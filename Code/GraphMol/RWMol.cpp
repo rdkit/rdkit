@@ -53,8 +53,21 @@ namespace RDKit{
       ++firstB;
     }
 
-    // and clear our computed properties since they are no longer accurate:
-    //clearComputedProps(true);
+    // add atom to any conformers as well, if we have any
+    if(other.getNumConformers()==1 && getNumConformers()==1){
+      Conformer &conf=getConformer();
+      const Conformer &oConf=other.getConformer();
+      conf.resize(getNumAtoms());
+      for(unsigned int i=0;i<newAtomIds.size();++i)
+        conf.setAtomPos(newAtomIds[i],oConf.getAtomPos(i));
+    } else {
+      for (ConformerIterator cfi = this->beginConformers();
+           cfi != this->endConformers(); ++cfi) {
+        (*cfi)->resize(getNumAtoms());
+        for(unsigned int i=0;i<newAtomIds.size();++i)
+          (*cfi)->setAtomPos(newAtomIds[i], RDGeom::Point3D(0.0, 0.0, 0.0));
+      }
+    }
   }
 
   unsigned int RWMol::addAtom(bool updateLabel){
@@ -101,7 +114,14 @@ namespace RDKit{
 
 
   void RWMol::removeAtom(unsigned int idx) {
-    Atom *oatom = getAtomWithIdx(idx);
+    removeAtom(getAtomWithIdx(idx));
+  }
+
+  void RWMol::removeAtom(Atom *atom) {
+    PRECONDITION(atom,"NULL atom provided");
+    PRECONDITION(static_cast<RWMol *>(&atom->getOwningMol())==this,"atom not owned by this molecule");
+    int idx=atom->getIdx();
+    
     // remove any bookmarks which point to this atom:
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
     ATOM_BOOKMARK_MAP::iterator markI=marks->begin();
@@ -112,17 +132,17 @@ namespace RDKit{
       // it.
       ATOM_BOOKMARK_MAP::iterator tmpI=markI;
       ++markI;
-      if(std::find(atoms.begin(),atoms.end(),oatom)!=atoms.end()){
-        clearAtomBookmark(tmpI->first,oatom);
+      if(std::find(atoms.begin(),atoms.end(),atom)!=atoms.end()){
+        clearAtomBookmark(tmpI->first,atom);
       }
     }
 
     // remove bonds attached to the atom
     std::vector<std::pair<unsigned int,unsigned int> > nbrs;
     ADJ_ITER b1,b2;
-    boost::tie(b1,b2)=getAtomNeighbors(oatom);
+    boost::tie(b1,b2)=getAtomNeighbors(atom);
     while(b1!=b2){
-      nbrs.push_back(std::make_pair(oatom->getIdx(),*b1));
+      nbrs.push_back(std::make_pair(atom->getIdx(),*b1));
       ++b1;
     }
     for(unsigned int i=0;i<nbrs.size();++i){
@@ -176,17 +196,13 @@ namespace RDKit{
     // they are pretty likely to be wrong now:
     clearComputedProps(true);
 
-    oatom->setOwningMol(NULL);
+    atom->setOwningMol(NULL);
     
     // remove all connections to the atom:
     MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
     boost::clear_vertex(vd,d_graph);
     // finally remove the vertex itself
     boost::remove_vertex(vd,d_graph);
-  }
-
-  void RWMol::removeAtom(Atom *atom) {
-    removeAtom(atom->getIdx());
   }
 
   unsigned int RWMol::addBond(unsigned int atomIdx1,unsigned int atomIdx2,

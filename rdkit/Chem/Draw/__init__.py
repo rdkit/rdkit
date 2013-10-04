@@ -4,6 +4,7 @@
 #  All Rights Reserved
 #
 import os
+from MolDrawing import MolDrawing,DrawingOptions
 
 def _getCanvas():
   useAGG=False
@@ -28,24 +29,27 @@ def _getCanvas():
       from aggCanvas import Canvas
       useAGG=True
     else:
+      DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
 def _createCanvas(size):
   useAGG,useCairo,Canvas=_getCanvas()
   if useAGG or useCairo:
-    import Image
+    try:
+      import Image
+    except ImportError:
+      from PIL import Image
     img = Image.new("RGBA",size,"white")
     canvas = Canvas(img)
   else:
-    MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
     from spingCanvas import Canvas
     canvas = Canvas(size=size,name='MolToImageFile')
     img = canvas._image
   return img,canvas
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
-               **kwargs):
+               fitImage=False, options=None, **kwargs):
   """ returns a PIL image containing a drawing of the molecule
 
     Keyword arguments:
@@ -56,11 +60,15 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     highlightMap -- dictionary of (atom, color) pairs (default None)
     highlightBonds -- list of bonds to highlight (default [])
   """
-  from MolDrawing import MolDrawing
   if not mol:
     raise ValueError,'Null molecule provided'
   img,canvas=_createCanvas(size)
-  drawer = MolDrawing(canvas)
+  if options is None:
+    options = DrawingOptions()
+  if fitImage:
+      options.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds = wedgeBonds
+  drawer = MolDrawing(canvas=canvas,drawingOptions=options)
 
   if kekulize:
     from rdkit import Chem
@@ -71,8 +79,6 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  drawer.wedgeDashedBonds=wedgeBonds
-
   if kwargs.has_key('legend'):
     legend = kwargs['legend']
     del kwargs['legend']
@@ -99,28 +105,31 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     return img
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
-              imageType=None,**kwargs):
+              imageType=None, fitImage=False, options=None, **kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
-  from MolDrawing import MolDrawing
   # original contribution from Uwe Hoffmann
   if not fileName:
     raise ValueError,'no fileName provided'
   if not mol:
     raise ValueError,'Null molecule provided'
 
-  
   if imageType is None:
     imageType=os.path.splitext(fileName)[1][1:]
 
+  if options is None:
+    options = DrawingOptions()
   useAGG,useCairo,Canvas = _getCanvas()
+  if fitImage:
+      options.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds = wedgeBonds
   if useCairo or useAGG:
     canvas = Canvas(size=size,imageType=imageType,
                               fileName=fileName)
   else:
-    MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
+    options.radicalSymbol = '.' #<- the sping canvas doesn't support unicode well
     canvas = Canvas(size=size,name=fileName,imageType=imageType)
-  drawer = MolDrawing(canvas)
+  drawer = MolDrawing(canvas=canvas,drawingOptions=options)
   if kekulize:
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
@@ -129,8 +138,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   if not mol.GetNumConformers():
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
-  
-  drawer.wedgeDashedBonds=wedgeBonds
+
   drawer.AddMol(mol,**kwargs)
   if useCairo or useAGG:
     canvas.flush()
@@ -154,7 +162,10 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
   """
   global tkRoot,tkLabel,tkPI
   import Tkinter
-  import ImageTk
+  try:
+    import ImageTk
+  except ImportError:
+    from PIL import ImageTk
 
   img = MolToImage(mol,size,kekulize,wedgeBonds,**kwargs)
 
@@ -170,15 +181,19 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
 
     
 def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
-             imageType=None,**kwargs):
+             imageType=None, fitImage=False, options=None, **kwargs):
   """ Generates a drawing of a molecule on a matplotlib canvas
   """
   if not mol:
     raise ValueError,'Null molecule provided'
-  from MolDrawing import MolDrawing
   from mplCanvas import Canvas
   canvas = Canvas(size)
-  drawer = MolDrawing(canvas)
+  if options is None:
+    options = DrawingOptions()
+  if fitImage:
+      drawingOptions.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds=wedgeBonds
+  drawer = MolDrawing(canvas=canvas, drawingOptions=options)
   omol=mol
   if kekulize:
     from rdkit import Chem
@@ -189,7 +204,6 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  drawer.wedgeDashedBonds=wedgeBonds
   drawer.AddMol(mol,**kwargs)
   omol._atomPs=drawer.atomPs[mol]
   for k,v in omol._atomPs.iteritems():
@@ -230,7 +244,10 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
 def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
   if legends is None: legends = [None]*len(mols)
   res = Image.new("RGB",(subImgSize[0]*len(mols),subImgSize[1]))
   for i,mol in enumerate(mols):
@@ -241,7 +258,10 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
 def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
   if legends is None: legends = [None]*len(mols)
 
   nRows = len(mols)//molsPerRow
@@ -257,7 +277,10 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
 
   mols = []
   for i in range(rxn.GetNumReactantTemplates()):

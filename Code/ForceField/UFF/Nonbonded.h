@@ -45,7 +45,7 @@ namespace ForceFields {
       vdWContrib(ForceField *owner,unsigned int idx1,unsigned int idx2,
 		 const AtomicParams *at1Params,
 		 const AtomicParams *at2Params,
-		 double threshMultiplier=2.0);
+		 double threshMultiplier=10.0);
       double getEnergy(double *pos) const;
       void getGrad(double *pos,double *grad) const;
     

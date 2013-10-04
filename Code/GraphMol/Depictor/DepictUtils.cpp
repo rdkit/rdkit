@@ -42,7 +42,7 @@ namespace RDDepict {
     
     // compute the sweep angle
     unsigned int na = ring.size();
-    double ang = 2*RDKit::PI/na;
+    double ang = 2*M_PI/na;
     
     // compute the arm length
     double al = BOND_LEN/(sqrt(2*(1 - cos(ang))));
@@ -79,7 +79,7 @@ namespace RDDepict {
     RDGeom::Point2D cloc = nb1;
     cloc += nb2;
     cloc *= 0.5;
-    if (ang > RDKit::PI) {
+    if (ang > M_PI) {
       // invert the cloc
       cloc -= rcr;
       cloc *= -1.0;
@@ -244,7 +244,7 @@ namespace RDDepict {
       if (numCommonAtoms == 2) {
         // if we found a ring with two atoms in common get out 
         nextId = currRingId;
-        return commonAtoms;
+        return commonAtoms; // FIX: this causes the rendering to be non-canonical
       }
       if (numCommonAtoms > maxCommonAtoms) {
         maxCommonAtoms = numCommonAtoms;

@@ -44,7 +44,7 @@ public class AromaticTests extends GraphMolTest {
 	@Test
 	public void testAromaticRegression() throws Exception {
 		String filePath = getFilePath("aromat_regress.txt");
-		performAromaticTest(filePath,4);
+		performAromaticTest(filePath,0);
 	}
 
 	@Test

@@ -964,14 +964,12 @@ namespace RDKit {
       }
  
       // now check if there are any extra rings on the molecule 
-      VECT_INT_VECT extras;
       if (!mol.hasProp("extraRings")) {
         // no extra rings nothign to be done
         return res.size();
       }
-      else {
-        mol.getProp("extraRings", extras);
-      }
+      const VECT_INT_VECT &extras=mol.getProp<VECT_INT_VECT>("extraRings");
+
 
       // convert the rings to bond ids
       VECT_INT_VECT bsrs, bextra;

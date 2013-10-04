@@ -48,7 +48,6 @@ namespace RDKit{
 	  atomIt != mol.endAtoms();++atomIt){
 	int atNum=(*atomIt)->getAtomicNum();
 	if(atNum!=1 || !onlyHeavy){
-          if(atNum==1) --nHsToCount;
           if(!(*atomIt)->getIsotope()){
             res += table->getMostCommonIsotopeMass(atNum);
           } else {
@@ -58,7 +57,7 @@ namespace RDKit{
 
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
-          nHsToCount += (*atomIt)->getTotalNumHs(true);
+          nHsToCount += (*atomIt)->getTotalNumHs(false);
 	}
 
       }

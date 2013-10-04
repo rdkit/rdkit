@@ -58,6 +58,26 @@
     RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
     return mr;
   }
+
+  std::vector<double> calcUSR(const RDKit::ROMol &mol,int confId=-1){
+    std::vector<double> res(12,0);
+    RDKit::Descriptors::USR(mol,res,confId);
+    return res;
+  }
+  std::vector<double> calcUSRCAT(const RDKit::ROMol &mol,int confId=-1){
+    std::vector<double> res(60,0);
+    std::vector<std::vector<unsigned int> > atomIds(0);
+    RDKit::Descriptors::USRCAT(mol,res,atomIds,confId);
+    return res;
+  }
+  double calcUSRScore(const std::vector<double> &v1,const std::vector<double> &v2,
+                      const std::vector<double> &weights){
+    return RDKit::Descriptors::calcUSRScore(v1,v2,weights);
+  }
+  double calcUSRScore(const std::vector<double> &v1,const std::vector<double> &v2){
+    const std::vector<double> weights(v1.size()/12,1.0);
+    return RDKit::Descriptors::calcUSRScore(v1,v2,weights);
+  }
 %}
 
 

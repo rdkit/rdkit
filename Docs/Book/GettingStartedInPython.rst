@@ -232,10 +232,10 @@ cyclobutane
      RDKit          3D
 <BLANKLINE>
   4  4  0  0  0  0  0  0  0  0999 V2000
-   -0.7931    0.5732   -0.2708 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.3802   -0.9196   -0.2340 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7838   -0.5392    0.6548 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.3894    0.8856    0.6202 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7883    0.5560   -0.2718 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4153   -0.9091   -0.1911 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7883   -0.5560    0.6568 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4153    0.9091    0.5762 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -273,7 +273,7 @@ An SDWriter can also be initialized using a file-like object:
 mol-295
      RDKit          3D
 <BLANKLINE>
- 20 22  0  0  0  0  0  0  0  0999 V2000
+ 20 22  0  0  1  0  0  0  0  0999 V2000
     2.3200    0.0800   -0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1.8400   -1.2200    0.1200 C   0  0  0  0  0  0  0  0  0  0  0  0
 ...
@@ -501,7 +501,6 @@ Note that the conformations that result from this procedure tend to be fairly ug
 They should be cleaned up using a force field.
 This can be done within the RDKit using its implementation of the Universal Force Field (UFF). [#rappe]_
 
-
 The full process of embedding and optimizing a molecule is easier than all the above verbiage makes it sound:
 
 >>> m = Chem.MolFromSmiles('C1CCC1OC')
@@ -510,6 +509,20 @@ The full process of embedding and optimizing a molecule is easier than all the a
 0
 >>> AllChem.UFFOptimizeMolecule(m2)
 0
+
+The RDKit also has an implementation of the MMFF94 force field available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_
+Please note that the MMFF atom typing code uses its own aromaticity model,
+so the aromaticity flags of the molecule will be modified after calling
+MMFF-related methods.
+
+>>> m = Chem.MolFromSmiles('C1CCC1OC')
+>>> m2=Chem.AddHs(m)
+>>> AllChem.EmbedMolecule(m2)
+0
+>>> AllChem.MMFFOptimizeMolecule(m2)
+0
+
+
 
 *Disclaimer/Warning*: Conformation generation is a difficult and subtle task.
 The 2D->3D conversion provided within the RDKit is not intended to be a replacement for a “real” conformational analysis tool; it merely provides quick 3D structures for cases when they are required.
@@ -799,7 +812,7 @@ or more molecules:
 >>> mol3 = Chem.MolFromSmiles("c1(C=O)cc(OC)c(O)cc1")
 >>> mols = [mol1,mol2,mol3]
 >>> MCS.FindMCS(mols)
-MCSResult(numAtoms=10, numBonds=10, smarts='[#6]-[#6]:1:[#6]:[#6](:[#6](:[#6]:[#6]:1)-[#8])-[#8]-[#6]', completed=1)
+MCSResult(numAtoms=10, numBonds=10, smarts='[#6]:1(:[#6]:[#6](:[#6](:[#6]:[#6]:1)-[#8])-[#8]-[#6])-[#6]', completed=1)
 
 It returns an MCSResult instance with information about the number of
 atoms and bonds in the MCS, the SMARTS string which matches the
@@ -865,7 +878,7 @@ requirement and also sets ringMatchesRingOnly to True.
 >>> MCS.FindMCS(mols)
 MCSResult(numAtoms=6, numBonds=6, smarts='[#6]-1-[#6]-[#6](-[#6])-[#6]-1-[#6]', completed=1)
 >>> MCS.FindMCS(mols, ringMatchesRingOnly=True)
-MCSResult(numAtoms=5, numBonds=5, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1-@[#6]', completed=1)
+MCSResult(numAtoms=5, numBonds=5, smarts='[#6]-@1-@[#6]-@[#6](-@[#6])-@[#6]-@1', completed=1)
 >>> MCS.FindMCS(mols, completeRingsOnly=True)
 MCSResult(numAtoms=4, numBonds=4, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1', completed=1)
 
@@ -2055,6 +2068,13 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#degen] Degen, J.; Wegscheid-Gerlach, C.; Zaliani, A; Rarey, M. "On the Art of Compiling and Using ‘Drug-Like’ Chemical Fragment Spaces." *ChemMedChem* **3**:1503–7 (2008).
 .. [#gobbi] Gobbi, A. & Poppinger, D. "Genetic optimization of combinatorial libraries." *Biotechnology and Bioengineering* **61**:47-54 (1998).
 .. [#rxnsmarts] A more detailed description of reaction smarts, as defined by the rdkit, is in the :doc:`RDKit_Book`.
+.. [#mmff1] Halgren, T. A. "Merck molecular force field. I. Basis, form, scope, parameterization, and performance of MMFF94." *J. Comp. Chem.* **17**:490–19 (1996).
+.. [#mmff2] Halgren, T. A. "Merck molecular force field. II. MMFF94 van der Waals and electrostatic parameters for intermolecular interactions." *J. Comp. Chem.* **17**:520–52 (1996).
+.. [#mmff3] Halgren, T. A. "Merck molecular force field. III. Molecular geometries and vibrational frequencies for MMFF94." *J. Comp. Chem.* **17**:553–86 (1996).
+.. [#mmff4] Halgren, T. A. & Nachbar, R. B. "Merck molecular force field. IV. conformational energies and geometries for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996).
+.. [#mmffs] Halgren, T. A. "MMFF VI. MMFF94s option for energy minimization studies." *J. Comp. Chem.* **20**:720–9 (1999).
+
+
 
 
 License

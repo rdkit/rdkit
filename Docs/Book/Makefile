@@ -42,7 +42,7 @@ apidocs:
 	mkdir -p $(BUILDDIR)/html/api
 	mkdir -p $(BUILDDIR)/html/cppapi
 	cp $(APIDOCSHOME)/*  $(BUILDDIR)/html/api
-	cp $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
+	cp -r $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
 
 html: apidocs
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

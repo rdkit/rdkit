@@ -29,7 +29,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
-
+#include <GraphMol/Descriptors/USRDescriptor.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -1606,8 +1606,191 @@ void testMQNs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testUSRDescriptor(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test USR Descriptor" << std::endl;
+  std::vector<double> descriptor(12);
 
+  // no conformers
+  ROMol *mol = SmilesToMol("C1CCCCC1");
+  bool ok = false;
+  try {
+      USR(*mol, descriptor);
+  } catch (ConformerException &e) {
+      ok = true;
+  }
+  TEST_ASSERT(ok);
 
+  // number of atoms < 3
+  mol = SmilesToMol("CC");
+  ok = false;
+  try {
+    USR(*mol, descriptor);
+  } catch (ValueErrorException &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+
+  // DESCRIPTOR
+  // comparing to results produced by Adrian Schreyer's code
+  // http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd25370e7ef93301d0e28d49a0851c2/usrcat/geometry.py?at=default
+  double refValues[12] = {2.37938524, 0.62181927, -0.89089872, 2.63773456, 1.1577952, -0.6937349,
+                          3.38248245, 1.59816952, -0.72933115, 3.38248245, 1.59816952,-0.72933115};
+  std::vector<double> refUSR (refValues, refValues + sizeof(refValues) / sizeof(double) );
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 = rdbase + "/Code/GraphMol/Descriptors/test_data/cyclohexane.mol";
+  mol = MolFileToMol(fname1, true, false, true);
+  std::vector<double> myUSR(12);
+  USR(*mol, myUSR);
+  for (unsigned int i = 0; i < myUSR.size(); ++i) {
+      TEST_ASSERT(feq(myUSR[i], refUSR[i]));
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testUSRScore(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test USR Score" << std::endl;
+  // SCORE
+  // descriptors and reference score from JCC (2007), 28, 1711-1723.
+  double m1[12]={4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51};
+  double m2[12]={4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13};
+  std::vector<double> d1 (m1, m1 + sizeof(m1) / sizeof(double) );
+  std::vector<double> d2 (m2, m2 + sizeof(m2) / sizeof(double) );
+  std::vector<double> weights(1, 1.0);
+  TEST_ASSERT(feq(calcUSRScore(d1, d2, weights), 0.812, 0.001));
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testUSRCATDescriptor(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test USRCAT Descriptor" << std::endl;
+  std::vector<double> descriptor(12);
+
+  // no conformers
+  ROMol *mol = SmilesToMol("C1CCCCC1");
+  bool ok = false;
+  try {
+      USR(*mol, descriptor);
+  } catch (ConformerException &e) {
+      ok = true;
+  }
+  TEST_ASSERT(ok);
+
+  // number of atoms < 3
+  mol = SmilesToMol("CC");
+  ok = false;
+  try {
+    USR(*mol, descriptor);
+  } catch (ValueErrorException &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+
+  // DESCRIPTOR
+  // comparing to results produced by Adrian Schreyer's code
+  // http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
+  double refValues[60] = {2.37938524, 0.62181927, -0.89089872, 2.63773456, 1.1577952, -0.6937349,
+                          3.38248245, 1.59816952, -0.72933115, 3.38248245, 1.59816952,-0.72933115,
+                          1.50000000, 0.00000000, -0.77827171, 1.86602540, 1.00893468,-0.89059233,
+                          3.02358914, 1.02718486, -0.64081261, 3.02358914, 1.02718486,-0.64081261,
+                          0.00000000, 0.00000000,  0.00000000, 0.00000000, 0.00000000, 0.00000000,
+                          0.00000000, 0.00000000,  0.00000000, 0.00000000, 0.00000000, 0.00000000,
+                          0.00000000, 0.00000000,  0.00000000, 0.00000000, 0.00000000, 0.00000000,
+                          0.00000000, 0.00000000,  0.00000000, 0.00000000, 0.00000000, 0.00000000,
+                          0.00000000, 0.00000000,  0.00000000, 0.00000000, 0.00000000, 0.00000000,
+                          0.00000000, 0.00000000,  0.00000000, 0.00000000, 0.00000000, 0.00000000};
+
+  std::vector<double> refUSR (refValues, refValues + sizeof(refValues) / sizeof(double) );
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 = rdbase + "/Code/GraphMol/Descriptors/test_data/cyclohexane.mol";
+  mol = MolFileToMol(fname1, true, false, true);
+  std::vector<std::vector<unsigned int> > atomIds;
+  std::vector<double> myUSR(12);
+  USRCAT(*mol, myUSR, atomIds);
+  for (unsigned int i = 0; i < myUSR.size(); ++i) {
+      TEST_ASSERT(feq(myUSR[i], refUSR[i]));
+  }
+
+  atomIds.resize(4);
+  unsigned int h[6] = {0, 1, 2, 3, 4, 5};
+  std::vector<unsigned int> hydrophobic(h, h + sizeof(h) / sizeof(unsigned int));
+  atomIds[0] = hydrophobic;
+  USRCAT(*mol, myUSR, atomIds);
+  for (unsigned int i = 0; i < myUSR.size(); ++i) {
+    TEST_ASSERT(feq(myUSR[i], refUSR[i]));
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testGitHubIssue56(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 56." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[H+]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,1.008,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,1.0078,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[2H+]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[H]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,1.008,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,1.0078,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[2H]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testGitHubIssue92(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Github92: Bad Crippen atom type for pyrrole H." << std::endl;
+
+  {
+    RWMol *mol;
+    mol = SmilesToMol("c1cccn1[H]",0,0);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getNumAtoms()==6);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[5],0.2142,.001));
+    delete mol;
+  }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -1626,7 +1809,6 @@ int main(){
   testVSADescriptors();
   testMolFormula();
   testIssue3415534();
-#endif
   testIssue3433771();
   testMultiThread();
   testIssue252();
@@ -1640,5 +1822,9 @@ int main(){
   testRingDescriptors();
   testMiscCountDescriptors();
   testMQNs();
+  testUSRDescriptor();
+#endif
+  testGitHubIssue56();
+  testGitHubIssue92();
 
 }

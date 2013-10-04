@@ -798,7 +798,7 @@ namespace RDKit{
         }
       }
       if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
-         || symb=="R" || symb=="R#" || (symb>="R0" && symb<="R9") ){
+         || symb=="R" || symb=="R#" || (symb[0]=='R' && symb>="R0" && symb<="R99") ){
         if(symb=="A"||symb=="Q"||symb=="*"){
           QueryAtom *query=new QueryAtom(0);
           if(symb=="*"){
@@ -823,15 +823,17 @@ namespace RDKit{
           res->setAtomicNum(0);
         }
         if(massDiff==0&&symb[0]=='R'){
-          if(symb=="R1") res->setIsotope(1);
-          else if(symb=="R2") res->setIsotope(2);
-          else if(symb=="R3") res->setIsotope(3);
-          else if(symb=="R4") res->setIsotope(4);
-          else if(symb=="R5") res->setIsotope(5);
-          else if(symb=="R6") res->setIsotope(6);
-          else if(symb=="R7") res->setIsotope(7);
-          else if(symb=="R8") res->setIsotope(8);
-          else if(symb=="R9") res->setIsotope(9);
+          if(symb.length()>1){
+            std::string rlabel="";
+            rlabel = symb.substr(1,symb.length()-1);
+            int rnumber;
+            try {
+              rnumber = boost::lexical_cast<int>(rlabel);
+            } catch (boost::bad_lexical_cast &) {
+              rnumber=-1;
+            }
+            if(rnumber>=0) res->setIsotope(rnumber);
+          }
         }
       } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
         res->setAtomicNum(1); 
@@ -899,7 +901,10 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(48,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molTotValence",totValence);
+        if(totValence!=0){
+          // only set if it's a non-default value
+          res->setProp("molTotValence",totValence);
+        }
       }
       if(text.size()>=63 && text.substr(60,3)!="  0"){
         int atomMapNumber=0;
@@ -1369,8 +1374,12 @@ namespace RDKit{
 	    if(rbcount==-1) rbcount=0;
 	    atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
 	  }
+        } else if(prop=="VAL"){
+	  if(val!="0"){
+	    int totval=FileParserUtils::toInt(val);
+	    atom->setProp("molTotValence",totval);
+	  }
         }
-
         ++token;
       }
     }
@@ -1622,18 +1631,49 @@ namespace RDKit{
         throw FileParseException(errout.str());
       }
     }
+
+    void ProcessMolProps(RWMol *mol){
+      PRECONDITION(mol,"no molecule");
+      for(RWMol::AtomIterator atomIt=mol->beginAtoms();
+          atomIt!=mol->endAtoms();
+          ++atomIt) {
+        Atom *atom=*atomIt;
+        if(atom->hasProp("molTotValence")){
+          int totV;
+          atom->getProp("molTotValence",totV);
+          if(totV==0) continue;
+          atom->setNoImplicit(true);
+          if(totV==15 // V2000
+             || totV==-1 // v3000
+             ){
+            atom->setNumExplicitHs(0);
+          } else {
+            if(atom->getExplicitValence()>totV){
+              BOOST_LOG(rdWarningLog) << "atom " << atom->getIdx() <<" has specified valence ("<<totV<<") smaller than the drawn valence "<<atom->getExplicitValence()<<"."<<std::endl;
+              atom->setNumExplicitHs(0);
+            } else {
+              atom->setNumExplicitHs(totV-atom->getExplicitValence());
+            }
+          }
+        }
+      }
+    }
+    
   } // end of local namespace
   namespace FileParserUtils {
     bool ParseV3000CTAB(std::istream *inStream,unsigned int &line,
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
 			unsigned int &nBonds,
-                        bool strictParsing){
+                        bool strictParsing,
+                        bool expectMEND){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
 
       std::string tempStr;
       std::vector<std::string> splitLine;
+
+      bool fileComplete=false;
 
       tempStr = getV3000Line(inStream,line);
       boost::to_upper(tempStr);
@@ -1748,10 +1788,20 @@ namespace RDKit{
         throw FileParseException("END CTAB line not found") ;
       }
 
+      if(expectMEND){
+        tempStr = getLine(inStream);
+        ++line;
+        if(tempStr[0]=='M'&&tempStr.substr(0,6)=="M  END"){
+          fileComplete=true;
+        }
+      } else {
+        fileComplete = true;
+      }
+
       mol->addConformer(conf, true);
       conf=0;
 
-      return true;
+      return fileComplete;
     }
 
     bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,
@@ -1915,7 +1965,11 @@ namespace RDKit{
         }
       }
     }
-    
+
+    if(chiralFlag){
+      res->setProp("_MolFileChiralFlag",chiralFlag);
+    }
+
     Conformer *conf=0;
     try {
       if(ctabVersion==2000){
@@ -1985,31 +2039,35 @@ namespace RDKit{
         (*atomIt)->calcExplicitValence(false);
       }
 
-      if ( sanitize ) {
-        // update the chirality and stereo-chemistry and stuff:
-        //
-        // NOTE: we detect the stereochemistry before sanitizing/removing
-        // hydrogens because the removal of H atoms may actually remove
-        // the wedged bond from the molecule.  This wipes out the only
-        // sign that chirality ever existed and makes us sad... so first
-        // perceive chirality, then remove the Hs and sanitize.
-        //
-        // One exception to this (of course, there's always an exception):
-        // DetectAtomStereoChemistry() needs to check the number of
-        // implicit hydrogens on atoms to detect if things can be
-        // chiral. However, if we ask for the number of implicit Hs before
-        // we've called MolOps::cleanUp() on the molecule, we'll get
-        // exceptions for common "weird" cases like a nitro group
-        // mis-represented as -N(=O)=O.  *SO*... we need to call
-        // cleanUp(), then detect the stereochemistry.
-        // (this was Issue 148)
-        //
-        if(chiralityPossible){
-          MolOps::cleanUp(*res);
-          const Conformer &conf = res->getConformer();
-          DetectAtomStereoChemistry(*res, &conf);
-        }
+      // postprocess mol file flags
+      ProcessMolProps(res);
 
+      // update the chirality and stereo-chemistry
+      //
+      // NOTE: we detect the stereochemistry before sanitizing/removing
+      // hydrogens because the removal of H atoms may actually remove
+      // the wedged bond from the molecule.  This wipes out the only
+      // sign that chirality ever existed and makes us sad... so first
+      // perceive chirality, then remove the Hs and sanitize.
+      //
+      // One exception to this (of course, there's always an exception):
+      // DetectAtomStereoChemistry() needs to check the number of
+      // implicit hydrogens on atoms to detect if things can be
+      // chiral. However, if we ask for the number of implicit Hs before
+      // we've called MolOps::cleanUp() on the molecule, we'll get
+      // exceptions for common "weird" cases like a nitro group
+      // mis-represented as -N(=O)=O.  *SO*... we need to call
+      // cleanUp(), then detect the stereochemistry.
+      // (this was Issue 148)
+      //
+      if(chiralityPossible){
+        const Conformer &conf = res->getConformer();
+        // if we aren't sanitizing, we technically shouldn't be doing this...
+        MolOps::cleanUp(*res);
+        DetectAtomStereoChemistry(*res, &conf);
+      }
+
+      if ( sanitize ) {
         try {
           if(removeHs){
             ROMol *tmp=MolOps::removeHs(*res,false,false);

@@ -20,7 +20,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <Geometry/point.h>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 
 namespace RDKit{
@@ -80,8 +80,11 @@ namespace RDKit{
         unsigned long invariant = 0;
         int num = atom->getAtomicNum() % 128;
         // get an int with the deviation in the mass from the default:
-        int mass = static_cast<int>(atom->getMass() -
-                                    PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+        int mass = 0;
+        if(atom->getIsotope()) {
+          mass = atom->getIsotope()-PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum());
+          if(mass>=0) mass += 1;
+        }          
         mass += 8;
         if(mass < 0) mass = 0;
         else mass = mass % 16;
@@ -146,6 +149,7 @@ namespace RDKit{
       for(int i=0;i<numAtoms;i++){
         if(!seedWithInvars){
           cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
+          cipEntries[i].push_back(static_cast<int>(ranks[i]));
         } else {
           cipEntries[i].push_back(static_cast<int>(invars[i]));
         }
@@ -308,10 +312,8 @@ namespace RDKit{
         const BOND_SPTR bond = mol[*beg];
         // check whether this bond is explictly set to have unknown stereo
         if (!hasExplicitUnknownStereo) {
-          if (bond->hasProp("_UnknownStereo")) {
-            int unknownStereo = 0;
-            bond->getProp("_UnknownStereo", unknownStereo);
-            if (unknownStereo)
+          if (bond->hasProp("_UnknownStereo") &&
+              bond->getProp<int>("_UnknownStereo")){
               hasExplicitUnknownStereo = true;
           }
         }
@@ -386,7 +388,7 @@ namespace RDKit{
       PRECONDITION(atom,"bad atom");
       bool res=false;
       if(atom->hasProp("_ringStereochemCand")){
-        atom->getProp("_ringStereochemCand",res);
+        res=atom->getProp<bool>("_ringStereochemCand");
       } else {
         const RingInfo *ringInfo=mol.getRingInfo();
         if(ringInfo->isInitialized() &&
@@ -454,7 +456,7 @@ namespace RDKit{
         // atom without stereochem in this atom's rings:
         INT_VECT ringStereoAtoms(0);
         if(atom->hasProp("_ringStereoAtoms")){
-          atom->getProp("_ringStereoAtoms",ringStereoAtoms);
+          ringStereoAtoms=atom->getProp<INT_VECT>("_ringStereoAtoms");
         }
         const VECT_INT_VECT atomRings=ringInfo->atomRings();
         for(VECT_INT_VECT::const_iterator ringIt=atomRings.begin();
@@ -475,7 +477,7 @@ namespace RDKit{
                 ringStereoAtoms.push_back(same*(*idxIt+1));
                 INT_VECT oAtoms(0);
                 if(mol.getAtomWithIdx(*idxIt)->hasProp("_ringStereoAtoms")){
-                  mol.getAtomWithIdx(*idxIt)->getProp("_ringStereoAtoms",oAtoms);
+                  oAtoms=mol.getAtomWithIdx(*idxIt)->getProp<INT_VECT>("_ringStereoAtoms");
                 }
                 oAtoms.push_back(same*(atom->getIdx()+1));
                 mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms,true);
@@ -885,6 +887,17 @@ namespace RDKit{
             }
           }
         }        
+        for(ROMol::BondIterator bondIt=mol.beginBonds();
+            bondIt!=mol.endBonds();++bondIt){
+          // wedged bonds to atoms that have no stereochem 
+          // should be removed. (github issue 87)
+          if(((*bondIt)->getBondDir()==Bond::BEGINWEDGE ||
+              (*bondIt)->getBondDir()==Bond::BEGINDASH) &&
+             (*bondIt)->getBeginAtom()->getChiralTag()==Atom::CHI_UNSPECIFIED &&
+             (*bondIt)->getEndAtom()->getChiralTag()==Atom::CHI_UNSPECIFIED){
+            (*bondIt)->setBondDir(Bond::NONE);
+          }
+        }
       }
       mol.setProp("_StereochemDone",1,true);
 

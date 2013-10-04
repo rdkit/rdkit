@@ -15,9 +15,12 @@
 #include "PeriodicTable.h"
 #include "SanitException.h"
 #include "QueryOps.h"
+#include "MonomerInfo.h"
+
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
+#include <RDGeneral/Dict.h>
 
 namespace RDKit {
   namespace {
@@ -64,8 +67,14 @@ Atom::Atom( const Atom & other){
   } else {
     dp_props = new Dict();
     STR_VECT computed;
-    dp_props->setVal("__computedProps", computed);
+    dp_props->setVal(detail::computedPropName, computed);
   }
+  if(other.dp_monomerInfo){
+    dp_monomerInfo = other.dp_monomerInfo->copy();
+  } else {
+    dp_monomerInfo=0;
+  }
+
 }
 void Atom::initAtom(){
   df_isAromatic = false;
@@ -85,17 +94,11 @@ void Atom::initAtom(){
   d_hybrid = UNSPECIFIED;
   dp_mol = 0;
   dp_props = new Dict();
+  dp_monomerInfo = 0;
 
   d_implicitValence=-1;
   d_explicitValence=-1;
 
-  // ok every Atom contains a property entry called "__computedProps"
-  // which provides list of property keys that correspond to value
-  // that have been computed this can used to blow out all computed
-  // properties while leaving the rest along initialize this list to
-  // an empty vector of strings
-  //STR_VECT computed;
-  //dp_props->setVal("__computedProps", computed);
 }
 
 Atom::~Atom()
@@ -103,6 +106,9 @@ Atom::~Atom()
   if(dp_props){
     delete dp_props;
     dp_props = 0;
+  }
+  if(dp_monomerInfo){
+    delete dp_monomerInfo;
   }
 }
 
@@ -127,7 +133,7 @@ std::string Atom::getSymbol() const {
   if(d_atomicNum != 0 || !hasProp("dummyLabel") ){
     res = PeriodicTable::getTable()->getElementSymbol(d_atomicNum);
   } else {
-    getProp("dummyLabel",res);
+    res=getProp<std::string>("dummyLabel");
   }
   return res;
 }
@@ -178,6 +184,11 @@ int Atom::getExplicitValence() const {
   return d_explicitValence;
 }
 
+unsigned int Atom::getTotalValence() const {
+  PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
+  return getExplicitValence()+getImplicitValence();
+}
+  
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   unsigned int res;
@@ -393,7 +404,6 @@ int Atom::calcImplicitValence(bool strict) {
                << " greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        BOOST_LOG(rdErrorLog)<< "  Atomic Num: "<<d_atomicNum << " symbol: " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << std::endl;
         throw MolSanitizeException(msg);
       } else {
         res = 0;
@@ -494,9 +504,7 @@ void Atom::invertChirality(){
     break;
   }
 }
-
-
-} // end o' namespace
+} // end o' namespace RDKit
 
 std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();

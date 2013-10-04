@@ -17,7 +17,7 @@
 #include <map>
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+#define M_PI           3.14159265358979323846
 #endif
 
 
@@ -56,7 +56,7 @@ namespace RDGeom {
     ~Point3D() {};
 
     Point3D(const Point3D &other) :
-      x(other.x), y(other.y), z(other.z) {
+      Point(other), x(other.x), y(other.y), z(other.z) {
     }
 
     inline unsigned int dimension() const {return 3;}
@@ -139,7 +139,8 @@ namespace RDGeom {
     };
 
     double lengthSq() const {
-      double res = pow(x,2) + pow(y,2) + pow(z,2);
+      //double res = pow(x,2) + pow(y,2) + pow(z,2);
+      double res = x*x+y*y+z*z;
       return res;
     };
 
@@ -263,7 +264,7 @@ namespace RDGeom {
     
     ~Point2D() {}; 
 
-    Point2D(const Point2D &other) : x(other.x), y(other.y) {
+    Point2D(const Point2D &other) : Point(other), x(other.x), y(other.y) {
     }
 
     inline unsigned int dimension() const {return 2;}
@@ -337,7 +338,8 @@ namespace RDGeom {
     }
 
     double length() const {
-      double res = pow(x,2) + pow(y,2);
+      //double res = pow(x,2) + pow(y,2);
+      double res = x*x+y*y;
       return sqrt(res);
     };
 
@@ -391,7 +393,7 @@ namespace RDGeom {
       dp_storage.reset(nvec);
     };
 
-    PointND(const PointND &other) {
+    PointND(const PointND &other) : Point(other) {
       RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(*other.getStorage());
       dp_storage.reset(nvec);
     }

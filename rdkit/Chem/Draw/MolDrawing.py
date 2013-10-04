@@ -24,39 +24,37 @@ class Font(object):
     if name: self.name=name
     if weight: self.weight=weight
 
-class MolDrawing(object):
-  dotsPerAngstrom = 30
-  useFraction=0.85
+class DrawingOptions(object):
+  dotsPerAngstrom= 30
+  useFraction= 0.85
   
-  atomLabelFontFace = "sans"
-  atomLabelFontSize = 12
-  atomLabelMinFontSize = 7
+  atomLabelFontFace= "sans"
+  atomLabelFontSize= 12
+  atomLabelMinFontSize= 7
 
-  bondLineWidth = 1.2
-  dblBondOffset = .3
-  dblBondLengthFrac = .8
+  bondLineWidth= 1.2
+  dblBondOffset= .3
+  dblBondLengthFrac= .8
 
-  defaultColor = (1,0,0)
-  selectColor = (1,0,0)
+  defaultColor= (1,0,0)
+  selectColor= (1,0,0)
 
-  colorBonds=True
-  noCarbonSymbols=True
-  includeAtomNumbers=False
-  atomNumberOffset=0
-  radicalSymbol=u'\u2219'
+  colorBonds= True
+  noCarbonSymbols= True
+  includeAtomNumbers= False
+  atomNumberOffset= 0
+  radicalSymbol= u'\u2219'
 
-  dash = (4,4)
-  atomPs = None
-  canvas = None
-  canvasSize=None
+  dash= (4,4)
 
-  wedgeDashedBonds=True
+  wedgeDashedBonds= True
 
   # used to adjust overall scaling for molecules that have been laid out with non-standard
   # bond lengths
-  coordScale=1.0
+  coordScale= 1.0
 
   elemDict={
+    1:(0.55,0.55,0.55),
     7:(0,0,1),
     8:(1,0,0),
     9:(.2,.8,.8),
@@ -67,17 +65,26 @@ class MolDrawing(object):
     0:(.5,.5,.5),
     }
 
-  def __init__(self,canvas=None):
+class MolDrawing(object):
+  atomPs = None
+  canvas = None
+  canvasSize = None
+
+  def __init__(self,canvas=None, drawingOptions=None):
     self.canvas = canvas
     if canvas:
       self.canvasSize=canvas.size
     self.atomPs = {}
+    if drawingOptions is None:
+      self.drawingOptions=DrawingOptions()
+    else:
+      self.drawingOptions=drawingOptions
     self.boundingBoxes = {}
 
   def transformPoint(self,pos):
     res = [0,0]
-    res[0] = (pos[0] + self.molTrans[0])*self.currDotsPerAngstrom*self.useFraction + self.drawingTrans[0]
-    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.currDotsPerAngstrom*self.useFraction + \
+    res[0] = (pos[0] + self.molTrans[0])*self.currDotsPerAngstrom*self.drawingOptions.useFraction + self.drawingTrans[0]
+    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.currDotsPerAngstrom*self.drawingOptions.useFraction + \
                                  self.drawingTrans[1])
     return res
   
@@ -92,8 +99,8 @@ class MolDrawing(object):
     perp = ang + math.pi/2.
 
     # here's the offset for the parallel bond:
-    offsetX = math.cos(perp)*self.dblBondOffset*self.currDotsPerAngstrom
-    offsetY = math.sin(perp)*self.dblBondOffset*self.currDotsPerAngstrom
+    offsetX = math.cos(perp)*self.drawingOptions.dblBondOffset*self.currDotsPerAngstrom
+    offsetY = math.sin(perp)*self.drawingOptions.dblBondOffset*self.currDotsPerAngstrom
 
     return perp,offsetX,offsetY
 
@@ -101,7 +108,7 @@ class MolDrawing(object):
                         offsetX,offsetY,
                         lenFrac=None):
     if not lenFrac:
-      lenFrac = self.dblBondLengthFrac
+      lenFrac = self.drawingOptions.dblBondLengthFrac
       
     dx = p2[0]-p1[0]
     dy = p2[1]-p1[1]
@@ -144,14 +151,14 @@ class MolDrawing(object):
             continue
           a3 = otherBond.GetOtherAtom(a1)
           if a3.GetIdx() != a2Idx:
-            p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx())*self.coordScale)
+            p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx())*self.drawingOptions.coordScale)
             dx2 = p3[0] - p1[0]
             dy2 = p3[1] - p1[1]
             dotP = dx2*offsetX + dy2*offsetY
             if dotP < 0:
               perp += math.pi
-              offsetX = math.cos(perp)*self.dblBondOffset*self.currDotsPerAngstrom
-              offsetY = math.sin(perp)*self.dblBondOffset*self.currDotsPerAngstrom
+              offsetX = math.cos(perp)*self.drawingOptions.dblBondOffset*self.currDotsPerAngstrom
+              offsetY = math.sin(perp)*self.drawingOptions.dblBondOffset*self.currDotsPerAngstrom
             
     fracP1,fracP2 = self._getOffsetBondPts(p1,p2,
                                            offsetX,offsetY,
@@ -159,8 +166,12 @@ class MolDrawing(object):
     return fracP1,fracP2
     
   def _drawWedgedBond(self,bond,pos,nbrPos,
-                      width=bondLineWidth,color=defaultColor,
+                      width=None,color=None,
                       dash=None):
+    if width is None:
+        width = self.drawingOptions.bondLineWidth
+    if color is None:
+        color = self.drawingOptions.defaultColor
     perp,offsetX,offsetY = self._getBondOffset(pos,nbrPos)
     offsetX *=.75
     offsetY *=.75
@@ -170,14 +181,18 @@ class MolDrawing(object):
     #canvas.drawPolygon(poly,edgeColor=color,edgeWidth=1,fillColor=color,closed=1)
     if not dash:
       self.canvas.addCanvasPolygon(poly,color=color)
-    elif self.wedgeDashedBonds and self.canvas.addCanvasDashedWedge:
+    elif self.drawingOptions.wedgeDashedBonds and self.canvas.addCanvasDashedWedge:
       self.canvas.addCanvasDashedWedge(poly[0],poly[1],poly[2],color=color)
     else:
       self.canvas.addCanvasLine(pos,nbrPos,linewidth=width*2,color=color,
                     dashes=dash)
     
   def _drawBond(self,bond,atom,nbr,pos,nbrPos,conf,
-                width=bondLineWidth,color=defaultColor,color2=None):
+                width=None,color=None,color2=None):
+    if width is None:
+      width = self.drawingOptions.bondLineWidth
+    if color is None:
+      color = self.drawingOptions.defaultColor
     bType=bond.GetBondType()
     if bType == Chem.BondType.SINGLE:
       bDir = bond.GetBondDir()
@@ -189,10 +204,10 @@ class MolDrawing(object):
         else:
           p2,p1 = pos,nbrPos
         if bDir==Chem.BondDir.BEGINWEDGE:
-          self._drawWedgedBond(bond,p1,p2,color=color,width=width)
+          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width)
         elif bDir==Chem.BondDir.BEGINDASH:
-          self._drawWedgedBond(bond,p1,p2,color=color,width=width,
-                               dash=self.dash)
+          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width,
+                               dash=self.drawingOptions.dash)
       else:
         self.canvas.addCanvasLine(pos, nbrPos, linewidth=width, color=color, color2=color2)
     elif bType == Chem.BondType.DOUBLE:
@@ -211,7 +226,7 @@ class MolDrawing(object):
       self.canvas.addCanvasLine(pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
       self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2,
-                    dash=self.dash)
+                    dash=self.drawingOptions.dash)
     elif bType == Chem.BondType.TRIPLE:
       self.canvas.addCanvasLine(pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
@@ -225,8 +240,8 @@ class MolDrawing(object):
       
       
   def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None,ignoreHs=False):
-    self.currDotsPerAngstrom=self.dotsPerAngstrom
-    self.currAtomLabelFontSize=self.atomLabelFontSize
+    self.currDotsPerAngstrom=self.drawingOptions.dotsPerAngstrom
+    self.currAtomLabelFontSize=self.drawingOptions.atomLabelFontSize
     if canvasSize is None:
       canvasSize=self.canvasSize
     xAccum = 0
@@ -239,7 +254,7 @@ class MolDrawing(object):
     nAts = mol.GetNumAtoms()
     for i in range(nAts):
       if ignoreHs and mol.GetAtomWithIdx(i).GetAtomicNum()==1: continue
-      pos = conf.GetAtomPosition(i)*self.coordScale
+      pos = conf.GetAtomPosition(i)*self.drawingOptions.coordScale
       xAccum += pos[0]
       yAccum += pos[1]
       minX = min(minX,pos[0])
@@ -264,20 +279,20 @@ class MolDrawing(object):
       ySize*=scale
       self.currDotsPerAngstrom*=scale
       self.currAtomLabelFontSize = max(self.currAtomLabelFontSize*scale,
-                                       self.atomLabelMinFontSize)
+                                       self.drawingOptions.atomLabelMinFontSize)
     if ySize>=.95*canvasSize[1]:
       scale = .9*canvasSize[1]/ySize
       xSize*=scale
       ySize*=scale
       self.currDotsPerAngstrom*=scale
       self.currAtomLabelFontSize = max(self.currAtomLabelFontSize*scale,
-                                       self.atomLabelMinFontSize)
+                                       self.drawingOptions.atomLabelMinFontSize)
     drawingTrans = canvasSize[0]/2,canvasSize[1]/2
     self.drawingTrans = drawingTrans
 
   def _drawLabel(self,label,pos,font,color=None,**kwargs):
     if color is None:
-      color = self.defaultColor
+      color = self.drawingOptions.defaultColor
     x1 = pos[0]
     y1 = pos[1]
     labelP = x1,y1
@@ -297,7 +312,7 @@ class MolDrawing(object):
     """
     conf = mol.GetConformer(confId)
     if kwargs.has_key('coordScale'):
-      self.coordScale=kwargs['coordScale']
+      self.drawingOptions.coordScale=kwargs['coordScale']
 
     if centerIt:
       self.scaleAndCenter(mol,conf,ignoreHs=ignoreHs)
@@ -309,13 +324,15 @@ class MolDrawing(object):
         drawingTrans = (0,0)
       self.drawingTrans = drawingTrans
 
-    font = Font(face=self.atomLabelFontFace,size=self.currAtomLabelFontSize)
+    font = Font(face=self.drawingOptions.atomLabelFontFace,size=self.currAtomLabelFontSize)
 
+    obds=None
     if not mol.HasProp('_drawingBondsWedged'):
+      # this is going to modify the molecule, get ready to undo that
+      obds=[x.GetBondDir() for x in mol.GetBonds()]
       Chem.WedgeMolBonds(mol,conf)
       
-
-    includeAtomNumbers = kwargs.get('includeAtomNumbers',self.includeAtomNumbers)
+    includeAtomNumbers = kwargs.get('includeAtomNumbers',self.drawingOptions.includeAtomNumbers)
     self.atomPs[mol] = {}
     self.boundingBoxes[mol] = [0]*4
     self.activeMol = mol
@@ -328,7 +345,7 @@ class MolDrawing(object):
       idx = atom.GetIdx()
       pos = self.atomPs[mol].get(idx,None)
       if pos is None:
-        pos = self.transformPoint(conf.GetAtomPosition(idx)*self.coordScale)
+        pos = self.transformPoint(conf.GetAtomPosition(idx)*self.drawingOptions.coordScale)
         self.atomPs[mol][idx] = pos
         if drawAtom:
           self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],pos[0])
@@ -344,7 +361,7 @@ class MolDrawing(object):
         if nbrIdx > idx:
           nbrPos = self.atomPs[mol].get(nbrIdx,None)
           if nbrPos is None:
-            nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx)*self.coordScale)
+            nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx)*self.drawingOptions.coordScale)
             self.atomPs[mol][nbrIdx] = nbrPos
             self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],nbrPos[0])
             self.boundingBoxes[mol][1]=min(self.boundingBoxes[mol][1],nbrPos[1])
@@ -352,24 +369,24 @@ class MolDrawing(object):
             self.boundingBoxes[mol][3]=max(self.boundingBoxes[mol][3],nbrPos[1])
             
           if highlightBonds and bond.GetIdx() in highlightBonds:
-            width=2.0*self.bondLineWidth
-            color = self.selectColor
-            color2 = self.selectColor
+            width=2.0*self.drawingOptions.bondLineWidth
+            color = self.drawingOptions.selectColor
+            color2 = self.drawingOptions.selectColor
           elif highlightAtoms and idx in highlightAtoms and nbrIdx in highlightAtoms:
-            width=2.0*self.bondLineWidth
-            color = self.selectColor
-            color2 = self.selectColor
+            width=2.0*self.drawingOptions.bondLineWidth
+            color = self.drawingOptions.selectColor
+            color2 = self.drawingOptions.selectColor
           elif highlightMap is not None and idx in highlightMap and nbrIdx in highlightMap:
-            width=2.0*self.bondLineWidth
+            width=2.0*self.drawingOptions.bondLineWidth
             color = highlightMap[idx]
             color2 = highlightMap[nbrIdx]
           else:
-            width=self.bondLineWidth
-            if self.colorBonds:
-              color = self.elemDict.get(atom.GetAtomicNum(),(0,0,0))
-              color2 = self.elemDict.get(nbr.GetAtomicNum(),(0,0,0))
+            width=self.drawingOptions.bondLineWidth
+            if self.drawingOptions.colorBonds:
+              color = self.drawingOptions.elemDict.get(atom.GetAtomicNum(),(0,0,0))
+              color2 = self.drawingOptions.elemDict.get(nbr.GetAtomicNum(),(0,0,0))
             else:
-              color = self.defaultColor
+              color = self.drawingOptions.defaultColor
               color2= color
               
           # make sure we draw from the beginning to the end
@@ -387,7 +404,7 @@ class MolDrawing(object):
   
       iso = atom.GetIsotope()
 
-      labelIt= not self.noCarbonSymbols or \
+      labelIt= not self.drawingOptions.noCarbonSymbols or \
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
                atom.GetNumRadicalElectrons() or \
@@ -425,7 +442,7 @@ class MolDrawing(object):
             chg = '<sup>%s</sup>'%chg
 
           if atom.GetNumRadicalElectrons():
-            rad = self.radicalSymbol*atom.GetNumRadicalElectrons()
+            rad = self.drawingOptions.radicalSymbol*atom.GetNumRadicalElectrons()
             rad = '<sup>%s</sup>'%rad
           else:
             rad = ''
@@ -439,7 +456,7 @@ class MolDrawing(object):
             mapNum=':'+atom.GetProp('molAtomMapNumber')
           deg = atom.GetDegree()
           if deg>1 or nbrSum[0]<1:
-            symbol = '%s%s%s%s%s%s'%(isotope,base,mapNum,hs,chg,rad)
+            symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
           else:
             symbol = '%s%s%s%s%s%s'%(rad,chg,hs,isotope,base,mapNum)
 
@@ -463,11 +480,16 @@ class MolDrawing(object):
         if highlightMap and idx in highlightMap:
           color = highlightMap[idx]
         elif highlightAtoms and idx in highlightAtoms:
-          color = self.selectColor
+          color = self.drawingOptions.selectColor
         else:
-          color = self.elemDict.get(atom.GetAtomicNum(),(0,0,0))
+          color = self.drawingOptions.elemDict.get(atom.GetAtomicNum(),(0,0,0))
         self._drawLabel(symbol, pos, font, color=color,orientation=orient)
-
+    # if we modified the bond wedging state, undo those changes now
+    if obds:
+      for i,d in enumerate(obds):
+        mol.GetBondWithIdx(i).SetBondDir(d)
+      
+      
     if flagCloseContactsDist>0:
       tol = flagCloseContactsDist*flagCloseContactsDist
       for i,atomi in enumerate(mol.GetAtoms()):
@@ -487,3 +509,5 @@ class MolDrawing(object):
                                       pi[1]+2*flagCloseContactsDist)),
                              color=(1.,0,0),
                              fill=False,stroke=True)
+
+            

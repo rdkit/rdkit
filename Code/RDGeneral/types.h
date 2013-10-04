@@ -20,6 +20,12 @@
 #include <RDGeneral/Invariant.h>
 #include "Dict.h"
 
+namespace detail {
+  // used in various places for computed properties
+  const std::string computedPropName="__computedProps";
+}
+
+
 #include <vector>
 #include <deque>
 #include <map>
@@ -55,7 +61,6 @@ namespace RDKit {
   const double SMALL_DOUBLE = 1.0e-8;
   const double MAX_INT = static_cast<double>(std::numeric_limits<int>::max());
   const double MAX_LONGINT = static_cast<double>(std::numeric_limits<LONGINT>::max());
-  const double PI=3.1415926535897931;
 
   typedef unsigned int                       UINT;
   typedef unsigned short                     USHORT;

@@ -201,8 +201,14 @@ class MolViewer(object):
     cmd = cmd%locals()
     self.server.do(cmd)
 
-  def GetPNG(self,h=None,w=None):
-    import Image,time
+  def GetPNG(self,h=None,w=None,preDelay=0):
+    try:
+      import Image
+    except ImportError:
+      from PIL import Image
+    import time
+    if preDelay>0:
+      time.sleep(preDelay)
     fd = tempfile.NamedTemporaryFile(suffix='.png',delete=False)
     fd.close()
     self.server.do('png %s'%fd.name)

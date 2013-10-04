@@ -1,6 +1,7 @@
 
 tests=[
   ("python","UnitTestDraw.py",{}),
+  ("python","UnitTestSimilarityMaps.py",{}),
   ]
 
 

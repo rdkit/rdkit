@@ -55,56 +55,82 @@ namespace RDKit {
         }
       }
 
+      void setTwoBitCell(boost::shared_array<boost::uint8_t> &res,
+        unsigned int pos, boost::uint8_t value)
+      {
+        unsigned int twoBitPos = pos / 4;
+        unsigned int shift = 2 * (pos % 4);
+        boost::uint8_t twoBitMask = 3 << shift;
+        res[twoBitPos] = ((res[twoBitPos] & (~twoBitMask)) | (value << shift));
+      }
+      
+      
+      boost::uint8_t getTwoBitCell
+        (boost::shared_array<boost::uint8_t> &res, unsigned int pos)
+      {
+        unsigned int twoBitPos = pos / 4;
+        unsigned int shift = 2 * (pos % 4);
+        boost::uint8_t twoBitMask = 3 << shift;
+        
+        return ((res[twoBitPos] & twoBitMask) >> shift);
+      }
+      
+
       // ------------------------------------------------------------------------
       //
-      // the matrix returned by this contains:
-      //  -1: if atoms i and j are directly connected
-      // idx: if atoms i and j are connected via atom idx
-      //  -2: otherwise
+      // the two-bit matrix returned by this contains:
+      //   0: if atoms i and j are directly connected
+      //   1: if atoms i and j are connected via an atom
+      //   3: otherwise
       //
       //  NOTE: the caller is responsible for calling delete []
       //  on the result
       //
       // ------------------------------------------------------------------------
-      boost::shared_array<int> buildNeighborMatrix(const ROMol &mol){
+      boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol)
+      {
         unsigned int nAtoms = mol.getNumAtoms();
-        boost::shared_array<int> res(new int[nAtoms*nAtoms]);
-        for(unsigned int i=0;i<nAtoms;i++){
-          unsigned int iTab=i*nAtoms;
-          for(unsigned int j=i;j<nAtoms;j++){
-            res[iTab+j] = -2;
-            res[i+j*nAtoms] = -2;
+        unsigned nTwoBitCells = (nAtoms * nAtoms - 1) / 4 + 1;
+        boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
+        for (unsigned int i = 0; i < nTwoBitCells; ++i) {
+          res[i] = 0;
+        }
+        for (unsigned int i = 0; i < nAtoms; ++i) {
+          unsigned int iTab = i * nAtoms;
+          for (unsigned int j = i; j < nAtoms; ++j) {
+            setTwoBitCell(res, iTab + j, RELATION_1_X);
+            setTwoBitCell(res, i + j * nAtoms, RELATION_1_X);
           }
         }
-        for(unsigned int i=0;i<mol.getNumBonds();i++){
-          const Bond *bondi=mol.getBondWithIdx(i);
+        for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+          const Bond *bondi = mol.getBondWithIdx(i);
 
-          res[bondi->getBeginAtomIdx()*nAtoms+bondi->getEndAtomIdx()] = -1;
-          res[bondi->getEndAtomIdx()*nAtoms+bondi->getBeginAtomIdx()] = -1;
+          setTwoBitCell(res, bondi->getBeginAtomIdx() * nAtoms + bondi->getEndAtomIdx(), RELATION_1_2);
+          setTwoBitCell(res, bondi->getEndAtomIdx() * nAtoms + bondi->getBeginAtomIdx(), RELATION_1_2);
 
-          for(unsigned int j=i+1;j<mol.getNumBonds();j++){
-            const Bond *bondj=mol.getBondWithIdx(j);
-            int idx1=-1,idx2=-1,idx3=-1;
-            if(bondi->getBeginAtomIdx()==bondj->getBeginAtomIdx()){
+          for (unsigned int j = i + 1; j < mol.getNumBonds(); ++j) {
+            const Bond *bondj = mol.getBondWithIdx(j);
+            int idx1 = -1;
+            int idx3 = -1;
+            if (bondi->getBeginAtomIdx() == bondj->getBeginAtomIdx()) {
               idx1 = bondi->getEndAtomIdx();
-              idx2 = bondi->getBeginAtomIdx();
               idx3 = bondj->getEndAtomIdx();
-            } else if(bondi->getBeginAtomIdx()==bondj->getEndAtomIdx()){
+            }
+            else if (bondi->getBeginAtomIdx() == bondj->getEndAtomIdx()) {
               idx1 = bondi->getEndAtomIdx();
-              idx2 = bondi->getBeginAtomIdx();
-              idx3 = bondj->getBeginAtomIdx();
-            } else if(bondi->getEndAtomIdx()==bondj->getBeginAtomIdx()){
-              idx1 = bondi->getBeginAtomIdx();
-              idx2 = bondi->getEndAtomIdx();
-              idx3 = bondj->getEndAtomIdx();
-            } else if(bondi->getEndAtomIdx()==bondj->getEndAtomIdx()){
-              idx1 = bondi->getBeginAtomIdx();
-              idx2 = bondi->getEndAtomIdx();
               idx3 = bondj->getBeginAtomIdx();
             }
-            if(idx1>-1){
-              res[idx1*nAtoms+idx3] = idx2;
-              res[idx3*nAtoms+idx1] = idx2;
+            else if (bondi->getEndAtomIdx() == bondj->getBeginAtomIdx()) {
+              idx1 = bondi->getBeginAtomIdx();
+              idx3 = bondj->getEndAtomIdx();
+            }
+            else if (bondi->getEndAtomIdx() == bondj->getEndAtomIdx()) {
+              idx1 = bondi->getBeginAtomIdx();
+              idx3 = bondj->getBeginAtomIdx();
+            }
+            if (idx1 > -1) {
+              setTwoBitCell(res, idx1 * nAtoms + idx3, RELATION_1_3);
+              setTwoBitCell(res, idx3 * nAtoms + idx1, RELATION_1_3);
             }
           }
         }
@@ -117,29 +143,76 @@ namespace RDKit {
       //
       // ------------------------------------------------------------------------
       void addAngles(const ROMol &mol,const AtomicParamVect &params,
-                     ForceFields::ForceField *field,boost::shared_array<int> neighborMatrix){
+                     ForceFields::ForceField *field){
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
+        ROMol::ADJ_ITER nbr1Idx;
+        ROMol::ADJ_ITER end1Nbrs;
+        ROMol::ADJ_ITER nbr2Idx;
+        ROMol::ADJ_ITER end2Nbrs;
+        RingInfo *rings=mol.getRingInfo();
 
         unsigned int nAtoms=mol.getNumAtoms();
-        for(unsigned int i=0;i<nAtoms;i++){
-          if(!params[i]) continue;
-          for(unsigned int j=i+1;j<nAtoms;j++){
-            if(!params[j]) continue;
-            if(neighborMatrix[i*nAtoms+j]>-1){
-              int k = neighborMatrix[i*nAtoms+j];
+        for(unsigned int j=0;j<nAtoms;j++){
+          if(!params[j]) continue;
+          const Atom *atomJ=mol.getAtomWithIdx(j);
+          if(atomJ->getDegree()==1) continue;
+          boost::tie(nbr1Idx,end1Nbrs)=mol.getAtomNeighbors(atomJ);
+          for (;nbr1Idx!=end1Nbrs;nbr1Idx++) {
+            const Atom *atomI=mol[*nbr1Idx].get();
+            unsigned int i=atomI->getIdx();
+            if(!params[i]) continue;
+            boost::tie(nbr2Idx,end2Nbrs)=mol.getAtomNeighbors(atomJ);
+            for (;nbr2Idx!=end2Nbrs;nbr2Idx++) {
+              if (nbr2Idx<(nbr1Idx+1)) {
+                continue;
+              }
+              const Atom *atomK=mol[*nbr2Idx].get();
+              unsigned int k=atomK->getIdx();
               if(!params[k]) continue;
-              const Atom *atomK = mol.getAtomWithIdx(k);
               // skip special cases:
-              if( !(atomK->getHybridization()==Atom::SP3D && atomK->getDegree()==5) ){
-                const Bond *b1 =mol.getBondBetweenAtoms(i,k);
-                const Bond *b2 =mol.getBondBetweenAtoms(j,k);
+              if( !(atomJ->getHybridization()==Atom::SP3D && atomJ->getDegree()==5) ){
+                const Bond *b1 =mol.getBondBetweenAtoms(i,j);
+                const Bond *b2 =mol.getBondBetweenAtoms(k,j);
                 // FIX: recognize amide bonds here.
                 AngleBendContrib *contrib;
                 int order=0;
-                switch(atomK->getHybridization()){
+                switch(atomJ->getHybridization()){
                 case Atom::SP:
-                  order=2;
+                  order=1;
+                  break;
+                // the following is a hack to get decent geometries
+                // with 3- and 4-membered rings incorporating sp2 atoms
+                case Atom::SP2:
+                  order=3;
+                  // if the central atom is in a ring of size 3
+                  if (rings->isAtomInRingOfSize(j, 3)) {
+                    // if the central atom and one of the bonded atoms, but not the
+                    //  other one are inside a ring, then this angle is between a
+                    // ring substituent and a ring edge
+                    if ((rings->isAtomInRingOfSize(i, 3) && !rings->isAtomInRingOfSize(k, 3))
+                      || (!rings->isAtomInRingOfSize(i, 3) && rings->isAtomInRingOfSize(k, 3))) {
+                      order = 30;
+                    }
+                    // if all atoms are inside the ring, then this is one of ring angles
+                    else if (rings->isAtomInRingOfSize(i, 3) && rings->isAtomInRingOfSize(k, 3)) {
+                      order = 35;
+                    }
+                  }
+                  // if the central atom is in a ring of size 4
+                  else if (rings->isAtomInRingOfSize(j, 4)) {
+                    // if the central atom and one of the bonded atoms, but not the
+                    //  other one are inside a ring, then this angle is between a
+                    // ring substituent and a ring edge
+                    if ((rings->isAtomInRingOfSize(i, 4) && !rings->isAtomInRingOfSize(k, 4))
+                      || (!rings->isAtomInRingOfSize(i, 4) && rings->isAtomInRingOfSize(k, 4))) {
+                      order = 40;
+                    }
+                    // if all atoms are inside the ring, then this is one of ring angles
+                    else if (rings->isAtomInRingOfSize(i, 4) && rings->isAtomInRingOfSize(k, 4)) {
+                      order = 45;
+                    }
+                  }
                   break;
                 case Atom::SP3D2:
                   order=4;
@@ -149,10 +222,10 @@ namespace RDKit {
                   break;
                 } 
                   
-                contrib = new AngleBendContrib(field,i,k,j,
+                contrib = new AngleBendContrib(field,i,j,k,
                                                b1->getBondTypeAsDouble(),
                                                b2->getBondTypeAsDouble(),
-                                               params[i],params[k],params[j],order);
+                                               params[i],params[j],params[k],order);
                 field->contribs().push_back(ForceFields::ContribPtr(contrib));
               }
             }
@@ -353,7 +426,7 @@ namespace RDKit {
       //
       // ------------------------------------------------------------------------
       void addNonbonded(const ROMol &mol,int confId,const AtomicParamVect &params,
-                        ForceFields::ForceField *field,boost::shared_array<int> neighborMatrix,
+                        ForceFields::ForceField *field,boost::shared_array<boost::uint8_t> neighborMatrix,
                         double vdwThresh,bool ignoreInterfragInteractions){
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
@@ -371,7 +444,7 @@ namespace RDKit {
             if(!params[j] || (ignoreInterfragInteractions && fragMapping[i]!=fragMapping[j])){
               continue;
             }
-            if(neighborMatrix[i*nAtoms+j]==-2){
+            if(getTwoBitCell(neighborMatrix,i*nAtoms+j)>=RELATION_1_4){
               double dist=(conf.getAtomPos(i) - conf.getAtomPos(j)).length();
               if(dist <
                  vdwThresh*Utils::calcNonbondedMinimum(params[i],params[j])){
@@ -384,6 +457,7 @@ namespace RDKit {
         }
       }
 
+      #if 0
       // ------------------------------------------------------------------------
       //
       //
@@ -402,6 +476,7 @@ namespace RDKit {
         //}
         return res;
       }
+      #endif
       // ------------------------------------------------------------------------
       //
       //
@@ -460,7 +535,7 @@ namespace RDKit {
                         hasSP2 = true;
                       }
                       //std::cout << "Torsion: " << bIdx << "-" << idx1 << "-" << idx2 << "-" << eIdx << std::endl;
-                      if(okToIncludeTorsion(mol,bond,bIdx,idx1,idx2,eIdx)){
+                      //if(okToIncludeTorsion(mol,bond,bIdx,idx1,idx2,eIdx)){
                         //std::cout << "  INCLUDED" << std::endl;
                         contrib = new TorsionAngleContrib(field,bIdx,idx1,idx2,eIdx,
                                                           bond->getBondTypeAsDouble(),
@@ -472,7 +547,7 @@ namespace RDKit {
                                                           hasSP2);
                         field->contribs().push_back(ForceFields::ContribPtr(contrib));
                         contribsHere.push_back(contrib);
-                      }
+                      //}
                     }
                   }
                   beg2++;
@@ -491,7 +566,6 @@ namespace RDKit {
 
       }
 
-#if 0
       // ------------------------------------------------------------------------
       //
       //
@@ -503,8 +577,73 @@ namespace RDKit {
         PRECONDITION(field,"bad forcefield");
 
         unsigned int nAtoms=mol.getNumAtoms();
+        unsigned int idx[4];
+        unsigned int n[4];
+        const Atom *atom[4];
+        ROMol::ADJ_ITER nbrIdx;
+        ROMol::ADJ_ITER endNbrs;
+
+        for (idx[1] = 0; idx[1] < mol.getNumAtoms(); ++idx[1]) {
+          atom[1] = mol.getAtomWithIdx(idx[1]);
+          int at2AtomicNum = atom[1]->getAtomicNum();
+          // if the central atom is not carbon, nitrogen, oxygen,
+          // phosphorous, arsenic, antimonium or bismuth, skip it
+          if (((at2AtomicNum != 6) && (at2AtomicNum != 7) && (at2AtomicNum != 8)
+            && (at2AtomicNum != 15) && (at2AtomicNum != 33) && (at2AtomicNum != 51)
+            && (at2AtomicNum != 83)) || (atom[1]->getDegree() != 3)) {
+            continue;
+          }
+          // if the central atom is carbon, nitrogen or oxygen
+          // but hybridization is not sp2, skip it
+          if (((at2AtomicNum == 6) || (at2AtomicNum == 7) || (at2AtomicNum == 8))
+            && (atom[1]->getHybridization() != Atom::SP2)) {
+            continue;
+          }
+          boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom[1]);
+          unsigned int i = 0;
+          bool isBoundToSP2O = false;
+          for (; nbrIdx != endNbrs; ++nbrIdx) {
+            atom[i] = mol[*nbrIdx].get();
+            idx[i] = atom[i]->getIdx();
+            // if the central atom is sp2 carbon and is
+            // bound to sp2 oxygen, set a flag
+            if (!isBoundToSP2O) {
+              isBoundToSP2O = ((at2AtomicNum == 6) && (atom[i]->getAtomicNum() == 8)
+                && (atom[i]->getHybridization() == Atom::SP2));
+            }
+            if (!i) {
+              ++i;
+            }
+            ++i;
+          }
+          for (unsigned int i = 0; i < 3; ++i) {
+            n[1] = 1;
+            switch (i) {
+              case 0:
+                n[0] = 0;
+                n[2] = 2;
+                n[3] = 3;
+              break;
+              
+              case 1:
+                n[0] = 0;
+                n[2] = 3;
+                n[3] = 2;
+              break;
+              
+              case 2:
+                n[0] = 2;
+                n[2] = 3;
+                n[3] = 0;
+              break;
+            }
+            InversionContrib *contrib;
+            contrib = new InversionContrib(field, idx[n[0]], idx[n[1]], idx[n[2]],
+                                             idx[n[3]], at2AtomicNum, isBoundToSP2O);
+            field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          }
+        }
       }
-#endif
     } // end of namespace Tools
     
     // ------------------------------------------------------------------------
@@ -527,12 +666,12 @@ namespace RDKit {
       }
       
       Tools::addBonds(mol,params,res);
-      boost::shared_array<int> neighborMat = Tools::buildNeighborMatrix(mol);
-      Tools::addAngles(mol,params,res,neighborMat);
+      Tools::addAngles(mol,params,res);
       Tools::addAngleSpecialCases(mol,confId,params,res);
+      boost::shared_array<boost::uint8_t> neighborMat = Tools::buildNeighborMatrix(mol);
       Tools::addNonbonded(mol,confId,params,res,neighborMat,vdwThresh,ignoreInterfragInteractions);
       Tools::addTorsions(mol,params,res);
-      //Tools::addInversions(mol,params,res);
+      Tools::addInversions(mol,params,res);
 
       return res;
     }

@@ -36,7 +36,7 @@ namespace ForceFields {
 	double rEN = ri*rj*(sqrt(Xi)-sqrt(Xj))*(sqrt(Xi)-sqrt(Xj)) /
 	  (Xi*ri + Xj*rj);
     
-	double res = ri + rj + rBO + rEN;
+	double res = ri + rj + rBO - rEN;
 	return res;
       }
   

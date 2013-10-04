@@ -595,7 +595,6 @@ namespace Canon {
     
 
     INT_VECT &ringClosures=atomRingClosures[atom->getIdx()];
-    //atom->getProp("_CanonRingClosureBondIndices",ringClosures);
     
     CHECK_INVARIANT(ringClosures.size()==cycles[atomIdx].size(),
                     "ring closure mismatch");
@@ -899,8 +898,7 @@ namespace Canon {
           msI->obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
           ringStereoChemAdjusted.set(msI->obj.atom->getIdx());
         }
-        INT_VECT ringStereoAtoms;
-        msI->obj.atom->getProp("_ringStereoAtoms",ringStereoAtoms);
+        const INT_VECT &ringStereoAtoms=msI->obj.atom->getProp<INT_VECT>("_ringStereoAtoms");
         BOOST_FOREACH(int nbrV,ringStereoAtoms){
           int nbrIdx=abs(nbrV)-1;
           if(!ringStereoChemAdjusted[nbrIdx] &&

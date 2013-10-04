@@ -438,6 +438,15 @@ namespace {
       return(false);      
     }
 
+
+    // atoms that aren't in their default valence state also get shut out
+    int defVal=PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
+    if(defVal>0 &&
+       at->getTotalValence()>(PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()-
+                                                                           at->getFormalCharge()))){
+      return false;
+    }
+
     // We are going to explicitly disallow atoms that have more
     // than one double or triple bond. This is to handle 
     // the situation:
@@ -468,6 +477,7 @@ namespace {
       }
       if(nMult>1) return(false);
     }
+    
     return(true);
   }
 

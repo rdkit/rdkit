@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -205,7 +205,7 @@ namespace RDKit{
               const Atom *tAtom=mol->getAtomWithIdx(*nbrIdx);
               int cip=0;
               if(tAtom->hasProp("_CIPRank")){
-                tAtom->getProp("_CIPRank",cip);
+                cip=tAtom->getProp<int>("_CIPRank");
               }
               nbrs.push_back(std::make_pair(cip,*nbrIdx));
             }
@@ -254,8 +254,7 @@ namespace RDKit{
               RDGeom::Point3D v2=nbr1Vect-nbr3Vect;
               RDGeom::Point3D v3=nbr2Vect-nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              std::string cipCode;
-              heavyAtom->getProp("_CIPCode", cipCode);
+              std::string cipCode=heavyAtom->getProp<std::string>("_CIPCode");
               if( (cipCode=="S" && vol<0) || (cipCode=="R" && vol>0) ){
                 dirVect*=-1;
               }
@@ -334,7 +333,7 @@ namespace RDKit{
             res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1, true);
+            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1);
             res->getAtomWithIdx(newIdx)->updatePropertyCache();
             if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
           }
@@ -444,9 +443,7 @@ namespace RDKit{
             // we'll get in here if we haven't already processed the atom's implicit
             //  hydrogens. (this is protection for the case that removeHs() is called
             //  multiple times on a single molecule without intervening addHs() calls)
-            bool tmpBool;
-            atom->getProp("origNoImplicit",tmpBool);    
-            atom->setNoImplicit(tmpBool);
+            atom->setNoImplicit(atom->getProp<bool>("origNoImplicit"));
             atom->clearProp("origNoImplicit");
           }
         }

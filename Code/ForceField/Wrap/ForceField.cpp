@@ -67,5 +67,51 @@ BOOST_PYTHON_MODULE(rdForceField) {
 	 (python::arg("self"),python::arg("idx")),
 	 "returns the location of an extra point as a tuple")
     ;
+  python::class_<PyMMFFMolProperties>("MMFFMolProperties",
+    "MMFF molecular properties", python::no_init)
+    .def("GetMMFFAtomType", &PyMMFFMolProperties::getMMFFAtomType,
+    (python::arg("self"), python::arg("idx")),
+    "Retrieves MMFF atom type for atom with index idx")
+    .def("GetMMFFFormalCharge", &PyMMFFMolProperties::getMMFFFormalCharge,
+    (python::arg("self"), python::arg("idx")),
+    "Retrieves MMFF formal charge for atom with index idx")
+    .def("GetMMFFPartialCharge", &PyMMFFMolProperties::getMMFFPartialCharge,
+    (python::arg("self"), python::arg("idx")),
+    "Retrieves MMFF partial charge for atom with index idx")
+    .def("SetMMFFDielectricModel", &PyMMFFMolProperties::setMMFFDielectricModel,
+    (python::arg("self"), python::arg("dielModel") = 1),
+    "Sets the DielModel MMFF property (1: constant; 2: distance-dependent; "
+    "defaults to constant)")
+    .def("SetMMFFDielectricConstant", &PyMMFFMolProperties::setMMFFDielectricConstant,
+    (python::arg("self"), python::arg("dielConst") = 1.0),
+    "Sets the DielConst MMFF property (defaults to 1.0)")
+    .def("SetMMFFBondTerm", &PyMMFFMolProperties::setMMFFBondTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the bond term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFAngleTerm", &PyMMFFMolProperties::setMMFFAngleTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the angle term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFStretchBendTerm", &PyMMFFMolProperties::setMMFFStretchBendTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the stretch-bend term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFOopTerm", &PyMMFFMolProperties::setMMFFOopTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the out-of-plane bend term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFTorsionTerm", &PyMMFFMolProperties::setMMFFTorsionTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the torsional term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFVdWTerm", &PyMMFFMolProperties::setMMFFVdWTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the Van der Waals term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFEleTerm", &PyMMFFMolProperties::setMMFFEleTerm,
+    (python::arg("self"), python::arg("state") = true),
+    "Sets the electrostatic term to be included in the MMFF equation (defaults to True)")
+    .def("SetMMFFVariant", &PyMMFFMolProperties::setMMFFVariant,
+    (python::arg("self"), python::arg("mmffVariant") = "MMFF94"),
+    "Sets the MMFF variant to be used (\"MMFF94\" or \"MMFF94s\"; defaults to \"MMFF94\")")
+    .def("SetMMFFVerbosity", &PyMMFFMolProperties::setMMFFVerbosity,
+    (python::arg("self"), python::arg("verbosity") = 0),
+    "Sets the MMFF verbosity (0: none; 1: low; 2: high; defaults to 0)")
+    ;
 
 }

@@ -183,6 +183,49 @@ void testGithubIssue40(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue67(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 67: seg fault from inchi" << std::endl;
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/C18H17N3/c19-18(20)21-14-17-12-10-16(11-13-17)9-5-4-8-15-6-2-1-3-7-15/h1-3,6-13H,14H2,(H4,19,20,21)/b9-8+";
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==21);
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
+void testGithubIssue68(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 68: hang while reading InChI" << std::endl;
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/C11H20NSSi2.Li/c1-14(2)8-9-15(3,4)12(14)10-11-6-5-7-13-11;/h6-7H,8-10H2,1-4H3;/q-1;+1";
+    BOOST_LOG(rdInfoLog) <<"  parse 1:" << std::endl;
+    ROMol *m = InchiToMol(inchi,tmp);
+    BOOST_LOG(rdInfoLog) <<"  done" << std::endl;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==16);
+    
+    delete m;
+  }
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/C12H22NSSi2.Li/c1-15(2)10-11-16(3,4)13(15)8-7-12-6-5-9-14-12;/h6,9H,7-8,10-11H2,1-4H3;/q-1;+1";
+    BOOST_LOG(rdInfoLog) <<"  parse 2:" << std::endl;
+    ROMol *m = InchiToMol(inchi,tmp);
+    BOOST_LOG(rdInfoLog) <<"  done" << std::endl;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==17);
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -193,4 +236,6 @@ int main(){
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
+  testGithubIssue67();
+  testGithubIssue68();
 }

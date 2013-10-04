@@ -200,7 +200,7 @@ std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smile
   return mVV;
 }
 
-void _checkNoMatches(std::string smarts, std::string smiles) {
+void _checkNoMatches(std::string smarts, std::string smiles, bool addHs=false) {
   ROMol *mol,*matcher,*matcher2;
   std::string pickle;
   bool matches;
@@ -216,6 +216,11 @@ void _checkNoMatches(std::string smarts, std::string smiles) {
 
   mol = SmilesToMol(smiles);
   CHECK_INVARIANT(mol,smiles);
+  if (addHs) {
+    ROMol *mol2 = MolOps::addHs(*mol);
+    delete mol;
+    mol = mol2;
+  }
   MolOps::findSSSR(*mol);
 
   matches = SubstructMatch(*mol,*matcher,mV);
@@ -359,8 +364,13 @@ void testMatches3(){
   _checkNoMatches("C[16*,32*]", "CC(=O)[S-]");
   _checkMatches("C[16*,32*]", "CC(=O)[32S-]", 1, 2);
 
-
-
+  // -----
+  // This block is connected to GitHub #60
+  //
+  std::cerr<<"1"<<std::endl;
+  _checkMatches("[#7h1]","c1cnc[nH]1", 1,1);
+  std::cerr<<"2"<<std::endl;
+  _checkNoMatches("[#7h1]","c1cnc[nH]1",true);
 
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1505,5 +1515,6 @@ main(int argc, char *argv[])
 #endif
   testRecursiveSerialNumbers();
   testReplacementPatterns();
+
   return 0;
 }

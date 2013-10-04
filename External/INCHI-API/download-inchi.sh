@@ -30,9 +30,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#
-# This script will download InChI software distribution version 1.03 and place
-# in the current directory
+# This script will download InChI software distribution version 1.04 and 
+# places it (temporarily) in a /tmp directory.  This directory will 
+# automatically dissappear after you reboot the machine.
 
 if ! which wget > /dev/null
 then

@@ -1,3 +1,123 @@
+******  Release_2013.09.1 *******
+(Changes relative to Release_2013.06.1)
+
+Acknowledgements:
+James Davidson, JP Ebejer, Nikolas Fechner, Gregory Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
+Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
+
+Bug Fixes:
+ - Bad Crippen atom type for pyrrole H
+   (github issue 92)
+ - PandasTools tests fail with Pandas v0.12
+   (github issue 91)
+ - Isotope information not affecting chirality
+   (github issue 90)
+ - properties are not read from SDF files with V3000 mol blocks.
+   (github issue 88)
+ - assignStereochemistry does not remove bond wedging that shouldn't be there.
+   (github issue 87)
+ - Drawing code modifies wedge bonds in reactions
+   (github issue 86)
+ - Stereochemistry not perceived when parsing CTABs unless sanitization is done.
+   (github issue 82)
+ - 2D rendering issue for epoxide ( CAS  70951-83-6)
+   (github issue 78)
+ - PandasTools doctests should be failing, but are not
+   (github issue 75)
+ - Benzothiazolium structure can be parsed from ctab, but the SMILES generated cannot be processed.
+   (github issue 72)
+ - Chem.MolFromInch hangs on CID 23691477 and CID 23691480
+   (github issue 68)
+ - Chem.MolFromInchi on CHEMBL104337 leads to segmentation fault 
+   (github issue 67)
+ - "Could not embed molecule." (The Anthony Conundrum)
+   (github issue 55)
+
+New Features:
+
+New Database Cartridge Features: 
+
+New Java Wrapper Features:
+
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+
+Other:
+
+
+******  Release_2013.06.1 *******
+(Changes relative to Release_2013.03.2)
+
+Administrivia note:
+In the course of this release cycle, development was moved over
+entirely to github. The sourceforge svn repository no longer contains
+an up-to-date version of the code.
+
+Acknowledgements:
+Andrew Dalke, JP Ebejer, Nikolas Fechner, Roger Sayle, Riccardo Vianello,
+Yingfeng Wang, Dan Warner 
+
+Bug Fixes:
+ - The docs for Descriptors.MolWt are now correct (GitHub #38)
+ - Molecules coming from InChi now have the correct molecular
+   weight. (GitHub #40)
+ - RemoveAtoms() no longer leads to problems in canonical SMILES
+   generation when chiral ring atoms are present. (GitHub #42)
+ - Atom invariants higher than the number of atoms in the molecule can
+   now be provided to the atom pairs and topological torsions
+   fingerprinters. (GitHub #43)
+ - A typo with the handling of log levels was fixed in the python
+   wrapper code for InChI generation. (GitHub #44)
+ - Stereochemistry no longer affects canonical SMILES generation if
+   non-stereo SMILES is being generated. (GitHub #45)
+ - The ExactMolWt of [H+] is no longer zero. (GitHub #56)
+ - The MPL canvas now has an addCanvasDashedWedge() method. (GitHub
+   #57) 
+ - RWMol::insertMol() now copies atom coordinates (if
+   present). (GitHub #59)
+ - The "h" primitive in SMARTS strings now uses the method
+   getTotalNumHs(false) instead of getImplicitValence().
+   (GitHub #60)
+ - bzip2 files now work better with the SDWriter class. (GitHub #63)
+ - a crashing bug in InChI generation was fixed. (GitHub #67)
+
+New Features:
+ - Sanitization can now be disabled when calling GetMolFrags() from
+   Python (GitHub #39)
+ - Bond.GetBondTypeAsDouble() has been added to the python
+   wrapper. (GitHub #48)
+ - The fmcs code now includes a threshold argument allowing the MCS
+   that hits a certain fraction of the input molecules (instead of all
+   of them) to be found. The code has also been synced with the most
+   recent version of Andrew Dalke's version.
+ - Atoms now have a getTotalValence() (GetTotalValence() from Python)
+   method. (GitHub #61)
+ - R labels from Mol files now can go from 0-99
+ - chiral flags in CTABs are now handled on both reading and writing.
+   The property "_MolFileChiralFlag" is used.
+
+
+New Database Cartridge Features: 
+
+New Java Wrapper Features:
+ - {Get,Set}Prop() methods are now available for both Atoms and
+   Bonds. (GitHub #32)
+
+
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+ - rdkit.utils.pydoc_local
+
+Other:
+ - the handling of flex/bison output files as dependencies has been
+   improved (GitHub #33)
+ - the molecule drawing code should now also work with pillow (a fork of
+   PIL)
+ - the PANDAS integration has been improved.  
+ 
+
 ******  Release_2013.03.2 *******
 (Changes relative to Release_2013.03.1)
 

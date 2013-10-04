@@ -41,7 +41,7 @@ import org.junit.Test;
 public class ForceFieldsTests extends GraphMolTest {
 
 	File testDataDir = new File(getRdBase(), 
-	"Code/GraphMol/ForceFieldHelpers/test_data");
+	"Code/GraphMol/ForceFieldHelpers/UFF/test_data");
 
 	// From GraphMol/ForceFieldHelpers/Wrap/testHelpers.py
 	@Test
@@ -339,13 +339,13 @@ public class ForceFieldsTests extends GraphMolTest {
 		p2.setGMP_Xi(6.899);
 		p2.setTheta0(120.0* Math.PI / 180.);
 		restLen = RDKFuncs.calcBondRestLength(RDKFuncs.getAmideBondOrder(), p1, p2);
-		assertEquals(1.368,restLen,1e-3);
+		assertEquals(1.357,restLen,1e-3);
 		restLen=RDKFuncs.calcBondRestLength(1.0, p2, p3);
-		assertEquals(1.462, restLen, 1e-3);
+		assertEquals(1.450, restLen, 1e-3);
 
 		forceConstant=RDKFuncs.calcAngleForceConstant(p2.getTheta0(), RDKFuncs.getAmideBondOrder(),1,
 				p1, p2, p3);
-		assertEquals(123.5, forceConstant, 1e-1); //  paper has 105.5
+		assertEquals(211.0, forceConstant, 1e-1); //  paper has 105.5
 
 
 
@@ -997,66 +997,66 @@ public class ForceFieldsTests extends GraphMolTest {
 
 		assertEquals(3, field.contribs().size());
 
-		Shared_Int_Array nbrMat = RDKFuncs.buildNeighborMatrix(mol);
-		assertEquals(-2, nbrMat.getElement(0));
-		assertEquals(-1, nbrMat.getElement(1));
-		assertEquals(1, nbrMat.getElement(2));
-		assertEquals(1, nbrMat.getElement(3));
+		// Shared_Int_Array nbrMat = RDKFuncs.buildNeighborMatrix(mol);
+		// assertEquals(-2, nbrMat.getElement(0));
+		// assertEquals(-1, nbrMat.getElement(1));
+		// assertEquals(1, nbrMat.getElement(2));
+		// assertEquals(1, nbrMat.getElement(3));
 
 	}
-	// testUFFBuilder1 (second part)from testHelpers.cpp
-	@Test
-	public void testUFFBuilderTools1b() {
+	// // testUFFBuilder1 (second part)from testHelpers.cpp
+	// @Test
+	// public void testUFFBuilderTools1b() {
 
-		ROMol mol,mol2;
-		Atomic_Params_Vect types;
-		ForceField field;
+	// 	ROMol mol,mol2;
+	// 	Atomic_Params_Vect types;
+	// 	ForceField field;
 
-		mol = RWMol.MolFromSmiles("CO");
-		Conformer conf3 = new Conformer(mol.getNumAtoms());
-		long cid = mol.addConformer(conf3);
-		assertNotNull(mol);
-		Flagged_Atomic_Params_Vect flaggedParams = ForceField.UFFGetAtomTypes(mol);
-		assertTrue(flaggedParams.getSecond());
-		types = flaggedParams.getFirst();
-		assertEquals(mol.getNumAtoms(), types.size());
-		field = new ForceField();
-		RDKFuncs.addBonds(mol,types,field);
+	// 	mol = RWMol.MolFromSmiles("CO");
+	// 	Conformer conf3 = new Conformer(mol.getNumAtoms());
+	// 	long cid = mol.addConformer(conf3);
+	// 	assertNotNull(mol);
+	// 	Flagged_Atomic_Params_Vect flaggedParams = ForceField.UFFGetAtomTypes(mol);
+	// 	assertTrue(flaggedParams.getSecond());
+	// 	types = flaggedParams.getFirst();
+	// 	assertEquals(mol.getNumAtoms(), types.size());
+	// 	field = new ForceField();
+	// 	RDKFuncs.addBonds(mol,types,field);
 
-		assertEquals(1, field.contribs().size());
-		Shared_Int_Array nbrMat = RDKFuncs.buildNeighborMatrix(mol);
-		assertEquals(-2, nbrMat.getElement(0));
-		assertEquals(-1, nbrMat.getElement(1));
+	// 	assertEquals(1, field.contribs().size());
+	// 	Shared_Int_Array nbrMat = RDKFuncs.buildNeighborMatrix(mol);
+	// 	assertEquals(-2, nbrMat.getElement(0));
+	// 	assertEquals(-1, nbrMat.getElement(1));
 
-		RDKFuncs.addAngles(mol,types,field,nbrMat);
-		assertEquals(1, field.contribs().size());
-		RDKFuncs.addNonbonded(mol,(int) cid,types,field,nbrMat);
-		assertEquals(1, field.contribs().size());
-		RDKFuncs.addTorsions(mol,types,field);
-		assertEquals(1, field.contribs().size());
+	// 	RDKFuncs.addAngles(mol,types,field,nbrMat);
+	// 	assertEquals(1, field.contribs().size());
+	// 	RDKFuncs.addNonbonded(mol,(int) cid,types,field,nbrMat);
+	// 	assertEquals(1, field.contribs().size());
+	// 	RDKFuncs.addTorsions(mol,types,field);
+	// 	assertEquals(1, field.contribs().size());
 
 
-		mol2 = mol.addHs(false);
-		assertEquals(6, mol2.getNumAtoms());
+	// 	mol2 = mol.addHs(false);
+	// 	assertEquals(6, mol2.getNumAtoms());
 
-		flaggedParams = ForceField.UFFGetAtomTypes(mol2);
-		assertTrue(flaggedParams.getSecond());
-		types = flaggedParams.getFirst();
-		assertEquals(mol2.getNumAtoms(), types.size());
+	// 	flaggedParams = ForceField.UFFGetAtomTypes(mol2);
+	// 	assertTrue(flaggedParams.getSecond());
+	// 	types = flaggedParams.getFirst();
+	// 	assertEquals(mol2.getNumAtoms(), types.size());
 
-		field=new ForceField();
-		RDKFuncs.addBonds(mol2,types,field);
-		assertEquals(5, field.contribs().size());
+	// 	field=new ForceField();
+	// 	RDKFuncs.addBonds(mol2,types,field);
+	// 	assertEquals(5, field.contribs().size());
 
-		nbrMat = RDKFuncs.buildNeighborMatrix(mol2);
-		RDKFuncs.addAngles(mol2,types,field,nbrMat);
-		assertEquals(12, field.contribs().size());
-		RDKFuncs.addNonbonded(mol2,(int) cid,types,field,nbrMat);
-		assertEquals(15, field.contribs().size());
-		RDKFuncs.addTorsions(mol2,types,field);
-		assertEquals(18, field.contribs().size());
+	// 	nbrMat = RDKFuncs.buildNeighborMatrix(mol2);
+	// 	RDKFuncs.addAngles(mol2,types,field,nbrMat);
+	// 	assertEquals(12, field.contribs().size());
+	// 	RDKFuncs.addNonbonded(mol2,(int) cid,types,field,nbrMat);
+	// 	assertEquals(15, field.contribs().size());
+	// 	RDKFuncs.addTorsions(mol2,types,field);
+	// 	assertEquals(18, field.contribs().size());
 
-	}
+	// }
 	@Test
 	public void testUFFBuilderSpecialCases(){
 		int needMore;
@@ -1064,7 +1064,7 @@ public class ForceFieldsTests extends GraphMolTest {
 		ForceField field;
 
 		String basePath = new File(getRdBase(), 
-		"/Code/GraphMol/ForceFieldHelpers/test_data").getPath();
+		"/Code/GraphMol/ForceFieldHelpers/UFF/test_data").getPath();
 		// ----------
 		//  Trigonal bipyramid
 		// ----------
@@ -1116,7 +1116,7 @@ public class ForceFieldsTests extends GraphMolTest {
 		double e1,e2;
 
 		String pathName = new File(getRdBase(), 
-		"/Code/GraphMol/ForceFieldHelpers/test_data/Issue239.mol").getPath();
+		"/Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue239.mol").getPath();
 		RWMol mol = RWMol.MolFromMolFile(pathName, true);
 		assertNotNull(mol);
 
@@ -1139,7 +1139,7 @@ public class ForceFieldsTests extends GraphMolTest {
 		double e1,e2;
 
 		String pathName = new File(getRdBase(), 
-		"/Code/GraphMol/ForceFieldHelpers/test_data/Issue239.mol").getPath();
+		"/Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue239.mol").getPath();
 		RWMol mol = RWMol.MolFromMolFile(pathName, true);
 		assertNotNull(mol);
 

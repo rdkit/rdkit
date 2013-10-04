@@ -659,8 +659,8 @@ void testIssue251() {
   DistGeom::BoundsMatPtr bm(mat);
   DGeomHelpers::initBoundsMat(bm);
   DGeomHelpers::setTopolBounds(*m, bm);
-  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.75, 0.01));
-  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.87, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.67, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.79, 0.01));
   delete m;
 }
 
@@ -937,7 +937,7 @@ void testConstrainedEmbedding() {
     coords[4]=ref->getConformer().getAtomPos(4);
 
 #if 1
-    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
     MatchVectType alignMap;
@@ -962,7 +962,7 @@ void testConstrainedEmbedding() {
     coords[6]=ref->getConformer().getAtomPos(2);
     coords[7]=ref->getConformer().getAtomPos(3);
     coords[8]=ref->getConformer().getAtomPos(4);
-    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
     MatchVectType alignMap;
@@ -1223,6 +1223,59 @@ void testMultiThread(){
 }
 #endif
 
+void testGitHub55() {
+  {
+    std::string smiles = "c1cnco1";
+    RWMol *core = SmilesToMol(smiles);
+    TEST_ASSERT(core);
+    
+    int cid = DGeomHelpers::EmbedMolecule(*core);
+    TEST_ASSERT(cid >= 0);
+
+    smiles = "o1cncc1C";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    std::map<int,RDGeom::Point3D> coords;
+    coords[0]=core->getConformer().getAtomPos(4);
+    coords[1]=core->getConformer().getAtomPos(3);
+    coords[2]=core->getConformer().getAtomPos(2);
+    coords[3]=core->getConformer().getAtomPos(1);
+    coords[4]=core->getConformer().getAtomPos(0);
+    cid = DGeomHelpers::EmbedMolecule(*mol,50,22,true,false,2.,true,1,&coords);
+    TEST_ASSERT(cid>-1);
+
+    delete core;
+    delete mol;
+  }
+  {
+    std::string smiles = "c1cncs1";
+    RWMol *core = SmilesToMol(smiles);
+    TEST_ASSERT(core);
+    
+    int cid = DGeomHelpers::EmbedMolecule(*core);
+    TEST_ASSERT(cid >= 0);
+
+    smiles = "s1cncc1C";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    std::map<int,RDGeom::Point3D> coords;
+    coords[0]=core->getConformer().getAtomPos(4);
+    coords[1]=core->getConformer().getAtomPos(3);
+    coords[2]=core->getConformer().getAtomPos(2);
+    coords[3]=core->getConformer().getAtomPos(1);
+    coords[4]=core->getConformer().getAtomPos(0);
+    cid = DGeomHelpers::EmbedMolecule(*mol,50,22,true,false,2.,true,1,&coords);
+    TEST_ASSERT(cid>-1);
+
+    delete core;
+    delete mol;
+  }
+}
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1335,8 +1388,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3238580 \n\n";
   testIssue3238580();
 
-#endif
-
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
   testIssue3483968();
@@ -1344,6 +1395,14 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test multi-threading \n\n";
   testMultiThread();
+
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
+  testGitHub55();
+
+
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 
   return(0);

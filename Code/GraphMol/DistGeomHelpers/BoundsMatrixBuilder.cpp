@@ -280,21 +280,24 @@ namespace RDKit {
     
     void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize, 
                        double &angle) {
+      // NOTE: this assumes that all angles in a ring are equal. This is
+      // certainly not always the case, particular in aromatic rings with heteroatoms
+      // like s1cncc1. This led to GitHub55, which was fixed elsewhere.
       
       if ((aHyb == Atom::SP2) || (ringSize==3) || (ringSize==4)) {
-        angle = RDKit::PI*(1 - 2.0/ringSize);
+        angle = M_PI*(1 - 2.0/ringSize);
       } else if (aHyb == Atom::SP3) {
         if (ringSize == 5) {
-          angle = 104*RDKit::PI/180;
+          angle = 104*M_PI/180;
         } else {
-          angle = 109.5*RDKit::PI/180;
+          angle = 109.5*M_PI/180;
         }
       } else if (aHyb == Atom::SP3D) {
-        angle = 105.0*RDKit::PI/180;
+        angle = 105.0*M_PI/180;
       } else if (aHyb == Atom::SP3D2) {
-        angle = 90.0*RDKit::PI/180;
+        angle = 90.0*M_PI/180;
       } else {
-        angle = 120*RDKit::PI/180;
+        angle = 120*M_PI/180;
       }
     }
     
@@ -403,26 +406,26 @@ namespace RDKit {
                 // if we have a sp2 atom things are planar - we simply divide the remaining angle among the 
                 // remaining 13 configurations (and there should only be one)
                 if (ahyb == Atom::SP2) {
-                  angle = (2*RDKit::PI - angleTaken[aid2])/(n13-visited[aid2]);
+                  angle = (2*M_PI - angleTaken[aid2])/(n13-visited[aid2]);
                 } else if (ahyb == Atom::SP3) {
                   // in the case of sp3 we will use the tetrahedral angle mostly - but 
                   // but with some special cases
-                  angle = 109.5*RDKit::PI/180;
+                  angle = 109.5*M_PI/180;
                   // we will special-case a little bit here for 3, 4 members ring atoms that are sp3 hybirdized
                   // beyond that the angle reasonably close to the tetrahedral angle
                   if (rinfo->isAtomInRingOfSize(aid2, 3)) {
-                    angle = 116.0*RDKit::PI/180;
+                    angle = 116.0*M_PI/180;
                   } else if (rinfo->isAtomInRingOfSize(aid2, 4)) {
-                    angle = 112.0*RDKit::PI/180;
+                    angle = 112.0*M_PI/180;
                   }
                 } else {
                   // other options we will simply based things on the number of substituent
                   if (deg == 5) {
-                    angle = 105.0*RDKit::PI/180;
+                    angle = 105.0*M_PI/180;
                   } else if (deg == 6) {
-                    angle = 135.0*RDKit::PI/180;
+                    angle = 135.0*M_PI/180;
                   } else { 
-                    angle = 120.0*RDKit::PI/180; // FIX: this default is probably not the best we can do here
+                    angle = 120.0*M_PI/180; // FIX: this default is probably not the best we can do here
                   }
                 }
                 aid3 = bnd2->getOtherAtomIdx(aid2);
@@ -447,20 +450,20 @@ namespace RDKit {
               const BOND_SPTR bnd2 = mol[*beg2];
               bid2 = bnd2->getIdx();
               if (ahyb == Atom::SP) {
-                angle = RDKit::PI;
+                angle = M_PI;
               } else if (ahyb == Atom::SP2) {
-                angle = 2*RDKit::PI/3;
+                angle = 2*M_PI/3;
               } else if (ahyb == Atom::SP3) {
-                angle = 109.5*RDKit::PI/180;
+                angle = 109.5*M_PI/180;
               } else if (ahyb == Atom::SP3D){ 
                 //FIX: this and the remaining two hybirdization states below should probably be special
                 // cased. These defaults below are probably not the best we can do particularly when
                 // stereo chemistry is know
-                angle = 105.0*RDKit::PI/180; 
+                angle = 105.0*M_PI/180; 
               } else if (ahyb == Atom::SP3D2){
-                angle = 135.0*RDKit::PI/180;
+                angle = 135.0*M_PI/180;
               } else {
-                angle = 120.0*RDKit::PI/180;
+                angle = 120.0*M_PI/180;
               }
               aid3 = bnd2->getOtherAtomIdx(aid2);
               _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
@@ -844,7 +847,7 @@ namespace RDKit {
           // this is *S-S* situation
           //FIX: this cannot be right is sulfur has more than two coordinated
           // the torsion angle is 90 deg 
-          dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, RDKit::PI/2) - GEN_DIST_TOL;
+          dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI/2) - GEN_DIST_TOL;
           du = dl + 2*GEN_DIST_TOL;
           path14.type = Path14Configuration::OTHER;
           //BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 << "\n";

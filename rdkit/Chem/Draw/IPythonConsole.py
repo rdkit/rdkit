@@ -2,12 +2,15 @@ import IPython
 if IPython.release.version<'0.11':
     raise ImportError,'this module requires at least v0.11 of IPython'
 
-from rdkit.Chem import rdchem
+from rdkit.Chem import rdchem,rdChemReactions
 from rdkit.Chem import Draw
 from cStringIO import StringIO
 import copy
 import numpy
-import Image
+try:
+    import Image
+except ImportError:
+    from PIL import Image
 
 molSize=(450,150)
 highlightSubstructs=True
@@ -35,6 +38,14 @@ def _toPNG(mol):
     img.save(sio,format='PNG')
     return sio.getvalue()
 
+def _toReactionPNG(rxn):
+    rc = copy.deepcopy(rxn)
+    img = Draw.ReactionToImage(rc,subImgSize=(int(molSize[0]/3), molSize[1]))
+    sio = StringIO()
+    img.save(sio,format='PNG')
+    return sio.getvalue()
+
+
 def _GetSubstructMatch(mol,query,**kwargs):
     res = mol.__GetSubstructMatch(query,**kwargs)
     if highlightSubstructs:
@@ -60,6 +71,7 @@ def display_pil_image(img):
 
 def InstallIPythonRenderer():
     rdchem.Mol._repr_png_=_toPNG
+    rdChemReactions.ChemicalReaction._repr_png_=_toReactionPNG
     if not hasattr(rdchem.Mol,'__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch=rdchem.Mol.GetSubstructMatch
     rdchem.Mol.GetSubstructMatch=_GetSubstructMatch
@@ -71,6 +83,7 @@ InstallIPythonRenderer()
 
 def UninstallIPythonRenderer():
     del rdchem.Mol._repr_png_
+    del rdChemReactions.ChemicalReaction._repr_png_
     if hasattr(rdchem.Mol,'__GetSubstructMatch'):
         rdchem.Mol.GetSubstructMatch=rdchem.Mol.__GetSubstructMatch
         del rdchem.Mol.__GetSubstructMatch

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/MonomerInfo.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
@@ -23,8 +24,8 @@ using boost::uint32_t;
 namespace RDKit{
 
   const int32_t MolPickler::versionMajor=7;
-  const int32_t MolPickler::versionMinor=1;
-  const int32_t MolPickler::versionPatch=1;
+  const int32_t MolPickler::versionMinor=2;
+  const int32_t MolPickler::versionPatch=0;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
   void streamWrite(std::ostream &ss,const std::string &what){
@@ -190,6 +191,8 @@ namespace RDKit{
         query->setDataFunc(queryAtomTotalDegree);
       } else if(descr=="AtomHCount"){
         query->setDataFunc(queryAtomHCount);
+      } else if(descr=="AtomImplicitHCount"){
+        query->setDataFunc(queryAtomImplicitHCount);
       } else if(descr=="AtomIsAromatic"){
         query->setDataFunc(queryAtomAromatic);
       } else if(descr=="AtomIsAliphatic"){
@@ -459,6 +462,128 @@ namespace RDKit{
       }
       return res;
     }
+
+    void pickleAtomPDBResidueInfo(std::ostream &ss,const AtomPDBResidueInfo *info){
+      PRECONDITION(info,"no info");
+      if(info->getSerialNumber())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SERIALNUMBER,info->getSerialNumber());
+      if(info->getAltLoc()!="")
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ALTLOC,info->getAltLoc());
+      if(info->getResidueName()!="")
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_RESIDUENAME,info->getResidueName());
+      if(info->getChainId()!="")
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_CHAINID,info->getChainId());
+      if(info->getInsertionCode()!="")
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_INSERTIONCODE,info->getInsertionCode());
+      if(info->getOccupancy())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_OCCUPANCY,info->getOccupancy());
+      if(info->getTempFactor())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_TEMPFACTOR,info->getTempFactor());
+      if(info->getIsHeteroAtom())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM,static_cast<char>(info->getIsHeteroAtom()));
+      if(info->getSecondaryStructure())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE,info->getSecondaryStructure());
+    }
+
+    void unpickleAtomPDBResidueInfo(std::istream &ss,AtomPDBResidueInfo *info,
+                                        int version){
+      PRECONDITION(info,"no info");
+      std::string sval;
+      double dval;
+      char cval;
+      unsigned int uival;
+      MolPickler::Tags tag=MolPickler::BEGIN_ATOM_MONOMER;
+      while(tag!=MolPickler::END_ATOM_MONOMER){
+        streamRead(ss,tag,version);
+        switch(tag){
+        case MolPickler::ATOM_PDB_RESIDUE_SERIALNUMBER:
+          unsigned int ival;
+          streamRead(ss,ival,version);
+          info->setSerialNumber(ival);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_ALTLOC:
+          streamRead(ss,sval,version);
+          info->setAltLoc(sval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_RESIDUENAME:
+          streamRead(ss,sval,version);
+          info->setResidueName(sval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_CHAINID:
+          streamRead(ss,sval,version);
+          info->setChainId(sval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_INSERTIONCODE:
+          streamRead(ss,sval,version);
+          info->setInsertionCode(sval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_OCCUPANCY:
+          streamRead(ss,dval,version);
+          info->setOccupancy(dval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_TEMPFACTOR:
+          streamRead(ss,dval,version);
+          info->setTempFactor(dval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM:
+          streamRead(ss,cval,version);
+          info->setIsHeteroAtom(cval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE:
+          streamRead(ss,uival,version);
+          info->setSecondaryStructure(uival);
+          break;
+        case MolPickler::END_ATOM_MONOMER:
+          break;
+        default:
+          throw MolPicklerException("unrecognized tag while parsing atom peptide residue info");
+        }
+      }
+    }
+
+    
+    void pickleAtomMonomerInfo(std::ostream &ss,const AtomMonomerInfo *info) {
+      PRECONDITION(info,"no info");
+      streamWrite(ss,info->getName());
+      streamWrite(ss,static_cast<unsigned int>(info->getMonomerType()));
+      switch(info->getMonomerType()){
+      case AtomMonomerInfo::UNKNOWN:
+      case AtomMonomerInfo::OTHER:
+        break;
+      case AtomMonomerInfo::PDBRESIDUE:
+        pickleAtomPDBResidueInfo(ss,static_cast<const AtomPDBResidueInfo *>(info));
+        break;
+      default:
+        throw MolPicklerException("unrecognized MonomerType");
+      }
+    }
+    AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss,int version) {
+      MolPickler::Tags tag;
+      std::string nm;
+      streamRead(ss,nm,version);
+      unsigned int typ;
+      streamRead(ss,typ,version);
+
+      AtomMonomerInfo *res;
+      switch(typ){
+      case AtomMonomerInfo::UNKNOWN:
+      case AtomMonomerInfo::OTHER:
+        res = new AtomMonomerInfo(RDKit::AtomMonomerInfo::AtomMonomerType(typ),nm);
+        streamRead(ss,tag,version);
+        if(tag!=MolPickler::END_ATOM_MONOMER)
+          throw MolPicklerException("did not find expected end of atom monomer info");          
+        break;
+      case AtomMonomerInfo::PDBRESIDUE:
+        res = static_cast<AtomMonomerInfo *>(new AtomPDBResidueInfo(nm));
+        unpickleAtomPDBResidueInfo(ss,static_cast<AtomPDBResidueInfo *>(res),version);
+        break;
+      default:
+        throw MolPicklerException("unrecognized MonomerType");
+      }
+      return res;
+    }
+
+
   } // end of anonymous namespace
 
 
@@ -735,8 +860,7 @@ namespace RDKit{
       try{
         atom->getProp("molAtomMapNumber",tmpInt);
       } catch (boost::bad_any_cast &exc) {
-        std::string tmpSVal;
-        atom->getProp("molAtomMapNumber",tmpSVal);
+        const std::string &tmpSVal=atom->getProp<std::string>("molAtomMapNumber");
         try{
           tmpInt = boost::lexical_cast<int>(tmpSVal);
         } catch(boost::bad_lexical_cast &lexc) {
@@ -767,6 +891,7 @@ namespace RDKit{
     if(atom->hasQuery()) flags |= 0x1<<4;
     if(getAtomMapNumber(atom,tmpInt)) flags |= 0x1<<3;
     if(atom->hasProp("dummyLabel")) flags |= 0x1<<2;
+    if(atom->getMonomerInfo()) flags |= 0x1<<1;
 
     streamWrite(ss,flags);
     
@@ -836,9 +961,12 @@ namespace RDKit{
       streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
     }
     if(atom->hasProp("dummyLabel")){
-      std::string tmpStr;
-      atom->getProp("dummyLabel",tmpStr);
-      streamWrite(ss,ATOM_DUMMYLABEL,tmpStr);
+      streamWrite(ss,ATOM_DUMMYLABEL,atom->getProp<std::string>("dummyLabel"));
+    }
+    if(atom->getMonomerInfo()){
+      streamWrite(ss,BEGIN_ATOM_MONOMER);
+      pickleAtomMonomerInfo(ss,atom->getMonomerInfo());
+      streamWrite(ss,END_ATOM_MONOMER);      
     }
   }
 
@@ -930,6 +1058,10 @@ namespace RDKit{
     if(version>=6020){
       hasAtomMap=flags & 0x1<<3;
       hasDummyLabel=flags & 0x1<<2;
+    }
+    bool hasMonomerInfo=0;
+    if(version>=7020){
+      hasMonomerInfo=flags & 0x1<<1;
     }
 
     // are coordinates present?
@@ -1091,7 +1223,15 @@ namespace RDKit{
         }
       }
     }
-
+    if(version>=7020){
+      if(hasMonomerInfo){
+        streamRead(ss,tag,version);
+        if(tag != BEGIN_ATOM_MONOMER){
+          throw MolPicklerException("Bad pickle format: BEGIN_ATOM_MONOMER tag not found.");
+        }
+        atom->setMonomerInfo(unpickleAtomMonomerInfo(ss,version));
+      }
+    }
     mol->addAtom(atom,false,true);
     return atom;
   }
@@ -1232,7 +1372,9 @@ namespace RDKit{
     }
     if(version>5000 && hasQuery) {
       Tags tag;
+      Bond *tbond=bond;
       bond = new QueryBond(*bond);
+      delete tbond;
       // we have a query:
       streamRead(ss,tag,version);
       if(tag != BEGINQUERY){

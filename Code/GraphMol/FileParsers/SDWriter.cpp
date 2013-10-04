@@ -84,17 +84,18 @@ namespace RDKit {
       // out to the file
       STR_VECT properties = mol.getPropList();
       STR_VECT compLst;
-      if (mol.hasProp("__computedProps")) {
-	mol.getProp("__computedProps", compLst);
+      if (mol.hasProp(detail::computedPropName)) {
+	mol.getProp(detail::computedPropName, compLst);
       }
       STR_VECT_CI pi;
       for (pi = properties.begin(); pi != properties.end(); pi++) {
 
 	// ignore any of the following properties
-	if ( ((*pi) == "__computedProps") || 
+	if ( ((*pi) == detail::computedPropName) || 
 	     ((*pi) == "_Name") ||
 	     ((*pi) == "_MolFileInfo") ||
-	     ((*pi) == "_MolFileComments")) {
+	     ((*pi) == "_MolFileComments") ||
+             ((*pi) == "_MolFileChiralFlag")) {
 	  continue;
 	}
 

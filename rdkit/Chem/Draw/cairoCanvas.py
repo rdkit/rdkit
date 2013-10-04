@@ -9,9 +9,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import cairo
+try:
+  import cairo
+except ImportError:
+  import cairocffi as cairo
 if not hasattr(cairo.ImageSurface,'get_data'):
-  raise ImportError,'cairo version too old'
+  raise ImportError,'cairo version too old'  
+
 
 import math
 import rdkit.RDConfig
@@ -27,7 +31,10 @@ except ImportError:
   pango=None
   
 from canvasbase import CanvasBase
-import Image
+try:
+  import Image
+except ImportError:
+  from PIL import Image
 
 class Canvas(CanvasBase):
   def __init__(self,

@@ -63,3 +63,21 @@ class Canvas(CanvasBase):
     ps = [self.rescalePt(x) for x in ps]
     canvas.add_patch(Polygon(ps,linewidth=0,facecolor=color))
 
+
+  def addCanvasDashedWedge(self,p1,p2,p3,dash=(2,2),color=(0,0,0),
+                           color2=None,**kwargs):
+    canvas = self._axes
+    dash= (3,3)
+    pts1 = self._getLinePoints(p1,p2,dash)
+    pts2 = self._getLinePoints(p1,p3,dash)
+    pts1 = [self.rescalePt(p) for p in pts1]
+    pts2 = [self.rescalePt(p) for p in pts2]
+    if len(pts2)<len(pts1):
+      pts2,pts1=pts1,pts2    
+    for i in range(len(pts1)):
+      if color2 and color2!=color:
+        mp = (pts1[i][0]+pts2[i][0])/2.,(pts1[i][1]+pts2[i][1])/2.
+        canvas.add_line(Line2D((pts1[i][0],mp[0]),(pts1[i][1],mp[1]),color=color,**kwargs))
+        canvas.add_line(Line2D((mp[0],pts2[i][0]),(mp[1],pts2[i][1]),color=color2,**kwargs))
+      else:
+        canvas.add_line(Line2D((pts1[i][0],pts2[i][0]),(pts1[i][1],pts2[i][1]),color=color,**kwargs))

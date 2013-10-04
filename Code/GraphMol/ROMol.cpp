@@ -103,7 +103,7 @@ namespace RDKit{
     if(!dp_props){
       dp_props = new Dict();
       STR_VECT computed;
-      dp_props->setVal("__computedProps", computed);
+      dp_props->setVal(detail::computedPropName, computed);
     }
     //std::cerr<<"---------    done init from other: "<<this<<" "<<&other<<std::endl;
   }
@@ -111,12 +111,12 @@ namespace RDKit{
   void ROMol::initMol() {
     dp_props = new Dict();
     dp_ringInfo = new RingInfo();
-    // ok every molecule contains a property entry called "__computedProps" which provides
+    // ok every molecule contains a property entry called detail::computedPropName which provides
     //  list of property keys that correspond to value that have been computed
     // this can used to blow out all computed properties while leaving the rest along
     // initialize this list to an empty vector of strings
     STR_VECT computed;
-    dp_props->setVal("__computedProps", computed);
+    dp_props->setVal(detail::computedPropName, computed);
   }
   
   unsigned int ROMol::getAtomDegree(const Atom *at) const {
@@ -478,12 +478,12 @@ namespace RDKit{
     if(includeRings) this->dp_ringInfo->reset();
 
     STR_VECT compLst;
-    getProp("__computedProps", compLst);
+    getProp(detail::computedPropName, compLst);
     BOOST_FOREACH(std::string &sv,compLst){
       dp_props->clearVal(sv);
     }
     compLst.clear();
-    dp_props->setVal("__computedProps", compLst);
+    dp_props->setVal(detail::computedPropName, compLst);
     for(ConstAtomIterator atomIt=this->beginAtoms();
         atomIt!=this->endAtoms();
         ++atomIt){

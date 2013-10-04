@@ -191,9 +191,9 @@ class TestCase(unittest.TestCase):
                             continue
 
                     diff += 1
-                    print 'InChI mismatach for PubChem Compound ' + \
+                    print 'InChI mismatch for PubChem Compound ' + \
                             m.GetProp('PUBCHEM_COMPOUND_CID') + \
-                            '\n' + MolToSmiles(m) + '\n' + inchiDiff(x, y)
+                            '\n' + MolToSmiles(m,True) + '\n' + inchiDiff(x, y)
                     print
 
                 else:
@@ -293,9 +293,9 @@ class TestCase(unittest.TestCase):
                 else:
                     same += 1
             print green + "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (same, diff, reasonable) + reset
-            self.assertEqual(same, 545)
+            self.assertEqual(same, 544)
             self.assertEqual(diff, 1)
-            self.assertEqual(reasonable, 635)
+            self.assertEqual(reasonable, 636)
 
     def test2InchiOptions(self):
         m = MolFromSmiles("CC=C(N)C")

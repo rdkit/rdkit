@@ -31,7 +31,9 @@ rdkit_headers(Atom.h
               Rings.h
               ROMol.h
               RWMol.h
-              SanitException.h DEST GraphMol)
+              SanitException.h
+              MonomerInfo.h
+              DEST GraphMol)
 
 add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)

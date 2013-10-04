@@ -110,7 +110,7 @@ If your linux distribution has a boost-devel package including the python and re
 Building the RDKit
 ------------------
 
-Fetch the source, here as tar.gz but you could use git or svn as well::
+Fetch the source, here as tar.gz but you could use git as well::
 
     wget http://downloads.sourceforge.net/project/rdkit/rdkit/QX_20XX/RDKit_20XX_XX_X.tgz
 
@@ -347,12 +347,9 @@ Extra software to install
     http://www.boost.org and follow the instructions
     in the "Getting Started" section of the documentation. Make sure
     the libraries and headers are installed to c:\boost
-  * a subversion client : *This is only necessary if you are planning
-    on building development versions of the RDKit.* A command line
-    client for subversion can be installed as part of the cygwin
-    installation, or a very nice graphical client that integrates well
-    with windows explorer can be downloaded from
-    http://tortoisesvn.tigris.org/ .
+  * a git client : *This is only necessary if you are planning
+    on building development versions of the RDKit.* This can be downloaded from
+    http://git-scm.com/downloads .
   * Optional packages
 
     * If you would like to install the RDKit InChI support (first
@@ -381,9 +378,9 @@ these conditions is not true, just change the corresponding paths.
     (http://www.boost.org/doc/libs/1_50_0/more/getting_started/windows.html). 
 
   * If you are planning on using a development version of the RDKit:
-    get a copy of the current RDKit source using subversion. If you're
-    using the command-line client the command is: ``svn co
-    http://svn.code.sf.net/p/rdkit/code/trunk c:\RDKit``
+    get a copy of the current RDKit source using git. If you're
+    using the command-line client the command is: ``git clone 
+    https://github.com/rdkit/rdkit.git c:\RDKit``
 
   * If you are planning on using a released version of the RDKit : get
     a copy of the most recent release and extract it into the directory ``c:\RDKit`` 

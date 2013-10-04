@@ -53,7 +53,7 @@ namespace RDKit{
         }
       }
       unsigned int nRadEs=atom->getNumRadicalElectrons();
-      if(nRadEs!=0){
+      if(nRadEs!=0 && atom->getTotalDegree()!=0){
         ++nRads;
         if(nRadEs%2){
           nRadEs=2;
@@ -352,6 +352,17 @@ namespace RDKit{
         parityFlag=getAtomParityFlag(atom,conf);
       }
     } 
+    if (atom->getNumRadicalElectrons()!=0){
+      if(atom->getTotalDegree()==0){
+        // Specify zero valence for elements/metals without neighbors
+        // or hydrogens (degree 0) instead of writing them as radicals.
+        totValence = 15;
+      } else {
+        // write the total valence for other radicals so that we have a chance of
+        // reconstructing what was there.
+        totValence = atom->getTotalValence();
+      }
+    }
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
     ss << boost::format("%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d") % x % y % z % symbol.c_str() %
@@ -488,8 +499,8 @@ namespace RDKit{
 
     std::string res;
 
-    int nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents;
-    int nReactants,nProducts,nIntermediates;
+    unsigned int nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents;
+    unsigned int nReactants,nProducts,nIntermediates;
     nAtoms = tmol.getNumAtoms();
     nBonds = tmol.getNumBonds();
     nLists = 0;
@@ -500,6 +511,10 @@ namespace RDKit{
     nProducts=0;
     nIntermediates=0;
 
+    if(mol.hasProp("_MolFileChiralFlag")){
+      mol.getProp("_MolFileChiralFlag",chiralFlag);
+    }
+    
     const Conformer *conf;
     if(confId<0 && tmol.getNumConformers()==0){
       conf=0;
