@@ -133,7 +133,7 @@ void testO3A() {
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
   std::string newSdf = sdf + "_O3A.sdf";
   sdf += ".sdf";
-  SDMolSupplier supplier(sdf, false, false);
+  SDMolSupplier supplier(sdf, true, false);
   int nMol = supplier.length();
   const int refNum = 48;
   SDWriter *newMol = new SDWriter(newSdf);
