@@ -366,6 +366,66 @@ namespace RDKit {
       mol->setProp("_Name",title);
   }
 
+// This is a macro to allow its use for C++ constants
+#define BCNAM(A,B,C)    (((A)<<16) | ((B)<<8) | (C))
+
+  // This function determines whether a standard atom name in
+  // in a recognized PDB amino acid should be chiral or not.
+  // This is used to avoid chirality on VAL.CG and LEU.CG.
+  static bool StandardPDBChiralAtom(const char *resnam, const char *atmnam)
+  {
+    switch(BCNAM(resnam[0],resnam[1],resnam[2])) {
+    case BCNAM('G','L','Y'):
+      return false;
+    case BCNAM('I','L','E'):
+    case BCNAM('T','H','R'):
+      // Alpha and beta carbons (" CA " and " CB ").
+      return atmnam[0]==' ' && atmnam[1]=='C' &&
+             (atmnam[2]=='A' || atmnam[2]=='B') &&
+             atmnam[3]==' ';
+    case BCNAM('A','L','A'):
+    case BCNAM('A','R','G'):
+    case BCNAM('A','S','N'):
+    case BCNAM('A','S','P'):
+    case BCNAM('C','Y','S'):
+    case BCNAM('G','L','N'):
+    case BCNAM('G','L','U'):
+    case BCNAM('H','I','S'):
+    case BCNAM('L','E','U'):
+    case BCNAM('L','Y','S'):
+    case BCNAM('M','E','T'):
+    case BCNAM('P','H','E'):
+    case BCNAM('P','R','O'):
+    case BCNAM('S','E','R'):
+    case BCNAM('T','R','P'):
+    case BCNAM('T','Y','R'):
+    case BCNAM('V','A','L'):
+      return atmnam[0]==' ' && atmnam[1]=='C' &&
+             atmnam[2]=='A' && atmnam[3]==' ';
+    }
+    return false;
+  }
+
+  static void StandardPDBResidueChirality(RWMol *mol)
+  {
+    for (ROMol::AtomIterator atomIt=mol->beginAtoms();
+         atomIt!=mol->endAtoms(); ++atomIt) {
+      Atom *atom = *atomIt;
+      if (atom->getChiralTag()!=Atom::CHI_UNSPECIFIED) {
+        AtomPDBResidueInfo *info = (AtomPDBResidueInfo*)atom->getMonomerInfo();
+        if (info &&
+            info->getMonomerType()==AtomMonomerInfo::PDBRESIDUE &&
+            !info->getIsHeteroAtom() &&
+            !StandardPDBChiralAtom(info->getResidueName().c_str(),
+                                   info->getName().c_str())) {
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+          if (atom->hasProp("_CIPCode"))
+            atom->clearProp("_CIPCode");
+        }
+      }
+    }
+  }
+
   RWMol *PDBBlockToMol(const char *str, bool sanitize,
                      bool removeHs, unsigned int flavor)
   {
@@ -442,6 +502,11 @@ namespace RDKit {
         MolOps::sanitizeMol(*mol);
       }
     }
+
+    /* Set tetrahedral chirality from 3D co-ordinates */
+    MolOps::assignChiralTypesFrom3D(*mol);
+    StandardPDBResidueChirality(mol);
+
     return mol;
   }
 
