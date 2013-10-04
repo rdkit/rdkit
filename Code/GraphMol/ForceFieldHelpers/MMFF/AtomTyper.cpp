@@ -2196,7 +2196,7 @@ namespace RDKit {
     // which caused trouble in case of failure
     unsigned int sanitizeMMFFMol(RWMol &mol)
     {
-      unsigned int error;
+      unsigned int error = 0;
       
       try { 
         MolOps::sanitizeMol(mol, error,
@@ -2209,10 +2209,13 @@ namespace RDKit {
                                            | MolOps::SANITIZE_SETHYBRIDIZATION
                                            | MolOps::SANITIZE_CLEANUPCHIRALITY
                                            | MolOps::SANITIZE_ADJUSTHS));
-        mol.setProp("_MMFFSanitized",1,true);
+        if (!(mol.hasProp("_MMFFSanitized"))) {
+          mol.setProp("_MMFFSanitized",1,true);
+        }
       } catch (MolSanitizeException &e){
-        
+      
       }
+      
       return error;
     }
     
@@ -2244,13 +2247,10 @@ namespace RDKit {
         for (it = mol.beginAtoms(); (!isAromaticSet) && (it != mol.endAtoms()); ++it) {
           isAromaticSet = (*it)->getIsAromatic();
         }
-        PRECONDITION(!isAromaticSet,
-          "Please reload your molecule setting the \"sanitize\" flag to \"false\"");
-        if (sanitizeMMFFMol((RWMol &)mol) != MolOps::SANITIZE_NONE) {
-          std::string msg = "MMFF sanitization failed";
-          BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw MolSanitizeException(msg);
+        if (isAromaticSet) {
+          MolOps::Kekulize((RWMol &)mol, true);
         }
+        mol.setProp("_MMFFSanitized",1,true);
       }      
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
         d_MMFFAtomPropertiesPtrVect[i]

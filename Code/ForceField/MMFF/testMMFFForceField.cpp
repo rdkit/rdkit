@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
   unsigned int i = 1;
   unsigned int n = 0;
   bool error = false;
-  int fullTest = false;
+  bool fullTest = false;
   int inc = 4;
   bool testFailure = false;
   while (i < argc) {
@@ -316,6 +316,7 @@ int main(int argc, char *argv[])
       }
     }
     else if (arg == "-L") {
+      fullTest = true;
       inc = 1;
     }
     else if (arg == "-l") {
@@ -422,9 +423,9 @@ int main(int argc, char *argv[])
           }
           else {
             mol = MolOps::addHs(*(molVec[i]));
-            MMFF::sanitizeMMFFMol((RWMol &)(*mol));
             DGeomHelpers::EmbedMolecule(*mol);
           }
+          MMFF::sanitizeMMFFMol((RWMol &)(*mol));
           if (mol->hasProp("_Name")) {
             mol->getProp("_Name", molName);
             rdkFStream << molName << std::endl;
