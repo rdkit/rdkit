@@ -83,25 +83,25 @@ M  END"""
 
   def test5(self) :
     fName = os.path.join(self.dirName,'benzene.mol')
-    m = Chem.MolFromMolFile(fName, False)
+    m = Chem.MolFromMolFile(fName)
     self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
-    m = Chem.MolFromMolFile(fName, False)
+    m = Chem.MolFromMolFile(fName)
     self.failUnless(ChemicalForceFields.MMFFOptimizeMolecule(m, maxIters = 1))
 
-    m = Chem.MolFromMolFile(fName, False)
+    m = Chem.MolFromMolFile(fName)
     self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, nonBondedThresh = 2.0))
 
-    m = Chem.MolFromMolFile(fName, False)
+    m = Chem.MolFromMolFile(fName)
     self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, confId = -1))
 
-    m = Chem.MolFromMolFile(fName, False)
+    m = Chem.MolFromMolFile(fName)
     self.failUnlessRaises(ValueError, lambda :ChemicalForceFields.MMFFOptimizeMolecule(m, confId = 1))
 
 
   def test6(self) :
     fName = os.path.join(self.dirName, 'benzene.mol')
-    m = Chem.MolFromMolFile(fName, False)
+    m = Chem.MolFromMolFile(fName)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.failUnless(ff)
