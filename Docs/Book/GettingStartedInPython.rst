@@ -1225,6 +1225,8 @@ Start by creating two molecules:
 The SimilarityMaps module supports three kind of fingerprints:
 atom pairs, topological torsions and Morgan fingerprints.
 
+>>> from rdkit.Chem import Draw
+>>> from rdkit.Chem.Draw import SimilarityMaps
 >>> fp = SimilarityMaps.GetAPFingerprint(mol, fpType='normal')
 >>> fp = SimilarityMaps.GetTTFingerprint(mol, fpType='normal')
 >>> fp = SimilarityMaps.GetMorganFingerprint(mol, fpType='bv')
@@ -1237,8 +1239,6 @@ specification of the fingerprint function and optionally the similarity metric.
 The default for the latter is the Dice similarity. Using all the default arguments
 of the Morgan fingerprint function, the similarity map can be generated like this:
 
->>> from rdkit.Chem import Draw
->>> from rdkit.Chem.Draw import SimilarityMaps
 >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
 
 The result looks like this:
@@ -1248,6 +1248,7 @@ The result looks like this:
 For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well as a different 
 similarity metric (e.g. Tanimoto), the call becomes:
 
+>>> from rdkit import DataStructs
 >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
 
 The result looks like this:
@@ -1259,11 +1260,14 @@ of the atomic weights such that the maximum absolute weight is 1. Therefore, the
 function outputs the maximum weight that was found when creating the map.
 
 >>> print maxweight
+0.0574712643678
 
 If one does not want the normalisation step, the map can be created like:
 
 >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+>>> print ["%.2f " % w for w in weights]
 >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
+['0.05 ', '0.07 ', '0.05 ', '0.08 ', '0.05 ', '0.06 ', '0.03 ', '0.04 ', '-0.01 ', '-0.04 ', '-0.03 ', '-0.05 ', '0.01 ', '0.03 ', '0.07 ', '0.10 ', '0.12 ', '0.11 ', '0.09 ', '0.10 ', '0.09 ', '0.06 ', '0.03 ', '0.02 ', '-0.01 ', '-0.05 ', '0.00 ', '0.00 ', '-0.03 ', '0.02 ', '0.09 ', '0.11 ', '-0.04 ', '0.04 ']
 
 The result looks like this:
 
