@@ -139,7 +139,6 @@ namespace RDKit{
      */
     ROMol *addHs(const ROMol &mol,bool explicitOnly=false,bool addCoords=false);
 
-
     //! returns a copy of a molecule with hydrogens removed
     /*!
         \param mol          the molecule to remove Hs from
@@ -163,6 +162,10 @@ namespace RDKit{
     */
     ROMol *removeHs(const ROMol &mol,bool implicitOnly=false,
 			   bool updateExplicitCount=false,bool sanitize=true);
+    //! \overload
+    // modifies the molecule in place
+    void removeHs(RWMol &mol,bool implicitOnly=false,
+                  bool updateExplicitCount=false,bool sanitize=true);
 
     //! returns a copy of a molecule with hydrogens removed and added as queries
     //!  to the heavy atoms to which they are bound.

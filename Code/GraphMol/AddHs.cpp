@@ -360,12 +360,11 @@ namespace RDKit{
     //     will not be removed.
     //   - two coordinate Hs, like the central H in C[H-]C, will not be removed
     //
-    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
+    void removeHs(RWMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       unsigned int currIdx=0,origIdx=0;
       std::map<unsigned int,unsigned int> idxMap;
-      RWMol *res = new RWMol(mol);
-      while(currIdx < res->getNumAtoms()){
-        Atom *atom = res->getAtomWithIdx(currIdx);
+      while(currIdx < mol.getNumAtoms()){
+        Atom *atom = mol.getAtomWithIdx(currIdx);
         idxMap[origIdx]=currIdx;
         ++origIdx;
         if(atom->getAtomicNum()==1){
@@ -375,19 +374,19 @@ namespace RDKit{
             removeIt=true;
           } else if(!implicitOnly && !atom->getIsotope() && atom->getDegree()==1){
             ROMol::ADJ_ITER begin,end;
-            boost::tie(begin,end) = res->getAtomNeighbors(atom);
-            if(res->getAtomWithIdx(*begin)->getAtomicNum() != 1){
+            boost::tie(begin,end) = mol.getAtomNeighbors(atom);
+            if(mol.getAtomWithIdx(*begin)->getAtomicNum() != 1){
               removeIt=true;
             }
           }
 
           if(removeIt){
             ROMol::OEDGE_ITER beg,end;
-            boost::tie(beg,end) = res->getAtomBonds(atom);
+            boost::tie(beg,end) = mol.getAtomBonds(atom);
             // note the assumption that the H only has one neighbor... I
             // feel no need to handle the case of hypervalent hydrogen!
             // :-) 
-            const BOND_SPTR bond = (*res)[*beg];
+            const BOND_SPTR bond = mol[*beg];
             Atom *heavyAtom =bond->getOtherAtom(atom);
 
             // we'll update the atom's explicit H count if we were told to
@@ -416,10 +415,10 @@ namespace RDKit{
             // atom.  We deal with that by explicitly checking here:
             if(heavyAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               INT_LIST neighborIndices;
-              boost::tie(beg,end) = res->getAtomBonds(heavyAtom);
+              boost::tie(beg,end) = mol.getAtomBonds(heavyAtom);
               while(beg!=end){
-                if((*res)[*beg]->getIdx()!=bond->getIdx()){
-                  neighborIndices.push_back((*res)[*beg]->getIdx());
+                if(mol[*beg]->getIdx()!=bond->getIdx()){
+                  neighborIndices.push_back(mol[*beg]->getIdx());
                 }
                 ++beg;
               }
@@ -431,7 +430,7 @@ namespace RDKit{
                 heavyAtom->invertChirality();
               }
             }     
-            res->removeAtom(atom);
+            mol.removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom
             currIdx++;
@@ -456,35 +455,22 @@ namespace RDKit{
       //
       if(!implicitOnly){
         if(sanitize){
-          try{
-            sanitizeMol(*res);
-          } catch (MolSanitizeException &se){
-            if(res) delete res;
-            throw se;
-          }
-
+          sanitizeMol(mol);
         }
-#if 0 // the fix to github issue 8 makes this redundant
-        if(mol.hasProp("_StereochemDone")){
-          // stereochem had been perceived in the original molecule,
-          // loop over the bonds and fix their stereoAtoms fields:
-          for(ROMol::BondIterator bondIt=res->beginBonds();
-              bondIt!=res->endBonds();
-              ++bondIt){
-            Bond *bond=*bondIt;
-            if( bond->getBondType()==Bond::DOUBLE &&
-                bond->getStereo()!=Bond::STEREONONE){
-              BOOST_FOREACH(int &v,bond->getStereoAtoms()){
-                v = idxMap[v];
-              }
-            }
-          }
-        }
-#endif        
       }
-
-      return static_cast<ROMol *>(res);
     };
+
+
+    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
+      RWMol *res = new RWMol(mol);
+      try{
+        removeHs(*res,implicitOnly,updateExplicitCount,sanitize);
+      } catch (MolSanitizeException &se){
+        if(res) delete res;
+        throw se;
+      }
+      return static_cast<ROMol *>(res);
+    }
 
     //
     //  This routine removes explicit hydrogens (and bonds to them) from
