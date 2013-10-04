@@ -1241,9 +1241,11 @@ of the Morgan fingerprint function, the similarity map can be generated like thi
 
 >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
 
-The result looks like this:
+Producing this image:
 
-.. image:: images/similarity_map_fp1.png
++-------------------------------------------+
+| .. image:: images/similarity_map_fp1.png  |
++-------------------------------------------+
 
 For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well as a different 
 similarity metric (e.g. Tanimoto), the call becomes:
@@ -1251,9 +1253,11 @@ similarity metric (e.g. Tanimoto), the call becomes:
 >>> from rdkit import DataStructs
 >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
 
-The result looks like this:
+Producing this image:
 
-.. image:: images/similarity_map_fp2.png
++-------------------------------------------+
+| .. image:: images/similarity_map_fp2.png  |
++-------------------------------------------+
 
 The convenience function GetSimilarityMapForFingerprint involves the normalisation
 of the atomic weights such that the maximum absolute weight is 1. Therefore, the 
@@ -1267,11 +1271,13 @@ If one does not want the normalisation step, the map can be created like:
 >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
 >>> print ["%.2f " % w for w in weights]
 >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
-['0.05 ', '0.07 ', '0.05 ', '0.08 ', '0.05 ', '0.06 ', '0.03 ', '0.04 ', '-0.01 ', '-0.04 ', '-0.03 ', '-0.05 ', '0.01 ', '0.03 ', '0.07 ', '0.10 ', '0.12 ', '0.11 ', '0.09 ', '0.10 ', '0.09 ', '0.06 ', '0.03 ', '0.02 ', '-0.01 ', '-0.05 ', '0.00 ', '0.00 ', '-0.03 ', '0.02 ', '0.09 ', '0.11 ', '-0.04 ', '0.04 ']
+['0.05 ', ...
 
-The result looks like this:
+Producing this image:
 
-.. image:: images/similarity_map_fp3.png
++-------------------------------------------+
+| .. image:: images/similarity_map_fp3.png  |
++-------------------------------------------+
 
 
 Descriptor Calculation
@@ -1297,6 +1303,37 @@ Partial charges are handled a bit differently:
 >>> float(m.GetAtomWithIdx(0).GetProp('_GasteigerCharge'))
 -0.047...
 
+
+Visualization of Descriptors
+============================
+
+Similarity maps can be used to visualize descriptors that can be divided into 
+atomic contributions. 
+
+The Gasteiger partial charges can be visualized as (using a different color scheme):
+
+>>> from rdkit.Chem.Draw import SimilarityMaps
+>>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+>>> AllChem.ComputeGasteigerCharges(m)
+>>> contribs = [float(mol.GetAtomWithIdx(i).GetProp('_GasteigerCharge')) for i in range(mol.GetNumAtoms())]
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, colorMap='jet', contourLines=10)
+
+Producing this image:
+
++-----------------------------------------------+
+| .. image:: images/similarity_map_charges.png  |
++-----------------------------------------------+
+
+Or for the Crippen contributions to logP:
+
+>>> contribs = rdMolDescriptors._CalcCrippenContribs(mol)
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], colorMap='jet', contourLines=10)
+
+Producing this image:
+
++-----------------------------------------------+
+| .. image:: images/similarity_map_crippen.png  |
++-----------------------------------------------+
 
 Chemical Reactions
 ******************
