@@ -36,7 +36,6 @@
 #include <GraphMol/RDKitBase.h> 
 #include "FileParsers.h"
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 

@@ -32,10 +32,8 @@
 //
 //  created by Nik Stiefl May 2008
 //  this file is heavily based on glandrum's MolFileParser
-//  currently no stereochemistry is detected and read in from 
-//  string is not supported
 //
-//
+
 
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
@@ -617,7 +615,7 @@ namespace RDKit{
       if(tBType=="1" || tBType=="am"){
         type=Bond::SINGLE;
       } else if(tBType=="2"){
-        type=Bond::DOUBLE; 
+        type=Bond::DOUBLE;
       } else if(tBType=="3"){
         type=Bond::TRIPLE;
       } else if(tBType=="ar"){
