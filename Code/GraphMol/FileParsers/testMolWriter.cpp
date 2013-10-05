@@ -724,6 +724,49 @@ void testMolFileTotalValence(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileWithRxn(){
+  BOOST_LOG(rdInfoLog) << "testing handling of mol files with reactions" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"rxn1.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==18);
+    TEST_ASSERT(m->getNumBonds()==16);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==18);
+    TEST_ASSERT(m->getNumBonds()==16);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -809,6 +852,10 @@ int main() {
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileTotalValence();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testMolFileWithRxn();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }

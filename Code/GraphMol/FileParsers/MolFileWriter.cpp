@@ -363,6 +363,10 @@ namespace RDKit{
         totValence = atom->getTotalValence();
       }
     }
+
+    if(atom->hasProp("molRxnRole")) atom->getProp("molRxnRole",rxnComponentType);
+    if(atom->hasProp("molRxnComponent")) atom->getProp("molRxnComponent",rxnComponentNumber);
+
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
     ss << boost::format("%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d") % x % y % z % symbol.c_str() %
