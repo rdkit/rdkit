@@ -102,6 +102,29 @@ bfp_tanimoto_sml(PG_FUNCTION_ARGS) {
 
   PG_RETURN_FLOAT8(res);          
 }
+PG_FUNCTION_INFO_V1(bfp_tversky_sml);
+Datum           bfp_tversky_sml(PG_FUNCTION_ARGS);
+Datum
+bfp_tversky_sml(PG_FUNCTION_ARGS) {
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
+
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1), 
+                                                 NULL, &bbfp, NULL);
+
+  res = calcBitmapTverskySml(abfp, bbfp, PG_GETARG_FLOAT4(2),PG_GETARG_FLOAT4(3) ); 
+
+  PG_RETURN_FLOAT8(res);          
+}
 #if PG_VERSION_NUM >= 90100
 PG_FUNCTION_INFO_V1(bfp_tanimoto_dist);
 Datum           bfp_tanimoto_dist(PG_FUNCTION_ARGS);
