@@ -617,7 +617,7 @@ namespace RDKit{
       if(tBType=="1" || tBType=="am"){
         type=Bond::SINGLE;
       } else if(tBType=="2"){
-        type=Bond::DOUBLE;
+        type=Bond::DOUBLE; 
       } else if(tBType=="3"){
         type=Bond::TRIPLE;
       } else if(tBType=="ar"){
@@ -872,8 +872,7 @@ namespace RDKit{
 
     if (res && sanitize ) {
       MolOps::cleanUp(*res);
-      res->updatePropertyCache(false);
-      MolOps::assignStereochemistry(*res,true,true);
+            
       try {
         if(removeHs){
           ROMol *tmp=MolOps::removeHs(*res,false,false);
@@ -882,6 +881,13 @@ namespace RDKit{
         } else {
           MolOps::sanitizeMol(*res);
         }
+        
+        // call DetectBondStereoChemistry after sanitization "because we need 
+        // the ring information".  Also this will set the E/Z labels on the bond.
+        // Similar in spirit to what happens in MolFileParser
+        const Conformer &conf = res->getConformer();
+        DetectBondStereoChemistry(*res, &conf);
+      
       }
       catch (MolSanitizeException &se){
         BOOST_LOG(rdWarningLog)<<"sanitise ";
@@ -891,7 +897,11 @@ namespace RDKit{
         delete res;
         throw se;
       }
+      
+      res->updatePropertyCache(false);      
+      MolOps::assignStereochemistry(*res,true,true);
     }
+
 
     return res;
   };
