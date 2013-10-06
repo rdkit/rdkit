@@ -17,6 +17,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <ForceField/Wrap/PyForceField.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/ROMol.h>
@@ -214,16 +215,36 @@ namespace RDKit {
       boost::shared_ptr<O3A> o3a;
     };
     PyO3A *getO3A(ROMol &prbMol, ROMol &refMol,
-      ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties,
-      ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties,
-      int prbCid = -1, int refCid = -1, bool reflect = false,
-      unsigned int maxIters = 50, unsigned int options = 1)
+                  python::object prbProps,
+                  python::object refProps,
+                  int prbCid = -1, int refCid = -1, bool reflect = false,
+                  unsigned int maxIters = 50, unsigned int options = 1)
     {
+      ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties=NULL;
+      MMFF::MMFFMolProperties *prbMolProps=NULL;
+      ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties=NULL;
+      MMFF::MMFFMolProperties *refMolProps=NULL;
+      
+      if(prbProps != python::object()){
+        prbPyMMFFMolProperties=python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
+        prbMolProps=prbPyMMFFMolProperties->mmffMolProperties.get();
+      } else {
+        prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+      }
+      if(refProps != python::object()){
+        refPyMMFFMolProperties=python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
+        refMolProps=refPyMMFFMolProperties->mmffMolProperties.get();
+      } else {
+        refMolProps = new MMFF::MMFFMolProperties(refMol);
+      }
+      
       O3A *o3a = new MolAlign::O3A(prbMol, refMol,
-        &(*(prbPyMMFFMolProperties->mmffMolProperties)),
-        &(*(refPyMMFFMolProperties->mmffMolProperties)),
-        prbCid, refCid, reflect, maxIters, options);
+                                   prbMolProps,refMolProps,
+                                   prbCid, refCid, reflect, maxIters, options);
       PyO3A *pyO3A = new PyO3A(o3a);
+
+      if(!prbPyMMFFMolProperties) delete prbMolProps;
+      if(!refPyMMFFMolProperties) delete refMolProps;
       
       return pyO3A;
     }
@@ -338,14 +359,14 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
      ARGUMENTS\n\
       - prbMol                   molecule that is to be aligned\n\
       - refMol                   molecule used as the reference for the alignment\n\
-      - prbCid                   ID of the conformation in the probe to be used \n\
-                                      for the alignment (defaults to first conformation)\n\
-      - refCid                   ID of the conformation in the ref molecule to which \n\
-                                      the alignment is computed (defaults to first conformation)\n\
       - prbPyMMFFMolProperties   PyMMFFMolProperties object for the probe molecule as returned\n\
                                       by SetupMMFFForceField()\n\
       - refPyMMFFMolProperties   PyMMFFMolProperties object for the reference molecule as returned\n\
                                       by SetupMMFFForceField()\n\
+      - prbCid                   ID of the conformation in the probe to be used \n\
+                                      for the alignment (defaults to first conformation)\n\
+      - refCid                   ID of the conformation in the ref molecule to which \n\
+                                      the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
       - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
       - options                  options for the O3A algorithm\n\
@@ -355,8 +376,8 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
     \n";
   python::def("GetO3A", RDKit::MolAlign::getO3A,
               (python::arg("prbMol"), python::arg("refMol"),
-               python::arg("prbPyMMFFMolProperties"),
-               python::arg("refPyMMFFMolProperties"),
+               python::arg("prbPyMMFFMolProperties") = python::object(),
+               python::arg("refPyMMFFMolProperties") = python::object(),
                python::arg("prbCid") = -1, python::arg("refCid") = -1,
                python::arg("reflect") = false, python::arg("maxIters") = 50,
                python::arg("options") = 1),

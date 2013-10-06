@@ -741,6 +741,7 @@ namespace RDKit {
           *(bestSDM[0]) = *(bestSDM[1]);
         }
       }
+      if(!extLAP) delete lap;
       RDKit::MatchVectType *o3aMatchVect = new RDKit::MatchVectType(pairs[0]);
       RDNumeric::DoubleVector *o3aWeights = new RDNumeric::DoubleVector(pairs[0]);
       bestSDM[0]->prepareMatchWeightsVect(*o3aMatchVect, *o3aWeights, bestC);
