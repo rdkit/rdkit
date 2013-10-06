@@ -35,56 +35,75 @@ const int ci_LOCAL_INF=static_cast<int>(1e8);
 
 namespace RDKit{
   namespace MolOps {
+    namespace {
+      void nitrogenCleanup(RWMol &mol,Atom *atom){
+        // conversions here:
+        // - neutral 5 coordinate Ns with double bonds to Os to the
+        //   zwitterionic form.  e.g.:
+        //   CN(=O)=O -> C[N+](=O)[O-]
+        //   and:
+        //   C1=CC=CN(=O)=C1 -> C1=CC=C[N+]([O-])=C1
+        // - neutral 5 coordinate Ns with triple bonds to Ns to the
+        //   zwitterionic form.  e.g.:
+        //   C-N=N#N -> C-N=[N+]=[N-] 
+
+        PRECONDITION(atom,"bad atom");
+        bool aromHolder;
+
+        // we only want to do neutrals so that things like this don't get
+        // munged: 
+        //  O=[n+]1occcc1
+        // this was sf.net issue 1811276
+        if(atom->getFormalCharge()) return;
+
+        // we need to play this little aromaticity game because the
+        // explicit valence code modifies its results for aromatic
+        // atoms.
+        aromHolder = atom->getIsAromatic();
+        atom->setIsAromatic(0);
+        // NOTE that we are calling calcExplicitValence() here, we do
+        // this because we cannot be sure that it has already been
+        // called on the atom (cleanUp() gets called pretty early in
+        // the sanitization process):
+        if(atom->calcExplicitValence(false)==5 ) {
+          unsigned int aid = atom->getIdx();
+          RWMol::ADJ_ITER nid1,end1;
+          boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
+          while (nid1 != end1) {
+            if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 8) &&
+                (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
+                (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() == Bond::DOUBLE)) {
+              // here's the double bonded oxygen
+              Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
+              b->setBondType(Bond::SINGLE);
+              atom->setFormalCharge(1);
+              mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
+              break;
+            } else if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 7) &&
+                       (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
+                       (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() == Bond::TRIPLE)) {
+              // here's the triple bonded nitrogen
+              Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
+              b->setBondType(Bond::DOUBLE);
+              atom->setFormalCharge(1);
+              mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
+              break;
+            }
+            ++nid1;
+          } // end of loop over the first neigh
+        } // if this atom is 5 coordinate nitrogen
+          // force a recalculation of the explicit valence here
+        atom->setIsAromatic(aromHolder);
+        atom->calcExplicitValence(false);
+      }
+    }
+
     void cleanUp(RWMol &mol) {
       ROMol::AtomIterator ai; 
-      int aid;
-      bool aromHolder;
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
         switch( (*ai)->getAtomicNum() ){
         case 7:
-          // convert neutral 5 coordinate Ns with double bonds to Os to the
-          // zwitterionic form.  e.g.:
-          //  CN(=O)=O -> C[N+](=O)[O-]
-          // and:
-          //  C1=CC=CN(=O)=C1 -> C1=CC=C[N+]([O-])=C1
-
-          // we only want to do neutrals so that things like this don't get
-          // munged: 
-          //  O=[n+]1occcc1
-          // this was sf.net issue 1811276
-          if((*ai)->getFormalCharge()){
-            continue;
-          }
-
-          // we need to play this little aromaticity game because the
-          // explicit valence code modifies its results for aromatic
-          // atoms.
-          aromHolder = (*ai)->getIsAromatic();
-          (*ai)->setIsAromatic(0);
-          // NOTE that we are calling calcExplicitValence() here, we do
-          // this because we cannot be sure that it has already been
-          // called on the atom (cleanUp() gets called pretty early in
-          // the sanitization process):
-          if((*ai)->calcExplicitValence(false)==5 ) {
-            aid = (*ai)->getIdx();
-            RWMol::ADJ_ITER nid1,end1;
-            boost::tie(nid1, end1) = mol.getAtomNeighbors(*ai);
-            while (nid1 != end1) {
-              if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 8) &&
-                  (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() == Bond::DOUBLE)) {
-                // here's the double bonded oxygen
-                Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
-                b->setBondType(Bond::SINGLE);
-                (*ai)->setFormalCharge(1);
-                mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
-                break;
-              }
-              nid1++;
-            } // end of loop over the first neigh
-          } // if this atom is 5 coordinate nitrogen
-          // force a recalculation of the explicit valence here
-          (*ai)->setIsAromatic(aromHolder);
-          (*ai)->calcExplicitValence(false);
+          nitrogenCleanup(mol,*ai);
           break;
         case 17:
           // recognize perchlorate and convert it from:
@@ -92,7 +111,7 @@ namespace RDKit{
           // to:
           //    [Cl+3]([O-])([O-])([O-])[O-]
           if((*ai)->calcExplicitValence(false)==7 && (*ai)->getFormalCharge()==0){
-            aid = (*ai)->getIdx();
+            unsigned int aid = (*ai)->getIdx();
             bool neighborsAllO=true;
             RWMol::ADJ_ITER nid1,end1;
             boost::tie(nid1, end1) = mol.getAtomNeighbors(*ai);
@@ -101,7 +120,7 @@ namespace RDKit{
                 neighborsAllO = false;
                 break;
               }
-              nid1++;
+              ++nid1;
             }
             if(neighborsAllO){
               (*ai)->setFormalCharge(3);
@@ -114,7 +133,7 @@ namespace RDKit{
                   otherAtom->setFormalCharge(-1);
                   otherAtom->calcExplicitValence(false);
                 }
-                nid1++;
+                ++nid1;
               }
               (*ai)->calcExplicitValence(false);
             }
