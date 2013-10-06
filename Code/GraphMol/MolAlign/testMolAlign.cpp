@@ -9,6 +9,9 @@
 //  of the RDKit source tree.
 //
 #include "AlignMolecules.h"
+#include "O3AAlignMolecules.h"
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
@@ -29,7 +32,7 @@ void test1MolAlign() {
   ROMol *m2 = MolFileToMol(fname2);
   
   double rmsd = MolAlign::alignMol(*m2, *m1);
-  CHECK_INVARIANT(RDKit::feq(rmsd, 0.6578), "");
+  TEST_ASSERT(RDKit::feq(rmsd, 0.6578));
   
   std::string fname3 = rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_trans.mol";
   ROMol *m3 = MolFileToMol(fname3);
@@ -39,17 +42,17 @@ void test1MolAlign() {
   for (i = 0; i < nat; i++) {
     RDGeom::Point3D pt1 = conf1.getAtomPos(i);
     RDGeom::Point3D pt2 = conf2.getAtomPos(i);
-    CHECK_INVARIANT(RDKit::feq(pt1.x, pt2.x, 0.001), "");
-    CHECK_INVARIANT(RDKit::feq(pt1.y, pt2.y, 0.001), "");
-    CHECK_INVARIANT(RDKit::feq(pt1.z, pt2.z, 0.001), "");
+    TEST_ASSERT(RDKit::feq(pt1.x, pt2.x, 0.001));
+    TEST_ASSERT(RDKit::feq(pt1.y, pt2.y, 0.001));
+    TEST_ASSERT(RDKit::feq(pt1.z, pt2.z, 0.001));
   }
   RDGeom::Transform3D trans;
   rmsd = MolAlign::getAlignmentTransform(*m1, *m2, trans);
-  CHECK_INVARIANT(RDKit::feq(rmsd, 0.6578), "");
+  TEST_ASSERT(RDKit::feq(rmsd, 0.6578));
 
   // specify conformations
   rmsd = MolAlign::alignMol(*m1, *m2, 0, 0);
-  CHECK_INVARIANT(RDKit::feq(rmsd, 0.6578), "");
+  TEST_ASSERT(RDKit::feq(rmsd, 0.6578));
 
   // provide an atom mapping
   delete m1;
@@ -71,7 +74,7 @@ void test2AtomMap() {
   atomMap.push_back(std::pair<int, int>(9, 19));
   atomMap.push_back(std::pair<int, int>(16, 30));
   double rmsd = MolAlign::alignMol(*m2, *m1, 0, 0, &atomMap);
-  CHECK_INVARIANT(RDKit::feq(rmsd, 0.8525), "");
+  TEST_ASSERT(RDKit::feq(rmsd, 0.8525));
   delete m1;
   delete m2;
   
@@ -96,7 +99,7 @@ void test3Weights() {
   wts.setVal(2, 1.0); wts.setVal(3, 1.0);
   wts.setVal(4, 1.0); wts.setVal(5, 2.0);
   double rmsd = MolAlign::alignMol(*m2, *m1, 0, 0, &atomMap, &wts);
-  CHECK_INVARIANT(RDKit::feq(rmsd, 0.9513), "");
+  TEST_ASSERT(RDKit::feq(rmsd, 0.9513));
   delete m1;
   delete m2;
 }
@@ -122,7 +125,35 @@ void testIssue241() {
   ff2->minimize(200, 1e-8, 1e-6);
 
   double rmsd = MolAlign::alignMol(*ref, *probe);
-  CHECK_INVARIANT(RDKit::feq(rmsd, 0.0), "");
+  TEST_ASSERT(RDKit::feq(rmsd, 0.0));
+}
+
+void testO3A() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
+  std::string newSdf = sdf + "_O3A.sdf";
+  sdf += ".sdf";
+  SDMolSupplier supplier(sdf, true, false);
+  int nMol = supplier.length();
+  const int refNum = 48;
+  //SDWriter *newMol = new SDWriter(newSdf);
+  ROMol refMol = *(supplier[refNum]);
+  MMFF::MMFFMolProperties refMP(refMol);
+  double cumScore = 0.0;
+  double cumMsd = 0.0;
+  for (int prbNum = 0; prbNum < nMol; ++prbNum) {
+    ROMol prbMol = *(supplier[prbNum]);
+    MMFF::MMFFMolProperties prbMP(prbMol);
+    MolAlign::O3A o3a(prbMol, refMol, &prbMP, &refMP);
+    double rmsd = o3a.align();
+    cumMsd += rmsd * rmsd;
+    cumScore += o3a.score();
+    //newMol->write(prbMol);
+  }
+  cumMsd /= (double)nMol;
+  //newMol->close();
+  TEST_ASSERT(RDKit::feq(cumScore, 6772,1));
+  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.385,.001));
 }
     
 int main() {
@@ -144,6 +175,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testIssue241 \n\n";
   testIssue241();
+    
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testO3A \n\n";
+  testO3A();
   std::cout << "***********************************************************\n";
   return(0);
 
