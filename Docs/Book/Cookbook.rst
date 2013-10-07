@@ -387,9 +387,7 @@ http://scikit-learn.org/stable/user_guide.html
 RDKit fingerprints can be used to train machine-learning
 models from scikit-learn. Here is an example for random forest:
 
-The code:
-
-.. testcode::
+The code::
 
   from rdkit import Chem, DataStructs
   from rdkit.Chem import AllChem
@@ -430,17 +428,16 @@ The code:
   print rf.predict(fp)
   print rf.predict_proba(fp)
 
-This produces:
-
-.. testoutput::
+The output with scikit-learn version 0.13 is:
 
     [1]
+    
     [[ 0.14  0.86]]
     
 
-Generating a similarity map for this model:
+Generating a similarity map for this model.
 
-.. testcode::
+The code::
 
   from rdkit.Chem.Draw import SimilarityMaps
   
@@ -450,13 +447,8 @@ Generating a similarity map for this model:
   
   m5 = Chem.MolFromSmiles('c1ccccc1O')
   fig, maxweight = SimilarityMaps.GetSimilarityMapForModel(m5, SimilarityMaps.GetMorganFingerprint, lambda x: getProba(x, rf.predict_proba))
-  print maxweight
   
 This produces:
-
-.. testoutput::
-
-    0.05
     
 .. image:: images/similarity_map_rf.png
 
