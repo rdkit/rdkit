@@ -1243,9 +1243,7 @@ of the Morgan fingerprint function, the similarity map can be generated like thi
 
 Producing this image:
 
-+-------------------------------------------+
-| .. image:: images/similarity_map_fp1.png  |
-+-------------------------------------------+
+.. image:: images/similarity_map_fp1.png
 
 For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well as a different 
 similarity metric (e.g. Tanimoto), the call becomes:
@@ -1255,9 +1253,7 @@ similarity metric (e.g. Tanimoto), the call becomes:
 
 Producing this image:
 
-+-------------------------------------------+
-| .. image:: images/similarity_map_fp2.png  |
-+-------------------------------------------+
+.. image:: images/similarity_map_fp2.png
 
 The convenience function GetSimilarityMapForFingerprint involves the normalisation
 of the atomic weights such that the maximum absolute weight is 1. Therefore, the 
@@ -1275,9 +1271,7 @@ If one does not want the normalisation step, the map can be created like:
 
 Producing this image:
 
-+-------------------------------------------+
-| .. image:: images/similarity_map_fp3.png  |
-+-------------------------------------------+
+.. image:: images/similarity_map_fp3.png
 
 
 Descriptor Calculation
@@ -1320,9 +1314,7 @@ The Gasteiger partial charges can be visualized as (using a different color sche
 
 Producing this image:
 
-+-----------------------------------------------+
-| .. image:: images/similarity_map_charges.png  |
-+-----------------------------------------------+
+.. image:: images/similarity_map_charges.png
 
 Or for the Crippen contributions to logP:
 
@@ -1331,9 +1323,7 @@ Or for the Crippen contributions to logP:
 
 Producing this image:
 
-+-----------------------------------------------+
-| .. image:: images/similarity_map_crippen.png  |
-+-----------------------------------------------+
+.. image:: images/similarity_map_crippen.png
 
 Chemical Reactions
 ******************
