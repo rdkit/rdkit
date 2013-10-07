@@ -7,6 +7,7 @@
 from rdkit import RDConfig
 import os,sys
 import unittest
+import math
 from rdkit import Chem
 from rdkit.Chem import rdMolAlign,rdDistGeom,ChemicalForceFields
 
@@ -47,7 +48,7 @@ class TestCase(unittest.TestCase):
             self.failUnless(lstFeq(conf2.GetAtomPosition(i), conf3.GetAtomPosition(i)))
 
         rmsd, trans = rdMolAlign.GetAlignmentTransform(mol2, mol1)
-        self.failUnless(feq(rmsd, 0.6578))
+        self.failUnlessAlmostEqual(rmsd, 0.6579,4)
 
     def test2AtomMap(self) :
         atomMap = ((18,27), (13,23), (21,14), (24,7), (9,19), (16,30))
@@ -59,7 +60,7 @@ class TestCase(unittest.TestCase):
         mol1 = Chem.MolFromMolFile(file1)
         mol2 = Chem.MolFromMolFile(file2)
         rmsd = rdMolAlign.AlignMol(mol2, mol1, 0, 0, atomMap)
-        self.failUnless(feq(rmsd, 0.8525))
+        self.failUnlessAlmostEqual(rmsd, 0.8525,4)
 
     def test3Weights(self):
         atomMap = ((18,27), (13,23), (21,14), (24,7), (9,19), (16,30))
@@ -72,7 +73,7 @@ class TestCase(unittest.TestCase):
         mol2 = Chem.MolFromMolFile(file2)
         wts = (1.0, 1.0, 1.0, 1.0, 1.0, 2.0)
         rmsd = rdMolAlign.AlignMol(mol2, mol1, 0, 0, atomMap, wts)
-        self.failUnless(feq(rmsd, 0.9513))
+        self.failUnlessAlmostEqual(rmsd, 0.9513,4)
 
     def test4AlignConfs(self):
       mol = Chem.MolFromSmiles('C1CC1CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
@@ -106,6 +107,46 @@ class TestCase(unittest.TestCase):
             
             self.failUnless(lstFeq(mpos, pos, .5))
 
+    def test5O3A(self):
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      # alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+      #                           'MolAlign', 'test_data', 'ref_e2_pyO3A.sdf')
+      molS = Chem.SDMolSupplier(sdf, True, False)
+      # molW = Chem.SDWriter(alignedSdf)
+      refNum = 48
+      refMol = molS[refNum]
+      cumScore = 0.0
+      cumMsd = 0.0
+      refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+      for prbMol in molS:
+        prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+        pyO3A = rdMolAlign.GetO3A(prbMol, refMol, prbPyMP, refPyMP)
+        cumScore += pyO3A.Score()
+        rmsd = pyO3A.Align()
+        cumMsd += rmsd * rmsd
+        # molW.write(prbMol)
+      cumMsd /= len(molS)
+      self.failUnlessAlmostEqual(cumScore,6772,0)
+      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.385,3)
+
+    def test6O3A(self):
+      " now test where the mmff parameters are generated on call "
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      molS = Chem.SDMolSupplier(sdf, True, False)
+      refNum = 48
+      refMol = molS[refNum]
+      cumScore = 0.0
+      cumMsd = 0.0
+      for prbMol in molS:
+        pyO3A = rdMolAlign.GetO3A(prbMol, refMol)
+        cumScore += pyO3A.Score()
+        rmsd = pyO3A.Align()
+        cumMsd += rmsd * rmsd
+      cumMsd /= len(molS)
+      self.failUnlessAlmostEqual(cumScore,6772,0)
+      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.385,3)
           
 if __name__ == '__main__':
     print "Testing MolAlign Wrappers"

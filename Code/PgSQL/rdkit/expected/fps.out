@@ -4,6 +4,24 @@ SELECT dice_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));
  0.372093023255814
 (1 row)
 
+SELECT tversky_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol),0.5,0.5);
+    tversky_sml    
+-------------------
+ 0.372093023255814
+(1 row)
+
+SELECT tanimoto_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));
+   tanimoto_sml    
+-------------------
+ 0.228571428571429
+(1 row)
+
+SELECT tversky_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol),1.0,1.0);
+    tversky_sml    
+-------------------
+ 0.228571428571429
+(1 row)
+
 SELECT dice_sml(atompair_fp('c1ccccc1'::mol),atompair_fp('c1ccncc1'::mol));
      dice_sml      
 -------------------

@@ -155,6 +155,7 @@ extern "C" {
 
   double calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
   double calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
+  double calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b,float ca, float cb);
 
   /* SparseIntVect<boost::int32_t> */
   typedef void * MolSparseFingerPrint;

@@ -3,6 +3,7 @@ from rdkit import RDConfig
 import unittest
 import cPickle as pickle
 import random
+import numpy
 
 def feq(a,b,tol=1e-4):
   return abs(a-b)<tol
@@ -192,6 +193,102 @@ class TestCase(unittest.TestCase):
       for i in range(bv.GetNumBits()):
         self.failUnlessEqual(bv[i],arr[i])
 
+   def test10BulkOps2(self):
+      nbits = 10000
+      bvs = []
+      for bvi in range(10):
+        bv = DataStructs.ExplicitBitVect(nbits)
+        for j in range(nbits) :
+           x = random.randrange(0,nbits)
+           bv.SetBit(x)
+        bvs.append(bv)
+      bvs = tuple(bvs)
+      sims = DataStructs.BulkTanimotoSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkDiceSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkAllBitSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.AllBitSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkOnBitSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkRogotGoldbergSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.RogotGoldbergSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
+      for i in range(len(bvs)):
+        sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)
+        self.failUnless(feq(sim,sims[i]))
+        sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,.5,.5)
+      for i in range(len(bvs)):
+        sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],.5,.5)
+        self.failUnless(feq(sim,sims[i]))
+        sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+   def test10BulkOps3(self):
+      nbits = 10000
+      bvs = numpy.empty((10,),DataStructs.ExplicitBitVect)
+      for bvi in range(10):
+        bv = DataStructs.ExplicitBitVect(nbits)
+        for j in range(nbits) :
+           x = random.randrange(0,nbits)
+           bv.SetBit(x)
+        bvs[bvi]=bv
+      sims = DataStructs.BulkTanimotoSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkDiceSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkAllBitSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.AllBitSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkOnBitSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkRogotGoldbergSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.RogotGoldbergSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
+      for i in range(len(bvs)):
+        sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)
+        self.failUnless(feq(sim,sims[i]))
+        sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,.5,.5)
+      for i in range(len(bvs)):
+        sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],.5,.5)
+        self.failUnless(feq(sim,sims[i]))
+        sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
 
       
 if __name__ == '__main__':

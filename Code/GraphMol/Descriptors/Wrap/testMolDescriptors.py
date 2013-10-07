@@ -206,69 +206,6 @@ class TestCase(unittest.TestCase) :
     contribs = rdMD._CalcCrippenContribs(mol,force=True,atomTypeLabels=ls)
     self.failUnlessEqual(ls,['N11', 'C18', 'C18', 'C18', 'C18', 'C21', 'C10', 'O2'])
 
-
-  def testUSR(self):
-    mol = Chem.MolFromSmiles("CC")
-    AllChem.Compute2DCoords(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSR(mol))
-    mol = Chem.MolFromSmiles("C1CCCCC1")
-    mol = Chem.AddHs(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSR(mol))
-    AllChem.Compute2DCoords(mol)
-    usr = rdMD.GetUSR(mol)
-    self.failUnlessEqual(len(usr), 12)
-
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributions([]))
-    
-    conf = mol.GetConformer()
-    coords = [conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
-    dist = rdMD.GetUSRDistributions(coords)
-    self.failUnlessEqual(len(dist), 4)
-    self.failUnlessEqual(len(dist[0]), mol.GetNumAtoms())
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRFromDistributions([]))
-    usr2 = rdMD.GetUSRFromDistributions(dist)
-    self.failUnlessEqual(usr, usr2)
-
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
-    p = []
-    dist = rdMD.GetUSRDistributions(coords, p)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
-    dist2 = rdMD.GetUSRDistributionsFromPoints(coords, p)
-    usr2 = rdMD.GetUSRFromDistributions(dist2)
-    self.failUnlessEqual(usr, usr2)
-
-    mol2 = Chem.MolFromSmiles("C1CCCCC1")
-    mol2 = Chem.AddHs(mol2)
-    AllChem.Compute2DCoords(mol2)
-    usr2 = rdMD.GetUSR(mol2)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRScore(usr, usr2[:2]))
-    self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
-
-    m1 = [4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51]
-    m2 = [4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13]
-    self.failUnlessAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
-    
-
-  def testUSRCAT(self):
-    mol = Chem.MolFromSmiles("CC")
-    AllChem.Compute2DCoords(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
-    mol = Chem.MolFromSmiles("C1CCCCC1")
-    mol = Chem.AddHs(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
-    AllChem.Compute2DCoords(mol)
-    usr = rdMD.GetUSRCAT(mol)
-    self.failUnlessEqual(len(usr), 60)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol, atomSelections=[]))
-    atoms = [[1, 2, 3, 4, 5, 6], []]
-    usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
-    self.failUnlessEqual(len(usr2), 36)
-    atoms = [[1, 2, 3, 4, 5, 6], [], [], []]
-    usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
-    self.failUnlessEqual(len(usr2), 60)
-    self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2, weights=[1.0, 1.0, 1.0, 1.0, 1.0]), 1.0)
-
-
   def testMolWt(self):
     mol = Chem.MolFromSmiles("C");
     amw = rdMD._CalcMolWt(mol);
