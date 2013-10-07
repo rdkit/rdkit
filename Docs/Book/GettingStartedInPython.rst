@@ -1266,8 +1266,8 @@ If one does not want the normalisation step, the map can be created like:
 
 >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
 >>> print ["%.2f " % w for w in weights]
->>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
 ['0.05 ', ...
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
 
 Producing this image:
 
@@ -1308,7 +1308,7 @@ The Gasteiger partial charges can be visualized as (using a different color sche
 
 >>> from rdkit.Chem.Draw import SimilarityMaps
 >>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
->>> AllChem.ComputeGasteigerCharges(m)
+>>> AllChem.ComputeGasteigerCharges(mol)
 >>> contribs = [float(mol.GetAtomWithIdx(i).GetProp('_GasteigerCharge')) for i in range(mol.GetNumAtoms())]
 >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, colorMap='jet', contourLines=10)
 
@@ -1318,6 +1318,7 @@ Producing this image:
 
 Or for the Crippen contributions to logP:
 
+>>> from rdkit.Chem import rdMolDescriptors
 >>> contribs = rdMolDescriptors._CalcCrippenContribs(mol)
 >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], colorMap='jet', contourLines=10)
 

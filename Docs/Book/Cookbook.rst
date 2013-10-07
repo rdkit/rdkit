@@ -414,7 +414,7 @@ The code:
     np_fps.append(arr)
     
   # get a random forest classifiert with 100 trees
-  rf = RandomForestClassifier(n_estimators=100, seed=1123)
+  rf = RandomForestClassifier(n_estimators=100, random_state=1123)
   
   # train the random forest
   # with the first two molecules being actives (class 1) and 
@@ -446,8 +446,9 @@ Generating a similarity map for this model:
   
   # helper function
   def getProba(fp, predictionFunction):
-    return predictionFunctoin(fp)[0][1]
+    return predictionFunction(fp)[0][1]
   
+  m5 = Chem.MolFromSmiles('c1ccccc1O')
   fig, maxweight = SimilarityMaps.GetSimilarityMapForModel(m5, SimilarityMaps.GetMorganFingerprint, lambda x: getProba(x, rf.predict_proba))
   print maxweight
   
