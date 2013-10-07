@@ -75,6 +75,7 @@ namespace ForceFields {
         }
         order = 0;
       }
+      // end of the hack
       dp_forceField = owner;
       d_at1Idx = idx1;
       d_at2Idx = idx2;
