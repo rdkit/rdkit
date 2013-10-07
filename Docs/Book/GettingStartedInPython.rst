@@ -1209,12 +1209,14 @@ get the molecules themselves as follows:
 
 >>> picks = [ms[x] for x in pickIndices]
 
+
 Generating Similarity Maps Using Fingerprints
 ============================================
 
 Similarity maps are a way to visualize the atomic contributions to
-the similarity between a molecule and a reference molecule. They are 
-in the :api:`rdkit.Chem.Draw.SimilarityMaps` module :
+the similarity between a molecule and a reference molecule. The
+methodology is described in Ref. [#riniker]_ .
+They are in the :api:`rdkit.Chem.Draw.SimilarityMaps` module :
 
 Start by creating two molecules:
 
@@ -2165,6 +2167,7 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#mmff3] Halgren, T. A. "Merck molecular force field. III. Molecular geometries and vibrational frequencies for MMFF94." *J. Comp. Chem.* **17**:553–86 (1996).
 .. [#mmff4] Halgren, T. A. & Nachbar, R. B. "Merck molecular force field. IV. conformational energies and geometries for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996).
 .. [#mmffs] Halgren, T. A. "MMFF VI. MMFF94s option for energy minimization studies." *J. Comp. Chem.* **20**:720–9 (1999).
+.. [#riniker] Riniker, S.; Landrum, G. A. "Similarity Maps - A Visualization Strategy for Molecular Fingerprints and Machine-Learning Methods" *J. Cheminf.* **5**:43 (2013).
 
 
 
