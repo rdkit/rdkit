@@ -1,4 +1,3 @@
-
 RDKit Cookbook
 %%%%%%%%%%%%%%
 
@@ -377,6 +376,81 @@ This produces:
     CC[N-]C(=O)CC -> CCNC(=O)CC
 
 
+Using scikit-learn with RDKit
+-----------------------------
+
+scikit-learn is a machine-learning library for Python 
+containing a variety of supervised and unsupervised methods.
+The documention can be found here:
+http://scikit-learn.org/stable/user_guide.html
+
+RDKit fingerprints can be used to train machine-learning
+models from scikit-learn. Here is an example for random forest:
+
+The code::
+
+  from rdkit import Chem, DataStructs
+  from rdkit.Chem import AllChem
+  from sklearn.ensemble import RandomForestClassifier
+  import numpy
+  
+  # generate four molecules
+  m1 = Chem.MolFromSmiles('c1ccccc1')
+  m2 = Chem.MolFromSmiles('c1ccccc1CC')
+  m3 = Chem.MolFromSmiles('c1ccncc1')
+  m4 = Chem.MolFromSmiles('c1ccncc1CC')
+  mols = [m1, m2, m3, m4]
+  
+  # generate fingeprints: Morgan fingerprint with radius 2
+  fps = [AllChem.GetMorganFingerprintAsBitVect(m, 2) for m in mols]
+  
+  # convert the RDKit explicit vectors into numpy arrays
+  np_fps = []
+  for fp in fps:
+    arr = numpy.zeros((1,))
+    DataStructs.ConvertToNumpyArray(fp, arr)
+    np_fps.append(arr)
+    
+  # get a random forest classifiert with 100 trees
+  rf = RandomForestClassifier(n_estimators=100, random_state=1123)
+  
+  # train the random forest
+  # with the first two molecules being actives (class 1) and 
+  # the last two being inactives (class 0)
+  ys_fit = [1, 1, 0, 0]
+  rf.fit(np_fps, ys_fit)
+  
+  # use the random forest to predict a new molecule
+  m5 = Chem.MolFromSmiles('c1ccccc1O')
+  fp = numpy.zeros((1,))
+  DataStructs.ConvertToNumpyArray(AllChem.GetMorganFingerprintAsBitVect(m5, 2), fp)
+  
+  print rf.predict(fp)
+  print rf.predict_proba(fp)
+
+The output with scikit-learn version 0.13 is:
+
+    [1]
+    
+    [[ 0.14  0.86]]
+    
+
+Generating a similarity map for this model.
+
+The code::
+
+  from rdkit.Chem.Draw import SimilarityMaps
+  
+  # helper function
+  def getProba(fp, predictionFunction):
+    return predictionFunction(fp)[0][1]
+  
+  m5 = Chem.MolFromSmiles('c1ccccc1O')
+  fig, maxweight = SimilarityMaps.GetSimilarityMapForModel(m5, SimilarityMaps.GetMorganFingerprint, lambda x: getProba(x, rf.predict_proba))
+  
+This produces:
+    
+.. image:: images/similarity_map_rf.png
 
 
 License
