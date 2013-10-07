@@ -1,4 +1,3 @@
-
 Getting Started with the RDKit in Python
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1210,6 +1209,72 @@ get the molecules themselves as follows:
 >>> picks = [ms[x] for x in pickIndices]
 
 
+Generating Similarity Maps Using Fingerprints
+============================================
+
+Similarity maps are a way to visualize the atomic contributions to
+the similarity between a molecule and a reference molecule. The
+methodology is described in Ref. [#riniker]_ .
+They are in the :api:`rdkit.Chem.Draw.SimilarityMaps` module :
+
+Start by creating two molecules:
+
+>>> from rdkit import Chem
+>>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+>>> refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
+
+The SimilarityMaps module supports three kind of fingerprints:
+atom pairs, topological torsions and Morgan fingerprints.
+
+>>> from rdkit.Chem import Draw
+>>> from rdkit.Chem.Draw import SimilarityMaps
+>>> fp = SimilarityMaps.GetAPFingerprint(mol, fpType='normal')
+>>> fp = SimilarityMaps.GetTTFingerprint(mol, fpType='normal')
+>>> fp = SimilarityMaps.GetMorganFingerprint(mol, fpType='bv')
+
+The types of atom pairs and torsions are normal (default), hashed and bit vector (bv).
+The types of the Morgan fingerprint are bit vector (bv, default) and count vector (count).
+
+The function generating a similarity map for two fingerprints requires the
+specification of the fingerprint function and optionally the similarity metric.
+The default for the latter is the Dice similarity. Using all the default arguments
+of the Morgan fingerprint function, the similarity map can be generated like this:
+
+>>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+
+Producing this image:
+
+.. image:: images/similarity_map_fp1.png
+
+For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well as a different 
+similarity metric (e.g. Tanimoto), the call becomes:
+
+>>> from rdkit import DataStructs
+>>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
+
+Producing this image:
+
+.. image:: images/similarity_map_fp2.png
+
+The convenience function GetSimilarityMapForFingerprint involves the normalisation
+of the atomic weights such that the maximum absolute weight is 1. Therefore, the 
+function outputs the maximum weight that was found when creating the map.
+
+>>> print maxweight
+0.0574712643678
+
+If one does not want the normalisation step, the map can be created like:
+
+>>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+>>> print ["%.2f " % w for w in weights]
+['0.05 ', ...
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
+
+Producing this image:
+
+.. image:: images/similarity_map_fp3.png
+
+
 Descriptor Calculation
 **********************
 
@@ -1233,6 +1298,34 @@ Partial charges are handled a bit differently:
 >>> float(m.GetAtomWithIdx(0).GetProp('_GasteigerCharge'))
 -0.047...
 
+
+Visualization of Descriptors
+============================
+
+Similarity maps can be used to visualize descriptors that can be divided into 
+atomic contributions. 
+
+The Gasteiger partial charges can be visualized as (using a different color scheme):
+
+>>> from rdkit.Chem.Draw import SimilarityMaps
+>>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+>>> AllChem.ComputeGasteigerCharges(mol)
+>>> contribs = [float(mol.GetAtomWithIdx(i).GetProp('_GasteigerCharge')) for i in range(mol.GetNumAtoms())]
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, colorMap='jet', contourLines=10)
+
+Producing this image:
+
+.. image:: images/similarity_map_charges.png
+
+Or for the Crippen contributions to logP:
+
+>>> from rdkit.Chem import rdMolDescriptors
+>>> contribs = rdMolDescriptors._CalcCrippenContribs(mol)
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], colorMap='jet', contourLines=10)
+
+Producing this image:
+
+.. image:: images/similarity_map_crippen.png
 
 Chemical Reactions
 ******************
@@ -2073,6 +2166,7 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#mmff3] Halgren, T. A. "Merck molecular force field. III. Molecular geometries and vibrational frequencies for MMFF94." *J. Comp. Chem.* **17**:553–86 (1996).
 .. [#mmff4] Halgren, T. A. & Nachbar, R. B. "Merck molecular force field. IV. conformational energies and geometries for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996).
 .. [#mmffs] Halgren, T. A. "MMFF VI. MMFF94s option for energy minimization studies." *J. Comp. Chem.* **20**:720–9 (1999).
+.. [#riniker] Riniker, S.; Landrum, G. A. "Similarity Maps - A Visualization Strategy for Molecular Fingerprints and Machine-Learning Methods" *J. Cheminf.* **5**:43 (2013).
 
 
 
