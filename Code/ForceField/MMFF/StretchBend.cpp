@@ -116,11 +116,8 @@ namespace ForceFields {
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
       double angleTerm = RAD2DEG * acos(cosTheta) - this->d_theta0;
-      double distTerm = RAD2DEG * d_forceConstants.first * (dist1 - this->d_restLen1)
-        + d_forceConstants.second * (dist2 - this->d_restLen2);
-      if (isDoubleZero(sinTheta) || isDoubleZero(dist1) || isDoubleZero(dist2)) {
-        return;
-      }
+      double distTerm = RAD2DEG * (d_forceConstants.first * (dist1 - this->d_restLen1)
+        + d_forceConstants.second * (dist2 - this->d_restLen2));
       double dCos_dS1 = 1.0 / dist1 * (p32.x - cosTheta * p12.x);
       double dCos_dS2 = 1.0 / dist1 * (p32.y - cosTheta * p12.y);
       double dCos_dS3 = 1.0 / dist1 * (p32.z - cosTheta * p12.z);

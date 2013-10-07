@@ -181,10 +181,10 @@ namespace RDKit {
                 case Atom::SP:
                   order=1;
                   break;
-                // the following is a hack to get decent geometries
-                // with 3- and 4-membered rings incorporating sp2 atoms
                 case Atom::SP2:
                   order=3;
+                  // the following is a hack to get decent geometries
+                  // with 3- and 4-membered rings incorporating sp2 atoms
                   // if the central atom is in a ring of size 3
                   if (rings->isAtomInRingOfSize(j, 3)) {
                     // if the central atom and one of the bonded atoms, but not the
@@ -213,6 +213,7 @@ namespace RDKit {
                       order = 45;
                     }
                   }
+                  // end of the hack
                   break;
                 case Atom::SP3D2:
                   order=4;
