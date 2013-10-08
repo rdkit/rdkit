@@ -1953,6 +1953,35 @@ void testSanitOps()
   TEST_ASSERT(m->getNumAtoms()==51);
   TEST_ASSERT(m->getAtomWithIdx(7)->getFormalCharge()==3);
   delete m;
+
+  smi = "CN=N#N";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge()==1);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge()==-1);
+  TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondType()==Bond::DOUBLE);
+  delete m;
+
+  smi = "N#N=NC";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge()==0);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::DOUBLE);
+  delete m;
+
+  smi = "N#N";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==2);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::TRIPLE);
+  delete m;
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

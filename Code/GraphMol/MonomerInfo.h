@@ -56,39 +56,47 @@ namespace RDKit{
                                                           d_serialNumber(other.d_serialNumber),
                                                           d_altLoc(other.d_altLoc),
                                                           d_residueName(other.d_residueName),
+                                                          d_residueNumber(other.d_residueNumber),
                                                           d_chainId(other.d_chainId),
                                                           d_insertionCode(other.d_insertionCode),
                                                           d_occupancy(other.d_occupancy),
                                                           d_tempFactor(other.d_tempFactor),
                                                           df_heteroAtom(false),
-                                                          d_secondaryStructure(0) {};
+                                                          d_secondaryStructure(0),
+                                                          d_segmentNumber(0){};
 
     AtomPDBResidueInfo(std::string atomName,
-                       unsigned int serialNumber=0,
+                       int serialNumber=0,
                        std::string altLoc="",
                        std::string residueName="",
+                       int residueNumber=0,
                        std::string chainId="",
                        std::string insertionCode="",
                        double occupancy=1.0,
                        double tempFactor=0.0,
                        bool isHeteroAtom=false,
-                       unsigned int secondaryStructure=0) :  AtomMonomerInfo(PDBRESIDUE,atomName),
-                                                             d_serialNumber(serialNumber),
-                                                             d_altLoc(altLoc),
-                                                             d_residueName(residueName),
-                                                             d_chainId(chainId),
-                                                             d_insertionCode(insertionCode),
-                                                             d_occupancy(occupancy),
-                                                             d_tempFactor(tempFactor),
-                                                             df_heteroAtom(isHeteroAtom),
-                                                             d_secondaryStructure(secondaryStructure) {};
+                       unsigned int secondaryStructure=0,
+                       unsigned int segmentNumber=0 ) :  AtomMonomerInfo(PDBRESIDUE,atomName),
+                                                         d_serialNumber(serialNumber),
+                                                         d_altLoc(altLoc),
+                                                         d_residueName(residueName),
+                                                         d_residueNumber(residueNumber),
+                                                         d_chainId(chainId),
+                                                         d_insertionCode(insertionCode),
+                                                         d_occupancy(occupancy),
+                                                         d_tempFactor(tempFactor),
+                                                         df_heteroAtom(isHeteroAtom),
+                                                         d_secondaryStructure(secondaryStructure),
+                                                         d_segmentNumber(segmentNumber) {};
     
-    unsigned int getSerialNumber() const { return d_serialNumber; };
-    void setSerialNumber(unsigned int val) { d_serialNumber=val; };
+    int getSerialNumber() const { return d_serialNumber; };
+    void setSerialNumber(int val) { d_serialNumber=val; };
     const std::string &getAltLoc() const { return d_altLoc; };
     void setAltLoc(const std::string &val) { d_altLoc=val; };
     const std::string &getResidueName() const { return d_residueName; };
     void setResidueName(const std::string &val) { d_residueName=val; };
+    int getResidueNumber() const { return d_residueNumber; };
+    void setResidueNumber(int val) { d_residueNumber=val; };
     const std::string &getChainId() const { return d_chainId; };
     void setChainId(const std::string &val) { d_chainId=val; };
     const std::string &getInsertionCode() const { return d_insertionCode; };
@@ -101,6 +109,8 @@ namespace RDKit{
     void setIsHeteroAtom(bool val) { df_heteroAtom=val; };
     unsigned int getSecondaryStructure() const {return d_secondaryStructure;};
     void setSecondaryStructure(unsigned int val) { d_secondaryStructure=val; };
+    unsigned int getSegmentNumber() const {return d_segmentNumber;};
+    void setSegmentNumber(unsigned int val) { d_segmentNumber=val; };
     
     
     AtomMonomerInfo *copy() const {
@@ -114,6 +124,7 @@ namespace RDKit{
     unsigned int d_serialNumber;
     std::string d_altLoc;
     std::string d_residueName;
+    int d_residueNumber;
     std::string d_chainId;
     std::string d_insertionCode;
     double d_occupancy;
@@ -121,6 +132,7 @@ namespace RDKit{
     // additional, non-PDB fields:
     bool df_heteroAtom;  // is this from a HETATM record?
     unsigned int d_secondaryStructure;
+    unsigned int d_segmentNumber;
 
   };
     

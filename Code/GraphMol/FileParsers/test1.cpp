@@ -2331,11 +2331,11 @@ void testIssue3073163(){
     MatchVectType mv;
     TEST_ASSERT(SubstructMatch(*m,*p,mv));
     std::string mb=MolToMolBlock(*m);
-    std::cerr<<"mb:\n"<<mb<<"----\n";
+    //std::cerr<<"mb:\n"<<mb<<"----\n";
     RWMol *m2=MolBlockToMol(mb);
     TEST_ASSERT(m2);
-    std::cerr<<"  mol: "<<MolToSmiles(*m,true)<<std::endl;
-    std::cerr<<"  mol2: "<<MolToSmiles(*m2,true)<<std::endl;
+    //std::cerr<<"  mol: "<<MolToSmiles(*m,true)<<std::endl;
+    //std::cerr<<"  mol2: "<<MolToSmiles(*m2,true)<<std::endl;
     TEST_ASSERT(SubstructMatch(*m2,*p,mv));
 
     delete m2;
@@ -3112,6 +3112,36 @@ void testMolFileWithHs(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileWithRxn(){
+  BOOST_LOG(rdInfoLog) << "testing reading reactions in mol files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"rxn1.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==18);
+    TEST_ASSERT(m->getNumBonds()==16);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+
+
+
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3176,6 +3206,7 @@ int main(int argc,char *argv[]){
   testGithub82();
 #endif
   testMolFileWithHs();
+  testMolFileWithRxn();
 
   return 0;
 }

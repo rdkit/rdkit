@@ -280,9 +280,9 @@ void testMMFFBuilder2()
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
-  mol = MolFileToMol(pathName + "/small1.mol", false);
+  mol = MolFileToMol(pathName + "/small1.mol",false);
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol(*mol);
+  MolOps::sanitizeMol(*mol);
 
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
@@ -306,9 +306,9 @@ void testMMFFBuilder2()
   delete mol;
   delete field;
 
-  mol = MolFileToMol(pathName + "/benzene.mol", false);
+  mol = MolFileToMol(pathName + "/benzene.mol",false);
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol(*mol);
+  MolOps::sanitizeMol(*mol);
 
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
@@ -319,9 +319,9 @@ void testMMFFBuilder2()
   delete mol;
   delete field;
   
-  mol = MolFileToMol(pathName + "/toluene.mol", false);
+  mol = MolFileToMol(pathName + "/toluene.mol",false);
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol(*mol);
+  MolOps::sanitizeMol(*mol);
 
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
@@ -332,9 +332,9 @@ void testMMFFBuilder2()
   delete mol;
   delete field;
 
-  mol = MolFileToMol(pathName + "/complex1.mol", false);
+  mol = MolFileToMol(pathName + "/complex1.mol",false);
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol(*mol);
+  MolOps::sanitizeMol(*mol);
 
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
@@ -360,13 +360,12 @@ void testMMFFBatch()
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
-  SDMolSupplier suppl(pathName + "/bulk.sdf", false);
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
 
   int count = 0;
   mol = suppl.next();
   while (mol && (!(suppl.atEnd()))) {
     ++count;
-    MMFF::sanitizeMMFFMol((RWMol &)*mol);
     std::string origMolBlock = MolToMolBlock(*mol);
 
     BOOST_LOG(rdErrorLog) << "Mol:" << count << std::endl;
@@ -405,10 +404,11 @@ void testIssue239()
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
-  mol = MolFileToMol(pathName + "/Issue239.mol", false);
+  mol = MolFileToMol(pathName + "/Issue239.mol",false);
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol((RWMol &)*mol);
+  MolOps::sanitizeMol(*mol);
 
+  
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
@@ -442,13 +442,11 @@ void testIssue242()
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
 
-  mol = MolFileToMol(pathName + "/Issue242-2.mol", false);
+  mol = MolFileToMol(pathName + "/Issue242-2.mol");
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol((RWMol &)*mol);
 
-  mol2 = MolFileToMol(pathName + "/Issue242-2.mol", false);
+  mol2 = MolFileToMol(pathName + "/Issue242-2.mol");
   TEST_ASSERT(mol2);
-  MMFF::sanitizeMMFFMol((RWMol &)*mol2);
 
   TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2, 30, 2370) >= 0);
   mb1 = MolToMolBlock(*mol);
@@ -500,7 +498,7 @@ void testSFIssue1653802()
 
   mol = MolFileToMol(pathName + "/cyclobutadiene.mol", false);
   TEST_ASSERT(mol);
-  MMFF::sanitizeMMFFMol(*mol);
+  MolOps::sanitizeMol(*mol);
   MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
 

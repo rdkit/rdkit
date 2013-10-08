@@ -645,6 +645,33 @@ calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
   return (2.0*intersect_popcount) / (a_popcount+b_popcount);
 }
 
+double
+calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b, float ca, float cb) {
+  std::string *abv = (std::string *)a;
+  std::string *bbv = (std::string *)b;
+  const unsigned char *afp=(const unsigned char *)abv->c_str();
+  const unsigned char *bfp=(const unsigned char *)bbv->c_str();
+  int intersect_popcount=0, acount=0, bcount=0;
+#ifndef USE_BUILTIN_POPCOUNT
+  for (unsigned int i=0; i<abv->size(); i++) {
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+    acount+=byte_popcounts[afp[i]];
+    bcount+=byte_popcounts[bfp[i]];
+  }
+#else
+  for(unsigned int i=0;i<abv->size()/sizeof(unsigned int);++i){
+    intersect_popcount += __builtin_popcount(((unsigned int *)afp)[i] & ((unsigned int *)bfp)[i]);
+    acount += __builtin_popcount(((unsigned int *)afp)[i]);
+    bcount += __builtin_popcount(((unsigned int *)bfp)[i]);    
+  }
+#endif
+  double denom = ca*acount + cb*bcount + (1-ca-cb)*intersect_popcount; 
+  if (denom == 0.0) {
+    return 0.0;
+  }
+  return intersect_popcount / denom;
+}
+
 
 /*******************************************
  *     MolSparseFingerPrint transformation *

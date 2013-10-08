@@ -471,6 +471,8 @@ namespace RDKit{
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ALTLOC,info->getAltLoc());
       if(info->getResidueName()!="")
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_RESIDUENAME,info->getResidueName());
+      if(info->getResidueNumber())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_RESIDUENUMBER,info->getResidueNumber());
       if(info->getChainId()!="")
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_CHAINID,info->getChainId());
       if(info->getInsertionCode()!="")
@@ -483,6 +485,8 @@ namespace RDKit{
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM,static_cast<char>(info->getIsHeteroAtom()));
       if(info->getSecondaryStructure())
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE,info->getSecondaryStructure());
+      if(info->getSegmentNumber())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SEGMENTNUMBER,info->getSegmentNumber());
     }
 
     void unpickleAtomPDBResidueInfo(std::istream &ss,AtomPDBResidueInfo *info,
@@ -492,12 +496,12 @@ namespace RDKit{
       double dval;
       char cval;
       unsigned int uival;
+      int ival;
       MolPickler::Tags tag=MolPickler::BEGIN_ATOM_MONOMER;
       while(tag!=MolPickler::END_ATOM_MONOMER){
         streamRead(ss,tag,version);
         switch(tag){
         case MolPickler::ATOM_PDB_RESIDUE_SERIALNUMBER:
-          unsigned int ival;
           streamRead(ss,ival,version);
           info->setSerialNumber(ival);
           break;
@@ -508,6 +512,10 @@ namespace RDKit{
         case MolPickler::ATOM_PDB_RESIDUE_RESIDUENAME:
           streamRead(ss,sval,version);
           info->setResidueName(sval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_RESIDUENUMBER:
+          streamRead(ss,ival,version);
+          info->setResidueNumber(ival);
           break;
         case MolPickler::ATOM_PDB_RESIDUE_CHAINID:
           streamRead(ss,sval,version);
@@ -532,6 +540,10 @@ namespace RDKit{
         case MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE:
           streamRead(ss,uival,version);
           info->setSecondaryStructure(uival);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_SEGMENTNUMBER:
+          streamRead(ss,uival,version);
+          info->setSegmentNumber(uival);
           break;
         case MolPickler::END_ATOM_MONOMER:
           break;

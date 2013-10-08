@@ -1,4 +1,3 @@
-// $Id: testMol2ToMol.cpp 1457 2009-04-03 09:05:17Z landrgr1 $
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -288,6 +287,25 @@ void testIssue3399798(std::string rdbase){
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
+
+// Test the following GitHub issue: https://github.com/rdkit/rdkit/issues/114
+void testIssue114(std::string rdbase) {
+
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- testing GitHub issue #114     --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+
+  std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/EZ_mol2_issue114.mol2";
+  RWMol *mol = Mol2FileToMol(fName);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  delete mol;
+  
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+}
+
   //FIX still missing chirality by 3D structure  
   //  still missing input std::string
 
@@ -299,6 +317,7 @@ int main(int argc,char *argv[]){
   testGeneral(rdbase);
   testAromaticChargedFail(rdbase);
   testIssue3399798(rdbase);
-
+  testIssue114(rdbase);
+  
   return 0;
 }

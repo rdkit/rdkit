@@ -23,11 +23,15 @@ import math
 from collections import defaultdict
 
 _fscores = None
-
 def readFragmentScores(name='fpscores'):
-  import cPickle,gzip
-  global _fscores
-  _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
+    import cPickle,gzip
+    global _fscores
+    _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
+    outDict = {}
+    for i in _fscores:
+        for j in range(1,len(i)):
+            outDict[i[j]] = float(i[0])
+    _fscores = outDict
 
 def numBridgeheadsAndSpiro(mol,ri=None):
   if ri is None:

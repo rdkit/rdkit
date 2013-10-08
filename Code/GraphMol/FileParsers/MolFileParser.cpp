@@ -906,6 +906,36 @@ namespace RDKit{
           res->setProp("molTotValence",totValence);
         }
       }
+      if(text.size()>=57 && text.substr(54,3)!="  0"){
+        int rxnRole=0;
+        try {
+          rxnRole= FileParserUtils::toInt(text.substr(54,3),true);
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(54,3) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+        if(rxnRole!=0){
+          // only set if it's a non-default value
+          res->setProp("molRxnRole",rxnRole);
+        }
+      }
+      if(text.size()>=60 && text.substr(57,3)!="  0"){
+        int rxnComponent=0;
+        try {
+          rxnComponent= FileParserUtils::toInt(text.substr(57,3),true);
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(57,3) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+        if(rxnComponent!=0){
+          // only set if it's a non-default value
+          res->setProp("molRxnComponent",rxnComponent);
+        }
+      }
       if(text.size()>=63 && text.substr(60,3)!="  0"){
         int atomMapNumber=0;
         try {

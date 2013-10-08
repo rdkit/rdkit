@@ -93,8 +93,10 @@ class TestCase(unittest.TestCase):
 if __name__ == '__main__':
   try:
     import matplotlib
+    from rdkit.Chem.Draw.mplCanvas import Canvas
   except ImportError:
+    pass
+  except RuntimeError:  # happens with GTK can't initialize
     pass
   else:
     unittest.main()
-
