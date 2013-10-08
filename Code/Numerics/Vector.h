@@ -250,7 +250,7 @@ namespace RDNumeric {
     }
 
     //! returns the dot product between two Vectors
-    inline TYPE dotProduct(const Vector<TYPE> other) {
+    inline TYPE dotProduct(const Vector<TYPE> other) const {
       PRECONDITION(d_size == other.size(), "Size mismatch in vector doct product");
       const TYPE *oData = other.getData();
       unsigned int i;
@@ -299,7 +299,18 @@ namespace RDNumeric {
   };
 
   typedef Vector<double> DoubleVector;
-}
+
+ //! returns the algebraic tanimoto similarity [defn' from JCIM 46:587-96 (2006)]
+  template <typename T>
+  double
+  TanimotoSimilarity(const Vector<T> &v1,const Vector<T> &v2){
+    double numer=v1.dotProduct(v2);
+    if(numer==0.0) return 0.0;
+    double denom=v1.normL2Sq()+v2.normL2Sq()-numer;
+    if(denom==0.0) return 0.0;
+    return numer/denom;
+  }
+} // end of namespace RDNumeric
 
 //! ostream operator for Vectors
 template <typename TYPE> std::ostream & operator<<(std::ostream& target, 
