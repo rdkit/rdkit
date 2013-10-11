@@ -11,6 +11,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h> 
 #include <GraphMol/Canon.h> 
+#include <GraphMol/MonomerInfo.h> 
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -3142,6 +3143,47 @@ void testMolFileWithRxn(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testPDBFile(){
+  BOOST_LOG(rdInfoLog) << "testing reading pdb files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"1CRN.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getName()==" N  ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueName()=="THR");
+    TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getTempFactor(),13.79));
+    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x,17.047));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y,14.099));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z,3.625));    
+
+
+    std::string mb=MolToPDBBlock(*m);
+    delete m;
+    m = PDBBlockToMol(mb);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getName()==" N  ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueName()=="THR");
+    TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getTempFactor(),13.79));    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x,17.047));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y,14.099));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z,3.625));    
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3207,6 +3249,7 @@ int main(int argc,char *argv[]){
 #endif
   testMolFileWithHs();
   testMolFileWithRxn();
+  testPDBFile();
 
   return 0;
 }
