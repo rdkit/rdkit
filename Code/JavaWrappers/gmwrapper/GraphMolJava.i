@@ -155,6 +155,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../QueryAtom.i"
 %include "../QueryBond.i"
 %include "../QueryOps.i"
+%include "../MonomerInfo.i"
 %include "../PeriodicTable.i"
 %include "../SanitException.i"
 %include "../SmilesParse.i"
