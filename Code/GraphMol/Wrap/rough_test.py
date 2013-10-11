@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2011  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2013  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -2415,6 +2415,27 @@ CAS<~>
     sdSup.SetData('')
     self.failUnlessEqual(len(sdSup),0)
 
+  def test84PDBBasics(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    m = Chem.MolFromPDBFile(fileN)
+    self.failUnless(m is not None)
+    self.failUnlessEqual(m.GetNumAtoms(),327)
+    self.failUnlessEqual(m.GetNumBonds(),337)
+    self.failUnless(m.GetAtomWithIdx(0).GetMonomerInfo())
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetName()," N  ")
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetResidueName(),"THR")
+    self.failUnlessAlmostEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetTempFactor(),13.79,2)
+    m = Chem.MolFromPDBBlock(Chem.MolToPDBBlock(m))
+    self.failUnlessEqual(m.GetNumAtoms(),327)
+    self.failUnlessEqual(m.GetNumBonds(),337)
+    self.failUnless(m.GetAtomWithIdx(0).GetMonomerInfo())
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetName()," N  ")
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetResidueName(),"THR")
+    self.failUnlessAlmostEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetTempFactor(),13.79,2)
+    
+    
+    
 
 
 
