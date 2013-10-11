@@ -94,6 +94,23 @@ static RDKit::RWMOL_SPTR MolFromMol2Block(const std::string &molBlock,bool sanit
   return RDKit::RWMOL_SPTR(mol);
 }
 
+static RDKit::RWMOL_SPTR MolFromPDBBlock(std::string molB,
+                                         bool sanitize=true,bool removeHs=true,
+                                         unsigned int flavor=0){
+  RDKit::RWMol *mol=0;
+  mol=RDKit::PDBBlockToMol(molB,sanitize,removeHs,flavor);
+  return RDKit::RWMOL_SPTR(mol);
+}
+
+static RDKit::RWMOL_SPTR MolFromPDBFile(std::string fName,
+                                        bool sanitize=true,bool removeHs=true,
+                                        unsigned int flavor=0){
+  RDKit::RWMol *mol=0;
+  mol=RDKit::PDBFileToMol(fName,sanitize,removeHs,flavor);
+  return RDKit::RWMOL_SPTR(mol);
+}
+
+ 
   /* Methods from MolFileStereoChem.h */
   void DetectAtomStereoChemistry(const RDKit::Conformer *conf) {
 	RDKit::DetectAtomStereoChemistry(*($self), conf);
