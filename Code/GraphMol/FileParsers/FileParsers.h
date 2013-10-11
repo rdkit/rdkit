@@ -199,6 +199,7 @@ namespace RDKit{
   RWMol *PDBFileToMol(const std::string &fname, bool sanitize=true,
                       bool removeHs=true, unsigned int flavor=0);
   std::string MolToPDBBlock(const ROMol &mol, int confId=-1, unsigned int flavor=0);
+  void MolToPDBFile(const ROMol &mol,const std::string &fname, int confId=-1, unsigned int flavor=0);
 }
 
 #endif

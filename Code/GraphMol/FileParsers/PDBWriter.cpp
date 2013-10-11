@@ -313,5 +313,11 @@ namespace RDKit {
     if(d_flavor & 1)
       (*dp_ostream) << "ENDMDL\n";
   }
+
+  void MolToPDBFile(ROMol &mol,const std::string &fname,int confId,unsigned int flavor){
+    PDBWriter w(fname,flavor);
+    w.write(mol,confId);
+  }
+
 }  // namespace RDKit
 
