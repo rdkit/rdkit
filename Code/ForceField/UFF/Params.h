@@ -7,8 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_PARAMS_H__
-#define __RD_PARAMS_H__
+#ifndef __RD_UFFPARAMS_H__
+#define __RD_UFFPARAMS_H__
 
 #include <string>
 #include <cmath>

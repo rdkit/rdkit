@@ -9,8 +9,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_DISTANCECONSTRAINT_H__
-#define __RD_DISTANCECONSTRAINT_H__
+#ifndef __RD_MMFFDISTANCECONSTRAINT_H__
+#define __RD_MMFFDISTANCECONSTRAINT_H__
 #include <iostream>
 #include <ForceField/Contrib.h>
 

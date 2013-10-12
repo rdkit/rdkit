@@ -9,8 +9,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_INVERSION_H__
-#define __RD_INVERSION_H__
+#ifndef __RD_UFFINVERSION_H__
+#define __RD_UFFINVERSION_H__
 #include <ForceField/Contrib.h>
 #include <boost/tuple/tuple.hpp>
 #include <Geometry/point.h>

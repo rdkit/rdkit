@@ -9,8 +9,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_STRETCHBEND_H__
-#define __RD_STRETCHBEND_H__
+#ifndef __RD_MMFFSTRETCHBEND_H__
+#define __RD_MMFFSTRETCHBEND_H__
 
 #include <utility>
 #include <ForceField/Contrib.h>

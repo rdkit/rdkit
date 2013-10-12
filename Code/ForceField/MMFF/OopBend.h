@@ -9,8 +9,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_OopBend_H__
-#define __RD_OopBend_H__
+#ifndef __RD_MMFFOopBend_H__
+#define __RD_MMFFOopBend_H__
 
 #include <ForceField/Contrib.h>
 #include <Geometry/point.h>

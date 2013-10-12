@@ -9,8 +9,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_NONBONDED_H__
-#define __RD_NONBONDED_H__
+#ifndef __RD_MMFFNONBONDED_H__
+#define __RD_MMFFNONBONDED_H__
 #include <ForceField/Contrib.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
