@@ -255,7 +255,7 @@ public class DistanceGeometryTests extends GraphMolTest {
 
 		for (int i = 0; i < cids.size(); i++ ) {
 			writer.write(m, cids.get(i));
-			ForceField ff = RDKFuncs.constructForceField(m, 10, cids.get(i));
+			ForceField ff = ForceField.UFFGetMoleculeForceField(m, 10, cids.get(i));
 			ff.initialize();
 			energy = ff.calcEnergy();
 			assertTrue(energy>100.0);
