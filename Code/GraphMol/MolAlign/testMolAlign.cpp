@@ -152,8 +152,9 @@ void testO3A() {
   }
   cumMsd /= (double)nMol;
   //newMol->close();
-  TEST_ASSERT(RDKit::feq(cumScore, 6772,1));
-  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.385,.001));
+  //std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  TEST_ASSERT(RDKit::feq(cumScore, 6941.8,1));
+  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.546,.001));
 }
     
 int main() {

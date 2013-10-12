@@ -218,7 +218,7 @@ namespace RDKit {
                   python::object prbProps,
                   python::object refProps,
                   int prbCid = -1, int refCid = -1, bool reflect = false,
-                  unsigned int maxIters = 50, unsigned int options = 1)
+                  unsigned int maxIters = 50, unsigned int accuracy = 0)
     {
       ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties=NULL;
       MMFF::MMFFMolProperties *prbMolProps=NULL;
@@ -240,7 +240,7 @@ namespace RDKit {
       
       O3A *o3a = new MolAlign::O3A(prbMol, refMol,
                                    prbMolProps,refMolProps,
-                                   prbCid, refCid, reflect, maxIters, options);
+                                   prbCid, refCid, reflect, maxIters, accuracy);
       PyO3A *pyO3A = new PyO3A(o3a);
 
       if(!prbPyMMFFMolProperties) delete prbMolProps;
@@ -369,7 +369,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                       the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
       - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
-      - options                  options for the O3A algorithm\n\
+      - accuracy                 0: maximum (the default); 3: minimum\n\
        \n\
       RETURNS\n\
       RMSD value\n\
@@ -380,7 +380,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                python::arg("refPyMMFFMolProperties") = python::object(),
                python::arg("prbCid") = -1, python::arg("refCid") = -1,
                python::arg("reflect") = false, python::arg("maxIters") = 50,
-               python::arg("options") = 1),
+               python::arg("accuracy") = 0),
                python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
 }

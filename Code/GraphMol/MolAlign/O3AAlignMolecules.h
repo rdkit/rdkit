@@ -31,12 +31,14 @@ namespace RDKit {
     const int O3_DUMMY_COST = 100000;
     const unsigned int O3_MAX_H_BINS = 20;
     const unsigned int O3_MAX_SDM_ITERATIONS = 100;
+    const unsigned int O3_MAX_SDM_THRESHOLD_ITER = 3;
     const double O3_RANDOM_TRANS_COEFF = 5.0;
     const double O3_THRESHOLD_DIFF_DISTANCE = 0.1;
-    const double O3_SDM_THRESHOLD = 0.7;
+    const double O3_SDM_THRESHOLD_START = 0.7;
+    const double O3_SDM_THRESHOLD_STEP = 0.3;
     const double O3_CHARGE_WEIGHT = 10.0;
     const double O3_RMSD_THRESHOLD = 1.0e-04;
-    const double O3_SCORE_THRESHOLD = 1.0e-04;
+    const double O3_SCORE_THRESHOLD = 0.01;
     const double O3_SCORING_FUNCTION_ALPHA = 5.0;
     const double O3_SCORING_FUNCTION_BETA = 0.5;
     const double O3_CHARGE_COEFF = 5.0;
@@ -83,7 +85,8 @@ namespace RDKit {
       void computeMinCostPath(unsigned int dim);
       void computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
         MMFF::MMFFMolProperties *prbMP, const ROMol &refMol, const MolHistogram &refHist,
-        MMFF::MMFFMolProperties *refMP, const int coeff = 0, const int n_bins = O3_MAX_H_BINS);
+        MMFF::MMFFMolProperties *refMP, const int coeff = 0, const bool useMMFFSim = false,
+        const int n_bins = O3_MAX_H_BINS);
     private:
       std::vector<int> d_rowSol;
       std::vector<int> d_colSol;
@@ -144,11 +147,11 @@ namespace RDKit {
           delete d_SDMPtrVect[i];
         }
       };
-      void fillFromDist(const double threshold = O3_SDM_THRESHOLD);
+      void fillFromDist(const double threshold = O3_SDM_THRESHOLD_START);
       void fillFromLAP(LAP &lap);
       double scoreAlignment();
       void prepareMatchWeightsVect(RDKit::MatchVectType &matchVect,
-        RDNumeric::DoubleVector &weights, int coeff = 0);
+        RDNumeric::DoubleVector &weights, int coeff);
       unsigned int size() {
         return d_SDMPtrVect.size();
       }
@@ -185,8 +188,7 @@ namespace RDKit {
         MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
         const int prbCid = -1, const int refCid = -1,
         const bool reflect = false, const unsigned int maxIters = 50,
-        const unsigned int options = O3_USE_MMFF_WEIGHTS,
-        LAP *extLAP = NULL);
+        const unsigned int accuracy = 0, LAP *extLAP = NULL);
       ~O3A() {
         if (d_o3aMatchVect) {
           delete d_o3aMatchVect;
