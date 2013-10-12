@@ -14,6 +14,7 @@ rdkit_library(RDShapeLib
               parseCommandLine.cpp  
               printUsage.cpp   
               siMath.cpp
+              shape.cpp
               LINK_LIBRARIES RDGeometryLib RDGeneral)
 
 rdkit_headers(alignmentInfo.h 
@@ -30,5 +31,6 @@ rdkit_headers(alignmentInfo.h
               printUsage.h 
               shapeAlignment.h 
               siMath.h 
+              shape.h
               solutionInfo.h DEST Shape)
 

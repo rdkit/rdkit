@@ -162,7 +162,6 @@ listAtomVolumes(RDKit::ROMol& mol, GaussianVolume& gv)
 	std::set<unsigned int>::iterator setIter;
 	
 	// Start by iterating over the single atoms and build map of overlaps
-    OpenBabel::OBElementTable et;
     const RDKit::PeriodicTable *tbl = RDKit::PeriodicTable::getTable();
     
 	int atomIndex = 0;  // keeps track of the atoms processed so far

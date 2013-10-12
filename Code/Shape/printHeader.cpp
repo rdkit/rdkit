@@ -40,7 +40,6 @@ printHeader(void)
     std::cerr << __DATE__ " " << __TIME__ << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "  -> GCC:       " << __VERSION__ << std::endl;
-	std::cerr << "  -> OpenBabel: " << BABEL_VERSION << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "  Copyright 2012 by Silicos-it, a division of Imacosi BVBA" << std::endl;
 	std::cerr << std::endl;
