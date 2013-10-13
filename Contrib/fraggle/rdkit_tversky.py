@@ -39,9 +39,9 @@ from rdkit import DataStructs
 parser = OptionParser(description="Program to Tversky search results as part of Fraggle",
                     epilog="Format of input file: whole mol smiles,ID,fraggle split smiles\t\t"
                     "Output: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim")
-parser.add_option('-f','--frags',action='store', dest='f_file', type='string', 
+parser.add_option('-f','--frags',dest='f_file', type='string', 
                   help="File containing the query fragmentations from Fraggle")
-parser.add_option('-c','--cutoff',action='store', dest='cutoff', type='float', default=0.8,
+parser.add_option('-c','--cutoff',dest='cutoff', type='float', default=0.8,
                   help="Cutoff for Tversy similarity. Only Tversky results with similarity greater than the cutoff will be output. DEFAULT = 0.8")
 
 
@@ -49,7 +49,6 @@ parser.add_option('-c','--cutoff',action='store', dest='cutoff', type='float', d
 #parse the command line options
 (options, args) = parser.parse_args()
 
-cutoff = 0.9
 if(options.f_file is None):
     print "Please specify the file containing the Fraggle fragmentations"
     sys.exit(1)
@@ -69,7 +68,7 @@ for line in q_split_input:
 
     qmol = Chem.MolFromSmiles(info[2])
     #print info[2]
-    if(qmol == None):
+    if qmol is None:
         sys.stderr.write("Can't generate mol for: %s\n" % (info[2]) )
         continue 
 
@@ -88,7 +87,7 @@ for line in sys.stdin:
     #print smi,id
 
     mol = Chem.MolFromSmiles(smi)
-    if(mol == None):
+    if mol is None:
         sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
         continue 
     

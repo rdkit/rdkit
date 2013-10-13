@@ -102,7 +102,7 @@ def is_ring_cut_valid(smi):
     valid = False
 
     m = Chem.MolFromSmiles(smi)
-    if(m != None):
+    if m is not None:
         #use gobal smarts
         if(m.HasSubstructMatch(cSma1) or m.HasSubstructMatch(cSma2)):
             atom_count = m.GetNumAtoms()
@@ -226,7 +226,7 @@ for line in sys.stdin:
 
     mol = Chem.MolFromSmiles(smi)
 
-    if(mol == None):
+    if mol is None:
         sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
 	continue
 
@@ -259,7 +259,7 @@ for line in sys.stdin:
             bonds_selected.append(acyclic_matching_atoms[x])
             bonds_selected.append(acyclic_matching_atoms[y])
             fragment = delete_bonds(bonds_selected,"acyclic")
-            if(fragment != None):
+            if fragment is not None:
                 #print "%s" % (fragment)
                 out_fragments.add(fragment)
             bonds_selected = []
@@ -285,7 +285,7 @@ for line in sys.stdin:
             fragment = delete_bonds(bonds_selected,"cyclic")
             bonds_selected = []
 
-            if(fragment != None):
+            if fragment is not None:
                 #print "%s" % (fragment)
                 out_fragments.add(fragment)
 
@@ -295,7 +295,7 @@ for line in sys.stdin:
                     bonds_selected.append(cyclic_matching_atoms[y])
                     bonds_selected.append(acyclic_matching_atoms[z])
                     fragment = delete_bonds(bonds_selected,"cyclic_and_acyclic")
-                    if(fragment != None):
+                    if fragment is not None:
                         #print "%s" % (fragment)
                         out_fragments.add(fragment)
                     bonds_selected = []
