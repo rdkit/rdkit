@@ -45,9 +45,9 @@ Shape-it is linked against OpenBabel version 2.
 #include <GraphMol/FileParsers/MolWriters.h>
 
 // Shape-it
-const std::string tanimoto = "Shape-it::Tanimoto"; 
-const std::string tversky_ref = "Shape-it::Tversky_Ref"; 
-const std::string tversky_db = "Shape-it::Tversky_Db"; 
+const std::string tanimoto = "Tanimoto"; 
+const std::string tversky_ref = "Tversky_Ref"; 
+const std::string tversky_db = "Tversky_Db"; 
 
 
 

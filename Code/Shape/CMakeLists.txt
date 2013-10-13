@@ -1,4 +1,4 @@
-rdkit_library(RDShapeLib
+rdkit_library(Shape
               alignmentInfo.cpp  
               bestResults.cpp  
               gaussianVolume.cpp  
@@ -15,7 +15,8 @@ rdkit_library(RDShapeLib
               printUsage.cpp   
               siMath.cpp
               shape.cpp
-              LINK_LIBRARIES RDGeometryLib RDGeneral)
+              SHARED
+              LINK_LIBRARIES  GraphMol RDGeneral RDGeometryLib DataStructs Shape FileParsers RDGeneral RDGeometryLib RDBoost)
 
 rdkit_headers(alignmentInfo.h 
               atomGaussian.h 
@@ -34,3 +35,4 @@ rdkit_headers(alignmentInfo.h
               shape.h
               solutionInfo.h DEST Shape)
 
+add_subdirectory(Wrap)

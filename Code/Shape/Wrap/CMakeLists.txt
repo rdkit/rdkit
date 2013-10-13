@@ -1,5 +1,5 @@
 rdkit_python_extension(rdShape
                        rdShape.cpp
-                       DEST Shape 
-                       LINK_LIBRARIES RDGeometryLib RDGeneral Shape)
+                       DEST Chem 
+                       LINK_LIBRARIES  GraphMol RDGeneral RDGeometryLib DataStructs Shape FileParsers RDGeneral RDGeometryLib RDBoost)
 

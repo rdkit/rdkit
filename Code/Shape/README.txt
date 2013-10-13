@@ -1,0 +1,1 @@
+Silicos-it Shape-it program developed by Hans de Winter, ported to rdkit by Jan Domanski.

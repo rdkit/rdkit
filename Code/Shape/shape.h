@@ -24,5 +24,4 @@
 #include <Shape/printHeader.h>
 #include <Shape/printUsage.h>
 
-SolutionInfo 
-align(RDKit::ROMol& refMol, RDKit::ROMol& dbMol);
+SolutionInfo shape(RDKit::ROMol& refMol, RDKit::ROMol& dbMol, unsigned int nBestHits, bool scoreOnly, unsigned int maxIter, std::string whichScore);
