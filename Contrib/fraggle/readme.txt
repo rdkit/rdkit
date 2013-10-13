@@ -45,7 +45,7 @@ Command:
 python fraggle.py <QUERY_FILE >FRAGGLE_FRAGMENTS
 
 Exmaple command:
-python fraggle.py <query.smi >query_fragmentation.csv
+python fraggle.py < data/query.smi > data/query_fragmentation.csv
 
 Format of QUERY_FILE is: SMILES ID <space or comma separated>
 See query.smi for an example input file
@@ -78,7 +78,7 @@ Command:
 python rdkit_tversky.py -f FRAGGLE_FRAGMENTS <DB_SMILES_FILE >TVERSKY_OUTPUT
 
 Example command:
-python rdkit_tversky.py -f query_fragmentation.csv <ChEMBL_11265_actives.smi >fragmentation_tversky_out
+python rdkit_tversky.py -f data/query_fragmentation.csv < data/ChEMBL_11265_actives.smi > data/fragmentation_tversky_out
 
 Format of FRAGGLE_FRAGMENTS file is: whole mol smiles,ID,fraggle split smiles
 See query_fragmentation.csv for an example file
@@ -117,7 +117,7 @@ Command:
 python atomcontrib.py <TVERSKY_OUTPUT >FINAL_FRAGGLE_RESULTS
 
 Example command:
-python atomcontrib.py <fragmentation_tversky_out >final_fraggle_results.csv
+python atomcontrib.py < data/fragmentation_tversky_out > data/final_fraggle_results.csv
 
 Format of TVERSKY_OUTPUT file is:
 query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim
