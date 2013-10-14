@@ -53,7 +53,7 @@ from rdkit import Chem
     #keep correct if >60% query mol
 
 #start
-def delete_bonds(bonds,ftype,hac):
+def delete_bonds(mol,bonds,ftype,hac):
 
     #use the same parent mol object and create editable mol
     em = Chem.EditableMol(mol)
@@ -237,7 +237,7 @@ def generate_fraggle_fragmentation(mol):
             #print matching_atoms[x],matching_atoms[y]
             bonds_selected.append(acyclic_matching_atoms[x])
             bonds_selected.append(acyclic_matching_atoms[y])
-            fragment = delete_bonds(bonds_selected,"acyclic",hac)
+            fragment = delete_bonds(mol,bonds_selected,"acyclic",hac)
             if fragment is not None:
                 #print "%s" % (fragment)
                 out_fragments.add(fragment)
@@ -261,7 +261,7 @@ def generate_fraggle_fragmentation(mol):
             #print matching_atoms[x],matching_atoms[y]
             bonds_selected.append(cyclic_matching_atoms[x])
             bonds_selected.append(cyclic_matching_atoms[y])
-            fragment = delete_bonds(bonds_selected,"cyclic",hac)
+            fragment = delete_bonds(mol,bonds_selected,"cyclic",hac)
             bonds_selected = []
 
             if fragment is not None:
@@ -273,7 +273,7 @@ def generate_fraggle_fragmentation(mol):
                     bonds_selected.append(cyclic_matching_atoms[x])
                     bonds_selected.append(cyclic_matching_atoms[y])
                     bonds_selected.append(acyclic_matching_atoms[z])
-                    fragment = delete_bonds(bonds_selected,"cyclic_and_acyclic",hac)
+                    fragment = delete_bonds(mol,bonds_selected,"cyclic_and_acyclic",hac)
                     if fragment is not None:
                         #print "%s" % (fragment)
                         out_fragments.add(fragment)
