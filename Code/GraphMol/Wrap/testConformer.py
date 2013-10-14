@@ -4,7 +4,7 @@
 #         All Rights Reserved
 #
 from rdkit import RDConfig
-import os,sys
+import os,sys,math
 import unittest
 from rdkit import Chem
 from rdkit.Geometry import Point3D
@@ -120,7 +120,60 @@ class TestCase(unittest.TestCase):
     self.failUnless(m.GetNumConformers() == 0)
     confs = m.GetConformers()
     self.failUnless(confs == ())
-    
+
+  def testGetSetBondLength(self):
+    file = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'test_data', '3-cyclohexylpyridine.mol')
+
+    m = Chem.MolFromMolFile(file, True, False)
+    conf = m.GetConformer()
+    dist = conf.GetBondLength(0, 19)
+    self.failUnlessAlmostEqual(dist, 1.36, 2)
+    conf.SetBondLength(0, 19, 2.5)
+    dist = conf.GetBondLength(0, 19)
+    self.failUnlessAlmostEqual(dist, 2.5, 1)
+    conf.SetBondLength(19, 0, 3.0)
+    dist = conf.GetBondLength(0, 19)
+    self.failUnlessAlmostEqual(dist, 3.0, 1)
+
+  def testGetSetAngle(self):
+    file = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'test_data', '3-cyclohexylpyridine.mol')
+
+    m = Chem.MolFromMolFile(file, True, False)
+    conf = m.GetConformer()
+    angle = conf.GetAngleDeg(0, 19, 21)
+    self.failUnlessAlmostEqual(angle, 109.7, 1)
+    conf.SetAngleDeg(0, 19, 21, 125.0)
+    angle = conf.GetAngleDeg(0, 19, 21);
+    self.failUnlessAlmostEqual(angle, 125.0, 1)
+    conf.SetAngleRad(21, 19, 0, math.pi / 2.)
+    angle = conf.GetAngleRad(0, 19, 21)
+    self.failUnlessAlmostEqual(angle, math.pi / 2., 1)
+    angle = conf.GetAngleDeg(0, 19, 21)
+    self.failUnlessAlmostEqual(angle, 90.0, 1)
+
+  def testGetSetDihedral(self):
+    file = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'test_data', '3-cyclohexylpyridine.mol')
+
+    m = Chem.MolFromMolFile(file, True, False)
+    conf = m.GetConformer()
+    dihedral = conf.GetDihedralDeg(0, 19, 21, 24)
+    self.failUnlessAlmostEqual(dihedral, 176.05, 2)
+    conf.SetDihedralDeg(8, 0, 19, 21, 65.0)
+    dihedral = conf.GetDihedralDeg(8, 0, 19, 21)
+    self.failUnlessAlmostEqual(dihedral, 65.0, 1)
+    conf.SetDihedralDeg(8, 0, 19, 21, -130.0)
+    dihedral = conf.GetDihedralDeg(8, 0, 19, 21)
+    self.failUnlessAlmostEqual(dihedral, -130.0, 1)
+    conf.SetDihedralRad(21, 19, 0, 8, -2. / 3. * math.pi)
+    dihedral = conf.GetDihedralRad(8, 0, 19, 21)
+    self.failUnlessAlmostEqual(dihedral, -2. / 3. * math.pi, 1)
+    dihedral = conf.GetDihedralDeg(8, 0, 19, 21)
+    self.failUnlessAlmostEqual(dihedral, -120.0, 1)
+
+
 if __name__ == '__main__':
   unittest.main()
 

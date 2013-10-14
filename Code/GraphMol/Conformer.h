@@ -58,7 +58,7 @@ namespace RDKit {
       }
     };
 
-    //! Copy COnstructor: initialize from a second conformation.
+    //! Copy Constructor: initialize from a second conformation.
     Conformer(const Conformer &other);
 
     //! Destructor
@@ -99,6 +99,58 @@ namespace RDKit {
       d_positions[atomId] = position;
     }
 
+    //! Get the bond length between the specified atoms i, j
+    const double getBondLength(unsigned int iAtomId, unsigned int jAtomId) const;
+
+    //! Set the bond length between the specified atoms i, j
+    //! (all atoms bonded to atom j are moved)
+    void setBondLength(unsigned int iAtomId,
+      unsigned int jAtomId, double value);
+
+    //! Get the angle in radians among the specified atoms i, j, k
+    const double getAngleRad(unsigned int iAtomId,
+      unsigned int jAtomId, unsigned int kAtomId) const;
+
+    //! Get the angle in degrees among the specified atoms i, j, k
+    inline const double getAngleDeg(unsigned int iAtomId,
+      unsigned int jAtomId, unsigned int kAtomId) const {
+      return (180. / M_PI * getAngleRad(iAtomId, jAtomId, kAtomId));
+    }
+
+    //! Set the angle in radians among the specified atoms i, j, k
+    //! (all atoms bonded to atom k are moved)
+    void setAngleRad(unsigned int iAtomId,
+      unsigned int jAtomId, unsigned int kAtomId, double value);
+
+    //! Set the angle in degrees among the specified atoms i, j, k
+    //! (all atoms bonded to atom k are moved)
+    inline void setAngleDeg(unsigned int iAtomId,
+      unsigned int jAtomId, unsigned int kAtomId, double value) {
+      setAngleRad(iAtomId, jAtomId, kAtomId, value / 180. * M_PI);
+    }
+
+    //! Get the dihedral angle in radians among the specified atoms i, j, k, l
+    double const getDihedralRad(unsigned int iAtomId,
+      unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId) const;
+
+    //! Get the dihedral angle in degrees among the specified atoms i, j, k, l
+    inline const double getDihedralDeg(unsigned int iAtomId,
+      unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId) const {
+      return (180. / M_PI * getDihedralRad(iAtomId, jAtomId, kAtomId, lAtomId));
+    }
+
+    //! Set the dihedral angle in radians among the specified atoms i, j, k, l
+    //! (all atoms bonded to atom l are moved)
+    void setDihedralRad(unsigned int iAtomId, unsigned int jAtomId,
+      unsigned int kAtomId, unsigned int lAtomId, double value);
+
+    //! Set the dihedral angle in degrees among the specified atoms i, j, k, l
+    //! (all atoms bonded to atom l are moved)
+    inline void setDihedralDeg(unsigned int iAtomId, unsigned int jAtomId,
+      unsigned int kAtomId, unsigned int lAtomId, double value) {
+      setDihedralRad(iAtomId, jAtomId, kAtomId, lAtomId, value / 180. * M_PI);
+    }
+
     //! get the ID of this conformer
     inline unsigned int getId() const {return d_id;}
     
@@ -119,10 +171,10 @@ namespace RDKit {
       df_is3D=v;
     }
   protected:
-    //! Set owning moelcule
+    //! Set owning molecule
     void setOwningMol(ROMol *mol);
 
-    //! Set owning moelcule
+    //! Set owning molecule
     void setOwningMol(ROMol &mol);
 
   private:

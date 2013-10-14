@@ -14,11 +14,16 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 //#include <boost/log/functions.hpp>
 
 #include <iostream>
 using namespace std;
 using namespace RDKit;
+
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
 
 // -------------------------------------------------------------------
 void testBookmarks(ROMol m){
@@ -1036,6 +1041,62 @@ void testAtomResidues()
 }
 
 
+void testGetSetBondLength() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/test_data/3-cyclohexylpyridine.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  double dist = conf.getBondLength(0, 19);
+  TEST_ASSERT(RDKit::feq(dist, 1.36));
+  conf.setBondLength(0, 19, 2.5);
+  dist = conf.getBondLength(0, 19);
+  TEST_ASSERT(RDKit::feq(dist, 2.5));
+  conf.setBondLength(19, 0, 3.0);
+  dist = conf.getBondLength(0, 19);
+  TEST_ASSERT(RDKit::feq(dist, 3.0));
+}
+
+
+void testGetSetAngle() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/test_data/3-cyclohexylpyridine.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  double angle = conf.getAngleDeg(0, 19, 21);
+  TEST_ASSERT(RDKit::feq(RDKit::round(angle * 10) / 10, 109.7));
+  conf.setAngleDeg(0, 19, 21, 125.0);
+  angle = conf.getAngleDeg(0, 19, 21);
+  TEST_ASSERT(RDKit::feq(angle, 125.0));
+  conf.setAngleRad(21, 19, 0, M_PI / 2.);
+  angle = conf.getAngleRad(0, 19, 21);
+  TEST_ASSERT(RDKit::feq(angle, M_PI / 2.));
+  angle = conf.getAngleDeg(0, 19, 21);
+  TEST_ASSERT(RDKit::feq(angle, 90.0));
+}
+
+
+void testGetSetDihedral() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/test_data/3-cyclohexylpyridine.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  double dihedral = conf.getDihedralDeg(0, 19, 21, 24);
+  TEST_ASSERT(RDKit::feq(RDKit::round(dihedral * 100) / 100, 176.05));
+  conf.setDihedralDeg(8, 0, 19, 21, 65.0);
+  dihedral = conf.getDihedralDeg(8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, 65.0));
+  conf.setDihedralDeg(8, 0, 19, 21, -130.0);
+  dihedral = conf.getDihedralDeg(8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, -130.0));
+  conf.setDihedralRad(21, 19, 0, 8, -2. / 3. * M_PI);
+  dihedral = conf.getDihedralRad(8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, -2. / 3. * M_PI));
+  dihedral = conf.getDihedralDeg(8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, -120.0));
+}
 
 // -------------------------------------------------------------------
 int main()
@@ -1060,6 +1121,9 @@ int main()
   testIssue284();
   testClearMol();
   testAtomResidues();
+  testGetSetBondLength();
+  testGetSetAngle();
+  testGetSetDihedral();
 
   return 0;
 }
