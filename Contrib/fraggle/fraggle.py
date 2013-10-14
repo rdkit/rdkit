@@ -30,16 +30,7 @@
 #
 # Created by Jameed Hussain, May 2013
 
-import sys
-import re
 from rdkit import Chem
-
-if (len(sys.argv) >= 2):
-    print "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n";
-    print "USAGE: ./fraggle.py <file_of_smiles";
-    print "Format of smiles file: SMILES ID (space or comma separated)";
-    print "Output: whole mol smiles,ID,fraggle split smiles\n";
-    sys.exit(1)
 
 #Fragmentation algorithm
 #-----------------------
@@ -70,16 +61,16 @@ def delete_bonds(bonds,ftype,hac):
     #loop through the bonds to delete
     #print "Breaking bonds between atoms: ",bonds
 
-    for i in bonds:
+    for b in bonds:
         #remove the bond
-	em.RemoveBond(i[0],i[1])
+	em.RemoveBond(b[0],b[1])
 
 	#now add attachement points
 	newAtomA = em.AddAtom(Chem.Atom(0))
-	em.AddBond(i[0],newAtomA,Chem.BondType.SINGLE)
+	em.AddBond(b[0],newAtomA,Chem.BondType.SINGLE)
 
 	newAtomB = em.AddAtom(Chem.Atom(0))
-	em.AddBond(i[1],newAtomB,Chem.BondType.SINGLE)
+	em.AddBond(b[1],newAtomB,Chem.BondType.SINGLE)
 
     #should be able to get away without sanitising mol
     #as the valencies should be okay
@@ -291,11 +282,19 @@ def generate_fraggle_fragmentation(mol):
     return out_fragments
 
 if __name__ =='__main__':
+    import sys,re
+    if (len(sys.argv) >= 2):
+        print "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n"
+        print "USAGE: ./fraggle.py <file_of_smiles"
+        print "Format of smiles file: SMILES ID (space or comma separated)"
+        print "Output: whole mol smiles,ID,fraggle split smiles\n"
+        sys.exit(1)
+
     #read the STDIN
     for line in sys.stdin:
         line = line.rstrip()
-        smi,id = re.split('\s|,',line)
-        #print smi,id
+        smi,id_ = re.split('\s|,',line)
+        #print smi,id_
 
         mol = Chem.MolFromSmiles(smi)
 
@@ -309,5 +308,5 @@ if __name__ =='__main__':
             #cansmi
             temp = Chem.MolFromSmiles(x)
 
-            print "%s,%s,%s" % (smi,id,Chem.MolToSmiles(temp))
+            print "%s,%s,%s" % (smi,id_,Chem.MolToSmiles(temp))
 
