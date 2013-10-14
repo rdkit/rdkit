@@ -62,7 +62,7 @@ if (len(sys.argv) >= 2):
     #keep correct if >60% query mol
 
 #start
-def delete_bonds(bonds,type):
+def delete_bonds(bonds,ftype,hac):
 
     #use the same parent mol object and create editable mol
     em = Chem.EditableMol(mol)
@@ -91,7 +91,7 @@ def delete_bonds(bonds,type):
     fragmented_smi = Chem.MolToSmiles(modifiedMol,True)
 
     #print fragmented_smi
-    fraggle_framentation = select_fragments(fragmented_smi,type)
+    fraggle_framentation = select_fragments(fragmented_smi,ftype,hac)
 
     return fraggle_framentation
 
@@ -111,13 +111,13 @@ def is_ring_cut_valid(smi):
     return valid,atom_count
     
 
-def select_fragments(f_smi,type):
+def select_fragments(f_smi,ftype,hac):
 
     result = ""
     result_hcount = 0
     fragments = f_smi.split(".")
 
-    if(type == "acyclic"):
+    if(ftype == "acyclic"):
         for f in fragments:
             attachments = f.count("*")
 
@@ -141,7 +141,7 @@ def select_fragments(f_smi,type):
         else:
             result = None
 
-    elif(type == "cyclic"):
+    elif(ftype == "cyclic"):
         result = None
         #make sure it is 2 components
         if( len(fragments) == 2):
@@ -155,7 +155,7 @@ def select_fragments(f_smi,type):
                         result = f
 
 
-    elif(type == "cyclic_and_acyclic"):
+    elif(ftype == "cyclic_and_acyclic"):
         #print f_smi
         result = ""
 
@@ -217,19 +217,7 @@ cyc_smarts = Chem.MolFromSmarts("[R1,R2]@[r;!R1]")
 cSma1 = Chem.MolFromSmarts("[#0][r].[r][#0]")
 cSma2 = Chem.MolFromSmarts("[#0][r][#0]")
 
-#read the STDIN
-for line in sys.stdin:
-
-    line = line.rstrip()
-    smi,id = re.split('\s|,',line)
-    #print smi,id
-
-    mol = Chem.MolFromSmiles(smi)
-
-    if mol is None:
-        sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
-	continue
-
+def generate_fraggle_fragmentation(mol):
     #query mol heavy atom count
     hac = mol.GetNumAtoms()
 
@@ -250,15 +238,15 @@ for line in sys.stdin:
     bonds_selected = []
 
     #loop to generate every single and double cut in the molecule
-    for x in xrange( total_acyclic ):
+    for x in range( total_acyclic ):
         #single cuts are not required
         #relevant single cut fragments can be found from the double cuts
         #for explanation see check_fragments method
-        for y in xrange(x+1,total_acyclic):
+        for y in range(x+1,total_acyclic):
             #print matching_atoms[x],matching_atoms[y]
             bonds_selected.append(acyclic_matching_atoms[x])
             bonds_selected.append(acyclic_matching_atoms[y])
-            fragment = delete_bonds(bonds_selected,"acyclic")
+            fragment = delete_bonds(bonds_selected,"acyclic",hac)
             if fragment is not None:
                 #print "%s" % (fragment)
                 out_fragments.add(fragment)
@@ -277,12 +265,12 @@ for line in sys.stdin:
     bonds_selected = []
 
     #loop to generate every double cut of relevant bonds
-    for x in xrange( total_cyclic ):
-        for y in xrange(x+1,total_cyclic):
+    for x in range( total_cyclic ):
+        for y in range(x+1,total_cyclic):
             #print matching_atoms[x],matching_atoms[y]
             bonds_selected.append(cyclic_matching_atoms[x])
             bonds_selected.append(cyclic_matching_atoms[y])
-            fragment = delete_bonds(bonds_selected,"cyclic")
+            fragment = delete_bonds(bonds_selected,"cyclic",hac)
             bonds_selected = []
 
             if fragment is not None:
@@ -290,20 +278,36 @@ for line in sys.stdin:
                 out_fragments.add(fragment)
 
                 #now do an acyclic cut with the successful cyclic cut
-                for z in xrange(total_acyclic):
+                for z in range(total_acyclic):
                     bonds_selected.append(cyclic_matching_atoms[x])
                     bonds_selected.append(cyclic_matching_atoms[y])
                     bonds_selected.append(acyclic_matching_atoms[z])
-                    fragment = delete_bonds(bonds_selected,"cyclic_and_acyclic")
+                    fragment = delete_bonds(bonds_selected,"cyclic_and_acyclic",hac)
                     if fragment is not None:
                         #print "%s" % (fragment)
                         out_fragments.add(fragment)
                     bonds_selected = []
 
-    #print out the unique fragments
-    for x in out_fragments:
-        #cansmi
-        temp = Chem.MolFromSmiles(x)
+    return out_fragments
 
-        print "%s,%s,%s" % (smi,id,Chem.MolToSmiles(temp))
+if __name__ =='__main__':
+    #read the STDIN
+    for line in sys.stdin:
+        line = line.rstrip()
+        smi,id = re.split('\s|,',line)
+        #print smi,id
+
+        mol = Chem.MolFromSmiles(smi)
+
+        if mol is None:
+            sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
+            continue
+
+        out_fragments = generate_fraggle_fragmentation(mol)
+        #print out the unique fragments
+        for x in out_fragments:
+            #cansmi
+            temp = Chem.MolFromSmiles(x)
+
+            print "%s,%s,%s" % (smi,id,Chem.MolToSmiles(temp))
 
