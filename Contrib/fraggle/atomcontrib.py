@@ -133,6 +133,41 @@ def atomContrib(subs,smi,options):
             pMol = Chem.MolFromSmiles(smi)
 
     return Chem.MolToSmiles(pMol)
+
+
+modified_query_fps = {}
+def compute_fraggle_similarity(inMol,inSmi,qMol,qSmi,qSubs,options):
+    qFP = Chem.RDKFingerprint(qMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+    iFP = Chem.RDKFingerprint(inMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+
+    rdkit_sim = DataStructs.TanimotoSimilarity(qFP,iFP)
+
+    qm_key = "%s_%s" % (qSubs,qSmi)
+    if qm_key in modified_query_fps:
+        qmMolFp = modified_query_fps[qm_key]
+    else:
+        query_modified = atomContrib(qSubs,qSmi,options)
+        qmMol = Chem.MolFromSmiles(query_modified)
+        qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+        modified_query_fps[qm_key] = qmMolFp
+
+    retrieved_modified = atomContrib(qSubs,inSmi,options)
+    #print "%s.%s" % (query_modified,retrieved_modified)
+    rmMol = Chem.MolFromSmiles(retrieved_modified)
+    #wrap in a try, catch
+    try:
+        rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+
+        fraggle_sim=max(DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp),
+                        rdkit_sim)
+        #print '\t',qSubs,fraggle_sim,rdkit_sim
+
+    except:
+        sys.stderr.write("Can't generate fp for: %s\n" % (retrieved_modified) )
+        fraggle_sim = 0.0
+
+    return rdkit_sim,fraggle_sim
+
 			
 
 parser = OptionParser(description="Program to post-process Tversky search results as part of Fraggle",
@@ -158,7 +193,6 @@ if __name__ == '__main__':
 
     #create some data structure to store results
     id_to_smi = {}
-    modified_query_fp = {}
     day_sim = {}
     frag_sim = {}
     query_size = {}
@@ -203,45 +237,15 @@ if __name__ == '__main__':
             #sys.stderr.write("Too large: %s\n" % (inSmi) )
             continue;
         
-        #rdkit_sim,fraggle_sim = compute_fraggle_similarity()
-        qFP = Chem.RDKFingerprint(query_mols[qID], maxPath=5, fpSize=1024, nBitsPerHash=2)
-        iFP = Chem.RDKFingerprint(iMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-
-        rdkit_sim = DataStructs.TanimotoSimilarity(qFP,iFP)
-
-        #print "%s %s %s %s %f" % (qSmi,query_id,inSmi,id,rdkit_sim)
-        #add to day_sim
+        #print '>>>',id_
+        rdkit_sim,fraggle_sim = compute_fraggle_similarity(iMol,inSmi,query_mols[qID],qSmi,qSubs,options)
         day_sim[qID][id_] = rdkit_sim
+        frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
 
         #check if you have the fp for the modified query
         #and generate if need to
-        qm_key = "%s_%s" % (qSubs,qSmi)
-        if qm_key in modified_query_fp:
-            qmMolFp = modified_query_fp[qm_key]
-        else:
-            query_modified = atomContrib(qSubs,qSmi,options)
-            qmMol = Chem.MolFromSmiles(query_modified)
-            #qmMolFp = FingerprintMols.FingerprintMol(qmMol)
-            qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-            #add to modified_query_fp
-            modified_query_fp[qm_key] = qmMolFp
 
-        retrieved_modified = atomContrib(qSubs,inSmi,options)
-        #print "%s.%s" % (query_modified,retrieved_modified)
-        rmMol = Chem.MolFromSmiles(retrieved_modified)
 
-        #wrap in a try, catch
-        try:
-            rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-            #print "%s," % (retrieved_modified),
-
-            fraggle_sim=max(DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp),
-                            rdkit_sim)
-                            
-            #store fraggle sim if its the highest
-            frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
-        except:
-            sys.stderr.write("Can't generate fp for: %s\n" % (retrieved_modified) )
 
     #right, print out the results for the query
     #Format: SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,Daylight_Similarity
