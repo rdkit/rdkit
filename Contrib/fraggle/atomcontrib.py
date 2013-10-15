@@ -179,7 +179,6 @@ if __name__ == '__main__':
         #add query to data structures
         frag_sim.setdefault(qID, defaultdict(float))
         day_sim.setdefault(qID, {})
-        modified_query_fp.setdefault(qID, {})
 
         if(qID not in query_size):
             qMol = Chem.MolFromSmiles(qSmi)
@@ -217,15 +216,15 @@ if __name__ == '__main__':
         #check if you have the fp for the modified query
         #and generate if need to
         qm_key = "%s_%s" % (qSubs,qSmi)
-        if qm_key in modified_query_fp[qID]:
-            qmMolFp = modified_query_fp[qID][qm_key]
+        if qm_key in modified_query_fp:
+            qmMolFp = modified_query_fp[qm_key]
         else:
             query_modified = atomContrib(qSubs,qSmi,options)
             qmMol = Chem.MolFromSmiles(query_modified)
             #qmMolFp = FingerprintMols.FingerprintMol(qmMol)
             qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
             #add to modified_query_fp
-            modified_query_fp[qID][qm_key] = qmMolFp
+            modified_query_fp[qm_key] = qmMolFp
 
         retrieved_modified = atomContrib(qSubs,inSmi,options)
         #print "%s.%s" % (query_modified,retrieved_modified)
