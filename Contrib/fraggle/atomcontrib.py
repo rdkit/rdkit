@@ -168,16 +168,13 @@ if __name__ == '__main__':
     emptyMol = Chem.MolFromSmiles('*')
 
     #read the STDIN
-    input = {}
     for line in sys.stdin:
         line = line.rstrip()
         qSubs,qSmi,qID,inSmi,id_,tversky = line.split(",")
 
-        #input dictionary
-        input.setdefault(qID,[]).append( (qSubs,inSmi,id_) )
-
         #add query to id_to_smi
         id_to_smi[qID] = qSmi
+        id_to_smi[id_] = inSmi
 
         #add query to data structures
         frag_sim.setdefault(qID, defaultdict(float))
@@ -206,12 +203,13 @@ if __name__ == '__main__':
         if(iMol.GetNumAtoms() > query_size[qID]+4):
             #sys.stderr.write("Too large: %s\n" % (inSmi) )
             continue;
-
-        id_to_smi[id_] = inSmi
+        
+        #rdkit_sim,fraggle_sim = compute_fraggle_similarity()
         qFP = Chem.RDKFingerprint(query_mols[qID], maxPath=5, fpSize=1024, nBitsPerHash=2)
         iFP = Chem.RDKFingerprint(iMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
 
-        rdkit_sim = DataStructs.FingerprintSimilarity(qFP,iFP)
+        rdkit_sim = DataStructs.TanimotoSimilarity(qFP,iFP)
+
         #print "%s %s %s %s %f" % (qSmi,query_id,inSmi,id,rdkit_sim)
         #add to day_sim
         day_sim[qID][id_] = rdkit_sim
@@ -239,7 +237,7 @@ if __name__ == '__main__':
             #print "%s," % (retrieved_modified),
 
             fraggle_sim=max(DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp),
-                            day_sim[qID][id_])
+                            rdkit_sim)
                             
             #store fraggle sim if its the highest
             frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
