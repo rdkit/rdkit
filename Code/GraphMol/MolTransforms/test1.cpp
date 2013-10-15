@@ -123,6 +123,64 @@ void test1(){
 }
 
 
+void testGetSetBondLength() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  double dist = getBondLength(conf, 0, 19);
+  TEST_ASSERT(RDKit::feq(dist, 1.36));
+  setBondLength(conf, 0, 19, 2.5);
+  dist = getBondLength(conf, 0, 19);
+  TEST_ASSERT(RDKit::feq(dist, 2.5));
+  setBondLength(conf, 19, 0, 3.0);
+  dist = getBondLength(conf, 0, 19);
+  TEST_ASSERT(RDKit::feq(dist, 3.0));
+}
+
+
+void testGetSetAngle() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  double angle = getAngleDeg(conf, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(RDKit::round(angle * 10) / 10, 109.7));
+  setAngleDeg(conf, 0, 19, 21, 125.0);
+  angle = getAngleDeg(conf, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(angle, 125.0));
+  setAngleRad(conf, 21, 19, 0, M_PI / 2.);
+  angle = getAngleRad(conf, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(angle, M_PI / 2.));
+  angle = getAngleDeg(conf, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(angle, 90.0));
+}
+
+
+void testGetSetDihedral() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  double dihedral = getDihedralDeg(conf, 0, 19, 21, 24);
+  TEST_ASSERT(RDKit::feq(RDKit::round(dihedral * 100) / 100, 176.05));
+  setDihedralDeg(conf, 8, 0, 19, 21, 65.0);
+  dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, 65.0));
+  setDihedralDeg(conf, 8, 0, 19, 21, -130.0);
+  dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, -130.0));
+  setDihedralRad(conf, 21, 19, 0, 8, -2. / 3. * M_PI);
+  dihedral = getDihedralRad(conf, 8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, -2. / 3. * M_PI));
+  dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
+  TEST_ASSERT(RDKit::feq(dihedral, -120.0));
+}
+
+
 
 int main() {
   //test1();
@@ -132,6 +190,15 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1Canonicalization \n\n";
   test1Canonicalization();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGetSetBondLength \n\n";
+  testGetSetBondLength();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGetSetAngle \n\n";
+  testGetSetAngle();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGetSetDihedral \n\n";
+  testGetSetDihedral();
   std::cout << "***********************************************************\n";
   return(0);
 }
