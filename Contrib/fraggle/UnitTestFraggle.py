@@ -9,7 +9,7 @@
 from rdkit import RDConfig
 import unittest,cPickle,os
 from rdkit import Chem
-import FraggleLib
+import FraggleSim
 
 class TestCase(unittest.TestCase):
   def testFragmentation(self):
@@ -17,7 +17,7 @@ class TestCase(unittest.TestCase):
     
     """
     mol = Chem.MolFromSmiles('COc1cc(CN2CCC(CC2)NC(=O)c2cncc(C)c2)c(OC)c2ccccc12')
-    frags = FraggleLib.generate_fraggle_fragmentation(mol)
+    frags = FraggleSim.generate_fraggle_fragmentation(mol)
     self.failUnlessEqual(len(frags),16)
 
     expected=('[*]C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',

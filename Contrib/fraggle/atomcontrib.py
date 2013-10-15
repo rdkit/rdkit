@@ -44,7 +44,7 @@ from collections import defaultdict
 #feed to atomcontrib function to return generalised_SMILES
 #use Tanimoto to compare generalised_SMILES with query smiles to give fraggle similarity
 
-import FraggleLib
+import FraggleSim
 
 parser = OptionParser(description="Program to post-process Tversky search results as part of Fraggle",
                     epilog="Format of input file: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim\t"
@@ -114,7 +114,7 @@ if __name__ == '__main__':
             continue;
         
         #print '>>>',id_
-        rdkit_sim,fraggle_sim = FraggleLib.compute_fraggle_similarity_for_subs(iMol,query_mols[qID],qSmi,qSubs,
+        rdkit_sim,fraggle_sim = FraggleSim.compute_fraggle_similarity_for_subs(iMol,query_mols[qID],qSmi,qSubs,
                                                                                options.pfp)
         day_sim[qID][id_] = rdkit_sim
         frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
