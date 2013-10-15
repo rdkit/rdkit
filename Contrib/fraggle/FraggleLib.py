@@ -297,7 +297,7 @@ def generate_fraggle_fragmentation(mol):
 #		If aliphatic turn to a Sc 
 #
 # Return modified smiles
-def atomContrib(subs,smi,options):
+def atomContrib(subs,mol,options):
     marked = {}
 
     def partialFP(atomID):
@@ -316,7 +316,7 @@ def atomContrib(subs,smi,options):
     #generate mol object & fp for input mol
     aBits = [];
 
-    pMol = Chem.MolFromSmiles(smi)
+    pMol = Chem.Mol(mol.ToBinary())
     pMolFp = Chem.RDKFingerprint(pMol, maxPath=5, fpSize=1024, nBitsPerHash=2, atomBits=aBits)
 
     #generate fp of query_substructs
@@ -365,13 +365,13 @@ def atomContrib(subs,smi,options):
             Chem.SanitizeMol(pMol)
         except:
             sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
-            pMol = Chem.MolFromSmiles(smi)
+            pMol = Chem.Mol(mol.ToBinary())
 
-    return Chem.MolToSmiles(pMol)
+    return pMol
 
 
 modified_query_fps = {}
-def compute_fraggle_similarity(inMol,inSmi,qMol,qSmi,qSubs,options):
+def compute_fraggle_similarity(inMol,qMol,qSmi,qSubs,options):
     qFP = Chem.RDKFingerprint(qMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
     iFP = Chem.RDKFingerprint(inMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
 
@@ -381,14 +381,12 @@ def compute_fraggle_similarity(inMol,inSmi,qMol,qSmi,qSubs,options):
     if qm_key in modified_query_fps:
         qmMolFp = modified_query_fps[qm_key]
     else:
-        query_modified = atomContrib(qSubs,qSmi,options)
-        qmMol = Chem.MolFromSmiles(query_modified)
+        qmMol  = atomContrib(qSubs,qMol,options)
         qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
         modified_query_fps[qm_key] = qmMolFp
 
-    retrieved_modified = atomContrib(qSubs,inSmi,options)
-    #print "%s.%s" % (query_modified,retrieved_modified)
-    rmMol = Chem.MolFromSmiles(retrieved_modified)
+    rmMol = atomContrib(qSubs,inMol,options)
+
     #wrap in a try, catch
     try:
         rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
@@ -403,4 +401,8 @@ def compute_fraggle_similarity(inMol,inSmi,qMol,qSmi,qSubs,options):
 
     return rdkit_sim,fraggle_sim
 
-			
+# def GetFraggleSimilarity(queryMol,refMol):
+#     """ return the Fraggle similarity between two molecules
+#     """
+#     frags = generate_fraggle_fragmentation(mol)
+    

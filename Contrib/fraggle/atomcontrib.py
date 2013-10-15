@@ -114,7 +114,7 @@ if __name__ == '__main__':
             continue;
         
         #print '>>>',id_
-        rdkit_sim,fraggle_sim = FraggleLib.compute_fraggle_similarity(iMol,inSmi,query_mols[qID],qSmi,qSubs,options)
+        rdkit_sim,fraggle_sim = FraggleLib.compute_fraggle_similarity(iMol,query_mols[qID],qSmi,qSubs,options)
         day_sim[qID][id_] = rdkit_sim
         frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
 
