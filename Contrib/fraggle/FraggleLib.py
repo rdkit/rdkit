@@ -29,8 +29,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, May 2013
-
+import sys
 from rdkit import Chem,DataStructs
+
+# our default rdkit fingerprinter parameters:
+rdkitFpParams=dict(maxPath=5,fpSize=1024,nBitsPerHash=2)
+
 
 #Fragmentation algorithm
 #-----------------------
@@ -317,11 +321,11 @@ def atomContrib(subs,mol,options):
     aBits = [];
 
     pMol = Chem.Mol(mol.ToBinary())
-    pMolFp = Chem.RDKFingerprint(pMol, maxPath=5, fpSize=1024, nBitsPerHash=2, atomBits=aBits)
+    pMolFp = Chem.RDKFingerprint(pMol, atomBits=aBits, **rdkitFpParams)
 
     #generate fp of query_substructs
     qsMol = Chem.MolFromSmiles(subs)
-    subsFp = Chem.RDKFingerprint(qsMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+    subsFp = Chem.RDKFingerprint(qsMol, **rdkitFpParams)
 
     #loop through atoms of smiles and mark
     for atom in pMol.GetAtoms():           
@@ -371,9 +375,9 @@ def atomContrib(subs,mol,options):
 
 
 modified_query_fps = {}
-def compute_fraggle_similarity(inMol,qMol,qSmi,qSubs,options):
-    qFP = Chem.RDKFingerprint(qMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-    iFP = Chem.RDKFingerprint(inMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+def compute_fraggle_similarity_for_subs(inMol,qMol,qSmi,qSubs,options):
+    qFP = Chem.RDKFingerprint(qMol, **rdkitFpParams)
+    iFP = Chem.RDKFingerprint(inMol, **rdkitFpParams)
 
     rdkit_sim = DataStructs.TanimotoSimilarity(qFP,iFP)
 
@@ -382,21 +386,21 @@ def compute_fraggle_similarity(inMol,qMol,qSmi,qSubs,options):
         qmMolFp = modified_query_fps[qm_key]
     else:
         qmMol  = atomContrib(qSubs,qMol,options)
-        qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+        qmMolFp = Chem.RDKFingerprint(qmMol, **rdkitFpParams)
         modified_query_fps[qm_key] = qmMolFp
 
     rmMol = atomContrib(qSubs,inMol,options)
 
     #wrap in a try, catch
     try:
-        rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+        rmMolFp = Chem.RDKFingerprint(rmMol, **rdkitFpParams)
 
         fraggle_sim=max(DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp),
                         rdkit_sim)
         #print '\t',qSubs,fraggle_sim,rdkit_sim
 
     except:
-        sys.stderr.write("Can't generate fp for: %s\n" % (retrieved_modified) )
+        sys.stderr.write("Can't generate fp for: %s\n" % (Chem.MolToSmiles(rmMol,True)))
         fraggle_sim = 0.0
 
     return rdkit_sim,fraggle_sim
