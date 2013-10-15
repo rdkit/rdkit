@@ -301,10 +301,10 @@ def generate_fraggle_fragmentation(mol):
 #		If aliphatic turn to a Sc 
 #
 # Return modified smiles
-def atomContrib(subs,mol,options):
+def atomContrib(subs,mol,tverskyThresh=0.8):
     marked = {}
 
-    def partialFP(atomID):
+    def partialFP(atomID,tverskyThresh):
 
         #create empty fp
         modifiedFP = DataStructs.ExplicitBitVect(1024)
@@ -313,7 +313,7 @@ def atomContrib(subs,mol,options):
 
         tverskySim = DataStructs.TverskySimilarity(subsFp,modifiedFP,0,1)
  
-        if(tverskySim < options.pfp):
+        if(tverskySim < tverskyThresh):
             #print "%i %s: %f" % (atomID+1, pMol.GetAtomWithIdx(atomID).GetSymbol(), tverskySim)
             marked[atomID] = 1
 
@@ -330,7 +330,7 @@ def atomContrib(subs,mol,options):
     #loop through atoms of smiles and mark
     for atom in pMol.GetAtoms():           
         #store atoms to change
-        partialFP(atom.GetIdx())
+        partialFP(atom.GetIdx(),tverskyThresh)
 
     #get rings to change
     ssr = pMol.GetRingInfo().AtomRings()
@@ -375,7 +375,7 @@ def atomContrib(subs,mol,options):
 
 
 modified_query_fps = {}
-def compute_fraggle_similarity_for_subs(inMol,qMol,qSmi,qSubs,options):
+def compute_fraggle_similarity_for_subs(inMol,qMol,qSmi,qSubs,tverskyThresh=0.8):
     qFP = Chem.RDKFingerprint(qMol, **rdkitFpParams)
     iFP = Chem.RDKFingerprint(inMol, **rdkitFpParams)
 
@@ -385,11 +385,11 @@ def compute_fraggle_similarity_for_subs(inMol,qMol,qSmi,qSubs,options):
     if qm_key in modified_query_fps:
         qmMolFp = modified_query_fps[qm_key]
     else:
-        qmMol  = atomContrib(qSubs,qMol,options)
+        qmMol  = atomContrib(qSubs,qMol,tverskyThresh)
         qmMolFp = Chem.RDKFingerprint(qmMol, **rdkitFpParams)
         modified_query_fps[qm_key] = qmMolFp
 
-    rmMol = atomContrib(qSubs,inMol,options)
+    rmMol = atomContrib(qSubs,inMol,tverskyThresh)
 
     #wrap in a try, catch
     try:
@@ -405,8 +405,60 @@ def compute_fraggle_similarity_for_subs(inMol,qMol,qSmi,qSubs,options):
 
     return rdkit_sim,fraggle_sim
 
-# def GetFraggleSimilarity(queryMol,refMol):
-#     """ return the Fraggle similarity between two molecules
-#     """
-#     frags = generate_fraggle_fragmentation(mol)
+def GetFraggleSimilarity(queryMol,refMol,tverskyThresh=0.8):
+    """ return the Fraggle similarity between two molecules
+
+    >>> q = Chem.MolFromSmiles('COc1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12')
+    >>> m = Chem.MolFromSmiles('COc1cc(CN2CCC(NC(=O)c3ccccc3)CC2)c(OC)c2ccccc12')
+    >>> sim,match = GetFraggleSimilarity(q,m)
+    >>> sim
+    0.980...
+    >>> match
+    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'    
+
+    >>> m = Chem.MolFromSmiles('COc1cc(CN2CCC(Nc3nc4ccccc4s3)CC2)c(OC)c2ccccc12')
+    >>> sim,match = GetFraggleSimilarity(q,m)
+    >>> sim
+    0.794...
+    >>> match
+    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'    
+
+    >>> q = Chem.MolFromSmiles('COc1ccccc1')
+    >>> sim,match = GetFraggleSimilarity(q,m)
+    >>> sim
+    0.347...
+    >>> match
+    '[*]c1ccccc1'    
+ 
+    """
+    if hasattr(queryMol,'_fraggleDecomp'):
+        frags = queryMol._fraggleDecomp
+    else:
+        frags = generate_fraggle_fragmentation(queryMol)
+        queryMol._fraggleDecomp = frags
+    qSmi = Chem.MolToSmiles(queryMol,True)
+    result=0.0
+    bestMatch=None
+    for frag in frags:
+        rdksim,fragsim= compute_fraggle_similarity_for_subs(refMol,queryMol,qSmi,frag,tverskyThresh)
+        if fragsim>result:
+            result=fragsim
+            bestMatch=frag
+    return result,bestMatch
+        
     
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest,sys
+  return doctest.testmod(sys.modules["__main__"],optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+
+
+if __name__ == '__main__':
+  import sys
+  failed,tried = _test()
+  sys.exit(failed)
+
