@@ -34,6 +34,7 @@ import sys
 from optparse import OptionParser
 from rdkit import Chem
 from rdkit import DataStructs
+from collections import defaultdict
 
 #input format
 #query_substructs,query_smiles,SMILES,ID,Tversky_sim
@@ -60,14 +61,14 @@ from rdkit import DataStructs
 #
 # Return modified smiles
 
-def atomContrib(subs,smi):
+def atomContrib(subs,smi,options):
 
     marked = {}
 
     def partialFP(atomID):
 
         #create empty fp
-        modifiedFP = Chem.RDKFingerprint(emptyMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+        modifiedFP = DataStructs.ExplicitBitVect(1024)
 
         modifiedFP.SetBitsFromList(aBits[atomID])
 
@@ -93,7 +94,7 @@ def atomContrib(subs,smi):
         partialFP(atom.GetIdx())
 
     #get rings to change
-    ssr = Chem.GetSymmSSSR(pMol)
+    ssr = pMol.GetRingInfo().AtomRings()
 
     #loop thru rings and records rings to change
     ringsToChange = {}
@@ -142,122 +143,113 @@ parser.add_option('-c','--cutoff',action='store', dest='cutoff', type='float', d
 parser.add_option('-p','--pfp',action='store', dest='pfp', type='float', default=0.8,
                   help="Cutoff for partial fp similarity. DEFAULT = 0.8")
 
+if __name__ == '__main__':
+    #parse the command line options
+    (options, args) = parser.parse_args()
 
-#parse the command line options
-(options, args) = parser.parse_args()
-
-if( (options.cutoff >= 0) and (options.cutoff <= 1) ):
-    fraggle_cutoff = options.cutoff
-else:
-    print "Fraggle cutoff must be in range 0-1"
-    sys.exit(1)
-
-
-print "SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,RDK5_Similarity"
-
-#create some data structure to store results
-id_to_smi = {}
-modified_query_fp = {}
-day_sim = {}
-frag_sim = {}
-query_size = {}
-query_mols = {}
-
-#generate dummy mol object which generates empty fp
-emptyMol = Chem.MolFromSmiles('*')
-
-#read the STDIN
-input = {}
-for line in sys.stdin:
-    line = line.rstrip()
-    qSubs,qSmi,qID,inSmi,id,tversky = line.split(",")
-
-    #input dictionary
-    input.setdefault(qID,[]).append( (qSubs,inSmi,id) )
-
-    #add query to id_to_smi
-    id_to_smi[qID] = qSmi
-
-    #add query to data structures
-    frag_sim.setdefault(qID, {})
-    day_sim.setdefault(qID, {})
-    modified_query_fp.setdefault(qID, {})
-
-    if(qID not in query_size):
-        qMol = Chem.MolFromSmiles(qSmi)
-        if(qMol == None):
-            sys.stderr.write("Can't generate mol for: %s\n" % (qSmi) )
-            continue
-        query_mols[qID] = qMol
-        query_size[qID] = qMol.GetNumAtoms()
-
-    iMol = Chem.MolFromSmiles(inSmi)
-
-    if(iMol == None):
-        sys.stderr.write("Can't generate mol for: %s\n" % (inSmi) )
-        continue
-
-    #discard based on atom size
-    if(iMol.GetNumAtoms() < query_size[qID]-3):
-        #sys.stderr.write("Too small: %s\n" % (inSmi) )
-        continue;
-
-    if(iMol.GetNumAtoms() > query_size[qID]+4):
-        #sys.stderr.write("Too large: %s\n" % (inSmi) )
-        continue;
-
-    id_to_smi[id] = inSmi
-    qFP = Chem.RDKFingerprint(query_mols[qID], maxPath=5, fpSize=1024, nBitsPerHash=2)
-    iFP = Chem.RDKFingerprint(iMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-
-    rdkit_sim = DataStructs.FingerprintSimilarity(qFP,iFP)
-    #print "%s %s %s %s %f" % (qSmi,query_id,inSmi,id,rdkit_sim)
-    #add to day_sim
-    day_sim[qID][id] = rdkit_sim
-
-    #check if you have the fp for the modified query
-    #and generate if need to
-    qm_key = "%s_%s" % (qSubs,qSmi)
-    if qm_key in modified_query_fp[qID]:
-        qmMolFp = modified_query_fp[qID][qm_key]
+    if( (options.cutoff >= 0) and (options.cutoff <= 1) ):
+        fraggle_cutoff = options.cutoff
     else:
-        query_modified = atomContrib(qSubs,qSmi)
-        qmMol = Chem.MolFromSmiles(query_modified)
-        #qmMolFp = FingerprintMols.FingerprintMol(qmMol)
-        qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-        #add to modified_query_fp
-        modified_query_fp[qID][qm_key] = qmMolFp
+        print "Fraggle cutoff must be in range 0-1"
+        sys.exit(1)
 
-    retrieved_modified = atomContrib(qSubs,inSmi)
-    #print "%s.%s" % (query_modified,retrieved_modified)
-    rmMol = Chem.MolFromSmiles(retrieved_modified)
 
-    #wrap in a try, catch
-    try:
-        rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-        #print "%s," % (retrieved_modified),
+    print "SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,RDK5_Similarity"
 
-        fraggle_sim = DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp)
-        #print "%s.%s %s" % (query_modified,retrieved_modified,fraggle_sim)
+    #create some data structure to store results
+    id_to_smi = {}
+    modified_query_fp = {}
+    day_sim = {}
+    frag_sim = {}
+    query_size = {}
+    query_mols = {}
 
-        if(day_sim[qID][id] > fraggle_sim):
-            fraggle_sim = day_sim[qID][id]
+    #generate dummy mol object which generates empty fp
+    emptyMol = Chem.MolFromSmiles('*')
 
-        #store fraggle sim if its the highest
-        if(id in frag_sim[qID]):
-            if(fraggle_sim > frag_sim[qID][id]):
-                frag_sim[qID][id] = fraggle_sim
+    #read the STDIN
+    input = {}
+    for line in sys.stdin:
+        line = line.rstrip()
+        qSubs,qSmi,qID,inSmi,id_,tversky = line.split(",")
+
+        #input dictionary
+        input.setdefault(qID,[]).append( (qSubs,inSmi,id_) )
+
+        #add query to id_to_smi
+        id_to_smi[qID] = qSmi
+
+        #add query to data structures
+        frag_sim.setdefault(qID, defaultdict(float))
+        day_sim.setdefault(qID, {})
+        modified_query_fp.setdefault(qID, {})
+
+        if(qID not in query_size):
+            qMol = Chem.MolFromSmiles(qSmi)
+            if(qMol == None):
+                sys.stderr.write("Can't generate mol for: %s\n" % (qSmi) )
+                continue
+            query_mols[qID] = qMol
+            query_size[qID] = qMol.GetNumAtoms()
+
+        iMol = Chem.MolFromSmiles(inSmi)
+
+        if(iMol == None):
+            sys.stderr.write("Can't generate mol for: %s\n" % (inSmi) )
+            continue
+
+        #discard based on atom size
+        if(iMol.GetNumAtoms() < query_size[qID]-3):
+            #sys.stderr.write("Too small: %s\n" % (inSmi) )
+            continue;
+
+        if(iMol.GetNumAtoms() > query_size[qID]+4):
+            #sys.stderr.write("Too large: %s\n" % (inSmi) )
+            continue;
+
+        id_to_smi[id_] = inSmi
+        qFP = Chem.RDKFingerprint(query_mols[qID], maxPath=5, fpSize=1024, nBitsPerHash=2)
+        iFP = Chem.RDKFingerprint(iMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+
+        rdkit_sim = DataStructs.FingerprintSimilarity(qFP,iFP)
+        #print "%s %s %s %s %f" % (qSmi,query_id,inSmi,id,rdkit_sim)
+        #add to day_sim
+        day_sim[qID][id_] = rdkit_sim
+
+        #check if you have the fp for the modified query
+        #and generate if need to
+        qm_key = "%s_%s" % (qSubs,qSmi)
+        if qm_key in modified_query_fp[qID]:
+            qmMolFp = modified_query_fp[qID][qm_key]
         else:
-            frag_sim[qID][id] = fraggle_sim
+            query_modified = atomContrib(qSubs,qSmi,options)
+            qmMol = Chem.MolFromSmiles(query_modified)
+            #qmMolFp = FingerprintMols.FingerprintMol(qmMol)
+            qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+            #add to modified_query_fp
+            modified_query_fp[qID][qm_key] = qmMolFp
 
-    except:
-        sys.stderr.write("Can't generate fp for: %s\n" % (retrieved_modified) )
+        retrieved_modified = atomContrib(qSubs,inSmi,options)
+        #print "%s.%s" % (query_modified,retrieved_modified)
+        rmMol = Chem.MolFromSmiles(retrieved_modified)
 
-#right, print out the results for the query
-#Format: SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,Daylight_Similarity
-for qID in frag_sim:
-    for id in frag_sim[qID]:
-        if(frag_sim[qID][id] >= fraggle_cutoff):
-            print "%s,%s,%s,%s,%s,%s" % (id_to_smi[id],id,id_to_smi[qID],qID,frag_sim[qID][id],day_sim[qID][id])
-	
-	
+        #wrap in a try, catch
+        try:
+            rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
+            #print "%s," % (retrieved_modified),
+
+            fraggle_sim=max(DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp),
+                            day_sim[qID][id_])
+                            
+            #store fraggle sim if its the highest
+            frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
+        except:
+            sys.stderr.write("Can't generate fp for: %s\n" % (retrieved_modified) )
+
+    #right, print out the results for the query
+    #Format: SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,Daylight_Similarity
+    for qID in frag_sim:
+        for id_ in frag_sim[qID]:
+            if(frag_sim[qID][id_] >= fraggle_cutoff):
+                print "%s,%s,%s,%s,%s,%s" % (id_to_smi[id_],id_,id_to_smi[qID],qID,frag_sim[qID][id_],day_sim[qID][id_])
+
