@@ -1,5 +1,5 @@
 from rdkit import RDConfig
-import os,sys
+import os,sys,math
 import unittest
 from rdkit import DataStructs
 from rdkit import Chem
@@ -59,6 +59,58 @@ class TestCase(unittest.TestCase):
             self.failUnless(feq(p1[0],p2[0]))
             self.failUnless(feq(p1[1],p2[1]))
             self.failUnless(feq(p1[2],p2[2]))
+
+    def testGetSetBondLength(self):
+        file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms',
+                             'test_data', '3-cyclohexylpyridine.mol')
+
+        m = Chem.MolFromMolFile(file, True, False)
+        conf = m.GetConformer()
+        dist = rdmt.GetBondLength(conf, 0, 19)
+        self.failUnlessAlmostEqual(dist, 1.36, 2)
+        rdmt.SetBondLength(conf, 0, 19, 2.5)
+        dist = rdmt.GetBondLength(conf, 0, 19)
+        self.failUnlessAlmostEqual(dist, 2.5, 1)
+        rdmt.SetBondLength(conf, 19, 0, 3.0)
+        dist = rdmt.GetBondLength(conf, 0, 19)
+        self.failUnlessAlmostEqual(dist, 3.0, 1)
+
+    def testGetSetAngle(self):
+        file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms',
+                             'test_data', '3-cyclohexylpyridine.mol')
+
+        m = Chem.MolFromMolFile(file, True, False)
+        conf = m.GetConformer()
+        angle = rdmt.GetAngleDeg(conf, 0, 19, 21)
+        self.failUnlessAlmostEqual(angle, 109.7, 1)
+        rdmt.SetAngleDeg(conf, 0, 19, 21, 125.0)
+        angle = rdmt.GetAngleDeg(conf, 0, 19, 21);
+        self.failUnlessAlmostEqual(angle, 125.0, 1)
+        rdmt.SetAngleRad(conf, 21, 19, 0, math.pi / 2.)
+        angle = rdmt.GetAngleRad(conf, 0, 19, 21)
+        self.failUnlessAlmostEqual(angle, math.pi / 2., 1)
+        angle = rdmt.GetAngleDeg(conf, 0, 19, 21)
+        self.failUnlessAlmostEqual(angle, 90.0, 1)
+
+    def testGetSetDihedral(self):
+        file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms',
+                             'test_data', '3-cyclohexylpyridine.mol')
+
+        m = Chem.MolFromMolFile(file, True, False)
+        conf = m.GetConformer()
+        dihedral = rdmt.GetDihedralDeg(conf, 0, 19, 21, 24)
+        self.failUnlessAlmostEqual(dihedral, 176.05, 2)
+        rdmt.SetDihedralDeg(conf, 8, 0, 19, 21, 65.0)
+        dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
+        self.failUnlessAlmostEqual(dihedral, 65.0, 1)
+        rdmt.SetDihedralDeg(conf, 8, 0, 19, 21, -130.0)
+        dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
+        self.failUnlessAlmostEqual(dihedral, -130.0, 1)
+        rdmt.SetDihedralRad(conf, 21, 19, 0, 8, -2. / 3. * math.pi)
+        dihedral = rdmt.GetDihedralRad(conf, 8, 0, 19, 21)
+        self.failUnlessAlmostEqual(dihedral, -2. / 3. * math.pi, 1)
+        dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
+        self.failUnlessAlmostEqual(dihedral, -120.0, 1)
             
 if __name__=="__main__":
     unittest.main()
