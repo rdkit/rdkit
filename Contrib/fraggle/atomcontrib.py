@@ -44,131 +44,7 @@ from collections import defaultdict
 #feed to atomcontrib function to return generalised_SMILES
 #use Tanimoto to compare generalised_SMILES with query smiles to give fraggle similarity
 
-#atomcontrib algorithm
-#generate fp of query_substructs (qfp)
-#
-#loop through atoms of smiles
-#   For each atom
-#	Generate partial fp of the atom (pfp)
-#	Find Tversky sim of pfp in qfp
-#	If Tversky < 0.8, mark atom in smiles
-#
-#Loop thru marked atoms
-#	If marked atom in ring - turn all atoms in that ring to * (aromatic) or Sc (aliphatic)
-#	For each marked atom
-#		If aromatic turn to a *
-#		If aliphatic turn to a Sc 
-#
-# Return modified smiles
-
-def atomContrib(subs,smi,options):
-
-    marked = {}
-
-    def partialFP(atomID):
-
-        #create empty fp
-        modifiedFP = DataStructs.ExplicitBitVect(1024)
-
-        modifiedFP.SetBitsFromList(aBits[atomID])
-
-        tverskySim = DataStructs.TverskySimilarity(subsFp,modifiedFP,0,1)
- 
-        if(tverskySim < options.pfp):
-            #print "%i %s: %f" % (atomID+1, pMol.GetAtomWithIdx(atomID).GetSymbol(), tverskySim)
-            marked[atomID] = 1
-
-    #generate mol object & fp for input mol
-    aBits = [];
-
-    pMol = Chem.MolFromSmiles(smi)
-    pMolFp = Chem.RDKFingerprint(pMol, maxPath=5, fpSize=1024, nBitsPerHash=2, atomBits=aBits)
-
-    #generate fp of query_substructs
-    qsMol = Chem.MolFromSmiles(subs)
-    subsFp = Chem.RDKFingerprint(qsMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-
-    #loop through atoms of smiles and mark
-    for atom in pMol.GetAtoms():           
-        #store atoms to change
-        partialFP(atom.GetIdx())
-
-    #get rings to change
-    ssr = pMol.GetRingInfo().AtomRings()
-
-    #loop thru rings and records rings to change
-    ringsToChange = {}
-    for ringList in range(len(ssr)):
-        #print "New ring"
-        for ringAtom in range(len(ssr[ringList])):
-            #print ssr[ringList][ringAtoms]
-            if(  marked.has_key(ssr[ringList][ringAtom])  ):
-                #print ssr[ringList][ringAtoms]
-                ringsToChange[ringList] = 1
-
-    #now add these ring atoms to marked
-    for ringList in ringsToChange:
-        for ringAtom in range(len(ssr[ringList])):
-            marked[ ssr[ringList][ringAtom] ] = 1
-
-    if(len(marked) > 0):
-        #now mutate the marked atoms
-        for key in marked:
-            #print key
-            if( pMol.GetAtomWithIdx(key).GetIsAromatic() ):
-                #pMol.GetAtomWithIdx(key).SetAtomicNum(91)
-                #this works everytime and causes far fewer problems
-                pMol.GetAtomWithIdx(key).SetAtomicNum(0)
-                pMol.GetAtomWithIdx(key).SetNoImplicit(True)
-            else:
-                #gives best sim
-                pMol.GetAtomWithIdx(key).SetAtomicNum(21)
-                #works better but when replace S it fails due to valency
-                #pMol.GetAtomWithIdx(key).SetAtomicNum(6)
-
-        try:
-            Chem.SanitizeMol(pMol)
-        except:
-            sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
-            pMol = Chem.MolFromSmiles(smi)
-
-    return Chem.MolToSmiles(pMol)
-
-
-modified_query_fps = {}
-def compute_fraggle_similarity(inMol,inSmi,qMol,qSmi,qSubs,options):
-    qFP = Chem.RDKFingerprint(qMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-    iFP = Chem.RDKFingerprint(inMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-
-    rdkit_sim = DataStructs.TanimotoSimilarity(qFP,iFP)
-
-    qm_key = "%s_%s" % (qSubs,qSmi)
-    if qm_key in modified_query_fps:
-        qmMolFp = modified_query_fps[qm_key]
-    else:
-        query_modified = atomContrib(qSubs,qSmi,options)
-        qmMol = Chem.MolFromSmiles(query_modified)
-        qmMolFp = Chem.RDKFingerprint(qmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-        modified_query_fps[qm_key] = qmMolFp
-
-    retrieved_modified = atomContrib(qSubs,inSmi,options)
-    #print "%s.%s" % (query_modified,retrieved_modified)
-    rmMol = Chem.MolFromSmiles(retrieved_modified)
-    #wrap in a try, catch
-    try:
-        rmMolFp = Chem.RDKFingerprint(rmMol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-
-        fraggle_sim=max(DataStructs.FingerprintSimilarity(qmMolFp,rmMolFp),
-                        rdkit_sim)
-        #print '\t',qSubs,fraggle_sim,rdkit_sim
-
-    except:
-        sys.stderr.write("Can't generate fp for: %s\n" % (retrieved_modified) )
-        fraggle_sim = 0.0
-
-    return rdkit_sim,fraggle_sim
-
-			
+import FraggleLib
 
 parser = OptionParser(description="Program to post-process Tversky search results as part of Fraggle",
                     epilog="Format of input file: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim\t"
@@ -238,7 +114,7 @@ if __name__ == '__main__':
             continue;
         
         #print '>>>',id_
-        rdkit_sim,fraggle_sim = compute_fraggle_similarity(iMol,inSmi,query_mols[qID],qSmi,qSubs,options)
+        rdkit_sim,fraggle_sim = FraggleLib.compute_fraggle_similarity(iMol,inSmi,query_mols[qID],qSmi,qSubs,options)
         day_sim[qID][id_] = rdkit_sim
         frag_sim[qID][id_] = max(frag_sim[qID][id_],fraggle_sim)
 
