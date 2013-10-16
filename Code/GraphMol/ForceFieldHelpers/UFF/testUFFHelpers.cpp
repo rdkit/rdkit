@@ -776,7 +776,7 @@ void testMissingParams(){
     UFF::AtomicParamVect types;
     bool foundAll;
 
-    RWMol *mol = SmilesToMol("[Cu](C)(C)(C)(C)C");
+    ROMol *mol = SmilesToMol("[Cu](C)(C)(C)(C)C");
     TEST_ASSERT(mol);
 
     ROMol *mol2 = MolOps::addHs(*mol);

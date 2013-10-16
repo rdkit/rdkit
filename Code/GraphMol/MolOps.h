@@ -138,7 +138,9 @@ namespace RDKit{
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
      */
     ROMol *addHs(const ROMol &mol,bool explicitOnly=false,bool addCoords=false);
-
+    //! \overload
+    // modifies the molecule in place
+    void addHs(RWMol &mol,bool explicitOnly=false,bool addCoords=false);
 
     //! returns a copy of a molecule with hydrogens removed
     /*!
@@ -163,6 +165,10 @@ namespace RDKit{
     */
     ROMol *removeHs(const ROMol &mol,bool implicitOnly=false,
 			   bool updateExplicitCount=false,bool sanitize=true);
+    //! \overload
+    // modifies the molecule in place
+    void removeHs(RWMol &mol,bool implicitOnly=false,
+                  bool updateExplicitCount=false,bool sanitize=true);
 
     //! returns a copy of a molecule with hydrogens removed and added as queries
     //!  to the heavy atoms to which they are bound.
@@ -186,6 +192,10 @@ namespace RDKit{
 	
     */
     ROMol *mergeQueryHs(const ROMol &mol);
+    //! \overload
+    // modifies the molecule in place
+    void mergeQueryHs(RWMol &mol);
+
     //@}
 
     //! \name Sanitization

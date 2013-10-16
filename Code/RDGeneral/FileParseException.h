@@ -18,9 +18,9 @@ namespace RDKit {
   class FileParseException : public std::runtime_error {
   public:
     //! construct with an error message
-    explicit FileParseException(const char *msg) : _msg(msg), std::runtime_error("FileParseException") {};
+    explicit FileParseException(const char *msg) : std::runtime_error("FileParseException"), _msg(msg) {};
     //! construct with an error message
-    explicit FileParseException(const std::string msg) : _msg(msg), std::runtime_error("FileParseException") {};
+    explicit FileParseException(const std::string msg) : std::runtime_error("FileParseException"), _msg(msg) {};
     //! get the error message
     const char *message () const { return _msg.c_str(); };
     ~FileParseException () throw () {};

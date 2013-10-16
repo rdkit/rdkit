@@ -142,6 +142,14 @@
     bool writeFirstConfTwice=false) {
     RDKit::MolToTPLFile(*($self), fName, partialChargeProp, writeFirstConfTwice);
   }
+
+  std::string MolToPDBBlock(int confId=-1,unsigned int flavor=0) {
+    return RDKit::MolToPDBBlock(*($self),confId,flavor);
+  }
+  void MolToPDBFile(std::string fName,int confId=-1,unsigned int flavor=0) {
+    RDKit::MolToPDBFile(*($self), fName, confId, flavor);
+  }
+
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
     return SubstructMatch(*($self),query,mv,true,useChirality);

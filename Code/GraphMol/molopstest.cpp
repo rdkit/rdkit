@@ -555,11 +555,11 @@ void test8()
   //BOOST_LOG(rdInfoLog) << "6" << std::endl;
   m3 = MolOps::removeHs(*m2,true);
   CHECK_INVARIANT(m3->getNumAtoms()==5,"");
-  delete m2;
+
   //BOOST_LOG(rdInfoLog) << "7" << std::endl;
   // remove all after removing only implicit
-  m2 = MolOps::removeHs(*m3,false);
-  CHECK_INVARIANT(m2->getNumAtoms()==4,"");
+  MolOps::removeHs(static_cast<RWMol &>(*m3),false);
+  CHECK_INVARIANT(m3->getNumAtoms()==4,"");
 
   // this test is also done in the same order in the python tests:
   delete m;
@@ -2513,7 +2513,7 @@ void testSFIssue1894348()
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0]==0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1]==4);
-  m2=static_cast<RWMol *>(MolOps::removeHs(*m));
+  m2=static_cast<RWMol *>(MolOps::removeHs(static_cast<const ROMol &>(*m)));
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0]==0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1]==4);
@@ -2529,7 +2529,7 @@ void testSFIssue1894348()
   TEST_ASSERT(m);
   MolOps::sanitizeMol(*m);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==0);
-  m2=static_cast<RWMol *>(MolOps::removeHs(*m));
+  m2=static_cast<RWMol *>(MolOps::removeHs(static_cast<const ROMol &>(*m)));
   // if we don't assign stereocodes in the original we shouldn't have them here:
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms().size()==0);
   delete m;
@@ -3149,7 +3149,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3167,7 +3167,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3183,7 +3183,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -4018,7 +4018,7 @@ void testSFNetIssue3549146() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
+    ROMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==16);
     ROMol *m2 = MolOps::mergeQueryHs(*m);

@@ -68,14 +68,21 @@ class MolViewer(object):
               molB="",confId=-1,zoom=True):
     """ special case for displaying a molecule or mol block """
   
-    if not molB:
-      molB = Chem.MolToMolBlock(mol,confId=confId)
     server = self.server
     if not zoom:
       self.server.do('view rdinterface,store')
     if showOnly:
       self.DeleteAll()
-    id = server.loadMolBlock(molB,name)
+
+    if mol.GetNumAtoms()<999:
+      if not molB:
+        molB = Chem.MolToMolBlock(mol,confId=confId)
+      mid = server.loadMolBlock(molB,name)
+    else:
+      if not molB:
+        molB = Chem.MolToPDBBlock(mol,confId=confId)
+      mid = server.loadPDB(molB,name)
+      
     if highlightFeatures:
       nm = name+'-features'
       conf = mol.GetConformer(confId)
@@ -91,7 +98,7 @@ class MolViewer(object):
       server.zoom('visible')
     else:
       self.server.do('view rdinterface,recall')
-    return id
+    return mid
 
   def GetSelectedAtoms(self,whichSelection=None):
     " returns the selected atoms "
