@@ -91,5 +91,58 @@ namespace MolTransforms{
   */
   void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar=false, bool ignoreHs=true);
 
+  //! Get the bond length between the specified atoms i, j
+  double getBondLength(RDKit::Conformer &conf,
+    unsigned int iAtomId, unsigned int jAtomId);
+
+  //! Set the bond length between the specified atoms i, j
+  //! (all atoms bonded to atom j are moved)
+  void setBondLength(RDKit::Conformer &conf,
+    unsigned int iAtomId, unsigned int jAtomId, double value);
+
+  //! Get the angle in radians among the specified atoms i, j, k
+  double getAngleRad(RDKit::Conformer &conf,
+    unsigned int iAtomId, unsigned int jAtomId, unsigned int kAtomId);
+
+  //! Get the angle in degrees among the specified atoms i, j, k
+  inline double getAngleDeg(RDKit::Conformer &conf,
+    unsigned int iAtomId, unsigned int jAtomId, unsigned int kAtomId) {
+    return (180. / M_PI * getAngleRad(conf, iAtomId, jAtomId, kAtomId));
+  }
+
+  //! Set the angle in radians among the specified atoms i, j, k
+  //! (all atoms bonded to atom k are moved)
+  void setAngleRad(RDKit::Conformer &conf, unsigned int iAtomId,
+    unsigned int jAtomId, unsigned int kAtomId, double value);
+
+  //! Set the angle in degrees among the specified atoms i, j, k
+  //! (all atoms bonded to atom k are moved)
+  inline void setAngleDeg(RDKit::Conformer &conf, unsigned int iAtomId,
+    unsigned int jAtomId, unsigned int kAtomId, double value) {
+    setAngleRad(conf, iAtomId, jAtomId, kAtomId, value / 180. * M_PI);
+  }
+
+  //! Get the dihedral angle in radians among the specified atoms i, j, k, l
+  double getDihedralRad(RDKit::Conformer &conf, unsigned int iAtomId,
+    unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId);
+
+  //! Get the dihedral angle in degrees among the specified atoms i, j, k, l
+  inline double getDihedralDeg(RDKit::Conformer &conf, unsigned int iAtomId,
+    unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId) {
+    return (180. / M_PI * getDihedralRad(conf, iAtomId, jAtomId, kAtomId, lAtomId));
+  }
+
+  //! Set the dihedral angle in radians among the specified atoms i, j, k, l
+  //! (all atoms bonded to atom l are moved)
+  void setDihedralRad(RDKit::Conformer &conf, unsigned int iAtomId,
+    unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId, double value);
+
+  //! Set the dihedral angle in degrees among the specified atoms i, j, k, l
+  //! (all atoms bonded to atom l are moved)
+  inline void setDihedralDeg(RDKit::Conformer &conf, unsigned int iAtomId,
+    unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId, double value) {
+    setDihedralRad(conf, iAtomId, jAtomId, kAtomId, lAtomId, value / 180. * M_PI);
+  }
+
 }
 #endif
