@@ -2434,7 +2434,16 @@ CAS<~>
     self.failUnlessEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetResidueName(),"THR")
     self.failUnlessAlmostEqual(m.GetAtomWithIdx(0).GetMonomerInfo().GetTempFactor(),13.79,2)
     
-    
+  def test85MolCopying(self):
+    m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
+    m.SetProp('foo','bar')
+    m2 = Chem.Mol(m)
+    self.failUnlessEqual(Chem.MolToSmiles(m,True),Chem.MolToSmiles(m2,True))
+    self.failUnless(m2.HasProp('foo'))
+    self.failUnlessEqual(m2.GetProp('foo'),'bar')    
+    ri = m2.GetRingInfo()
+    self.failUnless(ri)
+    self.failUnlessEqual(ri.NumRings(),1)
     
 
 
