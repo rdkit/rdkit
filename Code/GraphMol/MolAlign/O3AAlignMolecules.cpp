@@ -667,7 +667,7 @@ namespace RDKit {
       std::vector<unsigned int> pairs(6, 0);
       std::vector<double> score(5, 0.0);
       std::vector<double> pairsRMSD(2, 0.0);
-      std::vector<SDM *> bestSDM(5, NULL);
+      std::vector<SDM *> bestSDM((unsigned int)5, NULL);
       MolHistogram refHist(refMol);
       MolHistogram prbHist(prbMol);
       LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
