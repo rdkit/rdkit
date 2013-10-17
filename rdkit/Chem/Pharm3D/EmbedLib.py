@@ -392,7 +392,7 @@ def EmbedPharmacophore(mol,atomMatch,pcophore,randomSeed=-1,count=10,smoothFirst
   res = []
   for i in range(count):
     tmpM = bm[:,:]
-    m2 = Chem.Mol(mol.ToBinary())
+    m2 = Chem.Mol(mol)
     t1 = time.time()
     try:
       if randomSeed<=0:

@@ -72,7 +72,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
 
   if kekulize:
     from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
+    mol = Chem.Mol(mol)
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():
@@ -132,7 +132,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   drawer = MolDrawing(canvas=canvas,drawingOptions=options)
   if kekulize:
     from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
+    mol = Chem.Mol(mol)
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():
@@ -197,7 +197,7 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   omol=mol
   if kekulize:
     from rdkit import Chem
-    mol = Chem.Mol(mol.ToBinary())
+    mol = Chem.Mol(mol)
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():

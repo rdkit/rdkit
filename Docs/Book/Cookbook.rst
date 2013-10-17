@@ -112,10 +112,10 @@ The code:
           tIndices=indices[:]
           nextIdx = matches.pop(0)
           tIndices.append(nextIdx)
-          nm = Chem.Mol(mol.ToBinary())
+          nm = Chem.Mol(mol)
           nm.GetAtomWithIdx(nextIdx).SetNoImplicit(True)
           nm.GetAtomWithIdx(nextIdx).SetNumExplicitHs(1)
-          cp = Chem.Mol(nm.ToBinary())
+          cp = Chem.Mol(nm)
           try:
               Chem.SanitizeMol(cp)
           except ValueError:
@@ -155,7 +155,7 @@ The code:
       # loop through the fragments in turn and try to aromatize them:
       ok=True
       for i,frag in enumerate(frags):
-          cp = Chem.Mol(frag.ToBinary())
+          cp = Chem.Mol(frag)
           try:
               Chem.SanitizeMol(cp)
           except ValueError:
@@ -194,7 +194,7 @@ Examples of using it:
         m = Chem.MolFromSmiles(smi,False)  
         try:
             m.UpdatePropertyCache(False)
-            cp = Chem.Mol(m.ToBinary())
+            cp = Chem.Mol(m)
             Chem.SanitizeMol(cp)
             m = cp
             print 'fine:',Chem.MolToSmiles(m)

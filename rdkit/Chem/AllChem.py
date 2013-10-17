@@ -62,7 +62,7 @@ def ComputeMolVolume(mol,confId=-1,gridSpacing=0.2,boxMargin=2.0):
   based on a grid-encoding of the molecular shape.
 
   """
-  mol = rdchem.Mol(mol.ToBinary())
+  mol = rdchem.Mol(mol)
   conf = mol.GetConformer(confId)
   CanonicalizeConformer(conf)
   box = ComputeConfBox(conf)
