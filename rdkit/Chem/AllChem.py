@@ -33,7 +33,7 @@ from rdkit.Chem.rdMolDescriptors import *
 from rdkit import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
-import numpy, copy, os
+import numpy, os
 from rdkit.RDLogger import logger
 logger = logger()
 
@@ -362,8 +362,8 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else the algorithm will fail.
 
   """
-  refmol2 = copy.deepcopy(refmol)
-  mol2 = copy.deepcopy(mol)
+  refmol2 = rdchem.Mol(refmol)
+  mol2 = rdchem.Mol(mol)
   if mol2.GetNumHeavyAtoms() != refmol2.GetNumHeavyAtoms():
     raise ValueError("Molecules do not have the same number of heavy atoms")
   # do the molecules match already?
