@@ -2410,8 +2410,8 @@ void testGitHubIssue25(){
     TEST_ASSERT(fp1);
     TEST_ASSERT(fp1->getTotalVal()==2);
     TEST_ASSERT(fp1->getNonzeroElements().size()==2);
-    TEST_ASSERT((*fp1)[4437590048]==1);
-    TEST_ASSERT((*fp1)[12893306913]==1);
+    TEST_ASSERT((*fp1)[4437590048LL]==1);
+    TEST_ASSERT((*fp1)[12893306913LL]==1);
     delete fp1;
     delete m1;
   }
