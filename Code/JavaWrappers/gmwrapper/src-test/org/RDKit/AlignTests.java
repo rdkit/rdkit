@@ -44,7 +44,7 @@ public class AlignTests extends GraphMolTest {
 	@Test
 	public void testO3ABasic () {
             String fname = new File(getRdBase(),
-                                    "Code/GraphMol/MolAlign/test_data/ref_e2_O3A.sdf").getPath();
+                                    "Code/GraphMol/MolAlign/test_data/ref_e2.sdf").getPath();
             SDMolSupplier sdsup = new SDMolSupplier(fname);
             ROMol m1 = sdsup.next();
             ROMol m2 = sdsup.next();
