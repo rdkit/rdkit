@@ -58,7 +58,7 @@ namespace RDKit{
              "Set the ID of the conformer\n")
         
         .def("GetAtomPosition", GetAtomPos,
-             "Get the posistion of an atom\n")
+             "Get the position of an atom\n")
         
         .def("SetAtomPosition", SetAtomPos,
              "Set the position of the specified atom\n")
@@ -69,6 +69,31 @@ namespace RDKit{
              "Set the 3D flag of the conformer\n")
         .def("Is3D", &Conformer::is3D,
              "returns the 3D flag of the conformer\n")
+        .def("GetBondLength", &Conformer::getBondLength,
+             "returns the bond length in angstrom between atoms i, j\n")
+        .def("SetBondLength", &Conformer::setBondLength,
+             "sets the bond length in angstrom between atoms i, j; "
+             "all atoms bonded to atom j are moved\n")
+        .def("GetAngleRad", &Conformer::getAngleRad,
+             "returns the angle in radians between atoms i, j, k\n")
+        .def("GetAngleDeg", &Conformer::getAngleDeg,
+             "returns the angle in degrees between atoms i, j, k\n")
+        .def("SetAngleRad", &Conformer::setAngleRad,
+             "sets the angle in radians between atoms i, j, k; "
+             "all atoms bonded to atom k are moved\n")
+        .def("SetAngleDeg", &Conformer::setAngleDeg,
+             "sets the angle in degrees between atoms i, j, k; "
+             "all atoms bonded to atom k are moved\n")
+        .def("GetDihedralRad", &Conformer::getDihedralRad,
+             "returns the dihedral angle in radians between atoms i, j, k, l\n")
+        .def("GetDihedralDeg", &Conformer::getDihedralDeg,
+             "returns the dihedral angle in degrees between atoms i, j, k, l\n")
+        .def("SetDihedralRad", &Conformer::setDihedralRad,
+             "sets the dihedral angle in radians between atoms i, j, k, l; "
+             "all atoms bonded to atom l are moved\n")
+        .def("SetDihedralDeg", &Conformer::setDihedralDeg,
+             "sets the dihedral angle in degrees between atoms i, j, k, l; "
+             "all atoms bonded to atom l are moved\n")
         ;
 
     };

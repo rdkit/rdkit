@@ -67,7 +67,7 @@ endif()
 
 add_subdirectory(Wrap)
 
-rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral FileParsers)
 
 rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeometryLib RDGeneral)
 
