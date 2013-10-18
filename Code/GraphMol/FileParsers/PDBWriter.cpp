@@ -295,7 +295,7 @@ namespace RDKit {
     if(dp_ostream!=NULL) close();
   }
 
-  void PDBWriter::write(ROMol &mol, int confId) {
+  void PDBWriter::write(const ROMol &mol, int confId) {
     PRECONDITION(dp_ostream,"no output stream");
 
     d_count++;
@@ -314,7 +314,7 @@ namespace RDKit {
       (*dp_ostream) << "ENDMDL\n";
   }
 
-  void MolToPDBFile(ROMol &mol,const std::string &fname,int confId,unsigned int flavor){
+  void MolToPDBFile(const ROMol &mol,const std::string &fname,int confId,unsigned int flavor){
     PDBWriter w(fname,flavor);
     w.write(mol,confId);
   }

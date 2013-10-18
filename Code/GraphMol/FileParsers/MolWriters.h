@@ -23,7 +23,7 @@ namespace RDKit {
   class MolWriter {
   public:
     virtual ~MolWriter() {}
-    virtual void write(ROMol &mol,int confId=defaultConfId) = 0;
+    virtual void write(const ROMol &mol,int confId=defaultConfId) = 0;
     virtual void flush() = 0;
     virtual void close() = 0;
     virtual void setProps(const STR_VECT &propNames)=0;
@@ -73,7 +73,7 @@ namespace RDKit {
     void setProps(const STR_VECT &propNames);
 
     //! \brief write a new molecule to the file
-    void write(ROMol &mol,int confId=defaultConfId);
+    void write(const ROMol &mol,int confId=defaultConfId);
 
     //! \brief flush the ostream
     void flush() {
@@ -142,7 +142,7 @@ namespace RDKit {
     void setProps(const STR_VECT &propNames);
 
     //! \brief write a new molecule to the file
-    void write(ROMol &mol, int confId=defaultConfId);
+    void write(const ROMol &mol, int confId=defaultConfId);
 
     //! \brief flush the ostream
     void flush() { 
@@ -196,7 +196,7 @@ namespace RDKit {
     void setProps(const STR_VECT &propNames);
 
     //! \brief write a new molecule to the file
-    void write(ROMol &mol, int confId=defaultConfId);
+    void write(const ROMol &mol, int confId=defaultConfId);
 
     //! \brief flush the ostream
     void flush() { 
@@ -249,7 +249,7 @@ namespace RDKit {
     ~PDBWriter();
 
     //! \brief write a new molecule to the file
-    void write(ROMol &mol, int confId=defaultConfId);
+    void write(const ROMol &mol, int confId=defaultConfId);
 
     void setProps(const STR_VECT&) {};
 

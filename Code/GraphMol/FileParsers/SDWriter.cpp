@@ -62,7 +62,7 @@ namespace RDKit {
     d_props = propNames;
   }
 
-  void SDWriter::write(ROMol &mol, int confId) {
+  void SDWriter::write(const ROMol &mol, int confId) {
     PRECONDITION(dp_ostream,"no output stream");
 
     // write the molecule 

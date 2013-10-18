@@ -78,7 +78,7 @@ namespace RDKit {
     d_props = propNames;
   }
 
-  void TDTWriter::write(ROMol &mol, int confId) {
+  void TDTWriter::write(const ROMol &mol, int confId) {
     CHECK_INVARIANT(dp_ostream,"no output stream");
     //start by writing a "|" line unless this is the first line
     if (d_molid > 0) {
