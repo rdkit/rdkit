@@ -6,6 +6,10 @@ James Davidson, JP Ebejer, Nikolas Fechner, Gregory Gerebtzoff, Michal Nowotka, 
 Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
 
 Bug Fixes:
+ - Incorrect angle terms in UFF
+   (github issue 105)
+ - Problems with stereochemistry flags and PathToSubmol()
+   (github issue 103)
  - Bad Crippen atom type for pyrrole H
    (github issue 92)
  - PandasTools tests fail with Pandas v0.12
@@ -34,6 +38,31 @@ Bug Fixes:
    (github issue 55)
 
 New Features:
+ - support \\ in SMILES
+   (github issue 136)
+ - Support a similarity threshold in DbCLI
+   (github issue 134)
+ - Support construction molecules from other molecules in the python wrapper
+   (github issue 133)
+ - support tversky similarity in DbCLI
+   (github issue 130)
+ - support tversky similarity in cartridge
+   (github issue 121)
+ - support reading and writing reactionComponentType and reactionComponentNumber from ctabs
+   (github issue 118)
+ - Add in-place forms of addHs(), removeHs(), and mergeQueryHs()
+   (github issue 117)
+ - modify MolOps::cleanUp() to support this azide formulation: C-N=N#N
+   (github issue 116)
+ - Dihedral rotation exposed in python
+   (github issue 113)
+ - Grey color for Hydrogens
+   (github issue 97)
+ - Add method for setting the chiral flag in mol blocks
+   (github issue 64)
+ - New descriptors added (Python only for now):
+   MaxPartialCharge(),MinPartialCharge(),MaxAbsPartialCharge(),MinAbsPartialCharge(),
+   MaxEStateIndex(),MinEStateIndex(),MaxAbsEStateIndex(),MinAbsEStateIndex()
 
 New Database Cartridge Features: 
 
