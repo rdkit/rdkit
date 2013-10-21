@@ -1,4 +1,3 @@
-# $Id$
 #
 # RDKit base fdef file.
 # Created by Greg Landrum
@@ -172,12 +171,6 @@ EndFeature
 # hydrophobic atom
 AtomType Hphobe [c,s,S&H0&v2,Br,I,{Carbon_NonPolar}]
 AtomType RingHphobe [R;{Hphobe}]
-
-# nitro groups in the RD code are always: *-[N+](=O)[O-]
-DefineFeature Nitro2 [N;D3;+](=O)[O-]
-  Family LumpedHydrophobe
-  Weights 1.0,1.0,1.0
-EndFeature
 
 #
 # 21.1.2008 (GL): update ring membership tests to reflect corrected meaning of

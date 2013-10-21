@@ -1,4 +1,3 @@
-# $Id$
 #
 # FDef file contributed by Markus Kossner
 
@@ -161,12 +160,6 @@ EndFeature
 DefineFeature Methyl [CH3]
   Family Hydrophobe
   Weights 1.0
-EndFeature
-
-# nitro groups in the RD code are always: *-[N+](=O)[O-]
-DefineFeature Nitro2 [N;D3;+](=O)[O-]
-  Family LumpedHydrophobe
-  Weights 1.0,1.0,1.0
 EndFeature
 
 DefineFeature ThreeWayAttach [D3,D4]
