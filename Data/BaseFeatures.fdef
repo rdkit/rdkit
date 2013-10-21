@@ -36,7 +36,12 @@ AtomType Hydroxyl [O;H1;v2]
 # a bit too general, but the idea is to eliminate things like CF3
 AtomType HalogenAcceptor [F;$(F-[#6]);!$(FC[F,Cl,Br,I])]
 
-DefineFeature SingleAtomAcceptor [{Hydroxyl},{ChalcAcceptor},{NAcceptor},{HalogenAcceptor}]
+# A Nitro is polar (Acceptor) according to pre-Greg-birth (1964) papers
+# Crystal structures: http://scripts.iucr.org/cgi-bin/paper?S0108768197010239
+# Gas phase: http://www.sciencedirect.com/science/article/pii/S0040402001991616
+AtomType Nitro [N;D3;+](=O)[O-]
+
+DefineFeature SingleAtomAcceptor [{Hydroxyl},{ChalcAcceptor},{NAcceptor},{HalogenAcceptor},{Nitro}]
   Family Acceptor
   Weights 1
 EndFeature
