@@ -44,7 +44,7 @@ from collections import defaultdict
 #feed to atomcontrib function to return generalised_SMILES
 #use Tanimoto to compare generalised_SMILES with query smiles to give fraggle similarity
 
-import FraggleSim
+from rdkit.Chem.Fraggle import FraggleSim
 
 parser = OptionParser(description="Program to post-process Tversky search results as part of Fraggle",
                     epilog="Format of input file: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim\t"
