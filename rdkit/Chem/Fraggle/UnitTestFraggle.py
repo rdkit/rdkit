@@ -9,7 +9,7 @@
 from rdkit import RDConfig
 import unittest,cPickle,os
 from rdkit import Chem
-import FraggleSim
+from rdkit.Chem.Fraggle import FraggleSim
 
 class TestCase(unittest.TestCase):
   def testFragmentation(self):
@@ -36,8 +36,8 @@ class TestCase(unittest.TestCase):
  '[*]c1cc(OC)c2ccccc2c1OC.[*]N1CCC(NC(=O)c2cncc(C)c2)CC1',
  '[*]c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
  '[*]c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC')
-    for smi in expected:
-        self.failUnless(smi in frags)
+    for smi in frags:
+        self.failUnless(smi in expected)
 
 if __name__ == '__main__':
   unittest.main()

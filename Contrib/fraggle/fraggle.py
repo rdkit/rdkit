@@ -31,7 +31,7 @@
 # Created by Jameed Hussain, May 2013
 
 from rdkit import Chem
-import FraggleSim
+from rdkit.Chem.Fraggle import FraggleSim
 
 if __name__ =='__main__':
     import sys,re
