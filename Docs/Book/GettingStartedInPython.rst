@@ -1210,7 +1210,7 @@ get the molecules themselves as follows:
 
 
 Generating Similarity Maps Using Fingerprints
-============================================
+=============================================
 
 Similarity maps are a way to visualize the atomic contributions to
 the similarity between a molecule and a reference molecule. The
