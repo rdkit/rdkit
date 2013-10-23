@@ -22,8 +22,8 @@ AtomType NAcceptor [n;+0;H0;!X3] #;!$([n](n))   !$([n;H1](cc)cc)
 # tertiary nitrogen adjacent to aromatic carbon
 AtomType NAcceptor [N&v3;H0;$(Nc)]
 
-# removes ether, thioether and nitro oxygen
-AtomType ChalcAcceptor [O;H0;!$(O=N-*);!$([OD2]([#6])[#6])]
+# removes ether, thioether oxygen
+AtomType ChalcAcceptor [O;H0;!$([OD2]([#6])[#6])]
 
 # Removed aromatic sulfur from ChalcAcceptor definition
 #We will not use aromatic oxygens! cf Leach, Gillet ... J Med Chem 2010,53, 539-558
