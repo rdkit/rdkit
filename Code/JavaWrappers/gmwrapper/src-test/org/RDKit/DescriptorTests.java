@@ -228,6 +228,14 @@ public class DescriptorTests extends GraphMolTest {
 	m1 = RWMol.MolFromSmiles("C([2H])([3H])O");
         assertEquals("CH4O",RDKFuncs.calcMolFormula(m1));
         assertEquals("CH2DTO",RDKFuncs.calcMolFormula(m1,true));
+        assertEquals("CH2[2H][3H]O",RDKFuncs.calcMolFormula(m1,true,false));
+    }
+    @Test public void testMolFormula2() {
+	ROMol m1;
+	m1 = RWMol.MolFromSmiles("C[13C]([2H])([3H])O");
+        assertEquals("C2H6O",RDKFuncs.calcMolFormula(m1));
+        assertEquals("C[13C]H4DTO",RDKFuncs.calcMolFormula(m1,true));
+        assertEquals("C[13C]H4[2H][3H]O",RDKFuncs.calcMolFormula(m1,true,false));
     }
 
     @Test public void testConnectivityDescriptors1() {
