@@ -8,7 +8,7 @@ Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner,
 !!!!!! IMPORTANT !!!!!!
  - Due to a bug fix in the parameter set, the MolLogP and MolMR
    descriptor calculators now return different values for molecules
-   with pyrolle (or pyrrole-like) Ns.
+   with pyrrole (or pyrrole-like) Ns.
 
 Bug Fixes:
  - The pymol ShowMol method can now handle molecules with more than
