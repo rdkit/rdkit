@@ -57,6 +57,7 @@ class Canvas(CanvasBase):
                     size=font.size*2.0,
                     family=font.face,
                     backgroundcolor="white")
+    return (None,None,None)
 
   def addCanvasPolygon(self,ps,color=(0,0,0),**kwargs):
     canvas = self._axes

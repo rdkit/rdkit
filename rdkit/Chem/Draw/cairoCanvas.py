@@ -9,6 +9,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import sys
 try:
   import cairo
 except ImportError:
@@ -152,16 +153,13 @@ class Canvas(CanvasBase):
     text = re.sub(r'\<.+?\>','',text)
     self.ctx.set_font_size(font.size)
     w,h=self.ctx.text_extents(text)[2:4]
-    bw,bh=w*1.8,h*1.4
-    dPos = pos[0]-bw/2.,pos[1]-bh/2.
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    self.ctx.set_source_rgb(*bgColor)
-    self.ctx.rectangle(dPos[0],dPos[1],bw,bh)
-    self.ctx.fill()
-    dPos = pos[0]-w/2.,pos[1]+h/2.
+    bw,bh=w+h*0.4,h*1.4
+    offset = w*pos[2]
+    dPos = pos[0]-w/2.+offset,pos[1]+h/2.
     self.ctx.set_source_rgb(*color)
     self.ctx.move_to(*dPos)
     self.ctx.show_text(text)
+    return (bw,bh,offset)
   def _addCanvasText2(self,text,pos,font,color=(0,0,0),**kwargs):
     if font.weight=='bold':
       weight=cairo.FONT_WEIGHT_BOLD
@@ -182,29 +180,27 @@ class Canvas(CanvasBase):
     iext,lext=lout.get_pixel_extents()
     w=lext[2]-lext[0]
     h=lext[3]-lext[1]
-    #bw,bh=w*1.8,h*1.4
+    bw,bh=w+h*0.4,h*1.4
+    offset = w*pos[2]
     if orientation=='W':
-      dPos = pos[0]-w,pos[1]-h/2.
+      dPos = pos[0]-w+offset,pos[1]-h/2.
     elif orientation=='E':
-      dPos = pos[0]-w/2,pos[1]-h/2.
+      dPos = pos[0]-w/2+offset,pos[1]-h/2.
     else:
-      dPos = pos[0]-w/2,pos[1]-h/2.
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    self.ctx.set_source_rgb(*bgColor)
-    self.ctx.rectangle(dPos[0],dPos[1],w,h)
-    self.ctx.fill()
+      dPos = pos[0]-w/2+offset,pos[1]-h/2.
     self.ctx.move_to(dPos[0],dPos[1])
 
     self.ctx.set_source_rgb(*color)
     cctx.update_layout(lout)
     cctx.show_layout(lout)
-    
+    return (bw,bh,offset)
 
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
     if pango is not None and pangocairo is not None:
-      self._addCanvasText2(text,pos,font,color,**kwargs)
+      textSize = self._addCanvasText2(text,pos,font,color,**kwargs)
     else:
-      self._addCanvasText1(text,pos,font,color,**kwargs)
+      textSize = self._addCanvasText1(text,pos,font,color,**kwargs)
+    return textSize
     
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
     if not fill and not stroke: return

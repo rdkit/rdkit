@@ -40,7 +40,7 @@ def _createCanvas(size):
       import Image
     except ImportError:
       from PIL import Image
-    img = Image.new("RGBA",size,"white")
+    img = Image.new("RGBA",size,(0,0,0,0))
     canvas = Canvas(img)
   else:
     from spingCanvas import Canvas
@@ -72,7 +72,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
 
   if kekulize:
     from rdkit import Chem
-    mol = Chem.Mol(mol)
+    mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():
@@ -132,7 +132,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   drawer = MolDrawing(canvas=canvas,drawingOptions=options)
   if kekulize:
     from rdkit import Chem
-    mol = Chem.Mol(mol)
+    mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():
@@ -197,7 +197,7 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   omol=mol
   if kekulize:
     from rdkit import Chem
-    mol = Chem.Mol(mol)
+    mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():
@@ -249,7 +249,7 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
   except ImportError:
     from PIL import Image
   if legends is None: legends = [None]*len(mols)
-  res = Image.new("RGB",(subImgSize[0]*len(mols),subImgSize[1]))
+  res = Image.new("RGBA",(subImgSize[0]*len(mols),subImgSize[1]))
   for i,mol in enumerate(mols):
     res.paste(MolToImage(mol,subImgSize,legend=legends[i],**kwargs),(i*subImgSize[0],0))
   return res
@@ -267,7 +267,7 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
   nRows = len(mols)//molsPerRow
   if len(mols)%molsPerRow : nRows+=1
     
-  res = Image.new("RGB",(molsPerRow*subImgSize[1],nRows*subImgSize[1]),(255,255,255))
+  res = Image.new("RGBA",(molsPerRow*subImgSize[1],nRows*subImgSize[1]),(255,255,255,0))
   for i,mol in enumerate(mols):
     row = i//molsPerRow
     col = i%molsPerRow
@@ -293,7 +293,7 @@ def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
     tmpl.UpdatePropertyCache(False)
     mols.append(tmpl)
 
-  res = Image.new("RGB",(subImgSize[0]*len(mols),subImgSize[1]),(255,255,255))
+  res = Image.new("RGBA",(subImgSize[0]*len(mols),subImgSize[1]),(255,255,255,0))
   for i,mol in enumerate(mols):
     if mol is not None:
       nimg = MolToImage(mol,subImgSize,kekulize=False,**kwargs)
