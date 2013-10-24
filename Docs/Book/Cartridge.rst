@@ -542,6 +542,41 @@ Other
 
 There are additional functions defined in the cartridge, but these are used for internal purposes.
 
+
+Using the Cartridge from Python
++++++++++++++++++++++++++++++++
+
+The recommended adapter for connecting to postgresql is pyscopg2
+(https://pypi.python.org/pypi/psycopg2). 
+
+Here's an example of connecting to our local copy of ChEMBL and doing
+a basic substructure search:: 
+
+  >>> import psycopg2
+  >>> conn = psycopg2.connect(database='chembl_16')
+  >>> curs = conn.cursor()
+  >>> curs.execute('select * from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
+  >>> curs.fetchone()
+  (9830, 'CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1')
+
+That returns a SMILES for each molecule. If you plan to do more work
+with the molecules after retrieving them, it is much more efficient to
+ask postgresql to give you the molecules in pickled form::
+
+  >>> curs.execute('select molregno,mol_send(m) from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
+  >>> row = curs.fetchone()
+  >>> row
+  (9830, <read-only buffer for 0x...>)
+
+These pickles can then be converted into molecules:: 
+
+  >>> from rdkit import Chem
+  >>> m = Chem.Mol(str(row[1]))
+  >>> Chem.MolToSmiles(m,True)
+  'CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1'
+
+
+
 License
 +++++++
 
