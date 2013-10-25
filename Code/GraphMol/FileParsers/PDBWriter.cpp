@@ -57,6 +57,9 @@ namespace RDKit {
 
     AtomPDBResidueInfo *info = (AtomPDBResidueInfo*)(atom->getMonomerInfo());
     if (info && info->getMonomerType()==AtomMonomerInfo::PDBRESIDUE) {
+      if(atom->getIdx()>2290 && atom->getIdx()<2295){
+        std::cerr<<atom->getIdx()<<" "<<info->getSerialNumber()<<" "<<info->getIsHeteroAtom()<<std::endl;
+      }
       ss<< (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
       ss<<std::setw(5)<<atom->getIdx()+1;
       ss<<' ';
@@ -69,7 +72,7 @@ namespace RDKit {
       ptr = info->getChainId().c_str();
       if (*ptr == '\0') ptr = " ";
       ss<<*ptr;
-      ss<<std::setw(4)<<info->getSerialNumber();
+      ss<<std::setw(4)<<info->getResidueNumber();
       ptr = info->getInsertionCode().c_str();
       if (*ptr == '\0') ptr = " ";
       ss<<*ptr;

@@ -479,6 +479,26 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("confId")=-1,python::arg("kekulize")=true),
 	      docString.c_str());
 
+  docString="Writes a Mol file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - includeStereo: (optional) toggles inclusion of stereochemical\n\
+                     information in the output\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+                as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToMolFile",RDKit::MolToMolFile,
+	      (python::arg("mol"),python::arg("filename"),
+               python::arg("includeStereo")=false,
+	       python::arg("confId")=-1,python::arg("kekulize")=true),
+	      docString.c_str());
 
   docString="Construct a molecule from a SMILES string.\n\n\
   ARGUMENTS:\n\
@@ -718,6 +738,12 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - mol: the molecule\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - flavor: (optional) \n\
+            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            flavor & 2 : Don't write any CONECT records \n\
+            flavor & 4 : Write CONECT records in both directions \n\
+            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            flavor & 16 : Write MASTER record \n\
+            flavor & 32 : Write TER record \n\
 \n\
   RETURNS:\n\
 \n\
@@ -725,6 +751,29 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n";  
   python::def("MolToPDBBlock",RDKit::MolToPDBBlock,
 	      (python::arg("mol"),
+	       python::arg("confId")=-1,python::arg("flavor")=0),
+	      docString.c_str());
+  docString="Writes a PDB file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: name of the file to write\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - flavor: (optional) \n\
+            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            flavor & 2 : Don't write any CONECT records \n\
+            flavor & 4 : Write CONECT records in both directions \n\
+            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            flavor & 16 : Write MASTER record \n\
+            flavor & 32 : Write TER record \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToPDBFile",RDKit::MolToPDBFile,
+	      (python::arg("mol"),
+               python::arg("filename"),
 	       python::arg("confId")=-1,python::arg("flavor")=0),
 	      docString.c_str());
 

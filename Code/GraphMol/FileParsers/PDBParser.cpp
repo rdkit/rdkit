@@ -202,7 +202,7 @@ namespace RDKit {
     }
 
     tmp = std::string(ptr+12,4);
-    AtomPDBResidueInfo *info = new AtomPDBResidueInfo(tmp);
+    AtomPDBResidueInfo *info = new AtomPDBResidueInfo(tmp,serialno);
     atom->setMonomerInfo(info);
 
     if (len >= 20)
@@ -234,7 +234,7 @@ namespace RDKit {
         throw FileParseException(errout.str()) ;
       }
     }
-    info->setSerialNumber(resno);
+    info->setResidueNumber(resno);
 
     double occup = 1.0;
     if (len >= 60) {

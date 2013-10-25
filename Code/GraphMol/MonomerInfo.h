@@ -61,9 +61,9 @@ namespace RDKit{
                                                           d_insertionCode(other.d_insertionCode),
                                                           d_occupancy(other.d_occupancy),
                                                           d_tempFactor(other.d_tempFactor),
-                                                          df_heteroAtom(false),
-                                                          d_secondaryStructure(0),
-                                                          d_segmentNumber(0){};
+                                                          df_heteroAtom(other.df_heteroAtom),
+                                                          d_secondaryStructure(other.d_secondaryStructure),
+                                                          d_segmentNumber(other.d_segmentNumber){};
 
     AtomPDBResidueInfo(std::string atomName,
                        int serialNumber=0,
