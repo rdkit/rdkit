@@ -57,9 +57,6 @@ namespace RDKit {
 
     AtomPDBResidueInfo *info = (AtomPDBResidueInfo*)(atom->getMonomerInfo());
     if (info && info->getMonomerType()==AtomMonomerInfo::PDBRESIDUE) {
-      if(atom->getIdx()>2290 && atom->getIdx()<2295){
-        std::cerr<<atom->getIdx()<<" "<<info->getSerialNumber()<<" "<<info->getIsHeteroAtom()<<std::endl;
-      }
       ss<< (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
       ss<<std::setw(5)<<atom->getIdx()+1;
       ss<<' ';
