@@ -200,7 +200,7 @@ namespace RDKit{
     /*!
       
       \param mol the molecule to work with
-      \param newOrder the new indices for the atoms (should be numAtoms long)
+      \param newOrder the new ordering of the atoms (should be numAtoms long)
          for example: if newOrder is [3,2,0,1], then atom 3 in the original 
          molecule will be atom 0 in the new one
      

@@ -31,6 +31,17 @@ namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  ROMol *renumberAtomsHelper(const ROMol &mol,python::object &pyNewOrder){
+    if(python::extract<unsigned int>(pyNewOrder.attr("__len__")())<mol.getNumAtoms()){
+      throw_value_error("atomCounts shorter than the number of atoms");
+    }
+    std::vector<unsigned int> *newOrder=pythonObjectToVect(pyNewOrder,mol.getNumAtoms());
+    ROMol *res = MolOps::renumberAtoms(mol,*newOrder);
+    delete newOrder;
+    return res;
+  }
+
+
   python::dict parseQueryDefFileHelper(python::object &input,bool standardize,
                                        std::string delimiter,std::string comment,
                                        unsigned int nameColumn,unsigned int smartsColumn){
@@ -1309,6 +1320,23 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("query"),
                    python::arg("atomIdx"),python::arg("preserveExistingQuery")=true),
                   docString.c_str());
+
+      // ------------------------------------------------------------------------
+      docString="Returns a copy of a molecule with renumbered atoms\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - newOrder: the new ordering the atoms (should be numAtoms long)\n\
+         for example: if newOrder is [3,2,0,1], then atom 3 in the original \n\
+         molecule will be atom 0 in the new one\n\
+\n\
+\n";
+      python::def("RenumberAtoms", renumberAtomsHelper,
+                  (python::arg("mol"),python::arg("newOrder")),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
 
 
     };

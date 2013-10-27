@@ -4340,8 +4340,8 @@ namespace{
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
-      std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
-      std::cerr<<std::endl;
+      //std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
+      //std::cerr<<std::endl;
 
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
       TEST_ASSERT(nm);
@@ -4377,7 +4377,7 @@ int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();

@@ -2445,8 +2445,17 @@ CAS<~>
     self.failUnless(ri)
     self.failUnlessEqual(ri.NumRings(),1)
     
-
-
+  def test86MolRenumbering(self):
+    import random
+    m = Chem.MolFromSmiles('C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1')
+    cSmi = Chem.MolToSmiles(m,True)
+    for i in range(m.GetNumAtoms()):
+      ans = list(range(m.GetNumAtoms()))
+      random.shuffle(ans)
+      print ans
+      m2 = Chem.RenumberAtoms(m,ans)
+      nSmi = Chem.MolToSmiles(m2,True)
+      self.failUnlessEqual(cSmi,nSmi)
 
 if __name__ == '__main__':
   unittest.main()
