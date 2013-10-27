@@ -24,7 +24,9 @@
 
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <boost/foreach.hpp>
+
 
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -4328,11 +4330,54 @@ void testGitHubIssue72()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace{
+  void _renumberTest(const ROMol *m){
+    PRECONDITION(m,"no molecule");
+    std::vector<unsigned int> idxV(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
+
+    std::string refSmi=MolToSmiles(*m,true);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::vector<unsigned int> nVect(idxV);
+      std::random_shuffle(nVect.begin(),nVect.end());
+      std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
+      std::cerr<<std::endl;
+
+      ROMol *nm=MolOps::renumberAtoms(*m,nVect);
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
+      TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+      std::string nSmi=MolToSmiles(*nm,true);
+      TEST_ASSERT(nSmi==refSmi);
+      delete nm;
+    }
+  }
+}
+void testRenumberAtoms()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms" << std::endl;
+  {
+    std::string smiles="C[C@H]1C[C@H](F)C1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  {
+    std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -4390,9 +4435,10 @@ int main(){
   testSFNetIssue272();
   testGitHubIssue8();
   testGitHubIssue42();
-#endif
   testGitHubIssue65();
   testGitHubIssue72();
+#endif
+  testRenumberAtoms();
 
   return 0;
 }
