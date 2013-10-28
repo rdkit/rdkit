@@ -2,7 +2,7 @@
 (Changes relative to Release_2013.06.1)
 
 Acknowledgements:
-James Davidson, JP Ebejer, Nikolas Fechner, Gregory Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
+James Davidson, JP Ebejer, Nikolas Fechner, Grégori Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
 Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
 
 !!!!!! IMPORTANT !!!!!!
