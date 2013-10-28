@@ -2,11 +2,28 @@
 (Changes relative to Release_2013.06.1)
 
 Acknowledgements:
-James Davidson, JP Ebejer, Peter Ertl, Nikolas Fechner, Gregory
-Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger Sayle, Gianluca
-Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner
+James Davidson, JP Ebejer, Nikolas Fechner, Gregory Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
+Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
+
+!!!!!! IMPORTANT !!!!!!
+ - Due to a bug fix in the parameter set, the MolLogP and MolMR
+   descriptor calculators now return different values for molecules
+   with pyrrole (or pyrrole-like) Ns.
 
 Bug Fixes:
+ - The pymol ShowMol method can now handle molecules with more than
+   999 atoms (they are sent via PDB)
+ - Various stability improvements to the Pandas integration.
+   (github issues 129 and 51)
+ - Some RDKit methods require python lists and don't allow passing
+   numpy arrays or pandas series directly
+   (github issue 119)
+ - mol2 parser not setting E/Z flags on double bonds
+   (github issue 114)
+ - Incorrect angle terms in UFF
+   (github issue 105)
+ - Problems with stereochemistry flags and PathToSubmol()
+   (github issue 103)
  - Bad Crippen atom type for pyrrole H
    (github issue 92)
  - PandasTools tests fail with Pandas v0.12
@@ -25,6 +42,8 @@ Bug Fixes:
    (github issue 78)
  - PandasTools doctests should be failing, but are not
    (github issue 75)
+ - Better handling of radicals to/from mol files
+   (github issue 73)
  - Benzothiazolium structure can be parsed from ctab, but the SMILES generated cannot be processed.
    (github issue 72)
  - Chem.MolFromInch hangs on CID 23691477 and CID 23691480
@@ -35,16 +54,87 @@ Bug Fixes:
    (github issue 55)
 
 New Features:
+ - MMFF94 and MMFF94S support
+ - implementation of the Open3DAlign rigid alignment algorithm
+ - Support for reading and writing PDB files
+ - The python function AllChem.AssignBondOrdersFromTemplate() can be
+   used to assign bond orders from a reference molecule to the bonds
+   in another molecule. This is helpful for getting bond orders
+   correct for PDB ligands.
+   (github issue 135)
+ - Bond lengths, angles, and torsions can now be queries and adjusted.
+   (github issue 132)
+ - Implementation of similarity maps
+   (github issue 94)
+ - Python implementation of the Fraggle similarity algorithm.
+   See Jameed Hussain's presentation from the 2013 UGM for details:
+   https://github.com/rdkit/UGM_2013/blob/master/Presentations/Hussain.Fraggle.pdf?raw=true
+ - SparseIntVects now support -=, +=, /=, and *= with ints from C++
+   and Python
+ - support \\ in SMILES
+   (github issue 136)
+ - Support a similarity threshold in DbCLI
+   (github issue 134)
+ - Support construction molecules from other molecules in the python wrapper
+   (github issue 133)
+ - support tversky similarity in DbCLI
+   (github issue 130)
+ - support tversky similarity in cartridge
+   (github issue 121)
+ - support reading and writing reactionComponentType and reactionComponentNumber from ctabs
+   (github issue 118)
+ - Add in-place forms of addHs(), removeHs(), and mergeQueryHs()
+   (github issue 117)
+ - modify MolOps::cleanUp() to support this azide formulation: C-N=N#N
+   (github issue 116)
+ - Dihedral rotation exposed in python
+   (github issue 113)
+ - Support for cairocffi (cairo drop-in replacement that plays nicely with virtualenv) 
+   (github issue 80) 
+ - Grey color for Hydrogens
+   (github issue 97)
+ - Improvements to the Dict interface in C++
+   (github issue 74)
+ - customizable drawing options
+   (github issue 71)
+ - Add method for setting the chiral flag in mol blocks
+   (github issue 64)
+ - New descriptors added (Python only for now):
+   MaxPartialCharge(),MinPartialCharge(),MaxAbsPartialCharge(),MinAbsPartialCharge(),
+   MaxEStateIndex(),MinEStateIndex(),MaxAbsEStateIndex(),MinAbsEStateIndex()
 
 New Database Cartridge Features: 
 
 New Java Wrapper Features:
+ - MMFF support
+ - PDB reading and writing
+ - Open3DAlign support
+
 
 Deprecated modules (to be removed in next release):
 
 Removed modules:
 
+Contrib updates:
+ - The MMPA implementation has been updated
+   See Jameed Hussain's tutorial from the 2013 UGM for details:
+   https://github.com/rdkit/UGM_2013/tree/master/Tutorials/mmpa_tutorial
+   [Jameed Hussain]
+ - An implementation of Ertl and Schuffenhauer's Synthetic
+   Accessibility score is available in Contrib/SA_Score
+   [Peter Ertl, Greg Landrum]
+ - Command line scripts for the Fraggle similarity algorithm
+   See Jameed Hussain's presentation from the 2013 UGM for details:
+   https://github.com/rdkit/UGM_2013/blob/master/Presentations/Hussain.Fraggle.pdf?raw=true
+   [Jameed Hussain]
+
 Other:
+ - Some of the changes to UFF deviate from the published force
+   field. Specifics of the changes, and the reasoning behind them, are
+   in Paolo Tosco's 2013 RDKit UGM presentation: 
+   https://github.com/rdkit/UGM_2013/blob/master/Presentations/Tosco.RDKit_UGM2013.pdf?raw=true
+ - Reaction drawing has been improved. Support for reaction drawing
+   has been added to the IPython notebook.
 
 
 ******  Release_2013.06.1 *******
