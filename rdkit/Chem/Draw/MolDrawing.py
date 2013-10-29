@@ -181,7 +181,6 @@ class MolDrawing(object):
   def _getBondAttachmentCoordinates(self, p1, p2, labelSize):
     newpos = [None, None]
     if labelSize != None:
-      print 'lS:',labelSize
       labelSizeOffset = [labelSize[0][0]/2 + (cmp(p2[0], p1[0]) * labelSize[0][2]), labelSize[0][1]/2]
       if p1[1] == p2[1]:
         newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
