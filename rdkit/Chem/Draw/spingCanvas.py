@@ -67,20 +67,12 @@ class Canvas(CanvasBase):
     text = re.sub(r'\<.+?\>','',text)
     font = pid.Font(face=faceMap[font.face],size=font.size)
     txtWidth,txtHeight=self.canvas.stringBox(text,font)
-    labelP = pos[0]-txtWidth/2,pos[1]+txtHeight/2
-    xPad = kwargs.get('xPadding',0)
-    yPad = kwargs.get('yPadding',0)
-    x1 = pos[0]-txtWidth/2 - xPad
-    y1 = pos[1]+txtHeight/2 + yPad
-    x2 = pos[0]+txtWidth/2 + xPad
-    y2 = pos[1]-txtHeight/2 - yPad
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    bgColor = convertColor(bgColor)
-    self.canvas.drawRect(x1,y1,x2,y2,
-                    edgeColor=pid.transparent,
-                    edgeWidth=0,fillColor=bgColor)
+    bw,bh=txtWidth+txtHeight*0.4,txtHeight*1.4
+    offset = txtWidth*pos[2]
+    labelP = pos[0]-txtWidth/2+offset,pos[1]+txtHeight/2
     color = convertColor(color)
     self.canvas.drawString(text,labelP[0],labelP[1],font,color=color)
+    return (bw,bh,offset)
 
   def addCanvasPolygon(self, ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
     if not fill and not stroke: return
