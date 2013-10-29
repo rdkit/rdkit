@@ -54,6 +54,8 @@ Bug Fixes:
    (github issue 55)
 
 New Features:
+ - Allow renumbering atoms in a molecule.
+   (github issue 140)
  - MMFF94 and MMFF94S support
  - implementation of the Open3DAlign rigid alignment algorithm
  - Support for reading and writing PDB files
