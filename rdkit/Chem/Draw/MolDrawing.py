@@ -41,6 +41,7 @@ class DrawingOptions(object):
 
   defaultColor= (1,0,0)
   selectColor= (1,0,0)
+  bgColor = (1,1,1)
 
   colorBonds= True
   noCarbonSymbols= True
@@ -84,6 +85,15 @@ class MolDrawing(object):
       self.drawingOptions=drawingOptions
     self.boundingBoxes = {}
 
+    if drawingOptions.bgColor is not None:
+      self.canvas.addCanvasPolygon(((0,0),
+                                    (canvas.size[0],0),
+                                    (canvas.size[0],canvas.size[1]),
+                                    (0,canvas.size[1])),
+                                   color=drawingOptions.bgColor,
+                                   fill=True,stroke=False)
+
+    
   def transformPoint(self,pos):
     res = [0,0]
     res[0] = (pos[0] + self.molTrans[0])*self.currDotsPerAngstrom*self.drawingOptions.useFraction + self.drawingTrans[0]
@@ -171,6 +181,7 @@ class MolDrawing(object):
   def _getBondAttachmentCoordinates(self, p1, p2, labelSize):
     newpos = [None, None]
     if labelSize != None:
+      print 'lS:',labelSize
       labelSizeOffset = [labelSize[0][0]/2 + (cmp(p2[0], p1[0]) * labelSize[0][2]), labelSize[0][1]/2]
       if p1[1] == p2[1]:
         newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
@@ -230,12 +241,17 @@ class MolDrawing(object):
         if bond.GetBeginAtom().GetChiralTag() in (Chem.ChiralType.CHI_TETRAHEDRAL_CW,
                                                   Chem.ChiralType.CHI_TETRAHEDRAL_CCW):
           p1,p2 = newpos,newnbrPos
+          wcolor=color
         else:
           p2,p1 = newpos,newnbrPos
+          if color2 is not None:
+            wcolor=color2
+          else:
+            wcolor=self.drawingOptions.defaultColor
         if bDir==Chem.BondDir.BEGINWEDGE:
-          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width)
+          self._drawWedgedBond(bond,p1,p2,color=wcolor,width=width)
         elif bDir==Chem.BondDir.BEGINDASH:
-          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width,
+          self._drawWedgedBond(bond,p1,p2,color=wcolor,width=width,
                                dash=self.drawingOptions.dash)
 
       else:
