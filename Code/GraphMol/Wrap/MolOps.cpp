@@ -1324,7 +1324,25 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
-      docString="Return a new molecule with all specified bonds broken";
+      docString="Return a new molecule with all specified bonds broken\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+      - mol            - the molecule to be modified\n\
+      - bondIndices    - indices of the bonds to be broken\n\
+      - addDummies  - toggles addition of dummy atoms to indicate where \n\
+          bonds were broken\n\
+      - dummyLabels - used to provide the labels to be used for the dummies.\n\
+          the first element in each pair is the label for the dummy\n\
+          that replaces the bond's beginAtom, the second is for the \n\
+          dummy that replaces the bond's endAtom. If not provided, the\n\
+          dummies are labeled with atom indices.\n\
+      - bondTypes - used to provide the bond type to use between the\n\
+          fragments and the dummy atoms. If not provided, defaults to single. \n\
+\n\
+  RETURNS:\n\
+      a new Mol with the modifications\n\
+";
       python::def("FragmentOnBonds", fragmentOnBondsHelper,
                   (python::arg("mol"),
                    python::arg("bondIndices"),

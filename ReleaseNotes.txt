@@ -54,6 +54,8 @@ Bug Fixes:
    (github issue 55)
 
 New Features:
+ - Add fragmentOnBonds() to python wrapper
+   (github issue 142)
  - Allow renumbering atoms in a molecule.
    (github issue 140)
  - MMFF94 and MMFF94S support
