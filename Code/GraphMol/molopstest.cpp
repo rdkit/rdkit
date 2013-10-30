@@ -4372,6 +4372,23 @@ void testRenumberAtoms()
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+void testGithubIssue141()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 141: Kekulization of molecule with aromatic N leaves the explicit H there." << std::endl;
+  {
+    std::string smiles="N1C=CC=C1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolOps::Kekulize(*m,true);
+    m->updatePropertyCache(true);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic())
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1)
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==0)
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -4423,6 +4440,7 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
+#endif
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
   testSFNetIssue3349243();
@@ -4437,8 +4455,8 @@ int main(){
   testGitHubIssue42();
   testGitHubIssue65();
   testGitHubIssue72();
-#endif
   testRenumberAtoms();
+  testGithubIssue141();
 
   return 0;
 }
