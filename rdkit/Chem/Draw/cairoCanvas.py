@@ -196,7 +196,7 @@ class Canvas(CanvasBase):
     iext,lext=lout.get_pixel_extents()
     w=lext[2]-lext[0]
     h=lext[3]-lext[1]
-    bw,bh=w,h
+    bw,bh=w+h*0.4,h
     offset = w*pos[2]
     if 0:
       if orientation=='W':
