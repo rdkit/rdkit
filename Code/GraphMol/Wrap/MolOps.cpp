@@ -31,6 +31,30 @@ namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
+                               bool addDummies,
+                               python::object pyDummyLabels,
+                               python::object pyBondTypes){
+    std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
+    if(pyDummyLabels){
+      unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+      dummyLabels = new std::vector<std::pair<unsigned int,unsigned int> >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        unsigned int v1=python::extract<unsigned int>(pyDummyLabels[i][0]);
+        unsigned int v2=python::extract<unsigned int>(pyDummyLabels[i][1]);
+        (*dummyLabels)[i] = std::make_pair(v1,v2);
+      }
+      
+    }
+    std::vector< Bond::BondType > *bondTypes=0;
+    ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes);
+    delete bondIndices;
+    if(dummyLabels) delete dummyLabels;
+    if(bondTypes) delete bondTypes;
+    return res;
+  }
+
   ROMol *renumberAtomsHelper(const ROMol &mol,python::object &pyNewOrder){
     if(python::extract<unsigned int>(pyNewOrder.attr("__len__")())<mol.getNumAtoms()){
       throw_value_error("atomCounts shorter than the number of atoms");
@@ -1297,6 +1321,16 @@ namespace RDKit{
       docString="Return a new molecule with all BRICS bonds broken";
       python::def("FragmentOnBRICSBonds", MolFragmenter::fragmentOnBRICSBonds,
                   (python::arg("mol")),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+
+      docString="Return a new molecule with all specified bonds broken";
+      python::def("FragmentOnBonds", fragmentOnBondsHelper,
+                  (python::arg("mol"),
+                   python::arg("bondIndices"),
+                   python::arg("addDummies")=true,
+                   python::arg("dummyLabels")=python::object(),
+                   python::arg("bondTypes")=python::object()),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
