@@ -79,30 +79,48 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  if kwargs.has_key('legend'):
-    legend = kwargs['legend']
-    del kwargs['legend']
-  else:
-    legend=''
-
   drawer.AddMol(mol,**kwargs)
-
-  if legend:
-    from rdkit.Chem.Draw.MolDrawing import Font
-    bbox = drawer.boundingBoxes[mol]
-    pos = size[0]/2,int(.94*size[1]) # the 0.94 is extremely empirical
-    # canvas.addCanvasPolygon(((bbox[0],bbox[1]),(bbox[2],bbox[1]),(bbox[2],bbox[3]),(bbox[0],bbox[3])),
-    #                         color=(1,0,0),fill=False,stroke=True)
-    # canvas.addCanvasPolygon(((0,0),(0,size[1]),(size[0],size[1]),(size[0],0)   ),
-    #                         color=(0,0,1),fill=False,stroke=True)
-    font=Font(face='sans',size=12)
-    canvas.addCanvasText(legend,pos,font)
+  drawer.AddLegend(kwargs.get('legend', ''))
 
   if kwargs.get('returnCanvas',False):
     return img,canvas,drawer
   else:
     canvas.flush()
     return img
+
+
+
+def MolToJSON(mol, size=(300,300), kekulize=True, wedgeBonds=True,
+               fitImage=False, options=None, **kwargs):
+  if not mol:
+    raise ValueError,'Null molecule provided'
+    
+  from jsonCanvas import Canvas
+  canvas = Canvas(size=size)
+  
+  if options is None:
+    options = DrawingOptions()
+  if fitImage:
+      options.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds = wedgeBonds
+  drawer = MolDrawing(canvas=canvas,drawingOptions=options)
+
+  if kekulize:
+    from rdkit import Chem
+    mol = Chem.Mol(mol.ToBinary())
+    Chem.Kekulize(mol)
+    
+  if not mol.GetNumConformers():
+    from rdkit.Chem import AllChem
+    AllChem.Compute2DCoords(mol)
+  
+  drawer.AddMol(mol,**kwargs)
+  drawer.AddLegend(kwargs.get('legend', ''))
+
+  canvas.flush()
+  return canvas.json               
+
+
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
               imageType=None, fitImage=False, options=None, **kwargs):

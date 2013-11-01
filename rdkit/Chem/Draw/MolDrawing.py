@@ -52,6 +52,11 @@ class DrawingOptions(object):
   # used to adjust overall scaling for molecules that have been laid out with non-standard
   # bond lengths
   coordScale= 1.0
+  
+  legendMarginX= 0.5
+  legendMarginY= 0.94 # the 0.94 is extremely empirical
+  legendFontFace= 'sans'
+  legendFontSize= 12 
 
   elemDict={
     1:(0.55,0.55,0.55),
@@ -297,7 +302,16 @@ class MolDrawing(object):
     y1 = pos[1]
     labelP = x1,y1
     self.canvas.addCanvasText(label,(x1,y1),font,color,**kwargs)
-    
+
+  def AddLegend(self, legend):
+    if not legend:
+      return
+    options = self.drawingOptions
+    size = self.canvasSize  
+    pos = int(size[0]*options.legendMarginX),int(size[1]*options.legendMarginY)
+    font=Font(face=options.legendFontFace,size=options.legendFontSize)
+    self.canvas.addCanvasText(legend,pos,font)  
+            
   def AddMol(self,mol,centerIt=True,molTrans=None,drawingTrans=None,
              highlightAtoms=[],confId=-1,flagCloseContactsDist=2,
              highlightMap=None, ignoreHs=False,highlightBonds=[],**kwargs):
