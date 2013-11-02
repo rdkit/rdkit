@@ -2483,6 +2483,20 @@ CAS<~>
     smi = Chem.MolToSmiles(nm,True)
     self.failUnlessEqual(smi,'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]')
 
+    m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
+    bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))
+    bs = []
+    for bi in bis:
+        b = m.GetBondBetweenAtoms(bi[0],bi[1])
+        bs.append(b.GetIdx())
+    bts = [Chem.BondType.DOUBLE]*len(bs)
+    nm = Chem.FragmentOnBonds(m,bs,bondTypes=bts)
+    frags = Chem.GetMolFrags(nm)
+    self.failUnlessEqual(len(frags),3)
+    smi = Chem.MolToSmiles(nm,True)
+    self.failUnlessEqual(smi,'[2*]=O.[3*]=C(CC)CC(=[6*])C.[5*]=O')
+
+
     
 if __name__ == '__main__':
   unittest.main()
