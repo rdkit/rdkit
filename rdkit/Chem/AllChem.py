@@ -364,8 +364,6 @@ def AssignBondOrdersFromTemplate(refmol, mol):
   """
   refmol2 = rdchem.Mol(refmol)
   mol2 = rdchem.Mol(mol)
-  if mol2.GetNumHeavyAtoms() != refmol2.GetNumHeavyAtoms():
-    raise ValueError("Molecules do not have the same number of heavy atoms")
   # do the molecules match already?
   matching = mol2.GetSubstructMatch(refmol2)
   if not matching: # no, they don't match
