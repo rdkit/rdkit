@@ -45,9 +45,19 @@ namespace RDKit{
         unsigned int v2=python::extract<unsigned int>(pyDummyLabels[i][1]);
         (*dummyLabels)[i] = std::make_pair(v1,v2);
       }
-      
     }
     std::vector< Bond::BondType > *bondTypes=0;
+    if(pyBondTypes){
+      unsigned int nVs=python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+      if(nVs!=bondIndices->size()) {
+	throw_value_error("bondTypes shorter than bondIndices");
+      }
+      bondTypes = new std::vector< Bond::BondType >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
+      }
+    }
+    
     ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes);
     delete bondIndices;
     if(dummyLabels) delete dummyLabels;
