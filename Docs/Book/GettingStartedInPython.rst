@@ -1557,6 +1557,63 @@ That returns molecules on request:
 >>> Chem.MolToSmiles(prods[2],True)
 'NS(=O)(=O)c1ccc(C2CCCO2)cc1'
 
+Other fragmentation approaches
+==============================
+
+In addition to the methods described above, the RDKit provide a very
+flexible generic function for fragmenting molecules along
+user-specified bonds.
+
+Here's a quick demonstration of using that to break all bonds between
+atoms in rings and atoms not in rings. We start by finding all the
+atom pairs:
+
+>>> m = Chem.MolFromSmiles('CC1CC(O)C1CCC1CC1')
+>>> bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+>>> bis
+((0, 1), (4, 3), (6, 5), (7, 8))
+
+then we get the corresponding bond indices:
+
+>>> bs = [m.GetBondBetweenAtoms(x,y).GetIdx() for x,y in bis]
+>>> bs
+[0, 3, 5, 7]
+
+then we use those bond indices as input to the fragmentation function:
+
+>>> nm = Chem.FragmentOnBonds(m,bs)
+
+the output is a molecule that has dummy atoms marking the places where
+bonds were broken:
+
+>>> Chem.MolToSmiles(nm,True)
+'[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1'
+
+By default the attachment points are labelled (using isotopes) with
+the index of the atom that was removed. We can also provide our own set of
+atom labels in the form of pairs of unsigned integers. The first value
+in each pair is used as the label for the dummy that replaces the
+bond's begin atom, the second value in each pair is for the dummy that
+replaces the bond's end atom. Here's an example, repeating the
+analysis above and marking the positions where the non-ring atoms were
+with the label 10 and marking the positions where the ring atoms were
+with label 1:
+
+>>> bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+>>> bs = []
+>>> labels=[]
+>>> for bi in bis:
+...    b = m.GetBondBetweenAtoms(bi[0],bi[1])
+...    if b.GetBeginAtomIdx()==bi[0]:
+...        labels.append((10,1))
+...    else:
+...        labels.append((1,10))
+...    bs.append(b.GetIdx())
+>>> nm = Chem.FragmentOnBonds(m,bs,dummyLabels=labels)
+>>> Chem.MolToSmiles(nm,True)
+'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]'
+
+
 
 Chemical Features and Pharmacophores
 ************************************

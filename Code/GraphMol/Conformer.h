@@ -58,7 +58,7 @@ namespace RDKit {
       }
     };
 
-    //! Copy COnstructor: initialize from a second conformation.
+    //! Copy Constructor: initialize from a second conformation.
     Conformer(const Conformer &other);
 
     //! Destructor

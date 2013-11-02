@@ -2,13 +2,13 @@
 (Changes relative to Release_2013.06.1)
 
 Acknowledgements:
-James Davidson, JP Ebejer, Nikolas Fechner, Gregory Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
+James Davidson, JP Ebejer, Nikolas Fechner, Grégori Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
 Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
 
 !!!!!! IMPORTANT !!!!!!
  - Due to a bug fix in the parameter set, the MolLogP and MolMR
    descriptor calculators now return different values for molecules
-   with pyrolle (or pyrrole-like) Ns.
+   with pyrrole (or pyrrole-like) Ns.
 
 Bug Fixes:
  - The pymol ShowMol method can now handle molecules with more than
@@ -54,6 +54,10 @@ Bug Fixes:
    (github issue 55)
 
 New Features:
+ - Add fragmentOnBonds() to python wrapper
+   (github issue 142)
+ - Allow renumbering atoms in a molecule.
+   (github issue 140)
  - MMFF94 and MMFF94S support
  - implementation of the Open3DAlign rigid alignment algorithm
  - Support for reading and writing PDB files

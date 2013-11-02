@@ -31,6 +31,41 @@ namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
+                               bool addDummies,
+                               python::object pyDummyLabels,
+                               python::object pyBondTypes){
+    std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
+    if(pyDummyLabels){
+      unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+      dummyLabels = new std::vector<std::pair<unsigned int,unsigned int> >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        unsigned int v1=python::extract<unsigned int>(pyDummyLabels[i][0]);
+        unsigned int v2=python::extract<unsigned int>(pyDummyLabels[i][1]);
+        (*dummyLabels)[i] = std::make_pair(v1,v2);
+      }
+      
+    }
+    std::vector< Bond::BondType > *bondTypes=0;
+    ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes);
+    delete bondIndices;
+    if(dummyLabels) delete dummyLabels;
+    if(bondTypes) delete bondTypes;
+    return res;
+  }
+
+  ROMol *renumberAtomsHelper(const ROMol &mol,python::object &pyNewOrder){
+    if(python::extract<unsigned int>(pyNewOrder.attr("__len__")())<mol.getNumAtoms()){
+      throw_value_error("atomCounts shorter than the number of atoms");
+    }
+    std::vector<unsigned int> *newOrder=pythonObjectToVect(pyNewOrder,mol.getNumAtoms());
+    ROMol *res = MolOps::renumberAtoms(mol,*newOrder);
+    delete newOrder;
+    return res;
+  }
+
+
   python::dict parseQueryDefFileHelper(python::object &input,bool standardize,
                                        std::string delimiter,std::string comment,
                                        unsigned int nameColumn,unsigned int smartsColumn){
@@ -1289,6 +1324,34 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
+      docString="Return a new molecule with all specified bonds broken\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+      - mol            - the molecule to be modified\n\
+      - bondIndices    - indices of the bonds to be broken\n\
+      - addDummies  - toggles addition of dummy atoms to indicate where \n\
+          bonds were broken\n\
+      - dummyLabels - used to provide the labels to be used for the dummies.\n\
+          the first element in each pair is the label for the dummy\n\
+          that replaces the bond's beginAtom, the second is for the \n\
+          dummy that replaces the bond's endAtom. If not provided, the\n\
+          dummies are labeled with atom indices.\n\
+      - bondTypes - used to provide the bond type to use between the\n\
+          fragments and the dummy atoms. If not provided, defaults to single. \n\
+\n\
+  RETURNS:\n\
+      a new Mol with the modifications\n\
+";
+      python::def("FragmentOnBonds", fragmentOnBondsHelper,
+                  (python::arg("mol"),
+                   python::arg("bondIndices"),
+                   python::arg("addDummies")=true,
+                   python::arg("dummyLabels")=python::object(),
+                   python::arg("bondTypes")=python::object()),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+
 
       // ------------------------------------------------------------------------
       docString="Adds a recursive query to an atom\n\
@@ -1309,6 +1372,23 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("query"),
                    python::arg("atomIdx"),python::arg("preserveExistingQuery")=true),
                   docString.c_str());
+
+      // ------------------------------------------------------------------------
+      docString="Returns a copy of a molecule with renumbered atoms\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - newOrder: the new ordering the atoms (should be numAtoms long)\n\
+         for example: if newOrder is [3,2,0,1], then atom 3 in the original \n\
+         molecule will be atom 0 in the new one\n\
+\n\
+\n";
+      python::def("RenumberAtoms", renumberAtomsHelper,
+                  (python::arg("mol"),python::arg("newOrder")),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
 
 
     };

@@ -2445,9 +2445,45 @@ CAS<~>
     self.failUnless(ri)
     self.failUnlessEqual(ri.NumRings(),1)
     
+  def test86MolRenumbering(self):
+    import random
+    m = Chem.MolFromSmiles('C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1')
+    cSmi = Chem.MolToSmiles(m,True)
+    for i in range(m.GetNumAtoms()):
+      ans = list(range(m.GetNumAtoms()))
+      random.shuffle(ans)
+      print ans
+      m2 = Chem.RenumberAtoms(m,ans)
+      nSmi = Chem.MolToSmiles(m2,True)
+      self.failUnlessEqual(cSmi,nSmi)
 
+  def test87FragmentOnBonds(self):
+    m = Chem.MolFromSmiles('CC1CC(O)C1CCC1CC1')
+    bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+    bs = []
+    labels=[]
+    for bi in bis:
+        b = m.GetBondBetweenAtoms(bi[0],bi[1])
+        if b.GetBeginAtomIdx()==bi[0]:
+            labels.append((10,1))
+        else:
+            labels.append((1,10))
+        bs.append(b.GetIdx())
+    nm = Chem.FragmentOnBonds(m,bs)
+    frags = Chem.GetMolFrags(nm)
+    self.failUnlessEqual(len(frags),5)
+    self.failUnlessEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    smi = Chem.MolToSmiles(nm,True)
+    self.failUnlessEqual(smi,'[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
 
+    nm = Chem.FragmentOnBonds(m,bs,dummyLabels=labels)
+    frags = Chem.GetMolFrags(nm)
+    self.failUnlessEqual(len(frags),5)
+    self.failUnlessEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    smi = Chem.MolToSmiles(nm,True)
+    self.failUnlessEqual(smi,'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]')
 
+    
 if __name__ == '__main__':
   unittest.main()
 

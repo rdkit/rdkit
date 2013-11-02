@@ -24,7 +24,9 @@
 
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <boost/foreach.hpp>
+
 
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -4328,6 +4330,66 @@ void testGitHubIssue72()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace{
+  void _renumberTest(const ROMol *m){
+    PRECONDITION(m,"no molecule");
+    std::vector<unsigned int> idxV(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
+
+    std::string refSmi=MolToSmiles(*m,true);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::vector<unsigned int> nVect(idxV);
+      std::random_shuffle(nVect.begin(),nVect.end());
+      //std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
+      //std::cerr<<std::endl;
+
+      ROMol *nm=MolOps::renumberAtoms(*m,nVect);
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
+      TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+      std::string nSmi=MolToSmiles(*nm,true);
+      TEST_ASSERT(nSmi==refSmi);
+      delete nm;
+    }
+  }
+}
+void testRenumberAtoms()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms" << std::endl;
+  {
+    std::string smiles="C[C@H]1C[C@H](F)C1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  {
+    std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+void testGithubIssue141()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 141: Kekulization of molecule with aromatic N leaves the explicit H there." << std::endl;
+  {
+    std::string smiles="N1C=CC=C1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolOps::Kekulize(*m,true);
+    m->updatePropertyCache(true);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic())
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1)
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==0)
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4378,6 +4440,7 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
+#endif
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
   testSFNetIssue3349243();
@@ -4390,9 +4453,10 @@ int main(){
   testSFNetIssue272();
   testGitHubIssue8();
   testGitHubIssue42();
-#endif
   testGitHubIssue65();
   testGitHubIssue72();
+  testRenumberAtoms();
+  testGithubIssue141();
 
   return 0;
 }

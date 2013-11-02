@@ -256,7 +256,7 @@ def _InstallDescriptors():
       fn.__doc__="MOE Charge VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,chgBins[i-1],
                                                                         chgBins[i])
     else:
-      fn.__doc__="MOE Chage VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,chgBins[i])
+      fn.__doc__="MOE Charge VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,chgBins[i])
     name="PEOE_VSA%d"%(i+1)
     fn.version="1.0.1"
     globals()[name]=fn

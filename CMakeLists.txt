@@ -49,7 +49,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 # Config variables:
 set(RDKit_Year "2013")
 set(RDKit_Month "09")
-set(RDKit_Revision "1beta")
+set(RDKit_Revision "1")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
@@ -96,7 +96,7 @@ install(FILES
 
 # extra boost versions
 if(MSVC)
-  SET(Boost_ADDITIONAL_VERSIONS "1.48""1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
+  SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

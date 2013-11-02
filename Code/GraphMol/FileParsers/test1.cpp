@@ -3157,6 +3157,11 @@ void testPDBFile(){
     TEST_ASSERT(m->getNumBonds()==337);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getSerialNumber()==10);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getResidueNumber()==2);
+
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getName()==" N  ");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueName()=="THR");
     TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getTempFactor(),13.79));
@@ -3173,6 +3178,11 @@ void testPDBFile(){
     TEST_ASSERT(m->getNumBonds()==337);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getSerialNumber()==10);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getResidueNumber()==2);
+
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getName()==" N  ");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueName()=="THR");
     TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getTempFactor(),13.79));    TEST_ASSERT(m->getNumConformers()==1);
@@ -3181,6 +3191,52 @@ void testPDBFile(){
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z,3.625));    
   }
 
+  {
+    std::string fName;
+    fName = rdbase+"2FVD.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2501);
+    TEST_ASSERT(m->getNumBonds()==2383);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getIsHeteroAtom()==0);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getSerialNumber()==2294);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueNumber()==299);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getIsHeteroAtom()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getChainId()=="A");
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getName()==" CA ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getResidueName()=="MET");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getName()==" N1 ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueName()=="LIA");
+
+    std::string mb=MolToPDBBlock(*m,-1,32);
+    delete m;
+    m = PDBBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2501);
+    TEST_ASSERT(m->getNumBonds()==2383);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getIsHeteroAtom()==0);
+    // FIX:
+    //TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getSerialNumber()==2294);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueNumber()==299);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getIsHeteroAtom()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getChainId()=="A");
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getName()==" CA ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getResidueName()=="MET");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getName()==" N1 ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueName()=="LIA");
+  }
+
+  
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

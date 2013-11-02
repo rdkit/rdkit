@@ -188,7 +188,7 @@ namespace RDKit{
         - Hydrogens which aren't connected to a heavy atom will not be
           removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
           all atoms removed.
-	      - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+        - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
 	
     */
     ROMol *mergeQueryHs(const ROMol &mol);
@@ -196,6 +196,22 @@ namespace RDKit{
     // modifies the molecule in place
     void mergeQueryHs(RWMol &mol);
 
+    //! returns a copy of a molecule with the atoms renumbered
+    /*!
+      
+      \param mol the molecule to work with
+      \param newOrder the new ordering of the atoms (should be numAtoms long)
+         for example: if newOrder is [3,2,0,1], then atom 3 in the original 
+         molecule will be atom 0 in the new one
+     
+      \return the new molecule 
+
+      <b>Notes:</b>
+        - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+	
+    */
+    ROMol *renumberAtoms(const ROMol &mol,const std::vector<unsigned int> &newOrder);
+    
     //@}
 
     //! \name Sanitization

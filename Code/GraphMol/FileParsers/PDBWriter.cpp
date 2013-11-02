@@ -69,7 +69,7 @@ namespace RDKit {
       ptr = info->getChainId().c_str();
       if (*ptr == '\0') ptr = " ";
       ss<<*ptr;
-      ss<<std::setw(4)<<info->getSerialNumber();
+      ss<<std::setw(4)<<info->getResidueNumber();
       ptr = info->getInsertionCode().c_str();
       if (*ptr == '\0') ptr = " ";
       ss<<*ptr;
