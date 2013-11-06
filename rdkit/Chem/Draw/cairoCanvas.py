@@ -184,6 +184,12 @@ class Canvas(CanvasBase):
                                 weight)
     orientation=kwargs.get('orientation','E')
     cctx=pangocairo.CairoContext(self.ctx)
+
+    plainText = re.sub(r'\<.+?\>','',text)
+    measureLout = cctx.create_layout()
+    measureLout.set_alignment(pango.ALIGN_LEFT)
+    measureLout.set_markup(plainText)
+
     lout = cctx.create_layout()
     lout.set_alignment(pango.ALIGN_LEFT)
     lout.set_markup(text)
@@ -192,11 +198,13 @@ class Canvas(CanvasBase):
     # than that w/ default cairo (at least for me)
     fnt = pango.FontDescription('%s %d'%(font.face,font.size*.8))
     lout.set_font_description(fnt)
+    measureLout.set_font_description(fnt)
 
-    iext,lext=lout.get_pixel_extents()
+    iext,lext=measureLout.get_pixel_extents()
     w=lext[2]-lext[0]
     h=lext[3]-lext[1]
-    bw,bh=w+h*0.4,h
+    pad = h*.4,h*.3
+    bw,bh=w+pad[0],h+pad[1]
     offset = w*pos[2]
     if 0:
       if orientation=='W':
@@ -208,7 +216,7 @@ class Canvas(CanvasBase):
       self.ctx.move_to(dPos[0],dPos[1])
     else:
       dPos = pos[0]-w/2.+offset,pos[1]-h/2.
-      self.ctx.move_to(*dPos)
+      self.ctx.move_to(dPos[0],dPos[1])
       
     self.ctx.set_source_rgb(*color)
     cctx.update_layout(lout)
