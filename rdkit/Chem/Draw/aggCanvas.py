@@ -91,7 +91,7 @@ class Canvas(CanvasBase):
     subH=0
     if not len(blocks):
       w,h=self.draw.textsize(text,aggFont)
-      bw,bh=w+h*0.4,w*1.4
+      tw,th=w,h
       offset = w*pos[2]
       dPos = pos[0]-w/2.+offset,pos[1]-h/2.
       self.draw.text(dPos,text,aggFont)
@@ -131,8 +131,8 @@ class Canvas(CanvasBase):
         h = max(h,th)
         dblocks.append((tblock,'',tw,th))
         
-      supH *= 0.25
-      subH *= 0.25
+      supH *= 0.5
+      subH *= 0.5
       h += supH + subH
       bw,bh=w+h*0.4,w*1.4
       offset = w*pos[2]
@@ -158,7 +158,7 @@ class Canvas(CanvasBase):
           lFont = aggFont
         self.draw.text(tPos,txt,lFont)
         dPos[0]+=tw
-    return (tw,th,offset)
+    return (tw+th*.4,th+th*.4,offset)
 
 
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
