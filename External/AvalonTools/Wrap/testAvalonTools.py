@@ -132,5 +132,78 @@ class TestCase(unittest.TestCase):
     self.failIf(fixed_mol)
     pyAvalonTools.CloseCheckMolFiles()
     
+  def testIsotopeBug(self):
+    mb="""D isotope problem.mol
+  Mrv0541 08141217122D          
+
+  4  3  0  0  0  0            999 V2000
+   -3.2705    0.5304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5561    0.9429    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8416    0.5304    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5561    1.7679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+M  ISO  1   3   2
+M  END
+"""
+    csmi = pyAvalonTools.GetCanonSmiles(mb,False)
+    self.failUnlessEqual(csmi,'[2H]C(C)C')
+    mb="""D isotope problem.mol
+  Mrv0541 08141217122D          
+
+  4  3  0  0  0  0            999 V2000
+   -3.2705    0.5304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5561    0.9429    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8416    0.5304    0.0000 H   2  0  0  0  0  0  0  0  0  0  0  0
+   -2.5561    1.7679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+M  ISO  1   3   2
+M  END
+"""
+    csmi = pyAvalonTools.GetCanonSmiles(mb,False)
+    self.failUnlessEqual(csmi,'[2H]C(C)C')
+
+    mb="""D isotope problem.mol
+  Mrv0541 08141217122D          
+
+  4  3  0  0  0  0            999 V2000
+   -3.2705    0.5304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5561    0.9429    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8416    0.5304    0.0000 D   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5561    1.7679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+M  END
+"""
+    csmi = pyAvalonTools.GetCanonSmiles(mb,False)
+    self.failUnlessEqual(csmi,'[2H]C(C)C')
+    
+  def testChiralPBug(self):
+    mb="""Untitled Document-1
+  Mrv0541 08161213182D          
+
+  5  4  0  0  0  0            999 V2000
+   -1.1196    1.1491    0.0000 P   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.4052    1.5616    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9446    1.1491    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3332    1.9460    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7071    0.4346    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  2  0  0  0  0
+  1  5  1  1  0  0  0
+M  END
+"""
+    r = pyAvalonTools.InitializeCheckMol(STRUCHK_INIT)
+    self.failUnlessEqual(r, 0)
+    (err, fixed_mol) = pyAvalonTools.CheckMolecule(mb, False)
+    self.failUnlessEqual(err, 0)
+    self.failUnless(fixed_mol)
+    self.failIfEqual(fixed_mol.GetAtomWithIdx(0).GetChiralTag(),Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
+
 if __name__ == '__main__':
     unittest.main()
