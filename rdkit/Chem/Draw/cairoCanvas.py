@@ -41,6 +41,8 @@ try:
 except ImportError:
   from PIL import Image
 
+scriptPattern=re.compile(r'\<.+?\>')
+  
 class Canvas(CanvasBase):
   def __init__(self,
                image=None,  # PIL image
@@ -154,7 +156,7 @@ class Canvas(CanvasBase):
     self.ctx.select_font_face(font.face,
                                 cairo.FONT_SLANT_NORMAL,
                                 weight)
-    text = re.sub(r'\<.+?\>','',text)
+    text = scriptPattern.sub(r'\<.+?\>','',text)
     self.ctx.set_font_size(font.size)
     w,h=self.ctx.text_extents(text)[2:4]
     bw,bh=w+h*0.4,h*1.4
@@ -185,7 +187,7 @@ class Canvas(CanvasBase):
     orientation=kwargs.get('orientation','E')
     cctx=pangocairo.CairoContext(self.ctx)
 
-    plainText = re.sub(r'\<.+?\>','',text)
+    plainText = scriptPattern.sub('',text)
     measureLout = cctx.create_layout()
     measureLout.set_alignment(pango.ALIGN_LEFT)
     measureLout.set_markup(plainText)
@@ -200,10 +202,18 @@ class Canvas(CanvasBase):
     lout.set_font_description(fnt)
     measureLout.set_font_description(fnt)
 
+    # this is a bit kludgy, but empirically we end up with too much
+    # vertical padding if we use the text box with super and subscripts
+    # for the measurement. 
     iext,lext=measureLout.get_pixel_extents()
-    w=lext[2]-lext[0]
+    iext2,lext2=lout.get_pixel_extents()
+    w=lext2[2]-lext2[0]
     h=lext[3]-lext[1]
-    pad = h*.4,h*.3
+    pad = [h*.2,h*.3]
+    # another empirical correction: labels draw at the bottom
+    # of bonds have too much vertical padding
+    if orientation=='S':
+      pad[1] *= 0.5
     bw,bh=w+pad[0],h+pad[1]
     offset = w*pos[2]
     if 0:
