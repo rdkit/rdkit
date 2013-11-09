@@ -12,6 +12,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
 from matplotlib.axes import Axes
 from matplotlib.pyplot import figure
+#from matplotlib import textpath,font_manager
 import numpy
 
 from canvasbase import CanvasBase
@@ -50,14 +51,32 @@ class Canvas(CanvasBase):
     pos = self.rescalePt(pos)
     canvas = self._axes
     text = re.sub(r'<.*?>','',text)
-    canvas.annotate(text,(pos[0],pos[1]),color=color,
-                    verticalalignment='center',
-                    horizontalalignment='center',
-                    weight=font.weight,
-                    size=font.size*2.0,
-                    family=font.face,
-                    backgroundcolor="white")
-    return (None,None,None)
+    orientation=kwargs.get('orientation','E')
+    halign='center'
+    valign='center'
+    if orientation=='E':
+      halign='left'
+    elif orientation=='W':
+      halign='right'
+    elif orientation=='S':
+      valign='top'
+    elif orientation=='N':
+      valign='bottom'
+      
+    
+    annot=canvas.annotate(text,(pos[0],pos[1]),color=color,
+                          verticalalignment=valign,
+                          horizontalalignment=halign,
+                          weight=font.weight,
+                          size=font.size*2.0,
+                          family=font.face,
+                          backgroundcolor='white')
+
+    bb = annot.get_window_extent(renderer=self._figure.canvas.get_renderer())
+    w,h = bb.width,bb.height
+    tw,th=canvas.transData.inverted().transform((w,h))
+    #print annot.xytext,w,h,tw,th
+    return (tw,th,0)
 
   def addCanvasPolygon(self,ps,color=(0,0,0),**kwargs):
     canvas = self._axes
