@@ -1,7 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import SDWriter
-import sys
 
 def CSVToSDF(csvFile,outFile):
     csvFile_h = open(csvFile,'r')
