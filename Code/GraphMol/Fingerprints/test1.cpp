@@ -2466,6 +2466,35 @@ void testGitHubIssue151(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 151: PatternFingerprint problems" << std::endl;
 
+
+  {
+    ROMol *qm = SmilesToMol("CCCn1c2ccccc2c2ccccc21");
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("O=C1NCc2c1c1c3cc(Br)ccc3n3c1c1c2c2ccccc2n1CC(CO)C3");
+    TEST_ASSERT(m);
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+  }
+  {
+    ROMol *qm = SmilesToMol("c1ccc2c(c1)[nH]c1ccccc12");
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("O=C1NCc2c1c1c3cc(Br)ccc3n3c1c1c2c2ccccc2n1CC(CO)C3");
+    TEST_ASSERT(m);
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+  }
   {
     ROMol *qm = SmilesToMol("CC(C)c1nnc(N)[nH]1");
     TEST_ASSERT(qm);
@@ -2494,7 +2523,6 @@ void testGitHubIssue151(){
     delete qm;
     delete m;
   }
-
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

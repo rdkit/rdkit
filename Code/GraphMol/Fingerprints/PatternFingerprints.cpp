@@ -42,11 +42,14 @@ namespace RDKit{
                       //"[*]~[R]~1[R]~[R]~1~[*]",
                       "[R]~1~[R]~[R]~[R]~[R]~1",
                       "[R]~1~[R]~[R]~[R]~[R]~[R]~1",
-                      "[R2]~[R1]~[R2]",
-                      "[R2]~[R1]~[R1]~[R2]",
-                      //"[*]!@[R]~[R]!@[*]", Github #151: can't have !@ in a SSS pattern
+                      //"[R2]~[R1]~[R2]", Github #151: can't have ring counts in an SSS pattern
+                      //"[R2]~[R1]~[R1]~[R2]",  Github #151: can't have ring counts in an SSS pattern
+                      "[R](@[R])(@[R])~[R]~[R](@[R])(@[R])",
+                      "[R](@[R])(@[R])~[R]@[R]~[R](@[R])(@[R])",
+                      
+                      //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
+                      //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
                       "[*]~[R](@[R])@[R](@[R])~[*]",
-                      //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in a SSS pattern
                       "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
