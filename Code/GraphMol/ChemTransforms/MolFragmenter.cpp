@@ -286,7 +286,7 @@ namespace RDKit{
         const Bond *bond=bondsToRemove[i];
         unsigned int bidx=bond->getBeginAtomIdx();
         unsigned int eidx=bond->getEndAtomIdx();
-	Bond::BondType bT=bond->getBondType();
+	    Bond::BondType bT=bond->getBondType();
         res->removeBond(bond->getBeginAtomIdx(),bond->getEndAtomIdx());
         if(addDummies){
           Atom *at1,*at2;
