@@ -18,6 +18,7 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <RDGeneral/RDLog.h>
@@ -2461,11 +2462,47 @@ void testGitHubIssue25(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue151(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 151: PatternFingerprint problems" << std::endl;
+
+  {
+    ROMol *qm = SmilesToMol("CC(C)c1nnc(N)[nH]1");
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("CC(C)c1nc2NCCCn2n1");
+    TEST_ASSERT(m);
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+  }
+  {
+    ROMol *qm = SmilesToMol("CC(C)c1nnc(N)[nH]1");
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("CN1c2nc(C3CCN(S(=O)(=O)c4ccc(Cl)cc4Cl)CC3)nn2S(=O)(=O)c2ccccc21");
+    TEST_ASSERT(m);
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-  test1();
 #if 1
+  test1();
   test2();
   test3();
   test1alg2();
@@ -2498,9 +2535,10 @@ int main(int argc,char *argv[]){
   testMACCS();
   testRDKitFromAtoms();
   testRDKitAtomBits();
-#endif
   testChiralPairs();
   testChiralTorsions();
   testGitHubIssue25();
+#endif
+  testGitHubIssue151();
   return 0;
 }
