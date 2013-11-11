@@ -14,7 +14,60 @@ import json
 from canvasbase import CanvasBase
 
 class Canvas(CanvasBase):
+  """
+  The output of this can be inserted in a web page that has raphael loaded as follows:
 
+'''
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Raphael Molecules demo</title>
+        <link rel="stylesheet" href="demo.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="demo-print.css" type="text/css" media="print">
+        <script src="raphael-min.js"></script>
+        <style media="screen">
+            body {
+                margin: 0;
+                padding: 0;
+                text-align: center;
+            }
+            h1 {
+                font-weight: 400;
+                height: 5%%;
+            }
+            #canvas {
+                height: 480px;
+                margin: 0 auto;
+                text-align: left;
+                width: 640px;
+            }
+            #code {
+                font-family: Consolas, Monaco, "Lucida Console", monospace;
+                height: 4em;
+                margin: 10px;
+                padding: 0;
+                width: 90%%;
+            }
+            #run {
+                font-size: 2em;
+            }
+        </style>
+        <script>
+            window.onload = function () {
+                var paper = Raphael("canvas", 600, 600);
+                paper.add(%(JSON)s);
+            };
+        </script>
+    </head>
+    <body>
+        <h1>Raphael Molecule Demo</h1>
+        <div id="canvas"></div>
+    </body>
+</html>
+'''
+
+  """
 #------------------------------------------------------------------------------
 
   def __init__(self, size=None):
