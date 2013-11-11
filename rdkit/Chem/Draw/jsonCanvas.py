@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2008 Greg Landrum
+#  Copyright (C) 2013 Michal Nowotka and Greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -74,11 +74,21 @@ class Canvas(CanvasBase):
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
     color = tuple(map(lambda x: x*255, color))
     bgColor = tuple(map(lambda x: x*255,kwargs.get('bgColor',(1,1,1))))
+
+    orientation=kwargs.get('orientation','E')
+    text = re.sub(r'\<.+?\>','',text)
+    print text,orientation
+    w,h = font.size * len(text),font.size
+    bw,bh = w,h*1.4
+    xp,yp=pos[0],pos[1]
+    if orientation=='E':
+      xp += w/2
+    elif orientation=='W':
+      xp -= w/2
     tex = dict()
     tex['type'] = 'text'
-    tex['x'] = pos[0]
-    tex['y'] = pos[1]
-    text = re.sub(r'\<.+?\>','',text)
+    tex['x'] = xp 
+    tex['y'] = yp
     tex['text'] = text
     tex['font-size'] = font.size
     tex['stroke'] = 'rgb' + str(color)
@@ -86,14 +96,17 @@ class Canvas(CanvasBase):
         tex['font-weight'] = "bold"
     backgroundRect = dict()
     backgroundRect['type'] = 'rect'
-    backgroundRect['x'] = pos[0] - (font.size * len(text)) / 2
-    backgroundRect['y'] = pos[1] - font.size / 2
-    backgroundRect['width'] = font.size * len(text)
-    backgroundRect['height'] = font.size
-    backgroundRect['fill'] = 'rgb' + str(bgColor)
-    backgroundRect['stroke'] = 'rgb' + str(bgColor)
-    self.objects.append(backgroundRect)    
+
+    if bgColor is not None:
+      backgroundRect['x'] = xp - w / 2
+      backgroundRect['y'] = yp - h / 2
+      backgroundRect['width'] = w
+      backgroundRect['height'] = h
+      backgroundRect['fill'] = 'rgb' + str(bgColor)
+      backgroundRect['stroke'] = 'rgb' + str(bgColor)
+      self.objects.append(backgroundRect)    
     self.objects.append(tex)
+    return bw,bh,w*pos[2]
 
 #------------------------------------------------------------------------------
     
