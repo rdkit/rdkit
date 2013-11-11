@@ -1550,6 +1550,14 @@ The result is a generator object:
 That returns molecules on request:
 
 >>> prods = [ms.next() for x in range(10)]
+>>> prods[0]
+<rdkit.Chem.rdchem.Mol object at 0x...>
+
+The molecules have not been sanitized, so it's a good idea to at least update the valences before continuing:
+
+>>> for prod in prods:
+...     prod.UpdatePropertyCache(strict=False)
+...     
 >>> Chem.MolToSmiles(prods[0],True)
 'O=[N+]([O-])c1ccc(C2CCCO2)cc1'
 >>> Chem.MolToSmiles(prods[1],True)

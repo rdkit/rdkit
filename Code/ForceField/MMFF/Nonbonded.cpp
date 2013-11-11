@@ -88,8 +88,10 @@ namespace ForceFields {
     {
       PRECONDITION(owner, "bad owner");
       PRECONDITION(mmffVdW, "bad MMFFVdWCollection");
-      PRECONDITION(mmffVdWParamsIAtom, "bad MMFFVdW parameters for atom " + idx1);
-      PRECONDITION(mmffVdWParamsJAtom, "bad MMFFVdW parameters for atom " + idx2);
+      PRECONDITION(mmffVdWParamsIAtom, "bad MMFFVdW parameters for atom " +
+                   boost::lexical_cast<std::string>(idx1));
+      PRECONDITION(mmffVdWParamsJAtom, "bad MMFFVdW parameters for atom " +
+                   boost::lexical_cast<std::string>(idx2));
       RANGE_CHECK(0, idx1, owner->positions().size() - 1);
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
 

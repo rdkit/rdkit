@@ -445,7 +445,7 @@ namespace RDKit{
           } else {
             // need to add to the atomCode here because we subtract off up to 2 below
             // as part of the branch correction
-            atomCodes.push_back(((*atomInvariants)[(*atomItI)->getIdx()])<<1 + 1);
+            atomCodes.push_back(((*atomInvariants)[(*atomItI)->getIdx()]<<1) + 1);
           }
         }
 

@@ -286,6 +286,7 @@ namespace RDKit{
         const Bond *bond=bondsToRemove[i];
         unsigned int bidx=bond->getBeginAtomIdx();
         unsigned int eidx=bond->getEndAtomIdx();
+	    Bond::BondType bT=bond->getBondType();
         res->removeBond(bond->getBeginAtomIdx(),bond->getEndAtomIdx());
         if(addDummies){
           Atom *at1,*at2;
@@ -299,7 +300,6 @@ namespace RDKit{
             at2->setIsotope(eidx);
           }
           unsigned int idx1=res->addAtom(at1,false,true);
-          Bond::BondType bT=bond->getBondType();
           if(bondTypes) bT=(*bondTypes)[i];
           res->addBond(eidx,at1->getIdx(),bT);
           unsigned int idx2=res->addAtom(at2,false,true);
