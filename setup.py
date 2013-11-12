@@ -25,6 +25,7 @@ child_packages = [
                "rdkit.Logger",
                "rdkit.ML",
                "rdkit.Numerics",
+               "rdkit.Shape",
                "rdkit.SimDivFilters",
                "rdkit.VLib",
                "rdkit.sping",

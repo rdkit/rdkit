@@ -14,6 +14,7 @@ add_subdirectory(Catalogs)
 add_subdirectory(GraphMol)
 add_subdirectory(Query)
 add_subdirectory(Features)
+add_subdirectory(Shape)
 
 add_subdirectory(DataManip)
 if(RDK_BIG_ENDIAN)
