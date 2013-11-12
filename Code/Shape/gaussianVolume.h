@@ -50,7 +50,7 @@ Shape-it is linked against OpenBabel version 2.
 #include <Shape/coordinate.h>
 #include <Shape/atomGaussian.h>
 #include <Shape/alignmentInfo.h>
-#include <Shape/options.h>
+
 
 
 

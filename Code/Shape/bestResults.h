@@ -73,9 +73,6 @@ class BestResults
       ~BestResults(void);
 			
       bool add(SolutionInfo& res);
-			
-      void writeMolecules(Options*);
-      void writeScores(Options*);
 };
 
 

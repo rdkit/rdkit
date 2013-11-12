@@ -29,7 +29,7 @@ Shape-it is linked against OpenBabel version 2.
 
 
 #include <Shape/gaussianVolume.h>
-
+#include <Shape/solutionInfo.h>
 
 		
 GaussianVolume::GaussianVolume(void)

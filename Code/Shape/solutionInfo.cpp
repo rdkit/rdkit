@@ -56,23 +56,6 @@ SolutionInfo::~SolutionInfo(void)
 }
 
 
-
-void
-SolutionInfo::printScores(Options& uo)
-{
-	*(uo.scoreOutStream) << dbName
-		<< "\t" << refName
-		<< "\t" << std::setprecision(3) << atomOverlap / (refAtomVolume + dbAtomVolume - atomOverlap)
-		<< "\t" << std::setprecision(3) << atomOverlap / (0.95*refAtomVolume + 0.05*dbAtomVolume)
-		<< "\t" << std::setprecision(3) << atomOverlap / (0.05*refAtomVolume + 0.95*dbAtomVolume)
-		<< "\t" << std::setprecision(5) << atomOverlap
-		<< "\t" << std::setprecision(5) << refAtomVolume
-		<< "\t" << std::setprecision(5) << dbAtomVolume << std::endl;
-	return;
-}
-
-
-
 void
 updateSolutionInfo(SolutionInfo& s, AlignmentInfo& res, double score, GaussianVolume& gv)
 {

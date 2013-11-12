@@ -36,3 +36,6 @@ class TestCase(unittest.TestCase) :
         score = rdkit.Chem.rdShape.Align(dot, dot, maxIter=10)
         print "dot-dot", score
         numpy.testing.assert_approx_equal(1., score, significant=2)
+
+if __name__ == '__main__':
+  unittest.main()

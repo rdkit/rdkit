@@ -63,7 +63,7 @@ Shape-it is linked against OpenBabel version 2.
 
 #ifndef sign
 	template <class T> inline T sign(const T & a, const T & b ) {return (b >= 0.0) ? ( a>=0 ? a : -a) : (a>=0 ? -a : a);}
-#endif sign
+#endif
 					
 
 

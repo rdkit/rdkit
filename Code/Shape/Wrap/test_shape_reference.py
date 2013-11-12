@@ -35,3 +35,5 @@ class TestCase(unittest.TestCase) :
         np.testing.assert_array_almost_equal(df["Shape-it::Tanimoto"], df1["Shape-it::Tanimoto"], decimal=3)
         np.testing.assert_array_almost_equal(df["Shape-it::Tanimoto"], df2["Shape-it::Tanimoto"], decimal=3)
 
+if __name__ == '__main__':
+  unittest.main()
