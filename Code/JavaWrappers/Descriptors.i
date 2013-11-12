@@ -58,6 +58,7 @@
     RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
     return mr;
   }
+
 %}
 
 

@@ -38,7 +38,7 @@ double SimilarityWrapper(const T &bv1,const std::string &pkl,double a,double b,
 
 
 template <typename T>
-python::list BulkWrapper(const T &bv1,python::list bvs,
+python::list BulkWrapper(const T &bv1,python::object bvs,
                          double (*metric)(const T &,const T &),
                          bool returnDistance){
   python::list res;
@@ -51,7 +51,7 @@ python::list BulkWrapper(const T &bv1,python::list bvs,
 }
 
 template <typename T>
-python::list BulkWrapper(const T &bv1,python::list bvs,double a,double b,
+python::list BulkWrapper(const T &bv1,python::object bvs,double a,double b,
                          double (*metric)(const T &,const T &,double,double),
                          bool returnDistance){
   python::list res;
@@ -70,7 +70,7 @@ double TanimotoSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkTanimotoSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkTanimotoSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))TanimotoSimilarity,
                      returnDistance);
@@ -83,7 +83,7 @@ double TverskySimilarity_w(const T1 &bv1,const T2 &bv2,double a,double b,bool re
                            returnDistance);
 }
 template <typename T>
-python::list BulkTverskySimilarity(const T &bv1,python::list bvs,double a,double b,
+python::list BulkTverskySimilarity(const T &bv1,python::object bvs,double a,double b,
                                    bool returnDistance){
   return BulkWrapper(bv1,bvs,a,b,
                      (double (*)(const T&,const T&,double,double))TverskySimilarity,
@@ -97,7 +97,7 @@ double CosineSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkCosineSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkCosineSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))CosineSimilarity,
                      returnDistance);
@@ -110,7 +110,7 @@ double KulczynskiSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkKulczynskiSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkKulczynskiSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))KulczynskiSimilarity,
                      returnDistance);
@@ -124,7 +124,7 @@ double DiceSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkDiceSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkDiceSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))DiceSimilarity,
                      returnDistance);
@@ -137,7 +137,7 @@ double SokalSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkSokalSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkSokalSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))SokalSimilarity,
                      returnDistance);
@@ -150,7 +150,7 @@ double McConnaugheySimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance)
                            returnDistance);
 }
 template <typename T>
-python::list BulkMcConnaugheySimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkMcConnaugheySimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))McConnaugheySimilarity,
                      returnDistance);
@@ -163,7 +163,7 @@ double AsymmetricSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkAsymmetricSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkAsymmetricSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))AsymmetricSimilarity,
                      returnDistance);
@@ -176,7 +176,7 @@ double BraunBlanquetSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance
                            returnDistance);
 }
 template <typename T>
-python::list BulkBraunBlanquetSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkBraunBlanquetSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))BraunBlanquetSimilarity,
                      returnDistance);
@@ -189,7 +189,7 @@ double RusselSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
                            returnDistance);
 }
 template <typename T>
-python::list BulkRusselSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkRusselSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))RusselSimilarity,
                      returnDistance);
@@ -202,20 +202,20 @@ double RogotGoldbergSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance
                            returnDistance);
 }
 template <typename T>
-python::list BulkRogotGoldbergSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkRogotGoldbergSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))RogotGoldbergSimilarity,
                      returnDistance);
 }
 
 template <typename T>
-python::list BulkOnBitSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkOnBitSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))OnBitSimilarity,
                      returnDistance);
 }
 template <typename T>
-python::list BulkAllBitSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+python::list BulkAllBitSimilarity(const T &bv1,python::object bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
                      (double (*)(const T&,const T&))AllBitSimilarity,
                      returnDistance);
@@ -227,9 +227,9 @@ python::list BulkAllBitSimilarity(const T &bv1,python::list bvs,bool returnDista
                (python::args("v1"),python::args("v2"))); \
   python::def( # _funcname_,(double (*)(const EBV &,const EBV &))_funcname_,\
                (python::args("v1"),python::args("v2")),_help_);\
-  python::def( # _bulkname_,(python::list (*)(const EBV &,python::list,bool))_bulkname_,\
+  python::def( # _bulkname_,(python::list (*)(const EBV &,python::object,bool))_bulkname_,\
                (python::args("v1"),python::args("v2"),python::args("returnDistance")=0));\
-  python::def( # _bulkname_,(python::list (*)(const EBV &,python::list,bool))_bulkname_,\
+  python::def( # _bulkname_,(python::list (*)(const EBV &,python::object,bool))_bulkname_,\
                (python::args("v1"),python::args("v2"),python::args("returnDistance")=0),_help_);}
   
 
@@ -242,9 +242,9 @@ python::list BulkAllBitSimilarity(const T &bv1,python::list bvs,bool returnDista
                (python::args("bv1"),python::args("pkl"),python::args("returnDistance")=0));\
   python::def( # _funcname_,(double (*)(const EBV &,const std::string &,bool))_name_w_,\
                (python::args("bv1"),python::args("pkl"),python::args("returnDistance")=0),_help_);\
-  python::def( # _bulkname_,(python::list (*)(const SBV &,python::list,bool))_bulkname_,\
+  python::def( # _bulkname_,(python::list (*)(const SBV &,python::object,bool))_bulkname_,\
                (python::args("bv1"),python::args("bvList"),python::args("returnDistance")=0));\
-  python::def( # _bulkname_,(python::list (*)(const EBV &,python::list,bool))_bulkname_,\
+  python::def( # _bulkname_,(python::list (*)(const EBV &,python::object,bool))_bulkname_,\
                (python::args("bv1"),python::args("bvList"),python::args("returnDistance")=0),_help_);}
 
 struct BitOps_wrapper {
@@ -290,11 +290,11 @@ struct BitOps_wrapper {
                    (python::args("bv1"),python::args("pkl"),python::args("a"),
                     python::args("b"),python::args("returnDistance")=0),help.c_str());
       python::def( "BulkTverskySimilarity",
-                   (python::list (*)(const SBV &,python::list,double,double,bool))BulkTverskySimilarity,
+                   (python::list (*)(const SBV &,python::object,double,double,bool))BulkTverskySimilarity,
                    (python::args("bv1"),python::args("bvList"),python::args("a"),
                     python::args("b"),python::args("returnDistance")=0));
       python::def( "BulkTverskySimilarity",
-                   (python::list (*)(const EBV &,python::list,double,double,bool))BulkTverskySimilarity,
+                   (python::list (*)(const EBV &,python::object,double,double,bool))BulkTverskySimilarity,
                    (python::args("bv1"),python::args("bvList"),python::args("a"),
                     python::args("b"),python::args("returnDistance")=0),help.c_str());
     }

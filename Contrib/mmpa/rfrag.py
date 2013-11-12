@@ -1,4 +1,4 @@
-# Copyright (c) 2012, GlaxoSmithKline Research & Development Ltd.
+# Copyright (c) 2013, GlaxoSmithKline Research & Development Ltd.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Created by Jameed Hussain, September 2012
+# Created by Jameed Hussain, July 2013
 
 import sys
 import re
@@ -58,7 +58,7 @@ def find_correct(f_array):
 
     return core,side_chains
 
-def delete_bonds(bonds):
+def delete_bonds(smi,id,mol,bonds,out):
 
     #use the same parent mol object and create editable mol
     em = Chem.EditableMol(mol)
@@ -115,10 +115,8 @@ def delete_bonds(bonds):
 
             #need to cansmi again as smiles can be different
             output = '%s,%s,,%s.%s' % (smi,id,Chem.MolToSmiles(s1,isomericSmiles=True),Chem.MolToSmiles(s2,isomericSmiles=True) )
-            if( (output in outlines) == False):
-                print output
-                #print
-                outlines[output]=None
+            if( (output in out) == False):
+                out.add(output)
 
         elif (isotope >= 2):
             #add the isotope labels
@@ -172,10 +170,62 @@ def delete_bonds(bonds):
             side_chains = re.sub('XX', '' , side_chains)
 
             output = '%s,%s,%s,%s' % (smi,id,core,side_chains)
-            if( (output in outlines) == False):
-                print output
-                outlines[output]=None
+            if( (output in out) == False):
+                out.add(output)
 
+def fragment_mol(smi,id):
+
+    mol = Chem.MolFromSmiles(smi)
+
+    #different cuts can give the same fragments
+    #to use outlines to remove them
+    outlines = set()
+
+    if(mol == None):
+        sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
+    else:
+        #SMARTS for "acyclic and not in a functional group"
+        smarts = Chem.MolFromSmarts("[#6+0;!$(*=,#[!#6])]!@!=!#[*]")
+
+        #finds the relevant bonds to break
+        #find the atoms maches
+        matching_atoms = mol.GetSubstructMatches(smarts)
+
+        total = len(matching_atoms)
+
+        #catch case where there are no bonds to fragment
+        if(total == 0):
+            output = '%s,%s,,' % (smi,id)
+            if( (output in outlines) == False ):
+                outlines.add(output)
+
+        bonds_selected = []
+
+        #loop to generate every single, double and triple cut in the molecule
+        for x in xrange( total ):
+            #print matches[x]
+            bonds_selected.append(matching_atoms[x])
+            delete_bonds(smi,id,mol,bonds_selected,outlines)
+            bonds_selected = []
+
+            for y in xrange(x+1,total):
+                #print matching_atoms[x],matching_atoms[y]
+                bonds_selected.append(matching_atoms[x])
+                bonds_selected.append(matching_atoms[y])
+                delete_bonds(smi,id,mol,bonds_selected,outlines)
+                bonds_selected = []
+
+                for z in xrange(y+1, total):
+                    #print matching_atoms[x],matching_atoms[y],matching_atoms[z]
+                    bonds_selected.append(matching_atoms[x])
+                    bonds_selected.append(matching_atoms[y])
+                    bonds_selected.append(matching_atoms[z])
+                    delete_bonds(smi,id,mol,bonds_selected,outlines)
+                    bonds_selected = []
+
+            #right, we are done.
+
+    return outlines
 
 if __name__=='__main__':
 
@@ -193,60 +243,16 @@ if __name__=='__main__':
         line = line.rstrip()
 
         line_fields = re.split('\s|,',line)
-        smi = line_fields[0]
-        id = line_fields[1]
+        smiles = line_fields[0]
+        cmpd_id = line_fields[1]
 
-        mol = Chem.MolFromSmiles(smi)
+        #returns a set containing the output
+        o = fragment_mol(smiles,cmpd_id)
 
-        if(mol == None):
-            sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
-            continue
+        for l in o:
+            print l
 
-        #different cuts can give the same fragments
-        #to use outlines to remove them
-        outlines={}
 
-        #SMARTS for "acyclic and not in a functional group"
-        smarts = Chem.MolFromSmarts("[#6+0;!$(*=,#[!#6])]!@!=!#[*]")
-
-        #finds the relevant bonds to break
-        #find the atoms maches
-        matching_atoms = mol.GetSubstructMatches(smarts)
-
-        total = len(matching_atoms)
-
-        #catch case where there are no bonds to fragment
-        if(total == 0):
-            output = '%s,%s,,' % (smi,id)
-            if( (output in outlines) == False ):
-                print output
-                outlines[output]=None
-
-        bonds_selected = []
-
-        #loop to generate every single, double and triple cut in the molecule
-        for x in xrange( total ):
-            #print matches[x]
-            bonds_selected.append(matching_atoms[x])
-            delete_bonds(bonds_selected)
-            bonds_selected = []
-
-            for y in xrange(x+1,total):
-                #print matching_atoms[x],matching_atoms[y]
-                bonds_selected.append(matching_atoms[x])
-                bonds_selected.append(matching_atoms[y])
-                delete_bonds(bonds_selected)
-                bonds_selected = []
-
-                for z in xrange(y+1, total):
-                    #print matching_atoms[x],matching_atoms[y],matching_atoms[z]
-                    bonds_selected.append(matching_atoms[x])
-                    bonds_selected.append(matching_atoms[y])
-                    bonds_selected.append(matching_atoms[z])
-                    delete_bonds(bonds_selected)
-                    bonds_selected = []
-
-            #right, we are done.
 
 
 

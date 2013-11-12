@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 from rdkit import Chem
+from rdkit.Chem import rdPartialCharges
 import collections
 
 def _isCallable(thing):
@@ -132,6 +133,43 @@ def NumRadicalElectrons(mol):
     accum += atom.GetNumRadicalElectrons()
   return accum
 NumRadicalElectrons.version="1.0.0"
+
+def _ChargeDescriptors(mol,force=False):
+  if not force and hasattr(mol,'_chargeDescriptors'):
+    return mol._chargeDescriptors
+  chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
+  minChg=500.
+  maxChg=-500.
+  for at in mol.GetAtoms():
+    chg = float(at.GetProp('_GasteigerCharge'))
+    minChg = min(chg,minChg)
+    maxChg = max(chg,maxChg)
+  res = (minChg,maxChg)
+  mol._chargeDescriptors=res
+  return res
+  
+
+def MaxPartialCharge(mol,force=False):
+  _,res = _ChargeDescriptors(mol,force)
+  return res
+MaxPartialCharge.version="1.0.0"
+
+def MinPartialCharge(mol,force=False):
+  res,_ = _ChargeDescriptors(mol,force)
+  return res
+MinPartialCharge.version="1.0.0"
+
+def MaxAbsPartialCharge(mol,force=False):
+  v1,v2 = _ChargeDescriptors(mol,force)
+  return max(abs(v1),abs(v2))
+MaxAbsPartialCharge.version="1.0.0"
+
+def MinAbsPartialCharge(mol,force=False):
+  v1,v2 = _ChargeDescriptors(mol,force)
+  return min(abs(v1),abs(v2))
+MinAbsPartialCharge.version="1.0.0"
+
+from rdkit.Chem.EState.EState import MaxEStateIndex,MinEStateIndex,MaxAbsEStateIndex,MinAbsEStateIndex
 
 _setupDescriptors(locals())
 

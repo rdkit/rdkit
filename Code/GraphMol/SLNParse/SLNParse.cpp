@@ -195,9 +195,7 @@ namespace RDKit {
         // this triggers a sanitization, so we do not need to
         // worry about doing one here:
         try{
-          ROMol *tmp = MolOps::removeHs(*res,false,false);
-          delete res;
-          res = static_cast<RWMol *>(tmp);
+          MolOps::removeHs(*res,false,false);
         } catch (...) {
           delete res;
           throw;

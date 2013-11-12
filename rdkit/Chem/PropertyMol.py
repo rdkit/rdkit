@@ -90,7 +90,7 @@ class PropertyMol(Chem.Mol):
   __getstate_manages_dict__=True
   def __init__(self,mol):
     if not isinstance(mol,Chem.Mol): return
-    Chem.Mol.__init__(self,mol.ToBinary())
+    Chem.Mol.__init__(self,mol)
     for pn in mol.GetPropNames(includePrivate=True):
       self.SetProp(pn,mol.GetProp(pn))
   def SetProp(self,nm,val):

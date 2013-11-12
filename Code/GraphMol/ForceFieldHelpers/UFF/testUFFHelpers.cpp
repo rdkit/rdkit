@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
@@ -213,7 +214,7 @@ void testUFFBuilder1(){
   UFF::AtomicParamVect types;
   bool foundAll;
   ForceFields::ForceField *field;
-  boost::shared_array<int> nbrMat;
+  boost::shared_array<boost::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   Conformer *conf = new Conformer(mol->getNumAtoms());
@@ -228,12 +229,12 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==3);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  TEST_ASSERT(nbrMat[0]==-2);
-  TEST_ASSERT(nbrMat[1]==-1);
-  TEST_ASSERT(nbrMat[2]==1);
-  TEST_ASSERT(nbrMat[3]==1);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,0)==UFF::Tools::RELATION_1_X);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,1)==UFF::Tools::RELATION_1_2);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,2)==UFF::Tools::RELATION_1_3);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,3)==UFF::Tools::RELATION_1_3);
 
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol,types,field);
   TEST_ASSERT(field->contribs().size()==6);
 
   // there are no non-bonded terms here:
@@ -259,12 +260,12 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==3);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  TEST_ASSERT(nbrMat[0]==-2);
-  TEST_ASSERT(nbrMat[1]==-1);
-  TEST_ASSERT(nbrMat[2]==1);
-  TEST_ASSERT(nbrMat[3]==-2);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,0)==UFF::Tools::RELATION_1_X);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,1)==UFF::Tools::RELATION_1_2);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,2)==UFF::Tools::RELATION_1_3);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,3)==UFF::Tools::RELATION_1_X);
 
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol,types,field);
   TEST_ASSERT(field->contribs().size()==5);
   UFF::Tools::addNonbonded(*mol,cid,types,field,nbrMat);
   TEST_ASSERT(field->contribs().size()==6);
@@ -289,10 +290,10 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==1);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  TEST_ASSERT(nbrMat[0]==-2);
-  TEST_ASSERT(nbrMat[1]==-1);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,0)==UFF::Tools::RELATION_1_X);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,1)==UFF::Tools::RELATION_1_2);
 
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol,types,field);
   TEST_ASSERT(field->contribs().size()==1);
   UFF::Tools::addNonbonded(*mol,cid,types,field,nbrMat);
   TEST_ASSERT(field->contribs().size()==1);
@@ -313,7 +314,7 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==5);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol2);
-  UFF::Tools::addAngles(*mol2,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol2,types,field);
   TEST_ASSERT(field->contribs().size()==12);
   UFF::Tools::addNonbonded(*mol2,cid,types,field,nbrMat);
   TEST_ASSERT(field->contribs().size()==15);
@@ -339,7 +340,7 @@ void testUFFBuilder2(){
   ForceFields::ForceField *field;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   mol = MolFileToMol(pathName+"/small1.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
@@ -360,7 +361,7 @@ void testUFFBuilder2(){
   field=UFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  needMore = field->minimize(100);
+  needMore = field->minimize(150);
   TEST_ASSERT(!needMore);
   //std::cout << MolToMolBlock(mol);
   delete mol;
@@ -421,7 +422,7 @@ void testUFFBatch(){
   ForceFields::ForceField *field;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   SDMolSupplier suppl(pathName+"/bulk.sdf",false);
 
   int count=0;
@@ -466,7 +467,7 @@ void testUFFBuilderSpecialCases(){
   ForceFields::ForceField *field;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   // ----------
   //  Trigonal bipyramid
   // ----------
@@ -527,7 +528,7 @@ void testIssue239(){
   double e1,e2;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   mol = MolFileToMol(pathName+"/Issue239.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
@@ -564,7 +565,7 @@ void testIssue242(){
   double e1,e2;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
 
   mol = MolFileToMol(pathName+"/Issue242.mol");
   TEST_ASSERT(mol);
@@ -669,7 +670,7 @@ void testSFIssue1653802(){
   ForceFields::ForceField *field;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
 
   mol = MolFileToMol(pathName+"/cyclobutadiene.mol",false);
   TEST_ASSERT(mol);
@@ -678,7 +679,7 @@ void testSFIssue1653802(){
 
   UFF::AtomicParamVect types;
   bool foundAll;
-  boost::shared_array<int> nbrMat;
+  boost::shared_array<boost::uint8_t> nbrMat;
   boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
@@ -687,11 +688,11 @@ void testSFIssue1653802(){
   TEST_ASSERT(field->contribs().size()==8);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
-  TEST_ASSERT(field->contribs().size()==18);
+  UFF::Tools::addAngles(*mol,types,field);
+  TEST_ASSERT(field->contribs().size()==20);
   UFF::Tools::addTorsions(*mol,types,field);
   //std::cout << field->contribs().size() << std::endl;
-  TEST_ASSERT(field->contribs().size()==34);
+  TEST_ASSERT(field->contribs().size()==36);
   UFF::Tools::addNonbonded(*mol,0,types,field,nbrMat);
   delete field;
 
@@ -710,7 +711,7 @@ void testSFIssue2378119(){
   BOOST_LOG(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   {
     RWMol *mol = MolFileToMol(pathName+"/Issue2378119.mol");
     TEST_ASSERT(mol);
@@ -775,7 +776,7 @@ void testMissingParams(){
     UFF::AtomicParamVect types;
     bool foundAll;
 
-    RWMol *mol = SmilesToMol("[Cu](C)(C)(C)(C)C");
+    ROMol *mol = SmilesToMol("[Cu](C)(C)(C)(C)C");
     TEST_ASSERT(mol);
 
     ROMol *mol2 = MolOps::addHs(*mol);
@@ -809,7 +810,7 @@ void testSFIssue3009337(){
   BOOST_LOG(rdErrorLog) << "    Testing SFIssue3009337." << std::endl;
 
   std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   {
     RWMol *mol = MolFileToMol(pathName+"/Issue3009337.mol",true,false);
     TEST_ASSERT(mol);
@@ -846,6 +847,42 @@ void testSFIssue3009337(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+void testGitHubIssue62() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing GitHubIssue62." << std::endl;
+
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  {
+    double energyValues[] =
+      { 38.687, 174.698, 337.986, 115.248,
+        2.482, 1.918, 10.165, 98.469, 39.078,
+        267.236, 15.747, 202.121, 205.539,
+        20.044, 218.986, 79.627 };
+    SmilesMolSupplier smiSupplier(pathName + "/Issue62.smi");
+    SDWriter *sdfWriter = new SDWriter(pathName + "/Issue62.sdf");
+    for (unsigned int i = 0; i < smiSupplier.length(); ++i) {
+      ROMol *mol = MolOps::addHs(*(smiSupplier[i]));
+      TEST_ASSERT(mol);
+      std::string molName = "";
+      if (mol->hasProp("_Name")) {
+        mol->getProp("_Name", molName);
+      }
+      DGeomHelpers::EmbedMolecule(*mol);
+      ForceFields::ForceField *field = UFF::constructForceField(*mol);
+      TEST_ASSERT(field);
+      field->initialize();
+      int needMore = field->minimize(200, 1.e-6, 1.e-3);
+      TEST_ASSERT(!needMore);
+      sdfWriter->write(*mol);
+      double e = field->calcEnergy();
+      BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
+      TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
+    }
+    sdfWriter->close();
+    BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  }
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -866,5 +903,5 @@ int main(){
 #endif
   testMissingParams();
   testSFIssue3009337();
-
+  testGitHubIssue62();
 }

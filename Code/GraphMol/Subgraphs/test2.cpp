@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <boost/foreach.hpp>
@@ -102,7 +103,7 @@ void test2()
     std::string smiles="CC1CC1";
     RWMol *mol=SmilesToMol(smiles);
     TEST_ASSERT(mol);
-    ROMol *mH=MolOps::addHs(*mol);
+    ROMol *mH=MolOps::addHs(static_cast<const ROMol &>(*mol));
 
     PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mH,1,0);
     TEST_ASSERT(pth.size()==1);
@@ -134,11 +135,58 @@ void test2()
   std::cout << "Finished" << std::endl;
 }
 
+void testGithubIssue103()
+{
+  std::cout << "-----------------------\n Testing github Issue103: stereochemistry and pathToSubmol" << std::endl;
+  {
+    std::string smiles="O=C(O)C(=O)C[C@@]1(C(=O)O)C=C[C@H](O)C=C1";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mol,2,12);
+    TEST_ASSERT(pth.size()==5);
+    ROMol *frag=Subgraphs::pathToSubmol(*mol,pth,false);
+    smiles = MolToSmiles(*frag,true);
+    TEST_ASSERT(smiles=="C=CC(O)C=C");
+    delete frag;
+    delete mol;
+  }
+  {
+    std::string smiles="O=C(O)C(=O)C[C@@]1(C(=O)O)C=C[C@H](O)C=C1";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mol,2,12);
+    TEST_ASSERT(pth.size()==5);
+    ROMol *frag=Subgraphs::pathToSubmol(*mol,pth,false);
+    smiles = MolToSmarts(*frag);
+    TEST_ASSERT(smiles=="[#6](-[#6H](-[#8])-[#6]=[#6])=[#6]");
+    delete frag;
+    delete mol;
+  }
+  {
+    std::string smiles="O=C(O)C(=O)C[C@@]1(C(=O)O)C=C[C@H](O)C=C1";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mol,2,12);
+    TEST_ASSERT(pth.size()==5);
+    ROMol *frag=Subgraphs::pathToSubmol(*mol,pth,true);
+    smiles = MolToSmarts(*frag);
+    TEST_ASSERT(smiles=="[#6](-[#6](-[#8])-[#6]=[#6])=[#6]");
+    delete frag;
+    delete mol;
+  }
+
+  std::cout << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
 {
   test1();
   test2();
+  testGithubIssue103();
   return 0;
 }

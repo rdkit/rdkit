@@ -1,6 +1,4 @@
-rdkit_library(ForceFieldHelpers AtomTyper.cpp Builder.cpp
-              LINK_LIBRARIES SmilesParse SubstructMatch ForceField)
-
-rdkit_headers(AtomTyper.h
-              Builder.h DEST GraphMol/ForceFieldHelpers/UFF)
-
+rdkit_test(testUFFForceFieldHelpers testUFFHelpers.cpp
+           LINK_LIBRARIES 
+           ForceFieldHelpers
+           DistGeomHelpers DistGeometry FileParsers MolTransforms SmilesParse SubstructMatch ForceField MolAlign Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral )

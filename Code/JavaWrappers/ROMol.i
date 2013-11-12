@@ -56,6 +56,7 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <GraphMol/MolDrawing/MolDrawing.h>
 #include <GraphMol/MolDrawing/DrawingToSVG.h>
 
@@ -141,6 +142,14 @@
     bool writeFirstConfTwice=false) {
     RDKit::MolToTPLFile(*($self), fName, partialChargeProp, writeFirstConfTwice);
   }
+
+  std::string MolToPDBBlock(int confId=-1,unsigned int flavor=0) {
+    return RDKit::MolToPDBBlock(*($self),confId,flavor);
+  }
+  void MolToPDBFile(std::string fName,int confId=-1,unsigned int flavor=0) {
+    RDKit::MolToPDBFile(*($self), fName, confId, flavor);
+  }
+
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
     return SubstructMatch(*($self),query,mv,true,useChirality);
@@ -366,6 +375,23 @@
                         bool reflect=false, unsigned int maxIters=50) {
     RDKit::MolAlign::alignMolConformers(*($self), atomIds, confIds, weights, reflect, maxIters);
   }
+
+  /* From GraphMol/MolAlign/AlignMolecules */
+  std::pair<double,double> O3AAlignMol(RDKit::ROMol &refMol, 
+                     int prbCid=-1, int refCid=-1,
+                     bool reflect=false, unsigned int maxIters=50,
+                     unsigned int accuracy=0) {
+    RDKit::MMFF::MMFFMolProperties prbMP(*($self));
+    RDKit::MMFF::MMFFMolProperties refMP(refMol);
+    
+    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, prbCid, refCid,
+                      reflect,maxIters,accuracy);
+    double rmsd=o3a.align();
+    double score = o3a.score();
+    return std::make_pair(rmsd,score);
+  }
+
+
 }
 
 

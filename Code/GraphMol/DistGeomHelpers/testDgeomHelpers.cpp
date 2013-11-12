@@ -659,8 +659,8 @@ void testIssue251() {
   DistGeom::BoundsMatPtr bm(mat);
   DGeomHelpers::initBoundsMat(bm);
   DGeomHelpers::setTopolBounds(*m, bm);
-  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.75, 0.01));
-  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.87, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.67, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.79, 0.01));
   delete m;
 }
 
@@ -848,7 +848,7 @@ void testRandomCoords() {
   for(tokenizer::iterator token=tokens.begin();
       token!=tokens.end();++token){
     std::string smi= *token;
-    RWMol *m = SmilesToMol(smi, 0, 1);
+    ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m=m2;
@@ -897,7 +897,7 @@ void testRandomCoords() {
 void testIssue1989539() {
   {
     std::string smi="c1ccccc1.Cl";
-    RWMol *m = SmilesToMol(smi, 0, 1);
+    ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m=m2;
@@ -937,7 +937,7 @@ void testConstrainedEmbedding() {
     coords[4]=ref->getConformer().getAtomPos(4);
 
 #if 1
-    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
     MatchVectType alignMap;
@@ -962,7 +962,7 @@ void testConstrainedEmbedding() {
     coords[6]=ref->getConformer().getAtomPos(2);
     coords[7]=ref->getConformer().getAtomPos(3);
     coords[8]=ref->getConformer().getAtomPos(4);
-    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
     MatchVectType alignMap;
@@ -1011,7 +1011,7 @@ void testIssue2091864() {
 void testIssue2091974() {
   {
     std::string smi="CCOC(OCC)(OCC)OCC";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1020,7 +1020,7 @@ void testIssue2091974() {
   }
   {
     std::string smi="O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1044,7 +1044,7 @@ void testIssue2835784() {
   }
   {
     std::string smi="C1C=C1";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1067,7 +1067,7 @@ void testIssue2835784() {
 #endif
   {
     std::string smi="C12=CCC1C2";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1242,7 +1242,7 @@ void testGitHub55() {
     coords[2]=core->getConformer().getAtomPos(2);
     coords[3]=core->getConformer().getAtomPos(1);
     coords[4]=core->getConformer().getAtomPos(0);
-    cid = DGeomHelpers::EmbedMolecule(*mol,50,23,true,false,2.,true,1,&coords);
+    cid = DGeomHelpers::EmbedMolecule(*mol,50,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
 
     delete core;
@@ -1266,7 +1266,7 @@ void testGitHub55() {
     coords[2]=core->getConformer().getAtomPos(2);
     coords[3]=core->getConformer().getAtomPos(1);
     coords[4]=core->getConformer().getAtomPos(0);
-    cid = DGeomHelpers::EmbedMolecule(*mol,50,23,true,false,2.,true,1,&coords);
+    cid = DGeomHelpers::EmbedMolecule(*mol,50,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
 
     delete core;

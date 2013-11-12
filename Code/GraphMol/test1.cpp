@@ -10,6 +10,7 @@
 //
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
@@ -991,6 +992,50 @@ void testIssue284()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testAtomResidues()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing residue information handling on atoms" << std::endl;
+  {
+    RWMol *m=new RWMol();
+
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addAtom(new Atom(6));
+    m->addBond(1,2,Bond::SINGLE);
+    m->addAtom(new Atom(6));
+    m->addBond(2,3,Bond::SINGLE);
+
+    TEST_ASSERT(!(m->getAtomWithIdx(0)->getMonomerInfo()));
+    TEST_ASSERT(!(m->getAtomWithIdx(1)->getMonomerInfo()));
+    TEST_ASSERT(!(m->getAtomWithIdx(2)->getMonomerInfo()));
+    TEST_ASSERT(!(m->getAtomWithIdx(3)->getMonomerInfo()));
+
+    m->getAtomWithIdx(0)->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER,"m1"));
+    TEST_ASSERT((m->getAtomWithIdx(0)->getMonomerInfo()));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getName()=="m1");
+
+    m->getAtomWithIdx(1)->setMonomerInfo(new AtomPDBResidueInfo("Ca",3));
+    TEST_ASSERT((m->getAtomWithIdx(1)->getMonomerInfo()));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getMonomerInfo()->getName()=="Ca");
+    TEST_ASSERT(static_cast<const AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getSerialNumber()==3);
+
+    RWMol *m2 = new RWMol(*m);
+    delete m;
+    
+    TEST_ASSERT((m2->getAtomWithIdx(0)->getMonomerInfo()));
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getMonomerInfo()->getName()=="m1");
+    TEST_ASSERT((m2->getAtomWithIdx(1)->getMonomerInfo()));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->getMonomerInfo()->getName()=="Ca");
+    TEST_ASSERT(static_cast<const AtomPDBResidueInfo *>(m2->getAtomWithIdx(1)->getMonomerInfo())->getSerialNumber()==3);
+    TEST_ASSERT(!(m2->getAtomWithIdx(2)->getMonomerInfo()));
+    TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 
 // -------------------------------------------------------------------
 int main()
@@ -1014,6 +1059,7 @@ int main()
   testIssue267();
   testIssue284();
   testClearMol();
-  
+  testAtomResidues();
+
   return 0;
 }

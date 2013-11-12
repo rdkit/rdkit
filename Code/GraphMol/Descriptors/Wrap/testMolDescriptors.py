@@ -2,8 +2,10 @@
 # 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Chem import AllChem
 from rdkit import DataStructs
 from rdkit import RDConfig
+from rdkit.Geometry import rdGeometry as rdG
 import unittest
 
 def feq(v1, v2, tol=1.e-4) :
@@ -203,9 +205,6 @@ class TestCase(unittest.TestCase) :
     ls = ['']*mol.GetNumAtoms()
     contribs = rdMD._CalcCrippenContribs(mol,force=True,atomTypeLabels=ls)
     self.failUnlessEqual(ls,['N11', 'C18', 'C18', 'C18', 'C18', 'C21', 'C10', 'O2'])
-
-
-    
 
   def testMolWt(self):
     mol = Chem.MolFromSmiles("C");

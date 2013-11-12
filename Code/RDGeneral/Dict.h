@@ -32,14 +32,12 @@ namespace RDKit{
   //!
   class Dict {
   public:
-    typedef std::map<const std::string, boost::any> DataType;
+    typedef std::map<std::string, boost::any> DataType;
     Dict(){
       _data.clear();
     };
 
-    Dict(const Dict &other) {
-      _data = other._data;
-    };
+    Dict(const Dict &other) : _data(other._data) {};
 
     Dict &operator=(const Dict &other) {
       _data = other._data;

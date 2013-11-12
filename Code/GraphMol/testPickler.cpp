@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -918,6 +919,41 @@ void testIssue285(){
 }
 
 
+void testAtomResidues()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing residue information handling on atoms" << std::endl;
+  {
+    RWMol *m=new RWMol();
+
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addAtom(new Atom(6));
+    m->addBond(1,2,Bond::SINGLE);
+    m->addAtom(new Atom(6));
+    m->addBond(2,3,Bond::SINGLE);
+
+    m->getAtomWithIdx(0)->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER,"m1"));
+    m->getAtomWithIdx(1)->setMonomerInfo(new AtomPDBResidueInfo("Ca",3));
+    MolOps::sanitizeMol(*m);
+
+    std::string pkl;
+    MolPickler::pickleMol(*m,pkl);
+    delete m;
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT((m2->getAtomWithIdx(0)->getMonomerInfo()));
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getMonomerInfo()->getName()=="m1");
+    TEST_ASSERT((m2->getAtomWithIdx(1)->getMonomerInfo()));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->getMonomerInfo()->getName()=="Ca");
+    TEST_ASSERT(static_cast<const AtomPDBResidueInfo *>(m2->getAtomWithIdx(1)->getMonomerInfo())->getSerialNumber()==3);
+    TEST_ASSERT(!(m2->getAtomWithIdx(2)->getMonomerInfo()));
+    TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong=false;
@@ -946,7 +982,7 @@ int main(int argc, char *argv[]) {
   testIssue3496759();
   testIssue280();
   testIssue285();
-  
+  testAtomResidues();
   return 0;
 
 }

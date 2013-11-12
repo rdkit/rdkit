@@ -1,6 +1,6 @@
-#line 2 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 2 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
-#line 4 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 4 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -54,7 +54,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -84,6 +83,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -158,7 +159,15 @@ typedef void* yyscan_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -168,11 +177,6 @@ typedef void* yyscan_t;
 #ifndef YY_TYPEDEF_YY_BUFFER_STATE
 #define YY_TYPEDEF_YY_BUFFER_STATE
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
-#endif
-
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
 #endif
 
 #define EOB_ACT_CONTINUE_SCAN 0
@@ -197,6 +201,11 @@ typedef size_t yy_size_t;
 
 #define unput(c) yyunput( c, yyg->yytext_ptr , yyscanner )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -214,7 +223,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -293,7 +302,7 @@ static void yysmiles__init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscan
 
 YY_BUFFER_STATE yysmiles__scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
 YY_BUFFER_STATE yysmiles__scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE yysmiles__scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
+YY_BUFFER_STATE yysmiles__scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
 
 void *yysmiles_alloc (yy_size_t ,yyscan_t yyscanner );
 void *yysmiles_realloc (void *,yy_size_t ,yyscan_t yyscanner );
@@ -358,7 +367,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[171] =
+static yyconst flex_int16_t yy_accept[172] =
     {   0,
         0,    0,    0,    0,  139,  137,  136,  124,  133,  128,
       129,  120,  123,  122,  132,  127,  134,  135,    6,  100,
@@ -367,17 +376,18 @@ static yyconst flex_int16_t yy_accept[171] =
       101,  137,  137,  106,  137,  110,  109,   16,  137,  137,
       102,  103,  104,  137,  105,  137,   87,   20,   69,  137,
        35,  137,  131,  116,  137,    0,    0,    0,    0,    0,
-        0,  108,  107,   84,   43,   13,   90,   15,   30,   80,
-       74,   51,    9,   78,   92,   17,   44,   53,   93,   91,
-       23,   21,   50,   26,   61,   63,   94,   58,   24,   95,
+        0,  108,  107,  126,   84,   43,   13,   90,   15,   30,
+       80,   74,   51,    9,   78,   92,   17,   44,   53,   93,
+       91,   23,   21,   50,   26,   61,   63,   94,   58,   24,
 
-       82,   28,   59,   29,    7,   67,   75,   62,   45,   72,
-       32,   52,    8,   98,   66,   96,   12,   22,   38,   11,
-       37,   55,   10,   25,   97,   88,   71,   86,   77,   42,
-       56,   79,   54,   73,   89,   83,   33,   70,   99,   41,
-       81,   40,   47,   18,   31,   14,   57,   46,   34,   68,
-       60,   39,   48,   85,   19,   76,   64,   49,   65,   27,
-       36,  118,  117,  119,    2,    4,    5,    3,    1,    0
+       95,   82,   28,   59,   29,    7,   67,   75,   62,   45,
+       72,   32,   52,    8,   98,   66,   96,   12,   22,   38,
+       11,   37,   55,   10,   25,   97,   88,   71,   86,   77,
+       42,   56,   79,   54,   73,   89,   83,   33,   70,   99,
+       41,   81,   40,   47,   18,   31,   14,   57,   46,   34,
+       68,   60,   39,   48,   85,   19,   76,   64,   49,   65,
+       27,   36,  118,  117,  119,    2,    4,    5,    3,    1,
+        0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -423,11 +433,11 @@ static yyconst flex_int32_t yy_meta[66] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int16_t yy_base[171] =
+static yyconst flex_int16_t yy_base[172] =
     {   0,
-        0,    0,   51,    0,  161,  237,  237,  237,  237,  237,
-      237,  237,  237,  237,  237,  237,  237,  237,   80,   98,
-      101,  237,  237,  237,  237,  237,  237,  237,  237,  237,
+        0,    0,   51,    0,  168,  237,  237,  237,  237,  237,
+      237,  237,  237,  237,  237,  237,  237,  237,   80,  101,
+      103,  237,  237,  237,  237,  237,  237,  237,  237,  113,
       237,  237,  237,  237,  237,  237,  237,  237,   69,   51,
        88,   88,   46,   79,   54,   68,   85,   81,  102,  102,
       118,   79,  124,  143,  152,  168,  237,  237,  237,   85,
@@ -442,29 +452,31 @@ static yyconst flex_int16_t yy_base[171] =
       237,  237,  237,  237,  237,  237,  237,  237,  237,  237,
       237,  237,  237,  237,  237,  237,  237,  237,  237,  237,
       237,  237,  237,  237,  237,  237,  237,  237,  237,  237,
-      237,  237,  237,  237,  237,  237,  237,  237,  237,  237
+      237,  237,  237,  237,  237,  237,  237,  237,  237,  237,
+      237
     } ;
 
-static yyconst flex_int16_t yy_def[171] =
+static yyconst flex_int16_t yy_def[172] =
     {   0,
-      170,    1,    1,    3,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
+      171,    1,    1,    3,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
 
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,    0
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+        0
     } ;
 
 static yyconst flex_int16_t yy_nxt[303] =
@@ -475,34 +487,34 @@ static yyconst flex_int16_t yy_nxt[303] =
        27,    6,    6,   28,    6,    6,    6,    6,    6,    6,
         6,   29,   30,    6,    6,   31,   32,    6,    6,    6,
         6,    6,    6,    6,    6,    6,   33,   34,   35,    6,
-       36,    6,    6,    6,   37,   38,  169,   39,   40,   41,
+       36,    6,    6,    6,   37,   38,  170,   39,   40,   41,
        42,   43,   44,   45,   46,   47,   48,   49,   50,   51,
        52,   53,   66,   54,   55,   56,   57,   58,   59,   60,
-       61,   62,  168,  167,   63,   82,   67,   68,  102,   83,
+       61,   62,  169,  168,   63,   83,   67,   68,  103,   84,
 
-      166,  103,  104,   84,   85,   96,   97,  165,   98,   69,
-       72,   64,   65,   70,   71,   74,  105,  106,  107,   75,
-      164,  159,  162,   76,   77,  108,  163,   99,   78,   79,
-       80,   81,   86,  158,  100,   87,   88,   89,  101,  127,
-      111,  109,   73,   90,  110,   91,  112,   92,   93,  116,
-       94,   95,  117,  160,  113,   73,  161,   72,  118,  119,
-      170,  114,  120,  121,  115,  122,  123,  170,  128,  129,
-      124,  130,  170,  170,  170,  125,  126,  170,  170,  131,
-      170,  132,  170,  133,  170,  134,  135,  136,  137,  170,
-      170,  138,  139,  170,  140,  170,  170,  143,  144,  141,
+      167,  104,  105,   85,   86,   97,   98,  166,   99,   69,
+       72,   64,   65,   70,   71,   75,  106,  107,  108,   76,
+      165,  160,  163,   77,   78,  109,  164,  100,   79,   80,
+       81,   82,   87,  159,  101,   88,   89,   90,  102,  128,
+      112,  110,   73,   91,  111,   92,  113,   93,   94,  117,
+       95,   96,  118,  161,  114,   74,  162,   73,  119,  120,
+       72,  115,  121,  122,  116,  123,  124,  171,  129,  130,
+      125,  131,  171,  171,  171,  126,  127,  171,  171,  132,
+      171,  133,  171,  134,  171,  135,  136,  137,  138,  171,
+      171,  139,  140,  171,  141,  171,  171,  144,  145,  142,
 
-      145,  170,  170,   66,  146,  142,  170,  147,  148,  170,
-      170,  149,  150,  151,  152,  170,  153,   67,   68,  154,
-      155,  170,  156,  157,  170,  170,  170,  170,  170,  170,
-       69,  170,  170,  170,   70,   71,    5,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
+      146,  171,  171,   66,  147,  143,  171,  148,  149,  171,
+      171,  150,  151,  152,  153,  171,  154,   67,   68,  155,
+      156,  171,  157,  158,  171,  171,  171,  171,  171,  171,
+       69,  171,  171,  171,   70,   71,    5,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
 
-      170,  170
+      171,  171
     } ;
 
 static yyconst flex_int16_t yy_chk[303] =
@@ -523,8 +535,8 @@ static yyconst flex_int16_t yy_chk[303] =
        65,   61,   64,   39,   39,   46,   64,   44,   39,   39,
        39,   39,   41,   60,   44,   41,   41,   41,   44,   52,
        48,   47,   41,   41,   47,   41,   49,   41,   41,   50,
-       41,   42,   50,   62,   49,   21,   62,   20,   50,   50,
-        5,   49,   51,   51,   49,   51,   51,    0,   53,   53,
+       41,   42,   50,   62,   49,   30,   62,   21,   50,   50,
+       20,   49,   51,   51,   49,   51,   51,    5,   53,   53,
        51,   53,    0,    0,    0,   51,   51,    0,    0,   53,
         0,   53,    0,   53,    0,   53,   53,   54,   54,    0,
         0,   54,   54,    0,   54,    0,    0,   55,   55,   54,
@@ -532,15 +544,15 @@ static yyconst flex_int16_t yy_chk[303] =
        55,    0,    0,   66,   55,   54,    0,   55,   55,    0,
         0,   55,   56,   56,   56,    0,   56,   66,   66,   56,
        56,    0,   56,   56,    0,    0,    0,    0,    0,    0,
-       66,    0,    0,    0,   66,   66,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
-      170,  170,  170,  170,  170,  170,  170,  170,  170,  170,
+       66,    0,    0,    0,   66,   66,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
+      171,  171,  171,  171,  171,  171,  171,  171,  171,  171,
 
-      170,  170
+      171,  171
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -590,7 +602,7 @@ void smiles_lexer_error(const char *msg) {
 }
 
 
-#line 594 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 606 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -620,8 +632,8 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    yy_size_t yy_n_chars;
-    yy_size_t yyleng_r;
+    int yy_n_chars;
+    int yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
     int yy_start;
@@ -674,7 +686,7 @@ FILE *yysmiles_get_out (yyscan_t yyscanner );
 
 void yysmiles_set_out  (FILE * out_str ,yyscan_t yyscanner );
 
-yy_size_t yysmiles_get_leng (yyscan_t yyscanner );
+int yysmiles_get_leng (yyscan_t yyscanner );
 
 char *yysmiles_get_text (yyscan_t yyscanner );
 
@@ -720,7 +732,12 @@ static int input (yyscan_t yyscanner );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -728,7 +745,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -739,7 +756,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -827,7 +844,7 @@ YY_DECL
 #line 46 "smiles.ll"
 
 
-#line 831 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 848 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
     yylval = yylval_param;
 
@@ -882,7 +899,7 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 171 )
+				if ( yy_current_state >= 172 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1380,7 +1397,7 @@ YY_RULE_SETUP
 #line 271 "smiles.ll"
 ECHO;
 	YY_BREAK
-#line 1384 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 1401 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1565,7 +1582,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1579,7 +1596,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1610,7 +1627,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			yyg->yy_n_chars, num_to_read );
+			yyg->yy_n_chars, (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
 		}
@@ -1672,7 +1689,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 171 )
+			if ( yy_current_state >= 172 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1701,11 +1718,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 171 )
+		if ( yy_current_state >= 172 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 170);
+	yy_is_jam = (yy_current_state == 171);
 
 	return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1723,7 +1740,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = yyg->yy_n_chars + 2;
+		register int number_to_move = yyg->yy_n_chars + 2;
 		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
 		register char *source =
@@ -1773,7 +1790,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
+			int offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -1797,7 +1814,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yysmiles_wrap(yyscanner ) )
-						return 0;
+						return EOF;
 
 					if ( ! yyg->yy_did_buffer_switch_on_eof )
 						YY_NEW_FILE;
@@ -2057,7 +2074,7 @@ void yysmiles_pop_buffer_state (yyscan_t yyscanner)
  */
 static void yysmiles_ensure_buffer_stack (yyscan_t yyscanner)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	if (!yyg->yy_buffer_stack) {
@@ -2150,16 +2167,17 @@ YY_BUFFER_STATE yysmiles__scan_string (yyconst char * yystr , yyscan_t yyscanner
 
 /** Setup the input buffer state to scan the given bytes. The next call to yysmiles_lex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yysmiles__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE yysmiles__scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -2269,7 +2287,7 @@ FILE *yysmiles_get_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-yy_size_t yysmiles_get_leng  (yyscan_t yyscanner)
+int yysmiles_get_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;

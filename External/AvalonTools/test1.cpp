@@ -248,11 +248,27 @@ void testBadMolfile() {
     CHECK_INVARIANT(oMolb=="",oMolb);
     
   }
+}
+
+void testSmilesSegFault() {
+  BOOST_LOG(rdInfoLog) << "testing a canonical smiles case that led to seg faults " << std::endl;
+  // some tests around dealing with bad mol blocks
+  {
+    std::string inSmi(1024,'C');
+    std::string smi=AvalonTools::getCanonSmiles(inSmi,true);
+    TEST_ASSERT(smi==inSmi);
+  }
+  {
+    std::string inSmi(1534,'C');
+    std::string smi=AvalonTools::getCanonSmiles(inSmi,true);
+    TEST_ASSERT(smi==inSmi);
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
+#if 1
   test1();
   test2();
   test3();
@@ -261,6 +277,8 @@ int main(int argc,char *argv[]){
   testSubstructFps();
   testStruChk();
   testBadMolfile();
+#endif  
+  testSmilesSegFault();
 
   return 0;
 }

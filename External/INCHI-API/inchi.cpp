@@ -1596,9 +1596,7 @@ namespace RDKit {
 
       if (sanitize) {
         if (removeHs) {
-          ROMol* tmp = MolOps::removeHs(*m, false, false);
-          delete m;
-          m = static_cast<RWMol *>(tmp);
+          MolOps::removeHs(*m, false, false);
         } else {
           MolOps::sanitizeMol(*m);
         }

@@ -1,7 +1,7 @@
 rdkit_python_extension(rdMolAlign rdMolAlign.cpp
                        DEST Chem
                        LINK_LIBRARIES
-MolAlign MolTransforms
+MolAlign MolTransforms ForceFieldHelpers ForceField
 EigenSolvers Alignment Optimizer SubstructMatch
 GraphMol RDGeneral RDGeometryLib DataStructs
                        RDBoost)

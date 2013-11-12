@@ -124,7 +124,7 @@ namespace Queries {
 
     //! \brief calls our \c dataFunc (if it's set) on \c what and returns
     //! the result, otherwise returns \c what
-    MatchFuncArgType TypeConvert(MatchFuncArgType what,Int2Type<false> d) const{
+    MatchFuncArgType TypeConvert(MatchFuncArgType what,Int2Type<false> /*d*/) const{
       MatchFuncArgType mfArg;
       if( this->d_dataFunc != NULL ){
 	mfArg = this->d_dataFunc(what);
@@ -134,7 +134,7 @@ namespace Queries {
       return mfArg;
     }
     //! calls our \c dataFunc (which must be set) on \c what and returns the result
-    MatchFuncArgType TypeConvert(DataFuncArgType what,Int2Type<true> d) const{
+    MatchFuncArgType TypeConvert(DataFuncArgType what,Int2Type<true> /*d*/) const{
       PRECONDITION(this->d_dataFunc,"no data function");
       MatchFuncArgType mfArg;
       mfArg = this->d_dataFunc(what);

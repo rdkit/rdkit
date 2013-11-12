@@ -1,4 +1,3 @@
-
 Getting Started with the RDKit in Python
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -232,10 +231,10 @@ cyclobutane
      RDKit          3D
 <BLANKLINE>
   4  4  0  0  0  0  0  0  0  0999 V2000
-   -0.7931    0.5732   -0.2708 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.3802   -0.9196   -0.2340 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7838   -0.5392    0.6548 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.3894    0.8856    0.6202 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7883    0.5560   -0.2718 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4153   -0.9091   -0.1911 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7883   -0.5560    0.6568 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4153    0.9091    0.5762 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -273,7 +272,7 @@ An SDWriter can also be initialized using a file-like object:
 mol-295
      RDKit          3D
 <BLANKLINE>
- 20 22  0  0  0  0  0  0  0  0999 V2000
+ 20 22  0  0  1  0  0  0  0  0999 V2000
     2.3200    0.0800   -0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1.8400   -1.2200    0.1200 C   0  0  0  0  0  0  0  0  0  0  0  0
 ...
@@ -501,7 +500,6 @@ Note that the conformations that result from this procedure tend to be fairly ug
 They should be cleaned up using a force field.
 This can be done within the RDKit using its implementation of the Universal Force Field (UFF). [#rappe]_
 
-
 The full process of embedding and optimizing a molecule is easier than all the above verbiage makes it sound:
 
 >>> m = Chem.MolFromSmiles('C1CCC1OC')
@@ -510,6 +508,20 @@ The full process of embedding and optimizing a molecule is easier than all the a
 0
 >>> AllChem.UFFOptimizeMolecule(m2)
 0
+
+The RDKit also has an implementation of the MMFF94 force field available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_
+Please note that the MMFF atom typing code uses its own aromaticity model,
+so the aromaticity flags of the molecule will be modified after calling
+MMFF-related methods.
+
+>>> m = Chem.MolFromSmiles('C1CCC1OC')
+>>> m2=Chem.AddHs(m)
+>>> AllChem.EmbedMolecule(m2)
+0
+>>> AllChem.MMFFOptimizeMolecule(m2)
+0
+
+
 
 *Disclaimer/Warning*: Conformation generation is a difficult and subtle task.
 The 2D->3D conversion provided within the RDKit is not intended to be a replacement for a “real” conformational analysis tool; it merely provides quick 3D structures for cases when they are required.
@@ -1197,6 +1209,72 @@ get the molecules themselves as follows:
 >>> picks = [ms[x] for x in pickIndices]
 
 
+Generating Similarity Maps Using Fingerprints
+=============================================
+
+Similarity maps are a way to visualize the atomic contributions to
+the similarity between a molecule and a reference molecule. The
+methodology is described in Ref. [#riniker]_ .
+They are in the :api:`rdkit.Chem.Draw.SimilarityMaps` module :
+
+Start by creating two molecules:
+
+>>> from rdkit import Chem
+>>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+>>> refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
+
+The SimilarityMaps module supports three kind of fingerprints:
+atom pairs, topological torsions and Morgan fingerprints.
+
+>>> from rdkit.Chem import Draw
+>>> from rdkit.Chem.Draw import SimilarityMaps
+>>> fp = SimilarityMaps.GetAPFingerprint(mol, fpType='normal')
+>>> fp = SimilarityMaps.GetTTFingerprint(mol, fpType='normal')
+>>> fp = SimilarityMaps.GetMorganFingerprint(mol, fpType='bv')
+
+The types of atom pairs and torsions are normal (default), hashed and bit vector (bv).
+The types of the Morgan fingerprint are bit vector (bv, default) and count vector (count).
+
+The function generating a similarity map for two fingerprints requires the
+specification of the fingerprint function and optionally the similarity metric.
+The default for the latter is the Dice similarity. Using all the default arguments
+of the Morgan fingerprint function, the similarity map can be generated like this:
+
+>>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+
+Producing this image:
+
+.. image:: images/similarity_map_fp1.png
+
+For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well as a different 
+similarity metric (e.g. Tanimoto), the call becomes:
+
+>>> from rdkit import DataStructs
+>>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
+
+Producing this image:
+
+.. image:: images/similarity_map_fp2.png
+
+The convenience function GetSimilarityMapForFingerprint involves the normalisation
+of the atomic weights such that the maximum absolute weight is 1. Therefore, the 
+function outputs the maximum weight that was found when creating the map.
+
+>>> print maxweight
+0.0574712643678
+
+If one does not want the normalisation step, the map can be created like:
+
+>>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
+>>> print ["%.2f " % w for w in weights]
+['0.05 ', ...
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
+
+Producing this image:
+
+.. image:: images/similarity_map_fp3.png
+
+
 Descriptor Calculation
 **********************
 
@@ -1220,6 +1298,34 @@ Partial charges are handled a bit differently:
 >>> float(m.GetAtomWithIdx(0).GetProp('_GasteigerCharge'))
 -0.047...
 
+
+Visualization of Descriptors
+============================
+
+Similarity maps can be used to visualize descriptors that can be divided into 
+atomic contributions. 
+
+The Gasteiger partial charges can be visualized as (using a different color scheme):
+
+>>> from rdkit.Chem.Draw import SimilarityMaps
+>>> mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+>>> AllChem.ComputeGasteigerCharges(mol)
+>>> contribs = [float(mol.GetAtomWithIdx(i).GetProp('_GasteigerCharge')) for i in range(mol.GetNumAtoms())]
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, colorMap='jet', contourLines=10)
+
+Producing this image:
+
+.. image:: images/similarity_map_charges.png
+
+Or for the Crippen contributions to logP:
+
+>>> from rdkit.Chem import rdMolDescriptors
+>>> contribs = rdMolDescriptors._CalcCrippenContribs(mol)
+>>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol,[x for x,y in contribs], colorMap='jet', contourLines=10)
+
+Producing this image:
+
+.. image:: images/similarity_map_crippen.png
 
 Chemical Reactions
 ******************
@@ -1444,12 +1550,77 @@ The result is a generator object:
 That returns molecules on request:
 
 >>> prods = [ms.next() for x in range(10)]
+>>> prods[0]
+<rdkit.Chem.rdchem.Mol object at 0x...>
+
+The molecules have not been sanitized, so it's a good idea to at least update the valences before continuing:
+
+>>> for prod in prods:
+...     prod.UpdatePropertyCache(strict=False)
+...     
 >>> Chem.MolToSmiles(prods[0],True)
 'O=[N+]([O-])c1ccc(C2CCCO2)cc1'
 >>> Chem.MolToSmiles(prods[1],True)
 'c1ccc(C2CCCO2)cc1'
 >>> Chem.MolToSmiles(prods[2],True)
 'NS(=O)(=O)c1ccc(C2CCCO2)cc1'
+
+Other fragmentation approaches
+==============================
+
+In addition to the methods described above, the RDKit provide a very
+flexible generic function for fragmenting molecules along
+user-specified bonds.
+
+Here's a quick demonstration of using that to break all bonds between
+atoms in rings and atoms not in rings. We start by finding all the
+atom pairs:
+
+>>> m = Chem.MolFromSmiles('CC1CC(O)C1CCC1CC1')
+>>> bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+>>> bis
+((0, 1), (4, 3), (6, 5), (7, 8))
+
+then we get the corresponding bond indices:
+
+>>> bs = [m.GetBondBetweenAtoms(x,y).GetIdx() for x,y in bis]
+>>> bs
+[0, 3, 5, 7]
+
+then we use those bond indices as input to the fragmentation function:
+
+>>> nm = Chem.FragmentOnBonds(m,bs)
+
+the output is a molecule that has dummy atoms marking the places where
+bonds were broken:
+
+>>> Chem.MolToSmiles(nm,True)
+'[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1'
+
+By default the attachment points are labelled (using isotopes) with
+the index of the atom that was removed. We can also provide our own set of
+atom labels in the form of pairs of unsigned integers. The first value
+in each pair is used as the label for the dummy that replaces the
+bond's begin atom, the second value in each pair is for the dummy that
+replaces the bond's end atom. Here's an example, repeating the
+analysis above and marking the positions where the non-ring atoms were
+with the label 10 and marking the positions where the ring atoms were
+with label 1:
+
+>>> bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+>>> bs = []
+>>> labels=[]
+>>> for bi in bis:
+...    b = m.GetBondBetweenAtoms(bi[0],bi[1])
+...    if b.GetBeginAtomIdx()==bi[0]:
+...        labels.append((10,1))
+...    else:
+...        labels.append((1,10))
+...    bs.append(b.GetIdx())
+>>> nm = Chem.FragmentOnBonds(m,bs,dummyLabels=labels)
+>>> Chem.MolToSmiles(nm,True)
+'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]'
+
 
 
 Chemical Features and Pharmacophores
@@ -2055,6 +2226,14 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#degen] Degen, J.; Wegscheid-Gerlach, C.; Zaliani, A; Rarey, M. "On the Art of Compiling and Using ‘Drug-Like’ Chemical Fragment Spaces." *ChemMedChem* **3**:1503–7 (2008).
 .. [#gobbi] Gobbi, A. & Poppinger, D. "Genetic optimization of combinatorial libraries." *Biotechnology and Bioengineering* **61**:47-54 (1998).
 .. [#rxnsmarts] A more detailed description of reaction smarts, as defined by the rdkit, is in the :doc:`RDKit_Book`.
+.. [#mmff1] Halgren, T. A. "Merck molecular force field. I. Basis, form, scope, parameterization, and performance of MMFF94." *J. Comp. Chem.* **17**:490–19 (1996).
+.. [#mmff2] Halgren, T. A. "Merck molecular force field. II. MMFF94 van der Waals and electrostatic parameters for intermolecular interactions." *J. Comp. Chem.* **17**:520–52 (1996).
+.. [#mmff3] Halgren, T. A. "Merck molecular force field. III. Molecular geometries and vibrational frequencies for MMFF94." *J. Comp. Chem.* **17**:553–86 (1996).
+.. [#mmff4] Halgren, T. A. & Nachbar, R. B. "Merck molecular force field. IV. conformational energies and geometries for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996).
+.. [#mmffs] Halgren, T. A. "MMFF VI. MMFF94s option for energy minimization studies." *J. Comp. Chem.* **20**:720–9 (1999).
+.. [#riniker] Riniker, S.; Landrum, G. A. "Similarity Maps - A Visualization Strategy for Molecular Fingerprints and Machine-Learning Methods" *J. Cheminf.* **5**:43 (2013).
+
+
 
 
 License

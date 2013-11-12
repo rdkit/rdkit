@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -104,7 +104,9 @@ namespace RDKit {
           subMol->addConformer(conf,false);
         }
       }
-      
+      // clear computed properties
+      subMol->clearComputedProps(true);
+
       return subMol;
     }
 

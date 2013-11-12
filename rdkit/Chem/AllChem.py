@@ -34,7 +34,9 @@ from rdkit.Chem.rdMolDescriptors import *
 from rdkit import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
-import numpy
+import numpy, os
+from rdkit.RDLogger import logger
+logger = logger()
 
 def TransformMol(mol,tform,confId=-1,keepConfs=False):
   """  Applies the transformation (usually a 4x4 double matrix) to a molecule
@@ -63,7 +65,7 @@ def ComputeMolVolume(mol,confId=-1,gridSpacing=0.2,boxMargin=2.0):
   based on a grid-encoding of the molecular shape.
 
   """
-  mol = rdchem.Mol(mol.ToBinary())
+  mol = rdchem.Mol(mol)
   conf = mol.GetConformer(confId)
   CanonicalizeConformer(conf)
   box = ComputeConfBox(conf)
@@ -175,8 +177,7 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
   
   """
   if not maps:
-    query = RemoveHs(probe)
-    matches = ref.GetSubstructMatches(query,uniquify=False)
+    matches = ref.GetSubstructMatches(probe,uniquify=False)
     if not matches:
       raise ValueError,'mol %s does not match mol %s'%(ref.GetProp('_Name'),
                                                        probe.GetProp('_Name'))
@@ -334,6 +335,73 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
     rms = AlignMol(mol,core,atomMap=algMap)
   mol.SetProp('EmbedRMS',str(rms))
   return mol
+
+def AssignBondOrdersFromTemplate(refmol, mol):
+  """ assigns bond orders to a molecule based on the 
+      bond orders in a template molecule
+
+  Arguments
+    - refmol: the template molecule
+    - mol: the molecule to assign bond orders to
+
+    An example, start by generating a template from a SMILES
+    and read in the PDB structure of the molecule
+    >>> from rdkit.Chem import AllChem
+    >>> template = AllChem.MolFromSmiles("CN1C(=NC(C1=O)(c2ccccc2)c3ccccc3)N")
+    >>> mol = AllChem.MolFromPDBFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4DJU_lig.pdb'))
+    >>> print len([1 for b in template.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    8
+    >>> print len([1 for b in mol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    22
+
+    Now assign the bond orders based on the template molecule
+    >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
+    >>> print len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    8
+
+    Note that the template molecule should have no explicit hydrogens 
+    else the algorithm will fail.
+
+  """
+  refmol2 = rdchem.Mol(refmol)
+  mol2 = rdchem.Mol(mol)
+  # do the molecules match already?
+  matching = mol2.GetSubstructMatch(refmol2)
+  if not matching: # no, they don't match
+    # check if bonds of mol are SINGLE
+    for b in mol2.GetBonds():
+      if b.GetBondType() != BondType.SINGLE:
+        b.SetBondType(BondType.SINGLE)
+        b.SetIsAromatic(False)
+    # set the bonds of mol to SINGLE
+    for b in refmol2.GetBonds():
+      b.SetBondType(BondType.SINGLE)
+      b.SetIsAromatic(False)
+    matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
+    # do the molecules match now?
+    if matching:
+      if len(matching) > 1:
+        logger.warning("More than one matching pattern found - picking one")
+      matching = matching[0]
+      # apply matching: set bond properties
+      for b in refmol.GetBonds():
+        atom1 = matching[b.GetBeginAtomIdx()]
+        atom2 = matching[b.GetEndAtomIdx()]
+        b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
+        b2.SetBondType(b.GetBondType())
+        b2.SetIsAromatic(b.GetIsAromatic())
+      # apply matching: set atom properties
+      for a in refmol.GetAtoms():
+        a2 = mol2.GetAtomWithIdx(matching[a.GetIdx()])
+        a2.SetHybridization(a.GetHybridization())
+        a2.SetIsAromatic(a.GetIsAromatic())
+        a2.SetNumExplicitHs(a.GetNumExplicitHs())
+      SanitizeMol(mol2)
+      if hasattr(mol2, '__sssAtoms'):
+        mol2.__sssAtoms = None # we don't want all bonds highlighted
+    else:
+      raise ValueError("No matching found")
+  return mol2
 
 
 #------------------------------------

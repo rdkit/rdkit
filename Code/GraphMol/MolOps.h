@@ -138,7 +138,9 @@ namespace RDKit{
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
      */
     ROMol *addHs(const ROMol &mol,bool explicitOnly=false,bool addCoords=false);
-
+    //! \overload
+    // modifies the molecule in place
+    void addHs(RWMol &mol,bool explicitOnly=false,bool addCoords=false);
 
     //! returns a copy of a molecule with hydrogens removed
     /*!
@@ -163,6 +165,10 @@ namespace RDKit{
     */
     ROMol *removeHs(const ROMol &mol,bool implicitOnly=false,
 			   bool updateExplicitCount=false,bool sanitize=true);
+    //! \overload
+    // modifies the molecule in place
+    void removeHs(RWMol &mol,bool implicitOnly=false,
+                  bool updateExplicitCount=false,bool sanitize=true);
 
     //! returns a copy of a molecule with hydrogens removed and added as queries
     //!  to the heavy atoms to which they are bound.
@@ -182,10 +188,30 @@ namespace RDKit{
         - Hydrogens which aren't connected to a heavy atom will not be
           removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
           all atoms removed.
-	      - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+        - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
 	
     */
     ROMol *mergeQueryHs(const ROMol &mol);
+    //! \overload
+    // modifies the molecule in place
+    void mergeQueryHs(RWMol &mol);
+
+    //! returns a copy of a molecule with the atoms renumbered
+    /*!
+      
+      \param mol the molecule to work with
+      \param newOrder the new ordering of the atoms (should be numAtoms long)
+         for example: if newOrder is [3,2,0,1], then atom 3 in the original 
+         molecule will be atom 0 in the new one
+     
+      \return the new molecule 
+
+      <b>Notes:</b>
+        - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+	
+    */
+    ROMol *renumberAtoms(const ROMol &mol,const std::vector<unsigned int> &newOrder);
+    
     //@}
 
     //! \name Sanitization

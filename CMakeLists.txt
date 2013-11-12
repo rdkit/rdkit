@@ -28,6 +28,7 @@ option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
 option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" ON )
 option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
+option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
@@ -46,8 +47,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
  
 #------- 
 # Config variables:
-set(RDKit_Year "2013")
-set(RDKit_Month "09")
+set(RDKit_Year "2014")
+set(RDKit_Month "03")
 set(RDKit_Revision "1pre")
 set(RDKit_ABI "1")
 
@@ -95,7 +96,7 @@ install(FILES
 
 # extra boost versions
 if(MSVC)
-  SET(Boost_ADDITIONAL_VERSIONS "1.48""1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
+  SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

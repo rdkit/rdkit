@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,10 +15,12 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/MonomerInfo.h>
 #include <RDGeneral/types.h>
 #include <Geometry/point.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <RDBoost/Wrap.h>
 
 #include "seqs.hpp"
 #include <algorithm>
@@ -124,6 +126,21 @@ namespace RDKit{
     return res;
   }
 
+  void SetAtomMonomerInfo(Atom *atom,const AtomMonomerInfo *info){
+    atom->setMonomerInfo(info->copy());
+  }
+
+  AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom){
+    return atom->getMonomerInfo();
+  }
+  AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom){
+    AtomMonomerInfo *res=atom->getMonomerInfo();
+    if(!res) return NULL;
+    if(res->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE){
+      throw_value_error("MonomerInfo is not a PDB Residue");
+    }
+    return (AtomPDBResidueInfo *)res;
+  }
 
 
 
@@ -282,10 +299,24 @@ struct atom_wrapper {
            "Returns a list of the properties set on the Atom.\n\n"
            )
 
+      .def("GetMonomerInfo",
+	   AtomGetMonomerInfo,
+	   python::return_internal_reference<1,
+	   python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns the atom's MonomerInfo object, if there is one.\n\n"
+	   )
+      .def("GetPDBResidueInfo",
+	   AtomGetPDBResidueInfo,
+	   python::return_internal_reference<1,
+	   python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns the atom's MonomerInfo object, if there is one.\n\n"
+	   )
+      .def("SetMonomerInfo", 
+	   SetAtomMonomerInfo,
+	   "Sets the atom's MonomerInfo object.\n\n"
+	   )
       ;
 
-    
-    
     python::enum_<Atom::HybridizationType>("HybridizationType")
       .value("UNSPECIFIED",Atom::UNSPECIFIED)
       .value("SP",Atom::SP)

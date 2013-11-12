@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2013 Greg Landrum, Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -83,7 +83,7 @@ namespace RDKit{
    */
   std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true,
                             int confId=-1,bool kekulize=true);
-  // \brief construct a molecule from an MDL mol file
+  // \brief Writes a molecule to an MDL mol file
   /*! 
    *   \param mol           - the molecule in question
    *   \param fName         - the name of the file to use
@@ -187,6 +187,45 @@ namespace RDKit{
   RWMol *Mol2BlockToMol(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
                         Mol2Type variant=CORINA);
 
+  RWMol *PDBBlockToMol(const char *str, bool sanitize=true,
+                       bool removeHs=true, unsigned int flavor=0);
+
+  RWMol *PDBBlockToMol(const std::string &str, bool sanitize=true,
+                       bool removeHs=true, unsigned int flavor=0);
+  RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize=true,
+                            bool removeHs=true, unsigned int flavor=0);
+  RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize=true,
+                            bool removeHs=true, unsigned int flavor=0);
+  RWMol *PDBFileToMol(const std::string &fname, bool sanitize=true,
+                      bool removeHs=true, unsigned int flavor=0);
+
+  // \brief generates an PDB block for a molecule
+  /*! 
+   *   \param mol           - the molecule in question
+   *   \param confId        - selects the conformer to be used
+   *   \param flavor        - controls what gets written:
+   *         flavor & 1 : Write MODEL/ENDMDL lines around each record
+   *         flavor & 2 : Don't write any CONECT records
+   *         flavor & 4 : Write CONECT records in both directions
+   *         flavor & 8 : Don't use multiple CONECTs to encode bond order
+   *         flavor & 16 : Write MASTER record
+   *         flavor & 32 : Write TER record
+   */
+  std::string MolToPDBBlock(const ROMol &mol, int confId=-1, unsigned int flavor=0);
+  // \brief Writes a molecule to an MDL mol file
+  /*! 
+   *   \param mol           - the molecule in question
+   *   \param fName         - the name of the file to use
+   *   \param confId        - selects the conformer to be used
+   *   \param flavor        - controls what gets written:
+   *         flavor & 1 : Write MODEL/ENDMDL lines around each record
+   *         flavor & 2 : Don't write any CONECT records
+   *         flavor & 4 : Write CONECT records in both directions
+   *         flavor & 8 : Don't use multiple CONECTs to encode bond order
+   *         flavor & 16 : Write MASTER record
+   *         flavor & 32 : Write TER record
+   */
+  void MolToPDBFile(const ROMol &mol,const std::string &fname, int confId=-1, unsigned int flavor=0);
 }
 
 #endif

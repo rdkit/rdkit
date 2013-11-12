@@ -260,6 +260,62 @@ namespace RDKit{
       SparseIntVect<IndexType> res(*this);
       return res-=other;
     }
+    SparseIntVect<IndexType> &
+    operator*= (int v) {
+      typename StorageType::iterator iter=d_data.begin();
+      while(iter!=d_data.end()){
+        iter->second *= v;
+        ++iter;
+      }
+      return *this;
+    };
+    SparseIntVect<IndexType> &
+    operator* (int v) {
+      SparseIntVect<IndexType> res(*this);
+      return res*=v;
+    };
+    SparseIntVect<IndexType> &
+    operator/= (int v) {
+      typename StorageType::iterator iter=d_data.begin();
+      while(iter!=d_data.end()){
+        iter->second /= v;
+        ++iter;
+      }
+      return *this;
+    };
+    SparseIntVect<IndexType> &
+    operator/ (int v) {
+      SparseIntVect<IndexType> res(*this);
+      return res/=v;
+    };
+    SparseIntVect<IndexType> &
+    operator+= (int v) {
+      typename StorageType::iterator iter=d_data.begin();
+      while(iter!=d_data.end()){
+        iter->second += v;
+        ++iter;
+      }
+      return *this;
+    };
+    SparseIntVect<IndexType> &
+    operator+ (int v) {
+      SparseIntVect<IndexType> res(*this);
+      return res+=v;
+    };
+    SparseIntVect<IndexType> &
+    operator-= (int v) {
+      typename StorageType::iterator iter=d_data.begin();
+      while(iter!=d_data.end()){
+        iter->second -= v;
+        ++iter;
+      }
+      return *this;
+    };
+    SparseIntVect<IndexType> &
+    operator- (int v) {
+      SparseIntVect<IndexType> res(*this);
+      return res-=v;
+    };
 
     bool operator==(const SparseIntVect<IndexType> &v2) const{
       if(d_length!=v2.d_length){

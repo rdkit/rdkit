@@ -52,6 +52,7 @@ void testPass(){
     "Cl/C=C\\Cl",
     "Cl/C=C/Cl",
     "Cl/C=C\\Cl",
+    "Cl/C=C\\\\Cl",
     "C1CC.CC1",
     "C1C(C2CC2).C2CC2C1",
     "[Na+].[Cl-].[NH4+].[Cl-]",
@@ -1143,6 +1144,16 @@ void testIssue159(){
 
   delete mol;
   smi = "C(\\C)=C/O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(refSmi==smi);
+
+  delete mol;
+  smi = "C(\\\\C)=C/O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
 

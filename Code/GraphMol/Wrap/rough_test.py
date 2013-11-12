@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2011  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2013  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -2415,9 +2415,89 @@ CAS<~>
     sdSup.SetData('')
     self.failUnlessEqual(len(sdSup),0)
 
+  def test84PDBBasics(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    m = Chem.MolFromPDBFile(fileN)
+    self.failUnless(m is not None)
+    self.failUnlessEqual(m.GetNumAtoms(),327)
+    self.failUnlessEqual(m.GetNumBonds(),337)
+    self.failUnless(m.GetAtomWithIdx(0).GetPDBResidueInfo())
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetName()," N  ")
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetResidueName(),"THR")
+    self.failUnlessAlmostEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetTempFactor(),13.79,2)
+    m = Chem.MolFromPDBBlock(Chem.MolToPDBBlock(m))
+    self.failUnlessEqual(m.GetNumAtoms(),327)
+    self.failUnlessEqual(m.GetNumBonds(),337)
+    self.failUnless(m.GetAtomWithIdx(0).GetPDBResidueInfo())
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetName()," N  ")
+    self.failUnlessEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetResidueName(),"THR")
+    self.failUnlessAlmostEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetTempFactor(),13.79,2)
+    
+  def test85MolCopying(self):
+    m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
+    m.SetProp('foo','bar')
+    m2 = Chem.Mol(m)
+    self.failUnlessEqual(Chem.MolToSmiles(m,True),Chem.MolToSmiles(m2,True))
+    self.failUnless(m2.HasProp('foo'))
+    self.failUnlessEqual(m2.GetProp('foo'),'bar')    
+    ri = m2.GetRingInfo()
+    self.failUnless(ri)
+    self.failUnlessEqual(ri.NumRings(),1)
+    
+  def test86MolRenumbering(self):
+    import random
+    m = Chem.MolFromSmiles('C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1')
+    cSmi = Chem.MolToSmiles(m,True)
+    for i in range(m.GetNumAtoms()):
+      ans = list(range(m.GetNumAtoms()))
+      random.shuffle(ans)
+      print ans
+      m2 = Chem.RenumberAtoms(m,ans)
+      nSmi = Chem.MolToSmiles(m2,True)
+      self.failUnlessEqual(cSmi,nSmi)
+
+  def test87FragmentOnBonds(self):
+    m = Chem.MolFromSmiles('CC1CC(O)C1CCC1CC1')
+    bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+    bs = []
+    labels=[]
+    for bi in bis:
+        b = m.GetBondBetweenAtoms(bi[0],bi[1])
+        if b.GetBeginAtomIdx()==bi[0]:
+            labels.append((10,1))
+        else:
+            labels.append((1,10))
+        bs.append(b.GetIdx())
+    nm = Chem.FragmentOnBonds(m,bs)
+    frags = Chem.GetMolFrags(nm)
+    self.failUnlessEqual(len(frags),5)
+    self.failUnlessEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    smi = Chem.MolToSmiles(nm,True)
+    self.failUnlessEqual(smi,'[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
+
+    nm = Chem.FragmentOnBonds(m,bs,dummyLabels=labels)
+    frags = Chem.GetMolFrags(nm)
+    self.failUnlessEqual(len(frags),5)
+    self.failUnlessEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    smi = Chem.MolToSmiles(nm,True)
+    self.failUnlessEqual(smi,'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]')
+
+    m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
+    bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))
+    bs = []
+    for bi in bis:
+        b = m.GetBondBetweenAtoms(bi[0],bi[1])
+        bs.append(b.GetIdx())
+    bts = [Chem.BondType.DOUBLE]*len(bs)
+    nm = Chem.FragmentOnBonds(m,bs,bondTypes=bts)
+    frags = Chem.GetMolFrags(nm)
+    self.failUnlessEqual(len(frags),3)
+    smi = Chem.MolToSmiles(nm,True)
+    self.failUnlessEqual(smi,'[2*]=O.[3*]=C(CC)CC(=[6*])C.[5*]=O')
 
 
-
+    
 if __name__ == '__main__':
   unittest.main()
 

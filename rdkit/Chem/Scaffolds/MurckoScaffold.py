@@ -32,7 +32,7 @@ def MakeScaffoldGeneric(mol):
   'CC1(C)CC1'
 
   """
-  res = Chem.Mol(mol.ToBinary())
+  res = Chem.Mol(mol)
   for atom in res.GetAtoms():
     if atom.GetAtomicNum()!=1:
       atom.SetAtomicNum(6)

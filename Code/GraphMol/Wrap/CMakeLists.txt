@@ -1,6 +1,6 @@
 rdkit_python_extension(rdchem 
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
-                       Conformer.cpp RingInfo.cpp EditableMol.cpp 
+                       Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
                        DEST Chem 
                        LINK_LIBRARIES 
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
@@ -18,13 +18,15 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
-                       TDTWriter.cpp CompressedSDMolSupplier.cpp )
+                       TDTWriter.cpp CompressedSDMolSupplier.cpp
+                       PDBWriter.cpp )
 else(RDK_BUILD_COMPRESSED_SUPPLIERS)
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
-                       TDTWriter.cpp)
+                       TDTWriter.cpp
+                       PDBWriter.cpp )
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 rdkit_python_extension(rdmolfiles

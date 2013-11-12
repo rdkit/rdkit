@@ -316,6 +316,31 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(splitLs[0][4],'0.631')
     os.unlink('testData/bzr/search.out')
 
+  def test2_8SearchThresh(self):
+    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    
+    p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf',
+                          '--simThresh=0.7','--outF=testData/bzr/search.out','testData/bzr_q1.mol'))
+    res=p.wait()
+    self.failIf(res)
+    p=None
+
+    self.failUnless(os.path.exists('testData/bzr/search.out'))
+    inF = file('testData/bzr/search.out','r')
+    lines=inF.readlines()
+    inF=None
+    self.failUnless(len(lines)==1)
+    splitL=lines[0].strip().split(',')
+    splitL.pop(0)
+    for i in range(0,len(splitL),2):
+      v = float(splitL[i+1])
+      self.failUnless(v>0.7)
+    os.unlink('testData/bzr/search.out')
+
+
     
   def test4CreateOptions(self):
     if os.path.exists('testData/bzr/Compounds.sqlt'):

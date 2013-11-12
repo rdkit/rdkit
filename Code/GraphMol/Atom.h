@@ -22,13 +22,13 @@
 // ours
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
-
+#include <RDGeneral/Dict.h>
 
 namespace RDKit{
   class ROMol;
   class RWMol;
+  class AtomMonomerInfo;
 
- 
   //! The class for representing atoms
   /*!
 
@@ -475,6 +475,11 @@ namespace RDKit{
     */
     int calcImplicitValence(bool strict=true);
 
+    AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; };
+    const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; };
+    //! takes ownership of the pointer
+    void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo=info; };
+    
   protected:
     //! sets our owning molecule
     void setOwningMol(ROMol *other);
@@ -499,6 +504,7 @@ namespace RDKit{
     unsigned int d_isotope;
     ROMol *dp_mol;
     Dict *dp_props;
+    AtomMonomerInfo *dp_monomerInfo;
     void initAtom();
   };
 

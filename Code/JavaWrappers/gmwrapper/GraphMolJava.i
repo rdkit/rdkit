@@ -87,6 +87,7 @@ typedef unsigned long long int	uintmax_t;
 */
 #endif
 
+%shared_ptr(std::exception)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -106,6 +107,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::UFF::DistanceConstraintContrib);
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
+%shared_ptr(ForceFields::UFF::InversionContrib);
 
 /* Some utility classes for passing arrays in and out */
 %array_class(double, Double_Array);
@@ -155,6 +157,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../QueryAtom.i"
 %include "../QueryBond.i"
 %include "../QueryOps.i"
+%include "../MonomerInfo.i"
 %include "../PeriodicTable.i"
 %include "../SanitException.i"
 %include "../SmilesParse.i"

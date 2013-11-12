@@ -31,17 +31,20 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 %{
+#include <ForceField/ForceField.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
-#include <ForceField/ForceField.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <ForceField/Contrib.h>
+#include <ForceField/UFF/Params.h>
 #include <ForceField/UFF/AngleBend.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <ForceField/UFF/Contribs.h>
 #include <ForceField/UFF/DistanceConstraint.h>
 #include <ForceField/UFF/Nonbonded.h>
-#include <ForceField/UFF/Params.h>
 #include <ForceField/UFF/TorsionAngle.h>
+#include <ForceField/UFF/Inversion.h>
 #include <boost/tuple/tuple.hpp>
 #include <GraphMol/ROMol.h>
 %}
@@ -50,18 +53,16 @@
 %ignore ForceFields::ForceField::positions(); 
 %ignore ForceFields::ForceField::positions() const; 
 %rename(get) ForceFields::UFF::ParamCollection::operator();
+
 %include <ForceField/ForceField.h>
 %include <ForceField/Contrib.h>
+%include <ForceField/UFF/Params.h>
 %include <ForceField/UFF/AngleBend.h>
 %include <ForceField/UFF/BondStretch.h>
-%include <ForceField/UFF/Contribs.h>
 %include <ForceField/UFF/DistanceConstraint.h>
 %include <ForceField/UFF/Nonbonded.h>
-%include <ForceField/UFF/Params.h>
 %include <ForceField/UFF/TorsionAngle.h>
-%include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
-%include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
-
+%include <ForceField/UFF/Inversion.h>
 
 %template(FF_Contrib_Vect) std::vector<ForceFields::ContribPtr>;
 %extend ForceFields::ForceField {
@@ -107,8 +108,50 @@
   }
 
   /* From GraphMol/ForceFieldHelpers/UFF/AtomTyper.h */
-  static std::pair<RDKit::UFF::AtomicParamVect,bool> UFFGetAtomTypes(const RDKit::ROMol &mol, const std::string &paramData="") {
+  static std::pair<std::vector<const ForceFields::UFF::AtomicParams *>,bool> UFFGetAtomTypes(const RDKit::ROMol &mol, const std::string &paramData="") {
     return RDKit::UFF::getAtomTypes(mol, paramData);
   }
+
+  static int MMFFOptimizeMolecule(RDKit::ROMol &mol,
+                                  std::string mmffVariant="MMFF94",
+                                  int maxIters=200,
+                                  double nonBondedThresh=100.0, int confId=-1,
+                                  bool ignoreInterfragInteractions=true ) {
+    int res=1;
+    RDKit::MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
+
+    if (mmffMolProperties.isValid()) {
+      ForceFields::ForceField *ff = RDKit::MMFF::constructForceField(mol,
+        &mmffMolProperties, nonBondedThresh, confId, ignoreInterfragInteractions);
+      ff->initialize();
+      res = ff->minimize(maxIters);
+      delete ff;
+    } else {
+      BOOST_LOG(rdErrorLog) << "Could not construct MMFF force field"<<std::endl;
+    }
+
+    return res;
+  }
+
+  static ForceFields::ForceField *MMFFGetMoleculeForceField(RDKit::ROMol &mol,
+                                                            std::string mmffVariant="MMFF94",
+                                                            double nonBondedThresh=100.0,
+                                                            int confId=-1,
+                                                            bool ignoreInterfragInteractions=true ) {
+
+    ForceFields::ForceField *ff = 0;
+    RDKit::MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
+    if (mmffMolProperties.isValid()) {
+      ff = RDKit::MMFF::constructForceField(mol,
+                                            &mmffMolProperties, nonBondedThresh,
+                                            confId, ignoreInterfragInteractions);
+      ff->initialize();
+    } else {
+      BOOST_LOG(rdErrorLog) << "Could not construct MMFF force field"<<std::endl;
+    }
+    return ff;
+  }
+
+
 }
 

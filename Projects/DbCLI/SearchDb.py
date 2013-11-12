@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2007-2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.13.0"
+_version = "0.14.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -65,12 +65,17 @@ from rdkit import DataStructs
 
 def GetNeighborLists(probes,topN,pool,
                      simMetric=DataStructs.DiceSimilarity,
-                     silent=False):
+                     simThresh=-1.,
+                     silent=False,
+                     **kwargs):
   probeFps = [x[1] for x in probes]
   validProbes = [x for x in range(len(probeFps)) if probeFps[x] is not None]
   validFps=[probeFps[x] for x in validProbes]
   from rdkit.DataStructs.TopNContainer import TopNContainer
-  nbrLists = [TopNContainer(topN) for x in range(len(probeFps))]
+  if simThresh<=0:
+    nbrLists = [TopNContainer(topN) for x in range(len(probeFps))]
+  else:
+    nbrLists=[TopNContainer(-1) for x in range(len(probeFps))]
 
   nDone=0
   for nm,fp in pool:
@@ -79,17 +84,27 @@ def GetNeighborLists(probes,topN,pool,
     if(simMetric==DataStructs.DiceSimilarity):
       scores = DataStructs.BulkDiceSimilarity(fp,validFps)
       for i,score in enumerate(scores):
-        nbrLists[validProbes[i]].Insert(score,nm)
+        if score>simThresh:
+          nbrLists[validProbes[i]].Insert(score,nm)
     elif(simMetric==DataStructs.TanimotoSimilarity):
       scores = DataStructs.BulkTanimotoSimilarity(fp,validFps)
       for i,score in enumerate(scores):
-        nbrLists[validProbes[i]].Insert(score,nm)
+        if score>simThresh:
+          nbrLists[validProbes[i]].Insert(score,nm)
+    elif(simMetric==DataStructs.TverskySimilarity):
+      av = float(kwargs.get('tverskyA',0.5))
+      bv = float(kwargs.get('tverskyB',0.5))
+      scores = DataStructs.BulkTverskySimilarity(fp,validFps,av,bv)
+      for i,score in enumerate(scores):
+        if score>simThresh:
+          nbrLists[validProbes[i]].Insert(score,nm)
     else:
       for i in range(len(probeFps)):
         pfp = probeFps[i]
         if pfp is not None:
           score = simMetric(probeFps[i],fp)
-          nbrLists[i].Insert(score,nm)
+          if score>simThresh:
+            nbrLists[validProbes[i]].Insert(score,nm)
   return nbrLists
 
 def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
@@ -178,6 +193,17 @@ def RunSearch(options,queryFilename):
     dbName = os.path.join(options.dbDir,options.morganFpDbName)
     fpTableName = options.morganFpTableName
     fpColName = options.morganFpColName
+
+
+  extraArgs={}
+  if options.similarityMetric=='tanimoto':
+    simMetric = DataStructs.TanimotoSimilarity
+  elif options.similarityMetric=='dice':
+    simMetric = DataStructs.DiceSimilarity
+  elif options.similarityMetric=='tversky':
+    simMetric = DataStructs.TverskySimilarity
+    extraArgs['tverskyA']=options.tverskyA
+    extraArgs['tverskyB']=options.tverskyB
 
   if options.smilesQuery:
     mol=Chem.MolFromSmiles(options.smilesQuery)
@@ -363,8 +389,7 @@ def RunSearch(options,queryFilename):
         yield (id,fp)
         row = curs.fetchone()
     topNLists = GetNeighborLists(probes,options.topN,poolFromCurs(curs,options.similarityType),
-                                 simMetric=simMetric)
-
+                                 simMetric=simMetric,simThresh=options.simThresh,**extraArgs)
     uniqIds=set()
     nbrLists = {}
     for i,nm in enumerate(nms):
@@ -555,6 +580,15 @@ parser.add_option('--morganFpTableName',default='morganfps',
 parser.add_option('--morganFpColName',default='morganfp',
                   help='name of the morgan fingerprint column')
 
+parser.add_option('--similarityMetric','--simMetric','--metric',
+                  default='',choices=('tanimoto','dice','tversky',''),
+                  help='Choose the type of similarity to use, possible values: tanimoto, dice, tversky. The default is determined by the fingerprint type')
+parser.add_option('--tverskyA',default=0.5,type='float',
+                  help='Tversky A value')
+parser.add_option('--tverskyB',default=0.5,type='float',
+                  help='Tversky B value')
+parser.add_option('--simThresh',default=-1,type='float',
+                  help='threshold to use for similarity searching. If provided, this supersedes the topN argument')
 
 if __name__=='__main__':
   import sys,getopt,time

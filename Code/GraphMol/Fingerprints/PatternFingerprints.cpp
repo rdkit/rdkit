@@ -28,10 +28,6 @@
 #include <boost/dynamic_bitset.hpp>
 
 //#define VERBOSE_FINGERPRINTING 1
-//#define REPORT_FP_STATS 1
-#ifdef REPORT_FP_STATS
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#endif
 
 namespace RDKit{
   const char *pqs[]={ "[*]~[*]",
@@ -46,11 +42,15 @@ namespace RDKit{
                       //"[*]~[R]~1[R]~[R]~1~[*]",
                       "[R]~1~[R]~[R]~[R]~[R]~1",
                       "[R]~1~[R]~[R]~[R]~[R]~[R]~1",
-                      "[R2]~[R1]~[R2]",
-                      "[R2]~[R1]~[R1]~[R2]",
-                      "[*]!@[R]~[R]!@[*]",
-                      "[*]!@[R]~[R]~[R]!@[*]",
-
+                      //"[R2]~[R1]~[R2]", Github #151: can't have ring counts in an SSS pattern
+                      //"[R2]~[R1]~[R1]~[R2]",  Github #151: can't have ring counts in an SSS pattern
+                      "[R](@[R])(@[R])~[R]~[R](@[R])(@[R])",
+                      "[R](@[R])(@[R])~[R]@[R]~[R](@[R])(@[R])",
+                      
+                      //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
+                      //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
+                      "[*]~[R](@[R])@[R](@[R])~[*]",
+                      "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",
@@ -191,6 +191,9 @@ namespace RDKit{
         // collect bits counting the number of occurances of the pattern:
         gboost::hash_combine(mIdx,0xBEEF);
         res->setBit(mIdx%fpSize);
+#ifdef VERBOSE_FINGERPRINTING
+        std::cerr<<"count: "<<mIdx%fpSize<<" | ";
+#endif          
 
         bool isQuery=false;
         boost::uint32_t bitId=pIdx;

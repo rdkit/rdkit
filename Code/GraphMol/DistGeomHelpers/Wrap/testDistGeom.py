@@ -106,8 +106,8 @@ class TestCase(unittest.TestCase) :
         mol = Chem.MolFromSmiles('CO')
         rdDistGeom.EmbedMolecule(mol, 10,1)
         conf = mol.GetConformer()
-        self.failUnless(lstEq(conf.GetAtomPosition(0), [0.71308, 0.0, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.71308, 0.0, 0.0]))
+        self.failUnless(lstEq(conf.GetAtomPosition(0), [0.69192, 0.0, 0.0]))
+        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.69192, 0.0, 0.0]))
         #writer.write(mol)
 
         mol = Chem.MolFromSmiles('CCC')
@@ -123,9 +123,9 @@ class TestCase(unittest.TestCase) :
         conf = mol.GetConformer()
         
         #writer.write(mol)
-        self.failUnless(lstEq(conf.GetAtomPosition(0), [-1.2591, -0.06189, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.00408, 0.12317, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(2), [1.26318, -0.061288, 0.0]))
+        self.failUnless(lstEq(conf.GetAtomPosition(0), [-1.2180, -0.06088, 0.0]))
+        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.00408, 0.12116, 0.0]))
+        self.failUnless(lstEq(conf.GetAtomPosition(2), [1.22207, -0.060276, 0.0]))
         
         mol = Chem.MolFromSmiles('C=C=C=C')
         rdDistGeom.EmbedMolecule(mol,10,1)
@@ -158,8 +158,8 @@ class TestCase(unittest.TestCase) :
     def test3MultiConf(self):
         mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
         cids = rdDistGeom.EmbedMultipleConfs(mol,10,maxAttempts=30,randomSeed=100)
-        energies = [90.05, 77.35, 91.45, 81.82, 81.60, 75.65, 86.50,
-                    80.35, 80.55, 73.73]
+        energies = [112.98, 103.57, 110.78, 100.40, 95.37, 101.64,
+                    114.72, 112.65, 117.65, 107.50]
         nenergies = []
         for cid in cids:
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
@@ -197,7 +197,7 @@ class TestCase(unittest.TestCase) :
 
 
         nconfs = []
-        expected = [5, 8, 8, 5, 6, 4]
+        expected = [5, 6, 6, 6, 6, 3]
         for smi in smiles:
             mol = Chem.MolFromSmiles(smi)
             cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30,
@@ -211,12 +211,12 @@ class TestCase(unittest.TestCase) :
     def test6Chirality(self):
         # turn on chirality and we should get chiral volume that is pretty consistent and
         # positive
-        tgtVol=14.0
+        tgtVol=13.0
         smiles = "Cl[C@](C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
-        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 30, maxAttempts=30,
                                              randomSeed=100)
-        self.failUnless(len(cids)==10)
+        self.failUnless(len(cids)==30)
         for cid in cids:
             conf = mol.GetConformer(cid)
             vol = computeChiralVol(conf.GetAtomPosition(0),
@@ -228,9 +228,9 @@ class TestCase(unittest.TestCase) :
         # turn of chirality and now we should see both chiral forms
         smiles = "ClC(C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
-        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 30, maxAttempts=30,
                                              randomSeed=120)
-        self.failUnless(len(cids)==10)
+        self.failUnless(len(cids)==30)
         nPos=0
         nNeg=0
         for cid in cids:
@@ -261,7 +261,7 @@ class TestCase(unittest.TestCase) :
         expected = [-3.62, -3.67, -3.72,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
         nPos=0
         nNeg=0
-        for i in range(10):
+        for i in range(30):
             smiles = "ClC(F)Br"
             mol = Chem.MolFromSmiles(smiles)
             ci = rdDistGeom.EmbedMolecule(mol, 30, (i+1)*10)

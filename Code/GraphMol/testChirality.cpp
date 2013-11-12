@@ -1545,7 +1545,7 @@ void testIssue2762917(){
   std::string rdbase = getenv("RDBASE");
 
   {
-    RWMol *m,*m2;
+    RWMol *m;
     std::string cip;
     std::string smiles="[C@@H](C)(Cl)O";
     m = SmilesToMol(smiles);
@@ -1559,22 +1559,18 @@ void testIssue2762917(){
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
-    m2 = (RWMol *)MolOps::addHs(*m);
-    TEST_ASSERT(m2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    MolOps::assignStereochemistry(*m,true);
 
-    TEST_ASSERT(m2->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-    MolOps::assignStereochemistry(*m2,true);
-
-    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    m2->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     delete m;
-    delete m2;
   }
 
   {
-    RWMol *m,*m2;
+    RWMol *m;
     std::string cip;
     std::string smiles="CCC.[C@@H](C)(Cl)O";
     m = SmilesToMol(smiles);
@@ -1588,22 +1584,20 @@ void testIssue2762917(){
     m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
-    m2 = (RWMol *)MolOps::addHs(*m);
-    TEST_ASSERT(m2);
+    MolOps::addHs(*m);
 
-    TEST_ASSERT(m2->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-    MolOps::assignStereochemistry(*m2,true);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    MolOps::assignStereochemistry(*m,true);
 
-    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    m2->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     delete m;
-    delete m2;
   }
 
   {
-    RWMol *m,*m2;
+    RWMol *m;
     std::string cip;
     std::string smiles="[C@@H]([C@H](C)O)(C)O";
     m = SmilesToMol(smiles);
@@ -1622,29 +1616,27 @@ void testIssue2762917(){
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
-    m2 = (RWMol *)MolOps::addHs(*m);
-    TEST_ASSERT(m2);
+    MolOps::addHs(*m);
 
-    TEST_ASSERT(m2->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-    TEST_ASSERT(m2->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
 
-    MolOps::assignStereochemistry(*m2,true);
+    MolOps::assignStereochemistry(*m,true);
 
-    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    m2->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    m2->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     delete m;
-    delete m2;
   }
 
 
   {
-    RWMol *m,*m2;
+    RWMol *m;
     std::string cip;
     std::string smiles="C1CC.[C@@H]1(Cl)O";
     m = SmilesToMol(smiles);
@@ -1658,18 +1650,16 @@ void testIssue2762917(){
     m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
-    m2 = (RWMol *)MolOps::addHs(*m);
-    TEST_ASSERT(m2);
+    MolOps::addHs(*m);
 
-    TEST_ASSERT(m2->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-    MolOps::assignStereochemistry(*m2,true);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    MolOps::assignStereochemistry(*m,true);
 
-    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    m2->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     delete m;
-    delete m2;
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

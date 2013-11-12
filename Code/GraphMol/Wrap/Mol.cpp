@@ -210,6 +210,7 @@ struct mol_wrapper {
 			  molClassDoc.c_str(),
 			  python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
+      .def(python::init<const ROMol &>())
       .def("GetNumAtoms",getMolNumAtoms,
 	   (python::arg("onlyHeavy")=-1,
             python::arg("onlyExplicit")=true),

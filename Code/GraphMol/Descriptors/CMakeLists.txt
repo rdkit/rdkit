@@ -1,6 +1,6 @@
 rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
-              MQN.cpp
+              MQN.cpp 
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch 
                 ${RDKit_THREAD_LIBS})
 

@@ -20,9 +20,9 @@ namespace RDKit {
   class BadFileException : public std::runtime_error {
   public :
     //! construct with an error message
-    explicit BadFileException(const char *msg) : _msg(msg), std::runtime_error("BadFileException") {};
+    explicit BadFileException(const char *msg) : std::runtime_error("BadFileException"), _msg(msg) {};
     //! construct with an error message
-    explicit BadFileException(const std::string msg) : _msg(msg), std::runtime_error("BadFileException") {};
+    explicit BadFileException(const std::string msg) : std::runtime_error("BadFileException"), _msg(msg) {};
     //! get the error message
     const char *message () const { return _msg.c_str(); };
     ~BadFileException () throw () {};

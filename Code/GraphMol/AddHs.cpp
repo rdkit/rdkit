@@ -283,20 +283,18 @@ namespace RDKit{
 
 
   namespace MolOps {
-    ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
-      RWMol *res = new RWMol(mol);
-
+    void addHs(RWMol &mol,bool explicitOnly,bool addCoords){
       // when we hit each atom, clear its computed properties
       // NOTE: it is essential that we not clear the ring info in the
       // molecule's computed properties.  We don't want to have to
       // regenerate that.  This caused Issue210 and Issue212:
-      res->clearComputedProps(false);
+      mol.clearComputedProps(false);
 
       // precompute the number of hydrogens we are going to add so that we can
       // pre-allocate the necessary space on the conformations of the molecule
       // for their coordinates
       unsigned int numAddHyds = 0;
-      for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
+      for(ROMol::AtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
         numAddHyds += (*at)->getNumExplicitHs();
         if (!explicitOnly) {
           numAddHyds += (*at)->getNumImplicitHs();
@@ -307,43 +305,49 @@ namespace RDKit{
       // loop over the conformations of the molecule and allocate new space
       // for the H locations (need to do this even if we aren't adding coords so
       // that the conformers have the correct number of atoms).
-      for (ROMol::ConformerIterator cfi = res->beginConformers();
-           cfi != res->endConformers(); ++cfi) {
+      for (ROMol::ConformerIterator cfi = mol.beginConformers();
+           cfi != mol.endConformers(); ++cfi) {
         (*cfi)->reserve(nSize);
       }
 
-      for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
+      unsigned int stopIdx=mol.getNumAtoms();
+      for(unsigned int aidx=0;aidx<stopIdx;++aidx){
+        Atom *newAt=mol.getAtomWithIdx(aidx);
         unsigned int newIdx;
-        Atom *newAt=res->getAtomWithIdx((*at)->getIdx());
         newAt->clearComputedProps();
         // always convert explicit Hs
-        for(unsigned int i=0;i<(*at)->getNumExplicitHs();i++){
-          newIdx=res->addAtom(new Atom(1),false,true);
-          res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
-          res->getAtomWithIdx(newIdx)->updatePropertyCache();
-          if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
+        unsigned int onumexpl=newAt->getNumExplicitHs();
+        for(unsigned int i=0;i<onumexpl;i++){
+          newIdx=mol.addAtom(new Atom(1),false,true);
+          mol.addBond(aidx,newIdx,Bond::SINGLE);
+          mol.getAtomWithIdx(newIdx)->updatePropertyCache();
+          if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
         }
         // clear the local property
         newAt->setNumExplicitHs(0);
 
         if(!explicitOnly){
           // take care of implicits
-          for(unsigned int i=0;i<(*at)->getNumImplicitHs();i++){
-            newIdx=res->addAtom(new Atom(1),false,true);
-            res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
+          for(unsigned int i=0;i<mol.getAtomWithIdx(aidx)->getNumImplicitHs();i++){
+            newIdx=mol.addAtom(new Atom(1),false,true);
+            mol.addBond(aidx,newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1);
-            res->getAtomWithIdx(newIdx)->updatePropertyCache();
-            if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
+            mol.getAtomWithIdx(newIdx)->setProp("isImplicit",1);
+            mol.getAtomWithIdx(newIdx)->updatePropertyCache();
+            if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",(*at)->getNoImplicit(), true);
+          newAt->setProp("origNoImplicit",newAt->getNoImplicit(), true);
           newAt->setNoImplicit(true);
         }
         // update the atom's derived properties (valence count, etc.)
         newAt->updatePropertyCache();
       }
+    }
+    ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
+      RWMol *res = new RWMol(mol);
+      addHs(*res,explicitOnly,addCoords);
       return static_cast<ROMol *>(res);
     };
 
@@ -360,12 +364,11 @@ namespace RDKit{
     //     will not be removed.
     //   - two coordinate Hs, like the central H in C[H-]C, will not be removed
     //
-    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
+    void removeHs(RWMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       unsigned int currIdx=0,origIdx=0;
       std::map<unsigned int,unsigned int> idxMap;
-      RWMol *res = new RWMol(mol);
-      while(currIdx < res->getNumAtoms()){
-        Atom *atom = res->getAtomWithIdx(currIdx);
+      while(currIdx < mol.getNumAtoms()){
+        Atom *atom = mol.getAtomWithIdx(currIdx);
         idxMap[origIdx]=currIdx;
         ++origIdx;
         if(atom->getAtomicNum()==1){
@@ -375,19 +378,19 @@ namespace RDKit{
             removeIt=true;
           } else if(!implicitOnly && !atom->getIsotope() && atom->getDegree()==1){
             ROMol::ADJ_ITER begin,end;
-            boost::tie(begin,end) = res->getAtomNeighbors(atom);
-            if(res->getAtomWithIdx(*begin)->getAtomicNum() != 1){
+            boost::tie(begin,end) = mol.getAtomNeighbors(atom);
+            if(mol.getAtomWithIdx(*begin)->getAtomicNum() != 1){
               removeIt=true;
             }
           }
 
           if(removeIt){
             ROMol::OEDGE_ITER beg,end;
-            boost::tie(beg,end) = res->getAtomBonds(atom);
+            boost::tie(beg,end) = mol.getAtomBonds(atom);
             // note the assumption that the H only has one neighbor... I
             // feel no need to handle the case of hypervalent hydrogen!
             // :-) 
-            const BOND_SPTR bond = (*res)[*beg];
+            const BOND_SPTR bond = mol[*beg];
             Atom *heavyAtom =bond->getOtherAtom(atom);
 
             // we'll update the atom's explicit H count if we were told to
@@ -416,10 +419,10 @@ namespace RDKit{
             // atom.  We deal with that by explicitly checking here:
             if(heavyAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               INT_LIST neighborIndices;
-              boost::tie(beg,end) = res->getAtomBonds(heavyAtom);
+              boost::tie(beg,end) = mol.getAtomBonds(heavyAtom);
               while(beg!=end){
-                if((*res)[*beg]->getIdx()!=bond->getIdx()){
-                  neighborIndices.push_back((*res)[*beg]->getIdx());
+                if(mol[*beg]->getIdx()!=bond->getIdx()){
+                  neighborIndices.push_back(mol[*beg]->getIdx());
                 }
                 ++beg;
               }
@@ -431,7 +434,7 @@ namespace RDKit{
                 heavyAtom->invertChirality();
               }
             }     
-            res->removeAtom(atom);
+            mol.removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom
             currIdx++;
@@ -456,35 +459,22 @@ namespace RDKit{
       //
       if(!implicitOnly){
         if(sanitize){
-          try{
-            sanitizeMol(*res);
-          } catch (MolSanitizeException &se){
-            if(res) delete res;
-            throw se;
-          }
-
+          sanitizeMol(mol);
         }
-#if 0 // the fix to github issue 8 makes this redundant
-        if(mol.hasProp("_StereochemDone")){
-          // stereochem had been perceived in the original molecule,
-          // loop over the bonds and fix their stereoAtoms fields:
-          for(ROMol::BondIterator bondIt=res->beginBonds();
-              bondIt!=res->endBonds();
-              ++bondIt){
-            Bond *bond=*bondIt;
-            if( bond->getBondType()==Bond::DOUBLE &&
-                bond->getStereo()!=Bond::STEREONONE){
-              BOOST_FOREACH(int &v,bond->getStereoAtoms()){
-                v = idxMap[v];
-              }
-            }
-          }
-        }
-#endif        
       }
-
-      return static_cast<ROMol *>(res);
     };
+
+
+    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
+      RWMol *res = new RWMol(mol);
+      try{
+        removeHs(*res,implicitOnly,updateExplicitCount,sanitize);
+      } catch (MolSanitizeException &se){
+        if(res) delete res;
+        throw se;
+      }
+      return static_cast<ROMol *>(res);
+    }
 
     //
     //  This routine removes explicit hydrogens (and bonds to them) from
@@ -497,20 +487,19 @@ namespace RDKit{
     //     removed.  This prevents molecules like "[H][H]" from having
     //     all atoms removed.
     //
-    ROMol *mergeQueryHs(const ROMol &mol){
-      RWMol *res = new RWMol(mol);
+    void mergeQueryHs(RWMol &mol){
       std::vector<unsigned int> atomsToRemove;
       
-      unsigned int currIdx=0;
-      while(currIdx < res->getNumAtoms()){
-        Atom *atom = res->getAtomWithIdx(currIdx);
+      unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
+      while(currIdx < stopIdx){
+        Atom *atom = mol.getAtomWithIdx(currIdx);
         if(atom->getAtomicNum()!=1){
           unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
-          boost::tie(begin,end) = res->getAtomNeighbors(atom);
+          boost::tie(begin,end) = mol.getAtomNeighbors(atom);
           while(begin!=end){
-            if(res->getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
-               res->getAtomWithIdx(*begin)->getDegree() == 1 ){
+            if(mol.getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
+               mol.getAtomWithIdx(*begin)->getDegree() == 1 ){
               atomsToRemove.push_back(*begin);
               ++numHsToRemove;
             }
@@ -558,9 +547,9 @@ namespace RDKit{
               ATOM_EQUALS_QUERY *tmp=makeAtomNumEqualsQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
               newAt->setQuery(tmp);
-              res->replaceAtom(atom->getIdx(),newAt);
+              mol.replaceAtom(atom->getIdx(),newAt);
               delete newAt;
-              atom = res->getAtomWithIdx(currIdx);
+              atom = mol.getAtomWithIdx(currIdx);
             }
             if(!hasHQuery){
               for(unsigned int i=0;i<numHsToRemove;++i){
@@ -576,11 +565,17 @@ namespace RDKit{
       std::sort(atomsToRemove.begin(),atomsToRemove.end());
       for(std::vector<unsigned int>::const_reverse_iterator aiter=atomsToRemove.rbegin();
           aiter!=atomsToRemove.rend();++aiter){
-        Atom *atom = res->getAtomWithIdx(*aiter);
-        res->removeAtom(atom);
+        Atom *atom = mol.getAtomWithIdx(*aiter);
+        mol.removeAtom(atom);
       }
 
+    };
+    ROMol *mergeQueryHs(const ROMol &mol){
+      RWMol *res = new RWMol(mol);
+      mergeQueryHs(*res);
       return static_cast<ROMol *>(res);
     };
+
+
   }; // end of namespace MolOps
 }; // end of namespace RDKit

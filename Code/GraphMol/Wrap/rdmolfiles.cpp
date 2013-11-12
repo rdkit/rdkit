@@ -150,6 +150,33 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
+  ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,unsigned int flavor) {
+    RWMol *newM=0;
+    try {
+      newM = PDBFileToMol(filename, sanitize,removeHs,flavor);
+    } catch (RDKit::BadFileException &e) {
+      PyErr_SetString(PyExc_IOError,e.message());
+      throw python::error_already_set();
+    } catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
+    } catch (...) {
+
+    }
+    return static_cast<ROMol *>(newM);
+  }
+
+  ROMol *MolFromPDBBlock(std::string molBlock, bool sanitize, bool removeHs, unsigned int flavor) {
+    std::istringstream inStream(molBlock);
+    RWMol *newM=0;
+    try {
+      newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor);
+    }  catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
+    } catch (...) {
+    }
+    return static_cast<ROMol *>(newM);
+  }
+
   std::string MolFragmentToSmilesHelper(const ROMol &mol,
                                         python::object atomsToUse,
                                         python::object bondsToUse,
@@ -200,6 +227,7 @@ void wrap_smisupplier();
 void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
+void wrap_pdbwriter();
 
 
 BOOST_PYTHON_MODULE(rdmolfiles)
@@ -374,8 +402,65 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
+  docString="Construct a molecule from a Mol file.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - fileName: name of the file to read\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to true.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
+      correctness of the content.\n\
+      Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromMolFile", RDKit::MolFromMolFile,
+	      (python::arg("molFileName"),
+	       python::arg("sanitize")=true,
+               python::arg("removeHs")=true,
+               python::arg("strictParsing")=true),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
 
-  docString="Returns the a Mol block for a molecule\n\
+  docString="Construct a molecule from a Mol block.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - molBlock: string containing the Mol block\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to 1.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
+      correctness of the content.\n\
+      Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromMolBlock", RDKit::MolFromMolBlock,
+	      (python::arg("molBlock"),
+	       python::arg("sanitize")=true,
+	       python::arg("removeHs")=true,
+               python::arg("strictParsing")=true),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+
+  
+
+  docString="Returns a Mol block for a molecule\n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule\n\
@@ -394,6 +479,26 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("confId")=-1,python::arg("kekulize")=true),
 	      docString.c_str());
 
+  docString="Writes a Mol file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - includeStereo: (optional) toggles inclusion of stereochemical\n\
+                     information in the output\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+                as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToMolFile",RDKit::MolToMolFile,
+	      (python::arg("mol"),python::arg("filename"),
+               python::arg("includeStereo")=false,
+	       python::arg("confId")=-1,python::arg("kekulize")=true),
+	      docString.c_str());
 
   docString="Construct a molecule from a SMILES string.\n\n\
   ARGUMENTS:\n\
@@ -574,9 +679,104 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      docString.c_str());
 
 
-  
 
-  
+  docString="Construct a molecule from a PDB file.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - fileName: name of the file to read\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to true.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+    - flavor: (optional) \n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromPDBFile", RDKit::MolFromPDBFile,
+	      (python::arg("molFileName"),
+	       python::arg("sanitize")=true,
+               python::arg("removeHs")=true,
+               python::arg("flavor")=0),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+
+  docString="Construct a molecule from a PDB block.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - molBlock: string containing the PDB block\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to 1.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+    - flavor: (optional) \n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromPDBBlock", RDKit::MolFromPDBBlock,
+	      (python::arg("molBlock"),
+	       python::arg("sanitize")=true,
+	       python::arg("removeHs")=true,
+               python::arg("flavor")=0),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+
+  docString="Returns a PDB block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - flavor: (optional) \n\
+            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            flavor & 2 : Don't write any CONECT records \n\
+            flavor & 4 : Write CONECT records in both directions \n\
+            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            flavor & 16 : Write MASTER record \n\
+            flavor & 32 : Write TER record \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToPDBBlock",RDKit::MolToPDBBlock,
+	      (python::arg("mol"),
+	       python::arg("confId")=-1,python::arg("flavor")=0),
+	      docString.c_str());
+  docString="Writes a PDB file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: name of the file to write\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - flavor: (optional) \n\
+            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            flavor & 2 : Don't write any CONECT records \n\
+            flavor & 4 : Write CONECT records in both directions \n\
+            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            flavor & 16 : Write MASTER record \n\
+            flavor & 32 : Write TER record \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToPDBFile",RDKit::MolToPDBFile,
+	      (python::arg("mol"),
+               python::arg("filename"),
+	       python::arg("confId")=-1,python::arg("flavor")=0),
+	      docString.c_str());
+
   /********************************************************
    * MolSupplier stuff
    *******************************************************/
@@ -587,6 +787,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   wrap_forwardsdsupplier();
   wrap_tdtsupplier();
   wrap_smisupplier();
+  //wrap_pdbsupplier();
 
   /********************************************************
    * MolWriter stuff
@@ -594,7 +795,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   wrap_smiwriter();
   wrap_sdwriter();
   wrap_tdtwriter();
-
+  wrap_pdbwriter();
 
   
 

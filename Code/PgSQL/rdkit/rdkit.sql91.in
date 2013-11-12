@@ -237,6 +237,11 @@ RETURNS float8
 AS 'MODULE_PATHNAME', 'bfp_dice_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
+CREATE OR REPLACE FUNCTION tversky_sml(bfp, bfp, float4, float4)
+RETURNS float8 
+AS 'MODULE_PATHNAME', 'bfp_tversky_sml'
+LANGUAGE C STRICT IMMUTABLE COST 10;
+
 CREATE OR REPLACE FUNCTION tanimoto_dist(bfp, bfp)
 RETURNS float8
 AS 'MODULE_PATHNAME', 'bfp_tanimoto_dist'

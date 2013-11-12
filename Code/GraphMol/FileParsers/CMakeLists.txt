@@ -1,9 +1,12 @@
 rdkit_library(FileParsers
               Mol2FileParser.cpp  
               MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp 
-              ForwardSDMolSupplier.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
-              SmilesWriter.cpp SDWriter.cpp TDTMolSupplier.cpp TDTWriter.cpp
-              TplFileParser.cpp TplFileWriter.cpp LINK_LIBRARIES SmilesParse GraphMol)
+              ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
+              SmilesMolSupplier.cpp SmilesWriter.cpp
+              TDTMolSupplier.cpp TDTWriter.cpp
+              TplFileParser.cpp TplFileWriter.cpp
+              PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp ProximityBonds.cpp
+              LINK_LIBRARIES SmilesParse GraphMol)
               
 rdkit_headers(FileParsers.h
               FileParserUtils.h

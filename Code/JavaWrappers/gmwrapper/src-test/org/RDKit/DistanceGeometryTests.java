@@ -72,10 +72,11 @@ public class DistanceGeometryTests extends GraphMolTest {
 						Point3D pt2j = conf2.getAtomPos(j);
 						double d1 = pt1j.minus(pt1i).length();
 						double d2 = pt2j.minus(pt2i).length();
-						if(m.getBondBetweenAtoms(i,j) != null)
+						if(m.getBondBetweenAtoms(i,j) != null){
 							assertEquals(d1, d2, 0.06);
-						else
-							assertEquals(d1, d2, 0.12);
+                                                } else {
+							assertEquals(d1, d2, 0.15);
+                                                }
 					}
 				}
 			}
@@ -254,7 +255,7 @@ public class DistanceGeometryTests extends GraphMolTest {
 
 		for (int i = 0; i < cids.size(); i++ ) {
 			writer.write(m, cids.get(i));
-			ForceField ff = RDKFuncs.constructForceField(m, 10, cids.get(i));
+			ForceField ff = ForceField.UFFGetMoleculeForceField(m, 10, cids.get(i));
 			ff.initialize();
 			energy = ff.calcEnergy();
 			assertTrue(energy>100.0);

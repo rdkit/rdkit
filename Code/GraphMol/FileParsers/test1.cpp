@@ -11,6 +11,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h> 
 #include <GraphMol/Canon.h> 
+#include <GraphMol/MonomerInfo.h> 
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -2331,11 +2332,11 @@ void testIssue3073163(){
     MatchVectType mv;
     TEST_ASSERT(SubstructMatch(*m,*p,mv));
     std::string mb=MolToMolBlock(*m);
-    std::cerr<<"mb:\n"<<mb<<"----\n";
+    //std::cerr<<"mb:\n"<<mb<<"----\n";
     RWMol *m2=MolBlockToMol(mb);
     TEST_ASSERT(m2);
-    std::cerr<<"  mol: "<<MolToSmiles(*m,true)<<std::endl;
-    std::cerr<<"  mol2: "<<MolToSmiles(*m2,true)<<std::endl;
+    //std::cerr<<"  mol: "<<MolToSmiles(*m,true)<<std::endl;
+    //std::cerr<<"  mol2: "<<MolToSmiles(*m2,true)<<std::endl;
     TEST_ASSERT(SubstructMatch(*m2,*p,mv));
 
     delete m2;
@@ -3112,6 +3113,133 @@ void testMolFileWithHs(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileWithRxn(){
+  BOOST_LOG(rdInfoLog) << "testing reading reactions in mol files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"rxn1.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==18);
+    TEST_ASSERT(m->getNumBonds()==16);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+
+
+
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testPDBFile(){
+  BOOST_LOG(rdInfoLog) << "testing reading pdb files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"1CRN.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getSerialNumber()==10);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getResidueNumber()==2);
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getName()==" N  ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueName()=="THR");
+    TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getTempFactor(),13.79));
+    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x,17.047));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y,14.099));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z,3.625));    
+
+
+    std::string mb=MolToPDBBlock(*m);
+    delete m;
+    m = PDBBlockToMol(mb);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getSerialNumber()==10);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())->getResidueNumber()==2);
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getName()==" N  ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueName()=="THR");
+    TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getTempFactor(),13.79));    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x,17.047));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y,14.099));    
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z,3.625));    
+  }
+
+  {
+    std::string fName;
+    fName = rdbase+"2FVD.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2501);
+    TEST_ASSERT(m->getNumBonds()==2383);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getIsHeteroAtom()==0);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getSerialNumber()==2294);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueNumber()==299);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getIsHeteroAtom()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getChainId()=="A");
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getName()==" CA ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getResidueName()=="MET");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getName()==" N1 ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueName()=="LIA");
+
+    std::string mb=MolToPDBBlock(*m,-1,32);
+    delete m;
+    m = PDBBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2501);
+    TEST_ASSERT(m->getNumBonds()==2383);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getSerialNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getResidueNumber()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())->getIsHeteroAtom()==0);
+    // FIX:
+    //TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getSerialNumber()==2294);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueNumber()==299);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getIsHeteroAtom()==1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getChainId()=="A");
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getName()==" CA ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())->getResidueName()=="MET");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getName()==" N1 ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2292)->getMonomerInfo())->getResidueName()=="LIA");
+  }
+
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3176,6 +3304,8 @@ int main(int argc,char *argv[]){
   testGithub82();
 #endif
   testMolFileWithHs();
+  testMolFileWithRxn();
+  testPDBFile();
 
   return 0;
 }

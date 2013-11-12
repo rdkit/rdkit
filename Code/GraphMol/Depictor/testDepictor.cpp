@@ -149,10 +149,9 @@ void testAddHs() {
   // test for issue 193
   std::string smi = "F[C@H](Cl)Br";
   RWMol *m = SmilesToMol(smi, 0, 1);
-  ROMol *m2 = MolOps::addHs(*m);
-  RDDepict::compute2DCoords(*m2);
+  MolOps::addHs(*m);
+  RDDepict::compute2DCoords(*m);
   delete m;
-  delete m2;
 }
 
 void testIssue198() {

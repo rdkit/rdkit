@@ -9,6 +9,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import sys
 try:
   import cairo
 except ImportError:
@@ -21,21 +22,27 @@ import math
 import rdkit.RDConfig
 import os,re
 import array
-try:
-  import pangocairo
-except ImportError:
-  pangocairo=None
-try:
-  import pango
-except ImportError:
+if not os.environ.has_key('RDK_NOPANGO'):
+  try:
+    import pangocairo
+  except ImportError:
+    pangocairo=None
+  try:
+    import pango
+  except ImportError:
+    pango=None
+else:
   pango=None
-  
+  pangocairo=None
+
 from canvasbase import CanvasBase
 try:
   import Image
 except ImportError:
   from PIL import Image
 
+scriptPattern=re.compile(r'\<.+?\>')
+  
 class Canvas(CanvasBase):
   def __init__(self,
                image=None,  # PIL image
@@ -149,19 +156,26 @@ class Canvas(CanvasBase):
     self.ctx.select_font_face(font.face,
                                 cairo.FONT_SLANT_NORMAL,
                                 weight)
-    text = re.sub(r'\<.+?\>','',text)
+    text = scriptPattern.sub(r'\<.+?\>','',text)
     self.ctx.set_font_size(font.size)
     w,h=self.ctx.text_extents(text)[2:4]
-    bw,bh=w*1.8,h*1.4
-    dPos = pos[0]-bw/2.,pos[1]-bh/2.
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    self.ctx.set_source_rgb(*bgColor)
-    self.ctx.rectangle(dPos[0],dPos[1],bw,bh)
-    self.ctx.fill()
-    dPos = pos[0]-w/2.,pos[1]+h/2.
+    bw,bh=w+h*0.4,h*1.4
+    offset = w*pos[2]
+    dPos = pos[0]-w/2.+offset,pos[1]+h/2.
     self.ctx.set_source_rgb(*color)
     self.ctx.move_to(*dPos)
     self.ctx.show_text(text)
+
+    if 0:
+      self.ctx.move_to(dPos[0],dPos[1])
+      self.ctx.line_to(dPos[0]+bw,dPos[1])
+      self.ctx.line_to(dPos[0]+bw,dPos[1]-bh)
+      self.ctx.line_to(dPos[0],dPos[1]-bh)
+      self.ctx.line_to(dPos[0],dPos[1])
+      self.ctx.close_path()
+      self.ctx.stroke()
+
+    return (bw,bh,offset)
   def _addCanvasText2(self,text,pos,font,color=(0,0,0),**kwargs):
     if font.weight=='bold':
       weight=cairo.FONT_WEIGHT_BOLD
@@ -172,39 +186,70 @@ class Canvas(CanvasBase):
                                 weight)
     orientation=kwargs.get('orientation','E')
     cctx=pangocairo.CairoContext(self.ctx)
+
+    plainText = scriptPattern.sub('',text)
+    measureLout = cctx.create_layout()
+    measureLout.set_alignment(pango.ALIGN_LEFT)
+    measureLout.set_markup(plainText)
+
     lout = cctx.create_layout()
     lout.set_alignment(pango.ALIGN_LEFT)
     lout.set_markup(text)
 
-    fnt = pango.FontDescription('%s %d'%(font.face,font.size))
+    # for whatever reason, the font size using pango is larger
+    # than that w/ default cairo (at least for me)
+    fnt = pango.FontDescription('%s %d'%(font.face,font.size*.8))
     lout.set_font_description(fnt)
+    measureLout.set_font_description(fnt)
 
-    iext,lext=lout.get_pixel_extents()
-    w=lext[2]-lext[0]
+    # this is a bit kludgy, but empirically we end up with too much
+    # vertical padding if we use the text box with super and subscripts
+    # for the measurement. 
+    iext,lext=measureLout.get_pixel_extents()
+    iext2,lext2=lout.get_pixel_extents()
+    w=lext2[2]-lext2[0]
     h=lext[3]-lext[1]
-    #bw,bh=w*1.8,h*1.4
-    if orientation=='W':
-      dPos = pos[0]-w,pos[1]-h/2.
-    elif orientation=='E':
-      dPos = pos[0]-w/2,pos[1]-h/2.
+    pad = [h*.2,h*.3]
+    # another empirical correction: labels draw at the bottom
+    # of bonds have too much vertical padding
+    if orientation=='S':
+      pad[1] *= 0.5
+    bw,bh=w+pad[0],h+pad[1]
+    offset = w*pos[2]
+    if 0:
+      if orientation=='W':
+        dPos = pos[0]-w+offset,pos[1]-h/2.
+      elif orientation=='E':
+        dPos = pos[0]-w/2+offset,pos[1]-h/2.
+      else:
+        dPos = pos[0]-w/2+offset,pos[1]-h/2.
+      self.ctx.move_to(dPos[0],dPos[1])
     else:
-      dPos = pos[0]-w/2,pos[1]-h/2.
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    self.ctx.set_source_rgb(*bgColor)
-    self.ctx.rectangle(dPos[0],dPos[1],w,h)
-    self.ctx.fill()
-    self.ctx.move_to(dPos[0],dPos[1])
-
+      dPos = pos[0]-w/2.+offset,pos[1]-h/2.
+      self.ctx.move_to(dPos[0],dPos[1])
+      
     self.ctx.set_source_rgb(*color)
     cctx.update_layout(lout)
     cctx.show_layout(lout)
+
+    if 0:
+      self.ctx.move_to(dPos[0],dPos[1])
+      self.ctx.line_to(dPos[0]+bw,dPos[1])
+      self.ctx.line_to(dPos[0]+bw,dPos[1]+bh)
+      self.ctx.line_to(dPos[0],dPos[1]+bh)
+      self.ctx.line_to(dPos[0],dPos[1])
+      self.ctx.close_path()
+      self.ctx.stroke()
     
+
+    return (bw,bh,offset)
 
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
     if pango is not None and pangocairo is not None:
-      self._addCanvasText2(text,pos,font,color,**kwargs)
+      textSize = self._addCanvasText2(text,pos,font,color,**kwargs)
     else:
-      self._addCanvasText1(text,pos,font,color,**kwargs)
+      textSize = self._addCanvasText1(text,pos,font,color,**kwargs)
+    return textSize
     
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
     if not fill and not stroke: return

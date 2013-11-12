@@ -158,14 +158,14 @@ namespace ForceFields {
         break;
       case 3:
         // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
-        cosNPhi = cosPhi*(cosPhi*cosPhi - 3*sinPhiSq);
+        cosNPhi = cosPhi*(cosPhi*cosPhi - 3.*sinPhiSq);
         break;
       case 6:
         // cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
-        cosNPhi = 1 + sinPhiSq*(-32*sinPhiSq*sinPhiSq + 48*sinPhiSq - 18);
+        cosNPhi = 1 + sinPhiSq*(-32.*sinPhiSq*sinPhiSq + 48.*sinPhiSq - 18.);
         break;
       }
-      double res=this->d_forceConstant/2.0 * (1 - this->d_cosTerm*cosNPhi);
+      double res=this->d_forceConstant/2.0 * (1. - this->d_cosTerm*cosNPhi);
       //std::cout << " torsion(" << this->d_at1Idx << "," << this->d_at2Idx << "," << this->d_at3Idx << "," << this->d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " -> " << res << std::endl;
       //if(this->d_at2Idx==5&&this->d_at3Idx==6) std::cerr << " torsion(" << this->d_at1Idx << "," << this->d_at2Idx << "," << this->d_at3Idx << "," << this->d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " -> " << res << std::endl;
       return res;

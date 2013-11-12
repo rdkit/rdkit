@@ -24,7 +24,13 @@
 
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <boost/foreach.hpp>
+
+
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
 
 using namespace RDKit;
 using namespace std;
@@ -551,11 +557,11 @@ void test8()
   //BOOST_LOG(rdInfoLog) << "6" << std::endl;
   m3 = MolOps::removeHs(*m2,true);
   CHECK_INVARIANT(m3->getNumAtoms()==5,"");
-  delete m2;
+
   //BOOST_LOG(rdInfoLog) << "7" << std::endl;
   // remove all after removing only implicit
-  m2 = MolOps::removeHs(*m3,false);
-  CHECK_INVARIANT(m2->getNumAtoms()==4,"");
+  MolOps::removeHs(static_cast<RWMol &>(*m3),false);
+  CHECK_INVARIANT(m3->getNumAtoms()==4,"");
 
   // this test is also done in the same order in the python tests:
   delete m;
@@ -1949,6 +1955,35 @@ void testSanitOps()
   TEST_ASSERT(m->getNumAtoms()==51);
   TEST_ASSERT(m->getAtomWithIdx(7)->getFormalCharge()==3);
   delete m;
+
+  smi = "CN=N#N";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge()==1);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge()==-1);
+  TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondType()==Bond::DOUBLE);
+  delete m;
+
+  smi = "N#N=NC";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge()==0);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::DOUBLE);
+  delete m;
+
+  smi = "N#N";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==2);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::TRIPLE);
+  delete m;
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -2480,7 +2515,7 @@ void testSFIssue1894348()
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0]==0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1]==4);
-  m2=static_cast<RWMol *>(MolOps::removeHs(*m));
+  m2=static_cast<RWMol *>(MolOps::removeHs(static_cast<const ROMol &>(*m)));
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0]==0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1]==4);
@@ -2496,7 +2531,7 @@ void testSFIssue1894348()
   TEST_ASSERT(m);
   MolOps::sanitizeMol(*m);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==0);
-  m2=static_cast<RWMol *>(MolOps::removeHs(*m));
+  m2=static_cast<RWMol *>(MolOps::removeHs(static_cast<const ROMol &>(*m)));
   // if we don't assign stereocodes in the original we shouldn't have them here:
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms().size()==0);
   delete m;
@@ -3116,7 +3151,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3134,7 +3169,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3150,7 +3185,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3985,7 +4020,7 @@ void testSFNetIssue3549146() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
+    ROMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==16);
     ROMol *m2 = MolOps::mergeQueryHs(*m);
@@ -4325,6 +4360,66 @@ void testGitHubIssue72()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace{
+  void _renumberTest(const ROMol *m){
+    PRECONDITION(m,"no molecule");
+    std::vector<unsigned int> idxV(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
+
+    std::string refSmi=MolToSmiles(*m,true);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::vector<unsigned int> nVect(idxV);
+      std::random_shuffle(nVect.begin(),nVect.end());
+      //std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
+      //std::cerr<<std::endl;
+
+      ROMol *nm=MolOps::renumberAtoms(*m,nVect);
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
+      TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+      std::string nSmi=MolToSmiles(*nm,true);
+      TEST_ASSERT(nSmi==refSmi);
+      delete nm;
+    }
+  }
+}
+void testRenumberAtoms()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms" << std::endl;
+  {
+    std::string smiles="C[C@H]1C[C@H](F)C1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  {
+    std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+void testGithubIssue141()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 141: Kekulization of molecule with aromatic N leaves the explicit H there." << std::endl;
+  {
+    std::string smiles="N1C=CC=C1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolOps::Kekulize(*m,true);
+    m->updatePropertyCache(true);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic())
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1)
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==0)
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4373,6 +4468,7 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
+#endif
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
   testSFNetIssue3349243();
@@ -4391,6 +4487,8 @@ int main(){
 #endif
   testBareHs();
   testGitHubIssue72();
+  testRenumberAtoms();
+  testGithubIssue141();
 
   return 0;
 }
