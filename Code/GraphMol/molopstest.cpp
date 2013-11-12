@@ -2546,7 +2546,7 @@ void testAromaticityEdges()
   RWMol *m;
 
   std::string smi;
-
+#if 1
   // ------
   // this was sf.net bug 1934360
   smi = "C1=C=NC=N1";
@@ -2651,6 +2651,25 @@ void testAromaticityEdges()
   TEST_ASSERT(m);
   TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic());
   TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getIsAromatic());
+  delete m;
+#endif
+  
+  // ------
+  // Caused problems from InChI
+  smi = "C[N]C1=CC=NC=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==8);
+  TEST_ASSERT(m->getAtomWithIdx(5)->getNumRadicalElectrons()==0);
+  TEST_ASSERT(m->getAtomWithIdx(5)->getIsAromatic());
+  delete m;
+
+  smi = "CN=C1C=C[N]C=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==8);
+  TEST_ASSERT(m->getAtomWithIdx(5)->getNumRadicalElectrons()==1);
+  TEST_ASSERT(!m->getAtomWithIdx(5)->getIsAromatic());
   delete m;
 
 
@@ -4468,7 +4487,6 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
-#endif
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
   testSFNetIssue3349243();
@@ -4483,12 +4501,12 @@ int main(){
   testGitHubIssue42();
   testGitHubIssue65();
   testSFNetIssue2952255();
-  testAromaticityEdges();
-#endif
   testBareHs();
   testGitHubIssue72();
   testRenumberAtoms();
   testGithubIssue141();
+#endif
+  testAromaticityEdges();
 
   return 0;
 }

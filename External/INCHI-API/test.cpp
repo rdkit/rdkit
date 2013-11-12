@@ -226,16 +226,48 @@ void testGithubIssue68(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testMiscValenceProblems(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing miscellaneous valence problems" << std::endl;
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/Ga/q+3";
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==3);
+    
+    delete m;
+  }
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/C6H7N2/c1-7-6-2-4-8-5-3-6/h2-5H,1H3";
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getAtomWithIdx(7)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(!m->getAtomWithIdx(7)->getIsAromatic());
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main(){
   RDLog::InitLogs();
+#if 1
   testMultiThread();
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
   testGithubIssue67();
   testGithubIssue68();
+#endif
+  testMiscValenceProblems();
+
 }

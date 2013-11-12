@@ -208,7 +208,7 @@ int Atom::calcExplicitValence(bool strict) {
   // check accum is greater than the default valence
   int chr = getFormalCharge();
   if(d_atomicNum>1){
-    unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum-chr);
+    int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum-chr);
     if (accum > dv && this->getIsAromatic()){
       // this needs some explanation : if the atom is aromatic and
       // accum > (dv + chr) we assume that no hydrogen can be added
@@ -398,14 +398,19 @@ int Atom::calcImplicitValence(bool strict) {
   else {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
-    res = -1;
     const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chg);
-    for (INT_VECT_CI vi = valens.begin();
-	 vi != valens.end() && *vi>=0; ++vi) {
-      int tot = (*vi);
-      if (explicitPlusRadV <= tot) {
-        res = tot - explicitPlusRadV;
-        break;
+    if(valens.size()==1 && valens[0]==-1){
+      // no default valence, set res to zero
+      res = 0;
+    } else {
+      res = -1;
+      for (INT_VECT_CI vi = valens.begin();
+           vi != valens.end() && *vi>=0; ++vi) {
+        int tot = (*vi);
+        if (explicitPlusRadV <= tot) {
+          res = tot - explicitPlusRadV;
+          break;
+        }
       }
     }
     if (res < 0) {
@@ -415,7 +420,7 @@ int Atom::calcImplicitValence(bool strict) {
         std::ostringstream errout;
         errout << "Explicit valence for atom # " << getIdx() 
                << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
-               << " greater than permitted";
+               << ", " << res <<", greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
         throw MolSanitizeException(msg);

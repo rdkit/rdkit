@@ -224,7 +224,7 @@ class TestCase(unittest.TestCase):
                                 )
                             )
                 except:
-                    print '>>> mol failed:',midx,MolToSmiles(m,True),x
+                    print '>>> mol(%d), cid(%s) failed:'%(midx,cid),MolToSmiles(m,True),x
                     y = ''
                 if y == '':
                     # metal involved?
@@ -295,8 +295,8 @@ class TestCase(unittest.TestCase):
                     same += 1
             print green + "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (same, diff, reasonable) + reset
             self.assertEqual(same, 544)
-            self.assertEqual(diff, 1)
-            self.assertEqual(reasonable, 636)
+            self.assertEqual(diff, 0)
+            self.assertEqual(reasonable, 637)
 
     def test2InchiOptions(self):
         m = MolFromSmiles("CC=C(N)C")

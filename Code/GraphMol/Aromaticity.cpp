@@ -546,13 +546,14 @@ namespace {
           nelec--;
         }
       }
-      if (nelec%2 == 1) {
+      if (nelec%2 == 1 || at->getNumRadicalElectrons()==1) {
         res = OneElectronDonorType;
       }
       else {
         res = TwoElectronDonorType;
       }
     }
+    //std::cerr<<"  "<<at->getIdx()<<" "<<at->getAtomicNum()<<" "<<res<<std::endl;;
     return(res);
   }
 }// end of local utility namespace
