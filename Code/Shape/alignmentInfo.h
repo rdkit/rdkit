@@ -41,15 +41,14 @@ Shape-it is linked against OpenBabel version 2.
 #include <Shape/siMath.h>
 
 
-class AlignmentInfo
-{
-	public:
-   
-		double          overlap;           ///< volume overlap of the atom gaussians
-		SiMath::Vector  rotor;             ///< optimal rotation
-      
-		AlignmentInfo(void);
-		~AlignmentInfo(void);
+class AlignmentInfo {
+  public:
+
+    double overlap;		///< volume overlap of the atom gaussians
+     SiMath::Vector rotor;	///< optimal rotation
+
+     AlignmentInfo(void);
+    ~AlignmentInfo(void);
 };
 
 

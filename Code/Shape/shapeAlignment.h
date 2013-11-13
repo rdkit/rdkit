@@ -47,38 +47,37 @@ Shape-it is linked against OpenBabel version 2.
 
 
 
-typedef std::map<unsigned int, double *> MatrixMap;
-typedef std::map<unsigned int, double *>::iterator MatIter;
-	
-   
-   
-class ShapeAlignment 
-{
-   private:
-      
-      GaussianVolume * _gRef;
-      GaussianVolume * _gDb;
-				
-      unsigned int _rAtoms;
-      unsigned int _rGauss;
-      unsigned int _dAtoms;
-      unsigned int _dGauss;
-      unsigned int _maxSize;
-      unsigned int _maxIter;
-			
-      MatrixMap _matrixMap;
-		
-      double* _updateMatrixMap(AtomGaussian&, AtomGaussian&);
-			
-   public:
-      
-      ShapeAlignment(GaussianVolume&, GaussianVolume&);
-      ~ShapeAlignment(void);
-			
-      AlignmentInfo gradientAscent(SiMath::Vector);
-      AlignmentInfo simulatedAnnealing(SiMath::Vector);
-			
-      void setMaxIterations(unsigned int);
+typedef std::map < unsigned int, double *>MatrixMap;
+typedef std::map < unsigned int, double *>::iterator MatIter;
+
+
+
+class ShapeAlignment {
+  private:
+
+    GaussianVolume * _gRef;
+    GaussianVolume *_gDb;
+
+    unsigned int _rAtoms;
+    unsigned int _rGauss;
+    unsigned int _dAtoms;
+    unsigned int _dGauss;
+    unsigned int _maxSize;
+    unsigned int _maxIter;
+
+    MatrixMap _matrixMap;
+
+    double *_updateMatrixMap(AtomGaussian &, AtomGaussian &);
+
+  public:
+
+    ShapeAlignment(GaussianVolume &, GaussianVolume &);
+    ~ShapeAlignment(void);
+
+    AlignmentInfo gradientAscent(SiMath::Vector);
+    AlignmentInfo simulatedAnnealing(SiMath::Vector);
+
+    void setMaxIterations(unsigned int);
 };
 
 

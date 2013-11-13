@@ -34,62 +34,51 @@ Shape-it is linked against OpenBabel version 2.
 
 BestResults::BestResults(unsigned int n)
 {
-   _bestList.clear();
-   _size = n;
-   _lowest = 0.0;
-   _filled = 0;
+    _bestList.clear();
+    _size = n;
+    _lowest = 0.0;
+    _filled = 0;
 }
 
 
 
 BestResults::~BestResults(void)
 {
-	std::vector<SolutionInfo*>::iterator it;
-	for (it = _bestList.begin(); it != _bestList.end(); ++it)
-	{
-		if (*it != NULL)
-      {
-			delete *it;
-         *it = NULL;
-		}
+    std::vector < SolutionInfo * >::iterator it;
+    for (it = _bestList.begin(); it != _bestList.end(); ++it) {
+	if (*it != NULL) {
+	    delete *it;
+	    *it = NULL;
 	}
+    }
 }
 
 
 
-bool
-BestResults::add(SolutionInfo& res)
+bool BestResults::add(SolutionInfo & res)
 {
-	std::vector<SolutionInfo* >::reverse_iterator it;
-	if (_filled < _size)
-	{
-		SolutionInfo* i = new SolutionInfo(res);
-		_bestList.push_back(i);
-		++_filled;
-	}
-	else if (res.score < _lowest)
-	{
-		return false;
-	}
-	else
-	{
-		// delete last element
-		it = _bestList.rbegin();
-		if (*it != NULL)
-      {
-			delete *it;
-         *it = NULL;
-      }
-		
-		// make new info element in the list
-		*it = new SolutionInfo(res);
-	}
-		
-	std::sort(_bestList.begin(), _bestList.end(), BestResults::_compInfo());
+    std::vector < SolutionInfo * >::reverse_iterator it;
+    if (_filled < _size) {
+	SolutionInfo *i = new SolutionInfo(res);
+	_bestList.push_back(i);
+	++_filled;
+    } else if (res.score < _lowest) {
+	return false;
+    } else {
+	// delete last element
 	it = _bestList.rbegin();
-	_lowest = (*it)->score;
-	
-	return true;
+	if (*it != NULL) {
+	    delete *it;
+	    *it = NULL;
+	}
+	// make new info element in the list
+	*it = new SolutionInfo(res);
+    }
+
+    std::sort(_bestList.begin(), _bestList.end(),
+	      BestResults::_compInfo());
+    it = _bestList.rbegin();
+    _lowest = (*it)->score;
+
+    return true;
 }
-
-

@@ -42,21 +42,20 @@ Shape-it is linked against OpenBabel version 2.
 
 
 
-class Coordinate
-{
-   public:
-   
-      double		x;
-      double		y;
-      double		z;
-   
-      Coordinate(void);
-      Coordinate(double, double, double);
+class Coordinate {
+  public:
+
+    double x;
+    double y;
+    double z;
+
+     Coordinate(void);
+     Coordinate(double, double, double);
 };
 
 
 
-std::ostream& operator<< (std::ostream&, const Coordinate&);
+std::ostream & operator<<(std::ostream &, const Coordinate &);
 
 
 

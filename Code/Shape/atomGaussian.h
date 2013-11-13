@@ -44,23 +44,22 @@ Shape-it is linked against OpenBabel version 2.
 
 
 
-class AtomGaussian
-{
-   public:
-   
-		Coordinate center;         ///< center of the gaussian
-		double alpha;              ///< alpha parameter of the gaussian representation
-		double volume;             ///< self-volume of the gaussian
-		double C;                  ///< constant from gaussian g(r) = C.exp(-alpha(center -r )^2)
-		unsigned int nbr;          ///< nbr of atoms that make up this overlap
+class AtomGaussian {
+  public:
 
-      AtomGaussian(void);
-      ~AtomGaussian(void);
+    Coordinate center;		///< center of the gaussian
+    double alpha;		///< alpha parameter of the gaussian representation
+    double volume;		///< self-volume of the gaussian
+    double C;			///< constant from gaussian g(r) = C.exp(-alpha(center -r )^2)
+    unsigned int nbr;		///< nbr of atoms that make up this overlap
+
+     AtomGaussian(void);
+    ~AtomGaussian(void);
 };
 
 
 
-AtomGaussian atomIntersection(AtomGaussian&, AtomGaussian&);
+AtomGaussian atomIntersection(AtomGaussian &, AtomGaussian &);
 
 
 

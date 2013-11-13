@@ -33,51 +33,57 @@ Shape-it is linked against OpenBabel version 2.
 
 
 SolutionInfo::SolutionInfo(void)
-: refName("")
+:refName("")
 , refAtomVolume(0.0)
-, refCenter(0,0,0)
-, refRotation(3,3,0)
+, refCenter(0, 0, 0)
+, refRotation(3, 3, 0)
 , dbName("")
 , dbAtomVolume(0.0)
 , dbMol()
-, dbCenter(0,0,0)
-, dbRotation(3,3,0)
+, dbCenter(0, 0, 0)
+, dbRotation(3, 3, 0)
 , atomOverlap(0.0)
 , score(0.0)
-, rotor(4,0.0)
+, rotor(4, 0.0)
 {
-   rotor[0] = 1.0;
+    rotor[0] = 1.0;
 }
 
 
-		
+
 SolutionInfo::~SolutionInfo(void)
 {
 }
 
 
 void
-updateSolutionInfo(SolutionInfo& s, AlignmentInfo& res, double score, GaussianVolume& gv)
+updateSolutionInfo(SolutionInfo & s, AlignmentInfo & res, double score,
+		   GaussianVolume & gv)
 {
-	s.dbAtomVolume = gv.overlap;
-	s.dbCenter = gv.centroid;
-	s.dbRotation = gv.rotation;
-	s.atomOverlap = res.overlap;
-	s.score = score;
-	s.rotor = res.rotor;
-	return;
+    s.dbAtomVolume = gv.overlap;
+    s.dbCenter = gv.centroid;
+    s.dbRotation = gv.rotation;
+    s.atomOverlap = res.overlap;
+    s.score = score;
+    s.rotor = res.rotor;
+    return;
 }
 
 
 
-void
-setAllScores(SolutionInfo& res)
+void setAllScores(SolutionInfo & res)
 {
     RDKit::ROMol dbMol = *res.dbMol;
-    
-    dbMol.setProp(tanimoto, res.atomOverlap / (res.refAtomVolume + res.dbAtomVolume - res.atomOverlap));
-    dbMol.setProp(tversky_ref, res.atomOverlap / (0.95*res.refAtomVolume + 0.05*res.dbAtomVolume));
-    dbMol.setProp(tversky_db, res.atomOverlap / (0.05*res.refAtomVolume + 0.95*res.dbAtomVolume));
-    
+
+    dbMol.setProp(tanimoto,
+		  res.atomOverlap / (res.refAtomVolume + res.dbAtomVolume -
+				     res.atomOverlap));
+    dbMol.setProp(tversky_ref,
+		  res.atomOverlap / (0.95 * res.refAtomVolume +
+				     0.05 * res.dbAtomVolume));
+    dbMol.setProp(tversky_db,
+		  res.atomOverlap / (0.05 * res.refAtomVolume +
+				     0.95 * res.dbAtomVolume));
+
     return;
 }

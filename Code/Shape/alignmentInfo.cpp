@@ -33,15 +33,14 @@ Shape-it is linked against OpenBabel version 2.
 
 
 AlignmentInfo::AlignmentInfo(void)
-: overlap(0.0)
+:overlap(0.0)
 , rotor(4, 0.0)
 {
-   rotor[0] = 1.0;
+    rotor[0] = 1.0;
 }
 
 
-		
+
 AlignmentInfo::~AlignmentInfo(void)
 {
 }
-

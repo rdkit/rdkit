@@ -48,38 +48,38 @@ Shape-it is linked against OpenBabel version 2.
 #include <Shape/alignmentInfo.h>
 #include <Shape/gaussianVolume.h>
 
-const std::string tanimoto = "Tanimoto"; 
-const std::string tversky_ref = "Tversky_Ref"; 
-const std::string tversky_db = "Tversky_Db"; 
+const std::string tanimoto = "Tanimoto";
+const std::string tversky_ref = "Tversky_Ref";
+const std::string tversky_db = "Tversky_Db";
 
-class SolutionInfo
-{
-   public:
-   
-      std::string       refName;
-      double            refAtomVolume;
-      Coordinate        refCenter;
-      SiMath::Matrix    refRotation;
-		
-      RDKit::ROMol*     dbMol;
-      std::string       dbName;
-      double            dbAtomVolume;
-      Coordinate        dbCenter;
-      SiMath::Matrix    dbRotation;
-		
-      double            atomOverlap;
-      double            score;
-      SiMath::Vector    rotor;
-		
-      SolutionInfo(void);
-      ~SolutionInfo(void);
-      
+class SolutionInfo {
+  public:
+
+    std::string refName;
+    double refAtomVolume;
+    Coordinate refCenter;
+    SiMath::Matrix refRotation;
+
+    RDKit::ROMol * dbMol;
+    std::string dbName;
+    double dbAtomVolume;
+    Coordinate dbCenter;
+    SiMath::Matrix dbRotation;
+
+    double atomOverlap;
+    double score;
+    SiMath::Vector rotor;
+
+    SolutionInfo(void);
+    ~SolutionInfo(void);
+
 };
 
 
 
-void setAllScores(SolutionInfo&);
-void updateSolutionInfo(SolutionInfo&, AlignmentInfo&, double, GaussianVolume&);
+void setAllScores(SolutionInfo &);
+void updateSolutionInfo(SolutionInfo &, AlignmentInfo &, double,
+			GaussianVolume &);
 
 
 

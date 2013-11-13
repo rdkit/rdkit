@@ -60,34 +60,33 @@ const double VCUTOFF = 2.0;
 const unsigned int LEVEL = 6;
 const double EPS = 0.03;
 const double GRADSCALE = 0.9;
-const double PENALTY = 5.00;	
+const double PENALTY = 5.00;
 
 
 
-class GaussianVolume
-{
-   public:
-   
-		double                     volume;       ///< Molecular volume
-		double                     overlap;      ///< Self-overlap of the molecule
-		Coordinate                 centroid;     ///< center of the gaussian volume
-		SiMath::Matrix					rotation;     ///< rotation matrix to align molecule to principal axes
-		std::vector<AtomGaussian>  gaussians;    ///< vector of all atom gaussians and their overlaps
-		std::vector<std::vector<unsigned int> * > childOverlaps;   ///< vector to keep track of which overlaps are formed with one gaussian
-		std::vector<unsigned int>  levels;                         ///< indicates where in the vector the level of overlaps changes
-			
-		GaussianVolume(void);
-      ~GaussianVolume(void);
+class GaussianVolume {
+  public:
+
+    double volume;		///< Molecular volume
+    double overlap;		///< Self-overlap of the molecule
+    Coordinate centroid;	///< center of the gaussian volume
+     SiMath::Matrix rotation;	///< rotation matrix to align molecule to principal axes
+     std::vector < AtomGaussian > gaussians;	///< vector of all atom gaussians and their overlaps
+     std::vector < std::vector < unsigned int >*>childOverlaps;	///< vector to keep track of which overlaps are formed with one gaussian
+     std::vector < unsigned int >levels;	///< indicates where in the vector the level of overlaps changes
+
+     GaussianVolume(void);
+    ~GaussianVolume(void);
 };
 
 
 
-void listAtomVolumes(RDKit::ROMol& mol, GaussianVolume& gv);
-void initOrientation(GaussianVolume&);
-double atomOverlap(GaussianVolume&, GaussianVolume&);
-double GAlpha(unsigned int); 
-double getScore(std::string&, double, double, double);
-void checkVolumes(GaussianVolume&, GaussianVolume&, AlignmentInfo&);
+void listAtomVolumes(RDKit::ROMol & mol, GaussianVolume & gv);
+void initOrientation(GaussianVolume &);
+double atomOverlap(GaussianVolume &, GaussianVolume &);
+double GAlpha(unsigned int);
+double getScore(std::string &, double, double, double);
+void checkVolumes(GaussianVolume &, GaussianVolume &, AlignmentInfo &);
 
 
 

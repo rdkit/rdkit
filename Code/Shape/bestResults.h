@@ -47,32 +47,29 @@ Shape-it is linked against OpenBabel version 2.
 
 
 
-class BestResults
-{
-   private:
-   
-      std::vector<SolutionInfo *>   _bestList;   ///< Local list to best N solutions
-			
-      double                        _lowest;     ///< lowest score in the list
-      unsigned int                  _size;       ///< total number of elements to be stored in the list
-      unsigned int                  _filled;     ///< number of elements stored in the list sofar
-			
-      class _compInfo
-      {
-         public:
-         
-				bool operator()(const SolutionInfo* a, const SolutionInfo* b)
-            {
-						return a->score > b->score;
-            };
-      };
-			
-   public:
-      
-      BestResults(unsigned int n = 100);
-      ~BestResults(void);
-			
-      bool add(SolutionInfo& res);
+class BestResults {
+  private:
+
+    std::vector < SolutionInfo * >_bestList;	///< Local list to best N solutions
+
+    double _lowest;		///< lowest score in the list
+    unsigned int _size;		///< total number of elements to be stored in the list
+    unsigned int _filled;	///< number of elements stored in the list sofar
+
+    class _compInfo {
+      public:
+
+	bool operator() (const SolutionInfo * a, const SolutionInfo * b) {
+	    return a->score > b->score;
+	};
+    };
+
+  public:
+
+    BestResults(unsigned int n = 100);
+    ~BestResults(void);
+
+    bool add(SolutionInfo & res);
 };
 
 

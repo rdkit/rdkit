@@ -19,4 +19,6 @@
 #include <Shape/shapeAlignment.h>
 #include <Shape/moleculeRotation.h>
 
-SolutionInfo shape(RDKit::ROMol& refMol, RDKit::ROMol& dbMol, unsigned int nBestHits, bool scoreOnly, unsigned int maxIter, std::string whichScore);
+SolutionInfo shape(RDKit::ROMol & refMol, RDKit::ROMol & dbMol,
+		   unsigned int nBestHits, bool scoreOnly,
+		   unsigned int maxIter, std::string whichScore);

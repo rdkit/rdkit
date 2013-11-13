@@ -31,28 +31,21 @@ Shape-it is linked against OpenBabel version 2.
 #include <Shape/coordinate.h>
 
 
-		
-Coordinate::Coordinate(void):
-   x(0.0),
-   y(0.0),
-   z(0.0)
+
+Coordinate::Coordinate(void):x(0.0), y(0.0), z(0.0)
 {
 }
 
 
-         
-Coordinate::Coordinate(double x, double y, double z):
-   x(x),
-   y(y),
-   z(z)
+
+Coordinate::Coordinate(double x, double y, double z):x(x), y(y), z(z)
 {
 };
 
 
 
-std::ostream&
-operator<< (std::ostream& os, const Coordinate& A)
+std::ostream & operator<<(std::ostream & os, const Coordinate & A)
 {
-	os << "(" << A.x << "," << A.y << "," << A.z << ")";
-	return os;
+    os << "(" << A.x << "," << A.y << "," << A.z << ")";
+    return os;
 };
