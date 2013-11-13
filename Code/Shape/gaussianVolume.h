@@ -47,7 +47,7 @@ Shape-it is linked against OpenBabel version 2.
 
 // Shape-it
 #include <Shape/siMath.h>
-#include <Shape/coordinate.h>
+#include <Geometry/point.h>
 #include <Shape/atomGaussian.h>
 #include <Shape/alignmentInfo.h>
 
@@ -66,10 +66,9 @@ const double PENALTY = 5.00;
 
 class GaussianVolume {
   public:
-
     double volume;		///< Molecular volume
     double overlap;		///< Self-overlap of the molecule
-    Coordinate centroid;	///< center of the gaussian volume
+    RDGeom::Point3D centroid;	///< center of the gaussian volume
      SiMath::Matrix rotation;	///< rotation matrix to align molecule to principal axes
      std::vector < AtomGaussian > gaussians;	///< vector of all atom gaussians and their overlaps
      std::vector < std::vector < unsigned int >*>childOverlaps;	///< vector to keep track of which overlaps are formed with one gaussian

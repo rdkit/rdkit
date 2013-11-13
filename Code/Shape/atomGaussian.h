@@ -39,7 +39,7 @@ Shape-it is linked against OpenBabel version 2.
 // OpenBabel
 
 // Shape-it
-#include <Shape/coordinate.h>
+#include <Geometry/point.h>
 #include <Shape/siMath.h>
 
 
@@ -47,7 +47,7 @@ Shape-it is linked against OpenBabel version 2.
 class AtomGaussian {
   public:
 
-    Coordinate center;		///< center of the gaussian
+  RDGeom::Point3D center;		///< center of the gaussian
     double alpha;		///< alpha parameter of the gaussian representation
     double volume;		///< self-volume of the gaussian
     double C;			///< constant from gaussian g(r) = C.exp(-alpha(center -r )^2)

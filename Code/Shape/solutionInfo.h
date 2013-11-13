@@ -41,9 +41,9 @@ Shape-it is linked against OpenBabel version 2.
 
 // RDKit
 #include <GraphMol/RWMol.h>
+#include <Geometry/point.h>
 
 // Shape-it
-#include <Shape/coordinate.h>
 #include <Shape/siMath.h>
 #include <Shape/alignmentInfo.h>
 #include <Shape/gaussianVolume.h>
@@ -57,13 +57,13 @@ class SolutionInfo {
 
     std::string refName;
     double refAtomVolume;
-    Coordinate refCenter;
+  RDGeom::Point3D refCenter;
     SiMath::Matrix refRotation;
 
     RDKit::ROMol * dbMol;
     std::string dbName;
     double dbAtomVolume;
-    Coordinate dbCenter;
+  RDGeom::Point3D dbCenter;
     SiMath::Matrix dbRotation;
 
     double atomOverlap;

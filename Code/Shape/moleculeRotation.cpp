@@ -33,7 +33,7 @@ Shape-it is linked against OpenBabel version 2.
 
 
 void
-positionMolecule(RDKit::ROMol & m, Coordinate & centroid,
+positionMolecule(RDKit::ROMol & m, RDGeom::Point3D & centroid,
 		 SiMath::Matrix & rotation)
 {
     RDKit::ROMol::AtomIterator ai;
@@ -63,7 +63,7 @@ positionMolecule(RDKit::ROMol & m, Coordinate & centroid,
 
 void
 repositionMolecule(RDKit::ROMol & m, SiMath::Matrix & rotation,
-		   Coordinate & centroid)
+		   RDGeom::Point3D & centroid)
 {
     RDKit::ROMol::AtomIterator ai;
     RDKit::Conformer conf = m.getConformer(0);

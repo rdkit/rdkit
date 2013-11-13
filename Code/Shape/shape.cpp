@@ -151,7 +151,6 @@ SolutionInfo shape(RDKit::ROMol & refMol, RDKit::ROMol & dbMol,
 	setAllScores(bestSolution);
 
 	if (!scoreOnly) {
-
 	    // Translate and rotate the molecule towards its centroid and inertia axes
 	    positionMolecule(*bestSolution.dbMol, bestSolution.dbCenter,
 			     bestSolution.dbRotation);

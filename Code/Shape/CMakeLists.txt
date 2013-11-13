@@ -5,7 +5,6 @@ rdkit_library(Shape
               shapeAlignment.cpp  
               solutionInfo.cpp
               atomGaussian.cpp   
-              coordinate.cpp   
               moleculeRotation.cpp  
               siMath.cpp
               shape.cpp
@@ -16,7 +15,6 @@ rdkit_headers(alignmentInfo.h
               atomGaussian.h 
               bestResults.h 
               config.h 
-              coordinate.h 
               gaussianVolume.h 
               moleculeRotation.h 
               shapeAlignment.h 

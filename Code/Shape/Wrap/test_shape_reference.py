@@ -5,7 +5,7 @@ import rdkit.Chem.rdShape
 #print rdkit.Chem.rdShape.Align.__doc__
 from rdkit import Chem
 from rdkit import RDConfig
-import unittest, os
+import unittest, os,time
 
 class TestCase(unittest.TestCase) :
     def test_shape_reference(self):
@@ -23,7 +23,10 @@ class TestCase(unittest.TestCase) :
         self.failUnlessAlmostEqual(score,1.0,1)
         
         supp = Chem.SDMolSupplier(f2)
+        t1=time.time()
         tanimoto = [rdkit.Chem.rdShape.Align(mol1, m, maxIter=0) for m in supp]
+        t2=time.time()
+        print "Alignment time: %.2f"%(t2-t1)
         
         df1 = [x.strip().split('\t') for x in file(d1).readlines()]
         taniCol = df1[0].index('Shape-it::Tanimoto')

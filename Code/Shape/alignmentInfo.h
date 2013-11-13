@@ -37,7 +37,6 @@ Shape-it is linked against OpenBabel version 2.
 #include <string>
 
 // Shape-it
-#include <Shape/coordinate.h>
 #include <Shape/siMath.h>
 
 
