@@ -156,7 +156,7 @@ class Canvas(CanvasBase):
     self.ctx.select_font_face(font.face,
                                 cairo.FONT_SLANT_NORMAL,
                                 weight)
-    text = scriptPattern.sub(r'\<.+?\>','',text)
+    text = scriptPattern.sub('',text)
     self.ctx.set_font_size(font.size)
     w,h=self.ctx.text_extents(text)[2:4]
     bw,bh=w+h*0.4,h*1.4
