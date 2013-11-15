@@ -153,7 +153,7 @@ namespace RDKit{
       }
     }
     if(!mol.getRingInfo()->isInitialized()){
-      MolOps::findSSSR(mol);
+      MolOps::fastFindRings(mol);
     }
 
     boost::dynamic_bitset<> isQueryAtom(mol.getNumAtoms()),isQueryBond(mol.getNumBonds());
@@ -161,7 +161,10 @@ namespace RDKit{
     boost::tie(firstA,lastA) = mol.getVertices();  
     while(firstA!=lastA){
       const Atom *at=mol[*firstA].get();
-      if(Fingerprints::detail::isComplexQuery(at)) isQueryAtom.set(at->getIdx());
+      if(Fingerprints::detail::isComplexQuery(at)){
+        isQueryAtom.set(at->getIdx());
+        //std::cerr<<"   complex atom: "<<at->getIdx()<<std::endl;
+      }
       ++firstA;
     }
     ROMol::EDGE_ITER firstB,lastB;
@@ -170,6 +173,7 @@ namespace RDKit{
       const Bond *bond = mol[*firstB].get();
       if( Fingerprints::detail::isComplexQuery(bond) ){
         isQueryBond.set(bond->getIdx());
+        //std::cerr<<"   complex bond: "<<bond->getIdx()<<std::endl;
       }
       ++firstB;
     }
