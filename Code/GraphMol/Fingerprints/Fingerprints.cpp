@@ -60,22 +60,40 @@ namespace RDKit{
       
         return true;
       }
+
+      bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query,bool &hasAtNum){
+        if(!query) return false;
+        if(query->getNegation()) return true;
+        std::string descr=query->getDescription();
+        //std::cerr<<" |"<<descr;
+        if(descr=="AtomAtomicNum"){
+          hasAtNum=true;
+          return false;
+        }
+        if(descr=="AtomOr" || descr=="AtomXor") return true;
+        if(descr=="AtomAnd"){
+          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=query->beginChildren();
+          while(childIt!=query->endChildren()){
+            if(_complexQueryHelper(childIt->get(),hasAtNum)) return true;
+            ++childIt;
+          }
+        }
+        return false;
+      }
       bool isComplexQuery(const Atom *a){
         if( !a->hasQuery()) return false;
+        //std::cerr<<"\n"<<a->getIdx();
         // negated things are always complex:
         if( a->getQuery()->getNegation()) return true;
         std::string descr=a->getQuery()->getDescription();
+        //std::cerr<<" "<<descr;
         if(descr=="AtomAtomicNum") return false;
         if(descr=="AtomOr" || descr=="AtomXor") return true;
         if(descr=="AtomAnd"){
-          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-          if( (*childIt)->getDescription()=="AtomAtomicNum" &&
-              ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
-               (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
-              (childIt+2)==a->getQuery()->endChildren()){
-            return false;
-          }
-          return true;
+          bool hasAtNum=false;
+          if(_complexQueryHelper(a->getQuery(),hasAtNum)) return true;
+          if(hasAtNum) return false;
+          else return true;
         }
       
         return true;

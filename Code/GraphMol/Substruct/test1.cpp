@@ -1003,7 +1003,7 @@ void testGitHubIssue15(){
     ROMol *query=SmartsToMol(qSmi);
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
-    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true,true);
     TEST_ASSERT(!matched);
   }
   {
@@ -1012,7 +1012,7 @@ void testGitHubIssue15(){
     ROMol *query=SmartsToMol(qSmi);
     ROMol *mol = SmartsToMol(mSmi);
     MatchVectType matchV;
-    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true,true);
     TEST_ASSERT(!matched);
   }
 

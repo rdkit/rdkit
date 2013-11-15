@@ -72,7 +72,7 @@ rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGener
 
 rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolMolOpsTest molopstest.cpp 
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)

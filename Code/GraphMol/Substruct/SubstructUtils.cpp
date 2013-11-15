@@ -16,11 +16,16 @@
 
 namespace RDKit{
 
-  bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
+  bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2,bool useQueryQueryMatches){
     PRECONDITION(a1,"bad atom");
     PRECONDITION(a2,"bad atom");
     //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
-    bool res = a1->Match(a2);
+    bool res;
+    if(useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()){
+      res = static_cast<QueryAtom *>(a1.get())->QueryMatch(static_cast<QueryAtom *>(a2.get()));
+    } else {
+      res = a1->Match(a2);
+    }
     return res;
   }
 

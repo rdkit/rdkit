@@ -12,6 +12,8 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <iostream>
 
 using namespace RDKit;
@@ -348,90 +350,90 @@ void testQueryQueryMatches(){
     QueryAtom a1,a2;
     a1.setQuery(makeAtomNullQuery());
     a2.setQuery(makeAtomNullQuery());
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1,a2(6);
     a1.setQuery(makeAtomNullQuery());
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(6);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1,a2;
     a1.setQuery(makeAtomAromaticQuery());
     a2.setQuery(makeAtomAromaticQuery());
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1,a2;
     a1.setQuery(makeAtomAromaticQuery());
     a2.setQuery(makeAtomAliphaticQuery());
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
     a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
     a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
     a1.expandQuery(makeAtomNumEqualsQuery(7),Queries::COMPOSITE_OR);
     a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(6);
     a1.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
     a2.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(6);
     a1.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
     a2.expandQuery(makeAtomExplicitValenceQuery(4),Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
     a1.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
     a2.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
     a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   // =====================================
@@ -533,6 +535,23 @@ void testIssue2892580(){
 }
 
 
+void testGithub153(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test github issue 53: query molecules not matching [R]" << std::endl;
+  RWMol *m=SmartsToMol("[C]1-[C]-[C]1");
+  MolOps::findSSSR(*m);
+
+  RWMol *q=SmartsToMol("[R]");
+
+  std::vector<MatchVectType> mvv;
+  TEST_ASSERT(SubstructMatch(*m,*q,mvv));
+  TEST_ASSERT(mvv.size()==3);
+  TEST_ASSERT(mvv[0].size()==1);
+  
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
+
+
 
 
 
@@ -546,7 +565,7 @@ int main(){
   test6();
   testQueryQueryMatches();
   testIssue2892580();
-
+  testGithub153();
 
   return 0;
 }
