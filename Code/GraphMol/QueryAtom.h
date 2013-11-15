@@ -69,6 +69,9 @@ namespace RDKit{
     bool Match(const Atom::ATOM_SPTR what) const;
     //! \overload
     bool Match(Atom const *what) const;
+    
+    //! returns true if our query details match those of QueryAtom \c what
+    bool QueryMatch(QueryAtom const *what) const;
 
   private:
     QUERYATOM_QUERY *dp_query;
