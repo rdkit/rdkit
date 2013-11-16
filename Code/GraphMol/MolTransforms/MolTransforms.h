@@ -36,7 +36,6 @@ namespace MolTransforms{
     \param ignoreHs If true, ignore hydrogen atoms
   */
   RDGeom::Point3D computeCentroid(const RDKit::Conformer &conf, bool ignoreHs=true);
-
   //! Compute the covariance matrix for a conformer
   /*!
     \param conf       Conformer of interest
@@ -48,7 +47,6 @@ namespace MolTransforms{
                                                        const RDGeom::Point3D &center,
                                                        bool normalize=false, 
                                                        bool ignoreHs=true);
-   
 
   //! Compute the transformation require to orient the conformation
   //! along the principal axes about the center; i.e. center is made to coincide with the

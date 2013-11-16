@@ -2,7 +2,7 @@ rdkit_python_extension(rdMolTransforms
                        rdMolTransforms.cpp
                        DEST Chem 
                        LINK_LIBRARIES MolTransforms 
-EigenSolvers 
+Alignment EigenSolvers 
 GraphMol DataStructs RDGeometryLib RDGeneral 
 RDBoost)
 

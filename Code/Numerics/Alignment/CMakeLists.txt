@@ -1,4 +1,4 @@
-rdkit_library(Alignment AlignPoints.cpp LINK_LIBRARIES RDGeometryLib)
+rdkit_library(Alignment AlignPoints.cpp LINK_LIBRARIES EigenSolvers RDGeometryLib)
 
 rdkit_headers(AlignPoints.h DEST Numerics/Alignment)
 

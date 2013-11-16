@@ -62,7 +62,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
 
   std::string docString = "Compute the centroid of the conformation - hydrogens are ignored and no attention\n\
                            if paid to the difference in sizes of the heavy atoms\n";
-  python::def("ComputeCentroid", MolTransforms::computeCentroid,
+  python::def("ComputeCentroid", (RDGeom::Point3D (*)(const RDKit::Conformer &,bool))MolTransforms::computeCentroid,
               (python::arg("conf"), python::arg("ignoreHs")=true),
               docString.c_str());
 

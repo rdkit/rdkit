@@ -11,6 +11,7 @@
 #define __RD_ALIGN_POINTS_H__
 
 #include <Geometry/point.h>
+#include <Numerics/SymmMatrix.h>
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
 
@@ -40,6 +41,16 @@ namespace RDNumeric {
                        const DoubleVector *weights=0, bool reflect=false, 
                        unsigned int maxIterations=50);
   }
+  RDGeom::Point3D computeCentroid(const std::vector<RDGeom::Point3D const *> &pts,
+                                  const std::vector<double> *wts=0);
+  RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(const std::vector<RDGeom::Point3D const *> &pts,
+                                                       const RDGeom::Point3D &center,
+                                                       bool normalize=false,
+                                                       const std::vector<double> *wts=0);
+  RDGeom::Transform3D *computeCanonicalTransform(const std::vector<RDGeom::Point3D const *> &pts,
+                                                 const RDGeom::Point3D *center=0,
+                                                 bool normalizeCovar=false,
+                                                 const std::vector<double> *wts=0);
 }
 
 #endif

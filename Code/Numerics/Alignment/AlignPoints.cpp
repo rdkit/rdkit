@@ -13,7 +13,8 @@
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
-
+#include <Numerics/EigenSolvers/PowerEigenSolver.h>
+#define EIGEN_TOLERANCE 1.0e-2
 #define TOLERANCE 1.e-6
 
 namespace RDNumeric {
@@ -349,6 +350,140 @@ namespace RDNumeric {
       trans.SetTranslation(move);
       return ssr;
     }
+  }
+  RDGeom::Point3D computeCentroid(const std::vector<RDGeom::Point3D const *> &pts,
+                                  const std::vector<double> *wts){
+    PRECONDITION(!wts || wts->size()>=pts.size(),"bad weight vector size");
+    RDGeom::Point3D res(0.0, 0.0, 0.0);
+    double totWeight=0.0;
+    for(unsigned int i=0;i<pts.size();++i){
+      double wt=1.0;
+      if(wts){
+        double wt=(*wts)[i];
+        res += *(pts[i])*wt;
+        totWeight+=wt;
+      } else {
+        res += *(pts[i]);
+        totWeight+=1.0;
+      }
+    }
+    res /= totWeight;
+    return res;
+  }
+  RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(const std::vector<RDGeom::Point3D const *> &pts,
+                                                       const RDGeom::Point3D &center,
+                                                       bool normalize,
+                                                       const std::vector<double> *wts){
+    PRECONDITION(!wts || wts->size()>=pts.size(),"bad weight vector size");
+    double xx, xy, xz, yy, yz, zz;
+    xx = xy = xz = yy = yz = zz = 0.0;
+    double totWeight=0.0;
+    for(unsigned int i=0;i<pts.size();++i){
+      RDGeom::Point3D loc = *(pts[i]);
+      double wt=1.0;
+      if(wts) wt=(*wts)[i];
+      loc -= center;
+      xx += wt*loc.x*loc.x;
+      xy += wt*loc.x*loc.y;
+      xz += wt*loc.x*loc.z;
+      yy += wt*loc.y*loc.y;
+      yz += wt*loc.y*loc.z;
+      zz += wt*loc.z*loc.z;
+      totWeight+=wt;
+    }
+    if (normalize) {
+      xx /= totWeight;
+      xy /= totWeight;
+      xz /= totWeight;
+      yy /= totWeight;
+      yz /= totWeight;
+      zz /= totWeight;
+    }
+    RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3,3);
+    res->setVal(0,0, xx);
+    res->setVal(0,1, xy);
+    res->setVal(0,2, xz);
+    res->setVal(1,1, yy);
+    res->setVal(1,2, yz);
+    res->setVal(2,2, zz);
+    return res;
+  }
+  RDGeom::Transform3D *computeCanonicalTransform(const std::vector<RDGeom::Point3D const *> &pts,
+                                                 const RDGeom::Point3D *center,
+                                                 bool normalizeCovar,
+                                                 const std::vector<double> *wts){
+    PRECONDITION(!wts || wts->size()>=pts.size(),"bad weight vector size");
+    RDGeom::Point3D origin;
+    if (!center) {
+      origin = computeCentroid(pts,wts);
+    } else {
+      origin = (*center);
+    }
+    RDNumeric::DoubleSymmMatrix *covMat = computeCovarianceMatrix(pts,origin,
+                                                                  normalizeCovar,
+                                                                  wts);
+    // find the eigen values and eigen vectors for the covMat
+    RDNumeric::DoubleMatrix eigVecs(3,3);
+    RDNumeric::DoubleVector eigVals(3);
+    // if we have a single atom system we don't need to do anyhting other than setting translation
+    // translation
+    unsigned int nPts = pts.size();
+    RDGeom::Transform3D *trans = new RDGeom::Transform3D;
+    
+    // set the translation
+    origin *= -1.0;
+
+    // if we have a single point system we don't need to do anything,
+    // setting translation is sufficient
+    if (nPts > 1) {
+      RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVals, eigVecs,
+                                                nPts);
+      // deal with zero eigen value systems
+      unsigned int i, j, dim = 3;
+      for (i = 0; i < 3; ++i) {
+        if (fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
+          dim--;
+        }
+      }
+      CHECK_INVARIANT(dim >= 1, "");
+      if (dim < 3) {
+        RDGeom::Point3D first(eigVecs.getVal(0,0), eigVecs.getVal(0,1), eigVecs.getVal(0,2));
+        if (dim == 1) {
+          // pick an arbitrary eigen vector perpendicular to the first vector
+          RDGeom::Point3D  second(first.getPerpendicular());
+          eigVecs.setVal(1,0, second.x);
+          eigVecs.setVal(1,1, second.y);
+          eigVecs.setVal(1,2, second.z);
+          if (eigVals.getVal(0) > 1.0) {
+            eigVals.setVal(1, 1.0);
+          } else {
+            eigVals.setVal(1, eigVals.getVal(0)/2.0);
+          }
+        }
+        RDGeom::Point3D second(eigVecs.getVal(1,0), eigVecs.getVal(1,1), eigVecs.getVal(1,2));
+        // pick the third eigen vector perpendicular to the first two
+        RDGeom::Point3D third = first.crossProduct(second);
+        eigVecs.setVal(2,0, third.x);
+        eigVecs.setVal(2,1, third.y);
+        eigVecs.setVal(2,2, third.z);
+        if (eigVals.getVal(1) > 1.0) {
+          eigVals.setVal(2, 1.0);
+        } else {
+          eigVals.setVal(2, eigVals.getVal(1)/2.0);
+        }
+      }
+      // now set the transformation
+      for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+          trans->setVal(i, j, eigVecs.getVal(i,j));
+        }
+      }
+    }// end of multiple atom system
+    trans->TransformPoint(origin);
+    trans->SetTranslation(origin);
+    delete covMat;
+
+    return trans;
   }
 }
 
