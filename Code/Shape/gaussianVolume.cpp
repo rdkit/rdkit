@@ -366,7 +366,9 @@ void initOrientation(GaussianVolume & gv)
     gv.centroid.y /= gv.volume;
     gv.centroid.z /= gv.volume;
 
+
     // Compute moments of inertia from mass matrix
+    //RDNumeric::DoubleSymmMatrix mass;
     SiMath::Matrix mass(3, 3, 0.0);
 
     // Loop over all gaussians
@@ -381,23 +383,15 @@ void initOrientation(GaussianVolume & gv)
 	y = i->center.y;
 	z = i->center.z;
 
-	if ((i->nbr % 2) == 0) {
-	    // Update upper triangle
-	    mass[0][0] -= i->volume * x * x;
-	    mass[0][1] -= i->volume * x * y;
-	    mass[0][2] -= i->volume * x * z;
-	    mass[1][1] -= i->volume * y * y;
-	    mass[1][2] -= i->volume * y * z;
-	    mass[2][2] -= i->volume * z * z;
-	} else {
-	    // Update upper triangle
-	    mass[0][0] += i->volume * x * x;
-	    mass[0][1] += i->volume * x * y;
-	    mass[0][2] += i->volume * x * z;
-	    mass[1][1] += i->volume * y * y;
-	    mass[1][2] += i->volume * y * z;
-	    mass[2][2] += i->volume * z * z;
-	}
+        int mult=(i->nbr % 2)?1:-1;
+        // Update upper triangle
+        mass[0][0] += mult*i->volume * x * x;
+        mass[0][1] += mult*i->volume * x * y;
+        mass[0][2] += mult*i->volume * x * z;
+        mass[1][1] += mult*i->volume * y * y;
+        mass[1][2] += mult*i->volume * y * z;
+        mass[2][2] += mult*i->volume * z * z;
+
     }
 
     // Set lower triangle

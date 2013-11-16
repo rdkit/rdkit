@@ -408,34 +408,15 @@ namespace RDNumeric {
     res->setVal(2,2, zz);
     return res;
   }
-  RDGeom::Transform3D *computeCanonicalTransform(const std::vector<RDGeom::Point3D const *> &pts,
-                                                 const RDGeom::Point3D *center,
-                                                 bool normalizeCovar,
-                                                 const std::vector<double> *wts){
-    PRECONDITION(!wts || wts->size()>=pts.size(),"bad weight vector size");
-    RDGeom::Point3D origin;
-    if (!center) {
-      origin = computeCentroid(pts,wts);
-    } else {
-      origin = (*center);
-    }
-    RDNumeric::DoubleSymmMatrix *covMat = computeCovarianceMatrix(pts,origin,
-                                                                  normalizeCovar,
-                                                                  wts);
+  RDGeom::Transform3D *computeCanonicalTransformFromCovMat(RDNumeric::DoubleSymmMatrix *covMat,
+                                                           unsigned int nPts){
+    PRECONDITION(covMat,"no covariance matrix");
     // find the eigen values and eigen vectors for the covMat
-    RDNumeric::DoubleMatrix eigVecs(3,3);
-    RDNumeric::DoubleVector eigVals(3);
-    // if we have a single atom system we don't need to do anyhting other than setting translation
-    // translation
-    unsigned int nPts = pts.size();
-    RDGeom::Transform3D *trans = new RDGeom::Transform3D;
-    
-    // set the translation
-    origin *= -1.0;
-
+    RDGeom::Transform3D *trans=new RDGeom::Transform3D;
     // if we have a single point system we don't need to do anything,
-    // setting translation is sufficient
     if (nPts > 1) {
+      RDNumeric::DoubleMatrix eigVecs(3,3);
+      RDNumeric::DoubleVector eigVals(3);
       RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVals, eigVecs,
                                                 nPts);
       // deal with zero eigen value systems
@@ -479,6 +460,33 @@ namespace RDNumeric {
         }
       }
     }// end of multiple atom system
+    return trans;
+  }
+  
+  RDGeom::Transform3D *computeCanonicalTransform(const std::vector<RDGeom::Point3D const *> &pts,
+                                                 const RDGeom::Point3D *center,
+                                                 bool normalizeCovar,
+                                                 const std::vector<double> *wts){
+    PRECONDITION(!wts || wts->size()>=pts.size(),"bad weight vector size");
+    RDGeom::Point3D origin;
+    if (!center) {
+      origin = computeCentroid(pts,wts);
+    } else {
+      origin = (*center);
+    }
+    RDNumeric::DoubleSymmMatrix *covMat = computeCovarianceMatrix(pts,origin,
+                                                                  normalizeCovar,
+                                                                  wts);
+    // find the eigen values and eigen vectors for the covMat
+    RDNumeric::DoubleMatrix eigVecs(3,3);
+    RDNumeric::DoubleVector eigVals(3);
+    // if we have a single atom system we don't need to do anyhting other than setting translation
+    // translation
+    unsigned int nPts = pts.size();
+    RDGeom::Transform3D *trans = computeCanonicalTransformFromCovMat(covMat,nPts);
+    
+    // set the translation
+    origin *= -1.0;
     trans->TransformPoint(origin);
     trans->SetTranslation(origin);
     delete covMat;
