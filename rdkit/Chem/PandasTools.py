@@ -100,10 +100,6 @@ try:
 except Exception as e:
   pd = None
 
-  
-  
-
-
 
 def patchPandasHTMLrepr(self):
   '''
@@ -156,7 +152,7 @@ def _molge(x,y):
     if not DataStructs.AllProbeBitsMatch(y._substructfp,x._substructfp):
       return False
   return x.HasSubstructMatch(y)
-            
+
 Chem.Mol.__ge__ = _molge # lambda x,y: x.HasSubstructMatch(y)
 
 def PrintAsBase64PNGString(x,renderer = None):
@@ -166,7 +162,7 @@ def PrintAsBase64PNGString(x,renderer = None):
 
 def PrintDefaultMolRep(x):
   return str(x.__repr__())
-	
+
 #Chem.Mol.__str__ = lambda x: '<img src="data:image/png;base64,%s" alt="Mol"/>'%get_image(Draw.MolToImage(x))
 Chem.Mol.__str__ = PrintAsBase64PNGString
 
@@ -187,7 +183,7 @@ def RenderImagesInAllDataFrames(images=True):
     pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
   else:
     pd.core.frame.DataFrame.to_html = defPandasRendering
-	    
+
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',includeFingerprints=False):
   '''Converts the molecules contains in "smilesCol" to RDKit molecules and appends them to the dataframe "frame" using the specified column name.
@@ -209,11 +205,11 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   returns a new dataframe instance that uses the default pandas rendering (thus not drawing images for molecules) instead of the monkey-patched one.
   '''
   if renderer == 'String':
-	Chem.Mol.__str__ = PrintDefaultMolRep
+    Chem.Mol.__str__ = PrintDefaultMolRep
   else:
-	Chem.Mol.__str__ = PrintAsBase64PNGString
+    Chem.Mol.__str__ = PrintAsBase64PNGString
   if frame is not None:
-	frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
+    frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
 def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False):
   """ Read file in SDF format and return as Panda data frame """
@@ -230,8 +226,71 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
       else:
         df = df.append(row)
   AddMoleculeColumnToFrame(df, smilesCol=smilesName, molCol = molColName,includeFingerprints=includeFingerprints)
-  return df  
+  return df
 
+from rdkit.Chem import SaltRemover
+remover = SaltRemover.SaltRemover()
+
+def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):
+  '''
+  Removes salts from mols in pandas DataFrame's ROMol column
+  '''
+  frame[molCol] = frame.apply(lambda x: remover.StripMol(x[molCol]), axis = 1)
+
+def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
+  '''
+  Saves smi file. SMILES are generated from column with RDKit molecules. Column with names is optional.
+  '''
+  w = Chem.SmilesWriter(outFile)
+  if NamesCol != '':
+    for m,n in zip(frame[molCol], map(str,frame[NamesCol])):
+      m.SetProp('_Name',n)
+      w.write(m)
+    w.close()        
+  else:
+    for m in frame[molCol]:
+      w.write(m)
+    w.close()
+
+def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
+  '''
+  Draw grid image of mols in pandas DataFrame.
+  '''
+  if legendsCol:
+    img = Draw.MolsToGridImage(frame[column], legends=map(str, list(frame[legendsCol])), **kwargs)
+  else:
+    img = Draw.MolsToGridImage(frame[column], **kwargs)
+  return img
+
+from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Chem import MolToSmiles
+
+def AddMurckoToFrame(frame, molCol = 'ROMol', MurckoCol = 'Murcko_SMILES', Generic = False):
+  '''
+  Adds column with SMILES of Murcko scaffolds to pandas DataFrame. Generic set to true results in SMILES of generic framework.
+  '''
+  if Generic:
+    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
+  else:
+    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
+
+
+from rdkit.Chem import AllChem
+
+def AlignMol(mol,scaffold):
+  """
+  Aligns mol (RDKit mol object) to scaffold (SMILES string)
+  """
+  scaffold = Chem.MolFromSmiles(scaffold)
+  AllChem.Compute2DCoords(scaffold)
+  AllChem.GenerateDepictionMatching2DStructure(mol,scaffold)
+  return mol
+
+def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
+  '''
+  Aligns molecules in molCol to scaffolds in scaffoldCol
+  '''
+  frame[molCol] = frame.apply(lambda x: AlignMol(x[molCol],x[scaffoldCol]), axis=1)
 
 
 if __name__ == "__main__":
