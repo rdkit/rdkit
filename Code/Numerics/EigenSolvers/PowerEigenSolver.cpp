@@ -16,14 +16,14 @@
 #include <time.h>
 
 #define MAX_ITERATIONS 1000
-#define TOLERANCE 0.001
 #define HUGE_EIGVAL 1.0e10
 #define TINY_EIGVAL 1.0e-10
 
 namespace RDNumeric {
   namespace EigenSolvers {
     bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
-                          DoubleVector &eigenValues, DoubleMatrix *eigenVectors, int seed) {
+                          DoubleVector &eigenValues, DoubleMatrix *eigenVectors, int seed,
+                          double tolerance) {
       // first check all the sizes
       unsigned int N = mat.numRows();
       CHECK_INVARIANT(eigenValues.size() >= numEig, "");
@@ -64,7 +64,7 @@ namespace RDNumeric {
           // compute the next estimate for the eigen vector
           v.assign(z);
           v /= eigVal;
-          if (fabs(eigVal - prevVal) < TOLERANCE) {
+          if (fabs(eigVal - prevVal) < tolerance) {
             converged = true;
             break;
           }

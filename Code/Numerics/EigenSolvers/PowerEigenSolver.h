@@ -27,6 +27,8 @@ namespace RDNumeric {
     \param eigenVectors Optional matrix used to return the eigenvectors (size = N*numEig)
     \param seed         Optional values to seed the random value generator used to 
                         initialize the eigen vectors
+    \param tolerance    numeric threshold to use during the optimization
+                        
     \return a boolean indicating whether or not the calculation converged.
     
     <b>Notes:</b>
@@ -53,13 +55,15 @@ namespace RDNumeric {
     bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                           DoubleVector &eigenValues,
                           DoubleMatrix *eigenVectors=0, 
-                          int seed=-1);
+                          int seed=-1,
+                          double tolerance=0.001);
     //! \overload
     static bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                           DoubleVector &eigenValues,
                           DoubleMatrix &eigenVectors, 
-                          int seed=-1) {
-      return powerEigenSolver(numEig,mat,eigenValues,&eigenVectors,seed);
+                                 int seed=-1,
+                                 double tolerance=0.001) {
+      return powerEigenSolver(numEig,mat,eigenValues,&eigenVectors,seed,tolerance);
     }
   };
 };

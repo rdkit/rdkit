@@ -88,9 +88,9 @@ void test1Canonicalization() {
   //trans = computeCanonicalTransform(*conf);
   //transformConformer(*conf, *trans);
   canonicalizeConformer(*conf);
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.6418, 0.6158, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(-0.2029, -0.8602, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(2), RDGeom::Point3D(0.8447, 0.2445, 0.0)), "");
+  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(0.8265, -0.3213, 0.0)), "");
+  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(-0.6939, -0.5495, 0.0)), "");
+  CHECK_INVARIANT(comparePts(conf->getAtomPos(2), RDGeom::Point3D(-0.1326, 0.8708, 0.0)), "");
   MolToMolFile(*mol, "junk.mol", 0);
   //CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
   //CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
