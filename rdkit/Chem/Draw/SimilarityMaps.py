@@ -151,7 +151,9 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(
   # coloring
   fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower', extent=(0,1,0,1), vmin=-maxScale, vmax=maxScale)
   # contour lines
-  fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
+  # only draw them when at least one weight is not zero
+  if len([w for w in weights if w != 0.0]):
+      fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
   return fig
 
 
