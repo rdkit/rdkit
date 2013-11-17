@@ -14,6 +14,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/AtomIterators.h>
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <boost/dynamic_bitset.hpp>
@@ -534,8 +535,6 @@ namespace RDKit {
     
     void SDM::fillFromDist(const double threshold)
     {
-      unsigned int i;
-      unsigned int j;
       int n = 0;
       int pairs = 0;
       const RDGeom::POINT3D_VECT &refPos =
@@ -550,17 +549,13 @@ namespace RDKit {
       boost::dynamic_bitset<> refUsed(largestNAtoms);
       boost::dynamic_bitset<> prbUsed(largestNAtoms);
       // loop over ref atoms
-      for (i = 0; i < d_refMol->getNumAtoms(); ++i) {
-        // skip hydrogens
-        if ((d_refMol->getAtomWithIdx(i))->getAtomicNum() == 1) {
-          continue;
-        }
+      unsigned int nRefAtoms = d_refMol->getNumAtoms();
+      unsigned int nPrbAtoms = d_prbMol->getNumAtoms();
+      for(unsigned int i=0;i<nRefAtoms;++i){
+        if((*d_refMol)[i]->getAtomicNum()==1) continue;
         // loop over prb atoms
-        for (j = 0; j < d_prbMol->getNumAtoms(); ++j) {
-          // skip hydrogens
-          if ((d_prbMol->getAtomWithIdx(j))->getAtomicNum() == 1) {
-            continue;
-          }
+        for(unsigned int j=0;j<nPrbAtoms;++j){
+          if((*d_prbMol)[j]->getAtomicNum()==1) continue;
           double sqDist = (refPos[i] - prbPos[j]).lengthSq();
           // if the distance between these two atoms is lower
           // than threshold, then include this pair in the SDM matrix
@@ -579,7 +574,7 @@ namespace RDKit {
       // increase the number of pairs which will be used
       // by rmsAlgorithm until an atom which has been
       // included in a previous pair is found
-      for (i = 0; (i < n) && (!(refUsed[d_SDMPtrVect[i]->idx[0]]))
+      for (unsigned int i = 0; (i < n) && (!(refUsed[d_SDMPtrVect[i]->idx[0]]))
         && (!(prbUsed[d_SDMPtrVect[i]->idx[1]])); ++i) {
         ++pairs;
         refUsed[d_SDMPtrVect[i]->idx[0]] = 1;
