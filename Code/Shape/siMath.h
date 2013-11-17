@@ -246,52 +246,7 @@ namespace SiMath {
     Vector colProduct(const Vector & U, const Matrix & A);
 
 
-
-    class SVD {
-      public:
-
-	SVD(const Matrix &, bool bU = true, bool bV = true);
-
-	Vector getSingularValues() {
-	    return _S;
-	};
-	Matrix getSingularMatrix();
-
-	Matrix getU() {
-	    return _U;
-	};
-	Matrix getV() {
-	    return _V;
-	};
-
-	double norm2() {
-	    return _S[0];
-	};
-
-	double cond() {
-	    return _S[0] / _S[_S.size() - 1];
-	};
-
-	int rank();
-
-      private:
-
-	int _m;			///< number of rows
-	int _n;			///< number of columns
-	Matrix _U;		///< Left singular vectors
-	Matrix _V;		///< Right singular vectors
-	Vector _S;		///< Singular values
-
-	bool _computeV;		///< Check if V should be computed
-	bool _computeU;		///< Check if U should be computed
-
-    };
-
-
-
     double randD(double, double);
-
-
 
 };				// end of namespace SiMath
 

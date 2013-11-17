@@ -36,12 +36,10 @@ SolutionInfo::SolutionInfo(void)
 :refName("")
 , refAtomVolume(0.0)
 , refCenter(0, 0, 0)
-, refRotation(3, 3, 0)
 , dbName("")
 , dbAtomVolume(0.0)
 , dbMol()
 , dbCenter(0, 0, 0)
-, dbRotation(3, 3, 0)
 , atomOverlap(0.0)
 , score(0.0)
 , rotor(4, 0.0)
@@ -62,7 +60,7 @@ updateSolutionInfo(SolutionInfo & s, AlignmentInfo & res, double score,
 {
     s.dbAtomVolume = gv.overlap;
     s.dbCenter = gv.centroid;
-    s.dbRotation = gv.rotation;
+    memcpy(static_cast<void *>(s.dbRotation),static_cast<void *>(gv.rotation), 3*3*sizeof(double));
     s.atomOverlap = res.overlap;
     s.score = score;
     s.rotor = res.rotor;

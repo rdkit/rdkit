@@ -9,7 +9,7 @@ rdkit_library(Shape
               siMath.cpp
               shape.cpp
               SHARED
-              LINK_LIBRARIES  GraphMol RDGeneral RDGeometryLib DataStructs Shape FileParsers RDGeneral RDGeometryLib RDBoost)
+              LINK_LIBRARIES  GraphMol RDGeneral RDGeometryLib DataStructs Shape Alignment EigenSolvers FileParsers RDGeneral RDGeometryLib RDBoost)
 
 rdkit_headers(alignmentInfo.h 
               atomGaussian.h 

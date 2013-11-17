@@ -44,10 +44,14 @@ Shape-it is linked against OpenBabel version 2.
 #include <GraphMol/ROMol.h>
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/AtomIterators.h>
+#include <Geometry/point.h>
+#include <Numerics/Matrix.h>
+#include <Numerics/SymmMatrix.h>
+#include <Numerics/Alignment/AlignPoints.h>
+
 
 // Shape-it
 #include <Shape/siMath.h>
-#include <Geometry/point.h>
 #include <Shape/atomGaussian.h>
 #include <Shape/alignmentInfo.h>
 
@@ -65,17 +69,18 @@ const double PENALTY = 5.00;
 
 
 class GaussianVolume {
-  public:
-    double volume;		///< Molecular volume
-    double overlap;		///< Self-overlap of the molecule
-    RDGeom::Point3D centroid;	///< center of the gaussian volume
-     SiMath::Matrix rotation;	///< rotation matrix to align molecule to principal axes
-     std::vector < AtomGaussian > gaussians;	///< vector of all atom gaussians and their overlaps
-     std::vector < std::vector < unsigned int >*>childOverlaps;	///< vector to keep track of which overlaps are formed with one gaussian
-     std::vector < unsigned int >levels;	///< indicates where in the vector the level of overlaps changes
+public:
+  double volume;		///< Molecular volume
+  double overlap;		///< Self-overlap of the molecule
+  RDGeom::Point3D centroid;	///< center of the gaussian volume
 
-     GaussianVolume(void);
-    ~GaussianVolume(void);
+  std::vector < AtomGaussian > gaussians;	///< vector of all atom gaussians and their overlaps
+  std::vector < std::vector < unsigned int >*>childOverlaps;	///< vector to keep track of which overlaps are formed with one gaussian
+  std::vector < unsigned int >levels;	///< indicates where in the vector the level of overlaps changes
+  double rotation[3][3];        ///< rotation matrix to align molecule to principal axes
+
+  GaussianVolume(void);
+  ~GaussianVolume(void);
 };
 
 

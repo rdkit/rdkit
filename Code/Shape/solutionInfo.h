@@ -53,25 +53,25 @@ const std::string tversky_ref = "Tversky_Ref";
 const std::string tversky_db = "Tversky_Db";
 
 class SolutionInfo {
-  public:
+public:
 
-    std::string refName;
-    double refAtomVolume;
+  std::string refName;
+  double refAtomVolume;
   RDGeom::Point3D refCenter;
-    SiMath::Matrix refRotation;
 
-    RDKit::ROMol * dbMol;
-    std::string dbName;
-    double dbAtomVolume;
+  RDKit::ROMol * dbMol;
+  std::string dbName;
+  double dbAtomVolume;
   RDGeom::Point3D dbCenter;
-    SiMath::Matrix dbRotation;
+  double refRotation[3][3];
+  double dbRotation[3][3];
 
-    double atomOverlap;
-    double score;
-    SiMath::Vector rotor;
+  double atomOverlap;
+  double score;
+  SiMath::Vector rotor;
 
-    SolutionInfo(void);
-    ~SolutionInfo(void);
+  SolutionInfo(void);
+  ~SolutionInfo(void);
 
 };
 

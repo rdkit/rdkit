@@ -30,13 +30,13 @@ Shape-it is linked against OpenBabel version 2.
 
 #include <Shape/gaussianVolume.h>
 #include <Shape/solutionInfo.h>
+#include <eigen3/Eigen/Dense>
 
 
 GaussianVolume::GaussianVolume(void)
 :volume(0.0)
 , overlap(0.0)
 , centroid(0.0, 0.0, 0.0)
-, rotation(3, 3, 0.0)
 , gaussians()
 , childOverlaps()
 , levels()
@@ -366,11 +366,13 @@ void initOrientation(GaussianVolume & gv)
     gv.centroid.y /= gv.volume;
     gv.centroid.z /= gv.volume;
 
-
+    //#define USE_EIGEN2
     // Compute moments of inertia from mass matrix
-    //RDNumeric::DoubleSymmMatrix mass;
-    SiMath::Matrix mass(3, 3, 0.0);
-
+#ifdef USE_EIGEN2
+    double sumXX=0,sumXY=0,sumXZ=0,sumYY=0,sumYZ=0,sumZZ=0;
+#else
+    RDNumeric::DoubleSymmMatrix mass(3,0.0);
+#endif
     // Loop over all gaussians
     for (std::vector < AtomGaussian >::iterator i = gv.gaussians.begin();
 	 i != gv.gaussians.end(); ++i) {
@@ -384,42 +386,91 @@ void initOrientation(GaussianVolume & gv)
 	z = i->center.z;
 
         int mult=(i->nbr % 2)?1:-1;
-        // Update upper triangle
-        mass[0][0] += mult*i->volume * x * x;
-        mass[0][1] += mult*i->volume * x * y;
-        mass[0][2] += mult*i->volume * x * z;
-        mass[1][1] += mult*i->volume * y * y;
-        mass[1][2] += mult*i->volume * y * z;
-        mass[2][2] += mult*i->volume * z * z;
-
+#ifdef USE_EIGEN2
+        sumXX += mult*i->volume * x * x;
+        sumXY += mult*i->volume * x * y;
+        sumXZ += mult*i->volume * x * z;
+        sumYY += mult*i->volume * y * y;
+        sumYZ += mult*i->volume * y * z;
+        sumZZ += mult*i->volume * z * z;
+#else
+        mass.setVal(0,0,mass.getVal(0,0) + mult*i->volume * x * x);
+        mass.setVal(0,1,mass.getVal(0,1) + mult*i->volume * x * y);
+        mass.setVal(0,2,mass.getVal(0,2) + mult*i->volume * x * z);
+        mass.setVal(1,1,mass.getVal(1,1) + mult*i->volume * y * y);
+        mass.setVal(1,2,mass.getVal(1,2) + mult*i->volume * y * z);
+        mass.setVal(2,2,mass.getVal(2,2) + mult*i->volume * z * z);
+#endif
     }
-
-    // Set lower triangle
-    mass[1][0] = mass[0][1];
-    mass[2][0] = mass[0][2];
-    mass[2][1] = mass[1][2];
-
     // Normalize mass matrix
+#ifdef USE_EIGEN2
+    sumXX/=gv.volume;
+    sumXY/=gv.volume;
+    sumXZ/=gv.volume;
+    sumYY/=gv.volume;
+    sumYZ/=gv.volume;
+    sumZZ/=gv.volume;
+    Eigen::Matrix3d mat;
+    mat << sumXX, sumXY, sumXZ,
+      sumXY, sumYY, sumYZ,
+      sumXZ, sumYZ, sumZZ;
+
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
+    if(eigensolver.info()!=Eigen::Success){
+      BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
+      return;
+    }
+    //    std::cerr << " eigenvalues: " << eigensolver.eigenvalues() << std::endl;
+    for(unsigned int i=0;i<3;++i){
+      for(unsigned int j=0;j<3;++j){
+        // the eigenvectors come back in increasing order, so reverse it here:
+        gv.rotation[i][j] = eigensolver.eigenvectors()(i,2-j);
+      }
+    }
+#else
     mass /= gv.volume;
-
-    // Compute SVD of the mass matrix
-    SiMath::SVD svd(mass, true, true);
-    gv.rotation = svd.getU();
-
+    int nPts = gv.gaussians.size();
+    RDGeom::Transform3D *tf=RDNumeric::computeCanonicalTransformFromCovMat(&mass,nPts);
+    for(unsigned int i=0;i<3;++i){
+      for(unsigned int j=0;j<3;++j){
+        gv.rotation[i][j] = tf->getVal(j,i);
+      }
+    }
+    delete tf;
+#endif
+#if 0
+    std::cerr<<std::endl;
+    for(unsigned int i=0;i<3;++i){
+      for(unsigned int j=0;j<3;++j){
+        std::cerr<<std::setprecision(5)<<gv.rotation[i][j]<<" ";
+      }
+      std::cerr<<std::endl;
+    }
+#endif    
     double det = gv.rotation[0][0] * gv.rotation[1][1] * gv.rotation[2][2]
 	+ gv.rotation[2][1] * gv.rotation[1][0] * gv.rotation[0][2]
 	+ gv.rotation[0][1] * gv.rotation[1][2] * gv.rotation[2][0]
 	- gv.rotation[0][0] * gv.rotation[1][2] * gv.rotation[2][1]
 	- gv.rotation[1][1] * gv.rotation[2][0] * gv.rotation[0][2]
 	- gv.rotation[2][2] * gv.rotation[0][1] * gv.rotation[1][0];
-
+    //std::cerr<<"  DET: "<<std::setprecision(3)<<det<<std::endl;
     // Check if it is a rotation matrix and not a mirroring
     if (det < 0) {
+      //std::cerr<<"FLIP"<<std::endl;
+#if 1
 	// Switch sign of third column
 	gv.rotation[0][2] = -gv.rotation[0][2];
 	gv.rotation[1][2] = -gv.rotation[1][2];
 	gv.rotation[2][2] = -gv.rotation[2][2];
+#else
+        for(unsigned int i=0;i<3;++i){
+          for(unsigned int j=0;j<3;++j){
+            gv.rotation[i][j]*=-1.;
+          }
+        }
+#endif
     }
+
     // Rotate all gaussians
     for (std::vector < AtomGaussian >::iterator i = gv.gaussians.begin();
 	 i != gv.gaussians.end(); ++i) {

@@ -38,7 +38,8 @@ SolutionInfo shape(RDKit::ROMol & refMol, RDKit::ROMol & dbMol,
     bestSolution.refName = refName;
     bestSolution.refAtomVolume = refVolume.overlap;
     bestSolution.refCenter = refVolume.centroid;
-    bestSolution.refRotation = refVolume.rotation;
+    memcpy(static_cast<void *>(bestSolution.refRotation),static_cast<void *>(refVolume.rotation),
+           3*3*sizeof(double));
 
 
 
