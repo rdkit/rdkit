@@ -418,7 +418,7 @@ namespace RDNumeric {
       RDNumeric::DoubleMatrix eigVecs(3,3);
       RDNumeric::DoubleVector eigVals(3);
       RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVals, eigVecs,
-                                                nPts);
+                                                nPts,0.000001);
       // deal with zero eigen value systems
       unsigned int i, j, dim = 3;
       for (i = 0; i < 3; ++i) {
