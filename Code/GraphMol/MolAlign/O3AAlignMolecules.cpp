@@ -182,10 +182,11 @@ namespace RDKit {
           if ((prbMol.getAtomWithIdx(j))->getAtomicNum() == 1) {
             continue;
           }
-          for (k = 0, hSum = 0.0; (k < n_bins)
-            && (refHist.get(y, k) + prbHist.get(x, k)); ++k) {
-            hSum += ((double)square(refHist.get(y, k) - prbHist.get(x, k))
-              / (double)(refHist.get(y, k) + prbHist.get(x, k)));
+          for (k = 0, hSum = 0.0; k < n_bins; ++k) {
+            int rhyk=refHist.get(y,k);
+            int phxk=prbHist.get(x,k);
+            if(!rhyk && !phxk) break;
+            hSum += (double)square(rhyk-phxk)/ (double)(rhyk+phxk);
           }
           mmffSim = mmffSimMatrix[refMP->getMMFFAtomType(i) - 1][prbMP->getMMFFAtomType(j) - 1];
           d_cost[y][x] = (int)round(((double)coeff * O3_CHARGE_WEIGHT
