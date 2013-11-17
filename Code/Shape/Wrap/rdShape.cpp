@@ -17,14 +17,14 @@
 namespace python = boost::python;
   
 namespace RDKit {
-        float align(ROMol &refMol, ROMol &dbMol, 
-                              bool scoreOnly=false, 
-                              unsigned int nBestHits = 10,
-                              unsigned int maxIterations=10,
-                              std::string whichScore = "Tanimoto") { 
-                              SolutionInfo si = shape(refMol, dbMol, nBestHits, scoreOnly, maxIterations, whichScore);
-                              return si.score;
-                              }
+  double align(ROMol &refMol, ROMol &dbMol, 
+               bool scoreOnly=false, 
+               unsigned int nBestHits = 10,
+               unsigned int maxIterations=10,
+               std::string whichScore = "Tanimoto") { 
+    SolutionInfo si = shape(refMol, dbMol, nBestHits, scoreOnly, maxIterations, whichScore);
+    return si.score;
+  }
 }
 
 BOOST_PYTHON_MODULE(rdShape) {
@@ -52,8 +52,10 @@ BOOST_PYTHON_MODULE(rdShape) {
 \n";
   python::def("Align", RDKit::align,
               (python::arg("refMol"), python::arg("dbMol"),
-               python::arg("nBestHits")=0,
-               python::arg("scoreOnly")=false, python::arg("maxIter")=0, python::arg("whichScore")="Tanimoto"),
+               python::arg("scoreOnly")=false,
+               python::arg("nBestHits")=10,
+               python::arg("maxIter")=0,
+               python::arg("whichScore")="Tanimoto"),
               docString.c_str());
 }
   
