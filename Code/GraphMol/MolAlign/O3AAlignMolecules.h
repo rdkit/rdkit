@@ -20,7 +20,8 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <vector>
 #include <cmath>
-#include "boost/multi_array.hpp"
+#include <boost/multi_array.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
   namespace MolAlign {
@@ -147,7 +148,9 @@ namespace RDKit {
           delete d_SDMPtrVect[i];
         }
       };
-      void fillFromDist(const double threshold = O3_SDM_THRESHOLD_START);
+      void fillFromDist(double threshold,
+                        const boost::dynamic_bitset<> &refHvyAtoms,
+                        const boost::dynamic_bitset<> &prbHvyAtoms);
       void fillFromLAP(LAP &lap);
       double scoreAlignment();
       void prepareMatchWeightsVect(RDKit::MatchVectType &matchVect,

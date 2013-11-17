@@ -533,7 +533,8 @@ namespace RDKit {
     }
 
     
-    void SDM::fillFromDist(const double threshold)
+    void SDM::fillFromDist(double threshold,const boost::dynamic_bitset<> &refHvyAtoms,
+                           const boost::dynamic_bitset<> &prbHvyAtoms)
     {
       int n = 0;
       int pairs = 0;
@@ -552,10 +553,10 @@ namespace RDKit {
       unsigned int nRefAtoms = d_refMol->getNumAtoms();
       unsigned int nPrbAtoms = d_prbMol->getNumAtoms();
       for(unsigned int i=0;i<nRefAtoms;++i){
-        if((*d_refMol)[i]->getAtomicNum()==1) continue;
+        if(!refHvyAtoms[i]) continue;
         // loop over prb atoms
         for(unsigned int j=0;j<nPrbAtoms;++j){
-          if((*d_prbMol)[j]->getAtomicNum()==1) continue;
+          if(!prbHvyAtoms[j]) continue;
           double sqDist = (refPos[i] - prbPos[j]).lengthSq();
           // if the distance between these two atoms is lower
           // than threshold, then include this pair in the SDM matrix
@@ -652,6 +653,16 @@ namespace RDKit {
     {
       unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
       unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
+      unsigned int nRefAtoms = d_refMol->getNumAtoms();
+      unsigned int nPrbAtoms = d_prbMol->getNumAtoms();
+      boost::dynamic_bitset<> refHvyAtoms(nRefAtoms);
+      boost::dynamic_bitset<> prbHvyAtoms(nPrbAtoms);
+      for(unsigned int ii=0;ii<nRefAtoms;++ii){
+        if((*d_refMol)[ii]->getAtomicNum()!=1) refHvyAtoms.set(ii);
+      }
+      for(unsigned int ii=0;ii<nPrbAtoms;++ii){
+        if((*d_prbMol)[ii]->getAtomicNum()!=1) prbHvyAtoms.set(ii);
+      }
       unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
       unsigned int i;
       int c;
@@ -692,7 +703,7 @@ namespace RDKit {
                 + (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
               while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
                 SDM progressSDM(&progressMol, &refMol, prbMP, refMP);
-                progressSDM.fillFromDist(sdmThresholdDist);
+                progressSDM.fillFromDist(sdmThresholdDist,refHvyAtoms,prbHvyAtoms);
                 pairs[5] = progressSDM.size();
                 if (pairs[5] < 3) {
                   break;
