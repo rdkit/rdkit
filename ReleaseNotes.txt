@@ -18,6 +18,7 @@ Removed modules:
 Contrib updates:
 
 Other:
+ - The Open3DAlign code is considerably faster.
 
 
 ******  Release_2013.09.1 *******
