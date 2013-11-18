@@ -652,6 +652,7 @@ namespace RDKit {
       d_reflect(reflect),
       d_maxIters(maxIters)
     {
+      ROMol prbCpy(prbMol);
       unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
       unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
       unsigned int nRefAtoms = d_refMol->getNumAtoms();
@@ -675,23 +676,22 @@ namespace RDKit {
       std::vector<double> score(5, 0.0);
       std::vector<double> pairsRMSD(2, 0.0);
       std::vector<SDM *> bestSDM((unsigned int)5, NULL);
-      MolHistogram refHist(refMol);
-      MolHistogram prbHist(prbMol);
+      MolHistogram refHist(refMol,refCid);
+      MolHistogram prbHist(prbCpy,prbCid);
       LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       for (l = 0, pairs[0] = 0, score[0] = 0.0; l <= ((accuracy < 2) ? 1 : 0); ++l) {
         for (c = 0, pairs[1] = 0, score[1] = 0.0; c <= O3_MAX_WEIGHT_COEFF;
           c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {
           w = (l ? c : 0);
-          lap->computeCostMatrix(prbMol, prbHist, prbMP, refMol, refHist, refMP, c, (bool)l);
+          lap->computeCostMatrix(prbCpy, prbHist, prbMP, refMol, refHist, refMP, c, (bool)l);
           lap->computeMinCostPath(largestNHeavyAtoms);
-          SDM startSDM(&prbMol, &refMol, prbMP, refMP);
+          SDM startSDM(&prbCpy, &refMol, prbMP, refMP);
           startSDM.fillFromLAP(*lap);
           for (pairs[2] = 0, score[2] = 0.0, i = 3; i < startSDM.size(); ++i) {
             RDKit::MatchVectType startMatchVect(i);
             RDNumeric::DoubleVector startWeights(i);
             startSDM.prepareMatchWeightsVect(startMatchVect, startWeights, w);
-            //ROMol progressMol = prbMol;
-            alignMol(prbMol, refMol, prbCid, refCid,
+            alignMol(prbCpy, refMol, prbCid, refCid,
               &startMatchVect, &startWeights, reflect, maxIters);
             unsigned int sdmThresholdIt;
             for (sdmThresholdIt = ((accuracy < 1) ? 0 : O3_MAX_SDM_THRESHOLD_ITER - 1),
@@ -703,7 +703,7 @@ namespace RDKit {
               double sdmThresholdDist = O3_SDM_THRESHOLD_START
                 + (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
               while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
-                SDM progressSDM(&prbMol, &refMol, prbMP, refMP);
+                SDM progressSDM(&prbCpy, &refMol, prbMP, refMP);
                 progressSDM.fillFromDist(sdmThresholdDist,refHvyAtoms,prbHvyAtoms);
                 pairs[5] = progressSDM.size();
                 if (pairs[5] < 3) {
@@ -713,7 +713,7 @@ namespace RDKit {
                 RDNumeric::DoubleVector progressWeights(pairs[5]);
                 progressSDM.prepareMatchWeightsVect(progressMatchVect, progressWeights, w);
                 RDGeom::Transform3D trans;
-                pairsRMSD[1] = getAlignmentTransform(prbMol, refMol,
+                pairsRMSD[1] = getAlignmentTransform(prbCpy, refMol,
                   trans, prbCid, refCid, &progressMatchVect, &progressWeights,
                   reflect, maxIters);
                 flag = ((pairs[5] > pairs[4]) || ((pairs[5] == pairs[4])
@@ -726,7 +726,7 @@ namespace RDKit {
                   }
                   bestSDM[4] = new SDM();
                   *(bestSDM[4]) = progressSDM;
-                  MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
+                  MolTransforms::transformConformer(prbCpy.getConformer(prbCid), trans);
                 }
                 ++iter;
               }
