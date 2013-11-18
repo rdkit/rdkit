@@ -690,8 +690,8 @@ namespace RDKit {
             RDKit::MatchVectType startMatchVect(i);
             RDNumeric::DoubleVector startWeights(i);
             startSDM.prepareMatchWeightsVect(startMatchVect, startWeights, w);
-            ROMol progressMol = prbMol;
-            alignMol(progressMol, refMol, prbCid, refCid,
+            //ROMol progressMol = prbMol;
+            alignMol(prbMol, refMol, prbCid, refCid,
               &startMatchVect, &startWeights, reflect, maxIters);
             unsigned int sdmThresholdIt;
             for (sdmThresholdIt = ((accuracy < 1) ? 0 : O3_MAX_SDM_THRESHOLD_ITER - 1),
@@ -703,7 +703,7 @@ namespace RDKit {
               double sdmThresholdDist = O3_SDM_THRESHOLD_START
                 + (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
               while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
-                SDM progressSDM(&progressMol, &refMol, prbMP, refMP);
+                SDM progressSDM(&prbMol, &refMol, prbMP, refMP);
                 progressSDM.fillFromDist(sdmThresholdDist,refHvyAtoms,prbHvyAtoms);
                 pairs[5] = progressSDM.size();
                 if (pairs[5] < 3) {
@@ -713,7 +713,7 @@ namespace RDKit {
                 RDNumeric::DoubleVector progressWeights(pairs[5]);
                 progressSDM.prepareMatchWeightsVect(progressMatchVect, progressWeights, w);
                 RDGeom::Transform3D trans;
-                pairsRMSD[1] = getAlignmentTransform(progressMol, refMol,
+                pairsRMSD[1] = getAlignmentTransform(prbMol, refMol,
                   trans, prbCid, refCid, &progressMatchVect, &progressWeights,
                   reflect, maxIters);
                 flag = ((pairs[5] > pairs[4]) || ((pairs[5] == pairs[4])
@@ -726,7 +726,7 @@ namespace RDKit {
                   }
                   bestSDM[4] = new SDM();
                   *(bestSDM[4]) = progressSDM;
-                  MolTransforms::transformConformer(progressMol.getConformer(prbCid), trans);
+                  MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
                 }
                 ++iter;
               }
