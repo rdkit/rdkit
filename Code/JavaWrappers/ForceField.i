@@ -151,7 +151,11 @@
     }
     return ff;
   }
+  static bool MMFFHasAllMoleculeParams(RDKit::ROMol &mol){
+    RDKit::MMFF::MMFFMolProperties mmffMolProperties(mol);
+    return mmffMolProperties.isValid();
+  }
 
+ }
 
-}
 
