@@ -190,6 +190,7 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   canvas = Canvas(size)
   if options is None:
     options = DrawingOptions()
+    options.bgColor=None
   if fitImage:
       drawingOptions.dotsPerAngstrom = int(min(size) / 10)
   options.wedgeDashedBonds=wedgeBonds
