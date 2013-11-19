@@ -230,12 +230,18 @@ namespace RDKit {
         prbMolProps=prbPyMMFFMolProperties->mmffMolProperties.get();
       } else {
         prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+        if(!prbMolProps->isValid()){
+          throw_value_error("missing MMFF94 parameters for probe molecule");
+        }
       }
       if(refProps != python::object()){
         refPyMMFFMolProperties=python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
         refMolProps=refPyMMFFMolProperties->mmffMolProperties.get();
       } else {
         refMolProps = new MMFF::MMFFMolProperties(refMol);
+        if(!refMolProps->isValid()){
+          throw_value_error("missing MMFF94 parameters for reference molecule");
+        }
       }
       
       O3A *o3a = new MolAlign::O3A(prbMol, refMol,

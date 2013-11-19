@@ -82,7 +82,6 @@ class TestCase(unittest.TestCase):
       writer = Chem.SDWriter('mol_899.sdf')
     
       for cid in cids:
-        print 'cid:',repr(cid)
         ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, confId=cid)
         ff.Initialize()
         more = 1
@@ -147,7 +146,23 @@ class TestCase(unittest.TestCase):
       cumMsd /= len(molS)
       self.failUnlessAlmostEqual(cumScore,6942,0)
       self.failUnlessAlmostEqual(math.sqrt(cumMsd),.546,3)
-          
+
+    def test7O3A(self):
+      " make sure we generate an error if parameters are missing (github issue 158) "
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+
+      m1 = Chem.MolFromSmiles('c1ccccc1Cl')
+      rdDistGeom.EmbedMolecule(m1)
+      m2 = Chem.MolFromSmiles('c1ccccc1B(O)O')
+      rdDistGeom.EmbedMolecule(m1)
+
+      self.failUnlessRaises(ValueError,lambda :rdMolAlign.GetO3A(m1, m2))
+      self.failUnlessRaises(ValueError,lambda :rdMolAlign.GetO3A(m2, m1))
+
+
+
+      
 if __name__ == '__main__':
     print "Testing MolAlign Wrappers"
     unittest.main()
