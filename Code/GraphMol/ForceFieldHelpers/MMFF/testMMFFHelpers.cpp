@@ -588,6 +588,90 @@ void testSFIssue2378119()
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+  void runblock_mmff(const std::vector<ROMol *> &mols,const std::vector<double> &energies,
+                unsigned int count,unsigned int idx){
+    for(unsigned int rep=0;rep<500;++rep){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+        ForceFields::ForceField *field = 0;
+        if(!(rep%100)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        try {
+          field = MMFF::constructForceField(*mol);
+        } catch (...) {
+          field = 0;
+        }
+        TEST_ASSERT(field);
+        field->initialize();
+        int failed = field->minimize(500);
+        TEST_ASSERT(!failed);
+        double eng=field->calcEnergy();
+        TEST_ASSERT(feq(eng,energies[i]));
+        delete field;
+      }
+    }
+  }
+}
+#include <boost/thread.hpp>  
+void testMMFFMultiThread(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading" << std::endl;
+
+  ForceFields::ForceField *field;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+  }
+
+  std::cerr<<"generating reference data"<<std::endl;
+  std::vector<double> energies(mols.size(),0.0);
+  for(unsigned int i=0;i<mols.size();++i){
+    ROMol mol(*mols[i]);
+    ForceFields::ForceField *field = 0;
+    try {
+      field = MMFF::constructForceField(mol);
+    } catch (...) {
+      field = 0;
+    }
+    TEST_ASSERT(field);
+    field->initialize();
+    int failed = field->minimize(500);
+    TEST_ASSERT(!failed);
+    energies[i]=field->calcEnergy();
+    delete field;
+  }
+  
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock_mmff,mols,energies,count,i));
+  }
+  tg.join_all();
+  
+  BOOST_FOREACH(ROMol *mol,mols){
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#endif
+
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -605,4 +689,7 @@ int main()
   testSFIssue2378119();
 #endif
   testMMFFBatch();
+#ifdef RDK_TEST_MULTITHREADED
+  testMMFFMultiThread();
+#endif
 }
