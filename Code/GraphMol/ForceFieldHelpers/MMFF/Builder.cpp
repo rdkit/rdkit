@@ -459,6 +459,7 @@ namespace RDKit {
                 mmffAngleParams = getMMFFAngleBendEmpiricalRuleParams
                   (mol, mmffAngleParams, mmffPropParamsCentralAtom,
                   mmffBondParams[0], mmffBondParams[1], idx[0], idx[1], idx[2]);
+                areMMFFAngleParamsEmpirical = true;
               }
               unsigned int stretchBendType = MMFF::getMMFFStretchBendType
                 (angleType, (iAtomType <= kAtomType) ? bondType[0] : bondType[1],
@@ -825,6 +826,9 @@ namespace RDKit {
                           }
                           totalTorsionEnergy += torsionEnergy;
                         }
+                      }
+                      if(areMMFFTorParamsEmpirical){
+                        delete mmffTorParams;
                       }
                     }
                   }

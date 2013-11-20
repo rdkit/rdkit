@@ -595,12 +595,14 @@ void testSFIssue2378119()
 int main()
 {
   RDLog::InitLogs();
+#if 0
   testMMFFTyper1();
   testMMFFBuilder1();
   testMMFFBuilder2();
-  testMMFFBatch();
   testIssue239();
   testIssue242();
   testSFIssue1653802();
   testSFIssue2378119();
+#endif
+  testMMFFBatch();
 }
