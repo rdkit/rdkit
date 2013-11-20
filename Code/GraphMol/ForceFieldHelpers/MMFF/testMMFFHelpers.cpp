@@ -595,7 +595,7 @@ void testSFIssue2378119()
 int main()
 {
   RDLog::InitLogs();
-#if 0
+#if 1
   testMMFFTyper1();
   testMMFFBuilder1();
   testMMFFBuilder2();

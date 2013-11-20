@@ -20,6 +20,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <vector>
 #include <cmath>
+#include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/dynamic_bitset.hpp>
 
@@ -122,8 +123,8 @@ namespace RDKit {
         d_refCid(other.d_refCid),
         d_SDMPtrVect(other.d_SDMPtrVect.size()) {
         for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
-          d_SDMPtrVect[i] = new SDMElement();
-          memcpy(d_SDMPtrVect[i], other.d_SDMPtrVect[i], sizeof(SDMElement));
+          d_SDMPtrVect[i] = boost::shared_ptr<SDMElement>(new SDMElement());
+          memcpy(d_SDMPtrVect[i].get(), other.d_SDMPtrVect[i].get(), sizeof(SDMElement));
         }
       };
       // assignment operator
@@ -136,18 +137,14 @@ namespace RDKit {
         d_refCid = other.d_refCid;
         d_SDMPtrVect.resize(other.d_SDMPtrVect.size());
         for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
-          d_SDMPtrVect[i] = new SDMElement();
-          memcpy(d_SDMPtrVect[i], other.d_SDMPtrVect[i], sizeof(SDMElement));
+          d_SDMPtrVect[i] = boost::shared_ptr<SDMElement>(new SDMElement());
+          memcpy(d_SDMPtrVect[i].get(), other.d_SDMPtrVect[i].get(), sizeof(SDMElement));
         }
         
         return *this;
       };
       // destructor    
-      ~SDM() {
-        for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
-          delete d_SDMPtrVect[i];
-        }
-      };
+      ~SDM() {};
       void fillFromDist(double threshold,
                         const boost::dynamic_bitset<> &refHvyAtoms,
                         const boost::dynamic_bitset<> &prbHvyAtoms);
@@ -171,14 +168,14 @@ namespace RDKit {
       MMFF::MMFFMolProperties *d_refMMFFMolProperties;
       int d_prbCid;
       int d_refCid;
-      std::vector<SDMElement *> d_SDMPtrVect;
-      static bool compareSDMScore(SDMElement *a, SDMElement *b)
+      std::vector<boost::shared_ptr<SDMElement> > d_SDMPtrVect;
+      static bool compareSDMScore(boost::shared_ptr<SDMElement> a, boost::shared_ptr<SDMElement> b)
       {
         return ((a->score != b->score) ? (a->score < b->score)
           : ((a->cost != b->cost) ? (a->cost < b->cost)
           : (a->idx[0] < b->idx[0])));
       };
-      static bool compareSDMDist(SDMElement *a, SDMElement *b)
+      static bool compareSDMDist(boost::shared_ptr<SDMElement> a, boost::shared_ptr<SDMElement> b)
       {
         return (isDoubleZero(a->sqDist - b->sqDist)
           ? (a->idx[0] < b->idx[0]) : (a->sqDist < b->sqDist));

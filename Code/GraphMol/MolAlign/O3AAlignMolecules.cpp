@@ -480,7 +480,7 @@ namespace RDKit {
         sdmElement->idx[0] = i;
         sdmElement->idx[1] = lap.getRowSol(i);
         sdmElement->cost = lap.getCost(i, lap.getRowSol(i));
-        d_SDMPtrVect.push_back(sdmElement);
+        d_SDMPtrVect.push_back(boost::shared_ptr<SDMElement>(sdmElement));
         ++n_equiv;
       }
       boost::multi_array<double, 2> diff(boost::extents[n_equiv][n_equiv]);
@@ -566,7 +566,7 @@ namespace RDKit {
             sdmElement->idx[0] = i;
             sdmElement->idx[1] = j;
             sdmElement->sqDist = sqDist;
-            d_SDMPtrVect.push_back(sdmElement);
+            d_SDMPtrVect.push_back(boost::shared_ptr<SDMElement>(sdmElement));
             ++n;
           }
         }

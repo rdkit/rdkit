@@ -137,20 +137,23 @@ void testO3A() {
   int nMol = supplier.length();
   const int refNum = 48;
   //SDWriter *newMol = new SDWriter(newSdf);
-  ROMol refMol = *(supplier[refNum]);
-  MMFF::MMFFMolProperties refMP(refMol);
+  ROMol *refMol = supplier[refNum];
+  MMFF::MMFFMolProperties refMP(*refMol);
   double cumScore = 0.0;
   double cumMsd = 0.0;
   for (int prbNum = 0; prbNum < nMol; ++prbNum) {
-    ROMol prbMol = *(supplier[prbNum]);
-    MMFF::MMFFMolProperties prbMP(prbMol);
-    MolAlign::O3A o3a(prbMol, refMol, &prbMP, &refMP);
+    std::cerr<<"doing: "<<prbNum<<std::endl;
+    ROMol *prbMol = supplier[prbNum];
+    MMFF::MMFFMolProperties prbMP(*prbMol);
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP);
     double rmsd = o3a.align();
     cumMsd += rmsd * rmsd;
     cumScore += o3a.score();
     //newMol->write(prbMol);
+    delete prbMol;
   }
   cumMsd /= (double)nMol;
+  delete refMol;
   //newMol->close();
   //std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
   TEST_ASSERT(RDKit::feq(cumScore, 6941.8,1));
@@ -161,6 +164,7 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
+#if 1
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -176,6 +180,7 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testIssue241 \n\n";
   testIssue241();
+#endif
     
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testO3A \n\n";
