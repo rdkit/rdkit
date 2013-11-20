@@ -159,7 +159,82 @@ void testO3A() {
   TEST_ASSERT(RDKit::feq(cumScore, 6941.8,1));
   TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.546,.001));
 }
-    
+
+
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+  void runblock_o3a(ROMol *refMol,
+                    const std::vector<ROMol *> &mols,const std::vector<double> &rmsds,
+                    const std::vector<double> &scores,
+                    unsigned int count,unsigned int idx){
+    for(unsigned int rep=0;rep<100;++rep){
+      MMFF::MMFFMolProperties refMP(*refMol);
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        ROMol prbMol(*mols[i]);
+        MMFF::MMFFMolProperties prbMP(prbMol);
+        MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
+        double rmsd = o3a.align();
+        double score = o3a.score();
+        TEST_ASSERT(feq(rmsd,rmsds[i]));
+        TEST_ASSERT(feq(score,scores[i]));
+      }
+    }
+  }
+}
+#include <boost/thread.hpp>  
+void testO3AMultiThread() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
+
+  SDMolSupplier suppl(sdf, true, false);
+
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+  }
+
+  std::cerr<<"generating reference data"<<std::endl;
+  std::vector<double> rmsds(mols.size(),0.0);
+  std::vector<double> scores(mols.size(),0.0);
+  const int refNum = 48;
+  ROMol *refMol = mols[refNum];
+  MMFF::MMFFMolProperties refMP(*refMol);
+
+  for(unsigned int i=0;i<mols.size();++i){
+    ROMol prbMol(*mols[i]);
+    MMFF::MMFFMolProperties prbMP(prbMol);
+    MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
+    rmsds[i]=o3a.align();
+    scores[i] = o3a.score();
+  }
+  
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock_o3a,refMol,mols,rmsds,scores,count,i));
+  }
+  tg.join_all();
+  
+  BOOST_FOREACH(ROMol *mol,mols){
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#endif
+
+
 int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
@@ -186,7 +261,13 @@ int main() {
   std::cout << "\t testO3A \n\n";
   testO3A();
   std::cout << "***********************************************************\n";
-  return(0);
+
+#ifdef RDK_TEST_MULTITHREADED
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testO3A multithreading\n\n";
+  testO3AMultiThread();
+#endif
+  std::cout << "***********************************************************\n";
 
 }
 

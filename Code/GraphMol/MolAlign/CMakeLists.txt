@@ -7,7 +7,7 @@ rdkit_test(testMolAlign testMolAlign.cpp
            LINK_LIBRARIES MolAlign 
 FileParsers DistGeomHelpers MolTransforms ForceFieldHelpers 
 SmilesParse DistGeometry ForceField Optimizer EigenSolvers Alignment SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS})
 
 add_subdirectory(Wrap)
 
