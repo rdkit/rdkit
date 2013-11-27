@@ -1209,9 +1209,6 @@ namespace {
 
 #include <boost/thread.hpp>  
 void testMultiThread(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
-
   std::cerr<<"building molecules"<<std::endl;
   //std::string smi="C/12=C(\\CSC2)Nc3cc(n[n]3C1=O)c4ccccc4";
   std::string smi="c1ccc2c(c1)C1C3C2C13";
