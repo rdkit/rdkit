@@ -55,6 +55,18 @@ namespace RDKit {
       // interactions. This causes us to get folded-up (and self-penetrating)
       // conformations for large flexible molecules
       if(useRandomCoords) basinThresh=1e8;
+
+      RDKit::double_source_type *rng=0;
+      RDKit::rng_type *generator;
+      RDKit::uniform_double *distrib;
+      if(seed>0){
+        generator=new RDKit::rng_type(42u);
+        generator->seed(seed);
+        distrib=new RDKit::uniform_double(0.0,1.0);
+        rng = new RDKit::double_source_type(*generator,*distrib);
+      } else {
+        rng = &RDKit::getDoubleRandomSource();
+      }
       
       bool gotCoords = false;
       unsigned int iter = 0;
@@ -62,12 +74,8 @@ namespace RDKit {
       while ((gotCoords == false) && (iter < maxIterations)) {
         ++iter;
         if(!useRandomCoords){
-          if (seed > 0) {
-            largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat, iter*seed);
-          } else {
-            largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat);
-          }
-          gotCoords = DistGeom::computeInitialCoords(distMat, positions,
+          largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat, *rng);
+          gotCoords = DistGeom::computeInitialCoords(distMat, positions,*rng,
                                                      randNegEig, numZeroFail);
         } else {
           double boxSize;
@@ -76,12 +84,13 @@ namespace RDKit {
           } else {
             boxSize=-1*boxSizeMult;
           }
-          if (seed > 0) {
-            RDKit::rng_type &generator = RDKit::getRandomGenerator();
-            generator.seed(seed*iter);
-          }
-          gotCoords = DistGeom::computeRandomCoords(positions,boxSize);
+          gotCoords = DistGeom::computeRandomCoords(positions,boxSize,*rng);
         }
+      }
+      if(seed>0 && rng){
+        delete rng;
+        delete generator;
+        delete distrib;
       }
       if (gotCoords) {
         ForceFields::ForceField *field = DistGeom::constructForceField(*mmat, positions,

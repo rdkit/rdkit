@@ -42,6 +42,9 @@ namespace RDKit{
   //! Optionally seed the random number generator 
   double getRandomVal(int seed = -1);
 
+  //! return a reference to the global (Boost) random source
+  double_source_type &getDoubleRandomSource();
+  
 
   template <class T>
   unsigned int countSwapsToInterconvert(const T &ref,T probe){

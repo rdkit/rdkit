@@ -28,14 +28,18 @@ namespace DistGeom {
   double pickRandomDistMat(const BoundsMatrix &mmat, 
                            RDNumeric::SymmMatrix<double> &distMat,
                            int seed) {
+    if(seed>0){
+      RDKit::getRandomGenerator(seed);
+    }
+    return pickRandomDistMat(mmat,distMat,RDKit::getDoubleRandomSource());
+  }
+
+  double pickRandomDistMat(const BoundsMatrix &mmat, 
+                           RDNumeric::SymmMatrix<double> &distMat,
+                           RDKit::double_source_type &rng) {
     // make sure the sizes match up
     unsigned int npt = mmat.numRows();
     CHECK_INVARIANT(npt == distMat.numRows(), "Size mismatch");
-
-    RDKit::rng_type &generator = RDKit::getRandomGenerator();
-    if (seed > 0) {
-      generator.seed(seed);
-    }
 
     double largestVal=-1.0;
     double *ddata = distMat.getData();
@@ -45,7 +49,8 @@ namespace DistGeom {
         double ub = mmat.getUpperBound(i,j);
         double lb = mmat.getLowerBound(i,j);
         CHECK_INVARIANT(ub >= lb, "");
-        double rval = RDKit::getRandomVal();
+        double rval = rng();
+        //std::cerr<<i<<"-"<<j<<": "<<rval<<std::endl;
         double d = lb + (rval)*(ub - lb);
         ddata[id+j] = d;
         if(d>largestVal){
@@ -58,7 +63,20 @@ namespace DistGeom {
 
   bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,  
                             RDGeom::PointPtrVect &positions, bool randNegEig, 
-                            unsigned int numZeroFail) {
+                            unsigned int numZeroFail,
+                            int seed) {
+    if(seed>0){
+      RDKit::getRandomGenerator(seed);
+    }
+    return computeInitialCoords(distMat,positions,RDKit::getDoubleRandomSource(),
+                                randNegEig,numZeroFail);
+
+  }
+  bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,  
+                            RDGeom::PointPtrVect &positions,
+                            RDKit::double_source_type &rng,
+                            bool randNegEig, 
+                            unsigned int numZeroFail){
     unsigned int N = distMat.numRows();
     unsigned int nPt = positions.size();
     CHECK_INVARIANT(nPt == N, "Size mismatch");
@@ -131,21 +149,32 @@ namespace DistGeom {
         if (eigData[j] >= 0.0) {
           (*pt)[j] = eigData[j]*eigVecs.getVal(j,i);
         } else {
-          (*pt)[j] = 1.0 - 2.0*RDKit::getRandomVal();
+          //std::cerr<<"!!! "<<i<<"-"<<j<<": "<<eigData[j]<<std::endl;
+          (*pt)[j] = 1.0 - 2.0*rng();
         }
       }
     }
     return true;
   }
 
-  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize){
-    CHECK_INVARIANT(boxSize>0.0, "bad boxSize");
+  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
+                           int seed){
+    if(seed>0){
+      RDKit::getRandomGenerator(seed);
+    }
+    return computeRandomCoords(positions,boxSize,
+                               RDKit::getDoubleRandomSource());
 
+  }
+  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
+                           RDKit::double_source_type &rng){
+    CHECK_INVARIANT(boxSize>0.0, "bad boxSize");
+    
     for(RDGeom::PointPtrVect::iterator ptIt=positions.begin();
         ptIt!=positions.end();++ptIt){
       RDGeom::Point *pt = *ptIt;
       for (unsigned int i = 0; i<pt->dimension(); ++i) {
-        (*pt)[i]=boxSize*(RDKit::getRandomVal()-0.5);
+        (*pt)[i]=boxSize*(rng()-0.5);
       }
     }
     return true;

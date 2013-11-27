@@ -64,7 +64,11 @@ void test1() {
   CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(3, 4), 1.0, 0.001), "");
 
   DoubleSymmMatrix dmat(npt, 0.0);
-  pickRandomDistMat(*mmat, dmat, 100);
+  RDKit::rng_type generator(42u);
+  generator.seed(100);
+  RDKit::uniform_double distrib(0,1.0);
+  RDKit::double_source_type rng(generator,distrib);
+  pickRandomDistMat(*mmat, dmat, rng);
 
   double sumElem = 0.0;
   for (unsigned int i = 0; i < dmat.getDataSize(); i++) {
