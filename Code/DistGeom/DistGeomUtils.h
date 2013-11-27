@@ -15,10 +15,12 @@
 #include <map>
 #include <Geometry/point.h>
 #include "ChiralSet.h"
+#include <RDGeneral/utils.h>
 
 namespace ForceFields {
   class ForceField;
 }
+
 
 namespace DistGeom {
 
@@ -27,12 +29,17 @@ namespace DistGeom {
   /*!
     \param mmat     Bounds matrix
     \param distmat  Storage for randomly chosen distances
-    \param seed     Optional value to seed the random number generator
+    \param seed     the random number seed to use
 
     \return the largest element of the distance matrix
    */
   double pickRandomDistMat(const BoundsMatrix &mmat, 
-                           RDNumeric::SymmMatrix<double> &distmat, int seed=-1);
+                           RDNumeric::SymmMatrix<double> &distmat,
+                           int seed=-1);
+  //! \overload
+  double pickRandomDistMat(const BoundsMatrix &mmat, 
+                           RDNumeric::SymmMatrix<double> &distmat,
+                           RDKit::double_source_type &rng);
 
   //! Compute an initial embedded in 3D based on a distance matrix
   /*! 
@@ -45,22 +52,35 @@ namespace DistGeom {
     \param randNegEig  If set to true and if any of the eigen values are negative, we will
                        pick the corresponding components of the coordinates at random
     \param numZeroFail Fail embedding is more this many (or more) eigen values are zero
+    \param seed        the random number seed to use
 
     \return true if the embedding was successful
   */
   bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,  
                             RDGeom::PointPtrVect &positions, bool randNegEig=false, 
-                            unsigned int numZeroFail=2);
+                            unsigned int numZeroFail=2,
+                            int seed=-1);
+  //! \overload
+  bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,  
+                            RDGeom::PointPtrVect &positions,
+                            RDKit::double_source_type &rng,
+                            bool randNegEig=false, 
+                            unsigned int numZeroFail=2
+                            );
 
   //! places atoms randomly in a box
   /*! 
     \param positions     A vector of pointers to Points to write out the resulting coordinates
-    \param boxSize     If set to true and if any of the eigen values are negative, we will
-                       pick the corresponding components of the coordinates at random
+    \param boxSize     the side-length of the cubic box
+    \param seed        the random number seed to use
 
-    \return true if the embedding was successful
+    \return true if the coordinate generation was successful
   */
-  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize);
+  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
+                           int seed=-1);
+  //! \overload
+  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
+                           RDKit::double_source_type &rng);
 
   //! Setup the error function for violation of distance bounds as a forcefield
   /*! 

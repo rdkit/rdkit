@@ -501,6 +501,9 @@ namespace RDKit {
       } else {
         MolOps::sanitizeMol(*mol);
       }
+    } else {
+      // we need some properties for the chiral setup
+      mol->updatePropertyCache(false);
     }
 
     /* Set tetrahedral chirality from 3D co-ordinates */

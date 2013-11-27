@@ -55,7 +55,6 @@ void test1() {
     RWMol *m = SmilesToMol(smi, 0, 1); 
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1,true,false,2,true,1,0,1e-2);
     CHECK_INVARIANT(cid >= 0, "");
-
     ROMol *m2 = sdsup.next();
     //BOOST_LOG(rdInfoLog) << ">>> " << smi << std::endl;
     //writer.write(*m);
@@ -86,7 +85,7 @@ void test1() {
             //BOOST_LOG(rdInfoLog) << ">1> " <<i<<","<<j<<":"<< d1 << " " << d2 << std::endl;
 	    TEST_ASSERT(fabs(d1-d2)/d1<0.06);
           }else{
-            //BOOST_LOG(rdInfoLog) << ">2> " <<i<<","<<j<<":"<< d1 << " " << d2 << std::endl;
+            //BOOST_LOG(rdInfoLog) << ">2> " <<i<<","<<j<<":"<< d1 << " " << d2 << " "<<fabs(d1-d2)/d1<<std::endl;
 	    TEST_ASSERT(fabs(d1-d2)/d1<0.12);
 	  }
 	}
@@ -1179,13 +1178,29 @@ void testIssue3483968() {
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
-  void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx){
-    for(unsigned int j=0;j<10;j++){
+  void runblock(const std::vector<ROMol *> &mols,const std::vector<double> &energies,
+                unsigned int count,unsigned int idx){
+    for(unsigned int j=0;j<100;j++){
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
-        ROMol *mol = mols[i];
-        std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*mol,10);
+        ROMol mol(*mols[i]);
+        std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(mol,10,30,0xFEED);
         TEST_ASSERT(cids.size() == 10);
+        ForceFields::ForceField *field = 0;
+        try {
+          field = UFF::constructForceField(mol,100.0,cids[0]);
+        } catch (...) {
+          field = 0;
+        }
+        TEST_ASSERT(field);
+        field->initialize();
+        double eng=field->calcEnergy();
+        if(!feq(eng,energies[i])){
+          std::cerr<<i<<" iter "<<j<<" "<<energies[i]<<" != "<<eng<<std::endl;
+        }
+        
+        TEST_ASSERT(feq(eng,energies[i]));
+        delete field;
       }
     }
   };
@@ -1194,23 +1209,61 @@ namespace {
 
 #include <boost/thread.hpp>  
 void testMultiThread(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
-
   std::cerr<<"building molecules"<<std::endl;
+  //std::string smi="C/12=C(\\CSC2)Nc3cc(n[n]3C1=O)c4ccccc4";
   std::string smi="c1ccc2c(c1)C1C3C2C13";
   std::vector<ROMol *> mols;
   for(unsigned int i=0;i<100;++i){
     RWMol *m = SmilesToMol(smi);
     mols.push_back(m);
   }
+
+
+  std::cerr<<"generating reference data"<<std::endl;
+  std::vector<double> energies(mols.size(),0.0);
+  for(unsigned int i=0;i<mols.size();++i){
+    ROMol mol(*mols[i]);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(mol,10,30,0xFEED);
+    TEST_ASSERT(cids.size() == 10);
+    ForceFields::ForceField *field = 0;
+    try {
+      field = UFF::constructForceField(mol,100.0,cids[0]);
+    } catch (...) {
+      field = 0;
+    }
+    TEST_ASSERT(field);
+    field->initialize();
+    double eng=field->calcEnergy();
+    TEST_ASSERT(eng!=0.0);
+    energies[i]=eng;
+    delete field;
+  }
+
+  std::cerr<<"validating reference data"<<std::endl;
+  for(unsigned int i=0;i<mols.size();++i){
+    ROMol mol(*mols[i]);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(mol,10,30,0xFEED);
+    TEST_ASSERT(cids.size() == 10);
+    ForceFields::ForceField *field = 0;
+    try {
+      field = UFF::constructForceField(mol,100.0,cids[0]);
+    } catch (...) {
+      field = 0;
+    }
+    TEST_ASSERT(field);
+    field->initialize();
+    double eng=field->calcEnergy();
+    TEST_ASSERT(feq(eng,energies[i]));
+    delete field;
+  }
+
   boost::thread_group tg;
 
   std::cerr<<"processing"<<std::endl;
   unsigned int count=4;
   for(unsigned int i=0;i<count;++i){
     std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock,mols,count,i));
+    tg.add_thread(new boost::thread(runblock,mols,energies,count,i));
   }
   tg.join_all();
 
@@ -1352,10 +1405,6 @@ int main() {
   testIssue355();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
-  test1();
-
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testRandomCoords \n\n";
   testRandomCoords();
 
@@ -1393,14 +1442,19 @@ int main() {
   testIssue3483968();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
+  testGitHub55();
+
+#endif
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
+  test1();
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test multi-threading \n\n";
   testMultiThread();
 
-#endif
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
-  testGitHub55();
+
 
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

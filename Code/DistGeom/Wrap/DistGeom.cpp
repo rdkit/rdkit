@@ -107,15 +107,13 @@ namespace RDKit {
     for(int iter=0;iter<maxIters && !gotCoords;iter++){
       // pick a random distance matrix
       DistGeom::pickRandomDistMat(bm,distMat,randomSeed);
-      // update the seed:
-      if(randomSeed>=0) randomSeed+=iter*999;
 
-      //std::cerr <<  "Random matrix:" << std::endl;
-      //std::cerr << distMat;
-      
       // and embed it:
       gotCoords=DistGeom::computeInitialCoords(distMat,posPtrs,randomizeOnFailure,
-                                               numZeroFail);
+                                               numZeroFail,randomSeed);
+
+      // update the seed:
+      if(randomSeed>=0) randomSeed+=iter*999;
     }
 
     if(gotCoords){

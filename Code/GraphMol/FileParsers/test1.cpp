@@ -3241,6 +3241,24 @@ void testPDBFile(){
 }
 
 
+void testGithub166(){
+  BOOST_LOG(rdInfoLog) << "testing Github 166: skipping sanitization on reading pdb files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"1CRN.pdb";
+    ROMol *m=PDBFileToMol(fName,false,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3306,6 +3324,7 @@ int main(int argc,char *argv[]){
   testMolFileWithHs();
   testMolFileWithRxn();
   testPDBFile();
+  testGithub166();
 
   return 0;
 }
