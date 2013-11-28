@@ -588,6 +588,27 @@ void testSFIssue2378119()
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub162()
+{
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing github 162: Incorrect SMILES after MMFF parameterization ." << std::endl;
+  {
+    ROMol *mol = SmilesToMol("C1=CNC=C1");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getNumExplicitHs()==1);
+    MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties);
+    TEST_ASSERT(mmffMolProperties->isValid());
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getNumExplicitHs()==1);
+    
+    delete mol;
+    delete mmffMolProperties;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
   void runblock_mmff(const std::vector<ROMol *> &mols,const std::vector<double> &energies,
@@ -687,9 +708,11 @@ int main()
   testIssue242();
   testSFIssue1653802();
   testSFIssue2378119();
-#endif
   testMMFFBatch();
 #ifdef RDK_TEST_MULTITHREADED
   testMMFFMultiThread();
 #endif
+#endif
+
+  testGithub162();
 }

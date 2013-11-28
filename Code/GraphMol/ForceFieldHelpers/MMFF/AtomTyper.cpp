@@ -379,7 +379,19 @@ namespace RDKit {
           if ((pi_e > 2) && (!((pi_e - 2) % 4))) {
             aromRingBitVect[i] = 1;
             for (j = 0; j < atomRings[i].size(); ++j) {
-              mol.getAtomWithIdx(atomRings[i][j])->setIsAromatic(true);
+              atom=mol.getAtomWithIdx(atomRings[i][j]);
+              atom->setIsAromatic(true);
+              if(atom->getAtomicNum()!=6) {
+                //                std::cerr<<"   orig: "<<atom->getNumExplicitHs()<<std::endl;
+#if 1
+                atom->calcImplicitValence(false);
+                int iv=atom->getImplicitValence();
+                if(iv){
+                  atom->setNumExplicitHs(iv);
+                  atom->calcImplicitValence(false);
+                }
+#endif
+              }
             }
           }
         }
