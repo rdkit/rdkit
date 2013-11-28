@@ -72,9 +72,12 @@ class Canvas(CanvasBase):
                           family=font.face,
                           backgroundcolor='white')
 
-    bb = annot.get_window_extent(renderer=self._figure.canvas.get_renderer())
-    w,h = bb.width,bb.height
-    tw,th=canvas.transData.inverted().transform((w,h))
+    try:
+      bb = annot.get_window_extent(renderer=self._figure.canvas.get_renderer())
+      w,h = bb.width,bb.height
+      tw,th=canvas.transData.inverted().transform((w,h))
+    except AttributeError:
+      tw,th = 0.1,0.1 # <- kludge
     #print annot.xytext,w,h,tw,th
     return (tw,th,0)
 
