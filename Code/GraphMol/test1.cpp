@@ -1035,8 +1035,6 @@ void testAtomResidues()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-
-
 // -------------------------------------------------------------------
 int main()
 {

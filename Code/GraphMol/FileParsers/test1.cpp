@@ -3288,6 +3288,9 @@ void testZBO(){
     TEST_ASSERT(m->getBondWithIdx(9)->getBondType()==Bond::ZERO);
     TEST_ASSERT(m->getBondWithIdx(10)->getBondType()==Bond::ZERO);
     TEST_ASSERT(m->getBondWithIdx(11)->getBondType()==Bond::ZERO);
+
+    // make sure we don't screw up aromaticity:
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
   }
   {
     std::string fName;

@@ -4390,6 +4390,59 @@ void testGithubIssue141()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testZBO()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing ZBO basics" << std::endl;
+  {
+    RWMol *m=new RWMol();
+
+    m->addAtom(new Atom(26));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(1,2,Bond::AROMATIC);
+    m->addBond(2,3,Bond::AROMATIC);
+    m->addBond(3,4,Bond::AROMATIC);
+    m->addBond(4,5,Bond::AROMATIC);
+    m->addBond(5,6,Bond::AROMATIC);
+    m->addBond(1,6,Bond::AROMATIC);
+
+    m->addBond(1,0,Bond::ZERO);
+    m->addBond(2,0,Bond::ZERO);
+    m->addBond(3,0,Bond::ZERO);
+    m->addBond(4,0,Bond::ZERO);
+    m->addBond(5,0,Bond::ZERO);
+    m->addBond(6,0,Bond::ZERO);
+
+    MolOps::sanitizeMol(*m);
+
+    TEST_ASSERT(m->getRingInfo()->numAtomRings(0)==0);
+    TEST_ASSERT(m->getRingInfo()->numAtomRings(1)==1);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(5)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getHybridization()==Atom::SP2);
+
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(2)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(3)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(4)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(5)->getIsAromatic());
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4440,7 +4493,6 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
-#endif
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
   testSFNetIssue3349243();
@@ -4457,6 +4509,8 @@ int main(){
   testGitHubIssue72();
   testRenumberAtoms();
   testGithubIssue141();
+#endif
+  testZBO();
 
   return 0;
 }
