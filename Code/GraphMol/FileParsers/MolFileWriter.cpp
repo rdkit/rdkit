@@ -235,6 +235,23 @@ namespace RDKit{
     return ss.str();
   }
 
+  const std::string GetMolFileZBOInfo(const RWMol &mol){
+    std::stringstream res;
+    std::stringstream ss;
+    unsigned int nEntries=0;
+    for(ROMol::ConstBondIterator bondIt=mol.beginBonds();
+	bondIt!=mol.endBonds();++bondIt){
+      if((*bondIt)->getBondType()==Bond::ZERO){
+        ++nEntries;
+        ss<<" "<<std::setw(3)<<(*bondIt)->getIdx()+1<<" "<<std::setw(3)<<0;
+      }
+    }
+    if(nEntries){
+      res<<"M  ZBO"<<std::setw(3)<<nEntries<<ss.str()<<std::endl;
+    }
+    return res.str();
+  }
+
   
   const std::string AtomGetMolFileSymbol(const Atom *atom){
     PRECONDITION(atom,"");
@@ -397,6 +414,7 @@ namespace RDKit{
       break;
     case Bond::TRIPLE: res="  3";break;
     case Bond::AROMATIC: res="  4";break;
+    case Bond::ZERO: res="  1";break;
     default: res="  0";break;
     }
     return res;
@@ -590,6 +608,7 @@ namespace RDKit{
     res += GetMolFileRGroupInfo(tmol);
     res += GetMolFileQueryInfo(tmol);
     res += GetMolFileAliasInfo(tmol);
+    res += GetMolFileZBOInfo(tmol);
 
     // FIX: R-group logic, SGroups and 3D features etc.
     res += "M  END\n";

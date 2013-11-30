@@ -224,6 +224,7 @@ struct bond_wrapper {
       .value("DATIVEL",Bond::DATIVEL)
       .value("DATIVER",Bond::DATIVER)
       .value("OTHER",Bond::OTHER)
+      .value("ZERO",Bond::ZERO)
       ;
     python::enum_<Bond::BondDir>("BondDir")
       .value("NONE",Bond::NONE)

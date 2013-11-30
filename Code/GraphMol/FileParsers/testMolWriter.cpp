@@ -768,6 +768,42 @@ void testMolFileWithRxn(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testZBO(){
+  BOOST_LOG(rdInfoLog) << "testing handling of ZBO specs" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"FeCO5.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -856,6 +892,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileWithRxn();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testZBO();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }

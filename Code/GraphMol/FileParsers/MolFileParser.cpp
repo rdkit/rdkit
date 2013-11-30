@@ -571,6 +571,57 @@ namespace RDKit{
       }
     }
 
+    void ParseZBOLine(RWMol *mol, const std::string &text,unsigned int line){
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  ZBO"),"bad ZBO line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int bid=0;
+        unsigned int order=0;
+        try {
+          bid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            order = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          }
+          if(!bid || bid>mol->getNumBonds() ){
+            std::ostringstream errout;
+            errout << "Bad ZBO specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --bid;
+          Bond *bnd=mol->getBondWithIdx(bid);
+          if(!bnd){
+            std::ostringstream errout;
+            errout << "Bond "<<bid<<" from ZBO specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            if(order==0){
+              bnd->setBondType(Bond::ZERO);
+            } else {
+              bnd->setBondType(static_cast<Bond::BondType>(order));
+            }
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+
     void ParseNewAtomList(RWMol *mol,const std::string &text,unsigned int line){
       if(text.size()<15){
         std::ostringstream errout;
@@ -1214,6 +1265,7 @@ namespace RDKit{
         else if(lineBeg=="M  STY") {
           ParseSGroup2000STYLine(mol, tempStr,line);
         }
+        else if(lineBeg=="M  ZBO") ParseZBOLine(mol,tempStr,line);
         line++;
         tempStr = getLine(inStream);
         lineBeg=tempStr.substr(0,6);

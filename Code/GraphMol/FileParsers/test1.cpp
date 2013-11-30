@@ -3257,6 +3257,62 @@ void testGithub166(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testZBO(){
+  BOOST_LOG(rdInfoLog) << "testing ZBO parsing" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"FeCO5.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+  }
+  {
+    std::string fName;
+    fName = rdbase+"CrBz.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getNumBonds()==12);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(9)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(10)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(11)->getBondType()==Bond::ZERO);
+  }
+  {
+    std::string fName;
+    fName = rdbase+"CrBz2.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==13);
+    TEST_ASSERT(m->getNumBonds()==24);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(9)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(10)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(11)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(18)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(19)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(20)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(21)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(22)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(23)->getBondType()==Bond::ZERO);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(int argc,char *argv[]){
@@ -3320,11 +3376,12 @@ int main(int argc,char *argv[]){
   testMolFileTotalValence();
   testGithub88();
   testGithub82();
-#endif
   testMolFileWithHs();
   testMolFileWithRxn();
   testPDBFile();
   testGithub166();
+#endif
+  testZBO();
 
   return 0;
 }

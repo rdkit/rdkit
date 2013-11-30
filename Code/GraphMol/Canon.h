@@ -22,6 +22,7 @@ namespace RDKit {
 namespace Canon {
   const int MAX_NATOMS=5000; //!< used in the canonical traversal code
   const int MAX_CYCLES=99;   //!< used in the canonical traversal code
+  const int MAX_BONDTYPE=32; //!< used in the canonical traversal code
 
   //! used in traversals of the molecule
   typedef enum {
