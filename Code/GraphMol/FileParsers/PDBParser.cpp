@@ -17,6 +17,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
+#include <RDGeneral/LocaleSwitcher.h>
 #include "ProximityBonds.h"
 
 #include <GraphMol/MonomerInfo.h>
@@ -433,6 +434,7 @@ namespace RDKit {
     std::map<int,Atom*> amap;
     std::map<Bond*,int> bmap;
     RWMol *mol = 0;
+    Utils::LocaleSwitcher ls;
 
     while (*str) {
       unsigned int len;
