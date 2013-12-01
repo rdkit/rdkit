@@ -54,8 +54,8 @@ namespace RDKit {
       MolHistogram(const ROMol &mol, const int cid = -1);
       ~MolHistogram() {};
     inline int get(const unsigned int y, const unsigned int x) const {
-      PRECONDITION((y >= 0) && (y < d_h.shape()[0]), "Invalid index on MolHistogram");
-      PRECONDITION((x >= 0) && (x < d_h.shape()[1]), "Invalid index on MolHistogram");
+      PRECONDITION((y > 0) && (y < d_h.shape()[0]), "Invalid index on MolHistogram");
+      PRECONDITION((x > 0) && (x < d_h.shape()[1]), "Invalid index on MolHistogram");
       return d_h[y][x];
     }
     private:
@@ -76,12 +76,12 @@ namespace RDKit {
         d_cost(boost::extents[dim][dim]) {};
       ~LAP() {};
       int getCost(const unsigned int i, const unsigned int j) {
-        PRECONDITION((i >= 0) && (i < d_cost.shape()[0]), "Invalid index on LAP.cost");
-        PRECONDITION((j >= 0) && (j < d_cost.shape()[1]), "Invalid index on LAP.cost");
+        PRECONDITION((i > 0) && (i < d_cost.shape()[0]), "Invalid index on LAP.cost");
+        PRECONDITION((j > 0) && (j < d_cost.shape()[1]), "Invalid index on LAP.cost");
         return d_cost[i][j];
       }
       int getRowSol(const unsigned int i) {
-        PRECONDITION((i >= 0) && (i < d_rowSol.size()), "Invalid index on LAP.rowSol");
+        PRECONDITION((i > 0) && (i < d_rowSol.size()), "Invalid index on LAP.rowSol");
         return d_rowSol[i];
       }
       void computeMinCostPath(unsigned int dim);
