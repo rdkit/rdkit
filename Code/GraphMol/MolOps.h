@@ -528,6 +528,29 @@ namespace RDKit{
 				  bool useAtomWts=false);
 
 
+    //! Computes the molecule's 3D distance matrix
+    /*!
+      
+      \param mol             the molecule of interest
+      \param confId          the conformer to use
+      \param useAtomWts      sets the diagonal elements of the result to
+               6.0/(atomic number)
+      \param force           forces calculation of the matrix, even if already computed
+      \param propNamePrefix  used to set the cached property name
+
+      \return the distance matrix.
+
+      <b>Notes</b>
+        - The result of this is cached in the molecule's local property dictionary,
+	  which will handle deallocation. Do the caller should <b>not</b> \c delete
+	  this pointer.
+     
+    */
+    double *get3DDistanceMat(const ROMol &mol,
+                             int confId=-1,
+                             bool useAtomWts=false,
+                             bool force=false,
+                             const char *propNamePrefix=0);
     //! Find the shortest path between two atoms
     /*!
       Uses the Bellman-Ford algorithm

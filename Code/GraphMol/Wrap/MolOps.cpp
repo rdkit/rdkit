@@ -247,6 +247,24 @@ namespace RDKit{
     
     return PyArray_Return(res);
   }
+  PyObject *get3DDistanceMatrix(ROMol &mol, int confId=-1,
+                              bool useAtomWts=false,bool force=false,
+                              const char *prefix=0) {
+    int nats = mol.getNumAtoms();
+    npy_intp dims[2];
+    dims[0] = nats;
+    dims[1] = nats;
+    double *distMat;
+    
+    distMat = MolOps::get3DDistanceMat(mol, confId, useAtomWts,force,prefix);
+    
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
+    
+    memcpy(static_cast<void *>(res->data),
+         static_cast<void *>(distMat),nats*nats*sizeof(double));
+    
+    return PyArray_Return(res);
+  }
 
   PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO=false,
                                int emptyVal=0,bool force=false,
@@ -728,6 +746,34 @@ namespace RDKit{
 \n";
       python::def("GetDistanceMatrix", getDistanceMatrix,
                   (python::arg("mol"),python::arg("useBO")=false,
+                   python::arg("useAtomWts")=false,
+                   python::arg("force")=false,
+                   python::arg("prefix")=""),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
+      docString="Returns the molecule's 3D distance matrix.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - confId: (optional) chooses the conformer Id to use\n\
+      Default value is -1.\n\
+\n\
+    - useAtomWts: (optional) toggles using atom weights for the diagonal elements of the\n\
+      matrix (to return a \"Balaban\" distance matrix).\n\
+      Default value is 0.\n\
+\n\
+    - force: (optional) forces the calculation to proceed, even if there is a cached value.\n\
+      Default value is 0.\n\
+\n\
+    - prefix: (optional, internal use) sets the prefix used in the property cache\n\
+      Default value is "".\n\
+\n\
+  RETURNS: a Numeric array of floats with the distance matrix\n\
+\n";
+      python::def("Get3DDistanceMatrix", get3DDistanceMatrix,
+                  (python::arg("mol"),python::arg("confId")=-1,
                    python::arg("useAtomWts")=false,
                    python::arg("force")=false,
                    python::arg("prefix")=""),
