@@ -200,8 +200,6 @@ namespace MolTransforms {
   namespace {
     void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId, unsigned int jAtomId,
                            std::list<unsigned int> &alist) {
-      const Atom *iAtom = mol.getAtomWithIdx(iAtomId);
-      const Atom *jAtom = mol.getAtomWithIdx(jAtomId);
       unsigned int nAtoms = mol.getNumAtoms();
       boost::dynamic_bitset<> visitedIdx(nAtoms);
       std::stack<unsigned int> stack;

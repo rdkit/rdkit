@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2013 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,22 +21,22 @@ namespace ForceFields {
 
     namespace Utils {
       double calcAngleForceConstant(double theta0,
-            double bondOrder12,double bondOrder23,
-            const AtomicParams *at1Params,
-            const AtomicParams *at2Params,
-            const AtomicParams *at3Params){
-  double cosTheta0=cos(theta0);
-  double r12 = calcBondRestLength(bondOrder12,at1Params,at2Params);
-  double r23 = calcBondRestLength(bondOrder23,at2Params,at3Params);
-  double r13 = sqrt(r12*r12 + r23*r23 - 2.*r12*r23*cosTheta0);
-  double beta = 2.*Params::G/(r12*r23);
+                                    double bondOrder12,double bondOrder23,
+                                    const AtomicParams *at1Params,
+                                    const AtomicParams *at2Params,
+                                    const AtomicParams *at3Params){
+        double cosTheta0=cos(theta0);
+        double r12 = calcBondRestLength(bondOrder12,at1Params,at2Params);
+        double r23 = calcBondRestLength(bondOrder23,at2Params,at3Params);
+        double r13 = sqrt(r12*r12 + r23*r23 - 2.*r12*r23*cosTheta0);
+        double beta = 2.*Params::G/(r12*r23);
 
-  double preFactor = beta*at1Params->Z1*at3Params->Z1 / int_pow<5>(r13);
-  double rTerm = r12*r23;
-  double innerBit = 3.*rTerm*(1.-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
+        double preFactor = beta*at1Params->Z1*at3Params->Z1 / int_pow<5>(r13);
+        double rTerm = r12*r23;
+        double innerBit = 3.*rTerm*(1.-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
             
-  double res=preFactor*rTerm*innerBit;
-  return res;
+        double res=preFactor*rTerm*innerBit;
+        return res;
       }
     } // end of namespace Utils
   

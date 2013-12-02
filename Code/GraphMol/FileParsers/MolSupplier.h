@@ -318,7 +318,6 @@ namespace RDKit {
 
     bool df_end; // have we reached the end of the file?
     int d_len; // total number of mols in the file
-    int d_next; // the  molecule we are ready to read
     int d_last; // the molecule we are ready to read
     int d_line; // line number we are currently on
     int d_confId2D; // id to use for 2D conformers

@@ -90,7 +90,6 @@ namespace ForceFields {
 
       double dist1 = this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos);
       double dist2 = this->dp_forceField->distance(this->d_at2Idx, this->d_at3Idx, pos);
-      double res = 0.0;
       
       RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
 			  pos[3 * this->d_at1Idx + 1],

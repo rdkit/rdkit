@@ -55,7 +55,7 @@ namespace ForceFields {
     private:
       int d_at1Idx,d_at2Idx,d_at3Idx;
       unsigned int d_order;
-      double d_forceConstant,d_theta0,d_C0,d_C1,d_C2;
+      double d_forceConstant,d_C0,d_C1,d_C2;
 
       double getEnergyTerm(double cosTheta,double sinThetaSq) const;
       double getThetaDeriv(double cosTheta,double sinTheta) const;

@@ -549,7 +549,6 @@ namespace RDKit{
       (*atIt)->updatePropertyCache(false);
     }
 
-    unsigned int nAtoms=atomsToUse.size();
     INT_VECT ranks(tmol.getNumAtoms(),-1);
 
     std::vector<unsigned int> atomOrdering;

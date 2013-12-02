@@ -377,7 +377,6 @@ namespace RDKit{
       unsigned int spos = 9;
       for (unsigned int ie = 0; ie < nent; ie++) {
         unsigned int aid;
-        int mass;
         try {
           aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
           spos += 4;
@@ -1735,7 +1734,7 @@ namespace RDKit{
       }
       conf = new Conformer(nAtoms);
       
-      unsigned int nSgroups,n3DConstraints,chiralFlag;
+      unsigned int nSgroups=0,n3DConstraints=0,chiralFlag=0;
       if(splitLine.size()>2) nSgroups = FileParserUtils::toInt(splitLine[2]);
       if(splitLine.size()>3) n3DConstraints = FileParserUtils::toInt(splitLine[3]);
       if(splitLine.size()>4) chiralFlag = FileParserUtils::toInt(splitLine[4]);
