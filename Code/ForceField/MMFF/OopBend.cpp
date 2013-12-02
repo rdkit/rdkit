@@ -76,17 +76,17 @@ namespace ForceFields {
     {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-        pos[3 * this->d_at1Idx + 1], pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-        pos[3 * this->d_at2Idx + 1], pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-        pos[3 * this->d_at3Idx + 1], pos[3 * this->d_at3Idx + 2]);
-      RDGeom::Point3D p4(pos[3 * this->d_at4Idx],
-        pos[3 * this->d_at4Idx + 1], pos[3 * this->d_at4Idx + 2]);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1], pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1], pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1], pos[3 * d_at3Idx + 2]);
+      RDGeom::Point3D p4(pos[3 * d_at4Idx],
+        pos[3 * d_at4Idx + 1], pos[3 * d_at4Idx + 2]);
 
       return Utils::calcOopBendEnergy
-        (Utils::calcOopChi(p1, p2, p3, p4), this->d_koop);
+        (Utils::calcOopChi(p1, p2, p3, p4), d_koop);
     }
 
     void OopBendContrib::getGrad(double *pos, double *grad) const
@@ -95,18 +95,18 @@ namespace ForceFields {
       PRECONDITION(pos,"bad vector");
       PRECONDITION(grad,"bad vector");
 
-      RDGeom::Point3D iPoint(pos[3 * this->d_at1Idx],
-        pos[3 * this->d_at1Idx + 1], pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D jPoint(pos[3 * this->d_at2Idx],
-        pos[3 * this->d_at2Idx + 1], pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D kPoint(pos[3 * this->d_at3Idx],
-        pos[3 * this->d_at3Idx + 1], pos[3 * this->d_at3Idx + 2]);
-      RDGeom::Point3D lPoint(pos[3 * this->d_at4Idx],
-        pos[3 * this->d_at4Idx + 1], pos[3 * this->d_at4Idx + 2]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
-      double *g3 = &(grad[3 * this->d_at3Idx]);
-      double *g4 = &(grad[3 * this->d_at4Idx]);
+      RDGeom::Point3D iPoint(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1], pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D jPoint(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1], pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D kPoint(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1], pos[3 * d_at3Idx + 2]);
+      RDGeom::Point3D lPoint(pos[3 * d_at4Idx],
+        pos[3 * d_at4Idx + 1], pos[3 * d_at4Idx + 2]);
+      double *g1 = &(grad[3 * d_at1Idx]);
+      double *g2 = &(grad[3 * d_at2Idx]);
+      double *g3 = &(grad[3 * d_at3Idx]);
+      double *g4 = &(grad[3 * d_at4Idx]);
 
       RDGeom::Point3D rJI = iPoint - jPoint;
       RDGeom::Point3D rJK = kPoint - jPoint;
@@ -131,7 +131,7 @@ namespace ForceFields {
       double sinThetaSq = std::max(1.0 - cosTheta * cosTheta, 1.0e-8);
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
       
-      double dE_dChi = RAD2DEG * 0.043844 * this->d_koop * chi;
+      double dE_dChi = RAD2DEG * 0.043844 * d_koop * chi;
       RDGeom::Point3D t1 = rJL.crossProduct(rJK);
       RDGeom::Point3D t2 = rJI.crossProduct(rJL);
       RDGeom::Point3D t3 = rJK.crossProduct(rJI);

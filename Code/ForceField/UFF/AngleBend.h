@@ -11,6 +11,7 @@
 #define __RD_ANGLEBEND_H__
 
 #include <ForceField/Contrib.h>
+#include <Geometry/point.h>
 
 namespace ForceFields {
   namespace UFF {
@@ -79,6 +80,9 @@ namespace ForceFields {
 				    const AtomicParams *at1Params,
 				    const AtomicParams *at2Params,
 				    const AtomicParams *at3Params);
+      void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+            double **g, double &dE_dTheta, double &cosTheta,
+            double &sinTheta);
     }  
   }
 }
