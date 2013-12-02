@@ -705,10 +705,6 @@ namespace RDKit {
         PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
-        unsigned int idx1;
-        unsigned int idx2;
-        unsigned int idx3;
-        unsigned int idx4;
         ROMol::ADJ_ITER nbr1Idx;
         ROMol::ADJ_ITER end1Nbrs;
         ROMol::ADJ_ITER nbr2Idx;
@@ -955,7 +951,6 @@ namespace RDKit {
         PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
-        MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
         INT_VECT fragMapping;
         if (ignoreInterfragInteractions) {
           std::vector<ROMOL_SPTR> molFrags = MolOps::getMolFrags(mol, true, &fragMapping);

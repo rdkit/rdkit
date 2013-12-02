@@ -401,7 +401,6 @@ int main(int argc, char *argv[])
           ((*molFileIt).substr(0, (*molFileIt).length() - 4) + "_min"
           + ((*molTypeIt == "smi") ? "_from_SMILES" : "") + ".sdf");
         ROMol *mol;
-        MMFF::MMFFMolProperties *mmffMolProperties;
         std::string molName;
         std::vector<std::string> nameArray;
 

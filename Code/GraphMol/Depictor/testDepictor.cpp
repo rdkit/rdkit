@@ -676,6 +676,7 @@ void testGitHubIssue8() {
     TEST_ASSERT(m2);
     TEST_ASSERT(m2->getNumAtoms()==m1->getNumAtoms()-1);
     unsigned int cid1 = RDDepict::compute2DCoords(*m2);
+    TEST_ASSERT(cid1==0);
     delete m1;
     delete m2;
     delete p;

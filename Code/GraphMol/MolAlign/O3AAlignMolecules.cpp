@@ -646,10 +646,10 @@ namespace RDKit {
       LAP *extLAP) :
       d_prbMol(&prbMol),
       d_refMol(&refMol),
-      d_prbCid(prbCid),
-      d_refCid(refCid),
       d_prbMMFFMolProperties(prbMP),
       d_refMMFFMolProperties(refMP),
+      d_prbCid(prbCid),
+      d_refCid(refCid),
       d_reflect(reflect),
       d_maxIters(maxIters)
     {

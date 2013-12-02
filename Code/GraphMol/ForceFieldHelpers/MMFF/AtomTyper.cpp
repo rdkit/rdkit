@@ -2429,7 +2429,6 @@ namespace RDKit {
     {
       PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
-      MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
       const Bond *bondJK = mol.getBondBetweenAtoms(idx2, idx3);
       unsigned int bondTypeIJ = this->getMMFFBondType
         (mol.getBondBetweenAtoms(idx1, idx2));

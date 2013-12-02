@@ -1287,6 +1287,7 @@ void testChiNs(){
       mol = SmilesToMol(sdata[idx]);
       TEST_ASSERT(mol);
       double v=calcChi3n(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
       ++idx;
       delete mol;
     }

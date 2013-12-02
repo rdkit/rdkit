@@ -844,7 +844,6 @@ void testIssue3453144()
 
 void testIssue3537675() 
 {
-  ROMol *mol1=0,*matcher1=0,*replacement=0;
   std::string smi,sma;
   
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
