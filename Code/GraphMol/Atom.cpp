@@ -445,7 +445,9 @@ bool Atom::Match(Atom const *what) const {
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if(res){
-    if(this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
+    if(this->getOwningMol().getRingInfo()->isInitialized() &&
+       what->getOwningMol().getRingInfo()->isInitialized() &&
+       this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
        what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)){
       res=false;
     } else if(!getAtomicNum()){
