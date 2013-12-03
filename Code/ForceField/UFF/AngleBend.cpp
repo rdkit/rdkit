@@ -63,7 +63,6 @@ namespace ForceFields {
         g[2][0] += dE_dTheta * dCos_dS[3] / (-sinTheta);
         g[2][1] += dE_dTheta * dCos_dS[4] / (-sinTheta);
         g[2][2] += dE_dTheta * dCos_dS[5] / (-sinTheta);
->>>>>>> 5b70cdbdc12c19eee9ddb20f2a0ef60be1fb098d
       }
     } // end of namespace Utils
   

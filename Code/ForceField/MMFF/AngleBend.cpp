@@ -115,15 +115,9 @@ namespace ForceFields {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
 
-<<<<<<< HEAD
-      double dist1 = this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos);
-      double dist2 = this->dp_forceField->distance(this->d_at2Idx, this->d_at3Idx, pos);
-=======
       double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
       double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
-      double res = 0.0;
->>>>>>> 5b70cdbdc12c19eee9ddb20f2a0ef60be1fb098d
-      
+
       RDGeom::Point3D p1(pos[3 * d_at1Idx],
 			  pos[3 * d_at1Idx + 1],
 			  pos[3 * d_at1Idx + 2]);
