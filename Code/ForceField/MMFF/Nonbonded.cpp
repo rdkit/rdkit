@@ -99,11 +99,11 @@ namespace ForceFields {
       d_at1Idx = idx1;
       d_at2Idx = idx2;
 
-      this->d_R_star_ij = Utils::calcUnscaledVdWMinimum
+      d_R_star_ij = Utils::calcUnscaledVdWMinimum
           (mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-      this->d_wellDepth = Utils::calcUnscaledVdWWellDepth
-          (this->d_R_star_ij, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-      Utils::scaleVdWParams(this->d_R_star_ij, this->d_wellDepth,
+      d_wellDepth = Utils::calcUnscaledVdWWellDepth
+          (d_R_star_ij, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
+      Utils::scaleVdWParams(d_R_star_ij, d_wellDepth,
         mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
     }
 
@@ -112,9 +112,9 @@ namespace ForceFields {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
 
-      double dist = this->dp_forceField->distance
-        (this->d_at1Idx, this->d_at2Idx, pos);
-      return Utils::calcVdWEnergy(dist, this->d_R_star_ij, this->d_wellDepth);
+      double dist = dp_forceField->distance
+        (d_at1Idx, d_at2Idx, pos);
+      return Utils::calcVdWEnergy(dist, d_R_star_ij, d_wellDepth);
     }
 
 
@@ -123,26 +123,26 @@ namespace ForceFields {
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
 
-      double dist = this->dp_forceField->distance
-        (this->d_at1Idx, this->d_at2Idx, pos);
-      double *at1Coords = &(pos[3 * this->d_at1Idx]);
-      double *at2Coords = &(pos[3 * this->d_at2Idx]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
-      double q = dist / this->d_R_star_ij;
+      double dist = dp_forceField->distance
+        (d_at1Idx, d_at2Idx, pos);
+      double *at1Coords = &(pos[3 * d_at1Idx]);
+      double *at2Coords = &(pos[3 * d_at2Idx]);
+      double *g1 = &(grad[3 * d_at1Idx]);
+      double *g2 = &(grad[3 * d_at2Idx]);
+      double q = dist / d_R_star_ij;
       double q2 = q * q;
       double q6 = q2 * q2 * q2;
       double q7 = q6 * q;
       double t = 1.07 / (q + 0.07);
       double t2 = t * t;
       double t7 = t2 * t2 * t2 * t;
-      double dE_dr = this->d_wellDepth / this->d_R_star_ij
+      double dE_dr = d_wellDepth / d_R_star_ij
         * t7 * (-7.84 * q6 / ((q7 + 0.12) * (q7 + 0.12))
         + ((-7.84 / (q7 + 0.12) + 14.0) / (q + 0.07)));
       for (unsigned int i = 0; i < 3; ++i) {
         double dGrad;
         dGrad = ((dist > 0.0)
-          ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : this->d_R_star_ij * 0.01);
+          ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : d_R_star_ij * 0.01);
         g1[i] += dGrad;
         g2[i] -= dGrad;
       }    
@@ -156,11 +156,11 @@ namespace ForceFields {
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
 
       dp_forceField = owner;
-      this->d_at1Idx = idx1;
-      this->d_at2Idx = idx2;
-      this->d_chargeTerm = chargeTerm;
-      this->d_dielModel = dielModel;
-      this->d_is1_4 = is1_4;
+      d_at1Idx = idx1;
+      d_at2Idx = idx2;
+      d_chargeTerm = chargeTerm;
+      d_dielModel = dielModel;
+      d_is1_4 = is1_4;
     }
 
     double EleContrib::getEnergy(double *pos) const
@@ -168,9 +168,9 @@ namespace ForceFields {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
 
-      return Utils::calcEleEnergy(this->d_at1Idx, this->d_at2Idx,
-        this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos),
-        this->d_chargeTerm, this->d_dielModel, this->d_is1_4);
+      return Utils::calcEleEnergy(d_at1Idx, d_at2Idx,
+        dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
+        d_chargeTerm, d_dielModel, d_is1_4);
     }
 
     void EleContrib::getGrad(double *pos, double *grad) const
@@ -179,17 +179,17 @@ namespace ForceFields {
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
 
-      double dist = this->dp_forceField->distance
-        (this->d_at1Idx, this->d_at2Idx, pos);
-      double *at1Coords = &(pos[3 * this->d_at1Idx]);
-      double *at2Coords = &(pos[3 * this->d_at2Idx]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
+      double dist = dp_forceField->distance
+        (d_at1Idx, d_at2Idx, pos);
+      double *at1Coords = &(pos[3 * d_at1Idx]);
+      double *at2Coords = &(pos[3 * d_at2Idx]);
+      double *g1 = &(grad[3 * d_at1Idx]);
+      double *g2 = &(grad[3 * d_at2Idx]);
       double corr_dist = dist + 0.05;
-      corr_dist *= ((this->d_dielModel == RDKit::MMFF::DISTANCE)
+      corr_dist *= ((d_dielModel == RDKit::MMFF::DISTANCE)
         ? corr_dist * corr_dist : corr_dist);
-      double dE_dr = -332.0716 * (double)(this->d_dielModel)
-        * this->d_chargeTerm / corr_dist  * (this->d_is1_4 ? 0.75 : 1.0);
+      double dE_dr = -332.0716 * (double)(d_dielModel)
+        * d_chargeTerm / corr_dist  * (d_is1_4 ? 0.75 : 1.0);
       for (unsigned int i = 0; i < 3; ++i) {
         double dGrad;
         dGrad = ((dist > 0.0)

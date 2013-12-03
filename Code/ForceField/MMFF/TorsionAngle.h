@@ -60,6 +60,8 @@ namespace ForceFields {
       //! calculates and returns the torsional MMFF energy
       double calcTorsionEnergy(const double V1,
         const double V2, const double V3, const double cosPhi);
+      void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t,
+        double *d, double **g, double &sinTerm, double &cosPhi);
     }
   }
 }
