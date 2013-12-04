@@ -142,10 +142,42 @@ void testO3A() {
   double cumScore = 0.0;
   double cumMsd = 0.0;
   for (int prbNum = 0; prbNum < nMol; ++prbNum) {
-    std::cerr<<"doing: "<<prbNum<<std::endl;
     ROMol *prbMol = supplier[prbNum];
     MMFF::MMFFMolProperties prbMP(*prbMol);
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP);
+    double rmsd = o3a.align();
+    cumMsd += rmsd * rmsd;
+    cumScore += o3a.score();
+    //newMol->write(prbMol);
+    delete prbMol;
+  }
+  cumMsd /= (double)nMol;
+  delete refMol;
+  //newMol->close();
+  //std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  TEST_ASSERT(RDKit::feq(cumScore, 6941.8,1));
+  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.546,.001));
+}
+
+void testO3ADMat() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
+  std::string newSdf = sdf + "_O3A.sdf";
+  sdf += ".sdf";
+  SDMolSupplier supplier(sdf, true, false);
+  int nMol = supplier.length();
+  const int refNum = 48;
+  //SDWriter *newMol = new SDWriter(newSdf);
+  ROMol *refMol = supplier[refNum];
+  MMFF::MMFFMolProperties refMP(*refMol);
+  double *refDmat=MolOps::get3DDistanceMat(*refMol);
+  double cumScore = 0.0;
+  double cumMsd = 0.0;
+  for (int prbNum = 0; prbNum < nMol; ++prbNum) {
+    ROMol *prbMol = supplier[prbNum];
+    MMFF::MMFFMolProperties prbMP(*prbMol);
+    double *prbDmat=MolOps::get3DDistanceMat(*prbMol);
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP, -1, -1, false, 50, 0, NULL, prbDmat, refDmat);
     double rmsd = o3a.align();
     cumMsd += rmsd * rmsd;
     cumScore += o3a.score();
@@ -260,7 +292,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testO3A \n\n";
   testO3A();
-  std::cout << "***********************************************************\n";
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testO3A with dmat\n\n";
+  testO3ADMat();
 
 #ifdef RDK_TEST_MULTITHREADED
   std::cout << "\t---------------------------------\n";

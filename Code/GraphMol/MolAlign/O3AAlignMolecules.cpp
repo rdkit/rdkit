@@ -640,10 +640,11 @@ namespace RDKit {
     
     
     O3A::O3A(ROMol &prbMol, const ROMol &refMol,
-      MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
-      const int prbCid, const int refCid, const bool reflect,
-      const unsigned int maxIters, const unsigned int accuracy,
-      LAP *extLAP) :
+             MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+             const int prbCid, const int refCid, const bool reflect,
+             const unsigned int maxIters, const unsigned int accuracy,
+             LAP *extLAP,double *prbDmat,double *refDmat
+             ) :
       d_prbMol(&prbMol),
       d_refMol(&refMol),
       d_prbMMFFMolProperties(prbMP),
@@ -677,8 +678,8 @@ namespace RDKit {
       std::vector<double> score(5, 0.0);
       std::vector<double> pairsRMSD(2, 0.0);
       std::vector<SDM *> bestSDM((unsigned int)5, NULL);
-      MolHistogram refHist(refMol,MolOps::get3DDistanceMat(refMol,refCid));
-      MolHistogram prbHist(prbCpy,MolOps::get3DDistanceMat(prbCpy,prbCid));
+      MolHistogram refHist(refMol,refDmat!=NULL?refDmat:MolOps::get3DDistanceMat(refMol,refCid));
+      MolHistogram prbHist(prbCpy,prbDmat!=NULL?prbDmat:MolOps::get3DDistanceMat(prbCpy,prbCid));
       LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       for (l = 0, pairs[0] = 0, score[0] = 0.0; l <= ((accuracy < 2) ? 1 : 0); ++l) {
         for (c = 0, pairs[1] = 0, score[1] = 0.0; c <= O3_MAX_WEIGHT_COEFF;

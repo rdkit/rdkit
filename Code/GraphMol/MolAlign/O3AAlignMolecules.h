@@ -185,10 +185,11 @@ namespace RDKit {
     class O3A {
     public:
       O3A(ROMol &prbMol, const ROMol &refMol,
-        MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
-        const int prbCid = -1, const int refCid = -1,
-        const bool reflect = false, const unsigned int maxIters = 50,
-        const unsigned int accuracy = 0, LAP *extLAP = NULL);
+          MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+          const int prbCid = -1, const int refCid = -1,
+          const bool reflect = false, const unsigned int maxIters = 50,
+          const unsigned int accuracy = 0, LAP *extLAP = NULL,
+          double *prbDmat = NULL,double *refDmat = NULL);
       ~O3A() {
         if (d_o3aMatchVect) {
           delete d_o3aMatchVect;
