@@ -142,7 +142,7 @@ void testO3A() {
   double cumScore = 0.0;
   double cumMsd = 0.0;
   for (int prbNum = 0; prbNum < nMol; ++prbNum) {
-    std::cerr<<"doing: "<<prbNum<<std::endl;
+    //std::cerr<<"doing: "<<prbNum<<std::endl;
     ROMol *prbMol = supplier[prbNum];
     MMFF::MMFFMolProperties prbMP(*prbMol);
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP);
@@ -157,7 +157,7 @@ void testO3A() {
   //newMol->close();
   //std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
   TEST_ASSERT(RDKit::feq(cumScore, 6941.8,1));
-  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.546,.001));
+  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.345,.001));
 }
 
 
