@@ -243,7 +243,7 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
       yield prods
 
 def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
-                     randomseed=2342):
+                     randomseed=2342,getForceField=UFFGetMoleculeForceField):
   """ generates an embedding of a molecule where part of the molecule
   is constrained to have particular coordinates
 
@@ -301,7 +301,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
 
   if not useTethers:
     # clean up the conformation
-    ff = UFFGetMoleculeForceField(mol,confId=0)
+    ff = getForceField(mol,confId=0)
     for i,idxI in enumerate(match):
       for j in range(i+1,len(match)):
         idxJ = match[j]
@@ -318,7 +318,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
   else:
     # rotate the embedded conformation onto the core:
     rms = AlignMol(mol,core,atomMap=algMap)
-    ff =  UFFGetMoleculeForceField(mol,confId=0)
+    ff =  getForceField(mol,confId=0)
     conf = core.GetConformer()
     for i in range(core.GetNumAtoms()):
       p =conf.GetAtomPosition(i)
