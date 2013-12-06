@@ -127,7 +127,7 @@ class TestCase(unittest.TestCase):
         # molW.write(prbMol)
       cumMsd /= len(molS)
       self.failUnlessAlmostEqual(cumScore,6942,0)
-      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.546,3)
+      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.345,3)
 
     def test6O3A(self):
       " now test where the mmff parameters are generated on call "
@@ -145,7 +145,7 @@ class TestCase(unittest.TestCase):
         cumMsd += rmsd * rmsd
       cumMsd /= len(molS)
       self.failUnlessAlmostEqual(cumScore,6942,0)
-      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.546,3)
+      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.345,3)
 
     def test7O3A(self):
       " make sure we generate an error if parameters are missing (github issue 158) "
