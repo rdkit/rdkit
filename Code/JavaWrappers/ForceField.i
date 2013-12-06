@@ -81,6 +81,7 @@
     return res;
   }
 
+  %newobject UFFGetMoleculeForceField;
   static ForceFields::ForceField *UFFGetMoleculeForceField(RDKit::ROMol &mol,
     double vdwThresh=10.0,
     int confId=-1,
@@ -133,6 +134,7 @@
     return res;
   }
 
+  %newobject MMFFGetMoleculeForceField;
   static ForceFields::ForceField *MMFFGetMoleculeForceField(RDKit::ROMol &mol,
                                                             std::string mmffVariant="MMFF94",
                                                             double nonBondedThresh=100.0,
