@@ -128,9 +128,11 @@ namespace RDKit{
   PyObject* replaceSubstructures(const ROMol &orig,
                                  const ROMol &query,
                                  const ROMol &replacement,
-                                 bool replaceAll=false) {
+                                 bool replaceAll=false,
+                                 unsigned int replacementConnectionPoint=0) {
     std::vector<ROMOL_SPTR> v=replaceSubstructs(orig, query,
-                                                replacement, replaceAll);
+                                                replacement, replaceAll,
+                                                replacementConnectionPoint);
     PyObject *res=PyTuple_New(v.size());
     for(unsigned int i=0;i<v.size();++i){
       PyTuple_SetItem(res,i,
@@ -683,6 +685,8 @@ namespace RDKit{
       the query will be replaced in a single result, otherwise each result will\n\
       contain a separate replacement.\n\
       Default value is False (return multiple replacements)\n\
+    - replacementConnectionPoint: (optional) index of the atom in the replacement that\n\
+      the bond should be made to.\n\
 \n\
   RETURNS: a tuple of new molecules with the substructures replaced removed\n\
 \n\
@@ -700,11 +704,14 @@ namespace RDKit{
     - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
 \n\
     - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
+\n\
+    - ReplaceSubstructs('COCCOC','OC','CN',True,1) -> ('CNCCNC',)\n\
 \n";
       python::def("ReplaceSubstructs", replaceSubstructures,
                   (python::arg("mol"),python::arg("query"),
                    python::arg("replacement"),
-                   python::arg("replaceAll")=false),
+                   python::arg("replaceAll")=false,
+                   python::arg("replacementConnectionPoint")=0),
                   docString.c_str());
 
       // ------------------------------------------------------------------------

@@ -182,6 +182,49 @@ void testReplaceSubstructs()
 }
 
 
+void testReplaceSubstructs2() 
+{
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "More testing of replaceSubstruct" << std::endl;
+
+  {
+    std::string smi = "CCC(=O)O";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    std::string sma = "[$(O-C(=O))]";
+    ROMol *matcher1 = SmartsToMol(sma);
+    TEST_ASSERT(matcher1);
+
+    std::string repl = "NC";
+    ROMol *frag = SmilesToMol(repl);
+    TEST_ASSERT(frag);
+
+    std::vector<ROMOL_SPTR> vect=replaceSubstructs(*mol1,*matcher1,*frag);
+    TEST_ASSERT(vect.size()==1);
+    TEST_ASSERT(mol1->getNumAtoms()==5);
+    TEST_ASSERT(vect[0]->getNumAtoms()==6);
+    std::string csmi1 = MolToSmiles(*vect[0],true);
+
+    repl = "CN";
+    delete frag;
+    frag = SmilesToMol(repl);
+    TEST_ASSERT(frag);
+    vect=replaceSubstructs(*mol1,*matcher1,*frag,true,1);
+    TEST_ASSERT(vect.size()==1);
+    TEST_ASSERT(mol1->getNumAtoms()==5);
+    TEST_ASSERT(vect[0]->getNumAtoms()==6);
+    std::string csmi2 = MolToSmiles(*vect[0],true);
+    TEST_ASSERT(csmi2==csmi1);
+    delete mol1;
+    delete matcher1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 void testReplaceSidechains() 
 {
   ROMol *mol1=0,*mol2=0,*matcher1=0;
@@ -1392,6 +1435,7 @@ int main() {
 #if 1
   testDeleteSubstruct();
   testReplaceSubstructs();
+  testReplaceSubstructs2();
   testReplaceSidechains();
   testReplaceCore();
   testReplaceCoreLabels();

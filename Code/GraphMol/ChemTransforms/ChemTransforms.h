@@ -62,6 +62,8 @@ namespace RDKit{
       \param replacement the ROMol to be inserted
       \param replaceAll  if this is true, only a single result, with all occurances
                          of the substructure replaced, will be returned.
+      \param replacementConnectionPoint   index of the atom in the replacement that
+                                          the bond should made to
 
       \return a vector of pointers to copies of \c mol with the matching atoms
           and bonds (if any) replaced
@@ -69,7 +71,8 @@ namespace RDKit{
   */
   std::vector<ROMOL_SPTR> replaceSubstructs(const ROMol &mol, const ROMol &query,
 					    const ROMol &replacement,
-					    bool replaceAll=false);
+					    bool replaceAll=false,
+                                            unsigned int replacementConnectionPoint=0);
 
   //! \brief Returns a copy of an ROMol with the atoms and bonds that 
   //!      don't fall within a substructure match removed.
