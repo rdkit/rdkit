@@ -198,18 +198,8 @@ namespace RDKit {
           delete d_o3aWeights;
         }
       };
-      double align() {
-        return alignMol(*d_prbMol, *d_refMol, d_prbCid, d_refCid,
-          d_o3aMatchVect, d_o3aWeights, d_reflect, d_maxIters);
-      };
-      std::pair<double, RDGeom::Transform3D *> trans() {
-        RDGeom::Transform3D *trans = new RDGeom::Transform3D();
-        double rmsd = getAlignmentTransform(*d_prbMol, *d_refMol,
-          *trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
-          d_reflect, d_maxIters);
-        
-        return std::make_pair(rmsd, trans);
-      };
+      double align();
+      std::pair<double, RDGeom::Transform3D *> trans();
       double score() {
         return d_o3aScore;
       };

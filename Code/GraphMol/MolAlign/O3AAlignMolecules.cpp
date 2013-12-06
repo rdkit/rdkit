@@ -800,6 +800,46 @@ namespace RDKit {
     }
 
 
+    double _rmsdMatchVect(const RDGeom::POINT3D_VECT &prbPos,
+      const RDGeom::POINT3D_VECT &refPos,
+      const RDKit::MatchVectType *matchVect)
+    {
+      double rmsd = 0.0;
+      for (unsigned int i = 0; i < (*matchVect).size(); ++i) {
+        //first pair element is prb, second is ref
+        rmsd += (prbPos[(*matchVect)[i].first]
+          - refPos[(*matchVect)[i].second]).lengthSq();
+      }
+      rmsd /= (*matchVect).size();
+
+      return sqrt(rmsd);
+    };
+
+
+    double O3A::align() {
+      alignMol(*d_prbMol, *d_refMol, d_prbCid, d_refCid,
+        d_o3aMatchVect, d_o3aWeights, d_reflect, d_maxIters);
+      
+      return _rmsdMatchVect
+        (d_prbMol->getConformer(d_prbCid).getPositions(),
+        d_refMol->getConformer(d_refCid).getPositions(),
+        d_o3aMatchVect);
+    }
+
+
+    std::pair<double, RDGeom::Transform3D *> O3A::trans() {
+      RDGeom::Transform3D *trans = new RDGeom::Transform3D();
+      getAlignmentTransform(*d_prbMol, *d_refMol,
+        *trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
+        d_reflect, d_maxIters);
+      
+      return std::make_pair(_rmsdMatchVect
+        (d_prbMol->getConformer(d_prbCid).getPositions(),
+        d_refMol->getConformer(d_refCid).getPositions(),
+        d_o3aMatchVect), trans);
+    };
+
+
     void randomTransform(ROMol &mol, const int cid, const int seed)
     {
       if (seed > 0) {
