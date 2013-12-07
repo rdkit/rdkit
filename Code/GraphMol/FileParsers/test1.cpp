@@ -3312,6 +3312,22 @@ void testZBO(){
     TEST_ASSERT(m->getBondWithIdx(22)->getBondType()==Bond::ZERO);
     TEST_ASSERT(m->getBondWithIdx(23)->getBondType()==Bond::ZERO);
   }
+  {
+    std::string fName;
+    fName = rdbase+"H3BNH3.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==1);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs()==3);
+
+  }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

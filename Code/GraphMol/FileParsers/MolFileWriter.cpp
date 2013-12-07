@@ -239,15 +239,55 @@ namespace RDKit{
     std::stringstream res;
     std::stringstream ss;
     unsigned int nEntries=0;
+    boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(),0);
     for(ROMol::ConstBondIterator bondIt=mol.beginBonds();
 	bondIt!=mol.endBonds();++bondIt){
       if((*bondIt)->getBondType()==Bond::ZERO){
         ++nEntries;
         ss<<" "<<std::setw(3)<<(*bondIt)->getIdx()+1<<" "<<std::setw(3)<<0;
+        if(nEntries==8){
+          res<<"M  ZBO"<<std::setw(3)<<nEntries<<ss.str()<<std::endl;
+          nEntries=0;
+          ss.str("");
+        }
+        atomsAffected[(*bondIt)->getBeginAtomIdx()]=1;
+        atomsAffected[(*bondIt)->getEndAtomIdx()]=1;
       }
     }
     if(nEntries){
       res<<"M  ZBO"<<std::setw(3)<<nEntries<<ss.str()<<std::endl;
+    }
+    if(atomsAffected.count()){
+      std::stringstream hydss;
+      unsigned int nhyd=0;
+      std::stringstream zchss;
+      unsigned int nzch=0;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        if(!atomsAffected[i]) continue;
+        const Atom *atom=mol.getAtomWithIdx(i);
+        nhyd++;
+        hydss<<boost::format(" %3d %3d")%(atom->getIdx()+1)%atom->getTotalNumHs();
+        if(nhyd==8){
+          res << boost::format("M  HYD%3d")%nhyd << hydss.str()<<std::endl;
+          hydss.str("");
+          nhyd=0;
+        }
+        if(atom->getFormalCharge()){
+          nzch++;
+          zchss<<boost::format(" %3d %3d")%(atom->getIdx()+1)%atom->getFormalCharge();
+          if(nzch==8){
+            res << boost::format("M  ZCH%3d")%nzch << zchss.str()<<std::endl;
+            zchss.str("");
+            nzch=0;
+          }
+        }
+      }
+      if(nhyd){
+        res << boost::format("M  HYD%3d")%nhyd << hydss.str()<<std::endl;
+      }
+      if(nzch){
+        res << boost::format("M  ZCH%3d")%nzch << zchss.str()<<std::endl;
+      }
     }
     return res.str();
   }
