@@ -51,11 +51,11 @@ namespace RDKit {
     
     class MolHistogram {
     public:
-      MolHistogram(const ROMol &mol, const int cid = -1);
+      MolHistogram(const ROMol &mol, const double *dmat);
       ~MolHistogram() {};
     inline int get(const unsigned int y, const unsigned int x) const {
-      PRECONDITION((y >= 0) && (y < d_h.shape()[0]), "Invalid index on MolHistogram");
-      PRECONDITION((x >= 0) && (x < d_h.shape()[1]), "Invalid index on MolHistogram");
+      PRECONDITION(y < d_h.shape()[0], "Invalid index on MolHistogram");
+      PRECONDITION(x < d_h.shape()[1], "Invalid index on MolHistogram");
       return d_h[y][x];
     }
     private:
@@ -76,12 +76,12 @@ namespace RDKit {
         d_cost(boost::extents[dim][dim]) {};
       ~LAP() {};
       int getCost(const unsigned int i, const unsigned int j) {
-        PRECONDITION((i >= 0) && (i < d_cost.shape()[0]), "Invalid index on LAP.cost");
-        PRECONDITION((j >= 0) && (j < d_cost.shape()[1]), "Invalid index on LAP.cost");
+        PRECONDITION(i < d_cost.shape()[0], "Invalid index on LAP.cost");
+        PRECONDITION(j < d_cost.shape()[1], "Invalid index on LAP.cost");
         return d_cost[i][j];
       }
       int getRowSol(const unsigned int i) {
-        PRECONDITION((i >= 0) && (i < d_rowSol.size()), "Invalid index on LAP.rowSol");
+        PRECONDITION(i < d_rowSol.size(), "Invalid index on LAP.rowSol");
         return d_rowSol[i];
       }
       void computeMinCostPath(unsigned int dim);
@@ -185,10 +185,11 @@ namespace RDKit {
     class O3A {
     public:
       O3A(ROMol &prbMol, const ROMol &refMol,
-        MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
-        const int prbCid = -1, const int refCid = -1,
-        const bool reflect = false, const unsigned int maxIters = 50,
-        const unsigned int accuracy = 0, LAP *extLAP = NULL);
+          MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+          const int prbCid = -1, const int refCid = -1,
+          const bool reflect = false, const unsigned int maxIters = 50,
+          const unsigned int accuracy = 0, LAP *extLAP = NULL,
+          double *prbDmat = NULL,double *refDmat = NULL);
       ~O3A() {
         if (d_o3aMatchVect) {
           delete d_o3aMatchVect;
@@ -197,18 +198,8 @@ namespace RDKit {
           delete d_o3aWeights;
         }
       };
-      double align() {
-        return alignMol(*d_prbMol, *d_refMol, d_prbCid, d_refCid,
-          d_o3aMatchVect, d_o3aWeights, d_reflect, d_maxIters);
-      };
-      std::pair<double, RDGeom::Transform3D *> trans() {
-        RDGeom::Transform3D *trans = new RDGeom::Transform3D();
-        double rmsd = getAlignmentTransform(*d_prbMol, *d_refMol,
-          *trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
-          d_reflect, d_maxIters);
-        
-        return std::make_pair(rmsd, trans);
-      };
+      double align();
+      std::pair<double, RDGeom::Transform3D *> trans();
       double score() {
         return d_o3aScore;
       };

@@ -58,7 +58,9 @@ namespace ForceFields {
       //! calculates and returns the angle bending MMFF energy
       double calcAngleBendEnergy(const double theta0,
         const double ka, bool isLinear, const double cosTheta);
-    }  
+      void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+        double **g, double &dE_dTheta, double &cosTheta, double &sinTheta);
+    }
   }
 }
 #endif

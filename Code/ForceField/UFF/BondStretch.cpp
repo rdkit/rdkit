@@ -63,9 +63,9 @@ namespace ForceFields {
       d_end1Idx = idx1;
       d_end2Idx = idx2;
 
-      this->d_restLen = Utils::calcBondRestLength(bondOrder,
+      d_restLen = Utils::calcBondRestLength(bondOrder,
 						  end1Params,end2Params);
-      this->d_forceConstant = Utils::calcBondForceConstant(this->d_restLen,
+      d_forceConstant = Utils::calcBondForceConstant(d_restLen,
 							   end1Params,end2Params);
     }
 
@@ -73,9 +73,9 @@ namespace ForceFields {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
 
-      double distTerm=this->dp_forceField->distance(this->d_end1Idx,this->d_end2Idx,pos) -
-	this->d_restLen;
-      double res = 0.5*this->d_forceConstant*distTerm*distTerm;
+      double distTerm=dp_forceField->distance(d_end1Idx,d_end2Idx,pos) -
+	d_restLen;
+      double res = 0.5*d_forceConstant*distTerm*distTerm;
       return res;
     }
     void BondStretchContrib::getGrad(double *pos,double *grad) const {
@@ -84,22 +84,22 @@ namespace ForceFields {
       PRECONDITION(grad,"bad vector");
 
 
-      double dist=this->dp_forceField->distance(this->d_end1Idx,this->d_end2Idx,pos);
-      double preFactor = this->d_forceConstant*(dist-this->d_restLen);
+      double dist=dp_forceField->distance(d_end1Idx,d_end2Idx,pos);
+      double preFactor = d_forceConstant*(dist-d_restLen);
 
-      //std::cout << "\tDist("<<this->d_end1Idx<<","<<this->d_end2Idx<<") " << dist << std::endl;
-      double *end1Coords = &(pos[3*this->d_end1Idx]);
-      double *end2Coords = &(pos[3*this->d_end2Idx]);
+      //std::cout << "\tDist("<<d_end1Idx<<","<<d_end2Idx<<") " << dist << std::endl;
+      double *end1Coords = &(pos[3*d_end1Idx]);
+      double *end2Coords = &(pos[3*d_end2Idx]);
       for(int i=0;i<3;i++){
 	double dGrad;
 	if(dist>0.0){
 	  dGrad=preFactor * (end1Coords[i]-end2Coords[i])/dist;
 	} else {
 	  // move a small amount in an arbitrary direction
-	  dGrad=this->d_forceConstant*.01;
+	  dGrad=d_forceConstant*.01;
 	}
-	grad[3*this->d_end1Idx+i] += dGrad;
-	grad[3*this->d_end2Idx+i] -= dGrad;
+	grad[3*d_end1Idx+i] += dGrad;
+	grad[3*d_end2Idx+i] -= dGrad;
       }    
     }
   

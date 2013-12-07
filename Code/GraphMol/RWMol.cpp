@@ -27,6 +27,15 @@ namespace RDKit{
     d_partialBonds.resize(0);
   };
 
+  RWMol &RWMol::operator=(const RWMol &other) {
+    if(this!=&other){
+      this->clear();
+      d_partialBonds.clear();
+      initFromOther(other,false);
+    }
+    return *this;
+  }
+
   void RWMol::insertMol(const ROMol &other)
   {
     std::vector<unsigned int> newAtomIds(other.getNumAtoms());

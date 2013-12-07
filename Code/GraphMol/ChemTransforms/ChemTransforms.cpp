@@ -134,7 +134,8 @@ namespace RDKit{
 
   std::vector<ROMOL_SPTR>
   replaceSubstructs(const ROMol &mol, const ROMol &query,const ROMol &replacement,
-                    bool replaceAll) {
+                    bool replaceAll,unsigned int replacementConnectionPoint) {
+    PRECONDITION(replacementConnectionPoint<replacement.getNumAtoms(),"bad replacementConnectionPoint");
     std::vector<ROMOL_SPTR> res;
     std::vector<MatchVectType> fgpMatches;
 
@@ -188,7 +189,8 @@ namespace RDKit{
         if(!std::binary_search(sortMatch.begin(),sortMatch.end(),int(*nbrIdx))){
           Bond *oBond=newMol->getBondBetweenAtoms(match[0],*nbrIdx);
           CHECK_INVARIANT(oBond,"required bond not found");
-          newMol->addBond(numOrigAtoms,*nbrIdx,oBond->getBondType());
+          newMol->addBond(numOrigAtoms+replacementConnectionPoint,
+                          *nbrIdx,oBond->getBondType());
         }
         nbrIdx++;
       }

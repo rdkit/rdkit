@@ -11,6 +11,7 @@
 #define __RD_ANGLEBEND_H__
 
 #include <ForceField/Contrib.h>
+#include <Geometry/point.h>
 
 namespace ForceFields {
   namespace UFF {
@@ -55,7 +56,7 @@ namespace ForceFields {
     private:
       int d_at1Idx,d_at2Idx,d_at3Idx;
       unsigned int d_order;
-      double d_forceConstant,d_theta0,d_C0,d_C1,d_C2;
+      double d_forceConstant,d_C0,d_C1,d_C2;
 
       double getEnergyTerm(double cosTheta,double sinThetaSq) const;
       double getThetaDeriv(double cosTheta,double sinTheta) const;
@@ -79,6 +80,9 @@ namespace ForceFields {
 				    const AtomicParams *at1Params,
 				    const AtomicParams *at2Params,
 				    const AtomicParams *at3Params);
+      void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+            double **g, double &dE_dTheta, double &cosTheta,
+            double &sinTheta);
     }  
   }
 }

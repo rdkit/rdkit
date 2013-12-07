@@ -40,7 +40,7 @@ namespace RDKit{
            make the copy substantially faster (thus the name).
     */
     RWMol(const ROMol &other,bool quickCopy=false) {d_partialBonds.clear(); initFromOther(other,quickCopy);};
-
+    RWMol &operator=(const RWMol &);
 
     //! insert the atoms and bonds from \c other into this molecule
     void insertMol( const ROMol &other);
@@ -210,16 +210,18 @@ namespace RDKit{
       d_bondBookmarks.clear();
       d_graph.clear();
       d_confs.clear();
-      if(dp_props) dp_props->reset();
+      if(dp_props){
+        dp_props->reset();
+        STR_VECT computed;
+        dp_props->setVal(detail::computedPropName, computed);
+      }
       if(dp_ringInfo) dp_ringInfo->reset();
-      
     };
 
 
   private:
     std::vector<BOND_SPTR> d_partialBonds;
     void destroy();
-    ROMol &operator=(const ROMol &); // disable assignment
 
   };
 

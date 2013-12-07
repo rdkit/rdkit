@@ -440,11 +440,17 @@ void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
 bool Atom::Match(Atom const *what) const {
   PRECONDITION(what,"bad query atom");
   bool res = getAtomicNum() == what->getAtomicNum();
+
   // special dummy--dummy match case:
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if(res){
-    if(!getAtomicNum()){
+    if(this->getOwningMol().getRingInfo()->isInitialized() &&
+       what->getOwningMol().getRingInfo()->isInitialized() &&
+       this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
+       what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)){
+      res=false;
+    } else if(!getAtomicNum()){
       // this is the new behavior, based on the isotopes:
       int tgt=this->getIsotope();
       int test=what->getIsotope();

@@ -454,14 +454,6 @@ namespace RDKit{
               bondHash = bi->getBondType();
             }
           }
-          boost::uint32_t nBitsInHash=0;
-          // boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here
-          // nBitsInHash+=3;
-          // ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
-          // nBitsInHash+=4;
-          // ourHash |= a1Hash<<nBitsInHash; // 8 bits
-          // nBitsInHash+=8;
-          // ourHash |= a2Hash<<nBitsInHash; // 8 bits
           boost::uint32_t ourHash=bondNbrs[i];
           gboost::hash_combine(ourHash,bondHash);
           gboost::hash_combine(ourHash,a1Hash);

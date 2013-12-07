@@ -14,6 +14,13 @@
 #include <RDBoost/Exceptions.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/UFF/AngleConstraint.h>
+#include <ForceField/UFF/TorsionConstraint.h>
+#include <ForceField/UFF/PositionConstraint.h>
+#include <ForceField/MMFF/DistanceConstraint.h>
+#include <ForceField/MMFF/AngleConstraint.h>
+#include <ForceField/MMFF/TorsionConstraint.h>
+#include <ForceField/MMFF/PositionConstraint.h>
 #include <boost/shared_ptr.hpp>
 #include "PyForceField.h"
 using namespace ForceFields;
@@ -24,6 +31,78 @@ void ForceFieldAddDistanceConstraint(PyForceField *self,unsigned int idx1,unsign
   UFF::DistanceConstraintContrib *constraint;
   constraint = new UFF::DistanceConstraintContrib(self->field.get(),idx1,idx2,minLen,maxLen,
 						  forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void ForceFieldAddFixedPoint(PyForceField *self, unsigned int idx) {
+  self->field->fixedPoints().push_back(idx);
+}
+
+void UFFAddDistanceConstraint(PyForceField *self, unsigned int idx1, unsigned int idx2,
+  bool relative, double minLen, double maxLen, double forceConstant) {
+  UFF::DistanceConstraintContrib *constraint =
+    new UFF::DistanceConstraintContrib(self->field.get(),
+    idx1, idx2, relative, minLen, maxLen, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void UFFAddAngleConstraint(PyForceField *self, unsigned int idx1, unsigned int idx2,
+  unsigned int idx3, bool relative, double minAngleDeg, double maxAngleDeg,
+  double forceConstant) {
+  UFF::AngleConstraintContrib *constraint =
+    new UFF::AngleConstraintContrib(self->field.get(),
+    idx1, idx2, idx3, relative, minAngleDeg, maxAngleDeg, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void UFFAddTorsionConstraint(PyForceField *self, unsigned int idx1, unsigned int idx2,
+  unsigned int idx3, unsigned int idx4, bool relative, double minDihedralDeg,
+  double maxDihedralDeg, double forceConstant) {
+  UFF::TorsionConstraintContrib *constraint =
+    new UFF::TorsionConstraintContrib(self->field.get(),
+    idx1, idx2, idx3, idx4, relative, minDihedralDeg, maxDihedralDeg, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void UFFAddPositionConstraint(PyForceField *self, unsigned int idx,
+  double maxDispl, double forceConstant) {
+  UFF::PositionConstraintContrib *constraint =
+    new UFF::PositionConstraintContrib(self->field.get(),
+    idx, maxDispl, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void MMFFAddDistanceConstraint(PyForceField *self, unsigned int idx1, unsigned int idx2,
+  bool relative, double minLen, double maxLen, double forceConstant) {
+  MMFF::DistanceConstraintContrib *constraint =
+    new MMFF::DistanceConstraintContrib(self->field.get(),
+    idx1, idx2, relative, minLen, maxLen, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void MMFFAddAngleConstraint(PyForceField *self, unsigned int idx1, unsigned int idx2,
+  unsigned int idx3, bool relative, double minAngleDeg, double maxAngleDeg,
+  double forceConstant) {
+  MMFF::AngleConstraintContrib *constraint =
+    new MMFF::AngleConstraintContrib(self->field.get(),
+    idx1, idx2, idx3, relative, minAngleDeg, maxAngleDeg, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void MMFFAddTorsionConstraint(PyForceField *self, unsigned int idx1, unsigned int idx2,
+  unsigned int idx3, unsigned int idx4, bool relative, double minDihedralDeg,
+  double maxDihedralDeg, double forceConstant) {
+  MMFF::TorsionConstraintContrib *constraint =
+    new MMFF::TorsionConstraintContrib(self->field.get(),
+    idx1, idx2, idx3, idx4, relative, minDihedralDeg, maxDihedralDeg, forceConstant);
+  self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
+}
+
+void MMFFAddPositionConstraint(PyForceField *self, unsigned int idx,
+  double maxDispl, double forceConstant) {
+  MMFF::PositionConstraintContrib *constraint =
+    new MMFF::PositionConstraintContrib(self->field.get(),
+    idx, maxDispl, forceConstant);
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
 }
 
@@ -56,7 +135,57 @@ BOOST_PYTHON_MODULE(rdForceField) {
 	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),
 	  python::arg("minLen"),python::arg("maxLen"),
 	  python::arg("forceConstant")),
-	 "Adds a distance constraint to the force field.")
+	 "Adds a distance constraint to the UFF force field "
+   "(deprecated, use UFFAddDistanceConstraint instead).")
+    .def("AddFixedPoint",ForceFieldAddFixedPoint,
+	 (python::arg("self"),python::arg("idx")),
+	 "Adds a fixed point to the force field.")
+    .def("UFFAddDistanceConstraint",UFFAddDistanceConstraint,
+	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),
+	  python::arg("relative"),python::arg("minLen"),python::arg("maxLen"),
+	  python::arg("forceConstant")),
+	 "Adds a distance constraint to the UFF force field; if relative == True, "
+   "then minLen and maxLen are intended as relative to the current distance.")
+    .def("UFFAddAngleConstraint",UFFAddAngleConstraint,
+	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),python::arg("idx3"),
+	  python::arg("relative"),python::arg("minAngleDeg"),python::arg("maxAngleDeg"),
+	  python::arg("forceConstant")),
+	 "Adds an angle constraint to the UFF force field; if relative == True, "
+   "then minAngleDeg and maxAngleDeg are intended as relative to the current angle.")
+    .def("UFFAddTorsionConstraint",UFFAddTorsionConstraint,
+	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),python::arg("idx3"),
+    python::arg("idx4"),python::arg("relative"),python::arg("minDihedralDeg"),
+    python::arg("maxDihedralDeg"),python::arg("forceConstant")),
+	 "Adds a dihedral angle constraint to the UFF force field; if relative == True, "
+   "then minDihedralDeg and maxDihedralDeg are intended as relative to the current "
+   "dihedral angle.")
+    .def("UFFAddPositionConstraint",UFFAddPositionConstraint,
+	 (python::arg("self"),python::arg("idx"),python::arg("maxDispl"),
+    python::arg("forceConstant")),
+	 "Adds a position constraint to the UFF force field.")
+    .def("MMFFAddDistanceConstraint",MMFFAddDistanceConstraint,
+	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),
+	  python::arg("relative"),python::arg("minLen"),python::arg("maxLen"),
+	  python::arg("forceConstant")),
+	 "Adds a distance constraint to the MMFF force field; if relative == True, "
+   "then minLen and maxLen are intended as relative to the current distance.")
+    .def("MMFFAddAngleConstraint",MMFFAddAngleConstraint,
+	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),python::arg("idx3"),
+	  python::arg("relative"),python::arg("minAngleDeg"),python::arg("maxAngleDeg"),
+	  python::arg("forceConstant")),
+	 "Adds an angle constraint to the MMFF force field; if relative == True, "
+   "then minAngleDeg and maxAngleDeg are intended as relative to the current angle.")
+    .def("MMFFAddTorsionConstraint",MMFFAddTorsionConstraint,
+	 (python::arg("self"),python::arg("idx1"),python::arg("idx2"),python::arg("idx3"),
+    python::arg("idx4"),python::arg("relative"),python::arg("minDihedralDeg"),
+    python::arg("maxDihedralDeg"),python::arg("forceConstant")),
+	 "Adds a dihedral angle constraint to the MMFF force field; if relative == True, "
+   "then minDihedralDeg and maxDihedralDeg are intended as relative to the current "
+   "dihedral angle.")
+    .def("MMFFAddPositionConstraint",MMFFAddPositionConstraint,
+	 (python::arg("self"),python::arg("idx"),python::arg("maxDispl"),
+    python::arg("forceConstant")),
+	 "Adds a position constraint to the MMFF force field.")
     .def("Initialize",&PyForceField::initialize,
 	 "initializes the force field (call this before minimizing)")
     .def("AddExtraPoint",&PyForceField::addExtraPoint,

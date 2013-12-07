@@ -14,6 +14,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/AtomIterators.h>
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -127,8 +128,9 @@ namespace RDKit {
     };
 
 
-    MolHistogram::MolHistogram(const ROMol &mol, const int cid) :
+    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat) :
       d_h(boost::extents[mol.getNumHeavyAtoms()][O3_MAX_H_BINS]) {
+      PRECONDITION(dmat,"empty distance matrix");
       unsigned int nAtoms = mol.getNumAtoms();
       unsigned int y = 0;
       for (unsigned int i = 0; i < nAtoms; ++i) {
@@ -140,9 +142,8 @@ namespace RDKit {
         for (unsigned int j = 0; j < O3_MAX_H_BINS; ++j) {
           this->d_h[y][j] = 0;
         }
-        const RDGeom::POINT3D_VECT &pos = mol.getConformer(cid).getPositions();
         for (unsigned int j = 0; j < nAtoms; ++j) {
-          unsigned int dist = (int)(pos[i] - pos[j]).length();
+          unsigned int dist = static_cast<unsigned int>(floor(dmat[i*nAtoms+j]));
           if (dist < O3_MAX_H_BINS) {
             ++(this->d_h[y][dist]);
           }
@@ -639,16 +640,17 @@ namespace RDKit {
     
     
     O3A::O3A(ROMol &prbMol, const ROMol &refMol,
-      MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
-      const int prbCid, const int refCid, const bool reflect,
-      const unsigned int maxIters, const unsigned int accuracy,
-      LAP *extLAP) :
+             MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+             const int prbCid, const int refCid, const bool reflect,
+             const unsigned int maxIters, const unsigned int accuracy,
+             LAP *extLAP,double *prbDmat,double *refDmat
+             ) :
       d_prbMol(&prbMol),
       d_refMol(&refMol),
-      d_prbCid(prbCid),
-      d_refCid(refCid),
       d_prbMMFFMolProperties(prbMP),
       d_refMMFFMolProperties(refMP),
+      d_prbCid(prbCid),
+      d_refCid(refCid),
       d_reflect(reflect),
       d_maxIters(maxIters)
     {
@@ -676,8 +678,8 @@ namespace RDKit {
       std::vector<double> score(5, 0.0);
       std::vector<double> pairsRMSD(2, 0.0);
       std::vector<SDM *> bestSDM((unsigned int)5, NULL);
-      MolHistogram refHist(refMol,refCid);
-      MolHistogram prbHist(prbCpy,prbCid);
+      MolHistogram refHist(refMol,refDmat!=NULL?refDmat:MolOps::get3DDistanceMat(refMol,refCid));
+      MolHistogram prbHist(prbCpy,prbDmat!=NULL?prbDmat:MolOps::get3DDistanceMat(prbCpy,prbCid));
       LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       for (l = 0, pairs[0] = 0, score[0] = 0.0; l <= ((accuracy < 2) ? 1 : 0); ++l) {
         for (c = 0, pairs[1] = 0, score[1] = 0.0; c <= O3_MAX_WEIGHT_COEFF;
@@ -796,6 +798,46 @@ namespace RDKit {
         }
       }
     }
+
+
+    double _rmsdMatchVect(const RDGeom::POINT3D_VECT &prbPos,
+      const RDGeom::POINT3D_VECT &refPos,
+      const RDKit::MatchVectType *matchVect)
+    {
+      double rmsd = 0.0;
+      for (unsigned int i = 0; i < (*matchVect).size(); ++i) {
+        //first pair element is prb, second is ref
+        rmsd += (prbPos[(*matchVect)[i].first]
+          - refPos[(*matchVect)[i].second]).lengthSq();
+      }
+      rmsd /= (*matchVect).size();
+
+      return sqrt(rmsd);
+    };
+
+
+    double O3A::align() {
+      alignMol(*d_prbMol, *d_refMol, d_prbCid, d_refCid,
+        d_o3aMatchVect, d_o3aWeights, d_reflect, d_maxIters);
+      
+      return _rmsdMatchVect
+        (d_prbMol->getConformer(d_prbCid).getPositions(),
+        d_refMol->getConformer(d_refCid).getPositions(),
+        d_o3aMatchVect);
+    }
+
+
+    std::pair<double, RDGeom::Transform3D *> O3A::trans() {
+      RDGeom::Transform3D *trans = new RDGeom::Transform3D();
+      getAlignmentTransform(*d_prbMol, *d_refMol,
+        *trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
+        d_reflect, d_maxIters);
+      
+      return std::make_pair(_rmsdMatchVect
+        (d_prbMol->getConformer(d_prbCid).getPositions(),
+        d_refMol->getConformer(d_refCid).getPositions(),
+        d_o3aMatchVect), trans);
+    };
 
 
     void randomTransform(ROMol &mol, const int cid, const int seed)

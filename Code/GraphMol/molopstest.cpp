@@ -4279,10 +4279,8 @@ void testGitHubIssue65()
     TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic());
     TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic());
 
-    m->debugMol(std::cerr);
     MolOps::Kekulize(*m);
 
-    
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -4440,7 +4438,29 @@ void testZBO()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testMolAssignment()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing operator= on molecules" << std::endl;
+  {
+    std::string smi= "CCN1CCN(c2cc3[nH]c(C(=O)[C@@]4(CC)CC[C@](C)(O)CC4)nc3cc2Cl)CC1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::string csmi=MolToSmiles(*m,true);
 
+    RWMol m2=*m;
+    std::string nsmi=MolToSmiles(m2,true);
+    TEST_ASSERT(nsmi==csmi);
+
+    RWMol *m3 = SmilesToMol("C2CC2[C@H](F)Cl");
+    TEST_ASSERT(m3);
+    *m3 = *m;
+    nsmi=MolToSmiles(*m3,true);
+    TEST_ASSERT(nsmi==csmi);
+    delete m3;
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 
 int main(){
@@ -4511,6 +4531,7 @@ int main(){
   testGithubIssue141();
 #endif
   testZBO();
+  testMolAssignment();
 
   return 0;
 }

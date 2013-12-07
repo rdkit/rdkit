@@ -71,23 +71,23 @@ namespace ForceFields {
     {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
-      double dist1 = this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx,pos);
-      double dist2 = this->dp_forceField->distance(this->d_at2Idx, this->d_at3Idx,pos);
+      double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx,pos);
+      double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx,pos);
       
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-			  pos[3 * this->d_at1Idx + 1],
-			  pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-			  pos[3 * this->d_at2Idx + 1],
-			  pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-			  pos[3 * this->d_at3Idx + 1],
-			  pos[3 * this->d_at3Idx + 2]);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+			  pos[3 * d_at1Idx + 1],
+			  pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+			  pos[3 * d_at2Idx + 1],
+			  pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+			  pos[3 * d_at3Idx + 1],
+			  pos[3 * d_at3Idx + 2]);
       
       std::pair<double, double> stretchBendEnergies =
-        Utils::calcStretchBendEnergy(dist1 - this->d_restLen1,
-        dist2 - this->d_restLen2, RAD2DEG * acos(Utils::calcCosTheta
-        (p1, p2, p3, dist1, dist2)) - this->d_theta0, this->d_forceConstants);
+        Utils::calcStretchBendEnergy(dist1 - d_restLen1,
+        dist2 - d_restLen2, RAD2DEG * acos(Utils::calcCosTheta
+        (p1, p2, p3, dist1, dist2)) - d_theta0, d_forceConstants);
       
       return (stretchBendEnergies.first + stretchBendEnergies.second);
     }
@@ -97,27 +97,27 @@ namespace ForceFields {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
-      double dist1 = this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos);
-      double dist2 = this->dp_forceField->distance(this->d_at2Idx, this->d_at3Idx, pos);
+      double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+      double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
 
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-        pos[3 * this->d_at1Idx + 1], pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-        pos[3 * this->d_at2Idx + 1], pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-        pos[3 * this->d_at3Idx + 1], pos[3 * this->d_at3Idx + 2]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
-      double *g3 = &(grad[3 * this->d_at3Idx]);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1], pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1], pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1], pos[3 * d_at3Idx + 2]);
+      double *g1 = &(grad[3 * d_at1Idx]);
+      double *g2 = &(grad[3 * d_at2Idx]);
+      double *g3 = &(grad[3 * d_at3Idx]);
 
       RDGeom::Point3D p12 = (p1 - p2) / dist1;
       RDGeom::Point3D p32 = (p3 - p2) / dist2;
       double cosTheta = p12.dotProduct(p32);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
-      double angleTerm = RAD2DEG * acos(cosTheta) - this->d_theta0;
-      double distTerm = RAD2DEG * (d_forceConstants.first * (dist1 - this->d_restLen1)
-        + d_forceConstants.second * (dist2 - this->d_restLen2));
+      double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
+      double distTerm = RAD2DEG * (d_forceConstants.first * (dist1 - d_restLen1)
+        + d_forceConstants.second * (dist2 - d_restLen2));
       double dCos_dS1 = 1.0 / dist1 * (p32.x - cosTheta * p12.x);
       double dCos_dS2 = 1.0 / dist1 * (p32.y - cosTheta * p12.y);
       double dCos_dS3 = 1.0 / dist1 * (p32.z - cosTheta * p12.z);

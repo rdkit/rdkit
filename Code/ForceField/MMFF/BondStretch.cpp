@@ -67,8 +67,8 @@ namespace ForceFields {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
 
-      return Utils::calcBondStretchEnergy(this->d_r0, this->d_kb,
-        this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos));
+      return Utils::calcBondStretchEnergy(d_r0, d_kb,
+        dp_forceField->distance(d_at1Idx, d_at2Idx, pos));
     }
 
     void BondStretchContrib::getGrad(double *pos, double *grad) const
@@ -77,21 +77,21 @@ namespace ForceFields {
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
 
-      double dist = this->dp_forceField->distance
-        (this->d_at1Idx, this->d_at2Idx, pos);
+      double dist = dp_forceField->distance
+        (d_at1Idx, d_at2Idx, pos);
 
-      double *at1Coords = &(pos[3 * this->d_at1Idx]);
-      double *at2Coords = &(pos[3 * this->d_at2Idx]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
+      double *at1Coords = &(pos[3 * d_at1Idx]);
+      double *at2Coords = &(pos[3 * d_at2Idx]);
+      double *g1 = &(grad[3 * d_at1Idx]);
+      double *g2 = &(grad[3 * d_at2Idx]);
       double const cs = -2.0;
-      double distTerm = dist - this->d_r0;
-      double dE_dr = 143.9325 * this->d_kb * distTerm
+      double distTerm = dist - d_r0;
+      double dE_dr = 143.9325 * d_kb * distTerm
         * (1.0 + 1.5 * cs * distTerm + 7.0 / 6.0 * cs * cs * distTerm * distTerm);
       double dGrad;
       for (unsigned int i = 0; i < 3; ++i) {
         dGrad = ((dist > 0.0)
-          ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : this->d_kb * 0.01);
+          ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : d_kb * 0.01);
         g1[i] += dGrad;
         g2[i] -= dGrad;
       }    

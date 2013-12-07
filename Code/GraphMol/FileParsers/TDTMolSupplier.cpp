@@ -14,6 +14,7 @@
 #include "MolSupplier.h"
 #include "FileParsers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/LocaleSwitcher.h>
 
 
 #include <boost/tokenizer.hpp>
@@ -218,6 +219,7 @@ namespace RDKit {
 
   ROMol *TDTMolSupplier::parseMol(std::string inLine){
     PRECONDITION(dp_inStream,"no stream");
+    Utils::LocaleSwitcher ls;
     std::size_t startP=inLine.find("<");
     std::size_t endP=inLine.find_last_of(">");
     std::string smiles = inLine.substr(startP+1,endP-startP-1);

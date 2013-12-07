@@ -49,6 +49,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <RDGeneral/LocaleSwitcher.h>
 
 
 namespace RDKit{
@@ -724,6 +725,7 @@ namespace RDKit{
     std::string tempStr,lineBeg;
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
     boost::char_separator<char> sep(" \t\n");
+    Utils::LocaleSwitcher ls;
 
     // all molecules start with a @<TRIPOS>MOLECULE! There is no other way to define an end of
     // molecule than to find a new one or an eof. Hence I have to read until I find one of the two ...

@@ -49,8 +49,10 @@ namespace RDKit{
     initMol();
     MolPickler::molFromPickle(pickle,*this);
   }
-  
+
   void ROMol::initFromOther(const ROMol &other,bool quickCopy){
+    if(this == &other) return;
+
     //std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
     // copy over the atoms
     const MolGraph &oGraph=other.d_graph;
@@ -478,11 +480,13 @@ namespace RDKit{
     if(includeRings) this->dp_ringInfo->reset();
 
     STR_VECT compLst;
-    getProp(detail::computedPropName, compLst);
-    BOOST_FOREACH(std::string &sv,compLst){
-      dp_props->clearVal(sv);
+    if(hasProp(detail::computedPropName)){
+      getProp(detail::computedPropName, compLst);
+      BOOST_FOREACH(std::string &sv,compLst){
+        dp_props->clearVal(sv);
+      }
+      compLst.clear();
     }
-    compLst.clear();
     dp_props->setVal(detail::computedPropName, compLst);
     for(ConstAtomIterator atomIt=this->beginAtoms();
         atomIt!=this->endAtoms();

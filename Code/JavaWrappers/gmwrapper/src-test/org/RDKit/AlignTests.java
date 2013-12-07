@@ -49,7 +49,7 @@ public class AlignTests extends GraphMolTest {
             ROMol m1 = sdsup.next();
             ROMol m2 = sdsup.next();
             Double_Pair res = m1.O3AAlignMol(m2);
-            assertEquals(res.getFirst(),0.086,.001);
+            assertEquals(res.getFirst(),0.049,.001);
             assertEquals(res.getSecond(),119.98,.01);
             
 	}

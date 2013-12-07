@@ -803,7 +803,6 @@ namespace RDKit{
                                                  0);
             for(unsigned int bidx=0;bidx<bondsToUse.size();++bidx){
               if(!bondsToUse[bidx]) continue;
-              const Bond *bond=mol.getBondWithIdx(bidx);
               const std::string &symb=(*bondSymbols)[bidx];
               boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
               tbranks[bidx]=hsh;
@@ -833,8 +832,8 @@ namespace RDKit{
               for(unsigned int iidx=0;iidx<aidx2;++iidx){
                 if(atomsToUse[iidx]) ++tidx2;
               }
-              const std::string &symb=(*bondSymbols)[bidx];
-              boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
+              //const std::string &symb=(*bondSymbols)[bidx];
+              //boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
               //std::cerr<<" ::: "<<bidx<<"->"<<branks[bidx]<<std::endl;
               tadjMat[tidx1*nActiveAtoms+tidx2]=branks[bidx];
               tadjMat[tidx2*nActiveAtoms+tidx1]=branks[bidx];

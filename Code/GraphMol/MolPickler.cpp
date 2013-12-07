@@ -890,7 +890,6 @@ namespace RDKit{
     PRECONDITION(atom,"empty atom");
     char tmpChar;
     signed char tmpSchar;
-    float tmpFloat;
     int tmpInt;
     char flags;
 

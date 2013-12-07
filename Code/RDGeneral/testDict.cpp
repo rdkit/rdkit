@@ -112,6 +112,7 @@ void testConstReturns(){
 
     std::string tgt=boost::any_cast<std::string>(anyv);
     const std::string &ctgt=boost::any_cast<const std::string &>(anyv);
+    TEST_ASSERT(ctgt!="");
   }
 
   {
