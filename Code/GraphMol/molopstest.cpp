@@ -4279,10 +4279,8 @@ void testGitHubIssue65()
     TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic());
     TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic());
 
-    m->debugMol(std::cerr);
     MolOps::Kekulize(*m);
 
-    
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
