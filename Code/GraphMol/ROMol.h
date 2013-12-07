@@ -184,7 +184,6 @@ namespace RDKit{
     ROMol(const std::string &binStr);
 
     virtual ~ROMol() { destroy(); };
-  
 
     //! \name Atoms
     //@{
@@ -637,7 +636,7 @@ namespace RDKit{
     Dict *dp_props;
     RingInfo *dp_ringInfo;
     CONF_SPTR_LIST d_confs;
-    ROMol &operator=(const ROMol &); // disable assignment
+    ROMol &operator=(const ROMol &); // disable assignment, RWMol's support assignment 
 
 #ifdef WIN32
   protected:

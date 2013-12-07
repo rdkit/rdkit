@@ -49,8 +49,10 @@ namespace RDKit{
     initMol();
     MolPickler::molFromPickle(pickle,*this);
   }
-  
+
   void ROMol::initFromOther(const ROMol &other,bool quickCopy){
+    if(this == &other) return;
+
     //std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
     // copy over the atoms
     const MolGraph &oGraph=other.d_graph;
