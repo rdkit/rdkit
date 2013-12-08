@@ -85,12 +85,12 @@ class MolDrawing(object):
       self.drawingOptions=drawingOptions
     self.boundingBoxes = {}
 
-    if drawingOptions.bgColor is not None:
+    if self.drawingOptions.bgColor is not None:
       self.canvas.addCanvasPolygon(((0,0),
                                     (canvas.size[0],0),
                                     (canvas.size[0],canvas.size[1]),
                                     (0,canvas.size[1])),
-                                   color=drawingOptions.bgColor,
+                                   color=self.drawingOptions.bgColor,
                                    fill=True,stroke=False)
 
     
@@ -283,8 +283,6 @@ class MolDrawing(object):
                                 dash=(1,2))
       
   def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None,ignoreHs=False):
-    self.currDotsPerAngstrom=self.drawingOptions.dotsPerAngstrom
-    self.currAtomLabelFontSize=self.drawingOptions.atomLabelFontSize
     if canvasSize is None:
       canvasSize=self.canvasSize
     xAccum = 0
@@ -358,6 +356,8 @@ class MolDrawing(object):
     if kwargs.has_key('coordScale'):
       self.drawingOptions.coordScale=kwargs['coordScale']
 
+    self.currDotsPerAngstrom=self.drawingOptions.dotsPerAngstrom
+    self.currAtomLabelFontSize=self.drawingOptions.atomLabelFontSize
     if centerIt:
       self.scaleAndCenter(mol,conf,ignoreHs=ignoreHs)
     else:
