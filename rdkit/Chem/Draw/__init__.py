@@ -268,7 +268,7 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
   nRows = len(mols)//molsPerRow
   if len(mols)%molsPerRow : nRows+=1
     
-  res = Image.new("RGBA",(molsPerRow*subImgSize[1],nRows*subImgSize[1]),(255,255,255,0))
+  res = Image.new("RGBA",(molsPerRow*subImgSize[0],nRows*subImgSize[1]),(255,255,255,0))
   for i,mol in enumerate(mols):
     row = i//molsPerRow
     col = i%molsPerRow
