@@ -457,7 +457,7 @@ namespace RDKit{
     QueryAtomIterator beginQueryAtoms(QueryAtom const *query);
     //! \overload
     ConstQueryAtomIterator beginQueryAtoms(QueryAtom const *) const;
-    //! gte an AtomIterator pointing at the end of our Atoms
+    //! get an AtomIterator pointing at the end of our Atoms
     QueryAtomIterator endQueryAtoms();
     //! \overload
     ConstQueryAtomIterator endQueryAtoms() const;
