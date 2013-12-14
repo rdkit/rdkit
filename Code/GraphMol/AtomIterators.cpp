@@ -116,13 +116,11 @@ namespace RDKit{
   // pre-increment
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator++() {
-    RANGE_CHECK(0,_pos,_max-1);
     _pos++;
     return *this;
   }
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator++(int) {
-    RANGE_CHECK(0,_pos,_max-1);
     AtomIterator_<Atom_,Mol_> res(*this);
     _pos++;
     return res;
@@ -131,12 +129,10 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator--() {
     _pos--;
-    RANGE_CHECK(0,_pos,_max-1);
     return *this;
   }
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator--(int) {
-    RANGE_CHECK(0,_pos,_max-1);
     AtomIterator_<Atom_,Mol_> res(*this);
     if(_pos-1 < 0) _pos = _max;
     else _pos--;
@@ -205,7 +201,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   HeteroatomIterator_<Atom_,Mol_> &HeteroatomIterator_<Atom_,Mol_>::operator++() {
     _pos = _findNext(_pos+1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -218,7 +213,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   HeteroatomIterator_<Atom_,Mol_> &HeteroatomIterator_<Atom_,Mol_>::operator--() {
     _pos = _findPrev(_pos-1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -303,7 +297,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   AromaticAtomIterator_<Atom_,Mol_> &AromaticAtomIterator_<Atom_,Mol_>::operator++() {
     _pos = _findNext(_pos+1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -316,7 +309,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   AromaticAtomIterator_<Atom_,Mol_> &AromaticAtomIterator_<Atom_,Mol_>::operator--() {
     _pos = _findPrev(_pos-1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -408,7 +400,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_> &QueryAtomIterator_<Atom_,Mol_>::operator++() {
     _pos = _findNext(_pos+1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -421,7 +412,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_> &QueryAtomIterator_<Atom_,Mol_>::operator--() {
     _pos = _findPrev(_pos-1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
