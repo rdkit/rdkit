@@ -337,12 +337,6 @@ namespace RDKit{
     return from;
   }
 
-
-
-
-
-
-  
   //-----------------------------------------
   //
   //  QueryAtomIterator
@@ -350,6 +344,7 @@ namespace RDKit{
   //-----------------------------------------
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_>::QueryAtomIterator_(Mol_ * mol,QueryAtom const *what){
+    PRECONDITION(what,"bad query atom");
     _mol = mol;
     _qA = static_cast<QueryAtom *>(what->copy());
     _end = mol->getNumAtoms();
@@ -371,16 +366,25 @@ namespace RDKit{
     _mol = other._mol;
     _pos = other._pos;
     _end = other._end;
-    _qA = static_cast<QueryAtom *>(other._qA->copy());
+    if(other._qA)
+      _qA = static_cast<QueryAtom *>(other._qA->copy());
+    else
+      _qA = NULL;
   }
 
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_> &
   QueryAtomIterator_<Atom_,Mol_>::operator =(const QueryAtomIterator_<Atom_,Mol_> &other){
-    _mol = other._mol;
-    _pos = other._pos;
-    _end = other._end;
-    _qA = static_cast<QueryAtom *>(other._qA->copy());
+    if(this!=&other){
+      _mol = other._mol;
+      _pos = other._pos;
+      _end = other._end;
+      if(_qA) delete _qA;
+      if(other._qA)
+        _qA = static_cast<QueryAtom *>(other._qA->copy());
+      else
+        _qA = NULL;
+    }
     return *this;
   }
   template <class Atom_, class Mol_>

@@ -180,6 +180,15 @@ void test4(){
     CHECK_INVARIANT((*++queryIt)->getIdx()==heteros1[1],"bad query");
     CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[1],"bad query");
   }
+  {
+    Mol::QueryAtomIterator queryIt = m->beginQueryAtoms(q);
+    queryIt++;
+    queryIt--;
+    Mol::QueryAtomIterator queryIt2 = queryIt;
+    CHECK_INVARIANT((*queryIt2)->getIdx()==heteros1[0],"bad query");
+    CHECK_INVARIANT((*++queryIt2)->getIdx()==heteros1[1],"bad query");
+    CHECK_INVARIANT((*queryIt2)->getIdx()==heteros1[1],"bad query");
+  }
   smi = "CC(C)CC(C)CC(C)CC(C)C";
   unsigned int heteros2[]={1,4,7,10};
   m = SmilesToMol(smi);

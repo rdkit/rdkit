@@ -20,45 +20,46 @@ namespace RDKit{
     int _size;
   public:
     //ReadOnlySeq() {};
-    ReadOnlySeq(T1 start,T1 end) : _start(start), _end(end), _pos(start), _size(-1) {};
-    ReadOnlySeq(const ReadOnlySeq<T1,T2> &other) {
-      std::cerr << "-------- ROS Copy" << std::endl;
-      _start = other._start;
-      _end = other._end;
-      _pos = other._pos;
-      _size = other._size;
+    ~ReadOnlySeq() {
+      //std::cerr<<" GC: "<<this<<std::endl;
     }
+    ReadOnlySeq(T1 start,T1 end) : _start(start), _end(end), _pos(start), _size(-1) {};
+    ReadOnlySeq(const ReadOnlySeq<T1,T2> &other) :  _start(other._start), _end(other._end),
+                                                    _pos(other._pos), _size(other._size) {};
     void reset() {
+      //std::cerr << "**** reset ****" << this<< std::endl;
       _pos = _start;
     }
     ReadOnlySeq<T1,T2> *__iter__() {
-      std::cerr << "**** ITER ****" << std::endl;
+      //std::cerr << "**** ITER ****" << this << std::endl;
       reset();
+      //std::cerr << "  finish ****" << this << std::endl;
       return this;
     };
     T2 next() {
-      std::cerr << "\tnext: " << *_pos << std::endl;
+      //std::cerr << "\tnext: " << _pos._pos << " " << _end._pos << std::endl;
       if(_pos == _end){
 	PyErr_SetString(PyExc_StopIteration,"End of sequence hit");
 	throw python::error_already_set();
       }      
       T2 res = *_pos;
-      _pos++;
+      ++_pos;
       return res;
     }
     T2 get_item(int which) {
+      //std::cerr << "get_item: " <<which<< std::endl;
       if(which >= len() ){
 	PyErr_SetString(PyExc_IndexError,"End of sequence hit");
 	throw python::error_already_set();
       }
       T1 it=_start;
       for(int i=0;i<which;i++){
-	it++;
+	++it;
       }
       return *it;
     }
     int len() {
-      //std::cerr << "LEN: " << std::endl;
+      //std::cerr << "len " << std::endl;
       if(_size<0){
 	_size = 0;
 	for(T1 tmp=_start;tmp!=_end;tmp++){
@@ -72,8 +73,7 @@ namespace RDKit{
   };
 
   typedef ReadOnlySeq<ROMol::AtomIterator,Atom*> AtomIterSeq;
-  typedef ReadOnlySeq<ROMol::AromaticAtomIterator,Atom*> AromaticAtomIterSeq;
-  typedef ReadOnlySeq<ROMol::HeteroatomIterator,Atom*> HeteroatomIterSeq;
+  typedef ReadOnlySeq<ROMol::QueryAtomIterator,Atom*> QueryAtomIterSeq;
   typedef ReadOnlySeq<ROMol::BondIterator,Bond*> BondIterSeq;
 }
 #endif
