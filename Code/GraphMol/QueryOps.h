@@ -148,6 +148,24 @@ namespace RDKit{
     }
   };
 
+
+  template <class T>
+  T *makeAtomSimpleQuery(int what,int func(Atom const *)){
+    T *res = new T;
+    res->setVal(what);
+    res->setDataFunc(func);
+    res->setDescription("AtomSimple");
+    return res;
+  }
+
+
+  //! returns a Query for matching atomic number
+  template <class T>
+  T *makeAtomNumQuery(int what,const std::string &descr){
+    T *res=makeAtomSimpleQuery<T>(what,queryAtomNum);
+    res->setDescription(descr);
+    return res;
+  }
   
   //! returns a Query for matching atomic number
   ATOM_EQUALS_QUERY *makeAtomNumQuery(int what);
