@@ -148,7 +148,7 @@ namespace RDKit{
       //  use invariants here, those lead to incorrect answers
       for(int i=0;i<numAtoms;i++){
         if(!seedWithInvars){
-          cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
+          cipEntries[i].push_back(mol[i]->getAtomicNum());
           cipEntries[i].push_back(static_cast<int>(ranks[i]));
         } else {
           cipEntries[i].push_back(static_cast<int>(invars[i]));
@@ -183,12 +183,12 @@ namespace RDKit{
 
           // start by pushing on our neighbors' ranks:
           ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(mol.getAtomWithIdx(*it));
+          boost::tie(beg,end) = mol.getAtomBonds(mol[*it].get());
           while(beg!=end){
             const Bond *bond=mol[*beg].get();
             ++beg;
             unsigned int nbrIdx=bond->getOtherAtomIdx(*it);
-            const Atom *nbr=mol.getAtomWithIdx(nbrIdx);
+            const Atom *nbr=mol[nbrIdx].get();
             
             int rank=ranks[nbrIdx]+1;
             // put the neighbor in 2N times where N is the bond order as a double.
@@ -222,9 +222,9 @@ namespace RDKit{
           }
           // add a zero for each coordinated H:
           // (as long as we're not a query atom)
-          if(!mol.getAtomWithIdx(*it)->hasQuery()){
+          if(!mol[*it]->hasQuery()){
             localEntry.insert(localEntry.begin(),
-                              mol.getAtomWithIdx(*it)->getTotalNumHs(),
+                              mol[*it]->getTotalNumHs(),
                               0);
           }
 
@@ -280,15 +280,15 @@ namespace RDKit{
       PRECONDITION((!ranks.size() || ranks.size()>=mol.getNumAtoms()),
                    "bad ranks size");
       if(!ranks.size()) ranks.resize(mol.getNumAtoms());
-      int numAtoms = mol.getNumAtoms();
+      unsigned int numAtoms = mol.getNumAtoms();
       // get the initial invariants:
       DOUBLE_VECT invars(numAtoms,0);
       buildCIPInvariants(mol,invars);
       iterateCIPRanks(mol,invars,ranks,false);
 
       // copy the ranks onto the atoms:
-      for(int i=0;i<numAtoms;i++){
-        mol.getAtomWithIdx(i)->setProp("_CIPRank",ranks[i],1);
+      for(unsigned int i=0;i<numAtoms;++i){
+        mol[i]->setProp("_CIPRank",ranks[i],1);
       }
     }
    
