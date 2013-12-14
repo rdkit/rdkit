@@ -180,9 +180,7 @@ ATOM_EQUALS_QUERY *makeAtomTotalValenceQuery(int what){
 }
   
 ATOM_EQUALS_QUERY *makeAtomNumQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomNum);
-  res->setDescription("AtomAtomicNum");
-  return res;
+  return makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomNum,"AtomAtomicNum");
 }
 
 ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what){
