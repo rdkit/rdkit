@@ -60,11 +60,11 @@ namespace Queries {
     bool getNegation() const { return this->df_negate; };
 
     //! sets our text description
-    void setDescription(std::string &descr) { this->d_description = descr; };
+    void setDescription(const std::string &descr) { this->d_description = descr; };
     //! \overload
     void setDescription(const char *descr) { this->d_description = std::string(descr); };
     //! returns our text description
-    std::string getDescription() const { return this->d_description; };
+    const std::string &getDescription() const { return this->d_description; };
 
     //! sets our match function
     void setMatchFunc(bool (*what)(MatchFuncArgType)) { this->d_matchFunc = what; };
