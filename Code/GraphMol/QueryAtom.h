@@ -28,8 +28,8 @@ namespace RDKit{
     typedef Queries::Query<int,Atom const *,true> QUERYATOM_QUERY;
 
     QueryAtom() : Atom(), dp_query(NULL) {};
-    explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumEqualsQuery(num)) {};
-    explicit QueryAtom(const Atom &other) : Atom(other), dp_query(makeAtomNumEqualsQuery(other.getAtomicNum())) {};
+    explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)) {};
+    explicit QueryAtom(const Atom &other) : Atom(other), dp_query(makeAtomNumQuery(other.getAtomicNum())) {};
     QueryAtom( const QueryAtom & other) : Atom(other){
       dp_query  = other.dp_query->copy();
     };

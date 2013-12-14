@@ -202,7 +202,7 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         RANGE_CHECK(0,atNum,200);  // goofy!
-        q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(atNum)));
+        q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
         if(!i) a.setAtomicNum(atNum);
       }
     
@@ -618,10 +618,10 @@ namespace RDKit{
           // replace the query:
           Atom::QUERYATOM_QUERY *oq=a->getQuery();
           a->setAtomicNum(atNum);
-          a->setQuery(makeAtomNumEqualsQuery(atNum));
+          a->setQuery(makeAtomNumQuery(atNum));
           delete oq;
         } else {
-          a->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
+          a->expandQuery(makeAtomNumQuery(atNum),Queries::COMPOSITE_OR,true);
         }
       }
       ASSERT_INVARIANT(a,"no atom built");
@@ -807,11 +807,11 @@ namespace RDKit{
             ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
             q->setDescription("AtomOr");
             q->setNegation(true);
-            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(6)));
-            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(1)));
+            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
+            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
             query->setQuery(q);
           } else if(symb=="A"){
-            query->setQuery(makeAtomNumEqualsQuery(1));
+            query->setQuery(makeAtomNumQuery(1));
             query->getQuery()->setNegation(true);
           }
           delete res;
@@ -1256,7 +1256,7 @@ namespace RDKit{
           if(!res){
             res = new QueryAtom(atNum);
           } else {
-            res->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
+            res->expandQuery(makeAtomNumQuery(atNum),Queries::COMPOSITE_OR,true);
           }
         }
         res->getQuery()->setNegation(negate);
@@ -1277,11 +1277,11 @@ namespace RDKit{
               ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
               q->setDescription("AtomOr");
               q->setNegation(true);
-              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(6)));
-              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(1)));
+              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
+              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
               res->setQuery(q);
             } else if(token=="A"){
-              res->setQuery(makeAtomNumEqualsQuery(1));
+              res->setQuery(makeAtomNumQuery(1));
               res->getQuery()->setNegation(true);
             }
             // queries have no implicit Hs:

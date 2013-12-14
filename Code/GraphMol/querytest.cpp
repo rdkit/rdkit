@@ -50,7 +50,7 @@ void test1(){
 
   qM.addAtom(qA);
   qA = new QueryAtom(6);
-  qA->expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
+  qA->expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
   qM.addAtom(qA);
   qM.addAtom(new QueryAtom(8));
   //Atom::ATOM_SPTR qA(new QueryAtom(6));
@@ -391,16 +391,16 @@ void testQueryQueryMatches(){
 
   {
     QueryAtom a1(6),a2(8);
-    a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
-    a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
+    a1.expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeAtomNumQuery(9),Queries::COMPOSITE_OR);
     TEST_ASSERT(a1.QueryMatch(&a2));
     TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
-    a1.expandQuery(makeAtomNumEqualsQuery(7),Queries::COMPOSITE_OR);
-    a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
+    a1.expandQuery(makeAtomNumQuery(7),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeAtomNumQuery(9),Queries::COMPOSITE_OR);
     TEST_ASSERT(!a1.QueryMatch(&a2));
     TEST_ASSERT(!a2.QueryMatch(&a1));
   }
@@ -431,7 +431,7 @@ void testQueryQueryMatches(){
 
   {
     QueryAtom a1(6),a2(8);
-    a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
+    a1.expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
     TEST_ASSERT(a1.QueryMatch(&a2));
     TEST_ASSERT(a2.QueryMatch(&a1));
   }

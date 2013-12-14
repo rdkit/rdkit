@@ -156,7 +156,7 @@ void test4(){
   
   Mol *m = SmilesToMol(smi);
   QueryAtom *q= new QueryAtom();
-  q->setQuery(makeAtomNumEqualsQuery(8));
+  q->setQuery(makeAtomNumQuery(8));
   Mol::QueryAtomIterator queryIt;
   unsigned int nSeen=0;
   for(queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){

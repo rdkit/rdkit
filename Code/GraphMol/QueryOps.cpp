@@ -187,7 +187,7 @@ ATOM_EQUALS_QUERY *makeAtomTotalValenceQuery(int what){
   return res;
 }
   
-ATOM_EQUALS_QUERY *makeAtomNumEqualsQuery(int what){
+ATOM_EQUALS_QUERY *makeAtomNumQuery(int what){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomNum);
   res->setDescription("AtomAtomicNum");
   return res;

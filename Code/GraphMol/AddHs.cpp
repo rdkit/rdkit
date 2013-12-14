@@ -544,7 +544,7 @@ namespace RDKit{
               }
             } else {
               // it wasn't a query atom, we need to replace it so that we can add a query:
-              ATOM_EQUALS_QUERY *tmp=makeAtomNumEqualsQuery(atom->getAtomicNum());
+              ATOM_EQUALS_QUERY *tmp=makeAtomNumQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
               newAt->setQuery(tmp);
               mol.replaceAtom(atom->getIdx(),newAt);

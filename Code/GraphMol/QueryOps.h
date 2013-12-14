@@ -150,7 +150,7 @@ namespace RDKit{
 
   
   //! returns a Query for matching atomic number
-  ATOM_EQUALS_QUERY *makeAtomNumEqualsQuery(int what);
+  ATOM_EQUALS_QUERY *makeAtomNumQuery(int what);
   //! returns a Query for matching implicit valence
   ATOM_EQUALS_QUERY *makeAtomImplicitValenceQuery(int what);
   //! returns a Query for matching explicit valence
