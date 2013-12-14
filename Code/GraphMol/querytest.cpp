@@ -550,6 +550,43 @@ void testGithub153(){
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+void testQualifiedQueries(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test queries using qualifiers instead of ==" << std::endl;
+  RWMol *m=SmilesToMol("CNO");
+
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_GREATER_QUERY>(7,"test"));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_GREATEREQUAL_QUERY>(7,"test"));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_LESS_QUERY>(7,"test"));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(2)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_LESSEQUAL_QUERY>(7,"test"));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(2)));
+  }
+  
+  delete m;
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
 
 
 
@@ -566,6 +603,7 @@ int main(){
   testQueryQueryMatches();
   testIssue2892580();
   testGithub153();
+  testQualifiedQueries();
 
   return 0;
 }
