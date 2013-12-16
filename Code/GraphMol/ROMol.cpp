@@ -456,6 +456,18 @@ namespace RDKit{
   ROMol::ConstQueryAtomIterator ROMol::endQueryAtoms() const{
     return ConstQueryAtomIterator(this,getNumAtoms());
   }
+  ROMol::MatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(Atom *)) {
+    return MatchingAtomIterator(this,what);
+  }
+  ROMol::ConstMatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(const Atom *)) const {
+    return ConstMatchingAtomIterator(this,what);
+  }
+  ROMol::MatchingAtomIterator ROMol::endMatchingAtoms(){
+    return MatchingAtomIterator(this,getNumAtoms());
+  }
+  ROMol::ConstMatchingAtomIterator ROMol::endMatchingAtoms() const{
+    return ConstMatchingAtomIterator(this,getNumAtoms());
+  }
 
   ROMol::BondIterator ROMol::beginBonds(){
     return BondIterator(this);

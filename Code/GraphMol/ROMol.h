@@ -60,6 +60,8 @@ namespace RDKit{
   class HeteroatomIterator_;
   template <class T1,class T2>
   class QueryAtomIterator_;
+  template <class T1,class T2>
+  class MatchingAtomIterator_;
 
 
 
@@ -162,6 +164,8 @@ namespace RDKit{
     typedef class HeteroatomIterator_<const Atom,const ROMol> ConstHeteroatomIterator;
     typedef class QueryAtomIterator_<Atom,ROMol> QueryAtomIterator;
     typedef class QueryAtomIterator_<const Atom,const ROMol> ConstQueryAtomIterator;
+    typedef class MatchingAtomIterator_<Atom,ROMol> MatchingAtomIterator;
+    typedef class MatchingAtomIterator_<const Atom,const ROMol> ConstMatchingAtomIterator;
 
 
     typedef CONF_SPTR_LIST_I ConformerIterator;
@@ -461,6 +465,15 @@ namespace RDKit{
     QueryAtomIterator endQueryAtoms();
     //! \overload
     ConstQueryAtomIterator endQueryAtoms() const;
+
+    //! get an AtomIterator pointing at our first Atom that matches \c query
+    MatchingAtomIterator beginMatchingAtoms(bool (*query)(Atom *));
+    //! \overload
+    ConstMatchingAtomIterator beginMatchingAtoms(bool (*query)(const Atom *)) const;
+    //! get an AtomIterator pointing at the end of our Atoms
+    MatchingAtomIterator endMatchingAtoms();
+    //! \overload
+    ConstMatchingAtomIterator endMatchingAtoms() const;
 
     inline ConformerIterator beginConformers() {
       return d_confs.begin();
