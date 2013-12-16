@@ -160,6 +160,11 @@ namespace RDKit {
                                                  mol->endQueryAtoms());
     return res;
   }
+  QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol,QueryAtom *qa){
+    QueryAtomIterSeq *res = new QueryAtomIterSeq(mol->beginQueryAtoms(qa),
+                                                 mol->endQueryAtoms());
+    return res;
+  }
 
   //AtomIterSeq *MolGetHeteros(ROMol *mol){
   //  AtomIterSeq *res = new AtomIterSeq(mol->beginHeteros(),
@@ -372,6 +377,10 @@ struct mol_wrapper {
            python::return_value_policy<python::manage_new_object,
            python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns a read-only sequence containing all of the molecule's aromatic Atoms.\n")
+      .def("GetQueryAtoms",MolGetQueryAtoms,
+           python::return_value_policy<python::manage_new_object,
+           python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns a read-only sequence containing all of the atoms in a molecule that match the query atom.\n")
 
       .def("GetBonds",MolGetBonds,
            python::return_value_policy<python::manage_new_object,
