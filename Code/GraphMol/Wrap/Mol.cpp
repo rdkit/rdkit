@@ -377,7 +377,7 @@ struct mol_wrapper {
            python::return_value_policy<python::manage_new_object,
            python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns a read-only sequence containing all of the molecule's aromatic Atoms.\n")
-      .def("GetQueryAtoms",MolGetQueryAtoms,
+      .def("GetAtomsMatchingQuery",MolGetQueryAtoms,
            python::return_value_policy<python::manage_new_object,
            python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns a read-only sequence containing all of the atoms in a molecule that match the query atom.\n")

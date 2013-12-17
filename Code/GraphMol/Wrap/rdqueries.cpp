@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2013 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,11 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include "rdmolops.h"
 #include <boost/python.hpp>
-
-#include "numpy/oldnumeric.h"
-
 #include <RDGeneral/types.h>
 
 #include <RDBoost/Wrap.h>
@@ -23,31 +19,18 @@
 namespace python = boost::python;
 using namespace RDKit;
 
-void rdSanitExceptionTranslator(RDKit::MolSanitizeException const& x){
-  std::ostringstream ss;
-  ss << "Sanitization error: " << x.message();
-  PyErr_SetString(PyExc_ValueError,ss.str().c_str());
-}
+void wrap_queries();
 
 
-void wrap_molops();
-
-
-BOOST_PYTHON_MODULE(rdmolops)
+BOOST_PYTHON_MODULE(rdqueries)
 {
   python::scope().attr("__doc__") =
-    "Module containing RDKit functionality for manipulating molecules."
+    "Module containing RDKit functionality for querying molecules."
     ;
-  import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
-  python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
 
-  // ******************************
-  // Functions from MolOps
-  //****************************
-  wrap_molops();
-
+  wrap_queries();
 }
 
 

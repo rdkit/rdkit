@@ -30,6 +30,7 @@ try:
 except:
   pass
 from rdkit.Chem.rdMolDescriptors import *
+from rdkit.Chem.rdqueries import *
 from rdkit import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges

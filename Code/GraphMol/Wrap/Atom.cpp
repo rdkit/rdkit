@@ -49,6 +49,14 @@ namespace RDKit{
     }
     return res;
   }
+  void expandQuery(QueryAtom *self,const QueryAtom *other,
+                          Queries::CompositeQueryType how,
+                          bool maintainOrder){
+    if(other->hasQuery()){
+      const QueryAtom::QUERYATOM_QUERY *qry=other->getQuery();
+      self->expandQuery(qry->copy(),how,maintainOrder);
+    }
+  }
 
   void AtomSetProp(const Atom *atom, const char *key,std::string val) {
     //std::cerr<<"asp: "<<atom<<" " << key<<" - " << val << std::endl;
@@ -331,6 +339,23 @@ struct atom_wrapper {
       .value("CHI_TETRAHEDRAL_CW",Atom::CHI_TETRAHEDRAL_CW)
       .value("CHI_TETRAHEDRAL_CCW",Atom::CHI_TETRAHEDRAL_CCW)
       .value("CHI_OTHER",Atom::CHI_OTHER)
+      ;
+
+
+    python::enum_<Queries::CompositeQueryType>("CompositeQueryType")
+      .value("COMPOSITE_AND",Queries::COMPOSITE_AND)
+      .value("COMPOSITE_OR",Queries::COMPOSITE_OR)
+      .value("COMPOSITE_XOR",Queries::COMPOSITE_XOR)
+      ;
+      
+
+    atomClassDoc="The class to store QueryAtoms.\n\
+These cannot currently be constructed directly from Python\n";
+    python::class_<QueryAtom,python::bases<Atom> >("QueryAtom",atomClassDoc.c_str(),python::no_init)
+      .def("ExpandQuery",expandQuery,
+           (python::arg("self"),python::arg("other"),python::arg("how")=Queries::COMPOSITE_AND,
+            python::arg("maintainOrder")=true),
+              "combines the query from other with ours")
       ;
 
   };
