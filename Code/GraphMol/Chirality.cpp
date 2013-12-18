@@ -135,7 +135,8 @@ namespace RDKit{
 #endif  
 
       // rank those:
-      RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
+      //RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
+      RankAtoms::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
       for(int i=0;i<numAtoms;++i){
@@ -255,7 +256,8 @@ namespace RDKit{
         // sort the new ranks and update the list of active indices:
         // 
         lastNumRanks=numRanks;
-        RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
+
+        RankAtoms::rankVect(cipEntries,ranks);
         RankAtoms::updateInPlayIndices(ranks,activeIndices);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
 
