@@ -122,9 +122,7 @@ namespace RDKit{
       int numAtoms = mol.getNumAtoms();
       CIP_ENTRY_VECT cipEntries(numAtoms);
       INT_LIST allIndices;
-      INT_LIST activeIndices;
       for(int i=0;i<numAtoms;++i){
-        activeIndices.push_back(i);
         allIndices.push_back(i);
       }
 #ifdef VERBOSE_CANON
@@ -135,7 +133,6 @@ namespace RDKit{
 #endif  
 
       // rank those:
-      //RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
       RankAtoms::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
@@ -143,7 +140,6 @@ namespace RDKit{
         BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
       }
 #endif  
-      RankAtoms::updateInPlayIndices(ranks,activeIndices);
       // Start each atom's rank vector with its atomic number:
       //  Note: in general one should avoid the temptation to
       //  use invariants here, those lead to incorrect answers
@@ -170,7 +166,7 @@ namespace RDKit{
       int numIts=0;
       int lastNumRanks=-1;
       int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
-      while( !activeIndices.empty() && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
+      while( numRanks<numAtoms && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
         unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
@@ -258,7 +254,6 @@ namespace RDKit{
         lastNumRanks=numRanks;
 
         RankAtoms::rankVect(cipEntries,ranks);
-        RankAtoms::updateInPlayIndices(ranks,activeIndices);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
 
         // now truncate each vector and stick the rank at the end
