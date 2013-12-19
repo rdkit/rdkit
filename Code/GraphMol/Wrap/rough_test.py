@@ -2519,6 +2519,14 @@ CAS<~>
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.failUnlessEqual(l,(1,2))
     
+    qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(2,4))
+
+    qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(3,6))
+
     
 
 
