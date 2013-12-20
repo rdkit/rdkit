@@ -88,6 +88,15 @@ namespace RDGeom {
     return (zi*d_numX*d_numY + yi*d_numX + xi);
   }
 
+  void UniformGrid3D::getGridIndices(unsigned int idx,unsigned int &xi, unsigned int &yi, unsigned int &zi) const {
+    if(idx >= d_numX*d_numY*d_numZ){
+      throw IndexErrorException(idx);
+    }
+    xi = idx%d_numX;
+    yi = (idx%(d_numX*d_numY))/d_numX;
+    zi = idx/(d_numX*d_numY);
+  }
+
   int UniformGrid3D::getGridPointIndex(const Point3D &point) const {
     Point3D tPt(point);
     tPt -= d_offSet;//d_origin;

@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2005-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -58,15 +58,6 @@ void testUniformGrid2() {
   grd.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
   grd.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
   writeGridToFile(grd, "junk.grd");
-#if 1
-  std::ofstream outS;
-  outS.open("junk.bin",std::ios_base::binary);
-  std::string pkl=grd.toString();
-  unsigned int sz=pkl.size();
-  outS<<sz;
-  outS<<pkl;
-  outS.close();
-#endif  
   double dist = tanimotoDistance(grd, grd);
   CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
 
@@ -195,6 +186,57 @@ void testUniformGridOps() {
   CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
 }
 
+void testUniformGridIndexing() {
+  // test distance metrics:
+  UniformGrid3D grd(5.0, 5.0, 5.0);
+
+  {
+    unsigned int xi=3,yi=3,zi=3;
+    unsigned int idx = grd.getGridIndex(xi,yi,zi);
+    unsigned int nxi,nyi,nzi;
+    grd.getGridIndices(idx,nxi,nyi,nzi);
+    TEST_ASSERT(nxi==xi);
+    TEST_ASSERT(nyi==yi);
+    TEST_ASSERT(nzi==zi);
+  }
+  {
+    unsigned int xi=3,yi=3,zi=5;
+    unsigned int idx = grd.getGridIndex(xi,yi,zi);
+    unsigned int nxi,nyi,nzi;
+    grd.getGridIndices(idx,nxi,nyi,nzi);
+    TEST_ASSERT(nxi==xi);
+    TEST_ASSERT(nyi==yi);
+    TEST_ASSERT(nzi==zi);
+  }
+  {
+    unsigned int xi=3,yi=6,zi=3;
+    unsigned int idx = grd.getGridIndex(xi,yi,zi);
+    unsigned int nxi,nyi,nzi;
+    grd.getGridIndices(idx,nxi,nyi,nzi);
+    TEST_ASSERT(nxi==xi);
+    TEST_ASSERT(nyi==yi);
+    TEST_ASSERT(nzi==zi);
+  }
+  {
+    unsigned int xi=0,yi=0,zi=0;
+    unsigned int idx = grd.getGridIndex(xi,yi,zi);
+    unsigned int nxi,nyi,nzi;
+    grd.getGridIndices(idx,nxi,nyi,nzi);
+    TEST_ASSERT(nxi==xi);
+    TEST_ASSERT(nyi==yi);
+    TEST_ASSERT(nzi==zi);
+  }
+  {
+    unsigned int xi=8,yi=2,zi=1;
+    unsigned int idx = grd.getGridIndex(xi,yi,zi);
+    unsigned int nxi,nyi,nzi;
+    grd.getGridIndices(idx,nxi,nyi,nzi);
+    TEST_ASSERT(nxi==xi);
+    TEST_ASSERT(nyi==yi);
+    TEST_ASSERT(nzi==zi);
+  }
+
+}
 
 int main() {
   std::cout << "***********************************************************\n";
@@ -215,6 +257,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testGridOps \n\n";
   testUniformGridOps();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testUniformGridIndexing \n\n";
+  testUniformGridIndexing();
 
 
   return 0;
