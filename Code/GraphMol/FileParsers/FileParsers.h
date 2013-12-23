@@ -80,9 +80,11 @@ namespace RDKit{
    *   \param includeStereo - toggles inclusion of stereochemistry information
    *   \param confId        - selects the conformer to be used
    *   \param kekulize      - triggers kekulization of the molecule before it is written
+   *   \param forceV3000    - force generation a V3000 mol block (happens automatically with
+   *                          more than 999 atoms or bonds)
    */
   std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true,
-                            int confId=-1,bool kekulize=true);
+                            int confId=-1,bool kekulize=true,bool forceV3000=false);
   // \brief Writes a molecule to an MDL mol file
   /*! 
    *   \param mol           - the molecule in question
@@ -90,9 +92,11 @@ namespace RDKit{
    *   \param includeStereo - toggles inclusion of stereochemistry information
    *   \param confId        - selects the conformer to be used
    *   \param kekulize      - triggers kekulization of the molecule before it is written
+   *   \param forceV3000    - force generation a V3000 mol block (happens automatically with
+   *                          more than 999 atoms or bonds)
    */
   void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true,
-                    int confId=-1,bool kekulize=true);
+                    int confId=-1,bool kekulize=true,bool forceV3000=false);
 
 
   //-----
