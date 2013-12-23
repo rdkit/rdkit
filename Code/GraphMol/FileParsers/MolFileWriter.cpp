@@ -776,14 +776,15 @@ namespace RDKit{
   //  Dump a molecule to a file
   //
   //------------------------------------------------
-  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId, bool kekulize){
+  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId, bool kekulize,
+                    bool forceV3000){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
     if (!outStream || !(*outStream) || outStream->bad() ) {
       std::ostringstream errout;
       errout << "Bad output file " << fName;
       throw BadFileException(errout.str());
     }
-    std::string outString = MolToMolBlock(mol,includeStereo,confId,kekulize);
+    std::string outString = MolToMolBlock(mol,includeStereo,confId,kekulize,forceV3000);
     *outStream  << outString;
     delete outStream;
   }    
