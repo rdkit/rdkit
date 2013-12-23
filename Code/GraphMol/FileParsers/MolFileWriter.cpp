@@ -1,12 +1,15 @@
-`// $Id$
+// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
+//
+//  23/12/2013:
+//     V3000 mol block writer contributed by Jan Holst Jensen
 //
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
@@ -180,7 +183,6 @@ namespace RDKit{
 	ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
       }
     }
-
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
       if(listQs[(*atomIt)->getIdx()]){
@@ -563,7 +565,7 @@ namespace RDKit{
   }
 
   int BondStereoCodeV2000ToV3000(int dirCode){
-    // JHJ: Maps V2000 dirCode to V3000 ditto. Please review. Not sure about the Any => Either (4 => 2) mapping.
+    // The Any bond configuration (code 4 in v2000 ctabs) seems to be missing
     switch (dirCode) {
       case 0: return 0;
       case 1: return 1; // V2000 Up       => Up.
@@ -604,7 +606,8 @@ namespace RDKit{
   //  gets a mol block as a string
   //
   //------------------------------------------------
-  std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId, bool kekulize){
+  std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId, bool kekulize,
+                            bool forceV3000 ){
     ROMol tromol(mol);
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     // NOTE: kekulize the molecule before writing it out
@@ -632,7 +635,7 @@ namespace RDKit{
     nAtoms = tmol.getNumAtoms();
     nBonds = tmol.getNumBonds();
     nLists = 0;
-    // JHJ 2013-12-21: Wouldn't a default of '1' be better ? '0' means that all stereocenters are treated as racemic mixtures.
+
     chiralFlag = 0;
     nsText=0;
     nRxnComponents=0;
@@ -685,8 +688,11 @@ namespace RDKit{
     }
     res += "\n";
 
-    isV3000 = (nAtoms > 999) || (nBonds > 999);
-    // isV3000 = true; //!! JHJ: Uncomment to force V3000 mode for testing. Can we add an optional 'forceV3000' parameter without breaking the API so V3000 output is easily testable ?
+    if(forceV3000)
+      isV3000=true;
+    else
+      isV3000 = (nAtoms > 999) || (nBonds > 999);
+
     std::stringstream ss;
     if (isV3000) {
       // Not sure if all counts in the Vx000 info line should be reset to 0 when V3000 is output ?
