@@ -516,8 +516,18 @@ namespace RDKit{
     int isotope=atom->getIsotope();
     if (parityFlag != 0) { ss << " CFG=" << parityFlag; }
     if (chg != 0)        { ss << " CHG=" << chg; }
-    if (isotope!=0)      { ss << " MASS=" << isotope; }
-    // Radicals are always converted to a valence value by CalcAtomProperties(), so don't output RAD tags.
+    if (isotope!=0)      { ss << " MASS=" << atom->getMass(); }
+
+    unsigned int nRadEs=atom->getNumRadicalElectrons();
+    if(nRadEs!=0 && atom->getTotalDegree()!=0){
+      if(nRadEs%2){
+        nRadEs=2;
+      } else {
+        nRadEs=3; // we use triplets, not singlets:
+      }
+      ss << " RAD=" << nRadEs;
+    } 
+
     if (totValence != 0) {
       if (totValence == 15){
         ss << " VAL=-1";

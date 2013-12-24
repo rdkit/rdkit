@@ -2168,6 +2168,73 @@ void test2V3K(){
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+void test3V3K(){
+  BOOST_LOG(rdInfoLog) << "testing basic writing of v3000 mol files" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  std::string fName;
+  {
+    // charges
+    fName = rdbase+"issue148.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==1);
+
+    delete m;
+  }
+
+  {
+    // multiple charge lines
+    fName = rdbase+"MolFileChgBug.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(24)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(25)->getFormalCharge()==-1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(24)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(25)->getFormalCharge()==-1);
+
+    delete m;
+  }
+  {
+    // radicals
+    fName = rdbase + "radical.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+
+    delete m;
+  }
+
+
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 void testIssue2963522(){
   BOOST_LOG(rdInfoLog) << " Testing issue 2963522 "<< std::endl;
@@ -3261,7 +3328,7 @@ void testGithub166(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -3320,11 +3387,12 @@ int main(int argc,char *argv[]){
   testMolFileTotalValence();
   testGithub88();
   testGithub82();
-#endif
   testMolFileWithHs();
   testMolFileWithRxn();
   testPDBFile();
   testGithub166();
+#endif
+  test3V3K();
 
   return 0;
 }
