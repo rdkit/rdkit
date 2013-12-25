@@ -499,7 +499,7 @@ namespace RDKit{
     return ss.str();
   }
     
-  const std::string GetV30MolFileAtomLine(const Atom *atom, const Conformer *conf=0){
+  const std::string GetV3000MolFileAtomLine(const Atom *atom, const Conformer *conf=0){
     PRECONDITION(atom,"");
     int totValence,atomMapNumber;
     unsigned int parityFlag;
@@ -537,9 +537,12 @@ namespace RDKit{
       }
     }
     if (symbol == "R#"){
-      // We now know that the atom has the _MolFileRLabel property. In MolFileParser.cpp it is registered as an int.
-      int rLabel;
-      atom->getProp("_MolFileRLabel",rLabel);
+      unsigned int rLabel;
+      if(atom->hasProp("_MolFileRLabel")){
+        atom->getProp("_MolFileRLabel",rLabel);
+      } else {
+        rLabel=1;
+      }
       ss << " RGROUPS=(1 " << rLabel << ")";
     }
     // HCOUNT - *query* hydrogen count. Not written by this writer.
@@ -547,7 +550,7 @@ namespace RDKit{
     return ss.str();
   };
 
-  int GetV30BondCode(const Bond *bond){
+  int GetV3000BondCode(const Bond *bond){
     // JHJ: As far as I can tell, the V3000 bond codes are the same as for V2000.
     PRECONDITION(bond,"");
     int res = 0;
@@ -586,7 +589,7 @@ namespace RDKit{
     }
   }
 
-  const std::string GetV30MolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+  const std::string GetV3000MolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                                  const Conformer *conf){
     PRECONDITION(bond,"");
 
@@ -596,7 +599,7 @@ namespace RDKit{
 
     std::stringstream ss;
     ss << "M  V30 " << bond->getIdx()+1;
-    ss << " " << GetV30BondCode(bond);
+    ss << " " << GetV3000BondCode(bond);
     if (reverse) {
       // switch the begin and end atoms on the bond line
       ss << " " << bond->getEndAtomIdx()+1;
@@ -761,7 +764,7 @@ namespace RDKit{
       res += "M  V30 BEGIN ATOM\n";
       for(ROMol::ConstAtomIterator atomIt=tmol.beginAtoms();
           atomIt!=tmol.endAtoms();++atomIt){
-        res += GetV30MolFileAtomLine(*atomIt, conf);
+        res += GetV3000MolFileAtomLine(*atomIt, conf);
         res += "\n";
       }
       res += "M  V30 END ATOM\n";
@@ -770,7 +773,7 @@ namespace RDKit{
       INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
       for(ROMol::ConstBondIterator bondIt=tmol.beginBonds();
           bondIt!=tmol.endBonds();++bondIt){
-        res += GetV30MolFileBondLine(*bondIt, wedgeBonds, conf);
+        res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
         res += "\n";
       }
       res += "M  V30 END BOND\n";

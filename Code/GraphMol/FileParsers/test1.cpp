@@ -2230,7 +2230,61 @@ void test3V3K(){
     delete m;
   }
 
+  {
+    // R Groups
+    fName = rdbase + "rgroups1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    unsigned int idx;
+    std::string label;
+  
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==2);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==1);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R1");
+    TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
 
+    
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    std::cerr<<mb<<std::endl;
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==2);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==1);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R1");
+    TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
+
+    delete m;
+  }
 
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -3328,7 +3382,7 @@ void testGithub166(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test4();
