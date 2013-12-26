@@ -769,15 +769,16 @@ namespace RDKit{
       }
       res += "M  V30 END ATOM\n";
 
-      res += "M  V30 BEGIN BOND\n";
-      INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
-      for(ROMol::ConstBondIterator bondIt=tmol.beginBonds();
-          bondIt!=tmol.endBonds();++bondIt){
-        res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
-        res += "\n";
+      if(tmol.getNumBonds()){
+        res += "M  V30 BEGIN BOND\n";
+        INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+        for(ROMol::ConstBondIterator bondIt=tmol.beginBonds();
+            bondIt!=tmol.endBonds();++bondIt){
+          res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
+          res += "\n";
+        }
+        res += "M  V30 END BOND\n";
       }
-      res += "M  V30 END BOND\n";
-
       res += "M  V30 END CTAB\n";
     }
     res += "M  END\n";

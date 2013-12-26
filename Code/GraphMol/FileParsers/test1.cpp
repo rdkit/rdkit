@@ -2231,6 +2231,33 @@ void test3V3K(){
   }
 
   {
+    // radical and valence
+    fName = rdbase+"CH.v3k.mol";
+    RWMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    // no bonds in this one, make sure there's no bond block:
+    TEST_ASSERT(mb.find("BEGIN ATOM")!=std::string::npos);
+    TEST_ASSERT(mb.find("BEGIN BOND")==std::string::npos);
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    delete m;
+  }
+
+  {
     // R Groups
     fName = rdbase + "rgroups1.mol";
     RWMol *m = MolFileToMol(fName);
@@ -2259,9 +2286,7 @@ void test3V3K(){
 
     
     std::string mb=MolToMolBlock(*m,true,-1,true,true);
-    std::cerr<<mb<<std::endl;
     delete m;
-
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
@@ -2286,6 +2311,17 @@ void test3V3K(){
     delete m;
   }
 
+  {
+    // automatic cut over to v3k
+    std::string smiles(1024,'C');
+    RWMol *m=SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1024);
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find("V2000")==std::string::npos);
+    TEST_ASSERT(mb.find("V3000")!=std::string::npos);
+    delete m;
+  }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
