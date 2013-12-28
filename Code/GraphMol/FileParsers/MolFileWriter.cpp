@@ -516,7 +516,12 @@ namespace RDKit{
     int isotope=atom->getIsotope();
     if (parityFlag != 0) { ss << " CFG=" << parityFlag; }
     if (chg != 0)        { ss << " CHG=" << chg; }
-    if (isotope!=0)      { ss << " MASS=" << atom->getMass(); }
+    if (isotope!=0)      {
+      // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
+      // online examples seem to have integer (isotope) values. We'll go with that.
+      int mass=static_cast<int>(floor(atom->getMass()));
+      ss << " MASS=" << mass;
+    }
 
     unsigned int nRadEs=atom->getNumRadicalElectrons();
     if(nRadEs!=0 && atom->getTotalDegree()!=0){

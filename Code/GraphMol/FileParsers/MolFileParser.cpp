@@ -1401,15 +1401,29 @@ namespace RDKit{
             throw FileParseException(errout.str()) ;
           }
         } else if(prop=="MASS"){
-          double v=FileParserUtils::toDouble(val);
+          // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
+          // Online examples seem to have integer (isotope) values and Marvin won't even read something that has a float.
+          // We'll go with the int
+          int v;
+          double dv;
+          try{
+            v=FileParserUtils::toInt(val);
+          } catch (boost::bad_lexical_cast &) {
+            try{
+              dv=FileParserUtils::toDouble(val);
+              v = static_cast<int>(floor(dv));
+            } catch (boost::bad_lexical_cast &){
+              v=-1;
+            }
+          }
           if(v<0){
             errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 <<" on line "<<line << std::endl;
             throw FileParseException(errout.str()) ;
           } else {
 	    if(!atom->hasQuery()) {
-	      atom->setMass(v);
+	      atom->setIsotope(v);
 	    } else {
-	      atom->expandQuery(makeAtomMassQuery(static_cast<int>(v)));
+	      atom->expandQuery(makeAtomIsotopeQuery(v));
 	    }
 	  }
         } else if(prop=="CFG"){

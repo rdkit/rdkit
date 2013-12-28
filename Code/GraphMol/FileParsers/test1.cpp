@@ -1993,7 +1993,7 @@ void test1V3K(){
     TEST_ASSERT(m->getNumAtoms()==9);
     TEST_ASSERT(m->getNumBonds()==9);
     TEST_ASSERT(m->getAtomWithIdx(4)->getFormalCharge()==-1);
-    TEST_ASSERT(m->getAtomWithIdx(4)->getMass()==17.0);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getIsotope()==17);
     //m->debugMol(std::cerr);
     //TEST_ASSERT(m->getBondWithIdx(8)->getBondDir()==Bond::BEGINWEDGE);
     delete m;
@@ -2174,6 +2174,7 @@ void test3V3K(){
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   std::string fName;
+
   {
     // charges
     fName = rdbase+"issue148.mol";
@@ -2284,7 +2285,6 @@ void test3V3K(){
     TEST_ASSERT(label=="R1");
     TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
 
-    
     std::string mb=MolToMolBlock(*m,true,-1,true,true);
     delete m;
     m = MolBlockToMol(mb);
@@ -2320,6 +2320,47 @@ void test3V3K(){
     std::string mb=MolToMolBlock(*m);
     TEST_ASSERT(mb.find("V2000")==std::string::npos);
     TEST_ASSERT(mb.find("V3000")!=std::string::npos);
+    delete m;
+  }
+
+  {
+    // D in CTAB
+    fName = rdbase + "D_in_CTAB.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==2);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+    
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==2);
+
+    delete m;
+  }
+  {
+    // T in CTAB
+    fName = rdbase + "T_in_CTAB.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==3);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==3);
+
     delete m;
   }
 
@@ -3470,7 +3511,6 @@ int main(int argc,char *argv[]){
   testIssue3484552();
   testIssue3514824();
   testIssue3525799();
-  testIssue3557675();
   testSkipLines();
   testIssue269();
   testMolFileChiralFlag();
@@ -3482,6 +3522,7 @@ int main(int argc,char *argv[]){
   testPDBFile();
   testGithub166();
 #endif
+  testIssue3557675();
   test3V3K();
 
   return 0;
