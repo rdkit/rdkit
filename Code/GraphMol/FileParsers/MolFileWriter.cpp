@@ -507,9 +507,27 @@ namespace RDKit{
     GetMolFileAtomProperties(atom, conf,
                              totValence,atomMapNumber, parityFlag, x, y, z);
 
-    std::string symbol = AtomGetMolFileSymbol(atom, false);
     std::stringstream ss;
-    ss << "M  V30 " << atom->getIdx() + 1 << " " << symbol << " " << x << " " << y << " " << z << " " << atomMapNumber;
+    ss << "M  V30 " << atom->getIdx() + 1;
+
+    std::string symbol=AtomGetMolFileSymbol(atom, false);
+    if(!hasListQuery(atom)){
+        ss << " " << symbol;
+    } else {
+      INT_VECT vals;
+      getListQueryVals(atom->getQuery(),vals);
+      if(atom->getQuery()->getNegation()) ss <<" "<<"\"NOT";
+      ss<<" [";
+      for(unsigned int i=0;i<vals.size();++i){
+        if(i!=0) ss<<",";
+        ss<<PeriodicTable::getTable()->getElementSymbol(vals[i]);
+      }
+      ss<<"]";
+      if(atom->getQuery()->getNegation()) ss <<"\"";
+    }
+
+    ss << " " << x << " " << y << " " << z;
+    ss << " " << atomMapNumber;
 
     // Extra atom properties.
     int chg = atom->getFormalCharge();
@@ -518,7 +536,8 @@ namespace RDKit{
     if (chg != 0)        { ss << " CHG=" << chg; }
     if (isotope!=0)      {
       // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
-      // online examples seem to have integer (isotope) values. We'll go with that.
+      // Online examples seem to have integer (isotope) values and Marvin won't even read something that has a float.
+      // We'll go with the int.
       int mass=static_cast<int>(floor(atom->getMass()));
       ss << " MASS=" << mass;
     }

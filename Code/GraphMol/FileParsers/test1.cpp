@@ -2364,6 +2364,48 @@ void test3V3K(){
     delete m;
   }
 
+  {
+    // atom list
+    fName = rdbase + "list-query.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getNumAtoms()==6);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1");
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1");
+  }
+
+  {
+    // not atom list
+    fName = rdbase + "not-list-query.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getNumAtoms()==4);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]-[#6](-[#6])=[!#7&!#8]");
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]-[#6](-[#6])=[!#7&!#8]");
+  }
+
+  
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
