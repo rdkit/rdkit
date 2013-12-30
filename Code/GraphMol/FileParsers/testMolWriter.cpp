@@ -768,6 +768,137 @@ void testMolFileWithRxn(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testSDWriterOptions() {
+  BOOST_LOG(rdInfoLog) << "testing SDWriter options" << std::endl;
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V3000")==std::string::npos);
+  }
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setForceV3000(true);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")==std::string::npos);
+    TEST_ASSERT(txt.find("V3000")!=std::string::npos);
+  }
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    writer.setForceV3000(true);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V3000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V2000")<txt.find("V3000"));
+  }
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setForceV3000(true);
+    writer.write(*mol);
+    writer.setForceV3000(false);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V3000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V2000")>txt.find("V3000"));
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")==std::string::npos);
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setKekulize(false);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")==std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")!=std::string::npos);
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    writer.setKekulize(false);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  2")<txt.find("  1  2  4"));
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setKekulize(false);
+    writer.write(*mol);
+    writer.setKekulize(true);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  2")>txt.find("  1  2  4"));
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -856,6 +987,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileWithRxn();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testSDWriterOptions();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }
