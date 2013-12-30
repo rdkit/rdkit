@@ -164,6 +164,12 @@ namespace RDKit {
     //! \brief get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };
 
+    void setForceV3000(bool val) { df_forceV3000=val; };
+    bool getForceV3000() const { return df_forceV3000; };    
+    
+    void setKekulize(bool val) { df_kekulize=val; };
+    bool getKekulize() const { return df_kekulize; };    
+    
   private:
     void writeProperty(const ROMol &mol, std::string name);
 
@@ -171,6 +177,8 @@ namespace RDKit {
     bool df_owner;
     unsigned int d_molid; // the number of the molecules we wrote so far
     STR_VECT d_props; // list of property name that need to be written out
+    bool df_forceV3000; // force writing the mol blocks as V3000
+    bool df_kekulize; // toggle kekulization of molecules on writing
   };
 
   //! The TDTWriter is for writing molecules and properties to

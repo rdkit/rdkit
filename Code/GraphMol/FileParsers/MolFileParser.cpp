@@ -68,6 +68,8 @@ namespace RDKit{
     }
 
     std::string getV3000Line(std::istream *inStream,unsigned int &line){
+      // FIX: technically V3K blocks are case-insensitive. We should really be
+      // up-casing everything here.
       PRECONDITION(inStream,"bad stream");
       std::string res,tempStr;
 

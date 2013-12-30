@@ -37,6 +37,8 @@ namespace RDKit {
       df_owner=false;
     }
     d_molid = 0;
+    df_kekulize=true;
+    df_forceV3000=false;
   }
 
   SDWriter::SDWriter(std::ostream *outStream,bool takeOwnership) {
@@ -47,6 +49,8 @@ namespace RDKit {
     dp_ostream = outStream;
     df_owner = takeOwnership;
     d_molid = 0;
+    df_kekulize=true;
+    df_forceV3000=false;
   }
 
   SDWriter::~SDWriter() {
@@ -66,7 +70,7 @@ namespace RDKit {
     PRECONDITION(dp_ostream,"no output stream");
 
     // write the molecule 
-    (*dp_ostream) << MolToMolBlock(mol, true, confId);
+    (*dp_ostream) << MolToMolBlock(mol, true, confId, df_kekulize, df_forceV3000);
 
     // now write the properties
     STR_VECT_CI pi;
