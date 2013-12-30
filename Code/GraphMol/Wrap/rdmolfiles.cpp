@@ -55,7 +55,13 @@ namespace RDKit{
     }
     return static_cast<ROMol *>(newM);
   }
+  ROMol *MolFromUnicodeSmiles(std::wstring usmiles,bool sanitize,
+                       python::dict replDict){
+    std::string smiles(usmiles.begin(),usmiles.end());
+    return MolFromSmiles(smiles,sanitize,replDict);
+  }
 
+  
   ROMol *MolFromSmarts(const char *smarts,bool mergeHs,
                        python::dict replDict){
     std::map<std::string,std::string> replacements;
@@ -70,7 +76,12 @@ namespace RDKit{
     }
     return static_cast<ROMol *>(newM);
   }
-   
+  ROMol *MolFromUnicodeSmarts(std::wstring usmarts,bool mergeHs,
+                              python::dict replDict){
+    
+    std::string smarts(usmarts.begin(),usmarts.end());
+    return MolFromSmarts(smarts.c_str(),mergeHs,replDict);
+  }   
   ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
 			bool skipFirstConf=false ) {
     RWMol *newM;
@@ -532,7 +543,14 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("replacements")=python::dict()),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  python::def("MolFromSmiles",RDKit::MolFromUnicodeSmiles,
+	      (python::arg("SMILES"),
+	       python::arg("sanitize")=true,
+               python::arg("replacements")=python::dict()),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
 
+  
   docString="Construct a molecule from a SMARTS string.\n\n\
   ARGUMENTS:\n\
 \n\
@@ -550,6 +568,12 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     a Mol object, None on failure.\n\
 \n";  
   python::def("MolFromSmarts",RDKit::MolFromSmarts,
+	      (python::arg("SMARTS"),
+	       python::arg("mergeHs")=false,
+               python::arg("replacements")=python::dict()),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  python::def("MolFromSmarts",RDKit::MolFromUnicodeSmarts,
 	      (python::arg("SMARTS"),
 	       python::arg("mergeHs")=false,
                python::arg("replacements")=python::dict()),

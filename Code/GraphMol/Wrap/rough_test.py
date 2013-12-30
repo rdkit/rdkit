@@ -2528,6 +2528,14 @@ CAS<~>
     self.failUnlessEqual(l,(3,6))
 
     
+  def test89UnicodeInput(self):
+    m = Chem.MolFromSmiles(u'c1ccccc1')
+    self.failUnless(m is not None)
+    self.failUnlessEqual(m.GetNumAtoms(),6)
+    m = Chem.MolFromSmarts(u'c1ccccc1')
+    self.failUnless(m is not None)
+    self.failUnlessEqual(m.GetNumAtoms(),6)
+    
 
 
     
