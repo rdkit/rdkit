@@ -1425,7 +1425,6 @@ void testIssue184(){
   }
 
   smi = MolToSmiles(*mol,1);
-  std::cerr<<"  "<<refSmi<<"\n"<<"  "<<smi<<std::endl;
   TEST_ASSERT(refSmi==smi);
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2329,7 +2328,6 @@ void testBug3139534(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m,true,false,-1,false);
-    std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
     TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
 
@@ -2386,7 +2384,6 @@ void testBug3139534(){
     TEST_ASSERT(smiles=="C1=C/NCCCCC/1");
 
     smiles = MolToSmiles(*m,true,false,0,false);
-    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1CCCCN/C=C/1");
 
     delete m;
@@ -2402,7 +2399,6 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(14)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="CCC/[N+]1=C/c2ccccc2OC(=O)\\C=C/1O");
 
     delete m;
@@ -3100,7 +3096,6 @@ void testFragmentSmiles(){
     std::string labels[6]={"a","b","","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    std::cerr<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CaC(aC)bC");
     delete m;
   }
