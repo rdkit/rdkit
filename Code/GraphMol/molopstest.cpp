@@ -3541,26 +3541,28 @@ void testAtomAtomMatch(){
 
   */
 
+  // note that in some cases here we have to be fairly careful about Hs on 
+  // the query to make sure that it doesn't have radicals (radical handling
+  // added to fix github #165
   aamatchtest("CCO","O",true,2,0);
   aamatchtest("CC[O-]","O",true,2,0);
-  aamatchtest("CCO","[O-]",false,2,0);
-  aamatchtest("CC[O-]","[O-]",true,2,0);
-  aamatchtest("CC[O-]","[OH]",true,2,0);
-  aamatchtest("CCOC","[OH]",true,2,0);
+  aamatchtest("CCO","[OH-]",false,2,0);
+  aamatchtest("CC[O-]","[OH-]",true,2,0);
+  aamatchtest("CC[O-]","[OH2]",true,2,0);
+  aamatchtest("CCOC","[OH2]",true,2,0);
   aamatchtest("CCOC","O",true,2,0);
   aamatchtest("CCC","C",true,2,0);
   aamatchtest("CC[14C]","C",true,2,0);
-  aamatchtest("CCC","[14C]",false,2,0);
-  aamatchtest("CC[14C]","[14C]",true,2,0);
-  aamatchtest("CC[13C]","[14C]",false,2,0);
+  aamatchtest("CCC","[14CH4]",false,2,0);
+  aamatchtest("CC[14C]","[14CH4]",true,2,0);
+  aamatchtest("CC[13C]","[14CH4]",false,2,0);
   aamatchtest("OCO","C",true,1,0);
-  aamatchtest("OCO","[CH]",true,1,0);
-  aamatchtest("OCO","[CH2]",true,1,0);
-  aamatchtest("OCO","[CH3]",true,1,0);
+  aamatchtest("OCO","[CH4]",true,1,0);
   aamatchtest("O[CH2]O","C",true,1,0);
-  aamatchtest("O[CH2]O","[CH]",true,1,0);
-  aamatchtest("O[CH2]O","[CH2]",true,1,0);
-  aamatchtest("O[CH2]O","[CH3]",true,1,0);
+  aamatchtest("O[CH2]O","[CH4]",true,1,0);
+  aamatchtest("O[CH2]O","[CH2]",false,1,0); // doesn't match due to radical count
+  aamatchtest("O[CH]O","[CH3]",true,1,0);
+  aamatchtest("O[CH]O","[CH2]",false,1,0); // doesn't match due to radical count
   aamatchtest("CC","*",false,1,0);
   aamatchtest("C*","*",true,1,0);
   aamatchtest("C[1*]","*",true,1,0);
@@ -4464,9 +4466,7 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
-#endif
   testSanitizeNonringAromatics();  
-  testAtomAtomMatch();
   testSFNetIssue3349243();
   testBasicCanon();
   testSFNetIssue3549146();
@@ -4482,6 +4482,8 @@ int main(){
   testRenumberAtoms();
   testGithubIssue141();
   testMolAssignment();
+#endif
+  testAtomAtomMatch();
 
   return 0;
 }

@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2002-2006 Rational Discovery LLC
+//   Copyright (C) 2002-2013 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -587,6 +587,27 @@ void testQualifiedQueries(){
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+void testGithub165(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test Github issue 165: radicals not used in atom-atom matching" << std::endl;
+
+  Atom a1(6);
+  Atom a2(6);
+
+  TEST_ASSERT(a1.Match(&a2));
+  TEST_ASSERT(a2.Match(&a1));
+  a1.setNumRadicalElectrons(2);
+  TEST_ASSERT(!a1.Match(&a2));
+  TEST_ASSERT(a2.Match(&a1));
+  a2.setNumRadicalElectrons(2);
+  TEST_ASSERT(a1.Match(&a2));
+  TEST_ASSERT(a2.Match(&a1));
+  a2.setNumRadicalElectrons(3);
+  TEST_ASSERT(!a1.Match(&a2));
+  TEST_ASSERT(!a2.Match(&a1));
+  
+  
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
 
 
 
@@ -604,6 +625,7 @@ int main(){
   testIssue2892580();
   testGithub153();
   testQualifiedQueries();
+  testGithub165();
 
   return 0;
 }

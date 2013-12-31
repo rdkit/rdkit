@@ -445,12 +445,13 @@ bool Atom::Match(Atom const *what) const {
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if(res){
-    if(this->getOwningMol().getRingInfo()->isInitialized() &&
+    if(this->dp_mol && what->dp_mol &&
+       this->getOwningMol().getRingInfo()->isInitialized() &&
        what->getOwningMol().getRingInfo()->isInitialized() &&
        this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
        what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)){
       res=false;
-    } else if(!getAtomicNum()){
+    } else if(!this->getAtomicNum()){
       // this is the new behavior, based on the isotopes:
       int tgt=this->getIsotope();
       int test=what->getIsotope();
@@ -461,7 +462,9 @@ bool Atom::Match(Atom const *what) const {
       // standard atom-atom match: The general rule here is that if this atom has a property that
       // deviates from the default, then the other atom should match that value.
       if( (this->getFormalCharge() && this->getFormalCharge()!=what->getFormalCharge()) ||
-          (this->getIsotope() && this->getIsotope()!=what->getIsotope()) ){
+          (this->getIsotope() && this->getIsotope()!=what->getIsotope()) ||
+          (this->getNumRadicalElectrons() && this->getNumRadicalElectrons()!=what->getNumRadicalElectrons())
+          ){
         res=false;
       }
     }
