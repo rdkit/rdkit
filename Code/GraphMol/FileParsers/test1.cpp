@@ -3257,6 +3257,23 @@ void testGithub166(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub164(){
+  BOOST_LOG(rdInfoLog) << "testing Github 164: problems with Xe from mol files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"Github164.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getNumBonds()==2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(int argc,char *argv[]){
@@ -3320,11 +3337,12 @@ int main(int argc,char *argv[]){
   testMolFileTotalValence();
   testGithub88();
   testGithub82();
-#endif
   testMolFileWithHs();
   testMolFileWithRxn();
   testPDBFile();
   testGithub166();
+#endif
+  testGithub164();
 
   return 0;
 }
