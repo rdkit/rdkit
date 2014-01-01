@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -184,14 +184,16 @@ namespace FindRings {
       } // end if (dupCand.size() > 1) 
     } // end of loop over all set of duplicate candidates
   }
-
-  bool compRingSize(const INT_VECT &ring1, const INT_VECT &ring2) {
-    return (ring1.size() < ring2.size());
-  }
+  
+  struct compRingSize : public std::binary_function<INT_VECT,INT_VECT,bool> {
+    bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
+      return v1.size() < v2.size();
+    }
+  };
 
   void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt, const ROMol &mol) {
     // sort on size
-    std::sort(res.begin(), res.end(), compRingSize);
+    std::sort(res.begin(), res.end(), compRingSize());
 
     // change the rings from atom IDs to bondIds
     VECT_INT_VECT brings;

@@ -12,6 +12,7 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/RankAtoms.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -276,11 +277,6 @@ namespace RDKit{
   }
 
   namespace {
-    bool compPair(const std::pair<unsigned int,RDGeom::Point3D> &v1,
-                  const std::pair<unsigned int,RDGeom::Point3D> &v2) {
-      return (v1.first < v2.first);
-    }
-
     unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf){
       PRECONDITION(atom,"bad atom");
       PRECONDITION(conf,"bad conformer");
@@ -303,7 +299,7 @@ namespace RDKit{
         vs.push_back(std::make_pair(idx,v));
         ++nbrIdx;
       }
-      std::sort(vs.begin(),vs.end(),compPair);
+      std::sort(vs.begin(),vs.end(),RankAtoms::pairLess<std::pair<unsigned int,RDGeom::Point3D> >());
       double vol;
       if(vs.size()==4) {
         vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,11 +43,6 @@ namespace RDKit{
       BOOST_LOG(rdDebugLog) << outS.str() << std::endl;
     }
   
-    // compare the first elements of two pairs of integers
-    int _pairComp(const INT_PAIR &arg1,const INT_PAIR &arg2){
-      return (arg1.first < arg2.first);
-    }
-
     // --------------------------------------------------
     //
     // Calculates chiral invariants for the atoms of a molecule
@@ -594,7 +589,7 @@ namespace RDKit{
             --unassignedAtoms;
 
             // sort the list of neighbors by their CIP ranks:
-            std::sort(nbrs.begin(),nbrs.end(),Chirality::_pairComp);
+            std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<std::pair<int,int> >());
 
             // collect the list of neighbor indices:
             std::list<int> nbrIndices;

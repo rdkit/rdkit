@@ -437,7 +437,7 @@ namespace RDKit {
       // as it seems like it is. (I'm going into this knowing that it's bound to 
       // happen; I'll kick myself and do the hard solution at that point.)
       CHECK_INVARIANT(nbrScores.size(),"no eligible neighbors for chiral center");
-      std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<int>());
+      std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<std::pair<int,int> >());
       res[nbrScores[0].second] = idx;
     }
     return res;

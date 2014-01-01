@@ -40,7 +40,7 @@ namespace RankAtoms {
   //! functor for implementing > on two std::pairs.  The first entries are compared.
   template <typename T>
   struct pairGreater : public std::binary_function<T,T,bool> {
-    bool operator() (const std::pair<T,int> &v1,const std::pair<T,int> &v2) const {
+    bool operator() (const T &v1,const T &v2) const {
       return v1.first > v2.first;
     }
   };
@@ -48,7 +48,7 @@ namespace RankAtoms {
   //! function for implementing < on two std::pairs.  The first entries are compared.
   template <typename T>
   struct pairLess : public std::binary_function<T,T,bool> {
-    bool operator() (const std::pair<T,int> &v1,const std::pair<T,int> &v2) const {
+    bool operator() (const T &v1,const T &v2) const {
       return v1.first < v2.first;
     }
   };
