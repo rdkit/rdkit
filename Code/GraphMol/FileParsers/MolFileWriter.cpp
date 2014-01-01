@@ -299,7 +299,7 @@ namespace RDKit{
         vs.push_back(std::make_pair(idx,v));
         ++nbrIdx;
       }
-      std::sort(vs.begin(),vs.end(),RankAtoms::pairLess<std::pair<unsigned int,RDGeom::Point3D> >());
+      std::sort(vs.begin(),vs.end(),RankAtoms::pairLess<unsigned int,RDGeom::Point3D>());
       double vol;
       if(vs.size()==4) {
         vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);

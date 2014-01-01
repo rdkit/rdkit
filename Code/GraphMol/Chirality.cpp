@@ -589,7 +589,7 @@ namespace RDKit{
             --unassignedAtoms;
 
             // sort the list of neighbors by their CIP ranks:
-            std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<std::pair<int,int> >());
+            std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<int,int>());
 
             // collect the list of neighbor indices:
             std::list<int> nbrIndices;
