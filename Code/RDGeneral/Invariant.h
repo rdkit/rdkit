@@ -1,5 +1,5 @@
 //
-// Copyright (C)  2001-2008 Greg Landrum, Randal M. Henne and Rational Discovery LLC
+// Copyright (C)  2001-2013 Greg Landrum, Randal M. Henne and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -47,7 +47,7 @@ namespace Invar {
       : std::runtime_error( prefix ),
 	mess_d( mess ),
         expr_d( expr ),
-	stringRep_d( prefix ),
+	prefix_d( prefix ),
 	file_dp( file ),
 	line_d( line )
     {
@@ -56,39 +56,40 @@ namespace Invar {
       : std::runtime_error( prefix ),
 	mess_d( mess.c_str() ),
         expr_d( expr ),
-	stringRep_d( prefix ),
+	prefix_d( prefix ),
 	file_dp( file ),
 	line_d( line )
     {
     }
     ~Invariant() throw () {};
 
-    std::string&
-    getMessage()
+    std::string 
+    getMessage() const
     { return mess_d; }
 
     const char *
-    getFile()
+    getFile() const
     { return file_dp; }
 
-    std::string&
-    getExpression()
+    std::string
+    getExpression() const
     { return expr_d; }
 
     int
-    getLine()
+    getLine() const
     { return line_d; }
 
-    std::string &
-    toString();
+    std::string  
+    toString() const;
     
 
   private:
 
     std::string
       mess_d,
-      expr_d,
-      stringRep_d;    // Used internally for string representation
+      expr_d,prefix_d;
+    
+
     
     const char 
       * const file_dp;
@@ -96,10 +97,8 @@ namespace Invar {
     int
       line_d;
   };
-
-  std::ostream& operator<<( std::ostream & s, Invariant & inv );
-
-};
+  std::ostream& operator<<( std::ostream & s, const Invariant & inv );
+} // end of namespace Invar
 
 
 
