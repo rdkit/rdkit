@@ -935,19 +935,16 @@ namespace RDKit{
         propFlags |= 1<<4;
         streamWrite(tss,tmpChar);
       }
-
-      tmpChar = static_cast<char>(atom->getExplicitValence());
-      if(tmpChar!=0){
+      if(atom->d_explicitValence>0){
+        tmpChar = static_cast<char>(atom->d_explicitValence);
         propFlags |= 1<<5;
         streamWrite(tss,tmpChar);
       }
-
-      tmpChar = static_cast<char>(atom->getImplicitValence());
-      if(tmpChar!=0){
+      if(atom->d_implicitValence>0){
+        tmpChar = static_cast<char>(atom->d_implicitValence);
         propFlags |= 1<<6;
         streamWrite(tss,tmpChar);
       }
-
       tmpChar = static_cast<char>(atom->getNumRadicalElectrons());
       if(tmpChar!=0){
         propFlags |= 1<<7;
