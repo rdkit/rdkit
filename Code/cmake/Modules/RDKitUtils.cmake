@@ -37,8 +37,8 @@ macro(rdkit_library)
       INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT runtime )
-      add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
       if(RDK_INSTALL_STATIC_LIBS)
+        add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
                 COMPONENT dev )
@@ -110,9 +110,11 @@ macro(rdkit_test)
     ${ARGN})
   CAR(RDKTEST_NAME ${RDKTEST_DEFAULT_ARGS})
   CDR(RDKTEST_SOURCES ${RDKTEST_DEFAULT_ARGS})
-  add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
-  target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
-  add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
+  if(RDK_BUILD_CPP_TESTS)
+    add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
+    target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
+    add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
+  endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_test)
 
 macro(add_pytest)
