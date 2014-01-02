@@ -93,8 +93,6 @@ namespace Canon {
 
   //! used to represent possible branches from an atom
   typedef boost::tuple<int,int,RDKit::Bond *> PossibleType;
-  //! compare two PossibleTypes
-  int _possibleComp(const PossibleType &arg1,const PossibleType &arg2);
 
   //! constructs the canonical traversal order for a molecular fragment
   /*!
