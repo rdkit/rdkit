@@ -49,7 +49,7 @@ def _createCanvas(size):
   return img,canvas
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
-               fitImage=False, options=None, **kwargs):
+               fitImage=False, options=None, canvas=None, **kwargs):
   """ returns a PIL image containing a drawing of the molecule
 
     Keyword arguments:
@@ -62,7 +62,11 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   """
   if not mol:
     raise ValueError,'Null molecule provided'
-  img,canvas=_createCanvas(size)
+  if canvas is None:
+    img,canvas=_createCanvas(size)
+  else:
+    img=None
+    
   if options is None:
     options = DrawingOptions()
   if fitImage:
