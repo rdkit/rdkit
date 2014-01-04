@@ -129,7 +129,7 @@
 #line 3 "smiles.yy"
 
 
-  // $Id: smiles.yy 2159 2012-08-28 04:01:49Z glandrum $
+  // $Id$
   //
   //  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
   //
@@ -203,7 +203,7 @@ typedef union YYSTYPE
   int                      ival;
 }
 /* Line 193 of yacc.c.  */
-#line 207 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 207 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -216,7 +216,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 220 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 220 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 #ifdef short
 # undef short
@@ -1842,7 +1842,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1846 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1846 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);

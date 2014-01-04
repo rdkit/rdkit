@@ -100,7 +100,7 @@ typedef union YYSTYPE
   int                      ival;
 }
 /* Line 1529 of yacc.c.  */
-#line 104 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/smiles.tab.hpp"
+#line 104 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
