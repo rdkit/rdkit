@@ -93,9 +93,9 @@ void DrawDemo(){
   {
     RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCc2sc([NH3+])c([NH3+])c2)cc1");
     cairo_surface_t *surface =
-      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 200, 200);
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 400, 400);
     cairo_t *cr = cairo_create (surface);
-    MolToCairo(*mol,cr,200,200);
+    MolToCairo(*mol,cr,400,400);
 
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "mol1.png");

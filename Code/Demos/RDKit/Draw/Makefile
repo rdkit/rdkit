@@ -13,3 +13,6 @@ CPPFLAGS = -g -I${BOOSTHOME} -I${RDBASE}/Code -Wno-deprecated $(shell pkg-config
 
 demo.exe: demo.o 
 	$(CXX)  -o $@ $< $(LDFLAGS) $(shell pkg-config --libs cairo)
+
+contour.exe: contour.o 
+	$(CXX)  -o $@ $< $(LDFLAGS) $(shell pkg-config --libs cairo)

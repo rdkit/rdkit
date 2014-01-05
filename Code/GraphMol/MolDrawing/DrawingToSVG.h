@@ -57,7 +57,7 @@ namespace RDKit {
       void drawLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,
                     unsigned int lineWidthMult){
         int width=*pos++;
-        width*=lineWidthMult;
+        width*=lineWidthMult/2;
 
         int dashed=*pos++;
         std::string dashString="";

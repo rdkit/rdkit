@@ -27,8 +27,7 @@
   LINE width dashed atom1_atnum atom2_atnum x1 y1 x2 y2
   WEDGE dashed atom1_atnum atom2_atnum x1 y1 x2 y2 x3 y3 
   ATOM idx atnum x y num_chars char1-charx orient
-
-
+  PLINE width dashed x1 y1 x2 y2
 
 *************/
 
@@ -41,7 +40,8 @@ namespace RDKit {
       WEDGE,
       ATOM,
       BOUNDS,
-      RESOLUTION
+      RESOLUTION,
+      PLINE
     } PrimType;
     typedef enum {
       C=0,
@@ -59,7 +59,7 @@ namespace RDKit {
                      double x2 , double y2 ) {
 
         res.push_back( LINE );
-        res.push_back( static_cast<ElementType>(lineWidth) );
+        res.push_back( static_cast<ElementType>(lineWidth*2) );
         res.push_back(dashed);
         res.push_back( static_cast<ElementType>(atnum1) );
         res.push_back( static_cast<ElementType>(atnum2) );
@@ -146,7 +146,9 @@ namespace RDKit {
                                      unsigned int dotsPerAngstrom=100,
                                      double dblBondOffset=0.3,
                                      double dblBondLengthFrac=0.8,
-                                     double angstromsPerChar=0.20){
+                                     double angstromsPerChar=0.20,
+                                     RDGeom::Point2D *minV=0,
+                                     RDGeom::Point2D *maxV=0){
       if(!mol.getRingInfo()->isInitialized()){
         MolOps::findSSSR(mol);
       }
@@ -230,6 +232,14 @@ namespace RDKit {
           maxx=std::max(pt.x,maxx);
           maxy=std::max(pt.y,maxy);
         }
+      }
+      if(minV){
+        minV->x=minx;
+        minV->y=miny;
+      }
+      if(maxV){
+        maxV->x=maxx;
+        maxV->y=maxy;
       }
       double dimx=(maxx-minx),dimy=(maxy-miny);
       res.push_back(BOUNDS);
@@ -401,7 +411,9 @@ namespace RDKit {
     }
 
     std::vector<int> MolToDrawing(const RDKit::ROMol &mol,const std::vector<int> *highlightAtoms=0,
-                                  bool kekulize=true){
+                                  bool kekulize=true,
+                                  RDGeom::Point2D *minV=0,
+                                  RDGeom::Point2D *maxV=0 ){
       RDKit::RWMol *cp = new RDKit::RWMol(mol);
       if(kekulize){
         try{
@@ -414,7 +426,10 @@ namespace RDKit {
       if(!mol.getNumConformers()) {
         RDDepict::compute2DCoords(*cp);
       }
-      std::vector<int> drawing=DrawMol(*cp,-1,highlightAtoms);
+      std::vector<int> drawing=DrawMol(*cp,-1,highlightAtoms,
+                                       100,0.3,0.8,0.2,
+                                       minV,maxV);
+
       delete cp;
       return drawing;
     }

@@ -59,8 +59,8 @@ namespace RDKit {
       void drawLineCairo(std::vector<int>::const_iterator &pos,
                          cairo_t *cr){
         PRECONDITION(cr,"no context");
-        int width=*pos++;
-        cairo_set_line_width(cr,width*10);
+        double width=*pos++;
+        cairo_set_line_width(cr,width*5);
         int dashed=*pos++;
         double dashes[2];
         switch(dashed){
