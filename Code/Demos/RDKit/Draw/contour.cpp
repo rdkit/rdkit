@@ -25,55 +25,11 @@
 #include <sstream>
 #include <fstream>
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "conrec.h"
 using namespace RDKit;
 using namespace RDGeom;
-
-void genMolGrid(const ROMol &mol,
-                Point2D &minV,Point2D &maxV,
-                double **&grid,double * &xCoords,double * &yCoords,
-                unsigned int nX,unsigned int nY,
-                double &minGridVal,double &maxGridVal,
-                double sigma=0.5){
-  grid = new double * [nX];
-  for(unsigned int i=0;i<nX;++i) grid[i]=new double [nY];
-  xCoords = new double [nX];
-  yCoords = new double [nY];
-
-  Point2D step=maxV-minV;
-  step.x/=(nX-1);
-  step.y/=(nY-1);    
-  for(unsigned int i=0;i<nX;++i){
-    xCoords[i] = minV.x + step.x*i;
-  }
-  for(unsigned int i=0;i<nY;++i){
-    yCoords[i] = minV.y + step.y*i;
-  }
-  maxGridVal=-1000;
-  minGridVal=1000;
-  double denom = 2*sigma*sigma;
-  double norm = 1./(sigma*sqrt(2*M_PI));
-  for(unsigned int i=0;i<nX;++i){
-    for(unsigned int j=0;j<nY;++j){
-      Point3D pt(xCoords[i],yCoords[j],0);
-      grid[i][j] = 0.0;
-      ROMol::VERTEX_ITER bAts,eAts;
-      boost::tie(bAts,eAts)=mol.getVertices();
-      while(bAts!=eAts){
-        const Point3D &apt=mol.getConformer().getAtomPos(mol[*bAts]->getIdx());
-        ++bAts;
-        double d2=(apt-pt).lengthSq();
-        double v = norm*exp(-d2/denom);
-        grid[i][j]+=v;
-      }
-      maxGridVal = max(maxGridVal,grid[i][j]);
-      minGridVal = min(minGridVal,grid[i][j]);
-      //std::cerr<<"      "<<pt.x<<" "<<pt.y<<" | "<<grid[i][j]<<std::endl;
-    }
-  }
-}
-                
 
 struct ContourAccumulator {
   void operator()(double x1,double y1,double x2,double y2,double contour){
@@ -82,13 +38,76 @@ struct ContourAccumulator {
   std::map<double,std::vector<std::pair<Point2D,Point2D> >  > contours;
 };
 
+class Grid {
+public:
+  unsigned int nX,nY;
+  double **grid,*xCoords,*yCoords;
+  Grid() : nX(0), nY(0), grid(NULL), xCoords(NULL), yCoords(NULL) {};
+  Grid(unsigned int inX,unsigned inY) : nX(inX), nY(inY) {
+    grid = new double * [nX];
+    for(unsigned int i=0;i<nX;++i) grid[i]=new double [nY];
+    xCoords = new double [nX];
+    yCoords = new double [nY];
+  }
+  ~Grid(){
+    if(grid){
+      for(unsigned int i=0;i<nX;++i){
+        if(grid[i]) delete [] grid[i];
+      }
+      delete [] grid;
+    }
+    if(xCoords) delete[] xCoords;
+    if(yCoords) delete[] yCoords;
+  }
+private:
+  Grid(const Grid &o);
+};
+
+void genMolGrid(const ROMol &mol,
+                Point2D &minV,Point2D &maxV,
+                Grid &grid,
+                double &minGridVal,double &maxGridVal,
+                double sigma=0.5){
+  Point2D step=maxV-minV;
+  step.x/=(grid.nX-1);
+  step.y/=(grid.nY-1);    
+  for(unsigned int i=0;i<grid.nX;++i){
+    grid.xCoords[i] = minV.x + step.x*i;
+  }
+  for(unsigned int i=0;i<grid.nY;++i){
+    grid.yCoords[i] = minV.y + step.y*i;
+  }
+  maxGridVal=-1000;
+  minGridVal=1000;
+  double denom = 2*sigma*sigma;
+  double norm = 1./(sigma*sqrt(2*M_PI));
+  for(unsigned int i=0;i<grid.nX;++i){
+    for(unsigned int j=0;j<grid.nY;++j){
+      Point3D pt(grid.xCoords[i],grid.yCoords[j],0);
+      grid.grid[i][j] = 0.0;
+      ROMol::VERTEX_ITER bAts,eAts;
+      boost::tie(bAts,eAts)=mol.getVertices();
+      while(bAts!=eAts){
+        const Point3D &apt=mol.getConformer().getAtomPos(mol[*bAts]->getIdx());
+        ++bAts;
+        double d2=(apt-pt).lengthSq();
+        double v = norm*exp(-d2/denom);
+        grid.grid[i][j]+=v;
+      }
+      maxGridVal = max(maxGridVal,grid.grid[i][j]);
+      minGridVal = min(minGridVal,grid.grid[i][j]);
+      //std::cerr<<"      "<<pt.x<<" "<<pt.y<<" | "<<grid[i][j]<<std::endl;
+    }
+  }
+}
+
 void blah(const ROMol &mol,std::vector<int> &drawing,const Point2D &minV,const Point2D &maxV){
   static int nX=200,nY=200;
-  double **grid,*xCoords,*yCoords;
+  Grid grid(nX,nY);
   Point2D gMinV(minV.x-2,minV.y-2);
   Point2D gMaxV(maxV.x+2,maxV.y+2);
   double maxGridVal,minGridVal;
-  genMolGrid(mol,gMinV,gMaxV,grid,xCoords,yCoords,nX,nY,minGridVal,maxGridVal);
+  genMolGrid(mol,gMinV,gMaxV,grid,minGridVal,maxGridVal);
   std::cerr<<" max: "<<maxGridVal<<" min: "<<minGridVal<<std::endl;
 
   const int ncontours=5;
@@ -97,7 +116,7 @@ void blah(const ROMol &mol,std::vector<int> &drawing,const Point2D &minV,const P
     contours[i] = minGridVal+(i+1)*(maxGridVal-minGridVal)/(ncontours+1);
   }
   ContourAccumulator accum;
-  conrec(grid,0,nX-1,0,nY-1,xCoords,yCoords,ncontours,contours,accum);
+  conrec(grid.grid,0,nX-1,0,nY-1,grid.xCoords,grid.yCoords,ncontours,contours,accum);
 
   int resolution=drawing[1];
   
