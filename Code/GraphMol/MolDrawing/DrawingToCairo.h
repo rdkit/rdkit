@@ -60,7 +60,7 @@ namespace RDKit {
                          cairo_t *cr){
         PRECONDITION(cr,"no context");
         double width=*pos++;
-        cairo_set_line_width(cr,width*5);
+        cairo_set_line_width(cr,width);
         int dashed=*pos++;
         double dashes[2];
         switch(dashed){
@@ -104,7 +104,7 @@ namespace RDKit {
                          cairo_t *cr){
         PRECONDITION(cr,"no context");
         double width=*pos++;
-        cairo_set_line_width(cr,width*5);
+        cairo_set_line_width(cr,width);
         int dashed=*pos++;
         double dashes[2];
         switch(dashed){

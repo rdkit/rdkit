@@ -130,7 +130,7 @@ void blah(const ROMol &mol,std::vector<int> &drawing,const Point2D &minV,const P
       tpt1 *= resolution;
       tpt2 *= resolution;
       drawing.push_back(Drawing::PLINE);
-      drawing.push_back(1);
+      drawing.push_back(2);
       drawing.push_back(0);
       drawing.push_back(50);drawing.push_back(50);drawing.push_back(50);
       drawing.push_back(tpt1.x);drawing.push_back(tpt1.y);

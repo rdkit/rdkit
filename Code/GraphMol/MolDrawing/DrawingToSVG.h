@@ -45,8 +45,9 @@ namespace RDKit {
         std::stringstream res;
         res<<std::setbase(16);
         res<<"#";
-        res<<std::setw(2);
-        res<<static_cast<unsigned char>(r)<<static_cast<unsigned char>(g)<<static_cast<unsigned char>(b);
+        res<<std::setfill('0')<<std::setw(2)<<static_cast<unsigned char>(r);
+        res<<std::setfill('0')<<std::setw(2)<<static_cast<unsigned char>(g);
+        res<<std::setfill('0')<<std::setw(2)<<static_cast<unsigned char>(b);
         return res.str();
       }
       std::string getColor(int atNum){
@@ -67,7 +68,9 @@ namespace RDKit {
       void drawLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,
                     unsigned int lineWidthMult){
         int width=*pos++;
-        width*=lineWidthMult/2;
+        width*=lineWidthMult;
+        width/=10;
+        if(width<=0) width=1;
 
         int dashed=*pos++;
         std::string dashString="";
@@ -110,7 +113,9 @@ namespace RDKit {
       void drawPLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,
                     unsigned int lineWidthMult){
         int width=*pos++;
-        width*=lineWidthMult/2;
+        width*=lineWidthMult;
+        width /= 10;
+        if(width<=0) width=1;
 
         int dashed=*pos++;
         std::string dashString="";
@@ -162,7 +167,7 @@ namespace RDKit {
     } // end of anonymous namespace 
 
     std::string DrawingToSVG(const std::vector<int> &drawing,
-                             unsigned int lineWidthMult=2,unsigned int fontSize=50){
+                             unsigned int lineWidthMult=6,unsigned int fontSize=50){
       std::vector<int>::const_iterator pos=drawing.begin()+2;
       if(*pos!= RDKit::Drawing::BOUNDS){
         std::cerr<<"no bounds token found"<<std::endl;

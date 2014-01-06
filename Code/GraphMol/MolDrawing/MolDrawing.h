@@ -59,7 +59,7 @@ namespace RDKit {
                      double x2 , double y2 ) {
 
         res.push_back( LINE );
-        res.push_back( static_cast<ElementType>(lineWidth*2) );
+        res.push_back( static_cast<ElementType>(lineWidth*10) );
         res.push_back(dashed);
         res.push_back( static_cast<ElementType>(atnum1) );
         res.push_back( static_cast<ElementType>(atnum2) );
