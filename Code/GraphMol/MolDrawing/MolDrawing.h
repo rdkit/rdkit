@@ -27,7 +27,7 @@
   LINE width dashed atom1_atnum atom2_atnum x1 y1 x2 y2
   WEDGE dashed atom1_atnum atom2_atnum x1 y1 x2 y2 x3 y3 
   ATOM idx atnum x y num_chars char1-charx orient
-  PLINE width dashed x1 y1 x2 y2
+  PLINE width dashed r g b x1 y1 x2 y2
 
 *************/
 

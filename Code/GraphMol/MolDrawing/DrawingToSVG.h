@@ -35,10 +35,20 @@
 #define _RD_DRAWING_TO_SVG_H_
 
 #include <GraphMol/MolDrawing/MolDrawing.h>
+#include <sstream>
+#include <iomanip>
 
 namespace RDKit {
   namespace Drawing {
     namespace {
+      std::string getColor(int r,int g, int b){
+        std::stringstream res;
+        res<<std::setbase(16);
+        res<<"#";
+        res<<std::setw(2);
+        res<<static_cast<unsigned char>(r)<<static_cast<unsigned char>(g)<<static_cast<unsigned char>(b);
+        return res.str();
+      }
       std::string getColor(int atNum){
         std::string res="#000000";
         switch(atNum){
@@ -97,6 +107,32 @@ namespace RDKit {
           sstr<<" />\n";
         }
       }
+      void drawPLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,
+                    unsigned int lineWidthMult){
+        int width=*pos++;
+        width*=lineWidthMult/2;
+
+        int dashed=*pos++;
+        std::string dashString="";
+        switch(dashed){
+        case 0:
+          break;
+        case 2:
+          dashString=";stroke-dasharray:2, 6";
+          break;
+        default:
+          dashString=";stroke-dasharray:6, 6";
+        }
+        int r=*pos++;
+        int g=*pos++;
+        int b=*pos++;
+        std::string c=getColor(r,g,b);
+        sstr<<"<svg:path ";
+        sstr<<"d='M "<<*pos<<","<<*(pos+1)<<" "<<*(pos+2)<<","<<*(pos+3)<<"' ";
+        pos+=4;
+        sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+        sstr<<" />\n";
+      }
 
       void drawAtom(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,unsigned int fontSz){
         int atNum=*pos++;
@@ -154,6 +190,9 @@ namespace RDKit {
         switch(token){
         case  RDKit::Drawing::LINE:
           drawLine(pos,sstr,lineWidthMult);
+          break;
+        case  RDKit::Drawing::PLINE:
+          drawPLine(pos,sstr,lineWidthMult);
           break;
         case  RDKit::Drawing::ATOM:
           drawAtom(pos,sstr,fontSize);

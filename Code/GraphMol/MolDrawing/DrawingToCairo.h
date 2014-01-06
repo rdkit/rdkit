@@ -100,6 +100,37 @@ namespace RDKit {
           cairo_stroke(cr);
         }
       }
+      void drawPLineCairo(std::vector<int>::const_iterator &pos,
+                         cairo_t *cr){
+        PRECONDITION(cr,"no context");
+        double width=*pos++;
+        cairo_set_line_width(cr,width*5);
+        int dashed=*pos++;
+        double dashes[2];
+        switch(dashed){
+        case 0:
+          cairo_set_dash(cr,0,0,0);
+          break;
+        case 2:
+          dashes[0]=5.0;dashes[1]=20.0;
+          cairo_set_dash(cr,dashes,sizeof(dashes)/sizeof(dashes[0]),0);    
+          break;
+        default:
+          dashes[0]=20.0;dashes[1]=20.0;
+          cairo_set_dash(cr,dashes,sizeof(dashes)/sizeof(dashes[0]),0);    
+        }
+        int r=*pos++;
+        int g=*pos++;
+        int b=*pos++;
+        int xp1 = *pos++;
+        int yp1 = *pos++;
+        int xp2 = *pos++;
+        int yp2 = *pos++;
+        cairo_set_source_rgb(cr,r/255.,g/255.,b/255.);
+        cairo_move_to(cr,xp1,yp1);
+        cairo_line_to(cr,xp2,yp2);
+        cairo_stroke(cr);
+      }
       void drawAtomCairo(std::vector<int>::const_iterator &pos,
                          cairo_t *cr){
         PRECONDITION(cr,"no context");
@@ -222,6 +253,9 @@ namespace RDKit {
         switch(token){
         case Drawing::LINE:
           drawLineCairo(pos,cr);
+          break;
+        case Drawing::PLINE:
+          drawPLineCairo(pos,cr);
           break;
         case Drawing::ATOM:
           drawAtomCairo(pos,cr);
