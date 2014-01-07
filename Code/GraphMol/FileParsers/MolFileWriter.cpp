@@ -538,7 +538,7 @@ namespace RDKit{
       // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
       // Online examples seem to have integer (isotope) values and Marvin won't even read something that has a float.
       // We'll go with the int.
-      int mass=static_cast<int>(floor(atom->getMass()));
+      int mass=static_cast<int>(round(atom->getMass()));
       ss << " MASS=" << mass;
     }
 
@@ -730,29 +730,37 @@ namespace RDKit{
     else
       isV3000 = (nAtoms > 999) || (nBonds > 999);
 
+    // the counts line:
     std::stringstream ss;
     if (isV3000) {
-      // Not sure if all counts in the Vx000 info line should be reset to 0 when V3000 is output ?
+      // All counts in the Vx000 info line should be 0
       ss<<std::setw(3)<<0;
       ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<0;
+      ss<<"999 V3000\n";
     }
     else {
       ss<<std::setw(3)<<nAtoms;
       ss<<std::setw(3)<<nBonds;
-    }
-    ss<<std::setw(3)<<nLists;
-    ss<<std::setw(3)<<0;
-    ss<<std::setw(3)<<chiralFlag;
-    ss<<std::setw(3)<<nsText;
-    ss<<std::setw(3)<<nRxnComponents;
-    ss<<std::setw(3)<<nReactants;
-    ss<<std::setw(3)<<nProducts;
-    ss<<std::setw(3)<<nIntermediates;
-    if (isV3000)
-      ss<<"999 V3000\n";
-    else
+      ss<<std::setw(3)<<nLists;
+      ss<<std::setw(3)<<0;
+      ss<<std::setw(3)<<chiralFlag;
+      ss<<std::setw(3)<<nsText;
+      ss<<std::setw(3)<<nRxnComponents;
+      ss<<std::setw(3)<<nReactants;
+      ss<<std::setw(3)<<nProducts;
+      ss<<std::setw(3)<<nIntermediates;
       ss<<"999 V2000\n";
+    }
     res += ss.str();
+
     if (!isV3000) {
       // V2000 output.
       for(ROMol::ConstAtomIterator atomIt=tmol.beginAtoms();
