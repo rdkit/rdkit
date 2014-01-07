@@ -31,6 +31,9 @@
 using namespace RDKit;
 using namespace RDGeom;
 
+// NOTE:
+// segments -> vector sample code can be found here:
+// http://apptree.net/conrec.htm
 struct ContourAccumulator {
   void operator()(double x1,double y1,double x2,double y2,double contour){
     contours[contour].push_back(std::make_pair(Point2D(x1,y1),Point2D(x2,y2)));
@@ -41,13 +44,15 @@ struct ContourAccumulator {
 class Grid {
 public:
   unsigned int nX,nY;
+  double minVal,maxVal;
   double **grid,*xCoords,*yCoords;
-  Grid() : nX(0), nY(0), grid(NULL), xCoords(NULL), yCoords(NULL) {};
-  Grid(unsigned int inX,unsigned inY) : nX(inX), nY(inY) {
+  Grid() : nX(0), nY(0), grid(NULL), xCoords(NULL), yCoords(NULL),minVal(1000),maxVal(-1000) {};
+  Grid(unsigned int inX,unsigned inY) : nX(inX), nY(inY), minVal(1000), maxVal(-1000) {
     grid = new double * [nX];
     for(unsigned int i=0;i<nX;++i) grid[i]=new double [nY];
     xCoords = new double [nX];
     yCoords = new double [nY];
+
   }
   ~Grid(){
     if(grid){
@@ -66,7 +71,6 @@ private:
 void genMolGrid(const ROMol &mol,
                 Point2D &minV,Point2D &maxV,
                 Grid &grid,
-                double &minGridVal,double &maxGridVal,
                 double sigma=0.5){
   Point2D step=maxV-minV;
   step.x/=(grid.nX-1);
@@ -77,8 +81,6 @@ void genMolGrid(const ROMol &mol,
   for(unsigned int i=0;i<grid.nY;++i){
     grid.yCoords[i] = minV.y + step.y*i;
   }
-  maxGridVal=-1000;
-  minGridVal=1000;
   double denom = 2*sigma*sigma;
   double norm = 1./(sigma*sqrt(2*M_PI));
   for(unsigned int i=0;i<grid.nX;++i){
@@ -94,29 +96,27 @@ void genMolGrid(const ROMol &mol,
         double v = norm*exp(-d2/denom);
         grid.grid[i][j]+=v;
       }
-      maxGridVal = max(maxGridVal,grid.grid[i][j]);
-      minGridVal = min(minGridVal,grid.grid[i][j]);
+      grid.maxVal = max(grid.maxVal,grid.grid[i][j]);
+      grid.minVal = min(grid.minVal,grid.grid[i][j]);
       //std::cerr<<"      "<<pt.x<<" "<<pt.y<<" | "<<grid[i][j]<<std::endl;
     }
   }
 }
 
-void blah(const ROMol &mol,std::vector<int> &drawing,const Point2D &minV,const Point2D &maxV){
-  static int nX=200,nY=200;
-  Grid grid(nX,nY);
+void blah(const ROMol &mol,std::vector<int> &drawing,const Point2D &minV,const Point2D &maxV,
+          Grid &grid){
   Point2D gMinV(minV.x-2,minV.y-2);
   Point2D gMaxV(maxV.x+2,maxV.y+2);
-  double maxGridVal,minGridVal;
-  genMolGrid(mol,gMinV,gMaxV,grid,minGridVal,maxGridVal);
-  std::cerr<<" max: "<<maxGridVal<<" min: "<<minGridVal<<std::endl;
+  genMolGrid(mol,gMinV,gMaxV,grid);
+  std::cerr<<" max: "<<grid.maxVal<<" min: "<<grid.minVal<<std::endl;
 
   const int ncontours=5;
   double contours[ncontours];
   for(unsigned int i=0;i<ncontours;++i){
-    contours[i] = minGridVal+(i+1)*(maxGridVal-minGridVal)/(ncontours+1);
+    contours[i] = grid.minVal+(i+1)*(grid.maxVal-grid.minVal)/(ncontours+1);
   }
   ContourAccumulator accum;
-  conrec(grid.grid,0,nX-1,0,nY-1,grid.xCoords,grid.yCoords,ncontours,contours,accum);
+  conrec(grid.grid,0,grid.nX-1,0,grid.nY-1,grid.xCoords,grid.yCoords,ncontours,contours,accum);
 
   int resolution=drawing[1];
   
@@ -149,7 +149,9 @@ std::string MolToSVG(ROMol &mol){
   Point2D maxV;
   std::vector<int> drawing=RDKit::Drawing::MolToDrawing(mol,NULL,true,&minV,&maxV);
 
-  blah(mol,drawing,minV,maxV);
+  static int nX=200,nY=200;
+  Grid grid(nX,nY);
+  blah(mol,drawing,minV,maxV,grid);
 
   std::string svg=RDKit::Drawing::DrawingToSVG(drawing);
   return svg;
@@ -171,24 +173,32 @@ void MolToCairo(ROMol &mol,cairo_t *cr,int width,int height){
   std::vector<int> drawing=RDKit::Drawing::MolToDrawing(mol,
                                                         NULL,true,
                                                         &minV,&maxV);
-  blah(mol,drawing,minV,maxV);
+  static int nX=200,nY=200;
+  Grid grid(nX,nY);
+  blah(mol,drawing,minV,maxV,grid);
 
   RDKit::Drawing::DrawingToCairo(drawing,cr,width,height);
-#if 0
-  double gridMin=0,gridMax=1.0;
-  Point2D gstep=gMaxV-gMinV;
-  gstep.x/=(nX-1);
-  gstep.y/=(nY-1);
+#if 1
+  int resolution = drawing[1];
+  Point2D gstep;
+  gstep.x = grid.xCoords[1]-grid.xCoords[0];
+  gstep.y = grid.yCoords[1]-grid.yCoords[0];
   gstep*=resolution;
-  for(unsigned int i=0;i<nX;++i){
-    for(unsigned int j=0;j<nY;++j){
-      Point2D pti(xCoords[i],yCoords[j]);
+  //gstep *= 10;
+  //gstep *= 1.05;
+  for(unsigned int i=0;i<grid.nX;++i){
+    if(grid.xCoords[i]<minV.x or grid.xCoords[i]>maxV.x) continue;
+    for(unsigned int j=0;j<grid.nY;++j){
+      if(grid.yCoords[j]<minV.y or grid.yCoords[j]>maxV.y) continue;
+      Point2D pti(grid.xCoords[i],grid.yCoords[j]);
       pti -= minV;
       pti *= resolution;
-      double cv = (grid[i][j])/gridMax;
+      double cv = (grid.grid[i][j])/grid.maxVal;
+      cairo_new_path(cr);
       cairo_set_source_rgba (cr, cv,cv,cv,0.5);
       cairo_rectangle(cr,pti.x,pti.y,gstep.x,gstep.y);
       cairo_fill(cr);
+      //std::cerr<<" "<<pti<<"->"<<(pti+gstep)<<" "<<cv<<std::endl;
     }
   }
 #endif
