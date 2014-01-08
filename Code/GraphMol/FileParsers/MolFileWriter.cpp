@@ -733,7 +733,7 @@ namespace RDKit{
     // the counts line:
     std::stringstream ss;
     if (isV3000) {
-      // All counts in the Vx000 info line should be 0
+      // All counts in the V3000 info line should be 0
       ss<<std::setw(3)<<0;
       ss<<std::setw(3)<<0;
       ss<<std::setw(3)<<0;

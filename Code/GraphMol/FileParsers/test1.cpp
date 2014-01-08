@@ -2166,6 +2166,19 @@ void test2V3K(){
     delete m2;
     delete m;
   }
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chebi_15469.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==53);
+    TEST_ASSERT(m->getNumBonds()==55);
+    TEST_ASSERT(m->getAtomWithIdx(52)->getAtomicNum()==0);
+    TEST_ASSERT(m->getAtomWithIdx(52)->hasQuery());
+    
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 void test3V3K(){

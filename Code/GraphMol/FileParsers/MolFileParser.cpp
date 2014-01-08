@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1316,7 +1316,10 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         // it's a normal CTAB atom symbol:
-        if(token=="R#" || token=="A" || token=="Q" || token=="*"){
+        // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to support them anyway
+        if(token=="R" || 
+           (token[0]=='R' && token=="R0" && token<="R99") ||
+           token=="R#" || token=="A" || token=="Q" || token=="*"){
           res=new QueryAtom(0);
           if(token=="A"||token=="Q"||token=="*"){
             if(token=="*"){
@@ -1338,6 +1341,18 @@ namespace RDKit{
           } else {
             res->setAtomicNum(0);
           }
+
+          if(token[0]=='R' && token=="R0" && token<="R99"){
+            std::string rlabel="";
+            rlabel = token.substr(1,token.length()-1);
+            int rnumber;
+            try {
+              rnumber = boost::lexical_cast<int>(rlabel);
+            } catch (boost::bad_lexical_cast &) {
+              rnumber=-1;
+            }
+            if(rnumber>=0) res->setIsotope(rnumber);
+          }
         } else if( token=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
           res = new Atom(1);
           res->setIsotope(2);
@@ -1349,6 +1364,7 @@ namespace RDKit{
           res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
         }
       }
+      
       
       POSTCONDITION(res,"no atom built");
       return res;
