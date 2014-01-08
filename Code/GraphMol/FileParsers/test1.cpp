@@ -2174,8 +2174,36 @@ void test2V3K(){
     TEST_ASSERT(m->getNumAtoms()==53);
     TEST_ASSERT(m->getNumBonds()==55);
     TEST_ASSERT(m->getAtomWithIdx(52)->getAtomicNum()==0);
-    TEST_ASSERT(m->getAtomWithIdx(52)->hasQuery());
-    
+    TEST_ASSERT(!m->getAtomWithIdx(52)->hasQuery());
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chebi_57262.v3k.2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chebi_57262.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
     delete m;
   }
 
@@ -3514,7 +3542,7 @@ void testGithub166(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -3548,7 +3576,6 @@ int main(int argc,char *argv[]){
   testListsAndValues();
   //testCrash();
   test1V3K();
-  test2V3K();
   testIssue2963522();
   testIssue3073163();
   testIssue3154208();
@@ -3576,9 +3603,10 @@ int main(int argc,char *argv[]){
   testMolFileWithRxn();
   testPDBFile();
   testGithub166();
-#endif
   testIssue3557675();
   test3V3K();
+#endif
+  test2V3K();
 
   return 0;
 }

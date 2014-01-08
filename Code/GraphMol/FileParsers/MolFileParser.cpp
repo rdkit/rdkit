@@ -1274,7 +1274,6 @@ namespace RDKit{
 
     Atom *ParseV3000AtomSymbol(std::string token,unsigned int &line){
       bool negate=false;
-
       boost::trim(token);
       std::string cpy=token;
       boost::to_upper(cpy);
@@ -1318,10 +1317,10 @@ namespace RDKit{
         // it's a normal CTAB atom symbol:
         // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to support them anyway
         if(token=="R" || 
-           (token[0]=='R' && token=="R0" && token<="R99") ||
+           (token[0]=='R' && token>="R0" && token<="R99") ||
            token=="R#" || token=="A" || token=="Q" || token=="*"){
-          res=new QueryAtom(0);
           if(token=="A"||token=="Q"||token=="*"){
+            res=new QueryAtom(0);
             if(token=="*"){
               // according to the MDL spec, these match anything
               res->setQuery(makeAtomNullQuery());
@@ -1339,10 +1338,10 @@ namespace RDKit{
             // queries have no implicit Hs:
             res->setNoImplicit(true);
           } else {
+            res = new Atom(1);
             res->setAtomicNum(0);
           }
-
-          if(token[0]=='R' && token=="R0" && token<="R99"){
+          if(token[0]=='R' && token>="R0" && token<="R99"){
             std::string rlabel="";
             rlabel = token.substr(1,token.length()-1);
             int rnumber;
