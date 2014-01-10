@@ -897,7 +897,62 @@ void testSDWriterOptions() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testV3000WriterDetails(){
+  BOOST_LOG(rdInfoLog) << "testing details of v3000 writing" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
+  {
+    std::string fName = rdbase + "chebi_57262.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("MASS=1")!=std::string::npos);
+    TEST_ASSERT(mb.find("MASS=2")!=std::string::npos);
+
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+
+    // repeat that one more time to make sure we're really solid:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("MASS=1")!=std::string::npos);
+    TEST_ASSERT(mb.find("MASS=2")!=std::string::npos);
+
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+    
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -991,6 +1046,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testSDWriterOptions();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testV3000WriterDetails();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }

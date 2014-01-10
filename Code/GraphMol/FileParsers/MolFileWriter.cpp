@@ -535,10 +535,14 @@ namespace RDKit{
     if (parityFlag != 0) { ss << " CFG=" << parityFlag; }
     if (chg != 0)        { ss << " CHG=" << chg; }
     if (isotope!=0)      {
-      // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
-      // Online examples seem to have integer (isotope) values and Marvin won't even read something that has a float.
+      // the documentation for V3000 CTABs says that this should contain the
+      // "absolute atomic weight" (whatever that means).
+      // Online examples seem to have integer (isotope) values and Marvin won't
+      // even read something that has a float.
       // We'll go with the int.
       int mass=static_cast<int>(round(atom->getMass()));
+      // dummies may have an isotope set but they always have a mass of zero:
+      if(!mass) mass=isotope;
       ss << " MASS=" << mass;
     }
 
