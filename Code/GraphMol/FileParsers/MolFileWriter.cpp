@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -244,17 +244,33 @@ namespace RDKit{
     std::string res;
     if(atom->hasProp("_MolFileRLabel")){
       res="R#";
-    } else if(hasComplexQuery(atom)){
-      if(hasListQuery(atom)){
-        res="L";
-      } else {
-        res="*";
-      }
-    } else if(atom->getAtomicNum()){
+    } else if(!atom->hasQuery() && atom->getAtomicNum()){
       res=atom->getSymbol();
     } else {
       if(!atom->hasProp("dummyLabel")){
-      	res = "R";
+        if(atom->hasQuery() &&
+           atom->getQuery()->getNegation() &&
+           atom->getQuery()->getDescription()=="AtomAtomicNum" &&
+           static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal()==1){
+          res="A";
+        } else if(atom->hasQuery() &&
+                  atom->getQuery()->getNegation() &&
+                  atom->getQuery()->getDescription()=="AtomOr" &&
+                  atom->getQuery()->endChildren()-atom->getQuery()->beginChildren()==2 &&
+                  (*atom->getQuery()->beginChildren())->getDescription()=="AtomAtomicNum" &&
+                  static_cast<ATOM_EQUALS_QUERY *>((*atom->getQuery()->beginChildren()).get())->getVal()==6 &&
+                  (*++(atom->getQuery()->beginChildren()))->getDescription()=="AtomAtomicNum" &&
+                  static_cast<ATOM_EQUALS_QUERY *>((*++(atom->getQuery()->beginChildren())).get())->getVal()==1){
+          res="Q";
+        } else if(hasComplexQuery(atom)){
+          if(hasListQuery(atom)){
+            res="L";
+          } else {
+            res="*";
+          }
+        } else {
+          res = "R";
+        }
       } else {
         std::string symb;
         atom->getProp("dummyLabel",symb);

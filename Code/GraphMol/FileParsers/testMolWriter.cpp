@@ -954,6 +954,66 @@ void testV3000WriterDetails(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub187(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 187: A not written to mol block" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "github187.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getNumBonds()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find(" A   0")!=std::string::npos);
+
+    // try the v3000 version:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("V30 1 A 0")!=std::string::npos);
+    
+    delete m;
+  }
+  
+  {
+    std::string fName = rdbase + "github187.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getNumBonds()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find(" A   0")!=std::string::npos);
+
+    // try the v3000 version:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("V30 1 A 0")!=std::string::npos);
+    
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "github187.2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getNumBonds()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find(" Q   0")!=std::string::npos);
+
+    // try the v3000 version:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("V30 1 \"NOT [C,H]\" 0")!=std::string::npos);
+    
+    delete m;
+  }
+
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1050,6 +1110,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testV3000WriterDetails();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub187();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }
