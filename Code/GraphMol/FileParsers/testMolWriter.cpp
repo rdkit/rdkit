@@ -1009,9 +1009,38 @@ void testGithub187(){
     
     delete m;
   }
-
   
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub186(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 186: chiral S not written to ctab" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "github186.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_OTHER
+                );
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_OTHER
+                );
+
+    delete m;
+  }
+  
 }
 
 int main() {
@@ -1114,6 +1143,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub187();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub186();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }
