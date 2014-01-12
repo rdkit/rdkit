@@ -434,6 +434,16 @@ namespace RDKit{
                 heavyAtom->invertChirality();
               }
             }     
+
+            // if it's a wavy bond, then we need to 
+            // mark the beginning atom with the _UnknownStereo tag.
+            // so that we know later that something was affecting its
+            // stereochem
+            if(bond->getBondDir()==Bond::UNKNOWN
+               && bond->getBeginAtomIdx()==heavyAtom->getIdx()){
+              heavyAtom->setProp("_UnknownStereo",1);
+            }
+
             mol.removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom

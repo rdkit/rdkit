@@ -3538,6 +3538,33 @@ void testGithub166(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub191()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 191: wavy bonds to Hs should affect attached double bond stereochemistry." << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github191.1.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    std::string smi=MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="C/C=C/C");
+    delete m;
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github191.2.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
+    std::string smi=MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="CC=CC");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -3605,8 +3632,9 @@ int main(int argc,char *argv[]){
   testGithub166();
   testIssue3557675();
   test3V3K();
-#endif
   test2V3K();
+#endif
+  testGithub191();
 
   return 0;
 }

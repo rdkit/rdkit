@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -665,6 +665,12 @@ namespace RDKit{
               // the pairs here are: atomrank,bonddir
               Chirality::INT_PAIR_VECT begAtomNeighbors,endAtomNeighbors;
               bool hasExplicitUnknownStereo = false;
+              if((dblBond->getBeginAtom()->hasProp("_UnknownStereo") &&
+                  dblBond->getBeginAtom()->getProp<int>("_UnknownStereo")) ||
+                 (dblBond->getEndAtom()->hasProp("_UnknownStereo") &&
+                  dblBond->getEndAtom()->getProp<int>("_UnknownStereo")) ){
+                hasExplicitUnknownStereo=true;
+              }
               Chirality::findAtomNeighborDirHelper(mol,begAtom,dblBond,
                                                    ranks,begAtomNeighbors,
                                                    hasExplicitUnknownStereo);

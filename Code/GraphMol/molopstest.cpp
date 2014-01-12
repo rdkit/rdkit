@@ -4413,7 +4413,6 @@ void testMolAssignment()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
