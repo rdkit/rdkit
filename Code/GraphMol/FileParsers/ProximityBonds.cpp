@@ -180,9 +180,9 @@ void ConnectTheDots(RWMol *mol)
 }
 
 
-static bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q)
+bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q)
 {
-  return p->getSerialNumber() == q->getSerialNumber() &&
+  return p->getResidueNumber() == q->getResidueNumber() &&
          p->getResidueName() == q->getResidueName() &&
          p->getChainId() == q->getChainId() &&
          p->getInsertionCode() == q->getInsertionCode();
