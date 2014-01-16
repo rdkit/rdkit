@@ -3310,6 +3310,22 @@ void testGithub194(){
 }
 
 
+void testGithub196(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 196: left justitified bond topology" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName;
+    fName = rdbase+"github196.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==19);
+    TEST_ASSERT(m->getNumBonds()==20);
+
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3378,6 +3394,7 @@ int main(int argc,char *argv[]){
   testPDBFile();
 #endif
   testGithub194();
+  testGithub196();
 
   return 0;
 }
