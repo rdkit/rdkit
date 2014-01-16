@@ -2526,6 +2526,20 @@ void testGitHubIssue151(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue195(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 195: GenMACCSKeys() raises an exception with an empty molecule" << std::endl;
+
+  {
+    ROMol *m1=new ROMol();
+    ExplicitBitVect *fp1=MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT(fp1->getNumOnBits()==0);
+
+    delete m1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2568,5 +2582,6 @@ int main(int argc,char *argv[]){
   testGitHubIssue25();
 #endif
   testGitHubIssue151();
+  testGitHubIssue195();
   return 0;
 }
