@@ -95,7 +95,8 @@ def ConvertRows(rows,globalProps,defaultVal,skipSmiles):
 def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
            redraw=False,errorsTo=None,keepHs=False,defaultVal='N/A',skipProps=False,
            regName='molecules',skipSmiles=False,maxRowsCached=-1,
-           uniqNames=False,addComputedProps=False,lazySupplier=False):
+           uniqNames=False,addComputedProps=False,lazySupplier=False,
+           startAnew=True):
   if not lazySupplier:
     nMols = len(suppl)
   else:
@@ -150,11 +151,23 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   typs.append('molpkl %s'%(DbModule.binaryTypeName))
   conn = DbConnect(dbName)
   curs = conn.GetCursor()
-  try:
-    curs.execute('drop table %s'%regName)
-  except:
-    pass
-  curs.execute('create table %s (%s)'%(regName,','.join(typs)))
+  if startAnew:
+    try:
+      curs.execute('drop table %s'%regName)
+    except:
+      pass
+    curs.execute('create table %s (%s)'%(regName,','.join(typs)))
+  else:
+    curs.execute('select * from %s limit 1'%(regName,))
+    ocolns = set([x[0] for x in curs.description])
+    ncolns = set([x.split()[0] for x in typs])
+    if ncolns != ocolns:
+      raise ValueError('Column names do not match: %s != %s'%(ocolns,ncolns))
+    curs.execute('select max(guid) from %s'%(regName,))
+    offset = curs.fetchone()[0]
+    for row in rows:
+      row[0] += offset
+    
   qs = ','.join([DbModule.placeHolder for x in typs])
 
 
