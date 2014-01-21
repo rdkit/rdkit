@@ -488,7 +488,12 @@ class MolDrawing(object):
           # This should be done in a better way in the future:
           # 'baseOffset' should be determined by getting the size of 'isotope' and the size of 'base', or the size of 'mapNum' and the size of 'base'
           # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact position of the base
-          if deg>1 or nbrSum[0]<1:
+          if deg==0:
+            if atom.GetAtomicNum() in (8,16,34,52,9,17,35,53,85):
+              symbol = '%s%s%s%s%s%s'%(hs,isotope,base,chg,rad,mapNum)
+            else:
+              symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
+          elif deg>1 or nbrSum[0]<1:
             symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
             baseOffset = 0.5 - (isotopeLength + len(base) / 2.) / symbolLength
           else:
