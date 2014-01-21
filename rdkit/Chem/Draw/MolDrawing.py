@@ -16,6 +16,8 @@ import sys
 import copy
 import pprint
 
+periodicTable=Chem.GetPeriodicTable()
+
 class Font(object):
   face='sans'
   size='12'
@@ -489,7 +491,7 @@ class MolDrawing(object):
           # 'baseOffset' should be determined by getting the size of 'isotope' and the size of 'base', or the size of 'mapNum' and the size of 'base'
           # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact position of the base
           if deg==0:
-            if atom.GetAtomicNum() in (8,16,34,52,9,17,35,53,85):
+            if periodicTable.GetElementSymbol(atom.GetAtomicNum()) in ('O','S','Se','Te','F','Cl','Br','I','At'):
               symbol = '%s%s%s%s%s%s'%(hs,isotope,base,chg,rad,mapNum)
             else:
               symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
