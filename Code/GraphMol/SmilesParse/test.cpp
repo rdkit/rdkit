@@ -1609,21 +1609,32 @@ void testIssue266(){
 }
 
 void testRootedAt(){
-  RWMol *mol;
-  std::string smi;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing rootedAtAtom functionality" << std::endl;
 
-  smi ="CN(C)C";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  smi = MolToSmiles(*mol,false,false,-1);
-  TEST_ASSERT(smi=="CN(C)C");
-  smi = MolToSmiles(*mol,false,false,1);
-  TEST_ASSERT(smi=="N(C)(C)C");
-  smi = MolToSmiles(*mol,false,false,2);
-  TEST_ASSERT(smi=="CN(C)C");
+  {
+    RWMol *mol;
+    std::string smi;
+    smi ="CN(C)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol,false,false,-1);
+    TEST_ASSERT(smi=="CN(C)C");
+    smi = MolToSmiles(*mol,false,false,1);
+    TEST_ASSERT(smi=="N(C)(C)C");
+    smi = MolToSmiles(*mol,false,false,2);
+    TEST_ASSERT(smi=="CN(C)C");
+    delete mol;
+  }
+  {
+    // This was github issue #182:
+    RWMol mol;
+    std::string smi;
+    smi = MolToSmiles(mol);
+    TEST_ASSERT(smi=="");
+    smi = MolToSmiles(mol,false,false,0);
+    TEST_ASSERT(smi=="");
+  }
 
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;

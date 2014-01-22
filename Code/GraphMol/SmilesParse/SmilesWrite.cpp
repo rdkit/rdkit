@@ -376,9 +376,9 @@ namespace RDKit{
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
                           bool allBondsExplicit){
+    if(!mol.getNumAtoms()) return "";
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
-    if(!mol.getNumAtoms()) return "";
 
     ROMol tmol(mol,true);
     if(doIsomericSmiles){
