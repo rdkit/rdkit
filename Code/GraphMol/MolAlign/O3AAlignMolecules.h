@@ -24,7 +24,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-//#define USE_O3A_CONSTRUCTOR
+#define USE_O3A_CONSTRUCTOR
 
 namespace RDKit {
   namespace MolAlign {
