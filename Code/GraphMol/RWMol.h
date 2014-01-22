@@ -210,9 +210,12 @@ namespace RDKit{
       d_bondBookmarks.clear();
       d_graph.clear();
       d_confs.clear();
-      if(dp_props) dp_props->reset();
+      if(dp_props){
+        dp_props->reset();
+        STR_VECT computed;
+        dp_props->setVal(detail::computedPropName, computed);
+      }
       if(dp_ringInfo) dp_ringInfo->reset();
-      
     };
 
 

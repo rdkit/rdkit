@@ -189,7 +189,7 @@ void testMolProps()
 
 void testClearMol()
 {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing RWMol.clear()>" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing RWMol.clear()" << std::endl;
   RWMol m2;
 
   m2.addAtom(new Atom(6));
@@ -203,13 +203,17 @@ void testClearMol()
   m2.getProp("prop1",tmpI);
   TEST_ASSERT(tmpI==2);
 
+  TEST_ASSERT(m2.hasProp(detail::computedPropName));
+
   m2.clear();
   TEST_ASSERT(!m2.hasProp("prop1"));
   TEST_ASSERT(m2.getNumAtoms()==0);
   TEST_ASSERT(m2.getNumBonds()==0);
   TEST_ASSERT(m2.getAtomBookmarks()->empty());
   TEST_ASSERT(m2.getBondBookmarks()->empty());
-  TEST_ASSERT(m2.getPropList().empty());
+
+  TEST_ASSERT(m2.hasProp(detail::computedPropName)); // <- github issue 176
+  TEST_ASSERT(m2.getPropList().size()==1);
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1034,8 +1038,6 @@ void testAtomResidues()
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-
-
 
 // -------------------------------------------------------------------
 int main()
