@@ -14,6 +14,7 @@
 #include <GraphMol/MonomerInfo.h> 
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
+#include "ProximityBonds.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -3240,6 +3241,40 @@ void testPDBFile(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+namespace RDKit {
+  bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q);
+}
+void testGithub194(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 194: bad bond types from pdb" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"1CRN.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    // the root cause: problems in SamePDBResidue:
+    TEST_ASSERT(SamePDBResidue(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo()),
+                               static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())));
+    TEST_ASSERT(SamePDBResidue(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo()),
+                               static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2)->getMonomerInfo())));
+    TEST_ASSERT(!SamePDBResidue(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo()),
+                                static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())));
+                
+    // the symptom, bond orders:
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2)->getMonomerInfo())->getName()==" C  ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(3)->getMonomerInfo())->getName()==" O  ");
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondType()==Bond::DOUBLE);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3306,6 +3341,7 @@ int main(int argc,char *argv[]){
   testMolFileWithHs();
   testMolFileWithRxn();
   testPDBFile();
+  testGithub194();
 
   return 0;
 }
