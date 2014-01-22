@@ -480,6 +480,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
                 as suggested by the MDL spec.\n\
+    - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
+                 more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -487,7 +489,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n";  
   python::def("MolToMolBlock",RDKit::MolToMolBlock,
 	      (python::arg("mol"),python::arg("includeStereo")=false,
-	       python::arg("confId")=-1,python::arg("kekulize")=true),
+	       python::arg("confId")=-1,python::arg("kekulize")=true,
+               python::arg("forceV3000")=false),
 	      docString.c_str());
 
   docString="Writes a Mol file for a molecule\n\
@@ -500,6 +503,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
                 as suggested by the MDL spec.\n\
+    - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
+                 more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -508,7 +513,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::def("MolToMolFile",RDKit::MolToMolFile,
 	      (python::arg("mol"),python::arg("filename"),
                python::arg("includeStereo")=false,
-	       python::arg("confId")=-1,python::arg("kekulize")=true),
+	       python::arg("confId")=-1,python::arg("kekulize")=true,
+               python::arg("forceV3000")=false),
 	      docString.c_str());
 
   docString="Construct a molecule from a SMILES string.\n\n\

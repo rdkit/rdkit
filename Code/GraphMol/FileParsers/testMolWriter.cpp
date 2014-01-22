@@ -768,6 +768,281 @@ void testMolFileWithRxn(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testSDWriterOptions() {
+  BOOST_LOG(rdInfoLog) << "testing SDWriter options" << std::endl;
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V3000")==std::string::npos);
+  }
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setForceV3000(true);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")==std::string::npos);
+    TEST_ASSERT(txt.find("V3000")!=std::string::npos);
+  }
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    writer.setForceV3000(true);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V3000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V2000")<txt.find("V3000"));
+  }
+  {
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setForceV3000(true);
+    writer.write(*mol);
+    writer.setForceV3000(false);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("V2000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V3000")!=std::string::npos);
+    TEST_ASSERT(txt.find("V2000")>txt.find("V3000"));
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")==std::string::npos);
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setKekulize(false);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 1, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")==std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")!=std::string::npos);
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.write(*mol);
+    writer.setKekulize(false);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  2")<txt.find("  1  2  4"));
+  }
+  {
+    // kekulization
+    std::stringstream ss;
+    SDWriter writer(&ss,false);
+    RWMol *mol=SmilesToMol("c1ccccc1");
+    writer.setKekulize(false);
+    writer.write(*mol);
+    writer.setKekulize(true);
+    writer.write(*mol);
+    delete mol;
+    writer.flush();
+    CHECK_INVARIANT(writer.numMols() == 2, "");
+
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("  1  2  2")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  4")!=std::string::npos);
+    TEST_ASSERT(txt.find("  1  2  2")>txt.find("  1  2  4"));
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testV3000WriterDetails(){
+  BOOST_LOG(rdInfoLog) << "testing details of v3000 writing" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName = rdbase + "chebi_57262.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("MASS=1")!=std::string::npos);
+    TEST_ASSERT(mb.find("MASS=2")!=std::string::npos);
+
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+
+    // repeat that one more time to make sure we're really solid:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("MASS=1")!=std::string::npos);
+    TEST_ASSERT(mb.find("MASS=2")!=std::string::npos);
+
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+    
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub187(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 187: A not written to mol block" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "github187.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getNumBonds()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find(" A   0")!=std::string::npos);
+
+    // try the v3000 version:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("V30 1 A 0")!=std::string::npos);
+    
+    delete m;
+  }
+  
+  {
+    std::string fName = rdbase + "github187.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getNumBonds()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find(" A   0")!=std::string::npos);
+
+    // try the v3000 version:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("V30 1 A 0")!=std::string::npos);
+    
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "github187.2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getNumBonds()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find(" Q   0")!=std::string::npos);
+
+    // try the v3000 version:
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    TEST_ASSERT(mb.find("V30 1 \"NOT [C,H]\" 0")!=std::string::npos);
+    
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub186(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 186: chiral S not written to ctab" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "github186.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_OTHER
+                );
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                m->getAtomWithIdx(6)->getChiralTag()!=Atom::CHI_OTHER
+                );
+
+    delete m;
+  }
+  
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -856,6 +1131,22 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileWithRxn();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testSDWriterOptions();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testV3000WriterDetails();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub187();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub186();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }

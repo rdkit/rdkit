@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -68,6 +68,8 @@ namespace RDKit{
     }
 
     std::string getV3000Line(std::istream *inStream,unsigned int &line){
+      // FIX: technically V3K blocks are case-insensitive. We should really be
+      // up-casing everything here.
       PRECONDITION(inStream,"bad stream");
       std::string res,tempStr;
 
@@ -642,6 +644,53 @@ namespace RDKit{
       mol->replaceAtom(idx,a); 
     };
   
+    void ParseV3000RGroups(RWMol *mol,Atom *&atom,const std::string &text,unsigned int line){
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(atom,"bad atom");
+      if(text[0]!='('||text[text.size()-1]!=')'){
+        std::ostringstream errout;
+        errout << "Bad RGROUPS specification " << text << " on line "<<line<<". Missing parens.";
+        throw FileParseException(errout.str()) ;
+      }
+      std::vector<std::string> splitToken;
+      std::string resid=text.substr(1,text.size()-2);
+      boost::split(splitToken,resid,boost::is_any_of(" "));
+      if(splitToken.size()<1){
+        std::ostringstream errout;
+        errout << "Bad RGROUPS specification " << text << " on line "<<line<<". Missing values.";
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int nRs;
+      try {
+        nRs = FileParserUtils::stripSpacesAndCast<unsigned int>(splitToken[0]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << splitToken[0] << " to int on line"<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      if(splitToken.size()<nRs+1){
+        std::ostringstream errout;
+        errout << "Bad RGROUPS specification " << text << " on line "<<line<<". Not enough values.";
+        throw FileParseException(errout.str()) ;
+      }
+      for(unsigned int i=0;i<nRs;++i){
+        unsigned int rLabel;
+        try {
+          rLabel = FileParserUtils::stripSpacesAndCast<unsigned int>(splitToken[i+1]);
+        } catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << splitToken[i+1] << " to int on line"<<line;
+          throw FileParseException(errout.str()) ;
+        }
+        atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
+        atom->setProp("_MolFileRLabel",rLabel);
+        std::string dLabel="R"+boost::lexical_cast<std::string>(rLabel);
+        atom->setProp("dummyLabel",dLabel);
+        atom->setIsotope(rLabel);
+        atom->setQuery(makeAtomNullQuery());
+      }
+    }
+    
     void ParseRGroupLabels(RWMol *mol,const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  RGP"),"bad R group label line");
@@ -1227,7 +1276,6 @@ namespace RDKit{
 
     Atom *ParseV3000AtomSymbol(std::string token,unsigned int &line){
       bool negate=false;
-
       boost::trim(token);
       std::string cpy=token;
       boost::to_upper(cpy);
@@ -1269,7 +1317,10 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         // it's a normal CTAB atom symbol:
-        if(token=="R#" || token=="A" || token=="Q" || token=="*"){
+        // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to support them anyway
+        if(token=="R" || 
+           (token[0]=='R' && token>="R0" && token<="R99") ||
+           token=="R#" || token=="A" || token=="Q" || token=="*"){
           if(token=="A"||token=="Q"||token=="*"){
             res=new QueryAtom(0);
             if(token=="*"){
@@ -1289,7 +1340,19 @@ namespace RDKit{
             // queries have no implicit Hs:
             res->setNoImplicit(true);
           } else {
+            res = new Atom(1);
             res->setAtomicNum(0);
+          }
+          if(token[0]=='R' && token>="R0" && token<="R99"){
+            std::string rlabel="";
+            rlabel = token.substr(1,token.length()-1);
+            int rnumber;
+            try {
+              rnumber = boost::lexical_cast<int>(rlabel);
+            } catch (boost::bad_lexical_cast &) {
+              rnumber=-1;
+            }
+            if(rnumber>=0) res->setIsotope(rnumber);
           }
         } else if( token=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
           res = new Atom(1);
@@ -1302,6 +1365,7 @@ namespace RDKit{
           res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
         }
       }
+      
       
       POSTCONDITION(res,"no atom built");
       return res;
@@ -1356,15 +1420,29 @@ namespace RDKit{
             throw FileParseException(errout.str()) ;
           }
         } else if(prop=="MASS"){
-          double v=FileParserUtils::toDouble(val);
-          if(v<=0){
+          // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
+          // Online examples seem to have integer (isotope) values and Marvin won't even read something that has a float.
+          // We'll go with the int
+          int v;
+          double dv;
+          try{
+            v=FileParserUtils::toInt(val);
+          } catch (boost::bad_lexical_cast &) {
+            try{
+              dv=FileParserUtils::toDouble(val);
+              v = static_cast<int>(floor(dv));
+            } catch (boost::bad_lexical_cast &){
+              v=-1;
+            }
+          }
+          if(v<0){
             errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 <<" on line "<<line << std::endl;
             throw FileParseException(errout.str()) ;
           } else {
 	    if(!atom->hasQuery()) {
-	      atom->setMass(v);
+	      atom->setIsotope(v);
 	    } else {
-	      atom->expandQuery(makeAtomMassQuery(static_cast<int>(v)));
+	      atom->expandQuery(makeAtomIsotopeQuery(v));
 	    }
 	  }
         } else if(prop=="CFG"){
@@ -1410,10 +1488,65 @@ namespace RDKit{
 	    int totval=FileParserUtils::toInt(val);
 	    atom->setProp("molTotValence",totval);
 	  }
+        } else if(prop=="RGROUPS"){
+          ParseV3000RGroups(mol,atom,val,line);
+          // FIX
         }
         ++token;
       }
     }
+
+    void tokenizeV3000Line(std::string line,std::vector<std::string> &tokens){
+      bool inQuotes=false,inParens=false;
+      unsigned int start=0;
+      unsigned int pos=0;
+      while(pos<line.size()){
+        if(line[pos]==' ' || line[pos]=='\t'){
+          if(start == pos){
+            ++start;
+            ++pos;
+          } else if( !inQuotes && !inParens){
+            tokens.push_back(line.substr(start,pos-start));
+            ++pos;
+            start=pos;
+          } else {
+            ++pos;
+          }
+        } else if(line[pos]==')' && inParens){
+          tokens.push_back(line.substr(start,pos-start+1));
+          inParens=false;
+          ++pos;
+          start=pos;
+        } else if(line[pos]=='(' && !inQuotes){
+          inParens=true;
+          ++pos;
+        } else if(line[pos]=='"' && !inParens){
+          if(pos+1<line.size() && line[pos+1]=='"'){
+            pos+=2;
+          } else if(inQuotes){
+            // don't push on the quotes themselves
+            tokens.push_back(line.substr(start+1,pos-start-1));
+            ++pos;
+            start=pos;
+            inQuotes=false;
+          } else {
+            ++pos;
+            inQuotes=true;
+          }
+        } else {
+          ++pos;
+        }
+      }
+      if(start!=pos){
+        tokens.push_back(line.substr(start,line.size()-start));
+      }
+#if 0
+      std::cerr<<"tokens: ";
+      std::copy(tokens.begin(),tokens.end(),std::ostream_iterator<std::string>(std::cerr,"|"));
+      std::cerr<<std::endl;
+#endif
+    }
+
     void ParseV3000AtomBlock(std::istream *inStream,unsigned int &line,
                              unsigned int nAtoms,RWMol *mol, Conformer *conf){
       PRECONDITION(inStream,"bad stream");
@@ -1433,9 +1566,11 @@ namespace RDKit{
 
         tempStr = getV3000Line(inStream,line);
         std::string trimmed=boost::trim_copy(tempStr);
-        boost::escaped_list_separator<char> els(""," \t","'\"");
-        boost::tokenizer<boost::escaped_list_separator<char> > tokens(trimmed,els);
-        boost::tokenizer<boost::escaped_list_separator<char> >::iterator token;
+
+        std::vector<std::string> tokens;
+        std::vector<std::string>::iterator token;
+
+        tokenizeV3000Line(trimmed,tokens);
         token=tokens.begin();
 
         if(token==tokens.end()) {
