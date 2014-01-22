@@ -1081,22 +1081,24 @@ namespace RDKit{
       if( text.size() >= 18 && text.substr(15,3)!="  0"){
         try {
           int topology = FileParserUtils::toInt(text.substr(15,3));
-          QueryBond *qBond=new QueryBond(*res);
-          BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
-          switch(topology){
-          case 1:
-            break;
-          case 2:
-            q->setNegation(true);
-            break;
-          default:
-            std::ostringstream errout;
-            errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
-            throw FileParseException(errout.str()) ;
+          if(topology){
+            QueryBond *qBond=new QueryBond(*res);
+            BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
+            switch(topology){
+            case 1:
+              break;
+            case 2:
+              q->setNegation(true);
+              break;
+            default:
+              std::ostringstream errout;
+              errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
+              throw FileParseException(errout.str()) ;
+            }
+            qBond->expandQuery(q);          
+            delete res;
+            res = qBond;
           }
-          qBond->expandQuery(q);          
-          delete res;
-          res = qBond;
         } catch (boost::bad_lexical_cast) {
           ;
         }
