@@ -24,8 +24,21 @@
 #include <boost/multi_array.hpp>
 #include <boost/dynamic_bitset.hpp>
 
+//#define USE_O3A_CONSTRUCTOR
+
 namespace RDKit {
   namespace MolAlign {
+    typedef struct O3AFuncData {
+      const ROMol *prbMol;
+      const ROMol *refMol;
+      int prbCid;
+      int refCid;
+      void *prbProp;
+      void *refProp;
+      int coeff;
+      int weight;
+      bool useMMFFSim;
+    } O3AFuncData;
     inline const bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     };
@@ -39,11 +52,13 @@ namespace RDKit {
     const double O3_SDM_THRESHOLD_START = 0.7;
     const double O3_SDM_THRESHOLD_STEP = 0.3;
     const double O3_CHARGE_WEIGHT = 10.0;
+    const double O3_CRIPPEN_WEIGHT = 10.0;
     const double O3_RMSD_THRESHOLD = 1.0e-04;
     const double O3_SCORE_THRESHOLD = 0.01;
     const double O3_SCORING_FUNCTION_ALPHA = 5.0;
     const double O3_SCORING_FUNCTION_BETA = 0.5;
     const double O3_CHARGE_COEFF = 5.0;
+    const double O3_CRIPPEN_COEFF = 1.0;
     const int O3_MAX_WEIGHT_COEFF = 5;
     enum {
       O3_USE_MMFF_WEIGHTS = (1<<0)
@@ -84,11 +99,11 @@ namespace RDKit {
         PRECONDITION(i < d_rowSol.size(), "Invalid index on LAP.rowSol");
         return d_rowSol[i];
       }
-      void computeMinCostPath(unsigned int dim);
+      void computeMinCostPath(const int dim);
       void computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
-        MMFF::MMFFMolProperties *prbMP, const ROMol &refMol, const MolHistogram &refHist,
-        MMFF::MMFFMolProperties *refMP, const int coeff = 0, const bool useMMFFSim = false,
-        const int n_bins = O3_MAX_H_BINS);
+        const ROMol &refMol, const MolHistogram &refHist, int (*costFunc)
+        (const unsigned int, const unsigned int, double, void *),
+        void *data, const unsigned int n_bins = O3_MAX_H_BINS);
     private:
       std::vector<int> d_rowSol;
       std::vector<int> d_colSol;
@@ -105,20 +120,17 @@ namespace RDKit {
     public:
       // constructor
       SDM(const ROMol *prbMol = NULL, const ROMol *refMol = NULL,
-        MMFF::MMFFMolProperties *prbMP = NULL, MMFF::MMFFMolProperties *refMP = NULL,
-        const int prbCid = -1, const int refCid = -1, const bool reflect = false) : 
+        void *prbProp = NULL, void *refProp = NULL,
+        const int prbCid = -1, const int refCid = -1,
+        const bool reflect = false) : 
         d_prbMol(prbMol),
         d_refMol(refMol),
-        d_prbMMFFMolProperties(prbMP),
-        d_refMMFFMolProperties(refMP),
         d_prbCid(prbCid),
         d_refCid(refCid) {};
       // copy constructor
       SDM(const SDM &other) :
         d_prbMol(other.d_prbMol),
         d_refMol(other.d_refMol),
-        d_prbMMFFMolProperties(other.d_prbMMFFMolProperties),
-        d_refMMFFMolProperties(other.d_refMMFFMolProperties),
         d_prbCid(other.d_prbCid),
         d_refCid(other.d_refCid),
         d_SDMPtrVect(other.d_SDMPtrVect.size()) {
@@ -131,8 +143,6 @@ namespace RDKit {
       SDM& operator=(const SDM &other) {
         d_prbMol = other.d_prbMol;
         d_refMol = other.d_refMol;
-        d_prbMMFFMolProperties = other.d_prbMMFFMolProperties;
-        d_refMMFFMolProperties = other.d_refMMFFMolProperties;
         d_prbCid = other.d_prbCid;
         d_refCid = other.d_refCid;
         d_SDMPtrVect.resize(other.d_SDMPtrVect.size());
@@ -149,9 +159,11 @@ namespace RDKit {
                         const boost::dynamic_bitset<> &refHvyAtoms,
                         const boost::dynamic_bitset<> &prbHvyAtoms);
       void fillFromLAP(LAP &lap);
-      double scoreAlignment();
+      double scoreAlignment(double (*scoringFunc)
+        (const unsigned int, const unsigned int, void *), void *data);
       void prepareMatchWeightsVect(RDKit::MatchVectType &matchVect,
-        RDNumeric::DoubleVector &weights, int coeff);
+        RDNumeric::DoubleVector &weights, double (*weightFunc)
+        (const unsigned int, const unsigned int, void *), void *data);
       unsigned int size() {
         return d_SDMPtrVect.size();
       }
@@ -164,8 +176,6 @@ namespace RDKit {
       } SDMElement;
       const ROMol *d_prbMol;
       const ROMol *d_refMol;
-      MMFF::MMFFMolProperties *d_prbMMFFMolProperties;
-      MMFF::MMFFMolProperties *d_refMMFFMolProperties;
       int d_prbCid;
       int d_refCid;
       std::vector<boost::shared_ptr<SDMElement> > d_SDMPtrVect;
@@ -184,12 +194,22 @@ namespace RDKit {
     
     class O3A {
     public:
+      #ifdef USE_O3A_CONSTRUCTOR
       O3A(ROMol &prbMol, const ROMol &refMol,
-          MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+          void *prbProp, void *refProp, std::string method = "MMFF94",
           const int prbCid = -1, const int refCid = -1,
           const bool reflect = false, const unsigned int maxIters = 50,
           const unsigned int accuracy = 0, LAP *extLAP = NULL,
-          double *prbDmat = NULL,double *refDmat = NULL);
+          MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
+      #endif
+      O3A(int (*costFunc)(const unsigned int, const unsigned int, double, void *),
+          double (*weightFunc)(const unsigned int, const unsigned int, void *),
+          double (*scoringFunc)(const unsigned int, const unsigned int, void *),
+          void *data, ROMol &prbMol, const ROMol &refMol, void *prbProp,
+          void *refProp, const int prbCid = -1, const int refCid = -1,
+          const bool reflect = false, const unsigned int maxIters = 50,
+          const unsigned int accuracy = 0, LAP *extLAP = NULL,
+          MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
       ~O3A() {
         if (d_o3aMatchVect) {
           delete d_o3aMatchVect;
@@ -199,7 +219,7 @@ namespace RDKit {
         }
       };
       double align();
-      std::pair<double, RDGeom::Transform3D *> trans();
+      double trans(RDGeom::Transform3D &trans);
       double score() {
         return d_o3aScore;
       };
@@ -212,8 +232,6 @@ namespace RDKit {
     private:
       ROMol *d_prbMol;
       const ROMol *d_refMol;
-      MMFF::MMFFMolProperties *d_prbMMFFMolProperties;
-      MMFF::MMFFMolProperties *d_refMMFFMolProperties;
       int d_prbCid;
       int d_refCid;
       bool d_reflect;
@@ -225,6 +243,24 @@ namespace RDKit {
     
     void randomTransform(ROMol &mol, const int cid = -1, const int seed = -1);
     const RDGeom::POINT3D_VECT *reflect(const Conformer &conf);
+    int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx, double hSum, void *data);
+    double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
+    double o3aMMFFScoringFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
+    int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx, double hSum, void *data);
+    double o3aCrippenWeightFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
+    double o3aCrippenScoringFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
+    #ifndef USE_O3A_CONSTRUCTOR
+    O3A *calcMMFFO3A(ROMol &prbMol, const ROMol &refMol,
+      MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+      const int prbCid = -1, const int refCid = -1, const bool reflect = false,
+      const unsigned int maxIters = 50, const unsigned int accuracy = 0,
+      LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
+    O3A *calcCrippenO3A(ROMol &prbMol, const ROMol &refMol,
+      std::vector<double> &prbLogpContribs, std::vector<double> &refLogpContribs,
+      const int prbCid = -1, const int refCid = -1, const bool reflect = false,
+      const unsigned int maxIters = 50, const unsigned int accuracy = 0,
+      LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
+    #endif
   }
 }
 #endif
