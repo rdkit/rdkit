@@ -19,6 +19,8 @@
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/math/special_functions/round.hpp>
 
 #define square(x)      ((x) * (x))
 
@@ -140,12 +142,12 @@ namespace RDKit {
         }
         // initialize h row(y) to all zeros
         for (unsigned int j = 0; j < O3_MAX_H_BINS; ++j) {
-          this->d_h[y][j] = 0;
+          d_h[y][j] = 0;
         }
         for (unsigned int j = 0; j < nAtoms; ++j) {
-          unsigned int dist = static_cast<unsigned int>(floor(dmat[i*nAtoms+j]));
+          unsigned int dist = static_cast<unsigned int>(floor(dmat[i * nAtoms + j]));
           if (dist < O3_MAX_H_BINS) {
-            ++(this->d_h[y][dist]);
+            ++d_h[y][dist];
           }
         }
         ++y;
@@ -153,17 +155,50 @@ namespace RDKit {
     }
 
 
-    void LAP::computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
-      MMFF::MMFFMolProperties *prbMP, const ROMol &refMol, const MolHistogram &refHist,
-      MMFF::MMFFMolProperties *refMP, const int coeff, const bool useMMFFSim,
-      const int n_bins)
+    int o3aMMFFCostFunc(const unsigned int prbIdx,
+      const unsigned int refIdx, double hSum, void *data)
     {
-      boost::uint8_t mmffSim;
-      int i;
-      int j;
-      int k;
-      int x;
-      int y;
+      boost::uint8_t mmffSim = mmffSimMatrix
+        [(static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFAtomType(refIdx) - 1]
+        [(static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFAtomType(prbIdx) - 1];
+      
+      return boost::math::iround
+        ((static_cast<double>(((O3AFuncData *)data)->coeff) * O3_CHARGE_WEIGHT
+        * fabs((static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFPartialCharge(refIdx)
+        - (static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFPartialCharge(prbIdx))
+        + (((O3AFuncData *)data)->useMMFFSim
+        ? static_cast<double>(O3_MAX_WEIGHT_COEFF - ((O3AFuncData *)data)->coeff)
+        * static_cast<double>(mmffSim) : 0.0) + hSum) * 1.0e03);
+    }
+
+
+    int o3aCrippenCostFunc(const unsigned int prbIdx,
+      const unsigned int refIdx, double hSum, void *data)
+    {
+      return boost::math::iround
+        ((static_cast<double>((static_cast<O3AFuncData *>(data))->coeff)
+        * O3_CHARGE_WEIGHT * fabs((*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->refProp)))[refIdx]
+        - (*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx])
+        + hSum) * 1.0e03);
+    }
+
+
+    void LAP::computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
+        const ROMol &refMol, const MolHistogram &refHist, int (*costFunc)
+        (const unsigned int, const unsigned int, double, void *),
+        void *data, const unsigned int n_bins)
+    {
+      unsigned int i;
+      unsigned int j;
+      unsigned int k;
+      unsigned int x;
+      unsigned int y;
       unsigned int largestNHeavyAtoms =
         std::max(refMol.getNumHeavyAtoms(), prbMol.getNumHeavyAtoms());
       double hSum = 0.0;
@@ -184,16 +219,12 @@ namespace RDKit {
             continue;
           }
           for (k = 0, hSum = 0.0; k < n_bins; ++k) {
-            int rhyk=refHist.get(y,k);
-            int phxk=prbHist.get(x,k);
-            if(!rhyk && !phxk) break;
-            hSum += (double)square(rhyk-phxk)/ (double)(rhyk+phxk);
+            int rhyk = refHist.get(y,k);
+            int phxk = prbHist.get(x,k);
+            if (!rhyk && !phxk) continue;
+            hSum += (double)square(rhyk - phxk) / (double)(rhyk + phxk);
           }
-          mmffSim = mmffSimMatrix[refMP->getMMFFAtomType(i) - 1][prbMP->getMMFFAtomType(j) - 1];
-          d_cost[y][x] = (int)round(((double)coeff * O3_CHARGE_WEIGHT
-            * fabs(refMP->getMMFFPartialCharge(i) - prbMP->getMMFFPartialCharge(j))
-            + (useMMFFSim ? (double)(O3_MAX_WEIGHT_COEFF - coeff) * (double)mmffSim : 0.0)
-            + hSum) * 1.0e03);
+          d_cost[y][x] = (*costFunc)(j, i, hSum, data);
           ++x;
         }
         ++y;
@@ -207,7 +238,7 @@ namespace RDKit {
     // and Sparse Linear Assignment Problems
     // Computing 1987, 38, 325-340
     //----------------------------------------------------
-    void LAP::computeMinCostPath(const unsigned int dim)
+    void LAP::computeMinCostPath(const int dim)
     {
       // input:
       // dim        - problem size
@@ -245,7 +276,7 @@ namespace RDKit {
       int v2;
 
       // init how many times a row will be assigned in the column reduction
-      for (unsigned n = 0; n < dim; ++n) {
+      for (int n = 0; n < dim; ++n) {
         d_matches[n] = 0;
       }
       // COLUMN REDUCTION
@@ -538,8 +569,8 @@ namespace RDKit {
     void SDM::fillFromDist(double threshold,const boost::dynamic_bitset<> &refHvyAtoms,
                            const boost::dynamic_bitset<> &prbHvyAtoms)
     {
-      int n = 0;
-      int pairs = 0;
+      unsigned int n = 0;
+      unsigned int pairs = 0;
       const RDGeom::POINT3D_VECT &refPos =
         d_refMol->getConformer(d_refCid).getPositions();
       const RDGeom::POINT3D_VECT &prbPos =
@@ -552,13 +583,13 @@ namespace RDKit {
       boost::dynamic_bitset<> refUsed(largestNAtoms);
       boost::dynamic_bitset<> prbUsed(largestNAtoms);
       // loop over ref atoms
-      unsigned int nRefAtoms = d_refMol->getNumAtoms();
-      unsigned int nPrbAtoms = d_prbMol->getNumAtoms();
-      for(unsigned int i=0;i<nRefAtoms;++i){
-        if(!refHvyAtoms[i]) continue;
+      unsigned int refNAtoms = d_refMol->getNumAtoms();
+      unsigned int prbNAtoms = d_prbMol->getNumAtoms();
+      for (unsigned int i = 0; i < refNAtoms; ++i) {
+        if (!refHvyAtoms[i]) continue;
         // loop over prb atoms
-        for(unsigned int j=0;j<nPrbAtoms;++j){
-          if(!prbHvyAtoms[j]) continue;
+        for (unsigned int j = 0; j < prbNAtoms; ++j) {
+          if (!prbHvyAtoms[j]) continue;
           double sqDist = (refPos[i] - prbPos[j]).lengthSq();
           // if the distance between these two atoms is lower
           // than threshold, then include this pair in the SDM matrix
@@ -587,23 +618,51 @@ namespace RDKit {
     }
     
 
+    double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data)
+    {
+      boost::uint8_t mmffSim = mmffSimMatrix
+        [(static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFAtomType(refIdx) - 1]
+        [(static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFAtomType(prbIdx) - 1];
+      
+      return static_cast<double>(O3_MAX_WEIGHT_COEFF
+        - (static_cast<O3AFuncData *>(data))->weight) * ((1.0 + O3_CHARGE_COEFF
+        * fabs((static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFPartialCharge(refIdx)
+        + (static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFPartialCharge(prbIdx)))
+        / (1.0 + fabs((static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFPartialCharge(refIdx)
+        - (static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFPartialCharge(prbIdx))))
+        + (double)((static_cast<O3AFuncData *>(data))->weight) / static_cast<double>(mmffSim);
+    }
+
+
+    double o3aCrippenWeightFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data)
+    {
+      return (0.01 + fabs((*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->refProp)))[refIdx]
+        + (*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx])
+        / (1.0 + fabs((*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->refProp)))[refIdx]
+        - (*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx])));
+    }
+
+
     void SDM::prepareMatchWeightsVect(RDKit::MatchVectType &matchVect,
-      RDNumeric::DoubleVector &weights, int coeff) {
+      RDNumeric::DoubleVector &weights, double (*weightFunc)
+      (const unsigned int, const unsigned int, void *), void *data) {
       PRECONDITION(matchVect.size() == weights.size(), "matchVect/weights size mismatch");
       double min;
       for (unsigned int i = 0; i < matchVect.size(); ++i) {
         //first pair element is prb, second is ref
         matchVect[i].first = d_SDMPtrVect[i]->idx[1];
         matchVect[i].second = d_SDMPtrVect[i]->idx[0];
-        boost::uint8_t mmffSim = mmffSimMatrix
-          [d_refMMFFMolProperties->getMMFFAtomType(d_SDMPtrVect[i]->idx[0]) - 1]
-          [d_prbMMFFMolProperties->getMMFFAtomType(d_SDMPtrVect[i]->idx[1]) - 1];
-        weights[i] = (double)(O3_MAX_WEIGHT_COEFF - coeff) * ((1.0 + O3_CHARGE_COEFF
-          * fabs(d_refMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[0])
-          + d_prbMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[1])))
-          / (1.0 + fabs(d_refMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[0])
-          - d_prbMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[1]))))
-          + (double)coeff * 1.0 / (double)mmffSim;
+        weights[i] = weightFunc(d_SDMPtrVect[i]->idx[1], d_SDMPtrVect[i]->idx[0], data);
         if ((!i) || (weights[i] < min)) {
           min = weights[i];
         }
@@ -614,156 +673,160 @@ namespace RDKit {
     }
     
 
-    double SDM::scoreAlignment()
+    double o3aMMFFScoringFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data)
+    {
+      const RDGeom::POINT3D_VECT &refPos =
+        (static_cast<O3AFuncData *>(data))->refMol->getConformer
+        ((static_cast<O3AFuncData *>(data))->refCid).getPositions();
+      const RDGeom::POINT3D_VECT &prbPos =
+        (static_cast<O3AFuncData *>(data))->prbMol->getConformer
+        ((static_cast<O3AFuncData *>(data))->prbCid).getPositions();
+
+      double sqDist = (refPos[refIdx] - prbPos[prbIdx]).lengthSq();
+      double chargeDiff = fabs((static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFPartialCharge(refIdx)
+        - (static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFPartialCharge(prbIdx));
+      double chargeSum = fabs((static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->refProp))->getMMFFPartialCharge(refIdx)
+        + (static_cast<MMFF::MMFFMolProperties *>
+        ((static_cast<O3AFuncData *>(data))->prbProp))->getMMFFPartialCharge(prbIdx));
+
+      return ((O3_SCORING_FUNCTION_ALPHA + (1.0 + O3_CHARGE_COEFF * chargeSum)
+        / (1.0 + chargeDiff)) * exp(-O3_SCORING_FUNCTION_BETA * sqDist));
+    }
+
+
+    double o3aCrippenScoringFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data)
+    {
+      const RDGeom::POINT3D_VECT &refPos =
+        (static_cast<O3AFuncData *>(data))->refMol->getConformer
+        ((static_cast<O3AFuncData *>(data))->refCid).getPositions();
+      const RDGeom::POINT3D_VECT &prbPos =
+        (static_cast<O3AFuncData *>(data))->prbMol->getConformer
+        ((static_cast<O3AFuncData *>(data))->prbCid).getPositions();
+
+      double sqDist = (refPos[refIdx] - prbPos[prbIdx]).lengthSq();
+      double logpDiff = fabs((*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->refProp)))[refIdx]
+        - (*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx]);
+      double logpSum = fabs((*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->refProp)))[refIdx]
+        + (*(static_cast<std::vector<double> *>
+        ((static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx]);
+
+      return ((O3_SCORING_FUNCTION_ALPHA + (1.0 + O3_CRIPPEN_COEFF * logpSum)
+        / (1.0 + logpDiff)) * exp(-O3_SCORING_FUNCTION_BETA * sqDist));
+    }
+
+
+    double SDM::scoreAlignment(double (*scoringFunc)
+      (const unsigned int, const unsigned int, void *), void *data)
     {
       double score = 0.0;
-      const RDGeom::POINT3D_VECT &refPos =
-        d_refMol->getConformer(d_refCid).getPositions();
-      const RDGeom::POINT3D_VECT &prbPos =
-        d_prbMol->getConformer(d_prbCid).getPositions();
       
       for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
-        double sqDist = (refPos[d_SDMPtrVect[i]->idx[0]]
-          - prbPos[d_SDMPtrVect[i]->idx[1]]).lengthSq();
-        double chargeDiff = fabs
-          (d_refMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[0])
-          - d_prbMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[1]));
-        double chargeSum = fabs
-          (d_refMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[0])
-          + d_prbMMFFMolProperties->getMMFFPartialCharge(d_SDMPtrVect[i]->idx[1]));
-        score += ((O3_SCORING_FUNCTION_ALPHA + (1.0 + O3_CHARGE_COEFF * chargeSum)
-          / (1.0 + chargeDiff)) * exp(-O3_SCORING_FUNCTION_BETA * sqDist));
+        score += scoringFunc(d_SDMPtrVect[i]->idx[1], d_SDMPtrVect[i]->idx[0], data);
       }
       
       return score;
     }
     
     
-    O3A::O3A(ROMol &prbMol, const ROMol &refMol,
-             MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
-             const int prbCid, const int refCid, const bool reflect,
+    O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double, void *),
+             double (*weightFunc)(const unsigned int, const unsigned int, void *),
+             double (*scoringFunc)(const unsigned int, const unsigned int, void *),
+             void *data, ROMol &prbMol, const ROMol &refMol, void *prbProp,
+             void *refProp, const int prbCid, const int refCid, const bool reflect,
              const unsigned int maxIters, const unsigned int accuracy,
-             LAP *extLAP,double *prbDmat,double *refDmat
-             ) :
+             LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist) :
       d_prbMol(&prbMol),
       d_refMol(&refMol),
-      d_prbMMFFMolProperties(prbMP),
-      d_refMMFFMolProperties(refMP),
       d_prbCid(prbCid),
       d_refCid(refCid),
       d_reflect(reflect),
       d_maxIters(maxIters)
     {
-      ROMol prbCpy(prbMol);
       unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
       unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
-      unsigned int nRefAtoms = d_refMol->getNumAtoms();
-      unsigned int nPrbAtoms = d_prbMol->getNumAtoms();
-      boost::dynamic_bitset<> refHvyAtoms(nRefAtoms);
-      boost::dynamic_bitset<> prbHvyAtoms(nPrbAtoms);
-      for(unsigned int ii=0;ii<nRefAtoms;++ii){
-        if((*d_refMol)[ii]->getAtomicNum()!=1) refHvyAtoms.set(ii);
+      unsigned int refNAtoms = d_refMol->getNumAtoms();
+      unsigned int prbNAtoms = d_prbMol->getNumAtoms();
+      boost::dynamic_bitset<> refHvyAtoms(refNAtoms);
+      boost::dynamic_bitset<> prbHvyAtoms(prbNAtoms);
+      unsigned int i;
+      for (i = 0; i < refNAtoms; ++i) {
+        if (refMol[i]->getAtomicNum() != 1) {
+          refHvyAtoms.set(i);
+        }
       }
-      for(unsigned int ii=0;ii<nPrbAtoms;++ii){
-        if((*d_prbMol)[ii]->getAtomicNum()!=1) prbHvyAtoms.set(ii);
+      for (i = 0; i < prbNAtoms; ++i) {
+        if (prbMol[i]->getAtomicNum() != 1) {
+          prbHvyAtoms.set(i);
+        }
       }
       unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
-      unsigned int i;
-      int c;
-      int bestC = 0;
-      int w;
-      int bestW = 0;
-      int l;
-      std::vector<unsigned int> pairs(6, 0);
-      std::vector<double> score(5, 0.0);
+      std::vector<unsigned int> pairs(4, 0);
+      std::vector<double> score(3, 0.0);
       std::vector<double> pairsRMSD(2, 0.0);
-      std::vector<SDM *> bestSDM((unsigned int)5, NULL);
-      MolHistogram refHist(refMol,refDmat!=NULL?refDmat:MolOps::get3DDistanceMat(refMol,refCid));
-      MolHistogram prbHist(prbCpy,prbDmat!=NULL?prbDmat:MolOps::get3DDistanceMat(prbCpy,prbCid));
+      std::vector<SDM *> bestSDM((unsigned int)3, NULL);
+      MolHistogram *refHist = (extRefHist ? extRefHist
+        : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+      MolHistogram *prbHist = (extPrbHist ? extPrbHist
+        : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
       LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
-      for (l = 0, pairs[0] = 0, score[0] = 0.0; l <= ((accuracy < 2) ? 1 : 0); ++l) {
-        for (c = 0, pairs[1] = 0, score[1] = 0.0; c <= O3_MAX_WEIGHT_COEFF;
-          c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {
-          w = (l ? c : 0);
-          lap->computeCostMatrix(prbCpy, prbHist, prbMP, refMol, refHist, refMP, c, (bool)l);
-          lap->computeMinCostPath(largestNHeavyAtoms);
-          SDM startSDM(&prbCpy, &refMol, prbMP, refMP);
-          startSDM.fillFromLAP(*lap);
-          for (pairs[2] = 0, score[2] = 0.0, i = 3; i < startSDM.size(); ++i) {
-            RDKit::MatchVectType startMatchVect(i);
-            RDNumeric::DoubleVector startWeights(i);
-            startSDM.prepareMatchWeightsVect(startMatchVect, startWeights, w);
-            alignMol(prbCpy, refMol, prbCid, refCid,
-              &startMatchVect, &startWeights, reflect, maxIters);
-            unsigned int sdmThresholdIt;
-            for (sdmThresholdIt = ((accuracy < 1) ? 0 : O3_MAX_SDM_THRESHOLD_ITER - 1),
-              pairs[3] = 0, score[3] = 0.0; sdmThresholdIt < O3_MAX_SDM_THRESHOLD_ITER;
-              ++sdmThresholdIt) {
-              pairs[4] = 0;
-              bool flag = true;
-              unsigned int iter = 0;
-              double sdmThresholdDist = O3_SDM_THRESHOLD_START
-                + (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
-              while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
-                SDM progressSDM(&prbCpy, &refMol, prbMP, refMP);
-                progressSDM.fillFromDist(sdmThresholdDist,refHvyAtoms,prbHvyAtoms);
-                pairs[5] = progressSDM.size();
-                if (pairs[5] < 3) {
-                  break;
-                }
-                RDKit::MatchVectType progressMatchVect(pairs[5]);
-                RDNumeric::DoubleVector progressWeights(pairs[5]);
-                progressSDM.prepareMatchWeightsVect(progressMatchVect, progressWeights, w);
-                RDGeom::Transform3D trans;
-                pairsRMSD[1] = getAlignmentTransform(prbCpy, refMol,
-                  trans, prbCid, refCid, &progressMatchVect, &progressWeights,
-                  reflect, maxIters);
-                flag = ((pairs[5] > pairs[4]) || ((pairs[5] == pairs[4])
-                  && ((!iter) || ((pairsRMSD[0] - pairsRMSD[1]) > O3_RMSD_THRESHOLD))));
-                if (flag) {
-                  pairs[4] = pairs[5];
-                  pairsRMSD[0] = pairsRMSD[1];
-                  if (bestSDM[4]) {
-                    delete bestSDM[4];
-                  }
-                  bestSDM[4] = new SDM();
-                  *(bestSDM[4]) = progressSDM;
-                  MolTransforms::transformConformer(prbCpy.getConformer(prbCid), trans);
-                }
-                ++iter;
-              }
-              score[4] = ((pairs[4] >= 3) ? bestSDM[4]->scoreAlignment() : 0.0);
-              if ((score[4] - score[3]) > O3_SCORE_THRESHOLD) {
-                pairs[3] = pairs[4];
-                score[3] = score[4];
-                if (bestSDM[3]) {
-                  delete bestSDM[3];
-                }
-                bestSDM[3] = new SDM();
-                *(bestSDM[3]) = *(bestSDM[4]);
-              }
+      lap->computeCostMatrix(prbMol, *prbHist, refMol, *refHist, costFunc, data);
+      lap->computeMinCostPath(largestNHeavyAtoms);
+      SDM startSDM(&prbMol, &refMol, prbProp, refProp);
+      startSDM.fillFromLAP(*lap);
+      for (pairs[0] = 0, score[0] = 0.0, i = 3; i < startSDM.size(); ++i) {
+        RDKit::MatchVectType startMatchVect(i);
+        RDNumeric::DoubleVector startWeights(i);
+        startSDM.prepareMatchWeightsVect(startMatchVect,
+          startWeights, weightFunc, data);
+        alignMol(prbMol, refMol, prbCid, refCid,
+          &startMatchVect, &startWeights, reflect, maxIters);
+        unsigned int sdmThresholdIt;
+        for (sdmThresholdIt = ((accuracy < 1) ? 0 : O3_MAX_SDM_THRESHOLD_ITER - 1),
+          pairs[1] = 0, score[1] = 0.0; sdmThresholdIt < O3_MAX_SDM_THRESHOLD_ITER;
+          ++sdmThresholdIt) {
+          pairs[2] = 0;
+          bool flag = true;
+          unsigned int iter = 0;
+          double sdmThresholdDist = O3_SDM_THRESHOLD_START
+            + (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
+          while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
+            SDM progressSDM(&prbMol, &refMol, prbProp, refProp);
+            progressSDM.fillFromDist(sdmThresholdDist,refHvyAtoms,prbHvyAtoms);
+            pairs[3] = progressSDM.size();
+            if (pairs[3] < 3) {
+              break;
             }
-            if ((score[3] - score[2]) > O3_SCORE_THRESHOLD) {
+            RDKit::MatchVectType progressMatchVect(pairs[3]);
+            RDNumeric::DoubleVector progressWeights(pairs[3]);
+            progressSDM.prepareMatchWeightsVect(progressMatchVect,
+              progressWeights, weightFunc, data);
+            RDGeom::Transform3D trans;
+            pairsRMSD[1] = getAlignmentTransform(prbMol, refMol,
+              trans, prbCid, refCid, &progressMatchVect, &progressWeights,
+              reflect, maxIters);
+            flag = ((pairs[3] > pairs[2]) || ((pairs[3] == pairs[2])
+              && ((!iter) || ((pairsRMSD[0] - pairsRMSD[1]) > O3_RMSD_THRESHOLD))));
+            if (flag) {
               pairs[2] = pairs[3];
-              score[2] = score[3];
+              pairsRMSD[0] = pairsRMSD[1];
               if (bestSDM[2]) {
                 delete bestSDM[2];
               }
               bestSDM[2] = new SDM();
-              *(bestSDM[2]) = *(bestSDM[3]);
+              *(bestSDM[2]) = progressSDM;
+              MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
             }
+            ++iter;
           }
-          if ((pairs[2] < 3) && (startSDM.size() >= 3)) {
-            pairs[2] = startSDM.size();
-            if (bestSDM[2]) {
-              delete bestSDM[2];
-            }
-            bestSDM[2] = new SDM();
-            *(bestSDM[2]) = startSDM;
-            score[2] = bestSDM[2]->scoreAlignment();
-          }
+          score[2] = ((pairs[2] >= 3)
+            ? bestSDM[2]->scoreAlignment(scoringFunc, data) : 0.0);
           if ((score[2] - score[1]) > O3_SCORE_THRESHOLD) {
-            bestC = c;
             pairs[1] = pairs[2];
             score[1] = score[2];
             if (bestSDM[1]) {
@@ -774,7 +837,6 @@ namespace RDKit {
           }
         }
         if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
-          bestW = (l ? bestC : 0);
           pairs[0] = pairs[1];
           score[0] = score[1];
           if (bestSDM[0]) {
@@ -784,20 +846,244 @@ namespace RDKit {
           *(bestSDM[0]) = *(bestSDM[1]);
         }
       }
-      if(!extLAP) delete lap;
+      if ((pairs[0] < 3) && (startSDM.size() >= 3)) {
+        pairs[0] = startSDM.size();
+        if (bestSDM[0]) {
+          delete bestSDM[0];
+        }
+        bestSDM[0] = new SDM();
+        *(bestSDM[0]) = startSDM;
+        score[0] = bestSDM[0]->scoreAlignment(scoringFunc, data);
+      }
       RDKit::MatchVectType *o3aMatchVect = new RDKit::MatchVectType(pairs[0]);
       RDNumeric::DoubleVector *o3aWeights = new RDNumeric::DoubleVector(pairs[0]);
-      bestSDM[0]->prepareMatchWeightsVect(*o3aMatchVect, *o3aWeights, bestW);
-      //bestSDM[0]->prepareMatchWeightsVect(*o3aMatchVect, *o3aWeights, bestL);
+      bestSDM[0]->prepareMatchWeightsVect(*o3aMatchVect, *o3aWeights, weightFunc, data);
       d_o3aMatchVect = o3aMatchVect;
       d_o3aWeights = o3aWeights;
       d_o3aScore = score[0];
-      for (i = 0; i < 5; ++i) {
+      for (i = 0; i < 3; ++i) {
         if (bestSDM[i]) {
           delete bestSDM[i];
         }
       }
+      if (!extLAP) {
+        delete lap;
+      }
+      if (!extRefHist) {
+        delete refHist;
+      }
+      if (!extPrbHist) {
+        delete prbHist;
+      }
     }
+
+
+    #ifdef USE_O3A_CONSTRUCTOR
+    O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
+      std::string method, const int prbCid, const int refCid,
+      const bool reflect, const unsigned int maxIters, const unsigned int accuracy,
+      LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist) :
+      d_prbMol(&prbMol),
+      d_refMol(&refMol),
+      d_prbCid(prbCid),
+      d_refCid(refCid),
+      d_reflect(reflect),
+      d_maxIters(maxIters)
+    {
+      boost::algorithm::to_lower(method);
+      int (*costFunc)(const unsigned int, const unsigned int, double, void *) = o3aMMFFCostFunc;
+      double (*weightFunc)(const unsigned int, const unsigned int, void *) = o3aMMFFWeightFunc;
+      double (*scoringFunc)(const unsigned int, const unsigned int, void *) = o3aMMFFScoringFunc;
+      if (method == "crippen") {
+        costFunc = o3aCrippenCostFunc;
+        weightFunc = o3aCrippenWeightFunc;
+        scoringFunc = o3aCrippenScoringFunc;
+      }
+      O3AFuncData data;
+      data.prbMol = &prbMol;
+      data.refMol = &refMol;
+      data.prbCid = prbCid;
+      data.refCid = refCid;
+      data.prbProp = prbProp;
+      data.refProp = refProp;
+      unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
+      unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
+      unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
+      unsigned int i;
+      int c;
+      int l;
+      std::vector<double> score(2, 0.0);
+      O3A *bestO3A = NULL;
+      MolHistogram *refHist = (extRefHist ? extRefHist
+        : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+      MolHistogram *prbHist = (extPrbHist ? extPrbHist
+        : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+      LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
+      for (l = 0, score[0] = 0.0;
+        l <= (((accuracy < 2) || (method == "crippen")) ? 1 : 0); ++l) {
+        data.useMMFFSim = (bool)l;
+        for (c = 0; c <= O3_MAX_WEIGHT_COEFF;
+          c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {
+          data.weight = (l ? c : 0);
+          data.coeff = c;
+          O3A *o3a = new O3A(costFunc, weightFunc, scoringFunc,
+            &data, prbMol, refMol, prbProp, refProp, prbCid, refCid,
+            reflect, maxIters, accuracy, lap, prbHist, refHist);
+          score[1] = o3a->score();
+          if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
+            if (bestO3A) {
+              delete bestO3A;
+            }
+            bestO3A = o3a;
+            score[0] = score[1];
+          }
+          else {
+            delete o3a;
+          }
+        }
+      }
+      unsigned int pairs = bestO3A->matches()->size();
+      RDKit::MatchVectType *bestO3AMatchVect = new RDKit::MatchVectType(pairs);
+      RDNumeric::DoubleVector *bestO3AWeights = new RDNumeric::DoubleVector(pairs);
+      for (i = 0; i < pairs; ++i) {
+        (*bestO3AMatchVect)[i].first = (*(bestO3A->matches()))[i].first;
+        (*bestO3AMatchVect)[i].second = (*(bestO3A->matches()))[i].second;
+        (*bestO3AWeights)[i] = (*(bestO3A->weights()))[i];
+      }
+      d_o3aMatchVect = bestO3AMatchVect;
+      d_o3aWeights = bestO3AWeights;
+      d_o3aScore = bestO3A->score();
+      delete bestO3A;
+      if (!extLAP) {
+        delete lap;
+      }
+      if (!extRefHist) {
+        delete refHist;
+      }
+      if (!extPrbHist) {
+        delete prbHist;
+      }
+    }
+    #else
+    O3A *calcMMFFO3A(ROMol &prbMol, const ROMol &refMol,
+      MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
+      const int prbCid, const int refCid, const bool reflect,
+      const unsigned int maxIters, const unsigned int accuracy,
+      LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist)
+    {
+      O3AFuncData data;
+      data.prbMol = &prbMol;
+      data.refMol = &refMol;
+      data.prbCid = prbCid;
+      data.refCid = refCid;
+      data.prbProp = prbMP;
+      data.refProp = refMP;
+      unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
+      unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
+      unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
+      int c;
+      int l;
+      std::vector<double> score(2, 0.0);
+      O3A *bestO3A = NULL;
+      MolHistogram *refHist = (extRefHist ? extRefHist
+        : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+      MolHistogram *prbHist = (extPrbHist ? extPrbHist
+        : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+      LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
+      for (l = 0, score[0] = 0.0; l <= ((accuracy < 2) ? 1 : 0); ++l) {
+        data.useMMFFSim = (bool)l;
+        for (c = 0; c <= O3_MAX_WEIGHT_COEFF;
+          c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {
+          data.weight = (l ? c : 0);
+          data.coeff = c;
+          O3A *o3a = new O3A(o3aMMFFCostFunc, o3aMMFFWeightFunc,
+            o3aMMFFScoringFunc, &data, prbMol, refMol, prbMP, refMP,
+            prbCid, refCid, reflect, maxIters, accuracy, lap, prbHist,
+            refHist);
+          score[1] = o3a->score();
+          if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
+            if (bestO3A) {
+              delete bestO3A;
+            }
+            bestO3A = o3a;
+            score[0] = score[1];
+          }
+          else {
+            delete o3a;
+          }
+        }
+      }
+      if (!extLAP) {
+        delete lap;
+      }
+      if (!extRefHist) {
+        delete refHist;
+      }
+      if (!extPrbHist) {
+        delete prbHist;
+      }
+      
+      return bestO3A;
+    }
+
+
+    O3A *calcCrippenO3A(ROMol &prbMol, const ROMol &refMol,
+      std::vector<double> &prbLogpContribs,
+      std::vector<double> &refLogpContribs,
+      const int prbCid, const int refCid, const bool reflect,
+      const unsigned int maxIters, const unsigned int accuracy,
+      LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist)
+    {
+      O3AFuncData data;
+      data.prbMol = &prbMol;
+      data.refMol = &refMol;
+      data.prbCid = prbCid;
+      data.refCid = refCid;
+      data.prbProp = &prbLogpContribs;
+      data.refProp = &refLogpContribs;
+      unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
+      unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
+      unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
+      int c;
+      std::vector<double> score(2, 0.0);
+      O3A *bestO3A = NULL;
+      MolHistogram *refHist = (extRefHist ? extRefHist
+        : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+      MolHistogram *prbHist = (extPrbHist ? extPrbHist
+        : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+      LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
+      for (c = 0; c <= O3_MAX_WEIGHT_COEFF;
+        c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {
+        data.coeff = c;
+        O3A *o3a = new O3A(o3aCrippenCostFunc, o3aCrippenWeightFunc,
+          o3aCrippenScoringFunc, &data, prbMol, refMol, &prbLogpContribs,
+          &refLogpContribs, prbCid, refCid, reflect, maxIters, accuracy,
+          lap, prbHist, refHist);
+        score[1] = o3a->score();
+        if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
+          if (bestO3A) {
+            delete bestO3A;
+          }
+          bestO3A = o3a;
+          score[0] = score[1];
+        }
+        else {
+          delete o3a;
+        }
+      }
+      if (!extLAP) {
+        delete lap;
+      }
+      if (!extRefHist) {
+        delete refHist;
+      }
+      if (!extPrbHist) {
+        delete prbHist;
+      }
+      
+      return bestO3A;
+    }
+    #endif
 
 
     double _rmsdMatchVect(const RDGeom::POINT3D_VECT &prbPos,
@@ -827,16 +1113,18 @@ namespace RDKit {
     }
 
 
-    std::pair<double, RDGeom::Transform3D *> O3A::trans() {
-      RDGeom::Transform3D *trans = new RDGeom::Transform3D();
+    double O3A::trans(RDGeom::Transform3D &trans) {
       getAlignmentTransform(*d_prbMol, *d_refMol,
-        *trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
+        trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
         d_reflect, d_maxIters);
-      
-      return std::make_pair(_rmsdMatchVect
-        (d_prbMol->getConformer(d_prbCid).getPositions(),
+      Conformer transConf(d_prbMol->getConformer(d_prbCid));
+      for (unsigned int i = 0; i < d_prbMol->getNumAtoms(); ++i) {
+        trans.TransformPoint(transConf.getAtomPos(i));
+      }
+
+      return _rmsdMatchVect(transConf.getPositions(),
         d_refMol->getConformer(d_refCid).getPositions(),
-        d_o3aMatchVect), trans);
+        d_o3aMatchVect);
     };
 
 
