@@ -196,7 +196,8 @@ void testCrippenO3A() {
     Descriptors::getCrippenAtomContribs(*prbMol, prbLogpContribs,
       prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
     #ifdef USE_O3A_CONSTRUCTOR
-    MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs, "Crippen");
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
+                      MolAlign::O3A::CRIPPEN);
     double rmsd = o3a.align();
     cumScore += o3a.score();
     #else
@@ -240,7 +241,8 @@ void testMMFFO3AMolHist() {
     
     #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP,
-      "MMFF94", -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
+                      MolAlign::O3A::MMFF94, -1, -1, false,
+                      50, 0, NULL, &prbHist, &refHist);
     double rmsd = o3a.align();
     cumScore += o3a.score();
     #else
@@ -297,7 +299,7 @@ void testCrippenO3AMolHist() {
     
     #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
-      "Crippen", -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
+      MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
     double rmsd = o3a.align();
     cumScore += o3a.score();
     #else
@@ -372,7 +374,8 @@ namespace {
         Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
           prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
         #ifdef USE_O3A_CONSTRUCTOR
-        MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs, "Crippen");
+        MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs, 
+                          MolAlign::O3A::CRIPPEN);
         double rmsd = o3a.align();
         double score = o3a.score();
         #else
@@ -485,7 +488,8 @@ void testCrippenO3AMultiThread() {
     Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
       prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
     #ifdef USE_O3A_CONSTRUCTOR
-    MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs, "Crippen");
+    MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
+                          MolAlign::O3A::CRIPPEN);
     rmsds[i]=o3a.align();
     scores[i] = o3a.score();
     #else
@@ -519,7 +523,7 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
-#if 1
+#if 0
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -535,8 +539,7 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testIssue241 \n\n";
   testIssue241();
-#endif
-    
+
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testMMFFO3A \n\n";
   testMMFFO3A();
@@ -557,7 +560,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testMMFFO3A multithreading\n\n";
   testMMFFO3AMultiThread();
+#endif
+#endif
 
+#ifdef RDK_TEST_MULTITHREADED
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testCrippenO3A multithreading\n\n";
   testCrippenO3AMultiThread();

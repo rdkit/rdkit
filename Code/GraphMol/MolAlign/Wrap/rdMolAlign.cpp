@@ -247,7 +247,8 @@ namespace RDKit {
       }
       #ifdef USE_O3A_CONSTRUCTOR
       O3A *o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps,refMolProps,
-                                   "MMFF94", prbCid, refCid, reflect, maxIters, accuracy);
+                                   MolAlign::O3A::MMFF94, prbCid, refCid,
+                                   reflect, maxIters, accuracy);
       #else
       O3A *o3a = MolAlign::calcMMFFO3A(prbMol, refMol,
                                    prbMolProps,refMolProps,
@@ -301,7 +302,8 @@ namespace RDKit {
       }
       #ifdef USE_O3A_CONSTRUCTOR
       O3A *o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
-                                   "Crippen", prbCid, refCid, reflect, maxIters, accuracy);
+                                   MolAlign::O3A::CRIPPEN, prbCid, refCid,
+                                   reflect, maxIters, accuracy);
       #else
       O3A *o3a = MolAlign::calcCrippenO3A(prbMol, refMol, prbLogpContribs,
         refLogpContribs, prbCid, refCid, reflect, maxIters, accuracy);

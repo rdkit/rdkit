@@ -880,7 +880,7 @@ namespace RDKit {
 
     #ifdef USE_O3A_CONSTRUCTOR
     O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
-      std::string method, const int prbCid, const int refCid,
+      AtomTypeScheme atomTypes, const int prbCid, const int refCid,
       const bool reflect, const unsigned int maxIters, const unsigned int accuracy,
       LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist) :
       d_prbMol(&prbMol),
@@ -890,11 +890,10 @@ namespace RDKit {
       d_reflect(reflect),
       d_maxIters(maxIters)
     {
-      boost::algorithm::to_lower(method);
       int (*costFunc)(const unsigned int, const unsigned int, double, void *) = o3aMMFFCostFunc;
       double (*weightFunc)(const unsigned int, const unsigned int, void *) = o3aMMFFWeightFunc;
       double (*scoringFunc)(const unsigned int, const unsigned int, void *) = o3aMMFFScoringFunc;
-      if (method == "crippen") {
+      if (atomTypes == CRIPPEN) {
         costFunc = o3aCrippenCostFunc;
         weightFunc = o3aCrippenWeightFunc;
         scoringFunc = o3aCrippenScoringFunc;
@@ -920,7 +919,7 @@ namespace RDKit {
         : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
       LAP *lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       for (l = 0, score[0] = 0.0;
-        l <= (((accuracy < 2) || (method == "crippen")) ? 1 : 0); ++l) {
+        l <= (((accuracy < 2) || (atomTypes == CRIPPEN)) ? 1 : 0); ++l) {
         data.useMMFFSim = (bool)l;
         for (c = 0; c <= O3_MAX_WEIGHT_COEFF;
           c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {

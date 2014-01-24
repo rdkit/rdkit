@@ -385,7 +385,8 @@
     RDKit::MMFF::MMFFMolProperties prbMP(*($self));
     RDKit::MMFF::MMFFMolProperties refMP(refMol);
     
-    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, prbCid, refCid,
+    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, RDKit::MolAlign::O3A::MMFF94,
+                             prbCid, refCid,
                              reflect,maxIters,accuracy);
     double rmsd=o3a.align();
     double score = o3a.score();

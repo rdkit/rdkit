@@ -194,9 +194,14 @@ namespace RDKit {
     
     class O3A {
     public:
+      //! pre-defined atom typing schemes
+      typedef enum { 
+        MMFF94=0,
+        CRIPPEN
+      } AtomTypeScheme;
       #ifdef USE_O3A_CONSTRUCTOR
       O3A(ROMol &prbMol, const ROMol &refMol,
-          void *prbProp, void *refProp, std::string method = "MMFF94",
+          void *prbProp, void *refProp, AtomTypeScheme atomTypes = MMFF94,
           const int prbCid = -1, const int refCid = -1,
           const bool reflect = false, const unsigned int maxIters = 50,
           const unsigned int accuracy = 0, LAP *extLAP = NULL,
