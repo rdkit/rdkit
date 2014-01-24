@@ -78,8 +78,9 @@ namespace RDKit{
 	// no need to keep matching stuff if we already found all the atoms:
 	if(atomNeeded.none()) break;
       }
-      mol.setProp("_crippenLogPContribs",logpContribs,true);
-      mol.setProp("_crippenMRContribs",mrContribs,true);
+      // this caching mechanism can cause problems in multi-threaded operation
+      //mol.setProp("_crippenLogPContribs",logpContribs,true);
+      //mol.setProp("_crippenMRContribs",mrContribs,true);
     }
     void calcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs,
 				bool force){
