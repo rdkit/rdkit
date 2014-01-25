@@ -21,7 +21,6 @@
 #include <ForceField/MMFF/AngleConstraint.h>
 #include <ForceField/MMFF/TorsionConstraint.h>
 #include <ForceField/MMFF/PositionConstraint.h>
-#include <boost/shared_ptr.hpp>
 #include "PyForceField.h"
 using namespace ForceFields;
 namespace python = boost::python;

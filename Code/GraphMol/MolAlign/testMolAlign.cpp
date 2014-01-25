@@ -354,13 +354,14 @@ namespace {
                     const std::vector<ROMol *> &mols,const std::vector<double> &rmsds,
                     const std::vector<double> &scores,
                     unsigned int count,unsigned int idx){
+    ROMol refMolCopy(*refMol);
     for(unsigned int rep=0;rep<100;++rep){
-      unsigned int refNAtoms = refMol->getNumAtoms();
+      unsigned int refNAtoms = refMolCopy.getNumAtoms();
       std::vector<double> refLogpContribs(refNAtoms);
       std::vector<double> refMRContribs(refNAtoms);
       std::vector<unsigned int> refAtomTypes(refNAtoms);
       std::vector<std::string> refAtomTypeLabels(refNAtoms);
-      Descriptors::getCrippenAtomContribs(*refMol, refLogpContribs,
+      Descriptors::getCrippenAtomContribs(refMolCopy, refLogpContribs,
         refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
@@ -374,12 +375,12 @@ namespace {
         Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
           prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
         #ifdef USE_O3A_CONSTRUCTOR
-        MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs, 
+        MolAlign::O3A o3a(prbMol, refMolCopy, &prbLogpContribs, &refLogpContribs, 
                           MolAlign::O3A::CRIPPEN);
         double rmsd = o3a.align();
         double score = o3a.score();
         #else
-        MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(prbMol, *refMol, prbLogpContribs, refLogpContribs);
+        MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(prbMol, refMolCopy, prbLogpContribs, refLogpContribs);
         double rmsd = o3a->align();
         double score = o3a->score();
         delete o3a;
@@ -523,7 +524,6 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
-#if 0
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -560,7 +560,6 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testMMFFO3A multithreading\n\n";
   testMMFFO3AMultiThread();
-#endif
 #endif
 
 #ifdef RDK_TEST_MULTITHREADED
