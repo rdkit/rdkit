@@ -260,7 +260,8 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
   return res
 
 
-def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs):
+def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
+                    highlightAtomLists=None,**kwargs):
   """ 
   """
   try:
@@ -276,7 +277,11 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
   for i,mol in enumerate(mols):
     row = i//molsPerRow
     col = i%molsPerRow
-    res.paste(MolToImage(mol,subImgSize,legend=legends[i],**kwargs),(col*subImgSize[0],row*subImgSize[1]))
+    highlights=None
+    if highlightAtomLists and highlightAtomLists[i]:
+      highlights=highlightAtomLists[i]
+    res.paste(MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
+                         **kwargs),(col*subImgSize[0],row*subImgSize[1]))
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
