@@ -53,9 +53,6 @@ class TorsionInstance {
 bool fexist(std::string filename);
 bool fgrep(std::fstream &fStream, std::string key);
 bool fgrep(std::fstream &fStream, std::string key, std::string &line);
-#ifndef RDK_NOGZIP
-void fgunzip(std::string filename);
-#endif
 void skipLines(std::istream& stream, unsigned int nLines);
 bool sortAngleBendInstanceVec(AngleBendInstance *a, AngleBendInstance *b);
 bool sortBondStretchInstanceVec(BondStretchInstance *a, BondStretchInstance *b);
