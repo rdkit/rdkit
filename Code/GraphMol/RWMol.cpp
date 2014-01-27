@@ -244,7 +244,7 @@ namespace RDKit{
 
     // if both atoms have a degree>1, reset our ring info structure,
     // because there's a non-trivial chance that it's now wrong.
-    if(boost::out_degree(atomIdx1,d_graph)>1 && boost::out_degree(atomIdx2,d_graph)>1){
+    if(dp_ringInfo && dp_ringInfo->isInitialized() && boost::out_degree(atomIdx1,d_graph)>1 && boost::out_degree(atomIdx2,d_graph)>1){
       dp_ringInfo->reset();      
     }
     

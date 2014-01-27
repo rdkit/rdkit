@@ -119,16 +119,16 @@ mol: atomd {
   RWMol *mp = (*molList)[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
-  int atomIdx2=mp->addAtom($2);
+  int atomIdx2=mp->addAtom($2,true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
-  delete $2;
+  //delete $2;
 }
 
 | mol BOND_TOKEN atomd  {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
-  int atomIdx2 = mp->addAtom($3);
+  int atomIdx2 = mp->addAtom($3,true,true);
   if( $2->getBondType() == Bond::DATIVER ){
     $2->setBeginAtomIdx(atomIdx1);
     $2->setEndAtomIdx(atomIdx2);
@@ -142,15 +142,15 @@ mol: atomd {
     $2->setEndAtomIdx(atomIdx2);
   }
   mp->addBond($2,true);
-  delete $3;
+  //delete $3;
 }
 
 | mol MINUS_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
-  int atomIdx2 = mp->addAtom($3);
+  int atomIdx2 = mp->addAtom($3,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
-  delete $3;
+  //delete $3;
 }
 
 | mol ring_number {
@@ -206,16 +206,16 @@ mol: atomd {
   RWMol *mp = (*molList)[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
-  int atomIdx2=mp->addAtom($3);
+  int atomIdx2=mp->addAtom($3,true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
-  delete $3;
+  //delete $3;
   branchPoints->push_back(atomIdx1);
 }
 | mol GROUP_OPEN_TOKEN BOND_TOKEN atomd  {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
-  int atomIdx2 = mp->addAtom($4);
+  int atomIdx2 = mp->addAtom($4,true,true);
   if( $3->getBondType() == Bond::DATIVER ){
     $3->setBeginAtomIdx(atomIdx1);
     $3->setEndAtomIdx(atomIdx2);
@@ -229,15 +229,15 @@ mol: atomd {
     $3->setEndAtomIdx(atomIdx2);
   }
   mp->addBond($3,true);
-  delete $4;
+  //delete $4;
   branchPoints->push_back(atomIdx1);
 }
 | mol GROUP_OPEN_TOKEN MINUS_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
-  int atomIdx2 = mp->addAtom($4);
+  int atomIdx2 = mp->addAtom($4,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
-  delete $4;
+  //delete $4;
   branchPoints->push_back(atomIdx1);
 }
 | mol GROUP_CLOSE_TOKEN {
