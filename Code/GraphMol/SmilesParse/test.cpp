@@ -2234,7 +2234,7 @@ void testBug1942220(){
   TEST_ASSERT(m->getNumAtoms()==4);
   //TEST_ASSERT(m->getNumAtoms(false)==5);
   smi = MolToSmiles(*m);
-  TEST_ASSERT(smi=="O=S(=O)O");
+  TEST_ASSERT(smi=="O=[SH](=O)O");
 
   
   delete m;
@@ -3332,6 +3332,38 @@ void testGithub45(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub206(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 206: Problems round-tripping P" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="O=[PH3]";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles = MolToSmiles(*m,true);
+    TEST_ASSERT(csmiles=="O=[PH3]");
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="O=P";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles = MolToSmiles(*m,true);
+    TEST_ASSERT(csmiles=="O=P");
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="O=[PH]";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles = MolToSmiles(*m,true);
+    TEST_ASSERT(csmiles=="O=P");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int
 main(int argc, char *argv[])
@@ -3386,5 +3418,6 @@ main(int argc, char *argv[])
 #endif
   testGithub12();
   testGithub45();
+  testGithub206();
   //testBug1719046();
 }

@@ -69,17 +69,16 @@ namespace RDKit{
         //   - atom-map information present
         const INT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
         int totalValence= atom->getTotalValence();
-        bool nonStandard;
-        nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
-                                totalValence)==defaultVs.end();
-        // another type of "nonstandard" valence is an aromatic N or P with
-        // explicit Hs indicated:
-        if((num==7||num==15) && atom->getIsAromatic() && atom->getNumExplicitHs()){
-          nonStandard=true;
-        }
+        bool nonStandard=false;
 
         if(atom->getNumRadicalElectrons()){
           nonStandard=true;
+        } else if((num==7||num==15) && atom->getIsAromatic() && atom->getNumExplicitHs()){
+          // another type of "nonstandard" valence is an aromatic N or P with
+          // explicit Hs indicated:
+          nonStandard=true;
+        } else {
+          nonStandard = (totalValence!=defaultVs.front() && atom->getTotalNumHs());
         }
 
         if(fc || nonStandard){
