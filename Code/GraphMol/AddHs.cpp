@@ -404,11 +404,11 @@ namespace RDKit{
               // this is a special case related to Issue 228 and the
               // "disappearing Hydrogen" problem discussed in MolOps::adjustHs
               //
-              // If we remove a hydrogen from an aromatic N or from P, we need
+              // If we remove a hydrogen from an aromatic N or P, we need
               // to be *sure* to increment the explicit count, even if the
               // H itself isn't marked as explicit
-              if(((heavyAtom->getAtomicNum()==7 && heavyAtom->getIsAromatic())
-                 || heavyAtom->getAtomicNum()==15) && heavyAtom->getFormalCharge()==0){
+              if((heavyAtom->getAtomicNum()==7||heavyAtom->getAtomicNum()==15) &&
+                 heavyAtom->getIsAromatic()){
                 heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs()+1);
               }
             }
