@@ -770,6 +770,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version")=RDKit::Descriptors::NumRotatableBondsVersion;
+  docString="returns a strict count of the number of rotatable bonds for a molecule";
+  python::def("CalcNumStrictRotatableBonds",
+	      RDKit::Descriptors::calcNumStrictRotatableBonds,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumStrictRotatableBonds_version")=RDKit::Descriptors::NumStrictRotatableBondsVersion;
   docString="returns the number of rings for a molecule";
   python::def("CalcNumRings",
 	      RDKit::Descriptors::calcNumRings,

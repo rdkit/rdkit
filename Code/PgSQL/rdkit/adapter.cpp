@@ -440,6 +440,7 @@ MOLDESCR(NumAliphaticCarbocycles,RDKit::Descriptors::calcNumAliphaticCarbocycles
 MOLDESCR(NumSaturatedCarbocycles,RDKit::Descriptors::calcNumSaturatedCarbocycles,int)
 
 MOLDESCR(NumRotatableBonds,RDKit::Descriptors::calcNumRotatableBonds,int)
+MOLDESCR(NumStrictRotatableBonds,RDKit::Descriptors::calcNumStrictRotatableBonds,int)
 MOLDESCR(Chi0v,RDKit::Descriptors::calcChi0v,double)
 MOLDESCR(Chi1v,RDKit::Descriptors::calcChi1v,double)
 MOLDESCR(Chi2v,RDKit::Descriptors::calcChi2v,double)
