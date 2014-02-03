@@ -1,6 +1,5 @@
 # coding=utf-8
-import os,re,gzip,json,requests,sys, optparse
-#from sys import
+import os,re,gzip,json,requests,sys, optparse,csv
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import SDWriter
@@ -25,9 +24,11 @@ from sklearn.metrics import make_scorer
 
 
 class p_con:
-    
+    """Class to create Models to classify Molecules active or inactive
+    using threshold for value in training-data"""
 
     def __init__(self,acc_id=None,proxy={}):
+        """Constructor to initialize Object, use proxy if neccessary"""
         self.request_data={"acc_id":acc_id,"proxy":proxy}
         self.acc_id = acc_id
         self.proxy = proxy
@@ -36,6 +37,7 @@ class p_con:
 
 
     def __str__(self):
+        """String-Representation for Object"""
         self.request_data["cmpd_count"] = len(self.sd_entries)
         retString = ""
         for key in self.request_data.keys():
@@ -43,9 +45,10 @@ class p_con:
         return retString.rstrip()
 
 
-    def _0_get_chembl_data(self):
-
+    def step_0_get_chembl_data(self):
+        """Download Compound-Data for self.acc_id, these are available in self.sd_entries afterwards"""
         def looks_like_number(x):
+            """Check for proper Float-Value"""
             try:
                 float(x)
                 return True
@@ -106,7 +109,7 @@ class p_con:
             self.dr[count] = bioactivity
             count+=1
 #            if count >5000: break
-        
+
 #       print "\n%d" % len(self.dr)
         SDtags = self.dr[0].keys()
         cpd_counter=0
@@ -123,8 +126,8 @@ class p_con:
         return True
 
 
-    def _1_keeplargestfrag(self):
-
+    def step_1_keeplargestfrag(self):
+        """remove all smaller Fragments per compound, just keep the largest"""
         result=[]
 
         for cpd in self.sd_entries:
@@ -140,7 +143,8 @@ class p_con:
         return True
 
 
-    def _2_remove_dupl(self):
+    def step_2_remove_dupl(self):
+        """remove duplicates from self.sd_entries"""
         result = []
         all_struct_dict = {}
 	for cpd in self.sd_entries:
@@ -159,7 +163,9 @@ class p_con:
         return True
 
 
-    def _3_merge_IC50(self):
+    def step_3_merge_IC50(self):
+        """merge IC50 of duplicates into one compound using mean of all values if:
+        min(IC50) => IC50_avg-3*IC50_stddev && max(IC50) <= IC50_avg+3*IC50_stddev && IC50_stddev <= IC50_avg"""
         np_old_settings = np.seterr(invalid='ignore') #dirty way to ignore warnings from np.std
 	def get_mean_IC50(mol_list):
 	    IC50 = 0
@@ -192,6 +198,10 @@ class p_con:
         result = []
         IC50_dict = {}
         for cpd in self.sd_entries:
+            if not "cansmirdkit" in cpd.GetPropNames():
+                Chem.RemoveHs(cpd)
+                cansmi = Chem.MolToSmiles(cpd,canonical=True)
+                cpd.SetProp('cansmirdkit',cansmi)
             cansmi = str(cpd.GetProp("cansmirdkit"))
             IC50_dict[cansmi]={}
 
@@ -231,7 +241,9 @@ class p_con:
         return True
 
         
-    def _4_set_TL(self,threshold,ic50_tag="value"):
+    def step_4_set_TL(self,threshold,ic50_tag="value"):
+        """set Property "TL"(TrafficLight) for each compound:
+        if ic50_tag (default:"value") > threshold: TL = 0, else 1"""
 #        print ic50_tag
         result = []
         i,j = 0,0
@@ -251,7 +263,9 @@ class p_con:
         return True
 
 
-    def _5_remove_descriptors(self):
+    def step_5_remove_descriptors(self):
+        """remove list of Properties from each compound (hardcoded)
+        which would corrupt process of creating Prediction-Models"""
         sd_tags = ['activity__comment','alogp','assay__chemblid','assay__description','assay__type','bioactivity__type','activity_comment','assay_chemblid','assay_description','assay_type','bioactivity_type','cansmirdkit','ingredient__cmpd__chemblid','ingredient_cmpd_chemblid','knownDrug','medChemFriendly','molecularFormula','name__in__reference','name_in_reference','numRo5Violations','operator','organism','parent__cmpd__chemblid','parent_cmpd_chemblid','passesRuleOfThree','preferredCompoundName','reference','rotatableBonds','smiles','Smiles','stdInChiKey','synonyms','target__chemblid','target_chemblid','target__confidence','target__name','target_confidence','target_name','units','value_avg','value_stddev'] + ['value']
         result = []
 
@@ -279,7 +293,8 @@ class p_con:
         self.sd_entries = result
         return True
 
-    def _6_calc_descriptors(self):
+    def step_6_calc_descriptors(self):
+        """calculate descriptors for each compound, according to Descriptors._descList"""
         nms=[x[0] for x in Descriptors._descList]
         calc = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
         for i in range(len(self.sd_entries)):
@@ -289,7 +304,10 @@ class p_con:
         return True
 
     
-    def _7_train_models(self):
+    def step_7_train_models(self):
+        """train models according to trafficlight using sklearn.ensamble.RandomForestClassifier
+        self.model contains up to 10 models afterwards, use save_model_info(type) to create csv or html
+        containing data for each model"""
 #        title_line = ["accuracy","MCC","precision","recall","f1","auc","assaytype","threshold","randomseed"]
 	title_line = ["#","accuracy","MCC","precision","recall","f1","auc","kappa","prevalence","bias","pickel-File"]
         self.csv_text= [title_line]
@@ -326,7 +344,9 @@ class p_con:
 #       print dataActs_array
 #        self.model = []
 	for randomseedcounter in range(1,11):
-            if self.verbous: print "try to calculate seed %d" % randomseedcounter
+            if self.verbous: 
+                print "################################"
+                print "try to calculate seed %d" % randomseedcounter
 #            print dataDescrs_array
 #            print dataActs_array
             X_train,X_test,y_train,y_test = cross_validation.train_test_split(dataDescrs_array,dataActs_array,test_size=.4,random_state=randomseedcounter)
@@ -416,6 +436,24 @@ class p_con:
                 kappa_prevalence = round(float(abs(tp-tn))/float(n),3)
                 kappa_bias = round(float(abs(fp-fn))/float(n),3)
 
+                if self.verbous:
+                    print "test:"
+                    print "\tpos\tneg"
+                    print "true\t%d\t%d" % (tp,tn)
+                    print "false\t%d\t%d" % (fp,fn)
+                    print conf_matrix
+                    print "\ntrain:"
+                    y_predict2 = clf_RF.predict(X_train)
+                    conf_matrix2 = metrics.confusion_matrix(y_train,y_predict2)
+                    tp2 = conf_matrix2[0][0]
+                    tn2 = conf_matrix2[1][1]
+                    fp2 = conf_matrix2[1][0]
+                    fn2 = conf_matrix2[0][1]
+                    print "\tpos\tneg"
+                    print "true\t%d\t%d" % (tp2,tn2)
+                    print "false\t%d\t%d" % (fp2,fn2)
+                    print conf_matrix2                    
+
 #                model_file = "clf_RF_%s_%s.pkl" % (inF,randomseedcounter) 
 
 
@@ -451,6 +489,7 @@ class p_con:
         return True if len(self.model)>0 else False
 
     def save_model_info(self,outfile,mode="html"):
+        """create html- or csv-File for models according to mode (default: "html")"""
         if mode=="csv":
             if not outfile.endswith(".csv"): outfile += ".csv"
             csv_file = open(outfile,"wb")
@@ -459,6 +498,7 @@ class p_con:
             csv_file.flush()
             csv_file.close()
         elif mode=="html":
+            if not outfile.endswith(".html"): outfile += ".html"
             def lines2list(lines):
 #                print lines
 #                data = [l.rstrip().split(";") for l in lines]
@@ -821,9 +861,12 @@ table th[class*="col-"] {
 
 
             def findBestWorst(data):
-                auc = [float(x[5].split("_")[0]) for x in data[1:]]
+#                recall = [float(x[4].split("_")[0]) for x in data[1:]]
+                auc = [float(x[6].split("_")[0]) for x in data[1:]]
+                max_index,min_index = auc.index(max(auc)),auc.index(min(auc))
 #                print auc
-                return (auc.index(max(auc)),auc.index(min(auc)))
+#                print max_index,min_index
+                return (max_index,min_index)
 
 
             def createPiePlot(cpds):
@@ -891,9 +934,10 @@ table th[class*="col-"] {
             data = lines2list(lines)
             html = list2html(data,act,inact)
             writeHtml(html,outfile)
-        return
+        return True
 
     def load_mols(self,sd_file):
+        """load SD-File from .sdf, .sdf.gz or .sd.gz"""
         if sd_file.endswith(".sdf.gz") or sd_file.endswith(".sd.gz"):
             SDFile = Chem.ForwardSDMolSupplier(gzip.open(sd_file))
         else:
@@ -902,11 +946,14 @@ table th[class*="col-"] {
         return True
 
     def save_mols(self,outfile,gzip=True):
+        """create SD-File of current molecules in self.sd_entries"""
         sdw = Chem.SDWriter(outfile+".tmp")
         for mol in self.sd_entries: sdw.write(mol)
         sdw.flush()
         sdw.close()
-        if not gzip: return
+        if not gzip:
+            os.rename(outfile+".tmp",outfile)
+            return
         f_in = open(outfile+".tmp", 'rb')
         f_out = gzip.open(outfile, 'wb')
         f_out.writelines(f_in)
@@ -917,10 +964,13 @@ table th[class*="col-"] {
         return
 
     def save_model(self,outfile,model_number=0):
+        """save Model to file using cPickle.dump"""
         cPickle.dump(self.model[model_number],file(outfile,"wb+"))
         return
         
     def load_models(self,model_files):
+        """load model or list of models into self.model"""
+        if type(model_files)==str: model_files = [model_files]
         i = 0
         for mod_file in model_files:
             model = open(mod_file,'r')
@@ -932,6 +982,7 @@ table th[class*="col-"] {
         return i
 
     def predict(self,model_number):
+        """try to predict activity of compounds using giving model-Number"""
         if len(self.model)<=model_number:
             sys.stderr.write("\nModel-Number %d doesn't exist, there are just %d Models\n" % (model_number,len(self.model)))
             sys.exit(-1)
@@ -972,100 +1023,6 @@ table th[class*="col-"] {
                 if y_predict==1: active += 1
                 sample.SetProp("TL_prediction",str(y_predict))
         return (active,inactive)
-
-
-def _main_():
-#    proxy={"https":"https://bla.bla:6060"}
-#    pco = p_con("P43088",proxy)
-#    pco = p_con("P43088")
-
-#    pco = p_con("P16066") #<- 48 cmpds <- 8 ic50
-    proxies = {"https": "https://s100291:SpiMurGa05@proxy.merck.de:8080"}
-
-    pco = p_con("P43088",proxy=proxies) # 277 cpds -> ?
-#    pco = p_con("Q12809",proxy=proxies)
-#    pco = p_con("P16066",proxy=proxies) 78 cpds -> 8
-
-#    pco = p_con("P11473") # 25071 cpds
-
-#    print pco
-
-
-
-
-#    pco = p_con("P11473",proxy=proxies)
-#    pco._0_get_chembl_data()
-    f = "out_P11473.sdf.gz"   #    <- 1 model
-#    f = "out_P11473.onlylargestfrag.sdf.gz"
-
-#    a='''
-#    f = "out_Q12809.sdf.gz"
-#    f = "out_P11473.sdf.gz"
-    pco.load_mols(f)
-#    print "loaded %s" % f
-#    print pco
-    pco._1_keeplargestfrag()
-    print "step1 done"
-#    print pco
-    pco._2_remove_dupl()
-    print "step2 done"
-#    print pco
-    pco._3_merge_IC50()
-    print "step3 done"
-#    print pco
-    pco._4_set_TL(10000)
-    print "step4 done"
-#    print pco
-    pco._5_remove_descriptors()
-    print "step5 done"
-#    print pco
-    pco._6_calc_descriptors()
-    print "step6 done"
-#    print pco
-
-
-
-    training = pco._7_train_models()
-    print "step7 done"
-    print "training %s" % ("worked, got %d models" % len(pco.model) if training else "went wrong")
-
-#    sys.exit(0)
-    
-
-    for i in range(len(pco.model)):
-        pco.save_model("model%d.pkl" % i,i)
-
-#    '''
-    pco.save_model_info("blafile.html",mode="html")
-
-
-    pco2 = p_con()
-    pco2.load_mols("out_P11473.sdf.gz")
-    pco2._1_keeplargestfrag()
-    pco2._2_remove_dupl()
-    pco2._3_merge_IC50()
-#    pco2._5_remove_descriptors()
-#    pco2._6_calc_descriptors()
-#    p = pco2.sd_entries[1].GetPropNames()
-#    print p
-#    for tag in pco2.sd_entries[0].GetPropNames(): print tag
-#    sys.exit(-1)
-    print "%d mols loaded" % len(pco2.sd_entries)
-    pco2.load_models(["model0.pkl","model1.pkl","model2.pkl","model3.pkl","model4.pkl","model5.pkl","model6.pkl","model7.pkl","model8.pkl","model9.pkl"])
-    print "models loaded"
-    for i in range(10):
-        act,inact = pco2.predict(i)
-        print "%d active: %d\tinactive: %d" % (i,act,inact)
-
-    return
-
-
-
-
-#    print pco
-#    print pco.sd_entries
-#    for entry in pco.sd_entries:
-#        print entry.GetProp('Smiles')
 
 
 if __name__ == "__main__":
@@ -1138,7 +1095,7 @@ if __name__ == "__main__":
             sys.exit(-1)
     else:
         print "gather Data for Accession-ID \'%s\'" % accession
-        result = pco._0_get_chembl_data()
+        result = pco.step_0_get_chembl_data()
         if not result:
             step_error("download ChEMBL-Data")
             sys.exit(-1)
@@ -1148,7 +1105,7 @@ if __name__ == "__main__":
 
 
 
-    result = pco._1_keeplargestfrag()
+    result = pco.step_1_keeplargestfrag()
     if not result:
         step_error("keep largest Fragment")
         sys.exit(-1)
@@ -1167,7 +1124,7 @@ if __name__ == "__main__":
     #         if options.onefile: os.remove(new_file[1])
     #         cur_file = new_file[0]
     if options.uniq:
-        result = pco._2_remove_dupl()
+        result = pco.step_2_remove_dupl()
         if not result:
             step_error("remove duplicates")
             sys.exit(-1)
@@ -1177,7 +1134,7 @@ if __name__ == "__main__":
 #    new_file = _03.merge_IC50(cur_file)
 #    if options.onefile: os.remove(cur_file)
 #    cur_file = new_file
-    result = pco._3_merge_IC50()
+    result = pco.step_3_merge_IC50()
     if not result:
         step_error("merge IC50-Values for same Smiles")
         sys.exit(-1)
@@ -1197,7 +1154,7 @@ if __name__ == "__main__":
 #    new_file = _05.set_hERG_TL(cur_file,options.SD_tag,options.cutoff)
 #    if options.onefile: os.remove(cur_file)
 #    cur_file = new_file
-    result = pco._4_set_TL(options.cutoff)
+    result = pco.step_4_set_TL(options.cutoff)
     if not result:
         step_error("set Trafficlight for cutoff")
         sys.exit(-1)
@@ -1205,7 +1162,7 @@ if __name__ == "__main__":
 #    new_file = _06.remove_descriptors(cur_file,options.remove_descr)
 #    if options.onefile: os.remove(cur_file)
 #    cur_file = new_file
-    result = pco._5_remove_descriptors()
+    result = pco.step_5_remove_descriptors()
     if not result:
         step_error("remove descriptors")
         sys.exit(-1)
@@ -1213,7 +1170,7 @@ if __name__ == "__main__":
 #    new_file = _07.calc_descr(cur_file)
 #    if options.onefile: os.remove(cur_file)
 #    cur_file = new_file
-    result = pco._6_calc_descriptors()
+    result = pco.step_6_calc_descriptors()
     if not result:
         step_error("calculate Descriptors")
         sys.exit(-1)
@@ -1221,10 +1178,13 @@ if __name__ == "__main__":
 #    new_file = _08.train_models(cur_file)
 #    if options.onefile: os.remove(cur_file)
 #    cur_file = new_file
-    result = pco._7_train_models()
+    result = pco.step_7_train_models()
     if not result:
         step_error("Training of Models")
-        sys.exit(-1)    
+        sys.exit(-1)
+
+    pco.save_model_info("model_info.csv",mode="csv")
+    pco.save_model_info("model_info.html",mode="html")
 
     for i in range(len(pco.model)):
         filename = "%s_%dnm_model_%d.pkl" % (accession,options.cutoff,i)
@@ -1232,4 +1192,9 @@ if __name__ == "__main__":
         pco.save_model(filename,i)
         print "Model %d saved into File: %s" % (i,filename)
 	
+
+    for i in range(len(pco.model)):
+        act,inact = pco.predict(i)
+#        act,inact = pco2.predict(i)
+        print "Model %d active: %d\tinactive: %d" % (i,act,inact)
 #    print "File: %s" % cur_file
