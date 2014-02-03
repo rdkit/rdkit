@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2011 Rational Discovery LLC
+//  Copyright (C) 2003-2014 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3364,6 +3364,20 @@ void testGithub206(){
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+void testGithub210(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters when calling assignStereochemistry()" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="O[C@H](F)CC(F)(Cl)I";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_ChiralityPossible"));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int
 main(int argc, char *argv[])
@@ -3419,5 +3433,6 @@ main(int argc, char *argv[])
   testGithub12();
   testGithub45();
   testGithub206();
+  testGithub210();
   //testBug1719046();
 }

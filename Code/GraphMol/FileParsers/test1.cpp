@@ -3634,6 +3634,21 @@ void testGithub191()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub210(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters when calling assignStereochemistry()" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github210.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_ChiralityPossible"));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3705,6 +3720,7 @@ int main(int argc,char *argv[]){
   test3V3K();
   test2V3K();
   testGithub191();
+  testGithub210();
 
   return 0;
 }

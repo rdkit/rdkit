@@ -817,6 +817,9 @@ namespace RDKit{
           if((*atIt)->hasProp("_CIPCode")){
             (*atIt)->clearProp("_CIPCode");
           }
+          if((*atIt)->hasProp("_ChiralityPossible")){
+            (*atIt)->clearProp("_ChiralityPossible");
+          }
         }        
         for(ROMol::BondIterator bondIt=mol.beginBonds();
             bondIt!=mol.endBonds();

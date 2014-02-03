@@ -2256,7 +2256,7 @@ namespace RDKit{
           res=NULL;
           throw;
         }
-        MolOps::assignStereochemistry(*res,true);
+        MolOps::assignStereochemistry(*res,true,true,true);
       }
 
       if(res->hasProp("_NeedsQueryScan")){
