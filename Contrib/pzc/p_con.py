@@ -1,4 +1,5 @@
 # coding=utf-8
+# Copyright (c) 2014 Merck KGaA
 import os,re,gzip,json,requests,sys, optparse,csv
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -6,6 +7,7 @@ from rdkit.Chem import SDWriter
 from rdkit.Chem import Descriptors
 from rdkit.ML.Descriptors import MoleculeDescriptors
 from scipy import interp
+from scipy import stats
 from sklearn import cross_validation
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
@@ -18,8 +20,320 @@ from pickle import Unpickler
 import numpy as np
 import math
 from pylab import *
-import cohenskappa as irr
 from sklearn.metrics import make_scorer
+
+
+kappa_template = '''\
+%(kind)s Kappa Coefficient
+--------------------------------
+Kappa %(kappa)6.4f
+ASE %(std_kappa)6.4f
+%(alpha_ci)s%% Lower Conf Limit %(kappa_low)6.4f
+%(alpha_ci)s%% Upper Conf Limit %(kappa_upp)6.4f
+
+Test of H0: %(kind)s Kappa = 0
+
+ASE under H0 %(std_kappa0)6.4f
+Z %(z_value)6.4f
+One-sided Pr > Z %(pvalue_one_sided)6.4f
+Two-sided Pr > |Z| %(pvalue_two_sided)6.4f
+'''
+
+'''
+Weighted Kappa Coefficient
+--------------------------------
+Weighted Kappa 0.4701
+ASE 0.1457
+95% Lower Conf Limit 0.1845
+95% Upper Conf Limit 0.7558
+
+Test of H0: Weighted Kappa = 0
+
+ASE under H0 0.1426
+Z 3.2971
+One-sided Pr > Z 0.0005
+Two-sided Pr > |Z| 0.0010
+'''
+
+
+def int_ifclose(x, dec=1, width=4):
+    '''helper function for creating result string for int or float
+
+only dec=1 and width=4 is implemented
+
+Parameters
+----------
+x : int or float
+value to format
+dec : 1
+number of decimals to print if x is not an integer
+width : 4
+width of string
+
+Returns
+-------
+xint : int or float
+x is converted to int if it is within 1e-14 of an integer
+x_string : str
+x formatted as string, either '%4d' or '%4.1f'
+'''
+    xint = int(round(x))
+    if np.max(np.abs(xint - x)) < 1e-14:
+        return xint, '%4d' % xint
+    else:
+        return x, '%4.1f' % x
+
+
+class KappaResults(dict):
+
+    def __init__(self, **kwds):
+        self.update(kwds)
+        if not 'alpha' in self:
+            self['alpha'] = 0.025
+            self['alpha_ci'] = int_ifclose(100 - 0.025 * 200)[1]
+
+        self['std_kappa'] = np.sqrt(self['var_kappa'])
+        self['std_kappa0'] = np.sqrt(self['var_kappa0'])
+
+        self['z_value'] = self['kappa'] / self['std_kappa0']
+
+        self['pvalue_one_sided'] = stats.norm.sf(self['z_value'])
+        self['pvalue_two_sided'] = self['pvalue_one_sided'] * 2
+
+        delta = stats.norm.isf(self['alpha']) * self['std_kappa']
+        self['kappa_low'] = self['kappa'] - delta
+        self['kappa_upp'] = self['kappa'] + delta
+
+    def __str__(self):
+        return kappa_template % self
+
+
+def cohens_kappa(table, weights=None, return_results=True, wt=None):
+    '''Compute Cohen's kappa with variance and equal-zero test
+
+Parameters
+----------
+table : array_like, 2-Dim
+square array with results of two raters, one rater in rows, second
+rater in columns
+weights : array_like
+The interpretation of weights depends on the wt argument.
+If both are None, then the simple kappa is computed.
+see wt for the case when wt is not None
+If weights is two dimensional, then it is directly used as a weight
+matrix. For computing the variance of kappa, the maximum of the
+weights is assumed to be smaller or equal to one.
+TODO: fix conflicting definitions in the 2-Dim case for
+wt : None or string
+If wt and weights are None, then the simple kappa is computed.
+If wt is given, but weights is None, then the weights are set to
+be [0, 1, 2, ..., k].
+If weights is a one-dimensional array, then it is used to construct
+the weight matrix given the following options.
+
+wt in ['linear', 'ca' or None] : use linear weights, Cicchetti-Allison
+actual weights are linear in the score "weights" difference
+wt in ['quadratic', 'fc'] : use linear weights, Fleiss-Cohen
+actual weights are squared in the score "weights" difference
+wt = 'toeplitz' : weight matrix is constructed as a toeplitz matrix
+from the one dimensional weights.
+
+return_results : bool
+If True (default), then an instance of KappaResults is returned.
+If False, then only kappa is computed and returned.
+
+Returns
+-------
+results or kappa
+If return_results is True (default), then a results instance with all
+statistics is returned
+If return_results is False, then only kappa is calculated and returned.
+
+Notes
+-----
+There are two conflicting definitions of the weight matrix, Wikipedia
+versus SAS manual. However, the computation are invariant to rescaling
+of the weights matrix, so there is no difference in the results.
+
+Weights for 'linear' and 'quadratic' are interpreted as scores for the
+categories, the weights in the computation are based on the pairwise
+difference between the scores.
+Weights for 'toeplitz' are a interpreted as weighted distance. The distance
+only depends on how many levels apart two entries in the table are but
+not on the levels themselves.
+
+example:
+
+weights = '0, 1, 2, 3' and wt is either linear or toeplitz means that the
+weighting only depends on the simple distance of levels.
+
+weights = '0, 0, 1, 1' and wt = 'linear' means that the first two levels
+are zero distance apart and the same for the last two levels. This is
+the sampe as forming two aggregated levels by merging the first two and
+the last two levels, respectively.
+
+weights = [0, 1, 2, 3] and wt = 'quadratic' is the same as squaring these
+weights and using wt = 'toeplitz'.
+
+References
+----------
+Wikipedia
+SAS Manual
+
+'''
+    table = np.asarray(table, float) #avoid integer division
+    agree = np.diag(table).sum()
+    nobs = table.sum()
+    probs = table / nobs
+    freqs = probs #TODO: rename to use freqs instead of probs for observed
+    probs_diag = np.diag(probs)
+    freq_row = table.sum(1) / nobs
+    freq_col = table.sum(0) / nobs
+    prob_exp = freq_col * freq_row[:, None]
+    assert np.allclose(prob_exp.sum(), 1)
+    #print prob_exp.sum()
+    agree_exp = np.diag(prob_exp).sum() #need for kappa_max
+    if weights is None and wt is None:
+        kind = 'Simple'
+        kappa = (agree / nobs - agree_exp) / (1 - agree_exp)
+
+        if return_results:
+            #variance
+            term_a = probs_diag * (1 - (freq_row + freq_col) * (1 - kappa))**2
+            term_a = term_a.sum()
+            term_b = probs * (freq_col[:, None] + freq_row)**2
+            d_idx = np.arange(table.shape[0])
+            term_b[d_idx, d_idx] = 0 #set diagonal to zero
+            term_b = (1 - kappa)**2 * term_b.sum()
+            term_c = (kappa - agree_exp * (1-kappa))**2
+            var_kappa = (term_a + term_b - term_c) / (1 - agree_exp)**2 / nobs
+            #term_c = freq_col * freq_row[:, None] * (freq_col + freq_row[:,None])
+            term_c = freq_col * freq_row * (freq_col + freq_row)
+            var_kappa0 = (agree_exp + agree_exp**2 - term_c.sum())
+            var_kappa0 /= (1 - agree_exp)**2 * nobs
+
+    else:
+        if weights is None:
+            weights = np.arange(table.shape[0])
+        #weights follows the Wikipedia definition, not the SAS, which is 1 -
+        kind = 'Weighted'
+        weights = np.asarray(weights, float)
+        if weights.ndim == 1:
+            if wt in ['ca', 'linear', None]:
+                weights = np.abs(weights[:, None] - weights) / \
+                           (weights[-1] - weights[0])
+            elif wt in ['fc', 'quadratic']:
+                weights = (weights[:, None] - weights)**2 / \
+                           (weights[-1] - weights[0])**2
+            elif wt == 'toeplitz':
+                #assume toeplitz structure
+                from scipy.linalg import toeplitz
+                #weights = toeplitz(np.arange(table.shape[0]))
+                weights = toeplitz(weights)
+            else:
+                raise ValueError('wt option is not known')
+        else:
+            rows, cols = table.shape
+            if (table.shape != weights.shape):
+                raise ValueError('weights are not square')
+        #this is formula from Wikipedia
+        kappa = 1 - (weights * table).sum() / nobs / (weights * prob_exp).sum()
+        #TODO: add var_kappa for weighted version
+        if return_results:
+            var_kappa = np.nan
+            var_kappa0 = np.nan
+            #switch to SAS manual weights, problem if user specifies weights
+            #w is negative in some examples,
+            #but weights is scale invariant in examples and rough check of source
+            w = 1. - weights
+            w_row = (freq_col * w).sum(1)
+            w_col = (freq_row[:, None] * w).sum(0)
+            agree_wexp = (w * freq_col * freq_row[:, None]).sum()
+            term_a = freqs * (w - (w_col + w_row[:, None]) * (1 - kappa))**2
+            fac = 1. / ((1 - agree_wexp)**2 * nobs)
+            var_kappa = term_a.sum() - (kappa - agree_wexp * (1 - kappa))**2
+            var_kappa *= fac
+
+            freqse = freq_col * freq_row[:, None]
+            var_kappa0 = (freqse * (w - (w_col + w_row[:, None]))**2).sum()
+            var_kappa0 -= agree_wexp**2
+            var_kappa0 *= fac
+
+    kappa_max = (np.minimum(freq_row, freq_col).sum() - agree_exp) / \
+                (1 - agree_exp)
+
+    if return_results:
+        res = KappaResults( kind=kind,
+                    kappa=kappa,
+                    kappa_max=kappa_max,
+                    weights=weights,
+                    var_kappa=var_kappa,
+                    var_kappa0=var_kappa0
+                    )
+        return res
+    else:
+        return kappa
+
+def to_table(data, bins=None):
+    '''convert raw data with shape (subject, rater) to (rater1, rater2)
+
+    brings data into correct format for cohens_kappa
+
+    Parameters
+    ----------
+    data : array_like, 2-Dim
+        data containing category assignment with subjects in rows and raters
+        in columns.
+    bins : None, int or tuple of array_like
+        If None, then the data is converted to integer categories,
+        0,1,2,...,n_cat-1. Because of the relabeling only category levels
+        with non-zero counts are included.
+        If this is an integer, then the category levels in the data are already
+        assumed to be in integers, 0,1,2,...,n_cat-1. In this case, the
+        returned array may contain columns with zero count, if no subject
+        has been categorized with this level.
+        If bins are a tuple of two array_like, then the bins are directly used
+        by ``numpy.histogramdd``. This is useful if we want to merge categories.
+
+    Returns
+    -------
+    arr : nd_array, (n_cat, n_cat)
+        Contingency table that contains counts of category level with rater1
+        in rows and rater2 in columns.
+
+    Notes
+    -----
+    no NaN handling, delete rows with missing values
+
+    This works also for more than two raters. In that case the dimension of
+    the resulting contingency table is the same as the number of raters
+    instead of 2-dimensional.
+
+    '''
+
+    data = np.asarray(data)
+    n_rows, n_cols = data.shape
+    if bins is None:
+        #I could add int conversion (reverse_index) to np.unique
+        cat_uni, cat_int = np.unique(data.ravel(), return_inverse=True)
+        n_cat = len(cat_uni)
+        data_ = cat_int.reshape(data.shape)
+        bins_ = np.arange(n_cat+1) - 0.5
+        #alternative implementation with double loop
+        #tt = np.asarray([[(x == [i,j]).all(1).sum() for j in cat_uni]
+        #                 for i in cat_uni] )
+        #other altervative: unique rows and bincount
+    elif np.isscalar(bins):
+        bins_ = np.arange(bins+1) - 0.5
+        data_ = data
+    else:
+        bins_ = bins
+        data_ = data
+
+
+    tt = np.histogramdd(data_, (bins_,)*n_cols)
+
+    return tt[0], bins_
 
 
 
@@ -108,9 +422,7 @@ class p_con:
             bioactivity['Smiles']=my_smiles
             self.dr[count] = bioactivity
             count+=1
-#            if count >5000: break
 
-#       print "\n%d" % len(self.dr)
         SDtags = self.dr[0].keys()
         cpd_counter=0
         self.sd_entries = []
@@ -122,7 +434,6 @@ class p_con:
             cpd_counter += 1
             for tag in SDtags: cpd.SetProp(str(tag),str(entry[tag]))
             self.sd_entries.append(cpd)
-#        self.request_data["cmpd_count"] = len(self.sd_entries)
         return True
 
 
@@ -179,20 +490,13 @@ class p_con:
 	    return IC50_avg
 
 	def get_stddev_IC50(mol_list):
-#            print "laenge",len(mol_list)
 	    IC50_list = []
 	    for mol in mol_list:
 		try:
-#                    print mol.GetProp("value")
-#                    print round(float(mol.GetProp("value")),2)
 		    IC50_list.append(round(float(mol.GetProp("value")),2))
-#                    print "append done"
 		except:
 		    print "no IC50 reported",mol.GetProp("_Name")
-#            print "stddev?"
-#            print len(IC50_list),IC50_list
 	    IC50_stddev = np.std(IC50_list,ddof=1)
-#            print "return"
 	    return IC50_stddev,IC50_list
 
         result = []
@@ -211,16 +515,11 @@ class p_con:
 		IC50_dict[cansmi].append(cpd)
 	    except:
 		IC50_dict[cansmi] = [cpd]
-#       print "foo1"
         for entry in IC50_dict:
-#            print entry
             IC50_avg = str(get_mean_IC50(IC50_dict[entry]))
-#            print 2
             IC50_stddev,IC50_list = get_stddev_IC50(IC50_dict[entry])
-#            print 3
             IC50_dict[entry][0].SetProp("value_stddev",str(IC50_stddev))
             IC50_dict[entry][0].SetProp("value",IC50_avg)
-#            print IC50_avg,IC50_stddev
             minimumvalue = float(IC50_avg)-3*float(IC50_stddev)
 	    maximumvalue = float(IC50_avg)+3*float(IC50_stddev)
             
@@ -244,7 +543,6 @@ class p_con:
     def step_4_set_TL(self,threshold,ic50_tag="value"):
         """set Property "TL"(TrafficLight) for each compound:
         if ic50_tag (default:"value") > threshold: TL = 0, else 1"""
-#        print ic50_tag
         result = []
         i,j = 0,0
         for cpd in self.sd_entries:
@@ -254,12 +552,10 @@ class p_con:
             else:
                 cpd.SetProp('TL','1')
                 j += 1
-            #print "Name: %s, TL: %s" % (cpd.GetProp("_Name"),cpd.GetProp("TL"))
             result.append(cpd)
 
         self.sd_entries = result
         if self.verbous: print "## act: %d, inact: %d" % (j,i)
-#        sys.exit(0)
         return True
 
 
@@ -270,25 +566,10 @@ class p_con:
         result = []
 
         for mol in self.sd_entries:
-#            properties = mol.GetPropNames(includePrivate=True)
             properties = mol.GetPropNames()
-#            print properties
             for tag in properties:
                 if tag in sd_tags: mol.ClearProp(tag)
-#                    print "remove tag: %s" % tag
-#                else:
-#                    print "remain tag: %s" % tag
-#                print tag
-#            sys.exit(-1)
-#            for tag in sd_tags
-#            for tag in sd_tags:
-#                if mol.HasProp(tag):
-#                    mol.ClearProp(tag)
             result.append(mol)
-#            print mol.__dict__
- #           for tag in mol.GetPropNames():
-#                print "%s: %s" % (tag,str(mol.GetProp(tag)))
-#            sys.exit(-1)
 
         self.sd_entries = result
         return True
@@ -308,7 +589,6 @@ class p_con:
         """train models according to trafficlight using sklearn.ensamble.RandomForestClassifier
         self.model contains up to 10 models afterwards, use save_model_info(type) to create csv or html
         containing data for each model"""
-#        title_line = ["accuracy","MCC","precision","recall","f1","auc","assaytype","threshold","randomseed"]
 	title_line = ["#","accuracy","MCC","precision","recall","f1","auc","kappa","prevalence","bias","pickel-File"]
         self.csv_text= [title_line]
 
@@ -341,89 +621,52 @@ class p_con:
 	dataDescrs_array = np.asarray(property_list_list)
 	dataActs_array   = np.array(TL_list)
 
-#       print dataActs_array
-#        self.model = []
 	for randomseedcounter in range(1,11):
-            if self.verbous: 
-                print "################################"
-                print "try to calculate seed %d" % randomseedcounter
-#            print dataDescrs_array
-#            print dataActs_array
-            X_train,X_test,y_train,y_test = cross_validation.train_test_split(dataDescrs_array,dataActs_array,test_size=.4,random_state=randomseedcounter)
-            try:
-#                clf_RF     = RandomForestClassifier(compute_importances=True,n_estimators=100,random_state=randomseedcounter)
+                if self.verbous: 
+                    print "################################"
+                    print "try to calculate seed %d" % randomseedcounter
+                X_train,X_test,y_train,y_test = cross_validation.train_test_split(dataDescrs_array,dataActs_array,test_size=.4,random_state=randomseedcounter)
+#            try:
                 clf_RF     = RandomForestClassifier(n_estimators=100,random_state=randomseedcounter)
                 clf_RF     = clf_RF.fit(X_train,y_train)
 
-#                print "x",X_train,"y",y_train
-
-#            sys.exit(0)
-
                 cv_counter = 5
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.zero_one_score)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.accuracy_score)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,scoring='accuracy')
 
-
-## TEST
                 scores = cross_validation.cross_val_score( clf_RF, X_test,y_test, cv=cv_counter,scoring='accuracy')
-##
 
                 accuracy_CV = round(scores.mean(),3)
                 accuracy_std_CV = round(scores.std(),3)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.matthews_corrcoef)
-#                def calcMCC(estimator,X,y):
-#                    return metrics.matthews_corrcoef(X,y)
    
                 calcMCC = make_scorer(metrics.matthews_corrcoef,greater_is_better=True,needs_threshold=False)
-
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,scoring=calcMCC) 
-## TEST
                 scores = cross_validation.cross_val_score( clf_RF, X_test,y_test, cv=cv_counter,scoring=calcMCC) 
-## 
+
                 MCC_CV = round(scores.mean(),3)
                 MCC_std_CV = round(scores.std(),3)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.f1_score)
 
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,scoring='f1')
-## TEST
                 scores = cross_validation.cross_val_score( clf_RF, X_test,y_test, cv=cv_counter,scoring='f1')
-##
                 scores_rounded = [round(x,3) for x in scores]
                 f1_CV = round(scores.mean(),3)
                 f1_std_CV = round(scores.std(),3)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.precision_score)
 
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,scoring='precision')
-## TEST
                 scores = cross_validation.cross_val_score( clf_RF, X_test,y_test, cv=cv_counter,scoring='precision')
-##
                 scores_rounded = [round(x,3) for x in scores]
                 precision_CV = round(scores.mean(),3)
                 precision_std_CV = round(scores.std(),3)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.recall_score)
 
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,scoring='recall')
-## TEST
                 scores = cross_validation.cross_val_score( clf_RF, X_test,y_test, cv=cv_counter,scoring='recall')
-##
                 scores_rounded = [round(x,3) for x in scores]
                 recall_CV = round(scores.mean(),3)
                 recall_std_CV = round(scores.std(),3)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.auc_score)
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,score_func=metrics.roc_auc_score)
 
-#                scores = cross_validation.cross_val_score( clf_RF, X_train,y_train, cv=cv_counter,scoring='roc_auc')
-## TEST
                 scores = cross_validation.cross_val_score( clf_RF, X_test,y_test, cv=cv_counter,scoring='roc_auc')
-##
                 scores_rounded = [round(x,3) for x in scores]
                 auc_CV = round(scores.mean(),3)
                 auc_std_CV = round(scores.std(),3)
 
                 y_predict = clf_RF.predict(X_test)
                 conf_matrix = metrics.confusion_matrix(y_test,y_predict)
-                coh_kappa = irr.cohens_kappa(conf_matrix)
+#                coh_kappa = cohenskappa.cohens_kappa(conf_matrix)
+                coh_kappa = cohens_kappa(conf_matrix)
                 kappa = round(coh_kappa['kappa'],3)
                 kappa_stdev = round(coh_kappa['std_kappa'],3)
 	    
@@ -454,17 +697,6 @@ class p_con:
                     print "false\t%d\t%d" % (fp2,fn2)
                     print conf_matrix2                    
 
-#                model_file = "clf_RF_%s_%s.pkl" % (inF,randomseedcounter) 
-
-
-                # result_string_cut = [str(accuracy_CV)+"_"+str(accuracy_std_CV),
-                #                      str(MCC_CV)+"_"+str(MCC_std_CV),
-                #                      str(precision_CV)+"_"+str(precision_std_CV),
-                #                      str(recall_CV)+"_"+str(recall_std_CV),
-                #                      str(f1_CV)+"_"+str(f1_std_CV),
-                #                      str(auc_CV)+"_"+str(auc_std_CV),
-                #                      dir_string,randomseedcounter]
-
                 result_string_cut = [randomseedcounter,
                                      str(accuracy_CV)+"_"+str(accuracy_std_CV),
                                      str(MCC_CV)+"_"+str(MCC_std_CV),
@@ -479,13 +711,11 @@ class p_con:
                 self.model.append(clf_RF)
                 self.csv_text.append(result_string_cut)
 
-#                print randomseedcounter,auc_CV
-            except:
-                print "got %d models" % len(self.model)
-#                if len(self.model)>0: return True
-#                else: return False
-#                sys.exit(0)
-                break
+#            except Exception as e:
+#                print "got %d models" % len(self.model)
+#                print e
+#                sys.exit(-1)
+#                break
         return True if len(self.model)>0 else False
 
     def save_model_info(self,outfile,mode="html"):
@@ -500,9 +730,6 @@ class p_con:
         elif mode=="html":
             if not outfile.endswith(".html"): outfile += ".html"
             def lines2list(lines):
-#                print lines
-#                data = [l.rstrip().split(";") for l in lines]
-#                return data
                 return lines
 
             def list2html(data,act,inact):
@@ -861,11 +1088,8 @@ table th[class*="col-"] {
 
 
             def findBestWorst(data):
-#                recall = [float(x[4].split("_")[0]) for x in data[1:]]
                 auc = [float(x[6].split("_")[0]) for x in data[1:]]
                 max_index,min_index = auc.index(max(auc)),auc.index(min(auc))
-#                print auc
-#                print max_index,min_index
                 return (max_index,min_index)
 
 
@@ -986,8 +1210,6 @@ table th[class*="col-"] {
         if len(self.model)<=model_number:
             sys.stderr.write("\nModel-Number %d doesn't exist, there are just %d Models\n" % (model_number,len(self.model)))
             sys.exit(-1)
- #       property_list_list = []
-#        TL_list = []
         descriptors = []
         active,inactive = 0,0
 
@@ -996,29 +1218,19 @@ table th[class*="col-"] {
         calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descriptors)
 
         clf_RF = self.model[model_number]
-#        clf_RF.set_params(random_state=0)
-
 
 
         for sample in self.sd_entries:
-#            sd_tags = ['activity__comment','alogp','assay__chemblid','assay__description','assay__type','bioactivity__type','activity_comment','assay_chemblid','assay_description','assay_type','bioactivity_type','cansmirdkit','ingredient__cmpd__chemblid','ingredient_cmpd_chemblid','knownDrug','medChemFriendly','molecularFormula','name__in__reference','name_in_reference','numRo5Violations','operator','organism','parent__cmpd__chemblid','parent_cmpd_chemblid','passesRuleOfThree','preferredCompoundName','reference','rotatableBonds','smiles','Smiles','stdInChiKey','synonyms','target__chemblid','target_chemblid','target__confidence','target__name','target_confidence','target_name','units','value_avg','value_stddev'] + ['value']
-#            for tag in sample.GetPropNames():
-#                if tag in sd_tags: sample.ClearProp(tag)
-            
             use = False
             try:
                 pattern = calculator.CalcDescriptors(sample)
-#                print pattern
                 use = True
             except e:
                 sys.stderr.write("Error computing descriptors for %s, skip" % sample)
             
             if use:
- #               property_list_list.append(pattern)
-#                dataDescrs_array = np.asarray(property_list_list)
                 dataDescrs_array = np.asarray(pattern)
                 y_predict  = int(clf_RF.predict(dataDescrs_array)[0])
-#                print clf_RF.predict(dataDescrs_array)
                 if y_predict==0: inactive += 1
                 if y_predict==1: active += 1
                 sample.SetProp("TL_prediction",str(y_predict))
@@ -1028,15 +1240,8 @@ table th[class*="col-"] {
 if __name__ == "__main__":
     def step_error(step):
         sys.stderr.write("Error in Step: %s" % step)
-#    d = {"a":1,"b":2,"c":3}
-#    for key in d:
-#        print "key: %s" % key
 
-#    _main_()
-
-
-
-    usage = "usage: python master.py --accession=<Acc_ID> --dupl/--uniq [--rof] [--combine=<file1>,<file2>] [--IC50=<IC50_tag>] [--cutoff=<value>] [--remove_descr=<txt_file>] [--proxy=<https://user:pass@proxy.de:portnumber] [--verbous] [--check_models=<model.pkl>]"
+    usage = "usage: python master.py [--accession=<Acc_ID>] [--sdf=<sdf-File>] --dupl/--uniq [--rof] [--combine=<file1>,<file2>] [--IC50=<IC50_tag>] [--cutoff=<value>] [--remove_descr=<txt_file>] [--proxy=<https://user:pass@proxy.de:portnumber] [--verbous] [--check_models=<model.pkl>]"
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('--accession',action='store',type='string',dest='accession',help="Accession ID of Protein (hint: P43088 is Vitamin_D_Receptor with ~200 compounds)",default='')
     parser.add_option('--rof',action='store_true',dest='onefile',help='remove obsolete Files',default=False)
@@ -1053,10 +1258,6 @@ if __name__ == "__main__":
 
     (options,args) = parser.parse_args()
     combineItems = options.combine.split(',')
-#    if len(sys.argv) < 2:
-#        print usage
-#        print '\"python master.py -h\" for help'
-#        sys.exit(-1)
 
     if   len(combineItems) == 1 and len(combineItems[0])>0:
         print 'need 2 files to combine'
@@ -1075,11 +1276,13 @@ if __name__ == "__main__":
 
     if options.accession == '' and options.sdf == '':
         print "please offer Accession-Number or SDF-File"
+        print "-h for help"
         sys.exit(-1)
 	
 	
     if options.dupl==False and options.uniq==False:
         print "Please select uniq or dupl -h for help"
+        print "-h for help"
         sys.exit(-1)
 
 
@@ -1101,44 +1304,22 @@ if __name__ == "__main__":
             sys.exit(-1)
 
 
-#    cur_file = _00.QueryChembl(accession)
-
-
 
     result = pco.step_1_keeplargestfrag()
     if not result:
         step_error("keep largest Fragment")
         sys.exit(-1)
 
-#    new_file = _01.processData(cur_file)
-#    if options.onefile: os.remove(cur_file)
-#    cur_file = new_file
-
-    # if (options.dupl and not options.uniq) or (not options.dupl and options.uniq):
-    #     new_file = _02.remove_dupl(cur_file)
-    #     if options.onefile: os.remove(cur_file)
-    #     if options.dupl:
-    #         if options.onefile: os.remove(new_file[0])
-    #         cur_file = new_file[1]
-    #     if options.uniq:
-    #         if options.onefile: os.remove(new_file[1])
-    #         cur_file = new_file[0]
     if options.uniq:
         result = pco.step_2_remove_dupl()
         if not result:
             step_error("remove duplicates")
             sys.exit(-1)
 
-
-
-#    new_file = _03.merge_IC50(cur_file)
-#    if options.onefile: os.remove(cur_file)
-#    cur_file = new_file
     result = pco.step_3_merge_IC50()
     if not result:
         step_error("merge IC50-Values for same Smiles")
         sys.exit(-1)
-
 
     if options.modelfile != '':
         result = pco.load_models(options.modelfile.split(","))
@@ -1149,35 +1330,23 @@ if __name__ == "__main__":
         for i in range(len(pco.model)):
             act,inact = pco.predict(i)
             print "%d\t%d\t%d" % (i,act,inact)
-
         sys.exit(0)
-#    new_file = _05.set_hERG_TL(cur_file,options.SD_tag,options.cutoff)
-#    if options.onefile: os.remove(cur_file)
-#    cur_file = new_file
+
     result = pco.step_4_set_TL(options.cutoff)
     if not result:
         step_error("set Trafficlight for cutoff")
         sys.exit(-1)
 
-#    new_file = _06.remove_descriptors(cur_file,options.remove_descr)
-#    if options.onefile: os.remove(cur_file)
-#    cur_file = new_file
     result = pco.step_5_remove_descriptors()
     if not result:
         step_error("remove descriptors")
         sys.exit(-1)
 
-#    new_file = _07.calc_descr(cur_file)
-#    if options.onefile: os.remove(cur_file)
-#    cur_file = new_file
     result = pco.step_6_calc_descriptors()
     if not result:
         step_error("calculate Descriptors")
         sys.exit(-1)
 
-#    new_file = _08.train_models(cur_file)
-#    if options.onefile: os.remove(cur_file)
-#    cur_file = new_file
     result = pco.step_7_train_models()
     if not result:
         step_error("Training of Models")
@@ -1188,13 +1357,10 @@ if __name__ == "__main__":
 
     for i in range(len(pco.model)):
         filename = "%s_%dnm_model_%d.pkl" % (accession,options.cutoff,i)
-#        pco.save_model("model%d.pkl" % i,i)
         pco.save_model(filename,i)
         print "Model %d saved into File: %s" % (i,filename)
 	
 
     for i in range(len(pco.model)):
         act,inact = pco.predict(i)
-#        act,inact = pco2.predict(i)
         print "Model %d active: %d\tinactive: %d" % (i,act,inact)
-#    print "File: %s" % cur_file
