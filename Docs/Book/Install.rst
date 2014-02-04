@@ -313,7 +313,7 @@ Recommended extras
 Installation of RDKit binaries
 ******************************
 
-  * Get the appropriate windows binary build from: <http://rdkit.googlecode.com/files>_
+  * Get the appropriate windows binary build from: <https://sourceforge.net/projects/rdkit/files/rdkit/>_
   * Extract the zip file somewhere without a space in the name, i.e. ``c:/``
   * The rest of this will assume that the installation is in ``c:/RDKit_2012_12_1``
   * Set the following environment variables:
