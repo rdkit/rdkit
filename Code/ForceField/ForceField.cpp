@@ -73,7 +73,7 @@ namespace ForceFields {
     d_numPoints=0;
     d_positions.clear();
     d_contribs.clear();
-    if(dp_distMat) delete [] dp_distMat;
+    delete [] dp_distMat;
     dp_distMat=0;
   }
 
@@ -140,7 +140,7 @@ namespace ForceFields {
   void ForceField::initialize(){
     // clean up if we have used this already:
     df_init=false;
-    if(dp_distMat) delete [] dp_distMat;
+    delete [] dp_distMat;
     dp_distMat=0;
     
     d_numPoints = d_positions.size();

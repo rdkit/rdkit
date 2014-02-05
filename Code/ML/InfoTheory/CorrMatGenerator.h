@@ -39,9 +39,7 @@ namespace RDInfoTheory {
     };
 
     ~BitCorrMatGenerator() {
-      if (dp_corrMat) {
-        delete [] dp_corrMat;
-      }
+      delete [] dp_corrMat;
     }
 
     void initGenerator() {
