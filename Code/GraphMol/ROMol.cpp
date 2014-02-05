@@ -344,8 +344,7 @@ namespace RDKit{
     d_graph[which].reset(atom_p);
     atom_p->setIdx(which);
     if(updateLabel){
-      if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
-      setAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
+      replaceAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
     }
     for (ConformerIterator cfi = this->beginConformers();
 	 cfi != this->endConformers(); ++cfi) {

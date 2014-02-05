@@ -229,6 +229,16 @@ namespace RDKit{
     void setAtomBookmark(ATOM_SPTR at,int mark) {d_atomBookmarks[mark].push_back(at.get());};
     //! \overload
     void setAtomBookmark(Atom *at,int mark) {d_atomBookmarks[mark].push_back(at);};
+    //! associates an Atom pointer with a bookmark
+    void replaceAtomBookmark(ATOM_SPTR at,int mark) {
+      d_atomBookmarks[mark].clear();
+      d_atomBookmarks[mark].push_back(at.get());
+    };
+    //! \overload
+    void replaceAtomBookmark(Atom *at,int mark) {
+      d_atomBookmarks[mark].clear();
+        d_atomBookmarks[mark].push_back(at);
+    };
     //! returns the first Atom associated with the \c bookmark provided
     Atom *getAtomWithBookmark(int mark);
     //! returns all Atoms associated with the \c bookmark provided
