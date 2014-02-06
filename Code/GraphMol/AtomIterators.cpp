@@ -163,7 +163,8 @@ namespace RDKit{
 
   template <class Atom_, class Mol_>
   HeteroatomIterator_<Atom_,Mol_>::~HeteroatomIterator_() {
-    if (_qA) delete _qA;
+    delete _qA;
+    _qA=NULL;
   }
 
   template <class Atom_, class Mol_>
@@ -359,7 +360,8 @@ namespace RDKit{
   };
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_>::~QueryAtomIterator_() {
-    if(_qA) delete _qA;
+    delete _qA;
+    _qA=NULL;
   }
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_>::QueryAtomIterator_(const QueryAtomIterator_<Atom_,Mol_> &other){
@@ -379,7 +381,7 @@ namespace RDKit{
       _mol = other._mol;
       _pos = other._pos;
       _end = other._end;
-      if(_qA) delete _qA;
+      delete _qA;
       if(other._qA)
         _qA = static_cast<QueryAtom *>(other._qA->copy());
       else

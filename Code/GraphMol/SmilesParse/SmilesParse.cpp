@@ -154,7 +154,7 @@ namespace RDKit{
       res = 0;
     }
     BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
-      if(molPtr) delete molPtr;
+      delete molPtr;
     }
 
     return res;

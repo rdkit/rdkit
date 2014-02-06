@@ -815,9 +815,7 @@ namespace RDKit {
             if (flag) {
               pairs[2] = pairs[3];
               pairsRMSD[0] = pairsRMSD[1];
-              if (bestSDM[2]) {
-                delete bestSDM[2];
-              }
+              delete bestSDM[2];
               bestSDM[2] = new SDM();
               *(bestSDM[2]) = progressSDM;
               MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
@@ -829,9 +827,7 @@ namespace RDKit {
           if ((score[2] - score[1]) > O3_SCORE_THRESHOLD) {
             pairs[1] = pairs[2];
             score[1] = score[2];
-            if (bestSDM[1]) {
-              delete bestSDM[1];
-            }
+            delete bestSDM[1];
             bestSDM[1] = new SDM();
             *(bestSDM[1]) = *(bestSDM[2]);
           }
@@ -839,18 +835,14 @@ namespace RDKit {
         if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
           pairs[0] = pairs[1];
           score[0] = score[1];
-          if (bestSDM[0]) {
-            delete bestSDM[0];
-          }
+          delete bestSDM[0];
           bestSDM[0] = new SDM();
           *(bestSDM[0]) = *(bestSDM[1]);
         }
       }
       if ((pairs[0] < 3) && (startSDM.size() >= 3)) {
         pairs[0] = startSDM.size();
-        if (bestSDM[0]) {
-          delete bestSDM[0];
-        }
+        delete bestSDM[0];
         bestSDM[0] = new SDM();
         *(bestSDM[0]) = startSDM;
         score[0] = bestSDM[0]->scoreAlignment(scoringFunc, data);
@@ -862,9 +854,7 @@ namespace RDKit {
       d_o3aWeights = o3aWeights;
       d_o3aScore = score[0];
       for (i = 0; i < 3; ++i) {
-        if (bestSDM[i]) {
-          delete bestSDM[i];
-        }
+        delete bestSDM[i];
       }
       if (!extLAP) {
         delete lap;
@@ -930,9 +920,7 @@ namespace RDKit {
             reflect, maxIters, accuracy, lap, prbHist, refHist);
           score[1] = o3a->score();
           if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
-            if (bestO3A) {
-              delete bestO3A;
-            }
+            delete bestO3A;
             bestO3A = o3a;
             score[0] = score[1];
           }
@@ -1001,9 +989,7 @@ namespace RDKit {
             refHist);
           score[1] = o3a->score();
           if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
-            if (bestO3A) {
-              delete bestO3A;
-            }
+            delete bestO3A;
             bestO3A = o3a;
             score[0] = score[1];
           }
@@ -1060,9 +1046,7 @@ namespace RDKit {
           lap, prbHist, refHist);
         score[1] = o3a->score();
         if ((score[1] - score[0]) > O3_SCORE_THRESHOLD) {
-          if (bestO3A) {
-            delete bestO3A;
-          }
+          delete bestO3A;
           bestO3A = o3a;
           score[0] = score[1];
         }

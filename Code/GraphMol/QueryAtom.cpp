@@ -14,10 +14,8 @@
 namespace RDKit{
 
 QueryAtom::~QueryAtom(){
-  if( dp_query ){
-    delete dp_query;
-    dp_query=0;
-  }
+  delete dp_query;
+  dp_query=NULL;
 };
 
 Atom *QueryAtom::copy() const {

@@ -752,7 +752,7 @@ namespace RDKit {
 
       RINGINVAR_SET invars;
 
-      int nats = mol.getNumAtoms();
+      unsigned int nats = mol.getNumAtoms();
       boost::dynamic_bitset<> activeAtoms(nats);
       activeAtoms.set();
       int nbnds = mol.getNumBonds();
@@ -769,7 +769,7 @@ namespace RDKit {
       // find the number of fragments in the molecule - we will loop over them
       VECT_INT_VECT frags;
       INT_VECT curFrag;
-      int nfrags = getMolFrags(mol, frags);
+      unsigned int nfrags = getMolFrags(mol, frags);
       for (unsigned int fi = 0; fi < nfrags; fi++) { // loop over the fragments in a molecule
         VECT_INT_VECT fragRes;
         curFrag = frags[fi];
@@ -856,7 +856,7 @@ namespace RDKit {
         } // done finding rings in this fragement
 
         // calculate the cyclomatic number for the fragment:
-        int nbnds=0;
+        unsigned int nbnds=0;
         for(ROMol::ConstBondIterator bndIt=mol.beginBonds();
             bndIt!=mol.endBonds();++bndIt){
           if(std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getBeginAtomIdx())!=curFrag.end() &&
@@ -874,7 +874,7 @@ namespace RDKit {
         }
 #endif
         int nexpt = (nbnds - curFrag.size()+1);
-        int ssiz = fragRes.size();
+        unsigned int ssiz = fragRes.size();
 
         // first check that we got at least the number of expected rings
         if(ssiz<nexpt){
@@ -1081,7 +1081,7 @@ namespace RDKit {
         mol.getRingInfo()->initialize();
       }
 
-      int nats = mol.getNumAtoms();
+      unsigned int nats = mol.getNumAtoms();
 
       INT_VECT atomColors(nats,0);
 

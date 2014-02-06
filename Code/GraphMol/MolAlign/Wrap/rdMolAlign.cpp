@@ -83,15 +83,10 @@ namespace RDKit {
     std::vector<unsigned int> *aIds = _translateIds(atomIds);
     std::vector<unsigned int> *cIds = _translateIds(confIds);
     MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters);
-    if (wtsVec) {
-      delete wtsVec;
-    }
-    if (aIds) {
-      delete aIds;
-    }
-    if (cIds) {
-      delete cIds;
-    }
+
+    delete wtsVec;
+    delete aIds;
+    delete cIds;
   }
     
   PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
@@ -136,12 +131,8 @@ namespace RDKit {
     RDGeom::Transform3D trans;
     double rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
                                                   wtsVec, reflect, maxIters);
-    if (aMap) {
-      delete aMap;
-    } 
-    if (wtsVec) {
-      delete wtsVec;
-    }
+    delete aMap;
+    delete wtsVec;
 
     return generateRmsdTransPyTuple(rmsd, trans);
   }
@@ -166,12 +157,9 @@ namespace RDKit {
     }
     double rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, 
                                      wtsVec, reflect, maxIters);
-    if (aMap) {
-      delete aMap;
-    } 
-    if (wtsVec) {
-      delete wtsVec;
-    }
+    delete aMap;
+    delete wtsVec;
+
     return rmsd;
   }
   

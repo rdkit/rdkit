@@ -70,9 +70,8 @@ namespace RDGeom {
 
 
   UniformGrid3D::~UniformGrid3D() {
-    if (dp_storage) {
-      delete dp_storage;
-    }
+    delete dp_storage;
+    dp_storage=NULL;
   }
 
   int UniformGrid3D::getGridIndex(unsigned int xi, unsigned int yi, unsigned int zi) const {
@@ -356,7 +355,7 @@ namespace RDGeom {
     streamRead(ss,pklSz);
     char *buff = new char[pklSz];
     ss.read(buff,pklSz*sizeof(char));
-    if(dp_storage) delete dp_storage;
+    delete dp_storage;
     dp_storage = new RDKit::DiscreteValueVect(buff,pklSz);
     delete [] buff;
   }

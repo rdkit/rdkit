@@ -295,7 +295,7 @@ int Atom::calcImplicitValence(bool strict) {
 
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
+  int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   if (dv==-1) {
     d_implicitValence = 0;
     return 0;

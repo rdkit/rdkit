@@ -130,13 +130,14 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
 
   void ExplicitBitVect::_initForSize(unsigned int size) {
     d_size = size;
-    if(dp_bits) delete dp_bits;
+    delete dp_bits;
     dp_bits = new boost::dynamic_bitset<>(size);
     d_numOnBits=0;
   };
 
   ExplicitBitVect::~ExplicitBitVect() {
-    if(dp_bits) delete dp_bits;
+    delete dp_bits;
+    dp_bits=NULL;
   };
 
 std::string

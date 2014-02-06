@@ -216,10 +216,10 @@ namespace RDKit{
     std::string res=MolFragmentToSmiles(mol,*avect,bvect,asymbols,bsymbols,
                                         doIsomericSmiles,doKekule,rootedAtAtom,
                                         canonical,allBondsExplicit);
-    if(avect) delete avect;
-    if(bvect) delete bvect;
-    if(asymbols) delete asymbols;
-    if(bsymbols) delete bsymbols;
+    delete avect;
+    delete bvect;
+    delete asymbols;
+    delete bsymbols;
     return res;
   }
 

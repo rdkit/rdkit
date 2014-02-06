@@ -237,7 +237,7 @@ namespace RDKit{
     //! \overload
     void replaceAtomBookmark(Atom *at,int mark) {
       d_atomBookmarks[mark].clear();
-        d_atomBookmarks[mark].push_back(at);
+      d_atomBookmarks[mark].push_back(at);
     };
     //! returns the first Atom associated with the \c bookmark provided
     Atom *getAtomWithBookmark(int mark);

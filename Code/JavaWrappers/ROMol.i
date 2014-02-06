@@ -73,6 +73,7 @@
 %ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
 %ignore RDKit::ROMol::setBondBookmark(Bond *,int);
 %ignore RDKit::ROMol::clearBondBookmark(int, const Bond *);
+%ignore RDKit::ROMol::replaceAtomBookmark(Atom *,int);
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
 %ignore RDKit::ROMol::clearProp(std::string const) const ;
 %ignore RDKit::ROMol::getAtomWithIdx(unsigned int) const ;

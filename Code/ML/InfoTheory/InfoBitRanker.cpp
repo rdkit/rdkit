@@ -48,9 +48,7 @@ namespace RDInfoTheory {
   }
 
   void InfoBitRanker::setMaskBits(RDKit::INT_VECT &maskBits) {
-    if (dp_maskBits) {
-      delete dp_maskBits;
-    }
+    delete dp_maskBits;
     dp_maskBits = new ExplicitBitVect(d_dims);
     for (RDKit::INT_VECT_CI bi = maskBits.begin();
          bi != maskBits.end(); ++bi) {
@@ -222,12 +220,10 @@ namespace RDInfoTheory {
     //   bitId, infogain, 1 additional column for number of hits for each class
     //double *res = new double[num*(2+d_classes)];
     
-    if (dp_topBits) {
-      delete [] dp_topBits;
-    }
     d_top = num;
     int ncols = 2+d_classes;
     
+    delete [] dp_topBits;
     dp_topBits = new double[num*ncols];
     
     int offset, bid;

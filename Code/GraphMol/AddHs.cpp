@@ -489,7 +489,7 @@ namespace RDKit{
       try{
         removeHs(*res,implicitOnly,updateExplicitCount,sanitize);
       } catch (MolSanitizeException &se){
-        if(res) delete res;
+        delete res;
         throw se;
       }
       return static_cast<ROMol *>(res);
