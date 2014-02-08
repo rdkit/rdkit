@@ -53,11 +53,6 @@
 using namespace std;
 using namespace RDKit;
 
-const unsigned int SSS_FP_SIZE=2048;
-const unsigned int LAYERED_FP_SIZE=1024;
-const unsigned int MORGAN_FP_SIZE=512;
-const unsigned int HASHED_TORSION_FP_SIZE=1024;
-const unsigned int HASHED_PAIR_FP_SIZE=2048;
 class ByteA : public std::string {
 public:
   ByteA() : string() {};
@@ -347,7 +342,7 @@ makeMolSign(CROMol data) {
   bytea                   *ret = NULL;
 
   try {
-    res = RDKit::PatternFingerprintMol(*mol,SSS_FP_SIZE);
+    res = RDKit::PatternFingerprintMol(*mol,getSubstructFpSize());
     //res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
 
     if(res){
@@ -1104,7 +1099,7 @@ makeLayeredBFP(CROMol data) {
   ExplicitBitVect *res=NULL;
 
   try {
-    res = RDKit::LayeredFingerprintMol(*mol,0xFFFFFFFF,1,7,LAYERED_FP_SIZE);
+    res = RDKit::LayeredFingerprintMol(*mol,0xFFFFFFFF,1,7,getLayeredFpSize());
   } catch (...) {
     elog(ERROR, "makeLayeredBFP: Unknown exception");
     if(res) delete res;
@@ -1125,7 +1120,7 @@ makeRDKitBFP(CROMol data) {
   ExplicitBitVect *res=NULL;
 
   try {
-    res = RDKit::RDKFingerprintMol(*mol,1,6,LAYERED_FP_SIZE,2);
+    res = RDKit::RDKFingerprintMol(*mol,1,6,getRDKitFpSize(),2);
   } catch (...) {
     elog(ERROR, "makeRDKitBFP: Unknown exception");
     if(res) delete res;
@@ -1164,7 +1159,7 @@ makeMorganBFP(CROMol data, int radius) {
   std::vector<boost::uint32_t> invars(mol->getNumAtoms());
   try {
     RDKit::MorganFingerprints::getConnectivityInvariants(*mol,invars,true);
-    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,MORGAN_FP_SIZE,&invars);
+    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,getMorganFpSize(),&invars);
   } catch (...) {
     elog(ERROR, "makeMorganBFP: Unknown exception");
   }
@@ -1203,7 +1198,8 @@ makeFeatMorganBFP(CROMol data, int radius) {
   try {
     RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
     res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,
-                                                             MORGAN_FP_SIZE,&invars);
+                                                             getFeatMorganFpSize(),
+                                                             &invars);
   } catch (...) {
     elog(ERROR, "makeMorganBFP: Unknown exception");
   }
@@ -1236,8 +1232,8 @@ makeAtomPairSFP(CROMol data){
   }
 #else
   try {
-    SparseIntVect<boost::int32_t> *afp=RDKit::AtomPairs::getHashedAtomPairFingerprint(*mol,HASHED_PAIR_FP_SIZE);
-    res = new SparseFP(HASHED_PAIR_FP_SIZE);
+    SparseIntVect<boost::int32_t> *afp=RDKit::AtomPairs::getHashedAtomPairFingerprint(*mol,getHashedAtomPairFpSize());
+    res = new SparseFP(getHashedAtomPairFpSize());
     for(SparseIntVect<boost::int32_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
         iter!=afp->getNonzeroElements().end();++iter){
       res->setVal(iter->first,iter->second);
@@ -1269,8 +1265,8 @@ makeTopologicalTorsionSFP(CROMol data){
   }
 #else
   try {
-    SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,HASHED_TORSION_FP_SIZE);
-    res = new SparseFP(HASHED_TORSION_FP_SIZE);
+    SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,getHashedTorsionFpSize());
+    res = new SparseFP(getHashedTorsionFpSize());
     for(SparseIntVect<boost::int64_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
         iter!=afp->getNonzeroElements().end();++iter){
       res->setVal(iter->first,iter->second);
@@ -1288,7 +1284,7 @@ makeAtomPairBFP(CROMol data){
   ROMol   *mol = (ROMol*)data;
   ExplicitBitVect *res=NULL;
   try {
-    res=RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(*mol,HASHED_PAIR_FP_SIZE);
+    res=RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(*mol,getHashedAtomPairFpSize());
   } catch (...) {
     elog(ERROR, "makeAtomPairBFP: Unknown exception");
   }
@@ -1306,7 +1302,7 @@ makeTopologicalTorsionBFP(CROMol data){
   ROMol   *mol = (ROMol*)data;
   ExplicitBitVect *res=NULL;
   try {
-    res =RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*mol,HASHED_TORSION_FP_SIZE);
+    res =RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*mol,getHashedTorsionFpSize());
   } catch (...) {
     elog(ERROR, "makeTopologicalTorsionBFP: Unknown exception");
   }

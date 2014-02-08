@@ -74,6 +74,13 @@ extern "C" {
   extern double getTanimotoLimit(void);
   extern double getDiceLimit(void);
   extern bool getDoChiralSSS(void);
+  extern int getSubstructFpSize(void);
+  extern int getMorganFpSize(void);
+  extern int getFeatMorganFpSize(void);
+  extern int getLayeredFpSize(void);
+  extern int getRDKitFpSize(void);
+  extern int getHashedTorsionFpSize(void);
+  extern int getHashedAtomPairFpSize(void);
 
   /*
    * From/to C/C++
