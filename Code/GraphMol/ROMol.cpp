@@ -362,8 +362,9 @@ namespace RDKit{
     RANGE_CHECK(0,bond_pin->getEndAtomIdx(),getNumAtoms()-1);
     PRECONDITION(bond_pin->getBeginAtomIdx()!=bond_pin->getEndAtomIdx(),
                  "attempt to add self-bond");
-    PRECONDITION(!getBondBetweenAtoms(bond_pin->getBeginAtomIdx(),
-                                      bond_pin->getEndAtomIdx()),"bond already exists");
+    PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
+                               bond_pin->getEndAtomIdx(),d_graph).second),"bond already exists");
+
     Bond *bond_p;
     if(!takeOwnership) bond_p = bond_pin->copy();
     else bond_p = bond_pin;
