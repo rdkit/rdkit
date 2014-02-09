@@ -9,7 +9,7 @@ import os,sys
 import unittest
 import math
 from rdkit import Chem
-from rdkit.Chem import rdMolAlign,rdDistGeom,ChemicalForceFields
+from rdkit.Chem import rdMolAlign,rdMolDescriptors,rdDistGeom,ChemicalForceFields
 
 def lstFeq(l1, l2, tol=1.e-4):
   if (len(list(l1)) != len(list(l2))):
@@ -106,11 +106,11 @@ class TestCase(unittest.TestCase):
             
             self.failUnless(lstFeq(mpos, pos, .5))
 
-    def test5O3A(self):
+    def test5MMFFO3A(self):
       sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                          'MolAlign', 'test_data', 'ref_e2.sdf')
       # alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
-      #                           'MolAlign', 'test_data', 'ref_e2_pyO3A.sdf')
+      #                           'MolAlign', 'test_data', 'ref_e2_pyMMFFO3A.sdf')
       molS = Chem.SDMolSupplier(sdf, True, False)
       # molW = Chem.SDWriter(alignedSdf)
       refNum = 48
@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase):
       self.failUnlessAlmostEqual(cumScore,6942,0)
       self.failUnlessAlmostEqual(math.sqrt(cumMsd),.345,3)
 
-    def test6O3A(self):
+    def test6MMFFO3A(self):
       " now test where the mmff parameters are generated on call "
       sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                          'MolAlign', 'test_data', 'ref_e2.sdf')
@@ -147,7 +147,7 @@ class TestCase(unittest.TestCase):
       self.failUnlessAlmostEqual(cumScore,6942,0)
       self.failUnlessAlmostEqual(math.sqrt(cumMsd),.345,3)
 
-    def test7O3A(self):
+    def test7MMFFO3A(self):
       " make sure we generate an error if parameters are missing (github issue 158) "
       sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                          'MolAlign', 'test_data', 'ref_e2.sdf')
@@ -159,6 +159,47 @@ class TestCase(unittest.TestCase):
 
       self.failUnlessRaises(ValueError,lambda :rdMolAlign.GetO3A(m1, m2))
       self.failUnlessRaises(ValueError,lambda :rdMolAlign.GetO3A(m2, m1))
+
+    def test8CrippenO3A(self):
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      # alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+      #                           'MolAlign', 'test_data', 'ref_e2_pyCrippenO3A.sdf')
+      molS = Chem.SDMolSupplier(sdf, True, False)
+      # molW = Chem.SDWriter(alignedSdf)
+      refNum = 48
+      refMol = molS[refNum]
+      cumScore = 0.0
+      cumMsd = 0.0
+      refList = rdMolDescriptors._CalcCrippenContribs(refMol, True)
+      for prbMol in molS:
+        prbList = rdMolDescriptors._CalcCrippenContribs(prbMol, True)
+        pyO3A = rdMolAlign.GetCrippenO3A(prbMol, refMol, prbList, refList)
+        cumScore += pyO3A.Score()
+        rmsd = pyO3A.Align()
+        cumMsd += rmsd * rmsd
+        # molW.write(prbMol)
+      cumMsd /= len(molS)
+      self.failUnlessAlmostEqual(cumScore,4918,0)
+      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.304,3)
+
+    def test9CrippenO3A(self):
+      " now test where the Crippen parameters are generated on call "
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      molS = Chem.SDMolSupplier(sdf, True, False)
+      refNum = 48
+      refMol = molS[refNum]
+      cumScore = 0.0
+      cumMsd = 0.0
+      for prbMol in molS:
+        pyO3A = rdMolAlign.GetCrippenO3A(prbMol, refMol)
+        cumScore += pyO3A.Score()
+        rmsd = pyO3A.Align()
+        cumMsd += rmsd * rmsd
+      cumMsd /= len(molS)
+      self.failUnlessAlmostEqual(cumScore,4918,0)
+      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.304,3)
 
 
 

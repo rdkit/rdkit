@@ -16,6 +16,7 @@
 #include "seqs.hpp"
 // ours
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
@@ -147,38 +148,33 @@ namespace RDKit {
     mol.debugMol(std::cout);
   }
 
-#if 0
-  // FIX: we should eventually figure out how to do iterators properly
-  //  so that these tuples don't have to be built
-  PyObject *MolGetAtoms(ROMol *mol){
-    python::list res;
-    for(ROMol::AtomIterator i=mol->beginAtoms();i!=mol->endAtoms();i++){
-      res.append(*i);
-    }
-    //return python::incref(python::tuple(res).ptr());
-    return python::incref(res.ptr());
-  }
-#else
   // FIX: we should eventually figure out how to do iterators properly
   AtomIterSeq *MolGetAtoms(ROMol *mol){
     AtomIterSeq *res = new AtomIterSeq(mol->beginAtoms(),mol->endAtoms());
     return res;
   }
-  AromaticAtomIterSeq *MolGetAromaticAtoms(ROMol *mol){
-    AromaticAtomIterSeq *res = new AromaticAtomIterSeq(mol->beginAromaticAtoms(),
-						       mol->endAromaticAtoms());
+  QueryAtomIterSeq *MolGetAromaticAtoms(ROMol *mol){
+    QueryAtom *qa=new QueryAtom();
+    qa->setQuery(makeAtomAromaticQuery());
+    QueryAtomIterSeq *res = new QueryAtomIterSeq(mol->beginQueryAtoms(qa),
+                                                 mol->endQueryAtoms());
     return res;
   }
-  HeteroatomIterSeq *MolGetHeteros(ROMol *mol){
-    HeteroatomIterSeq *res = new HeteroatomIterSeq(mol->beginHeteros(),
-						   mol->endHeteros());
+  QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol,QueryAtom *qa){
+    QueryAtomIterSeq *res = new QueryAtomIterSeq(mol->beginQueryAtoms(qa),
+                                                 mol->endQueryAtoms());
     return res;
   }
+
+  //AtomIterSeq *MolGetHeteros(ROMol *mol){
+  //  AtomIterSeq *res = new AtomIterSeq(mol->beginHeteros(),
+  //                                     mol->endHeteros());
+  //  return res;
+  //}
   BondIterSeq *MolGetBonds(ROMol *mol){
     BondIterSeq *res = new BondIterSeq(mol->beginBonds(),mol->endBonds());
     return res;
   }
-#endif
 
   int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit){
     if(onlyHeavy>-1){
@@ -377,6 +373,15 @@ struct mol_wrapper {
            python::return_value_policy<python::manage_new_object,
            python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns a read-only sequence containing all of the molecule's Atoms.\n")
+      .def("GetAromaticAtoms",MolGetAromaticAtoms,
+           python::return_value_policy<python::manage_new_object,
+           python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns a read-only sequence containing all of the molecule's aromatic Atoms.\n")
+      .def("GetAtomsMatchingQuery",MolGetQueryAtoms,
+           python::return_value_policy<python::manage_new_object,
+           python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns a read-only sequence containing all of the atoms in a molecule that match the query atom.\n")
+
       .def("GetBonds",MolGetBonds,
            python::return_value_policy<python::manage_new_object,
            python::with_custodian_and_ward_postcall<0,1> >(),

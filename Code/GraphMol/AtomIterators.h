@@ -61,7 +61,7 @@ namespace RDKit{
     ThisType &operator--();
     ThisType operator--(int);
   
-  private:
+    //private:
     int _pos,_max;
     Mol_ * _mol;
   };
@@ -101,8 +101,6 @@ namespace RDKit{
     int _findPrev(int from);
   };
 
-
-
   //! Iterate over aromatic atoms, this is bidirectional
   template <class Atom_, class Mol_>
   class AromaticAtomIterator_ {
@@ -133,8 +131,6 @@ namespace RDKit{
     int _findNext(int from);  
     int _findPrev(int from);
   };
-
-
   
   //! Iterate over atoms matching a query. This is bidirectional.
   template <class Atom_, class Mol_>
@@ -168,6 +164,39 @@ namespace RDKit{
     int _findPrev(int from);
   };
 
+  //! Iterate over atoms matching a query function. This is bidirectional.
+  template <class Atom_, class Mol_>
+  class MatchingAtomIterator_ {
+  public:
+    typedef MatchingAtomIterator_<Atom_,Mol_> ThisType;
+    MatchingAtomIterator_() : _end(-1),_pos(-1),_mol(0),_qF(0) {}; 
+    MatchingAtomIterator_(Mol_ * mol,bool (*fn)(Atom_ *));
+    MatchingAtomIterator_(Mol_ * mol,int pos);
+    ~MatchingAtomIterator_();
+    MatchingAtomIterator_(const ThisType &other);
+    MatchingAtomIterator_ &operator=(const ThisType &other);
+    bool operator==(const ThisType &other);
+    bool operator!=(const ThisType &other);
+
+    Atom_ * operator*();
+
+    // pre-increment
+    ThisType &operator++();
+    ThisType operator++(int);
+
+    // pre-decrement
+    ThisType &operator--();
+    ThisType operator--(int);
+  private:
+    int _end,_pos;
+    Mol_ * _mol;
+    bool (*_qF)(Atom_ *);
+
+    int _findNext(int from);  
+    int _findPrev(int from);
+  };
+
+  
 
 }  /* end o namespace */
 

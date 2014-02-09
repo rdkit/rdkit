@@ -218,7 +218,7 @@ void sln_lexer_error(const char *msg) {
 }
 <INITIAL,IN_RECURSE_STATE>Hev {
   yylval->atom_T = new QueryAtom();
-  yylval->atom_T->setQuery(makeAtomNumEqualsQuery(1));
+  yylval->atom_T->setQuery(makeAtomNumQuery(1));
   // FIX: are 2H or 3H heavy atoms or Hs?
   yylval->atom_T->getQuery()->setNegation(true);
 
@@ -228,10 +228,10 @@ void sln_lexer_error(const char *msg) {
 }
 <INITIAL,IN_RECURSE_STATE>Hal {
   yylval->atom_T = new QueryAtom();
-  yylval->atom_T->setQuery(makeAtomNumEqualsQuery(9));
-  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
-  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(35),Queries::COMPOSITE_OR,true);
-  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(53),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->setQuery(makeAtomNumQuery(9));
+  yylval->atom_T->expandQuery(makeAtomNumQuery(17),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->expandQuery(makeAtomNumQuery(35),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->expandQuery(makeAtomNumQuery(53),Queries::COMPOSITE_OR,true);
 
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
@@ -239,8 +239,8 @@ void sln_lexer_error(const char *msg) {
 }
 <INITIAL,IN_RECURSE_STATE>Het {
   yylval->atom_T = new QueryAtom();
-  yylval->atom_T->setQuery(makeAtomNumEqualsQuery(6));
-  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->setQuery(makeAtomNumQuery(6));
+  yylval->atom_T->expandQuery(makeAtomNumQuery(1),Queries::COMPOSITE_OR,true);
   yylval->atom_T->getQuery()->setNegation(true);
 
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        

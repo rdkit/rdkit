@@ -69,17 +69,16 @@ namespace RDKit{
         //   - atom-map information present
         const INT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
         int totalValence= atom->getTotalValence();
-        bool nonStandard;
-        nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
-                                totalValence)==defaultVs.end();
-        // another type of "nonstandard" valence is an aromatic N or P with
-        // explicit Hs indicated:
-        if((num==7||num==15) && atom->getIsAromatic() && atom->getNumExplicitHs()){
-          nonStandard=true;
-        }
+        bool nonStandard=false;
 
         if(atom->getNumRadicalElectrons()){
           nonStandard=true;
+        } else if((num==7||num==15) && atom->getIsAromatic() && atom->getNumExplicitHs()){
+          // another type of "nonstandard" valence is an aromatic N or P with
+          // explicit Hs indicated:
+          nonStandard=true;
+        } else {
+          nonStandard = (totalValence!=defaultVs.front() && atom->getTotalNumHs());
         }
 
         if(fc || nonStandard){
@@ -376,9 +375,9 @@ namespace RDKit{
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
                           bool allBondsExplicit){
+    if(!mol.getNumAtoms()) return "";
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
-    if(!mol.getNumAtoms()) return "";
 
     ROMol tmol(mol,true);
     if(doIsomericSmiles){

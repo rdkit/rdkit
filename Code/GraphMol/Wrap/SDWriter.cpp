@@ -97,6 +97,18 @@ namespace RDKit {
 	.def("NumMols", &SDWriter::numMols,
 	     "Returns the number of molecules written so far.\n\n"
 	     )
+	.def("SetForceV3000", &SDWriter::setForceV3000,
+	     "Sets whether or not V3000 mol file writing is being forced.\n\n"
+	     )
+	.def("GetForceV3000", &SDWriter::getForceV3000,
+	     "Returns whether or not V3000 mol file writing is being forced.\n\n"
+	     )
+	.def("SetKekulize", &SDWriter::setKekulize,
+	     "Sets whether or not molecules are kekulized on writing.\n\n"
+	     )
+	.def("GetKekulize", &SDWriter::getKekulize,
+	     "Returns whether or not molecules are kekulized on writing.\n\n"
+	     )
 	;
     };
   };

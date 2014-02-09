@@ -116,13 +116,11 @@ namespace RDKit{
   // pre-increment
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator++() {
-    RANGE_CHECK(0,_pos,_max-1);
     _pos++;
     return *this;
   }
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator++(int) {
-    RANGE_CHECK(0,_pos,_max-1);
     AtomIterator_<Atom_,Mol_> res(*this);
     _pos++;
     return res;
@@ -131,12 +129,10 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator--() {
     _pos--;
-    RANGE_CHECK(0,_pos,_max-1);
     return *this;
   }
   template <class Atom_, class Mol_>
   AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator--(int) {
-    RANGE_CHECK(0,_pos,_max-1);
     AtomIterator_<Atom_,Mol_> res(*this);
     if(_pos-1 < 0) _pos = _max;
     else _pos--;
@@ -167,7 +163,8 @@ namespace RDKit{
 
   template <class Atom_, class Mol_>
   HeteroatomIterator_<Atom_,Mol_>::~HeteroatomIterator_() {
-    if (_qA) delete _qA;
+    delete _qA;
+    _qA=NULL;
   }
 
   template <class Atom_, class Mol_>
@@ -205,7 +202,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   HeteroatomIterator_<Atom_,Mol_> &HeteroatomIterator_<Atom_,Mol_>::operator++() {
     _pos = _findNext(_pos+1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -218,7 +214,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   HeteroatomIterator_<Atom_,Mol_> &HeteroatomIterator_<Atom_,Mol_>::operator--() {
     _pos = _findPrev(_pos-1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -303,7 +298,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   AromaticAtomIterator_<Atom_,Mol_> &AromaticAtomIterator_<Atom_,Mol_>::operator++() {
     _pos = _findNext(_pos+1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -316,7 +310,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   AromaticAtomIterator_<Atom_,Mol_> &AromaticAtomIterator_<Atom_,Mol_>::operator--() {
     _pos = _findPrev(_pos-1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -345,12 +338,6 @@ namespace RDKit{
     return from;
   }
 
-
-
-
-
-
-  
   //-----------------------------------------
   //
   //  QueryAtomIterator
@@ -358,6 +345,7 @@ namespace RDKit{
   //-----------------------------------------
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_>::QueryAtomIterator_(Mol_ * mol,QueryAtom const *what){
+    PRECONDITION(what,"bad query atom");
     _mol = mol;
     _qA = static_cast<QueryAtom *>(what->copy());
     _end = mol->getNumAtoms();
@@ -372,23 +360,33 @@ namespace RDKit{
   };
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_>::~QueryAtomIterator_() {
-    if(_qA) delete _qA;
+    delete _qA;
+    _qA=NULL;
   }
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_>::QueryAtomIterator_(const QueryAtomIterator_<Atom_,Mol_> &other){
     _mol = other._mol;
     _pos = other._pos;
     _end = other._end;
-    _qA = static_cast<QueryAtom *>(other._qA->copy());
+    if(other._qA)
+      _qA = static_cast<QueryAtom *>(other._qA->copy());
+    else
+      _qA = NULL;
   }
 
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_> &
   QueryAtomIterator_<Atom_,Mol_>::operator =(const QueryAtomIterator_<Atom_,Mol_> &other){
-    _mol = other._mol;
-    _pos = other._pos;
-    _end = other._end;
-    _qA = static_cast<QueryAtom *>(other._qA->copy());
+    if(this!=&other){
+      _mol = other._mol;
+      _pos = other._pos;
+      _end = other._end;
+      delete _qA;
+      if(other._qA)
+        _qA = static_cast<QueryAtom *>(other._qA->copy());
+      else
+        _qA = NULL;
+    }
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -402,13 +400,13 @@ namespace RDKit{
 
   template <class Atom_, class Mol_>
   Atom_ * QueryAtomIterator_<Atom_,Mol_>::operator*() {
+    PRECONDITION(_mol!=NULL,"no molecule");
     return (*_mol)[_pos].get();
   }
   // pre-increment
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_> &QueryAtomIterator_<Atom_,Mol_>::operator++() {
     _pos = _findNext(_pos+1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -421,7 +419,6 @@ namespace RDKit{
   template <class Atom_, class Mol_>
   QueryAtomIterator_<Atom_,Mol_> &QueryAtomIterator_<Atom_,Mol_>::operator--() {
     _pos = _findPrev(_pos-1);
-    RANGE_CHECK(0,_pos,_end-1);
     return *this;
   }
   template <class Atom_, class Mol_>
@@ -432,6 +429,7 @@ namespace RDKit{
   }
   template <class Atom_, class Mol_>
   int QueryAtomIterator_<Atom_,Mol_>::_findNext(int from){
+    PRECONDITION(_mol!=NULL,"no molecule");
     PRECONDITION(_qA!=NULL,"no query set");
     while(from<_end){
       if(_qA->Match((*_mol)[from])) break;
@@ -442,6 +440,7 @@ namespace RDKit{
   
   template <class Atom_, class Mol_>
   int QueryAtomIterator_<Atom_,Mol_>::_findPrev(int from){
+    PRECONDITION(_mol!=NULL,"no molecule");
     PRECONDITION(_qA!=NULL,"no query set");
     while(from>0){
       if(_qA->Match((*_mol)[from])) break;
@@ -452,6 +451,112 @@ namespace RDKit{
   }
 
 
+  //-----------------------------------------
+  //
+  //  MatchingAtomIterator
+  //
+  //-----------------------------------------
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_>::MatchingAtomIterator_(Mol_ * mol,bool (*fn)(Atom_ *)){
+    PRECONDITION(fn,"bad query function");
+    _mol = mol;
+    _qF = fn;
+    _end = mol->getNumAtoms();
+    _pos = _findNext(0);
+  };
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_>::MatchingAtomIterator_(Mol_ * mol,int pos){
+    _mol = mol;
+    _qF = NULL;
+    _end = mol->getNumAtoms();
+    _pos = pos;
+  };
+
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_>::~MatchingAtomIterator_() {}
+
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_>::MatchingAtomIterator_(const MatchingAtomIterator_<Atom_,Mol_> &other){
+    _mol = other._mol;
+    _pos = other._pos;
+    _end = other._end;
+    _qF = other._qF;
+  }
+
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_> &
+  MatchingAtomIterator_<Atom_,Mol_>::operator =(const MatchingAtomIterator_<Atom_,Mol_> &other){
+    if(this!=&other){
+      _mol = other._mol;
+      _pos = other._pos;
+      _end = other._end;
+      _qF = other._qF;
+    }
+    return *this;
+  }
+  template <class Atom_, class Mol_>
+  bool MatchingAtomIterator_<Atom_,Mol_>::operator==(const MatchingAtomIterator_<Atom_,Mol_> &other){
+    return _mol==other._mol && _pos==other._pos;
+  }
+  template <class Atom_, class Mol_>
+  bool MatchingAtomIterator_<Atom_,Mol_>::operator!=(const MatchingAtomIterator_<Atom_,Mol_> &other){
+    return _mol!=other._mol || _pos!=other._pos;
+  }
+
+  template <class Atom_, class Mol_>
+  Atom_ * MatchingAtomIterator_<Atom_,Mol_>::operator*() {
+    PRECONDITION(_mol!=NULL,"no molecule");
+    return (*_mol)[_pos].get();
+  }
+  // pre-increment
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_> &MatchingAtomIterator_<Atom_,Mol_>::operator++() {
+    _pos = _findNext(_pos+1);
+    return *this;
+  }
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_> MatchingAtomIterator_<Atom_,Mol_>::operator++(int) {
+    MatchingAtomIterator_ res(*this); 
+    _pos = _findNext(_pos+1);
+    return res;
+  }
+  // pre-decrement
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_> &MatchingAtomIterator_<Atom_,Mol_>::operator--() {
+    _pos = _findPrev(_pos-1);
+    return *this;
+  }
+  template <class Atom_, class Mol_>
+  MatchingAtomIterator_<Atom_,Mol_> MatchingAtomIterator_<Atom_,Mol_>::operator--(int) {
+    MatchingAtomIterator_<Atom_,Mol_> res(*this); 
+    _pos = _findPrev(_pos-1);
+    return res;
+  }
+  template <class Atom_, class Mol_>
+  int MatchingAtomIterator_<Atom_,Mol_>::_findNext(int from){
+    PRECONDITION(_mol!=NULL,"no molecule");
+    PRECONDITION(_qF!=NULL,"no query set");
+    while(from<_end){
+      if(_qF((*_mol)[from].get())) break;
+      else ++from;
+    }
+    return from;
+  }
+  
+  template <class Atom_, class Mol_>
+  int MatchingAtomIterator_<Atom_,Mol_>::_findPrev(int from){
+    PRECONDITION(_mol!=NULL,"no molecule");
+    PRECONDITION(_qF!=NULL,"no query set");
+    while(from>0){
+      if(_qF((*_mol)[from].get())) break;
+      else --from;
+    }
+    if(from<0) from = _end;
+    return from;
+  }
+
+  
+
   template class AtomIterator_<Atom,ROMol>;
   template class AtomIterator_<const Atom,const ROMol>;
 
@@ -461,6 +566,8 @@ namespace RDKit{
   template class HeteroatomIterator_<const Atom,const ROMol>;
   template class QueryAtomIterator_<Atom,ROMol>;
   template class QueryAtomIterator_<const Atom,const ROMol>;
+  template class MatchingAtomIterator_<Atom,ROMol>;
+  template class MatchingAtomIterator_<const Atom,const ROMol>;
 
 
 }; // end o' namespace

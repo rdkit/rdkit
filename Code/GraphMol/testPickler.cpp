@@ -954,6 +954,27 @@ void testAtomResidues()
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithub149()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing Github issue 149: cannot pickle unsanitized molecules" << std::endl;
+  {
+    ROMol *m = SmilesToMol("CCO",0,0);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+
+    std::string pkl;
+    MolPickler::pickleMol(*m,pkl);
+    delete m;
+    m = new RWMol(pkl);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    delete m;
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong=false;
@@ -983,7 +1004,7 @@ int main(int argc, char *argv[]) {
   testIssue280();
   testIssue285();
   testAtomResidues();
-  return 0;
+  testGithub149();
 
 }
       

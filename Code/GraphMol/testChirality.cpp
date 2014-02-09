@@ -1836,6 +1836,7 @@ void testFindChiralAtoms(){
     std::string smiles="F[C@H](Cl)C(Cl)(Br)C(F)(F)F";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m,true,true);
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
     TEST_ASSERT(!(m->getAtomWithIdx(3)->hasProp("_CIPCode")));
     TEST_ASSERT(!(m->getAtomWithIdx(6)->hasProp("_CIPCode")));

@@ -132,21 +132,29 @@ void test3(){
   unsigned char heteros[]={2,5,7,9,10};
   
   Mol *m = SmilesToMol(smi);
-  Mol::HeteroatomIterator heteroIt;
-  unsigned int nSeen=0;
-  for(heteroIt=m->beginHeteros();heteroIt!=m->endHeteros();heteroIt++){
-    CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[nSeen],"bad hetero");
-    nSeen++;
+  {
+    unsigned int nSeen=0;
+    for(Mol::HeteroatomIterator heteroIt=m->beginHeteros();heteroIt!=m->endHeteros();heteroIt++){
+      CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[nSeen],"bad hetero");
+      nSeen++;
+    }
   }
-
-  heteroIt = m->beginHeteros();
-  heteroIt++;
-  heteroIt++;
-  heteroIt--;
-  CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[1],"bad hetero");
-  CHECK_INVARIANT((*--heteroIt)->getIdx()==heteros[0],"bad hetero");
-  CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[0],"bad hetero");
-
+  {
+    unsigned int nSeen=0;
+    for(Mol::HeteroatomIterator heteroIt=m->beginHeteros();heteroIt!=m->endHeteros();++heteroIt){
+      CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[nSeen],"bad hetero");
+      nSeen++;
+    }
+  }
+  {
+    Mol::HeteroatomIterator heteroIt = m->beginHeteros();
+    heteroIt++;
+    heteroIt++;
+    heteroIt--;
+    CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[1],"bad hetero");
+    CHECK_INVARIANT((*--heteroIt)->getIdx()==heteros[0],"bad hetero");
+    CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[0],"bad hetero");
+  }
   BOOST_LOG(rdInfoLog)<< "test3 done" << endl;
 };
 
@@ -156,32 +164,43 @@ void test4(){
   
   Mol *m = SmilesToMol(smi);
   QueryAtom *q= new QueryAtom();
-  q->setQuery(makeAtomNumEqualsQuery(8));
-  Mol::QueryAtomIterator queryIt;
-  unsigned int nSeen=0;
-  for(queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){
-    CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[nSeen],"bad query");
-    nSeen++;
+  q->setQuery(makeAtomNumQuery(8));
+  {
+    unsigned int nSeen=0;
+    for(Mol::QueryAtomIterator queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){
+      CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[nSeen],"bad query");
+      nSeen++;
+    }
   }
-
-  queryIt = m->beginQueryAtoms(q);
-  queryIt++;
-  queryIt--;
-  CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[0],"bad query");
-  CHECK_INVARIANT((*++queryIt)->getIdx()==heteros1[1],"bad query");
-  CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[1],"bad query");
-
+  {
+    Mol::QueryAtomIterator queryIt = m->beginQueryAtoms(q);
+    queryIt++;
+    queryIt--;
+    CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[0],"bad query");
+    CHECK_INVARIANT((*++queryIt)->getIdx()==heteros1[1],"bad query");
+    CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[1],"bad query");
+  }
+  {
+    Mol::QueryAtomIterator queryIt = m->beginQueryAtoms(q);
+    queryIt++;
+    queryIt--;
+    Mol::QueryAtomIterator queryIt2 = queryIt;
+    CHECK_INVARIANT((*queryIt2)->getIdx()==heteros1[0],"bad query");
+    CHECK_INVARIANT((*++queryIt2)->getIdx()==heteros1[1],"bad query");
+    CHECK_INVARIANT((*queryIt2)->getIdx()==heteros1[1],"bad query");
+  }
   smi = "CC(C)CC(C)CC(C)CC(C)C";
   unsigned int heteros2[]={1,4,7,10};
   m = SmilesToMol(smi);
   //m->debugMol(cout);
   q->setQuery(makeAtomImplicitValenceQuery(1));
-  nSeen = 0;
-  for(queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){
-    CHECK_INVARIANT((*queryIt)->getIdx()==heteros2[nSeen],"bad query");
-    nSeen++;
+  {
+    unsigned int nSeen = 0;
+    for(Mol::QueryAtomIterator queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();++queryIt){
+      CHECK_INVARIANT((*queryIt)->getIdx()==heteros2[nSeen],"bad query");
+      nSeen++;
+    }
   }
-
   BOOST_LOG(rdInfoLog)<< "test4 done" << endl;
 };
 
@@ -342,6 +361,25 @@ void testIssue263(){
 }
 
 
+void test8(){
+  {
+    string smi="CC1CC2CC1C2";
+    Mol *m = SmilesToMol(smi);
+    QueryAtom *q= new QueryAtom();
+    q->setQuery(makeAtomExplicitDegreeQuery(3));
+    q->expandQuery(makeAtomRingBondCountQuery(2));
+    unsigned int nSeen=0;
+    for(Mol::QueryAtomIterator queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();++queryIt){
+      TEST_ASSERT((*queryIt)->getIdx()==1);
+      nSeen++;
+    }
+    TEST_ASSERT(nSeen=1);
+    delete m;
+    delete q;
+  }
+
+  BOOST_LOG(rdInfoLog)<< "test8 done" << endl;
+};
 
 
 int main(){
@@ -353,6 +391,7 @@ int main(){
   test5();
   test6();
   test7();
+  test8();
   testIssue263();
 
   

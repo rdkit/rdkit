@@ -6,11 +6,17 @@ rdkit_python_extension(rdchem
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
 
 rdkit_python_extension(rdmolops
-                       rdmolops.cpp MolOps.cpp
+                       rdmolops.cpp MolOps.cpp 
                        DEST Chem 
                        LINK_LIBRARIES 
                        FileParsers SubstructMatch Fingerprints ChemTransforms
                        Catalogs Subgraphs SmilesParse GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
+
+rdkit_python_extension(rdqueries
+                       rdqueries.cpp Queries.cpp
+                       DEST Chem 
+                       LINK_LIBRARIES 
+                       GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
 find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)

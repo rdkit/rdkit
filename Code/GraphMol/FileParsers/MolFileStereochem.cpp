@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -414,6 +414,11 @@ namespace RDKit {
       std::vector< std::pair<int,int> > nbrScores;
       while (atomBonds.first != atomBonds.second ){
         const Bond *bond = mol[*atomBonds.first].get();
+        atomBonds.first++;
+
+        // can only wedge single bonds:
+        if(bond->getBondType()!=Bond::SINGLE) continue;
+
         int bid = bond->getIdx();
         if (res.find(bid) == res.end()) {
           int nbrScore=0;
@@ -427,7 +432,6 @@ namespace RDKit {
           nbrScore += mol.getRingInfo()->numBondRings(bid);
           nbrScores.push_back(std::make_pair(nbrScore,bid));
         }
-        atomBonds.first++;
       }
       // There's still one situation where this whole thing can fail: an unlucky
       // situation where all neighbors of all neighbors of an atom are chiral and
@@ -437,7 +441,7 @@ namespace RDKit {
       // as it seems like it is. (I'm going into this knowing that it's bound to 
       // happen; I'll kick myself and do the hard solution at that point.)
       CHECK_INVARIANT(nbrScores.size(),"no eligible neighbors for chiral center");
-      std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<int>);
+      std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<int,int>());
       res[nbrScores[0].second] = idx;
     }
     return res;

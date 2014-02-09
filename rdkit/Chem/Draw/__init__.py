@@ -49,7 +49,7 @@ def _createCanvas(size):
   return img,canvas
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
-               fitImage=False, options=None, **kwargs):
+               fitImage=False, options=None, canvas=None, **kwargs):
   """ returns a PIL image containing a drawing of the molecule
 
     Keyword arguments:
@@ -62,7 +62,11 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   """
   if not mol:
     raise ValueError,'Null molecule provided'
-  img,canvas=_createCanvas(size)
+  if canvas is None:
+    img,canvas=_createCanvas(size)
+  else:
+    img=None
+    
   if options is None:
     options = DrawingOptions()
   if fitImage:
@@ -256,7 +260,8 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
   return res
 
 
-def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs):
+def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
+                    highlightAtomLists=None,**kwargs):
   """ 
   """
   try:
@@ -268,11 +273,15 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
   nRows = len(mols)//molsPerRow
   if len(mols)%molsPerRow : nRows+=1
     
-  res = Image.new("RGBA",(molsPerRow*subImgSize[1],nRows*subImgSize[1]),(255,255,255,0))
+  res = Image.new("RGBA",(molsPerRow*subImgSize[0],nRows*subImgSize[1]),(255,255,255,0))
   for i,mol in enumerate(mols):
     row = i//molsPerRow
     col = i%molsPerRow
-    res.paste(MolToImage(mol,subImgSize,legend=legends[i],**kwargs),(col*subImgSize[0],row*subImgSize[1]))
+    highlights=None
+    if highlightAtomLists and highlightAtomLists[i]:
+      highlights=highlightAtomLists[i]
+    res.paste(MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
+                         **kwargs),(col*subImgSize[0],row*subImgSize[1]))
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):

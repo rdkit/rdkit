@@ -13,6 +13,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -128,10 +129,10 @@ void testIssue241() {
   TEST_ASSERT(RDKit::feq(rmsd, 0.0));
 }
 
-void testO3A() {
+void testMMFFO3A() {
   std::string rdbase = getenv("RDBASE");
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
-  std::string newSdf = sdf + "_O3A.sdf";
+  std::string newSdf = sdf + "_MMFFO3A.sdf";
   sdf += ".sdf";
   SDMolSupplier supplier(sdf, true, false);
   int nMol = supplier.length();
@@ -144,10 +145,17 @@ void testO3A() {
   for (int prbNum = 0; prbNum < nMol; ++prbNum) {
     ROMol *prbMol = supplier[prbNum];
     MMFF::MMFFMolProperties prbMP(*prbMol);
+    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP);
     double rmsd = o3a.align();
-    cumMsd += rmsd * rmsd;
     cumScore += o3a.score();
+    #else
+    MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(*prbMol, *refMol, &prbMP, &refMP);
+    double rmsd = o3a->align();
+    cumScore += o3a->score();
+    delete o3a;
+    #endif
+    cumMsd += rmsd * rmsd;
     //newMol->write(prbMol);
     delete prbMol;
   }
@@ -159,10 +167,61 @@ void testO3A() {
   TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.345,.001));
 }
 
-void testO3ADMat() {
+void testCrippenO3A() {
   std::string rdbase = getenv("RDBASE");
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
-  std::string newSdf = sdf + "_O3A.sdf";
+  std::string newSdf = sdf + "_CrippenO3A.sdf";
+  sdf += ".sdf";
+  SDMolSupplier supplier(sdf, true, false);
+  int nMol = supplier.length();
+  const int refNum = 48;
+  //SDWriter *newMol = new SDWriter(newSdf);
+  ROMol *refMol = supplier[refNum];
+  unsigned int refNAtoms = refMol->getNumAtoms();
+  std::vector<double> refLogpContribs(refNAtoms);
+  std::vector<double> refMRContribs(refNAtoms);
+  std::vector<unsigned int> refAtomTypes(refNAtoms);
+  std::vector<std::string> refAtomTypeLabels(refNAtoms);
+  Descriptors::getCrippenAtomContribs(*refMol, refLogpContribs,
+    refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+  double cumScore = 0.0;
+  double cumMsd = 0.0;
+  for (int prbNum = 0; prbNum < nMol; ++prbNum) {
+    ROMol *prbMol = supplier[prbNum];
+    unsigned int prbNAtoms = prbMol->getNumAtoms();
+    std::vector<double> prbLogpContribs(prbNAtoms);
+    std::vector<double> prbMRContribs(prbNAtoms);
+    std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+    std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+    Descriptors::getCrippenAtomContribs(*prbMol, prbLogpContribs,
+      prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+    #ifdef USE_O3A_CONSTRUCTOR
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
+                      MolAlign::O3A::CRIPPEN);
+    double rmsd = o3a.align();
+    cumScore += o3a.score();
+    #else
+    MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(*prbMol, *refMol, prbLogpContribs, refLogpContribs);
+    double rmsd = o3a->align();
+    cumScore += o3a->score();
+    delete o3a;
+    #endif
+    cumMsd += rmsd * rmsd;
+    //newMol->write(prbMol);
+    delete prbMol;
+  }
+  cumMsd /= (double)nMol;
+  delete refMol;
+  //newMol->close();
+  //std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  TEST_ASSERT(RDKit::feq(cumScore, 4918.1,1));
+  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.304,.001));
+}
+
+void testMMFFO3AMolHist() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
+  std::string newSdf = sdf + "_MMFFO3A.sdf";
   sdf += ".sdf";
   SDMolSupplier supplier(sdf, true, false);
   int nMol = supplier.length();
@@ -171,16 +230,29 @@ void testO3ADMat() {
   ROMol *refMol = supplier[refNum];
   MMFF::MMFFMolProperties refMP(*refMol);
   double *refDmat=MolOps::get3DDistanceMat(*refMol);
+  MolAlign::MolHistogram refHist(*refMol, refDmat);
   double cumScore = 0.0;
   double cumMsd = 0.0;
   for (int prbNum = 0; prbNum < nMol; ++prbNum) {
     ROMol *prbMol = supplier[prbNum];
     MMFF::MMFFMolProperties prbMP(*prbMol);
     double *prbDmat=MolOps::get3DDistanceMat(*prbMol);
-    MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP, -1, -1, false, 50, 0, NULL, prbDmat, refDmat);
+    MolAlign::MolHistogram prbHist(*prbMol, prbDmat);
+    
+    #ifdef USE_O3A_CONSTRUCTOR
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP,
+                      MolAlign::O3A::MMFF94, -1, -1, false,
+                      50, 0, NULL, &prbHist, &refHist);
     double rmsd = o3a.align();
-    cumMsd += rmsd * rmsd;
     cumScore += o3a.score();
+    #else
+    MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(*prbMol, *refMol,
+      &prbMP, &refMP, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
+    double rmsd = o3a->align();
+    cumScore += o3a->score();
+    delete o3a;
+    #endif
+    cumMsd += rmsd * rmsd;
     //newMol->write(prbMol);
     delete prbMol;
   }
@@ -192,10 +264,67 @@ void testO3ADMat() {
   TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.345,.001));
 }
 
+void testCrippenO3AMolHist() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
+  std::string newSdf = sdf + "_CrippenO3A.sdf";
+  sdf += ".sdf";
+  SDMolSupplier supplier(sdf, true, false);
+  int nMol = supplier.length();
+  const int refNum = 48;
+  //SDWriter *newMol = new SDWriter(newSdf);
+  ROMol *refMol = supplier[refNum];
+  unsigned int refNAtoms = refMol->getNumAtoms();
+  std::vector<double> refLogpContribs(refNAtoms);
+  std::vector<double> refMRContribs(refNAtoms);
+  std::vector<unsigned int> refAtomTypes(refNAtoms);
+  std::vector<std::string> refAtomTypeLabels(refNAtoms);
+  Descriptors::getCrippenAtomContribs(*refMol, refLogpContribs,
+    refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+  double *refDmat=MolOps::get3DDistanceMat(*refMol);
+  MolAlign::MolHistogram refHist(*refMol, refDmat);
+  double cumScore = 0.0;
+  double cumMsd = 0.0;
+  for (int prbNum = 0; prbNum < nMol; ++prbNum) {
+    ROMol *prbMol = supplier[prbNum];
+    unsigned int prbNAtoms = prbMol->getNumAtoms();
+    std::vector<double> prbLogpContribs(prbNAtoms);
+    std::vector<double> prbMRContribs(prbNAtoms);
+    std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+    std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+    Descriptors::getCrippenAtomContribs(*prbMol, prbLogpContribs,
+      prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+    double *prbDmat=MolOps::get3DDistanceMat(*prbMol);
+    MolAlign::MolHistogram prbHist(*prbMol, prbDmat);
+    
+    #ifdef USE_O3A_CONSTRUCTOR
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
+      MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
+    double rmsd = o3a.align();
+    cumScore += o3a.score();
+    #else
+    MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(*prbMol, *refMol,
+      prbLogpContribs, refLogpContribs, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
+    double rmsd = o3a->align();
+    cumScore += o3a->score();
+    delete o3a;
+    #endif
+    cumMsd += rmsd * rmsd;
+    //newMol->write(prbMol);
+    delete prbMol;
+  }
+  cumMsd /= (double)nMol;
+  delete refMol;
+  //newMol->close();
+  //std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  TEST_ASSERT(RDKit::feq(cumScore, 4918.1,1));
+  TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.304,.001));
+}
+
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
-  void runblock_o3a(ROMol *refMol,
+  void runblock_o3a_mmff(ROMol *refMol,
                     const std::vector<ROMol *> &mols,const std::vector<double> &rmsds,
                     const std::vector<double> &scores,
                     unsigned int count,unsigned int idx){
@@ -206,9 +335,56 @@ namespace {
         if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
         ROMol prbMol(*mols[i]);
         MMFF::MMFFMolProperties prbMP(prbMol);
+        #ifdef USE_O3A_CONSTRUCTOR
         MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
         double rmsd = o3a.align();
         double score = o3a.score();
+        #else
+        MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(prbMol, *refMol, &prbMP, &refMP);
+        double rmsd = o3a->align();
+        double score = o3a->score();
+        delete o3a;
+        #endif
+        TEST_ASSERT(feq(rmsd,rmsds[i]));
+        TEST_ASSERT(feq(score,scores[i]));
+      }
+    }
+  }
+  void runblock_o3a_crippen(ROMol *refMol,
+                    const std::vector<ROMol *> &mols,const std::vector<double> &rmsds,
+                    const std::vector<double> &scores,
+                    unsigned int count,unsigned int idx){
+    ROMol refMolCopy(*refMol);
+    for(unsigned int rep=0;rep<100;++rep){
+      unsigned int refNAtoms = refMolCopy.getNumAtoms();
+      std::vector<double> refLogpContribs(refNAtoms);
+      std::vector<double> refMRContribs(refNAtoms);
+      std::vector<unsigned int> refAtomTypes(refNAtoms);
+      std::vector<std::string> refAtomTypeLabels(refNAtoms);
+      Descriptors::getCrippenAtomContribs(refMolCopy, refLogpContribs,
+        refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        ROMol prbMol(*mols[i]);
+        unsigned int prbNAtoms = prbMol.getNumAtoms();
+        std::vector<double> prbLogpContribs(prbNAtoms);
+        std::vector<double> prbMRContribs(prbNAtoms);
+        std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+        std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+        Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
+          prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+        #ifdef USE_O3A_CONSTRUCTOR
+        MolAlign::O3A o3a(prbMol, refMolCopy, &prbLogpContribs, &refLogpContribs, 
+                          MolAlign::O3A::CRIPPEN);
+        double rmsd = o3a.align();
+        double score = o3a.score();
+        #else
+        MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(prbMol, refMolCopy, prbLogpContribs, refLogpContribs);
+        double rmsd = o3a->align();
+        double score = o3a->score();
+        delete o3a;
+        #endif
         TEST_ASSERT(feq(rmsd,rmsds[i]));
         TEST_ASSERT(feq(score,scores[i]));
       }
@@ -216,7 +392,7 @@ namespace {
   }
 }
 #include <boost/thread.hpp>  
-void testO3AMultiThread() {
+void testMMFFO3AMultiThread() {
   std::string rdbase = getenv("RDBASE");
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
 
@@ -244,9 +420,16 @@ void testO3AMultiThread() {
   for(unsigned int i=0;i<mols.size();++i){
     ROMol prbMol(*mols[i]);
     MMFF::MMFFMolProperties prbMP(prbMol);
+    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
     rmsds[i]=o3a.align();
     scores[i] = o3a.score();
+    #else
+    MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(prbMol, *refMol, &prbMP, &refMP);
+    rmsds[i]=o3a->align();
+    scores[i] = o3a->score();
+    delete o3a;
+    #endif
   }
   
   boost::thread_group tg;
@@ -255,7 +438,77 @@ void testO3AMultiThread() {
   unsigned int count=4;
   for(unsigned int i=0;i<count;++i){
     std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock_o3a,refMol,mols,rmsds,scores,count,i));
+    tg.add_thread(new boost::thread(runblock_o3a_mmff,refMol,mols,rmsds,scores,count,i));
+  }
+  tg.join_all();
+  
+  BOOST_FOREACH(ROMol *mol,mols){
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testCrippenO3AMultiThread() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
+
+  SDMolSupplier suppl(sdf, true, false);
+
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+  }
+
+  std::cerr<<"generating reference data"<<std::endl;
+  std::vector<double> rmsds(mols.size(),0.0);
+  std::vector<double> scores(mols.size(),0.0);
+  const int refNum = 48;
+  ROMol *refMol = mols[refNum];
+  unsigned int refNAtoms = refMol->getNumAtoms();
+  std::vector<double> refLogpContribs(refNAtoms);
+  std::vector<double> refMRContribs(refNAtoms);
+  std::vector<unsigned int> refAtomTypes(refNAtoms);
+  std::vector<std::string> refAtomTypeLabels(refNAtoms);
+  Descriptors::getCrippenAtomContribs(*refMol, refLogpContribs,
+    refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+
+  for(unsigned int i=0;i<mols.size();++i){
+    ROMol prbMol(*mols[i]);
+    unsigned int prbNAtoms = prbMol.getNumAtoms();
+    std::vector<double> prbLogpContribs(prbNAtoms);
+    std::vector<double> prbMRContribs(prbNAtoms);
+    std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+    std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+    Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
+      prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+    #ifdef USE_O3A_CONSTRUCTOR
+    MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
+                          MolAlign::O3A::CRIPPEN);
+    rmsds[i]=o3a.align();
+    scores[i] = o3a.score();
+    #else
+    MolAlign::O3A *o3a = MolAlign::calcCrippenO3A
+      (prbMol, *refMol, prbLogpContribs, refLogpContribs);
+    rmsds[i]=o3a->align();
+    scores[i] = o3a->score();
+    delete o3a;
+    #endif
+  }
+  
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock_o3a_crippen,refMol,mols,rmsds,scores,count,i));
   }
   tg.join_all();
   
@@ -271,7 +524,6 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
-#if 1
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -287,20 +539,33 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testIssue241 \n\n";
   testIssue241();
-#endif
-    
-  std::cout << "\t---------------------------------\n";
-  std::cout << "\t testO3A \n\n";
-  testO3A();
 
   std::cout << "\t---------------------------------\n";
-  std::cout << "\t testO3A with dmat\n\n";
-  testO3ADMat();
+  std::cout << "\t testMMFFO3A \n\n";
+  testMMFFO3A();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A with pre-computed dmat and MolHistogram\n\n";
+  testMMFFO3AMolHist();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A \n\n";
+  testCrippenO3A();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A with pre-computed dmat and MolHistogram\n\n";
+  testCrippenO3AMolHist();
 
 #ifdef RDK_TEST_MULTITHREADED
   std::cout << "\t---------------------------------\n";
-  std::cout << "\t testO3A multithreading\n\n";
-  testO3AMultiThread();
+  std::cout << "\t testMMFFO3A multithreading\n\n";
+  testMMFFO3AMultiThread();
+#endif
+
+#ifdef RDK_TEST_MULTITHREADED
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A multithreading\n\n";
+  testCrippenO3AMultiThread();
 #endif
   std::cout << "***********************************************************\n";
 

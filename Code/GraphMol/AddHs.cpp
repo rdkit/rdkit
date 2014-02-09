@@ -367,6 +367,10 @@ namespace RDKit{
     void removeHs(RWMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       unsigned int currIdx=0,origIdx=0;
       std::map<unsigned int,unsigned int> idxMap;
+      for(ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms(); ++atIt) {
+        if ((*atIt)->getAtomicNum() == 1) continue;
+        (*atIt)->updatePropertyCache(false);
+      }
       while(currIdx < mol.getNumAtoms()){
         Atom *atom = mol.getAtomWithIdx(currIdx);
         idxMap[origIdx]=currIdx;
@@ -392,6 +396,9 @@ namespace RDKit{
             // :-) 
             const BOND_SPTR bond = mol[*beg];
             Atom *heavyAtom =bond->getOtherAtom(atom);
+            int heavyAtomNum = heavyAtom->getAtomicNum();
+            const INT_VECT &defaultVs =
+              PeriodicTable::getTable()->getValenceList(heavyAtomNum);
 
             // we'll update the atom's explicit H count if we were told to
             // *or* if the atom is chiral, in which case the H is needed
@@ -404,12 +411,14 @@ namespace RDKit{
               // this is a special case related to Issue 228 and the
               // "disappearing Hydrogen" problem discussed in MolOps::adjustHs
               //
-              // If we remove a hydrogen from an aromatic N, we need to
-              // be *sure* to increment the explicit count, even if the
-              // H itself isn't marked as explicit
-              if(heavyAtom->getAtomicNum()==7 && heavyAtom->getIsAromatic()
-                 && heavyAtom->getFormalCharge()==0){
-                heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs()+1);
+              // If we remove a hydrogen from an aromatic N or P, or if
+              // the heavy atom it is connected to is not in its default
+              // valence state, we need to be *sure* to increment the
+              // explicit count, even if the H itself isn't marked as explicit
+              if (((heavyAtomNum == 7 || heavyAtomNum == 15)
+                && heavyAtom->getIsAromatic()) || (std::find(defaultVs.begin() + 1,
+                defaultVs.end(), heavyAtom->getTotalValence()) != defaultVs.end())) {
+                heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
               }
             }
 
@@ -434,6 +443,16 @@ namespace RDKit{
                 heavyAtom->invertChirality();
               }
             }     
+
+            // if it's a wavy bond, then we need to 
+            // mark the beginning atom with the _UnknownStereo tag.
+            // so that we know later that something was affecting its
+            // stereochem
+            if(bond->getBondDir()==Bond::UNKNOWN
+               && bond->getBeginAtomIdx()==heavyAtom->getIdx()){
+              heavyAtom->setProp("_UnknownStereo",1);
+            }
+
             mol.removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom
@@ -470,7 +489,7 @@ namespace RDKit{
       try{
         removeHs(*res,implicitOnly,updateExplicitCount,sanitize);
       } catch (MolSanitizeException &se){
-        if(res) delete res;
+        delete res;
         throw se;
       }
       return static_cast<ROMol *>(res);
@@ -544,7 +563,7 @@ namespace RDKit{
               }
             } else {
               // it wasn't a query atom, we need to replace it so that we can add a query:
-              ATOM_EQUALS_QUERY *tmp=makeAtomNumEqualsQuery(atom->getAtomicNum());
+              ATOM_EQUALS_QUERY *tmp=makeAtomNumQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
               newAt->setQuery(tmp);
               mol.replaceAtom(atom->getIdx(),newAt);

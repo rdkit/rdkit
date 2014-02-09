@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2002-2006 Rational Discovery LLC
+//   Copyright (C) 2002-2013 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -50,7 +50,7 @@ void test1(){
 
   qM.addAtom(qA);
   qA = new QueryAtom(6);
-  qA->expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
+  qA->expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
   qM.addAtom(qA);
   qM.addAtom(new QueryAtom(8));
   //Atom::ATOM_SPTR qA(new QueryAtom(6));
@@ -391,16 +391,16 @@ void testQueryQueryMatches(){
 
   {
     QueryAtom a1(6),a2(8);
-    a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
-    a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
+    a1.expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeAtomNumQuery(9),Queries::COMPOSITE_OR);
     TEST_ASSERT(a1.QueryMatch(&a2));
     TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6),a2(8);
-    a1.expandQuery(makeAtomNumEqualsQuery(7),Queries::COMPOSITE_OR);
-    a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
+    a1.expandQuery(makeAtomNumQuery(7),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeAtomNumQuery(9),Queries::COMPOSITE_OR);
     TEST_ASSERT(!a1.QueryMatch(&a2));
     TEST_ASSERT(!a2.QueryMatch(&a1));
   }
@@ -431,7 +431,7 @@ void testQueryQueryMatches(){
 
   {
     QueryAtom a1(6),a2(8);
-    a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
+    a1.expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
     TEST_ASSERT(a1.QueryMatch(&a2));
     TEST_ASSERT(a2.QueryMatch(&a1));
   }
@@ -550,6 +550,64 @@ void testGithub153(){
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+void testQualifiedQueries(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test queries using qualifiers instead of ==" << std::endl;
+  RWMol *m=SmilesToMol("CNO");
+
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_GREATER_QUERY>(7,"test"));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_GREATEREQUAL_QUERY>(7,"test"));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_LESS_QUERY>(7,"test"));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(2)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumQuery<ATOM_LESSEQUAL_QUERY>(7,"test"));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(2)));
+  }
+  
+  delete m;
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
+void testGithub165(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test Github issue 165: radicals not used in atom-atom matching" << std::endl;
+
+  Atom a1(6);
+  Atom a2(6);
+
+  TEST_ASSERT(a1.Match(&a2));
+  TEST_ASSERT(a2.Match(&a1));
+  a1.setNumRadicalElectrons(2);
+  TEST_ASSERT(!a1.Match(&a2));
+  TEST_ASSERT(a2.Match(&a1));
+  a2.setNumRadicalElectrons(2);
+  TEST_ASSERT(a1.Match(&a2));
+  TEST_ASSERT(a2.Match(&a1));
+  a2.setNumRadicalElectrons(3);
+  TEST_ASSERT(!a1.Match(&a2));
+  TEST_ASSERT(!a2.Match(&a1));
+  
+  
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
 
 
 
@@ -566,6 +624,8 @@ int main(){
   testQueryQueryMatches();
   testIssue2892580();
   testGithub153();
+  testQualifiedQueries();
+  testGithub165();
 
   return 0;
 }

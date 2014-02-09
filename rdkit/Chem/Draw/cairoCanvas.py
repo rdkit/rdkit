@@ -75,7 +75,7 @@ class Canvas(CanvasBase):
       ctx = cairo.Context(surface)
       size=image.size[0], image.size[1]
       self.image=image
-    elif size is not None:
+    elif ctx is None and size is not None:
       if cairo.HAS_PDF_SURFACE and imageType == "pdf":
         surface = cairo.PDFSurface (fileName, size[0], size[1])
       elif cairo.HAS_SVG_SURFACE and imageType == "svg":
@@ -91,10 +91,11 @@ class Canvas(CanvasBase):
       ctx.paint()
     else:
       surface=ctx.get_target()
-      try:
-        size=surface.get_width(),surface.get_height() 
-      except AttributeError:
-        size=None
+      if size is None:
+        try:
+          size=surface.get_width(),surface.get_height() 
+        except AttributeError:
+          size=None
     self.ctx=ctx
     self.size=size
     self.surface=surface

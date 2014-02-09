@@ -35,10 +35,8 @@ namespace RDKit {
     FragCatalogEntry(const std::string &pickle);
     
     ~FragCatalogEntry() { 
-      if(dp_mol){
-	delete dp_mol;
-	dp_mol=0;
-      }
+      delete dp_mol;
+      dp_mol=0;
       if(dp_props){
 	delete dp_props;
 	dp_props=0;

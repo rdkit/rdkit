@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C) 2001-2008 Greg Landrum, Randal M. Henne, and Rational Discovery LLC
+// Copyright (C) 2001-2013 Greg Landrum, Randal M. Henne, and Rational Discovery LLC
 // 
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,17 +22,16 @@
 namespace Invar {
 
   std::ostream & 
-  operator<<( std::ostream & s, Invariant & inv )
+  operator<<( std::ostream & s, const Invariant & inv )
   {
     return s << inv.toString().c_str();
   }
 
-  std::string& Invariant::
-  toString()
+  std::string Invariant::toString() const
   {
     std::string line=boost::lexical_cast<std::string>(this->getLine());
     
-    stringRep_d += "\n" + this->getMessage() + "\nViolation occurred on line " 
+    std::string stringRep = this->prefix_d + "\n" + this->getMessage() + "\nViolation occurred on line " 
       + line + " in file " + this->getFile() + "\nFailed Expression: "
       + this->getExpression() + "\n";
 
@@ -45,7 +44,7 @@ namespace Invar {
     std::cerr<<"\n--------------\n"<<std::endl;
 #endif
     
-    return stringRep_d;
+    return stringRep;
     
   }
 

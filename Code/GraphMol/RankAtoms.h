@@ -38,24 +38,26 @@ namespace RankAtoms {
   }
 
   //! functor for implementing > on two std::pairs.  The first entries are compared.
-  template <typename T>
-  struct pairGTFunctor {
-    bool operator() (const std::pair<T,int> &v1,const std::pair<T,int> &v2){
+  template <typename T1, typename T2>
+  struct pairGreater : public std::binary_function<std::pair<T1,T2>,std::pair<T1,T2>,bool> {
+    bool operator() (const std::pair<T1,T2> &v1,const std::pair<T1,T2> &v2) const {
       return v1.first > v2.first;
     }
   };
 
   //! function for implementing < on two std::pairs.  The first entries are compared.
-  template <typename T>
-  bool pairLess(const std::pair<T,int> &v1,const std::pair<T,int> &v2){
-    return v1.first < v2.first;
-  }
+  template <typename T1, typename T2>
+  struct pairLess : public std::binary_function<std::pair<T1,T2>,std::pair<T1,T2>,bool> {
+    bool operator() (const std::pair<T1,T2> &v1,const std::pair<T1,T2> &v2) const {
+      return v1.first < v2.first;
+    }
+  };
 
   template <typename T>
-  class argless {
+  class argless : public std::binary_function<T,T,bool> {
   public:
-    argless(const T& c) : container(c) {};
-    bool operator() (unsigned int v1,unsigned int v2){
+    argless(const T& c) : std::binary_function<T,T,bool>(), container(c) {};
+    bool operator() (unsigned int v1,unsigned int v2) const {
       return container[v1]<container[v2];
     }
     const T &container;

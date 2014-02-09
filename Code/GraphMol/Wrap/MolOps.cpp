@@ -60,8 +60,8 @@ namespace RDKit{
     
     ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes);
     delete bondIndices;
-    if(dummyLabels) delete dummyLabels;
-    if(bondTypes) delete bondTypes;
+    delete dummyLabels;
+    delete bondTypes;
     return res;
   }
 
@@ -159,7 +159,7 @@ namespace RDKit{
 
     
     if(!preserveExistingQuery){
-      if(oAt->getQuery()) delete oAt->getQuery();
+      delete oAt->getQuery();
       oAt->setQuery(q);
     } else {
       oAt->expandQuery(q,Queries::COMPOSITE_AND);
@@ -353,9 +353,8 @@ namespace RDKit{
       }
       delete atomCountsV;
     }
-    if(lFromAtoms){
-      delete lFromAtoms;
-    }
+    delete lFromAtoms;
+
     return res;
   }
   ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol,
@@ -416,12 +415,9 @@ namespace RDKit{
                                    useHs,tgtDensity,minSize,branchedPaths,
                                    useBondOrder,lAtomInvariants,lFromAtoms,lAtomBits);
 
-    if(lAtomInvariants){
-      delete lAtomInvariants;
-    }
-    if(lFromAtoms){
-      delete lFromAtoms;
-    }
+    delete lAtomInvariants;
+    delete lFromAtoms;
+
     if(lAtomBits){
       python::list &pyl=static_cast<python::list &>(atomBits);
       for(unsigned int i=0;i<mol.getNumAtoms();++i){

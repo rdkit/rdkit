@@ -14,6 +14,7 @@
 #include <GraphMol/MonomerInfo.h> 
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
+#include "ProximityBonds.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -1993,7 +1994,7 @@ void test1V3K(){
     TEST_ASSERT(m->getNumAtoms()==9);
     TEST_ASSERT(m->getNumBonds()==9);
     TEST_ASSERT(m->getAtomWithIdx(4)->getFormalCharge()==-1);
-    TEST_ASSERT(m->getAtomWithIdx(4)->getMass()==17.0);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getIsotope()==17);
     //m->debugMol(std::cerr);
     //TEST_ASSERT(m->getBondWithIdx(8)->getBondDir()==Bond::BEGINWEDGE);
     delete m;
@@ -2166,6 +2167,287 @@ void test2V3K(){
     delete m2;
     delete m;
   }
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chebi_15469.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==53);
+    TEST_ASSERT(m->getNumBonds()==55);
+    TEST_ASSERT(m->getAtomWithIdx(52)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(52)->hasQuery());
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chebi_57262.v3k.2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chebi_57262.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==22);
+    TEST_ASSERT(m->getNumBonds()==21);
+    TEST_ASSERT(m->getAtomWithIdx(18)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(18)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(18)->getIsotope()==1);
+    TEST_ASSERT(m->getAtomWithIdx(21)->getAtomicNum()==0);
+    TEST_ASSERT(!m->getAtomWithIdx(21)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(21)->getIsotope()==2);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+void test3V3K(){
+  BOOST_LOG(rdInfoLog) << "testing basic writing of v3000 mol files" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  std::string fName;
+
+  {
+    // charges
+    fName = rdbase+"issue148.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==1);
+
+    delete m;
+  }
+
+  {
+    // multiple charge lines
+    fName = rdbase+"MolFileChgBug.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(24)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(25)->getFormalCharge()==-1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(24)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(25)->getFormalCharge()==-1);
+
+    delete m;
+  }
+  {
+    // radicals
+    fName = rdbase + "radical.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+
+    delete m;
+  }
+
+  {
+    // radical and valence
+    fName = rdbase+"CH.v3k.mol";
+    RWMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    // no bonds in this one, make sure there's no bond block:
+    TEST_ASSERT(mb.find("BEGIN ATOM")!=std::string::npos);
+    TEST_ASSERT(mb.find("BEGIN BOND")==std::string::npos);
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    delete m;
+  }
+
+  {
+    // R Groups
+    fName = rdbase + "rgroups1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    unsigned int idx;
+    std::string label;
+  
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==2);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==1);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R1");
+    TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==2);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==1);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+    TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
+    m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+    TEST_ASSERT(label=="R1");
+    TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
+
+    delete m;
+  }
+
+  {
+    // automatic cut over to v3k
+    std::string smiles(1024,'C');
+    RWMol *m=SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1024);
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find("V2000")==std::string::npos);
+    TEST_ASSERT(mb.find("V3000")!=std::string::npos);
+    delete m;
+  }
+
+  {
+    // D in CTAB
+    fName = rdbase + "D_in_CTAB.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==2);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+    
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==2);
+
+    delete m;
+  }
+  {
+    // T in CTAB
+    fName = rdbase + "T_in_CTAB.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==3);
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==3);
+
+    delete m;
+  }
+
+  {
+    // atom list
+    fName = rdbase + "list-query.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getNumAtoms()==6);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1");
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1");
+  }
+
+  {
+    // not atom list
+    fName = rdbase + "not-list-query.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getNumAtoms()==4);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]-[#6](-[#6])=[!#7&!#8]");
+
+    std::string mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    sma = MolToSmarts(*m);
+    TEST_ASSERT(sma=="[#6]-[#6](-[#6])=[!#7&!#8]");
+  }
+
+  
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -3261,7 +3543,6 @@ void testZBO(){
   BOOST_LOG(rdInfoLog) << "testing ZBO parsing" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
-
   {
     std::string fName;
     fName = rdbase+"FeCO5.mol";
@@ -3326,13 +3607,118 @@ void testZBO(){
     TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs()==0);
     TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==3);
     TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs()==3);
-
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
+void testGithub164(){
+  BOOST_LOG(rdInfoLog) << "testing Github 164: problems with Xe from mol files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName;
+    fName = rdbase+"Github164.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getNumBonds()==2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+namespace RDKit {
+  bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q);
+}
+void testGithub194(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 194: bad bond types from pdb" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"1CRN.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==327);
+    TEST_ASSERT(m->getNumBonds()==337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    // the root cause: problems in SamePDBResidue:
+    TEST_ASSERT(SamePDBResidue(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo()),
+                               static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())));
+    TEST_ASSERT(SamePDBResidue(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo()),
+                               static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2)->getMonomerInfo())));
+    TEST_ASSERT(!SamePDBResidue(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo()),
+                                static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(9)->getMonomerInfo())));
+                
+    // the symptom, bond orders:
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(2)->getMonomerInfo())->getName()==" C  ");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(3)->getMonomerInfo())->getName()==" O  ");
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondType()==Bond::DOUBLE);
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 
+void testGithub196(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 196: left justitified bond topology" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName;
+    fName = rdbase+"github196.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==19);
+    TEST_ASSERT(m->getNumBonds()==20);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub191()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 191: wavy bonds to Hs should affect attached double bond stereochemistry." << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github191.1.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    std::string smi=MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="C/C=C/C");
+    delete m;
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github191.2.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
+    std::string smi=MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="CC=CC");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub210(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters when calling assignStereochemistry()" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github210.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_ChiralityPossible"));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3370,7 +3756,6 @@ int main(int argc,char *argv[]){
   testListsAndValues();
   //testCrash();
   test1V3K();
-  test2V3K();
   testIssue2963522();
   testIssue3073163();
   testIssue3154208();
@@ -3388,7 +3773,6 @@ int main(int argc,char *argv[]){
   testIssue3484552();
   testIssue3514824();
   testIssue3525799();
-  testIssue3557675();
   testSkipLines();
   testIssue269();
   testMolFileChiralFlag();
@@ -3397,10 +3781,18 @@ int main(int argc,char *argv[]){
   testGithub82();
   testMolFileWithHs();
   testMolFileWithRxn();
-  testPDBFile();
   testGithub166();
 #endif
   testZBO();
 
+  testGithub164();
+  testPDBFile();
+  testGithub194();
+  testGithub196();
+  testIssue3557675();
+  test3V3K();
+  test2V3K();
+  testGithub191();
+  testGithub210();
   return 0;
 }

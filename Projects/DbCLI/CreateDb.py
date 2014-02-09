@@ -126,7 +126,8 @@ parser.add_option('--noExtras',default=False,action='store_true',
                   help='skip all non-molecule databases')
 parser.add_option('--skipLoad','--skipMols',action="store_false",dest='loadMols',default=True,
                   help='skip the molecule loading (assumes mol db already exists)')
-
+parser.add_option('--updateDb','--update',default=False,action='store_true',
+                  help='add to an existing database')
 parser.add_option('--doPharm2D',default=False,
                   action='store_true',
                   help='skip calculating Pharm2D fingerprints')
@@ -209,7 +210,10 @@ def CreateDb(options,dataFilename='',supplier=None):
                   addComputedProps=options.addProps,uniqNames=True,
                   skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached),
                   silent=options.silent,nameProp=options.nameProp,
-                  lazySupplier=int(options.maxRowsCached)>0)
+                  lazySupplier=int(options.maxRowsCached)>0,
+                  startAnew=not options.updateDb
+                  )
+
   if options.doPairs:
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
     pairCurs = pairConn.GetCursor()

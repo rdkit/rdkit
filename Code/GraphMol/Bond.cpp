@@ -47,7 +47,7 @@ Bond::Bond(const Bond &other){
 
 Bond::~Bond()
 {
-  if(dp_props) delete dp_props;
+  delete dp_props;
 }
 
 Bond &Bond::operator=(const Bond &other){

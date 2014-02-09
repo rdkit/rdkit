@@ -2452,7 +2452,6 @@ CAS<~>
     for i in range(m.GetNumAtoms()):
       ans = list(range(m.GetNumAtoms()))
       random.shuffle(ans)
-      print ans
       m2 = Chem.RenumberAtoms(m,ans)
       nSmi = Chem.MolToSmiles(m2,True)
       self.failUnlessEqual(cSmi,nSmi)
@@ -2495,6 +2494,48 @@ CAS<~>
     self.failUnlessEqual(len(frags),3)
     smi = Chem.MolToSmiles(nm,True)
     self.failUnlessEqual(smi,'[2*]=O.[3*]=C(CC)CC(=[6*])C.[5*]=O')
+
+  def test88QueryAtoms(self):
+    from rdkit.Chem import rdqueries
+    m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
+    
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(2,4))
+
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6,negate=True))
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(4,))
+    
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6,negate=True),
+                   how=Chem.CompositeQueryType.COMPOSITE_OR)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(1,2,4))
+    
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6,negate=True),
+                   how=Chem.CompositeQueryType.COMPOSITE_XOR)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(1,2))
+    
+    qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(2,4))
+
+    qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.failUnlessEqual(l,(3,6))
+
+    
+  def test89UnicodeInput(self):
+    m = Chem.MolFromSmiles(u'c1ccccc1')
+    self.failUnless(m is not None)
+    self.failUnlessEqual(m.GetNumAtoms(),6)
+    m = Chem.MolFromSmarts(u'c1ccccc1')
+    self.failUnless(m is not None)
+    self.failUnlessEqual(m.GetNumAtoms(),6)
+    
 
 
     

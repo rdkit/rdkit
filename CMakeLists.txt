@@ -29,6 +29,7 @@ option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
 option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" ON )
 option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
 option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
+option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)

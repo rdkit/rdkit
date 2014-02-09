@@ -70,9 +70,8 @@ namespace RDGeom {
 
 
   UniformGrid3D::~UniformGrid3D() {
-    if (dp_storage) {
-      delete dp_storage;
-    }
+    delete dp_storage;
+    dp_storage=NULL;
   }
 
   int UniformGrid3D::getGridIndex(unsigned int xi, unsigned int yi, unsigned int zi) const {
@@ -86,6 +85,15 @@ namespace RDGeom {
       return -1;
     }
     return (zi*d_numX*d_numY + yi*d_numX + xi);
+  }
+
+  void UniformGrid3D::getGridIndices(unsigned int idx,unsigned int &xi, unsigned int &yi, unsigned int &zi) const {
+    if(idx >= d_numX*d_numY*d_numZ){
+      throw IndexErrorException(idx);
+    }
+    xi = idx%d_numX;
+    yi = (idx%(d_numX*d_numY))/d_numX;
+    zi = idx/(d_numX*d_numY);
   }
 
   int UniformGrid3D::getGridPointIndex(const Point3D &point) const {
@@ -347,7 +355,7 @@ namespace RDGeom {
     streamRead(ss,pklSz);
     char *buff = new char[pklSz];
     ss.read(buff,pklSz*sizeof(char));
-    if(dp_storage) delete dp_storage;
+    delete dp_storage;
     dp_storage = new RDKit::DiscreteValueVect(buff,pklSz);
     delete [] buff;
   }

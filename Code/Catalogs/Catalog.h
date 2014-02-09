@@ -42,9 +42,7 @@ namespace RDCatalog {
 
     //------------------------------------
     virtual ~Catalog(){
-      if (dp_cParams) {
-        delete dp_cParams;
-      }
+      delete dp_cParams;
     }
     
     //------------------------------------

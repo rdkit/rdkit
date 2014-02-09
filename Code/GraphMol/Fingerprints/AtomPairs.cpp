@@ -419,8 +419,8 @@ namespace RDKit{
           updateElement(*res,code);
         }
       }
-      if(fromAtomsBV) delete fromAtomsBV;
-      if(ignoreAtomsBV) delete ignoreAtomsBV;
+      delete fromAtomsBV;
+      delete ignoreAtomsBV;
 
       return res;
     }
@@ -500,8 +500,8 @@ namespace RDKit{
             updateElement(*res,bit%nBits);
           }
         }
-        if(fromAtomsBV) delete fromAtomsBV;
-        if(ignoreAtomsBV) delete ignoreAtomsBV;
+        delete fromAtomsBV;
+        delete ignoreAtomsBV;
       }
     } // end of local namespace
     SparseIntVect<boost::int64_t> *

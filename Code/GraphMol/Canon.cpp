@@ -12,11 +12,14 @@
 #include <GraphMol/Canon.h>
 #include <RDBoost/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
+#include <algorithm>
 
 namespace Canon {
   using namespace RDKit;
-  int _possibleComp(const PossibleType &arg1,const PossibleType &arg2) {
-    return (arg1.get<0>() < arg2.get<0>());
+  struct _possibleCompare : public std::binary_function<PossibleType,PossibleType,bool> {
+    bool operator()(const PossibleType &arg1,const PossibleType &arg2) const {
+      return (arg1.get<0>() < arg2.get<0>());
+    }
   };
 
   void switchBondDir(Bond *bond){
@@ -517,7 +520,7 @@ namespace Canon {
     //  Sort on ranks
     //
     // ---------------------
-    std::sort(possibles.begin(),possibles.end(),_possibleComp);
+    std::sort(possibles.begin(),possibles.end(),_possibleCompare());
 
 
     // ---------------------

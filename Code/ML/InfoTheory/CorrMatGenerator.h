@@ -39,9 +39,7 @@ namespace RDInfoTheory {
     };
 
     ~BitCorrMatGenerator() {
-      if (dp_corrMat) {
-        delete [] dp_corrMat;
-      }
+      delete [] dp_corrMat;
     }
 
     void initGenerator() {
@@ -59,9 +57,8 @@ namespace RDInfoTheory {
       d_descs = bitIdList;
       int i, nd = d_descs.size();
       int nelem = nd*(nd-1)/2;
-      if (dp_corrMat != 0) {
-        delete [] dp_corrMat;
-      }
+      delete [] dp_corrMat;
+
       dp_corrMat = new double[nd*(nd-1)/2];
       for (i = 0; i < nelem; i++) {
         dp_corrMat[i] = 0.0;

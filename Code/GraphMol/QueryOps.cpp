@@ -135,14 +135,6 @@ BOND_EQUALS_QUERY *makeBondMinRingSizeQuery(int tgt){
   return res;
 }
 
-ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
-  ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;
-  res->setVal(what);
-  res->setDataFunc(func);
-  res->setDescription("AtomSimple");
-  return res;
-}
-
 unsigned int queryAtomBondProduct(Atom const * at) {
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
@@ -171,104 +163,102 @@ unsigned int queryAtomAllBondProduct(Atom const * at) {
 
 
 ATOM_EQUALS_QUERY *makeAtomImplicitValenceQuery(int what){
-  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery(what,queryAtomImplicitValence);
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomImplicitValence);
   res->setDescription("AtomImplicitValence");
   return res;
 }
 ATOM_EQUALS_QUERY *makeAtomExplicitValenceQuery(int what){
-  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery(what,queryAtomExplicitValence);
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomExplicitValence);
   res->setDescription("AtomExplicitValence");
   return res;
 }
   
 ATOM_EQUALS_QUERY *makeAtomTotalValenceQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomTotalValence);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomTotalValence);
   res->setDescription("AtomTotalValence");
   return res;
 }
   
-ATOM_EQUALS_QUERY *makeAtomNumEqualsQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomNum);
-  res->setDescription("AtomAtomicNum");
-  return res;
+ATOM_EQUALS_QUERY *makeAtomNumQuery(int what){
+  return makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomNum,"AtomAtomicNum");
 }
 
 ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomExplicitDegree);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomExplicitDegree);
   res->setDescription("AtomExplicitDegree");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomTotalDegreeQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomTotalDegree);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomTotalDegree);
   res->setDescription("AtomTotalDegree");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomHCount);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomHCount);
   res->setDescription("AtomHCount");
   return res;
 }
 ATOM_EQUALS_QUERY *makeAtomImplicitHCountQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomImplicitHCount);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomImplicitHCount);
   res->setDescription("AtomImplicitHCount");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomAromaticQuery(){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryAtomAromatic);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomAromatic);
   res->setDescription("AtomIsAromatic");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomAliphaticQuery(){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryAtomAliphatic);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomAliphatic);
   res->setDescription("AtomIsAliphatic");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomUnsaturatedQuery(){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryAtomUnsaturated);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomUnsaturated);
   res->setDescription("AtomUnsaturated");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomMassQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(massIntegerConversionFactor*what,
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(massIntegerConversionFactor*what,
                                              queryAtomMass);
   res->setDescription("AtomMass");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,
                                              queryAtomIsotope);
   res->setDescription("AtomIsotope");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomFormalCharge);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomFormalCharge);
   res->setDescription("AtomFormalCharge");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomHybridization);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryAtomHybridization);
   res->setDescription("AtomHybridization");
   return res;
 }
   
 ATOM_EQUALS_QUERY *makeAtomInRingQuery(){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryIsAtomInRing);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryIsAtomInRing);
   res->setDescription("AtomInRing");
   return res;
 }
 
 ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what){
   ATOM_EQUALS_QUERY *res;
-  res = makeAtomSimpleQuery(what,queryIsAtomInNRings);
+  res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryIsAtomInNRings);
   res->setDescription("AtomInNRings");
   return res;
 }

@@ -148,48 +148,173 @@ namespace RDKit{
     }
   };
 
-  
+
+  template <class T>
+  T *makeAtomSimpleQuery(int what,int func(Atom const *),const std::string &description="Atom Simple"){
+    T *res = new T;
+    res->setVal(what);
+    res->setDataFunc(func);
+    res->setDescription(description);
+    return res;
+  }
+
+
   //! returns a Query for matching atomic number
-  ATOM_EQUALS_QUERY *makeAtomNumEqualsQuery(int what);
+  template <class T>
+  T *makeAtomNumQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomNum,descr);
+  }
+  //! \overload
+  ATOM_EQUALS_QUERY *makeAtomNumQuery(int what);
+
   //! returns a Query for matching implicit valence
+  template <class T>
+  T *makeAtomImplicitValenceQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomImplicitValence,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomImplicitValenceQuery(int what);
+
   //! returns a Query for matching explicit valence
+  template <class T>
+  T *makeAtomExplicitValenceQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomExplicitValence,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomExplicitValenceQuery(int what);
+
   //! returns a Query for matching total valence
+  template <class T>
+  T *makeAtomTotalValenceQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomTotalValence,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomTotalValenceQuery(int what);
+
   //! returns a Query for matching explicit degree
+  template <class T>
+  T *makeAtomExplicitDegreeQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomExplicitDegree,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what);
+
   //! returns a Query for matching atomic degree
+  template <class T>
+  T *makeAtomTotalDegreeQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomTotalDegree,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomTotalDegreeQuery(int what);
+
   //! returns a Query for matching hydrogen count
+  template <class T>
+  T *makeAtomHCountQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomHCount,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what);
+
   //! returns a Query for matching implicit hydrogen count
+  template <class T>
+  T *makeAtomImplicitHCountQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomImplicitHCount,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomImplicitHCountQuery(int what);
+
   //! returns a Query for matching the \c isAromatic flag
+  template <class T>
+  T *makeAtomAromaticQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(true,queryAtomAromatic,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomAromaticQuery();
+
   //! returns a Query for matching aliphatic atoms
+  template <class T>
+  T *makeAtomAliphaticQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(true,queryAtomAliphatic,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomAliphaticQuery();
+
   //! returns a Query for matching atoms with a particular mass
+  template <class T>
+  T *makeAtomMassQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(massIntegerConversionFactor*what,queryAtomMass,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomMassQuery(int what);
+
   //! returns a Query for matching atoms with a particular isotope
+  template <class T>
+  T *makeAtomIsotopeQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomIsotope,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what);
+
   //! returns a Query for matching formal charge
+  template <class T>
+  T *makeAtomFormalChargeQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomFormalCharge,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what);
+
   //! returns a Query for matching hybridization
+  template <class T>
+  T *makeAtomHybridizationQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomHybridization,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what);
+
   //! returns a Query for matching atoms with unsaturation:
+  template <class T>
+  T *makeAtomUnsaturatedQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(true,queryAtomUnsaturated,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomUnsaturatedQuery();
 
+
   //! returns a Query for matching ring atoms
+  template <class T>
+  T *makeAtomInRingQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(true,queryIsAtomInRing,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomInRingQuery();
+
   //! returns a Query for matching atoms in a particular number of rings
+  template <class T>
+  T *makeAtomInNRingsQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryIsAtomInNRings,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what);
+
   //! returns a Query for matching atoms in rings of a particular size
   ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt);
+
   //! returns a Query for matching an atom's minimum ring size
+  template <class T>
+  T *makeAtomMinRingSizeQuery(int tgt,const std::string &descr){
+    return makeAtomSimpleQuery<T>(tgt,queryAtomMinRingSize,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomMinRingSizeQuery(int tgt);
+
   //! returns a Query for matching atoms with a particular number of ring bonds
+  template <class T>
+  T *makeAtomRingBondCountQuery(int what,const std::string &descr){
+    return makeAtomSimpleQuery<T>(what,queryAtomRingBondCount,descr);
+  }
+  //! \overload
   ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
+
 
   //! returns a Query for matching bond orders
   BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);

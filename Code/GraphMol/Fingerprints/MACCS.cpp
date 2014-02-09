@@ -303,6 +303,8 @@ namespace  {
     PRECONDITION(fp.size()==167,"bad fingerprint");
     fp.clearBits();
 
+    if(!mol.getNumAtoms()) return;
+
     std::vector<RDKit::MatchVectType> matches;
     RDKit::RWMol::ConstAtomIterator atom;
     RDKit::MatchVectType match;

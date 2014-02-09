@@ -19,7 +19,7 @@ What is it?
 
   - http://www.rdkit.org
   - Supports Mac/Windows/Linux
-  - Quarterly releases
+  - Releases every 6 months
   - Web presence:
 
     - Homepage: http://www.rdkit.org
@@ -32,11 +32,11 @@ What is it?
 
     - Sourceforge (http://sourceforge.net/projects/rdkit) 
       
-      Mailing lists, Downloads, SVN repository (not always up-to-date)
+      Mailing lists, Downloads
 
     - Google code (http://code.google.com/p/rdkit/)
       
-      Downloads, wiki
+      wiki
 
   - Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for
       `rdkit-discuss <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/>`_ and
@@ -52,7 +52,7 @@ What is it?
 Functionality overview
 ======================
 
-- Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1]_, Corina mol2 [1]_
+- Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1]_, Corina mol2 [1]_, PDB
 - “Cheminformatics”:
 
   - Substructure searching
@@ -64,7 +64,7 @@ Functionality overview
 
 - 2D depiction, including constrained depiction
 - 2D->3D conversion/conformational analysis via distance geometry
-- UFF implementation for cleaning up structures
+- UFF and MMFF94/MMFF94S implementations for cleaning up structures
 - Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, etc.
 - Similarity/diversity picking
 - 2D pharmacophores [1]_
@@ -75,8 +75,9 @@ Functionality overview
 - Multi-molecule maximum common substructure [2]_
 - Feature maps
 - Shape-based similarity
-- Molecule-molecule alignment
+- RMSD-based molecule-molecule alignment
 - Shape-based alignment (subshape alignment [3]_) [1]_
+- Unsupervised molecule-molecule alignment using Open3DAlign algorithm [4]_
 - Integration with PyMOL for 3D visualization
 - Functional group filtering
 - Salt stripping
@@ -87,11 +88,13 @@ Functionality overview
   - Electrotopological state (Estate)
   - clogP, MR (Wildman and Crippen approach)
   - “MOE like” VSA descriptors
-  - Feature-map vectors [4]_
+  - Feature-map vectors [5]_
+  - MQN [6]_
+- Similarity Maps [7]_
 
 - Machine Learning:
 
-  - Clustering (hierarchical)
+  - Clustering (hierarchical, Butina)
   - Information theory (Shannon entropy, information gain, etc.)
 
 - Tight integration with the `IPython <http://ipython.org>`_ notebook and qtconsole.
@@ -103,8 +106,13 @@ Functionality overview
 
 .. [3] Putta, S., Eksterowicz, J., Lemmen, C. & Stanton, R. "A Novel Subshape Molecular Descriptor" *Journal of Chemical Information and Computer Sciences* **43:1623–35** (2003).
 
-.. [4] Landrum, G., Penzotti, J. & Putta, S. "Feature-map vectors: a new class of informative descriptors for computational drug discovery" *Journal of Computer-Aided Molecular Design* **20:751–62** (2006).
+.. [4] Tosco, P., Balle, T. & Shiri, F. Open3DALIGN: an open-source software aimed at unsupervised ligand alignment. *J Comput Aided Mol Des* **25:777–83** (2011).
 
+.. [5] Landrum, G., Penzotti, J. & Putta, S. "Feature-map vectors: a new class of informative descriptors for computational drug discovery" *Journal of Computer-Aided Molecular Design* **20:751–62** (2006).
+
+.. [6] Nguyen, K. T., Blum, L. C., van Deursen, R. & Reymond, J.-L. Classification of Organic Molecules by Molecular Quantum Numbers. *ChemMedChem* **4:1803–5** (2009).
+
+.. [7] Riniker, S. & Landrum, G. A. Similarity maps - a visualization strategy for molecular fingerprints and machine-learning methods. *Journal of Cheminformatics* **5:43** (2013).
 
 The Contrib Directory
 =====================
@@ -146,11 +154,27 @@ The Contrib directory, part of the standard RDKit distribution, includes code th
 
   Contribution from Jameed Hussain. 
 
+- **SA_Score**: Synthetic assessibility score
+
+  Python source for an implementation of the SA score algorithm described in the publication:
+
+  Ertl, P. and Schuffenhauer A. "Estimation of Synthetic Accessibility Score of Drug-like Molecules based on Molecular Complexity and Fragment Contributions" *Journal of Cheminformatics* **1:8** (2009)
+
+  Contribution from Peter Ertl
+
+- **fraggle**: A fragment-based molecular similarity algorithm
+
+  Python source for an implementation of the fraggle similarity algorithm developed at GSK and described in this RDKit UGM presentation:
+  https://github.com/rdkit/UGM_2013/blob/master/Presentations/Hussain.Fraggle.pdf
+
+  Contribution from Jameed Hussain
+
+  
 
 License
 =======
 
-This document is copyright (C) 2013 by Greg Landrum
+This document is copyright (C) 2013-2014 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

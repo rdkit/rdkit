@@ -11,7 +11,7 @@ rdkit_headers(Crippen.h Lipinski.h
               DEST GraphMol/Descriptors)
 
 rdkit_test(testDescriptors test.cpp 
-LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib )
+LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 
 
 add_subdirectory(Wrap)

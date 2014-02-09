@@ -453,10 +453,32 @@ This produces:
 .. image:: images/similarity_map_rf.png
 
 
+Using custom MCS atom types
+---------------------------
+
+Mailing list discussion:
+http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg03676.html
+
+IPython notebook:
+http://nbviewer.ipython.org/gist/greglandrum/8351725
+https://gist.github.com/greglandrum/8351725
+
+The code:
+
+.. testcode::
+
+  from rdkit import Chem
+  from rdkit.Chem import MCS
+  
+  def label(a):
+    " a simple hash combining atom number and hybridization "
+    return 100*int(a.GetHybridization())+a.GetAtomicNum()
+
+
 License
 *******
 
-This document is copyright (C) 2012 by Greg Landrum
+This document is copyright (C) 2012-2014 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

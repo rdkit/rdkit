@@ -73,6 +73,7 @@
 %ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
 %ignore RDKit::ROMol::setBondBookmark(Bond *,int);
 %ignore RDKit::ROMol::clearBondBookmark(int, const Bond *);
+%ignore RDKit::ROMol::replaceAtomBookmark(Atom *,int);
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
 %ignore RDKit::ROMol::clearProp(std::string const) const ;
 %ignore RDKit::ROMol::getAtomWithIdx(unsigned int) const ;
@@ -385,7 +386,8 @@
     RDKit::MMFF::MMFFMolProperties prbMP(*($self));
     RDKit::MMFF::MMFFMolProperties refMP(refMol);
     
-    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, prbCid, refCid,
+    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, RDKit::MolAlign::O3A::MMFF94,
+                             prbCid, refCid,
                              reflect,maxIters,accuracy);
     double rmsd=o3a.align();
     double score = o3a.score();

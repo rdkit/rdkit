@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -154,7 +154,7 @@ namespace RDKit{
       res = 0;
     }
     BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
-      if(molPtr) delete molPtr;
+      delete molPtr;
     }
 
     return res;
@@ -188,7 +188,7 @@ namespace RDKit{
       try {
         MolOps::removeHs(*res,false,false);
         // figure out stereochemistry:
-        MolOps::assignStereochemistry(*res,true);
+        MolOps::assignStereochemistry(*res,true,true,true);
       } catch (...) {
         delete res;
         throw;

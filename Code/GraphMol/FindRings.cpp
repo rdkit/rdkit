@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -184,14 +184,16 @@ namespace FindRings {
       } // end if (dupCand.size() > 1) 
     } // end of loop over all set of duplicate candidates
   }
-
-  bool compRingSize(const INT_VECT &ring1, const INT_VECT &ring2) {
-    return (ring1.size() < ring2.size());
-  }
+  
+  struct compRingSize : public std::binary_function<INT_VECT,INT_VECT,bool> {
+    bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
+      return v1.size() < v2.size();
+    }
+  };
 
   void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt, const ROMol &mol) {
     // sort on size
-    std::sort(res.begin(), res.end(), compRingSize);
+    std::sort(res.begin(), res.end(), compRingSize());
 
     // change the rings from atom IDs to bondIds
     VECT_INT_VECT brings;
@@ -750,7 +752,7 @@ namespace RDKit {
 
       RINGINVAR_SET invars;
 
-      int nats = mol.getNumAtoms();
+      unsigned int nats = mol.getNumAtoms();
       boost::dynamic_bitset<> activeAtoms(nats);
       activeAtoms.set();
       int nbnds = mol.getNumBonds();
@@ -786,7 +788,7 @@ namespace RDKit {
       // find the number of fragments in the molecule - we will loop over them
       VECT_INT_VECT frags;
       INT_VECT curFrag;
-      int nfrags = getMolFrags(mol, frags);
+      unsigned int nfrags = getMolFrags(mol, frags);
       for (unsigned int fi = 0; fi < nfrags; fi++) { // loop over the fragments in a molecule
         VECT_INT_VECT fragRes;
         curFrag = frags[fi];
@@ -873,7 +875,7 @@ namespace RDKit {
         } // done finding rings in this fragement
 
         // calculate the cyclomatic number for the fragment:
-        int nbnds=0;
+        unsigned int nbnds=0;
         for(ROMol::ConstBondIterator bndIt=mol.beginBonds();
             bndIt!=mol.endBonds();++bndIt){
           if(std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getBeginAtomIdx())!=curFrag.end() &&
@@ -1099,7 +1101,7 @@ namespace RDKit {
         mol.getRingInfo()->initialize();
       }
 
-      int nats = mol.getNumAtoms();
+      unsigned int nats = mol.getNumAtoms();
 
       INT_VECT atomColors(nats,0);
 

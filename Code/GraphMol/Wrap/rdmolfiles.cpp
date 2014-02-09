@@ -41,13 +41,23 @@ void rdBadFileExceptionTranslator(RDKit::BadFileException const& x){
 
 
 namespace RDKit{
-  ROMol *MolFromSmiles(std::string smiles,bool sanitize,
+  std::string pyObjectToString(python::object input){
+    python::extract<std::string> ex(input);
+    if(ex.check()) return ex();
+    std::wstring ws=python::extract<std::wstring>(input);
+    return std::string(ws.begin(),ws.end());   
+
+  }
+  
+  
+  ROMol *MolFromSmiles(python::object ismiles,bool sanitize,
                        python::dict replDict){
     std::map<std::string,std::string> replacements;
     for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
       replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
     }
     RWMol *newM;
+    std::string smiles=pyObjectToString(ismiles);
     try {
       newM = SmilesToMol(smiles,0,sanitize,&replacements);
     } catch (...) {
@@ -55,13 +65,15 @@ namespace RDKit{
     }
     return static_cast<ROMol *>(newM);
   }
-
-  ROMol *MolFromSmarts(const char *smarts,bool mergeHs,
+  
+  ROMol *MolFromSmarts(python::object ismarts,bool mergeHs,
                        python::dict replDict){
     std::map<std::string,std::string> replacements;
     for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
       replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
     }
+    std::string smarts=pyObjectToString(ismarts);
+
     RWMol *newM; 
     try {
       newM = SmartsToMol(smarts,0,mergeHs,&replacements);
@@ -70,7 +82,6 @@ namespace RDKit{
     }
     return static_cast<ROMol *>(newM);
   }
-   
   ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
 			bool skipFirstConf=false ) {
     RWMol *newM;
@@ -85,9 +96,9 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
-  ROMol *MolFromTPLBlock(std::string tplBlock, bool sanitize=true,
+  ROMol *MolFromTPLBlock(python::object itplBlock, bool sanitize=true,
 			bool skipFirstConf=false ) {
-    std::istringstream inStream(tplBlock);
+    std::istringstream inStream(pyObjectToString(itplBlock));
     unsigned int line = 0;
     RWMol *newM;
     try {
@@ -113,8 +124,8 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
-  ROMol *MolFromMolBlock(std::string molBlock, bool sanitize, bool removeHs, bool strictParsing) {
-    std::istringstream inStream(molBlock);
+  ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs, bool strictParsing) {
+    std::istringstream inStream(pyObjectToString(imolBlock));
     unsigned int line = 0;
     RWMol *newM=0;
     try {
@@ -165,8 +176,8 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
-  ROMol *MolFromPDBBlock(std::string molBlock, bool sanitize, bool removeHs, unsigned int flavor) {
-    std::istringstream inStream(molBlock);
+  ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs, unsigned int flavor) {
+    std::istringstream inStream(pyObjectToString(molBlock));
     RWMol *newM=0;
     try {
       newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor);
@@ -205,10 +216,10 @@ namespace RDKit{
     std::string res=MolFragmentToSmiles(mol,*avect,bvect,asymbols,bsymbols,
                                         doIsomericSmiles,doKekule,rootedAtAtom,
                                         canonical,allBondsExplicit);
-    if(avect) delete avect;
-    if(bvect) delete bvect;
-    if(asymbols) delete asymbols;
-    if(bsymbols) delete bsymbols;
+    delete avect;
+    delete bvect;
+    delete asymbols;
+    delete bsymbols;
     return res;
   }
 
@@ -469,6 +480,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
                 as suggested by the MDL spec.\n\
+    - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
+                 more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -476,7 +489,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n";  
   python::def("MolToMolBlock",RDKit::MolToMolBlock,
 	      (python::arg("mol"),python::arg("includeStereo")=false,
-	       python::arg("confId")=-1,python::arg("kekulize")=true),
+	       python::arg("confId")=-1,python::arg("kekulize")=true,
+               python::arg("forceV3000")=false),
 	      docString.c_str());
 
   docString="Writes a Mol file for a molecule\n\
@@ -489,6 +503,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
                 as suggested by the MDL spec.\n\
+    - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
+                 more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -497,7 +513,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::def("MolToMolFile",RDKit::MolToMolFile,
 	      (python::arg("mol"),python::arg("filename"),
                python::arg("includeStereo")=false,
-	       python::arg("confId")=-1,python::arg("kekulize")=true),
+	       python::arg("confId")=-1,python::arg("kekulize")=true,
+               python::arg("forceV3000")=false),
 	      docString.c_str());
 
   docString="Construct a molecule from a SMILES string.\n\n\
@@ -532,7 +549,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("replacements")=python::dict()),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
-
+  
   docString="Construct a molecule from a SMARTS string.\n\n\
   ARGUMENTS:\n\
 \n\

@@ -394,7 +394,13 @@ class TestCase(unittest.TestCase):
         ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
         self.failUnlessAlmostEqual(ang,math.pi,4)
 
-        
+    def test7UniformGridIndices(self):
+        ugrid = geom.UniformGrid3D(20, 18, 15)
+        idx = ugrid.GetGridIndex(3,2,1)
+        xi,yi,zi=ugrid.GetGridIndices(idx)
+        self.failUnlessEqual(xi,3)
+        self.failUnlessEqual(yi,2)
+        self.failUnlessEqual(zi,1)
         
 if __name__=='__main__':
     print "Testing Geometry wrapper"

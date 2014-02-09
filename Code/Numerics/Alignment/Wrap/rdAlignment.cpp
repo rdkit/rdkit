@@ -140,10 +140,8 @@ namespace RDNumeric {
         }
       }
       
-      
-      if (wtsVec) {
-        delete wtsVec;
-      }
+      delete wtsVec;
+
       for (unsigned int i = 0; i < npt; ++i) {
         delete probePts[i];
         delete refPts[i];

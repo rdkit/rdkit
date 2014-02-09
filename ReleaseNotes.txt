@@ -1,5 +1,5 @@
 ******  Release_2014.03.1 *******
-(Changes relative to Release_2013.09.1)
+(Changes relative to Release_2013.09.2)
 
 Acknowledgements:
 
@@ -19,7 +19,31 @@ Contrib updates:
 
 Other:
  - The Open3DAlign code is considerably faster.
+ - The SMILES parsing code is faster.
 
+******  Release_2013.09.2 *******
+(Changes relative to Release_2013.09.2)
+
+Acknowledgements:
+Andrew Dalke, JP Ebejer, Daniel Moser, Sereina Riniker, Roger Sayle, Manuel Schwarze, Julia Weber
+
+Bug Fixes:
+- cannot pickle unsanitized molecules
+  (github issue 149)
+- Problems reading PDB files when locale is DE
+  (github issue 170)
+- calling RWMol::clear() leaves property dict empty
+  (github issue 176)
+- zero atom molecule generates exception in MolToSmiles when 
+  rootedAtAtom is provided
+  (github issue 182)
+- bond orders not being set when PDB files are read
+  (github issue 194)
+- GenMACCSKeys() raises an exception with an empty molecule
+  (github issue 195)
+- left-justified SDF bond topology of "0" raises an unexpected
+  exception
+  (github issue 196)
 
 ******  Release_2013.09.1 *******
 (Changes relative to Release_2013.06.1)

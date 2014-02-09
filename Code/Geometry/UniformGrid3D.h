@@ -1,5 +1,5 @@
 // 
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,7 @@
 #include <DataStructs/DiscreteValueVect.h>
 #include "Grid3D.h"
 #include <iostream>
+
 namespace RDGeom {
   class UniformGrid3D : public Grid3D {
   
@@ -102,6 +103,11 @@ namespace RDGeom {
     //!
     //! \return the integer value, -1 if the indices are outside the grid
     int getGridIndex(unsigned int xi, unsigned int yi, unsigned int zi) const;
+
+    //! \brief get the x, y, and z indices of a grid-point index
+    //!
+    void getGridIndices(unsigned int idx,unsigned int &xi, unsigned int &yi, unsigned int &zi) const;
+
 
     //! \brief get the number of grid points along x-axis
     unsigned int getNumX() const { return d_numX; };

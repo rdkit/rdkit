@@ -16,6 +16,8 @@ import sys
 import copy
 import pprint
 
+periodicTable=Chem.GetPeriodicTable()
+
 class Font(object):
   face='sans'
   size='12'
@@ -85,12 +87,12 @@ class MolDrawing(object):
       self.drawingOptions=drawingOptions
     self.boundingBoxes = {}
 
-    if drawingOptions.bgColor is not None:
+    if self.drawingOptions.bgColor is not None:
       self.canvas.addCanvasPolygon(((0,0),
                                     (canvas.size[0],0),
                                     (canvas.size[0],canvas.size[1]),
                                     (0,canvas.size[1])),
-                                   color=drawingOptions.bgColor,
+                                   color=self.drawingOptions.bgColor,
                                    fill=True,stroke=False)
 
     
@@ -283,8 +285,6 @@ class MolDrawing(object):
                                 dash=(1,2))
       
   def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None,ignoreHs=False):
-    self.currDotsPerAngstrom=self.drawingOptions.dotsPerAngstrom
-    self.currAtomLabelFontSize=self.drawingOptions.atomLabelFontSize
     if canvasSize is None:
       canvasSize=self.canvasSize
     xAccum = 0
@@ -358,6 +358,8 @@ class MolDrawing(object):
     if kwargs.has_key('coordScale'):
       self.drawingOptions.coordScale=kwargs['coordScale']
 
+    self.currDotsPerAngstrom=self.drawingOptions.dotsPerAngstrom
+    self.currAtomLabelFontSize=self.drawingOptions.atomLabelFontSize
     if centerIt:
       self.scaleAndCenter(mol,conf,ignoreHs=ignoreHs)
     else:
@@ -488,7 +490,12 @@ class MolDrawing(object):
           # This should be done in a better way in the future:
           # 'baseOffset' should be determined by getting the size of 'isotope' and the size of 'base', or the size of 'mapNum' and the size of 'base'
           # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact position of the base
-          if deg>1 or nbrSum[0]<1:
+          if deg==0:
+            if periodicTable.GetElementSymbol(atom.GetAtomicNum()) in ('O','S','Se','Te','F','Cl','Br','I','At'):
+              symbol = '%s%s%s%s%s%s'%(hs,isotope,base,chg,rad,mapNum)
+            else:
+              symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
+          elif deg>1 or nbrSum[0]<1:
             symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
             baseOffset = 0.5 - (isotopeLength + len(base) / 2.) / symbolLength
           else:

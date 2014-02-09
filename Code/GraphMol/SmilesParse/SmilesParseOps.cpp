@@ -97,14 +97,17 @@ namespace SmilesParseOps{
       atomIdx2 = lastAt->getIdx();
       if(frag->hasBondBookmark(ci_LEADING_BOND)){
         //std::cout << "found it" << std::endl;
-        Bond *leadingBond = frag->getBondWithBookmark(ci_LEADING_BOND);
-        // we've already got a bond, so just set its local info
-        // and then add it to the molecule intact (no sense doing
-        // any extra work).
-        leadingBond->setOwningMol(mol);
-        leadingBond->setBeginAtomIdx(atomIdx2);
-        leadingBond->setEndAtomIdx(atomIdx1);
-        mol->addBond(leadingBond,true);
+        const ROMol::BOND_PTR_LIST &leadingBonds=frag->getAllBondsWithBookmark(ci_LEADING_BOND);
+        BOOST_FOREACH(Bond *leadingBond,leadingBonds){
+          // we've already got a bond, so just set its local info
+          // and then add it to the molecule intact (no sense doing
+          // any extra work).
+          leadingBond->setOwningMol(mol);
+          leadingBond->setEndAtomIdx(leadingBond->getBeginAtomIdx()+nOrigAtoms);
+          leadingBond->setBeginAtomIdx(atomIdx2);
+          mol->addBond(leadingBond,true);
+        }
+        mol->clearBondBookmark(ci_LEADING_BOND);
       } else {
         if(!doingQuery){
           if(bondOrder == Bond::UNSPECIFIED){

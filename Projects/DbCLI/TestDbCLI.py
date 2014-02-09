@@ -508,8 +508,68 @@ class TestCase(unittest.TestCase):
       self.failUnless(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
 
+  def test6Update(self):
+    p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
+                          'testData/bzr.smi'))
+    res=p.wait()
+    self.failIf(res)
+    p=None
+
+    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    
+    conn = DbConnect('testData/bzr/Compounds.sqlt')
+    d = conn.GetData('molecules',fields='count(*)')
+    self.failUnlessEqual(d[0][0],10)
+    
+    conn = DbConnect('testData/bzr/AtomPairs.sqlt')
+    d = conn.GetData('atompairs',fields='count(*)')
+    self.failUnlessEqual(d[0][0],10)
 
     
+    conn = DbConnect('testData/bzr/Descriptors.sqlt')
+    d = conn.GetData('descriptors_v1',fields='count(*)')
+    self.failUnlessEqual(d[0][0],10)
+
+    
+    conn = DbConnect('testData/bzr/Fingerprints.sqlt')
+    d = conn.GetData('rdkitfps',fields='count(*)')
+    self.failUnlessEqual(d[0][0],10)
+
+
+    p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
+                          '--updateDb',
+                          'testData/bzr.2.smi'))
+    res=p.wait()
+    self.failIf(res)
+    p=None
+
+    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    
+    conn = DbConnect('testData/bzr/Compounds.sqlt')
+    d = conn.GetData('molecules',fields='count(*)')
+    self.failUnlessEqual(d[0][0],20)
+    
+    conn = DbConnect('testData/bzr/AtomPairs.sqlt')
+    d = conn.GetData('atompairs',fields='count(*)')
+    self.failUnlessEqual(d[0][0],20)
+
+    
+    conn = DbConnect('testData/bzr/Descriptors.sqlt')
+    d = conn.GetData('descriptors_v1',fields='count(*)')
+    self.failUnlessEqual(d[0][0],20)
+
+    
+    conn = DbConnect('testData/bzr/Fingerprints.sqlt')
+    d = conn.GetData('rdkitfps',fields='count(*)')
+    self.failUnlessEqual(d[0][0],20)
+
+
 
 if __name__ == '__main__':
   unittest.main()

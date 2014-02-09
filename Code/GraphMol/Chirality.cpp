@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,11 +43,6 @@ namespace RDKit{
       BOOST_LOG(rdDebugLog) << outS.str() << std::endl;
     }
   
-    // compare the first elements of two pairs of integers
-    int _pairComp(const INT_PAIR &arg1,const INT_PAIR &arg2){
-      return (arg1.first < arg2.first);
-    }
-
     // --------------------------------------------------
     //
     // Calculates chiral invariants for the atoms of a molecule
@@ -122,9 +117,7 @@ namespace RDKit{
       int numAtoms = mol.getNumAtoms();
       CIP_ENTRY_VECT cipEntries(numAtoms);
       INT_LIST allIndices;
-      INT_LIST activeIndices;
       for(int i=0;i<numAtoms;++i){
-        activeIndices.push_back(i);
         allIndices.push_back(i);
       }
 #ifdef VERBOSE_CANON
@@ -135,20 +128,19 @@ namespace RDKit{
 #endif  
 
       // rank those:
-      RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
+      RankAtoms::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
       for(int i=0;i<numAtoms;++i){
         BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
       }
 #endif  
-      RankAtoms::updateInPlayIndices(ranks,activeIndices);
       // Start each atom's rank vector with its atomic number:
       //  Note: in general one should avoid the temptation to
       //  use invariants here, those lead to incorrect answers
       for(int i=0;i<numAtoms;i++){
         if(!seedWithInvars){
-          cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
+          cipEntries[i].push_back(mol[i]->getAtomicNum());
           cipEntries[i].push_back(static_cast<int>(ranks[i]));
         } else {
           cipEntries[i].push_back(static_cast<int>(invars[i]));
@@ -169,7 +161,7 @@ namespace RDKit{
       int numIts=0;
       int lastNumRanks=-1;
       int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
-      while( !activeIndices.empty() && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
+      while( numRanks<numAtoms && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
         unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
@@ -183,12 +175,12 @@ namespace RDKit{
 
           // start by pushing on our neighbors' ranks:
           ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(mol.getAtomWithIdx(*it));
+          boost::tie(beg,end) = mol.getAtomBonds(mol[*it].get());
           while(beg!=end){
             const Bond *bond=mol[*beg].get();
             ++beg;
             unsigned int nbrIdx=bond->getOtherAtomIdx(*it);
-            const Atom *nbr=mol.getAtomWithIdx(nbrIdx);
+            const Atom *nbr=mol[nbrIdx].get();
             
             int rank=ranks[nbrIdx]+1;
             // put the neighbor in 2N times where N is the bond order as a double.
@@ -222,9 +214,9 @@ namespace RDKit{
           }
           // add a zero for each coordinated H:
           // (as long as we're not a query atom)
-          if(!mol.getAtomWithIdx(*it)->hasQuery()){
+          if(!mol[*it]->hasQuery()){
             localEntry.insert(localEntry.begin(),
-                              mol.getAtomWithIdx(*it)->getTotalNumHs(),
+                              mol[*it]->getTotalNumHs(),
                               0);
           }
 
@@ -255,8 +247,8 @@ namespace RDKit{
         // sort the new ranks and update the list of active indices:
         // 
         lastNumRanks=numRanks;
-        RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
-        RankAtoms::updateInPlayIndices(ranks,activeIndices);
+
+        RankAtoms::rankVect(cipEntries,ranks);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
 
         // now truncate each vector and stick the rank at the end
@@ -280,15 +272,15 @@ namespace RDKit{
       PRECONDITION((!ranks.size() || ranks.size()>=mol.getNumAtoms()),
                    "bad ranks size");
       if(!ranks.size()) ranks.resize(mol.getNumAtoms());
-      int numAtoms = mol.getNumAtoms();
+      unsigned int numAtoms = mol.getNumAtoms();
       // get the initial invariants:
       DOUBLE_VECT invars(numAtoms,0);
       buildCIPInvariants(mol,invars);
       iterateCIPRanks(mol,invars,ranks,false);
 
       // copy the ranks onto the atoms:
-      for(int i=0;i<numAtoms;i++){
-        mol.getAtomWithIdx(i)->setProp("_CIPRank",ranks[i],1);
+      for(unsigned int i=0;i<numAtoms;++i){
+        mol[i]->setProp("_CIPRank",ranks[i],1);
       }
     }
    
@@ -597,7 +589,7 @@ namespace RDKit{
             --unassignedAtoms;
 
             // sort the list of neighbors by their CIP ranks:
-            std::sort(nbrs.begin(),nbrs.end(),Chirality::_pairComp);
+            std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<int,int>());
 
             // collect the list of neighbor indices:
             std::list<int> nbrIndices;
@@ -668,6 +660,12 @@ namespace RDKit{
               // the pairs here are: atomrank,bonddir
               Chirality::INT_PAIR_VECT begAtomNeighbors,endAtomNeighbors;
               bool hasExplicitUnknownStereo = false;
+              if((dblBond->getBeginAtom()->hasProp("_UnknownStereo") &&
+                  dblBond->getBeginAtom()->getProp<int>("_UnknownStereo")) ||
+                 (dblBond->getEndAtom()->hasProp("_UnknownStereo") &&
+                  dblBond->getEndAtom()->getProp<int>("_UnknownStereo")) ){
+                hasExplicitUnknownStereo=true;
+              }
               Chirality::findAtomNeighborDirHelper(mol,begAtom,dblBond,
                                                    ranks,begAtomNeighbors,
                                                    hasExplicitUnknownStereo);
@@ -818,6 +816,9 @@ namespace RDKit{
             atIt!=mol.endAtoms();++atIt){
           if((*atIt)->hasProp("_CIPCode")){
             (*atIt)->clearProp("_CIPCode");
+          }
+          if((*atIt)->hasProp("_ChiralityPossible")){
+            (*atIt)->clearProp("_ChiralityPossible");
           }
         }        
         for(ROMol::BondIterator bondIt=mol.beginBonds();
