@@ -45,6 +45,11 @@ HeteroatomSmarts = Chem.MolFromSmarts('[!#6;!#1]')
 #  from the graph). So the bond in [2H]C([2H])([2H])C([2H])([2H])[2H] *is* considered
 #  rotatable.
 RotatableBondSmarts = Chem.MolFromSmarts('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
+#  Under Strict rules a bond is rotatable iff it is a single non-ring bond where neither atom
+#  is terminal or in a terminal group or where a conjugated system involving amides, esters, 
+#  sulfonamides etc appear. A terminal group is defined as and of the following: C(F)(F)F,
+#  C(Cl)(Cl)Cl, C(Br)(Br)Br or C([CH3])([CH3])[CH3]
+StrictRotatableBondSmarts = Chem.MolFromSmarts('[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]=[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])[CH3])]')
 NHOHSmarts = Chem.MolFromSmarts('[#8H1,#7H1,#7H2,#7H3]')
 NOCountSmarts = Chem.MolFromSmarts('[#7,#8]')
 
@@ -68,6 +73,10 @@ NumRotatableBonds = lambda x:rdMolDescriptors.CalcNumRotatableBonds(x)
 NumRotatableBonds.__doc__="Number of Rotatable Bonds"
 NumRotatableBonds.version="1.0.0"
 _RotatableBonds = lambda x,y=RotatableBondSmarts:x.GetSubstructMatches(y,uniquify=1)
+NumStrictRotatableBonds = lambda x:rdMolDescriptors.CalcNumStrictRotatableBonds(x)
+NumStrictRotatableBonds.__doc__="Stricter count of the number of Rotatable Bonds"
+NumStrictRotatableBonds.version="1.0.0"
+_StrictRotatableBonds = lambda x,y=StrictRotatableBondSmarts:x.GetSubstructMatches(y,uniquify=1)
 NOCount = lambda x:rdMolDescriptors.CalcNumLipinskiHBA(x)
 NOCount.__doc__="Number of Nitrogens and Oxygens"
 NOCount.version="1.0.0"
