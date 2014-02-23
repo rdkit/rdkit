@@ -3863,6 +3863,22 @@ void test39InnocentChiralityLoss(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test40AgentsInSmarts(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing handling of agents in reaction smarts" << std::endl;
+  // This was github #222
+  {
+    ChemicalReaction *rxn;
+    std::string smi;
+    smi = "[C:1](=[O:2])O.[N:3][C:4]>[Pd]>[C:1](=[O:2])[N:3][C:4]";
+    rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -3913,6 +3929,7 @@ int main() {
   test38AddRecursiveQueriesToReaction();
 #endif
   test39InnocentChiralityLoss();
+  test40AgentsInSmarts();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

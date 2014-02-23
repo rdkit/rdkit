@@ -136,19 +136,26 @@ namespace RDKit {
   
   ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text,
                                                  std::map<std::string,std::string> *replacements) {
-    std::size_t pos=text.find(">>");
-    if(pos==std::string::npos){
+    std::size_t pos1=text.find(">");
+    std::size_t pos2=text.rfind(">");
+    if(pos1==std::string::npos){
       throw ChemicalReactionParserException("a reaction requires at least one reactant and one product");
     }
-    if(text.rfind(">>")!=pos){
+    if(text.find(">",pos1+1)!=pos2){
       throw ChemicalReactionParserException("multi-step reactions not supported");
     }
     
-    std::string reactText=text.substr(0,pos);
+    std::string reactText=text.substr(0,pos1);
     std::vector<std::string> reactSmarts=DaylightParserUtils::splitSmartsIntoComponents(reactText);
 
-    std::string productText=text.substr(pos+2);
-    
+#if 0    
+    // we don't currently do anything with this, but we could
+    std::string agentText="";
+    if(pos2!=pos1+1){
+      agentText=text.substr(pos1+1,(pos2-pos1)-1);
+    }
+#endif    
+    std::string productText=text.substr(pos2+1);
     ChemicalReaction *rxn=new ChemicalReaction();
    
     for(std::vector<std::string>::const_iterator txtIt=reactSmarts.begin();
