@@ -52,6 +52,7 @@ public class Lipinski {
 	//  from the graph). So the bond in [2H]C([2H])([2H])C([2H])([2H])[2H] *is* considered
 	//  rotatable.
 	static ROMol RotatableBondSmarts = RWMol.MolFromSmarts("[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]");
+	static ROMol StrictRotatableBondSmarts = RWMol.MolFromSmarts("[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]=[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])[CH3])]");
 	static ROMol NHOHSmarts = RWMol.MolFromSmarts("[#8H1,#7H1,#7H2,#7H3]");
 	static ROMol NOCountSmarts = RWMol.MolFromSmarts("[#7,#8]");
 
@@ -70,6 +71,9 @@ public class Lipinski {
 	}
 	public static int getRotatableBondCount(ROMol mol) {
 		return getMatchCount(mol, RotatableBondSmarts);
+	}
+	public static int getStrictRotatableBondCount(ROMol mol) {
+		return getMatchCount(mol, StrictRotatableBondSmarts);
 	}
 	public static int getNHOHCount(ROMol mol) {
 		return getMatchCount(mol, NHOHSmarts);

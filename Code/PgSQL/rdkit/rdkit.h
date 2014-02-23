@@ -117,6 +117,7 @@ extern "C" {
   int MolNumAtoms(CROMol i);
   int MolNumHeavyAtoms(CROMol i);
   int MolNumRotatableBonds(CROMol i);
+  int MolNumStrictRotatableBonds(CROMol i);
   int MolNumHeteroatoms(CROMol i);
   int MolNumRings(CROMol i);
   int MolNumAromaticRings(CROMol i);

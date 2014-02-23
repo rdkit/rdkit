@@ -31,6 +31,10 @@ namespace RDKit{
     //! calculates the number of rotatable bonds
     unsigned int calcNumRotatableBonds(const ROMol &mol);
 
+    extern const std::string NumStrictRotatableBondsVersion;
+    //! calculates the number of rotatable bonds more strictly, excluding amides, esters etc
+    unsigned int calcNumStrictRotatableBonds(const ROMol &mol);
+
     extern const std::string NumHBDVersion;
     //! calculates the number of H-bond donors
     unsigned int calcNumHBD(const ROMol &mol);
