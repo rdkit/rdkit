@@ -764,12 +764,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumHBA_version")=RDKit::Descriptors::NumHBAVersion;
-  docString="returns the number of rotatable bonds for a molecule";
+  docString="returns the number of rotatable bonds for a molecule. The strict option (default) does not count things like amide or ester bonds";
   python::def("CalcNumRotatableBonds",
 	      RDKit::Descriptors::calcNumRotatableBonds,
-	      (python::arg("mol")),
+	      (python::arg("mol"),
+               python::arg("strict")=true),
               docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version")=RDKit::Descriptors::NumRotatableBondsVersion;
+
   docString="returns the number of rings for a molecule";
   python::def("CalcNumRings",
 	      RDKit::Descriptors::calcNumRings,
