@@ -1,6 +1,12 @@
 ******  Release_2014.03.1 *******
 (Changes relative to Release_2013.09.2)
 
+!!!!!! IMPORTANT !!!!!!
+ - Due to a bug fix in the rotatable bonds definition, the default
+   rotatable bond calculation returns different values than before.
+   This also affects MQN descriptor #18.
+
+
 Acknowledgements:
 
 Bug Fixes:
