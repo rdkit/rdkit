@@ -55,7 +55,7 @@ void test1(){
   {
     std::string smi = "Cc1ccc(C(F)(F)F)o1";
     RWMol *m1 = SmilesToMol(smi);
-    std::vector<uint32_t> vs1(m1->getNumAtoms());
+    std::vector<boost::uint32_t> vs1(m1->getNumAtoms());
     for(unsigned int i=0;i<m1->getNumAtoms();++i){
       vs1[i] = m1->getAtomWithIdx(i)->getAtomicNum();
     }
@@ -63,7 +63,7 @@ void test1(){
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,5,1024,1,0,-1,0,1,1,&vs1);
     smi = "c1ccoc1";
     RWMol *m2 = SmilesToMol(smi);
-    std::vector<uint32_t> vs2(m2->getNumAtoms());
+    std::vector<boost::uint32_t> vs2(m2->getNumAtoms());
     for(unsigned int i=0;i<m2->getNumAtoms();++i){
       vs2[i] = m2->getAtomWithIdx(i)->getAtomicNum();
     }
@@ -80,7 +80,7 @@ void test1(){
   {
     std::string smi = "Oc1cc2[nH]cnc2c(O)n1";
     RWMol *m1 = SmilesToMol(smi);
-    std::vector<uint32_t> vs1(m1->getNumAtoms());
+    std::vector<boost::uint32_t> vs1(m1->getNumAtoms());
     for(unsigned int i=0;i<m1->getNumAtoms();++i){
       vs1[i] = m1->getAtomWithIdx(i)->getAtomicNum();
     }
@@ -91,7 +91,7 @@ void test1(){
     for(unsigned int i=0;i<m1->getNumAtoms();++i){
       smi = MolToSmiles(*m1,false,false,i,false);
       RWMol *m2 = SmilesToMol(smi);
-      std::vector<uint32_t> vs2(m2->getNumAtoms());
+      std::vector<boost::uint32_t> vs2(m2->getNumAtoms());
       for(unsigned int i=0;i<m2->getNumAtoms();++i){
         vs2[i] = m2->getAtomWithIdx(i)->getAtomicNum();
       }
@@ -112,7 +112,7 @@ void test1(){
   {
     std::string smi = "Oc1cc2[nH]cnc2c(O)n1";
     RWMol *m1 = SmilesToMol(smi);
-    std::vector<uint32_t> vs1(m1->getNumAtoms());
+    std::vector<boost::uint32_t> vs1(m1->getNumAtoms());
     for(unsigned int i=0;i<m1->getNumAtoms();++i){
       vs1[i] = m1->getAtomWithIdx(i)->getAtomicNum();
     }
@@ -120,7 +120,7 @@ void test1(){
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,5,1024,1,0,-1,0,1,1,&vs1);
     smi = "c1ccncc1";
     RWMol *m2 = SmilesToMol(smi);
-    std::vector<uint32_t> vs2(m2->getNumAtoms());
+    std::vector<boost::uint32_t> vs2(m2->getNumAtoms());
     for(unsigned int i=0;i<m2->getNumAtoms();++i){
       vs2[i] = m2->getAtomWithIdx(i)->getAtomicNum();
     }
