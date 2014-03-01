@@ -4464,6 +4464,20 @@ void testMolAssignment()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue190()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 190: Don't merge Hs onto dummy atoms." << std::endl;
+  {
+    std::string smiles="*[H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4534,6 +4548,7 @@ int main(){
   testMolAssignment();
 
   testAtomAtomMatch();
+  testGithubIssue190();
 
   return 0;
 }

@@ -160,6 +160,8 @@ namespace RDKit{
              all atoms removed.
            - Labelled hydrogen (e.g. atoms with atomic number=1, but mass > 1),
              will not be removed.
+           - two coordinate Hs, like the central H in C[H-]C, will not be removed
+           - Hs connected to dummy atoms will not be removed
 
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
     */
