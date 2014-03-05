@@ -2989,6 +2989,7 @@ void test30ReactProdQueries(){
     TEST_ASSERT(mol);
     TEST_ASSERT(isMoleculeReactantOfReaction(*rxn,*mol,which));
     TEST_ASSERT(which==0);
+    TEST_ASSERT(isMoleculeReactantOfReaction(*rxn,*mol));
     delete(mol);
 
     smi = "c1ccccc1Cl";
@@ -2996,6 +2997,7 @@ void test30ReactProdQueries(){
     TEST_ASSERT(mol);
     TEST_ASSERT(!isMoleculeReactantOfReaction(*rxn,*mol,which));
     TEST_ASSERT(which==rxn->getNumReactantTemplates());
+    TEST_ASSERT(!isMoleculeReactantOfReaction(*rxn,*mol));
     delete(mol);
 
     smi = "c1ccncc1Br";
@@ -3038,6 +3040,7 @@ void test30ReactProdQueries(){
     TEST_ASSERT(mol);
     TEST_ASSERT(isMoleculeProductOfReaction(*rxn,*mol,which));
     TEST_ASSERT(which==0);
+    TEST_ASSERT(isMoleculeProductOfReaction(*rxn,*mol));
     delete(mol);
 
     smi = "c1cccnc1C(=O)C";
@@ -3045,6 +3048,7 @@ void test30ReactProdQueries(){
     TEST_ASSERT(mol);
     TEST_ASSERT(!isMoleculeProductOfReaction(*rxn,*mol,which));
     TEST_ASSERT(which==rxn->getNumProductTemplates());
+    TEST_ASSERT(!isMoleculeProductOfReaction(*rxn,*mol));
     delete(mol);
 
     delete(rxn);

@@ -45,6 +45,10 @@
 %include <GraphMol/ChemReactions/ReactionParser.h>
 %ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &,bool);
 %ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &);
+%ignore RDKit::isMoleculeReactantOfReaction(const ChemicalReaction &r,const ROMol &,
+                                            unsigned int &);
+%ignore RDKit::isMoleculeProductOfReaction(const ChemicalReaction &r,const ROMol &,
+                                            unsigned int &);
 
 %extend RDKit::ChemicalReaction {
 static RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){

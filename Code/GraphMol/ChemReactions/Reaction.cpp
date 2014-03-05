@@ -913,6 +913,10 @@ namespace RDKit {
     }
     return false;
   }
+  bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol){
+    unsigned int ignore;
+    return isMoleculeReactantOfReaction(rxn,mol,ignore);
+  }
 
   bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
                                       unsigned int &which){
@@ -928,6 +932,10 @@ namespace RDKit {
       }
     }
     return false;
+  }
+  bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol){
+    unsigned int ignore;
+    return isMoleculeProductOfReaction(rxn,mol,ignore);
   }
 
   void addRecursiveQueriesToReaction(ChemicalReaction &rxn,
