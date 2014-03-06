@@ -120,10 +120,11 @@ Datum           mol_from_ctab(PG_FUNCTION_ARGS);
 Datum
 mol_from_ctab(PG_FUNCTION_ARGS) {
   char    *data = PG_GETARG_CSTRING(0);
+  bool keepConformer = PG_GETARG_BOOL(1);
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolCTAB(data,false,true);
+  mol = parseMolCTAB(data,keepConformer,true);
   if(!mol) PG_RETURN_NULL();
   res = deconstructROMol(mol);
   freeCROMol(mol);
