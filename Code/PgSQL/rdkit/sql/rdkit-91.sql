@@ -171,6 +171,28 @@ select mol_from_ctab('chiral1.mol
   1  5  1  0      
 M  END');
 
+-- mol_to_ctab() - suppress auto-generation of depiction.
+select mol_to_ctab(mol('CCC'), false);
+-- mol_to_ctab() - with auto-generated depiction.
+select mol_to_ctab(mol('CCC'));
+-- mol_to_ctab() - should preserve existing/input depiction. Note the
+-- extra 'true' parameter to 'mol_from_ctab()' that forces the cartridge
+-- to preserve the input conformer. Otherwise the conformer will be lost.
+select mol_to_ctab(mol_from_ctab('chiral1.mol
+  ChemDraw04200416412D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -0.0141    0.0553    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8109    0.0553    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0      
+  1  3  1  0      
+  1  4  1  1      
+  1  5  1  0      
+M  END', true));
+
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),3);
 select all_values_gt(torsion_fp('c1ccccc1C'::mol),1);

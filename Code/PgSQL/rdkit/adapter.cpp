@@ -36,6 +36,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -321,6 +322,27 @@ makeMolText(CROMol data, int *len,bool asSmarts) {
   *len = StringData.size();
   return (char*)StringData.c_str();               
 }
+
+extern "C" char *
+makeCtabText(CROMol data, int *len, bool createDepictionIfMissing) {
+  ROMol *mol = (ROMol*)data;
+
+  try {
+    if (createDepictionIfMissing && mol->getNumConformers() == 0) {
+      RDDepict::compute2DCoords(*mol);
+    }
+    StringData = MolToMolBlock(*mol);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeCtabText: problems converting molecule to CTAB")));
+    StringData="";
+  }       
+
+  *len = StringData.size();
+  return (char*)StringData.c_str();               
+}
+
 extern "C" char *
 makeMolBlob(CROMol data, int *len){
   ROMol   *mol = (ROMol*)data;

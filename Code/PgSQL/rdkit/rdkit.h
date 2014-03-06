@@ -98,6 +98,7 @@ extern "C" {
   CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail);
   CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail);
   char *makeMolText(CROMol data, int *len,bool asSmarts);
+  char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
   bool isValidSmiles(char *data);
   bool isValidSmarts(char *data);
   bool isValidCTAB(char *data);
