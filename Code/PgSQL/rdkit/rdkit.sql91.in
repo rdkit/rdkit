@@ -515,7 +515,7 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 
-CREATE OR REPLACE FUNCTION mol_fmla(mol,bool default false, bool default true)
+CREATE OR REPLACE FUNCTION mol_formula(mol,bool default false, bool default true)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;

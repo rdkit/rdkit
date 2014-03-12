@@ -489,7 +489,7 @@ MolNumHeavyAtoms(CROMol i){
 }
 
 extern "C" char *
-makeMolFmlaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes) {
+makeMolFormulaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes) {
   ROMol *mol = (ROMol*)data;
 
   try {
@@ -497,7 +497,7 @@ makeMolFmlaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIs
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
-             errmsg("makeMolFmlaText: problems converting molecule to sum formula")));
+             errmsg("makeMolFormulaText: problems converting molecule to sum formula")));
     StringData="";
   }       
 

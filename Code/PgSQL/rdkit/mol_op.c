@@ -217,10 +217,10 @@ MOLDESCR(kappa1,MolKappa1,FLOAT4)
 MOLDESCR(kappa2,MolKappa2,FLOAT4)
 MOLDESCR(kappa3,MolKappa3,FLOAT4)
 
-PG_FUNCTION_INFO_V1(mol_fmla);
-Datum           mol_fmla(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_formula);
+Datum           mol_formula(PG_FUNCTION_ARGS);
 Datum
-mol_fmla(PG_FUNCTION_ARGS) {
+mol_formula(PG_FUNCTION_ARGS) {
   CROMol  mol;
   char    *str;
   int     len;
@@ -234,7 +234,7 @@ mol_fmla(PG_FUNCTION_ARGS) {
   bool separateIsotopes    = PG_GETARG_BOOL(1);
   bool abbreviateHIsotopes = PG_GETARG_BOOL(2);
 
-  str = makeMolFmlaText(mol, &len, separateIsotopes, abbreviateHIsotopes);
+  str = makeMolFormulaText(mol, &len, separateIsotopes, abbreviateHIsotopes);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
