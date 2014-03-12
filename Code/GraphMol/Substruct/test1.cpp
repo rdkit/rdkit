@@ -1018,6 +1018,65 @@ void testGitHubIssue15(){
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testAtomLimits(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test limiting matches to particular atoms" << std::endl;
+
+  {
+    std::string qSmi="CC";
+    std::string mSmi="CCC";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    std::vector< MatchVectType > matches;
+    int count=SubstructMatch(*mol,*query,matches,true,true,true,true);
+    TEST_ASSERT(count==2);
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
+    atoms.set(0);
+    atoms.set(1);
+    count=SubstructMatch(*mol,*query,matches,true,true,true,true,&atoms);
+    TEST_ASSERT(count==1);
+    atoms.reset();
+    atoms.set(0);
+
+    count=SubstructMatch(*mol,*query,matches,true,true,true,true,&atoms);
+    TEST_ASSERT(count==0);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+void testBondLimits(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test limiting matches to particular bonds" << std::endl;
+
+  {
+    std::string qSmi="CC";
+    std::string mSmi="CCC";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    std::vector< MatchVectType > matches;
+    int count=SubstructMatch(*mol,*query,matches,true,true,true);
+    TEST_ASSERT(count==2);
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
+    bonds.set(0);
+    bonds.set(1);
+    count=SubstructMatch(*mol,*query,matches,true,true,true,true,NULL,&bonds);
+    TEST_ASSERT(count==2);
+    bonds.reset();
+    bonds.set(0);
+    count=SubstructMatch(*mol,*query,matches,true,true,true,true,NULL,&bonds);
+    TEST_ASSERT(count==1);
+    bonds.reset();
+    count=SubstructMatch(*mol,*query,matches,true,true,true,true,NULL,&bonds);
+    TEST_ASSERT(count==0);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 int main(int argc,char *argv[])
 {
 #if 1
@@ -1037,6 +1096,8 @@ int main(int argc,char *argv[])
   testCisTransMatch();
 #endif
   testGitHubIssue15();
+  testAtomLimits();
+  testBondLimits();
   return 0;
 }
 

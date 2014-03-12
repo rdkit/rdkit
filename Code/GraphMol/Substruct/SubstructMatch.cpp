@@ -28,7 +28,9 @@ namespace RDKit{
     typedef std::map<unsigned int,QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
     
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
-			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches);
+			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
+                         const boost::dynamic_bitset<> *includeOnlyAtoms,
+                         const boost::dynamic_bitset<> *includeOnlyBonds);
 #ifdef RDK_THREADSAFE_SSS
     void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *q);
 #endif
@@ -133,11 +135,13 @@ namespace RDKit{
     class AtomLabelFunctor{
     public:
       AtomLabelFunctor(const ROMol &query,const ROMol &mol, bool useChirality,
-                       bool useQueryQueryMatches) :
+                       bool useQueryQueryMatches, const boost::dynamic_bitset<> *includeOnlyAtoms) :
         d_query(query), d_mol(mol), df_useChirality(useChirality),
-        df_useQueryQueryMatches(useQueryQueryMatches) {};
+        df_useQueryQueryMatches(useQueryQueryMatches),dp_includeOnlyAtoms(includeOnlyAtoms) {};
       bool operator()(unsigned int i,unsigned int j) const{
         bool res=false;
+        if(dp_includeOnlyAtoms && !(*dp_includeOnlyAtoms)[j]) return false;
+
         if(df_useChirality){
           const Atom *qAt=d_query.getAtomWithIdx(i);
           if(qAt->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
@@ -155,12 +159,16 @@ namespace RDKit{
       const ROMol &d_mol;
       bool df_useChirality;
       bool df_useQueryQueryMatches;
+      const boost::dynamic_bitset<> *dp_includeOnlyAtoms;
     };
     class BondLabelFunctor{
     public:
-      BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality) :
-        d_query(query), d_mol(mol),df_useChirality(useChirality) {};
+      BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality,const boost::dynamic_bitset<> *includeOnlyBonds) :
+        d_query(query), d_mol(mol),df_useChirality(useChirality),
+        dp_includeOnlyBonds(includeOnlyBonds){};
       bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j) const{
+        if(dp_includeOnlyBonds && !(*dp_includeOnlyBonds)[d_mol[j]->getIdx()]) return false;
+
         bool res=bondCompat(d_query[i],d_mol[j]);
         if(df_useChirality){
           const BOND_SPTR qBnd=d_query[i];
@@ -181,6 +189,7 @@ namespace RDKit{
       const ROMol &d_query;
       const ROMol &d_mol;
       bool df_useChirality;
+      const boost::dynamic_bitset<> *dp_includeOnlyBonds;
     };
   }    
   
@@ -189,7 +198,9 @@ namespace RDKit{
   // find one match
   //
   bool SubstructMatch(const ROMol &mol,const ROMol &query,MatchVectType &matchVect,
-                      bool recursionPossible,bool useChirality,bool useQueryQueryMatches)
+                      bool recursionPossible,bool useChirality,bool useQueryQueryMatches,
+                      const boost::dynamic_bitset<> *includeOnlyAtoms,
+                      const boost::dynamic_bitset<> *includeOnlyBonds)
   {
 
     //std::cerr<<"begin match"<<std::endl;
@@ -199,7 +210,7 @@ namespace RDKit{
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
 	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap,
-                                  useQueryQueryMatches);
+                                  useQueryQueryMatches,includeOnlyAtoms,includeOnlyBonds);
         }
       }
     }
@@ -209,8 +220,8 @@ namespace RDKit{
     matchVect.resize(0);
 
     detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
-    detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches);
-    detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
+    detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches,includeOnlyAtoms);
+    detail::BondLabelFunctor bondLabeler(query,mol,useChirality,includeOnlyBonds);
 
     detail::ssPairType match;
 #if 0
@@ -250,7 +261,9 @@ namespace RDKit{
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matches,
 			      bool uniquify,bool recursionPossible,
-			      bool useChirality,bool useQueryQueryMatches){
+			      bool useChirality,bool useQueryQueryMatches,
+			      const boost::dynamic_bitset<> *includeOnlyAtoms,
+	                      const boost::dynamic_bitset<> *includeOnlyBonds){
 
     if(recursionPossible){
       detail::SUBQUERY_MAP subqueryMap;
@@ -259,7 +272,7 @@ namespace RDKit{
         if((*atIt)->getQuery()){
           //std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
 	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap,
-                                  useQueryQueryMatches);
+                                  useQueryQueryMatches,includeOnlyAtoms,includeOnlyBonds);
         }
       }
     }
@@ -267,8 +280,8 @@ namespace RDKit{
     matches.clear();
     matches.resize(0);
 
-    detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches);
-    detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
+    detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches,includeOnlyAtoms);
+    detail::BondLabelFunctor bondLabeler(query,mol,useChirality,includeOnlyBonds);
     detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     
     std::list<detail::ssPairType> pms;
@@ -315,18 +328,20 @@ namespace RDKit{
   namespace detail {
     unsigned int RecursiveMatcher(const ROMol &mol,const ROMol &query,
 				  std::vector< int > &matches,bool useChirality,
-				  SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches)
+				  SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
+	                              const boost::dynamic_bitset<> *includeOnlyAtoms,
+	                              const boost::dynamic_bitset<> *includeOnlyBonds)
     {
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
 	if((*atIt)->getQuery()){
 	  MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap,
-                          useQueryQueryMatches);
+                          useQueryQueryMatches,includeOnlyAtoms,includeOnlyBonds);
 	}
       }
  
-      detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches);
-      detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
+      detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches,includeOnlyAtoms);
+      detail::BondLabelFunctor bondLabeler(query,mol,useChirality,includeOnlyBonds);
       detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
 
       matches.clear();
@@ -370,7 +385,9 @@ namespace RDKit{
     }
 
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *query,bool useChirality,
-			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches){
+			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
+                         const boost::dynamic_bitset<> *includeOnlyAtoms,
+                         const boost::dynamic_bitset<> *includeOnlyBonds){
       PRECONDITION(query,"bad query");
       //std::cout << "*-*-* MS: " << (int)query << std::endl;
       //std::cout << "\t\t" << typeid(*query).name() << std::endl;
@@ -402,7 +419,9 @@ namespace RDKit{
 	  if(queryMol){
 	    std::vector< int > matchStarts;
 	    unsigned int res = RecursiveMatcher(mol,*queryMol,matchStarts,useChirality,
-						subqueryMap,useQueryQueryMatches);
+						subqueryMap,useQueryQueryMatches,
+			                        includeOnlyAtoms,
+			                        includeOnlyBonds);
 	    if(res){
 	      for(std::vector<int>::iterator i=matchStarts.begin();
 		  i!=matchStarts.end();
@@ -425,7 +444,7 @@ namespace RDKit{
       Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
       //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
       for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
-	MatchSubqueries(mol,childIt->get(),useChirality,subqueryMap,useQueryQueryMatches);
+	MatchSubqueries(mol,childIt->get(),useChirality,subqueryMap,useQueryQueryMatches,includeOnlyAtoms,includeOnlyBonds);
       }
       //std::cout << "<<- back " << (int)query << std::endl;
     }
