@@ -244,7 +244,7 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
       yield prods
 
 def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
-                     randomseed=2342,getForceField=UFFGetMoleculeForceField):
+                     randomseed=2342,getForceField=UFFGetMoleculeForceField,**kwargs):
   """ generates an embedding of a molecule where part of the molecule
   is constrained to have particular coordinates
 
@@ -294,7 +294,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
     corePtI = coreConf.GetAtomPosition(i)
     coordMap[idxI]=corePtI
 
-  ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed)
+  ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed,**kwargs)
   if ci<0:
     raise ValueError,'Could not embed molecule.'
 
