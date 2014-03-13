@@ -659,6 +659,7 @@ namespace RDKit{
             throw FileParseException(errout.str()) ;
           } else {
             if(val >=0 ){
+              atom->setProp("_ZBO_H",true);
               atom->setNumExplicitHs(val);
             }
           }
@@ -1958,7 +1959,7 @@ namespace RDKit{
           atomIt!=mol->endAtoms();
           ++atomIt) {
         Atom *atom=*atomIt;
-        if(atom->hasProp("molTotValence")){
+        if(atom->hasProp("molTotValence") && !atom->hasProp("_ZBO_H")){
           int totV;
           atom->getProp("molTotValence",totV);
           if(totV==0) continue;

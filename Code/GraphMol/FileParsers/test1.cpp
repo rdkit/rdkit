@@ -2418,7 +2418,6 @@ void test3V3K(){
 
     std::string mb=MolToMolBlock(*m,true,-1,true,true);
     delete m;
-
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==6);
