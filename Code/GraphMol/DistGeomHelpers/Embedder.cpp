@@ -245,13 +245,14 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap,
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
-                      double basinThresh){
+                      double basinThresh,
+                      int expTorsionLevel){
 
       INT_VECT confIds;
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,
                                  numZeroFail,-1.0,coordMap,optimizerForceTol,
-                                 ignoreSmoothingFailures,basinThresh);
+                                 ignoreSmoothingFailures,basinThresh,expTorsionLevel);
 
       int res;
       if(confIds.size()){
@@ -306,7 +307,8 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
-                                double basinThresh){
+                                double basinThresh,
+                                int expTorsionLevel){
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
       if(molFrags.size()>1 && coordMap){
@@ -334,7 +336,7 @@ namespace RDKit {
         initBoundsMat(mmat);
       
         double tol=0.0;
-        setTopolBounds(*piece, mmat, true, false);
+        setTopolBounds(*piece, mmat, true, false, expTorsionLevel);
         if(coordMap){
           adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
           tol=0.05;
@@ -343,7 +345,7 @@ namespace RDKit {
           // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
           // without 15 bounds and with VDW scaling
           initBoundsMat(mmat);
-          setTopolBounds(*piece, mmat, false, true);
+          setTopolBounds(*piece, mmat, false, true, expTorsionLevel);
 
           if(coordMap){
             adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
@@ -355,7 +357,7 @@ namespace RDKit {
             if(ignoreSmoothingFailures){
               // proceed anyway with the more relaxed bounds matrix
               initBoundsMat(mmat);
-              setTopolBounds(*piece, mmat, false, true);
+              setTopolBounds(*piece, mmat, false, true, expTorsionLevel);
 
               if(coordMap){
                 adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);

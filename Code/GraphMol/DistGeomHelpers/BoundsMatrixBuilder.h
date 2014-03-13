@@ -42,6 +42,9 @@ namespace RDKit {
       \param scaleVDW     If true scale the sum of the vdW radii while setting lower bounds
                           so that a smaller value (0.7*(vdw1 + vdw2) ) is used for paths
 			  that are less five bonds apart.
+      \param level        Sets the level for the experimental torsion angle preferences
+                          Default = -1 : no experimental preferences are used
+                          0 : only peaks, 1 : peaks with tolerance1, 2 : peaks with tolerance2
 
       <b>Note</b>
       For some strained systems the bounds matrix resulting from setting 1-5 bounds may
@@ -49,7 +52,7 @@ namespace RDKit {
       recompute the bounds matrix with no 1-5 bounds and with vdW scaling. 
     */
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-			bool set15bounds=true, bool scaleVDW=false);
+			bool set15bounds=true, bool scaleVDW=false, int level = -1);
   }
 }
 #endif

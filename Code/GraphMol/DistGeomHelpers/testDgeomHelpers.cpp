@@ -663,6 +663,19 @@ void testIssue251() {
   delete m;
 }
 
+void testIssue251_exp() {
+  std::string smi = "COC=O";
+  ROMol *m = SmilesToMol(smi, 0, 1);
+  unsigned int nat = m->getNumAtoms();
+  DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nat);
+  DistGeom::BoundsMatPtr bm(mat);
+  DGeomHelpers::initBoundsMat(bm);
+  DGeomHelpers::setTopolBounds(*m, bm, true, false, 2); // level 2
+  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.67, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.79, 0.02));
+  delete m;
+}
+
 void testIssue276() {
   bool ok;
   std::string smi = "CP1(C)=CC=CN=C1C";
@@ -1387,6 +1400,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue251 \n\n";
   testIssue251();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t testIssue251_exp \n\n";
+  testIssue251_exp();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue276 \n";
