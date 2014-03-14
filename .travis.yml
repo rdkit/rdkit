@@ -13,7 +13,7 @@ before_script:
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${RDBASE}/lib
  - mkdir build
  - cd build
- - ln -s /usr/share/java/junit.jar $RDBASE/External/java_lib
+ - ln -s /usr/share/java $RDBASE/External/java_lib
  - cmake -DRDK_BUILD_SWIG_WRAPPERS=ON ..
 
 script:
