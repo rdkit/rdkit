@@ -14,6 +14,7 @@ before_script:
  - mkdir build
  - cd build
  - ln -s /usr/share/java $RDBASE/External/java_lib
+ - ls -l $RDBASE/External/java_lib
  - cmake -DRDK_BUILD_SWIG_WRAPPERS=ON ..
 
 script:
