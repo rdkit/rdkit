@@ -150,8 +150,8 @@ namespace RDKit {
       \param accumData    Used to store the data that have been calculated so far
                           about the molecule
       \param level        Sets the level for the experimental torsion angle preferences
-                          Default = -1 : no experimental preferences are used
-                          0 : only peaks, 1 : peaks with tolerance1, 2 : peaks with tolerance2
+                          NOEXP : no experimental preferences are used, PEAK : only peaks,
+                          TOLERANCE1 : peaks with tolerance1, TOLERANCE2 : peaks with tolerance2
 
       <b>Procedure</b>
       As in the case of 1-3 distances 1-4 distance that are part of simple rings are
@@ -159,7 +159,7 @@ namespace RDKit {
       to the special cases.
      */
     void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, 
-                     ComputedData &accumData, double *distMatrix, int level=-1);
+                     ComputedData &accumData, double *distMatrix, ExpTorsionLevel level);
     
     //! Set 1-5 distance bounds for atoms in a molecule
     /*!
@@ -646,7 +646,7 @@ namespace RDKit {
           }
           inLine = RDKit::getLine(inStream);
         }
-        std::cerr << "Exp. torsion angles = " << d_params.size() << std::endl;
+        //std::cerr << "Exp. torsion angles = " << d_params.size() << std::endl;
       }
 
     void _checkAndSetBounds(unsigned int i, unsigned int j, 
@@ -1480,6 +1480,7 @@ namespace RDKit {
       Path14Configuration path14;
       path14.bid1 = bid1; path14.bid2 = bid2; path14.bid3 = bid3;
       path14.type = Path14Configuration::OTHER;
+      //std::cerr << bl1 << " " << bl2 << " " << bl3 << " " << ba12 << " " << ba23 << " " << ub_angle << std::endl;
 
       double dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, lb_angle) - GEN_DIST_TOL;
       double du = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, ub_angle) + GEN_DIST_TOL;
@@ -1489,7 +1490,7 @@ namespace RDKit {
     }
 
     void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, 
-                     ComputedData &accumData, double *distMatrix, int level) {
+                     ComputedData &accumData, double *distMatrix, ExpTorsionLevel level) {
       unsigned int npt = mmat->numRows();
       CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       
@@ -1543,7 +1544,7 @@ namespace RDKit {
       } // end of all rings
 
       // first, we set the torsion angles with experimental data
-      if (level > -1) {
+      if (level != NOEXP) {
         const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
         // loop over patterns
         for(ExpTorsionAngleCollection::ParamsVect::const_iterator it = params->begin();
@@ -1569,15 +1570,15 @@ namespace RDKit {
               // get the bounds
               double lb_angle, ub_angle;
               switch (level) {
-                case 0:
+                case PEAK:
                   lb_angle = it->lb_peak;
                   ub_angle = it->ub_peak;
                   break;
-                case 1:
+                case TOLERANCE1:
                   lb_angle = it->lb_tol1;
                   ub_angle = it->ub_tol1;
                   break;
-                case 2:
+                case TOLERANCE2:
                   lb_angle = it->lb_tol2;
                   ub_angle = it->ub_tol2;
                   break;
@@ -1673,7 +1674,7 @@ namespace RDKit {
     };
 
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                        bool set15bounds, bool scaleVDW, int level) {
+                        bool set15bounds, bool scaleVDW, ExpTorsionLevel level) {
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
       ComputedData accumData(na, nb);

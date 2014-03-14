@@ -670,7 +670,8 @@ void testIssue251_exp() {
   DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nat);
   DistGeom::BoundsMatPtr bm(mat);
   DGeomHelpers::initBoundsMat(bm);
-  DGeomHelpers::setTopolBounds(*m, bm, true, false, 2); // level 2
+  DGeomHelpers::setTopolBounds(*m, bm, true, false, DGeomHelpers::TOLERANCE2); // level 2
+  // exp. SMARTS pattern: [O:1]=[C:2]!@[O:3]~[C:4] --> upper angle = 15 deg
   TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.67, 0.01));
   TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.79, 0.02));
   delete m;

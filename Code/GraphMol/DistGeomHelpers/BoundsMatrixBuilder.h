@@ -27,6 +27,14 @@ namespace RDKit {
     void initBoundsMat(DistGeom::BoundsMatPtr mmat,double defaultMin=0.0,
 		       double defaultMax=1000.0);
 
+    //! the level he experimental torsion angle preferences
+    typedef enum {
+      NOEXP = -1, // no exp. torsion angle preferences
+      PEAK = 0, // only peaks
+      TOLERANCE1 = 1, // peaks with tolerance1
+      TOLERANCE2 = 2, // peaks with tolerance2
+    } ExpTorsionLevel;
+
     //! Set upper and lower distance bounds between atoms in a molecule based on topology
     /*!   
       This consists of setting 1-2, 1-3 and 1-4 distance based on bond lengths,
@@ -43,8 +51,9 @@ namespace RDKit {
                           so that a smaller value (0.7*(vdw1 + vdw2) ) is used for paths
 			  that are less five bonds apart.
       \param level        Sets the level for the experimental torsion angle preferences
-                          Default = -1 : no experimental preferences are used
-                          0 : only peaks, 1 : peaks with tolerance1, 2 : peaks with tolerance2
+                          Default = NOEXP : no experimental preferences are used
+                          PEAK : only peaks, TOLERANCE1 : peaks with tolerance1,
+                          TOLERANCE2 : peaks with tolerance2
 
       <b>Note</b>
       For some strained systems the bounds matrix resulting from setting 1-5 bounds may
@@ -52,7 +61,7 @@ namespace RDKit {
       recompute the bounds matrix with no 1-5 bounds and with vdW scaling. 
     */
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-			bool set15bounds=true, bool scaleVDW=false, int level = -1);
+			bool set15bounds=true, bool scaleVDW=false, ExpTorsionLevel level = NOEXP);
   }
 }
 #endif

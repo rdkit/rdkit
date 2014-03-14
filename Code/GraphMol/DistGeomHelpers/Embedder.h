@@ -14,6 +14,7 @@
 #include <map>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
+#include "BoundsMatrixBuilder.h"
 
 namespace RDKit {
   namespace DGeomHelpers {
@@ -66,9 +67,10 @@ namespace RDKit {
                                       smoothing fails
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
-      \param expTorsionLevel   sets the level for the experimental torsion angle preferences
-                               Default = -1 : no experimental preferences are used
-                               0 : only peaks, 1 : peaks with tolerance1, 2 : peaks with tolerance2
+      \param level   sets the level for the experimental torsion angle preferences
+                     Default = NOEXP : no experimental preferences are used
+                     PEAK : only peaks, TOLERANCE1 : peaks with tolerance1,
+                     TOLERANCE2 : peaks with tolerance2
 
       \return ID of the conformations added to the molecule, -1 if the emdedding failed
     */
@@ -81,7 +83,7 @@ namespace RDKit {
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
                       double basinThresh=5.0,
-                      int expTorsionLevel=-1
+                      ExpTorsionLevel level=NOEXP
                       );
 
     //*! Embed multiple conformations for a molecule
@@ -135,9 +137,10 @@ namespace RDKit {
 
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
-      \param expTorsionLevel   sets the level for the experimental torsion angle preferences
-                               Default = -1 : no experimental preferences are used
-                               0 : only peaks, 1 : peaks with tolerance1, 2 : peaks with tolerance2
+      \param level   sets the level for the experimental torsion angle preferences
+                     Default = NOEXP : no experimental preferences are used
+                     PEAK : only peaks, TOLERANCE1 : peaks with tolerance1,
+                     TOLERANCE2 : peaks with tolerance2
 
 
       \return an INT_VECT of conformer ids
@@ -153,7 +156,7 @@ namespace RDKit {
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
                                 double basinThresh=5.0,
-                                int expTorsionLevel=-1);
+                                ExpTorsionLevel level=NOEXP);
 
   }
 }

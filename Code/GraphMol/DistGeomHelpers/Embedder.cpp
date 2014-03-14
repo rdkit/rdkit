@@ -246,13 +246,13 @@ namespace RDKit {
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
                       double basinThresh,
-                      int expTorsionLevel){
+                      ExpTorsionLevel level){
 
       INT_VECT confIds;
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,
                                  numZeroFail,-1.0,coordMap,optimizerForceTol,
-                                 ignoreSmoothingFailures,basinThresh,expTorsionLevel);
+                                 ignoreSmoothingFailures,basinThresh,level);
 
       int res;
       if(confIds.size()){
@@ -308,7 +308,7 @@ namespace RDKit {
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
                                 double basinThresh,
-                                int expTorsionLevel){
+                                ExpTorsionLevel level){
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
       if(molFrags.size()>1 && coordMap){
@@ -336,7 +336,7 @@ namespace RDKit {
         initBoundsMat(mmat);
       
         double tol=0.0;
-        setTopolBounds(*piece, mmat, true, false, expTorsionLevel);
+        setTopolBounds(*piece, mmat, true, false, level);
         if(coordMap){
           adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
           tol=0.05;
@@ -345,7 +345,7 @@ namespace RDKit {
           // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
           // without 15 bounds and with VDW scaling
           initBoundsMat(mmat);
-          setTopolBounds(*piece, mmat, false, true, expTorsionLevel);
+          setTopolBounds(*piece, mmat, false, true, level);
 
           if(coordMap){
             adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
@@ -357,7 +357,7 @@ namespace RDKit {
             if(ignoreSmoothingFailures){
               // proceed anyway with the more relaxed bounds matrix
               initBoundsMat(mmat);
-              setTopolBounds(*piece, mmat, false, true, expTorsionLevel);
+              setTopolBounds(*piece, mmat, false, true, level);
 
               if(coordMap){
                 adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);

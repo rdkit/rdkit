@@ -22,12 +22,28 @@
 namespace python = boost::python;
 
 namespace RDKit {
+  DGeomHelpers::ExpTorsionLevel getLevel(int level) {
+    switch(level) {
+      case -1:
+        return DGeomHelpers::NOEXP;
+      case 0:
+        return DGeomHelpers::PEAK;
+      case 1:
+        return DGeomHelpers::TOLERANCE1;
+      case 2:
+        return DGeomHelpers::TOLERANCE2;
+      default:
+        throw ValueErrorException("Unsupported value for expTorsionAnglePref.");
+    }
+  }
+
   int EmbedMolecule(ROMol &mol, unsigned int maxAttempts,
                     int seed, bool clearConfs,
 		    bool useRandomCoords,double boxSizeMult,
                     bool randNegEig, unsigned int numZeroFail,
                     python::dict &coordMap,double forceTol,
-                    bool ignoreSmoothingFailures){
+                    bool ignoreSmoothingFailures,
+                    int expTorsionAnglePref=-1){
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
     unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
@@ -40,13 +56,16 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
+    DGeomHelpers::ExpTorsionLevel level = getLevel(expTorsionAnglePref);
+
     int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
                                           seed, clearConfs,
 					  useRandomCoords,boxSizeMult,
 					  randNegEig,
                                           numZeroFail,
                                           pMapPtr,forceTol,
-                                          ignoreSmoothingFailures);
+                                          ignoreSmoothingFailures,5.0,
+                                          level);
     return res;
   }
 
@@ -57,7 +76,8 @@ namespace RDKit {
                               bool randNegEig, unsigned int numZeroFail,
 			      double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
-                              bool ignoreSmoothingFailures) {
+                              bool ignoreSmoothingFailures,
+                              int expTorsionAnglePref=-1) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -71,26 +91,31 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
+    DGeomHelpers::ExpTorsionLevel level = getLevel(expTorsionAnglePref);
+
     INT_VECT res = DGeomHelpers::EmbedMultipleConfs(mol, numConfs, maxAttempts,
                                                     seed, clearConfs,
 						    useRandomCoords,boxSizeMult, 
                                                     randNegEig, numZeroFail,
                                                     pruneRmsThresh,pMapPtr,forceTol,
-                                                    ignoreSmoothingFailures);
+                                                    ignoreSmoothingFailures, 5.0,
+                                                    level);
 
     return res;
   } 
 
   PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds=true,
-                               bool scaleVDW=false) {
+                               bool scaleVDW=false,
+                               int expTorsionAnglePref=-1) {
     unsigned int nats = mol.getNumAtoms();
     npy_intp dims[2];
     dims[0] = nats;
     dims[1] = nats;
+    DGeomHelpers::ExpTorsionLevel level = getLevel(expTorsionAnglePref);
 
     DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
     DGeomHelpers::initBoundsMat(mat);
-    DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW);
+    DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW, level);
     PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
 	   static_cast<void *>(mat->getData()),
@@ -139,6 +164,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - expTorsionAnglePref : use experimental torsion angle preferences.\n\
+                            Default: no exp. preferences (-1), \n\
+                            0: only peaks, 1: peaks with tolerance1, \n\
+                            2: peaks with tolerance 2.  \n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -151,7 +180,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
-               python::arg("ignoreSmoothingFailures")=false),
+               python::arg("ignoreSmoothingFailures")=false,
+               python::arg("expTorsionAnglePref")=-1),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -194,6 +224,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - expTorsionAnglePref : use experimental torsion angle preferences.\n\
+                            Default: no exp. preferences (-1), \n\
+                            0: only peaks, 1: peaks with tolerance1, \n\
+                            2: peaks with tolerance 2.  \n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -207,7 +241,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 	       python::arg("pruneRmsThresh")=-1.0,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
-               python::arg("ignoreSmoothingFailures")=false),
+               python::arg("ignoreSmoothingFailures")=false,
+               python::arg("expTorsionAnglePref")=-1),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\
@@ -218,13 +253,18 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                     topology (otherwise stop at 1-4s)\n\
     - scaleVDW : scale down the sum of VDW radii when setting the \n\
                  lower bounds for atoms less than 5 bonds apart \n\
+    - expTorsionAnglePref : use experimental torsion angle preferences.\n\
+                            Default: no exp. preferences (-1), \n\
+                            0: only peaks, 1: peaks with tolerance1, \n\
+                            2: peaks with tolerance 2.  \n\
  RETURNS:\n\n\
     the bounds matrix as a Numeric array with lower bounds in \n\
     the lower triangle and upper bounds in the upper triangle\n\
 \n";
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds")=true,
-               python::arg("scaleVDW")=false),
+               python::arg("scaleVDW")=false,
+               python::arg("expTorsionAnglePref")=-1),
               docString.c_str());
 
 
