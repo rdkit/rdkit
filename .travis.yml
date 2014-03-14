@@ -13,11 +13,11 @@ before_script:
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${RDBASE}/lib
  - mkdir build
  - cd build
- - ln -s /usr/share/java $RDBASE/External/java_lib
- - ls -l $RDBASE/External/java_lib
+ - mkdir $RDBASE/External/java_lib
+ - cp /usr/share/java/junit.jar $RDBASE/External/java_lib
  - cmake -DRDK_BUILD_SWIG_WRAPPERS=ON ..
 
 script:
- - make
+ - make -j2
  - make install
  - ctest --output-on-failure
