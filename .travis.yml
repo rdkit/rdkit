@@ -15,6 +15,7 @@ before_script:
  - cd build
  - mkdir $RDBASE/External/java_lib
  - cp /usr/share/java/junit.jar $RDBASE/External/java_lib
+ - ls -l $RDBASE/External/java_lib
  - cmake -DRDK_BUILD_SWIG_WRAPPERS=ON ..
 
 script:
