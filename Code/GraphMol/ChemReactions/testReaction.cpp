@@ -3884,6 +3884,39 @@ void test40AgentsInSmarts(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test41Github233(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github 233: chirality not preserved in nonmapped atoms" << std::endl;
+  {
+    ChemicalReaction *rxn;
+    std::string smi;
+    smi = "[F:1][C:2]([C:3])[I:4]>>[F:1][C:2]([C:3][C@H]([OH])Br)[Cl:4]";
+    rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+
+    unsigned int nWarn,nError;
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    smi = "FC(C)I";
+    ROMol *mol = SmilesToMol(smi);
+    MOL_SPTR_VECT reacts;
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+    smi=MolToSmiles(*prods[0][0],true);
+    TEST_ASSERT(smi=="O[C@H](Br)CC(F)Cl");
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -3934,6 +3967,7 @@ int main() {
 #endif
   test39InnocentChiralityLoss();
   test40AgentsInSmarts();
+  test41Github233();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
