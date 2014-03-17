@@ -22,20 +22,6 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  DGeomHelpers::ExpTorsionLevel getLevel(int level) {
-    switch(level) {
-      case -1:
-        return DGeomHelpers::NOEXP;
-      case 0:
-        return DGeomHelpers::PEAK;
-      case 1:
-        return DGeomHelpers::TOLERANCE1;
-      case 2:
-        return DGeomHelpers::TOLERANCE2;
-      default:
-        throw ValueErrorException("Unsupported value for expTorsionAnglePref.");
-    }
-  }
 
   int EmbedMolecule(ROMol &mol, unsigned int maxAttempts,
                     int seed, bool clearConfs,
@@ -43,7 +29,7 @@ namespace RDKit {
                     bool randNegEig, unsigned int numZeroFail,
                     python::dict &coordMap,double forceTol,
                     bool ignoreSmoothingFailures,
-                    int expTorsionAnglePref=-1){
+                    DGeomHelpers::ExpTorsionLevel expTorsionAnglePref=DGeomHelpers::NOEXP){
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
     unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
@@ -56,8 +42,6 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
-    DGeomHelpers::ExpTorsionLevel level = getLevel(expTorsionAnglePref);
-
     int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
                                           seed, clearConfs,
 					  useRandomCoords,boxSizeMult,
@@ -65,7 +49,7 @@ namespace RDKit {
                                           numZeroFail,
                                           pMapPtr,forceTol,
                                           ignoreSmoothingFailures,5.0,
-                                          level);
+                                          expTorsionAnglePref);
     return res;
   }
 
@@ -77,7 +61,7 @@ namespace RDKit {
 			      double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
                               bool ignoreSmoothingFailures,
-                              int expTorsionAnglePref=-1) {
+                              DGeomHelpers::ExpTorsionLevel expTorsionAnglePref=DGeomHelpers::NOEXP) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -91,31 +75,28 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
-    DGeomHelpers::ExpTorsionLevel level = getLevel(expTorsionAnglePref);
-
     INT_VECT res = DGeomHelpers::EmbedMultipleConfs(mol, numConfs, maxAttempts,
                                                     seed, clearConfs,
 						    useRandomCoords,boxSizeMult, 
                                                     randNegEig, numZeroFail,
                                                     pruneRmsThresh,pMapPtr,forceTol,
                                                     ignoreSmoothingFailures, 5.0,
-                                                    level);
+                                                    expTorsionAnglePref);
 
     return res;
   } 
 
   PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds=true,
                                bool scaleVDW=false,
-                               int expTorsionAnglePref=-1) {
+                               DGeomHelpers::ExpTorsionLevel expTorsionAnglePref=DGeomHelpers::NOEXP) {
     unsigned int nats = mol.getNumAtoms();
     npy_intp dims[2];
     dims[0] = nats;
     dims[1] = nats;
-    DGeomHelpers::ExpTorsionLevel level = getLevel(expTorsionAnglePref);
 
     DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
     DGeomHelpers::initBoundsMat(mat);
-    DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW, level);
+    DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW, expTorsionAnglePref);
     PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
 	   static_cast<void *>(mat->getData()),
@@ -131,6 +112,13 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     ;
 
   import_array();
+
+  python::enum_<RDKit::DGeomHelpers::ExpTorsionLevel>("ExpTorsionLevel")
+    .value("NO_EXP",RDKit::DGeomHelpers::NOEXP)
+    .value("PEAKS",RDKit::DGeomHelpers::PEAK)
+    .value("TOLERANCE1",RDKit::DGeomHelpers::TOLERANCE1)
+    .value("TOLERANCE2",RDKit::DGeomHelpers::TOLERANCE2)
+    ;
 
   //RegisterListConverter<RDKit::Atom*>();
 
@@ -181,7 +169,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
-               python::arg("expTorsionAnglePref")=-1),
+               python::arg("expTorsionAnglePref")=RDKit::DGeomHelpers::NOEXP),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -242,7 +230,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
-               python::arg("expTorsionAnglePref")=-1),
+               python::arg("expTorsionAnglePref")=RDKit::DGeomHelpers::NOEXP),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\
@@ -264,7 +252,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds")=true,
                python::arg("scaleVDW")=false,
-               python::arg("expTorsionAnglePref")=-1),
+               python::arg("expTorsionAnglePref")=RDKit::DGeomHelpers::NOEXP),
               docString.c_str());
 
 
