@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/MonomerInfo.h> 
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
@@ -75,7 +76,37 @@ namespace RDKit{
     return res;
   }
 
+  namespace {
+    std::string getResidue(const ROMol &m,const Atom *at){
+      if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
+      return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
+    }
+    std::string getChainId(const ROMol &m,const Atom *at){
+      if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
+      return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getChainId();
+    }
+  }
+  python::dict splitMolByPDBResidues(const ROMol &mol){
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getResidue,false);
 
+    python::dict pyres;
+    for(std::map<std::string,boost::shared_ptr<ROMol> >::const_iterator iter=res.begin();
+        iter!=res.end();++iter){
+      pyres[iter->first]=iter->second;
+    }
+    return pyres;
+  }
+  python::dict splitMolByPDBChainId(const ROMol &mol){
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getChainId,false);
+
+    python::dict pyres;
+    for(std::map<std::string,boost::shared_ptr<ROMol> >::const_iterator iter=res.begin();
+        iter!=res.end();++iter){
+      pyres[iter->first]=iter->second;
+    }
+    return pyres;
+  }
+  
   python::dict parseQueryDefFileHelper(python::object &input,bool standardize,
                                        std::string delimiter,std::string comment,
                                        unsigned int nameColumn,unsigned int smartsColumn){
@@ -1071,6 +1102,33 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("asMols")=false,
                    python::arg("sanitizeFrags")=true),
                   docString.c_str());
+
+      // ------------------------------------------------------------------------
+      docString="Splits a molecule into pieces based on PDB residue information.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  RETURNS: a dictionary keyed by residue name with molecules as the values\n\
+\n";
+      python::def("SplitMolByPDBResidues", &splitMolByPDBResidues,
+                  (python::arg("mol")),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
+      docString="Splits a molecule into pieces based on PDB chain information.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  RETURNS: a dictionary keyed by residue name with molecules as the values\n\
+\n";
+      python::def("SplitMolByPDBChainId", &splitMolByPDBChainId,
+                  (python::arg("mol")),
+                  docString.c_str());
+
+
 
       // ------------------------------------------------------------------------
       docString="Returns the formal charge for the molecule.\n\

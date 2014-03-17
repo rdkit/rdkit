@@ -3719,6 +3719,36 @@ void testGithub210(){
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+namespace {
+  std::string getResidue(const ROMol &m,const Atom *at){
+    if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
+    return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
+  }
+}
+void testPDBResidues(){
+  BOOST_LOG(rdInfoLog) << "testing splitting on PDB residues" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"2NW4.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(*m,getResidue,false);
+
+    TEST_ASSERT(res.size()==22);
+    TEST_ASSERT(res.find(std::string("8NH"))!=res.end());
+    TEST_ASSERT(res.find(std::string("ALA"))!=res.end());
+    TEST_ASSERT(res[std::string("8NH")]->getNumAtoms()==21);
+
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3793,5 +3823,6 @@ int main(int argc,char *argv[]){
   test2V3K();
   testGithub191();
   testGithub210();
+  testPDBResidues();
   return 0;
 }

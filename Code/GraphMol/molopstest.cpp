@@ -4477,6 +4477,39 @@ void testGithubIssue190()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace {
+  int getAtNum(const ROMol &m,const Atom *at){
+    return at->getAtomicNum();
+  }
+  std::string getSymbol(const ROMol &m,const Atom *at){
+    return at->getSymbol();
+  }
+}
+void testMolFragsWithQuery()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing getMolFragsWithQuery()." << std::endl;
+  {
+    std::string smiles="C1CCC1ONNC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    std::map<int,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(*m,getAtNum);
+    TEST_ASSERT(res.size()==3);
+    TEST_ASSERT(res.find(6)!=res.end());
+    TEST_ASSERT(res.find(7)!=res.end());
+    TEST_ASSERT(res.find(8)!=res.end());
+    TEST_ASSERT(res.find(5)==res.end());
+    TEST_ASSERT(res[6]->getNumAtoms()==5);
+    TEST_ASSERT(res[6]->getNumBonds()==4);
+    TEST_ASSERT(res[7]->getNumAtoms()==2);
+    TEST_ASSERT(res[7]->getNumBonds()==1);
+    TEST_ASSERT(res[8]->getNumAtoms()==1);
+    TEST_ASSERT(res[8]->getNumBonds()==0);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -4549,7 +4582,7 @@ int main(){
 
   testAtomAtomMatch();
   testGithubIssue190();
-
+  testMolFragsWithQuery();
   return 0;
 }
 
