@@ -362,6 +362,15 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     Note that the template molecule should have no explicit hydrogens
     else the algorithm will fail.
 
+    It also works if there are different formal charges (this was github issue 235):
+    >>> template=AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
+    >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4FTR_lig.mol'))
+    >>> AllChem.MolToSmiles(mol)
+    'COC1CC(C2CCC3C(C2)NC2CCC(CC(O)N(C)C)CC2NC3O)CCC1N(O)O'
+    >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
+    >>> AllChem.MolToSmiles(newMol)
+    'COc1cc(-c2ccc3c(c2)Nc2ccc(CC(=O)N(C)C)cc2NC3=O)ccc1[N+](=O)[O-]'
+
   """
   refmol2 = rdchem.Mol(refmol)
   mol2 = rdchem.Mol(mol)
@@ -377,6 +386,12 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     for b in refmol2.GetBonds():
       b.SetBondType(BondType.SINGLE)
       b.SetIsAromatic(False)
+    # set atom charges to zero;
+    for a in refmol2.GetAtoms():
+      a.SetFormalCharge(0)
+    for a in mol2.GetAtoms():
+      a.SetFormalCharge(0)
+      
     matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
     # do the molecules match now?
     if matching:
@@ -396,6 +411,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
         a2.SetHybridization(a.GetHybridization())
         a2.SetIsAromatic(a.GetIsAromatic())
         a2.SetNumExplicitHs(a.GetNumExplicitHs())
+        a2.SetFormalCharge(a.GetFormalCharge())
       SanitizeMol(mol2)
       if hasattr(mol2, '__sssAtoms'):
         mol2.__sssAtoms = None # we don't want all bonds highlighted
