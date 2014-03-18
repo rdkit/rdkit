@@ -6,6 +6,7 @@ rdkit_library(DistGeometry
               LINK_LIBRARIES EigenSolvers ForceField)
 
 rdkit_headers(BoundsMatrix.h
+              MultiRangeBoundsMatrix.h
               ChiralSet.h
               ChiralViolationContrib.h
               DistGeomUtils.h

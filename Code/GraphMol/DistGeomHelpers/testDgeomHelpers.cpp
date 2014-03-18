@@ -13,6 +13,7 @@
 #include <string>
 #include <iostream>
 #include <DistGeom/BoundsMatrix.h>
+#include <DistGeom/MultiRangeBoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -663,17 +664,45 @@ void testIssue251() {
   delete m;
 }
 
-void testIssue251_exp() {
+void testMultiRange() {
   std::string smi = "COC=O";
   ROMol *m = SmilesToMol(smi, 0, 1);
   unsigned int nat = m->getNumAtoms();
+  DistGeom::MultiRangeBoundsMatrix *multimat = new DistGeom::MultiRangeBoundsMatrix(nat);
+  DistGeom::MultiRangeBoundsMatPtr pmulti(multimat);
+  DGeomHelpers::setTopolMultiRangeBounds(*m, pmulti, true, false, DGeomHelpers::TOLERANCE1);
+  TEST_ASSERT(pmulti->getLowerBound(0,3).size()==1);
+  TEST_ASSERT(pmulti->getUpperBound(0,3).size()==1);
+  // get a random "normal" bounds matrix
   DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nat);
-  DistGeom::BoundsMatPtr bm(mat);
-  DGeomHelpers::initBoundsMat(bm);
-  DGeomHelpers::setTopolBounds(*m, bm, true, false, DGeomHelpers::TOLERANCE2); // level 2
-  // exp. SMARTS pattern: [O:1]=[C:2]!@[O:3]~[C:4] --> upper angle = 15 deg
-  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.67, 0.01));
-  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.79, 0.02));
+  DistGeom::BoundsMatPtr pmat(mat);
+  pmulti->getRandomBoundsMatrix(pmat);
+  // exp. SMARTS pattern: [O:1]=[C:2]!@[O:3]~[C:4] --> upper angle = 10 deg
+  TEST_ASSERT(RDKit::feq(pmat->getLowerBound(0,3), 2.67, 0.01));
+  TEST_ASSERT(RDKit::feq(pmat->getUpperBound(0,3), 2.79, 0.01));
+  delete m;
+}
+
+void testMultiRange2() {
+  std::string smi = "FC(F)(F)Oc1ccccc1";
+  ROMol *m = SmilesToMol(smi, 0, 1);
+  unsigned int nat = m->getNumAtoms();
+  DistGeom::MultiRangeBoundsMatrix *multimat = new DistGeom::MultiRangeBoundsMatrix(nat);
+  DistGeom::MultiRangeBoundsMatPtr pmulti(multimat);
+  DGeomHelpers::setTopolMultiRangeBounds(*m, pmulti, true, false, DGeomHelpers::TOLERANCE1);
+  // exp. SMARTS pattern: [!#1:1][CX4H0:2]!@[OX2:3][!#1:4] --> two peaks
+  TEST_ASSERT(pmulti->getLowerBound(0,5).size()==2);
+  TEST_ASSERT(pmulti->getUpperBound(0,5).size()==2);
+  TEST_ASSERT(RDKit::feq(pmulti->getLowerBound(0,5)[0], 2.68, 0.01));
+  TEST_ASSERT(RDKit::feq(pmulti->getUpperBound(0,5)[0], 3.05, 0.01));
+  TEST_ASSERT(RDKit::feq(pmulti->getLowerBound(0,5)[1], 3.51, 0.01));
+  TEST_ASSERT(RDKit::feq(pmulti->getUpperBound(0,5)[1], 3.65, 0.01));
+  // get a random "normal" bounds matrix
+  DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nat);
+  DistGeom::BoundsMatPtr pmat(mat);
+  pmulti->getRandomBoundsMatrix(pmat);
+  TEST_ASSERT(pmat->getLowerBound(0,5)==pmulti->getLowerBound(0,5)[0] || pmat->getLowerBound(0,5)==pmulti->getLowerBound(0,5)[1]);
+  TEST_ASSERT(pmat->getUpperBound(0,5)==pmulti->getUpperBound(0,5)[0] || pmat->getUpperBound(0,5)==pmulti->getUpperBound(0,5)[1]);
   delete m;
 }
 
@@ -1403,8 +1432,12 @@ int main() {
   testIssue251();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue251_exp \n\n";
-  testIssue251_exp();
+  BOOST_LOG(rdInfoLog) << "\t testMultiRange \n\n";
+  testMultiRange();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t testMultiRange2 \n\n";
+  testMultiRange2();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue276 \n";

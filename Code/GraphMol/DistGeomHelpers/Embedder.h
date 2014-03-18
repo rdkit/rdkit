@@ -67,10 +67,6 @@ namespace RDKit {
                                       smoothing fails
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
-      \param level   sets the level for the experimental torsion angle preferences
-                     Default = NOEXP : no experimental preferences are used
-                     PEAK : only peaks, TOLERANCE1 : peaks with tolerance1,
-                     TOLERANCE2 : peaks with tolerance2
 
       \return ID of the conformations added to the molecule, -1 if the emdedding failed
     */
@@ -82,8 +78,7 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap=0,
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
-                      double basinThresh=5.0,
-                      ExpTorsionLevel level=NOEXP
+                      double basinThresh=5.0
                       );
 
     //*! Embed multiple conformations for a molecule
@@ -137,10 +132,6 @@ namespace RDKit {
 
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
-      \param level   sets the level for the experimental torsion angle preferences
-                     Default = NOEXP : no experimental preferences are used
-                     PEAK : only peaks, TOLERANCE1 : peaks with tolerance1,
-                     TOLERANCE2 : peaks with tolerance2
 
 
       \return an INT_VECT of conformer ids
@@ -155,8 +146,68 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
-                                double basinThresh=5.0,
-                                ExpTorsionLevel level=NOEXP);
+                                double basinThresh=5.0);
+
+    //*! Embed multiple conformations for a molecule based on exp. torsion angle preferences
+    /*!
+      This is kind of equivalent to calling KnowledgeEmbedMolecule multiple times - just that the bounds
+      matrix is computed only once from the topology
+
+       **NOTE**: if the molecule has multiple fragments, they will be embedded separately,
+         this means that they will likely occupy the same region of space.
+
+
+      \param mol            Molecule of interest
+      \param numConfs       Number of conformations to be generated
+      \param maxIterations  Max. number of times the embedding will be tried if coordinates are
+                            not obtained successfully. The default value is 10x the number of atoms.
+      \param seed           provides a seed for the random number generator (so that the same
+                            coordinates can be obtained for a molecule on multiple runs).
+                            If negative, the RNG will not be seeded.
+      \param clearConfs     Clear all existing conformations on the molecule
+      \param level          sets the level for the experimental torsion angle preferences
+                            PEAK : only peaks, TOLERANCE1 : peaks with tolerance1 (Default),
+                            TOLERANCE2 : peaks with tolerance2
+      \param boxSizeMult    Determines the size of the box that is used for
+                            random coordinates. If this is a positive number, the
+                            side length will equal the largest element of the distance
+                            matrix times \c boxSizeMult. If this is a negative number,
+                            the side length will equal \c -boxSizeMult (i.e. independent
+                            of the elements of the distance matrix).
+      \param randNegEig     Picks coordinates at random when a embedding process produces
+                            negative eigenvalues
+      \param numZeroFail    Fail embedding if we find this many or more zero eigenvalues
+                            (within a tolerance)
+      \param pruneRmsThresh Retain only the conformations out of 'numConfs' after embedding that are
+                            at least this far apart from each other. RMSD is computed on the heavy atoms.
+                            Prunining is greedy; i.e. the first embedded conformation is retained and from
+                            then on only those that are atleast pruneRmsThresh away from already
+                            retained conformations are kept. The pruning is done after embedding and
+                            bounds violation minimization. No pruning by default.
+
+      \param optimizerForceTol set the tolerance on forces in the DGeom optimizer
+                               (this shouldn't normally be altered in client code).
+
+      \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
+                                      smoothing fails
+
+      \param basinThresh    set the basin threshold for the DGeom force field,
+                            (this shouldn't normally be altered in client code).
+
+
+      \return an INT_VECT of conformer ids
+
+    */
+    INT_VECT KnowledgeEmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
+                                unsigned int maxIterations=30,
+                                int seed=-1, bool clearConfs=true,
+                                ExpTorsionLevel level=TOLERANCE1,
+                                double boxSizeMult=2.0,
+                                bool randNegEig=true, unsigned int numZeroFail=1,
+                                double pruneRmsThresh=-1.0,
+                                double optimizerForceTol=1e-3,
+                                bool ignoreSmoothingFailures=false,
+                                double basinThresh=5.0);
 
   }
 }

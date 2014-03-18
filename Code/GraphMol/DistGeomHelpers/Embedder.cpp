@@ -11,6 +11,7 @@
 
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
+#include <DistGeom/MultiRangeBoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
 #include <DistGeom/TriangleSmooth.h>
 #include "BoundsMatrixBuilder.h"
@@ -245,14 +246,13 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap,
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
-                      double basinThresh,
-                      ExpTorsionLevel level){
+                      double basinThresh){
 
       INT_VECT confIds;
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,
                                  numZeroFail,-1.0,coordMap,optimizerForceTol,
-                                 ignoreSmoothingFailures,basinThresh,level);
+                                 ignoreSmoothingFailures,basinThresh);
 
       int res;
       if(confIds.size()){
@@ -307,8 +307,7 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
-                                double basinThresh,
-                                ExpTorsionLevel level){
+                                double basinThresh){
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
       if(molFrags.size()>1 && coordMap){
@@ -336,7 +335,7 @@ namespace RDKit {
         initBoundsMat(mmat);
       
         double tol=0.0;
-        setTopolBounds(*piece, mmat, true, false, level);
+        setTopolBounds(*piece, mmat, true, false);
         if(coordMap){
           adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
           tol=0.05;
@@ -345,7 +344,7 @@ namespace RDKit {
           // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
           // without 15 bounds and with VDW scaling
           initBoundsMat(mmat);
-          setTopolBounds(*piece, mmat, false, true, level);
+          setTopolBounds(*piece, mmat, false, true);
 
           if(coordMap){
             adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
@@ -357,7 +356,7 @@ namespace RDKit {
             if(ignoreSmoothingFailures){
               // proceed anyway with the more relaxed bounds matrix
               initBoundsMat(mmat);
-              setTopolBounds(*piece, mmat, false, true, level);
+              setTopolBounds(*piece, mmat, false, true);
 
               if(coordMap){
                 adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
@@ -443,6 +442,134 @@ namespace RDKit {
       }
       return res;
     }
-  }
-}
+
+    INT_VECT KnowledgeEmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
+                                        unsigned int maxIterations,
+                                        int seed, bool clearConfs,
+                                        DGeomHelpers::ExpTorsionLevel level,
+                                        double boxSizeMult,
+                                        bool randNegEig, unsigned int numZeroFail,
+                                        double pruneRmsThresh,
+                                        double optimizerForceTol,
+                                        bool ignoreSmoothingFailures,
+                                        double basinThresh) {
+      INT_VECT fragMapping;
+      std::vector<ROMOL_SPTR> molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
+      std::vector< Conformer * > confs;
+      confs.reserve(numConfs);
+      for (unsigned int i = 0; i < numConfs; ++i){
+        confs.push_back(new Conformer(mol.getNumAtoms()));
+      }
+      boost::dynamic_bitset<> confsOk(numConfs);
+      confsOk.set();
+
+      if (clearConfs) {
+        mol.clearConformers();
+      }
+      INT_VECT res;
+
+      // loop over fragments
+      for (unsigned int fragIdx = 0; fragIdx < molFrags.size(); ++fragIdx){
+        ROMOL_SPTR piece = molFrags[fragIdx];
+        unsigned int nAtoms = piece->getNumAtoms();
+
+        DistGeom::MultiRangeBoundsMatrix *multimat = new DistGeom::MultiRangeBoundsMatrix(nAtoms);
+        DistGeom::MultiRangeBoundsMatPtr p_multimat(multimat);
+
+        setTopolMultiRangeBounds(*piece, p_multimat, true, false, level);
+
+        // find all the chiral centers in the molecule
+        DistGeom::VECT_CHIRALSET chiralCenters;
+        MolOps::assignStereochemistry(*piece);
+        _findChiralSets(*piece, chiralCenters);
+
+        // if we have any chiral centers or are using random coordinates, we will
+        // first embed the molecule in four dimensions, otherwise we will use 3D
+        bool fourD = false;
+        if (chiralCenters.size() > 0) {
+          fourD = true;
+        }
+        RDGeom::PointPtrVect positions;
+        for (unsigned int i = 0; i < nAtoms; ++i) {
+          if (fourD) {
+            positions.push_back(new RDGeom::PointND(4));
+          } else {
+            positions.push_back(new RDGeom::Point3D());
+          }
+        }
+
+        // loop over conformers
+        for (unsigned int ci = 0; ci < numConfs; ci++) {
+          if (!confsOk[ci]) {
+            // if one of the fragments here has already failed, there's no
+            // sense in embedding this one
+            continue;
+          }
+
+          // get a random bounds matrix for this conformer
+          DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nAtoms);
+          DistGeom::BoundsMatPtr mmat(mat);
+          multimat->getRandomBoundsMatrix(mmat);
+
+          // triangle-smooth it
+          double tol = 0.0;
+          if (!DistGeom::triangleSmoothBounds(mmat,tol)) {
+            if (!ignoreSmoothingFailures) {
+              BOOST_LOG(rdWarningLog)<<"Could not triangle bounds smooth molecule."<<std::endl;
+              return res;
+            }
+          }
+
+          // get the coordinates
+          bool gotCoords = _embedPoints(positions, mmat,
+                                        false, boxSizeMult,
+                                        randNegEig, numZeroFail,
+                                        optimizerForceTol,
+                                        basinThresh, (ci+1)*seed,
+                                        maxIterations, chiralCenters);
+
+          if (gotCoords) {
+            Conformer *conf = confs[ci];
+            unsigned int fragAtomIdx = 0;
+            for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+              if (fragMapping[i] == static_cast<int>(fragIdx) ){
+                conf->setAtomPos(i, RDGeom::Point3D((*positions[fragAtomIdx])[0],
+                                                    (*positions[fragAtomIdx])[1],
+                                                    (*positions[fragAtomIdx])[2]));
+                ++fragAtomIdx;
+              }
+            }
+          } else {
+            confsOk[ci] = 0; // embedding failed
+          }
+          //FIX: how to remove mat and mmat?
+        } // end loop over conformers
+
+        for (unsigned int i = 0; i < nAtoms; ++i) {
+          delete positions[i];
+        }
+      } // end loop over fragments
+
+      // check the conformers
+      for (unsigned int ci = 0; ci < confs.size(); ++ci) {
+        Conformer *conf = confs[ci];
+        if (confsOk[ci]) {
+          // check if we are pruning away conformations and
+          // a closeby conformation has already been chosen :
+          if (pruneRmsThresh > 0.0 &&
+              !_isConfFarFromRest(mol, *conf, pruneRmsThresh)) {
+            delete conf;
+          } else {
+            int confId = (int)mol.addConformer(conf, true);
+            res.push_back(confId);
+          }
+        } else {
+          delete conf;
+        }
+      }
+      return res;
+    }
+
+  } // end namespace DGeomHelpers
+} // end namespace RDKit
     
