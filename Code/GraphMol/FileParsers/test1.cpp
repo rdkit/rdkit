@@ -3744,6 +3744,14 @@ void testPDBResidues(){
     TEST_ASSERT(res.find(std::string("ALA"))!=res.end());
     TEST_ASSERT(res[std::string("8NH")]->getNumAtoms()==21);
 
+    const ROMol *lig=res[std::string("8NH")].get();
+    TEST_ASSERT(lig->getNumConformers()==1);
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(0).x,23.517));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(0).y,5.263));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(0).z,4.399));
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(11).x,27.589));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(11).y,-0.311));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(11).z,3.743));    
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

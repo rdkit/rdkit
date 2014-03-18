@@ -400,6 +400,21 @@ namespace RDKit{
           ++nbrIdx;
         }        
       }
+      // update conformers
+      for(ROMol::ConstConformerIterator cit=mol.beginConformers();
+          cit!=mol.endConformers();++cit){
+        for(typename std::map<T,boost::shared_ptr<ROMol> >::iterator iter=res.begin();
+            iter!=res.end();++iter){
+          ROMol *newM=iter->second.get();
+          Conformer *conf=new Conformer(newM->getNumAtoms());
+          conf->setId((*cit)->getId());
+          conf->set3D((*cit)->is3D());
+          newM->addConformer(conf);
+        }
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          res[assignments[i]]->getConformer((*cit)->getId()).setAtomPos(ids[i],(*cit)->getAtomPos(i));
+        }
+      }
       if(sanitizeFrags){
         for(typename std::map<T,boost::shared_ptr<ROMol> >::iterator iter=res.begin();
             iter!=res.end();++iter){
