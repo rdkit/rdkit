@@ -40,6 +40,22 @@ static double rdkit_dice_smlar_limit = 0.5;
 static bool rdkit_do_chiral_sss = false;
 static bool rdkit_guc_inited = false;
 
+#define SSS_FP_SIZE 2048
+#define LAYERED_FP_SIZE 1024
+#define RDKIT_FP_SIZE 1024
+#define MORGAN_FP_SIZE 512
+#define FEATMORGAN_FP_SIZE 512
+#define HASHED_TORSION_FP_SIZE 1024
+#define HASHED_PAIR_FP_SIZE 2048
+
+static int rdkit_sss_fp_size = SSS_FP_SIZE;
+static int rdkit_morgan_fp_size = MORGAN_FP_SIZE;
+static int rdkit_featmorgan_fp_size = FEATMORGAN_FP_SIZE;
+static int rdkit_layered_fp_size = LAYERED_FP_SIZE;
+static int rdkit_rdkit_fp_size = RDKIT_FP_SIZE;
+static int rdkit_hashed_torsion_fp_size = HASHED_TORSION_FP_SIZE;
+static int rdkit_hashed_atompair_fp_size = HASHED_PAIR_FP_SIZE;
+
 #if PG_VERSION_NUM < 80400
 #error The earliest supported postgresql version is 8.4
 #endif
@@ -96,6 +112,120 @@ initRDKitGUC()
 #endif
                            NULL
                            );
+
+  DefineCustomIntVariable(
+                           "rdkit.ss_fp_size",
+                           "Size (in bits) of the fingerprint used for substructure screening",
+                           "Size (in bits) of the fingerprint used for substructure screening",
+                           &rdkit_sss_fp_size,
+                           SSS_FP_SIZE,
+                           64,
+                           4096,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+  DefineCustomIntVariable(
+                           "rdkit.morgan_fp_size",
+                           "Size (in bits) of morgan fingerprints",
+                           "Size (in bits) of morgan fingerprints",
+                           &rdkit_morgan_fp_size,
+                           MORGAN_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+  DefineCustomIntVariable(
+                           "rdkit.featmorgan_fp_size",
+                           "Size (in bits) of featmorgan fingerprints",
+                           "Size (in bits) of featmorgan fingerprints",
+                           &rdkit_featmorgan_fp_size,
+                           FEATMORGAN_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+  DefineCustomIntVariable(
+                           "rdkit.layered_fp_size",
+                           "Size (in bits) of layered fingerprints",
+                           "Size (in bits) of layered fingerprints",
+                           &rdkit_layered_fp_size,
+                           LAYERED_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+  DefineCustomIntVariable(
+                           "rdkit.rdkit_fp_size",
+                           "Size (in bits) of RDKit fingerprints",
+                           "Size (in bits) of RDKit fingerprints",
+                           &rdkit_rdkit_fp_size,
+                           RDKIT_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+  DefineCustomIntVariable(
+                           "rdkit.hashed_torsion_fp_size",
+                           "Size (in bits) of topological torsion bit vector fingerprints",
+                           "Size (in bits) of topological torsion bit vector fingerprints",
+                           &rdkit_hashed_torsion_fp_size,
+                           HASHED_TORSION_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+  DefineCustomIntVariable(
+                           "rdkit.hashed_atompair_fp_size",
+                           "Size (in bits) of atom pair bit vector fingerprints",
+                           "Size (in bits) of atom pair torsion bit vector fingerprints",
+                           &rdkit_hashed_atompair_fp_size,
+                           HASHED_PAIR_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
+
   rdkit_guc_inited = true;
 }
 
@@ -121,6 +251,49 @@ getDoChiralSSS(void) {
     initRDKitGUC();
 
   return rdkit_do_chiral_sss;
+}
+
+int
+getSubstructFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_sss_fp_size;
+}
+int
+getMorganFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_morgan_fp_size;
+}
+int
+getFeatMorganFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_featmorgan_fp_size;
+}
+int
+getLayeredFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_layered_fp_size;
+}
+int
+getRDKitFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_rdkit_fp_size;
+}
+int
+getHashedTorsionFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_hashed_torsion_fp_size;
+}
+int
+getHashedAtomPairFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_hashed_atompair_fp_size;
 }
 
 void _PG_init(void);

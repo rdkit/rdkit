@@ -1584,7 +1584,7 @@ void testMQNs(){
   BOOST_LOG(rdErrorLog) << "    Test MQN" << std::endl;
 
   unsigned int tgt[42]={98,  0,  4,  0,  0,  1,  0,  3,  9,  5,  4,  0, 29,  3,  0, 66, 35,
-                      0, 26, 30, 21,  2,  2,  0,  0,  6, 12,  6,  0, 70, 26,  0,  0,  0,
+                      0, 25, 30, 21,  2,  2,  0,  0,  6, 12,  6,  0, 70, 26,  0,  0,  0,
                       2, 16,  0,  0,  0,  0, 10,  5};
 
   std::vector<unsigned int> accum(42,0);
@@ -1601,6 +1601,9 @@ void testMQNs(){
     delete mol;
   }
   for(unsigned int i=0;i<42;++i){
+    if(accum[i] != tgt[i]){
+      std::cerr<<" !! "<<i<<accum[i]<<"!="<<tgt[i]<<std::endl;
+    }
     TEST_ASSERT(accum[i]==tgt[i]);
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

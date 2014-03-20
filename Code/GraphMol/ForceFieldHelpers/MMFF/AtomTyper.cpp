@@ -2273,7 +2273,7 @@ namespace RDKit {
       
       setMMFFAromaticity((RWMol &)mol);
       for (it = mol.beginAtoms(); it != mol.endAtoms(); ++it) {
-        if ((*it)->getAtomicNum() > 1) {
+        if ((*it)->getAtomicNum() != 1) {
           this->setMMFFHeavyAtomType(*it);
         }
       }

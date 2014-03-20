@@ -1668,7 +1668,7 @@ If the molecule has coordinates, then the features will also have reasonable loc
 >>> feats[0].GetPos()
 <rdkit.Geometry.rdGeometry.Point3D object at 0x...>
 >>> list(feats[0].GetPos())
-[-2.99..., -1.558..., 0.0]
+[2.07..., -2.335..., 0.0]
 
 
 2D Pharmacophore Fingerprints

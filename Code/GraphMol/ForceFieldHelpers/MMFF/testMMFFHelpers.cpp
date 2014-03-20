@@ -692,6 +692,34 @@ void testMMFFMultiThread(){
 }
 #endif
 
+void testGithub224()
+{
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing github 224: crash during MMFF parameterization ." << std::endl;
+  {
+    ROMol *mol = SmilesToMol("[1*]C");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties);
+    TEST_ASSERT(!mmffMolProperties->isValid());
+    
+    delete mol;
+    delete mmffMolProperties;
+  }
+  {
+    ROMol *mol = SmilesToMol("[1*]c1ccc(S(=O)(=O)Nc2ccc([2*])cc2)cc1");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties);
+    TEST_ASSERT(!mmffMolProperties->isValid());
+    
+    delete mol;
+    delete mmffMolProperties;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -712,7 +740,7 @@ int main()
 #ifdef RDK_TEST_MULTITHREADED
   testMMFFMultiThread();
 #endif
-#endif
-
   testGithub162();
+#endif
+  testGithub224();
 }

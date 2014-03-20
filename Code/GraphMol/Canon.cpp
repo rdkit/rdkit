@@ -482,19 +482,19 @@ namespace Canon {
         //  Here's how the black magic works:
         //   - non-ring atom neighbors have their original ranks
         //   - ring atom neighbors have this added to their ranks:
-        //       (Bond::OTHER - bondOrder)*MAX_NATOMS*MAX_NATOMS
+        //       (MAX_BONDTYPE - bondOrder)*MAX_NATOMS*MAX_NATOMS
         //   - ring-closure neighbors lose a factor of:
-        //       (Bond::OTHER+1)*MAX_NATOMS*MAX_NATOMS
+        //       (MAX_BONDTYPE+1)*MAX_NATOMS*MAX_NATOMS
         //
         //  This tactic biases us to traverse to non-ring neighbors first,
         //  original ordering if bond orders are all equal... crafty, neh?
         //  
         // ---------------------
         if( colors[otherIdx] == GREY_NODE ) {
-          rank -= static_cast<int>(Bond::OTHER+1) *
+          rank -= static_cast<int>(MAX_BONDTYPE+1) *
             MAX_NATOMS*MAX_NATOMS;
           if(!bondSymbols){
-            rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
+            rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
               MAX_NATOMS;
           } else {
             const std::string &symb=(*bondSymbols)[theBond->getIdx()];
@@ -503,7 +503,7 @@ namespace Canon {
           }
         } else if( theBond->getOwningMol().getRingInfo()->numBondRings(theBond->getIdx()) ){
           if(!bondSymbols){
-            rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
+            rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
               MAX_NATOMS*MAX_NATOMS;
           } else {
             const std::string &symb=(*bondSymbols)[theBond->getIdx()];

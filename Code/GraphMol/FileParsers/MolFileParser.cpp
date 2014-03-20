@@ -572,6 +572,158 @@ namespace RDKit{
       }
     }
 
+    void ParseZCHLine(RWMol *mol, const std::string &text,unsigned int line){
+      // part of Alex Clark's ZBO proposal
+      // from JCIM 51:3149-57 (2011)
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  ZCH"),"bad ZCH line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int aid=0;
+        int val=0;
+        try {
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos,4));
+          }
+          if(!aid || aid>mol->getNumAtoms() || aid==0 ){
+            std::ostringstream errout;
+            errout << "Bad ZCH specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --aid;
+          Atom *atom=mol->getAtomWithIdx(aid);
+          if(!atom){
+            std::ostringstream errout;
+            errout << "Atom "<<aid<<" from ZCH specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            atom->setFormalCharge(val);
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+    void ParseHYDLine(RWMol *mol, const std::string &text,unsigned int line){
+      // part of Alex Clark's ZBO proposal
+      // from JCIM 51:3149-57 (2011)
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  HYD"),"bad HYD line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int aid=0;
+        int val=-1;
+        try {
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos,4));
+          }
+          if(!aid || aid>mol->getNumAtoms() || aid==0 ){
+            std::ostringstream errout;
+            errout << "Bad HYD specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --aid;
+          Atom *atom=mol->getAtomWithIdx(aid);
+          if(!atom){
+            std::ostringstream errout;
+            errout << "Atom "<<aid<<" from HYD specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            if(val >=0 ){
+              atom->setProp("_ZBO_H",true);
+              atom->setNumExplicitHs(val);
+            }
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+    void ParseZBOLine(RWMol *mol, const std::string &text,unsigned int line){
+      // part of Alex Clark's ZBO proposal
+      // from JCIM 51:3149-57 (2011)
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  ZBO"),"bad ZBO line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int bid=0;
+        unsigned int order=0;
+        try {
+          bid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            order = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          }
+          if(!bid || bid>mol->getNumBonds() || bid==0){
+            std::ostringstream errout;
+            errout << "Bad ZBO specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --bid;
+          Bond *bnd=mol->getBondWithIdx(bid);
+          if(!bnd){
+            std::ostringstream errout;
+            errout << "Bond "<<bid<<" from ZBO specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            if(order==0){
+              bnd->setBondType(Bond::ZERO);
+            } else {
+              bnd->setBondType(static_cast<Bond::BondType>(order));
+            }
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+
     void ParseNewAtomList(RWMol *mol,const std::string &text,unsigned int line){
       if(text.size()<15){
         std::ostringstream errout;
@@ -1264,6 +1416,9 @@ namespace RDKit{
         else if(lineBeg=="M  STY") {
           ParseSGroup2000STYLine(mol, tempStr,line);
         }
+        else if(lineBeg=="M  ZBO") ParseZBOLine(mol,tempStr,line);
+        else if(lineBeg=="M  ZCH") ParseZCHLine(mol,tempStr,line);
+        else if(lineBeg=="M  HYD") ParseHYDLine(mol,tempStr,line);
         line++;
         tempStr = getLine(inStream);
         lineBeg=tempStr.substr(0,6);
@@ -1804,7 +1959,7 @@ namespace RDKit{
           atomIt!=mol->endAtoms();
           ++atomIt) {
         Atom *atom=*atomIt;
-        if(atom->hasProp("molTotValence")){
+        if(atom->hasProp("molTotValence") && !atom->hasProp("_ZBO_H")){
           int totV;
           atom->getProp("molTotValence",totV);
           if(totV==0) continue;

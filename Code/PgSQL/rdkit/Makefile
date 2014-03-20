@@ -8,7 +8,7 @@ ifeq ($(USE_INCHI),1)
   INCHIREGRESS=inchi
 endif
 
-RDKLIBS       = ${INCHILIBS} -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral 
+RDKLIBS       = ${INCHILIBS} -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral 
 
 ifeq ($(STATIC_LINK),1)
   SHLIB_LINK += -L${RDKIT}/lib $(addsuffix _static,${RDKLIBS})
@@ -21,7 +21,7 @@ ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
 
-PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"007100"' ${INCHIFLAGS} #-DUSE_BUILTIN_POPCOUNT -msse4.2
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"007200"' ${INCHIFLAGS} #-DUSE_BUILTIN_POPCOUNT -msse4.2
 
 CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-unused-function 

@@ -238,6 +238,63 @@ namespace RDKit{
     return ss.str();
   }
 
+  const std::string GetMolFileZBOInfo(const RWMol &mol){
+    std::stringstream res;
+    std::stringstream ss;
+    unsigned int nEntries=0;
+    boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(),0);
+    for(ROMol::ConstBondIterator bondIt=mol.beginBonds();
+	bondIt!=mol.endBonds();++bondIt){
+      if((*bondIt)->getBondType()==Bond::ZERO){
+        ++nEntries;
+        ss<<" "<<std::setw(3)<<(*bondIt)->getIdx()+1<<" "<<std::setw(3)<<0;
+        if(nEntries==8){
+          res<<"M  ZBO"<<std::setw(3)<<nEntries<<ss.str()<<std::endl;
+          nEntries=0;
+          ss.str("");
+        }
+        atomsAffected[(*bondIt)->getBeginAtomIdx()]=1;
+        atomsAffected[(*bondIt)->getEndAtomIdx()]=1;
+      }
+    }
+    if(nEntries){
+      res<<"M  ZBO"<<std::setw(3)<<nEntries<<ss.str()<<std::endl;
+    }
+    if(atomsAffected.count()){
+      std::stringstream hydss;
+      unsigned int nhyd=0;
+      std::stringstream zchss;
+      unsigned int nzch=0;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        if(!atomsAffected[i]) continue;
+        const Atom *atom=mol.getAtomWithIdx(i);
+        nhyd++;
+        hydss<<boost::format(" %3d %3d")%(atom->getIdx()+1)%atom->getTotalNumHs();
+        if(nhyd==8){
+          res << boost::format("M  HYD%3d")%nhyd << hydss.str()<<std::endl;
+          hydss.str("");
+          nhyd=0;
+        }
+        if(atom->getFormalCharge()){
+          nzch++;
+          zchss<<boost::format(" %3d %3d")%(atom->getIdx()+1)%atom->getFormalCharge();
+          if(nzch==8){
+            res << boost::format("M  ZCH%3d")%nzch << zchss.str()<<std::endl;
+            zchss.str("");
+            nzch=0;
+          }
+        }
+      }
+      if(nhyd){
+        res << boost::format("M  HYD%3d")%nhyd << hydss.str()<<std::endl;
+      }
+      if(nzch){
+        res << boost::format("M  ZCH%3d")%nzch << zchss.str()<<std::endl;
+      }
+    }
+    return res.str();
+  }
+
   
   const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces){
     PRECONDITION(atom,"");
@@ -359,15 +416,18 @@ namespace RDKit{
         parityFlag=getAtomParityFlag(atom,conf);
       }
     } 
-    if (atom->getNumRadicalElectrons()!=0){
+    if (atom->getNumRadicalElectrons()!=0 ||
+        (!atom->hasQuery() && (atom->getAtomicNum()<5 || atom->getAtomicNum()>9) &&
+         (atom->getAtomicNum()<15 || atom->getAtomicNum()>17) &&
+         (atom->getAtomicNum()!=35 && atom->getAtomicNum()!=53)
+         ) ){
       if(atom->getTotalDegree()==0){
         // Specify zero valence for elements/metals without neighbors
         // or hydrogens (degree 0) instead of writing them as radicals.
         totValence = 15;
       } else {
-        // write the total valence for other radicals so that we have a chance of
-        // reconstructing what was there.
-        totValence = atom->getTotalValence();
+        // write the total valence for other atoms
+        totValence = atom->getTotalValence()%15;
       }
     }
   }
@@ -424,6 +484,7 @@ namespace RDKit{
       break;
     case Bond::TRIPLE: res="  3";break;
     case Bond::AROMATIC: res="  4";break;
+    case Bond::ZERO: res="  1";break;
     default: res="  0";break;
     }
     return res;
@@ -796,8 +857,10 @@ namespace RDKit{
       res += GetMolFileRGroupInfo(tmol);
       res += GetMolFileQueryInfo(tmol);
       res += GetMolFileAliasInfo(tmol);
+      res += GetMolFileZBOInfo(tmol);
 
-    // FIX: R-group logic, SGroups and 3D features etc.
+
+      // FIX: R-group logic, SGroups and 3D features etc.
     }
     else {
       // V3000 output.

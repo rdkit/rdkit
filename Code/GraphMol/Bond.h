@@ -71,7 +71,8 @@ namespace RDKit{
       DATIVE,      //!< standard two-electron dative
       DATIVEL,     //!< standard two-electron dative
       DATIVER,     //!< standard two-electron dative
-      OTHER
+      OTHER,       
+      ZERO         //!< Zero-order bond (from http://pubs.acs.org/doi/abs/10.1021/ci200488k)
     } BondType;
 
     //! the bond's direction (for chirality)

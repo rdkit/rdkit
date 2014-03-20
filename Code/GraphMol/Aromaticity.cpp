@@ -266,7 +266,7 @@ namespace {
           return true;
         }
        }
-      beg++;
+      ++beg;
     }
     return false;
   }
@@ -289,7 +289,15 @@ namespace {
 
   bool incidentMultipleBond(const Atom *at) {
     PRECONDITION(at,"bad atom");
-    return at->getExplicitValence()!=static_cast<int>(at->getDegree()+at->getNumExplicitHs());
+    int deg=at->getDegree()+at->getNumExplicitHs();
+    ROMol::OEDGE_ITER beg,end;
+    boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
+    while(beg!=end){
+      BOND_SPTR bond=at->getOwningMol()[*beg];
+      if(bond->getBondType()==Bond::ZERO) --deg;
+      ++beg;
+    }
+    return at->getExplicitValence()!=static_cast<int>(deg);
   }
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring,
@@ -571,6 +579,15 @@ namespace RDKit {
 
       // total atom degree:
       int degree=at->getDegree() + at->getTotalNumHs(); 
+
+      ROMol::OEDGE_ITER beg,end;
+      boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
+      while(beg!=end){
+        BOND_SPTR bond=at->getOwningMol()[*beg];
+        if(bond->getBondType()==Bond::ZERO) --degree;
+        ++beg;
+      }
+
       // if we are more than 3 coordinated we should not be aromatic
       if (degree > 3) {
         return -1;

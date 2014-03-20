@@ -9,7 +9,7 @@
 #  of the RDKit source tree.
 #
 """ Import all RDKit chemistry modules
- 
+
 """
 from rdkit import rdBase
 from rdkit import RDConfig
@@ -51,7 +51,7 @@ def TransformMol(mol,tform,confId=-1,keepConfs=False):
     for id in allConfIds:
       if not id==confId: mol.RemoveConformer(id)
     #reset the conf Id to zero since there is only one conformer left
-    mol.GetConformer(confId).SetId(0) 
+    mol.GetConformer(confId).SetId(0)
 
 def ComputeMolShape(mol,confId=-1,boxDim=(20,20,20),spacing=0.5,**kwargs):
   """ returns a grid representation of the molecule's shape
@@ -59,7 +59,7 @@ def ComputeMolShape(mol,confId=-1,boxDim=(20,20,20),spacing=0.5,**kwargs):
   res = rdGeometry.UniformGrid3D(boxDim[0],boxDim[1],boxDim[2],spacing=spacing)
   EncodeShape(mol,res,confId,**kwargs)
   return res
-  
+
 def ComputeMolVolume(mol,confId=-1,gridSpacing=0.2,boxMargin=2.0):
   """ Calculates the volume of a particular conformer of a molecule
   based on a grid-encoding of the molecular shape.
@@ -98,7 +98,7 @@ def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
     - reference:    a molecule with the reference atoms to align to;
                     this should have a depiction.
     - confId:       (optional) the id of the reference conformation to use
-    - referencePattern:  (optional) an optional molecule to be used to 
+    - referencePattern:  (optional) an optional molecule to be used to
                          generate the atom mapping between the molecule
                          and the reference.
     - acceptFailure: (optional) if True, standard depictions will be generated
@@ -159,7 +159,7 @@ def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
       dm.append((pi-pj).Length())
   dm = numpy.array(dm)
   Compute2DCoordsMimicDistmat(mol,dm,**kwargs)
-      
+
 def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
   """ Returns the optimal RMS for aligning two molecules, taking
   symmetry into account. As a side-effect, the probe molecule is
@@ -174,7 +174,7 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
       tuples with the atom-atom mappings of the two molecules.
       If not provided, these will be generated using a substructure
       search.
-  
+
   """
   if not maps:
     matches = ref.GetSubstructMatches(probe,uniquify=False)
@@ -223,10 +223,10 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   >>> [Chem.MolToSmiles(r.next()[0]) for x in range(4)]
   ['NC=O', 'CNC=O', 'CCNC=O', 'CCCNC=O']
 
-  
+
   """
   if len(sidechainSets) != reaction.GetNumReactantTemplates():
-    raise ValueError,'%d sidechains provided, %d required'%(len(sidechainSets),reaction.getNumReactantTemplates())
+    raise ValueError,'%d sidechains provided, %d required'%(len(sidechainSets),reaction.GetNumReactantTemplates())
 
   def _combiEnumerator(items,depth=0):
     for item in items[depth]:
@@ -244,7 +244,7 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
       yield prods
 
 def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
-                     randomseed=2342,getForceField=UFFGetMoleculeForceField):
+                     randomseed=2342,getForceField=UFFGetMoleculeForceField,**kwargs):
   """ generates an embedding of a molecule where part of the molecule
   is constrained to have particular coordinates
 
@@ -294,10 +294,10 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
     corePtI = coreConf.GetAtomPosition(i)
     coordMap[idxI]=corePtI
 
-  ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed)
+  ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed,**kwargs)
   if ci<0:
     raise ValueError,'Could not embed molecule.'
-  
+
   algMap=[(j,i) for i,j in enumerate(match)]
 
   if not useTethers:
@@ -337,7 +337,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
   return mol
 
 def AssignBondOrdersFromTemplate(refmol, mol):
-  """ assigns bond orders to a molecule based on the 
+  """ assigns bond orders to a molecule based on the
       bond orders in a template molecule
 
   Arguments
@@ -359,8 +359,17 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     >>> print len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8
 
-    Note that the template molecule should have no explicit hydrogens 
+    Note that the template molecule should have no explicit hydrogens
     else the algorithm will fail.
+
+    It also works if there are different formal charges (this was github issue 235):
+    >>> template=AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
+    >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4FTR_lig.mol'))
+    >>> AllChem.MolToSmiles(mol)
+    'COC1CC(C2CCC3C(C2)NC2CCC(CC(O)N(C)C)CC2NC3O)CCC1N(O)O'
+    >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
+    >>> AllChem.MolToSmiles(newMol)
+    'COc1cc(-c2ccc3c(c2)Nc2ccc(CC(=O)N(C)C)cc2NC3=O)ccc1[N+](=O)[O-]'
 
   """
   refmol2 = rdchem.Mol(refmol)
@@ -377,6 +386,12 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     for b in refmol2.GetBonds():
       b.SetBondType(BondType.SINGLE)
       b.SetIsAromatic(False)
+    # set atom charges to zero;
+    for a in refmol2.GetAtoms():
+      a.SetFormalCharge(0)
+    for a in mol2.GetAtoms():
+      a.SetFormalCharge(0)
+      
     matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
     # do the molecules match now?
     if matching:
@@ -396,6 +411,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
         a2.SetHybridization(a.GetHybridization())
         a2.SetIsAromatic(a.GetIsAromatic())
         a2.SetNumExplicitHs(a.GetNumExplicitHs())
+        a2.SetFormalCharge(a.GetFormalCharge())
       SanitizeMol(mol2)
       if hasattr(mol2, '__sssAtoms'):
         mol2.__sssAtoms = None # we don't want all bonds highlighted

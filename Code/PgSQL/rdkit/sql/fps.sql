@@ -39,3 +39,39 @@ pgpairfp
 WHERE atompair_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
 ORDER BY sml DESC, id LIMIT 10;
 
+select tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), rdkit_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.rdkit_fp_size = 512;
+select tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), rdkit_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.rdkit_fp_size = 1024;
+select tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), rdkit_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+
+select tanimoto_sml(layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), layered_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.layered_fp_size = 512;
+select tanimoto_sml(layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), layered_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.layered_fp_size = 1024;
+select tanimoto_sml(layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), layered_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+
+select tanimoto_sml(morganbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), morganbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.morgan_fp_size = 512;
+select tanimoto_sml(morganbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), morganbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.morgan_fp_size = 1024;
+select tanimoto_sml(morganbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), morganbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+
+select tanimoto_sml(featmorganbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), featmorganbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.featmorgan_fp_size = 512;
+select tanimoto_sml(featmorganbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), featmorganbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.featmorgan_fp_size = 1024;
+select tanimoto_sml(featmorganbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), featmorganbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+
+select tanimoto_sml(torsionbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), torsionbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.hashed_torsion_fp_size = 512;
+select tanimoto_sml(torsionbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), torsionbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.hashed_torsion_fp_size = 1024;
+select tanimoto_sml(torsionbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), torsionbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+
+select tanimoto_sml(atompairbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), atompairbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.hashed_atompair_fp_size = 512;
+select tanimoto_sml(atompairbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), atompairbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+set rdkit.hashed_atompair_fp_size = 1024;
+select tanimoto_sml(atompairbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), atompairbv_fp('N=C1CC(NC2=CC=CC=C12)C1=CC=CC=C1'::mol)) AS sml;
+

@@ -2418,7 +2418,6 @@ void test3V3K(){
 
     std::string mb=MolToMolBlock(*m,true,-1,true,true);
     delete m;
-
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==6);
@@ -3539,11 +3538,82 @@ void testGithub166(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testZBO(){
+  BOOST_LOG(rdInfoLog) << "testing ZBO parsing" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName;
+    fName = rdbase+"FeCO5.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+  }
+  {
+    std::string fName;
+    fName = rdbase+"CrBz.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getNumBonds()==12);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(9)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(10)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(11)->getBondType()==Bond::ZERO);
+
+    // make sure we don't screw up aromaticity:
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  }
+  {
+    std::string fName;
+    fName = rdbase+"CrBz2.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==13);
+    TEST_ASSERT(m->getNumBonds()==24);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(9)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(10)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(11)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(18)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(19)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(20)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(21)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(22)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(23)->getBondType()==Bond::ZERO);
+  }
+  {
+    std::string fName;
+    fName = rdbase+"H3BNH3.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==1);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs()==3);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testGithub164(){
   BOOST_LOG(rdInfoLog) << "testing Github 164: problems with Xe from mol files" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
-
   {
     std::string fName;
     fName = rdbase+"Github164.mol";
@@ -3649,6 +3719,44 @@ void testGithub210(){
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+namespace {
+  std::string getResidue(const ROMol &m,const Atom *at){
+    if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
+    return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
+  }
+}
+void testPDBResidues(){
+  BOOST_LOG(rdInfoLog) << "testing splitting on PDB residues" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"2NW4.pdb";
+    ROMol *m=PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType()==AtomMonomerInfo::PDBRESIDUE);
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(*m,getResidue,false);
+
+    TEST_ASSERT(res.size()==22);
+    TEST_ASSERT(res.find(std::string("8NH"))!=res.end());
+    TEST_ASSERT(res.find(std::string("ALA"))!=res.end());
+    TEST_ASSERT(res[std::string("8NH")]->getNumAtoms()==21);
+
+    const ROMol *lig=res[std::string("8NH")].get();
+    TEST_ASSERT(lig->getNumConformers()==1);
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(0).x,23.517));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(0).y,5.263));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(0).z,4.399));
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(11).x,27.589));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(11).y,-0.311));    
+    TEST_ASSERT(feq(lig->getConformer().getAtomPos(11).z,3.743));    
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3711,16 +3819,18 @@ int main(int argc,char *argv[]){
   testMolFileWithHs();
   testMolFileWithRxn();
   testGithub166();
+#endif
+  testZBO();
+
   testGithub164();
   testPDBFile();
   testGithub194();
   testGithub196();
   testIssue3557675();
-#endif
   test3V3K();
   test2V3K();
   testGithub191();
   testGithub210();
-
+  testPDBResidues();
   return 0;
 }

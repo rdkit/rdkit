@@ -1,5 +1,3 @@
-%pure_parser
-
 %{
 
   // $Id$
@@ -77,13 +75,13 @@ yyprint (FILE *file, int type, YYSTYPE value)
 
 
 %}
- 
+
+%define api.pure
+%lex-param   {yyscan_t *scanner}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {bool doQueries}
 %parse-param {void *scanner}
-
-%lex-param {yyscan_t *scanner}
 
 %union {
   int                      mol_T;

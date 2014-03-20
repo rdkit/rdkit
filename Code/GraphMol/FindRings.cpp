@@ -758,12 +758,31 @@ namespace RDKit {
       int nbnds = mol.getNumBonds();
       boost::dynamic_bitset<> activeBonds(nbnds);
       activeBonds.set();
+
+      // Zero-order bonds are not candidates for rings
+      ROMol::EDGE_ITER firstB,lastB;
+      boost::tie(firstB,lastB) = mol.getEdges();
+      while(firstB!=lastB){
+        BOND_SPTR bond = mol[*firstB];
+        if(bond->getBondType()==Bond::ZERO) activeBonds[bond->getIdx()]=0;
+        ++firstB;
+      }
+
+      
       boost::dynamic_bitset<> ringBonds(nbnds);
       boost::dynamic_bitset<> ringAtoms(nats);
 
       INT_VECT atomDegrees(nats);
       for(unsigned int i=0;i<nats;++i){
-        atomDegrees[i] = mol.getAtomWithIdx(i)->getDegree();
+        const Atom *atom=mol.getAtomWithIdx(i);
+        atomDegrees[i] = atom->getDegree();
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomBonds(atom);
+        while(beg!=end){
+          BOND_SPTR bond=mol[*beg];
+          if(bond->getBondType()==Bond::ZERO) atomDegrees[i]--;
+          ++beg;
+        }
       }
       
       // find the number of fragments in the molecule - we will loop over them
@@ -860,7 +879,8 @@ namespace RDKit {
         for(ROMol::ConstBondIterator bndIt=mol.beginBonds();
             bndIt!=mol.endBonds();++bndIt){
           if(std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getBeginAtomIdx())!=curFrag.end() &&
-             std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getEndAtomIdx())!=curFrag.end()) {
+             std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getEndAtomIdx())!=curFrag.end() &&
+             (*bndIt)->getBondType()!=Bond::ZERO ) {
             ++nbnds;
           }
         }
@@ -874,7 +894,7 @@ namespace RDKit {
         }
 #endif
         int nexpt = (nbnds - curFrag.size()+1);
-        unsigned int ssiz = fragRes.size();
+        int ssiz = fragRes.size();
 
         // first check that we got at least the number of expected rings
         if(ssiz<nexpt){

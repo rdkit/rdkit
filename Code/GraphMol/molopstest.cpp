@@ -4390,6 +4390,55 @@ void testGithubIssue141()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testZBO()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing ZBO basics" << std::endl;
+  {
+    RWMol *m=new RWMol();
+
+    m->addAtom(new Atom(26));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(1,2,Bond::AROMATIC);
+    m->addBond(2,3,Bond::AROMATIC);
+    m->addBond(3,4,Bond::AROMATIC);
+    m->addBond(4,5,Bond::AROMATIC);
+    m->addBond(5,6,Bond::AROMATIC);
+    m->addBond(1,6,Bond::AROMATIC);
+
+    m->addBond(1,0,Bond::ZERO);
+    m->addBond(2,0,Bond::ZERO);
+    m->addBond(3,0,Bond::ZERO);
+    m->addBond(4,0,Bond::ZERO);
+    m->addBond(5,0,Bond::ZERO);
+    m->addBond(6,0,Bond::ZERO);
+
+    MolOps::sanitizeMol(*m);
+
+    TEST_ASSERT(m->getRingInfo()->numAtomRings(0)==0);
+    TEST_ASSERT(m->getRingInfo()->numAtomRings(1)==1);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(5)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getHybridization()==Atom::SP2);
+
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(2)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(3)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(4)->getIsAromatic());
+    TEST_ASSERT(m->getBondWithIdx(5)->getIsAromatic());
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 void testMolAssignment()
 {
@@ -4414,6 +4463,53 @@ void testMolAssignment()
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+void testGithubIssue190()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 190: Don't merge Hs onto dummy atoms." << std::endl;
+  {
+    std::string smiles="*[H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+namespace {
+  int getAtNum(const ROMol &m,const Atom *at){
+    return at->getAtomicNum();
+  }
+  std::string getSymbol(const ROMol &m,const Atom *at){
+    return at->getSymbol();
+  }
+}
+void testMolFragsWithQuery()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing getMolFragsWithQuery()." << std::endl;
+  {
+    std::string smiles="C1CCC1ONNC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    std::map<int,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(*m,getAtNum);
+    TEST_ASSERT(res.size()==3);
+    TEST_ASSERT(res.find(6)!=res.end());
+    TEST_ASSERT(res.find(7)!=res.end());
+    TEST_ASSERT(res.find(8)!=res.end());
+    TEST_ASSERT(res.find(5)==res.end());
+    TEST_ASSERT(res[6]->getNumAtoms()==5);
+    TEST_ASSERT(res[6]->getNumBonds()==4);
+    TEST_ASSERT(res[7]->getNumAtoms()==2);
+    TEST_ASSERT(res[7]->getNumBonds()==1);
+    TEST_ASSERT(res[8]->getNumAtoms()==1);
+    TEST_ASSERT(res[8]->getNumBonds()==0);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -4480,10 +4576,13 @@ int main(){
   testGitHubIssue72();
   testRenumberAtoms();
   testGithubIssue141();
-  testMolAssignment();
 #endif
-  testAtomAtomMatch();
+  testZBO();
+  testMolAssignment();
 
+  testAtomAtomMatch();
+  testGithubIssue190();
+  testMolFragsWithQuery();
   return 0;
 }
 

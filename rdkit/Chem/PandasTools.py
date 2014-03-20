@@ -214,17 +214,21 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
 def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False):
   """ Read file in SDF format and return as Panda data frame """
   df = None
-  with open(filename, 'rU') as f:
-    for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
-      if mol is None: continue
-      row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
-      if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
-      row[smilesName] = Chem.MolToSmiles(mol)
-      row = pd.DataFrame(row, index=[i])
-      if df is None:
-        df = row
-      else:
-        df = df.append(row)
+  if type(filename) is str:
+    f = open(filename, 'rU')
+  else:
+    f = filename
+  for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
+    if mol is None: continue
+    row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+    if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
+    row[smilesName] = Chem.MolToSmiles(mol)
+    row = pd.DataFrame(row, index=[i])
+    if df is None:
+      df = row
+    else:
+      df = df.append(row)
+  f.close()
   AddMoleculeColumnToFrame(df, smilesCol=smilesName, molCol = molColName,includeFingerprints=includeFingerprints)
   return df
 

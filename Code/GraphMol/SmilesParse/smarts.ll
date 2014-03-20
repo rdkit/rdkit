@@ -215,6 +215,8 @@ Br			{  yylval->ival = 35;  return ORGANIC_ATOM_TOKEN;  }
 I			{  yylval->ival = 53;  return ORGANIC_ATOM_TOKEN;  }
 
 
+b			{  yylval->ival = 5;  return AROMATIC_ATOM_TOKEN;  }
+
 c			{  yylval->ival = 6;  return AROMATIC_ATOM_TOKEN;  }
 
 n			{  yylval->ival = 7;  return AROMATIC_ATOM_TOKEN;  }
@@ -228,6 +230,7 @@ s			{  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
 <IN_ATOM_STATE>se	{  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
 
 <IN_ATOM_STATE>te	{  yylval->ival = 52;  return AROMATIC_ATOM_TOKEN;  }
+
 
 
 \*			{

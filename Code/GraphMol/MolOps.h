@@ -11,6 +11,7 @@
 #define _RD_MOL_OPS_H_
 
 #include <vector>
+#include <map>
 #include <list>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -90,6 +91,22 @@ namespace RDKit{
                                                        bool sanitizeFrags=true,
                                                        std::vector<int> *frags=0);
 
+    //! splits a molecule into pieces using a query
+    /*!
+
+      \param mol     the molecule of interest
+      \param query   the query used to fragment the molecule
+      \param sanitizeFrags  toggles sanitization of the fragments after
+                            they are built
+      \return a map of the fragments and their labels
+      
+    */
+    template <typename T>
+    std::map<T,boost::shared_ptr<ROMol> > getMolFragsWithQuery(const ROMol &mol,
+                                                               T (*query)(const ROMol &,const Atom *),
+                                                               bool sanitizeFrags=true);
+
+
 #if 0
     //! finds a molecule's minimium spanning tree (MST)
     /*!
@@ -160,6 +177,8 @@ namespace RDKit{
              all atoms removed.
            - Labelled hydrogen (e.g. atoms with atomic number=1, but mass > 1),
              will not be removed.
+           - two coordinate Hs, like the central H in C[H-]C, will not be removed
+           - Hs connected to dummy atoms will not be removed
 
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
     */

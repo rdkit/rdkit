@@ -897,11 +897,78 @@ void testSDWriterOptions() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testZBO(){
+  BOOST_LOG(rdInfoLog) << "testing handling of ZBO specs" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName;
+    fName = rdbase+"FeCO5.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    std::cerr<<"MOLBLOCK:\n"<<mb<<"------\n";
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+    TEST_ASSERT(m->getNumBonds()==10);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getBondWithIdx(7)->getBondType()==Bond::ZERO);
+
+    delete m;
+  }
+
+  {
+    std::string fName;
+    fName = rdbase+"H3BNH3.mol";
+    ROMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==1);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs()==3);
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    //std::cerr<<"MOLBLOCK:\n"<<mb<<"------\n";
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==1);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::ZERO);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs()==3);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testV3000WriterDetails(){
   BOOST_LOG(rdInfoLog) << "testing details of v3000 writing" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
-
   {
     std::string fName = rdbase + "chebi_57262.v3k.mol";
     RWMol *m = MolFileToMol(fName);
@@ -1043,6 +1110,45 @@ void testGithub186(){
   
 }
 
+void testGithub189(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 189: Problems round-tripping Al2Cl6 via CTAB" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "github189.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence()==4);
+
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence()==4);
+
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence()==4);
+
+    delete m;
+  }
+  
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1134,6 +1240,10 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testZBO();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   testSDWriterOptions();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
@@ -1147,6 +1257,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub186();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub189();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }
