@@ -7,36 +7,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef WIN32
-#define CALGORITHMS_EXPORTS
-#endif
-#define PYTH_FILE_WITH_INIT
-#include "Clustering.h"
-#include <numpy/arrayobject.h>
-#include <boost/cstdint.hpp>
-#include <iostream>
+#define PY_ARRAY_UNIQUE_SYMBOL Py_Array_API_Clustering
 
-#ifdef WIN32
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID lpReserved
-					 )
-{
-    switch (ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-		case DLL_THREAD_ATTACH:
-		case DLL_THREAD_DETACH:
-		case DLL_PROCESS_DETACH:
-			break;
-    }
-    return TRUE;
-}
-#endif
+#include <boost/python.hpp>
+#include <boost/cstdint.hpp>
+
+namespace python = boost::python;
+
+#include <numpy/arrayobject.h>
 
 typedef double real;
-
-
 
 extern "C"
 void distdriver_(boost::int64_t *n,boost::int64_t *len,
@@ -75,20 +55,18 @@ void clusterit(real *dataP,boost::int64_t n,boost::int64_t m,boost::int64_t iopt
 };
 
 static PyObject *
-Clustering_MurtaghCluster(PyObject *self,PyObject *args)
+Clustering_MurtaghCluster(python::object data, int nPts, int sz, int option)
 {
   PyArrayObject *dataContig;
-  PyObject *data;
-  int nPts,sz,option;
   boost::int64_t *ia,*ib;
   real *crit;
   PyObject *res;
   PyObject *tmp;
   npy_intp dims[2];
 
-  if(!PyArg_ParseTuple(args,"Oiii",&data,&nPts,&sz,&option))
-    return NULL;
-  dataContig = (PyArrayObject *)PyArray_ContiguousFromObject(data,PyArray_DOUBLE,2,2);
+  // FIXME (check type is array or raise)
+  dataContig 
+    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(data.ptr(),PyArray_DOUBLE,2,2));
 
   ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   ib = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
@@ -112,7 +90,6 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
   tmp = PyArray_SimpleNewFromData(1,dims,NPY_DOUBLE,(void *)crit);
   PyTuple_SetItem(res,2,(PyObject *)tmp);
 
-  Py_DECREF(dataContig);
   return res;
 };
 
@@ -128,21 +105,19 @@ void distclusterit(real *dists,boost::int64_t n,boost::int64_t iopt,
 
 
 static PyObject *
-Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
+Clustering_MurtaghDistCluster(python::object data, int nPts, int option)
 {
   PyArrayObject *dataContig;
-  PyObject *data;
-  int nPts,option;
   boost::int64_t *ia,*ib;
   real *crit;
   PyObject *res=PyTuple_New(3);
   PyObject *tmp;
   npy_intp dims[] = {1};
 
-  if(!PyArg_ParseTuple(args,"Oii",&data,&nPts,&option))
-    return NULL;
+  // FIXME (check type is array)
+  dataContig 
+    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(data.ptr(),PyArray_DOUBLE,1,1));
 
-  dataContig = (PyArrayObject *)PyArray_ContiguousFromObject(data,PyArray_DOUBLE,1,1);
   ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   ib = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   crit = (real *)calloc(nPts,sizeof(real));
@@ -164,21 +139,21 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
   tmp = PyArray_SimpleNewFromData(1,dims,NPY_DOUBLE,(void *)crit);
   PyTuple_SetItem(res,2,tmp);
   
-  Py_DECREF(dataContig);
   return res;
 };
 
-static PyMethodDef locMethods[] = {
-  {"MurtaghCluster",Clustering_MurtaghCluster,METH_VARARGS},
-  {"MurtaghDistCluster",Clustering_MurtaghDistCluster,METH_VARARGS},
-  {NULL,NULL}
-};
 
-CALGORITHMS_API void initClustering()
-{
-  (void) Py_InitModule("Clustering",locMethods);
-#ifndef NO_IMPORT_ARRAY
+BOOST_PYTHON_MODULE(Clustering) {
+
   import_array();
-#endif
+
+  python::def("MurtaghCluster", Clustering_MurtaghCluster,
+	      ( python::arg("data"), python::arg("nPts"), 
+		python::arg("sz"), python::arg("option") ),
+	      "TODO: provide docstring");
+  python::def("MurtaghDistCluster", Clustering_MurtaghDistCluster,
+	      ( python::arg("data"), python::arg("nPts"), 
+		python::arg("option") ),
+	      "TODO: provide docstring");
 }
 
