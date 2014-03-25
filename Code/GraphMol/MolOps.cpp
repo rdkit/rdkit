@@ -371,7 +371,9 @@ namespace RDKit{
     template <typename T>
     std::map<T,boost::shared_ptr<ROMol> > getMolFragsWithQuery(const ROMol &mol,
                                                                T (*query)(const ROMol &,const Atom *),
-                                                               bool sanitizeFrags){
+                                                               bool sanitizeFrags,
+                                                               const std::vector<T> *whiteList,
+                                                               bool negateList){
       PRECONDITION(query,"no query");
 
       std::vector<T> assignments(mol.getNumAtoms());
@@ -379,6 +381,11 @@ namespace RDKit{
       std::map<T,boost::shared_ptr<ROMol> > res;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
         T where=query(mol,mol.getAtomWithIdx(i));
+        if(whiteList){
+          bool found=std::find(whiteList->begin(),whiteList->end(),where)!=whiteList->end();
+          if(!found && !negateList) continue;
+          else if (found && negateList) continue;
+        }
         assignments[i]=where;
         if(res.find(where)==res.end()){
           res[where]=boost::shared_ptr<ROMol>(new ROMol());
@@ -412,6 +419,7 @@ namespace RDKit{
           newM->addConformer(conf);
         }
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          if(ids[i]<0) continue;
           res[assignments[i]]->getConformer((*cit)->getId()).setAtomPos(ids[i],(*cit)->getAtomPos(i));
         }
       }
@@ -425,13 +433,19 @@ namespace RDKit{
     }
     template std::map<std::string,boost::shared_ptr<ROMol> > getMolFragsWithQuery(const ROMol &mol,
                                                                                   std::string (*query)(const ROMol &,const Atom *),
-                                                                                  bool sanitizeFrags);
+                                                                                  bool sanitizeFrags,
+                                                                                  const std::vector<std::string> *,
+                                                                                  bool);
     template std::map<int,boost::shared_ptr<ROMol> > getMolFragsWithQuery(const ROMol &mol,
                                                                           int (*query)(const ROMol &,const Atom *),
-                                                                          bool sanitizeFrags);
+                                                                          bool sanitizeFrags,
+                                                                          const std::vector<int> *,
+                                                                          bool);
     template std::map<unsigned int,boost::shared_ptr<ROMol> > getMolFragsWithQuery(const ROMol &mol,
                                                                                    unsigned int (*query)(const ROMol &,const Atom *),
-                                                                                   bool sanitizeFrags);
+                                                                                   bool sanitizeFrags,
+                                                                                   const std::vector<unsigned int> *,
+                                                                                   bool);
 
 #if 0
     void findSpanningTree(const ROMol &mol,INT_VECT &mst){

@@ -86,8 +86,21 @@ namespace RDKit{
       return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getChainId();
     }
   }
-  python::dict splitMolByPDBResidues(const ROMol &mol){
-    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getResidue,false);
+  python::dict splitMolByPDBResidues(const ROMol &mol,
+                                     python::object pyWhiteList,
+                                     bool negateList){
+
+    std::vector<std::string> *whiteList=NULL;
+    if(pyWhiteList){
+      unsigned int nVs=python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+      whiteList=new std::vector<std::string>(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
+      }
+    }
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getResidue,false,
+                                                                                     whiteList,negateList);
+    delete whiteList;
 
     python::dict pyres;
     for(std::map<std::string,boost::shared_ptr<ROMol> >::const_iterator iter=res.begin();
@@ -96,8 +109,21 @@ namespace RDKit{
     }
     return pyres;
   }
-  python::dict splitMolByPDBChainId(const ROMol &mol){
-    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getChainId,false);
+  python::dict splitMolByPDBChainId(const ROMol &mol,
+                                     python::object pyWhiteList,
+                                     bool negateList){
+                                    
+    std::vector<std::string> *whiteList=NULL;
+    if(pyWhiteList){
+      unsigned int nVs=python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+      whiteList=new std::vector<std::string>(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
+      }
+    }
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getChainId,false,
+                                                                                     whiteList,negateList);
+    delete whiteList;
 
     python::dict pyres;
     for(std::map<std::string,boost::shared_ptr<ROMol> >::const_iterator iter=res.begin();
@@ -1109,11 +1135,15 @@ namespace RDKit{
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
+    - whiteList: only residues in this list will be returned\n\
+    - negateList: if set, negates the white list inclusion logic\n\
 \n\
   RETURNS: a dictionary keyed by residue name with molecules as the values\n\
 \n";
       python::def("SplitMolByPDBResidues", &splitMolByPDBResidues,
-                  (python::arg("mol")),
+                  (python::arg("mol"),
+                   python::arg("whiteList")=python::object(),
+                   python::arg("negateList")=false),
                   docString.c_str());
       // ------------------------------------------------------------------------
       docString="Splits a molecule into pieces based on PDB chain information.\n\
@@ -1121,11 +1151,15 @@ namespace RDKit{
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
+    - whiteList: only residues in this list will be returned\n\
+    - negateList: if set, negates the white list inclusion logic\n\
 \n\
-  RETURNS: a dictionary keyed by residue name with molecules as the values\n\
+  RETURNS: a dictionary keyed by chain id with molecules as the values\n\
 \n";
       python::def("SplitMolByPDBChainId", &splitMolByPDBChainId,
-                  (python::arg("mol")),
+                  (python::arg("mol"),
+                   python::arg("whiteList")=python::object(),
+                   python::arg("negateList")=false),
                   docString.c_str());
 
 
