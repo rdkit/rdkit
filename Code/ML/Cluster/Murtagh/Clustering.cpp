@@ -9,7 +9,7 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL Py_Array_API_Clustering
 
-#include <boost/python.hpp>
+#include <RDBoost/Wrap.h>
 #include <boost/cstdint.hpp>
 
 namespace python = boost::python;
@@ -64,9 +64,13 @@ Clustering_MurtaghCluster(python::object data, int nPts, int sz, int option)
   PyObject *tmp;
   npy_intp dims[2];
 
-  // FIXME (check type is array or raise)
-  dataContig 
-    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(data.ptr(),PyArray_DOUBLE,2,2));
+  if (PyArray_Check(data.ptr())) {
+    dataContig 
+      = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(data.ptr(),PyArray_DOUBLE,2,2));
+  }
+  else {
+    throw_value_error("PyArray_Type expected as input");
+  }
 
   ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   ib = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
@@ -114,9 +118,13 @@ Clustering_MurtaghDistCluster(python::object data, int nPts, int option)
   PyObject *tmp;
   npy_intp dims[] = {1};
 
-  // FIXME (check type is array)
-  dataContig 
-    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(data.ptr(),PyArray_DOUBLE,1,1));
+  if (PyArray_Check(data.ptr())) {
+    dataContig 
+      = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(data.ptr(),PyArray_DOUBLE,1,1));
+  }
+  else {
+    throw_value_error("PyArray_Type expected as input");
+  }
 
   ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   ib = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
