@@ -292,8 +292,8 @@ namespace {
       if(nBits<0){
         res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                         static_cast<unsigned int>(radius),
-                                                        invars,froms,useChirality,
-                                                        useBondTypes,false,bitInfoMap);
+                                                        invars,froms,useChirality,useBondTypes,
+                                                        false,bitInfoMap);
       } else {
         res = RDKit::MorganFingerprints::getHashedFingerprint(mol,
                                                         static_cast<unsigned int>(radius),
