@@ -146,6 +146,8 @@ extern "C" {
   double MolKappa2(CROMol i);
   double MolKappa3(CROMol i);
 
+  char *makeMolFormulaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes);
+
   const char *MolInchi(CROMol i);
   const char *MolInchiKey(CROMol i);
   CROMol MolMurckoScaffold(CROMol i);

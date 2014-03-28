@@ -11,6 +11,7 @@
 #define _RD_MOL_OPS_H_
 
 #include <vector>
+#include <map>
 #include <list>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -89,6 +90,28 @@ namespace RDKit{
     std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
                                                        bool sanitizeFrags=true,
                                                        std::vector<int> *frags=0);
+
+    //! splits a molecule into pieces based on labels assigned using a query
+    /*!
+
+      \param mol     the molecule of interest
+      \param query   the query used to "label" the molecule for fragmentation
+      \param sanitizeFrags  toggles sanitization of the fragments after
+                            they are built
+      \param whiteList  if provided, only labels in the list will be kept
+      \param negateList if true, the white list logic will be inverted: only labels
+                        not in the list will be kept
+      
+      \return a map of the fragments and their labels
+      
+    */
+    template <typename T>
+    std::map<T,boost::shared_ptr<ROMol> > getMolFragsWithQuery(const ROMol &mol,
+                                                               T (*query)(const ROMol &,const Atom *),
+                                                               bool sanitizeFrags=true,
+                                                               const std::vector<T> *whiteList=0,
+                                                               bool negateList=false);
+
 
 #if 0
     //! finds a molecule's minimium spanning tree (MST)

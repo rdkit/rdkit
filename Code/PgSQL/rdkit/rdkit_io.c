@@ -132,7 +132,6 @@ mol_from_ctab(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);           
 }
 
-
 PG_FUNCTION_INFO_V1(mol_from_smarts);
 Datum           mol_from_smarts(PG_FUNCTION_ARGS);
 Datum

@@ -488,6 +488,23 @@ MolNumHeavyAtoms(CROMol i){
   return im->getNumHeavyAtoms();
 }
 
+extern "C" char *
+makeMolFormulaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes) {
+  ROMol *mol = (ROMol*)data;
+
+  try {
+    StringData = RDKit::Descriptors::calcMolFormula(*mol, separateIsotopes, abbreviateHIsotopes);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeMolFormulaText: problems converting molecule to sum formula")));
+    StringData="";
+  }       
+
+  *len = StringData.size();
+  return (char*)StringData.c_str();               
+}
+
 extern "C" const char *
 MolInchi(CROMol i){
   std::string inchi="InChI not available";

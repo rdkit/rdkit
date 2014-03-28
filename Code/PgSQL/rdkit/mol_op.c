@@ -217,6 +217,28 @@ MOLDESCR(kappa1,MolKappa1,FLOAT4)
 MOLDESCR(kappa2,MolKappa2,FLOAT4)
 MOLDESCR(kappa3,MolKappa3,FLOAT4)
 
+PG_FUNCTION_INFO_V1(mol_formula);
+Datum           mol_formula(PG_FUNCTION_ARGS);
+Datum
+mol_formula(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+
+  bool separateIsotopes    = PG_GETARG_BOOL(1);
+  bool abbreviateHIsotopes = PG_GETARG_BOOL(2);
+
+  str = makeMolFormulaText(mol, &len, separateIsotopes, abbreviateHIsotopes);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
 PG_FUNCTION_INFO_V1(mol_inchi);
 Datum           mol_inchi(PG_FUNCTION_ARGS);
 Datum

@@ -47,7 +47,11 @@ namespace RDKit {
           prodIt!=rxn->endProductTemplates();++prodIt){
         for(ROMol::AtomIterator prodAtomIt=(*prodIt)->beginAtoms();
             prodAtomIt!=(*prodIt)->endAtoms();++prodAtomIt){
-          if(!(*prodAtomIt)->hasProp("molAtomMapNumber")) continue;
+          if(!(*prodAtomIt)->hasProp("molAtomMapNumber")){
+            // if we have stereochemistry specified, it's automatically creating stereochem:
+            (*prodAtomIt)->setProp("molInversionFlag",4);
+            continue;
+          } 
           int mapNum;
           (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
           for(MOL_SPTR_VECT::const_iterator reactIt=rxn->beginReactantTemplates();
