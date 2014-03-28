@@ -191,7 +191,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       for(unsigned int i=0;i<nAtoms;++i){
         if(!fromAtoms ||
            std::find(fromAtoms->begin(),fromAtoms->end(),i)!=fromAtoms->end()){
-          if(!onlyNonzeroInvariants || (*invariants)[i]){
+          if( !onlyNonzeroInvariants || (*invariants)[i]){
             uint32_t bit=updateElement(res,(*invariants)[i]);
             if(atomsSettingBits) (*atomsSettingBits)[bit].push_back(std::make_pair(i,0));
           }
