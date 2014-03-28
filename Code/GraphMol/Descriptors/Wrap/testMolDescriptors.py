@@ -130,14 +130,6 @@ class TestCase(unittest.TestCase) :
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
     fp = rdMD.GetMorganFingerprint(mol,0)
     self.failUnless(len(fp.GetNonzeroElements())==4)
-    
-    mol = Chem.MolFromSmiles('CC')
-    fp = rdMD.GetMorganFingerprint(mol,0)
-    self.failUnless(len(fp.GetNonzeroElements())==1)
-    self.failUnless(fp.GetNonzeroElements().values()[0]==2)
-    fp = rdMD.GetMorganFingerprint(mol,0,useCounts=False)
-    self.failUnless(len(fp.GetNonzeroElements())==1)
-    self.failUnless(fp.GetNonzeroElements().values()[0]==1)
 
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
     fp = rdMD.GetHashedMorganFingerprint(mol,0)

@@ -155,16 +155,12 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       }
     } // end of getConnectivityInvariants()
 
-    uint32_t updateElement(SparseIntVect<uint32_t> &v,unsigned int elem, bool counting){
+    uint32_t updateElement(SparseIntVect<uint32_t> &v,unsigned int elem){
       uint32_t bit=elem%v.getLength();
-      if (counting) {
-          v.setVal(bit,v.getVal(bit)+1);
-      } else {
-          v.setVal(bit,1);
-      }
+      v.setVal(bit,v.getVal(bit)+1);
       return elem;
     }
-    uint32_t updateElement(ExplicitBitVect &v,unsigned int elem, bool counting=false){
+    uint32_t updateElement(ExplicitBitVect &v,unsigned int elem){
       uint32_t bit=elem%v.getNumBits();
       v.setBit(bit);
       return bit;
@@ -175,7 +171,6 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          unsigned int radius,
                          std::vector<uint32_t> *invariants,
                          const std::vector<uint32_t> *fromAtoms,
-                         bool useCounts,
                          bool useChirality,
                          bool useBondTypes,
                          bool onlyNonzeroInvariants,
@@ -197,7 +192,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
         if(!fromAtoms ||
            std::find(fromAtoms->begin(),fromAtoms->end(),i)!=fromAtoms->end()){
           if(!onlyNonzeroInvariants || (*invariants)[i]){
-            uint32_t bit=updateElement(res,(*invariants)[i], useCounts);
+            uint32_t bit=updateElement(res,(*invariants)[i]);
             if(atomsSettingBits) (*atomsSettingBits)[bit].push_back(std::make_pair(i,0));
           }
         }
@@ -330,7 +325,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                        iter->get<0>())==neighborhoods.end()){
             if(!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]){
               if(includeAtoms[iter->get<2>()]){
-                uint32_t bit=updateElement(res,iter->get<1>(), useCounts);
+                uint32_t bit=updateElement(res,iter->get<1>());
                 if(atomsSettingBits) (*atomsSettingBits)[bit].push_back(std::make_pair(iter->get<2>(),
                                                                                        layer+1));
               }
@@ -362,13 +357,12 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                    unsigned int radius,
                    std::vector<uint32_t> *invariants,
                    const std::vector<uint32_t> *fromAtoms,
-                   bool useCounts,
                    bool useChirality,bool useBondTypes,
                    bool onlyNonzeroInvariants,
                    BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-      calcFingerprint(mol,radius,invariants,fromAtoms,useCounts,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
@@ -383,7 +377,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,true,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
@@ -398,7 +392,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                             bool onlyNonzeroInvariants,
                             BitInfoMap *atomsSettingBits){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,false,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }

@@ -252,7 +252,6 @@ namespace {
                                  int nBits,
                                  python::object invariants,
                                  python::object fromAtoms,
-                                 bool useCounts,
                                  bool useChirality,
                                  bool useBondTypes,
                                  bool useFeatures,
@@ -293,7 +292,7 @@ namespace {
       if(nBits<0){
         res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                         static_cast<unsigned int>(radius),
-                                                        invars,froms,useCounts,useChirality,
+                                                        invars,froms,useChirality,
                                                         useBondTypes,false,bitInfoMap);
       } else {
         res = RDKit::MorganFingerprints::getHashedFingerprint(mol,
@@ -324,12 +323,11 @@ namespace {
                                                               int radius,
                                                               python::object invariants,
                                                               python::object fromAtoms,
-                                                              bool useCounts,
                                                               bool useChirality,
                                                               bool useBondTypes,
                                                               bool useFeatures,
                                                               python::object bitInfo){
-    return MorganFingerprintHelper(mol,radius,-1,invariants,fromAtoms,useCounts,useChirality,useBondTypes,
+    return MorganFingerprintHelper(mol,radius,-1,invariants,fromAtoms,useChirality,useBondTypes,
                                    useFeatures,bitInfo);
   }
   RDKit::SparseIntVect<boost::uint32_t> *GetHashedMorganFingerprint(const RDKit::ROMol &mol,
@@ -341,7 +339,7 @@ namespace {
                                                               bool useBondTypes,
                                                               bool useFeatures,
                                                               python::object bitInfo){
-    return MorganFingerprintHelper(mol,radius,nBits,invariants,fromAtoms,true,useChirality,useBondTypes,
+    return MorganFingerprintHelper(mol,radius,nBits,invariants,fromAtoms,useChirality,useBondTypes,
                                    useFeatures,bitInfo);
   }
 
@@ -626,7 +624,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"),python::arg("radius"),
                python::arg("invariants")=python::list(),
                python::arg("fromAtoms")=python::list(),
-               python::arg("useCounts")=true,
                python::arg("useChirality")=false,
                python::arg("useBondTypes")=true,
                python::arg("useFeatures")=false,
