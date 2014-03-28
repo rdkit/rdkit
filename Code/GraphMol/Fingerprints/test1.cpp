@@ -820,7 +820,7 @@ void test1MorganFPs(){
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
 
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false);
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false,true,false);
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=fp->getNonzeroElements().begin();
         iter!=fp->getNonzeroElements().end();++iter){
@@ -955,10 +955,10 @@ void test1MorganFPs(){
     fp = MorganFingerprints::getFingerprint(*mol,1);
     TEST_ASSERT(fp->getNonzeroElements().size()==8);
     delete fp;
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,true,true);
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,true);
     TEST_ASSERT(fp->getNonzeroElements().size()==4);
     delete fp;
-    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,true,true);
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,true);
     TEST_ASSERT(fp->getNonzeroElements().size()==9);
     delete fp;
     delete mol;
@@ -1746,7 +1746,7 @@ void testMorganAtomInfo(){
     SparseIntVect<boost::uint32_t>::StorageType nze;
 
     mol = SmilesToMol("CCCCC");
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,true,false,true,false,&bitInfo);
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false,true,true,false,&bitInfo);
     nze=fp->getNonzeroElements();
     TEST_ASSERT(nze.size()==2);
     TEST_ASSERT(bitInfo.size()==2);
@@ -1762,7 +1762,7 @@ void testMorganAtomInfo(){
     delete fp;
 
     bitInfo.clear();
-    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,true,false,true,false,&bitInfo);
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,false,true,true,false,&bitInfo);
     TEST_ASSERT(fp->getNonzeroElements().size()==5);
     for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=nze.begin();
         iter!=nze.end();++iter){

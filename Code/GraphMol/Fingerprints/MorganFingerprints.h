@@ -75,12 +75,12 @@ namespace RDKit {
             (calculated by getConnectivityInvariants())
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
-      \param useCounts : if set, counts of the features will be used
       \param useChirality : if set, additional information will be added to the fingerprint
                             when chiral atoms are discovered. This will cause \verbatim C[C@H](F)Cl,
                             C[C@@H](F)Cl, and CC(F)Cl \endverbatim to generate different fingerprints.
       \param useBondTypes : if set, bond types will be included as part of the hash for
                             calculating bits
+      \param useCounts : if set, counts of the features will be used
       \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
                                      have a nonzero invariant.
       \param atomsSettingBits : if nonzero, this will be used to return information
@@ -97,9 +97,9 @@ namespace RDKit {
                      unsigned int radius,
                      std::vector<boost::uint32_t> *invariants=0,
                      const std::vector<boost::uint32_t> *fromAtoms=0,
-                     bool useCounts=true,
                      bool useChirality=false,
                      bool useBondTypes=true,
+                     bool useCounts=true,
                      bool onlyNonzeroInvariants=false,
                      BitInfoMap *atomsSettingBits=0);
 

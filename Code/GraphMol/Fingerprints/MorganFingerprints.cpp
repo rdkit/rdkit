@@ -175,9 +175,9 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          unsigned int radius,
                          std::vector<uint32_t> *invariants,
                          const std::vector<uint32_t> *fromAtoms,
-                         bool useCounts,
                          bool useChirality,
                          bool useBondTypes,
+                         bool useCounts,
                          bool onlyNonzeroInvariants,
                          BitInfoMap *atomsSettingBits,
                          T &res){
@@ -362,13 +362,13 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                    unsigned int radius,
                    std::vector<uint32_t> *invariants,
                    const std::vector<uint32_t> *fromAtoms,
-                   bool useCounts,
                    bool useChirality,bool useBondTypes,
+                   bool useCounts,
                    bool onlyNonzeroInvariants,
                    BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-      calcFingerprint(mol,radius,invariants,fromAtoms,useCounts,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,useCounts,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
@@ -383,7 +383,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,true,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,true,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
@@ -398,7 +398,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                             bool onlyNonzeroInvariants,
                             BitInfoMap *atomsSettingBits){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,false,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,false,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
