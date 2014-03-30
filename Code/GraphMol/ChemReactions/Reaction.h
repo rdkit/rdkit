@@ -255,6 +255,9 @@ namespace RDKit{
   //! of reactants on return
   bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
                                       unsigned int &which);
+  //! \overload
+  bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
+  
   //! tests whether or not the molecule has a substructure match
   //! to any of the reaction's products
   //! the \c which argument is used to return which of the products
@@ -262,6 +265,8 @@ namespace RDKit{
   //! of products on return
   bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
                                    unsigned int &which);
+  //! \overload
+  bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
 
   //! returns indices of the atoms in each reactant that are changed
   //! in the reaction

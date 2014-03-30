@@ -101,7 +101,7 @@ except Exception as e:
   pd = None
 
 
-def patchPandasHTMLrepr(self):
+def patchPandasHTMLrepr(self,**kwargs):
   '''
   Patched default escaping of HTML control characters to allow molecule image rendering dataframes
   '''

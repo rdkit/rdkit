@@ -416,15 +416,18 @@ namespace RDKit{
         parityFlag=getAtomParityFlag(atom,conf);
       }
     } 
-    if (atom->getNumRadicalElectrons()!=0){
+    if (atom->getNumRadicalElectrons()!=0 ||
+        (!atom->hasQuery() && (atom->getAtomicNum()<5 || atom->getAtomicNum()>9) &&
+         (atom->getAtomicNum()<15 || atom->getAtomicNum()>17) &&
+         (atom->getAtomicNum()!=35 && atom->getAtomicNum()!=53)
+         ) ){
       if(atom->getTotalDegree()==0){
         // Specify zero valence for elements/metals without neighbors
         // or hydrogens (degree 0) instead of writing them as radicals.
         totValence = 15;
       } else {
-        // write the total valence for other radicals so that we have a chance of
-        // reconstructing what was there.
-        totValence = atom->getTotalValence();
+        // write the total valence for other atoms
+        totValence = atom->getTotalValence()%15;
       }
     }
   }

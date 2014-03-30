@@ -66,7 +66,7 @@ public class ChemReactionTests extends GraphMolTest {
 		rxn.addReactantTemplate(r1);
 		assertEquals( 1,rxn.getNumReactantTemplates() );
 
-		r1 = RWMol.MolFromSmarts("[N:3]");
+		r1 = RWMol.MolFromSmarts("[N;!$(N-C=O):3]");
 		rxn.addReactantTemplate(r1);
 		assertEquals( 2,rxn.getNumReactantTemplates() );
 
@@ -85,6 +85,10 @@ public class ChemReactionTests extends GraphMolTest {
 		assertEquals( 1,prods.size() );
 		assertEquals( 1,prods.get(0).size() );
 		assertEquals( 3,prods.get(0).get(0).getNumAtoms() );
+                assertEquals( true, RDKFuncs.isMoleculeReactantOfReaction(rxn,reacts.get(0)) );
+                assertEquals( false, RDKFuncs.isMoleculeReactantOfReaction(rxn,prods.get(0).get(0)) );
+                assertEquals( true, RDKFuncs.isMoleculeProductOfReaction(rxn,prods.get(0).get(0)) );
+                assertEquals( false, RDKFuncs.isMoleculeProductOfReaction(rxn,reacts.get(0)) );
 	}
 
 	@Test
