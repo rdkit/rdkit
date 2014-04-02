@@ -947,7 +947,7 @@ void testZBO(){
 
     std::string mb=MolToMolBlock(*m);
     delete m;
-    std::cerr<<"MOLBLOCK:\n"<<mb<<"------\n";
+    //std::cerr<<"MOLBLOCK:\n"<<mb<<"------\n";
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==2);
@@ -1110,6 +1110,45 @@ void testGithub186(){
   
 }
 
+void testGithub189(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 189: Problems round-tripping Al2Cl6 via CTAB" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "github189.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence()==4);
+
+
+    std::string mb=MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence()==4);
+
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m;
+    m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence()==4);
+
+    delete m;
+  }
+  
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1218,6 +1257,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub186();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub189();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }

@@ -98,6 +98,7 @@ extern "C" {
   CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail);
   CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail);
   char *makeMolText(CROMol data, int *len,bool asSmarts);
+  char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
   bool isValidSmiles(char *data);
   bool isValidSmarts(char *data);
   bool isValidCTAB(char *data);
@@ -144,6 +145,8 @@ extern "C" {
   double MolKappa1(CROMol i);
   double MolKappa2(CROMol i);
   double MolKappa3(CROMol i);
+
+  char *makeMolFormulaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes);
 
   const char *MolInchi(CROMol i);
   const char *MolInchiKey(CROMol i);

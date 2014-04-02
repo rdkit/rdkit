@@ -4,7 +4,7 @@ before_install:
  - sudo apt-get update -qq
 
 install:
- - sudo apt-get install -qq flex bison build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev libboost-dev libboost-python-dev libboost-regex-dev python-imaging
+ - sudo apt-get install -qq flex bison build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev libboost-dev libboost-python-dev libboost-regex-dev python-imaging openjdk-7-jdk swig junit
 
 before_script:
  # RDKit
@@ -13,9 +13,12 @@ before_script:
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${RDBASE}/lib
  - mkdir build
  - cd build
+ - mkdir $RDBASE/External/java_lib
+ - cp /usr/share/java/junit.jar $RDBASE/External/java_lib
+ - ls -l $RDBASE/External/java_lib
  - cmake ..
 
 script:
- - make
+ - make -j2
  - make install
  - ctest --output-on-failure

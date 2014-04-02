@@ -20,6 +20,17 @@ SELECT mol_chi4v('c1ccccc1O'::mol) v;
 SELECT mol_kappa1('C12CC2C3CC13'::mol) v;
 SELECT mol_kappa2('CC(C)C1CCC(C)CCC1'::mol) v;
 SELECT mol_kappa3('CC(C)C1CCC(C)CCC1'::mol) v;
+-- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
+select mol_formula('[2H]C([3H])O'::mol);
+                                     -- separateIsotopes = true
+select mol_formula('[2H]C([3H])O'::mol, true);
+                                           -- abbreviateHIsotopes = false
+select mol_formula('[2H]C([3H])O'::mol, true, false);
+       --
+select mol_formula('[2H][13CH2]CO'::mol);
+select mol_formula('[2H][13CH2]CO'::mol, true);
+select mol_formula('[2H][13CH2]CO'::mol, true, false);
+--
 SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
 SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
 SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds;

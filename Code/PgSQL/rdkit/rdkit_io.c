@@ -120,17 +120,17 @@ Datum           mol_from_ctab(PG_FUNCTION_ARGS);
 Datum
 mol_from_ctab(PG_FUNCTION_ARGS) {
   char    *data = PG_GETARG_CSTRING(0);
+  bool keepConformer = PG_GETARG_BOOL(1);
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolCTAB(data,false,true);
+  mol = parseMolCTAB(data,keepConformer,true);
   if(!mol) PG_RETURN_NULL();
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
   PG_RETURN_MOL_P(res);           
 }
-
 
 PG_FUNCTION_INFO_V1(mol_from_smarts);
 Datum           mol_from_smarts(PG_FUNCTION_ARGS);
@@ -162,6 +162,26 @@ mol_from_smiles(PG_FUNCTION_ARGS) {
   freeCROMol(mol);
 
   PG_RETURN_MOL_P(res);           
+}
+
+PG_FUNCTION_INFO_V1(mol_to_ctab);
+Datum           mol_to_ctab(PG_FUNCTION_ARGS);
+Datum
+mol_to_ctab(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+
+  bool createDepictionIfMissing = PG_GETARG_BOOL(1);
+  str = makeCtabText(mol, &len, createDepictionIfMissing);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
 
 PG_FUNCTION_INFO_V1(mol_to_smiles);

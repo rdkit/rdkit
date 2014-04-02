@@ -130,6 +130,47 @@ SELECT mol_kappa3('CC(C)C1CCC(C)CCC1'::mol) v;
  2.84444
 (1 row)
 
+-- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
+select mol_formula('[2H]C([3H])O'::mol);
+ mol_formula 
+-------------
+ CH4O
+(1 row)
+
+                                     -- separateIsotopes = true
+select mol_formula('[2H]C([3H])O'::mol, true);
+ mol_formula 
+-------------
+ CH2DTO
+(1 row)
+
+                                           -- abbreviateHIsotopes = false
+select mol_formula('[2H]C([3H])O'::mol, true, false);
+ mol_formula  
+--------------
+ CH2[2H][3H]O
+(1 row)
+
+       --
+select mol_formula('[2H][13CH2]CO'::mol);
+ mol_formula 
+-------------
+ C2H6O
+(1 row)
+
+select mol_formula('[2H][13CH2]CO'::mol, true);
+ mol_formula 
+-------------
+ C[13C]H5DO
+(1 row)
+
+select mol_formula('[2H][13CH2]CO'::mol, true, false);
+  mol_formula  
+---------------
+ C[13C]H5[2H]O
+(1 row)
+
+--
 SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
  mol_numrotatablebonds 
 -----------------------
