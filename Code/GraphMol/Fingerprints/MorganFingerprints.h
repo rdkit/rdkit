@@ -80,6 +80,7 @@ namespace RDKit {
                             C[C@@H](F)Cl, and CC(F)Cl \endverbatim to generate different fingerprints.
       \param useBondTypes : if set, bond types will be included as part of the hash for
                             calculating bits
+      \param useCounts : if set, counts of the features will be used
       \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
                                      have a nonzero invariant.
       \param atomsSettingBits : if nonzero, this will be used to return information
@@ -98,6 +99,7 @@ namespace RDKit {
                      const std::vector<boost::uint32_t> *fromAtoms=0,
                      bool useChirality=false,
                      bool useBondTypes=true,
+                     bool useCounts=true,
                      bool onlyNonzeroInvariants=false,
                      BitInfoMap *atomsSettingBits=0);
 
