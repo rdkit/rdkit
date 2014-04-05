@@ -30,7 +30,7 @@ option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing i
 option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
 option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
-option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" ON)
+option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
