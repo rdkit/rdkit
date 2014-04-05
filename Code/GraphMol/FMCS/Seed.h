@@ -29,7 +29,7 @@ namespace RDKit
 
         std::vector<bool>   ExcludedBonds;
         unsigned            LastAddedAtomsBeginIdx; // in this subgraph for improving performance of future growing
-        unsigned            LastAddedBondsBeginIdx; // in this subgraph for improving performance of future growing
+        unsigned            LastAddedBondsBeginIdx; // in this subgraph for DEBUG ONLY
         unsigned            RemainingBonds;
         unsigned            RemainingAtoms;
 #ifdef DUP_SUBSTRUCT_CACHE
@@ -71,8 +71,8 @@ if(0==MoleculeFragment.BondsIdx[0])
 }
 */
 //TMP DEBUG
-/*
-if(MoleculeFragment.BondsIdx.size() >=8
+
+if(MoleculeFragment.BondsIdx.size() >=8 +2
     && MoleculeFragment.BondsIdx[ 0]==0
     && MoleculeFragment.BondsIdx[ 1]==15
     && MoleculeFragment.BondsIdx[ 2]==1
@@ -81,9 +81,13 @@ if(MoleculeFragment.BondsIdx.size() >=8
     && MoleculeFragment.BondsIdx[ 5]==17
     && MoleculeFragment.BondsIdx[ 6]==13
     && MoleculeFragment.BondsIdx[ 7]==14
+  && MoleculeFragment.BondsIdx[ 8]==18
+  && MoleculeFragment.BondsIdx[ 9]==3
     )
-;//return true;
-*/
+    return RemainingBonds + getNumBonds() >  maxBonds
+        || RemainingAtoms + getNumAtoms() >= maxAtoms;
+//return true;
+
             return RemainingBonds + getNumBonds() >  maxBonds
                 || RemainingAtoms + getNumAtoms() >= maxAtoms;
             

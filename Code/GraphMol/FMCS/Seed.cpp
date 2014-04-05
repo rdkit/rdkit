@@ -2,6 +2,7 @@
 #include "Seed.h"
 
 #include "DebugTrace.h"
+#include "../SmilesParse/SmilesWrite.h"
 
 namespace RDKit
 {
@@ -25,7 +26,7 @@ namespace FMCS
         BitSet getBitSet()const {return Bits;}
         bool generateNext()
         {
-            return (++Bits) < MaxValue;
+            return (++Bits) <= MaxValue;
         }
         bool is2Power() // one bit is set only
         {
@@ -97,10 +98,15 @@ void Seed::grow(MaximumCommonSubgraph& mcs, const ROMol& qmol) const
     std::map<unsigned, unsigned> newAtomsMap; // map new added atoms to their seed's indeces
 
 //TMP DEBUG
-/*
+
 //DEBUG BREAKPOINT test 504
-//if(getNumBonds() >= 28  && getNumAtoms() >= 27) // test 504
-if(MoleculeFragment.BondsIdx.size() >=8+2
+// test 504
+// MCS atoms=(1, 2, 0, 3, 17, 4, 18, 5, 16, 19, 6, 7, 20, 34, 8, 21, 9, 15, 22, 10, 14, 23, 11, 12, 24, 13, 25, 33, 26, 27, 32, 28, 31, 29, ) new atoms=[29, ]
+//     bonds=(0, 15, 1, 16, 2, 17, 13, 14, 18, 3, 34, 19, 36, 4, 5, 20, 6, 35, 21, 7, 12, 32, 8, 9, 11, 22, 10, 30, 31, 23, 24, 37, 25, 29, 26, 28, ) 
+// Size=34, 36 Remain=1, 1
+// [CH2:34][N:19]([CH2:18][CH2:17][CH2:0][CH2:1][CH2:2][NH:3][C:4](=[O:16])[CH:5]1[CH2:6][CH:7]1[c:8]1[cH:15][cH:14][c:12]([Cl:13])[c:10]([Cl:11])[cH:9]1)[CH2:20][CH2:21][CH:22][NH:23][C:24](=[O:33])[NH:25][c:26]1[cH:32][cH:31][c:29][cH:28][cH:27]1
+if(MoleculeFragment.BondsIdx.size() == 11+4 //+3
+//common bonds
     && MoleculeFragment.BondsIdx[ 0]==0
     && MoleculeFragment.BondsIdx[ 1]==15
     && MoleculeFragment.BondsIdx[ 2]==1
@@ -111,16 +117,20 @@ if(MoleculeFragment.BondsIdx.size() >=8+2
     && MoleculeFragment.BondsIdx[ 7]==14
     && MoleculeFragment.BondsIdx[ 8]==18
   && MoleculeFragment.BondsIdx[ 9]==3
-  //&& MoleculeFragment.BondsIdx[ 9]==34 // not 3
-//    && MoleculeFragment.BondsIdx[10]==
-//    && MoleculeFragment.BondsIdx[11]==
-//    && MoleculeFragment.BondsIdx[12]==
-//    && MoleculeFragment.BondsIdx[13]==
+  && MoleculeFragment.BondsIdx[10]==34
+    && MoleculeFragment.BondsIdx[11]==19
+    && MoleculeFragment.BondsIdx[12]==36
+    && MoleculeFragment.BondsIdx[13]==4
+    && MoleculeFragment.BondsIdx[14]==5
+// part of MCS
+//  && MoleculeFragment.BondsIdx[15]==20
+//  && MoleculeFragment.BondsIdx[16]==6
+//  && MoleculeFragment.BondsIdx[17]==35
    )
 {
     newAtomsMap.clear();
 }
-*/
+
     for(unsigned srcAtomIdx = LastAddedAtomsBeginIdx; srcAtomIdx < getNumAtoms(); srcAtomIdx++)   // all atoms added on previous growing only
     {
         const Atom* atom = MoleculeFragment.Atoms[srcAtomIdx];
@@ -233,42 +243,85 @@ if(0==GrowingStage)
         }
         const Bond* src_bond = qmol.getBondWithIdx(nbi->BondIdx);
         seed.addBond(src_bond);
+        seed.computeRemainingSize(qmol);
 
-        seed.computeRemainingSize(qmol);//, excludedBonds);
-        if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune()
+        if(seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune()
         {
+            if( ! mcs.checkIfMatchAndAppend(seed))
+            {
+//DEBUG test 504
+/*if(33!=nbi->BondIdx && 27!=nbi->BondIdx
+   && seed.MoleculeFragment.BondsIdx.end()==find(seed.MoleculeFragment.BondsIdx.begin(),seed.MoleculeFragment.BondsIdx.end(),33)
+   && seed.MoleculeFragment.BondsIdx.end()==find(seed.MoleculeFragment.BondsIdx.begin(),seed.MoleculeFragment.BondsIdx.end(),27))
+{
+    if( ! mcs.checkIfMatchAndAppend(seed))
+        continue; //NEVER
+}
+*/
+                nbi->BondIdx = -1; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
+                ++numErasedNewBonds;
+            }
+        }
+        else   // seed too small
+        {
+/*just this s eed is small
+if(33!=nbi->BondIdx && 27!=nbi->BondIdx
+   && seed.MoleculeFragment.BondsIdx.end()==find(seed.MoleculeFragment.BondsIdx.begin(),seed.MoleculeFragment.BondsIdx.end(),33)
+   && seed.MoleculeFragment.BondsIdx.end()==find(seed.MoleculeFragment.BondsIdx.begin(),seed.MoleculeFragment.BondsIdx.end(),27))
+{
+    seed.computeRemainingSize(qmol);
+    std::cout<<"REJECT atoms=(";
+    for(unsigned seedAtomIdx = 0; seedAtomIdx < seed.getNumAtoms(); seedAtomIdx++)
+    {
+        const Atom* atom = seed.MoleculeFragment.Atoms[seedAtomIdx];
+        std::cout<<atom->getIdx()<<", ";
+    }
+    std::cout<<") new atoms=[";
+    for(unsigned seedAtomIdx = seed.LastAddedAtomsBeginIdx; seedAtomIdx < seed.getNumAtoms(); seedAtomIdx++)
+    {
+        const Atom* atom = seed.MoleculeFragment.Atoms[seedAtomIdx];
+        std::cout<<atom->getIdx()<<", ";
+    }
+    std::cout<<"] Size="<< seed.getNumAtoms() <<", "<< seed.getNumBonds() <<" Remain=" << seed.RemainingAtoms <<", "<<seed.RemainingBonds<<" = ";
+    std::cout<< MolFragmentToSmiles(qmol, *(const std::vector<int>*) &seed.MoleculeFragment.AtomsIdx, (const std::vector<int>*) &seed.MoleculeFragment.BondsIdx) <<"\n";  // unsigned
+//    continue;
+}
+*/
 #ifdef VERBOSE_STATISTICS_ON
             ++stat.RemainingSizeRejected;
 #endif
-            nbi->BondIdx = -1;  // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
-            ++numErasedNewBonds;
-            continue;           // seed too small
-        }
-
-        if( ! mcs.checkIfMatchAndAppend(seed))//, excludedBonds))
-        {
-            nbi->BondIdx = -1; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
-            ++numErasedNewBonds;
         }
     }
+
     if(numErasedNewBonds > 0)
     {
         std::vector<NewBond> dirtyNewBonds;
         dirtyNewBonds.reserve(newBonds.size());
         dirtyNewBonds.swap(newBonds);
-        for(std::vector<NewBond>::iterator nbi = dirtyNewBonds.begin(); nbi != dirtyNewBonds.end(); nbi++)
+        for(std::vector<NewBond>::const_iterator nbi = dirtyNewBonds.begin(); nbi != dirtyNewBonds.end(); nbi++)
             if(-1 != nbi->BondIdx)
                 newBonds.push_back(*nbi);
+/* // NEW with The SAME Result:
+        std::vector<NewBond> clearNewBonds;
+        for(std::vector<NewBond>::const_iterator nbi = newBonds.begin(); nbi != newBonds.end(); nbi++)
+            if(-1 != nbi->BondIdx)
+                clearNewBonds.push_back(*nbi);
+        newBonds.clear();
+        for(std::vector<NewBond>::const_iterator nbi = clearNewBonds.begin(); nbi != clearNewBonds.end(); nbi++)
+            newBonds.push_back(*nbi);
+*/
     }
 
     // add all other from 2^^k-1 possible seeds, where k=newBonds.size():
-    if(newBonds.size() > 1) // just one new bond, such seed is already added
+    if(newBonds.size() > 1) // if just one new bond, such seed has been already created
     {
         if(sizeof(unsigned long long)*8 < newBonds.size())
             throw std::runtime_error("Max number of new external bonds of a seed more than 64");
         BitSet maxCompositionValue;
         Composition2N::compute2N(newBonds.size(), maxCompositionValue);
-        maxCompositionValue -= 1;   // exclude already processed all external bonds combination
+        maxCompositionValue -= 1;   // 2^N-1
+        if(0==numErasedNewBonds)
+            maxCompositionValue -= 1;   // exclude already processed all external bonds combination 2N-2
         Composition2N composition(maxCompositionValue);
 
 #ifdef EXCLUDE_WRONG_COMPOSITION
@@ -339,11 +392,11 @@ if(0==GrowingStage)
             else
             {
 //1                seedCorrupted = 
-                bool found = mcs.checkIfMatchAndAppend(seed);//, excludedBonds);  // added with SWAP !!!
-// if seed does not matched it is possible to exclude some FAILED combinations for performance improvement
+                bool found = mcs.checkIfMatchAndAppend(seed);
+
                 if(!found)
                 {
-#ifdef EXCLUDE_WRONG_COMPOSITION
+#ifdef EXCLUDE_WRONG_COMPOSITION  // if seed does not matched it is possible to exclude this FAILED combination for performance improvement
                     failedCombinations.push_back(composition.getBitSet());
                     failedCombinationsMask &= composition.getBitSet();
 #ifdef VERBOSE_STATISTICS_ON

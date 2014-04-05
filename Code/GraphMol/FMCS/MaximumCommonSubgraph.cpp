@@ -299,26 +299,39 @@ void MaximumCommonSubgraph::growSeeds(MolFragment& mcsIdx, MCSResult& res)
         SeedSet::iterator si = Seeds.begin();
 
         si->grow(*this, *QueryMolecule);
-/*
-        if((Seeds.front().getNumAtoms() >= res.NumAtoms  // bigger substructure
-         && Seeds.front().getNumBonds() >= res.NumBonds)
-         ||(Parameters.MaximizeBonds && Seeds.front().getNumBonds() > res.NumBonds)
-         )
-*/
-        if(  // bigger substructure
-           (!Parameters.MaximizeBonds && Seeds.front().getNumAtoms() > res.NumAtoms)
-         ||( Parameters.MaximizeBonds && Seeds.front().getNumBonds() > res.NumBonds)
+
+        const Seed& fs = Seeds.front();
+        // bigger substructure found
+        if((!Parameters.MaximizeBonds && (fs.getNumAtoms() > res.NumAtoms || (fs.getNumAtoms() == res.NumAtoms && fs.getNumBonds() > res.NumBonds)))
+         ||( Parameters.MaximizeBonds && (fs.getNumBonds() > res.NumBonds || (fs.getNumBonds() == res.NumBonds && fs.getNumAtoms() > res.NumAtoms)))
          )
         {
             stat.MCSFoundStep = stat.TotalSteps;
-            const Seed& mcs = Seeds.front();
-            res.NumAtoms     = mcs.getNumAtoms();
-            res.NumBonds     = mcs.getNumBonds();
-            mcsIdx.Atoms    = mcs.MoleculeFragment.Atoms;
-            mcsIdx.Bonds    = mcs.MoleculeFragment.Bonds;
-            mcsIdx.AtomsIdx = mcs.MoleculeFragment.AtomsIdx;
-            mcsIdx.BondsIdx = mcs.MoleculeFragment.BondsIdx;
+            res.NumAtoms    = fs.getNumAtoms();
+            res.NumBonds    = fs.getNumBonds();
+            mcsIdx.Atoms    = fs.MoleculeFragment.Atoms;
+            mcsIdx.Bonds    = fs.MoleculeFragment.Bonds;
+            mcsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
+            mcsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
 //TMP DEBUG
+/*    std::cout<<"MCS atoms=(";
+    for(unsigned seedAtomIdx = 0; seedAtomIdx < mcs.getNumAtoms(); seedAtomIdx++)
+    {
+        const Atom* atom = mcs.MoleculeFragment.Atoms[seedAtomIdx];
+        std::cout<<atom->getIdx()<<", ";
+    }
+    std::cout<<") new atoms=[";
+    for(unsigned seedAtomIdx = mcs.LastAddedAtomsBeginIdx; seedAtomIdx < mcs.getNumAtoms(); seedAtomIdx++)
+    {
+        const Atom* atom = mcs.MoleculeFragment.Atoms[seedAtomIdx];
+        std::cout<<atom->getIdx()<<", ";
+    }
+    std::cout<<"] bonds=(";
+    for(int i=0; i<mcsIdx.BondsIdx.size(); i++)
+        std::cout<<mcsIdx.BondsIdx[i]<<", ";
+    std::cout<<") Size="<< mcs.getNumAtoms() <<", "<< mcs.getNumBonds() <<" Remain=" << mcs.RemainingAtoms <<", "<<mcs.RemainingBonds<<" = ";
+    std::cout<< MolFragmentToSmiles(*QueryMolecule, *(const std::vector<int>*) &mcs.MoleculeFragment.AtomsIdx, (const std::vector<int>*) &mcs.MoleculeFragment.BondsIdx) <<"\n";  // unsigned
+*/
 /*
 if(0==si->MoleculeFragment.BondsIdx[0])
 {
@@ -531,22 +544,44 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
     init();
     makeInitialSeeds();
 
+/* // TEMP DEBUG !!!!!!!!!!!!!
+  {
+    std::cout<<"---Bonds----------\n";
+      for(int i=0; i<QueryMolecule->getNumBonds(); i++)
+        std::cout<<i<<" "
+            <<" =("<< QueryMolecule->getBondWithIdx(i)->getBeginAtomIdx()
+            <<" , "<< QueryMolecule->getBondWithIdx(i)->getEndAtomIdx()<<")\n";
+    std::cout<<"---Atoms----------\n";
+    for(int i=0; i<QueryMolecule->getNumAtoms(); i++)
+    {
+        const Atom* a = QueryMolecule->getAtomWithIdx(i);
+        std::cout<<i<<" : elem="<<a->getAtomicNum()<<" bonds: ";
+        ROMol::OEDGE_ITER beg,end;
+        for(boost::tie(beg,end) = QueryMolecule->getAtomBonds(a); beg!=end; beg++)
+        {
+            const Bond* bond = &*((*QueryMolecule)[*beg]);
+            std::cout<<bond->getIdx()<<"=("<< bond->getBeginAtomIdx()<<", "<<bond->getEndAtomIdx()<<") ";
+        }
+        std::cout<<"\n";
+    }
+    std::cout<<"-------------\n";
+  }
+// !!!!!!!!!!!!!!!!!!!!!!
+*/
     MolFragment mcsIdx; // current MCS
     growSeeds(mcsIdx, res);
 
     res.SmartsString = generateSMARTS(mcsIdx);
 
-/* TMP DEBUG 
+/* // TMP DEBUG 
+    std::cout<<"---MCS Bonds------\n";
+    for(int i=0; i<mcsIdx.BondsIdx.size(); i++)
+        std::cout<<i<<" bIdx=" << mcsIdx.BondsIdx[i]
+            <<" =("<< QueryMolecule->getBondWithIdx(mcsIdx.BondsIdx[i])->getBeginAtomIdx()
+            <<" , "<< QueryMolecule->getBondWithIdx(mcsIdx.BondsIdx[i])->getEndAtomIdx()<<")\n";
+// TMP DEBUG 
 //---------------------------
 std::cout<<"Query      "<< MolToSmiles(*QueryMolecule) <<"\n";
-RWMol qm(*QueryMolecule);
-        unsigned nq = qm.getNumAtoms();
-        for(size_t ai = 0; ai < nq; ai++)
-        {
-            Atom* atom = qm.getAtomWithIdx(ai);
-            atom->setProp("molAtomMapNumber", ai+1);
-        }
-std::cout<<"Query      "<< MolToSmarts(qm) <<"\n";
 std::cout<<"MCS Smiles "<< MolFragmentToSmiles(*QueryMolecule, *(const std::vector<int>*) &mcsIdx.AtomsIdx, (const std::vector<int>*) &mcsIdx.BondsIdx) <<"\n";  // unsigned
 */
 /*
@@ -563,10 +598,6 @@ std::cout<<"MCS Smiles "<< MolFragmentToSmiles(*QueryMolecule, *(const std::vect
 #ifdef VERBOSE_STATISTICS_ON
 if(ConsoleOutputEnabled)
 {
-//    std::cout << "QUERY: " << MolToSmiles(*QueryMolecule) << "\n";
-//    for(std::vector<TargetMolecule>::const_iterator tag = Targets.begin(); tag != Targets.end(); tag++)
-//        std::cout<< "TARG : " << MolToSmiles(*(*tag).Molecule) << "\n";
-// VERBOSE OUTPUT
     std::cout << "STATISTICS:\n";
     std::cout << "Total Growing Steps  = " << stat.TotalSteps<<",  MCS found on "<<stat.MCSFoundStep<<" step\n";
     std::cout << "Initial   Seeds      = " << stat.InitialSeed << ",  Mismatched " << stat.MismatchedInitialSeed<<"\n";

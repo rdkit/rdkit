@@ -161,7 +161,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
     }
 
     std::string outSmilesFile(test); outSmilesFile += ".smiles";
-    unsigned n=0, passed=0, failed=0, timedout=0;
+    unsigned n=0, passed=0, failed=0, failed_less=0, timedout=0;
     double secTotal = 0.;
 
     std::vector<MCSResult>  referenceResults;
@@ -313,8 +313,8 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         secTotal += sec;
         if(!test_N.empty())
             std::cout<<"\n" << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-        else if(referenceResults[n].NumAtoms > res.NumAtoms || referenceResults[n].NumBonds > res.NumBonds)
-            std::cout<<" - failed. LESS: "<<res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+        else if(!referenceResults[n].Canceled && !res.Canceled && (/*referenceResults[n].NumAtoms > res.NumAtoms ||*/ referenceResults[n].NumBonds > res.NumBonds))
+            std::cout<<" - failed. LESS: "<<res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds ("<<referenceResults[n].NumAtoms - res.NumAtoms<<", "<<referenceResults[n].NumBonds-res.NumBonds<<")\n";
 
         if(!referenceResults.empty())
         {
@@ -329,7 +329,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                     , referenceResults[n].NumAtoms, referenceResults[n].NumBonds, referenceResults[n].SmartsString.c_str());
                 else
                     fprintf(f, "# %u REFCMP: res  %s %s %u %u %s.\n", n+1, "FAILED"
-                    , referenceResults[n].NumAtoms > res.NumAtoms || referenceResults[n].NumBonds > res.NumBonds ? "MISSING":"GREATER"
+                    , /*referenceResults[n].NumAtoms > res.NumAtoms ||*/ referenceResults[n].NumBonds > res.NumBonds ? "MISSING":"GREATER"
                     , referenceResults[n].NumAtoms, referenceResults[n].NumBonds, referenceResults[n].SmartsString.c_str());
 
                 if(referenceResults[n].Canceled 
@@ -338,7 +338,11 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                 else if(res.Canceled)
                     timedout++;
                 else
+                {
+                    if(referenceResults[n].NumBonds > res.NumBonds)
+                        failed_less++;
                     failed++;
+                }
             }
             else
                 fprintf(f, "# %u REFCMP: res  ABSENT - timeout\n", n+1);
@@ -347,7 +351,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         fprintf(f, "%u %c %d %u %u %.2f %s\n", n+1, (res.Canceled ? 'F':'.'), 1 //number of fragments in the MCS
                                           , res.NumAtoms, res.NumBonds, sec, res.SmartsString.c_str());
         if(fs)
-            fprintf(fs, "//# %u %c  %u %u %.2f sec MCS: %s\n", n+1, (res.Canceled || !res.isCompleted() ? 'F':'.'), res.NumAtoms, res.NumBonds, sec, res.SmartsString.c_str());
+            fprintf(fs, "//# %u %c  %u %u %.2f sec MCS: %s\n", n+1, (res.Canceled ? 'F':'.'), res.NumAtoms, res.NumBonds, sec, res.SmartsString.c_str());
         if(ft) // statistic details
             fprintf(ft, "%u; %s; %d; %d; %.2f; %.2f; %u; %u; %u; %u\n",n+1
                       , !res.Canceled ? "ok" : referenceResults[n].Canceled ? "bad" : "TIMEOUT"
@@ -362,8 +366,8 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         stat.AtomCompareCalls = 0;  // 32 bit counter with very big value -> possible overflow
         stat.BondCompareCalls = 0;
     }
-    fprintf(f, "#\n#\n# %u passed, %u failed %u timed out.\n# Total %.2f seconds, Average %.2f seconds, Average exclude timeouts about %.2f seconds.\n"
-             , passed, failed, timedout, secTotal, secTotal/n, (secTotal-30.6*timedout)/n);
+    fprintf(f, "#\n#\n# %u passed, %u failed, %u failed_less, %u timed out.\n# Total %.2f seconds, Average %.2f seconds, Average exclude timeouts about %.2f seconds.\n"
+             , passed, failed, failed_less, timedout, secTotal, secTotal/n, (secTotal-30.6*timedout)/n);
 #ifdef VERBOSE_STATISTICS_ON
     fprintf(f, "#\n# --- STATISTICS:---\n#             Total value   |   Average\n"
         "# Seeds Num %15u | %8u (amount of generated seeds)\n"
@@ -615,7 +619,8 @@ void test504()
         //"O=C(-N-c1:c:c:c:c:c:1)-N-C-C-C-N(-C)-C-C-C-C-C-N-C(-C1-C-C-1-c1:c:c:c(-Cl):c(-Cl):c:1)=O", // python MCS == SMARTS !!!
         //"Clc1ccc(NC(=O)NC2CCN(CCCCCNC(=O)C3CC3[c:3]3[cH:2]cc(Cl)c(Cl)[cH:1]3)C2)cc1",
         //TEST 504
-//"C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)C1 CHEMBL545864",  // - QUERY
+"C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)C1 CHEMBL545864",  // - QUERY
+//"C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccccc2)=O)C1 CHEMBL545864",  // - QUERY - Cl:30
 
         "FC(F)(F)c1cc(NC(N2CCCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)ccc1Cl CHEMBL528228",
         "FC(F)(F)c1cc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)C2)=O)ccc1Cl CHEMBL525875",
@@ -626,13 +631,61 @@ void test504()
         "Fc1ccc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)cc1C(F)(F)F CHEMBL581847",
         "FC(F)(F)c1ccc(NC(NC2CCN(CCCCCNC(C3CC3c3cc(Cl)c(Cl)cc3)=O)CC2)=O)cc1 CHEMBL579547",
 
-        "C(CCNC(C1CC1c1cc(Cl)c(Cl)cc1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)C1 CHEMBL545864",  // - QUERY
+//        "C(CCNC(C1CC1c1cc(Cl)c(Cl)cc1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)C1 CHEMBL545864",  // - QUERY
 //        "Clc1ccc(NC(=O)NC2CCN(CCCCCNC(=O)C3CC3c3ccc(Cl)c(Cl)c3)C2)cc1",   // - the same QUERY with RIGHT MCS !!!
 //        "Clc1ccc(NC(=O)NC2CCN(CCCCCNC(=O)C3CC3[c:1]3[cH:2]cc(Cl)c(Cl)[cH:3]3)C2)cc1",   // - the same QUERY with Atom MAP and RIGHT MCS !!!
 
         "N#Cc1cccc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)c1 CHEMBL529994",
     };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+    RWMol* qm = SmartsToMol( getSmilesOnly(smi[0]) );
+    unsigned nq = qm->getNumAtoms();
+    for(size_t ai = 0; ai < nq; ai++)
+    {
+        Atom* atom = qm->getAtomWithIdx(ai);
+        atom->setProp("molAtomMapNumber", (int)ai);
+    }
+    std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
+//    for(int i=qm->getNumBonds()-1; i>=17; i--)
+//        qm->removeBond(qm->getBondWithIdx(i)->getBeginAtomIdx(), qm->getBondWithIdx(i)->getEndAtomIdx());
+    mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
+    for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
+        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
+    MCSParameters p;
+    t0 = nanoClock();
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+}
+
+void test18()
+{
+    std::cout << "\ntest18()\n";
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] =
+    {
+    //TEST 18
+    "Cc1nc(CN(C(C)c2ncccc2)CCCCN)ccc1 CHEMBL1682991", //-- QUERY
+    "Cc1ccc(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682990",
+    "Cc1cccnc1CN(C(C)c1ccccn1)CCCCN CHEMBL1682998",
+    "CC(N(CCCCN)Cc1c(N)cccn1)c1ccccn1 CHEMBL1682987",
+    "Cc1cc(C)c(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682992",
+    "Cc1cc(C(C)N(CCCCN)Cc2c(C)cccn2)ncc1 CHEMBL1682993",
+    "Cc1nc(C(C)N(CCCCN)Cc2nc3c([nH]2)cccc3)ccc1 CHEMBL1682878",
+    "CC(c1ncccc1)N(CCCCN)Cc1nc2c([nH]1)cccc2 CHEMBL1682867",
+    "CC(N(CCCCN)Cc1c(C(C)(C)C)cccn1)c1ccccn1 CHEMBL1682989",
+    "CC(N(CCCCN)Cc1c(C(F)(F)F)cccn1)c1ccccn1 CHEMBL1682988",
+    //# 18 .  20 20 0.04 sec MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
+    };
+    RWMol* qm = SmartsToMol( getSmilesOnly(smi[0]) );
+    unsigned nq = qm->getNumAtoms();
+    for(size_t ai = 0; ai < nq; ai++)
+    {
+        Atom* atom = qm->getAtomWithIdx(ai);
+        atom->setProp("molAtomMapNumber", (int)ai);
+    }
+    std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
+    mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
+    for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
     MCSParameters p;
     t0 = nanoClock();
@@ -818,8 +871,9 @@ int main(int argc, const char* argv[])
 
 #ifdef WIN32  // brief test set for testing and issue investigation
 {
-    test504();
-//    return 0;
+    testGregSDFFileSetFiltered();
+    test18();
+    return 0;
 
     testRing1();
 //    return 0;
@@ -860,6 +914,7 @@ int main(int argc, const char* argv[])
     return 0;
 }
 #endif
+
     if(3 == argc && '-' == argv[1][0])
      switch(argv[1][1]) // ./test -s|m|b <filename with test files list>
     {
@@ -897,7 +952,7 @@ int main(int argc, const char* argv[])
         else if(0==strcmp(argv[1]+strlen(argv[1])-4, ".sdf"))
             testFileSDF(argv[1]);   // .sdf
         else if(0==strcmp(argv[1]+strlen(argv[1])-4, "mcsb"))
-            testFileMCSB(argv[1], 120);  // .mcsb
+            testFileMCSB(argv[1], 30);  // .mcsb
         else
             printf("UNKNOWN File Extention.\n");
     }
