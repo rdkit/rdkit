@@ -56,7 +56,7 @@ namespace RDKit {
 
 }
 
-BOOST_PYTHON_MODULE(rdConfParser) {
+BOOST_PYTHON_MODULE(rdConformerParser) {
   python::scope().attr("__doc__") =
     "Module containing functions to read conformations of a molecule from MD trajectories"
     ;
