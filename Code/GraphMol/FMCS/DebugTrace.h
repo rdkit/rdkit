@@ -76,7 +76,7 @@
                          , DupCacheFound(0), DupCacheFoundMatch(0)
         {}
     };
-    extern ExecStatistics stat;
+    extern ExecStatistics extstat;
 #endif
 
 namespace RDKit

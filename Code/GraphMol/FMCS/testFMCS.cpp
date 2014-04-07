@@ -118,7 +118,7 @@ unsigned long long nanoClock (void)   // actually returns microseconds
 
 void printTime()
 {
-    stat = ExecStatistics();
+    extstat = ExecStatistics();
 
     unsigned long long t1 = nanoClock();
     double sec = double(t1-t0) / 1000000.;
@@ -265,7 +265,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         exit(1);
     }
     FILE* fs  = fopen(outSmilesFile.c_str(), "wt");
-    FILE* ft  = fopen((outFile+".stat.csv").c_str(), "wt");
+    FILE* ft  = fopen((outFile+".extstat.csv").c_str(), "wt");
     setvbuf(f , 0, _IOFBF, 4*1024);
     setvbuf(fs, 0, _IOFBF, 4*1024);
     setvbuf(ft, 0, _IOFBF,  4*1024); // small file
@@ -305,7 +305,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                 fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid->c_str());
         }
         fprintf(f, "\n");
-        ExecStatistics curStat = stat;          //to compute the difference for this test only
+        ExecStatistics curStat = extstat;          //to compute the difference for this test only
         unsigned long long tc0 = nanoClock();
         MCSResult res = findMCS(tcmols, &p);    // *** T E S T ***
         unsigned long long tc1 = nanoClock();
@@ -358,13 +358,13 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                       , referenceResults[n].Canceled ? 0 : res.NumAtoms - referenceResults[n].NumAtoms
                       , referenceResults[n].Canceled ? 0 : res.NumBonds - referenceResults[n].NumBonds
                       , sec, referenceResultsTime[n]
-                      , stat.Seed - curStat.Seed
-                      , stat.MatchCall - curStat.MatchCall
-                      , stat.AtomCompareCalls - curStat.AtomCompareCalls
-                      , stat.BondCompareCalls - curStat.BondCompareCalls
+                      , extstat.Seed - curStat.Seed
+                      , extstat.MatchCall - curStat.MatchCall
+                      , extstat.AtomCompareCalls - curStat.AtomCompareCalls
+                      , extstat.BondCompareCalls - curStat.BondCompareCalls
                    );
-        stat.AtomCompareCalls = 0;  // 32 bit counter with very big value -> possible overflow
-        stat.BondCompareCalls = 0;
+        extstat.AtomCompareCalls = 0;  // 32 bit counter with very big value -> possible overflow
+        extstat.BondCompareCalls = 0;
     }
     fprintf(f, "#\n#\n# %u passed, %u failed, %u failed_less, %u timed out.\n# Total %.2f seconds, Average %.2f seconds, Average exclude timeouts about %.2f seconds.\n"
              , passed, failed, failed_less, timedout, secTotal, secTotal/n, (secTotal-30.6*timedout)/n);
@@ -386,26 +386,26 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         "# ExactMatchCall %15u | %8u (SubstructMatch function calls)\n"
         "# ExactMatchTRUE %15u | %8u \n"
 #endif
-        , stat.Seed, stat.Seed/n
-        , stat.RemainingSizeRejected, stat.RemainingSizeRejected/n
-        , 0==stat.Seed ? 0 : int((double)stat.RemainingSizeRejected / (double)stat.Seed *100.)
+        , extstat.Seed, extstat.Seed/n
+        , extstat.RemainingSizeRejected, extstat.RemainingSizeRejected/n
+        , 0==extstat.Seed ? 0 : int((double)extstat.RemainingSizeRejected / (double)extstat.Seed *100.)
 #ifdef SMILES_CACHE
-        , stat.FindInMatchedCache        , stat.FindInMatchedCache/n
-        , stat.FoundInMatchedCache        , stat.FoundInMatchedCache/n
-        , 0==stat.FindInMatchedCache ? 0 : int((double)stat.FoundInMatchedCache / (double)stat.FindInMatchedCache *100.)
+        , extstat.FindInMatchedCache        , extstat.FindInMatchedCache/n
+        , extstat.FoundInMatchedCache        , extstat.FoundInMatchedCache/n
+        , 0==extstat.FindInMatchedCache ? 0 : int((double)extstat.FoundInMatchedCache / (double)extstat.FindInMatchedCache *100.)
 #endif
-        , stat.MatchCall        , stat.MatchCall/n
-        , stat.MatchCallTrue        , stat.MatchCallTrue/n
-        , int((double)stat.MatchCallTrue / (double)stat.MatchCall *100.)
+        , extstat.MatchCall        , extstat.MatchCall/n
+        , extstat.MatchCallTrue        , extstat.MatchCallTrue/n
+        , int((double)extstat.MatchCallTrue / (double)extstat.MatchCall *100.)
 #ifdef FAST_SUBSTRUCT_CACHE
-//        , stat.HashCacheKeysSize, stat.HashCacheKeysSize/n
-//        , stat.HashCacheEntries , stat.HashCacheEntries/n
-        , stat.FindHashInCache,    stat.FindHashInCache/n
-        , stat.HashKeyFoundInCache,stat.HashKeyFoundInCache/n
-        , 0==stat.FindHashInCache ? 0 : int((double)stat.HashKeyFoundInCache / (double)stat.FindHashInCache *100.)
+//        , extstat.HashCacheKeysSize, extstat.HashCacheKeysSize/n
+//        , extstat.HashCacheEntries , extstat.HashCacheEntries/n
+        , extstat.FindHashInCache,    extstat.FindHashInCache/n
+        , extstat.HashKeyFoundInCache,extstat.HashKeyFoundInCache/n
+        , 0==extstat.FindHashInCache ? 0 : int((double)extstat.HashKeyFoundInCache / (double)extstat.FindHashInCache *100.)
 
-        , stat.ExactMatchCall    , stat.ExactMatchCall/n
-        , stat.ExactMatchCallTrue, stat.ExactMatchCallTrue/n
+        , extstat.ExactMatchCall    , extstat.ExactMatchCall/n
+        , extstat.ExactMatchCallTrue, extstat.ExactMatchCallTrue/n
 #endif
         );
 #endif

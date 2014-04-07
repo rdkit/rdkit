@@ -26,7 +26,7 @@ namespace RDKit
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* )
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.AtomCompareCalls;
+        ++extstat.AtomCompareCalls;
 #endif
         p; mol1; atom1; mol2; atom2;    // unused
         return true;
@@ -35,7 +35,7 @@ namespace RDKit
     bool MCSAtomCompareElements (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* )
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.AtomCompareCalls;
+        ++extstat.AtomCompareCalls;
 #endif
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
@@ -127,7 +127,7 @@ namespace RDKit
     bool MCSBondCompareAny (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud)
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.BondCompareCalls;
+        ++extstat.BondCompareCalls;
 #endif
         p; mol1; bond1; mol2; bond2;    // unused
         if(p.RingMatchesRingOnly)
@@ -138,7 +138,7 @@ namespace RDKit
     bool MCSBondCompareOrder (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud)
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.BondCompareCalls;
+        ++extstat.BondCompareCalls;
 #endif
         static const BondMatchOrderMatrix match(true); // ignore Aromatization
 
@@ -159,7 +159,7 @@ namespace RDKit
     bool MCSBondCompareOrderExact (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud)
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.BondCompareCalls;
+        ++extstat.BondCompareCalls;
 #endif
         static const BondMatchOrderMatrix match(false); // AROMATIC != SINGLE
 

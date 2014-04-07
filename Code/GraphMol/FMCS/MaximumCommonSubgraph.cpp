@@ -11,7 +11,7 @@
 #include "MaximumCommonSubgraph.h"
 
 #ifdef VERBOSE_STATISTICS_ON
-    ExecStatistics stat;
+    ExecStatistics extstat;
 #endif
 namespace RDKit
 {
@@ -258,8 +258,8 @@ void MaximumCommonSubgraph::makeInitialSeeds()
 #endif
 
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.Seed;
-        ++stat.InitialSeed;
+        ++extstat.Seed;
+        ++extstat.InitialSeed;
 #endif
         seed.addAtom((*bi)->getBeginAtom());
         seed.addAtom((*bi)->getEndAtom());
@@ -272,7 +272,7 @@ void MaximumCommonSubgraph::makeInitialSeeds()
         if( ! checkIfMatchAndAppend(seed))
         {
 #ifdef VERBOSE_STATISTICS_ON
-            ++stat.MismatchedInitialSeed;
+            ++extstat.MismatchedInitialSeed;
 #endif
             // optionally remove all such bonds from all targets TOPOLOGY where it exists.
             //..........
@@ -295,7 +295,7 @@ void MaximumCommonSubgraph::growSeeds(MolFragment& mcsIdx, MCSResult& res)
     while(!Seeds.empty())
     {
         ++steps;
-        stat.TotalSteps++;
+        extstat.TotalSteps++;
         SeedSet::iterator si = Seeds.begin();
 
         si->grow(*this, *QueryMolecule);
@@ -306,7 +306,7 @@ void MaximumCommonSubgraph::growSeeds(MolFragment& mcsIdx, MCSResult& res)
          ||( Parameters.MaximizeBonds && (fs.getNumBonds() > res.NumBonds || (fs.getNumBonds() == res.NumBonds && fs.getNumAtoms() > res.NumAtoms)))
          )
         {
-            stat.MCSFoundStep = stat.TotalSteps;
+            extstat.MCSFoundStep = extstat.TotalSteps;
             res.NumAtoms    = fs.getNumAtoms();
             res.NumBonds    = fs.getNumBonds();
             mcsIdx.Atoms    = fs.MoleculeFragment.Atoms;
@@ -386,7 +386,7 @@ if(0==si->MoleculeFragment.BondsIdx[0])
             Stat.NumAtoms = res.NumAtoms;
             Stat.NumBonds = res.NumBonds;
 #ifdef VERBOSE_STATISTICS_ON
-            Stat.SeedProcessed = stat.Seed;
+            Stat.SeedProcessed = extstat.Seed;
 #endif
             if(!Parameters.ProgressCallback(Stat, Parameters, Parameters.ProgressCallbackUserData))
             {
@@ -599,42 +599,42 @@ std::cout<<"MCS Smiles "<< MolFragmentToSmiles(*QueryMolecule, *(const std::vect
 if(ConsoleOutputEnabled)
 {
     std::cout << "STATISTICS:\n";
-    std::cout << "Total Growing Steps  = " << stat.TotalSteps<<",  MCS found on "<<stat.MCSFoundStep<<" step\n";
-    std::cout << "Initial   Seeds      = " << stat.InitialSeed << ",  Mismatched " << stat.MismatchedInitialSeed<<"\n";
-    std::cout << "Inspected Seeds      = " << stat.Seed<<"\n";
-    std::cout << "Rejected by BestSize = " << stat.RemainingSizeRejected << "\n";
+    std::cout << "Total Growing Steps  = " << extstat.TotalSteps<<",  MCS found on "<<extstat.MCSFoundStep<<" step\n";
+    std::cout << "Initial   Seeds      = " << extstat.InitialSeed << ",  Mismatched " << extstat.MismatchedInitialSeed<<"\n";
+    std::cout << "Inspected Seeds      = " << extstat.Seed<<"\n";
+    std::cout << "Rejected by BestSize = " << extstat.RemainingSizeRejected << "\n";
 #ifdef EXCLUDE_WRONG_COMPOSITION   
-    std::cout << "Rejected by WrongComposition = " << stat.WrongCompositionRejected
-                        << " [ " << stat.WrongCompositionDetected << " Detected ]\n";
+    std::cout << "Rejected by WrongComposition = " << extstat.WrongCompositionRejected
+                        << " [ " << extstat.WrongCompositionDetected << " Detected ]\n";
 #endif
-    std::cout << "MatchCheck Seeds     = " << stat.SeedCheck      <<"\n";
+    std::cout << "MatchCheck Seeds     = " << extstat.SeedCheck      <<"\n";
     std::cout //<< "\n"
-              << "     MatchCalls = " << stat.MatchCall      <<"\n"
-              << "     MatchFound = " << stat.MatchCallTrue  <<"\n";
+              << "     MatchCalls = " << extstat.MatchCall      <<"\n"
+              << "     MatchFound = " << extstat.MatchCallTrue  <<"\n";
 #ifdef FAST_INCREMENTAL_MATCH
-    std::cout << " fastMatchCalls = " << stat.FastMatchCall <<"\n"
-              << " fastMatchFound = " << stat.FastMatchCallTrue <<"\n";
-    std::cout << " slowMatchCalls = " << stat.MatchCall     - stat.FastMatchCallTrue <<"\n"
-              << " slowMatchFound = " << stat.MatchCallTrue - stat.FastMatchCallTrue <<"\n";
+    std::cout << " fastMatchCalls = " << extstat.FastMatchCall <<"\n"
+              << " fastMatchFound = " << extstat.FastMatchCallTrue <<"\n";
+    std::cout << " slowMatchCalls = " << extstat.MatchCall     - extstat.FastMatchCallTrue <<"\n"
+              << " slowMatchFound = " << extstat.MatchCallTrue - extstat.FastMatchCallTrue <<"\n";
 #endif
 #ifdef PRECOMPUTED_TABLES_MATCH
     std::cout << "--- USED PreComputed Match TABLES ! ---\n";
 #endif
 #ifdef VERBOSE_STATISTICS_FASTCALLS_ON
-    std::cout << "AtomFunctorCalls = " << stat.AtomFunctorCalls << "\n";
-    std::cout << "BondCompareCalls = " << stat.BondCompareCalls << "\n";
+    std::cout << "AtomFunctorCalls = " << extstat.AtomFunctorCalls << "\n";
+    std::cout << "BondCompareCalls = " << extstat.BondCompareCalls << "\n";
 #endif
 //    std::cout << "\n";
-    std::cout << "  DupCacheFound = " << stat.DupCacheFound 
-        <<"   "<< stat.DupCacheFoundMatch<<" matched, "
-        <<stat.DupCacheFound - stat.DupCacheFoundMatch <<" mismatched\n";
+    std::cout << "  DupCacheFound = " << extstat.DupCacheFound 
+        <<"   "<< extstat.DupCacheFoundMatch<<" matched, "
+        <<extstat.DupCacheFound - extstat.DupCacheFoundMatch <<" mismatched\n";
 #ifdef FAST_SUBSTRUCT_CACHE
     std::cout << "HashCache size  = " << HashCache.keyssize() << " keys\n";
     std::cout << "HashCache size  = " << HashCache.fullsize() << " entries\n";
-    std::cout << "FindHashInCache = " << stat.FindHashInCache << "\n";
-    std::cout << "HashFoundInCache= " << stat.HashKeyFoundInCache << "\n";
-    std::cout << "ExactMatchCalls = " << stat.ExactMatchCall  <<"\n"
-              << "ExactMatchFound = " << stat.ExactMatchCallTrue <<"\n";
+    std::cout << "FindHashInCache = " << extstat.FindHashInCache << "\n";
+    std::cout << "HashFoundInCache= " << extstat.HashKeyFoundInCache << "\n";
+    std::cout << "ExactMatchCalls = " << extstat.ExactMatchCall  <<"\n"
+              << "ExactMatchFound = " << extstat.ExactMatchCallTrue <<"\n";
 #endif
 }
 #endif
@@ -652,7 +652,7 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
         TRACE(0) << "\n";
 #endif
 #ifdef VERBOSE_STATISTICS_ON
-    ++stat.SeedCheck;
+    ++extstat.SeedCheck;
 #endif
 
     bool foundInCache = false;
@@ -663,8 +663,8 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
     {
     // duplicate found. skip match() but store both seeds, because they will grow by different paths !!!
         #ifdef VERBOSE_STATISTICS_ON
-            stat.DupCacheFound++;
-            stat.DupCacheFoundMatch += foundInCache ? 1 : 0;
+            extstat.DupCacheFound++;
+            extstat.DupCacheFoundMatch += foundInCache ? 1 : 0;
         #endif
         if(!foundInCache) // mismatched !!!
             return false;
@@ -678,14 +678,14 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
     if(!foundInCache)
     {
     #ifdef VERBOSE_STATISTICS_ON
-        ++stat.FindHashInCache;
+        ++extstat.FindHashInCache;
     #endif
         cacheEntry = HashCache.find(seed, QueryAtomLabels, QueryBondLabels, cacheKey);
         cacheEntryIsValid = true;
         if(cacheEntry)   // possibly found. check for hash collision
         {
             #ifdef VERBOSE_STATISTICS_ON
-                ++stat.HashKeyFoundInCache;
+                ++extstat.HashKeyFoundInCache;
             #endif
             // check hash collisions (time +3%):
             for(SubstructureCache::TIndexEntry::const_iterator g = cacheEntry->begin(); !foundInCache && g != cacheEntry->end(); g++)
@@ -693,7 +693,7 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
                 if(g->m_vertices.size() != seed.getNumAtoms() || g->m_edges.size() != seed.getNumBonds())
                     continue;
             #ifdef VERBOSE_STATISTICS_ON
-                ++stat.ExactMatchCall;
+                ++extstat.ExactMatchCall;
             #endif
             // EXACT MATCH
             #ifdef PRECOMPUTED_TABLES_MATCH
@@ -702,7 +702,7 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
             #endif
             #ifdef VERBOSE_STATISTICS_ON
                 if(foundInCache)
-                    ++stat.ExactMatchCallTrue;
+                    ++extstat.ExactMatchCallTrue;
             #endif
             }
         }
@@ -748,7 +748,7 @@ bool MaximumCommonSubgraph::match(Seed& seed)
     for(std::vector<Target>::const_iterator tag = Targets.begin(); tag != Targets.end(); tag++, itarget++)
     {
 #ifdef VERBOSE_STATISTICS_ON
-    ++stat.MatchCall;
+    ++extstat.MatchCall;
 #endif
         bool target_matched = false;
 #ifdef FAST_INCREMENTAL_MATCH
@@ -799,7 +799,7 @@ bool MaximumCommonSubgraph::match(Seed& seed)
     if(missing <= max_miss)
     {
         #ifdef VERBOSE_STATISTICS_ON
-            ++stat.MatchCallTrue;
+            ++extstat.MatchCallTrue;
         #endif
         return true;
     }
@@ -812,7 +812,7 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget)
 {
     // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
-    ++stat.FastMatchCall;
+    ++extstat.FastMatchCall;
 #endif
     Target& t = Targets[itarget];
     BondMatchSet& match = seed.MatchResult[itarget];
@@ -879,7 +879,7 @@ both (seedAtom, tagAtom) of
         )
     {
     #ifdef VERBOSE_STATISTICS_ON
-        ++stat.FastMatchCallTrue;
+        ++extstat.FastMatchCallTrue;
     #endif
         return true;
     }

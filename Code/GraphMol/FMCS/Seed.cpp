@@ -186,7 +186,7 @@ if(0==GrowingStage)
         seed.addBond(src_bond);
     }
 #ifdef VERBOSE_STATISTICS_ON
-    ++stat.Seed;
+    ++extstat.Seed;
 #endif
     seed.RemainingBonds = RemainingBonds - newBonds.size();     // Added ALL !!!
     seed.RemainingAtoms = RemainingAtoms - newAtomsMap.size();  // new atoms added to seed
@@ -205,7 +205,7 @@ if(0==GrowingStage)
     if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.RemainingSizeRejected;
+        ++extstat.RemainingSizeRejected;
 #endif
         GrowingStage = -1;
         return; // the biggest possible subrgaph from this seed is too small for future growing. So, skip ALL children !
@@ -229,7 +229,7 @@ if(0==GrowingStage)
     for(std::vector<NewBond>::iterator nbi = newBonds.begin(); nbi != newBonds.end(); nbi++)
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++stat.Seed;
+        ++extstat.Seed;
 #endif
         Seed seed;
         seed.createFromParent(this);
@@ -288,7 +288,7 @@ if(33!=nbi->BondIdx && 27!=nbi->BondIdx
 }
 */
 #ifdef VERBOSE_STATISTICS_ON
-            ++stat.RemainingSizeRejected;
+            ++extstat.RemainingSizeRejected;
 #endif
         }
     }
@@ -348,14 +348,14 @@ if(33!=nbi->BondIdx && 27!=nbi->BondIdx
                 if(compositionWrong)
                 {
 #ifdef VERBOSE_STATISTICS_ON
-                    ++stat.WrongCompositionRejected;
+                    ++extstat.WrongCompositionRejected;
 #endif
                     continue;
                 }
             }
 #endif
 #ifdef VERBOSE_STATISTICS_ON
-            ++stat.Seed;
+            ++extstat.Seed;
 #endif
             Seed seed;
             seed.createFromParent(this);
@@ -386,7 +386,7 @@ if(33!=nbi->BondIdx && 27!=nbi->BondIdx
             if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune(). // seed too small
             {
 #ifdef VERBOSE_STATISTICS_ON
-                ++stat.RemainingSizeRejected;
+                ++extstat.RemainingSizeRejected;
 #endif
             }
             else
@@ -400,7 +400,7 @@ if(33!=nbi->BondIdx && 27!=nbi->BondIdx
                     failedCombinations.push_back(composition.getBitSet());
                     failedCombinationsMask &= composition.getBitSet();
 #ifdef VERBOSE_STATISTICS_ON
-                    ++stat.WrongCompositionDetected;
+                    ++extstat.WrongCompositionDetected;
 #endif
 #endif
                 }
