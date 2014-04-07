@@ -3,10 +3,10 @@ set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 find_package (RDKit REQUIRED)
 
 set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Code/cmake/Modules)
+set(RDKit_LibDir ${PROJECT_SOURCE_DIR}/../../lib)
 include_directories (${RDKIT_INCLUDE_DIR})
 include(RDKitUtils)
 
-set(RDKit_LibDir ${PROJECT_SOURCE_DIR}/../../lib)
 macro(local_library)
   PARSE_ARGUMENTS(RDKLIB
     "LINK_LIBRARIES;DEST"
@@ -69,7 +69,7 @@ local_library(ConformerParser ConformerParser.cpp
 
 rdkit_test(testConformerParser test.cpp 
            LINK_LIBRARIES ConformerParser
-${RDKIT_LIBRARIES} 
+           ${RDKIT_LIBRARIES} 
 )
 
 add_subdirectory(Wrap)

@@ -1,5 +1,5 @@
 from rdkit import Chem
-from rdkit.Chem import rdConfParser
+from rdkit.Chem import rdConformerParser
 from rdkit import RDConfig
 import unittest
 import os
@@ -17,18 +17,18 @@ class TestCase(unittest.TestCase) :
                                             'test_data','water_coords.trx')
         mol = Chem.MolFromSmiles('O')
         mol = Chem.AddHs(mol)
-        ids = rdConfParser.AddConformersFromAmberTrajectory(mol, fileN)
+        ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN)
         self.failUnless(mol.GetNumConformers() == 1)
         self.failUnless(len(ids) == 1)
         self.failUnless(ids[0] == 0)
 
         fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','ConformerParser',
                                             'test_data','water_coords2.trx')
-        ids = rdConfParser.AddConformersFromAmberTrajectory(mol, fileN, clearConfs=True)
+        ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN, clearConfs=True)
         self.failUnless(mol.GetNumConformers() == 2)
-        ids = rdConfParser.AddConformersFromAmberTrajectory(mol, fileN, clearConfs=False)
+        ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN, clearConfs=False)
         self.failUnless(mol.GetNumConformers() == 4)
-        ids = rdConfParser.AddConformersFromAmberTrajectory(mol, fileN, numConfs=1, clearConfs=True)
+        ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN, numConfs=1, clearConfs=True)
         self.failUnless(mol.GetNumConformers() == 1)
         
             

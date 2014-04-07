@@ -1,6 +1,6 @@
 
 tests=[
-    ("python","testDistGeom.py",{}),
+    ("python","testConfParser.py",{}),
     ]
 
 longTests=[]

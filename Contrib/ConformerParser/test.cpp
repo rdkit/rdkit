@@ -45,7 +45,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
-#include <GraphMol/ConformerParser/ConformerParser.h>
+#include "ConformerParser.h"
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -59,7 +59,7 @@ void test1(){
   ROMol *mol = SmilesToMol("CCC");
   std::vector<std::vector<double> > coords;
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Code/GraphMol/ConformerParser/test_data/water_coords_bad.trx";
+  std::string fName = rdbase + "/Contrib/ConformerParser/test_data/water_coords_bad.trx";
   bool ok = false;
   try {
     readAmberTrajectory(fName, coords, mol->getNumAtoms());
@@ -68,7 +68,7 @@ void test1(){
   }
   TEST_ASSERT(ok);
 
-  fName = rdbase + "/Code/GraphMol/ConformerParser/test_data/water_coords_bad2.trx";
+  fName = rdbase + "/Contrib/ConformerParser/test_data/water_coords_bad2.trx";
   ok = false;
   try {
     readAmberTrajectory(fName, coords, mol->getNumAtoms());
@@ -78,7 +78,7 @@ void test1(){
   }
   TEST_ASSERT(ok);
 
-  fName = rdbase + "/Code/GraphMol/ConformerParser/test_data/water_coords.trx";
+  fName = rdbase + "/Contrib/ConformerParser/test_data/water_coords.trx";
   readAmberTrajectory(fName, coords, mol->getNumAtoms());
   TEST_ASSERT(coords.size() == 1);
   TEST_ASSERT(coords[0].size() == 9);
@@ -97,7 +97,7 @@ void test1(){
 
   coords.resize(0);
   mol->clearConformers();
-  fName = rdbase + "/Code/GraphMol/ConformerParser/test_data/water_coords2.trx";
+  fName = rdbase + "/Contrib/ConformerParser/test_data/water_coords2.trx";
   readAmberTrajectory(fName, coords, mol->getNumAtoms());
   TEST_ASSERT(coords.size() == 2);
   TEST_ASSERT(coords[1].size() == 9);
