@@ -15,11 +15,21 @@
 #include "base64.h"
 #include <sstream>
 #include <limits>
+#include <math.h>
 #ifdef WIN32
 #include <ios>
 #endif
 #include <boost/cstdint.hpp>
 
+ExplicitBitVect::ExplicitBitVect(unsigned int size, bool set)
+{
+  d_size=0;dp_bits = 0;d_numOnBits=0;
+  if (set) {
+    _initForSizeWithBitsSet(size);
+  } else {
+    _initForSize(size);
+  }
+}
 ExplicitBitVect::ExplicitBitVect(const std::string &s)
 {
   d_size=0;dp_bits = 0;d_numOnBits=0;
@@ -134,6 +144,13 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     dp_bits = new boost::dynamic_bitset<>(size);
     d_numOnBits=0;
   };
+
+  void ExplicitBitVect::_initForSizeWithBitsSet(const unsigned int size) {
+    d_size = size;
+    delete dp_bits;
+    dp_bits = new boost::dynamic_bitset<>(size, (unsigned long)(pow(2, size)-1));
+    d_numOnBits = size;
+  }
 
   ExplicitBitVect::~ExplicitBitVect() {
     delete dp_bits;
