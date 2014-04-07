@@ -50,6 +50,7 @@
 #include "../FileParsers/MolSupplier.h" //SDF
 #include "../SmilesParse/SmilesParse.h"
 #include "../SmilesParse/SmilesWrite.h"
+#include <RDGeneral/Invariant.h>
 #include "FMCS.h"
 
 #include "DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
@@ -748,6 +749,33 @@ void testSimple()
     printTime();
 }
 
+
+void testThreshold()
+{
+    std::cout << "\ntestThreshold()\n";
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] =
+    {
+      "CCC",
+      "CCCO",
+      "CCCN",
+      "CC",
+    };
+    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
+    MCSParameters p;
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS1: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    TEST_ASSERT(res.NumAtoms==2);
+    TEST_ASSERT(res.NumBonds==1);
+    p.Threshold=0.5;
+    res = findMCS(mols, &p);
+    std::cout << "MCS2: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";    
+    TEST_ASSERT(res.NumAtoms==3);
+    TEST_ASSERT(res.NumBonds==2);
+}
+
+
 void testCmndLineSMILES(int argc, const char* argv[])
 {
     std::vector<ROMOL_SPTR> mols;
@@ -773,6 +801,7 @@ double testFileSDF(const char* test)
     }
     MCSParameters p;
 //    p.MaximizeBonds = true;
+    p.Threshold=0.4;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
     double t = (nanoClock() - t0) / 1000000.;
@@ -962,6 +991,7 @@ int main(int argc, const char* argv[])
     {
         testSimpleFast();
         testSimple();
+        testThreshold();
 //        test1Basics();
 //        testGregSDFFileSetFiltered();
     }
