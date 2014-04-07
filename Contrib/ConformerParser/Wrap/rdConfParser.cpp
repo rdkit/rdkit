@@ -34,7 +34,7 @@
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
 
-#include <GraphMol/ConformerParser/ConformerParser.h>
+#include "../ConformerParser.h"
 
 namespace python = boost::python;
 
