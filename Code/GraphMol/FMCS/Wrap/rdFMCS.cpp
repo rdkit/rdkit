@@ -16,14 +16,21 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  MCSResult *FindMCSWrapper(python::object mols){
+  MCSResult *FindMCSWrapper(python::object mols,bool maximizeBonds,double threshold,
+                            unsigned timeout,bool verbose){
     std::vector<ROMOL_SPTR> ms;
     unsigned int nElems=python::extract<unsigned int>(mols.attr("__len__")());
     ms.resize(nElems);
     for(unsigned int i=0;i<nElems;++i){
       ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
     }
-    MCSResult *res=new MCSResult(findMCS(ms));
+    MCSParameters *ps=new MCSParameters();
+    ps->MaximizeBonds=maximizeBonds;
+    ps->Threshold=threshold;
+    ps->Timeout=timeout;
+    ps->Verbose=verbose;
+    MCSResult *res=new MCSResult(findMCS(ms,ps));
+    delete ps;
     return res;
   }
 }
@@ -49,7 +56,12 @@ BOOST_PYTHON_MODULE(rdFMCS) {
    
   std::string docString = "Find the MCS for a set of molecules";
   python::def("FindMCS", RDKit::FindMCSWrapper,
-              (python::arg("mols")),// python::arg("ignoreHs")=true),
+              (python::arg("mols"),
+               python::arg("maximizeBonds")=true,
+               python::arg("threshold")=1.0,
+               python::arg("timeout")=3600,
+               python::arg("verbose")=false
+               ),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
 }
