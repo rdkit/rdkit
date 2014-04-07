@@ -16,18 +16,40 @@
 namespace python = boost::python;
 
 namespace RDKit {
+  MCSResult *FindMCSWrapper(python::object mols){
+    std::vector<ROMOL_SPTR> ms;
+    unsigned int nElems=python::extract<unsigned int>(mols.attr("__len__")());
+    ms.resize(nElems);
+    for(unsigned int i=0;i<nElems;++i){
+      ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
+    }
+    MCSResult *res=new MCSResult(findMCS(ms));
+    return res;
+  }
+}
+
+namespace {
+  struct mcsresult_wrapper {
+    static void wrap(){
+      python::class_<RDKit::MCSResult>("MCSResult","stores MCS results",python::no_init)
+        .def_readonly("numAtoms",&RDKit::MCSResult::NumAtoms)
+        .def_readonly("numBonds",&RDKit::MCSResult::NumBonds)
+        .def_readonly("smartsString",&RDKit::MCSResult::SmartsString)
+        .def_readonly("canceled",&RDKit::MCSResult::Canceled)
+        ;
+    }
+  };
 }
 
 BOOST_PYTHON_MODULE(rdFMCS) {
   
   python::scope().attr("__doc__") =
     "Module containing a C++ implementation of the FMCS algorithm";
+  mcsresult_wrapper::wrap();
    
-  /*
-  std::string docString = "Compute the centroid of the conformation - hydrogens are ignored and no attention\n\
-                           if paid to the difference in sizes of the heavy atoms\n";
-  python::def("ComputeCentroid", MolTransforms::computeCentroid,
-              (python::arg("conf"), python::arg("ignoreHs")=true),
+  std::string docString = "Find the MCS for a set of molecules";
+  python::def("FindMCS", RDKit::FindMCSWrapper,
+              (python::arg("mols")),// python::arg("ignoreHs")=true),
+              python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
-  */
 }
