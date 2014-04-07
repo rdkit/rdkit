@@ -39,7 +39,6 @@ rdkit_headers(Atom.h
 add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)
 add_subdirectory(FileParsers)
-add_subdirectory(ConformerParser)
 add_subdirectory(Substruct)
 add_subdirectory(ChemReactions)
 add_subdirectory(ChemTransforms)
