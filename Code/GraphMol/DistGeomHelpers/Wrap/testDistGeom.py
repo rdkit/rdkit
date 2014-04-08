@@ -155,16 +155,6 @@ class TestCase(unittest.TestCase) :
         self.failUnless(bm[1,0]<1.510)
         self.failUnless(bm[0,1]>1.510)
 
-    def testMultiRange(self):
-        mol = Chem.MolFromSmiles('FC(F)(F)Oc1ccccc1')
-        print Chem.MolToSmiles(mol)
-        bm = rdDistGeom.GetMoleculeMultiRangeBoundsMatrix(mol)
-        print "multi-range bounds matrix"
-        print bm[0,5]
-        cids = rdDistGeom.KnowledgeEmbedMultipleConfs(mol)
-        #self.failUnless(feq(bm[3,0], 2.67, 0.01))
-        #self.failUnless(feq(bm[0,3], 2.79, 0.02))
-
     def test3MultiConf(self):
         mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
         cids = rdDistGeom.EmbedMultipleConfs(mol,10,maxAttempts=30,randomSeed=100)

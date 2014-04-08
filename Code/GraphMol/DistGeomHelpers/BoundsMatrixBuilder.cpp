@@ -10,13 +10,10 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <DistGeom/BoundsMatrix.h>
-#include <DistGeom/MultiRangeBoundsMatrix.h>
 #include "BoundsMatrixBuilder.h"
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
@@ -24,16 +21,6 @@
 #include <DistGeom/TriangleSmooth.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
-#include <iostream>
-#include <sstream>
-#include <RDGeneral/StreamOps.h>
-
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-#include <boost/flyweight.hpp>
-#include <boost/flyweight/key_value.hpp>
-#include <boost/flyweight/no_tracking.hpp>
 
 const double DIST12_DELTA = 0.01;
 const double ANGLE_DELTA = 0.0837;
@@ -157,30 +144,8 @@ namespace RDKit {
       to the special cases.
      */
     void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, 
-                     ComputedData &accumData, double *distMatrix,
-                     BIT_SET &donePaths);
+                     ComputedData &accumData);
     
-    //! Set 1-4 distance bounds for atoms in a molecule
-    /*!
-      These are computed using the range of allowed torsion angles based on
-      experimental torsion angle preferences. The rest are computed using 0 and 180 deg
-      as the min. and max. torsion angles.
-
-      \param mol          Molecule of interest
-      \param mmat         Multi-range bounds matrix to which the bounds are written
-      \param accumData    Used to store the data that have been calculated so far
-                          about the molecule
-      \param ExpTorsionLevel Level for experimental torsion angle preferences
-
-      <b>Procedure</b>
-      As in the case of 1-3 distances 1-4 distance that are part of simple rings are
-      first dealt with. The remaining 1-4 cases are dealt with while paying attention
-      to the special cases.
-     */
-    void set14Bounds(const ROMol &mol, DistGeom::MultiRangeBoundsMatPtr mmat,
-                     ComputedData &accumData, double *distMatrix,
-                     BIT_SET &donePaths, ExpTorsionLevel level);
-
     //! Set 1-5 distance bounds for atoms in a molecule
     /*!
       This is an optional call that recognizes a variety of special cases.
@@ -205,490 +170,11 @@ namespace RDKit {
     */
     void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool useTopolScaling=true);
 
-  } // namespace DGeomHelpers
-} // namespace RDKit
+  }
+}
 
 namespace RDKit {
   namespace DGeomHelpers {
-
-
-    /* SMARTS patterns for experimental torsion angle preferences
-     * taken from J. Med. Chem. 56, 1026-2028 (2013)
-     *
-     * three levels: peak (level 0), peak + tolerance1 (level 1), peak + tolerance2 (level 2)
-     * FIX: Here are only the peaks with tolerance1
-     * format: [SMARTS, lower bound peak 1, upper bound peak 1, ..., lower bound peak N, upper bound peak N]
-     */
-    const std::string torsionPreferences=
-        "[O:1]=[C:2]!@[O:3]~[CH0:4] 0.00 20.00\n" // CO //  Ester bond I O=[C:2][O:3]
-        "[O:1]=[C:2]([N])!@[O:3]~[C:4] 0.00 20.00\n"
-        "[O:1]=[C:2]!@[O:3]~[C:4] 0.00 10.00\n"
-        "[O:1]=[C:2]!@[O:3]~[!#1:4] 0.00 10.00\n"
-        "O=[C:1][O:2]!@[c:3]~[*:4] 60.00 120.00\n" // Ester bond II O=[C:1][O:2][C,c:3]
-        "O=[C:1][O:2]!@[CX3:3]~[*:4] 0.00 30.00 60.00 120.00 150.00 180.00\n"
-        "O=[C:1][O:2]!@[CH1:3][H:4] 0.00 50.00\n"
-        "O=[C:1][O:2]!@[CH2:3]~[C:4] 80.00 110.00 150.00 180.00\n"
-        "[H:1][CX4H1:2]!@[O:3][CX4:4] 0.00 40.00 50.00 70.00\n" // Ether [*][CX4,CX3:2][O:3]([CX4,CX3])
-        "[C:1][CH2:2]!@[O:3][CX4:4] 170.00 180.00\n"
-        "[*:1][CX4:2]!@[O:3][CX3:4](=[!O]) 40.00 80.00 160.00 180.00\n"
-        "[O:1][CX4:2]!@[O:3][CX4:4] 55.00 85.00\n"
-        "[*:1][CX4:2]!@[O:3][CX4:4] 30.00 90.00 150.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[O:3][S:4] 65.00 115.00\n" // Arylether [a][c:2][O:3]
-        "[cH1:1][c:2]([cH0])!@[O:3][S:4] 70.00 110.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][S:4] 70.00 110.00\n"
-        "[cH1:1][c:2]([cH1])!@[O:3][c:4] 0.00 180.00\n"
-        "[cH1:1][c:2]([cH0])!@[O:3][c:4] 0.00 135.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][c:4] 50.00 130.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][!C;!H:4] 0.00 20.00 160.00 180.00\n"
-        "[cH0:1][c:2]([cH1])!@[O:3][!C;!H:4] 0.00 20.00 160.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[O:3][!C;!H:4] 0.00 20.00 60.00 120.00 160.00 180.00\n"
-        "[cH:1][c:2]([cH])!@[O:3][C:4](F)(F)[F] 80.00 100.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][CX4:4]([!#1])([!#1])([!#1]) 70.00 110.00\n"
-        "[a:1][c:2]([a])!@[O:3][CX4H0:4] 0.00 30.00 60.00 120.00 150.00 180.00\n"
-        "[cH1,n:1][c:2]!@[O:3][CRH1:4] 0.00 20.00 160.00 180.00\n"
-        "[cH1,n:1][c:2]!@[O:3][CH1:4] 0.00 20.00 160.00 180.00\n"
-        "[nX2H0:1][c:2]([cH0])!@[O:3][CX4H0:4] 0.00 10.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][CX4H0:4] 180.00 180.00\n"
-        "[cH0:1][c:2]([nX2])!@[O:3][C:4] 170.00 180.00\n"
-        "[nX2:1][c:2]([nX2])!@[O:3][C:4] 0.00 10.00 170.00 180.00\n"
-        "[nX2:1][c:2]([nX3])!@[O:3][C:4] 0.00 10.00\n"
-        "[cH1:1][c:2]([nX3])!@[O:3][C:4] 0.00 10.00\n"
-        "[cH1:1][c:2]([nX2])!@[O:3][C:4] 170.00 180.00\n"
-        "[cH0:1]([CX3])[c:2]([cH1])!@[O:3][C:4] 160.00 180.00\n"
-        "[cH1:1][c:2](cO)!@[O:3][C:4] 0.00 20.00\n"
-        "O[c:1][c:2](cO)!@[O:3][C:4] 60.00 120.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][C:4] 60.00 120.00\n"
-        "[cH0:1][c:2]([cH1])!@[O:3][C:4] 160.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[O:3][C:4] 0.00 20.00 160.00 180.00\n"
-        "[a:1][c:2]!@[O:3][CX3H0:4] 60.00 120.00\n"
-        "[cH0:1][c:2]([cH0])!@[O:3][!#1:4] 70.00 110.00\n"
-        "[aH0:1][c:2]!@[OX2:3][!#1:4] 0.00 10.00 70.00 110.00 170.00 180.00\n"
-        "[cH1,nX3H1:1][c:2]([cH0])!@[O:3][CX4H0:4] 0.00 10.00 80.00 100.00\n"
-        "[!#1:1][CX4H0:2]!@[OX2:3][!#1:4] 45.00 75.00 165.00 180.00\n" // [CX4][OX2] [CX4:2][OX2:3]
-        "[H:1][CX4H1:2]!@[OX2:3][!#1:4] 0.00 60.00\n"
-        "[C:1][CX4H2:2]!@[OX2:3][c:4] 60.00 100.00 160.00 180.00\n"
-        "[c:1][CX4H2:2]!@[OX2:3][C:4] 60.00 100.00 150.00 180.00\n"
-        "[C:1][CX4H2:2]!@[OX2:3][C:4] 60.00 100.00 150.00 180.00\n"
-        "[c:1][CX4H2:2]!@[OX2:3][c:4] 70.00 90.00 160.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[OX2:3][c:4] 70.00 90.00 160.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[OX2:3][C:4] 60.00 100.00 150.00 180.00\n"
-        "[c:1][CX4H2:2]!@[OX2:3][!#1:4] 60.00 100.00 150.00 180.00\n"
-        "[C:1][CX4H2:2]!@[OX2:3][!#1:4] 60.00 100.00 150.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[OX2:3][!#1:4] 60.00 100.00 150.00 180.00\n"
-        "[!#1:1][CX4:2]!@[OX2:3][!#1:4] 50.00 180.00\n"
-        "O=[CX3:1][NX3H0:2](C)!@[CX4H2:3][C:4] 65.00 115.00\n" // NC
-        "O=[CX3:1][NX3H1:2]!@[CX4H2:3][C:4] 60.00 100.00 160.00 180.00\n"
-        "O=[S:1](=O)[NX3H0:2]!@[CX4H2:3][!#1:4] 70.00 110.00 140.00 160.00\n" // Sulfonamide O=[S:1](=O)[N:2][#6:3]
-        "O=[S:1](=O)[NX3H1:2]!@[CX4H2:3][!#1:4] 70.00 110.00 150.00 180.00\n"
-        "O=[S:1](=O)[NX3H0:2]!@[CX4H1:3][H:4] 0.00 20.00 160.00 180.00\n"
-        "O=[S:1](=O)[NX3H1:2]!@[CX4H1:3][H:4] 0.00 60.00\n"
-        "O=[S:1](=O)[NH1:2]!@[c:3][nX2:4] 0.00 20.00 160.00 180.00\n"
-        "O=[S:1](=O)[NH0:2]!@[c:3]([cH1])[cH1:4] 70.00 110.00\n"
-        "O=[S:1](=O)[NH1:2]!@[c:3]([cH1])[cH1:4] 40.00 80.00 130.00 150.00\n"
-        "O=[S:1](=O)[NH0:2]!@[c:3]([cH1])[cH0:4] 80.00 100.00\n"
-        "O=[S:1](=O)[NH1:2]!@[c:3]([cH1])[cH0:4] 110.00 130.00 140.00 160.00\n"
-        "O=[S:1](=O)[NH0:2]!@[c:3]([cH0])[cH0:4] 80.00 100.00\n"
-        "O=[S:1](=O)[NH1:2]!@[c:3]([cH0])[cH0:4] 70.00 110.00\n"
-        "O=[S:1](=O)[N:2]!@[c:3][a:4] 0.00 30.00 60.00 120.00 150.00 180.00\n"
-        "[O-:1][N+:2](=O)!@[c:3]([cH,nX2H0])[cH,nX2H0:4] 0.00 20.00 160.00 180.00\n" // Nitro [O-:1][N+:2](=O)[c:3]
-        "[O-:1][N+:2](=O)!@[c:3]([cH0])[cH,nX2H0:4] 0.00 50.00 150.00 180.00\n"
-        "[O-:1][N+:2](=O)!@[c:3]([cH0])[cH0:4] 0.00 30.00 60.00 120.00 150.00 180.00\n"
-        "[O-:1][N+:2](=O)!@[c:3][a:4] 0.00 20.00 160.00 180.00\n"
-        "[cH0:1][c:2]([cH0])!@[NX3H1:3][C,c:4] 60.00 120.00\n" // Guanidine I [c:2][NH1:3][C,c](~[N,n])(~[N,n])
-        "[cH0:1][c:2]([cH1])!@[NX3H1:3][C,c:4] 150.00 180.00\n"
-        "[cH0:1][c:2]([nX2H0])!@[NX3H1:3][C,c:4] 170.00 180.00\n"
-        "[cH0:1][c:2]([nX3H1])!@[NX3H1:3][C,c:4] 170.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[NX3H1:3][C,c:4] 0.00 40.00 140.00 180.00\n"
-        "[cH1:1][c:2]([nX3H1])!@[NX3H1:3][C,c:4] 0.00 10.00 170.00 180.00\n"
-        "[nX2H0:1][c:2]([nX2H0])!@[NX3H1:3][C,c:4] 0.00 10.00 170.00 180.00\n"
-        "[nX2H0:1][c:2]([nX3H1])!@[NX3H1:3][C,c:4] 0.00 10.00 170.00 180.00\n"
-        "[a:1][a:2]!@[NH1:3][C,c:4] 0.00 40.00 140.00 180.00\n"
-        "[C:1][NH:2]!@[C:3](=[NH2:4])[NH2] 0.00 20.00 170.00 180.00\n" // Guanidine II [NH:2][C:3](~[N,n])(~[N,n])
-        "[NH2][C:1](=[NH2])[NH:2]!@[CH2:3][C:4] 160.00 180.00\n"
-        "[a:1][c:2]!@[NX2:3]=[C:4]([NX3])n 40.00 80.00 100.00 140.00\n" // Guanidine III [c:2][NX2:3]=[C](~[N,n])(~[N,n])
-        "[nX2:1][c:2]!@[NX2:3]=[C:4]([NX3])N 0.00 30.00 150.00 180.00\n"
-        "[cH0:1][c:2]!@[NX2:3]=[C:4]([NX3])N 40.00 80.00 100.00 140.00\n"
-        "[cH1:1][c:2]!@[NX2:3]=[C:4]([NX3])N 40.00 80.00 100.00 140.00\n"
-        "[O:1]=[C:2]([NH1])!@[NX3H1:3](C=O)[H:4] 0.00 5.00\n" // Imide [C](=O)[NX3:2][C:3]=O
-        "[O:1]=[C:2]!@[NX3H1:3](C=O)[H:4] 0.00 10.00 170.00 180.00\n"
-        "[O:1]=[C:2]!@[NX3:3](C=O)[*:4] 0.00 20.00 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX3:3]=[NX2:4] 0.00 10.00 170.00 180.00\n" // Aliphatic Amides O=C[NX3:2][C:3]
-        "O=[C:1][NX3H0:2]!@[CX3:3]=[*H0:4] 0.00 20.00 150.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[CX3:3]=[*H1:4] 60.00 120.00 170.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[CX3:3]=[*H2:4] 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX3:3]=[*H2:4] 0.00 10.00\n"
-        "O=[C:1][NX3H1:2]!@[CX3:3]=[*H1:4] 0.00 10.00 110.00 150.00 160.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX3:3]=[*H0:4] 0.00 10.00 170.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[CX3H1:3]=[*:4] 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX3H1:3]=[*:4] 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX3:3]=[*:4] 0.00 10.00 100.00 140.00 170.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[CX4H2:3][c:4]([cH,nX2H0])[cH,nX2H0] 70.00 130.00\n"
-        "O=[C:1][NX3H1:2]!@[CX4H2:3][c:4]([cH,nX2H0])[cH,nX2H0] 60.00 120.00 150.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[CX4H2:3][!#1:4] 70.00 110.00\n"
-        "O=[C:1][NX3H1:2]!@[CX4H2:3][!#1:4] 70.00 110.00 150.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[CX4H1:3][H:4] 0.00 30.00 160.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX4H1:3][H:4] 0.00 60.00\n"
-        "O=[C:1][NX3H0:2]!@[CX4H0:3][C:4] 50.00 70.00 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[CX4H0:3][C:4] 45.00 75.00 165.00 180.00\n"
-        "O=[C:1][NX3:2]!@[!#1:3][!#1:4] 0.00 10.00 50.00 130.00 170.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[c:3]([s,o])[n:4] 180.00 180.00\n" // Aromatic Amides O=C[NX3:2][c:3]
-        "O=[C:1][NX3H1:2]!@[c:3]([s,o])[n:4] 170.00 180.00\n"
-        "O=[C:1][NX3:2]!@[a:3]([s,o])[a:4] 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[c:3]([cH,nX2H0])[cH,nX2H0:4] 0.00 30.00 150.00 180.00\n"
-        "O=[C:1][NX3:2]!@[a:3]([nX2H0])[cH0:4] 60.00 120.00 170.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[a:3]([nX2H0])[cH1:4] 0.00 20.00\n"
-        "O=[C:1][NX3:2]!@[a:3]([nX2H0])[cH1:4] 0.00 20.00\n"
-        "O=[C:1][NX3:2]!@[a:3][nH:4] 0.00 10.00\n"
-        "O=[C:1][NX3H1:2]!@[c:3]([cH0]Cl)[cH:4] 0.00 45.00\n"
-        "O=[C:1][NX3H1:2]!@[c:3]([cH0]F)[cH:4] 0.00 30.00\n"
-        "O=[C:1][NX3:2]!@[a:3]([cH1])[aH0:4]!@O 150.00 180.00\n"
-        "O=[C:1][NX3:2]!@[a:3][aH0:4] 0.00 10.00 60.00 120.00 160.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[c:3]([cH1])[cH1:4] 0.00 40.00 140.00 180.00\n"
-        "O=[C:1][NX3H0:2]!@[c:3]([cH1])[cH1:4] 20.00 160.00\n"
-        "O=[C:1][NX3H0:2]!@[c:3]([cH0])[cH:4] 60.00 120.00\n"
-        "O=[C:1][NX3H1:2]!@[c:3]([cH0])[cH:4] 0.00 50.00\n"
-        "O=[C:1][NX3H0:2]!@[c:3]([cH0])[cH0:4] 70.00 110.00\n"
-        "O=[C:1][NX3H1:2]!@[c:3]([cH0])[cH0:4] 30.00 90.00 100.00 140.00\n"
-        "O=[C:1][NX3H0:2]!@[a:3][a:4] 0.00 180.00\n"
-        "O=[C:1][NX3H1:2]!@[a:3][a:4] 0.00 40.00 140.00 180.00\n"
-        "[O:1]=[CX3:2]([NX3H1]C)!@[NX3H1:3][!#1:4] 0.00 20.00\n" // Amide bond O=[C:2][NX3:3]
-        "[O:1]=[C:2]([!NH1])!@[NX3H1:3]([H:4])(c([nX2H0])([nX2H0])) 170.00 180.00\n"
-        "[O:1]=[C:2]([NH1])!@[NX3H1:3]([H:4])(c([nX2H0])([nX2H0])) 0.00 10.00\n"
-        "[O:1]=[C:2]!@[NX3H1:3]([H:4])(c([nX2H0])([nX2H0])) 0.00 10.00 170.00 180.00\n"
-        "[O:1]=[C:2]!@[NX3H1:3]([H:4])(cn) 0.00 10.00 170.00 180.00\n"
-        "[O:1]=[C:2]!@[NX3H0:3]([a:4])[A] 0.00 20.00 160.00 180.00\n"
-        "[O:1]=[CX3:2](a)!@[NX3H0:3][!#1:4] 0.00 25.00 150.00 180.00\n"
-        "[O:1]=[CX3:2]!@[NX3H0:3][!#1:4] 0.00 20.00 160.00 180.00\n"
-        "[O:1]=[CX3:2]!@[NX3H1:3][!#1:4] 0.00 15.00\n"
-        "[CH0:1][NX3:2]([CH0])!@[c:3][a:4] 50.00 130.00\n" // Anilines a[a:2][N:3]
-        "[CH0:1][NX3:2]([CH1])!@[c:3][a:4] 0.00 30.00 60.00 120.00 150.00 180.00\n"
-        "[cH1,nX2H0:1][c:2]([cH1,nX2H0])!@[NX3&r:3][*:4] 0.00 20.00 160.00 180.00\n"
-        "[cH1,nX2H0:1][c:2]([cH1,nX2H0])!@[NX3&r:3][CX4&r:4] 0.00 30.00 150.00 180.00\n"
-        "[a:1][c:2]!@[NX3H1:3][CX4&r:4]([C&r])([C&r]) 0.00 20.00 160.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[NX3:3][CX4:4] 0.00 20.00 160.00 180.00\n"
-        "[cH0:1][c:2]([cH,nX2H0])!@[NX3H1:3][CX4:4] 170.00 180.00\n"
-        "[cH0:1][c:2]([cH,nX2H0])!@[NX3H0:3][CX4:4] 30.00 90.00 150.00 180.00\n"
-        "[cH0:1][c:2]([cH0])!@[NX3:3][CX4:4] 60.00 120.00\n"
-        "[c:1][c:2](c)!@[NX3:3][CX4:4] 0.00 20.00 160.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[NX3:3][a:4] 15.00 75.00 105.00 165.00\n"
-        "[cH1:1][c:2]([cH0])!@[NX3:3][a:4] 0.00 50.00\n"
-        "[cH0:1][c:2]([cH0])!@[NX3:3][a:4] 40.00 80.00 100.00 140.00\n"
-        "[cH0:1][a:2]!@[NX3H0:3][CX3:4]=O 60.00 120.00\n"
-        "[cH0:1][a:2]!@[NX3H1:3][CX3:4]=O 60.00 180.00\n"
-        "[nX2H0:1][a:2]([nX2H0])!@[NX3H0:3][CX3:4]=O 40.00 80.00 100.00 140.00\n"
-        "[nX2H0:1][a:2]([!nX2H0])!@[NX3H1:3][CX3:4](A)=O 160.00 180.00\n"
-        "[nX2H0:1][a:2]([!nX2H0])!@[NX3H1:3][CX3:4](a)=O 165.00 180.00\n"
-        "[nX2H0:1][a:2]([!nX2H0])!@[NX3H1:3][CX3:4](C)=O 160.00 180.00\n"
-        "[nX2H0:1][a:2]([!nX2H0])!@[NX3H1:3][CX3:4]([NX3H1])=O 160.00 180.00\n"
-        "[nX2H0:1][a:2]([!nX2H0])!@[NX3H1:3][CX3:4]([OX2])=O 160.00 180.00\n"
-        "[nX2H0:1][a:2]([!nX2H0])!@[NX3H1:3][CX3:4]=O 165.00 180.00\n"
-        "[nX2H0:1][a:2]!@[NX3H1:3][CX3:4]=O 0.00 10.00 170.00 180.00\n"
-        "[a:1][a:2]!@[NX3H0:3][CX3:4]=O 0.00 180.00\n"
-        "[a:1][a:2]!@[NX3H1:3][CX3:4]=O 0.00 40.00 140.00 180.00\n"
-        "[a:1][a:2]!@[NX3:3][CX4H0:4] 0.00 30.00 60.00 120.00 150.00 180.00\n"
-        "[a:1][a:2]!@[NX3:3][!#1:4] 0.00 20.00 160.00 180.00\n"
-        "[O:1]=[CX3:2]!@[nX3:3]([aH0:4])([aH0]) 0.00 30.00 150.00 180.00\n" // Amide with aro. N O=[C:2][n:3]
-        "[O:1]=[CX3:2]!@[nX3:3][aH1:4] 0.00 10.00 170.00 180.00\n"
-        "[O:1]=[CX3:2]!@[nX3:3][aH0:4] 0.00 30.00 150.00 180.00\n"
-        "[a:1][CX3:2](=S)!@[NX3:3][a:4] 170.00 180.00\n" // Thioamide S=[CX3:2][NX3:3]
-        "[!#1:1][CX3:2](=S)!@[NX3H0:3][!#1:4] 0.00 10.00 170.00 180.00\n"
-        "[!#1:1][CX3:2](=S)!@[NX3H1:3][!#1:4] 0.00 10.00 170.00 180.00\n"
-        "[!#1:1][CH2:2]!@[n:3][cH0:4] 70.00 110.00\n" // substitution of aromatic nitrogens [n:2][C:3]
-        "[!#1:1][CH2:2]!@[n:3][a:4] 70.00 110.00\n"
-        "[CX4:1][CX4H2:2]!@[NX3;N^3:3][CX4:4] 60.00 100.00 140.00 180.00\n" // [CX4:2][NX3:3] [CX4:2][NX3:3]
-        "[CX4:1][CX4H2:2]!@[NX3:3][CX4:4] 60.00 100.00 150.00 180.00\n"
-        "[C:1][CX4H2:2]!@[NX3;N^3:3][C:4] 50.00 90.00 140.00 180.00\n"
-        "[C:1][CX4H2:2]!@[NX3:3][C:4] 60.00 120.00 150.00 180.00\n"
-        "[C:1][CX4:2]!@[NX3;N^3:3][C:4] 50.00 90.00 140.00 180.00\n"
-        "[C:1][CX4:2]!@[NX3:3][C:4] 40.00 100.00 130.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[NX3H1;N^3:3][!#1:4] 60.00 100.00 160.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[NX3H1:3][!#1:4] 60.00 120.00 160.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[NX3;N^3:3][!#1:4] 40.00 100.00 140.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[NX3:3][!#1:4] 60.00 100.00 150.00 180.00\n"
-        //"[!#1:1][CX4:2]!@[NX3;N^3:3] 15.00 75.00 155.00 180.00\n"
-        "[!#1:1][CX4:2]!@[NX3;N^3:3][!#1:4] 40.00 100.00 150.00 180.00\n"
-        "[!#1:1][CX4:2]!@[NX3:3][!#1:4] 40.00 100.00 160.00 180.00\n"
-        //"[!#1:1][S:2](=O)(=O)!@[N^3:3]@[C&r3] 30.00 70.00\n" // SN
-        //"[C:1][S:2](=O)(=O)!@[N^3:3] 160.00 180.00\n"
-        //"[c:1][S:2](=O)(=O)!@[N^3:3] 160.00 180.00\n"
-        //"[!#1:1][S:2](=O)(=O)!@[N^3:3] 160.00 180.00\n"
-        "[!#1:1][S:2](=O)(=O)!@[nX3:3]([aH1])[aH1:4] 55.00 105.00\n"
-        "[!#1:1][S:2](=O)(=O)!@[nX3:3][aH0:4] 45.00 95.00\n"
-        "[!#1:1][S:2](=O)(=O)!@[nX3:3][a:4] 55.00 105.00\n"
-        "[c:1][S:2](=O)(=O)!@[NX2H0:3]-[*:4] 60.00 100.00\n"
-        "[*:1][S:2](=O)(=O)!@[NX3H0&r:3][*:4] 50.00 90.00\n"
-        "[C:1][S:2](=O)(=O)!@[NX3H1:3][c:4] 45.00 85.00\n"
-        "[C:1][S:2](=O)(=O)!@[NX3H0:3][c:4] 60.00 120.00\n"
-        "[c:1][S:2](=O)(=O)!@[NX3H1:3][C:4] 60.00 100.00\n"
-        "[c:1][S:2](=O)(=O)!@[NX3H0:3][C:4] 60.00 100.00\n"
-        "[c:1][S:2](=O)(=O)!@[NX3H1:3][c:4] 50.00 90.00\n"
-        "[c:1][S:2](=O)(=O)!@[NX3H0:3][c:4] 60.00 100.00\n"
-        "[C:1][S:2](=O)(=O)!@[NX3H1:3][C:4] 60.00 100.00\n"
-        "[C:1][S:2](=O)(=O)!@[NX3H0:3][C:4] 60.00 100.00\n"
-        "[*:1][S:2](=O)(=O)!@[NX3H1:3][*:4] 60.00 100.00\n"
-        "[*:1][S:2](=O)(=O)!@[NX3H0:3][*:4] 60.00 100.00\n"
-        "[!#1:1][CX3:2]!@[SX2:3][!#1:4] 0.00 10.00 50.00 70.00 170.00 180.00\n" // CS // [C:2][S:3]
-        "[!#1:1][CX4:2]!@[SX2:3][!#1:4] 50.00 90.00 160.00 180.00\n"
-        "[!#1:1][CX3:2]!@[SX3:3][!#1:4] 50.00 70.00 120.00 140.00\n"
-        "[!#1:1][CX4:2]!@[SX3:3][!#1:4] 50.00 70.00 170.00 180.00\n"
-        "[!#1:1][CX3:2]!@[SX4:3][!#1:4] 60.00 100.00\n"
-        "[H:1][CX4H1:2]!@[SX4:3][!#1:4] 50.00 70.00 170.00 180.00\n"
-        "[!#1:1][CX4:2]!@[SX4:3][!#1:4] 35.00 85.00 155.00 180.00\n"
-        "[aH1:1][c:2]([aH1])!@[SX2:3][!#1:4] 0.00 30.00 60.00 120.00 150.00 180.00\n" // [c:2][S:3]
-        "[aH1:1][c:2]([aH0])!@[SX2:3][!#1:4] 0.00 20.00 70.00 110.00 170.00 180.00\n"
-        "[aH0:1][c:2]([aH0])!@[SX2:3][!#1:4] 0.00 15.00 65.00 115.00 165.00 180.00\n"
-        "[!#1:1][c:2]!@[SX2:3][!#1:4] 0.00 20.00 60.00 120.00 160.00 180.00\n"
-        "[!#1:1][c:2]!@[SX3:3][!#1:4] 60.00 120.00\n"
-        "[aH1:1][c:2]([aH1])!@[SX4:3][!#1:4] 70.00 110.00\n"
-        "[aH0:1][c:2]([aH1])!@[SX4:3][!#1:4] 40.00 80.00 170.00 180.00\n"
-        "[aH0:1][c:2]([aH0])!@[SX4:3][!#1:4] 60.00 120.00\n"
-        "[!#1:1][c:2]!@[SX4:3][!#1:4] 60.00 120.00\n"
-        "[O:1]=[CX3:2]([NH1])!@[CH2:3][CX3:4]=O 5.00 15.00 40.00 100.00 175.00 180.00\n" // CC // [C:2][C:3]
-        "[O:1]=[CX3:2]([NH1])!@[CH2:3][C:4] 0.00 70.00\n"
-        "[C]\[CX3:1]([H])=[CX3:2]([C])!@\[CH2:3][C:4] 0.00 20.00 90.00 130.00\n"
-        "[C]\[CX3:1]([H])=[CX3:2]([H])!@\[CH1:3](C)[C:4] 100.00 140.00\n"
-        "[C]\[CX3:1]([H])=[CX3:2]([H])!@\[CH2:3][C:4] 0.00 10.00 100.00 140.00\n"
-        "[C]\[CX3:1]([H])=[CX3:2]([H])!@/[CH2:3][C:4] 0.00 10.00 100.00 140.00\n"
-        "[N:1][C:2](=O)!@[CX4H2:3][CX4H2:4] 100.00 180.00\n"
-        "N[C:2](=[O:1])!@[CH2:3][N:4] 0.00 30.00 150.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[CX4H1:3][H:4] 10.00 70.00 110.00 170.00\n"
-        "[CX3H2:1]=[CX3:2]!@[CX3:3]=[C:4] 170.00 180.00\n"
-        "[CX3:1]=[CX3:2]!@[CH2:3][OX2:4] 0.00 10.00 100.00 140.00\n"
-        "[CX3:1]=[CX3:2]!@[CH1:3](C)[C:4] 0.00 60.00 100.00 140.00\n"
-        "[CX3:1]=[CX3:2]!@[CH2:3][C:4] 0.00 10.00 100.00 140.00\n"
-        "[CX3:1]=[CX3:2]!@[CH2:3][c:4] 0.00 10.00 100.00 140.00\n"
-        "[CX3:1]=[CX3:2]!@[CH2:3][!#1:4] 0.00 15.00 90.00 150.00\n"
-        "[O:1]=[CX3:2]!@[CX3:3]=[O:4] 170.00 180.00\n"
-        "[CX3:1]=[CX3:2]!@[CX3:3]=[CX3:4] 170.00 180.00\n"
-        "[*^2:1]~[C^2:2]([!H])!@[C^2:3]~[*^2:4] 0.00 30.00 150.00 180.00\n"
-        "[*^2:1]~[C^2:2]!@[C^2:3]~[*^2:4] 0.00 20.00 160.00 180.00\n"
-        "[O:1]=[CX3:2]!@[CX4&r3:3]!@[!#1:4] 0.00 20.00 100.00 140.00 160.00 180.00\n"
-        "[O:1]=[CX3:2]!@[CX4H1&r3:3][H:4] 0.00 20.00 160.00 180.00\n"
-        "[OX2:1][CX4H2:2]!@[CX4H2:3][N&r:4] 40.00 80.00 160.00 180.00\n" // anomeric
-        "[OX2:1][CX4H2:2]!@[CX4H2:3][N:4] 40.00 80.00 160.00 180.00\n"
-        "[OX2:1][CX4:2]!@[CX4:3][N:4] 40.00 80.00 170.00 180.00\n"
-        "[OX2:1][CX4H2:2]!@[CX4H2:3][OX2:4] 45.00 75.00 165.00 180.00\n"
-        "[OX2:1][CX4:2]!@[CX4:3][OX2:4] 40.00 80.00 160.00 180.00\n"
-        "[!#1:1][CX4&r:2]!@[CX4&r:3][!#1:4] 40.00 80.00 160.00 180.00\n" // [CX4][CX4]
-        "[!#1:1][CX4H2:2]!@[CX4H2:3][!#1:4] 45.00 75.00 165.00 180.00\n"
-        "[!#1:1][CX4:2]!@[CX4:3][!#1:4] 40.00 80.00 160.00 180.00\n"
-        "[OH1:1][CX4:2]!@[CX3:3]=[O:4] 0.00 20.00 140.00 180.00\n" // [CX4][CX3]
-        "[NH1:1][CX4:2]!@[CX3:3]=[O:4] 0.00 50.00 130.00 170.00\n"
-        "[O:1][CX4:2]!@[CX3:3]=[O:4] 0.00 40.00 140.00 180.00\n"
-        "[N:1][CX4:2]!@[CX3:3]=[O:4] 0.00 40.00 140.00 180.00\n"
-        "[C:1][CX4H2:2]!@[CX3:3]=[O:4] 0.00 40.00\n"
-        "[c:1][CX4H2:2]!@[CX3:3]=[O:4] 0.00 30.00\n"
-        "[!#1:1][CX4H2:2]!@[CX3:3]=[O:4] 0.00 30.00 160.00 180.00\n"
-        "[c:1][CX4:2]!@[CX3:3]=[O:4] 0.00 40.00 60.00 140.00\n"
-        "[C:1][CX4:2]!@[CX3:3]=[O:4] 0.00 170.00\n"
-        "[!#1:1][CX4:2]!@[CX3:3]=[O:4] 0.00 160.00\n"
-        "[c:1][CX4:2]!@[CX3:3][C:4] 40.00 80.00 160.00 180.00\n"
-        "[C:1][CX4:2]!@[CX3:3][c:4] 50.00 90.00 150.00 180.00\n"
-        "[c:1][CX4:2]!@[CX3:3][c:4] 50.00 90.00 160.00 180.00\n"
-        "[C:1][CX4:2]!@[CX3:3][C:4] 30.00 90.00 140.00 180.00\n"
-        "[!#1:1][CX4:2]!@[CX3H0:3][!#1:4] 20.00 100.00 150.00 180.00\n"
-        "[H:1][CX4H1:2]!@[CX3:3][!#1:4] 10.00 70.00 150.00 180.00\n"
-        "[!#1:1][CX4H2:2]!@[CX3:3][!#1:4] 0.00 20.00 60.00 100.00 150.00 180.00\n"
-        "[!#1:1][CX4:2]!@[CX3:3][!#1:4] 30.00 90.00 150.00 180.00\n"
-        "[c:1][c:2]!@[c:3][c:4]!@c 35.00 145.00\n" // [c:2][c:3]
-        "[cH0:1][c:2]([cH0])!@[c:3]([cH0:4])[cH0] 70.00 110.00\n"
-        "[cH0:1][c:2]([cH0])!@[c:3]([cH0:4])[cH1] 70.00 110.00\n"
-        "[cH0:1][c:2]([cH1])!@[c:3]([cH0:4])[cH1] 50.00 135.00\n"
-        "[cH0:1][c:2]([cH0])!@[c:3]([cH1:4])[cH1] 60.00 120.00\n"
-        "[cH0:1][c:2]([cH1])!@[c:3]([cH1:4])[cH1] 35.00 145.00\n"
-        "[cH1:1][c:2]([cH1])!@[c:3]([cH1:4])[cH1] 0.00 180.00\n"
-        "[nX2H0:1][c:2]!@[c:3][nX3H1:4] 0.00 180.00\n"
-        "[nX2H0:1][c:2]([!nX2H0])!@[c:3]([!nX2H0])[nX2H0:4] 170.00 180.00\n"
-        "[nX2H0:1][c:2](a(a)(a))!@[c:3][nX2H0:4] 110.00 180.00\n"
-        "[nX2H0:1][c:2](a([CX3H0]))!@[c:3](a([CX3H0]))[nX2H0:4] 80.00 120.00\n"
-        "[nX2H0:1][c:2]!@[c:3][nX2H0:4] 0.00 180.00\n"
-        "[c:1][c:2]!@[c:3][s,o,nX3H1:4] 0.00 180.00\n"
-        "[cH0:1][c:2]([cH0])!@[c:3][nX2H0:4] 60.00 120.00\n"
-        "[cH0:1][c:2]!@[c:3]([cH0])[nX2H0:4] 0.00 130.00\n"
-        "[c:1][c:2]!@[c:3]([cH0])[nX2H0:4] 20.00 160.00\n"
-        "[c:1][c:2]([cH0])!@[c:3][nX2H0:4] 0.00 180.00\n"
-        "[c:1][c:2]!@[c:3][nX2H0:4] 0.00 180.00\n"
-        "[c:1][c&r5:2]!@[c&r5:3][c:4] 0.00 180.00\n"
-        "[c:1][c&r6:2]!@[c&r5:3][c:4] 0.00 180.00\n"
-        "[c:1][c&r6:2]!@[c&r6:3][cH0:4] 50.00 130.00\n"
-        "[c:1][c&r6:2]!@[c&r6:3][c:4] 0.00 180.00\n"
-        "[c:1][c:2]!@[c:3][c:4] 0.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H0:3][a:4] 40.00 180.00\n" // [c:2][C:3] // Benzyl [c:2][CX4H2,CX4H1,CX4H0:3]
-        "[cH0:1][c:2]!@[CX4H0:3][N,O,S:4] 30.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H0:3][CX3:4] 40.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H0:3][CX4:4] 50.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H0:3][*:4] 50.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H2:3][a:4] 60.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H2:3][CX3:4] 60.00 100.00\n"
-        "[cH1:1][c:2]([cH1])!@[CX4H2:3][CX4H1:4]C(=O)(O) 60.00 120.00\n"
-        "[cH1:1][c:2]([cH1])!@[CX4H2:3][CX4:4] 60.00 120.00\n"
-        "[cH0:1][c:2]!@[CX4H2:3][CX4:4] 70.00 110.00\n"
-        "[cH0:1][c:2]!@[CX4H2:3][N,O,S:4] 60.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H2:3][!#1:4] 70.00 180.00\n"
-        "[cH0:1][c:2]!@[CX4H1:3][a:4] 40.00 150.00\n"
-        "[cH0:1][c:2]!@[CX4H1:3][CX4:4] 90.00 150.00\n"
-        "[cH0:1][c:2]!@[CX4H1:3][CX3:4] 40.00 140.00\n"
-        "[cH0:1][c:2]!@[CX4H1:3][N,O,S:4] 40.00 170.00\n"
-        "[cH0:1][c:2]!@[CX4H1:3][H:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX4H0:3][a:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX4H0:3][CX3:4] 5.00 160.00\n"
-        "[a:1][c:2]!@[CX4H0:3][CX4:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX4H0:3][N,O:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX4H0:3][*:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX4H2:3][a:4] 50.00 130.00\n"
-        "[a:1][c:2]!@[CX4H2:3][CX3:4] 60.00 120.00\n"
-        "[a:1][c:2]!@[CX4H2:3][CX4:4] 60.00 120.00\n"
-        "[a:1][c:2]!@[CX4H2:3][N,O:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX4H2:3][!#1:4] 50.00 130.00\n"
-        "[a:1][c:2]!@[CX4H1:3][N,O:4] 10.00 170.00\n"
-        "[a:1][c:2]!@[CX4H1:3][a:4] 20.00 160.00\n"
-        "[a:1][c:2]!@[CX4H1:3][H:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[C:3](=[N:4][CX4H1])(N[CX4H1]) 0.00 180.00\n" // Benzamidine [c:2][C:3](=N)(-N)
-        "[a:1][c:2]!@[C:3](=[N:4][CX4])(N[CX4]) 0.00 180.00\n"
-        "[a:1][c:2]!@[C:3](=[NH0:4][CX4]) 0.00 180.00\n"
-        "[a:1][c:2]!@[C:3](=[N:4][!#1])(N[!#1]) 0.00 180.00\n"
-        "[a:1][c:2]!@[C:3](=[N:4][!#1])(N~[!#1]) 0.00 180.00\n"
-        "[nX2H0:1][c:2]!@[C:3](=[N:4])(-[NH1,NH2]) 0.00 180.00\n"
-        "[nX2H0:1][c:2]!@[C:3](=[NH1,NH2:4]) 0.00 180.00\n"
-        "[cH0:1][c:2]([cH0])!@[C:3](=[N:4]) 0.00 180.00\n"
-        "[cH0:1][c:2]!@[C:3](=[N:4]) 0.00 10.00\n"
-        "[a:1][c:2]!@[C:3](=[N:4]) 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3][a:4]C(=O)(O) 0.00 180.00\n" // Benzoic acid [O:1]=[C:2]([OH1,O-])!@[c:3]
-        "[O:1]=[C:2]([O-])!@[c:3][a:4][CX3]=O 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3][nX3H1:4] 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3][nX2H0:4] 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3]([cH0])[cH0:4] 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3]([cH1])[cH0:4]([NH1,NH2]) 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3]([cH1])[cH0:4] 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3]([cH1])[cH1:4] 0.00 180.00\n"
-        "[O:1]=[C:2]([O-])!@[c:3][a:4] 0.00 180.00\n"
-        "[a:1]([OH1])[a:2]!@[CX3:3](=[O:4])([NX3H0,CX4H0,c]) 0.00 20.00\n" // intra hbond c([NH1,NH2,OH1])[c:2][CX3:3]=O
-        "[a:1]([NH1,NH2])[a:2]!@[CX3:3](=[O:4])([NX3H0,CX4H0,c]) 0.00 45.00\n"
-        "[c:1]([OH1])[c:2]!@[CX3:3](=[O:4])([NX3H0]) 0.00 130.00\n"
-        "[c:1]([NH1,NH2])[c:2]!@[CX3:3](=[O:4])([NX3H0]) 40.00 80.00\n"
-        "[c:1]([OH1])[c:2]!@[CX3:3](=[O:4])([O]) 0.00 180.00\n"
-        "[c:1]([NH1,NH2])[c:2]!@[CX3:3](=[O:4])([O]) 0.00 180.00\n"
-        "[a:1]([OH1])[a:2]!@[CX3:3](=[O:4])([O]) 0.00 180.00\n"
-        "[a:1]([NH1,NH2])[a:2]!@[CX3:3](=[O:4])([O]) 170.00 180.00\n"
-        "[c:1]([OH1])[c:2]!@[CX3:3](=[O:4])([!O]) 0.00 180.00\n"
-        "[c:1]([NH1,NH2])[c:2]!@[CX3:3](=[O:4])([!O]) 0.00 30.00\n"
-        "[a:1]([OH1])[a:2]!@[CX3:3](=[O:4])([!O]) 0.00 180.00\n"
-        "[a:1]([NH1,NH2])[a:2]!@[CX3:3](=[O:4])([!O]) 0.00 30.00\n"
-        "[cH0:1]([CX3])[c:2]([cH1])!@[CX3:3](c)=[O:4] 40.00 140.00\n" // aro-acyl-aro [c:2][CX3:3](a)=O
-        "[cH0:1][c:2]([cH0])!@[CX3:3](c)=[O:4] 0.00 180.00\n"
-        "[cH0:1]([OH1])[c:2]([cH1])!@[CX3:3](c)=[O:4] 0.00 30.00\n"
-        "[cH0:1][c:2]([cH1])!@[CX3:3](c)=[O:4] 0.00 130.00\n"
-        "[cH1:1][c:2]([cH1])!@[CX3:3](c)=[O:4] 0.00 180.00\n"
-        "[a:1][a:2]!@[CX3:3](a)=[O:4] 0.00 180.00\n"
-        "[s:1][c:2]!@[C:3]([NH1])=[O:4] 0.00 20.00\n" // benzamide [c:2][CX3:3](=O)([NX3])
-        "[cH0:1](Cl)[c:2]([cH1])!@[CX3:3]([NX3H1])=[O:4] 35.00 145.00\n"
-        "[cH0:1](F)[c:2]([cH1])!@[CX3:3]([NX3H1])=[O:4] 150.00 180.00\n"
-        "[cH0:1]([OH0])[c:2]([cH1])!@[C:3](=O)[NH1:4] 0.00 20.00\n"
-        "[cH0:1]([OH1])[c:2]([cH1])!@[C:3](=O)[NH1:4] 0.00 180.00\n"
-        "[cH0:1][c:2]([cH1])!@[CX3:3]([NX3H1])=[O:4] 0.00 170.00\n"
-        "[cH0:1][c:2]([cH1])!@[CX3:3]([NX3H0])=[O:4] 50.00 130.00\n"
-        "[cH1:1][c:2]([cH1])!@[C:3]([NH1,NH2])=[O:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[C:3]([NH0])=[O:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[C:3]([NH1,NH2])=[O:4] 0.00 180.00\n"
-        "[cH0:1](F)[c:2]([cH1])!@[CX3:3]=[O:4] 160.00 180.00\n" // aro-acyl [c:2][CX3:3]=O
-        "[cH0:1](Cl)[c:2]([cH1])!@[CX3:3]=[O:4] 40.00 140.00\n"
-        "[nX3H1:1][a:2]!@[CX3:3]=[O:4] 0.00 15.00\n"
-        "[nX2H0:1][c:2](c)!@[CX3:3]([!O])=[O:4] 165.00 180.00\n"
-        "[nX2H0:1][a:2]([nX2H0])!@[CX3:3]=[O:4] 0.00 180.00\n"
-        "[*^2]!@[cH0:1][c:2]([cH1])!@[CX3:3]=[O:4] 0.00 180.00\n"
-        "[cH0:1][c:2]([cH1])!@[CX3:3]=[O:4] 0.00 180.00\n"
-        "[cH0:1][c:2]([cH0])!@[CX3:3]=[O:4] 0.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[CX3:3]([CX3H0])=[O:4] 0.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[CX3:3]=[O:4] 0.00 180.00\n"
-        "[a:1][a:2]!@[CX3:3]=[O:4] 0.00 180.00\n"
-        "[cH1:1][c:2]([nX2])!@[CX3:3]=[NX3:4] 0.00 180.00\n" // aro-C=N [c:2][CX3:3]=N
-        "[cH1:1][c:2]([nX3H1])!@[CX3:3]=[NX2:4] 170.00 180.00\n"
-        "[cH1:1][c:2]([nX2])!@[CX3:3]=[NX2:4] 0.00 20.00\n"
-        "[cH1:1][c:2]([cH0]([OH1]))!@[CX3:3]=[NX2:4] 170.00 180.00\n"
-        "[cH1:1][c:2]([cH0])!@[CX3:3]=[NX2:4] 180.00 180.00\n"
-        "[cH1:1][c:2]([cH1])!@[CX3:3]=[NX2:4] 0.00 180.00\n"
-        "[cH0:1][c:2]([cH0])!@[CX3:3]=[NX2:4] 0.00 180.00\n"
-        "[a:1][c:2]!@[CX3:3]=[CX3H0:4] 0.00 180.00\n" // Vinyl benzene [c:2][CX3:3]=[CX3]
-        "[a:1][a:2]!@[CX3:3]=[CX3H2:4] 0.00 180.00\n"
-        "[a:1][a:2]!@[CX3:3]=[CX3H1:4] 0.00 180.00\n"
-        "[*:1][SX2:2]!@[SX2:3][*:4] 70.00 110.00\n" // SS
-        ;
-
-    //! A structure used to the experimental torsion patterns
-    struct ExpTorsionAngle {
-      std::string smarts;
-      std::vector<double> lower_bounds;
-      std::vector<double> upper_bounds;
-      boost::shared_ptr<const ROMol> dp_pattern;
-      unsigned int idx[4];
-    };
-
-    // class to store the experimental torsion angles
-    class ExpTorsionAngleCollection {
-      public:
-        typedef std::vector<ExpTorsionAngle> ParamsVect;
-        static const ExpTorsionAngleCollection *getParams(const std::string &paramData="");
-        ParamsVect::const_iterator begin() const { return d_params.begin(); };
-        ParamsVect::const_iterator end() const { return d_params.end(); };
-        ExpTorsionAngleCollection(const std::string &paramData);
-      private:
-        ParamsVect d_params;                                 //!< the parameters
-      };
-
-      typedef boost::flyweight<boost::flyweights::key_value<std::string,ExpTorsionAngleCollection>,
-                                   boost::flyweights::no_tracking > param_flyweight;
-
-      const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(const std::string &paramData){
-        const ExpTorsionAngleCollection *res = &(param_flyweight(paramData).get());
-        return res;
-      }
-
-      ExpTorsionAngleCollection::ExpTorsionAngleCollection(const std::string &paramData){
-        boost::char_separator<char> tabSep(" ","",boost::drop_empty_tokens);
-        std::string params;
-        if (paramData == "") params = torsionPreferences;
-        else params = paramData;
-        std::istringstream inStream(params);
-
-        std::string inLine = RDKit::getLine(inStream);
-        unsigned int idx = 0;
-        while (!inStream.eof()) {
-          if (inLine[0] != '#'){
-            ExpTorsionAngle angle;
-            tokenizer tokens(inLine, tabSep);
-            tokenizer::iterator token = tokens.begin();
-            angle.smarts = *token;
-            ++token;
-            while (token != tokens.end()) {
-                angle.lower_bounds.push_back((boost::lexical_cast<double>(*token)/180.0) * M_PI);
-                ++token;
-                angle.upper_bounds.push_back((boost::lexical_cast<double>(*token)/180.0) * M_PI);
-                ++token;
-            };
-            angle.dp_pattern = boost::shared_ptr<const ROMol>(SmartsToMol(angle.smarts));
-            // get the atom indices for atom 1, 2, 3, 4 in the pattern
-            for(unsigned int i = 0; i < (angle.dp_pattern.get())->getNumAtoms(); ++i){
-              Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
-              if (atom->hasProp("molAtomMapNumber")) {
-                int num;
-                atom->getProp("molAtomMapNumber", num);
-                if (num == 1)
-                  angle.idx[0] = i;
-                else if (num == 2)
-                  angle.idx[1] = i;
-                else if (num == 3)
-                  angle.idx[2] = i;
-                else if (num == 4)
-                  angle.idx[3] = i;
-              }
-            }
-            d_params.push_back(angle);
-          }
-          inLine = RDKit::getLine(inStream);
-        }
-        //std::cerr << "Exp. torsion angles = " << d_params.size() << std::endl;
-      }
-
     void _checkAndSetBounds(unsigned int i, unsigned int j, 
                             double lb, double ub, 
                             DistGeom::BoundsMatPtr mmat) {
@@ -1506,8 +992,7 @@ namespace RDKit {
     }
 
     void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, 
-                     ComputedData &accumData, double *distMatrix,
-                     BIT_SET &donePaths) {
+                     ComputedData &accumData,double *distMatrix) {
       unsigned int npt = mmat->numRows();
       CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       
@@ -1521,10 +1006,9 @@ namespace RDKit {
       ROMol::ConstBondIterator bi;
       
       unsigned int nb = mol.getNumBonds();
-      BIT_SET ringBondPairs(nb*nb);
+      BIT_SET ringBondPairs(nb*nb), donePaths(nb*nb*nb);
       unsigned int id1, id2, pid1, pid2, pid3, pid4;
-
-      // second, we will deal with 1-4 atoms that belong to the same ring
+      // first we will deal with 1-4 atoms that belong to the same ring    
       for (rii = bondRings.begin(); rii != bondRings.end(); rii++) {
         // we don't need deal with 3 membered rings
         unsigned int rSize = rii->size();
@@ -1542,12 +1026,11 @@ namespace RDKit {
           id1 = bid1*nb*nb + bid2*nb + bid3;
           id2 = bid3*nb*nb + bid2*nb + bid1;
           
-          // we haven't dealt with this path before
           ringBondPairs[pid1] = 1;
           ringBondPairs[pid2] = 1;
           donePaths[id1] = 1;
           donePaths[id2] = 1;
-
+          
           if (rSize > 5) {
             _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
                                mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
@@ -1555,11 +1038,10 @@ namespace RDKit {
           } else {
             _record14Path(mol, bid1, bid2, bid3, accumData);
           }
-
+         
           bid1 = bid2;
         } // loop over bonds in the ring
       } // end of all rings
-
       for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
         bid2 = (*bi)->getIdx();
         aid2 = (*bi)->getBeginAtomIdx();
@@ -1618,86 +1100,7 @@ namespace RDKit {
           ++beg1;
         }
       }
-    }
-
-    void _setExp14Bounds(unsigned int aid1, unsigned int aid4, unsigned int bid1,
-                         unsigned int bid2, unsigned int bid3,
-                         ComputedData &accumData, DistGeom::MultiRangeBoundsMatPtr mmat,
-                         double *dmat, std::vector<double> lb_angles,
-                         std::vector<double> ub_angles) {
-      PRECONDITION(lb_angles.size()==ub_angles.size(), "lower and upper bounds ranges not the same");
-
-      double bl1 = accumData.bondLengths[bid1];
-      double bl2 = accumData.bondLengths[bid2];
-      double bl3 = accumData.bondLengths[bid3];
-
-      double ba12 = accumData.bondAngles->getVal(bid1, bid2);
-      double ba23 = accumData.bondAngles->getVal(bid2, bid3);
-      CHECK_INVARIANT(ba12 > 0.0, "");
-      CHECK_INVARIANT(ba23 > 0.0, "");
-
-      Path14Configuration path14;
-      path14.bid1 = bid1; path14.bid2 = bid2; path14.bid3 = bid3;
-      path14.type = Path14Configuration::OTHER;
-
-      //std::cerr << "set exp bounds : " << aid1 << " " << aid4 << " " << lb_angles.size() << std::endl;
-
-      for (unsigned int i = 0; i < lb_angles.size(); ++i) {
-        double lb = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, lb_angles[i]) - GEN_DIST_TOL;
-        double ub = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, ub_angles[i]) + GEN_DIST_TOL;
-        CHECK_INVARIANT(ub > lb, "upper bound not greater than lower bound");
-        CHECK_INVARIANT(lb > DIST12_DELTA, "bad lower bound");
-
-        mmat->setLowerBound(aid1, aid4, lb);
-        mmat->setUpperBound(aid1, aid4, ub);
-      }
-      accumData.paths14.push_back(path14);
-    }
-
-    void set14Bounds(const ROMol &mol, DistGeom::MultiRangeBoundsMatPtr mmat,
-                     ComputedData &accumData, double *distMatrix, BIT_SET &donePaths,
-                     ExpTorsionLevel level) {
-      unsigned int npt = mmat->numRows();
-      CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
-
-      unsigned int aid1, aid2, aid3, aid4;
-      unsigned int bid1, bid2, bid3;
-
-      unsigned int nb = mol.getNumBonds();
-      unsigned int id1, id2, pid1, pid2, pid3, pid4;
-
-      // first, we set the torsion angles with experimental data
-      const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
-      // loop over patterns
-      for(ExpTorsionAngleCollection::ParamsVect::const_iterator it = params->begin();
-          it != params->end(); ++it) {
-        std::vector<MatchVectType> matches;
-        SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
-        // loop over matches
-        for(std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
-            matchIt != matches.end(); ++matchIt) {
-          //std::cerr << it->smarts << std::endl;
-          // get bond indices
-          aid1 = (*matchIt)[it->idx[0]].second;
-          aid2 = (*matchIt)[it->idx[1]].second;
-          aid3 = (*matchIt)[it->idx[2]].second;
-          aid4 = (*matchIt)[it->idx[3]].second;
-          bid1 = mol.getBondBetweenAtoms(aid1, aid2)->getIdx();
-          bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-          bid3 = mol.getBondBetweenAtoms(aid3, aid4)->getIdx();
-          // check if path already done
-          id1 = nb*nb*bid1 + nb*bid2 + bid3;
-          id2 = nb*nb*bid3 + nb*bid2 + bid1;
-          if ((!donePaths[id1]) && (!donePaths[id2])) {
-            // we haven't dealt with this path before
-            _setExp14Bounds(aid1, aid4, bid1, bid2, bid3, accumData, mmat,
-                            distMatrix, it->lower_bounds, it->upper_bounds);
-            donePaths[id1] = 1;
-            donePaths[id2] = 1;
-          }
-        } // end loop over matches
-      } // end loop over patterns
-    }
+    }  
 
 
     void initBoundsMat(DistGeom::BoundsMatrix *mmat,double defaultMin,
@@ -1711,27 +1114,9 @@ namespace RDKit {
 	}
       }
     }
-
     void initBoundsMat(DistGeom::BoundsMatPtr mmat,double defaultMin,
 		       double defaultMax){
       initBoundsMat(mmat.get(),defaultMin,defaultMax);
-    };
-
-    void initMultiRangeBoundsMat(DistGeom::MultiRangeBoundsMatrix *mmat, double defaultMin,
-                                 double defaultMax){
-      unsigned int npt = mmat->numRows();
-
-      for (unsigned int i = 1; i < npt; i++) {
-        for (unsigned int j = 0; j < i; j++) {
-          mmat->setUpperBound(i,j,defaultMax);
-          mmat->setLowerBound(i,j,defaultMin);
-        }
-      }
-    }
-
-    void initMultiRangeBoundsMat(DistGeom::MultiRangeBoundsMatPtr mmat,double defaultMin,
-                                 double defaultMax){
-      initMultiRangeBoundsMat(mmat.get(),defaultMin,defaultMax);
     };
 
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -1745,51 +1130,13 @@ namespace RDKit {
       set12Bounds(mol, mmat, accumData);
       set13Bounds(mol, mmat, accumData);
 
-      BIT_SET donePaths(nb*nb*nb);
-      set14Bounds(mol, mmat, accumData, distMatrix, donePaths);
+      set14Bounds(mol, mmat, accumData,distMatrix);
 
       if (set15bounds) {
-        set15Bounds(mol, mmat, accumData, distMatrix);
+        set15Bounds(mol, mmat, accumData,distMatrix);
       }
 
-      setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
-    }
-
-    void setTopolMultiRangeBounds(const ROMol &mol, DistGeom::MultiRangeBoundsMatPtr mmat,
-                                  bool set15bounds, bool scaleVDW, ExpTorsionLevel level) {
-      // seed for random number
-      srand(time(NULL));
-      unsigned int nb = mol.getNumBonds();
-      unsigned int na = mol.getNumAtoms();
-      ComputedData accumData(na, nb);
-      double *distMatrix = 0;
-      distMatrix = MolOps::getDistanceMat(mol);
-
-      // for all interactions except 1-4 use a normal bounds matrix
-      DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(mol.getNumAtoms());
-      DistGeom::BoundsMatPtr tmp_mat(mat);
-      initBoundsMat(tmp_mat);
-
-      set12Bounds(mol, tmp_mat, accumData);
-      set13Bounds(mol, tmp_mat, accumData);
-
-
-      BIT_SET donePaths(nb*nb*nb);
-      // set the experimental preferences
-      set14Bounds(mol, mmat, accumData, distMatrix, donePaths, level);
-      // set the rest
-      set14Bounds(mol, tmp_mat, accumData, distMatrix, donePaths);
-
-      if (set15bounds) {
-        set15Bounds(mol, tmp_mat, accumData, distMatrix);
-      }
-
-      setLowerBoundVDW(mol, tmp_mat, scaleVDW, distMatrix);
-
-      // write the values from the bounds matrix to the multi-range bounds matrix
-      mmat->copyFromBoundsMatrix(tmp_mat);
-
-      //FIX: how to remove mat and mmat?
+      setLowerBoundVDW(mol, mmat, scaleVDW,distMatrix);
     }
 
 
@@ -2062,6 +1409,5 @@ namespace RDKit {
         _set15BoundsHelper(mol, bid3, bid2, bid1, type, accumData, mmat, distMatrix);
       }
     }
-
-  } // namespace DGeomHelpers
-} // namespace RDKit
+  }
+}

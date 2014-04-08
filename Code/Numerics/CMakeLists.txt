@@ -4,7 +4,6 @@ add_subdirectory(Optimizer)
 
 rdkit_headers(Matrix.h
               SquareMatrix.h
-              MultiRangeSquareMatrix.h
               SymmMatrix.h
               Vector.h DEST Numerics)
 
