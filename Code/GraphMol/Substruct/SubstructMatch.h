@@ -12,7 +12,6 @@
 
 // std bits
 #include <vector>
-#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit{
   class ROMol;
@@ -33,8 +32,6 @@ namespace RDKit{
       \param useChirality  use atomic CIP codes as part of the comparison
       \param useQueryQueryMatches  if set, the contents of atom queries will be
                                    used as part of the matching
-      \param includeOnlyAtoms     if provided, only atom indices (in mol) whose bits are set will be considered
-      \param includeOnlyBonds     if provided, only bond indices (in mol) whose bits are set will be considered
 
       \return whether or not a match was found
     
@@ -43,9 +40,7 @@ namespace RDKit{
 		      MatchVectType &matchVect,
 		      bool recursionPossible=true,
 		      bool useChirality=false,
-                      bool useQueryQueryMatches=false,
-                      const boost::dynamic_bitset<> *includeOnlyAtoms=NULL,
-                      const boost::dynamic_bitset<> *includeOnlyBonds=NULL);
+                      bool useQueryQueryMatches=false);
 
   //! Find all substructure matches for a query in a molecule
   /*!
@@ -58,8 +53,6 @@ namespace RDKit{
       \param useChirality  use atomic CIP codes as part of the comparison
       \param useQueryQueryMatches  if set, the contents of atom queries will be
                                    used as part of the matching
-      \param includeOnlyAtoms     if provided, only atom indices (in mol) whose bits are set will be considered
-      \param includeOnlyBonds     if provided, only bond indices (in mol) whose bits are set will be considered
 
       \return the number of matches found
     
@@ -68,9 +61,7 @@ namespace RDKit{
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify=true,bool recursionPossible=true,
 			      bool useChirality=false,
-                              bool useQueryQueryMatches=false,
-                              const boost::dynamic_bitset<> *includeOnlyAtoms=NULL,
-                              const boost::dynamic_bitset<> *includeOnlyBonds=NULL);
+                              bool useQueryQueryMatches=false);
 }
 
 #endif
