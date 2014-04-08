@@ -21,6 +21,7 @@
 #endif
 #include <boost/cstdint.hpp>
 
+
 // """ -------------------------------------------------------
 //
 // Construct a SparseBitVect from a binary string.
