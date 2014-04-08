@@ -51,6 +51,11 @@ class TestCase(unittest.TestCase):
       for i in range(1000) :
          assert bv2.GetBit(i) == 0
 
+   def test01BVWithAllOnes(self) :
+      bv1 = DataStructs.ExplicitBitVect(10, True)
+      for i in range(10) :
+         assert bv1.GetBit(i) == 1
+
    def test1SparsePickle(self) :
       nbits = 10000
       bv1 = DataStructs.SparseBitVect(nbits)

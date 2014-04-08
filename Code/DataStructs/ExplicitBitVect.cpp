@@ -21,10 +21,10 @@
 #endif
 #include <boost/cstdint.hpp>
 
-ExplicitBitVect::ExplicitBitVect(unsigned int size, bool set)
+ExplicitBitVect::ExplicitBitVect(unsigned int size, bool bitsSet)
 {
   d_size=0;dp_bits = 0;d_numOnBits=0;
-  if (set) {
+  if (bitsSet) {
     _initForSizeWithBitsSet(size);
   } else {
     _initForSize(size);

@@ -50,6 +50,7 @@ struct EBV_wrapper {
     boost::shared_ptr<ExplicitBitVect> >("ExplicitBitVect",ebvClassDoc.c_str(),
                                   python::init<unsigned int>())
     .def(python::init<std::string>())
+    .def(python::init<unsigned int, bool>())
     .def("SetBit",(bool (EBV::*)(unsigned int))&EBV::setBit,
          "Turns on a particular bit.  Returns the original state of the bit.\n")
     .def("SetBitsFromList",(void (*)(EBV *,python::object))SetBitsFromList,
