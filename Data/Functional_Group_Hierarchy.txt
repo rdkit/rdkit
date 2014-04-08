@@ -67,9 +67,9 @@ Azide				[N;H0;$(N-[#6]);D2]=[N;D2]=[N;D1]	Azide
   Azide.Aromatic		[N;H0;$(N-c);D2]=[N;D2]=[N;D1]	Aromatic Azide
   Azide.Aliphatic		[N;H0;$(N-C);D2]=[N;D2]=[N;D1]	Aliphatic Azide
 
-Nitro				[N;H0;$(N-[#6]);D3;+](=[O;D1])-[O-;D1]	Nitro
-  Nitro.Aromatic		[N;H0;$(N-c);D3;+](=[O;D1])-[O-;D1]	Aromatic Nitro
-  Nitro.Aliphatic		[N;H0;$(N-C);D3;+](=[O;D1])-[O-;D1]	Aliphatic Nitro
+Nitro				[N;H0;$(N-[#6]);D3](=[O;D1])~[O;D1]	Nitro
+  Nitro.Aromatic		[N;H0;$(N-c);D3](=[O;D1])~[O;D1]	Aromatic Nitro
+  Nitro.Aliphatic		[N;H0;$(N-C);D3](=[O;D1])~[O;D1]	Aliphatic Nitro
 
 TerminalAlkyne			[C;$(C#[CH])]			Terminal Alkyne
 //  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
