@@ -1284,6 +1284,18 @@ void test12SimilaritiesSparseBV() {
 	TEST_ASSERT(feq(AllBitSimilarity(sbv,sbv2),0.6));
 }
 
+void test13BitVectAllOnes() {
+  {
+    ExplicitBitVect bv(32, false);
+    TEST_ASSERT(bv.getNumOnBits()==0);
+    TEST_ASSERT(bv[0]==0);
+
+    ExplicitBitVect bv2(32, true);
+    TEST_ASSERT(bv2.getNumOnBits()==32);
+    TEST_ASSERT(bv2[0]==1);
+  }
+}
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -1347,6 +1359,9 @@ int main(){
 
   BOOST_LOG(rdInfoLog) << " Test Similarity Measures SparseBitVect -------------------------------" << std::endl;
     test12SimilaritiesSparseBV();
+
+  BOOST_LOG(rdInfoLog) << " Test BitVect with all ones -------------------------------" << std::endl;
+  test13BitVectAllOnes();
 
   return 0;
   
