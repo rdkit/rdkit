@@ -26,7 +26,6 @@ ExplicitBitVect::ExplicitBitVect(unsigned int size, bool bitsSet)
   _initForSize(size);
   if (bitsSet) {
     dp_bits->set(); // set all bits to 1
-    //dp_bits.resize(size, true);
     d_numOnBits = size;
   }
 }
