@@ -70,7 +70,6 @@ private:
   unsigned int d_size;
   unsigned int d_numOnBits;
   void _initForSize(const unsigned int size);
-  void _initForSizeWithBitsSet(const unsigned int size);
 };
 
 

@@ -15,7 +15,6 @@
 #include "base64.h"
 #include <sstream>
 #include <limits>
-#include <math.h>
 #ifdef WIN32
 #include <ios>
 #endif
@@ -24,10 +23,11 @@
 ExplicitBitVect::ExplicitBitVect(unsigned int size, bool bitsSet)
 {
   d_size=0;dp_bits = 0;d_numOnBits=0;
+  _initForSize(size);
   if (bitsSet) {
-    _initForSizeWithBitsSet(size);
-  } else {
-    _initForSize(size);
+    dp_bits->set(); // set all bits to 1
+    //dp_bits.resize(size, true);
+    d_numOnBits = size;
   }
 }
 ExplicitBitVect::ExplicitBitVect(const std::string &s)
@@ -144,13 +144,6 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     dp_bits = new boost::dynamic_bitset<>(size);
     d_numOnBits=0;
   };
-
-  void ExplicitBitVect::_initForSizeWithBitsSet(const unsigned int size) {
-    d_size = size;
-    delete dp_bits;
-    dp_bits = new boost::dynamic_bitset<>(size, (unsigned long)(pow(2, size)-1));
-    d_numOnBits = size;
-  }
 
   ExplicitBitVect::~ExplicitBitVect() {
     delete dp_bits;
