@@ -43,6 +43,14 @@ namespace python = boost::python;
     }
   }
 
+  template <typename T>
+  void UnSetBitsFromList(T *bv, python::object offBitList) {
+    PySequenceHolder<int> bitL(offBitList);
+    for (unsigned int i = 0; i < bitL.size(); i++) {
+      bv->unsetBit(bitL[i]);
+    }
+  }
+
   // used to support __getitem__
   template <typename T>
   const int get_VectItem(const T& self,int which)
