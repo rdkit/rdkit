@@ -3917,6 +3917,95 @@ void test41Github233(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test42ReactionSmiles(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  std::string smi;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Daylight parser" << std::endl;
+
+  smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:4]";
+  rxn = RxnSmartsToChemicalReaction(smi,0,true); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  smi = "C(=O)O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  smi = "CN";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  rxn->initReactantMatchers();
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getNumBonds()==3);
+  
+  delete rxn;
+  reacts.clear();
+  smi = "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
+  rxn = RxnSmartsToChemicalReaction(smi,0,true); 
+  TEST_ASSERT(rxn);
+  
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==2);
+
+  smi = "OC(=O)CN";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  smi = "OC(=O)CN";    
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  rxn->initReactantMatchers();
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==2);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
+  TEST_ASSERT(prods[0][1]->getNumAtoms()==2);
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
+  TEST_ASSERT(MolToSmiles(*prods[0][1])=="OO");
+
+
+  delete rxn;
+  reacts.clear();
+  smi = "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10].[N:1]1[C:2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
+  try{
+    rxn = RxnSmartsToChemicalReaction(smi,0,true); 
+  } catch (ChemicalReactionParserException &) {
+  }
+  
+  smi = "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9]>>[O:5][O:10]";
+  try{
+    rxn = RxnSmartsToChemicalReaction(smi,0,true); 
+  } catch (ChemicalReactionParserException &) {
+  }
+
+  smi = "[Q:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
+  try{
+    rxn = RxnSmartsToChemicalReaction(smi,0,true); 
+  } catch (ChemicalReactionParserException &) {
+  }
+  
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -3968,6 +4057,7 @@ int main() {
   test39InnocentChiralityLoss();
   test40AgentsInSmarts();
   test41Github233();
+  test42ReactionSmiles();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

@@ -71,9 +71,12 @@ namespace RDKit{
      \param text          the SMARTS to convert
      \param replacements  a string->string map of replacement strings.
                           \see SmilesToMol for more information about replacements
+     \param useSmiles     if set, the SMILES parser will be used instead of the SMARTS
+                           parserfor the individual components 
    */ 
   ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text,
-                                                 std::map<std::string,std::string> *replacements=0);
+                                                 std::map<std::string,std::string> *replacements=0,
+                                                 bool useSmiles=false);
 
   //! returns the reaction SMARTS for a reaction
   std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);
