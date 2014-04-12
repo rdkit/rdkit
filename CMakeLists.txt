@@ -118,14 +118,16 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
-    # Determine correct installation directory for Python bindings
-    # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
-    execute_process(
-      COMMAND
-      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
-      OUTPUT_VARIABLE PYTHON_INSTDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+    if (NOT PYTHON_INSTDIR)
+      # Determine correct installation directory for Python bindings
+      # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
+      execute_process(
+        COMMAND
+        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
+        OUTPUT_VARIABLE PYTHON_INSTDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+    endif (NOT PYTHON_INSTDIR)
     message("Python Install directory ${PYTHON_INSTDIR}")
     install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
       COMPONENT python
