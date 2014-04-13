@@ -3999,11 +3999,44 @@ void test42ReactionSmiles(){
   } catch (ChemicalReactionParserException &) {
   }
   
-
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test41Github243(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github 243: dummy labels copied into products" << std::endl;
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase + "/Code/GraphMol/ChemReactions/testData/github243.rxn";
+    ChemicalReaction *rxn = RxnFileToChemicalReaction(fName); 
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
 
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    std::string smi = "CCCN";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(9)->getAtomicNum()==6);
+    TEST_ASSERT(!prods[0][0]->getAtomWithIdx(9)->hasProp("dummyLabel"));
+    TEST_ASSERT(!prods[0][0]->getAtomWithIdx(9)->hasProp("_MolFileRLabel"));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(9)->getIsotope()==0);
+
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(10)->getAtomicNum()==0);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(10)->hasProp("dummyLabel"));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(10)->hasProp("_MolFileRLabel"));
+
+    delete(rxn);
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 
 int main() { 
@@ -4058,6 +4091,7 @@ int main() {
   test40AgentsInSmarts();
   test41Github233();
   test42ReactionSmiles();
+  test41Github243();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
