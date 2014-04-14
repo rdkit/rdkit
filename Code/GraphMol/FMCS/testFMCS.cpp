@@ -900,7 +900,7 @@ int main(int argc, const char* argv[])
 #ifdef xxWIN32  // brief test set for testing and issue investigation
 {
     //test18();
-    //testThreshold();
+    testThreshold();
     testSimple();
 
     //testGregSDFFileSetFiltered();
