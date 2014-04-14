@@ -505,6 +505,10 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget, Seed& newSe
 
     AtomMatchSet atomMatchResult(mcs.getNumAtoms());
 
+    newSeed.ExcludedBonds.resize(newQuery.Molecule->getNumBonds());
+    for(size_t j = 0; j < newSeed.ExcludedBonds.size(); j++)
+        newSeed.ExcludedBonds[j] = false;
+
     for(match_V_t::const_iterator mit = match.begin(); mit != match.end(); mit++)
     {
         unsigned ai = mit->first;  // SeedAtomIdx in mcs seed
@@ -513,6 +517,7 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget, Seed& newSe
         const Atom* ta = newQuery.Molecule->getAtomWithIdx(newQuery.Topology[mit->second]);
         newSeed.addAtom(ta);
     }
+
     for(std::vector<const Bond*>::const_iterator bond = McsIdx.Bonds.begin(); bond != McsIdx.Bonds.end(); bond++)
     {
         unsigned i = mcsAtomIdxMap[(*bond)->getBeginAtomIdx()];
@@ -522,6 +527,7 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget, Seed& newSe
         const Bond* tb = newQuery.Molecule->getBondBetweenAtoms(ti, tj);
         newSeed.addBond(tb);
     }
+    newSeed.computeRemainingSize(*newQuery.Molecule);
     return true;
 }
 
@@ -563,9 +569,6 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
         if(i+1 < Molecules.size() - ThresholdCount)
         {
             Seed seed;
-            seed.ExcludedBonds.resize(Molecules[i+1]->getNumBonds());
-            for(size_t j = 0; j < seed.ExcludedBonds.size(); j++)
-                seed.ExcludedBonds[j] = false;
             if(createSeedFromMCS(i, seed)) // MCS matched with new query
                 Seeds.push_back(seed);
             std::swap(Molecules[0], Molecules[i+1]); // change query molecule for threshold < 1.

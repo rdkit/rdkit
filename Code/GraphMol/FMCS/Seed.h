@@ -55,39 +55,6 @@ namespace RDKit
         void grow(MaximumCommonSubgraph& mcs, const ROMol& qmol)const;
         bool canGrowBiggerThan(unsigned maxBonds, unsigned maxAtoms)const  // prune()
         {
-//TMP DEBUG
-/*
-if(0==MoleculeFragment.BondsIdx[0])
-{
-    std::cout<<"\n"
-        <<(RemainingBonds + getNumBonds() > maxBonds || RemainingAtoms + getNumAtoms() >= maxAtoms ? "true":"FALSE")
-        <<" ------------------------"<<(void*)this 
-        <<": LastAddedAtomsBeginIdx = "<<LastAddedAtomsBeginIdx<<", LastAddedBondsBeginIdx = "<<LastAddedBondsBeginIdx<<"\n";
-    for(size_t i = 0; i < MoleculeFragment.Bonds.size(); i++)
-        std::cout << i << " "<<MoleculeFragment.Bonds[i]->getIdx()<<" : "
-                        <<" "<<MoleculeFragment.Bonds[i]->getBeginAtom()->getIdx()
-                        <<" "<<MoleculeFragment.Bonds[i]->getEndAtom()->getIdx()
-                        <<"\n";
-}
-*/
-//TMP DEBUG
-
-if(MoleculeFragment.BondsIdx.size() >=8 +2
-    && MoleculeFragment.BondsIdx[ 0]==0
-    && MoleculeFragment.BondsIdx[ 1]==15
-    && MoleculeFragment.BondsIdx[ 2]==1
-    && MoleculeFragment.BondsIdx[ 3]==16
-    && MoleculeFragment.BondsIdx[ 4]==2
-    && MoleculeFragment.BondsIdx[ 5]==17
-    && MoleculeFragment.BondsIdx[ 6]==13
-    && MoleculeFragment.BondsIdx[ 7]==14
-  && MoleculeFragment.BondsIdx[ 8]==18
-  && MoleculeFragment.BondsIdx[ 9]==3
-    )
-    return RemainingBonds + getNumBonds() >  maxBonds
-        || RemainingAtoms + getNumAtoms() >= maxAtoms;
-//return true;
-
             return RemainingBonds + getNumBonds() >  maxBonds
                 || RemainingAtoms + getNumAtoms() >= maxAtoms;
             
