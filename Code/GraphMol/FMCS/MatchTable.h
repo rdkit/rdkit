@@ -17,6 +17,7 @@ namespace RDKit
         inline size_t getXSize()const { return XSize;}
         inline size_t getYSize()const { return YSize;}
         inline bool   empty   ()const { return Data.empty();}
+        inline void   clear   () { Data.clear(); XSize = 0; YSize = 0;}
         inline void   resize(size_t cy, size_t cx) { Data.resize(cx*cy); XSize = cx; YSize = cy;}
         inline void set(size_t row, size_t col, T val) { Data[row*XSize + col] = val;}
         inline T at(size_t row, size_t col)     { return Data[row*XSize + col];}

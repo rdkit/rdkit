@@ -18,6 +18,15 @@ namespace RDKit
  {
     class MaximumCommonSubgraph
     {
+        struct MCS  // current result. Reference to a fragment of source molecule
+        {
+            std::vector<const Atom*> Atoms;
+            std::vector<const Bond*> Bonds;
+            std::vector<unsigned>    AtomsIdx;
+            std::vector<unsigned>    BondsIdx;  // need for results and size() only !
+            const ROMol*             QueryMolecule;
+            std::vector<Target>      Targets;
+        };
         time_t          To;
         MCSProgressData Stat;
         MCSParameters   Parameters;
@@ -36,24 +45,20 @@ namespace RDKit
 #ifdef DUP_SUBSTRUCT_CACHE
         DuplicatedSeedCache DuplicateCache;
 #endif
-
-#ifdef SMILES_CACHE 
-        CanonicalSMARTS_Set MatchedCanonicalSMARTS;
-#ifdef SMILES_CACHE_NOT_MATCHED //opt. OPTIMIZATION ???:
-        CanonicalSMARTS_Set DoNotMatchedCanonicalSMARTS;
-#endif
-#endif
         const ROMol*        QueryMolecule;
         std::vector<Target> Targets;
-//    public:
-        SeedSet Seeds;
-
+        SeedSet             Seeds;
+        MCS                 McsIdx;
     public:
+#ifdef VERBOSE_STATISTICS_ON
+        ExecStatistics VerboseStatistics;
+#endif
+
         MaximumCommonSubgraph(const MCSParameters* params);
         ~MaximumCommonSubgraph() {clear();}
         MCSResult find (const std::vector<ROMOL_SPTR>& mols);
-        unsigned getMaxNumberBonds()const {return Seeds.MaxBonds;}
-        unsigned getMaxNumberAtoms()const {return Seeds.MaxAtoms;}
+        unsigned getMaxNumberBonds()const {return McsIdx.BondsIdx.size();}  //Seeds.MaxBonds;}
+        unsigned getMaxNumberAtoms()const {return McsIdx.AtomsIdx.size();}  //Seeds.MaxAtoms;}
     //internal:
         bool checkIfMatchAndAppend(Seed& seed);//, const std::vector<char>& excludedBonds);   // REPLACE with Swap !!!
     private:
@@ -64,8 +69,9 @@ namespace RDKit
         }
         void init();
         void makeInitialSeeds();
-        void growSeeds(MolFragment& mcsIdx, MCSResult& res);
-        std::string generateSMARTS(const MolFragment& mcsIdx);
+        bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
+        bool growSeeds();   //returns false if canceled
+        static std::string generateResultSMARTS(const MCS& McsIdx);
 
         bool match(Seed& seed);
         bool matchIncrementalFast(Seed& seed, unsigned itag); // use results of previous match stored in the seed

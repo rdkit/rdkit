@@ -25,18 +25,12 @@ namespace RDKit
 
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* )
     {
-#ifdef VERBOSE_STATISTICS_ON
-        ++extstat.AtomCompareCalls;
-#endif
         p; mol1; atom1; mol2; atom2;    // unused
         return true;
     }
 
     bool MCSAtomCompareElements (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* )
     {
-#ifdef VERBOSE_STATISTICS_ON
-        ++extstat.AtomCompareCalls;
-#endif
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         if(p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
@@ -126,9 +120,6 @@ namespace RDKit
 
     bool MCSBondCompareAny (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud)
     {
-#ifdef VERBOSE_STATISTICS_ON
-        ++extstat.BondCompareCalls;
-#endif
         p; mol1; bond1; mol2; bond2;    // unused
         if(p.RingMatchesRingOnly)
             return checkRingMatch(p, mol1, bond1, mol2, bond2, ud);
@@ -137,11 +128,7 @@ namespace RDKit
 
     bool MCSBondCompareOrder (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud)
     {
-#ifdef VERBOSE_STATISTICS_ON
-        ++extstat.BondCompareCalls;
-#endif
         static const BondMatchOrderMatrix match(true); // ignore Aromatization
-
         const Bond* b1 = mol1.getBondWithIdx(bond1);
         const Bond* b2 = mol2.getBondWithIdx(bond2);
         Bond::BondType t1 = b1->getBondType();
@@ -158,11 +145,7 @@ namespace RDKit
 
     bool MCSBondCompareOrderExact (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud)
     {
-#ifdef VERBOSE_STATISTICS_ON
-        ++extstat.BondCompareCalls;
-#endif
         static const BondMatchOrderMatrix match(false); // AROMATIC != SINGLE
-
         const Bond* b1 = mol1.getBondWithIdx(bond1);
         const Bond* b2 = mol2.getBondWithIdx(bond2);
         Bond::BondType t1 = b1->getBondType();

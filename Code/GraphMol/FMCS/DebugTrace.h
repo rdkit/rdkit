@@ -14,7 +14,7 @@
 // SELECT ALGORITHM OPTIONS by comment some lines to exclude additional or experimental optimisations:
 
 #define SEED_GROW_DEEP              // fast and works much times faster (but it can depend on molecules)
-//#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because amount of external bonds usually is very small.
+#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because amount of external bonds usually is very small.
                                     // Exclude mismatched bonds combinations during seed growing (2^N stage)
 
 #define FAST_SUBSTRUCT_CACHE        // based on Morgan code hash
@@ -76,7 +76,6 @@
                          , DupCacheFound(0), DupCacheFoundMatch(0)
         {}
     };
-    extern ExecStatistics extstat;
 #endif
 
 namespace RDKit

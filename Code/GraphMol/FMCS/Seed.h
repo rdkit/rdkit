@@ -39,7 +39,7 @@ namespace RDKit
         std::vector<BondMatchSet> MatchResult;  // for each target
 #endif // FAST_INCREMENTAL_MATCH
     public:
-        Seed() : GrowingStage(0), LastAddedAtomsBeginIdx(0), RemainingBonds(-1), RemainingAtoms(-1) {}
+        Seed() : GrowingStage(0), LastAddedAtomsBeginIdx(0), LastAddedBondsBeginIdx(0), RemainingBonds(-1), RemainingAtoms(-1) {}
 
         void createFromParent(const Seed* parent)
         {

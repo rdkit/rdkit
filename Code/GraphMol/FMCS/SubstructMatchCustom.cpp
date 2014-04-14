@@ -34,9 +34,6 @@ namespace RDKit
             : QueryTopology(query), TargetTopology(target), MatchTable(targetMatch) {};
         bool operator()(unsigned int i,unsigned int j)const
         {
-#ifdef VERBOSE_STATISTICS_FASTCALLS_ON
-            stat.AtomFunctorCalls++;
-#endif
             return MatchTable.at(QueryTopology[i], TargetTopology[j]);
         }
     };
@@ -51,15 +48,15 @@ namespace RDKit
             : QueryTopology(query), TargetTopology(target), MatchTable(targetMatch) {};
         bool operator()(FMCS::Graph::edge_descriptor i, FMCS::Graph::edge_descriptor j)const
         {
-#ifdef VERBOSE_STATISTICS_FASTCALLS_ON
-            stat.BondFunctorCalls++;
-#endif
             return MatchTable.at(QueryTopology[i], TargetTopology[j]);
         }
     };
 
 bool SubstructMatchCustomTable(const FMCS::Graph& target, const FMCS::Graph& query, const MatchTable& atomMatchTable, const MatchTable& bondMatchTable, match_V_t* match)
 {
+    if(query.m_vertices.size() > target.m_vertices.size()   // query > target
+     ||query.m_edges.size() > target.m_edges.size())
+        return false;
     ROMol mo;
     MolMatchFinalCheckFunctor mc(mo, mo); // unused dummy item, just required by vf2() external implementation
 
@@ -98,9 +95,6 @@ bool SubstructMatchCustomTable(const FMCS::Graph& target, const FMCS::Graph& que
       {};
       bool operator()(unsigned int i,unsigned int j)const
       {
-#ifdef VERBOSE_STATISTICS_FASTCALLS_ON
-            stat.AtomFunctorCalls++;
-#endif
         return AtomCompare(Parameters, d_query, QueryTopology[i], d_mol, TargetTopology[j], UserData);
       }
     };
@@ -128,9 +122,6 @@ bool SubstructMatchCustomTable(const FMCS::Graph& target, const FMCS::Graph& que
 
       bool operator()(FMCS::Graph::edge_descriptor i, FMCS::Graph::edge_descriptor j)const
       {
-#ifdef VERBOSE_STATISTICS_FASTCALLS_ON
-            stat.BondFunctorCalls++;
-#endif
         unsigned  ii =  QueryTopology[i]; //take actual Idx value for full source query molecule from index list
         unsigned  jj = TargetTopology[j]; // the same Idx
         return BondCompare(Parameters, d_query, ii, d_mol, jj, UserData);

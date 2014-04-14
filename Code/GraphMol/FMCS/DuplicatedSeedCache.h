@@ -66,6 +66,11 @@ namespace RDKit
         size_t              MaxAtoms;  // max key in the cache for fast failed find
     public:
         DuplicatedSeedCache() : MaxAtoms(0) {}
+        void clear()
+        {
+            Index.clear();
+            MaxAtoms=0;
+        }
 
         bool find(const TKey& key, TValue& value)const
         {

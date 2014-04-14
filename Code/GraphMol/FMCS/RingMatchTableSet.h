@@ -14,6 +14,11 @@ namespace FMCS
             FMCS::MatchTable                    MatchMatrix;
             std::map<const INT_VECT*, unsigned> RingIndex;
         public:
+            inline void clear()
+            {
+                MatchMatrix.clear();
+                RingIndex.clear();
+            }
             inline void resize(unsigned s1, unsigned s2)
             {
                 MatchMatrix.resize(s1, s2);
@@ -55,6 +60,18 @@ namespace FMCS
         std::map<const INT_VECT*, unsigned>    QueryRingIndex;
 
     public:
+        RingMatchTableSet() : QueryBondRingsIndeces(0) {}
+
+        inline void clear()
+        {
+            if(QueryBondRingsIndeces)
+                QueryBondRingsIndeces->clear();
+            TargetBondRingsIndecesSet.clear();
+            MatchMatrixSet.clear();
+            QueryRingIndex.clear();
+
+        }
+
         inline bool isQueryBondInRing(unsigned bi)const
         {
             return (*QueryBondRingsIndeces)[bi].empty();

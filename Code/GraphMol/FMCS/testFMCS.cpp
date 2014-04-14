@@ -50,7 +50,6 @@
 #include "../FileParsers/MolSupplier.h" //SDF
 #include "../SmilesParse/SmilesParse.h"
 #include "../SmilesParse/SmilesWrite.h"
-#include <RDGeneral/Invariant.h>
 #include "FMCS.h"
 
 #include "DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
@@ -119,8 +118,6 @@ unsigned long long nanoClock (void)   // actually returns microseconds
 
 void printTime()
 {
-    extstat = ExecStatistics();
-
     unsigned long long t1 = nanoClock();
     double sec = double(t1-t0) / 1000000.;
     printf("\nTime elapsed %.2f seconds\n", sec);
@@ -266,7 +263,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         exit(1);
     }
     FILE* fs  = fopen(outSmilesFile.c_str(), "wt");
-    FILE* ft  = fopen((outFile+".extstat.csv").c_str(), "wt");
+    FILE* ft  = fopen((outFile+".stat.csv").c_str(), "wt");
     setvbuf(f , 0, _IOFBF, 4*1024);
     setvbuf(fs, 0, _IOFBF, 4*1024);
     setvbuf(ft, 0, _IOFBF,  4*1024); // small file
@@ -306,7 +303,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                 fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid->c_str());
         }
         fprintf(f, "\n");
-        ExecStatistics curStat = extstat;          //to compute the difference for this test only
+//        ExecStatistics curStat = stat;          //to compute the difference for this test only
         unsigned long long tc0 = nanoClock();
         MCSResult res = findMCS(tcmols, &p);    // *** T E S T ***
         unsigned long long tc1 = nanoClock();
@@ -353,30 +350,28 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                                           , res.NumAtoms, res.NumBonds, sec, res.SmartsString.c_str());
         if(fs)
             fprintf(fs, "//# %u %c  %u %u %.2f sec MCS: %s\n", n+1, (res.Canceled ? 'F':'.'), res.NumAtoms, res.NumBonds, sec, res.SmartsString.c_str());
+#ifdef xxVERBOSE_STATISTICS_ON
         if(ft) // statistic details
             fprintf(ft, "%u; %s; %d; %d; %.2f; %.2f; %u; %u; %u; %u\n",n+1
                       , !res.Canceled ? "ok" : referenceResults[n].Canceled ? "bad" : "TIMEOUT"
                       , referenceResults[n].Canceled ? 0 : res.NumAtoms - referenceResults[n].NumAtoms
                       , referenceResults[n].Canceled ? 0 : res.NumBonds - referenceResults[n].NumBonds
                       , sec, referenceResultsTime[n]
-                      , extstat.Seed - curStat.Seed
-                      , extstat.MatchCall - curStat.MatchCall
-                      , extstat.AtomCompareCalls - curStat.AtomCompareCalls
-                      , extstat.BondCompareCalls - curStat.BondCompareCalls
+                      , stat.Seed - curStat.Seed
+                      , stat.MatchCall - curStat.MatchCall
+                      , stat.AtomCompareCalls - curStat.AtomCompareCalls
+                      , stat.BondCompareCalls - curStat.BondCompareCalls
                    );
-        extstat.AtomCompareCalls = 0;  // 32 bit counter with very big value -> possible overflow
-        extstat.BondCompareCalls = 0;
+        stat.AtomCompareCalls = 0;  // 32 bit counter with very big value -> possible overflow
+        stat.BondCompareCalls = 0;
+#endif
     }
     fprintf(f, "#\n#\n# %u passed, %u failed, %u failed_less, %u timed out.\n# Total %.2f seconds, Average %.2f seconds, Average exclude timeouts about %.2f seconds.\n"
              , passed, failed, failed_less, timedout, secTotal, secTotal/n, (secTotal-30.6*timedout)/n);
-#ifdef VERBOSE_STATISTICS_ON
+#ifdef xxVERBOSE_STATISTICS_ON
     fprintf(f, "#\n# --- STATISTICS:---\n#             Total value   |   Average\n"
         "# Seeds Num %15u | %8u (amount of generated seeds)\n"
         "# BestSizeR %15u | %8u = %d%% (rejected by RemainingSize against BestSize seed)\n"
-#ifdef SMILES_CACHE
-        "# CacheFind %15u | %8u (SMILES generated)\n"
-        "# CacheTRUE %15u | %8u = %d%% (found in cache)\n"
-#endif
         "# MatchCall %15u | %8u (SubstructMatch function calls)\n"
         "# MatchTRUE %15u | %8u = %d%%\n"
 #ifdef FAST_SUBSTRUCT_CACHE
@@ -387,26 +382,21 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         "# ExactMatchCall %15u | %8u (SubstructMatch function calls)\n"
         "# ExactMatchTRUE %15u | %8u \n"
 #endif
-        , extstat.Seed, extstat.Seed/n
-        , extstat.RemainingSizeRejected, extstat.RemainingSizeRejected/n
-        , 0==extstat.Seed ? 0 : int((double)extstat.RemainingSizeRejected / (double)extstat.Seed *100.)
-#ifdef SMILES_CACHE
-        , extstat.FindInMatchedCache        , extstat.FindInMatchedCache/n
-        , extstat.FoundInMatchedCache        , extstat.FoundInMatchedCache/n
-        , 0==extstat.FindInMatchedCache ? 0 : int((double)extstat.FoundInMatchedCache / (double)extstat.FindInMatchedCache *100.)
-#endif
-        , extstat.MatchCall        , extstat.MatchCall/n
-        , extstat.MatchCallTrue        , extstat.MatchCallTrue/n
-        , int((double)extstat.MatchCallTrue / (double)extstat.MatchCall *100.)
+        , stat.Seed, stat.Seed/n
+        , stat.RemainingSizeRejected, stat.RemainingSizeRejected/n
+        , 0==stat.Seed ? 0 : int((double)stat.RemainingSizeRejected / (double)stat.Seed *100.)
+        , stat.MatchCall        , stat.MatchCall/n
+        , stat.MatchCallTrue        , stat.MatchCallTrue/n
+        , int((double)stat.MatchCallTrue / (double)stat.MatchCall *100.)
 #ifdef FAST_SUBSTRUCT_CACHE
-//        , extstat.HashCacheKeysSize, extstat.HashCacheKeysSize/n
-//        , extstat.HashCacheEntries , extstat.HashCacheEntries/n
-        , extstat.FindHashInCache,    extstat.FindHashInCache/n
-        , extstat.HashKeyFoundInCache,extstat.HashKeyFoundInCache/n
-        , 0==extstat.FindHashInCache ? 0 : int((double)extstat.HashKeyFoundInCache / (double)extstat.FindHashInCache *100.)
+//        , stat.HashCacheKeysSize, stat.HashCacheKeysSize/n
+//        , stat.HashCacheEntries , stat.HashCacheEntries/n
+        , stat.FindHashInCache,    stat.FindHashInCache/n
+        , stat.HashKeyFoundInCache,stat.HashKeyFoundInCache/n
+        , 0==stat.FindHashInCache ? 0 : int((double)stat.HashKeyFoundInCache / (double)stat.FindHashInCache *100.)
 
-        , extstat.ExactMatchCall    , extstat.ExactMatchCall/n
-        , extstat.ExactMatchCallTrue, extstat.ExactMatchCallTrue/n
+        , stat.ExactMatchCall    , stat.ExactMatchCall/n
+        , stat.ExactMatchCallTrue, stat.ExactMatchCallTrue/n
 #endif
         );
 #endif
@@ -600,7 +590,7 @@ void testRing1()
     };
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
-//        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));    // NO RING INFO generated!!!
+
     MCSParameters p;
     p.BondCompareParameters.RingMatchesRingOnly = true;
     p.BondCompareParameters.CompleteRingsOnly   = true;
@@ -646,8 +636,6 @@ void test504()
         atom->setProp("molAtomMapNumber", (int)ai);
     }
     std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
-//    for(int i=qm->getNumBonds()-1; i>=17; i--)
-//        qm->removeBond(qm->getBondWithIdx(i)->getBeginAtomIdx(), qm->getBondWithIdx(i)->getEndAtomIdx());
     mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
     for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
@@ -675,7 +663,7 @@ void test18()
     "CC(c1ncccc1)N(CCCCN)Cc1nc2c([nH]1)cccc2 CHEMBL1682867",
     "CC(N(CCCCN)Cc1c(C(C)(C)C)cccn1)c1ccccn1 CHEMBL1682989",
     "CC(N(CCCCN)Cc1c(C(F)(F)F)cccn1)c1ccccn1 CHEMBL1682988",
-    //# 18 .  20 20 0.04 sec MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
+    //# 18 .  20 20 0.04 sec. Python MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
     };
     RWMol* qm = SmartsToMol( getSmilesOnly(smi[0]) );
     unsigned nq = qm->getNumAtoms();
@@ -695,6 +683,44 @@ void test18()
     printTime();
 }
 
+void testThreshold()
+{
+    std::cout << "\ntestThreshold()\n";
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] =
+    {
+        "CCC", "CCCO", "CCCN", "CC",
+        "CCC", "CCCO", "CCCN", "CC",
+        "CCC", "CC",
+/*
+      "COCc1c(ncc2[nH]c3cccc(Oc4ccc(Cl)cc4)c3c12)C(=O)OC(C)C",
+      "COCc1cnc(C(=O)OC(C)C)c2[nH]c3cc(Oc4ccc(Cl)cc4)ccc3c12",
+
+//        "CC(c1ccccn1)N(C)Ccnccc" // short "MCS" for test 18
+    //TEST 18
+    "Cc1nc(CN(C(C)c2ncccc2)CCCCN)ccc1 CHEMBL1682991", //-- QUERY
+    "Cc1ccc(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682990",
+    "Cc1cccnc1CN(C(C)c1ccccn1)CCCCN CHEMBL1682998",
+    "CC(N(CCCCN)Cc1c(N)cccn1)c1ccccn1 CHEMBL1682987",
+    "Cc1cc(C)c(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682992",
+    "Cc1cc(C(C)N(CCCCN)Cc2c(C)cccn2)ncc1 CHEMBL1682993",
+    "Cc1nc(C(C)N(CCCCN)Cc2nc3c([nH]2)cccc3)ccc1 CHEMBL1682878",
+    "CC(c1ncccc1)N(CCCCN)Cc1nc2c([nH]1)cccc2 CHEMBL1682867",
+    "CC(N(CCCCN)Cc1c(C(C)(C)C)cccn1)c1ccccn1 CHEMBL1682989",
+    "CC(N(CCCCN)Cc1c(C(F)(F)F)cccn1)c1ccccn1 CHEMBL1682988",
+    //# 18 .  20 20 0.04 sec MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
+*/
+    };
+    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));
+    findMCS(mols);
+    MCSParameters p;
+    p.Threshold = 0.7;
+    t0 = nanoClock();
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+}
 
 void testSimpleFast()
 {
@@ -714,6 +740,7 @@ void testSimpleFast()
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
     MCSParameters p;
+    p.Threshold = 0.7;
     p.BondCompareParameters.RingMatchesRingOnly = true;
     p.BondCompareParameters.CompleteRingsOnly   = true;
     t0 = nanoClock();
@@ -728,8 +755,7 @@ void testSimple()
     std::vector<ROMOL_SPTR> mols;
     const char* smi[] =
     {
-        // LONG TIME TEST for performance analisis
-        //WAS 8 sec test (now about 30 sec)
+        // LONG TIME TEST for performance analisis (about 30 sec)
         "CC(C)CC(NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258 modified QUERY",// CHEMBL439258
         "CC(C)CC(NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(=O)C(Cc1ccccc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC(C(NC(C)=O)Cc1cc2ccccc2cc1)=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258",// CHEMBL439258
         "CC(C)CC(NC(=O)CNC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC(C(NC(C)=O)Cc1cc2ccccc2cc1)=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258 modified",// CHEMBL439258
@@ -741,6 +767,7 @@ void testSimple()
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
     MCSParameters p;
+    //p.Threshold = 0.5;
     p.BondCompareParameters.RingMatchesRingOnly = true;
     p.BondCompareParameters.CompleteRingsOnly   = true;
     t0 = nanoClock();
@@ -748,33 +775,6 @@ void testSimple()
     std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
     printTime();
 }
-
-
-void testThreshold()
-{
-    std::cout << "\ntestThreshold()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] =
-    {
-      "CCC",
-      "CCCO",
-      "CCCN",
-      "CC",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    MCSParameters p;
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS1: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    TEST_ASSERT(res.NumAtoms==2);
-    TEST_ASSERT(res.NumBonds==1);
-    p.Threshold=0.5;
-    res = findMCS(mols, &p);
-    std::cout << "MCS2: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";    
-    TEST_ASSERT(res.NumAtoms==3);
-    TEST_ASSERT(res.NumBonds==2);
-}
-
 
 void testCmndLineSMILES(int argc, const char* argv[])
 {
@@ -801,7 +801,6 @@ double testFileSDF(const char* test)
     }
     MCSParameters p;
 //    p.MaximizeBonds = true;
-    p.Threshold=0.4;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
     double t = (nanoClock() - t0) / 1000000.;
@@ -898,31 +897,26 @@ int main(int argc, const char* argv[])
     T0 = nanoClock();
     t0 = nanoClock();
 
-#ifdef WIN32  // brief test set for testing and issue investigation
+#ifdef xxWIN32  // brief test set for testing and issue investigation
 {
-    testGregSDFFileSetFiltered();
-    test18();
-    return 0;
-
-    testRing1();
-//    return 0;
-
-    testSimpleFast();
+    //test18();
+    //testThreshold();
     testSimple();
+
+    //testGregSDFFileSetFiltered();
+    //test18();
+    //return 0;
+
+//    testRing1();
 //    return 0;
-/*
 
-    testFileSDF("Greg'sComparision/data/filtered/d3_aid329485.filtered.sdf"); // 25 25 1s
-    testFileSDF("Greg'sComparision/data/filtered/d3_aid642590.filtered.sdf"); // 14 14 0.3s
-    return 0;
-    testFileSDF("Greg'sComparision/data/filtered/beta2_adrenergic_aid38311.filtered.sdf"); // fast. with time > python time to 18 times
-    testFileSDF("Greg'sComparision/data/filtered/d3_aid62457.filtered.sdf"); // slow 1 min
-    testFileSDF("Greg'sComparision/data/filtered/beta2_adrenergic_aid759384.filtered.sdf"); // fast
+//    testSimpleFast();
+//    testSimple();
+//    return 0;
+
+//    testGregSDFFileSetFiltered();
     //return 0;
 
-    testGregSDFFileSetFiltered();
-    //return 0;
-*/
     std::vector<unsigned> tc;
 //    tc.push_back(10);
 //    tc.push_back(992);
@@ -991,7 +985,6 @@ int main(int argc, const char* argv[])
     {
         testSimpleFast();
         testSimple();
-        testThreshold();
 //        test1Basics();
 //        testGregSDFFileSetFiltered();
     }
