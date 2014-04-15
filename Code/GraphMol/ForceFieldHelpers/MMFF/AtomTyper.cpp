@@ -1975,8 +1975,7 @@ namespace RDKit {
     void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom)
     {
       unsigned int atomType;
-      bool isHOCC = false;
-      bool isHOCN = false;
+      bool isHOCCorHOCN = false;
       bool isHOCO = false;
       bool isHOP = false;
       bool isHOS = false;
@@ -2122,18 +2121,13 @@ namespace RDKit {
                       if (nbr3Atom->getIdx() == nbrAtom->getIdx()) {
                         continue;
                       }
-                      // if the carbon neighbor is another carbon bonded
-                      // via a double or aromatic bond, ipso is HOCC
-                      if ((nbr3Atom->getAtomicNum() == 6)
+                      // if the carbon neighbor is another carbon or nitrogen
+                      // bonded via a double or aromatic bond, ipso is HOCC/HOCN
+                      if (((nbr3Atom->getAtomicNum() == 6)
+                        || (nbr3Atom->getAtomicNum() == 7))
                         && ((bond->getBondType() == Bond::DOUBLE)
                         || (bond->getBondType() == Bond::AROMATIC))) {
-                        isHOCC = true;
-                      }
-                      // if the carbon neighbor is a nitrogen bonded
-                      // via a double bond, ipso is HOCN
-                      if ((nbr3Atom->getAtomicNum() == 7)
-                        && (bond->getBondType() == Bond::DOUBLE)) {
-                        isHOCN = true;
+                        isHOCCorHOCN = true;
                       }
                       // if the carbon neighbor is an oxygen bonded
                       // via a double bond, ipso is HOCO
@@ -2158,7 +2152,7 @@ namespace RDKit {
                   atomType = 24;
                   break;
                 }
-                if (isHOCC || isHOCN) {
+                if (isHOCCorHOCN) {
                   // HOCC
                   // Enolic or phenolic hydroxyl hydrogen
                   // HOCN

@@ -2,8 +2,6 @@
 //
 // Copyright (C)  2013 Paolo Tosco
 //
-// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
-//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -73,7 +71,7 @@ bool fgrep(std::fstream &rdkFStream, std::string key)
 }
 
 
-bool getLineByNum(std::istream& stream,
+bool getLineByNum(std::fstream &stream,
   std::streampos startPos, unsigned int n, std::string& line)
 {
   std::streampos current = stream.tellg();
@@ -413,7 +411,8 @@ void mmffValidationSuite(int argc, char *argv[])
         std::vector<std::string> nameArray;
 
         rdkFStream.open(rdk.c_str(), (firstTest
-          ? std::fstream::out : (std::fstream::out | std::fstream::app)));
+          ? std::fstream::out | std::fstream::binary
+          : (std::fstream::out | std::fstream::binary | std::fstream::app)));
         std::string computingKey = (*ffIt) + " energies for " + (*molFileIt);
         std::cerr << std::endl << "Computing " << computingKey << "..." << std::endl;
         for (i = 0; i < computingKey.length(); ++i) {
@@ -458,8 +457,8 @@ void mmffValidationSuite(int argc, char *argv[])
         sdfWriter->close();
         rdkFStream.close();
         std::cerr << "Checking against " << ref << "..." << std::endl;
-        rdkFStream.open(rdk.c_str(), std::fstream::in);
-        refFStream.open(ref.c_str(), std::fstream::in);
+        rdkFStream.open(rdk.c_str(), std::fstream::in | std::fstream::binary);
+        refFStream.open(ref.c_str(), std::fstream::in | std::fstream::binary);
         
         bool found = false;
         std::string skip;
