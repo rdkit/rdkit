@@ -20,8 +20,11 @@
 #include <Numerics/Vector.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 using namespace RDKit;
 
@@ -145,16 +148,9 @@ void testMMFFO3A() {
   for (int prbNum = 0; prbNum < nMol; ++prbNum) {
     ROMol *prbMol = supplier[prbNum];
     MMFF::MMFFMolProperties prbMP(*prbMol);
-    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP);
     double rmsd = o3a.align();
     cumScore += o3a.score();
-    #else
-    MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(*prbMol, *refMol, &prbMP, &refMP);
-    double rmsd = o3a->align();
-    cumScore += o3a->score();
-    delete o3a;
-    #endif
     cumMsd += rmsd * rmsd;
     //newMol->write(prbMol);
     delete prbMol;
@@ -195,17 +191,10 @@ void testCrippenO3A() {
     std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
     Descriptors::getCrippenAtomContribs(*prbMol, prbLogpContribs,
       prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
-    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
                       MolAlign::O3A::CRIPPEN);
     double rmsd = o3a.align();
     cumScore += o3a.score();
-    #else
-    MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(*prbMol, *refMol, prbLogpContribs, refLogpContribs);
-    double rmsd = o3a->align();
-    cumScore += o3a->score();
-    delete o3a;
-    #endif
     cumMsd += rmsd * rmsd;
     //newMol->write(prbMol);
     delete prbMol;
@@ -239,19 +228,11 @@ void testMMFFO3AMolHist() {
     double *prbDmat=MolOps::get3DDistanceMat(*prbMol);
     MolAlign::MolHistogram prbHist(*prbMol, prbDmat);
     
-    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP,
                       MolAlign::O3A::MMFF94, -1, -1, false,
-                      50, 0, NULL, &prbHist, &refHist);
+                      50, 0, NULL, NULL, NULL, &prbHist, &refHist);
     double rmsd = o3a.align();
     cumScore += o3a.score();
-    #else
-    MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(*prbMol, *refMol,
-      &prbMP, &refMP, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
-    double rmsd = o3a->align();
-    cumScore += o3a->score();
-    delete o3a;
-    #endif
     cumMsd += rmsd * rmsd;
     //newMol->write(prbMol);
     delete prbMol;
@@ -297,18 +278,10 @@ void testCrippenO3AMolHist() {
     double *prbDmat=MolOps::get3DDistanceMat(*prbMol);
     MolAlign::MolHistogram prbHist(*prbMol, prbDmat);
     
-    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
-      MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
+      MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, NULL, NULL, NULL, &prbHist, &refHist);
     double rmsd = o3a.align();
     cumScore += o3a.score();
-    #else
-    MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(*prbMol, *refMol,
-      prbLogpContribs, refLogpContribs, -1, -1, false, 50, 0, NULL, &prbHist, &refHist);
-    double rmsd = o3a->align();
-    cumScore += o3a->score();
-    delete o3a;
-    #endif
     cumMsd += rmsd * rmsd;
     //newMol->write(prbMol);
     delete prbMol;
@@ -321,6 +294,209 @@ void testCrippenO3AMolHist() {
   TEST_ASSERT(RDKit::feq(sqrt(cumMsd),.304,.001));
 }
 
+void testMMFFO3AConstraints() {
+  ROMol *m = SmilesToMol("n1ccc(cc1)-c1ccccc1");
+  TEST_ASSERT(m);
+  ROMol *m1 = MolOps::addHs(*m);
+  delete m;
+  TEST_ASSERT(m1);
+  DGeomHelpers::EmbedMolecule(*m1);
+  MMFF::sanitizeMMFFMol((RWMol &)(*m1));
+  MMFF::MMFFMolProperties mp(*m1);
+  TEST_ASSERT(mp.isValid());
+  ForceFields::ForceField *field = MMFF::constructForceField(*m1, &mp);
+  field->initialize();
+  field->minimize();
+  RWMol *patt = SmartsToMol("nccc-cccc");
+  MatchVectType matchVect;
+  TEST_ASSERT(SubstructMatch(*m1, (ROMol &)*patt, matchVect));
+  unsigned int nIdx = matchVect[0].second;
+  unsigned int cIdx = matchVect[matchVect.size() - 1].second;
+  MolTransforms::setDihedralDeg(m1->getConformer(), matchVect[2].second,
+    matchVect[3].second, matchVect[4].second, matchVect[5].second, 0.0);
+  ROMol m2(*m1);
+  MolAlign::randomTransform(m2);
+  ROMol m3(m2);
+  MolAlign::O3A *o3a = new MolAlign::O3A(m2, *m1, &mp, &mp);
+  TEST_ASSERT(o3a);
+  o3a->align();
+  delete o3a;
+  double d = (m2.getConformer().getAtomPos(cIdx)
+    - m1->getConformer().getAtomPos(cIdx)).length();
+  TEST_ASSERT(feq(d, 0.0, 1));
+  MatchVectType constraintMap;
+  constraintMap.push_back(std::make_pair(cIdx, nIdx));
+  o3a = new MolAlign::O3A(m3, *m1, &mp, &mp,
+    MolAlign::O3A::MMFF94, -1, -1, false, 50, 0, &constraintMap);
+  TEST_ASSERT(o3a);
+  o3a->align();
+  delete o3a;
+  d = (m3.getConformer().getAtomPos(cIdx)
+    - m1->getConformer().getAtomPos(cIdx)).length();
+  TEST_ASSERT(feq(d, 7.0, 1.0));
+  delete m1;
+}
+
+void testCrippenO3AConstraints() {
+  ROMol *m = SmilesToMol("n1ccc(cc1)-c1ccccc1");
+  TEST_ASSERT(m);
+  ROMol *m1 = MolOps::addHs(*m);
+  delete m;
+  TEST_ASSERT(m1);
+  DGeomHelpers::EmbedMolecule(*m1);
+  MMFF::sanitizeMMFFMol((RWMol &)(*m1));
+  MMFF::MMFFMolProperties mp(*m1);
+  TEST_ASSERT(mp.isValid());
+  ForceFields::ForceField *field = MMFF::constructForceField(*m1, &mp);
+  field->initialize();
+  field->minimize();
+  RWMol *patt = SmartsToMol("nccc-cccc");
+  MatchVectType matchVect;
+  TEST_ASSERT(SubstructMatch(*m1, (ROMol &)*patt, matchVect));
+  unsigned int nIdx = matchVect[0].second;
+  unsigned int cIdx = matchVect[matchVect.size() - 1].second;
+  MolTransforms::setDihedralDeg(m1->getConformer(), matchVect[2].second,
+    matchVect[3].second, matchVect[4].second, matchVect[5].second, 0.0);
+  ROMol m2(*m1);
+  MolAlign::randomTransform(m2);
+  ROMol m3(m2);
+  unsigned int prbNAtoms = m2.getNumAtoms();
+  std::vector<double> prbLogpContribs(prbNAtoms);
+  std::vector<double> prbMRContribs(prbNAtoms);
+  std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+  std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+  Descriptors::getCrippenAtomContribs(m2, prbLogpContribs,
+    prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+  MolAlign::O3A *o3a = new MolAlign::O3A(m2, *m1,
+    &prbLogpContribs, &prbLogpContribs, MolAlign::O3A::CRIPPEN);
+  TEST_ASSERT(o3a);
+  o3a->align();
+  delete o3a;
+  double d = (m2.getConformer().getAtomPos(cIdx)
+    - m1->getConformer().getAtomPos(cIdx)).length();
+  TEST_ASSERT(feq(d, 0.0, 1));
+  MatchVectType constraintMap;
+  constraintMap.push_back(std::make_pair(cIdx, nIdx));
+  o3a = new MolAlign::O3A(m3, *m1, &prbLogpContribs, &prbLogpContribs,
+    MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, &constraintMap);
+  TEST_ASSERT(o3a);
+  o3a->align();
+  delete o3a;
+  d = (m3.getConformer().getAtomPos(cIdx)
+    - m1->getConformer().getAtomPos(cIdx)).length();
+  TEST_ASSERT(feq(d, 7.0, 1.0));
+  delete m1;
+}
+
+void testMMFFO3AConstraintsAndLocalOnly() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
+  SDMolSupplier supplier(sdf, true, false);
+  const int refNum = 23;
+  const int prbNum = 32;
+  ROMol *refMol = supplier[refNum];
+  ROMol *prbMol = supplier[prbNum];
+  unsigned int refNAtoms = refMol->getNumAtoms();
+  std::vector<double> refLogpContribs(refNAtoms);
+  std::vector<double> refMRContribs(refNAtoms);
+  std::vector<unsigned int> refAtomTypes(refNAtoms);
+  std::vector<std::string> refAtomTypeLabels(refNAtoms);
+  Descriptors::getCrippenAtomContribs(*refMol, refLogpContribs,
+    refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+  unsigned int prbNAtoms = prbMol->getNumAtoms();
+  std::vector<double> prbLogpContribs(prbNAtoms);
+  std::vector<double> prbMRContribs(prbNAtoms);
+  std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+  std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+  Descriptors::getCrippenAtomContribs(*prbMol, prbLogpContribs,
+    prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+  RWMol *patt = SmartsToMol("S");
+  MatchVectType matchVect;
+  TEST_ASSERT(SubstructMatch(*refMol, (ROMol &)*patt, matchVect));
+  delete patt;
+  unsigned int refSIdx = matchVect[0].second;
+  matchVect.clear();
+  patt = SmartsToMol("O");
+  TEST_ASSERT(SubstructMatch(*prbMol, (ROMol &)*patt, matchVect));
+  delete patt;
+  unsigned int prbOIdx = matchVect[0].second;
+  std::vector<double> distOS(2);
+  distOS[0] = 2.7;
+  distOS[1] = 0.4;
+  std::vector<double> weights(2);
+  weights[0] = 0.1;
+  weights[1] = 100.0;
+  for (unsigned int i = 0; i < 2; ++i) {
+    MatchVectType constraintMap;
+    constraintMap.push_back(std::make_pair(prbOIdx, refSIdx));
+    RDNumeric::DoubleVector constraintWeights(1);
+    constraintWeights[0] = weights[i];
+    MolAlign::O3A *o3a = new MolAlign::O3A(*prbMol, *refMol,
+      &prbLogpContribs, &refLogpContribs, MolAlign::O3A::CRIPPEN,
+      -1, -1, false, 50, 0, &constraintMap, &constraintWeights);
+    TEST_ASSERT(o3a);
+    o3a->align();
+    delete o3a;
+    o3a = new MolAlign::O3A(*prbMol, *refMol, &prbLogpContribs,
+      &refLogpContribs, MolAlign::O3A::CRIPPEN, -1, -1,
+      false, 50, MolAlign::O3_LOCAL_ONLY);
+    TEST_ASSERT(o3a);
+    o3a->align();
+    delete o3a;
+    double d = (prbMol->getConformer().getAtomPos(prbOIdx)
+      - refMol->getConformer().getAtomPos(refSIdx)).length();
+    TEST_ASSERT(feq(d, distOS[i], 0.1));
+  }
+}
+
+void testCrippenO3AConstraintsAndLocalOnly() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
+  SDMolSupplier supplier(sdf, true, false);
+  const int refNum = 23;
+  const int prbNum = 32;
+  ROMol *refMol = supplier[refNum];
+  ROMol *prbMol = supplier[prbNum];
+  MMFF::MMFFMolProperties refMP(*refMol);
+  TEST_ASSERT(refMP.isValid());
+  MMFF::MMFFMolProperties prbMP(*prbMol);
+  TEST_ASSERT(prbMP.isValid());
+  RWMol *patt = SmartsToMol("S");
+  MatchVectType matchVect;
+  TEST_ASSERT(SubstructMatch(*refMol, (ROMol &)*patt, matchVect));
+  delete patt;
+  unsigned int refSIdx = matchVect[0].second;
+  matchVect.clear();
+  patt = SmartsToMol("O");
+  TEST_ASSERT(SubstructMatch(*prbMol, (ROMol &)*patt, matchVect));
+  delete patt;
+  unsigned int prbOIdx = matchVect[0].second;
+  std::vector<double> distOS(2);
+  distOS[0] = 3.2;
+  distOS[1] = 0.3;
+  std::vector<double> weights(2);
+  weights[0] = 10.0;
+  weights[1] = 100.0;
+  for (unsigned int i = 0; i < 2; ++i) {
+    MatchVectType constraintMap;
+    constraintMap.push_back(std::make_pair(prbOIdx, refSIdx));
+    RDNumeric::DoubleVector constraintWeights(1);
+    constraintWeights[0] = weights[i];
+    MolAlign::O3A *o3a = new MolAlign::O3A(*prbMol, *refMol, &prbMP, &refMP,
+      MolAlign::O3A::MMFF94, -1, -1, false, 50, 0, &constraintMap, &constraintWeights);
+    TEST_ASSERT(o3a);
+    o3a->align();
+    delete o3a;
+    o3a = new MolAlign::O3A(*prbMol, *refMol, &prbMP, &refMP,
+      MolAlign::O3A::MMFF94, -1, -1, false, 50, MolAlign::O3_LOCAL_ONLY);
+    TEST_ASSERT(o3a);
+    o3a->align();
+    delete o3a;
+    double d = (prbMol->getConformer().getAtomPos(prbOIdx)
+      - refMol->getConformer().getAtomPos(refSIdx)).length();
+    TEST_ASSERT(feq(d, distOS[i], 0.1));
+  }
+}
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
@@ -335,16 +511,9 @@ namespace {
         if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
         ROMol prbMol(*mols[i]);
         MMFF::MMFFMolProperties prbMP(prbMol);
-        #ifdef USE_O3A_CONSTRUCTOR
         MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
         double rmsd = o3a.align();
         double score = o3a.score();
-        #else
-        MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(prbMol, *refMol, &prbMP, &refMP);
-        double rmsd = o3a->align();
-        double score = o3a->score();
-        delete o3a;
-        #endif
         TEST_ASSERT(feq(rmsd,rmsds[i]));
         TEST_ASSERT(feq(score,scores[i]));
       }
@@ -374,17 +543,10 @@ namespace {
         std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
         Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
           prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
-        #ifdef USE_O3A_CONSTRUCTOR
         MolAlign::O3A o3a(prbMol, refMolCopy, &prbLogpContribs, &refLogpContribs, 
                           MolAlign::O3A::CRIPPEN);
         double rmsd = o3a.align();
         double score = o3a.score();
-        #else
-        MolAlign::O3A *o3a = MolAlign::calcCrippenO3A(prbMol, refMolCopy, prbLogpContribs, refLogpContribs);
-        double rmsd = o3a->align();
-        double score = o3a->score();
-        delete o3a;
-        #endif
         TEST_ASSERT(feq(rmsd,rmsds[i]));
         TEST_ASSERT(feq(score,scores[i]));
       }
@@ -420,16 +582,9 @@ void testMMFFO3AMultiThread() {
   for(unsigned int i=0;i<mols.size();++i){
     ROMol prbMol(*mols[i]);
     MMFF::MMFFMolProperties prbMP(prbMol);
-    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
     rmsds[i]=o3a.align();
     scores[i] = o3a.score();
-    #else
-    MolAlign::O3A *o3a = MolAlign::calcMMFFO3A(prbMol, *refMol, &prbMP, &refMP);
-    rmsds[i]=o3a->align();
-    scores[i] = o3a->score();
-    delete o3a;
-    #endif
   }
   
   boost::thread_group tg;
@@ -488,18 +643,10 @@ void testCrippenO3AMultiThread() {
     std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
     Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
       prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
-    #ifdef USE_O3A_CONSTRUCTOR
     MolAlign::O3A o3a(prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
                           MolAlign::O3A::CRIPPEN);
     rmsds[i]=o3a.align();
     scores[i] = o3a.score();
-    #else
-    MolAlign::O3A *o3a = MolAlign::calcCrippenO3A
-      (prbMol, *refMol, prbLogpContribs, refLogpContribs);
-    rmsds[i]=o3a->align();
-    scores[i] = o3a->score();
-    delete o3a;
-    #endif
   }
   
   boost::thread_group tg;
@@ -549,12 +696,28 @@ int main() {
   testMMFFO3AMolHist();
 
   std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A with constraints\n\n";
+  testMMFFO3AConstraints();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A with variable weight constraints followed by local-only optimization\n\n";
+  testMMFFO3AConstraintsAndLocalOnly();
+
+  std::cout << "\t---------------------------------\n";
   std::cout << "\t testCrippenO3A \n\n";
   testCrippenO3A();
 
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testCrippenO3A with pre-computed dmat and MolHistogram\n\n";
   testCrippenO3AMolHist();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A with constraints\n\n";
+  testCrippenO3AConstraints();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A with variable weight constraints followed by local-only optimization\n\n";
+  testCrippenO3AConstraintsAndLocalOnly();
 
 #ifdef RDK_TEST_MULTITHREADED
   std::cout << "\t---------------------------------\n";

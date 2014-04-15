@@ -1,5 +1,6 @@
+// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
+//  Copyright (C) 2013-2014 Paolo Tosco
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,26 +25,88 @@
 #include <boost/multi_array.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#define USE_O3A_CONSTRUCTOR
-
 namespace RDKit {
   namespace MolAlign {
     typedef struct O3AFuncData {
-      const ROMol *prbMol;
-      const ROMol *refMol;
-      int prbCid;
-      int refCid;
+      const Conformer *prbConf;
+      const Conformer *refConf;
       void *prbProp;
       void *refProp;
       int coeff;
       int weight;
       bool useMMFFSim;
     } O3AFuncData;
-    inline const bool isDoubleZero(const double x) {
+    inline bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     };
     
+    class O3AConstraintVect;
+    
+    //! A class to define alignment constraints. Each constraint
+    //! is defined by a pair of atom indexes (one for the probe,
+    //! one for the reference) and a weight. Constraints can
+    //! can be added via the O3AConstraintVect class.
+    class O3AConstraint {
+      friend class O3AConstraintVect;
+      public:
+        double getPrbIdx() {
+          return d_prbIdx;
+        }
+        double getRefIdx() {
+          return d_refIdx;
+        }
+        double getWeight() {
+          return d_weight;
+        }
+      private:
+        unsigned int d_idx;
+        unsigned int d_prbIdx;
+        unsigned int d_refIdx;
+        double d_weight;
+    };
+
+    //! A class to store a vector of alignment constraints. Each constraint
+    //! is defined by an O3AConstraint object. Each time the append()
+    //! method is invoked, the vector is sorted to make lookup faster.
+    //! Hence, constraints are not necessarily stored in the same order
+    //! they were appended.
+    class O3AConstraintVect {
+      public:
+        O3AConstraintVect() :
+          d_count(0) {};
+        ~O3AConstraintVect() {};
+        void append(unsigned int prbIdx, unsigned int refIdx, double weight) {
+          O3AConstraint *o3aConstraint = new O3AConstraint();
+          o3aConstraint->d_idx = d_count;
+          o3aConstraint->d_prbIdx = prbIdx;
+          o3aConstraint->d_refIdx = refIdx;
+          o3aConstraint->d_weight = weight;
+          d_o3aConstraintVect.push_back(boost::shared_ptr<O3AConstraint>(o3aConstraint));
+          std::sort(d_o3aConstraintVect.begin(),
+            d_o3aConstraintVect.end(), d_compareO3AConstraint);
+          ++d_count;
+        }
+        std::vector<boost::shared_ptr<O3AConstraint> >::size_type size() {
+          return d_o3aConstraintVect.size();
+        }
+        O3AConstraint *operator[](unsigned int i) {
+          return d_o3aConstraintVect[i].get();
+        }
+      private:
+        unsigned int d_count;
+        std::vector<boost::shared_ptr<O3AConstraint> > d_o3aConstraintVect;
+        static bool d_compareO3AConstraint(boost::shared_ptr<O3AConstraint> a, boost::shared_ptr<O3AConstraint> b)
+        {
+          return ((a->d_prbIdx != b->d_prbIdx) ? (a->d_prbIdx < b->d_prbIdx)
+            : ((a->d_refIdx != b->d_refIdx) ? (a->d_refIdx < b->d_refIdx)
+            : ((a->d_weight != b->d_weight) ? (a->d_weight > b->d_weight)
+            : (a->d_idx < b->d_idx))));
+        };
+    };
+
     const int O3_DUMMY_COST = 100000;
+    const int O3_LARGE_NEGATIVE_WEIGHT = -1e9;
+    const int O3_DEFAULT_CONSTRAINT_WEIGHT = 100.0;
     const unsigned int O3_MAX_H_BINS = 20;
     const unsigned int O3_MAX_SDM_ITERATIONS = 100;
     const unsigned int O3_MAX_SDM_THRESHOLD_ITER = 3;
@@ -61,7 +124,9 @@ namespace RDKit {
     const double O3_CRIPPEN_COEFF = 1.0;
     const int O3_MAX_WEIGHT_COEFF = 5;
     enum {
-      O3_USE_MMFF_WEIGHTS = (1<<0)
+      O3_USE_MMFF_WEIGHTS = (1<<0),
+      O3_ACCURACY_MASK = (1<<0 | 1<<1),
+      O3_LOCAL_ONLY = (1<<2)
     };
     
     class MolHistogram {
@@ -101,7 +166,8 @@ namespace RDKit {
       }
       void computeMinCostPath(const int dim);
       void computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
-        const ROMol &refMol, const MolHistogram &refHist, int (*costFunc)
+        const ROMol &refMol, const MolHistogram &refHist,
+        O3AConstraintVect *o3aConstraintVect, int (*costFunc)
         (const unsigned int, const unsigned int, double, void *),
         void *data, const unsigned int n_bins = O3_MAX_H_BINS);
     private:
@@ -119,20 +185,16 @@ namespace RDKit {
     class SDM {
     public:
       // constructor
-      SDM(const ROMol *prbMol = NULL, const ROMol *refMol = NULL,
-        void *prbProp = NULL, void *refProp = NULL,
-        const int prbCid = -1, const int refCid = -1,
-        const bool reflect = false) : 
-        d_prbMol(prbMol),
-        d_refMol(refMol),
-        d_prbCid(prbCid),
-        d_refCid(refCid) {};
+      SDM(const Conformer *prbConf = NULL, const Conformer *refConf = NULL,
+        O3AConstraintVect *o3aConstraintVect = NULL) : 
+        d_prbConf(prbConf),
+        d_refConf(refConf),
+        d_o3aConstraintVect(o3aConstraintVect) {};
       // copy constructor
       SDM(const SDM &other) :
-        d_prbMol(other.d_prbMol),
-        d_refMol(other.d_refMol),
-        d_prbCid(other.d_prbCid),
-        d_refCid(other.d_refCid),
+        d_prbConf(other.d_prbConf),
+        d_refConf(other.d_refConf),
+        d_o3aConstraintVect(other.d_o3aConstraintVect),
         d_SDMPtrVect(other.d_SDMPtrVect.size()) {
         for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
           d_SDMPtrVect[i] = boost::shared_ptr<SDMElement>(new SDMElement());
@@ -141,10 +203,9 @@ namespace RDKit {
       };
       // assignment operator
       SDM& operator=(const SDM &other) {
-        d_prbMol = other.d_prbMol;
-        d_refMol = other.d_refMol;
-        d_prbCid = other.d_prbCid;
-        d_refCid = other.d_refCid;
+        d_prbConf = other.d_prbConf;
+        d_refConf = other.d_refConf;
+        d_o3aConstraintVect = other.d_o3aConstraintVect;
         d_SDMPtrVect.resize(other.d_SDMPtrVect.size());
         for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
           d_SDMPtrVect[i] = boost::shared_ptr<SDMElement>(new SDMElement());
@@ -173,48 +234,55 @@ namespace RDKit {
         int score;
         int cost;
         double sqDist;
+        O3AConstraint *o3aConstraint;
       } SDMElement;
-      const ROMol *d_prbMol;
-      const ROMol *d_refMol;
-      int d_prbCid;
-      int d_refCid;
+      const Conformer *d_prbConf;
+      const Conformer *d_refConf;
+      O3AConstraintVect *d_o3aConstraintVect;
       std::vector<boost::shared_ptr<SDMElement> > d_SDMPtrVect;
       static bool compareSDMScore(boost::shared_ptr<SDMElement> a, boost::shared_ptr<SDMElement> b)
       {
         return ((a->score != b->score) ? (a->score < b->score)
           : ((a->cost != b->cost) ? (a->cost < b->cost)
-          : (a->idx[0] < b->idx[0])));
+          : ((a->idx[0] != b->idx[0]) ? (a->idx[0] < b->idx[0])
+          : (a->idx[1] < b->idx[1]))));
       };
       static bool compareSDMDist(boost::shared_ptr<SDMElement> a, boost::shared_ptr<SDMElement> b)
       {
-        return (isDoubleZero(a->sqDist - b->sqDist)
-          ? (a->idx[0] < b->idx[0]) : (a->sqDist < b->sqDist));
+        double aWeight = (a->o3aConstraint ? a->o3aConstraint->getWeight() : 0.0);
+        double bWeight = (b->o3aConstraint ? b->o3aConstraint->getWeight() : 0.0);
+        return ((aWeight != bWeight) ? (aWeight > bWeight)
+          : ((a->sqDist != b->sqDist) ? (a->sqDist < b->sqDist)
+          : ((a->idx[0] != b->idx[0]) ? (a->idx[0] < b->idx[0])
+          : (a->idx[1] < b->idx[1]))));
       };
     };
     
     class O3A {
     public:
       //! pre-defined atom typing schemes
-      typedef enum { 
+      typedef enum {
         MMFF94=0,
         CRIPPEN
       } AtomTypeScheme;
-      #ifdef USE_O3A_CONSTRUCTOR
       O3A(ROMol &prbMol, const ROMol &refMol,
           void *prbProp, void *refProp, AtomTypeScheme atomTypes = MMFF94,
           const int prbCid = -1, const int refCid = -1,
           const bool reflect = false, const unsigned int maxIters = 50,
-          const unsigned int accuracy = 0, LAP *extLAP = NULL,
+          unsigned int options = 0, const MatchVectType *constraintMap = NULL,
+          const RDNumeric::DoubleVector *constraintWeights = NULL, LAP *extLAP = NULL,
           MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
-      #endif
       O3A(int (*costFunc)(const unsigned int, const unsigned int, double, void *),
-          double (*weightFunc)(const unsigned int, const unsigned int, void *),
-          double (*scoringFunc)(const unsigned int, const unsigned int, void *),
-          void *data, ROMol &prbMol, const ROMol &refMol, void *prbProp,
-          void *refProp, const int prbCid = -1, const int refCid = -1,
-          const bool reflect = false, const unsigned int maxIters = 50,
-          const unsigned int accuracy = 0, LAP *extLAP = NULL,
-          MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
+        double (*weightFunc)(const unsigned int, const unsigned int, void *),
+        double (*scoringFunc)(const unsigned int, const unsigned int, void *),
+        void *data, ROMol &prbMol, const ROMol &refMol,
+        const int prbCid, const int refCid,
+        boost::dynamic_bitset<> *prbHvyAtoms = NULL,
+        boost::dynamic_bitset<> *refHvyAtoms = NULL,
+        const bool reflect = false, const unsigned int maxIters = 50,
+        unsigned int options = 0, O3AConstraintVect *o3aConstraintVect = NULL,
+        ROMol *extWorkPrbMol = NULL, LAP *extLAP = NULL,
+        MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
       ~O3A() {
         if (d_o3aMatchVect) {
           delete d_o3aMatchVect;
@@ -254,18 +322,6 @@ namespace RDKit {
     int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx, double hSum, void *data);
     double o3aCrippenWeightFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
     double o3aCrippenScoringFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
-    #ifndef USE_O3A_CONSTRUCTOR
-    O3A *calcMMFFO3A(ROMol &prbMol, const ROMol &refMol,
-      MMFF::MMFFMolProperties *prbMP, MMFF::MMFFMolProperties *refMP,
-      const int prbCid = -1, const int refCid = -1, const bool reflect = false,
-      const unsigned int maxIters = 50, const unsigned int accuracy = 0,
-      LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
-    O3A *calcCrippenO3A(ROMol &prbMol, const ROMol &refMol,
-      std::vector<double> &prbLogpContribs, std::vector<double> &refLogpContribs,
-      const int prbCid = -1, const int refCid = -1, const bool reflect = false,
-      const unsigned int maxIters = 50, const unsigned int accuracy = 0,
-      LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL, MolHistogram *extRefHist = NULL);
-    #endif
   }
 }
 #endif
