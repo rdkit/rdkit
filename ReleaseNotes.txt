@@ -133,12 +133,12 @@ Contrib updates:
  (github pull 213)
 - ConformerParser functionality
  (github pull 245)
-- Fix Bison 3.x incompabtility
- (github pull 226)
 
 Other:
 - The Open3DAlign code is considerably faster.
 - The SMILES parsing code is faster.
+- Fix Bison 3.x incompabtility
+ (github pull 226)
 - Add Travis support
  (github pull 227)
 - port of rdkit.ML  bindings from Python/C API to boost::python
