@@ -83,10 +83,15 @@ namespace RDKit {
     std::vector<unsigned int> *aIds = _translateIds(atomIds);
     std::vector<unsigned int> *cIds = _translateIds(confIds);
     MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters);
-
-    delete wtsVec;
-    delete aIds;
-    delete cIds;
+    if (wtsVec) {
+      delete wtsVec;
+    }
+    if (aIds) {
+      delete aIds;
+    }
+    if (cIds) {
+      delete cIds;
+    }
   }
     
   PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
@@ -131,8 +136,12 @@ namespace RDKit {
     RDGeom::Transform3D trans;
     double rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
                                                   wtsVec, reflect, maxIters);
-    delete aMap;
-    delete wtsVec;
+    if (aMap) {
+      delete aMap;
+    } 
+    if (wtsVec) {
+      delete wtsVec;
+    }
 
     return generateRmsdTransPyTuple(rmsd, trans);
   }
@@ -157,9 +166,12 @@ namespace RDKit {
     }
     double rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, 
                                      wtsVec, reflect, maxIters);
-    delete aMap;
-    delete wtsVec;
-
+    if (aMap) {
+      delete aMap;
+    } 
+    if (wtsVec) {
+      delete wtsVec;
+    }
     return rmsd;
   }
   
@@ -208,8 +220,31 @@ namespace RDKit {
                   python::object prbProps,
                   python::object refProps,
                   int prbCid = -1, int refCid = -1, bool reflect = false,
-                  unsigned int maxIters = 50, unsigned int accuracy = 0)
+                  unsigned int maxIters = 50, unsigned int options = 0,
+                  python::list constraintMap = python::list(),
+                  python::list constraintWeights = python::list())
     {
+      MatchVectType *cMap = (python::len(constraintMap)
+        ? _translateAtomMap(constraintMap) : NULL);
+      RDNumeric::DoubleVector *cWts = NULL;
+      if (cMap) {
+        cWts = _translateWeights(constraintWeights);
+        if (cWts) {
+          if ((*cMap).size() != (*cWts).size()) {
+            throw_value_error("The number of weights should match the number of constraints");
+          }
+        }
+        for (unsigned int i = 0; i < (*cMap).size(); ++i) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+            throw_value_error("Constrained atom idx out of range");
+          }
+          if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
+            || (refMol[(*cMap)[i].second]->getAtomicNum() == 1)) {
+            throw_value_error("Constrained atoms must be heavy atoms");
+          }
+        }
+      }
       ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties=NULL;
       MMFF::MMFFMolProperties *prbMolProps=NULL;
       ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties=NULL;
@@ -233,19 +268,19 @@ namespace RDKit {
           throw_value_error("missing MMFF94 parameters for reference molecule");
         }
       }
-      #ifdef USE_O3A_CONSTRUCTOR
       O3A *o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps,refMolProps,
                                    MolAlign::O3A::MMFF94, prbCid, refCid,
-                                   reflect, maxIters, accuracy);
-      #else
-      O3A *o3a = MolAlign::calcMMFFO3A(prbMol, refMol,
-                                   prbMolProps,refMolProps,
-                                   prbCid, refCid, reflect, maxIters, accuracy);
-      #endif
+                                   reflect, maxIters, options, cMap, cWts);
       PyO3A *pyO3A = new PyO3A(o3a);
 
       if(!prbPyMMFFMolProperties) delete prbMolProps;
       if(!refPyMMFFMolProperties) delete refMolProps;
+      if (cMap) {
+        delete cMap;
+      } 
+      if (cWts) {
+        delete cWts;
+      }
       
       return pyO3A;
     }
@@ -253,8 +288,31 @@ namespace RDKit {
                   python::list prbCrippenContribs,
                   python::list refCrippenContribs,
                   int prbCid = -1, int refCid = -1, bool reflect = false,
-                  unsigned int maxIters = 50, unsigned int accuracy = 0)
+                  unsigned int maxIters = 50, unsigned int options = 0,
+                  python::list constraintMap = python::list(),
+                  python::list constraintWeights = python::list())
     {
+      MatchVectType *cMap = (python::len(constraintMap)
+        ? _translateAtomMap(constraintMap) : NULL);
+      RDNumeric::DoubleVector *cWts = NULL;
+      if (cMap) {
+        cWts = _translateWeights(constraintWeights);
+        if (cWts) {
+          if ((*cMap).size() != (*cWts).size()) {
+            throw_value_error("The number of weights should match the number of constraints");
+          }
+        }
+        for (unsigned int i = 0; i < (*cMap).size(); ++i) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+            throw_value_error("Constrained atom idx out of range");
+          }
+          if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
+            || (refMol[(*cMap)[i].second]->getAtomicNum() == 1)) {
+            throw_value_error("Constrained atoms must be heavy atoms");
+          }
+        }
+      }
       unsigned int prbNAtoms = prbMol.getNumAtoms();
       std::vector<double> prbLogpContribs(prbNAtoms);
       unsigned int refNAtoms = refMol.getNumAtoms();
@@ -288,15 +346,16 @@ namespace RDKit {
         Descriptors::getCrippenAtomContribs(refMol, refLogpContribs,
           refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
       }
-      #ifdef USE_O3A_CONSTRUCTOR
       O3A *o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
                                    MolAlign::O3A::CRIPPEN, prbCid, refCid,
-                                   reflect, maxIters, accuracy);
-      #else
-      O3A *o3a = MolAlign::calcCrippenO3A(prbMol, refMol, prbLogpContribs,
-        refLogpContribs, prbCid, refCid, reflect, maxIters, accuracy);
-      #endif
+                                   reflect, maxIters, options, cMap, cWts);
       PyO3A *pyO3A = new PyO3A(o3a);
+      if (cMap) {
+        delete cMap;
+      } 
+      if (cWts) {
+        delete cWts;
+      }
       
       return pyO3A;
     }
@@ -435,8 +494,17 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - refCid                   ID of the conformation in the ref molecule to which \n\
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
+                                 (defaults to false)\n\
       - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
-      - accuracy                 0: maximum (the default); 3: minimum\n\
+                                 (defaults to 50)\n\
+      - options                  least 2 significant bits encode accuracy\n\
+                                 (0: maximum, 3: minimum; defaults to 0)\n\
+                                 bit 3 triggers local optimization of the alignment\n\
+                                 (no computation of the cost matrix; defaults: off)\n\
+      - constraintMap            a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
+                                 which shall be used for the alignment (defaults to [])\n\
+      - constraintWeights        optionally specify weights for each of the constraints\n\
+                                 (weights default to 100.0)\n\
        \n\
       RETURNS\n\
       RMSD value\n\
@@ -447,7 +515,9 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                python::arg("refPyMMFFMolProperties") = python::object(),
                python::arg("prbCid") = -1, python::arg("refCid") = -1,
                python::arg("reflect") = false, python::arg("maxIters") = 50,
-               python::arg("accuracy") = 0),
+               python::arg("options") = 0,
+               python::arg("constraintMap") = python::list(),
+               python::arg("constraintWeights") = python::list()),
                python::return_value_policy<python::manage_new_object>(),
                docString.c_str());
   docString = "Get an O3A object with atomMap and weights vectors to overlay\n\
@@ -468,8 +538,17 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - refCid                   ID of the conformation in the ref molecule to which \n\
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
+                                 (defaults to false)\n\
       - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
-      - accuracy                 0: maximum (the default); 3: minimum\n\
+                                 (defaults to 50)\n\
+      - options                  least 2 significant bits encode accuracy\n\
+                                 (0: maximum, 3: minimum; defaults to 0)\n\
+                                 bit 3 triggers local optimization of the alignment\n\
+                                 (no computation of the cost matrix; defaults: off)\n\
+      - constraintMap            a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
+                                 which shall be used for the alignment (defaults to [])\n\
+      - constraintWeights        optionally specify weights for each of the constraints\n\
+                                 (weights default to 100.0)\n\
        \n\
       RETURNS\n\
       RMSD value\n\
@@ -480,7 +559,9 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                python::arg("refCrippenContribs") = python::list(),
                python::arg("prbCid") = -1, python::arg("refCid") = -1,
                python::arg("reflect") = false, python::arg("maxIters") = 50,
-               python::arg("accuracy") = 0),
+               python::arg("options") = 0,
+               python::arg("constraintMap") = python::list(),
+               python::arg("constraintWeights") = python::list()),
                python::return_value_policy<python::manage_new_object>(),
                docString.c_str());
 }
