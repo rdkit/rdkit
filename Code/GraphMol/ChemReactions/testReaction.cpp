@@ -2395,7 +2395,16 @@ void test23Pickling(){
     delete rxn;
     rxn = new ChemicalReaction();
     ReactionPickler::reactionFromPickle(pkl,rxn);
+    TEST_ASSERT(!rxn->isInitialized());
     rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->isInitialized());
+
+    // quick test of github issue #249
+    ReactionPickler::pickleReaction(rxn,pkl);
+    delete rxn;
+    rxn = new ChemicalReaction();
+    ReactionPickler::reactionFromPickle(pkl,rxn);
+    TEST_ASSERT(rxn->isInitialized());
 
     smi = "OC(=O)CN";
     ROMol *mol = SmilesToMol(smi);

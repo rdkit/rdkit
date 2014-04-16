@@ -111,10 +111,12 @@ namespace RDKit{
 
   */
   class ChemicalReaction {
+    friend class ReactionPickler;
+
   public:
     ChemicalReaction() : df_needsInit(true), df_implicitProperties(false) {};
     ChemicalReaction(const ChemicalReaction &other){
-        df_needsInit=true;
+        df_needsInit=other.df_needsInit;
         df_implicitProperties=other.df_implicitProperties;
         m_reactantTemplates=other.m_reactantTemplates;
         m_productTemplates=other.m_productTemplates;
