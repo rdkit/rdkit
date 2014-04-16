@@ -28,7 +28,7 @@ namespace RDKit {
 
     // given the atomic num, this function returns the periodic
     // table row number, starting from 0 for hydrogen
-    const unsigned int getPeriodicTableRow(const int atomicNum)
+    unsigned int getPeriodicTableRow(const int atomicNum)
     {
       unsigned int periodicTableRow = 0;
       
@@ -2308,7 +2308,7 @@ namespace RDKit {
 
     // returns the MMFF angle type of the angle formed
     // by atoms with indexes idx1, idx2, idx3
-    const unsigned int MMFFMolProperties::getMMFFAngleType
+    unsigned int MMFFMolProperties::getMMFFAngleType
       (const ROMol &mol, const unsigned int idx1,
       const unsigned int idx2, const unsigned int idx3)
     {
@@ -2346,7 +2346,7 @@ namespace RDKit {
     
 
     // returns the MMFF bond type of the bond
-    const unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond)
+    unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond)
     {
       PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
@@ -2368,7 +2368,7 @@ namespace RDKit {
     // given the angle type and the two bond types of the bond
     // which compose the angle, it returns the MMFF stretch-bend
     // type of the angle
-    const unsigned int getMMFFStretchBendType(const unsigned int angleType,
+    unsigned int getMMFFStretchBendType(const unsigned int angleType,
       const unsigned int bondType1, const unsigned int bondType2)
     {
       unsigned int stretchBendType = 0;

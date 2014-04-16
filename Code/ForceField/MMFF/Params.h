@@ -37,7 +37,7 @@ namespace ForceFields {
 
     const double DEG2RAD = M_PI / 180.0;
     const double RAD2DEG = 180.0 / M_PI;
-    inline const bool isDoubleZero(const double x) {
+    inline bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     }
 
@@ -152,7 +152,7 @@ namespace ForceFields {
       /*!
 	\return a pointer to the MMFFArom object, NULL on failure.
       */
-      const bool isMMFFAromatic(const unsigned int atomType) const {
+      bool isMMFFAromatic(const unsigned int atomType) const {
         return ((std::find(d_params.begin(), d_params.end(),
           atomType) != d_params.end()) ? true : false);
       }
