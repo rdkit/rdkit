@@ -37,6 +37,8 @@ Bug Fixes:
  (github issue 180)
 - ctabs do not contain wedged bonds for chiral s
  (github issue 186)
+- ctabs do not contain "A" when appropriate
+ (github issue 187)
 - Problems round-tripping Al2Cl6 via CTAB
  (github issue 189)
 - Don't merge Hs onto dummies
@@ -59,6 +61,8 @@ Bug Fixes:
  (github pull 219)
 - aromatic B ("b") causes errors from SMARTS parser
  (github issue 220)
+- Segmentation fault for MMFF optimization with dummy atoms
+ (github issue 224)
 - isMoleculeReactantOfReaction() and isMoleculeProductOfReaction() not useable from SWIG wrappers
  (github issue 228)
 - cartridge: mol_from_ctab() ignores argument about keeping conformers
@@ -97,10 +101,16 @@ New Features:
  (github issue 181)
 - Support richer QueryAtom options in Python
  (github issue 183)
+- Support writing V3000 mol blocks
+ (github issue 184)
 - Allow disabling the building of tests
  (github issue 185)
+- Expand DbCLI to allow updating databases 
+ (github issue 197)
 - Code refactoring and enhancement to allow for O3A alignment according to atom-based Crippen logP contribs
  (github pull 201)
+- call MolOps::assignStereochemistry() with flagPossibleStereoCenters true from within the molecule parsers.
+ (github issue 210)
 - Support passing of file-like PandasTools.LoadSDF
  (github pull 221)
 - Reaction SMARTS parser should support agents
@@ -117,6 +127,8 @@ New Features:
  (github pull 246)
 
 New Database Cartridge Features: 
+- Support configuration of fingerprint sizes in cartridge.
+ (github issue 216)
 - Add mol_to_ctab(mol, bool default true) to Postgres cartridge.
  (github pull 230)
 - Adds sum formula function to PG cartridge.
