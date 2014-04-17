@@ -8,7 +8,7 @@
 
 
 Acknowledgements:
-Paul Czodrowski, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright 
+Paul Czodrowski, Markus Elfring, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright 
 
 Bug Fixes:
 - Dict::DataType declaration causing problems with C++11 std::lib
