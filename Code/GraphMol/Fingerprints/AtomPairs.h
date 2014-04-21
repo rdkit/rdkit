@@ -94,6 +94,8 @@ namespace RDKit {
                              invariant are used.
       \param includeChirality: if set, chirality will be used in the atom invariants
                                (note: this is ignored if atomInvariants are provided)  
+      \param use2D:       if set, the 2D (topological) distance matrix is used.
+      
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -105,14 +107,16 @@ namespace RDKit {
                            const std::vector<boost::uint32_t> *fromAtoms=0,
                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
                            const std::vector<boost::uint32_t> *atomInvariants=0,
-                           bool includeChirality=false);
+                           bool includeChirality=false,
+                           bool use2D=true);
     //! \overload
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,
                            const std::vector<boost::uint32_t> *fromAtoms=0,
                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
                            const std::vector<boost::uint32_t> *atomInvariants=0,
-                           bool includeChirality=false);
+                           bool includeChirality=false,
+                           bool use2D=true);
 
 
     //! returns the hashed atom-pair fingerprint for a molecule
@@ -135,6 +139,7 @@ namespace RDKit {
                              invariant are used.
       \param includeChirality: if set, chirality will be used in the atom invariants
                                (note: this is ignored if atomInvariants are provided)  
+      \param use2D:       if set, the 2D (topological) distance matrix is used.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -148,7 +153,8 @@ namespace RDKit {
                                  const std::vector<boost::uint32_t> *fromAtoms=0,
                                  const std::vector<boost::uint32_t> *ignoreAtoms=0,
                                  const std::vector<boost::uint32_t> *atomInvariants=0,
-                                 bool includeChirality=false);
+                                 bool includeChirality=false,
+                                 bool use2D=true);
     //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
     /*!
       \param mol:   the molecule to be fingerprinted
@@ -170,6 +176,7 @@ namespace RDKit {
       \param nBitsPerEntry: number of bits to use in simulating counts
       \param includeChirality: if set, chirality will be used in the atom invariants
                                (note: this is ignored if atomInvariants are provided)  
+      \param use2D:       if set, the 2D (topological) distance matrix is used.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -184,7 +191,8 @@ namespace RDKit {
                                           const std::vector<boost::uint32_t> *ignoreAtoms=0,
                                           const std::vector<boost::uint32_t> *atomInvariants=0,
                                           unsigned int nBitsPerEntry=4,
-                                          bool includeChirality=false);
+                                          bool includeChirality=false,
+                                          bool use2D=true);
                                           
 
 

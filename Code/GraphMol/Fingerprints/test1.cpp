@@ -2535,6 +2535,58 @@ void testGitHubIssue151(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+
+void test3DAtomPairs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test 3D atom pairs." << std::endl;
+
+  std::string fName= getenv("RDBASE");
+  fName += "/Code/GraphMol/Fingerprints/testData/triangle.sdf";
+  SDMolSupplier suppl(fName);
+  {
+    ROMol *mol=suppl.next();
+    SparseIntVect<boost::int32_t> *fp;
+    // do the 3D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,false);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+    // now do the 2D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,true);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+
+    // we should get a conformer exception if there are no conformers:
+    mol->clearConformers();
+    bool ok=false;
+    try{
+      fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,false);
+    } catch (ConformerException &e){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    
+    delete mol;
+  }
+  {
+    ROMol *mol=suppl.next();
+    SparseIntVect<boost::int32_t> *fp;
+    // do the 3D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,false);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+    // now do the 2D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,true);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testGitHubIssue195(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 195: GenMACCSKeys() raises an exception with an empty molecule" << std::endl;
@@ -2591,6 +2643,7 @@ int main(int argc,char *argv[]){
   testGitHubIssue25();
 #endif
   testGitHubIssue151();
+  test3DAtomPairs();
   testGitHubIssue195();
   return 0;
 }
