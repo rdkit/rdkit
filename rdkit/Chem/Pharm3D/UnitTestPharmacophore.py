@@ -11,7 +11,7 @@
 from rdkit import RDConfig
 import unittest,sys,os,cPickle
 from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem import ChemicalFeatures,AllChem
 import EmbedLib
 import gzip
 
@@ -107,7 +107,28 @@ class TestCase(unittest.TestCase):
     self.failUnlessRaises(IndexError,pcophore.setLowerBound2D,3,0,2)
     self.failUnlessRaises(ValueError,pcophore.setLowerBound2D,3,0,2,checkBounds=True)
 
+  def test4Github252(self):
+    fdef= os.path.join(RDConfig.RDDataDir,'BaseFeatures.fdef')
+    feat_factory = ChemicalFeatures.BuildFeatureFactory(fdef)
 
+    m1 = Chem.MolFromSmiles('Cc1ccccc1')
+    feats = feat_factory.GetFeaturesForMol(m1)
+    try:
+      pcophore = Pharmacophore.Pharmacophore(feats)
+      ok=False
+    except:
+      ok=True
+    self.failUnless(ok)
+
+    AllChem.Compute2DCoords(m1)
+    try:
+      pcophore = Pharmacophore.Pharmacophore(feats)
+      ok=True
+    except:
+      ok=False
+    self.failUnless(ok)
+
+    
     
 if __name__ == '__main__':
   unittest.main()

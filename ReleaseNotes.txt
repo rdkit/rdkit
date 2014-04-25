@@ -77,6 +77,8 @@ Bug Fixes:
  (github issue 243)
 - Two bugfixes in MMFF code
  (github pull 248)
+- seg fault when trying to construct pharmacophore with no conformation
+ (github issue 252)
 
 New Features:
 - Expose gasteiger charge calculation to SWIG
@@ -125,7 +127,9 @@ New Features:
  (github pull 244)
 - Support of RDK fingerprints added to SimilarityMaps
  (github pull 246)
-
+- support 3D distances in the atom pair finerprints
+ (github issue 251)
+ 
 New Database Cartridge Features: 
 - Support configuration of fingerprint sizes in cartridge.
  (github issue 216)
