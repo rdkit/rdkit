@@ -20,6 +20,7 @@ from rdkit import RDConfig
 
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
+from mol2 import MolToMol2Block, MolToMol2File
 from rdkit.Chem import PeriodicTable as pyPeriodicTable
 from rdkit.Chem import rdchem
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
@@ -27,6 +28,7 @@ from rdkit.Chem.rdchem import *
 from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
 from rdkit.Chem.inchi import *
+
 
 def QuickSmartsMatch(smi,sma,unique=True,display=False):
   m = MolFromSmiles(smi)
