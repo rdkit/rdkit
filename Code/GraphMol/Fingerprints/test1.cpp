@@ -2602,6 +2602,71 @@ void testGitHubIssue195(){
 }
 
 
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+  void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx,
+                const std::vector<ExplicitBitVect *> &referenceData){
+    for(unsigned int j=0;j<300;j++){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+        ExplicitBitVect *lbv=PatternFingerprintMol(*mol,2048);
+        TEST_ASSERT((*lbv)==(*referenceData[i]));
+        delete lbv;
+      }
+    }
+  };
+}
+
+#include <boost/thread.hpp>  
+void testMultithreadedPatternFP(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_200.props.sdf";
+  SDMolSupplier suppl(fName);
+  std::cerr<<"reading molecules and generating reference data"<<std::endl;
+  std::vector<ROMol *> mols;
+  std::vector<ExplicitBitVect *> referenceData;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+    ExplicitBitVect *bv=PatternFingerprintMol(*mol,2048);
+    referenceData.push_back(bv);
+  }
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData));
+  }
+  tg.join_all();
+
+  for(unsigned int i=0;i<mols.size();++i){
+    delete mols[i];
+    delete referenceData[i];
+  }
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#else
+void testMultithreadedPatternFP(){
+}
+#endif
+
+
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -2645,5 +2710,6 @@ int main(int argc,char *argv[]){
   testGitHubIssue151();
   test3DAtomPairs();
   testGitHubIssue195();
+  testMultithreadedPatternFP();
   return 0;
 }
