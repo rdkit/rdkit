@@ -1,3 +1,13 @@
+// $Id$
+//
+//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #pragma once
 #include <vector>
 #include <stdexcept>
@@ -10,7 +20,7 @@ namespace RDKit
 {
  namespace FMCS
  {
-#ifdef FAST_INCREMENTAL_MATCH
+#ifdef xxFAST_INCREMENTAL_MATCH //unused and works fast without it
         struct AtomAdjacency
         {
             const Bond* Bond;
@@ -28,7 +38,7 @@ namespace RDKit
         MatchTable      AtomMatchTable;
         MatchTable      BondMatchTable;
 #endif
-#ifdef FAST_INCREMENTAL_MATCH
+#ifdef xxFAST_INCREMENTAL_MATCH
         std::vector<AtomAdjacencyList> AtomAdjacency;
 #endif
     };

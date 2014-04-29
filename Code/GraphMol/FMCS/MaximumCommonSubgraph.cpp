@@ -1,3 +1,13 @@
+// $Id$
+//
+//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #include <list>
 #include <algorithm>
 #include <math.h>
@@ -187,7 +197,7 @@ void MaximumCommonSubgraph::init()
         for(ROMol::ConstAtomIterator a = Targets[i].Molecule->beginAtoms(); a != Targets[i].Molecule->endAtoms(); a++, j++)
         {
             Targets[i].Topology.addAtom((*a)->getIdx());
-#ifdef FAST_INCREMENTAL_MATCH
+#ifdef xxFAST_INCREMENTAL_MATCH
             Targets[i].AtomAdjacency.resize((*it)->getNumAtoms());
             ROMol::OEDGE_ITER beg,end;
             for(boost::tie(beg,end) = (*it)->getAtomBonds(*a); beg!=end; beg++)  // all bonds from the atom
@@ -296,8 +306,6 @@ void MaximumCommonSubgraph::makeInitialSeeds()
 
         }
     }
-//    Seeds.MaxBonds = 1;
-//    Seeds.MaxAtoms = 2;
 }
 
 bool MaximumCommonSubgraph::growSeeds()
@@ -402,8 +410,10 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)
             , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
             );
 #endif
+        if(!target_matched)
+            continue;
         atomMatchResult[itarget].resize(seed.getNumAtoms());
-        for(match_V_t::const_iterator mit = match.begin(); target_matched && mit != match.end(); mit++)
+        for(match_V_t::const_iterator mit = match.begin(); mit != match.end(); mit++)
         {
             unsigned ai = mit->first;  // SeedAtomIdx
             atomMatchResult[itarget][ai].QueryAtomIdx  = seed.Topology[mit->first];
@@ -414,7 +424,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)
         }
         // AND BUILD BOND MATCH INFO
         unsigned bi=0;
-        for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); target_matched && bond != mcsIdx.Bonds.end(); bond++, bi++)
+        for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
         {
             unsigned i = atomIdxMap[(*bond)->getBeginAtomIdx()];
             unsigned j = atomIdxMap[(*bond)->getEndAtomIdx()];
@@ -564,6 +574,9 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
     for(size_t i=0; i < Molecules.size() - ThresholdCount && !res.Canceled; i++)
     {
         init();
+
+//std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
+
         makeInitialSeeds();
         res.Canceled = growSeeds() ? false : true;
         if(i+1 < Molecules.size() - ThresholdCount)
@@ -598,7 +611,7 @@ if(ConsoleOutputEnabled)
     std::cout << " fastMatchCalls = " << VerboseStatistics.FastMatchCall <<"\n"
               << " fastMatchFound = " << VerboseStatistics.FastMatchCallTrue <<"\n";
     std::cout << " slowMatchCalls = " << VerboseStatistics.MatchCall     - VerboseStatistics.FastMatchCallTrue <<"\n"
-              << " slowMatchFound = " << VerboseStatistics.MatchCallTrue - VerboseStatistics.FastMatchCallTrue <<"\n";
+              << " slowMatchFound = " << VerboseStatistics.SlowMatchCallTrue<<"\n";
 #endif
 #ifdef PRECOMPUTED_TABLES_MATCH
     std::cout << "--- USED PreComputed Match TABLES ! ---\n";
@@ -735,7 +748,7 @@ bool MaximumCommonSubgraph::match(Seed& seed)
 #endif
         bool target_matched = false;
 #ifdef FAST_INCREMENTAL_MATCH
-        if(!seed.MatchResult[itarget].empty())
+        if(!seed.MatchResult.empty() && !seed.MatchResult[itarget].empty())
             target_matched = matchIncrementalFast(seed, itarget);
 #endif
         if(!target_matched) // slow full match
@@ -755,17 +768,20 @@ bool MaximumCommonSubgraph::match(Seed& seed)
             );
 #endif
 #ifdef FAST_INCREMENTAL_MATCH   // save current match info
-            seed.MatchResult[itarget].clear();//resize(target_matched ? match.size() : 0);
-            for(match_V_t::const_iterator mit = match.begin(); target_matched && mit != match.end(); mit++)
+            if(target_matched)
             {
-                BondMatch m;
-                m.SeedAtomIdx   = mit->first;
-                m.QueryAtomIdx  = seed.GraphTopology[mit->first];
-                m.TargetAtomIdx = mit->second; //==target.Topology[it->second]);
-                seed.MatchResult[itarget].push_back(m); // add for each matched bond
+                if (seed.MatchResult.empty())
+                    seed.MatchResult.resize(Targets.size());
+                seed.MatchResult[itarget].init(seed, match, *QueryMolecule, *tag);
             }
-            //AND RESTORE BOND MATCH INFO !!!!!!!!!!!!!!!!!!!!!
+            else
+                if(!seed.MatchResult.empty())
+                    seed.MatchResult[itarget].clear();//.Empty = true; // == fast clear();
 #endif
+        #ifdef VERBOSE_STATISTICS_ON
+            if(target_matched)
+                ++VerboseStatistics.SlowMatchCallTrue;
+        #endif
         }
 
         if(target_matched)
@@ -790,84 +806,128 @@ bool MaximumCommonSubgraph::match(Seed& seed)
 }
 
 #ifdef FAST_INCREMENTAL_MATCH
-// call it by target, if fail perform full match check
+
+// call it for each target, if fail perform full match check
 bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget)
 {
     // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
     ++VerboseStatistics.FastMatchCall;
 #endif
-    Target& t = Targets[itarget];
-    BondMatchSet& match = seed.MatchResult[itarget];
-    size_t previousLen = match.size();
-    for(unsigned newBondSeedIdx = seed.LastAddedBondsBeginIdx; newBondSeedIdx < seed.getNumBonds(); newBondSeedIdx++)
+    const Target& target = Targets[itarget];
+    TargetMatch& match = seed.MatchResult[itarget];
+    if(match.empty())
+        return false;
+    bool matched = false;
+    for(unsigned newBondSeedIdx = match.MatchedBondSize; newBondSeedIdx < seed.getNumBonds(); newBondSeedIdx++)
     {
-        bool found=false;
-        const Bond* bond = seed.MoleculeFragment.Bonds[newBondSeedIdx];
+        matched = false;
+        bool atomAdded = false;
+        const Bond* newBond = seed.MoleculeFragment.Bonds[newBondSeedIdx];
         unsigned newBondQueryIdx   = seed.MoleculeFragment.BondsIdx[newBondSeedIdx];
-        unsigned i = seed.MoleculeFragment.SeedAtomIdxMap[bond->getBeginAtomIdx()];
-        if(i >= seed.LastAddedAtomsBeginIdx) // old atom in the seed
-            i = seed.MoleculeFragment.SeedAtomIdxMap[bond->getEndAtomIdx()];
-        unsigned newBondSourceAtomSeedIdx   = i; // seed's index of atom from which new bond was added
-        const BondMatch& ma = seed.MatchResult[itarget][i];
-        unsigned newBondSourceAtomTargetIdx = ma.TargetAtomIdx; // corresponding atom in the target
-unsigned newBondSourceAtomQueryIdx  = ma.QueryAtomIdx;
-//const Atom* newBondSourceAtomTarget = t.Molecule->getAtomWithIdx(newBondSourceAtomTargetIdx);
-        // check all unvisited bonds from newBondSourceAtomTargetIdx
-        const AtomAdjacencyList& taAdj = t.AtomAdjacency[newBondSourceAtomTargetIdx];
-        for(size_t itaAdji = 0; itaAdji < taAdj.size(); itaAdji++)
-        {
-            unsigned tbi = taAdj[itaAdji].BondIdx;
-            if(t.BondMatchTable.at(newBondQueryIdx, tbi))
-            {
-/*
-                // and check ending atom of the bond too 
-                //..........
-                bool visited = false;
-                //match.find
-                //MULTIPLE various bonds for one atom !!!
-                for(size_t im = 0; !visited && im < match.size(); im++)
-                    if(seed.MatchResult[itarget][im]. == )
-                        visited = true;
-                if(visited) // visited == targer bons already presents in the match of this seed
-                    continue;
-                // append to match result
-                seed.MatchResult[itarget][]
 
-                found = true;
-                break;
-*/
+        unsigned newBondSourceAtomSeedIdx;  // seed's index of atom from which new bond was added
+        unsigned newBondAnotherAtomSeedIdx; // seed's index of atom on another end of the bond
+        unsigned i = seed.MoleculeFragment.SeedAtomIdxMap[newBond->getBeginAtomIdx()];
+        unsigned j = seed.MoleculeFragment.SeedAtomIdxMap[newBond->getEndAtomIdx()];
+        if(i >= match.MatchedAtomSize) // this is new atom in the seed
+        {
+            newBondSourceAtomSeedIdx  = j;
+            newBondAnotherAtomSeedIdx = i;
+        }
+        else
+        {
+            newBondSourceAtomSeedIdx  = i;
+            newBondAnotherAtomSeedIdx = j;
+        }
+        unsigned newBondAnotherAtomQueryIdx = seed.MoleculeFragment.AtomsIdx[newBondAnotherAtomSeedIdx];
+        unsigned newBondSourceAtomQueryIdx  = seed.MoleculeFragment.AtomsIdx[newBondSourceAtomSeedIdx ];
+        unsigned newBondSourceAtomTargetIdx = match.TargetAtomIdx[newBondSourceAtomQueryIdx]; // matched to newBondSourceAtomSeedIdx
+
+        const Bond* tb = NULL;
+        unsigned newBondAnotherAtomTargetIdx = -1;
+
+        if(newBondAnotherAtomSeedIdx < match.MatchedAtomSize) // new bond between old atoms - both are matched to exact atoms in the target
+        {
+            newBondAnotherAtomTargetIdx = match.TargetAtomIdx[newBondAnotherAtomQueryIdx];
+            tb = target.Molecule->getBondBetweenAtoms(newBondSourceAtomTargetIdx, newBondAnotherAtomTargetIdx); //target bond between Source and Another atoms
+            if(tb) // bond exists, check match with query molecule
+            {
+                unsigned tbi = tb->getIdx();
+                unsigned qbi = seed.MoleculeFragment.BondsIdx[newBondAnotherAtomSeedIdx];
+                if( ! match.VisitedTargetBonds[tbi])   // false if target bond is already matched
+                    matched = target.BondMatchTable.at(qbi, tbi);
             }
         }
+        else // enumerate all bonds from source atom in the target
+        {
+            const Atom* atom = target.Molecule->getAtomWithIdx(newBondSourceAtomTargetIdx);
+            ROMol::OEDGE_ITER beg,end;
+            for(boost::tie(beg,end) = target.Molecule->getAtomBonds(atom); beg!=end; beg++)
+            {
+                tb = & *((*target.Molecule)[*beg]);
+                if( ! match.VisitedTargetBonds[tb->getIdx()])
+                {
+                    newBondAnotherAtomTargetIdx = tb->getBeginAtomIdx();
+                    if(newBondSourceAtomTargetIdx == newBondAnotherAtomTargetIdx)
+                        newBondAnotherAtomTargetIdx = tb->getEndAtomIdx();
+
+                    if(newBondAnotherAtomSeedIdx < seed.LastAddedAtomsBeginIdx  // RING: old atom, new atom in matched substructure must be new in seed
+                       || std::find(seed.MoleculeFragment.AtomsIdx.begin()+seed.LastAddedAtomsBeginIdx, 
+                                    seed.MoleculeFragment.AtomsIdx.begin()+newBondAnotherAtomSeedIdx, newBondAnotherAtomQueryIdx) == seed.MoleculeFragment.AtomsIdx.end())
+                    {
+                        if(!match.VisitedTargetAtoms[newBondAnotherAtomTargetIdx])
+                            continue;
+                    }
+                    else
+                    {
+                        if( match.VisitedTargetAtoms[newBondAnotherAtomTargetIdx])
+                            continue;
+                    }
+
+                //check AnotherAtom and bond
+                    matched = target.AtomMatchTable.at(newBondAnotherAtomQueryIdx, newBondAnotherAtomTargetIdx);
+                    if(matched)
+                    {
+                        matched = target.BondMatchTable.at(seed.MoleculeFragment.BondsIdx[newBondSeedIdx], tb->getIdx());
+                        atomAdded = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(matched) //update match history
+        {
+            if(atomAdded) //new atom has been added
+            {
+                match.MatchedAtomSize++;
+                match.TargetAtomIdx[newBondAnotherAtomQueryIdx] = newBondAnotherAtomTargetIdx;
+                match.VisitedTargetAtoms[newBondAnotherAtomTargetIdx] = true;
+            }
+            match.MatchedBondSize++;
+            match.TargetBondIdx[newBondQueryIdx] = tb->getIdx();
+            match.VisitedTargetBonds[tb->getIdx()] = true;
+        }
+        else
+        {
+            match.clear();
+            return false;
+        }
     }
-/*/-----------------------
-//Seed:
-unsigned LastAddedBondBeginIdx;
-//history for each tag
-seedBond, tagBond,
-both (seedAtom, tagAtom) of
 
-        Graph q = seed.GraphTopology;
-        for(unsigned ib = seed.LastAddedBondBeginIdx; ib < seed.getNumBonds(); ib++)   // all added bonds
-
-            ib
-            endAtom // of ib
-            unsigned tagBeginAtomIdx = ...; // already verified. matched with seed.
-            for() all outgoing bonds except already matched to seed
-                check match of bond to ib and endAtom to ia if ia is not already verified (ring back to seed)
-        //        for(unsigned srcAtomIdx = seed.LastAddedAtomsBeginIdx; srcAtomIdx < seed.getNumAtoms(); srcAtomIdx++)   // all added atoms
-
-//-----------------------*/
-    if(false // match_ok
-        )
+    if(match.MatchedAtomSize != seed.getNumAtoms() || match.MatchedBondSize != seed.getNumBonds()) // number of unique items !!!
     {
-    #ifdef VERBOSE_STATISTICS_ON
-        ++VerboseStatistics.FastMatchCallTrue;
-    #endif
-        return true;
+        match.clear();
+        return false;
     }
-    match.resize(previousLen);  // clean up - remove new items only
-    return false;
+
+#ifdef VERBOSE_STATISTICS_ON
+    if(matched)
+        ++VerboseStatistics.FastMatchCallTrue;
+#endif
+
+    return matched;
 }
 #endif // FAST_INCREMENTAL_MATCH
 

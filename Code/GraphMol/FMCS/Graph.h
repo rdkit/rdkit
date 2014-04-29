@@ -1,3 +1,14 @@
+// $Id$
+//
+//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 // graph topology in terms of indeces in source molecule
 #pragma once
 #include <boost/graph/adjacency_list.hpp>
@@ -6,24 +17,6 @@ namespace RDKit
 {
  namespace FMCS
  {
-/*
-    template<typename T>
-    class TMatrix // for scalar value types ! including bool with special STL implementation (no reference to item - bitset used)
-    {
-        size_t          Size;
-        std::vector<T>  Data;
-    public:
-        inline TMatrix(size_t size=0) : Size(size), Data(cx*cy) {}
-        inline size_t getSize()const { return Size;}
-        inline bool   empty   ()const { return Data.empty();}
-        inline void   resize(size_t size) { Data.resize(size*size); Size = size;}
-        inline void set(size_t row, size_t col, T val) { Data[row*Size + col] = val;}
-        inline T at(size_t row, size_t col)     { return Data[row*Size + col];}
-        inline T at(size_t row, size_t col)const{ return Data[row*Size + col];}
-    };
-    typedef TMatrix<bool>    AdjacencyMatrix;   // actual graph adjacency matrix, index based
-*/
-
     typedef unsigned AtomIdx_t;
     typedef unsigned BondIdx_t;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, AtomIdx_t, BondIdx_t> Graph_t; 

@@ -1,3 +1,13 @@
+// $Id$
+//
+//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #include "MaximumCommonSubgraph.h"
 #include "Seed.h"
 
@@ -163,14 +173,16 @@ if(0==GrowingStage)
         GrowingStage = -1;
         return; // the biggest possible subrgaph from this seed is too small for future growing. So, skip ALL children !
     }
-
-    bool allMatched = mcs.checkIfMatchAndAppend(seed);//, excludedBonds);   // this seed + all extern bonds is a part of MCS
+#ifdef FAST_INCREMENTAL_MATCH
+        seed.MatchResult = MatchResult;
+#endif
+    bool allMatched = mcs.checkIfMatchAndAppend(seed);  // this seed + all extern bonds is a part of MCS
 
     GrowingStage = 1;
     if(allMatched && newBonds.size() > 1)
         return; // grow deep first. postpone next growing steps
 }
-// 2. Check and add all 2^^N-1 - N other possible seeds:
+// 2. Check and add all 2^N-1-1 other possible seeds:
     if(1 == newBonds.size())
     {
         GrowingStage = -1;
@@ -200,6 +212,10 @@ if(0==GrowingStage)
 
         if(seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune()
         {
+#ifdef FAST_INCREMENTAL_MATCH
+            if(!MatchResult.empty())
+                seed.MatchResult = MatchResult;
+#endif
             if( ! mcs.checkIfMatchAndAppend(seed))
             {
                 nbi->BondIdx = -1; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
@@ -303,11 +319,14 @@ if(0==GrowingStage)
             }
             else
             {
+#ifdef FAST_INCREMENTAL_MATCH
+                seed.MatchResult = MatchResult;
+#endif
                 bool found = mcs.checkIfMatchAndAppend(seed);
 
                 if(!found)
                 {
-#ifdef EXCLUDE_WRONG_COMPOSITION  // if seed does not matched it is possible to exclude this FAILED combination for performance improvement
+#ifdef EXCLUDE_WRONG_COMPOSITION  // if seed does not matched it is possible to exclude this mismatched combination for performance improvement
                     failedCombinations.push_back(composition.getBitSet());
                     failedCombinationsMask &= composition.getBitSet();
 #ifdef VERBOSE_STATISTICS_ON
