@@ -1,3 +1,13 @@
+// $Id$
+//
+//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #pragma once
 #include <vector>
 #include <string>
@@ -9,7 +19,11 @@
 #include "SubstructureCache.h"
 #include "DuplicatedSeedCache.h"
 #include "MatchTable.h"
+#ifdef FAST_INCREMENTAL_MATCH
+#include "TargetMatch.h"
+#endif
 #include "RingMatchTableSet.h"
+
 #include "DebugTrace.h" // algorithm filter definitions
 
 namespace RDKit
@@ -27,6 +41,7 @@ namespace RDKit
             const ROMol*             QueryMolecule;
             std::vector<Target>      Targets;
         };
+
         time_t          To;
         MCSProgressData Stat;
         MCSParameters   Parameters;
@@ -74,7 +89,7 @@ namespace RDKit
         static std::string generateResultSMARTS(const MCS& McsIdx);
 
         bool match(Seed& seed);
-        bool matchIncrementalFast(Seed& seed, unsigned itag); // use results of previous match stored in the seed
+        bool matchIncrementalFast(Seed& seed, unsigned itarget);
     };
 
 }} // namespace RDKit

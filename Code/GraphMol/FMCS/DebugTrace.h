@@ -1,3 +1,13 @@
+// $Id$
+//
+//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #pragma once
 #include <stdio.h>
 #include <string.h>
@@ -11,6 +21,8 @@
     #include <fcntl.h>
 #endif
 
+#define VERBOSE_STATISTICS_ON
+
 // SELECT ALGORITHM OPTIONS by comment some lines to exclude additional or experimental optimisations:
 
 #define SEED_GROW_DEEP              // fast and works much times faster (but it can depend on molecules)
@@ -23,11 +35,8 @@
 #define PRECOMPUTED_TABLES_MATCH    // Improves overal performance about 20%, especially in hard cases.
                                     // Takes some extra memory (Vt*vq+Et*eq)/8 bytes for each target G(Vt,Et) matched with query G(vq,eq).
 
-//#define FAST_INCREMENTAL_MATCH      // NOT IMPLEMENTED YET fast and should be usefull
+#define FAST_INCREMENTAL_MATCH      // NOT IMPLEMENTED YET fast and should be usefull
                                     // history based check match without finding new matched substructure location in the target
-
-
-#define VERBOSE_STATISTICS_ON
 
 // Enable / Disable DEBUG TRACE output
 #ifdef WIN32__xx__TRACE_ON
@@ -47,7 +56,7 @@
         unsigned Seed, RemainingSizeRejected;
         unsigned SeedCheck;
         unsigned MatchCall, MatchCallTrue;
-        unsigned FastMatchCall, FastMatchCallTrue;
+        unsigned FastMatchCall, FastMatchCallTrue, SlowMatchCallTrue;
         unsigned ExactMatchCall, ExactMatchCallTrue;   // hash cache
         unsigned FindHashInCache, HashKeyFoundInCache;
 #ifdef SMILES_CACHE
@@ -63,7 +72,7 @@
                          , InitialSeed(0), MismatchedInitialSeed(0)
                          , Seed(0), RemainingSizeRejected(0)
                          , SeedCheck(0), MatchCall(0), MatchCallTrue(0)
-                         , FastMatchCall(0), FastMatchCallTrue(0)
+                         , FastMatchCall(0), FastMatchCallTrue(0), SlowMatchCallTrue(0)
                          , ExactMatchCall(0), ExactMatchCallTrue(0)
                          , FindHashInCache(0), HashKeyFoundInCache(0)
 #ifdef SMILES_CACHE

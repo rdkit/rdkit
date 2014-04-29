@@ -1,6 +1,6 @@
 // $Id: testFMCS.cpp $
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -900,7 +900,7 @@ int main(int argc, const char* argv[])
 #ifdef xxWIN32  // brief test set for testing and issue investigation
 {
     //test18();
-    testThreshold();
+    //testThreshold();
     testSimple();
 
     //testGregSDFFileSetFiltered();
