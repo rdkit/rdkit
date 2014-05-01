@@ -1,20 +1,76 @@
 import IPython
 if IPython.release.version<'0.11':
     raise ImportError,'this module requires at least v0.11 of IPython'
-
+from rdkit import Chem
 from rdkit.Chem import rdchem,rdChemReactions
 from rdkit.Chem import Draw
 from cStringIO import StringIO
-import copy
+import copy,json,numpy
+
 import numpy
 try:
     import Image
 except ImportError:
     from PIL import Image
 
+
 molSize=(450,150)
 highlightSubstructs=True
 kekulizeStructures=True
+
+_js_drawer=None
+
+ipython_3d = False
+molSize_3d=(450,450)
+drawing_type_3d = "ball and stick"
+camera_type_3d = "perspective"
+def _toJSON(mol):
+    """For IPython notebook, renders 3D pybel.Molecule webGL objects."""
+
+    if not ipython_3d or not mol.GetNumConformers():
+        return None
+
+    conf = mol.GetConformer()
+    if not conf.Is3D():
+        return None
+
+    mol = Chem.Mol(mol)
+    Chem.Kekulize(mol)
+     # If the javascript files have not yet been loaded, do so
+    global _js_drawer
+    if not _js_drawer:
+        import urllib2
+        url = ("https://raw.githubusercontent.com/patrickfuller/imolecule/master/build/imolecule.min.js")
+        _js_drawer = urllib2.urlopen(url).read()
+
+    size = molSize_3d
+
+    # center the molecule:
+    atomps = numpy.array([list(conf.GetAtomPosition(x)) for x in range(mol.GetNumAtoms())])
+    avgP = numpy.average(atomps,0)
+    atomps-=avgP
+    
+    # Convert the relevant parts of `self` into JSON for rendering
+    atoms = [{"element": atom.GetSymbol(),
+              "location": list(atomps[atom.GetIdx()])}
+             for atom in mol.GetAtoms()]
+    bonds = [{"atoms": [bond.GetBeginAtomIdx(),
+                        bond.GetEndAtomIdx()],
+              "order": int(bond.GetBondTypeAsDouble())}
+             for bond in mol.GetBonds()]
+    mol = {"atoms": atoms, "bonds": bonds}
+    json_mol = json.dumps(mol, separators=(",", ":"))
+
+    js = ("var $d = $('<div/>').attr('id', 'molecule_' + utils.uuid());"
+         "$d.width(%d); $d.height(%d);"
+         "imolecule.create($d, {drawingType: '%s', cameraType: '%s'});"
+         "imolecule.draw(%s);"
+         "container.show();"
+         "element.append($d);" % (size + (drawing_type_3d, camera_type_3d,
+                                  json_mol)))
+
+    return _js_drawer + js
+ 
 def _toPNG(mol):
     if hasattr(mol,'__sssAtoms'):
         highlightAtoms=mol.__sssAtoms
@@ -71,6 +127,7 @@ def display_pil_image(img):
 
 def InstallIPythonRenderer():
     rdchem.Mol._repr_png_=_toPNG
+    rdchem.Mol._repr_javascript_=_toJSON
     rdChemReactions.ChemicalReaction._repr_png_=_toReactionPNG
     if not hasattr(rdchem.Mol,'__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch=rdchem.Mol.GetSubstructMatch
