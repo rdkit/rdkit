@@ -143,6 +143,8 @@ New Java Wrapper Features:
 Deprecated modules (to be removed in next release):
 
 Removed modules:
+- The CMIM integration (previously available to python in the rdkit.ML.FeatureSelect package)
+  has been removed due to license incompatibility.
 
 Contrib updates:
 - Added Contribution to train ChEMBL-based models
