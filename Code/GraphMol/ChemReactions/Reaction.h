@@ -273,7 +273,7 @@ namespace RDKit{
   //! returns indices of the atoms in each reactant that are changed
   //! in the reaction
   /*!
-    \param rxn the reaction were are interested in
+    \param rxn the reaction we are interested in
 
     \param mappedAtomsOnly if set, atoms that are not mapped will not be included in
          the list of changed atoms (otherwise they are automatically included)
@@ -299,7 +299,28 @@ namespace RDKit{
   VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,bool mappedAtomsOnly=false);
 
   //! add the recursive queries to the reactants of a reaction
-  void addRecursiveQueriesToReaction(ChemicalReaction &rxn, const std::map<std::string,ROMOL_SPTR> &queries,
+  /*!
+    This does its work using RDKit::addRecursiveQueries()
+
+      \param rxn the reaction we are interested in
+      \param queries        - the dictionary of named queries to add
+      \param propName       - the atom property to use to get query names
+      optional:
+      \param reactantLabels - to store pairs of (atom index, query string)
+                              per reactant
+  
+      NOTES:
+        - existing query information, if present, will be supplemented (AND logic)
+        - non-query atoms will be replaced with query atoms using only the query
+          logic
+        - query names can be present as comma separated lists, they will then
+          be combined using OR logic.
+        - throws a KeyErrorException if a particular query name is not present
+          in \c queries
+
+   */  
+  void addRecursiveQueriesToReaction(ChemicalReaction &rxn,
+                                     const std::map<std::string,ROMOL_SPTR> &queries,
 		  std::string propName,
 		  std::vector<std::vector<std::pair<unsigned int,std::string> > > *reactantLabels=NULL);
 
@@ -309,7 +330,7 @@ namespace RDDepict {
   //! \brief Generate 2D coordinates (a depiction) for a reaction
   /*! 
 
-    \param rxn the reaction were are interested in
+    \param rxn the reaction we are interested in
 
     \param spacing the spacing between components of the reaction
 
