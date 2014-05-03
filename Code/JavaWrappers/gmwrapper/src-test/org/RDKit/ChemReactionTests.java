@@ -420,6 +420,32 @@ public class ChemReactionTests extends GraphMolTest {
 		}
 	}
 
+
+    // @Test
+	public void test99MemoryLeak() {
+		ChemicalReaction rxn = 
+			ChemicalReaction.ReactionFromSmarts("[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]");
+		assertNotNull(rxn );;
+		assertEquals( 2,rxn.getNumReactantTemplates() );
+		assertEquals( 1,rxn.getNumProductTemplates() );
+		assertTrue(rxn.getImplicitPropertiesFlag());
+
+		ROMol_Vect reacts = new ROMol_Vect();
+		for (String react : new String[] {"C(=O)O","N"})
+			reacts.add(RWMol.MolFromSmiles(react));		
+		// Do not need the initReactantMatchers call here
+                for(Integer i=0;i<1000000;i++){
+                    ROMol_Vect_Vect prods = rxn.runReactants(reacts);;
+                    assertEquals( 1,prods.size() );
+                    assertEquals( 1,prods.get(0).size() );
+                    assertEquals( 3,prods.get(0).get(0).getNumAtoms() );
+                    //prods.get(0).get(0).delete();
+                    //prods.get(0).delete();
+                    //prods.delete();
+                }
+
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.ChemReactionTests");
 	}
