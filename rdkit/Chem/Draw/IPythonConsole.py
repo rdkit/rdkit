@@ -79,7 +79,7 @@ def _toJSON(mol):
                      json_mol))
 
 
-def _toPNG(mol):
+def _toSVG(mol):
     if hasattr(mol, '__sssAtoms'):
         highlightAtoms = mol.__sssAtoms
     else:
@@ -90,17 +90,24 @@ def _toPNG(mol):
         mol.UpdatePropertyCache(False)
 
     mc = copy.deepcopy(mol)
+    sio = StringIO()
     try:
-        img = Draw.MolToImage(mc, size=molSize, kekulize=kekulizeStructures,
-                              highlightAtoms=highlightAtoms)
+        Draw.MolToFile(mc, sio, size=molSize, imageType="svg",
+                       kekulize=kekulizeStructures,
+                       highlightAtoms=highlightAtoms)
     except ValueError:  # <- can happen on a kekulization failure
         mc = copy.deepcopy(mol)
-        img = Draw.MolToImage(mc, size=molSize, kekulize=False,
-                              highlightAtoms=highlightAtoms)
+        Draw.MolToFile(mc, sio, size=molSize, kekulize=False,
+                       highlightAtoms=highlightAtoms, imageType="svg")
 
-    sio = StringIO()
-    img.save(sio, format='PNG')
-    return sio.getvalue()
+    # It seems that the svg renderer used doesn't quite hit the spec.
+    # Here are some fixes to make it work in the notebook, although I think
+    # the underlying issue needs to be resolved at the generation step
+    svg_split = sio.getvalue().replace("svg:", "").splitlines()
+    header = ('<svg version="1.1" xmlns="http://www.w3.org/2000/svg"'
+              'width="%dpx" height="%dpx">') % molSize
+    svg = "\n".join(svg_split[:1] + [header] + svg_split[5:])
+    return svg
 
 
 def _toReactionPNG(rxn):
@@ -138,7 +145,7 @@ def display_pil_image(img):
 
 
 def InstallIPythonRenderer():
-    rdchem.Mol._repr_png_ = _toPNG
+    rdchem.Mol._repr_svg_ = _toSVG
     rdchem.Mol._repr_javascript_ = _toJSON
     rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
     if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
@@ -152,7 +159,7 @@ InstallIPythonRenderer()
 
 
 def UninstallIPythonRenderer():
-    del rdchem.Mol._repr_png_
+    del rdchem.Mol._repr_svg_
     del rdChemReactions.ChemicalReaction._repr_png_
     if hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.GetSubstructMatch = rdchem.Mol.__GetSubstructMatch
