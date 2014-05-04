@@ -1,6 +1,6 @@
 import IPython
-if IPython.release.version < '0.11':
-    raise ImportError('this module requires at least v0.11 of IPython')
+if IPython.release.version < '2.0':
+    raise ImportError('this module requires at least v2.0 of IPython')
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
@@ -17,7 +17,7 @@ molSize = (450, 150)
 highlightSubstructs = True
 kekulizeStructures = True
 
-_js_drawer = None
+_3d_initialized = False
 
 ipython_3d = False
 molSize_3d = (450, 450)
@@ -26,7 +26,7 @@ camera_type_3d = "perspective"
 
 
 def _toJSON(mol):
-    """For IPython notebook, renders 3D pybel.Molecule webGL objects."""
+    """For IPython notebook, renders 3D webGL objects."""
 
     if not ipython_3d or not mol.GetNumConformers():
         return None
@@ -37,14 +37,6 @@ def _toJSON(mol):
 
     mol = Chem.Mol(mol)
     Chem.Kekulize(mol)
-     # If the javascript files have not yet been loaded, do so
-    global _js_drawer
-    if not _js_drawer:
-        import urllib2
-        url = ("https://raw.githubusercontent.com/patrickfuller/imolecule/"
-               "master/build/imolecule.min.js")
-        _js_drawer = urllib2.urlopen(url).read()
-
     size = molSize_3d
 
     # center the molecule:
@@ -53,7 +45,19 @@ def _toJSON(mol):
     avgP = numpy.average(atomps, 0)
     atomps -= avgP
 
-    # Convert the relevant parts of `self` into JSON for rendering
+    lib_path = "/nbextensions/imolecule.min.js"
+    # If the javascript lib has not yet been loaded, do so.
+    # IPython >=2.0 does this by copying the file into ~/.ipython/nbextensions
+    global _3d_initialized
+    if not _3d_initialized:
+        import os
+        from IPython.html.nbextensions import install_nbextension
+        filepath = os.path.normpath(os.path.dirname(__file__))
+        install_nbextension([os.path.join(filepath, "imolecule.min.js")],
+                            verbose=0)
+        _3d_initialized = True
+
+    # Convert the relevant parts of the molecule into JSON for rendering
     atoms = [{"element": atom.GetSymbol(),
               "location": list(atomps[atom.GetIdx()])}
              for atom in mol.GetAtoms()]
@@ -64,15 +68,15 @@ def _toJSON(mol):
     mol = {"atoms": atoms, "bonds": bonds}
     json_mol = json.dumps(mol, separators=(",", ":"))
 
-    js = ("var $d = $('<div/>').attr('id', 'molecule_' + utils.uuid());"
-          "$d.width(%d); $d.height(%d);"
-          "imolecule.create($d, {drawingType: '%s', cameraType: '%s'});"
-          "imolecule.draw(%s);"
-          "container.show();"
-          "element.append($d);" % (size + (drawing_type_3d, camera_type_3d,
-                                   json_mol)))
-
-    return _js_drawer + js
+    return """require(['%s'], function () {
+           var $d = $('<div/>').attr('id', 'molecule_' + utils.uuid());
+           $d.width(%d); $d.height(%d);
+           $d.imolecule = jQuery.extend({}, imolecule);
+           $d.imolecule.create($d, {drawingType: '%s', cameraType: '%s'});
+           $d.imolecule.draw(%s);
+           element.append($d);
+           });""" % ((lib_path,) + size + (drawing_type_3d, camera_type_3d,
+                     json_mol))
 
 
 def _toPNG(mol):
