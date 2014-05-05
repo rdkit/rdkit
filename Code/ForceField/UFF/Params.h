@@ -23,7 +23,7 @@ namespace ForceFields {
 
     const double DEG2RAD = M_PI / 180.0;
     const double RAD2DEG = 180.0 / M_PI;
-    inline const bool isDoubleZero(const double x) {
+    inline bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     }
     //! class to store atomic parameters for the Universal Force Field

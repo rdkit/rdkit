@@ -820,6 +820,15 @@ void test1MorganFPs(){
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
 
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false,true,false);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=fp->getNonzeroElements().begin();
+        iter!=fp->getNonzeroElements().end();++iter){
+      TEST_ASSERT(iter->second==1); // check that count == 1
+      ++iter;
+    }
+    delete fp;
+
     fp = MorganFingerprints::getHashedFingerprint(*mol,0);
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
@@ -1737,7 +1746,7 @@ void testMorganAtomInfo(){
     SparseIntVect<boost::uint32_t>::StorageType nze;
 
     mol = SmilesToMol("CCCCC");
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false,true,false,&bitInfo);
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false,true,true,false,&bitInfo);
     nze=fp->getNonzeroElements();
     TEST_ASSERT(nze.size()==2);
     TEST_ASSERT(bitInfo.size()==2);
@@ -1753,7 +1762,7 @@ void testMorganAtomInfo(){
     delete fp;
 
     bitInfo.clear();
-    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,false,true,false,&bitInfo);
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,false,true,true,false,&bitInfo);
     TEST_ASSERT(fp->getNonzeroElements().size()==5);
     for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=nze.begin();
         iter!=nze.end();++iter){
@@ -2526,6 +2535,58 @@ void testGitHubIssue151(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+
+void test3DAtomPairs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test 3D atom pairs." << std::endl;
+
+  std::string fName= getenv("RDBASE");
+  fName += "/Code/GraphMol/Fingerprints/testData/triangle.sdf";
+  SDMolSupplier suppl(fName);
+  {
+    ROMol *mol=suppl.next();
+    SparseIntVect<boost::int32_t> *fp;
+    // do the 3D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,false);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+    // now do the 2D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,true);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+
+    // we should get a conformer exception if there are no conformers:
+    mol->clearConformers();
+    bool ok=false;
+    try{
+      fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,false);
+    } catch (ConformerException &e){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    
+    delete mol;
+  }
+  {
+    ROMol *mol=suppl.next();
+    SparseIntVect<boost::int32_t> *fp;
+    // do the 3D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,false);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+    // now do the 2D version
+    fp = AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,AtomPairs::maxPathLen-1,0,0,0,false,true);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testGitHubIssue195(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 195: GenMACCSKeys() raises an exception with an empty molecule" << std::endl;
@@ -2539,6 +2600,71 @@ void testGitHubIssue195(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+  void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx,
+                const std::vector<ExplicitBitVect *> &referenceData){
+    for(unsigned int j=0;j<300;j++){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+        ExplicitBitVect *lbv=PatternFingerprintMol(*mol,2048);
+        TEST_ASSERT((*lbv)==(*referenceData[i]));
+        delete lbv;
+      }
+    }
+  };
+}
+
+#include <boost/thread.hpp>  
+void testMultithreadedPatternFP(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_200.props.sdf";
+  SDMolSupplier suppl(fName);
+  std::cerr<<"reading molecules and generating reference data"<<std::endl;
+  std::vector<ROMol *> mols;
+  std::vector<ExplicitBitVect *> referenceData;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+    ExplicitBitVect *bv=PatternFingerprintMol(*mol,2048);
+    referenceData.push_back(bv);
+  }
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData));
+  }
+  tg.join_all();
+
+  for(unsigned int i=0;i<mols.size();++i){
+    delete mols[i];
+    delete referenceData[i];
+  }
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#else
+void testMultithreadedPatternFP(){
+}
+#endif
+
+
 
 
 int main(int argc,char *argv[]){
@@ -2582,6 +2708,8 @@ int main(int argc,char *argv[]){
   testGitHubIssue25();
 #endif
   testGitHubIssue151();
+  test3DAtomPairs();
   testGitHubIssue195();
+  testMultithreadedPatternFP();
   return 0;
 }

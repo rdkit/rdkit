@@ -1,8 +1,12 @@
-tests=[
-      ("python","testCMIM.py",{}),
-          ]
 
-longTests=[]
+tests=[
+  ("python","Enumerator.py",{}),
+  ]
+
+
+
+longTests=[
+  ]
 
 if __name__=='__main__':
   import sys

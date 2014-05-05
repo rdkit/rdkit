@@ -4507,6 +4507,43 @@ void testMolFragsWithQuery()
     TEST_ASSERT(res[8]->getNumBonds()==0);
     delete m;
   }
+  {
+    std::string smiles="C1CCC1ONNC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    std::vector<int> keep;
+    keep.push_back(6);
+    keep.push_back(8);
+    std::map<int,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(*m,getAtNum,true,&keep);
+    TEST_ASSERT(res.size()==2);
+    TEST_ASSERT(res.find(6)!=res.end());
+    TEST_ASSERT(res.find(7)==res.end());
+    TEST_ASSERT(res.find(8)!=res.end());
+    TEST_ASSERT(res[6]->getNumAtoms()==5);
+    TEST_ASSERT(res[6]->getNumBonds()==4);
+    TEST_ASSERT(res[8]->getNumAtoms()==1);
+    TEST_ASSERT(res[8]->getNumBonds()==0);
+    delete m;
+  }
+  {
+    std::string smiles="C1CCC1ONNC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    std::vector<int> keep;
+    keep.push_back(6);
+    keep.push_back(8);
+    std::map<int,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(*m,getAtNum,true,&keep,true);
+    TEST_ASSERT(res.size()==1);
+    TEST_ASSERT(res.find(6)==res.end());
+    TEST_ASSERT(res.find(7)!=res.end());
+    TEST_ASSERT(res.find(8)==res.end());
+    TEST_ASSERT(res[7]->getNumAtoms()==2);
+    TEST_ASSERT(res[7]->getNumBonds()==1);
+
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

@@ -53,6 +53,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} 
                 GraphMol RDGeneral Depictor SubstructMatch SmilesParse 
                 ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})           
+  rdkit_headers(inchi.h DEST GraphMol)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_PYTHON_WRAPPERS)

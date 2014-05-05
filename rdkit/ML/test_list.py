@@ -5,7 +5,7 @@ tests=[
   ("python","UnitTestAnalyzeComposite.py",{}),
   ]
 
-for dir in ['Cluster','Composite','Data','DecTree','Descriptors','FeatureSelect','InfoTheory','KNN','ModelPackage','NaiveBayes','Neural','SLT']:
+for dir in ['Cluster','Composite','Data','DecTree','Descriptors','InfoTheory','KNN','ModelPackage','NaiveBayes','Neural','SLT']:
     tests.append(('python','test_list.py',{'dir':dir}))
 
 longTests=[

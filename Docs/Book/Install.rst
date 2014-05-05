@@ -28,7 +28,7 @@ Gianluca Sforna creates binary RPMs that can be found here: <http://giallu.fedor
 MacOS
 -----
 
-Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit <https://github.com/edc/homebrew-rdkit>_
+Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit <https://github.com/rdkit/homebrew-rdkit>_
 
 
 Building from Source

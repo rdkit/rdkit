@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase):
             if p != eg[-1]: nWrong +=1
         self.failUnless(nWrong==1)
 
-    def test5(self) :
+    def _test5(self) : # disabled because CMIM was removed
         examples = [
             ['a',  1,0,1,0,1,1,0,  1],
             ['b',  1,0,0,0,1,0,0,  1],

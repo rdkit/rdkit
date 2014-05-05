@@ -8,27 +8,167 @@
 
 
 Acknowledgements:
+Paul Czodrowski, Markus Elfring, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright 
 
 Bug Fixes:
+- Dict::DataType declaration causing problems with C++11 std::lib
+ (github issue 144)
+- Pre-condition Violation in AllChem.Compute2DCoords
+ (github issue 146)
+- GetSimilarityMapForFingerprint() fails when similarity is zero
+ (github issue 148)
+- PatternFingerprint failure for substructure matching
+ (github issue 151)
+- query atoms don't match ring queries
+ (github issue 153)
+- Incorrect SMILES generated after calling MMFF parameterization
+ (github issue 162)
+- Problems with Xe from SDF
+ (github issue 164)
+- Radicals not being used in atom--atom matches
+ (github issue 165)
+- Cannot skip sanitization while reading PDB
+ (github issue 166)
+- Distance Geometry embedding not thread safe
+ (github issue 167)
+- O3A::align() and O3A::trans() now return "true" RMSD value
+ (github pull 173)
+- RangeError when pre-incrementing or decrementing AtomIterators
+ (github issue 180)
+- ctabs do not contain wedged bonds for chiral s
+ (github issue 186)
+- ctabs do not contain "A" when appropriate
+ (github issue 187)
+- Problems round-tripping Al2Cl6 via CTAB
+ (github issue 189)
+- Don't merge Hs onto dummies
+ (github issue 190)
+- Wavy bonds to Hs in CTABs should affect the stereochemistry of attached double bonds
+ (github issue 191)
+- Rendering binary compounds as ClH, FH, BrH or IH rather than putting H first.
+ (github issue 199)
+- Fixed data race condition in Code/GraphMol/MolAlign/testMolAlign.cpp
+ (github pull 202)
+- Re-prepared SDF/SMILES files of the MMFF validation suite + a fix
+ (github pull 205)
+- Problems round-tripping P with non-default valence.
+ (github issue 206)
+- Added a stricter definition of rotatable bonds as a new function in the ...
+ (github pull 211)
+- Code/GraphMol/AddHs patch proposal
+ (github pull 212)
+- Fix: Changed getNumReactantTemplates to GetNumReactantTemplates.
+ (github pull 219)
+- aromatic B ("b") causes errors from SMARTS parser
+ (github issue 220)
+- Segmentation fault for MMFF optimization with dummy atoms
+ (github issue 224)
+- isMoleculeReactantOfReaction() and isMoleculeProductOfReaction() not useable from SWIG wrappers
+ (github issue 228)
+- cartridge: mol_from_ctab() ignores argument about keeping conformers
+ (github issue 229)
+- Reaction not correctly preserving chirality on unmapped atoms.
+ (github issue 233)
+- AllChem.AssignBondOrdersFromTemplate() fails with nitro groups
+ (github issue 235)
+- Fix molecule dataframe rendering in pandas 0.13.x
+ (github pull 236)
+- Dummy labels copied improperly into products
+ (github issue 243)
+- Two bugfixes in MMFF code
+ (github pull 248)
+- seg fault when trying to construct pharmacophore with no conformation
+ (github issue 252)
+- EmbedMolecule() should not create a conformer for molecules that have zero atoms
+ (github issue 256)
 
 New Features:
-
+- Expose gasteiger charge calculation to SWIG
+ (github issue 152)
+- Added additional functionality to PandasTools
+ (github pull 155)
+- Add MMFFHasAllMoleculeParams() to SWIG interface
+ (github issue 157)
+- O3A code should throw an exception if the parameterization is not complete.
+ (github issue 158)
+- Support zero order bonds
+ (github issue 168)
+- Add attachmentPoint argument to ReplaceSubstructs
+ (github issue 171)
+- Forcefield constraints (distances, angles, torsions, positions)
+ (github pull 172)
+- Add kekulize flag to SDWriter
+ (github issue 174)
+- Support operator= for RWMol
+ (github issue 175)
+- Get GetAromaticAtoms() and GetQueryAtoms() working from python
+ (github issue 181)
+- Support richer QueryAtom options in Python
+ (github issue 183)
+- Support writing V3000 mol blocks
+ (github issue 184)
+- Allow disabling the building of tests
+ (github issue 185)
+- Expand DbCLI to allow updating databases 
+ (github issue 197)
+- Code refactoring and enhancement to allow for O3A alignment according to atom-based Crippen logP contribs
+ (github pull 201)
+- call MolOps::assignStereochemistry() with flagPossibleStereoCenters true from within the molecule parsers.
+ (github issue 210)
+- Support passing of file-like PandasTools.LoadSDF
+ (github pull 221)
+- Reaction SMARTS parser should support agents
+ (github issue 222)
+- Add function to MolOps to allow a molecule to be split into fragments based on a query function
+ (github issue 234)
+- Adding option useCounts for Morgan fingerprints
+ (github pull 238)
+- support SimpleEnum functionality for adding recursive queries to reactions
+ (github issue 242)
+- Additional functions for bit vectors
+ (github pull 244)
+- Support of RDK fingerprints added to SimilarityMaps
+ (github pull 246)
+- support 3D distances in the atom pair finerprints
+ (github issue 251)
+ 
 New Database Cartridge Features: 
+- Support configuration of fingerprint sizes in cartridge.
+ (github issue 216)
+- Add mol_to_ctab(mol, bool default true) to Postgres cartridge.
+ (github pull 230)
+- Adds sum formula function to PG cartridge.
+ (github pull 232)
 
 New Java Wrapper Features:
 
 Deprecated modules (to be removed in next release):
 
 Removed modules:
+- The CMIM integration (previously available to python in the rdkit.ML.FeatureSelect package)
+  has been removed due to license incompatibility.
 
 Contrib updates:
+- Added Contribution to train ChEMBL-based models
+ (github pull 213)
+- ConformerParser functionality
+ (github pull 245)
 
 Other:
- - The Open3DAlign code is considerably faster.
- - The SMILES parsing code is faster.
+- The Open3DAlign code is considerably faster.
+- The SMILES parsing code is faster.
+- Fix Bison 3.x incompabtility
+ (github pull 226)
+- Add Travis support
+ (github pull 227)
+- port of rdkit.ML  bindings from Python/C API to boost::python
+ (github pull 237)
+- The code now builds more easily using the Anaconda python distribution's 
+  conda package manager
+ (github pull 247)
 
 ******  Release_2013.09.2 *******
-(Changes relative to Release_2013.09.2)
+(Changes relative to Release_2013.09.1)
 
 Acknowledgements:
 Andrew Dalke, JP Ebejer, Daniel Moser, Sereina Riniker, Roger Sayle, Manuel Schwarze, Julia Weber
