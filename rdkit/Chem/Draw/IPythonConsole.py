@@ -19,6 +19,7 @@ kekulizeStructures = True
 
 _3d_initialized = False
 
+ipython_useSVG = False
 ipython_3d = False
 molSize_3d = (450, 450)
 drawing_type_3d = "ball and stick"
@@ -79,7 +80,32 @@ def _toJSON(mol):
                      json_mol))
 
 
+def _toPNG(mol):
+    if hasattr(mol,'__sssAtoms'):
+        highlightAtoms=mol.__sssAtoms
+    else:
+        highlightAtoms=[]
+    try:
+        mol.GetAtomWithIdx(0).GetExplicitValence()
+    except RuntimeError:
+        mol.UpdatePropertyCache(False)
+    
+    mc = copy.deepcopy(mol)
+    try:
+        img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
+                            highlightAtoms=highlightAtoms)
+    except ValueError:  # <- can happen on a kekulization failure
+        mc = copy.deepcopy(mol)
+        img = Draw.MolToImage(mc,size=molSize,kekulize=False,
+                            highlightAtoms=highlightAtoms)
+        
+    sio = StringIO()
+    img.save(sio,format='PNG')
+    return sio.getvalue()
+
 def _toSVG(mol):
+    if not ipython_useSVG:
+        return None
     if hasattr(mol, '__sssAtoms'):
         highlightAtoms = mol.__sssAtoms
     else:
@@ -146,6 +172,7 @@ def display_pil_image(img):
 
 def InstallIPythonRenderer():
     rdchem.Mol._repr_svg_ = _toSVG
+    rdchem.Mol._repr_png_ = _toPNG
     rdchem.Mol._repr_javascript_ = _toJSON
     rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
     if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
