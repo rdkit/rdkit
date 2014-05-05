@@ -79,6 +79,8 @@ Bug Fixes:
  (github pull 248)
 - seg fault when trying to construct pharmacophore with no conformation
  (github issue 252)
+- EmbedMolecule() should not create a conformer for molecules that have zero atoms
+ (github issue 256)
 
 New Features:
 - Expose gasteiger charge calculation to SWIG
