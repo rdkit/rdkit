@@ -17,6 +17,7 @@
 
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
+#include <RDBoost/Exceptions.h>
 #include <Numerics/SymmMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <boost/dynamic_bitset.hpp>
@@ -1121,8 +1122,12 @@ namespace RDKit {
 
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                         bool set15bounds, bool scaleVDW) {
+      PRECONDITION(mmat.get(),"bad pointer");
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
+      if(!na){
+        throw ValueErrorException("molecule has no atoms");
+      }
       ComputedData accumData(na, nb);
       double *distMatrix=0;
       distMatrix = MolOps::getDistanceMat(mol);
