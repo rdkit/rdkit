@@ -231,7 +231,15 @@ namespace RDKit{
           }
           const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
                                                     amap[pbond->getEndAtomIdx()]);
-          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+
+          // makes sure aromatic bonds and single bonds from SMARTS always hash the same:
+          if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
+             mbond->getBondType()!=Bond::AROMATIC){
+            gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+          } else {
+            gboost::hash_combine(bitId,(boost::uint32_t)Bond::SINGLE);
+          }
+
         }
         if(!isQuery){
 #ifdef VERBOSE_FINGERPRINTING

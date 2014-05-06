@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
@@ -2601,6 +2602,118 @@ void testGitHubIssue195(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue258(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 258: Bad pattern fingerprint for query molecule" << std::endl;
+
+#if 0
+  {
+    ROMol *qm = SmartsToMol("n2c(-[#6])ccc2-[#6]",
+                            0,true);
+    TEST_ASSERT(qm);
+    std::cerr<<" q: "<<MolToSmarts(*qm)<<std::endl;
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+
+    delete qm;
+
+    qm = SmartsToMol("n2c(cc(c2-[#6]))-[#6]",
+                            0,true);
+    TEST_ASSERT(qm);
+    std::cerr<<" q: "<<MolToSmarts(*qm)<<std::endl;
+    ExplicitBitVect *qbv2=PatternFingerprintMol(*qm,2048);
+
+    ExplicitBitVect dv=(*qbv)^(*qbv2);
+    IntVect iv;
+    dv.getOnBits(iv);
+    std::cerr<<"\n\n";
+    std::copy(iv.begin(),iv.end(),std::ostream_iterator<int>(std::cerr,", "));
+    std::cerr<<std::endl;
+    
+    delete qm;
+    delete qbv;
+    delete qbv2;
+  }
+#endif
+
+  {
+    ROMol *qm = SmartsToMol("n2c(-[#6])ccc2-[#6]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    std::cerr<<" q: "<<MolToSmarts(*qm)<<std::endl;
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2c(cc(c2-[#6]))-[#6]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    std::cerr<<" q: "<<MolToSmarts(*qm)<<std::endl;
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2(-[#6]:1:[!#1]:[#6]:[#6]:[#6]:[#6]:1)c(cc(c2-[#6;X4]))-[#6;X4]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2(-[#6]:1:[!#1]:[#6]:[#6]:[#6]:[#6]:1)c(cc(c2-[#6;X4])-[#1])-[#6;X4]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
@@ -2706,10 +2819,12 @@ int main(int argc,char *argv[]){
   testChiralPairs();
   testChiralTorsions();
   testGitHubIssue25();
-#endif
   testGitHubIssue151();
   test3DAtomPairs();
   testGitHubIssue195();
   testMultithreadedPatternFP();
+#endif
+  testGitHubIssue258();
+
   return 0;
 }
