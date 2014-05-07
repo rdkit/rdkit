@@ -50,10 +50,15 @@ namespace RDKit{
     return res;
   }
 
-  bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2){
+  bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2,bool useQueryQueryMatches){
     PRECONDITION(b1,"bad bond");
     PRECONDITION(b2,"bad bond");
-    bool res = b1->Match(b2);
+    bool res;
+    if(useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()){
+      res = static_cast<QueryBond *>(b1.get())->QueryMatch(static_cast<QueryBond *>(b2.get()));
+    } else {
+      res = b1->Match(b2);
+    }
     //std::cout << "\t\tbondCompat: "<< b1->getIdx() << "-" << b2->getIdx() << ": " << res << std::endl;
     return res;
   }

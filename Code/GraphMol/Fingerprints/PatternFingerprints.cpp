@@ -122,9 +122,20 @@ namespace RDKit{
       }
       return;
     }
-  }    
+  }   
 
-
+  namespace {
+    bool isPatternComplexQuery(const Bond *b){
+      if( !b->hasQuery()) return false;
+      // negated things are always complex:
+      if( b->getQuery()->getNegation()) return true;
+      std::string descr=b->getQuery()->getDescription();
+      //std::cerr<<"   !!!!!! "<<b->getIdx()<<" "<<b->getBeginAtomIdx()<<"-"<<b->getEndAtomIdx()<<" "<<descr<<std::endl;
+      if(descr=="BondOrder") return false;
+      return true;
+    }
+  }
+  
   // caller owns the result, it must be deleted
   ExplicitBitVect *PatternFingerprintMol(const ROMol &mol,
                                          unsigned int fpSize,
@@ -171,7 +182,8 @@ namespace RDKit{
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
       const Bond *bond = mol[*firstB].get();
-      if( Fingerprints::detail::isComplexQuery(bond) ){
+      //if( Fingerprints::detail::isComplexQuery(bond) ){
+      if( isPatternComplexQuery(bond) ){
         isQueryBond.set(bond->getIdx());
         //std::cerr<<"   complex bond: "<<bond->getIdx()<<std::endl;
       }
@@ -219,26 +231,39 @@ namespace RDKit{
         if(isQuery) continue;
         ROMol::EDGE_ITER firstB,lastB;
         boost::tie(firstB,lastB) = patt->getEdges();
-        while(firstB!=lastB){
+#ifdef VERBOSE_FINGERPRINTING
+        std::cerr<<" bs:|| ";
+#endif
+        while(!isQuery && firstB!=lastB){
           BOND_SPTR pbond = (*patt.get())[*firstB];
           ++firstB;
-          if(isQueryBond[pbond->getIdx()]){
-            isQuery=true;
-#ifdef VERBOSE_FINGERPRINTING
-            std::cerr<<"bond query: "<<pbond->getIdx();
-#endif
-            break;
-          }
           const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
                                                     amap[pbond->getEndAtomIdx()]);
 
-          // makes sure aromatic bonds and single bonds from SMARTS always hash the same:
-          if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
-             mbond->getBondType()!=Bond::AROMATIC){
-            gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
-          } else {
-            gboost::hash_combine(bitId,(boost::uint32_t)Bond::SINGLE);
+          if(isQueryBond[mbond->getIdx()]){
+            isQuery=true;
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<"bond query: "<<mbond->getIdx();
+#endif
+            break;
           }
+          // makes sure aromatic bonds and single bonds from SMARTS always hash the same:
+          //if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
+          //   mbond->getBondType()!=Bond::AROMATIC){
+          if(!mbond->getIsAromatic()){
+            gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<mbond->getBondType()<<" ";
+#endif
+          } else {
+            gboost::hash_combine(bitId,(boost::uint32_t)Bond::AROMATIC);
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<Bond::AROMATIC<<" ";
+#endif
+          }
+            //} else {
+            //  gboost::hash_combine(bitId,(boost::uint32_t)Bond::SINGLE);
+            //          }
 
         }
         if(!isQuery){
