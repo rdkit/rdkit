@@ -109,7 +109,6 @@ namespace ForceFields {
       double d2 = std::max(t2.length(), 0.0);
       t1 /= d1;
       t2 /= d2;
-      double cosPhi = t1.dotProduct(t2);
       
       RDGeom::Point3D n123 = (-r1).crossProduct(r2);
       double n123SqLength = n123.lengthSq();

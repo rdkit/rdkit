@@ -356,7 +356,7 @@ namespace RDKit{
           }
           bondsUsed.set(bond->getIdx());
           bondIndices.push_back(bond->getIdx());
-          if(bond->getBeginAtomIdx()==mv[0].second){
+          if(bond->getBeginAtomIdx()==static_cast<unsigned int>(mv[0].second)){
             dummyLabels.push_back(std::make_pair(fbt.atom1Label,fbt.atom2Label));
           } else {
             dummyLabels.push_back(std::make_pair(fbt.atom2Label,fbt.atom1Label));

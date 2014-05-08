@@ -84,6 +84,7 @@ namespace RDKit{
         if(mass < 0) mass = 0;
         else mass = mass % 16;
 
+#if 0
         // NOTE: the inclusion of hybridization in the invariant (as
         // suggested in the original paper), leads to the situation
         // that 
@@ -102,6 +103,7 @@ namespace RDKit{
         case Atom::SP3D2: hyb=2;break;
         default: break;
         }
+#endif
 
         invariant = num; // 7 bits here
         invariant = (invariant << 4) | mass;
@@ -114,15 +116,15 @@ namespace RDKit{
       PRECONDITION(invars.size()==mol.getNumAtoms(),"bad invars size");
       PRECONDITION(ranks.size()>=mol.getNumAtoms(),"bad ranks size");
 
-      int numAtoms = mol.getNumAtoms();
+      unsigned int numAtoms = mol.getNumAtoms();
       CIP_ENTRY_VECT cipEntries(numAtoms);
       INT_LIST allIndices;
-      for(int i=0;i<numAtoms;++i){
+      for(unsigned int i=0;i<numAtoms;++i){
         allIndices.push_back(i);
       }
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
-      for(int i=0;i<numAtoms;i++){
+      for(unsigned int i=0;i<numAtoms;i++){
         BOOST_LOG(rdDebugLog) << i << ": " << invars[i] << std::endl;
       }
 #endif  
@@ -131,14 +133,14 @@ namespace RDKit{
       RankAtoms::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
-      for(int i=0;i<numAtoms;++i){
+      for(unsigned int i=0;i<numAtoms;++i){
         BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
       }
 #endif  
       // Start each atom's rank vector with its atomic number:
       //  Note: in general one should avoid the temptation to
       //  use invariants here, those lead to incorrect answers
-      for(int i=0;i<numAtoms;i++){
+      for(unsigned int i=0;i<numAtoms;i++){
         if(!seedWithInvars){
           cipEntries[i].push_back(mol[i]->getAtomicNum());
           cipEntries[i].push_back(static_cast<int>(ranks[i]));
@@ -157,11 +159,12 @@ namespace RDKit{
       //      maximum number of steps required for two atoms to 
       //      "feel" each other (each influences one additional 
       //      neighbor shell per iteration). 
-      int maxIts=numAtoms/2+1;
-      int numIts=0;
+      unsigned int maxIts=numAtoms/2+1;
+      unsigned int numIts=0;
       int lastNumRanks=-1;
-      int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
-      while( numRanks<numAtoms && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
+      unsigned int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
+      while( numRanks<numAtoms && numIts<maxIts && (lastNumRanks<0 ||
+                                                    static_cast<unsigned int>(lastNumRanks)<numRanks) ){
         unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
@@ -260,7 +263,7 @@ namespace RDKit{
         ++numIts;
 #ifdef VERBOSE_CANON
         BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
-        for(int i=0;i<numAtoms;i++){
+        for(unsigned int i=0;i<numAtoms;i++){
           BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << " > ";
           debugVect(cipEntries[i]);
         }

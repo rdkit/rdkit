@@ -1309,7 +1309,7 @@ namespace RDKit{
     int begIdx,endIdx;
     T tmpT;
 
-    Bond *bond;
+    Bond *bond=NULL;
     streamRead(ss,tmpT,version);
     if(directMap){
       begIdx=tmpT;
@@ -1380,9 +1380,13 @@ namespace RDKit{
     }
     if(version>5000 && hasQuery) {
       Tags tag;
-      Bond *tbond=bond;
-      bond = new QueryBond(*bond);
-      delete tbond;
+      if(bond){
+        delete bond;
+        bond = new QueryBond(*bond);
+      } else {
+        bond = new QueryBond();
+      }
+
       // we have a query:
       streamRead(ss,tag,version);
       if(tag != BEGINQUERY){
@@ -1394,9 +1398,11 @@ namespace RDKit{
         throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
       }
     }
-    bond->setBeginAtomIdx(begIdx);
-    bond->setEndAtomIdx(endIdx);
-    mol->addBond(bond,true);
+    if(bond){
+      bond->setBeginAtomIdx(begIdx);
+      bond->setEndAtomIdx(endIdx);
+      mol->addBond(bond,true);
+    }
     return bond;
   }
 
@@ -1446,40 +1452,40 @@ namespace RDKit{
 
     if(numRings>0){
       ringInfo->preallocate(mol->getNumAtoms(),mol->getNumBonds());
-    }
-    
-    for(unsigned int i=0;i<numRings;i++){
-      T tmpT;
-      T ringSize;
-      streamRead(ss,ringSize,version);
+      for(unsigned int i=0;i<static_cast<unsigned int>(numRings);i++){
+        T tmpT;
+        T ringSize;
+        streamRead(ss,ringSize,version);
 
-      INT_VECT atoms(static_cast<int>(ringSize));
-      INT_VECT bonds(static_cast<int>(ringSize));
-      for(unsigned int j=0; j<ringSize; j++){
-        streamRead(ss,tmpT,version);
-        if(directMap){
-          atoms[j] = static_cast<int>(tmpT);
-        } else {
-          atoms[j] = mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
-        }
-      }
-      if(version<7000){
-        for(unsigned int j=0; j<ringSize; j++){
+        INT_VECT atoms(static_cast<int>(ringSize));
+        INT_VECT bonds(static_cast<int>(ringSize));
+        for(unsigned int j=0; j<static_cast<unsigned int>(ringSize); j++){
           streamRead(ss,tmpT,version);
           if(directMap){
-            bonds[j] = static_cast<int>(tmpT);
+            atoms[j] = static_cast<int>(tmpT);
           } else {
-            bonds[j] = mol->getBondWithBookmark(static_cast<int>(tmpT))->getIdx();
+            atoms[j] = mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
           }
         }
-      } else {
-        for(unsigned int j=1;j<ringSize;++j){
-          bonds[j-1]=mol->getBondBetweenAtoms(atoms[j-1],atoms[j])->getIdx();
+        if(version<7000){
+          for(unsigned int j=0; j<static_cast<unsigned int>(ringSize); j++){
+            streamRead(ss,tmpT,version);
+            if(directMap){
+              bonds[j] = static_cast<int>(tmpT);
+            } else {
+              bonds[j] = mol->getBondWithBookmark(static_cast<int>(tmpT))->getIdx();
+            }
+          }
+        } else {
+          for(unsigned int j=1;j<static_cast<unsigned int>(ringSize);++j){
+            bonds[j-1]=mol->getBondBetweenAtoms(atoms[j-1],atoms[j])->getIdx();
+          }
+          bonds[ringSize-1]=mol->getBondBetweenAtoms(atoms[0],atoms[ringSize-1])->getIdx();
         }
-        bonds[ringSize-1]=mol->getBondBetweenAtoms(atoms[0],atoms[ringSize-1])->getIdx();
+        ringInfo->addRing(atoms,bonds);
       }
-      ringInfo->addRing(atoms,bonds);
     }
+
   }
 
 

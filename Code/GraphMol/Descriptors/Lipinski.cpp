@@ -35,16 +35,15 @@
       unsigned int countMatches(const RDKit::ROMol &mol) const {
         PRECONDITION(m_matcher,"no matcher");
         std::vector<RDKit::MatchVectType> matches;
-        unsigned int res=0;
         // This is an ugly one. Recursive queries aren't thread safe.
         // Unfortunately we have to take a performance hit here in order
         // to guarantee thread safety
         if(m_needCopies){
 	  const RDKit::ROMol nm(*(m_matcher),true);
-          res=RDKit::SubstructMatch(mol,nm,matches);
+          RDKit::SubstructMatch(mol,nm,matches);
         } else {
           const RDKit::ROMol &nm=*m_matcher;
-          res=RDKit::SubstructMatch(mol,nm,matches);
+          RDKit::SubstructMatch(mol,nm,matches);
         }
         return matches.size();
       }

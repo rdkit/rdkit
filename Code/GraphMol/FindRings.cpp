@@ -252,7 +252,7 @@ namespace FindRings {
                         ) {
     // place to record any duplicate rings discovered from the current d2 nodes
     RINGINVAR_INT_VECT_MAP dupD2Cands;
-    int cand, nsmall;
+    int cand;
     INT_VECT_CI d2i;
 
     INT_INT_VECT_MAP dupMap;
@@ -275,7 +275,7 @@ namespace FindRings {
       //std::cerr<<"    smallest rings bfs: "<<cand<<std::endl;
       VECT_INT_VECT srings;
       // we have to find all non duplicate possible smallest rings for each node
-      nsmall = smallestRingsBfs(tMol, cand, srings, activeBonds);
+      smallestRingsBfs(tMol, cand, srings, activeBonds);
       for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
@@ -436,7 +436,7 @@ namespace FindRings {
         VECT_INT_VECT trings;
         INT_VECT forb;
         forb.push_back(f2);
-        int nrngs = smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
+        smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
           boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
@@ -450,7 +450,7 @@ namespace FindRings {
         trings.clear();
         forb.clear();
         forb.push_back(f1);
-        nrngs = smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
+        smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
           boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());

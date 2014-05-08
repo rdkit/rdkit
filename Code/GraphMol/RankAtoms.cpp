@@ -766,7 +766,7 @@ namespace RDKit{
 
         // start by ranking the atoms using the invariants
         VECT_DOUBLE_VECT nRanks(nActiveAtoms);
-        for(int i=0;i<nActiveAtoms;i++) nRanks[i].push_back(tinvariants[i]);
+        for(unsigned int i=0;i<nActiveAtoms;i++) nRanks[i].push_back(tinvariants[i]);
         INT_VECT tranks(nActiveAtoms,0);
         RankAtoms::rankVect(nRanks,tranks);
 #if 0
