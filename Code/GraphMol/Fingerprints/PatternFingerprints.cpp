@@ -27,7 +27,29 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+
+
 //#define VERBOSE_FINGERPRINTING 1
+
+  namespace {
+    class ss_matcher {
+    public:
+      ss_matcher() {};
+      ss_matcher(const std::string &pattern){
+        RDKit::RWMol *p=RDKit::SmartsToMol(pattern);
+        TEST_ASSERT(p);
+        m_matcher.reset(p);
+      };
+
+      //const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
+      const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
+    private:
+      RDKit::ROMOL_SPTR m_matcher;
+    };
+  }
 
 namespace RDKit{
   const char *pqs[]={ "[*]~[*]",
@@ -73,6 +95,7 @@ namespace RDKit{
                       "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
 #endif
                       ""};
+  typedef boost::flyweight<boost::flyweights::key_value<std::string,ss_matcher>,boost::flyweights::no_tracking > pattern_flyweight;
 
   namespace detail {
     void getAtomNumbers(const Atom *a,std::vector<int> &atomNums){
@@ -145,24 +168,18 @@ namespace RDKit{
     PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
     PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits()==fpSize,"bad setOnlyBits size");
 
-    static std::vector<ROMOL_SPTR> patts;
-    // FIX: need a mutex here to be threadsafe
-    if(patts.size()==0){
-      unsigned int idx=0;
-      while(1){
-        std::string pq=pqs[idx];
-        if(pq=="") break;
-        idx++;
-        RWMol *tm;
-        try {
-          tm = SmartsToMol(pq);
-        }catch (...) {
-          tm=NULL;
-        }
-        if(!tm) continue;
-        patts.push_back(ROMOL_SPTR(static_cast<ROMol *>(tm)));
-      }
+    std::vector<const ROMol *> patts;
+    patts.reserve(10);
+    unsigned int idx=0;
+    while(1){
+      std::string pq=pqs[idx];
+      if(pq=="") break;
+      ++idx;
+      const ROMol *matcher=pattern_flyweight(pq).get().getMatcher();
+      CHECK_INVARIANT(matcher,"bad smarts");
+      patts.push_back(matcher);
     }
+
     if(!mol.getRingInfo()->isInitialized()){
       MolOps::fastFindRings(mol);
     }
@@ -192,13 +209,13 @@ namespace RDKit{
     
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     unsigned int pIdx=0;
-    BOOST_FOREACH(ROMOL_SPTR patt,patts){
+    BOOST_FOREACH(const ROMol *patt,patts){
       ++pIdx;
       std::vector<MatchVectType> matches;
       // uniquify matches?
       //   time for 10K molecules w/ uniquify: 5.24s
       //   time for 10K molecules w/o uniquify: 4.87s
-      SubstructMatch(mol,*(patt.get()),matches,false); 
+      SubstructMatch(mol,*patt,matches,false); 
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
       BOOST_FOREACH(MatchVectType &mv,matches){
 #ifdef VERBOSE_FINGERPRINTING
@@ -235,7 +252,7 @@ namespace RDKit{
         std::cerr<<" bs:|| ";
 #endif
         while(!isQuery && firstB!=lastB){
-          BOND_SPTR pbond = (*patt.get())[*firstB];
+          BOND_SPTR pbond = (*patt)[*firstB];
           ++firstB;
           const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
                                                     amap[pbond->getEndAtomIdx()]);

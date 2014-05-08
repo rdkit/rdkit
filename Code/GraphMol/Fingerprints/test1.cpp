@@ -2718,13 +2718,15 @@ void testGitHubIssue258(){
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
   void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx,
-                const std::vector<ExplicitBitVect *> &referenceData){
-    for(unsigned int j=0;j<300;j++){
+                const std::vector<ExplicitBitVect *> &referenceData,
+                unsigned int nReps){
+    for(unsigned int j=0;j<nReps;j++){
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
         ROMol *mol = mols[i];
         ExplicitBitVect *lbv=PatternFingerprintMol(*mol,2048);
-        TEST_ASSERT((*lbv)==(*referenceData[i]));
+        if(referenceData.size() && referenceData[i])
+          TEST_ASSERT((*lbv)==(*referenceData[i]));
         delete lbv;
       }
     }
@@ -2734,12 +2736,12 @@ namespace {
 #include <boost/thread.hpp>  
 void testMultithreadedPatternFP(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading with the pattern FP" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
   SDMolSupplier suppl(fName);
-  std::cerr<<"reading molecules and generating reference data"<<std::endl;
+  std::cerr<<"reading molecules"<<std::endl;
   std::vector<ROMol *> mols;
   std::vector<ExplicitBitVect *> referenceData;
   while(!suppl.atEnd()&&mols.size()<100){
@@ -2751,16 +2753,25 @@ void testMultithreadedPatternFP(){
     }
     if(!mol) continue;
     mols.push_back(mol);
-    ExplicitBitVect *bv=PatternFingerprintMol(*mol,2048);
-    referenceData.push_back(bv);
   }
   boost::thread_group tg;
 
-  std::cerr<<"processing"<<std::endl;
+  std::cerr<<"pass 1"<<std::endl;
   unsigned int count=4;
   for(unsigned int i=0;i<count;++i){
     std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData));
+    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData,10));
+  }
+  tg.join_all();
+
+  BOOST_FOREACH(const ROMol *mol,mols){
+    ExplicitBitVect *bv=PatternFingerprintMol(*mol,2048);
+    referenceData.push_back(bv);
+  }
+  std::cerr<<"pass 2"<<std::endl;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData,300));
   }
   tg.join_all();
 
