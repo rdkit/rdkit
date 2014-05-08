@@ -129,7 +129,7 @@ New Features:
  (github pull 244)
 - Support of RDK fingerprints added to SimilarityMaps
  (github pull 246)
-- support 3D distances in the atom pair finerprints
+- support 3D distances in the atom pair fingerprints
  (github issue 251)
  
 New Database Cartridge Features: 
