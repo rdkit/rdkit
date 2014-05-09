@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
@@ -2601,17 +2602,131 @@ void testGitHubIssue195(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue258(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 258: Bad pattern fingerprint for query molecule" << std::endl;
+
+  {
+    ROMol *qm = SmartsToMol("n2c(-[#6])ccc2-[#6]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2c(cc(c2-[#6]))-[#6]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2(-[#6]:1:[!#1]:[#6]:[#6]:[#6]:[#6]:1)c(cc(c2-[#6;X4]))-[#6;X4]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("n2(-c:1:c:c:c:c:c:1)c(cc(c2-C))-C",
+                            0,true);
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+
+#if 0
+    ExplicitBitVect dv=(*qbv)^((*qbv)&(*mbv));
+    IntVect iv;
+    dv.getOnBits(iv);
+    std::cerr<<"\n\n";
+    std::copy(iv.begin(),iv.end(),std::ostream_iterator<int>(std::cerr,", "));
+    std::cerr<<std::endl;
+#endif
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+
+    
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2(-[#6]:1:[!#1]:[#6]:[#6]:[#6]:[#6]:1)c(cc(c2-[#6;X4]))-[#6;X4]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+    
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+  {
+    ROMol *qm = SmartsToMol("n2(-[#6]:1:[!#1]:[#6]:[#6]:[#6]:[#6]:1)c(cc(c2-[#6;X4])-[#1])-[#6;X4]",
+                            0,true);
+    TEST_ASSERT(qm);
+    ROMol *m = SmilesToMol("Clc1c(cccc1)-n2c(c(cc2C)C=NNC(=O)CSc3ncccn3)C");
+    TEST_ASSERT(m);
+
+    ExplicitBitVect *qbv=PatternFingerprintMol(*qm,2048);
+    ExplicitBitVect *mbv=PatternFingerprintMol(*m,2048);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*qm,mv));
+    TEST_ASSERT(AllProbeBitsMatch(*qbv,*mbv));
+
+    delete qm;
+    delete m;
+    delete qbv;
+    delete mbv;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
   void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx,
-                const std::vector<ExplicitBitVect *> &referenceData){
-    for(unsigned int j=0;j<300;j++){
+                const std::vector<ExplicitBitVect *> &referenceData,
+                unsigned int nReps){
+    for(unsigned int j=0;j<nReps;j++){
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
         ROMol *mol = mols[i];
         ExplicitBitVect *lbv=PatternFingerprintMol(*mol,2048);
-        TEST_ASSERT((*lbv)==(*referenceData[i]));
+        if(referenceData.size() && referenceData[i])
+          TEST_ASSERT((*lbv)==(*referenceData[i]));
         delete lbv;
       }
     }
@@ -2621,12 +2736,12 @@ namespace {
 #include <boost/thread.hpp>  
 void testMultithreadedPatternFP(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading with the pattern FP" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
   SDMolSupplier suppl(fName);
-  std::cerr<<"reading molecules and generating reference data"<<std::endl;
+  std::cerr<<"reading molecules"<<std::endl;
   std::vector<ROMol *> mols;
   std::vector<ExplicitBitVect *> referenceData;
   while(!suppl.atEnd()&&mols.size()<100){
@@ -2638,16 +2753,25 @@ void testMultithreadedPatternFP(){
     }
     if(!mol) continue;
     mols.push_back(mol);
-    ExplicitBitVect *bv=PatternFingerprintMol(*mol,2048);
-    referenceData.push_back(bv);
   }
   boost::thread_group tg;
 
-  std::cerr<<"processing"<<std::endl;
+  std::cerr<<"pass 1"<<std::endl;
   unsigned int count=4;
   for(unsigned int i=0;i<count;++i){
     std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData));
+    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData,10));
+  }
+  tg.join_all();
+
+  BOOST_FOREACH(const ROMol *mol,mols){
+    ExplicitBitVect *bv=PatternFingerprintMol(*mol,2048);
+    referenceData.push_back(bv);
+  }
+  std::cerr<<"pass 2"<<std::endl;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,count,i,referenceData,300));
   }
   tg.join_all();
 
@@ -2706,10 +2830,12 @@ int main(int argc,char *argv[]){
   testChiralPairs();
   testChiralTorsions();
   testGitHubIssue25();
-#endif
   testGitHubIssue151();
   test3DAtomPairs();
   testGitHubIssue195();
   testMultithreadedPatternFP();
+#endif
+  testGitHubIssue258();
+
   return 0;
 }
