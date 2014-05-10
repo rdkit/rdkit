@@ -352,8 +352,16 @@ Extra software to install
     http://git-scm.com/downloads .
   * Optional packages
 
-    * If you would like to install the RDKit InChI support (first
-      available in the Q2 2011 release), follow the instructions in
+    * If you would like to install the RDKit InChI support, follow the
+      instructions in $RDBASE/External/INCHI-API/README to get a copy
+      of the InChI source and put it in the appropriate place.
+
+    * If you would like to install the RDKit Avalon toolkit support,
+      follow the instructions in $RDBASE/External/AvalonTool/README to
+      get a copy of the InChI source and put it in the appropriate
+      place.
+    
+      
       $RDBASE/External/INCHI-API to get a copy of the InChI source and
       put it in the appropriate place.
 
@@ -391,8 +399,9 @@ Building from the command line (recommended)
 --------------------------------------------
 
   * Create a directory ``c:\RDKit\build`` and cd into it
-  * Run cmake. Here's an example basic command line for 64bit windows:
-    ``cmake -DBOOST_ROOT=c:/boost -G"Visual Studio 10 Win64" ..``
+  * Run cmake. Here's an example basic command line for 64bit windows that assumes the InChI and
+    Avalon toolkit sources are available (see above):
+    ``cmake -DRDK_BUILD_PYTHON_WRAPPERS=0N -DAVALONTOOLS_DIR=c:/avalontoolkit_beta/sourcedistribution -DBOOST_ROOT=c:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -G"Visual Studio 10 Win64" ..`` 
   * Build the code. Here's an example command line:
     ``c:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj``
 
