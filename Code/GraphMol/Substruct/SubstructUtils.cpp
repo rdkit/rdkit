@@ -16,7 +16,7 @@
 
 namespace RDKit{
 
-  bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2,bool useQueryQueryMatches){
+  bool atomCompat(const ATOM_SPTR &a1,const ATOM_SPTR &a2,bool useQueryQueryMatches){
     PRECONDITION(a1,"bad atom");
     PRECONDITION(a2,"bad atom");
     //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
@@ -29,7 +29,7 @@ namespace RDKit{
     return res;
   }
 
-  bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
+  bool chiralAtomCompat(const ATOM_SPTR &a1,const ATOM_SPTR &a2){
     PRECONDITION(a1,"bad atom");
     PRECONDITION(a2,"bad atom");
     //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
@@ -50,7 +50,7 @@ namespace RDKit{
     return res;
   }
 
-  bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2,bool useQueryQueryMatches){
+  bool bondCompat(const BOND_SPTR &b1,const BOND_SPTR &b2,bool useQueryQueryMatches){
     PRECONDITION(b1,"bad bond");
     PRECONDITION(b2,"bad bond");
     bool res;

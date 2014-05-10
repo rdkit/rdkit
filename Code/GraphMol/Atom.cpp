@@ -471,10 +471,6 @@ bool Atom::Match(Atom const *what) const {
   }
   return res;
 }
-bool Atom::Match(const Atom::ATOM_SPTR what) const {
-  return Match(what.get());
-}
-
 void Atom::updatePropertyCache(bool strict) {
   calcExplicitValence(strict);
   calcImplicitValence(strict);
