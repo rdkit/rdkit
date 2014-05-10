@@ -358,12 +358,8 @@ Extra software to install
 
     * If you would like to install the RDKit Avalon toolkit support,
       follow the instructions in $RDBASE/External/AvalonTool/README to
-      get a copy of the InChI source and put it in the appropriate
-      place.
-    
-      
-      $RDBASE/External/INCHI-API to get a copy of the InChI source and
-      put it in the appropriate place.
+      get a copy of the Avalon toolkit source and put it in the
+      appropriate place.
 
 Setup and Preparation
 ---------------------
