@@ -341,7 +341,7 @@ Extra software to install
   * cmake : (http://www.cmake.org/cmake/resources/software.html) should be installed.
   * boost : It is strongly recommended to download and use a
     precompiled version of the boost libraries from
-    http://www.boostpro.com/download/ . When you run the installer,
+    http://sourceforge.net/projects/boost/files/boost-binaries/ . When you run the installer,
     the only binary libraries you need are python, regex, and system.
     If you want to install boost from source, download a copy from
     http://www.boost.org and follow the instructions
@@ -368,14 +368,6 @@ these conditions is not true, just change the corresponding paths.
   * If you install things in paths that have spaces in their names,
     be sure to use quotes properly in your environment variable
     definitions.
-
-  * If you have more than one version of visual studio installed,
-    the instructions below may not use the correct compiler. In this
-    case you need to use a different ``--toolset`` argument to specify
-    the version of the compiler used in all commands. Information
-    for this situation is covered in
-    the boost.build documentation
-    (http://www.boost.org/doc/libs/1_50_0/more/getting_started/windows.html). 
 
   * If you are planning on using a development version of the RDKit:
     get a copy of the current RDKit source using git. If you're
@@ -424,7 +416,7 @@ Building the Code Using GUIs (not recommended)
     * build the "ALL_BUILD" target; this will take a while and generate warnings, but there should be no errors. Note: if you are building the SWIG wrappers you may get an error the first time you try to build them. If you see this error, try building ALL_BUILD again; it should work the second time.
     * build the "INSTALL" target
 
-Testing the Build (optional by recommended)
+Testing the Build (optional, but recommended)
 -------------------------------------------
   
   * cd to ``c:\RDKit\build`` and run ctest.
