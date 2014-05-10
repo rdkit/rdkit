@@ -1381,8 +1381,9 @@ namespace RDKit{
     if(version>5000 && hasQuery) {
       Tags tag;
       if(bond){
-        delete bond;
+        Bond *tbond=bond;
         bond = new QueryBond(*bond);
+        delete tbond;
       } else {
         bond = new QueryBond();
       }
