@@ -11,10 +11,13 @@
 #pragma once
 #include <map>
 #include "../RDKitBase.h"
+#include "DebugTrace.h" // algorithm optimisation definitions
 #include "Graph.h"
 #include "DuplicatedSeedCache.h"
 #include "SubstructMatchCustom.h"
-#include "DebugTrace.h" // algorithm optimisation definitions
+#ifdef MULTI_THREAD
+#include "Thread.h"
+#endif
 
 namespace RDKit
 {
@@ -27,15 +30,35 @@ namespace RDKit
     {
         std::vector<const Atom*>    Atoms;
         std::vector<const Bond*>    Bonds;
-        std::vector<unsigned>    AtomsIdx;
-        std::vector<unsigned>    BondsIdx;  // need for results and size() only !
-        std::map<unsigned, unsigned> SeedAtomIdxMap;   // Full Query Molecule to Seed indeces backward conversion map
+        std::vector<unsigned>       AtomsIdx;
+        std::vector<unsigned>       BondsIdx;  // need for results and size() only !
+        std::map<unsigned,unsigned> SeedAtomIdxMap;   // Full Query Molecule to Seed indeces backward conversion map
     };
 
-    struct Seed
+    struct NewBond
     {
-        mutable unsigned    GrowingStage; // 0 new seed; -1 finished; n>0 in progress, exact stage of growing for SDF
+        unsigned    SourceAtomIdx;  // index in the seed. Atom is already in the seed
+        unsigned    BondIdx;        // index in qmol of new bond scheduled to be added into seed. This is outgoing bond from SourceAtomIdx
+        unsigned    NewAtomIdx;     // index in qmol of new atom scheduled to be added into seed. Another end of new bond
+        const Atom* NewAtom;        // pointer to qmol's new atom scheduled to be added into seed. Another end of new bond
+        unsigned    EndAtomIdx;     // index in the seed. RING. "New" Atom on the another end of new bond is already exists in the seed.
+
+        NewBond() : SourceAtomIdx(-1), BondIdx(-1), NewAtomIdx(-1), NewAtom(0), EndAtomIdx(-1) {}
+
+        NewBond(unsigned from_atom, unsigned bond_idx, unsigned new_atom, unsigned to_atom, const Atom* a)
+                : SourceAtomIdx(from_atom), BondIdx(bond_idx), NewAtomIdx(new_atom), NewAtom(a), EndAtomIdx(to_atom) {}
+    };
+
+    class Seed
+    {
+    private:
+        mutable std::vector<NewBond> NewBonds;      // for multistage growing. all directly connected outgoing bonds
     public:
+#ifdef MULTI_THREAD
+        mutable bool        ProcessingScheduled;
+#endif
+        bool                CopyComplete;       // this seed has been completely copied into list. postponed non0locked copy for MULTI_THREAD
+        mutable unsigned    GrowingStage;       // 0 new seed; -1 finished; n>0 in progress, exact stage of growing for SDF
         MolFragment         MoleculeFragment;   // Reference to a fragment of source molecule
         Graph               Topology;           // seed topology with references to source molecule
 
@@ -51,12 +74,45 @@ namespace RDKit
         std::vector<TargetMatch> MatchResult;  // for each target
 #endif // FAST_INCREMENTAL_MATCH
     public:
-        Seed() : GrowingStage(0), LastAddedAtomsBeginIdx(0), LastAddedBondsBeginIdx(0)
-               , RemainingBonds(-1), RemainingAtoms(-1) {}
+        Seed() : 
+#ifdef MULTI_THREAD
+            ProcessingScheduled(false), 
+#endif
+                CopyComplete(false)
+               , GrowingStage(0), LastAddedAtomsBeginIdx(0), LastAddedBondsBeginIdx(0)
+               , RemainingBonds(-1), RemainingAtoms(-1)
+        {}
 
+        void setMoleculeFragment(const Seed& src)
+        {
+            MoleculeFragment = src.MoleculeFragment;
+        }
+        Seed& operator = (const Seed& src)
+        {
+            NewBonds = src.NewBonds;
+        #ifdef MULTI_THREAD
+            ProcessingScheduled = src.ProcessingScheduled;
+        #endif
+            GrowingStage = src.GrowingStage;
+            MoleculeFragment = src.MoleculeFragment;
+            Topology = src.Topology;
+            ExcludedBonds = src.ExcludedBonds;
+            LastAddedAtomsBeginIdx = src.LastAddedAtomsBeginIdx;
+            LastAddedBondsBeginIdx = src.LastAddedBondsBeginIdx;
+            RemainingBonds = src.RemainingBonds;
+            RemainingAtoms = src.RemainingAtoms;
+        #ifdef DUP_SUBSTRUCT_CACHE
+            DupCacheKey = src.DupCacheKey;
+        #endif
+        #ifdef FAST_INCREMENTAL_MATCH
+            MatchResult = src.MatchResult;
+        #endif
+            //MoleculeFragment = src.MoleculeFragment;
+            CopyComplete = true; // LAST
+            return *this;
+        }
         void createFromParent(const Seed* parent)
         {
-//            *this = *parent; 
             MoleculeFragment = parent->MoleculeFragment;
             Topology         = parent->Topology;
             ExcludedBonds    = parent->ExcludedBonds;
@@ -73,7 +129,7 @@ namespace RDKit
         unsigned getNumAtoms()const {return MoleculeFragment.AtomsIdx.size();}
         unsigned getNumBonds()const {return MoleculeFragment.BondsIdx.size();}
 
-        void grow(MaximumCommonSubgraph& mcs, const ROMol& qmol)const;
+        void grow(MaximumCommonSubgraph& mcs)const;
         bool canGrowBiggerThan(unsigned maxBonds, unsigned maxAtoms)const  // prune()
         {
             return RemainingBonds + getNumBonds() >  maxBonds
@@ -82,8 +138,9 @@ namespace RDKit
         }
         void computeRemainingSize(const ROMol& qmol);//, const std::vector<char>& excludedBonds);
 
-        unsigned addAtom(const Atom* atom);
-        unsigned addBond(const Bond* bond);
+        unsigned addAtom (const Atom* atom);
+        unsigned addBond (const Bond* bond);
+        void fillNewBonds(const ROMol& qmol);
     };
 
 }}

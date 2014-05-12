@@ -69,6 +69,7 @@ namespace RDKit
         void*                       CompareFunctionsUserData;
         MCSProgressCallback         ProgressCallback;       // return false to interrupt execution
         void*                       ProgressCallbackUserData;
+        unsigned ThreadNumber;      // #ifdef MULTI_THREAD
     public:
         MCSParameters(): MaximizeBonds(true)
                     , Threshold(1.0)    // match to all
@@ -79,6 +80,7 @@ namespace RDKit
                     , CompareFunctionsUserData(0)
                     , ProgressCallback(MCSProgressCallbackTimeout)
                     , ProgressCallbackUserData(0)
+                    , ThreadNumber(64) // 64 is optimal value for 4 kernels i7 CPU
         {}
     };
         
@@ -90,7 +92,7 @@ namespace RDKit
         bool        Canceled;   // interrupted by timeout or user defined progress callback. Contains valid current MCS !
     public:
         MCSResult() : NumAtoms(0), NumBonds(0), Canceled(false) {}
-        bool isCompleted()const { return !Canceled; }//0!=NumAtoms;}
+        bool isCompleted()const { return !Canceled; }
     };
 
     MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params=0);

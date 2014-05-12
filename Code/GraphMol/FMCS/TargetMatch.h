@@ -40,8 +40,8 @@ namespace RDKit
                 memcpy(&TargetAtomIdx[0], &src.TargetAtomIdx[0], sizeof(unsigned)*TargetAtomIdx.size());
                 TargetBondIdx.resize(src.TargetBondIdx.size());
                 memcpy(&TargetBondIdx[0], &src.TargetBondIdx[0], sizeof(unsigned)*TargetBondIdx.size());
-                VisitedTargetBonds = src.VisitedTargetBonds; // bitset
-                VisitedTargetAtoms = src.VisitedTargetAtoms; // bitset
+                VisitedTargetBonds = src.VisitedTargetBonds; // std::vector<bool> bitset
+                VisitedTargetAtoms = src.VisitedTargetAtoms; // std::vector<bool> bitset
             }
             return *this;
         }
@@ -58,7 +58,7 @@ namespace RDKit
         void init(const Seed& seed, const match_V_t& match, const ROMol& query, const Target& target)
         {
             TargetAtomIdx.resize(query.getNumAtoms());
-            TargetBondIdx.resize(target.Molecule->getNumBonds());
+            TargetBondIdx.resize(query.getNumBonds());
             VisitedTargetBonds.resize(target.Molecule->getNumBonds());
             VisitedTargetAtoms.resize(target.Molecule->getNumAtoms());
 

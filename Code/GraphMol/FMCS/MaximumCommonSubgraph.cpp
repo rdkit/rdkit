@@ -281,8 +281,13 @@ void MaximumCommonSubgraph::makeInitialSeeds()
 #endif
 
 #ifdef VERBOSE_STATISTICS_ON
-        ++VerboseStatistics.Seed;
-        ++VerboseStatistics.InitialSeed;
+        {
+            #ifdef MULTI_THREAD
+            Guard statlock(StatisticsMutex);
+            #endif
+            ++VerboseStatistics.Seed;
+            ++VerboseStatistics.InitialSeed;
+        }
 #endif
         seed.addAtom((*bi)->getBeginAtom());
         seed.addAtom((*bi)->getEndAtom());
@@ -294,9 +299,6 @@ void MaximumCommonSubgraph::makeInitialSeeds()
 
         if( ! checkIfMatchAndAppend(seed))
         {
-#ifdef VERBOSE_STATISTICS_ON
-            ++VerboseStatistics.MismatchedInitialSeed;
-#endif
             // optionally remove all such bonds from all targets TOPOLOGY where it exists.
             //..........
 
@@ -304,9 +306,40 @@ void MaximumCommonSubgraph::makeInitialSeeds()
             for(SeedSet::iterator si = Seeds.begin(); si != Seeds.end(); si++)
                 si->ExcludedBonds[(*bi)->getIdx()] = true;
 
+#ifdef VERBOSE_STATISTICS_ON
+            #ifdef MULTI_THREAD
+            Guard statlock(StatisticsMutex);
+            #endif
+            ++VerboseStatistics.MismatchedInitialSeed;
+#endif
         }
     }
 }
+
+#ifdef MULTI_THREAD
+    void SeedGrowThread::run(void)
+    {
+        while(!StopSignal)
+        {
+            if(SeedToProceed)
+            {
+                SeedToProceed->grow(*Mcs);
+                SeedToProceed->ProcessingScheduled = false;
+                SeedToProceed = 0; // reset busy flag
+                if (JobFinishedPoolEvent)
+                    JobFinishedPoolEvent->setSignal();
+
+            }
+            else if(NewJobEvent)
+                    NewJobEvent->wait(3000);
+            else
+                Sleep0();
+        }
+        if (JobFinishedPoolEvent)
+            JobFinishedPoolEvent->setSignal();  // force to break waiting
+    }
+
+#endif
 
 bool MaximumCommonSubgraph::growSeeds()
 {
@@ -314,39 +347,88 @@ bool MaximumCommonSubgraph::growSeeds()
     bool canceled = false;
     unsigned steps = 99999; // steps from last progress callback call. call it immediately in the begining
 
+#ifdef MULTI_THREAD
+    if(0==Parameters.ThreadNumber)
+        Parameters.ThreadNumber = 1;
+    ThreadPool WorkingThreadPool(Parameters.ThreadNumber, this); // start all working threads
+#endif
     // Find MCS -- SDF Seed growing OPTIMISATION (it works in 3 times faster)
     while(!Seeds.empty())
     {
+#ifdef MULTI_THREAD
+        while(!WorkingThreadPool.waitReady(100))
+        {}
+        Sleep0();
+        Guard lock(*this);
+        {
+            for(SeedSet::iterator next, si = Seeds.begin(); si != Seeds.end() && !WorkingThreadPool.isBusy(); si = next)
+            {
+                next = si;
+                next++;
+                if(!si->CopyComplete)
+                    continue;
+                if(-1 == si->GrowingStage) // finished
+                    Seeds.erase(si);
+                else if(!si->ProcessingScheduled)// && !WorkingThreadPool->isBusy())
+                {
+                    si->ProcessingScheduled = true;
+                    WorkingThreadPool.addJob(&*si);
+                    ++steps;
+                #ifdef VERBOSE_STATISTICS_ON
+                    VerboseStatistics.TotalSteps++; // the only place where it is increased
+                #endif
+                }
+            }
+        }
+        Sleep0();
+#else
         ++steps;
+#ifdef VERBOSE_STATISTICS_ON
         VerboseStatistics.TotalSteps++;
+#endif
         SeedSet::iterator si = Seeds.begin();
 
-        si->grow(*this, *QueryMolecule);
-
-        const Seed& fs = Seeds.front();
-        // bigger substructure found
-        if((!Parameters.MaximizeBonds && (fs.getNumAtoms() > getMaxNumberAtoms() || (fs.getNumAtoms() == getMaxNumberAtoms() && fs.getNumBonds() > getMaxNumberBonds())))
-         ||( Parameters.MaximizeBonds && (fs.getNumBonds() > getMaxNumberBonds() || (fs.getNumBonds() == getMaxNumberBonds() && fs.getNumAtoms() > getMaxNumberAtoms())))
-         )
+        si->grow(*this);
+#endif
+#ifdef MULTI_THREAD
+        if(!Seeds.empty())
+#endif
         {
-            mcsFound = true;
-            VerboseStatistics.MCSFoundStep = VerboseStatistics.TotalSteps;
-            McsIdx.Atoms    = fs.MoleculeFragment.Atoms;
-            McsIdx.Bonds    = fs.MoleculeFragment.Bonds;
-            McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
-            McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+            const Seed& fs = Seeds.front();
+            // bigger substructure found
+            if(fs.CopyComplete)
+            if((!Parameters.MaximizeBonds && (fs.getNumAtoms() > getMaxNumberAtoms() || (fs.getNumAtoms() == getMaxNumberAtoms() && fs.getNumBonds() > getMaxNumberBonds())))
+             ||( Parameters.MaximizeBonds && (fs.getNumBonds() > getMaxNumberBonds() || (fs.getNumBonds() == getMaxNumberBonds() && fs.getNumAtoms() > getMaxNumberAtoms())))
+             )
+            {
+                mcsFound = true;
+#ifdef VERBOSE_STATISTICS_ON
+                VerboseStatistics.MCSFoundStep = VerboseStatistics.TotalSteps;
+                if (Parameters.ProgressCallback == MCSProgressCallbackTimeout && (steps >= 377))
+                    VerboseStatistics.MCSFoundTime = time(0);
+#endif
+                McsIdx.Atoms    = fs.MoleculeFragment.Atoms;
+                McsIdx.Bonds    = fs.MoleculeFragment.Bonds;
+                McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
+                McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+            }
         }
-
+#ifndef MULTI_THREAD
         if(-1 == si->GrowingStage) //finished
             Seeds.erase(si);
-
-        if(Parameters.ProgressCallback && (steps > 777))// || res.NumAtoms > Stat.NumAtoms))
+#endif
+        if(Parameters.ProgressCallback && (steps >= 377))
         {
             steps = 0;
             Stat.NumAtoms = getMaxNumberAtoms();
             Stat.NumBonds = getMaxNumberBonds();
 #ifdef VERBOSE_STATISTICS_ON
-            Stat.SeedProcessed = VerboseStatistics.Seed;
+            {
+                #ifdef MULTI_THREAD
+                Guard statlock(StatisticsMutex);
+                #endif
+                Stat.SeedProcessed = VerboseStatistics.Seed;
+            }
 #endif
             if(!Parameters.ProgressCallback(Stat, Parameters, Parameters.ProgressCallbackUserData))
             {
@@ -574,10 +656,14 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
     for(size_t i=0; i < Molecules.size() - ThresholdCount && !res.Canceled; i++)
     {
         init();
+        if(Targets.empty())
+            break;
 
-//std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
+std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
 
         makeInitialSeeds();
+        if(Seeds.empty())
+            break;
         res.Canceled = growSeeds() ? false : true;
         if(i+1 < Molecules.size() - ThresholdCount)
         {
@@ -589,16 +675,25 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
     }
     res.NumAtoms     = getMaxNumberAtoms();
     res.NumBonds     = getMaxNumberBonds();
-    res.SmartsString = generateResultSMARTS(McsIdx);
+    if (res.NumBonds > 0)
+        res.SmartsString = generateResultSMARTS(McsIdx);
 
 #ifdef VERBOSE_STATISTICS_ON
 if(ConsoleOutputEnabled)
 {
+    #ifdef MULTI_THREAD
+    Guard statlock(StatisticsMutex);
+    #endif
     std::cout << "STATISTICS:\n";
-    std::cout << "Total Growing Steps  = " << VerboseStatistics.TotalSteps<<",  MCS found on "<<VerboseStatistics.MCSFoundStep<<" step\n";
+    std::cout << "Total Growing Steps  = " << VerboseStatistics.TotalSteps<<", MCS found on "<<VerboseStatistics.MCSFoundStep<<" step";
+    if(VerboseStatistics.MCSFoundTime - To > 0)
+        std::cout << ", for about "<<(VerboseStatistics.MCSFoundTime - To)<<" seconds\n";
+    else
+        std::cout << ", for less than 1 second\n";
     std::cout << "Initial   Seeds      = " << VerboseStatistics.InitialSeed << ",  Mismatched " << VerboseStatistics.MismatchedInitialSeed<<"\n";
     std::cout << "Inspected Seeds      = " << VerboseStatistics.Seed<<"\n";
     std::cout << "Rejected by BestSize = " << VerboseStatistics.RemainingSizeRejected << "\n";
+    std::cout << "SingleBondExcluded   = " << VerboseStatistics.SingleBondExcluded << "\n";
 #ifdef EXCLUDE_WRONG_COMPOSITION   
     std::cout << "Rejected by WrongComposition = " << VerboseStatistics.WrongCompositionRejected
                         << " [ " << VerboseStatistics.WrongCompositionDetected << " Detected ]\n";
@@ -642,68 +737,83 @@ if(ConsoleOutputEnabled)
 bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
 {
 #ifdef TRACE_ON
-        TRACE() << "CHECK ";    // print out time
-        for(std::vector<const Bond*>::const_iterator bi = seed.MoleculeFragment.Bonds.begin(); bi != seed.MoleculeFragment.Bonds.end(); bi++)
-            TRACE(0) << (*bi)->getIdx() << " ";
-        TRACE(0) << "\n";
+    TRACE() << "CHECK ";    // print out time
+    for(std::vector<const Bond*>::const_iterator bi = seed.MoleculeFragment.Bonds.begin(); bi != seed.MoleculeFragment.Bonds.end(); bi++)
+        TRACE(0) << (*bi)->getIdx() << " ";
+    TRACE(0) << "\n";
 #endif
 #ifdef VERBOSE_STATISTICS_ON
-    ++VerboseStatistics.SeedCheck;
-#endif
-
-    bool foundInCache = false;
-    bool foundInDupCache = false;
-
-#ifdef DUP_SUBSTRUCT_CACHE
-    if(DuplicateCache.find(seed.DupCacheKey, foundInCache))
     {
-    // duplicate found. skip match() but store both seeds, because they will grow by different paths !!!
-        #ifdef VERBOSE_STATISTICS_ON
-            VerboseStatistics.DupCacheFound++;
-            VerboseStatistics.DupCacheFoundMatch += foundInCache ? 1 : 0;
+        #ifdef MULTI_THREAD
+        Guard statlock(StatisticsMutex);
         #endif
-        if(!foundInCache) // mismatched !!!
-            return false;
+        ++VerboseStatistics.SeedCheck;
     }
-    foundInDupCache = foundInCache;
 #endif
 #ifdef FAST_SUBSTRUCT_CACHE
     SubstructureCache::HashKey      cacheKey;
     SubstructureCache::TIndexEntry* cacheEntry = 0;
     bool cacheEntryIsValid = false;
-    if(!foundInCache)
+#endif
+
+    bool foundInCache = false;
+    bool foundInDupCache = false;
+
     {
-    #ifdef VERBOSE_STATISTICS_ON
-        ++VerboseStatistics.FindHashInCache;
-    #endif
-        cacheEntry = HashCache.find(seed, QueryAtomLabels, QueryBondLabels, cacheKey);
-        cacheEntryIsValid = true;
-        if(cacheEntry)   // possibly found. check for hash collision
+#ifdef MULTI_THREAD
+        Guard lock(*this);
+#endif
+    #ifdef DUP_SUBSTRUCT_CACHE
+        if(DuplicateCache.find(seed.DupCacheKey, foundInCache))
         {
+        // duplicate found. skip match() but store both seeds, because they will grow by different paths !!!
             #ifdef VERBOSE_STATISTICS_ON
-                ++VerboseStatistics.HashKeyFoundInCache;
+                #ifdef MULTI_THREAD
+                Guard statlock(StatisticsMutex);
+                #endif
+                VerboseStatistics.DupCacheFound++;
+                VerboseStatistics.DupCacheFoundMatch += foundInCache ? 1 : 0;
             #endif
-            // check hash collisions (time +3%):
-            for(SubstructureCache::TIndexEntry::const_iterator g = cacheEntry->begin(); !foundInCache && g != cacheEntry->end(); g++)
+            if(!foundInCache) // mismatched !!!
+                return false;
+        }
+        foundInDupCache = foundInCache;
+    #endif
+    #ifdef FAST_SUBSTRUCT_CACHE
+        if(!foundInCache)
+        {
+        #ifdef VERBOSE_STATISTICS_ON
+            ++VerboseStatistics.FindHashInCache;
+        #endif
+            cacheEntry = HashCache.find(seed, QueryAtomLabels, QueryBondLabels, cacheKey);
+            cacheEntryIsValid = true;
+            if(cacheEntry)   // possibly found. check for hash collision
             {
-                if(g->m_vertices.size() != seed.getNumAtoms() || g->m_edges.size() != seed.getNumBonds())
-                    continue;
-            #ifdef VERBOSE_STATISTICS_ON
-                ++VerboseStatistics.ExactMatchCall;
-            #endif
-            // EXACT MATCH
-            #ifdef PRECOMPUTED_TABLES_MATCH
-                foundInCache = SubstructMatchCustomTable((*g), seed.Topology, QueryAtomMatchTable, QueryBondMatchTable);
-            #else //..................
-            #endif
-            #ifdef VERBOSE_STATISTICS_ON
-                if(foundInCache)
-                    ++VerboseStatistics.ExactMatchCallTrue;
-            #endif
+                #ifdef VERBOSE_STATISTICS_ON
+                    ++VerboseStatistics.HashKeyFoundInCache;
+                #endif
+                // check hash collisions (time +3%):
+                for(SubstructureCache::TIndexEntry::const_iterator g = cacheEntry->begin(); !foundInCache && g != cacheEntry->end(); g++)
+                {
+                    if(g->m_vertices.size() != seed.getNumAtoms() || g->m_edges.size() != seed.getNumBonds())
+                        continue;
+                #ifdef VERBOSE_STATISTICS_ON
+                    ++VerboseStatistics.ExactMatchCall;
+                #endif
+                // EXACT MATCH
+                #ifdef PRECOMPUTED_TABLES_MATCH
+                    foundInCache = SubstructMatchCustomTable((*g), seed.Topology, QueryAtomMatchTable, QueryBondMatchTable);
+                #else //..................
+                #endif
+                #ifdef VERBOSE_STATISTICS_ON
+                    if(foundInCache)
+                        ++VerboseStatistics.ExactMatchCallTrue;
+                #endif
+                }
             }
         }
-    }
     #endif
+    }
     bool found = foundInCache;
 
     if(!found) 
@@ -711,26 +821,41 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed)
         found = match(seed);
     }
 
-    if(found)  // Store new generated seed, if found in cache or in all(- threshold) targets
-    {
-        Seed& new_seed = Seeds.add(seed);
+    Seed *newSeed = 0;
 
-    #ifdef DUP_SUBSTRUCT_CACHE
-        if(!foundInDupCache && seed.getNumBonds() >= 3)  // only seed with a ring can be duplicated - do not store very small seed in cache
-            DuplicateCache.add(seed.DupCacheKey, true);
-    #endif
-    #ifdef FAST_SUBSTRUCT_CACHE
-        if(!foundInCache)
-            HashCache.add(seed, cacheKey, cacheEntry);
-    #endif
-    }
-    else
     {
-    #ifdef DUP_SUBSTRUCT_CACHE
-        if(seed.getNumBonds() > 3)
-            DuplicateCache.add(seed.DupCacheKey, false);   //opt. cache mismatched duplicates too
+    #ifdef MULTI_THREAD
+        Guard lock(*this);
     #endif
+        if(found)  // Store new generated seed, if found in cache or in all(- threshold) targets
+        {
+            newSeed = &Seeds.add(seed);
+            newSeed->CopyComplete = false;
+
+        #ifdef DUP_SUBSTRUCT_CACHE
+            if(!foundInDupCache && seed.getNumBonds() >= 3)  // only seed with a ring can be duplicated - do not store very small seed in cache
+                DuplicateCache.add(seed.DupCacheKey, true);
+        #endif
+        #ifdef FAST_SUBSTRUCT_CACHE
+            if(!foundInCache)
+            #ifdef MULTI_THREAD
+                HashCache.add(seed, cacheKey, 0);   // cacheEntry can be invalid in MT environment
+            #else
+                HashCache.add(seed, cacheKey, cacheEntry);
+            #endif
+        #endif
+        }
+        else
+        {
+        #ifdef DUP_SUBSTRUCT_CACHE
+            if(seed.getNumBonds() > 3)
+                DuplicateCache.add(seed.DupCacheKey, false);   //opt. cache mismatched duplicates too
+        #endif
+        }
     }
+    if(found)
+        *newSeed = seed; // non-blocking copy for MULTI_THREAD and best CPU utilization
+
     return found;  // new matched seed has been actualy added
 }
 
@@ -744,7 +869,12 @@ bool MaximumCommonSubgraph::match(Seed& seed)
     for(std::vector<Target>::const_iterator tag = Targets.begin(); tag != Targets.end(); tag++, itarget++)
     {
 #ifdef VERBOSE_STATISTICS_ON
-    ++VerboseStatistics.MatchCall;
+        {
+            #ifdef MULTI_THREAD
+            Guard statlock(StatisticsMutex);
+            #endif
+            ++VerboseStatistics.MatchCall;
+        }
 #endif
         bool target_matched = false;
 #ifdef FAST_INCREMENTAL_MATCH
@@ -780,7 +910,12 @@ bool MaximumCommonSubgraph::match(Seed& seed)
 #endif
         #ifdef VERBOSE_STATISTICS_ON
             if(target_matched)
+            {
+                #ifdef MULTI_THREAD
+                Guard statlock(StatisticsMutex);
+                #endif
                 ++VerboseStatistics.SlowMatchCallTrue;
+            }
         #endif
         }
 
@@ -798,6 +933,9 @@ bool MaximumCommonSubgraph::match(Seed& seed)
     if(missing <= max_miss)
     {
         #ifdef VERBOSE_STATISTICS_ON
+            #ifdef MULTI_THREAD
+            Guard statlock(StatisticsMutex);
+            #endif
             ++VerboseStatistics.MatchCallTrue;
         #endif
         return true;
@@ -812,7 +950,12 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget)
 {
     // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
-    ++VerboseStatistics.FastMatchCall;
+    {
+        #ifdef MULTI_THREAD
+        Guard statlock(StatisticsMutex);
+        #endif
+        ++VerboseStatistics.FastMatchCall;
+    }
 #endif
     const Target& target = Targets[itarget];
     TargetMatch& match = seed.MatchResult[itarget];
@@ -924,7 +1067,12 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget)
 
 #ifdef VERBOSE_STATISTICS_ON
     if(matched)
+    {
+        #ifdef MULTI_THREAD
+        Guard statlock(StatisticsMutex);
+        #endif
         ++VerboseStatistics.FastMatchCallTrue;
+    }
 #endif
 
     return matched;
