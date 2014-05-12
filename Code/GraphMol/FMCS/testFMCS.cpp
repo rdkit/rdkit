@@ -86,9 +86,9 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     tmpres <<= 32;
     tmpres |= ft.dwLowDateTime;
  
-    /*converting file time to unix epoch*/
+    //converting file time to unix epoch
     tmpres -= DELTA_EPOCH_IN_MICROSECS; 
-    tmpres /= 10;  /*convert into microseconds*/
+    tmpres /= 10;  //convert into microseconds
     tv->tv_sec = (long)(tmpres / 1000000UL);
     tv->tv_usec = (long)(tmpres % 1000000UL);
   }
@@ -111,7 +111,6 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 unsigned long long nanoClock (void)   // actually returns microseconds
 {
    struct timeval t;
-   //struct timezone tz;
    gettimeofday(&t, (struct timezone*)0);
    return t.tv_usec + t.tv_sec * 1000000ULL;
 }
@@ -132,6 +131,23 @@ std::string getSmilesOnly(const char* smiles, std::string* id=0) // remove label
         *id = std::string(smiles+n);
     return std::string(smiles, n);
 }
+
+
+std::string getSmilesOnlyChEMBL(const char* smiles, std::string* id=0) // remove label, because RDKit parse FAILED
+{
+    const char* sp = strchr(smiles, '\t');
+    if(sp)
+    {
+        unsigned n = (sp ? sp-smiles+1 : strlen(smiles));
+        if(id)
+            *id = std::string(smiles, n);
+        sp = strchr(++sp,'\t');
+        if(sp)
+           sp++;
+    }
+    return std::string(sp);
+}
+    
 //====================================================================================================
 
 void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> test_N=std::vector<unsigned>())  // optional list of some tests for investigation
@@ -262,14 +278,16 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
         perror("Could not create output file");
         exit(1);
     }
-    FILE* fs  = fopen(outSmilesFile.c_str(), "wt");
-    FILE* ft  = fopen((outFile+".stat.csv").c_str(), "wt");
     setvbuf(f , 0, _IOFBF, 4*1024);
-    setvbuf(fs, 0, _IOFBF, 4*1024);
+    FILE* fs = 0;  //fopen(outSmilesFile.c_str(), "wt");
+    if(fs)
+        setvbuf(fs, 0, _IOFBF, 4*1024);
+#ifdef xxVERBOSE_STATISTICS_ON
+    FILE* ft  = fopen((outFile+".stat.csv").c_str(), "wt");
     setvbuf(ft, 0, _IOFBF,  4*1024); // small file
     if(ft)
         fprintf(ft, "N; Status; dAtoms; dBonds; t(sec); ref.t; Seed; MatchCall; AtomCmp; BondCmp\n"); //CSV Header
-
+#endif
     n = 0;
     MCSParameters p;
     p.Timeout = timeout;
@@ -400,11 +418,14 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
 #endif
         );
 #endif
-    fclose(f);
+    if(f)
+        fclose(f);
     if(fs)
         fclose(fs);
+#ifdef xxVERBOSE_STATISTICS_ON
     if(ft)
         fclose(ft);
+#endif
     printTime();
 }
 
@@ -722,6 +743,161 @@ void testThreshold()
     printTime();
 }
 
+void test330()
+{
+    std::cout << "\ntest330()\n";
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] =
+    {
+//TEST 330  40 sec
+"CCC(C)C(NC(=O)C(NC(C(CCC(O)=O)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC(CCCCN)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240742",
+"CCC(C)C(NC(=O)C(NC(C(CCCCN)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(Cc1ccccc1)NC(C(CC(C)C)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC(CCC(O)=O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240736",
+"CCC(C)C(NC(CN)=O)C(NC(C(NC(CC(O)=O)C(NC(C(NC(C)C(NC(CCCCN)C(NC(C(NC(CC(C)C)C(NC(Cc1ccccc1)C(NC(CCC(O)=O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O)=O)CCCCN)=O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O CHEMBL1240738",
+"CCC(C)C(NC(CN)=O)C(NC(Cc1ccccc1)C(NC(CC(O)=O)C(NC(CCCCN)C(NC(CC(C)C)C(NC(C)C(NC(CCCCN)C(NC(CCC(O)=O)C(NC(C(NC(CO)C(NC(C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O)=O CHEMBL1240740",
+"CCC(C)C(NC(CN)=O)C(NC(Cc1c[nH]c2c1cccc2)C(NC(CO)C(NC(CC(O)=O)C(NC(CC(C)C)C(NC(C)C(NC(CCC(O)=O)C(NC(C(NC(C(NC(CCCCN)C(NC(CCCCN)C(NC(Cc1ccccc1)C(O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O CHEMBL1240741",
+"CCC(C)C(NC(=O)C(NC(=O)C(CCCCN)NC(C(CC(C)C)NC(C(Cc1c[nH]c2c1cccc2)NC(CN)=O)=O)=O)CCCCN)C(NC(CCC(O)=O)C(NC(CO)C(=O)NC(C(NC(C(NC(CC(O)=O)C(NC(C)C(NC(Cc1ccccc1)C(O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O CHEMBL1240743",
+"CCC(C)C(NC(C(CCC(O)=O)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O CHEMBL431874",
+"CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC(CCC(O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O)=O CHEMBL262166",
+"CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC(CCCCN)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O CHEMBL313122",
+"CCC(C)C(NC(C(CCCCN)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)=O)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O CHEMBL314239",
+//# 330 F  42 41 30.93 sec MCS: [#6]-[#6](-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6](-[#6]-[#6]-[#6])-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6])=[#8])=[#8])=[#8])=[#8])=[#8])-[#6](-[#7]-[#6](-[#6]-[#6](:[#6]):[#6]:[#6]:[#6]:[#6])-[#6](-[#8])=[#8])=[#8]
+    };
+    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
+    MCSParameters p;
+//    p.Threshold = 0.7; // TEMP
+    t0 = nanoClock();
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+}
+
+
+void testChEMBLdat(const char* test, double th=1.0)
+{
+    std::cout << "\ntestChEMBLdat() "<<test<<"\n";
+    std::vector<ROMOL_SPTR> mols;
+    char smiles[4096];
+    unsigned n=0;
+    FILE* f = fopen(test, "rt");
+    if(!f)
+    {
+        perror("fopen testChEMBLdat()");
+        return;
+    }
+    FILE* fs = fopen((std::string(test)+".smi").c_str(), "wt");
+    std::cout<<"Loading SMILES ... \n";
+    t0 = nanoClock();
+    while(fgets(smiles, sizeof(smiles), f))
+    {
+        std::cout<<"\rLine: "<< ++n <<" ";
+        if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) // commented to skip
+        {
+           mols.push_back(ROMOL_SPTR(SmartsToMol(getSmilesOnlyChEMBL(smiles))));
+           fputs(getSmilesOnlyChEMBL(smiles).c_str(), fs);
+        }
+    }
+    fclose(f);
+    fclose(fs);
+    printTime();
+    std::cout<<"FIND MCS in "<<mols.size()<<" molecules.\n\n";
+    t0 = nanoClock();
+    MCSParameters p;
+    p.Threshold = th;
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS : "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+}
+
+void testChEMBLdatALL(double th=1.0)
+{
+    const char* test[] =
+    {
+        "cmp_list_ChEMBL_100126_actives.dat",
+        "cmp_list_ChEMBL_100579_actives.dat",
+        "cmp_list_ChEMBL_100_actives.dat",
+        "cmp_list_ChEMBL_10188_actives.dat",
+        "cmp_list_ChEMBL_10193_actives.dat",
+        "cmp_list_ChEMBL_10198_actives.dat",
+        "cmp_list_ChEMBL_10260_actives.dat",
+        "cmp_list_ChEMBL_10280_actives.dat",
+        "cmp_list_ChEMBL_10378_actives.dat",
+        "cmp_list_ChEMBL_10417_actives.dat",
+        "cmp_list_ChEMBL_10434_actives.dat",
+        "cmp_list_ChEMBL_10475_actives.dat",
+        "cmp_list_ChEMBL_10498_actives.dat",
+        "cmp_list_ChEMBL_104_actives.dat",
+        "cmp_list_ChEMBL_10579_actives.dat",
+        "cmp_list_ChEMBL_105_actives.dat",
+        "cmp_list_ChEMBL_10752_actives.dat",
+        "cmp_list_ChEMBL_10773_actives.dat",
+        "cmp_list_ChEMBL_107_actives.dat",
+        "cmp_list_ChEMBL_108_actives.dat",
+        "cmp_list_ChEMBL_10927_actives.dat",
+        "cmp_list_ChEMBL_10980_actives.dat",
+        "cmp_list_ChEMBL_11085_actives.dat",
+        "cmp_list_ChEMBL_11140_actives.dat",
+        "cmp_list_ChEMBL_11225_actives.dat",
+        "cmp_list_ChEMBL_11279_actives.dat",
+        "cmp_list_ChEMBL_11336_actives.dat",
+        "cmp_list_ChEMBL_11359_actives.dat",
+        "cmp_list_ChEMBL_11365_actives.dat",
+        "cmp_list_ChEMBL_11442_actives.dat",
+        "cmp_list_ChEMBL_11488_actives.dat",
+        "cmp_list_ChEMBL_11489_actives.dat",
+        "cmp_list_ChEMBL_114_actives.dat",
+        "cmp_list_ChEMBL_11534_actives.dat",
+        "cmp_list_ChEMBL_11536_actives.dat",
+        "cmp_list_ChEMBL_11575_actives.dat",
+        "cmp_list_ChEMBL_11631_actives.dat",
+        "cmp_list_ChEMBL_11682_actives.dat",
+        "cmp_list_ChEMBL_116_actives.dat",
+        "cmp_list_ChEMBL_121_actives.dat",
+        "cmp_list_ChEMBL_12209_actives.dat",
+        "cmp_list_ChEMBL_12252_actives.dat",
+        "cmp_list_ChEMBL_12261_actives.dat",
+        "cmp_list_ChEMBL_12670_actives.dat",
+        "cmp_list_ChEMBL_12679_actives.dat",
+        "cmp_list_ChEMBL_126_actives.dat",
+        "cmp_list_ChEMBL_12840_actives.dat",
+        "cmp_list_ChEMBL_12911_actives.dat",
+        "cmp_list_ChEMBL_12952_actives.dat",
+        "cmp_list_ChEMBL_12968_actives.dat",
+        "cmp_list_ChEMBL_13001_actives.dat",
+        "cmp_list_ChEMBL_130_actives.dat",
+        "cmp_list_ChEMBL_134_actives.dat",
+        "cmp_list_ChEMBL_15_actives.dat",
+        "cmp_list_ChEMBL_165_actives.dat",
+        "cmp_list_ChEMBL_17045_actives.dat",
+        "cmp_list_ChEMBL_18061_actives.dat",
+        "cmp_list_ChEMBL_19905_actives.dat",
+        "cmp_list_ChEMBL_20014_actives.dat",
+        "cmp_list_ChEMBL_20174_actives.dat",
+        "cmp_list_ChEMBL_219_actives.dat",
+        "cmp_list_ChEMBL_234_actives.dat",
+        "cmp_list_ChEMBL_237_actives.dat",
+        "cmp_list_ChEMBL_259_actives.dat",
+        "cmp_list_ChEMBL_25_actives.dat",
+        "cmp_list_ChEMBL_276_actives.dat",
+        "cmp_list_ChEMBL_28_actives.dat",
+        "cmp_list_ChEMBL_36_actives.dat",
+        "cmp_list_ChEMBL_43_actives.dat",
+        "cmp_list_ChEMBL_51_actives.dat",
+        "cmp_list_ChEMBL_52_actives.dat",
+        "cmp_list_ChEMBL_61_actives.dat",
+        "cmp_list_ChEMBL_65_actives.dat",
+        "cmp_list_ChEMBL_72_actives.dat",
+        "cmp_list_ChEMBL_87_actives.dat",
+        "cmp_list_ChEMBL_8_actives.dat",
+        "cmp_list_ChEMBL_90_actives.dat",
+        "cmp_list_ChEMBL_93_actives.dat",
+        "cmp_list_ChEMBL_zinc_decoys.dat",
+    };
+    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++)
+        testChEMBLdat((std::string("benchmarking_platform-master/compounds/ChEMBL/") + test[i]).c_str(), th);
+}
+
+
 void testSimpleFast()
 {
     std::cout << "\ntestSimpleFast()\n";
@@ -820,7 +996,7 @@ void testFileSMILES(const char* test)
     {
         std::cout<<"\rLine: "<< ++n <<" ";
         if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) // commented to skip
-            if(strlen(smiles) > 92) // minimal query size !!!
+//            if(strlen(smiles) > 92) // minimal query size !!!
                 mols.push_back(ROMOL_SPTR(SmartsToMol(getSmilesOnly(smiles))));
     }
     fclose(f);
@@ -888,7 +1064,7 @@ int main(int argc, const char* argv[])
     RDKit::FMCS::ConsoleOutputEnabled = true;
 // use maximum CPU resoures to increase time measuring accuracy and stability in multi process environment
 #ifdef WIN32
-    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
+//    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
     SetThreadPriority(GetCurrentThread (), THREAD_PRIORITY_HIGHEST );
 #else
     setpriority(PRIO_PROCESS, getpid(), -20); 
@@ -897,29 +1073,38 @@ int main(int argc, const char* argv[])
     T0 = nanoClock();
     t0 = nanoClock();
 
-#ifdef xxWIN32  // brief test set for testing and issue investigation
+#ifdef WIN32  // brief test set for testing and issue investigation
 {
-    //test18();
-    //testThreshold();
-    testSimple();
+    while(true)
+        test330();
+//    testChEMBLdatALL();
+/*
+    testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat");
+    testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat", 0.8);
+    testChEMBLdat("cmp_list_ChEMBL_12209_actives.dat"); 
+*/
+    return 0;
 
-    //testGregSDFFileSetFiltered();
+    testSimpleFast();
+    testSimple();
+//    testFileSDF("Greg'sComparision/data/filtered/d3_aid58783.filtered.sdf");
+//    testSimple();
+
+//    testGregSDFFileSetFiltered();
     //test18();
     //return 0;
 
+    //testThreshold();
 //    testRing1();
-//    return 0;
-
-//    testSimpleFast();
-//    testSimple();
-//    return 0;
+    return 0;
 
 //    testGregSDFFileSetFiltered();
     //return 0;
 
     std::vector<unsigned> tc;
-//    tc.push_back(10);
-//    tc.push_back(992);
+    tc.push_back(90);
+    tc.push_back(326);
+    tc.push_back(330);
 //992 PYTHON 20 21 N1(-C-C=C(-c2:c(:c:c:c):c:n:c:2)-C-C-1)-C-C-C-C-C-C
 //992 . 1    27 28 1.10 CNcc(CCCCCN1CCC(=CC1)c1cncc1ccc)cccc
 //now        25 26
@@ -933,7 +1118,7 @@ int main(int argc, const char* argv[])
     tc.push_back(605);
     tc.push_back(619);
 */
-//    testFileMCSB(argv[1], 300, tc);
+    testFileMCSB(argv[1], 300, tc);
     return 0;
 }
 #endif
@@ -976,6 +1161,8 @@ int main(int argc, const char* argv[])
             testFileSDF(argv[1]);   // .sdf
         else if(0==strcmp(argv[1]+strlen(argv[1])-4, "mcsb"))
             testFileMCSB(argv[1], 30);  // .mcsb
+        else if(0==strcmp(argv[1]+strlen(argv[1])-4, ".dat"))
+            testChEMBLdat(argv[1]);   // .sdf
         else
             printf("UNKNOWN File Extention.\n");
     }

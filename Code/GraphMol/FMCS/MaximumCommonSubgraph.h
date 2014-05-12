@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include "../RDKitBase.h"
 #include "FMCS.h"
+#include "DebugTrace.h" // algorithm filter definitions
 #include "SeedSet.h"
 #include "Target.h"
 #include "SubstructureCache.h"
@@ -22,15 +23,20 @@
 #ifdef FAST_INCREMENTAL_MATCH
 #include "TargetMatch.h"
 #endif
+#ifdef MULTI_THREAD
+#include "ThreadPool.h"
+#endif
 #include "RingMatchTableSet.h"
 
-#include "DebugTrace.h" // algorithm filter definitions
 
 namespace RDKit
 {
  namespace FMCS
  {
     class MaximumCommonSubgraph
+#ifdef MULTI_THREAD
+        : private Mutex
+#endif
     {
         struct MCS  // current result. Reference to a fragment of source molecule
         {
@@ -67,13 +73,42 @@ namespace RDKit
     public:
 #ifdef VERBOSE_STATISTICS_ON
         ExecStatistics VerboseStatistics;
+#ifdef MULTI_THREAD
+        Mutex   StatisticsMutex;
+#endif
 #endif
 
         MaximumCommonSubgraph(const MCSParameters* params);
         ~MaximumCommonSubgraph() {clear();}
         MCSResult find (const std::vector<ROMOL_SPTR>& mols);
-        unsigned getMaxNumberBonds()const {return McsIdx.BondsIdx.size();}  //Seeds.MaxBonds;}
-        unsigned getMaxNumberAtoms()const {return McsIdx.AtomsIdx.size();}  //Seeds.MaxAtoms;}
+        const ROMol& getQueryMolecule()const { return *QueryMolecule;}
+/* optional
+        unsigned getMaxNumberBonds()
+#ifdef MULTI_THREAD
+        {
+            Guard lock(*this);
+#else
+            const 
+        {
+#endif
+*/        unsigned getMaxNumberBonds() const 
+        {
+            return McsIdx.BondsIdx.size();
+        }
+
+/* optional
+        unsigned getMaxNumberAtoms()
+#ifdef MULTI_THREAD
+        {
+            Guard lock(*this);
+#else
+            const 
+        {
+#endif
+*/        unsigned getMaxNumberAtoms() const 
+        {
+            return McsIdx.AtomsIdx.size();
+        }
     //internal:
         bool checkIfMatchAndAppend(Seed& seed);//, const std::vector<char>& excludedBonds);   // REPLACE with Swap !!!
     private:
@@ -81,6 +116,7 @@ namespace RDKit
         {
             Targets.clear();
             Molecules.clear();
+            To = time(0);
         }
         void init();
         void makeInitialSeeds();

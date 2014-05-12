@@ -19,9 +19,9 @@ namespace RDKit
  {
     class SeedSet // sorted by amount of bonds
     {
-    protected:
         typedef std::list<Seed> ValueSet;
         ValueSet            Seeds;
+        Seed                EmptySeed;
     public:
         typedef Seed        Value;
         typedef ValueSet::iterator       iterator;
@@ -46,8 +46,10 @@ namespace RDKit
             for(where = Seeds.begin(); where != Seeds.end(); where++) // find position in sorted list
                 if(where->getNumBonds() < seed.getNumBonds())
                     break;
-            iterator it = Seeds.insert(where, seed);
+            iterator it = Seeds.insert(where, EmptySeed);
             Value& val = *it;
+            val.setMoleculeFragment(seed);
+
             return val;
         }
     };

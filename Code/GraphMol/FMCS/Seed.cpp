@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "MaximumCommonSubgraph.h"
+#include "Composition2N.h"
 #include "Seed.h"
 
 #include "DebugTrace.h"
@@ -18,37 +19,6 @@ namespace RDKit
 {
 namespace FMCS
 {
-    typedef unsigned long long BitSet;
-    class Composition2N // generator of 2^N-1 possible bit combinations
-    {
-        BitSet  Bits;
-        BitSet  MaxValue;
-    public:
-        Composition2N(const BitSet& maxValue) : Bits(0), MaxValue(maxValue) {}
-
-        static void compute2N(unsigned power, BitSet& value)
-        {
-            value = 1uLL << power;
-        }
-        BitSet getBitSet()const {return Bits;}
-        bool generateNext()
-        {
-            return (++Bits) <= MaxValue;
-        }
-        bool is2Power() // one bit is set only
-        {
-            BitSet  bits = Bits;
-            unsigned n = 0;
-            while(0==(bits & 1uLL) && ++n < sizeof(bits)*8)    //find lowest bitwise 1
-                bits >>= 1uLL;      //shift all zero lower bits
-            if(0!=(bits & 1uLL))
-                bits >>= 1uLL;      //shift first set bit
-            return 0==bits;  //remained bits except lowest 1
-        }
-        bool nonZero() {return 0!=Bits;}
-        bool isSet(unsigned bit) { return 0 != (Bits & (1uLL << bit));}
-    };
-
 
 unsigned Seed::addAtom(const Atom* atom)
 {
@@ -82,28 +52,9 @@ unsigned Seed::addBond(const Bond* bond)
     return getNumBonds();
 }
 
-
-struct NewBond
+void Seed::fillNewBonds(const ROMol& qmol)
 {
-    unsigned    SourceAtomIdx;  // index in the seed. Atom is already in the seed
-    unsigned    BondIdx;        // index in qmol of new bond scheduled to be added into seed. This is outgoing bond from SourceAtomIdx
-    unsigned    NewAtomIdx;     // index in qmol of new atom scheduled to be added into seed. Another end of new bond
-    const Atom* NewAtom;        // pointer to qmol's new atom scheduled to be added into seed. Another end of new bond
-    unsigned    EndAtomIdx;     // index in the seed. RING. "New" Atom on the another end of new bond is already exists in the seed.
-
-    NewBond() : SourceAtomIdx(-1), BondIdx(-1), NewAtomIdx(-1), NewAtom(0), EndAtomIdx(-1) {}
-
-    NewBond(unsigned from_atom, unsigned bond_idx, unsigned new_atom, unsigned to_atom, const Atom* a)
-            : SourceAtomIdx(from_atom), BondIdx(bond_idx), NewAtomIdx(new_atom), NewAtom(a), EndAtomIdx(to_atom) {}
-};
-
-
-void Seed::grow(MaximumCommonSubgraph& mcs, const ROMol& qmol) const
-{
-    std::vector<bool>            excludedBonds = ExcludedBonds;
-    std::vector<NewBond>         newBonds;    // all directly connected outgoing bonds
-    std::map<unsigned, unsigned> newAtomsMap; // map new added atoms to their seed's indeces
-
+    std::vector<bool> excludedBonds = ExcludedBonds;
     for(unsigned srcAtomIdx = LastAddedAtomsBeginIdx; srcAtomIdx < getNumAtoms(); srcAtomIdx++)   // all atoms added on previous growing only
     {
         const Atom* atom = MoleculeFragment.Atoms[srcAtomIdx];
@@ -111,7 +62,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs, const ROMol& qmol) const
         for(boost::tie(beg,end) = qmol.getAtomBonds(atom); beg!=end; beg++)  // all bonds from MoleculeFragment.Atoms[srcAtomIdx] 
         {
             const Bond* bond = &*(qmol[*beg]);
-            if( ! excludedBonds[bond->getIdx()])   // already in the seed or in the newBonds list from another and of a RING
+            if( ! excludedBonds[bond->getIdx()])   // already in the seed or in the NewBonds list from another atom in a RING
             {
                 excludedBonds[bond->getIdx()] = true;
                 unsigned ai = (atom == bond->getBeginAtom()) ? bond->getEndAtomIdx() : bond->getBeginAtomIdx();
@@ -123,24 +74,46 @@ void Seed::grow(MaximumCommonSubgraph& mcs, const ROMol& qmol) const
                     end_atom_idx = i;
                     break;
                 }
-                newBonds.push_back(NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx, -1==end_atom_idx ? end_atom:0));
+                NewBonds.push_back(NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx, -1==end_atom_idx ? end_atom:0));
             }
         }
     }
-    if(newBonds.empty())
+}
+
+
+void Seed::grow(MaximumCommonSubgraph& mcs) const
+{
+    const ROMol& qmol = mcs.getQueryMolecule();
+    std::map<unsigned, unsigned> newAtomsMap; // map new added atoms to their seed's indeces
+
+if(0==GrowingStage)
+{
+    if(!canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune() parent
+    {
+        GrowingStage = -1; //finished
+#ifdef VERBOSE_STATISTICS_ON
+        #ifdef MULTI_THREAD
+        Guard statlock(mcs.StatisticsMutex);
+        #endif
+        ++mcs.VerboseStatistics.RemainingSizeRejected;
+#endif
+        return;
+    }
+    // 0. Fill out list of all directly connected outgoing bonds
+    ((Seed*)this)->fillNewBonds(qmol); // non const method, multistage growing optimisation
+
+    if(NewBonds.empty())
     {
         GrowingStage = -1;  // finished
         return;
     }
 
-if(0==GrowingStage)
-{
     // 1. Check and add the biggest child seed with all outgoing bonds added:
     // Add all bonds at first (build the biggest child seed). All new atoms are already in the seed
     Seed seed;
     seed.createFromParent(this);
 
-    for(std::vector<NewBond>::iterator nbi = newBonds.begin(); nbi != newBonds.end(); nbi++)
+    for(std::vector<NewBond>::const_iterator nbi = NewBonds.begin(); nbi != NewBonds.end(); nbi++)
     {
         unsigned aIdx = nbi->EndAtomIdx;
         if(-1 == aIdx) // new atom
@@ -159,18 +132,26 @@ if(0==GrowingStage)
         seed.addBond(src_bond);
     }
 #ifdef VERBOSE_STATISTICS_ON
-    ++mcs.VerboseStatistics.Seed;
+    {
+        #ifdef MULTI_THREAD
+        Guard statlock(mcs.StatisticsMutex);
+        #endif
+        ++mcs.VerboseStatistics.Seed;
+    }
 #endif
-    seed.RemainingBonds = RemainingBonds - newBonds.size();     // Added ALL !!!
+    seed.RemainingBonds = RemainingBonds - NewBonds.size();     // Added ALL !!!
     seed.RemainingAtoms = RemainingAtoms - newAtomsMap.size();  // new atoms added to seed
 
     // prune() Best Sizes
     if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )
     {
+        GrowingStage = -1;
 #ifdef VERBOSE_STATISTICS_ON
+        #ifdef MULTI_THREAD
+        Guard statlock(mcs.StatisticsMutex);
+        #endif
         ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
-        GrowingStage = -1;
         return; // the biggest possible subrgaph from this seed is too small for future growing. So, skip ALL children !
     }
 #ifdef FAST_INCREMENTAL_MATCH
@@ -179,22 +160,27 @@ if(0==GrowingStage)
     bool allMatched = mcs.checkIfMatchAndAppend(seed);  // this seed + all extern bonds is a part of MCS
 
     GrowingStage = 1;
-    if(allMatched && newBonds.size() > 1)
+    if(allMatched && NewBonds.size() > 1)
         return; // grow deep first. postpone next growing steps
 }
 // 2. Check and add all 2^N-1-1 other possible seeds:
-    if(1 == newBonds.size())
+    if(1 == NewBonds.size())
     {
         GrowingStage = -1;
         return; // everything has been done
     }
     // OPTIMISATION:
-    // check each single bond first: if (this seed + one bond) does not exist in MCS, exclude this new bond from growing this seed.
+    // check each single bond first: if (this seed + single bond) does not exist in MCS, exclude this new bond from growing this seed.
     unsigned numErasedNewBonds = 0;
-    for(std::vector<NewBond>::iterator nbi = newBonds.begin(); nbi != newBonds.end(); nbi++)
+    for(std::vector<NewBond>::iterator nbi = NewBonds.begin(); nbi != NewBonds.end(); nbi++)
     {
 #ifdef VERBOSE_STATISTICS_ON
-        ++mcs.VerboseStatistics.Seed;
+        {
+            #ifdef MULTI_THREAD
+            Guard statlock(mcs.StatisticsMutex);
+            #endif
+            ++mcs.VerboseStatistics.Seed;
+        }
 #endif
         Seed seed;
         seed.createFromParent(this);
@@ -220,11 +206,20 @@ if(0==GrowingStage)
             {
                 nbi->BondIdx = -1; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
                 ++numErasedNewBonds;
+#ifdef VERBOSE_STATISTICS_ON
+            #ifdef MULTI_THREAD
+            Guard statlock(mcs.StatisticsMutex);
+            #endif
+            ++mcs.VerboseStatistics.SingleBondExcluded;
+#endif
             }
         }
         else   // seed too small
         {
 #ifdef VERBOSE_STATISTICS_ON
+            #ifdef MULTI_THREAD
+            Guard statlock(mcs.StatisticsMutex);
+            #endif
             ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
         }
@@ -233,24 +228,22 @@ if(0==GrowingStage)
     if(numErasedNewBonds > 0)
     {
         std::vector<NewBond> dirtyNewBonds;
-        dirtyNewBonds.reserve(newBonds.size());
-        dirtyNewBonds.swap(newBonds);
+        dirtyNewBonds.reserve(NewBonds.size());
+        dirtyNewBonds.swap(NewBonds);
         for(std::vector<NewBond>::const_iterator nbi = dirtyNewBonds.begin(); nbi != dirtyNewBonds.end(); nbi++)
             if(-1 != nbi->BondIdx)
-                newBonds.push_back(*nbi);
+                NewBonds.push_back(*nbi);
     }
 
     // add all other from 2^k-1 possible seeds, where k=newBonds.size():
-    if(newBonds.size() > 1) // if just one new bond, such seed has been already created
+    if(NewBonds.size() > 1) // if just one new bond, such seed has been already created
     {
-        if(sizeof(unsigned long long)*8 < newBonds.size())
+        if(sizeof(unsigned long long)*8 < NewBonds.size())
             throw std::runtime_error("Max number of new external bonds of a seed more than 64");
         BitSet maxCompositionValue;
-        Composition2N::compute2N(newBonds.size(), maxCompositionValue);
+        Composition2N::compute2N(NewBonds.size(), maxCompositionValue);
         maxCompositionValue -= 1;   // 2^N-1
-        if(0==numErasedNewBonds)
-            maxCompositionValue -= 1;   // exclude already processed all external bonds combination 2N-2
-        Composition2N composition(maxCompositionValue);
+        Composition2N composition(maxCompositionValue, maxCompositionValue);
 
 #ifdef EXCLUDE_WRONG_COMPOSITION
         std::vector<BitSet> failedCombinations;
@@ -260,6 +253,8 @@ if(0==GrowingStage)
         {
             if(composition.is2Power()) // exclude already processed single external bond combinations
                 continue;
+            if(0==numErasedNewBonds && composition.getBitSet() == maxCompositionValue)
+                continue;   // exclude already processed all external bonds combination 2N-1
 #ifdef EXCLUDE_WRONG_COMPOSITION
 // OPTIMISATION. reduce amount of generated seeds and match calls
 // 2120 instead of 2208 match calls on small test. 43 wrongComp-s, 83 rejected
@@ -283,16 +278,21 @@ if(0==GrowingStage)
             }
 #endif
 #ifdef VERBOSE_STATISTICS_ON
-            ++mcs.VerboseStatistics.Seed;
+            {
+                #ifdef MULTI_THREAD
+                Guard statlock(mcs.StatisticsMutex);
+                #endif
+                ++mcs.VerboseStatistics.Seed;
+            }
 #endif
             Seed seed;
             seed.createFromParent(this);
             newAtomsMap.clear();
 
-            for(unsigned i=0; i<newBonds.size(); i++)
+            for(unsigned i=0; i<NewBonds.size(); i++)
              if(composition.isSet(i))
             {
-                const NewBond* nbi = & newBonds[i];
+                const NewBond* nbi = & NewBonds[i];
                 unsigned aIdx = nbi->EndAtomIdx;    // existed in this parent seed (ring) or -1
                 if(-1 == aIdx) // new atom
                 {
@@ -314,6 +314,9 @@ if(0==GrowingStage)
             if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune(). // seed too small
             {
 #ifdef VERBOSE_STATISTICS_ON
+                #ifdef MULTI_THREAD
+                Guard statlock(mcs.StatisticsMutex);
+                #endif
                 ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
             }
@@ -330,6 +333,9 @@ if(0==GrowingStage)
                     failedCombinations.push_back(composition.getBitSet());
                     failedCombinationsMask &= composition.getBitSet();
 #ifdef VERBOSE_STATISTICS_ON
+                    #ifdef MULTI_THREAD
+                    Guard statlock(mcs.StatisticsMutex);
+                    #endif
                     ++mcs.VerboseStatistics.WrongCompositionDetected;
 #endif
 #endif

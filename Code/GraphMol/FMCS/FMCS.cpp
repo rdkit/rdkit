@@ -18,6 +18,9 @@ namespace RDKit
 {
     MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params) 
     {
+        MCSParameters p;
+        if(0 == params)
+            params = &p;
         RDKit::FMCS::MaximumCommonSubgraph fmcs(params);
         return fmcs.find(mols);
     }

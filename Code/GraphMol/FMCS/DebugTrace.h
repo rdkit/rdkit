@@ -21,12 +21,10 @@
     #include <fcntl.h>
 #endif
 
-#define VERBOSE_STATISTICS_ON
-
 // SELECT ALGORITHM OPTIONS by comment some lines to exclude additional or experimental optimisations:
 
 #define SEED_GROW_DEEP              // fast and works much times faster (but it can depend on molecules)
-#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because amount of external bonds usually is very small.
+//#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because amount of external bonds usually is very small.
                                     // Exclude mismatched bonds combinations during seed growing (2^N stage)
 
 #define FAST_SUBSTRUCT_CACHE        // based on Morgan code hash
@@ -35,8 +33,10 @@
 #define PRECOMPUTED_TABLES_MATCH    // Improves overal performance about 20%, especially in hard cases.
                                     // Takes some extra memory (Vt*vq+Et*eq)/8 bytes for each target G(Vt,Et) matched with query G(vq,eq).
 
-#define FAST_INCREMENTAL_MATCH      // NOT IMPLEMENTED YET fast and should be usefull
-                                    // history based check match without finding new matched substructure location in the target
+#define FAST_INCREMENTAL_MATCH      // fast and some time very usefull
+                                    // previous match result based match checking without finding new matched substructure location in the target
+
+///#define MULTI_THREAD // experimental !
 
 // Enable / Disable DEBUG TRACE output
 #ifdef WIN32__xx__TRACE_ON
@@ -44,7 +44,13 @@
 #else
 #endif
 
+#ifndef MULTI_THREAD
+    #define VERBOSE_STATISTICS_ON
+#endif
+
+
 #ifdef VERBOSE_STATISTICS_ON
+
 // compute statistics of really very very fast calls. 
 // It a bit decrease overal performance, but might be interested for investigation purpose (only)
 //#define VERBOSE_STATISTICS_FASTCALLS_ON
@@ -52,9 +58,10 @@
     struct ExecStatistics
     {
         unsigned TotalSteps, MCSFoundStep;
+        time_t   MCSFoundTime;  // approximately
         unsigned InitialSeed, MismatchedInitialSeed;
         unsigned Seed, RemainingSizeRejected;
-        unsigned SeedCheck;
+        unsigned SeedCheck, SingleBondExcluded;
         unsigned MatchCall, MatchCallTrue;
         unsigned FastMatchCall, FastMatchCallTrue, SlowMatchCallTrue;
         unsigned ExactMatchCall, ExactMatchCallTrue;   // hash cache
@@ -69,9 +76,10 @@
         unsigned DupCacheFound, DupCacheFoundMatch;
 
         ExecStatistics() : TotalSteps(0), MCSFoundStep(0)
+                         , MCSFoundTime(time(0))
                          , InitialSeed(0), MismatchedInitialSeed(0)
                          , Seed(0), RemainingSizeRejected(0)
-                         , SeedCheck(0), MatchCall(0), MatchCallTrue(0)
+                         , SeedCheck(0), SingleBondExcluded(0), MatchCall(0), MatchCallTrue(0)
                          , FastMatchCall(0), FastMatchCallTrue(0), SlowMatchCallTrue(0)
                          , ExactMatchCall(0), ExactMatchCallTrue(0)
                          , FindHashInCache(0), HashKeyFoundInCache(0)
