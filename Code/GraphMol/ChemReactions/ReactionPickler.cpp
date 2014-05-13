@@ -104,6 +104,7 @@ namespace RDKit{
 
     uint32_t flag = 0;
     if(rxn->getImplicitPropertiesFlag()) flag |= 0x1;
+    if(rxn->df_needsInit) flag |= 0x2;
     streamWrite(ss,flag);
 
     // -------------------
@@ -137,10 +138,10 @@ namespace RDKit{
     streamRead(ss,numReactants);
     streamRead(ss,numProducts);
 
+    // we use this here and below to set df_needsInit, so don't re-use the variable
     uint32_t flag = 0;
     streamRead(ss,flag);
     rxn->setImplicitPropertiesFlag(flag & 0x1);
-
 
     // -------------------
     //
@@ -173,5 +174,9 @@ namespace RDKit{
     if(tag != ENDPRODUCTS){
       throw ReactionPicklerException("Bad pickle format: ENDPRODUCTS tag not found.");
     }
+
+    // need to do this after we add reactants and products
+    rxn->df_needsInit = flag & 0x2;
+
   } // end of _depickle
 }; // end of RDKit namespace

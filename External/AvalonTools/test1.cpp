@@ -58,11 +58,10 @@ void test1(){
 void test2(){
   BOOST_LOG(rdInfoLog) << "testing coordinate generation" << std::endl;
 
-#if 0
+#if 1
   {
     RWMol *m = SmilesToMol("c1cccnc1");
     TEST_ASSERT(m);
-
     unsigned int confId=AvalonTools::set2DCoords(*m);
     TEST_ASSERT(m->getNumConformers()==1);
     TEST_ASSERT(confId==0);

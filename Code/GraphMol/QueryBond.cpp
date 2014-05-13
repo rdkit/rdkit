@@ -187,6 +187,12 @@ bool QueryBond::Match(const Bond::BOND_SPTR what) const {
   } //end of local namespace
 
 bool QueryBond::Match(Bond const *what) const {
+  PRECONDITION(what,"bad query bond");
+  PRECONDITION(dp_query,"no query set");
+  return dp_query->Match(what);
+}
+bool QueryBond::QueryMatch(QueryBond const *what) const {
+  PRECONDITION(what,"bad query bond");
   PRECONDITION(dp_query,"no query set");
   if(!what->hasQuery()){
     return dp_query->Match(what);

@@ -298,7 +298,9 @@ namespace RDKit{
     */
     virtual bool Match(Atom const *what) const;
     //! \overload
-    virtual bool Match(const ATOM_SPTR what) const;
+    virtual inline bool Match(const ATOM_SPTR &what) const {
+      return Match(what.get());
+    };
   
 
     // ------------------------------------

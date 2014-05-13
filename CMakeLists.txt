@@ -21,6 +21,7 @@ option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
+option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
 option(RDK_BUILD_THREADSAFE_SSS "enable thread-safe substructure searching (requires boost.thread)" OFF )
@@ -30,7 +31,7 @@ option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing i
 option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
 option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
-option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" ON)
+option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
@@ -50,7 +51,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #------- 
 # Config variables:
 set(RDKit_Year "2014")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1pre")
 set(RDKit_ABI "1")
 
@@ -118,14 +119,16 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
-    # Determine correct installation directory for Python bindings
-    # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
-    execute_process(
-      COMMAND
-      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
-      OUTPUT_VARIABLE PYTHON_INSTDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+    if (NOT PYTHON_INSTDIR)
+      # Determine correct installation directory for Python bindings
+      # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
+      execute_process(
+        COMMAND
+        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
+        OUTPUT_VARIABLE PYTHON_INSTDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+    endif (NOT PYTHON_INSTDIR)
     message("Python Install directory ${PYTHON_INSTDIR}")
     install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
       COMPONENT python
@@ -217,6 +220,10 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
   add_subdirectory(rdkit)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
+
+if(RDK_BUILD_CONTRIB)
+  add_subdirectory(Contrib)
+endif(RDK_BUILD_CONTRIB)
 
 # Packaging
 SET(CPACK_GENERATOR "TGZ;DEB;RPM")

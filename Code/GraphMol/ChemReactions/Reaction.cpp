@@ -325,20 +325,23 @@ namespace RDKit {
           // and this is the corresponding atom in the reactant.
           const Atom *reactantAtom=reactant->getAtomWithIdx(reactantAtomIdx);
 
-          if(rxn->getImplicitPropertiesFlag()){
-            // --------- --------- --------- --------- --------- ---------
             // which properties need to be set from the reactant?
-            if(productAtom->getAtomicNum()<=0){
-              // If the product atom is a dummy, set everything
-              productAtom->setAtomicNum(reactantAtom->getAtomicNum());
-              productAtom->setIsAromatic(reactantAtom->getIsAromatic());
-              // now that the atomic number is set, we need
-              // to reset the isotope so that the mass is also correct:
-              if(productAtom->getIsotope())
-                productAtom->setIsotope(productAtom->getIsotope());              
-            }
+          if(productAtom->getAtomicNum()<=0){
+            productAtom->setAtomicNum(reactantAtom->getAtomicNum());
+            productAtom->setIsAromatic(reactantAtom->getIsAromatic());
+            // don't copy isotope information over from dummy atoms
+            productAtom->setIsotope(reactantAtom->getIsotope());
+
+            // remove dummy labels (if present)
+            if(productAtom->hasProp("dummyLabel")) productAtom->clearProp("dummyLabel");
+            if(productAtom->hasProp("_MolFileRLabel")) productAtom->clearProp("_MolFileRLabel");
+          }
+
+
+          if(rxn->getImplicitPropertiesFlag()){
             updateImplicitAtomProperties(productAtom,reactantAtom);
           }
+
           // One might be tempted to copy over the reactant atom's chirality into the
           // product atom if chirality is not specified on the product. This would be a
           // very bad idea because the order of bonds will almost certainly change on the

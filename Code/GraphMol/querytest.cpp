@@ -445,73 +445,73 @@ void testQueryQueryMatches(){
     a1.setQuery(makeBondNullQuery());
     a2.setQuery(makeBondNullQuery());
     TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1,a2(Bond::SINGLE);
     a1.setQuery(makeBondNullQuery());
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::SINGLE);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
     a1.expandQuery(makeBondOrderEqualsQuery(Bond::DOUBLE),Queries::COMPOSITE_OR);
     a2.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
     a1.expandQuery(makeBondOrderEqualsQuery(Bond::TRIPLE),Queries::COMPOSITE_OR);
     a2.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),Queries::COMPOSITE_OR);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
     a1.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_OR);
     a2.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
     a1.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_AND);
     a2.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::SINGLE);
     a1.expandQuery(makeBondMinRingSizeQuery(5),Queries::COMPOSITE_AND);
     a2.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.Match(&a2));
-    TEST_ASSERT(!a2.Match(&a1));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+    TEST_ASSERT(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE),a2(Bond::AROMATIC);
     a1.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.Match(&a1));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+    TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;

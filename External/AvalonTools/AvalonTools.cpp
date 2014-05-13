@@ -170,8 +170,6 @@ namespace AvalonTools {
   unsigned int set2DCoords(ROMol &mol,bool clearConfs){
     struct reaccs_molecule_t *mp=molToReaccs(mol);
     struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-    //std::cerr<<"----\n"<<MolToMolStr(mp2)<<"--------\n";
-
     TEST_ASSERT(mp2->n_atoms==mol.getNumAtoms());
 
     RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
@@ -201,10 +199,10 @@ namespace AvalonTools {
     std::string res="";
     if(mp){
       struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-      FreeMolecule(mp);
       Utils::LocaleSwitcher ls;
       char *molB = MolToMolStr(mp2);
       res=molB;
+      FreeMolecule(mp);
       FreeMolecule(mp2);
       MyFree(molB);
     } 

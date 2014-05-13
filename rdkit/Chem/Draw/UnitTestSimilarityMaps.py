@@ -89,6 +89,11 @@ class TestCase(unittest.TestCase):
     weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='hashed'))
     self.failUnless(weights[3] < 0)
 
+    # RDK fingerprint BV
+    refWeights = [0.42105, 0.42105, 0.42105, -0.32895, 0.42105, 0.42105]
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetRDKFingerprint(m, i, nBits=1024, nBitsPerHash=1))
+    for w,r in zip(weights, refWeights): self.failUnlessAlmostEqual(w, r, 4)
+
     
 if __name__ == '__main__':
   try:

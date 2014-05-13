@@ -62,13 +62,11 @@ namespace RDKit {
     const FragCatalogEntry *entry;
     int bitId;
     double invar;
-    bool found;
     for (pi = allPathsMap[1].begin(); pi != allPathsMap[1].end(); pi++) {
       //std::cout << "-*-*-* Fragment *-*-*-*-" << std::endl;
       FragCatalogEntry *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
       nent->setDescription(fparams);
       invar = computeIntVectPrimesProduct(*pi);
-      found = false;
       // ok here is the plan - initialize the entry for this path in mapkm1 to -1
       // which will be overwritten to the correct entry id in the catalog if we find 
       // a match. This -1 initialization will be useful when we move onto higher order stuff
@@ -82,7 +80,6 @@ namespace RDKit {
 	  }
 	  mapkm1[invar] = (*eti);
 	  delete nent;
-	  found = true;
 	  break;
 	}
       }
@@ -109,7 +106,6 @@ namespace RDKit {
       for (pi = ordi->second.begin(); pi != ordi->second.end(); pi++) {
 	invar = computeIntVectPrimesProduct(*pi);
 	mapk[invar] = -1;
-	found = false;
 	FragCatalogEntry *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
 	nent->setDescription(fparams);
 	//std::cout << "Testing 2nd order fragment: " << nent->getDescription() << std::endl;
@@ -160,7 +156,6 @@ namespace RDKit {
 	for (iti = intersect.begin(); iti != intersect.end(); iti++) {
 	  entry = fcat.getEntryWithIdx(*iti);
 	  if (nent->match(entry, tol) ) {
-	    found = true;
 	    mapk[invar] = (*iti);
 	    bitId = entry->getBitId();
 	    if (bitId >= 0) {

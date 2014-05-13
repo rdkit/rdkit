@@ -805,7 +805,7 @@ def ParseArgs(runDetails):
                               
                               'doKnn','knnK=','knnTanimoto','knnEuclid',
 
-                              'doSigTree','doCMIM=','allowCollections',
+                              'doSigTree','allowCollections',
 
                               'doNaiveBayes', 'mEstimateVal=',
                               'doSigBayes',
@@ -909,8 +909,6 @@ def ParseArgs(runDetails):
       runDetails.useTrees=0
       runDetails.useNaiveBayes=0
       runDetails.useSigTrees=1
-    elif arg == '--doCMIM':
-      runDetails.useCMIM=int(val)
     elif arg == '--allowCollections':
       runDetails.allowCollections=True
 

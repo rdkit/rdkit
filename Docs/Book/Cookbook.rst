@@ -463,9 +463,19 @@ IPython notebook:
 http://nbviewer.ipython.org/gist/greglandrum/8351725
 https://gist.github.com/greglandrum/8351725
 
+The goal is to be able to use custom atom types in the MCS code, yet
+still be able to get a readable SMILES for the MCS. We will use the
+MCS code's option to use isotope information in the matching and then
+set bogus isotope values that contain our isotope information.
+
 The code:
 
 .. testcode::
+
+  # our test molecules:
+  smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
+        "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
+  ms = [Chem.MolFromSmiles(x) for x in smis]
 
   from rdkit import Chem
   from rdkit.Chem import MCS
@@ -473,6 +483,45 @@ The code:
   def label(a):
     " a simple hash combining atom number and hybridization "
     return 100*int(a.GetHybridization())+a.GetAtomicNum()
+
+  # copy the molecules, since we will be changing them
+  nms = [Chem.Mol(x) for x in ms]
+  for nm in nms:
+    for at in nm.GetAtoms():
+        at.SetIsotope(label(at))
+
+  mcs=MCS.FindMCS(nms,atomCompare='isotopes')
+  print mcs.smarts
+
+This generates the following output:
+
+.. testoutput::
+
+  [406*]-[308*]-[306*]:1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)(-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[307*]-[306*]:1:[307*]:[306*]:2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*]
+
+That's what we asked for, but it's not exactly readable. We can get to a more readable form in a two step process:
+
+  1) Do a substructure match of the MCS onto a copied molecule
+  2) Generate SMILES for the original molecule, using only the atoms that matched in the copy.
+
+This works because we know that the atom indices in the copies and the original molecules are the same.
+  
+.. testcode::
+
+  def getMCSSmiles(mol,labelledMol,mcs):
+      mcsp = Chem.MolFromSmarts(mcs.smarts)
+      match = labelledMol.GetSubstructMatch(mcsp)
+      return Chem.MolFragmentToSmiles(ms[0],atomsToUse=match,
+                                      isomericSmiles=True,
+                                      canonical=False)
+
+  print getMCSSmiles(ms[0],nms[0],mcs)
+
+.. testoutput::
+
+  COc1ccc(C(Nc2nc3c(ncn3COC)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1
+
+That's what we were looking for.
 
 
 License

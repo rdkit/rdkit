@@ -88,7 +88,7 @@ macro(rdkit_python_extension)
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 if(WIN32)
     set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
-                          RUNTIME_OUTPUT_DIRECTORY
+                          LIBRARY_OUTPUT_DIRECTORY
                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
 else(WIN32)
     set_target_properties(${RDKPY_NAME} PROPERTIES 

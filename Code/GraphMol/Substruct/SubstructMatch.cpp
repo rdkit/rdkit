@@ -158,10 +158,11 @@ namespace RDKit{
     };
     class BondLabelFunctor{
     public:
-      BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality) :
-        d_query(query), d_mol(mol),df_useChirality(useChirality) {};
+      BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality,
+                       bool useQueryQueryMatches) :
+        d_query(query), d_mol(mol),df_useChirality(useChirality),
+        df_useQueryQueryMatches(useQueryQueryMatches) {};
       bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j) const{
-        bool res=bondCompat(d_query[i],d_mol[j]);
         if(df_useChirality){
           const BOND_SPTR qBnd=d_query[i];
           if(qBnd->getBondType()==Bond::DOUBLE &&
@@ -174,13 +175,14 @@ namespace RDKit{
               return false;
           }
         }
-
+        bool res=bondCompat(d_query[i],d_mol[j]);
         return res;
       }
     private:
       const ROMol &d_query;
       const ROMol &d_mol;
       bool df_useChirality;
+      bool df_useQueryQueryMatches;
     };
   }    
   
@@ -210,7 +212,7 @@ namespace RDKit{
 
     detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches);
-    detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
+    detail::BondLabelFunctor bondLabeler(query,mol,useChirality,useQueryQueryMatches);
 
     detail::ssPairType match;
 #if 0
@@ -268,7 +270,7 @@ namespace RDKit{
     matches.resize(0);
 
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches);
-    detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
+    detail::BondLabelFunctor bondLabeler(query,mol,useChirality,useQueryQueryMatches);
     detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     
     std::list<detail::ssPairType> pms;
@@ -326,7 +328,7 @@ namespace RDKit{
       }
  
       detail::AtomLabelFunctor atomLabeler(query,mol,useChirality,useQueryQueryMatches);
-      detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
+      detail::BondLabelFunctor bondLabeler(query,mol,useChirality,useQueryQueryMatches);
       detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
 
       matches.clear();
@@ -352,7 +354,7 @@ namespace RDKit{
 	    bool found=false;
 	    for(detail::ssPairType::const_iterator pairIter=iter1->begin();
 		pairIter!=iter1->end();++pairIter){
-	      if(pairIter->first==rootIdx){
+	      if(pairIter->first==static_cast<unsigned int>(rootIdx)){
 		matches.push_back(pairIter->second);
 		found=true;
 		break;

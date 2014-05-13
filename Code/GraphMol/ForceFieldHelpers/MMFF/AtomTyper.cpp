@@ -28,7 +28,7 @@ namespace RDKit {
 
     // given the atomic num, this function returns the periodic
     // table row number, starting from 0 for hydrogen
-    const unsigned int getPeriodicTableRow(const int atomicNum)
+    unsigned int getPeriodicTableRow(const int atomicNum)
     {
       unsigned int periodicTableRow = 0;
       
@@ -1975,8 +1975,7 @@ namespace RDKit {
     void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom)
     {
       unsigned int atomType;
-      bool isHOCC = false;
-      bool isHOCN = false;
+      bool isHOCCorHOCN = false;
       bool isHOCO = false;
       bool isHOP = false;
       bool isHOS = false;
@@ -2122,18 +2121,13 @@ namespace RDKit {
                       if (nbr3Atom->getIdx() == nbrAtom->getIdx()) {
                         continue;
                       }
-                      // if the carbon neighbor is another carbon bonded
-                      // via a double or aromatic bond, ipso is HOCC
-                      if ((nbr3Atom->getAtomicNum() == 6)
+                      // if the carbon neighbor is another carbon or nitrogen
+                      // bonded via a double or aromatic bond, ipso is HOCC/HOCN
+                      if (((nbr3Atom->getAtomicNum() == 6)
+                        || (nbr3Atom->getAtomicNum() == 7))
                         && ((bond->getBondType() == Bond::DOUBLE)
                         || (bond->getBondType() == Bond::AROMATIC))) {
-                        isHOCC = true;
-                      }
-                      // if the carbon neighbor is a nitrogen bonded
-                      // via a double bond, ipso is HOCN
-                      if ((nbr3Atom->getAtomicNum() == 7)
-                        && (bond->getBondType() == Bond::DOUBLE)) {
-                        isHOCN = true;
+                        isHOCCorHOCN = true;
                       }
                       // if the carbon neighbor is an oxygen bonded
                       // via a double bond, ipso is HOCO
@@ -2158,7 +2152,7 @@ namespace RDKit {
                   atomType = 24;
                   break;
                 }
-                if (isHOCC || isHOCN) {
+                if (isHOCCorHOCN) {
                   // HOCC
                   // Enolic or phenolic hydroxyl hydrogen
                   // HOCN
@@ -2314,7 +2308,7 @@ namespace RDKit {
 
     // returns the MMFF angle type of the angle formed
     // by atoms with indexes idx1, idx2, idx3
-    const unsigned int MMFFMolProperties::getMMFFAngleType
+    unsigned int MMFFMolProperties::getMMFFAngleType
       (const ROMol &mol, const unsigned int idx1,
       const unsigned int idx2, const unsigned int idx3)
     {
@@ -2352,7 +2346,7 @@ namespace RDKit {
     
 
     // returns the MMFF bond type of the bond
-    const unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond)
+    unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond)
     {
       PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
@@ -2374,7 +2368,7 @@ namespace RDKit {
     // given the angle type and the two bond types of the bond
     // which compose the angle, it returns the MMFF stretch-bend
     // type of the angle
-    const unsigned int getMMFFStretchBendType(const unsigned int angleType,
+    unsigned int getMMFFStretchBendType(const unsigned int angleType,
       const unsigned int bondType1, const unsigned int bondType2)
     {
       unsigned int stretchBendType = 0;

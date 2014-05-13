@@ -1,12 +1,10 @@
 
 tests=[
-  ("python","UnitTestCMIM.py",{}),
+  ("testExecs/testConformerParser.exe","",{}),
   ]
 
+longTests = []
 
-
-longTests=[
-  ]
 if __name__=='__main__':
   import sys
   from rdkit import TestRunner

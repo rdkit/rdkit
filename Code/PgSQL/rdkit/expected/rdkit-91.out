@@ -155,7 +155,7 @@ SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
    939
 (1 row)
 
-SELECT id, rdkit_fp(m) AS f INTO pgbfp FROM pgmol;
+SELECT id, rdkit_fp(m) AS f, maccs_fp(m) as maccsf INTO pgbfp FROM pgmol;
 CREATE UNIQUE INDEX bfp_ididx ON pgbfp (id);
 SELECT id, morgan_fp(m,1) AS f INTO pgsfp FROM pgmol;
 CREATE UNIQUE INDEX sfp_ididx ON pgsfp (id);

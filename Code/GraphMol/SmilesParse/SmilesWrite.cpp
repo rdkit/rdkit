@@ -109,7 +109,6 @@ namespace RDKit{
       }
       res << symb;
 
-      bool chiralityIncluded=false;
       if(atom->getOwningMol().hasProp("_doIsoSmiles") &&
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
         INT_LIST trueOrder;
@@ -137,14 +136,12 @@ namespace RDKit{
             atStr = "@@";
           else
             atStr = "@";
-          chiralityIncluded=true;
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
           if(!(nSwaps%2))
             atStr = "@";
           else
             atStr = "@@";
-          chiralityIncluded=true;
           break;
         default:
           break;

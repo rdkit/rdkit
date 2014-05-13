@@ -30,7 +30,7 @@
 #include <ForceField/ForceField.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <math.h>
-
+#include <RDBoost/Exceptions.h>
 
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -1276,7 +1276,7 @@ void testMultiThread(){
 }
 #endif
 
-void testGitHub55() {
+void testGithub55() {
   {
     std::string smiles = "c1cnco1";
     RWMol *core = SmilesToMol(smiles);
@@ -1327,7 +1327,22 @@ void testGitHub55() {
   }
 }
 
+void testGithub256() {
+  {
+    RWMol *mol = new RWMol();
+    TEST_ASSERT(mol);
 
+    bool ok=false;
+    try{
+      DGeomHelpers::EmbedMolecule(*mol);
+      ok=false;
+    } catch (const ValueErrorException &e) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    delete mol;
+  }
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -1443,7 +1458,7 @@ int main() {
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
-  testGitHub55();
+  testGithub55();
 
 #endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
@@ -1452,6 +1467,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test multi-threading \n\n";
   testMultiThread();
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 256: handling of zero-atom molecules\n\n";
+  testGithub256();
 
 
 
