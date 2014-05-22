@@ -10,6 +10,7 @@
 #ifndef __RD_EQUALITYQUERY_H__
 #define __RD_EQUALITYQUERY_H__
 #include "Query.h"
+#include <sstream>
 
 namespace Queries {
 
@@ -77,6 +78,16 @@ namespace Queries {
       res->d_description = this->d_description;
       return res;
     };
+
+    std::string getFullDescription() const {
+      std::ostringstream res;
+      res<<this->getDescription();
+      res<<" "<<this->d_val;
+      if(this->getNegation()) res<<" != ";
+      else res<<" = ";
+      res<<"val";
+      return res.str();
+    }
 
   protected:
     MatchFuncArgType d_val;
