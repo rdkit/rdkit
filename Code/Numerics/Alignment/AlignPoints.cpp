@@ -315,8 +315,7 @@ namespace RDNumeric {
       
       // get the eigenVecs and eigenVals for the matrix
       double eigenVecs[4][4], eigenVals[4];
-      unsigned int numIter;
-      numIter = jacobi(quad, eigenVals, eigenVecs, maxIterations);
+      jacobi(quad, eigenVals, eigenVecs, maxIterations);
       
       // get the quaternion
       double quater[4];

@@ -650,9 +650,14 @@ calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #else
-  for(unsigned int i=0;i<abv->size()/sizeof(unsigned int);++i){
+  unsigned int eidx=abv->size()/sizeof(unsigned int);
+  for(unsigned int i=0;i<eidx;++i){
     union_popcount += __builtin_popcount(((unsigned int *)afp)[i] | ((unsigned int *)bfp)[i]);
     intersect_popcount += __builtin_popcount(((unsigned int *)afp)[i] & ((unsigned int *)bfp)[i]);
+  }  
+  for(unsigned int i=eidx*sizeof(unsigned int);i<abv->size(); ++i){
+    union_popcount += byte_popcounts[afp[i] | bfp[i]];
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #endif
   if (union_popcount == 0) {
@@ -668,11 +673,28 @@ calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
   const unsigned char *afp=(const unsigned char *)abv->c_str();
   const unsigned char *bfp=(const unsigned char *)bbv->c_str();
   int intersect_popcount=0,a_popcount=0,b_popcount=0;
+
+#ifndef USE_BUILTIN_POPCOUNT
   for (unsigned int i=0; i<abv->size(); i++) {
     a_popcount += byte_popcounts[afp[i]];
     b_popcount += byte_popcounts[bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
+#else
+  unsigned int eidx=abv->size()/sizeof(unsigned int);
+  for(unsigned int i=0;i<eidx;++i){
+    a_popcount += __builtin_popcount(((unsigned int *)afp)[i]);
+    b_popcount += __builtin_popcount(((unsigned int *)bfp)[i]);
+    intersect_popcount += __builtin_popcount(((unsigned int *)afp)[i] & ((unsigned int *)bfp)[i]);
+  }
+  for(unsigned int i=eidx*sizeof(unsigned int);i<abv->size(); ++i){
+    a_popcount += byte_popcounts[afp[i]];
+    b_popcount += byte_popcounts[bfp[i]];
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+  }
+
+#endif
+
   if (a_popcount+b_popcount == 0) {
     return 0.0;
   }
@@ -693,10 +715,16 @@ calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b, float ca, f
     bcount+=byte_popcounts[bfp[i]];
   }
 #else
-  for(unsigned int i=0;i<abv->size()/sizeof(unsigned int);++i){
+  unsigned int eidx=abv->size()/sizeof(unsigned int);
+  for(unsigned int i=0;i<eidx;++i){
     intersect_popcount += __builtin_popcount(((unsigned int *)afp)[i] & ((unsigned int *)bfp)[i]);
     acount += __builtin_popcount(((unsigned int *)afp)[i]);
     bcount += __builtin_popcount(((unsigned int *)bfp)[i]);    
+  }
+  for(unsigned int i=eidx*sizeof(unsigned int);i<abv->size(); ++i){
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+    acount+=byte_popcounts[afp[i]];
+    bcount+=byte_popcounts[bfp[i]];
   }
 #endif
   double denom = ca*acount + cb*bcount + (1-ca-cb)*intersect_popcount; 

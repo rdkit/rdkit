@@ -82,6 +82,12 @@ SELECT dice_sml(featmorganbv_fp('c1ccccc1'::mol),featmorganbv_fp('c1ccncc1'::mol
       0.5
 (1 row)
 
+SELECT tanimoto_sml(maccs_fp('c1ccccc1'::mol),maccs_fp('c1ccncc1'::mol));
+ tanimoto_sml 
+--------------
+        0.375
+(1 row)
+
 SELECT dice_sml(maccs_fp('c1ccccc1'::mol),maccs_fp('c1ccncc1'::mol));
      dice_sml      
 -------------------

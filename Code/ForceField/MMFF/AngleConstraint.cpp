@@ -27,7 +27,7 @@ namespace ForceFields {
       RANGE_CHECK(0, idx1, owner->positions().size() - 1);
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
       RANGE_CHECK(0, idx3, owner->positions().size() - 1);
-      PRECONDITION(maxAngleDeg >= minAngleDeg, "bad bounds");
+      _pretreatAngles(minAngleDeg, maxAngleDeg);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
@@ -48,7 +48,6 @@ namespace ForceFields {
       RANGE_CHECK(0, idx1, pos.size() - 1);
       RANGE_CHECK(0, idx2, pos.size() - 1);
       RANGE_CHECK(0, idx3, pos.size() - 1);
-      PRECONDITION(maxAngleDeg >= minAngleDeg, "allowedDeltaDeg must be >= 0.0");
 
       double angle = 0.0;
       if (relative) {
@@ -66,8 +65,11 @@ namespace ForceFields {
       d_at1Idx = idx1;
       d_at2Idx = idx2;
       d_at3Idx = idx3;
-      d_minAngleDeg = angle + minAngleDeg;
-      d_maxAngleDeg = angle + maxAngleDeg;
+      minAngleDeg += angle;
+      maxAngleDeg += angle;
+      _pretreatAngles(minAngleDeg, maxAngleDeg);
+      d_minAngleDeg = minAngleDeg;
+      d_maxAngleDeg = maxAngleDeg;
       d_forceConstant = forceConst;
     }
 
