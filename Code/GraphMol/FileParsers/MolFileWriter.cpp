@@ -36,6 +36,36 @@ namespace RDKit{
   //  
   //*************************************
 
+  namespace {
+    int getQueryBondSymbol(const Bond *bond){
+      PRECONDITION(bond,"no bond");
+      PRECONDITION(bond->hasQuery(),"no query");
+      int res=8;
+      if(bond->getQuery()->getDescription()=="BondOr" && 
+         !bond->getQuery()->getNegation() ){
+        if(bond->getQuery()->endChildren()-bond->getQuery()->beginChildren()==2){
+          Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=bond->getQuery()->beginChildren();
+          Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
+          if((*child1)->getDescription()=="BondOrder" && !(*child1)->getNegation() &&
+             (*child2)->getDescription()=="BondOrder" && !(*child2)->getNegation() ){
+            // ok, it's a bond query we have a chance of dealing with
+            int t1=static_cast<BOND_EQUALS_QUERY *>(child1->get())->getVal();
+            int t2=static_cast<BOND_EQUALS_QUERY *>(child2->get())->getVal();
+            if(t1>t2) std::swap(t1,t2);
+            if(t1==Bond::SINGLE && t2==Bond::DOUBLE){
+              res=5;
+            } else if(t1==Bond::SINGLE && t2==Bond::AROMATIC){
+              res=6;
+            } else if(t1==Bond::DOUBLE && t2==Bond::AROMATIC){
+              res=7;
+            }
+          }
+        }
+      }
+      return res;
+    }
+  }
+  
   const std::string GetMolFileChargeInfo(const RWMol &mol){
     std::stringstream res;
     std::stringstream chgss;
@@ -463,29 +493,33 @@ namespace RDKit{
     return res;
   };
   
-  const std::string BondGetMolFileSymbol(const Bond *bond){
+  int BondGetMolFileSymbol(const Bond *bond){
     PRECONDITION(bond,"");
     // FIX: should eventually recognize queries
-    std::string res;
-    switch(bond->getBondType()){
-    case Bond::SINGLE:
-      if(bond->getIsAromatic()){
-        res="  4";
-      } else {
-        res="  1";
+    int res=0;
+    if(bond->hasQuery()){
+      res=getQueryBondSymbol(bond);
+    } else {
+      switch(bond->getBondType()){
+      case Bond::SINGLE:
+        if(bond->getIsAromatic()){
+          res=4;
+        } else {
+          res=1;
+        }
+        break;
+      case Bond::DOUBLE: 
+        if(bond->getIsAromatic()){
+          res=4;
+        } else {
+          res=2;
+        }
+        break;
+      case Bond::TRIPLE: res=3;break;
+      case Bond::AROMATIC: res=4;break;
+      case Bond::ZERO: res=1;break;
+      default: break;
       }
-      break;
-    case Bond::DOUBLE: 
-      if(bond->getIsAromatic()){
-        res="  4";
-      } else {
-        res="  2";
-      }
-      break;
-    case Bond::TRIPLE: res="  3";break;
-    case Bond::AROMATIC: res="  4";break;
-    case Bond::ZERO: res="  1";break;
-    default: res="  0";break;
     }
     return res;
     //return res.c_str();
@@ -552,11 +586,11 @@ namespace RDKit{
   const std::string GetMolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                                  const Conformer *conf){
     PRECONDITION(bond,"");
-    std::string symbol = BondGetMolFileSymbol(bond);
 
     int dirCode;
     bool reverse;
     GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+    int symbol = BondGetMolFileSymbol(bond);
     
     std::stringstream ss;
     if (reverse) {
@@ -567,7 +601,7 @@ namespace RDKit{
       ss << std::setw(3) << bond->getBeginAtomIdx()+1;
       ss << std::setw(3) << bond->getEndAtomIdx()+1;
     }
-    ss << symbol;
+    ss << std::setw(3) << symbol;
     ss << " " << std::setw(2) << dirCode;
     return ss.str();
   }
@@ -656,24 +690,28 @@ namespace RDKit{
     PRECONDITION(bond,"");
     int res = 0;
     // FIX: should eventually recognize queries
-    switch(bond->getBondType()){
-    case Bond::SINGLE:
-      if(bond->getIsAromatic()){
-        res=4;
-      } else {
-        res=1;
+    if(bond->hasQuery()){
+      res = getQueryBondSymbol(bond);
+    } else {
+      switch(bond->getBondType()){
+      case Bond::SINGLE:
+        if(bond->getIsAromatic()){
+          res=4;
+        } else {
+          res=1;
+        }
+        break;
+      case Bond::DOUBLE: 
+        if(bond->getIsAromatic()){
+          res=4;
+        } else {
+          res=2;
+        }
+        break;
+      case Bond::TRIPLE: res=3;break;
+      case Bond::AROMATIC: res=4;break;
+      default: res=0;break;
       }
-      break;
-    case Bond::DOUBLE: 
-      if(bond->getIsAromatic()){
-        res=4;
-      } else {
-        res=2;
-      }
-      break;
-    case Bond::TRIPLE: res=3;break;
-    case Bond::AROMATIC: res=4;break;
-    default: res=0;break;
     }
     return res;
   }
