@@ -1284,7 +1284,11 @@ namespace RDKit{
         try {
           int topology = FileParserUtils::toInt(text.substr(15,3));
           if(topology){
-            QueryBond *qBond=new QueryBond(*res);
+            if(!res->hasQuery()){
+              QueryBond *qBond=new QueryBond(*res);
+              delete res;
+              res = qBond;
+            }
             BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
             switch(topology){
             case 1:
@@ -1297,9 +1301,7 @@ namespace RDKit{
               errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
               throw FileParseException(errout.str()) ;
             }
-            qBond->expandQuery(q);          
-            delete res;
-            res = qBond;
+            res->expandQuery(q);          
           }
         } catch (boost::bad_lexical_cast) {
           ;
