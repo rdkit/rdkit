@@ -37,14 +37,56 @@ namespace RDKit{
   //*************************************
 
   namespace {
+    int getQueryBondTopology(const Bond *bond){
+      PRECONDITION(bond,"no bond");
+      PRECONDITION(bond->hasQuery(),"no query");
+      int res=0;
+      Bond::QUERYBOND_QUERY *qry=bond->getQuery();
+      // start by catching combined bond order + bond topology queries
+      
+      if(qry->getDescription()=="BondAnd" && 
+         !qry->getNegation() &&
+         qry->endChildren()-qry->beginChildren()==2){
+        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=qry->beginChildren();
+        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
+        if( (*child1)->getDescription()=="BondOr" &&
+            (*child2)->getDescription()=="BondInRing"){
+          qry = child2->get();
+        } else if((*child1)->getDescription()=="BondInRing" &&
+                  (*child2)->getDescription()=="BondOr"){
+          qry = child1->get();
+        }
+      }
+      if(qry->getDescription()=="BondInRing"){
+        if(qry->getNegation()) res=2;
+        else res=1;
+      }
+      return res;
+    }
+
     int getQueryBondSymbol(const Bond *bond){
       PRECONDITION(bond,"no bond");
       PRECONDITION(bond->hasQuery(),"no query");
       int res=8;
-      if(bond->getQuery()->getDescription()=="BondOr" && 
-         !bond->getQuery()->getNegation() ){
-        if(bond->getQuery()->endChildren()-bond->getQuery()->beginChildren()==2){
-          Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=bond->getQuery()->beginChildren();
+      Bond::QUERYBOND_QUERY *qry=bond->getQuery();
+      // start by catching combined bond order + bond topology queries
+      if(qry->getDescription()=="BondAnd" && 
+         !qry->getNegation() &&
+         qry->endChildren()-qry->beginChildren()==2){
+        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=qry->beginChildren();
+        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
+        if( (*child1)->getDescription()=="BondOr" &&
+            (*child2)->getDescription()=="BondInRing"){
+          qry = child1->get();
+        } else if((*child1)->getDescription()=="BondInRing" &&
+                  (*child2)->getDescription()=="BondOr"){
+          qry = child2->get();
+        }
+      }
+      if(qry->getDescription()=="BondOr" && 
+         !qry->getNegation() ){
+        if(qry->endChildren()-qry->beginChildren()==2){
+          Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=qry->beginChildren();
           Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
           if((*child1)->getDescription()=="BondOrder" && !(*child1)->getNegation() &&
              (*child2)->getDescription()=="BondOrder" && !(*child2)->getNegation() ){
@@ -603,6 +645,14 @@ namespace RDKit{
     }
     ss << std::setw(3) << symbol;
     ss << " " << std::setw(2) << dirCode;
+
+    if(bond->hasQuery()){
+      int topol = getQueryBondTopology(bond);
+      if(topol){
+        ss << " " << std::setw(2) << 0 << " " << std::setw(2) << topol;
+      }
+    }
+
     return ss.str();
   }
     
@@ -749,6 +799,12 @@ namespace RDKit{
     }
     if (dirCode != 0){
       ss << " CFG=" << BondStereoCodeV2000ToV3000(dirCode);
+    }
+    if(bond->hasQuery()){
+      int topol = getQueryBondTopology(bond);
+      if(topol){
+        ss << " TOPO=" << topol;
+      }
     }
     return ss.str();
   }

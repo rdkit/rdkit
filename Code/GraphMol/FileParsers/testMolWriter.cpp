@@ -1231,6 +1231,39 @@ void testGithub266(){
   
 }
 
+
+void testGithub268(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 268: Bond topology information written to CTAB" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "bond-query4.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription()=="BondAnd");
+    
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondAnd");
+    
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m2;
+    m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondAnd");
+
+    delete m;
+  }
+}  
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1347,6 +1380,10 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub266();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub268();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }
