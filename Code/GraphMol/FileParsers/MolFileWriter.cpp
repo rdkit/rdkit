@@ -64,42 +64,49 @@ namespace RDKit{
       return res;
     }
 
+    // returns 0 if there's a basic bond-order query
     int getQueryBondSymbol(const Bond *bond){
       PRECONDITION(bond,"no bond");
       PRECONDITION(bond->hasQuery(),"no query");
       int res=8;
+      
       Bond::QUERYBOND_QUERY *qry=bond->getQuery();
-      // start by catching combined bond order + bond topology queries
-      if(qry->getDescription()=="BondAnd" && 
-         !qry->getNegation() &&
-         qry->endChildren()-qry->beginChildren()==2){
-        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=qry->beginChildren();
-        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
-        if( (*child1)->getDescription()=="BondOr" &&
-            (*child2)->getDescription()=="BondInRing"){
-          qry = child1->get();
-        } else if((*child1)->getDescription()=="BondInRing" &&
-                  (*child2)->getDescription()=="BondOr"){
-          qry = child2->get();
-        }
-      }
-      if(qry->getDescription()=="BondOr" && 
-         !qry->getNegation() ){
-        if(qry->endChildren()-qry->beginChildren()==2){
+      if(qry->getDescription()=="BondOrder"){
+        // trap the simple bond-order query
+        res=0;
+      } else {
+        // start by catching combined bond order + bond topology queries
+        if(qry->getDescription()=="BondAnd" && 
+           !qry->getNegation() &&
+           qry->endChildren()-qry->beginChildren()==2){
           Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=qry->beginChildren();
           Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
-          if((*child1)->getDescription()=="BondOrder" && !(*child1)->getNegation() &&
-             (*child2)->getDescription()=="BondOrder" && !(*child2)->getNegation() ){
-            // ok, it's a bond query we have a chance of dealing with
-            int t1=static_cast<BOND_EQUALS_QUERY *>(child1->get())->getVal();
-            int t2=static_cast<BOND_EQUALS_QUERY *>(child2->get())->getVal();
-            if(t1>t2) std::swap(t1,t2);
-            if(t1==Bond::SINGLE && t2==Bond::DOUBLE){
-              res=5;
-            } else if(t1==Bond::SINGLE && t2==Bond::AROMATIC){
-              res=6;
-            } else if(t1==Bond::DOUBLE && t2==Bond::AROMATIC){
-              res=7;
+          if( (*child1)->getDescription()=="BondOr" &&
+              (*child2)->getDescription()=="BondInRing"){
+            qry = child1->get();
+          } else if((*child1)->getDescription()=="BondInRing" &&
+                    (*child2)->getDescription()=="BondOr"){
+            qry = child2->get();
+          }
+        }
+        if(qry->getDescription()=="BondOr" && 
+           !qry->getNegation() ){
+          if(qry->endChildren()-qry->beginChildren()==2){
+            Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1=qry->beginChildren();
+            Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2=child1+1;
+            if((*child1)->getDescription()=="BondOrder" && !(*child1)->getNegation() &&
+               (*child2)->getDescription()=="BondOrder" && !(*child2)->getNegation() ){
+              // ok, it's a bond query we have a chance of dealing with
+              int t1=static_cast<BOND_EQUALS_QUERY *>(child1->get())->getVal();
+              int t2=static_cast<BOND_EQUALS_QUERY *>(child2->get())->getVal();
+              if(t1>t2) std::swap(t1,t2);
+              if(t1==Bond::SINGLE && t2==Bond::DOUBLE){
+                res=5;
+              } else if(t1==Bond::SINGLE && t2==Bond::AROMATIC){
+                res=6;
+              } else if(t1==Bond::DOUBLE && t2==Bond::AROMATIC){
+                res=7;
+              }
             }
           }
         }
@@ -374,7 +381,8 @@ namespace RDKit{
     std::string res;
     if(atom->hasProp("_MolFileRLabel")){
       res="R#";
-    } else if(!atom->hasQuery() && atom->getAtomicNum()){
+      //    } else if(!atom->hasQuery() && atom->getAtomicNum()){
+    } else if(atom->getAtomicNum()){
       res=atom->getSymbol();
     } else {
       if(!atom->hasProp("dummyLabel")){
@@ -541,7 +549,8 @@ namespace RDKit{
     int res=0;
     if(bond->hasQuery()){
       res=getQueryBondSymbol(bond);
-    } else {
+    }
+    if(!res){
       switch(bond->getBondType()){
       case Bond::SINGLE:
         if(bond->getIsAromatic()){
@@ -740,9 +749,9 @@ namespace RDKit{
     PRECONDITION(bond,"");
     int res = 0;
     // FIX: should eventually recognize queries
-    if(bond->hasQuery()){
+    if(bond->hasQuery())
       res = getQueryBondSymbol(bond);
-    } else {
+    if(!res){
       switch(bond->getBondType()){
       case Bond::SINGLE:
         if(bond->getIsAromatic()){

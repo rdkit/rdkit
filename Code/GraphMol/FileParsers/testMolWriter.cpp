@@ -1228,6 +1228,25 @@ void testGithub266(){
 
     delete m;
   }
+
+  {
+    ROMol *m=SmartsToMol("C-CN");
+    TEST_ASSERT(m);
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(!m2->getAtomWithIdx(2)->hasQuery());
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getAtomicNum()==6);
+    TEST_ASSERT(m2->getAtomWithIdx(1)->getAtomicNum()==6);
+    TEST_ASSERT(m2->getAtomWithIdx(2)->getAtomicNum()==7);
+    TEST_ASSERT(!m2->getBondWithIdx(0)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+
+  }
+
   
 }
 
