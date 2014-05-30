@@ -16,6 +16,13 @@
 #include <iostream>
 #ifdef WIN32
     #include <Windows.h> // for Winmm.lib timeGetTime()
+    #ifdef _DEBUG   // check memory leaks
+        #include <crtdbg.h>
+        #define _CRTDBG_MAP_ALLOC
+        #ifndef new
+            #define new new( _NORMAL_BLOCK, __FILE__, __LINE__)
+        #endif
+    #endif
 #else
     #include <unistd.h>
     #include <fcntl.h>
@@ -99,7 +106,6 @@ namespace RDKit
 {
  namespace FMCS
  {
-     extern bool ConsoleOutputEnabled;
 #ifdef TRACE_ON
      std::ostream& TRACE(unsigned info=1)
      {

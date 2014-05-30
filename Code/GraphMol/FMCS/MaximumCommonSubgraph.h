@@ -56,10 +56,10 @@ namespace RDKit
 #ifdef FAST_SUBSTRUCT_CACHE
         std::vector<unsigned> QueryAtomLabels;  // for code Morgan. Value based on current functor and parameters
         std::vector<unsigned> QueryBondLabels;  // for code Morgan. Value based on current functor and parameters
-        SubstructureCache   HashCache;
+        SubstructureCache     HashCache;
 #ifdef PRECOMPUTED_TABLES_MATCH
-        MatchTable      QueryAtomMatchTable;
-        MatchTable      QueryBondMatchTable;
+        MatchTable          QueryAtomMatchTable;
+        MatchTable          QueryBondMatchTable;
 #endif
         RingMatchTableSet   RingMatchTables;
 #endif
@@ -67,6 +67,7 @@ namespace RDKit
         DuplicatedSeedCache DuplicateCache;
 #endif
         const ROMol*        QueryMolecule;
+        unsigned            QueryMoleculeMatchedBonds;
         std::vector<Target> Targets;
         SeedSet             Seeds;
         MCS                 McsIdx;
