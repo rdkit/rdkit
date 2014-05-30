@@ -22,12 +22,6 @@
 #ifdef VERBOSE_STATISTICS_ON
     ExecStatistics VerboseStatistics;
 #endif
-namespace RDKit
-{
- namespace FMCS
- {
-    bool ConsoleOutputEnabled = false;
-}}
 
 namespace RDKit
 {
@@ -255,6 +249,61 @@ void MaximumCommonSubgraph::init()
     Parameters.CompareFunctionsUserData = userData; // restore
 }
 
+
+struct QueryRings
+{
+    std::vector<unsigned>   BondRings;  // amount of rings
+    std::vector<unsigned>   AtomRings;  // amount of rings
+
+    QueryRings(const ROMol* query) : BondRings(query->getNumBonds()), AtomRings(query->getNumAtoms())
+    {
+        {
+            for(size_t b = 0; b < BondRings.size(); b++)
+                BondRings[b] = 0;
+            const RingInfo::VECT_INT_VECT& rings = query->getRingInfo()->bondRings();
+            for (RingInfo::VECT_INT_VECT::const_iterator r = rings.begin(); r != rings.end(); r++)
+             for(INT_VECT::const_iterator ri = r->begin(); ri != r->end(); ri++)
+                 ++BondRings[*ri];
+        }
+        {
+            for(size_t a = 0; a < AtomRings.size(); a++)
+                AtomRings[a] = 0;
+            const RingInfo::VECT_INT_VECT& rings = query->getRingInfo()->atomRings();
+            for (RingInfo::VECT_INT_VECT::const_iterator r = rings.begin(); r != rings.end(); r++)
+             for(INT_VECT::const_iterator ri = r->begin(); ri != r->end(); ri++)
+                 ++AtomRings[*ri];
+        }
+    }
+    
+    inline unsigned getNumberRings(const Bond* bond)const
+    {
+        return BondRings[bond->getIdx()];
+    }
+
+    inline unsigned getNumberRings(const Atom* atom)const
+    {
+        return AtomRings[atom->getIdx()];
+    }
+};
+
+struct WeightedBond
+{
+    const Bond* BondPtr;
+    unsigned    Weight;
+    WeightedBond() : BondPtr(0), Weight(0) {}
+    WeightedBond(const Bond* bond, const QueryRings& r) : BondPtr(bond), Weight(0)
+    {
+        // score ((bond.is_in_ring + atom1.is_in_ring + atom2.is_in_ring)
+        if(r.getNumberRings(bond))
+            Weight += 1;
+        if(r.getNumberRings(bond->getBeginAtom()))
+            Weight += 1;
+        if(r.getNumberRings(bond->getEndAtom()))
+            Weight += 1;
+    }
+    bool operator < (const WeightedBond& r) { return Weight >= r.Weight;}   // sort in Z-A order
+};
+
 void MaximumCommonSubgraph::makeInitialSeeds()
 {
     // build a set of initial seeds as "all" single bonds from query molecule
@@ -263,14 +312,21 @@ void MaximumCommonSubgraph::makeInitialSeeds()
         excludedBonds[i] = false;
 
     Seeds.clear();
-
+    QueryMoleculeMatchedBonds = 0;
     //R1 additional performance OPTIMISATION
     //if(Parameters.BondCompareParameters.CompleteRingsOnly)
     // disable all mismatched rings, and do not generate initial seeds from such disabled bonds
     //  for(  rings .....) for(i......) 
     //   if(mismatched) excludedBonds[i.......] = true;
-
+    QueryRings r(QueryMolecule);
+    std::vector<WeightedBond> wb;
+    wb.reserve(QueryMolecule->getNumBonds());
     for(RWMol::ConstBondIterator bi = QueryMolecule->beginBonds(); bi != QueryMolecule->endBonds(); bi++)
+        wb.push_back(WeightedBond(*bi, r));
+    //SLOW Result: 
+    //std::sort(wb.begin(), wb.end());
+
+    for(std::vector<WeightedBond>::const_iterator bi = wb.begin(); bi != wb.end(); bi++)
     {
         //R1 additional performance OPTIMISATION
         //if(excludedBonds[(*bi)->getIdx()])
@@ -289,22 +345,24 @@ void MaximumCommonSubgraph::makeInitialSeeds()
             ++VerboseStatistics.InitialSeed;
         }
 #endif
-        seed.addAtom((*bi)->getBeginAtom());
-        seed.addAtom((*bi)->getEndAtom());
+        seed.addAtom(bi->BondPtr->getBeginAtom());
+        seed.addAtom(bi->BondPtr->getEndAtom());
         seed.ExcludedBonds = excludedBonds; // all bonds from first to current
-        seed.addBond (*bi);
-        excludedBonds[(*bi)->getIdx()] = true;
+        seed.addBond (bi->BondPtr);
+        excludedBonds[bi->BondPtr->getIdx()] = true;
 
         seed.computeRemainingSize(*QueryMolecule);
 
-        if( ! checkIfMatchAndAppend(seed))
+        if(checkIfMatchAndAppend(seed))
+            ++QueryMoleculeMatchedBonds;
+        else
         {
             // optionally remove all such bonds from all targets TOPOLOGY where it exists.
             //..........
 
             // disable (mark as already processed) mismatched bond in all seeds
             for(SeedSet::iterator si = Seeds.begin(); si != Seeds.end(); si++)
-                si->ExcludedBonds[(*bi)->getIdx()] = true;
+                si->ExcludedBonds[bi->BondPtr->getIdx()] = true;
 
 #ifdef VERBOSE_STATISTICS_ON
             #ifdef MULTI_THREAD
@@ -353,7 +411,7 @@ bool MaximumCommonSubgraph::growSeeds()
     ThreadPool WorkingThreadPool(Parameters.ThreadNumber, this); // start all working threads
 #endif
     // Find MCS -- SDF Seed growing OPTIMISATION (it works in 3 times faster)
-    while(!Seeds.empty())
+    while(!Seeds.empty() && getMaxNumberBonds() < QueryMoleculeMatchedBonds)
     {
 #ifdef MULTI_THREAD
         while(!WorkingThreadPool.waitReady(100))
@@ -525,38 +583,38 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)
     unsigned ai = 0;  // SeedAtomIdx
     for(std::vector<const Atom*>::const_iterator atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end(); atom++, ai++)
     {
-        QueryAtom* a = new QueryAtom(*(*atom));  // generate [#6] instead of C or c !
+        QueryAtom a(*(*atom));  // generate [#6] instead of C or c !
         //for all atomMatchSet[ai] items add atom query to template
         for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
         {
-            ATOM_OR_QUERY* a2 = new ATOM_OR_QUERY();
-            a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
-            a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
-            a2->setDescription("AtomOr");
+            ATOM_OR_QUERY a2;
+            a2.addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
+            a2.addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
+            a2.setDescription("AtomOr");
 //ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what)
 //....
-            a->setQuery(a2);
+            a.setQuery(&a2);
         }
-        mol.addAtom(a, true);
+        mol.addAtom(&a, true, false);
     }
     unsigned bi = 0;  // Seed Idx
     for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
     {
         unsigned i = atomIdxMap[(*bond)->getBeginAtomIdx()];
         unsigned j = atomIdxMap[(*bond)->getEndAtomIdx()];
-        QueryBond* b = new QueryBond(*(*bond));
+        QueryBond b(*(*bond));
         // add OR template if need
         for(std::map<unsigned, const Bond*>::const_iterator bm = bondMatchSet[bi].begin(); bm != bondMatchSet[bi].end(); bm++)
         {
-            BOND_OR_QUERY* b2 = new BOND_OR_QUERY();
-            b2->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery((*bond)->getBondType())));
-            b2->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(bm->second->getBondType())));      
-            b2->setDescription("BondOr");
-            b->setQuery(b2);
+            BOND_OR_QUERY b2;
+            b2.addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery((*bond)->getBondType())));
+            b2.addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(bm->second->getBondType())));      
+            b2.setDescription("BondOr");
+            b.setQuery(&b2);
         }
-        b->setBeginAtomIdx(i);
-        b->setEndAtomIdx(j);
-        mol.addBond(b, true);
+        b.setBeginAtomIdx(i);
+        b.setEndAtomIdx(j);
+        mol.addBond(&b, false);
     }
     return MolToSmarts(mol, true);
 }
@@ -659,7 +717,7 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
         if(Targets.empty())
             break;
 
-std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
+//DEBUG: std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
 
         makeInitialSeeds();
         if(Seeds.empty())
@@ -679,7 +737,7 @@ std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
         res.SmartsString = generateResultSMARTS(McsIdx);
 
 #ifdef VERBOSE_STATISTICS_ON
-if(ConsoleOutputEnabled)
+if(Parameters.Verbose)
 {
     #ifdef MULTI_THREAD
     Guard statlock(StatisticsMutex);
