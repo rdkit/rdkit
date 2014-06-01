@@ -40,10 +40,12 @@ namespace ForceFields {
       {
         double distTerm = distance - r0;
         double distTerm2 = distTerm * distTerm;
+        double const c1 = 143.9325;
         double const cs = -2.0;
+        double const c3 = 7.0 / 12.0;
         
-        return (143.9325 * kb / 2.0 * distTerm2
-          * (1.0 + cs * distTerm + 7.0 / 12.0 * cs * cs * distTerm2));
+        return (0.5 * c1 * kb * distTerm2
+          * (1.0 + cs * distTerm + c3 * cs * cs * distTerm2));
       }
     } // end of namespace Utils
   
@@ -85,9 +87,11 @@ namespace ForceFields {
       double *g1 = &(grad[3 * d_at1Idx]);
       double *g2 = &(grad[3 * d_at2Idx]);
       double const cs = -2.0;
+      double const c1 = 143.9325;
+      double const c3 = 7.0 / 12.0;
       double distTerm = dist - d_r0;
-      double dE_dr = 143.9325 * d_kb * distTerm
-        * (1.0 + 1.5 * cs * distTerm + 7.0 / 6.0 * cs * cs * distTerm * distTerm);
+      double dE_dr = c1 * d_kb * distTerm
+        * (1.0 + 1.5 * cs * distTerm + 2.0 * c3 * cs * cs * distTerm * distTerm);
       double dGrad;
       for (unsigned int i = 0; i < 3; ++i) {
         dGrad = ((dist > 0.0)

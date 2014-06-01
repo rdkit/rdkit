@@ -36,8 +36,9 @@ namespace ForceFields {
         const MMFFVdW *mmffVdWParamsIAtom, const MMFFVdW *mmffVdWParamsJAtom)
       {
         double R_star_ij2 = R_star_ij * R_star_ij;
+        double const c4 = 181.16;
         
-        return (181.16 * mmffVdWParamsIAtom->G_i * mmffVdWParamsJAtom->G_i
+        return (c4 * mmffVdWParamsIAtom->G_i * mmffVdWParamsJAtom->G_i
           * mmffVdWParamsIAtom->alpha_i * mmffVdWParamsJAtom->alpha_i
           / ((sqrt(mmffVdWParamsIAtom->alpha_i / mmffVdWParamsIAtom->N_i)
           + sqrt(mmffVdWParamsJAtom->alpha_i / mmffVdWParamsJAtom->N_i))
@@ -47,14 +48,18 @@ namespace ForceFields {
       double calcVdWEnergy(const double dist,
         const double R_star_ij, const double wellDepth)
       {
+        double const vdw1 = 1.07;
+        double const vdw1m1 = vdw1 - 1.0;
+        double const vdw2 = 1.12;
+        double const vdw2m1 = vdw2 - 1.0;
         double dist2 = dist * dist;
         double dist7 = dist2 * dist2 * dist2 * dist;
-        double aTerm = 1.07 * R_star_ij / (dist + 0.07 * R_star_ij);
+        double aTerm = vdw1 * R_star_ij / (dist + vdw1m1 * R_star_ij);
         double aTerm2 = aTerm * aTerm;
         double aTerm7 = aTerm2 * aTerm2 * aTerm2 * aTerm;
         double R_star_ij2 = R_star_ij * R_star_ij;
         double R_star_ij7 = R_star_ij2 * R_star_ij2 * R_star_ij2 * R_star_ij;
-        double bTerm = 1.12 * R_star_ij7 / (dist7 + 0.12 * R_star_ij7) - 2.0;
+        double bTerm = vdw2 * R_star_ij7 / (dist7 + vdw2m1 * R_star_ij7) - 2.0;
         double res = wellDepth * aTerm7 * bTerm;
         
         return res;
@@ -75,10 +80,12 @@ namespace ForceFields {
         double chargeTerm, boost::uint8_t dielModel, bool is1_4)
       {
         double corr_dist = dist + 0.05;
+        double const diel = 332.0716;
+        double const sc1_4 = 0.75;
         if (dielModel == RDKit::MMFF::DISTANCE) {
           corr_dist *= corr_dist;
         }
-        return (332.0716 * chargeTerm / corr_dist * (is1_4 ? 0.75 : 1.0));
+        return (diel * chargeTerm / corr_dist * (is1_4 ? sc1_4 : 1.0));
       }
     } // end of namespace utils
     
@@ -123,6 +130,11 @@ namespace ForceFields {
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
 
+      double const vdw1 = 1.07;
+      double const vdw1m1 = vdw1 - 1.0;
+      double const vdw2 = 1.12;
+      double const vdw2m1 = vdw2 - 1.0;
+      double const vdw2t7 = vdw2 * 7.0;
       double dist = dp_forceField->distance
         (d_at1Idx, d_at2Idx, pos);
       double *at1Coords = &(pos[3 * d_at1Idx]);
@@ -133,12 +145,13 @@ namespace ForceFields {
       double q2 = q * q;
       double q6 = q2 * q2 * q2;
       double q7 = q6 * q;
-      double t = 1.07 / (q + 0.07);
+      double q7pvdw2m1 = q7 + vdw2m1;
+      double t = vdw1 / (q + vdw1 - 1.0);
       double t2 = t * t;
       double t7 = t2 * t2 * t2 * t;
       double dE_dr = d_wellDepth / d_R_star_ij
-        * t7 * (-7.84 * q6 / ((q7 + 0.12) * (q7 + 0.12))
-        + ((-7.84 / (q7 + 0.12) + 14.0) / (q + 0.07)));
+        * t7 * (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1)
+        + ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
       for (unsigned int i = 0; i < 3; ++i) {
         double dGrad;
         dGrad = ((dist > 0.0)
