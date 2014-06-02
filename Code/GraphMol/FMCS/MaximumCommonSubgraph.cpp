@@ -587,33 +587,33 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)
         //for all atomMatchSet[ai] items add atom query to template
         for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
         {
-            ATOM_OR_QUERY a2;
-            a2.addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
-            a2.addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
-            a2.setDescription("AtomOr");
+            ATOM_OR_QUERY *a2 = new ATOM_OR_QUERY();
+            a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
+            a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
+            a2->setDescription("AtomOr");
 //ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what)
 //....
-            a.setQuery(&a2);
+            a.setQuery(a2);
         }
         mol.addAtom(&a, true, false);
     }
     unsigned bi = 0;  // Seed Idx
     for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
     {
-        unsigned i = atomIdxMap[(*bond)->getBeginAtomIdx()];
-        unsigned j = atomIdxMap[(*bond)->getEndAtomIdx()];
         QueryBond b(*(*bond));
+        unsigned beginAtomIdx = atomIdxMap[(*bond)->getBeginAtomIdx()];
+        unsigned   endAtomIdx = atomIdxMap[(*bond)->getEndAtomIdx()];
+        b.setBeginAtomIdx(beginAtomIdx);
+        b.setEndAtomIdx  (endAtomIdx);
         // add OR template if need
         for(std::map<unsigned, const Bond*>::const_iterator bm = bondMatchSet[bi].begin(); bm != bondMatchSet[bi].end(); bm++)
         {
-            BOND_OR_QUERY b2;
-            b2.addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery((*bond)->getBondType())));
-            b2.addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(bm->second->getBondType())));      
-            b2.setDescription("BondOr");
-            b.setQuery(&b2);
+            BOND_OR_QUERY *b2 = new BOND_OR_QUERY();
+            b2->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery((*bond)->getBondType())));
+            b2->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(bm->second->getBondType())));      
+            b2->setDescription("BondOr");
+            b.setQuery(b2);
         }
-        b.setBeginAtomIdx(i);
-        b.setEndAtomIdx(j);
         mol.addBond(&b, false);
     }
     return MolToSmarts(mol, true);
