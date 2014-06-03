@@ -24,6 +24,7 @@ namespace ForceFields {
         RDGeom::Point3D t2=r3.crossProduct(r4);
         double d1=t1.length(),d2=t2.length();
         double cosPhi=t1.dotProduct(t2)/(d1*d2);
+        clipToOne(cosPhi);
         return cosPhi;
       }
 
@@ -247,6 +248,7 @@ namespace ForceFields {
       t[0] /= d[0];
       t[1] /= d[1];
       double cosPhi = t[0].dotProduct(t[1]);
+      clipToOne(cosPhi);
       double sinPhiSq = 1.0 - cosPhi * cosPhi;
       double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
 

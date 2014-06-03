@@ -35,8 +35,10 @@ namespace ForceFields {
       {
         RDGeom::Point3D p12 = p1 - p2;
         RDGeom::Point3D p32 = p3 - p2;
-        
-        return p12.dotProduct(p32) / (dist1 * dist2);
+        double cosTheta = p12.dotProduct(p32) / (dist1 * dist2);
+        clipToOne(cosTheta);
+
+        return cosTheta;
       }
       
       double calcAngleForceConstant(const MMFFAngle *mmffAngleParams)
@@ -51,13 +53,15 @@ namespace ForceFields {
       {
         double angle = RAD2DEG * acos(cosTheta) - theta0;
         double const cb = -0.006981317;
+        double const c1 = 143.9325;
+        double const c2 = 0.043844;
         double res = 0.0;
         
         if (isLinear) {
-          res = 143.9325 * ka * (1.0 + cosTheta);
+          res = c1 * ka * (1.0 + cosTheta);
         }
         else {
-          res = 0.5 * 0.043844 * ka * angle * angle * (1.0 + cb * angle);
+          res = 0.5 * c2 * ka * angle * angle * (1.0 + cb * angle);
         }
 
         return res;
@@ -158,6 +162,7 @@ namespace ForceFields {
         (p3 - p2) / dist[1]
       };
       double cosTheta = r[0].dotProduct(r[1]);
+      clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
@@ -167,9 +172,11 @@ namespace ForceFields {
       // dE/dTheta is independent of cartesians:
       double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
       double const cb = -0.006981317;
+      double const c1 = 143.9325;
+      double const c2 = 0.043844;
         
-      double dE_dTheta = (d_isLinear ? -143.9325 * d_ka * sinTheta
-        : RAD2DEG * 0.043844 * d_ka * angleTerm * (1.0 + 1.5 * cb * angleTerm));
+      double dE_dTheta = (d_isLinear ? -c1 * d_ka * sinTheta
+        : RAD2DEG * c2 * d_ka * angleTerm * (1.0 + 1.5 * cb * angleTerm));
     
       Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
     }

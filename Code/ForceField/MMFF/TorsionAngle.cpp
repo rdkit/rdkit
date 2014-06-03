@@ -29,8 +29,10 @@ namespace ForceFields {
         RDGeom::Point3D r4 = lPoint - kPoint;
         RDGeom::Point3D t1 = r1.crossProduct(r2);
         RDGeom::Point3D t2 = r3.crossProduct(r4);
+        double cosPhi = t1.dotProduct(t2) / (t1.length() * t2.length());
+        clipToOne(cosPhi);
 
-        return (t1.dotProduct(t2) / (t1.length() * t2.length()));
+        return cosPhi;
       }
       
       boost::tuple<double, double, double>
@@ -171,6 +173,7 @@ namespace ForceFields {
       t[0] /= d[0];
       t[1] /= d[1];
       double cosPhi = t[0].dotProduct(t[1]);
+      clipToOne(cosPhi);
       double sinPhiSq = 1.0 - cosPhi * cosPhi;
       double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
       double sin2Phi = 2.0 * sinPhi * cosPhi;
