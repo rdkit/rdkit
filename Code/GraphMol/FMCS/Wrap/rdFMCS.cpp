@@ -16,8 +16,20 @@
 namespace python = boost::python;
 
 namespace RDKit {
+  typedef enum {
+    AtomCompareAny,
+    AtomCompareElements,
+    AtomCompareIsotopes
+  } AtomComparator_;
+  typedef enum {
+    BondCompareAny,
+    BondCompareOrder,
+    BondCompareOrderExact
+  } BondComparator_;
+  
+  
   MCSResult *FindMCSWrapper(python::object mols,bool maximizeBonds,double threshold,
-                            unsigned timeout,bool verbose){
+                            unsigned timeout,bool verbose, AtomComparator_ atomComp, BondComparator_ bondComp){
     std::vector<ROMOL_SPTR> ms;
     unsigned int nElems=python::extract<unsigned int>(mols.attr("__len__")());
     ms.resize(nElems);
@@ -29,6 +41,22 @@ namespace RDKit {
     ps->Threshold=threshold;
     ps->Timeout=timeout;
     ps->Verbose=verbose;
+    switch(atomComp){
+    case AtomCompareAny:
+      ps->AtomTyper=MCSAtomCompareAny; break;
+    case AtomCompareElements:
+      ps->AtomTyper=MCSAtomCompareElements; break;
+    case AtomCompareIsotopes:
+      ps->AtomTyper=MCSAtomCompareIsotopes; break;
+    }
+    switch(bondComp){
+    case BondCompareAny:
+      ps->BondTyper=MCSBondCompareAny; break;
+    case BondCompareOrder:
+      ps->BondTyper=MCSBondCompareOrder; break;
+    case BondCompareOrderExact:
+      ps->BondTyper=MCSBondCompareOrderExact; break;
+    }
     MCSResult *res=new MCSResult(findMCS(ms,ps));
     delete ps;
     return res;
@@ -53,6 +81,17 @@ BOOST_PYTHON_MODULE(rdFMCS) {
   python::scope().attr("__doc__") =
     "Module containing a C++ implementation of the FMCS algorithm";
   mcsresult_wrapper::wrap();
+
+  python::enum_<RDKit::AtomComparator_>("AtomCompare")
+    .value("CompareAny",RDKit::AtomCompareAny)
+    .value("CompareElements",RDKit::AtomCompareElements)
+    .value("CompareIsotopes",RDKit::AtomCompareIsotopes)
+    ;
+  python::enum_<RDKit::BondComparator_>("BondCompare")
+    .value("CompareAny",RDKit::BondCompareAny)
+    .value("CompareOrder",RDKit::BondCompareOrder)
+    .value("CompareOrderExact",RDKit::BondCompareOrderExact)
+    ;
    
   std::string docString = "Find the MCS for a set of molecules";
   python::def("FindMCS", RDKit::FindMCSWrapper,
@@ -60,8 +99,11 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                python::arg("maximizeBonds")=true,
                python::arg("threshold")=1.0,
                python::arg("timeout")=3600,
-               python::arg("verbose")=false
+               python::arg("verbose")=false,
+               python::arg("atomCompare")=RDKit::AtomCompareElements,
+               python::arg("bondCompare")=RDKit::BondCompareOrder
                ),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
+
 }
