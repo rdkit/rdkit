@@ -33,9 +33,9 @@
 package org.RDKit;
 
 import static org.junit.Assert.*;
+import java.io.File;
 
 import org.junit.*;
-
 public class ChemBondTests extends GraphMolTest {
 	private ROMol m;
 
@@ -81,8 +81,30 @@ public class ChemBondTests extends GraphMolTest {
 		assertFalse (b2.getIsConjugated());
 	}
 
-	public static void main(String args[]) {
-		org.junit.runner.JUnitCore.main("org.RDKit.ChemBondTests");
+	// Testing more bond props
+	@Test
+	public void test5BondIters() {
+	    // Traversing through bond list of a molecule
+	    BondIterator it = m.beginBonds();
+	    int iCount = 0;
+ 
+	    while ( it.ne(m.endBonds()) ) {
+		final Bond bond = it.getBond();
+		final Bond.BondType type = bond.getBondType();
+		final Atom atomStart = bond.getBeginAtom();
+		final Atom atomEnd = bond.getEndAtom();
+		// some silly tests
+		assertEquals(atomStart.getIdx(),bond.getBeginAtomIdx());
+		assertEquals(atomEnd.getIdx(),bond.getEndAtomIdx());
+
+		it = it.next();
+		iCount++;
+	    }
+	    assertEquals(iCount,m.getNumBonds());
 	}
+
+    public static void main(String args[]) {
+	org.junit.runner.JUnitCore.main("org.RDKit.ChemBondTests");
+    }
 
 }

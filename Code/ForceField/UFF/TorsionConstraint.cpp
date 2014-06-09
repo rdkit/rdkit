@@ -30,7 +30,7 @@ namespace ForceFields {
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
       RANGE_CHECK(0, idx3, owner->positions().size() - 1);
       RANGE_CHECK(0, idx4, owner->positions().size() - 1);
-      PRECONDITION(maxDihedralDeg >= minDihedralDeg, "bad bounds");
+      _pretreatAngles(minDihedralDeg, maxDihedralDeg);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
@@ -80,8 +80,11 @@ namespace ForceFields {
       d_at2Idx = idx2;
       d_at3Idx = idx3;
       d_at4Idx = idx4;
-      d_minDihedralDeg = dihedral + minDihedralDeg;
-      d_maxDihedralDeg = dihedral + maxDihedralDeg;
+      minDihedralDeg += dihedral;
+      maxDihedralDeg += dihedral;
+      _pretreatAngles(minDihedralDeg, maxDihedralDeg);
+      d_minDihedralDeg = minDihedralDeg;
+      d_maxDihedralDeg = maxDihedralDeg;
       d_forceConstant = forceConst;
     }
 

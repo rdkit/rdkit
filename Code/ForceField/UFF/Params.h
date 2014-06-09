@@ -26,6 +26,9 @@ namespace ForceFields {
     inline bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     }
+
+    void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg);
+
     //! class to store atomic parameters for the Universal Force Field
     class AtomicParams {
     public:

@@ -211,6 +211,117 @@ void test2(){
   m2 = SmilesToMol(smi);
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
 
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - 
+  // this was github issue #269
+  // - - - - - - - - - - - - - - - - - - - - - - - - 
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bond-query4.mol";
+  delete m;
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  delete m2;
+  smi = "C1CCC1C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1CCC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "C1C=CC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "C1C#CC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "CCCC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "CC=CC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "CC#CC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bond-query5.mol";
+  delete m;
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  delete m2;
+  smi = "C1CCC1C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1CCC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C=CC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C#CC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "CCCC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "CC=CC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "CC#CC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bond-query6.mol";
+  delete m;
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  delete m2;
+  smi = "C1CCC1C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1CCC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C=CC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C#CC1=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "CCCC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "CC=CC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "CC#CC=C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+  
+  delete m2;
   delete m;
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
