@@ -512,7 +512,7 @@ bool MaximumCommonSubgraph::growSeeds()
     };
     typedef std::vector<AtomMatch> AtomMatchSet; 
 
-std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)
+std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
 {
     // match the result MCS with all targets to check if it is exact match or template
     Seed seed; // result MCS
@@ -583,19 +583,28 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)
     unsigned ai = 0;  // SeedAtomIdx
     for(std::vector<const Atom*>::const_iterator atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end(); atom++, ai++)
     {
-        QueryAtom a(*(*atom));  // generate [#6] instead of C or c !
-        //for all atomMatchSet[ai] items add atom query to template
-        for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
+        if(Parameters.AtomTyper == MCSAtomCompareIsotopes)  // do '[0*]-[0*]-[13*]' for CC[13NH2]
         {
-            ATOM_OR_QUERY *a2 = new ATOM_OR_QUERY();
-            a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
-            a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
-            a2->setDescription("AtomOr");
-//ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what)
-//....
-            a.setQuery(a2);
+            QueryAtom a(*(*atom));
+            a.setQuery( makeAtomIsotopeQuery((int) (*atom)->getIsotope() ) );
+            mol.addAtom(&a, true, false);
         }
-        mol.addAtom(&a, true, false);
+        else
+        {
+            QueryAtom a(*(*atom));  // generate [#6] instead of C or c !
+            //for all atomMatchSet[ai] items add atom query to template
+            for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
+            {
+                ATOM_OR_QUERY *a2 = new ATOM_OR_QUERY();
+                a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
+                a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
+                a2->setDescription("AtomOr");
+    //ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what)
+    //....
+                a.setQuery(a2);
+            }
+            mol.addAtom(&a, true, false);
+        }
     }
     unsigned bi = 0;  // Seed Idx
     for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)

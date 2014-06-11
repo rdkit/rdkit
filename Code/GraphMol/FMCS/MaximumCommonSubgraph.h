@@ -123,7 +123,7 @@ namespace RDKit
         void makeInitialSeeds();
         bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
         bool growSeeds();   //returns false if canceled
-        static std::string generateResultSMARTS(const MCS& McsIdx);
+        std::string generateResultSMARTS(const MCS& McsIdx)const;
 
         bool match(Seed& seed);
         bool matchIncrementalFast(Seed& seed, unsigned itarget);

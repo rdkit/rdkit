@@ -53,8 +53,9 @@ namespace RDKit
 
     bool MCSAtomCompareIsotopes (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ud)
     {
-        if( ! MCSAtomCompareElements (p, mol1, atom1, mol2, atom2, ud))
-            return false;
+        // ignore everything except isotope information:
+        //if( ! MCSAtomCompareElements (p, mol1, atom1, mol2, atom2, ud))
+        //    return false;
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         return a1.getIsotope() == a2.getIsotope();
