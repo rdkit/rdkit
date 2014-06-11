@@ -193,7 +193,7 @@ public:
             pthread_attr_t attr;
             pthread_attr_init(&attr);
             if(0!=stackSize)
-                pthread_attr_setstacksize(&attr, stack_size);
+                pthread_attr_setstacksize(&attr, stackSize);
             int r = pthread_create(&handle, &attr, _run, this);
             pthread_attr_destroy(&attr);
             if(0 != r)
