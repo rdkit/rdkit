@@ -32,7 +32,7 @@
 
 #define SEED_GROW_DEEP              // fast and works much times faster (but it can depend on molecules)
 //#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because amount of external bonds usually is very small.
-                                    // Exclude mismatched bonds combinations during seed growing (2^N stage)
+                                    // Exclude mismatched bonds combinations during seed growing (2^N-1 stage)
 
 #define FAST_SUBSTRUCT_CACHE        // based on Morgan code hash
 #define DUP_SUBSTRUCT_CACHE         // based on list of query atoms and bonds. For rings where seeds growing in both directions throw the same ring.
@@ -43,7 +43,9 @@
 #define FAST_INCREMENTAL_MATCH      // fast and some time very usefull
                                     // previous match result based match checking without finding new matched substructure location in the target
 
-///#define MULTI_THREAD // experimental !
+#ifdef RDK_THREADSAFE_SSS
+    #define MULTI_THREAD // experimental !
+#endif
 
 // Enable / Disable DEBUG TRACE output
 #ifdef WIN32__xx__TRACE_ON
