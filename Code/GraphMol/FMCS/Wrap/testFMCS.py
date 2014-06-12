@@ -82,6 +82,31 @@ class TestCase(unittest.TestCase):
         self.failUnless(nHits>=int(0.8*len(smis)))
         # smarts too hard to canonicalize this
         #self.failUnlessEqual(mcs.smartsString,'[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](-[#8]-[#6]-[#6]-[#7]-[#6]-[#6])-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2')
+
+
+    def test3IsotopeMatch(self):
+        smis=(
+            "CC[14NH2]",
+            "CC[14CH3]",
+            )
+        
+        ms = [Chem.MolFromSmiles(x) for x in smis]
+        mcs = rdFMCS.FindMCS(ms)
+        self.failUnlessEqual(mcs.numBonds,1)
+        self.failUnlessEqual(mcs.numAtoms,2)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        mcs = rdFMCS.FindMCS(ms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+        self.failUnlessEqual(mcs.numBonds,2)
+        self.failUnlessEqual(mcs.numAtoms,3)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        self.failUnless(Chem.MolFromSmiles('CC[14CH3]').HasSubstructMatch(qm))
+        self.failIf(Chem.MolFromSmiles('CC[13CH3]').HasSubstructMatch(qm))
+        self.failUnless(Chem.MolFromSmiles('OO[14CH3]').HasSubstructMatch(qm))
+        self.failIf(Chem.MolFromSmiles('O[13CH2][14CH3]').HasSubstructMatch(qm))
+
+
         
             
 if __name__=="__main__":
