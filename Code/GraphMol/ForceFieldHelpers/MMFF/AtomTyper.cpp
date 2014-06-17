@@ -1111,10 +1111,11 @@ namespace RDKit {
                     if (elementDoubleBondedToC == 7) {
                       // if 2 nitrogens with 3 neighbors and no nitrogens with 2 neighbors
                       // are bonded to this carbon, and we have a formal charge,
-                      // but not a 6-membered aromatic ring,
-                      // then this is an amidinium nitrogen (>N-C=N+<)
+                      // but not a 6-membered aromatic ring, and the carbon atom
+                      // is not sp3, then this is an amidinium nitrogen (>N-C=N+<)
                       if ((nN3bondedToC == 2) && (!nN2bondedToC)
-                        && nFormalCharge && (!nInAromatic6Ring)) {
+                        && nFormalCharge && (!nInAromatic6Ring)
+                        && (nbrAtom->getTotalDegree() < 4)) {
                         isNCNplus = true;
                       }
                       // if 3 nitrogens with 3 neighbors are bonded

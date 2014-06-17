@@ -268,10 +268,8 @@ void fixTorsionInstance(TorsionInstance *torsionInstance)
 }
 
 
-void mmffValidationSuite(int argc, char *argv[])
+int mmffValidationSuite(int argc, char *argv[])
 {
-  std::cerr << "-------------------------------------" << std::endl;
-  std::cerr << "Official MMFF validation suite." << std::endl;
   std::string arg;
   std::string ffVariant = "";
   std::vector<std::string> ffVec;
@@ -341,8 +339,10 @@ void mmffValidationSuite(int argc, char *argv[])
       "[{-sdf [<sdf_file>] | -smi [<smiles_file>]}] [-l <log_file>]"
       << std::endl;
     
-    return;
+    return -1;
   }
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Official MMFF validation suite." << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/ForceField/MMFF/test_data/";
   if (molFile != "") {
@@ -1376,6 +1376,7 @@ void mmffValidationSuite(int argc, char *argv[])
    
   TEST_ASSERT(!testFailure);
   std::cerr << "  done" << std::endl;
+  return 0;
 }
 
 void testMMFFAllConstraints(){
@@ -1552,6 +1553,9 @@ void testMMFFAllConstraints(){
 
 int main(int argc, char *argv[])
 {
-  mmffValidationSuite(argc, argv);
-  testMMFFAllConstraints();
+  if (!mmffValidationSuite(argc, argv)) {
+    testMMFFAllConstraints();
+  }
+  
+  return 0;
 }
