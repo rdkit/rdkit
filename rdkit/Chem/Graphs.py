@@ -17,6 +17,7 @@ C/C++ codebase.
 import numpy
 from rdkit import Chem
 from rdkit import DataStructs
+from rdkit.six.moves import xrange
 import types
 
 def CharacteristicPolynomial(mol,mat=None):

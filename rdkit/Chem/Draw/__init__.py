@@ -4,7 +4,7 @@
 #  All Rights Reserved
 #
 import os
-from MolDrawing import MolDrawing,DrawingOptions
+from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 
 def _getCanvas():
   useAGG=False
@@ -61,7 +61,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     highlightBonds -- list of bonds to highlight (default [])
   """
   if not mol:
-    raise ValueError,'Null molecule provided'
+    raise ValueError('Null molecule provided')
   if canvas is None:
     img,canvas=_createCanvas(size)
   else:
@@ -114,9 +114,9 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   """
   # original contribution from Uwe Hoffmann
   if not fileName:
-    raise ValueError,'no fileName provided'
+    raise ValueError('no fileName provided')
   if not mol:
-    raise ValueError,'Null molecule provided'
+    raise ValueError('Null molecule provided')
 
   if imageType is None:
     imageType=os.path.splitext(fileName)[1][1:]
@@ -189,7 +189,7 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   """ Generates a drawing of a molecule on a matplotlib canvas
   """
   if not mol:
-    raise ValueError,'Null molecule provided'
+    raise ValueError('Null molecule provided')
   from mplCanvas import Canvas
   canvas = Canvas(size)
   if options is None:

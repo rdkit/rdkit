@@ -17,6 +17,7 @@
 #include <RDGeneral/types.h>
 
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 #include <RDBoost/Exceptions.h>
 #include <GraphMol/SanitException.h>
 
@@ -38,7 +39,7 @@ BOOST_PYTHON_MODULE(rdmolops)
   python::scope().attr("__doc__") =
     "Module containing RDKit functionality for manipulating molecules."
     ;
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);

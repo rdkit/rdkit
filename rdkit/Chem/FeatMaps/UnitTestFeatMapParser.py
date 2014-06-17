@@ -43,22 +43,22 @@ EndPoints
     p = FeatMapParser.FeatMapParser()
     p.SetData(txt)
     fm = p.Parse()
-    self.failUnless(fm.scoreMode==FeatMaps.FeatMapScoreMode.Best)
-    self.failUnless(fm.dirScoreMode==FeatMaps.FeatDirScoreMode.DotFullRange)
-    self.failUnless(fm.GetNumFeatures()==3)
+    self.assertTrue(fm.scoreMode==FeatMaps.FeatMapScoreMode.Best)
+    self.assertTrue(fm.dirScoreMode==FeatMaps.FeatDirScoreMode.DotFullRange)
+    self.assertTrue(fm.GetNumFeatures()==3)
 
 
     feats = fm.GetFeatures()
-    self.failUnless(feq(feats[0].weight,1.25))
-    self.failUnless(feq(feats[1].weight,2.0))
-    self.failUnless(feq(feats[2].weight,1.25))
+    self.assertTrue(feq(feats[0].weight,1.25))
+    self.assertTrue(feq(feats[1].weight,2.0))
+    self.assertTrue(feq(feats[2].weight,1.25))
     
-    self.failUnless(len(feats[0].featDirs)==1)
-    self.failUnless(len(feats[1].featDirs)==2)
-    self.failUnless(len(feats[2].featDirs)==0)
+    self.assertTrue(len(feats[0].featDirs)==1)
+    self.assertTrue(len(feats[1].featDirs)==2)
+    self.assertTrue(len(feats[2].featDirs)==0)
     
     fams = [x.GetFamily() for x in feats]
-    self.failUnless(fams==['Acceptor','Aromatic','Acceptor'])
+    self.assertTrue(fams==['Acceptor','Aromatic','Acceptor'])
     
 if __name__ == '__main__':
   unittest.main()

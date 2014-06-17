@@ -52,18 +52,21 @@
     4) A python list of lists with the data points
 
 """
+from __future__ import print_function
+import re,csv
+import random
+
+from rdkit import six
+from rdkit.six.moves import cPickle
+from rdkit.six.moves import xrange, map
 from rdkit import RDConfig
 from rdkit.utils import fileutils
 from rdkit.ML.Data import MLData
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.DataStructs import BitUtils
-import string
-import re,csv
-import cPickle
-import random
 
 def permutation(nToDo):
-  res = range(nToDo)
+  res = list(xrange(nToDo))
   random.shuffle(res)
   return res
 
@@ -89,7 +92,7 @@ def WriteData(outFile,varNames,qBounds,examples):
     outFile.write('# %s %s\n'%(varNames[i],str(qBounds[i])))
   outFile.write('# ----------\n')
   for example in examples:
-    outFile.write(string.join(map(str,example),' ')+'\n')
+    outFile.write(' '.join(map(str,example))+'\n')
     
 
 def ReadVars(inFile):
@@ -112,15 +115,15 @@ def ReadVars(inFile):
   qBounds = []
   fileutils.MoveToMatchingLine(inFile,'Variable Table')
   inLine = inFile.readline()
-  while string.find(inLine,'# ----') == -1:
-    splitLine = string.split(inLine[2:],'[')
-    varNames.append(string.strip(splitLine[0]))
+  while inLine.find('# ----') == -1:
+    splitLine = inLine[2:].split('[')
+    varNames.append(splitLine[0].strip())
     qBounds.append(splitLine[1][:-2])
     inLine = inFile.readline()
   for i in xrange(len(qBounds)):
     
     if qBounds[i] != '':
-      l = string.split(qBounds[i],',')
+      l = qBounds[i].split(',')
       qBounds[i] = []
       for item in l:
         qBounds[i].append(float(item))
@@ -158,7 +161,7 @@ def ReadQuantExamples(inFile):
     if expr1.search(inLine) is None:
       resArr = expr2.split(inLine)
       if len(resArr)>1:
-        examples.append(map(lambda x: int(x),resArr[1:]))
+        examples.append(list(map(lambda x: int(x),resArr[1:])))
         names.append(resArr[0])
     inLine = inFile.readline()
   return names,examples
@@ -219,10 +222,9 @@ def BuildQuantDataSet(fileName):
       an _MLData.MLQuantDataSet_
       
   """
-  inFile = open(fileName,'r')
-
-  varNames,qBounds = ReadVars(inFile)
-  ptNames,examples = ReadQuantExamples(inFile)
+  with open(fileName,'r') as inFile:
+    varNames,qBounds = ReadVars(inFile)
+    ptNames,examples = ReadQuantExamples(inFile)
   data = MLData.MLQuantDataSet(examples,qBounds=qBounds,varNames=varNames,
                                ptNames=ptNames)
   return data
@@ -240,10 +242,9 @@ def BuildDataSet(fileName):
       an _MLData.MLDataSet_
       
   """
-  inFile = open(fileName,'r')
-
-  varNames,qBounds = ReadVars(inFile)
-  ptNames,examples = ReadGeneralExamples(inFile)
+  with open(fileName,'r') as inFile: 
+    varNames,qBounds = ReadVars(inFile)
+    ptNames,examples = ReadGeneralExamples(inFile)
   data = MLData.MLDataSet(examples,qBounds=qBounds,varNames=varNames,
                           ptNames=ptNames)
   return data
@@ -272,10 +273,13 @@ def CalcNPossibleUsingMap(data,order,qBounds,nQBounds=None):
      - _nPossible_ for other numeric variables will be calculated
 
   """
-  numericTypes = [type(1),type(1.0),type(1L)]
-  print 'order:',order, len(order)
-  print 'qB:',qBounds
-  #print 'nQB:',nQBounds, len(nQBounds)
+  numericTypes = [int, float]
+  if six.PY2:
+    numericTypes.append(long)
+    
+  print('order:',order, len(order))
+  print('qB:',qBounds)
+  #print('nQB:',nQBounds, len(nQBounds))
   assert (qBounds and len(order)==len(qBounds)) or (nQBounds and len(order)==len(nQBounds)),\
          'order/qBounds mismatch'
   nVars = len(order)
@@ -300,11 +304,11 @@ def CalcNPossibleUsingMap(data,order,qBounds,nQBounds=None):
           nPossible[col] = -1
           cols.remove(col)
       else:
-        print 'bye bye col %d: %s'%(col,repr(d))
+        print('bye bye col %d: %s'%(col,repr(d)))
         nPossible[col] = -1
         cols.remove(col)
 
-  return map(lambda x:int(x)+1,nPossible)
+  return list(map(lambda x:int(x)+1,nPossible))
 
 
 
@@ -441,7 +445,7 @@ def TextToData(reader,ignoreCols=[],onlyCols=None):
   for splitLine in reader:
     if len(splitLine):
       if len(splitLine)!=nCols:
-        raise ValueError,'unequal line lengths'
+        raise ValueError('unequal line lengths')
       tmp = [splitLine[x] for x in keepCols]
       ptNames.append(tmp[0])
       pt = [None]*(nVars-1)
@@ -493,11 +497,11 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
   """
 #DOC
   """
-  if frac<0 or frac>1: raise ValueError,'filter fraction out of bounds'
+  if frac<0 or frac>1: raise ValueError('filter fraction out of bounds')
   try:
     inData[0][col]
   except IndexError:
-    raise ValueError,'target column index out of range'
+    raise ValueError('target column index out of range')
 
   
   # convert the input data to a list and sort them
@@ -506,8 +510,10 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
   else:
     tmp = list(inData)
   nOrig = len(tmp)
-  sortOrder = range(nOrig)
-  sortOrder.sort(lambda x,y,col=col,tmp=tmp:cmp(tmp[x][col],tmp[y][col]))
+  sortOrder = list(xrange(nOrig))
+  #sortOrder.sort(lambda x,y,col=col,tmp=tmp:cmp(tmp[x][col],tmp[y][col]))
+  # no more cmp in python3, must use a key function
+  sortOrder.sort(key=lambda x: tmp[x][col])
   tmp = [tmp[x] for x in sortOrder]
 
   # find the start of the entries with value val
@@ -515,7 +521,7 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
   while start < nOrig and tmp[start][col] != val:
     start += 1
   if  start >= nOrig:
-    raise ValueError,'target value (%d) not found in data'%(val)
+    raise ValueError('target value (%d) not found in data'%(val))
   
   # find the end of the entries with value val
   finish = start+1
@@ -567,11 +573,11 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
       nOthersFinal -= 1
       nFinal -= 1
     
-  others = range(start) + range(finish,nOrig)
+  others = list(xrange(start)) + list(xrange(finish,nOrig))
   othersTake = permutation(nOthers)
   others = [others[x] for x in othersTake[:nOthersFinal]]
 
-  targets = range(start,finish)
+  targets = list(xrange(start,finish))
   targetsTake = permutation(nWithVal)
   targets = [targets[x] for x in targetsTake[:nTgtFinal]]
     

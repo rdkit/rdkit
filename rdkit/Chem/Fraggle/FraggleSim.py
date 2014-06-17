@@ -67,14 +67,14 @@ def delete_bonds(mol,bonds,ftype,hac):
 
     for b in bonds:
         #remove the bond
-	em.RemoveBond(b[0],b[1])
+        em.RemoveBond(b[0],b[1])
 
-	#now add attachement points
-	newAtomA = em.AddAtom(Chem.Atom(0))
-	em.AddBond(b[0],newAtomA,Chem.BondType.SINGLE)
+        #now add attachement points
+        newAtomA = em.AddAtom(Chem.Atom(0))
+        em.AddBond(b[0],newAtomA,Chem.BondType.SINGLE)
 
-	newAtomB = em.AddAtom(Chem.Atom(0))
-	em.AddBond(b[1],newAtomB,Chem.BondType.SINGLE)
+        newAtomB = em.AddAtom(Chem.Atom(0))
+        em.AddBond(b[1],newAtomB,Chem.BondType.SINGLE)
 
     #should be able to get away without sanitising mol
     #as the valencies should be okay

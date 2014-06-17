@@ -5,7 +5,8 @@
 """ unit testing code for molecular descriptor calculators
 
 """
-import unittest,cPickle,os.path
+import unittest,os.path
+from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import MoleculeDescriptors
 import numpy

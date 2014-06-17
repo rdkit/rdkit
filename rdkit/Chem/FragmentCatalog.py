@@ -8,9 +8,10 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
-from rdfragcatalog import *
 import sys
+
+from rdkit import Chem
+from rdkit.Chem.rdfragcatalog import *
 
 
 def message(msg,dest=sys.stdout):

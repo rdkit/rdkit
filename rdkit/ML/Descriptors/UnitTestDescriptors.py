@@ -7,7 +7,7 @@
 """
 import unittest
 from rdkit.ML.Descriptors import CompoundDescriptors
-
+from rdkit.six.moves import xrange
     
 
 class TestCase(unittest.TestCase):

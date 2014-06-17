@@ -15,7 +15,7 @@ from rdkit import RDConfig
 import unittest,os
 from rdkit.ML import BuildComposite
 from rdkit.ML import ScreenComposite
-import cPickle as pickle
+from rdkit.six.moves import cPickle as pickle
 
 def feq(a,b,tol=1e-4):
   if abs(a-b)>tol: return 0
@@ -34,8 +34,8 @@ class TestCase(unittest.TestCase):
   def test1(self):
     """ basics """
     self.details.tableName = 'ferro_quant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 7
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
@@ -56,8 +56,8 @@ class TestCase(unittest.TestCase):
     self.details.doHoldout=1
     self.details.doTraining=0
     
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 7
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
@@ -78,8 +78,8 @@ class TestCase(unittest.TestCase):
     self.details.doHoldout=0
     self.details.doTraining=1
 
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 7
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
@@ -101,8 +101,8 @@ class TestCase(unittest.TestCase):
     self.details.doHoldout=0
     self.details.doTraining=0
 
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 7
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
@@ -121,8 +121,9 @@ class TestCase(unittest.TestCase):
   def test5(self):
     """ basics """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),
-                              'rb'))
+
+    with open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
@@ -142,8 +143,8 @@ class TestCase(unittest.TestCase):
   def test6(self):
     """ multiple models """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     composites = [compos,compos]
@@ -167,8 +168,8 @@ class TestCase(unittest.TestCase):
   def test7(self):
     """ shuffle """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.shuffleActivities=1
@@ -186,8 +187,9 @@ class TestCase(unittest.TestCase):
   def test8(self):
     """ shuffle with segmentation """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
+              'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.shuffleActivities=1
@@ -206,8 +208,9 @@ class TestCase(unittest.TestCase):
   def test9(self):
     """ shuffle with segmentation2 """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
+              'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.shuffleActivities=1
@@ -226,8 +229,9 @@ class TestCase(unittest.TestCase):
   def test10(self):
     """ filtering """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
+              'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.filterVal=1
@@ -247,8 +251,9 @@ class TestCase(unittest.TestCase):
   def test11(self):
     """ filtering with segmentation """
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
+              'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.doHoldout=1
@@ -270,8 +275,9 @@ class TestCase(unittest.TestCase):
   def test12(self):
     """ test the naive bayes composite"""
     self.details.tableName = 'ferro_noquant'
-    compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_NaiveBayes.pkl'),
-                              'rb'))
+    with open(os.path.join(self.baseDir,'ferromag_NaiveBayes.pkl'),
+              'rb') as pklF:
+      compos = pickle.load(pklF)
     tgt = 10
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.doHoldout=1

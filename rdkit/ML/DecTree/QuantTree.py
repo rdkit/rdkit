@@ -16,7 +16,7 @@ class QuantTreeNode(DecTree.DecTreeNode):
    
   """
   def __init__(self,*args,**kwargs):
-    apply(DecTree.DecTreeNode.__init__,(self,)+args,kwargs)
+    DecTree.DecTreeNode.__init__(self,*args,**kwargs)
     self.qBounds = []
     self.nBounds = 0
   def ClassifyExample(self,example,appendExamples=0):

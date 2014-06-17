@@ -11,12 +11,12 @@
 """unit testing code for the BuildComposite functionality
 
 """
-from rdkit import RDConfig
 import unittest,os
+from rdkit.six.moves import cPickle as pickle
+from rdkit import RDConfig
 from rdkit.ML import BuildComposite
 from rdkit.ML import ScreenComposite
 from rdkit.Dbase.DbConnection import DbConnect
-import cPickle as pickle
 
 def feq(a,b,tol=1e-4):
   if abs(a-b)>tol: return 0
@@ -80,8 +80,8 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10.pkl'
 
-    refCompos = pickle.load(open(os.path.join(self.baseDir,refComposName),
-                                 'rb'))
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+      refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
     self._init(refCompos)
@@ -94,8 +94,8 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10_3.pkl'
 
-    refCompos = pickle.load(open(os.path.join(self.baseDir,refComposName),
-                                 'rb'))
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+      refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
     self._init(refCompos)
@@ -109,8 +109,8 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10_3_lessgreedy.pkl'
 
-    refCompos = pickle.load(open(os.path.join(self.baseDir,refComposName),
-                                 'rb'))
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+      refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
     self._init(refCompos)
@@ -125,8 +125,8 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_50_3.pkl'
 
-    refCompos = pickle.load(open(os.path.join(self.baseDir,refComposName),
-                                 'rb'))
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+      refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
     self._init(refCompos)
@@ -141,9 +141,8 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_noquant'
     refComposName = 'ferromag_auto_10_3.pkl'
 
-    refCompos = pickle.load(open(os.path.join(self.baseDir,refComposName),
-                                 'rb'))
-
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+      refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
     self._init(refCompos,copyBounds=1)
@@ -157,8 +156,8 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_noquant_realact'
     refComposName = 'ferromag_auto_10_3.pkl'
 
-    refCompos = pickle.load(open(os.path.join(self.baseDir,refComposName),
-                                 'rb'))
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+      refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
     self._init(refCompos,copyBounds=1)
@@ -172,8 +171,8 @@ class TestCase(unittest.TestCase):
     """ Test composite of naive bayes"""
     self.details.tableName = 'ferro_noquant'
     refComposName = 'ferromag_NaiveBayes.pkl'
-    pklFile = open(os.path.join(self.baseDir,refComposName), 'rb')
-    refCompos = pickle.load(pklFile)
+    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklFile:
+      refCompos = pickle.load(pklFile)
     self._init(refCompos,copyBounds=1)
     self.details.useTrees = 0
     self.details.useNaiveBayes = 1

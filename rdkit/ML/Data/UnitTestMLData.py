@@ -6,7 +6,7 @@
 
 """
 import unittest
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit.ML.Data import MLData,DataUtils
 from rdkit import RDConfig
     

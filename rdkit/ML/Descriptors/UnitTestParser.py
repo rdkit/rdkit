@@ -5,13 +5,15 @@
 """ unit testing code for compound descriptors
 
 """
+from __future__ import print_function
 import unittest
 import Parser
-    
+
+from rdkit.six.moves import xrange    
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.piece1 = [['d1','d2'],['d1','d2']]
     self.aDict = {'Fe':{'d1':1,'d2':2},'Pt':{'d1':10,'d2':20}}
     self.pDict = {'d1':100.,'d2':200.}

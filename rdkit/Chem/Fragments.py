@@ -47,7 +47,7 @@ def _LoadPatterns(fileName=None):
             ok=0
           else:
             if not patt or patt.GetNumAtoms()==0: ok=0
-          if not ok: raise ImportError,'Smarts %s could not be parsed'%(repr(sma))
+          if not ok: raise ImportError('Smarts %s could not be parsed'%(repr(sma)))
           fn = lambda mol,countUnique=True,pattern=patt:_CountMatches(mol,pattern,unique=countUnique)
           fn.__doc__ = descr
           name = name.replace('=','_')

@@ -5,13 +5,13 @@
   (only the composition is required)
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 from rdkit.utils import chemutils
 import os
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML.Descriptors import Parser,Descriptors
-
-import string
+from rdkit.six.moves import xrange 
 
 # the list of possible ways to count valence electrons that we know
 countOptions = [('NVAL','total number of valence electrons'),
@@ -53,7 +53,7 @@ def GetAllDescriptorNames(db,tbl1,tbl2,user='sysdba',password='masterkey'):
   conn = DbConnect(db,user=user,password=password)
   
   colNames = conn.GetColumnNames(table=tbl1)
-  colDesc = map(lambda x:(string.upper(x[0]),x[1]),
+  colDesc = map(lambda x:(x[0].upper(),x[1]),
                 conn.GetColumns('property,notes',table=tbl2))
   for name,desc in countOptions:
     colNames.append(name)
@@ -262,7 +262,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     self.ProcessCompoundList()
 
     self.atomDict = {}
-    whereString = string.join(self.nonZeroDescriptors,' and ')
+    whereString = ' and '.join(self.nonZeroDescriptors)
     if whereString != '':
       whereString = 'where ' + whereString
     chemutils.GetAtomicData(self.atomDict,self.requiredDescriptors,self.dbName,self.dbTable,
@@ -303,12 +303,12 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
           try:
             method = getattr(self,target)
           except AttributeError:
-            print 'Method %s does not exist'%(target)
+            print('Method %s does not exist'%(target))
           else:
             res.append(method(descName,composList))
-    except KeyError,msg:
-      print 'composition %s caused problems'%composList
-      raise KeyError,msg
+    except KeyError as msg:
+      print('composition %s caused problems'%composList)
+      raise KeyError(msg)
     return res  
     
   def CalcCompoundDescriptorsForComposition(self,compos='',composList=None,
@@ -368,7 +368,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     composList = chemutils.SplitComposition(composVect[0])
     try:
       r1 = self.CalcSimpleDescriptorsForComposition(composList=composList)
-    except KeyError,msg:
+    except KeyError as msg:
       res = []
     else:
       r2 = self.CalcCompoundDescriptorsForComposition(composList=composList,
@@ -392,7 +392,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
           try:
             method = getattr(self,target)
           except AttributeError:
-            print 'Method %s does not exist'%(target)
+            print('Method %s does not exist'%(target))
           else:
             res.append('%s_%s'%(target,descName))
       for entry in self.compoundList:
@@ -448,8 +448,10 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
       dbName = RDConfig.RDDataDatabase
 
     Descriptors.DescriptorCalculator.__init__(self)
-    self.simpleList = map(lambda x:(string.upper(x[0]),map(string.upper,x[1])),
-                          simpleList)
+    #self.simpleList = map(lambda x:(string.upper(x[0]),map(string.upper,x[1])),
+    #                      simpleList)
+    self.simpleList = [(x[0].upper(), [y.upper() for y in x[1]]) 
+                       for x in simpleList]
     self.descriptorNames = None
     self.compoundList = compoundList
     if self.compoundList is None:
@@ -466,12 +468,12 @@ if __name__ == '__main__':
        ('Cov_rad',['Max','Min'])]
   o = DescriptorCalculator(d)
   o.BuildAtomDict()
-  print 'len:',len(o.atomDict.keys())
+  print('len:',len(o.atomDict.keys()))
   for key in o.atomDict.keys()[-4:-1]:
-    print key,o.atomDict[key]
+    print(key,o.atomDict[key])
 
-  print 'descriptors:',o.GetDescriptorNames()
+  print('descriptors:',o.GetDescriptorNames())
   composList = ['Nb','Nb3','NbPt','Nb2Pt']
   for compos in composList:
     descs = o.CalcSimpleDescriptorsForComposition(compos)
-    print compos,descs
+    print(compos,descs)

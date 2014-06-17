@@ -4,6 +4,7 @@
 #
 #     @@  All Rights Reserved  @@
 #
+from __future__ import print_function
 from rdkit import RDConfig
 import os,sys,copy
 import unittest
@@ -36,7 +37,7 @@ class TestCase(unittest.TestCase):
         mol2 = Chem.MolFromMolFile(file2)
 
         rmsd = rdMolAlign.AlignMol(mol2, mol1)
-        self.failUnless(feq(rmsd, 0.6578))
+        self.assertTrue(feq(rmsd, 0.6578))
 
         file3 = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                              'MolAlign', 'test_data', '1oir_trans.mol')
@@ -45,10 +46,10 @@ class TestCase(unittest.TestCase):
         conf3 = mol3.GetConformer()
 
         for i in range(mol2.GetNumAtoms()):
-            self.failUnless(lstFeq(conf2.GetAtomPosition(i), conf3.GetAtomPosition(i)))
+            self.assertTrue(lstFeq(conf2.GetAtomPosition(i), conf3.GetAtomPosition(i)))
 
         rmsd, trans = rdMolAlign.GetAlignmentTransform(mol2, mol1)
-        self.failUnlessAlmostEqual(rmsd, 0.6579,4)
+        self.assertAlmostEqual(rmsd, 0.6579,4)
 
     def test2AtomMap(self) :
         atomMap = ((18,27), (13,23), (21,14), (24,7), (9,19), (16,30))
@@ -60,7 +61,7 @@ class TestCase(unittest.TestCase):
         mol1 = Chem.MolFromMolFile(file1)
         mol2 = Chem.MolFromMolFile(file2)
         rmsd = rdMolAlign.AlignMol(mol2, mol1, 0, 0, atomMap)
-        self.failUnlessAlmostEqual(rmsd, 0.8525,4)
+        self.assertAlmostEqual(rmsd, 0.8525,4)
 
     def test3Weights(self):
         atomMap = ((18,27), (13,23), (21,14), (24,7), (9,19), (16,30))
@@ -73,7 +74,7 @@ class TestCase(unittest.TestCase):
         mol2 = Chem.MolFromMolFile(file2)
         wts = (1.0, 1.0, 1.0, 1.0, 1.0, 2.0)
         rmsd = rdMolAlign.AlignMol(mol2, mol1, 0, 0, atomMap, wts)
-        self.failUnlessAlmostEqual(rmsd, 0.9513,4)
+        self.assertAlmostEqual(rmsd, 0.9513,4)
 
     def test4AlignConfs(self):
       mol = Chem.MolFromSmiles('C1CC1CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
@@ -104,7 +105,7 @@ class TestCase(unittest.TestCase):
           else :
             pos = list(conf.GetAtomPosition(aid))
             
-            self.failUnless(lstFeq(mpos, pos, .5))
+            self.assertTrue(lstFeq(mpos, pos, .5))
 
     def test5MMFFO3A(self):
       sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
@@ -126,8 +127,8 @@ class TestCase(unittest.TestCase):
         cumMsd += rmsd * rmsd
         # molW.write(prbMol)
       cumMsd /= len(molS)
-      self.failUnlessAlmostEqual(cumScore,6942,0)
-      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.345,3)
+      self.assertAlmostEqual(cumScore,6942,0)
+      self.assertAlmostEqual(math.sqrt(cumMsd),.345,3)
 
     def test6MMFFO3A(self):
       " now test where the mmff parameters are generated on call "
@@ -144,8 +145,8 @@ class TestCase(unittest.TestCase):
         rmsd = pyO3A.Align()
         cumMsd += rmsd * rmsd
       cumMsd /= len(molS)
-      self.failUnlessAlmostEqual(cumScore,6942,0)
-      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.345,3)
+      self.assertAlmostEqual(cumScore,6942,0)
+      self.assertAlmostEqual(math.sqrt(cumMsd),.345,3)
 
     def test7MMFFO3A(self):
       " make sure we generate an error if parameters are missing (github issue 158) "
@@ -155,8 +156,8 @@ class TestCase(unittest.TestCase):
       m2 = Chem.MolFromSmiles('c1ccccc1B(O)O')
       rdDistGeom.EmbedMolecule(m1)
 
-      self.failUnlessRaises(ValueError,lambda :rdMolAlign.GetO3A(m1, m2))
-      self.failUnlessRaises(ValueError,lambda :rdMolAlign.GetO3A(m2, m1))
+      self.assertRaises(ValueError,lambda :rdMolAlign.GetO3A(m1, m2))
+      self.assertRaises(ValueError,lambda :rdMolAlign.GetO3A(m2, m1))
 
     def test8MMFFO3A(self):
       " test MMFFO3A with constraints "
@@ -184,12 +185,12 @@ class TestCase(unittest.TestCase):
       pyO3A.Align()
       d = m2.GetConformer().GetAtomPosition(cIdx). \
         Distance(m1.GetConformer().GetAtomPosition(cIdx))
-      self.failUnlessAlmostEqual(d, 0, 0)
+      self.assertAlmostEqual(d, 0, 0)
       pyO3A = rdMolAlign.GetO3A(m3, m1, constraintMap = [[cIdx, nIdx]])
       pyO3A.Align()
       d = m3.GetConformer().GetAtomPosition(cIdx). \
         Distance(m1.GetConformer().GetAtomPosition(cIdx))
-      self.failUnlessAlmostEqual(d, 7, 0)
+      self.assertAlmostEqual(d, 7, 0)
       #alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
       #                          'MolAlign', 'test_data',
       #                          '4-phenylpyridines_MMFFO3A.sdf')
@@ -231,7 +232,7 @@ class TestCase(unittest.TestCase):
         # molW.write(prbMol)
         d = prbMol.GetConformer().GetAtomPosition(prbOIdx). \
           Distance(refMol.GetConformer().GetAtomPosition(refSIdx))
-        self.failUnlessAlmostEqual(d, distOS[i], 1)
+        self.assertAlmostEqual(d, distOS[i], 1)
       # molW.close()
 
     def test10CrippenO3A(self):
@@ -254,8 +255,8 @@ class TestCase(unittest.TestCase):
         cumMsd += rmsd * rmsd
         molW.write(prbMol)
       cumMsd /= len(molS)
-      self.failUnlessAlmostEqual(cumScore,4918,0)
-      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.304,3)
+      self.assertAlmostEqual(cumScore,4918,0)
+      self.assertAlmostEqual(math.sqrt(cumMsd),.304,3)
 
     def test11CrippenO3A(self):
       " now test where the Crippen parameters are generated on call "
@@ -272,8 +273,8 @@ class TestCase(unittest.TestCase):
         rmsd = pyO3A.Trans()[0]
         cumMsd += rmsd * rmsd
       cumMsd /= len(molS)
-      self.failUnlessAlmostEqual(cumScore,4918,0)
-      self.failUnlessAlmostEqual(math.sqrt(cumMsd),.304,3)
+      self.assertAlmostEqual(cumScore,4918,0)
+      self.assertAlmostEqual(math.sqrt(cumMsd),.304,3)
 
     def test12CrippenO3A(self):
       " test CrippenO3A with constraints "
@@ -301,12 +302,12 @@ class TestCase(unittest.TestCase):
       pyO3A.Align()
       d = m2.GetConformer().GetAtomPosition(cIdx). \
         Distance(m1.GetConformer().GetAtomPosition(cIdx))
-      self.failUnlessAlmostEqual(d, 0, 0)
+      self.assertAlmostEqual(d, 0, 0)
       pyO3A = rdMolAlign.GetCrippenO3A(m3, m1, constraintMap = [[cIdx, nIdx]])
       pyO3A.Align()
       d = m3.GetConformer().GetAtomPosition(cIdx). \
         Distance(m1.GetConformer().GetAtomPosition(cIdx))
-      self.failUnlessAlmostEqual(d, 7, 0)
+      self.assertAlmostEqual(d, 7, 0)
       #alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
       #                          'MolAlign', 'test_data',
       #                          '4-phenylpyridines_CrippenO3A.sdf')
@@ -347,10 +348,10 @@ class TestCase(unittest.TestCase):
         # molW.write(prbMol)
         d = prbMol.GetConformer().GetAtomPosition(prbOIdx). \
           Distance(refMol.GetConformer().GetAtomPosition(refSIdx))
-        self.failUnlessAlmostEqual(d, distOS[i], 1)
+        self.assertAlmostEqual(d, distOS[i], 1)
       # molW.close()
 
 
 if __name__ == '__main__':
-    print "Testing MolAlign Wrappers"
+    print("Testing MolAlign Wrappers")
     unittest.main()

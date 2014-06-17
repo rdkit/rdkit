@@ -13,6 +13,7 @@
 validation values are from the paper (JCICS _31_ 76-81 (1991))
 
 """
+from __future__ import print_function
 import unittest
 import numpy
 from rdkit import Chem
@@ -30,7 +31,7 @@ class TestCase(unittest.TestCase):
       inds = EState.EStateIndices(mol)
 
       maxV = max(abs(ans-inds))
-      if show: print inds
+      if show: print(inds)
       assert maxV<tol,'bad EStates for smiles: %s'%(smi)
       
   

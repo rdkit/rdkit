@@ -81,7 +81,7 @@ class FeatMapParser(object):
         elif keyword=='beginparams':
           featMap.params=self.ParseParamBlock()
         else:
-          raise FeatMapParseError,'Unrecognized keyword %s on line %d'%(keyword,self._lineNum)
+          raise FeatMapParseError('Unrecognized keyword %s on line %d'%(keyword,self._lineNum))
       else:
         keyword = splitL[0].strip().lower()
         val = splitL[1].strip()
@@ -89,14 +89,14 @@ class FeatMapParser(object):
           try:
             featMap.scoreMode=getattr(FeatMaps.FeatMapScoreMode,val)
           except AttributeError:
-            raise FeatMapParseError,'ScoreMode %s not recognized on line %d'%(val,self._lineNum)
+            raise FeatMapParseError('ScoreMode %s not recognized on line %d'%(val,self._lineNum))
         elif keyword=='dirscoremode':
           try:
             featMap.dirScoreMode=getattr(FeatMaps.FeatDirScoreMode,val)
           except AttributeError:
-            raise FeatMapParseError,'DirScoreMode %s not recognized on line %d'%(val,self._lineNum)
+            raise FeatMapParseError('DirScoreMode %s not recognized on line %d'%(val,self._lineNum))
         else:
-          raise FeatMapParseError,'Unrecognized keyword %s on line %d'%(keyword,self._lineNum)
+          raise FeatMapParseError('Unrecognized keyword %s on line %d'%(keyword,self._lineNum))
       l = self._NextLine().strip()
     return featMap
     
@@ -120,9 +120,9 @@ class FeatMapParser(object):
           try:
             param.featProfile=getattr(param.FeatProfile,val)
           except AttributeError:
-            raise FeatMapParseError,'Profile %s not recognized on line %d'%(val,self._lineNum)
+            raise FeatMapParseError('Profile %s not recognized on line %d'%(val,self._lineNum))
         else:
-          raise FeatMapParseError,'FeatMapParam option %s not recognized on line %d'%(name,self._lineNum)
+          raise FeatMapParseError('FeatMapParam option %s not recognized on line %d'%(name,self._lineNum))
       params[family]=param
       l = self._NextLine()
 
@@ -142,7 +142,7 @@ class FeatMapParser(object):
     txt = txt[startP:endP]
     splitL = txt.split(',')
     if len(splitL) != 3:
-      raise ValueError,'Bad location string'
+      raise ValueError('Bad location string')
     vs = [float(x) for x in splitL]
     pt = Geometry.Point3D(vs[0],vs[1],vs[2])
     return pt
@@ -180,7 +180,7 @@ class FeatMapParser(object):
           pos = self._parsePoint(val)
           p.featDirs.append(pos)
         else:
-          raise FeatMapParseError,'FeatPoint option %s not recognized on line %d'%(name,self._lineNum)
+          raise FeatMapParseError('FeatPoint option %s not recognized on line %d'%(name,self._lineNum))
         i+=1
       feats.append(p)
       l = self._NextLine()

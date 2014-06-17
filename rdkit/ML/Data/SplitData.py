@@ -4,10 +4,14 @@
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
-from rdkit import RDConfig,RDRandom
+from __future__ import print_function
 import random
-import types,os.path,sys
-SeqTypes=(types.ListType,types.TupleType)
+import os.path,sys
+
+from rdkit import RDConfig,RDRandom
+from rdkit.six.moves import xrange
+
+SeqTypes=(list, tuple)
 
 def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
   """ splits a set of indices into a data set into 2 pieces
@@ -116,7 +120,7 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
       else:
         resTest.append(i)
   else:
-    perm = range(nPts)
+    perm = list(xrange(nPts))
     random.shuffle(perm)
     nTrain = int(nPts*frac)
     
@@ -124,8 +128,8 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
     resTest = list(perm[nTrain:])
         
   if not silent:
-    print 'Training with %d (of %d) points.'%(len(resData),nPts)
-    print '\t%d points are in the hold-out set.'%(len(resTest))
+    print('Training with %d (of %d) points.'%(len(resData),nPts))
+    print('\t%d points are in the hold-out set.'%(len(resTest)))
   return resData,resTest
 
   
@@ -154,8 +158,8 @@ def SplitDataSet(data,frac,silent=0):
   resTest = [data[x] for x in test]
 
   if not silent:
-    print 'Training with %d (of %d) points.'%(len(resData),nOrig)
-    print '\t%d points are in the hold-out set.'%(len(resTest))
+    print('Training with %d (of %d) points.'%(len(resData),nOrig))
+    print('\t%d points are in the hold-out set.'%(len(resTest)))
   return resData,resTest
 
 

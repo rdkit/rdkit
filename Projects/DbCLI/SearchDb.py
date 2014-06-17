@@ -223,7 +223,7 @@ def RunSearch(options,queryFilename):
   elif options.outF=='':
     outF=None
   else:
-    outF = file(options.outF,'w+')
+    outF = open(options.outF,'w+')
   
   molsOut=False
   if options.sdfOut:

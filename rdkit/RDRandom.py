@@ -15,7 +15,12 @@
 import sys
 
 import random as _random
-if sys.hexversion >= 0x20303f0:
+if sys.hexversion >= 0x30400f0:
+  # TODO review this
+  random = _random.random
+  randrange = _random.randrange
+  seed = _random.seed
+elif sys.hexversion >= 0x20303f0:
   _randGen = _random.WichmannHill()
   random = _randGen.random
   randrange = _randGen.randrange

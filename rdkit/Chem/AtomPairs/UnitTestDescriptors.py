@@ -8,7 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import unittest,cPickle,os,gzip
+from __future__ import print_function
+import unittest,os,gzip
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem.AtomPairs import Pairs,Torsions
@@ -38,8 +40,8 @@ class TestCase(unittest.TestCase):
       #      if pd[k]!=v: print '>>>3',k,v,pd[k]
       #    else:
       #      print '>>>4',k,v
-      self.failUnless(ap==atomPairs[i])
-      self.failUnless(ap!=atomPairs[i-1])
+      self.assertTrue(ap==atomPairs[i])
+      self.assertTrue(ap!=atomPairs[i-1])
 
   def testTorsionsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.tts.pkl.gz'),'rb')
@@ -47,22 +49,22 @@ class TestCase(unittest.TestCase):
     for i,m in enumerate(self.mols):
       tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(m)
       if tt!=torsions[i]:
-        print Chem.MolToSmiles(m)
+        print(Chem.MolToSmiles(m))
         pd=tt.GetNonzeroElements()
         rd=torsions[i].GetNonzeroElements()
         for k,v in pd.iteritems():
           if rd.has_key(k):
-            if rd[k]!=v: print '>>>1',k,v,rd[k]
+            if rd[k]!=v: print('>>>1',k,v,rd[k])
           else:
-            print '>>>2',k,v
+            print('>>>2',k,v)
         for k,v in rd.iteritems():
           if pd.has_key(k):
-            if pd[k]!=v: print '>>>3',k,v,pd[k]
+            if pd[k]!=v: print('>>>3',k,v,pd[k])
           else:
-            print '>>>4',k,v
+            print('>>>4',k,v)
        
-      self.failUnless(tt==torsions[i])
-      self.failUnless(tt!=torsions[i-1])
+      self.assertTrue(tt==torsions[i])
+      self.assertTrue(tt!=torsions[i-1])
 
 
 if __name__ == '__main__':

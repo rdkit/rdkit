@@ -11,7 +11,8 @@
 """basic unit testing code for SMILES canonicalization
 
 """
-import unittest,cPickle,os
+import unittest,os
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 
 class TestCase(unittest.TestCase):

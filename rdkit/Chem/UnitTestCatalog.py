@@ -8,12 +8,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
+import os
 import unittest
+from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-import cPickle
-import os
+from rdkit.six.moves import cPickle
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<tol
@@ -197,7 +197,7 @@ class TestCase(unittest.TestCase):
     entry = bitInfo[1]
     assert int(entry[0]) in (2,6)
     txt = cat.GetBitDescription(int(entry[0]))
-    self.failUnless( txt in ('CCC<-O>','C=C<-O>'), txt) 
+    self.assertTrue( txt in ('CCC<-O>','C=C<-O>'), txt) 
     assert feq(entry[1],0.1611)
 
     entry = bitInfo[6]

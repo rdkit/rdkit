@@ -198,18 +198,20 @@ a QDAT file.
      
 
 """
+from __future__ import print_function
+import sys,time
+import math
+import numpy
+from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.utils import listutils
 from rdkit.ML.Composite import Composite,BayesComposite
 #from ML.SVM import SVMClassificationModel as SVM
-import numpy
-import math
 from rdkit.ML.Data import DataUtils,SplitData
 from rdkit.ML import ScreenComposite
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
-import sys,cPickle,time
 from rdkit import DataStructs
 
 _runDetails = CompositeRun.CompositeRun()
@@ -755,18 +757,18 @@ def ShowVersion(includeArgs=0):
   """ prints the version number
 
   """
-  print 'This is BuildComposite.py version %s'%(__VERSION_STRING)
+  print('This is BuildComposite.py version %s' % (__VERSION_STRING))
   if includeArgs:
     import sys
-    print 'command line was:'
-    print ' '.join(sys.argv)
+    print('command line was:')
+    print(' '.join(sys.argv))
 
 def Usage():
   """ provides a list of arguments for when this is used from the command line
 
   """
   import sys
-  print __doc__
+  print(__doc__)
   sys.exit(-1)
 
 def SetDefaults(runDetails=None):

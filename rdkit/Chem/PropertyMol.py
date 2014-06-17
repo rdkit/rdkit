@@ -8,7 +8,7 @@ from rdkit import Chem
 class PropertyMol(Chem.Mol):
   """ allows rdkit molecules to be pickled with their properties saved.
 
-   >>> import cPickle
+   >>> from rdkit.six.moves import cPickle
    >>> m = Chem.MolFromMolFile('test_data/benzene.mol')
    >>> m.GetProp('_Name')
    'benzene.mol'
@@ -61,7 +61,7 @@ class PropertyMol(Chem.Mol):
    >>> w = Chem.SDWriter(fn)
    >>> w.write(pm)
    >>> w=None
-   >>> txt = file(fn,'r').read()
+   >>> txt = open(fn,'r').read()
    >>> '<IntVal>' in txt
    True
    >>> try:
@@ -76,7 +76,7 @@ class PropertyMol(Chem.Mol):
    >>> pm = cPickle.loads(cPickle.dumps(pm))
    >>> w.write(pm)
    >>> w=None
-   >>> txt = file(fn,'r').read()
+   >>> txt = open(fn,'r').read()
    >>> '<IntVal>' in txt
    True
    >>> try:

@@ -9,7 +9,7 @@ from rdkit.ML.Data import DataUtils, MLData
 from rdkit.ML.KNN import CrossValidate,DistFunctions
 from rdkit.ML.KNN import KNNModel,KNNClassificationModel,KNNRegressionModel
 import os.path
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit import RDRandom
 
 def feq(a,b,tol=1e-4):

@@ -11,8 +11,9 @@
 """basic unit testing code for the molecule boost wrapper
 
 """
+import unittest,os
+from rdkit.six.moves import cPickle
 from rdkit import RDConfig
-import unittest,cPickle,os
 from rdkit import Chem
 
 

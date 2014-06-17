@@ -9,13 +9,13 @@ it's intended to be shallow, but broad
 
 """
 import unittest,os
+from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger=logger()
 from rdkit import Chem
 from rdkit.Chem import FragmentCatalog
 from rdkit import DataStructs
-import cPickle
 
 
 class TestCase(unittest.TestCase):
@@ -65,7 +65,8 @@ class TestCase(unittest.TestCase):
             assert tuple(fcat.GetEntryFuncGroupIds(id))==tuple(fcat.GetBitFuncGroupIds(id))
             
     def test3FPgenerator(self) :
-        smiLines = open(self.smiName,'r').readlines()
+        with open(self.smiName,'r') as smiF:
+            smiLines = smiF.readlines()
         fparams = FragmentCatalog.FragCatParams(1, 6, self.fName)
         fcat = FragmentCatalog.FragCatalog(fparams)
         fgen = FragmentCatalog.FragCatGenerator()
@@ -92,7 +93,8 @@ class TestCase(unittest.TestCase):
 
                 
     def test4Serialize(self) :
-        smiLines = open(self.smiName,'r').readlines()
+        with open(self.smiName,'r') as smiF:
+            smiLines = smiF.readlines()
         fparams = FragmentCatalog.FragCatParams(1, 6, self.fName)
         fcat = FragmentCatalog.FragCatalog(fparams)
         fgen = FragmentCatalog.FragCatGenerator()
@@ -120,7 +122,8 @@ class TestCase(unittest.TestCase):
 
                 
     def test5FPsize(self) :
-        smiLines = open(self.smiName,'r').readlines()
+        with open(self.smiName,'r') as smiF:
+            smiLines = smiF.readlines()
         fparams = FragmentCatalog.FragCatParams(6, 6, self.fName)
         fcat = FragmentCatalog.FragCatalog(fparams)
         fgen = FragmentCatalog.FragCatGenerator()

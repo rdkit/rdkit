@@ -4,8 +4,9 @@
 """ Implements a class used to represent N-ary trees
 
 """
-import cPickle
+from __future__ import print_function
 import numpy
+from rdkit.six.moves import cPickle
 
 # FIX: the TreeNode class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled
@@ -225,9 +226,9 @@ class TreeNode:
       
     """
     if showData:
-      print '%s%s: %s'%('  '*level,self.name,str(self.data))
+      print('%s%s: %s'%('  '*level,self.name,str(self.data)))
     else:
-      print '%s%s'%('  '*level,self.name)
+      print('%s%s'%('  '*level,self.name))
     
     for child in self.children:
       child.Print(level+1,showData=showData)
@@ -236,8 +237,8 @@ class TreeNode:
     """ Pickles the tree and writes it to disk
 
     """
-    pFile = open(fileName,'w+')
-    cPickle.dump(self,pFile)
+    with open(fileName,'w+') as pFile:
+      cPickle.dump(self,pFile)
     
   def __str__(self):
     """ returns a string representation of the tree
@@ -286,27 +287,27 @@ if __name__ == '__main__':
   tree = TreeNode(None,'root')
   for i in xrange(3):
     child = tree.AddChild('child %d'%i)
-  print tree
+  print(tree)
   tree.GetChildren()[1].AddChild('grandchild')
   tree.GetChildren()[1].AddChild('grandchild2')
   tree.GetChildren()[1].AddChild('grandchild3')
-  print tree
+  print(tree)
   tree.Pickle('save.pkl')
-  print 'prune'
+  print('prune')
   tree.PruneChild(tree.GetChildren()[1])
-  print 'done'
-  print tree
+  print('done')
+  print(tree)
 
   import copy
   tree2 = copy.deepcopy(tree)
-  print 'tree==tree2', tree==tree2
+  print('tree==tree2', tree==tree2)
 
   foo = [tree]
-  print 'tree in [tree]:', tree in foo,foo.index(tree)
-  print 'tree2 in [tree]:', tree2 in foo, foo.index(tree2)
+  print('tree in [tree]:', tree in foo,foo.index(tree))
+  print('tree2 in [tree]:', tree2 in foo, foo.index(tree2))
 
   tree2.GetChildren()[1].AddChild('grandchild4')
-  print 'tree==tree2', tree==tree2  
+  print('tree==tree2', tree==tree2)
   tree.Destroy()
   
 

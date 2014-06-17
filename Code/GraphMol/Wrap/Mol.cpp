@@ -15,6 +15,7 @@
 #include "rdchem.h"
 #include "seqs.hpp"
 // ours
+#include <RDBoost/pyint_api.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>

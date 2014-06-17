@@ -20,7 +20,7 @@ try:
 except ImportError:
   Murtagh=None
 import numpy
-import cPickle
+from rdkit.six.moves import cPickle
 
 
 class TestCase(unittest.TestCase):

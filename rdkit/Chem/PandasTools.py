@@ -76,13 +76,15 @@ This can be reverted using the ChangeMoleculeRendering method
 >>> print molX # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
 '''
+from __future__ import print_function
 
+from base64 import b64encode
+import types
 
+from rdkit.six.moves import cStringIO as StringIO
 from rdkit import Chem
 from rdkit.Chem import Draw
-from base64 import b64encode
-from StringIO import StringIO
-import types
+
 try:
   import pandas as pd
   v = pd.version.version.split('.')
@@ -300,11 +302,12 @@ def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
 if __name__ == "__main__":
   import sys
   if pd is None:
-    print >>sys.stderr,"pandas installation not found, skipping tests"
+    print("pandas installation not found, skipping tests", file=sys.stderr)
   else:
     v = pd.version.version.split('.')
     if v[0]=='0' and int(v[1])<10:
-      print >>sys.stderr,"pandas installation >=0.10 not found, skipping tests"
+      print("pandas installation >=0.10 not found, skipping tests", 
+            file=sys.stderr)
     else:
       import doctest
       failed,tried=doctest.testmod(optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)

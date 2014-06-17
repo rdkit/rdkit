@@ -22,7 +22,7 @@ Other compatibility notes:
 
 
 """
-
+from __future__ import print_function
 import numpy
 from rdkit.ML.Composite import Composite
 
@@ -85,14 +85,14 @@ class BayesComposite(Composite.Composite):
     self.resultProbs /= sum(self.resultProbs)
 
     if verbose:
-      print '**** Bayesian Results'
-      print 'Result probabilities'
-      print '\t',self.resultProbs
-      print 'Model by model breakdown of conditional probs'
+      print('**** Bayesian Results')
+      print('Result probabilities')
+      print('\t',self.resultProbs)
+      print('Model by model breakdown of conditional probs')
       for mat in self.condProbs:
         for row in mat:
-          print '\t',row
-        print
+          print('\t',row)
+        print()
       
 
       
@@ -133,7 +133,7 @@ class BayesComposite(Composite.Composite):
     res = numpy.argmax(votes)
     conf = votes[res] / len(self)
     if verbose:
-      print votes,conf,example[-1]
+      print(votes,conf,example[-1])
     if conf > threshold:
       return res,conf
     else:

@@ -8,8 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
+import copy,struct
+from rdkit.six.moves import cPickle
+from rdkit.six import iterkeys
 from rdkit import DataStructs
-import copy,struct,cPickle
 
 class VectCollection(object):
   """
@@ -150,7 +153,7 @@ class VectCollection(object):
     self.__orVect=None
     if not self.__vects:
       return
-    ks = self.__vects.keys()
+    ks = list(iterkeys(self.__vects))
     self.__orVect = copy.copy(self.__vects[ks[0]])
     self.__numBits = self.__orVect.GetNumBits()
     for i in range(1,len(ks)):
@@ -213,7 +216,7 @@ class VectCollection(object):
     tmp = {}
     for k in keep:
       tmp[k] = self.__vects[k]
-    if verbose: print 'uniquify:',len(self.__vects),'->',len(tmp)
+    if verbose: print('uniquify:',len(self.__vects),'->',len(tmp))
     self.__vects=tmp
       
 

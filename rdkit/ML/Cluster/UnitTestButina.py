@@ -3,11 +3,11 @@
 # Copyright (C) 2007-2008 Greg Landrum
 #  All Rights Reserved
 #
-from rdkit import RDConfig
 import unittest
 
+from rdkit.six.moves import cPickle
+from rdkit import RDConfig
 from rdkit.ML.Cluster import Butina
-import cPickle
 
 
 class TestCase(unittest.TestCase):
@@ -20,11 +20,11 @@ class TestCase(unittest.TestCase):
              ]
     nPts = 6
     cs = Butina.ClusterData(dists,nPts,1.1,isDistData=1)
-    self.failUnless(len(cs)==3)
+    self.assertTrue(len(cs)==3)
 
-    self.failUnless(cs[0]==(1,0,2))
-    self.failUnless(cs[1]==(5,4))
-    self.failUnless(cs[2]==(3,))
+    self.assertTrue(cs[0]==(1,0,2))
+    self.assertTrue(cs[1]==(5,4))
+    self.assertTrue(cs[2]==(3,))
 
   def test2(self):
     dists = [.5,
@@ -38,11 +38,11 @@ class TestCase(unittest.TestCase):
     nPts = 8
     cs = Butina.ClusterData(dists,nPts,2.1,isDistData=1)
 
-    self.failUnless(len(cs)==3)
+    self.assertTrue(len(cs)==3)
 
-    self.failUnless(cs[0]==(3,0,1,2,4))
-    self.failUnless(cs[1]==(7,6))
-    self.failUnless(cs[2]==(5,))
+    self.assertTrue(cs[0]==(3,0,1,2,4))
+    self.assertTrue(cs[1]==(7,6))
+    self.assertTrue(cs[2]==(5,))
 
   def test3(self):
     " edge case: everything a singleton "
@@ -51,11 +51,11 @@ class TestCase(unittest.TestCase):
              ]
     nPts = 3
     cs = Butina.ClusterData(dists,nPts,0.9,isDistData=1)
-    self.failUnless(len(cs)==3)
+    self.assertTrue(len(cs)==3)
 
-    self.failUnless(cs[0]==(2,))
-    self.failUnless(cs[1]==(1,))
-    self.failUnless(cs[2]==(0,))
+    self.assertTrue(cs[0]==(2,))
+    self.assertTrue(cs[1]==(1,))
+    self.assertTrue(cs[2]==(0,))
 
   def test4(self):
     " edge case: everything in one cluster "
@@ -65,8 +65,8 @@ class TestCase(unittest.TestCase):
              ]
     nPts = 4
     cs = Butina.ClusterData(dists,nPts,2,isDistData=1)
-    self.failUnless(len(cs)==1)
-    self.failUnless(cs[0]==(3,0,1,2))
+    self.assertTrue(len(cs)==1)
+    self.assertTrue(cs[0]==(3,0,1,2))
 
   def test4(self):
     " edge case: one in the middle leaves the edges lonely "
@@ -77,10 +77,10 @@ class TestCase(unittest.TestCase):
              ]
     nPts = 5
     cs = Butina.ClusterData(dists,nPts,1.1,isDistData=1)
-    self.failUnless(len(cs)==3)
-    self.failUnless(cs[0]==(2,1,3))
-    self.failUnless(cs[1]==(4,))
-    self.failUnless(cs[2]==(0,))
+    self.assertTrue(len(cs)==3)
+    self.assertTrue(cs[0]==(2,1,3))
+    self.assertTrue(cs[1]==(4,))
+    self.assertTrue(cs[2]==(0,))
 
   def test6(self):
     " edge case: zero distances: "
@@ -91,10 +91,10 @@ class TestCase(unittest.TestCase):
              ]
     nPts = 5
     cs = Butina.ClusterData(dists,nPts,0.9,isDistData=1)
-    self.failUnless(len(cs)==3)
-    self.failUnless(cs[0]==(3,1,2))
-    self.failUnless(cs[1]==(4,))
-    self.failUnless(cs[2]==(0,))
+    self.assertTrue(len(cs)==3)
+    self.assertTrue(cs[0]==(3,1,2))
+    self.assertTrue(cs[1]==(4,))
+    self.assertTrue(cs[2]==(0,))
 
 
 

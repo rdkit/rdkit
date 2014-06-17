@@ -12,6 +12,7 @@
 
 
 """
+from __future__ import print_function, division
 from rdkit.DataStructs import SparseBitVect,IntSparseIntVect,LongSparseIntVect
 from rdkit.Chem.Pharm2D import Utils
 import copy
@@ -166,10 +167,10 @@ class SigFactory(object):
       whichBins[i] = where
     res = scaffolds.index(tuple(whichBins))
     if _verbose:
-      print '----- _fBI  -----------'
-      print ' scaffolds:',scaffolds
-      print ' bins:',whichBins
-      print ' res:',res
+      print('----- _fBI  -----------')
+      print(' scaffolds:',scaffolds)
+      print(' bins:',whichBins)
+      print(' res:',res)
     return res
 
   def GetFeatFamilies(self):
@@ -208,9 +209,9 @@ class SigFactory(object):
     """
     nPoints = len(featIndices)
     if nPoints>3:
-      raise NotImplementedError,'>3 points not supported'
-    if nPoints < self.minPointCount: raise IndexError,'bad number of points'
-    if nPoints > self.maxPointCount: raise IndexError,'bad number of points'
+      raise NotImplementedError('>3 points not supported')
+    if nPoints < self.minPointCount: raise IndexError('bad number of points')
+    if nPoints > self.maxPointCount: raise IndexError('bad number of points')
 
     # this is the start of the nPoint-point pharmacophores
     startIdx = self._starts[nPoints]
@@ -223,29 +224,29 @@ class SigFactory(object):
       tmp.sort()
       featIndices = tmp
 
-    if featIndices[0]<0: raise IndexError,'bad feature index'
-    if max(featIndices)>=self._nFeats: raise IndexError,'bad feature index'
+    if featIndices[0]<0: raise IndexError('bad feature index')
+    if max(featIndices)>=self._nFeats: raise IndexError('bad feature index')
 
     if nPoints==3:
       featIndices,dists=Utils.OrderTriangle(featIndices,dists)
             
 
     offset = Utils.CountUpTo(self._nFeats,nPoints,featIndices)
-    if _verbose: print 'offset for feature %s: %d'%(str(featIndices),offset)
+    if _verbose: print('offset for feature %s: %d'%(str(featIndices),offset))
     offset *= len(self._scaffolds[len(dists)])
 
       
     try:
       if _verbose:
-        print '>>>>>>>>>>>>>>>>>>>>>>>'
-        print '\tScaffolds:',repr(self._scaffolds[len(dists)]),type(self._scaffolds[len(dists)])
-        print '\tDists:',repr(dists),type(dists)
-        print '\tbins:',repr(self._bins),type(self._bins)
+        print('>>>>>>>>>>>>>>>>>>>>>>>')
+        print('\tScaffolds:',repr(self._scaffolds[len(dists)]),type(self._scaffolds[len(dists)]))
+        print('\tDists:',repr(dists),type(dists))
+        print('\tbins:',repr(self._bins),type(self._bins))
       bin = self._findBinIdx(dists,self._bins,self._scaffolds[len(dists)])
     except ValueError:
       fams = self.GetFeatFamilies()
       fams = [fams[x] for x in featIndices]
-      raise IndexError,'distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s'%(fams,dists,self._bins,self._scaffolds)
+      raise IndexError('distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s'%(fams,dists,self._bins,self._scaffolds))
 
     return startIdx + offset + bin
 
@@ -268,7 +269,7 @@ class SigFactory(object):
      
     """
     if idx >= self._sigSize:
-      raise IndexError,'bad index (%d) queried. %d is the max'%(idx,self._sigSize)
+      raise IndexError('bad index (%d) queried. %d is the max'%(idx,self._sigSize))
     # first figure out how many points are in the p'cophore
     nPts = self.minPointCount
     while nPts < self.maxPointCount and self._starts[nPts+1]<=idx:
@@ -277,7 +278,7 @@ class SigFactory(object):
     # how far are we in from the start point?
     offsetFromStart = idx - self._starts[nPts]
     if _verbose:
-      print '\t %d Points, %d offset'%(nPts,offsetFromStart)
+      print('\t %d Points, %d offset'%(nPts,offsetFromStart))
 
     # lookup the number of scaffolds
     nDists = len(Utils.nPointDistDict[nPts])
@@ -286,17 +287,17 @@ class SigFactory(object):
     nScaffolds = len(scaffolds)
 
     # figure out to which proto-pharmacophore we belong:
-    protoIdx = offsetFromStart / nScaffolds
+    protoIdx = offsetFromStart // nScaffolds
     indexCombos = Utils.GetIndexCombinations(self._nFeats,nPts)
     combo = tuple(indexCombos[protoIdx])
     if _verbose:
-      print '\t combo: %s'%(str(combo))
+      print('\t combo: %s'%(str(combo)))
 
     # and which scaffold:
     scaffoldIdx = offsetFromStart % nScaffolds
     scaffold = scaffolds[scaffoldIdx]
     if _verbose:
-      print '\t scaffold: %s'%(str(scaffold))
+      print('\t scaffold: %s'%(str(scaffold)))
     return nPts,combo,scaffold
 
   def Init(self):

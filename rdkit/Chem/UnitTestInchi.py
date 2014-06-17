@@ -29,6 +29,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from __future__ import print_function
 from rdkit.Chem import *
 from rdkit import RDConfig
 from rdkit.Chem import rdDepictor
@@ -149,7 +150,7 @@ class TestCase(unittest.TestCase):
         self.dataset['problematic'] = GzippedSDMolSupplier(
                 os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
                     'pubchem-hard-set.sdf.gz'))
-        _ = file(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
+        _ = open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
             'pubchem-hard-set.inchi'))
         self.dataset_inchi['problematic'] = load(_)
         _.close()
@@ -191,15 +192,15 @@ class TestCase(unittest.TestCase):
                             continue
 
                     diff += 1
-                    print 'InChI mismatch for PubChem Compound ' + \
-                            m.GetProp('PUBCHEM_COMPOUND_CID') + \
-                            '\n' + MolToSmiles(m,True) + '\n' + inchiDiff(x, y)
-                    print
+                    print('InChI mismatch for PubChem Compound ' + 
+                          m.GetProp('PUBCHEM_COMPOUND_CID') + 
+                          '\n' + MolToSmiles(m,True) + '\n' + inchiDiff(x, y))
+                    print()
 
                 else:
                     same += 1
 
-            print green + "InChI write Summary: %d identical, %d suffix variance, %d reasonable" % (same, diff, reasonable) + reset
+            print(green + "InChI write Summary: %d identical, %d suffix variance, %d reasonable" % (same, diff, reasonable) + reset)
             self.assertEqual(same, 1164)
             self.assertEqual(diff, 0)
             self.assertEqual(reasonable, 17)
@@ -255,8 +256,8 @@ class TestCase(unittest.TestCase):
                         continue
 
                     diff += 1
-                    print green + 'Empty mol for PubChem Compound ' + \
-                        cid + '\n' + reset
+                    print(green + 'Empty mol for PubChem Compound ' + 
+                          cid + '\n' + reset)
                     continue
                 if x != y:
                     # if there was warning in the first place, then this is
@@ -286,13 +287,13 @@ class TestCase(unittest.TestCase):
                         continue
 
                     diff += 1
-                    print green + 'Molecule mismatch for PubChem Compound ' + \
-                            cid + '\n' + reset + \
-                            inchiDiff(x, y) + reset
-                    print
+                    print(green + 'Molecule mismatch for PubChem Compound ' + 
+                          cid + '\n' + reset + 
+                          inchiDiff(x, y) + reset)
+                    print()
                 else:
                     same += 1
-            print green + "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (same, diff, reasonable) + reset
+            print(green + "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (same, diff, reasonable) + reset)
             self.assertEqual(same, 544)
             self.assertEqual(diff, 1)
             self.assertEqual(reasonable, 636)

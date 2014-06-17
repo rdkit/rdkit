@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import sys
 from rdkit import RDConfig
 
 if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
@@ -54,8 +55,11 @@ elif hasattr(RDConfig,"useSqlLite") and RDConfig.useSqlLite:
   dbFileWildcard='*.sqlt'
   placeHolder='?'
   binaryTypeName="blob"
-  binaryHolder = buffer
+  if sys.version > '3':
+    binaryHolder = memoryview
+  else:
+    binaryHolder = buffer
 
   connect = lambda x,*args:sqlite.connect(x)
 else:
-  raise ImportError,"Neither sqlite nor PgSQL support found."
+  raise ImportError("Neither sqlite nor PgSQL support found.")

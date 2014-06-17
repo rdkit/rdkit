@@ -139,7 +139,8 @@ class TestCase(unittest.TestCase):
 
     
   def test4(self):
-    import gzip,cPickle
+    import gzip
+    from rdkit.six.moves import cPickle
     from BuildSigTree import BuildSigTree
     gz = gzip.open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data',
                                 'cdk2-few.pkl.gz'),

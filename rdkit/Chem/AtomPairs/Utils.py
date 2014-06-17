@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 import math
@@ -47,12 +48,12 @@ def ExplainAtomCode(code,branchSubtract=0):
   piMask = (1<<rdMolDescriptors.AtomPairsParameters.numPiBits)-1
 
   nBranch = int(code&branchMask)
-  #print code,
+  #print(code,end='')
   code = code>>rdMolDescriptors.AtomPairsParameters.numBranchBits
   nPi = int(code&piMask)
-  #print code,
+  #print(code,end='')
   code = code>>rdMolDescriptors.AtomPairsParameters.numPiBits
-  #print code,
+  #print(code,end='')
   typeIdx=int(code&typeMask)
   if typeIdx<len(rdMolDescriptors.AtomPairsParameters.atomTypes):
     atomNum = rdMolDescriptors.AtomPairsParameters.atomTypes[typeIdx]
@@ -263,15 +264,15 @@ def CosineSimilarity(v1,v2):
 
     - the vectors must be sorted
 
-  >>> print '%.3f'%CosineSimilarity( (1,2,3,4,10), (2,4,6) )
+  >>> print('%.3f'%CosineSimilarity( (1,2,3,4,10), (2,4,6) ))
   0.516
-  >>> print '%.3f'%CosineSimilarity( (1,2,2,3,4), (2,2,4,5,6) )
+  >>> print('%.3f'%CosineSimilarity( (1,2,2,3,4), (2,2,4,5,6) ))
   0.714
-  >>> print '%.3f'%CosineSimilarity( (1,2,2,3,4), (1,2,2,3,4) )
+  >>> print('%.3f'%CosineSimilarity( (1,2,2,3,4), (1,2,2,3,4) ))
   1.000
-  >>> print '%.3f'%CosineSimilarity( (1,2,2,3,4), (5,6,7) )
+  >>> print('%.3f'%CosineSimilarity( (1,2,2,3,4), (5,6,7) ))
   0.000
-  >>> print '%.3f'%CosineSimilarity( (1,2,2,3,4), () )
+  >>> print('%.3f'%CosineSimilarity( (1,2,2,3,4), () ))
   0.000
 
   """

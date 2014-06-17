@@ -44,6 +44,7 @@ Here's the general flow of things:
   -666.  So bad descriptor values should stand out like sore thumbs.
 
 """
+from __future__ import print_function
 __DEBUG=0
 from rdkit import RDConfig
 import string
@@ -324,11 +325,11 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
   except:
     if __DEBUG:
       import sys,traceback
-      print 'Sub Failure!'
+      print('Sub Failure!')
       traceback.print_exc()
-      print evalTarget
-      print propDict
-      raise RuntimeError,'Failure 1'
+      print(evalTarget)
+      print(propDict)
+      raise RuntimeError('Failure 1')
     else:
       return -666
 
@@ -347,13 +348,13 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
       except:
         outF.write('no atomDict\n')
       outF.close()
-      print 'ick!'
-      print 'formula:',formula
-      print 'target:',evalTarget
-      print 'propDict:',propDict
-      print 'keys:',atomDict.keys()
+      print('ick!')
+      print('formula:',formula)
+      print('target:',evalTarget)
+      print('propDict:',propDict)
+      print('keys:',atomDict.keys())
       traceback.print_exc()
-      raise RuntimeError,'Failure 2'
+      raise RuntimeError('Failure 2')
     else:
       v = -666
   return v
@@ -429,7 +430,7 @@ if __name__ == '__main__':
 
   for cExpr in cExprs:
     argVect = piece1 + [cExpr]
-    print cExpr
-    print CalcSingleCompoundDescriptor(compos,argVect,aDict,pDict)
-    print CalcMultipleCompoundsDescriptor([compos,compos],argVect,aDict,[pDict,pDict])
+    print(cExpr)
+    print(CalcSingleCompoundDescriptor(compos,argVect,aDict,pDict))
+    print(CalcMultipleCompoundsDescriptor([compos,compos],argVect,aDict,[pDict,pDict]))
 

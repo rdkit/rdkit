@@ -25,7 +25,7 @@ def ProcessMol(mol,typeConversions,globalProps,nDone,nameProp='_Name',nameCol='c
                skipSmiles=False,
                uniqNames=None,namesSeen=None):
   if not mol:
-    raise ValueError,'no molecule'
+    raise ValueError('no molecule')
   if keepHs:
     Chem.SanitizeMol(mol)
   try:

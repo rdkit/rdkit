@@ -8,7 +8,7 @@
 
 """
 import unittest
-import cPickle
+from rdkit.six.moves import cPickle, xrange
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
 from rdkit import RDConfig
@@ -17,7 +17,8 @@ from rdkit import RDConfig
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    self.examples = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','rb'))
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','rb') as pklF:
+      self.examples = cPickle.load(pklF)
     self.varNames = ['composition','max_atomic','has3d','has4d','has5d','elconc','atvol','isferro']
     self.qBounds = [[],[1.89,3.53],[],[],[],[0.55,0.73],[11.81,14.52],[]]
     self.nPoss= [0,3,2,2,2,3,3,2]
@@ -40,7 +41,8 @@ class TestCase(unittest.TestCase):
       
   def testTreeGrow(self):
     " testing tree-based composite "
-    self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb'))
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
+      self.refCompos = cPickle.load(pklF)
 
     composite = Composite.Composite()
     composite._varNames=self.varNames
@@ -65,8 +67,10 @@ class TestCase(unittest.TestCase):
 
   def testTreeScreen(self):
     " testing tree-based composite screening "
-    self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb'))
-    testCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unittree.pkl','rb'))
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
+      self.refCompos = cPickle.load(pklF)
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unittree.pkl','rb') as pklF:
+      testCompos = cPickle.load(pklF)
     for example in self.examples:
       res,conf = testCompos.ClassifyExample(example)
       cRes,cConf = self.refCompos.ClassifyExample(example)

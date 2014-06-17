@@ -11,9 +11,11 @@
 import numpy
 import math
 
+from rdkit.six.moves import xrange
+
 # try to get the C versions of these routines
 try:
-  import rdInfoTheory as cEntropy
+  import rdkit.ML.InfoTheory.rdInfoTheory as cEntropy
 except:
   hascEntropy=0
 else:

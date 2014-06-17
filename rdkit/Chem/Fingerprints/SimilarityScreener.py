@@ -16,6 +16,7 @@ See _SimilarityScreener_ for overview of required API
 from rdkit import DataStructs
 from rdkit.DataStructs import TopNContainer
 from rdkit import RDConfig
+from rdkit import six
 
 class SimilarityScreener(object):
   """  base class
@@ -95,7 +96,7 @@ class ThresholdScreener(SimilarityScreener):
     while not done:
       # this is going to crap out when the data source iterator finishes,
       #  that's how we stop when no match is found
-      obj = self.dataIter.next()
+      obj = six.next(self.dataIter)
       fp = self.fingerprinter(obj)
       sim = DataStructs.FingerprintSimilarity(fp,self.probe,self.metric)
       if sim >= self.threshold:
@@ -109,14 +110,19 @@ class ThresholdScreener(SimilarityScreener):
     """
     self.dataSource.reset()
     self.dataIter = iter(self.dataSource)
+
   def __iter__(self):
     """ returns an iterator for this screener
     """
     self.Reset()
     return self
+
   def next(self):
     """ required part of iterator interface """
     return self._nextMatch()
+
+  __next__ = next
+
 
 class TopNScreener(SimilarityScreener):
   """ A screener that only returns the top N hits found
@@ -139,6 +145,7 @@ class TopNScreener(SimilarityScreener):
       self._initTopN()
     self.Reset()
     return self
+
   def next(self):
     if self._pos >= self.numToGet:
       raise StopIteration
@@ -146,7 +153,9 @@ class TopNScreener(SimilarityScreener):
       res = self.topN[self._pos]
       self._pos += 1
       return res
-    
+
+  __next__ = next
+
   def _initTopN(self):
     self.topN = TopNContainer.TopNContainer(self.numToGet)
     for obj in self.dataSource:

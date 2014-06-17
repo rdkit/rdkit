@@ -3,16 +3,17 @@
 #
 
 """ unit testing code for trees and decision trees (not learning/xvalidation) """
-from rdkit import RDConfig
+from __future__ import print_function
 import unittest
-from rdkit.ML.DecTree import Tree,DecTree
 import copy
-import cPickle
+from rdkit import RDConfig
+from rdkit.ML.DecTree import Tree,DecTree
+from rdkit.six.moves import cPickle
 
 
 class TreeTestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.baseTree = Tree.TreeNode(None,'root')    
     self.pickleFileName = RDConfig.RDCodeDir+'/ML/DecTree/test_data/treeunit.pkl'
     

@@ -36,20 +36,20 @@ class TestCase(unittest.TestCase):
     conf.SetId(0)
     cid = mol.AddConformer(conf)
 
-    self.failUnless(cid == 0)
+    self.assertTrue(cid == 0)
     
     conf2 = mol.GetConformer(0)
-    self.failUnless(conf2.GetId() == cid)
+    self.assertTrue(conf2.GetId() == cid)
     pt1 = conf2.GetAtomPosition(0)
-    self.failUnless(ptEq(pt1, Point3D(-0.5, 0.0, 0.0)))
+    self.assertTrue(ptEq(pt1, Point3D(-0.5, 0.0, 0.0)))
     
     pt2 = conf2.GetAtomPosition(1)
-    self.failUnless(ptEq(pt2, Point3D(1.0, 0.0, 0.0)))
+    self.assertTrue(ptEq(pt2, Point3D(1.0, 0.0, 0.0)))
     
     #changing conf should not change conf2 - related to issue 217
     conf.SetAtomPosition(1, Point3D(2.0, 0.0, 0.0))
     pt2 = conf2.GetAtomPosition(1)
-    self.failUnless(feq(pt2[0], 1.0))
+    self.assertTrue(feq(pt2[0], 1.0))
 
     conf = Chem.Conformer(2)
     conf.SetAtomPosition(0, Point3D(-0.5, 0.0, 0.0))
@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase):
     conf.SetId(2)
 
     cid = mol.AddConformer(conf, 0)
-    self.failUnless(cid == 2)
+    self.assertTrue(cid == 2)
     conf3 = mol.GetConformer(2)
     
   def test0AddHds(self) :
@@ -68,12 +68,12 @@ class TestCase(unittest.TestCase):
     cid = mol.AddConformer(conf)
 
     conf2 = mol.GetConformer()
-    self.failUnless(conf2.GetNumAtoms() == 2)
+    self.assertTrue(conf2.GetNumAtoms() == 2)
 
     nmol = Chem.AddHs(mol, 0,1)
     conf3 = nmol.GetConformer()
-    self.failUnless(conf3.GetNumAtoms() == 8)
-    self.failUnless(conf2.GetNumAtoms() == 2)
+    self.assertTrue(conf3.GetNumAtoms() == 8)
+    self.assertTrue(conf2.GetNumAtoms() == 2)
 
     targetCoords = [[-0.5, 0.0, 0.0],
                     [1.0, 0.0, 0.0],
@@ -86,21 +86,21 @@ class TestCase(unittest.TestCase):
 
     for i in range(8) :
       pt = conf3.GetAtomPosition(i)
-      self.failUnless(ptEq(pt, apply(Point3D,tuple(targetCoords[i]))))
+      self.assertTrue(ptEq(pt, Point3D(*tuple(targetCoords[i]))))
 
   def test2Issue217(self) :
     smi = 'c1ccccc1'
     m = Chem.MolFromSmiles(smi)
     addConf(m)
-    self.failUnless(m.GetNumConformers()==1);
+    self.assertTrue(m.GetNumConformers()==1);
     mb2 = Chem.MolToMolBlock(m)
 
   def test3Exceptions(self) :
     smi = 'c1ccccc1'
     m = Chem.MolFromSmiles(smi)
     addConf(m)
-    self.failUnless(m.GetNumConformers()==1)
-    self.failUnlessRaises(ValueError,lambda:m.GetConformer(2))
+    self.assertTrue(m.GetNumConformers()==1)
+    self.assertRaises(ValueError,lambda:m.GetConformer(2))
 
   def test4ConfTuple(self):
     smi = 'c1ccccc1'
@@ -109,17 +109,17 @@ class TestCase(unittest.TestCase):
       addConf(m)
 
     confs = m.GetConformers()
-    self.failUnless(len(confs) == 10)
+    self.assertTrue(len(confs) == 10)
 
     for conf in confs:
       for i in range(6):
         pt = conf.GetAtomPosition(i)
-        self.failUnless(ptEq(pt, Point3D(0.0, 0.0, 0.0)))
+        self.assertTrue(ptEq(pt, Point3D(0.0, 0.0, 0.0)))
 
     m.RemoveAllConformers()
-    self.failUnless(m.GetNumConformers() == 0)
+    self.assertTrue(m.GetNumConformers() == 0)
     confs = m.GetConformers()
-    self.failUnless(confs == ())
+    self.assertTrue(confs == ())
     
 if __name__ == '__main__':
   unittest.main()

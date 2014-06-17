@@ -124,7 +124,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
+        ${PYTHON_EXECUTABLE} -c "from __future__ import print_function; from distutils import sysconfig; print(sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}'))"
         OUTPUT_VARIABLE PYTHON_INSTDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
       )

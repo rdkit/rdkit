@@ -22,10 +22,11 @@ Other compatibility notes:
 
 
 """
-from rdkit.ML.Data import DataUtils
-import cPickle
+from __future__ import print_function
 import math
 import numpy
+from rdkit.six.moves import cPickle, xrange
+from rdkit.ML.Data import DataUtils
 
 class Composite(object):
   """a composite model
@@ -377,8 +378,7 @@ class Composite(object):
         - if the local descriptor names do not appear in _colNames_, this will
           raise an _IndexError_ exception.
     """
-    import types
-    if type(colNames)!=types.ListType:
+    if type(colNames)!=list:
       colNames = list(colNames)
     descs = [x.upper() for x in self.GetDescriptorNames()]
     self._mapOrder = [None]*len(descs)
@@ -396,7 +396,7 @@ class Composite(object):
       try:
         self._mapOrder[i] = colNames.index(descs[i])
       except ValueError:
-        raise ValueError,'cannot find descriptor name: %s in set %s'%(repr(descs[i]),repr(colNames))
+        raise ValueError('cannot find descriptor name: %s in set %s'%(repr(descs[i]),repr(colNames)))
     try:
       self._mapOrder[-1] = colNames.index(descs[-1])
     except ValueError:
@@ -475,9 +475,8 @@ class Composite(object):
       else:
         trainSet = trainExamples
 
-      #print "Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples))
-      model,frac = apply(buildDriver,(trainSet,attrs,nPossibleVals),
-                         buildArgs)
+      #print("Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples)))
+      model,frac = buildDriver(*(trainSet,attrs,nPossibleVals), **buildArgs)
       if pruneIt:
         model,frac2 = pruner(model,model.GetTrainingExamples(),
                             model.GetTestExamples(),
@@ -491,7 +490,7 @@ class Composite(object):
         
       self.AddModel(model,frac,needsQuantization)
       if not silent and (nTries < 10 or i % (nTries/10) == 0):
-        print 'Cycle: % 4d'%(i)
+        print('Cycle: % 4d'%(i))
       if progressCallback is not None:
         progressCallback(i)
 
@@ -715,13 +714,13 @@ if __name__ == '__main__':
     c.AddModel(n,0.5)
     c.AverageErrors()
     c.SortModels()
-    print c
+    print(c)
 
     qB = [[],[.5,1,1.5]]
     exs = [['foo',0],['foo',.4],['foo',.6],['foo',1.1],['foo',2.0]]
-    print 'quantBounds:',qB
+    print('quantBounds:',qB)
     for ex in exs:
       q = c.QuantizeExample(ex,qB)
-      print ex,q
+      print(ex,q)
   else:
     pass

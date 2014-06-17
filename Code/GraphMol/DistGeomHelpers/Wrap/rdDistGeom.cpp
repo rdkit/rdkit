@@ -15,6 +15,7 @@
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -105,7 +106,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     "Module containing functions to compute atomic coordinates in 3D using distance geometry"
     ;
 
-  import_array();
+  rdkit_import_array();
 
   //RegisterListConverter<RDKit::Atom*>();
 

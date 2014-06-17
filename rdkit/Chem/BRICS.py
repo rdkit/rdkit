@@ -34,9 +34,12 @@
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
+from __future__ import print_function
+import sys,re,random
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
-import sys,re,random
+from rdkit.six import iteritems, iterkeys, next
+from rdkit.six.moves import range
 
 # These are the definitions that will be applied to fragment molecules:
 environs = {
@@ -204,11 +207,11 @@ for gp in smartsGps:
       t=Reactions.ReactionFromSmarts(defn)
       t.Initialize()
     except:
-      print defn
+      print(defn)
       raise
 
 environMatchers={}
-for env,sma in environs.iteritems():
+for env,sma in iteritems(environs):
   environMatchers[env]=Chem.MolFromSmarts(sma)
   
 bondMatchers=[]
@@ -279,12 +282,12 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   
   """
   letter = re.compile('[a-z,A-Z]')
-  indices = range(len(bondMatchers))
+  indices = list(range(len(bondMatchers)))
   bondsDone=set()
   if randomizeOrder: random.shuffle(indices)
 
   envMatches={}
-  for env,patt in environMatchers.iteritems():
+  for env,patt in iteritems(environMatchers):
     envMatches[env]=mol.HasSubstructMatch(patt)
   for gpIdx in indices:
     if randomizeOrder:
@@ -388,7 +391,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   >>> sorted(res)
   ['[14*]c1ccccn1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
 
-  >>> res = BRICSDecompose(m,returnMols=True)
+  >>> res = list(BRICSDecompose(m,returnMols=True))
   >>> res[0]
   <rdkit.Chem.rdchem.Mol object ...>
   >>> smis = [Chem.MolToSmiles(x,True) for x in res]
@@ -449,17 +452,17 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
     newPool = {}
     while activePool:
       matched=False
-      nSmi = activePool.keys()[0]
+      nSmi = next(iterkeys(activePool))
       mol = activePool.pop(nSmi)
       for rxnIdx,reaction in enumerate(reactionGp):
         if onlyUseReactions and (gpIdx,rxnIdx) not in onlyUseReactions:
           continue
         if not silent:
-          print '--------'
-          print smartsGps[gpIdx][rxnIdx]
+          print('--------')
+          print(smartsGps[gpIdx][rxnIdx])
         ps = reaction.RunReactants((mol,))
         if ps:
-          if not silent: print  nSmi,'->',len(ps),'products'
+          if not silent: print(nSmi,'->',len(ps),'products')
           for prodSeq in ps:
             seqOk=True
             # we want to disqualify small fragments, so sort the product sequence by size
@@ -481,7 +484,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
               matched=True
               for nats,prod in prodSeq:
                 pSmi = prod.pSmi
-                #print '\t',nats,pSmi
+                #print('\t',nats,pSmi)
                 if pSmi not in allNodes:
                   if not singlePass:
                     activePool[pSmi] = prod

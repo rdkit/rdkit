@@ -3,15 +3,16 @@
 #
 
 """ unit tests for the ID3 implementation """
-from rdkit import RDConfig
+from __future__ import print_function
 import unittest
+from rdkit.six.moves import cPickle
+from rdkit import RDConfig
 from rdkit.ML.DecTree import ID3,DecTree
-import cPickle
 from rdkit.ML.Data import MLData
 
 class ID3TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.basicTreeName=RDConfig.RDCodeDir+'/ML/DecTree/test_data/BasicTree.pkl'
     self.multiTreeName=RDConfig.RDCodeDir+'/ML/DecTree/test_data/MultiTree.pkl'
   def _setupBasicTree(self):

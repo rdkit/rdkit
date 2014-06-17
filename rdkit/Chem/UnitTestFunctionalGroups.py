@@ -31,11 +31,13 @@
 #
 #  Created by Greg Landrum October 2006
 #
+from __future__ import print_function
+import unittest,os
+import os.path
 from rdkit import RDConfig
-import unittest,cPickle,os
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import FunctionalGroups
-import os.path
 
 class TestCase(unittest.TestCase):
   def test1Basics(self):
@@ -143,8 +145,8 @@ Amine\tN\tAmine
       fp = FunctionalGroups.CreateMolFingerprint(m,hierarchy)
       fph = FunctionalGroups.CreateMolFingerprint(mh,hierarchy)
       if fp!=fph:
-        print fp.ToBitString()
-        print fph.ToBitString()
+        print(fp.ToBitString())
+        print(fph.ToBitString())
       self.failUnlessEqual(fp,fph)
 
 if __name__ == '__main__':
