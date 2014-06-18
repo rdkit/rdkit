@@ -113,7 +113,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
   find_package(NumPy REQUIRED)
   include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
-  find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
+  find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
 
 
   if(RDK_INSTALL_INTREE)
