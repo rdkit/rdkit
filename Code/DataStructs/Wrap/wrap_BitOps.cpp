@@ -23,6 +23,15 @@ EBV *ff2(const EBV &ev1, int factor=2) {
 }
 
 
+namespace {
+  template <typename T>
+  python::object BVToBinaryText(const T &bv){
+    std::string res=BitVectToBinaryText(bv);
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+  }
+}
+
 template <typename T>
 double SimilarityWrapper(const T &bv1,const std::string &pkl,
                          double (*metric)(const T &,const T &),bool returnDistance){
@@ -368,9 +377,9 @@ struct BitOps_wrapper {
                 "Returns an FPS string representing the bit vector."
                 );
     python::def("BitVectToBinaryText",
-                (std::string (*)(const SBV&))BitVectToBinaryText);
+                (python::object (*)(const SBV&))BVToBinaryText);
     python::def("BitVectToBinaryText",
-                (std::string (*)(const EBV&))BitVectToBinaryText,
+                (python::object (*)(const EBV&))BVToBinaryText,
                 "Returns a binary string (byte array) representing the bit vector."
                 );
   }

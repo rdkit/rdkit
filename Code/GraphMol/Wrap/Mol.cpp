@@ -28,10 +28,11 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-  std::string MolToBinary(const ROMol &self){
+  python::object MolToBinary(const ROMol &self){
     std::string res;
     MolPickler::pickleMol(self,res);
-    return res;
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
   }
   //
   // allows molecules to be pickled.
