@@ -2192,7 +2192,7 @@ CAS<~>
     if sys.version > '3':
       from io import BytesIO,StringIO
     else:
-      import StringIO
+      from StringIO import StringIO
 
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
