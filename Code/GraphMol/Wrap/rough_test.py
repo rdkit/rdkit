@@ -2189,7 +2189,12 @@ CAS<~>
     
   def test70StreamSDWriter(self):
     import gzip
-    from rdkit.six.moves import cStringIO as StringIO
+    if sys.version > '3':
+      from io import BytesIO,StringIO
+    else:
+      import StringIO
+
+
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     inf = gzip.open(fileN)
@@ -2207,8 +2212,11 @@ CAS<~>
     self.assertEqual(i,16)
     w.flush()
     w=None
-    
-    isio=StringIO(osio.getvalue())
+    if sys.version > '3':
+      txt = osio.getvalue().encode()
+      isio = BytesIO(txt)
+    else:
+      isio = StringIO(osio.getvalue())
     suppl = Chem.ForwardSDMolSupplier(isio)
     i = 0
     for mol in suppl :
