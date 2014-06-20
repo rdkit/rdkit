@@ -55,10 +55,11 @@ void rdChemicalReactionExceptionTranslator(RDKit::ChemicalReactionException cons
 }
 
 namespace RDKit {
-  std::string ReactionToBinary(const ChemicalReaction &self){
+  python::object ReactionToBinary(const ChemicalReaction &self){
     std::string res;
     ReactionPickler::pickleReaction(self,res);
-    return res;
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
   }
   //
   // allows reactions to be pickled.

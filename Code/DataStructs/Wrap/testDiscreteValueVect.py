@@ -9,7 +9,7 @@ import sys
 import unittest
 
 from rdkit import RDConfig
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import DataStructs as ds
 
 class TestCase(unittest.TestCase):
@@ -135,10 +135,10 @@ class TestCase(unittest.TestCase):
       v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)
       for i in range(15):
         v1[2*i] = 1
-      v2 = cPickle.loads(cPickle.dumps(v1))
+      v2 = pickle.loads(pickle.dumps(v1))
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       #cPickle.dump(v1,outF)
-      v2=cPickle.load(inF)
+      v2=pickle.load(inF,encoding='latin1')
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       self.assertTrue(v1.GetTotalVal()==v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal()!=0)
@@ -146,10 +146,10 @@ class TestCase(unittest.TestCase):
       v1 = ds.DiscreteValueVect(ds.DiscreteValueType.TWOBITVALUE, 30)
       for i in range(30):
         v1[i] = i%4
-      v2 = cPickle.loads(cPickle.dumps(v1))
+      v2 = pickle.loads(pickle.dumps(v1))
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
-      #cPickle.dump(v1,outF)
-      v2=cPickle.load(inF)
+      #pickle.dump(v1,outF)
+      v2=pickle.load(inF)
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       self.assertTrue(v1.GetTotalVal()==v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal()!=0)
@@ -157,10 +157,10 @@ class TestCase(unittest.TestCase):
       v1 = ds.DiscreteValueVect(ds.DiscreteValueType.FOURBITVALUE, 16)
       for i in range(16):
         v1[i] = i%16
-      v2 = cPickle.loads(cPickle.dumps(v1))
+      v2 = pickle.loads(pickle.dumps(v1))
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
-      #cPickle.dump(v1,outF)
-      v2=cPickle.load(inF)
+      #pickle.dump(v1,outF)
+      v2=pickle.load(inF)
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       self.assertTrue(v1.GetTotalVal()==v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal()!=0)
@@ -171,10 +171,10 @@ class TestCase(unittest.TestCase):
       v1[2] = 3
       v1[3] = 56
       v1[4] = 128
-      v2 = cPickle.loads(cPickle.dumps(v1))
+      v2 = pickle.loads(pickle.dumps(v1))
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
-      #cPickle.dump(v1,outF)
-      v2=cPickle.load(inF)
+      #pickle.dump(v1,outF)
+      v2=pickle.load(inF)
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       self.assertTrue(v1.GetTotalVal()==v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal()!=0)
@@ -183,10 +183,10 @@ class TestCase(unittest.TestCase):
       v1[0] = 2345
       v1[1] = 64578
       v1[2] = 34
-      v2 = cPickle.loads(cPickle.dumps(v1))
+      v2 = pickle.loads(pickle.dumps(v1))
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
-      #cPickle.dump(v1,outF)
-      v2=cPickle.load(inF)
+      #pickle.dump(v1,outF)
+      v2=pickle.load(inF)
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       self.assertTrue(v1.GetTotalVal()==v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal()!=0)
