@@ -592,21 +592,15 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
         else
         {
             QueryAtom a(*(*atom));  // generate [#6] instead of C or c !
-            //for all atomMatchSet[ai] items add atom query to template
+            a.setQuery(makeAtomNumQuery((*atom)->getAtomicNum()));
+            //for all atomMatchSet[ai] items add atom query to template like [#6,#17,#9, ... ]
             for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
-            {
-                ATOM_OR_QUERY *a2 = new ATOM_OR_QUERY();
-                a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery((*atom)->getAtomicNum())));
-                a2->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(am->second->getAtomicNum())));      
-                a2->setDescription("AtomOr");
-    //ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what)
-    //....
-                a.setQuery(a2);
-            }
+                a.expandQuery(makeAtomNumQuery(am->second->getAtomicNum()), Queries::COMPOSITE_OR);
             mol.addAtom(&a, true, false);
         }
     }
     unsigned bi = 0;  // Seed Idx
+/*
     for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
     {
         QueryBond b(*(*bond));
@@ -625,6 +619,21 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
         }
         mol.addBond(&b, false);
     }
+*/
+    for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
+    {
+        QueryBond b(*(*bond));
+        unsigned beginAtomIdx = atomIdxMap[(*bond)->getBeginAtomIdx()];
+        unsigned   endAtomIdx = atomIdxMap[(*bond)->getEndAtomIdx()];
+        b.setBeginAtomIdx(beginAtomIdx);
+        b.setEndAtomIdx  (endAtomIdx);
+        b.setQuery(makeBondOrderEqualsQuery((*bond)->getBondType()));
+        // add OR template if need
+        for(std::map<unsigned, const Bond*>::const_iterator bm = bondMatchSet[bi].begin(); bm != bondMatchSet[bi].end(); bm++)
+            b.expandQuery(makeBondOrderEqualsQuery(bm->second->getBondType()) , Queries::COMPOSITE_OR);
+        mol.addBond(&b, false);
+    }
+/// */
     return MolToSmarts(mol, true);
 }
 
