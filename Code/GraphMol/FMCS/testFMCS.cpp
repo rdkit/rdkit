@@ -1734,6 +1734,51 @@ void testAtomCompareIsotopes()
     printTime();
 }
 
+
+void testAtomCompareAnyAtom()
+{
+    std::cout << "\ntestAtomCompareAnyAtom()\n";
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] =
+    {
+        "c1ccccc1C",
+        "c1ccccc1O",
+        "c1ccccc1Cl",
+        "c1ccccc1F",
+        "c1ccccc1N",
+    };
+    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
+    t0 = nanoClock();
+    p.AtomTyper = MCSAtomCompareAny;
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+}
+
+void testAtomCompareAnyAtomBond()
+{
+    std::cout << "\ntestAtomCompareAnyAtom()\n";
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] =
+    {
+        "C1CCCCC1=C",
+        "c1ccccc1O",
+        "c1ccccc1Cl",
+        "c1ccccc1F",
+        "c1ccccc1N",
+    };
+    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
+    t0 = nanoClock();
+    p.AtomTyper = MCSAtomCompareAny;
+    p.BondTyper = MCSBondCompareAny;
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+}
+
+
 void testSimple()
 {
     std::cout << "\ntestSimple()\n";
@@ -1877,12 +1922,21 @@ int main(int argc, const char* argv[])
     T0 = nanoClock();
     t0 = nanoClock();
 
+#ifdef WIN32  // brief test set for testing and issue investigation
+#ifdef _DEBUG   // check memory leaks
+  _CrtMemState _ms;
+  _CrtMemCheckpoint(&_ms);
+#endif
+    testAtomCompareAnyAtom();
+    testAtomCompareAnyAtomBond();
+#ifdef _DEBUG   // check memory leaks
+  _CrtMemDumpAllObjectsSince(&_ms);
+#endif
+//testAtomCompareIsotopes();
 //testChEMBL_TxtALL_chembl_II_sets();
 //testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
-testAtomCompareIsotopes();
     return 0;
 
-#ifdef WIN32  // brief test set for testing and issue investigation
 {
     RWMol* m = SmartsToMol("[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#7]-[#6]2:[#6]:[#6]:[#6]3:[#6](:[#6]:2):[#7]:[#7]:[#6]:3-[#6]4:[#6]:[#6]:[#6]:[#6]:[#6]:4");
 #ifdef _DEBUG   // check memory leaks
