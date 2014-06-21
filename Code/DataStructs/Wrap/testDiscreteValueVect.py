@@ -9,7 +9,8 @@ import sys
 import unittest
 
 from rdkit import RDConfig
-import pickle
+#import pickle
+from rdkit.six.moves import cPickle as pickle
 from rdkit import DataStructs as ds
 
 class TestCase(unittest.TestCase):
@@ -138,7 +139,10 @@ class TestCase(unittest.TestCase):
       v2 = pickle.loads(pickle.dumps(v1))
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       #cPickle.dump(v1,outF)
-      v2=pickle.load(inF,encoding='latin1')
+      if sys.version > '3':
+        v2=pickle.load(inF,encoding='latin1')
+      else:
+        v2=pickle.load(inF)
       self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
       self.assertTrue(v1.GetTotalVal()==v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal()!=0)
