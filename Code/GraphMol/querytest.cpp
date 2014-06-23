@@ -49,10 +49,12 @@ void test1(){
 
 
   qM.addAtom(qA);
+  delete qA;
   qA = new QueryAtom(6);
   qA->expandQuery(makeAtomNumQuery(8),Queries::COMPOSITE_OR);
   qM.addAtom(qA);
-  qM.addAtom(new QueryAtom(8));
+  delete qA;
+  qM.addAtom(new QueryAtom(8),true,true);
   //Atom::ATOM_SPTR qA(new QueryAtom(6));
   
   QueryBond *qB;
@@ -63,12 +65,12 @@ void test1(){
 
   CHECK_INVARIANT(qB->Match(m.getBondWithIdx(0)),"");
   CHECK_INVARIANT(qB->Match(m.getBondWithIdx(1)),"");
-  qM.addBond(qB);
+  qM.addBond(qB,true);
   qB = new QueryBond(Bond::DOUBLE);
   qB->setOwningMol(qM);
   qB->setBeginAtomIdx(1);
   qB->setEndAtomIdx(2);
-  qM.addBond(qB);
+  qM.addBond(qB,true);
 
 
   CHECK_INVARIANT(qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(0)),"");
@@ -616,6 +618,7 @@ void testGithub165(){
 int main(){
   RDLog::InitLogs();
   test1();
+#if 1
   test2();
   test3();
   test4();
@@ -626,6 +629,6 @@ int main(){
   testGithub153();
   testQualifiedQueries();
   testGithub165();
-
+#endif
   return 0;
 }
