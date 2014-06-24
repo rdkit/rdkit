@@ -361,9 +361,8 @@ class TestCase(unittest.TestCase) :
             cMap[i]=ref.GetConformer().GetAtomPosition(i)
         ci = rdDistGeom.EmbedMolecule(probe,coordMap=cMap,randomSeed=23)
         self.assertTrue(ci>-1);
-        algMap = zip(range(5),range(5))
+        algMap = list(zip(range(5),range(5)))
         ssd = rdMolAlign.AlignMol(probe,ref,atomMap=algMap)
-        print('ssd:',ssd)
         self.assertTrue(ssd<0.1)
             
 if __name__ == '__main__':
