@@ -312,7 +312,7 @@ def CreateDb(options,dataFilename='',supplier=None):
       i+=1
     except:
       break
-    mol = Chem.Mol(str(pkl))
+    mol = Chem.Mol(pkl)
     if not mol: continue
      
     if options.doPairs:

@@ -78,9 +78,9 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+
     self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
@@ -93,7 +93,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.assertTrue(nbrs.has_key(lbl))
+      self.assertTrue(lbl in nbrs)
       self.assertTrue(nbrs[lbl]=='1.000',nbrs[lbl])
     os.unlink('testData/bzr/search.out')
     
@@ -111,9 +111,9 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+
     self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
@@ -126,7 +126,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.assertTrue(nbrs.has_key(lbl))
+      self.assertTrue(lbl in nbrs)
       self.assertTrue(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
     
@@ -144,9 +144,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
@@ -159,7 +158,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.assertTrue(nbrs.has_key(lbl))
+      self.assertTrue(lbl in nbrs)
       self.assertTrue(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
     
@@ -178,9 +177,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertTrue(len(lines)==30)
     os.unlink('testData/bzr/search.out')
     
@@ -192,9 +190,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertTrue(len(lines)==30)
     os.unlink('testData/bzr/search.out')
     
@@ -207,9 +204,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertEqual(len(lines),49)
     os.unlink('testData/bzr/search.out')
     
@@ -228,7 +224,7 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
+    inF = open('testData/bzr/search.out','r')
     lines=inF.readlines()
     inF=None
     self.assertEqual(len(lines),49)
@@ -244,7 +240,7 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
+    inF = open('testData/bzr/search.out','r')
     lines=inF.readlines()
     inF=None
     self.assertEqual(len(lines),114)
@@ -259,9 +255,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertEqual(len(lines),5)
     os.unlink('testData/bzr/search.out')
     
@@ -274,9 +269,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertEqual(len(lines),25)
     os.unlink('testData/bzr/search.out')
 
@@ -294,9 +288,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
@@ -309,7 +302,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.assertTrue(nbrs.has_key(lbl))
+      self.assertTrue(lbl in nbrs)
       self.assertTrue(nbrs[lbl]=='1.000')
     self.assertEqual(splitLs[0][0],'Adinazolam')
     self.assertEqual(splitLs[0][3],'alpha-hydroxytriazolam')
@@ -329,9 +322,9 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+
     self.assertTrue(len(lines)==1)
     splitL=lines[0].strip().split(',')
     splitL.pop(0)
@@ -489,9 +482,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
     self.assertEqual(len(lines),163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
@@ -504,7 +496,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.assertTrue(nbrs.has_key(lbl))
+      self.assertTrue(lbl in nbrs)
       self.assertTrue(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
 

@@ -31,6 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
+from __future__ import print_function
 _version = "0.14.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
@@ -108,7 +109,7 @@ def GetNeighborLists(probes,topN,pool,
   return nbrLists
 
 def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
-  dataFile=file(dataFilename,'r')
+  dataFile=open(dataFilename,'r')
   for idx,line in enumerate(dataFile):
     try:
       smi,nm = line.strip().split(' ')
@@ -120,7 +121,7 @@ def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
       m=None
     if not m:
       if errfile:
-        print >>errFile,idx,nm,smi
+        print(idx,nm,smi,file=errfile)
       continue
     yield (nm,smi,m)
 
@@ -231,7 +232,7 @@ def RunSearch(options,queryFilename):
     if options.sdfOut=='-':
       sdfOut=sys.stdout
     else:
-      sdfOut = file(options.sdfOut,'w+')
+      sdfOut = open(options.sdfOut,'w+')
   else:
     sdfOut=None
   if options.smilesOut:
@@ -239,13 +240,13 @@ def RunSearch(options,queryFilename):
     if options.smilesOut=='-':
       smilesOut=sys.stdout
     else:
-      smilesOut = file(options.smilesOut,'w+')
+      smilesOut = open(options.smilesOut,'w+')
   else:
     smilesOut=None
 
   if queryFilename:
     try:
-      tmpF = file(queryFilename,'r')
+      tmpF = open(queryFilename,'r')
     except IOError:
       logger.error('could not open query file %s'%queryFilename)
       sys.exit(1)
@@ -328,9 +329,9 @@ def RunSearch(options,queryFilename):
       while row:
         id,molpkl = row
         if not options.zipMols:
-          m = Chem.Mol(str(molpkl))
+          m = Chem.Mol(molpkl)
         else:
-          m = Chem.Mol(zlib.decompress(str(molpkl)))
+          m = Chem.Mol(zlib.decompress(molpkl))
         matched=m.HasSubstructMatch(options.queryMol)
         if options.negateQuery:
           matched = not matched
@@ -385,7 +386,7 @@ def RunSearch(options,queryFilename):
       row = curs.fetchone()
       while row:
         id,pkl = row
-        fp = DepickleFP(str(pkl),similarityMethod)
+        fp = DepickleFP(pkl,similarityMethod)
         yield (id,fp)
         row = curs.fetchone()
     topNLists = GetNeighborLists(probes,options.topN,poolFromCurs(curs,options.similarityType),
@@ -421,23 +422,23 @@ def RunSearch(options,queryFilename):
     for guid,id in curs.fetchall():
       nmDict[guid]=str(id)
     
-    ks = nbrLists.keys()
+    ks = list(nbrLists.keys())
     ks.sort()
     if not options.transpose:
       for i,nm in ks:
         nbrs= nbrLists[(i,nm)]
         nbrTxt=options.outputDelim.join([nm]+['%s%s%.3f'%(nmDict[id],options.outputDelim,score) for id,score in nbrs])
-        if outF: print >>outF,nbrTxt
+        if outF: print(nbrTxt,file=outF)
     else:
       labels = ['%s%sSimilarity'%(x[1],options.outputDelim) for x in ks]
-      if outF: print >>outF,options.outputDelim.join(labels)
+      if outF: print(options.outputDelim.join(labels),file=outF)
       for i in range(options.topN):
         outL = []
         for idx,nm in ks:
           nbr = nbrLists[(idx,nm)][i]
           outL.append(nmDict[nbr[0]])
           outL.append('%.3f'%nbr[1])
-        if outF: print >>outF,options.outputDelim.join(outL)
+        if outF: print(options.outputDelim.join(outL),file=outF)
   else:
     if not options.silent: logger.info('Creating output')
     curs = mConn.GetCursor()
@@ -449,7 +450,7 @@ def RunSearch(options,queryFilename):
     nmDict={}
     for guid,id in curs.fetchall():
       nmDict[guid]=str(id)
-    if outF: print >>outF,'\n'.join(nmDict.values())
+    if outF: print('\n'.join(nmDict.values()),file=outF)
   if molsOut and ids:
     molDbName = os.path.join(options.dbDir,options.molDbName)
     cns = [x.lower() for x in mConn.GetColumnNames('molecules')]
@@ -468,21 +469,21 @@ def RunSearch(options,queryFilename):
     while row:
       row = list(row)
       pkl = row[-1]
-      m = Chem.Mol(str(pkl))
+      m = Chem.Mol(pkl)
       guid = row[0]
       nm = nmDict[guid]
       if sdfOut:
         m.SetProp('_Name',nm)
-        print >>sdfOut,Chem.MolToMolBlock(m)
+        print(Chem.MolToMolBlock(m),file=sdfOut)
         for i in range(1,len(cns)-1):
           pn = cns[i]
           pv = str(row[i])
           print >>sdfOut,'> <%s>\n%s\n'%(pn,pv)
-        print >>sdfOut,'$$$$'
+        print('$$$$',file=sdfOut)
       if smilesOut:
         smi=Chem.MolToSmiles(m,options.chiralSmiles)        
       if smilesOut:
-        print >>smilesOut,'%s %s'%(smi,str(row[1]))
+        print('%s %s'%(smi,str(row[1])),file=smilesOut)
       row=curs.fetchone()
   if not options.silent: logger.info('Done!')
 
