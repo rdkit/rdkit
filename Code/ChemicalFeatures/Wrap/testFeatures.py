@@ -69,7 +69,10 @@ class TestCase(unittest.TestCase):
     def testPickle(self):
       ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0),123)
       pkl = cPickle.dumps(ffeat)
-      ffeat2 = cPickle.loads(pkl,encoding='latin1')
+      if sys.version > '3':
+        ffeat2 = cPickle.loads(pkl,encoding='latin1')
+      else:
+        ffeat2 = cPickle.loads(pkl)
       self.assertTrue(ffeat2.GetId()==ffeat.GetId());      
       self.assertTrue(ffeat2.GetFamily()==ffeat.GetFamily())
       self.assertTrue(ffeat2.GetType()==ffeat.GetType())
