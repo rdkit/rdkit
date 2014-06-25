@@ -224,9 +224,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = open('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inf:
+      lines=inF.readlines()
     self.assertEqual(len(lines),49)
     os.unlink('testData/bzr/search.out')
     if os.path.exists('testData/crud.out'):
@@ -240,9 +239,8 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    inF = open('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
+    with open('testData/bzr/search.out','r') as inf:
+      lines=inF.readlines()
     self.assertEqual(len(lines),114)
     os.unlink('testData/bzr/search.out')
     
