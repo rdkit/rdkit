@@ -63,6 +63,12 @@ from rdkit.Chem.MolDb import FingerprintUtils
 
 from rdkit import DataStructs
 
+def _molFromPkl(pkl):
+  if isinstance(pkl,(bytes,str)):
+    mol = Chem.Mol(pkl)
+  else:
+    mol = Chem.Mol(str(pkl))
+  return mol
 
 def GetNeighborLists(probes,topN,pool,
                      simMetric=DataStructs.DiceSimilarity,
@@ -329,7 +335,7 @@ def RunSearch(options,queryFilename):
       while row:
         id,molpkl = row
         if not options.zipMols:
-          m = Chem.Mol(molpkl)
+          m = _molFromPkl(molpkl)
         else:
           m = Chem.Mol(zlib.decompress(molpkl))
         matched=m.HasSubstructMatch(options.queryMol)
@@ -468,8 +474,7 @@ def RunSearch(options,queryFilename):
     molD = {}
     while row:
       row = list(row)
-      pkl = row[-1]
-      m = Chem.Mol(pkl)
+      m = _molFromPkl(row[-1])
       guid = row[0]
       nm = nmDict[guid]
       if sdfOut:
