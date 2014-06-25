@@ -100,6 +100,8 @@ def BuildMorganFP(mol):
   return fp
 
 def DepickleFP(pkl,similarityMethod):
+    if not isinstance(pkl,(bytes,str)):
+      pkl = str(pkl)
     try:
         klass=similarityMethods[similarityMethod]
         fp = klass(pkl)

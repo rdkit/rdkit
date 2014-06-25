@@ -224,7 +224,7 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    with open('testData/bzr/search.out','r') as inf:
+    with open('testData/bzr/search.out','r') as inF:
       lines=inF.readlines()
     self.assertEqual(len(lines),49)
     os.unlink('testData/bzr/search.out')
@@ -239,7 +239,7 @@ class TestCase(unittest.TestCase):
     p=None
 
     self.assertTrue(os.path.exists('testData/bzr/search.out'))
-    with open('testData/bzr/search.out','r') as inf:
+    with open('testData/bzr/search.out','r') as inF:
       lines=inF.readlines()
     self.assertEqual(len(lines),114)
     os.unlink('testData/bzr/search.out')
