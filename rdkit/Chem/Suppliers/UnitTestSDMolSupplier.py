@@ -55,7 +55,8 @@ class TestCase(unittest.TestCase):
 
   def test_Writer(self):
     " tests writes using a file name "
-    inD = open(self.fName,'r').read()
+    with open(self.fName,'r') as inf:
+      inD = inf.read()
     supp = Chem.SDMolSupplier(self.fName)
     outName = tempfile.mktemp('.sdf')
     writer = Chem.SDWriter(outName)
@@ -65,7 +66,7 @@ class TestCase(unittest.TestCase):
       writer.write(m)
     writer.flush()
     writer = None
-    with inf as open(outName,'r'):
+    with open(outName,'r') as inf:
       outD = inf.read()
     try:
       os.unlink(outName)
