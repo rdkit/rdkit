@@ -65,7 +65,8 @@ class TestCase(unittest.TestCase):
       writer.write(m)
     writer.flush()
     writer = None
-    outD = open(outName,'r').read()
+    with inf as open(outName,'r'):
+      outD = inf.read()
     try:
       os.unlink(outName)
     except:

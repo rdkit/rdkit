@@ -646,8 +646,6 @@ def BertzCT(mol, cutoff = 100, dMat = None, forceDMat = 1):
   if not connectionDict:
     connectionDict = {'a':1}
 
-  ks = connectionDict.keys()
-  ks.sort()
   return _CalculateEntropies(connectionDict, atomTypeDict, numAtoms)
 BertzCT.version="2.0.0"
 # Recent Revisions:

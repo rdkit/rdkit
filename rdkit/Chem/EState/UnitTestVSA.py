@@ -28,7 +28,8 @@ class TestCase(unittest.TestCase):
   def test1(self):
     inName = os.path.join(RDConfig.RDCodeDir,'Chem','EState','test_data',
                           'EState_VSA.csv')
-    inL = open(inName,'r').readline()
+    with open(inName,'r') as inF:
+      inL = inF.readline()
     names = [x.strip() for x in inL.split(',')[1:]]
     suppl = Chem.SmilesMolSupplier(inName,delimiter=',',nameColumn=-1)
     for mol in suppl:

@@ -42,14 +42,7 @@ class PropertyMol(Chem.Mol):
    of property values:
    >>> pm.SetProp('IntVal',1)
 
-   That wouldn't work with a standard mol:
-   >>> m.SetProp('IntVal',1)
-   Traceback (most recent call last):
-     ...
-   ArgumentError: Python argument types in
-       Mol.SetProp(Mol, str, int)
-   did not match C++ signature:
-     ...
+   That wouldn't work with a standard mol
 
    but the Property mols still convert all values to strings before storing:
    >>> pm.GetProp('IntVal')
@@ -103,7 +96,7 @@ class PropertyMol(Chem.Mol):
             'propD':pDict}
   def __setstate__(self,stateD):
     Chem.Mol.__init__(self,stateD['pkl'])
-    for prop,val in stateD['propD'].iteritems():
+    for prop,val in stateD['propD'].items():
       self.SetProp(prop,val)
 
     

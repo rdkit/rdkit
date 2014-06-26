@@ -220,7 +220,7 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   >>> r = AllChem.EnumerateLibraryFromReaction(rxn,[acids,amines])
 
   ... look at the first 4 compounds:
-  >>> [Chem.MolToSmiles(r.next()[0]) for x in range(4)]
+  >>> [Chem.MolToSmiles(next(r)[0]) for x in range(4)]
   ['NC=O', 'CNC=O', 'CCNC=O', 'CCCNC=O']
 
 

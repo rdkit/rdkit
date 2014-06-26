@@ -154,19 +154,19 @@ class TestCase(unittest.TestCase):
     self.assertTrue(nFails<nFailsAllowed)
   def testDetails(self):
     Crippen._Init()
-    inF = open(self.detailName,'rb')
-    if 0:
-      outF = open('tmp.pkl','wb+')
-      self._writeDetailFile(inF,outF)
-    self._doDetailFile(inF)
+    with open(self.detailName,'rb') as inF:
+      if 0:
+        outF = open('tmp.pkl','wb+')
+        self._writeDetailFile(inF,outF)
+      self._doDetailFile(inF)
 
   def testDetails2(self):
     Crippen._Init()
-    inF = open(self.detailName2,'rb')
-    if 0:
-      outF = open('tmp.pkl','wb+')
-      self._writeDetailFile(inF,outF)
-    self._doDetailFile(inF)
+    with open(self.detailName2,'rb') as inF:
+      if 0:
+        outF = open('tmp.pkl','wb+')
+        self._writeDetailFile(inF,outF)
+      self._doDetailFile(inF)
 
   def testIssue80(self):
     from rdkit.Chem import Lipinski

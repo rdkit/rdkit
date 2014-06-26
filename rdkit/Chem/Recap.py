@@ -180,8 +180,10 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0,onlyUseReactions=None):
           seqOk=True
           # we want to disqualify small fragments, so sort the product sequence by size
           # and then look for "forbidden" fragments
-          prodSeq = [(prod.GetNumAtoms(onlyExplicit=True),prod) for prod in prodSeq]
-          prodSeq.sort()
+          tSeq = [(prod.GetNumAtoms(onlyExplicit=True),idx) for idx,prod in enumerate(prodSeq)]
+          tSeq.sort()
+          ts=[(x,prodSeq[y]) for x,y in tSeq]
+          prodSeq=ts
           for nats,prod in prodSeq:
             try:
               Chem.SanitizeMol(prod)

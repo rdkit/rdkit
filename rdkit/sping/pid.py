@@ -99,7 +99,6 @@ __version_maj_number__ = "1.0" # if release should match "1.0"
 __version_min_number__ = "0"  # should match "12"
 __version__ =  __version_maj_number__ + "." + __version_min_number__ # c.f. "1.0.12"
 
-from types import StringType, IntType, InstanceType
 from rdkit.sping.colors import *
 
 inch = 72               # 1 PIDDLE drawing unit == 1/72 imperial inch
@@ -561,13 +560,13 @@ class Canvas:
 #-------------------------------------------------------------------------
 
 # utility functions #
-
+from rdkit import six
 def getFileObject(file, openFlags="wb"):
         """Common code for every Canvas.save() operation takes a string
         or a potential file object and assures that a valid fileobj is returned"""
 
         if file:
-                if isinstance(file, StringType):
+                if isinstance(file, six.string_types):
                         fileobj = open(file, openFlags)
                 else:
                         if hasattr(file, "write"):

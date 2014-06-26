@@ -720,7 +720,7 @@ def _getFeatDict(mol,featFactory,features):
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> d =_getFeatDict(m,featFactory,activeFeats)
-    >>> d.keys()
+    >>> list(d.keys())
     ['Donor', 'Acceptor']
     >>> donors = d['Donor']
     >>> len(donors)
@@ -795,9 +795,9 @@ def CombiEnum(sequence):
   provides all combinations of the elements of the subsequences:
 
   >>> gen = CombiEnum(((1,2),(10,20)))
-  >>> gen.next()
+  >>> next(gen)
   [1, 10]
-  >>> gen.next()
+  >>> next(gen)
   [1, 20]
 
   >>> [x for x in CombiEnum(((1,2),(10,20)))]

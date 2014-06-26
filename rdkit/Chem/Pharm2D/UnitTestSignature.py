@@ -139,14 +139,14 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
     self.assertEqual(sig.GetLength(),990)
-    cs = tuple(sig.GetNonzeroElements().iteritems())
+    cs = tuple(sig.GetNonzeroElements().items())
     self.assertEqual(cs,((1,1),))
 
     mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
     self.assertEqual(sig.GetLength(),990)
     elems = sig.GetNonzeroElements()
-    bs = elems.keys()
+    bs = list(elems.keys())
     bs.sort()
     cs = [(x,elems[x]) for x in bs]
     self.assertEqual(tuple(cs),((1,2),(2,1),(67,1)))

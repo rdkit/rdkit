@@ -15,7 +15,7 @@ class Color:
 		d["blue"] = _float(blue)
 
 	def __setattr__(self, name, value):
-		raise TypeError, "piddle.Color has read-only attributes"
+		raise TypeError("piddle.Color has read-only attributes")
 
 	def __mul__(self,x):
 		return Color(self.red*x, self.green*x, self.blue*x)
@@ -31,16 +31,16 @@ class Color:
 	
 	def __add__(self,x):
 		return Color(self.red+x.red, self.green+x.green, self.blue+x.blue)
-		
+        
 	def __sub__(self,x):
 		return Color(self.red-x.red, self.green-x.green, self.blue-x.blue)
-		
+        
 	def __repr__(self):
 		return "Color(%1.2f,%1.2f,%1.2f)" % (self.red, self.green, self.blue)
 
 	def __hash__(self):
 		return hash( (self.red, self.green, self.blue) )
-		
+        
 	def __cmp__(self,other):
 		try:
 			dsum = 4*self.red-4*other.red + 2*self.green-2*other.green + self.blue-other.blue
@@ -60,7 +60,7 @@ class Color:
 
         def toHexStr(self):
                 return "0x%.6x" % self.toHexRGB()
-		
+        
 def HexColor(val):
 	"""This class converts a hex string, or an actual integer number,
 	into the corresponding color.  E.g., in "AABBCC" or 0xAABBCC,
@@ -69,9 +69,9 @@ def HexColor(val):
 		val = int(val,16)
 	factor = 1.0 / 255
 	return Color(factor * ((val >> 16) & 0xFF), 
-			  factor * ((val >> 8) & 0xFF),
-			  factor * (val & 0xFF))
-		
+                     factor * ((val >> 8) & 0xFF),
+                     factor * (val & 0xFF))
+
 # color constants -- mostly from HTML standard
 aliceblue = 	HexColor(0xF0F8FF)
 antiquewhite = 	HexColor(0xFAEBD7)

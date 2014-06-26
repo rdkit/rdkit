@@ -713,7 +713,7 @@ class Canvas:
 		    image.seek(2, 1)		#skip segment length
 		    x = struct.unpack('B', image.read(1)) #data precision
 		    if x[0] != 8:
-			raise PDFError, ' JPEG must have 8 bits per component'
+			raise PDFError(' JPEG must have 8 bits per component')
 		    y = struct.unpack('BB', image.read(2))
 		    height = (y[0] << 8) + y[1] 
 		    y = struct.unpack('BB', image.read(2))
@@ -723,7 +723,7 @@ class Canvas:
 		    return width, height, color
 		    done = 1
 		elif x[0] in unsupportedMarkers:
-		    raise PDFError, ' Unsupported JPEG marker: %0.2x' % x[0]
+		    raise PDFError(' Unsupported JPEG marker: {%0.2x}'.format(x[0]))
 		elif x[0] not in noParamMarkers:
 		    #skip segments with parameters
 		    #read length and skip the data
@@ -770,17 +770,17 @@ class Canvas:
         if direction in [0,90,180,270]:
             direction_arg = '/Di /%d' % direction
         else:
-            raise PDFError, ' directions allowed are 0,90,180,270'
+            raise PDFError(' directions allowed are 0,90,180,270')
         
         if dimension in ['H', 'V']:
             dimension_arg = '/Dm /%s' % dimension
         else:
-            raise PDFError,'dimension values allowed are H and V'
+            raise PDFError('dimension values allowed are H and V')
         
         if motion in ['I','O']:
             motion_arg = '/M /%s' % motion
         else:
-            raise PDFError,'motion values allowed are I and O'
+            raise PDFError('motion values allowed are I and O')
 
 
         # this says which effects require which argument types from above
@@ -796,7 +796,7 @@ class Canvas:
         try:
             args = PageTransitionEffects[effectname]
         except KeyError:
-            raise PDFError, 'Unknown Effect Name "%s"' % effectname
+            raise PDFError('Unknown Effect Name "{%s}"'.format(effectname))
             self._pageTransitionString = ''
             return
         
@@ -1046,7 +1046,7 @@ class PDFTextObject:
         elif type(stuff) == TupleType:
             lines = stuff
         else:
-            raise ValueError, "argument to textlines must be string,, list or tuple"
+            raise ValueError("argument to textlines must be string, list or tuple")
         
         for line in lines:
             escaped_text = self._canvas._escape(line)

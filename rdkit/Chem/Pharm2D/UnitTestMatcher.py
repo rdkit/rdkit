@@ -70,7 +70,8 @@ class TestCase(unittest.TestCase):
     from rdkit import RDConfig
     import os
     nToDo=20
-    inD = open(os.path.join(RDConfig.RDDataDir,'NCI','first_5K.smi'),'r').readlines()[:nToDo]
+    with open(os.path.join(RDConfig.RDDataDir,'NCI','first_5K.smi'),'r') as inF:
+      inD = inF.readlines()[:nToDo]
     factory = Gobbi_Pharm2D.factory
     factory.SetBins([(2,3),(3,4),(4,5),(5,8),(8,100)])
     for line in inD:
