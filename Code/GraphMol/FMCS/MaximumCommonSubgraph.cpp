@@ -15,13 +15,10 @@
 #include "../QueryBond.h"
 #include "../SmilesParse/SmilesWrite.h"
 #include "../SmilesParse/SmartsWrite.h"
-//#include "../Substruct/SubstructMatch.h"
+#include "../SmilesParse/SmilesParse.h"
+#include "../Substruct/SubstructMatch.h"
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
-
-#ifdef VERBOSE_STATISTICS_ON
-    ExecStatistics VerboseStatistics;
-#endif
 
 namespace RDKit
 {
@@ -41,7 +38,7 @@ MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters* params)
     Parameters = ( 0 != params ? *params : MCSParameters());
     if (Parameters.ProgressCallback == MCSProgressCallbackTimeout)
         Parameters.ProgressCallbackUserData = &To;
-        To = time(0);
+    To = nanoClock();
 }
 
 static
@@ -69,6 +66,7 @@ void MaximumCommonSubgraph::init()
 #endif
 
     void* userData = Parameters.CompareFunctionsUserData;
+
     if(Parameters.BondCompareParameters.CompleteRingsOnly || Parameters.BondCompareParameters.RingMatchesRingOnly)
     {
 #ifdef FAST_SUBSTRUCT_CACHE
@@ -76,15 +74,17 @@ void MaximumCommonSubgraph::init()
         Parameters.CompareFunctionsUserData = &RingMatchTables;
 #endif
     }
+        size_t nq  = 0;
 #ifdef FAST_SUBSTRUCT_CACHE
 #ifdef PRECOMPUTED_TABLES_MATCH
-        // fill out RingMatchTables for check cache Hash collision by checking match a part of Query to Query
+        // fill out RingMatchTables to check cache Hash collision by checking match a part of Query to Query
         if(!userData // predefined functor - compute RingMatchTable for all targets
-        && (Parameters.BondCompareParameters.CompleteRingsOnly || Parameters.BondCompareParameters.RingMatchesRingOnly))
-            RingMatchTables.computeRingMatchTable(QueryMolecule, QueryMolecule, Parameters);
+        && (Parameters.BondCompareParameters.CompleteRingsOnly || Parameters.BondCompareParameters.RingMatchesRingOnly)
+        )
+           RingMatchTables.computeRingMatchTable(QueryMolecule, QueryMolecule, Parameters);
 
         // fill out match tables
-        size_t nq = QueryMolecule->getNumAtoms();
+        nq = QueryMolecule->getNumAtoms();
         QueryAtomMatchTable.resize(nq, nq);
         for(size_t aj = 0; aj < nq; aj++)
             for(size_t ai = 0; ai < nq; ai++)
@@ -301,7 +301,7 @@ struct WeightedBond
         if(r.getNumberRings(bond->getEndAtom()))
             Weight += 1;
     }
-    bool operator < (const WeightedBond& r) { return Weight >= r.Weight;}   // sort in Z-A order
+    bool operator < (const WeightedBond& r) { return Weight >= r.Weight;}   // sort in Z-A order (Rings first)
 };
 
 void MaximumCommonSubgraph::makeInitialSeeds()
@@ -313,6 +313,7 @@ void MaximumCommonSubgraph::makeInitialSeeds()
 
     Seeds.clear();
     QueryMoleculeMatchedBonds = 0;
+    QueryMoleculeMatchedAtoms = 0;//QueryMolecule->getNumAtoms();
     //R1 additional performance OPTIMISATION
     //if(Parameters.BondCompareParameters.CompleteRingsOnly)
     // disable all mismatched rings, and do not generate initial seeds from such disabled bonds
@@ -354,7 +355,11 @@ void MaximumCommonSubgraph::makeInitialSeeds()
         seed.computeRemainingSize(*QueryMolecule);
 
         if(checkIfMatchAndAppend(seed))
+        {
             ++QueryMoleculeMatchedBonds;
+//            if(Parameters.Verbose)    // if wb was sorted
+//                std::cout << "New initial seed weight=" << bi->Weight << ", a1="<<bi->BondPtr->getBeginAtom()->getIdx() << ", a2="<<bi->BondPtr->getEndAtom  ()->getIdx()<<"\n";
+        }
         else
         {
             // optionally remove all such bonds from all targets TOPOLOGY where it exists.
@@ -372,6 +377,27 @@ void MaximumCommonSubgraph::makeInitialSeeds()
 #endif
         }
     }
+
+    size_t nq = QueryMolecule->getNumAtoms();
+    for(size_t i = 0; i < nq; i++)  // all query's atoms
+    {
+        unsigned matched = 0;
+        for(std::vector<Target>::const_iterator tag = Targets.begin(); tag != Targets.end(); tag++)
+        {
+            size_t nt = tag->Molecule->getNumAtoms();
+            for(size_t aj = 0; aj < nt; aj++)
+            {
+                if(tag->AtomMatchTable.at(i, aj))
+                {
+                   ++matched;
+                   break;
+                }
+            }
+        }
+        if(matched >= ThresholdCount)
+            ++QueryMoleculeMatchedAtoms;
+    }
+
 }
 
 #ifdef MULTI_THREAD
@@ -411,7 +437,7 @@ bool MaximumCommonSubgraph::growSeeds()
     ThreadPool WorkingThreadPool(Parameters.ThreadNumber, this); // start all working threads
 #endif
     // Find MCS -- SDF Seed growing OPTIMISATION (it works in 3 times faster)
-    while(!Seeds.empty() && getMaxNumberBonds() < QueryMoleculeMatchedBonds)
+    while(!Seeds.empty())
     {
 #ifdef MULTI_THREAD
         while(!WorkingThreadPool.waitReady(100))
@@ -440,6 +466,11 @@ bool MaximumCommonSubgraph::growSeeds()
         }
         Sleep0();
 #else
+        if(getMaxNumberBonds() == QueryMoleculeMatchedBonds)    // MCS == Query
+            break;
+//wrong:        if(getMaxNumberAtoms() == QueryMoleculeMatchedAtoms && Seeds.front().getNumAtoms() < getMaxNumberAtoms() - 1)
+//            break;
+
         ++steps;
 #ifdef VERBOSE_STATISTICS_ON
         VerboseStatistics.TotalSteps++;
@@ -462,15 +493,26 @@ bool MaximumCommonSubgraph::growSeeds()
                 mcsFound = true;
 #ifdef VERBOSE_STATISTICS_ON
                 VerboseStatistics.MCSFoundStep = VerboseStatistics.TotalSteps;
-                if (Parameters.ProgressCallback == MCSProgressCallbackTimeout && (steps >= 377))
-                    VerboseStatistics.MCSFoundTime = time(0);
+//                if (Parameters.ProgressCallback == MCSProgressCallbackTimeout)
+                    VerboseStatistics.MCSFoundTime = nanoClock();
 #endif
                 McsIdx.Atoms    = fs.MoleculeFragment.Atoms;
                 McsIdx.Bonds    = fs.MoleculeFragment.Bonds;
                 McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
                 McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+if(Parameters.Verbose)
+{
+    std::cout << VerboseStatistics.TotalSteps << " Seeds:" << Seeds.size() << " MCS "<< McsIdx.Atoms.size() << " atoms, " << McsIdx.Bonds.size() << " bonds";
+    printf(" for %.4lf seconds. bond[0]=%u\n", double(VerboseStatistics.MCSFoundTime - To)/1000000., McsIdx.BondsIdx[0]);
+}
             }
         }
+if(Parameters.Verbose)
+{
+//DEBUG
+    //if(36 == McsIdx.Bonds.size())
+//    std::cout << si->getNumBonds() << " + " << si->RemainingBonds << " bonds " << "\n";
+}
 #ifndef MULTI_THREAD
         if(-1 == si->GrowingStage) //finished
             Seeds.erase(si);
@@ -542,9 +584,9 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
             SubstructMatchCustomTable(tag->Topology, seed.Topology, tag->AtomMatchTable, tag->BondMatchTable, &match);
 #else //noticable slowly:
             SubstructMatchCustom(
-            tag->Topology.GraphTopology
+            tag->Topology
             , *tag->Molecule
-            , seed.GraphTopology
+            , seed.Topology
             , *QueryMolecule
             , Parameters.AtomTyper, Parameters.BondTyper
             , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
@@ -585,13 +627,13 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
     {
         if(Parameters.AtomTyper == MCSAtomCompareIsotopes)  // do '[0*]-[0*]-[13*]' for CC[13NH2]
         {
-            QueryAtom a(*(*atom));
+            QueryAtom a;
             a.setQuery( makeAtomIsotopeQuery((int) (*atom)->getIsotope() ) );
             mol.addAtom(&a, true, false);
         }
         else
         {
-            QueryAtom a(*(*atom));  // generate [#6] instead of C or c !
+            QueryAtom a; // generate [#6] instead of C or c !
             a.setQuery(makeAtomNumQuery((*atom)->getAtomicNum()));
             //for all atomMatchSet[ai] items add atom query to template like [#6,#17,#9, ... ]
             for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
@@ -600,29 +642,9 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
         }
     }
     unsigned bi = 0;  // Seed Idx
-/*
     for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
     {
-        QueryBond b(*(*bond));
-        unsigned beginAtomIdx = atomIdxMap[(*bond)->getBeginAtomIdx()];
-        unsigned   endAtomIdx = atomIdxMap[(*bond)->getEndAtomIdx()];
-        b.setBeginAtomIdx(beginAtomIdx);
-        b.setEndAtomIdx  (endAtomIdx);
-        // add OR template if need
-        for(std::map<unsigned, const Bond*>::const_iterator bm = bondMatchSet[bi].begin(); bm != bondMatchSet[bi].end(); bm++)
-        {
-            BOND_OR_QUERY *b2 = new BOND_OR_QUERY();
-            b2->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery((*bond)->getBondType())));
-            b2->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(bm->second->getBondType())));      
-            b2->setDescription("BondOr");
-            b.setQuery(b2);
-        }
-        mol.addBond(&b, false);
-    }
-*/
-    for(std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); bond++, bi++)
-    {
-        QueryBond b(*(*bond));
+        QueryBond b;
         unsigned beginAtomIdx = atomIdxMap[(*bond)->getBeginAtomIdx()];
         unsigned   endAtomIdx = atomIdxMap[(*bond)->getEndAtomIdx()];
         b.setBeginAtomIdx(beginAtomIdx);
@@ -633,7 +655,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(const MCS& mcsIdx)const
             b.expandQuery(makeBondOrderEqualsQuery(bm->second->getBondType()) , Queries::COMPOSITE_OR);
         mol.addBond(&b, false);
     }
-/// */
+
     return MolToSmarts(mol, true);
 }
 
@@ -660,9 +682,9 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget, Seed& newSe
             SubstructMatchCustomTable(newQuery.Topology, mcs.Topology, newQuery.AtomMatchTable, newQuery.BondMatchTable, &match);
 #else //noticable slowly:
             SubstructMatchCustom(
-            tag->Topology.GraphTopology
-            , *tag->Molecule
-            , seed.GraphTopology
+            newQuery.Topology
+            , *newQuery.Molecule
+            , mcs.Topology
             , *QueryMolecule
             , Parameters.AtomTyper, Parameters.BondTyper
             , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
@@ -735,9 +757,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols)
         if(Targets.empty())
             break;
 
-//DEBUG: std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<"\n";
-
         makeInitialSeeds();
+//DEBUG: 
+if(Parameters.Verbose)
+        std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<" "<<QueryMolecule->getNumAtoms()<<"("<<QueryMoleculeMatchedAtoms<<") atoms, "
+        <<QueryMolecule->getNumBonds()<<"("<<QueryMoleculeMatchedBonds<<") bonds\n";
+
         if(Seeds.empty())
             break;
         res.Canceled = growSeeds() ? false : true;
@@ -760,10 +785,22 @@ if(Parameters.Verbose)
     #ifdef MULTI_THREAD
     Guard statlock(StatisticsMutex);
     #endif
+    unsigned itarget = 0;
+    for(std::vector<Target>::const_iterator tag = Targets.begin(); res.NumAtoms > 0 && tag != Targets.end(); tag++, itarget++)
+    {
+        MatchVectType match;
+        RWMol* m = SmartsToMol(res.SmartsString.c_str());
+
+        bool target_matched = SubstructMatch(*tag->Molecule, *m, match);
+        if(!target_matched)
+            std::cout<<"Target "<< itarget+1 << (target_matched ? " matched " : " MISMATCHED ") << MolToSmiles(*tag->Molecule) <<"\n";
+        delete m;
+    }
+
     std::cout << "STATISTICS:\n";
     std::cout << "Total Growing Steps  = " << VerboseStatistics.TotalSteps<<", MCS found on "<<VerboseStatistics.MCSFoundStep<<" step";
     if(VerboseStatistics.MCSFoundTime - To > 0)
-        std::cout << ", for about "<<(VerboseStatistics.MCSFoundTime - To)<<" seconds\n";
+        printf(", for %.4lf seconds\n", double(VerboseStatistics.MCSFoundTime - To)/1000000.);
     else
         std::cout << ", for less than 1 second\n";
     std::cout << "Initial   Seeds      = " << VerboseStatistics.InitialSeed << ",  Mismatched " << VerboseStatistics.MismatchedInitialSeed<<"\n";
@@ -967,7 +1004,7 @@ bool MaximumCommonSubgraph::match(Seed& seed)
             SubstructMatchCustom(
             tag->Topology
             , *tag->Molecule
-            , seed.GraphTopology
+            , seed.Topology
             , *QueryMolecule
             , Parameters.AtomTyper, Parameters.BondTyper
             , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
@@ -1075,7 +1112,12 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget)
                 unsigned tbi = tb->getIdx();
                 unsigned qbi = seed.MoleculeFragment.BondsIdx[newBondAnotherAtomSeedIdx];
                 if( ! match.VisitedTargetBonds[tbi])   // false if target bond is already matched
+#ifdef PRECOMPUTED_TABLES_MATCH
                     matched = target.BondMatchTable.at(qbi, tbi);
+#else
+    #pragma warning("NOT IMPLEMENTED")
+                    ;
+#endif
             }
         }
         else // enumerate all bonds from source atom in the target
@@ -1104,7 +1146,7 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget)
                             continue;
                     }
 
-                //check AnotherAtom and bond
+                    //check AnotherAtom and bond
                     matched = target.AtomMatchTable.at(newBondAnotherAtomQueryIdx, newBondAnotherAtomTargetIdx);
                     if(matched)
                     {

@@ -48,7 +48,7 @@ namespace RDKit
             std::vector<Target>      Targets;
         };
 
-        time_t          To;
+        unsigned long long To;
         MCSProgressData Stat;
         MCSParameters   Parameters;
         unsigned        ThresholdCount;   // min number of matching
@@ -68,6 +68,7 @@ namespace RDKit
 #endif
         const ROMol*        QueryMolecule;
         unsigned            QueryMoleculeMatchedBonds;
+        unsigned            QueryMoleculeMatchedAtoms;
         std::vector<Target> Targets;
         SeedSet             Seeds;
         MCS                 McsIdx;
@@ -117,7 +118,7 @@ namespace RDKit
         {
             Targets.clear();
             Molecules.clear();
-            To = time(0);
+            To = nanoClock();
         }
         void init();
         void makeInitialSeeds();
