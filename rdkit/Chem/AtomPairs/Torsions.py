@@ -18,7 +18,7 @@ Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 """
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-import Utils
+from rdkit.Chem.AtomPairs import Utils
 
 def pyScorePath(mol,path,size,atomCodes=None):
   """ Returns a score for an individual path.
