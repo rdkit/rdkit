@@ -50,12 +50,19 @@ class DbFpSupplier(VLibNode):
 
   def _BuildFp(self,data):
     data = list(data)
-    pkl = str(data[self.fpCol])
+    if sys.version>'3':
+      pkl = bytes(data[self.fpCol],encoding='Latin1')
+    else:
+      pkl = str(data[self.fpCol])
     del data[self.fpCol]
     self._numProcessed+=1;
     try:
       if self._usePickles:
-        newFp = cPickle.loads(pkl)
+        if sys.version>'3':
+          newFp = cPickle.loads(pkl,encoding='Latin1')
+        else:
+          newFp = cPickle.loads(pkl)
+          
       else:
         newFp = DataStructs.ExplicitBitVect(pkl)
     except:
