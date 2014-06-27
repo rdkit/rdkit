@@ -133,7 +133,7 @@ namespace RDKit
         bool canGrowBiggerThan(unsigned maxBonds, unsigned maxAtoms)const  // prune()
         {
             return RemainingBonds + getNumBonds() >  maxBonds
-                || RemainingAtoms + getNumAtoms() >= maxAtoms;
+                ||(RemainingBonds + getNumBonds() ==  maxBonds && RemainingAtoms + getNumAtoms() > maxAtoms); //python: >=
             
         }
         void computeRemainingSize(const ROMol& qmol);//, const std::vector<char>& excludedBonds);

@@ -27,9 +27,9 @@ namespace RDKit
 
     bool MCSProgressCallbackTimeout(const MCSProgressData& stat, const MCSParameters &params, void* userData)
     {
-        time_t* t0 = (time_t*)userData;
-        time_t  t = time(0);
-        return t - *t0 <= params.Timeout;
+        unsigned long long* t0 = (unsigned long long*)userData;
+        unsigned long long  t  = nanoClock();
+        return t - *t0 <= params.Timeout*1000000ULL;
     }
 
 // PREDEFINED FUNCTORS:

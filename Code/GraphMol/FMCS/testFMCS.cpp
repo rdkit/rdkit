@@ -54,73 +54,16 @@
 #include "FMCS.h"
 #include "DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
 
-
 using namespace RDKit;
 
 unsigned long long T0;
 unsigned long long t0;
 
-#ifdef WIN32
-//#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
-//  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
-//#else
-  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
-//#endif
- 
-struct timezone 
-{
-  int  tz_minuteswest; /* minutes W of Greenwich */
-  int  tz_dsttime;     /* type of dst correction */
-};
- 
-int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-  FILETIME ft;
-  unsigned __int64 tmpres = 0;
-  static int tzflag;
- 
-  if (NULL != tv)
-  {
-    GetSystemTimeAsFileTime(&ft);
- 
-    tmpres |= ft.dwHighDateTime;
-    tmpres <<= 32;
-    tmpres |= ft.dwLowDateTime;
- 
-    //converting file time to unix epoch
-    tmpres -= DELTA_EPOCH_IN_MICROSECS; 
-    tmpres /= 10;  //convert into microseconds
-    tv->tv_sec = (long)(tmpres / 1000000UL);
-    tv->tv_usec = (long)(tmpres % 1000000UL);
-  }
-
-  if (NULL != tz)
-  {
-    if (!tzflag)
-    {
-      _tzset();
-      tzflag++;
-    }
-    tz->tz_minuteswest = _timezone / 60;
-    tz->tz_dsttime = _daylight;
-  }
- 
-  return 0;
-}
-#endif
-
-unsigned long long nanoClock (void)   // actually returns microseconds
-{
-   struct timeval t;
-   gettimeofday(&t, (struct timezone*)0);
-   return t.tv_usec + t.tv_sec * 1000000ULL;
-}
-
 void printTime()
 {
     unsigned long long t1 = nanoClock();
     double sec = double(t1-t0) / 1000000.;
-    printf("\nTime elapsed %.2f seconds\n", sec);
+    printf("\nTime elapsed %.3lf seconds\n", sec);
     t0 = nanoClock();
 }
 
@@ -596,7 +539,7 @@ void test1Basics()
 //------
 #else
         std::string id;
-        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i], &id) )));
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i], &id) )));
         std::cout << id << "\n";
 #endif
     }
@@ -660,7 +603,7 @@ void test504()
 
         "N#Cc1cccc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)c1 CHEMBL529994",
     };
-    RWMol* qm = SmartsToMol( getSmilesOnly(smi[0]) );
+    RWMol* qm = SmilesToMol( getSmilesOnly(smi[0]) );
     unsigned nq = qm->getNumAtoms();
     for(size_t ai = 0; ai < nq; ai++)
     {
@@ -670,7 +613,7 @@ void test504()
     std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
     mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
     for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
     std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
@@ -696,7 +639,7 @@ void test18()
     "CC(N(CCCCN)Cc1c(C(F)(F)F)cccn1)c1ccccn1 CHEMBL1682988",
     //# 18 .  20 20 0.04 sec. Python MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
     };
-    RWMol* qm = SmartsToMol( getSmilesOnly(smi[0]) );
+    RWMol* qm = SmilesToMol( getSmilesOnly(smi[0]) );
     unsigned nq = qm->getNumAtoms();
     for(size_t ai = 0; ai < nq; ai++)
     {
@@ -706,7 +649,7 @@ void test18()
     std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
     mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
     for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
     std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
@@ -742,7 +685,7 @@ void testThreshold()
 */
     };
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmartsToMol( getSmilesOnly(smi[i]) )));
+        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
     findMCS(mols);
     p.Threshold = 0.7;
     t0 = nanoClock();
@@ -779,7 +722,7 @@ void test330()
 }
 
 
-void testChEMBL_Txt(const char* test, double th=1.0)
+void testChEMBL_Txt(const char* test, double th=1.0, const char* csv="chembl_II_sets.C++.res.csv")
 {
     std::cout << "\ntestChEMBL_Txt() "<<test<<"\n";
     std::vector<ROMOL_SPTR> mols;
@@ -791,12 +734,12 @@ void testChEMBL_Txt(const char* test, double th=1.0)
         perror("fopen testChEMBL_Txt()");
         return;
     }
-    FILE* fres = fopen("chembl_II_sets.res.cvs", "at");
+    FILE* fres = fopen(csv, "at");
     while(fgets(smiles, sizeof(smiles), f))
     {
         if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) // commented to skip
         {
-           mols.push_back(ROMOL_SPTR(SmartsToMol(getSmilesOnlyTxt(smiles))));
+            mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnlyTxt(smiles))));
         }
     }
     fclose(f);
@@ -810,8 +753,12 @@ void testChEMBL_Txt(const char* test, double th=1.0)
     fprintf(fres, "%s; %.1f; %.2f; %u; %u; %s\n", test, th, sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
     fclose(fres);
 }
+
 void testChEMBL_TxtALL_chembl_II_sets(double th=1.0)
 {
+    FILE* fres = fopen("chembl_II_sets.C++.res.csv", "at");
+    fprintf(fres,"test;threshold;t,sec;atoms;bonds;mcs\n");
+    fclose(fres);
     const char* test[] =
     {
         "Target_no_100_15113.txt",
@@ -1464,7 +1411,80 @@ void testChEMBL_TxtALL_chembl_II_sets(double th=1.0)
         "Target_no_93_57082.txt",
     };
     for(int i=0; i<sizeof(test)/sizeof(test[0]); i++)
-        testChEMBL_Txt((std::string("chembl_II_sets/") + test[i]).c_str(), th);
+        testChEMBL_Txt((std::string("chembl_II_sets/") + test[i]).c_str(), th, "chembl_II_sets.C++.res.csv");
+}
+
+void testChEMBL_TxtSLOW_chembl_II_sets(double th=1.0)
+{
+    FILE* fres = fopen("chembl_II_sets.SLOW.C++.res.csv", "wt");
+    fprintf(fres,"test;threshold;t,sec;atoms;bonds;mcs\n");
+    fclose(fres);
+    const char* test[] =
+    {
+        "Target_no_10980_51302.txt",
+        "Target_no_114_31443.txt",
+        "Target_no_10260_54285.txt",
+        "Target_no_11489_37339.txt",
+        "Target_no_10980_52937.txt",
+        "Target_no_114_48395.txt",
+        "Target_no_10280_45765.txt",
+        "Target_no_10188_50681.txt",
+        "Target_no_114_46087.txt",
+        "Target_no_10188_58358.txt",
+        "Target_no_11140_54121.txt",
+        "Target_no_114_37208.txt",
+        "Target_no_10193_53483.txt",
+        "Target_no_10980_31623.txt",
+        "Target_no_10280_60672.txt",
+        "Target_no_10188_45279.txt",
+        "Target_no_11140_49860.txt",
+        "Target_no_10280_53081.txt",
+        "Target_no_11489_46089.txt",
+        "Target_no_10188_54039.txt",
+        "Target_no_114_34747.txt",
+        "Target_no_11365_30331.txt",
+        "Target_no_10188_48029.txt",
+        "Target_no_114_16827.txt",
+        "Target_no_100_30745.txt",
+        "Target_no_108_49591.txt",
+        "Target_no_107_49591.txt",
+        "Target_no_10980_35957.txt",
+        "Target_no_11489_37318.txt",
+        "Target_no_10188_58265.txt",
+        "Target_no_107_58879.txt",
+        "Target_no_11140_37272.txt",
+        "Target_no_10188_39262.txt",
+        "Target_no_10280_47928.txt",
+        "Target_no_107_49345.txt",
+        "Target_no_10188_20244.txt",
+        "Target_no_10980_20853.txt",
+        "Target_no_11365_58566.txt",
+        "Target_no_114_44562.txt",
+        "Target_no_100_16613.txt",
+        "Target_no_11489_39561.txt",
+        "Target_no_10434_35926.txt",
+        "Target_no_10980_31508.txt",
+        "Target_no_11489_34818.txt",
+        "Target_no_10188_58866.txt",
+        "Target_no_11489_58958.txt",
+        "Target_no_11140_39472.txt",
+        "Target_no_10980_5739.txt",
+        "Target_no_11489_54754.txt",
+        "Target_no_10260_38526.txt",
+        "Target_no_11489_58262.txt",
+        "Target_no_107_34921.txt",
+        "Target_no_107_30866.txt",
+        "Target_no_108_30866.txt",
+        "Target_no_10980_36641.txt",
+        "Target_no_10980_30840.txt",
+        "Target_no_107_31249.txt",
+        "Target_no_11140_53395.txt",
+        "Target_no_10193_46700.txt",
+        "Target_no_10980_30994.txt",
+        "Target_no_11140_37038.txt",
+    };
+    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++)
+        testChEMBL_Txt((std::string("chembl_II_sets/") + test[i]).c_str(), th,"chembl_II_sets.SLOW.C++.res.csv");
 }
 
 void testChEMBLdat(const char* test, double th=1.0)
@@ -1487,7 +1507,7 @@ void testChEMBLdat(const char* test, double th=1.0)
         std::cout<<"\rLine: "<< ++n <<" ";
         if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) // commented to skip
         {
-           mols.push_back(ROMOL_SPTR(SmartsToMol(getSmilesOnlyChEMBL(smiles))));
+           mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnlyChEMBL(smiles))));
            fputs(getSmilesOnlyChEMBL(smiles).c_str(), fs);
         }
     }
@@ -1808,7 +1828,7 @@ void testCmndLineSMILES(int argc, const char* argv[])
 {
     std::vector<ROMOL_SPTR> mols;
     for(int i=1; i<argc; i++)
-        mols.push_back(ROMOL_SPTR(SmartsToMol(argv[i])));
+        mols.push_back(ROMOL_SPTR(SmilesToMol(argv[i])));
     MCSResult res = findMCS(mols);
     std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
     printTime();
@@ -1847,7 +1867,7 @@ void testFileSMILES(const char* test)
         std::cout<<"\rLine: "<< ++n <<" ";
         if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) // commented to skip
 //            if(strlen(smiles) > 92) // minimal query size !!!
-                mols.push_back(ROMOL_SPTR(SmartsToMol(getSmilesOnly(smiles))));
+                mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smiles))));
     }
     fclose(f);
     printTime();
@@ -1901,7 +1921,7 @@ void testGregSDFFileSetFiltered()
     double totalT=0.;
     for(int i=0; i<sizeof(sdf)/sizeof(sdf[0]); i++)
         totalT += testFileSDF((sdf_dir+sdf[i]).c_str());
-    printf("\nTOTAL Time elapsed %.2f seconds\n================================================\n", totalT);
+    printf("\nTOTAL Time elapsed %.2lf seconds\n================================================\n", totalT);
 }
 //====================================================================================================
 //====================================================================================================
@@ -1909,7 +1929,7 @@ void testGregSDFFileSetFiltered()
 
 int main(int argc, const char* argv[])
 {
-    p.Verbose = true;
+//    p.Verbose = true;
 
 // use maximum CPU resoures to increase time measuring accuracy and stability in multi process environment
 #ifdef WIN32
@@ -1922,13 +1942,36 @@ int main(int argc, const char* argv[])
     T0 = nanoClock();
     t0 = nanoClock();
 
-#ifdef WIN32  // brief test set for testing and issue investigation
+    testSimpleFast();
+    //testChEMBL_TxtSLOW_chembl_II_sets();    // python total time is about 55/2 sec
+    return 0;
+/*
+//    p.BondTyper = MCSBondCompareOrderExact;
+    testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
+//    return 0;
+
+ //   testChEMBL_TxtALL_chembl_II_sets();
+ //   testTarget_no_10188_30149();
+//    return 0;
+    // SLOW tests
+    test330();
+    testChEMBL_Txt("chembl_II_sets/Target_no_10980_52937.txt");
+    testChEMBL_Txt("chembl_II_sets/Target_no_11489_37339.txt");
+    testChEMBL_Txt("chembl_II_sets/Target_no_10260_54285.txt");
+    testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
+    return 0;
+*/
+#ifdef xxWIN32  // brief test set for testing and issue investigation
 #ifdef _DEBUG   // check memory leaks
   _CrtMemState _ms;
   _CrtMemCheckpoint(&_ms);
 #endif
-    testAtomCompareAnyAtom();
-    testAtomCompareAnyAtomBond();
+    //while(1)   // check memory leaks in TaskManager or 'top -p ...'
+    {
+        testTarget_no_10188_30149();
+        testAtomCompareAnyAtom();
+        testAtomCompareAnyAtomBond();
+    }
 #ifdef _DEBUG   // check memory leaks
   _CrtMemDumpAllObjectsSince(&_ms);
 #endif
@@ -1938,7 +1981,7 @@ int main(int argc, const char* argv[])
     return 0;
 
 {
-    RWMol* m = SmartsToMol("[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#7]-[#6]2:[#6]:[#6]:[#6]3:[#6](:[#6]:2):[#7]:[#7]:[#6]:3-[#6]4:[#6]:[#6]:[#6]:[#6]:[#6]:4");
+    RWMol* m = SmilesToMol("[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#7]-[#6]2:[#6]:[#6]:[#6]3:[#6](:[#6]:2):[#7]:[#7]:[#6]:3-[#6]4:[#6]:[#6]:[#6]:[#6]:[#6]:4");
 #ifdef _DEBUG   // check memory leaks
   _CrtMemState _ms;
   _CrtMemCheckpoint(&_ms);
@@ -1955,10 +1998,10 @@ int main(int argc, const char* argv[])
     return 0;
 
     testSimple();
-    while(true) // MT test
-        test330();
-    testChEMBLdatALL();
-    testGregSDFFileSetFiltered();
+    //while(true) // MT test
+    //    test330();
+    //testChEMBLdatALL();
+    //testGregSDFFileSetFiltered();
 /*
     testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat");
     testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat", 0.8);
@@ -2060,7 +2103,7 @@ int main(int argc, const char* argv[])
 
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
-    printf("TOTAL Time elapsed %.2f seconds\n", sec);
+    printf("TOTAL Time elapsed %.2lf seconds\n", sec);
 
     return 0;
 }

@@ -86,8 +86,6 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const
     const ROMol& qmol = mcs.getQueryMolecule();
     std::map<unsigned, unsigned> newAtomsMap; // map new added atoms to their seed's indeces
 
-if(0==GrowingStage)
-{
     if(!canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )   // prune() parent
     {
         GrowingStage = -1; //finished
@@ -99,6 +97,9 @@ if(0==GrowingStage)
 #endif
         return;
     }
+
+if(0==GrowingStage)
+{
     // 0. Fill out list of all directly connected outgoing bonds
     ((Seed*)this)->fillNewBonds(qmol); // non const method, multistage growing optimisation
 
@@ -142,6 +143,7 @@ if(0==GrowingStage)
     seed.RemainingBonds = RemainingBonds - NewBonds.size();     // Added ALL !!!
     seed.RemainingAtoms = RemainingAtoms - newAtomsMap.size();  // new atoms added to seed
 
+//    seed.computeRemainingSize(qmol);
     // prune() Best Sizes
     if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) )
     {
@@ -158,6 +160,10 @@ if(0==GrowingStage)
         seed.MatchResult = MatchResult;
 #endif
     bool allMatched = mcs.checkIfMatchAndAppend(seed);  // this seed + all extern bonds is a part of MCS
+
+//DEBUG:
+//    if(seed.MoleculeFragment.BondsIdx[0] > 1)
+//        std::cout << seed.getNumBonds() << " + " << seed.RemainingBonds << " bonds [0]=" << seed.MoleculeFragment.BondsIdx[0] << "\n";
 
     GrowingStage = 1;
     if(allMatched && NewBonds.size() > 1)
