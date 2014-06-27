@@ -79,7 +79,7 @@ namespace RDKit
                     }
                  }
 
-               KeyNumericMetrics::TValue result = 0;
+                KeyNumericMetrics::TValue result = 0;
                 for(unsigned seedAtomIdx = 0; seedAtomIdx < nv; seedAtomIdx++)
                 {
                     unsigned long code = currCodes[seedAtomIdx];
@@ -108,7 +108,7 @@ namespace RDKit
         typedef HashKey                TKey;
         typedef std::list<FMCS::Graph> TIndexEntry; // hash-key is not unique key
     private:
-        std::vector<TIndexEntry>                             ValueStorage;
+        std::vector<TIndexEntry>                    ValueStorage;
         std::map<KeyNumericMetrics::TValue, size_t> NumericIndex;  // TIndexEntry
     public:
         // returns computed key, and pointer to index entry with a set of subgraphs corresponding to the key if found.

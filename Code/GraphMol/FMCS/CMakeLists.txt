@@ -1,6 +1,6 @@
 rdkit_library(FMCS
               FMCS.cpp Seed.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
-              LINK_LIBRARIES Depictor FileParsers ChemTransforms )
+              LINK_LIBRARIES Depictor FileParsers ChemTransforms SubstructMatch)
 
 rdkit_headers(FMCS.h
               Seed.h
@@ -14,6 +14,6 @@ rdkit_headers(FMCS.h
 
 rdkit_test(testFMCS testFMCS.cpp LINK_LIBRARIES
 FMCS ChemTransforms Depictor FileParsers SmilesParse 
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib SubstructMatch)
 
 add_subdirectory(Wrap)
