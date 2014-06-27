@@ -83,7 +83,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  if kwargs.has_key('legend'):
+  if 'legend' in kwargs:
     legend = kwargs['legend']
     del kwargs['legend']
   else:

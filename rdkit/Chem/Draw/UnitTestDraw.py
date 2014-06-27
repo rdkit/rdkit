@@ -35,7 +35,7 @@ class TestCase(unittest.TestCase):
 
     Draw.MolToFile(self.mol,fn)
 
-    self.failIfEqual(os.path.getsize(fn),0)
+    self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
     except:
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
 
     Draw.MolToFile(self.mol,fn)
 
-    self.failIfEqual(os.path.getsize(fn),0)
+    self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
     except:
@@ -75,7 +75,7 @@ class TestCase(unittest.TestCase):
 
     Draw.MolToFile(self.mol,fn)
 
-    self.failIfEqual(os.path.getsize(fn),0)
+    self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
     except:
