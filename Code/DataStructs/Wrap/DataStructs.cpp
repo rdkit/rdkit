@@ -44,6 +44,7 @@ void convertToNumpyArray(const T &v,python::object destArray){
   for(unsigned int i=0;i<v.size();++i){
     PyObject *iItem = PyInt_FromLong(v[i]);
     PyArray_SETITEM(destP,PyArray_GETPTR1(destP,i),iItem);
+    Py_DECREF(iItem);
   }
 }
 
