@@ -500,11 +500,13 @@ bool MaximumCommonSubgraph::growSeeds()
                 McsIdx.Bonds    = fs.MoleculeFragment.Bonds;
                 McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
                 McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+#ifdef VERBOSE_STATISTICS_ON
 if(Parameters.Verbose)
 {
     std::cout << VerboseStatistics.TotalSteps << " Seeds:" << Seeds.size() << " MCS "<< McsIdx.Atoms.size() << " atoms, " << McsIdx.Bonds.size() << " bonds";
     printf(" for %.4lf seconds. bond[0]=%u\n", double(VerboseStatistics.MCSFoundTime - To)/1000000., McsIdx.BondsIdx[0]);
 }
+#endif            
             }
         }
 if(Parameters.Verbose)
