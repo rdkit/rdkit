@@ -39,8 +39,8 @@ class TestCase(unittest.TestCase):
     Generate._verbose=False
     tgt = (1,2,11,52,117)
     onBits = sig.GetOnBits()
-    self.failUnlessEqual(tuple(onBits),tgt)
-    self.failUnlessEqual(len(onBits),len(tgt))
+    self.assertEqual(tuple(onBits),tgt)
+    self.assertEqual(len(onBits),len(tgt))
 
     bitMatches = ([((0,),(3,))],
                   [((0,),(7,)),((3,),(7,))],
@@ -51,7 +51,7 @@ class TestCase(unittest.TestCase):
       matches = Matcher.GetAtomsMatchingBit(self.factory,bit,mol)
       #print bit,matches
       #tgt = bitMatches[i]
-      #self.failUnlessEqual(matches,tgt)
+      #self.assertEqual(matches,tgt)
 
   def test2Bug28(self):
     smi = 'Cc([s]1)nnc1SCC(\CS2)=C(/C([O-])=O)N3C(=O)[C@H]([C@@H]23)NC(=O)C[n]4cnnn4'
@@ -62,7 +62,7 @@ class TestCase(unittest.TestCase):
     onBits = sig.GetOnBits()
     for bit in onBits:
       atoms = Matcher.GetAtomsMatchingBit(factory,bit,mol,justOne=1)
-      self.failUnless(len(atoms))
+      self.assertTrue(len(atoms))
 
   def test3Roundtrip(self):
     """ longer-running Bug 28 test

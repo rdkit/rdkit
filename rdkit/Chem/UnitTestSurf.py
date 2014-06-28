@@ -32,8 +32,8 @@ class TestCase(unittest.TestCase):
   def testTPSAShort(self):
     " Short TPSA test "
     inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     for line in lines:
       if line[0] != '#':
         line.strip()
@@ -49,8 +49,8 @@ class TestCase(unittest.TestCase):
     " Longer TPSA test "
     #inName = RDConfig.RDDataDir+'/NCI/first_5k.tpsa.csv'
     inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     lineNo = 0
     for line in lines:
       lineNo += 1
@@ -94,8 +94,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(psa,psaH)
 
     inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     for line in lines:
       if line[0] != '#':
         line.strip()
@@ -107,8 +107,8 @@ class TestCase(unittest.TestCase):
         self.assertTrue(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
     if doLong:
       inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
-      inF = open(inName,'r')
-      lines = inF.readlines()
+      with open(inName,'r') as inF:
+        lines = inF.readlines()
       for line in lines:
         if line[0] != '#':
           line.strip()

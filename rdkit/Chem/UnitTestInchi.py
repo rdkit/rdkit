@@ -41,7 +41,7 @@ import gzip
 from subprocess import Popen, PIPE
 import re
 from rdkit.rdBase import DisableLog, EnableLog
-from pickle import load
+from rdkit.six.moves.cPickle import load
 
 curdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -73,6 +73,7 @@ class NoReentrySDMolSupplier(object):
     def next(self):
         buf = ''
         for line in self.f:
+            line = str(line)
             buf += line
             if line.strip() == '$$$$':
                 break
@@ -96,6 +97,8 @@ class NoReentrySDMolSupplier(object):
             raise ValueError("No reentry allowed")
         self.valid = False
         return self
+    def __next__(self):
+        return self.next()
 
 class GzippedSDMolSupplier(NoReentrySDMolSupplier):
     def fileopen(self):
@@ -147,13 +150,12 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         self.dataset = dict()
         self.dataset_inchi = dict()
-        self.dataset['problematic'] = GzippedSDMolSupplier(
-                os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
-                    'pubchem-hard-set.sdf.gz'))
-        _ = open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
-            'pubchem-hard-set.inchi'))
-        self.dataset_inchi['problematic'] = load(_)
-        _.close()
+        inf = gzip.open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
+                                     'pubchem-hard-set.sdf.gz'),'r')
+        self.dataset['problematic'] = ForwardSDMolSupplier(inf,sanitize=False,removeHs=False)
+        with open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
+                               'pubchem-hard-set.inchi'),'rb') as inF:
+            self.dataset_inchi['problematic'] = load(inF)
         # disable logging
         DisableLog('rdApp.warning')
 
@@ -164,7 +166,7 @@ class TestCase(unittest.TestCase):
         for fp, f in self.dataset.items():
             inchi_db = self.dataset_inchi[fp]
             same, diff, reasonable = 0, 0, 0
-            for m in f:
+            for i_,m in enumerate(f):
                 if m is None:
                     continue
                 ref_inchi = inchi_db[m.GetProp('PUBCHEM_COMPOUND_CID')]
@@ -186,7 +188,7 @@ class TestCase(unittest.TestCase):
                     try:
                         MolToInchi(m, treatWarningAsError=True)
                     except InchiReadWriteError as inst:
-                        inchi, error = inst
+                        inchi, error = inst.args
                         if 'Metal' in error:
                             reasonable += 1
                             continue
@@ -231,7 +233,7 @@ class TestCase(unittest.TestCase):
                     try:
                         MolToInchi(m, treatWarningAsError=True)
                     except InchiReadWriteError as inst:
-                        _, error = inst
+                        _, error = inst.args
                         if 'Metal' in error or \
                                 'Charges were rearranged' in error:
                             reasonable += 1

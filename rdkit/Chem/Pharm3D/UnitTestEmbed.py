@@ -217,8 +217,9 @@ class TestCase(unittest.TestCase):
                                           'Issue268_Mol1.mol'))
     m2 = Chem.MolFromMolFile(os.path.join(self.dataDir,
                                           'Issue268_Mol2.mol'))
-    pcop = cPickle.load(open(os.path.join(self.dataDir,
-                                          'Issue268_Pcop.pkl'),'rb'))
+    with open(os.path.join(self.dataDir,
+                           'Issue268_Pcop.pkl'),'rb') as inF:
+      pcop = cPickle.load(inF)
     #pcop._boundsMat=numpy.array(pcop._boundsMat)
     #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
     #cPickle.dump(pcop,file(os.path.join(self.dataDir,
