@@ -138,6 +138,7 @@ namespace ForceFields {
       RDGeom::Point3D p12=p1-p2;
       RDGeom::Point3D p32=p3-p2;
       double cosTheta = p12.dotProduct(p32)/(dist1*dist2);
+      clipToOne(cosTheta);
       // we need sin^2(theta) to get cos(2*theta), so compute that:
       double sinThetaSq = 1.-cosTheta*cosTheta;
     
@@ -173,6 +174,7 @@ namespace ForceFields {
         (p3 - p2) / dist[1]
       };
       double cosTheta = r[0].dotProduct(r[1]);
+      clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 

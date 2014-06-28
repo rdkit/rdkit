@@ -59,6 +59,7 @@ namespace ForceFields {
         RDGeom::Point3D p12 = (p1 - p2) / dist1;
         RDGeom::Point3D p32 = (p3 - p2) / dist2;
         double cosTheta = p12.dotProduct(p32);
+        clipToOne(cosTheta);
         angle = RAD2DEG * acos(cosTheta);
       }
       dp_forceField = owner;
@@ -91,6 +92,7 @@ namespace ForceFields {
       RDGeom::Point3D p12 = (p1 - p2) / dist1;
       RDGeom::Point3D p32 = (p3 - p2) / dist2;
       double cosTheta = p12.dotProduct(p32);
+      clipToOne(cosTheta);
       double angle = RAD2DEG * acos(cosTheta);
       double angleTerm = 0.0;
       if (angle < d_minAngleDeg) {
@@ -132,6 +134,7 @@ namespace ForceFields {
         (p3 - p2) / dist[1]
       };
       double cosTheta = r[0].dotProduct(r[1]);
+      clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 

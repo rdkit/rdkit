@@ -178,9 +178,11 @@ namespace ForceFields {
       RDGeom::Point3D n = (-rJI).crossProduct(rJK);
       n /= n.length();
       double cosY = n.dotProduct(rJL);
+      clipToOne(cosY);
       double sinYSq = 1.0 - cosY * cosY;
       double sinY = std::max(((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0), 1.0e-8);
       double cosTheta = rJI.dotProduct(rJK);
+      clipToOne(cosTheta);
       double sinThetaSq = std::max(1.0 - cosTheta * cosTheta, 1.0e-8);
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
       // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)
