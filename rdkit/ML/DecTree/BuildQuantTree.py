@@ -33,7 +33,7 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
     nAttrs = len(attrs)
     if nToTake < nAttrs:
       ids = list(range(nAttrs))
-      random.shuffle(ids)
+      random.shuffle(ids,random=random.random)
       tmp = [attrs[x] for x in ids[:nToTake]]
       #print('\tavail:',tmp)
       attrs = tmp

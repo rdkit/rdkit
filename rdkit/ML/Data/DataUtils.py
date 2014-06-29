@@ -67,7 +67,7 @@ from rdkit.DataStructs import BitUtils
 
 def permutation(nToDo):
   res = list(xrange(nToDo))
-  random.shuffle(res)
+  random.shuffle(res,random=random.random)
   return res
 
 def WriteData(outFile,varNames,qBounds,examples):
@@ -655,7 +655,7 @@ def RandomizeActivities(dataSet,shuffle=0,runDetails=None):
   if shuffle:
     if runDetails: runDetails.shuffled = 1
     acts = dataSet.GetResults()[:]
-    random.shuffle(acts)
+    random.shuffle(acts,random=random.random)
   else:
     if runDetails: runDetails.randomized = 1
     acts = [random.randint(0,nPossible) for x in len(examples)]

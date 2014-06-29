@@ -89,7 +89,7 @@ class TestCase(unittest.TestCase):
 
       for i in range(5):
         perm = list(names)
-        random.shuffle(perm)
+        random.shuffle(perm,random=random.random)
 
         m = Chem.MolFromSmiles(smi)
         for desc in perm:
@@ -109,7 +109,7 @@ class TestCase(unittest.TestCase):
     names = calc.GetDescriptorNames()
     DataUtils.InitRandomNumbers((23,42))
     perm = list(names)
-    random.shuffle(perm)
+    random.shuffle(perm,random=random.random)
     calc.simpleList = perm
     calc.descriptorNames = perm
     pkg.Init()

@@ -284,7 +284,7 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   letter = re.compile('[a-z,A-Z]')
   indices = list(range(len(bondMatchers)))
   bondsDone=set()
-  if randomizeOrder: random.shuffle(indices)
+  if randomizeOrder: random.shuffle(indices,random=random.random)
 
   envMatches={}
   for env,patt in iteritems(environMatchers):
@@ -292,7 +292,7 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   for gpIdx in indices:
     if randomizeOrder:
       compats =bondMatchers[gpIdx][:]
-      random.shuffle(compats)
+      random.shuffle(compats,random=random.random)
     else:
       compats = bondMatchers[gpIdx]
     for i1,i2,bType,patt in compats:
@@ -518,10 +518,10 @@ def BRICSBuild(fragments,onlyCompleteMols=True,seeds=None,uniquify=True,
     seeds = list(fragments)
   if scrambleReagents:
     seeds = list(seeds)
-    random.shuffle(seeds)
+    random.shuffle(seeds,random=random.random)
   if scrambleReagents:
     tempReactions = list(reverseReactions)
-    random.shuffle(tempReactions)
+    random.shuffle(tempReactions,random=random.random)
   else:
     tempReactions=reverseReactions
   for seed in seeds:

@@ -26,7 +26,7 @@ def RandomizeMolBlock(molB):
   atLines = splitB[idx:idx+nAts]
 
   order = list(range(nAts))
-  random.shuffle(order)
+  random.shuffle(order,random=random.random)
 
   for i in order:
     res.append(atLines[i])
