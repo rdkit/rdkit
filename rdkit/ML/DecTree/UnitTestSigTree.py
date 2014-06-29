@@ -4,7 +4,7 @@
 #   All Rights Reserved
 #
 from rdkit import RDConfig
-import unittest,os
+import unittest,os,sys
 from rdkit.ML.DecTree.SigTree import SigTreeNode
 from rdkit.ML import InfoTheory
 from rdkit.DataStructs import ExplicitBitVect
@@ -145,7 +145,10 @@ class TestCase(unittest.TestCase):
     gz = gzip.open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data',
                                 'cdk2-few.pkl.gz'),
                    'rb')
-    examples = cPickle.load(gz,encoding='Latin1')
+    if sys.version>'3':
+      examples = cPickle.load(gz,encoding='Latin1')
+    else:
+      examples = cPickle.load(gz)
     t = BuildSigTree(examples,2,maxDepth=3)
     self.assertEqual(t.GetLabel(),2181)
     self.assertEqual(t.GetChildren()[0].GetLabel(),2861)
