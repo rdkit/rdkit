@@ -9,7 +9,7 @@
 #  of the RDKit source tree.
 #
 from __future__ import print_function
-import copy,struct
+import copy,struct,sys
 from rdkit.six.moves import cPickle
 from rdkit.six import iterkeys
 from rdkit import DataStructs
@@ -164,7 +164,7 @@ class VectCollection(object):
     return len(self.__vects.keys())
 
   def GetChildren(self):
-    return tuple(self.__vects.iteritems())
+    return tuple(self.__vects.items())
 
   def GetBit(self,id):
     if self.__needReset:
@@ -179,14 +179,14 @@ class VectCollection(object):
     return self.__orVect.GetOnBits()
 
   def DetachVectsNotMatchingBit(self,bit):
-    items = list(self.__vects.iteritems())
+    items = list(self.__vects.items())
     for k,v in items:
       if not v.GetBit(bit):
         del(self.__vects[k])
         self.__needReset=True
 
   def DetachVectsMatchingBit(self,bit):
-    items = list(self.__vects.iteritems())
+    items = list(self.__vects.items())
     for k,v in items:
       if v.GetBit(bit):
         del(self.__vects[k])
@@ -194,7 +194,7 @@ class VectCollection(object):
 
   def Uniquify(self,verbose=False):
     obls = {}
-    for k,v in self.__vects.iteritems():
+    for k,v in self.__vects.items():
       obls[k] = list(v.GetOnBits())
     
     keys = self.__vects.keys()
@@ -234,7 +234,7 @@ class VectCollection(object):
   #
   def __getstate__(self):
     pkl = struct.pack('<I',len(self.__vects))
-    for k,v in self.__vects.iteritems():
+    for k,v in self.__vects.items():
       pkl += struct.pack('<I',k)
       p = v.ToBinary()
       l = len(p)
@@ -243,6 +243,9 @@ class VectCollection(object):
     return pkl
 
   def __setstate__(self,pkl):
+    if sys.version>'3' and isinstance(pkl,str):
+      pkl = bytes(pkl,encoding='Latin1')
+      
     self.__vects = {}
     self.__orVect = None
     self.__numBits = -1

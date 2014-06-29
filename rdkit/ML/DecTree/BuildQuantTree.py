@@ -154,7 +154,6 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
                                         nPossibleRes,nPossibleVals,attrs,
                                         exIndices=exIndices,
                                         **kwargs)
-
     # remove that variable from the lists of possible variables
     nextAttrs = attrs[:]
     if not kwargs.get('recycleVars',0):

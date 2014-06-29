@@ -34,8 +34,8 @@ def CalcTotalEntropy(examples,nPossibleVals):
   nRes = nPossibleVals[-1]
   resList = numpy.zeros(nRes,'i')
   for example in examples:
-    res = example[-1]
-    resList[res] = resList[res] + 1
+    res = int(example[-1])
+    resList[res] += 1
   return entropy.InfoEntropy(resList)
          
 def GenVarTable(examples,nPossibleVals,vars):

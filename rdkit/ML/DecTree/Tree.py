@@ -238,7 +238,7 @@ class TreeNode:
     """ Pickles the tree and writes it to disk
 
     """
-    with open(fileName,'w+') as pFile:
+    with open(fileName,'wb+') as pFile:
       cPickle.dump(self,pFile)
     
   def __str__(self):
@@ -261,29 +261,37 @@ class TreeNode:
 
         This works recursively
     """
+    return (self<other)*-1 or (other<self)*1
+
+  def __lt__(self,other):
+    """ allows tree1 < tree2
+
+      **Note**
+
+        This works recursively
+    """
     try:
       nChildren = len(self.children)
-      if cmp(type(self),type(other)):
-        return cmp(type(self),type(other))
-      elif cmp(self.name,other.name):
-        return cmp(self.name,other.name)
-      elif cmp(self.label,other.label):
-        return cmp(self.label,other.label)
-      if nChildren < len(other.children):
-        return -1
-      elif nChildren > len(other.children):
-        return 1
-      else:
-        for i in xrange(nChildren):
-          res = cmp(self.children[i],other.children[i])
-          if res != 0:
-            return res
+      oChildren=len(other.children)
+      if str(type(self))<str(type(other)): return True
+      if self.name<other.name: return True
+      if self.label is not None:
+        if other.label is not None:
+          if self.label<other.label: return True
+        else:
+          return False
+      elif other.label is not None:
+        return True
+      if nChildren<oChildren: return True
+      if nChildren>oChildren: return False
+      for i in range(nChildren):
+        if self.children[i]<other.children[i]: return True
     except AttributeError:
-      return -1
-
-    return 0
-    
-
+      return True
+    return False
+  def __eq__(self,other):
+    return not self<other and not other<self
+  
 if __name__ == '__main__':
   tree = TreeNode(None,'root')
   for i in xrange(3):

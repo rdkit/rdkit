@@ -72,7 +72,7 @@ class TestCase(unittest.TestCase):
     self.examples1 = examples1
 
 
-  def testCmp(self):
+  def test0Cmp(self):
     " testing tree comparisons "
     self._setupTree1()
     self._setupTree2()
@@ -80,21 +80,21 @@ class TestCase(unittest.TestCase):
     assert self.t2 == self.t2, 'self equals failed'
     assert self.t1 != self.t2, 'not equals failed'
 
-  def testTree1(self):
+  def test1Tree(self):
     " testing tree1 "
     self._setupTree1()
-    inFile = open(self.qTree1Name,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.qTree1Name,'rb') as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
-  def testTree2(self):
+  def test2Tree(self):
     " testing tree2 "
     self._setupTree2()
-    inFile = open(self.qTree2Name,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.qTree2Name,'rb') as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t2 == t2, 'Incorrect tree generated.'
 
-  def testClassify(self):
+  def test3Classify(self):
     " testing classification "
     self._setupTree1()
     self._setupTree2()
@@ -105,18 +105,18 @@ class TestCase(unittest.TestCase):
       assert self.t2.ClassifyExample(self.examples2[i])==self.examples2[i][-1],\
              'examples2[%d] misclassified'%i
       
-  def testUnusedVars(self):
+  def test4UnusedVars(self):
     " testing unused variables "
     self._setupTree1a()
-    inFile = open(self.qTree1Name,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.qTree1Name,'rb') as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     for i in xrange(len(self.examples1)):
       assert self.t1.ClassifyExample(self.examples1[i])==self.examples1[i][-1],\
              'examples1[%d] misclassified'%i
 
 
-  def testBug29(self):
+  def test5Bug29(self):
     """ a more extensive test of the cmp stuff using hand-built trees """
     import copy
 
@@ -152,7 +152,7 @@ class TestCase(unittest.TestCase):
     c1.AddChildNode(c12)
     assert cmp(t1,t2),'inequality failed'
 
-  def testBug29_2(self):
+  def test6Bug29_2(self):
     """ a more extensive test of the cmp stuff using pickled trees"""
     import os
     with open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data','CmpTree1.pkl'),'rb') as t1File:
@@ -162,7 +162,7 @@ class TestCase(unittest.TestCase):
     assert cmp(t1,t2),'equality failed'
 
 
-  def testRecycle(self):
+  def test7Recycle(self):
     """ try recycling descriptors """
     examples1 = [[3,0,0],
                  [3,1,1],
@@ -182,10 +182,9 @@ class TestCase(unittest.TestCase):
     assert self.t1.GetChildren()[1].GetChildren()[1].GetLabel()==0
     
     
-  def testRandomForest(self):
+  def test8RandomForest(self):
     """ try random forests descriptors """
     import random
-    
     random.seed(23)
     nAttrs = 100
     nPts = 10
@@ -194,7 +193,7 @@ class TestCase(unittest.TestCase):
       descrs = [random.randint(0,1) for x in range(nAttrs)]
       act = sum(descrs) > nAttrs/2
       examples.append(descrs+[act])
-    attrs = range(nAttrs)
+    attrs = list(range(nAttrs))
     nPossibleVals = [2]*(nAttrs+1)
     boundsPerVar=[0]*nAttrs+[0]
     self.t1 = BuildQuantTree.QuantTreeBoot(examples,attrs,
@@ -202,9 +201,9 @@ class TestCase(unittest.TestCase):
                                            maxDepth=1,
                                            recycleVars=1,
                                            randomDescriptors=3)
-    assert self.t1.GetLabel()==49,self.t1.GetLabel()
-    assert self.t1.GetChildren()[0].GetLabel()==3,self.t1.GetChildren()[0].GetLabel()
-    assert self.t1.GetChildren()[1].GetLabel()==54,self.t1.GetChildren()[1].GetLabel()
+    self.assertEqual(self.t1.GetLabel(),49)
+    self.assertEqual(self.t1.GetChildren()[0].GetLabel(),3)
+    self.assertEqual(self.t1.GetChildren()[1].GetLabel(),54)
     
 
 

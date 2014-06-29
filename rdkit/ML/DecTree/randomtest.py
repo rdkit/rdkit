@@ -19,7 +19,7 @@ def GenRandomExamples(nVars=10,randScale=0.3,bitProb=0.5,nExamples=500,seed=(0,0
         examples[i] = varVals
 
     nPossibleVals = [2]*(nExamples+1)
-    attrs = range(nVars)
+    attrs = list(range(nVars))
 
     return (examples,attrs,nPossibleVals)
     
