@@ -15,6 +15,7 @@ from __future__ import print_function
 import numpy
 
 from rdkit.six.moves import reduce
+from rdkit.six import cmp
 
 CMPTOL=1e-6
 
@@ -202,35 +203,31 @@ class Cluster(object):
     for child in self.GetChildren():
       child.Print(level=level+1,showData=showData,offset=offset)
     
-  def _cmp(self,tv1,tv2):
-    tv = (tv1<tv2)*-1 or (tv1>tv2)*1
-    return tv
-    
   def Compare(self,other,ignoreExtras=1):
     """ not as choosy as self==other
 
     """
     tv1,tv2 = str(type(self)),str(type(other))
-    tv = self._cmp(tv1,tv2)
+    tv = cmp(tv1,tv2)
     if tv:
       return tv
     tv1,tv2 = len(self),len(other)
-    tv = self._cmp(tv1,tv2)
+    tv = cmp(tv1,tv2)
     if tv:
       return tv
       
     if not ignoreExtras:
       m1,m2=self.GetMetric(),other.GetMetric()
       if abs(m1-m2)>CMPTOL:
-        return self._cmp(m1,m2)
+        return cmp(m1,m2)
 
-      if self._cmp(self.GetName(),other.GetName()):
-        return self._cmp(self.GetName(),other.GetName())
+      if cmp(self.GetName(),other.GetName()):
+        return cmp(self.GetName(),other.GetName())
 
       sP = self.GetPosition()
       oP = other.GetPosition()
       try:
-        r = self._cmp(len(sP),len(oP))
+        r = cmp(len(sP),len(oP))
       except:
         pass
       else:
@@ -238,15 +235,15 @@ class Cluster(object):
           return r
 
       try:
-        r = self._cmp(sP,oP) 
+        r = cmp(sP,oP) 
       except:
         r = sum(sP-oP)
       if r:
         return r
         
     c1,c2=self.GetChildren(),other.GetChildren()
-    if self._cmp(len(c1),len(c2)):
-      return self._cmp(len(c1),len(c2))
+    if cmp(len(c1),len(c2)):
+      return cmp(len(c1),len(c2))
     for i in range(len(c1)):
       t = c1[i].Compare(c2[i],ignoreExtras=ignoreExtras)
       if t:

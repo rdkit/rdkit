@@ -10,6 +10,7 @@
 
 """
 from rdkit.ML.DecTree import DecTree,Tree
+from rdkit.six import cmp
 
 class QuantTreeNode(DecTree.DecTreeNode):
   """ 

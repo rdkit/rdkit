@@ -13,6 +13,7 @@
 """
 import unittest,os
 from rdkit.six.moves import cPickle as pickle
+from rdkit.six import cmp
 from rdkit import RDConfig
 from rdkit.ML import BuildComposite
 from rdkit.ML import ScreenComposite

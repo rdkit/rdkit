@@ -37,7 +37,7 @@ class TestCase(unittest.TestCase):
     composite.SetQuantBounds(qBounds,nPoss)    
     for i in xrange(len(examples)):
       qEx = composite.QuantizeExample(examples[i])
-      assert qEx == answers[i],'quantization of %s failed'%(str(examples[i]))
+      self.assertEqual(qEx,answers[i])
       
   def testTreeGrow(self):
     " testing tree-based composite "
@@ -55,11 +55,11 @@ class TestCase(unittest.TestCase):
     composite.AverageErrors()
     composite.SortModels()
     self.treeComposite = composite
-    assert len(composite) == len(self.refCompos),'length mismatch %d!=%d'%(len(composite),len(self.refCompos))
+    self.assertEqual(len(composite),len(self.refCompos))
     for i in xrange(len(composite)):
       t1,c1,e1 = composite[i]
       t2,c2,e2 = self.refCompos[i]
-      assert e1 == e2, 'error mismatch'
+      self.assertEqual(e1,e2)
       # we used to check for equality here, but since there are redundant errors,
       #  that's non-trivial.
       #assert t1 == t2, 'tree mismatch'
@@ -69,13 +69,14 @@ class TestCase(unittest.TestCase):
     " testing tree-based composite screening "
     with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
       self.refCompos = cPickle.load(pklF)
+    print(self.refCompos)
     with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unittree.pkl','rb') as pklF:
       testCompos = cPickle.load(pklF)
     for example in self.examples:
       res,conf = testCompos.ClassifyExample(example)
       cRes,cConf = self.refCompos.ClassifyExample(example)
-      assert res==cRes,'result mismatch'
-      assert conf==cConf,'confidence mismatch'
+      self.assertEqual(res,cRes)
+      self.assertEqual(conf,cConf)
     
   def testErrorEstimate(self):
     " testing out-of-bag error estimates "

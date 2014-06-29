@@ -12,6 +12,7 @@ from rdkit.ML.DecTree import BuildQuantTree
 from rdkit.ML.DecTree.QuantTree import QuantTreeNode
 from rdkit.ML.Data import MLData
 from rdkit.six.moves import cPickle, xrange
+from rdkit.six import cmp
 
 class TestCase(unittest.TestCase):
   def setUp(self):

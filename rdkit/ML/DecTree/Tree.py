@@ -7,6 +7,7 @@
 from __future__ import print_function
 import numpy
 from rdkit.six.moves import cPickle
+from rdkit.six import cmp
 
 # FIX: the TreeNode class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled

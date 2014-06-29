@@ -15,16 +15,10 @@ import math
 import sys
 import copy
 import pprint
+from rdkit.six import cmp
 
 periodicTable=Chem.GetPeriodicTable()
 
-def _cmp(t1,t2):
-  if t1<t2:
-    return -1
-  elif t2>t1:
-    return 1
-  return 0
-  
 class Font(object):
   face='sans'
   size='12'
@@ -190,21 +184,21 @@ class MolDrawing(object):
   def _getBondAttachmentCoordinates(self, p1, p2, labelSize):
     newpos = [None, None]
     if labelSize != None:
-      labelSizeOffset = [labelSize[0][0]/2 + (_cmp(p2[0], p1[0]) * labelSize[0][2]), labelSize[0][1]/2]
+      labelSizeOffset = [labelSize[0][0]/2 + (cmp(p2[0], p1[0]) * labelSize[0][2]), labelSize[0][1]/2]
       if p1[1] == p2[1]:
-        newpos[0] = p1[0] + _cmp(p2[0], p1[0]) * labelSizeOffset[0]
+        newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
       else:
         if abs(labelSizeOffset[1] * (p2[0] - p1[0]) / (p2[1] - p1[1])) < labelSizeOffset[0]:
-          newpos[0] = p1[0] + _cmp(p2[0], p1[0]) * abs(labelSizeOffset[1] * (p2[0] - p1[0]) / (p2[1] - p1[1]))
+          newpos[0] = p1[0] + cmp(p2[0], p1[0]) * abs(labelSizeOffset[1] * (p2[0] - p1[0]) / (p2[1] - p1[1]))
         else:
-          newpos[0] = p1[0] + _cmp(p2[0], p1[0]) * labelSizeOffset[0]
+          newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
       if p1[0] == p2[0]:
-        newpos[1] = p1[1] + _cmp(p2[1], p1[1]) * labelSizeOffset[1]
+        newpos[1] = p1[1] + cmp(p2[1], p1[1]) * labelSizeOffset[1]
       else:
         if abs(labelSizeOffset[0] * (p1[1] - p2[1]) / (p2[0] - p1[0])) < labelSizeOffset[1]:
-          newpos[1] = p1[1] + _cmp(p2[1], p1[1]) * abs(labelSizeOffset[0] * (p1[1] - p2[1]) / (p2[0] - p1[0]))
+          newpos[1] = p1[1] + cmp(p2[1], p1[1]) * abs(labelSizeOffset[0] * (p1[1] - p2[1]) / (p2[0] - p1[0]))
         else:
-          newpos[1] = p1[1] + _cmp(p2[1], p1[1]) * labelSizeOffset[1]
+          newpos[1] = p1[1] + cmp(p2[1], p1[1]) * labelSizeOffset[1]
     else:
       newpos = copy.deepcopy(p1)
     return newpos

@@ -652,3 +652,10 @@ def add_metaclass(metaclass):
                 orig_vars.pop(slots_var)
         return metaclass(cls.__name__, cls.__bases__, orig_vars)
     return wrapper
+
+# added as part of the RDKit port
+if PY3:
+    def cmp(t1,t2):
+        return (t1<t2)*-1 or (t1>t2)*1
+else:
+    cmp=cmp

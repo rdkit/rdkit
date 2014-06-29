@@ -564,7 +564,7 @@ class Composite(object):
     """ convert local summed error to average error
 
     """
-    self.errList = map(lambda x,y:x/y,self.errList,self.countList)
+    self.errList = list(map(lambda x,y:x/y,self.errList,self.countList))
 
   def SortModels(self,sortOnError=1):
     """ sorts the list of models
@@ -582,6 +582,7 @@ class Composite(object):
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
+    print(order,sortOnError,self.errList,self.countList)
     self.modelList = [self.modelList[x] for x in order]
     self.countList = [self.countList[x] for x in order]
     self.errList = [self.errList[x] for x in order]
