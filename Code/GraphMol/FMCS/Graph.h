@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2014 Novartis Institutes for BioMedical Research
 //
@@ -15,8 +14,8 @@
 
 namespace RDKit
 {
- namespace FMCS
- {
+  namespace FMCS
+  {
     typedef unsigned AtomIdx_t;
     typedef unsigned BondIdx_t;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, AtomIdx_t, BondIdx_t> Graph_t; 
@@ -24,18 +23,19 @@ namespace RDKit
     class Graph : public Graph_t
     {
     public:
-        void addAtom(unsigned atom)
-        {
-            Graph::vertex_descriptor which = boost::add_vertex(*this);
-            (*this)[which] = atom;
-        }
-        void addBond(unsigned bond, unsigned beginAtom, unsigned endAtom)
-        {
-            bool res;
-            Graph_t::edge_descriptor which;
-            boost::tie(which, res) = boost::add_edge(beginAtom, endAtom, *this);
-            (*this)[which] = bond;
-        }
+      void addAtom(unsigned atom)
+      {
+        Graph::vertex_descriptor which = boost::add_vertex(*this);
+        (*this)[which] = atom;
+      }
+      void addBond(unsigned bond, unsigned beginAtom, unsigned endAtom)
+      {
+        bool res;
+        Graph_t::edge_descriptor which;
+        boost::tie(which, res) = boost::add_edge(beginAtom, endAtom, *this);
+        (*this)[which] = bond;
+      }
     };
 
- }}
+  }
+}

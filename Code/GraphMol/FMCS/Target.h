@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2014 Novartis Institutes for BioMedical Research
 //
@@ -18,29 +17,29 @@
 
 namespace RDKit
 {
- namespace FMCS
- {
+  namespace FMCS
+  {
 #ifdef xxFAST_INCREMENTAL_MATCH //unused and works fast without it
-        struct AtomAdjacency
-        {
-            const Bond* Bond;
-            unsigned    BondIdx;
-            unsigned    ConnectedAtomIdx;   // another end on the bond
-        };
-        typedef std::vector<AtomAdjacency>  AtomAdjacencyList;
+    struct AtomAdjacency
+    {
+      const Bond* Bond;
+      unsigned    BondIdx;
+      unsigned    ConnectedAtomIdx;   // another end on the bond
+    };
+    typedef std::vector<AtomAdjacency>  AtomAdjacencyList;
 #endif // FAST_INCREMENTAL_MATCH
 
     struct Target
     {
-        const ROMol*    Molecule;
-        Graph           Topology;
+      const ROMol*    Molecule;
+      Graph           Topology;
 #ifdef PRECOMPUTED_TABLES_MATCH
-        MatchTable      AtomMatchTable;
-        MatchTable      BondMatchTable;
+      MatchTable      AtomMatchTable;
+      MatchTable      BondMatchTable;
 #endif
 #ifdef xxFAST_INCREMENTAL_MATCH
-        std::vector<AtomAdjacencyList> AtomAdjacency;
+      std::vector<AtomAdjacencyList> AtomAdjacency;
 #endif
     };
-
- }}
+  }
+}
