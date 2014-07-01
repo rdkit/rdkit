@@ -106,7 +106,43 @@ class TestCase(unittest.TestCase):
         self.failUnless(Chem.MolFromSmiles('OO[14CH3]').HasSubstructMatch(qm))
         self.failIf(Chem.MolFromSmiles('O[13CH2][14CH3]').HasSubstructMatch(qm))
 
+    def test4RingMatches(self):
+        smis = ['CCCCC','CCC1CCCCC1']
+        ms = [Chem.MolFromSmiles(x) for x in smis]
+        mcs = rdFMCS.FindMCS(ms)
+        self.assertEqual(mcs.numBonds,4)
+        self.assertEqual(mcs.numAtoms,5)
+        self.assertEqual(mcs.smartsString,'[#6]-[#6]-[#6]-[#6]-[#6]')
 
+        mcs = rdFMCS.FindMCS(ms,completeRingsOnly=True)
+        self.assertEqual(mcs.numBonds,2)
+        self.assertEqual(mcs.numAtoms,3)
+        self.assertEqual(mcs.smartsString,'[#6]-[#6]-[#6]')
+
+        mcs = rdFMCS.FindMCS(ms,ringMatchesRingOnly=True)
+        self.assertEqual(mcs.numBonds,2)
+        self.assertEqual(mcs.numAtoms,3)
+        self.assertEqual(mcs.smartsString,'[#6]-[#6]-[#6]')
+
+        smis = ['CC1CCC1','CCC1CCCCC1']
+        ms = [Chem.MolFromSmiles(x) for x in smis]
+        mcs = rdFMCS.FindMCS(ms)
+        self.assertEqual(mcs.numBonds,4)
+        self.assertEqual(mcs.numAtoms,5)
+        self.assertEqual(mcs.smartsString,'[#6]-[#6](-[#6]-[#6])-[#6]')
+
+        mcs = rdFMCS.FindMCS(ms,completeRingsOnly=True)
+        self.assertEqual(mcs.numBonds,1)
+        self.assertEqual(mcs.numAtoms,2)
+        self.assertEqual(mcs.smartsString,'[#6]-[#6]')
+
+        mcs = rdFMCS.FindMCS(ms,ringMatchesRingOnly=True)
+        self.assertEqual(mcs.numBonds,4)
+        self.assertEqual(mcs.numAtoms,5)
+        self.assertEqual(mcs.smartsString,'[#6]-[#6](-[#6]-[#6])-[#6]')
+
+        
+        
         
             
 if __name__=="__main__":
