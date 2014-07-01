@@ -1,3 +1,25 @@
+******  Release_2014.09.1 *******
+(Changes relative to Release_2014.03.1)
+
+Acknowledgements:
+
+Bug Fixes:
+
+New Features:
+ 
+New Database Cartridge Features: 
+
+New Java Wrapper Features:
+
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+
+Contrib updates:
+
+Other:
+
+
 ******  Release_2014.03.1 *******
 (Changes relative to Release_2013.09.2)
 
@@ -6,9 +28,8 @@
    rotatable bond calculation returns different values than before.
    This also affects MQN descriptor #18.
 
-
 Acknowledgements:
-Paul Czodrowski, Markus Elfring, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright 
+Paul Czodrowski, James Davidson, Markus Elfring, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright 
 
 Bug Fixes:
 - Dict::DataType declaration causing problems with C++11 std::lib
@@ -79,6 +100,12 @@ Bug Fixes:
  (github pull 248)
 - seg fault when trying to construct pharmacophore with no conformation
  (github issue 252)
+- EmbedMolecule() should not create a conformer for molecules that have zero atoms
+ (github issue 256)
+- cartridge: dice similarity calculation does not use USE_BUILTIN_POPCOUNT flag
+ (github issue 259)
+- cartridge: similarity calculations wrong for maccs fps when USE_BUILTIN_POPCOUNT flag is set
+ (github issue 260)
 
 New Features:
 - Expose gasteiger charge calculation to SWIG
@@ -118,6 +145,7 @@ New Features:
 - Reaction SMARTS parser should support agents
  (github issue 222)
 - Add function to MolOps to allow a molecule to be split into fragments based on a query function
+  This is useable from python as Chem.SplitMolByPDBResidues() and Chem.SplitMolByPDBChainId()
  (github issue 234)
 - Adding option useCounts for Morgan fingerprints
  (github pull 238)
@@ -127,8 +155,11 @@ New Features:
  (github pull 244)
 - Support of RDK fingerprints added to SimilarityMaps
  (github pull 246)
-- support 3D distances in the atom pair finerprints
+- add get3DDistance
+- support 3D distances in the atom pair fingerprints
  (github issue 251)
+- added MolOps::get3DDistanceMat() (Chem.Get3DDistanceMatrix() from python)
+
  
 New Database Cartridge Features: 
 - Support configuration of fingerprint sizes in cartridge.

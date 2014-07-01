@@ -58,6 +58,16 @@ namespace Queries {
       res->d_description = this->d_description;
       return res;
     };
+
+    std::string getFullDescription() const {
+      std::ostringstream res;
+      res<<this->getDescription();
+      res<<" "<<this->d_val;
+      if(this->getNegation()) res<<" ! <= ";
+      else res<<" <= ";
+      return res.str();
+    };
+
   };
 
 }

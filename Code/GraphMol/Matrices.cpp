@@ -415,7 +415,7 @@ namespace RDKit{
 	return sptr.get();
       }    
 
-      int nAts=mol.getNumAtoms();
+      unsigned int nAts=mol.getNumAtoms();
       double *dMat = new double[nAts*nAts];
       sptr.reset(dMat);
 

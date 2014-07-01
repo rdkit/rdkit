@@ -88,10 +88,8 @@ namespace RDDepict {
     // now for points that new atoms will be added to later on we need to do some setup
     //RDKit::INT_DEQUE_CI dai;
     RDKit::INT_LIST_CI dai;
-    int deg;
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
     for (dai = d_attachPts.begin(); dai != d_attachPts.end(); dai++) {
-      deg = dp_mol->getAtomWithIdx(*dai)->getDegree();
       boost::tie(nbrIdx,endNbrs) = dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(*dai));
       // find the neighbors that are already embedded for each of these atoms
       RDKit::INT_VECT doneNbrs;

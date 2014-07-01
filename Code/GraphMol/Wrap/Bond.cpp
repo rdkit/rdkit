@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2014 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,34 @@
 
 namespace python = boost::python;
 namespace RDKit{
+
+  namespace {
+    std::string qhelper(Bond::QUERYBOND_QUERY *q,unsigned int depth){
+      std::ostringstream res;
+
+      if(q){
+	for (unsigned int i=0;i<depth;++i) res<<"  ";
+	res << q->getFullDescription();
+        if(q->getNegation()) res <<" ! ";
+        
+        res << "\n";
+	for(Bond::QUERYBOND_QUERY::CHILD_VECT_CI ci=q->beginChildren();
+	    ci!=q->endChildren();++ci){
+	  res << qhelper((*ci).get(),depth+1);
+	}
+      }
+      return res.str();
+    }
+  } // end of local namespace
+  std::string describeQuery(const Bond *bond){
+    std::string res="";
+    if(bond->hasQuery()){
+      res=qhelper(bond->getQuery(),0);
+    }
+    return res;
+  }
+
+
 
   int BondHasProp(const Bond *bond, const char *key) {
     int res = bond->hasProp(key);
@@ -160,7 +188,10 @@ struct bond_wrapper {
 	   "Returns whether or not the bond is in a ring of any size.\n\n")
 
       .def("HasQuery",&Bond::hasQuery,
-     "Returns whether or not the bond has an associated query\n\n")
+           "Returns whether or not the bond has an associated query\n\n")
+
+      .def("DescribeQuery",describeQuery,
+	   "returns a text description of the query. Primarily intended for debugging purposes.\n\n")
 
       .def("GetSmarts",BondGetSmarts,
            (python::arg("bond"),

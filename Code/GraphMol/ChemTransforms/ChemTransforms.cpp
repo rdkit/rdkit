@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
@@ -447,8 +448,8 @@ namespace RDKit{
 
   ROMol *MurckoDecompose(const ROMol &mol){
     RWMol *res=new RWMol(mol);
-    int nAtoms=res->getNumAtoms();
-    if(nAtoms==0) return res;
+    unsigned int nAtoms=res->getNumAtoms();
+    if(!nAtoms) return res;
 
     // start by getting the shortest paths matrix:
     MolOps::getDistanceMat(mol,false,false,true);
@@ -482,7 +483,7 @@ namespace RDKit{
       }
     }
 
-    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+    boost::dynamic_bitset<> removedAtoms(nAtoms);
     std::vector<Atom *> atomsToRemove;
     for(unsigned int i=0;i<nAtoms;++i){
       if(!keepAtoms[i]){
@@ -609,7 +610,7 @@ namespace RDKit{
 
   void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
                          bool standardize,std::string delimiter,std::string comment,
-                         int nameColumn,int smartsColumn){
+                         unsigned int nameColumn,unsigned int smartsColumn){
     PRECONDITION(inStream,"no stream");
     queryDefs.clear();
 
@@ -656,13 +657,20 @@ namespace RDKit{
   }
   void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
                          bool standardize,std::string delimiter,std::string comment,
-                         int nameColumn,int smartsColumn){
+                         unsigned int nameColumn,unsigned int smartsColumn){
     std::ifstream inStream(filename.c_str());
     if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;
       errout << "Bad input file " << filename;
       throw BadFileException(errout.str());
     }
+    parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
+  }
+  void parseQueryDefText(const std::string &queryDefText,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize,std::string delimiter,std::string comment,
+                         unsigned int nameColumn,unsigned int smartsColumn){
+    std::stringstream inStream(queryDefText);
     parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
   }
 }  // end of namespace RDKit

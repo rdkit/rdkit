@@ -129,7 +129,7 @@ namespace RDKit{
   void RWMol::removeAtom(Atom *atom) {
     PRECONDITION(atom,"NULL atom provided");
     PRECONDITION(static_cast<RWMol *>(&atom->getOwningMol())==this,"atom not owned by this molecule");
-    int idx=atom->getIdx();
+    unsigned int idx=atom->getIdx();
     
     // remove any bookmarks which point to this atom:
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();

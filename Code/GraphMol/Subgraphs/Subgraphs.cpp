@@ -257,7 +257,7 @@ namespace Subgraphs {
         tPath.push_back(i);
         paths.push_back(tPath);
       }
-    } else if(rootedAtAtom<dim) {
+    } else if(rootedAtAtom<static_cast<int>(dim)) {
       // only start a path at the atom of interest:
       PATH_TYPE tPath;
       tPath.push_back(rootedAtAtom);
@@ -308,8 +308,9 @@ namespace Subgraphs {
 
       // if we're only returning paths rooted at a particular atom, check now
       // that this bond involves that atom:
-      if(rootedAtAtom>=0 && mol.getBondWithIdx(i)->getBeginAtomIdx()!=rootedAtAtom &&
-         mol.getBondWithIdx(i)->getEndAtomIdx()!=rootedAtAtom ){
+      if(rootedAtAtom>=0 &&
+         mol.getBondWithIdx(i)->getBeginAtomIdx()!=static_cast<unsigned int>(rootedAtAtom) &&
+         mol.getBondWithIdx(i)->getEndAtomIdx()!=static_cast<unsigned int>(rootedAtAtom) ){
         continue;
       }
 
@@ -360,8 +361,9 @@ namespace Subgraphs {
 
       // if we're only returning paths rooted at a particular atom, check now
       // that this bond involves that atom:
-      if(rootedAtAtom>=0 && mol.getBondWithIdx(i)->getBeginAtomIdx()!=rootedAtAtom &&
-         mol.getBondWithIdx(i)->getEndAtomIdx()!=rootedAtAtom ){
+      if(rootedAtAtom>=0 &&
+         mol.getBondWithIdx(i)->getBeginAtomIdx()!=static_cast<unsigned int>(rootedAtAtom) &&
+         mol.getBondWithIdx(i)->getEndAtomIdx()!=static_cast<unsigned int>(rootedAtAtom) ){
         continue;
       }
 

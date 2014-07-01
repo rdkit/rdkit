@@ -279,7 +279,7 @@ namespace RDKit{
       if(nBitsPerEntry!=4){
         BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
           for(unsigned int i=0;i<nBitsPerEntry;++i){
-            if(val.second>i) res->setBit(val.first*nBitsPerEntry+i);
+            if(val.second>static_cast<int>(i) ) res->setBit(val.first*nBitsPerEntry+i);
           }        
         }
       } else {
@@ -553,7 +553,7 @@ namespace RDKit{
       if(nBitsPerEntry!=4){
         BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
           for(unsigned int i=0;i<nBitsPerEntry;++i){
-            if(val.second>i) res->setBit(val.first*nBitsPerEntry+i);
+            if(val.second>static_cast<int>(i)) res->setBit(val.first*nBitsPerEntry+i);
           }        
         }
       } else {

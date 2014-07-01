@@ -38,7 +38,8 @@ namespace ForceFields {
         (const double deltaDist1, const double deltaDist2,
         const double deltaTheta, const std::pair<double, double> forceConstants)
       {
-        double factor = 2.51210 * deltaTheta;
+        double const c5 = 2.51210;
+        double factor = c5 * deltaTheta;
         
         return std::make_pair(factor * forceConstants.first * deltaDist1,
           factor * forceConstants.second * deltaDist2);
@@ -112,7 +113,9 @@ namespace ForceFields {
 
       RDGeom::Point3D p12 = (p1 - p2) / dist1;
       RDGeom::Point3D p32 = (p3 - p2) / dist2;
+      double const c5 = 2.51210;
       double cosTheta = p12.dotProduct(p32);
+      clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
       double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
@@ -126,28 +129,28 @@ namespace ForceFields {
       double dCos_dS5 = 1.0 / dist2 * (p12.y - cosTheta * p32.y);
       double dCos_dS6 = 1.0 / dist2 * (p12.z - cosTheta * p32.z);
 
-      g1[0] += 2.51210 * (p12.x * d_forceConstants.first
+      g1[0] += c5 * (p12.x * d_forceConstants.first
         * angleTerm + dCos_dS1 / (-sinTheta) * distTerm);
-      g1[1] += 2.51210 * (p12.y * d_forceConstants.first
+      g1[1] += c5 * (p12.y * d_forceConstants.first
         * angleTerm + dCos_dS2 / (-sinTheta) * distTerm);
-      g1[2] += 2.51210 * (p12.z * d_forceConstants.first
+      g1[2] += c5 * (p12.z * d_forceConstants.first
         * angleTerm + dCos_dS3 / (-sinTheta) * distTerm);
 
-      g2[0] += 2.51210 * ((-p12.x * d_forceConstants.first
+      g2[0] += c5 * ((-p12.x * d_forceConstants.first
         - p32.x * d_forceConstants.second) * angleTerm
         + (-dCos_dS1 - dCos_dS4) / (-sinTheta) * distTerm);
-      g2[1] += 2.51210 * ((-p12.y * d_forceConstants.first
+      g2[1] += c5 * ((-p12.y * d_forceConstants.first
         - p32.y * d_forceConstants.second) * angleTerm
         + (-dCos_dS2 - dCos_dS5) / (-sinTheta) * distTerm);
-      g2[2] += 2.51210 * ((-p12.z * d_forceConstants.first
+      g2[2] += c5 * ((-p12.z * d_forceConstants.first
         - p32.z * d_forceConstants.second) * angleTerm
         + (-dCos_dS3 - dCos_dS6) / (-sinTheta) * distTerm);
     
-      g3[0] += 2.51210 * (p32.x * d_forceConstants.second
+      g3[0] += c5 * (p32.x * d_forceConstants.second
         * angleTerm + dCos_dS4 / (-sinTheta) * distTerm);
-      g3[1] += 2.51210 * (p32.y * d_forceConstants.second
+      g3[1] += c5 * (p32.y * d_forceConstants.second
         * angleTerm + dCos_dS5 / (-sinTheta) * distTerm);
-      g3[2] += 2.51210 * (p32.z * d_forceConstants.second
+      g3[2] += c5 * (p32.z * d_forceConstants.second
         * angleTerm + dCos_dS6 / (-sinTheta) * distTerm);
     }
   }

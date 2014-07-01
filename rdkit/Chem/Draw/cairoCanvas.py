@@ -1,4 +1,4 @@
-# $Id$
+# $Id: cairoCanvas.py 11930 2014-01-24 07:00:08Z landrgr1 $
 #
 #  Copyright (C) 2008 Greg Landrum
 #  Copyright (C) 2009 Uwe Hoffmann
@@ -14,7 +14,8 @@ try:
   import cairo
 except ImportError:
   import cairocffi as cairo
-if not hasattr(cairo.ImageSurface,'get_data'):
+if not hasattr(cairo.ImageSurface,'get_data') and \
+   not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
   raise ImportError,'cairo version too old'  
 
 
@@ -108,11 +109,18 @@ class Canvas(CanvasBase):
       self.surface.write_to_png(self.fileName)
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
-      self.image.fromstring(self.surface.get_data(),
-                            "raw","BGRA",0,1)
+      if hasattr(self.surface,'get_data'):
+        self.image.fromstring(self.surface.get_data(),
+                              "raw","BGRA",0,1)
+      else:
+        self.image.fromstring(self.surface.get_data_as_rgba(),
+                              "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
-      buffer=self.surface.get_data()
+      if hasattr(self.surface,'get_data'):
+        buffer=self.surface.get_data()
+      else:
+        buffer=self.surface.get_data_as_rgba()
       return buffer
 
   def _doLine(self, p1, p2, **kwargs):

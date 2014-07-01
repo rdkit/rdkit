@@ -30,8 +30,8 @@ namespace RDKit{
                        (pre-existing contents will be deleted)
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-      \param useQueryQueryMatches  if set, the contents of atom queries will be
-                                   used as part of the matching
+      \param useQueryQueryMatches  if set, the contents of atom and bond queries
+                                   will be used as part of the matching
 
       \return whether or not a match was found
     
@@ -51,8 +51,8 @@ namespace RDKit{
       \param uniquify  Toggles uniquification (by atom index) of the results
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-      \param useQueryQueryMatches  if set, the contents of atom queries will be
-                                   used as part of the matching
+      \param useQueryQueryMatches  if set, the contents of atom and bond queries
+                                   will be used as part of the matching
 
       \return the number of matches found
     

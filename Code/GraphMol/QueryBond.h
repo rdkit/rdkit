@@ -55,6 +55,9 @@ namespace RDKit{
     //! \overload
     bool Match(Bond const *what) const;
 
+    //! returns true if our query details match those of QueryBond \c what
+    bool QueryMatch(QueryBond const *what) const;
+
 
     // This method can be used to distinguish query bonds from standard bonds
     bool hasQuery() const { return dp_query!=0; };

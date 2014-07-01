@@ -22,6 +22,7 @@
 #include <GraphMol/Conformer.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
+#include <RDBoost/Exceptions.h>
 
 #include <Geometry/Transform3D.h>
 #include <Numerics/Alignment/AlignPoints.h>
@@ -307,6 +308,10 @@ namespace RDKit {
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
                                 double basinThresh){
+      if(!mol.getNumAtoms()){
+        throw ValueErrorException("molecule has no atoms");
+      }
+
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
       if(molFrags.size()>1 && coordMap){

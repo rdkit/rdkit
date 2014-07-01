@@ -1149,6 +1149,140 @@ void testGithub189(){
   
 }
 
+void testGithub266(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 266: Bond query information written to CTAB" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "bond-query.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+    
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+    
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m2;
+    m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+
+    delete m;
+  }
+  
+  {
+    std::string fName = rdbase + "bond-query2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+    
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+    
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m2;
+    m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+
+    delete m;
+  }
+  
+  {
+    std::string fName = rdbase + "bond-query3.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+    
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+    
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m2;
+    m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+
+    delete m;
+  }
+
+  {
+    ROMol *m=SmartsToMol("C-CN");
+    TEST_ASSERT(m);
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(!m2->getAtomWithIdx(2)->hasQuery());
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getAtomicNum()==6);
+    TEST_ASSERT(m2->getAtomWithIdx(1)->getAtomicNum()==6);
+    TEST_ASSERT(m2->getAtomWithIdx(2)->getAtomicNum()==7);
+    TEST_ASSERT(!m2->getBondWithIdx(0)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondOr");
+
+  }
+
+  
+}
+
+
+void testGithub268(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 268: Bond topology information written to CTAB" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  
+  {
+    std::string fName = rdbase + "bond-query4.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription()=="BondAnd");
+    
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondAnd");
+    
+    // try v3k
+    mb=MolToMolBlock(*m,true,-1,true,true);
+    delete m2;
+    m2 = MolBlockToMol(mb);
+    TEST_ASSERT(m2->getNumBonds()==4);
+    TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
+    TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription()=="BondAnd");
+
+    delete m;
+  }
+}  
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1261,6 +1395,14 @@ int main() {
   
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub189();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub266();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub268();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 }

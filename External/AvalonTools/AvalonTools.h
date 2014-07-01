@@ -1,4 +1,4 @@
-// $Id$
+// $Id: AvalonTools.h 1897 2011-12-23 06:17:39Z glandrum $
 //
 // Created by Greg Landrum, July 2008
 //
@@ -45,6 +45,8 @@ namespace AvalonTools {
   RDKit::ROMOL_SPTR checkMol(int &errors, RDKit::ROMol& inMol);
   RDKit::ROMOL_SPTR checkMol(int &errors, const std::string &data, bool isSmiles);
   std::pair<std::string,int> checkMolString(const std::string &data, bool isSmiles);
+  std::string getCheckMolLog();
+
   void closeCheckMolFiles();
 }
 #endif

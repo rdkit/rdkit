@@ -278,23 +278,25 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      int spos = 9;
+      unsigned int spos = 9;
       for (int ie = 0; ie < nent; ie++) {
         if(text.size()<spos+8){
           std::ostringstream errout;
           errout << "SGroup line too short: '" << text<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
+#if 0        
         int nbr;
         try {
           nbr = FileParserUtils::toInt(text.substr(spos,4));
-          spos += 4;
         } 
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
           errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
+#endif
+        spos += 4;
         std::string typ = text.substr(spos+1,3);
         if(!SGroupOK(typ)){
           std::ostringstream errout;
@@ -1282,7 +1284,11 @@ namespace RDKit{
         try {
           int topology = FileParserUtils::toInt(text.substr(15,3));
           if(topology){
-            QueryBond *qBond=new QueryBond(*res);
+            if(!res->hasQuery()){
+              QueryBond *qBond=new QueryBond(*res);
+              delete res;
+              res = qBond;
+            }
             BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
             switch(topology){
             case 1:
@@ -1295,9 +1301,7 @@ namespace RDKit{
               errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
               throw FileParseException(errout.str()) ;
             }
-            qBond->expandQuery(q);          
-            delete res;
-            res = qBond;
+            res->expandQuery(q);          
           }
         } catch (boost::bad_lexical_cast) {
           ;
@@ -1394,7 +1398,7 @@ namespace RDKit{
             errout << "negative skip value "<<nToSkip<<" on line "<<line;
             throw FileParseException(errout.str()) ;
           }
-          for(unsigned int i=0;i<nToSkip;++i){
+          for(unsigned int i=0;i<static_cast<unsigned int>(nToSkip);++i){
             ++line;
             tempStr=getLine(inStream);
           }

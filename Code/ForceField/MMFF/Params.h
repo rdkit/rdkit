@@ -40,7 +40,17 @@ namespace ForceFields {
     inline bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     }
+    inline void clipToOne(double &x) {
+      if (x > 1.0) {
+        x = 1.0;
+      }
+      else if (x < -1.0) {
+        x = -1.0;
+      }
+    }
 
+    void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg);
+    
     //! class to store MMFF atom type equivalence levels
     class MMFFDef {
     public:
