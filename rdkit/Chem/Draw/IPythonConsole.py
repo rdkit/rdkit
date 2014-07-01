@@ -37,7 +37,10 @@ def _toJSON(mol):
         return None
 
     mol = Chem.Mol(mol)
-    Chem.Kekulize(mol)
+    try:
+        Chem.Kekulize(mol)
+    except:
+        mol = Chem.Mol(mol)
     size = molSize_3d
 
     # center the molecule:
@@ -187,6 +190,8 @@ InstallIPythonRenderer()
 
 def UninstallIPythonRenderer():
     del rdchem.Mol._repr_svg_
+    del rdchem.Mol._repr_png_
+    del rdchem.Mol._repr_javascript_
     del rdChemReactions.ChemicalReaction._repr_png_
     if hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.GetSubstructMatch = rdchem.Mol.__GetSubstructMatch
