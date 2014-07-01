@@ -24,18 +24,18 @@ class TestCase(unittest.TestCase):
         qm = ms[0]
         ms = ms[1:]
         mcs = rdFMCS.FindMCS(ms)
-        self.failUnlessEqual(mcs.numBonds,21)
-        self.failUnlessEqual(mcs.numAtoms,21)
-        self.failUnlessEqual(mcs.smartsString,'[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
+        self.assertEqual(mcs.numBonds,21)
+        self.assertEqual(mcs.numAtoms,21)
+        self.assertEqual(mcs.smartsString,'[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
         qm = Chem.MolFromSmarts(mcs.smartsString)
         self.failUnless(qm is not None)
         for m in ms:
             self.failUnless(m.HasSubstructMatch(qm))
         
         mcs = rdFMCS.FindMCS(ms,threshold=0.8)
-        self.failUnlessEqual(mcs.numBonds,21)
-        self.failUnlessEqual(mcs.numAtoms,21)
-        self.failUnlessEqual(mcs.smartsString,'[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
+        self.assertEqual(mcs.numBonds,21)
+        self.assertEqual(mcs.numAtoms,21)
+        self.assertEqual(mcs.smartsString,'[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
         qm = Chem.MolFromSmarts(mcs.smartsString)
         self.failUnless(qm is not None)
         for m in ms:
@@ -61,18 +61,18 @@ class TestCase(unittest.TestCase):
         qm = ms[0]
         ms = ms[1:]
         mcs = rdFMCS.FindMCS(ms)
-        self.failUnlessEqual(mcs.numBonds,9)
-        self.failUnlessEqual(mcs.numAtoms,10)
+        self.assertEqual(mcs.numBonds,9)
+        self.assertEqual(mcs.numAtoms,10)
         qm = Chem.MolFromSmarts(mcs.smartsString)
         self.failUnless(qm is not None)
         for m in ms:
             self.failUnless(m.HasSubstructMatch(qm))
         # smarts too hard to canonicalize this
-        #self.failUnlessEqual(mcs.smartsString,'[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6](-[#6]-[#8]-[#6]:,-[#6])-,:[#6]')
+        #self.assertEqual(mcs.smartsString,'[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6](-[#6]-[#8]-[#6]:,-[#6])-,:[#6]')
 
         mcs = rdFMCS.FindMCS(ms,threshold=0.8)
-        self.failUnlessEqual(mcs.numBonds,20)
-        self.failUnlessEqual(mcs.numAtoms,19)
+        self.assertEqual(mcs.numBonds,20)
+        self.assertEqual(mcs.numAtoms,19)
         qm = Chem.MolFromSmarts(mcs.smartsString)
         self.failUnless(qm is not None)
         nHits=0
@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase):
                 nHits+=1
         self.failUnless(nHits>=int(0.8*len(smis)))
         # smarts too hard to canonicalize this
-        #self.failUnlessEqual(mcs.smartsString,'[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](-[#8]-[#6]-[#6]-[#7]-[#6]-[#6])-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2')
+        #self.assertEqual(mcs.smartsString,'[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](-[#8]-[#6]-[#6]-[#7]-[#6]-[#6])-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2')
 
 
     def test3IsotopeMatch(self):
@@ -92,13 +92,13 @@ class TestCase(unittest.TestCase):
         
         ms = [Chem.MolFromSmiles(x) for x in smis]
         mcs = rdFMCS.FindMCS(ms)
-        self.failUnlessEqual(mcs.numBonds,1)
-        self.failUnlessEqual(mcs.numAtoms,2)
+        self.assertEqual(mcs.numBonds,1)
+        self.assertEqual(mcs.numAtoms,2)
         qm = Chem.MolFromSmarts(mcs.smartsString)
 
         mcs = rdFMCS.FindMCS(ms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
-        self.failUnlessEqual(mcs.numBonds,2)
-        self.failUnlessEqual(mcs.numAtoms,3)
+        self.assertEqual(mcs.numBonds,2)
+        self.assertEqual(mcs.numAtoms,3)
         qm = Chem.MolFromSmarts(mcs.smartsString)
 
         self.failUnless(Chem.MolFromSmiles('CC[14CH3]').HasSubstructMatch(qm))
