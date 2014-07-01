@@ -1,12 +1,15 @@
 import IPython
 if IPython.release.version < '2.0':
     raise ImportError('this module requires at least v2.0 of IPython')
+from IPython.html.nbextensions import install_nbextension
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
 from cStringIO import StringIO
 import copy
+import os
 import json
+import uuid
 import numpy
 try:
     import Image
@@ -46,17 +49,15 @@ def _toJSON(mol):
     avgP = numpy.average(atomps, 0)
     atomps -= avgP
 
-    lib_path = "/nbextensions/imolecule.min.js"
     # If the javascript lib has not yet been loaded, do so.
     # IPython >=2.0 does this by copying the file into ~/.ipython/nbextensions
-    global _3d_initialized
-    if not _3d_initialized:
-        import os
-        from IPython.html.nbextensions import install_nbextension
-        filepath = os.path.normpath(os.path.dirname(__file__))
-        install_nbextension([os.path.join(filepath, "imolecule.min.js")],
-                            verbose=0)
-        _3d_initialized = True
+    # Fallback support provided by grabbing js from remote server
+    local_path = "/nbextensions/imolecule.min"
+    remote_path = ("https://raw.githubusercontent.com/patrickfuller/"
+                   "imolecule/master/build/imolecule.min")
+    filepath = os.path.normpath(os.path.dirname(__file__))
+    install_nbextension([os.path.join(filepath, "imolecule.min.js")],
+                        verbose=0)
 
     # Convert the relevant parts of the molecule into JSON for rendering
     atoms = [{"element": atom.GetSymbol(),
@@ -69,15 +70,19 @@ def _toJSON(mol):
     mol = {"atoms": atoms, "bonds": bonds}
     json_mol = json.dumps(mol, separators=(",", ":"))
 
-    return """require(['%s'], function () {
-           var $d = $('<div/>').attr('id', 'molecule_' + utils.uuid());
-           $d.width(%d); $d.height(%d);
-           $d.imolecule = jQuery.extend({}, imolecule);
-           $d.imolecule.create($d, {drawingType: '%s', cameraType: '%s'});
-           $d.imolecule.draw(%s);
-           element.append($d);
-           });""" % ((lib_path,) + size + (drawing_type_3d, camera_type_3d,
-                     json_mol))
+    div_id = uuid.uuid4()
+    return """<div id="molecule_%s"></div>
+           <script type="text/javascript">
+           requirejs.config({paths: {imolecule: ['%s', '%s']}});
+           require(['imolecule'], function () {
+               var $d = $('#molecule_%s');
+               $d.width(%d); $d.height(%d);
+               $d.imolecule = jQuery.extend({}, imolecule);
+               $d.imolecule.create($d, {drawingType: '%s', cameraType: '%s'});
+               $d.imolecule.draw(%s);
+           });
+           </script>""" % (div_id, local_path, remote_path, div_id, size[0],
+                           size[1], drawing_type_3d, camera_type_3d, json_mol)
 
 
 def _toPNG(mol):
@@ -89,7 +94,7 @@ def _toPNG(mol):
         mol.GetAtomWithIdx(0).GetExplicitValence()
     except RuntimeError:
         mol.UpdatePropertyCache(False)
-    
+
     mc = copy.deepcopy(mol)
     try:
         img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
@@ -98,7 +103,7 @@ def _toPNG(mol):
         mc = copy.deepcopy(mol)
         img = Draw.MolToImage(mc,size=molSize,kekulize=False,
                             highlightAtoms=highlightAtoms)
-        
+
     sio = StringIO()
     img.save(sio,format='PNG')
     return sio.getvalue()
@@ -173,7 +178,7 @@ def display_pil_image(img):
 def InstallIPythonRenderer():
     rdchem.Mol._repr_svg_ = _toSVG
     rdchem.Mol._repr_png_ = _toPNG
-    rdchem.Mol._repr_javascript_ = _toJSON
+    rdchem.Mol._repr_html_ = _toJSON
     rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
     if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
