@@ -1425,6 +1425,47 @@ void benchFragmentOnBRICSBonds()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testFragmentOnSomeBonds() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing fragmentOnSomeBonds"<< std::endl;
+
+  {
+    std::string smi = "OCCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={0,2,4};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,2);
+    TEST_ASSERT(frags.size()==3);
+    std::vector<std::vector<int> > fragMap;
+
+    TEST_ASSERT(MolOps::getMolFrags(*frags[0],fragMap)==3);
+    TEST_ASSERT(fragMap.size()==3);
+    TEST_ASSERT(fragMap[0].size()==2);
+    TEST_ASSERT(fragMap[1].size()==4);
+    TEST_ASSERT(fragMap[2].size()==4);
+
+    TEST_ASSERT(MolOps::getMolFrags(*frags[1],fragMap)==3);
+    TEST_ASSERT(fragMap.size()==3);
+    TEST_ASSERT(fragMap[0].size()==2);
+    TEST_ASSERT(fragMap[1].size()==6);
+    TEST_ASSERT(fragMap[2].size()==2);
+
+    TEST_ASSERT(MolOps::getMolFrags(*frags[2],fragMap)==3);
+    TEST_ASSERT(fragMap.size()==3);
+    TEST_ASSERT(fragMap[0].size()==4);
+    TEST_ASSERT(fragMap[1].size()==4);
+    TEST_ASSERT(fragMap[2].size()==2);
+    
+    delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1454,8 +1495,9 @@ int main() {
   testIssue275();
 
   testFragmentOnBonds();
-#endif
   testFragmentOnBRICSBonds();
+#endif
+  testFragmentOnSomeBonds();
   //benchFragmentOnBRICSBonds();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

@@ -2536,7 +2536,28 @@ CAS<~>
     self.failUnless(m is not None)
     self.failUnlessEqual(m.GetNumAtoms(),6)
     
+  def test90FragmentOnSomeBonds(self):
+    m = Chem.MolFromSmiles('OCCCCN')
+    pieces = Chem.FragmentOnSomeBonds(m,(0,2,4),2)
+    self.assertEqual(len(pieces),3)
+    
+    frags = Chem.GetMolFrags(pieces[0])
+    self.assertEqual(len(frags),3)
+    self.assertEqual(len(frags[0]),2)
+    self.assertEqual(len(frags[1]),4)
+    self.assertEqual(len(frags[2]),4)
 
+    frags = Chem.GetMolFrags(pieces[1])
+    self.assertEqual(len(frags),3)
+    self.assertEqual(len(frags[0]),2)
+    self.assertEqual(len(frags[1]),6)
+    self.assertEqual(len(frags[2]),2)
+
+    frags = Chem.GetMolFrags(pieces[2])
+    self.assertEqual(len(frags),3)
+    self.assertEqual(len(frags[0]),4)
+    self.assertEqual(len(frags[1]),4)
+    self.assertEqual(len(frags[2]),2)
 
     
 if __name__ == '__main__':

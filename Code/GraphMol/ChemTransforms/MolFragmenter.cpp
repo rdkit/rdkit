@@ -19,6 +19,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/cstdint.hpp>
 #include <vector>
 #include <algorithm>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -268,6 +269,53 @@ namespace RDKit{
       std::map<unsigned int,std::string> atTypes;
       constructBRICSAtomTypes(atTypes);
       constructFragmenterBondTypes(BRICSdefs,atTypes,defs,"//",true,false);
+    }
+
+    namespace {
+      boost::uint64_t nextBitCombo(boost::uint64_t v){
+        // code from: http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
+        boost::uint64_t t = (v | (v - 1)) + 1;  
+        return t | ((((t & -t) / (v & -v)) >> 1) - 1);  
+      }
+    }
+    
+    void fragmentOnSomeBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
+                             std::vector<ROMOL_SPTR> &resMols,
+                             unsigned int maxToCut,
+                             bool addDummies,
+                             const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
+                             const std::vector< Bond::BondType > *bondTypes){
+      PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
+      PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
+      if(bondIndices.size()>63) throw ValueErrorException("currently can only fragment on up to 63 bonds");
+      boost::uint64_t state=(0x1<<maxToCut)-1;
+      boost::uint64_t stop=0x1<<bondIndices.size();
+      std::vector<unsigned int> fragmentHere(maxToCut);
+      std::vector< std::pair<unsigned int,unsigned int> > *dummyLabelsHere=NULL;
+      if(dummyLabels){
+        dummyLabelsHere=new std::vector< std::pair<unsigned int,unsigned int> >(maxToCut);
+      }
+      std::vector< Bond::BondType > *bondTypesHere=NULL;
+      if(bondTypes){
+        bondTypesHere=new std::vector< Bond::BondType >(maxToCut);
+      }
+      while(state<stop){
+        unsigned int nSeen=0;
+        for(unsigned int i=0;i<bondIndices.size() && nSeen<maxToCut;++i){
+          if(state&(0x1<<i)){
+            fragmentHere[nSeen]=bondIndices[i];
+            if(dummyLabelsHere) dummyLabelsHere[nSeen]=dummyLabels[i];
+            if(bondTypesHere) bondTypesHere[nSeen]=bondTypes[i];
+            ++nSeen;
+          }
+        }
+        ROMol *nm=fragmentOnBonds(mol,fragmentHere,addDummies,dummyLabelsHere,bondTypesHere);
+        resMols.push_back(ROMOL_SPTR(nm));
+        
+        state = nextBitCombo(state);
+      }
+      delete dummyLabelsHere;
+      delete bondTypesHere;
     }
 
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,

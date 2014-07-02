@@ -52,6 +52,13 @@ namespace RDKit {
     //! \overload
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns,
                            const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons=0);
+    void fragmentOnSomeBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
+                             std::vector<ROMOL_SPTR> &resMols,
+                             unsigned int maxToCut=1,
+                             bool addDummies=true,
+                             const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0,
+                             const std::vector< Bond::BondType > *bondTypes=0);
+
 
     //! \brief Fragments a molecule by breaking all BRICS bonds
     /*!
