@@ -25,8 +25,6 @@ molSize = (450, 150)
 highlightSubstructs = True
 kekulizeStructures = True
 
-_3d_initialized = False
-
 ipython_useSVG = False
 ipython_3d = False
 molSize_3d = (450, 450)
