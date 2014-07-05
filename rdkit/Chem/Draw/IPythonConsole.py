@@ -1,7 +1,12 @@
 import IPython
-if IPython.release.version < '2.0':
-    raise ImportError('this module requires at least v2.0 of IPython')
-from IPython.html.nbextensions import install_nbextension
+if IPython.release.version < '0.11':
+    raise ImportError('this module requires at least v0.11 of IPython')
+elif IPython.release.version < '2.0':
+    install_nbextension=None
+    _canUse3D=False
+else:
+    from IPython.html.nbextensions import install_nbextension
+    _canUse3D=True
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
@@ -179,9 +184,10 @@ def display_pil_image(img):
 
 
 def InstallIPythonRenderer():
-    rdchem.Mol._repr_svg_ = _toSVG
     rdchem.Mol._repr_png_ = _toPNG
-    rdchem.Mol._repr_html_ = _toJSON
+    rdchem.Mol._repr_svg_ = _toSVG
+    if _canUse3D:
+        rdchem.Mol._repr_html_ = _toJSON
     rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
     if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
@@ -196,7 +202,8 @@ InstallIPythonRenderer()
 def UninstallIPythonRenderer():
     del rdchem.Mol._repr_svg_
     del rdchem.Mol._repr_png_
-    del rdchem.Mol._repr_javascript_
+    if _canUse3D:
+        del rdchem.Mol._repr_html_
     del rdChemReactions.ChemicalReaction._repr_png_
     if hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.GetSubstructMatch = rdchem.Mol.__GetSubstructMatch
