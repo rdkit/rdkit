@@ -19,11 +19,11 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     self.testDataPath=os.path.join(RDConfig.RDCodeDir,'Chem','AtomPairs','test_data')
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.pkl.gz'),'rb')
-    self.mols=cPickle.load(inF)
+    self.mols=cPickle.load(inF, encoding='bytes')
 
   def testPairsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.aps.pkl.gz'),'rb')
-    atomPairs = cPickle.load(inF)
+    atomPairs = cPickle.load(inF, encoding='bytes')
     for i,m in enumerate(self.mols):
       ap = Pairs.GetAtomPairFingerprint(m)
       #if ap!=atomPairs[i]:
@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
 
   def testTorsionsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.tts.pkl.gz'),'rb')
-    torsions = cPickle.load(inF)
+    torsions = cPickle.load(inF, encoding='bytes')
     for i,m in enumerate(self.mols):
       tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(m)
       if tt!=torsions[i]:

@@ -6,7 +6,7 @@
 **NOTE** This code should be obsolete now that ML.Composite.Composite is up and running.
 
 """
-import cPickle
+from rdkit.six.moves import cPickle
 import numpy
 from rdkit.ML.DecTree import CrossValidate,PruneTree
 

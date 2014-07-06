@@ -12,7 +12,8 @@
 
 """
 from rdkit import RDConfig
-import unittest,sys,os,cPickle
+import unittest,sys,os
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Crippen
 

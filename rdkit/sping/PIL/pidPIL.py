@@ -46,7 +46,7 @@ else:
 # load font metrics
 try:
   f = open(os.path.join(_fontprefix,'metrics.dat'), 'rb')
-  import cPickle
+  from rdkit.six.moves import cPickle
   _widthmaps = cPickle.load(f)
   _ascents = cPickle.load(f)
   _descents = cPickle.load(f)

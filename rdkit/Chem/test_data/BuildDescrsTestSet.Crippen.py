@@ -1,5 +1,6 @@
 from rdkit import RDConfig
-import os.path,cPickle
+import os.path
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
