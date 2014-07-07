@@ -69,10 +69,7 @@ class TestCase(unittest.TestCase):
     def testPickle(self):
       ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0),123)
       pkl = cPickle.dumps(ffeat)
-      if sys.version > '3':
-        ffeat2 = cPickle.loads(pkl,encoding='latin1')
-      else:
-        ffeat2 = cPickle.loads(pkl)
+      ffeat2 = cPickle.loads(pkl, encoding='bytes')
       self.assertTrue(ffeat2.GetId()==ffeat.GetId());      
       self.assertTrue(ffeat2.GetFamily()==ffeat.GetFamily())
       self.assertTrue(ffeat2.GetType()==ffeat.GetType())
@@ -81,7 +78,7 @@ class TestCase(unittest.TestCase):
       # Check that the old pickled versions have not been broken        
       inF = open(os.path.join(RDConfig.RDBaseDir,
                               'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),'rb')
-      ffeat2=cPickle.load(inF)
+      ffeat2=cPickle.load(inF, encoding='bytes')
       # this version (1.0) does not have an id in the byte stream 
       self.assertTrue(ffeat2.GetFamily()==ffeat.GetFamily())
       self.assertTrue(ffeat2.GetType()==ffeat.GetType())
@@ -94,7 +91,7 @@ class TestCase(unittest.TestCase):
       #cPickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
       inF = open(os.path.join(RDConfig.RDBaseDir,
                               'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'rb')
-      ffeat2=cPickle.load(inF)
+      ffeat2=cPickle.load(inF, encoding='bytes')
       self.assertTrue(ffeat2.GetId()==ffeat.GetId());
       self.assertTrue(ffeat2.GetFamily()==ffeat.GetFamily())
       self.assertTrue(ffeat2.GetType()==ffeat.GetType())

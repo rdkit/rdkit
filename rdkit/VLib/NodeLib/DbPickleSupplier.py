@@ -6,7 +6,7 @@
 from rdkit import RDConfig
 import sys,os.path
 from rdkit.VLib.Supply import SupplyNode
-import cPickle
+from rdkit.six.moves import cPickle
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql

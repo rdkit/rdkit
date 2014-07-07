@@ -720,8 +720,8 @@ def _getFeatDict(mol,featFactory,features):
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> d =_getFeatDict(m,featFactory,activeFeats)
-    >>> list(d.keys())
-    ['Donor', 'Acceptor']
+    >>> sorted(list(d.keys()))
+    ['Acceptor', 'Donor']
     >>> donors = d['Donor']
     >>> len(donors)
     1

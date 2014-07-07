@@ -67,7 +67,8 @@ Optional Arguments:
 """
 from rdkit import RDConfig
 import numpy
-import cPickle,copy
+import copy
+from rdkit.six.moves import cPickle
 #from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML.Data import DataUtils,SplitData,Stats
 from rdkit.Dbase.DbConnection import DbConnect

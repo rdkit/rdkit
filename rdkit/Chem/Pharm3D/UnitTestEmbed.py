@@ -11,6 +11,7 @@
 from __future__ import print_function
 from rdkit import RDConfig
 import unittest,sys,os
+from rdkit.six import PY3
 from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import ChemicalFeatures,rdDistGeom
@@ -78,7 +79,9 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        tpl = cPickle.load(inF)
+        tpl = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
         #tpl=tpl[0],tpl[1],numpy.array(tpl[2])
         #cPickle.dump(tpl,outF)
       except:
@@ -97,7 +100,9 @@ class TestCase(unittest.TestCase):
     hits = []
     while 1:
       try:
-        tpl = cPickle.load(inF)
+        tpl = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
       except:
         break
       if self._matchMol(tpl,self.pcophore, self.featFactory,1):
@@ -118,7 +123,9 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        name,molPkl,boundsMat = cPickle.load(inF)
+        name,molPkl,boundsMat = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          molPkl = bytes(molPkl, encoding='latin1')
       except:
         break
 
@@ -136,7 +143,7 @@ class TestCase(unittest.TestCase):
         if not failed:
           nHits += 1
           
-          if testResults.has_key(name):
+          if name in testResults:
             stats = EmbedLib.EmbedOne(mol,name,match,self.pcophore,count=10,
                                       silent=1,randomSeed=23)
             tgt = testResults[name]
@@ -144,9 +151,9 @@ class TestCase(unittest.TestCase):
             print(name)
             print(','.join(['%.2f'%x for x in stats]))
             # we'll use different tolerances for the different values:
-            self.failUnless(feq(tgt[0],stats[0],5.0),(tgt[0],stats[0]))
+            self.assertTrue(feq(tgt[0],stats[0],5.0),(tgt[0],stats[0]))
             for i in range(2,len(tgt)):
-              self.failUnless(feq(tgt[i],stats[i],5.0),(tgt[i],stats[i]))
+              self.assertTrue(feq(tgt[i],stats[i],5.0),(tgt[i],stats[i]))
         
     self.assertEqual(nDone,100)
     #print 'nHits:',nHits
@@ -182,7 +189,9 @@ class TestCase(unittest.TestCase):
 
     while 1:
       try:
-        name,molPkl,boundsMat = cPickle.load(inF)
+        name,molPkl,boundsMat = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          molPkl = bytes(molPkl, encoding='latin1')
       except:
         break
 
@@ -219,7 +228,7 @@ class TestCase(unittest.TestCase):
                                           'Issue268_Mol2.mol'))
     with open(os.path.join(self.dataDir,
                            'Issue268_Pcop.pkl'),'rb') as inF:
-      pcop = cPickle.load(inF)
+      pcop = cPickle.load(inF, encoding='latin1')
     #pcop._boundsMat=numpy.array(pcop._boundsMat)
     #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
     #cPickle.dump(pcop,file(os.path.join(self.dataDir,
@@ -239,8 +248,8 @@ class TestCase(unittest.TestCase):
                                                     mol=m2,use2DLimits=True)[2]),4)
 
     from rdkit import DistanceGeometry as DG
-    self.failUnless(DG.DoTriangleSmoothing(b1))
-    self.failUnless(DG.DoTriangleSmoothing(b2))
+    self.assertTrue(DG.DoTriangleSmoothing(b1))
+    self.assertTrue(DG.DoTriangleSmoothing(b2))
 
     self.assertEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
     self.assertEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)

@@ -100,7 +100,8 @@ from rdkit.ML import ScreenComposite,BuildComposite
 from rdkit.ML.Composite import AdjustComposite
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
-import sys,cPickle,time,types
+from rdkit.six.moves import cPickle
+import sys,time,types
 
 _runDetails = CompositeRun.CompositeRun()
 

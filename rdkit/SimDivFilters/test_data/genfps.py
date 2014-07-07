@@ -1,7 +1,7 @@
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 
 if RDConfig.usePgSQL:
