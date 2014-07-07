@@ -304,8 +304,8 @@ namespace RDKit{
         for(unsigned int i=0;i<bondIndices.size() && nSeen<maxToCut;++i){
           if(state&(0x1<<i)){
             fragmentHere[nSeen]=bondIndices[i];
-            if(dummyLabelsHere) dummyLabelsHere[nSeen]=dummyLabels[i];
-            if(bondTypesHere) bondTypesHere[nSeen]=bondTypes[i];
+            if(dummyLabelsHere) (*dummyLabelsHere)[nSeen]=(*dummyLabels)[i];
+            if(bondTypesHere) (*bondTypesHere)[nSeen]=(*bondTypes)[i];
             ++nSeen;
           }
         }
