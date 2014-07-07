@@ -89,8 +89,8 @@ namespace RDKit{
     //! store type of chirality
     typedef enum {
       CHI_UNSPECIFIED=0,  //!< chirality that hasn't been specified
-      CHI_TETRAHEDRAL_CW, //!< tetrahedral: clockwise rotation (SMILES @@)
-      CHI_TETRAHEDRAL_CCW,//!< tetrahedral: counter-clockwise rotation (SMILES @)
+      CHI_TETRAHEDRAL_CW, //!< tetrahedral: clockwise rotation (SMILES \@\@)
+      CHI_TETRAHEDRAL_CCW,//!< tetrahedral: counter-clockwise rotation (SMILES \@)
       CHI_OTHER           //!< some unrecognized type of chirality
     } ChiralType;
 
