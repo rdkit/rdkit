@@ -83,7 +83,6 @@ class TestCase(unittest.TestCase):
         # smarts too hard to canonicalize this
         #self.assertEqual(mcs.smartsString,'[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](-[#8]-[#6]-[#6]-[#7]-[#6]-[#6])-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2')
 
-
     def test3IsotopeMatch(self):
         smis=(
             "CC[14NH2]",
@@ -141,7 +140,35 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mcs.numAtoms,5)
         self.assertEqual(mcs.smartsString,'[#6]-[#6](-[#6]-[#6])-[#6]')
 
-        
+    def test5AnyMatch(self):
+        smis=('c1ccccc1C',
+              'c1ccccc1O',
+              'c1ccccc1Cl'
+            )
+        ms = [Chem.MolFromSmiles(x) for x in smis]
+        mcs = rdFMCS.FindMCS(ms,atomCompare=rdFMCS.AtomCompare.CompareAny)
+        self.assertEqual(mcs.numBonds,7)
+        self.assertEqual(mcs.numAtoms,7)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        for m in ms:
+            self.assertTrue(m.HasSubstructMatch(qm))
+
+
+        smis=('c1cccnc1C',
+              'c1cnncc1O',
+              'c1cccnc1Cl'
+            )
+        ms = [Chem.MolFromSmiles(x) for x in smis]
+        mcs = rdFMCS.FindMCS(ms,atomCompare=rdFMCS.AtomCompare.CompareAny)
+        self.assertEqual(mcs.numBonds,7)
+        self.assertEqual(mcs.numAtoms,7)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        for m in ms:
+            self.assertTrue(m.HasSubstructMatch(qm))
+
+
         
         
             
