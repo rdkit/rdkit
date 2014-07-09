@@ -12,8 +12,6 @@ from rdkit.ML.Neural import Network,Trainers
 from rdkit.ML.Data import SplitData
 import math
 
-from rdkit import RDRandom
-
 def CrossValidate(net,testExamples,tolerance,appendExamples=0):
   """ Determines the classification error for the testExamples
     **Arguments**

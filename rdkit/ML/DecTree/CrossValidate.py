@@ -12,7 +12,6 @@ from __future__ import print_function
 from rdkit.ML.DecTree import ID3
 from rdkit.ML.Data import SplitData
 import numpy
-from rdkit import RDRandom
 from rdkit.six.moves import xrange
 
 def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,

@@ -9,7 +9,6 @@ and evaluation of individual models
 from __future__ import print_function
 from rdkit.ML.KNN.KNNClassificationModel import KNNClassificationModel
 from rdkit.ML.KNN.KNNRegressionModel import KNNRegressionModel
-from rdkit import RDRandom
 from rdkit.ML.KNN import DistFunctions
 from rdkit.ML.Data import SplitData
 

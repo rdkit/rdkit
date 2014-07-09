@@ -56,8 +56,8 @@ class XValTestCase(unittest.TestCase):
     tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
                                                     nPossibleVals,silent=1,
                                                     replacementSelection=1)
-    assert tree
-    assert feq(frac,0.0833)
+    self.assertTrue(tree)
+    self.assertAlmostEqual(frac,0.01666,4)
     
     
 
