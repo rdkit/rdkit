@@ -465,7 +465,6 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
   if details.activityBounds:
     nPossibleVals[-1] = len(details.activityBounds)+1
 
-  
   if setDescNames:
     composite.SetInputOrder(data.GetVarNames())
     composite.SetDescriptorNames(details._descNames)
@@ -685,7 +684,6 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
       if nRej > 0:
         _runDetails.holdout_fraction_dropped = float(nRej)/nPts
       
-
   if details.persistTblName and details.dbName:
     message('Updating results table %s:%s'%(details.dbName,details.persistTblName))
     details.Store(db=details.dbName,table=details.persistTblName)

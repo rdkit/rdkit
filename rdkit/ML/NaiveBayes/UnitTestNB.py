@@ -12,9 +12,6 @@ from rdkit.ML.NaiveBayes import CrossValidate
 from rdkit.DataStructs import ExplicitBitVect
 
 
-def feq(a,b,tol=1e-4):
-    return abs(a-b)<tol
-
 class TestCase(unittest.TestCase):
     def setUp(self) :
         DataUtils.InitRandomNumbers((25,25))
@@ -29,18 +26,18 @@ class TestCase(unittest.TestCase):
         attrs = range(1,nvars+1)
         npvals= [0] + [3]*nvars + [2]
         qBounds = [0] + [2]*nvars + [0]
-        mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds)
+        mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds, silent=True)
+
+        self.assertAlmostEqual(mod._classProbs[0], 0.5000, 4)
+        self.assertAlmostEqual(mod._classProbs[1], 0.5000, 4)
+        self.assertAlmostEqual(mod._QBoundVals[1][0], -0.0360, 4)
+        self.assertAlmostEqual(mod._QBoundVals[1][1], 0.114)
+        self.assertAlmostEqual(mod._QBoundVals[2][0], -0.7022, 4)
+        self.assertAlmostEqual(mod._QBoundVals[2][1], -0.16635, 4)
+        self.assertAlmostEqual(mod._QBoundVals[3][0], -0.3659, 4)
+        self.assertAlmostEqual(mod._QBoundVals[3][1], 0.4305, 4)
         
-        assert feq(mod._classProbs[0], 0.54167)
-        assert feq(mod._classProbs[1], 0.45833)
-        assert feq(mod._QBoundVals[1][0], -0.56995)
-        assert feq(mod._QBoundVals[1][1], 0.114)
-        assert feq(mod._QBoundVals[2][0], -0.7022)
-        assert feq(mod._QBoundVals[2][1], -0.2347)
-        assert feq(mod._QBoundVals[3][0], -0.3659)
-        assert feq(mod._QBoundVals[3][1], 1.17275)
-        
-        assert feq(err, 0.16129)
+        self.assertAlmostEqual(err, 0.2121, 4)
 
     def test2NaiveBayes(self) :
         fName = os.path.join(RDConfig.RDCodeDir,'ML','NaiveBayes','test_data','stddata.csv')
@@ -52,9 +49,9 @@ class TestCase(unittest.TestCase):
         npvals= [0] + [3]*nvars + [2]
         qBounds = [0] + [2]*nvars + [0]
         mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds,
-                                                       mEstimateVal=20.0)
+                                                       mEstimateVal=20.0, silent=True)
         
-        assert feq(err, 0.19354)
+        self.assertAlmostEqual(err, 0.1818, 4)
         
     def test3(self) :
         examples = [
@@ -103,7 +100,7 @@ class TestCase(unittest.TestCase):
             self.failUnless(p1==p2)
             v1 = mdl.GetClassificationDetails()
             v2 = mdl.GetClassificationDetails()
-            self.failUnless(feq(p1,p2))
+            self.failUnlessAlmostEqual(p1,p2,4)
 
     def test4(self) :
         examples = [

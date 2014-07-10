@@ -54,6 +54,10 @@ class TestCase(unittest.TestCase):
                    pruner=pruner,nTries=100,silent=1)
     composite.AverageErrors()
     composite.SortModels()
+
+    #with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','wb') as pklF:
+    #  cPickle.dump(composite,pklF)
+
     self.treeComposite = composite
     self.assertEqual(len(composite),len(self.refCompos))
     for i in xrange(len(composite)):
@@ -65,19 +69,6 @@ class TestCase(unittest.TestCase):
       #assert t1 == t2, 'tree mismatch'
       #assert c1 == c2, 'count mismatch'
 
-  def testTreeScreen(self):
-    " testing tree-based composite screening "
-    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
-      self.refCompos = cPickle.load(pklF)
-    print(self.refCompos)
-    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unittree.pkl','rb') as pklF:
-      testCompos = cPickle.load(pklF)
-    for example in self.examples:
-      res,conf = testCompos.ClassifyExample(example)
-      cRes,cConf = self.refCompos.ClassifyExample(example)
-      self.assertEqual(res,cRes)
-      self.assertEqual(conf,cConf)
-    
   def testErrorEstimate(self):
     " testing out-of-bag error estimates "
 

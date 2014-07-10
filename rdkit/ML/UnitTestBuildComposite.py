@@ -19,10 +19,6 @@ from rdkit.ML import BuildComposite
 from rdkit.ML import ScreenComposite
 from rdkit.Dbase.DbConnection import DbConnect
 
-def feq(a,b,tol=1e-4):
-  if abs(a-b)>tol: return 0
-  else: return 1
-
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
@@ -39,7 +35,7 @@ class TestCase(unittest.TestCase):
     conn = DbConnect(self.details.dbName,self.details.tableName)
     cols = [x.upper() for x in conn.GetColumnNames()]
     cDescs = [x.upper() for x in refCompos.GetDescriptorNames()]
-    assert cols==cDescs,'bad descriptor names in table: %s != %s'%(cols,cDescs)
+    self.failUnlessEqual(cols,cDescs)
     
     self.details.nModels = 10
     self.details.lockRandom = 1
@@ -57,7 +53,7 @@ class TestCase(unittest.TestCase):
       self.details.qBounds = refCompos.GetQuantBounds()[0]
 
   def compare(self,compos,refCompos):
-    assert len(compos)==len(refCompos),'%d != %d'%(len(compos),len(refCompos))
+    self.assertEqual(len(compos),len(refCompos))
     cs = []
     rcs = []
     for i in range(len(compos)):
@@ -73,8 +69,8 @@ class TestCase(unittest.TestCase):
     for i in range(len(compos)):
       tree,count,err = cs[i]
       refTree,refCount,refErr = rcs[i]
-      assert count==refCount, str((count,refCount))
-      assert feq(err,refErr),'%f != %f'%(err,refErr)
+      self.assertEqual(count,refCount)
+      self.assertAlmostEqual(err,refErr,4)
     
   def test1(self):
     """ basics """
@@ -88,6 +84,10 @@ class TestCase(unittest.TestCase):
     self._init(refCompos)
     compos = BuildComposite.RunIt(self.details,saveIt=0)
 
+    #pickle.dump(compos,open(os.path.join(self.baseDir,refComposName), 'wb'))
+    #with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    #  refCompos = pickle.load(pklF)
+    
     self.compare(compos,refCompos)
     
   def test2(self):
@@ -150,6 +150,7 @@ class TestCase(unittest.TestCase):
     self.details.limitDepth = 3
     self.details.nModels = 10
     compos = BuildComposite.RunIt(self.details,saveIt=0)
+
     self.compare(compos,refCompos)
 
   def test6(self):
@@ -166,6 +167,7 @@ class TestCase(unittest.TestCase):
     self.details.nModels = 10
     self.details.activityBounds=[0.5]
     compos = BuildComposite.RunIt(self.details,saveIt=0)
+
     self.compare(compos,refCompos)
 
   def test7(self):
@@ -180,6 +182,7 @@ class TestCase(unittest.TestCase):
     self.details.mEstimateVal = 20.0
     self.details.qBounds = [0] + [2]*6 + [0]
     compos = BuildComposite.RunIt(self.details, saveIt= 0)
+
     self.compare(compos,refCompos)
         
     
