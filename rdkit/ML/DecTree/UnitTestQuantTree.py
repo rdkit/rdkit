@@ -196,6 +196,7 @@ class TestCase(unittest.TestCase):
     attrs = list(range(nAttrs))
     nPossibleVals = [2]*(nAttrs+1)
     boundsPerVar=[0]*nAttrs+[0]
+    random.seed(23)
     self.t1 = BuildQuantTree.QuantTreeBoot(examples,attrs,
                                            nPossibleVals,boundsPerVar,
                                            maxDepth=1,

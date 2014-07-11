@@ -40,7 +40,7 @@ class XValTestCase(unittest.TestCase):
 
     from rdkit.six.moves import cPickle
     #cPickle.dump(tree,open(self.origTreeName,'w+'))
-    with open(self.origTreeName,'r') as inFile:
+    with open(self.origTreeName,'rb') as inFile:
       oTree = cPickle.load(inFile)
 
     assert oTree==tree,'Random CrossValidation test failed'
