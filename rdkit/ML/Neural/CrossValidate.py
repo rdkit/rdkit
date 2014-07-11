@@ -37,7 +37,7 @@ def CrossValidate(net,testExamples,tolerance,appendExamples=0):
   nTest = len(testExamples)
   nBad = 0
   badExamples = []
-  for i in xrange(nTest):
+  for i in range(nTest):
     testEx = testExamples[i]
     trueRes = testExamples[i][-1]
     res = net.ClassifyExample(testEx)

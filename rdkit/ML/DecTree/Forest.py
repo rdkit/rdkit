@@ -274,7 +274,7 @@ class Forest(object):
 
     """
     outStr= 'Forest\n'
-    for i in xrange(len(self.treeList)):
+    for i in range(len(self.treeList)):
       outStr = outStr + \
          '  Tree % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
                                                                   100.*self.errList[i])

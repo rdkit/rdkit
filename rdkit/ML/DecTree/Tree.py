@@ -294,7 +294,7 @@ class TreeNode:
   
 if __name__ == '__main__':
   tree = TreeNode(None,'root')
-  for i in xrange(3):
+  for i in range(3):
     child = tree.AddChild('child %d'%i)
   print(tree)
   tree.GetChildren()[1].AddChild('grandchild')

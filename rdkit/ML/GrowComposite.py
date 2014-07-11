@@ -222,7 +222,7 @@ def GrowIt(details,composite,progressCallback=None,
   avgErrs = numpy.array(avgErrs)
   composite._varNames = data.GetVarNames()
 
-  for i in xrange(len(modelList)):
+  for i in range(len(modelList)):
     modelList[i].NameModel(composite._varNames)
 
   # do final statistics

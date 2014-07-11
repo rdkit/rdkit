@@ -226,7 +226,7 @@ def _SubForAtomicVars(cExpr,varList,dictName):
    *Not intended for client use*
 
   """
-  for i in xrange(len(varList)):
+  for i in range(len(varList)):
     cExpr = string.replace(cExpr,'$%d'%(i+1),
                        '%s["DEADBEEF"]["%s"]'%(dictName,varList[i]))
   return cExpr
@@ -237,7 +237,7 @@ def _SubForCompoundDescriptors(cExpr,varList,dictName):
    *Not intended for client use*
 
   """
-  for i in xrange(len(varList)):
+  for i in range(len(varList)):
     cExpr = string.replace(cExpr,'$%s'%chr(ord('a')+i),
                            '%s["%s"]'%(dictName,varList[i]))
   return cExpr
@@ -406,7 +406,7 @@ def CalcMultipleCompoundsDescriptor(composVect,argVect,atomDict,propDictList):
     evalTarget = _SubMethodArgs(formula,knownMethods)
   except:
     return res
-  for i in xrange(len(composVect)):
+  for i in range(len(composVect)):
     propDict = propDictList[i]
     compos = composVect[i]
     try:
