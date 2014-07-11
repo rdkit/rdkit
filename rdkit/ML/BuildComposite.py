@@ -617,7 +617,7 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
   avgErrs = numpy.array(avgErrs)
   composite._varNames = data.GetVarNames()
 
-  for i in xrange(len(modelList)):
+  for i in range(len(modelList)):
     modelList[i].NameModel(composite._varNames)
 
   # do final statistics
@@ -690,7 +690,7 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
              
   if details.badName != '':
     badFile = open(details.badName,'w+')
-    for i in xrange(len(badExamples)):
+    for i in range(len(badExamples)):
       ex = badExamples[i]
       vote = wrong[i]
       outStr = '%s\t%s\n'%(ex,vote)

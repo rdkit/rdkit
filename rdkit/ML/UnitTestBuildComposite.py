@@ -35,7 +35,7 @@ class TestCase(unittest.TestCase):
     conn = DbConnect(self.details.dbName,self.details.tableName)
     cols = [x.upper() for x in conn.GetColumnNames()]
     cDescs = [x.upper() for x in refCompos.GetDescriptorNames()]
-    self.failUnlessEqual(cols,cDescs)
+    self.assertEqual(cols,cDescs)
     
     self.details.nModels = 10
     self.details.lockRandom = 1
@@ -64,8 +64,9 @@ class TestCase(unittest.TestCase):
         return cmp(x[1],y[1])
       else:
         return cmp(x[2],y[2])
-    cs.sort(sortHelp)
-    rcs.sort(sortHelp)
+    cs.sort(key=lambda x:(x[2],x[2]))
+    rcs.sort(key=lambda x:(x[2],x[2]))
+
     for i in range(len(compos)):
       tree,count,err = cs[i]
       refTree,refCount,refErr = rcs[i]

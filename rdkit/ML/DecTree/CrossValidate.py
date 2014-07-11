@@ -65,11 +65,9 @@ def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
     argD = {'initialVar':attrs[i]}
     argD.update(kwargs)
     if nQuantBounds is None or nQuantBounds == []:
-      trees[i] = apply(treeBuilder,(trainExamples,attrs,nPossibleVals),
-                       argD)
+      trees[i] = treeBuilder(trainExamples,attrs,nPossibleVals,**argd)
     else:
-      trees[i] = apply(treeBuilder,(trainExamples,attrs,nPossibleVals,nQuantBounds),
-                       argD)
+      trees[i] = treeBuilder(trainExamples,attrs,nPossibleVals,nQuantBounds,**argD)
     if trees[i]:
       errs[i],foo = CrossValidate(trees[i],examples,appendExamples=0)
     else:
