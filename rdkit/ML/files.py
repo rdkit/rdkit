@@ -90,7 +90,7 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
   nIndVars = len(string.split(dataLines[0]))-1
   indVarMat = numpy.zeros((nPts,nIndVars),dataType)
   depVarVect = numpy.zeros(nPts,dataType)
-  for i in xrange(nPts):
+  for i in range(nPts):
     splitLine = string.split(dataLines[i])
     depVarVect[i] = _convfunc(splitLine[depVarCol])
     del splitLine[depVarCol]

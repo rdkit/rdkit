@@ -949,14 +949,14 @@ def ScreenToHtml(nGood,nBad,nRej,avgGood,avgBad,avgSkip,voteTable,imgDir='.',
 
   outTxt.append('<center><table border=1>')
   outTxt.append('<tr><td></td>')
-  for i in xrange(nPoss):
+  for i in range(nPoss):
     outTxt.append('<th>%d</th>'%i)
   outTxt.append('<th>% Accurate</th>')
   outTxt.append('</tr>')
   #outTxt.append('<th rowspan=%d>Predicted</th></tr>'%(nPoss+1))
-  for i in xrange(nPoss):
+  for i in range(nPoss):
     outTxt.append('<tr><th>%d</th>'%(i))
-    for j in xrange(nPoss):
+    for j in range(nPoss):
       if i == j:
         if not multModels:
           outTxt.append('<td bgcolor="#A0A0FF">%d</td>'%(voteTable[j,i]))

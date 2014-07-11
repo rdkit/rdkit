@@ -25,7 +25,7 @@ Other compatibility notes:
 from __future__ import print_function
 import math
 import numpy
-from rdkit.six.moves import cPickle, xrange
+from rdkit.six.moves import cPickle
 from rdkit.ML.Data import DataUtils
 
 class Composite(object):
@@ -146,7 +146,7 @@ class Composite(object):
     if activityQuant:
       example = example[:]
       act = example[actCol]
-      for box in xrange(len(activityQuant)):
+      for box in range(len(activityQuant)):
         if act < activityQuant[box]:
           act = box
           break
@@ -182,11 +182,11 @@ class Composite(object):
       quantBounds = self.quantBounds
     assert len(example)==len(quantBounds),'example/quantBounds mismatch'
     quantExample = [None]*len(example)
-    for i in xrange(len(quantBounds)):
+    for i in range(len(quantBounds)):
       bounds = quantBounds[i]
       p = example[i]
       if len(bounds):
-        for box in xrange(len(bounds)):
+        for box in range(len(bounds)):
           if p < bounds[box]:
             p = box
             break
@@ -350,7 +350,7 @@ class Composite(object):
       return inputVect
     remappedInput = [None]*len(order)
 
-    for i in xrange(len(order)-1):
+    for i in range(len(order)-1):
       remappedInput[i] = inputVect[order[i]]
     if order[-1] == -1:
       remappedInput[-1] = 0
@@ -392,7 +392,7 @@ class Composite(object):
     except ValueError:
       self._mapOrder[0] = 0
 
-    for i in xrange(1,len(descs)-1):
+    for i in range(1,len(descs)-1):
       try:
         self._mapOrder[i] = colNames.index(descs[i])
       except ValueError:
@@ -451,7 +451,7 @@ class Composite(object):
     if self._mapOrder is not None:
       examples = map(self._RemapInput,examples)
     if self.GetActivityQuantBounds():
-      for i in xrange(len(examples)):
+      for i in range(len(examples)):
         examples[i] = self.QuantizeActivity(examples[i])
         nPossibleVals[-1]=len(self.GetActivityQuantBounds())+1  
     if self.nPossibleVals is None:
@@ -459,12 +459,12 @@ class Composite(object):
     if needsQuantization:
       trainExamples = [None]*len(examples)
       nPossibleVals = self.nPossibleVals
-      for i in xrange(len(examples)):
+      for i in range(len(examples)):
         trainExamples[i] = self.QuantizeExample(examples[i],self.quantBounds)
     else:
       trainExamples = examples
 
-    for i in xrange(nTries):
+    for i in range(nTries):
       trainSet = None
       
       if (hasattr(self, '_modelFilterFrac')) and (self._modelFilterFrac != 0) :
@@ -700,7 +700,7 @@ class Composite(object):
 
     """
     outStr= 'Composite\n'
-    for i in xrange(len(self.modelList)):
+    for i in range(len(self.modelList)):
       outStr = outStr + \
          '  Model % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
                                                                      100.*self.errList[i])

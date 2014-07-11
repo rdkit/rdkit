@@ -51,7 +51,7 @@ class BayesComposite(Composite.Composite):
     self.resultProbs = numpy.zeros(nResults,numpy.float)
     self.condProbs = [None]*nModels
 
-    for i in xrange(nModels):
+    for i in range(nModels):
       self.condProbs[i] = numpy.zeros((nResults,nResults),numpy.float)
     # FIX: this is a quick hack which may slow things down a lot
     for example in data:
@@ -124,9 +124,9 @@ class BayesComposite(Composite.Composite):
 
     nPossibleRes = self.nPossibleVals[-1]
     votes = [0.]*nPossibleRes
-    for i in xrange(len(self)):
+    for i in range(len(self)):
       predict = self.modelVotes[i]
-      for j in xrange(nPossibleRes):
+      for j in range(nPossibleRes):
         votes[j] += self.condProbs[i][predict,j]
 
     #totVotes = sum(votes)

@@ -322,17 +322,15 @@ def WritePickledData(outName,data):
       - data: either an _MLData.MLDataSet_ or an _MLData.MLQuantDataSet_
 
   """
-  outFile = open(outName,'wb+')
   varNames = data.GetVarNames()
   qBounds = data.GetQuantBounds()
   ptNames = data.GetPtNames()
   examples = data.GetAllData()
-
-  cPickle.dump(varNames,outFile)
-  cPickle.dump(qBounds,outFile)  
-  cPickle.dump(ptNames,outFile)  
-  cPickle.dump(examples,outFile)
-  outFile.close()
+  with open(outName,'wb+') as outFile:
+    cPickle.dump(varNames,outFile)
+    cPickle.dump(qBounds,outFile)  
+    cPickle.dump(ptNames,outFile)  
+    cPickle.dump(examples,outFile)
 
 def TakeEnsemble(vect,ensembleIds,isDataVect=False):
   """
@@ -425,7 +423,7 @@ def TextToData(reader,ignoreCols=[],onlyCols=None):
 
   """
 
-  varNames = reader.next()
+  varNames = next(reader)
   if not onlyCols:
     keepCols = []
     for i,name in enumerate(varNames):
@@ -470,9 +468,9 @@ def TextFileToData(fName,onlyCols=None):
   ext = fName.split('.')[-1]
   if ext.upper() == 'CSV':
     #  CSV module distributed with python2.3 and later
-    splitter = csv.reader(open(fName,'rU'))
+    splitter = csv.reader(open(fName,'r'))
   else:
-    splitter = csv.reader(open(fName,'rU'),delimiter='\t')
+    splitter = csv.reader(open(fName,'r'),delimiter='\t')
   return TextToData(splitter,onlyCols=onlyCols)
 
 def InitRandomNumbers(seed):

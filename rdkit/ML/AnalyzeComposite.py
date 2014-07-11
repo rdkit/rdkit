@@ -198,7 +198,7 @@ def ShowStats(statD,enrich=1):
 # Error Statistics:
 \tOverall: %(oAvg)6.3f%% (%(oDev)6.3f)  %(oCorrectConf)4.1f/%(oIncorrectConf)4.1f
 \t\tBest: %(oBestIdx)d %(oBestErr)6.3f%%"""%(statD)
-  if statD.has_key('hAvg'):
+  if 'hAvg' in statD:
     statD['hBestIdx'] = statD['hBestIdx']+1
     txt += """
 \tHoldout: %(hAvg)6.3f%% (%(hDev)6.3f)  %(hCorrectConf)4.1f/%(hIncorrectConf)4.1f

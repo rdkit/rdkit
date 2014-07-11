@@ -40,7 +40,7 @@ def CrossValidate(knnMod,testExamples,appendExamples=0):
   if isinstance(knnMod,KNNClassificationModel):
     badExamples = []
     nBad = 0
-    for i in xrange(nTest):
+    for i in range(nTest):
       testEx = testExamples[i]
       trueRes = testEx[-1]
       res = knnMod.ClassifyExample(testEx, appendExamples)
@@ -50,7 +50,7 @@ def CrossValidate(knnMod,testExamples,appendExamples=0):
     return float(nBad)/nTest, badExamples
   elif isinstance(knnMod,KNNRegressionModel):
     devSum=0.0
-    for i in xrange(nTest):
+    for i in range(nTest):
       testEx = testExamples[i]
       trueRes = testEx[-1]
       res = knnMod.PredictExample(testEx, appendExamples)
