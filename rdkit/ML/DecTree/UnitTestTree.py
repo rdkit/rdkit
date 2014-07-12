@@ -50,11 +50,6 @@ class TreeTestCase(unittest.TestCase):
     child = tree.GetChildren()[0]
     assert child.GetName()=='child1','Tree.PruneChild failed'
 
-  def test4Pickle(self):
-    " testing tree pickle "
-    self._readyTree()
-    self.baseTree.Pickle(self.pickleFileName)
-
   def test5Equals(self):
     " testing tree equals "
     nTree = Tree.TreeNode(None,'root')
@@ -71,8 +66,8 @@ class TreeTestCase(unittest.TestCase):
   def test6PickleEquals(self):
     " testing pickled tree equals "
     self._readyTree()
-    with open(self.pickleFileName,'rb') as pFile:
-      oTree = cPickle.load(pFile)
+    pkl = cPickle.dumps(self.baseTree)
+    oTree = cPickle.loads(pkl)
 
     assert oTree == self.baseTree,'Pickle inequality test failed'
 
