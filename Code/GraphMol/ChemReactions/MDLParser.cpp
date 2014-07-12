@@ -77,9 +77,8 @@ namespace RDKit {
 	nProds = FileParserUtils::stripSpacesAndCast<unsigned int>(tempStr.substr(spos,3));
 	spos = 6;
       } catch (boost::bad_lexical_cast &) {
-	if (rxn) {
-	  delete rxn;
-	}
+        delete rxn;
+        rxn=0;
 	std::ostringstream errout;
 	errout << "Cannot convert " << tempStr.substr(spos,3) << " to int";
 	throw ChemicalReactionParserException(errout.str()) ;
@@ -250,7 +249,8 @@ namespace RDKit {
     }
     catch (ChemicalReactionParserException &e) { 
       // catch our exceptions and throw them back after cleanup
-      if(res) delete res;
+      delete res;
+      res=0;
       throw e;
     }
 
