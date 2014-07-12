@@ -466,12 +466,14 @@ def TextFileToData(fName,onlyCols=None):
 
   """
   ext = fName.split('.')[-1]
-  if ext.upper() == 'CSV':
-    #  CSV module distributed with python2.3 and later
-    splitter = csv.reader(open(fName,'r'))
-  else:
-    splitter = csv.reader(open(fName,'r'),delimiter='\t')
-  return TextToData(splitter,onlyCols=onlyCols)
+  with open(fName,'r') as inF:
+    if ext.upper() == 'CSV':
+      #  CSV module distributed with python2.3 and later
+      splitter = csv.reader(inF)
+    else:
+      splitter = csv.reader(inF,delimiter='\t')
+    res = TextToData(splitter,onlyCols=onlyCols)
+  return res
 
 def InitRandomNumbers(seed):
   """ Seeds the random number generators

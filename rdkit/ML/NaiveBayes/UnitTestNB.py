@@ -71,7 +71,7 @@ class TestCase(unittest.TestCase):
         for eg in examples:
             p = mdl.ClassifyExample(eg)
             if p != eg[-1]: nWrong +=1
-        self.failUnless(nWrong==1)
+        self.assertEqual(nWrong,1)
 
         bitEx = []
         for eg in examples:
@@ -89,7 +89,7 @@ class TestCase(unittest.TestCase):
         for eg in bitEx:
             p = mdl2.ClassifyExample(eg)
             if p != eg[-1]: nWrong +=1
-        self.failUnless(nWrong==1)
+        self.assertEqual(nWrong,1)
         
         # now compare:
         for i in range(len(bitEx)):
@@ -97,10 +97,10 @@ class TestCase(unittest.TestCase):
             p1 = mdl.ClassifyExample(eg)
             bitEg = bitEx[i]
             p2 = mdl2.ClassifyExample(bitEg)
-            self.failUnless(p1==p2)
+            self.assertEqual(p1,p2)
             v1 = mdl.GetClassificationDetails()
             v2 = mdl.GetClassificationDetails()
-            self.failUnlessAlmostEqual(p1,p2,4)
+            self.assertAlmostEqual(p1,p2,4)
 
     def test4(self) :
         examples = [
@@ -138,7 +138,7 @@ class TestCase(unittest.TestCase):
         for eg in bitEx:
             p = mdl2.ClassifyExample(eg)
             if p != eg[-1]: nWrong +=1
-        self.failUnless(nWrong==1)
+        self.assertEqual(nWrong,1)
 
     def _test5(self) : # disabled because CMIM was removed
         examples = [
@@ -173,7 +173,7 @@ class TestCase(unittest.TestCase):
         for eg in bitEx:
             p = mdl2.ClassifyExample(eg)
             if p != eg[-1]: nWrong +=1
-        self.failUnless(nWrong==1)
+        self.assertEqual(nWrong,1)
             
 if __name__ == '__main__':
     unittest.main()                                                  
