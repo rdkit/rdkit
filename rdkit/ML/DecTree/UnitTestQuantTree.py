@@ -190,13 +190,12 @@ class TestCase(unittest.TestCase):
     nPts = 10
     examples = []
     for i in range(nPts):
-      descrs = [random.randint(0,1) for x in range(nAttrs)]
+      descrs = [int(random.random()>0.5) for x in range(nAttrs)]
       act = sum(descrs) > nAttrs/2
       examples.append(descrs+[act])
     attrs = list(range(nAttrs))
     nPossibleVals = [2]*(nAttrs+1)
     boundsPerVar=[0]*nAttrs+[0]
-    random.seed(23)
     self.t1 = BuildQuantTree.QuantTreeBoot(examples,attrs,
                                            nPossibleVals,boundsPerVar,
                                            maxDepth=1,

@@ -35,7 +35,6 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
       ids = list(range(nAttrs))
       random.shuffle(ids,random=random.random)
       tmp = [attrs[x] for x in ids[:nToTake]]
-      print('\tavail:',tmp)
       attrs = tmp
 
   for var in attrs:
