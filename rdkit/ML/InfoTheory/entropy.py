@@ -21,7 +21,6 @@ except:
 else:
   hascEntropy=1
 
-
 # it's pretty obvious what this is for ;-)
 _log2 = math.log(2)
 

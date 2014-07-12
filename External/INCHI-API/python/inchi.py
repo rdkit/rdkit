@@ -140,7 +140,7 @@ def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
         inchi, aux = MolToInchiAndAuxInfo(mol, options, logLevel=logLevel,
                 treatWarningAsError=treatWarningAsError)
     except InchiReadWriteError as inst:
-        inchi, aux, message = inst
+        inchi, aux, message = inst.args
         raise InchiReadWriteError(inchi, message)
     return inchi
 

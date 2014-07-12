@@ -516,11 +516,11 @@ def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
   """
      Used by BertzCT
   """
-  connectionList = connectionDict.values()
+  connectionList = list(connectionDict.values())
   totConnections = sum(connectionList)
   connectionIE = totConnections*(entropy.InfoEntropy(numpy.array(connectionList)) +
                                  math.log(totConnections)/_log2val)
-  atomTypeList = atomTypeDict.values()
+  atomTypeList = list(atomTypeDict.values())
   atomTypeIE = numAtoms*entropy.InfoEntropy(numpy.array(atomTypeList))
   return atomTypeIE + connectionIE
 

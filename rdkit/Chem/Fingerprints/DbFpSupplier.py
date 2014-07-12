@@ -59,7 +59,7 @@ class DbFpSupplier(VLibNode):
     try:
       if self._usePickles:
         if sys.version>'3':
-          newFp = cPickle.loads(pkl,encoding='Latin1')
+          newFp = cPickle.loads(pkl,encoding='bytes')
         else:
           newFp = cPickle.loads(pkl)
           

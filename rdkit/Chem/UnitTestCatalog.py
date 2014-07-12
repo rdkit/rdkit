@@ -85,10 +85,10 @@ class TestCase(unittest.TestCase):
     self._testBits(cat2)
     
   def test3CatFilePickle(self):
-    pklFile = open(os.path.join(RDConfig.RDCodeDir,'Chem',
-                                'test_data','simple_catalog.pkl'),
-                   'rb')
-    cat = cPickle.load(pklFile, encoding='bytes')
+    with open(os.path.join(RDConfig.RDCodeDir,'Chem',
+                           'test_data','simple_catalog.pkl'),
+              'rb') as pklFile:
+      cat = cPickle.load(pklFile, encoding='bytes')
     assert cat.GetNumEntries()==21
     assert cat.GetFPLength()==21
     self._testBits(cat)
