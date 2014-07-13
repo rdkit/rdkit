@@ -22,7 +22,7 @@ if 'RDBASE' in os.environ:
   RDBinDir=os.path.join(RDBaseDir,'bin')
   RDProjDir=os.path.join(RDBaseDir,'Projects')
 else:
-  from RDPaths import *
+  from rdkit.RDPaths import *
 
 rpcTestPort=8423
 pythonTestCommand="python"
