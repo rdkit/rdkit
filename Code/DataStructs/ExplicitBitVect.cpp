@@ -48,6 +48,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
 
   ExplicitBitVect& ExplicitBitVect::operator=(const ExplicitBitVect& other){
     d_size = other.d_size;
+    delete dp_bits;
     dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
     d_numOnBits=other.d_numOnBits;
     return *this;
