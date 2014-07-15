@@ -12,6 +12,7 @@ from __future__ import print_function
 import copy,struct,sys
 from rdkit.six.moves import cPickle
 from rdkit.six import iterkeys
+from rdkit import six
 from rdkit import DataStructs
 
 class VectCollection(object):
@@ -243,7 +244,7 @@ class VectCollection(object):
     return pkl
 
   def __setstate__(self,pkl):
-    if sys.version>'3' and isinstance(pkl,str):
+    if six.PY3 and isinstance(pkl,str):
       pkl = bytes(pkl,encoding='Latin1')
       
     self.__vects = {}

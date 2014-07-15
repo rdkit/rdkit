@@ -2139,7 +2139,7 @@ CAS<~>
     import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
-    if sys.version > '3':
+    if six.PY3:
       from io import BytesIO
       sio = BytesIO(gzip.open(fileN).read())
     else:
@@ -2189,7 +2189,7 @@ CAS<~>
     
   def test70StreamSDWriter(self):
     import gzip
-    if sys.version > '3':
+    if six.PY3:
       from io import BytesIO,StringIO
     else:
       from StringIO import StringIO
@@ -2212,7 +2212,7 @@ CAS<~>
     self.assertEqual(i,16)
     w.flush()
     w=None
-    if sys.version > '3':
+    if six.PY3:
       txt = osio.getvalue().encode()
       isio = BytesIO(txt)
     else:
