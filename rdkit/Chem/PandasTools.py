@@ -9,9 +9,9 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C','Name':'Penicilline G'}, ignore_index=True)#Penicilline G
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O','Name':'Tetracycline'}, ignore_index=True)#Tetracycline
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O)O)C','Name':'Ampicilline'}, ignore_index=True)#Ampicilline
->>> print [str(x) for x in  antibiotics.columns]
+>>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles']
->>> print antibiotics
+>>> print(antibiotics)
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
 1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4...
@@ -20,7 +20,7 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 a new column can be created holding the respective RDKit molecule objects. The fingerprint can be included to accelerate substructure searches on the dataframe.
 
 >>> PandasTools.AddMoleculeColumnToFrame(antibiotics,'Smiles','Molecule',includeFingerprints=True)
->>> print [str(x) for x in  antibiotics.columns]
+>>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles', 'Molecule']
 
 A substructure filter can be applied on the dataframe using the RDKit molecule column, because the ">=" operator has been modified to work as a substructure check.
@@ -28,7 +28,7 @@ Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtaine
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
 >>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
->>> print beta_lactam_antibiotics[['Name','Smiles']]
+>>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
 2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
@@ -66,14 +66,14 @@ dtypes: object(20)>
 
 In order to support rendering the molecules as images in the HTML export of the dataframe, the __str__ method is monkey-patched to return a base64 encoded PNG:
 >>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
->>> print molX # doctest: +SKIP
+>>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
 This can be reverted using the ChangeMoleculeRendering method
 >>> ChangeMoleculeRendering(renderer='String')
->>> print molX # doctest: +SKIP
+>>> print(molX) # doctest: +SKIP
 <rdkit.Chem.rdchem.Mol object at 0x10d179440>
 >>> ChangeMoleculeRendering(renderer='PNG')
->>> print molX # doctest: +SKIP
+>>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
 '''
 from __future__ import print_function
