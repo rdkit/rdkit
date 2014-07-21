@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import sys
+from rdkit import six
 from rdkit import RDConfig
 
 if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
@@ -55,10 +55,7 @@ elif hasattr(RDConfig,"useSqlLite") and RDConfig.useSqlLite:
   dbFileWildcard='*.sqlt'
   placeHolder='?'
   binaryTypeName="blob"
-  if sys.version > '3':
-    binaryHolder = memoryview
-  else:
-    binaryHolder = buffer
+  binaryHolder = memoryview if six.PY3 else buffer
 
   connect = lambda x,*args:sqlite.connect(x)
 else:

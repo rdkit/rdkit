@@ -14,7 +14,7 @@
 from __future__ import print_function
 from rdkit import RDConfig
 import unittest,os.path
-import pickle
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
@@ -61,10 +61,7 @@ class TestCase(unittest.TestCase):
     refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','MQNs_regress.pkl')
     with open(refFile,'rb') as inf:
       pkl = inf.read()
-    if sys.version>'3':
-      refData  = pickle.loads(pkl,encoding='bytes')
-    else:
-      refData  = pickle.loads(pkl)
+    refData  = cPickle.loads(pkl,encoding='bytes')
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
     for i,m in enumerate(ms):

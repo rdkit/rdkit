@@ -15,6 +15,7 @@
 from rdkit import RDConfig
 from rdkit.VLib.Node import VLibNode
 from rdkit import DataStructs
+from rdkit import six
 from rdkit.six.moves import cPickle
 import sys
 def warning(msg,dest=sys.stderr):
@@ -50,7 +51,7 @@ class DbFpSupplier(VLibNode):
 
   def _BuildFp(self,data):
     data = list(data)
-    if sys.version>'3':
+    if six.PY3:
       pkl = bytes(data[self.fpCol],encoding='Latin1')
     else:
       pkl = str(data[self.fpCol])
@@ -58,11 +59,7 @@ class DbFpSupplier(VLibNode):
     self._numProcessed+=1;
     try:
       if self._usePickles:
-        if sys.version>'3':
-          newFp = cPickle.loads(pkl,encoding='bytes')
-        else:
-          newFp = cPickle.loads(pkl)
-          
+        newFp = cPickle.loads(pkl,encoding='bytes')          
       else:
         newFp = DataStructs.ExplicitBitVect(pkl)
     except:

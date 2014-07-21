@@ -219,14 +219,8 @@ class streambuf : public std::basic_streambuf<char>
       read_buffer = py_read(buffer_size);
       char *read_buffer_data;
       bp::ssize_t py_n_read;
-#if PY_MAJOR_VERSION >= 3
-      // TODO review this.
       if (PyBytes_AsStringAndSize(read_buffer.ptr(),
                                    &read_buffer_data, &py_n_read) == -1) {
-#else
-      if (PyString_AsStringAndSize(read_buffer.ptr(),
-                                   &read_buffer_data, &py_n_read) == -1) {
-#endif
         setg(0, 0, 0);
         throw std::invalid_argument(
           "The method 'read' of the Python file object "
