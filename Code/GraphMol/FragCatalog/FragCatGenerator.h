@@ -7,8 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_FRAG_CAT_GENERATOR_H_
-#define _RD_FRAG_CAT_GENRATOR_H_
+#ifndef RD_FRAG_CAT_GENERATOR_H
+#define RD_FRAG_CAT_GENERATOR_H
 
 #include <Catalogs/Catalog.h>
 #include "FragCatalogEntry.h"

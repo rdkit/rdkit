@@ -244,6 +244,33 @@ M  END
 
 The optimization step isn't necessary, but it substantially improves the quality of the conformation.
 
+To get good conformations, it's almost always a good idea to add hydrogens to the molecule first:
+
+>>> m3 = Chem.AddHs(m2)
+>>> AllChem.EmbedMolecule(m3)
+0
+>>> AllChem.UFFOptimizeMolecule(m3)
+0
+
+These can then be removed:
+
+>>> m3 = Chem.RemoveHs(m3)
+>>> print Chem.MolToMolBlock(m3)    # doctest: +NORMALIZE_WHITESPACE
+cyclobutane
+     RDKit          3D
+<BLANKLINE>
+  4  4  0  0  0  0  0  0  0  0999 V2000
+    0.2851    1.0372   -0.0171 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0352   -0.2833    0.0743 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2851   -1.0372    0.0171 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0352    0.2833   -0.0743 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  1  1  0
+M  END
+<BLANKLINE>
+
 If you'd like to write the molecules to a file, use Python file objects:
 
 >>> print >>file('data/foo.mol','w+'),Chem.MolToMolBlock(m2)

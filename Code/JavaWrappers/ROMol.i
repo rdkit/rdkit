@@ -80,6 +80,14 @@
 %ignore RDKit::ROMol::getBondWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
 %ignore RDKit::ROMol::getAtomNeighbors(Atom const *at) const;
+%ignore RDKit::ROMol::getAtomNeighbors(ATOM_SPTR at) const;
+%ignore RDKit::ROMol::getAtomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::getVertices() ;
+%ignore RDKit::ROMol::getVertices() const ;
+%ignore RDKit::ROMol::getEdges() ;
+%ignore RDKit::ROMol::getEdges() const ;
+%ignore RDKit::ROMol::getTopology() const ;
+
 
 /*
  * Special handling for Conformer objects which should not be GCed until the molecule is destroyed

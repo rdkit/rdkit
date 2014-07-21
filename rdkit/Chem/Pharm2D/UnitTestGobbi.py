@@ -11,8 +11,10 @@
 """unit testing code for the signatures
 
 """
+from __future__ import print_function
 import unittest
 import os
+from rdkit.six import next
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem.Pharm2D import Gobbi_Pharm2D,Generate
@@ -101,11 +103,11 @@ class TestCase(unittest.TestCase):
         shouldMatch,mapList=d[k]
         feats=self.factory.featFactory.GetFeaturesForMol(mol,includeOnly=k)
         if shouldMatch:
-          self.failUnless(feats)
-          self.failUnlessEqual(len(feats),len(mapList))
+          self.assertTrue(feats)
+          self.assertEqual(len(feats),len(mapList))
           aids = [(x.GetAtomIds()[0],) for x in feats]
           aids.sort()
-          self.failUnlessEqual(tuple(aids),mapList)
+          self.assertEqual(tuple(aids),mapList)
 
   def test2Sigs(self):
     probes = [('O=CCC=O',(149,)),
@@ -114,21 +116,21 @@ class TestCase(unittest.TestCase):
               ]
     for smi,tgt in probes:
       sig = Generate.Gen2DFingerprint(Chem.MolFromSmiles(smi),self.factory)
-      self.failUnlessEqual(len(sig),39972)
+      self.assertEqual(len(sig),39972)
       bs = tuple(sig.GetOnBits())
-      self.failUnlessEqual(len(bs),len(tgt))
-      self.failUnlessEqual(bs,tgt)
+      self.assertEqual(len(bs),len(tgt))
+      self.assertEqual(bs,tgt)
 
   def testOrderBug(self):
     sdFile = os.path.join(RDConfig.RDCodeDir,'Chem','Pharm2D','test_data','orderBug.sdf')
     suppl = Chem.SDMolSupplier(sdFile)
-    m1 =suppl.next()
-    m2 = suppl.next()
+    m1 = next(suppl)
+    m2 = next(suppl)
     sig1 = Generate.Gen2DFingerprint(m1,self.factory)
     sig2 = Generate.Gen2DFingerprint(m2,self.factory)
     ob1 = set(sig1.GetOnBits())
     ob2 = set(sig2.GetOnBits())
-    self.failUnlessEqual(sig1,sig2)
+    self.assertEqual(sig1,sig2)
 
   def testOrderBug2(self):
     from rdkit.Chem import Randomize
@@ -142,27 +144,27 @@ class TestCase(unittest.TestCase):
       m2 = Chem.MolFromSmiles(csmi)
       #m2.Debug()
       sig2 = Generate.Gen2DFingerprint(m2,self.factory)
-      self.failUnless(list(sig1.GetOnBits())==list(sig2.GetOnBits()),'%s %s'%(smi,csmi))
-      self.failUnlessEqual(DataStructs.DiceSimilarity(sig1,sig2),1.0)
-      self.failUnlessEqual(sig1,sig2)
+      self.assertTrue(list(sig1.GetOnBits())==list(sig2.GetOnBits()),'%s %s'%(smi,csmi))
+      self.assertEqual(DataStructs.DiceSimilarity(sig1,sig2),1.0)
+      self.assertEqual(sig1,sig2)
       for i in range(10):
         m2 = Randomize.RandomizeMol(m1)
         sig2 = Generate.Gen2DFingerprint(m2,self.factory)
         if sig2!=sig1:
           Generate._verbose=True
-          print '----------------'
+          print('----------------')
           sig1 = Generate.Gen2DFingerprint(m1,self.factory)
-          print '----------------'
+          print('----------------')
           sig2 = Generate.Gen2DFingerprint(m2,self.factory)
-          print '----------------'
-          print Chem.MolToMolBlock(m1)
-          print '----------------'
-          print Chem.MolToMolBlock(m2)
-          print '----------------'
+          print('----------------')
+          print(Chem.MolToMolBlock(m1))
+          print('----------------')
+          print(Chem.MolToMolBlock(m2))
+          print('----------------')
           s1 = set(sig1.GetOnBits())
           s2= set(sig2.GetOnBits())
-          print s1.difference(s2)
-        self.failUnlessEqual(sig1,sig2)
+          print(s1.difference(s2))
+        self.assertEqual(sig1,sig2)
 
 
 if __name__ == '__main__':

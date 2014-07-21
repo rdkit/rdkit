@@ -32,6 +32,45 @@ namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,python::object pyBondIndices,
+                                          unsigned int nToBreak,
+                                          bool addDummies,
+                                          python::object pyDummyLabels,
+                                          python::object pyBondTypes){
+    std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
+    if(pyDummyLabels){
+      unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+      dummyLabels = new std::vector<std::pair<unsigned int,unsigned int> >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        unsigned int v1=python::extract<unsigned int>(pyDummyLabels[i][0]);
+        unsigned int v2=python::extract<unsigned int>(pyDummyLabels[i][1]);
+        (*dummyLabels)[i] = std::make_pair(v1,v2);
+      }
+    }
+    std::vector< Bond::BondType > *bondTypes=0;
+    if(pyBondTypes){
+      unsigned int nVs=python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+      if(nVs!=bondIndices->size()) {
+	throw_value_error("bondTypes shorter than bondIndices");
+      }
+      bondTypes = new std::vector< Bond::BondType >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
+      }
+    }
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(mol,*bondIndices,frags,nToBreak,addDummies,dummyLabels,bondTypes);
+    python::list res;
+    for(unsigned int i=0;i<frags.size();++i){
+      res.append(frags[i]);
+    }
+    delete bondIndices;
+    delete dummyLabels;
+    delete bondTypes;
+    return python::tuple(res);
+  }
+
   ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
                                bool addDummies,
                                python::object pyDummyLabels,
@@ -1502,6 +1541,15 @@ namespace RDKit{
                    python::arg("bondTypes")=python::object()),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
+      docString="fragment on some bonds";
+      python::def("FragmentOnSomeBonds", fragmentOnSomeBondsHelper,
+                  (python::arg("mol"),
+                   python::arg("bondIndices"),
+                   python::arg("numToBreak")=1,
+                   python::arg("addDummies")=true,
+                   python::arg("dummyLabels")=python::object(),
+                   python::arg("bondTypes")=python::object()),
+                  docString.c_str());
 
 
       // ------------------------------------------------------------------------

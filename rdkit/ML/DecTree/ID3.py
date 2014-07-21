@@ -14,6 +14,7 @@
 import numpy
 from rdkit.ML.DecTree import DecTree
 from rdkit.ML.InfoTheory import entropy
+from rdkit.six.moves import range, xrange
 
 def CalcTotalEntropy(examples,nPossibleVals):
   """ Calculates the total entropy of the data set (w.r.t. the results)
@@ -33,8 +34,8 @@ def CalcTotalEntropy(examples,nPossibleVals):
   nRes = nPossibleVals[-1]
   resList = numpy.zeros(nRes,'i')
   for example in examples:
-    res = example[-1]
-    resList[res] = resList[res] + 1
+    res = int(example[-1])
+    resList[res] += 1
   return entropy.InfoEntropy(resList)
          
 def GenVarTable(examples,nPossibleVals,vars):
@@ -203,7 +204,7 @@ def ID3Boot(examples,attrs,nPossibleVals,initialVar=None,depth=0,maxDepth=-1,
   tree.SetData(totEntropy)
   tree.SetLabel(best)
   tree.SetTerminal(0)
-  nextAttrs = attrs[:]
+  nextAttrs = list(attrs)
   if not kwargs.get('recycleVars',0):
     nextAttrs.remove(best)
 

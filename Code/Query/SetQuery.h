@@ -11,6 +11,9 @@
 #define __RD_SETQUERY_H__
 #include <set>
 #include "Query.h"
+#include <sstream>
+#include <algorithm>
+#include <iterator>
 
 namespace Queries{
   //! \brief a Query implementing a set: arguments must 
@@ -66,7 +69,18 @@ namespace Queries{
     unsigned int size() const {
       return d_set.size();
     };
-  
+
+    std::string getFullDescription() const {
+      std::ostringstream res;
+      res<<this->getDescription()<<" val";
+      if(this->getNegation()) res<<" not in ";
+      else res<<" in (";
+      std::copy(d_set.begin(),d_set.end(),std::ostream_iterator<MatchFuncArgType>(res,", "));
+      res<<")";
+      return res.str();
+    }
+
+    
   protected:
     CONTAINER_TYPE d_set;
   };

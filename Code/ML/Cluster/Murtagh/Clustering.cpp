@@ -16,6 +16,8 @@ namespace python = boost::python;
 
 #include <numpy/arrayobject.h>
 
+#include <RDBoost/import_array.h>
+
 typedef double real;
 
 extern "C"
@@ -153,7 +155,7 @@ Clustering_MurtaghDistCluster(python::object data, int nPts, int option)
 
 BOOST_PYTHON_MODULE(Clustering) {
 
-  import_array();
+  rdkit_import_array();
 
   python::def("MurtaghCluster", Clustering_MurtaghCluster,
 	      ( python::arg("data"), python::arg("nPts"), 

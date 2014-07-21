@@ -6,7 +6,7 @@
 **NOTE** This code should be obsolete now that ML.Composite.Composite is up and running.
 
 """
-import cPickle
+from rdkit.six.moves import cPickle
 import numpy
 from rdkit.ML.DecTree import CrossValidate,PruneTree
 
@@ -274,7 +274,7 @@ class Forest(object):
 
     """
     outStr= 'Forest\n'
-    for i in xrange(len(self.treeList)):
+    for i in range(len(self.treeList)):
       outStr = outStr + \
          '  Tree % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
                                                                   100.*self.errList[i])

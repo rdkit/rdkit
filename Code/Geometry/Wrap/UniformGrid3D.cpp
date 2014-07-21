@@ -27,7 +27,9 @@ namespace RDGeom {
     static python::tuple
     getinitargs(const UniformGrid3D& self)
     {
-      return python::make_tuple(self.toString());
+      std::string res=self.toString();
+      python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+      return python::make_tuple(retval);
     };
   };
 

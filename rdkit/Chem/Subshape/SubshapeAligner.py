@@ -335,7 +335,7 @@ class SubshapeAligner(object):
 
 
 if __name__=='__main__':
-  import cPickle
+  from rdkit.six.moves import cPickle
   tgtMol,tgtShape = cPickle.load(file('target.pkl','rb'))
   queryMol,queryShape = cPickle.load(file('query.pkl','rb'))
   builder = cPickle.load(file('builder.pkl','rb'))

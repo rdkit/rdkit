@@ -11,7 +11,7 @@
 """ unit testing code for the C++ BitVects
 """
 import unittest,os,sys
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit.DataStructs import cDataStructs
 klass = cDataStructs.SparseBitVect
 

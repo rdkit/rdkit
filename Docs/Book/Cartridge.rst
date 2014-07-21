@@ -485,12 +485,13 @@ Molecule I/O and Validation
 
 * `mol_from_smiles(smiles)` : returns a molecule for a SMILES string, NULL if the molecule construction fails.
 * `mol_from_smarts(smarts)` : returns a molecule for a SMARTS string, NULL if the molecule construction fails.
-* `mol_from_ctab(ctab)` : returns a molecule for a CTAB (mol block) string, NULL if the molecule construction fails.
+* `mol_from_ctab(ctab, bool default false)` : returns a molecule for a CTAB (mol block) string, NULL if the molecule construction fails. The optional second argument controls whether or not the molecule's coordinates are saved.
 * `mol_from_pkl(bytea)` : returns a molecule for a binary string (bytea), NULL if the molecule construction fails. (*available from Q3 2012 (2012_09) release*)
 
 * `mol_to_smiles(mol)` : returns the canonical SMILES for a molecule.
 * `mol_to_smarts(mol)` : returns SMARTS string for a molecule.
 * `mol_to_pkl(mol)` : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012_09) release*)
+* `mol_to_ctab(mol,bool default true)` : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. (*available from the 2014_03 release*)
 
 
 Substructure operations
@@ -525,6 +526,9 @@ Descriptors
 * `mol_numsaturatedcarbocycles(mol)` : returns the number of saturated carbocycles in a molecule (*available from 2013_03 release*).
 * `mol_inchi(mol)` : returns an InChI for the molecule. (*available from the 2011_06 release, requires that the RDKit be built with InChI support*).
 * `mol_inchikey(mol)` : returns an InChI key for the molecule. (*available from the 2011_06 release, requires that the RDKit be built with InChI support*).
+* `mol_formula(mol,bool default false, bool default true)` : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H].
+(*available from the 2014_03 release*)
+
 
 Connectivity Descriptors
 ::::::::::::::::::::::::

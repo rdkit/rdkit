@@ -50,7 +50,7 @@ def stringwidth(text, font, encoding):
         try:
             widths = _Widths[encoding][string.lower(font) ]
         except:
-            raise KeyError, "Improper encoding %s or font name %s" % (encoding, font)
+            raise KeyError("Improper encoding {0} or font name {1}".format(encoding, font))
     w = 0
     for char in text:
         w = w + widths[ord(char)]

@@ -38,7 +38,7 @@ class Canvas(CanvasBase):
       except ImportError:
         from PIL import Image
       if size is None:
-        raise ValueError,'please provide either an image or a size'
+        raise ValueError('please provide either an image or a size')
       img = Image.new('RGBA',size,"white")
     self.image = img
     self.draw = Draw(img)
@@ -48,7 +48,7 @@ class Canvas(CanvasBase):
     else:
       self.size = size
     if imageType and imageType not in ('png','jpg'):
-      raise ValueError,'unsupported image type for agg canvas'
+      raise ValueError('unsupported image type for agg canvas')
     self.drawType=imageType
     self.fileName=fileName
     

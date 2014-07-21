@@ -11,6 +11,7 @@
 """ unit testing code for MOE-type descriptors with EStates
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import unittest,os
 from rdkit import Chem
@@ -23,21 +24,22 @@ def feq(n1,n2,tol=1e-4):
 class TestCase(unittest.TestCase):
   def setUp(self):
     if doLong:
-      print '\n%s: '%self.shortDescription(),
+      print('\n%s: '%self.shortDescription(), end='')
   def test1(self):
     inName = os.path.join(RDConfig.RDCodeDir,'Chem','EState','test_data',
                           'EState_VSA.csv')
-    inL = open(inName,'r').readline()
+    with open(inName,'r') as inF:
+      inL = inF.readline()
     names = [x.strip() for x in inL.split(',')[1:]]
     suppl = Chem.SmilesMolSupplier(inName,delimiter=',',nameColumn=-1)
     for mol in suppl:
-      self.failUnless(mol)
+      self.assertTrue(mol)
       smi = Chem.MolToSmiles(mol)
       for name in names:
         prop = float(mol.GetProp(name))
         func = getattr(EState_VSA,name)
         v = func(mol)
-        self.failUnless(feq(v,prop),'%s: %.4f!=%.4f'%(smi,v,prop))
+        self.assertTrue(feq(v,prop),'%s: %.4f!=%.4f'%(smi,v,prop))
 
         
 if __name__ == '__main__':

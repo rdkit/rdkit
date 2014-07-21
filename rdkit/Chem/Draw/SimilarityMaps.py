@@ -247,13 +247,13 @@ def GetTTFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, targetSize=4, 
 # usage:   lambda m,i: GetMorganFingerprint(m, i, radius, fpType, nBits, useFeatures)
 def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useFeatures=False):
   """
-  Calculates the Morgan fingerprint with the counts of atomId removed.
+  Calculates the Morgan fingerprint with the environments of atomId removed.
 
   Parameters:
     mol -- the molecule of interest
     radius -- the maximum radius
     fpType -- the type of Morgan fingerprint: 'count' or 'bv'
-    atomId -- the atom to remove the counts for (if -1, no count is removed)
+    atomId -- the atom to remove the environments for (if -1, no environments is removed)
     nBits -- the size of the bit vector (only for fpType = 'bv')
     useFeatures -- if false: ConnectivityMorgan, if true: FeatureMorgan
   """
@@ -292,4 +292,35 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
       # delete the bits with atomId
       for bit in mol._fpInfo[1][atomId]:
         molFp[bit] -= 1
+    return molFp
+
+# usage:   lambda m,i: GetRDKFingerprint(m, i, fpType, nBits, minPath, maxPath, nBitsPerHash)
+def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPath=5, nBitsPerHash=2):
+  """
+  Calculates the RDKit fingerprint with the paths of atomId removed.
+
+  Parameters:
+    mol -- the molecule of interest
+    atomId -- the atom to remove the paths for (if -1, no path is removed)
+    fpType -- the type of RDKit fingerprint: 'bv'
+    nBits -- the size of the bit vector
+    minPath -- minimum path length
+    maxPath -- maximum path length
+    nBitsPerHash -- number of to set per path
+  """
+  if fpType not in ['bv', '']: raise ValueError("Unknown RDKit fingerprint type")
+  fpType = 'bv'
+  if not hasattr(mol, '_fpInfo'):
+    info = [] # list with bits for each atom
+    # get the fingerprint
+    molFp = Chem.RDKFingerprint(mol, fpSize=nBits, minPath=minPath, maxPath=maxPath, nBitsPerHash=nBitsPerHash, atomBits=info)
+    mol._fpInfo = (molFp, info)
+
+  if atomId < 0:
+    return mol._fpInfo[0]
+  else: # remove the bits of atomId
+    if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
+    if len(mol._fpInfo) != 2: raise ValueError("_fpInfo not set")
+    molFp = copy.deepcopy(mol._fpInfo[0])
+    molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
     return molFp

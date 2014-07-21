@@ -27,7 +27,7 @@ namespace ForceFields {
       RANGE_CHECK(0, idx1, owner->positions().size() - 1);
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
       RANGE_CHECK(0, idx3, owner->positions().size() - 1);
-      PRECONDITION(maxAngleDeg >= minAngleDeg, "bad bounds");
+      _pretreatAngles(minAngleDeg, maxAngleDeg);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
@@ -48,7 +48,6 @@ namespace ForceFields {
       RANGE_CHECK(0, idx1, pos.size() - 1);
       RANGE_CHECK(0, idx2, pos.size() - 1);
       RANGE_CHECK(0, idx3, pos.size() - 1);
-      PRECONDITION(maxAngleDeg >= minAngleDeg, "allowedDeltaDeg must be >= 0.0");
 
       double angle = 0.0;
       if (relative) {
@@ -60,14 +59,18 @@ namespace ForceFields {
         RDGeom::Point3D p12 = (p1 - p2) / dist1;
         RDGeom::Point3D p32 = (p3 - p2) / dist2;
         double cosTheta = p12.dotProduct(p32);
+        clipToOne(cosTheta);
         angle = RAD2DEG * acos(cosTheta);
       }
       dp_forceField = owner;
       d_at1Idx = idx1;
       d_at2Idx = idx2;
       d_at3Idx = idx3;
-      d_minAngleDeg = angle + minAngleDeg;
-      d_maxAngleDeg = angle + maxAngleDeg;
+      minAngleDeg += angle;
+      maxAngleDeg += angle;
+      _pretreatAngles(minAngleDeg, maxAngleDeg);
+      d_minAngleDeg = minAngleDeg;
+      d_maxAngleDeg = maxAngleDeg;
       d_forceConstant = forceConst;
     }
 
@@ -89,6 +92,7 @@ namespace ForceFields {
       RDGeom::Point3D p12 = (p1 - p2) / dist1;
       RDGeom::Point3D p32 = (p3 - p2) / dist2;
       double cosTheta = p12.dotProduct(p32);
+      clipToOne(cosTheta);
       double angle = RAD2DEG * acos(cosTheta);
       double angleTerm = 0.0;
       if (angle < d_minAngleDeg) {
@@ -130,6 +134,7 @@ namespace ForceFields {
         (p3 - p2) / dist[1]
       };
       double cosTheta = r[0].dotProduct(r[1]);
+      clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 

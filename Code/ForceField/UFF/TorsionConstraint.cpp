@@ -30,7 +30,7 @@ namespace ForceFields {
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
       RANGE_CHECK(0, idx3, owner->positions().size() - 1);
       RANGE_CHECK(0, idx4, owner->positions().size() - 1);
-      PRECONDITION(maxDihedralDeg >= minDihedralDeg, "bad bounds");
+      _pretreatAngles(minDihedralDeg, maxDihedralDeg);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
@@ -80,8 +80,11 @@ namespace ForceFields {
       d_at2Idx = idx2;
       d_at3Idx = idx3;
       d_at4Idx = idx4;
-      d_minDihedralDeg = dihedral + minDihedralDeg;
-      d_maxDihedralDeg = dihedral + maxDihedralDeg;
+      minDihedralDeg += dihedral;
+      maxDihedralDeg += dihedral;
+      _pretreatAngles(minDihedralDeg, maxDihedralDeg);
+      d_minDihedralDeg = minDihedralDeg;
+      d_maxDihedralDeg = maxDihedralDeg;
       d_forceConstant = forceConst;
     }
 
@@ -109,7 +112,6 @@ namespace ForceFields {
       double d2 = std::max(t2.length(), 0.0);
       t1 /= d1;
       t2 /= d2;
-      double cosPhi = t1.dotProduct(t2);
       
       RDGeom::Point3D n123 = (-r1).crossProduct(r2);
       double n123SqLength = n123.lengthSq();
@@ -175,6 +177,7 @@ namespace ForceFields {
       t[0] /= d[0];
       t[1] /= d[1];
       double cosPhi = t[0].dotProduct(t[1]);
+      clipToOne(cosPhi);
       double sinPhiSq = 1.0 - cosPhi * cosPhi;
       double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
       // dE/dPhi is independent of cartesians:

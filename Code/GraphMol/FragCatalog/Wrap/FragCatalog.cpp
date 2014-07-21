@@ -27,7 +27,7 @@ namespace RDKit{
     {
       std::string res;
       res = self.Serialize();
-      return python::make_tuple(res);
+      return python::make_tuple(python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length()))));
     };
   };
   unsigned int GetBitEntryId(const FragCatalog *self,unsigned int idx){

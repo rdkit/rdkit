@@ -55,10 +55,11 @@ void rdChemicalReactionExceptionTranslator(RDKit::ChemicalReactionException cons
 }
 
 namespace RDKit {
-  std::string ReactionToBinary(const ChemicalReaction &self){
+  python::object ReactionToBinary(const ChemicalReaction &self){
     std::string res;
     ReactionPickler::pickleReaction(self,res);
-    return res;
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
   }
   //
   // allows reactions to be pickled.
@@ -157,14 +158,15 @@ namespace RDKit {
   
 
   ChemicalReaction *ReactionFromSmarts(const char *smarts,
-                                  python::dict replDict){
+                                       python::dict replDict,
+                                       bool useSmiles){
     PRECONDITION(smarts,"null SMARTS string");
     std::map<std::string,std::string> replacements;
     for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
       replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
     }
     ChemicalReaction *res; 
-    res = RxnSmartsToChemicalReaction(smarts,&replacements);
+    res = RxnSmartsToChemicalReaction(smarts,&replacements,useSmiles);
     return res;
   }
   
@@ -290,7 +292,8 @@ Sample Usage:\n\
 
   python::def("ReactionFromSmarts",RDKit::ReactionFromSmarts,
               (python::arg("SMARTS"),
-               python::arg("replacements")=python::dict()),
+               python::arg("replacements")=python::dict(),
+               python::arg("useSmiles")=false),
               "construct a ChemicalReaction from a reaction SMARTS string. \n\
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",

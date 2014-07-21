@@ -1,4 +1,4 @@
-# $Id$
+# $Id: cairoCanvas.py 11930 2014-01-24 07:00:08Z landrgr1 $
 #
 #  Copyright (C) 2008 Greg Landrum
 #  Copyright (C) 2009 Uwe Hoffmann
@@ -14,8 +14,9 @@ try:
   import cairo
 except ImportError:
   import cairocffi as cairo
-if not hasattr(cairo.ImageSurface,'get_data'):
-  raise ImportError,'cairo version too old'  
+if not hasattr(cairo.ImageSurface,'get_data') and \
+   not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
+  raise ImportError('cairo version too old')
 
 
 import math
@@ -64,8 +65,8 @@ class Canvas(CanvasBase):
       try:
       	imgd = image.tostring("raw","BGRA")
       except SystemError:
-	r,g,b,a = image.split()
-	imgd = Image.merge("RGBA",(b,g,r,a)).tostring("raw","RGBA")
+        r,g,b,a = image.split()
+        imgd = Image.merge("RGBA",(b,g,r,a)).tostring("raw","RGBA")
    
       a = array.array('B',imgd)
       stride=image.size[0]*4
@@ -85,7 +86,7 @@ class Canvas(CanvasBase):
       elif imageType == "png":
         surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, size[0], size[1])
       else:
-        raise ValueError, "Unrecognized file type. Valid choices are pdf, svg, ps, and png"
+        raise ValueError("Unrecognized file type. Valid choices are pdf, svg, ps, and png")
       ctx = cairo.Context(surface)
       ctx.set_source_rgb(1,1,1)
       ctx.paint()
@@ -108,11 +109,18 @@ class Canvas(CanvasBase):
       self.surface.write_to_png(self.fileName)
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
-      self.image.fromstring(self.surface.get_data(),
-                            "raw","BGRA",0,1)
+      if hasattr(self.surface,'get_data'):
+        self.image.fromstring(self.surface.get_data(),
+                              "raw","BGRA",0,1)
+      else:
+        self.image.fromstring(self.surface.get_data_as_rgba(),
+                              "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
-      buffer=self.surface.get_data()
+      if hasattr(self.surface,'get_data'):
+        buffer=self.surface.get_data()
+      else:
+        buffer=self.surface.get_data_as_rgba()
       return buffer
 
   def _doLine(self, p1, p2, **kwargs):

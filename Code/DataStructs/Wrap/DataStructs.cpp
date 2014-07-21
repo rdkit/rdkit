@@ -18,7 +18,8 @@
 #include <boost/python/numeric.hpp>
 #include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
-
+#include <RDBoost/import_array.h>
+#include <RDBoost/pyint_api.h>
 
 namespace python = boost::python;
 
@@ -44,6 +45,7 @@ void convertToNumpyArray(const T &v,python::object destArray){
   for(unsigned int i=0;i<v.size();++i){
     PyObject *iItem = PyInt_FromLong(v[i]);
     PyArray_SETITEM(destP,PyArray_GETPTR1(destP,i),iItem);
+    Py_DECREF(iItem);
   }
 }
 
@@ -51,7 +53,7 @@ void convertToNumpyArray(const T &v,python::object destArray){
 
 BOOST_PYTHON_MODULE(cDataStructs)
 {
-  import_array();
+  rdkit_import_array();
   python::scope().attr("__doc__") =
     "Module containing an assortment of functionality for basic data structures.\n"
     "\n"

@@ -36,8 +36,7 @@ except ImportError:
   from PIL import Image, ImageFont, ImageDraw
 import math
 
-import string
-
+from rdkit import six
 import os
 if __name__ == '__main__':
   _fontprefix = os.path.join(os.curdir, 'pilfonts')
@@ -47,13 +46,13 @@ else:
 # load font metrics
 try:
   f = open(os.path.join(_fontprefix,'metrics.dat'), 'rb')
-  import cPickle
+  from rdkit.six.moves import cPickle
   _widthmaps = cPickle.load(f)
   _ascents = cPickle.load(f)
   _descents = cPickle.load(f)
   f.close()
 except:
-  print "Warning: unable to load font metrics from dir %s"%(_fontprefix)
+  print("Warning: unable to load font metrics from dir {0}".format(_fontprefix))
   _widthmaps = {}
   _ascents = {}
   _descents = {}
@@ -88,25 +87,25 @@ def _matchingFontPath(font):
   else: face = 'times'
 
   size = _closestSize(font.size)
-  if type(face) == StringType:
+  if isinstance(face,six.string_types):
     path = _pilFontPath(face,size,font.bold)
-    path = string.split(path,os.sep)[-1]
+    path = path.split(os.sep)[-1]
     if path in _widthmaps.keys(): return path
   else:
     for item in font.face:
       path = _pilFontPath(item,size,font.bold)
-      path = string.split(path,os.sep)[-1]
+      path = path.split(os.sep)[-1]
       if path in _widthmaps.keys(): return path
   # not found?  Try it with courier, which should always be there
   path = _pilFontPath('courier',size,font.bold)
-  return string.split(path,os.sep)[-1]
+  return path.split(os.sep)[-1]
 
 def _pilFont(font):
   if font.face: face = font.face
   else: face = 'times'
 
   size = _closestSize(font.size)
-  if type(face) == StringType:
+  if isinstance(face,six.string_types):
     try: 
       pilfont = ImageFont.load_path(_pilFontPath(face,size,font.bold))
     except:

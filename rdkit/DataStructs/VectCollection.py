@@ -8,8 +8,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
+import copy,struct,sys
+from rdkit.six.moves import cPickle
+from rdkit.six import iterkeys
+from rdkit import six
 from rdkit import DataStructs
-import copy,struct,cPickle
 
 class VectCollection(object):
   """
@@ -150,7 +154,7 @@ class VectCollection(object):
     self.__orVect=None
     if not self.__vects:
       return
-    ks = self.__vects.keys()
+    ks = list(iterkeys(self.__vects))
     self.__orVect = copy.copy(self.__vects[ks[0]])
     self.__numBits = self.__orVect.GetNumBits()
     for i in range(1,len(ks)):
@@ -161,7 +165,7 @@ class VectCollection(object):
     return len(self.__vects.keys())
 
   def GetChildren(self):
-    return tuple(self.__vects.iteritems())
+    return tuple(self.__vects.items())
 
   def GetBit(self,id):
     if self.__needReset:
@@ -176,14 +180,14 @@ class VectCollection(object):
     return self.__orVect.GetOnBits()
 
   def DetachVectsNotMatchingBit(self,bit):
-    items = list(self.__vects.iteritems())
+    items = list(self.__vects.items())
     for k,v in items:
       if not v.GetBit(bit):
         del(self.__vects[k])
         self.__needReset=True
 
   def DetachVectsMatchingBit(self,bit):
-    items = list(self.__vects.iteritems())
+    items = list(self.__vects.items())
     for k,v in items:
       if v.GetBit(bit):
         del(self.__vects[k])
@@ -191,7 +195,7 @@ class VectCollection(object):
 
   def Uniquify(self,verbose=False):
     obls = {}
-    for k,v in self.__vects.iteritems():
+    for k,v in self.__vects.items():
       obls[k] = list(v.GetOnBits())
     
     keys = self.__vects.keys()
@@ -213,7 +217,7 @@ class VectCollection(object):
     tmp = {}
     for k in keep:
       tmp[k] = self.__vects[k]
-    if verbose: print 'uniquify:',len(self.__vects),'->',len(tmp)
+    if verbose: print('uniquify:',len(self.__vects),'->',len(tmp))
     self.__vects=tmp
       
 
@@ -231,7 +235,7 @@ class VectCollection(object):
   #
   def __getstate__(self):
     pkl = struct.pack('<I',len(self.__vects))
-    for k,v in self.__vects.iteritems():
+    for k,v in self.__vects.items():
       pkl += struct.pack('<I',k)
       p = v.ToBinary()
       l = len(p)
@@ -240,6 +244,9 @@ class VectCollection(object):
     return pkl
 
   def __setstate__(self,pkl):
+    if six.PY3 and isinstance(pkl,str):
+      pkl = bytes(pkl,encoding='Latin1')
+      
     self.__vects = {}
     self.__orVect = None
     self.__numBits = -1

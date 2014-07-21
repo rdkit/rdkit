@@ -1,7 +1,7 @@
 from rdkit import DataStructs
 from rdkit import RDConfig
 import unittest
-import cPickle as pickle
+from rdkit.six.moves import cPickle as pickle
 import random
 import numpy
 
@@ -25,11 +25,15 @@ class TestCase(unittest.TestCase):
       for i in range(1000) :
          assert bv1.GetBit(i) == bv2.GetBit(i)
 
-      self.failUnless(bv1==bv2)
+      self.assertTrue(bv1==bv2)
       bv2.SetBit(1)
-      self.failUnless(bv1!=bv2)
+      self.assertTrue(bv1!=bv2)
       bv2.UnSetBit(1)
-      self.failUnless(bv1==bv2)
+      self.assertTrue(bv1==bv2)
+
+      bv2.UnSetBitsFromList(obits)
+      for i in range(1000) :
+         assert bv2.GetBit(i) == 0
 
       bv1 = DataStructs.ExplicitBitVect(1000)
       bv2 = DataStructs.ExplicitBitVect(1000)
@@ -42,6 +46,15 @@ class TestCase(unittest.TestCase):
 
       for i in range(1000) :
          assert bv1.GetBit(i) == bv2.GetBit(i)
+
+      bv2.UnSetBitsFromList(obits)
+      for i in range(1000) :
+         assert bv2.GetBit(i) == 0
+
+   def test01BVWithAllOnes(self) :
+      bv1 = DataStructs.ExplicitBitVect(10, True)
+      for i in range(10) :
+         assert bv1.GetBit(i) == 1
 
    def test1SparsePickle(self) :
       nbits = 10000
@@ -89,16 +102,16 @@ class TestCase(unittest.TestCase):
          bv1.SetBit(i)
          if i < 3*sz/4:
             bv2.SetBit(i)
-      self.failUnless(DataStructs.AllProbeBitsMatch(bv1,bv1.ToBinary()))
-      self.failUnless(DataStructs.AllProbeBitsMatch(bv2,bv1.ToBinary()))
-      self.failIf(DataStructs.AllProbeBitsMatch(bv1,bv2.ToBinary()))
-      self.failUnless(DataStructs.AllProbeBitsMatch(bv2,bv2.ToBinary()))
+      self.assertTrue(DataStructs.AllProbeBitsMatch(bv1,bv1.ToBinary()))
+      self.assertTrue(DataStructs.AllProbeBitsMatch(bv2,bv1.ToBinary()))
+      self.assertFalse(DataStructs.AllProbeBitsMatch(bv1,bv2.ToBinary()))
+      self.assertTrue(DataStructs.AllProbeBitsMatch(bv2,bv2.ToBinary()))
 
    def test5FromBitString(self):
       s1 = '1010'
       bv = DataStructs.CreateFromBitString(s1)
-      self.failUnless(len(bv)==4)
-      self.failUnless(list(bv.GetOnBits())==[0,2])
+      self.assertTrue(len(bv)==4)
+      self.assertTrue(list(bv.GetOnBits())==[0,2])
 
    def test6BulkOps(self):
       nbits = 10000
@@ -112,41 +125,41 @@ class TestCase(unittest.TestCase):
       sims = DataStructs.BulkTanimotoSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkDiceSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkAllBitSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.AllBitSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkOnBitSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkRogotGoldbergSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.RogotGoldbergSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
         sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,.5,.5)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],.5,.5)
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
    def test7FPS(self):
       bv = DataStructs.ExplicitBitVect(32)
@@ -156,14 +169,14 @@ class TestCase(unittest.TestCase):
       bv.SetBit(23)
       bv.SetBit(31)
 
-      self.failUnlessEqual(DataStructs.BitVectToFPSText(bv),"03008280")
+      self.assertEqual(DataStructs.BitVectToFPSText(bv),"03008280")
       bv2 = DataStructs.CreateFromFPSText("03008280")
-      self.failUnlessEqual(bv,bv2)
+      self.assertEqual(bv,bv2)
 
-      self.failUnlessRaises(ValueError,lambda : DataStructs.CreateFromFPSText("030082801"))
+      self.assertRaises(ValueError,lambda : DataStructs.CreateFromFPSText("030082801"))
       
       bv2 = DataStructs.CreateFromFPSText("")
-      self.failUnlessEqual(bv2.GetNumBits(),0)
+      self.assertEqual(bv2.GetNumBits(),0)
 
 
    def test8BinText(self):
@@ -175,10 +188,10 @@ class TestCase(unittest.TestCase):
       bv.SetBit(31)
 
       bv2 = DataStructs.CreateFromBinaryText(DataStructs.BitVectToBinaryText(bv))
-      self.failUnlessEqual(bv,bv2)
+      self.assertEqual(bv,bv2)
 
       bv2 = DataStructs.CreateFromBinaryText("")
-      self.failUnlessEqual(bv2.GetNumBits(),0)
+      self.assertEqual(bv2.GetNumBits(),0)
 
    def test9ToNumpy(self):
       import numpy
@@ -191,7 +204,7 @@ class TestCase(unittest.TestCase):
       arr = numpy.zeros((3,),'i')
       DataStructs.ConvertToNumpyArray(bv,arr)
       for i in range(bv.GetNumBits()):
-        self.failUnlessEqual(bv[i],arr[i])
+        self.assertEqual(bv[i],arr[i])
 
    def test10BulkOps2(self):
       nbits = 10000
@@ -206,41 +219,41 @@ class TestCase(unittest.TestCase):
       sims = DataStructs.BulkTanimotoSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkDiceSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkAllBitSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.AllBitSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkOnBitSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkRogotGoldbergSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.RogotGoldbergSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
         sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,.5,.5)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],.5,.5)
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
    def test10BulkOps3(self):
       nbits = 10000
@@ -254,41 +267,41 @@ class TestCase(unittest.TestCase):
       sims = DataStructs.BulkTanimotoSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkDiceSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkAllBitSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.AllBitSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkOnBitSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkRogotGoldbergSimilarity(bvs[0],bvs)
       for i in range(len(bvs)):
         sim = DataStructs.RogotGoldbergSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
         sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,.5,.5)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],.5,.5)
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
-        self.failUnless(feq(sim,sims[i]))
+        self.assertTrue(feq(sim,sims[i]))
 
       
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-// $Id$
+// $Id: AvalonTools.cpp 2355 2013-01-08 05:35:03Z glandrum $
 //
 // Created by Greg Landrum, July 2008
 //
@@ -170,8 +170,6 @@ namespace AvalonTools {
   unsigned int set2DCoords(ROMol &mol,bool clearConfs){
     struct reaccs_molecule_t *mp=molToReaccs(mol);
     struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-    //std::cerr<<"----\n"<<MolToMolStr(mp2)<<"--------\n";
-
     TEST_ASSERT(mp2->n_atoms==mol.getNumAtoms());
 
     RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
@@ -201,10 +199,10 @@ namespace AvalonTools {
     std::string res="";
     if(mp){
       struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-      FreeMolecule(mp);
       Utils::LocaleSwitcher ls;
       char *molB = MolToMolStr(mp2);
       res=molB;
+      FreeMolecule(mp);
       FreeMolecule(mp2);
       MyFree(molB);
     } 
@@ -292,6 +290,9 @@ namespace AvalonTools {
    **/
   int checkMolString(const std::string &data, const bool isSmiles,
 		     struct reaccs_molecule_t **mp) {
+	// clean msg list from previous call (if no previous call, freemsglist does nothing)	
+    FreeMsgList();
+
     int errs = 0;
     if(isSmiles){
       *mp = SMIToMOL(data.c_str(),DY_AROMATICITY);
@@ -311,7 +312,19 @@ namespace AvalonTools {
     return InitCheckMol((char *) optString.c_str());
   }
 
+  std::string getCheckMolLog()
+  {
+	  char *buf = GetMsgList();
+	  std::string res = buf;
+	  MyFree(buf);
+
+	  return res;
+  }
+
   RDKit::ROMOL_SPTR checkMol(int &errs, RDKit::ROMol& inMol) {
+	// clean msg list from previous call (if no previous call, freemsglist does nothing)	
+    FreeMsgList();
+
     struct reaccs_molecule_t *mp;
     RDKit::ROMol *rMol = 0;
     mp = molToReaccs(inMol);

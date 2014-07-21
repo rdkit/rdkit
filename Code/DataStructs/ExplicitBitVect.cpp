@@ -20,6 +20,15 @@
 #endif
 #include <boost/cstdint.hpp>
 
+ExplicitBitVect::ExplicitBitVect(unsigned int size, bool bitsSet)
+{
+  d_size=0;dp_bits = 0;d_numOnBits=0;
+  _initForSize(size);
+  if (bitsSet) {
+    dp_bits->set(); // set all bits to 1
+    d_numOnBits = size;
+  }
+}
 ExplicitBitVect::ExplicitBitVect(const std::string &s)
 {
   d_size=0;dp_bits = 0;d_numOnBits=0;
@@ -39,6 +48,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
 
   ExplicitBitVect& ExplicitBitVect::operator=(const ExplicitBitVect& other){
     d_size = other.d_size;
+    delete dp_bits;
     dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
     d_numOnBits=other.d_numOnBits;
     return *this;

@@ -11,7 +11,9 @@
 """  Functionality for SATIS typing atoms
 
 """
+from __future__ import print_function
 from rdkit import Chem
+from rdkit.six.moves import xrange
 
 _debug = 0
 
@@ -80,11 +82,11 @@ def SATISTypes(mol,neighborsToInclude=4):
     bonds = atom.GetBonds()
     nBonds = len(bonds)
     otherIndices = [-1]*nBonds
-    if _debug: print code[0],
+    if _debug: print(code[0],end='')
     for j in range(nBonds):
       otherIndices[j] = bonds[j].GetOtherAtom(atom).GetIdx()
-      if _debug: print otherIndices[j],
-    if _debug: print  
+      if _debug: print(otherIndices[j],end='')
+    if _debug: print()  
     otherNums = [atomicNums[x] for x in otherIndices] + \
                 [1]*atom.GetTotalNumHs()
     otherNums.sort()
@@ -117,7 +119,7 @@ if __name__ == '__main__':
   smis = ['CC(=O)NC','CP(F)(Cl)(Br)(O)',
           'O=CC(=O)C','C(=O)OCC(=O)O','C(=O)[O-]']
   for smi in smis:
-    print smi
+    print(smi)
     m = Chem.MolFromSmiles(smi)
     codes = SATISTypes(m)
-    print codes
+    print(codes)

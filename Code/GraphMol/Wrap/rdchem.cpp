@@ -14,6 +14,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <numpy/oldnumeric.h>
 #include <GraphMol/SanitException.h>
+#include <RDBoost/import_array.h>
+#include <RDBoost/iterator_next.h>
 
 #include <sstream>
 
@@ -55,7 +57,7 @@ BOOST_PYTHON_MODULE(rdchem)
     ;
   RegisterListConverter<RDKit::Atom*>();
   RegisterListConverter<RDKit::Bond*>();
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
@@ -72,7 +74,7 @@ BOOST_PYTHON_MODULE(rdchem)
     .def("__iter__",&AtomIterSeq::__iter__,
          python::return_internal_reference<1,
                                            python::with_custodian_and_ward_postcall<0,1> >())
-    .def("next",&AtomIterSeq::next,
+    .def(NEXT_METHOD,&AtomIterSeq::next,
     	   python::return_value_policy<python::reference_existing_object>())
 
     .def("__len__",&AtomIterSeq::len)
@@ -85,7 +87,7 @@ BOOST_PYTHON_MODULE(rdchem)
     .def("__iter__",&QueryAtomIterSeq::__iter__,
          python::return_internal_reference<1,
                                            python::with_custodian_and_ward_postcall<0,1> >())
-    .def("next",&QueryAtomIterSeq::next,
+    .def(NEXT_METHOD,&QueryAtomIterSeq::next,
     	   python::return_value_policy<python::reference_existing_object>())
     .def("__len__",&QueryAtomIterSeq::len)
     .def("__getitem__",&QueryAtomIterSeq::get_item,

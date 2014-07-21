@@ -18,16 +18,16 @@ Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 """
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-import Utils
+from rdkit.Chem.AtomPairs import Utils
 
 def pyScorePath(mol,path,size,atomCodes=None):
   """ Returns a score for an individual path.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
-  >>> c1 = long(Utils.GetAtomCode(m.GetAtomWithIdx(0),1))
-  >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
-  >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
-  >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
+  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
+  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
+  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
+  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(3),1)
   >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
   >>> pyScorePath(m,(0,1,2,3),4)==t
   1
@@ -38,10 +38,10 @@ def pyScorePath(mol,path,size,atomCodes=None):
 
 
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
-  >>> c1 = long(Utils.GetAtomCode(m.GetAtomWithIdx(0),1))
-  >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
-  >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
-  >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(4),1))
+  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
+  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
+  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
+  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(4),1)
   >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
   >>> pyScorePath(m,(0,1,2,4),4)==t
   1
@@ -71,9 +71,9 @@ def pyScorePath(mol,path,size,atomCodes=None):
       end -= 1
     else:
       break
-  accum = 0L
+  accum = 0
   for i in range(size):
-    accum |= long(codes[i]) << (rdMolDescriptors.AtomPairsParameters.codeSize*i)
+    accum |= codes[i] << (rdMolDescriptors.AtomPairsParameters.codeSize*i)
   return accum
 
 def ExplainPathScore(score,size=4):

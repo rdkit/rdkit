@@ -11,8 +11,10 @@
 """ General descriptor testing code
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
-import unittest,os.path,cPickle
+import unittest,os.path
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
@@ -27,14 +29,14 @@ class TestCase(unittest.TestCase):
     smis = ('CC[Pu]','CC[*]')
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
-      self.failUnless(m)
+      self.assertTrue(m)
       for nm,fn in Descriptors._descList:
         try:
           v = fn(m)
         except:
           import traceback
           traceback.print_exc()
-          self.failUnless(0,'SMILES: %s'%smi)
+          self.assertTrue(0,'SMILES: %s'%smi)
 
   def testMolFormula(self):
     for (smiles, expected) in (  ("[NH4+]", "H4N+"),
@@ -54,18 +56,20 @@ class TestCase(unittest.TestCase):
                                  ):
       mol = Chem.MolFromSmiles(smiles)
       actual = AllChem.CalcMolFormula(mol)
-      self.failUnlessEqual(actual,expected)
+      self.assertEqual(actual,expected)
   def testMQNDetails(self):
     refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','MQNs_regress.pkl')
-    refData = cPickle.load(file(refFile))
+    with open(refFile,'rb') as inf:
+      pkl = inf.read()
+    refData  = cPickle.loads(pkl,encoding='bytes')
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
     for i,m in enumerate(ms):
       mqns = rdMolDescriptors.MQNs_(m) 
       if mqns!=refData[i][1]:
         indices=[(j,x,y) for j,x,y in zip(range(len(mqns)),mqns,refData[i][1]) if x!=y]
-        print Chem.MolToSmiles(m),indices
-      self.failUnlessEqual(mqns,refData[i][1])
+        print(Chem.MolToSmiles(m),indices)
+      self.assertEqual(mqns,refData[i][1])
   def testMQN(self):
     tgt = np.array([42917,   274,   870,   621,   135,  1582,    29,  3147,  5463,
         6999,   470,    81, 19055,  4424,   309, 24061, 17820,     1,
@@ -77,7 +81,7 @@ class TestCase(unittest.TestCase):
     vs = np.zeros((42,),np.int32)
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
-    self.failIf(False in (vs==tgt))
+    self.assertFalse(False in (vs==tgt))
     
           
       

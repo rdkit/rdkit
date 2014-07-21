@@ -1,0 +1,61 @@
+To use the Avalon Toolkit support in the RDKit, first download a copy of the
+source from:
+http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.1_beta/AvalonToolkit_1.1_beta.source.tar/download
+
+Note that the version number is important.
+
+Extract the tar file somewhere; the source requred by the RDKit is in
+the SourceDistribution directory.
+
+Apply the following diff to the files
+SourceDistribution/common/reaccsio.c and
+SourceDistribution/common/smi2mol.c:
+
+$ diff SourceDistribution/common ~/avalontoolkit_beta/SourceDistribution/common
+diff SourceDistribution/common/reaccsio.c /cygdrive/c/Users/glandrum/avalontoolkit_beta/SourceDistribution/common/reaccsio.c
+1400d1399
+<
+1414c1413
+<                MyFree((char *)tempdir);
+---
+>                //MyFree((char *)tempdir);
+1433d1431
+<
+1443c1441
+<
+---
+>    fprintf(stderr,"  returning\n");
+
+diff SourceDistribution/common/smi2mol.c /cygdrive/c/Users/glandrum/avalontoolkit_beta/SourceDistribution/common/smi2mol.c
+936c936
+< fprintf(stderr, "2: opening branch '%s'\n", tmp);
+---
+>                 /* fprintf(stderr, "2: opening branch '%s'\n", tmp); */
+1012c1012
+< fprintf(stderr, "closing branch '%s'\n", tmp);
+---
+>           /* fprintf(stderr, "closing branch '%s'\n", tmp); */
+1543c1543
+< fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
+---
+>           /*fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
+1550c1550
+< fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
+---
+>           /*fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
+1574c1574
+< fprintf(stderr, "1: opening branch '%s'\n", num_buf);
+---
+>                    /*fprintf(stderr, "1: opening branch '%s'\n", num_buf);*/
+1592c1592
+< fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
+---
+>            /*fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
+1596c1596
+< fprintf(stderr, "\n");
+---
+>       /*fprintf(stderr, "\n");*/
+
+
+
+

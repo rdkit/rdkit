@@ -10,7 +10,10 @@
     Dan W. Patterson, Prentice Hall, 1996
   
 """
+from __future__ import print_function
 import numpy
+
+from rdkit.six.moves import xrange
   
 class Trainer(object):
   """ "virtual base class" for network trainers
@@ -155,7 +158,7 @@ class BackProp(Trainer):
     while (not converged) and (cycle < maxIts):
       maxErr = 0
       newErr = 0
-      #print 'bp: ',cycle
+      #print('bp: ',cycle)
       for example in examples:
         localErr = self.StepUpdate(example,net)
         newErr += localErr
@@ -165,22 +168,22 @@ class BackProp(Trainer):
         newErr = newErr / nExamples
       else:
         newErr = maxErr
-      #print '\t',newErr,errTol
+      #print('\t',newErr,errTol)
         
       if newErr <= errTol:
         converged = 1
 
 #      if cycle % 10 == 0 and not silent:
       if not silent:
-        print 'epoch %d, error: % 6.4f'%(cycle,newErr)
+        print('epoch %d, error: % 6.4f'%(cycle,newErr))
 
       cycle = cycle + 1
     if not silent:
       if converged:
-        print 'Converged after %d epochs.'%cycle
+        print('Converged after %d epochs.'%cycle)
       else:
-        print 'NOT Converged after %d epochs.'%cycle
-      print 'final error: % 6.4f'%newErr
+        print('NOT Converged after %d epochs.'%cycle)
+      print('final error: % 6.4f'%newErr)
 
   def __init__(self,speed=0.5,momentum=0.7):
     """ Constructor
@@ -224,10 +227,10 @@ if __name__ == '__main__':
     net = Network.Network([3,1])
     t = BackProp()
     t.TrainOnLine(examples,net,maxIts=1000,useAvgErr=0)
-    print 'classifications:'
+    print('classifications:')
     for example in examples:
       res = net.ClassifyExample(example[0])
-      print '%f -> %f'%(example[1][0],res)
+      print('%f -> %f'%(example[1][0],res))
 
     return net
 
@@ -256,10 +259,10 @@ if __name__ == '__main__':
     net = Network.Network([1,2,1])
     t = BackProp(speed=.8)
     t.TrainOnLine(examples,net,errTol=0.1,useAvgErr=0)
-    print 'classifications:'
+    print('classifications:')
     for example in examples:
       res = net.ClassifyExample(example[:-1])
-      print '%f -> %f'%(example[-1],res)
+      print('%f -> %f'%(example[-1],res))
 
     return net
 
@@ -275,8 +278,8 @@ if __name__ == '__main__':
     
   if 0:
     net = testXor()
-    print 'Xor:', net
-    import cPickle
+    print('Xor:', net)
+    from rdkit.six.moves import cPickle
     outF = open('xornet.pkl','wb+')
     cPickle.dump(net,outF)
     outF.close()

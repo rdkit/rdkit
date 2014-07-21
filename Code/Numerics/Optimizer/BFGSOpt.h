@@ -10,6 +10,7 @@
 #include <math.h>
 #include <RDGeneral/Invariant.h>
 #include <cstring>
+#include <algorithm>
 
 namespace BFGSOpt {
   const double FUNCTOL=1e-4;  //!< Default tolerance for function convergence in the minimizer

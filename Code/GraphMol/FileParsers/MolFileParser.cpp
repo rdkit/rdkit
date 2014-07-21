@@ -278,23 +278,25 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      int spos = 9;
+      unsigned int spos = 9;
       for (int ie = 0; ie < nent; ie++) {
         if(text.size()<spos+8){
           std::ostringstream errout;
           errout << "SGroup line too short: '" << text<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
+#if 0        
         int nbr;
         try {
           nbr = FileParserUtils::toInt(text.substr(spos,4));
-          spos += 4;
         } 
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
           errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
+#endif
+        spos += 4;
         std::string typ = text.substr(spos+1,3);
         if(!SGroupOK(typ)){
           std::ostringstream errout;
@@ -1282,7 +1284,11 @@ namespace RDKit{
         try {
           int topology = FileParserUtils::toInt(text.substr(15,3));
           if(topology){
-            QueryBond *qBond=new QueryBond(*res);
+            if(!res->hasQuery()){
+              QueryBond *qBond=new QueryBond(*res);
+              delete res;
+              res = qBond;
+            }
             BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
             switch(topology){
             case 1:
@@ -1295,9 +1301,7 @@ namespace RDKit{
               errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
               throw FileParseException(errout.str()) ;
             }
-            qBond->expandQuery(q);          
-            delete res;
-            res = qBond;
+            res->expandQuery(q);          
           }
         } catch (boost::bad_lexical_cast) {
           ;
@@ -1394,7 +1398,7 @@ namespace RDKit{
             errout << "negative skip value "<<nToSkip<<" on line "<<line;
             throw FileParseException(errout.str()) ;
           }
-          for(unsigned int i=0;i<nToSkip;++i){
+          for(unsigned int i=0;i<static_cast<unsigned int>(nToSkip);++i){
             ++line;
             tempStr=getLine(inStream);
           }
@@ -2265,7 +2269,8 @@ namespace RDKit{
         std::ostringstream errout;
         errout<<"CTAB version string invalid at line "<<line;
         if(strictParsing){
-          if(res) delete res;
+          delete res;
+          res=NULL;
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -2276,10 +2281,8 @@ namespace RDKit{
         std::ostringstream errout;
         errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "' at line " << line;
         if(strictParsing){
-          if(res){
-            delete res;
-            res = NULL;
-          }
+          delete res;
+          res = NULL;
           throw FileParseException(errout.str()) ;
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() <<std::endl;
@@ -2302,10 +2305,8 @@ namespace RDKit{
           std::ostringstream errout;
           errout << "V3000 mol blocks should have 0s in the initial counts line. (line: "<<line<<")";
           if(strictParsing){
-            if(res){
-              delete res;
-              res = NULL;
-            }
+            delete res;
+            res = NULL;
             throw FileParseException(errout.str()) ;
           } else {
             BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl ;
@@ -2317,8 +2318,8 @@ namespace RDKit{
       }
     } catch (MolFileUnhandledFeatureException &e) { 
       // unhandled mol file feature, just delete the result 
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<" on line: "<<line<<". Molecule skipped."<<std::endl;
@@ -2335,16 +2336,16 @@ namespace RDKit{
         fileComplete=false;        
     } catch (FileParseException &e) { 
       // catch our exceptions and throw them back after cleanup
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       throw e;
     }
 
     if(!fileComplete){
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       std::ostringstream errout;
@@ -2407,7 +2408,7 @@ namespace RDKit{
           DetectBondStereoChemistry(*res, &conf);
         }
         catch (...){
-          if(res) delete res;
+          delete res;
           res=NULL;
           throw;
         }

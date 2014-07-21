@@ -832,6 +832,44 @@ void testNestedAtomTypes(){
 
 }
 
+void testGithub252(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing Github Issue #252: crash when calling getPos() with no conformer." << std::endl;
+  BOOST_LOG(rdErrorLog) << "     expect a precondition failure message below" << std::endl;
+
+  ROMol *testMol;
+  MolChemicalFeatureFactory *factory;
+  FeatSPtrList featSPtrs;
+  boost::shared_ptr<MolChemicalFeature> featSPtr;
+
+  std::string fdef=
+    "DefineFeature CTriplet [C][C][C]\n"
+    "  Family LumpedHydrophobe\n"
+    "  Weights 1.0,1.0,1.0\n"
+    "EndFeature\n"
+    "DefineFeature CPair [C][C]\n"
+    "  Family LumpedHydrophobe\n"
+    "  Weights 1.0,1.0\n"
+    "EndFeature\n";
+  factory = buildFeatureFactory(fdef);
+  TEST_ASSERT(factory);
+  TEST_ASSERT(factory->getNumFeatureDefs()==2);
+  testMol=SmilesToMol("CCC");
+  TEST_ASSERT(testMol);
+  featSPtrs = factory->getFeaturesForMol(*testMol);
+  TEST_ASSERT(featSPtrs.size()==1);
+  featSPtr=*featSPtrs.begin();
+  TEST_ASSERT(featSPtr->getFamily()=="LumpedHydrophobe");
+  bool ok=false;
+  try{
+    featSPtr->getPos();
+  } catch (const Invar::Invariant &i){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  BOOST_LOG(rdErrorLog) << "   Done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -853,4 +891,5 @@ int main(){
   testIssue348();
 #endif
   testNestedAtomTypes();
+  testGithub252();
 }

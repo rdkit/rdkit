@@ -29,11 +29,11 @@
 namespace python = boost::python;
 namespace RDKit{
   namespace {
-    std::string qhelper(Atom::QUERYATOM_QUERY *q,int depth){
+    std::string qhelper(Atom::QUERYATOM_QUERY *q,unsigned int depth){
       std::string res="";
       if(q){
 	for (unsigned int i=0;i<depth;++i) res+="  ";
-	res += q->getDescription()+"\n";
+	res += q->getFullDescription()+"\n";
 	for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci=q->beginChildren();
 	    ci!=q->endChildren();++ci){
 	  res +=  qhelper((*ci).get(),depth+1);

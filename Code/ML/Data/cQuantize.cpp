@@ -7,12 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <cstring>
+
 #include <RDBoost/Wrap.h>
+#include <numpy/oldnumeric.h>
+#include <RDBoost/import_array.h>
 
 namespace python = boost::python;
 
-#include <cstring>
-#include <numpy/oldnumeric.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 
 /***********************************************
@@ -340,7 +342,7 @@ cQuantize_FindStartPoints(python::object values, python::object results,
 
 BOOST_PYTHON_MODULE(cQuantize) {
 
-  import_array();
+  rdkit_import_array();
 
   python::def("_RecurseOnBounds", cQuantize_RecurseOnBounds,
 	      ( python::arg("vals"), python::arg("pyCuts"), 

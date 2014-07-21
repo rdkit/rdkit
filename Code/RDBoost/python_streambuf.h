@@ -219,7 +219,7 @@ class streambuf : public std::basic_streambuf<char>
       read_buffer = py_read(buffer_size);
       char *read_buffer_data;
       bp::ssize_t py_n_read;
-      if (PyString_AsStringAndSize(read_buffer.ptr(),
+      if (PyBytes_AsStringAndSize(read_buffer.ptr(),
                                    &read_buffer_data, &py_n_read) == -1) {
         setg(0, 0, 0);
         throw std::invalid_argument(

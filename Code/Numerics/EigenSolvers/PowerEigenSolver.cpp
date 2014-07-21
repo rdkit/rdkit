@@ -37,7 +37,7 @@ namespace RDNumeric {
       }
       
       unsigned int ei;
-      double eigVal, prevVal, maxEval;
+      double eigVal, prevVal;
       bool converged=false;
       unsigned int i, j, id, iter, evalId;
       
@@ -53,7 +53,6 @@ namespace RDNumeric {
           // z = mat*v
           multiply(mat, v, z);
           prevVal = eigVal;
-          maxEval = -1.0;
           evalId = z.largestAbsValId();
           eigVal = z.getVal(evalId);
           

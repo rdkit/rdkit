@@ -58,7 +58,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
        - fileName: the name of the file to be written
        
     """
-    import cPickle
+    from rdkit.six.moves import cPickle
     try:
       f = open(fileName,'wb+')
     except:

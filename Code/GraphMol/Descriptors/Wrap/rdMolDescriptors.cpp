@@ -99,13 +99,14 @@ namespace {
                                                                python::object fromAtoms,
                                                                python::object ignoreAtoms,
                                                                python::object atomInvariants,
-                                                               bool includeChirality){
+                                                               bool includeChirality,
+                                                               bool use2D){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
-                                                   fvect,ivect,invvect,includeChirality);
+                                                   fvect,ivect,invvect,includeChirality,use2D);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -118,13 +119,15 @@ namespace {
                                                                      python::object fromAtoms,
                                                                      python::object ignoreAtoms,
                                                                      python::object atomInvariants,
-                                                                     bool includeChirality){
+                                                                     bool includeChirality,
+                                                                     bool use2D){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
-                                                         fvect,ivect,invvect,includeChirality);
+                                                         fvect,ivect,invvect,includeChirality,
+                                                         use2D);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -204,7 +207,8 @@ namespace {
                                                          python::object ignoreAtoms,
                                                          python::object atomInvariants,
                                                          unsigned int nBitsPerEntry,
-                                                         bool includeChirality
+                                                         bool includeChirality,
+                                                         bool use2D
                                                          ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
@@ -213,7 +217,8 @@ namespace {
     res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
                                                                   minLength,maxLength,
                                                                   fvect,ivect,invvect,
-                                                                  nBitsPerEntry,includeChirality);
+                                                                  nBitsPerEntry,includeChirality,
+                                                                  use2D);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -552,7 +557,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
-               python::arg("includeChirality")=false),
+               python::arg("includeChirality")=false,
+               python::arg("use2D")=true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -566,7 +572,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
-               python::arg("includeChirality")=false),
+               python::arg("includeChirality")=false,
+               python::arg("use2D")=true),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -581,7 +588,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
                python::arg("nBitsPerEntry")=4,
-               python::arg("includeChirality")=false),
+               python::arg("includeChirality")=false,
+               python::arg("use2D")=true),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 

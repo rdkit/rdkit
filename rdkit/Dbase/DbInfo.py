@@ -8,9 +8,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
-import DbModule
+from __future__ import print_function
 import sys
+
+from rdkit import RDConfig
+from rdkit.Dbase import DbModule
+
 sqlTextTypes = DbModule.sqlTextTypes
 sqlIntTypes = DbModule.sqlIntTypes
 sqlFloatTypes = DbModule.sqlFloatTypes
@@ -36,7 +39,7 @@ def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1
       try:
         cn = DbModule.connect(dBase,user,password)
       except:
-        print 'Problems opening database: %s'%(dBase)
+        print('Problems opening database: %s'%(dBase))
         return []
     c = cn.cursor()
     c.execute(DbModule.getDbSql)
@@ -77,7 +80,7 @@ def GetTableNames(dBase,user='sysdba',password='masterkey',
     try:
       cn = DbModule.connect(dBase,user,password)
     except:
-      print 'Problems opening database: %s'%(dBase)
+      print('Problems opening database: %s'%(dBase))
       return []
   c = cn.cursor()
   if not includeViews:
@@ -111,19 +114,19 @@ def GetColumnInfoFromCursor(cursor):
         sys.stderr.write('odd type in col %s: %s\n'%(cName,str(cType)))
       results.append((cName,typeStr))
   else:
-    import types
+    from rdkit.six import PY2, PY3
     r = cursor.fetchone()
     if not r: return results
     for i,v in enumerate(r):
       cName = cursor.description[i][0]
       typ = type(v)
-      if typ in types.StringTypes:
+      if typ == str or (PY2 and typ == unicode):
         typeStr='string'
-      elif typ == types.IntType:
+      elif typ == int:
         typeStr='integer'
-      elif typ == types.FloatType:
+      elif typ == float:
         typeStr='float'
-      elif typ == types.BufferType:
+      elif (PY2 and typ == buffer) or (PY3 and typ in (memoryview, bytes)):
         typeStr='binary'
       else:
         sys.stderr.write('odd type in col %s: %s\n'%(cName,typ))
@@ -201,5 +204,5 @@ def GetColumnNames(dBase,table,user='sysdba',password='masterkey',
   c.execute(cmd)
   c.fetchone()
   desc = c.description
-  res = map(lambda x:str(x[0]),desc)
+  res = [str(x[0]) for x in desc]
   return res

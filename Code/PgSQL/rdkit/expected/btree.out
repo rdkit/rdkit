@@ -99,8 +99,8 @@ SET enable_bitmapscan=off;
 SET enable_seqscan=on;
 SELECT * FROM pgbfp WHERE 
 	f = rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
- id | f 
-----+---
+ id | f | maccsf 
+----+---+--------
 (0 rows)
 
 SELECT count(*) FROM pgbfp WHERE 
@@ -143,8 +143,8 @@ SET enable_bitmapscan=on;
 SET enable_seqscan=off;
 SELECT * FROM pgbfp WHERE 
 	f = rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
- id | f 
-----+---
+ id | f | maccsf 
+----+---+--------
 (0 rows)
 
 SELECT count(*) FROM pgbfp WHERE 

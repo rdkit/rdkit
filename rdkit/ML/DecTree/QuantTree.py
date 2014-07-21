@@ -10,13 +10,14 @@
 
 """
 from rdkit.ML.DecTree import DecTree,Tree
+from rdkit.six import cmp
 
 class QuantTreeNode(DecTree.DecTreeNode):
   """ 
    
   """
   def __init__(self,*args,**kwargs):
-    apply(DecTree.DecTreeNode.__init__,(self,)+args,kwargs)
+    DecTree.DecTreeNode.__init__(self,*args,**kwargs)
     self.qBounds = []
     self.nBounds = 0
   def ClassifyExample(self,example,appendExamples=0):
@@ -65,9 +66,15 @@ class QuantTreeNode(DecTree.DecTreeNode):
     return self.qBounds
   
   def __cmp__(self,other):
-    return cmp(type(self),type(other)) or \
-           cmp(self.qBounds,other.qBounds) or \
-           Tree.TreeNode.__cmp__(self,other)
+    return (self<other)*-1 or (other<self)*1
+    
+  def __lt__(self,other):
+    if str(type(self)) < str(type(other)): return True
+    if self.qBounds<other.qBounds: return True
+    if Tree.TreeNode.__lt__(self,other): return True
+    return False
+  def __eq__(self,other):
+    return not self<other and not other<self
 
   def __str__(self):
     """ returns a string representation of the tree

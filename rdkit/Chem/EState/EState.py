@@ -11,6 +11,7 @@
 """ Basic EState definitions
 
 """
+from __future__ import print_function
 import numpy
 from rdkit import Chem
 
@@ -81,7 +82,7 @@ if __name__ =='__main__':
   smis = ['CCCC','CCCCC','CCCCCC','CC(N)C(=O)O','CC(N)C(=O)[O-].[Na+]']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)
-    print smi
+    print(smi)
     inds = EStateIndices(m)
-    print '\t',inds
+    print('\t',inds)
 

@@ -65,7 +65,14 @@ namespace Queries {
     void setDescription(const char *descr) { this->d_description = std::string(descr); };
     //! returns our text description
     const std::string &getDescription() const { return this->d_description; };
-
+    //! returns a fuller text description
+    virtual std::string getFullDescription() const {
+      if(!getNegation())
+        return getDescription();
+      else
+        return "not "+getDescription();
+    }
+    
     //! sets our match function
     void setMatchFunc(bool (*what)(MatchFuncArgType)) { this->d_matchFunc = what; };
     //! returns our match function:

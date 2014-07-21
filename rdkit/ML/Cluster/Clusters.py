@@ -11,7 +11,11 @@
 """ contains the Cluster class for representing hierarchical cluster trees
 
 """
+from __future__ import print_function
 import numpy
+
+from rdkit.six.moves import reduce
+from rdkit.six import cmp
 
 CMPTOL=1e-6
 
@@ -132,7 +136,8 @@ class Cluster(object):
     else:
       res = []
       children = self.GetChildren()
-      children.sort(lambda x,y:cmp(len(y),len(x)))
+      # children.sort(lambda x,y:cmp(len(y),len(x)))
+      children.sort(key=lambda x:len(x), reverse=True)
       for child in children:
         res += child.GetPoints()
       self._points=res
@@ -172,7 +177,8 @@ class Cluster(object):
     self._UpdateLength()
 
   def GetChildren(self):
-    self.children.sort(lambda x,y:cmp(x.GetMetric(),y.GetMetric()))
+    #self.children.sort(lambda x,y:cmp(x.GetMetric(),y.GetMetric()))
+    self.children.sort(key=lambda x:x.GetMetric())
     return self.children
 
   def SetData(self,data):
@@ -190,9 +196,9 @@ class Cluster(object):
 
   def Print(self,level=0,showData=0,offset='\t'):
     if not showData or self.GetData() is None:
-      print '%s%s%s Metric: %f'%('  '*level,self.GetName(),offset,self.GetMetric())
+      print('%s%s%s Metric: %f'%('  '*level,self.GetName(),offset,self.GetMetric()))
     else:
-      print '%s%s%s Data: %f\t Metric: %f'%('  '*level,self.GetName(),offset,self.GetData(),self.GetMetric())
+      print('%s%s%s Data: %f\t Metric: %f'%('  '*level,self.GetName(),offset,self.GetData(),self.GetMetric()))
         
     for child in self.GetChildren():
       child.Print(level=level+1,showData=showData,offset=offset)
@@ -201,11 +207,14 @@ class Cluster(object):
     """ not as choosy as self==other
 
     """
-    if cmp(type(self),type(other)):
-      return cmp(type(self),type(other))
-
-    if cmp(len(self),len(other)):
-      return cmp(len(self),len(other))
+    tv1,tv2 = str(type(self)),str(type(other))
+    tv = cmp(tv1,tv2)
+    if tv:
+      return tv
+    tv1,tv2 = len(self),len(other)
+    tv = cmp(tv1,tv2)
+    if tv:
+      return tv
       
     if not ignoreExtras:
       m1,m2=self.GetMetric(),other.GetMetric()
@@ -295,5 +304,5 @@ if __name__ == '__main__':
     nodes = ClusterUtils.GetNodeList(root)
 
     indices = [x.GetIndex() for x in nodes]
-    print 'XXX:',indices
+    print('XXX:',indices)
 

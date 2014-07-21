@@ -8,6 +8,7 @@
   this uses the Python iterator interface, so you'll need python 2.2 or above.
 
 """
+from __future__ import print_function
 import sys
 from rdkit.Dbase import DbInfo
 
@@ -93,6 +94,7 @@ class DbResultSet(DbResultBase):
           self.seen.append(v)
     return r
 
+  __next__ = next # PY3
     
 
 class RandomAccessDbResultSet(DbResultBase):
@@ -127,13 +129,13 @@ class RandomAccessDbResultSet(DbResultBase):
         r = self.cursor.fetchone()
       self.cursor = None
   def __getitem__(self,idx):
-    if idx < 0: raise IndexError,"negative indices not supported"
+    if idx < 0: raise IndexError("negative indices not supported")
     if self.cursor is None:
       if len(self.results):
         if idx >= len(self.results):
-          raise IndexError,'index %d too large (%d max)'%(idx,len(self.results))
+          raise IndexError('index %d too large (%d max)'%(idx,len(self.results)))
       else:
-        raise ValueError,'Invalid cursor'
+        raise ValueError('Invalid cursor')
       
     while idx >= len(self.results):
       r = None
@@ -141,7 +143,7 @@ class RandomAccessDbResultSet(DbResultBase):
         r = self.cursor.fetchone()
         if not r:
           self.cursor = None
-          raise IndexError,'index %d too large (%d max)'%(idx,len(self.results))
+          raise IndexError('index %d too large (%d max)'%(idx,len(self.results)))
 
         if self.transform is not None:
           r =  self.transform(r)
@@ -159,7 +161,7 @@ class RandomAccessDbResultSet(DbResultBase):
       
   def __len__(self):
     if self.results is None:
-      raise ValueError,"len() not supported for noMemory Results Sets"
+      raise ValueError("len() not supported for noMemory Results Sets")
     self._finish()
     return len(self.results)
 
@@ -172,11 +174,14 @@ class RandomAccessDbResultSet(DbResultBase):
       raise StopIteration
     return res
   
+  __next__ = next # PY3
+
+
 if __name__ == '__main__':
   from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect('TEST.GDB')
   curs = conn.GetCursor()
-  print 'curs:',repr(curs)
+  print('curs:',repr(curs))
   curs.execute('select * from ten_elements')
   set = RandomAccessDbResultSet(curs)
   for i in range(12):
@@ -185,21 +190,21 @@ if __name__ == '__main__':
     except IndexError:
       assert i >= 10
     
-  print 'use len'
+  print('use len')
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements')
   set = RandomAccessDbResultSet(curs)
   for i in range(len(set)):
     val = set[i]
 
-  print 'use iter'
+  print('use iter')
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements')
   set = DbResultSet(curs)
   for thing in set:
     id,val = thing
 
-  print 'dups'
+  print('dups')
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
   set = DbResultSet(curs)
