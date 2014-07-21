@@ -56,18 +56,18 @@ _test1="""
 0
 >>> r[3]
 1
->>> r.has_key(4)
+>>> 4 in r
 0
 
 Check that we can handle subtrees:
 >>> r = CollectLabelLevels(t1,{},1,2)
 >>> r[1]
 1
->>> r.has_key(2)
+>>> 2 in r
 0
->>> r.has_key(3)
+>>> 3 in r
 0
->>> r.has_key(4)
+>>> 4 in r
 0
 
 >>> names = CollectDescriptorNames(t1,{})
@@ -87,17 +87,17 @@ Check that we can handle subtrees:
 'd2'
 >>> names[3]
 'd3'
->>> names.has_key(4)
+>>> 4 in names
 0
 
 >>> names = CollectDescriptorNames(t1,{},1,2)
 >>> names[1]
 'd1'
->>> names.has_key(2)
+>>> 2 in names
 0
->>> names.has_key(3)
+>>> 3 in names
 0
->>> names.has_key(4)
+>>> 4 in names
 0
 
 

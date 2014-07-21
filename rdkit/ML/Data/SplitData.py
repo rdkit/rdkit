@@ -4,10 +4,14 @@
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
-from rdkit import RDConfig,RDRandom
+from __future__ import print_function
 import random
-import types,os.path,sys
-SeqTypes=(types.ListType,types.TupleType)
+import os.path,sys
+
+from rdkit import RDConfig,RDRandom
+from rdkit.six.moves import xrange
+
+SeqTypes=(list, tuple)
 
 def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
   """ splits a set of indices into a data set into 2 pieces
@@ -67,14 +71,15 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> test,train = SplitIndices(10,.5,legacy=1)
   >>> test
-  [0, 1, 2, 3, 4, 7, 9]
+  [3, 5, 7, 8, 9]
   >>> train
-  [5, 6, 8]
+  [0, 1, 2, 4, 6]
+
   >>> test,train = SplitIndices(10,.5,legacy=1)
   >>> test
-  [4, 5, 7, 8, 9]
+  [0, 1, 2, 3, 5, 8, 9]
   >>> train
-  [0, 1, 2, 3, 6]
+  [4, 6, 7]
 
   The replacement approach returns a fixed number in the training set,
   a variable number in the test set and can contain duplicates in the
@@ -82,14 +87,14 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> test,train = SplitIndices(10,.5,replacement=1)
   >>> test
-  [1, 1, 3, 0, 1]
+  [9, 9, 8, 0, 5]
   >>> train
-  [2, 4, 5, 6, 7, 8, 9]
+  [1, 2, 3, 4, 6, 7]
   >>> test,train = SplitIndices(10,.5,replacement=1)
   >>> test
-  [9, 5, 4, 8, 0]
+  [4, 5, 1, 1, 4]
   >>> train
-  [1, 2, 3, 6, 7]
+  [0, 2, 3, 6, 7, 8, 9]
   
   """
   if frac<0. or frac > 1.:
@@ -116,16 +121,16 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
       else:
         resTest.append(i)
   else:
-    perm = range(nPts)
-    random.shuffle(perm)
+    perm = list(xrange(nPts))
+    random.shuffle(perm,random=random.random)
     nTrain = int(nPts*frac)
     
     resData = list(perm[:nTrain])
     resTest = list(perm[nTrain:])
         
   if not silent:
-    print 'Training with %d (of %d) points.'%(len(resData),nPts)
-    print '\t%d points are in the hold-out set.'%(len(resTest))
+    print('Training with %d (of %d) points.'%(len(resData),nPts))
+    print('\t%d points are in the hold-out set.'%(len(resTest)))
   return resData,resTest
 
   
@@ -154,8 +159,8 @@ def SplitDataSet(data,frac,silent=0):
   resTest = [data[x] for x in test]
 
   if not silent:
-    print 'Training with %d (of %d) points.'%(len(resData),nOrig)
-    print '\t%d points are in the hold-out set.'%(len(resTest))
+    print('Training with %d (of %d) points.'%(len(resData),nOrig))
+    print('\t%d points are in the hold-out set.'%(len(resTest)))
   return resData,resTest
 
 

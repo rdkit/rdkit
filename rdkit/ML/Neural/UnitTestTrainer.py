@@ -8,6 +8,7 @@
    this basically works out **all** of the network code
 
 """
+from __future__ import print_function
 import unittest
 from rdkit.ML.Neural import Network,Trainers
 import numpy
@@ -16,7 +17,7 @@ random.seed(23)
 
 class TrainerTestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.trainTol = 0.3
     self.orExamples = [
         [0,0,1,0.1],

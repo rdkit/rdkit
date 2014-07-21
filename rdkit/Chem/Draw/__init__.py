@@ -4,7 +4,7 @@
 #  All Rights Reserved
 #
 import os
-from MolDrawing import MolDrawing,DrawingOptions
+from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 
 def _getCanvas():
   useAGG=False
@@ -12,25 +12,25 @@ def _getCanvas():
   Canvas=None
   if not os.environ.get('RDKIT_CANVAS',''):
     try:
-      from cairoCanvas import Canvas
+      from rdkit.Chem.Draw.cairoCanvas import Canvas
       useCairo=True
     except ImportError:
       try:
-        from aggCanvas import Canvas
+        from rdkit.Chem.Draw.aggCanvas import Canvas
         useAGG=True
       except ImportError:
-        from spingCanvas import Canvas
+        from rdkit.Chem.Draw.spingCanvas import Canvas
   else:
     canv=os.environ['RDKIT_CANVAS'].lower()
     if canv =='cairo':
-      from cairoCanvas import Canvas
+      from rdkit.Chem.Draw.cairoCanvas import Canvas
       useCairo=True
     elif canv =='agg':
-      from aggCanvas import Canvas
+      from rdkit.Chem.Draw.aggCanvas import Canvas
       useAGG=True
     else:
       DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
-      from spingCanvas import Canvas      
+      from rdkit.Chem.Draw.spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
 def _createCanvas(size):
@@ -43,7 +43,7 @@ def _createCanvas(size):
     img = Image.new("RGBA",size,(0,0,0,0))
     canvas = Canvas(img)
   else:
-    from spingCanvas import Canvas
+    from rdkit.Chem.Draw.spingCanvas import Canvas
     canvas = Canvas(size=size,name='MolToImageFile')
     img = canvas._image
   return img,canvas
@@ -61,7 +61,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     highlightBonds -- list of bonds to highlight (default [])
   """
   if not mol:
-    raise ValueError,'Null molecule provided'
+    raise ValueError('Null molecule provided')
   if canvas is None:
     img,canvas=_createCanvas(size)
   else:
@@ -83,7 +83,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  if kwargs.has_key('legend'):
+  if 'legend' in kwargs:
     legend = kwargs['legend']
     del kwargs['legend']
   else:
@@ -114,9 +114,9 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   """
   # original contribution from Uwe Hoffmann
   if not fileName:
-    raise ValueError,'no fileName provided'
+    raise ValueError('no fileName provided')
   if not mol:
-    raise ValueError,'Null molecule provided'
+    raise ValueError('Null molecule provided')
 
   if imageType is None:
     imageType=os.path.splitext(fileName)[1][1:]
@@ -189,8 +189,8 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   """ Generates a drawing of a molecule on a matplotlib canvas
   """
   if not mol:
-    raise ValueError,'Null molecule provided'
-  from mplCanvas import Canvas
+    raise ValueError('Null molecule provided')
+  from rdkit.Chem.Draw.mplCanvas import Canvas
   canvas = Canvas(size)
   if options is None:
     options = DrawingOptions()

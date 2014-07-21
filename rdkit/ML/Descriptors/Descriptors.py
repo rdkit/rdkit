@@ -4,6 +4,7 @@
 """ Various bits and pieces for calculating descriptors
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 
 class DescriptorCalculator:
@@ -19,15 +20,15 @@ class DescriptorCalculator:
     """ prints out a list of the descriptors
 
     """
-    print '#---------'
-    print 'Simple:'
+    print('#---------')
+    print('Simple:')
     for desc in self.simpleList:
-      print desc
+      print(desc)
     if self.compoundList:
-      print '#---------'
-      print 'Compound:'
+      print('#---------')
+      print('Compound:')
       for desc in self.compoundList:
-        print desc
+        print(desc)
       
   def GetDescriptorNames(self):
     """ returns a list of the names of the descriptors this calculator generates
@@ -43,11 +44,11 @@ class DescriptorCalculator:
        - fileName: the name of the file to be written
        
     """
-    import cPickle
+    from rdkit.six.moves import cPickle
     try:
       f = open(fileName,'wb+')
     except:
-      print 'cannot open output file %s for writing'%(fileName)
+      print('cannot open output file %s for writing'%(fileName))
       return
     cPickle.dump(self,f)
     f.close()

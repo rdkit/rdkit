@@ -5,7 +5,7 @@ from rdkit.ML import InfoTheory
 from rdkit import DataStructs
 from rdkit.Dbase.DbConnection import DbConnect
 import os
-import cPickle as pickle
+from rdkit.six.moves import cPickle as pickle
 
 def feq(v1,v2,tol2=1e-4):
     return abs(v1-v2)<=tol2

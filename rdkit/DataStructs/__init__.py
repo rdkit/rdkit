@@ -8,10 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import division
 from rdkit import rdBase
-import cDataStructs
+from rdkit.DataStructs import cDataStructs
 __doc__=cDataStructs.__doc__
-from cDataStructs import *
+from rdkit.DataStructs.cDataStructs import *
 
 
 similarityFunctions=[
@@ -37,13 +38,13 @@ def FingerprintSimilarity(fp1,fp2,metric=TanimotoSimilarity):
   sz1 = fp1.GetNumBits()
   sz2 = fp2.GetNumBits()
   if sz1<sz2:
-    fp2 = FoldFingerprint(fp2,sz2/sz1)
+    fp2 = FoldFingerprint(fp2,sz2//sz1)
   elif sz2<sz1:
-    fp1 = FoldFingerprint(fp1,sz1/sz2)
+    fp1 = FoldFingerprint(fp1,sz1//sz2)
   return metric(fp1,fp2)
 
 def FoldToTargetDensity(fp,density=0.3,minLength=64):
-  while float(fp.GetNumOnBits())/len(fp)>density and len(fp)/2>minLength:
+  while fp.GetNumOnBits()/len(fp)>density and len(fp)//2>minLength:
     fp = FoldFingerprint(fp,2)
   return fp
 

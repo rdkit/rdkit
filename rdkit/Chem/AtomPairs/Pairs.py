@@ -28,7 +28,7 @@ GetAtomPairFingerprintAsIntVect=rdMolDescriptors.GetAtomPairFingerprint
 numPathBits=rdMolDescriptors.AtomPairsParameters.numPathBits
 _maxPathLen=(1<<numPathBits)-1
 numFpBits=numPathBits+2*rdMolDescriptors.AtomPairsParameters.codeSize
-fpLen=1L<<numFpBits
+fpLen=1<<numFpBits
 
 def pyScorePair(at1,at2,dist,atomCodes=None):
   """ Returns a score for an individual atom pair.

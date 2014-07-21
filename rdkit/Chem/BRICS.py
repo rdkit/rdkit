@@ -34,9 +34,12 @@
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
+from __future__ import print_function
+import sys,re,random
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
-import sys,re,random
+from rdkit.six import iteritems, iterkeys, next
+from rdkit.six.moves import range
 
 # These are the definitions that will be applied to fragment molecules:
 environs = {
@@ -204,11 +207,11 @@ for gp in smartsGps:
       t=Reactions.ReactionFromSmarts(defn)
       t.Initialize()
     except:
-      print defn
+      print(defn)
       raise
 
 environMatchers={}
-for env,sma in environs.iteritems():
+for env,sma in iteritems(environs):
   environMatchers[env]=Chem.MolFromSmarts(sma)
   
 bondMatchers=[]
@@ -258,7 +261,7 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   >>> res = FindBRICSBonds(m)
   >>> res
   <generator object ...>
-  >>> res.next()
+  >>> next(res)
   ((3, 2), ('3', '4'))
 
   >>> m = Chem.MolFromSmiles('CC=CC')
@@ -279,17 +282,17 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   
   """
   letter = re.compile('[a-z,A-Z]')
-  indices = range(len(bondMatchers))
+  indices = list(range(len(bondMatchers)))
   bondsDone=set()
-  if randomizeOrder: random.shuffle(indices)
+  if randomizeOrder: random.shuffle(indices,random=random.random)
 
   envMatches={}
-  for env,patt in environMatchers.iteritems():
+  for env,patt in iteritems(environMatchers):
     envMatches[env]=mol.HasSubstructMatch(patt)
   for gpIdx in indices:
     if randomizeOrder:
       compats =bondMatchers[gpIdx][:]
-      random.shuffle(compats)
+      random.shuffle(compats,random=random.random)
     else:
       compats = bondMatchers[gpIdx]
     for i1,i2,bType,patt in compats:
@@ -388,7 +391,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   >>> sorted(res)
   ['[14*]c1ccccn1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
 
-  >>> res = BRICSDecompose(m,returnMols=True)
+  >>> res = list(BRICSDecompose(m,returnMols=True))
   >>> res[0]
   <rdkit.Chem.rdchem.Mol object ...>
   >>> smis = [Chem.MolToSmiles(x,True) for x in res]
@@ -449,23 +452,24 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
     newPool = {}
     while activePool:
       matched=False
-      nSmi = activePool.keys()[0]
+      nSmi = next(iterkeys(activePool))
       mol = activePool.pop(nSmi)
       for rxnIdx,reaction in enumerate(reactionGp):
         if onlyUseReactions and (gpIdx,rxnIdx) not in onlyUseReactions:
           continue
         if not silent:
-          print '--------'
-          print smartsGps[gpIdx][rxnIdx]
+          print('--------')
+          print(smartsGps[gpIdx][rxnIdx])
         ps = reaction.RunReactants((mol,))
         if ps:
-          if not silent: print  nSmi,'->',len(ps),'products'
+          if not silent: print(nSmi,'->',len(ps),'products')
           for prodSeq in ps:
             seqOk=True
             # we want to disqualify small fragments, so sort the product sequence by size
-            prodSeq = [(prod.GetNumAtoms(onlyExplicit=True),prod) for prod in prodSeq]
-            prodSeq.sort()
-            for nats,prod in prodSeq:
+            tSeq = [(prod.GetNumAtoms(onlyExplicit=True),idx) for idx,prod in enumerate(prodSeq)]
+            tSeq.sort()
+            for nats,idx in tSeq:
+              prod = prodSeq[idx]
               try:
                 Chem.SanitizeMol(prod)
               except:
@@ -477,11 +481,13 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
                   seqOk=False
                   break
               prod.pSmi = pSmi
+            ts = [(x,prodSeq[y]) for x,y in tSeq]
+            prodSeq=ts
             if seqOk:
               matched=True
               for nats,prod in prodSeq:
                 pSmi = prod.pSmi
-                #print '\t',nats,pSmi
+                #print('\t',nats,pSmi)
                 if pSmi not in allNodes:
                   if not singlePass:
                     activePool[pSmi] = prod
@@ -512,10 +518,10 @@ def BRICSBuild(fragments,onlyCompleteMols=True,seeds=None,uniquify=True,
     seeds = list(fragments)
   if scrambleReagents:
     seeds = list(seeds)
-    random.shuffle(seeds)
+    random.shuffle(seeds,random=random.random)
   if scrambleReagents:
     tempReactions = list(reverseReactions)
-    random.shuffle(tempReactions)
+    random.shuffle(tempReactions,random=random.random)
   else:
     tempReactions=reverseReactions
   for seed in seeds:
@@ -582,99 +588,99 @@ if __name__=='__main__':
     def test1(self):
       m = Chem.MolFromSmiles('CC(=O)OC')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2)
 
       m = Chem.MolFromSmiles('CC(=O)N1CCC1=O')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2,res)
 
       m = Chem.MolFromSmiles('c1ccccc1N(C)C')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2,res)
 
       m = Chem.MolFromSmiles('c1cccnc1N(C)C')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2,res)
 
       m = Chem.MolFromSmiles('o1ccnc1N(C)C')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2)
 
       m = Chem.MolFromSmiles('c1ccccc1OC')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2)
 
       m = Chem.MolFromSmiles('o1ccnc1OC')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2)
 
       m = Chem.MolFromSmiles('O1CCNC1OC')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==2)
 
       m = Chem.MolFromSmiles('CCCSCC')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==3,res)
-      self.failUnless('[11*]S[11*]' in res,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==3,res)
+      self.assertTrue('[11*]S[11*]' in res,res)
 
       m = Chem.MolFromSmiles('CCNC(=O)C1CC1')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==4,res)
-      self.failUnless('[5*]N[5*]' in res,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==4,res)
+      self.assertTrue('[5*]N[5*]' in res,res)
 
     def test2(self):
       # example from the paper, nexavar: 
       m = Chem.MolFromSmiles('CNC(=O)C1=NC=CC(OC2=CC=C(NC(=O)NC3=CC(=C(Cl)C=C3)C(F)(F)F)C=C2)=C1')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==9,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==9,res)
 
     def test3(self):
       m = Chem.MolFromSmiles('FC(F)(F)C1=C(Cl)C=CC(NC(=O)NC2=CC=CC=C2)=C1')
       res = BRICSDecompose(m)
-      self.failUnless(res)
-      self.failUnless(len(res)==5,res)
-      self.failUnless('[5*]N[5*]' in res,res)
-      self.failUnless('[16*]c1ccccc1' in res,res)
-      self.failUnless('[8*]C(F)(F)F' in res,res)
+      self.assertTrue(res)
+      self.assertTrue(len(res)==5,res)
+      self.assertTrue('[5*]N[5*]' in res,res)
+      self.assertTrue('[16*]c1ccccc1' in res,res)
+      self.assertTrue('[8*]C(F)(F)F' in res,res)
 
 
     def test4(self):
       allNodes = set()
       m = Chem.MolFromSmiles('c1ccccc1OCCC')
       res = BRICSDecompose(m,allNodes=allNodes)
-      self.failUnless(res)
+      self.assertTrue(res)
       leaves=res
-      self.failUnless(len(leaves)==3,leaves)
-      self.failUnless(len(allNodes)==6,allNodes)
+      self.assertTrue(len(leaves)==3,leaves)
+      self.assertTrue(len(allNodes)==6,allNodes)
       res = BRICSDecompose(m,allNodes=allNodes)
-      self.failIf(res)
-      self.failUnless(len(allNodes)==6,allNodes)
+      self.assertFalse(res)
+      self.assertTrue(len(allNodes)==6,allNodes)
 
       m = Chem.MolFromSmiles('c1ccccc1OCCCC')
       res = BRICSDecompose(m,allNodes=allNodes)
-      self.failUnless(res)
+      self.assertTrue(res)
       leaves.update(res)
-      self.failUnless(len(allNodes)==9,allNodes)
-      self.failUnless(len(leaves)==4,leaves)
+      self.assertTrue(len(allNodes)==9,allNodes)
+      self.assertTrue(len(leaves)==4,leaves)
       
       
       m = Chem.MolFromSmiles('c1cc(C(=O)NCC)ccc1OCCC')
       res = BRICSDecompose(m,allNodes=allNodes)
-      self.failUnless(res)
+      self.assertTrue(res)
       leaves.update(res)
-      self.failUnless(len(leaves)==8,leaves)
-      self.failUnless(len(allNodes)==18,allNodes)
+      self.assertTrue(len(leaves)==8,leaves)
+      self.assertTrue(len(allNodes)==18,allNodes)
 
     def test5(self):
       allNodes = set()
@@ -685,12 +691,12 @@ if __name__=='__main__':
         ]
       frags = [Chem.MolFromSmiles(x) for x in frags]
       res = BRICSBuild(frags)
-      self.failUnless(res)
+      self.assertTrue(res)
       res= list(res)
-      self.failUnless(len(res)==6)
+      self.assertTrue(len(res)==6)
       smis = [Chem.MolToSmiles(x,True) for x in res]
-      self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
-      self.failUnless('c1ccc(-c2ccccn2)cc1' in smis)
+      self.assertTrue('c1ccc(-c2ccccc2)cc1' in smis)
+      self.assertTrue('c1ccc(-c2ccccn2)cc1' in smis)
 
     def test5a(self):
       allNodes = set()
@@ -700,12 +706,12 @@ if __name__=='__main__':
         ]
       frags = [Chem.MolFromSmiles(x) for x in frags]
       res = BRICSBuild(frags)
-      self.failUnless(res)
+      self.assertTrue(res)
       res=list(res)
       smis = [Chem.MolToSmiles(x,True) for x in res]
-      self.failUnless(len(smis)==2,smis)
-      self.failUnless('c1ccc(Oc2ccccc2)cc1' in smis)
-      self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
+      self.assertTrue(len(smis)==2,smis)
+      self.assertTrue('c1ccc(Oc2ccccc2)cc1' in smis)
+      self.assertTrue('c1ccc(-c2ccccc2)cc1' in smis)
 
       
       
@@ -718,13 +724,13 @@ if __name__=='__main__':
         ]
       frags = [Chem.MolFromSmiles(x) for x in frags]
       res = BRICSBuild(frags)
-      self.failUnless(res)
+      self.assertTrue(res)
       res= list(res)
-      self.failUnless(len(res)==3)
+      self.assertTrue(len(res)==3)
       smis = [Chem.MolToSmiles(x,True) for x in res]
-      self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
-      self.failUnless('COc1ccccc1' in smis)
-      self.failUnless('c1ccn(-c2ccccc2)c1' in smis)
+      self.assertTrue('c1ccc(-c2ccccc2)cc1' in smis)
+      self.assertTrue('COc1ccccc1' in smis)
+      self.assertTrue('c1ccn(-c2ccccc2)c1' in smis)
 
     def test7(self):
       allNodes = set()
@@ -735,46 +741,46 @@ if __name__=='__main__':
         ]
       frags = [Chem.MolFromSmiles(x) for x in frags]
       res = BRICSBuild(frags)
-      self.failUnless(res)
+      self.assertTrue(res)
       res= list(res)
       smis = [Chem.MolToSmiles(x,True) for x in res]
-      self.failUnless(len(res)==3)
-      self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
-      self.failUnless('COc1ccccc1' in smis)
-      self.failUnless('O=C(COc1ccccc1)c1ccccc1' in smis)
+      self.assertTrue(len(res)==3)
+      self.assertTrue('c1ccc(-c2ccccc2)cc1' in smis)
+      self.assertTrue('COc1ccccc1' in smis)
+      self.assertTrue('O=C(COc1ccccc1)c1ccccc1' in smis)
 
     def test8(self):
       random.seed(23)
       base = Chem.MolFromSmiles("n1cncnc1OCC(C1CC1)OC1CNC1")
       catalog = BRICSDecompose(base)
-      self.failUnless(len(catalog)==5,catalog)
+      self.assertTrue(len(catalog)==5,catalog)
       
       catalog = [Chem.MolFromSmiles(x) for x in catalog]
       ms = [Chem.MolToSmiles(x) for x in BRICSBuild(catalog,maxDepth=4)]
-      self.failUnless(len(ms)==36,ms)
+      self.assertTrue(len(ms)==36,ms)
 
       
       ts = ['n1cnc(C2CNC2)nc1','n1cnc(-c2ncncn2)nc1','C(OC1CNC1)C(C1CC1)OC1CNC1',
             'n1cnc(OC(COC2CNC2)C2CC2)nc1','n1cnc(OCC(OC2CNC2)C2CNC2)nc1']
       ts = [Chem.MolToSmiles(Chem.MolFromSmiles(x),True) for x in ts]
       for t in ts:
-        self.failUnless(t in ms,(t,ms))
+        self.assertTrue(t in ms,(t,ms))
         
     def test9(self):
       m = Chem.MolFromSmiles('CCOc1ccccc1c1ncc(c2nc(NCCCC)ncn2)cc1')
       res=BRICSDecompose(m)
-      self.failUnlessEqual(len(res),7)
-      self.failUnless('[3*]O[3*]' in res)
-      self.failIf('[14*]c1ncnc(NCCCC)n1' in res)
+      self.assertEqual(len(res),7)
+      self.assertTrue('[3*]O[3*]' in res)
+      self.assertFalse('[14*]c1ncnc(NCCCC)n1' in res)
       res = BRICSDecompose(m,singlePass=True)
-      self.failUnlessEqual(len(res),13)
-      self.failUnless('[3*]OCC' in res)
-      self.failUnless('[14*]c1ncnc(NCCCC)n1' in res)
+      self.assertEqual(len(res),13)
+      self.assertTrue('[3*]OCC' in res)
+      self.assertTrue('[14*]c1ncnc(NCCCC)n1' in res)
 
     def test10(self):
       m = Chem.MolFromSmiles('C1CCCCN1c1ccccc1')
       res=BRICSDecompose(m)
-      self.failUnlessEqual(len(res),2,res)
+      self.assertEqual(len(res),2,res)
 
     def test11(self):
       # test coordinate preservation:
@@ -815,41 +821,41 @@ M  END
       pieces = BreakBRICSBonds(m)
 
       frags = Chem.GetMolFrags(pieces,asMols=True)
-      self.failUnlessEqual(len(frags),3)
-      self.failUnlessEqual(frags[0].GetNumAtoms(),7)
-      self.failUnlessEqual(frags[1].GetNumAtoms(),3)
-      self.failUnlessEqual(frags[2].GetNumAtoms(),7)
+      self.assertEqual(len(frags),3)
+      self.assertEqual(frags[0].GetNumAtoms(),7)
+      self.assertEqual(frags[1].GetNumAtoms(),3)
+      self.assertEqual(frags[2].GetNumAtoms(),7)
 
       c1 = m.GetConformer()
       c2 = frags[0].GetConformer()
       for i in range(6):
         p1 = c1.GetAtomPosition(i)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(6)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c2 = frags[2].GetConformer()
       for i in range(6):
         p1 = c1.GetAtomPosition(i+7)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(6)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c2 = frags[1].GetConformer()
       for i in range(1):
         p1 = c1.GetAtomPosition(i+6)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(5)
       p2 = c2.GetAtomPosition(1)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(0)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
 
       # make sure multiple conformations (include 2D) also work:
@@ -888,87 +894,87 @@ M  END
 """
       m2 = Chem.MolFromMolBlock(molblock)
       m.AddConformer(m2.GetConformer(),assignId=True)
-      self.failUnlessEqual(m.GetNumConformers(),2)
+      self.assertEqual(m.GetNumConformers(),2)
 
       pieces = BreakBRICSBonds(m)
       frags = Chem.GetMolFrags(pieces,asMols=True)
-      self.failUnlessEqual(len(frags),3)
-      self.failUnlessEqual(frags[0].GetNumAtoms(),7)
-      self.failUnlessEqual(frags[1].GetNumAtoms(),3)
-      self.failUnlessEqual(frags[2].GetNumAtoms(),7)
-      self.failUnlessEqual(frags[0].GetNumConformers(),2)
-      self.failUnlessEqual(frags[1].GetNumConformers(),2)
-      self.failUnlessEqual(frags[2].GetNumConformers(),2)
+      self.assertEqual(len(frags),3)
+      self.assertEqual(frags[0].GetNumAtoms(),7)
+      self.assertEqual(frags[1].GetNumAtoms(),3)
+      self.assertEqual(frags[2].GetNumAtoms(),7)
+      self.assertEqual(frags[0].GetNumConformers(),2)
+      self.assertEqual(frags[1].GetNumConformers(),2)
+      self.assertEqual(frags[2].GetNumConformers(),2)
 
       c1 = m.GetConformer(0)
       c2 = frags[0].GetConformer(0)
       for i in range(6):
         p1 = c1.GetAtomPosition(i)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(6)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c2 = frags[2].GetConformer(0)
       for i in range(6):
         p1 = c1.GetAtomPosition(i+7)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(6)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c2 = frags[1].GetConformer(0)
       for i in range(1):
         p1 = c1.GetAtomPosition(i+6)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(5)
       p2 = c2.GetAtomPosition(1)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(0)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c1 = m.GetConformer(1)
       c2 = frags[0].GetConformer(1)
       for i in range(6):
         p1 = c1.GetAtomPosition(i)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(6)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c2 = frags[2].GetConformer(1)
       for i in range(6):
         p1 = c1.GetAtomPosition(i+7)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(6)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
       c2 = frags[1].GetConformer(1)
       for i in range(1):
         p1 = c1.GetAtomPosition(i+6)
         p2 = c2.GetAtomPosition(i)
-        self.failUnlessEqual((p1-p2).Length(),0.0)
+        self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(5)
       p2 = c2.GetAtomPosition(1)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
       p1 = c1.GetAtomPosition(6)
       p2 = c2.GetAtomPosition(0)
-      self.failUnlessEqual((p1-p2).Length(),0.0)
+      self.assertEqual((p1-p2).Length(),0.0)
 
     def test12(self):
       m = Chem.MolFromSmiles('CCS(=O)(=O)NCC')
       res=list(FindBRICSBonds(m))
-      self.failUnlessEqual(len(res),2,res)
+      self.assertEqual(len(res),2,res)
       atIds = [x[0] for x in res]
       atIds.sort()
-      self.failUnlessEqual(atIds,[(5,2), (6,5)])
+      self.assertEqual(atIds,[(5,2), (6,5)])
       
       
 

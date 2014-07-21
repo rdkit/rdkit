@@ -15,8 +15,10 @@ lie.
     [0.9,1.,1.1,2.,2.2] -> [0,1,1,2,2]
 
 """
+from __future__ import print_function
 import numpy
 from rdkit.ML.InfoTheory import entropy
+from rdkit.six.moves import zip, map, range
 try:
   import cQuantize
 except:
@@ -305,7 +307,7 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
     return [],-1e8
   
   # sort the variable values:
-  svs = zip(vals,results)
+  svs = list(zip(vals,results))
   svs.sort()
   sortVals,sortResults = zip(*svs)
   startNext=_FindStartPoints(sortVals,sortResults,nData)
@@ -315,7 +317,7 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
     nBounds = len(startNext)-1
   if nBounds == 0:
     nBounds=1
-  initCuts = range(nBounds)
+  initCuts = list(range(nBounds))
   maxGain,bestCuts = _RecurseOnBounds(sortVals,initCuts,0,startNext,
                                       sortResults,nPossibleRes)
   quantBounds = []
@@ -354,11 +356,11 @@ if __name__ == '__main__':
          (2.1,0),
          (2.2,1),
          (2.3,0)]
-    varValues = map(lambda x:x[0],d)
-    resCodes = map(lambda x:x[1],d)
+    varValues = list(map(lambda x:x[0],d))
+    resCodes = list(map(lambda x:x[1],d))
     nPossibleRes = 2
     res = FindVarMultQuantBounds(varValues,2,resCodes,nPossibleRes)
-    print 'RES:',res
+    print('RES:',res)
     target = ([1.3, 2.05],.34707 )
   else:
     d = [(1.,0),
@@ -373,28 +375,28 @@ if __name__ == '__main__':
          (2.1,0),
          (2.2,1),
          (2.3,0)]
-    varValues = map(lambda x:x[0],d)
-    resCodes = map(lambda x:x[1],d)
+    varValues = list(map(lambda x:x[0],d))
+    resCodes = list(map(lambda x:x[1],d))
     nPossibleRes =2
     res = FindVarMultQuantBounds(varValues,1,resCodes,nPossibleRes)
-    print res
+    print(res)
     #sys.exit(1)
     d = [(1.4,1),
          (1.4,0)]
 
-    varValues = map(lambda x:x[0],d)
-    resCodes = map(lambda x:x[1],d)
+    varValues = list(map(lambda x:x[0],d))
+    resCodes = list(map(lambda x:x[1],d))
     nPossibleRes =2
     res = FindVarMultQuantBounds(varValues,1,resCodes,nPossibleRes)
-    print res
+    print(res)
 
     d = [(1.4,0),
          (1.4,0),(1.6,1)]
-    varValues = map(lambda x:x[0],d)
-    resCodes = map(lambda x:x[1],d)
+    varValues = list(map(lambda x:x[0],d))
+    resCodes = list(map(lambda x:x[1],d))
     nPossibleRes =2
     res = FindVarMultQuantBounds(varValues,2,resCodes,nPossibleRes)
-    print res
+    print(res)
   
 
   

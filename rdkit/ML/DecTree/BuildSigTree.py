@@ -8,7 +8,7 @@
 """ 
 
 """
-
+from __future__ import print_function
 import numpy
 from rdkit.ML.DecTree import SigTree
 from rdkit.ML import InfoTheory
@@ -99,7 +99,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
      a SigTree.SigTreeNode with the root of the decision tree
 
   """
-  if verbose: print '  '*depth,'Build'
+  if verbose: print('  '*depth,'Build')
   tree=SigTree.SigTreeNode(None,'node',level=depth)
   tree.SetData(-666)
   #tree.SetExamples(examples)
@@ -107,14 +107,14 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
   # counts of each result code:
   #resCodes = map(lambda x:int(x[-1]),examples)
   resCodes = [int(x[-1]) for x in examples]
-  #print 'resCodes:',resCodes
+  #print('resCodes:',resCodes)
   counts = [0]*nPossibleRes
   for res in resCodes:
     counts[res] += 1
-  #print '    '*depth,'counts:',counts
+  #print('    '*depth,'counts:',counts)
 
   nzCounts = numpy.nonzero(counts)[0]
-  if verbose: print '  '*depth,'\tcounts:',counts
+  if verbose: print('  '*depth,'\tcounts:',counts)
   if len(nzCounts) == 1:
     # bottomed out because there is only one result code left
     #  with any counts (i.e. there's only one type of example
@@ -154,11 +154,11 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
       availBits=None
     if availBits:
       ranker.SetMaskBits(availBits)
-    #print '  2:'*depth,availBits
+    #print('  2:'*depth,availBits)
 
     useCollections=isinstance(examples[0][1],VectCollection)
     for example in examples:
-      #print '  '*depth,example[1].ToBitString(),example[-1]
+      #print('  '*depth,example[1].ToBitString(),example[-1])
       if not useCollections:
         ranker.AccumulateVotes(example[1],example[-1])
       else:
@@ -172,7 +172,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
     except:
       import traceback
       traceback.print_exc()
-      print 'get top n failed'
+      print('get top n failed')
       gain = -1.0
     if gain <= 0.0:
       v =  numpy.argmax(counts)
@@ -181,8 +181,8 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
       tree.SetTerminal(1)
       return tree
     best = int(bitInfo[0])
-    #print '  '*depth,'\tbest:',bitInfo
-    if verbose: print '  '*depth,'\tbest:',bitInfo
+    #print('  '*depth,'\tbest:',bitInfo)
+    if verbose: print('  '*depth,'\tbest:',bitInfo)
     # set some info at this node
     tree.SetName('Bit-%d'%(best))
     tree.SetLabel(best)
@@ -205,7 +205,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
         onExamples.append(example)
       else:
         offExamples.append(example)
-    #print '    '*depth,len(offExamples),len(onExamples)
+    #print('    '*depth,len(offExamples),len(onExamples))
     for ex in (offExamples,onExamples):
       if len(ex) == 0:
         v =  numpy.argmax(counts)

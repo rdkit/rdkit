@@ -1,6 +1,7 @@
 from rdkit import Chem
 from rdkit import RDConfig
-import time,cPickle,sys,gzip
+import time,sys,gzip
+from rdkit.six.moves import cPickle
 from rdkit.RDLogger import logger
 logger = logger()
 

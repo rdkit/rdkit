@@ -8,10 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <string>
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
-#include <string>
+#include <RDBoost/iterator_next.h>
 
 //ours
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -100,7 +101,7 @@ namespace RDKit {
 	.def(python::init<>())
 	.def("__iter__", (SmilesMolSupplier *(*)(SmilesMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
-	.def("next", (ROMol *(*)(SmilesMolSupplier *))&MolSupplNext,
+	.def(NEXT_METHOD, (ROMol *(*)(SmilesMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("__getitem__", (ROMol *(*)(SmilesMolSupplier *,int))&MolSupplGetItem,

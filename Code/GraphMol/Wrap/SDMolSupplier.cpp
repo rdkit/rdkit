@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/PySequenceHolder.h>
+#include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
 
@@ -79,7 +80,7 @@ namespace RDKit {
                                                        python::arg("strictParsing")=true)))
 	.def("__iter__", (SDMolSupplier *(*)(SDMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
-	.def("next", (ROMol *(*)(SDMolSupplier *))&MolSupplNextAcceptNullLastMolecule,
+	.def(NEXT_METHOD, (ROMol *(*)(SDMolSupplier *))&MolSupplNextAcceptNullLastMolecule,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("__getitem__", (ROMol *(*)(SDMolSupplier *,int))&MolSupplGetItem,

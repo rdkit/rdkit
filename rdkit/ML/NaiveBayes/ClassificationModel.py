@@ -9,7 +9,7 @@
 """
 import numpy
 from rdkit.ML.Data import Quantize
-
+from rdkit.six import iteritems
 def _getBinId(val, qBounds) :
   bid = 0
   for bnd in qBounds:
@@ -196,7 +196,7 @@ class NaiveBayesClassifier :
     
     #for key in self._condProbs:
     for cls in range(self._nClasses) :
-      if not ncls.has_key(cls): continue
+      if not cls in ncls: continue
       #cls = key[0]
       tmp = self._condProbs[cls]
       for ai in self._attrs:
@@ -230,7 +230,7 @@ class NaiveBayesClassifier :
             elif (self._nPosVals[ai] > 0) :
               pdesc = 1.0/(self._nPosVals[ai])
             else :
-              raise ValueError, 'Neither Bounds set nor data pre-quantized for attribute ' + str(ai)
+              raise ValueError('Neither Bounds set nor data pre-quantized for attribute ' + str(ai))
             tmp[ai][bid] += (self._mEstimateVal)*pdesc
             tmp[ai][bid] /= (ncls[cls] + self._mEstimateVal)
           
@@ -252,7 +252,7 @@ class NaiveBayesClassifier :
     if appendExamples:
       self._examples.append(example)
     clsProb = {}
-    for key,prob in self._classProbs.iteritems():
+    for key,prob in iteritems(self._classProbs):
       clsProb[key] = prob
       tmp = self._condProbs[key]
       for ai in self._attrs:
@@ -269,7 +269,7 @@ class NaiveBayesClassifier :
 
     mkey = -1
     self.mprob = -1.0
-    for key,prob in clsProb.iteritems() :
+    for key,prob in iteritems(clsProb):
       if (prob > self.mprob) :
         mkey = key
         self.mprob = prob

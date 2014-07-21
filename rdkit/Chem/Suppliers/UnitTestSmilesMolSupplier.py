@@ -14,6 +14,7 @@
 import unittest,sys,os
 from rdkit import RDConfig
 from rdkit import Chem
+from rdkit.six import next
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -23,7 +24,7 @@ class TestCase(unittest.TestCase):
     " tests lazy reads """
     supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis),',',0,-1,0)
     for i in range(4):
-      m = supp.next()
+      m = next(supp)
       assert m,'read %d failed'%i
       assert m.GetNumAtoms(),'no atoms in mol %d'%i
     i = len(supp)-1

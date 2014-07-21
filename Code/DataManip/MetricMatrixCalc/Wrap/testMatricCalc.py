@@ -1,3 +1,4 @@
+from __future__ import division
 from rdkit import RDConfig
 import unittest
 from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
@@ -111,7 +112,7 @@ class TestCase(unittest.TestCase):
 
         assert numpy.shape(dmatArr) == numpy.shape(dmatLL)
 
-        for i in range(n*(n-1)/2):
+        for i in range(n*(n-1)//2):
             assert feq(dmatArr[i], dmatLL[i])
 
     def test4ebv(self) :
@@ -130,7 +131,7 @@ class TestCase(unittest.TestCase):
 
         sMat = rdmmc.GetTanimotoSimMat(lst)
 
-        for i in range(n*(n-1)/2) :
+        for i in range(n*(n-1)//2) :
             assert feq(sMat[i] + dMat[i], 1.0) 
                         
     def test5sbv(self) :
@@ -149,7 +150,7 @@ class TestCase(unittest.TestCase):
 
         sMat = rdmmc.GetTanimotoSimMat(lst)
 
-        for i in range(n*(n-1)/2) :
+        for i in range(n*(n-1)//2) :
             assert feq(sMat[i] + dMat[i], 1.0) 
                         
 if __name__ == '__main__':

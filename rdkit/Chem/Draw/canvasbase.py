@@ -22,7 +22,7 @@ class CanvasBase:
             If `color2` is specified, it will be used to draw the second half
             of the segment
         """
-        raise NotImplementedError, 'This should be implemented'
+        raise NotImplementedError('This should be implemented')
 
     def addCanvasText(self, text, pos, font, color=(0, 0, 0), **kwargs):
         """Draw some text
@@ -30,7 +30,7 @@ class CanvasBase:
            The provided `text` is drawn at position `pos` using the given
            `font` and the chosen `color`.
         """
-        raise NotImplementedError, 'This should be implemented'
+        raise NotImplementedError('This should be implemented')
 
     def addCanvasPolygon(self, ps, color=(0, 0 ,0), **kwargs):
         """Draw a polygon
@@ -38,7 +38,7 @@ class CanvasBase:
            Draw a polygon identified by vertexes given in `ps` using
            the given `color` 
         """
-        raise NotImplementedError, 'This should be implemented'
+        raise NotImplementedError('This should be implemented')
 
     def addCanvasDashedWedge(self, p1, p2, p3, dash=(2, 2), 
                              color=(0, 0, 0), color2=None, **kwargs):
@@ -51,7 +51,7 @@ class CanvasBase:
            TODO: fix comment, I'm not sure what `dash` does
 
         """
-        raise NotImplementedError, 'This should be implemented'
+        raise NotImplementedError('This should be implemented')
 
     def flush(self):
         """Complete any remaining draw operation
@@ -59,7 +59,7 @@ class CanvasBase:
            This is supposed to be the last operation on the canvas before
            saving it
         """
-        raise NotImplementedError, 'This should be implemented'
+        raise NotImplementedError('This should be implemented')
 
     def _getLinePoints(self, p1, p2, dash):
         x1, y1 = p1

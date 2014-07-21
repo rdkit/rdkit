@@ -28,7 +28,8 @@ class DecTreeNode(Tree.TreeNode):
    
   """
   def __init__(self,*args,**kwargs):
-    apply(Tree.TreeNode.__init__,(self,)+args,kwargs)
+    #apply(Tree.TreeNode.__init__,(self,)+args,kwargs)
+    Tree.TreeNode.__init__(self, *args, **kwargs)
     self.examples = []
     self.badExamples = []
     self.trainingExamples = []

@@ -275,7 +275,7 @@ def tkTest(testfunc):
 		drawRotstring(tkcanvas)
         else :
                 print "Illegal testfunc handed to tkTest"
-                raise ValueError,"Unsupported testfunc"
+                raise ValueError("Unsupported testfunc")
 
         tkcanvas.flush() 
 	root.mainloop()

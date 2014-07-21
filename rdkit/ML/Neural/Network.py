@@ -21,9 +21,11 @@
   main node list.
 
 """
+from __future__ import print_function
 import numpy
 import random
 
+from rdkit.six.moves import xrange
 from rdkit.ML.Neural import NetNode, ActFuncs
 
 # FIX: this class has not been updated to new-style classes
@@ -219,23 +221,23 @@ class Network:
 
 if __name__ == '__main__':
 
-  print '[2,2,2]'
+  print('[2,2,2]')
   net = Network([2,2,2])
-  print net
+  print(net)
 
-  print '[2,4,1]'
+  print('[2,4,1]')
   net = Network([2,4,1])
-  print net
+  print(net)
 
-  print '[2,2]'
+  print('[2,2]')
   net = Network([2,2])
-  print net
+  print(net)
   input = [1,0]
   res = net.ClassifyExample(input)
-  print input,'->',res
+  print(input,'->',res)
   input = [0,1]
   res = net.ClassifyExample(input)
-  print input,'->',res
+  print(input,'->',res)
   input = [.5,.5]
   res = net.ClassifyExample(input)
-  print input,'->',res
+  print(input,'->',res)

@@ -25,7 +25,7 @@ def ProcessMol(mol,typeConversions,globalProps,nDone,nameProp='_Name',nameCol='c
                skipSmiles=False,
                uniqNames=None,namesSeen=None):
   if not mol:
-    raise ValueError,'no molecule'
+    raise ValueError('no molecule')
   if keepHs:
     Chem.SanitizeMol(mol)
   try:
@@ -138,7 +138,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
     nameDef += ' unique'
   typs = ['guid integer not null primary key',nameDef]
   pns = []
-  for pn,v in globalProps.iteritems():
+  for pn,v in globalProps.items():
     addNm = re.sub(r'[\W]','_',pn)
     typs.append('%s %s'%(addNm,typeConversions[v][0]))
     pns.append(pn.lower())
@@ -179,7 +179,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   while 1:
     nDone +=1
     try:
-      m = suppl.next()
+      m = next(suppl)
     except StopIteration:
       break
     if not m:

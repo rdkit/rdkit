@@ -22,8 +22,8 @@ from rdkit import Chem
 from rdkit.Chem.Pharm2D import Utils
 
 import types
-import exceptions
-class MatchError(exceptions.Exception):
+
+class MatchError(Exception):
   pass
 
 _verbose = 0
@@ -55,9 +55,9 @@ def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=
   assert sigFactory.shortestPathsOnly,'not implemented for non-shortest path signatures'
   nPts,featCombo,scaffold = sigFactory.GetBitInfo(bitIdx)
   if _verbose:
-    print 'info:',nPts
-    print '\t',featCombo
-    print '\t',scaffold
+    print('info:',nPts)
+    print('\t',featCombo)
+    print('\t',scaffold)
   
   if matchingAtoms is None:
     matchingAtoms = sigFactory.GetMolFeats(mol)
@@ -72,12 +72,12 @@ def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=
     else:
       # one of the patterns didn't find a match, we
       #  can return now
-      if _verbose: print 'no match found for feature:',featIdx
+      if _verbose: print('no match found for feature:',featIdx)
       return []
  
   if _verbose:
-    print 'choices:'
-    print choices
+    print('choices:')
+    print(choices)
 
   if dMat is None:
     dMat = Chem.GetDistanceMatrix(mol,sigFactory.includeBondOrder)
@@ -89,7 +89,7 @@ def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=
 
   res = []
   for protoPharm in protoPharmacophores:
-    if _verbose: print 'protoPharm:',protoPharm
+    if _verbose: print('protoPharm:',protoPharm)
     for i in range(len(distsToCheck)):
       dLow,dHigh = sigFactory.GetBins()[scaffold[i]]
       a1,a2 = distsToCheck[i]
@@ -100,11 +100,11 @@ def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=
       #
       idx1,idx2 = protoPharm[a1][0],protoPharm[a2][0]
       dist = dMat[idx1,idx2]
-      if _verbose: print '\t dist: %d->%d = %d (%d,%d)'%(idx1,idx2,dist,dLow,dHigh)
+      if _verbose: print('\t dist: %d->%d = %d (%d,%d)'%(idx1,idx2,dist,dLow,dHigh))
       if dist < dLow or dist >= dHigh:
         break
     else:
-      if _verbose: print 'Found one'
+      if _verbose: print('Found one')
       # we found it
       protoPharm.sort()
       protoPharm = tuple(protoPharm)
@@ -126,23 +126,23 @@ if __name__ == '__main__':
   
   mol = Chem.MolFromSmiles('OCC(=O)CCCN')
   Generate.Gen2DFingerprint(mol,sig)
-  print 'onbits:',list(sig.GetOnBits())
+  print('onbits:',list(sig.GetOnBits()))
 
   _verbose=0
   for bit in sig.GetOnBits():
     atoms = GetAtomsMatchingBit(sig,bit,mol)
-    print '\tBit %d: '%(bit),atoms
+    print('\tBit %d: '%(bit),atoms)
 
     
-  print '--------------------------'
+  print('--------------------------')
   sig = factory.GetSignature()
   sig.SetIncludeBondOrder(1)
   Generate.Gen2DFingerprint(mol,sig)
-  print 'onbits:',list(sig.GetOnBits())
+  print('onbits:',list(sig.GetOnBits()))
 
   for bit in sig.GetOnBits():
     atoms = GetAtomsMatchingBit(sig,bit,mol)
-    print '\tBit %d: '%(bit),atoms
+    print('\tBit %d: '%(bit),atoms)
 
   
   

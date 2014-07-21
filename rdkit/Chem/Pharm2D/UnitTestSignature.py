@@ -32,17 +32,17 @@ class TestCase(unittest.TestCase):
     self.factory.maxPointCount=2
     self.factory.Init()
     sig = self.factory.GetSignature()
-    self.failUnlessEqual(len(sig),45)
+    self.assertEqual(len(sig),45)
     
     self.factory.maxPointCount=3
     self.factory.Init()
     sig = self.factory.GetSignature()
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     
     self.factory.maxPointCount=4
     self.factory.Init()
     sig = self.factory.GetSignature()
-    self.failUnlessEqual(len(sig),18000)
+    self.assertEqual(len(sig),18000)
     
   def test2BitIdx(self):
     data = [
@@ -61,11 +61,11 @@ class TestCase(unittest.TestCase):
     for tpl in data:
       patts,dists,bit = tpl
       idx = self.factory.GetBitIdx(patts,dists)
-      self.failUnlessEqual(bit,idx)
+      self.assertEqual(bit,idx)
 
       cnt,feats,bins = self.factory.GetBitInfo(bit)
-      self.failUnlessEqual(cnt,len(patts))
-      self.failUnlessEqual(feats,patts)
+      self.assertEqual(cnt,len(patts))
+      self.assertEqual(feats,patts)
 
   def test3BitIdx(self):
     """ test 3 point p'cophore ids,
@@ -74,7 +74,7 @@ class TestCase(unittest.TestCase):
     """
     self.factory.SetBins(((0,2),(2,4),(4,8)))
     self.factory.Init()
-    self.failUnlessEqual(self.factory.GetSigSize(),990)
+    self.assertEqual(self.factory.GetSigSize(),990)
     probes = [((0,0,0),(1,3,1),54),
               ((0,0,0),(3,1,1),54),
               ((0,0,0),(1,1,3),54),
@@ -83,18 +83,18 @@ class TestCase(unittest.TestCase):
               ]
     for patts,dists,ans in probes:
       idx = self.factory.GetBitIdx(patts,dists)
-      self.failUnlessEqual(idx,ans)
+      self.assertEqual(idx,ans)
 
       cnt,feats,bins = self.factory.GetBitInfo(ans)
-      self.failUnlessEqual(cnt,len(patts))
-      self.failUnlessEqual(feats,patts)
+      self.assertEqual(cnt,len(patts))
+      self.assertEqual(feats,patts)
 
       
   def test4BitIdx(self):
     self.factory.trianglePruneBins=True
     self.factory.Init()
     sig = self.factory.GetSignature()
-    self.failUnlessEqual(len(sig),885)
+    self.assertEqual(len(sig),885)
 
     probes = [((0,0,0),(1,3,1),52),
               ((0,0,0),(1,1,3),52),
@@ -104,10 +104,10 @@ class TestCase(unittest.TestCase):
               ]
     for patts,dists,ans in probes:
       idx = self.factory.GetBitIdx(patts,dists)
-      self.failUnlessEqual(idx,ans)
+      self.assertEqual(idx,ans)
       cnt,feats,bins = self.factory.GetBitInfo(ans)
-      self.failUnlessEqual(cnt,len(patts))
-      self.failUnlessEqual(feats,patts)
+      self.assertEqual(cnt,len(patts))
+      self.assertEqual(feats,patts)
 
   def test5SimpleSig(self):
     factory = self.factory
@@ -118,15 +118,15 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,(1,))
+    self.assertEqual(bs,(1,))
 
     mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,(1,2,67))
+    self.assertEqual(bs,(1,2,67))
 
   def test6SimpleSigCounts(self):
     factory = self.factory
@@ -138,18 +138,18 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(sig.GetLength(),990)
-    cs = tuple(sig.GetNonzeroElements().iteritems())
-    self.failUnlessEqual(cs,((1,1),))
+    self.assertEqual(sig.GetLength(),990)
+    cs = tuple(sig.GetNonzeroElements().items())
+    self.assertEqual(cs,((1,1),))
 
     mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(sig.GetLength(),990)
+    self.assertEqual(sig.GetLength(),990)
     elems = sig.GetNonzeroElements()
-    bs = elems.keys()
+    bs = list(elems.keys())
     bs.sort()
     cs = [(x,elems[x]) for x in bs]
-    self.failUnlessEqual(tuple(cs),((1,2),(2,1),(67,1)))
+    self.assertEqual(tuple(cs),((1,2),(2,1),(67,1)))
 
   def test7SimpleSigSkip(self):
     factory = self.factory
@@ -161,9 +161,9 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),570)
+    self.assertEqual(len(sig),570)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,())
+    self.assertEqual(bs,())
     
   def test8MultiPointMatches(self):
     factory = self.factory
@@ -174,15 +174,15 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=Cc1ccccc1')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,(3,))
+    self.assertEqual(bs,(3,))
 
     mol = Chem.MolFromSmiles('O=CCCCCCCCCc1ccccc1')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,())
+    self.assertEqual(bs,())
 
   # FIX: add test for perms argument to Gen2DFingerprint
 
@@ -198,15 +198,15 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('[O-]CCC(=O)')
     sig=Generate.Gen2DFingerprint(mol,self.factory)
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,(1,))
+    self.assertEqual(bs,(1,))
     
     self.factory.includeBondOrder=True
     sig=Generate.Gen2DFingerprint(mol,self.factory)
-    self.failUnlessEqual(len(sig),990)
+    self.assertEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,(0,))
+    self.assertEqual(bs,(0,))
 
   def testDefaultFactory(self):
     from rdkit.Chem import Pharm2D
@@ -214,30 +214,30 @@ class TestCase(unittest.TestCase):
     #Generate._verbose=True
     mol = Chem.MolFromSmiles('OCCC(=O)')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),19355)
-    self.failUnlessEqual(tuple(sig.GetOnBits()),(2,16,21,84,1274,4361,))
+    self.assertEqual(len(sig),19355)
+    self.assertEqual(tuple(sig.GetOnBits()),(2,16,21,84,1274,4361,))
     nPts,combo,scaffold,labels,dMat=factory._GetBitSummaryData(21)
-    self.failUnlessEqual(nPts,2)
-    self.failUnlessEqual(labels,['Acceptor','Hydrophobe'])
-    self.failUnlessEqual(list(dMat[0]),[0,0])
-    self.failUnlessEqual(list(dMat[1]),[0,0])
+    self.assertEqual(nPts,2)
+    self.assertEqual(labels,['Acceptor','Hydrophobe'])
+    self.assertEqual(list(dMat[0]),[0,0])
+    self.assertEqual(list(dMat[1]),[0,0])
 
     txt=factory.GetBitDescription(21)
-    self.failUnlessEqual(txt,'Acceptor Hydrophobe |0 0|0 0|')
+    self.assertEqual(txt,'Acceptor Hydrophobe |0 0|0 0|')
     
     nPts,combo,scaffold,labels,dMat=factory._GetBitSummaryData(2)
-    self.failUnlessEqual(nPts,2)
-    self.failUnlessEqual(labels,['Acceptor','Acceptor'])
-    self.failUnlessEqual(list(dMat[0]),[0,2])
-    self.failUnlessEqual(list(dMat[1]),[2,0])
+    self.assertEqual(nPts,2)
+    self.assertEqual(labels,['Acceptor','Acceptor'])
+    self.assertEqual(list(dMat[0]),[0,2])
+    self.assertEqual(list(dMat[1]),[2,0])
 
     nPts,combo,scaffold,labels,dMat=factory._GetBitSummaryData(4361)
-    self.failUnlessEqual(nPts,3)
-    self.failUnlessEqual(labels,['Acceptor','Donor','Hydrophobe'])
-    self.failUnlessEqual(list(dMat[0]),[0,2,0])
-    self.failUnlessEqual(list(dMat[1]),[2,0,0])
-    self.failUnlessEqual(list(dMat[2]),[0,0,0])
-    self.failUnlessEqual(factory.GetBitDescription(4361),
+    self.assertEqual(nPts,3)
+    self.assertEqual(labels,['Acceptor','Donor','Hydrophobe'])
+    self.assertEqual(list(dMat[0]),[0,2,0])
+    self.assertEqual(list(dMat[1]),[2,0,0])
+    self.assertEqual(list(dMat[2]),[0,0,0])
+    self.assertEqual(factory.GetBitDescription(4361),
                          'Acceptor Donor Hydrophobe |0 2 0|2 0 0|0 0 0|')
 
 if __name__ == '__main__':

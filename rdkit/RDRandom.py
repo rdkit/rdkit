@@ -15,17 +15,7 @@
 import sys
 
 import random as _random
-if sys.hexversion >= 0x20303f0:
-  _randGen = _random.WichmannHill()
-  random = _randGen.random
-  randrange = _randGen.randrange
-  def seed(val):
-    global _randGen,random,randrange
-    _randGen = _random.WichmannHill()
-    _randGen.whseed(val)
-    random = _randGen.random
-    randrange = _randGen.randrange
-else:
-  random = _random.random
-  randrange = _random.randrange
-  seed = _random.whseed
+random = _random.random
+randrange = _random.randrange
+seed = _random.seed
+

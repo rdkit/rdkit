@@ -13,7 +13,7 @@
 """
 
 import os,sys
-if os.environ.has_key('RDBASE'):
+if 'RDBASE' in os.environ:
   RDBaseDir=os.environ['RDBASE']
   RDCodeDir=os.path.join(RDBaseDir,'rdkit')
   RDDataDir=os.path.join(RDBaseDir,'Data')
@@ -22,7 +22,7 @@ if os.environ.has_key('RDBASE'):
   RDBinDir=os.path.join(RDBaseDir,'bin')
   RDProjDir=os.path.join(RDBaseDir,'Projects')
 else:
-  from RDPaths import *
+  from rdkit.RDPaths import *
 
 rpcTestPort=8423
 pythonTestCommand="python"
@@ -30,10 +30,9 @@ pythonTestCommand="python"
 defaultDBUser='sysdba'
 defaultDBPassword='masterkey'
 
-import exceptions
-class ObsoleteCodeError(exceptions.Exception):
+class ObsoleteCodeError(Exception):
   pass
-class UnimplementedCodeError(exceptions.Exception):
+class UnimplementedCodeError(Exception):
   pass
 
 # ---------------------

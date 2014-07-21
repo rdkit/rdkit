@@ -92,4 +92,12 @@ namespace python = boost::python;
     return res;
   }
 
+  template <typename T>
+  python::object BVToBinary(const T &bv){
+    std::string res=bv.toString();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+  }
+
+
 #endif

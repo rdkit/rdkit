@@ -11,11 +11,15 @@
 """unit testing code for the Crippen clogp and MR calculators
 
 """
+from __future__ import print_function
+import unittest,sys,os
+
+import numpy
+
 from rdkit import RDConfig
-import unittest,sys,os,cPickle
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Crippen
-import numpy
 
 def feq(n1,n2,tol=1e-5):
   return abs(n1-n2)<=tol
@@ -30,7 +34,9 @@ class TestCase(unittest.TestCase):
     smis=[]
     clogs=[]
     mrs=[]
-    for line in file(self.fName,'r').xreadlines():
+    with open(self.fName,'r') as f:
+      lines = f.readlines()
+    for line in lines:
       if len(line) and line[0] != '#':
         splitL = line.split(',')
         if len(splitL)==3:
@@ -53,15 +59,15 @@ class TestCase(unittest.TestCase):
       if 1:
         clog = self.clogs[i]
         tmp = Crippen.MolLogP(mol)
-        self.failUnless(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
+        self.assertTrue(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
 
         mr = self.mrs[i]
         tmp = Crippen.MolMR(mol)
-        self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
+        self.assertTrue(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
       else:
         clog = Crippen.MolLogP(mol)
         mr = Crippen.MolMR(mol)
-        print >>outF,'%s,%.4f,%.4f'%(smi,clog,mr)
+        print('%s,%.4f,%.4f'%(smi,clog,mr), file=outF)
   def testRepeat(self):
     self._readData()
     nMols = len(self.smis)
@@ -72,12 +78,12 @@ class TestCase(unittest.TestCase):
       clog = self.clogs[i]
       tmp = Crippen.MolLogP(mol)
       tmp = Crippen.MolLogP(mol)
-      self.failUnless(feq(clog,tmp),'bad logp fooutF,r %s: %4.4f != %4.4f'%(smi,clog,tmp))
+      self.assertTrue(feq(clog,tmp),'bad logp fooutF,r %s: %4.4f != %4.4f'%(smi,clog,tmp))
 
       mr = self.mrs[i]
       tmp = Crippen.MolMR(mol)
       tmp = Crippen.MolMR(mol)
-      self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
+      self.assertTrue(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
       
   def _writeDetailFile(self,inF,outF):
     while 1:
@@ -98,13 +104,13 @@ class TestCase(unittest.TestCase):
           contribs = Crippen._GetAtomContribs(mol)
           cPickle.dump((smi,contribs),outF)
         else:
-          print 'Problems with SMILES:',smi
+          print('Problems with SMILES:',smi)
   def _doDetailFile(self,inF,nFailsAllowed=1):
     done = 0
     verbose=0
     nFails=0
     while not done:
-      if verbose: print '---------------'
+      if verbose: print('---------------')
       try:
         smi,refContribs = cPickle.load(inF)
       except EOFError:
@@ -138,29 +144,29 @@ class TestCase(unittest.TestCase):
             refL = refContribs[refOrder[i]]
             l = contribs[order[i]]
             if not feq(refL,l):
-              print '%s (%s): %d %6.5f != %6.5f'%(smi,smi2,order[i],refL,l)
+              print('%s (%s): %d %6.5f != %6.5f'%(smi,smi2,order[i],refL,l))
               Crippen._GetAtomContribs(mol,force=1)
-              print '-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*'
+              print('-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*')
               nFails +=1
               break;
         else:
-          print 'Problems with SMILES:',smi
-    self.failUnless(nFails<nFailsAllowed)
+          print('Problems with SMILES:',smi)
+    self.assertTrue(nFails<nFailsAllowed)
   def testDetails(self):
     Crippen._Init()
-    inF = open(self.detailName,'rb')
-    if 0:
-      outF = open('tmp.pkl','wb+')
-      self._writeDetailFile(inF,outF)
-    self._doDetailFile(inF)
+    with open(self.detailName,'rb') as inF:
+      if 0:
+        outF = open('tmp.pkl','wb+')
+        self._writeDetailFile(inF,outF)
+      self._doDetailFile(inF)
 
   def testDetails2(self):
     Crippen._Init()
-    inF = open(self.detailName2,'rb')
-    if 0:
-      outF = open('tmp.pkl','wb+')
-      self._writeDetailFile(inF,outF)
-    self._doDetailFile(inF)
+    with open(self.detailName2,'rb') as inF:
+      if 0:
+        outF = open('tmp.pkl','wb+')
+        self._writeDetailFile(inF,outF)
+      self._doDetailFile(inF)
 
   def testIssue80(self):
     from rdkit.Chem import Lipinski
@@ -168,12 +174,12 @@ class TestCase(unittest.TestCase):
     ref = Crippen.MolLogP(m)
     Lipinski.NHOHCount(m)
     probe = Crippen.MolLogP(m)
-    self.failUnless(probe==ref)
+    self.assertTrue(probe==ref)
     
   def testIssue1749494(self):
     m1 = Chem.MolFromSmiles('[*]CC')
     v = Crippen.MolLogP(m1)
-    self.failUnless(feq(v,0.9739))
+    self.assertTrue(feq(v,0.9739))
     
           
       

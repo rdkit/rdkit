@@ -13,6 +13,7 @@
  When possible, it's probably preferable to use a _DbConnection.DbConnect_ object
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 from rdkit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
 def _take(fromL,what):
@@ -106,9 +107,9 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
       traceback.print_exc()
       return None
     if transform is not None:
-      raise ValueError,'forceList and transform arguments are not compatible'
+      raise ValueError('forceList and transform arguments are not compatible')
     if not randomAccess:
-      raise ValueError,'when forceList is set, randomAccess must also be used'
+      raise ValueError('when forceList is set, randomAccess must also be used')
     data = c.fetchall()
     if removeDups>0:
       seen = []
@@ -206,10 +207,10 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
           locType = types.StringType
           try:
             d = str(d)
-          except UnicodeError,msg:
-            print 'cannot convert text from row %d col %d to a string'%(row+2,col)
-            print '\t>%s'%(repr(d))
-            raise UnicodeError,msg
+          except UnicodeError as msg:
+            print('cannot convert text from row %d col %d to a string'%(row+2,col))
+            print('\t>%s'%(repr(d)))
+            raise UnicodeError(msg)
         else:
           typeHere[1] = max(typeHere[1],len(str(d)))
         if locType == types.StringType:
@@ -248,7 +249,7 @@ def _AdjustColHeadings(colHeadings,maxColLabelLen):
       # interbase (at least) has a limit on the maximum length of a column name
       newHead = string.replace(colHeadings[i],'_','')
       newHead = newHead[:maxColLabelLen]
-      print '\tHeading %s too long, changed to %s'%(colHeadings[i],newHead)
+      print('\tHeading %s too long, changed to %s'%(colHeadings[i],newHead))
       colHeadings[i] = newHead
   return colHeadings
 
@@ -282,8 +283,8 @@ def _insertBlock(conn,sqlStr,block,silent=False):
         if not silent:
           import traceback
           traceback.print_exc()
-          print 'insert failed:',sqlStr
-          print '\t',repr(row)
+          print('insert failed:',sqlStr)
+          print('\t',repr(row))
       else:
         conn.commit()
   else:
@@ -303,13 +304,13 @@ def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
   try:
     c.execute('drop table %s'%(table))
   except:
-    print 'cannot drop table %s'%(table)
+    print('cannot drop table %s'%(table))
   try:
     sqlStr = 'create table %s (%s)'%(table,colDefs)
     c.execute(sqlStr)
   except:
-    print 'create table failed: ', sqlStr
-    print 'here is the exception:'
+    print('create table failed: ', sqlStr)
+    print('here is the exception:')
     import traceback
     traceback.print_exc()
     return
@@ -391,7 +392,7 @@ def TextFileToDatabase(dBase,table,inF,delim=',',
     inL = inL.replace('\n','')
     splitL = inL.split(delim)
     if len(splitL)!=nCols:
-      print '>>>',repr(inL)
+      print('>>>',repr(inL))
       assert len(splitL)==nCols,'unequal length'
     tmpVect = []
     for entry in splitL:

@@ -100,7 +100,8 @@ from rdkit.ML import ScreenComposite,BuildComposite
 from rdkit.ML.Composite import AdjustComposite
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
-import sys,cPickle,time,types
+from rdkit.six.moves import cPickle
+import sys,time,types
 
 _runDetails = CompositeRun.CompositeRun()
 
@@ -221,7 +222,7 @@ def GrowIt(details,composite,progressCallback=None,
   avgErrs = numpy.array(avgErrs)
   composite._varNames = data.GetVarNames()
 
-  for i in xrange(len(modelList)):
+  for i in range(len(modelList)):
     modelList[i].NameModel(composite._varNames)
 
   # do final statistics
