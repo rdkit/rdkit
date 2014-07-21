@@ -8,11 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <string>
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 #include <RDBoost/iterator_next.h>
+#include <string>
 
 //ours
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -23,12 +23,12 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  
+
   SmilesMolSupplier *SmilesSupplierFromText(std::string text,
 				      std::string delimiter=" ",
 				      int smilesColumn=0,
-				      int nameColumn=1, 
-				      bool titleLine=true,		   
+				      int nameColumn=1,
+				      bool titleLine=true,
 				      bool sanitize=true){
     SmilesMolSupplier *res=new SmilesMolSupplier();
     res->setData(text,delimiter,smilesColumn,
