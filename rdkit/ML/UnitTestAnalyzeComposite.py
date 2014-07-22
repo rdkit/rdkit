@@ -14,7 +14,7 @@
 from rdkit import RDConfig
 import unittest,os
 from rdkit.ML import AnalyzeComposite
-import cPickle as pickle
+from rdkit.six.moves import cPickle as pickle
 
 def feq(a,b,tol=1e-4):
   if abs(a-b)>tol: return 0
@@ -27,16 +27,18 @@ class TestCase(unittest.TestCase):
   def test1_Issue163(self):
     name1 = os.path.join(self.baseDir,'humanoral.1.pkl')
     try:
-      c1 = pickle.load(open(name1,'rb'))
+      with open(name1,'rb') as pklF:
+        c1 = pickle.load(pklF)
     except:
       c1 = None
-    self.failUnless(c1)
+    self.assertTrue(c1)
     name2 = os.path.join(self.baseDir,'humanoral.2.pkl')
     try:
-      c2 = pickle.load(open(name2,'rb'))
+      with open(name2, 'rb') as pklF:
+        c2 = pickle.load(pklF)
     except:
       c2 = None
-    self.failUnless(c2)
+    self.assertTrue(c2)
 
     try:
       res = AnalyzeComposite.ProcessIt([c1,c2],verbose=-1)
@@ -46,13 +48,13 @@ class TestCase(unittest.TestCase):
       ok=0
     else:
       ok=1
-    self.failUnless(ok)
+    self.assertTrue(ok)
 
-    self.failUnless(res[0][0]=='BALABANJ')
-    self.failUnless(res[1][0]=='BERTZCT')
-    self.failUnless(res[-1][0]=='FR_ALLYLIC_OXID')
+    self.assertTrue(res[0][0]=='BALABANJ')
+    self.assertTrue(res[1][0]=='BERTZCT')
+    self.assertTrue(res[-1][0]=='FR_ALLYLIC_OXID')
     for entry in res:
-      self.failUnless(len(entry)==5)
+      self.assertTrue(len(entry)==5)
     
 if __name__ == '__main__':
   unittest.main()

@@ -1,5 +1,5 @@
 ## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
+from __future__ import division,print_function
 from rdkit import RDConfig
 import unittest
 from rdkit.ML.InfoTheory import rdInfoTheory
@@ -9,15 +9,16 @@ except ImportError:
   BitClusterer=None
 from rdkit.ML.Data import DataUtils
 from rdkit import DataStructs
+
 import random
 
 def getValLTM(i, j, mat):
     if (i > j) :
-        id = (i*(i-1)/2) + j
-        return mat[id]
+        id_ = (i*(i-1)//2) + j
+        return mat[id_]
     elif (j > i) :
-        id = (j*(j-1)/2) + i
-        return mat[id]
+        id_ = (j*(j-1)//2) + i
+        return mat[id_]
     else :
         return 0.0
         
@@ -37,17 +38,16 @@ class TestCase(unittest.TestCase):
         self.d = 40
         self.nfp = 1000
 
-        self.blist = range(self.nbits)
+        self.blist = list(range(self.nbits))
                 
         self.fps = []
         for fi in range(self.nfp) :
             fp = DataStructs.ExplicitBitVect(self.nbits)
-            obits = range(self.nbits/2)
-            random.shuffle(obits)
-            obits = obits[0:self.d]
-            for bit in obits :
+            obits = list(range(self.nbits//2))
+            random.shuffle(obits,random=random.random)
+            for bit in obits[0:self.d] :
                 fp.SetBit(bit)
-                fp.SetBit(bit + self.nbits/2)
+                fp.SetBit(bit + self.nbits//2)
             self.fps.append(fp)
 
     def test0CorrMat(self) :
@@ -60,12 +60,12 @@ class TestCase(unittest.TestCase):
 
         avr = 0.0
         navr = 0.0
-        for i in range(self.nbits/2) :
-            avr += getValLTM(i, i + self.nbits/2, corrMat)
+        for i in range(self.nbits//2) :
+            avr += getValLTM(i, i + self.nbits//2, corrMat)
             navr += getValLTM(i,i+1, corrMat)
 
-        assert 2*avr/self.nbits == 400.0
-        assert 2*navr/self.nbits == 158.3,2*navr/self.nbits
+        self.assertEqual(2*avr/self.nbits,400.0)
+        self.assertEqual(2*navr/self.nbits,158.3)
 
     def test1Cluster(self) :
         if BitClusterer is None:
@@ -77,31 +77,31 @@ class TestCase(unittest.TestCase):
 
         corrMat = cmg.GetCorrMatrix()
         
-        bcl = BitClusterer.BitClusterer(self.blist, self.nbits/2)
+        bcl = BitClusterer.BitClusterer(self.blist, self.nbits//2)
         bcl.ClusterBits(corrMat)
         cls = bcl.GetClusters()
         for cl in cls :
-            assert len(cl) == 2
-            assert (cl[0] + self.nbits/2) == cl[1]
+            self.assertEqual(len(cl),2)
+            self.assertEqual((cl[0] + self.nbits//2), cl[1])
 
         tfp = DataStructs.ExplicitBitVect(self.nbits)
-        obits = range(0,self.nbits/4) + range(self.nbits/2, 3*self.nbits/4)
+        obits = list(range(0,self.nbits//4)) + list(range(self.nbits//2, 3*self.nbits//4))
         tfp.SetBitsFromList(obits)
         rvc = bcl.MapToClusterScores(tfp)
-        assert len(rvc) == self.nbits/2
-        for i in range(self.nbits/2) :
-            if i < self.nbits/4:
-                assert rvc[i] == 2
+        self.assertEqual(len(rvc),self.nbits//2)
+        for i in range(self.nbits//2) :
+            if i < self.nbits//4:
+                self.assertEqual(rvc[i],2)
             else :
-                assert rvc[i] == 0
+                self.assertEqual(rvc[i],0)
 
         nfp = bcl.MapToClusterFP(tfp)
-        assert len(nfp) == self.nbits/2
-        for i in range(self.nbits/2) :
-           if i < self.nbits/4:
-                assert nfp[i]
+        self.assertEqual(len(nfp),self.nbits//2)
+        for i in range(self.nbits//2) :
+           if i < self.nbits//4:
+               self.assertTrue(nfp[i])
            else :
-               assert not nfp[i]
+               self.assertFalse(nfp[i])
                
 if __name__ == '__main__':
     unittest.main()

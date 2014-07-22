@@ -26,7 +26,7 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase import DbModule
 from rdkit.DataStructs.TopNContainer import TopNContainer
 import sys,types
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit.Chem.Fingerprints import FingerprintMols,DbFpSupplier
 try:  
   from rdkit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq

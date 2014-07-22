@@ -14,6 +14,8 @@
 # include <boost/python/suite/indexing/container_utils.hpp>
 # include <boost/python/iterator.hpp>
 
+#include "pyint_api.h"
+
 namespace boost { namespace python {
             
     // Forward declaration

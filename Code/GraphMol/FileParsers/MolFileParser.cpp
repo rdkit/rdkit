@@ -2269,7 +2269,8 @@ namespace RDKit{
         std::ostringstream errout;
         errout<<"CTAB version string invalid at line "<<line;
         if(strictParsing){
-          if(res) delete res;
+          delete res;
+          res=NULL;
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -2280,10 +2281,8 @@ namespace RDKit{
         std::ostringstream errout;
         errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "' at line " << line;
         if(strictParsing){
-          if(res){
-            delete res;
-            res = NULL;
-          }
+          delete res;
+          res = NULL;
           throw FileParseException(errout.str()) ;
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() <<std::endl;
@@ -2306,10 +2305,8 @@ namespace RDKit{
           std::ostringstream errout;
           errout << "V3000 mol blocks should have 0s in the initial counts line. (line: "<<line<<")";
           if(strictParsing){
-            if(res){
-              delete res;
-              res = NULL;
-            }
+            delete res;
+            res = NULL;
             throw FileParseException(errout.str()) ;
           } else {
             BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl ;
@@ -2321,8 +2318,8 @@ namespace RDKit{
       }
     } catch (MolFileUnhandledFeatureException &e) { 
       // unhandled mol file feature, just delete the result 
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<" on line: "<<line<<". Molecule skipped."<<std::endl;
@@ -2339,16 +2336,16 @@ namespace RDKit{
         fileComplete=false;        
     } catch (FileParseException &e) { 
       // catch our exceptions and throw them back after cleanup
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       throw e;
     }
 
     if(!fileComplete){
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       std::ostringstream errout;
@@ -2411,7 +2408,7 @@ namespace RDKit{
           DetectBondStereoChemistry(*res, &conf);
         }
         catch (...){
-          if(res) delete res;
+          delete res;
           res=NULL;
           throw;
         }

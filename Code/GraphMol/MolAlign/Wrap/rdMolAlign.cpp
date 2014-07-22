@@ -21,6 +21,7 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 #include <GraphMol/ROMol.h>
 
 
@@ -363,7 +364,7 @@ namespace RDKit {
 }
 
 BOOST_PYTHON_MODULE(rdMolAlign) {
-  import_array();
+  rdkit_import_array();
   python::scope().attr("__doc__") =
     "Module containing functions to align a molecule to a second molecule";
     

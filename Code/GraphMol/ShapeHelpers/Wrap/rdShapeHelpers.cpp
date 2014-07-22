@@ -13,6 +13,7 @@
 #include "numpy/oldnumeric.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 
 #include <Geometry/Transform3D.h>
 #include <Geometry/UniformGrid3D.h>
@@ -129,7 +130,7 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
     "Module containing functions to encode and compare the shapes of molecules"
     ;
   
-  import_array();
+  rdkit_import_array();
   
   //RegisterListConverter<RDKit::Atom*>();
   

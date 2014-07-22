@@ -3,31 +3,27 @@
 #
 
 """ unit testing code for trees and decision trees (not learning/xvalidation) """
-from rdkit import RDConfig
+from __future__ import print_function
 import unittest
-from rdkit.ML.DecTree import Tree,DecTree
 import copy
-import cPickle
+from rdkit import RDConfig
+from rdkit.ML.DecTree import Tree,DecTree
+from rdkit.six.moves import cPickle
 
 
 class TreeTestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.baseTree = Tree.TreeNode(None,'root')    
     self.pickleFileName = RDConfig.RDCodeDir+'/ML/DecTree/test_data/treeunit.pkl'
     
-  def testAdd(self):
+  def test0Add(self):
     " testing AddChild "
     tree = self.baseTree
-    addWorks = 1
-    try:
-      for i in xrange(3):
-        child = tree.AddChild('child %d'%i)
-    except:
-      addWorks = 0
-    assert addWorks,'Tree.AddChild failed'
+    for i in range(3):
+      child = tree.AddChild('child %d'%i)
 
-  def testGetName(self):
+  def test1GetName(self):
     " testing GetName "
     tree = self.baseTree
     # we know this works
@@ -38,14 +34,14 @@ class TreeTestCase(unittest.TestCase):
     tree.AddChild('child0')
     tree.AddChild('child1')
 
-  def testGetChildren(self):
+  def test2GetChildren(self):
     " testing GetChildren "
     self._readyTree()
     tree = self.baseTree
     child = tree.GetChildren()[1]
     assert child.GetName()=='child1','Tree.GetChildren failed'
 
-  def testPrune(self):
+  def test3Prune(self):
     " testing PruneChild"
     self._readyTree()
     tree = self.baseTree
@@ -54,17 +50,7 @@ class TreeTestCase(unittest.TestCase):
     child = tree.GetChildren()[0]
     assert child.GetName()=='child1','Tree.PruneChild failed'
 
-  def testPickle(self):
-    " testing tree pickle "
-    self._readyTree()
-    pickleWorked=1
-    try:
-      self.baseTree.Pickle(self.pickleFileName)
-    except:
-      pickleWorked=0
-    assert pickleWorked,'tree.Pickle Failed'      
-
-  def testEquals(self):
+  def test5Equals(self):
     " testing tree equals "
     nTree = Tree.TreeNode(None,'root')
     self._readyTree()
@@ -77,24 +63,24 @@ class TreeTestCase(unittest.TestCase):
     assert tTree != self.baseTree,'Inequality test 1 failed. (bad Tree.__cmp__)'
     assert self.baseTree != tTree,'Inequality test 2 failed. (bad Tree.__cmp__)'    
     
-  def testPickleEquals(self):
+  def test6PickleEquals(self):
     " testing pickled tree equals "
     self._readyTree()
-    pFile = open(self.pickleFileName,'r')
-    oTree = cPickle.load(pFile)
+    pkl = cPickle.dumps(self.baseTree)
+    oTree = cPickle.loads(pkl)
 
     assert oTree == self.baseTree,'Pickle inequality test failed'
 
     self.baseTree.PruneChild(self.baseTree.GetChildren()[0])
     assert oTree != self.baseTree,'Pickle inequality test failed (bad Tree.__cmp__)'    
 
-  def testCopy(self):
+  def test7Copy(self):
     " testing deepcopy on trees "
     self._readyTree()
     nTree = copy.deepcopy(self.baseTree)
     assert nTree == self.baseTree,'deepcopy failed'
 
-  def testIn(self):
+  def test8In(self):
     " testing list membership "
     self._readyTree()
     nTree = copy.deepcopy(self.baseTree)

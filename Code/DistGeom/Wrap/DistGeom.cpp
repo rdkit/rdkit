@@ -14,6 +14,8 @@
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
 #include "numpy/arrayobject.h"
 #include <RDBoost/Wrap.h>
+#include <RDBoost/pyint_api.h>
+#include <RDBoost/import_array.h>
 
 #include <Geometry/point.h>
 #include <Numerics/Matrix.h>
@@ -169,7 +171,7 @@ BOOST_PYTHON_MODULE(DistGeom) {
     "Module containing functions for basic distance geometry operations"
     ;
 
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 
   std::string docString;

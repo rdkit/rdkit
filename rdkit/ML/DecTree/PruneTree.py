@@ -4,9 +4,11 @@
 """ Contains functionality for doing tree pruning
 
 """
+from __future__ import print_function
 import numpy
-from rdkit.ML.DecTree import CrossValidate, DecTree
 import copy
+from rdkit.ML.DecTree import CrossValidate, DecTree
+from rdkit.six.moves import range
 
 _verbose = 0
 
@@ -25,7 +27,7 @@ def MaxCount(examples):
   resList = [x[-1] for x in examples]
   maxVal = max(resList)
   counts = [None]*(maxVal+1)
-  for i in xrange(maxVal+1):
+  for i in range(maxVal+1):
     counts[i] = sum([x==i for x in resList])
 
   return numpy.argmax(counts)
@@ -36,7 +38,7 @@ def _GetLocalError(node):
     pred = node.ClassifyExample(example,appendExamples=0)
     if pred != example[-1]:
       nWrong +=1
-      #if _verbose: print '------------------>MISS:',example,pred
+      #if _verbose: print('------------------>MISS:',example,pred)
   return nWrong    
 
 def _Pruner(node,level=0):
@@ -64,7 +66,7 @@ def _Pruner(node,level=0):
         favor smaller trees.
       
   """
-  if _verbose: print '  '*level,'<%d>  '%level,'>>> Pruner'
+  if _verbose: print('  '*level,'<%d>  '%level,'>>> Pruner')
   children = node.GetChildren()[:]
     
   bestTree = copy.deepcopy(node)
@@ -79,13 +81,13 @@ def _Pruner(node,level=0):
     child = children[i]
     examples = child.GetExamples()
     if _verbose:
-      print '  '*level,'<%d>  '%level,' Child:',i,child.GetLabel()
+      print('  '*level,'<%d>  '%level,' Child:',i,child.GetLabel())
       bestTree.Print()
-      print
+      print()
     if len(examples):
-      if _verbose: print '  '*level,'<%d>  '%level,'  Examples',len(examples)
+      if _verbose: print('  '*level,'<%d>  '%level,'  Examples',len(examples))
       if not child.GetTerminal():
-        if _verbose: print '  '*level,'<%d>  '%level,'    Nonterminal'
+        if _verbose: print('  '*level,'<%d>  '%level,'    Nonterminal')
 
         workTree = copy.deepcopy(bestTree)
         #
@@ -98,12 +100,12 @@ def _Pruner(node,level=0):
           bestErr = tempErr
           bestTree = copy.deepcopy(workTree)
           if _verbose:
-            print '  '*level,'<%d>  '%level,'>->->->->->'
-            print '  '*level,'<%d>  '%level,'replacing:',i,child.GetLabel()
+            print('  '*level,'<%d>  '%level,'>->->->->->')
+            print('  '*level,'<%d>  '%level,'replacing:',i,child.GetLabel())
             child.Print()
-            print '  '*level,'<%d>  '%level,'with:'
+            print('  '*level,'<%d>  '%level,'with:')
             newNode.Print()
-            print '  '*level,'<%d>  '%level,'<-<-<-<-<-<'
+            print('  '*level,'<%d>  '%level,'<-<-<-<-<-<')
         else:
           workTree.ReplaceChildIndex(i,child)
         #
@@ -115,24 +117,24 @@ def _Pruner(node,level=0):
         newNode.SetExamples(child.GetExamples())
         workTree.ReplaceChildIndex(i,newNode)
         if _verbose:
-          print '  '*level,'<%d>  '%level,'ATTEMPT:'
+          print('  '*level,'<%d>  '%level,'ATTEMPT:')
           workTree.Print()
         newErr = _GetLocalError(workTree)
-        if _verbose: print '  '*level,'<%d>  '%level,'---> ',newErr,bestErr
+        if _verbose: print('  '*level,'<%d>  '%level,'---> ',newErr,bestErr)
         if newErr <= bestErr:
           bestErr = newErr
           bestTree = copy.deepcopy(workTree)
           if _verbose:
-            print '  '*level,'<%d>  '%level,'PRUNING:'
+            print('  '*level,'<%d>  '%level,'PRUNING:')
             workTree.Print()
         else:
-          if _verbose: print '  '*level,'<%d>  '%level,'FAIL'
+          if _verbose: print('  '*level,'<%d>  '%level,'FAIL')
           # whoops... put the child back in:
           workTree.ReplaceChildIndex(i,child)
       else:
-        if _verbose: print '  '*level,'<%d>  '%level,'    Terminal'
+        if _verbose: print('  '*level,'<%d>  '%level,'    Terminal')
     else:
-      if _verbose: print '  '*level,'<%d>  '%level,'  No Examples',len(examples)
+      if _verbose: print('  '*level,'<%d>  '%level,'  No Examples',len(examples))
       #
       # FIX:  we need to figure out what to do here (nodes that contain
       #   no examples in the testing set).  I can concoct arguments for
@@ -141,7 +143,7 @@ def _Pruner(node,level=0):
       #
       pass
 
-  if _verbose: print '  '*level,'<%d>  '%level,'<<< out'
+  if _verbose: print('  '*level,'<%d>  '%level,'<<< out')
   return bestTree
 
 def PruneTree(tree,trainExamples,testExamples,minimizeTestErrorOnly=1):
@@ -212,12 +214,12 @@ def _testRandom():
   tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,nPossibleVals)
   tree.Print()
   tree.Pickle('orig.pkl')
-  print 'original error is:', frac
+  print('original error is:', frac)
   
-  print '----Pruning'
+  print('----Pruning')
   newTree,frac2 = PruneTree(tree,tree.GetTrainingExamples(),tree.GetTestExamples())
   newTree.Print()
-  print 'pruned error is:',frac2
+  print('pruned error is:',frac2)
   newTree.Pickle('prune.pkl')  
 
 
@@ -235,18 +237,18 @@ def _testSpecific():
   tree = ID3.ID3Boot(oPts,attrs=range(3),nPossibleVals=[2]*4)
   tree.Print()
   err,badEx = CrossValidate.CrossValidate(tree,oPts)
-  print 'original error:',err
+  print('original error:',err)
 
 
   err,badEx = CrossValidate.CrossValidate(tree,tPts)
-  print 'original holdout error:',err
+  print('original holdout error:',err)
   newTree,frac2 = PruneTree(tree,oPts,tPts)
   newTree.Print()
   err,badEx = CrossValidate.CrossValidate(newTree,tPts)
-  print 'pruned holdout error is:',err
-  print badEx
+  print('pruned holdout error is:',err)
+  print(badEx)
 
-  print len(tree),len(newTree)
+  print(len(tree),len(newTree))
 
 def _testChain():
   from rdkit.ML.DecTree import ID3
@@ -270,16 +272,16 @@ def _testChain():
   tree = ID3.ID3Boot(oPts,attrs=range(len(oPts[0])-1),nPossibleVals=[2]*len(oPts[0]))
   tree.Print()
   err,badEx = CrossValidate.CrossValidate(tree,oPts)
-  print 'original error:',err
+  print('original error:',err)
 
 
   err,badEx = CrossValidate.CrossValidate(tree,tPts)
-  print 'original holdout error:',err
+  print('original holdout error:',err)
   newTree,frac2 = PruneTree(tree,oPts,tPts)
   newTree.Print()
   err,badEx = CrossValidate.CrossValidate(newTree,tPts)
-  print 'pruned holdout error is:',err
-  print badEx
+  print('pruned holdout error is:',err)
+  print(badEx)
 
 
 if __name__ == '__main__':

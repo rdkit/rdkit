@@ -34,7 +34,7 @@ class Canvas(CanvasBase):
     elif imageType=="png":
       from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
     else:
-      raise ValueError,'unrecognized format: %s'%imageType
+      raise ValueError('unrecognized format: %s'%imageType)
     self.canvas = Canvas(size=size, name=name)
     if hasattr(self.canvas,'_image'):
       self._image = self.canvas._image

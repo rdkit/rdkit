@@ -44,9 +44,9 @@ Here's the general flow of things:
   -666.  So bad descriptor values should stand out like sore thumbs.
 
 """
+from __future__ import print_function
 __DEBUG=0
 from rdkit import RDConfig
-import string
 
 # we do this to allow the use of stuff in the math module
 from math import *
@@ -78,10 +78,10 @@ def HAS(strArg,composList,atomDict):
   splitArgs = string.split(strArg,',')
   if len(splitArgs)>1:
     for atom,num in composList:
-      tStr = string.replace(splitArgs[0],'DEADBEEF',atom)
+      tStr = splitArgs[0].replace('DEADBEEF',atom)
       where = eval(tStr)
       what = eval(splitArgs[1])
-      if string.find(where,what)!= -1:
+      if where.find(what)!= -1:
         return 1
     return 0
   else:
@@ -107,7 +107,7 @@ def SUM(strArg,composList,atomDict):
   """
   accum = 0.0
   for atom,num in composList:
-    tStr = string.replace(strArg,'DEADBEEF',atom)
+    tStr = strArg.replace('DEADBEEF',atom)
     accum = accum + eval(tStr)*num
   return accum
 
@@ -132,7 +132,7 @@ def MEAN(strArg,composList,atomDict):
   accum = 0.0
   nSoFar = 0
   for atom,num in composList:
-    tStr = string.replace(strArg,'DEADBEEF',atom)
+    tStr = strArg.replace('DEADBEEF',atom)
     accum = accum + eval(tStr)*num
     nSoFar = nSoFar + num
   return accum/nSoFar
@@ -160,7 +160,7 @@ def DEV(strArg,composList,atomDict):
   accum = 0.0
   nSoFar = 0.0
   for atom,num in composList:
-    tStr = string.replace(strArg,'DEADBEEF',atom)
+    tStr = strArg.replace('DEADBEEF',atom)
     accum = accum + abs(eval(tStr)-avg)*num
     nSoFar = nSoFar + num
   return accum/nSoFar
@@ -185,7 +185,7 @@ def MIN(strArg,composList,atomDict):
   """
   accum = []
   for atom,num in composList:
-    tStr = string.replace(strArg,'DEADBEEF',atom)
+    tStr = strArg.replace('DEADBEEF',atom)
     accum.append(eval(tStr))
   return min(accum)
 
@@ -209,7 +209,7 @@ def MAX(strArg,composList,atomDict):
   """
   accum = []
   for atom,num in composList:
-    tStr = string.replace(strArg,'DEADBEEF',atom)
+    tStr = strArg.replace('DEADBEEF',atom)
     accum.append(eval(tStr))
   return max(accum)
 
@@ -225,8 +225,8 @@ def _SubForAtomicVars(cExpr,varList,dictName):
    *Not intended for client use*
 
   """
-  for i in xrange(len(varList)):
-    cExpr = string.replace(cExpr,'$%d'%(i+1),
+  for i in range(len(varList)):
+    cExpr = cExpr.replace('$%d'%(i+1),
                        '%s["DEADBEEF"]["%s"]'%(dictName,varList[i]))
   return cExpr
 
@@ -236,8 +236,8 @@ def _SubForCompoundDescriptors(cExpr,varList,dictName):
    *Not intended for client use*
 
   """
-  for i in xrange(len(varList)):
-    cExpr = string.replace(cExpr,'$%s'%chr(ord('a')+i),
+  for i in range(len(varList)):
+    cExpr = cExpr.replace('$%s'%chr(ord('a')+i),
                            '%s["%s"]'%(dictName,varList[i]))
   return cExpr
   
@@ -257,7 +257,7 @@ def _SubMethodArgs(cExpr,knownMethods):
   for method in knownMethods:
     p = 0
     while p != -1 and p < len(res):
-      p = string.find(res,method,p)
+      p = res.find(method,p)
       if p != -1:
         p = p + len(method) + 1
         start = p
@@ -324,11 +324,11 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
   except:
     if __DEBUG:
       import sys,traceback
-      print 'Sub Failure!'
+      print('Sub Failure!')
       traceback.print_exc()
-      print evalTarget
-      print propDict
-      raise RuntimeError,'Failure 1'
+      print(evalTarget)
+      print(propDict)
+      raise RuntimeError('Failure 1')
     else:
       return -666
 
@@ -347,13 +347,13 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
       except:
         outF.write('no atomDict\n')
       outF.close()
-      print 'ick!'
-      print 'formula:',formula
-      print 'target:',evalTarget
-      print 'propDict:',propDict
-      print 'keys:',atomDict.keys()
+      print('ick!')
+      print('formula:',formula)
+      print('target:',evalTarget)
+      print('propDict:',propDict)
+      print('keys:',atomDict.keys())
       traceback.print_exc()
-      raise RuntimeError,'Failure 2'
+      raise RuntimeError('Failure 2')
     else:
       v = -666
   return v
@@ -405,7 +405,7 @@ def CalcMultipleCompoundsDescriptor(composVect,argVect,atomDict,propDictList):
     evalTarget = _SubMethodArgs(formula,knownMethods)
   except:
     return res
-  for i in xrange(len(composVect)):
+  for i in range(len(composVect)):
     propDict = propDictList[i]
     compos = composVect[i]
     try:
@@ -429,7 +429,7 @@ if __name__ == '__main__':
 
   for cExpr in cExprs:
     argVect = piece1 + [cExpr]
-    print cExpr
-    print CalcSingleCompoundDescriptor(compos,argVect,aDict,pDict)
-    print CalcMultipleCompoundsDescriptor([compos,compos],argVect,aDict,[pDict,pDict])
+    print(cExpr)
+    print(CalcSingleCompoundDescriptor(compos,argVect,aDict,pDict))
+    print(CalcMultipleCompoundsDescriptor([compos,compos],argVect,aDict,[pDict,pDict]))
 

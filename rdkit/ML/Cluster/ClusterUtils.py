@@ -30,7 +30,7 @@ def GetNodeList(cluster):
     return [cluster]
   else:
     children = cluster.GetChildren()
-    children.sort(lambda x,y:cmp(len(y),len(x)))
+    children.sort(key=lambda x:len(x), reverse=True)
     res = []
     for child in children:
       res += GetNodeList(child)
@@ -111,7 +111,7 @@ def _BreadthFirstSplit(cluster,n):
 
   """
   if len(cluster)<n:
-    raise ValueError,'Cannot split cluster of length %d into %d pieces'%(len(cluster),n)
+    raise ValueError('Cannot split cluster of length %d into %d pieces'%(len(cluster),n))
   if len(cluster)==n:
     return cluster.GetPoints()
   clusters = [cluster]
@@ -122,26 +122,18 @@ def _BreadthFirstSplit(cluster,n):
     assert nxtIdx<len(clusters)
 
     children = clusters[nxtIdx].GetChildren()
-    children.sort(_sortHelper)
+    children.sort(key=lambda x: x.GetMetric(), reverse=True)
     for child in children:
       clusters.append(child)
     del clusters[nxtIdx]
   return clusters
-
-def _sortHelper(ca,cb):
-  """  *Internal Use Only*
-
-    Used to sort cluster nodes
-
-  """
-  return cmp(cb.GetMetric(),ca.GetMetric())
 
 def _HeightFirstSplit(cluster,n):
   """  *Internal Use Only*
 
   """
   if len(cluster)<n:
-    raise ValueError,'Cannot split cluster of length %d into %d pieces'%(len(cluster),n)
+    raise ValueError('Cannot split cluster of length %d into %d pieces'%(len(cluster),n))
   if len(cluster)==n:
     return cluster.GetPoints()
   clusters = [cluster]
@@ -155,7 +147,7 @@ def _HeightFirstSplit(cluster,n):
     for child in children:
       clusters.append(child)
     del clusters[nxtIdx]
-    clusters.sort(_sortHelper)
+    clusters.sort(key=lambda x: x.GetMetric(), reverse=True)
   return clusters
   
 

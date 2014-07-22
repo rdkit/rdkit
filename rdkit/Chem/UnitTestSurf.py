@@ -13,8 +13,10 @@
 FIX: add tests for LabuteASA
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
-import unittest,cPickle,os
+import unittest,os
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import MolSurf
 import os.path
@@ -25,13 +27,13 @@ def feq(n1,n2,tol=1e-4):
 class TestCase(unittest.TestCase):
   def setUp(self):
     if doLong:
-      print '\n%s: '%self.shortDescription(),
+      print('\n%s: '%self.shortDescription(),end='')
 
   def testTPSAShort(self):
     " Short TPSA test "
     inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     for line in lines:
       if line[0] != '#':
         line.strip()
@@ -47,8 +49,8 @@ class TestCase(unittest.TestCase):
     " Longer TPSA test "
     #inName = RDConfig.RDDataDir+'/NCI/first_5k.tpsa.csv'
     inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     lineNo = 0
     for line in lines:
       lineNo += 1
@@ -61,7 +63,7 @@ class TestCase(unittest.TestCase):
         except:
           mol = None
         if not mol:
-          print 'molecule construction failed on line %d'%lineNo
+          print('molecule construction failed on line %d'%lineNo)
         else:
           ok = 1
           try:
@@ -85,15 +87,15 @@ class TestCase(unittest.TestCase):
       psac = MolSurf.rdMolDescriptors._CalcTPSAContribs(mol)
       psaHc = MolSurf.rdMolDescriptors._CalcTPSAContribs(molH)
       for i,v in enumerate(psac):
-        print '\t',i,'\t',v,'\t',psaHc[i]
+        print('\t',i,'\t',v,'\t',psaHc[i])
       while i<len(psaHc):
-        print '\t\t\t',psaHc[i]
+        print('\t\t\t',psaHc[i])
         i+=1
-    self.failUnlessEqual(psa,psaH)
+    self.assertEqual(psa,psaH)
 
     inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     for line in lines:
       if line[0] != '#':
         line.strip()
@@ -102,11 +104,11 @@ class TestCase(unittest.TestCase):
         mol = Chem.MolFromSmiles(smi)
         mol = Chem.AddHs(mol)
         calc = MolSurf.TPSA(mol)
-        self.failUnless(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
+        self.assertTrue(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
     if doLong:
       inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
-      inF = open(inName,'r')
-      lines = inF.readlines()
+      with open(inName,'r') as inF:
+        lines = inF.readlines()
       for line in lines:
         if line[0] != '#':
           line.strip()
@@ -115,7 +117,7 @@ class TestCase(unittest.TestCase):
           mol = Chem.MolFromSmiles(smi)
           mol = Chem.AddHs(mol)
           calc = MolSurf.TPSA(mol)
-          self.failUnless(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
+          self.assertTrue(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
       
     
 if __name__ == '__main__':

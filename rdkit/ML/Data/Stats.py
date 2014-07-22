@@ -78,10 +78,9 @@ def PrincipalComponents(mat,reverseOrder=1):
   """ do a principal components analysis
 
   """
-  import numpy.oldnumeric.linear_algebra as LinearAlgebra
   covMat = FormCorrelationMatrix(mat)
 
-  eigenVals,eigenVects = LinearAlgebra.eigenvectors(covMat)
+  eigenVals,eigenVects = numpy.linalg.eig(covMat)
   try:
     eigenVals = eigenVals.real
   except:

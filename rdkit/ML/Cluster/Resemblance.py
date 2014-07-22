@@ -45,8 +45,8 @@ def EuclideanDistance(inData):
   nObjs = len(inData)
   res = numpy.zeros((nObjs*(nObjs-1)/2),numpy.float)
   nSoFar = 0
-  for col in xrange(1,nObjs):
-    for row in xrange(col):
+  for col in range(1,nObjs):
+    for row in range(col):
       t = inData[row]-inData[col]
       res[nSoFar] = sum(t*t)
       nSoFar += 1
@@ -121,8 +121,8 @@ def ShowMetricMat(metricMat,nObjs):
 
   """
   assert len(metricMat) == nObjs*(nObjs-1)/2, 'bad matrix length in FindMinValInList'
-  for row in xrange(nObjs):
-    for col in xrange(nObjs):
+  for row in range(nObjs):
+    for col in range(nObjs):
       if col <= row:
         print '   ---    ',
       else:

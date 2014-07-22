@@ -15,6 +15,7 @@ import math
 import sys
 import copy
 import pprint
+from rdkit.six import cmp
 
 periodicTable=Chem.GetPeriodicTable()
 
@@ -355,7 +356,7 @@ class MolDrawing(object):
       - specifying centerIt will cause molTrans and drawingTrans to be ignored
     """
     conf = mol.GetConformer(confId)
-    if kwargs.has_key('coordScale'):
+    if 'coordScale' in kwargs:
       self.drawingOptions.coordScale=kwargs['coordScale']
 
     self.currDotsPerAngstrom=self.drawingOptions.dotsPerAngstrom

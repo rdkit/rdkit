@@ -142,7 +142,7 @@ class NetNode:
     # there's only one of these, everybody has a pointer to it.
     self.nodeList = nodeList 
 
-    self.actFunc = apply(actFunc,actFuncParms)
+    self.actFunc = actFunc(*actFuncParms)
     
     
     

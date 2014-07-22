@@ -3,7 +3,9 @@
 # Copyright (C) 2009 Greg Landrum
 #  All Rights Reserved
 #
-import cPickle
+from __future__ import print_function
+from rdkit.six.moves import cPickle
+from rdkit.six import iterkeys
 from rdkit import DataStructs,Chem
 from rdkit import Chem
 
@@ -14,7 +16,7 @@ similarityMethods={'RDK':DataStructs.ExplicitBitVect,
                    'Gobbi2D':DataStructs.SparseBitVect,
                    'Morgan':DataStructs.UIntSparseIntVect
                    }
-supportedSimilarityMethods=similarityMethods.keys()
+supportedSimilarityMethods=list(iterkeys(similarityMethods))
 
 
 class LayeredOptions:
@@ -59,7 +61,7 @@ def BuildSigFactory(options=None,fdefFile=None,
   if options:
     fdefFile = options.fdefFile
   if not fdefFile:
-    raise ValueError,'bad fdef file'
+    raise ValueError('bad fdef file')
   from rdkit.Chem import ChemicalFeatures
   from rdkit.Chem.Pharm2D import SigFactory
   featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
@@ -88,7 +90,7 @@ def BuildPharm2DFP(mol):
   try:
     fp=Generate.Gen2DFingerprint(mol,sigFactory)
   except IndexError:
-    print 'FAIL:',Chem.MolToSmiles(mol,True)
+    print('FAIL:',Chem.MolToSmiles(mol,True))
     raise
   return fp
 def BuildMorganFP(mol):
@@ -98,6 +100,8 @@ def BuildMorganFP(mol):
   return fp
 
 def DepickleFP(pkl,similarityMethod):
+    if not isinstance(pkl,(bytes,str)):
+      pkl = str(pkl)
     try:
         klass=similarityMethods[similarityMethod]
         fp = klass(pkl)

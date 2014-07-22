@@ -11,15 +11,14 @@
 """ defines class _DbConnect_, for abstracting connections to databases
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import sys,types
-import exceptions
 
 class DbError(RuntimeError):
   pass
   
-from rdkit.Dbase import DbUtils,DbInfo
-import DbModule
+from rdkit.Dbase import DbUtils,DbInfo,DbModule
 
 
 class DbConnect(object):
@@ -269,7 +268,7 @@ class DbConnect(object):
       c.execute(addStr)
     except:
       import traceback
-      print 'command failed:',addStr
+      print('command failed:',addStr)
       traceback.print_exc()
     else:
       self.Commit()
@@ -294,11 +293,11 @@ class DbConnect(object):
       c.execute(cmd,vals)
     except:
       import traceback
-      print 'insert failed:'
-      print cmd
-      print 'the error was:'
+      print('insert failed:')
+      print(cmd)
+      print('the error was:')
       traceback.print_exc()
-      raise DbError,"Insert Failed"
+      raise DbError("Insert Failed")
     
   def InsertColumnData(self,tableName,columnName,value,where):
     """ inserts data into a particular column of the table
@@ -335,7 +334,7 @@ class DbConnect(object):
     try:
       c.execute("alter table %s add %s %s"%(tableName,colName,colType))
     except:
-      print 'AddColumn failed'
+      print('AddColumn failed')
 
   def Commit(self):
     """ commits the current transaction

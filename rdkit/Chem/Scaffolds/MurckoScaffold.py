@@ -122,7 +122,7 @@ def MurckoScaffoldSmiles(smiles=None, mol=None, includeChirality=False):
   else:
     mol = mol
   if mol is None:
-    raise ValueError,'No molecule provided'
+    raise ValueError('No molecule provided')
   scaffold = GetScaffoldForMol(mol)
   if not scaffold: return None
   return Chem.MolToSmiles(scaffold,includeChirality)

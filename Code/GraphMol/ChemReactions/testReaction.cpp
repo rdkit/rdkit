@@ -4011,7 +4011,7 @@ void test42ReactionSmiles(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void test41Github243(){
+void test43Github243(){
     
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing github 243: dummy labels copied into products" << std::endl;
@@ -4042,6 +4042,30 @@ void test41Github243(){
     TEST_ASSERT(prods[0][0]->getAtomWithIdx(10)->hasProp("_MolFileRLabel"));
 
     delete(rxn);
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test44Github290(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github 290: seg fault while parsing rxn" << std::endl;
+  {
+    ChemicalReaction *rxn=new ChemicalReaction();
+    delete rxn;
+  }
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase + "/Code/GraphMol/ChemReactions/testData/bogus_github290.rxn";
+
+    bool failed=false;
+    try{
+          ChemicalReaction *rxn = RxnFileToChemicalReaction(fName);
+    } catch (ChemicalReactionParserException &) {
+      failed=true;
+    }
+    TEST_ASSERT(failed);
   }
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -4100,7 +4124,8 @@ int main() {
   test40AgentsInSmarts();
   test41Github233();
   test42ReactionSmiles();
-  test41Github243();
+  test43Github243();
+  test44Github290();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

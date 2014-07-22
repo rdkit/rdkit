@@ -39,7 +39,7 @@ class TestCase(unittest.TestCase):
     p =  Chem.MolFromSmarts('CC(=O)C')
     matches = self.m.GetSubstructMatches(p)
     m = matches[0]
-    atomList = map(lambda x,y=self.m:y.GetAtomWithIdx(x).GetSymbol(),m)
+    atomList = [self.m.GetAtomWithIdx(x).GetSymbol() for x in m]
     assert atomList==['C','C','O','C'],'bad atom ordering: %s'%str(atomList)
 
 if __name__ == '__main__':

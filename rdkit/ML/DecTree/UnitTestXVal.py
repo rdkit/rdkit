@@ -3,17 +3,17 @@
 #
 
 """ unit testing code for cross validation """
+from __future__ import print_function
+import unittest, random
 from rdkit import RDConfig
-import unittest
 from rdkit.ML.DecTree import CrossValidate
-import random
 
 def feq(a,b,tol=1e-4):
   return abs(a-b)<tol
 
 class XValTestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.origTreeName = RDConfig.RDCodeDir+'/ML/DecTree/test_data/XValTree.pkl'
     self.randomSeed = 23
     self.randomArraySeed = (23,42)
@@ -38,11 +38,10 @@ class XValTestCase(unittest.TestCase):
     tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
                                                     nPossibleVals,silent=1)
 
-    import cPickle
-    #cPickle.dump(tree,file(self.origTreeName,'w+'))
-    inFile = open(self.origTreeName,'r')
-    oTree = cPickle.load(inFile)
-
+    from rdkit.six.moves import cPickle
+    #cPickle.dump(tree,open(self.origTreeName,'w+'))
+    with open(self.origTreeName,'rb') as inFile:
+      oTree = cPickle.load(inFile)
 
     assert oTree==tree,'Random CrossValidation test failed'
     
@@ -56,8 +55,8 @@ class XValTestCase(unittest.TestCase):
     tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
                                                     nPossibleVals,silent=1,
                                                     replacementSelection=1)
-    assert tree
-    assert feq(frac,0.0833)
+    self.assertTrue(tree)
+    self.assertAlmostEqual(frac,0.01666,4)
     
     
 

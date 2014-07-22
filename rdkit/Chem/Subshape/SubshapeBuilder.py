@@ -7,7 +7,8 @@ from rdkit import Chem,Geometry
 from rdkit.Chem import AllChem
 from rdkit.Chem.Subshape import SubshapeObjects
 from rdkit.Chem.Subshape import BuilderUtils
-import time,cPickle
+from rdkit.six.moves import cPickle
+import time
 
 #-----------------------------------------------------------------------------
 class SubshapeCombineOperations(object):

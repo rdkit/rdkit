@@ -15,7 +15,8 @@ relevant... but tests are tests
 
 """
 from rdkit import RDConfig
-import unittest,cPickle,os
+import unittest,os
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
@@ -99,7 +100,7 @@ class TestCase(unittest.TestCase):
     m0 = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir,'Chem','test_data','github112_tgt.mol'),removeHs=False)
     m1 = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir,'Chem','test_data','github112_qry.mol'),removeHs=False)
     rms = AllChem.GetBestRMS(m0,m1)
-    self.failUnlessAlmostEqual(rms,0.456,3)
+    self.assertAlmostEqual(rms,0.456,3)
 
 
 

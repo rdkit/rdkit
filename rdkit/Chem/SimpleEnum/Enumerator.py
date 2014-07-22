@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, May 2009
+from __future__ import print_function
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -163,7 +164,7 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
   >>> smis.sort()
   >>> len(smis)
   6
-  >>> print smis
+  >>> print(smis)
   ['CCCc1ccccc1', 'CCCc1ccccn1', 'CCCc1cccnc1', 'CCc1ccccc1', 'CCc1ccccn1', 'CCc1cccnc1']
   
   The nastiness can be avoided at the cost of some memory by asking for only unique products:
@@ -171,14 +172,14 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
   >>> prods = list(prods)
   >>> len(prods)
   6
-  >>> print sorted([Chem.MolToSmiles(x[0]) for x in prods])
+  >>> print(sorted([Chem.MolToSmiles(x[0]) for x in prods]))
   ['CCCc1ccccc1', 'CCCc1ccccn1', 'CCCc1cccnc1', 'CCc1ccccc1', 'CCc1ccccn1', 'CCc1cccnc1']
 
   
   """
   nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(reaction)
-  if nError: raise ValueError,'bad reaction'
-  if len(bbLists) != nReacts: raise ValueError,'%d reactants in reaction, %d bb lists supplied'%(nReacts,len(bbLists))
+  if nError: raise ValueError('bad reaction')
+  if len(bbLists) != nReacts: raise ValueError('%d reactants in reaction, %d bb lists supplied'%(nReacts,len(bbLists)))
   def _uniqueOnly(lst):
     seen=[]
     for entry in lst:

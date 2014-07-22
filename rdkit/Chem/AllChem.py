@@ -108,10 +108,10 @@ def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
   """
   if reference and referencePattern:
     if not reference.GetNumAtoms(onlyExplicit=True)==referencePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError,'When a pattern is provided, it must have the same number of atoms as the reference'
+      raise ValueError('When a pattern is provided, it must have the same number of atoms as the reference')
     referenceMatch = reference.GetSubstructMatch(referencePattern)
     if not referenceMatch:
-      raise ValueError,"Reference does not map to itself"
+      raise ValueError("Reference does not map to itself")
   else:
     referenceMatch = range(reference.GetNumAtoms(onlyExplicit=True))
   if referencePattern:
@@ -121,7 +121,7 @@ def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
 
   if not match:
     if not acceptFailure:
-      raise ValueError,'Substructure match with reference not found.'
+      raise ValueError('Substructure match with reference not found.')
     else:
       coordMap={}
   else:
@@ -179,8 +179,8 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
   if not maps:
     matches = ref.GetSubstructMatches(probe,uniquify=False)
     if not matches:
-      raise ValueError,'mol %s does not match mol %s'%(ref.GetProp('_Name'),
-                                                       probe.GetProp('_Name'))
+      raise ValueError('mol %s does not match mol %s'%(ref.GetProp('_Name'),
+                                                       probe.GetProp('_Name')))
     maps = [list(enumerate(match)) for match in matches]
   bestRMS=1000.
   for amap in maps:
@@ -220,13 +220,14 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   >>> r = AllChem.EnumerateLibraryFromReaction(rxn,[acids,amines])
 
   ... look at the first 4 compounds:
-  >>> [Chem.MolToSmiles(r.next()[0]) for x in range(4)]
+  >>> [Chem.MolToSmiles(next(r)[0]) for x in range(4)]
   ['NC=O', 'CNC=O', 'CCNC=O', 'CCCNC=O']
 
 
   """
   if len(sidechainSets) != reaction.GetNumReactantTemplates():
-    raise ValueError,'%d sidechains provided, %d required'%(len(sidechainSets),reaction.GetNumReactantTemplates())
+    raise ValueError('%d sidechains provided, %d required' %
+                     (len(sidechainSets),reaction.GetNumReactantTemplates()))
 
   def _combiEnumerator(items,depth=0):
     for item in items[depth]:
@@ -287,7 +288,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
   """
   match = mol.GetSubstructMatch(core)
   if not match:
-    raise ValueError,"molecule doesn't match the core"
+    raise ValueError("molecule doesn't match the core")
   coordMap={}
   coreConf = core.GetConformer(coreConfId)
   for i,idxI in enumerate(match):
@@ -296,7 +297,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
 
   ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed,**kwargs)
   if ci<0:
-    raise ValueError,'Could not embed molecule.'
+    raise ValueError('Could not embed molecule.')
 
   algMap=[(j,i) for i,j in enumerate(match)]
 
@@ -349,14 +350,14 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     >>> from rdkit.Chem import AllChem
     >>> template = AllChem.MolFromSmiles("CN1C(=NC(C1=O)(c2ccccc2)c3ccccc3)N")
     >>> mol = AllChem.MolFromPDBFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4DJU_lig.pdb'))
-    >>> print len([1 for b in template.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    >>> len([1 for b in template.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8
-    >>> print len([1 for b in mol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    >>> len([1 for b in mol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     22
 
     Now assign the bond orders based on the template molecule
     >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
-    >>> print len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    >>> len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8
 
     Note that the template molecule should have no explicit hydrogens

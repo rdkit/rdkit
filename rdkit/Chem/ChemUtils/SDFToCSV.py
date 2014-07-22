@@ -61,7 +61,7 @@ class TestCase(unittest.TestCase):
     pass
   def test1(self):
     import os
-    from cStringIO import StringIO
+    from rdkit.six.moves import cStringIO as StringIO
     fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()
@@ -75,13 +75,13 @@ class TestCase(unittest.TestCase):
     lines = txt.split('\n')
     if not lines[-1]:
       del lines[-1]
-    self.failUnless(len(lines)==201,'bad num lines: %d'%len(lines))
+    self.assertTrue(len(lines)==201,'bad num lines: %d'%len(lines))
     line0 = lines[0].split(',')
-    self.failUnlessEqual(len(line0),20)
-    self.failUnless(line0[0]=='SMILES')
+    self.assertEqual(len(line0),20)
+    self.assertTrue(line0[0]=='SMILES')
   def test2(self):
     import os
-    from cStringIO import StringIO
+    from rdkit.six.moves import cStringIO as StringIO
     fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()
@@ -95,11 +95,11 @@ class TestCase(unittest.TestCase):
     lines = txt.split('\n')
     if not lines[-1]:
       del lines[-1]
-    self.failUnless(len(lines)==6,'bad num lines: %d'%len(lines))
+    self.assertTrue(len(lines)==6,'bad num lines: %d'%len(lines))
     line0 = lines[0].split(',')
-    self.failUnlessEqual(len(line0),20)
-    self.failUnless(line0[0]=='AMW')
-    self.failUnless(line0[1]=='SMILES')
+    self.assertEqual(len(line0),20)
+    self.assertTrue(line0[0]=='AMW')
+    self.assertTrue(line0[1]=='SMILES')
     
     
     

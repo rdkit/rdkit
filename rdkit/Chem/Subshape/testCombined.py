@@ -2,7 +2,8 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.PyMol import MolViewer
 from rdkit.Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
-import cPickle,copy
+from rdkit.six.moves import cPickle
+import copy
 
 m1 = Chem.MolFromMolFile('test_data/square1.mol')
 m2 = Chem.MolFromMolFile('test_data/square2.mol')

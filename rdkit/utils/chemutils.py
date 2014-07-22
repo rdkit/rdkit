@@ -4,8 +4,10 @@
 """ utility functions with "chemical know-how"
 
 """
+from __future__ import print_function
+import re,os
 from rdkit import RDConfig
-import string,re,os
+from rdkit.six.moves import xrange
 
 if not RDConfig.usePgSQL:
   _atomDbName = os.path.join(RDConfig.RDDataDir,'atomdb.gdb')
@@ -42,7 +44,7 @@ def GetAtomicData(atomDict,descriptorsDesired,dBase=_atomDbName,
   from rdkit.Dbase import DbModule
   cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
-  descriptorsDesired = map(string.upper,descriptorsDesired)
+  descriptorsDesired = [s.upper() for s in descriptorsDesired]
   if 'NAME' not in descriptorsDesired:
     descriptorsDesired.append('NAME')
   if includeElCounts and 'CONFIG' not in descriptorsDesired:
@@ -50,12 +52,12 @@ def GetAtomicData(atomDict,descriptorsDesired,dBase=_atomDbName,
   for field in extraFields:
     if field in descriptorsDesired:
       descriptorsDesired.remove(field)
-  toPull = string.join(descriptorsDesired,',')
+  toPull = ','.join(descriptorsDesired)
   command = 'select %s from atomic_data %s'%(toPull,where)
   try:
     c.execute(command)
   except:
-    print 'Problems executing command:',command
+    print('Problems executing command:',command)
     return
   res = c.fetchall()
   for atom in res:
@@ -124,39 +126,39 @@ def ConfigToNumElectrons(config,ignoreFullD=0,ignoreFullF=0):
       the number of valence electrons
       
   """
-  arr = string.split(config,' ')
+  arr = config.split(' ')
 
   nEl = 0
   for i in range(1,len(arr)):
-    l = string.split(arr[i],'^')
+    l = arr[i].split('^')
     incr = int(l[1])
-    if ignoreFullF and incr==14 and string.find(l[0],'f')!=-1 and len(arr) > 2:
+    if ignoreFullF and incr==14 and l[0].find('f')!=-1 and len(arr) > 2:
       incr = 0
-    if ignoreFullD and incr==10 and string.find(l[0],'d')!=-1 and len(arr) > 2:
+    if ignoreFullD and incr==10 and l[0].find('d')!=-1 and len(arr) > 2:
       incr = 0
     nEl = nEl + incr
   return nEl
 
 if __name__ == '__main__':
   
-  print SplitComposition('Fe')
-  print SplitComposition('Fe3Al')
-  print SplitComposition('Fe99PdAl')
-  print SplitComposition('TiNiSiSO12P')      
+  print(SplitComposition('Fe'))
+  print(SplitComposition('Fe3Al'))
+  print(SplitComposition('Fe99PdAl'))
+  print(SplitComposition('TiNiSiSO12P'))
   temp = ['[Xe] 4f^12 6s^2','[Xe] 4f^14 5d^6 6s^2','[Xe] 4f^14 5d^10 6s^2',
           '[Xe] 4f^14 5d^10 6s^2 6p^1', '[Xe] 5d^10']
-  print 'ignore all'
+  print('ignore all')
   for entry in temp:
-    print entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=1,ignoreFullF=1)
-  print 'ignore d'
+    print(entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=1,ignoreFullF=1))
+  print('ignore d')
   for entry in temp:
-    print entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=1,ignoreFullF=0)
-  print 'ignore f'
+    print(entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=1,ignoreFullF=0))
+  print('ignore f')
   for entry in temp:
-    print entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=0,ignoreFullF=1)
-  print 'ignore None'
+    print(entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=0,ignoreFullF=1))
+  print('ignore None')
   for entry in temp:
-    print entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=0,ignoreFullF=0)
+    print(entry, '\t\t\t\t', ConfigToNumElectrons(entry,ignoreFullD=0,ignoreFullF=0))
 
       
       

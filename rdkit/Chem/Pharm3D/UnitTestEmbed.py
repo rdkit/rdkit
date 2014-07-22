@@ -8,8 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 from rdkit import RDConfig
-import unittest,sys,os,cPickle
+import unittest,sys,os
+from rdkit.six import PY3
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import ChemicalFeatures,rdDistGeom
 import EmbedLib
@@ -17,7 +20,6 @@ import gzip
 from rdkit import DistanceGeometry as DG
 from rdkit import Geometry
 import Pharmacophore
-import cPickle
 import numpy
 
 def feq(n1,n2,tol=1e-5):
@@ -77,7 +79,9 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        tpl = cPickle.load(inF)
+        tpl = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
         #tpl=tpl[0],tpl[1],numpy.array(tpl[2])
         #cPickle.dump(tpl,outF)
       except:
@@ -85,9 +89,9 @@ class TestCase(unittest.TestCase):
       if self._matchMol(tpl,self.pcophore,self.featFactory,0):
         nHits+=1
       nDone += 1
-    self.failUnlessEqual(nDone,100)
+    self.assertEqual(nDone,100)
     #print 'nHits:',nHits
-    self.failUnlessEqual(nHits,47)
+    self.assertEqual(nHits,47)
     
   def test2SearchDownsample(self):
     inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
@@ -96,15 +100,17 @@ class TestCase(unittest.TestCase):
     hits = []
     while 1:
       try:
-        tpl = cPickle.load(inF)
+        tpl = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
       except:
         break
       if self._matchMol(tpl,self.pcophore, self.featFactory,1):
         nHits+=1
       nDone += 1
-    self.failUnlessEqual(nDone,100)
+    self.assertEqual(nDone,100)
     #print 'nHits:',nHits
-    self.failUnlessEqual(nHits,47)
+    self.assertEqual(nHits,47)
     
   def test3Embed(self):
     testResults={
@@ -117,7 +123,9 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        name,molPkl,boundsMat = cPickle.load(inF)
+        name,molPkl,boundsMat = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          molPkl = bytes(molPkl, encoding='latin1')
       except:
         break
 
@@ -135,21 +143,21 @@ class TestCase(unittest.TestCase):
         if not failed:
           nHits += 1
           
-          if testResults.has_key(name):
+          if name in testResults:
             stats = EmbedLib.EmbedOne(mol,name,match,self.pcophore,count=10,
                                       silent=1,randomSeed=23)
             tgt = testResults[name]
-            self.failUnlessEqual(len(tgt),len(stats))
-            print name
-            print ','.join(['%.2f'%x for x in stats])
+            self.assertEqual(len(tgt),len(stats))
+            print(name)
+            print(','.join(['%.2f'%x for x in stats]))
             # we'll use different tolerances for the different values:
-            self.failUnless(feq(tgt[0],stats[0],5.0),(tgt[0],stats[0]))
+            self.assertTrue(feq(tgt[0],stats[0],5.0),(tgt[0],stats[0]))
             for i in range(2,len(tgt)):
-              self.failUnless(feq(tgt[i],stats[i],5.0),(tgt[i],stats[i]))
+              self.assertTrue(feq(tgt[i],stats[i],5.0),(tgt[i],stats[i]))
         
-    self.failUnlessEqual(nDone,100)
+    self.assertEqual(nDone,100)
     #print 'nHits:',nHits
-    self.failUnlessEqual(nHits,50)
+    self.assertEqual(nHits,50)
     
   def test4Search(self):
     featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(self.dataDir,
@@ -181,7 +189,9 @@ class TestCase(unittest.TestCase):
 
     while 1:
       try:
-        name,molPkl,boundsMat = cPickle.load(inF)
+        name,molPkl,boundsMat = cPickle.load(inF, encoding='latin1')
+        if PY3:
+          molPkl = bytes(molPkl, encoding='latin1')
       except:
         break
 
@@ -202,10 +212,10 @@ class TestCase(unittest.TestCase):
         if not failed:
           nHits+=1
 
-    self.failUnlessEqual(nDone,100)
-    self.failUnlessEqual(nMatches,93)
+    self.assertEqual(nDone,100)
+    self.assertEqual(nMatches,93)
     #print 'nhits:',nHits
-    self.failUnlessEqual(nHits,67)
+    self.assertEqual(nHits,67)
 
   def testIssue268(self):
     from rdkit import RDLogger
@@ -216,8 +226,9 @@ class TestCase(unittest.TestCase):
                                           'Issue268_Mol1.mol'))
     m2 = Chem.MolFromMolFile(os.path.join(self.dataDir,
                                           'Issue268_Mol2.mol'))
-    pcop = cPickle.load(file(os.path.join(self.dataDir,
-                                          'Issue268_Pcop.pkl'),'rb'))
+    with open(os.path.join(self.dataDir,
+                           'Issue268_Pcop.pkl'),'rb') as inF:
+      pcop = cPickle.load(inF, encoding='latin1')
     #pcop._boundsMat=numpy.array(pcop._boundsMat)
     #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
     #cPickle.dump(pcop,file(os.path.join(self.dataDir,
@@ -227,25 +238,25 @@ class TestCase(unittest.TestCase):
     b1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)
     b2 = rdDistGeom.GetMoleculeBoundsMatrix(m2)
 
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)
 
 
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
                                                     mol=m1,use2DLimits=True)[2]),4)
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
                                                     mol=m2,use2DLimits=True)[2]),4)
 
     from rdkit import DistanceGeometry as DG
-    self.failUnless(DG.DoTriangleSmoothing(b1))
-    self.failUnless(DG.DoTriangleSmoothing(b2))
+    self.assertTrue(DG.DoTriangleSmoothing(b1))
+    self.assertTrue(DG.DoTriangleSmoothing(b2))
 
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)
     
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
                                                     mol=m1,use2DLimits=True)[2]),4)
-    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
+    self.assertEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
                                                     mol=m2,use2DLimits=True)[2]),4)
 
     

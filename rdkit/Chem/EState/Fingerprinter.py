@@ -13,6 +13,7 @@
 """  EState fingerprinting
 
 """
+from __future__ import print_function
 import numpy
 from rdkit.Chem.EState import EStateIndices
 from rdkit.Chem.EState import AtomTypes
@@ -49,16 +50,16 @@ if __name__ == '__main__':
   smis = ['CC','CCC','c1[nH]cnc1CC(N)C(O)=O','NCCc1ccc(O)c(O)c1']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)
-    print smi,Chem.MolToSmiles(m)
+    print(smi,Chem.MolToSmiles(m))
     types = AtomTypes.TypeAtoms(m)
     for i in range(m.GetNumAtoms()):
-      print '%d %4s: %s'%(i+1,m.GetAtomWithIdx(i).GetSymbol(),str(types[i]))
+      print('%d %4s: %s'%(i+1,m.GetAtomWithIdx(i).GetSymbol(),str(types[i])))
     es = EStateIndices(m)
     counts,sums = FingerprintMol(m)
     for i in range(len(AtomTypes.esPatterns)):
       if counts[i]:
         name,patt = AtomTypes.esPatterns[i]
-        print '%6s, % 2d, % 5.4f'%(name,counts[i],sums[i])
+        print('%6s, % 2d, % 5.4f'%(name,counts[i],sums[i]))
     for i in range(len(es)):
-      print '% 2d, % 5.4f'%(i+1,es[i])
-    print '--------'
+      print('% 2d, % 5.4f'%(i+1,es[i]))
+    print('--------')

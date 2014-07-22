@@ -31,11 +31,11 @@ class TestCase(unittest.TestCase):
 
     foo,fn=tempfile.mkstemp(suffix='.png')
     foo=None
-    self.failUnlessEqual(os.path.getsize(fn),0)
+    self.assertEqual(os.path.getsize(fn),0)
 
     Draw.MolToFile(self.mol,fn)
 
-    self.failIfEqual(os.path.getsize(fn),0)
+    self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
     except:
@@ -51,11 +51,11 @@ class TestCase(unittest.TestCase):
 
     foo,fn=tempfile.mkstemp(suffix='.png')
     foo=None
-    self.failUnlessEqual(os.path.getsize(fn),0)
+    self.assertEqual(os.path.getsize(fn),0)
 
     Draw.MolToFile(self.mol,fn)
 
-    self.failIfEqual(os.path.getsize(fn),0)
+    self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
     except:
@@ -71,11 +71,11 @@ class TestCase(unittest.TestCase):
 
     foo,fn=tempfile.mkstemp(suffix='.png')
     foo=None
-    self.failUnlessEqual(os.path.getsize(fn),0)
+    self.assertEqual(os.path.getsize(fn),0)
 
     Draw.MolToFile(self.mol,fn)
 
-    self.failIfEqual(os.path.getsize(fn),0)
+    self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
     except:
@@ -89,9 +89,9 @@ class TestCase(unittest.TestCase):
     os.environ['RDKIT_CANVAS']='cairo'
 
     img=Draw.MolToImage(self.mol,size=(300,300))
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
+    self.assertTrue(img)
+    self.assertEqual(img.size[0],300)
+    self.assertEqual(img.size[1],300)
     
   def testAggImage(self):
     try:
@@ -100,9 +100,9 @@ class TestCase(unittest.TestCase):
       return
     os.environ['RDKIT_CANVAS']='agg'
     img=Draw.MolToImage(self.mol,size=(300,300))
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
+    self.assertTrue(img)
+    self.assertEqual(img.size[0],300)
+    self.assertEqual(img.size[1],300)
 
   def testSpingImage(self):
     try:
@@ -111,9 +111,9 @@ class TestCase(unittest.TestCase):
       return
     os.environ['RDKIT_CANVAS']='sping'
     img=Draw.MolToImage(self.mol,size=(300,300))
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
+    self.assertTrue(img)
+    self.assertEqual(img.size[0],300)
+    self.assertEqual(img.size[1],300)
 
   def testCairoImageDash(self):
     try:
@@ -123,9 +123,9 @@ class TestCase(unittest.TestCase):
     os.environ['RDKIT_CANVAS']='cairo'
 
     img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
+    self.assertTrue(img)
+    self.assertEqual(img.size[0],300)
+    self.assertEqual(img.size[1],300)
     
   def testAggImageDash(self):
     try:
@@ -134,9 +134,9 @@ class TestCase(unittest.TestCase):
       return
     os.environ['RDKIT_CANVAS']='agg'
     img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
+    self.assertTrue(img)
+    self.assertEqual(img.size[0],300)
+    self.assertEqual(img.size[1],300)
 
   def testSpingImageDash(self):
     try:
@@ -145,9 +145,9 @@ class TestCase(unittest.TestCase):
       return
     os.environ['RDKIT_CANVAS']='sping'
     img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
+    self.assertTrue(img)
+    self.assertEqual(img.size[0],300)
+    self.assertEqual(img.size[1],300)
 
   def testGithubIssue54(self):
     try:
@@ -157,24 +157,24 @@ class TestCase(unittest.TestCase):
     os.environ['RDKIT_CANVAS']='sping'
     mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
     img = Draw.MolToImage(mol)
-    self.failUnless(img)
+    self.assertTrue(img)
     
   def testGithubIssue86(self):
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
     for b in mol.GetBonds():
-      self.failUnlessEqual(b.GetBondDir(),Chem.BondDir.NONE)
+      self.assertEqual(b.GetBondDir(),Chem.BondDir.NONE)
     img = Draw.MolToImage(mol,kekulize=False)
-    self.failUnless(img)
+    self.assertTrue(img)
     for b in mol.GetBonds():
-      self.failUnlessEqual(b.GetBondDir(),Chem.BondDir.NONE)
+      self.assertEqual(b.GetBondDir(),Chem.BondDir.NONE)
 
     Chem.WedgeMolBonds(mol,mol.GetConformer())
     obds = [x.GetBondDir() for x in mol.GetBonds()]
-    self.failUnlessEqual(obds.count(Chem.BondDir.NONE),2)
+    self.assertEqual(obds.count(Chem.BondDir.NONE),2)
     img = Draw.MolToImage(mol,kekulize=False)
-    self.failUnless(img)
+    self.assertTrue(img)
     nbds = [x.GetBondDir() for x in mol.GetBonds()]
-    self.failUnlessEqual(obds,nbds)
+    self.assertEqual(obds,nbds)
 
     
 

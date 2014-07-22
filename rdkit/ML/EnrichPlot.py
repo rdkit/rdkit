@@ -67,13 +67,15 @@ Optional Arguments:
 """
 from rdkit import RDConfig
 import numpy
-import cPickle,copy
+import copy
+from rdkit.six.moves import cPickle
 #from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML.Data import DataUtils,SplitData,Stats
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit import DataStructs
 from rdkit.ML import CompositeRun
 import sys,os,types
+from rdkit.six import cmp
 
 __VERSION_STRING="2.4.0"
 def message(msg,noRet=0,dest=sys.stderr):

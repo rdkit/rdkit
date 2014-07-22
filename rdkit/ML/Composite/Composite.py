@@ -22,10 +22,11 @@ Other compatibility notes:
 
 
 """
-from rdkit.ML.Data import DataUtils
-import cPickle
+from __future__ import print_function
 import math
 import numpy
+from rdkit.six.moves import cPickle
+from rdkit.ML.Data import DataUtils
 
 class Composite(object):
   """a composite model
@@ -145,7 +146,7 @@ class Composite(object):
     if activityQuant:
       example = example[:]
       act = example[actCol]
-      for box in xrange(len(activityQuant)):
+      for box in range(len(activityQuant)):
         if act < activityQuant[box]:
           act = box
           break
@@ -181,11 +182,11 @@ class Composite(object):
       quantBounds = self.quantBounds
     assert len(example)==len(quantBounds),'example/quantBounds mismatch'
     quantExample = [None]*len(example)
-    for i in xrange(len(quantBounds)):
+    for i in range(len(quantBounds)):
       bounds = quantBounds[i]
       p = example[i]
       if len(bounds):
-        for box in xrange(len(bounds)):
+        for box in range(len(bounds)):
           if p < bounds[box]:
             p = box
             break
@@ -349,7 +350,7 @@ class Composite(object):
       return inputVect
     remappedInput = [None]*len(order)
 
-    for i in xrange(len(order)-1):
+    for i in range(len(order)-1):
       remappedInput[i] = inputVect[order[i]]
     if order[-1] == -1:
       remappedInput[-1] = 0
@@ -377,8 +378,7 @@ class Composite(object):
         - if the local descriptor names do not appear in _colNames_, this will
           raise an _IndexError_ exception.
     """
-    import types
-    if type(colNames)!=types.ListType:
+    if type(colNames)!=list:
       colNames = list(colNames)
     descs = [x.upper() for x in self.GetDescriptorNames()]
     self._mapOrder = [None]*len(descs)
@@ -392,11 +392,11 @@ class Composite(object):
     except ValueError:
       self._mapOrder[0] = 0
 
-    for i in xrange(1,len(descs)-1):
+    for i in range(1,len(descs)-1):
       try:
         self._mapOrder[i] = colNames.index(descs[i])
       except ValueError:
-        raise ValueError,'cannot find descriptor name: %s in set %s'%(repr(descs[i]),repr(colNames))
+        raise ValueError('cannot find descriptor name: %s in set %s'%(repr(descs[i]),repr(colNames)))
     try:
       self._mapOrder[-1] = colNames.index(descs[-1])
     except ValueError:
@@ -451,7 +451,7 @@ class Composite(object):
     if self._mapOrder is not None:
       examples = map(self._RemapInput,examples)
     if self.GetActivityQuantBounds():
-      for i in xrange(len(examples)):
+      for i in range(len(examples)):
         examples[i] = self.QuantizeActivity(examples[i])
         nPossibleVals[-1]=len(self.GetActivityQuantBounds())+1  
     if self.nPossibleVals is None:
@@ -459,12 +459,12 @@ class Composite(object):
     if needsQuantization:
       trainExamples = [None]*len(examples)
       nPossibleVals = self.nPossibleVals
-      for i in xrange(len(examples)):
+      for i in range(len(examples)):
         trainExamples[i] = self.QuantizeExample(examples[i],self.quantBounds)
     else:
       trainExamples = examples
 
-    for i in xrange(nTries):
+    for i in range(nTries):
       trainSet = None
       
       if (hasattr(self, '_modelFilterFrac')) and (self._modelFilterFrac != 0) :
@@ -475,9 +475,8 @@ class Composite(object):
       else:
         trainSet = trainExamples
 
-      #print "Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples))
-      model,frac = apply(buildDriver,(trainSet,attrs,nPossibleVals),
-                         buildArgs)
+      #print("Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples)))
+      model,frac = buildDriver(*(trainSet,attrs,nPossibleVals), **buildArgs)
       if pruneIt:
         model,frac2 = pruner(model,model.GetTrainingExamples(),
                             model.GetTestExamples(),
@@ -491,7 +490,7 @@ class Composite(object):
         
       self.AddModel(model,frac,needsQuantization)
       if not silent and (nTries < 10 or i % (nTries/10) == 0):
-        print 'Cycle: % 4d'%(i)
+        print('Cycle: % 4d'%(i))
       if progressCallback is not None:
         progressCallback(i)
 
@@ -565,7 +564,7 @@ class Composite(object):
     """ convert local summed error to average error
 
     """
-    self.errList = map(lambda x,y:x/y,self.errList,self.countList)
+    self.errList = list(map(lambda x,y:x/y,self.errList,self.countList))
 
   def SortModels(self,sortOnError=1):
     """ sorts the list of models
@@ -583,6 +582,7 @@ class Composite(object):
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
+    #print(order,sortOnError,self.errList,self.countList)
     self.modelList = [self.modelList[x] for x in order]
     self.countList = [self.countList[x] for x in order]
     self.errList = [self.errList[x] for x in order]
@@ -700,7 +700,7 @@ class Composite(object):
 
     """
     outStr= 'Composite\n'
-    for i in xrange(len(self.modelList)):
+    for i in range(len(self.modelList)):
       outStr = outStr + \
          '  Model % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
                                                                      100.*self.errList[i])
@@ -715,13 +715,13 @@ if __name__ == '__main__':
     c.AddModel(n,0.5)
     c.AverageErrors()
     c.SortModels()
-    print c
+    print(c)
 
     qB = [[],[.5,1,1.5]]
     exs = [['foo',0],['foo',.4],['foo',.6],['foo',1.1],['foo',2.0]]
-    print 'quantBounds:',qB
+    print('quantBounds:',qB)
     for ex in exs:
       q = c.QuantizeExample(ex,qB)
-      print ex,q
+      print(ex,q)
   else:
     pass

@@ -1,9 +1,12 @@
-from rdkit import RDConfig,RDRandom
 import unittest
+import numpy
+import os
+
+from rdkit.six.moves import cPickle
+
+from rdkit import RDConfig,RDRandom
 from rdkit.ML.InfoTheory import rdInfoTheory as rdit
 from rdkit import DataStructs
-import numpy
-import os,cPickle
 
 def feq(a,b,tol=1e-4):
     return abs(a-b)<tol
@@ -15,37 +18,37 @@ class TestCase(unittest.TestCase):
 
     def test0GainFuns(self):
        arr = numpy.array([9,5])
-       self.failUnless(feq(rdit.InfoEntropy(arr),0.9403))
+       self.assertTrue(feq(rdit.InfoEntropy(arr),0.9403))
        arr = numpy.array([9,9])
-       self.failUnless(feq(rdit.InfoEntropy(arr),1.0000))
+       self.assertTrue(feq(rdit.InfoEntropy(arr),1.0000))
        arr = numpy.array([5,5])
-       self.failUnless(feq(rdit.InfoEntropy(arr),1.0000))
+       self.assertTrue(feq(rdit.InfoEntropy(arr),1.0000))
        arr = numpy.array([5,0])
-       self.failUnless(feq(rdit.InfoEntropy(arr),0.0000))
+       self.assertTrue(feq(rdit.InfoEntropy(arr),0.0000))
        arr = numpy.array([5,5,5])
-       self.failUnless(feq(rdit.InfoEntropy(arr),1.5850))
+       self.assertTrue(feq(rdit.InfoEntropy(arr),1.5850))
        arr = numpy.array([2,5,5])
-       self.failUnless(feq(rdit.InfoEntropy(arr),1.4834))
+       self.assertTrue(feq(rdit.InfoEntropy(arr),1.4834))
 
        
        mat2 = numpy.array([[6,2],[3,3]])
-       self.failUnless(feq(rdit.InfoGain(mat2),0.0481))
-       self.failUnless(feq(rdit.ChiSquare(mat2),0.9333))
+       self.assertTrue(feq(rdit.InfoGain(mat2),0.0481))
+       self.assertTrue(feq(rdit.ChiSquare(mat2),0.9333))
        
        mat3 = numpy.array([[1,1],[2,1]])
-       self.failUnless(feq(rdit.InfoGain(mat3),0.0200))
+       self.assertTrue(feq(rdit.InfoGain(mat3),0.0200))
 
        
        mat4 = numpy.array([[2,0],[1,2]])
-       self.failUnless(feq(rdit.InfoGain(mat4),0.4200))
+       self.assertTrue(feq(rdit.InfoGain(mat4),0.4200))
 
 
        mat5 = numpy.array([[0,0],[0,0]])
-       self.failUnless(feq(rdit.InfoGain(mat5),0.0000))
+       self.assertTrue(feq(rdit.InfoGain(mat5),0.0000))
 
 
        mat6 = numpy.array([[1,0],[1,0]])
-       self.failUnless(feq(rdit.InfoGain(mat6),0.0000))
+       self.assertTrue(feq(rdit.InfoGain(mat6),0.0000))
 
 
        
@@ -82,7 +85,7 @@ class TestCase(unittest.TestCase):
             rn2.AccumulateVotes(fp[0], fp[1])
 
         res2 = rn2.GetTopN(50)
-        self.failUnless((res==res2).all())
+        self.assertTrue((res==res2).all())
         
         rn3 = rdit.InfoBitRanker(nbits, nc, rdit.InfoType.BIASENTROPY)
         #rn3.SetBiasList([0])
@@ -93,7 +96,7 @@ class TestCase(unittest.TestCase):
         for i in range(50) :
             fan = res3[i,2]/na
             fin = res3[i,3]/ni
-            self.failUnless(fan > fin)
+            self.assertTrue(fan > fin)
                           
     def test2ranker(self) :
         nbits = 100
@@ -122,14 +125,14 @@ class TestCase(unittest.TestCase):
         res =  rn.GetTopN(5)
         ids = [int(x[0]) for x in res]
         ids.sort()
-        self.failUnless(ids==[10,15,25,63,70])
+        self.assertTrue(ids==[10,15,25,63,70])
         try:
             res = rn.GetTopN(10)
         except:
             ok = 1
         else:
             ok = 0
-        self.failUnless(ok)
+        self.assertTrue(ok)
 
     def test3Issue140(self) :
         nbits = 2
@@ -145,18 +148,18 @@ class TestCase(unittest.TestCase):
             res =  rn.GetTopN(1)
         except:
             res = None
-        self.failUnless(res is not None)    
+        self.assertTrue(res is not None)    
 
     def test4Issue237(self) :
-        inF = open(os.path.join(RDConfig.RDBaseDir,'Code','ML','InfoTheory','Wrap','testData','Issue237.pkl'),'rb')
-        examples,avail,bias,nB,nPoss = cPickle.load(inF)
+        with open(os.path.join(RDConfig.RDBaseDir,'Code','ML','InfoTheory','Wrap','testData','Issue237.pkl'),'rb') as inF:
+            examples,avail,bias,nB,nPoss = cPickle.load(inF, encoding='bytes')
         ranker = rdit.InfoBitRanker(nB,nPoss,rdit.InfoType.BIASENTROPY)
         ranker.SetMaskBits(avail)
         for ex in examples:
             ranker.AccumulateVotes(ex[1],ex[-1])
         # this dumps core on linux if the bug isn't fixed:
         v=ranker.GetTopN(1)
-        self.failUnless(int(v[0][0])==12)
+        self.assertTrue(int(v[0][0])==12)
                           
 if __name__ == '__main__':
     unittest.main()

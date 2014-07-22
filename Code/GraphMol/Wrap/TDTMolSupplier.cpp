@@ -15,6 +15,7 @@
 //ours
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/iterator_next.h>
 #include "MolSupplier.h"
 
 namespace python = boost::python;
@@ -61,7 +62,7 @@ namespace RDKit {
 								 python::arg("sanitize")=true)))
 	.def("__iter__", (TDTMolSupplier *(*)(TDTMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
-        .def("next", (ROMol *(*)(TDTMolSupplier *))&MolSupplNext,
+        .def(NEXT_METHOD, (ROMol *(*)(TDTMolSupplier *))&MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("__getitem__", (ROMol *(*)(TDTMolSupplier *,int))&MolSupplGetItem,

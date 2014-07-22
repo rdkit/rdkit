@@ -5,12 +5,17 @@
 """ classes to be used to help work with data sets
 
 """
+from __future__ import print_function
 import numpy
 import math
 import copy,types
+from rdkit import six
+from rdkit.six.moves import xrange
 
+numericTypes = [int, float]
+if six.PY2:
+  numericTypes.append(long)
 
-numericTypes = [type(1),type(1.0),type(1L)]
 class MLDataSet(object):
   """ A data set for holding general data (floats, ints, and strings)
 
@@ -85,7 +90,7 @@ class MLDataSet(object):
     """
     nVars = self.GetNVars()+self.nResults
     nPossible = [-1]*nVars
-    cols = range(nVars)
+    cols = list(xrange(nVars))
     for i,bounds in enumerate(self.qBounds):
       if len(bounds)>0:
         nPossible[i] = len(bounds)
@@ -122,7 +127,7 @@ class MLDataSet(object):
     return res
   def __setitem__(self,idx,val):
     if len(val) != self.GetNVars()+self.GetNResults()+1:
-      raise ValueError,'bad value in assignment'
+      raise ValueError('bad value in assignment')
     self.ptNames[idx] = val[0]
     self.data[idx] = val[1:]
     return val
@@ -181,7 +186,7 @@ class MLDataSet(object):
 
   def AddPoints(self,pts,names):
     if len(pts)!=len(names):
-      raise ValueError,"input length mismatch"
+      raise ValueError("input length mismatch")
     self.data += pts
     self.ptNames += names
     self.nPts = len(self.data)
@@ -323,15 +328,15 @@ if __name__ == '__main__':
   ptNames = ['p1','p2','p3','p4','p5']
   set = MLQuantDataSet(examples,varNames=varNames,ptNames=ptNames)
   DataUtils.WritePickledData('test_data/test.qdat.pkl',set)
-  print 'nVars:',set.GetNVars()
-  print 'nPts:',set.GetNPts()
-  print 'nPoss:',set.GetNPossibleVals()
-  print 'qBounds:',set.GetQuantBounds()
-  print 'data:',set.GetAllData()
-  print 'Input data:',set.GetInputData()
-  print 'results:',set.GetResults()
+  print('nVars:',set.GetNVars())
+  print('nPts:',set.GetNPts())
+  print('nPoss:',set.GetNPossibleVals())
+  print('qBounds:',set.GetQuantBounds())
+  print('data:',set.GetAllData())
+  print('Input data:',set.GetInputData())
+  print('results:',set.GetResults())
 
-  print 'nameddata:',set.GetNamedData()
+  print('nameddata:',set.GetNamedData())
 
   examples = [
     ['foo',1,1.0,1,1.1],
@@ -345,13 +350,13 @@ if __name__ == '__main__':
   ptNames = ['p1','p2','p3','p4','p5']
   set = MLDataSet(examples,qBounds=qBounds)
   DataUtils.WritePickledData('test_data/test.dat.pkl',set)
-  print 'nVars:',set.GetNVars()
-  print 'nPts:',set.GetNPts()
-  print 'nPoss:',set.GetNPossibleVals()
-  print 'qBounds:',set.GetQuantBounds()
-  print 'data:',set.GetAllData()
-  print 'Input data:',set.GetInputData()
-  print 'results:',set.GetResults()
+  print('nVars:',set.GetNVars())
+  print('nPts:',set.GetNPts())
+  print('nPoss:',set.GetNPossibleVals())
+  print('qBounds:',set.GetQuantBounds())
+  print('data:',set.GetAllData())
+  print('Input data:',set.GetInputData())
+  print('results:',set.GetResults())
 
-  print 'nameddata:',set.GetNamedData()
+  print('nameddata:',set.GetNamedData())
 
