@@ -15,31 +15,27 @@
 #include "MatchTable.h"
 #include "DebugTrace.h" // algorithm filter definitions
 
-namespace RDKit
-{
-  namespace FMCS
-  {
+namespace RDKit {
+    namespace FMCS {
 #ifdef xxFAST_INCREMENTAL_MATCH //unused and works fast without it
-    struct AtomAdjacency
-    {
-      const Bond* Bond;
-      unsigned    BondIdx;
-      unsigned    ConnectedAtomIdx;   // another end on the bond
-    };
-    typedef std::vector<AtomAdjacency>  AtomAdjacencyList;
+        struct AtomAdjacency {
+            const Bond* Bond;
+            unsigned    BondIdx;
+            unsigned    ConnectedAtomIdx;   // another end on the bond
+        };
+        typedef std::vector<AtomAdjacency>  AtomAdjacencyList;
 #endif // FAST_INCREMENTAL_MATCH
 
-    struct Target
-    {
-      const ROMol*    Molecule;
-      Graph           Topology;
+        struct Target {
+            const ROMol*    Molecule;
+            Graph           Topology;
 #ifdef PRECOMPUTED_TABLES_MATCH
-      MatchTable      AtomMatchTable;
-      MatchTable      BondMatchTable;
+            MatchTable      AtomMatchTable;
+            MatchTable      BondMatchTable;
 #endif
 #ifdef xxFAST_INCREMENTAL_MATCH
-      std::vector<AtomAdjacencyList> AtomAdjacency;
+            std::vector<AtomAdjacencyList> AtomAdjacency;
 #endif
-    };
-  }
+        };
+    }
 }
