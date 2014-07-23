@@ -18,6 +18,7 @@
 #include <boost/lexical_cast.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <Geometry/point.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 
 /***********
   Return Format: vector of ints
