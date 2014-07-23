@@ -350,7 +350,7 @@ namespace RDKit{
           if(closureVal >= 10){
             res << "%";
           }
-          //std::cout << " > " << closureVal <<std::endl;
+          //std::cerr << " > " << closureVal <<std::endl;
           res << closureVal;
           break;
         case Canon::MOL_STACK_BRANCH_OPEN:
