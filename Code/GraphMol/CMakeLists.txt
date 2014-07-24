@@ -6,6 +6,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp RankAtoms.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp
+              roger_canon.cpp
               SHARED 
               LINK_LIBRARIES RDGeometryLib RDGeneral 
                  ${RDKit_THREAD_LIBS})
@@ -87,5 +88,8 @@ rdkit_test(graphmoltestPickler testPickler.cpp
            LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
+
+rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse_static GraphMol_static
+RDGeometryLib_static RDGeneral_static )
 
 
