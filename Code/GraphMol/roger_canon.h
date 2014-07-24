@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <GraphMol/ROMol.h>
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <cstring>
@@ -24,21 +25,6 @@ namespace RDKit {
     };
 
 
-    void CreateSinglePartition(unsigned int nAtoms,
-                               unsigned int *order,
-                               unsigned int *count,
-                               unsigned int *atomIndices);
-    void ActivatePartitions(unsigned int nAtoms,
-                            unsigned int *order,
-                            unsigned int *count,
-                            int &activeset,int *next);    
-    template <typename CompareFunc>
-    void RefinePartitions(unsigned int nAtoms,
-                          CompareFunc compar, int mode,
-                          unsigned int *order,
-                          unsigned int *count,
-                          int &activeset, int *next,
-                          unsigned int *atomIndices);
 #if 0    
     bool hanoi( int* base, int nel, int *temp, int *count, func compar ) {
       std::cerr<<"  hanoi: "<<nel<<std::endl;
@@ -163,7 +149,7 @@ namespace RDKit {
       } else if( nel == 2 ) {
         n1 = base[0];
         n2 = base[1];
-        int stat = (*compar)(n1,n2);
+        int stat = compar(n1,n2);
         if( stat == 0 ) {
           count[n1] = 2;
           count[n2] = 0;
@@ -201,11 +187,13 @@ namespace RDKit {
         s1 = b1;
       }
 
-#if 0
+#if 1
       while( true ) {
-        int stat = (*compar)(*s1,*s2);
+        int stat = compar(*s1,*s2);
         int len1 = count[*s1];
         int len2 = count[*s2];
+        assert(len1>0);
+        assert(len2>0);
         if( stat == 0 ) {
           count[*s1] = len1+len2;
           count[*s2] = 0;
@@ -247,7 +235,7 @@ namespace RDKit {
       }
 #elif 1
       while( true ) {
-        if( (*compar)(*s1,*s2) <= 0 ) {
+        if( compar(*s1,*s2) <= 0 ) {
           *ptr++ = *s1++;
           n1--;
           if( n1 == 0 ) {
@@ -266,7 +254,7 @@ namespace RDKit {
       }
 #else
       do {
-        if( (*compar)(*s1,*s2) <= 0 ) {
+        if( compar(*s1,*s2) <= 0 ) {
           *ptr++ = *s1++;
           n1--;
         } else {
@@ -295,5 +283,67 @@ namespace RDKit {
       free(temp);
     }
 
+
+    void CreateSinglePartition(unsigned int nAtoms,
+                               int *order,
+                               int *count,
+                               canon_atom *atoms);
+
+    void ActivatePartitions(unsigned int nAtoms,
+                            int *order,
+                            int *count,
+                            int &activeset,int *next);    
+
+    template <typename CompareFunc>
+    void RefinePartitions(const ROMol &mol,
+                          canon_atom *atoms,
+                          CompareFunc compar, int mode,
+                          int *order,
+                          int *count,
+                          int &activeset, int *next){
+      unsigned int nAtoms=mol.getNumAtoms();
+      register int partition;
+      register int symclass;
+      register int *start;
+      register int offset;
+      register int index;
+      register int len;
+      register int i;
+
+      while( activeset != -1 ) {
+        partition = activeset;
+        activeset = next[partition];
+        next[partition] = -2;
+
+        len = count[partition]; 
+        offset = atoms[partition].index;
+        start = order+offset;
+        hanoisort(start,len,count,compar);
+
+        index = start[0];
+        for( i=count[index]; i<len; i++ ) {
+          index = start[i];
+          if( count[index] )
+            symclass = offset+i;
+          atoms[index].index = symclass;
+
+          if( mode ) {
+            ROMol::ADJ_ITER nbrIdx,endNbrs;
+            boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(index));
+            while(nbrIdx!=endNbrs){
+              int nbor=mol[*nbrIdx]->getIdx();
+              ++nbrIdx;
+              offset = atoms[nbor].index;
+              partition = order[offset];
+              if( (count[partition]>1) &&
+                  (next[partition]==-2) ) {
+                next[partition] = activeset;
+                activeset = partition;
+              }
+            }
+          }
+        }
+      }
+    }
   } // end of Canon namespace
 } // end of RDKit namespace
