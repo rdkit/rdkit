@@ -447,6 +447,10 @@ namespace Canon {
 
     int nAttached=0;
 
+#if 0
+    std::cerr<<"traverse from atom: "<<atomIdx<<" via bond "<<inBondIdx<<" num cycles available: "
+             <<std::count(cyclesAvailable.begin(),cyclesAvailable.end(),1)<<std::endl;
+#endif
     Atom *atom = mol.getAtomWithIdx(atomIdx);
     INT_LIST directTravList,cycleEndList;
 
@@ -474,7 +478,7 @@ namespace Canon {
         // ---------------------
         //
         // things are a bit more complicated if we are sitting on a
-        // ring atom we would like to traverse first to the
+        // ring atom. we would like to traverse first to the
         // ring-closure atoms, then to atoms outside the ring first,
         // then to atoms in the ring that haven't already been visited
         // (non-ring-closure atoms).
@@ -511,6 +515,7 @@ namespace Canon {
             rank += (hsh%MAX_NATOMS)*MAX_NATOMS*MAX_NATOMS;
           }
         }
+        //std::cerr<<"   p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
         possibles.push_back(PossibleType(rank,otherIdx,theBond.get()));
       }
     }
