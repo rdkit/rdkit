@@ -20,10 +20,21 @@
 #include <list>
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/cstdint.hpp>
 
+namespace RDKit{
+  class ROMol;
+}
 namespace RankAtoms {
   typedef std::vector<int> INT_VECT;
   typedef std::list<int> INT_LIST;
+
+  //! generate the atom invariants used for ranking
+  void buildAtomInvariants(const RDKit::ROMol &mol,
+                           std::vector<boost::uint64_t> &res,
+                           bool includeChirality,
+                           bool includeIsotopes);
+
 
   //! utility function for ranking atoms
   void updateInPlayIndices(const INT_VECT &ranks,INT_LIST &indicesInPlay);
