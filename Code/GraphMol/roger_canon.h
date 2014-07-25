@@ -27,7 +27,7 @@ namespace RDKit {
 
 #if 0    
     bool hanoi( int* base, int nel, int *temp, int *count, func compar ) {
-      std::cerr<<"  hanoi: "<<nel<<std::endl;
+      //std::cerr<<"  hanoi: "<<nel<<std::endl;
       register int *b1,*b2;
       register int *t1,*t2;
       register int *s1,*s2;
@@ -81,7 +81,7 @@ namespace RDKit {
 
       while( true ) {
         int stat = (*compar)(*s1,*s2);
-        std::cerr<<"    while: "<<*s1<<"-"<<*s2<<" "<<stat<<" ("<<s1<<","<<s2<<")"<<std::endl;
+        //std::cerr<<"    while: "<<*s1<<"-"<<*s2<<" "<<stat<<" ("<<s1<<","<<s2<<")"<<std::endl;
         if( stat == 0 ) {
           assert(count[*s1]>0);
           assert(count[*s2]>0);
@@ -121,7 +121,7 @@ namespace RDKit {
           int len = count[*s2];
           memcpy(ptr,s2,len*sizeof(int));
           ptr += len; n2 -= len;
-          std::cerr<<"       len: "<<len<<" "<<n2<<" "<<n1<<std::endl;
+          //std::cerr<<"       len: "<<len<<" "<<n2<<" "<<n1<<std::endl;
           if( n2 == 0 ) {
             memcpy(ptr,s1,n1*sizeof(int));
             return result;
@@ -283,7 +283,6 @@ namespace RDKit {
       free(temp);
     }
 
-
     void CreateSinglePartition(unsigned int nAtoms,
                                int *order,
                                int *count,
@@ -293,6 +292,73 @@ namespace RDKit {
                             int *order,
                             int *count,
                             int &activeset,int *next);    
+
+
+    class BaseAtomCompareFunctor {
+      canon_atom *d_atoms;
+    public:
+      BaseAtomCompareFunctor() : d_atoms(NULL) {};
+      BaseAtomCompareFunctor(canon_atom *atoms) : d_atoms(atoms) {};
+      int operator()(int i,int j) const {
+        PRECONDITION(d_atoms,"no atoms");
+        unsigned int ivi= d_atoms[i].invar;
+        unsigned int ivj= d_atoms[j].invar;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+        else
+          return 0;
+      }
+    };
+
+    class NbrAtomCompareFunctor {
+      Canon::canon_atom *dp_atoms;
+      const ROMol *dp_mol;
+      unsigned int getAtomNeighborhood(unsigned int i) const{
+        unsigned int res=0;
+        const Atom *at=dp_mol->getAtomWithIdx(i);
+        std::vector<unsigned int> nbrs(at->getDegree());
+        unsigned int nbridx=0;
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = dp_mol->getAtomBonds(at);
+        while(beg!=end){
+          const BOND_SPTR bond=(*dp_mol)[*beg];
+          nbrs[nbridx]=static_cast<unsigned int>(100*bond->getBondTypeAsDouble())+dp_atoms[bond->getOtherAtomIdx(i)].index;
+          ++beg;
+          ++nbridx;
+        }
+        std::sort(nbrs.begin(),nbrs.end());
+        for(nbridx=0;nbridx<at->getDegree();++nbridx){
+          res+=(nbridx*1)*1000+nbrs[nbridx];
+        }
+        return res;
+      }
+    public:
+      NbrAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL) {};
+      NbrAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m) {};
+      int operator()(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        PRECONDITION(dp_mol,"no molecule");
+        unsigned int ivi= dp_atoms[i].invar;
+        unsigned int ivj= dp_atoms[j].invar;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+        else{
+          ivi=dp_atoms[i].index+1+getAtomNeighborhood(i);
+          ivj=dp_atoms[j].index+1+getAtomNeighborhood(j);
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
+          else
+            return 0;
+        }
+      }
+    };
+
 
     template <typename CompareFunc>
     void RefinePartitions(const ROMol &mol,
@@ -311,18 +377,15 @@ namespace RDKit {
       register int i;
 
       while( activeset != -1 ) {
-        std::cerr<<"ITER: "<<activeset<<" next: "<<next[activeset]<<std::endl;
-
-        std::cerr<<" next: ";
-        for(unsigned int ii=0;ii<nAtoms;++ii){
-            std::cerr<<ii<<":"<<next[ii]<<" ";
-          }
-              std::cerr<<std::endl; 
-      
-
-        for(unsigned int ii=0;ii<nAtoms;++ii){
-          std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
-        }
+        //std::cerr<<"ITER: "<<activeset<<" next: "<<next[activeset]<<std::endl;
+        // std::cerr<<" next: ";
+        // for(unsigned int ii=0;ii<nAtoms;++ii){
+        //   std::cerr<<ii<<":"<<next[ii]<<" ";
+        // }
+        // std::cerr<<std::endl; 
+        // for(unsigned int ii=0;ii<nAtoms;++ii){
+        //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
+        // }
 
         partition = activeset;
         activeset = next[partition];
@@ -331,11 +394,11 @@ namespace RDKit {
         len = count[partition]; 
         offset = atoms[partition].index;
         start = order+offset;
-        std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
+        //std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
         hanoisort(start,len,count,compar);
-        for(unsigned int ii=0;ii<nAtoms;++ii){
-          std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
-        }
+        // for(unsigned int ii=0;ii<nAtoms;++ii){
+        //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
+        // }
 
         index = start[0];
         for( i=count[index]; i<len; i++ ) {
@@ -406,6 +469,10 @@ namespace RDKit {
         } 
       }
     } // end of BreakTies()
+
+    void RankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+                      bool includeChirality=true,
+                      bool includeIsotopes=true);
 
   } // end of Canon namespace
 } // end of RDKit namespace

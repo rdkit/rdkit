@@ -16,6 +16,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
+#include <GraphMol/RankAtoms.h>
 
 namespace RDKit {
   namespace Canon{
@@ -50,16 +51,39 @@ namespace RDKit {
         } else i++;
       } while( i < nAtoms );
     }
-#if 0
-    void SymmetryPerception( Molecule mol )
-    {
-      CreateSinglePartition();
-      ActivatePartitions();
-      RefinePartitions(compare1,false);
-      ActivatePartitions();
-      RefinePartitions(compare2,true);
-    }
-#endif
+
+    void RankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+                      bool includeChirality,bool includeIsotopes) {
+      std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
+      std::vector<boost::uint64_t> invars(mol.getNumAtoms());
+      RankAtoms::buildAtomInvariants(mol,invars,includeChirality,includeIsotopes);
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        atoms[i].invar=invars[i];
+        atoms[i].index=i;
+      }
+      BaseAtomCompareFunctor ftor(&atoms.front());
+
+      canon_atom *data=&atoms.front();
+      int *count=(int *)malloc(atoms.size()*sizeof(int));
+      int *order=(int *)malloc(atoms.size()*sizeof(int));
+      int activeset;
+      int *next=(int *)malloc(atoms.size()*sizeof(int));
+      CreateSinglePartition(atoms.size(),order,count,data);
+      ActivatePartitions(atoms.size(),order,count,activeset,next);
+      RefinePartitions(mol,data,ftor,false,order,count,activeset,next);
+
+      NbrAtomCompareFunctor ftor2(&atoms.front(),mol);
+      ActivatePartitions(atoms.size(),order,count,activeset,next);
+      RefinePartitions(mol,data,ftor2,true,order,count,activeset,next);
+      BreakTies(mol,data,ftor2,true,order,count,activeset,next);
+
+      res.resize(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        res[order[i]]=i;
+      }
+      free(count); free(order); free(next);
+
+    } // end of RankAtoms()
     
   } // end of Canon namespace
 } // end of RDKit namespace
