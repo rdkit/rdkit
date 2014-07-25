@@ -311,6 +311,19 @@ namespace RDKit {
       register int i;
 
       while( activeset != -1 ) {
+        std::cerr<<"ITER: "<<activeset<<" next: "<<next[activeset]<<std::endl;
+
+        std::cerr<<" next: ";
+        for(unsigned int ii=0;ii<nAtoms;++ii){
+            std::cerr<<ii<<":"<<next[ii]<<" ";
+          }
+              std::cerr<<std::endl; 
+      
+
+        for(unsigned int ii=0;ii<nAtoms;++ii){
+          std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
+        }
+
         partition = activeset;
         activeset = next[partition];
         next[partition] = -2;
@@ -318,7 +331,11 @@ namespace RDKit {
         len = count[partition]; 
         offset = atoms[partition].index;
         start = order+offset;
+        std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
         hanoisort(start,len,count,compar);
+        for(unsigned int ii=0;ii<nAtoms;++ii){
+          std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
+        }
 
         index = start[0];
         for( i=count[index]; i<len; i++ ) {
@@ -333,8 +350,8 @@ namespace RDKit {
             while(nbrIdx!=endNbrs){
               int nbor=mol[*nbrIdx]->getIdx();
               ++nbrIdx;
-              offset = atoms[nbor].index;
-              partition = order[offset];
+              int nbroffset = atoms[nbor].index;
+              partition = order[nbroffset];
               if( (count[partition]>1) &&
                   (next[partition]==-2) ) {
                 next[partition] = activeset;

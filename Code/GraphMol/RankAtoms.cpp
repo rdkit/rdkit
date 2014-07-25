@@ -332,12 +332,12 @@ namespace RankAtoms{
   // NOTE: if the atom has not had chirality info pre-calculated, it doesn't
   // much matter what value includeChirality has!
   // --------------------------------------------------
-  void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
+  void buildAtomInvariants(const ROMol &mol,
+                           std::vector<boost::uint64_t> &res,
                            bool includeChirality,
                            bool includeIsotopes){
     PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
     unsigned int atsSoFar=0;
-    std::vector<boost::uint64_t> tres(mol.getNumAtoms());
     for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
       Atom const *atom = *atIt;
       int nHs = atom->getTotalNumHs() % 8;
@@ -418,14 +418,14 @@ namespace RankAtoms{
         }
         invariant = (invariant << 2) | isT;
       }
-      tres[atsSoFar++] = invariant;
+      res[atsSoFar++] = invariant;
     }
     if(includeChirality){
       // ring stereochemistry
       boost::dynamic_bitset<> adjusted(mol.getNumAtoms());
       for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
         Atom const *atom = *atIt;
-        tres[atom->getIdx()] = tres[atom->getIdx()]<<2;
+        res[atom->getIdx()] = res[atom->getIdx()]<<2;
       }
       for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
         Atom const *atom = *atIt;
@@ -440,7 +440,7 @@ namespace RankAtoms{
           while(beg!=end){
             unsigned int nbrIdx=mol[*beg]->getIdx();
             if(!adjusted[nbrIdx]){
-              tres[nbrIdx] |= nCount%4;
+              res[nbrIdx] |= nCount%4;
               adjusted.set(nbrIdx);
             }
             ++nCount;
@@ -449,6 +449,22 @@ namespace RankAtoms{
         }
       }
     }
+  }
+
+
+  // --------------------------------------------------
+  //
+  // Calculates invariants for the atoms of a molecule
+  //
+  // NOTE: if the atom has not had chirality info pre-calculated, it doesn't
+  // much matter what value includeChirality has!
+  // --------------------------------------------------
+  void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
+                           bool includeChirality,
+                           bool includeIsotopes){
+    PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
+    std::vector<boost::uint64_t> tres(mol.getNumAtoms());
+    buildAtomInvariants(mol,tres,includeChirality,includeIsotopes);
     for(unsigned int i=0;i<mol.getNumAtoms();++i) res[i]=tres[i];
   }
 
