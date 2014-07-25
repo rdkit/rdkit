@@ -471,9 +471,83 @@ void test4(){
     TEST_ASSERT(order[7]==7 && count[7]==0); 
 
   }
+};
 
 
-  
+void test5(){
+  // canonicalization via tie breaking
+  {
+    std::string smi="FC1C(CC)CCC1CC";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      atoms[i].invar=m->getAtomWithIdx(i)->getAtomicNum();
+      atoms[i].index=i;
+    }
+    atomcomparefunctor ftor(&atoms.front());
+
+    RDKit::Canon::canon_atom *data=&atoms.front();
+    int *count=(int *)malloc(atoms.size()*sizeof(int));
+    int *order=(int *)malloc(atoms.size()*sizeof(int));
+    int activeset;
+    int *next=(int *)malloc(atoms.size()*sizeof(int));
+    RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+
+    std::cerr<<"----------------------------------"<<std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<std::endl;
+    }
+
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    std::cerr<<"----------------------------------"<<std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      if(i>0){
+        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
+        if(atoms[order[i]].invar != atoms[order[i-1]].invar){
+          TEST_ASSERT(count[order[i]]!=0);
+        } else {
+          TEST_ASSERT(count[order[i]]==0);
+        }
+      } else {
+        TEST_ASSERT(count[order[i]]!=0);
+      }
+      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+    }
+
+
+    std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+    atomcomparefunctor2 ftor2(&atoms.front(),*m);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor2,true,order,count,activeset,next);
+    std::cerr<<"----------------------------------"<<std::endl;
+    
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      if(i>0){
+        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
+      }
+      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+    }
+    // here we can't manage to get everything  unique
+    TEST_ASSERT(order[0]==4 && count[4]==2); 
+    TEST_ASSERT(order[1]==9 && count[9]==0); 
+    TEST_ASSERT(order[2]==3 && count[3]==2); 
+    TEST_ASSERT(order[3]==8 && count[8]==0); 
+    TEST_ASSERT(order[4]==5 && count[5]==2); 
+    TEST_ASSERT(order[5]==6 && count[6]==0); 
+    TEST_ASSERT(order[6]==2 && count[2]==2); 
+    TEST_ASSERT(order[7]==7 && count[7]==0); 
+
+    RDKit::Canon::BreakTies(*m,data,ftor2,true,order,count,activeset,next);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      if(i>0){
+        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
+      }
+      TEST_ASSERT(count[order[i]]==1);
+    }
+  }
 };
 
 
@@ -482,7 +556,8 @@ int main(){
   //test1();
   //test2();
   //test3();
-  test4();
+  //test4();
+  test5();
   return 0;
 }
 

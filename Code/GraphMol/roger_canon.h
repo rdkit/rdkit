@@ -361,6 +361,51 @@ namespace RDKit {
           }
         }
       }
-    }
+    } // end of RefinePartitions()
+
+    template <typename CompareFunc>
+    void BreakTies(const ROMol &mol,
+                   canon_atom *atoms,
+                   CompareFunc compar, int mode,
+                   int *order,
+                   int *count,
+                   int &activeset, int *next){
+      unsigned int nAtoms=mol.getNumAtoms();
+      register int partition;
+      register int *start;
+      register int offset;
+      register int index;
+      register int len;
+      register int i;
+
+      for( i=0; i<nAtoms; i++ ) {
+        partition = order[i];
+        while( count[partition] > 1 ) {
+          len = count[partition];
+          offset = i+len-1;
+          index = order[offset];
+          atoms[index].index = offset;
+          count[partition] = len-1;
+          count[index] = 1;
+
+          ROMol::ADJ_ITER nbrIdx,endNbrs;
+          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(index));
+          while(nbrIdx!=endNbrs){
+            int nbor=mol[*nbrIdx]->getIdx();
+            ++nbrIdx;
+
+            offset = atoms[nbor].index;
+            int npart = order[offset];
+            if( (count[npart]>1) &&
+                (next[npart]==-2) ) {
+              next[npart] = activeset;
+              activeset = npart;
+            }
+          }
+          RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next);
+        } 
+      }
+    } // end of BreakTies()
+
   } // end of Canon namespace
 } // end of RDKit namespace
