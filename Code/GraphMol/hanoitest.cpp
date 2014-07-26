@@ -39,6 +39,24 @@ int icmp(int a,int b){
   return 0;
 }
 
+class int_compare_ftor {
+  const int *dp_ints;
+public:
+  int_compare_ftor() : dp_ints(NULL) {};
+  int_compare_ftor(const int *ints) : dp_ints(ints) {};
+  int operator()(int i,int j) const {
+    PRECONDITION(dp_ints,"no ints");
+    unsigned int ivi= dp_ints[i];
+    unsigned int ivj= dp_ints[j];
+    if(ivi<ivj)
+      return -1;
+    else if(ivi>ivj)
+      return 1;
+    else
+      return 0;
+  }
+};
+
 void qs1(  const std::vector< std::vector<int> > &vects){
   BOOST_LOG(rdInfoLog)<<"sorting (qsort) vectors"<<std::endl;
   for(unsigned int i=0;i<vects.size();++i){
@@ -55,14 +73,17 @@ void qs1(  const std::vector< std::vector<int> > &vects){
 void hs1(  const std::vector< std::vector<int> > &vects){
   BOOST_LOG(rdInfoLog)<<"sorting (hanoi sort) vectors"<<std::endl;
   for(unsigned int i=0;i<vects.size();++i){
-    std::vector<int> tv=vects[i];
-    int *data=&tv.front();
-    int *count=(int *)malloc(tv.size()*sizeof(int));
-    RDKit::Canon::hanoisort(data,tv.size(),count,icmp);
-    for(unsigned int j=1;j<tv.size();++j){
-      TEST_ASSERT(tv[j]>=tv[j-1]);
+    const int *data=&vects[i].front();
+    int_compare_ftor icmp(data);
+    int *indices=(int *)malloc(vects[i].size()*sizeof(int));
+    for(unsigned int j=0;j<vects[i].size();++j) indices[j]=j;
+    int *count=(int *)malloc(vects[i].size()*sizeof(int));
+    RDKit::Canon::hanoisort(indices,vects[i].size(),count,icmp);
+    for(unsigned int j=1;j<vects[i].size();++j){
+      TEST_ASSERT(data[indices[j]]>=data[indices[j-1]]);
     }
     free(count);
+    free(indices);
   }
   BOOST_LOG(rdInfoLog)<< "done: " << vects.size()<<std::endl;
 }
@@ -86,15 +107,12 @@ void test1(){
   std::vector< std::vector<int> > vects(nVects);
   for(unsigned int i=0;i<nVects;++i){
     vects[i] = std::vector<int>(vectSize);
-    for(unsigned int j=0;j<nClasses;++j){
-      vects[i][j] = j;
-    }
-    for(unsigned int j=nClasses+1;j<vectSize;++j){
+    for(unsigned int j=0;j<vectSize;++j){
       vects[i][j] = randomSource();
     }
   }
 
-  qs1(vects);
+  //qs1(vects);
   hs1(vects);
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -571,7 +589,7 @@ void test6(){
 
 int main(){
   RDLog::InitLogs();
-  //test1();
+  test1();
   test2();
   test3();
   test4();
