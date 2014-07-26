@@ -413,6 +413,7 @@ void test4(){
         TEST_ASSERT(ftor(order[i],order[i-1])>=0);
       }
     }
+    delete m;
   }
 
   {
@@ -453,6 +454,7 @@ void test4(){
         TEST_ASSERT(ftor(order[i],order[i-1])>=0);
       }
     }
+    delete m;
   }
 
   {
@@ -509,6 +511,7 @@ void test4(){
     TEST_ASSERT(order[8]==7 && count[7]==0); 
     TEST_ASSERT(order[9]==1 && count[1]==1); 
 
+    delete m;
   }
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -571,6 +574,7 @@ void test5(){
       //std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       TEST_ASSERT(count[order[i]]==1);
     }
+    delete m;
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -579,6 +583,7 @@ void test5(){
 void test6(){
   BOOST_LOG(rdInfoLog) << "testing canonicalization using the wrapper." << std::endl;
   // canonicalization using the wrapper
+#if 1
   {
     std::string smi="FC1C(CC)CCC1CC";
     RWMol *m =SmilesToMol(smi);
@@ -603,6 +608,7 @@ void test6(){
     TEST_ASSERT(atomRanks[7]==9);
     TEST_ASSERT(atomRanks[8]==4);
     TEST_ASSERT(atomRanks[9]==1);
+    delete m;
   }
 
   {
@@ -619,22 +625,64 @@ void test6(){
       seen.set(atomRanks[i],1);
     }
 
-    for(unsigned int ii=0;ii<atomRanks.size();++ii){
-      std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
-    }
+    // for(unsigned int ii=0;ii<atomRanks.size();++ii){
+    //   std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
+    // }
     TEST_ASSERT(atomRanks[0]==0);
     TEST_ASSERT(atomRanks[1]==3);
-    TEST_ASSERT(atomRanks[2]==8);
+    TEST_ASSERT(atomRanks[2]==9);
     TEST_ASSERT(atomRanks[3]==5);
     TEST_ASSERT(atomRanks[4]==4);
     TEST_ASSERT(atomRanks[5]==6);
-    TEST_ASSERT(atomRanks[6]==9);
+    TEST_ASSERT(atomRanks[6]==10);
     TEST_ASSERT(atomRanks[7]==7);
-    TEST_ASSERT(atomRanks[8]==10);
+    TEST_ASSERT(atomRanks[8]==8);
     TEST_ASSERT(atomRanks[9]==2);
     TEST_ASSERT(atomRanks[10]==1);
 
+    delete m;
   }
+
+  {
+    std::string smi="N[C@@H](Cc1c[nH]c2ccccc12)C(=O)N[C@@H](CCCN=C(N)N)C(=O)N[C@@H](Cc3c[nH]c4ccccc34)C(=O)OCc5ccccc5";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+
+    std::vector<unsigned int> atomRanks;
+    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    boost::dynamic_bitset<> seen(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
+      TEST_ASSERT(!seen[atomRanks[i]]);
+      seen.set(atomRanks[i],1);
+    }
+
+    // for(unsigned int ii=0;ii<atomRanks.size();++ii){
+    //   std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
+    // }
+    delete m;
+  }
+#endif  
+  {
+    std::string smi="BrC=C1CCC(C(=O)O1)c2cccc3ccccc23";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+
+    std::vector<unsigned int> atomRanks;
+    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    boost::dynamic_bitset<> seen(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
+      TEST_ASSERT(!seen[atomRanks[i]]);
+      seen.set(atomRanks[i],1);
+    }
+
+    // for(unsigned int ii=0;ii<atomRanks.size();++ii){
+    //   std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
+    // }
+    delete m;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -643,7 +691,7 @@ void test6(){
 
 int main(){
   RDLog::InitLogs();
-  //test1();
+  test1();
   test2();
   test3();
   test4();
