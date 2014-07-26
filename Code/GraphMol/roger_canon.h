@@ -20,6 +20,7 @@
 namespace RDKit {
   namespace Canon{
     struct canon_atom{
+      const Atom *atom;
       unsigned int invar;
       int index;
     };
