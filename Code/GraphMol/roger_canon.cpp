@@ -55,13 +55,11 @@ namespace RDKit {
     void RankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
                       bool includeChirality,bool includeIsotopes) {
       std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-      std::vector<boost::uint64_t> invars(mol.getNumAtoms());
-      RankAtoms::buildAtomInvariants(mol,invars,includeChirality,includeIsotopes);
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        atoms[i].invar=invars[i];
+        atoms[i].atom=mol.getAtomWithIdx(i);
         atoms[i].index=i;
       }
-      BaseAtomCompareFunctor ftor(&atoms.front());
+      AtomCompareFunctor ftor(&atoms.front(),mol);
 
       canon_atom *data=&atoms.front();
       int *count=(int *)malloc(atoms.size()*sizeof(int));
@@ -72,10 +70,10 @@ namespace RDKit {
       ActivatePartitions(atoms.size(),order,count,activeset,next);
       RefinePartitions(mol,data,ftor,false,order,count,activeset,next);
 
-      NbrAtomCompareFunctor ftor2(&atoms.front(),mol);
+      ftor.df_useNbrs=true;
       ActivatePartitions(atoms.size(),order,count,activeset,next);
-      RefinePartitions(mol,data,ftor2,true,order,count,activeset,next);
-      BreakTies(mol,data,ftor2,true,order,count,activeset,next);
+      RefinePartitions(mol,data,ftor,true,order,count,activeset,next);
+      BreakTies(mol,data,ftor,true,order,count,activeset,next);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){

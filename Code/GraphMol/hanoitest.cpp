@@ -125,14 +125,24 @@ public:
   atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms) {};
   int operator()(int i,int j) const {
     PRECONDITION(d_atoms,"no atoms");
-    unsigned int ivi= d_atoms[i].atom->getAtomicNum();
-    unsigned int ivj= d_atoms[j].atom->getAtomicNum();
+    unsigned int ivi,ivj;
+
+    // always start with the current class:
+    ivi= d_atoms[i].index;
+    ivj= d_atoms[j].index;
     if(ivi<ivj)
       return -1;
     else if(ivi>ivj)
       return 1;
-    else
-      return 0;
+
+    ivi= d_atoms[i].atom->getAtomicNum();
+    ivj= d_atoms[j].atom->getAtomicNum();
+    if(ivi<ivj)
+      return -1;
+    else if(ivi>ivj)
+      return 1;
+
+    return 0;
   }
 };
 class atomcomparefunctor2 {
@@ -143,6 +153,14 @@ public:
   int operator()(int i,int j) const {
     PRECONDITION(d_atoms,"no atoms");
     unsigned int ivi,ivj;
+
+    // always start with the current class:
+    ivi= d_atoms[i].index;
+    ivj= d_atoms[j].index;
+    if(ivi<ivj)
+      return -1;
+    else if(ivi>ivj)
+      return 1;
 
     // start by comparing degree
     ivi= d_atoms[i].atom->getDegree();
@@ -175,7 +193,7 @@ void test2(){
     std::vector<int> indices(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       atoms[i].atom = m->getAtomWithIdx(i);
-      atoms[i].index=i;
+      atoms[i].index=0;
       indices[i]=i;
     }
     atomcomparefunctor ftor(&atoms.front());
@@ -185,6 +203,7 @@ void test2(){
     RDKit::Canon::hanoisort(data,atoms.size(),count,ftor);
 
     for(unsigned int i=0;i<m->getNumAtoms();++i){
+      //std::cerr<<indices[i]<<" "<<" index: "<<atoms[indices[i]].index<<" count: "<<count[indices[i]]<<std::endl;
       if(i>0){
         TEST_ASSERT(atoms[indices[i]].atom->getAtomicNum() >= atoms[indices[i-1]].atom->getAtomicNum());
         if(atoms[indices[i]].atom->getAtomicNum() != atoms[indices[i-1]].atom->getAtomicNum()){
@@ -224,10 +243,10 @@ void test3(){
 
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
 
-    std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-    }
+    // std::cerr<<"----------------------------------"<<std::endl;
+    // for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //   std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+    // }
 
     TEST_ASSERT(order[0]==1);
     TEST_ASSERT(order[6]==0);
@@ -259,11 +278,10 @@ void test3(){
 
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
 
-
-    std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-    }
+    // std::cerr<<"----------------------------------"<<std::endl;
+    // for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //   std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+    // }
 
     TEST_ASSERT(order[0]==7);
     TEST_ASSERT(order[1]==0);
@@ -301,7 +319,7 @@ class atomcomparefunctor3 {
     }
     std::sort(nbrs.begin(),nbrs.end());
     for(nbridx=0;nbridx<at->getDegree();++nbridx){
-      res+=(nbridx*1)*1000+nbrs[nbridx];
+      res+=(nbridx+1)*1000+nbrs[nbridx];
     }
     return res;
   }
@@ -309,6 +327,14 @@ class atomcomparefunctor3 {
     PRECONDITION(dp_atoms,"no atoms");
     unsigned int ivi,ivj;
 
+    // always start with the current class:
+    ivi= dp_atoms[i].index;
+    ivj= dp_atoms[j].index;
+    if(ivi<ivj)
+      return -1;
+    else if(ivi>ivj)
+      return 1;
+    
     // start by comparing degree
     ivi= dp_atoms[i].atom->getDegree();
     ivj= dp_atoms[j].atom->getDegree();
@@ -328,20 +354,25 @@ class atomcomparefunctor3 {
     return 0;
   }
 public:
-  atomcomparefunctor3() : dp_atoms(NULL), dp_mol(NULL) {};
-  atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m) {};
+  bool df_useNbrs;
+  atomcomparefunctor3() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false) {};
+  atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m),
+                                                                  df_useNbrs(false) {};
   int operator()(int i,int j) const {
     PRECONDITION(dp_atoms,"no atoms");
     PRECONDITION(dp_mol,"no molecule");
     int v=basecomp(i,j);
     if(v) return v;
-
-    ivi=dp_atoms[i].index+1+getAtomNeighborhood(i);
-    ivj=dp_atoms[j].index+1+getAtomNeighborhood(j);
-    if(ivi<ivj)
-      return -1;
-    else if(ivi>ivj)
-      return 1;
+    unsigned int ivi,ivj;
+    if(df_useNbrs){
+      ivi=dp_atoms[i].index+1+getAtomNeighborhood(i);
+      ivj=dp_atoms[j].index+1+getAtomNeighborhood(j);
+      //std::cerr<<"               "<<i<<"-"<<j<<": "<<ivi<<" "<<ivj<<std::endl;
+      if(ivi<ivj)
+        return -1;
+      else if(ivi>ivj)
+        return 1;
+    }
     return 0;
   }
 };
@@ -356,11 +387,10 @@ void test4(){
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      atoms[i].atom=m->getAtomWithIdx(i)->getAtomicNum();
+      atoms[i].atom=m->getAtomWithIdx(i);
       atoms[i].index=i;
     }
-    atomcomparefunctor ftor(&atoms.front());
-
+    atomcomparefunctor3 ftor(&atoms.front(),*m);
     RDKit::Canon::canon_atom *data=&atoms.front();
     int *count=(int *)malloc(atoms.size()*sizeof(int));
     int *order=(int *)malloc(atoms.size()*sizeof(int));
@@ -371,15 +401,16 @@ void test4(){
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-    atomcomparefunctor3 ftor2(&atoms.front(),*m);
+    ftor.df_useNbrs=true;
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor2,true,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
+
     //std::cerr<<"----------------------------------"<<std::endl;
-    
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      //std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      TEST_ASSERT(count[order[i]]==1);
       if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
+        TEST_ASSERT(ftor(order[i],order[i-1])>=0);
       }
     }
   }
@@ -390,10 +421,10 @@ void test4(){
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      atoms[i].invar=m->getAtomWithIdx(i)->getAtomicNum();
+      atoms[i].atom=m->getAtomWithIdx(i);
       atoms[i].index=i;
     }
-    atomcomparefunctor ftor(&atoms.front());
+    atomcomparefunctor3 ftor(&atoms.front(),*m);
 
     RDKit::Canon::canon_atom *data=&atoms.front();
     int *count=(int *)malloc(atoms.size()*sizeof(int));
@@ -403,39 +434,24 @@ void test4(){
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
 
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
-    //   std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<std::endl;
+    //   std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
     // }
 
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
-    //std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
-        if(atoms[order[i]].invar != atoms[order[i-1]].invar){
-          TEST_ASSERT(count[order[i]]!=0);
-        } else {
-          TEST_ASSERT(count[order[i]]==0);
-        }
-      } else {
-        TEST_ASSERT(count[order[i]]!=0);
-      }
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-    }
-
-    //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-    atomcomparefunctor3 ftor2(&atoms.front(),*m);
+    ftor.df_useNbrs=true;
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor2,true,order,count,activeset,next);
-    //std::cerr<<"----------------------------------"<<std::endl;
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
     
+    //std::cerr<<"----------------------------------"<<std::endl;
     for(unsigned int i=0;i<m->getNumAtoms();++i){
+      //std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      TEST_ASSERT(count[order[i]]==1);
       if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
+        //std::cerr<<"  ftor: "<<ftor(order[i],order[i-1])<<std::endl;
+        TEST_ASSERT(ftor(order[i],order[i-1])>=0);
       }
-      TEST_ASSERT(count[order[i]]==1); // here we should manage to uniquify everything
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
     }
   }
 
@@ -445,10 +461,10 @@ void test4(){
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      atoms[i].invar=m->getAtomWithIdx(i)->getAtomicNum();
+      atoms[i].atom=m->getAtomWithIdx(i);
       atoms[i].index=i;
     }
-    atomcomparefunctor ftor(&atoms.front());
+    atomcomparefunctor3 ftor(&atoms.front(),*m);
 
     RDKit::Canon::canon_atom *data=&atoms.front();
     int *count=(int *)malloc(atoms.size()*sizeof(int));
@@ -464,44 +480,37 @@ void test4(){
     // }
 
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
-    //std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
-        if(atoms[order[i]].invar != atoms[order[i-1]].invar){
-          TEST_ASSERT(count[order[i]]!=0);
-        } else {
-          TEST_ASSERT(count[order[i]]==0);
-        }
-      } else {
-        TEST_ASSERT(count[order[i]]!=0);
-      }
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-    }
-
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-    atomcomparefunctor3 ftor2(&atoms.front(),*m);
+    ftor.df_useNbrs=true;
+
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor2,true,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
     //std::cerr<<"----------------------------------"<<std::endl;
-    
+
+
     for(unsigned int i=0;i<m->getNumAtoms();++i){
+      //std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
+        //std::cerr<<"  ftor: "<<ftor(order[i],order[i-1])<<std::endl;
+        TEST_ASSERT(ftor(order[i],order[i-1])>=0);
       }
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
     }
+    
     // here we can't manage to get everything  unique
     TEST_ASSERT(order[0]==4 && count[4]==2); 
     TEST_ASSERT(order[1]==9 && count[9]==0); 
-    TEST_ASSERT(order[2]==3 && count[3]==2); 
-    TEST_ASSERT(order[3]==8 && count[8]==0); 
-    TEST_ASSERT(order[4]==5 && count[5]==2); 
-    TEST_ASSERT(order[5]==6 && count[6]==0); 
-    TEST_ASSERT(order[6]==2 && count[2]==2); 
-    TEST_ASSERT(order[7]==7 && count[7]==0); 
+    TEST_ASSERT(order[2]==0 && count[0]==1); 
+    TEST_ASSERT(order[3]==3 && count[3]==2); 
+    TEST_ASSERT(order[4]==8 && count[8]==0); 
+    TEST_ASSERT(order[5]==5 && count[5]==2); 
+    TEST_ASSERT(order[6]==6 && count[6]==0); 
+    TEST_ASSERT(order[7]==2 && count[2]==2); 
+    TEST_ASSERT(order[8]==7 && count[7]==0); 
+    TEST_ASSERT(order[9]==1 && count[1]==1); 
+
   }
+
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
 
@@ -515,10 +524,10 @@ void test5(){
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      atoms[i].invar=m->getAtomWithIdx(i)->getAtomicNum();
+      atoms[i].atom=m->getAtomWithIdx(i);
       atoms[i].index=i;
     }
-    atomcomparefunctor ftor(&atoms.front());
+    atomcomparefunctor3 ftor(&atoms.front(),*m);
 
     RDKit::Canon::canon_atom *data=&atoms.front();
     int *count=(int *)malloc(atoms.size()*sizeof(int));
@@ -534,50 +543,32 @@ void test5(){
     // }
 
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
-    //std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
-        if(atoms[order[i]].invar != atoms[order[i-1]].invar){
-          TEST_ASSERT(count[order[i]]!=0);
-        } else {
-          TEST_ASSERT(count[order[i]]==0);
-        }
-      } else {
-        TEST_ASSERT(count[order[i]]!=0);
-      }
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-    }
-
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-    atomcomparefunctor3 ftor2(&atoms.front(),*m);
+    ftor.df_useNbrs=true;
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor2,true,order,count,activeset,next);
-    //std::cerr<<"----------------------------------"<<std::endl;
-    
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
-      }
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-    }
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
+
+    // std::cerr<<"----------------------------------"<<std::endl;
+    // for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //   std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+    // }
+
     // here we can't manage to get everything  unique
     TEST_ASSERT(order[0]==4 && count[4]==2); 
     TEST_ASSERT(order[1]==9 && count[9]==0); 
-    TEST_ASSERT(order[2]==3 && count[3]==2); 
-    TEST_ASSERT(order[3]==8 && count[8]==0); 
-    TEST_ASSERT(order[4]==5 && count[5]==2); 
-    TEST_ASSERT(order[5]==6 && count[6]==0); 
-    TEST_ASSERT(order[6]==2 && count[2]==2); 
-    TEST_ASSERT(order[7]==7 && count[7]==0); 
+    TEST_ASSERT(order[2]==0 && count[0]==1); 
+    TEST_ASSERT(order[3]==3 && count[3]==2); 
+    TEST_ASSERT(order[4]==8 && count[8]==0); 
+    TEST_ASSERT(order[5]==5 && count[5]==2); 
+    TEST_ASSERT(order[6]==6 && count[6]==0); 
+    TEST_ASSERT(order[7]==2 && count[2]==2); 
+    TEST_ASSERT(order[8]==7 && count[7]==0); 
+    TEST_ASSERT(order[9]==1 && count[1]==1); 
 
-    RDKit::Canon::BreakTies(*m,data,ftor2,true,order,count,activeset,next);
+    RDKit::Canon::BreakTies(*m,data,ftor,true,order,count,activeset,next);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      //std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-      if(i>0){
-        TEST_ASSERT(atoms[order[i]].invar >= atoms[order[i-1]].invar);
-      }
+      //std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       TEST_ASSERT(count[order[i]]==1);
     }
   }
@@ -597,10 +588,54 @@ void test6(){
     RDKit::Canon::RankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      TEST_ASSERT(!seen[i]);
-      seen.set(i,1);
+      TEST_ASSERT(!seen[atomRanks[i]]);
+      seen.set(atomRanks[i],1);
     }
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]==2);
+    TEST_ASSERT(atomRanks[1]==7);
+    TEST_ASSERT(atomRanks[2]==8);
+    TEST_ASSERT(atomRanks[3]==3);
+    TEST_ASSERT(atomRanks[4]==0);
+    TEST_ASSERT(atomRanks[5]==5);
+    TEST_ASSERT(atomRanks[6]==6);
+    TEST_ASSERT(atomRanks[7]==9);
+    TEST_ASSERT(atomRanks[8]==4);
+    TEST_ASSERT(atomRanks[9]==1);
   }
+
+  {
+    std::string smi="CC[C@@H]1CCC[C@@H](O1)C(=O)O";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+
+    std::vector<unsigned int> atomRanks;
+    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    boost::dynamic_bitset<> seen(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
+      TEST_ASSERT(!seen[atomRanks[i]]);
+      seen.set(atomRanks[i],1);
+    }
+
+    for(unsigned int ii=0;ii<atomRanks.size();++ii){
+      std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
+    }
+    TEST_ASSERT(atomRanks[0]==0);
+    TEST_ASSERT(atomRanks[1]==3);
+    TEST_ASSERT(atomRanks[2]==8);
+    TEST_ASSERT(atomRanks[3]==5);
+    TEST_ASSERT(atomRanks[4]==4);
+    TEST_ASSERT(atomRanks[5]==6);
+    TEST_ASSERT(atomRanks[6]==9);
+    TEST_ASSERT(atomRanks[7]==7);
+    TEST_ASSERT(atomRanks[8]==10);
+    TEST_ASSERT(atomRanks[9]==2);
+    TEST_ASSERT(atomRanks[10]==1);
+
+  }
+
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
 
@@ -612,8 +647,8 @@ int main(){
   test2();
   test3();
   test4();
-  //test5();
-  //test6();
+  test5();
+  test6();
   return 0;
 }
 
