@@ -688,15 +688,69 @@ void test6(){
 };
 
 
+namespace{
+  void _renumberTest(const ROMol *m){
+    PRECONDITION(m,"no molecule");
+    std::vector<unsigned int> idxV(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
+    std::vector<unsigned int> atomRanks;
+    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    m->debugMol(std::cerr);
+
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::vector<unsigned int> nVect(idxV);
+      std::random_shuffle(nVect.begin(),nVect.end());
+      ROMol *nm=MolOps::renumberAtoms(*m,nVect);
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
+      TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+      nm->debugMol(std::cerr);
+      std::vector<unsigned int> newRanks;
+      RDKit::Canon::RankMolAtoms(*nm,newRanks);
+      for(unsigned int j=0;j<m->getNumAtoms();++j){
+        std::cerr<<"  "<<j<<" "<<newRanks[j]<<" "<<atomRanks[nVect[j]]<<std::endl;
+      }
+      for(unsigned int j=0;j<m->getNumAtoms();++j){
+        TEST_ASSERT(newRanks[j]==atomRanks[nVect[j]]);
+      }
+      delete nm;
+    }
+  }
+}
+
+void test7(){
+  BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
+  {
+    std::string smiles="C[C@H]1C[C@H](F)C1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  {
+    std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 
 int main(){
   RDLog::InitLogs();
+#if 1
   test1();
   test2();
   test3();
   test4();
   test5();
   test6();
+#endif
+  //test7();
   return 0;
 }
 

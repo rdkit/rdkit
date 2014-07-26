@@ -299,12 +299,19 @@ namespace RDKit {
 
     struct bondholder {
       Bond::BondType bondType;
+      Bond::BondStereo bondStereo; 
       unsigned int nbrIdx;
-      bondholder() : bondType(Bond::UNSPECIFIED), nbrIdx(0) {};
-      bondholder(Bond::BondType bt,unsigned int ni) : bondType(bt),nbrIdx(ni) {};
+      bondholder() : bondType(Bond::UNSPECIFIED),
+                     bondStereo(Bond::STEREONONE),
+                     nbrIdx(0) {};
+      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni) : bondType(bt),
+                                                                          bondStereo(bs),
+                                                                          nbrIdx(ni) {};
       bool operator<(const bondholder &o) const {
         if(bondType!=o.bondType)
           return bondType<o.bondType;
+        if(bondStereo!=o.bondStereo)
+          return bondStereo<o.bondStereo;
         return nbrIdx<o.nbrIdx;
       }
       static int compare(const bondholder &x,const bondholder &y){
@@ -312,6 +319,11 @@ namespace RDKit {
           return -1;
         else if(x.bondType>y.bondType)
           return 1;
+        if(x.bondStereo<y.bondStereo)
+          return -1;
+        else if(x.bondStereo>y.bondStereo)
+          return 1;
+
         return x.nbrIdx-y.nbrIdx;
       }
     };
@@ -320,14 +332,19 @@ namespace RDKit {
       const ROMol *dp_mol;
       void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
         unsigned int res=0;
-        const Atom *at=dp_mol->getAtomWithIdx(i);
+        const Atom *at=dp_atoms[i].atom;
         nbrs.resize(0);
         nbrs.reserve(at->getDegree());
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg];
-          nbrs.push_back(bondholder(bond->getBondType(),dp_atoms[bond->getOtherAtomIdx(i)].index));
+          if(df_useChirality)
+            nbrs.push_back(bondholder(bond->getBondType(),bond->getStereo(),
+                                      dp_atoms[bond->getOtherAtomIdx(i)].index));
+          else
+            nbrs.push_back(bondholder(bond->getBondType(),Bond::STEREONONE,
+                                      dp_atoms[bond->getOtherAtomIdx(i)].index));
           ++beg;
         }
         std::sort(nbrs.begin(),nbrs.end());
@@ -360,12 +377,46 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
 
+        if(df_useIsotopes){
+          ivi=dp_atoms[i].atom->getIsotope();
+          ivj=dp_atoms[j].atom->getIsotope();
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
+        }
+
+        if(df_useChirality){
+          // first atom stereochem:
+          ivi=0;
+          ivj=0;
+          if(dp_atoms[i].atom->hasProp("_CIPCode")){
+            std::string cipCode;
+            dp_atoms[i].atom->getProp("_CIPCode",cipCode);
+            ivi=cipCode=="R"?1:2;
+          }
+          if(dp_atoms[j].atom->hasProp("_CIPCode")){
+            std::string cipCode;
+            dp_atoms[j].atom->getProp("_CIPCode",cipCode);
+            ivj=cipCode=="R"?1:2;
+          }
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
+
+          // bonds are taken care of in the neighborhood comparison
+        }
         return 0;
       }
     public:
       bool df_useNbrs;
-      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false) {};
-      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false) {};
+      bool df_useIsotopes;
+      bool df_useChirality;
+      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false),
+                             df_useIsotopes(true), df_useChirality(true) {};
+      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false),
+                                                                     df_useIsotopes(true), df_useChirality(true) {};
       int operator()(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
         PRECONDITION(dp_mol,"no molecule");
@@ -438,7 +489,7 @@ namespace RDKit {
 
           if( mode ) {
             ROMol::ADJ_ITER nbrIdx,endNbrs;
-            boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(index));
+            boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atoms[index].atom);
             while(nbrIdx!=endNbrs){
               int nbor=mol[*nbrIdx]->getIdx();
               ++nbrIdx;
@@ -481,7 +532,7 @@ namespace RDKit {
           count[index] = 1;
 
           ROMol::ADJ_ITER nbrIdx,endNbrs;
-          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(index));
+          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atoms[index].atom);
           while(nbrIdx!=endNbrs){
             int nbor=mol[*nbrIdx]->getIdx();
             ++nbrIdx;
