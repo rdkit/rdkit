@@ -21,7 +21,6 @@ namespace RDKit {
   namespace Canon{
     struct canon_atom{
       const Atom *atom;
-      unsigned int invar;
       int index;
     };
 
@@ -295,68 +294,94 @@ namespace RDKit {
                             int &activeset,int *next);    
 
 
-    class BaseAtomCompareFunctor {
-      canon_atom *d_atoms;
-    public:
-      BaseAtomCompareFunctor() : d_atoms(NULL) {};
-      BaseAtomCompareFunctor(canon_atom *atoms) : d_atoms(atoms) {};
-      int operator()(int i,int j) const {
-        PRECONDITION(d_atoms,"no atoms");
-        unsigned int ivi= d_atoms[i].invar;
-        unsigned int ivj= d_atoms[j].invar;
-        if(ivi<ivj)
+    struct bondholder {
+      Bond::BondType bondType;
+      unsigned int nbrIdx;
+      bondholder() : bondType(Bond::UNSPECIFIED), nbrIdx(0) {};
+      bondholder(Bond::BondType bt,unsigned int ni) : bondType(bt),nbrIdx(ni) {};
+      bool operator<(const bondholder &o) const {
+        if(bondType!=o.bondType)
+          return bondType<o.bondType;
+        return nbrIdx<o.nbrIdx;
+      }
+      static int compare(const bondholder &x,const bondholder &y){
+        if(x.bondType<y.bondType)
           return -1;
-        else if(ivi>ivj)
+        else if(x.bondType>y.bondType)
           return 1;
-        else
-          return 0;
+        return x.nbrIdx-y.nbrIdx;
       }
     };
-
-    class NbrAtomCompareFunctor {
+    class AtomCompareFunctor {
       Canon::canon_atom *dp_atoms;
       const ROMol *dp_mol;
-      unsigned int getAtomNeighborhood(unsigned int i) const{
+      void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
         unsigned int res=0;
         const Atom *at=dp_mol->getAtomWithIdx(i);
-        std::vector<unsigned int> nbrs(at->getDegree());
-        unsigned int nbridx=0;
+        nbrs.resize(0);
+        nbrs.reserve(at->getDegree());
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg];
-          nbrs[nbridx]=static_cast<unsigned int>(100*bond->getBondTypeAsDouble())+dp_atoms[bond->getOtherAtomIdx(i)].index;
+          nbrs.push_back(bondholder(bond->getBondType(),dp_atoms[bond->getOtherAtomIdx(i)].index));
           ++beg;
-          ++nbridx;
         }
         std::sort(nbrs.begin(),nbrs.end());
-        for(nbridx=0;nbridx<at->getDegree();++nbridx){
-          res+=(nbridx*1)*1000+nbrs[nbridx];
-        }
-        return res;
       }
-    public:
-      NbrAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL) {};
-      NbrAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m) {};
-      int operator()(int i,int j) const {
+      int basecomp(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
-        PRECONDITION(dp_mol,"no molecule");
-        unsigned int ivi= dp_atoms[i].invar;
-        unsigned int ivj= dp_atoms[j].invar;
+        unsigned int ivi,ivj;
+
+        // always start with the current class:
+        ivi= dp_atoms[i].index;
+        ivj= dp_atoms[j].index;
         if(ivi<ivj)
           return -1;
         else if(ivi>ivj)
           return 1;
-        else{
-          ivi=dp_atoms[i].index+1+getAtomNeighborhood(i);
-          ivj=dp_atoms[j].index+1+getAtomNeighborhood(j);
-          if(ivi<ivj)
-            return -1;
-          else if(ivi>ivj)
-            return 1;
-          else
-            return 0;
+    
+        // start by comparing degree
+        ivi= dp_atoms[i].atom->getDegree();
+        ivj= dp_atoms[j].atom->getDegree();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // move onto atomic number
+        ivi= dp_atoms[i].atom->getAtomicNum();
+        ivj= dp_atoms[j].atom->getAtomicNum();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        return 0;
+      }
+    public:
+      bool df_useNbrs;
+      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL) {};
+      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m) {};
+      int operator()(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        PRECONDITION(dp_mol,"no molecule");
+        PRECONDITION(i!=j,"bad call");
+        int v=basecomp(i,j);
+        if(v) return v;
+        TEST_ASSERT(i!=j);
+
+        if(df_useNbrs){
+          std::vector<bondholder> nbrsi,nbrsj;
+          getAtomNeighborhood(i,nbrsi);
+          getAtomNeighborhood(j,nbrsj);
+          TEST_ASSERT(i!=j);
+          for(unsigned int ii=0;ii<nbrsi.size();++ii){
+            int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
+            if(cmp) return cmp;
+          }
         }
+        return 0;
       }
     };
 
@@ -385,7 +410,7 @@ namespace RDKit {
         // }
         // std::cerr<<std::endl; 
         // for(unsigned int ii=0;ii<nAtoms;++ii){
-        //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
+        //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         // }
 
         partition = activeset;
@@ -398,7 +423,7 @@ namespace RDKit {
         //std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
         hanoisort(start,len,count,compar);
         // for(unsigned int ii=0;ii<nAtoms;++ii){
-        //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" "<<atoms[order[ii]].invar<<" index: "<<atoms[order[ii]].index<<std::endl;
+        //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         // }
 
         index = start[0];
