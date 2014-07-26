@@ -90,40 +90,40 @@ namespace RDKit {
           count[*s1] = len1+len2;
           count[*s2] = 0;
 
-          memcpy(ptr,s1,len1*sizeof(int));
+          memmove(ptr,s1,len1*sizeof(int));
           ptr += len1;  n1 -= len1;
           if( n1 == 0 ) {
             if( ptr != s2 )
-              memcpy(ptr,s2,n2*sizeof(int));
+              memmove(ptr,s2,n2*sizeof(int));
             return result;
           }
           s1 += len1;
-          memcpy(ptr,s2,len2*sizeof(int));
+          memmove(ptr,s2,len2*sizeof(int));
           ptr += len2; n2 -= len2;
           if( n2 == 0 ) {
-            memcpy(ptr,s1,n1*sizeof(int));
+            memmove(ptr,s1,n1*sizeof(int));
             return result;
           }
           s2 += len2;
         } else if( stat < 0 ) {
           assert(count[*s1]>0);
           int len = count[*s1];
-          memcpy(ptr,s1,len*sizeof(int));
+          memmove(ptr,s1,len*sizeof(int));
           ptr += len;  n1 -= len;
           if( n1 == 0 ) {
             if( ptr != s2 )
-              memcpy(ptr,s2,n2*sizeof(int));
+              memmove(ptr,s2,n2*sizeof(int));
             return result;
           }
           s1 += len;
         } else /* stat > 0 */ {
           assert(count[*s2]>0);
           int len = count[*s2];
-          memcpy(ptr,s2,len*sizeof(int));
+          memmove(ptr,s2,len*sizeof(int));
           ptr += len; n2 -= len;
           //std::cerr<<"       len: "<<len<<" "<<n2<<" "<<n1<<std::endl;
           if( n2 == 0 ) {
-            memcpy(ptr,s1,n1*sizeof(int));
+            memmove(ptr,s1,n1*sizeof(int));
             return result;
           }
           s2 += len;
@@ -189,6 +189,7 @@ namespace RDKit {
 
 #if 1
       while( true ) {
+        assert(*s1!=*s2);
         int stat = compar(*s1,*s2);
         int len1 = count[*s1];
         int len2 = count[*s2];
@@ -197,35 +198,37 @@ namespace RDKit {
         if( stat == 0 ) {
           count[*s1] = len1+len2;
           count[*s2] = 0;
-          memcpy(ptr,s1,len1*sizeof(int));
+          memmove(ptr,s1,len1*sizeof(int));
           ptr += len1;  n1 -= len1;
           if( n1 == 0 ) {
             if( ptr != s2 )
-              memcpy(ptr,s2,n2*sizeof(int));
+              memmove(ptr,s2,n2*sizeof(int));
             return result;
           }
           s1 += len1;
-          memcpy(ptr,s2,len2*sizeof(int));
+
+          //std::cerr<<"  cpy: "<<*s1<<" "<<*s2<<" "<<len2<<std::endl;
+          memmove(ptr,s2,len2*sizeof(int));
           ptr += len2; n2 -= len2;
           if( n2 == 0 ) {
-            memcpy(ptr,s1,n1*sizeof(int));
+            memmove(ptr,s1,n1*sizeof(int));
             return result;
           }
           s2 += len2;
         } else if( stat < 0 && len1>0 ) {
-          memcpy(ptr,s1,len1*sizeof(int));
+          memmove(ptr,s1,len1*sizeof(int));
           ptr += len1;  n1 -= len1;
           if( n1 == 0 ) {
             if( ptr != s2 )
-              memcpy(ptr,s2,n2*sizeof(int));
+              memmove(ptr,s2,n2*sizeof(int));
             return result;
           }
           s1 += len1;
         } else if (stat > 0  && len2>0) /* stat > 0 */ {
-          memcpy(ptr,s2,len2*sizeof(int));
+          memmove(ptr,s2,len2*sizeof(int));
           ptr += len2; n2 -= len2;
           if( n2 == 0 ) {
-            memcpy(ptr,s1,n1*sizeof(int));
+            memmove(ptr,s1,n1*sizeof(int));
             return result;
           }
           s2 += len2;
@@ -240,14 +243,14 @@ namespace RDKit {
           n1--;
           if( n1 == 0 ) {
             if( ptr != s2 )
-              memcpy(ptr,s2,n2*sizeof(int));
+              memmove(ptr,s2,n2*sizeof(int));
             return result;
           }
         } else {
           *ptr++ = *s2++;
           n2--;
           if( n2 == 0 ) {
-            memcpy(ptr,s1,n1*sizeof(int));
+            memmove(ptr,s1,n1*sizeof(int));
             return result;
           }
         }
@@ -264,9 +267,9 @@ namespace RDKit {
       } while( (n1>0) && (n2>0) );
 
       if( n1 > 0 ) {
-        memcpy(ptr,s1,n1*sizeof(int));
+        memmove(ptr,s1,n1*sizeof(int));
       } else if( ptr != s2 )
-        memcpy(ptr,s2,n2*sizeof(int));
+        memmove(ptr,s2,n2*sizeof(int));
       return result;
 #endif    
     }
@@ -279,7 +282,7 @@ namespace RDKit {
 
       temp = (int*)malloc(nel*sizeof(int));
       if( hanoi(base,nel,temp,count,compar) )
-        memcpy(base,temp,nel*sizeof(int));
+        memmove(base,temp,nel*sizeof(int));
       free(temp);
     }
 
@@ -361,8 +364,8 @@ namespace RDKit {
       }
     public:
       bool df_useNbrs;
-      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL) {};
-      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m) {};
+      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false) {};
+      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false) {};
       int operator()(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
         PRECONDITION(dp_mol,"no molecule");
