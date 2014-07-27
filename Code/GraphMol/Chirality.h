@@ -30,7 +30,7 @@ namespace RDKit{
            CIP ranking.
     
     */
-    void assignAtomCIPRanks(const ROMol &mol,INT_VECT &ranks);
+    void assignAtomCIPRanks(const ROMol &mol,UINT_VECT &ranks);
   }
 }
 /// @endcond

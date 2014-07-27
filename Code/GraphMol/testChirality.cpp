@@ -1679,7 +1679,7 @@ void testIssue3009911(){
     ranks = new int[m->getNumAtoms()];
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      int rank;
+      unsigned int rank;
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
       m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
       ranks[i]=rank;
@@ -1707,7 +1707,7 @@ void testIssue3009911(){
     ranks = new int[m->getNumAtoms()];
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      int rank;
+      unsigned int rank;
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
       m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
       ranks[i]=rank;
