@@ -811,13 +811,13 @@ void test10()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
 
-  INT_VECT ranks;
+  UINT_VECT ranks;
   ranks.resize(m->getNumAtoms());
   Chirality::assignAtomCIPRanks(*m,ranks);
 
-  int cip1,cip2;
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPRank));
-  m->getAtomWithIdx(0)->getProp(common_properties::_CIPRank,cip1);
+  unsigned int cip1,cip2;
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPRank"));
+  m->getAtomWithIdx(0)->getProp("_CIPRank",cip1);
   TEST_ASSERT(cip1==ranks[0]);
   TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::_CIPRank));
   m->getAtomWithIdx(2)->getProp(common_properties::_CIPRank,cip2);
@@ -838,9 +838,9 @@ void test10()
   ranks.resize(m->getNumAtoms());
   Chirality::assignAtomCIPRanks(*m,ranks);
   for(unsigned int i=0;i<m->getNumAtoms();i++){
-    int cip;
-    TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank));
-    m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,cip);
+    unsigned int cip;
+    TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"));
+    m->getAtomWithIdx(i)->getProp("_CIPRank",cip);
   }
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -1452,11 +1452,11 @@ void testIssue188()
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 188: bad CIP rankings" << std::endl;
   ROMol *m;
   std::string smi;
-  int cip1,cip2,cip3;
+  unsigned int cip1,cip2,cip3;
 
   smi = "OC[C@H](C=C)C";
   m = SmilesToMol(smi);
-  INT_VECT ranks;
+  UINT_VECT ranks;
   ranks.resize(m->getNumAtoms());
   Chirality::assignAtomCIPRanks(*m,ranks);
   TEST_ASSERT(m);

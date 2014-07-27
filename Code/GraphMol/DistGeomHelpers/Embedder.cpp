@@ -155,8 +155,8 @@ namespace RDKit {
             boost::tie(beg,end) = mol.getAtomBonds(*ati);
             while (beg != end) {
               oatom = mol[*beg]->getOtherAtom(*ati);
-              int rank;
-              oatom->getProp(common_properties::_CIPRank, rank);
+              unsigned int rank;
+              oatom->getProp("_CIPRank", rank);
               INT_PAIR rAid(rank, oatom->getIdx());
               nbrs.push_back(rAid);
               ++beg;
@@ -169,8 +169,8 @@ namespace RDKit {
 
             std::sort(nbrs.begin(), nbrs.end());
             if (nbrs.size() < 4) {
-              int rank;
-              (*ati)->getProp(common_properties::_CIPRank, rank);
+              unsigned int rank;
+              (*ati)->getProp("_CIPRank", rank);
               INT_PAIR rAid(rank, (*ati)->getIdx());
               nbrs.insert(nbrs.begin(), rAid); 
               includeSelf = true;
