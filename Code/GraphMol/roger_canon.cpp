@@ -52,7 +52,8 @@ namespace RDKit {
       } while( i < nAtoms );
     }
 
-    void RankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+    void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+                      bool breakTies,
                       bool includeChirality,bool includeIsotopes) {
       std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -73,7 +74,8 @@ namespace RDKit {
       ftor.df_useNbrs=true;
       ActivatePartitions(atoms.size(),order,count,activeset,next);
       RefinePartitions(mol,data,ftor,true,order,count,activeset,next);
-      BreakTies(mol,data,ftor,true,order,count,activeset,next);
+      if(breakTies)
+        BreakTies(mol,data,ftor,true,order,count,activeset,next);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -81,7 +83,7 @@ namespace RDKit {
       }
       free(count); free(order); free(next);
 
-    } // end of RankAtoms()
+    } // end of rankMolAtoms()
     
   } // end of Canon namespace
 } // end of RDKit namespace

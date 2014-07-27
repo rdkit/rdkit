@@ -590,7 +590,7 @@ void test6(){
     TEST_ASSERT(m);
 
     std::vector<unsigned int> atomRanks;
-    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    RDKit::Canon::rankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       TEST_ASSERT(!seen[atomRanks[i]]);
@@ -617,7 +617,7 @@ void test6(){
     TEST_ASSERT(m);
 
     std::vector<unsigned int> atomRanks;
-    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    RDKit::Canon::rankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
@@ -649,7 +649,7 @@ void test6(){
     TEST_ASSERT(m);
 
     std::vector<unsigned int> atomRanks;
-    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    RDKit::Canon::rankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
@@ -669,7 +669,7 @@ void test6(){
     TEST_ASSERT(m);
 
     std::vector<unsigned int> atomRanks;
-    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    RDKit::Canon::rankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
@@ -694,7 +694,7 @@ namespace{
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
     std::vector<unsigned int> atomRanks;
-    RDKit::Canon::RankMolAtoms(*m,atomRanks);
+    RDKit::Canon::rankMolAtoms(*m,atomRanks);
     m->debugMol(std::cerr);
 
     for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -706,7 +706,7 @@ namespace{
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
       nm->debugMol(std::cerr);
       std::vector<unsigned int> newRanks;
-      RDKit::Canon::RankMolAtoms(*nm,newRanks);
+      RDKit::Canon::rankMolAtoms(*nm,newRanks);
       for(unsigned int j=0;j<m->getNumAtoms();++j){
         std::cerr<<"  "<<j<<" "<<newRanks[j]<<" "<<atomRanks[nVect[j]]<<std::endl;
       }

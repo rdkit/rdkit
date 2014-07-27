@@ -550,7 +550,8 @@ namespace RDKit {
       }
     } // end of BreakTies()
 
-    void RankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+    void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+                      bool breakTies=true,
                       bool includeChirality=true,
                       bool includeIsotopes=true);
 
