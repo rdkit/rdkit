@@ -24,113 +24,6 @@ namespace RDKit {
       int index;
     };
 
-
-#if 0    
-    bool hanoi( int* base, int nel, int *temp, int *count, func compar ) {
-      //std::cerr<<"  hanoi: "<<nel<<std::endl;
-      register int *b1,*b2;
-      register int *t1,*t2;
-      register int *s1,*s2;
-      register int n1,n2;
-      register bool result;
-      register int *ptr;
-
-      if( nel == 1 ) {
-        count[base[0]] = 1;
-        return false;
-      } else if( nel == 2 ) {
-        n1 = base[0];
-        n2 = base[1];
-        int stat = (*compar)(n1,n2);
-        if( stat == 0 ) {
-          count[n1] = 2;
-          count[n2] = 0;
-          return false;
-        } else if( stat < 0 ) {
-          count[n1] = 1;
-          count[n2] = 1;
-          return false;
-        } else /* stat > 0 */ {
-          count[n1] = 1;
-          count[n2] = 1;
-          base[0] = n2;   /* temp[0] = n2; */
-          base[1] = n1;   /* temp[1] = n1; */
-          return false;   /* return True;  */
-        }
-      }
-
-      n1 = nel/2;    n2 = nel-n1;
-      b1 = base;     t1 = temp;
-      b2 = base+n1;  t2 = temp+n1;
-
-      if( hanoi(b1,n1,t1,count,compar) ) {
-        if( hanoi(b2,n2,t2,count,compar) ) {
-          s2 = t2;
-        } else s2 = b2;
-        result = false;
-        ptr = base;
-        s1 = t1;
-      } else {
-        if( hanoi(b2,n2,t2,count,compar) ) {
-          s2 = t2;
-        } else s2 = b2;
-        result = true;
-        ptr = temp;
-        s1 = b1;
-      }
-
-      while( true ) {
-        int stat = (*compar)(*s1,*s2);
-        //std::cerr<<"    while: "<<*s1<<"-"<<*s2<<" "<<stat<<" ("<<s1<<","<<s2<<")"<<std::endl;
-        if( stat == 0 ) {
-          assert(count[*s1]>0);
-          assert(count[*s2]>0);
-          int len1 = count[*s1];
-          int len2 = count[*s2];
-          count[*s1] = len1+len2;
-          count[*s2] = 0;
-
-          memmove(ptr,s1,len1*sizeof(int));
-          ptr += len1;  n1 -= len1;
-          if( n1 == 0 ) {
-            if( ptr != s2 )
-              memmove(ptr,s2,n2*sizeof(int));
-            return result;
-          }
-          s1 += len1;
-          memmove(ptr,s2,len2*sizeof(int));
-          ptr += len2; n2 -= len2;
-          if( n2 == 0 ) {
-            memmove(ptr,s1,n1*sizeof(int));
-            return result;
-          }
-          s2 += len2;
-        } else if( stat < 0 ) {
-          assert(count[*s1]>0);
-          int len = count[*s1];
-          memmove(ptr,s1,len*sizeof(int));
-          ptr += len;  n1 -= len;
-          if( n1 == 0 ) {
-            if( ptr != s2 )
-              memmove(ptr,s2,n2*sizeof(int));
-            return result;
-          }
-          s1 += len;
-        } else /* stat > 0 */ {
-          assert(count[*s2]>0);
-          int len = count[*s2];
-          memmove(ptr,s2,len*sizeof(int));
-          ptr += len; n2 -= len;
-          //std::cerr<<"       len: "<<len<<" "<<n2<<" "<<n1<<std::endl;
-          if( n2 == 0 ) {
-            memmove(ptr,s1,n1*sizeof(int));
-            return result;
-          }
-          s2 += len;
-        }
-      }
-    }
-#else
     template <typename CompareFunc>
     bool hanoi( int* base, int nel, int *temp, int *count, CompareFunc compar ) {
       //std::cerr<<"  hanoi: "<<nel<<std::endl;
@@ -140,8 +33,6 @@ namespace RDKit {
       register int n1,n2;
       register int result;
       register int *ptr;
-
-
 
       if( nel == 1 ) {
         count[base[0]] = 1;
@@ -187,7 +78,6 @@ namespace RDKit {
         s1 = b1;
       }
 
-#if 1
       while( true ) {
         assert(*s1!=*s2);
         int stat = compar(*s1,*s2);
@@ -236,44 +126,7 @@ namespace RDKit {
           assert(0);
         }
       }
-#elif 1
-      while( true ) {
-        if( compar(*s1,*s2) <= 0 ) {
-          *ptr++ = *s1++;
-          n1--;
-          if( n1 == 0 ) {
-            if( ptr != s2 )
-              memmove(ptr,s2,n2*sizeof(int));
-            return result;
-          }
-        } else {
-          *ptr++ = *s2++;
-          n2--;
-          if( n2 == 0 ) {
-            memmove(ptr,s1,n1*sizeof(int));
-            return result;
-          }
-        }
-      }
-#else
-      do {
-        if( compar(*s1,*s2) <= 0 ) {
-          *ptr++ = *s1++;
-          n1--;
-        } else {
-          *ptr++ = *s2++;
-          n2--;
-        }
-      } while( (n1>0) && (n2>0) );
-
-      if( n1 > 0 ) {
-        memmove(ptr,s1,n1*sizeof(int));
-      } else if( ptr != s2 )
-        memmove(ptr,s2,n2*sizeof(int));
-      return result;
-#endif    
     }
-#endif
 
     template <typename CompareFunc>
     void hanoisort( int* base, int nel, int *count, CompareFunc compar )
@@ -295,7 +148,6 @@ namespace RDKit {
                             int *order,
                             int *count,
                             int &activeset,int *next);    
-
 
     struct bondholder {
       Bond::BondType bondType;
@@ -377,6 +229,7 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
 
+        // isotopes if we're using them
         if(df_useIsotopes){
           ivi=dp_atoms[i].atom->getIsotope();
           ivj=dp_atoms[j].atom->getIsotope();
@@ -386,6 +239,7 @@ namespace RDKit {
             return 1;
         }
 
+        // chirality if we're using it
         if(df_useChirality){
           // first atom stereochem:
           ivi=0;
@@ -423,13 +277,11 @@ namespace RDKit {
         PRECONDITION(i!=j,"bad call");
         int v=basecomp(i,j);
         if(v) return v;
-        TEST_ASSERT(i!=j);
 
         if(df_useNbrs){
           std::vector<bondholder> nbrsi,nbrsj;
           getAtomNeighborhood(i,nbrsi);
           getAtomNeighborhood(j,nbrsj);
-          TEST_ASSERT(i!=j);
           for(unsigned int ii=0;ii<nbrsi.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
             if(cmp) return cmp;
