@@ -105,6 +105,7 @@ endif(MSVC)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #------- 
   # pull in python:
+  find_package(PythonInterp)
   find_package(PythonLibs)
   if(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
     include_directories(${PYTHON_INCLUDE_PATH})
@@ -113,7 +114,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
   find_package(NumPy REQUIRED)
   include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
-  find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+
+  if(PYTHON_VERSION_MAJOR EQUAL 3)
+     find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+  else(PYTHON_VERSION_MAJOR EQUAL 3)
+     find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
+  endif(PYTHON_VERSION_MAJOR EQUAL 3) 
 
 
   if(RDK_INSTALL_INTREE)
