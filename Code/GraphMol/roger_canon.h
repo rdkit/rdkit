@@ -25,7 +25,7 @@ namespace RDKit {
     };
 
     template <typename CompareFunc>
-    bool hanoi( int* base, int nel, int *temp, int *count, CompareFunc compar ) {
+    bool hanoi( int* base, int nel, int *temp, int *count, int *changed, CompareFunc compar ) {
       //std::cerr<<"  hanoi: "<<nel<<std::endl;
       register int *b1,*b2;
       register int *t1,*t2;
@@ -62,15 +62,15 @@ namespace RDKit {
       b1 = base;     t1 = temp;
       b2 = base+n1;  t2 = temp+n1;
 
-      if( hanoi(b1,n1,t1,count,compar) ) {
-        if( hanoi(b2,n2,t2,count,compar) ) {
+      if( hanoi(b1,n1,t1,count,changed,compar) ) {
+        if( hanoi(b2,n2,t2,count,changed,compar) ) {
           s2 = t2;
         } else s2 = b2;
         result = false;
         ptr = base;
         s1 = t1;
       } else {
-        if( hanoi(b2,n2,t2,count,compar) ) {
+        if( hanoi(b2,n2,t2,count,changed,compar) ) {
           s2 = t2;
         } else s2 = b2;
         result = true;
@@ -129,12 +129,12 @@ namespace RDKit {
     }
 
     template <typename CompareFunc>
-    void hanoisort( int* base, int nel, int *count, CompareFunc compar )
+    void hanoisort( int* base, int nel, int *count, int *changed, CompareFunc compar )
     {
       register int *temp;
 
       temp = (int*)malloc(nel*sizeof(int));
-      if( hanoi(base,nel,temp,count,compar) )
+      if( hanoi(base,nel,temp,count,changed,compar) )
         memmove(base,temp,nel*sizeof(int));
       free(temp);
     }
@@ -147,7 +147,8 @@ namespace RDKit {
     void ActivatePartitions(unsigned int nAtoms,
                             int *order,
                             int *count,
-                            int &activeset,int *next);    
+                            int &activeset,int *next,
+                            int *changed);    
 
     struct bondholder {
       Bond::BondType bondType;
@@ -298,7 +299,8 @@ namespace RDKit {
                           CompareFunc compar, int mode,
                           int *order,
                           int *count,
-                          int &activeset, int *next){
+                          int &activeset, int *next,
+                          int *changed){
       unsigned int nAtoms=mol.getNumAtoms();
       register int partition;
       register int symclass;
@@ -327,7 +329,7 @@ namespace RDKit {
         offset = atoms[partition].index;
         start = order+offset;
         //std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
-        hanoisort(start,len,count,compar);
+        hanoisort(start,len,count,changed, compar);
         // for(unsigned int ii=0;ii<nAtoms;++ii){
         //   std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         // }
@@ -364,16 +366,16 @@ namespace RDKit {
                    CompareFunc compar, int mode,
                    int *order,
                    int *count,
-                   int &activeset, int *next){
+                   int &activeset, int *next,
+                   int *changed){
       unsigned int nAtoms=mol.getNumAtoms();
       register int partition;
       register int *start;
       register int offset;
       register int index;
       register int len;
-      register int i;
 
-      for( i=0; i<nAtoms; i++ ) {
+      for(unsigned int i=0; i<nAtoms; i++ ) {
         partition = order[i];
         while( count[partition] > 1 ) {
           len = count[partition];
@@ -397,7 +399,7 @@ namespace RDKit {
               activeset = npart;
             }
           }
-          RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next);
+          RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next,changed);
         } 
       }
     } // end of BreakTies()

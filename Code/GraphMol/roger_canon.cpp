@@ -35,7 +35,8 @@ namespace RDKit {
     void ActivatePartitions(unsigned int nAtoms,
                             int *order,
                             int *count,
-                            int &activeset,int *next) {
+                            int &activeset,int *next,
+                            int *changed) {
       unsigned int i,j;
       activeset = -1;
       for( i=0; i<nAtoms; i++ )
@@ -67,15 +68,16 @@ namespace RDKit {
       int *order=(int *)malloc(atoms.size()*sizeof(int));
       int activeset;
       int *next=(int *)malloc(atoms.size()*sizeof(int));
+      int *changed=(int *)malloc(atoms.size()*sizeof(int));
       CreateSinglePartition(atoms.size(),order,count,data);
-      ActivatePartitions(atoms.size(),order,count,activeset,next);
-      RefinePartitions(mol,data,ftor,false,order,count,activeset,next);
+      ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+      RefinePartitions(mol,data,ftor,false,order,count,activeset,next,changed);
 
       ftor.df_useNbrs=true;
-      ActivatePartitions(atoms.size(),order,count,activeset,next);
-      RefinePartitions(mol,data,ftor,true,order,count,activeset,next);
+      ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+      RefinePartitions(mol,data,ftor,true,order,count,activeset,next,changed);
       if(breakTies)
-        BreakTies(mol,data,ftor,true,order,count,activeset,next);
+        BreakTies(mol,data,ftor,true,order,count,activeset,next,changed);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
