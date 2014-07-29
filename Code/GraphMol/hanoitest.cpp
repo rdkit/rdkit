@@ -78,7 +78,8 @@ void hs1(  const std::vector< std::vector<int> > &vects){
     int *indices=(int *)malloc(vects[i].size()*sizeof(int));
     for(unsigned int j=0;j<vects[i].size();++j) indices[j]=j;
     int *count=(int *)malloc(vects[i].size()*sizeof(int));
-    RDKit::Canon::hanoisort(indices,vects[i].size(),count,icmp);
+    int *changed=(int *)malloc(vects[i].size()*sizeof(int));
+    RDKit::Canon::hanoisort(indices,vects[i].size(),count,changed,icmp);
     for(unsigned int j=1;j<vects[i].size();++j){
       TEST_ASSERT(data[indices[j]]>=data[indices[j-1]]);
     }
@@ -200,7 +201,8 @@ void test2(){
 
     int *data=&indices.front();
     int *count=(int *)malloc(atoms.size()*sizeof(int));
-    RDKit::Canon::hanoisort(data,atoms.size(),count,ftor);
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
+    RDKit::Canon::hanoisort(data,atoms.size(),count,changed,ftor);
 
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       //std::cerr<<indices[i]<<" "<<" index: "<<atoms[indices[i]].index<<" count: "<<count[indices[i]]<<std::endl;
@@ -238,10 +240,11 @@ void test3(){
     int *order=(int *)malloc(atoms.size()*sizeof(int));
     int activeset;
     int *next=(int *)malloc(atoms.size()*sizeof(int));
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -273,10 +276,12 @@ void test3(){
     int *order=(int *)malloc(atoms.size()*sizeof(int));
     int activeset;
     int *next=(int *)malloc(atoms.size()*sizeof(int));
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
+    
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -396,14 +401,15 @@ void test4(){
     int *order=(int *)malloc(atoms.size()*sizeof(int));
     int activeset;
     int *next=(int *)malloc(atoms.size()*sizeof(int));
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
     ftor.df_useNbrs=true;
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next,changed);
 
     //std::cerr<<"----------------------------------"<<std::endl;
     for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -432,18 +438,19 @@ void test4(){
     int *order=(int *)malloc(atoms.size()*sizeof(int));
     int activeset;
     int *next=(int *)malloc(atoms.size()*sizeof(int));
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
     //   std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
     // }
 
     ftor.df_useNbrs=true;
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next,changed);
     
     //std::cerr<<"----------------------------------"<<std::endl;
     for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -473,21 +480,22 @@ void test4(){
     int *order=(int *)malloc(atoms.size()*sizeof(int));
     int activeset;
     int *next=(int *)malloc(atoms.size()*sizeof(int));
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
     //   std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<std::endl;
     // }
 
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
     ftor.df_useNbrs=true;
 
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next,changed);
     //std::cerr<<"----------------------------------"<<std::endl;
 
 
@@ -537,20 +545,21 @@ void test5(){
     int *order=(int *)malloc(atoms.size()*sizeof(int));
     int activeset;
     int *next=(int *)malloc(atoms.size()*sizeof(int));
+    int *changed=(int *)malloc(atoms.size()*sizeof(int));
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
     //   std::cerr<<order[i]<<" "<<atoms[order[i]].invar<<" index: "<<atoms[order[i]].index<<std::endl;
     // }
 
-    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
     ftor.df_useNbrs=true;
-    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next);
-    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next);
+    RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next,changed);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -569,7 +578,7 @@ void test5(){
     TEST_ASSERT(order[8]==7 && count[7]==0); 
     TEST_ASSERT(order[9]==1 && count[1]==1); 
 
-    RDKit::Canon::BreakTies(*m,data,ftor,true,order,count,activeset,next);
+    RDKit::Canon::BreakTies(*m,data,ftor,true,order,count,activeset,next,changed);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       //std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       TEST_ASSERT(count[order[i]]==1);
