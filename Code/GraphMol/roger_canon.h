@@ -40,7 +40,7 @@ namespace RDKit {
       } else if( nel == 2 ) {
         n1 = base[0];
         n2 = base[1];
-        int stat = compar(n1,n2);
+        int stat = (!changed || changed[n1]||changed[n2]) ? compar(n1,n2) : 0;
         if( stat == 0 ) {
           count[n1] = 2;
           count[n2] = 0;
@@ -80,7 +80,7 @@ namespace RDKit {
 
       while( true ) {
         assert(*s1!=*s2);
-        int stat = compar(*s1,*s2);
+        int stat = (!changed || changed[*s1]||changed[*s2]) ? compar(*s1,*s2) : 0;
         int len1 = count[*s1];
         int len2 = count[*s2];
         assert(len1>0);
@@ -348,6 +348,7 @@ namespace RDKit {
               int nbor=mol[*nbrIdx]->getIdx();
               ++nbrIdx;
               int nbroffset = atoms[nbor].index;
+              changed[nbor]=1;
               partition = order[nbroffset];
               if( (count[partition]>1) &&
                   (next[partition]==-2) ) {
@@ -392,6 +393,7 @@ namespace RDKit {
             ++nbrIdx;
 
             offset = atoms[nbor].index;
+            changed[nbor]=1;
             int npart = order[offset];
             if( (count[npart]>1) &&
                 (next[npart]==-2) ) {
