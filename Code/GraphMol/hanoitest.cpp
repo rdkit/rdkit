@@ -78,7 +78,7 @@ void hs1(  const std::vector< std::vector<int> > &vects){
     int *indices=(int *)malloc(vects[i].size()*sizeof(int));
     for(unsigned int j=0;j<vects[i].size();++j) indices[j]=j;
     int *count=(int *)malloc(vects[i].size()*sizeof(int));
-    int *changed=(int *)malloc(vects[i].size()*sizeof(int));
+    int *changed=0;
     RDKit::Canon::hanoisort(indices,vects[i].size(),count,changed,icmp);
     for(unsigned int j=1;j<vects[i].size();++j){
       TEST_ASSERT(data[indices[j]]>=data[indices[j-1]]);
@@ -202,6 +202,7 @@ void test2(){
     int *data=&indices.front();
     int *count=(int *)malloc(atoms.size()*sizeof(int));
     int *changed=(int *)malloc(atoms.size()*sizeof(int));
+    for(unsigned int i=0;i<atoms.size();++i) changed[i]=1;
     RDKit::Canon::hanoisort(data,atoms.size(),count,changed,ftor);
 
     for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -244,7 +245,18 @@ void test3(){
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
+
+    std::cerr<<"----------------------------------"<<std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<i<<" "<<atoms[i].index<<" "<<count[i]<<" "<<next[i]<<std::endl;
+    }
+
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
+
+    std::cerr<<"----------------------------------"<<std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<i<<" "<<atoms[i].index<<" "<<count[i]<<" "<<next[i]<<" "<<order[i]<<std::endl;
+    }
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){

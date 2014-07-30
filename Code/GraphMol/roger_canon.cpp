@@ -51,6 +51,15 @@ namespace RDKit {
           i += count[j];
         } else i++;
       } while( i < nAtoms );
+
+      for( i=0; i<nAtoms; i++ ){
+        // j = order[i];
+        // int flag=0;
+        // if(count[j]){
+        //   flag=(next[j]!=-2);
+        // }
+        changed[i]=1;
+      }
     }
 
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
