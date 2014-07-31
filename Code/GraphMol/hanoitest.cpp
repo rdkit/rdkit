@@ -246,17 +246,17 @@ void test3(){
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
 
 
-    std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<i<<" "<<atoms[i].index<<" "<<count[i]<<" "<<next[i]<<std::endl;
-    }
+    // std::cerr<<"----------------------------------"<<std::endl;
+    // for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //   std::cerr<<i<<" "<<atoms[i].index<<" "<<count[i]<<" "<<next[i]<<" "<<order[i]<<std::endl;
+    // }
 
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
 
-    std::cerr<<"----------------------------------"<<std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<i<<" "<<atoms[i].index<<" "<<count[i]<<" "<<next[i]<<" "<<order[i]<<std::endl;
-    }
+    // std::cerr<<"----------------------------------"<<std::endl;
+    // for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //   std::cerr<<i<<" "<<atoms[i].index<<" "<<count[i]<<" "<<next[i]<<" "<<order[i]<<std::endl;
+    // }
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -416,11 +416,24 @@ void test4(){
     int *changed=(int *)malloc(atoms.size()*sizeof(int));
     RDKit::Canon::CreateSinglePartition(atoms.size(),order,count,data);
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    // std::cerr<<"1----------------------------------"<<std::endl;
+    //  for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //    std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<" next: "<<next[order[i]]<<" changed: "<<changed[order[i]]<<std::endl;
+    // }
     RDKit::Canon::RefinePartitions(*m,data,ftor,false,order,count,activeset,next,changed);
+
+    // std::cerr<<"2----------------------------------"<<std::endl;
+    //  for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //    std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<" next: "<<next[order[i]]<<" changed: "<<changed[order[i]]<<std::endl;
+    // }
 
     //std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
     ftor.df_useNbrs=true;
     RDKit::Canon::ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+    // std::cerr<<"3----------------------------------"<<std::endl;
+    // for(unsigned int i=0;i<m->getNumAtoms();++i){
+    //    std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<" next: "<<next[order[i]]<<" changed: "<<changed[order[i]]<<std::endl;
+    // }
     RDKit::Canon::RefinePartitions(*m,data,ftor,true,order,count,activeset,next,changed);
 
     //std::cerr<<"----------------------------------"<<std::endl;

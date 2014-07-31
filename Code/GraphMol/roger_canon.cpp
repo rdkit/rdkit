@@ -53,12 +53,15 @@ namespace RDKit {
       } while( i < nAtoms );
 
       for( i=0; i<nAtoms; i++ ){
-        // j = order[i];
-        // int flag=0;
-        // if(count[j]){
-        //   flag=(next[j]!=-2);
-        // }
-        changed[i]=1;
+        j = order[i];
+        int flag=1;
+#define SKIP_NODE_CHANGED_OPTIMIZATION 1
+#ifndef SKIP_NODE_CHANGED_OPTIMIZATION
+        if(count[j]){
+          flag=(next[j]!=-2);
+        }
+#endif
+        changed[j]=flag;
       }
     }
 
