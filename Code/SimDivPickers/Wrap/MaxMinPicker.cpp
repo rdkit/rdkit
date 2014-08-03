@@ -16,9 +16,11 @@
 #include "numpy/oldnumeric.h"
 #include <map>
 
-
+#include <DataStructs/BitVects.h>
+#include <DataStructs/BitOps.h>
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/MaxMinPicker.h>
+#include <SimDivPickers/HierarchicalClusterPicker.h>
 #include <iostream>
 
 namespace python = boost::python;
@@ -87,11 +89,65 @@ namespace RDPickers {
     return res;
   }
 
+  typedef enum {
+    TANIMOTO=1,
+    DICE
+  } DistanceMethod;
+  class pyBVFunctor {
+  public:
+    pyBVFunctor(python::object obj,DistanceMethod method) : dp_obj(obj), d_method(method) {}
+    double operator()(unsigned int i,unsigned int j) {
+      const ExplicitBitVect *bvi,*bvj;
+      try{
+        bvi=python::extract<const ExplicitBitVect *>(dp_obj[i]);
+        bvj=python::extract<const ExplicitBitVect *>(dp_obj[j]);
+      } catch (...) {
+        throw_value_error("unable to extract ExplicitBitVect from sequence value");
+      }
+      double res=0.0;
+      switch(d_method){
+      case TANIMOTO:
+        res = 1.-TanimotoSimilarity(*bvi,*bvj);
+        break;
+      case DICE:
+        res = 1.-DiceSimilarity(*bvi,*bvj);
+        break;
+      default:
+        throw_value_error("unsupported similarity value");
+      }
+      return res;
+    }
+  private:
+    python::object dp_obj;
+    DistanceMethod d_method;
+  };
+  
+  RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, 
+                                        python::object objs,
+                                        int poolSize, 
+                                        int pickSize,
+                                        python::object firstPicks,
+                                        int seed,
+                                        DistanceMethod method
+                                        ) {
+    pyBVFunctor functor(objs,method);
+    RDKit::INT_VECT firstPickVect;
+    for(unsigned int i=0;i<python::extract<unsigned int>(firstPicks.attr("__len__")());++i){
+      firstPickVect.push_back(python::extract<int>(firstPicks[i]));
+    }
+    RDKit::INT_VECT res=picker->lazyPick(functor, poolSize, pickSize,firstPickVect,seed);
+    return res;
+  }
+} // end of namespace RDPickers
+
   struct MaxMin_wrap {
     static void wrap() {
-      python::class_<MaxMinPicker>("MaxMinPicker", 
+      python::enum_<RDPickers::DistanceMethod>("DistanceMethod")
+        .value("TANIMOTO", RDPickers::TANIMOTO)
+        .value("DICE", RDPickers::DICE);
+      python::class_<RDPickers::MaxMinPicker>("MaxMinPicker", 
                                    "A class for diversity picking of items using the MaxMin Algorithm\n")
-        .def("Pick", MaxMinPicks,
+        .def("Pick", RDPickers::MaxMinPicks,
              (python::arg("self"),python::arg("distMat"),python::arg("poolSize"),
               python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
               python::arg("seed")=-1),
@@ -105,7 +161,7 @@ namespace RDPickers {
              "  - seed: (optional) seed for the random number genrator\n"
              )
 
-        .def("LazyPick", LazyMaxMinPicks,
+        .def("LazyPick", RDPickers::LazyMaxMinPicks,
              (python::arg("self"),python::arg("distFunc"),python::arg("poolSize"),
               python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
               python::arg("seed")=-1),
@@ -121,13 +177,27 @@ namespace RDPickers {
              "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
              "  - seed: (optional) seed for the random number genrator\n"
              )
+        .def("LazyBitVectorPick", RDPickers::LazyVectorMaxMinPicks,
+             (python::arg("self"),python::arg("objects"),python::arg("poolSize"),
+              python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
+              python::arg("seed")=-1,python::arg("method")=RDPickers::TANIMOTO),
+             "Pick a subset of items from a pool of bit vectors using the MaxMin Algorithm\n"
+             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n"
+             "ARGUMENTS:\n\n"
+             "  - vectors: a sequence of the bit vectors that should be picked from.\n"
+             "  - poolSize: number of items in the pool\n"
+             "  - pickSize: number of items to pick from the pool\n"
+             "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
+             "  - seed: (optional) seed for the random number genrator\n"
+             "  - method: (optional) the distance measure to use\n"
+             )
         ;
     };
   };
-}
+
 
 void wrap_maxminpick() {
-  RDPickers::MaxMin_wrap::wrap();
+  MaxMin_wrap::wrap();
 }
 
   
