@@ -14,8 +14,8 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 
+namespace RDKit {
 namespace Canon {
-  using namespace RDKit;
   struct _possibleCompare : public std::binary_function<PossibleType,PossibleType,bool> {
     bool operator()(const PossibleType &arg1,const PossibleType &arg2) const {
       return (arg1.get<0>() < arg2.get<0>());
@@ -422,6 +422,28 @@ namespace Canon {
       }
     }
   }
+  
+  void canonicalDFSTraversal(ROMol &mol,int atomIdx,int inBondIdx,
+                             std::vector<AtomColors> &colors,
+                             VECT_INT_VECT &cycles,
+                             UINT_VECT &ranks,
+                             INT_VECT &cyclesAvailable,
+                             MolStack &molStack,
+                             INT_VECT &atomOrders,
+                             INT_VECT &bondVisitOrders,
+                             VECT_INT_VECT &atomRingClosures,
+                             std::vector<INT_LIST> &atomTraversalBondOrder,
+                             const boost::dynamic_bitset<> *bondsInPlay,
+                             const std::vector<std::string> *bondSymbols
+                             ){
+    PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(atomOrders.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(bondVisitOrders.size()>=mol.getNumBonds(),"vector too small");
+    PRECONDITION(atomRingClosures.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(atomTraversalBondOrder.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(!bondsInPlay || bondsInPlay->size()>=mol.getNumBonds(),"bondsInPlay too small");
+    PRECONDITION(!bondSymbols || bondSymbols->size()>=mol.getNumBonds(),"bondSymbols too small");
 
 
   // finds cycles
@@ -881,7 +903,7 @@ namespace Canon {
 
   void canonicalizeFragment(ROMol &mol,int atomIdx,
                             std::vector<AtomColors> &colors,
-                            INT_VECT &ranks,
+                            UINT_VECT &ranks,
                             MolStack &molStack,
                             const boost::dynamic_bitset<> *bondsInPlay,
                             const std::vector<std::string> *bondSymbols){
@@ -1000,7 +1022,8 @@ namespace Canon {
 #endif
 
   }
-};
+}
+}
 
 
 

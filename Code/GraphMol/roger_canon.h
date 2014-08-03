@@ -240,6 +240,31 @@ namespace RDKit {
             return 1;
         }
 
+        // nHs
+        ivi=dp_atoms[i].atom->getTotalNumHs();
+        ivj=dp_atoms[j].atom->getTotalNumHs();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+        
+        // charge
+        ivi=dp_atoms[i].atom->getFormalCharge();
+        ivj=dp_atoms[j].atom->getFormalCharge();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+        
+        // charge
+        ivi=dp_atoms[i].atom->getFormalCharge();
+        ivj=dp_atoms[j].atom->getFormalCharge();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+        
+        
         // chirality if we're using it
         if(df_useChirality){
           // first atom stereochem:
