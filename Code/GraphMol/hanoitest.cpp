@@ -13,6 +13,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RankAtoms.h>
 
 #include <iostream>
@@ -659,9 +660,9 @@ void test6(){
       seen.set(atomRanks[i],1);
     }
 
-    // for(unsigned int ii=0;ii<atomRanks.size();++ii){
-    //   std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
-    // }
+    for(unsigned int ii=0;ii<atomRanks.size();++ii){
+       std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
+    }
     TEST_ASSERT(atomRanks[0]==0);
     TEST_ASSERT(atomRanks[1]==3);
     TEST_ASSERT(atomRanks[2]==9);
@@ -671,8 +672,8 @@ void test6(){
     TEST_ASSERT(atomRanks[6]==10);
     TEST_ASSERT(atomRanks[7]==7);
     TEST_ASSERT(atomRanks[8]==8);
-    TEST_ASSERT(atomRanks[9]==2);
-    TEST_ASSERT(atomRanks[10]==1);
+    TEST_ASSERT(atomRanks[9]==1);
+    TEST_ASSERT(atomRanks[10]==2);
 
     delete m;
   }
@@ -725,11 +726,9 @@ void test6(){
 namespace{
   void _renumberTest(const ROMol *m){
     PRECONDITION(m,"no molecule");
+    std::string osmi=MolToSmiles(*m,true);
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
-    std::vector<unsigned int> atomRanks;
-    RDKit::Canon::rankMolAtoms(*m,atomRanks);
-    m->debugMol(std::cerr);
 
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       std::vector<unsigned int> nVect(idxV);
@@ -738,15 +737,13 @@ namespace{
       TEST_ASSERT(nm);
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
-      nm->debugMol(std::cerr);
-      std::vector<unsigned int> newRanks;
-      RDKit::Canon::rankMolAtoms(*nm,newRanks);
-      for(unsigned int j=0;j<m->getNumAtoms();++j){
-        std::cerr<<"  "<<j<<" "<<newRanks[j]<<" "<<atomRanks[nVect[j]]<<std::endl;
+      std::string smi=MolToSmiles(*nm,true);
+      if(smi!=osmi){
+        std::cerr<<osmi<<std::endl;
+        std::cerr<<smi<<std::endl;
       }
-      for(unsigned int j=0;j<m->getNumAtoms();++j){
-        TEST_ASSERT(newRanks[j]==atomRanks[nVect[j]]);
-      }
+      TEST_ASSERT(smi==osmi);
+
       delete nm;
     }
   }
@@ -755,19 +752,14 @@ namespace{
 void test7(){
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
   {
-    std::string smiles="C[C@H]1C[C@H](F)C1";
+    std::string smiles="N[C@@]1(C[C@H]([18F])C1)C(=O)O";
+
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     _renumberTest(m);
     delete m;
   }
-  {
-    std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    _renumberTest(m);
-    delete m;
-  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -784,7 +776,7 @@ int main(){
   test5();
   test6();
 #endif
-  //test7();
+  test7();
   return 0;
 }
 
