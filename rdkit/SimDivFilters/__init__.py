@@ -5,6 +5,6 @@
 from rdkit import rdBase
 try:
   import rdSimDivPickers
-  from rdSimDivPickers import *
+  from rdkit.Chem.SimDivFilters.rdSimDivPickers import *
 except ImportError:
   rdSimDivPickers=None
