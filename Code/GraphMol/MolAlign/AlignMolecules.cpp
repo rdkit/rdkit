@@ -120,8 +120,8 @@ namespace RDKit {
                                                           trans, weights, reflect, 
                                                           maxIters);
           if (RMSlist) {
-        	rms /= (prbPoints.size());
-        	(*RMSlist).push_back(sqrt(rms));
+            rms /= (prbPoints.size());
+            (*RMSlist).push_back(sqrt(rms));
           }
           MolTransforms::transformConformer(*(*cnfi), trans);
         }
@@ -139,9 +139,9 @@ namespace RDKit {
                                                           trans, weights, reflect, 
                                                           maxIters);
           if (RMSlist) {
-			rms /= (prbPoints.size());
-			(*RMSlist).push_back(sqrt(rms));
-		  }
+	    rms /= (prbPoints.size());
+	    (*RMSlist).push_back(sqrt(rms));
+	  }
           MolTransforms::transformConformer(conf, trans);
         }
       }

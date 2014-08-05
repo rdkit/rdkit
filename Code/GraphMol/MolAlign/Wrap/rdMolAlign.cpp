@@ -85,9 +85,9 @@ namespace RDKit {
     std::vector<unsigned int> *aIds = _translateIds(atomIds);
     std::vector<unsigned int> *cIds = _translateIds(confIds);
     std::vector<double> *RMSvector = 0;
-	if(RMSlist != python::object()){
-		RMSvector = new std::vector<double>();
-	}
+    if(RMSlist != python::object()){
+      RMSvector = new std::vector<double>();
+    }
     MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters, RMSvector);
     if (wtsVec) {
       delete wtsVec;
@@ -99,12 +99,12 @@ namespace RDKit {
       delete cIds;
     }
     if(RMSvector){
-	  python::list &pyl = static_cast<python::list &>(RMSlist);
-	  for(unsigned int i = 0; i < (*RMSvector).size(); ++i){
-		pyl.append((*RMSvector)[i]);
-	  }
-	  delete RMSvector;
-	}
+      python::list &pyl = static_cast<python::list &>(RMSlist);
+      for(unsigned int i = 0; i < (*RMSvector).size(); ++i){
+	pyl.append((*RMSvector)[i]);
+      }
+      delete RMSvector;
+    }
   }
     
   PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {

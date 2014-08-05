@@ -230,23 +230,23 @@ def GetConformerRMS(mol,confId1,confId2,atomIds=None,prealigned=False):
   return numpy.sqrt(ssr)
 
 def GetConformerRMSMatrix(mol,atomIds=None):
-    """ Returns the RMS matrix of the conformers of a molecule.
-    As a side-effect, the conformers will be aligned to the first
-    conformer (i.e. the reference) and will left in the aligned state.
+  """ Returns the RMS matrix of the conformers of a molecule.
+  As a side-effect, the conformers will be aligned to the first
+  conformer (i.e. the reference) and will left in the aligned state.
         
-    Arguments:
-      - mol:     the molecule
-      - atomIds: (optional) list of atom ids to use a points for
-                 alingment - defaults to all atoms
+  Arguments:
+    - mol:     the molecule
+    - atomIds: (optional) list of atom ids to use a points for
+               alingment - defaults to all atoms
     
-    Note that the returned RMS matrix is symmetrically, i.e. it is the
-    lower half of the matrix, e.g. for 5 conformers:
-    rmsmatrix = [ a,
-                  b, c,
-                  d, e, f,
-                  g, h, i, j]
-    This way it can be directly used as distance matrix in e.g. Butina 
-    clustering.
+  Note that the returned RMS matrix is symmetrically, i.e. it is the
+  lower half of the matrix, e.g. for 5 conformers:
+  rmsmatrix = [ a,
+                b, c,
+                d, e, f,
+                g, h, i, j]
+  This way it can be directly used as distance matrix in e.g. Butina 
+  clustering.
       
   """
   # align the conformers
