@@ -27,7 +27,7 @@ class TestCase(unittest.TestCase):
         return 0.0
       if i<j:
         j,i=i,j
-      return self.dMat[i*(i-1)/2+j]
+      return self.dMat[i*(i-1)//2+j]
     lmaxmin = pkr.LazyPick(func, self.n, self.m,(886,112))
     self.assertEqual(list(lmaxmin),list(maxmin))
 
