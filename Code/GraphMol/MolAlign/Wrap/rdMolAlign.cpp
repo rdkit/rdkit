@@ -454,8 +454,8 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
       - maxIters  maximum number of iterations used in mimizing the RMSD\n\
-	  - RMSlist   if provided, fills in the RMS values between the reference\n\
-		          conformation and the other aligned conformations\n\
+      - RMSlist   if provided, fills in the RMS values between the reference\n\
+		  conformation and the other aligned conformations\n\
        \n\
     \n";
   python::def("AlignMolConformers", RDKit::alignMolConfs,
