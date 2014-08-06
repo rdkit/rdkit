@@ -104,7 +104,7 @@ namespace RDKit {
 
       // now loop throught the remaininf conformations and transform them
       RDGeom::Transform3D trans;
-      double rms;
+      double ssd;
       if (confIds == 0) {
         unsigned int i=0;
         ROMol::ConformerIterator cnfi;
@@ -116,12 +116,12 @@ namespace RDKit {
             continue;
           }
           _fillAtomPositions(prbPoints, *(*cnfi), atomIds);
-          rms = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints,
-                                                          trans, weights, reflect, 
-                                                          maxIters);
+          ssd = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints,
+						   trans, weights, reflect, 
+						   maxIters);
           if (RMSlist) {
-            rms /= (prbPoints.size());
-            (*RMSlist).push_back(sqrt(rms));
+            ssd /= (prbPoints.size());
+            RMSlist->push_back(sqrt(ssd));
           }
           MolTransforms::transformConformer(*(*cnfi), trans);
         }
@@ -135,12 +135,12 @@ namespace RDKit {
           }
           Conformer &conf = mol.getConformer(*cai);
           _fillAtomPositions(prbPoints, conf, atomIds);
-          rms = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints,
-                                                          trans, weights, reflect, 
-                                                          maxIters);
+          ssd = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints,
+						   trans, weights, reflect, 
+						   maxIters);
           if (RMSlist) {
-	    rms /= (prbPoints.size());
-	    (*RMSlist).push_back(sqrt(rms));
+	    ssd /= (prbPoints.size());
+	    RMSlist->push_back(sqrt(ssd));
 	  }
           MolTransforms::transformConformer(conf, trans);
         }
