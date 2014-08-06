@@ -194,6 +194,76 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
     AlignMol(probe,ref,probeConfId,refConfId,atomMap=bestMap)
   return bestRMS
 
+def GetConformerRMS(mol,confId1,confId2,atomIds=None,prealigned=False):
+  """ Returns the RMS between two conformations.
+  By default, the conformers will be aligned to the first conformer
+  of the molecule (i.e. the reference) before RMS calculation and, 
+  as a side-effect, will be left in the aligned state.
+  
+  Arguments:
+    - mol:        the molecule
+    - confId1:    the id of the first conformer
+    - confId2:    the id of the second conformer
+    - atomIds:    (optional) list of atom ids to use a points for
+                  alingment - defaults to all atoms
+    - prealigned: (optional) by default the conformers are assumed
+                  be unaligned and will therefore be aligned to the
+                  first conformer
+
+  """
+  # align the conformers if necessary
+  # Note: the reference conformer is always the first one
+  if not prealigned:
+    if atomIds:
+      AlignMolConformers(mol, confIds=[confId1,confId2], atomIds=atomIds)
+    else:
+      AlignMolConformers(mol, confIds=[confId1,confId2])
+
+  # calculate the RMS between the two conformations
+  conf1 = mol.GetConformer(id=confId1)
+  conf2 = mol.GetConformer(id=confId2)
+  ssr = 0
+  for i in range(mol.GetNumAtoms()):
+    d = conf1.GetAtomPosition(i).Distance(conf2.GetAtomPosition(i))
+    ssr += d*d
+  ssr /= mol.GetNumAtoms()
+  return numpy.sqrt(ssr)
+
+def GetConformerRMSMatrix(mol,atomIds=None):
+  """ Returns the RMS matrix of the conformers of a molecule.
+  As a side-effect, the conformers will be aligned to the first
+  conformer (i.e. the reference) and will left in the aligned state.
+        
+  Arguments:
+    - mol:     the molecule
+    - atomIds: (optional) list of atom ids to use a points for
+               alingment - defaults to all atoms
+    
+  Note that the returned RMS matrix is symmetrically, i.e. it is the
+  lower half of the matrix, e.g. for 5 conformers:
+  rmsmatrix = [ a,
+                b, c,
+                d, e, f,
+                g, h, i, j]
+  This way it can be directly used as distance matrix in e.g. Butina 
+  clustering.
+      
+  """
+  # align the conformers
+  # Note: the reference conformer is always the first one
+  rmsvals = []
+  if atomIds:
+    AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
+  else:
+    AlignMolConformers(mol, RMSlist=rmsvals)
+  # loop over the conformations (except the reference one)
+  cmat = []
+  for i in range(1, mol.GetNumConformers()):
+    cmat.append(rmsvals[i-1])
+    for j in range(1,i):
+      cmat.append(GetConformerRMS(mol, i, j, atomIds=atomIds, prealigned=True))
+  return cmat
+
 def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   """ Returns a generator for the virtual library defined by
    a reaction and a sequence of sidechain sets
