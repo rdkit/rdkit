@@ -464,7 +464,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                python::arg("weights")=python::list(),
                python::arg("reflect")=false,
                python::arg("maxIters")=50,
-               python::arg("RMSlist")=python::list()),
+               python::arg("RMSlist")=python::object()),
               docString.c_str());
 
   docString = "Perform a random transformation on a molecule\n\
