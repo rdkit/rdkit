@@ -107,6 +107,16 @@ class TestCase(unittest.TestCase):
             
             self.assertTrue(lstFeq(mpos, pos, .5))
 
+      # now test that we can get a list of RMS values
+      rmsvals = []
+      rdMolAlign.AlignMolConformers(mol, aids, RMSlist=rmsvals)
+      self.assertTrue((len(rmsvals)==mol.GetNumConformers()-1))
+
+      # make sure something sensible happens if we provide a stupid
+      # argument:
+      rmsvals = 4
+      self.assertRaises(AttributeError,rdMolAlign.AlignMolConformers,mol, atomIds=aids, RMSlist=rmsvals)
+
     def test5MMFFO3A(self):
       sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                          'MolAlign', 'test_data', 'ref_e2.sdf')

@@ -4,7 +4,8 @@
 #
 from rdkit import rdBase
 try:
-  import rdSimDivPickers
-  from rdSimDivPickers import *
+  from rdkit.SimDivFilters import rdSimDivPickers
+  from rdkit.SimDivFilters.rdSimDivPickers import *
 except ImportError:
+  import traceback
   rdSimDivPickers=None
