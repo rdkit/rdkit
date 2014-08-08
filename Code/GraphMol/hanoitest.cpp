@@ -618,7 +618,7 @@ void test5(){
 void test6(){
   BOOST_LOG(rdInfoLog) << "testing canonicalization using the wrapper." << std::endl;
   // canonicalization using the wrapper
-#if 1
+#if 0
   {
     std::string smi="FC1C(CC)CCC1CC";
     RWMol *m =SmilesToMol(smi);
@@ -697,7 +697,6 @@ void test6(){
     // }
     delete m;
   }
-#endif  
   {
     std::string smi="BrC=C1CCC(C(=O)O1)c2cccc3ccccc23";
     RWMol *m =SmilesToMol(smi);
@@ -734,6 +733,7 @@ void test6(){
     }
     delete m;
   }
+#endif  
   {
     std::string smi="CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2";
     RWMol *m =SmilesToMol(smi);
