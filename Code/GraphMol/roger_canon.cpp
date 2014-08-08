@@ -84,16 +84,33 @@ namespace RDKit {
       CreateSinglePartition(atoms.size(),order,count,data);
       ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
       RefinePartitions(mol,data,ftor,false,order,count,activeset,next,changed);
+      std::cerr<<"1--------"<<std::endl;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+	std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      }
 
       ftor.df_useNbrs=true;
       ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
+      std::cerr<<"1a--------"<<std::endl;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+	std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      }
       RefinePartitions(mol,data,ftor,true,order,count,activeset,next,changed);
-      if(breakTies)
+      std::cerr<<"2--------"<<std::endl;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+	std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      }
+      if(breakTies){
         BreakTies(mol,data,ftor,true,order,count,activeset,next,changed);
+	std::cerr<<"3--------"<<std::endl;
+	for(unsigned int i=0;i<mol.getNumAtoms();++i){
+	  std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+	}
+      }
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        res[order[i]]=i;
+        res[order[i]]=atoms[order[i]].index;
       }
       free(count); free(order); free(next);
 
