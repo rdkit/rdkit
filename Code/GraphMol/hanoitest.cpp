@@ -718,6 +718,39 @@ void test6(){
     delete m;
   }
 
+  {
+    std::string smi="CC12CCCC1CCCC2";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+
+    // start w/o tie breaking here; we shouldn't need it.
+    std::vector<unsigned int> atomRanks;
+    RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
+    boost::dynamic_bitset<> seen(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<"      "<<i<<" "<<atomRanks[i]<<std::endl;
+      TEST_ASSERT(!seen[atomRanks[i]]);
+      seen.set(atomRanks[i],1);
+    }
+    delete m;
+  }
+  {
+    std::string smi="CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+
+    // start w/o tie breaking here; we shouldn't need it.
+    std::vector<unsigned int> atomRanks;
+    RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
+    boost::dynamic_bitset<> seen(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<"      "<<i<<" "<<atomRanks[i]<<std::endl;
+      TEST_ASSERT(!seen[atomRanks[i]]);
+      seen.set(atomRanks[i],1);
+    }
+    delete m;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -726,11 +759,14 @@ void test6(){
 namespace{
   void _renumberTest(const ROMol *m){
     PRECONDITION(m,"no molecule");
+    std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
     std::string osmi=MolToSmiles(*m,true);
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
 
+    std::srand(0xF00D);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<"---------------------------------------------------"<<std::endl;
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
@@ -752,6 +788,22 @@ namespace{
 void test7(){
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
   {
+    std::string smiles="CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2";
+
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  {
+    std::string smiles="C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2";
+
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  {
     std::string smiles="N[C@@]1(C[C@H]([18F])C1)C(=O)O";
 
     ROMol *m = SmilesToMol(smiles);
@@ -759,16 +811,20 @@ void test7(){
     _renumberTest(m);
     delete m;
   }
+  {
+    std::string smiles="CCCN[C@H]1CC[C@H](NC)CC1";
 
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-
-
-
 int main(){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -776,6 +832,7 @@ int main(){
   test5();
   test6();
 #endif
+  test6();
   test7();
   return 0;
 }
