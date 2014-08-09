@@ -168,6 +168,15 @@ class TestCase(unittest.TestCase):
         for m in ms:
             self.assertTrue(m.HasSubstructMatch(qm))
 
+    def test6MatchValences(self):
+        ms = (Chem.MolFromSmiles('NC1OC1'),Chem.MolFromSmiles('C1OC1[N+](=O)[O-]'))
+        mcs = rdFMCS.FindMCS(ms)
+        self.assertEqual(mcs.numBonds,4)
+        self.assertEqual(mcs.numAtoms,4)
+        mcs = rdFMCS.FindMCS(ms,matchValences=True)
+        self.assertEqual(mcs.numBonds,3)
+        self.assertEqual(mcs.numAtoms,3)
+
 
         
         

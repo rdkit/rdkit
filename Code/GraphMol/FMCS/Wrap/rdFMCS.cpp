@@ -29,6 +29,7 @@ namespace RDKit {
 
     MCSResult *FindMCSWrapper(python::object mols,bool maximizeBonds,double threshold,
                               unsigned timeout,bool verbose,
+                              bool matchValences,
                               bool ringMatchesRingOnly,bool completeRingsOnly,
                               AtomComparator_ atomComp, BondComparator_ bondComp) {
         std::vector<ROMOL_SPTR> ms;
@@ -43,6 +44,7 @@ namespace RDKit {
         ps->Threshold=threshold;
         ps->Timeout=timeout;
         ps->Verbose=verbose;
+        ps->AtomCompareParameters.MatchValences=matchValences;
         switch(atomComp) {
         case AtomCompareAny:
             ps->AtomTyper=MCSAtomCompareAny;
@@ -110,6 +112,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                  python::arg("threshold")=1.0,
                  python::arg("timeout")=3600,
                  python::arg("verbose")=false,
+                 python::arg("matchValences")=false,
                  python::arg("ringMatchesRingOnly")=false,
                  python::arg("completeRingsOnly")=false,
                  python::arg("atomCompare")=RDKit::AtomCompareElements,
