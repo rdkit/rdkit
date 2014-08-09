@@ -1,5 +1,5 @@
 from rdkit import RDConfig
-import unittest
+import unittest,os
 from rdkit.SimDivFilters import rdSimDivPickers
 from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
 import numpy
@@ -19,30 +19,33 @@ class TestCase(unittest.TestCase):
   def test0MaxMin(self):
     pkr = rdSimDivPickers.MaxMinPicker()
     maxmin = pkr.Pick(self.dMat, self.n, self.m,(886,112))
-    self.failUnless(maxmin[0]==886)
-    self.failUnless(maxmin[1]==112)
+    self.assertEqual(maxmin[0],886)
+    self.assertEqual(maxmin[1],112)
 
     def func(i,j):
       if i==j:
         return 0.0
       if i<j:
         j,i=i,j
-      return self.dMat[i*(i-1)/2+j]
+      return self.dMat[i*(i-1)//2+j]
     lmaxmin = pkr.LazyPick(func, self.n, self.m,(886,112))
-    self.failUnless(list(lmaxmin)==list(maxmin))
+    self.assertEqual(list(lmaxmin),list(maxmin))
 
-    self.failUnlessRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(1012,)))
-    self.failUnlessRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(-1,)))
+    lmaxmin = pkr.LazyPick(func, self.n, self.m,(886,112),useCache=False)
+    self.assertEqual(list(lmaxmin),list(maxmin))
+
+    self.assertRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(1012,)))
+    self.assertRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(-1,)))
 
     maxmin = pkr.Pick(self.dMat, self.n, self.m)
-    self.failUnless(maxmin)
+    self.assertTrue(maxmin)
     lmaxmin = pkr.LazyPick(func, self.n, self.m)
-    self.failUnless(lmaxmin)
+    self.assertTrue(lmaxmin)
 
   def test1HierarchPick(self) :
-    infil = open("test_data/points.csv", 'r')
-    lines = infil.readlines()
-    infil.close()
+    fname = os.path.join(RDConfig.RDBaseDir,'Code','SimDivPickers','Wrap','test_data','points.csv')
+    with open(fname) as infil:
+      lines = infil.readlines()
     self.dataPts = numpy.zeros((len(lines), 2), 'd')
     labels = []
     i = 0
@@ -61,7 +64,7 @@ class TestCase(unittest.TestCase):
       for id in cl:
         assert clbl == labels[id]
     hierarch = pkr.Pick(self.dMat, i, 2)
-    assert tuple(hierarch) == (1,30)
+    self.assertEqual(tuple(hierarch),(1,30))
 
 
   def testIssue208(self) :
@@ -77,7 +80,7 @@ class TestCase(unittest.TestCase):
     p1.sort()
     p2 = list(picker.Pick(m,sz,N))
     p2.sort()
-    self.failUnless(p1==p2)
+    self.assertEqual(p1,p2)
 
   def testInts(self) :
     """ make sure we can handle ints too """
@@ -93,7 +96,7 @@ class TestCase(unittest.TestCase):
     p1.sort()
     p2 = list(picker.Pick(m,sz,N))
     p2.sort()
-    self.failUnless(p1==p2)
+    self.assertEqual(p1,p2)
 
             
   def testNonUniqueCrash(self) :
@@ -115,15 +118,27 @@ class TestCase(unittest.TestCase):
       return d
     picker = rdSimDivPickers.MaxMinPicker()
     try:
-      mm = picker.LazyPick(taniFunc,len(vs),N)
+      mm1 = picker.LazyPick(taniFunc,len(vs),N)
     except:
       ok=False
     else:
       ok=True
-    self.failUnless(ok)
-    self.failUnless(len(mm)==N)
+    self.assertTrue(ok)
+    self.assertEqual(len(mm1),N)
     picker = None
 
+    picker = rdSimDivPickers.MaxMinPicker()
+    try:
+      mm2 = picker.LazyBitVectorPick(vs,len(vs),N)
+    except:
+      ok=False
+    else:
+      ok=True
+    self.assertTrue(ok)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(tuple(mm2),tuple(mm1))
+    picker = None
+    
     ds = []
     nvs = len(vs)
     for i in range(nvs):
@@ -134,7 +149,40 @@ class TestCase(unittest.TestCase):
     picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,nvs,N))
 
-            
+
+  def testBitVectorMaxMin(self):
+    from rdkit import DataStructs
+    sz = 100
+    nbits=200
+    nBitsToSet=int(nbits*.1)
+    N=10
+    vs = []
+    for i in range(sz):
+      bv = DataStructs.ExplicitBitVect(nbits)
+      for j in range(nBitsToSet):
+        val= int(nbits*random.random())
+        bv.SetBit(val)
+      vs.append(bv)
+    def func(i,j,bvs = vs):
+      d = DataStructs.TanimotoSimilarity(bvs[i],bvs[j],returnDistance=True)
+      return d
+    picker = rdSimDivPickers.MaxMinPicker()
+    mm1 = picker.LazyPick(func,len(vs),N)
+    self.assertEqual(len(mm1),N)
+
+    mm2 = picker.LazyPick(func,len(vs),N,useCache=False)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(list(mm1),list(mm2))
+    
+    mm2 = picker.LazyBitVectorPick(vs,len(vs),N)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(list(mm1),list(mm2))
+
+    mm2 = picker.LazyBitVectorPick(vs,len(vs),N,useCache=False)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(list(mm1),list(mm2))
+    
+    
 if __name__ == '__main__':
     unittest.main()
 

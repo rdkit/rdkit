@@ -16,9 +16,11 @@
 #include "numpy/oldnumeric.h"
 #include <map>
 
-
+#include <DataStructs/BitVects.h>
+#include <DataStructs/BitOps.h>
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/MaxMinPicker.h>
+#include <SimDivPickers/HierarchicalClusterPicker.h>
 #include <iostream>
 
 namespace python = boost::python;
@@ -55,21 +57,27 @@ namespace RDPickers {
                         
   class pyobjFunctor {
   public:
-    pyobjFunctor(python::object obj) : dp_obj(obj) {}
+    pyobjFunctor(python::object obj,bool useCache) : dp_obj(obj), dp_cache(NULL) {
+      if(useCache) dp_cache= new std::map<std::pair<unsigned int,unsigned int>,double>();
+    }
+    ~pyobjFunctor() {
+      delete dp_cache;
+    }
     double operator()(unsigned int i,unsigned int j) {
       double res;
       std::pair<unsigned int ,unsigned int> idxPair(i,j);
-      if(this->d_cache.count(idxPair)>0){
-        res = this->d_cache[idxPair];
+      if(dp_cache && dp_cache->count(idxPair)>0){
+        res = (*dp_cache)[idxPair];
       } else {
         res=python::extract<double>(dp_obj(i,j));
-        this->d_cache[idxPair]=res;
+        if(dp_cache)
+          (*dp_cache)[idxPair]=res;
       }
       return res;
     }
   private:
     python::object dp_obj;
-    std::map<std::pair<unsigned int,unsigned int>,double> d_cache;
+    std::map<std::pair<unsigned int,unsigned int>,double> *dp_cache;
   };
 
   RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, 
@@ -77,8 +85,75 @@ namespace RDPickers {
                                   int poolSize, 
                                   int pickSize,
                                   python::object firstPicks,
-                                  int seed) {
-    pyobjFunctor functor(distFunc);
+                                  int seed,
+                                  bool useCache) {
+    RDKit::INT_VECT firstPickVect;
+    for(unsigned int i=0;i<python::extract<unsigned int>(firstPicks.attr("__len__")());++i){
+      firstPickVect.push_back(python::extract<int>(firstPicks[i]));
+    }
+    RDKit::INT_VECT res;
+    pyobjFunctor functor(distFunc,useCache);
+    res=picker->lazyPick(functor, poolSize, pickSize,firstPickVect,seed);
+    return res;
+  }
+
+  // NOTE: TANIMOTO and DICE provably return the same results for the diversity picking
+  //    this is still here just in case we ever later want to support other methods.
+  typedef enum {
+    TANIMOTO=1,
+    DICE
+  } DistanceMethod;
+
+  template <typename BV>
+  class pyBVFunctor {
+  public:
+    pyBVFunctor(const std::vector<const BV *> &obj,DistanceMethod method,bool useCache) : d_obj(obj), d_method(method), dp_cache(NULL) {
+      if(useCache) dp_cache = new std::map<std::pair<unsigned int,unsigned int>,double>();
+    }
+    ~pyBVFunctor() {
+      delete dp_cache;
+    }
+    double operator()(unsigned int i,unsigned int j) {
+      double res=0.0;
+      std::pair<unsigned int ,unsigned int> idxPair(i,j);
+      if(dp_cache && dp_cache->count(idxPair)>0){
+        res = (*dp_cache)[idxPair];
+      } else {
+        switch(d_method){
+        case TANIMOTO:
+          res = 1.-TanimotoSimilarity(*d_obj[i],*d_obj[j]);
+          break;
+        case DICE:
+          res = 1.-DiceSimilarity(*d_obj[i],*d_obj[j]);
+          break;
+        default:
+          throw_value_error("unsupported similarity value");
+        }
+        if(dp_cache){
+          (*dp_cache)[idxPair]=res;
+        }
+      }
+      return res;
+    }
+  private:
+    const std::vector<const BV *> &d_obj;
+    DistanceMethod d_method;
+    std::map<std::pair<unsigned int,unsigned int>,double> *dp_cache;
+  };
+  
+  RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, 
+                                        python::object objs,
+                                        int poolSize, 
+                                        int pickSize,
+                                        python::object firstPicks,
+                                        int seed,
+                                        bool useCache
+                                        ) {
+    std::vector<const ExplicitBitVect *> bvs(poolSize);
+    for(unsigned int i=0;i<poolSize;++i){
+      bvs[i]=python::extract<const ExplicitBitVect *>(objs[i]);
+    }
+    pyBVFunctor<ExplicitBitVect> functor(bvs,TANIMOTO,useCache);
     RDKit::INT_VECT firstPickVect;
     for(unsigned int i=0;i<python::extract<unsigned int>(firstPicks.attr("__len__")());++i){
       firstPickVect.push_back(python::extract<int>(firstPicks[i]));
@@ -86,12 +161,13 @@ namespace RDPickers {
     RDKit::INT_VECT res=picker->lazyPick(functor, poolSize, pickSize,firstPickVect,seed);
     return res;
   }
+} // end of namespace RDPickers
 
   struct MaxMin_wrap {
     static void wrap() {
-      python::class_<MaxMinPicker>("MaxMinPicker", 
+      python::class_<RDPickers::MaxMinPicker>("MaxMinPicker", 
                                    "A class for diversity picking of items using the MaxMin Algorithm\n")
-        .def("Pick", MaxMinPicks,
+        .def("Pick", RDPickers::MaxMinPicks,
              (python::arg("self"),python::arg("distMat"),python::arg("poolSize"),
               python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
               python::arg("seed")=-1),
@@ -102,13 +178,13 @@ namespace RDPickers {
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n"
              "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
-             "  - seed: (optional) seed for the random number genrator\n"
+             "  - seed: (optional) seed for the random number generator\n"
              )
 
-        .def("LazyPick", LazyMaxMinPicks,
+        .def("LazyPick", RDPickers::LazyMaxMinPicks,
              (python::arg("self"),python::arg("distFunc"),python::arg("poolSize"),
               python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
-              python::arg("seed")=-1),
+              python::arg("seed")=-1,python::arg("useCache")=true),
              "Pick a subset of items from a pool of items using the MaxMin Algorithm\n"
              "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n"
              "ARGUMENTS:\n\n"
@@ -119,15 +195,34 @@ namespace RDPickers {
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n"
              "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
-             "  - seed: (optional) seed for the random number genrator\n"
+             "  - seed: (optional) seed for the random number generator\n"
+             "  - useCache: (optional) toggles use of a cache for the distance calculation\n"
+             "              This trades memory usage for speed.\n"
+             )
+        .def("LazyBitVectorPick", RDPickers::LazyVectorMaxMinPicks,
+             (python::arg("self"),python::arg("objects"),python::arg("poolSize"),
+              python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
+              python::arg("seed")=-1,
+              python::arg("useCache")=true),
+             "Pick a subset of items from a pool of bit vectors using the MaxMin Algorithm\n"
+             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n"
+             "ARGUMENTS:\n\n"
+             "  - vectors: a sequence of the bit vectors that should be picked from.\n"
+             "  - poolSize: number of items in the pool\n"
+             "  - pickSize: number of items to pick from the pool\n"
+             "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
+             "  - seed: (optional) seed for the random number generator\n"
+             "  - useCache: (optional) toggles use of a cache for the distance calculation\n"
+             "              This trades memory usage for speed.\n"
+
              )
         ;
     };
   };
-}
+
 
 void wrap_maxminpick() {
-  RDPickers::MaxMin_wrap::wrap();
+  MaxMin_wrap::wrap();
 }
 
   

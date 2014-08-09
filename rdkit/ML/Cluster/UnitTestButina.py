@@ -96,8 +96,44 @@ class TestCase(unittest.TestCase):
     self.assertTrue(cs[1]==(4,))
     self.assertTrue(cs[2]==(0,))
 
+  def test7(self):
+    " reordering: no changes "
+    dists = [1,
+             2,1,
+             4,3,2,
+             6,5,4,2,
+             7,6,5,3,1
+             ]
+    nPts = 6
+    cs = Butina.ClusterData(dists,nPts,1.1,isDistData=1,reordering=True)
+    self.assertTrue(len(cs)==3)
 
+    self.assertTrue(cs[0]==(1,0,2))
+    self.assertTrue(cs[1]==(5,4))
+    self.assertTrue(cs[2]==(3,))
 
+  def test8(self):
+    " reordering: changes"
+    dists = [2,
+             3.5,1.5,
+             5,3,1.5,
+             7,5,3.5,2,
+             8,6,4.5,3,1,
+             9,7,5.5,4,2,1,
+             ]
+    nPts = 7
+    # without reordering
+    cs = Butina.ClusterData(dists,nPts,2.1,isDistData=1)
+    self.assertTrue(len(cs)==3)
+    self.assertTrue(cs[0]==(4,3,5,6))
+    self.assertTrue(cs[1]==(2,1))
+    self.assertTrue(cs[2]==(0,))
+
+    # with reordering
+    cs = Butina.ClusterData(dists,nPts,2.1,isDistData=1,reordering=True)
+    self.assertTrue(len(cs)==2)
+    self.assertTrue(cs[0]==(4,3,5,6))
+    self.assertTrue(cs[1]==(1,0,2))
     
 
 profileTest=0

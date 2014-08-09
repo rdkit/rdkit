@@ -15,6 +15,7 @@ tests=[
   ("python","UnitTestSmiles.py",{}),
   ("python","UnitTestSuppliers.py",{}),
   ("python","UnitTestSurf.py",{}),
+  ("python","UnitTestMol3D.py",{}),
   ("python","FragmentMatcher.py",{}),
   ("python","MACCSkeys.py",{}),
   ("python","Descriptors.py",{}),
