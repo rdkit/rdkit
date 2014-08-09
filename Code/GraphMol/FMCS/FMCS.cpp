@@ -33,20 +33,17 @@ namespace RDKit {
     //=== ATOM COMPARE ========================================================
 
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ) {
-        p;
-        mol1;
-        atom1;
-        mol2;
-        atom2;    // unused
         return true;
     }
 
     bool MCSAtomCompareElements (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ) {
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
+        if(a1.getAtomicNum() != a2.getAtomicNum())
+          return false;
         if(p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
             return false;
-        return a1.getAtomicNum() == a2.getAtomicNum();
+        return true;
     }
 
     bool MCSAtomCompareIsotopes (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ud) {
@@ -123,11 +120,6 @@ namespace RDKit {
     }
 
     bool MCSBondCompareAny (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* ud) {
-        p;
-        mol1;
-        bond1;
-        mol2;
-        bond2;    // unused
         if(p.RingMatchesRingOnly)
             return checkRingMatch(p, mol1, bond1, mol2, bond2, ud);
         return true;
