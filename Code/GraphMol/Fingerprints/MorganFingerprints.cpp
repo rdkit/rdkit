@@ -162,7 +162,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       } else {
           v.setVal(bit,1);
       }
-      return elem;
+      return bit;
     }
     uint32_t updateElement(ExplicitBitVect &v,unsigned int elem, bool counting=false){
       uint32_t bit=elem%v.getNumBits();
