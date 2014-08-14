@@ -61,10 +61,10 @@ namespace RDKit {
                 memset(&TargetAtomIdx[0], 0xFF, sizeof(unsigned)*TargetAtomIdx.size());
                 memset(&TargetBondIdx[0], 0xFF, sizeof(unsigned)*TargetBondIdx.size());
                 /*
-                  for(size_t i = 0; i < TargetAtomIdx.size(); i++)
-                  TargetAtomIdx[i] = -1;
-                  for(size_t i = 0; i < TargetBondIdx.size(); i++)
-                  TargetBondIdx[i] = -1;
+                            for(size_t i = 0; i < TargetAtomIdx.size(); i++)
+                                TargetAtomIdx[i] = -1;
+                            for(size_t i = 0; i < TargetBondIdx.size(); i++)
+                                TargetBondIdx[i] = -1;
                 */
                 for(size_t i = 0; i < VisitedTargetBonds.size(); i++)
                     VisitedTargetBonds[i] = false;

@@ -79,18 +79,18 @@ namespace RDKit {
 
                 }
 
-                //not implemented yet:
+//not implemented yet:
                 /*
-                  void computeFingerprint(const Seed& seed)
-                  {
-                  unsigned int radius = seed.getNumBonds();
-                  if (radius > 5)
-                  radius = 5;
-                  ExplicitBitVect *mf = RDKit::MorganFingerprints::getFingerprintAsBitVect(seed.GraphTopology, radius);   //SLOW !!!
-                  // ...
-                  delete mf;
-                  NumericMetrics.Field.hasFingerprint = 1;
-                  }
+                            void computeFingerprint(const Seed& seed)
+                            {
+                            unsigned int radius = seed.getNumBonds();
+                            if (radius > 5)
+                                radius = 5;
+                            ExplicitBitVect *mf = RDKit::MorganFingerprints::getFingerprintAsBitVect(seed.GraphTopology, radius);   //SLOW !!!
+                            // ...
+                            delete mf;
+                                NumericMetrics.Field.hasFingerprint = 1;
+                            }
                 */
             };
 

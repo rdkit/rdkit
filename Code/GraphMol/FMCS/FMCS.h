@@ -43,7 +43,6 @@ namespace RDKit {
         unsigned NumAtoms;
         unsigned NumBonds;
         unsigned SeedProcessed;
-        // ...............
     public:
         MCSProgressData() : NumAtoms(0), NumBonds(0), SeedProcessed(0) {}
     };
@@ -55,7 +54,7 @@ namespace RDKit {
         bool     MaximizeBonds;
         double   Threshold;
         unsigned Timeout;   // in seconds
-        bool     Verbose; // ?
+        bool     Verbose;
         MCSAtomCompareParameters    AtomCompareParameters;
         MCSBondCompareParameters    BondCompareParameters;
         MCSAtomCompareFunction      AtomTyper;
@@ -63,7 +62,6 @@ namespace RDKit {
         void*                       CompareFunctionsUserData;
         MCSProgressCallback         ProgressCallback;       // return false to interrupt execution
         void*                       ProgressCallbackUserData;
-        unsigned ThreadNumber;      // #ifdef MULTI_THREAD
     public:
         MCSParameters(): MaximizeBonds(true)
             , Threshold(1.0)    // match to all
@@ -74,7 +72,6 @@ namespace RDKit {
             , CompareFunctionsUserData(0)
             , ProgressCallback(MCSProgressCallbackTimeout)
             , ProgressCallbackUserData(0)
-            , ThreadNumber(64) // 64 is optimal value for 4 kernels i7 CPU
         {}
     };
 

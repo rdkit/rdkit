@@ -72,7 +72,7 @@ namespace RDKit {
                 return val;
             }
         };
+
     }
 }
-
 

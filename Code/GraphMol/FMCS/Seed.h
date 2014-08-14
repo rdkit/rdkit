@@ -14,9 +14,6 @@
 #include "Graph.h"
 #include "DuplicatedSeedCache.h"
 #include "SubstructMatchCustom.h"
-#ifdef MULTI_THREAD
-#include "Thread.h"
-#endif
 
 namespace RDKit {
     namespace FMCS {
@@ -48,9 +45,6 @@ namespace RDKit {
         private:
             mutable std::vector<NewBond> NewBonds;      // for multistage growing. all directly connected outgoing bonds
         public:
-#ifdef MULTI_THREAD
-            mutable bool        ProcessingScheduled;
-#endif
             bool                CopyComplete;       // this seed has been completely copied into list. postponed non0locked copy for MULTI_THREAD
             mutable unsigned    GrowingStage;       // 0 new seed; -1 finished; n>0 in progress, exact stage of growing for SDF
             MolFragment         MoleculeFragment;   // Reference to a fragment of source molecule
@@ -64,15 +58,9 @@ namespace RDKit {
 #ifdef DUP_SUBSTRUCT_CACHE
             DuplicatedSeedCache::TKey DupCacheKey;
 #endif
-#ifdef FAST_INCREMENTAL_MATCH
             std::vector<TargetMatch> MatchResult;  // for each target
-#endif // FAST_INCREMENTAL_MATCH
         public:
-            Seed() :
-#ifdef MULTI_THREAD
-                ProcessingScheduled(false),
-#endif
-                CopyComplete(false)
+            Seed() : CopyComplete(false)
                 , GrowingStage(0), LastAddedAtomsBeginIdx(0), LastAddedBondsBeginIdx(0)
                 , RemainingBonds(-1), RemainingAtoms(-1)
             {}
@@ -82,9 +70,6 @@ namespace RDKit {
             }
             Seed& operator = (const Seed& src) {
                 NewBonds = src.NewBonds;
-#ifdef MULTI_THREAD
-                ProcessingScheduled = src.ProcessingScheduled;
-#endif
                 GrowingStage = src.GrowingStage;
                 MoleculeFragment = src.MoleculeFragment;
                 Topology = src.Topology;
@@ -96,10 +81,7 @@ namespace RDKit {
 #ifdef DUP_SUBSTRUCT_CACHE
                 DupCacheKey = src.DupCacheKey;
 #endif
-#ifdef FAST_INCREMENTAL_MATCH
                 MatchResult = src.MatchResult;
-#endif
-                //MoleculeFragment = src.MoleculeFragment;
                 CopyComplete = true; // LAST
                 return *this;
             }
@@ -127,14 +109,15 @@ namespace RDKit {
             void grow(MaximumCommonSubgraph& mcs)const;
             bool canGrowBiggerThan(unsigned maxBonds, unsigned maxAtoms)const { // prune()
                 return RemainingBonds + getNumBonds() >  maxBonds
-                       ||(RemainingBonds + getNumBonds() ==  maxBonds && RemainingAtoms + getNumAtoms() > maxAtoms); //python: >=
+                       ||(RemainingBonds + getNumBonds() ==  maxBonds && RemainingAtoms + getNumAtoms() > maxAtoms);
 
             }
-            void computeRemainingSize(const ROMol& qmol);//, const std::vector<char>& excludedBonds);
+            void computeRemainingSize(const ROMol& qmol);
 
             unsigned addAtom (const Atom* atom);
             unsigned addBond (const Bond* bond);
             void fillNewBonds(const ROMol& qmol);
         };
+
     }
 }
