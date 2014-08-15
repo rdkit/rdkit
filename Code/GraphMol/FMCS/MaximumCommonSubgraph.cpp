@@ -48,10 +48,8 @@ namespace RDKit {
 #ifdef FAST_SUBSTRUCT_CACHE
             QueryAtomLabels.clear();
             QueryBondLabels.clear();
-#ifdef PRECOMPUTED_TABLES_MATCH
             QueryAtomMatchTable.clear();
             QueryBondMatchTable.clear();
-#endif
             RingMatchTables.clear();
 #endif
 #ifdef DUP_SUBSTRUCT_CACHE
@@ -68,7 +66,6 @@ namespace RDKit {
             }
             size_t nq  = 0;
 #ifdef FAST_SUBSTRUCT_CACHE
-#ifdef PRECOMPUTED_TABLES_MATCH
             // fill out RingMatchTables to check cache Hash collision by checking match a part of Query to Query
             if(!userData // predefined functor - compute RingMatchTable for all targets
                     && (Parameters.BondCompareParameters.CompleteRingsOnly || Parameters.BondCompareParameters.RingMatchesRingOnly)
@@ -89,7 +86,6 @@ namespace RDKit {
                 for(size_t ai = 0; ai < nq; ai++)
                     QueryBondMatchTable.set(ai, aj, Parameters.BondTyper(Parameters.BondCompareParameters,
                                             *QueryMolecule, ai, *QueryMolecule, aj, Parameters.CompareFunctionsUserData));
-#endif // PRECOMPUTED_TABLES_MATCH
             // Compute label values based on current functor and parameters for code Morgan correct computation.
             unsigned currentLabelValue = 1;
             std::vector<LabelDefinition> labels;
@@ -169,19 +165,6 @@ namespace RDKit {
                 size_t j=0;    // current item
                 for(ROMol::ConstAtomIterator a = Targets[i].Molecule->beginAtoms(); a != Targets[i].Molecule->endAtoms(); a++, j++) {
                     Targets[i].Topology.addAtom((*a)->getIdx());
-#ifdef xxFAST_INCREMENTAL_MATCH
-                    Targets[i].AtomAdjacency.resize((*it)->getNumAtoms());
-                    ROMol::OEDGE_ITER beg,end;
-                    for(boost::tie(beg,end) = (*it)->getAtomBonds(*a); beg!=end; beg++) { // all bonds from the atom
-                        AtomAdjacency aa;
-                        aa.Bond = (*(*it))[*beg].get();
-                        aa.BondIdx = aa.Bond->getIdx();
-                        aa.ConnectedAtomIdx = aa.Bond->getEndAtomIdx();
-                        if((*a)->getIdx() == aa.ConnectedAtomIdx)
-                            aa.ConnectedAtomIdx = aa.Bond->getBeginAtomIdx();
-                        Targets[i].AtomAdjacency[j].push_back(aa);
-                    }
-#endif // FAST_INCREMENTAL_MATCH
                 }
                 // build Target Topology ADD BONDs
                 for(ROMol::ConstBondIterator b = Targets[i].Molecule->beginBonds(); b != Targets[i].Molecule->endBonds(); b++) {
@@ -200,7 +183,6 @@ namespace RDKit {
 #endif
                 }
 
-#ifdef PRECOMPUTED_TABLES_MATCH
                 // fill out match tables
                 size_t nq = QueryMolecule->getNumAtoms();
                 size_t nt = (*it)->getNumAtoms();
@@ -218,7 +200,6 @@ namespace RDKit {
                     for(size_t ai = 0; ai < nq; ai++)
                         Targets[i].BondMatchTable.set(ai, aj, Parameters.BondTyper(Parameters.BondCompareParameters,
                                                       *QueryMolecule, ai, *Targets[i].Molecule, aj, Parameters.CompareFunctionsUserData));
-#endif
             }
 
             Parameters.CompareFunctionsUserData = userData; // restore
@@ -294,23 +275,16 @@ namespace RDKit {
             wb.reserve(QueryMolecule->getNumBonds());
             for(RWMol::ConstBondIterator bi = QueryMolecule->beginBonds(); bi != QueryMolecule->endBonds(); bi++)
                 wb.push_back(WeightedBond(*bi, r));
-            //SLOW Result:
-            //std::sort(wb.begin(), wb.end());
 
             for(std::vector<WeightedBond>::const_iterator bi = wb.begin(); bi != wb.end(); bi++) {
                 //R1 additional performance OPTIMISATION
                 //if(excludedBonds[(*bi)->getIdx()])
                 //    continue;
                 Seed seed;
-#ifdef FAST_INCREMENTAL_MATCH
                 seed.MatchResult.resize(Targets.size());
-#endif
 
 #ifdef VERBOSE_STATISTICS_ON
                 {
-#ifdef MULTI_THREAD
-                    Guard statlock(StatisticsMutex);
-#endif
                     ++VerboseStatistics.Seed;
                     ++VerboseStatistics.InitialSeed;
                 }
@@ -325,8 +299,6 @@ namespace RDKit {
 
                 if(checkIfMatchAndAppend(seed)) {
                     ++QueryMoleculeMatchedBonds;
-                    //            if(Parameters.Verbose)    // if wb was sorted
-                    //                std::cout << "New initial seed weight=" << bi->Weight << ", a1="<<bi->BondPtr->getBeginAtom()->getIdx() << ", a2="<<bi->BondPtr->getEndAtom  ()->getIdx()<<"\n";
                 } else {
                     // optionally remove all such bonds from all targets TOPOLOGY where it exists.
                     //..........
@@ -336,9 +308,6 @@ namespace RDKit {
                         si->ExcludedBonds[bi->BondPtr->getIdx()] = true;
 
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                    Guard statlock(StatisticsMutex);
-#endif
                     ++VerboseStatistics.MismatchedInitialSeed;
 #endif
                 }
@@ -362,69 +331,16 @@ namespace RDKit {
 
         }
 
-#ifdef MULTI_THREAD
-        void SeedGrowThread::run(void) {
-            while(!StopSignal) {
-                if(SeedToProceed) {
-                    SeedToProceed->grow(*Mcs);
-                    SeedToProceed->ProcessingScheduled = false;
-                    SeedToProceed = 0; // reset busy flag
-                    if (JobFinishedPoolEvent)
-                        JobFinishedPoolEvent->setSignal();
-
-                } else if(NewJobEvent)
-                    NewJobEvent->wait(3000);
-                else
-                    Sleep0();
-            }
-            if (JobFinishedPoolEvent)
-                JobFinishedPoolEvent->setSignal();  // force to break waiting
-        }
-
-#endif
 
         bool MaximumCommonSubgraph::growSeeds() {
             bool mcsFound = false;
             bool canceled = false;
             unsigned steps = 99999; // steps from last progress callback call. call it immediately in the begining
 
-#ifdef MULTI_THREAD
-            if(0==Parameters.ThreadNumber)
-                Parameters.ThreadNumber = 1;
-            ThreadPool WorkingThreadPool(Parameters.ThreadNumber, this); // start all working threads
-#endif
             // Find MCS -- SDF Seed growing OPTIMISATION (it works in 3 times faster)
             while(!Seeds.empty()) {
-#ifdef MULTI_THREAD
-                while(!WorkingThreadPool.waitReady(100))
-                    {}
-                Sleep0();
-                Guard lock(*this);
-                {
-                    for(SeedSet::iterator next, si = Seeds.begin(); si != Seeds.end() && !WorkingThreadPool.isBusy(); si = next) {
-                        next = si;
-                        next++;
-                        if(!si->CopyComplete)
-                            continue;
-                        if(-1 == si->GrowingStage) // finished
-                            Seeds.erase(si);
-                        else if(!si->ProcessingScheduled) { // && !WorkingThreadPool->isBusy())
-                            si->ProcessingScheduled = true;
-                            WorkingThreadPool.addJob(&*si);
-                            ++steps;
-#ifdef VERBOSE_STATISTICS_ON
-                            VerboseStatistics.TotalSteps++; // the only place where it is increased
-#endif
-                        }
-                    }
-                }
-                Sleep0();
-#else
                 if(getMaxNumberBonds() == QueryMoleculeMatchedBonds)    // MCS == Query
                     break;
-                //wrong:        if(getMaxNumberAtoms() == QueryMoleculeMatchedAtoms && Seeds.front().getNumAtoms() < getMaxNumberAtoms() - 1)
-                //            break;
-
                 ++steps;
 #ifdef VERBOSE_STATISTICS_ON
                 VerboseStatistics.TotalSteps++;
@@ -432,10 +348,6 @@ namespace RDKit {
                 SeedSet::iterator si = Seeds.begin();
 
                 si->grow(*this);
-#endif
-#ifdef MULTI_THREAD
-                if(!Seeds.empty())
-#endif
                 {
                     const Seed& fs = Seeds.front();
                     // bigger substructure found
@@ -446,42 +358,24 @@ namespace RDKit {
                             mcsFound = true;
 #ifdef VERBOSE_STATISTICS_ON
                             VerboseStatistics.MCSFoundStep = VerboseStatistics.TotalSteps;
-                            //                if (Parameters.ProgressCallback == MCSProgressCallbackTimeout)
                             VerboseStatistics.MCSFoundTime = nanoClock();
 #endif
                             McsIdx.Atoms    = fs.MoleculeFragment.Atoms;
                             McsIdx.Bonds    = fs.MoleculeFragment.Bonds;
                             McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
                             McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
-#ifdef VERBOSE_STATISTICS_ON
                             if(Parameters.Verbose) {
                                 std::cout << VerboseStatistics.TotalSteps << " Seeds:" << Seeds.size() << " MCS "<< McsIdx.Atoms.size() << " atoms, " << McsIdx.Bonds.size() << " bonds";
                                 printf(" for %.4lf seconds. bond[0]=%u\n", double(VerboseStatistics.MCSFoundTime - To)/1000000., McsIdx.BondsIdx[0]);
                             }
-#endif
                         }
                 }
-                if(Parameters.Verbose) {
-                    //DEBUG
-                    //if(36 == McsIdx.Bonds.size())
-                    //    std::cout << si->getNumBonds() << " + " << si->RemainingBonds << " bonds " << "\n";
-                }
-#ifndef MULTI_THREAD
                 if(-1 == si->GrowingStage) //finished
                     Seeds.erase(si);
-#endif
                 if(Parameters.ProgressCallback && (steps >= 377)) {
                     steps = 0;
                     Stat.NumAtoms = getMaxNumberAtoms();
                     Stat.NumBonds = getMaxNumberBonds();
-#ifdef VERBOSE_STATISTICS_ON
-                    {
-#ifdef MULTI_THREAD
-                        Guard statlock(StatisticsMutex);
-#endif
-                        Stat.SeedProcessed = VerboseStatistics.Seed;
-                    }
-#endif
                     if(!Parameters.ProgressCallback(Stat, Parameters, Parameters.ProgressCallbackUserData)) {
                         canceled = true;
                         break;
@@ -513,7 +407,6 @@ namespace RDKit {
             std::vector<unsigned> atomIdxMap(mcsIdx.QueryMolecule->getNumAtoms());
             std::vector<std::map<unsigned, const Bond*> > bondMatchSet (mcsIdx.Bonds.size()); //key is unique BondType
             std::vector<std::map<unsigned, const Atom*> > atomMatchSet (mcsIdx.Atoms.size()); //key is unique atomic number
-            //isotope, mass, charge, Hs    std::vector<std::map<unsigned, const Atom*> > atomMatchSet (mcsIdx.Atoms.size()); //key is unique atomic number
 
             for(std::vector<const Atom*>::const_iterator atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end(); atom++) {
                 atomIdxMap[(*atom)->getIdx()] = seed.getNumAtoms();
@@ -526,18 +419,7 @@ namespace RDKit {
             for(std::vector<Target>::const_iterator tag = mcsIdx.Targets.begin(); tag != mcsIdx.Targets.end(); tag++, itarget++) {
                 match_V_t match;    // THERE IS NO Bonds match INFO !!!!
                 bool target_matched =
-#ifdef PRECOMPUTED_TABLES_MATCH
                     SubstructMatchCustomTable(tag->Topology, seed.Topology, tag->AtomMatchTable, tag->BondMatchTable, &match);
-#else //noticable slowly:
-                    SubstructMatchCustom(
-                        tag->Topology
-                        , *tag->Molecule
-                        , seed.Topology
-                        , *QueryMolecule
-                        , Parameters.AtomTyper, Parameters.BondTyper
-                        , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
-                    );
-#endif
                 if(!target_matched)
                     continue;
                 atomMatchResult[itarget].resize(seed.getNumAtoms());
@@ -615,18 +497,7 @@ namespace RDKit {
 
             match_V_t match;
             bool target_matched =
-#ifdef PRECOMPUTED_TABLES_MATCH
                 SubstructMatchCustomTable(newQuery.Topology, mcs.Topology, newQuery.AtomMatchTable, newQuery.BondMatchTable, &match);
-#else //noticable slowly:
-                SubstructMatchCustom(
-                    newQuery.Topology
-                    , *newQuery.Molecule
-                    , mcs.Topology
-                    , *QueryMolecule
-                    , Parameters.AtomTyper, Parameters.BondTyper
-                    , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
-                );
-#endif
             if(!target_matched)
                 return false;
 
@@ -690,7 +561,7 @@ namespace RDKit {
                     break;
 
                 makeInitialSeeds();
-                //DEBUG:
+
                 if(Parameters.Verbose)
                     std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<" "<<QueryMolecule->getNumAtoms()<<"("<<QueryMoleculeMatchedAtoms<<") atoms, "
                              <<QueryMolecule->getNumBonds()<<"("<<QueryMoleculeMatchedBonds<<") bonds\n";
@@ -712,9 +583,6 @@ namespace RDKit {
 
 #ifdef VERBOSE_STATISTICS_ON
             if(Parameters.Verbose) {
-#ifdef MULTI_THREAD
-                Guard statlock(StatisticsMutex);
-#endif
                 unsigned itarget = 0;
                 for(std::vector<Target>::const_iterator tag = Targets.begin(); res.NumAtoms > 0 && tag != Targets.end(); tag++, itarget++) {
                     MatchVectType match;
@@ -744,20 +612,15 @@ namespace RDKit {
                 std::cout //<< "\n"
                         << "     MatchCalls = " << VerboseStatistics.MatchCall      <<"\n"
                         << "     MatchFound = " << VerboseStatistics.MatchCallTrue  <<"\n";
-#ifdef FAST_INCREMENTAL_MATCH
                 std::cout << " fastMatchCalls = " << VerboseStatistics.FastMatchCall <<"\n"
                           << " fastMatchFound = " << VerboseStatistics.FastMatchCallTrue <<"\n";
                 std::cout << " slowMatchCalls = " << VerboseStatistics.MatchCall     - VerboseStatistics.FastMatchCallTrue <<"\n"
                           << " slowMatchFound = " << VerboseStatistics.SlowMatchCallTrue<<"\n";
-#endif
-#ifdef PRECOMPUTED_TABLES_MATCH
-                std::cout << "--- USED PreComputed Match TABLES ! ---\n";
-#endif
+
 #ifdef VERBOSE_STATISTICS_FASTCALLS_ON
                 std::cout << "AtomFunctorCalls = " << VerboseStatistics.AtomFunctorCalls << "\n";
                 std::cout << "BondCompareCalls = " << VerboseStatistics.BondCompareCalls << "\n";
 #endif
-                //    std::cout << "\n";
                 std::cout << "  DupCacheFound = " << VerboseStatistics.DupCacheFound
                           <<"   "<< VerboseStatistics.DupCacheFoundMatch<<" matched, "
                           <<VerboseStatistics.DupCacheFound - VerboseStatistics.DupCacheFoundMatch <<" mismatched\n";
@@ -771,25 +634,14 @@ namespace RDKit {
 #endif
             }
 #endif
-            //---------------------
+
             clear();
             return res;
         }
 
         bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
-#ifdef TRACE_ON
-            TRACE() << "CHECK ";    // print out time
-            for(std::vector<const Bond*>::const_iterator bi = seed.MoleculeFragment.Bonds.begin(); bi != seed.MoleculeFragment.Bonds.end(); bi++)
-                TRACE(0) << (*bi)->getIdx() << " ";
-            TRACE(0) << "\n";
-#endif
 #ifdef VERBOSE_STATISTICS_ON
-            {
-#ifdef MULTI_THREAD
-                Guard statlock(StatisticsMutex);
-#endif
-                ++VerboseStatistics.SeedCheck;
-            }
+            ++VerboseStatistics.SeedCheck;
 #endif
 #ifdef FAST_SUBSTRUCT_CACHE
             SubstructureCache::HashKey      cacheKey;
@@ -801,16 +653,10 @@ namespace RDKit {
             bool foundInDupCache = false;
 
             {
-#ifdef MULTI_THREAD
-                Guard lock(*this);
-#endif
 #ifdef DUP_SUBSTRUCT_CACHE
                 if(DuplicateCache.find(seed.DupCacheKey, foundInCache)) {
                     // duplicate found. skip match() but store both seeds, because they will grow by different paths !!!
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                    Guard statlock(StatisticsMutex);
-#endif
                     VerboseStatistics.DupCacheFound++;
                     VerboseStatistics.DupCacheFoundMatch += foundInCache ? 1 : 0;
 #endif
@@ -838,10 +684,7 @@ namespace RDKit {
                             ++VerboseStatistics.ExactMatchCall;
 #endif
                             // EXACT MATCH
-#ifdef PRECOMPUTED_TABLES_MATCH
                             foundInCache = SubstructMatchCustomTable((*g), seed.Topology, QueryAtomMatchTable, QueryBondMatchTable);
-#else //..................
-#endif
 #ifdef VERBOSE_STATISTICS_ON
                             if(foundInCache)
                                 ++VerboseStatistics.ExactMatchCallTrue;
@@ -860,12 +703,11 @@ namespace RDKit {
             Seed *newSeed = 0;
 
             {
-#ifdef MULTI_THREAD
-                Guard lock(*this);
-#endif
                 if(found) { // Store new generated seed, if found in cache or in all(- threshold) targets
-                    newSeed = &Seeds.add(seed);
-                    newSeed->CopyComplete = false;
+                    {
+                        newSeed = &Seeds.add(seed);
+                        newSeed->CopyComplete = false;
+                    }
 
 #ifdef DUP_SUBSTRUCT_CACHE
                     if(!foundInDupCache && seed.getNumBonds() >= 3)  // only seed with a ring can be duplicated - do not store very small seed in cache
@@ -873,11 +715,7 @@ namespace RDKit {
 #endif
 #ifdef FAST_SUBSTRUCT_CACHE
                     if(!foundInCache)
-#ifdef MULTI_THREAD
-                        HashCache.add(seed, cacheKey, 0);   // cacheEntry can be invalid in MT environment
-#else
                         HashCache.add(seed, cacheKey, cacheEntry);
-#endif
 #endif
                 } else {
 #ifdef DUP_SUBSTRUCT_CACHE
@@ -886,7 +724,7 @@ namespace RDKit {
 #endif
                 }
             }
-            if(found)
+            if(newSeed)
                 *newSeed = seed; // non-blocking copy for MULTI_THREAD and best CPU utilization
 
             return found;  // new matched seed has been actualy added
@@ -901,45 +739,25 @@ namespace RDKit {
             for(std::vector<Target>::const_iterator tag = Targets.begin(); tag != Targets.end(); tag++, itarget++) {
 #ifdef VERBOSE_STATISTICS_ON
                 {
-#ifdef MULTI_THREAD
-                    Guard statlock(StatisticsMutex);
-#endif
                     ++VerboseStatistics.MatchCall;
                 }
 #endif
                 bool target_matched = false;
-#ifdef FAST_INCREMENTAL_MATCH
                 if(!seed.MatchResult.empty() && !seed.MatchResult[itarget].empty())
                     target_matched = matchIncrementalFast(seed, itarget);
-#endif
                 if(!target_matched) { // slow full match
                     match_V_t match;    // THERE IS NO Bonds match INFO !!!!
                     target_matched =
-#ifdef PRECOMPUTED_TABLES_MATCH
                         SubstructMatchCustomTable(tag->Topology, seed.Topology, tag->AtomMatchTable, tag->BondMatchTable, &match);
-#else //noticable slowly:
-                        SubstructMatchCustom(
-                            tag->Topology
-                            , *tag->Molecule
-                            , seed.Topology
-                            , *QueryMolecule
-                            , Parameters.AtomTyper, Parameters.BondTyper
-                            , Parameters.AtomCompareParameters, Parameters.BondCompareParameters, Parameters.CompareFunctionsUserData
-                        );
-#endif
-#ifdef FAST_INCREMENTAL_MATCH   // save current match info
+                    // save current match info
                     if(target_matched) {
                         if (seed.MatchResult.empty())
                             seed.MatchResult.resize(Targets.size());
                         seed.MatchResult[itarget].init(seed, match, *QueryMolecule, *tag);
                     } else if(!seed.MatchResult.empty())
                         seed.MatchResult[itarget].clear();//.Empty = true; // == fast clear();
-#endif
 #ifdef VERBOSE_STATISTICS_ON
                     if(target_matched) {
-#ifdef MULTI_THREAD
-                        Guard statlock(StatisticsMutex);
-#endif
                         ++VerboseStatistics.SlowMatchCallTrue;
                     }
 #endif
@@ -955,9 +773,6 @@ namespace RDKit {
             }
             if(missing <= max_miss) {
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                Guard statlock(StatisticsMutex);
-#endif
                 ++VerboseStatistics.MatchCallTrue;
 #endif
                 return true;
@@ -965,16 +780,12 @@ namespace RDKit {
             return false;
         }
 
-#ifdef FAST_INCREMENTAL_MATCH
 
-        // call it for each target, if fail perform full match check
+// call it for each target, if fail perform full match check
         bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
             // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
             {
-#ifdef MULTI_THREAD
-                Guard statlock(StatisticsMutex);
-#endif
                 ++VerboseStatistics.FastMatchCall;
             }
 #endif
@@ -1014,12 +825,7 @@ namespace RDKit {
                         unsigned tbi = tb->getIdx();
                         unsigned qbi = seed.MoleculeFragment.BondsIdx[newBondAnotherAtomSeedIdx];
                         if( ! match.VisitedTargetBonds[tbi])   // false if target bond is already matched
-#ifdef PRECOMPUTED_TABLES_MATCH
                             matched = target.BondMatchTable.at(qbi, tbi);
-#else
-#pragma warning("NOT IMPLEMENTED")
-                            ;
-#endif
                     }
                 } else { // enumerate all bonds from source atom in the target
                     const Atom* atom = target.Molecule->getAtomWithIdx(newBondSourceAtomTargetIdx);
@@ -1083,7 +889,6 @@ namespace RDKit {
 
             return matched;
         }
-#endif // FAST_INCREMENTAL_MATCH
 
     }
 }   // namespace RDKit

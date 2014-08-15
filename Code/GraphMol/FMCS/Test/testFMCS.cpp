@@ -1,3 +1,4 @@
+// $Id: testFMCS.cpp $
 //
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -42,16 +43,14 @@
 #include <time.h>
 #include <string>
 #include <iostream>
-//#include <RDGeneral/RDLog.h>
-//#include <RDGeneral/utils.h>
-#include "../RDKitBase.h"
-#include "../FileParsers/FileParsers.h" //MOL single molecule !
-#include "../FileParsers/MolSupplier.h" //SDF
-#include "../SmilesParse/SmilesParse.h"
-#include "../SmilesParse/SmilesWrite.h"
-#include "../SmilesParse/SmartsWrite.h"
-#include "FMCS.h"
-#include "DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
+#include "../../RDKitBase.h"
+#include "../../FileParsers/FileParsers.h" //MOL single molecule !
+#include "../../FileParsers/MolSupplier.h" //SDF
+#include "../../SmilesParse/SmilesParse.h"
+#include "../../SmilesParse/SmilesWrite.h"
+#include "../../SmilesParse/SmartsWrite.h"
+#include "../FMCS.h"
+#include "../DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
 
 using namespace RDKit;
 
@@ -61,7 +60,7 @@ unsigned long long t0;
 void printTime() {
     unsigned long long t1 = nanoClock();
     double sec = double(t1-t0) / 1000000.;
-    printf("\nTime elapsed %.3lf seconds\n", sec);
+    printf("Time elapsed %.3lf seconds\n", sec);
     t0 = nanoClock();
 }
 
@@ -75,9 +74,15 @@ std::string getSmilesOnly(const char* smiles, std::string* id=0) { // remove lab
 
 std::string getSmilesOnlyTxt(const char* smiles, std::string* id=0) { // remove label from string like "CHEMBL90218 NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
     const char* sp = strchr(smiles,' ');
-    if(sp && '\0'!=*sp)
-        return std::string(++sp);
-    else
+    if(sp && '\0'!=*sp) {
+        if(id)
+            *id = std::string(smiles, sp-smiles);
+        sp++;
+        size_t i;
+        for(i = strlen(sp)-1; sp[i] < ' ' && i>=0; i--)
+            ;
+        return std::string(sp, i+1);
+    } else
         return smiles;
 }
 
@@ -235,7 +240,6 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
     fprintf(f, "#software RDKit C++ FMCS \n#options  timeout=%u threshold=%g\n", p.Timeout, p.Threshold);
     std::cout<<"Perform test cases ... \n";
     for(std::list< std::vector<std::string> >::const_iterator tc = testCase.begin(); tc != testCase.end(); tc++, n++) {
-        //        if(test_N != 0 && test_N != n+1)
         if(!test_N.empty() && test_N.end() == std::find(test_N.begin(), test_N.end(), n+1))
             continue;
 
@@ -258,7 +262,7 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
                 fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid->c_str());
         }
         fprintf(f, "\n");
-        //        ExecStatistics curStat = stat;          //to compute the difference for this test only
+//        ExecStatistics curStat = stat;          //to compute the difference for this test only
         unsigned long long tc0 = nanoClock();
         MCSResult res = findMCS(tcmols, &p);    // *** T E S T ***
         unsigned long long tc1 = nanoClock();
@@ -326,8 +330,8 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
             "# MatchCall %15u | %8u (SubstructMatch function calls)\n"
             "# MatchTRUE %15u | %8u = %d%%\n"
 #ifdef FAST_SUBSTRUCT_CACHE
-            //        "#HashCache  %15u | %8u keys\n"
-            //        "#HashCache  %15u | %8u entries\n"
+//        "#HashCache  %15u | %8u keys\n"
+//        "#HashCache  %15u | %8u entries\n"
             "# HashCacheFind  %15u | %8u \n"
             "# HashKeysFound  %15u | %8u = %d%% hash keys found \n"
             "# ExactMatchCall %15u | %8u (SubstructMatch function calls)\n"
@@ -340,8 +344,8 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
             , stat.MatchCallTrue        , stat.MatchCallTrue/n
             , int((double)stat.MatchCallTrue / (double)stat.MatchCall *100.)
 #ifdef FAST_SUBSTRUCT_CACHE
-            //        , stat.HashCacheKeysSize, stat.HashCacheKeysSize/n
-            //        , stat.HashCacheEntries , stat.HashCacheEntries/n
+//        , stat.HashCacheKeysSize, stat.HashCacheKeysSize/n
+//        , stat.HashCacheEntries , stat.HashCacheEntries/n
             , stat.FindHashInCache,    stat.FindHashInCache/n
             , stat.HashKeyFoundInCache,stat.HashKeyFoundInCache/n
             , 0==stat.FindHashInCache ? 0 : int((double)stat.HashKeyFoundInCache / (double)stat.FindHashInCache *100.)
@@ -364,199 +368,13 @@ void testFileMCSB(const char* test, unsigned timeout=30, std::vector<unsigned> t
 
 //=========================================================================
 
-
-//=========================================================================
-
-void test1Basics() {
-    //    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    //    BOOST_LOG(rdInfoLog) << "FMCS test1Basics()" << std::endl;
-
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        //         "CC1CCC(N)CC1", "CC1CC(C)CC(C)C1"  // OK test.sdf
-        //         "OC1CCC1", "OC1CCC1" // OK ==
-        //         "CC1CC(C=O=S)CC(C=N)C1", "CC1CC(C=O=S)CC(C=N)C1"  // OK test.sdf ++
-        //         "CC1CC(C=O=S)CC(N=C)C1", "CC1CC(C)CC(N)C1"  // OK test.sdf ++
-        //        "CC1CC(C=O=S3)C2C(N=C-O23)C1", "C7C1CC(C8)C7C(NO8)C1"  // OK test.sdf ++
-        //        "O1CCN(OSC)CO1-CC1CC(N=C-O23)C2C(C=O=S3)C1", "C7C1CC(C8)C7C(NO8)C1"  // OK MCS:{0 9 8 5 7 4 2 3 11}: Smarts=CCCC(N)CC(C)CO
-
-        //      "[O:8][C:1]1[C:2][C:3]([N:9])[C:4][C:5][C:6]1", "NC1(S-O-C)C[C:9](O-S-C)[C:7]CC1" // OK MCS:{0 1 7 2 6 3 4 5}: Smarts=NC1CCCC(O)C1 == N[CH:3]1[CH2:4][CH2:5][CH2:6][CH:1](O)[CH2:2]1
-        //MCS: N[CH:3]1[CH2:4][CH2:5][CH2:6][CH:1][(OH:8)][CH2:2]1
-
-
-        // PASSED     ///FAILED (missing one bond to close ring):
-        // Python MCS = 26 bonds : COCc1cncc(c1):n:c1cccc(Oc2ccc(Cl)cc2)c1 WITH AROMATIZATION
-        // MCS 26: COCc1c-ncc(c1)nc1cccc(c1)Oc1ccc(Cl)cc1 24 atoms, 26 bonds Time elapsed 0.12 seconds
-        // MCS 25: cc(cc(cn)nc1cccc(Oc2ccc(Cl)cc2)c1)COC 24 atoms, 25 bonds. WITH AROMATIZATION !!!!
-        // MCS 16: COCC=CN=CC1=CC(=CC=C)C(=C)N1, 16 atoms, 16 bonds.      WITHOUT AROMATIZATION !!!!
-        ///            "COCC1=C(N=CC2=C1C1=C(OC3=CC=C(Cl)C=C3)C=CC=C1N2)C(=O)OC(C)C",
-        ///            "COCC1=CN=C(C(=O)OC(C)C)C2=C1C1=CC=C(OC3=CC=C(Cl)C=C3)C=C1N2",
-        // The SAME, but pre AROMATIZATED (else PRECONDITION Exception with Implicit Hs / 16 bonds only)
-        //            "COCc1c(ncc2[nH]c3cccc(Oc4ccc(Cl)cc4)c3c12)C(=O)OC(C)C",
-        //            "COCc1cnc(C(=O)OC(C)C)c2[nH]c3cc(Oc4ccc(Cl)cc4)ccc3c12",
-        //
-        /* /TEST 4
-           "CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934",
-           "CN(C)c1ccc(CC(=O)NCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL152361",
-           "CN(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336",
-           "CN(C)c1ccc(CC(=O)NCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157429",
-           "CN(C)c1ccc(CC(=O)NCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL357551",
-           "CN(C)c1ccc(CC(=O)NCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL421974",
-           "CN(C)c1ccc(CC(NCCCCCC(NO)=O)=O)cc1 CHEMBL484488",
-           "CC(C)Cc1ccc(C(C)C(=O)NC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL564780",
-           "c1cc([N+]([O-])=O)ccc1CC(=O)NC1CCCCCC1 CHEMBL1553142",
-           "CC1(C)NC(C)(C)CC(NC(=O)Cc2ccccc2)C1 CHEMBL1703640",
-           //# 3 . 1 14 14 0.08 sec MCS: CCCCNC(=O)Cc1ccccc1
-           */
-        /*
-        //TEST 5 FAILED
-        //.5 . 1 20 22 0.23 N(-c1:c:c:c:c:c:1)-C-c1:n(-C-c2:c:c:c:c:c:2):c:n:c:1
-        //MCS: ccccc-ccc(c)NCc1cncn1Cc1ccccc1 23 atoms, 24 bonds Time elapsed 6.39 seconds
-        "c1ccc(Cn2c(CNc3cc(-c4ccccc4)ccc3)cnc2)cc1 CHEMBL485450",   // QUERY
-        "Cc1ccc(Cn2c(CNc3cc(-c4ccccc4)ccc3)cnc2)cc1 CHEMBL498061",
-        "c1ccc(-c2ccc(Cn3c(CNc4cc(-c5ccccc5)ccc4)cnc3)cc2)cc1 CHEMBL485449",
-        "Clc1ccc(Cn2c(CNc3cc(-c4ccccc4)ccc3)cnc2)cc1 CHEMBL525178",
-        "Cc1cccc(-c2cc(NCc3cncn3Cc3ccccc3)ccc2)c1 CHEMBL482856",
-        "c1ccc(Cn2c(CNc3cc(-c4ccncc4)ccc3)cnc2)cc1 CHEMBL497405",
-        "Cc1c(-c2cc(NCc3cncn3Cc3ccccc3)ccc2)cccc1 CHEMBL520679",
-        "c1ccc(Cn2c(CNc3cc(-c4cnccc4)ccc3)cnc2)cc1 CHEMBL496834",
-        "O=[N+]([O-])c1ccc(Cn2c(CNc3cc(-c4ccccc4)ccc3)cnc2)cc1 CHEMBL497885",
-        "c1ccc(-c2ccc(Cn3c(CNc4ccc(-c5ccccc5)cc4)cnc3)cc2)cc1 CHEMBL497407",
-        */
-        //"CCCCCCC1C23C4=c5c6c7c8c5c5c9c%10c%11c%12c(c%108)c8c7c7c%10c%13c%14c%15c%16c%17c%18c%19c%20c(c%21c%22c%23c(c9C(C25C[N+]1(C)C)C1c2c3c3c5c9c2-c(c%231)c(c%22%19)C%18C9C1(C5=C%13C(C43)c6%10)C%14%17C[N+](C)(C)C1CCCCCC)c%21%11)c%12c(c%16%20)c8c%157 CHEMBL439119"
-        /*
-        //WAS 8 sec test
-        //NOW:
-        //Inspected Seeds      = 54250    Rejected by BestSize = 21360    Rejected by WrongComposition = 191( 134 generated)
-        //MatchCalls = 44607  MatchFound = 30334
-        //AtomCompareCalls = 103017020    BondCompareCalls = 25286076
-        //MCS : CCCC(NC(=O)CNC(=O)C(Cc(c)c)NC(=O)CNC(=O)CNC(=O)CNC(=O)C(C)NC=O)C(=O)NC(CCC)C(=O)NC(C)C 49 atoms, 48 bonds
-        //Time elapsed 20.19 seconds
-        //Time elapsed 35.65 seconds + FIX
-        //Time elapsed 123 seconds + FIX + can SMILES
-        "CC(C)CC(NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258 modified QUERY",// CHEMBL439258
-        "CC(C)CC(NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(=O)C(Cc1ccccc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC(C(NC(C)=O)Cc1cc2ccccc2cc1)=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258",// CHEMBL439258
-        "CC(C)CC(NC(=O)CNC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC(C(NC(C)=O)Cc1cc2ccccc2cc1)=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258 modified",// CHEMBL439258
-
-        "CCCCC(NC(C(CCC(O)=O)NC(C(CC(C)C)NC(C(C(C)C)NC(=O)C(CCC(O)=O)NC(C(CCCN=C(N)N)NC(C(NC(=O)C(NC(C(NC(C1CCCNC(=O)CCC(N)C(=O)NC(CC(C)C)C(=O)NC(C(C)O)C(=O)N1)=O)Cc1c[nH]cn1)=O)CC(C)C)CC(C)C)=O)=O)=O)=O)=O)C(NC(C)C(NC(CCCN=C(N)N)C(NC(C)C(NC(CCC(O)=O)C(NC(CCC(N)=O)C(NC(CC(C)C)C(NC(C)C(NC(CCC(N)=O)C(NC(CCC(N)=O)C(NC(C)C(NC(Cc1c[nH]cn1)C(NC(CO)C(NC(CC(N)=O)C(NC(CCCN=C(N)N)C(NC(CCCCN)C(NC(CC(C)C)C(NC(CCCC)C(NC(C(NC(C(C)CC)C(NC(C(N)=O)C(C)CC)=O)=O)CCC(O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O CHEMBL438567",
-        "CCC(C)C(NC(CNC(=O)C(C)NC(=O)C(C)NC(C(Cc1nc[nH]c1)NC(C(CC(N)=O)NC(CNC(C(CO)NC(=O)C(C)NC(=O)C(CCC(N)=O)NC(C(NC(=O)C(NC(C(CCCN=C(N)N)NC(C(CCC(N)=O)NC(C(NC(C(CCCN=C(N)N)NC(CNC(C(CCC(N)=O)NC(C(CC(C)C)NC(C(C)N)=O)=O)=O)=O)=O)CC(C)C)=O)=O)=O)CC(C)C)CC(C)C)=O)=O)=O)=O)=O)=O)C(NC(CC(C)C)C(NC(C(O)C)C(NC(CCSC)C(O)=O)=O)=O)=O CHEMBL429374",
-        "CC(C)CC1NC(=O)C(CCCCN)NC(=O)C(Cc2ccc(O)cc2)NC(=O)CNC(=O)C2NC(=O)C(NC(C(C(C)C)NC(CNC(C3NC(=O)CC3)=O)=O)=O)CSSCC(C(O)=O)NC(=O)C3N(CCC3O)C(=O)C(Cc3ccccc3)NC(=O)C(CSSC2)NC1=O CHEMBL1076370",
-        */
-
-        // SLOW
-        //test 45 #  Using CHEMBL551656 CHEMBL563796 CHEMBL561978 CHEMBL559467 CHEMBL550503 CHEMBL562866 CHEMBL552190 CHEMBL181547 CHEMBL359567 CHEMBL373316
-        // 45 . 1 30 32 27.01 n12-C-c:c(-c:2:c:c2-C(-O)(-C-C)-C(-O-C-c:2:c:1=O)=O):n:c(:c:c:c-O):c(:c):c-C-C-C
-        //MCS: CCCCc(cc)c1Cn2-cc3COC(=O)[C](O)(CC):c3cc2-c1nccccO 30 atoms, 32 bonds
-        //Time elapsed 40.41 seconds
-        //MCS : CCCCc(cc)cCn1c(-cncccc)cc2c(COC(=O)[C]:2(O)CC)c-1=O 30 atoms, 31 bonds
-        //Time elapsed 9.70 seconds
-        "CCC1(O)c2cc3n(c(=O)c2COC1=O)Cc1c-3nc2ccc(OC)cc2c1C1CCCCC1 CHEMBL551656",
-        "CCC1(O)c2cc3n(c(=O)c2COC1=O)Cc1c-3nc2ccc(OC)cc2c1C1CCCC1 CHEMBL563796", //Q
-        "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(OC)cc1c2C1CCCCCC1 CHEMBL561978",
-        "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(OC)cc1c2C1CCC1 CHEMBL559467",
-        "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(O)cc1c2C1CCCC1 CHEMBL550503",
-        "CCC1(O)c2cc3n(c(=O)c2COC1=O)Cc1c-3nc2ccc(O)cc2c1C1CCCCCC1 CHEMBL562866",
-        "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(O)cc1c2C1CCCCC1 CHEMBL552190",
-        "CCC1(O)c2c(c(=O)n3c(c2)-c2nc4cc5c(cc4c(C4CCCC4)c2C3)OCO5)COC1=O CHEMBL181547",
-        "CCC1(O)c2c(c(=O)n3c(c2)-c2nc4c(c(C5CCCCC5)c2C3)cc2c(c4)OCO2)COC1=O CHEMBL359567",
-        "CCCc1c(OC)ccc2nc3c(c(CC)c21)Cn1c-3cc2c(c1=O)COC(=O)C2(O)CC CHEMBL373316",
-
-
-        /*
-        // # 190 TEST must < 0.27 sec
-        "COc1cc2nc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)ccc3)oc2cc1  CHEMBL1479679",
-        "COc1cc2nc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)c(C)cc3)oc2cc1  CHEMBL1333382",
-        "Cc1cc2oc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)ccc3)nc2cc1  CHEMBL1437584",
-        "COc1c(NC(=O)CSc2ccc(Cl)cc2)cc(-c2nc3ccccc3o2)cc1  CHEMBL1601350",
-        "Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
-        "Cc1cc2oc(-c3cc(NC(=O)CSc4ccc(Cl)cc4)c(C)cc3)nc2cc1  CHEMBL1612903",
-        "COc1cc2nc(-c3cc(NC(=O)Cc4ccc(Cl)cc4)c(C)cc3)oc2cc1  CHEMBL1316483",
-        "Cc1c(NC(=O)CSc2ccc(Cl)cc2)cccc1-c1nc2cc(Cl)ccc2o1  CHEMBL1568754",
-        "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
-        "Cc1ccc(SCC(=O)Nc2cc(-c3nc4cc(C)ccc4o3)c(O)cc2)cc1  CHEMBL1611932",
-        //# 19 21 1.37 sec MCS: CC(=O)Nc1cccc(c1)-c1nc2ccccc2o1
-        //  19 21 2.36 sec MCS: CC(=O)Nc1cccc(c1)-c1nc2ccccc2o1 19 atoms, 21 bonds
-        */
-        /*
-        //FIXED with //C1 - decrease excludeBonds   /// FAILED !!!!!!!!
-        //#  Using CHEMBL1515359 CHEMBL1590658 CHEMBL1447567 CHEMBL1384017 CHEMBL1456416 CHEMBL1308819 CHEMBL1703007 CHEMBL1707819 CHEMBL1500793 CHEMBL1334715
-        //32 . 1 31 33 0.82 S(-N1-C-C-O-C-C-1)(-c1:c:c:c(-N(-C-C)-C-C):c(-N-C(-C=C-c2:c:c:c:c:c:2)=O):c:1)(=O)=O
-        "O=C(Nc1cc(S(N2CCOCC2)(=O)=O)ccc1N1CCOCC1)C=Cc1ccc(Cl)cc1  CHEMBL1515359",
-        "c1ccc(C=CC(Nc2cc(S(N3CCOCC3)(=O)=O)ccc2N2CCOCC2)=O)cc1  CHEMBL1590658",
-        "Cc1ccc(C=CC(=O)Nc2cc(S(N3CCOCC3)(=O)=O)ccc2N2CCOCC2)cc1  CHEMBL1447567",
-        "c1ccc(C=CC(Nc2cc(S(N3CCOCC3)(=O)=O)ccc2N2CCCC2)=O)cc1  CHEMBL1384017",
-        "O=C(C=Cc1ccc(F)cc1)Nc1cc(S(N2CCOCC2)(=O)=O)ccc1N1CCCC1  CHEMBL1456416",
-        "c1cc(F)cc(C=CC(=O)Nc2c(N3CCCC3)ccc(S(N3CCOCC3)(=O)=O)c2)c1  CHEMBL1308819",
-        "CCN1CCN(c2ccc(S(N3CCOCC3)(=O)=O)cc2NC(=O)C=Cc2ccc(C)cc2)CC1  CHEMBL1703007",
-        "c1cc(C=CC(=O)Nc2cc(S(N3CCOCC3)(=O)=O)ccc2N2CCOCC2)c([N+]([O-])=O)cc1  CHEMBL1707819",
-        "N#CC(=Cc1ccccc1)C(=O)Nc1cc(S(N2CCOCC2)(=O)=O)ccc1N1CCCC1  CHEMBL1500793",
-        "C(=Cc1ccc2c(c1)OCO2)C(Nc1cc(S(=O)(=O)N2CCOCC2)ccc1N1CCOCC1)=O  CHEMBL1334715",
-        // 31 31 0.05 sec MCS: CCOCCNS(=O)(=O)c1ccc(c(c1)NC(=O)C=Cc(c)cccc)N(CC)CC
-        // 31 32 0.15 sec MCS: CCOCCNS(=O)(=O)c1ccc(c(c1)NC(=O)C=Cc1ccccc1)N(CC)CC 31 atoms, 32 bonds
-        // 31 33 0.35 sec MCS: CCN(CC)c1ccc(cc1NC(=O)C=Cc1ccccc1)S(=O)(=O)N1CCOCC1
-        */
-    };
-
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++) {
-        //        mols.push_back(ROMOL_SPTR(SmartsToMol(smi[i]))); //it skips aromaticity
-#if 0
-        // optional temporary AROMATIZATION - for this test ONLY
-        //(to avoid PRECONDITION Exception with Implicit Hs)
-        std::auto_ptr<RWMol> mol(SmartsToMol(smi[i]));
-        unsigned dummy;
-        RDKit::MolOps::sanitizeMol(*mol, dummy, RDKit::MolOps::SANITIZE_ADJUSTHS|RDKit::MolOps::SANITIZE_SETAROMATICITY);
-        std::string s = MolToSmiles(*mol);
-        RWMol* m = SmartsToMol(s);
-        RDKit::MolOps::sanitizeMol(*m, dummy, RDKit::MolOps::SANITIZE_ADJUSTHS|RDKit::MolOps::SANITIZE_SETAROMATICITY);
-        mols.push_back(ROMOL_SPTR( m ));
-        std::cout << "MOL : " << s <<"\n";
-        //------
-#else
-        std::string id;
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i], &id) )));
-        std::cout << id << "\n";
-#endif
-    }
-
-    t0 = nanoClock();
-
-    //p.Threshold = 0.7;
-    //p.Timeout = 9;
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-
-void testRing1() {
-    std::cout << "\ntestRing1()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        "COCc1c(ncc2[nH]c3cccc(Oc4ccc(Cl)cc4)c3c12)C(=O)OC(C)C",
-        //      "COCc1cnc(C(=O)OC(C)C)c2[nH]c3cc(Oc4ccc(Cl)cc4)ccc3c12", // original molecule
-        "COCc1cnc(C(=O)OC(C)C)c2[nH]ccc(Oc4ccc(Cl)cc4)cccc12",   // ring 3 removed
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
-
-    p.BondCompareParameters.RingMatchesRingOnly = true;
-    p.BondCompareParameters.CompleteRingsOnly   = true;
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-
 void test504() {
     std::cout << "\ntest504()\n";
     std::vector<ROMOL_SPTR> mols;
     const char* smi[] = {
-        //"O=C(-N-c1:c:c:c:c:c:1)-N-C-C-C-N(-C)-C-C-C-C-C-N-C(-C1-C-C-1-c1:c:c:c(-Cl):c(-Cl):c:1)=O", // python MCS == SMARTS !!!
-        //"Clc1ccc(NC(=O)NC2CCN(CCCCCNC(=O)C3CC3[c:3]3[cH:2]cc(Cl)c(Cl)[cH:1]3)C2)cc1",
         //TEST 504
         "C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)C1 CHEMBL545864",  // - QUERY
-        //"C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccccc2)=O)C1 CHEMBL545864",  // - QUERY - Cl:30
+//"C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccccc2)=O)C1 CHEMBL545864",  // - QUERY - Cl:30
 
         "FC(F)(F)c1cc(NC(N2CCCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)ccc1Cl CHEMBL528228",
         "FC(F)(F)c1cc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)C2)=O)ccc1Cl CHEMBL525875",
@@ -566,10 +384,6 @@ void test504() {
         "FC(F)(F)c1ccc(NC(NC2CCN(CCCCCNC(C3CC3c3cc(Cl)c(Cl)cc3)=O)C2)=O)cc1 CHEMBL525307",
         "Fc1ccc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)cc1C(F)(F)F CHEMBL581847",
         "FC(F)(F)c1ccc(NC(NC2CCN(CCCCCNC(C3CC3c3cc(Cl)c(Cl)cc3)=O)CC2)=O)cc1 CHEMBL579547",
-
-        //        "C(CCNC(C1CC1c1cc(Cl)c(Cl)cc1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)C1 CHEMBL545864",  // - QUERY
-        //        "Clc1ccc(NC(=O)NC2CCN(CCCCCNC(=O)C3CC3c3ccc(Cl)c(Cl)c3)C2)cc1",   // - the same QUERY with RIGHT MCS !!!
-        //        "Clc1ccc(NC(=O)NC2CCN(CCCCCNC(=O)C3CC3[c:1]3[cH:2]cc(Cl)c(Cl)[cH:3]3)C2)cc1",   // - the same QUERY with Atom MAP and RIGHT MCS !!!
 
         "N#Cc1cccc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)c1 CHEMBL529994",
     };
@@ -589,102 +403,7 @@ void test504() {
     printTime();
 }
 
-void test18() {
-    std::cout << "\ntest18()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        //TEST 18
-        "Cc1nc(CN(C(C)c2ncccc2)CCCCN)ccc1 CHEMBL1682991", //-- QUERY
-        "Cc1ccc(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682990",
-        "Cc1cccnc1CN(C(C)c1ccccn1)CCCCN CHEMBL1682998",
-        "CC(N(CCCCN)Cc1c(N)cccn1)c1ccccn1 CHEMBL1682987",
-        "Cc1cc(C)c(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682992",
-        "Cc1cc(C(C)N(CCCCN)Cc2c(C)cccn2)ncc1 CHEMBL1682993",
-        "Cc1nc(C(C)N(CCCCN)Cc2nc3c([nH]2)cccc3)ccc1 CHEMBL1682878",
-        "CC(c1ncccc1)N(CCCCN)Cc1nc2c([nH]1)cccc2 CHEMBL1682867",
-        "CC(N(CCCCN)Cc1c(C(C)(C)C)cccn1)c1ccccn1 CHEMBL1682989",
-        "CC(N(CCCCN)Cc1c(C(F)(F)F)cccn1)c1ccccn1 CHEMBL1682988",
-        //# 18 .  20 20 0.04 sec. Python MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
-    };
-    RWMol* qm = SmilesToMol( getSmilesOnly(smi[0]) );
-    unsigned nq = qm->getNumAtoms();
-    for(size_t ai = 0; ai < nq; ai++) {
-        Atom* atom = qm->getAtomWithIdx(ai);
-        atom->setProp("molAtomMapNumber", (int)ai);
-    }
-    std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
-    mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
-    for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-void testThreshold() {
-    std::cout << "\ntestThreshold()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        "CCC", "CCCO", "CCCN", "CC",
-        "CCC", "CCCO", "CCCN", "CC",
-        "CCC", "CC",
-        /*
-          "COCc1c(ncc2[nH]c3cccc(Oc4ccc(Cl)cc4)c3c12)C(=O)OC(C)C",
-          "COCc1cnc(C(=O)OC(C)C)c2[nH]c3cc(Oc4ccc(Cl)cc4)ccc3c12",
-
-          //        "CC(c1ccccn1)N(C)Ccnccc" // short "MCS" for test 18
-          //TEST 18
-          "Cc1nc(CN(C(C)c2ncccc2)CCCCN)ccc1 CHEMBL1682991", //-- QUERY
-          "Cc1ccc(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682990",
-          "Cc1cccnc1CN(C(C)c1ccccn1)CCCCN CHEMBL1682998",
-          "CC(N(CCCCN)Cc1c(N)cccn1)c1ccccn1 CHEMBL1682987",
-          "Cc1cc(C)c(CN(C(C)c2ccccn2)CCCCN)nc1 CHEMBL1682992",
-          "Cc1cc(C(C)N(CCCCN)Cc2c(C)cccn2)ncc1 CHEMBL1682993",
-          "Cc1nc(C(C)N(CCCCN)Cc2nc3c([nH]2)cccc3)ccc1 CHEMBL1682878",
-          "CC(c1ncccc1)N(CCCCN)Cc1nc2c([nH]1)cccc2 CHEMBL1682867",
-          "CC(N(CCCCN)Cc1c(C(C)(C)C)cccn1)c1ccccn1 CHEMBL1682989",
-          "CC(N(CCCCN)Cc1c(C(F)(F)F)cccn1)c1ccccn1 CHEMBL1682988",
-          //# 18 .  20 20 0.04 sec MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
-          */
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    findMCS(mols);
-    p.Threshold = 0.7;
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-void test330() {
-    std::cout << "\ntest330()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        //TEST 330  40 sec
-        "CCC(C)C(NC(=O)C(NC(C(CCC(O)=O)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC(CCCCN)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240742",
-        "CCC(C)C(NC(=O)C(NC(C(CCCCN)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(Cc1ccccc1)NC(C(CC(C)C)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC(CCC(O)=O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240736",
-        "CCC(C)C(NC(CN)=O)C(NC(C(NC(CC(O)=O)C(NC(C(NC(C)C(NC(CCCCN)C(NC(C(NC(CC(C)C)C(NC(Cc1ccccc1)C(NC(CCC(O)=O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O)=O)CCCCN)=O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O CHEMBL1240738",
-        "CCC(C)C(NC(CN)=O)C(NC(Cc1ccccc1)C(NC(CC(O)=O)C(NC(CCCCN)C(NC(CC(C)C)C(NC(C)C(NC(CCCCN)C(NC(CCC(O)=O)C(NC(C(NC(CO)C(NC(C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O)=O CHEMBL1240740",
-        "CCC(C)C(NC(CN)=O)C(NC(Cc1c[nH]c2c1cccc2)C(NC(CO)C(NC(CC(O)=O)C(NC(CC(C)C)C(NC(C)C(NC(CCC(O)=O)C(NC(C(NC(C(NC(CCCCN)C(NC(CCCCN)C(NC(Cc1ccccc1)C(O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O CHEMBL1240741",
-        "CCC(C)C(NC(=O)C(NC(=O)C(CCCCN)NC(C(CC(C)C)NC(C(Cc1c[nH]c2c1cccc2)NC(CN)=O)=O)=O)CCCCN)C(NC(CCC(O)=O)C(NC(CO)C(=O)NC(C(NC(C(NC(CC(O)=O)C(NC(C)C(NC(Cc1ccccc1)C(O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O CHEMBL1240743",
-        "CCC(C)C(NC(C(CCC(O)=O)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O CHEMBL431874",
-        "CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC(CCC(O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O)=O CHEMBL262166",
-        "CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC(CCCCN)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O CHEMBL313122",
-        "CCC(C)C(NC(C(CCCCN)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)=O)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O CHEMBL314239",
-        //# 330 F  42 41 30.93 sec MCS: [#6]-[#6](-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6](-[#6]-[#6]-[#6])-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6])=[#8])=[#8])=[#8])=[#8])=[#8])-[#6](-[#7]-[#6](-[#6]-[#6](:[#6]):[#6]:[#6]:[#6]:[#6])-[#6](-[#8])=[#8])=[#8]
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-
-void testChEMBL_Txt(const char* test, double th=1.0, const char* csv="chembl_II_sets.C++.res.csv") {
+std::string testChEMBL_Txt(const char* test, double th=1.0, const char* csv="chembl_II_sets.C++.res.csv") {
     std::cout << "\ntestChEMBL_Txt() "<<test<<"\n";
     std::vector<ROMOL_SPTR> mols;
     char smiles[4096];
@@ -692,29 +411,53 @@ void testChEMBL_Txt(const char* test, double th=1.0, const char* csv="chembl_II_
     FILE* f = fopen(test, "rt");
     if(!f) {
         perror("fopen testChEMBL_Txt()");
-        return;
+        return "";
     }
+    char testsmi[512];
+    strcpy(testsmi, test);
+    strcpy(testsmi + strlen(test)-3, "smi");
+    FILE* fsmi = fopen(testsmi, "wt");
     FILE* fres = fopen(csv, "at");
     while(fgets(smiles, sizeof(smiles), f)) {
         if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) { // commented to skip
-            mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnlyTxt(smiles))));
+            std::string id;
+            std::string smi = getSmilesOnlyTxt(smiles, &id);
+            fprintf(fsmi, "%s\n", (smi+" "+ id).c_str());
+            mols.push_back(ROMOL_SPTR(SmilesToMol(smi)));
         }
     }
     fclose(f);
-    t0 = nanoClock();
+    fclose(fsmi);
+
     p.Threshold = th;
+
+    t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
     unsigned long long tc1 = nanoClock();
     double sec = double(tc1-t0) / 1000000.;
+
     std::cout << "MCS : "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
     printTime();
-    fprintf(fres, "%s; %.1f; %.2f; %u; %u; %s\n", test, th, sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+    fprintf(fres, "%s;%u;%.1f;%.4f;%u;%u;%s;", test, mols.size(), th, sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+
+    p.BondTyper = MCSBondCompareOrderExact;
+    t0 = nanoClock();
+    res = findMCS(mols, &p);
+    tc1 = nanoClock();
+    sec = double(tc1-t0) / 1000000.;
+    p.BondTyper = MCSBondCompareOrder;
+
+    std::cout << "MCS : "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+    printTime();
+    fprintf(fres, "%.1f;%.4f;%u;%u;%s\n", sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+
     fclose(fres);
+    return testsmi;
 }
 
 void testChEMBL_TxtALL_chembl_II_sets(double th=1.0) {
-    FILE* fres = fopen("chembl_II_sets.C++.res.csv", "at");
-    fprintf(fres,"test;threshold;t,sec;atoms;bonds;mcs\n");
+    FILE* fres = fopen("chembl_II_sets.C.res.csv", "wt");
+    fprintf(fres,"test;Nmols;threshold;t,sec;atoms;bonds;mcs;E t,sec;E atoms;E bonds;E mcs\n");
     fclose(fres);
     const char* test[] = {
         "Target_no_100_15113.txt",
@@ -1366,8 +1109,21 @@ void testChEMBL_TxtALL_chembl_II_sets(double th=1.0) {
         "Target_no_93_47082.txt",
         "Target_no_93_57082.txt",
     };
-    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++)
-        testChEMBL_Txt((std::string("chembl_II_sets/") + test[i]).c_str(), th, "chembl_II_sets.C++.res.csv");
+    FILE *fcmd = fopen("chembl_II_sets.bat", "wt");
+    // commands for prepare Python test:
+    fprintf(fcmd, "DEL %s\n", "chembl_II_sets.P.res.csv");   //clear before append results
+    fprintf(fcmd, "SET PATH=%PATH%;C:/LIB\n");
+    fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
+    fprintf(fcmd, "ECHO P test;P Nmols;P status;P time,sec;P nAtoms;P nBonds;P MCS >%s\n", "chembl_II_sets.P.res.csv");
+
+    p.Timeout = 60;
+    p.Verbose = false;
+
+    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++) {
+        std::string smiName = std::string("chembl_II_sets/") + test[i];
+        std::string testsmi = testChEMBL_Txt(smiName.c_str(), th, "chembl_II_sets.C.res.csv");
+        fprintf(fcmd, "fmcs_bench.py --timeout %u %s >>%s\n", p.Timeout, testsmi.c_str(), "chembl_II_sets.P.res.csv");   // command for the same Python test
+    }
 }
 
 void testChEMBL_TxtSLOW_chembl_II_sets(double th=1.0) {
@@ -1625,137 +1381,6 @@ void testTarget_no_10188_49064() {
     printTime();
 }
 
-
-void testSimpleFast() {
-    std::cout << "\ntestSimpleFast()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        // SHORT TEST for 26 bonds.
-        // Python MCS = 26 bonds : COCc1cncc(c1):n:c1cccc(Oc2ccc(Cl)cc2)c1
-        // MCS 26: COCc1c-ncc(c1)nc1cccc(c1)Oc1ccc(Cl)cc1 24 atoms, 26 bonds
-        ///            "COCC1=C(N=CC2=C1C1=C(OC3=CC=C(Cl)C=C3)C=CC=C1N2)C(=O)OC(C)C",
-        ///            "COCC1=CN=C(C(=O)OC(C)C)C2=C1C1=CC=C(OC3=CC=C(Cl)C=C3)C=C1N2",
-        // The SAME, but pre AROMATIZATED (else PRECONDITION Exception with Implicit Hs / 16 bonds only)
-        "COCc1c(ncc2[nH]c3cccc(Oc4ccc(Cl)cc4)c3c12)C(=O)OC(C)C",
-        "COCc1cnc(C(=O)OC(C)C)c2[nH]c3cc(Oc4ccc(Cl)cc4)ccc3c12",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    p.Threshold = 0.7;
-    p.BondCompareParameters.RingMatchesRingOnly = true;
-    p.BondCompareParameters.CompleteRingsOnly   = true;
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-void testSegFault() {
-    std::cout << "\ntestSegFault()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        "CN(CCCN(C)CCc1ccccc1)CCOC(c1ccccc1)c1ccccc1",
-        "CN(CCCc1ccccc1)CCCN(C)CCOC(c1ccccc1)c1ccccc1",
-        "Fc1ccc(C(OCCNCCCNCCc2ccccc2)c2ccc(F)cc2)cc1",
-        "O=C(Cc1ccccc1)NCCCCNCCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "O=C(Cc1ccccc1)NCCNCCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "O=C(Cc1ccc(Br)cc1)NC=CNCCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "O=C(Cc1ccc(F)cc1)NCCNCCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "O=C(Cc1ccccc1)NCCCNCCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "CN(CCOC(c1ccc(F)cc1)c1ccc(F)cc1)CCN(C)CCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "COC(=O)C1C2CCC(CC1C(=O)Oc1ccccc1)N2C",
-        "O=C1CN(CCc2ccccc2)CCN1CCOC(c1ccc(F)cc1)c1ccc(F)cc1",
-        "CN(CCOC(c1ccccc1)c1ccccc1)CCN(C)CCc1ccc(F)cc1",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-
-void testAtomCompareIsotopes() {
-    std::cout << "\ntestAtomCompareIsotopes()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        "CC[13NH2]",
-        "CC[13CH3]",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    t0 = nanoClock();
-    p.AtomTyper = MCSAtomCompareIsotopes;
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-
-void testAtomCompareAnyAtom() {
-    std::cout << "\ntestAtomCompareAnyAtom()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        "c1ccccc1C",
-        "c1ccccc1O",
-        "c1ccccc1Cl",
-        "c1ccccc1F",
-        "c1ccccc1N",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    t0 = nanoClock();
-    p.AtomTyper = MCSAtomCompareAny;
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-void testAtomCompareAnyAtomBond() {
-    std::cout << "\ntestAtomCompareAnyAtom()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        "C1CCCCC1=C",
-        "c1ccccc1O",
-        "c1ccccc1Cl",
-        "c1ccccc1F",
-        "c1ccccc1N",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    t0 = nanoClock();
-    p.AtomTyper = MCSAtomCompareAny;
-    p.BondTyper = MCSBondCompareAny;
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
-
-void testSimple() {
-    std::cout << "\ntestSimple()\n";
-    std::vector<ROMOL_SPTR> mols;
-    const char* smi[] = {
-        // LONG TIME TEST for performance analisis (about 30 sec)
-        "CC(C)CC(NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258 modified QUERY",// CHEMBL439258
-        "CC(C)CC(NC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(=O)C(Cc1ccccc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC(C(NC(C)=O)Cc1cc2ccccc2cc1)=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258",// CHEMBL439258
-        "CC(C)CC(NC(=O)CNC(=O)C(Cc1ccc(NC(C)=O)cc1)NC(C(CO)NC(C(NC(c1ccncc1)=O)NC(=O)C(Cc1ccc(Cl)cc1)NC(C(NC(C)=O)Cc1cc2ccccc2cc1)=O)=O)=O)C(NC(CCCCNC(C)C)C(N1C(C(=O)NC(C)C(N)=O)CCC1)=O)=O CHEMBL439258 modified",// CHEMBL439258
-
-        "CCCCC(NC(C(CCC(O)=O)NC(C(CC(C)C)NC(C(C(C)C)NC(=O)C(CCC(O)=O)NC(C(CCCN=C(N)N)NC(C(NC(=O)C(NC(C(NC(C1CCCNC(=O)CCC(N)C(=O)NC(CC(C)C)C(=O)NC(C(C)O)C(=O)N1)=O)Cc1c[nH]cn1)=O)CC(C)C)CC(C)C)=O)=O)=O)=O)=O)C(NC(C)C(NC(CCCN=C(N)N)C(NC(C)C(NC(CCC(O)=O)C(NC(CCC(N)=O)C(NC(CC(C)C)C(NC(C)C(NC(CCC(N)=O)C(NC(CCC(N)=O)C(NC(C)C(NC(Cc1c[nH]cn1)C(NC(CO)C(NC(CC(N)=O)C(NC(CCCN=C(N)N)C(NC(CCCCN)C(NC(CC(C)C)C(NC(CCCC)C(NC(C(NC(C(C)CC)C(NC(C(N)=O)C(C)CC)=O)=O)CCC(O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O)=O CHEMBL438567",
-        "CCC(C)C(NC(CNC(=O)C(C)NC(=O)C(C)NC(C(Cc1nc[nH]c1)NC(C(CC(N)=O)NC(CNC(C(CO)NC(=O)C(C)NC(=O)C(CCC(N)=O)NC(C(NC(=O)C(NC(C(CCCN=C(N)N)NC(C(CCC(N)=O)NC(C(NC(C(CCCN=C(N)N)NC(CNC(C(CCC(N)=O)NC(C(CC(C)C)NC(C(C)N)=O)=O)=O)=O)=O)CC(C)C)=O)=O)=O)CC(C)C)CC(C)C)=O)=O)=O)=O)=O)=O)C(NC(CC(C)C)C(NC(C(O)C)C(NC(CCSC)C(O)=O)=O)=O)=O CHEMBL429374",
-        "CC(C)CC1NC(=O)C(CCCCN)NC(=O)C(Cc2ccc(O)cc2)NC(=O)CNC(=O)C2NC(=O)C(NC(C(C(C)C)NC(CNC(C3NC(=O)CC3)=O)=O)=O)CSSCC(C(O)=O)NC(=O)C3N(CCC3O)C(=O)C(Cc3ccccc3)NC(=O)C(CSSC2)NC1=O CHEMBL1076370",
-    };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
-        mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
-    p.BondCompareParameters.RingMatchesRingOnly = true;
-    p.BondCompareParameters.CompleteRingsOnly   = true;
-    t0 = nanoClock();
-    MCSResult res = findMCS(mols, &p);
-    std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-    printTime();
-}
-
 void testCmndLineSMILES(int argc, const char* argv[]) {
     std::vector<ROMOL_SPTR> mols;
     for(int i=1; i<argc; i++)
@@ -1784,6 +1409,267 @@ double testFileSDF(const char* test) {
     return t;
 }
 
+
+void testFileSDF_RandomSet_SMI(const char* path="benchmark", const char* test="chembl13-10000-random-pairs.sdf") {
+    p.Timeout = 60;
+    p.Verbose = false;
+    unsigned long long To = nanoClock();
+
+    std::cout << "\ntestFileSDF_RandomSet(): " << path<<"/"<<test << "\n";
+    std::vector<ROMOL_SPTR> mols;
+    FILE* fcsv = fopen((std::string(path)+"_"+test+".SMI.C.csv").c_str(), "wt");
+    fprintf(fcsv, "test;Nmols;status;t,sec;nAtoms;nBonds;C++ MCS; E status;E t,sec;E nAtoms;E nBonds;E C++ MCS\n");
+
+    bool fileExist = true;
+    unsigned n = 1;
+    for( ; fileExist ; n++) {
+        char smiName[256];
+        sprintf(smiName,"%s/smiles/%s.%u.smi", path, test, n);
+        FILE* fsmi = fopen(smiName, "rt");
+        if(!fsmi) {
+            fileExist = false;
+            break;
+        }
+        char smiles[4096];
+        while(fgets(smiles, sizeof(smiles), fsmi)) {
+            mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smiles))));
+        }
+        fclose(fsmi);
+        if(mols.size()>1) {
+            t0 = nanoClock();
+            MCSResult res = findMCS(mols, &p);
+            double t = (nanoClock() - t0) / 1000000.;
+            printTime();
+            std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+            fprintf(fcsv, "%u;%u;%s;%.3f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+        }
+        if(mols.size()>1) {
+            p.BondTyper = MCSBondCompareOrderExact;
+            t0 = nanoClock();
+            MCSResult res = findMCS(mols, &p);
+            double t = (nanoClock() - t0) / 1000000.;
+            printTime();
+            std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+            fprintf(fcsv, "%u;%u;%s;%.3f;%u;%u;%s\n", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            p.BondTyper = MCSBondCompareOrder;
+        }
+        mols.clear();
+    }
+    fclose(fcsv);
+}
+
+void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", const char* path="benchmark") {
+    p.Timeout = 60;
+    p.Verbose = false;
+
+    unsigned long long To = nanoClock();
+
+    std::cout << "\ntestFileSDF_RandomSet(): " << path<<"/"<<test << "\n";
+    std::vector<ROMOL_SPTR> mols;
+    std::vector<ROMOL_SPTR> all_mols;
+    FILE* fall = fopen((std::string(path)+"_ALL.P.bat").c_str(), "at");
+    fprintf(fall, "CALL %s\n", (std::string(path)+"_"+test+".P.bat").c_str());
+    fclose(fall);
+    FILE* fcmd = fopen((std::string(path)+"_"+test+".P.bat").c_str(), "wt");
+    FILE* fcsv = fopen((std::string(path)+"_"+test+".C.csv").c_str(), "wt");
+    fprintf(fcsv, "test;Nmols;status;t,sec;nAtoms;nBonds;C++ MCS; E status;E t,sec;E nAtoms;E nBonds;E C++ MCS\n");
+    std::string fn(std::string(path)+"/"+test);
+    RDKit::MolSupplier* suppl = 0;
+    try {
+        if('f' == test[strlen(test)-1])   // sdf file
+            suppl = new RDKit::SDMolSupplier(fn);
+        else if('i' == test[strlen(test)-1])   // smi file
+            suppl = new RDKit::SmilesMolSupplier(fn);
+    } catch(...) {
+        std::cout << "ERROR: RDKit could not load input file" << "\n";
+        return;
+    }
+    if(!suppl) {
+        std::cout << "ERROR: unsupported input file format" << "\n";
+        return;
+    }
+    // commands for prepare Python test:
+    fprintf(fcmd, "DEL %s\n", (std::string(path)+"_"+test+".P.csv").c_str());   //clear before append results
+    fprintf(fcmd, "SET PATH=%PATH%;C:/LIB\n");
+    fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
+    fprintf(fcmd, "ECHO P test;P Nmols;P status;P time,sec;P nAtoms;P nBonds;P MCS >%s\n", (std::string(path)+"_"+test+".P.csv").c_str());
+
+    unsigned n = 1;
+    std::cout << "\n****** Load all molecules from SFD and PAIR SET test *********\n\n";
+    for( ; !suppl->atEnd() ; n++) {
+        char smiName[256];
+        sprintf(smiName,"%s/smiles/%s.%u.smi", path, test, n);
+        FILE* fsmi = fopen(smiName, "wt");
+        if(!fsmi) {
+            std::cout << "ERROR: could not create SMI file " << smiName <<"\n";
+            return;
+        }
+        ROMol *m=0;
+        for(int i=0; i<2 && !suppl->atEnd(); i++) {  // load sequential pair
+            m = suppl->next();
+            if(m) {
+                mols.push_back(ROMOL_SPTR(m));
+                all_mols.push_back(mols.back());
+                fprintf(fsmi,"%s Mol%u\n", MolToSmiles(*m).c_str(), n+i);
+            }
+        }
+        fclose(fsmi);
+        if(mols.size()<2) {
+            unlink(smiName);
+            n--;
+        } else {
+            fprintf(fcmd, "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n, p.Timeout, p.Threshold, smiName, (std::string(path)+"_"+test+".P.csv").c_str());   // command for the same Python test
+
+            if(mols.size()>1) {
+                t0 = nanoClock();
+                MCSResult res = findMCS(mols, &p);
+                double t = (nanoClock() - t0) / 1000000.;
+                if(t < 0.00001)
+                    t = 0.00001; // avoid division by zero
+                printTime();
+                std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+                fprintf(fcsv, "%u;%u;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            }
+            if(mols.size()>1) {
+                p.BondTyper = MCSBondCompareOrderExact;
+                t0 = nanoClock();
+                MCSResult res = findMCS(mols, &p);
+                double t = (nanoClock() - t0) / 1000000.;
+                if(t < 0.00001)
+                    t = 0.00001; // avoid division by zero
+                printTime();
+                std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+                fprintf(fcsv, "%s;%.5f;%u;%u;%s\n", res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+                p.BondTyper = MCSBondCompareOrder;
+            }
+        }
+        mols.clear();
+    }
+    delete(suppl);
+
+    std::cout << "\n****** RANDOM SET test *********\n\n";
+    const unsigned N_RandomTests = all_mols.size() * 7;
+    srand(1);   // make stable pseudorandom sequence
+    for(unsigned jn; n <= N_RandomTests; jn++, n++) {
+        char smiName[256];
+        sprintf(smiName,"%s/smilesRAND/%s.%u.smi", path, test, n);
+        FILE* fsmi = fopen(smiName, "wt");
+        fprintf(fcmd, "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n, p.Timeout, p.Threshold, smiName, (std::string(path)+"_"+test+".P.csv").c_str());   // command for the same Python test
+        ROMol *m=0;
+        unsigned iN = 3+rand()%32;
+        for(int i=0; i < iN; i++) {  // load random set
+            mols.push_back(all_mols[rand()%(all_mols.size()-1)]);
+            fprintf(fsmi,"%s Mol%u\n", MolToSmiles(*mols.back()).c_str(), n+i);
+        }
+        fclose(fsmi);
+        if(mols.size()>1) {
+            t0 = nanoClock();
+            MCSResult res = findMCS(mols, &p);
+            double t = (nanoClock() - t0) / 1000000.;
+            if(t < 0.00001)
+                t = 0.00001; // avoid division by zero
+            printTime();
+            std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+            fprintf(fcsv, "%u;%u;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+        }
+        if(mols.size()>1) {
+            p.BondTyper = MCSBondCompareOrderExact;
+            t0 = nanoClock();
+            MCSResult res = findMCS(mols, &p);
+            double t = (nanoClock() - t0) / 1000000.;
+            if(t < 0.00001)
+                t = 0.00001; // avoid division by zero
+            printTime();
+            std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+            fprintf(fcsv, "%s;%.5f;%u;%u;%s\n", res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            p.BondTyper = MCSBondCompareOrder;
+        }
+        mols.clear();
+    }
+    fclose(fcsv);
+    fclose(fcmd);
+
+    std::cout << "\n****** BIG MCS RANDOM SET test *********\n\n";
+
+    unsigned maxMol = 0;
+    for(unsigned i=0; i < all_mols.size(); i++) {
+        if(maxMol < all_mols[i]->getNumBonds())
+            maxMol = all_mols[i]->getNumBonds();
+    }
+    const unsigned N_BigRandomTests = all_mols.size() > 2000 ? all_mols.size()/2 : all_mols.size()*2;
+    const unsigned N_BigRandomTestsAttempts = all_mols.size()*130;
+    const unsigned SizeOfBigMCS_ForBigRandomTests = maxMol < 24 ? maxMol*2/3 : 21;
+
+    fall = fopen((std::string(path)+"_ALL_BIG.P.bat").c_str(), "at");
+    fprintf(fall, "CALL %s\n", (std::string(path)+"_"+test+".BIG_MCS.P.bat").c_str());
+    fclose(fall);
+    fcmd = fopen((std::string(path)+"_"+test+".BIG_MCS.P.bat").c_str(), "wt");
+    fcsv = fopen((std::string(path)+"_"+test+".BIG_MCS.C.csv").c_str(), "wt");
+    fprintf(fcsv, "test;Nmols;status;t,sec;nAtoms;nBonds;C++ MCS; E status;E t,sec;E nAtoms;E nBonds;E C++ MCS\n");
+
+    const unsigned n1 = n;
+    fprintf(fcmd, "DEL %s\n", (std::string(path)+"_"+test+".BIG_MCS.P.csv").c_str());   //clear before append results
+    fprintf(fcmd, "SET PATH=%PATH%;C:/LIB\n");
+    fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
+    fprintf(fcmd, "ECHO P test;P Nmols;P status;P time,sec;P nAtoms;P nBonds;P MCS >%s\n", (std::string(path)+"_"+test+".BIG_MCS.P.csv").c_str());
+    for(size_t jn=0; jn < N_BigRandomTestsAttempts && n-n1 <= N_BigRandomTests; jn++) {
+        char smiName[512];
+        sprintf(smiName,"%s/smilesBIG/%s.%u.smi", path, test, n);
+        ROMol *m=0;
+        unsigned iN = 2+rand()%24;
+        mols.clear();
+        for(size_t i=0; i < iN; i++)    // load random set
+            for(size_t ij=0; ij < all_mols.size()/2; ij++) {
+                unsigned mi = rand()%(all_mols.size()-1);
+                if(all_mols[mi]->getNumBonds() < SizeOfBigMCS_ForBigRandomTests)
+                    continue;
+                mols.push_back(all_mols[mi]);
+                break;
+            }
+        MCSResult res;
+        if(mols.size()>1) {
+            t0 = nanoClock();
+            res = findMCS(mols, &p);
+            double t = (nanoClock() - t0) / 1000000.;
+            if(t < 0.00001)
+                t = 0.00001; // avoid division by zero
+            printTime();
+            std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+            if(res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
+                fprintf(fcsv, "%u;%u;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+                fprintf(fcmd, "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n, p.Timeout, p.Threshold, smiName, (std::string(path)+"_"+test+".BIG_MCS.P.csv").c_str());   // command for the same Python test
+                n++;
+            }
+        }
+        if(res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
+            FILE* fsmi = fopen(smiName, "wt");
+            for(int i=0; i < mols.size(); i++) {  // load random set
+                fprintf(fsmi,"%s Mol%u\n", MolToSmiles(*mols[i]).c_str(), n+i);
+            }
+            fclose(fsmi);
+        }
+        if(res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
+            p.BondTyper = MCSBondCompareOrderExact;
+            t0 = nanoClock();
+            res = findMCS(mols, &p);
+            double t = (nanoClock() - t0) / 1000000.;
+            if(t < 0.00001)
+                t = 0.00001; // avoid division by zero
+            printTime();
+            std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
+            fprintf(fcsv, "%s;%.5f;%u;%u;%s\n", res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            p.BondTyper = MCSBondCompareOrder;
+        }
+        mols.clear();
+    }
+    fclose(fcsv);
+    fclose(fcmd);
+
+    t0 = T0;
+    std::cout << n << " tests processed\n";
+    printTime();
+}
+
 void testFileSMILES(const char* test) {
     std::vector<ROMOL_SPTR> mols;
     char smiles[4096];
@@ -1793,7 +1679,7 @@ void testFileSMILES(const char* test) {
     while(fgets(smiles, sizeof(smiles), f)) {
         std::cout<<"\rLine: "<< ++n <<" ";
         if('#' != smiles[0] && ' ' != smiles[0] && '/' != smiles[0]) // commented to skip
-            //            if(strlen(smiles) > 92) // minimal query size !!!
+//            if(strlen(smiles) > 92) // minimal query size !!!
             mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smiles))));
     }
     fclose(f);
@@ -1811,35 +1697,35 @@ void testFileSMILES(const char* test) {
 void testGregSDFFileSetFiltered() {
     const std::string sdf_dir("Greg'sComparision/data/filtered/");
     const char* sdf[] = {
-        //fmcs:     0.11            27      29      beta2_adrenergic_aid465635.filtered.sdf O=C(O)C1:C:C:C(C2:C:C:C(CCNCC(O)C3:C:C:C:C:C:3):C:C:2):C:C:1
+        //fmcs: 	0.11		27	29	beta2_adrenergic_aid465635.filtered.sdf	O=C(O)C1:C:C:C(C2:C:C:C(CCNCC(O)C3:C:C:C:C:C:3):C:C:2):C:C:1
         "beta2_adrenergic_aid465635.filtered.sdf",
-        //fmcs:     1.90            22      23      beta2_adrenergic_aid578239.filtered.sdf CNC1:C:C:C(CCNCC(O)COC2:C:C:C:C:C:2):C:C:1
+        //fmcs: 	1.90		22	23	beta2_adrenergic_aid578239.filtered.sdf	CNC1:C:C:C(CCNCC(O)COC2:C:C:C:C:C:2):C:C:1
         "beta2_adrenergic_aid578239.filtered.sdf",
-        //fmcs:     1.88            22      23      beta2_adrenergic_aid578240.filtered.sdf CNC1:C:C:C(CCNCC(O)COC2:C:C:C:C:C:2):C:C:1
+        //fmcs: 	1.88		22	23	beta2_adrenergic_aid578240.filtered.sdf	CNC1:C:C:C(CCNCC(O)COC2:C:C:C:C:C:2):C:C:1
         "beta2_adrenergic_aid578240.filtered.sdf",
-        //fmcs:     0.07            17      18      beta2_adrenergic_aid759384.filtered.sdf CCNCC(O)C1:C:C:C(O):C2:N:C(=O):[SH]:C:2:1
+        //fmcs: 	0.07		17	18	beta2_adrenergic_aid759384.filtered.sdf	CCNCC(O)C1:C:C:C(O):C2:N:C(=O):[SH]:C:2:1
         "beta2_adrenergic_aid759384.filtered.sdf",
-        //fmcs:     1.01            25      25      d3_aid329485.filtered.sdf       C:C:C:C:C:CC(=O)NCCCCN1CCN(C:C:C:C:C:C)CC1
+        //fmcs: 	1.01		25	25	d3_aid329485.filtered.sdf	C:C:C:C:C:CC(=O)NCCCCN1CCN(C:C:C:C:C:C)CC1
         "d3_aid329485.filtered.sdf",
-        //fmcs:     0.13            20      21      d3_aid367038.filtered.sdf       C:C:C:C:N:C:CCN1CCN(C2:C:C:C:C:C:2)CC1
+        //fmcs: 	0.13		20	21	d3_aid367038.filtered.sdf	C:C:C:C:N:C:CCN1CCN(C2:C:C:C:C:C:2)CC1
         "d3_aid367038.filtered.sdf",
-        //fmcs:     0.78            27      29      d3_aid563533.filtered.sdf       O=C(C:C:C1:C:C:C:C:C:1)NCCCCN1CCN(C2:C:C:C:C:C:2)CC1
+        //fmcs: 	0.78		27	29	d3_aid563533.filtered.sdf	O=C(C:C:C1:C:C:C:C:C:1)NCCCCN1CCN(C2:C:C:C:C:C:2)CC1
         "d3_aid563533.filtered.sdf",
-        //fmcs:     0.09            14      14      d3_aid563770.filtered.sdf       CCCN(CC)C(=O)C1:C:C:C:C:C:1
+        //fmcs: 	0.09		14	14	d3_aid563770.filtered.sdf	CCCN(CC)C(=O)C1:C:C:C:C:C:1
         "d3_aid563770.filtered.sdf",
-        //fmcs:     0.14            22      24      d3_aid578980.filtered.sdf       C(:C:N:C1:C:C:N:C:N:1)CN1CCN(C2:C:C:C:C:C:2)CC1
+        //fmcs: 	0.14		22	24	d3_aid578980.filtered.sdf	C(:C:N:C1:C:C:N:C:N:1)CN1CCN(C2:C:C:C:C:C:2)CC1
         "d3_aid578980.filtered.sdf",
-        //fmcs:     0.20            15      17      d3_aid58783.filtered.sdf        CCN1CC2COC3:C:C:C:C:C:3C2C1
+        //fmcs: 	0.20		15	17	d3_aid58783.filtered.sdf	CCN1CC2COC3:C:C:C:C:C:3C2C1
         "d3_aid58783.filtered.sdf",
-        //fmcs:     0.08            14      14      d3_aid62278.filtered.sdf        C:C(CNCC):N:CC1:C:C:C:C:C:1
+        //fmcs: 	0.08		14	14	d3_aid62278.filtered.sdf	C:C(CNCC):N:CC1:C:C:C:C:C:1
         "d3_aid62278.filtered.sdf",
-        //fmcs:     0.05            7       7       d3_aid62281.filtered.sdf        CC1:C:C:C:C:C:1
+        //fmcs: 	0.05		7	7	d3_aid62281.filtered.sdf	CC1:C:C:C:C:C:1
         "d3_aid62281.filtered.sdf",
-        //fmcs:     33.13           26      27      d3_aid62457.filtered.sdf        CC(=O)NCCCCN1CCC2:C:C:C(OS(=O)(=O)C(F)(F)F):C:C:2C1
+        //fmcs: 	33.13		26	27	d3_aid62457.filtered.sdf	CC(=O)NCCCCN1CCC2:C:C:C(OS(=O)(=O)C(F)(F)F):C:C:2C1
         "d3_aid62457.filtered.sdf",
-        //fmcs:     0.08            14      15      d3_aid62774.filtered.sdf        CCN1CCCC(C2:C:C:C:C:C:2)C1
+        //fmcs: 	0.08		14	15	d3_aid62774.filtered.sdf	CCN1CCCC(C2:C:C:C:C:C:2)C1
         "d3_aid62774.filtered.sdf",
-        //fmcs:     0.33            14      14      d3_aid642590.filtered.sdf       C:C:C:C:C:C:CCN1CCCCC1
+        //fmcs: 	0.33		14	14	d3_aid642590.filtered.sdf	C:C:C:C:C:C:CCN1CCCCC1
         "d3_aid642590.filtered.sdf",
     };
 
@@ -1853,11 +1739,11 @@ void testGregSDFFileSetFiltered() {
 
 
 int main(int argc, const char* argv[]) {
-    //    p.Verbose = true;
+    p.Verbose = true;
 
-    // use maximum CPU resoures to increase time measuring accuracy and stability in multi process environment
+// use maximum CPU resoures to increase time measuring accuracy and stability in multi process environment
 #ifdef WIN32
-    //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
+//    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
     SetThreadPriority(GetCurrentThread (), THREAD_PRIORITY_HIGHEST );
 #else
     setpriority(PRIO_PROCESS, getpid(), -20);
@@ -1866,25 +1752,37 @@ int main(int argc, const char* argv[]) {
     T0 = nanoClock();
     t0 = nanoClock();
 
-    testSimpleFast();
-    //testChEMBL_TxtSLOW_chembl_II_sets();    // python total time is about 55/2 sec
+//testFileSDF_RandomSet("cmp_list_ChEMBL_12209_actives.dat.smi");   //FAST Test
+//a lot of benchmark tests
+    testChEMBL_TxtALL_chembl_II_sets();
+    testFileSDF_RandomSet("chembl13-10000-random-pairs.sdf");
+    testFileSDF_RandomSet("chembl13_pairs.smi");
+    testFileSDF_RandomSet("chembl13_knearest_2.smi");
+    testFileSDF_RandomSet("chembl13_knearest_10.smi");
+    testFileSDF_RandomSet("chembl13_knearest_100.smi");
+    p.Threshold = 0.8;
+    testFileSDF_RandomSet("chembl13_threshold_80.smi");
+    p.Threshold = 0.9;
+    testFileSDF_RandomSet("chembl13_threshold_90.smi");
+////    testFileSDF_RandomSet("");
     return 0;
+//------------------------
     /*
     //    p.BondTyper = MCSBondCompareOrderExact;
-    testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
+        testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
     //    return 0;
 
-    //   testChEMBL_TxtALL_chembl_II_sets();
-    //   testTarget_no_10188_30149();
+     //   testChEMBL_TxtALL_chembl_II_sets();
+     //   testTarget_no_10188_30149();
     //    return 0;
-    // SLOW tests
-    test330();
-    testChEMBL_Txt("chembl_II_sets/Target_no_10980_52937.txt");
-    testChEMBL_Txt("chembl_II_sets/Target_no_11489_37339.txt");
-    testChEMBL_Txt("chembl_II_sets/Target_no_10260_54285.txt");
-    testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
-    return 0;
+        // SLOW tests
+        test330();
+        testChEMBL_Txt("chembl_II_sets/Target_no_10980_52937.txt");
+        testChEMBL_Txt("chembl_II_sets/Target_no_11489_37339.txt");
+        testChEMBL_Txt("chembl_II_sets/Target_no_10260_54285.txt");
+        testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
     */
+
 #ifdef xxWIN32  // brief test set for testing and issue investigation
 #ifdef _DEBUG   // check memory leaks
     _CrtMemState _ms;
@@ -1892,16 +1790,12 @@ int main(int argc, const char* argv[]) {
 #endif
     //while(1)   // check memory leaks in TaskManager or 'top -p ...'
     {
-        testTarget_no_10188_30149();
-        testAtomCompareAnyAtom();
-        testAtomCompareAnyAtomBond();
     }
 #ifdef _DEBUG   // check memory leaks
     _CrtMemDumpAllObjectsSince(&_ms);
 #endif
-    //testAtomCompareIsotopes();
-    //testChEMBL_TxtALL_chembl_II_sets();
-    //testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
+//testChEMBL_TxtALL_chembl_II_sets();
+//testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW !!!
     return 0;
 
     {
@@ -1911,7 +1805,7 @@ int main(int argc, const char* argv[]) {
         _CrtMemCheckpoint(&_ms);
 #endif
         std::cout << MolToSmarts(*m, true) <<"\n";
-        //    while(1)   // check memory leaks
+//    while(1)   // check memory leaks
         testTarget_no_10188_30149();
         testTarget_no_10188_49064();
 
@@ -1921,50 +1815,43 @@ int main(int argc, const char* argv[]) {
         delete m;
         return 0;
 
-        testSimple();
-        //while(true) // MT test
-        //    test330();
-        //testChEMBLdatALL();
-        //testGregSDFFileSetFiltered();
+//    while(true) // MT test
+//        test330();
+        testChEMBLdatALL();
+        testGregSDFFileSetFiltered();
         /*
-          testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat");
-          testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat", 0.8);
-          testChEMBLdat("cmp_list_ChEMBL_12209_actives.dat");
+            testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat");
+            testChEMBLdat("cmp_list_ChEMBL_100126_actives.dat", 0.8);
+            testChEMBLdat("cmp_list_ChEMBL_12209_actives.dat");
         */
         return 0;
 
-        //    testSimpleFast();
-        testSimple();
-        //    testFileSDF("Greg'sComparision/data/filtered/d3_aid58783.filtered.sdf");
-        //    testSimple();
+//    testFileSDF("Greg'sComparision/data/filtered/d3_aid58783.filtered.sdf");
 
-        //    testGregSDFFileSetFiltered();
-        //test18();
+//    testGregSDFFileSetFiltered();
         //return 0;
 
-        //testThreshold();
-        //    testRing1();
         return 0;
 
-        //    testGregSDFFileSetFiltered();
+//    testGregSDFFileSetFiltered();
         //return 0;
 
         std::vector<unsigned> tc;
         tc.push_back(90);
         tc.push_back(326);
         tc.push_back(330);
-        //992 PYTHON 20 21 N1(-C-C=C(-c2:c(:c:c:c):c:n:c:2)-C-C-1)-C-C-C-C-C-C
-        //992 . 1    27 28 1.10 CNcc(CCCCCN1CCC(=CC1)c1cncc1ccc)cccc
-        //now        25 26
+//992 PYTHON 20 21 N1(-C-C=C(-c2:c(:c:c:c):c:n:c:2)-C-C-1)-C-C-C-C-C-C
+//992 . 1    27 28 1.10 CNcc(CCCCCN1CCC(=CC1)c1cncc1ccc)cccc
+//now        25 26
 
         /*
-          tc.push_back(33);
-          tc.push_back(59);
-          tc.push_back(124);
+            tc.push_back(33);
+            tc.push_back(59);
+              tc.push_back(124);
 
-          tc.push_back(345);
-          tc.push_back(605);
-          tc.push_back(619);
+            tc.push_back(345);
+            tc.push_back(605);
+            tc.push_back(619);
         */
         testFileMCSB(argv[1], 300, tc);
         return 0;
@@ -2011,12 +1898,9 @@ int main(int argc, const char* argv[]) {
     } else if(argc > 1+2)
         testCmndLineSMILES(argc, argv);
     else {
-        testSimpleFast();
-        testSimple();
-        //        test1Basics();
-        //        testGregSDFFileSetFiltered();
+        testGregSDFFileSetFiltered();
     }
-    //  BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+//  BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;

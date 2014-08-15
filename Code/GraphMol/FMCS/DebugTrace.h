@@ -36,40 +36,21 @@
 //#define EXCLUDE_WRONG_COMPOSITION   // fast but with a little effect, because amount of external bonds usually is very small.
 // Exclude mismatched bonds combinations during seed growing (2^N-1 stage)
 
-#define FAST_SUBSTRUCT_CACHE        // based on Morgan code hash
+#define FAST_SUBSTRUCT_CACHE        // based on a hash of Morgan code
 #define DUP_SUBSTRUCT_CACHE         // based on list of query atoms and bonds. For rings where seeds growing in both directions throw the same ring.
-
-#define PRECOMPUTED_TABLES_MATCH    // Improves overal performance about 20%, especially in hard cases.
-// Takes some extra memory (Vt*vq+Et*eq)/8 bytes for each target G(Vt,Et) matched with query G(vq,eq).
 
 #define FAST_INCREMENTAL_MATCH      // fast and some time very usefull. request PRECOMPUTED_TABLES_MATCH
 // previous match result based match checking without finding new matched substructure location in the target
 
-#ifdef RDK_THREADSAFE_SSS
-#define MULTI_THREAD // experimental !
-#endif
-
-// Enable / Disable DEBUG TRACE output
-#ifdef WIN32__xx__TRACE_ON
-#define TRACE_ON
-#else
-#endif
-
-#ifndef MULTI_THREAD
 #define VERBOSE_STATISTICS_ON
-#endif
 
 
 #ifdef WIN32
-//#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
-//  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
-//#else
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
-//#endif
 
 struct timezone {
-    int  tz_minuteswest; /* minutes W of Greenwich */
-    int  tz_dsttime;     /* type of dst correction */
+    int  tz_minuteswest; // minutes W of Greenwich
+    int  tz_dsttime;     // type of dst correction
 };
 
 static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
@@ -99,7 +80,6 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
         tz->tz_minuteswest = _timezone / 60;
         tz->tz_dsttime = _daylight;
     }
-
     return 0;
 }
 #endif
@@ -115,9 +95,9 @@ namespace RDKit {
 
 #ifdef VERBOSE_STATISTICS_ON
 
-        // compute statistics of really very very fast calls.
-        // It a bit decrease overal performance, but might be interested for investigation purpose (only)
-        //#define VERBOSE_STATISTICS_FASTCALLS_ON
+// compute statistics of really very very fast calls.
+// It a bit decrease overal performance, but might be interested for investigation purpose (only)
+//#define VERBOSE_STATISTICS_FASTCALLS_ON
 
         struct ExecStatistics {
             unsigned TotalSteps, MCSFoundStep;
@@ -150,57 +130,5 @@ namespace RDKit {
         };
 #endif
 
-
-#ifdef TRACE_ON
-        std::ostream& TRACE(unsigned info=1) {
-            if(info > 0) { // print out time
-                struct tm *now;
-                char strt[32], strts[12];
-#ifdef WIN32
-                static unsigned long t0 = timeGetTime();
-                see gettimeofday for Win in test.cpp
-                typedef struct timespec {
-                    time_t tv_sec;  // Seconds since 00:00:00 GMT = 1 January 1970
-                    long   tv_nsec; // Additional nanoseconds since Windows started - assume since tv_sec
-                } timespec;
-
-            struct timespec ts;
-            //time( &(ts.tv_sec) );
-            unsigned long t = timeGetTime() - t0; // t from app started
-                ts.tv_sec  =  t / 1000LU;
-                ts.tv_nsec = (t % 1000LU)*1000000LU;     // nanoseconds.
-#else
-                struct timespec ts;
-                //clock_gettime(CLOCK_REALTIME, &ts);
-                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
-#endif
-
-                now = gmtime(&ts.tv_sec);
-                if(now != NULL)
-                    strftime(strt, sizeof(strt), "%H:%M:%S", now); //strftime(strt, sizeof(strt), "%Y-%m-%d %H:%M:%S", now);
-
-#ifdef WIN32
-                sprintf(strts, ".%03lu ", ts.tv_nsec / 1000000LU);
-#else
-                sprintf(strts, ".%05lu ", ts.tv_nsec / 10000LU);
-#endif
-
-                std::cout << strt << strts;
-            }
-            return std::cout;
-        }
-#else
-        class NullStream {
-        public:
-            template<class T>
-            NullStream& operator << (const T&) {
-                return *this;   // DO NOTHING
-            }
-        };
-        static inline NullStream& TRACE(unsigned info=1) {
-            static NullStream z;
-            return z;
-        }
-#endif
     }
 }

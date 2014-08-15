@@ -19,22 +19,13 @@
 #include "SubstructureCache.h"
 #include "DuplicatedSeedCache.h"
 #include "MatchTable.h"
-#ifdef FAST_INCREMENTAL_MATCH
 #include "TargetMatch.h"
-#endif
-#ifdef MULTI_THREAD
-#include "ThreadPool.h"
-#endif
 #include "RingMatchTableSet.h"
 
 
 namespace RDKit {
     namespace FMCS {
-        class MaximumCommonSubgraph
-#ifdef MULTI_THREAD
-            : private Mutex
-#endif
-        {
+        class MaximumCommonSubgraph {
             struct MCS { // current result. Reference to a fragment of source molecule
                 std::vector<const Atom*> Atoms;
                 std::vector<const Bond*> Bonds;
@@ -53,10 +44,8 @@ namespace RDKit {
             std::vector<unsigned> QueryAtomLabels;  // for code Morgan. Value based on current functor and parameters
             std::vector<unsigned> QueryBondLabels;  // for code Morgan. Value based on current functor and parameters
             SubstructureCache     HashCache;
-#ifdef PRECOMPUTED_TABLES_MATCH
             MatchTable          QueryAtomMatchTable;
             MatchTable          QueryBondMatchTable;
-#endif
             RingMatchTableSet   RingMatchTables;
 #endif
 #ifdef DUP_SUBSTRUCT_CACHE
@@ -71,9 +60,6 @@ namespace RDKit {
         public:
 #ifdef VERBOSE_STATISTICS_ON
             ExecStatistics VerboseStatistics;
-#ifdef MULTI_THREAD
-            Mutex   StatisticsMutex;
-#endif
 #endif
 
             MaximumCommonSubgraph(const MCSParameters* params);
@@ -84,33 +70,15 @@ namespace RDKit {
             const ROMol& getQueryMolecule()const {
                 return *QueryMolecule;
             }
-            /* optional
-               unsigned getMaxNumberBonds()
-               #ifdef MULTI_THREAD
-               {
-               Guard lock(*this);
-               #else
-               const
-               {
-               #endif
-            */        unsigned getMaxNumberBonds() const {
+            unsigned getMaxNumberBonds() const {
                 return McsIdx.BondsIdx.size();
             }
 
-            /* optional
-               unsigned getMaxNumberAtoms()
-               #ifdef MULTI_THREAD
-               {
-               Guard lock(*this);
-               #else
-               const
-               {
-               #endif
-            */        unsigned getMaxNumberAtoms() const {
+            unsigned getMaxNumberAtoms() const {
                 return McsIdx.AtomsIdx.size();
             }
             //internal:
-            bool checkIfMatchAndAppend(Seed& seed);//, const std::vector<char>& excludedBonds);   // REPLACE with Swap !!!
+            bool checkIfMatchAndAppend(Seed& seed);
         private:
             void clear() {
                 Targets.clear();
@@ -126,5 +94,6 @@ namespace RDKit {
             bool match(Seed& seed);
             bool matchIncrementalFast(Seed& seed, unsigned itarget);
         };
+
     }
 } // namespace RDKit

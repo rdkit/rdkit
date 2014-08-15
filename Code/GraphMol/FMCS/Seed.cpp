@@ -78,9 +78,6 @@ namespace RDKit {
             if(!canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) ) { // prune() parent
                 GrowingStage = -1; //finished
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                Guard statlock(mcs.StatisticsMutex);
-#endif
                 ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
                 return;
@@ -105,7 +102,7 @@ namespace RDKit {
                     if(-1 == aIdx) { // new atom
                         std::map<unsigned, unsigned>::const_iterator nai = newAtomsMap.find(nbi->NewAtomIdx);         // check RING
                         if(newAtomsMap.end() == nai) {
-                            const Atom* end_atom = nbi->NewAtom;//qmol.getAtomWithIdx(nbi->NewAtomIdx);
+                            const Atom* end_atom = nbi->NewAtom;
                             aIdx = seed.addAtom(end_atom);
                             newAtomsMap[nbi->NewAtomIdx] = aIdx;    // store new possible ring end point
                         } else
@@ -116,41 +113,29 @@ namespace RDKit {
                 }
 #ifdef VERBOSE_STATISTICS_ON
                 {
-#ifdef MULTI_THREAD
-                    Guard statlock(mcs.StatisticsMutex);
-#endif
                     ++mcs.VerboseStatistics.Seed;
                 }
 #endif
                 seed.RemainingBonds = RemainingBonds - NewBonds.size();     // Added ALL !!!
                 seed.RemainingAtoms = RemainingAtoms - newAtomsMap.size();  // new atoms added to seed
 
-                //    seed.computeRemainingSize(qmol);
                 // prune() Best Sizes
                 if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) ) {
                     GrowingStage = -1;
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                    Guard statlock(mcs.StatisticsMutex);
-#endif
                     ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
                     return; // the biggest possible subrgaph from this seed is too small for future growing. So, skip ALL children !
                 }
-#ifdef FAST_INCREMENTAL_MATCH
                 seed.MatchResult = MatchResult;
-#endif
                 bool allMatched = mcs.checkIfMatchAndAppend(seed);  // this seed + all extern bonds is a part of MCS
 
-                //DEBUG:
-                //    if(seed.MoleculeFragment.BondsIdx[0] > 1)
-                //        std::cout << seed.getNumBonds() << " + " << seed.RemainingBonds << " bonds [0]=" << seed.MoleculeFragment.BondsIdx[0] << "\n";
 
                 GrowingStage = 1;
                 if(allMatched && NewBonds.size() > 1)
                     return; // grow deep first. postpone next growing steps
             }
-            // 2. Check and add all 2^N-1-1 other possible seeds:
+// 2. Check and add all 2^N-1-1 other possible seeds:
             if(1 == NewBonds.size()) {
                 GrowingStage = -1;
                 return; // everything has been done
@@ -161,9 +146,6 @@ namespace RDKit {
             for(std::vector<NewBond>::iterator nbi = NewBonds.begin(); nbi != NewBonds.end(); nbi++) {
 #ifdef VERBOSE_STATISTICS_ON
                 {
-#ifdef MULTI_THREAD
-                    Guard statlock(mcs.StatisticsMutex);
-#endif
                     ++mcs.VerboseStatistics.Seed;
                 }
 #endif
@@ -181,25 +163,17 @@ namespace RDKit {
                 seed.computeRemainingSize(qmol);
 
                 if(seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) ) { // prune()
-#ifdef FAST_INCREMENTAL_MATCH
                     if(!MatchResult.empty())
                         seed.MatchResult = MatchResult;
-#endif
                     if( ! mcs.checkIfMatchAndAppend(seed)) {
                         nbi->BondIdx = -1; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
                         ++numErasedNewBonds;
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                        Guard statlock(mcs.StatisticsMutex);
-#endif
                         ++mcs.VerboseStatistics.SingleBondExcluded;
 #endif
                     }
                 } else { // seed too small
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                    Guard statlock(mcs.StatisticsMutex);
-#endif
                     ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
                 }
@@ -233,8 +207,8 @@ namespace RDKit {
                     if(0==numErasedNewBonds && composition.getBitSet() == maxCompositionValue)
                         continue;   // exclude already processed all external bonds combination 2N-1
 #ifdef EXCLUDE_WRONG_COMPOSITION
-                    // OPTIMISATION. reduce amount of generated seeds and match calls
-                    // 2120 instead of 2208 match calls on small test. 43 wrongComp-s, 83 rejected
+// OPTIMISATION. reduce amount of generated seeds and match calls
+// 2120 instead of 2208 match calls on small test. 43 wrongComp-s, 83 rejected
                     if(failedCombinationsMask & composition.getBitSet()) { // possibly exists in the list
                         bool compositionWrong = false;
                         for(std::vector<BitSet>::const_iterator failed = failedCombinations.begin();
@@ -253,9 +227,6 @@ namespace RDKit {
 #endif
 #ifdef VERBOSE_STATISTICS_ON
                     {
-#ifdef MULTI_THREAD
-                        Guard statlock(mcs.StatisticsMutex);
-#endif
                         ++mcs.VerboseStatistics.Seed;
                     }
 #endif
@@ -283,15 +254,10 @@ namespace RDKit {
                     seed.computeRemainingSize(qmol);
                     if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) ) { // prune(). // seed too small
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                        Guard statlock(mcs.StatisticsMutex);
-#endif
                         ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
                     } else {
-#ifdef FAST_INCREMENTAL_MATCH
                         seed.MatchResult = MatchResult;
-#endif
                         bool found = mcs.checkIfMatchAndAppend(seed);
 
                         if(!found) {
@@ -299,9 +265,6 @@ namespace RDKit {
                             failedCombinations.push_back(composition.getBitSet());
                             failedCombinationsMask &= composition.getBitSet();
 #ifdef VERBOSE_STATISTICS_ON
-#ifdef MULTI_THREAD
-                            Guard statlock(mcs.StatisticsMutex);
-#endif
                             ++mcs.VerboseStatistics.WrongCompositionDetected;
 #endif
 #endif
@@ -364,5 +327,6 @@ namespace RDKit {
                 }
             }
         }
+
     }
 }

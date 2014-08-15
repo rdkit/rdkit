@@ -12,8 +12,9 @@ rdkit_headers(FMCS.h
               MaximumCommonSubgraph.h
               DEST GraphMol/FMCS)
 
-rdkit_test(testFMCS testFMCS.cpp LINK_LIBRARIES
+rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
 FMCS ChemTransforms Depictor FileParsers SmilesParse 
 GraphMol RDGeneral RDGeometryLib SubstructMatch)
 
 add_subdirectory(Wrap)
+add_subdirectory(Test)
