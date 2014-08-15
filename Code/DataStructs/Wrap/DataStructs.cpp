@@ -15,7 +15,7 @@
 #include <DataStructs/BitVects.h>
 #include <DataStructs/DiscreteValueVect.h>
 #include <DataStructs/SparseIntVect.h>
-
+#include <DataStructs/RealValueVect.h>
 #include <RDBoost/boost_numpy.h>
 #include <numpy/npy_common.h>
 #include <RDBoost/import_array.h>
@@ -28,6 +28,7 @@ void wrap_EBV();
 void wrap_BitOps();
 void wrap_Utils();
 void wrap_discreteValVect();
+void wrap_realValVect();
 void wrap_sparseIntVect();
 void wrap_FPB();
 
@@ -72,6 +73,7 @@ BOOST_PYTHON_MODULE(cDataStructs) {
   wrap_EBV();
   wrap_BitOps();
   wrap_discreteValVect();
+  wrap_realValVect();
   wrap_sparseIntVect();
   wrap_FPB();
 
@@ -99,4 +101,8 @@ BOOST_PYTHON_MODULE(cDataStructs) {
               (void (*)(const RDKit::SparseIntVect<boost::uint64_t> &,
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
+  python::def("ConvertToNumpyArray",
+              (void (*)(const RDKit::RealValueVect &,
+                        python::object))convertToNumpyArray,
+              (python::arg("rvv"), python::arg("destArray")));
 }
