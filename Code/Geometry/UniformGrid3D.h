@@ -17,7 +17,8 @@
 #include <iostream>
 
 namespace RDGeom {
-class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
+class UniformGrid3D
+    : public Grid3D<RDKit::DiscreteValueVect, int, unsigned int> {
  public:
   //! \brief ctor
   /*
@@ -28,13 +29,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
       \param valType: the data type of the grid (determines the number of bits
                       per point)
       \param offset:  OPTIONAL: the offset of the grid from (0,0,0), in
-     Angstroms.
+    Angstroms.
 
-      \b Note: the values of arguments such as \c dimX and \c spacing
-      don't actually need to be in Angstroms, but they should be internally
-      consistent.
+    \b Note: the values of arguments such as \c dimX and \c spacing
+    don't actually need to be in Angstroms, but they should be internally
+    consistent.
 
-  */
+*/
   UniformGrid3D(double dimX, double dimY, double dimZ, double spacing = 0.5,
                 RDKit::DiscreteValueVect::DiscreteValueType valType =
                     RDKit::DiscreteValueVect::TWOBITVALUE,
