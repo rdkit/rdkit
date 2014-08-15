@@ -636,9 +636,10 @@ int main(int argc, const char* argv[]) {
 
     test18();
     test504();
+#if 0 //disable these by default because they are very long.
     test330();  // SLOW test
     test45();   // SLOW
-
+#endif
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
     printf("TOTAL Time elapsed %.2lf seconds\n", sec);
