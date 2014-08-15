@@ -125,6 +125,8 @@ add_subdirectory(Abbreviations)
 add_subdirectory(GeneralizedSubstruct)
 add_subdirectory(MolProcessing)
 
+add_subdirectory(MIF)
+
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
         SubstructMatch ForceFieldHelpers ForceField)
