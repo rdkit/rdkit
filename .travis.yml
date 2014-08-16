@@ -28,6 +28,8 @@ install:
 
  # and the base dependencies
  - sudo apt-get install -qq openjdk-7-jdk swig # for the java wrappers
+ - sudo apt-get install -qq postgresql postgresql-server-dev-9.3 # for the cartridge
+
  - sudo apt-get install libjpeg62 # for pillow
  - conda install -q numpy pillow
  
@@ -63,3 +65,8 @@ script:
  - make -j2
  - make install
  - ctest --output-on-failure
+
+ - cd $RDBASE/Code/PgSQL/rdkit
+ - make -j2
+ - make install
+ - make installcheck
