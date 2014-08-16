@@ -298,7 +298,7 @@ gmol_same(PG_FUNCTION_ARGS)
 static int
 hemdistsign(bytea *a, bytea *b)
 {
-  int         i,
+  unsigned i,
     dist = 0;
   unsigned char   *as = (unsigned char *)VARDATA(a),
     *bs = (unsigned char *)VARDATA(b);
@@ -312,8 +312,13 @@ hemdistsign(bytea *a, bytea *b)
       dist += number_of_ones[diff];
     }
 #else
-  for(i=0;i<SIGLEN(a)/sizeof(unsigned int);++i){
+  unsigned eidx=SIGLEN(a)/sizeof(unsigned int);
+  for(i=0;i<eidx;++i){
     dist += __builtin_popcount(((unsigned int *)as)[i] ^ ((unsigned int *)bs)[i]);
+  }
+  for(i=eidx*sizeof(unsigned);i<SIGLEN(a);++i){
+    int diff = as[i] ^ bs[i];
+    dist += number_of_ones[diff];
   }
 #endif
   return dist;
@@ -333,11 +338,16 @@ soergeldistsign(bytea *a, bytea *b) {
     intersect_popcount += number_of_ones[as[i] & bs[i]];
   }
 #else
-  unsigned int   *as = (unsigned int *)VARDATA(a);
-  unsigned int   *bs = (unsigned int *)VARDATA(b);
-  for(i=0;i<SIGLEN(a)/sizeof(unsigned int);++i){
+  unsigned *as = (unsigned *)VARDATA(a);
+  unsigned *bs = (unsigned *)VARDATA(b);
+  unsigned eidx=SIGLEN(a)/sizeof(unsigned);
+  for(i=0;i<eidx;++i){
     union_popcount += __builtin_popcount(as[i] | bs[i]);
     intersect_popcount += __builtin_popcount(as[i] & bs[i]);
+  }
+  for(i=eidx*sizeof(unsigned);i<SIGLEN(a);++i){
+    union_popcount += number_of_ones[as[i] | bs[i]];
+    intersect_popcount += number_of_ones[as[i] & bs[i]];
   }
 #endif
   if (union_popcount == 0) {
@@ -826,8 +836,12 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
     for(i=0;i<SIGLEN(key);i++)
       cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
-    for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
+    unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
+    for(i=0;i<eidx;++i){
       cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+    }
+    for(i=eidx*sizeof(unsigned);i<SIGLEN(key);++i){
+      cnt += number_of_ones[ pk[i] & pq[i] ];
     }
 #endif      
 
@@ -889,8 +903,12 @@ gbfp_distance(PG_FUNCTION_ARGS)
         for(i=0;i<SIGLEN(key);i++)
             cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
+        unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
         for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
           cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+        }
+        for(i=eidx*sizeof(unsigned);i<SIGLEN(key);++i){
+          cnt += number_of_ones[ pk[i] & pq[i] ];
         }
 #endif        
 
