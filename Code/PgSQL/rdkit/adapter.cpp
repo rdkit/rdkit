@@ -49,6 +49,9 @@
 #ifdef BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
 #endif
+#ifdef BUILD_AVALON_SUPPORT
+#include <AvalonTools/AvalonTools.h>
+#endif
 #include "rdkit.h"
 
 using namespace std;
@@ -1399,3 +1402,29 @@ makeMACCSBFP(CROMol data){
     return NULL;
   }
 }
+
+extern "C" MolBitmapFingerPrint
+makeAvalonBFP(CROMol data,bool isQuery,unsigned int bitFlags) {
+#ifdef BUILD_AVALON_SUPPORT
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  try {
+    res = new ExplicitBitVect(getAvalonFpSize());
+    AvalonTools::getAvalonFP(*mol, *res, getAvalonFpSize(),isQuery,true,bitFlags);
+  } catch (...) {
+    elog(ERROR, "makeAvalonBFP: Unknown exception");
+  }
+        
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
+#else
+  elog(ERROR, "Avalon support not enabled");
+  return NULL;
+#endif
+}
+

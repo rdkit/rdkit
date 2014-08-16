@@ -81,6 +81,7 @@ extern "C" {
   extern int getRDKitFpSize(void);
   extern int getHashedTorsionFpSize(void);
   extern int getHashedAtomPairFpSize(void);
+  extern int getAvalonFpSize(void);
 
   /*
    * From/to C/C++
@@ -204,6 +205,7 @@ extern "C" {
   MolBitmapFingerPrint makeAtomPairBFP(CROMol data);
   MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data);
   MolBitmapFingerPrint makeMACCSBFP(CROMol data);
+  MolBitmapFingerPrint makeAvalonBFP(CROMol data,bool isQuery,unsigned int bitFlags);
 
   /*
    * Indexes

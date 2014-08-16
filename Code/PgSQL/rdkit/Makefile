@@ -1,5 +1,6 @@
 RDKIT=$(RDBASE)
-USE_INCHI=0
+USE_INCHI=1
+USE_AVALON=1
 STATIC_LINK=1
 
 ifeq ($(USE_INCHI),1)
@@ -7,8 +8,13 @@ ifeq ($(USE_INCHI),1)
   INCHIFLAGS=-I${RDKIT}/External -DBUILD_INCHI_SUPPORT  
   INCHIREGRESS=inchi
 endif
+ifeq ($(USE_AVALON),1)
+  AVALONLIBS=-lAvalonLib -lavalon_clib
+  AVALONFLAGS=-I${RDKIT}/External -DBUILD_AVALON_SUPPORT  
+  AVALONREGRESS=avalon
+endif
 
-RDKLIBS       = ${INCHILIBS} -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral 
+RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral 
 
 ifeq ($(STATIC_LINK),1)
   SHLIB_LINK += -L${RDKIT}/lib $(addsuffix _static,${RDKLIBS})
@@ -21,7 +27,7 @@ ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
 
-PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"007200"' ${INCHIFLAGS} #-DUSE_BUILTIN_POPCOUNT -msse4.2
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"007200"' ${AVALONFLAGS} ${INCHIFLAGS} #-DUSE_BUILTIN_POPCOUNT -msse4.2
 
 CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-unused-function 
@@ -43,7 +49,7 @@ all: $(EXTENSION)--$(EXTVERSION).sql
 $(EXTENSION)--$(EXTVERSION).sql: $(EXTENSION).sql91.in
 	cp $< $@
 
-REGRESS    = rdkit-91 props btree molgist bfpgist-91 sfpgist slfpgist fps ${INCHIREGRESS}
+REGRESS    = rdkit-91 props btree molgist bfpgist-91 sfpgist slfpgist fps ${INCHIREGRESS} ${AVALONREGRESS}
 DATA = $(EXTENSION)--$(EXTVERSION).sql
 EXTRA_CLEAN = $(EXTENSION)--$(EXTVERSION).sql
 else

@@ -47,6 +47,7 @@ static bool rdkit_guc_inited = false;
 #define FEATMORGAN_FP_SIZE 512
 #define HASHED_TORSION_FP_SIZE 1024
 #define HASHED_PAIR_FP_SIZE 2048
+#define AVALON_FP_SIZE 512
 
 static int rdkit_sss_fp_size = SSS_FP_SIZE;
 static int rdkit_morgan_fp_size = MORGAN_FP_SIZE;
@@ -55,6 +56,7 @@ static int rdkit_layered_fp_size = LAYERED_FP_SIZE;
 static int rdkit_rdkit_fp_size = RDKIT_FP_SIZE;
 static int rdkit_hashed_torsion_fp_size = HASHED_TORSION_FP_SIZE;
 static int rdkit_hashed_atompair_fp_size = HASHED_PAIR_FP_SIZE;
+static int rdkit_avalon_fp_size = AVALON_FP_SIZE;
 
 #if PG_VERSION_NUM < 80400
 #error The earliest supported postgresql version is 8.4
@@ -226,6 +228,22 @@ initRDKitGUC()
                            NULL
                            );
 
+  DefineCustomIntVariable(
+                           "rdkit.avalon_fp_size",
+                           "Size (in bits) of avalon fingerprints",
+                           "Size (in bits) of avalon fingerprints",
+                           &rdkit_avalon_fp_size,
+                           AVALON_FP_SIZE,
+                           64,
+                           9192,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
   rdkit_guc_inited = true;
 }
 
@@ -294,6 +312,12 @@ getHashedAtomPairFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_hashed_atompair_fp_size;
+}
+int
+getAvalonFpSize(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+  return rdkit_avalon_fp_size;
 }
 
 void _PG_init(void);
