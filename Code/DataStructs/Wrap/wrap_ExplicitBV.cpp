@@ -88,9 +88,11 @@ struct EBV_wrapper {
     .def(python::self & python::self)
     .def(python::self | python::self)
     .def(python::self ^ python::self)
+    .def(python::self + python::self)
     .def(~python::self)
     .def(python::self == python::self)
     .def(python::self != python::self)
+    .def(python::self += python::self)
 
     .def_pickle(ebv_pickle_suite())
   ;

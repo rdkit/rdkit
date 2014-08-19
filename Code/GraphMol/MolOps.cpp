@@ -1,6 +1,7 @@
 // $Id$
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -30,6 +31,7 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <GraphMol/ROMol.h>
 
 const int ci_LOCAL_INF=static_cast<int>(1e8);
 
@@ -516,5 +518,17 @@ namespace RDKit{
       }
       return accum;
     };
+
+    unsigned getNumAtomsWithDistinctProperty(const ROMol& mol, std::string prop)
+    {
+      unsigned numPropAtoms=0;
+      for (ROMol::ConstAtomIterator ai = mol.beginAtoms();
+      	  ai != mol.endAtoms(); ++ai) {
+        if((*ai)->hasProp(prop)){
+      	  ++numPropAtoms;
+        }
+      }
+      return numPropAtoms;
+    }
   }; // end of namespace MolOps
 }; // end of namespace RDKit

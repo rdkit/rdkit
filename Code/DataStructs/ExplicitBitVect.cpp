@@ -1,6 +1,7 @@
 // $Id$
 //
 // Copyright (c) 2001-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -111,11 +112,47 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     return(ans);
   };
   
+  ExplicitBitVect& ExplicitBitVect::operator^= (const ExplicitBitVect &other) {
+    *(dp_bits) ^= *(other.dp_bits);
+    d_numOnBits=dp_bits->count();
+    return *this;
+  };
+
+  ExplicitBitVect& ExplicitBitVect::operator&= (const ExplicitBitVect &other) {
+    *(dp_bits) &= *(other.dp_bits);
+    d_numOnBits=dp_bits->count();
+    return *this;
+  };
+
+  ExplicitBitVect& ExplicitBitVect::operator|= (const ExplicitBitVect &other) {
+    *(dp_bits) |= *(other.dp_bits);
+    d_numOnBits=dp_bits->count();
+    return *this;
+  };
+
   ExplicitBitVect ExplicitBitVect::operator~ () const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = ~(*dp_bits);
     ans.d_numOnBits=ans.dp_bits->count();
     return(ans);
+  };
+
+  ExplicitBitVect& ExplicitBitVect::operator+= (const ExplicitBitVect &other) {
+    dp_bits->resize(d_size+other.d_size);
+    unsigned int original_size = d_size;
+    d_size = dp_bits->size();
+    for(unsigned i=0;i<other.d_size;i++){
+      if(other[i]){
+        setBit(i+original_size);
+      }
+    }
+    d_numOnBits=dp_bits->count();
+    return *this;
+  };
+
+  ExplicitBitVect ExplicitBitVect::operator+ (const ExplicitBitVect &other) const {
+    ExplicitBitVect ans(*this);
+    return ans+=other;
   };
 
   unsigned int ExplicitBitVect::getNumBits() const {
