@@ -175,8 +175,8 @@ void smarts_lexer_error(const char *msg) {
 
 <IN_ATOM_STATE>h {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomImplicitHCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+        yylval->atom->setQuery(makeAtomHasImplicitHQuery());
+	return IMPLICIT_H_ATOM_QUERY_TOKEN;
 }
 
 <IN_ATOM_STATE>R {

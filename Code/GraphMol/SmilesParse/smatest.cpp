@@ -372,7 +372,6 @@ void testMatches3(){
   _checkMatches("[#7h1]","c1cnc[nH]1", 1,1);
   _checkNoMatches("[#7h1]","c1cnc[nH]1",true);
 
-  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1478,7 +1477,39 @@ void testReplacementPatterns(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub313(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github #313: problems with 'h' in SMARTS" << std::endl;
 
+  {
+    // basics: does it parse correctly and generate the right results?
+    _checkMatches("N[Ch]","FC(Cl)Nc1ccccc1", 1,2);
+    _checkMatches("N[Ch1]","CNC(F)c1ccccc1", 1,2);
+    _checkMatches("N[Ch]","CNCc1ccccc1", 2,2);
+    _checkMatches("N[Ch]","CNc1ccccc1", 1,2);
+    _checkNoMatches("N[Ch]","FC(Cl)(O)Nc1ccccc1", false);
+  }
+
+  {
+    // next: can we write it?
+    std::string sma="[h]";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[h]");
+    delete matcher;
+
+    sma="[h1]";
+    matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[h1]");
+    delete matcher;    
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+  
 
 int
 main(int argc, char *argv[])
@@ -1511,9 +1542,10 @@ main(int argc, char *argv[])
   testIssue2884178_part1();
   testIssue2884178_part2();
   testIssue3000399();
-#endif
   testRecursiveSerialNumbers();
   testReplacementPatterns();
-
+#endif
+  testGithub313();
+  
   return 0;
 }

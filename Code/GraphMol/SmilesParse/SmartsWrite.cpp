@@ -129,6 +129,9 @@ namespace RDKit {
       if (descrip == "AtomImplicitHCount") {
         res << "h" << query->getVal();
         needParen = true;
+      }else if (descrip == "AtomHasImplicitH") {
+        res << "h";
+        needParen = true;
       } else if (descrip == "AtomTotalValence") {
         res << "v" << query->getVal();
         needParen = true;

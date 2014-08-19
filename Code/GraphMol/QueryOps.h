@@ -69,6 +69,7 @@ namespace RDKit{
   static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
   static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
   static int queryAtomImplicitHCount(Atom const * at) { return at->getTotalNumHs(false); };
+  static int queryAtomHasImplicitH(Atom const * at) { return int(at->getTotalNumHs(false)>0); };
   static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
   static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };
   static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
@@ -214,6 +215,15 @@ namespace RDKit{
   }
   //! \overload
   ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what);
+
+  //! returns a Query for matching ring atoms
+  template <class T>
+  T *makeAtomHasImplicitHQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(true,queryAtomHasImplicitH,descr);
+  }
+  //! \overload
+  ATOM_EQUALS_QUERY *makeAtomHasImplicitHQuery();
+
 
   //! returns a Query for matching implicit hydrogen count
   template <class T>
