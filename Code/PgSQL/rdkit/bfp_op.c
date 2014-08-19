@@ -429,3 +429,24 @@ avalon_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+
+PG_FUNCTION_INFO_V1(reaction_structural_bfp);
+Datum       reaction_structural_bfp(PG_FUNCTION_ARGS);
+Datum
+reaction_structural_bfp(PG_FUNCTION_ARGS) {
+  CChemicalReaction rxn;
+  MolBitmapFingerPrint fp;
+  BitmapFingerPrint *sfp;
+
+  fcinfo->flinfo->fn_extra = SearchChemReactionCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &rxn, NULL);
+
+  fp = makeReactionBFP(rxn, getReactionSubstructFpSize(), PG_GETARG_INT32(1) /* fpType */);
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
+
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+}

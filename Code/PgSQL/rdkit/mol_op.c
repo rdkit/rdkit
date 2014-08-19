@@ -135,14 +135,14 @@ mol_rsubstruct(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0), 
-                                            NULL, &a, NULL);
+                                            NULL, &i, NULL);
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(1), 
-                                            NULL, &i, NULL);
+                                            NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(i, a));             
+  PG_RETURN_BOOL(MolSubstruct(a, i));
 }
 
 PG_FUNCTION_INFO_V1(mol_substruct_count);
