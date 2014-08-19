@@ -1,6 +1,6 @@
 #  $Id$
 #
-#  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -301,7 +301,11 @@ M  END
       Chem.SanitizeMol(p[0])
 
   def test10DotSeparation(self):
-    rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1')
+    # 08/05/14
+    # This test is changed due to a new behavior of the smarts
+    # reaction parser which now allows using parenthesis in products
+    # as well. original smiles: '[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1'
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)')
     mol = Chem.MolFromSmiles('C1ON1')
     products = rxn.RunReactants([mol])
     self.assertEqual(len(products),1)
@@ -339,7 +343,11 @@ M  END
 
 
   def test12Pickles(self):
-    rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1')
+    # 08/05/14
+    # This test is changed due to a new behavior of the smarts
+    # reaction parser which now allows using parenthesis in products
+    # as well. original smiles: '[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1'
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)')
     pkl = cPickle.dumps(rxn)
     rxn = cPickle.loads(pkl)
     mol = Chem.MolFromSmiles('C1ON1')
@@ -440,6 +448,37 @@ M  END
     self.assertTrue(rxn)
     rxn.Initialize()
     self.assertRaises(ValueError,lambda : rxn.RunReactants((None,)))
+
+  def test19RemoveUnmappedMoleculesToAgents(self):
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]")
+    self.failUnless(rxn)
+    rxn.Initialize()
+    self.failUnless(rxn.GetNumReactantTemplates()==3)
+    self.failUnless(rxn.GetNumProductTemplates()==1)
+    self.failUnless(rxn.GetNumAgentTemplates()==3)
+
+    rxn.RemoveUnmappedReactantTemplates()
+    rxn.RemoveUnmappedProductTemplates()
+
+    self.failUnless(rxn.GetNumReactantTemplates()==2)
+    self.failUnless(rxn.GetNumProductTemplates()==1)
+    self.failUnless(rxn.GetNumAgentTemplates()==4)
+
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1]=[O:2].[N:3].C(=O)O>>[N:3]~[C:1]=[O:2].[OH2]")
+    self.failUnless(rxn)
+    rxn.Initialize()
+    self.failUnless(rxn.GetNumReactantTemplates()==3)
+    self.failUnless(rxn.GetNumProductTemplates()==2)
+    self.failUnless(rxn.GetNumAgentTemplates()==0)
+    
+    agentList=[]
+    rxn.RemoveUnmappedReactantTemplates(moveToAgentTemplates=False, targetList=agentList)
+    rxn.RemoveUnmappedProductTemplates(targetList=agentList)
+
+    self.failUnless(rxn.GetNumReactantTemplates()==2)
+    self.failUnless(rxn.GetNumProductTemplates()==1)
+    self.failUnless(rxn.GetNumAgentTemplates()==1)
+    self.failUnless(len(agentList)==2)
 
 if __name__ == '__main__':
   unittest.main()

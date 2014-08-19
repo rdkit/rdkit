@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -151,23 +151,28 @@ namespace RDKit {
     }
     
     std::string reactText=text.substr(0,pos1);
-    std::vector<std::string> reactSmarts=DaylightParserUtils::splitSmartsIntoComponents(reactText);
-
-#if 0    
-    // we don't currently do anything with this, but we could
     std::string agentText="";
     if(pos2!=pos1+1){
       agentText=text.substr(pos1+1,(pos2-pos1)-1);
     }
-#endif    
     std::string productText=text.substr(pos2+1);
+
+    // recognize changes within the same molecules, e.g., intra molecular bond formation
+    // therefore we need to correctly interpret parenthesis and dots in the reaction smarts
+    std::vector<std::string> reactSmarts=DaylightParserUtils::splitSmartsIntoComponents(reactText);
+    std::vector<std::string> productSmarts=DaylightParserUtils::splitSmartsIntoComponents(productText);
+
     ChemicalReaction *rxn=new ChemicalReaction();
    
     for(std::vector<std::string>::const_iterator txtIt=reactSmarts.begin();
         txtIt!=reactSmarts.end();++txtIt){
       ROMol *mol;
-      if(!useSmiles) mol=SmartsToMol(*txtIt,0,false,replacements);
-      else mol=SmilesToMol(*txtIt,0,false,replacements);
+      if(!useSmiles){
+        mol=SmartsToMol(*txtIt,0,false,replacements);
+      }
+      else{
+        mol=SmilesToMol(*txtIt,0,false,replacements);
+      }
       if(!mol){
         std::string errMsg="Problems constructing reactant from SMARTS: ";
         errMsg += *txtIt;
@@ -175,28 +180,47 @@ namespace RDKit {
       }
       rxn->addReactantTemplate(ROMOL_SPTR(mol));        
     }
-    //std::cerr << " ---------------------------------------------------------" << std::endl;    
-    ROMol *prodMol;
-    if(!useSmiles) prodMol=SmartsToMol(productText,0,false,replacements);
-    else prodMol=SmilesToMol(productText,0,false,replacements);
 
-    if(!prodMol){
-      std::string errMsg="Problems constructing product from SMARTS: ";
-      errMsg += productText;
-      throw ChemicalReactionParserException(errMsg);
+    for(std::vector<std::string>::const_iterator txtIt=productSmarts.begin();
+        txtIt!=productSmarts.end();++txtIt){
+      ROMol *mol;
+      if(!useSmiles){
+        mol=SmartsToMol(*txtIt,0,false,replacements);
+      }
+      else{
+        mol=SmilesToMol(*txtIt,0,false,replacements);
+      }
+      if(!mol){
+        std::string errMsg="Problems constructing product from SMARTS: ";
+        errMsg += *txtIt;
+        throw ChemicalReactionParserException(errMsg);
+      }
+      rxn->addProductTemplate(ROMOL_SPTR(mol));
     }
-    std::vector<ROMOL_SPTR> prods=MolOps::getMolFrags(*prodMol,false);
-    delete prodMol;
-    for(std::vector<ROMOL_SPTR>::iterator pIt=prods.begin();
-        pIt!=prods.end();++pIt){
-      rxn->addProductTemplate(*pIt);        
-    }
-    //std::cerr << " ---------------------------------------------------------" << std::endl;    
     DaylightParserUtils::updateProductsStereochem(rxn);
+
+    ROMol *agentMol;
+    //allow a reaction template to have no agent specified
+    if(agentText.size() != 0){
+      if(!useSmiles) agentMol=SmartsToMol(agentText,0,false,replacements);
+      else agentMol=SmilesToMol(agentText,0,false,replacements);
+
+      if(!agentMol){
+        std::string errMsg="Problems constructing agent from SMARTS: ";
+        errMsg += agentText;
+        throw ChemicalReactionParserException(errMsg);
+      }
+      std::vector<ROMOL_SPTR> agents=MolOps::getMolFrags(*agentMol,false);
+      delete agentMol;
+      for(std::vector<ROMOL_SPTR>::iterator aIt=agents.begin();
+        aIt!=agents.end();++aIt){
+        rxn->addAgentTemplate(*aIt);
+      }
+    }
     
     // "SMARTS"-based reactions have implicit properties
     rxn->setImplicitPropertiesFlag(true);
-    
+
     return rxn;    
   }
 
