@@ -1,5 +1,6 @@
 //
-// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-208 greg Landrum and Rational Discovery LLC
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -47,13 +48,21 @@ public:
   ExplicitBitVect operator& (const ExplicitBitVect &other) const;
   ExplicitBitVect operator| (const ExplicitBitVect &other) const;
   ExplicitBitVect operator~ () const;
+  /* concatenate two ExplicitBitVects */
+  ExplicitBitVect operator+ (const ExplicitBitVect &other) const;
+
+  ExplicitBitVect& operator^= (const ExplicitBitVect &other);
+  ExplicitBitVect& operator&= (const ExplicitBitVect &other);
+  ExplicitBitVect& operator|= (const ExplicitBitVect &other);
+  /* concatenate two ExplicitBitVects */
+  ExplicitBitVect& operator+= (const ExplicitBitVect &other);
+
   unsigned int getNumBits() const;
   unsigned int getNumOnBits() const;
   unsigned int getNumOffBits() const;
 
   void getOnBits (IntVect& v) const;
 
-  // FIX: complete these
   void clearBits() { dp_bits->reset(); };
   std::string toString() const;
   
