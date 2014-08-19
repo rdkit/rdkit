@@ -369,9 +369,7 @@ void testMatches3(){
   // -----
   // This block is connected to GitHub #60
   //
-  std::cerr<<"1"<<std::endl;
   _checkMatches("[#7h1]","c1cnc[nH]1", 1,1);
-  std::cerr<<"2"<<std::endl;
   _checkNoMatches("[#7h1]","c1cnc[nH]1",true);
 
   
@@ -968,7 +966,6 @@ void testAtomMap(){
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
   sma=MolToSmarts(*matcher1);
-  std::cerr<<"sma: "<<sma<<std::endl;
   TEST_ASSERT(sma=="[C&$(C=O):2]-[O:3]");
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
