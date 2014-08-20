@@ -1931,6 +1931,95 @@ namespace ForceFields {
       "53	53	2.67	1.6	E94\n";
 
 
+    class MMFFHerschbachLaurieCollection * MMFFHerschbachLaurieCollection::ds_instance = NULL;
+
+    extern const std::string defaultMMFFHerschbachLaurie ;
+
+    MMFFHerschbachLaurieCollection * MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie (const std::string &mmffHerschbachLaurie )
+    {
+      if (!ds_instance) {
+        ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie );
+      }
+      else if (mmffHerschbachLaurie  != "") {
+        delete ds_instance;
+        ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie );
+      }
+      return ds_instance;
+    }
+
+    MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie )
+    {
+      if (mmffHerschbachLaurie  == "") {
+        mmffHerschbachLaurie  = defaultMMFFHerschbachLaurie ;
+      }
+      std::istringstream inStream(mmffHerschbachLaurie );
+      std::string inLine = RDKit::getLine(inStream);
+      while (!(inStream.eof())) {
+        if (inLine[0] != '*') {
+          MMFFHerschbachLaurie mmffHerschbachLaurieObj;
+          boost::char_separator<char> tabSep("\t");
+          tokenizer tokens(inLine, tabSep);
+          tokenizer::iterator token = tokens.begin();
+
+          #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
+          unsigned int iRow = boost::lexical_cast<unsigned int>(*token);
+          #else
+          d_iRow.push_back((boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          #endif
+          ++token;
+          #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
+          unsigned int jRow = boost::lexical_cast<unsigned int>(*token);
+          #else
+          d_jRow.push_back((boost::uint8_t)boost::lexical_cast<unsigned int>(*token));
+          #endif
+          ++token;
+          mmffHerschbachLaurieObj.a_ij = boost::lexical_cast<double>(*token);
+          ++token;
+          mmffHerschbachLaurieObj.d_ij = boost::lexical_cast<double>(*token);
+          ++token;
+          mmffHerschbachLaurieObj.dp_ij = boost::lexical_cast<double>(*token);
+          ++token;
+          #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
+          d_params[iRow][jRow] = mmffHerschbachLaurieObj;
+          #else
+          d_params.push_back(mmffHerschbachLaurieObj);
+          #endif
+        }
+        inLine = RDKit::getLine(inStream);
+      }
+    }
+
+    const std::string defaultMMFFHerschbachLaurie  =
+      "*Table I. Parameters for Badger's Rule.\n"
+      "*\n"
+      "*	i j a_ij d_ij dp_ij\n"
+      "0	0	1.26	0.025	0.025\n"
+      "0	1	1.66	0.30	0.36\n"
+      "0	2	1.84	0.38	0.58\n"
+      "0	3	1.98	0.49	0.65\n"
+      "0	4	2.03	0.51	0.80\n"
+      "0	5	2.03	0.25	0.81\n"
+      "1	1	1.91	0.68	0.68\n"
+      "1	2	2.28	0.74	0.92\n"
+      "1	3	2.35	0.85	1.02\n"
+      "1	4	2.33	0.68	1.12\n"
+      "1	5	2.50	0.97	1.22\n"
+      "2	2	2.41	1.18	1.18\n"
+      "2	3	2.52	1.02	1.28\n"
+      "2	4	2.61	1.28	1.40\n"
+      "2	5	2.60	0.84	1.24\n"
+      "3	3	2.58	1.41	1.35\n"
+      "3	4	2.66	0.86	1.48\n"
+      "3	5	2.75	1.14	1.55\n"
+      "4	4	2.85	1.62	1.62\n"
+      "4	5	2.76	1.25	1.51\n"
+      "0	30	1.85	0.15	0.53\n"
+      "0	40	1.84	0.61	0.61\n"
+      "0	50	1.78	0.97	0.62\n"
+      "1	30	2.08	1.14	0.97\n"
+      "1	40	2.34	1.17	1.08\n";
+
+
     class MMFFCovRadPauEleCollection * MMFFCovRadPauEleCollection::ds_instance = NULL;
 
     extern const std::string defaultMMFFCovRadPauEle;

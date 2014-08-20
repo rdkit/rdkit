@@ -484,6 +484,24 @@ void testIssue242()
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub308()
+{
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing github 308: crash during MMFF parameterization ." << std::endl;
+  ROMol *mol = SmilesToMol("FF");
+  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol) >= 0);
+  int needMore;
+  ForceFields::ForceField *field = 0;
+  TEST_ASSERT(mol);
+  MMFF::MMFFMolProperties mmffMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties.isValid());
+  field = MMFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  needMore = field->minimize(200, 1.0e-6, 1.0e-3);
+  TEST_ASSERT(!needMore);
+}
+
 void testSFIssue1653802()
 {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -734,6 +752,7 @@ int main()
   testMMFFBuilder2();
   testIssue239();
   testIssue242();
+  testGithub308();
   testSFIssue1653802();
   testSFIssue2378119();
   testMMFFBatch();
