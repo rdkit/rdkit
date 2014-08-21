@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1296,6 +1296,17 @@ void test13BitVectAllOnes() {
   }
 }
 
+void test18BitVectConcatenation() {
+ {
+   ExplicitBitVect bv(32, false);
+   ExplicitBitVect bv2(32, true);
+   ExplicitBitVect bv3 = bv + bv2;
+   TEST_ASSERT(bv3.getNumBits() == 64);
+   TEST_ASSERT(bv3.getNumOnBits() == 32);
+   TEST_ASSERT(bv3.getNumOffBits() == 32);
+  }
+}
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -1362,6 +1373,9 @@ int main(){
 
   BOOST_LOG(rdInfoLog) << " Test BitVect with all ones -------------------------------" << std::endl;
   test13BitVectAllOnes();
+
+  BOOST_LOG(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  -------------------------------" << std::endl;
+  test18BitVectConcatenation();
 
   return 0;
   

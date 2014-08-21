@@ -1,8 +1,10 @@
-/* A Bison parser, made by GNU Bison 2.5.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* A Bison parser, made by GNU Bison 2.4.1.  */
+
+/* Skeleton interface for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,33 +45,34 @@
      SIMPLE_ATOM_QUERY_TOKEN = 261,
      COMPLEX_ATOM_QUERY_TOKEN = 262,
      RINGSIZE_ATOM_QUERY_TOKEN = 263,
-     HYB_TOKEN = 264,
-     ZERO_TOKEN = 265,
-     NONZERO_DIGIT_TOKEN = 266,
-     GROUP_OPEN_TOKEN = 267,
-     GROUP_CLOSE_TOKEN = 268,
-     SEPARATOR_TOKEN = 269,
-     HASH_TOKEN = 270,
-     MINUS_TOKEN = 271,
-     PLUS_TOKEN = 272,
-     CHIRAL_MARKER_TOKEN = 273,
-     CHI_CLASS_TOKEN = 274,
-     CHI_CLASS_OH_TOKEN = 275,
-     H_TOKEN = 276,
-     AT_TOKEN = 277,
-     PERCENT_TOKEN = 278,
-     ATOM_OPEN_TOKEN = 279,
-     ATOM_CLOSE_TOKEN = 280,
-     NOT_TOKEN = 281,
-     AND_TOKEN = 282,
-     OR_TOKEN = 283,
-     SEMI_TOKEN = 284,
-     BEGIN_RECURSE = 285,
-     END_RECURSE = 286,
-     COLON_TOKEN = 287,
-     UNDERSCORE_TOKEN = 288,
-     BOND_TOKEN = 289,
-     EOS_TOKEN = 290
+     IMPLICIT_H_ATOM_QUERY_TOKEN = 264,
+     HYB_TOKEN = 265,
+     ZERO_TOKEN = 266,
+     NONZERO_DIGIT_TOKEN = 267,
+     GROUP_OPEN_TOKEN = 268,
+     GROUP_CLOSE_TOKEN = 269,
+     SEPARATOR_TOKEN = 270,
+     HASH_TOKEN = 271,
+     MINUS_TOKEN = 272,
+     PLUS_TOKEN = 273,
+     CHIRAL_MARKER_TOKEN = 274,
+     CHI_CLASS_TOKEN = 275,
+     CHI_CLASS_OH_TOKEN = 276,
+     H_TOKEN = 277,
+     AT_TOKEN = 278,
+     PERCENT_TOKEN = 279,
+     ATOM_OPEN_TOKEN = 280,
+     ATOM_CLOSE_TOKEN = 281,
+     NOT_TOKEN = 282,
+     AND_TOKEN = 283,
+     OR_TOKEN = 284,
+     SEMI_TOKEN = 285,
+     BEGIN_RECURSE = 286,
+     END_RECURSE = 287,
+     COLON_TOKEN = 288,
+     UNDERSCORE_TOKEN = 289,
+     BOND_TOKEN = 290,
+     EOS_TOKEN = 291
    };
 #endif
 
@@ -79,8 +82,8 @@
 typedef union YYSTYPE
 {
 
-/* Line 2068 of yacc.c  */
-#line 53 "smarts.yy"
+/* Line 1676 of yacc.c  */
+#line 52 "smarts.yy"
 
   int                      moli;
   RDKit::QueryAtom * atom;
@@ -89,8 +92,8 @@ typedef union YYSTYPE
 
 
 
-/* Line 2068 of yacc.c  */
-#line 94 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
+/* Line 1676 of yacc.c  */
+#line 97 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

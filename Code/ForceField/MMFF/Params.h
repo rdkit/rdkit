@@ -91,6 +91,15 @@ namespace ForceFields {
       double r0;
     };
 
+    //! class to store parameters for Herschbach-Laurie's version
+    //! of Badger's rule
+    class MMFFHerschbachLaurie {
+    public:
+      double a_ij;
+      double d_ij;
+      double dp_ij;
+    };
+
     //! class to store covalent radius and Pauling electronegativity
     //! values for MMFF bond stretching empirical rule
     class MMFFCovRadPauEle {
@@ -556,6 +565,81 @@ namespace ForceFields {
       std::vector<MMFFBond> d_params;  //!< the parameter vector
       std::vector<boost::uint8_t> d_iAtomicNum;  //! atomic number vector for atom i
       std::vector<boost::uint8_t> d_jAtomicNum;  //! atomic number vector for atom j
+      #endif
+    };
+
+    class MMFFHerschbachLaurieCollection {
+    public:
+      //! gets a pointer to the singleton MMFFHerschbachLaurieCollection
+      /*!
+	\param mmffHerschbachLaurie (optional) a string with parameter data. See
+	 below for more information about this argument
+
+	\return a pointer to the singleton MMFFHerschbachLaurieCollection
+
+	<b>Notes:</b>
+	  - do <b>not</b> delete the pointer returned here
+	  - if the singleton MMFFHerschbachLaurieCollection has already been instantiated and
+	    \c mmffHerschbachLaurie is empty, the singleton will be returned.
+	  - if \c mmffHerschbachLaurie is empty and the singleton MMFFHerschbachLaurieCollection has
+	    not yet been instantiated, the default parameters (from Params.cpp)
+	    will be used.
+	  - if \c mmffHerschbachLaurie is supplied, a new singleton will be instantiated.
+	    The current instantiation (if there is one) will be deleted.
+      */
+      static MMFFHerschbachLaurieCollection *getMMFFHerschbachLaurie(const std::string &mmffHerschbachLaurie = "");
+      //! Looks up the parameters for a particular key and returns them.
+      /*!
+	\return a pointer to the MMFFHerschbachLaurie object, NULL on failure.
+      */
+      const MMFFHerschbachLaurie *operator()(const int iRow, const int jRow) {
+        
+        const MMFFHerschbachLaurie *mmffHerschbachLaurieParams = NULL;
+        unsigned int canIRow = iRow;
+        unsigned int canJRow = jRow;
+        if (iRow > jRow) {
+          canIRow = jRow;
+          canJRow = iRow;
+        }
+        #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
+        std::map<const unsigned int,
+          std::map<const unsigned int, MMFFHerschbachLaurie> >::const_iterator res1;
+        std::map<const unsigned int, MMFFHerschbachLaurie>::const_iterator res2;
+        res1 = d_params.find(canIRow);
+        if (res1 != d_params.end()) {
+          res2 = ((*res1).second).find(canJRow);
+          if (res2 != ((*res1).second).end()) {
+            mmffHerschbachLaurieParams = &((*res2).second);
+          }
+        }
+        #else
+        std::pair<std::vector<boost::uint8_t>::const_iterator,
+          std::vector<boost::uint8_t>::const_iterator> bounds;
+        bounds = std::equal_range
+          (d_iRow.begin(), d_iRow.end(), canIRow);
+        if (bounds.first != bounds.second) {
+          bounds = std::equal_range
+            (d_jRow.begin() + (bounds.first - d_iRow.begin()),
+            d_jRow.begin() + (bounds.second - d_iRow.begin()),
+            canJRow);
+          if (bounds.first != bounds.second) {
+            mmffHerschbachLaurieParams = &d_params[bounds.first - d_jRow.begin()];
+          }
+        }
+        #endif
+
+        return mmffHerschbachLaurieParams;
+      }
+    private:
+      //! to force this to be a singleton, the constructor must be private
+      MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie);
+      static class MMFFHerschbachLaurieCollection *ds_instance;    //!< the singleton
+      #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
+      std::map<const unsigned int, std::map<const unsigned int, MMFFHerschbachLaurie> > d_params;  //!< the parameter 2D-map
+      #else
+      std::vector<MMFFHerschbachLaurie> d_params;  //!< the parameter vector
+      std::vector<boost::uint8_t> d_iRow;  //! periodic row number vector for atom i
+      std::vector<boost::uint8_t> d_jRow;  //! periodic row number vector for atom j
       #endif
     };
 

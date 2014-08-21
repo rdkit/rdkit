@@ -3560,6 +3560,7 @@ void testAtomAtomMatch(){
   aamatchtest("OCO","[CH4]",true,1,0);
   aamatchtest("O[CH2]O","C",true,1,0);
   aamatchtest("O[CH2]O","[CH4]",true,1,0);
+  aamatchtest("OCO","[CH2]",false,1,0); // doesn't match due to radical count
   aamatchtest("O[CH2]O","[CH2]",false,1,0); // doesn't match due to radical count
   aamatchtest("O[CH]O","[CH3]",true,1,0);
   aamatchtest("O[CH]O","[CH2]",false,1,0); // doesn't match due to radical count

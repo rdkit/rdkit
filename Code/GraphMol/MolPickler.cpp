@@ -193,6 +193,8 @@ namespace RDKit{
         query->setDataFunc(queryAtomHCount);
       } else if(descr=="AtomImplicitHCount"){
         query->setDataFunc(queryAtomImplicitHCount);
+      } else if(descr=="AtomHasImplicitH"){
+        query->setDataFunc(queryAtomHasImplicitH);
       } else if(descr=="AtomIsAromatic"){
         query->setDataFunc(queryAtomAromatic);
       } else if(descr=="AtomIsAliphatic"){
