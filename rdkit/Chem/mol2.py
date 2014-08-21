@@ -60,13 +60,18 @@ def MolToMol2Block(mol, confId=-1):
 {}
 {} {} 0 0 0
 SMALL
-USER_CHARGES\n""".format(mol.GetProp("_Name"), mol.GetNumAtoms(), mol.GetNumBonds())
+USER_CHARGES\n""".format(mol.GetProp("_Name") if "_Name" in mol.GetPropNames() else "UNK", mol.GetNumAtoms(), mol.GetNumBonds())
 
         # FIXME "USER_CHARGES" could become 'Gasteiger charges'
         # FIXME "SMALL" means small molecule but could become "PROTEIN"
         
         pos = _get_positions(mol, confId)
-        atom_lines = atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:>4} {} {} {:>7.4f}".format(a.GetIdx()+1, a.GetProp("_TriposAtomName"), float(pos[a.GetIdx()][0]), float(pos[a.GetIdx()][1]), float(pos[a.GetIdx()][2]), a.GetProp("_TriposAtomType"), 1, "UNL", float(a.GetProp("_TriposPartialCharge"))) for a in mol.GetAtoms()]
+        atom_lines = atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:>4} {} {} {:>7.4f}".format(a.GetIdx()+1, 
+                                                                                                         a.GetProp("_TriposAtomName") if "_TriposAtomName" in a.GetPropNames() else a.GetSymbol()+str(a.GetIdx()+1), 
+                                                                                                         float(pos[a.GetIdx()][0]), float(pos[a.GetIdx()][1]), float(pos[a.GetIdx()][2]), 
+                                                                                                         a.GetProp("_TriposAtomType") if "_TriposAtomType" in a.GetPropNames() else a.GetSymbol(), 
+                                                                                                         1, "UNL", 
+                                                                                                         float(a.GetProp("_TriposPartialCharge")) if "_TriposPartialCharge" in a.GetPropNames() else 0.0) for a in mol.GetAtoms()]
         atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines + ["\n"]
         atom_lines = "\n".join(atom_lines)
             
