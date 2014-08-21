@@ -108,6 +108,17 @@ namespace RDKit{
   static int queryIsAtomInRing(Atom const * at) {
     return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx())!=0;
   };
+  static int queryAtomHasRingBond(Atom const * at) {
+    ROMol::OBOND_ITER_PAIR atomBonds=at->getOwningMol().getAtomBonds(at);
+    while(atomBonds.first != atomBonds.second){
+      unsigned int bondIdx=at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
+      if(at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
+        return 1;
+      }
+      ++atomBonds.first;  
+    }
+    return 0;
+  };
   static int queryIsBondInRing(Bond const * bond) {
     return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())!=0;
   };
@@ -325,6 +336,13 @@ namespace RDKit{
   //! \overload
   ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
+  //! returns a Query for matching atoms with a particular number of ring bonds
+  template <class T>
+  T *makeAtomHasRingBondQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(1,queryAtomHasRingBond,descr);
+  }
+  //! \overload
+  ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery();
 
   //! returns a Query for matching bond orders
   BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);

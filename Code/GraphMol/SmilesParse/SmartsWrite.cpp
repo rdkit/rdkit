@@ -144,6 +144,9 @@ namespace RDKit {
       } else if (descrip == "AtomTotalDegree") {
         res << "X" << query->getVal();
         needParen = true;
+      } else if (descrip == "AtomHasRingBond") {
+        res << "x";
+        needParen = true;
       } else if (descrip == "AtomHCount") {
         res << "H" << query->getVal();
         needParen = true;
@@ -195,28 +198,11 @@ namespace RDKit {
       } else if (descrip == "AtomIsotope") {
         res << query->getVal()<<"*";
         needParen = true;
+      } else if (descrip == "AtomHasRingBond") {
+        res << "x";
+        needParen = true;
       } else if (descrip == "AtomRingBondCount") {
-        int count=query->getVal();
-        if(count==0){
-          res<<"!";
-        }
-        res<<"$(*";
-        while(count>1){
-          res<<"(@*)";
-          --count;
-        }
-        res<<"@*)";
-        count=query->getVal()+1;
-        if(count>1){
-          // put in a counter query for the next highest number of ring
-          // bonds:
-          res<<"&!$(*";
-          while(count>1){
-            res<<"(@*)";
-            --count;
-          }
-          res<<"@*)";
-        }
+        res << "x" << query->getVal();
         needParen = true;
       } else if (descrip == "AtomUnsaturated") {
         res<<"$(*=,:,#*)";

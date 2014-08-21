@@ -261,6 +261,12 @@ ATOM_EQUALS_QUERY *makeAtomInRingQuery(){
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery(){
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomHasRingBond);
+  res->setDescription("AtomHasRingBond");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what){
   ATOM_EQUALS_QUERY *res;
   res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what,queryIsAtomInNRings);

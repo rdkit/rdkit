@@ -1509,6 +1509,40 @@ void testGithub313(){
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+void testGithub314(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github #314: problems with 'x' in SMARTS" << std::endl;
+
+  {
+    // basics: does it parse correctly and generate the right results?
+    _checkMatches("[x]","C1CC1", 3,1);
+    _checkNoMatches("[x]","CCC");
+    _checkMatches("[x2]","C1CC1", 3,1);
+    _checkNoMatches("[x3]","C1CC1");
+    _checkNoMatches("[x3]","CC1CC1");
+  }
+
+  {
+    // next: can we write it?
+    std::string sma="[x]";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[x]");
+    delete matcher;
+
+    sma="[x1]";
+    matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[x1]");
+    delete matcher;    
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
   
 
 int
@@ -1546,6 +1580,7 @@ main(int argc, char *argv[])
   testReplacementPatterns();
 #endif
   testGithub313();
+  testGithub314();
   
   return 0;
 }

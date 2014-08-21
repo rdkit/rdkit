@@ -163,8 +163,8 @@ void smarts_lexer_error(const char *msg) {
 
 <IN_ATOM_STATE>x {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomRingBondCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+	yylval->atom->setQuery(makeAtomHasRingBondQuery());
+	return RINGBOND_ATOM_QUERY_TOKEN;
 }
 
 <IN_ATOM_STATE>v {
