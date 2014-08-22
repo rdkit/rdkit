@@ -1790,6 +1790,7 @@ void testMorganAtomInfo(){
     TEST_ASSERT(bitInfo.size()==2);
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
         iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->first<2048);
       TEST_ASSERT(fp->getBit(iter->first));
     }
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
@@ -1804,6 +1805,7 @@ void testMorganAtomInfo(){
     TEST_ASSERT(bitInfo.size()==5);
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
         iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->first<2048);
       TEST_ASSERT(fp->getBit(iter->first));
     }
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
@@ -1813,6 +1815,32 @@ void testMorganAtomInfo(){
     }
     delete fp;
   
+    delete mol;
+  }
+
+  { // this was github issue #295
+
+    ROMol *mol;
+    MorganFingerprints::BitInfoMap bitInfo1,bitInfo2;
+
+    mol = SmilesToMol("CCCCC");
+
+    ExplicitBitVect *fp;
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,2,2048,0,0,false,true,false,&bitInfo1);
+    delete fp;
+
+    SparseIntVect<boost::uint32_t> *iv;
+    iv = MorganFingerprints::getHashedFingerprint(*mol,2,2048,0,0,false,true,false,&bitInfo2);
+    delete iv;
+
+    TEST_ASSERT(bitInfo1.size()==bitInfo2.size());
+    
+    for(MorganFingerprints::BitInfoMap::const_iterator iter1=bitInfo1.begin();
+        iter1!=bitInfo1.end();++iter1){
+      TEST_ASSERT(iter1->first<2048);
+      TEST_ASSERT(bitInfo2.find(iter1->first)!=bitInfo2.end());
+    }
+    
     delete mol;
   }
 

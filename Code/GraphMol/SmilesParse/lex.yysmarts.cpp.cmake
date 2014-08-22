@@ -1,6 +1,6 @@
-#line 2 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 2 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
-#line 4 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 4 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -621,7 +621,7 @@ void smarts_lexer_error(const char *msg) {
 
 
 
-#line 625 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 625 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -871,7 +871,7 @@ YY_DECL
 #line 47 "smarts.ll"
 
 
-#line 875 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 875 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
     yylval = yylval_param;
 
@@ -1204,8 +1204,8 @@ YY_RULE_SETUP
 #line 176 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomImplicitHCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+        yylval->atom->setQuery(makeAtomHasImplicitHQuery());
+	return IMPLICIT_H_ATOM_QUERY_TOKEN;
 }
 	YY_BREAK
 case 104:
@@ -1543,7 +1543,7 @@ YY_RULE_SETUP
 #line 345 "smarts.ll"
 ECHO;
 	YY_BREAK
-#line 1547 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 1547 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

@@ -1,0 +1,18 @@
+select tanimoto_sml(avalon_fp('c1ccccc1'::mol),avalon_fp('c1ccccc1'::mol));
+ tanimoto_sml 
+--------------
+            1
+(1 row)
+
+select tanimoto_sml(avalon_fp('c1ccccc1'::mol),avalon_fp('c1ccccc1'::mol,true));
+ tanimoto_sml 
+--------------
+         0.25
+(1 row)
+
+select tanimoto_sml(avalon_fp('c1ccccc1'::mol),avalon_fp('c1ccccn1'::mol));
+   tanimoto_sml    
+-------------------
+ 0.333333333333333
+(1 row)
+

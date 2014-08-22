@@ -231,6 +231,13 @@ RETURNS bfp
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION avalon_fp(mol,bool default false,int default 15761407)
+RETURNS bfp
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+
+
 
 CREATE OR REPLACE FUNCTION tanimoto_sml(bfp, bfp)
 RETURNS float8 
@@ -1119,3 +1126,240 @@ AS
 STORAGE         bytea;
 
 
+
+CREATE OR REPLACE FUNCTION reaction_in(cstring)
+RETURNS reaction
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_out(reaction)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_recv(internal)
+RETURNS reaction
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_send(reaction)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE reaction (
+        INTERNALLENGTH = -1,
+        INPUT = reaction_in,
+        OUTPUT = reaction_out,
+        RECEIVE = reaction_recv,
+        SEND = reaction_send,
+        STORAGE = extended
+);
+
+CREATE OR REPLACE FUNCTION reaction_from_smiles(cstring)
+RETURNS reaction
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_from_smarts(cstring)
+RETURNS reaction
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_to_smiles(reaction)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_to_smarts(reaction)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_from_ctab(cstring)
+RETURNS reaction
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_to_ctab(reaction)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_numreactants(reaction)
+RETURNS integer
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_numproducts(reaction)
+RETURNS integer
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_numagents(reaction)
+RETURNS integer
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct(reaction, reaction)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'reaction_substruct'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR @> (
+	LEFTARG = reaction,
+	RIGHTARG = reaction,
+	PROCEDURE = substruct(reaction, reaction),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION substructFP(reaction, reaction)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'reaction_substructFP'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR ?> (
+	LEFTARG = reaction,
+	RIGHTARG = reaction,
+	PROCEDURE = substructFP(reaction, reaction),
+	COMMUTATOR = '?<',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+CREATE OR REPLACE FUNCTION rsubstruct(reaction, reaction)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'reaction_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR <@ (
+	LEFTARG = reaction,
+	RIGHTARG = reaction,
+	PROCEDURE = rsubstruct(reaction, reaction),
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION rsubstructFP(reaction, reaction)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'reaction_rsubstructFP'
+LANGUAGE C STRICT IMMUTABLE;
+
+
+CREATE OPERATOR ?< (
+	LEFTARG = reaction,
+	RIGHTARG = reaction,
+	PROCEDURE = rsubstructFP(reaction, reaction),
+	COMMUTATOR = '?>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION reaction_ne(reaction,reaction)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR <> (
+        LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_ne,
+        COMMUTATOR = '<>',
+    NEGATOR = '=',
+        RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
+
+CREATE OR REPLACE FUNCTION reaction_eq(reaction,reaction)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR @= (
+    LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_eq,
+    COMMUTATOR = '=',
+    NEGATOR = '<>',
+    RESTRICT = eqsel,
+    JOIN = eqjoinsel
+);
+
+CREATE OR REPLACE FUNCTION greaction_consistent(bytea,internal,int4)
+    RETURNS bool
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION greaction_compress(internal)
+    RETURNS internal
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+
+CREATE OPERATOR CLASS reaction_ops
+DEFAULT FOR TYPE reaction USING gist
+AS
+	OPERATOR	3	@> (reaction, reaction),
+	OPERATOR	4	<@ (reaction, reaction),
+	OPERATOR	6	@= (reaction, reaction),
+	OPERATOR	7	?> (reaction, reaction),
+	OPERATOR	8	?< (reaction, reaction),	
+    FUNCTION    1   greaction_consistent (bytea, internal, int4),
+    FUNCTION    2   gmol_union (bytea, internal),
+    FUNCTION    3   greaction_compress (internal),
+    FUNCTION    4   gmol_decompress (internal),
+    FUNCTION    5   gmol_penalty (internal, internal, internal),
+    FUNCTION    6   gmol_picksplit (internal, internal),
+    FUNCTION    7   gmol_same (bytea, bytea, internal),
+STORAGE         bytea;
+
+CREATE OR REPLACE FUNCTION has_reaction_substructmatch(queryreaction char, tablename regclass, columnname text) 
+  RETURNS SETOF reaction AS
+$BODY$
+DECLARE
+	nof_all_entries real;
+	nof_index_matches real;
+	match_ratio real;
+BEGIN
+  SET enable_seqscan=off;
+  SET enable_bitmapscan=on;
+  SET enable_indexscan=on;
+  RAISE NOTICE 'Your query: %', queryreaction;
+  EXECUTE 'SELECT COUNT(*) FROM ' || tablename INTO nof_all_entries;
+  RAISE NOTICE 'Number of reactions in table: %', nof_all_entries;
+  EXECUTE 'SELECT COUNT(*) FROM ' || tablename || ' WHERE ' || quote_ident(columnname) || '?>' || quote_literal(queryreaction) INTO nof_index_matches;
+  RAISE NOTICE 'Number of matched reactions in the index: %', nof_index_matches;
+  match_ratio := nof_index_matches/nof_all_entries;
+  RAISE NOTICE 'Match ratio: %', match_ratio;
+  IF match_ratio > 0.7 THEN
+    SET enable_seqscan=on;
+    SET enable_bitmapscan=off;
+    SET enable_indexscan=off;
+    IF match_ratio >= 1.0 THEN
+      RAISE NOTICE 'Your query matches % percent of the index. You are sure you already have build an index?', match_ratio*100.0;
+    END IF;
+    RAISE NOTICE 'Your query matches % percent of the index. Executing strategy: SequentialScan. Starting substructure matching..', match_ratio*100.0;
+  ELSE
+    SET enable_seqscan=off;
+    SET enable_bitmapscan=on;
+    SET enable_indexscan=on;
+    RAISE NOTICE 'Executing strategy: IndexScan and BitMapHeapScan. % matches have to be rechecked. Starting substructure matching...', nof_index_matches;
+  END IF;
+  RETURN QUERY EXECUTE 'SELECT * FROM ' || tablename || ' WHERE ' || quote_ident(columnname) || '@>' || quote_literal(queryreaction);
+END
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION reaction_difference_fp(reaction, int default 1)
+RETURNS sfp
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION reaction_structural_bfp(reaction,int default 5)
+RETURNS bfp
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+  

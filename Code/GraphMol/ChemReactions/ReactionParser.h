@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -78,12 +78,34 @@ namespace RDKit{
                                                  std::map<std::string,std::string> *replacements=0,
                                                  bool useSmiles=false);
 
+  //! Parse a ROMol into a ChemicalReaction, RXN role must be set before
+  /*!
+     Alternative to build a reaction from a molecule (fragments) which have RXN roles
+     set as atom properties: "molRxnRole" (1=reactant, 2=product, 3=agent) 
+
+     \param mol           ROMol with RXN roles set
+   */
+  ChemicalReaction * RxnMolToChemicalReaction(const ROMol &mol);
+
+
+
   //! returns the reaction SMARTS for a reaction
   std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);
 
+  //! returns the reaction SMILES for a reaction
+  std::string ChemicalReactionToRxnSmiles(ChemicalReaction &rxn);
+
   //! returns an RXN block for a reaction
-  std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn);
+  /*!
+     \param rxn            chemical reaction
+     \param separateAgents flag to decide if agents were put in a seperate block,
+                           otherwise they were included in the reactants block (default)
+   */
+  std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn, bool separateAgents=false);
   
+  //! returns a ROMol with RXN roles used to describe the reaction
+  ROMol* ChemicalReactionToRxnMol(const ChemicalReaction &rxn);
+
 }; // end of RDKit namespace
 
 #endif

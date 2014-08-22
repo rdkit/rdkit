@@ -93,7 +93,9 @@ try:
   else:
     if 'display.width' in  pd.core.config._registered_options:
       pd.set_option('display.width',1000000000)
-    if 'display.height' in  pd.core.config._registered_options:
+    if 'display.max_rows' in  pd.core.config._registered_options:
+      pd.set_option('display.max_rows',1000000000)
+    elif 'display.height' in  pd.core.config._registered_options:
       pd.set_option('display.height',1000000000)
     if 'display.max_colwidth' in  pd.core.config._registered_options:
       pd.set_option('display.max_colwidth',1000000000)

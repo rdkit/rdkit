@@ -31,6 +31,9 @@ class TestCase(unittest.TestCase):
     lmaxmin = pkr.LazyPick(func, self.n, self.m,(886,112))
     self.assertEqual(list(lmaxmin),list(maxmin))
 
+    lmaxmin = pkr.LazyPick(func, self.n, self.m,(886,112),useCache=False)
+    self.assertEqual(list(lmaxmin),list(maxmin))
+
     self.assertRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(1012,)))
     self.assertRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(-1,)))
 
@@ -146,7 +149,40 @@ class TestCase(unittest.TestCase):
     picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,nvs,N))
 
-            
+
+  def testBitVectorMaxMin(self):
+    from rdkit import DataStructs
+    sz = 100
+    nbits=200
+    nBitsToSet=int(nbits*.1)
+    N=10
+    vs = []
+    for i in range(sz):
+      bv = DataStructs.ExplicitBitVect(nbits)
+      for j in range(nBitsToSet):
+        val= int(nbits*random.random())
+        bv.SetBit(val)
+      vs.append(bv)
+    def func(i,j,bvs = vs):
+      d = DataStructs.TanimotoSimilarity(bvs[i],bvs[j],returnDistance=True)
+      return d
+    picker = rdSimDivPickers.MaxMinPicker()
+    mm1 = picker.LazyPick(func,len(vs),N)
+    self.assertEqual(len(mm1),N)
+
+    mm2 = picker.LazyPick(func,len(vs),N,useCache=False)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(list(mm1),list(mm2))
+    
+    mm2 = picker.LazyBitVectorPick(vs,len(vs),N)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(list(mm1),list(mm2))
+
+    mm2 = picker.LazyBitVectorPick(vs,len(vs),N,useCache=False)
+    self.assertEqual(len(mm2),N)
+    self.assertEqual(list(mm1),list(mm2))
+    
+    
 if __name__ == '__main__':
     unittest.main()
 
