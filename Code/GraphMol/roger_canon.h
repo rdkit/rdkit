@@ -16,7 +16,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
-
+#include <vector>
 
 namespace RDKit {
   namespace Canon{
@@ -184,6 +184,8 @@ namespace RDKit {
     class AtomCompareFunctor {
       Canon::canon_atom *dp_atoms;
       const ROMol *dp_mol;
+      std::vector<std::vector<unsigned int> > d_atomInvars;
+
       void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
         unsigned int res=0;
         const Atom *at=dp_atoms[i].atom;
@@ -204,6 +206,8 @@ namespace RDKit {
         std::sort(nbrs.begin(),nbrs.end());
       }
       // EFF: it's stupid inefficient to be calling this frequently
+      // however: since we use the current class of the nbr, there's some
+      // heavy bookkeeping to really remove it
       unsigned int getAtomRingNbrCode(unsigned int i) const {
 	const Atom *at=dp_atoms[i].atom;
 	ROMol::ADJ_ITER beg,end;
@@ -221,8 +225,8 @@ namespace RDKit {
 	    while(nbeg!=nend){
 	      const ATOM_SPTR nnbr=(*dp_mol)[*nbeg];
 	      if(nnbr->getIdx()==at->getIdx()){
-		//std::cerr<<"  "<<at->getIdx()<<" "<<nidx<<std::endl;
-		return nidx;
+		//std::cerr<<"  "<<at->getIdx()<<"-"<<nbr->getIdx()<<" "<<nidx<<std::endl;
+		return dp_atoms[nbr->getIdx()].index*1000000+nidx;
 	      }
 	      ++nidx;
 	      ++nbeg;
@@ -243,7 +247,7 @@ namespace RDKit {
           return -1;
         else if(ivi>ivj)
           return 1;
-    
+
         // start by comparing degree
         ivi= dp_atoms[i].atom->getDegree();
         ivj= dp_atoms[j].atom->getDegree();
@@ -286,14 +290,6 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
         
-        // charge
-        ivi=dp_atoms[i].atom->getFormalCharge();
-        ivj=dp_atoms[j].atom->getFormalCharge();
-        if(ivi<ivj)
-          return -1;
-        else if(ivi>ivj)
-          return 1;
-        
         // ring membership
         ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx())!=0;
         ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx())!=0;
@@ -322,6 +318,14 @@ namespace RDKit {
           else if(ivi>ivj)
             return 1;
 
+          // can't actually use values here, because they are arbitrary
+          ivi=dp_atoms[i].atom->getChiralTag()!=0;
+          ivj=dp_atoms[j].atom->getChiralTag()!=0;
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
+          
 	  // ring stereochemistry
 	  if(dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx()) &&
 	     dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx()) ){
@@ -332,8 +336,6 @@ namespace RDKit {
 	    else if(ivi>ivj)
 	      return 1;
 	  }
-  
-	  
           // bond stereo is taken care of in the neighborhood comparison
         }
         return 0;
@@ -343,15 +345,17 @@ namespace RDKit {
       bool df_useIsotopes;
       bool df_useChirality;
       AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false),
-                             df_useIsotopes(true), df_useChirality(true) {};
+                             df_useIsotopes(true), df_useChirality(true) {
+      };
       AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false),
-                                                                     df_useIsotopes(true), df_useChirality(true) {};
+                                                                     df_useIsotopes(true), df_useChirality(true) {
+      };
       int operator()(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
         PRECONDITION(dp_mol,"no molecule");
         PRECONDITION(i!=j,"bad call");
         int v=basecomp(i,j);
-	//std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
+	// std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
@@ -360,7 +364,7 @@ namespace RDKit {
           getAtomNeighborhood(j,nbrsj);
           for(unsigned int ii=0;ii<nbrsi.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
-	    //std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
+	    // std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
           }
         }

@@ -15,6 +15,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RankAtoms.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>
 #include <vector>
@@ -759,19 +760,19 @@ void test6(){
 namespace{
   void _renumberTest(const ROMol *m,std::string inSmiles){
     PRECONDITION(m,"no molecule");
-    // std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
+    //std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
     std::string osmi=MolToSmiles(*m,true);
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
 
     std::srand(0xF00D);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      // std::cerr<<"---------------------------------------------------"<<std::endl;
+      //std::cerr<<"---------------------------------------------------"<<std::endl;
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
-      // for(unsigned int j=0;j<m->getNumAtoms();++j){
-      //   std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
-      // }
+      //for(unsigned int j=0;j<m->getNumAtoms();++j){
+      //  std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
+      //}
       
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
       TEST_ASSERT(nm);
@@ -793,9 +794,10 @@ namespace{
 void test7(){
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
   std::string smis[]={
+    "C[C@@H]1CCC[C@H](C)[C@H]1C",
+    "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
     "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
     "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
-    "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
     "CCCN[C@H]1CC[C@H](NC)CC1",
     "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
     "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
@@ -806,7 +808,10 @@ void test7(){
     "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
     "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
     "CCC1=C(C)CN(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)N[C@H]3CC[C@H](C)CC3)cc2)C1=O",
-
+    "C[C@H]1C[C@H](C1)N1CCC1",
+    "C[C@H]1C[C@H](C1)N1CCN(C)CC1",
+    "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
+    "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
     "EOS"
   };
   unsigned int i=0;
@@ -814,7 +819,27 @@ void test7(){
     std::string smiles=smis[i++];
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m,true);
     _renumberTest(m,smiles);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void test8(){
+  BOOST_LOG(rdInfoLog) << "testing smiles round-tripping." << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi1b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    if(smi1!=smi2) std::cerr<<smi1<<"\n"<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -829,8 +854,9 @@ int main(){
   test4();
   test5();
   test6();
-#endif
   test7();
+#endif
+  test8();
   return 0;
 }
 
