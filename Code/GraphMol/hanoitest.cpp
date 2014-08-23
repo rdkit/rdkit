@@ -618,7 +618,7 @@ void test5(){
 void test6(){
   BOOST_LOG(rdInfoLog) << "testing canonicalization using the wrapper." << std::endl;
   // canonicalization using the wrapper
-#if 0
+#if 1
   {
     std::string smi="FC1C(CC)CCC1CC";
     RWMol *m =SmilesToMol(smi);
@@ -660,9 +660,9 @@ void test6(){
       seen.set(atomRanks[i],1);
     }
 
-    for(unsigned int ii=0;ii<atomRanks.size();++ii){
-       std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
-    }
+    // for(unsigned int ii=0;ii<atomRanks.size();++ii){
+    //    std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
+    // }
     TEST_ASSERT(atomRanks[0]==0);
     TEST_ASSERT(atomRanks[1]==3);
     TEST_ASSERT(atomRanks[2]==9);
@@ -697,6 +697,7 @@ void test6(){
     // }
     delete m;
   }
+#endif
   {
     std::string smi="BrC=C1CCC(C(=O)O1)c2cccc3ccccc23";
     RWMol *m =SmilesToMol(smi);
@@ -727,13 +728,13 @@ void test6(){
     RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<"      "<<i<<" "<<atomRanks[i]<<std::endl;
+      //      std::cerr<<"      "<<i<<" "<<atomRanks[i]<<std::endl;
       TEST_ASSERT(!seen[atomRanks[i]]);
       seen.set(atomRanks[i],1);
     }
     delete m;
   }
-#endif  
+
   {
     std::string smi="CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2";
     RWMol *m =SmilesToMol(smi);
@@ -744,7 +745,6 @@ void test6(){
     RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<"      "<<i<<" "<<atomRanks[i]<<std::endl;
       TEST_ASSERT(!seen[atomRanks[i]]);
       seen.set(atomRanks[i],1);
     }
@@ -757,16 +757,16 @@ void test6(){
 
 
 namespace{
-  void _renumberTest(const ROMol *m){
+  void _renumberTest(const ROMol *m,std::string inSmiles){
     PRECONDITION(m,"no molecule");
-    std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
+    //    std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
     std::string osmi=MolToSmiles(*m,true);
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
 
     std::srand(0xF00D);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<"---------------------------------------------------"<<std::endl;
+      //std::cerr<<"---------------------------------------------------"<<std::endl;
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
@@ -775,6 +775,7 @@ namespace{
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
       std::string smi=MolToSmiles(*nm,true);
       if(smi!=osmi){
+        std::cerr<<"  input: "<<inSmiles<<std::endl;
         std::cerr<<osmi<<std::endl;
         std::cerr<<smi<<std::endl;
       }
@@ -787,36 +788,20 @@ namespace{
 
 void test7(){
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
-  {
-    std::string smiles="CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2";
+  std::string smis[]={
+    "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
+    "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
+    "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
+    "CCCN[C@H]1CC[C@H](NC)CC1",
 
+    "EOS"
+  };
+  unsigned int i=0;
+  while(smis[i]!="EOS"){
+    std::string smiles=smis[i++];
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    _renumberTest(m);
-    delete m;
-  }
-  {
-    std::string smiles="C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2";
-
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    _renumberTest(m);
-    delete m;
-  }
-  {
-    std::string smiles="N[C@@]1(C[C@H]([18F])C1)C(=O)O";
-
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    _renumberTest(m);
-    delete m;
-  }
-  {
-    std::string smiles="CCCN[C@H]1CC[C@H](NC)CC1";
-
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    _renumberTest(m);
+    _renumberTest(m,smiles);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -824,13 +809,12 @@ void test7(){
 
 int main(){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test3();
   test4();
   test5();
-  test6();
 #endif
   test6();
   test7();

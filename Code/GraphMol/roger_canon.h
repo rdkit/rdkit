@@ -221,7 +221,7 @@ namespace RDKit {
 	    while(nbeg!=nend){
 	      const ATOM_SPTR nnbr=(*dp_mol)[*nbeg];
 	      if(nnbr->getIdx()==at->getIdx()){
-		std::cerr<<"  "<<at->getIdx()<<" "<<nidx<<std::endl;
+		//std::cerr<<"  "<<at->getIdx()<<" "<<nidx<<std::endl;
 		return nidx;
 	      }
 	      ++nidx;
@@ -344,7 +344,7 @@ namespace RDKit {
         PRECONDITION(dp_mol,"no molecule");
         PRECONDITION(i!=j,"bad call");
         int v=basecomp(i,j);
-	std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
+	//std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
@@ -353,7 +353,7 @@ namespace RDKit {
           getAtomNeighborhood(j,nbrsj);
           for(unsigned int ii=0;ii<nbrsi.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
-	    std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
+	    //std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
           }
         }
@@ -397,25 +397,28 @@ namespace RDKit {
         len = count[partition]; 
         offset = atoms[partition].index;
         start = order+offset;
-	std::cerr<<"\n\n**************************************************************"<<std::endl;
-        std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
-         for(unsigned int ii=0;ii<nAtoms;++ii){
-           std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
-         }
+	// std::cerr<<"\n\n**************************************************************"<<std::endl;
+        // std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
+        //  for(unsigned int ii=0;ii<nAtoms;++ii){
+        //    std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
+        //  }
         hanoisort(start,len,count,changed, compar);
-	std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
-	for(unsigned int ii=0;ii<nAtoms;++ii){
-           std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
-         }
+	// std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
+	// for(unsigned int ii=0;ii<nAtoms;++ii){
+        //    std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
+        //  }
         index = start[0];
-	std::cerr<<"  len:"<<len<<" index:"<<index<<" count:"<<count[index]<<std::endl;
+	// std::cerr<<"  len:"<<len<<" index:"<<index<<" count:"<<count[index]<<std::endl;
         for( i=count[index]; i<len; i++ ) {
           index = start[i];
           if( count[index] )
             symclass = offset+i;
           atoms[index].index = symclass;
-
-          if( mode ) {
+        }
+        if( mode ) {
+          index=start[0];
+          for( i=count[index]; i<len; i++ ) {
+            index=start[i];
             ROMol::ADJ_ITER nbrIdx,endNbrs;
             boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atoms[index].atom);
             while(nbrIdx!=endNbrs){
@@ -424,7 +427,7 @@ namespace RDKit {
               int nbroffset = atoms[nbor].index;
               changed[nbor]=1;
               partition = order[nbroffset];
-	      std::cerr<<"            changed: "<<index<<" "<<nbor<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
+	      // std::cerr<<"            changed: "<<index<<" "<<nbor<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
               if( (count[partition]>1) &&
                   (next[partition]==-2) ) {
                 next[partition] = activeset;
