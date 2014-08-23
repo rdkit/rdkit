@@ -759,16 +759,20 @@ void test6(){
 namespace{
   void _renumberTest(const ROMol *m,std::string inSmiles){
     PRECONDITION(m,"no molecule");
-    //    std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
+    // std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
     std::string osmi=MolToSmiles(*m,true);
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
 
     std::srand(0xF00D);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      //std::cerr<<"---------------------------------------------------"<<std::endl;
+      // std::cerr<<"---------------------------------------------------"<<std::endl;
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
+      // for(unsigned int j=0;j<m->getNumAtoms();++j){
+      //   std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
+      // }
+      
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
       TEST_ASSERT(nm);
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
@@ -824,8 +828,8 @@ int main(){
   test3();
   test4();
   test5();
-#endif
   test6();
+#endif
   test7();
   return 0;
 }
