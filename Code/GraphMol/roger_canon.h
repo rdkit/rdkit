@@ -294,6 +294,13 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
         
+        // ring membership
+        ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx())!=0;
+        ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx())!=0;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
         
         // chirality if we're using it
         if(df_useChirality){
