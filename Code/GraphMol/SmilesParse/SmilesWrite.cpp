@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/roger_canon.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -266,7 +267,7 @@ namespace RDKit{
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        INT_VECT &ranks,bool doKekule,bool canonical,
+                                        UINT_VECT &ranks,bool doKekule,bool canonical,
                                         bool allBondsExplicit,
                                         std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,
@@ -393,7 +394,7 @@ namespace RDKit{
     }
 
     unsigned int nAtoms=tmol.getNumAtoms();
-    INT_VECT ranks(nAtoms,-1);
+    UINT_VECT ranks(nAtoms);
 
     std::vector<unsigned int> atomOrdering;
 
@@ -416,7 +417,7 @@ namespace RDKit{
       }
     }
     if(canonical){
-      MolOps::rankAtoms(tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
+      Canon::rankMolAtoms(tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
     }
@@ -439,7 +440,7 @@ namespace RDKit{
         nextAtomIdx=rootedAtAtom;
         rootedAtAtom=-1;
       } else {
-        int nextRank = nAtoms+1;
+        unsigned int nextRank = nAtoms+1;
         for(unsigned int i=0;i<nAtoms;i++){
           if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
             nextRank = ranks[i];
@@ -545,7 +546,7 @@ namespace RDKit{
       (*atIt)->updatePropertyCache(false);
     }
 
-    INT_VECT ranks(tmol.getNumAtoms(),-1);
+    UINT_VECT ranks(tmol.getNumAtoms());
 
     std::vector<unsigned int> atomOrdering;
 
@@ -568,7 +569,8 @@ namespace RDKit{
       }
     }
     if(canonical){
-      MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
+      UNDER_CONSTRUCTION("not implemented");
+      //MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
     }

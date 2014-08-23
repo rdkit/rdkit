@@ -196,7 +196,7 @@
     return RDKit::replaceCore(*($self), coreQuery, replaceDummies, labelByIndex);
   };
 
-  void AssignAtomCIPRanks(RDKit::INT_VECT &ranks) {
+  void AssignAtomCIPRanks(RDKit::UINT_VECT &ranks) {
     RDKit::Chirality::assignAtomCIPRanks(*($self), ranks);
   };
 

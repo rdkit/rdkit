@@ -1387,7 +1387,7 @@ namespace RDKit {
         INT_PAIR_VECT zBondPairs, eBondPairs;
         if (numStereo0D) {
           // calculate CIPCode as they might be used
-          INT_VECT ranks;
+          UINT_VECT ranks;
           Chirality::assignAtomCIPRanks(*m, ranks);
           for (int i = 0; i < numStereo0D; i ++) {
             inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;
@@ -1766,7 +1766,7 @@ namespace RDKit {
         boost::tie(nbrIter, endNbrIter) = m->getAtomNeighbors(atom);
         std::vector<std::pair<unsigned int, unsigned int> > neighbors;
         while (nbrIter != endNbrIter) {
-          int cip = 0;
+          unsigned int cip = 0;
           if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
             m->getAtomWithIdx(*nbrIter)->getProp("_CIPRank", cip);
           neighbors.push_back(std::make_pair(cip, *nbrIter));

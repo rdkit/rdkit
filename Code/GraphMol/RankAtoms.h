@@ -20,10 +20,21 @@
 #include <list>
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/cstdint.hpp>
 
+namespace RDKit{
+  class ROMol;
+}
 namespace RankAtoms {
   typedef std::vector<int> INT_VECT;
   typedef std::list<int> INT_LIST;
+
+  //! generate the atom invariants used for ranking
+  void buildAtomInvariants(const RDKit::ROMol &mol,
+                           std::vector<boost::uint64_t> &res,
+                           bool includeChirality,
+                           bool includeIsotopes);
+
 
   //! utility function for ranking atoms
   void updateInPlayIndices(const INT_VECT &ranks,INT_LIST &indicesInPlay);
@@ -69,19 +80,19 @@ namespace RankAtoms {
     \param vect the vector to rank
     \param res  is used to return the ranks of each entry
   */
-  template <typename T>  
-  void rankVect(const std::vector<T> &vect,INT_VECT &res){
+  template <typename T1,typename T2>  
+  void rankVect(const std::vector<T1> &vect,T2 &res){
     PRECONDITION(res.size()>=vect.size(),"vector size mismatch");
     unsigned int nEntries = vect.size();
 
     std::vector< unsigned int > indices(nEntries);
     for(unsigned int i=0;i<nEntries;++i) indices[i]=i; 
-    std::sort(indices.begin(),indices.end(),argless< std::vector<T> >(vect) );
+    std::sort(indices.begin(),indices.end(),argless< std::vector<T1> >(vect) );
 
     int currRank=0;
-    T lastV = vect[indices[0]];
+    T1 lastV = vect[indices[0]];
     BOOST_FOREACH(unsigned int idx,indices){
-      T v = vect[idx];
+      T1 v = vect[idx];
       if(v==lastV){
         res[idx] = currRank;
       } else {

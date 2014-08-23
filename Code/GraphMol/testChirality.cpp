@@ -1356,10 +1356,12 @@ void testBondDirRemoval(){
     std::string smi1=MolToSmiles(*m,true);
 
     // check removal of redundant bond direction information:
-    std::vector<int> ranks(m->getNumAtoms(),0);
-    MolOps::rankAtoms(*m,ranks);
+    std::vector<int> oranks(m->getNumAtoms(),0);
+    MolOps::rankAtoms(*m,oranks);
     std::vector<Canon::AtomColors> colors(m->getNumAtoms());
     Canon::MolStack stack;
+    std::vector<unsigned int> ranks(oranks.size());
+    for(unsigned int i=0;i<ranks.size();++i) ranks[i]=oranks[i];
     Canon::canonicalizeFragment(*m,0,colors,ranks,stack);
 
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::NONE);
@@ -1679,7 +1681,7 @@ void testIssue3009911(){
     ranks = new int[m->getNumAtoms()];
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      int rank;
+      unsigned int rank;
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
       m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
       ranks[i]=rank;
@@ -1707,7 +1709,7 @@ void testIssue3009911(){
     ranks = new int[m->getNumAtoms()];
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      int rank;
+      unsigned int rank;
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
       m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
       ranks[i]=rank;

@@ -14,8 +14,8 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 
+namespace RDKit {
 namespace Canon {
-  using namespace RDKit;
   struct _possibleCompare : public std::binary_function<PossibleType,PossibleType,bool> {
     bool operator()(const PossibleType &arg1,const PossibleType &arg2) const {
       return (arg1.get<0>() < arg2.get<0>());
@@ -426,7 +426,7 @@ namespace Canon {
   void canonicalDFSTraversal(ROMol &mol,int atomIdx,int inBondIdx,
                              std::vector<AtomColors> &colors,
                              VECT_INT_VECT &cycles,
-                             INT_VECT &ranks,
+                             UINT_VECT &ranks,
                              INT_VECT &cyclesAvailable,
                              MolStack &molStack,
                              INT_VECT &atomOrders,
@@ -813,7 +813,7 @@ namespace Canon {
 
   void canonicalizeFragment(ROMol &mol,int atomIdx,
                             std::vector<AtomColors> &colors,
-                            INT_VECT &ranks,
+                            UINT_VECT &ranks,
                             MolStack &molStack,
                             const boost::dynamic_bitset<> *bondsInPlay,
                             const std::vector<std::string> *bondSymbols){
@@ -932,7 +932,8 @@ namespace Canon {
 #endif
 
   }
-};
+}
+}
 
 
 
