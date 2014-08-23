@@ -793,6 +793,15 @@ void test7(){
     "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
     "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
     "CCCN[C@H]1CC[C@H](NC)CC1",
+    "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
+    "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
+    "O=[N+]([O-])c1ccccc1S(=O)(=O)NC[C@H]1CC[C@H](CNCC2Cc3ccccc3CC2)CC1",
+    "Oc1ccc2c(Cc3ccc(OCCN4CCCCC4)cc3)c([C@H]3CC[C@H](O)CC3)sc2c1",
+    "O=C(c1ccc(OCCN2CCCCC2)cc1)c1c2ccc(O)cc2sc1[C@H]1CC[C@H](O)CC1",
+    "N#Cc1ccc2c(c1)CCN(CC[C@@H]1CC[C@@H](NC(=O)c3ccnc4ccccc34)CC1)C2",
+    "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
+    "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
+    "CCC1=C(C)CN(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)N[C@H]3CC[C@H](C)CC3)cc2)C1=O",
 
     "EOS"
   };
