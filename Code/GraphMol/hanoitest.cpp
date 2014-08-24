@@ -850,19 +850,50 @@ void test9(){
   BOOST_LOG(rdInfoLog) << "testing chiral invariants." << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
-    std::string smi="CC12CCCC1CCCC2";
-    RWMol *m =SmilesToMol(smi);
+    std::string smi="C[C@](F)(Cl)I";
+    RWMol *m =SmilesToMol(smi,0,0);
     TEST_ASSERT(m);
-
-
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]<atomRanks[2]);
+    TEST_ASSERT(atomRanks[0]<atomRanks[3]);
+    TEST_ASSERT(atomRanks[0]<atomRanks[4]);
+    TEST_ASSERT(atomRanks[2]<atomRanks[3]);
+    TEST_ASSERT(atomRanks[2]<atomRanks[4]);
+    TEST_ASSERT(atomRanks[3]<atomRanks[4]);
   }
+
+  {
+    std::string smi="CC[C@](F)(Cl)C=C";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[1]<atomRanks[3]);
+    TEST_ASSERT(atomRanks[1]<atomRanks[4]);
+    TEST_ASSERT(atomRanks[1]<atomRanks[5]);
+    TEST_ASSERT(atomRanks[3]<atomRanks[4]);
+    TEST_ASSERT(atomRanks[4]>atomRanks[5]);
+    TEST_ASSERT(atomRanks[4]>atomRanks[5]);
+  }
+
+
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 
 int main(){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test3();
