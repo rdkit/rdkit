@@ -50,16 +50,38 @@ def _createCanvas(size):
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
                fitImage=False, options=None, canvas=None, **kwargs):
-  """ returns a PIL image containing a drawing of the molecule
+  """Returns a PIL image containing a drawing of the molecule
+    
+      ARGUMENTS:
 
-    Keyword arguments:
-    kekulize -- run kekulization routine on input `mol` (default True)
-    size -- final image size, in pixel (default (300,300))
-    wedgeBonds -- draw wedge (stereo) bonds (default True)
-    highlightAtoms -- list of atoms to highlight (default [])
-    highlightMap -- dictionary of (atom, color) pairs (default None)
-    highlightBonds -- list of bonds to highlight (default [])
+        - kekulize: run kekulization routine on input `mol` (default True)
+        
+        - size: final image size, in pixel (default (300,300))
+        
+        - wedgeBonds: draw wedge (stereo) bonds (default True)
+        
+        - highlightAtoms: list of atoms to highlight (default [])
+        
+        - highlightMap: dictionary of (atom, color) pairs (default None)
+        
+        - highlightBonds: list of bonds to highlight (default [])
+
+        - highlightColor: RGB color as tuple (default [1, 0, 0])
+          
+      NOTE:
+          
+            use 'matplotlib.colors.to_rgb()' to convert string and 
+            HTML color codes into the RGB tuple representation, eg.
+            
+              from matplotlib.colors import ColorConverter
+              img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
+              img.save("molecule.png")
+              
+      RETURNS:
+    
+        a PIL Image object
   """
+  
   if not mol:
     raise ValueError('Null molecule provided')
   if canvas is None:
@@ -72,6 +94,10 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   if fitImage:
       options.dotsPerAngstrom = int(min(size) / 10)
   options.wedgeDashedBonds = wedgeBonds
+  if 'highlightColor' in kwargs:
+      color = kwargs.pop('highlightColor', (1, 0, 0))
+      options.selectColor = color
+      
   drawer = MolDrawing(canvas=canvas,drawingOptions=options)
 
   if kekulize:

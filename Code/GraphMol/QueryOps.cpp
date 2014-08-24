@@ -205,6 +205,11 @@ ATOM_EQUALS_QUERY *makeAtomImplicitHCountQuery(int what){
   res->setDescription("AtomImplicitHCount");
   return res;
 }
+ATOM_EQUALS_QUERY *makeAtomHasImplicitHQuery(){
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomHasImplicitH);
+  res->setDescription("AtomHasImplicitH");
+  return res;
+}
 
 ATOM_EQUALS_QUERY *makeAtomAromaticQuery(){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomAromatic);
@@ -253,6 +258,12 @@ ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what){
 ATOM_EQUALS_QUERY *makeAtomInRingQuery(){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryIsAtomInRing);
   res->setDescription("AtomInRing");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery(){
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true,queryAtomHasRingBond);
+  res->setDescription("AtomHasRingBond");
   return res;
 }
 

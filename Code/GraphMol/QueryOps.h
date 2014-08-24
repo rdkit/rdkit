@@ -69,6 +69,7 @@ namespace RDKit{
   static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
   static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
   static int queryAtomImplicitHCount(Atom const * at) { return at->getTotalNumHs(false); };
+  static int queryAtomHasImplicitH(Atom const * at) { return int(at->getTotalNumHs(false)>0); };
   static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
   static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };
   static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
@@ -106,6 +107,17 @@ namespace RDKit{
   };
   static int queryIsAtomInRing(Atom const * at) {
     return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx())!=0;
+  };
+  static int queryAtomHasRingBond(Atom const * at) {
+    ROMol::OBOND_ITER_PAIR atomBonds=at->getOwningMol().getAtomBonds(at);
+    while(atomBonds.first != atomBonds.second){
+      unsigned int bondIdx=at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
+      if(at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
+        return 1;
+      }
+      ++atomBonds.first;  
+    }
+    return 0;
   };
   static int queryIsBondInRing(Bond const * bond) {
     return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())!=0;
@@ -215,6 +227,15 @@ namespace RDKit{
   //! \overload
   ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what);
 
+  //! returns a Query for matching ring atoms
+  template <class T>
+  T *makeAtomHasImplicitHQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(true,queryAtomHasImplicitH,descr);
+  }
+  //! \overload
+  ATOM_EQUALS_QUERY *makeAtomHasImplicitHQuery();
+
+
   //! returns a Query for matching implicit hydrogen count
   template <class T>
   T *makeAtomImplicitHCountQuery(int what,const std::string &descr){
@@ -315,6 +336,13 @@ namespace RDKit{
   //! \overload
   ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
+  //! returns a Query for matching atoms with a particular number of ring bonds
+  template <class T>
+  T *makeAtomHasRingBondQuery(const std::string &descr){
+    return makeAtomSimpleQuery<T>(1,queryAtomHasRingBond,descr);
+  }
+  //! \overload
+  ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery();
 
   //! returns a Query for matching bond orders
   BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);

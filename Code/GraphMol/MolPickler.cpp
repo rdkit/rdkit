@@ -171,6 +171,8 @@ namespace RDKit{
       Query<int,Atom const *,true> *tmpQuery;
       if(descr=="AtomRingBondCount"){
         query->setDataFunc(queryAtomRingBondCount);
+      } else if(descr=="AtomHasRingBond"){
+        query->setDataFunc(queryAtomHasRingBond);
       } else if(descr=="AtomRingSize"){
         tmpQuery=makeAtomInRingOfSizeQuery(static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
         query->setDataFunc(tmpQuery->getDataFunc());
@@ -193,6 +195,8 @@ namespace RDKit{
         query->setDataFunc(queryAtomHCount);
       } else if(descr=="AtomImplicitHCount"){
         query->setDataFunc(queryAtomImplicitHCount);
+      } else if(descr=="AtomHasImplicitH"){
+        query->setDataFunc(queryAtomHasImplicitH);
       } else if(descr=="AtomIsAromatic"){
         query->setDataFunc(queryAtomAromatic);
       } else if(descr=="AtomIsAliphatic"){
