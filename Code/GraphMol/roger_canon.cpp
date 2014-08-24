@@ -65,6 +65,54 @@ namespace RDKit {
       }
     }
 
+    template <typename T>
+    void rankWithFunctor(T &ftor,
+                         bool breakTies,
+                         int *order){
+      const ROMol &mol=*ftor.dp_mol;
+      canon_atom *atoms=ftor.dp_atoms;
+      unsigned int nAts=mol.getNumAtoms();
+      int *count=(int *)malloc(nAts*sizeof(int));
+      int activeset;
+      int *next=(int *)malloc(nAts*sizeof(int));
+      int *changed=(int *)malloc(nAts*sizeof(int));
+      CreateSinglePartition(nAts,order,count,atoms);
+      ActivatePartitions(nAts,order,count,activeset,next,changed);
+      RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed);
+      //#define VERBOSE_CANON 1
+#ifdef VERBOSE_CANON
+      std::cerr<<"1--------"<<std::endl;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      }
+#endif
+      ftor.df_useNbrs=true;
+      ActivatePartitions(nAts,order,count,activeset,next,changed);
+#ifdef VERBOSE_CANON
+      std::cerr<<"1a--------"<<std::endl;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      }
+#endif
+      RefinePartitions(mol,atoms,ftor,true,order,count,activeset,next,changed);
+#ifdef VERBOSE_CANON
+      std::cerr<<"2--------"<<std::endl;
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+      }
+#endif
+      if(breakTies){
+        BreakTies(mol,atoms,ftor,true,order,count,activeset,next,changed);
+#ifdef VERBOSE_CANON
+	std::cerr<<"3--------"<<std::endl;
+	for(unsigned int i=0;i<mol.getNumAtoms();++i){
+	  std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+	}
+#endif
+      }
+      free(count); free(next);
+    }
+
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
                       bool breakTies,
                       bool includeChirality,bool includeIsotopes) {
@@ -74,55 +122,37 @@ namespace RDKit {
         atoms[i].index=i;
       }
       AtomCompareFunctor ftor(&atoms.front(),mol);
+      ftor.df_useIsotopes=includeIsotopes;
+      ftor.df_useChirality=includeChirality;
 
-      canon_atom *data=&atoms.front();
-      int *count=(int *)malloc(atoms.size()*sizeof(int));
-      int *order=(int *)malloc(atoms.size()*sizeof(int));
-      int activeset;
-      int *next=(int *)malloc(atoms.size()*sizeof(int));
-      int *changed=(int *)malloc(atoms.size()*sizeof(int));
-      CreateSinglePartition(atoms.size(),order,count,data);
-      ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
-      RefinePartitions(mol,data,ftor,false,order,count,activeset,next,changed);
-      //#define VERBOSE_CANON 1
-#ifdef VERBOSE_CANON
-      std::cerr<<"1--------"<<std::endl;
-      for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-      }
-#endif
-      ftor.df_useNbrs=true;
-      ActivatePartitions(atoms.size(),order,count,activeset,next,changed);
-#ifdef VERBOSE_CANON
-      std::cerr<<"1a--------"<<std::endl;
-      for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-      }
-#endif
-      RefinePartitions(mol,data,ftor,true,order,count,activeset,next,changed);
-#ifdef VERBOSE_CANON
-      std::cerr<<"2--------"<<std::endl;
-      for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-      }
-#endif
-      if(breakTies){
-        BreakTies(mol,data,ftor,true,order,count,activeset,next,changed);
-#ifdef VERBOSE_CANON
-	std::cerr<<"3--------"<<std::endl;
-	for(unsigned int i=0;i<mol.getNumAtoms();++i){
-	  std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-	}
-#endif
-      }
+      int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
+      rankWithFunctor(ftor,breakTies,order);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
         res[order[i]]=atoms[order[i]].index;
       }
-      free(count); free(order); free(next);
-
+      free(order); 
     } // end of rankMolAtoms()
+
+    void chiralRankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res){
+      std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        atoms[i].atom=mol.getAtomWithIdx(i);
+        atoms[i].index=i;
+      }
+      ChiralAtomCompareFunctor ftor(&atoms.front(),mol);
+
+      int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
+      rankWithFunctor(ftor,false,order);
+
+      res.resize(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        res[order[i]]=atoms[order[i]].index;
+      }
+      free(order); 
+    } // end of rankMolAtoms()
+
     
   } // end of Canon namespace
 } // end of RDKit namespace
