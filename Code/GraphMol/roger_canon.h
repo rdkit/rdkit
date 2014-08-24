@@ -153,14 +153,17 @@ namespace RDKit {
 
     struct bondholder {
       Bond::BondType bondType;
-      Bond::BondStereo bondStereo; 
+      unsigned int bondStereo;
       unsigned int nbrIdx;
       bondholder() : bondType(Bond::UNSPECIFIED),
-                     bondStereo(Bond::STEREONONE),
+                     bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
                      nbrIdx(0) {};
       bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni) : bondType(bt),
-                                                                          bondStereo(bs),
+                                                                          bondStereo(static_cast<unsigned int>(bs)),
                                                                           nbrIdx(ni) {};
+      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni) : bondType(bt),
+                                                                   bondStereo(bs),
+                                                                   nbrIdx(ni) {};
       bool operator<(const bondholder &o) const {
         if(bondType!=o.bondType)
           return bondType<o.bondType;
@@ -181,11 +184,8 @@ namespace RDKit {
         return x.nbrIdx-y.nbrIdx;
       }
     };
-    class AtomCompareFunctor {
-      Canon::canon_atom *dp_atoms;
-      const ROMol *dp_mol;
-      std::vector<std::vector<unsigned int> > d_atomInvars;
 
+    class AtomCompareFunctor {
       void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
         unsigned int res=0;
         const Atom *at=dp_atoms[i].atom;
@@ -310,12 +310,12 @@ namespace RDKit {
           if(dp_atoms[i].atom->hasProp("_CIPCode")){
             std::string cipCode;
             dp_atoms[i].atom->getProp("_CIPCode",cipCode);
-            ivi=cipCode=="R"?1:2;
+            ivi=cipCode=="R"?2:1;
           }
           if(dp_atoms[j].atom->hasProp("_CIPCode")){
             std::string cipCode;
             dp_atoms[j].atom->getProp("_CIPCode",cipCode);
-            ivj=cipCode=="R"?1:2;
+            ivj=cipCode=="R"?2:1;
           }
           if(ivi<ivj)
             return -1;
@@ -345,6 +345,8 @@ namespace RDKit {
         return 0;
       }
     public:
+      Canon::canon_atom *dp_atoms;
+      const ROMol *dp_mol;
       bool df_useNbrs;
       bool df_useIsotopes;
       bool df_useChirality;
@@ -375,6 +377,118 @@ namespace RDKit {
         return 0;
       }
     };
+
+
+    class ChiralAtomCompareFunctor {
+      void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
+        unsigned int res=0;
+        const Atom *at=dp_atoms[i].atom;
+        nbrs.resize(0);
+        nbrs.reserve(4);
+        for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
+          nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
+        }
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = dp_mol->getAtomBonds(at);
+        while(beg!=end){
+          const BOND_SPTR bond=(*dp_mol)[*beg];
+          if(bond->getOtherAtom(at)->getAtomicNum()==1) continue;
+          int stereo=0;
+          switch(bond->getStereo()){
+          case Bond::STEREOZ:
+            stereo=1;
+            break;
+          case Bond::STEREOE:
+            stereo=2;
+            break;
+          default:
+            stereo=0;
+          }
+          nbrs.push_back(bondholder(Bond::SINGLE,stereo,
+                                    dp_atoms[bond->getOtherAtomIdx(i)].index+1));
+          ++beg;
+        }
+        std::sort(nbrs.begin(),nbrs.end());
+      }
+
+      int basecomp(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        unsigned int ivi,ivj;
+
+        // always start with the current class:
+        ivi= dp_atoms[i].index;
+        ivj= dp_atoms[j].index;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // move onto atomic number
+        ivi= dp_atoms[i].atom->getAtomicNum();
+        ivj= dp_atoms[j].atom->getAtomicNum();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // isotopes:
+        ivi=dp_atoms[i].atom->getIsotope();
+        ivj=dp_atoms[j].atom->getIsotope();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // first atom stereochem:
+        ivi=0;
+        ivj=0;
+        if(dp_atoms[i].atom->hasProp("_CIPCode")){
+          std::string cipCode;
+          dp_atoms[i].atom->getProp("_CIPCode",cipCode);
+          ivi=cipCode=="R"?2:1;
+        }
+        if(dp_atoms[j].atom->hasProp("_CIPCode")){
+          std::string cipCode;
+          dp_atoms[j].atom->getProp("_CIPCode",cipCode);
+          ivj=cipCode=="R"?2:1;
+        }
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // bond stereo is taken care of in the neighborhood comparison
+        return 0;
+      }
+    public:
+      Canon::canon_atom *dp_atoms;
+      const ROMol *dp_mol;
+      bool df_useNbrs;
+      ChiralAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false) {
+      };
+      ChiralAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false) {
+      };
+      int operator()(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        PRECONDITION(dp_mol,"no molecule");
+        PRECONDITION(i!=j,"bad call");
+        int v=basecomp(i,j);
+	// std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
+        if(v) return v;
+
+        if(df_useNbrs){
+          std::vector<bondholder> nbrsi,nbrsj;
+          getAtomNeighborhood(i,nbrsi);
+          getAtomNeighborhood(j,nbrsj);
+          for(unsigned int ii=0;ii<nbrsi.size();++ii){
+            int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
+            if(cmp) return cmp;
+          }
+        }
+        return 0;
+      }
+    };
+
 
 
     template <typename CompareFunc>
@@ -503,6 +617,7 @@ namespace RDKit {
                       bool breakTies=true,
                       bool includeChirality=true,
                       bool includeIsotopes=true);
+    void chiralRankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res);
 
   } // end of Canon namespace
 } // end of RDKit namespace

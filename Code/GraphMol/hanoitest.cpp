@@ -846,9 +846,23 @@ void test8(){
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test9(){
+  BOOST_LOG(rdInfoLog) << "testing chiral invariants." << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string smi="CC12CCCC1CCCC2";
+    RWMol *m =SmilesToMol(smi);
+    TEST_ASSERT(m);
+
+
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -856,8 +870,9 @@ int main(){
   test5();
   test6();
   test7();
-#endif
   test8();
+#endif
+  test9();
   return 0;
 }
 
