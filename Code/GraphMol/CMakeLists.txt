@@ -95,6 +95,6 @@ rdkit_test(graphmoltestPickler testPickler.cpp
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse_static FileParsers_static GraphMol_static
-RDGeometryLib_static RDGeneral_static )
+RDGeometryLib_static RDGeneral_static ${RDKit_THREAD_LIBS} )
 
 

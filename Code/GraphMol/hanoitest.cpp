@@ -812,6 +812,7 @@ void test7(){
     "C[C@H]1C[C@H](C1)N1CCN(C)CC1",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
+    "*12*3*1*3*4*5*4*52",
     "EOS"
   };
   unsigned int i=0;

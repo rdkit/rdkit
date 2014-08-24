@@ -291,8 +291,12 @@ namespace RDKit {
           return 1;
         
         // ring membership
-        ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx())!=0;
-        ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx())!=0;
+        // initial passes at this were just checking "isInRing" to allow
+        // a possible future more efficient check. These break on this
+        // lovely double-diamond pathological case:
+        //   *12*3*1*3*4*5*4*52
+        ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx());
+        ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx());
         if(ivi<ivj)
           return -1;
         else if(ivi>ivj)
