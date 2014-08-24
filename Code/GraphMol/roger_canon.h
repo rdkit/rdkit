@@ -473,7 +473,7 @@ namespace RDKit {
         PRECONDITION(dp_mol,"no molecule");
         PRECONDITION(i!=j,"bad call");
         int v=basecomp(i,j);
-	// std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
+	//std::cerr<<"           cbc: "<<i<<"-"<<j<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
@@ -482,6 +482,7 @@ namespace RDKit {
           getAtomNeighborhood(j,nbrsj);
           for(unsigned int ii=0;ii<nbrsi.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
+            //std::cerr<<"                 cbc: "<<i<<"("<<nbrsi[ii].nbrIdx<<")-"<<j<<"("<<nbrsj[ii].nbrIdx<<")"<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
           }
         }

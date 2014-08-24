@@ -10,6 +10,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RankAtoms.h>
+#include <GraphMol/roger_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <algorithm>
@@ -276,11 +277,9 @@ namespace RDKit{
                    "bad ranks size");
       if(!ranks.size()) ranks.resize(mol.getNumAtoms());
       unsigned int numAtoms = mol.getNumAtoms();
-      // get the initial invariants:
-      DOUBLE_VECT invars(numAtoms,0);
-      buildCIPInvariants(mol,invars);
-      iterateCIPRanks(mol,invars,ranks,false);
 
+      Canon::chiralRankMolAtoms(mol,ranks);
+      
       // copy the ranks onto the atoms:
       for(unsigned int i=0;i<numAtoms;++i){
         mol[i]->setProp(common_properties::_CIPRank,ranks[i],1);
