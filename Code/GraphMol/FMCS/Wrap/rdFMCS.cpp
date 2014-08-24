@@ -78,11 +78,11 @@ namespace RDKit {
 namespace {
     struct mcsresult_wrapper {
         static void wrap() {
-            python::class_<RDKit::MCSResult>("MCSResult","stores MCS results",python::no_init)
-            .def_readonly("numAtoms",&RDKit::MCSResult::NumAtoms)
-            .def_readonly("numBonds",&RDKit::MCSResult::NumBonds)
-            .def_readonly("smartsString",&RDKit::MCSResult::SmartsString)
-            .def_readonly("canceled",&RDKit::MCSResult::Canceled)
+            python::class_<RDKit::MCSResult>("MCSResult","used to return MCS results",python::no_init)
+              .def_readonly("numAtoms",&RDKit::MCSResult::NumAtoms,"number of atoms in MCS")
+              .def_readonly("numBonds",&RDKit::MCSResult::NumBonds,"number of bonds in MCS")
+              .def_readonly("smartsString",&RDKit::MCSResult::SmartsString,"SMARTS string for the MCS")
+              .def_readonly("canceled",&RDKit::MCSResult::Canceled,"if True, the MCS calculation did not finish")
             ;
         }
     };
