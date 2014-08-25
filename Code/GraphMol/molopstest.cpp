@@ -4348,15 +4348,29 @@ namespace{
       TEST_ASSERT(nm);
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+
+      // checking the SSS is a test for Github #317
+      MatchVectType mv; 
+      TEST_ASSERT(SubstructMatch(*m,*nm,mv));
+      TEST_ASSERT(mv.size()==nm->getNumAtoms());
+      
       std::string nSmi=MolToSmiles(*nm,true);
       TEST_ASSERT(nSmi==refSmi);
       delete nm;
     }
   }
 }
+
 void testRenumberAtoms()
 {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms" << std::endl;
+  {
+    std::string smiles="CC1CCCC(C)C1C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
   {
     std::string smiles="C[C@H]1C[C@H](F)C1";
     ROMol *m = SmilesToMol(smiles);
