@@ -2006,7 +2006,7 @@ namespace RDKit {
     // finds the MMFF atomType for a hydrogen atom
     void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom)
     {
-      unsigned int atomType;
+      unsigned int atomType=0;
       bool isHOCCorHOCN = false;
       bool isHOCO = false;
       bool isHOP = false;
