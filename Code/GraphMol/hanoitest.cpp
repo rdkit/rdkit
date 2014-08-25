@@ -778,6 +778,20 @@ namespace{
       TEST_ASSERT(nm);
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+      MolOps::assignStereochemistry(*nm,true,true);
+      for(unsigned int ii=0;ii<nm->getNumAtoms();++ii){
+        if(nm->getAtomWithIdx(ii)->hasProp("_CIPCode")){
+          TEST_ASSERT(m->getAtomWithIdx(nVect[ii])->hasProp("_CIPCode"));
+          std::string ocip=m->getAtomWithIdx(nVect[ii])->getProp<std::string>("_CIPCode");
+          std::string ncip=nm->getAtomWithIdx(ii)->getProp<std::string>("_CIPCode");
+          if(ocip!=ncip){
+            std::cerr<<"  cip mismatch: "<<inSmiles<<std::endl;
+            std::cerr<<"      "<<nVect[ii]<<": "<<ocip<<" -> "<<ii<<": "<<ncip<<std::endl;
+          }
+          TEST_ASSERT(ocip==ncip);
+        }
+      }
+      
       std::string smi=MolToSmiles(*nm,true);
       if(smi!=osmi){
         std::cerr<<"  input: "<<inSmiles<<std::endl;
@@ -813,6 +827,10 @@ void test7(){
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
     "*12*3*1*3*4*5*4*52",
+    "N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
+    "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
+    "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
+    "N[C@@H]1[C@H]2CN(c3nc4c(cc3F)c(=O)c(C(=O)O)cn4C3CC3)C[C@@H]12",
     "EOS"
   };
   unsigned int i=0;
@@ -885,6 +903,45 @@ void test9(){
     TEST_ASSERT(atomRanks[4]>atomRanks[5]);
   }
 
+  {
+    // make sure we aren't breaking ties
+    std::string smi="C[C@](C)(Cl)I";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]==atomRanks[2]);
+    TEST_ASSERT(atomRanks[0]<atomRanks[3]);
+    TEST_ASSERT(atomRanks[0]<atomRanks[4]);
+    TEST_ASSERT(atomRanks[2]<atomRanks[3]);
+    TEST_ASSERT(atomRanks[2]<atomRanks[4]);
+    TEST_ASSERT(atomRanks[3]<atomRanks[4]);
+  }
+
+  {
+    std::string smi="N[C@H]1C2CC3CC1C[C@](O)(C3)C2";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]>atomRanks[1]);
+    TEST_ASSERT(atomRanks[0]<atomRanks[9]);
+    TEST_ASSERT(atomRanks[2]==atomRanks[6]);
+    TEST_ASSERT(atomRanks[7]==atomRanks[11]);
+    TEST_ASSERT(atomRanks[3]==atomRanks[5]);
+    TEST_ASSERT(atomRanks[2]>atomRanks[3]);
+    TEST_ASSERT(atomRanks[2]>atomRanks[11]);
+    TEST_ASSERT(atomRanks[3]<atomRanks[11]);
+  }
+
 
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -893,16 +950,16 @@ void test9(){
 
 int main(){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test3();
   test4();
   test5();
   test6();
+#endif
   test7();
   test8();
-#endif
   test9();
   return 0;
 }
