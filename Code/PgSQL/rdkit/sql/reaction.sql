@@ -26,6 +26,8 @@ SET rdkit.move_unmmapped_reactants_to_agents=true;
 SET rdkit.threshold_unmapped_reactant_atoms=0.9;
 SELECT reaction_numagents(reaction_from_smarts('C(F)(F)F.[c1:1][c:2][c:3][c:4]c[c1:5]>CC(=O)O>[c1:1][c:2][c:3][c:4]n[c1:5]'));
 SET rdkit.threshold_unmapped_reactant_atoms=0.2;
+SELECT 'c1ccccc1>>c1cccnc1'::reaction @= 'c1ccccc1>>c1cccnc1'::reaction;
+SELECT 'c1ccccc1>>c1cccnc1'::reaction @= 'c1ccccc1>>c1cncnc1'::reaction;
 SELECT reaction_from_ctab('$RXN                                                                 
                                                                      
       RDKit                                                          
