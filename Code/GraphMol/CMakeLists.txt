@@ -62,6 +62,7 @@ add_subdirectory(MolCatalog)
 add_subdirectory(MolDrawing)
 
 add_subdirectory(MIF)
+add_subdirectory(FMCS)
 
 
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)

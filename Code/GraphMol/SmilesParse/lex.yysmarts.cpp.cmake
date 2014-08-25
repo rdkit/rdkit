@@ -1186,8 +1186,8 @@ YY_RULE_SETUP
 #line 164 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomRingBondCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+	yylval->atom->setQuery(makeAtomHasRingBondQuery());
+	return RINGBOND_ATOM_QUERY_TOKEN;
 }
 	YY_BREAK
 case 102:
@@ -1204,8 +1204,8 @@ YY_RULE_SETUP
 #line 176 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomImplicitHCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+        yylval->atom->setQuery(makeAtomHasImplicitHQuery());
+	return IMPLICIT_H_ATOM_QUERY_TOKEN;
 }
 	YY_BREAK
 case 104:

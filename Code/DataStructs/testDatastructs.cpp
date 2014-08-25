@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1297,6 +1297,7 @@ void test13BitVectAllOnes() {
   }
 }
 
+
 void test14RealVect() {
   RealValueVect vect1(30);
   unsigned int i;
@@ -1413,6 +1414,17 @@ void test17RealVectOps() {
   TEST_ASSERT(feq(vect5.getTotalVal(),4.8));
 }
 
+void test18BitVectConcatenation() {
+ {
+   ExplicitBitVect bv(32, false);
+   ExplicitBitVect bv2(32, true);
+   ExplicitBitVect bv3 = bv + bv2;
+   TEST_ASSERT(bv3.getNumBits() == 64);
+   TEST_ASSERT(bv3.getNumOnBits() == 32);
+   TEST_ASSERT(bv3.getNumOffBits() == 32);
+  }
+}
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -1488,6 +1500,9 @@ int main(){
   test16RealVectPickles();
   BOOST_LOG(rdInfoLog) << " Test RealValue Vectors 4: Vector Operations  -------------------------------" << std::endl;
   test17RealVectOps();
+
+  BOOST_LOG(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  -------------------------------" << std::endl;
+  test18BitVectConcatenation();
+
   return 0;
-  
 }

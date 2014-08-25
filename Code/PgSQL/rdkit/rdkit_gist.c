@@ -298,7 +298,7 @@ gmol_same(PG_FUNCTION_ARGS)
 static int
 hemdistsign(bytea *a, bytea *b)
 {
-  int         i,
+  unsigned i,
     dist = 0;
   unsigned char   *as = (unsigned char *)VARDATA(a),
     *bs = (unsigned char *)VARDATA(b);
@@ -312,8 +312,13 @@ hemdistsign(bytea *a, bytea *b)
       dist += number_of_ones[diff];
     }
 #else
-  for(i=0;i<SIGLEN(a)/sizeof(unsigned int);++i){
+  unsigned eidx=SIGLEN(a)/sizeof(unsigned int);
+  for(i=0;i<eidx;++i){
     dist += __builtin_popcount(((unsigned int *)as)[i] ^ ((unsigned int *)bs)[i]);
+  }
+  for(i=eidx*sizeof(unsigned);i<SIGLEN(a);++i){
+    int diff = as[i] ^ bs[i];
+    dist += number_of_ones[diff];
   }
 #endif
   return dist;
@@ -333,11 +338,16 @@ soergeldistsign(bytea *a, bytea *b) {
     intersect_popcount += number_of_ones[as[i] & bs[i]];
   }
 #else
-  unsigned int   *as = (unsigned int *)VARDATA(a);
-  unsigned int   *bs = (unsigned int *)VARDATA(b);
-  for(i=0;i<SIGLEN(a)/sizeof(unsigned int);++i){
+  unsigned *as = (unsigned *)VARDATA(a);
+  unsigned *bs = (unsigned *)VARDATA(b);
+  unsigned eidx=SIGLEN(a)/sizeof(unsigned);
+  for(i=0;i<eidx;++i){
     union_popcount += __builtin_popcount(as[i] | bs[i]);
     intersect_popcount += __builtin_popcount(as[i] & bs[i]);
+  }
+  for(i=eidx*sizeof(unsigned);i<SIGLEN(a);++i){
+    union_popcount += number_of_ones[as[i] | bs[i]];
+    intersect_popcount += number_of_ones[as[i] & bs[i]];
   }
 #endif
   if (union_popcount == 0) {
@@ -721,9 +731,11 @@ gmol_consistent(PG_FUNCTION_ARGS)
           if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
-          for(i=0; res && i<SIGLEN(key); i++)
-            if ( (k[i] & q[i]) != q[i])
+          for(i=0; res && i<SIGLEN(key); i++){
+        	unsigned char temp = k[i] & q[i];
+            if ( temp != q[i] || temp != k[i])
               res = false;
+          }
         }
       break;
     default:
@@ -826,8 +838,12 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
     for(i=0;i<SIGLEN(key);i++)
       cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
-    for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
+    unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
+    for(i=0;i<eidx;++i){
       cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+    }
+    for(i=eidx*sizeof(unsigned);i<SIGLEN(key);++i){
+      cnt += number_of_ones[ pk[i] & pq[i] ];
     }
 #endif      
 
@@ -889,8 +905,12 @@ gbfp_distance(PG_FUNCTION_ARGS)
         for(i=0;i<SIGLEN(key);i++)
             cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
+        unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
         for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
           cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+        }
+        for(i=eidx*sizeof(unsigned);i<SIGLEN(key);++i){
+          cnt += number_of_ones[ pk[i] & pq[i] ];
         }
 #endif        
 
@@ -1011,5 +1031,194 @@ gsfp_consistent(PG_FUNCTION_ARGS)
                      );
     }
 }
+
+PG_FUNCTION_INFO_V1(greaction_compress);
+Datum greaction_compress(PG_FUNCTION_ARGS);
+Datum
+greaction_compress(PG_FUNCTION_ARGS)
+{
+  GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+  GISTENTRY  *retval = entry;
+
+  if (entry->leafkey) {
+    CChemicalReaction rxn = constructChemReact(DatumGetMolP(entry->key));
+
+    retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+
+    gistentryinit(*retval, PointerGetDatum(makeReactionSign(rxn)),
+                  entry->rel, entry->page,
+                  entry->offset, FALSE);
+    freeChemReaction(rxn);
+  }
+  else if ( !ISALLTRUE(DatumGetPointer(entry->key)) )
+    {
+      retval = compressAllTrue(entry);
+    }
+
+  PG_RETURN_POINTER(retval);
+}
+
+PG_FUNCTION_INFO_V1(greaction_consistent);
+Datum greaction_consistent(PG_FUNCTION_ARGS);
+Datum
+greaction_consistent(PG_FUNCTION_ARGS)
+{
+  GISTENTRY               *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+  StrategyNumber  strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+  bool                    *recheck = (bool *) PG_GETARG_POINTER(4);
+  bytea                   *key = (bytea*)DatumGetPointer(entry->key);
+  bytea                   *query;
+  bool                    res = true;
+
+  fcinfo->flinfo->fn_extra = SearchChemReactionCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1),
+                                            NULL, NULL,&query);
+
+  switch(strategy)
+    {
+    case RDKitContains:
+      *recheck = true;
+
+      if (!ISALLTRUE(key))
+        {
+          int i;
+          unsigned char   *k = (unsigned char*)VARDATA(key),
+            *q = (unsigned char*)VARDATA(query);
+
+          if (SIGLEN(key) != SIGLEN(query))
+            elog(ERROR, "All fingerprints should be the same length");
+
+          for(i=0; res && i<SIGLEN(key); i++)
+            if ( (k[i] & q[i]) != q[i])
+              res = false;
+        }
+      break;
+    case RDKitContained:
+      *recheck = true;
+
+      if (!ISALLTRUE(key))
+        {
+          int i;
+          unsigned char   *k = (unsigned char*)VARDATA(key),
+            *q = (unsigned char*)VARDATA(query);
+
+          if (SIGLEN(key) != SIGLEN(query))
+            elog(ERROR, "All fingerprints should be the same length");
+
+          if ( GIST_LEAF(entry) )
+            {
+              for(i=0; res && i<SIGLEN(key); i++)
+                if ( (k[i] & q[i]) != k[i])
+                  res = false;
+            }
+          else
+            {
+              /*
+               * Due to superimposed key on inner page we could only check
+               * overlapping
+               */
+              res = false;
+              for(i=0; res == false && i<SIGLEN(key); i++)
+                if ( k[i] & q[i] )
+                  res = true;
+            }
+        }
+      else if (GIST_LEAF(entry))
+        {
+          int i;
+          unsigned char *q = (unsigned char*)VARDATA(query);
+
+          res = true;
+          for(i=0; res && i<SIGLEN(query); i++)
+            if ( q[i] != 0xff )
+              res = false;
+        }
+      break;
+    case RDKitEquals:
+      *recheck = true;
+
+      if (!ISALLTRUE(key))
+        {
+          int i;
+          unsigned char   *k = (unsigned char*)VARDATA(key),
+            *q = (unsigned char*)VARDATA(query);
+
+          if (SIGLEN(key) != SIGLEN(query))
+            elog(ERROR, "All fingerprints should be the same length");
+
+          for(i=0; res && i<SIGLEN(key); i++){
+          	unsigned char temp = k[i] & q[i];
+              if ( temp != q[i] || temp != k[i])
+                res = false;
+            }
+        }
+      break;
+    case RDKitSmaller:
+      *recheck = false;
+
+      if (!ISALLTRUE(key))
+        {
+          int i;
+          unsigned char   *k = (unsigned char*)VARDATA(key),
+            *q = (unsigned char*)VARDATA(query);
+
+          if (SIGLEN(key) != SIGLEN(query))
+            elog(ERROR, "All fingerprints should be the same length");
+
+          for(i=0; res && i<SIGLEN(key); i++)
+            if ( (k[i] & q[i]) != q[i])
+              res = false;
+        }
+      break;
+    case RDKitGreater:
+      *recheck = false;
+
+      if (!ISALLTRUE(key))
+        {
+          int i;
+          unsigned char   *k = (unsigned char*)VARDATA(key),
+            *q = (unsigned char*)VARDATA(query);
+
+          if (SIGLEN(key) != SIGLEN(query))
+            elog(ERROR, "All fingerprints should be the same length");
+
+          if ( GIST_LEAF(entry) )
+            {
+              for(i=0; res && i<SIGLEN(key); i++)
+                if ( (k[i] & q[i]) != k[i])
+                  res = false;
+            }
+          else
+            {
+              /*
+               * Due to superimposed key on inner page we could only check
+               * overlapping
+               */
+              res = false;
+              for(i=0; res == false && i<SIGLEN(key); i++)
+                if ( k[i] & q[i] )
+                  res = true;
+            }
+        }
+      else if (GIST_LEAF(entry))
+        {
+          int i;
+          unsigned char *q = (unsigned char*)VARDATA(query);
+
+          res = true;
+          for(i=0; res && i<SIGLEN(query); i++)
+            if ( q[i] != 0xff )
+              res = false;
+        }
+      break;
+    default:
+      elog(ERROR,"Unknown strategy: %d", strategy);
+    }
+
+  PG_RETURN_BOOL(res);
+}
+
 
 

@@ -27,18 +27,13 @@ install:
  - sudo apt-get install -qq build-essential
 
  # and the base dependencies
+ - sudo apt-get install -qq openjdk-7-jdk swig # for the java wrappers
+
  - sudo apt-get install libjpeg62 # for pillow
  - conda install -q numpy pillow
  
  # install the conda boost packages from the RDKit binstar channel.
- # the python 2.7 build includes the java wrappers, this requires downgrading
- # boost to avoid a SWIG error. 
- - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-     sudo apt-get install -qq openjdk-7-jdk swig;
-     conda install -q -c rdkit boost=1.46.1;
-   else
-     conda install -q -c rdkit boost;
-   fi
+ - conda install -q -c rdkit boost
 
 
 before_script:
@@ -48,11 +43,9 @@ before_script:
  - export PYTHONPATH=${RDBASE}
  - export LD_LIBRARY_PATH=${RDBASE}/lib
 
- - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-     mkdir $RDBASE/External/java_lib;
-     wget http://search.maven.org/remotecontent?filepath=junit/junit/4.10/junit-4.10.jar -O $RDBASE/External/java_lib/junit.jar;
-     ls -l $RDBASE/External/java_lib;
-   fi
+ - mkdir $RDBASE/External/java_lib
+ - wget http://search.maven.org/remotecontent?filepath=junit/junit/4.10/junit-4.10.jar -O $RDBASE/External/java_lib/junit.jar
+ - ls -l $RDBASE/External/java_lib
  
  - export PYTHON=`which python`
  - echo $PYTHON
@@ -62,14 +55,10 @@ before_script:
  - echo $PY_SP_DIR
 
 
- - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-     export SWIG_WRAPPERS_OPTS="-D RDK_BUILD_SWIG_WRAPPERS=ON";
-   fi
-
 script:
  - mkdir build
  - cd build
- - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON $SWIG_WRAPPERS_OPTS ..
+ - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON ..
  - cat CMakeCache.txt # useful for debugging/troubleshooting
 
  - make -j2

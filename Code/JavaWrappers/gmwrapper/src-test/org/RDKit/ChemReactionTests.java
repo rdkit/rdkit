@@ -368,7 +368,7 @@ public class ChemReactionTests extends GraphMolTest {
 	public void test10DotSeparation() {
 		ROMol mol = RWMol.MolFromSmiles("C1ON1");
 		ChemicalReaction rxn = 
-			ChemicalReaction.ReactionFromSmarts("[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1");
+			ChemicalReaction.ReactionFromSmarts("[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)");
 		ROMol_Vect reactants = new ROMol_Vect();
 		reactants.add(mol);
 		ROMol_Vect_Vect products = rxn.runReactants(reactants);

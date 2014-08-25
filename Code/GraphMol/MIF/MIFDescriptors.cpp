@@ -119,6 +119,10 @@ namespace RDMIF {
     if (FF == "MMFF94") {
       const ForceFields::MMFF::MMFFVdW * params, *probeparams;
       RDKit::MMFF::MMFFMolProperties props(mol);
+      if ( !props.isValid() ){
+        throw ValueErrorException("No MMFF atom types available for at least one atom in molecule.");
+      }
+
       ForceFields::MMFF::MMFFVdWCollection *mmffVdW = ForceFields::MMFF::MMFFVdWCollection::getMMFFVdW();
       probeparams = ( *mmffVdW )(probeAtomTypeMMFF);
 
@@ -140,13 +144,15 @@ namespace RDMIF {
       ForceFields::UFF::ParamCollection *paramcoll = ForceFields::UFF::ParamCollection::getParams();
       probeparams = (*paramcoll)(probeAtomTypeUFF);
 
-      RDKit::UFF::AtomicParamVect params;
-      params = (RDKit::UFF::getAtomTypes(mol)).first;
+      std::pair<RDKit::UFF::AtomicParamVect, bool> params = RDKit::UFF::getAtomTypes(mol);
+      if ( !params.second ){
+        throw ValueErrorException("No UFF atom types available for at least one atom in molecule.");
+      }
 
       for (unsigned int i = 0; i < d_nAtoms; i++) {
         d_pos.push_back(conf.getAtomPos(i));
-        d_R_star_ij.push_back(ForceFields::UFF::Utils::calcNonbondedMinimum(probeparams, params[i]));
-        d_wellDepth.push_back(ForceFields::UFF::Utils::calcNonbondedDepth(probeparams, params[i]));
+        d_R_star_ij.push_back(ForceFields::UFF::Utils::calcNonbondedMinimum(probeparams, params.first[i]));
+        d_wellDepth.push_back(ForceFields::UFF::Utils::calcNonbondedDepth(probeparams, params.first[i]));
       }
       d_getEnergy = d_calcUFFEnergy;
     }

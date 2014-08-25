@@ -7,6 +7,7 @@ SET(CMAKE_SWIG_FLAGS "")
 
 if(WIN32)
 	set(RDKit_Wrapper_Libs
+        FMCS
         FileParsers SmilesParse
 	Depictor SubstructMatch ChemReactions Fingerprints ChemTransforms
         Descriptors MolTransforms  PartialCharges 
@@ -25,7 +26,8 @@ if(WIN32)
           set(RDKit_Wrapper_Libs AvalonLib  avalon_clib ${RDKit_Wrapper_Libs})
         endif(RDK_BUILD_AVALON_SUPPORT)
 else()
-	set(RDKit_Wrapper_Libs 
+	set(RDKit_Wrapper_Libs
+        FMCS_static
         FileParsers_static SmilesParse_static
 	Depictor_static SubstructMatch_static ChemReactions_static Fingerprints_static ChemTransforms_static
 	Subgraphs_static GraphMol_static DataStructs_static Descriptors_static PartialCharges_static MolTransforms_static
