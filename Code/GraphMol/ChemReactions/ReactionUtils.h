@@ -49,26 +49,6 @@ namespace RDKit{
      const ChemicalReaction &rxn,
      ReactionMoleculeType t);
 
-  unsigned getReactantTemplatesNumAtoms(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  unsigned getProductTemplatesNumAtoms(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  unsigned getAgentTemplatesNumAtoms(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  unsigned getReactionNumAtoms(const ChemicalReaction &rxn, bool onlyHeavy=true, bool includeAgents=false);
-  
-  unsigned getReactantTemplatesNumBonds(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  unsigned getProductTemplatesNumBonds(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  unsigned getAgentTemplatesNumBonds(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  unsigned getReactionNumBonds(const ChemicalReaction &rxn, bool onlyHeavy=true, bool includeAgents=false);
-  
-  double calcReactantTemplatesMW(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  double calcProductTemplatesMW(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  double calcAgentTemplatesMW(const ChemicalReaction &rxn, bool onlyHeavy=true);
-  double calcReactionMW(const ChemicalReaction &rxn, bool onlyHeavy=true, bool includeAgents=false);
-
-  unsigned getReactantTemplatesNumRings(const ChemicalReaction &rxn);
-  unsigned getProductTemplatesNumRings(const ChemicalReaction &rxn);
-  unsigned getAgentTemplatesNumRings(const ChemicalReaction &rxn);
-  unsigned getReactionNumRings(const ChemicalReaction &rxn, bool includeAgents=false);
-
   bool hasReactantTemplateSubstructMatch(
     const ChemicalReaction &rxn,
     const ChemicalReaction &query_rxn);

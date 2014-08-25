@@ -146,6 +146,18 @@ SELECT reaction_numagents(reaction_from_smarts('C(F)(F)F.[c1:1][c:2][c:3][c:4]c[
 (1 row)
 
 SET rdkit.threshold_unmapped_reactant_atoms=0.2;
+SELECT 'c1ccccc1>>c1cccnc1'::reaction @= 'c1ccccc1>>c1cccnc1'::reaction;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'c1ccccc1>>c1cccnc1'::reaction @= 'c1ccccc1>>c1cncnc1'::reaction;
+ ?column? 
+----------
+ f
+(1 row)
+
 SELECT reaction_from_ctab('$RXN                                                                 
                                                                      
       RDKit                                                          
