@@ -98,6 +98,37 @@ namespace RDKit {
                             const RDNumeric::DoubleVector *weights=0, 
                             bool reflect=false, unsigned int maxIters=50);
 
+    //! \brief Calculates eigenvalues (= principal moments of inertia) and eigenvectors of inertia tensor
+    /*!
+      \param mol                molecule that is to be used
+      \param eigenVals          array[3] for storing eigenvalues of inertia tensor
+      \param eigenVects         array[3][3] for storing eigenVecs of inertia tensor
+      \param confId             ID of the conformation in the probe to be used
+                                for the alignment (defaults to first conformation)
+      \param weights            Ptr to vector of weights of atom positions to be used.
+                                                defaults to masses of atoms (if weights==NULL Ptr)
+      \param maxIterations      maximum number of iterations used to align molecule
+     */
+    void getMomentsOfInertia(const ROMol &mol, double eigenVals[3], double eigenVecs[3][3], int confId = -1,
+                             RDNumeric::DoubleVector *weights=0, unsigned int maxIterations=50);
+
+    //! \brief Calculate alignment transform necessary for aligning a molecule to its principal moments of inertia
+    /*!
+      \param mol		molecule that is to be aligned
+      \param trans	    	a RDGeom::Transform3D object (affine transformation matrix)
+      \param eigenVals          an array of doubles to store the eigenvalues in (= principal moments of inertia)
+                                defaults to NULL (nothing is stored)
+      \param eigenVecs          a 3x3 array of doubles to store the eigenvectors in
+                                defaults to NULL (nothing is stored)
+      \param confId		ID of the conformation in the probe to be used
+                       		for the alignment (defaults to first conformation)
+      \param weights		Ptr to vector of weights of atom positions to be used.
+      	  	  	  	  		defaults to masses of atoms (if weights==NULL Ptr)
+      \param maxIterations 	maximum number of iterations used to align molecule
+     */
+    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, double eigenVals[3]=NULL, double eigenVecs[3][3]=NULL,
+                               int confId = -1, RDNumeric::DoubleVector *weights=0, unsigned int maxIterations=50);
+
     //! Align the conformations of a molecule using a common set of atoms
     /*! 
       \param mol       The molecule of interest

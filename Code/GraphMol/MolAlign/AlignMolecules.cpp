@@ -65,6 +65,74 @@ namespace RDKit {
       return res;
     }
 
+    void getMomentsOfInertia(const ROMol &mol, double eigenVals[3], double eigenVecs[3][3],
+                             int confId, RDNumeric::DoubleVector *weights, unsigned int maxIterations) {
+      unsigned int nPts = mol.getNumAtoms();
+
+      RDNumeric::DoubleVector *wts;
+      if ( weights ){
+        wts = weights;
+      }
+      else {
+        wts = new RDNumeric::DoubleVector(nPts);
+        for (unsigned int i = 0; i < nPts; ++i){
+          wts->setVal(i, mol.getAtomWithIdx(i)->getMass());
+        }
+      }
+
+      const RDKit::Conformer &conf = mol.getConformer(confId);
+      RDGeom::Point3DConstPtrVect prbPoints;
+      prbPoints.reserve(nPts);
+      for ( unsigned int i = 0; i < nPts; ++i ){
+        prbPoints.push_back( &conf.getAtomPos(i) );
+      }
+
+      RDNumeric::Alignments::getMomentsOfInertia(prbPoints, eigenVals, eigenVecs, wts, maxIterations);
+      if (!weights){
+        delete wts;
+      }
+    }
+
+    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, double eigenVals[3], double eigenVecs[3][3],
+                               int confId, RDNumeric::DoubleVector *weights, unsigned int maxIterations) {
+      unsigned int nPts = mol.getNumAtoms();
+
+      RDNumeric::DoubleVector *wts;
+      if ( weights ){
+        wts = weights;
+      }
+      else {
+        wts = new RDNumeric::DoubleVector(nPts);
+        for (unsigned int i = 0; i < nPts; ++i){
+          wts->setVal(i, mol.getAtomWithIdx(i)->getMass());
+        }
+      }
+
+      RDKit::Conformer &conf = mol.getConformer(confId);
+      RDGeom::Point3DConstPtrVect prbPoints;
+      prbPoints.reserve(nPts);
+      for ( unsigned int i = 0; i < nPts; ++i ){
+        prbPoints.push_back( &conf.getAtomPos(i) );
+      }
+      double *eVals, (*eVecs)[3];
+      if (eigenVals) {
+        eVals = eigenVals;
+      }
+      else {
+        eVals = NULL;
+      }
+      if (eigenVecs) {
+        eVecs = eigenVecs;
+      }
+      else {
+        eVecs = NULL;
+      }
+      RDNumeric::Alignments::getPrincAxesTransform(prbPoints, trans, eVals, eVecs, wts, maxIterations);
+      if (!weights){
+        delete wts;
+      }
+    }
+
     void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
                             const std::vector<unsigned int> *atomIds=0) {
       unsigned int na = conf.getNumAtoms();
