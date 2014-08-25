@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "AlignPoints.h"
+#include <RDBoost/Exceptions.h>
 #include <RDGeneral/Invariant.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
@@ -97,9 +98,9 @@ namespace RDNumeric {
       }
     }
 
-    void _covertCovMatToQuad(const double covMat[3][3], 
-                             const RDGeom::Point3D &rptSum, const RDGeom::Point3D &pptSum, 
-                             double wtsSum, double quad[4][4]) {
+    void _convertCovMatToQuad(const double covMat[3][3],
+                              const RDGeom::Point3D &rptSum, const RDGeom::Point3D &pptSum,
+                              double wtsSum, double quad[4][4]) {
       double PxRx, PxRy, PxRz;
       double PyRx, PyRy, PyRz;
       double PzRx, PzRy, PzRz;
@@ -133,6 +134,42 @@ namespace RDNumeric {
       quad[2][3] = quad[3][2] = -2.0*(PyRz + PzRy);
     }
 
+    void _computeInertiaTensor(const RDGeom::Point3DConstPtrVect &points,
+                               const RDGeom::Point3D &com,
+                               const DoubleVector &weights,
+                               double covMat[3][3]) {
+      for (unsigned int i = 0; i < 3; i++) {
+        for (unsigned int j=0; j < 3; j++) {
+          covMat[i][j] = 0.0;
+        }
+      }
+      unsigned int npt = points.size();
+      CHECK_INVARIANT(npt == weights.size(), "Number of points and number of weights do not match");
+      const double *wData = weights.getData();
+
+      RDGeom::Point3D ppt;
+      double w, x2, y2, z2;
+      for (unsigned int i = 0; i < npt; i++) {
+        ppt = (*points[i])-com;
+        x2 = (ppt.x) * (ppt.x);
+        y2 = (ppt.y) * (ppt.y);
+        z2 = (ppt.z) * (ppt.z);
+
+        w = wData[i];
+
+        covMat[0][0] += w * ( y2 + z2 );
+        covMat[1][1] += w * ( x2 + z2 );
+        covMat[2][2] += w * ( x2 + y2 );
+
+        covMat[0][1] -= w * (ppt.x) * (ppt.y);
+        covMat[0][2] -= w * (ppt.x) * (ppt.z);
+        covMat[1][2] -= w * (ppt.y) * (ppt.z);
+      }
+      covMat[1][0] = covMat[0][1];
+      covMat[2][0] = covMat[0][2];
+      covMat[2][1] = covMat[1][2];
+    }
+    
     //! Obtain the eigen vectors and eigen values 
     /*!
       \param quad        4x4 matrix of interest
@@ -311,7 +348,7 @@ namespace RDNumeric {
 
       // convert the covariance matrix to a 4x4 matrix that needs to be diagonalized
       double quad[4][4];
-      _covertCovMatToQuad(covMat, rptSum, pptSum, wtsSum, quad);
+      _convertCovMatToQuad(covMat, rptSum, pptSum, wtsSum, quad);
       
       // get the eigenVecs and eigenVals for the matrix
       double eigenVecs[4][4], eigenVals[4];
@@ -347,6 +384,116 @@ namespace RDNumeric {
       move /= wtsSum;
       trans.SetTranslation(move);
       return ssr;
+    }
+
+    void getMomentsOfInertia(const RDGeom::Point3DConstPtrVect &points, double eigenVals[3], double eigenVecs[3][3],
+                             const DoubleVector *weights, unsigned int maxIterations){
+      unsigned int npt = points.size();
+
+      const DoubleVector *wts;
+      if (weights) {
+        PRECONDITION(npt == weights->size(), "Mismatch in number of points");
+        wts = weights;
+      } else {
+        wts = new DoubleVector(npt, 1.0);
+      }
+
+      // determine center of mass
+      RDGeom::Point3D com = _weightedSumOfPoints(points, *wts)/_sumOfWeights(*wts);
+
+      double covMat[3][3];
+      // compute the co-variance matrix
+      _computeInertiaTensor(points, com, *wts, covMat);
+      if(!weights){
+        delete wts;
+      }
+
+#ifdef RDK_USE_EIGEN3
+      Eigen::Matrix3d *cov=reinterpret_cast<Eigen::Matrix3d *>(covMat);
+      Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen(*cov);
+      if(eigen.info() != Eigen::Success){
+        throw ValueErrorException("Eigen3: eigenvalue calculation did not converge");
+        return;
+      }
+      memcpy(eigenVals, &eigen.eigenvalues(),  sizeof(double)*3);
+      memcpy(eigenVecs, &eigen.eigenvectors(), sizeof(double)*9);
+#else
+      // convert the covariance matrix to a 4x4 matrix that needs to be diagonalized
+      double quad[4][4];
+      memset(quad, 0, sizeof(double)*16);
+      for ( unsigned int i =0; i < 3; ++i ){
+        memcpy(quad[i], covMat[i], sizeof(double)*3);
+      }
+
+      // get the eigenVecs and eigenVals for the matrix
+      double eigenVectors[4][4], eigenValues[4];
+      jacobi(quad, eigenValues, eigenVectors, maxIterations);
+
+      //return to original 3x3 matrix
+      for ( unsigned int i = 0, j = 0; i < 4; ++i ){
+        if ( !(RDKit::feq(eigenVectors[3][i], 1.0)) ){
+          for ( unsigned int k = 0; k < 3; ++k ){
+            eigenVecs[j][k] = eigenVectors[k][i];
+          }
+          eigenVals[j] = eigenValues[i];
+          j++;
+        }
+      }
+#endif
+    }
+
+    void getPrincAxesTransform(const RDGeom::Point3DConstPtrVect &probePoints,
+                               RDGeom::Transform3D &trans, double eigenVals[3], double eigenVecs[3][3],
+                               const DoubleVector *weights, unsigned int maxIterations){
+      unsigned int npt = probePoints.size();
+
+      const DoubleVector *wts;
+      if (weights) {
+        PRECONDITION(npt == weights->size(), "Mismatch in number of points");
+        wts = weights;
+      } else {
+        wts = new DoubleVector(npt, 1.0);
+      }
+      RDGeom::Point3D origin = _weightedSumOfPoints(probePoints, *wts)/_sumOfWeights(*wts);
+
+      double *eVals, (*eVecs)[3];
+      if (eigenVals) {
+        eVals = eigenVals;
+      }
+      else {
+        eVals = new double[3];
+      }
+      if (eigenVecs) {
+        eVecs = eigenVecs;
+      }
+      else {
+        eVecs = new double[3][3];
+      }
+      getMomentsOfInertia(probePoints, eVals, eVecs, wts, maxIterations);
+      if (!weights){
+        delete wts;
+      }
+
+      // set affine transformation matrix
+      trans.setToIdentity();
+      double *data = trans.getData();
+
+      //rotation
+      for ( unsigned int i = 0; i < 3; i++ ){
+        memcpy(data+4*i, &(eVecs[i]), sizeof(double)*3);
+      }
+
+      //translation
+      origin *= -1;
+      trans.TransformPoint(origin);
+      trans.SetTranslation(origin);
+
+      if (!eigenVals) {
+        delete eVals;
+      }
+      if (!eigenVecs) {
+        delete eVecs;
+      }
     }
   }
 }
