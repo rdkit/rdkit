@@ -13,6 +13,7 @@
 #include <GraphMol/GraphMol.h>
 #include <numpy/arrayobject.h>
 #include <boost/foreach.hpp>
+#include <RDBoost/PySequenceHolder.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
@@ -514,6 +515,42 @@ namespace {
     }
     return pyres;
   }
+
+  RDNumeric::DoubleVector *_translateWeights(python::object weights) { //copied from GraphMol/MolAlign/Wrap/rdMolAlign.cpp
+    PySequenceHolder<double> wts(weights);
+    unsigned int nwts = wts.size();
+    RDNumeric::DoubleVector *wtsVec = NULL;
+
+    unsigned int i;
+    if (nwts > 0) {
+      wtsVec = new RDNumeric::DoubleVector(nwts);
+      for ( i = 0; i < nwts; i++) {
+        wtsVec->setVal(i, wts[i]);
+      }
+    }
+    return wtsVec;
+  }
+  
+  python::tuple CalcPMI(const RDKit::ROMol &mol, int confId=-1, python::object weights=python::list(),
+                       unsigned int maxIterations=50){
+    unsigned int nAtms;
+    nAtms = mol.getNumAtoms();
+
+    RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
+    if (wtsVec) {
+      if (wtsVec->size() != nAtms) {
+        throw_value_error("Incorrect number of weights specified");
+      }
+    }
+
+    RDKit::Descriptors::Moments MoI;
+    RDKit::Descriptors::calcPMIDescriptors(mol, MoI, confId, wtsVec, maxIterations);
+
+    python::tuple pyres=python::make_tuple(MoI.PMI1, MoI.PMI2, MoI.PMI3, MoI.NPR1, MoI.NPR2);
+
+    delete wtsVec;
+    return pyres;
+  }
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1007,4 +1044,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   
+  docString="Returns PMI descriptors for a molecule as a tuple.";
+  python::def("CalcPMIDescriptors",
+              &CalcPMI,(python::arg("mol"), python::arg("confId")=-1,
+                  python::arg("weights")=python::list(), python::arg("maxIters")=50), docString.c_str());
 }

@@ -26,6 +26,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
@@ -1609,6 +1610,73 @@ void testMQNs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testPMI() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test PMI" << std::endl;
+
+  Moments MoI;
+  //1 atom
+  RWMol mol = *SmilesToMol("C");
+  DGeomHelpers::EmbedMolecule(mol);
+  calcPMIDescriptors(mol, MoI);
+  TEST_ASSERT(mol.getNumAtoms() == 1);
+  TEST_ASSERT(feq(MoI[0],0.0));
+  TEST_ASSERT(feq(MoI[1],0.0));
+  TEST_ASSERT(feq(MoI[2],0.0));
+  //std::cout << MoI[3] << std::endl;
+  //std::cout << MoI[4] << std::endl;
+  //TEST_ASSERT(feq(MoI[3],0.0));
+  //TEST_ASSERT(feq(MoI[4],0.0));
+
+  //2 atom
+  mol = *SmilesToMol("Cl");
+  MolOps::addHs(mol);
+  DGeomHelpers::EmbedMolecule(mol);
+  calcPMIDescriptors(mol, MoI);
+  TEST_ASSERT(mol.getNumAtoms() == 2);
+  TEST_ASSERT(feq(MoI[0],0.0));
+  TEST_ASSERT(feq(MoI[1],MoI[2]));
+  TEST_ASSERT(feq(MoI[3],0.0));
+  TEST_ASSERT(feq(MoI[4],1.0));
+
+  //three atoms, planar
+  mol = *SmilesToMol("O");
+  MolOps::addHs(mol);
+  try {
+    calcPMIDescriptors(mol, MoI);
+  } catch (ConformerException &dexp) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+  }
+
+  DGeomHelpers::EmbedMolecule(mol);
+  calcPMIDescriptors(mol, MoI);
+  TEST_ASSERT(mol.getNumAtoms() == 3);
+  TEST_ASSERT(MoI[0] < MoI[1]);
+  TEST_ASSERT(MoI[1] < MoI[2]);
+  TEST_ASSERT(feq(MoI[0]/MoI[2], MoI[3]));
+  TEST_ASSERT(feq(MoI[1]/MoI[2], MoI[4]));
+  TEST_ASSERT(feq(MoI[0]+MoI[1], MoI[2])); //planar molecules
+  TEST_ASSERT(feq(MoI[3]+MoI[4], 1.0)); //planar molecules
+
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Code/GraphMol/Descriptors/test_data/cyclohexane.mol";
+
+  mol = *MolFileToMol(fName, true, false);
+
+  calcPMIDescriptors(mol, MoI);
+
+  TEST_ASSERT(MoI[0] < MoI[1]);
+  TEST_ASSERT(MoI[1] < MoI[2]);
+  TEST_ASSERT(feq(MoI[0]/MoI[2], MoI[3]));
+  TEST_ASSERT(feq(MoI[1]/MoI[2], MoI[4]));
+  TEST_ASSERT(int( MoI[0]*10 ) == int( MoI[1]*10 ));
+  TEST_ASSERT(std::floor( MoI[3]*10 + 0.5 ) == 5 );
+  TEST_ASSERT(std::floor( MoI[4]*10 + 0.5) == 5 );
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testGitHubIssue56(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 56." << std::endl;
@@ -1706,6 +1774,7 @@ int main(){
   testRingDescriptors();
   testMiscCountDescriptors();
   testMQNs();
+  testPMI();
 #endif
   testGitHubIssue56();
   testGitHubIssue92();
