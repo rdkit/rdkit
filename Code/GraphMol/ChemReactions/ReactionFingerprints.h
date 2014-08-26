@@ -68,9 +68,9 @@ namespace RDKit{
 
 	  ReactionFingerprintParams():
 		includeAgents(false),
-		bitRatioAgents(0.0),
+		bitRatioAgents(0.2),
 		nonAgentWeight(10),
-		agentWeight(0),
+		agentWeight(1),
 		fpSize(2048),
 		fpType(AtomPairFP){}
 
