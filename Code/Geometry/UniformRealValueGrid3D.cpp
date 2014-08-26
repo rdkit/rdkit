@@ -46,6 +46,7 @@ using namespace RDKit;
 
 namespace RDGeom {
   boost::int32_t ci_RealValueGrid3DPICKLE_VERSION = 0x1;
+
   UniformRealValueGrid3D::UniformRealValueGrid3D(
       const UniformRealValueGrid3D &other) {
     PRECONDITION(other.dp_storage,

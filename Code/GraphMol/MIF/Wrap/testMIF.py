@@ -12,9 +12,9 @@ def feq(v1, v2, tol=1.0e-4):
 
 class testfunctor():
     def __call__ (self, x, y, z):
-  	return 1.0
+        return 1.0
     def __call__(self, pt):
-	return 1.0
+	    return 1.0
 
 class TestCase(unittest.TestCase):
     def SetUp(self):

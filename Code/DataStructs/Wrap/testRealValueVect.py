@@ -3,9 +3,10 @@
 # 14.04.2014 by David Hahn, hahnda6
 
 from rdkit import RDConfig
-import os,sys,cPickle
+import os,sys
 import unittest
 from rdkit import DataStructs as ds
+from rdkit.six.moves import cPickle
 
 class TestCase(unittest.TestCase):
   def setUp(self) :
