@@ -766,7 +766,7 @@ namespace{
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
 
     std::srand(0xF00D);
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
+    for(unsigned int i=0;i<50;++i){
       //std::cerr<<"---------------------------------------------------"<<std::endl;
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
@@ -787,6 +787,7 @@ namespace{
           if(ocip!=ncip){
             std::cerr<<"  cip mismatch: "<<inSmiles<<std::endl;
             std::cerr<<"      "<<nVect[ii]<<": "<<ocip<<" -> "<<ii<<": "<<ncip<<std::endl;
+            std::cerr<<"      "<<MolToSmiles(*nm,true)<<std::endl;
           }
           TEST_ASSERT(ocip==ncip);
         }
