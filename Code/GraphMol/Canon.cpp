@@ -425,14 +425,14 @@ namespace Canon {
 
 
   // finds cycles
-  void _dfsHelper1(ROMol &mol,int atomIdx,int inBondIdx,
-                   std::vector<AtomColors> &colors,
-                   INT_VECT &ranks,
-                   INT_VECT &atomOrders,
-                   VECT_INT_VECT &atomRingClosures,
-                   const boost::dynamic_bitset<> *bondsInPlay,
-                   const std::vector<std::string> *bondSymbols
-                  ){
+  void dfsFindCycles(ROMol &mol,int atomIdx,int inBondIdx,
+                     std::vector<AtomColors> &colors,
+                     INT_VECT &ranks,
+                     INT_VECT &atomOrders,
+                     VECT_INT_VECT &atomRingClosures,
+                     const boost::dynamic_bitset<> *bondsInPlay,
+                     const std::vector<std::string> *bondSymbols
+                     ){
     Atom *atom = mol.getAtomWithIdx(atomIdx);
     atomOrders.push_back(atomIdx);
 
@@ -524,7 +524,7 @@ namespace Canon {
         // -----
         // we haven't seen this node at all before, traverse
         // -----
-        _dfsHelper1(mol,possibleIdx,bond->getIdx(),colors,
+        dfsFindCycles(mol,possibleIdx,bond->getIdx(),colors,
                     ranks,atomOrders,
                     atomRingClosures,
                     bondsInPlay,bondSymbols);
@@ -546,19 +546,19 @@ namespace Canon {
     colors[atomIdx] = BLACK_NODE;
   }
 
-  void _dfsHelper2(ROMol &mol,int atomIdx,int inBondIdx,
-                  std::vector<AtomColors> &colors,
-                  VECT_INT_VECT &cycles,
-                  INT_VECT &ranks,
-                  INT_VECT &cyclesAvailable,
-                  MolStack &molStack,
-                  INT_VECT &atomOrders,
-                  INT_VECT &bondVisitOrders,
-                  VECT_INT_VECT &atomRingClosures,
-                  std::vector<INT_LIST> &atomTraversalBondOrder,
-                  const boost::dynamic_bitset<> *bondsInPlay,
-                  const std::vector<std::string> *bondSymbols
-                  ){
+  void dfsBuildStack(ROMol &mol,int atomIdx,int inBondIdx,
+                     std::vector<AtomColors> &colors,
+                     VECT_INT_VECT &cycles,
+                     INT_VECT &ranks,
+                     INT_VECT &cyclesAvailable,
+                     MolStack &molStack,
+                     INT_VECT &atomOrders,
+                     INT_VECT &bondVisitOrders,
+                     VECT_INT_VECT &atomRingClosures,
+                     std::vector<INT_LIST> &atomTraversalBondOrder,
+                     const boost::dynamic_bitset<> *bondsInPlay,
+                     const std::vector<std::string> *bondSymbols
+                     ){
 #if 0
     std::cerr<<"traverse from atom: "<<atomIdx<<" via bond "<<inBondIdx<<" num cycles available: "
              <<std::count(cyclesAvailable.begin(),cyclesAvailable.end(),1)<<std::endl;
@@ -640,13 +640,7 @@ namespace Canon {
         // then to atoms in the ring that haven't already been visited
         // (non-ring-closure atoms).
         // 
-        //  Here's how the black magic works:
-        //   - non-ring atom neighbors have their original ranks
-        //   - ring atom neighbors have this added to their ranks:
-        //       (MAX_BONDTYPE - bondOrder)*MAX_NATOMS*MAX_NATOMS
-        //
-        //  This tactic biases us to traverse to non-ring neighbors first,
-        //  original ordering if bond orders are all equal... crafty, neh?
+        // otherwise it's the same ranking logic as above
         //  
         // ---------------------
         if( colors[otherIdx] != WHITE_NODE || seenFromHere[otherIdx] ) {
@@ -702,16 +696,15 @@ namespace Canon {
       }
       travList.push_back(bond->getIdx());
       if(possiblesIt+1 != possibles.end()){
-        //std::cerr<<" branch from: "<<atomIdx<<" to: "<<possibleIdx<<" "<<possibles.size()<<std::endl;
         // we're branching
         molStack.push_back(MolStackElem("(",possiblesIt-possibles.begin()));
       }
       molStack.push_back(MolStackElem(bond,atomIdx));
       bondVisitOrders[bond->getIdx()]=molStack.size();
-      _dfsHelper2(mol,possibleIdx,bond->getIdx(),colors,
-                  cycles,ranks,cyclesAvailable,molStack,
-                  atomOrders,bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
-                  bondsInPlay,bondSymbols);
+      dfsBuildStack(mol,possibleIdx,bond->getIdx(),colors,
+                    cycles,ranks,cyclesAvailable,molStack,
+                    atomOrders,bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
+                    bondsInPlay,bondSymbols);
       if(possiblesIt+1 != possibles.end()){
         molStack.push_back(MolStackElem(")",possiblesIt-possibles.begin()));
       }
@@ -747,25 +740,25 @@ namespace Canon {
     std::vector<AtomColors> tcolors;
     tcolors.resize(colors.size());
     std::copy(colors.begin(),colors.end(),tcolors.begin());
-    _dfsHelper1(mol,atomIdx,inBondIdx,
-                tcolors,
-                ranks,
-                atomOrders,
-                atomRingClosures,
-                bondsInPlay,
-                bondSymbols);
-    _dfsHelper2(mol,atomIdx,inBondIdx,
-                colors,
-                cycles,
-                ranks,
-                cyclesAvailable,
-                molStack,
-                atomOrders,
-                bondVisitOrders,
-                atomRingClosures,
-                atomTraversalBondOrder,
-                bondsInPlay,
-                bondSymbols);
+    dfsFindCycles(mol,atomIdx,inBondIdx,
+                  tcolors,
+                  ranks,
+                  atomOrders,
+                  atomRingClosures,
+                  bondsInPlay,
+                  bondSymbols);
+    dfsBuildStack(mol,atomIdx,inBondIdx,
+                  colors,
+                  cycles,
+                  ranks,
+                  cyclesAvailable,
+                  molStack,
+                  atomOrders,
+                  bondVisitOrders,
+                  atomRingClosures,
+                  atomTraversalBondOrder,
+                  bondsInPlay,
+                  bondSymbols);
 
   }
 
