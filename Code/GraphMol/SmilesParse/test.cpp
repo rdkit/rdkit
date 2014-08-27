@@ -3173,6 +3173,7 @@ void testBug253(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     std::string csmiles1 = MolToSmiles(*m,true);
+    std::cerr<<"--"<<csmiles1<<std::endl;
     TEST_ASSERT(csmiles1=="C(CC1CCCCC12CCCCC2)C1CCCC1");
   }
 

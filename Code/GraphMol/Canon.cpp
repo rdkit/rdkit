@@ -559,20 +559,64 @@ namespace Canon {
                   const boost::dynamic_bitset<> *bondsInPlay,
                   const std::vector<std::string> *bondSymbols
                   ){
-
-    int nAttached=0;
-
 #if 0
     std::cerr<<"traverse from atom: "<<atomIdx<<" via bond "<<inBondIdx<<" num cycles available: "
              <<std::count(cyclesAvailable.begin(),cyclesAvailable.end(),1)<<std::endl;
 #endif
     Atom *atom = mol.getAtomWithIdx(atomIdx);
     INT_LIST directTravList,cycleEndList;
-
+    boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
+    
+    seenFromHere.set(atomIdx);
     molStack.push_back(MolStackElem(atom));
     atomOrders[atom->getIdx()] = molStack.size();
     colors[atomIdx] = GREY_NODE;
 
+    INT_LIST travList;
+    if(inBondIdx>=0) travList.push_back(inBondIdx);
+
+    
+    // ---------------------
+    //
+    //  Add any ring closures
+    //
+    // ---------------------
+    if(atomRingClosures[atomIdx].size()){
+      std::vector<unsigned int> ringsClosed;
+      BOOST_FOREACH(int bIdx,atomRingClosures[atomIdx]){
+        travList.push_back(bIdx);
+        Bond *bond = mol.getBondWithIdx(bIdx);
+        seenFromHere.set(bond->getOtherAtomIdx(atomIdx));
+        if(bond->hasProp("_TraversalRingClosureBond")){
+          // this is end of the ring closure
+          // we can just pull the ring index from the bond itself:
+          unsigned int ringIdx=bond->getProp<unsigned int>("_TraversalRingClosureBond");
+          molStack.push_back(MolStackElem(bond,atomIdx));
+          bondVisitOrders[bIdx]=molStack.size();
+          molStack.push_back(MolStackElem(ringIdx));
+          // don't make the ring digit immediately available again: we don't want to have the same
+          // ring digit opening and closing rings on an atom.
+          ringsClosed.push_back(ringIdx-1);
+        } else {
+          // this is the beginning of the ring closure, we need to come up with a ring index:
+          INT_VECT::const_iterator cAIt=std::find(cyclesAvailable.begin(),
+                                                  cyclesAvailable.end(),1);
+          if(cAIt==cyclesAvailable.end()){
+            throw ValueErrorException("Too many rings open at once. SMILES cannot be generated.");
+          }
+          unsigned int lowestRingIdx =  cAIt-cyclesAvailable.begin();
+          cyclesAvailable[lowestRingIdx] = 0;
+          ++lowestRingIdx;
+          bond->setProp("_TraversalRingClosureBond",lowestRingIdx);
+          molStack.push_back(MolStackElem(lowestRingIdx));
+        }
+      }
+      BOOST_FOREACH(unsigned int ringIdx,ringsClosed){
+        cyclesAvailable[ringIdx]=1;
+      }
+    }
+
+    
     // ---------------------
     //
     //  Build the list of possible destinations from here
@@ -589,12 +633,10 @@ namespace Canon {
       if(bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) continue;
       if(inBondIdx<0 || theBond->getIdx() != static_cast<unsigned int>(inBondIdx)){
         int otherIdx = theBond->getOtherAtomIdx(atomIdx);
-        long rank=ranks[otherIdx];
         // ---------------------
         //
-        // things are a bit more complicated if we are sitting on a
-        // ring atom. we would like to traverse first to the
-        // ring-closure atoms, then to atoms outside the ring first,
+        // This time we skip the ring-closure atoms (we did them
+        // above); we want to traverse first to atoms outside the ring
         // then to atoms in the ring that haven't already been visited
         // (non-ring-closure atoms).
         // 
@@ -602,25 +644,17 @@ namespace Canon {
         //   - non-ring atom neighbors have their original ranks
         //   - ring atom neighbors have this added to their ranks:
         //       (MAX_BONDTYPE - bondOrder)*MAX_NATOMS*MAX_NATOMS
-        //   - ring-closure neighbors lose a factor of:
-        //       (MAX_BONDTYPE+1)*MAX_NATOMS*MAX_NATOMS
         //
         //  This tactic biases us to traverse to non-ring neighbors first,
         //  original ordering if bond orders are all equal... crafty, neh?
         //  
         // ---------------------
-        if( colors[otherIdx] == GREY_NODE ) {
-          rank -= static_cast<int>(MAX_BONDTYPE+1) *
-            MAX_NATOMS*MAX_NATOMS;
-          if(!bondSymbols){
-            rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
-              MAX_NATOMS;
-          } else {
-            const std::string &symb=(*bondSymbols)[theBond->getIdx()];
-            boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
-            rank += (hsh%MAX_NATOMS) *  MAX_NATOMS;
-          }
-        } else if( theBond->getOwningMol().getRingInfo()->numBondRings(theBond->getIdx()) ){
+        if( colors[otherIdx] != WHITE_NODE || seenFromHere[otherIdx] ) {
+          // ring closure or finished atom... skip it.
+          continue;
+        }
+        long rank=ranks[otherIdx];
+        if( theBond->getOwningMol().getRingInfo()->numBondRings(theBond->getIdx()) ){
           if(!bondSymbols){
             rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
               MAX_NATOMS*MAX_NATOMS;
@@ -648,159 +682,41 @@ namespace Canon {
     //  Now work the children
     //
     // ---------------------
-    std::vector<MolStack> subStacks;
     for(std::vector<PossibleType>::iterator possiblesIt=possibles.begin();
         possiblesIt!=possibles.end();
         possiblesIt++){
-      MolStack subStack;
       int possibleIdx = possiblesIt->get<1>();
+      if(colors[possibleIdx]!=WHITE_NODE){
+        // we're either done or it's a ring-closure, which we already processed...
+        // this test isn't strictly required, because we only added WHITE notes to
+        // the possibles list, but it seems logical to document it
+        continue;
+      }
       Bond *bond = possiblesIt->get<2>();
       Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
       unsigned int lowestRingIdx;
       INT_VECT::const_iterator cAIt;
-      switch(colors[possibleIdx]){
-      case WHITE_NODE:
-        // -----
-        // we haven't seen this node at all before
-        // -----
-
-        // it might have some residual data from earlier calls, clean that up:
-        if(otherAtom->hasProp("_TraversalBondIndexOrder")){
-          otherAtom->clearProp("_TraversalBondIndexOrder");
-        }
-
-        directTravList.push_back(bond->getIdx());
-        subStack.push_back(MolStackElem(bond,atomIdx));
-        _dfsHelper2(mol,possibleIdx,bond->getIdx(),colors,
-                    cycles,ranks,cyclesAvailable,subStack,
-                    atomOrders,bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
-                    bondsInPlay,bondSymbols);
-        subStacks.push_back(subStack);
-        nAttached += 1;
-        break;
-      case GREY_NODE:
-        // -----
-        // we've seen this, but haven't finished it (we're finishing a ring)
-        // -----
-        cycleEndList.push_back(bond->getIdx());
-        cAIt=std::find(cyclesAvailable.begin(),
-                       cyclesAvailable.end(),1);
-        if(cAIt==cyclesAvailable.end()){
-          throw ValueErrorException("Too many rings open at once. SMILES cannot be generated.");
-        }
-        lowestRingIdx =  cAIt-cyclesAvailable.begin();
-        cyclesAvailable[lowestRingIdx] = 0;
-        cycles[possibleIdx].push_back(lowestRingIdx);
-        ++lowestRingIdx;
-
-        bond->setProp("_TraversalRingClosureBond",lowestRingIdx);
-        molStack.push_back(MolStackElem(bond,
-                                        atom->getIdx()));
-        molStack.push_back(MolStackElem(lowestRingIdx));
-
-        // we need to add this bond (which closes the ring) to the traversal list for the
-        // other atom as well:
-        atomTraversalBondOrder[otherAtom->getIdx()].push_back(bond->getIdx());
-        atomRingClosures[otherAtom->getIdx()].push_back(bond->getIdx());
-
-        break;
-      default:
-        // -----
-        // this node has been finished. don't do anything.
-        // -----
-        break;
+      // ww might have some residual data from earlier calls, clean that up:
+      if(otherAtom->hasProp("_TraversalBondIndexOrder")){
+        otherAtom->clearProp("_TraversalBondIndexOrder");
       }
-    }
-    
-
-    INT_VECT &ringClosures=atomRingClosures[atom->getIdx()];
-    
-    CHECK_INVARIANT(ringClosures.size()==cycles[atomIdx].size(),
-                    "ring closure mismatch");
-    for(unsigned int i=0;i<ringClosures.size();i++){
-      int ringIdx=cycles[atomIdx][i];
-      ringIdx += 1;
-      molStack.push_back(MolStackElem(ringIdx));
-    }
-    cycles[atomIdx].resize(0);
-  
-    MolStack::const_iterator ciMS;
-    for(int i=0;i<nAttached;i++){
-      if(i<nAttached-1){
-        int branchIdx=0;
-        if(subStacks[i].begin()->type==MOL_STACK_ATOM){
-          branchIdx=subStacks[i].begin()->obj.atom->getIdx();
-        } else if(subStacks[i].begin()->type==MOL_STACK_BOND){
-          branchIdx=-1*subStacks[i].begin()->obj.bond->getIdx();
-        } else {
-          ASSERT_INVARIANT(0,"branch started with something other than an atom or bond");
-        }
-        molStack.push_back(MolStackElem("(",branchIdx));
-        for(ciMS=subStacks[i].begin();ciMS!=subStacks[i].end();ciMS++){
-          molStack.push_back(*ciMS);
-          switch(ciMS->type){
-          case MOL_STACK_ATOM:
-            atomOrders[ciMS->obj.atom->getIdx()] = molStack.size();
-            break;
-          case MOL_STACK_BOND:
-            bondVisitOrders[ciMS->obj.bond->getIdx()] = molStack.size();
-            break;
-          default:
-            break;
-          }
-        }
-        molStack.push_back(MolStackElem(")",branchIdx));
-      } else {
-        for(ciMS=subStacks[i].begin();ciMS!=subStacks[i].end();ciMS++){
-          molStack.push_back(*ciMS);
-          switch(ciMS->type){
-          case MOL_STACK_ATOM:
-            atomOrders[ciMS->obj.atom->getIdx()] = molStack.size();
-            break;
-          case MOL_STACK_BOND:
-            bondVisitOrders[ciMS->obj.bond->getIdx()] = molStack.size();
-            break;
-          default:
-            break;
-          }
-        }
+      travList.push_back(bond->getIdx());
+      if(possiblesIt+1 != possibles.end()){
+        //std::cerr<<" branch from: "<<atomIdx<<" to: "<<possibleIdx<<" "<<possibles.size()<<std::endl;
+        // we're branching
+        molStack.push_back(MolStackElem("(",possiblesIt-possibles.begin()));
+      }
+      molStack.push_back(MolStackElem(bond,atomIdx));
+      bondVisitOrders[bond->getIdx()]=molStack.size();
+      _dfsHelper2(mol,possibleIdx,bond->getIdx(),colors,
+                  cycles,ranks,cyclesAvailable,molStack,
+                  atomOrders,bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
+                  bondsInPlay,bondSymbols);
+      if(possiblesIt+1 != possibles.end()){
+        molStack.push_back(MolStackElem(")",possiblesIt-possibles.begin()));
       }
     }
 
-    //std::cerr<<"*****>>>>>> Traversal results for atom: "<<atom->getIdx()<<"> ";
-    INT_LIST travList;
-    // first push on the incoming bond:
-    if(inBondIdx >= 0){
-      //std::cerr<<" "<<inBondIdx;
-      travList.push_back(inBondIdx);
-    }
-
-    // ... ring closures that end here:
-    for(INT_LIST_CI ilci=cycleEndList.begin();ilci!=cycleEndList.end();++ilci){
-      //std::cerr<<" ["<<*ilci<<"]";
-      travList.push_back(*ilci);
-    }
-
-
-    // ... ring closures that start here:
-    // if(atom->hasProp("_TraversalBondIndexOrder")){
-    //   INT_LIST indirectTravList;
-    //   atom->getProp("_TraversalBondIndexOrder",indirectTravList);
-    //   for(INT_LIST_CI ilci=indirectTravList.begin();ilci!=indirectTravList.end();++ilci){
-    //     //std::cerr<<" ("<<*ilci<<")";
-    //     travList.push_back(*ilci);
-    //   }
-    // }
-    BOOST_FOREACH(int ili,atomTraversalBondOrder[atom->getIdx()]){
-      travList.push_back(ili);
-    }
-
-    // and finally the bonds we directly traverse:
-    for(INT_LIST_CI ilci=directTravList.begin();ilci!=directTravList.end();++ilci){
-      //std::cerr<<" "<<*ilci;
-      travList.push_back(*ilci);
-    }
-    //std::cerr<<"\n";
     atomTraversalBondOrder[atom->getIdx()]=travList;
     colors[atomIdx] = BLACK_NODE;
   }
@@ -828,6 +744,16 @@ namespace Canon {
     PRECONDITION(!bondsInPlay || bondsInPlay->size()>=mol.getNumBonds(),"bondsInPlay too small");
     PRECONDITION(!bondSymbols || bondSymbols->size()>=mol.getNumBonds(),"bondSymbols too small");
 
+    std::vector<AtomColors> tcolors;
+    tcolors.resize(colors.size());
+    std::copy(colors.begin(),colors.end(),tcolors.begin());
+    _dfsHelper1(mol,atomIdx,inBondIdx,
+                tcolors,
+                ranks,
+                atomOrders,
+                atomRingClosures,
+                bondsInPlay,
+                bondSymbols);
     _dfsHelper2(mol,atomIdx,inBondIdx,
                 colors,
                 cycles,
@@ -840,6 +766,7 @@ namespace Canon {
                 atomTraversalBondOrder,
                 bondsInPlay,
                 bondSymbols);
+
   }
 
   bool canHaveDirection(const Bond *bond){
