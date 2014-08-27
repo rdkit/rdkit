@@ -470,51 +470,6 @@ of the replacements argument.",
   python::def("HasReactantTemplateSubstructMatch",RDKit::hasReactantTemplateSubstructMatch,
 		  (python::arg("reaction"), python::arg("queryReaction")),
           "tests if the reactants of a queryReaction are substructures of the reactants of a reaction");
-  python::def("GetReactionNumRings",RDKit::getReactionNumRings,
-		  (python::arg("reaction"), python::arg("includeAgents")=false),
-           "get the number of rings in a reaction template");
-  python::def("GetAgentTemplatesNumRings",RDKit::getAgentTemplatesNumRings,
-           "get the number of rings found in the agents of a reaction template");
-  python::def("getProductTemplatesNumRings",RDKit::getProductTemplatesNumRings,
-           "get the number of rings found in the products of a reaction template");
-  python::def("getReactantTemplatesNumRings",RDKit::getReactantTemplatesNumRings,
-           "get the number of rings found in the reactants of a reaction template");
-  python::def("CalcReactionMW",RDKit::calcReactionMW,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true, python::arg("includeAgents")=false),
-           "calculates the molecular weight of a reaction template");
-  python::def("CalcAgentTemplatesMW",RDKit::calcAgentTemplatesMW,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "calculates the molecular weight of the agents of a reaction template");
-  python::def("CalcProductTemplatesMW",RDKit::calcProductTemplatesMW,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "calculates the molecular weight of the products of a reaction template");
-  python::def("CalcReactantTemplatesMW",RDKit::calcReactantTemplatesMW,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "calculates the molecular weight of the reactants of a reaction template");
-  python::def("GetReactionNumBonds",RDKit::getReactionNumBonds,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true, python::arg("includeAgents")=false),
-           "returns the number of bonds of a reaction template");
-  python::def("GetAgentTemplatesNumBonds",RDKit::getAgentTemplatesNumBonds,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "returns the number of bonds of the agents of a reaction template");
-  python::def("GetProductTemplatesNumBonds",RDKit::getProductTemplatesNumBonds,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "returns the number of bonds of the products of a reaction template");
-  python::def("GetReactantTemplatesNumBonds",RDKit::getReactantTemplatesNumBonds,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "returns the number of bonds of the reactants of a reaction template");
-  python::def("GetReactionNumAtoms",RDKit::getReactionNumAtoms,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true, python::arg("includeAgents")=false),
-           "returns the number of atoms of a reaction template");
-  python::def("GetAgentTemplatesNumAtoms",RDKit::getAgentTemplatesNumAtoms,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "returns the number of atoms of the agents of a reaction template");
-  python::def("GetProductTemplatesNumAtoms",RDKit::getProductTemplatesNumAtoms,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "returns the number of atoms of the products of a reaction template");
-  python::def("GetReactantTemplatesNumAtoms",RDKit::getReactantTemplatesNumAtoms,
-		  (python::arg("reaction"), python::arg("onlyHeavy")=true),
-           "returns the number of atoms of the reactants of a reaction template");
 
 }
               

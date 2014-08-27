@@ -63,9 +63,9 @@ namespace RDKit {
           bi!=mol.endBonds();++bi){
         const Bond *oBond=(*bi);
         Bond *nBond=oBond->copy();
-        res->addBond(nBond,true);
         nBond->setBeginAtomIdx(revOrder[oBond->getBeginAtomIdx()]);
         nBond->setEndAtomIdx(revOrder[oBond->getEndAtomIdx()]);
+        res->addBond(nBond,true);
         // take care of atom-numbering-dependent properties:
         BOOST_FOREACH(int &idx,nBond->getStereoAtoms()){
           idx=revOrder[idx];
