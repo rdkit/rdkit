@@ -37,7 +37,7 @@ Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
 import numpy, os
 from rdkit.RDLogger import logger
 logger = logger()
-
+import warnings
 def TransformMol(mol,tform,confId=-1,keepConfs=False):
   """  Applies the transformation (usually a 4x4 double matrix) to a molecule
   if keepConfs is False then all but that conformer are removed
@@ -175,12 +175,21 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
       If not provided, these will be generated using a substructure
       search.
 
+  Note: 
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial 
+  explosion' especially if hydrogens are present.  
+  Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing the
+  atom order.
+
   """
   if not maps:
     matches = ref.GetSubstructMatches(probe,uniquify=False)
     if not matches:
       raise ValueError('mol %s does not match mol %s'%(ref.GetProp('_Name'),
                                                        probe.GetProp('_Name')))
+    if len(matches) > 1e6: 
+      warnings.warn("{} matches detected for molecule {}, this may lead to a performance slowdown.".format(len(matches), probe.GetProp('_Name')))
     maps = [list(enumerate(match)) for match in matches]
   bestRMS=1000.
   for amap in maps:
