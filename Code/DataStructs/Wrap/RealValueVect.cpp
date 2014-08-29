@@ -17,7 +17,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -41,16 +42,17 @@
 
 using namespace RDKit;
 
-struct rvv_pickle_suite : python::pickle_suite
-{
-  static python::tuple
-  getinitargs(const RealValueVect& self)
-  {
-    return python::make_tuple(self.toString());
+struct rvv_pickle_suite : python::pickle_suite {
+  static python::tuple getinitargs(const RealValueVect &self) {
+    std::string res = self.toString();
+    python::object retval = python::object(
+        python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+    return python::make_tuple(retval);
   };
 };
 
-std::string realValVectDoc="A container class for storing real\n\
+std::string realValVectDoc =
+    "A container class for storing real\n\
 values.\n\
 \n\
 The length of the vector is set at construction time.\n\
@@ -69,36 +71,27 @@ Elements can be set and read using indexing (i.e. bv[i] = 4 or val=bv[i])\n\
 
 struct realValVec_wrapper {
   static void wrap() {
-
-    python::class_<RealValueVect>("RealValueVect",
-                                  realValVectDoc.c_str(),
+    python::class_<RealValueVect>("RealValueVect", realValVectDoc.c_str(),
                                   python::init<unsigned int>("Constructor"))
-              .def(python::init<std::string>())
-              .def("__len__", &RealValueVect::getLength,
-                   "Get the number of entries in the vector")
-              .def("__setitem__", &RealValueVect::setVal,
-                   "Set the value at a specified location")
-              .def("__getitem__", &RealValueVect::getVal,
-                   "Get the value at a specified location")
-              .def(python::self & python::self)
-              .def(python::self | python::self)
-              .def(python::self - python::self)
-              .def(python::self -= python::self)
-              .def(python::self + python::self)
-              .def(python::self += python::self)
-              .def("GetTotalVal", &RealValueVect::getTotalVal,
-                   "Get the sum of the values in the vector, basically L1 norm")
-              .def_pickle(rvv_pickle_suite())
-                                  ;
+        .def(python::init<std::string>())
+        .def("__len__", &RealValueVect::getLength,
+             "Get the number of entries in the vector")
+        .def("__setitem__", &RealValueVect::setVal,
+             "Set the value at a specified location")
+        .def("__getitem__", &RealValueVect::getVal,
+             "Get the value at a specified location")
+        .def(python::self & python::self)
+        .def(python::self | python::self)
+        .def(python::self - python::self)
+        .def(python::self -= python::self)
+        .def(python::self + python::self)
+        .def(python::self += python::self)
+        .def("GetTotalVal", &RealValueVect::getTotalVal,
+             "Get the sum of the values in the vector, basically L1 norm")
+        .def_pickle(rvv_pickle_suite());
     python::def("ComputeL1Norm", computeL1Norm,
                 "Compute the distance between two real vector values\n");
   }
 };
 
-void wrap_realValVect() {
-  realValVec_wrapper::wrap();
-}
-
-
-
-
+void wrap_realValVect() { realValVec_wrapper::wrap(); }

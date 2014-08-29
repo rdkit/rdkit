@@ -2,7 +2,7 @@
 #
 # 14.04.2014 by David Hahn, hahnda6
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from rdkit import RDConfig
 import os,sys,cPickle
 import unittest
@@ -50,7 +50,7 @@ class TestCase(unittest.TestCase):
         v2 = cPickle.loads(cPickle.dumps(v1))
         self.assertAlmostEqual(ds.ComputeL1Norm(v1, v2), 0)
         #cPickle.dump(v1,outF)
-        v2=cPickle.load(inF)
+        v2=cPickle.load(inF, encoding='bytes')
         self.assertAlmostEqual(ds.ComputeL1Norm(v1, v2), 0)
         self.assertAlmostEqual(v1.GetTotalVal(), v2.GetTotalVal())
         self.failUnless(v2.GetTotalVal()!=0)
