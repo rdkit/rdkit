@@ -5338,58 +5338,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void test56SimpleReactionUtils(){
-    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdInfoLog) << "Testing simple reaction utils functions" << std::endl;
-    unsigned int nWarn,nError;
-  {
-    std::string smi = "c1ccncc1Cc1ccccc1>[Na].[OH2]>c1ccncc1.c1ccccc1";
-	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
-    TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
-    TEST_ASSERT(nError==0);
-    rxn->initReactantMatchers();
-
-    TEST_ASSERT(rxn);
-    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
-    TEST_ASSERT(rxn->getNumProductTemplates()==2);
-    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
-
-    double reactionMW = calcProductTemplatesMW(*rxn) + calcReactantTemplatesMW(*rxn);
-    double reactionMWAgentsIncluded = reactionMW + calcAgentTemplatesMW(*rxn);
-
-    TEST_ASSERT(calcReactionMW(*rxn)==reactionMW);
-    TEST_ASSERT(calcReactionMW(*rxn, true,true)==reactionMWAgentsIncluded);
-
-    unsigned reactionBonds = getAgentTemplatesNumBonds(*rxn) + getProductTemplatesNumBonds(*rxn)
-    		            + getReactantTemplatesNumBonds(*rxn);
-
-    TEST_ASSERT(getReactionNumBonds(*rxn)==26);
-    TEST_ASSERT(getAgentTemplatesNumBonds(*rxn)==0);
-    TEST_ASSERT(getProductTemplatesNumBonds(*rxn)==12);
-    TEST_ASSERT(getReactantTemplatesNumBonds(*rxn)==14);
-    TEST_ASSERT(getReactionNumBonds(*rxn, true,true)==reactionBonds);
-
-    unsigned reactionAtoms = getAgentTemplatesNumAtoms(*rxn) + getProductTemplatesNumAtoms(*rxn)
-    		            + getReactantTemplatesNumAtoms(*rxn);
-
-    TEST_ASSERT(getReactionNumAtoms(*rxn)==25);
-    TEST_ASSERT(getAgentTemplatesNumAtoms(*rxn)==2);
-    TEST_ASSERT(getProductTemplatesNumAtoms(*rxn)==12);
-    TEST_ASSERT(getReactantTemplatesNumAtoms(*rxn)==13);
-    TEST_ASSERT(getReactionNumAtoms(*rxn, true,true)==reactionAtoms);
-
-    TEST_ASSERT(getReactionNumRings(*rxn)==4);
-    TEST_ASSERT(getAgentTemplatesNumRings(*rxn)==0);
-    TEST_ASSERT(getProductTemplatesNumRings(*rxn)==2);
-    TEST_ASSERT(getReactantTemplatesNumRings(*rxn)==2);
-
-    delete rxn;
-  }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
-void test57TestOldPickleVersion(){
+void test56TestOldPickleVersion(){
     BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
     BOOST_LOG(rdInfoLog) << "Testing old pickle file with new agent version" << std::endl;
     unsigned int nWarn,nError;
@@ -5478,10 +5427,8 @@ int main() {
   test52RedundantProductMappingNumbersAndRunReactants();
   test53ReactionSubstructureMatching();
   test54RedundantProductMappingNumbersAndRSChirality();
-  test55RedundantProductMappingNumbersAndEZStereochemistry();
-  test56SimpleReactionUtils();
-  test57TestOldPickleVersion();
-
+  test55RedundantProductMappingNumbersAndEZStereochemistry();;
+  test56TestOldPickleVersion();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

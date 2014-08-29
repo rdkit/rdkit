@@ -1728,6 +1728,58 @@ ReactionSubstructFP(CChemicalReaction rxn, CChemicalReaction rxnquery) {
   return true;
 }
 
+// some helper functions in anonymous namespace
+namespace{
+
+struct MoleculeDescriptors{
+	MoleculeDescriptors():nAtoms(0),nBonds(0),nRings(0),MW(0.0){}
+unsigned nAtoms;
+unsigned nBonds;
+unsigned nRings;
+double MW;
+};
+
+MoleculeDescriptors* calcMolecularDescriptorsReaction(
+		RDKit::ChemicalReaction *rxn,
+		RDKit::ReactionMoleculeType t){
+  MoleculeDescriptors* des = new MoleculeDescriptors();
+  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(*rxn, t);
+  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(*rxn, t);
+  for(; begin != end; ++begin){
+    des->nAtoms += begin->get()->getNumHeavyAtoms();
+	des->nBonds += begin->get()->getNumBonds(true);
+	des->MW = RDKit::Descriptors::calcAMW(*begin->get(),true);
+	if(!begin->get()->getRingInfo()->isInitialized()){
+	  begin->get()->updatePropertyCache();
+	  RDKit::MolOps::findSSSR(*begin->get());
+	}
+	des->nRings += begin->get()->getRingInfo()->numRings();
+  }
+  return des;
+}
+
+int compareMolDescriptors(const MoleculeDescriptors& md1, const MoleculeDescriptors& md2){
+  int res = md1.nAtoms - md2.nAtoms;
+  if(res){
+    return res;
+  }
+  res = md1.nBonds - md2.nBonds;
+  if(res){
+    return res;
+  }
+  res = md1.nRings - md2.nRings;
+  if(res){
+    return res;
+  }
+  res = int(md1.MW - md2.MW);
+  if(res){
+    return res;
+  }
+  return 0;
+}
+
+}
+
 extern "C" int
 reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2) {
   ChemicalReaction *rxnm = (ChemicalReaction*)rxn;
@@ -1738,21 +1790,47 @@ reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2) {
     return -1;
   } if(!rxn2m) return 1;
 
-  int res = getReactionNumAtoms(*rxnm, true, (!getIgnoreReactionAgents())) -
-		  getReactionNumAtoms(*rxn2m, true, (!getIgnoreReactionAgents()));
-  if(res) return res;
+  int res = rxnm->getNumReactantTemplates() - rxn2m->getNumReactantTemplates();
+  if (res){
+    return res;
+  }
+  res = rxnm->getNumProductTemplates() - rxn2m->getNumProductTemplates();
+  if (res){
+    return res;
+  }
+  if(!getIgnoreReactionAgents()){
+    res = rxnm->getNumAgentTemplates() - rxn2m->getNumAgentTemplates();
+    if (res){
+      return res;
+    }
+  }
 
-  res = getReactionNumBonds(*rxnm, true, (!getIgnoreReactionAgents())) -
-		  getReactionNumBonds(*rxn2m, true, (!getIgnoreReactionAgents()));
-  if(res) return res;
-
-  res = int(calcReactionMW(*rxnm, true, (!getIgnoreReactionAgents())))-
-    int(calcReactionMW(*rxn2m, true, (!getIgnoreReactionAgents())));
-  if(res) return res;
-
-  res = getReactionNumRings(*rxnm, (!getIgnoreReactionAgents())) -
-		  getReactionNumRings(*rxn2m, (!getIgnoreReactionAgents()));
-  if(res) return res;
+  MoleculeDescriptors* rxn_react = calcMolecularDescriptorsReaction(rxnm, Reactant);
+  MoleculeDescriptors* rxn2_react = calcMolecularDescriptorsReaction(rxn2m, Reactant);
+  res = compareMolDescriptors(*rxn_react, *rxn2_react);
+  delete(rxn_react);
+  delete(rxn2_react);
+  if (res){
+    return res;
+  }
+  MoleculeDescriptors* rxn_product = calcMolecularDescriptorsReaction(rxnm, Product);
+  MoleculeDescriptors* rxn2_product = calcMolecularDescriptorsReaction(rxn2m, Product);
+  res = compareMolDescriptors(*rxn_product, *rxn2_product);
+  delete(rxn_product);
+  delete(rxn2_product);
+  if (res){
+    return res;
+  }
+  if(!getIgnoreReactionAgents()){
+    MoleculeDescriptors* rxn_agent = calcMolecularDescriptorsReaction(rxnm, Agent);
+	MoleculeDescriptors* rxn2_agent = calcMolecularDescriptorsReaction(rxn2m, Agent);
+	res = compareMolDescriptors(*rxn_agent, *rxn2_agent);
+	delete(rxn_agent);
+	delete(rxn2_agent);
+	if (res){
+	  return res;
+	}
+  }
 
   RDKit::MatchVectType matchVect;
   if(hasReactionSubstructMatch(*rxnm, *rxn2m, (!getIgnoreReactionAgents()))){
