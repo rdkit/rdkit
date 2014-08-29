@@ -2,6 +2,7 @@
 #
 # 14.04.2014 by David Hahn, hahnda6
 
+from __future__ import print_function
 from rdkit import RDConfig
 import os,sys,cPickle
 import unittest
@@ -40,18 +41,20 @@ class TestCase(unittest.TestCase):
    
   def test3Pickles(self):
     #outF = file('../testData/rvvs.pkl','wb+')
-    inF = file(os.path.join(RDConfig.RDBaseDir,
-                            'Code/DataStructs/Wrap/testData/rvvs.pkl'),'rb')
-    v1 = ds.RealValueVect(30)
-    for i in range(15):
-      v1[2*i] = 1.3
-    v2 = cPickle.loads(cPickle.dumps(v1))
-    self.assertAlmostEqual(ds.ComputeL1Norm(v1, v2), 0)
-    #cPickle.dump(v1,outF)
-    v2=cPickle.load(inF)
-    self.assertAlmostEqual(ds.ComputeL1Norm(v1, v2), 0)
-    self.assertAlmostEqual(v1.GetTotalVal(), v2.GetTotalVal())
-    self.failUnless(v2.GetTotalVal()!=0)
+    with open(os.path.join(RDConfig.RDBaseDir,
+                   'Code/DataStructs/Wrap/testData/rvvs.pkl'),
+      'rb') as inF:
+        v1 = ds.RealValueVect(30)
+        for i in range(15):
+            v1[2*i] = 1.3
+        v2 = cPickle.loads(cPickle.dumps(v1))
+        self.assertAlmostEqual(ds.ComputeL1Norm(v1, v2), 0)
+        #cPickle.dump(v1,outF)
+        v2=cPickle.load(inF)
+        self.assertAlmostEqual(ds.ComputeL1Norm(v1, v2), 0)
+        self.assertAlmostEqual(v1.GetTotalVal(), v2.GetTotalVal())
+        self.failUnless(v2.GetTotalVal()!=0)
+    #outF.close()
 
   
   def test4RealVectOps(self):
@@ -108,8 +111,6 @@ class TestCase(unittest.TestCase):
       bv[31]=12.2
       arr = numpy.zeros((32,))
       ds.ConvertToNumpyArray(bv,arr)
-      print(bv)
-      print(arr)
       for i in range(len(bv)):
         self.assertAlmostEqual(bv[i],arr[i])
 
