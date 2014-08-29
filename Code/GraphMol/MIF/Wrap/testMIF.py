@@ -1,7 +1,8 @@
+from __future__ import print_function
 import os,sys
 import unittest
 import copy
-from rdkit import Chem, DataStructs, RDConfig
+from rdkit import DataStructs, RDConfig
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.Chem import rdMIF, AllChem
 import math
@@ -423,5 +424,5 @@ class TestCase(unittest.TestCase):
 
 
 if __name__=='__main__':
-    print "Testing MIF wrapper"
+    print("Testing MIF wrapper")
     unittest.main()
