@@ -1,6 +1,7 @@
 // $Id$
 //
 //  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +15,10 @@
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
+
+#ifdef RDK_USE_EIGEN3
+#include <Eigen/Eigenvalues>
+#endif
 
 #define TOLERANCE 1.e-6
 
@@ -413,7 +418,6 @@ namespace RDNumeric {
       Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen(*cov);
       if(eigen.info() != Eigen::Success){
         throw ValueErrorException("Eigen3: eigenvalue calculation did not converge");
-        return;
       }
       memcpy(eigenVals, &eigen.eigenvalues(),  sizeof(double)*3);
       memcpy(eigenVecs, &eigen.eigenvectors(), sizeof(double)*9);
