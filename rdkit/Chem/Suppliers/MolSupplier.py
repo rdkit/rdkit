@@ -17,7 +17,7 @@ class MolSupplier(object):
 
   """
   def __init__(self):
-    raise ValueError,'cannot instantiate MolSuppliers'
+    raise ValueError('cannot instantiate MolSuppliers')
   def Reset(self):
     pass
   def __iter__(self):

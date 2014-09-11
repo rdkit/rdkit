@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time,gzip,random,os,sys
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -225,4 +226,4 @@ if tests[17]:
 
     
 
-print 'times: ',' || '.join(['%.1f'%x for x in ts])
+print('times: ',' || '.join(['%.1f'%x for x in ts]))

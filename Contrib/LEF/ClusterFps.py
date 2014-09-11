@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
+from __future__ import print_function
 from rdkit.ML.Cluster import Butina
 from rdkit import DataStructs
 import sys,cPickle
@@ -61,11 +62,11 @@ def distFunc(a,b):
 
 for sim in sims:
     clusters=Butina.ClusterData(uniq,len(uniq),1.-sim,False,distFunc)
-    print >>sys.stderr,'Sim: %.2f, nClusters: %d'%(sim,len(clusters))
+    print('Sim: %.2f, nClusters: %d'%(sim,len(clusters)), file=sys.stderr)
     for i,cluster in enumerate(clusters):
         for pt in cluster:
             uniq[pt].append(str(i+1))
     cols.append('cluster_thresh_%d'%(int(100*sim)))
-print ' '.join(cols)
+print(' '.join(cols))
 for row in uniq:
-    print ' '.join(row[1:])
+    print(' '.join(row[1:]))

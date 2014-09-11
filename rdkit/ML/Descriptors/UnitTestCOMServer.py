@@ -5,6 +5,7 @@
 """ unit testing code for the descriptor COM server
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import unittest
 import Parser
@@ -13,7 +14,7 @@ from Numeric import *
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
   def testConnect(self):
     " testing connection "
     ok = 1

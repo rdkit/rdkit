@@ -3,7 +3,7 @@
 """ Generic file manipulation stuff
 
 """
-
+from __future__ import print_function
 import numpy
 import string,re
 
@@ -104,6 +104,6 @@ if __name__ == '__main__':
 
   fileN = sys.argv[1]
   iV,dV = ReadDataFile(fileN)
-  print 'iV:', iV
-  print 'dV:', dV
+  print('iV:', iV)
+  print('dV:', dV)
   

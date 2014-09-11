@@ -332,7 +332,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
         temppen.setink( (255,255,255) )
         pilfont = pp._pilFont(font)
 
-        if not pilfont: raise ValueError,"Bad font: %s"%font
+        if not pilfont: raise ValueError("Bad font: %s"%font)
 
         temppen.setfont( pilfont )
         pos = [4, int(tempsize/2 - pilCan.fontAscent(font)) - pilCan.fontDescent(font)]
@@ -503,7 +503,7 @@ try :
             return self._tkcanvas
 
 except ImportError:
-    raise ImportError, "TKCanvasPIL requires sping  PIL Canvas, PIL may not be installed"
+    raise ImportError("TKCanvasPIL requires sping  PIL Canvas, PIL may not be installed")
 
 
 

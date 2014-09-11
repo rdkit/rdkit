@@ -56,7 +56,7 @@ class DbMolSupplier(MolSupplier):
         self.molFmt = molColumnFormats[name]
         break
     if self.molCol < 0:
-      raise ValueError,'DbResultSet has no recognizable molecule column'
+      raise ValueError('DbResultSet has no recognizable molecule column')
     del self._colNames[self.molCol]
     self._colNames  = tuple(self._colNames)
     self._numProcessed=0

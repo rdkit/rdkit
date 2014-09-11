@@ -8,6 +8,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
+
 _version = "$Rev$"
 _splashMessage="""
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -49,7 +51,7 @@ if __name__ == '__main__':
       - the smiles file should have SMILES in the first column
 
     """
-    print >>sys.stderr,message
+    print(message, file=sys.stderr)
 
 
   import getopt
@@ -62,7 +64,7 @@ if __name__ == '__main__':
   if len(extras)<2:
     Usage()
     sys.exit(-1)
-  print >>sys.stderr,_splashMessage
+  print(_splashMessage, file=sys.stderr)
   fdefFilename = extras[0]
   if not os.path.exists(fdefFilename):
     logger.error("Fdef file %s does not exist."%fdefFilename)
@@ -95,21 +97,21 @@ if __name__ == '__main__':
       mol = None
 
     if mol:
-      print 'Mol-%d\t%s'%(lineNo,smi)
+      print('Mol-%d\t%s'%(lineNo,smi))
 
       if not reverseIt:
         featInfo = GetAtomFeatInfo(factory,mol)
         for i,v in enumerate(featInfo):
-          print '\t% 2s(%d)'%(mol.GetAtomWithIdx(i).GetSymbol(),i+1),
+          print('\t% 2s(%d)'%(mol.GetAtomWithIdx(i).GetSymbol(),i+1),end='')
           if v:
-            print '\t',', '.join(v)
+            print('\t',', '.join(v))
           else:
-            print
+            print()
       else:
         feats = factory.GetFeaturesForMol(mol)
         for feat in feats:
-          print '\t%s-%s: '%(feat.GetFamily(),feat.GetType()),
-          print ', '.join([str(x) for x in feat.GetAtomIds()])
+          print('\t%s-%s: '%(feat.GetFamily(),feat.GetType()),end='')
+          print(', '.join([str(x) for x in feat.GetAtomIds()]))
     else:
       logger.warning("Could not process smiles '%s' on line %d."%(smi,lineNo))
 

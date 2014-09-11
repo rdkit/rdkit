@@ -4,6 +4,8 @@
 """ generates license files for our primitive license handler
 
 """
+from __future__ import print_function
+
 from rdkit.utils import Licensing
 import sha,base64,time,StringIO
 import sys
@@ -53,7 +55,7 @@ if __name__ == '__main__':
     mods = ','.join([x.strip() for x in sys.argv[2:]])
   else:
     mods = None
-  print DataFromTextDate(d,mods)
+  print(DataFromTextDate(d,mods))
 
 
   

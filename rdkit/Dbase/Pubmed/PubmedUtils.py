@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 import re,urllib
 import QueryParams
 
@@ -102,4 +103,4 @@ if __name__ == '__main__':
   recs = Searches.GetRecords(['11960484','10893315'],
                              conn=open('test_data/records.xml','r'))
   res = RecordsToPubmedText(recs)
-  print res
+  print(res)

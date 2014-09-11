@@ -38,7 +38,7 @@ def _myimport(name, globals=None, locals=None, fromlist=None):
         #fails with ImportError, if McMillan has overwritten Python's native import
         #and win32com.gen_py tries to generate a module
         return mcimport(name, globals, locals, fromlist)
-    except ImportError, err:
+    except ImportError as err:
         if name.startswith('win32com.gen_py'):
             #this is the Python-Native Import Method, if a patched McMillan-Installer exists
             return __oldimport__(name, globals, locals, fromlist)

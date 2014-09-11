@@ -1,6 +1,6 @@
 # pdfutils.py - everything to do with images, streams,
 # compression, and some constants
-
+from __future__ import print_function
 import os
 import string
 import cStringIO
@@ -27,14 +27,14 @@ def cacheImageFile(filename):
     code.append('ID')
     #use a flate filter and Ascii Base 85
     raw = img.tostring()
-    assert(len(raw) == imgwidth * imgheight, "Wrong amount of data for image")
+    assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
     compressed = zlib.compress(raw)   #this bit is very fast...
     encoded = _AsciiBase85Encode(compressed) #...sadly this isn't
     
     #write in blocks of 60 characters per line
     outstream = cStringIO.StringIO(encoded)
     dataline = outstream.read(60)
-    while dataline <> "":
+    while dataline != "":
         code.append(dataline)
         dataline = outstream.read(60)
     
@@ -45,7 +45,7 @@ def cacheImageFile(filename):
     f = open(cachedname,'wb')
     f.write(string.join(code, LINEEND)+LINEEND)
     f.close()
-    print 'cached image as %s' % cachedname
+    print('cached image as %s' % cachedname)
 
 
 def preProcessImages(spec):
@@ -61,7 +61,7 @@ def preProcessImages(spec):
 
     for filename in filelist:
         if cachedImageExists(filename):
-            print 'cached version of %s already exists' % filename
+            print('cached version of %s already exists' % filename)
         else:
             cacheImageFile(filename)
         
@@ -136,15 +136,15 @@ def _AsciiHexDecode(input):
 
 def _AsciiHexTest(text='What is the average velocity of a sparrow?'):
     "Do the obvious test for whether Ascii Hex encoding works"
-    print 'Plain text:', text
+    print('Plain text:', text)
     encoded = _AsciiHexEncode(text)
-    print 'Encoded:', encoded
+    print('Encoded:', encoded)
     decoded = _AsciiHexDecode(encoded)
-    print 'Decoded:', decoded
+    print('Decoded:', decoded)
     if decoded == text:
-        print 'Passed'
+        print('Passed')
     else:
-        print 'Failed!'
+        print('Failed!')
     
 def _AsciiBase85Encode(input):
     """This is a compact encoding used for binary data within
@@ -163,7 +163,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(body[offset+2])
         b4 = ord(body[offset+3])
     
-        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
 
         if num == 0:
             #special case
@@ -194,7 +194,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(lastbit[2])
         b4 = ord(lastbit[3])
 
-        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
 
         #solve for c1..c5
         temp, c5 = divmod(num, 85)
@@ -229,7 +229,7 @@ def _AsciiBase85Decode(input):
     # special rules apply if not a multiple of five bytes.  
     whole_word_count, remainder_size = divmod(len(stripped), 5)
     #print '%d words, %d leftover' % (whole_word_count, remainder_size)
-    assert remainder_size <> 1, 'invalid Ascii 85 stream!'
+    assert remainder_size != 1, 'invalid Ascii 85 stream!'
     cut = 5 * whole_word_count
     body, lastbit = stripped[0:cut], stripped[cut:]
     
@@ -301,14 +301,14 @@ def _wrap(input, columns=60):
 
 def _AsciiBase85Test(text='What is the average velocity of a sparrow?'):
     "Do the obvious test for whether Base 85 encoding works"
-    print 'Plain text:', text
+    print('Plain text:', text)
     encoded = _AsciiBase85Encode(text)
-    print 'Encoded:', encoded
+    print('Encoded:', encoded)
     decoded = _AsciiBase85Decode(encoded)
-    print 'Decoded:', decoded
+    print('Decoded:', decoded)
     if decoded == text:
-        print 'Passed'
+        print('Passed')
     else:
-        print 'Failed!'
+        print('Failed!')
 
 

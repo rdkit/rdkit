@@ -26,6 +26,7 @@ StringFormat XML characters
 
        Greek Letter Symbols as specified in MathML 
 """
+from __future__ import print_function
 
 #       How it works: Each tag grouping <b></b> sets a flag upon entry and 
 #       clears the flag upon exit.  Each call to handle_data creates a 
@@ -139,14 +140,14 @@ class StringSegment:
                         return y
         
         def dump(self):
-                print "StringSegment: ]%s[" % self.s
-                print "\tsuper = ", self.super
-                print "\tsub = ", self.sub
-                print "\tbold = ", self.bold
-                print "\titalic = ",self.italic
-                print "\tunderline = ", self.underline
-                print "\twidth = ", self.width
-                print "\tgreek = ", self.greek
+                print("StringSegment: ]%s[" % self.s)
+                print("\tsuper = ", self.super)
+                print("\tsub = ", self.sub)
+                print("\tbold = ", self.bold)
+                print("\titalic = ",self.italic)
+                print("\tunderline = ", self.underline)
+                print("\twidth = ", self.width)
+                print("\tgreek = ", self.greek)
 
 #------------------------------------------------------------------     
 # The StringFormatter will be able to format the following xml
@@ -215,7 +216,7 @@ class StringFormatter(xmllib.XMLParser):
         
         #### greek script
         def start_greek(self, attributes, letter):
-#               print "creating a greek letter... ", letter
+#               print("creating a greek letter... ", letter)
                 self.greek = 1
                 self.handle_data(letter)
 
@@ -258,7 +259,7 @@ class StringFormatter(xmllib.XMLParser):
 
         #----------------------------------------------------------------
 #       def syntax_error(self,message):
-#               print message
+#               print(message)
 
         #----------------------------------------------------------------
         def handle_data(self,data):
@@ -386,15 +387,15 @@ def test1():
         drawString(canvas,"<u><b>hello there</b></u><super>hi</super>",10,20)
         drawString(canvas,"hello!",10,40)
 
-        print "'hello!' width = ", stringWidth(canvas,"hello!")
-        print "'hello!' SPING width = ", canvas.stringWidth("hello!")
+        print("'hello!' width = ", stringWidth(canvas,"hello!"))
+        print("'hello!' SPING width = ", canvas.stringWidth("hello!"))
 
         drawString(canvas, "<b>hello!</b> goodbye", 10,60) 
-        print "'<b>hello!</b> goodbye' width = ", stringWidth(canvas,"<b>hello!</b> goodbye")
+        print("'<b>hello!</b> goodbye' width = ", stringWidth(canvas,"<b>hello!</b> goodbye"))
         drawString(canvas, "hello!", 10,80, Font(bold=1)) 
-        print "'hello!' Font(bold=1) SPING width = ", canvas.stringWidth("hello!",Font(bold=1))
+        print("'hello!' Font(bold=1) SPING width = ", canvas.stringWidth("hello!",Font(bold=1)))
         drawString(canvas, " goodbye", 10,100) 
-        print "' goodbye' SPING width = ", canvas.stringWidth(" goodbye")
+        print("' goodbye' SPING width = ", canvas.stringWidth(" goodbye"))
         canvas.flush()
 
 def test2():
@@ -493,21 +494,21 @@ def stringformatTest():
                 "<b><sub>bold+sub</sub></b> hello <u><super>underline+super</super></u>")
         
         # break down the various string widths
-        print 'sw("<b><sub>bold+sub</sub></b>") = ', stringWidth(canvas,"<b><sub>bold+sub</sub></b>")
-        print 'sw(" hello ") = ', stringWidth(canvas," hello ")
-        print 'sw("<u><super>underline+super</super></u>") = ', \
-                stringWidth(canvas,"<u><super>underline+super</super></u>")
+        print('sw("<b><sub>bold+sub</sub></b>") = ', stringWidth(canvas,"<b><sub>bold+sub</sub></b>"))
+        print('sw(" hello ") = ', stringWidth(canvas," hello "))
+        print('sw("<u><super>underline+super</super></u>") = ', 
+              stringWidth(canvas,"<u><super>underline+super</super></u>"))
         
         pwidth1 = canvas.stringWidth("bold+sub",Font(size=canvas.defaultFont.size-sizedelta, bold=1))
-        print "pwidth1 = ", pwidth1
+        print("pwidth1 = ", pwidth1)
         pwidth2 = canvas.stringWidth(" hello ")
-        print "pwidth2 = ", pwidth2
+        print("pwidth2 = ", pwidth2)
         pwidth3 = canvas.stringWidth("underline+super",
                 Font(size=canvas.defaultFont.size-sizedelta,underline=1))
-        print "pwidth3 = ", pwidth3     
+        print("pwidth3 = ", pwidth3)
 
         # these should be the same
-        print "sfwidth = ", sfwidth, " pwidth = ", pwidth1+pwidth2+pwidth3
+        print("sfwidth = ", sfwidth, " pwidth = ", pwidth1+pwidth2+pwidth3)
 
         ################################################### testing greek characters
         # looks better in a larger font
@@ -515,21 +516,21 @@ def stringformatTest():
         x = 10
         y = canvas.defaultFont.size*1.5
         drawString(canvas,"&alpha; &beta; <chi/> &Delta; <delta/>",x,y, Font(size=16), color = blue)
-        print "line starting with alpha should be font size 16" 
+        print("line starting with alpha should be font size 16")
         y = y+30
         drawString(canvas,"&epsiv; &eta; &Gamma; <gamma/>",x,y, color = green)  
         y = y+30
         drawString(canvas,"&iota; &kappa; &Lambda; <lambda/>",x,y, color = blue)        
         y = y+30
         drawString(canvas,"<u>&mu;</u> &nu; <b>&Omega;</b> <omega/>",x,y, color = green)        
-        print "mu should be underlined, Omega should be big and bold"
+        print("mu should be underlined, Omega should be big and bold")
         y = y+30
         drawString(canvas,"&omicron; &Phi; &phi; <phiv/>",x,y, color = blue)    
         y = y+30
         drawString(canvas,"&Pi; &pi; &piv; <Psi/> &psi; &rho;",x,y, color = green)      
         y = y+30
         drawString(canvas,"<u>&Sigma; &sigma; &sigmav; <tau/></u>",x,y, color = blue)   
-        print "line starting with sigma should be completely underlined"
+        print("line starting with sigma should be completely underlined")
         y = y+30
         drawString(canvas,"&Theta; &theta; &thetav; <Xi/> &xi; &zeta;",x,y, color = green)      
         y= y+30

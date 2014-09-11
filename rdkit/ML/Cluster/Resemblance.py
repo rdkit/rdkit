@@ -25,6 +25,7 @@
        '(col*(col-1))/2 + row'
 
 """
+from __future__ import print_function
 import numpy
 
 
@@ -124,10 +125,10 @@ def ShowMetricMat(metricMat,nObjs):
   for row in range(nObjs):
     for col in range(nObjs):
       if col <= row:
-        print '   ---    ',
+        print('   ---    ',end='')
       else:
-        print '%10.6f'%metricMat[(col*(col-1))/2+row],
-    print
+        print('%10.6f'%metricMat[(col*(col-1))/2+row],end='')
+    print()
 
 
 
@@ -141,7 +142,7 @@ if __name__ == '__main__':
   m = [.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0]
   nObjs = 5
   for i in range(10):
-    print i, FindMinValInList(m,nObjs,i)
+    print(i, FindMinValInList(m,nObjs,i))
 
 
 
