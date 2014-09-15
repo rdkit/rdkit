@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  $Id$
 #
@@ -13,7 +11,7 @@ from rdkit.Chem import rdDepictor
 from rdkit import Geometry
 from rdkit import RDConfig
 from rdkit.Chem.ChemUtils import AlignDepict
-import numpy.oldnumeric as Numeric
+import numpy as np
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -25,7 +23,7 @@ def getDistMat(mol):
     conf = mol.GetConformer()
     nat = mol.GetNumAtoms()
     nl = nat*(nat-1)//2
-    res = Numeric.zeros(nl, Numeric.Float)
+    res = np.zeros(nl, np.float)
 
     for i in range(1,nat):
         pi = conf.GetAtomPosition(i)
