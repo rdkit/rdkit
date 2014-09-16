@@ -11,8 +11,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <DistGeom/BoundsMatrix.h>
 #include "BoundsMatrixBuilder.h"
-#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
-#include <ForceField/UFF/BondStretch.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
+#include <ForceField/MMFF/BondStretch.h>
 #include <Geometry/Utils.h>
 
 #include <RDGeneral/utils.h>
@@ -207,20 +207,19 @@ namespace RDKit {
       unsigned int npt = mmat->numRows();
       CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       CHECK_INVARIANT(accumData.bondLengths.size() >= mol.getNumBonds(), "Wrong size accumData");
-      bool foundAll;
-      UFF::AtomicParamVect atomParams;
-      boost::tie(atomParams,foundAll)= UFF::getAtomTypes(mol);
-      CHECK_INVARIANT(atomParams.size()==mol.getNumAtoms(),"parameter vector size mismatch");
-      
+
+      ROMol mol2 = mol;
+      MMFF::MMFFMolProperties* molProperties = new MMFF::MMFFMolProperties(mol2);
+
       ROMol::ConstBondIterator bi;
       unsigned int begId, endId;
       double bl;
       for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
         begId = (*bi)->getBeginAtomIdx();
         endId = (*bi)->getEndAtomIdx();
-        if(atomParams[begId] && atomParams[endId]){
-          bl = ForceFields::UFF::Utils::calcBondRestLength((*bi)->getBondTypeAsDouble(),
-                                                           atomParams[begId], atomParams[endId]);
+        if(molProperties->getMMFFAtomType(begId) && molProperties->getMMFFAtomType(endId)){
+          const ForceFields::MMFF::MMFFBond* mmffBond = molProperties->getMMFFBondStretchEmpiricalRuleParams(mol, *bi);
+          bl = ForceFields::MMFF::Utils::calcBondRestLength(mmffBond);
           accumData.bondLengths[(*bi)->getIdx()] = bl;
           mmat->setUpperBound(begId, endId, bl + DIST12_DELTA);
           mmat->setLowerBound(begId, endId, bl - DIST12_DELTA);
