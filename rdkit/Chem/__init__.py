@@ -20,6 +20,8 @@ from rdkit import RDConfig
 
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
+from rdkit.Chem.mol2 import MolToMol2Block, MolToMol2File
+from rdkit.Chem.mae import ForwardMAEParser, ForwardMAESupplier
 from rdkit.Chem import PeriodicTable as pyPeriodicTable
 from rdkit.Chem import rdchem
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
@@ -44,6 +46,8 @@ def SupplierFromFilename(fileN,delim='',**kwargs):
   ext = fileN.split('.')[-1].lower()
   if ext=='sdf':
     suppl = SDMolSupplier(fileN,**kwargs)
+  elif ext=='mae':
+    suppl = ForwardMAESupplier(fileN, **kwargs)
   elif ext=='csv':
     if not delim:
       delim = ','
