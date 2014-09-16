@@ -10,6 +10,7 @@
 #
 """ unit testing code for the C++ ExplicitBitVects
 """
+from __future__ import print_function
 import unittest,os,sys
 from rdkit.six.moves import cPickle
 from rdkit.DataStructs import cDataStructs
@@ -22,7 +23,7 @@ def ieq(n1,n2):
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     sys.stdout.flush()
   def testSparseIdx(self):
     """ test indexing into ExplicitBitVects

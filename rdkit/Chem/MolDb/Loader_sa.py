@@ -55,7 +55,7 @@ def ProcessMol(session,mol,globalProps,nDone,nameProp='_Name',nameCol='compound_
                skipProps=False,addComputedProps=False,
                skipSmiles=False):
   if not mol:
-    raise ValueError,'no molecule'
+    raise ValueError('no molecule')
   if keepHs:
     Chem.SanitizeMol(mol)
   try:
@@ -189,4 +189,4 @@ if __name__=='__main__':
   db =sys.argv[2]
   LoadDb(sdf,db,addComputedProps=False)
   session = RegisterSchema('sqlite:///%s'%(db))()
-  print '>>>>', len(session.query(Compound).all())
+  print('>>>>', len(session.query(Compound).all()))

@@ -1,10 +1,10 @@
 import IPython
 if IPython.release.version<'0.11':
-    raise ImportError,'this module requires at least v0.11 of IPython'
+    raise ImportError('this module requires at least v0.11 of IPython')
 
 from rdkit.Chem import rdchem,rdChemReactions
 from rdkit.Chem import Draw
-from cStringIO import StringIO
+from rdkit.six import BytesIO
 import copy
 import numpy
 try:
@@ -34,16 +34,16 @@ def _toPNG(mol):
         img = Draw.MolToImage(mc,size=molSize,kekulize=False,
                             highlightAtoms=highlightAtoms)
         
-    sio = StringIO()
-    img.save(sio,format='PNG')
-    return sio.getvalue()
+    bio = BytesIO()
+    img.save(bio,format='PNG')
+    return bio.getvalue()
 
 def _toReactionPNG(rxn):
     rc = copy.deepcopy(rxn)
     img = Draw.ReactionToImage(rc,subImgSize=(int(molSize[0]/3), molSize[1]))
-    sio = StringIO()
-    img.save(sio,format='PNG')
-    return sio.getvalue()
+    bio = BytesIO()
+    img.save(bio,format='PNG')
+    return bio.getvalue()
 
 
 def _GetSubstructMatch(mol,query,**kwargs):
@@ -65,9 +65,9 @@ def _GetSubstructMatches(mol,query,**kwargs):
 # code for displaying PIL images directly,
 def display_pil_image(img):
     """displayhook function for PIL Images, rendered as PNG"""
-    sio = StringIO()
-    img.save(sio,format='PNG')
-    return sio.getvalue()
+    bio = BytesIO()
+    img.save(bio,format='PNG')
+    return bio.getvalue()
 
 def InstallIPythonRenderer():
     rdchem.Mol._repr_png_=_toPNG

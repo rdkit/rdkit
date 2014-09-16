@@ -1,4 +1,5 @@
 # $Id$
+from __future__ import print_function
 import pidtest
 
 def testLatin1Chars(can):
@@ -13,7 +14,7 @@ def testLatin1Chars(can):
     can.drawString("hola Málaga amigos niños: Page 2", curx,cury)
 
     str = "sometextÄËÖ with ácënts"
-    print len("ÄËÖ")
+    print(len("ÄËÖ"))
     pidtest.CenterAndBox(can, str, y=150)
 
     can.flush()

@@ -38,6 +38,7 @@ from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors as rdMD
 from rdkit.Chem import rdmolops
 from rdkit.Chem import Draw
+from rdkit.six import iteritems
 import numpy
 import math
 import copy
@@ -266,7 +267,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     # construct the bit map
     if fpType == 'bv': bitmap = [DataStructs.ExplicitBitVect(nBits) for x in range(mol.GetNumAtoms())]
     else: bitmap = [[] for x in range(mol.GetNumAtoms())]
-    for bit, es in info.iteritems():
+    for bit, es in iteritems(info):
       for at1, rad in es:
         if rad == 0: # for radius 0
           if fpType == 'bv': bitmap[at1][bit] = 1

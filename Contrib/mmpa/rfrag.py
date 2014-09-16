@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, July 2013
-
+from __future__ import print_function
 import sys
 import re
 from rdkit import Chem
@@ -230,12 +230,12 @@ def fragment_mol(smi,id):
 if __name__=='__main__':
 
     if (len(sys.argv) >= 2):
-	print "Program that fragments a user input set of smiles.";
-	print "The program enumerates every single,double and triple acyclic single bond cuts in a molecule.\n";
-	print "USAGE: ./rfrag.py <file_of_smiles";
-	print "Format of smiles file: SMILES ID (space separated)";
-	print "Output: whole mol smiles,ID,core,context\n";
-	sys.exit(1)
+        print("Program that fragments a user input set of smiles.")
+        print("The program enumerates every single,double and triple acyclic single bond cuts in a molecule.\n")
+        print("USAGE: ./rfrag.py <file_of_smiles")
+        print("Format of smiles file: SMILES ID (space separated)")
+        print("Output: whole mol smiles,ID,core,context\n")
+        sys.exit(1)
 
     #read the STDIN
     for line in sys.stdin:
@@ -250,7 +250,7 @@ if __name__=='__main__':
         o = fragment_mol(smiles,cmpd_id)
 
         for l in o:
-            print l
+            print(l)
 
 
 

@@ -52,7 +52,7 @@ class SupplyNode(VLibNode):
     self._pos += 1
     return res
   def AddParent(self,parent,notify=1):
-    raise ValueError,'SupplyNodes do not have parents'
+    raise ValueError('SupplyNodes do not have parents')
 
   
 #------------------------------------

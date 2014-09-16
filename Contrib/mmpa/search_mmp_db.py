@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, July 2013
-
+from __future__ import print_function
 import sys
 import os
 import re
@@ -103,11 +103,11 @@ def print_smallest_change_mmp(db_results,cmpd_id,query_size):
             if(float(size_of_change)/query_size <= ratio):
                 cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key, ))
                 rsmi = cursor.fetchone()[0]
-                print "%s,%s,%s,%s,%s,%s" % (smi,rsmi,id,value[0],value[1],value[2])
+                print("%s,%s,%s,%s,%s,%s" % (smi,rsmi,id,value[0],value[1],value[2]))
         elif(size_of_change <= max_size):
             cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key, ))
             rsmi = cursor.fetchone()[0]
-            print "%s,%s,%s,%s,%s,%s" % (search_string,rsmi,id,value[0],value[1],value[2])
+            print("%s,%s,%s,%s,%s,%s" % (search_string,rsmi,id,value[0],value[1],value[2]))
 
 def run_subs_query(subs):
 
@@ -140,9 +140,9 @@ def run_subs_query(subs):
             #cansmirk
             smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
             if(have_id):
-                print "%s,%s,%s,%s,%s,%s,%s,%s" % (subs,id,r[0],r[3],r[1],r[4],smirks,context)
+                print("%s,%s,%s,%s,%s,%s,%s,%s" % (subs,id,r[0],r[3],r[1],r[4],smirks,context))
             else:
-                print "%s,%s,%s,%s,%s,%s,%s" % (subs,r[0],r[3],r[1],r[4],smirks,context)
+                print("%s,%s,%s,%s,%s,%s,%s" % (subs,r[0],r[3],r[1],r[4],smirks,context))
 
 def run_subs_smarts_query(subs_smarts):
 
@@ -184,9 +184,9 @@ def run_subs_smarts_query(subs_smarts):
             #cansmirk
             smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
             if(have_id):
-                print "%s,%s,%s,%s,%s,%s,%s" % (id,r[0],r[3],r[1],r[4],smirks,context)
+                print("%s,%s,%s,%s,%s,%s,%s" % (id,r[0],r[3],r[1],r[4],smirks,context))
             else:
-                print "%s,%s,%s,%s,%s,%s" % (r[0],r[3],r[1],r[4],smirks,context)
+                print("%s,%s,%s,%s,%s,%s" % (r[0],r[3],r[1],r[4],smirks,context))
     infile.close()
     #remove temporary files
     os.unlink(temp_core_ni_file)
@@ -246,9 +246,9 @@ def run_trans_smarts_query(transform):
     for r in results:
         smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
         if(have_id):
-            print "%s,%s,%s,%s,%s,%s,%s,%s" % (transform,id,r[0],r[3],r[1],r[4],smirks,context)
+            print("%s,%s,%s,%s,%s,%s,%s,%s" % (transform,id,r[0],r[3],r[1],r[4],smirks,context))
         else:
-            print "%s,%s,%s,%s,%s,%s,%s" % (transform,r[0],r[3],r[1],r[4],smirks,context)
+            print("%s,%s,%s,%s,%s,%s,%s" % (transform,r[0],r[3],r[1],r[4],smirks,context))
 
 def run_trans_query(transform):
 
@@ -284,9 +284,9 @@ def run_trans_query(transform):
         #make sure connectivity is correct
         if(smirks == transform):
             if(have_id):
-                print "%s,%s,%s,%s,%s,%s,%s" % (id,r[0],r[3],r[1],r[4],smirks,context)
+                print("%s,%s,%s,%s,%s,%s,%s" % (id,r[0],r[3],r[1],r[4],smirks,context))
             else:
-                print "%s,%s,%s,%s,%s,%s" % (r[0],r[3],r[1],r[4],smirks,context)
+                print("%s,%s,%s,%s,%s,%s" % (r[0],r[3],r[1],r[4],smirks,context))
 
 def remove_numbers(in_string):
 
@@ -356,7 +356,7 @@ if(options.maxsize != None):
 elif(options.ratio != None):
     ratio = options.ratio
     if(ratio >= 1):
-        print "Ratio specified: %s. Ratio needs to be less than 1."
+        print("Ratio specified: %s. Ratio needs to be less than 1.")
         sys.exit(1)
     use_ratio = True
 
@@ -364,10 +364,10 @@ if(options.type != None):
     if( (options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or (options.type == "subs_smarts") or (options.type == "trans_smarts")):
         search_type = options.type
     else:
-        print "Unrecognised search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts"
+        print("Unrecognised search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts")
         sys.exit(1)
 else:
-    print "Please specify search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts"
+    print("Please specify search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts")
     sys.exit(1)
 
 if(options.prefix != None):

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
 import numpy
 from rdkit import RDRandom
@@ -33,8 +34,8 @@ for i in range(n-1) :
 # now do the picking
 res = pkr.Pick(distMat, n, m)
 
-print "Results:"
+print("Results:")
 for k in res :
-    print dataPts[k][0], dataPts[k][1]
+    print(dataPts[k][0], dataPts[k][1])
 
 

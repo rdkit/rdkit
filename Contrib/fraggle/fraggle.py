@@ -29,17 +29,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, May 2013
-
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem.Fraggle import FraggleSim
 
 if __name__ =='__main__':
     import sys,re
     if (len(sys.argv) >= 2):
-        print "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n"
-        print "USAGE: ./fraggle.py <file_of_smiles"
-        print "Format of smiles file: SMILES ID (space or comma separated)"
-        print "Output: whole mol smiles,ID,fraggle split smiles\n"
+        print("Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n")
+        print("USAGE: ./fraggle.py <file_of_smiles")
+        print("Format of smiles file: SMILES ID (space or comma separated)")
+        print("Output: whole mol smiles,ID,fraggle split smiles\n")
         sys.exit(1)
 
     #read the STDIN
@@ -60,5 +60,5 @@ if __name__ =='__main__':
             #cansmi
             temp = Chem.MolFromSmiles(x)
 
-            print "%s,%s,%s" % (smi,id_,Chem.MolToSmiles(temp))
+            print("%s,%s,%s" % (smi,id_,Chem.MolToSmiles(temp)))
 

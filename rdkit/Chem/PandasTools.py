@@ -81,7 +81,7 @@ from __future__ import print_function
 from base64 import b64encode
 import types
 
-from rdkit.six.moves import cStringIO as StringIO
+from rdkit.six import BytesIO
 from rdkit import Chem
 from rdkit.Chem import Draw
 
@@ -127,9 +127,9 @@ def patchPandasHeadMethod(self,n=5):
 def _get_image(x):
   """displayhook function for PIL Images, rendered as PNG"""
   import pandas as pd
-  sio = StringIO()    
-  x.save(sio,format='PNG')
-  s = b64encode(sio.getvalue())
+  bio = BytesIO()    
+  x.save(bio,format='PNG')
+  s = b64encode(bio.getvalue()).decode('ascii')
   pd.set_option('display.max_columns',len(s)+1000)
   pd.set_option('display.max_rows',len(s)+1000)
   if len(s)+100 > pd.get_option("display.max_colwidth"):
@@ -219,7 +219,7 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
   """ Read file in SDF format and return as Panda data frame """
   df = None
   if type(filename) is str:
-    f = open(filename, 'rU')
+    f = open(filename, 'rb') #'rU')
   else:
     f = filename
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):

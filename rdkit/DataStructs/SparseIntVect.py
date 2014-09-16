@@ -350,13 +350,13 @@ class pySparseIntVect(object):
     
     """
     if abs(which)>=self.size:
-      raise IndexError,which
+      raise IndexError(which)
     if which<0:
       which = self.size-which
     return self.container.get(which,0)
   def __setitem__(self,which,val):
     if abs(which)>=self.size:
-      raise IndexError,which
+      raise IndexError(which)
     val = int(val)
     if which<0:
       which = self.size-which
