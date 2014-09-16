@@ -1,3 +1,3 @@
-add_library(InfoTheory STATIC InfoBitRanker.cpp)
+rdkit_library(InfoTheory InfoBitRanker.cpp)
 
 add_subdirectory(Wrap)
