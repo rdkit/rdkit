@@ -15,12 +15,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>  
 #include <GraphMol/SmilesParse/SmilesParseOps.h>  
 #include <RDGeneral/RDLog.h>
+
+#define YYDEBUG 1
 #include "smarts.tab.hpp"
 
 extern int yysmarts_lex(YYSTYPE *,void *);
-
-
-#define YYDEBUG 1
 
 void
 yysmarts_error( const char *input,
