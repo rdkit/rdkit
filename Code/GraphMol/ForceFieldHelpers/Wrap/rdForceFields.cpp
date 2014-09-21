@@ -19,6 +19,8 @@
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
+#include <GraphMol/MolOps.h>
+
 
 namespace python = boost::python;
 
@@ -67,7 +69,11 @@ namespace RDKit {
       res = ff->minimize(maxIters);
       delete ff;
     }
-    
+
+    RWMol &wmol = static_cast<RWMol &>(mol);
+    unsigned int operationThatFailed;
+    MolOps::sanitizeMol(wmol,operationThatFailed,MolOps::SANITIZE_ALL);
+
     return res;
   }
 
