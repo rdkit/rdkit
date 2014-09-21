@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, September 2012
-
+from __future__ import print_function
 import sys
 import re
 from rdkit import Chem
@@ -38,9 +38,9 @@ from indexing import cansmirk
 if __name__=='__main__':
 
     if (len(sys.argv) >= 2):
-	print "Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n";
-	print "USAGE: ./cansmirks.py <file_of_smirks\n";
-	sys.exit(1)
+        print("Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n")
+        print("USAGE: ./cansmirks.py <file_of_smirks\n")
+        sys.exit(1)
 
     #read the STDIN
     for line in sys.stdin:
@@ -82,4 +82,4 @@ if __name__=='__main__':
 
         csmirk,context = cansmirk(clhs,crhs,"")
 
-        print "%s %s" % (csmirk,id)
+        print("%s %s" % (csmirk,id))

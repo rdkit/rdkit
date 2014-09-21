@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, October 2013
-
+from __future__ import print_function
 import sys
 import re
 from optparse import OptionParser
@@ -50,11 +50,11 @@ parser.add_option('-c','--cutoff',dest='cutoff', type='float', default=0.8,
 (options, args) = parser.parse_args()
 
 if(options.f_file is None):
-    print "Please specify the file containing the Fraggle fragmentations"
+    print("Please specify the file containing the Fraggle fragmentations")
     sys.exit(1)
 
 if((options.cutoff < 0) or (options.cutoff > 1)):
-    print "Please specify a Tversky cut-off between 0-1"
+    print("Please specify a Tversky cut-off between 0-1")
     sys.exit(1)
     
 #sys.exit(1)
@@ -99,7 +99,7 @@ for line in sys.stdin:
     #query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim
     for i in xrange(fragments):
         if(res[i] >= options.cutoff):
-            print "%s,%s,%s,%s,%s,%s" % (query_info[i][2],query_info[i][0],query_info[i][1],smi,id,res[i])
+            print("%s,%s,%s,%s,%s,%s" % (query_info[i][2],query_info[i][0],query_info[i][1],smi,id,res[i]))
 
             
             

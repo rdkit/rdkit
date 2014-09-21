@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Tkinter import *
 from sping.TK import TKCanvas
 from sping import colors
@@ -8,13 +9,13 @@ from sping import colors
 
 class Test(Frame):
     def printit(self):
-	print "hi"
-        print self.draw.size
-        print "height = %s" % self.draw.height
+        print("hi")
+        print(self.draw.size)
+        print("height = %s" % self.draw.height)
         
     def saveToPostscript(self):
         "Save the whole canvas to a postscript file"
-        print "Saving output to file tkCanvas.eps using sping.PS"
+        print("Saving output to file tkCanvas.eps using sping.PS")
         import sping.PS
         can = sping.PS.PSCanvas(size=self.draw.size, name="tkCanvas.eps")
         self.spingDrawingCommands(can)
@@ -22,46 +23,46 @@ class Test(Frame):
 
 
     def createWidgets(self):
-	self.question = Label(self, text="Can Find The BLUE Square??????")
-	self.question.pack()
+        self.question = Label(self, text="Can Find The BLUE Square??????")
+        self.question.pack()
 
-	self.QUIT = Button(self, text='QUIT', background='red', 
-			   height=3, command=self.quit)
-        self.QUIT.pack(side=BOTTOM, fill=BOTH)	
+        self.QUIT = Button(self, text='QUIT', background='red', 
+                           height=3, command=self.quit)
+        self.QUIT.pack(side=BOTTOM, fill=BOTH)  
 
         Button(self, text='Save To PS', command=self.saveToPostscript).pack()
 
         
-	spacer = Frame(self, height="0.25i")
-	spacer.pack(side=BOTTOM)
+        spacer = Frame(self, height="0.25i")
+        spacer.pack(side=BOTTOM)
 
         self.draw = TKCanvas(name="SpingTKCanvas", size=(600,600), master=self,
                              scrollingViewPortSize=(400,400) )
 
-	self.draw.scrollX = Scrollbar(self, orient=HORIZONTAL)
-	self.draw.scrollY = Scrollbar(self, orient=VERTICAL)
+        self.draw.scrollX = Scrollbar(self, orient=HORIZONTAL)
+        self.draw.scrollY = Scrollbar(self, orient=VERTICAL)
 
-	# now tie the three together. This is standard boilerplate text
-	self.draw['xscrollcommand'] = self.draw.scrollX.set
-	self.draw['yscrollcommand'] = self.draw.scrollY.set
-	self.draw.scrollX['command'] = self.draw.xview
-	self.draw.scrollY['command'] = self.draw.yview
+        # now tie the three together. This is standard boilerplate text
+        self.draw['xscrollcommand'] = self.draw.scrollX.set
+        self.draw['yscrollcommand'] = self.draw.scrollY.set
+        self.draw.scrollX['command'] = self.draw.xview
+        self.draw.scrollY['command'] = self.draw.yview
 
-	# draw something. Note that the first square 
-	# is visible, but you need to scroll to see the second one.
+        # draw something. Note that the first square 
+        # is visible, but you need to scroll to see the second one.
 
         self.spingDrawingCommands(self.draw)  # hand this a sping Canvas and it draws to it
 
 
-	# pack 'em up
-	self.draw.scrollX.pack(side=BOTTOM, fill=X)
-	self.draw.scrollY.pack(side=RIGHT, fill=Y)
-	self.draw.pack(side=LEFT)
+        # pack 'em up
+        self.draw.scrollX.pack(side=BOTTOM, fill=X)
+        self.draw.scrollY.pack(side=RIGHT, fill=Y)
+        self.draw.pack(side=LEFT)
 
 
     def scrollCanvasX(self, *args): 
-	print "scrolling", args
-	print self.draw.scrollX.get()
+        print("scrolling", args)
+        print(self.draw.scrollX.get())
 
     def spingDrawingCommands(self, anySpingCanvas):
         anySpingCanvas.drawRect(10, 10, 100, 100, edgeColor=colors.blue, fillColor=colors.green)
@@ -71,9 +72,9 @@ class Test(Frame):
 
 
     def __init__(self, master=None):
-	Frame.__init__(self, master)
-	Pack.config(self)
-	self.createWidgets()
+        Frame.__init__(self, master)
+        Pack.config(self)
+        self.createWidgets()
 
 test = Test()
 

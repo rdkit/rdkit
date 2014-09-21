@@ -13,7 +13,7 @@ from rdkit.sping import pid
 import math,re
 
 from rdkit.sping.PIL.pidPIL import PILCanvas
-from canvasbase import CanvasBase
+from rdkit.Chem.Draw.canvasbase import CanvasBase
 
 faceMap={'sans':'helvetica',
          'serif':'times'}

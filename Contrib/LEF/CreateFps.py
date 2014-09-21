@@ -29,6 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
+from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.AtomPairs import Pairs,Torsions
@@ -91,7 +93,7 @@ if __name__=='__main__':
     cPickle.dump(colNames,outF)
     cPickle.dump(fps,outF)
 
-    print 'name1 smiles1 name2 smiles2 name12 smiles12 environment_id '+' '.join([x for x,y in extraQueries])
+    print('name1 smiles1 name2 smiles2 name12 smiles12 environment_id '+' '.join([x for x,y in extraQueries]))
     if 1:
         seen = []
         smis=[]
@@ -103,7 +105,7 @@ if __name__=='__main__':
             if fp in seen and smi not in smis:
                 id = seen.index(fp)
                 onm,osmi=data[id]
-                print nm,smi,onm,osmi,nm+'.'+onm,smi+'.'+osmi,id+1,' '.join(row[3:])
+                print(nm,smi,onm,osmi,nm+'.'+onm,smi+'.'+osmi,id+1,' '.join(row[3:]))
             else:
                 seen.append(fp)
                 smis.append(smi)

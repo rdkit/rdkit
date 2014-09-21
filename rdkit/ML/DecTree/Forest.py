@@ -6,6 +6,7 @@
 **NOTE** This code should be obsolete now that ML.Composite.Composite is up and running.
 
 """
+from __future__ import print_function
 from rdkit.six.moves import cPickle
 import numpy
 from rdkit.ML.DecTree import CrossValidate,PruneTree
@@ -122,11 +123,11 @@ class Forest(object):
         tree,frac2 = PruneTree.PruneTree(tree,tree.GetTrainingExamples(),
                                         tree.GetTestExamples(),
                                         minimizeTestErrorOnly=0)
-        print 'prune: ', frac,frac2
+        print('prune: ', frac,frac2)
         frac = frac2
       self.AddTree(tree,frac)
       if i % (nTries/10) == 0:
-        print 'Cycle: % 4d'%(i)
+        print('Cycle: % 4d'%(i))
 
   def Pickle(self,fileName='foo.pkl'):
     """ Writes this forest off to a file so that it can be easily loaded later
@@ -294,4 +295,4 @@ if __name__ == '__main__':
   f.AddTree(n,0.5)
   f.AverageErrors()
   f.SortTrees()
-  print f
+  print(f)

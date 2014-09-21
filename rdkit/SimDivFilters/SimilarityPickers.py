@@ -3,6 +3,7 @@
 # Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
+from __future__ import print_function
 from rdkit import RDConfig
 from rdkit import DataStructs
 from rdkit.DataStructs.TopNContainer import TopNContainer
@@ -11,7 +12,7 @@ import bisect
 class GenericPicker(object):
   _picks = None
   def MakePicks(self,force=0):
-    raise NotImplementedError,"GenericPicker is a virtual base class"
+    raise NotImplementedError("GenericPicker is a virtual base class")
   def __len__(self):
     if self._picks is None:
       self.MakePicks()
@@ -234,7 +235,7 @@ class SpreadPicker(GenericPicker):
         fps.append(origFp)
       j+=1
       if not silent and not j%1000:
-        print 'scored %d fps'%j
+        print('scored %d fps'%j)
 
     # sort the rows of that matrix:
     #for i in range(nProbes):

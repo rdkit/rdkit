@@ -4,6 +4,7 @@
 #  All Rights Reserved
 #
 import os
+from rdkit.six import iteritems
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 
 def _getCanvas():
@@ -237,7 +238,7 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   
   drawer.AddMol(mol,**kwargs)
   omol._atomPs=drawer.atomPs[mol]
-  for k,v in omol._atomPs.iteritems():
+  for k,v in iteritems(omol._atomPs):
     omol._atomPs[k]=canvas.rescalePt(v)
   canvas._figure.set_size_inches(float(size[0])/100,float(size[1])/100)
   return canvas._figure

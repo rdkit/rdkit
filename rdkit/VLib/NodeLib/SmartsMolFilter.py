@@ -62,7 +62,7 @@ class SmartsFilter(FilterNode):
   def _initPatterns(self,patterns,counts):
     nPatts = len(patterns)
     if len(counts) and len(counts)!=nPatts:
-      raise ValueError,'if counts is specified, it must match patterns in length'
+      raise ValueError('if counts is specified, it must match patterns in length')
     if not len(counts):
       counts = [1]*nPatts
     targets = [None]*nPatts
@@ -72,7 +72,7 @@ class SmartsFilter(FilterNode):
       if type(p) in types.StringTypes:
         m = Chem.MolFromSmarts(p)
         if not m:
-          raise ValueError,'bad smarts: %s'%(p)
+          raise ValueError('bad smarts: %s'%(p))
         p = m
       targets[i] = p,c
     self._patterns = tuple(targets)  

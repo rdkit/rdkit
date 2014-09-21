@@ -174,7 +174,7 @@ class ClusterRenderer(object):
     if not self.stopAtCentroids:
       self._DrawToLimit(cluster)
     else:
-      raise NotImplementedError,'stopAtCentroids drawing not yet implemented'
+      raise NotImplementedError('stopAtCentroids drawing not yet implemented')
       
 
 def DrawClusterTree(cluster,canvas,size,

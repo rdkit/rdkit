@@ -32,7 +32,7 @@ class FastSDMolSupplier(object):
       
   def init(self,data,recogTxt='$$$$\n'):
     if not data:
-      raise ValueError,'no data'
+      raise ValueError('no data')
     # FIX: it'd be nice to not be caching data locally like this, but it's the easiest
     # way to handle pickle support.
     self.data=data

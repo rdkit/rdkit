@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 splitExpr = re.compile('[\t\ ]')
 
@@ -18,11 +19,11 @@ def runit(fName):
         m = rdmol.MolFromSmiles(smi)
         nPassed += 1
       except:
-        print '\t%s failed'%repr(smi)
-        print '\tline: %s'%(repr(line))
+        print('\t%s failed'%repr(smi))
+        print('\tline: %s'%(repr(line)))
         nFailed += 1
       m = None  
-  print '%d of %d passed'%(nPassed,nTried)
+  print('%d of %d passed'%(nPassed,nTried))
 
 if __name__ == '__main__':
   import sys

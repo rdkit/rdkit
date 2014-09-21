@@ -14,7 +14,7 @@ from xml.etree import ElementTree
 import re
 vers = re.split("[a-zA-Z]",ElementTree.VERSION)[0]
 if vers < '1.2':
-  raise ImportError,'The PubMed record interface requires a version of ElementTree >= 1.2'
+  raise ImportError('The PubMed record interface requires a version of ElementTree >= 1.2')
 
 
 class Record(object):

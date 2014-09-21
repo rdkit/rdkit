@@ -8,7 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-raise NotImplementedError,'not finished yet'
+from __future__ import print_function
+
+raise NotImplementedError('not finished yet')
 """ lazy generator of 2D pharmacophore signature data
 
 """
@@ -48,7 +50,7 @@ class Generator(object):
        
     """
     if not isinstance(sigFactory,SigFactory.SigFactory):
-      raise ValueError,'bad factory'
+      raise ValueError('bad factory')
 
     self.sigFactory = sigFactory
     self.mol = mol
@@ -83,7 +85,7 @@ class Generator(object):
 
     """
     if idx < 0 or idx >= self.sig.GetSize():
-      raise IndexError,'Index %d invalid'%(idx)
+      raise IndexError('Index %d invalid'%(idx))
     if self.bits is not None and self.bits.has_key(idx):
       return self.bits[idx]
     
@@ -133,24 +135,24 @@ if __name__ == '__main__':
   random.seed(23)
   bits = [random.randint(0,sig.GetSize()-1) for x in range(nBits)]
 
-  print 'Using the Lazy Generator'
+  print('Using the Lazy Generator')
   t1 = time.time()
   for i in range(len(mols)):
-    if not i % 10: print 'done mol %d of %d'%(i,len(mols))
+    if not i % 10: print('done mol %d of %d'%(i,len(mols)))
     gen = Generator(factory,mols[i])
     for bit in bits:
       v = gen[bit]
   t2 = time.time()    
-  print '\tthat took %4.2f seconds'%(t2-t1)
+  print('\tthat took %4.2f seconds'%(t2-t1))
     
   
-  print 'Generating and checking signatures'
+  print('Generating and checking signatures')
   t1 = time.time()
   for i in range(len(mols)):
-    if not i % 10: print 'done mol %d of %d'%(i,len(mols))
+    if not i % 10: print('done mol %d of %d'%(i,len(mols)))
     sig = Generate.Gen2DFingerprint(mols[i],factory)
     for bit in bits:
       v = sig[bit]
   t2 = time.time()    
-  print '\tthat took %4.2f seconds'%(t2-t1)
+  print('\tthat took %4.2f seconds'%(t2-t1))
   

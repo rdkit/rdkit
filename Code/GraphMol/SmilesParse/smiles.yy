@@ -16,20 +16,12 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>  
 #include <GraphMol/SmilesParse/SmilesParseOps.h>  
 #include <RDGeneral/RDLog.h>
+
+#define YYDEBUG 1
 #include "smiles.tab.hpp"
 
 extern int yysmiles_lex(YYSTYPE *,void *);
 
-#define YYDEBUG 1
-
-void
-yysmiles_error( const char *input,
-                std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *branchPoints,
-		void *scanner,const char * msg )
-{
-  throw RDKit::SmilesParseException(msg);
-}
 
 using namespace RDKit;
 namespace {
@@ -42,6 +34,16 @@ namespace {
   molList->resize(0);
  }
 }
+void
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                std::list<unsigned int> *branchPoints,
+		void *scanner,const char * msg )
+{
+  yyErrorCleanup(ms);      
+  throw RDKit::SmilesParseException(msg);
+}
+
 
 %}
 

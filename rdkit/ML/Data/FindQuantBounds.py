@@ -2,7 +2,7 @@
 #  Copyright (C) 2001  greg Landrum
 #
 
-
+from __future__ import print_function
 from rdkit.ML.Data import Quantize
 from rdkit.Dbase import DbConnection
 from rdkit import RDConfig
@@ -14,7 +14,7 @@ def runIt(namesAndTypes,dbConnect,nBounds,resCol,typesToDo=['float']):
     if cType in typesToDo:
       dList = map(lambda x:x[0],dbConnect.GetColumns(cName))
       qDat = Quantize.FindVarMultQuantBounds(dList,nBounds,results,nPossibleRes)
-      print cName, qDat
+      print(cName, qDat)
 
 
 def Usage():
@@ -26,7 +26,7 @@ def Usage():
     -n: specify the number of bounds to attempt to find for each variable
     -i: also find vars for integer values
 """
-  print msg
+  print(msg)
   sys.exit(-1)
 
 if __name__ == '__main__':
