@@ -30,6 +30,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/Descriptors/PBFDescriptors.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -1744,6 +1745,91 @@ void testGitHubIssue92(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testPBF() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test PBF Descriptors." << std::endl;
+
+  //three atoms, planar
+  RWMol *m = SmilesToMol("O");
+  MolOps::addHs(*m);
+  //without coordinates
+  try {
+    double dpbf = calcPBF(*m);
+  }
+  catch (Invar::Invariant &mess) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: "  << mess.what() << "\n";
+  }
+
+  //with coordinates
+  DGeomHelpers::EmbedMolecule(*m);
+  double dpbf = calcPBF(*m);
+  TEST_ASSERT(feq(dpbf, 0.0));
+
+  delete m;
+
+  m = SmilesToMol("FS(F)(F)(F)(F)F");
+  //without conformer
+  try {
+    dpbf = calcPBF(*m);
+  }
+  catch (Invar::Invariant &mess) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: "  << mess.what() << "\n";
+  }
+
+  Conformer *conf = new Conformer(7);
+  //hypothetical conformer
+  conf->setAtomPos(1,RDGeom::Point3D(0.0,0.0,0.0));
+  conf->setAtomPos(0,RDGeom::Point3D(-1.0,0.0,0.0));
+  conf->setAtomPos(2,RDGeom::Point3D(0.0,-1.0,0.0));
+  conf->setAtomPos(3,RDGeom::Point3D(1.0,0.0,0.0));
+  conf->setAtomPos(4,RDGeom::Point3D(0.0,1.0,0.0));
+  conf->setAtomPos(5,RDGeom::Point3D(0.0,0.0,-1.0));
+  conf->setAtomPos(6,RDGeom::Point3D(0.0,0.0,1.0));
+  m->addConformer(conf);
+
+  //2D conformer
+  conf->set3D(false);
+  dpbf = calcPBF(*m);
+  TEST_ASSERT(feq(dpbf, 0.0));
+
+  //3D conformer, 5 atoms will be in plane, 2 outside with 1.0 distance to plane
+  //PBF=(2*1.0)/7
+  conf->set3D(true);
+  dpbf = calcPBF(*m);
+  TEST_ASSERT(feq(dpbf, 2.0/7.0));
+
+  delete m;
+
+  //testing with set of molecules with precalculated PBF descriptors
+  std::string fname = getenv("RDBASE");
+  fname += "/Code/GraphMol/Descriptors/test_data/egfr.sdf";
+  RDKit::SDMolSupplier reader(fname,true,false);
+
+  fname = getenv("RDBASE");
+  fname += "/Code/GraphMol/Descriptors/test_data/egfr.out";
+  std::ifstream instrm(fname.c_str());
+
+  int nDone=0;
+  while(!reader.atEnd()){
+    RDKit::ROMol *m=reader.next();
+    if(!m) continue;
+    std::string nm;
+    m->getProp("_Name",nm);
+    double dpbf=calcPBF(*m);
+
+    std::string inm;
+    double ref;
+    instrm>>inm;
+    instrm>>ref;
+    TEST_ASSERT(inm == nm);
+    TEST_ASSERT(feq(ref, dpbf));
+    delete m;
+    ++nDone;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1775,6 +1861,7 @@ int main(){
   testMiscCountDescriptors();
   testMQNs();
   testPMI();
+  testPBF();
 #endif
   testGitHubIssue56();
   testGitHubIssue92();

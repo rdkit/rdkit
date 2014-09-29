@@ -1044,6 +1044,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   
+  docString="Returns PBF descriptor for a molecule.";
+  python::def("CalcPBFDescriptor",
+              &RDKit::Descriptors::calcPBF,(python::arg("mol"), python::arg("confId")=-1), docString.c_str());
+  
   docString="Returns PMI descriptors for a molecule as a tuple.";
   python::def("CalcPMIDescriptors",
               &CalcPMI,(python::arg("mol"), python::arg("confId")=-1,

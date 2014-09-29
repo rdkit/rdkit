@@ -14,7 +14,10 @@
 #include <RDGeneral/Invariant.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
+#include <boost/lexical_cast.hpp>
+#include <Numerics/SquareMatrix.h>
 #include <Numerics/Vector.h>
+#include <Numerics/EigenSolvers/JacobiEigenSolver.h>
 
 #ifdef RDK_USE_EIGEN3
 #include <Eigen/Eigenvalues>
@@ -105,7 +108,8 @@ namespace RDNumeric {
 
     void _convertCovMatToQuad(const double covMat[3][3],
                               const RDGeom::Point3D &rptSum, const RDGeom::Point3D &pptSum,
-                              double wtsSum, double quad[4][4]) {
+                              double wtsSum, DoubleSymmMatrix &quad) {
+      PRECONDITION(quad.numCols()==4, "Wrong dimension of Matrix.")
       double PxRx, PxRy, PxRz;
       double PyRx, PyRy, PyRz;
       double PzRx, PzRy, PzRz;
@@ -126,28 +130,27 @@ namespace RDNumeric {
       PzRy = covMat[2][1] - temp*rptSum.y;
       PzRz = covMat[2][2] - temp*rptSum.z;
 
-      quad[0][0] = -2.0*(PxRx + PyRy + PzRz);
-      quad[1][1] = -2.0*(PxRx - PyRy - PzRz);
-      quad[2][2] = -2.0*(PyRy - PzRz - PxRx);
-      quad[3][3] = -2.0*(PzRz - PxRx - PyRy);
+      quad.setVal(0, 0, -2.0*(PxRx + PyRy + PzRz));
+      quad.setVal(1, 1, -2.0*(PxRx - PyRy - PzRz));
+      quad.setVal(2, 2, -2.0*(PyRy - PzRz - PxRx));
+      quad.setVal(3, 3, -2.0*(PzRz - PxRx - PyRy));
 
-      quad[0][1] = quad[1][0] = 2.0*(PyRz - PzRy);
-      quad[0][2] = quad[2][0] = 2.0*(PzRx - PxRz);
-      quad[0][3] = quad[3][0] = 2.0*(PxRy - PyRx);
-      quad[1][2] = quad[2][1] = -2.0*(PxRy + PyRx);
-      quad[1][3] = quad[3][1] = -2.0*(PzRx + PxRz);
-      quad[2][3] = quad[3][2] = -2.0*(PyRz + PzRy);
+      quad.setVal(1, 0, 2.0*(PyRz - PzRy));
+      quad.setVal(2, 0, 2.0*(PzRx - PxRz));
+      quad.setVal(3, 0, 2.0*(PxRy - PyRx));
+      quad.setVal(2, 1, -2.0*(PxRy + PyRx));
+      quad.setVal(3, 1, -2.0*(PzRx + PxRz));
+      quad.setVal(3, 2, -2.0*(PyRz + PzRy));
     }
 
     void _computeInertiaTensor(const RDGeom::Point3DConstPtrVect &points,
                                const RDGeom::Point3D &com,
                                const DoubleVector &weights,
-                               double covMat[3][3]) {
-      for (unsigned int i = 0; i < 3; i++) {
-        for (unsigned int j=0; j < 3; j++) {
-          covMat[i][j] = 0.0;
-        }
-      }
+                               DoubleSymmMatrix &inMat) {
+      PRECONDITION(inMat.numRows()==3, "Wrong dimension of Matrix.");
+      double *data = inMat.getData();
+      memset(data, 0, sizeof(double)*6);
+      
       unsigned int npt = points.size();
       CHECK_INVARIANT(npt == weights.size(), "Number of points and number of weights do not match");
       const double *wData = weights.getData();
@@ -162,17 +165,14 @@ namespace RDNumeric {
 
         w = wData[i];
 
-        covMat[0][0] += w * ( y2 + z2 );
-        covMat[1][1] += w * ( x2 + z2 );
-        covMat[2][2] += w * ( x2 + y2 );
+        data[0] += w * ( y2 + z2 );
+        data[2] += w * ( x2 + z2 );
+        data[5] += w * ( x2 + y2 );
 
-        covMat[0][1] -= w * (ppt.x) * (ppt.y);
-        covMat[0][2] -= w * (ppt.x) * (ppt.z);
-        covMat[1][2] -= w * (ppt.y) * (ppt.z);
+        data[1] -= w * (ppt.x) * (ppt.y);
+        data[3] -= w * (ppt.x) * (ppt.z);
+        data[4] -= w * (ppt.y) * (ppt.z);
       }
-      covMat[1][0] = covMat[0][1];
-      covMat[2][0] = covMat[0][2];
-      covMat[2][1] = covMat[1][2];
     }
     
     //! Obtain the eigen vectors and eigen values 
@@ -204,102 +204,102 @@ namespace RDNumeric {
       Also see page 463 in Numerical Recipes in C (second edition)
     */
 
-    unsigned int jacobi (double quad[4][4], double eigenVals[4], double eigenVecs[4][4], 
-                unsigned int maxIter) {
-      double offDiagNorm, diagNorm;
-      double b, dma, q, t, c, s;
-      double atemp, vtemp, dtemp;
-      int i, j, k;
-      unsigned int l;
-      
-      // initialize the eigen vector to Identity
-      for (j = 0; j <= 3; j++) {
-        for (i = 0; i <= 3; i++) eigenVecs[i][j] = 0.0;
-        eigenVecs[j][j] = 1.0;
-        eigenVals[j] = quad[j][j];
-      }
-      
-      for (l = 0; l < maxIter; l++) {
-        diagNorm = 0.0;
-        offDiagNorm = 0.0;
-        for (j = 0; j <= 3; j++) {
-          diagNorm += fabs(eigenVals[j]);
-          for (i = 0; i <= j - 1; i++) {
-            offDiagNorm += fabs(quad[i][j]);
-          }
-        }
-        if((offDiagNorm/diagNorm) <= TOLERANCE) 
-          goto Exit_now;
-        for (j = 1; j <= 3; j++) {
-          for (i = 0; i <= j - 1; i++) {
-            b = quad[i][j];
-            if(fabs(b) > 0.0) {
-              dma = eigenVals[j] - eigenVals[i];
-              if((fabs(dma) + fabs(b)) <=  fabs(dma)) {
-                t = b / dma;
-              }
-              else {
-                q = 0.5 * dma / b;
-                t = 1.0/(fabs(q) + sqrt(1.0+q*q));
-                if(q < 0.0) {
-                  t = -t;
-                }
-              }
-              c = 1.0/sqrt(t * t + 1.0);
-              s = t * c;
-              quad[i][j] = 0.0;
-              for (k = 0; k <= i-1; k++) {
-                atemp = c * quad[k][i] - s * quad[k][j];
-                quad[k][j] = s * quad[k][i] + c * quad[k][j];
-                quad[k][i] = atemp;
-              }
-              for (k = i+1; k <= j-1; k++) {
-                atemp = c * quad[i][k] - s * quad[k][j];
-                quad[k][j] = s * quad[i][k] + c * quad[k][j];
-                quad[i][k] = atemp;
-              }
-              for (k = j+1; k <= 3; k++) {
-                atemp = c * quad[i][k] - s * quad[j][k];
-                quad[j][k] = s * quad[i][k] + c * quad[j][k];
-                quad[i][k] = atemp;
-              }
-              for (k = 0; k <= 3; k++) {
-                vtemp = c * eigenVecs[k][i] - s * eigenVecs[k][j];
-                eigenVecs[k][j] = s * eigenVecs[k][i] + c * eigenVecs[k][j];
-                eigenVecs[k][i] = vtemp;
-              }
-              dtemp = c*c*eigenVals[i] + s*s*eigenVals[j] - 2.0*c*s*b;
-              eigenVals[j] = s*s*eigenVals[i] + c*c*eigenVals[j] +  2.0*c*s*b;
-              eigenVals[i] = dtemp;
-            }  /* end if */
-          } /* end for i */
-        } /* end for j */
-      } /* end for l */
-      
-    Exit_now:
-      
-      for (j = 0; j <= 2; j++) {
-        k = j;
-        dtemp = eigenVals[k];
-        for (i = j+1; i <= 3; i++) {
-          if(eigenVals[i] < dtemp) {
-            k = i;
-            dtemp = eigenVals[k];
-          }
-        }
-        
-        if(k > j) {
-          eigenVals[k] = eigenVals[j];
-          eigenVals[j] = dtemp;
-          for (i = 0; i <= 3; i++) {
-            dtemp = eigenVecs[i][k];
-            eigenVecs[i][k] = eigenVecs[i][j];
-            eigenVecs[i][j] = dtemp;
-          }
-        }
-      }
-      return l+1;
-    }
+//    unsigned int jacobi (double quad[4][4], double eigenVals[4], double eigenVecs[4][4],
+//                unsigned int maxIter) {
+//      double offDiagNorm, diagNorm;
+//      double b, dma, q, t, c, s;
+//      double atemp, vtemp, dtemp;
+//      int i, j, k;
+//      unsigned int l;
+//
+//      // initialize the eigen vector to Identity
+//      for (j = 0; j <= 3; j++) {
+//        for (i = 0; i <= 3; i++) eigenVecs[i][j] = 0.0;
+//        eigenVecs[j][j] = 1.0;
+//        eigenVals[j] = quad[j][j];
+//      }
+//
+//      for (l = 0; l < maxIter; l++) {
+//        diagNorm = 0.0;
+//        offDiagNorm = 0.0;
+//        for (j = 0; j <= 3; j++) {
+//          diagNorm += fabs(eigenVals[j]);
+//          for (i = 0; i <= j - 1; i++) {
+//            offDiagNorm += fabs(quad[i][j]);
+//          }
+//        }
+//        if((offDiagNorm/diagNorm) <= TOLERANCE)
+//          goto Exit_now;
+//        for (j = 1; j <= 3; j++) {
+//          for (i = 0; i <= j - 1; i++) {
+//            b = quad[i][j];
+//            if(fabs(b) > 0.0) {
+//              dma = eigenVals[j] - eigenVals[i];
+//              if((fabs(dma) + fabs(b)) <=  fabs(dma)) {
+//                t = b / dma;
+//              }
+//              else {
+//                q = 0.5 * dma / b;
+//                t = 1.0/(fabs(q) + sqrt(1.0+q*q));
+//                if(q < 0.0) {
+//                  t = -t;
+//                }
+//              }
+//              c = 1.0/sqrt(t * t + 1.0);
+//              s = t * c;
+//              quad[i][j] = 0.0;
+//              for (k = 0; k <= i-1; k++) {
+//                atemp = c * quad[k][i] - s * quad[k][j];
+//                quad[k][j] = s * quad[k][i] + c * quad[k][j];
+//                quad[k][i] = atemp;
+//              }
+//              for (k = i+1; k <= j-1; k++) {
+//                atemp = c * quad[i][k] - s * quad[k][j];
+//                quad[k][j] = s * quad[i][k] + c * quad[k][j];
+//                quad[i][k] = atemp;
+//              }
+//              for (k = j+1; k <= 3; k++) {
+//                atemp = c * quad[i][k] - s * quad[j][k];
+//                quad[j][k] = s * quad[i][k] + c * quad[j][k];
+//                quad[i][k] = atemp;
+//              }
+//              for (k = 0; k <= 3; k++) {
+//                vtemp = c * eigenVecs[k][i] - s * eigenVecs[k][j];
+//                eigenVecs[k][j] = s * eigenVecs[k][i] + c * eigenVecs[k][j];
+//                eigenVecs[k][i] = vtemp;
+//              }
+//              dtemp = c*c*eigenVals[i] + s*s*eigenVals[j] - 2.0*c*s*b;
+//              eigenVals[j] = s*s*eigenVals[i] + c*c*eigenVals[j] +  2.0*c*s*b;
+//              eigenVals[i] = dtemp;
+//            }  /* end if */
+//          } /* end for i */
+//        } /* end for j */
+//      } /* end for l */
+//
+//    Exit_now:
+//
+//      for (j = 0; j <= 2; j++) {
+//        k = j;
+//        dtemp = eigenVals[k];
+//        for (i = j+1; i <= 3; i++) {
+//          if(eigenVals[i] < dtemp) {
+//            k = i;
+//            dtemp = eigenVals[k];
+//          }
+//        }
+//
+//        if(k > j) {
+//          eigenVals[k] = eigenVals[j];
+//          eigenVals[j] = dtemp;
+//          for (i = 0; i <= 3; i++) {
+//            dtemp = eigenVecs[i][k];
+//            eigenVecs[i][k] = eigenVecs[i][j];
+//            eigenVecs[i][j] = dtemp;
+//          }
+//        }
+//      }
+//      return l+1;
+//    }*/
 
     void reflectCovMat(double covMat[3][3]) {
       unsigned int i, j;
@@ -352,20 +352,21 @@ namespace RDNumeric {
       }
 
       // convert the covariance matrix to a 4x4 matrix that needs to be diagonalized
-      double quad[4][4];
+      DoubleSymmMatrix quad(4);
       _convertCovMatToQuad(covMat, rptSum, pptSum, wtsSum, quad);
       
       // get the eigenVecs and eigenVals for the matrix
-      double eigenVecs[4][4], eigenVals[4];
-      jacobi(quad, eigenVals, eigenVecs, maxIterations);
+      DoubleVector eigenVals(4);
+      DoubleSquareMatrix eigenVecs(4);
+      EigenSolvers::jacobiEigenSolver(quad, eigenVals, eigenVecs, maxIterations);
       
       // get the quaternion
       double quater[4];
-      quater[0] = eigenVecs[0][0];
-      quater[1] = eigenVecs[1][0];
-      quater[2] = eigenVecs[2][0];
-      quater[3] = eigenVecs[3][0];
-      
+      quater[0] = eigenVecs.getVal(0,0);
+      quater[1] = eigenVecs.getVal(0,1);
+      quater[2] = eigenVecs.getVal(0,2);
+      quater[3] = eigenVecs.getVal(0,3);
+            
       trans.SetRotationFromQuaternion(quater);
       if (reflect) {
         // put the flip in the rotation matrix
@@ -391,8 +392,15 @@ namespace RDNumeric {
       return ssr;
     }
 
-    void getMomentsOfInertia(const RDGeom::Point3DConstPtrVect &points, double eigenVals[3], double eigenVecs[3][3],
-                             const DoubleVector *weights, unsigned int maxIterations){
+void getMomentsOfInertia(const RDGeom::Point3DConstPtrVect &points, std::vector<double>& eigenVals,
+                             std::vector< std::vector<double> >& eigenVecs, const DoubleVector *weights,
+                             unsigned int maxIterations){
+      PRECONDITION(eigenVals.size()==3, "Size of vector eigenVals is not 3.");
+      PRECONDITION(eigenVecs.size()==3, "Size of vector eigenVecs is not 3.");
+      for ( unsigned int i =0; i < 3; ++i ){
+        PRECONDITION(eigenVecs[i].size()==3, "Size of vector eigenVecs[" + boost::lexical_cast<std::string>(i) + "] is not 3.");
+      }
+      
       unsigned int npt = points.size();
 
       const DoubleVector *wts;
@@ -406,48 +414,42 @@ namespace RDNumeric {
       // determine center of mass
       RDGeom::Point3D com = _weightedSumOfPoints(points, *wts)/_sumOfWeights(*wts);
 
-      double covMat[3][3];
+      DoubleSymmMatrix inMat(3);
       // compute the co-variance matrix
-      _computeInertiaTensor(points, com, *wts, covMat);
+      _computeInertiaTensor(points, com, *wts, inMat);
       if(!weights){
         delete wts;
       }
 
 #ifdef RDK_USE_EIGEN3
-      Eigen::Matrix3d *cov=reinterpret_cast<Eigen::Matrix3d *>(covMat);
-      Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen(*cov);
+      Eigen::Matrix3d cov;
+      cov << inMat.getVal(0,0), inMat.getVal(0,1), inMat.getVal(0,2),
+             inMat.getVal(1,0), inMat.getVal(1,1), inMat.getVal(1,2),
+             inMat.getVal(2,0), inMat.getVal(2,1), inMat.getVal(2,2);
+      Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen(cov);
       if(eigen.info() != Eigen::Success){
         throw ValueErrorException("Eigen3: eigenvalue calculation did not converge");
       }
-      memcpy(eigenVals, &eigen.eigenvalues(),  sizeof(double)*3);
-      memcpy(eigenVecs, &eigen.eigenvectors(), sizeof(double)*9);
+      memcpy(eigenVals.data(), &eigen.eigenvalues(),  sizeof(double)*3);
+      memcpy(eigenVecs[0].data(), &eigen.eigenvectors()(0,0), sizeof(double)*3);
+      memcpy(eigenVecs[1].data(), &eigen.eigenvectors()(0,1), sizeof(double)*3);
+      memcpy(eigenVecs[2].data(), &eigen.eigenvectors()(0,2), sizeof(double)*3);
 #else
-      // convert the covariance matrix to a 4x4 matrix that needs to be diagonalized
-      double quad[4][4];
-      memset(quad, 0, sizeof(double)*16);
-      for ( unsigned int i =0; i < 3; ++i ){
-        memcpy(quad[i], covMat[i], sizeof(double)*3);
-      }
-
       // get the eigenVecs and eigenVals for the matrix
-      double eigenVectors[4][4], eigenValues[4];
-      jacobi(quad, eigenValues, eigenVectors, maxIterations);
+      DoubleVector eigenValues(3);
+      DoubleSquareMatrix eigenVectors(3);
+      unsigned int iter = EigenSolvers::jacobiEigenSolver(inMat, eigenValues, eigenVectors, maxIterations);
 
-      //return to original 3x3 matrix
-      for ( unsigned int i = 0, j = 0; i < 4; ++i ){
-        if ( !(RDKit::feq(eigenVectors[3][i], 1.0)) ){
-          for ( unsigned int k = 0; k < 3; ++k ){
-            eigenVecs[j][k] = eigenVectors[k][i];
-          }
-          eigenVals[j] = eigenValues[i];
-          j++;
-        }
-      }
+      memcpy(eigenVals.data(), eigenValues.getData(), sizeof(double)*3);
+      memcpy(eigenVecs[0].data(), eigenVectors.getData(), sizeof(double)*3);
+      memcpy(eigenVecs[1].data(), &eigenVectors.getData()[3], sizeof(double)*3);
+      memcpy(eigenVecs[2].data(), &eigenVectors.getData()[6], sizeof(double)*3);
 #endif
     }
 
+
     void getPrincAxesTransform(const RDGeom::Point3DConstPtrVect &probePoints,
-                               RDGeom::Transform3D &trans, double eigenVals[3], double eigenVecs[3][3],
+                               RDGeom::Transform3D &trans, std::vector<double> *eigenVals, std::vector< std::vector<double> > *eigenVecs,
                                const DoubleVector *weights, unsigned int maxIterations){
       unsigned int npt = probePoints.size();
 
@@ -460,20 +462,26 @@ namespace RDNumeric {
       }
       RDGeom::Point3D origin = _weightedSumOfPoints(probePoints, *wts)/_sumOfWeights(*wts);
 
-      double *eVals, (*eVecs)[3];
+      std::vector<double> *eVals;
+      std::vector< std::vector<double> > *eVecs;
       if (eigenVals) {
+        PRECONDITION(eigenVals->size()==3, "Size of vector eigenVals is not 3.");
         eVals = eigenVals;
       }
       else {
-        eVals = new double[3];
+        eVals = new std::vector<double>(3, 0.0);
       }
       if (eigenVecs) {
+        PRECONDITION(eigenVecs->size()==3, "Size of vector eigenVecs is not 3.");
+        for ( unsigned int i =0; i < 3; ++i ){
+          PRECONDITION((*eigenVecs)[i].size()==3, "Size of vector eigenVecs[" + boost::lexical_cast<std::string>(i) + "] is not 3.");
+        }
         eVecs = eigenVecs;
       }
       else {
-        eVecs = new double[3][3];
+        eVecs = new std::vector< std::vector<double> >(3, std::vector<double>(3, 0.0));
       }
-      getMomentsOfInertia(probePoints, eVals, eVecs, wts, maxIterations);
+      getMomentsOfInertia(probePoints, *eVals, *eVecs, wts, maxIterations);
       if (!weights){
         delete wts;
       }
@@ -484,9 +492,8 @@ namespace RDNumeric {
 
       //rotation
       for ( unsigned int i = 0; i < 3; i++ ){
-        memcpy(data+4*i, &(eVecs[i]), sizeof(double)*3);
+        memcpy(data+4*i, (*eVecs)[i].data(), sizeof(double)*3);
       }
-
       //translation
       origin *= -1;
       trans.TransformPoint(origin);
@@ -501,5 +508,6 @@ namespace RDNumeric {
     }
   }
 }
+
 
       

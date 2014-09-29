@@ -13,7 +13,9 @@ namespace RDKit {
   void Descriptors::calcPMIDescriptors(const ROMol &mol, Descriptors::Moments &MoI,
                                                  int confId, RDNumeric::DoubleVector *weights,
                                                  unsigned int maxIterations){
-    double eigenVals[3], eigenVecs[3][3];
+    std::vector<double> eigenVals(3, 0.0);
+    std::vector< std::vector<double> >eigenVecs(3, std::vector<double>(3, 0.0));
+
     MolAlign::getMomentsOfInertia(mol, eigenVals, eigenVecs, confId, weights, maxIterations);
     MoI.PMI1 = eigenVals[0];
     MoI.PMI2 = eigenVals[1];

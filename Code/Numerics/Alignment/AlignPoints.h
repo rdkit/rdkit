@@ -49,7 +49,8 @@ namespace RDNumeric {
             \param maxIterations  Maximum number of iterations
      */
     void getMomentsOfInertia(const RDGeom::Point3DConstPtrVect &points,
-    		double eigenVals[3], double eigenVecs[3][3], const DoubleVector *weights=0, unsigned int maxIterations=50);
+                             std::vector<double>& eigenVals, std::vector< std::vector<double> >& eigenVecs,
+                             const DoubleVector *weights=0, unsigned int maxIterations=50);
 
 
     //! \brief Calculate alignment transform of a set of points with annotated weights to align
@@ -65,9 +66,8 @@ namespace RDNumeric {
       \param maxIterations  Maximum number of iterations
      */
     void getPrincAxesTransform(const RDGeom::Point3DConstPtrVect &points,
-    		RDGeom::Transform3D &trans, double eigenVals[3]=NULL, double eigenVecs[3][3]=NULL,
-    		const DoubleVector *weights=0,
-    		unsigned int maxIterations=50);
+    		RDGeom::Transform3D &trans, std::vector<double> *eigenVals=NULL, std::vector< std::vector<double> > *eigenVecs=NULL,
+    		const DoubleVector *weights=0, unsigned int maxIterations=50);
   }
 }
 

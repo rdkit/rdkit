@@ -170,15 +170,16 @@ namespace RDKit {
     unsigned int nAtms;
     nAtms = prbMol.getNumAtoms();
 
-    double *eVals, (*eVecs)[3];
+    std::vector<double> *eVals;
+    std::vector< std::vector<double> > *eVecs;
     if (PyArray_Check(eigenVals.ptr())) {
-      eVals = new double[3];
+      eVals = new std::vector<double>(3, 0.0);
     }
     else {
       eVals = NULL;
     }
     if (PyArray_Check(eigenVecs.ptr())) {
-      eVecs = new double[3][3];
+      eVecs = new std::vector< std::vector<double> >(3, std::vector<double>(3, 0.0));
     }
     else {
       eVecs = NULL;
@@ -200,7 +201,7 @@ namespace RDKit {
       PyArrayObject *aPtr = (PyArrayObject *)eigenVals.ptr();
       PyArray_Resize(aPtr,&adims,0,NPY_ANYORDER);
       for (unsigned i = 0; i < 3; ++i) {
-        PyObject *iItem = PyFloat_FromDouble(eVals[i]);
+        PyObject *iItem = PyFloat_FromDouble((*eVals)[i]);
         PyArray_SETITEM(aPtr,PyArray_GETPTR1(aPtr,i),iItem);
         Py_DECREF(iItem);
       }
@@ -216,7 +217,7 @@ namespace RDKit {
       PyArray_Resize(ePtr, &edims, 0, NPY_ANYORDER);
       for(unsigned int i=0;i<3;++i){
         for(unsigned int j=0; j<3; ++j){
-          PyObject *iItem = PyFloat_FromDouble(eVecs[i][j]);
+          PyObject *iItem = PyFloat_FromDouble((*eVecs)[i][j]);
           PyArray_SETITEM(ePtr,PyArray_GETPTR2(ePtr, i, j),iItem);
           Py_DECREF(iItem);
         }

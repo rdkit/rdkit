@@ -109,8 +109,9 @@ namespace RDKit {
                                                 defaults to masses of atoms (if weights==NULL Ptr)
       \param maxIterations      maximum number of iterations used to align molecule
      */
-    void getMomentsOfInertia(const ROMol &mol, double eigenVals[3], double eigenVecs[3][3], int confId = -1,
+    void getMomentsOfInertia(const ROMol &mol,std::vector<double> &eigenVals, std::vector< std::vector<double> > &eigenVecs, int confId = -1,
                              RDNumeric::DoubleVector *weights=0, unsigned int maxIterations=50);
+
 
     //! \brief Calculate alignment transform necessary for aligning a molecule to its principal moments of inertia
     /*!
@@ -126,7 +127,7 @@ namespace RDKit {
       	  	  	  	  		defaults to masses of atoms (if weights==NULL Ptr)
       \param maxIterations 	maximum number of iterations used to align molecule
      */
-    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, double eigenVals[3]=NULL, double eigenVecs[3][3]=NULL,
+    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, std::vector<double> *eigenVals=NULL, std::vector< std::vector<double> > *eigenVecs=NULL,
                                int confId = -1, RDNumeric::DoubleVector *weights=0, unsigned int maxIterations=50);
 
     //! Align the conformations of a molecule using a common set of atoms

@@ -65,10 +65,16 @@ namespace RDKit {
       return res;
     }
 
-    void getMomentsOfInertia(const ROMol &mol, double eigenVals[3], double eigenVecs[3][3],
+    void getMomentsOfInertia(const ROMol &mol, std::vector<double> &eigenVals, std::vector< std::vector<double> > &eigenVecs,
                              int confId, RDNumeric::DoubleVector *weights, unsigned int maxIterations) {
-      unsigned int nPts = mol.getNumAtoms();
+      PRECONDITION(eigenVals.size()==3, "Size of vector eigenVals is not 3.");
+      PRECONDITION(eigenVecs.size()==3, "Size of vector eigenVecs is not 3.");
+      for ( unsigned int i =0; i < 3; ++i ){
+        PRECONDITION(eigenVecs[i].size()==3, "Size of vector eigenVecs[" + boost::lexical_cast<std::string>(i) + "] is not 3.");
+      }
 
+      unsigned int nPts = mol.getNumAtoms();
+      
       RDNumeric::DoubleVector *wts;
       if ( weights ){
         wts = weights;
@@ -93,8 +99,9 @@ namespace RDKit {
       }
     }
 
-    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, double eigenVals[3], double eigenVecs[3][3],
+    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, std::vector<double> *eigenVals, std::vector< std::vector<double> > *eigenVecs,
                                int confId, RDNumeric::DoubleVector *weights, unsigned int maxIterations) {
+      
       unsigned int nPts = mol.getNumAtoms();
 
       RDNumeric::DoubleVector *wts;
@@ -114,18 +121,25 @@ namespace RDKit {
       for ( unsigned int i = 0; i < nPts; ++i ){
         prbPoints.push_back( &conf.getAtomPos(i) );
       }
-      double *eVals, (*eVecs)[3];
+
+      std::vector<double> *eVals;
+      std::vector< std::vector<double> > *eVecs;
       if (eigenVals) {
+        PRECONDITION(eigenVals->size()==3, "Size of vector eigenVals is not 3.");
         eVals = eigenVals;
       }
       else {
-        eVals = NULL;
+        eVals = new std::vector<double>(3, 0.0);
       }
       if (eigenVecs) {
+        PRECONDITION(eigenVecs->size()==3, "Size of vector eigenVecs is not 3.");
+        for ( unsigned int i =0; i < 3; ++i ){
+          PRECONDITION((*eigenVecs)[i].size()==3, "Size of vector eigenVecs[" + boost::lexical_cast<std::string>(i) + "] is not 3.");
+        }
         eVecs = eigenVecs;
       }
       else {
-        eVecs = NULL;
+        eVecs = new std::vector< std::vector<double> >(3, std::vector<double>(3, 0.0));
       }
       RDNumeric::Alignments::getPrincAxesTransform(prbPoints, trans, eVals, eVecs, wts, maxIterations);
       if (!weights){

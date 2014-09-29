@@ -109,8 +109,8 @@ void test3Weights() {
 }
 
 void test4PrincipalAxes() {
-  double eigenVals[3], eigenVecs[3][3];
-  double eigenVals2[3], eigenVecs2[3][3];
+  std::vector<double> eigenVals(3,0.0), eigenVals2(3,0.0);
+  std::vector< std::vector<double> > eigenVecs(3, std::vector<double>(3,0.0)), eigenVecs2(3, std::vector<double>(3,0.0));
   //1 atom
   RWMol * mol = SmilesToMol("C");
   DGeomHelpers::EmbedMolecule(*mol);
@@ -119,7 +119,7 @@ void test4PrincipalAxes() {
 
   RDGeom::Transform3D trans;
   MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
-  MolAlign::getPrincAxesTransform(*mol, trans, eigenVals2, eigenVecs2);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
   TEST_ASSERT(feq(eigenVals[0],0.0));
   TEST_ASSERT(feq(eigenVals[1],0.0));
   TEST_ASSERT(feq(eigenVals[2],0.0));
@@ -154,7 +154,7 @@ void test4PrincipalAxes() {
   conf = mol->getConformer(0);
 
   MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
-  MolAlign::getPrincAxesTransform(*mol, trans, eigenVals2, eigenVecs2);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
   MolTransforms::transformConformer(conf, trans);
   TEST_ASSERT(mol->getNumAtoms() == 2);
   TEST_ASSERT(feq(conf.getAtomPos(0).x/mol->getAtomWithIdx(1)->getMass(), - conf.getAtomPos(1).x/mol->getAtomWithIdx(0)->getMass()));
@@ -186,7 +186,7 @@ void test4PrincipalAxes() {
   conf = mol->getConformer(0);
 
   MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
-  MolAlign::getPrincAxesTransform(*mol, trans, eigenVals2, eigenVecs2);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
   MolTransforms::transformConformer(conf, trans);
 
   TEST_ASSERT(mol->getNumAtoms() == 3);
@@ -211,7 +211,7 @@ void test4PrincipalAxes() {
   conf = mol->getConformer(0);
 
   MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
-  MolAlign::getPrincAxesTransform(*mol, trans, eigenVals2, eigenVecs2);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
   MolTransforms::transformConformer(conf, trans);
 
   std::string fname2 = rdbase + "/Code/GraphMol/MolAlign/test_data/acetonitrile_aligned.mol";

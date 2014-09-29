@@ -163,11 +163,11 @@ void testPrincAxesAlignment() {
   RDGeom::Point3D pt1(3.0, 2.0, 5.0); pts.push_back(&pt1);
 
   RDGeom::Transform3D trans;
-  double eigenVals[3], eigenVecs[3][3];
-  double eigenVals2[3], eigenVecs2[3][3];
+  std::vector<double> eigenVals(3, 0.0), eigenVals2(3, 0.0);
+  std::vector< std::vector<double> > eigenVecs(3, std::vector<double>(3,0.0)), eigenVecs2(3, std::vector<double>(3,0.0));
 
   getMomentsOfInertia(pts, eigenVals, eigenVecs);
-  getPrincAxesTransform(pts, trans, eigenVals2, eigenVecs2);
+  getPrincAxesTransform(pts, trans, &eigenVals2, &eigenVecs2);
 
   trans.TransformPoint(pt1);
 
@@ -180,8 +180,8 @@ void testPrincAxesAlignment() {
   TEST_ASSERT(RDKit::feq(-3.0, trans.getVal(0, 3)));
   TEST_ASSERT(RDKit::feq(-2.0, trans.getVal(1, 3)));
   TEST_ASSERT(RDKit::feq(-5.0, trans.getVal(2, 3)));
-  for (unsigned int i = 0; i < 3; i++) {
-    for (unsigned int j = 0; j < 3; j++) {
+  for (unsigned int i = 0; i < 3; ++i) {
+    for (unsigned int j = 0; j < 3; ++j) {
       if ( i == j ){
         TEST_ASSERT(RDKit::feq(1.0, trans.getVal(i, j)));
       }
@@ -200,7 +200,7 @@ void testPrincAxesAlignment() {
   RDGeom::Point3D pt2(4.0, 4.0, 2.0); pts.push_back(&pt2);
 
   getMomentsOfInertia(pts, eigenVals, eigenVecs);
-  getPrincAxesTransform(pts, trans, eigenVals2, eigenVecs2);
+  getPrincAxesTransform(pts, trans, &eigenVals2, &eigenVecs2);
 
 
   trans.TransformPoint(pt1);
@@ -232,7 +232,7 @@ void testPrincAxesAlignment() {
   RDGeom::Point3D pt3(2.0, 2.0, 0.0); pts.push_back(&pt3);
 
   getMomentsOfInertia(pts, eigenVals, eigenVecs);
-  getPrincAxesTransform(pts, trans, eigenVals2, eigenVecs2);
+  getPrincAxesTransform(pts, trans, &eigenVals2, &eigenVecs2);
 
   trans.TransformPoint(pt1);
   trans.TransformPoint(pt2);
