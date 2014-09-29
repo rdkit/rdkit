@@ -102,16 +102,52 @@ namespace RDMIF {
 
     return res;
   }
+  
+  DistanceToClosestAtom::DistanceToClosestAtom(const RDKit::ROMol &mol, int confId) {
+    PRECONDITION(mol.getNumConformers() > 0,
+                 "No Conformers available for molecule");
+    d_nAtoms = mol.getNumAtoms();
+    d_pos.reserve(d_nAtoms);
+    RDKit::Conformer conf = mol.getConformer(confId);
 
+    for (unsigned int i = 0; i < d_nAtoms; i++) {
+      RDGeom::Point3D &pos = conf.getAtomPos(i);
+      d_pos.push_back(pos.x);
+      d_pos.push_back(pos.y);
+      d_pos.push_back(pos.z);
+    }
+  }
+
+  double DistanceToClosestAtom::operator()(double x, double y, double z, double thres) {
+    unsigned int j = 0;
+    double temp = x - d_pos[j];
+    double dist2 = temp*temp;
+    temp = y - d_pos[j+1];
+    dist2 += temp*temp;
+    temp = z - d_pos[j+2];
+    dist2 += temp*temp;
+    double res = dist2;
+    for (j = 1; j < d_nAtoms; j++) {
+      temp = x - d_pos[j];
+      dist2 = temp*temp;
+      temp = y - d_pos[j+1];
+      dist2 += temp*temp;
+      temp = z - d_pos[j+2];
+      dist2 += temp*temp;
+      res = std::min(res, dist2);
+    }
+    return sqrt(res);
+  }
+  
   VdWaals::VdWaals(RDKit::ROMol &mol, int confId,
                    unsigned int probeAtomTypeMMFF,
                    const std::string &probeAtomTypeUFF, const std::string &FF,
                    bool scaling, double cutoff) :
-                      d_cutoff(cutoff) {
+                      d_cutoff(cutoff*cutoff) {
     PRECONDITION(( FF == "MMFF94" ) || ( FF == "UFF" ), "Force Field not known.");
 
     d_nAtoms = mol.getNumAtoms();
-    d_pos.reserve(d_nAtoms);
+    d_pos.reserve(3*d_nAtoms);
     d_R_star_ij.reserve(d_nAtoms);
     d_wellDepth.reserve(d_nAtoms);
     RDKit::Conformer conf = mol.getConformer(confId);
@@ -129,14 +165,17 @@ namespace RDMIF {
       for (unsigned int i = 0; i < d_nAtoms; i++) {
         const unsigned int iAtomType = props.getMMFFAtomType(i);
         params = ( *mmffVdW )(iAtomType);
-        d_pos.push_back(conf.getAtomPos(i));
+        const RDGeom::Point3D &pt = conf.getAtomPos(i);
+        d_pos.push_back(pt.x);
+        d_pos.push_back(pt.y);
+        d_pos.push_back(pt.z);
         d_R_star_ij.push_back(ForceFields::MMFF::Utils::calcUnscaledVdWMinimum(mmffVdW, params, probeparams));
         d_wellDepth.push_back(ForceFields::MMFF::Utils::calcUnscaledVdWWellDepth(d_R_star_ij[i], params, probeparams));
         //scaling for taking undirected H-Bonds into account
         if (scaling) {
           ForceFields::MMFF::Utils::scaleVdWParams(d_R_star_ij[i], d_wellDepth[i], mmffVdW, params, probeparams);
         }
-        d_getEnergy = ForceFields::MMFF::Utils::calcVdWEnergy;
+        d_getEnergy = d_calcMMFFEnergy;
       }
     }
     else if (FF == "UFF") {
@@ -150,8 +189,11 @@ namespace RDMIF {
       }
 
       for (unsigned int i = 0; i < d_nAtoms; i++) {
-        d_pos.push_back(conf.getAtomPos(i));
-        d_R_star_ij.push_back(ForceFields::UFF::Utils::calcNonbondedMinimum(probeparams, params.first[i]));
+        const RDGeom::Point3D &pt = conf.getAtomPos(i);
+        d_pos.push_back(pt.x);
+        d_pos.push_back(pt.y);
+        d_pos.push_back(pt.z);
+        d_R_star_ij.push_back(probeparams->x1 * params.first[i]->x1 );
         d_wellDepth.push_back(ForceFields::UFF::Utils::calcNonbondedDepth(probeparams, params.first[i]));
       }
       d_getEnergy = d_calcUFFEnergy;
@@ -175,23 +217,46 @@ namespace RDMIF {
     return res;
   }
 
-  double VdWaals::operator()(const RDGeom::Point3D &pt) {
-    double res = 0.0, dis;
-    for (unsigned int i = 0; i < d_nAtoms; i++) {
-      dis = std::max(( pt - d_pos[i] ).length(), d_cutoff);
-      res += ( *d_getEnergy )(dis, d_R_star_ij[i], d_wellDepth[i]);
+  double VdWaals::operator()(double x, double y, double z, double thres){
+    double res = 0.0, dist2, temp;
+    for (unsigned int i = 0, j = 0; i < d_nAtoms; i++) {
+      temp = x - d_pos[j++];
+      dist2  = temp * temp;
+      temp = y - d_pos[j++];
+      dist2 += temp * temp;
+      temp = z - d_pos[j++];
+      dist2 += temp * temp;
+      if (dist2 < thres) {
+        dist2 = std::max(dist2, d_cutoff);
+        res += (*d_getEnergy)(dist2, d_R_star_ij[i], d_wellDepth[i]);
+      }
     }
     return res;
   }
 
-  double VdWaals::d_calcUFFEnergy(double dis, double x_ij, double wellDepth) {
-    double r = x_ij / dis;
-    double r6 = int_pow<6>(r);
+  double VdWaals::d_calcUFFEnergy(double dist2, double x_ij, double wellDepth) {
+    double r6 = x_ij/dist2;
+    r6 *= r6*r6;
     double r12 = r6 * r6;
-    double res = wellDepth * ( r12 - 2.0 * r6 );
-    return res;
+    return wellDepth * ( r12 - 2.0 * r6 );
   }
 
+  double VdWaals::d_calcMMFFEnergy(double dist2, double R_star_ij, double wellDepth) {
+    double const vdw1 = 1.07;
+    double const vdw1m1 = vdw1 - 1.0;
+    double const vdw2 = 1.12;
+    double const vdw2m1 = vdw2 - 1.0;
+    double dist = sqrt(dist2);
+    double dist7 = dist2 * dist2 * dist2 * dist;
+    double aTerm = vdw1 * R_star_ij / (dist + vdw1m1 * R_star_ij);
+    double aTerm2 = aTerm * aTerm;
+    double aTerm7 = aTerm2 * aTerm2 * aTerm2 * aTerm;
+    double R_star_ij2 = R_star_ij * R_star_ij;
+    double R_star_ij7 = R_star_ij2 * R_star_ij2 * R_star_ij2 * R_star_ij;
+    double bTerm = vdw2 * R_star_ij7 / (dist7 + vdw2m1 * R_star_ij7) - 2.0;
+    return wellDepth * aTerm7 * bTerm;
+  }
+  
   namespace CoulombDetail {
     const double prefactor = 1 / ( 4.0 * 3.141592 * 8.854188 ) * 1.602
         * 1.602 * 6.02214129 * 10000;
@@ -201,9 +266,15 @@ namespace RDMIF {
                    const std::vector<RDGeom::Point3D> &positions,
                    double probecharge, bool absVal, double alpha, double cutoff) :
                       d_nAtoms(charges.size()), d_probe(probecharge), d_absVal(absVal), d_charges(charges),
-                      d_pos(positions), d_alpha(alpha), d_cutoff(cutoff) {
-    PRECONDITION(d_charges.size() == d_pos.size(),
+                      d_alpha(alpha), d_cutoff(cutoff*cutoff) {
+    PRECONDITION(d_charges.size() == positions.size(),
                  "Lengths of positions and charges vectors do not match.");
+    d_pos.reserve(3*d_nAtoms);
+    for (unsigned int i = 0; i<positions.size(); ++i){
+      d_pos.push_back(positions[i].x);
+      d_pos.push_back(positions[i].y);
+      d_pos.push_back(positions[i].z);
+    }
     if (fabs(d_alpha) < MIN_VAL) {
       d_softcore = false;
       if (d_cutoff < MIN_VAL) {
@@ -219,13 +290,16 @@ namespace RDMIF {
                    bool absVal, const std::string &prop, double alpha,
                    double cutoff) :
                       d_nAtoms(mol.getNumAtoms()), d_probe(probecharge), d_absVal(absVal), d_alpha(
-                          alpha), d_cutoff(cutoff) {
+                          alpha), d_cutoff(cutoff*cutoff) {
     d_charges.reserve(d_nAtoms);
-    d_pos.reserve(d_nAtoms);
+    d_pos.reserve(3*d_nAtoms);
     RDKit::Conformer conf = mol.getConformer(confId);
     for (unsigned int i = 0; i < d_nAtoms; ++i) {
       d_charges.push_back(mol.getAtomWithIdx(i)->getProp<double>(prop));
-      d_pos.push_back(conf.getAtomPos(i));
+      const RDGeom::Point3D &pt=conf.getAtomPos(i);
+      d_pos.push_back(pt.x);
+      d_pos.push_back(pt.y);
+      d_pos.push_back(pt.z);
     }
     if (fabs(d_alpha) < MIN_VAL) {
       d_softcore = false;
@@ -238,21 +312,33 @@ namespace RDMIF {
     }
   }
 
-  double Coulomb::operator()(const RDGeom::Point3D &pt) {
-    double res = 0.0, dis;
-    RDGeom::Point3D pt_t;
+  double Coulomb::operator()(double x, double y, double z, double thres) {
+    double res = 0.0, dist2, temp;
     if (d_softcore) {
-      for (unsigned int i = 0; i < d_nAtoms; i++) {
-        pt_t = pt - d_pos[i];
-        dis = pt_t.lengthSq();
-        res += d_charges[i] * ( 1 / sqrt(d_alpha + dis) );
+      for (unsigned int i = 0, j = 0; i < d_nAtoms; i++) {
+        temp = x - d_pos[j++];
+        dist2 = temp*temp;
+        temp = y - d_pos[j++];
+        dist2 += temp*temp;
+        temp = z - d_pos[j++];
+        dist2 += temp*temp;
+        if ( dist2 < thres ) {
+          res += d_charges[i] * ( 1.0 / sqrt(d_alpha + dist2) );
+        }
       }
     }
     else {
-      for (unsigned int i = 0; i < d_nAtoms; i++) {
-        pt_t = pt - d_pos[i];
-        dis = std::max( (pt - d_pos[i]).length(), d_cutoff);
-        res += d_charges[i] * ( 1 / dis );
+      for (unsigned int i = 0, j=0; i < d_nAtoms; i++) {
+        temp = x - d_pos[j++];
+        dist2 = temp*temp;
+        temp = y - d_pos[j++];
+        dist2 += temp*temp;
+        temp = z - d_pos[j++];
+        dist2 += temp*temp;
+        if ( dist2 < thres ) {
+          dist2 = std::max(dist2, d_cutoff);
+          res += d_charges[i] * ( 1.0 / sqrt(dist2) );
+        }
       }
     }
     res *= CoulombDetail::prefactor * d_probe;
@@ -266,13 +352,19 @@ namespace RDMIF {
                                        const std::vector<RDGeom::Point3D> &positions, double probecharge,
                                        bool absVal, double alpha, double cutoff, double epsilon, double xi) :
                       d_probe(probecharge), d_absVal(absVal), d_charges(charges),
-                      d_pos(positions), d_nAtoms(charges.size()), d_alpha(alpha),
+                      d_nAtoms(charges.size()), d_alpha(alpha),
                       d_cutoff(cutoff * cutoff), d_epsilon(epsilon), d_xi(xi) {
-    PRECONDITION(d_charges.size() == d_pos.size(), "Lengths of positions and charges vectors do not match.");
+    PRECONDITION(d_charges.size() == positions.size(), "Lengths of positions and charges vectors do not match.");
     d_dielectric = ( d_xi - d_epsilon ) / ( d_xi + d_epsilon );
     std::vector<unsigned int> neighbors(positions.size(), 0);
 
-    for (unsigned int i = 0; i < positions.size() - 1; i++) {
+    d_dists.reserve(d_nAtoms);
+    d_sp.reserve(d_nAtoms);
+    d_pos.reserve(3*d_nAtoms);
+    for (unsigned int i = 0; i < positions.size(); i++) {
+      d_pos.push_back(positions[i].x);
+      d_pos.push_back(positions[i].y);
+      d_pos.push_back(positions[i].z);
       for (unsigned int j = i + 1; j < positions.size(); j++) {
         double dis = (positions[j] - positions[i]).length();
         if (dis < 4.0) {
@@ -329,24 +421,33 @@ namespace RDMIF {
                       d_probe(probecharge), d_absVal(absVal), d_nAtoms(mol.getNumAtoms()),
                       d_alpha(alpha), d_cutoff(cutoff * cutoff), d_epsilon(epsilon), d_xi(xi) {
     PRECONDITION(mol.getNumConformers() > 0, "No Conformers for Molecule");
-    std::vector<double> charges;
-    std::vector<RDGeom::Point3D> pos;
-    RDKit::Conformer conf = mol.getConformer(confId);
+    
     d_charges.reserve(d_nAtoms);
-    d_pos.reserve(d_nAtoms);
-
+    d_sp.reserve(d_nAtoms);
+    d_dists.reserve(d_nAtoms);
+    d_pos.reserve(3*d_nAtoms);
+    
+    RDKit::Conformer conf = mol.getConformer(confId);
     for (unsigned int i = 0; i < d_nAtoms; ++i) {
       d_charges.push_back(mol.getAtomWithIdx(i)->getProp<double>(prop));
-      d_pos.push_back(conf.getAtomPos(i));
+      const RDGeom::Point3D &pt=conf.getAtomPos(i);
+      d_pos.push_back(pt.x);
+      d_pos.push_back(pt.y);
+      d_pos.push_back(pt.z);
     }
     d_dielectric = ( d_xi - d_epsilon ) / ( d_xi + d_epsilon );
 
-    std::vector<unsigned int> neighbors(d_pos.size(), 0);
+    std::vector<unsigned int> neighbors(d_charges.size(), 0);
 
-    for (unsigned int i = 0; i < d_pos.size() - 1; i++) {
-      for (unsigned int j = i + 1; j < d_pos.size(); j++) {
-        double dis = (d_pos[j] - d_pos[i]).length();
-        if (dis < 4.0) {
+    for (unsigned int i = 0; i < d_charges.size() - 1; ++i) {
+      for (unsigned int j = i + 1; j < d_charges.size(); ++j) {
+        double temp = d_pos[j*3]-d_pos[i*3];
+        double dist2 = temp * temp;
+        temp = d_pos[j*3+1]-d_pos[i*3+1];
+        dist2 += temp * temp;
+        temp = d_pos[j*3+2]-d_pos[i*3+2];
+        dist2 += temp * temp;
+        if (dist2 < 16.0) {
           neighbors[i]++;
           neighbors[j]++;
         }
@@ -393,13 +494,19 @@ namespace RDMIF {
     }
   }
 
-  double CoulombDielectric::operator()(const RDGeom::Point3D &pt) {
+  double CoulombDielectric::operator()(double x, double y, double z, double thres){
     int neigh = 0;
-    double res = 0.0, dis, sq = 0.0;
-    RDGeom::Point3D pt_t;
-    for (unsigned int i = 0; i < d_nAtoms; i++) {
-      dis = ( pt - d_pos[i] ).lengthSq();
-      if (dis < 16.0) {
+    double res = 0.0, sq = 0.0;
+
+    for (unsigned int i = 0, j=0; i < d_nAtoms; ++i, j+=3) {
+      double temp = x - d_pos[j];
+      double dist2 = temp * temp;
+      temp = y - d_pos[j+1];
+      dist2 += temp * temp;
+      temp = z -d_pos[j+2];
+      dist2 += temp * temp;
+      d_dists[i] = dist2;
+      if (dist2 < 16.0) {
         neigh += 1;
       }
     }
@@ -433,16 +540,21 @@ namespace RDMIF {
         sq = 4.0;
     }
 
-    for (unsigned int i = 0; i < d_nAtoms; i++) {
-      pt_t = pt - d_pos[i];
-      dis = pt_t.lengthSq();
-      if (d_softcore) {
-        res += d_charges[i] * ( 1 / sqrt(d_alpha + dis)
-            + d_dielectric / sqrt(d_alpha + dis + 4.0 * d_sp[i] * sq) );
+
+    if (d_softcore) {
+      for (unsigned int i = 0; i < d_nAtoms; i++) {
+        if ( d_dists[i] < thres ) {
+          res += d_charges[i] * ( 1 / sqrt(d_alpha + d_dists[i])
+            + d_dielectric / sqrt(d_alpha + d_dists[i]+ 4.0 * d_sp[i] * sq) );
+        }
       }
-      else {
-        dis = std::max(dis, d_cutoff);
-        res += d_charges[i] * ( 1 / sqrt(dis) + d_dielectric / sqrt(dis + 4.0 * d_sp[i] * sq) );
+    }
+    else {
+      for (unsigned int i = 0; i < d_nAtoms; i++) {
+        if ( d_dists[i] < thres ) {
+          double dist2 = std::max(d_dists[i], d_cutoff);
+          res += d_charges[i] * ( 1 / sqrt(dist2) + d_dielectric / sqrt(dist2 + 4.0 * d_sp[i] * sq) );
+        }
       }
     }
     res *= CoulombDetail::prefactor * ( 1 / d_xi ) * d_probe;
@@ -450,7 +562,6 @@ namespace RDMIF {
     if (d_absVal) {
       res = -fabs(res); // takes the negative absolute value of the interaction energy
     }
-
     return res;
   }
 
@@ -459,7 +570,7 @@ namespace RDMIF {
     const double rm[2][2] = { { 3.2, 3.0 }, { 3.0, 2.8 } };
     const double K1 = 562.25380293;
     const double K2 = 0.11697778;
-    const double bondlength[2] = { 0.972, 1.019 };
+    const double bondlength[2] = { -0.972, -1.019 };
 
     double cos_2(double t, double t_0 = 0.0, double t_i = 1.0) {
       if (t < M_PI_2) {
@@ -628,20 +739,24 @@ namespace RDMIF {
     }
     else { // this should never be the case
       BOOST_LOG(rdErrorLog)
-                          << "HBond::operator(): unknown target property d_DAprop: " << d_DAprop
+                          << "HBond: unknown target property d_DAprop: " << d_DAprop
                           << std::endl;
     }
 
-    d_nInteract = d_pos.size(); // updated to number of interactions
-
-    POSTCONDITION(d_nInteract == d_targettypes.size(),
+    d_nInteract = d_targettypes.size(); // updated to number of interactions
+    d_eneContrib.resize(d_nInteract, 0);
+    d_vectTargetProbe.resize(d_nInteract*3, 0);
+    
+    POSTCONDITION(d_nInteract * 3 == d_pos.size(),
                   "Error in constructing H-Bond descriptor: Vector length mismatch (target atom types).");
-    POSTCONDITION(d_nInteract == d_direction.size(),
+    POSTCONDITION(d_nInteract * 3 == d_direction.size(),
                   "Error in constructing H-Bond descriptor: Vector length mismatch (bond directions).");
     POSTCONDITION(d_nInteract == d_function.size(),
                   "Error in constructing H-Bond descriptor: Vector length mismatch (angular functions).");
-    POSTCONDITION(d_nInteract == d_plane.size(),
+    POSTCONDITION(d_nInteract * 3 == d_plane.size(),
                   "Error in constructing H-Bond descriptor: Vector length mismatch (lone pair planes).");
+    POSTCONDITION(d_nInteract == d_lengths.size(),
+                  "Error in constructing H-Bond descriptor: Vector length mismatch (bondlengths).");
   }
 
   unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId, bool fixed,
@@ -685,7 +800,6 @@ namespace RDMIF {
             dir = bondDirection[0] + hbonddir;
             plane = bondDirection[0].crossProduct(hbonddir); // X-O-Y plane vector
             plane = plane.crossProduct(dir); // lp plane vector
-            plane.normalize();
             if (fixed) {
               addVectElements(O, &cos_2_0, pos, dir, plane);
             }
@@ -783,7 +897,6 @@ namespace RDMIF {
               if (atom->getFormalCharge() <= 0) { //no positively charged nitrogen
                 dir = bondDirection[0] + bondDirection[1]; // get hydrogen bond direction
                 plane = bondDirection[0].crossProduct(bondDirection[1]);//normal vector of lone pair plane = plane of three atoms
-                plane.normalize();
                 addVectElements(N, &cos_2, pos, dir, plane);
                 interact++;
               }
@@ -835,7 +948,6 @@ namespace RDMIF {
                 ++secnbrIdx;
               }
               plane = bondDirection[0].crossProduct(dir); // lp plane vector
-              plane.normalize();
               if (atom->getFormalCharge() == 0) { //carbonyl, carboxyl C=O, X=O
                 addVectElements(O, &cos_acc, pos, bondDirection[0], plane);
                 interact++;
@@ -856,7 +968,6 @@ namespace RDMIF {
               dir = bondDirection[0] + bondDirection[1]; // get bond direction
               plane = bondDirection[0].crossProduct(bondDirection[1]); // X-O-Y plane vector
               plane = plane.crossProduct(dir); // lp plane vector
-              plane.normalize();
               if (aromaticnbr) { // if oxygen bound to aromatic system, eg. phenol
                 addVectElements(O, &cos_2, pos, dir, plane);
               }
@@ -940,7 +1051,6 @@ namespace RDMIF {
                 if (nonhnbrs == 2) { // secondary imines, heterocycles
                   dir = bondDirection[0] + bondDirection[1]; // get hydrogen bond direction
                   plane = bondDirection[0].crossProduct(bondDirection[1]);//normal vector of lone pair plane = plane of three atoms
-                  plane.normalize();
                   addVectElements(N, &cos_2, pos, dir, plane);
                 }
                 else if (nonhnbrs == 1) { // primary imine, hydrogen is allowed to swap places
@@ -955,7 +1065,6 @@ namespace RDMIF {
                     ++nbrIdx;
                   }
                   plane = bondDirection[0].crossProduct(bondDirection[1]);//normal vector of lone pair plane = plane of three atoms
-                  plane.normalize();
                   addVectElements(N, &cos_acc, pos, bondDirection[0], plane);
                 }
                 else {		//[N-]H2 rotating
@@ -1038,7 +1147,6 @@ namespace RDMIF {
                 ++secnbrIdx;
               }
               plane = bondDirection[0].crossProduct(dir); // lp plane vector
-              plane.normalize();
               if (atom->getFormalCharge() == 0) { //carbonyl, carboxyl C=O, X=O
                 addVectElements(O, &cos_acc, pos, bondDirection[0], plane);
                 interact++;
@@ -1072,7 +1180,6 @@ namespace RDMIF {
                     ++nbrIdx;
                   }
                   plane = bondDirection[0].crossProduct(bondDirection[1]); // X-O-Y plane vector
-                  plane.normalize();
                   addVectElements(O, &cos_acc, pos, bondDirection[0], plane);
                 }
                 else {
@@ -1083,7 +1190,6 @@ namespace RDMIF {
                 dir = bondDirection[0] + bondDirection[1]; // get hydrogen bond direction
                 plane = bondDirection[0].crossProduct(bondDirection[1]); // X-O-Y plane vector
                 plane = plane.crossProduct(dir); // lp plane vector
-                plane.normalize();
                 addVectElements(O, &cos_2_0, pos, dir, plane);
               }
               interact++;
@@ -1227,7 +1333,6 @@ namespace RDMIF {
                   // let's swap hydrogen and lp:
                   plane = dir.crossProduct(hbonddir); // lp plane vector
                   plane = plane.crossProduct(dir); //plane through other bond perpendicular to X-N-H plane
-                  plane.normalize();
                   dir = plane * hbonddir.dotProduct(plane); //projection of vector hbonddir on plane vector
                   hbonddir -= dir * 2; // mirroring of dir vector on plane
                   addVectElements(N, &cos_2, pos, hbonddir); // second hbond, hydrogen at other place
@@ -1253,7 +1358,7 @@ namespace RDMIF {
                     }
                     ++nbrIdx;
                   }
-                  addVectElements(N, &cos_2_rot, pos, dir * bondlength[N]); // vector dir has typcial N-H bondlength, for approximate / average calculation of angle p (see operator())
+                  addVectElements(N, &cos_2_rot, pos, dir * (-bondlength[N])); // vector dir has typcial N-H bondlength, for approximate / average calculation of angle p (see operator())
                   interact++;
                 }
                 else { //ammonia
@@ -1275,7 +1380,7 @@ namespace RDMIF {
                     }
                     ++nbrIdx;
                   }
-                  addVectElements(N, &cos_2_rot, pos, dir * bondlength[N]); // vector dir has typcial N-H bondlength, for approximate / average calculation of angle p (see operator())
+                  addVectElements(N, &cos_2_rot, pos, dir * (-bondlength[N])); // vector dir has typcial N-H bondlength, for approximate / average calculation of angle p (see operator())
                   interact++;
                 }
                 else { // secondary or tertiary ammonium, no rotation, same as fixed bonds
@@ -1346,14 +1451,13 @@ namespace RDMIF {
                     // let's swap hydrogen and lp:
                     plane = dir.crossProduct(hbonddir); // lp plane vector
                     plane = plane.crossProduct(dir); //plane through other bond perpendicular to X-N-H plane
-                    plane.normalize();
                     dir = plane * hbonddir.dotProduct(plane); //projection of vector dir on plane vector
                     hbonddir -= dir * 2; // mirroring of dir vector on plane
                     addVectElements(O, &cos_4, pos, hbonddir); // second hbond, hydrogen at other place
                     interact++;
                   }
                   else { // all other oxygens, flexible
-                    addVectElements(O, &cos_4_rot, pos, dir * bondlength[O]); // vector dir has typcial O-H bondlength, for approximate / average calculation of angle p (see operator())
+                    addVectElements(O, &cos_4_rot, pos, dir * (-bondlength[O])); // vector dir has typcial O-H bondlength, for approximate / average calculation of angle p (see operator())
                     interact++;
                   }
                 }
@@ -1369,7 +1473,7 @@ namespace RDMIF {
                     if (mol.getAtomWithIdx(*nbrIdx)->getAtomicNum() != 1) { //search for X-O bond
                       dir = pos - conf.getAtomPos(*nbrIdx); // X-O bond direction
                       dir.normalize();
-                      addVectElements(O, &cos_4_rot, pos, dir * bondlength[O]); // vector dir has typcial O-H bondlength, for approximate / average calculation of angle p (see operator())
+                      addVectElements(O, &cos_4_rot, pos, dir * (-bondlength[O])); // vector dir has typcial O-H bondlength, for approximate / average calculation of angle p (see operator())
                       interact++;
                     }
                     ++nbrIdx;
@@ -1402,99 +1506,193 @@ namespace RDMIF {
     return interact;
   }
 
-  double HBond::operator()(const RDGeom::Point3D &pt) {
+  double HBond::operator() (double x, double y, double z, double thres) {
     using namespace HBondDetail;
-
-    unsigned int maxId = 0; // id of strongest interaction
-    double dis; //distance between target and probe
-    double eneTerm1, eneTerm2, minEne = std::numeric_limits<double>::max(),
-        res = 0.0; //energy variables
-    std::vector<double> eneContrib; // energy contributions of all interactions
-    std::vector<double> t; // angle t (angle between direction of hbond and target-probe direction)
-    double t0, ti, p; //angles t_0 (out-of-lonepair-plane angle), t_i (in-lonepair-plane angle), p (angle between best hydrogen bond direction of probe and hydrogen-acceptor vector)
-    std::vector<RDGeom::Point3D> vectTargetProbe; // hydrogen bond direction of probe
-    RDGeom::Point3D probeDirection; //
 
     if (d_nInteract < 1) { // no interactions
       return 0.0; // return 0.0
     }
 
-    for (unsigned int i = 0; i < d_nInteract; i++) { //calculation of energy contributions and searching for the favored probe direction ( direction of lowest energy contribution )
-      vectTargetProbe.push_back(pt - d_pos[i]); //vector of interaction
+    double res = 0.0;
 
-      dis = vectTargetProbe[i].lengthSq(); // calc of squared length of interaction
-      dis = std::max(dis, d_cutoff);
+    if (d_DAprop == 'A') {
+      unsigned int minId;
+      double minEne = std::numeric_limits<double>::max(); //minimal energy
+      double probeDirection[3]; //direction of probe
 
-      t.push_back(vectTargetProbe[i].angleTo(d_direction[i])); //calc of angle between direction of hbond and target-probe direction
+      for (unsigned int i = 0, j = 0; i < d_nInteract; i++, j+=3) { //calculation of energy contributions and searching for the favored probe direction ( direction of lowest energy contribution )
+        d_vectTargetProbe[j]   = x - d_pos[j]; //vector of interaction
+        d_vectTargetProbe[j+1] = y - d_pos[j+1];
+        d_vectTargetProbe[j+2] = z - d_pos[j+2];
 
-      eneTerm1 = rm[d_probetype][d_targettypes[i]];
-      eneTerm1 *= eneTerm1; //squared rm
-      eneTerm1 /= dis; //division by squared distance
-      eneTerm2 = eneTerm1 * eneTerm1; // fourth power of rm/distance
-      eneTerm1 = eneTerm2 * eneTerm1; // sixth power of rm/distance
-      eneTerm2 *= eneTerm2; //eigth power of rm/distance
-      eneTerm2 *= ( 4.0 * eneTerm1 - 3.0 * eneTerm2 );
-      eneTerm2 *= em[d_probetype][d_targettypes[i]]; // multiplication with em
-      eneContrib.push_back(eneTerm2);
+        double dist2 = d_vectTargetProbe[j]*d_vectTargetProbe[j]+
+            d_vectTargetProbe[j+1]*d_vectTargetProbe[j+1]+d_vectTargetProbe[j+2]*d_vectTargetProbe[j+2]; // calc of squared length of interaction
+//        std::cout << dist2 << std::endl;
+        if ( dist2 < thres ) {
+          double dis = sqrt(dist2);
+          double distN[3] = {d_vectTargetProbe[j]/dis, d_vectTargetProbe[j+1]/dis, d_vectTargetProbe[j+2]/dis};
 
-      if (d_DAprop == 'D') {
-        eneContrib[i] *= ( *( d_function[i] ) )(t[i], 0.0, 1.0); // scaling of energy contribution
+          dist2 = std::max(dist2, d_cutoff);
+
+          double t = angle(distN[0], distN[1], distN[2], d_direction[j], d_direction[j+1], d_direction[j+2]); //calc of angle between direction of hbond and target-probe direction
+
+          double eneTerm1 = rm[d_probetype][d_targettypes[i]];
+          eneTerm1 *= eneTerm1; //squared rm
+          eneTerm1 /= dist2; //division by squared distance
+          double eneTerm2 = eneTerm1 * eneTerm1; // fourth power of rm/distance
+          eneTerm1 = eneTerm2 * eneTerm1; // sixth power of rm/distance
+          eneTerm2 *= eneTerm2; //eigth power of rm/distance
+          eneTerm2 *= ( 4.0 * eneTerm1 - 3.0 * eneTerm2 );
+          eneTerm2 *= em[d_probetype][d_targettypes[i]]; // multiplication with em
+          d_eneContrib[i]=eneTerm2;
+
+          double t0, ti;
+          if ( d_function[i] == &cos_acc || d_function[i] == &cos_2_0 ) {//only if dependent of ti and t0
+            double dotProd = d_vectTargetProbe[j]*d_plane[j]+d_vectTargetProbe[j+1]*d_plane[j+1]+d_vectTargetProbe[j+2]*d_plane[j+2];
+            double vectTargetProbeInPlane[3] = {d_vectTargetProbe[j] - d_plane[j] * dotProd, // projection of targetProbe vector on lp plane
+                d_vectTargetProbe[j+1] - d_plane[j+1] * dotProd, // projection of targetProbe vector on lp plane
+                d_vectTargetProbe[j+2] - d_plane[j+2] * dotProd}; // projection of targetProbe vector on lp plane
+
+            normalize(vectTargetProbeInPlane[0], vectTargetProbeInPlane[1], vectTargetProbeInPlane[2]);
+
+            //angles t_0 (out-of-lonepair-plane angle), t_i (in-lonepair-plane angle),
+            t0 = angle(distN[0], distN[1], distN[2], vectTargetProbeInPlane[0], vectTargetProbeInPlane[1], vectTargetProbeInPlane[2]); // out of plane angle
+            ti = angle(d_direction[j], d_direction[j+1], d_direction[j+2], vectTargetProbeInPlane[0], vectTargetProbeInPlane[1], vectTargetProbeInPlane[2]); // in plane angle
+          }
+          else {
+            t0 = 0.0;
+            ti = 1.0;
+          }
+          d_eneContrib[i] *= ( *( d_function[i] ) )(t, t0, ti); // scaling of energy contribution
+
+          if (d_eneContrib[i] < minEne) { // check whether most favored interaction
+            minEne = d_eneContrib[i];
+            minId = i;
+          }
+        }
+        else {
+          d_eneContrib[i] = 0.0;
+        }
       }
-      else if (d_DAprop == 'A') {
-        RDGeom::Point3D vectTargetProbeInPlane;
-        vectTargetProbeInPlane = vectTargetProbe[i]
-                                                 - d_plane[i] * vectTargetProbe[i].dotProduct(d_plane[i]); // projection of targetProbe vector on lp plane
-        t0 = vectTargetProbe[i].angleTo(vectTargetProbeInPlane); // out of plane angle
-        ti = d_direction[i].angleTo(vectTargetProbeInPlane); // in plane angle
-        eneContrib[i] *= ( *( d_function[i] ) )(t[i], t0, ti); // scaling of energy contribution
-      }
-      else { // this should never be the case
-        BOOST_LOG(rdErrorLog)
-                            << "HBond::operator(): unknown target property d_DAprop: "
-                            << d_DAprop << std::endl;
-      }
+      minId *= 3;
+      probeDirection[0] = -d_vectTargetProbe[minId]; // probe is directed to most favored interaction
+      probeDirection[1] = -d_vectTargetProbe[++minId];
+      probeDirection[2] = -d_vectTargetProbe[++minId];
+      normalize(probeDirection[0], probeDirection[1], probeDirection[2]);
 
-      if (eneContrib[i] < minEne) { // check whether most favored interaction
-        minEne = eneContrib[i];
-        probeDirection = -vectTargetProbe[i]; // probe is directed to most favored interaction
+      for (unsigned int i = 0, j = 0; i < d_nInteract; i++, j+=3) { // scaling to take probe direction into account and adding up
+        double vectHydrogenTarget[3] = {probeDirection[0] * bondlength[d_probetype] - d_vectTargetProbe[j],
+            probeDirection[1]* bondlength[d_probetype] - d_vectTargetProbe[j+1],
+            probeDirection[2]* bondlength[d_probetype] - d_vectTargetProbe[j+2]};
+
+        normalize(vectHydrogenTarget[0], vectHydrogenTarget[1], vectHydrogenTarget[2]);
+
+        //p (angle between best hydrogen bond direction of probe and hydrogen-acceptor vector)
+        double p = angle(probeDirection[0], probeDirection[1], probeDirection[2], vectHydrogenTarget[0], vectHydrogenTarget[1], vectHydrogenTarget[2]);
+
+        res += d_eneContrib[i] * cos_2(p, 0.0, 1.0); // scaling of energy contribution and adding up
+
       }
     }
+    else { //d_DAprop='D'
+      unsigned int minId;
+      double minEne = std::numeric_limits<double>::max(); //minimal energy
+      double probeDirection[3]; //direction of prope
 
-    probeDirection.normalize();
+      for (unsigned int i = 0, j = 0; i < d_nInteract; i++, j+=3) { //calculation of energy contributions and searching for the favored probe direction ( direction of lowest energy contribution )
+        d_vectTargetProbe[j]   = x - d_pos[j]; //vector of interaction
+        d_vectTargetProbe[j+1] = y - d_pos[j+1];
+        d_vectTargetProbe[j+2] = z - d_pos[j+2];
 
-    for (unsigned int i = 0; i < d_nInteract; i++) { // scaling to take probe direction into account and adding up
-      if (d_DAprop == 'D') {
-        RDGeom::Point3D vectProbeHydrogen;
-        vectProbeHydrogen = ( vectTargetProbe[i] - d_direction[i] ) * ( -1 );
-        p = vectProbeHydrogen.angleTo(probeDirection);
-      }
-      else if (d_DAprop == 'A') {
-        RDGeom::Point3D vectHydrogenTarget;
-        vectHydrogenTarget = ( probeDirection * ( bondlength[d_probetype] )
-            + vectTargetProbe[i] ) * ( -1 );
-        p = probeDirection.angleTo(vectHydrogenTarget);
 
+        double dist2 = d_vectTargetProbe[j]*d_vectTargetProbe[j]+
+            d_vectTargetProbe[j+1]*d_vectTargetProbe[j+1]+d_vectTargetProbe[j+2]*d_vectTargetProbe[j+2]; // calc of squared length of interaction
+    //    std::cout << dist2 << std::endl;
+        if ( dist2 < thres ) {
+          double dis = sqrt(dist2);
+          double distN[3] = {d_vectTargetProbe[j]/dis, d_vectTargetProbe[j+1]/dis, d_vectTargetProbe[j+2]/dis};
+
+          dist2 = std::max(dist2, d_cutoff);
+
+          double t = angle(distN[0], distN[1], distN[2], d_direction[j], d_direction[j+1], d_direction[j+2]); //calc of angle between direction of hbond and target-probe direction
+
+          double eneTerm1 = rm[d_probetype][d_targettypes[i]];
+          eneTerm1 *= eneTerm1; //squared rm
+          eneTerm1 /= dist2; //division by squared distance
+          double eneTerm2 = eneTerm1 * eneTerm1; // fourth power of rm/distance
+          eneTerm1 = eneTerm2 * eneTerm1; // sixth power of rm/distance
+          eneTerm2 *= eneTerm2; //eigth power of rm/distance
+          eneTerm2 *= ( 4.0 * eneTerm1 - 3.0 * eneTerm2 );
+          eneTerm2 *= em[d_probetype][d_targettypes[i]]; // multiplication with em
+          d_eneContrib[i] = eneTerm2;
+
+          d_eneContrib[i] *= ( *( d_function[i] ) )(t, 0.0, 1.0); // scaling of energy contribution
+
+          if (d_eneContrib[i] < minEne) { // check whether most favored interaction
+            minEne = d_eneContrib[i];
+            minId = i;
+          }
+        }
+        else {
+          d_eneContrib[i] = 0;
+        }
       }
-      else { // this should never be the case
-        BOOST_LOG(rdErrorLog)
-                            << "HBond::operator(): unknown target property d_DAprop: "
-                            << d_DAprop << std::endl;
+      minId *= 3;
+      probeDirection[0] = -d_vectTargetProbe[minId]; // probe is directed to most favored interaction
+      probeDirection[1] = -d_vectTargetProbe[++minId];
+      probeDirection[2] = -d_vectTargetProbe[++minId];
+      normalize(probeDirection[0], probeDirection[1], probeDirection[2]);
+
+      for (unsigned int i = 0, j = 0; i < d_nInteract; i++, j+=3) { // scaling to take probe direction into account and adding up
+        double vectProbeHydrogen[3] = {d_direction[j]*d_lengths[i]  - d_vectTargetProbe[j],
+            d_direction[j+1]*d_lengths[i] - d_vectTargetProbe[j+1],
+            d_direction[j+2]*d_lengths[i] - d_vectTargetProbe[j+2]};
+
+        normalize(vectProbeHydrogen[0], vectProbeHydrogen[1], vectProbeHydrogen[2]);
+
+        //p (angle between best hydrogen bond direction of probe and hydrogen-acceptor vector)
+        double p = angle(vectProbeHydrogen[0], vectProbeHydrogen[1], vectProbeHydrogen[2],
+                         probeDirection[0], probeDirection[1], probeDirection[2]);
+
+        res += d_eneContrib[i] * cos_2(p, 0.0, 1.0); // scaling of energy contribution and adding up
       }
-      res += eneContrib[i] * cos_2(p, 0.0, 1.0); // scaling of energy contribution and adding up
     }
-
     return res;
   }
 
-  void HBond::addVectElements(atomtype type, double
+void HBond::addVectElements(atomtype type, double
                               (*funct)(double, double, double),
-                              RDGeom::Point3D pos, RDGeom::Point3D dir,
-                              RDGeom::Point3D plane) {
+                              const RDGeom::Point3D &pos, const RDGeom::Point3D &dir,
+                              const RDGeom::Point3D &plane) {
     d_targettypes.push_back(type);
     d_function.push_back(funct);
-    d_pos.push_back(pos);
-    d_direction.push_back(dir);
-    d_plane.push_back(plane);
+    d_pos.push_back(pos.x);
+    d_pos.push_back(pos.y);
+    d_pos.push_back(pos.z);
+    double len = dir.length();
+    d_lengths.push_back(len);
+    d_direction.push_back(dir.x/len);
+    d_direction.push_back(dir.y/len);
+    d_direction.push_back(dir.z/len);
+    len = plane.length();
+    d_plane.push_back(plane.x/len);
+    d_plane.push_back(plane.y/len);
+    d_plane.push_back(plane.z/len);
+  }
+
+  void HBond::normalize(double &x, double &y, double &z) const {
+    double temp = x * x + y * y + z * z;
+    temp = sqrt(temp);
+    x /= temp;
+    y /= temp;
+    z /= temp;
+  }
+
+  const double HBond::angle(double x1, double y1, double z1, double x2, double y2, double z2) const {
+    double dotProd = x1 * x2 + y1 * y2 + z1 * z2;
+    if(dotProd<-1.0) dotProd = -1.0;
+    else if(dotProd>1.0) dotProd = 1.0;
+    return acos(dotProd);
   }
 
   Hydrophilic::Hydrophilic(const RDKit::ROMol &mol, int confId, bool fixed,
@@ -1503,10 +1701,10 @@ namespace RDMIF {
     d_hbondO = HBond(mol, confId, "O", fixed, cutoff);
   }
 
-  double Hydrophilic::operator()(const RDGeom::Point3D &pt) {
+  double Hydrophilic::operator()(double x, double y, double z, double thres){
     double hbondO, hbondOH;
-    hbondO = d_hbondO(pt);
-    hbondOH = d_hbondOH(pt);
+    hbondO = d_hbondO(x, y, z, thres);
+    hbondOH = d_hbondOH(x, y, z, thres);
     return std::min(hbondO, hbondOH);
   }
 

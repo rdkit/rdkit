@@ -66,43 +66,54 @@ namespace RDMIF {
   /*!
    any unary function/functor can be used taking a grid point of type RDKit::Point3D as parameter
    \param grd			a UniformRealValueGrid3D
-   \param functor		any unary function/functor which takes a Point3D as parameter
+   \param functor		any unary function/functor which takes four doubles as parameters (3 coordinates, 1 threshold)
+   \param thres	                cuts of atom contributions if distance of interaction higher than threshold,
+   			        negative threshold: no threshold, defaults to -1.0
    */
   template<typename T>
-  void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor) {
-    for (unsigned int id = 0; id < grd.getSize(); id++) {
-      grd.setVal(id, functor(grd.getGridPointLoc(id)));
+  void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor, double thres=-1.0) {
+    const RDGeom::Point3D &offSet = grd.getOffset();
+    double oX = offSet.x,
+           oY = offSet.y,
+           z = offSet.z;
+    double x=oX, y =oY;
+    double spacing = grd.getSpacing();
+    if (thres < 0) {
+      thres = spacing * grd.getSize();
+    }
+    thres *= thres; //comparing squared distance
+    
+    unsigned int id = 0;
+    const boost::shared_array<double> &data=grd.getDataPtr();
+
+    double res;
+
+    for (unsigned int idZ = 0; idZ < grd.getNumZ(); idZ++) {
+      for (unsigned int idY = 0; idY < grd.getNumY(); idY++) {
+        for (unsigned int idX = 0; idX < grd.getNumX(); idX++) {
+          data[id++]=functor(x, y, z, thres);
+          x+=spacing;
+        }
+        y+=spacing;
+        x=oX;
+      }
+      z += spacing;
+      y= oY;
     }
   }
 
   //! \brief class for calculation of distance to closest atom of \c mol from grid point \c pt
-  class distanceToClosestAtom {
+  class DistanceToClosestAtom {
   public:
     //! construct a distanceToClosestAtom from a ROMol
-    distanceToClosestAtom(const RDKit::ROMol &mol, int confId = -1) {
-      PRECONDITION(mol.getNumConformers() > 0,
-                   "No Conformers available for molecule");
-      d_nAtoms = mol.getNumAtoms();
-      d_pos.reserve(d_nAtoms);
-      RDKit::Conformer conf = mol.getConformer(confId);
-
-      for (unsigned int i = 0; i < d_nAtoms; i++) {
-        d_pos.push_back(conf.getAtomPos(i));
-      }
-    }
-
-    //! Calculated the closest distance, \returns distance in Angstrom
-    double operator()(const RDGeom::Point3D &pt) {
-      double res = (pt - d_pos[0]).lengthSq();
-      for (unsigned int i = 1; i < d_nAtoms; i++) {
-        res = std::min(res, (pt - d_pos[i]).lengthSq());
-      }
-      return sqrt(res);
-    }
+    DistanceToClosestAtom(const RDKit::ROMol &mol, int confId = -1);
+    
+    //! Calculates the closest distance, \returns distance in Angstrom
+    double operator()(double x, double y, double z, double thres);
 
   private:
     unsigned int d_nAtoms;
-    std::vector<RDGeom::Point3D> d_pos;
+    std::vector<double> d_pos;
   };
 
   //! \brief class for calculation of electrostatic interaction (Coulomb energy) between probe and molecule in
@@ -113,7 +124,7 @@ namespace RDMIF {
    d_probe      charge of probe [e]
    d_absVal     if true, absolute values of interactions are calculated
    d_alpha      softcore interaction parameter [A^2]
-   d_cutoff     minimum cutoff distance [A]
+   d_cutoff     squared minimum cutoff distance [A^2]
    d_charges    vector of doubles with all partial charges of the atoms in a molecule [e]
    d_pos        vector of Point3Ds with all positions of the atoms in a molecule [A]
    d_prefactor  prefactor taking into account the geometric factors,natural constants and conversion of units
@@ -121,7 +132,7 @@ namespace RDMIF {
   class Coulomb {
   public:
     Coulomb() :
-      d_nAtoms(0), d_probe(1), d_alpha(0.0), d_cutoff(0.001), d_softcore(false),
+      d_nAtoms(0), d_probe(1), d_alpha(0.0), d_cutoff(0.00001), d_softcore(false),
       d_absVal(false) {};
     ~Coulomb() {};
 
@@ -159,11 +170,12 @@ namespace RDMIF {
     //! \brief calculated the electrostatic interaction at point \c pt in the molecules field
     //! in [kJ mol^-1]
     /*!
-     \param pt		point at which the interaction is calculated
+     \param x, y, z     coordinates at which the interaction is calculated
+     \param thres       squared max distance until interactions are calc.
      <b>Returns</b>
      electrostatic interaction energy in [kJ mol^-1]
      */
-    double operator()(const RDGeom::Point3D &pt);
+    double operator()(double x, double y, double z, double thres);
 
   private:
     unsigned int d_nAtoms;
@@ -171,7 +183,7 @@ namespace RDMIF {
     double d_cutoff, d_probe;
     const double d_alpha;
     std::vector<double> d_charges;
-    std::vector<RDGeom::Point3D> d_pos;
+    std::vector<double> d_pos;
   };
 
   //! \brief class for calculation of electrostatic interaction (Coulomb energy) between probe and molecule
@@ -243,15 +255,16 @@ namespace RDMIF {
                       double alpha = 0.0, double cutoff = 1.0, double epsilon = 80.0,
                       double xi = 4.0);
 
+
     //! \brief returns the electrostatic interaction at point \c pt in the molecule's field
     //! in [kJ mol^-1]
     /*!
-     \param pt		point at which the interaction is calculated
+     \param x, y, z     coordinates at which the interaction is calculated
+     \param thres       squared threshold distance
      <b>Returns</b>
      electrostatic interaction energy in [kJ mol^-1]
      */
-    double
-    operator()(const RDGeom::Point3D &pt);
+    double operator()(double x, double y, double z, double thres);
 
   private:
     unsigned int d_nAtoms;
@@ -259,7 +272,8 @@ namespace RDMIF {
     double d_dielectric, d_cutoff, d_probe;
     const double d_epsilon, d_xi, d_alpha;
     std::vector<double> d_charges, d_sp;
-    std::vector<RDGeom::Point3D> d_pos;
+    std::vector<double> d_pos;
+    std::vector<double> d_dists;
   };
 
 
@@ -287,20 +301,22 @@ namespace RDMIF {
     //! \brief returns the VdW interaction at point \c pt in the molecules field
     //! in [kJ mol^-1]
     /*!
-     \param pt		point at which the interaction is calculated
+     \param x, y, z     coordinates at which the interaction is calculated
+     \param thres       squared max distance until interactions are calc.
      <b>Returns</b>
      vdW interaction energy in [kJ mol^-1]
      */
-    double operator()(const RDGeom::Point3D &pt);	  //calc of energy at gridpoint pt
-
+    double operator()(double x, double y, double z, double thres);
+       
   private:
     double d_cutoff;
     unsigned int d_nAtoms;
     std::vector<double> d_R_star_ij, d_wellDepth;
-    std::vector<RDGeom::Point3D> d_pos;
+    std::vector<double> d_pos;
 
     double (*d_getEnergy)(double, double, double); //pointer to energy function (MMFF94 or UFF)
     static double d_calcUFFEnergy(double, double, double); //UFF energy function
+    static double d_calcMMFFEnergy(double, double, double); //MMFF energy function
   };
 
   // Factory functions for VdWaals
@@ -373,11 +389,12 @@ namespace RDMIF {
     //! \brief returns the hydrogen bonding interaction at point \c pt in the molecules field
     //! in [kJ mol^-1]
     /*!
-     \param pt		point at which the interaction is calculated
+     \param x, y, z     coordinates at which the interaction is calculated
+     \param thres       squared max distance until interactions are calc.
      <b>Returns</b>
      hydrogen bonding interaction energy in [kJ mol^-1]
      */
-    double operator()(const RDGeom::Point3D &pt);
+    double operator()(double x, double y, double z, double thres);
 
     unsigned int getNumInteractions() const {
       return d_nInteract;
@@ -392,9 +409,12 @@ namespace RDMIF {
     unsigned int d_nInteract; //number of HBond interactions
 
     std::vector<atomtype> d_targettypes;
-    std::vector<RDGeom::Point3D> d_pos; 	//vector of positions of target atoms
-    std::vector<RDGeom::Point3D> d_direction; //vector of sum of lone pair vectors
-    std::vector<RDGeom::Point3D> d_plane; 	//vector of lone pair plane vectors
+    std::vector<double> d_pos; 	//vector of positions of target atoms
+    std::vector<double> d_direction; //vector of sum of lone pair vectors
+    std::vector<double> d_lengths;      //vector of lengths of direction vectors
+    std::vector<double> d_plane; 	//vector of lone pair plane vectors
+    std::vector<double> d_eneContrib; // energy contributions of all interactions
+    std::vector<double> d_vectTargetProbe; // hydrogen bond direction of probe
 
     //constructing functions
     unsigned int findSpecials(const RDKit::ROMol &mol, int confId, bool fixed,
@@ -407,9 +427,13 @@ namespace RDMIF {
                                        const std::vector<unsigned int> &specials);
     unsigned int findDonors_unfixed(const RDKit::ROMol &mol, int confId,
                                     const std::vector<unsigned int> &specials);
+    
     void addVectElements(atomtype type, double (*funct)(double, double, double),
-                         RDGeom::Point3D pos, RDGeom::Point3D dir,
-                         RDGeom::Point3D plane = RDGeom::Point3D(0.0, 0.0, 0.0));
+                         const RDGeom::Point3D &pos, const RDGeom::Point3D &dir,
+                         const RDGeom::Point3D &plane = RDGeom::Point3D(0.0, 0.0, 0.0));
+
+    void normalize(double &x, double &y, double &z) const;
+    const double angle(double x1, double y1, double z1, double x2, double y2, double z2) const;
 
     std::vector<double(*)(double, double, double)> d_function;
 
@@ -440,7 +464,7 @@ namespace RDMIF {
     Hydrophilic(const RDKit::ROMol &mol, int confId = -1, bool fixed = true, double cutoff = 1.0);
     ~Hydrophilic() {};
 
-    double operator()(const RDGeom::Point3D &pt);
+    double operator()(double x, double y, double z, double thres);
 
   private:
     HBond d_hbondOH, d_hbondO;

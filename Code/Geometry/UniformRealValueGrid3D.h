@@ -135,6 +135,11 @@ namespace RDGeom {
     //! \brief return a \b const pointer to our occupancy vector
     const RDKit::RealValueVect *getOccupancyVect() const { return dp_storage;} ;
 
+    //!brief returns shared pointer
+    const boost::shared_array<double> &getDataPtr() {
+      return dp_storage->getArray();
+    }
+    
     //! \brief returns true if the grid \c other has parameters
     //!        compatible with ours.
     bool compareParams(const UniformRealValueGrid3D &other) const;

@@ -100,6 +100,8 @@ namespace RDKit{
     //! return a pointer to our raw data storage
     const double *getData() const {  return d_data.get();  };
 
+    const DATA_SPTR &getArray() {return d_data; };
+
     //! compares 2 vectors and returns false if different
     bool compareVectors(const RealValueVect &other);
 

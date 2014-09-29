@@ -165,9 +165,9 @@ namespace RDMIF {
 				    - pt: Point3D from which the distance to the molecule is calculated\n\
 				RETURNS:\n\
 				    - closest distance in [A]\n";
-      python::class_<distanceToClosestAtom>("DistanceToClosestAtom", docStringClass.c_str(),
+      python::class_<DistanceToClosestAtom>("DistanceToClosestAtom", docStringClass.c_str(),
                                             python::init<const RDKit::ROMol, int>((python::arg("mol"), python::arg("confId")=-1), docStringConst.c_str()))
-				            .def("__call__", &distanceToClosestAtom::operator(), (python::arg("pt")), docString.c_str());
+				            .def("__call__", &DistanceToClosestAtom::operator(), (python::arg("x"), python::arg("y"), python::arg("z"), python::arg("threshold")), docString.c_str());
 
 
 
@@ -187,7 +187,8 @@ namespace RDMIF {
       docString = "Calculates the electrostatic interaction (Coulomb energy) between probe and molecule in\n\
 						vaccuum (no dielectric).\n\n\
 				ARGUMENTS:\n\
-				    - pt:	Point3D of probe position for energy calculation\n\
+				    - x, y, z:	 coordinates of probe position for energy calculation\n\
+                                    - threshold: maximal distance until which interactions are calculated\n\
 				RETURNS:\n\
 					- electrostatic potential in [kJ mol^-1]\n";
       python::class_<Coulomb>("Coulomb", docStringClass.c_str(), python::init<const RDKit::ROMol &, int, double, bool,
@@ -195,7 +196,7 @@ namespace RDMIF {
                                   python::arg("probeCharge")=1.0, python::arg("absVal")=false,
                                   python::arg("chargeKey")="_GasteigerCharge", python::arg("softcoreParam")=0.0,
                                   python::arg("cutoffDist")=1.0), docStringConst.c_str()))
-				            .def("__call__", &Coulomb::operator(), (python::arg("pt")), docString.c_str());
+				            .def("__call__", &Coulomb::operator(), (python::arg("x"), python::arg("y"), python::arg("z"), python::arg("threshold")), docString.c_str());
 
       docStringConst = "Alternative constructor for Coulomb class.\n\n\
 						ARGUMENTS:\n\
@@ -232,14 +233,15 @@ namespace RDMIF {
       docString = "Calculates the electrostatic interaction (Coulomb energy) between probe and molecule in\n\
 						by taking a distance-dependent dielectric into account.\n\n\
 				ARGUMENTS:\n\
-				    - pt:	Point3D of probe position for energy calculation\n\
-				RETURNS:\n\
+				    - x, y, z:	 coordinates of probe position for energy calculation\n\
+                                    - threshold: maximal distance until which interactions are calculated\n\
+                                RETURNS:\n\
 					- electrostatic potential in [kJ mol^-1]\n";
       python::class_<CoulombDielectric>("CoulombDielectric", docStringClass.c_str(), python::init<const RDKit::ROMol &, int, double, bool, const std::string &,
                                         double, double, double, double>((python::arg("mol"), python::arg("confId")=-1, python::arg("probeCharge")=1.0,
                                             python::arg("absVal")=false, python::arg("chargeKey")="_GasteigerCharge", python::arg("softcoreParam")=0.0,
                                             python::arg("cutoffDist")=1.0, python::arg("epsilon")=80.0, python::arg("xi")=4.0 ),docStringConst.c_str()))
-				            .def("__call__", &CoulombDielectric::operator(), (python::arg("pt")),
+				            .def("__call__", &CoulombDielectric::operator(), (python::arg("x"), python::arg("y"), python::arg("z"), python::arg("threshold")),
 				                 docString.c_str());
 
       docStringConst = "Alternative constructor for CoulombDielectric class.\n\n\
@@ -264,11 +266,12 @@ namespace RDMIF {
       docStringClass = "Class for calculation van der Waals interaction between molecule and a probe at a gridpoint.\n\n";
       docString = "Calculates the van der Waals interaction between molecule and a probe at a gridpoint.\n\n\
 				ARGUMENTS:\n\
-				    - pt:	Point3D of probe position for energy calculation\n\
-				RETURNS:\n\
+				    - x, y, z:	 coordinates of probe position for energy calculation\n\
+                                    - threshold: maximal distance until which interactions are calculated\n\
+                                RETURNS:\n\
 					- van der Waals potential in [kJ mol^-1]\n";
       python::class_<VdWaals>("VdWaals", "", python::init<>("Default Constructor"))
-					            .def("__call__", &VdWaals::operator(), (python::arg("pt")), docString.c_str());
+	.def("__call__", &VdWaals::operator(), (python::arg("x"), python::arg("y"), python::arg("z"), python::arg("threshold")), docString.c_str());
 
       docStringConst = "Constructs VdWaals class which uses MMFF94 force field parameters.\n\n\
 				ARGUMENTS:\n\
@@ -313,13 +316,14 @@ namespace RDMIF {
 			            - cutoffDist     minimum cutoff distance [A] (defaults to 1.0)\n";
       docString = "Calculates the hydrogen bonding energy between probe and molecule in\n\n\
 				ARGUMENTS:\n\
-				    - pt:	Point3D of probe position for energy calculation\n\
-				RETURNS:\n\
+				    - x, y, z:	 coordinates of probe position for energy calculation\n\
+                                    - threshold: maximal distance until which interactions are calculated\n\
+                                RETURNS:\n\
 					hydrogen bonding energy in [kJ mol^-1]\n";
       python::class_<HBond>("HBond", docStringClass.c_str(), python::init<RDKit::ROMol &, int, const std::string&, bool,
                             double>((python::arg("mol"), python::arg("confId")=-1, python::arg("probeType")="OH", python::arg("fixed")=true,
                                 python::arg("cutoffDist")=1.0), docStringConst.c_str()))
-					            .def("__call__", &HBond::operator(), (python::arg("pt")), docString.c_str());
+					            .def("__call__", &HBond::operator(), (python::arg("x"), python::arg("y"), python::arg("z"), python::arg("threshold")), docString.c_str());
 
 
 
@@ -339,14 +343,15 @@ namespace RDMIF {
 	                            - cutoffDist	 minimum cutoff distance [A] (default:1.0)\n";
       docString = "Calculates the hydrophilic field energy at a point.\n\n\
 				ARGUMENTS:\n\
-				    - pt:	Point3D of probe position for energy calculation\n\
-				RETURNS:\n\
+				    - x, y, z:	 coordinates of probe position for energy calculation\n\
+                                    - threshold: maximal distance until which interactions are calculated\n\
+                                RETURNS:\n\
 					hydrophilic field energy in [kJ mol^-1]\n";
       python::class_<Hydrophilic>("Hydrophilic", docStringClass.c_str(),
                                   python::init<RDKit::ROMol &, int, bool, double>
       ((python::arg("mol"), python::arg("confId")=-1, python::arg("fixed")=true,       python::arg("cutoffDist")=1.0),
        docStringConst.c_str()))
-                   .def("__call__", &Hydrophilic::operator(), (python::arg("pt")), docString.c_str());
+                   .def("__call__", &Hydrophilic::operator(), (python::arg("x"), python::arg("y"), python::arg("z"), python::arg("threshold")), docString.c_str());
 
 
 
@@ -368,23 +373,23 @@ namespace RDMIF {
 				ARGUMENTS:\n\
 				    - grid: 	   UniformRealValueGrid3D which get the MIF values\n\
 				    - descriptor:  Descriptor class which is used to calculate values\n";
-      python::def("CalculateDescriptors", calculateDescriptors<distanceToClosestAtom>,
+      python::def("CalculateDescriptors", calculateDescriptors<DistanceToClosestAtom>,
                   (python::arg("grid"), python::arg("descriptor")), docString.c_str());
 
       python::def("CalculateDescriptors", calculateDescriptors<Coulomb>,
-                  (python::arg("grid"), python::arg("descriptor")), docString.c_str());
+                  (python::arg("grid"), python::arg("descriptor"), python::arg("threshold")=-1.0), docString.c_str());
 
       python::def("CalculateDescriptors", calculateDescriptors<CoulombDielectric>,
-                  (python::arg("grid"), python::arg("descriptor")), docString.c_str());
+                  (python::arg("grid"), python::arg("descriptor"), python::arg("threshold")=-1.0), docString.c_str());
 
       python::def("CalculateDescriptors", calculateDescriptors<VdWaals>,
-                  (python::arg("grid"), python::arg("descriptor")), docString.c_str());
+                  (python::arg("grid"), python::arg("descriptor"), python::arg("threshold")=-1.0), docString.c_str());
 
       python::def("CalculateDescriptors", calculateDescriptors<HBond>,
-                  (python::arg("grid"), python::arg("descriptor")), docString.c_str());
+                  (python::arg("grid"), python::arg("descriptor"), python::arg("threshold")=-1.0), docString.c_str());
 
       python::def("CalculateDescriptors", calculateDescriptors<Hydrophilic>,
-                  (python::arg("grid"), python::arg("descriptor")), docString.c_str());
+                  (python::arg("grid"), python::arg("descriptor"), python::arg("threshold")=-1.0), docString.c_str());
 
 
       docString = "Writes Grid to a file in Gaussian CUBE format.\n\n\
