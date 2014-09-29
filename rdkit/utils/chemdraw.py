@@ -11,6 +11,8 @@
 """ tools for interacting with chemdraw
 
 """
+from __future__ import print_function
+
 import string,tempfile,os,time
 try:
   import pythoncom
@@ -20,7 +22,7 @@ try:
 except:
   cdxModule = None
   _cdxVersion=0
-  raise ImportError,"ChemDraw version (at least version 7) not found."
+  raise ImportError("ChemDraw version (at least version 7) not found.")
 else:
   _cdxVersion=7
 
@@ -246,10 +248,10 @@ try:
     return img
 except ImportError:
   def SmilesToPilImage(smilesStr):
-    print 'You need to have PIL installed to use this functionality'
+    print('You need to have PIL installed to use this functionality')
     return None
   def MolToPilImage(dataStr,inFormat='chemical/daylight-smiles',outFormat='image/gif'):
-    print 'You need to have PIL installed to use this functionality'
+    print('You need to have PIL installed to use this functionality')
     return None
 
 
@@ -297,8 +299,8 @@ def Add3DCoordsToMol(data,format,props={}):
   doc = c3dApp.Documents.Open(molFName)
 
   if not doc:
-    print 'cannot open molecule'
-    raise ValueError,'No Molecule'
+    print('cannot open molecule')
+    raise ValueError('No Molecule')
 
   # set up the MM2 job
   job = Dispatch('Chem3D.MM2Job')
@@ -377,7 +379,7 @@ def OptimizeSDFile(inFileName,outFileName,problemFileName='problems.sdf',
     elif nextLine.find('$$$$') != -1:
       t2 = time.time()
       nDone += 1
-      print 'finished molecule %d in %f seconds'%(nDone,time.time()-t1)
+      print('finished molecule %d in %f seconds'%(nDone,time.time()-t1))
       t1 = time.time()
       if nDone%restartEvery == 0:
         CloseChem3D()
@@ -410,13 +412,13 @@ if __name__=='__main__':
   img = SmilesToPilImage(inStr)
   img.save('foo.jpg')
   convStr = CDXClean(inStr,'chemical/x-daylight-smiles','chemical/x-daylight-smiles')
-  print 'in:',inStr
-  print 'out:',convStr
+  print('in:',inStr)
+  print('out:',convStr)
   convStr = CDXConvert(inStr,'chemical/x-daylight-smiles','chemical/x-mdl-molfile')
-  print 'in:',inStr
-  print 'out:',convStr
+  print('in:',inStr)
+  print('out:',convStr)
   convStr2 = CDXClean(convStr,'chemical/x-mdl-molfile','chemical/x-mdl-molfile')  
-  print 'out2:',convStr2
+  print('out2:',convStr2)
 
   inStr = 'COc1ccc(c2onc(c2C(=O)NCCc3ccc(F)cc3)c4ccc(F)cc4)c(OC)c1'
   convStr = CDXConvert(inStr,'chemical/x-daylight-smiles','chemical/x-mdl-molfile')

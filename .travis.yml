@@ -30,7 +30,7 @@ install:
  - sudo apt-get install -qq openjdk-7-jdk swig # for the java wrappers
 
  - sudo apt-get install libjpeg62 # for pillow
- - conda install -q numpy pillow
+ - conda install -q numpy pillow pandas # matplotlib
  
  # install the conda boost packages from the RDKit binstar channel.
  - conda install -q -c rdkit boost

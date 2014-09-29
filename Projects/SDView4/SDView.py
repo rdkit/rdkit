@@ -32,6 +32,7 @@
 #
 # Created by Greg Landrum
 #
+from __future__ import print_function
 _version = "0.1.0"
 
 import sys,cStringIO,math
@@ -47,7 +48,7 @@ logger = logger()
 class SDUtils(object):
   @staticmethod
   def GetSDPropNames(fName=None,data=None,blockSize=1024,nBlocks=2):
-    if not (fName or data): raise ValueError,"provide at least one value"
+    if not (fName or data): raise ValueError("provide at least one value")
     import re
     nRead=0
     nmMatcher=re.compile(r'^> +<(\w+)>',re.M)
@@ -159,7 +160,7 @@ class MolCanvasView(QtGui.QGraphicsView):
           if self.selectingMols:
             self.emit(QtCore.SIGNAL("molSelected(PyQt_PyObject)"),mol)
           break
-      print coords.x(),coords.y()
+      print(coords.x(),coords.y())
       r=self.viewport().rect()
       img = QtGui.QImage(r.width(),r.height(),QtGui.QImage.Format_RGB32)
       img.fill(QtGui.QColor(255,255,255).rgb())
@@ -295,7 +296,7 @@ class MolTableModel(QtCore.QAbstractTableModel):
     self._cache={}
 
   def sort(self,col,order):
-    print 'SORT!',col,order
+    print('SORT!',col,order)
 
 class SSSProxy(QtGui.QSortFilterProxyModel):
   def filterAcceptsRow(self,row,index):
@@ -347,9 +348,9 @@ class MainWindow(QtGui.QMainWindow):
     self.connect(self.molCanvas,QtCore.SIGNAL('atomSelected(PyQt_PyObject,int)'),self.molCanvasAtomSelected)
     self.molCanvas.show()
   def molCanvasMolSelected(self,mol):
-    print 'mol: ',mol.GetProp('_Name')
+    print('mol: ',mol.GetProp('_Name'))
   def molCanvasAtomSelected(self,mol,atomIdx):
-    print 'Mol: ',mol.GetProp('_Name'),'Atom: ',atomIdx,mol.GetAtomWithIdx(atomIdx).GetSymbol()
+    print('Mol: ',mol.GetProp('_Name'),'Atom: ',atomIdx,mol.GetAtomWithIdx(atomIdx).GetSymbol())
 
   def attachMol3DViewer(self,viewer=None):
     if viewer is None:

@@ -26,9 +26,11 @@ namespace RDKit{
       if(atom->getIsAromatic()){
         res=1;
       } else if(atom->getHybridization() != Atom::SP3){
-        CHECK_INVARIANT(static_cast<unsigned int>(atom->getExplicitValence())>=atom->getDegree(),
+        unsigned int val=static_cast<unsigned int>(atom->getExplicitValence());
+        val -= atom->getNumExplicitHs();
+        CHECK_INVARIANT(val>=atom->getDegree(),
                         "explicit valence exceeds atom degree");
-        res = atom->getExplicitValence()-atom->getDegree();
+        res = val-atom->getDegree();
       }
       return res;
     }

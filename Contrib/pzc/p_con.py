@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright (c) 2014 Merck KGaA
+from __future__ import print_function
 import os,re,gzip,json,requests,sys, optparse,csv
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -442,11 +443,11 @@ class p_con:
         result=[]
 
         for cpd in self.sd_entries:
-	    fragments = Chem.GetMolFrags(cpd,asMols=True)
-	    list_cpds_fragsize = []
-	    for frag in fragments:
-		list_cpds_fragsize.append(frag.GetNumAtoms())
-	    largest_frag_index = list_cpds_fragsize.index(max(list_cpds_fragsize))
+            fragments = Chem.GetMolFrags(cpd,asMols=True)
+            list_cpds_fragsize = []
+            for frag in fragments:
+                list_cpds_fragsize.append(frag.GetNumAtoms())
+            largest_frag_index = list_cpds_fragsize.index(max(list_cpds_fragsize))
             largest_frag = fragments[largest_frag_index]
             result.append(largest_frag)
 
@@ -458,7 +459,7 @@ class p_con:
         """remove duplicates from self.sd_entries"""
         result = []
         all_struct_dict = {}
-	for cpd in self.sd_entries:
+        for cpd in self.sd_entries:
             Chem.RemoveHs(cpd)
             cansmi = Chem.MolToSmiles(cpd,canonical=True)
             if not cansmi in all_struct_dict.keys():
@@ -478,26 +479,26 @@ class p_con:
         """merge IC50 of duplicates into one compound using mean of all values if:
         min(IC50) => IC50_avg-3*IC50_stddev && max(IC50) <= IC50_avg+3*IC50_stddev && IC50_stddev <= IC50_avg"""
         np_old_settings = np.seterr(invalid='ignore') #dirty way to ignore warnings from np.std
-	def get_mean_IC50(mol_list):
-	    IC50 = 0
-	    IC50_avg = 0
-	    for bla in mol_list:
-		try:
-		    IC50 +=  float(bla.GetProp("value"))
-		except:
-		    print "no IC50 reported",bla.GetProp("_Name")
-	    IC50_avg = IC50 / len(mol_list)
-	    return IC50_avg
+        def get_mean_IC50(mol_list):
+            IC50 = 0
+            IC50_avg = 0
+            for bla in mol_list:
+                try:
+                    IC50 +=  float(bla.GetProp("value"))
+                except:
+                    print("no IC50 reported",bla.GetProp("_Name"))
+            IC50_avg = IC50 / len(mol_list)
+            return IC50_avg
 
-	def get_stddev_IC50(mol_list):
-	    IC50_list = []
-	    for mol in mol_list:
-		try:
-		    IC50_list.append(round(float(mol.GetProp("value")),2))
-		except:
-		    print "no IC50 reported",mol.GetProp("_Name")
-	    IC50_stddev = np.std(IC50_list,ddof=1)
-	    return IC50_stddev,IC50_list
+        def get_stddev_IC50(mol_list):
+            IC50_list = []
+            for mol in mol_list:
+                try:
+                    IC50_list.append(round(float(mol.GetProp("value")),2))
+                except:
+                    print("no IC50 reported",mol.GetProp("_Name"))
+            IC50_stddev = np.std(IC50_list,ddof=1)
+            return IC50_stddev,IC50_list
 
         result = []
         IC50_dict = {}
@@ -511,17 +512,17 @@ class p_con:
 
         for cpd in self.sd_entries:
             cansmi = str(cpd.GetProp("cansmirdkit"))
-	    try:
-		IC50_dict[cansmi].append(cpd)
-	    except:
-		IC50_dict[cansmi] = [cpd]
+            try:
+                IC50_dict[cansmi].append(cpd)
+            except:
+                IC50_dict[cansmi] = [cpd]
         for entry in IC50_dict:
             IC50_avg = str(get_mean_IC50(IC50_dict[entry]))
             IC50_stddev,IC50_list = get_stddev_IC50(IC50_dict[entry])
             IC50_dict[entry][0].SetProp("value_stddev",str(IC50_stddev))
             IC50_dict[entry][0].SetProp("value",IC50_avg)
             minimumvalue = float(IC50_avg)-3*float(IC50_stddev)
-	    maximumvalue = float(IC50_avg)+3*float(IC50_stddev)
+            maximumvalue = float(IC50_avg)+3*float(IC50_stddev)
             
             if round(IC50_stddev,1) == 0.0:
                 result.append(IC50_dict[entry][0])
@@ -529,7 +530,7 @@ class p_con:
                 runawaylist = []
                 for e in IC50_dict[entry]:
                     runawaylist.append(e.GetProp("_Name"))
-                    print "stddev larger than mean", runawaylist, IC50_list, IC50_avg,IC50_stddev
+                    print("stddev larger than mean", runawaylist, IC50_list, IC50_avg,IC50_stddev)
             elif np.min(IC50_list) < minimumvalue or np.max(IC50_list) > maximumvalue:
                 pass
             else:
@@ -555,7 +556,7 @@ class p_con:
             result.append(cpd)
 
         self.sd_entries = result
-        if self.verbous: print "## act: %d, inact: %d" % (j,i)
+        if self.verbous: print("## act: %d, inact: %d" % (j,i))
         return True
 
 
@@ -589,42 +590,42 @@ class p_con:
         """train models according to trafficlight using sklearn.ensamble.RandomForestClassifier
         self.model contains up to 10 models afterwards, use save_model_info(type) to create csv or html
         containing data for each model"""
-	title_line = ["#","accuracy","MCC","precision","recall","f1","auc","kappa","prevalence","bias","pickel-File"]
+        title_line = ["#","accuracy","MCC","precision","recall","f1","auc","kappa","prevalence","bias","pickel-File"]
         self.csv_text= [title_line]
 
-	TL_list = []
-	property_list_list = []
- 	directory = os.getcwd().split("/")[-2:]
-	dir_string  = ';'.join(directory)
+        TL_list = []
+        property_list_list = []
+        directory = os.getcwd().split("/")[-2:]
+        dir_string  = ';'.join(directory)
         for cpd in self.sd_entries:
             property_list = []
-	    property_name_list = []
-	    prop_name = cpd.GetPropNames()
+            property_name_list = []
+            prop_name = cpd.GetPropNames()
             for property in prop_name:
                 if property not in ['TL','value']:
                     try:
-			f = float(cpd.GetProp(property))
+                        f = float(cpd.GetProp(property))
                         if math.isnan(f) or math.isinf(f):
-                            print "invalid: %s" % property
+                            print("invalid: %s" % property)
                         
-		    except ValueError:
-                        print "valerror: %s" % property
-			continue
-		    property_list.append(f)
-		    property_name_list.append(property)
-		elif property == 'TL':
-		    TL_list.append(int(cpd.GetProp(property)))
-		else:
-                    print property
-		    pass
-	    property_list_list.append(property_list)
-	dataDescrs_array = np.asarray(property_list_list)
-	dataActs_array   = np.array(TL_list)
+                    except ValueError:
+                        print("valerror: %s" % property)
+                        continue
+                    property_list.append(f)
+                    property_name_list.append(property)
+                elif property == 'TL':
+                    TL_list.append(int(cpd.GetProp(property)))
+                else:
+                    print(property)
+                    pass
+            property_list_list.append(property_list)
+        dataDescrs_array = np.asarray(property_list_list)
+        dataActs_array   = np.array(TL_list)
 
-	for randomseedcounter in range(1,11):
+        for randomseedcounter in range(1,11):
                 if self.verbous: 
-                    print "################################"
-                    print "try to calculate seed %d" % randomseedcounter
+                    print("################################")
+                    print("try to calculate seed %d" % randomseedcounter)
                 X_train,X_test,y_train,y_test = cross_validation.train_test_split(dataDescrs_array,dataActs_array,test_size=.4,random_state=randomseedcounter)
 #            try:
                 clf_RF     = RandomForestClassifier(n_estimators=100,random_state=randomseedcounter)
@@ -669,7 +670,7 @@ class p_con:
                 coh_kappa = cohens_kappa(conf_matrix)
                 kappa = round(coh_kappa['kappa'],3)
                 kappa_stdev = round(coh_kappa['std_kappa'],3)
-	    
+            
                 tp = conf_matrix[0][0]
                 tn = conf_matrix[1][1]
                 fp = conf_matrix[1][0]
@@ -680,22 +681,22 @@ class p_con:
                 kappa_bias = round(float(abs(fp-fn))/float(n),3)
 
                 if self.verbous:
-                    print "test:"
-                    print "\tpos\tneg"
-                    print "true\t%d\t%d" % (tp,tn)
-                    print "false\t%d\t%d" % (fp,fn)
-                    print conf_matrix
-                    print "\ntrain:"
+                    print("test:")
+                    print("\tpos\tneg")
+                    print("true\t%d\t%d" % (tp,tn))
+                    print("false\t%d\t%d" % (fp,fn))
+                    print(conf_matrix)
+                    print("\ntrain:")
                     y_predict2 = clf_RF.predict(X_train)
                     conf_matrix2 = metrics.confusion_matrix(y_train,y_predict2)
                     tp2 = conf_matrix2[0][0]
                     tn2 = conf_matrix2[1][1]
                     fp2 = conf_matrix2[1][0]
                     fn2 = conf_matrix2[0][1]
-                    print "\tpos\tneg"
-                    print "true\t%d\t%d" % (tp2,tn2)
-                    print "false\t%d\t%d" % (fp2,fn2)
-                    print conf_matrix2                    
+                    print("\tpos\tneg")
+                    print("true\t%d\t%d" % (tp2,tn2))
+                    print("false\t%d\t%d" % (fp2,fn2))
+                    print(conf_matrix2)                    
 
                 result_string_cut = [randomseedcounter,
                                      str(accuracy_CV)+"_"+str(accuracy_std_CV),
@@ -1102,7 +1103,7 @@ table th[class*="col-"] {
                     return act,inact
 
                 act_count,inact_count = getActInact(cpds)
-                print "act/inact from TL's %d/%d" % (act_count,inact_count)
+                print("act/inact from TL's %d/%d" % (act_count,inact_count))
                 fig = plt.figure(figsize=(2,2))
                 pie = plt.pie([inact_count,act_count],colors=('r','g'))
                 fig.savefig("pieplot.png",transparent=True)
@@ -1260,12 +1261,12 @@ if __name__ == "__main__":
     combineItems = options.combine.split(',')
 
     if   len(combineItems) == 1 and len(combineItems[0])>0:
-        print 'need 2 files to combine'
-        print usage
+        print('need 2 files to combine')
+        print(usage)
         sys.exit(-1)
     elif len(combineItems) == 2 and len(combineItems[0])>0 and len(combineItems[1])>0:
         cur_file = _04.combine(combineItems[0],combineItems[1])
-        print "File: %s" % cur_file
+        print("File: %s" % cur_file)
         sys.exit(0)
 
     code = options.accession.split(':')
@@ -1275,14 +1276,14 @@ if __name__ == "__main__":
         accession = code[1]
 
     if options.accession == '' and options.sdf == '':
-        print "please offer Accession-Number or SDF-File"
-        print "-h for help"
+        print("please offer Accession-Number or SDF-File")
+        print("-h for help")
         sys.exit(-1)
-	
-	
+        
+        
     if options.dupl==False and options.uniq==False:
-        print "Please select uniq or dupl -h for help"
-        print "-h for help"
+        print("Please select uniq or dupl -h for help")
+        print("-h for help")
         sys.exit(-1)
 
 
@@ -1291,13 +1292,13 @@ if __name__ == "__main__":
 
 
     if options.sdf != '':
-        print "load sdf from File: %s" % options.sdf
+        print("load sdf from File: %s" % options.sdf)
         result = pco.load_mols(options.sdf)
         if not result:
             step_error("load SDF-File")
             sys.exit(-1)
     else:
-        print "gather Data for Accession-ID \'%s\'" % accession
+        print("gather Data for Accession-ID \'%s\'" % accession)
         result = pco.step_0_get_chembl_data()
         if not result:
             step_error("download ChEMBL-Data")
@@ -1326,10 +1327,10 @@ if __name__ == "__main__":
         if not result:
             step_error("Load Model-Files")
             sys.exit(-1)
-        print "\n#Model\tActive\tInactive"
+        print("\n#Model\tActive\tInactive")
         for i in range(len(pco.model)):
             act,inact = pco.predict(i)
-            print "%d\t%d\t%d" % (i,act,inact)
+            print("%d\t%d\t%d" % (i,act,inact))
         sys.exit(0)
 
     result = pco.step_4_set_TL(options.cutoff)
@@ -1358,9 +1359,9 @@ if __name__ == "__main__":
     for i in range(len(pco.model)):
         filename = "%s_%dnm_model_%d.pkl" % (accession,options.cutoff,i)
         pco.save_model(filename,i)
-        print "Model %d saved into File: %s" % (i,filename)
-	
+        print("Model %d saved into File: %s" % (i,filename))
+        
 
     for i in range(len(pco.model)):
         act,inact = pco.predict(i)
-        print "Model %d active: %d\tinactive: %d" % (i,act,inact)
+        print("Model %d active: %d\tinactive: %d" % (i,act,inact))

@@ -10,6 +10,7 @@
 #
 """ This has all be re-implemented in the C++ code
 """
+from __future__ import print_function
 import math
 
 class BitVect:
@@ -28,9 +29,9 @@ class BitVect:
   
   def TanimotoSimilarity(self,other):
     if not isinstance(other,BitVect):
-      raise TypeError,"Tanimoto similarities can only be calculated between two BitVects"
+      raise TypeError("Tanimoto similarities can only be calculated between two BitVects")
     if len(self)!=len(other):
-      raise ValueError,"BitVects must be the same length"
+      raise ValueError("BitVects must be the same length")
     bc = len(self & other)
     b1 = self.NumOnBits()
     b2 = other.NumOnBits()
@@ -39,21 +40,21 @@ class BitVect:
 
   def EuclideanDistance(self,other):
     if not isinstance(other,BitVect):
-      raise TypeError,"Tanimoto similarities can only be calculated between two BitVects"
+      raise TypeError("Tanimoto similarities can only be calculated between two BitVects")
     bt = len(self)
     bi = len(self ^ (~ other))
     return math.sqrt(bt-bi)/bt
   
   def __getitem__(self,which):
     if which >= self.nBits or which < 0:
-      raise ValueError,'bad index'
+      raise ValueError('bad index')
     return self.bits[which]
 
   def __setitem__(self,which,val):
     if which >= self.nBits or which < 0:
-      raise ValueError,'bad index'
+      raise ValueError('bad index')
     if val not in [0,1]:
-      raise ValueError,'val must be 0 or 1'
+      raise ValueError('val must be 0 or 1')
 
     self.bits[which] = val
       
@@ -62,9 +63,9 @@ class BitVect:
 
   def __and__(self,other):
     if not isinstance(other,BitVect):
-      raise TypeError,"BitVects can only be &'ed with other BitVects"
+      raise TypeError("BitVects can only be &'ed with other BitVects")
     if len(self) != len(other):
-      raise ValueError,"BitVects must be of the same length"
+      raise ValueError("BitVects must be of the same length")
 
     l1 = self.GetOnBits()
     l2 = other.GetOnBits()
@@ -73,9 +74,9 @@ class BitVect:
 
   def __or__(self,other):
     if not isinstance(other,BitVect):
-      raise TypeError,"BitVects can only be |'ed with other BitVects"
+      raise TypeError("BitVects can only be |'ed with other BitVects")
     if len(self) != len(other):
-      raise ValueError,"BitVects must be of the same length"
+      raise ValueError("BitVects must be of the same length")
     l1 = self.GetOnBits()
     l2 = other.GetOnBits()
     r = l1 + [bit for bit in l2 if bit not in l1]
@@ -84,9 +85,9 @@ class BitVect:
 
   def __xor__(self,other):
     if not isinstance(other,BitVect):
-      raise TypeError,"BitVects can only be ^'ed with other BitVects"
+      raise TypeError("BitVects can only be ^'ed with other BitVects")
     if len(self) != len(other):
-      raise ValueError,"BitVects must be of the same length"
+      raise ValueError("BitVects must be of the same length")
     
     l1 = self.GetOnBits()
     l2 = other.GetOnBits()
@@ -118,7 +119,7 @@ class SparseBitVect(BitVect):
   
   def __getitem__(self,which):
     if which >= self.nBits or which < 0:
-      raise ValueError,'bad index'
+      raise ValueError('bad index')
     if which in self.bits:
       return 1
     else:
@@ -126,7 +127,7 @@ class SparseBitVect(BitVect):
 
   def __setitem__(self,which,val):
     if which >= self.nBits or which < 0:
-      raise ValueError,'bad index'
+      raise ValueError('bad index')
     if val == 0:
       if which in self.bits:
         self.bits.remove(which)
@@ -145,14 +146,14 @@ if __name__ == '__main__':
   b2[4] = 1
   b2[5] = 1
   b2[5] = 0
-  print 'b1:',b1.GetOnBits()
-  print 'b2:',b2.GetOnBits()
-  print '&:', b1 & b2
-  print '|:', b1 | b2
-  print '^:', b1 ^ b2
-  print 'b1.Tanimoto(b2):',b1.TanimotoSimilarity(b2)
-  print 'b1.Tanimoto(b1):',b1.TanimotoSimilarity(b1)
-  print 'b2.Tanimoto(b2):',b2.TanimotoSimilarity(b2)
-  print 'b2.Tanimoto(b1):',b2.TanimotoSimilarity(b1)
+  print('b1:',b1.GetOnBits())
+  print('b2:',b2.GetOnBits())
+  print('&:', b1 & b2)
+  print('|:', b1 | b2)
+  print('^:', b1 ^ b2)
+  print('b1.Tanimoto(b2):',b1.TanimotoSimilarity(b2))
+  print('b1.Tanimoto(b1):',b1.TanimotoSimilarity(b1))
+  print('b2.Tanimoto(b2):',b2.TanimotoSimilarity(b2))
+  print('b2.Tanimoto(b1):',b2.TanimotoSimilarity(b1))
   
   
