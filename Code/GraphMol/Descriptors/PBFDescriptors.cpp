@@ -43,7 +43,7 @@
 //
 
 #include "PBFDescriptors.h"
-#include <vector.h>
+#include <vector>
 
 #ifdef RDK_USE_EIGEN3
 #include <Eigen/Dense>
