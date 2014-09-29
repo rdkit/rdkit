@@ -58,10 +58,7 @@ namespace RDMIF {
   public:
     testfunctor() {
     }
-    double operator()(const Point3D &pt) {
-      return 1.0;
-    }
-    double operator()(const double &x, const double &y, const double &z) {
+    double operator()(const double &x, const double &y, const double &z, double thres) {
       return 1.0;
     }
   };
@@ -96,7 +93,7 @@ void test2CalculateDescriptors () {
   UniformRealValueGrid3D grd (5.0, 5.0, 5.0, 1.0, new Point3D (0.0, 0.0, 0.0),
                               data);
 
-  calculateDescriptors (grd, testfunctor());
+  calculateDescriptors(grd, testfunctor());
   CHECK_INVARIANT(feq (data->getTotalVal (), grd.getSize ()),
                   "Descriptor Calculation does not work correctly.");
 }
@@ -116,15 +113,22 @@ void test3CubeFiles () {
   UniformRealValueGrid3D grd2;
   RWMol mol2 = *readFromCubeFile (grd2, path + "test3.cube");
 
-  CHECK_INVARIANT(grd.getSize () == grd2.getSize (),
+  CHECK_INVARIANT(grd.getSize() == grd2.getSize(),
                   "I/O: grid sizes are not the same.");
   for (unsigned int i = 0; i < grd2.getSize (); i++) {
-    CHECK_INVARIANT(feq (grd2.getVal (i), double (i / 10.0)),
+    CHECK_INVARIANT(feq(grd2.getVal(i), double(i / 10.0)),
                     "I/O: values in grid are not correct.");
   }
-  CHECK_INVARIANT(grd.compareGrids (grd2), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.getNumX() == grd2.getNumX(), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.getNumY() == grd2.getNumY(), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.getNumZ() == grd2.getNumZ(), "I/O: grids are not the same.");
+  CHECK_INVARIANT(feq(grd.getOffset().x, grd2.getOffset().x), "I/O: grids are not the same.");
+  CHECK_INVARIANT(feq(grd.getSpacing(), grd2.getSpacing()), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.compareVectors(grd2), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.compareParams(grd2), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.compareGrids(grd2), "I/O: grids are not the same.");
 
-  CHECK_INVARIANT(mol.getNumAtoms () == mol2.getNumAtoms (),
+  CHECK_INVARIANT(mol.getNumAtoms() == mol2.getNumAtoms(),
                   "I/O: number of atoms are not the same.");
   for (unsigned int i = 0; i < mol.getNumAtoms (); i++) {
     CHECK_INVARIANT(mol.getAtomWithIdx (i)->getAtomicNum ()
@@ -166,35 +170,40 @@ void test4Coulomb () {
   calculateDescriptors<Coulomb>(grd, coul);
   calculateDescriptors<Coulomb>(grd2, Coulomb (charges, pos));
 
-  CHECK_INVARIANT(grd.compareGrids (grd2),
+  CHECK_INVARIANT(grd.compareGrids(grd2),
                   "Coulomb: Different constructors do not yield the same descriptor.");
-  CHECK_INVARIANT(feq (coul (Point3D (0.0, 0.0, 0.0)), 0.0),
+  CHECK_INVARIANT(feq (coul(0.0,0.0,0.0, 1000), 0.0),
                   "Coulomb: Potential between atoms wrong.(should be 0)");
-  CHECK_INVARIANT(coul (Point3D (2.0, 0.0, 0.0)) < 0,
+  CHECK_INVARIANT(coul(2.0,0.0,0.0, 1000) < 0,
                   "Coulomb: Potential between positive charges not positive.");
-  CHECK_INVARIANT(coul (Point3D (-2.0, 0.0, 0.0)) > 0,
+  CHECK_INVARIANT(coul(-2.0,0.0,0.0, 1000) > 0,
                   "Coulomb: Potential between positive and negative charges not negative.");
-
+  CHECK_INVARIANT(feq(coul(0.0,0.0,0.0, 0.1), 0.0),
+                  "Coulomb: Small threshold dist does not give 0.");
+                  
   calculateDescriptors<Coulomb>(grd, Coulomb(mol, 0, 1.0, true));
   for (unsigned int i = 0; i < grd.getSize(); i++) {
     CHECK_INVARIANT(grd.getVal (i) <= 0.0, "Coulomb: Absolute value field not negative");
   }
 
-  Coulomb coul1(mol, 0, -1.0);
-  CHECK_INVARIANT(coul1(Point3D(-2.0, 0.0, 0.0)) < 0, "Coulomb: Potential between negative charges not positive.");
-  CHECK_INVARIANT(coul1 (Point3D (2.0, 0.0, 0.0)) > 0, "Coulomb: Potential between positive and negative charges not negative.");
+Coulomb coul1(mol, 0, -1.0, false, "_GasteigerCharge", 0.0, 0.01);
+  CHECK_INVARIANT(coul1(-2.0, 0.0, 0.0, 1000) < 0, "Coulomb: Potential between negative charges not positive.");
+  CHECK_INVARIANT(coul1(2.0, 0.0, 0.0, 1000) > 0, "Coulomb: Potential between positive and negative charges not negative.");
 
-  Coulomb coul2 = Coulomb(mol, 0, -.5);
-  CHECK_INVARIANT(coul1 (Point3D (-2.0, 0.0, 0.0)) < coul2 (Point3D (-2.0, 0.0, 0.0)),
+  Coulomb coul2 = Coulomb(mol, 0, -.5, false, "_GasteigerCharge", 0.0, 0.01);
+  CHECK_INVARIANT(coul1(-2.0, 0.0, 0.0, 1000) < coul2 (-2.0, 0.0, 0.0, 1000),
                   "Coulomb: Higher probecharge does not result in stronger forces.");
 
   Coulomb coul3(mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0);
-  CHECK_INVARIANT(coul3(Point3D(0.0, 0.0, 0.0)) > coul3(Point3D(0.1, 0.0, 0.0)),
+  CHECK_INVARIANT(coul3(0.0, 0.0, 0.0, 1000) > coul3(0.1, 0.0, 0.0, 1000),
                   "Coulomb: Softcore interaction wrong.");
-  CHECK_INVARIANT(coul3(Point3D(0.66, 0.0, 0.0)) > coul3(Point3D(0.68, 0.0, 0.0)),
+  CHECK_INVARIANT(coul3(0.66, 0.0, 0.0, 1000) > coul3(0.68, 0.0, 0.0, 1000),
                   "Coulomb: Softcore interaction wrong.");
-  CHECK_INVARIANT(coul3(Point3D(0.70, 0.0, 0.0)) > coul3(Point3D(0.68, 0.0, 0.0)),
+  CHECK_INVARIANT(coul3(0.70, 0.0, 0.0, 1000) > coul3(0.68, 0.0, 0.0, 1000),
                   "Coulomb: Softcore interaction wrong.");
+  CHECK_INVARIANT(feq(coul3(0.0,0.0,0.0, 0.1), 0.0),
+                  "Coulomb: Small threshold dist does not give 0.");
+
 }
 
 void test5CoulombDielectric () {
@@ -222,9 +231,18 @@ void test5CoulombDielectric () {
   calculateDescriptors<CoulombDielectric>(grd2, CoulombDielectric (charges, pos));
 
   CHECK_INVARIANT(grd.compareGrids(grd2), "CoulombDielectric: Different constructors do not yield the same descriptor.");
-  CHECK_INVARIANT(feq (couldiele (Point3D (0.0, 0.0, 0.0)), 0.0), "CoulombDielectric: Potential between atoms wrong.(should be 0)");
-  CHECK_INVARIANT(couldiele (Point3D (2.0, 0.0, 0.0)) < 0, "CoulombDielectric: Potential between positive charges not positive.");
-  CHECK_INVARIANT(couldiele (Point3D (-2.0, 0.0, 0.0)) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
+  CHECK_INVARIANT(feq (couldiele(0.0, 0.0, 0.0, 1000), 0.0), "CoulombDielectric: Potential between atoms wrong.(should be 0)");
+  CHECK_INVARIANT(couldiele(2.0, 0.0, 0.0, 1000) < 0, "CoulombDielectric: Potential between positive charges not positive.");
+  CHECK_INVARIANT(couldiele(-2.0, 0.0, 0.0, 1000) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
+
+  calculateDescriptors<CoulombDielectric>(grd, CoulombDielectric (mol, 0, 1.0, true));
+  for (unsigned int i = 0; i < grd.getSize(); i++) {
+    CHECK_INVARIANT(grd.getVal (i) <= 0.0, "CoulombDielectric: Absolute value field not negative");
+  }
+
+  CHECK_INVARIANT(feq (couldiele(0.0, 0.0, 0.0, 1000), 0.0), "CoulombDielectric: Potential between atoms wrong.(should be 0)");
+  CHECK_INVARIANT(couldiele(2.0, 0.0, 0.0, 1000) < 0, "CoulombDielectric: Potential between positive charges not positive.");
+  CHECK_INVARIANT(couldiele(-2.0, 0.0, 0.0, 1000) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
 
   calculateDescriptors<CoulombDielectric>(grd, CoulombDielectric (mol, 0, 1.0, true));
   for (unsigned int i = 0; i < grd.getSize(); i++) {
@@ -232,20 +250,20 @@ void test5CoulombDielectric () {
   }
 
   CoulombDielectric couldiele1(mol, 0, -1.0);
-  CHECK_INVARIANT(couldiele1 (Point3D (-2.0, 0.0, 0.0)) < 0, "CoulombDielectric: Potential between negative charges not positive.");
-  CHECK_INVARIANT(couldiele1 (Point3D (2.0, 0.0, 0.0)) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
+  CHECK_INVARIANT(couldiele1(-2.0, 0.0, 0.0, 1000) < 0, "CoulombDielectric: Potential between negative charges not positive.");
+  CHECK_INVARIANT(couldiele1(2.0, 0.0, 0.0, 1000) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
 
   CoulombDielectric couldiele2 (mol, 0, -.5);
 
-  CHECK_INVARIANT(couldiele1 (Point3D (-2.0, 0.0, 0.0)) < couldiele2 (Point3D (-2.0, 0.0, 0.0)),
+  CHECK_INVARIANT(couldiele1(-2.0, 0.0, 0.0, 1000) < couldiele2(-2.0, 0.0, 0.0, 1000),
                   "CoulombDielectric: Higher probecharge does not result in stronger forces.");
 
   CoulombDielectric couldiele3(mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0);
-  CHECK_INVARIANT(couldiele3(Point3D (0.0, 0.0, 0.0)) > couldiele3 (Point3D (0.1, 0.0, 0.0)),
+  CHECK_INVARIANT(couldiele3(0.0, 0.0, 0.0, 1000) > couldiele3(0.1, 0.0, 0.0, 1000),
                   "CoulombDielectric: Softcore interaction wrong.");
-  CHECK_INVARIANT(couldiele3(Point3D (0.66, 0.0, 0.0)) > couldiele3 (Point3D (0.68, 0.0, 0.0)),
+  CHECK_INVARIANT(couldiele3(0.66, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
                   "CoulombDielectric: Softcore interaction wrong.");
-  CHECK_INVARIANT(couldiele3(Point3D (0.70, 0.0, 0.0)) > couldiele3 (Point3D (0.68, 0.0, 0.0)),
+  CHECK_INVARIANT(couldiele3(0.70, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
                   "CoulombDielectric: Softcore interaction wrong.");
 
 
@@ -256,11 +274,11 @@ void test5CoulombDielectric () {
   CoulombDielectric couldiele4 (mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0,  80.0,  4.0);
   CoulombDielectric couldiele5 (mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0, 200.0,  4.0);
   CoulombDielectric couldiele6 (mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0,  80.0, 10.0);
-  CHECK_INVARIANT(couldiele5 (Point3D (-1.0, 0.0, 0.0)) < couldiele4 (Point3D (-1.0, 0.0, 0.0)),
+  CHECK_INVARIANT(couldiele5(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000),
                   "CoulombDielectric: solvent permittivity scaling wrong.");
 
 
-  CHECK_INVARIANT(couldiele6 (Point3D (-1.0, 0.0, 0.0)) < couldiele4 (Point3D (-1.0, 0.0, 0.0)),
+  CHECK_INVARIANT(couldiele6(-1.0, 0.0, 0.0, 1000) < couldiele4 (-1.0, 0.0, 0.0, 1000),
                   "CoulombDielectric: solute permittivity scaling wrong.");
 }
 
@@ -278,22 +296,22 @@ void test6VdWaals () {
   mol = *MolFileToMol(path + "HCN.mol", true, false);
   VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
 
-  CHECK_INVARIANT(vdw(Point3D(-5.0, 0, 0)) < 0, "VdWMMFF: Potential not negative in favorable region.");
-  CHECK_INVARIANT(vdw(Point3D(-1.68, 0, 0)) > vdw(Point3D(-5.0, 0, 0)), "VdWMMFF: Potential next to core not higher than further apart.");
-  CHECK_INVARIANT(vdw(Point3D(-5.0, 0, 0)) < vdw(Point3D(-10.0, 0, 0)), "VdWMMFF: Potential very far apart not higher than in favorable distance to core.");
+  CHECK_INVARIANT(vdw(-5.0, 0, 0, 1000) < 0, "VdWMMFF: Potential not negative in favorable region.");
+  CHECK_INVARIANT(vdw(-1.68, 0, 0, 1000) > vdw(-5.0, 0, 0, 1000), "VdWMMFF: Potential next to core not higher than further apart.");
+  CHECK_INVARIANT(vdw(-5.0, 0, 0, 1000) < vdw(-10.0, 0, 0, 1000), "VdWMMFF: Potential very far apart not higher than in favorable distance to core.");
 
   RWMol mol2 = *MolFileToMol(path + "h2o.mol", true, false);
   vdw  = constructVdWaalsMMFF(mol2, 0, 6, false, 1.0);
   VdWaals vdw2 = constructVdWaalsMMFF(mol2, 0, 6, true, 1.0);
-  CHECK_INVARIANT(fabs(vdw2(Point3D(-3.0, 0, 0)) - vdw(Point3D(-3.0, 0, 0))) > 0.0001,
+  CHECK_INVARIANT(fabs(vdw2(-3.0, 0, 0, 1000) - vdw(-3.0, 0, 0, 1000)) > 0.0001,
                   "VdWMMFF: No scaling of interactions.");
 
 
   VdWaals vdw3 = constructVdWaalsUFF(mol, 0, "O_3", 1.0);
-  CHECK_INVARIANT(vdw3(Point3D(-5.0, 0, 0)) < 0, "VdWMMFF: Potential not negative in favorable region.");
-  CHECK_INVARIANT(vdw3(Point3D(-1.68, 0, 0)) > vdw3(Point3D(-5.0, 0, 0)),
+  CHECK_INVARIANT(vdw3(-5.0, 0, 0, 1000) < 0, "VdWMMFF: Potential not negative in favorable region.");
+  CHECK_INVARIANT(vdw3(-1.68, 0, 0, 1000) > vdw3(-5.0, 0, 0, 1000),
                   "VdWUFF: Potential next to core not higher than further apart.");
-  CHECK_INVARIANT(vdw3(Point3D(-5.0, 0, 0)) < vdw3(Point3D(-10.0, 0, 0)),
+  CHECK_INVARIANT(vdw3(-5.0, 0, 0, 1000) < vdw3(-10.0, 0, 0, 1000),
                   "VdWUFF: Potential very far apart not higher than in favorable distance to core.");
 
   std::string names[] = { "acetone", "aceticacid", "phenol", "phenolate",
@@ -304,9 +322,9 @@ void test6VdWaals () {
   for ( unsigned int i = 0; i < 24; i++ ){
     mol = *MolFileToMol(path + names[i] + ".mol", true, false);
     vdw = constructVdWaalsMMFF(mol);
-    CHECK_INVARIANT(vdw(Point3D(0.0,0.0,0.0)), "VdWMMFF: crashed with " + names[i]);
+    CHECK_INVARIANT(vdw(0.0,0.0,0.0,1000), "VdWMMFF: crashed with " + names[i]);
     vdw = constructVdWaalsUFF(mol);
-    CHECK_INVARIANT(vdw(Point3D(0.0,0.0,0.0)), "VdWUFF: crashed with " + names[i]);
+    CHECK_INVARIANT(vdw(0.0,0.0,0.0,1000), "VdWUFF: crashed with " + names[i]);
   }
 }
 
@@ -354,14 +372,14 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes1.getNumInteractions() == 1, "");
   calculateDescriptors<HBond>(grd, hbonddes1);
   HBond hbonddes2(mol, 0, "O", false, 0.001);
-  CHECK_INVARIANT(hbonddes1(Point3D(4.0, 0.0, 1.0)) > hbonddes2(Point3D(4.0, 0.0, 1.0)),
+  CHECK_INVARIANT(hbonddes1(4.0, 0.0, 1.0, 1000) > hbonddes2(4.0, 0.0, 1.0, 1000),
                   "HBond: Flexible bonds do not yield more negative potential.");
   HBond hbonddes3(mol, 0, "NH", true, 0.001);
   CHECK_INVARIANT(hbonddes3.getNumInteractions() == 2, "");
-  CHECK_INVARIANT(hbonddes(Point3D(2.0, 2.0, 1.0)) < hbonddes3(Point3D(2.0, 2.0, 1.0)), "HBond: N probe stronger interaction than O probe");
+  CHECK_INVARIANT(hbonddes(2.0, 2.0, 2.0, 1000) < hbonddes3(2.0, 2.0, 2.0, 1000), "HBond: N probe stronger interaction than O probe");
   HBond hbonddes4(mol, 0, "N", true, 0.001);
   CHECK_INVARIANT(hbonddes4.getNumInteractions() == 1, "");
-  CHECK_INVARIANT(hbonddes1(Point3D(3.0, 0.0,0.0)) < hbonddes4(Point3D(3.0,0.0,0.0)), "HBond: N probe stronger interaction than O probe");
+  CHECK_INVARIANT(hbonddes1(3.0, 0.0,0.0, 1000) < hbonddes4(3.0,0.0,0.0, 1000), "HBond: N probe stronger interaction than O probe");
 
   mol = *MolFileToMol(path + "acetone.mol", true, false);     //Acetone
   grd = *constructGrid(mol, 0, 5.0, 1);
@@ -492,70 +510,60 @@ void test8Hydrophilic() {
   HBond hbondOH(mol, 0, "OH");
   HBond hbondO(mol, 0, "O");
 
-  Point3D pt(0.0,0.0,0.0);
-  double hyd = hydro(pt),
-      hOH = hbondOH(pt),
-      hO  = hbondO(pt);
+  double hyd = hydro(0.0,0.0,0.0, 1000),
+      hOH = hbondOH(0.0,0.0,0.0, 1000),
+      hO  = hbondO(0.0,0.0,0.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(1.0, 1.5, 2.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(1.0, 1.5, 2.0, 1000);
+  hOH = hbondOH(1.0, 1.5, 2.0, 1000);
+  hO  = hbondO(1.0, 1.5, 2.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(2.0, 1.5, -3.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(2.0, 1.5, -3.0, 1000);
+  hOH = hbondOH(2.0, 1.5, -3.0, 1000);
+  hO  = hbondO(2.0, 1.5, -3.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(-2.5, 0.5, 3.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(-2.5, 0.5, 3.0, 1000);
+  hOH = hbondOH(-2.5, 0.5, 3.0, 1000);
+  hO  = hbondO(-2.5, 0.5, 3.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(10.0, 1.5, 1.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(10.0, 1.5, 1.0, 1000);
+  hOH = hbondOH(10.0, 1.5, 1.0, 1000);
+  hO  = hbondO(10.0, 1.5, 1.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(6.0, -5.0, 0.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(6.0, -5.0, 0.0, 1000);
+  hOH = hbondOH(6.0, -5.0, 0.0, 1000);
+  hO  = hbondO(6.0, -5.0, 0.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(-3.0, -3.0, 7.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(-3.0, -3.0, 7.0, 1000);
+  hOH = hbondOH(-3.0, -3.0, 7.0, 1000);
+  hO  = hbondO(-3.0, -3.0, 7.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(1.0, 0.0, 0.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(1.0, 0.0, 0.0, 1000);
+  hOH = hbondOH(1.0, 0.0, 0.0, 1000);
+  hO  = hbondO(1.0, 0.0, 0.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(0.0, 2.0, 2.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(0.0, 2.0, 2.0, 1000);
+  hOH = hbondOH(0.0, 2.0, 2.0, 1000);
+  hO  = hbondO(0.0, 2.0, 2.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(2.0, -2.0, 0.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+
+  hyd = hydro(2.0, -2.0, 0.0, 1000);
+  hOH = hbondOH(2.0, -2.0, 0.0, 1000);
+  hO  = hbondO(2.0, -2.0, 0.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 
-  pt = Point3D(2.0, -2.0, -3.0);
-  hyd = hydro(pt);
-  hOH = hbondOH(pt);
-  hO  = hbondO(pt);
+  hyd = hydro(2.0, -2.0, -3.0, 1000);
+  hOH = hbondOH(2.0, -2.0, -3.0, 1000);
+  hO  = hbondO(2.0, -2.0, -3.0, 1000);
   CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
 }
 

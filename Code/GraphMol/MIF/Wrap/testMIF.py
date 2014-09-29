@@ -84,9 +84,9 @@ class TestCase(unittest.TestCase):
         self.failUnless(grd.CompareParams(grd2))
         self.failUnless(grd.CompareVectors(grd2))
         self.failUnless(grd.CompareGrids(grd2))
-        self.failUnless(feq(coul(geom.Point3D(0.0, 0.0, 0.0)), 0.0))
-        self.failUnless(coul(geom.Point3D(2.0, 0.0, 0.0)) < 0)
-        self.failUnless(coul(geom.Point3D(-2.0, 0.0, 0.0)) > 0)
+        self.failUnless(feq(coul(0.0, 0.0, 0.0, 1000), 0.0))
+        self.failUnless(coul(2.0, 0.0, 0.0, 1000) < 0)
+        self.failUnless(coul(-2.0, 0.0, 0.0, 1000) > 0)
 
         rdMIF.CalculateDescriptors(grd, rdMIF.Coulomb(mol, absVal=True))
 
@@ -94,16 +94,18 @@ class TestCase(unittest.TestCase):
             self.failUnless(grd.GetVal(i) <= 0.0)
 
         coul1 = rdMIF.Coulomb(mol, probeCharge=-1.0)
-        self.failUnless(coul1(geom.Point3D(-2.0, 0.0, 0.0)) < 0)
-        self.failUnless(coul1(geom.Point3D(2.0, 0.0, 0.0)) > 0)
+        self.failUnless(coul1(-2.0, 0.0, 0.0, 1000) < 0)
+        self.failUnless(coul1(2.0, 0.0, 0.0, 1000) > 0)
+
 
         coul2 = rdMIF.Coulomb(mol, probeCharge= -.5)
-        self.failUnless(coul1(geom.Point3D(-2.0, 0.0, 0.0)) < coul2(geom.Point3D(-2.0, 0.0, 0.0)))
+        self.failUnless(coul1(-2.0, 0.0, 0.0, 1000) < coul2(-2.0, 0.0, 0.0, 1000))
+
 
         coul3 = rdMIF.Coulomb(mol, confId=0, probeCharge=1.0, absVal=False, chargeKey="_GasteigerCharge", softcoreParam=0.01, cutoffDist=1.0)
-        self.failUnless(coul3 (geom.Point3D (0.0, 0.0, 0.0)) > coul3 (geom.Point3D (0.1, 0.0, 0.0)))
-        self.failUnless(coul3 (geom.Point3D (0.66, 0.0, 0.0)) > coul3 (geom.Point3D (0.68, 0.0, 0.0)))
-        self.failUnless(coul3 (geom.Point3D (0.70, 0.0, 0.0)) > coul3 (geom.Point3D (0.68, 0.0, 0.0)))
+        self.failUnless(coul3 (0.0, 0.0, 0.0, 1000) > coul3 (0.1, 0.0, 0.0, 1000))
+        self.failUnless(coul3 (0.66, 0.0, 0.0, 1000) > coul3 (0.68, 0.0, 0.0, 1000))
+        self.failUnless(coul3 (0.70, 0.0, 0.0, 1000) > coul3 (0.68, 0.0, 0.0, 1000))
         
 
     def test4CoulombDielectric(self):
@@ -129,9 +131,10 @@ class TestCase(unittest.TestCase):
         rdMIF.CalculateDescriptors(grd2, rdMIF.CoulombDielectric_(charges, pos))
 
         self.failUnless(grd.CompareGrids(grd2))
-        self.failUnless(feq(couldiele(geom.Point3D(0.0, 0.0, 0.0)), 0.0))
-        self.failUnless(couldiele(geom.Point3D(2.0, 0.0, 0.0)) < 0)
-        self.failUnless(couldiele(geom.Point3D(-2.0, 0.0, 0.0)) > 0)
+        self.failUnless(feq(couldiele(0.0, 0.0, 0.0, 1000), 0.0))
+        self.failUnless(couldiele(2.0, 0.0, 0.0, 1000) < 0)
+        self.failUnless(couldiele(-2.0, 0.0, 0.0, 1000) > 0)
+
 
         rdMIF.CalculateDescriptors(grd, rdMIF.CoulombDielectric(mol, absVal=True))
 
@@ -139,16 +142,16 @@ class TestCase(unittest.TestCase):
             self.failUnless(grd.GetVal(i) <= 0.0)
 
         couldiele1 = rdMIF.CoulombDielectric(mol, probeCharge=-1.0)
-        self.failUnless(couldiele1(geom.Point3D(-2.0, 0.0, 0.0)) < 0)
-        self.failUnless(couldiele1(geom.Point3D(2.0, 0.0, 0.0)) > 0)
+        self.failUnless(couldiele1(-2.0, 0.0, 0.0, 1000) < 0)
+        self.failUnless(couldiele1(2.0, 0.0, 0.0, 1000) > 0)
 
         couldiele2 = rdMIF.CoulombDielectric(mol, probeCharge= -.5)
-        self.failUnless(couldiele1(geom.Point3D(-2.0, 0.0, 0.0)) < couldiele2(geom.Point3D(-2.0, 0.0, 0.0)))
+        self.failUnless(couldiele1(-2.0, 0.0, 0.0, 1000) < couldiele2(-2.0, 0.0, 0.0, 1000))
 
         couldiele3 = rdMIF.CoulombDielectric(mol, confId=0, probeCharge=1.0, absVal=False, chargeKey="_GasteigerCharge", softcoreParam=0.01, cutoffDist=1.0)
-        self.failUnless(couldiele3 (geom.Point3D (0.0, 0.0, 0.0)) > couldiele3 (geom.Point3D (0.1, 0.0, 0.0)))
-        self.failUnless(couldiele3 (geom.Point3D (0.66, 0.0, 0.0)) > couldiele3 (geom.Point3D (0.68, 0.0, 0.0)))
-        self.failUnless(couldiele3 (geom.Point3D (0.70, 0.0, 0.0)) > couldiele3 (geom.Point3D (0.68, 0.0, 0.0)))
+        self.failUnless(couldiele3(0.0, 0.0, 0.0, 1000) > couldiele3(0.1, 0.0, 0.0, 1000))
+        self.failUnless(couldiele3(0.66, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000))
+        self.failUnless(couldiele3(0.70, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000))
 
 
         mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/glucose.mol'), removeHs=False)
@@ -158,29 +161,29 @@ class TestCase(unittest.TestCase):
         couldiele5 = rdMIF.CoulombDielectric(mol, confId=0, probeCharge=1.0, absVal=False, chargeKey="_GasteigerCharge", softcoreParam=0.01, cutoffDist=1.0, epsilon=200.0, xi=4.0)
         couldiele6 = rdMIF.CoulombDielectric(mol, confId=0, probeCharge=1.0, absVal=False, chargeKey="_GasteigerCharge", softcoreParam=0.01, cutoffDist=1.0, epsilon=80.0, xi=10.0)
         
-        self.failUnless(couldiele5(geom.Point3D(-1.0, 0.0, 0.0)) < couldiele4(geom.Point3D(-1.0, 0.0, 0.0)))
-        self.failUnless(couldiele6(geom.Point3D(-1.0, 0.0, 0.0)) < couldiele4(geom.Point3D(-1.0, 0.0, 0.0)))
+        self.failUnless(couldiele5(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000))
+        self.failUnless(couldiele6(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000))
 
     def test5VdWaals(self):
         mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/HCN.mol'), removeHs=False)
         vdw = rdMIF.ConstructVdWaalsMMFF(mol, confId=0, probeType=6, scaling=False, cutoffDist=1.0)
         
-        self.failUnless(vdw(geom.Point3D(-5.0, 0, 0)) < 0)
-        self.failUnless(vdw(geom.Point3D(-1.68, 0, 0)) > vdw (geom.Point3D (-5.0, 0, 0)))
-        self.failUnless(vdw(geom.Point3D(-5.0, 0, 0)) < vdw (geom.Point3D (-10.0, 0, 0)))
+        self.failUnless(vdw(-5.0, 0, 0, 1000) < 0)
+        self.failUnless(vdw(-1.68, 0, 0, 1000) > vdw (-5.0, 0, 0, 1000))
+        self.failUnless(vdw(-5.0, 0, 0, 1000) < vdw (-10.0, 0, 0, 1000))
         
         mol2 = AllChem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/h2o.mol'), removeHs=False)
         vdw  = rdMIF.ConstructVdWaalsMMFF(mol2, scaling=False)
         vdw2 = rdMIF.ConstructVdWaalsMMFF(mol2, scaling=True)
         
-        self.failUnless(abs(vdw2(geom.Point3D(-3.0, 0, 0)) - vdw(geom.Point3D(-3.0, 0, 0))) > 0.0001)
-
+        self.failUnless(abs(vdw2(-3.0, 0, 0, 1000) - vdw(-3.0, 0, 0, 1000)) > 0.0001)
+        
         vdw3 = rdMIF.ConstructVdWaalsUFF(mol, confId=0, probeType="O_3", cutoffDist=1.0)
 
-        self.failUnless(vdw3(geom.Point3D (-5.0, 0, 0)) < 0)
-        self.failUnless(vdw3(geom.Point3D(-1.68, 0, 0)) > vdw3(geom.Point3D(-5.0, 0, 0)))
-        self.failUnless(vdw3(geom.Point3D(-5.0, 0, 0)) < vdw3(geom.Point3D(-10.0, 0, 0)))
-
+        self.failUnless(vdw3(-5.0, 0, 0, 1000) < 0)
+        self.failUnless(vdw3(-1.68, 0, 0, 1000) > vdw3(-5.0, 0, 0, 1000))
+        self.failUnless(vdw3(-5.0, 0, 0, 1000) < vdw3(-10.0, 0, 0, 1000))
+        
 #   std::string names[] = { "acetone", "aceticacid", "phenol", "phenolate",
 #       "serine", "threonine", "ethanol", "diethylether", "h2o", "ammonia",
 #       "ethylamine", "imine", "acetonitrile", "histidine", "phenylamine",
@@ -189,9 +192,9 @@ class TestCase(unittest.TestCase):
 #   for ( unsigned int i = 0; i < 24; i++ ){
 #     mol = *MolFileToMol (path + names[i] + ".mol", true, false);
 #     vdw = constructVdWaalsMMFF(mol);
-#     self.failUnless(vdw(geom.Point3D(0.0,0.0,0.0)), "VdWMMFF: crashed with " + names[i]);
+#     self.failUnless(vdw(0.0,0.0,0.0, 1000), "VdWMMFF: crashed with " + names[i]);
 #     vdw = constructVdWaalsUFF(mol);
-#     self.failUnless(vdw(geom.Point3D(0.0,0.0,0.0)), "VdWUFF: crashed with " + names[i]);
+#     self.failUnless(vdw(0.0,0.0,0.0, 1000), "VdWUFF: crashed with " + names[i]);
 
     def test6HBond(self):
         mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/ethane.mol'), removeHs=False)
@@ -223,13 +226,13 @@ class TestCase(unittest.TestCase):
         rdMIF.CalculateDescriptors(grd, hbonddes1)
 
         hbonddes2 = rdMIF.HBond(mol, probeType="O", fixed=False)
-        self.failUnless(hbonddes1(geom.Point3D(4.0, 0.0, 1.0)) > hbonddes2(geom.Point3D(4.0, 0.0, 1.0)))
+        self.failUnless(hbonddes1(4.0, 0.0, 1.0, 1000) > hbonddes2(4.0, 0.0, 1.0, 1000))
 
         hbonddes3 = rdMIF.HBond(mol, probeType="NH")
-        self.failUnless(hbonddes(geom.Point3D(2.0, 2.0, 1.0)) < hbonddes3(geom.Point3D(2.0, 2.0, 1.0)))
+        self.failUnless(hbonddes(2.0, 2.0, 1.0, 1000) < hbonddes3(2.0, 2.0, 1.0, 1000))
 
         hbonddes4 = rdMIF.HBond(mol, probeType="N")
-        self.failUnless(hbonddes1(geom.Point3D(3.0, 0.0,0.0)) < hbonddes4(geom.Point3D(3.0,0.0,0.0)))
+        self.failUnless(hbonddes1(3.0, 0.0,0.0, 1000) < hbonddes4(3.0,0.0,0.0, 1000))
         
 #   mol = *MolFileToMol (path + "acetone.mol", true, false);     //Acetone
 #   grd = *constructGrid (mol, 0, 5.0, 1);
@@ -357,69 +360,69 @@ class TestCase(unittest.TestCase):
        hbondO = rdMIF.HBond(mol, probeType="O")
 
        pt = geom.Point3D(0.0,0.0,0.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
 
        pt = geom.Point3D(1.0, 1.5, 2.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
        
        pt = geom.Point3D(2.0, 1.5, -3.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
        
        pt = geom.Point3D(-2.5, 0.5, 3.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
        
        pt = geom.Point3D(10.0, 1.5, 1.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
        
        pt = geom.Point3D(6.0, -5.0, 0.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
 
        pt = geom.Point3D(-3.0, -3.0, 7.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
        
        pt = geom.Point3D(1.0, 0.0, 0.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
 
        pt = geom.Point3D(0.0, 2.0, 2.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
 
        pt = geom.Point3D(2.0, -2.0, 0.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
 
        pt = geom.Point3D(2.0, -2.0, -3.0)
-       hyd = hydro(pt)
-       hOH = hbondOH(pt)
-       hO  = hbondO(pt)
+       hyd = hydro(pt.x, pt.y, pt.z, 1000)
+       hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
+       hO  = hbondO(pt.x, pt.y, pt.z, 1000)
        self.failUnless(feq(min(hOH, hO), hyd))
 
 

@@ -103,9 +103,10 @@ class RealValueVect {
   //! compares 2 vectors and returns false if different
   bool compareVectors(const RealValueVect &other);
 
+  const DATA_SPTR &getArray() { return d_data; };
+
   //! support rvv3 = rvv1&rvv2
   /*!
-
      operator& returns the minimum value for each element.
      e.g.:
        [0,1,2,0] & [0,1,1,1] -> [0,1,1,0]
