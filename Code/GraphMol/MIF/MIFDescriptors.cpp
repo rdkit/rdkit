@@ -358,7 +358,7 @@ namespace RDMIF {
     d_dielectric = ( d_xi - d_epsilon ) / ( d_xi + d_epsilon );
     std::vector<unsigned int> neighbors(positions.size(), 0);
 
-    d_dists.reserve(d_nAtoms);
+    d_dists.resize(d_nAtoms);
     d_sp.reserve(d_nAtoms);
     d_pos.reserve(3*d_nAtoms);
     for (unsigned int i = 0; i < positions.size(); i++) {
@@ -424,7 +424,7 @@ namespace RDMIF {
     
     d_charges.reserve(d_nAtoms);
     d_sp.reserve(d_nAtoms);
-    d_dists.reserve(d_nAtoms);
+    d_dists.resize(d_nAtoms);
     d_pos.reserve(3*d_nAtoms);
     
     RDKit::Conformer conf = mol.getConformer(confId);
