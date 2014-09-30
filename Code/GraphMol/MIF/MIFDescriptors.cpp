@@ -384,7 +384,7 @@ CoulombDielectric::CoulombDielectric(
   d_dielectric = (d_xi - d_epsilon) / (d_xi + d_epsilon);
   std::vector<unsigned int> neighbors(positions.size(), 0);
 
-  d_dists.reserve(d_nAtoms);
+  d_dists.resize(d_nAtoms);
   d_sp.reserve(d_nAtoms);
   d_pos.reserve(3 * d_nAtoms);
   for (unsigned int i = 0; i < positions.size(); i++) {
@@ -454,7 +454,7 @@ CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
 
   d_charges.reserve(d_nAtoms);
   d_sp.reserve(d_nAtoms);
-  d_dists.reserve(d_nAtoms);
+  d_dists.resize(d_nAtoms);
   d_pos.reserve(3 * d_nAtoms);
 
   RDKit::Conformer conf = mol.getConformer(confId);
@@ -974,7 +974,7 @@ unsigned int HBond::findAcceptors(const RDKit::ROMol &mol, int confId,
 
         switch (nbrs) {  // no of neighbors
           case 1:        // carbonyl, carboxyl C=O, X=O (X=S,P,...), anions
-                   // (alcoholates, carboxylates)
+                         // (alcoholates, carboxylates)
             --nbrIdx;
             boost::tie(secnbrIdx, secendNbrs) = mol.getAtomNeighbors(
                 mol.getAtomWithIdx(*nbrIdx));  // get neighbors of neighbor atom
@@ -1212,7 +1212,7 @@ unsigned int HBond::findAcceptors_unfixed(
 
         switch (nbrs) {  // no of neighbors
           case 1:        // carbonyl, carboxyl C=O, X=O (X=S,P,...), anions
-                   // (alcoholates, carboxylates)
+                         // (alcoholates, carboxylates)
             --nbrIdx;
             boost::tie(secnbrIdx, secendNbrs) = mol.getAtomNeighbors(
                 mol.getAtomWithIdx(*nbrIdx));  // get neighbors of neighbor atom
@@ -1550,8 +1550,8 @@ unsigned int HBond::findDonors_unfixed(
 
         if (nonhnbrs != nbrs) {  // otherwise no hydrogen, no hydrogen bond
                                  // donation possible
-          switch (nbrs) {  // no of neighbors
-            case 1:        // hydroxyl
+          switch (nbrs) {        // no of neighbors
+            case 1:              // hydroxyl
               addVectElements(O, &no_dep, pos, RDGeom::Point3D(0.0, 0.0, 0.0));
               interact++;
               break;
