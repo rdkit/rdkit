@@ -956,4 +956,10 @@ AS
     FUNCTION    7   gslfp_same (bytea, bytea, internal),
 STORAGE         bytea;
 
+CREATE OR REPLACE FUNCTION mol_hash(mol)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'mol_hash'
+    LANGUAGE C STRICT IMMUTABLE;
+
+
 
