@@ -3905,6 +3905,24 @@ void testPDBResidues(){
 }
 
 
+void testGithub337(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 337: No double bond stereo perception from CTABs when sanitization is turned off" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"unsanitized_stereo.mol",false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+    std::string molBlock = MolToMolBlock(*m);
+    TEST_ASSERT(molBlock.find("  1  2  2  0")!=std::string::npos);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3980,5 +3998,6 @@ int main(int argc,char *argv[]){
   testGithub191();
   testGithub210();
   testPDBResidues();
+  testGithub337();
   return 0;
 }

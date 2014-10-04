@@ -935,6 +935,8 @@ namespace RDKit {
     // stereochemistry
     // NOTE that we are explicitly excluding double bonds in rings
     // with this test.
+    if(!mol.getRingInfo()->isInitialized()) MolOps::fastFindRings(mol);
+
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::DOUBLE &&
@@ -944,8 +946,6 @@ namespace RDKit {
           (*bondIt)->getEndAtom()->getDegree()>1 &&
           !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))
           ){
-        bondsInPlay.push_back(*bondIt);
-
         const Atom *a1=(*bondIt)->getBeginAtom();
         const Atom *a2=(*bondIt)->getEndAtom();
 
@@ -973,6 +973,7 @@ namespace RDKit {
           }
           ++beg;
         }
+        bondsInPlay.push_back(*bondIt);
       }
     }
 

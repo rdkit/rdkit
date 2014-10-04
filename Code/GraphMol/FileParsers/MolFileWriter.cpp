@@ -628,7 +628,38 @@ namespace RDKit{
 	  dirCode = 3;
 	} else if(!(bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) &&
 		  bond->getBeginAtom()->getDegree()>1 && bond->getEndAtom()->getDegree()>1){
-          dirCode = 3;
+          // we don't know that it's explicitly unspecified (covered above with the ==STEREOANY check)
+          // look to see if one of the atoms has a bond with direction set
+          if(bond->getBondDir()==Bond::EITHERDOUBLE){
+            dirCode = 3;
+          } else {
+            bool nbrHasDir=false;
+            
+            ROMol::OEDGE_ITER beg,end;
+            boost::tie(beg,end) = bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
+            while(beg!=end && !nbrHasDir){
+              const BOND_SPTR nbrBond=bond->getOwningMol()[*beg];
+              if(nbrBond->getBondType()==Bond::SINGLE &&
+                 ( nbrBond->getBondDir()==Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir()==Bond::ENDDOWNRIGHT ) ){
+                nbrHasDir=true;
+              }
+              ++beg;
+            }
+            boost::tie(beg,end) = bond->getOwningMol().getAtomBonds(bond->getEndAtom());
+            while(beg!=end && !nbrHasDir){
+              const BOND_SPTR nbrBond=bond->getOwningMol()[*beg];
+              if(nbrBond->getBondType()==Bond::SINGLE &&
+                 ( nbrBond->getBondDir()==Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir()==Bond::ENDDOWNRIGHT ) ){
+                nbrHasDir=true;
+              }
+              ++beg;
+            }
+            if(!nbrHasDir){
+              dirCode=3;
+            }
+          }
         }
       }
     }
