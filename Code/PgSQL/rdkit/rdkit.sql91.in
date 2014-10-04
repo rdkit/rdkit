@@ -1362,4 +1362,9 @@ CREATE OR REPLACE FUNCTION reaction_structural_bfp(reaction,int default 5)
 RETURNS bfp
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_hash(mol)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'mol_hash'
+    LANGUAGE C STRICT IMMUTABLE;
   
