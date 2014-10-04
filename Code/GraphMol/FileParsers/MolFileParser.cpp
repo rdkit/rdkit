@@ -2382,9 +2382,8 @@ namespace RDKit{
       // cleanUp(), then detect the stereochemistry.
       // (this was Issue 148)
       //
+      const Conformer &conf = res->getConformer();
       if(chiralityPossible){
-        const Conformer &conf = res->getConformer();
-        // if we aren't sanitizing, we technically shouldn't be doing this...
         MolOps::cleanUp(*res);
         DetectAtomStereoChemistry(*res, &conf);
       }
@@ -2404,7 +2403,6 @@ namespace RDKit{
       
           // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry 
           // here after sanitization because we need the ring information:
-          const Conformer &conf = res->getConformer();
           DetectBondStereoChemistry(*res, &conf);
         }
         catch (...){
@@ -2413,6 +2411,10 @@ namespace RDKit{
           throw;
         }
         MolOps::assignStereochemistry(*res,true,true,true);
+      } else {
+        // we still need to do something about double bond stereochemistry
+        // (was github issue 337)
+        DetectBondStereoChemistry(*res, &conf);
       }
 
       if(res->hasProp("_NeedsQueryScan")){
