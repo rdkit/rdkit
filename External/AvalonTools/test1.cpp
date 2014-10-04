@@ -273,7 +273,7 @@ void testGithub336() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/External/AvalonTools/test_data/";
-    std::ifstream ins((pathName+"EZ_Test.2.sdf").c_str());
+    std::ifstream ins((pathName+"EZ_test.2.sdf").c_str());
     std::string mb((std::istreambuf_iterator<char>(ins)), 
                    std::istreambuf_iterator<char>());
     ROMol *m = MolBlockToMol(mb);
