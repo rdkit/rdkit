@@ -55,6 +55,7 @@ class DrawingOptions(object):
   dash= (4,4)
 
   wedgeDashedBonds= True
+  showUnknownDoubleBonds= True
 
   # used to adjust overall scaling for molecules that have been laid out with non-standard
   # bond lengths
@@ -259,17 +260,23 @@ class MolDrawing(object):
       else:
         self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
     elif bType == Chem.BondType.DOUBLE:
-      if bond.IsInRing() or (atom.GetDegree()!=1 and bond.GetOtherAtom(atom).GetDegree()!=1):
+      crossBond = (self.drawingOptions.showUnknownDoubleBonds and \
+                     bond.GetStereo() == Chem.BondStereo.STEREOANY)
+      if not crossBond and \
+            ( bond.IsInRing() or (atom.GetDegree()!=1 and bond.GetOtherAtom(atom).GetDegree()!=1) ):
         self.canvas.addCanvasLine(newpos,newnbrPos,linewidth=width,color=color,color2=color2)
         fp1,fp2 = self._offsetDblBond(newpos,newnbrPos,bond,atom,nbr,conf)
         self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
       else:
         fp1,fp2 = self._offsetDblBond(newpos,newnbrPos,bond,atom,nbr,conf,dir=.5,
                                       lenFrac=1.0)
-        self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
-        fp1,fp2 = self._offsetDblBond(newpos,newnbrPos,bond,atom,nbr,conf,dir=-.5,
+        fp3,fp4 = self._offsetDblBond(newpos,newnbrPos,bond,atom,nbr,conf,dir=-.5,
                                       lenFrac=1.0)
+        if crossBond:
+          fp2,fp4=fp4,fp2
         self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
+        self.canvas.addCanvasLine(fp3,fp4,linewidth=width,color=color,color2=color2)
+          
     elif bType == Chem.BondType.AROMATIC:
       self.canvas.addCanvasLine(newpos,newnbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(newpos,newnbrPos,bond,atom,nbr,conf)

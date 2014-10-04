@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 try:
   from reportlab import platypus
 except ImportError:
@@ -64,7 +65,7 @@ else:
     def __call__(self,arg):
       res = list(arg)
       if self.verbose:
-        print 'Render:',res[0]
+        print('Render:',res[0])
       if hasCDX:
         smi = res[self.smiCol]
         tmpName = self.tempHandler.get('.jpg')

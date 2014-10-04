@@ -8,6 +8,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
+
 from rdkit import Chem
 import sys
 from rdkit.Chem import Randomize
@@ -16,7 +18,7 @@ def TestMolecule(mol):
   try:
     Chem.SanitizeMol(mol)
     mol = Chem.RemoveHs(mol)
-  except ValueError,msg:
+  except ValueError as msg:
     return -1
   except:
     import traceback
@@ -46,7 +48,7 @@ def TestSupplier(suppl,stopAfter=-1,reportInterval=100,reportTo=sys.stderr,
       traceback.print_exc()
       nFailed += 1
       reportTo.flush()
-      print >>reportTo,'Failure at mol %d'%nDone
+      print('Failure at mol %d'%nDone, file=reportTo)
     else:
       if mol:
         ok = TestMolecule(mol)
@@ -56,18 +58,18 @@ def TestSupplier(suppl,stopAfter=-1,reportInterval=100,reportTo=sys.stderr,
         nFailed += 1
         reportTo.flush()
         if ok==-3:
-          print >>reportTo,'Canonicalization',
-        print >>reportTo,'Failure at mol %d'%nDone,
+          print('Canonicalization',end='',file=reportTo)
+        print('Failure at mol %d'%nDone,end='',file=reportTo)
         if mol:
-          print >>reportTo,mol.GetProp(nameProp),
-        print >>reportTo,''
+          print(mol.GetProp(nameProp),end='',file=reportTo)
+        print('', file=reportTo)
 
           
     nDone += 1
     if nDone==stopAfter:
       break
     if not nDone%reportInterval:
-      print 'Done %d molecules, %d failures'%(nDone,nFailed)
+      print('Done %d molecules, %d failures'%(nDone,nFailed))
   return nDone,nFailed
 if __name__=='__main__':
   suppl = Chem.SDMolSupplier(sys.argv[1],False)
@@ -77,4 +79,4 @@ if __name__=='__main__':
     nameProp = '_Name'
     
   nDone,nFailed = TestSupplier(suppl,nameProp=nameProp)
-  print '%d failures in %d mols'%(nFailed,nDone)
+  print('%d failures in %d mols'%(nFailed,nDone))

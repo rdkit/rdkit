@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, July 2013
-
+from __future__ import print_function
 import sys
 import re
 from optparse import OptionParser
@@ -69,7 +69,7 @@ if __name__=='__main__':
 
     #print options.transform_file
     if(options.transform_file == None):
-        print "Please specify the transform file."
+        print("Please specify the transform file.")
         sys.exit(1)
 
     smiles=[]
@@ -84,7 +84,7 @@ if __name__=='__main__':
     #all the transform must come from BioDig to guarantee they have been cansmirk'ed
     infile=open(options.transform_file, 'r')
 
-    print "Input_SMILES,ID,RG-Transform,RG-transformedSMILES"
+    print("Input_SMILES,ID,RG-Transform,RG-transformedSMILES")
     for transform in infile:
         transform = transform.rstrip()
 
@@ -117,7 +117,7 @@ if __name__=='__main__':
                     products.add(Chem.MolToSmiles(p,isomericSmiles=True))
 
             for p in products:
-                print "%s,%s,%s,%s" % (x[0],x[1],transform,p)
+                print("%s,%s,%s,%s" % (x[0],x[1],transform,p))
 
 
 

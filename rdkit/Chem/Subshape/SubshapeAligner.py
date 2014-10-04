@@ -3,6 +3,7 @@
 # Copyright (C) 2007-2008 by Greg Landrum 
 #  All rights reserved
 #
+from __future__ import print_function
 from rdkit import RDLogger
 logger = RDLogger.logger()
 from rdkit import Chem,Geometry
@@ -341,7 +342,7 @@ if __name__=='__main__':
   builder = cPickle.load(file('builder.pkl','rb'))
   aligner = SubshapeAligner()
   algs = aligner.GetSubshapeAlignments(tgtMol,tgtShape,queryMol,queryShape,builder)
-  print len(algs)
+  print(len(algs))
 
   from rdkit.Chem.PyMol import MolViewer
   v = MolViewer()

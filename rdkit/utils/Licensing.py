@@ -14,13 +14,15 @@
   The verification code is used to ensure that the date
   has not been tampered with
 """
-import sha,base64,time,exceptions
+from __future__ import print_function
+
+import sha,base64,time
 
 
 EXPIRED=-1
 BADMODULE=0
 
-class LicenseError(exceptions.Exception):
+class LicenseError(Exception):
   pass
 
 # this is a base64 encoding of the string "RD License Manager"
@@ -39,10 +41,10 @@ def _Verify(lines):
   verifier = sha.new(base64.decodestring(_salt))
   inL = lines[0]
   if inL == '':
-    raise LicenseError,'EOF hit parsing license file'
+    raise LicenseError('EOF hit parsing license file')
 
   if inL.find('Expiration_Date:')==-1:
-    raise LicenseError,'bad license file format'
+    raise LicenseError('bad license file format')
   dText = inL.split(':')[-1].strip()
   verifier.update(dText)
   try:
@@ -50,7 +52,7 @@ def _Verify(lines):
   except:
     dateComponents = []
   if len(dateComponents) != 3:
-    raise LicenseError,'bad date format in license file'
+    raise LicenseError('bad date format in license file')
   day,month,year = dateComponents
 
   pos = 1
@@ -69,9 +71,9 @@ def _Verify(lines):
     pos += 1
     inL = lines[pos]
   if inL == '':
-    raise LicenseError,'EOF hit parsing license file'
+    raise LicenseError('EOF hit parsing license file')
   if inL.find('Verification:')==-1:
-    raise LicenseError,'bad license file format'
+    raise LicenseError('bad license file format')
   vText = inL.split(':')[-1].strip()
 
   expDate = int(time.mktime((year,month,day,
@@ -81,7 +83,7 @@ def _Verify(lines):
   verifier.update(str(expDate))
   verifier.update(','.join(modules))
   if verifier.hexdigest() != vText:
-    raise LicenseError,'verification of license file failed'
+    raise LicenseError('verification of license file failed')
 
   # ok, the license file has not been tampered with... proceed
   return expDate,modules
@@ -101,7 +103,7 @@ def CheckLicenseFile(filename):
   try:
     inF = open(filename,'r')
   except IOError:
-    raise LicenseError,'License file %s could not be opened'%(filename)
+    raise LicenseError('License file %s could not be opened'%(filename))
 
   lines = []
   for line in inF.readlines():
@@ -125,7 +127,7 @@ if __name__ == '__main__':
   import sys
   if len(sys.argv)>1:
     for nm in sys.argv[1:]:
-      print nm,CheckLicenseFile(nm),CheckLicenseString(open(nm,'r').read())
+      print(nm,CheckLicenseFile(nm),CheckLicenseString(open(nm,'r').read()))
 
 
   

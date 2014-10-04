@@ -158,7 +158,7 @@ namespace RDKit{
     
     //! Removes the reactant templates from a reaction if atom mapping ratio is below a given threshold
     /*! By default the removed reactant templates were attached to the agent templates.
-    /*! An alternative will be to provide a pointer to a molecule vector where these reactants should be saved.
+        An alternative will be to provide a pointer to a molecule vector where these reactants should be saved.
     */
     void removeUnmappedReactantTemplates(
       double thresholdUnmappedAtoms = 0.2,
@@ -167,7 +167,7 @@ namespace RDKit{
 
     //! Removes the product templates from a reaction if its atom mapping ratio is below a given threshold
     /*! By default the removed products templates were attached to the agent templates.
-    /*! An alternative will be to provide a pointer to a molecule vector where these products should be saved.
+        An alternative will be to provide a pointer to a molecule vector where these products should be saved.
     */
     void removeUnmappedProductTemplates(
       double thresholdUnmappedAtoms =0.2,

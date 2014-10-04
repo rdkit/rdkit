@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Chem import rdmol
 from Chem.rdmol import Atom,Bond,Mol
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
   m = rdmol.Mol()
   ParseMolBlock(lines,m)
 
-  print m.getNumAtoms()
+  print(m.getNumAtoms())
   m.debugMol()
 
-  print rdmol.MolToCDXML(m)
+  print(rdmol.MolToCDXML(m))

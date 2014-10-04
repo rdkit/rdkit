@@ -8,6 +8,7 @@ processing the C++ code.  That html is viewed with Firefox and the appropriate p
 files don't have that section and for now this program can't handle them without some additional annotation
 by hand.
 """
+from __future__ import print_function
 
 from BeautifulSoup import *
 import os
@@ -452,10 +453,10 @@ if __name__ == '__main__':
     import sys
     text = open(sys.argv[1]).read()
     class_name = sys.argv[2]
-    print do_class(text,  class_name)
+    print(do_class(text,  class_name))
     docs = do_methods(text,  class_name)
     for doc in docs:
-        print doc
+        print(doc)
         
         
     

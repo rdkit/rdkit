@@ -16,6 +16,7 @@ out to PubMed itself.  Actual calls to the functions would not include
 the _conn_ argument.
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import QueryParams,Records
 import urllib,urllib2
@@ -264,36 +265,36 @@ if __name__ == '__main__':
   ids = ['11666868','11169640']
   if 0:
     summs = GetSummaries(ids,conn=open('summary.xml','r'))
-    print 'summs:',summs
+    print('summs:',summs)
     for summary in summs:
-      print summary.Authors
-      print '\t',summary.Title
-      print '\t',summary.Source,
-      print summary.Volume,
-      print summary.Pages,
-      print summary.PubDate
+      print(summary.Authors)
+      print('\t',summary.Title)
+      print('\t',summary.Source,end='')
+      print(summary.Volume,end='')
+      print(summary.Pages,end='')
+      print(summary.PubDate)
     
   if 0:
     ids = ['11666868']
     res = GetRecords(ids,conn=open('records.xml','r'))
     for record in res:
-      print record.Authors
-      print '\t',record.Title
-      print '\t',record.Journal,
-      print record.Volume,
-      print record.Pages,
-      print record.PubYear
-      print
+      print(record.Authors)
+      print('\t',record.Title)
+      print('\t',record.Journal,end='')
+      print(record.Volume,end='')
+      print(record.Pages,end='')
+      print(record.PubYear)
+      print()
     
   if 0:
     ids = ['11666868','11169640']
     res = CheckForLinks(ids,conn=open('haslinks.xml','r'))
-    print res
+    print(res)
     
   if 0:
     ids = ['11666868']
     res = GetLinks(ids,conn=open('links.xml','r'))
     #res = GetLinks(ids)
     for id,score in res[:10]:
-      print id,score
+      print(id,score)
 

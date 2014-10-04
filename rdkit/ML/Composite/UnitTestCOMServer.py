@@ -3,6 +3,7 @@
 #
 
 # unit testing code for the composite model COM server
+from __future__ import print_function
 from rdkit import RDConfig
 import unittest
 from rdkit.ML.Composite import Composite
@@ -11,7 +12,7 @@ from Numeric import *
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
   def testConnect(self):
     " connecting to COM server "
     ok = 1

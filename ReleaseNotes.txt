@@ -2,14 +2,99 @@
 (Changes relative to Release_2014.03.1)
 
 Acknowledgements:
+Paolo Tosco, Riccardo Vianello, Jan Domanski, Nadine Schneider, Alexander Savelyev, Sereina Riniker, Noel O'Boyle, Matt Swain, Patrick Fuller, Roger Sayle
+ 
 
 Bug Fixes:
+- Bond query information not written to CTAB
+ (github issue 266)
+- Bond topology queries not written to CTABs
+ (github issue 268)
+- Combined bond query + topology query not correctly parsed from CTAB
+ (github issue 269)
+- SWIG wrapped suppliers leak memory on .next()
+ (github issue 270)
+- SWIG wrappers don't build with SWIG 3.0.x
+ (github issue 277)
+- core leak from DataStructs.ConvertToNumpyArray
+ (github issue 281)
+- MolTransforms not exposed to Java wrapper
+ (github issue 285)
+- Seg fault in ReactionFromRxnBlock
+ (github issue 290)
+- BitInfo from GetHashedMorganFingerprint() has non-folded values
+ (github issue 295)
+- bad inchi for chiral S when the molecule is sanitized
+ (github issue 296)
+- Cannot generate smiles for ChEBI 50252
+ (github issue 298)
+- Either molecule-molecule substruct matching is wrong *OR* the docs for Atom::Match incorrect 
+ (github issue 304)
+- fluorine F-F  gives segmentation fault with MMFF forcefield
+ (github issue 308)
+- cartridge: MACCS similarity wrong when using the builtin popcount and the index
+ (github issue 311)
+- Substructure Search via SMARTS implicit hydrogens
+ (github issue 313)
+- SMARTS output for [x] is wrong
+ (github issue 314)
+- Bonds not being set up properly in renumberAtoms
+ (github issue 317)
+- Python 2 code in python 3 branch
+ (github issue 326)
+- Linking error with ICC 15.0 on Linux
+ (github issue 327)
+- memory leaks when smiles/smarts parsers fail
+ (github issue 335)
+- Fixed a weakness in the angular restraint code
+ (github pull 261 from ptosco)
+- A few fixes to improve MMFF/UFF robustness
+ (github pull 274 from ptosco)
+- Static webGL rendering fix
+ (github pull 287 from patrickfuller)
+- Revert #include ordering in SmilesMolSupplier.cpp
+ (github pull 297 from mcs07)
+- Add missing include for RDDepict::compute2DCoords
+ (github pull 301 from baoilleach)
+- Herschbach-Laurie fallback implemented to fix GitHub 308
+ (github pull 312 from ptosco)
+- Issue #320 Making GetBestRMS more idiot-proof
+ (github pull 322 from jandom)
 
 New Features:
+- Should be able to do intramolecular bond breaking in reactions.
+ (github issue 58)
+- Support reactions in cartridge
+ (github issue 223)
+- Documentation of Inchi methods
+ (github issue 240)
+- add DescribeQuery() to Bond python wrapper
+ (github issue 267)
+- support avalon fingerprint in cartridge
+ (github issue 286)
+- support partial fragmentation with fragmentOnSomeBonds 
+ (github issue 288)
+- C++ implementation of FMCS algorithm
+- Reordering feature for Butina clustering
+ (github pull 302 from sriniker)
+- Changes and new functions for the calculation of RMS values between conformers of a molecule
+ (github pull 306 from sriniker)
+- Extended chemical reaction functionality and add chemical reactions to cartridge
+ (github pull 315 from NadineSchneider)
+- Custom color to highlight atoms in Mol2Image
+ (github pull 316 from jandom)
+- Several different fingerprint algorithms for chemical reactions are now available
+
  
 New Database Cartridge Features: 
+- Chemical reactions and several operations on them are now supported
+- Avalon fingerprints now supported (when support has been compiled in)
+
 
 New Java Wrapper Features:
+- FMCS implementation exposed
+- Fingerprints for chemical reactions
+- Possible core leak in some of the MolSuppliers was fixed
 
 Deprecated modules (to be removed in next release):
 
@@ -18,6 +103,9 @@ Removed modules:
 Contrib updates:
 
 Other:
+- The RDKit now supports both python3 and python2.
+- There is now conda integration for the RDKit.
+- SMILES generation is substantially faster
 
 
 ******  Release_2014.03.1 *******

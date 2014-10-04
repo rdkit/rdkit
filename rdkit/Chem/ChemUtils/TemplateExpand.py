@@ -313,7 +313,7 @@ if __name__=='__main__':
 
   if do3D:
     if not molTemplate:
-      raise ValueError,'the --3D option is only useable in combination with --moltemplate'
+      raise ValueError('the --3D option is only useable in combination with --moltemplate')
     if redrawTemplate:
       logger.warning('--redrawTemplate does not make sense in combination with --molTemplate. removing it')
       redrawTemplate=False
@@ -325,7 +325,7 @@ if __name__=='__main__':
     for i,sma in enumerate(splitL):
       patt = Chem.MolFromSmarts(sma)
       if not patt:
-        raise ValueError,'could not convert smarts "%s" to a query'%sma
+        raise ValueError('could not convert smarts "%s" to a query'%sma)
       if i>=4:
         i+=1
       replace = Chem.MolFromSmiles('[%d*]'%(i+1))

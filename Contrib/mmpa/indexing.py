@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, September 2012
-
+from __future__ import print_function
 import sys
 import re
 from rdkit import Chem
@@ -411,7 +411,7 @@ if __name__=='__main__':
     elif(options.ratio != None):
         ratio = options.ratio
         if(ratio >= 1):
-            print "Ratio specified: %s. Ratio needs to be less than 1."
+            print("Ratio specified: %s. Ratio needs to be less than 1.")
             sys.exit(1)
         use_ratio = True
 
@@ -507,12 +507,12 @@ if __name__=='__main__':
                         if(core_a != core_b):
 
                             smirks,context = cansmirk(core_a,core_b,key)
-                            print "%s,%s,%s,%s,%s,%s" % ( id_to_smi[id_a], id_to_smi[id_b], id_a, id_b, smirks, context )
+                            print("%s,%s,%s,%s,%s,%s" % ( id_to_smi[id_a], id_to_smi[id_b], id_a, id_b, smirks, context ))
 
                             #deal with symmetry switch
                             if(options.sym == True):
                                 smirks,context = cansmirk(core_b,core_a,key)
-                                print "%s,%s,%s,%s,%s,%s" % ( id_to_smi[id_b], id_to_smi[id_a], id_b, id_a, smirks, context )
+                                print("%s,%s,%s,%s,%s,%s" % ( id_to_smi[id_b], id_to_smi[id_a], id_b, id_a, smirks, context ))
 
 
 
