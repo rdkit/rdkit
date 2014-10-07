@@ -47,12 +47,13 @@ then
 	mkdir -p src
 	echo "================================================================"
 	echo "Downloading InChI software distribution version 1.04"
-	echo "  http://www.inchi-trust.org/sites/default/files/inchi-1.04/INCHI-1-API.ZIP"
+	echo "  http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip"
 	echo "  ====>"
 	echo "  $TEMPDIR"
 	echo "================================================================"
 	cd $TEMPDIR
-	wget http://www.inchi-trust.org/sites/default/files/inchi-1.04/INCHI-1-API.ZIP # transfered to a new url from 1.03
+	wget http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip
+	
 	echo "================================================================"
 	echo "Unarchiving"
 	echo "================================================================"
