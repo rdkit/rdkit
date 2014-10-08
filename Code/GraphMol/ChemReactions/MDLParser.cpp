@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -63,10 +63,9 @@ namespace RDKit {
       if(inStream.eof()){
 	throw ChemicalReactionParserException("premature EOF hit.");
       }
-  
       rxn=new ChemicalReaction();
   
-      unsigned int nReacts=0,nProds=0;
+      unsigned int nReacts=0,nProds=0,nAgents=0;
       unsigned int spos = 0;
       if(tempStr.size()<6){
 	throw ChemicalReactionParserException("rxn counts line is too short");
@@ -75,16 +74,21 @@ namespace RDKit {
 	nReacts = FileParserUtils::stripSpacesAndCast<unsigned int>(tempStr.substr(0,3));
 	spos = 3;
 	nProds = FileParserUtils::stripSpacesAndCast<unsigned int>(tempStr.substr(spos,3));
-	spos = 6;
-      } catch (boost::bad_lexical_cast &) {
-	if (rxn) {
-	  delete rxn;
+	spos = 6;;
+	if(tempStr.size()>6){
+	  std::string trimmed=boost::trim_copy(tempStr.substr(spos,3));
+	  if(trimmed.size() > 0){
+	    nAgents = FileParserUtils::stripSpacesAndCast<unsigned int>(tempStr.substr(spos,3));
+	    spos = 9;
+	  }
 	}
+      } catch (boost::bad_lexical_cast &) {
+        delete rxn;
+        rxn=0;
 	std::ostringstream errout;
 	errout << "Cannot convert " << tempStr.substr(spos,3) << " to int";
 	throw ChemicalReactionParserException(errout.str()) ;
       }
-    
       for(unsigned int i=0;i<nReacts;++i){
 	line++;
 	tempStr = getLine(inStream);
@@ -128,8 +132,30 @@ namespace RDKit {
 	  throw ChemicalReactionParserException("Null product in reaction file.");
 	}
 	rxn->addProductTemplate(ROMOL_SPTR(prod));
-      }    
+      }
+
+      for(unsigned int i=0;i<nAgents;++i){
+	line++;
+	tempStr = getLine(inStream);
+	if(inStream.eof()){
+	  throw ChemicalReactionParserException("premature EOF hit.");
+	}
+	if(tempStr.substr(0,4)!="$MOL"){
+	  throw ChemicalReactionParserException("$MOL header not found");
+	}
+	ROMol *agent;
+	try{
+		agent=MolDataStreamToMol(inStream,line,false);
+	} catch (FileParseException &e){
+	  std::ostringstream errout;
+	  errout << "Cannot parse agent " << i << ". The error was:\n\t" << e.message();
+	  throw ChemicalReactionParserException(errout.str()) ;
+	}
+	rxn->addAgentTemplate(ROMOL_SPTR(agent));
+      }
+
     }
+
 
     void ParseV3000RxnBlock(std::istream &inStream,unsigned int &line,
 			    ChemicalReaction *&rxn)
@@ -158,6 +184,10 @@ namespace RDKit {
       }
       unsigned int nReacts=FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[1]);
       unsigned int nProds=FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[2]);
+      unsigned int nAgents=0;
+      if(tokens.size()>3){
+        nAgents=FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[3]);
+      }
       
       tempStr = FileParserUtils::getV3000Line(&inStream,line);
       boost::to_upper(tempStr);
@@ -221,6 +251,39 @@ namespace RDKit {
       if(tempStr.length()<11 || tempStr.substr(0,11) != "END PRODUCT"){
 	throw FileParseException("END PRODUCT line not found") ;
       }
+
+      if(nAgents){
+        tempStr = FileParserUtils::getV3000Line(&inStream,line);
+        boost::to_upper(tempStr);
+        if(tempStr.length()<14 || tempStr.substr(0,14) != "BEGIN AGENT"){
+          throw FileParseException("BEGIN AGENT line not found") ;
+        }
+      }
+      for(unsigned int i=0;i<nAgents;++i){
+        RWMol *agent;
+        unsigned int natoms,nbonds;
+        bool chiralityPossible;
+        Conformer *conf=0;
+        agent= new RWMol();
+        try {
+          FileParserUtils::ParseV3000CTAB(&inStream,line,agent,conf,
+        		  chiralityPossible,natoms,nbonds,true,false);
+        } catch (FileParseException &e){
+          delete agent;
+          agent=0;
+          std::ostringstream errout;
+          errout << "Cannot parse agent " << i << ". The error was:\n\t" << e.message();
+          throw ChemicalReactionParserException(errout.str()) ;
+        }
+        rxn->addAgentTemplate(ROMOL_SPTR(dynamic_cast<ROMol *>(agent)));
+      }
+      if(nAgents){
+        tempStr = FileParserUtils::getV3000Line(&inStream,line);
+        boost::to_upper(tempStr);
+        if(tempStr.length()<12 || tempStr.substr(0,12) != "END AGENT"){
+    	    throw FileParseException("END AGENT line not found") ;
+        }
+      }
     }
   } // end of local namespace
 
@@ -250,10 +313,10 @@ namespace RDKit {
     }
     catch (ChemicalReactionParserException &e) { 
       // catch our exceptions and throw them back after cleanup
-      if(res) delete res;
+      delete res;
+      res=0;
       throw e;
     }
-
     // convert atoms to queries:
     for(MOL_SPTR_VECT::const_iterator iter=res->beginReactantTemplates();
 	iter != res->endReactantTemplates();++iter){

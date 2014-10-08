@@ -13,6 +13,7 @@
 
 
 """
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import Graphs
 from rdkit.Chem import rdchem
@@ -82,7 +83,7 @@ def _pyHallKierAlpha(m):
     else:
       rA = PeriodicTable.nameTable[symb][5]
       alpha = rA/rC - 1
-    print atom.GetIdx(),atom.GetSymbol(),alpha
+    print(atom.GetIdx(),atom.GetSymbol(),alpha)
     alphaSum += alpha  
   return alphaSum    
 #HallKierAlpha.version="1.0.2"  
@@ -515,11 +516,11 @@ def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
   """
      Used by BertzCT
   """
-  connectionList = connectionDict.values()
+  connectionList = list(connectionDict.values())
   totConnections = sum(connectionList)
   connectionIE = totConnections*(entropy.InfoEntropy(numpy.array(connectionList)) +
                                  math.log(totConnections)/_log2val)
-  atomTypeList = atomTypeDict.values()
+  atomTypeList = list(atomTypeDict.values())
   atomTypeIE = numAtoms*entropy.InfoEntropy(numpy.array(atomTypeList))
   return atomTypeIE + connectionIE
 
@@ -617,7 +618,7 @@ def BertzCT(mol, cutoff = 100, dMat = None, forceDMat = 1):
 
   bondDict, neighborList, vdList = _CreateBondDictEtc(mol, numAtoms)
   symmetryClasses = _AssignSymmetryClasses(mol, vdList, dMat, forceDMat, numAtoms, cutoff)
-  #print 'Symmm Classes:',symmetryClasses
+  #print('Symmm Classes:',symmetryClasses)
   for atomIdx in range(numAtoms):
     hingeAtomNumber = mol.GetAtomWithIdx(atomIdx).GetAtomicNum()
     atomTypeDict[hingeAtomNumber] = atomTypeDict.get(hingeAtomNumber,0)+1
@@ -628,7 +629,7 @@ def BertzCT(mol, cutoff = 100, dMat = None, forceDMat = 1):
       neighbor_iIdx = neighborList[atomIdx][i]
       NiClass = symmetryClasses[neighbor_iIdx]
       bond_i_order = _LookUpBondOrder(atomIdx, neighbor_iIdx, bondDict)
-      #print '\t',atomIdx,i,hingeAtomClass,NiClass,bond_i_order
+      #print('\t',atomIdx,i,hingeAtomClass,NiClass,bond_i_order)
       if (bond_i_order > 1) and (neighbor_iIdx > atomIdx):
         numConnections = bond_i_order*(bond_i_order - 1)/2
         connectionKey = (min(hingeAtomClass, NiClass), max(hingeAtomClass, NiClass))
@@ -645,8 +646,6 @@ def BertzCT(mol, cutoff = 100, dMat = None, forceDMat = 1):
   if not connectionDict:
     connectionDict = {'a':1}
 
-  ks = connectionDict.keys()
-  ks.sort()
   return _CalculateEntropies(connectionDict, atomTypeDict, numAtoms)
 BertzCT.version="2.0.0"
 # Recent Revisions:

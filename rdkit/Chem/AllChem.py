@@ -37,7 +37,7 @@ Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
 import numpy, os
 from rdkit.RDLogger import logger
 logger = logger()
-
+import warnings
 def TransformMol(mol,tform,confId=-1,keepConfs=False):
   """  Applies the transformation (usually a 4x4 double matrix) to a molecule
   if keepConfs is False then all but that conformer are removed
@@ -108,10 +108,10 @@ def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
   """
   if reference and referencePattern:
     if not reference.GetNumAtoms(onlyExplicit=True)==referencePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError,'When a pattern is provided, it must have the same number of atoms as the reference'
+      raise ValueError('When a pattern is provided, it must have the same number of atoms as the reference')
     referenceMatch = reference.GetSubstructMatch(referencePattern)
     if not referenceMatch:
-      raise ValueError,"Reference does not map to itself"
+      raise ValueError("Reference does not map to itself")
   else:
     referenceMatch = range(reference.GetNumAtoms(onlyExplicit=True))
   if referencePattern:
@@ -121,7 +121,7 @@ def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
 
   if not match:
     if not acceptFailure:
-      raise ValueError,'Substructure match with reference not found.'
+      raise ValueError('Substructure match with reference not found.')
     else:
       coordMap={}
   else:
@@ -175,12 +175,21 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
       If not provided, these will be generated using a substructure
       search.
 
+  Note: 
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial 
+  explosion' especially if hydrogens are present.  
+  Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing the
+  atom order.
+
   """
   if not maps:
     matches = ref.GetSubstructMatches(probe,uniquify=False)
     if not matches:
-      raise ValueError,'mol %s does not match mol %s'%(ref.GetProp('_Name'),
-                                                       probe.GetProp('_Name'))
+      raise ValueError('mol %s does not match mol %s'%(ref.GetProp('_Name'),
+                                                       probe.GetProp('_Name')))
+    if len(matches) > 1e6: 
+      warnings.warn("{} matches detected for molecule {}, this may lead to a performance slowdown.".format(len(matches), probe.GetProp('_Name')))
     maps = [list(enumerate(match)) for match in matches]
   bestRMS=1000.
   for amap in maps:
@@ -193,6 +202,76 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
   if bestMap != amap:
     AlignMol(probe,ref,probeConfId,refConfId,atomMap=bestMap)
   return bestRMS
+
+def GetConformerRMS(mol,confId1,confId2,atomIds=None,prealigned=False):
+  """ Returns the RMS between two conformations.
+  By default, the conformers will be aligned to the first conformer
+  of the molecule (i.e. the reference) before RMS calculation and, 
+  as a side-effect, will be left in the aligned state.
+  
+  Arguments:
+    - mol:        the molecule
+    - confId1:    the id of the first conformer
+    - confId2:    the id of the second conformer
+    - atomIds:    (optional) list of atom ids to use a points for
+                  alingment - defaults to all atoms
+    - prealigned: (optional) by default the conformers are assumed
+                  be unaligned and will therefore be aligned to the
+                  first conformer
+
+  """
+  # align the conformers if necessary
+  # Note: the reference conformer is always the first one
+  if not prealigned:
+    if atomIds:
+      AlignMolConformers(mol, confIds=[confId1,confId2], atomIds=atomIds)
+    else:
+      AlignMolConformers(mol, confIds=[confId1,confId2])
+
+  # calculate the RMS between the two conformations
+  conf1 = mol.GetConformer(id=confId1)
+  conf2 = mol.GetConformer(id=confId2)
+  ssr = 0
+  for i in range(mol.GetNumAtoms()):
+    d = conf1.GetAtomPosition(i).Distance(conf2.GetAtomPosition(i))
+    ssr += d*d
+  ssr /= mol.GetNumAtoms()
+  return numpy.sqrt(ssr)
+
+def GetConformerRMSMatrix(mol,atomIds=None):
+  """ Returns the RMS matrix of the conformers of a molecule.
+  As a side-effect, the conformers will be aligned to the first
+  conformer (i.e. the reference) and will left in the aligned state.
+        
+  Arguments:
+    - mol:     the molecule
+    - atomIds: (optional) list of atom ids to use a points for
+               alingment - defaults to all atoms
+    
+  Note that the returned RMS matrix is symmetrically, i.e. it is the
+  lower half of the matrix, e.g. for 5 conformers:
+  rmsmatrix = [ a,
+                b, c,
+                d, e, f,
+                g, h, i, j]
+  This way it can be directly used as distance matrix in e.g. Butina 
+  clustering.
+      
+  """
+  # align the conformers
+  # Note: the reference conformer is always the first one
+  rmsvals = []
+  if atomIds:
+    AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
+  else:
+    AlignMolConformers(mol, RMSlist=rmsvals)
+  # loop over the conformations (except the reference one)
+  cmat = []
+  for i in range(1, mol.GetNumConformers()):
+    cmat.append(rmsvals[i-1])
+    for j in range(1,i):
+      cmat.append(GetConformerRMS(mol, i, j, atomIds=atomIds, prealigned=True))
+  return cmat
 
 def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   """ Returns a generator for the virtual library defined by
@@ -220,13 +299,14 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   >>> r = AllChem.EnumerateLibraryFromReaction(rxn,[acids,amines])
 
   ... look at the first 4 compounds:
-  >>> [Chem.MolToSmiles(r.next()[0]) for x in range(4)]
+  >>> [Chem.MolToSmiles(next(r)[0]) for x in range(4)]
   ['NC=O', 'CNC=O', 'CCNC=O', 'CCCNC=O']
 
 
   """
   if len(sidechainSets) != reaction.GetNumReactantTemplates():
-    raise ValueError,'%d sidechains provided, %d required'%(len(sidechainSets),reaction.GetNumReactantTemplates())
+    raise ValueError('%d sidechains provided, %d required' %
+                     (len(sidechainSets),reaction.GetNumReactantTemplates()))
 
   def _combiEnumerator(items,depth=0):
     for item in items[depth]:
@@ -287,7 +367,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
   """
   match = mol.GetSubstructMatch(core)
   if not match:
-    raise ValueError,"molecule doesn't match the core"
+    raise ValueError("molecule doesn't match the core")
   coordMap={}
   coreConf = core.GetConformer(coreConfId)
   for i,idxI in enumerate(match):
@@ -296,7 +376,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
 
   ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed,**kwargs)
   if ci<0:
-    raise ValueError,'Could not embed molecule.'
+    raise ValueError('Could not embed molecule.')
 
   algMap=[(j,i) for i,j in enumerate(match)]
 
@@ -349,14 +429,14 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     >>> from rdkit.Chem import AllChem
     >>> template = AllChem.MolFromSmiles("CN1C(=NC(C1=O)(c2ccccc2)c3ccccc3)N")
     >>> mol = AllChem.MolFromPDBFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4DJU_lig.pdb'))
-    >>> print len([1 for b in template.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    >>> len([1 for b in template.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8
-    >>> print len([1 for b in mol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    >>> len([1 for b in mol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     22
 
     Now assign the bond orders based on the template molecule
     >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
-    >>> print len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
+    >>> len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8
 
     Note that the template molecule should have no explicit hydrogens

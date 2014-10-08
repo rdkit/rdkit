@@ -1,5 +1,6 @@
 //
 //  Copyright (C) 2009 Greg Landrum
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -48,6 +49,8 @@ namespace RDKit{
       ENDREACTANTS,
       BEGINPRODUCTS,
       ENDPRODUCTS,
+      BEGINAGENTS,
+      ENDAGENTS,
       ENDREACTION,
     } Tags;
 

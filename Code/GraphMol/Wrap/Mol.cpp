@@ -15,6 +15,7 @@
 #include "rdchem.h"
 #include "seqs.hpp"
 // ours
+#include <RDBoost/pyint_api.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -27,10 +28,11 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-  std::string MolToBinary(const ROMol &self){
+  python::object MolToBinary(const ROMol &self){
     std::string res;
     MolPickler::pickleMol(self,res);
-    return res;
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
   }
   //
   // allows molecules to be pickled.

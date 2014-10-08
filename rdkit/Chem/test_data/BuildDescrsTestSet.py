@@ -1,5 +1,7 @@
+from __future__ import print_function
 from rdkit import RDConfig
-import os.path,cPickle
+import os.path
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
@@ -22,7 +24,7 @@ def runIt(inFileName,outFileName,smiCol=0,maxMols=-1,delim=','):
       if not splitL: continue
       smi = splitL[smiCol].strip()
       mol = Chem.MolFromSmiles(smi)
-      print smi
+      print(smi)
       if mol:
         vals = []
         for descr in descrs:

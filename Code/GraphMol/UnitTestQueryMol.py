@@ -3,12 +3,14 @@
 """basic unit testing code for query mols
 
 """
+from __future__ import print_function
+
 from rdkit import RDConfig
 import unittest,os,sys
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     # decipher the name of the executable
     if(sys.platform == 'win32'):
       exe = 'QueryMolTest___Win32_Debug/QueryMolTest.exe'

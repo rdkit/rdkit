@@ -7,7 +7,8 @@ from rdkit import Chem,Geometry
 from rdkit.Chem import AllChem
 from rdkit.Chem.Subshape import SubshapeObjects
 from rdkit.Chem.Subshape import BuilderUtils
-import time,cPickle
+from rdkit.six.moves import cPickle
+import time
 
 #-----------------------------------------------------------------------------
 class SubshapeCombineOperations(object):
@@ -59,7 +60,7 @@ class SubshapeBuilder(object):
     pts = BuilderUtils.ClusterTerminalPts(pts,self.winRad,self.terminalPtRadScale)
     BuilderUtils.ExpandTerminalPts(shape,pts,self.winRad)
     if len(pts)<3:
-      raise ValueError,'only found %d terminals, need at least 3'%len(pts)
+      raise ValueError('only found %d terminals, need at least 3'%len(pts))
     
     if not terminalPtsOnly:
       pts = BuilderUtils.AppendSkeletonPoints(shape.grid,pts,self.winRad,self.stepSize)
@@ -79,7 +80,7 @@ class SubshapeBuilder(object):
     elif operation==SubshapeCombineOperations.INTERSECT:
       cs.grid &=  subshape2.grid
     else:
-      raise ValueError,'bad combination operation'
+      raise ValueError('bad combination operation')
     return cs
 
     

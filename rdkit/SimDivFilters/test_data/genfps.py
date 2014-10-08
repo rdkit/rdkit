@@ -1,7 +1,8 @@
+from __future__ import print_function
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 
 if RDConfig.usePgSQL:
@@ -15,7 +16,7 @@ conn = DbConnect(dbName,molTblName)
 conn.AddTable(fpTblName,'id varchar(10),autofragmentfp %s'%DbModule.binaryTypeName)
 d = conn.GetData()
 for smi,id in d:
-  print repr(id),repr(smi)
+  print(repr(id),repr(smi))
   mol = Chem.MolFromSmiles(smi)
   fp = Chem.RDKFingerprint(mol)
   pkl = cPickle.dumps(fp)

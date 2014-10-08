@@ -79,13 +79,13 @@ class FeatMap(object):
     self._feats = []
     if feats:
       if len(feats)!=len(weights):
-        raise ValueError,'feats and weights lists must be the same length'
+        raise ValueError('feats and weights lists must be the same length')
       for feat,weight in zip(feats,weights):
         self.AddFeature(feat,weight)
 
   def AddFeature(self,feat,weight=None):
-    if self.params and not self.params.has_key(feat.GetFamily()):
-      raise ValueError,'feature family %s not found in params'%feat.GetFamily()
+    if self.params and not feat.GetFamily() in self.params:
+      raise ValueError('feature family %s not found in params'%feat.GetFamily())
 
     newFeat = FeatMapPoint()
     newFeat.initFromFeat(feat)
@@ -95,9 +95,9 @@ class FeatMap(object):
     
   def AddFeatPoint(self,featPt):
     if not isinstance(featPt,FeatMapPoint):
-      raise ValueError,'addFeatPoint() must be called with a FeatMapPoint instance'
-    if self.params and not self.params.has_key(featPt.GetFamily()):
-      raise ValueError,'feature family %s not found in params'%featPt.GetFamily()
+      raise ValueError('addFeatPoint() must be called with a FeatMapPoint instance')
+    if self.params and not featPt.GetFamily() in self.params:
+      raise ValueError('feature family %s not found in params'%featPt.GetFamily())
     self._feats.append(featPt)
 
     
@@ -149,7 +149,7 @@ class FeatMap(object):
       if self.dirScoreMode==FeatDirScoreMode.DotPosRange:
         dirScore = (dirScore + 1.0)/2.0
       elif self.dirScoreMode!=FeatDirScoreMode.DotFullRange:
-        raise NotImplementedError,'bad feature dir score mode'
+        raise NotImplementedError('bad feature dir score mode')
       score *= dirScore
       
     return score
@@ -158,12 +158,12 @@ class FeatMap(object):
                  featsToFeatMapIdx=[]):
     nFeats = len(self._feats)
     if mapScoreVect and len(mapScoreVect)!=nFeats:
-      raise ValueError,'if provided, len(mapScoreVect) should equal numFeats'
+      raise ValueError('if provided, len(mapScoreVect) should equal numFeats')
     nToScore = len(featsToScore)
     if featsScoreVect and len(featsScoreVect)!=nToScore:
-      raise ValueError,'if provided, len(featsScoreVect) should equal len(featsToScore)'
+      raise ValueError('if provided, len(featsScoreVect) should equal len(featsToScore)')
     if featsToFeatMapIdx and len(featsToFeatMapIdx)!=nToScore:
-      raise ValueError,'if provided, len(featsToFeatMapIdx) should equal len(featsToScore)'
+      raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
 
     if mapScoreVect:
       for i in range(nFeats): mapScoreVect[i]=0.0
@@ -206,7 +206,7 @@ class FeatMap(object):
             mapScoreVect[sIdx] += lScore
             featsToFeatMapIdx[oIdx].append(sIdx)
           else:
-            raise ValueError,'bad score mode'
+            raise ValueError('bad score mode')
 
     totScore = 0.0
     if self.scoreMode == FeatMapScoreMode.Closest:

@@ -13,6 +13,7 @@
 validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 
 """
+from __future__ import print_function
 import unittest
 import numpy
 from rdkit import Chem
@@ -30,8 +31,8 @@ class TestCase(unittest.TestCase):
       counts = counts[numpy.nonzero(counts)]
       vals = vals[numpy.nonzero(vals)]
       if show:
-        print counts
-        print vals
+        print(counts)
+        print(vals)
       assert len(c)==len(counts),'bad count len for smiles: %s'%(smi)
       assert len(v)==len(vals),'bad val len for smiles: %s'%(smi)
       c = numpy.array(c)

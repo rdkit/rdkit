@@ -153,7 +153,7 @@ class Logger(object):
       tempL = kwargs['loggerIgnore']
       for entry in tempL:
         if type(entry) not in stringTypes:
-          raise ValueError,'All entries in loggerIgnore must be either strings or regexps'
+          raise ValueError('All entries in loggerIgnore must be either strings or regexps')
       self.__dict__['_loggerIgnore'] = tempL
       del kwargs['loggerIgnore']
     else:
@@ -186,7 +186,7 @@ class Logger(object):
       else:
         return tmpAttr
     else:
-      raise AttributeError, '%s instance has no attribute %s'%(repr(self._loggerClass.__name__),repr(which))
+      raise AttributeError('%s instance has no attribute %s'%(repr(self._loggerClass.__name__),repr(which)))
 
   def __setattr__(self,which,val):
     """ setattr calls (i.e. wrappedObject.foo = 1) are also logged

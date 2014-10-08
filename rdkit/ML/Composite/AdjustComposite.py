@@ -6,6 +6,7 @@
 """ functionality to allow adjusting composite model contents
 
 """
+from __future__ import print_function
 import numpy
 import copy
 
@@ -71,7 +72,7 @@ def BalanceComposite(model,set1,set2,weight,targetSize,names1=None,names2=None):
   # sort them:
   bestOrder = list(numpy.argsort(scores))
   bestOrder.reverse()
-  print '\tTAKE:',bestOrder[:targetSize]
+  print('\tTAKE:',bestOrder[:targetSize])
   # and now take the best set:
   for i in range(targetSize):
     idx = bestOrder[i]

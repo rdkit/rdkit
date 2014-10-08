@@ -3,11 +3,11 @@
 #
 
 """ """
-from rdkit import RDConfig
 import unittest
-from rdkit.ML.DecTree import ID3,PruneTree,CrossValidate
 import copy
-import cPickle
+from rdkit import RDConfig
+from rdkit.ML.DecTree import ID3,PruneTree,CrossValidate
+from rdkit.six.moves import cPickle
 
 def feq(a,b,tol=1e-4):
   return abs(a-b)<=tol

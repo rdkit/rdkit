@@ -61,10 +61,10 @@ class SaltRemover(object):
     """
     whitespace = re.compile(r'[\t ]+')
     if self.defnData:
-      from cStringIO import StringIO
+      from rdkit.six.moves import cStringIO as StringIO
       inF = StringIO(self.defnData)
     else:
-      inF = file(self.defnFilename,'r')
+      inF = open(self.defnFilename,'r')
     self.salts = []
     for line in inF:
       line = line.strip().split('//')[0]
@@ -75,7 +75,7 @@ class SaltRemover(object):
         except:
           import traceback
           traceback.print_exc()
-          raise ValueError,line
+          raise ValueError(line)
         self.salts.append(salt)
 
   def StripMol(self,mol,dontRemoveEverything=False):

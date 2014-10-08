@@ -1,11 +1,14 @@
+from __future__ import print_function
+import unittest
+import os,copy
+import math
+import numpy
+
+from rdkit.six.moves import cPickle as pickle
+from rdkit.six import next
 from rdkit import Chem
 from rdkit.Chem import rdDistGeom,ChemicalForceFields,rdMolAlign
 from rdkit import RDConfig
-import unittest
-import os,copy
-import cPickle as pickle
-import math
-import numpy
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
 logger=logger()
@@ -92,7 +95,7 @@ class TestCase(unittest.TestCase) :
         
         ofile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
                                             'test_data','embedDistOpti.sdf')
-        self.failUnless(compareWithOld(fileN, ofile))
+        self.assertTrue(compareWithOld(fileN, ofile))
 
     def test1Small(self):
         #writer = Chem.SDWriter("test.sdf")
@@ -100,22 +103,22 @@ class TestCase(unittest.TestCase) :
         mol = Chem.MolFromSmiles('O')
         rdDistGeom.EmbedMolecule(mol,10,1)
         conf = mol.GetConformer()
-        self.failUnless(lstEq(conf.GetAtomPosition(0), [0.0, 0.0, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(0), [0.0, 0.0, 0.0]))
         #writer.write(mol)
         
         mol = Chem.MolFromSmiles('CO')
         rdDistGeom.EmbedMolecule(mol, 10,1)
         conf = mol.GetConformer()
-        self.failUnless(lstEq(conf.GetAtomPosition(0), [0.69192, 0.0, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.69192, 0.0, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(0), [0.69192, 0.0, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.69192, 0.0, 0.0]))
         #writer.write(mol)
 
         mol = Chem.MolFromSmiles('CCC')
         rdDistGeom.EmbedMolecule(mol,10,1)
         conf = mol.GetConformer()
-        self.failUnless(lstEq(conf.GetAtomPosition(0), [-1.21676, -0.2989, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.00604, 0.59337, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(2), [1.22281, -0.29446, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.21676, -0.2989, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.00604, 0.59337, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.22281, -0.29446, 0.0]))
         #writer.write(mol)
         
         mol = Chem.MolFromSmiles('O=C=O')
@@ -123,9 +126,9 @@ class TestCase(unittest.TestCase) :
         conf = mol.GetConformer()
         
         #writer.write(mol)
-        self.failUnless(lstEq(conf.GetAtomPosition(0), [-1.2180, -0.06088, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(1), [-0.00408, 0.12116, 0.0]))
-        self.failUnless(lstEq(conf.GetAtomPosition(2), [1.22207, -0.060276, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.2180, -0.06088, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.00408, 0.12116, 0.0]))
+        self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.22207, -0.060276, 0.0]))
         
         mol = Chem.MolFromSmiles('C=C=C=C')
         rdDistGeom.EmbedMolecule(mol,10,1)
@@ -134,26 +137,26 @@ class TestCase(unittest.TestCase) :
         #writer.write(mol)
 
         d1 = computeDist(conf.GetAtomPosition(0), conf.GetAtomPosition(1))
-        self.failUnless(feq(d1, 1.31, 0.01))
+        self.assertTrue(feq(d1, 1.31, 0.01))
         d2 = computeDist(conf.GetAtomPosition(0), conf.GetAtomPosition(2))
-        self.failUnless(feq(d2, 2.59, 0.05))
+        self.assertTrue(feq(d2, 2.59, 0.05))
         d3 = computeDist(conf.GetAtomPosition(0), conf.GetAtomPosition(3))
-        self.failUnless(feq(d3, 3.84, 0.1))
+        self.assertTrue(feq(d3, 3.84, 0.1))
         d4 = computeDist(conf.GetAtomPosition(1), conf.GetAtomPosition(2))
-        self.failUnless(feq(d4, 1.29, 0.01))
+        self.assertTrue(feq(d4, 1.29, 0.01))
         d5 = computeDist(conf.GetAtomPosition(1), conf.GetAtomPosition(3))
-        self.failUnless(feq(d5, 2.54, 0.1))
+        self.assertTrue(feq(d5, 2.54, 0.1))
         d6 = computeDist(conf.GetAtomPosition(2), conf.GetAtomPosition(3))
-        self.failUnless(feq(d6, 1.31, 0.01))
+        self.assertTrue(feq(d6, 1.31, 0.01))
 
     def test2Utils(self):
         mol = Chem.MolFromSmiles('CC')
         bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
-        self.failUnless(bm[1,0]>0)
-        self.failUnless(bm[0,1]>0)
-        self.failUnless(bm[0,1]>=bm[1,0])
-        self.failUnless(bm[1,0]<1.510)
-        self.failUnless(bm[0,1]>1.510)
+        self.assertTrue(bm[1,0]>0)
+        self.assertTrue(bm[0,1]>0)
+        self.assertTrue(bm[0,1]>=bm[1,0])
+        self.assertTrue(bm[1,0]<1.510)
+        self.assertTrue(bm[0,1]>1.510)
 
     def test3MultiConf(self):
         mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
@@ -165,18 +168,18 @@ class TestCase(unittest.TestCase) :
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
             ee = ff.CalcEnergy()
             nenergies.append(ee)
-        #print ['%.2f'%x for x in nenergies]
-        #print nenergies
-        self.failUnless(lstEq(energies, nenergies,tol=1e-2))
+        #print(['%.2f'%x for x in nenergies])
+        #print(nenergies)
+        self.assertTrue(lstEq(energies, nenergies,tol=1e-2))
             
     def test4OrderDependence(self) :
-        self.failUnless(compareOrder("CC(C)(C)C(=O)NC(C1)CC(N2C)CCC12",
+        self.assertTrue(compareOrder("CC(C)(C)C(=O)NC(C1)CC(N2C)CCC12",
                                      "CN1C2CCC1CC(NC(=O)C(C)(C)C)C2"))
         #issue 230
-        self.failUnless(compareOrder("C#CC(C)(C)N(CN1)C\N=C/1SC",
+        self.assertTrue(compareOrder("C#CC(C)(C)N(CN1)C\\N=C/1SC",
                                      "CSC1=NCN(C(C)(C)C#C)CN1"))
         #issue 232
-        self.failUnless(compareOrder("CC(C)(C)C(=O)NC(C1)CC(N2C)CCC12",
+        self.assertTrue(compareOrder("CC(C)(C)C(=O)NC(C1)CC(N2C)CCC12",
                                      "CN1C2CCC1CC(NC(=O)C(C)(C)C)C2"))
         
     def test5Issue285(self):
@@ -185,7 +188,7 @@ class TestCase(unittest.TestCase) :
         for i,ci in enumerate(cs):
             for j in range(i+1,len(cs)):
                 cj = cs[j]
-                self.failUnless(Chem.MolToMolBlock(m,confId=ci)!=Chem.MolToMolBlock(m,confId=cj))
+                self.assertTrue(Chem.MolToMolBlock(m,confId=ci)!=Chem.MolToMolBlock(m,confId=cj))
 
     def test6RmsPruning(self):
         smiles = ['CC(C)CC(NC(C1[N+]CCC1)=O)C([O-])=O',
@@ -206,7 +209,7 @@ class TestCase(unittest.TestCase) :
             
         d = [abs(x-y) for x,y in zip(expected,nconfs)]
 
-        self.failUnless(max(d)<=1)
+        self.assertTrue(max(d)<=1)
 
     def test6Chirality(self):
         # turn on chirality and we should get chiral volume that is pretty consistent and
@@ -216,21 +219,21 @@ class TestCase(unittest.TestCase) :
         mol = Chem.MolFromSmiles(smiles)
         cids = rdDistGeom.EmbedMultipleConfs(mol, 30, maxAttempts=30,
                                              randomSeed=100)
-        self.failUnless(len(cids)==30)
+        self.assertTrue(len(cids)==30)
         for cid in cids:
             conf = mol.GetConformer(cid)
             vol = computeChiralVol(conf.GetAtomPosition(0),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(abs(vol-tgtVol)<1)
+            self.assertTrue(abs(vol-tgtVol)<1)
 
         # turn of chirality and now we should see both chiral forms
         smiles = "ClC(C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
         cids = rdDistGeom.EmbedMultipleConfs(mol, 30, maxAttempts=30,
                                              randomSeed=120)
-        self.failUnless(len(cids)==30)
+        self.assertTrue(len(cids)==30)
         nPos=0
         nNeg=0
         for cid in cids:
@@ -239,11 +242,11 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
+            self.assertTrue(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
             if vol<0: nNeg+=1
             else: nPos+=1
-        self.failUnless(nPos>0)
-        self.failUnless(nNeg>0)
+        self.assertTrue(nPos>0)
+        self.assertTrue(nNeg>0)
 
         tgtVol=5.0
         for i in range(10):
@@ -255,7 +258,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
-            self.failUnless(abs(vol-tgtVol)<1,"%s %s"%(vol,tgtVol))
+            self.assertTrue(abs(vol-tgtVol)<1,"%s %s"%(vol,tgtVol))
 
         tgtVol=3.5
         expected = [-3.62, -3.67, -3.72,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
@@ -270,19 +273,19 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
-            self.failUnless(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
+            self.assertTrue(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
             if vol<0: nNeg+=1
             else: nPos+=1
 
-        self.failUnless(nPos>0)
-        self.failUnless(nNeg>0)
+        self.assertTrue(nPos>0)
+        self.assertTrue(nNeg>0)
 
         smiles = "Cl[C@H](F)Br"
         m = Chem.MolFromSmiles(smiles)
         mol = Chem.AddHs(m)
         cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
                                              randomSeed=100)
-        self.failUnless(len(cids)==10)
+        self.assertTrue(len(cids)==10)
         tgtVol=10.5
         for cid in cids:
             conf = mol.GetConformer(cid)
@@ -290,7 +293,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(abs(vol-tgtVol)<2.)
+            self.assertTrue(abs(vol-tgtVol)<2.)
         
         # let's try a little more complicated system
         expectedV1 = -2.0
@@ -308,7 +311,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(7),
                                    conf.GetAtomPosition(13))
-            self.failUnless(abs(vol1-expectedV1)<1 or abs(vol1+expectedV1)<1)
+            self.assertTrue(abs(vol1-expectedV1)<1 or abs(vol1+expectedV1)<1)
             if vol1<0: nNeg+=1
             else: nPos+=1
 
@@ -317,15 +320,15 @@ class TestCase(unittest.TestCase) :
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            self.failUnless(abs(vol2-expectedV2)<1 or abs(vol2+expectedV2)<1)
+            self.assertTrue(abs(vol2-expectedV2)<1 or abs(vol2+expectedV2)<1)
 
         # remove the chiral specification and we should see other chiral
         # forms of the compound
         expectedV1 = 2.0 #[-2.30, -2.31, -2.30,  2.30, -1.77]
         expectedV2 = 2.8 #[2.90,  2.89,  2.69, -2.90, -2.93]
         
-        self.failUnless(nPos>0)
-        self.failUnless(nNeg>0)
+        self.assertTrue(nPos>0)
+        self.assertTrue(nNeg>0)
         for i in range(5):
             smi = "C1=CC=C(C=C1)C(OC1=C[NH]N=C1)C(=O)[NH]CC(Cl)C1=CC=NC=C1"
             mol = Chem.MolFromSmiles(smi)
@@ -342,26 +345,25 @@ class TestCase(unittest.TestCase) :
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            self.failUnless(abs(abs(vol1)-expectedV1)<1.0)
-            self.failUnless(abs(abs(vol2)-expectedV2)<1.0)
+            self.assertTrue(abs(abs(vol1)-expectedV1)<1.0)
+            self.assertTrue(abs(abs(vol2)-expectedV2)<1.0)
 
 
     def test7ConstrainedEmbedding(self):
         ofile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
                              'test_data','constrain1.sdf')
         suppl = Chem.SDMolSupplier(ofile);
-        ref = suppl.next()
+        ref = next(suppl)
         probe = copy.deepcopy(ref)
 
         cMap={}
         for i in range(5):
             cMap[i]=ref.GetConformer().GetAtomPosition(i)
         ci = rdDistGeom.EmbedMolecule(probe,coordMap=cMap,randomSeed=23)
-        self.failUnless(ci>-1);
-        algMap = zip(range(5),range(5))
+        self.assertTrue(ci>-1);
+        algMap = list(zip(range(5),range(5)))
         ssd = rdMolAlign.AlignMol(probe,ref,atomMap=algMap)
-        print 'ssd:',ssd
-        self.failUnless(ssd<0.1)
+        self.assertTrue(ssd<0.1)
             
 if __name__ == '__main__':
   unittest.main()

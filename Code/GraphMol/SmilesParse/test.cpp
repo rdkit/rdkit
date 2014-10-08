@@ -9,9 +9,11 @@
 //  of the RDKit source tree.
 //
 #include <iostream>
+#include <string>
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
 using namespace RDKit;
@@ -3171,6 +3173,7 @@ void testBug253(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     std::string csmiles1 = MolToSmiles(*m,true);
+    std::cerr<<"--"<<csmiles1<<std::endl;
     TEST_ASSERT(csmiles1=="C(CC1CCCCC12CCCCC2)C1CCCC1");
   }
 
@@ -3378,6 +3381,33 @@ void testGithub210(){
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+void testGithub298(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 298: cannot generate smiles for ChEBI_50252" << std::endl;
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase + "/Code/GraphMol/test_data/ChEBI_50252.mol";
+    RWMol *m = MolFileToMol(fName,false,false);
+
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==80);
+    TEST_ASSERT(m->getNumBonds()==210);
+    m->updatePropertyCache(false);
+    MolOps::fastFindRings(*m);
+
+    std::string csmiles=MolToSmiles(*m);
+    TEST_ASSERT(csmiles!="");
+    TEST_ASSERT(csmiles.find("%100")==std::string::npos);
+    
+    delete m;
+    m = SmilesToMol(csmiles,0,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==80);
+    TEST_ASSERT(m->getNumBonds()==210);
+    
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int
 main(int argc, char *argv[])
@@ -3429,10 +3459,11 @@ main(int argc, char *argv[])
   testBug257();
   testFragmentSmiles();
   testRingStereochem();
-#endif
   testGithub12();
   testGithub45();
   testGithub206();
   testGithub210();
+#endif
+  testGithub298();
   //testBug1719046();
 }

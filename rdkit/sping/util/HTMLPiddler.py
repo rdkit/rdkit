@@ -46,7 +46,7 @@ Credits:
         disclaimers: * NO WARRANTIES * USE AT YOUR OWN RISK *    
     
 '''
-
+from __future__ import print_function
 import htmllib, formatter, string
 from types import *
 import piddle
@@ -125,7 +125,7 @@ class _HtmlPiddleWriter:
     # Start of methods required by the formatter
     
     def new_font(self, fontParams):
-        if TRACE: print 'nf',fontParams
+        if TRACE: print('nf',fontParams)
         # fontParams is None, or the tuple (size, i, b, tt)
         if not fontParams:
             fontParams = (None, None, None, None)
@@ -157,12 +157,12 @@ class _HtmlPiddleWriter:
         
     def new_spacing(self, spacing):
         self.send_line_break()
-        t = "new_spacing(%s)" % `spacing`
+        t = "new_spacing(%s)" % repr(spacing)
         self.OutputLine(t, 1)
         
     def new_styles(self, styles):
         self.send_line_break()
-        t = "new_styles(%s)" % `styles`
+        t = "new_styles(%s)" % repr(styles)
         self.OutputLine(t, 1)
         
     def send_label_data(self, data):
@@ -232,8 +232,8 @@ class _HtmlPiddleWriter:
             else:
                 w = self.pc.stringWidth(text+bword, self.font)
                 h = self.pc.fontHeight(self.font)
-                if TRACE: print 'sfd T:', text+bword
-                if TRACE: print 'sfd',self.x,w,self.x+w,self.rmargin
+                if TRACE: print('sfd T:', text+bword)
+                if TRACE: print('sfd',self.x,w,self.x+w,self.rmargin)
                 if self.x + w < self.rmargin:
                     # Word fits.
                     text = text + bword
@@ -251,8 +251,8 @@ class _HtmlPiddleWriter:
         
     def OutputLine(self, text, linebreak = 0):
         if text:
-            if TRACE: print 'olt:',text
-            if TRACE: print 'olf:',self.font.size, self.font.bold, self.font.italic, self.font.underline, self.font.face
+            if TRACE: print('olt:',text)
+            if TRACE: print('olf:',self.font.size, self.font.bold, self.font.italic, self.font.underline, self.font.face)
             self.pc.drawString(text, self.x, self.y, self.font, self.color)
             #if self.anchor:
             #    o.anchor = self.anchor
@@ -331,7 +331,7 @@ def demoPDF(html):
     pc.save()
 
 def demoPIL(html):
-    print 'be patient, this is a little slow...'
+    print('be patient, this is a little slow...')
     import piddlePIL
     pc = piddlePIL.PILCanvas((800,600), 'HTMLPiddler')
     pc.drawLine(0,0,100,80, color=piddle.green)
@@ -361,12 +361,12 @@ def demoWX(html):
 def demo(html=DEMO_HTML):
     
     while 1:
-        print 'Demo of HTMLPiddler.py'
-        print '   1. piddlePDF'
-        print '   2. piddlePIL'
-        #print '   3. piddleTK'
-        #print '   4. piddleWX'
-        print '   0. EXIT'
+        print('Demo of HTMLPiddler.py')
+        print('   1. piddlePDF')
+        print('   2. piddlePIL')
+        #print('   3. piddleTK')
+        #print('   4. piddleWX')
+        print('   0. EXIT')
         sel = raw_input('Enter Selection Number: ')
         try: sel = string.atoi(string.strip(sel))
         except: sel = -1

@@ -13,6 +13,7 @@ piddlePDF calls pdfgen and offers a high-level interface.
 
 (C) Copyright Andy Robinson 1998-1999
 """
+from __future__ import print_function
 import os
 import sys
 import string
@@ -25,7 +26,7 @@ from math import sin, cos, pi, ceil
 try:
     import zlib
 except:
-    print "zlib not available, page compression not available"
+    print("zlib not available, page compression not available")
 
 
 from pdfgeom import bezierArc
@@ -133,11 +134,11 @@ class PDFDocument:
     
     def printXref(self):
         self.startxref = sys.stdout.tell()
-        print 'xref'
-        print 0,len(self.objects) + 1
-        print '0000000000 65535 f'
+        print('xref')
+        print(0,len(self.objects) + 1)
+        print('0000000000 65535 f')
         for pos in self.xref:
-            print '%0.10d 00000 n' % pos
+            print('%0.10d 00000 n' % pos)
 
     def writeXref(self, f):
         self.startxref = f.tell()
@@ -149,10 +150,10 @@ class PDFDocument:
 
     
     def printTrailer(self):
-        print 'trailer'
-        print '<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1, self.infopos)
-        print 'startxref'
-        print self.startxref
+        print('trailer')
+        print('<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1, self.infopos))
+        print('startxref')
+        print(self.startxref)
 
     def writeTrailer(self, f):
         f.write('trailer' + LINEEND)
@@ -198,20 +199,20 @@ class PDFDocument:
 
     def printPDF(self):
         "prints it to standard output.  Logs positions for doing trailer"
-        print "%PDF-1.0"
-        print "%םל¶¾"
+        print("%PDF-1.0")
+        print("%םל¶¾")
         i = 1
         self.xref = []
         for obj in self.objects:
             pos = sys.stdout.tell()
             self.xref.append(pos)
-            print i, '0 obj'
+            print(i, '0 obj')
             obj.printPDF()
-            print 'endobj'
+            print('endobj')
             i = i + 1
         self.printXref()
         self.printTrailer()
-        print "%%EOF",
+        print("%%EOF",end='')
 
     def addPage(self, page):
         """adds page and stream at end.  Maintains pages list"""
@@ -238,7 +239,7 @@ class PDFDocument:
         try:
             return self.fontMapping[psfontname]
         except:
-            raise PDFError, "Font %s not available in document" % psfontname
+            raise PDFError("Font {0} not available in document".format(psfontname))
 
     def getAvailableFonts(self):
         fontnames = self.fontMapping.keys()
@@ -281,10 +282,10 @@ class OutputGrabber:
 def testOutputGrabber():
     gr = OutputGrabber()
     for i in range(10):
-        print 'line',i
+        print('line',i)
     data = gr.getData()
     gr.close()
-    print 'Data...',data
+    print('Data...',data)
     
 
 ##############################################################
@@ -559,4 +560,4 @@ def MakeFontDictionary(startpos, count):
     return dict
         
 if __name__ == '__main__':
-    print 'For test scripts, run test1.py to test6.py'
+    print('For test scripts, run test1.py to test6.py')

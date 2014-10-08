@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -34,34 +34,85 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <sstream>
+
+namespace{
+
+void setRXNRoleOfAllMoleculeAtoms(RDKit::ROMol &mol, int role)
+{
+  RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
+  while(atItP.first != atItP.second ){
+    RDKit::Atom *oAtom=mol[*(atItP.first++)].get();
+  	oAtom->setProp("molRxnRole", role);
+  }
+}
+
+std::string molToString(RDKit::ROMol &mol, bool toSmiles)
+{
+  if(toSmiles){
+    return MolToSmiles(mol,true);
+  }
+    return MolToSmarts(mol,true);
+}
+
+std::string ChemicalReactionToRxnToString(RDKit::ChemicalReaction &rxn, bool toSmiles)
+{
+  std::string res="";
+  for(RDKit::MOL_SPTR_VECT::const_iterator iter=rxn.beginReactantTemplates();
+  iter != rxn.endReactantTemplates();++iter){
+    if(iter!=rxn.beginReactantTemplates()){
+    	res +=".";
+    }
+    res += molToString(**iter, toSmiles);
+  }
+  res += ">";
+  for(RDKit::MOL_SPTR_VECT::const_iterator iter=rxn.beginAgentTemplates();
+  iter != rxn.endAgentTemplates();++iter){
+    if(iter!=rxn.beginAgentTemplates()){
+      res +=".";
+    }
+    res += molToString(**iter, toSmiles);
+  }
+  res += ">";
+  for(RDKit::MOL_SPTR_VECT::const_iterator iter=rxn.beginProductTemplates();
+  iter != rxn.endProductTemplates();++iter){
+    if(iter!=rxn.beginProductTemplates()){
+      res +=".";
+    }
+    res += molToString(**iter, toSmiles);
+  }
+  return res;
+}
+}
 
 namespace RDKit {
 
   //! returns the reaction SMARTS for a reaction
   std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn){
-    std::string res="";
-    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginReactantTemplates();
-	iter != rxn.endReactantTemplates();++iter){
-      if(iter!=rxn.beginReactantTemplates()) res +=".";
-      res += MolToSmarts(**iter,true);
-    }
-    res += ">>";
-    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginProductTemplates();
-	iter != rxn.endProductTemplates();++iter){
-      if(iter!=rxn.beginProductTemplates()) res +=".";
-      res += MolToSmarts(**iter,true);
-    }
-    return res;
+	return ChemicalReactionToRxnToString(rxn, false);
   };
+
+  //! returns the reaction SMILES for a reaction
+  std::string ChemicalReactionToRxnSmiles(ChemicalReaction &rxn){
+	  return ChemicalReactionToRxnToString(rxn, true);
+  };
+
 #if 1
   //! returns an RXN block for a reaction
-  std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn){
+  std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn, bool separateAgents){
     std::ostringstream res;
     res<<"$RXN\n\n      RDKit\n\n";
-    res<<std::setw(3)<<rxn.getNumReactantTemplates()<<std::setw(3)<<rxn.getNumProductTemplates()<<"\n";
+    if(separateAgents){
+      res<<std::setw(3)<<rxn.getNumReactantTemplates()
+    	 <<std::setw(3)<<rxn.getNumProductTemplates()
+         <<std::setw(3)<<rxn.getNumAgentTemplates()<<"\n";
+    }
+    else{
+      res<<std::setw(3)<<(rxn.getNumReactantTemplates()+rxn.getNumAgentTemplates())
+    	 <<std::setw(3)<<rxn.getNumProductTemplates()<<"\n";
+    }
 
-    
     for(MOL_SPTR_VECT::const_iterator iter=rxn.beginReactantTemplates();
 	iter != rxn.endReactantTemplates();++iter){
       // to write the mol block, we need ring information:
@@ -69,15 +120,56 @@ namespace RDKit {
       res<<"$MOL\n";
       res << MolToMolBlock(**iter,true,-1,false);
     }
-
+    if(!separateAgents){
+      for(MOL_SPTR_VECT::const_iterator iter=rxn.beginAgentTemplates();
+          iter != rxn.endAgentTemplates();++iter){
+        // to write the mol block, we need ring information:
+        MolOps::findSSSR(**iter);
+        res<<"$MOL\n";
+        res << MolToMolBlock(**iter,true,-1,false);
+      }
+    }
     for(MOL_SPTR_VECT::const_iterator iter=rxn.beginProductTemplates();
 	iter != rxn.endProductTemplates();++iter){
       // to write the mol block, we need ring information:
       MolOps::findSSSR(**iter);
       res<<"$MOL\n";
       res << MolToMolBlock(**iter,true,-1,false);
+    }
+    if(separateAgents){
+      for(MOL_SPTR_VECT::const_iterator iter=rxn.beginAgentTemplates();
+          iter != rxn.endAgentTemplates();++iter){
+        // to write the mol block, we need ring information:
+        MolOps::findSSSR(**iter);
+        res<<"$MOL\n";
+        res << MolToMolBlock(**iter,true,-1,false);
+      }
     }
     return res.str();
   };
 #endif
+
+  //! returns a ROMol with RXNMolRole used for a reaction
+  ROMol* ChemicalReactionToRxnMol(const ChemicalReaction &rxn)
+  {
+    RWMol *res=new RWMol();
+
+    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginReactantTemplates();
+	iter != rxn.endReactantTemplates();++iter){
+      setRXNRoleOfAllMoleculeAtoms(*iter->get(), 1);
+      res->insertMol(*iter->get());
+    }
+    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginProductTemplates();
+	iter != rxn.endProductTemplates();++iter){
+        setRXNRoleOfAllMoleculeAtoms(*iter->get(), 2);
+        res->insertMol(*iter->get());
+    }
+    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginAgentTemplates();
+	iter != rxn.endAgentTemplates();++iter){
+        setRXNRoleOfAllMoleculeAtoms(*iter->get(), 3);
+        res->insertMol(*iter->get());
+    }
+    return (ROMol *)res;
+  }
+
 }  

@@ -13,75 +13,75 @@ class TestCase(unittest.TestCase):
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnless(d[0][0]==10)
+    self.assertTrue(d[0][0]==10)
     
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
     d = conn.GetData('atompairs',fields='count(*)')
-    self.failUnless(d[0][0]==10)
+    self.assertTrue(d[0][0]==10)
     
     conn = DbConnect('testData/bzr/Descriptors.sqlt')
     d = conn.GetData('descriptors_v1',fields='count(*)')
-    self.failUnless(d[0][0]==10)
+    self.assertTrue(d[0][0]==10)
     
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
     d = conn.GetData('rdkitfps',fields='count(*)')
-    self.failUnless(d[0][0]==10)
+    self.assertTrue(d[0][0]==10)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=sdf',
                           '--doGobbi2D',
                           'testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnless(d[0][0]==163)
+    self.assertTrue(d[0][0]==163)
     
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
     d = conn.GetData('atompairs',fields='count(*)')
-    self.failUnless(d[0][0]==163)
+    self.assertTrue(d[0][0]==163)
     
     conn = DbConnect('testData/bzr/Descriptors.sqlt')
     d = conn.GetData('descriptors_v1',fields='count(*)')
-    self.failUnless(d[0][0]==163)
+    self.assertTrue(d[0][0]==163)
     
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
     d = conn.GetData('rdkitfps',fields='count(*)')
-    self.failUnless(d[0][0]==163)
+    self.assertTrue(d[0][0]==163)
 
   def test2_1SearchFPs(self):
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf',
                           '--topN=5','--outF=testData/bzr/search.out','testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==163)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+
+    self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
       lbl = line[0]
@@ -90,31 +90,31 @@ class TestCase(unittest.TestCase):
       lastVal=1.0
       while i<len(line):
         nbrs[line[i]]=line[i+1]
-        self.failUnless(float(line[i+1])<=lastVal)
+        self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.failUnless(nbrs.has_key(lbl))
-      self.failUnless(nbrs[lbl]=='1.000',nbrs[lbl])
+      self.assertTrue(lbl in nbrs)
+      self.assertTrue(nbrs[lbl]=='1.000',nbrs[lbl])
     os.unlink('testData/bzr/search.out')
     
   def test2_2SearchAtomPairs(self):
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf',
                           '--topN=5','--outF=testData/bzr/search.out','--similarityType=AtomPairs',
                           'testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==163)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+
+    self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
       lbl = line[0]
@@ -123,31 +123,30 @@ class TestCase(unittest.TestCase):
       lastVal=1.0
       while i<len(line):
         nbrs[line[i]]=line[i+1]
-        self.failUnless(float(line[i+1])<=lastVal)
+        self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.failUnless(nbrs.has_key(lbl))
-      self.failUnless(nbrs[lbl]=='1.000')
+      self.assertTrue(lbl in nbrs)
+      self.assertTrue(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
     
   def test2_3SearchTorsions(self):
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf','--topN=5',
                           '--outF=testData/bzr/search.out','--similarityType=TopologicalTorsions',
                           'testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==163)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
       lbl = line[0]
@@ -156,46 +155,44 @@ class TestCase(unittest.TestCase):
       lastVal=1.0
       while i<len(line):
         nbrs[line[i]]=line[i+1]
-        self.failUnless(float(line[i+1])<=lastVal)
+        self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.failUnless(nbrs.has_key(lbl))
-      self.failUnless(nbrs[lbl]=='1.000')
+      self.assertTrue(lbl in nbrs)
+      self.assertTrue(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
     
 
   def test2_4SearchProps(self):
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out','--query=activity<6.5'))
 
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==30)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertTrue(len(lines)==30)
     os.unlink('testData/bzr/search.out')
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out','--query=activity<6.5'))
 
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==30)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertTrue(len(lines)==30)
     os.unlink('testData/bzr/search.out')
     
   def test2_5SearchSmarts(self):
@@ -203,14 +200,13 @@ class TestCase(unittest.TestCase):
                           '--outF=testData/bzr/search.out','--smarts=cncncc',))
 
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnlessEqual(len(lines),49)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertEqual(len(lines),49)
     os.unlink('testData/bzr/search.out')
     
     if os.path.exists('/dev/null'):
@@ -224,14 +220,13 @@ class TestCase(unittest.TestCase):
                             '--smilesOut=testData/bzr/search.out',
                             '--smarts=cncncc',))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnlessEqual(len(lines),49)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertEqual(len(lines),49)
     os.unlink('testData/bzr/search.out')
     if os.path.exists('testData/crud.out'):
       os.unlink('testData/crud.out')
@@ -240,14 +235,13 @@ class TestCase(unittest.TestCase):
                           '--outF=testData/bzr/search.out','--negate','--smarts=cncncc',))
 
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnlessEqual(len(lines),114)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertEqual(len(lines),114)
     os.unlink('testData/bzr/search.out')
     
   def test2_6SearchBoth(self):
@@ -255,14 +249,13 @@ class TestCase(unittest.TestCase):
                           '--outF=testData/bzr/search.out','--query=activity<6.5','--smarts=cncncc'))
 
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnlessEqual(len(lines),5)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertEqual(len(lines),5)
     os.unlink('testData/bzr/search.out')
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
@@ -270,34 +263,32 @@ class TestCase(unittest.TestCase):
                           '--smarts=cncncc','--negate'))
 
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnlessEqual(len(lines),25)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertEqual(len(lines),25)
     os.unlink('testData/bzr/search.out')
 
   def test2_7SearchGobbi(self):
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf','--topN=5',
                           '--outF=testData/bzr/search.out','--similarityType=Gobbi2D',
                           'testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==163)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertTrue(len(lines)==163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
       lbl = line[0]
@@ -306,38 +297,38 @@ class TestCase(unittest.TestCase):
       lastVal=1.0
       while i<len(line):
         nbrs[line[i]]=line[i+1]
-        self.failUnless(float(line[i+1])<=lastVal)
+        self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.failUnless(nbrs.has_key(lbl))
-      self.failUnless(nbrs[lbl]=='1.000')
-    self.failUnlessEqual(splitLs[0][0],'Adinazolam')
-    self.failUnlessEqual(splitLs[0][3],'alpha-hydroxytriazolam')
-    self.failUnlessEqual(splitLs[0][4],'0.631')
+      self.assertTrue(lbl in nbrs)
+      self.assertTrue(nbrs[lbl]=='1.000')
+    self.assertEqual(splitLs[0][0],'Adinazolam')
+    self.assertEqual(splitLs[0][3],'alpha-hydroxytriazolam')
+    self.assertEqual(splitLs[0][4],'0.631')
     os.unlink('testData/bzr/search.out')
 
   def test2_8SearchThresh(self):
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf',
                           '--simThresh=0.7','--outF=testData/bzr/search.out','testData/bzr_q1.mol'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnless(len(lines)==1)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+
+    self.assertTrue(len(lines)==1)
     splitL=lines[0].strip().split(',')
     splitL.pop(0)
     for i in range(0,len(splitL),2):
       v = float(splitL[i+1])
-      self.failUnless(v>0.7)
+      self.assertTrue(v>0.7)
     os.unlink('testData/bzr/search.out')
 
 
@@ -357,21 +348,21 @@ class TestCase(unittest.TestCase):
 
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
     d = conn.GetData('molecules',fields='*')
-    self.failUnlessEqual(len(d),10)
+    self.assertEqual(len(d),10)
     cns = [x.lower() for x in d.GetColumnNames()]
-    self.failIf('smiles' in cns)
+    self.assertFalse('smiles' in cns)
 
     conn=None
     d=None
@@ -389,62 +380,62 @@ class TestCase(unittest.TestCase):
                           '--noSmiles','--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnless(d[0][0]==10)
+    self.assertTrue(d[0][0]==10)
     d = conn.GetData('molecules',fields='*')
-    self.failUnless(len(d)==10)
+    self.assertTrue(len(d)==10)
     cns = [x.lower() for x in d.GetColumnNames()]
-    self.failIf('smiles' in cns)
+    self.assertFalse('smiles' in cns)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--noProps','--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
     d = conn.GetData('molecules',fields='*')
-    self.failUnlessEqual(len(d),10)
+    self.assertEqual(len(d),10)
     cns = [x.lower() for x in d.GetColumnNames()]
-    self.failUnless('smiles' in cns)
+    self.assertTrue('smiles' in cns)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           '--maxRowsCached=4',
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
     d = conn.GetData('molecules',fields='*')
-    self.failUnlessEqual(len(d),10)
+    self.assertEqual(len(d),10)
     cns = [x.lower() for x in d.GetColumnNames()]
-    self.failUnless('smiles' in cns)
+    self.assertTrue('smiles' in cns)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--noFingerprints',
@@ -452,13 +443,13 @@ class TestCase(unittest.TestCase):
                           '--maxRowsCached=4',
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failIf(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertFalse(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
   def test5TestBackwardsCompat(self):
     if os.path.exists('testData/bzr/Compounds.sqlt'):
@@ -474,7 +465,7 @@ class TestCase(unittest.TestCase):
                           '--noFingerprints','--noDescriptors',
                           'testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
@@ -485,14 +476,13 @@ class TestCase(unittest.TestCase):
                           '--pairTableName=tmp',
                           'testData/bzr.sdf'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/search.out'))
-    inF = file('testData/bzr/search.out','r')
-    lines=inF.readlines()
-    inF=None
-    self.failUnlessEqual(len(lines),163)
+    self.assertTrue(os.path.exists('testData/bzr/search.out'))
+    with open('testData/bzr/search.out','r') as inF:
+      lines=inF.readlines()
+    self.assertEqual(len(lines),163)
     splitLs=[x.strip().split(',') for x in lines]
     for line in splitLs:
       lbl = line[0]
@@ -501,73 +491,73 @@ class TestCase(unittest.TestCase):
       lastVal=1.0
       while i<len(line):
         nbrs[line[i]]=line[i+1]
-        self.failUnless(float(line[i+1])<=lastVal)
+        self.assertTrue(float(line[i+1])<=lastVal)
         lastVal=float(line[i+1])
         i+=2
-      self.failUnless(nbrs.has_key(lbl))
-      self.failUnless(nbrs[lbl]=='1.000')
+      self.assertTrue(lbl in nbrs)
+      self.assertTrue(nbrs[lbl]=='1.000')
     os.unlink('testData/bzr/search.out')
 
   def test6Update(self):
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           'testData/bzr.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
     
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
     d = conn.GetData('atompairs',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
 
     
     conn = DbConnect('testData/bzr/Descriptors.sqlt')
     d = conn.GetData('descriptors_v1',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
 
     
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
     d = conn.GetData('rdkitfps',fields='count(*)')
-    self.failUnlessEqual(d[0][0],10)
+    self.assertEqual(d[0][0],10)
 
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--updateDb',
                           'testData/bzr.2.smi'))
     res=p.wait()
-    self.failIf(res)
+    self.assertFalse(res)
     p=None
 
-    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
-    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
     
     conn = DbConnect('testData/bzr/Compounds.sqlt')
     d = conn.GetData('molecules',fields='count(*)')
-    self.failUnlessEqual(d[0][0],20)
+    self.assertEqual(d[0][0],20)
     
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
     d = conn.GetData('atompairs',fields='count(*)')
-    self.failUnlessEqual(d[0][0],20)
+    self.assertEqual(d[0][0],20)
 
     
     conn = DbConnect('testData/bzr/Descriptors.sqlt')
     d = conn.GetData('descriptors_v1',fields='count(*)')
-    self.failUnlessEqual(d[0][0],20)
+    self.assertEqual(d[0][0],20)
 
     
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
     d = conn.GetData('rdkitfps',fields='count(*)')
-    self.failUnlessEqual(d[0][0],20)
+    self.assertEqual(d[0][0],20)
 
 
 

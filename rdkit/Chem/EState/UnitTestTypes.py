@@ -13,6 +13,7 @@
 validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 
 """
+from __future__ import print_function
 import unittest
 from rdkit import Chem
 from rdkit.Chem import EState
@@ -26,7 +27,7 @@ class TestCase(unittest.TestCase):
     for smi,ans in vals:
       mol = Chem.MolFromSmiles(smi)
       types = AtomTypes.TypeAtoms(mol)
-      if show: print types
+      if show: print(types)
       assert len(ans)==len(types),'bad type len for smiles: %s'%(smi)
       lens = [len(x) for x in types]
       assert max(lens)==1,'atom matched multiple types for smiles: %s'%(smi)

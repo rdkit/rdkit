@@ -87,7 +87,7 @@ class SmartsRemover(TransformNode):
       if type(p) in types.StringTypes:
         m = Chem.MolFromSmarts(p)
         if not m:
-          raise ValueError,'bad smarts: %s'%(p)
+          raise ValueError('bad smarts: %s'%(p))
         p = m
       targets[i] = p
     self._patterns = tuple(targets)  

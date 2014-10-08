@@ -13,7 +13,8 @@ from rdkit import Chem
 
 from rdkit.Chem import AllChem
 from rdkit.Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
-import cPickle,copy,sys,os
+from rdkit.six.moves import cPickle
+import copy,sys,os
 
 class TestCase(unittest.TestCase):
   def setUp(self):

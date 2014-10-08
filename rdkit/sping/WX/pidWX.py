@@ -161,11 +161,11 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     self.redraw()
 
   def OnOver(self, x, y):
-    self.text = `x` + "," + `y`
+    self.text = repr(x) + "," + repr(y)
     self.redraw()
 
   def OnClick(self, x, y):
-    self.text = `x` + "," + `y`
+    self.text = repr(x) + "," + repr(y)
     self.click.SetValue(true)
     self.redraw()
 

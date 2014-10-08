@@ -74,7 +74,7 @@ def AlignMolToTemplate2D(mol,template,match=None,clearConfs=False,
   if not match:
     match = mol.GetSubstructMatch(template)
   if not match:
-    raise ValueError,'no match between mol and template'
+    raise ValueError('no match between mol and template')
   
   atomMap = {}
   templateConf = template.GetConformer(templateConfId)

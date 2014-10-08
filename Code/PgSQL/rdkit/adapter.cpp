@@ -31,6 +31,9 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -49,7 +52,12 @@
 #ifdef BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
 #endif
+#ifdef BUILD_AVALON_SUPPORT
+#include <AvalonTools/AvalonTools.h>
+#endif
 #include "rdkit.h"
+#include <GraphMol/ChemReactions/ReactionFingerprints.h>
+#include <GraphMol/ChemReactions/ReactionUtils.h>
 
 using namespace std;
 using namespace RDKit;
@@ -1399,3 +1407,488 @@ makeMACCSBFP(CROMol data){
     return NULL;
   }
 }
+
+extern "C" MolBitmapFingerPrint
+makeAvalonBFP(CROMol data,bool isQuery,unsigned int bitFlags) {
+#ifdef BUILD_AVALON_SUPPORT
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  try {
+    res = new ExplicitBitVect(getAvalonFpSize());
+    AvalonTools::getAvalonFP(*mol, *res, getAvalonFpSize(),isQuery,true,bitFlags);
+  } catch (...) {
+    elog(ERROR, "makeAvalonBFP: Unknown exception");
+  }
+        
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
+#else
+  elog(ERROR, "Avalon support not enabled");
+  return NULL;
+#endif
+}
+
+
+/* chemical reactions */
+
+extern "C"  void
+freeChemReaction(CChemicalReaction  data) {
+  ChemicalReaction    *rxn = (ChemicalReaction*)data;
+  delete rxn;
+}
+
+extern "C" CChemicalReaction
+constructChemReact(ChemReactionBA *data) {
+  ChemicalReaction   *rxn = new ChemicalReaction();
+
+  try {
+    ByteA b(data);
+    ReactionPickler::reactionFromPickle(b, rxn);
+  } catch (ReactionPicklerException& e) {
+    elog(ERROR, "reactionFromPickle: %s", e.message());
+  } catch (...) {
+    elog(ERROR, "constructChemReact: Unknown exception");
+  }
+
+  return (CChemicalReaction)rxn;
+}
+
+extern "C" ChemReactionBA*
+deconstructChemReact(CChemicalReaction data) {
+	ChemicalReaction   *rxn = (ChemicalReaction*)data;
+  ByteA   b;
+
+  try {
+    ReactionPickler::pickleReaction(rxn, b);
+  } catch (ReactionPicklerException& e) {
+    elog(ERROR, "pickleReaction: %s", e.message());
+  } catch (...) {
+    elog(ERROR, "deconstructChemReact: Unknown exception");
+  }
+
+  return (ChemReactionBA*)b.toByteA();
+}
+
+extern "C" CChemicalReaction
+parseChemReactText(char *data,bool asSmarts,bool warnOnFail) {
+	ChemicalReaction   *rxn = NULL;
+
+  try {
+    StringData.assign(data);
+    if(asSmarts){
+      rxn = RxnSmartsToChemicalReaction(StringData);
+    } else {
+      rxn = RxnSmartsToChemicalReaction(StringData,0,true);
+    }
+    if(getInitReaction()){
+      rxn->initReactantMatchers();
+    }
+    if(getMoveUnmappedReactantsToAgents() && hasReactionAtomMapping(*rxn)){
+      rxn->removeUnmappedReactantTemplates(getThresholdUnmappedReactantAtoms());
+    }
+  } catch (...) {
+    rxn=NULL;
+  }
+  if(rxn==NULL){
+    if(warnOnFail){
+      ereport(WARNING,
+              (errcode(ERRCODE_WARNING),
+               errmsg("could not create chemical reaction from SMILES '%s'",data)));
+    } else {
+      ereport(ERROR,
+              (errcode(ERRCODE_DATA_EXCEPTION),
+               errmsg("could not create chemical reaction  from SMILES '%s'",data)));
+    }
+  }
+
+  return (CChemicalReaction)rxn;
+}
+
+extern "C" CChemicalReaction
+parseChemReactBlob(char *data,int len) {
+	ChemicalReaction   *rxn = NULL;
+
+  try {
+    StringData.assign(data,len);
+    rxn = new ChemicalReaction(StringData);
+    if(getInitReaction()){
+      rxn->initReactantMatchers();
+    }
+    if(getMoveUnmappedReactantsToAgents() && hasReactionAtomMapping(*rxn)){
+      rxn->removeUnmappedReactantTemplates(getThresholdUnmappedReactantAtoms());
+    }
+  } catch (...) {
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("problem generating chemical reaction from blob data")));
+  }
+  if(rxn==NULL){
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("blob data could not be parsed")));
+  }
+
+  return (CChemicalReaction)rxn;
+}
+
+
+extern "C" char *
+makeChemReactText(CChemicalReaction data, int *len,bool asSmarts) {
+  ChemicalReaction   *rxn = (ChemicalReaction*)data;
+
+  try {
+    if(!asSmarts){
+    	StringData = ChemicalReactionToRxnSmiles(*rxn);
+    } else {
+    	StringData = ChemicalReactionToRxnSmarts(*rxn);
+    }
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeChemReactText: problems converting chemical reaction  to SMILES/SMARTS")));
+    StringData="";
+  }
+
+  *len = StringData.size();
+  return (char*)StringData.c_str();
+}
+
+extern "C" char *
+makeChemReactBlob(CChemicalReaction data, int *len){
+  ChemicalReaction   *rxn = (ChemicalReaction*)data;
+  StringData.clear();
+  try {
+    ReactionPickler::pickleReaction(*rxn,StringData);
+  } catch (...) {
+    elog(ERROR, "makeChemReactBlob: Unknown exception");
+  }
+
+  *len = StringData.size();
+  return (char*)StringData.data();
+}
+
+
+extern "C" CChemicalReaction
+parseChemReactCTAB(char *data,bool warnOnFail) {
+  ChemicalReaction   *rxn = NULL;
+
+  try {
+    StringData.assign(data);
+    rxn = RxnBlockToChemicalReaction(StringData);
+    if(getInitReaction()){
+      rxn->initReactantMatchers();
+    }
+    if(getMoveUnmappedReactantsToAgents() && hasReactionAtomMapping(*rxn)){
+      rxn->removeUnmappedReactantTemplates(getThresholdUnmappedReactantAtoms());
+    }
+  } catch (...) {
+	  rxn=NULL;
+  }
+  if(rxn==NULL){
+    if(warnOnFail){
+      ereport(WARNING,
+              (errcode(ERRCODE_WARNING),
+               errmsg("could not create reaction from CTAB '%s'",data)));
+
+    } else {
+      ereport(ERROR,
+              (errcode(ERRCODE_DATA_EXCEPTION),
+               errmsg("could not create reaction from CTAB '%s'",data)));
+    }
+  }
+
+  return (CChemicalReaction)rxn;
+}
+
+extern "C" char *
+makeCTABChemReact(CChemicalReaction data, int *len) {
+  ChemicalReaction *rxn = (ChemicalReaction*)data;
+
+  try {
+    StringData = ChemicalReactionToRxnBlock(*rxn);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeCTABChemReact: problems converting reaction to CTAB")));
+    StringData="";
+  }
+
+  *len = StringData.size();
+  return (char*)StringData.c_str();
+}
+
+
+extern "C" int
+ChemReactNumReactants(CChemicalReaction crxn){
+  const ChemicalReaction *rxn = (ChemicalReaction*)crxn;
+  return rxn->getNumReactantTemplates();
+}
+
+extern "C" int
+ChemReactNumProducts(CChemicalReaction crxn){
+  const ChemicalReaction *rxn = (ChemicalReaction*)crxn;
+  return rxn->getNumProductTemplates();
+}
+
+extern "C" int
+ChemReactNumAgents(CChemicalReaction crxn){
+  const ChemicalReaction *rxn = (ChemicalReaction*)crxn;
+  return rxn->getNumAgentTemplates();
+}
+
+extern "C" bytea*
+makeReactionSign(CChemicalReaction data) {
+  ChemicalReaction *rxn = (ChemicalReaction*)data;
+  ExplicitBitVect *res = NULL;
+  bytea *ret = NULL;
+
+  try {
+	RDKit::ReactionFingerprintParams params;
+	params.fpType = static_cast<FingerprintType>(getReactionSubstructFpType());
+	params.fpSize = getReactionSubstructFpSize();
+	params.includeAgents = (!getIgnoreReactionAgents());
+    params.bitRatioAgents = getReactionStructuralFPAgentBitRatio();
+    res = RDKit::StructuralFingerprintChemReaction(*rxn, params);
+
+    if(res){
+      std::string sres=BitVectToBinaryText(*res);
+      ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)&sres);
+      delete res;
+      res=0;
+    }
+  } catch (...) {
+    elog(ERROR, "makeReactionSign: Unknown exception");
+    if(res) delete res;
+  }
+  return ret;
+}
+
+
+extern "C" int
+ReactionSubstruct(CChemicalReaction rxn, CChemicalReaction rxn2) {
+  ChemicalReaction *rxnm = (ChemicalReaction*)rxn;
+  ChemicalReaction *rxn2m = (ChemicalReaction*)rxn2;
+
+  /* Reaction search */
+  if(rxn2m->getNumReactantTemplates() != 0 && rxn2m->getNumProductTemplates() != 0){
+	  return hasReactionSubstructMatch(*rxnm, *rxn2m, (!getIgnoreReactionAgents()));
+  }
+  /* Product search */
+  if(rxn2m->getNumReactantTemplates() == 0 && rxn2m->getNumProductTemplates() != 0){
+    if(rxn2m->getNumAgentTemplates() != 0 && !getIgnoreReactionAgents()){
+    	return (hasProductTemplateSubstructMatch(*rxnm, *rxn2m) &&
+    			hasAgentTemplateSubstructMatch(*rxnm, *rxn2m));
+    }
+	return hasProductTemplateSubstructMatch(*rxnm, *rxn2m);
+  }
+  /* Reactant search */
+  if(rxn2m->getNumReactantTemplates() != 0 && rxn2m->getNumProductTemplates() == 0){
+    if(rxn2m->getNumAgentTemplates() != 0 && !getIgnoreReactionAgents()){
+      return (hasReactantTemplateSubstructMatch(*rxnm, *rxn2m) &&
+    		  hasAgentTemplateSubstructMatch(*rxnm, *rxn2m));
+    }
+    return hasReactantTemplateSubstructMatch(*rxnm, *rxn2m);
+  }
+  /* Agent search */
+  if(rxn2m->getNumReactantTemplates() == 0 && rxn2m->getNumProductTemplates() == 0
+		  && rxn2m->getNumAgentTemplates() != 0){
+    return hasAgentTemplateSubstructMatch(*rxnm, *rxn2m);
+  }
+
+  return false;
+}
+
+extern "C" int
+ReactionSubstructFP(CChemicalReaction rxn, CChemicalReaction rxnquery) {
+  ChemicalReaction *rxnm = (ChemicalReaction*)rxn;
+  ChemicalReaction *rxnqm = (ChemicalReaction*)rxnquery;
+
+  RDKit::ReactionFingerprintParams params;
+  params.fpType = static_cast<FingerprintType>(getReactionSubstructFpType());
+  params.fpSize = getReactionSubstructFpSize();
+  params.includeAgents = (!getIgnoreReactionAgents());
+  params.bitRatioAgents = getReactionStructuralFPAgentBitRatio();
+
+  ExplicitBitVect *fp1 = StructuralFingerprintChemReaction(*rxnm, params);
+  ExplicitBitVect *fp2 = StructuralFingerprintChemReaction(*rxnqm, params);
+
+  if(fp1->getNumOnBits() < fp2->getNumOnBits()){
+    return false;
+  }
+  for(unsigned i=0; i<fp1->getNumBits(); i++){
+    if((fp1->getBit(i) & fp2->getBit(i)) != fp2->getBit(i)){
+      return false;
+    }
+  }
+  return true;
+}
+
+// some helper functions in anonymous namespace
+namespace{
+
+struct MoleculeDescriptors{
+	MoleculeDescriptors():nAtoms(0),nBonds(0),nRings(0),MW(0.0){}
+unsigned nAtoms;
+unsigned nBonds;
+unsigned nRings;
+double MW;
+};
+
+MoleculeDescriptors* calcMolecularDescriptorsReaction(
+		RDKit::ChemicalReaction *rxn,
+		RDKit::ReactionMoleculeType t){
+  MoleculeDescriptors* des = new MoleculeDescriptors();
+  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(*rxn, t);
+  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(*rxn, t);
+  for(; begin != end; ++begin){
+    des->nAtoms += begin->get()->getNumHeavyAtoms();
+	des->nBonds += begin->get()->getNumBonds(true);
+	des->MW = RDKit::Descriptors::calcAMW(*begin->get(),true);
+	if(!begin->get()->getRingInfo()->isInitialized()){
+	  begin->get()->updatePropertyCache();
+	  RDKit::MolOps::findSSSR(*begin->get());
+	}
+	des->nRings += begin->get()->getRingInfo()->numRings();
+  }
+  return des;
+}
+
+int compareMolDescriptors(const MoleculeDescriptors& md1, const MoleculeDescriptors& md2){
+  int res = md1.nAtoms - md2.nAtoms;
+  if(res){
+    return res;
+  }
+  res = md1.nBonds - md2.nBonds;
+  if(res){
+    return res;
+  }
+  res = md1.nRings - md2.nRings;
+  if(res){
+    return res;
+  }
+  res = int(md1.MW - md2.MW);
+  if(res){
+    return res;
+  }
+  return 0;
+}
+
+}
+
+extern "C" int
+reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2) {
+  ChemicalReaction *rxnm = (ChemicalReaction*)rxn;
+  ChemicalReaction *rxn2m = (ChemicalReaction*)rxn2;
+
+  if(!rxnm){
+    if(!rxn2m) return 0;
+    return -1;
+  } if(!rxn2m) return 1;
+
+  int res = rxnm->getNumReactantTemplates() - rxn2m->getNumReactantTemplates();
+  if (res){
+    return res;
+  }
+  res = rxnm->getNumProductTemplates() - rxn2m->getNumProductTemplates();
+  if (res){
+    return res;
+  }
+  if(!getIgnoreReactionAgents()){
+    res = rxnm->getNumAgentTemplates() - rxn2m->getNumAgentTemplates();
+    if (res){
+      return res;
+    }
+  }
+
+  MoleculeDescriptors* rxn_react = calcMolecularDescriptorsReaction(rxnm, Reactant);
+  MoleculeDescriptors* rxn2_react = calcMolecularDescriptorsReaction(rxn2m, Reactant);
+  res = compareMolDescriptors(*rxn_react, *rxn2_react);
+  delete(rxn_react);
+  delete(rxn2_react);
+  if (res){
+    return res;
+  }
+  MoleculeDescriptors* rxn_product = calcMolecularDescriptorsReaction(rxnm, Product);
+  MoleculeDescriptors* rxn2_product = calcMolecularDescriptorsReaction(rxn2m, Product);
+  res = compareMolDescriptors(*rxn_product, *rxn2_product);
+  delete(rxn_product);
+  delete(rxn2_product);
+  if (res){
+    return res;
+  }
+  if(!getIgnoreReactionAgents()){
+    MoleculeDescriptors* rxn_agent = calcMolecularDescriptorsReaction(rxnm, Agent);
+	MoleculeDescriptors* rxn2_agent = calcMolecularDescriptorsReaction(rxn2m, Agent);
+	res = compareMolDescriptors(*rxn_agent, *rxn2_agent);
+	delete(rxn_agent);
+	delete(rxn2_agent);
+	if (res){
+	  return res;
+	}
+  }
+
+  RDKit::MatchVectType matchVect;
+  if(hasReactionSubstructMatch(*rxnm, *rxn2m, (!getIgnoreReactionAgents()))){
+    return 0;
+  }
+  return -1;
+}
+
+extern "C" MolSparseFingerPrint
+makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType){
+  ChemicalReaction   *rxn = (ChemicalReaction*)data;
+  SparseFP        *res=NULL;
+
+  try {
+	if(fpType > 3 || fpType < 1){
+	  elog(ERROR, "makeReactionDifferenceSFP: Unknown Fingerprint type");
+	}
+	FingerprintType fp = static_cast<RDKit::FingerprintType>(fpType);
+  	RDKit::ReactionFingerprintParams params;
+  	params.fpType = static_cast<FingerprintType>(fpType);
+  	params.fpSize = size;
+	params.includeAgents = (!getIgnoreReactionAgents());
+	params.agentWeight = getReactionDifferenceFPWeightAgents();
+	params.nonAgentWeight = getReactionDifferenceFPWeightNonagents();
+    res = (SparseFP*)RDKit::DifferenceFingerprintChemReaction(*rxn, params);
+  } catch (...) {
+    elog(ERROR, "makeReactionDifferenceSFP: Unknown exception");
+  }
+  return (MolSparseFingerPrint)res;
+}
+
+extern "C" MolBitmapFingerPrint
+makeReactionBFP(CChemicalReaction data, int size, int fpType) {
+  ChemicalReaction   *rxn = (ChemicalReaction*)data;
+  ExplicitBitVect *res=NULL;
+
+  try {
+  	if(fpType > 5 || fpType < 1){
+  	  elog(ERROR, "makeReactionBFP: Unknown Fingerprint type");
+  	}
+  	FingerprintType fp = static_cast<RDKit::FingerprintType>(fpType);
+  	RDKit::ReactionFingerprintParams params;
+  	params.fpType = static_cast<FingerprintType>(fpType);
+  	params.fpSize = size;
+	params.includeAgents = (!getIgnoreReactionAgents());
+	params.bitRatioAgents = getReactionStructuralFPAgentBitRatio();
+    res = (ExplicitBitVect*)RDKit::StructuralFingerprintChemReaction(*rxn, params);
+  } catch (...) {
+    elog(ERROR, "makeReactionBFP: Unknown exception");
+  }
+
+  if(res){
+	std::string *sres=new std::string(BitVectToBinaryText(*res));
+	delete res;
+	return (MolBitmapFingerPrint)sres;
+  }
+  else {
+	return NULL;
+  }
+}
+

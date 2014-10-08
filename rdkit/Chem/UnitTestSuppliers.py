@@ -12,7 +12,9 @@
 
 """
 from rdkit import RDConfig
-import unittest,cPickle,os
+import unittest,os
+from rdkit.six import next
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 
 
@@ -38,20 +40,20 @@ class TestCase(unittest.TestCase):
     assert len(ms)==10
     # test reset:
     suppl.reset()
-    m = suppl.next()
+    m = next(suppl)
     assert m.GetProp('_Name')=='48'
     assert m.GetProp('NSC')=='48'
     assert m.GetProp('CAS_RN')=='15716-70-8'
-    m = suppl.next()
+    m = next(suppl)
     assert m.GetProp('_Name')=='78'
     assert m.GetProp('NSC')=='78'
     assert m.GetProp('CAS_RN')=='6290-84-2'
 
     suppl.reset()
     for i in range(10):
-      m = suppl.next()
+      m = next(suppl)
     try:
-      m = suppl.next()
+      m = next(suppl)
     except StopIteration:
       ok=1
     else:
@@ -71,17 +73,17 @@ class TestCase(unittest.TestCase):
     assert len(ms)==20
     # test reset:
     suppl.reset()
-    m = suppl.next()
+    m = next(suppl)
     assert m.GetProp('_Name')=='ALDOSTERONE'
     assert m.GetProp('ID')=='RD-PGP-0001'
-    m = suppl.next()
+    m = next(suppl)
     assert m.GetProp('_Name')=='AMIODARONE'
     assert m.GetProp('ID')=='RD-PGP-0002'
     suppl.reset()
     for i in range(20):
-      m = suppl.next()
+      m = next(suppl)
     try:
-      m = suppl.next()
+      m = next(suppl)
     except StopIteration:
       ok=1
     else:
@@ -96,7 +98,8 @@ CCOC,5
 """
     import tempfile
     fileN = tempfile.mktemp('.csv')
-    open(fileN,'w+').write(txt)
+    with open(fileN,'w+') as f:
+      f.write(txt)
     self._files.append(fileN)
     suppl = Chem.SmilesMolSupplier(fileN,delimiter=',',smilesColumn=0,
                                    nameColumn=1,titleLine=0)

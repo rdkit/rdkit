@@ -3,10 +3,11 @@
 #  Copyright (C) 2004 Rational Discovery LLC
 #     All Rights Reserved
 #
+from __future__ import print_function
 from rdkit import RDConfig
 import sys,os.path
 from rdkit.VLib.Supply import SupplyNode
-import cPickle
+from rdkit.six.moves import cPickle
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql
@@ -32,14 +33,14 @@ if RDConfig.usePgSQL:
              curs.closed or \
              curs.conn is None or \
              (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
-        raise ValueError,'bad cursor'
+        raise ValueError('bad cursor')
       if curs.res.nfields and curs.res.nfields < 2:
-        raise ValueError,\
-              'invalid number of results returned (%d), must be at least 2'%curs.res.nfields
+        raise ValueError(
+          'invalid number of results returned (%d), must be at least 2'%curs.res.nfields)
       desc1 = curs.description[self._pickleCol]
       ftv = desc1[self._pickleCol].value
       if  ftv != sql.BINARY:
-        raise TypeError,'pickle column (%d) of bad type'%self._pickleCol
+        raise TypeError('pickle column (%d) of bad type'%self._pickleCol)
 
     def __iter__(self):
       try:
@@ -47,7 +48,7 @@ if RDConfig.usePgSQL:
       except:
         import traceback
         traceback.print_exc()
-        print 'COMMAND:',self.cmd
+        print('COMMAND:',self.cmd)
         raise
       self._first=1
       self._validate()
@@ -67,7 +68,7 @@ if RDConfig.usePgSQL:
           raise StopIteration
         else:
           if res.nfields < 2:
-            raise ValueError,'bad result: %s'%str(res)
+            raise ValueError('bad result: %s'%str(res))
           t = [res.getvalue(0,x) for x in range(res.nfields)]
           val = t[self._pickleCol]
       else:
@@ -103,7 +104,7 @@ if RDConfig.usePgSQL:
       self.rowCount = self.res.ntuples+1
       self.idx=0
       if self.res.nfields < 2:
-        raise ValueError,'bad query result'%str(res)
+        raise ValueError('bad query result'%str(res))
 
       return self
     def next(self):
@@ -126,7 +127,7 @@ if RDConfig.usePgSQL:
         self.rowCount = self.res.ntuples+1
         self.idx=0
         if self.res.nfields < 2:
-          raise ValueError,'bad query result'%str(res)
+          raise ValueError('bad query result'%str(res))
 
       if idx < 0:
         idx = self.rowCount+idx

@@ -65,15 +65,18 @@ Optional Arguments:
     displayed in gnuplot.
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import numpy
-import cPickle,copy
+import copy
+from rdkit.six.moves import cPickle
 #from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML.Data import DataUtils,SplitData,Stats
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit import DataStructs
 from rdkit.ML import CompositeRun
 import sys,os,types
+from rdkit.six import cmp
 
 __VERSION_STRING="2.4.0"
 def message(msg,noRet=0,dest=sys.stderr):
@@ -237,17 +240,17 @@ def MakePlot(details,final,counts,pickVects,nModels,nTrueActs=-1):
   set term postscript enh color solid "Helvetica" 16
   set term X
   """%(__VERSION_STRING)
-  print >>gnuF,gnuHdr
+  print(gnuHdr, file=gnuF)
   if nTrueActs >0:
-    print >>gnuF,'set yr [0:%d]'%nTrueActs
-  print >>gnuF,'plot x with lines'
+    print('set yr [0:%d]'%nTrueActs, file=gnuF)
+  print('plot x with lines', file=gnuF)
   if nModels>1:
     everyGap = i/20
-    print >>gnuF,'replot "%s" using 1:2 with lines,'%(dataFileName),
-    print >>gnuF,'"%s" every %d using 1:2:5 with yerrorbars'%(dataFileName,
-                                                                 everyGap)
+    print('replot "%s" using 1:2 with lines,'%(dataFileName),end='', file=gnuF)
+    print('"%s" every %d using 1:2:5 with yerrorbars'%(dataFileName,
+                                                       everyGap), file=gnuF)
   else:
-    print >>gnuF,'replot "%s" with points'%(dataFileName)
+    print('replot "%s" with points'%(dataFileName), file=gnuF)
   gnuF.close()
 
   if hasattr(details,'showPlot') and details.showPlot:
@@ -345,7 +348,7 @@ if __name__=='__main__':
       
   if not details.dbName or not details.dbTableName:
     Usage()
-    print '*******Please provide both the -d and -t arguments'
+    print('*******Please provide both the -d and -t arguments')
 
   message('Building Data set\n')
   dataSet = DataUtils.DBToData(details.dbName,details.dbTableName,
@@ -380,7 +383,7 @@ if __name__=='__main__':
       except:
         import traceback
         traceback.print_exc()
-        print 'Model failed'
+        print('Model failed')
       else:
         message('  <-Done')
       try:
@@ -394,7 +397,7 @@ if __name__=='__main__':
         model = cPickle.load(open(modelName,'rb'))
       except:
         import traceback
-        print 'problems with model %s:'%modelName
+        print('problems with model %s:'%modelName)
         traceback.print_exc()
       else:
         models.append(model)
@@ -460,25 +463,25 @@ if __name__=='__main__':
     MakePlot(details,final,counts,pickVects,nModels,nTrueActs=nTrueActives)
   else:
     if nModels>1:
-      print '#Index\tAvg_num_correct\tConf90Pct\tAvg_num_picked\tNum_picks\tlast_selection'
+      print('#Index\tAvg_num_correct\tConf90Pct\tAvg_num_picked\tNum_picks\tlast_selection')
     else:
-      print '#Index\tAvg_num_correct\tAvg_num_picked\tNum_picks\tlast_selection'
+      print('#Index\tAvg_num_correct\tAvg_num_picked\tNum_picks\tlast_selection')
 
     i = 0
     while i < nPts and counts[i] != 0:
       if nModels>1:
         mean,sd = Stats.MeanAndDev(pickVects[i])
         confInterval = Stats.GetConfidenceInterval(sd,len(pickVects[i]),level=90)
-        print '%d\t%f\t%f\t%f\t%d\t%s'%(i+1,final[i][0]/counts[i],confInterval,
+        print('%d\t%f\t%f\t%f\t%d\t%s'%(i+1,final[i][0]/counts[i],confInterval,
                                         final[i][1]/counts[i],
-                                        counts[i],str(selPts[i]))
+                                        counts[i],str(selPts[i])))
       else:
-        print '%d\t%f\t%f\t%d\t%s'%(i+1,final[i][0]/counts[i],
+        print('%d\t%f\t%f\t%d\t%s'%(i+1,final[i][0]/counts[i],
                                     final[i][1]/counts[i],
-                                    counts[i],str(selPts[i]))
+                                    counts[i],str(selPts[i])))
       i += 1
     
   mean,sd = Stats.MeanAndDev(halfwayPts)
-  print 'Halfway point: %.2f(%.2f)'%(mean,sd)
+  print('Halfway point: %.2f(%.2f)'%(mean,sd))
       
     

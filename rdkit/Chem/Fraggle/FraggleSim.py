@@ -67,14 +67,14 @@ def delete_bonds(mol,bonds,ftype,hac):
 
     for b in bonds:
         #remove the bond
-	em.RemoveBond(b[0],b[1])
+        em.RemoveBond(b[0],b[1])
 
-	#now add attachement points
-	newAtomA = em.AddAtom(Chem.Atom(0))
-	em.AddBond(b[0],newAtomA,Chem.BondType.SINGLE)
+        #now add attachement points
+        newAtomA = em.AddAtom(Chem.Atom(0))
+        em.AddBond(b[0],newAtomA,Chem.BondType.SINGLE)
 
-	newAtomB = em.AddAtom(Chem.Atom(0))
-	em.AddBond(b[1],newAtomB,Chem.BondType.SINGLE)
+        newAtomB = em.AddAtom(Chem.Atom(0))
+        em.AddBond(b[1],newAtomB,Chem.BondType.SINGLE)
 
     #should be able to get away without sanitising mol
     #as the valencies should be okay
@@ -213,6 +213,11 @@ cSma1 = Chem.MolFromSmarts("[#0][r].[r][#0]")
 cSma2 = Chem.MolFromSmarts("[#0][r][#0]")
 
 def generate_fraggle_fragmentation(mol):
+    """
+    >>> q = Chem.MolFromSmiles('COc1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12')
+    >>> list(generate_fraggle_fragmentation(q))
+    ['[*]C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C(=O)c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC', '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]C(=O)c1cncc(C)c1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]NC(=O)c1cncc(C)c1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1', '[*]NC(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC', '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1', '[*]c1c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc(OC)c2ccccc12', '[*]c1c([*])c(OC)c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc1OC', '[*]c1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12', '[*]c1cc(OC)c2ccccc2c1OC.[*]N1CCC(NC(=O)c2cncc(C)c2)CC1', '[*]c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC']
+    """
     #query mol heavy atom count
     hac = mol.GetNumAtoms()
 
@@ -227,7 +232,7 @@ def generate_fraggle_fragmentation(mol):
     #find the relevant bonds to break
     acyclic_matching_atoms = mol.GetSubstructMatches(acyc_smarts)
     #print "Matching Atoms:"
-    #print matching_atoms
+    #print("acyclic matching atoms: ",acyclic_matching_atoms)
 
     total_acyclic = len(acyclic_matching_atoms)
     bonds_selected = []
@@ -243,16 +248,18 @@ def generate_fraggle_fragmentation(mol):
             bonds_selected.append(acyclic_matching_atoms[y])
             fragment = delete_bonds(mol,bonds_selected,"acyclic",hac)
             if fragment is not None:
-                #print "%s" % (fragment)
+                #print(fragment)
                 out_fragments.add(fragment)
             bonds_selected = []
 
+    #print(out_fragments)
     ##################################
     # Fused/Spiro exocyclic bond Cuts
     ##################################
 
     #find the relevant bonds to break
     cyclic_matching_atoms = mol.GetSubstructMatches(cyc_smarts)
+    #print("cyclic matching atoms: ",cyclic_matching_atoms)
     #print "Matching Atoms:"
     #print matching_atoms
 
@@ -283,7 +290,7 @@ def generate_fraggle_fragmentation(mol):
                         out_fragments.add(fragment)
                     bonds_selected = []
 
-    return out_fragments
+    return sorted(list(out_fragments))
 
 #atomcontrib algorithm
 #generate fp of query_substructs (qfp)
@@ -341,7 +348,7 @@ def atomContrib(subs,mol,tverskyThresh=0.8):
         #print "New ring"
         for ringAtom in range(len(ssr[ringList])):
             #print ssr[ringList][ringAtoms]
-            if(  marked.has_key(ssr[ringList][ringAtom])  ):
+            if ssr[ringList][ringAtom] in marked:
                 #print ssr[ringList][ringAtoms]
                 ringsToChange[ringList] = 1
 

@@ -48,6 +48,37 @@ namespace RDKit {
       return periodicTableRow;
     }
     
+    // given the atomic num, this function returns the periodic
+    // table row number, starting from 1 for helium
+    // Hydrogen has a special row number (0), while transition
+    // metals have the row number multiplied by 10
+    unsigned int getPeriodicTableRowHL(const int atomicNum)
+    {
+      unsigned int periodicTableRow = 0;
+      
+      if (atomicNum == 2) {
+        periodicTableRow = 1;
+      }
+      else if ((atomicNum >= 3) && (atomicNum <= 10)) {
+        periodicTableRow = 2;
+      }
+      else if ((atomicNum >= 11) && (atomicNum <= 18)) {
+        periodicTableRow = 3;
+      }
+      else if ((atomicNum >= 19) && (atomicNum <= 36)) {
+        periodicTableRow = 4;
+      }
+      else if ((atomicNum >= 37) && (atomicNum <= 54)) {
+        periodicTableRow = 5;
+      }
+      if (((atomicNum >= 21) && (atomicNum <= 30))
+        || ((atomicNum >= 39) && (atomicNum <= 48))
+        || ((atomicNum >= 39) && (atomicNum <= 48))) {
+        periodicTableRow *= 10;
+      }
+      
+      return periodicTableRow;
+    }
     
     // given the MMFF atom type, this function returns true
     // if it is aromatic
@@ -1975,7 +2006,7 @@ namespace RDKit {
     // finds the MMFF atomType for a hydrogen atom
     void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom)
     {
-      unsigned int atomType;
+      unsigned int atomType=0;
       bool isHOCCorHOCN = false;
       bool isHOCO = false;
       bool isHOP = false;
@@ -2473,9 +2504,12 @@ namespace RDKit {
       PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
       const MMFFBond *mmffBndkParams;
+      const MMFFHerschbachLaurie *mmffHerschbachLaurieParams;
       const MMFFProp *mmffAtomPropParams[2];
       const MMFFCovRadPauEle *mmffAtomCovRadPauEleParams[2];
       MMFFBndkCollection *mmffBndk = MMFFBndkCollection::getMMFFBndk();
+      MMFFHerschbachLaurieCollection *mmffHerschbachLaurie =
+        MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie();
       MMFFCovRadPauEleCollection *mmffCovRadPauEle =
         MMFFCovRadPauEleCollection::getMMFFCovRadPauEle();
       MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
@@ -2593,11 +2627,23 @@ namespace RDKit {
       mmffBondParams->r0 = (r0_i[0] + r0_i[1] - c * pow(fabs
         (mmffAtomCovRadPauEleParams[0]->chi
         - mmffAtomCovRadPauEleParams[1]->chi), n) - delta);
-      // equation (19) - MMFF.V, page 625
-      double coeff = mmffBndkParams->r0 / mmffBondParams->r0;
-      double coeff2 = coeff * coeff;
-      double coeff6 = coeff2 * coeff2 * coeff2;
-      mmffBondParams->kb = mmffBndkParams->kb * coeff6;
+      if (mmffBndkParams) {
+        // equation (19) - MMFF.V, page 625
+        double coeff = mmffBndkParams->r0 / mmffBondParams->r0;
+        double coeff2 = coeff * coeff;
+        double coeff6 = coeff2 * coeff2 * coeff2;
+        mmffBondParams->kb = mmffBndkParams->kb * coeff6;
+      }
+      else {
+        // MMFF.V, page 627
+        // Herschbach-Laurie version of Badger's rule
+        // J. Chem. Phys. 35, 458 (1961); http://dx.doi.org/10.1063/1.1731952
+        // equation (8), page 5
+        mmffHerschbachLaurieParams = (*mmffHerschbachLaurie)
+          (getPeriodicTableRowHL(atomicNum1), getPeriodicTableRowHL(atomicNum2));
+        mmffBondParams->kb = pow(10.0, -(mmffBondParams->r0
+          - mmffHerschbachLaurieParams->a_ij) / mmffHerschbachLaurieParams->d_ij);
+      }
       
       return (const ForceFields::MMFF::MMFFBond *)mmffBondParams;
     }

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 #include <RDBoost/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/FileParseException.h>
+#include <GraphMol/ChemReactions/ReactionFingerprints.h>
+#include <GraphMol/ChemReactions/ReactionUtils.h>
 
 namespace python = boost::python;
 
@@ -55,10 +57,11 @@ void rdChemicalReactionExceptionTranslator(RDKit::ChemicalReactionException cons
 }
 
 namespace RDKit {
-  std::string ReactionToBinary(const ChemicalReaction &self){
+  python::object ReactionToBinary(const ChemicalReaction &self){
     std::string res;
     ReactionPickler::pickleReaction(self,res);
-    return res;
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
   }
   //
   // allows reactions to be pickled.
@@ -124,6 +127,49 @@ namespace RDKit {
     ROMol *res = const_cast<ROMol *>(iter->get());
     return res;
   }
+  ROMol * GetAgentTemplate(const ChemicalReaction *self,unsigned int which){
+    if(which>=self->getNumAgentTemplates()){
+      throw_value_error("requested template index too high");
+    }
+    MOL_SPTR_VECT::const_iterator iter=self->beginAgentTemplates();
+    iter += which;
+    ROMol *res = const_cast<ROMol *>(iter->get());
+    return res;
+  }
+
+  void RemoveUnmappedReactantTemplates(ChemicalReaction *self, double thresholdUnmappedAtoms, bool moveToAgentTemplates,
+		  python::object targetList){
+    if(targetList==python::object()){
+    	self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms, moveToAgentTemplates);
+	}
+    else{
+	  MOL_SPTR_VECT tmp;
+	  self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms, moveToAgentTemplates, &tmp);
+	  python::list molList = python::extract<python::list>(targetList);
+	  if(tmp.size() > 0){
+	    for(unsigned int i = 0; i < tmp.size(); i++){
+		  molList.append(tmp.at(i));
+	    }
+	  }
+    }
+  }
+
+  void RemoveUnmappedProductTemplates(ChemicalReaction *self, double thresholdUnmappedAtoms, bool moveToAgentTemplates,
+		  python::object targetList){
+    if(targetList==python::object()){
+    	self->removeUnmappedProductTemplates(thresholdUnmappedAtoms, moveToAgentTemplates);
+	}
+    else{
+	  MOL_SPTR_VECT tmp;
+	  self->removeUnmappedProductTemplates(thresholdUnmappedAtoms, moveToAgentTemplates, &tmp);
+	  python::list molList = python::extract<python::list>(targetList);
+	  if(tmp.size() > 0){
+	    for(unsigned int i = 0; i < tmp.size(); i++){
+		  molList.append(tmp.at(i));
+	    }
+	  }
+    }
+  }
 
   void Compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
                                   double spacing=2.0,
@@ -153,6 +199,10 @@ namespace RDKit {
   bool IsMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol){
     unsigned int which;
     return isMoleculeProductOfReaction(rxn,mol,which);
+  }
+  bool IsMoleculeAgentOfReaction(const ChemicalReaction &rxn,const ROMol &mol){
+    unsigned int which;
+    return isMoleculeAgentOfReaction(rxn,mol,which);
   }
   
 
@@ -220,7 +270,28 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
 
   python::register_exception_translator<RDKit::ChemicalReactionParserException>(&rdChemicalReactionParserExceptionTranslator);
   python::register_exception_translator<RDKit::ChemicalReactionException>(&rdChemicalReactionExceptionTranslator);
-    
+
+  python::enum_<RDKit::FingerprintType>("FingerprintType")
+          .value("AtomPairFP", RDKit::AtomPairFP)
+          .value("TopologicalTorsion", RDKit::TopologicalTorsion)
+          .value("MorganFP", RDKit::MorganFP)
+          .value("RDKitFP", RDKit::RDKitFP)
+          .value("PatternFP", RDKit::PatternFP)
+          ;
+  std::string docStringReactionFPParams =
+		  "A class for storing parameters to manipulate the calculation of fingerprints of chemical reactions.";
+
+  python::class_<RDKit::ReactionFingerprintParams>("ReactionFingerprintParams",docStringReactionFPParams.c_str(),
+		  python::init<>("Constructor, takes no arguments"))
+   .def(python::init<bool, double, unsigned int, int, unsigned int, RDKit::FingerprintType>())
+   .def_readwrite("fpSize", &RDKit::ReactionFingerprintParams::fpSize)
+   .def_readwrite("fpType", &RDKit::ReactionFingerprintParams::fpType)
+   .def_readwrite("bitRatioAgents", &RDKit::ReactionFingerprintParams::bitRatioAgents)
+   .def_readwrite("nonAgentWeight", &RDKit::ReactionFingerprintParams::nonAgentWeight)
+   .def_readwrite("agentWeight", &RDKit::ReactionFingerprintParams::agentWeight)
+   .def_readwrite("includeAgents", &RDKit::ReactionFingerprintParams::includeAgents)
+  ;
+
   std::string docString = "A class for storing and applying chemical reactions.\n\
 \n\
 Sample Usage:\n\
@@ -242,10 +313,22 @@ Sample Usage:\n\
          "returns the number of reactants this reaction expects")
     .def("GetNumProductTemplates",&RDKit::ChemicalReaction::getNumProductTemplates,
          "returns the number of products this reaction generates")
+    .def("GetNumAgentTemplates",&RDKit::ChemicalReaction::getNumAgentTemplates,
+         "returns the number of agents this reaction expects")
     .def("AddReactantTemplate",&RDKit::ChemicalReaction::addReactantTemplate,
          "adds a reactant (a Molecule) to the reaction")
     .def("AddProductTemplate",&RDKit::ChemicalReaction::addProductTemplate,
          "adds a product (a Molecule)")
+    .def("AddAgentTemplate",&RDKit::ChemicalReaction::addAgentTemplate,
+         "adds a agent (a Molecule)")
+    .def("RemoveUnmappedReactantTemplates",RDKit::RemoveUnmappedReactantTemplates,
+        (python::arg("self"), python::arg("thresholdUnmappedAtoms")=0.2,python::arg("moveToAgentTemplates")=true,
+         python::arg("targetList")=python::object()),
+        "Removes molecules with an atom mapping ratio below thresholdUnmappedAtoms from reactant templates to the agent templates or to a given targetList")
+    .def("RemoveUnmappedProductTemplates",RDKit::RemoveUnmappedProductTemplates,
+        (python::arg("self"), python::arg("thresholdUnmappedAtoms")=0.2,python::arg("moveToAgentTemplates")=true,
+         python::arg("targetList")=python::object()),
+         "Removes molecules with an atom mapping ratio below thresholdUnmappedAtoms from product templates to the agent templates or to a given targetList")
     .def("RunReactants",(PyObject *(*)(RDKit::ChemicalReaction *,python::tuple))RDKit::RunReactants,
          "apply the reaction to a sequence of reactant molecules and return the products as a tuple of tuples")
     .def("RunReactants",(PyObject *(*)(RDKit::ChemicalReaction *,python::list))RDKit::RunReactants,
@@ -265,6 +348,10 @@ Sample Usage:\n\
          (python::arg("self"),python::arg("which")),
          python::return_value_policy<python::reference_existing_object>(),
          "returns one of our reactant templates")
+    .def("GetAgentTemplate",&RDKit::GetAgentTemplate,
+         (python::arg("self"),python::arg("which")),
+         python::return_value_policy<python::reference_existing_object>(),
+         "returns one of our agent templates")
     .def("_setImplicitPropertiesFlag",&RDKit::ChemicalReaction::setImplicitPropertiesFlag,
          (python::arg("self"),python::arg("val")),
          "EXPERT USER: indicates that the reaction can have implicit properties")
@@ -277,6 +364,8 @@ Sample Usage:\n\
          "returns whether or not the molecule has a substructure match to one of the reactants.")
     .def("IsMoleculeProduct",RDKit::IsMoleculeProductOfReaction,
          "returns whether or not the molecule has a substructure match to one of the products.")
+    .def("IsMoleculeAgent",RDKit::IsMoleculeAgentOfReaction,
+         "returns whether or not the molecule has a substructure match to one of the agents.")
     .def("GetReactingAtoms",&RDKit::GetReactingAtoms,
          (python::arg("self"),python::arg("mappedAtomsOnly")=false),
          "returns a sequence of sequences with the atoms that change in the reaction")
@@ -303,13 +392,23 @@ of the replacements argument.",
   python::def("ReactionFromRxnBlock",RDKit::RxnBlockToChemicalReaction,
       "construct a ChemicalReaction from an string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
+  python::def("ReactionFromMolecule",RDKit::RxnMolToChemicalReaction,
+      "construct a ChemicalReaction from an molecule if the RXN role property of the molecule is set",
+      python::return_value_policy<python::manage_new_object>());
 
   python::def("ReactionToSmarts",RDKit::ChemicalReactionToRxnSmarts,
       (python::arg("reaction")),
       "construct a reaction SMARTS string for a ChemicalReaction");
-  python::def("ReactionToRxnBlock",RDKit::ChemicalReactionToRxnBlock,
+  python::def("ReactionToSmiles",RDKit::ChemicalReactionToRxnSmiles,
       (python::arg("reaction")),
+      "construct a reaction SMILES string for a ChemicalReaction");
+  python::def("ReactionToRxnBlock",RDKit::ChemicalReactionToRxnBlock,
+      (python::arg("reaction"), python::arg("separateAgents")=false),
       "construct a string in MDL rxn format for a ChemicalReaction");
+  python::def("ReactionToMolecule",RDKit::ChemicalReactionToRxnMol,
+      (python::arg("reaction")),
+      "construct a molecule for a ChemicalReaction with RXN role property set",
+      python::return_value_policy<python::manage_new_object>());
 
   docString = "Compute 2D coordinates for a reaction. \n\
   ARGUMENTS: \n\n\
@@ -339,6 +438,38 @@ of the replacements argument.",
                python::arg("permuteDeg4Nodes")=false,
                python::arg("bondLength")=-1.0),
 	      docString.c_str());
+
+  python::def("CreateDifferenceFingerprintForReaction",RDKit::DifferenceFingerprintChemReaction,
+              (python::arg("reaction"),
+               python::arg("ReactionFingerPrintParams")=RDKit::DefaultDifferenceFPParams),
+              "construct a difference fingerprint for a ChemicalReaction by subtracting the reactant "
+              "fingerprint from the product fingerprint",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def("CreateStructuralFingerprintForReaction",RDKit::StructuralFingerprintChemReaction,
+              (python::arg("reaction"),
+               python::arg("ReactionFingerPrintParams")=RDKit::DefaultStructuralFPParams),
+              "construct a structural fingerprint for a ChemicalReaction by concatenating the reactant "
+              "fingerprint and the product fingerprint",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def("IsReactionTemplateMoleculeAgent",RDKit::isReactionTemplateMoleculeAgent,
+		  (python::arg("molecule"), python::arg("agentThreshold")),
+          "tests if a molecule can be classified as an agent depending on the ratio of mapped atoms and a give threshold");
+  python::def("HasReactionAtomMapping",RDKit::hasReactionAtomMapping,
+          "tests if a reaction obtains any atom mapping");
+  python::def("HasReactionSubstructMatch",RDKit::hasReactionSubstructMatch,
+		  (python::arg("reaction"), python::arg("queryReaction"), python::arg("includeAgents")=false),
+          "tests if the queryReaction is a substructure of a reaction");
+  python::def("HasAgentTemplateSubstructMatch",RDKit::hasAgentTemplateSubstructMatch,
+		  (python::arg("reaction"), python::arg("queryReaction")),
+          "tests if the agents of a queryReaction are the same as those of a reaction");
+  python::def("HasProductTemplateSubstructMatch",RDKit::hasProductTemplateSubstructMatch,
+		  (python::arg("reaction"), python::arg("queryReaction")),
+          "tests if the products of a queryReaction are substructures of the products of a reaction");
+  python::def("HasReactantTemplateSubstructMatch",RDKit::hasReactantTemplateSubstructMatch,
+		  (python::arg("reaction"), python::arg("queryReaction")),
+          "tests if the reactants of a queryReaction are substructures of the reactants of a reaction");
 
 }
               

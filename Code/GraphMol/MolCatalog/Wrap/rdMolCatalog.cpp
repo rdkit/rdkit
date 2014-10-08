@@ -19,7 +19,7 @@ namespace {
     {
       std::string res;
       res = self.Serialize();
-      return python::make_tuple(res);
+      return python::make_tuple(python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length()))));
     };
   };
 
@@ -30,7 +30,7 @@ namespace {
     {
       std::string res;
       res = self.Serialize();
-      return python::make_tuple(res);
+      return python::make_tuple(python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length()))));
     };
   };
 

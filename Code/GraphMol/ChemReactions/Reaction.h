@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -120,6 +120,7 @@ namespace RDKit{
         df_implicitProperties=other.df_implicitProperties;
         m_reactantTemplates=other.m_reactantTemplates;
         m_productTemplates=other.m_productTemplates;
+        m_agentTemplates=other.m_agentTemplates;
     }
     //! construct a reaction from a pickle string
     ChemicalReaction(const std::string &binStr);
@@ -135,6 +136,16 @@ namespace RDKit{
       return this->m_reactantTemplates.size();
     }
 
+    //! Adds a new agent template
+    /*!
+      \return the number of agent
+
+    */
+    unsigned int addAgentTemplate(ROMOL_SPTR mol){
+      this->m_agentTemplates.push_back(mol);
+      return this->m_agentTemplates.size();
+    }
+
     //! Adds a new product template
     /*!
       \return the number of products
@@ -145,6 +156,23 @@ namespace RDKit{
       return this->m_productTemplates.size();
     }
     
+    //! Removes the reactant templates from a reaction if atom mapping ratio is below a given threshold
+    /*! By default the removed reactant templates were attached to the agent templates.
+        An alternative will be to provide a pointer to a molecule vector where these reactants should be saved.
+    */
+    void removeUnmappedReactantTemplates(
+      double thresholdUnmappedAtoms = 0.2,
+      bool moveToAgentTemplates = true,
+      MOL_SPTR_VECT *targetVector = NULL);
+
+    //! Removes the product templates from a reaction if its atom mapping ratio is below a given threshold
+    /*! By default the removed products templates were attached to the agent templates.
+        An alternative will be to provide a pointer to a molecule vector where these products should be saved.
+    */
+    void removeUnmappedProductTemplates(
+      double thresholdUnmappedAtoms =0.2,
+      bool moveToAgentTemplates = true,
+      MOL_SPTR_VECT *targetVector = NULL);
       
     //! Runs the reaction on a set of reactants
     /*!
@@ -175,6 +203,13 @@ namespace RDKit{
         return this->m_productTemplates.end();    
     }
 
+    MOL_SPTR_VECT::const_iterator beginAgentTemplates() const {
+        return this->m_agentTemplates.begin();
+    }
+    MOL_SPTR_VECT::const_iterator endAgentTemplates() const {
+        return this->m_agentTemplates.end();
+    }
+
     MOL_SPTR_VECT::iterator beginReactantTemplates() {
         return this->m_reactantTemplates.begin();    
     }
@@ -188,8 +223,16 @@ namespace RDKit{
     MOL_SPTR_VECT::iterator endProductTemplates() {
         return this->m_productTemplates.end();    
     }
+
+    MOL_SPTR_VECT::iterator beginAgentTemplates() {
+        return this->m_agentTemplates.begin();
+    }
+    MOL_SPTR_VECT::iterator endAgentTemplates() {
+        return this->m_agentTemplates.end();
+    }
     unsigned int getNumReactantTemplates() const { return this->m_reactantTemplates.size(); };
     unsigned int getNumProductTemplates() const { return this->m_productTemplates.size(); };
+    unsigned int getNumAgentTemplates() const { return this->m_agentTemplates.size(); };
 
     //! initializes our internal reactant-matching datastructures.
     /*! 
@@ -244,10 +287,8 @@ namespace RDKit{
   private:
     bool df_needsInit;
     bool df_implicitProperties;
-    MOL_SPTR_VECT m_reactantTemplates,m_productTemplates;
+    MOL_SPTR_VECT m_reactantTemplates,m_productTemplates,m_agentTemplates;
     ChemicalReaction &operator=(const ChemicalReaction &); // disable assignment
-    MOL_SPTR_VECT generateOneProductSet(const MOL_SPTR_VECT &reactants,
-                                        const std::vector<MatchVectType> &reactantsMatch) const;
   };
 
   //! tests whether or not the molecule has a substructure match
@@ -269,6 +310,16 @@ namespace RDKit{
                                    unsigned int &which);
   //! \overload
   bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
+
+  //! tests whether or not the molecule has a substructure match
+  //! to any of the reaction's agents
+  //! the \c which argument is used to return which of the agents
+  //! the molecule matches. If there's no match, it is equal to the number
+  //! of agents on return
+  bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
+                                   unsigned int &which);
+  //! \overload
+  bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
 
   //! returns indices of the atoms in each reactant that are changed
   //! in the reaction

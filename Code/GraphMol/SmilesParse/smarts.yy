@@ -15,12 +15,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>  
 #include <GraphMol/SmilesParse/SmilesParseOps.h>  
 #include <RDGeneral/RDLog.h>
+
+#define YYDEBUG 1
 #include "smarts.tab.hpp"
 
 extern int yysmarts_lex(YYSTYPE *,void *);
-
-
-#define YYDEBUG 1
 
 void
 yysmarts_error( const char *input,
@@ -59,7 +58,7 @@ namespace {
 %token <ival> AROMATIC_ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <atom> ATOM_TOKEN
 %token <atom> SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
-%token <atom> RINGSIZE_ATOM_QUERY_TOKEN HYB_TOKEN
+%token <atom> RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN HYB_TOKEN
 %token <ival> ZERO_TOKEN NONZERO_DIGIT_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
 %token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN 
@@ -370,6 +369,16 @@ atom_query:	simple_atom
 | RINGSIZE_ATOM_QUERY_TOKEN number {
   delete $1->getQuery();
   $1->setQuery(makeAtomMinRingSizeQuery($2));
+}
+| RINGBOND_ATOM_QUERY_TOKEN
+| RINGBOND_ATOM_QUERY_TOKEN number {
+  delete $1->getQuery();
+  $1->setQuery(makeAtomRingBondCountQuery($2));
+}
+| IMPLICIT_H_ATOM_QUERY_TOKEN
+| IMPLICIT_H_ATOM_QUERY_TOKEN number {
+  delete $1->getQuery();
+  $1->setQuery(makeAtomImplicitHCountQuery($2));
 }
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();

@@ -389,5 +389,25 @@ torsion_fp(PG_FUNCTION_ARGS) {
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
 
+PG_FUNCTION_INFO_V1(reaction_difference_fp);
+Datum       reaction_difference_fp(PG_FUNCTION_ARGS);
+Datum
+reaction_difference_fp(PG_FUNCTION_ARGS) {
+  CChemicalReaction  rxn;
+  MolSparseFingerPrint    fp;
+  SparseFingerPrint       *sfp;
 
+  fcinfo->flinfo->fn_extra = SearchChemReactionCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &rxn, NULL);
+
+  fp = makeReactionDifferenceSFP(rxn, getReactionDifferenceFpSize(),
+		  PG_GETARG_INT32(1) /* Fingerprinttype */ );
+  sfp = deconstructMolSparseFingerPrint(fp);
+  freeMolSparseFingerPrint(fp);
+
+  PG_RETURN_SPARSEFINGERPRINT_P(sfp);
+}
 

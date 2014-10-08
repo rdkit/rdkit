@@ -108,11 +108,15 @@ namespace RDKit {
                        defaults to all weights = 1
       \param reflect   toggles reflecting (about the origin) the alignment
       \param maxIters  the maximum number of iterations to attempt
+      \param RMSlist   if nonzero, this will be used to return the RMS values
+                       between the reference conformation and the other aligned
+                       conformations
     */
     void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds=0,
                             const std::vector<unsigned int> *confIds=0,
                             const RDNumeric::DoubleVector *weights=0, 
-                            bool reflect=false, unsigned int maxIters=50);
+                            bool reflect=false, unsigned int maxIters=50,
+                            std::vector<double> *RMSlist=0);
   }
 }
 #endif

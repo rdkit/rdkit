@@ -9,9 +9,9 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C','Name':'Penicilline G'}, ignore_index=True)#Penicilline G
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O','Name':'Tetracycline'}, ignore_index=True)#Tetracycline
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O)O)C','Name':'Ampicilline'}, ignore_index=True)#Ampicilline
->>> print [str(x) for x in  antibiotics.columns]
+>>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles']
->>> print antibiotics
+>>> print(antibiotics)
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
 1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4...
@@ -20,7 +20,7 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 a new column can be created holding the respective RDKit molecule objects. The fingerprint can be included to accelerate substructure searches on the dataframe.
 
 >>> PandasTools.AddMoleculeColumnToFrame(antibiotics,'Smiles','Molecule',includeFingerprints=True)
->>> print [str(x) for x in  antibiotics.columns]
+>>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles', 'Molecule']
 
 A substructure filter can be applied on the dataframe using the RDKit molecule column, because the ">=" operator has been modified to work as a substructure check.
@@ -28,7 +28,7 @@ Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtaine
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
 >>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
->>> print beta_lactam_antibiotics[['Name','Smiles']]
+>>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
 2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
@@ -66,23 +66,25 @@ dtypes: object(20)>
 
 In order to support rendering the molecules as images in the HTML export of the dataframe, the __str__ method is monkey-patched to return a base64 encoded PNG:
 >>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
->>> print molX # doctest: +SKIP
+>>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
 This can be reverted using the ChangeMoleculeRendering method
 >>> ChangeMoleculeRendering(renderer='String')
->>> print molX # doctest: +SKIP
+>>> print(molX) # doctest: +SKIP
 <rdkit.Chem.rdchem.Mol object at 0x10d179440>
 >>> ChangeMoleculeRendering(renderer='PNG')
->>> print molX # doctest: +SKIP
+>>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
 '''
+from __future__ import print_function
 
+from base64 import b64encode
+import types
 
+from rdkit.six import BytesIO
 from rdkit import Chem
 from rdkit.Chem import Draw
-from base64 import b64encode
-from StringIO import StringIO
-import types
+
 try:
   import pandas as pd
   v = pd.version.version.split('.')
@@ -91,7 +93,9 @@ try:
   else:
     if 'display.width' in  pd.core.config._registered_options:
       pd.set_option('display.width',1000000000)
-    if 'display.height' in  pd.core.config._registered_options:
+    if 'display.max_rows' in  pd.core.config._registered_options:
+      pd.set_option('display.max_rows',1000000000)
+    elif 'display.height' in  pd.core.config._registered_options:
       pd.set_option('display.height',1000000000)
     if 'display.max_colwidth' in  pd.core.config._registered_options:
       pd.set_option('display.max_colwidth',1000000000)
@@ -123,9 +127,9 @@ def patchPandasHeadMethod(self,n=5):
 def _get_image(x):
   """displayhook function for PIL Images, rendered as PNG"""
   import pandas as pd
-  sio = StringIO()    
-  x.save(sio,format='PNG')
-  s = b64encode(sio.getvalue())
+  bio = BytesIO()    
+  x.save(bio,format='PNG')
+  s = b64encode(bio.getvalue()).decode('ascii')
   pd.set_option('display.max_columns',len(s)+1000)
   pd.set_option('display.max_rows',len(s)+1000)
   if len(s)+100 > pd.get_option("display.max_colwidth"):
@@ -215,7 +219,7 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
   """ Read file in SDF format and return as Panda data frame """
   df = None
   if type(filename) is str:
-    f = open(filename, 'rU')
+    f = open(filename, 'rb') #'rU')
   else:
     f = filename
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
@@ -300,11 +304,12 @@ def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
 if __name__ == "__main__":
   import sys
   if pd is None:
-    print >>sys.stderr,"pandas installation not found, skipping tests"
+    print("pandas installation not found, skipping tests", file=sys.stderr)
   else:
     v = pd.version.version.split('.')
     if v[0]=='0' and int(v[1])<10:
-      print >>sys.stderr,"pandas installation >=0.10 not found, skipping tests"
+      print("pandas installation >=0.10 not found, skipping tests", 
+            file=sys.stderr)
     else:
       import doctest
       failed,tried=doctest.testmod(optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)

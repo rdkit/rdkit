@@ -11,6 +11,7 @@
 """unit testing code for graph-theoretical descriptors
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import unittest,os.path
 from rdkit import Chem
@@ -22,7 +23,7 @@ def feq(n1,n2,tol=1e-4):
 class TestCase(unittest.TestCase):
   def setUp(self):
     if doLong:
-      print '\n%s: '%self.shortDescription(),
+      print('\n%s: '%self.shortDescription(),end='')
 
     
   def testBertzCTShort(self):
@@ -51,54 +52,54 @@ class TestCase(unittest.TestCase):
      
    """
    col = 1
-   inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data','PP_descrs_regress.2.csv'),'r')
-   lineNum=0
-   for line in inF.xreadlines():
-     lineNum+=1
-     if line[0] != '#':
-       splitL = line.split(',')
-       smi = splitL[0]
-       try:
-         m = Chem.MolFromSmiles(smi)
-       except:
-         m = None
-
-       assert m,'line %d, smiles: %s'%(lineNum,smi)
-       useIt=1
-       for atom in m.GetAtoms():
-         if atom.GetIsAromatic():
-           useIt=0
-           break
-       if useIt:
-         tgtVal = float(splitL[col])
+   with open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data','PP_descrs_regress.2.csv'),'r') as inF:
+     lineNum=0
+     for line in inF:
+       lineNum+=1
+       if line[0] != '#':
+         splitL = line.split(',')
+         smi = splitL[0]
          try:
-           val = GraphDescriptors.BertzCT(m)
+           m = Chem.MolFromSmiles(smi)
          except:
-           val = 666
-         assert feq(val,tgtVal,1e-4),'line %d, mol %s (CT calc = %f) should have CT = %f'%(lineNum,smi,val,tgtVal)
+           m = None
 
-  def __testDesc(self,fileN,col,func):
-   inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',fileN),'r')
-   lineNum=0
-   for line in inF.xreadlines():
-     lineNum+=1
-     if line[0] != '#':
-       splitL = line.split(',')
-       smi = splitL[0]
-       try:
-         m = Chem.MolFromSmiles(smi)
-       except:
-         m = None
-       assert m,'line %d, smiles: %s'%(lineNum,smi)
-       useIt=1
-       if useIt:
-         tgtVal = float(splitL[col])
-         if not feq(tgtVal,666.0):
+         assert m,'line %d, smiles: %s'%(lineNum,smi)
+         useIt=1
+         for atom in m.GetAtoms():
+           if atom.GetIsAromatic():
+             useIt=0
+             break
+         if useIt:
+           tgtVal = float(splitL[col])
            try:
-             val = func(m)
+             val = GraphDescriptors.BertzCT(m)
            except:
              val = 666
-           assert feq(val,tgtVal,1e-4),'line %d, mol %s (calc = %f) should have val = %f'%(lineNum,smi,val,tgtVal)
+           assert feq(val,tgtVal,1e-4),'line %d, mol %s (CT calc = %f) should have CT = %f'%(lineNum,smi,val,tgtVal)
+
+  def __testDesc(self,fileN,col,func):
+   with open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',fileN),'r') as inF:
+     lineNum=0
+     for line in inF:
+       lineNum+=1
+       if line[0] != '#':
+         splitL = line.split(',')
+         smi = splitL[0]
+         try:
+           m = Chem.MolFromSmiles(smi)
+         except:
+           m = None
+         assert m,'line %d, smiles: %s'%(lineNum,smi)
+         useIt=1
+         if useIt:
+           tgtVal = float(splitL[col])
+           if not feq(tgtVal,666.0):
+             try:
+               val = func(m)
+             except:
+               val = 666
+             assert feq(val,tgtVal,1e-4),'line %d, mol %s (calc = %f) should have val = %f'%(lineNum,smi,val,tgtVal)
 
   def testChi0Long(self):
    """ test calculation of Chi0
@@ -267,8 +268,8 @@ class TestCase(unittest.TestCase):
   def _testTPSAShortNCI(self):
     " Short TPSA test "
     inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
-    inF = open(inName,'r')
-    lines = inF.readlines()
+    with open(inName,'r') as inF:
+      lines = inF.readlines()
     for line in lines:
       if line[0] != '#':
         line.strip()
@@ -276,15 +277,15 @@ class TestCase(unittest.TestCase):
         ans = float(ans)
 
         mol = Chem.MolFromSmiles(smi)
-      
+
         calc = MolSurf.TPSA(mol)
         assert feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans)
 
   def _testTPSALongNCI(self):
     " Long TPSA test "
     fileN = 'tpsa_regr.csv'
-    inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',fileN),'r')
-    lines = inF.readlines()
+    with open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',fileN),'r') as inF:
+      lines = inF.readlines()
     lineNo = 0
     for line in lines:
       lineNo+=1

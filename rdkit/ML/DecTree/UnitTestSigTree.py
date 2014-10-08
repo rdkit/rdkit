@@ -4,7 +4,7 @@
 #   All Rights Reserved
 #
 from rdkit import RDConfig
-import unittest,os
+import unittest,os,sys
 from rdkit.ML.DecTree.SigTree import SigTreeNode
 from rdkit.ML import InfoTheory
 from rdkit.DataStructs import ExplicitBitVect
@@ -34,15 +34,15 @@ class TestCase(unittest.TestCase):
     bv = ExplicitBitVect(5)
     
     ex = ['nm',bv]
-    self.failIf(t1.ClassifyExample(ex))
+    self.assertFalse(t1.ClassifyExample(ex))
     bv.SetBit(1)
-    self.failUnless(t1.ClassifyExample(ex))
+    self.assertTrue(t1.ClassifyExample(ex))
     
     bv.SetBit(0)
-    self.failUnless(t1.ClassifyExample(ex))
+    self.assertTrue(t1.ClassifyExample(ex))
 
     bv.SetBit(2)
-    self.failIf(t1.ClassifyExample(ex))
+    self.assertFalse(t1.ClassifyExample(ex))
 
   def test2(self):
     t1 = self.tree
@@ -57,13 +57,13 @@ class TestCase(unittest.TestCase):
     vc.AddVect(2,bv)
 
     ex = ['nm',bv,1]
-    self.failUnless(t1.ClassifyExample(ex))
+    self.assertTrue(t1.ClassifyExample(ex))
     
     bv = ExplicitBitVect(5)
     bv.SetBitsFromList([0,2])
     vc.AddVect(1,bv)
     ex = ['nm',bv,1]
-    self.failIf(t1.ClassifyExample(ex))
+    self.assertFalse(t1.ClassifyExample(ex))
 
   def test3(self):
     from BuildSigTree import BuildSigTree
@@ -118,14 +118,14 @@ class TestCase(unittest.TestCase):
     t = BuildSigTree(examples,2,metric=InfoTheory.InfoType.ENTROPY,
                      maxDepth=2,verbose=0)
 
-    self.failUnless(t.GetName()=='Bit-0')
-    self.failUnless(t.GetLabel()==0)
+    self.assertEqual(t.GetName(),'Bit-0')
+    self.assertEqual(t.GetLabel(),0)
     c0 = t.GetChildren()[0]
-    self.failUnless(c0.GetName()=='Bit-1')
-    self.failUnless(c0.GetLabel()==1)
+    self.assertEqual(c0.GetName(),'Bit-1')
+    self.assertEqual(c0.GetLabel(),1)
     c1 = t.GetChildren()[1]
-    self.failUnless(c1.GetName()=='Bit-1')
-    self.failUnless(c1.GetLabel()==1)
+    self.assertEqual(c1.GetName(),'Bit-1')
+    self.assertEqual(c1.GetLabel(),1)
 
     bv = ExplicitBitVect(2)
     bv.SetBit(0)
@@ -135,20 +135,21 @@ class TestCase(unittest.TestCase):
     bv.SetBit(1)
     vc.AddVect(2,bv)
     r = t.ClassifyExample(['t',vc,0])
-    self.failUnless(r==0)
+    self.assertEqual(r,0)
 
     
   def test4(self):
-    import gzip,cPickle
+    import gzip
+    from rdkit.six.moves import cPickle
     from BuildSigTree import BuildSigTree
     gz = gzip.open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data',
                                 'cdk2-few.pkl.gz'),
-                   'r')
-    examples = cPickle.load(gz)
+                   'rb')
+    examples = cPickle.load(gz,encoding='Latin1')
     t = BuildSigTree(examples,2,maxDepth=3)
-    self.failUnless(t.GetLabel()==2181)
-    self.failUnless(t.GetChildren()[0].GetLabel()==2861)
-    self.failUnless(t.GetChildren()[1].GetLabel()==8182)
+    self.assertEqual(t.GetLabel(),2181)
+    self.assertEqual(t.GetChildren()[0].GetLabel(),2861)
+    self.assertEqual(t.GetChildren()[1].GetLabel(),8182)
   
 if __name__ == '__main__':
   unittest.main()

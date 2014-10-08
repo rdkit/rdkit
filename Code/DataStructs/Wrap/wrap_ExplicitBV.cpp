@@ -21,7 +21,9 @@ struct ebv_pickle_suite : python::pickle_suite
   static python::tuple
   getinitargs(const ExplicitBitVect& self)
   {
-    return python::make_tuple(self.toString());
+    std::string res=self.toString();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return python::make_tuple(retval);
   };
 };
 
@@ -75,7 +77,7 @@ struct EBV_wrapper {
     .def("GetOnBits",
          (IntVect (*)(const EBV&))GetOnBits,
          "Returns a tuple containing IDs of the on bits.\n")
-    .def("ToBinary",&EBV::toString,
+    .def("ToBinary",(python::object (*)(const EBV&))BVToBinary,
          "Returns an internal binary representation of the vector.\n")
     .def("FromBase64",
          (void (*)(EBV &,const std::string &))InitFromBase64,
@@ -86,9 +88,11 @@ struct EBV_wrapper {
     .def(python::self & python::self)
     .def(python::self | python::self)
     .def(python::self ^ python::self)
+    .def(python::self + python::self)
     .def(~python::self)
     .def(python::self == python::self)
     .def(python::self != python::self)
+    .def(python::self += python::self)
 
     .def_pickle(ebv_pickle_suite())
   ;

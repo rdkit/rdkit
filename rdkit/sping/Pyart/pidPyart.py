@@ -5,6 +5,7 @@
 #   __ native drawEllipse
 #   __ native drawArc    
 #   __ drawImage support (work on Pyart side of things)
+from __future__ import print_function
 import pyart
 from rdkit.sping.pid import *
 from rdkit.sping.PDF import pdfmetrics
@@ -34,7 +35,7 @@ class PyartCanvas(Canvas):
     def __setattr__(self, name, value):
         if name == 'defaultLineColor':
             if value:
-                # print 'setting defaultLineColor to %s, 0x%x' % (value, value.toHexRGB())
+                # print('setting defaultLineColor to %s, 0x%x' % (value, value.toHexRGB()))
                 if value != transparent:
                     self._pycan.gstate.stroke = value.toHexRGB()
                 self.__dict__[name] = value
@@ -184,7 +185,7 @@ class PyartCanvas(Canvas):
                                              (width != self.defaultLineWidth) )
             if color != self.defaultLineColor:
                 self._pycan.gstate.stroke = color.toHexRGB()
-                # print "color is %s <-> %s" % (color, color.toHexStr())
+                # print("color is %s <-> %s" % (color, color.toHexStr()))
             if width != self.defaultLineWidth:
                 self._pycan.gstate.stroke_width = width
             ###################
@@ -291,7 +292,7 @@ if __name__=='__main__':
     #can.drawLine(10,10, 50, 10, color=green, width = 4.5)
     rdkit.sping.tests.pidtest.drawBasics(can)
     can.save(file='basicTest.png')
-    print 'saving basicTest.png'
+    print('saving basicTest.png')
 
     can = PyartCanvas(size=(400,400), name='test-strings.png')
     rdkit.sping.tests.pidtest.drawStrings(can)

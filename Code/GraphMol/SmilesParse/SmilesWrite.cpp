@@ -114,12 +114,6 @@ namespace RDKit{
         INT_LIST trueOrder;
         atom->getProp("_TraversalBondIndexOrder",trueOrder);
         int nSwaps=  atom->getPerturbationOrder(trueOrder);
-        // if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") &&
-        //     !atom->getOwningMol().hasProp("_ringSteroWarning") ){
-        //   BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. The output SMILES is not canonical."<<std::endl;
-        //   atom->getOwningMol().setProp("_ringStereoWarning",true,true);
-        // }
-
         if(atom->getDegree()==3 && !bondIn){
           // This is a special case. Here's an example:
           //   Our internal representation of a chiral center is equivalent to:
@@ -350,7 +344,7 @@ namespace RDKit{
           if(closureVal >= 10){
             res << "%";
           }
-          //std::cout << " > " << closureVal <<std::endl;
+          //std::cerr << " > " << closureVal <<std::endl;
           res << closureVal;
           break;
         case Canon::MOL_STACK_BRANCH_OPEN:

@@ -17,6 +17,7 @@
   numbering
 
 """
+from __future__ import print_function, division
 import numpy
 
 #
@@ -135,7 +136,7 @@ def NumCombinations(nItems,nSlots):
   global _numCombDict
   res = _numCombDict.get((nItems,nSlots),-1)
   if res == -1:
-    res = _fact(nItems+nSlots-1) / (_fact(nItems-1)*_fact(nSlots))
+    res = _fact(nItems+nSlots-1) // (_fact(nItems-1)*_fact(nSlots))
     _numCombDict[(nItems,nSlots)] = res
   return res  
 
@@ -165,8 +166,8 @@ def CountUpTo(nItems,nSlots,vs,idx=0,startAt=0):
   """
   global _countCache
   if _verbose:
-    print '  '*idx,'CountUpTo(%d)'%idx,vs[idx],startAt
-  if idx==0 and _countCache.has_key((nItems,nSlots,tuple(vs))):
+    print('  '*idx,'CountUpTo(%d)'%idx,vs[idx],startAt)
+  if idx==0 and (nItems,nSlots,tuple(vs)) in _countCache:
     return _countCache[(nItems,nSlots,tuple(vs))]
   elif idx >= nSlots:
     accum = 0
@@ -179,11 +180,11 @@ def CountUpTo(nItems,nSlots,vs,idx=0,startAt=0):
       nLevsUnder = nSlots-idx-1
       nValsOver = nItems-i
       if _verbose:
-        print '  '*idx,' ',i,nValsOver,nLevsUnder,\
-              NumCombinations(nValsOver,nLevsUnder)
+        print('  '*idx,' ',i,nValsOver,nLevsUnder,
+              NumCombinations(nValsOver,nLevsUnder))
       accum += NumCombinations(nValsOver,nLevsUnder)
     accum += CountUpTo(nItems,nSlots,vs,idx+1,vs[idx])
-  if _verbose: print '  '*idx,'>',accum
+  if _verbose: print('  '*idx,'>',accum)
   if idx == 0:
     _countCache[(nItems,nSlots,tuple(vs))] = accum
   return accum
@@ -209,7 +210,7 @@ def GetIndexCombinations(nItems,nSlots,slot=0,lastItemVal=0):
 
   """
   global _indexCombinations
-  if not slot and _indexCombinations.has_key((nItems,nSlots)):
+  if not slot and (nItems,nSlots) in _indexCombinations:
     res = _indexCombinations[(nItems,nSlots)]
   elif slot >= nSlots:
     res =  []
@@ -303,13 +304,13 @@ def UniquifyCombinations(combos):
       - a list of tuples containing the unique combos
 
   """
-  print '>>> u:',combos
+  print('>>> u:',combos)
   resD = {}
   for combo in combos:
     k = combo[:]
     k.sort()
     resD[tuple(k)] = tuple(combo)
-  print '    >>> u:',resD.values()
+  print('    >>> u:',resD.values())
   return resD.values() 
 
 def GetPossibleScaffolds(nPts,bins,useTriangleInequality=True):
@@ -360,8 +361,8 @@ def OrderTriangle(featIndices,dists):
     ([0, 0, 1], [1, 3, 2])
     
   """
-  if len(featIndices)!=3: raise ValueError,'bad indices'
-  if len(dists)!=3: raise ValueError,'bad dists'
+  if len(featIndices)!=3: raise ValueError('bad indices')
+  if len(dists)!=3: raise ValueError('bad dists')
 
   fs = set(featIndices)
   if len(fs)==3:

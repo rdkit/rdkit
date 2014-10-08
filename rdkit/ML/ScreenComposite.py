@@ -108,10 +108,12 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 
 """
+from __future__ import print_function
+import sys, copy
+import numpy
+from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit import DataStructs
-import sys,cPickle,types,copy
-import numpy
 
 try:
   from PIL import Image,ImageDraw
@@ -204,11 +206,11 @@ def CollectResults(indices,dataSet,composite,callback=None,appendExamples=0,
 
   """
   #for i in range(len(composite)):
-  #  print '  ',i,'TRAIN:',composite[i][0]._trainIndices
+  #  print('  ',i,'TRAIN:',composite[i][0]._trainIndices)
 
   for j in range(len(composite)):
     tmp = composite.GetModel(j)
-    if hasattr(tmp,'_trainIndices') and type(tmp._trainIndices)!=types.DictType:
+    if hasattr(tmp,'_trainIndices') and type(tmp._trainIndices)!=dict:
       tis = {}
       if hasattr(tmp,'_trainIndices'):
         for v in tmp._trainIndices: tis[v]=1
@@ -228,7 +230,7 @@ def CollectResults(indices,dataSet,composite,callback=None,appendExamples=0,
           use.append(j)
     else:
       use = None
-    #print 'IDX:',idx,'use:',use  
+    #print('IDX:',idx,'use:',use  )
     pred,conf = composite.ClassifyExample(example,appendExample=appendExamples,
                                           onlyModels=use)
     if composite.GetActivityQuantBounds():
@@ -381,15 +383,16 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
   nGood = len(goodVotes)
   nClassified = nGood + nBad
   if verbose:
-    print '\n\t*** Vote Results ***'
-    print 'misclassified: %d/%d (%%%4.2f)\t%d/%d (%%%4.2f)'%(nBad,nExamples,
-                                                           100.*float(nBad)/nExamples,
-                                                           nBad,nClassified,
-                                                           100.*float(nBad)/nClassified)
+    print('\n\t*** Vote Results ***')
+    print('misclassified: %d/%d (%%%4.2f)\t%d/%d (%%%4.2f)' % 
+          (nBad,nExamples,
+           100.*float(nBad)/nExamples,
+           nBad,nClassified,
+           100.*float(nBad)/nClassified))
   nSkip = len(noVotes)
   if nSkip > 0:
     if verbose:
-      print 'skipped: %d/%d (%%% 4.2f)'%(nSkip,nExamples,100.*float(nSkip)/nExamples)
+      print('skipped: %d/%d (%%% 4.2f)'%(nSkip,nExamples,100.*float(nSkip)/nExamples))
     noConf = numpy.array([x[2] for x in noVotes])
     avgSkip = sum(noConf)/float(nSkip)
   else:
@@ -411,9 +414,9 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
     avgGood = 0.
 
   if verbose:
-    print
-    print 'average correct confidence:   % 6.4f'%avgGood
-    print 'average incorrect confidence: % 6.4f'%avgBad
+    print()
+    print('average correct confidence:   % 6.4f'%avgGood)
+    print('average incorrect confidence: % 6.4f'%avgBad)
 
   voteTab = numpy.zeros((nResultCodes,nResultCodes),numpy.int)
   for res in goodRes:
@@ -422,8 +425,8 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
     voteTab[ans,res] += 1
     
   if verbose:
-    print
-    print '\tResults Table:'
+    print()
+    print('\tResults Table:')
     vTab=voteTab.transpose()
     colCounts = numpy.sum(vTab,0)
     rowCounts = numpy.sum(vTab,1)
@@ -538,19 +541,19 @@ def ScreenIt(composite,indices,data,partialVote=0,voteTol=0.0,verbose=1,screenRe
 
   nData = nGood + misCount + nSkipped
   if verbose:
-    print 'Total N Points:',nData
+    print('Total N Points:',nData)
   if partialVote:
     nCounted = nData-nSkipped
     if verbose:
-      print 'Misclassifications: %d (%%%4.2f)'%(misCount,100.*float(misCount)/nCounted) 
-      print 'N Skipped: %d (%%%4.2f)'%(nSkipped,100.*float(nSkipped)/nData)
-      print '\tGood Votes Skipped: %d (%%%4.2f)'%(goodSkipped,100.*float(goodSkipped)/nSkipped)
-      print '\tBad Votes Skipped: %d (%%%4.2f)'%(badSkipped,100.*float(badSkipped)/nSkipped)
+      print('Misclassifications: %d (%%%4.2f)'%(misCount,100.*float(misCount)/nCounted))
+      print('N Skipped: %d (%%%4.2f)'%(nSkipped,100.*float(nSkipped)/nData))
+      print('\tGood Votes Skipped: %d (%%%4.2f)'%(goodSkipped,100.*float(goodSkipped)/nSkipped))
+      print('\tBad Votes Skipped: %d (%%%4.2f)'%(badSkipped,100.*float(badSkipped)/nSkipped))
   else:
     if verbose:
-      print 'Misclassifications: %d (%%%4.2f)'%(misCount,100.*float(misCount)/nData) 
-      print 'Average Correct Vote Confidence:   % 6.4f'%(goodAccum/(nData-misCount))
-      print 'Average InCorrect Vote Confidence: % 6.4f'%(badAccum/misCount)
+      print('Misclassifications: %d (%%%4.2f)'%(misCount,100.*float(misCount)/nData)) 
+      print('Average Correct Vote Confidence:   % 6.4f'%(goodAccum/(nData-misCount)))
+      print('Average InCorrect Vote Confidence: % 6.4f'%(badAccum/misCount))
 
   avgGood=0
   avgBad=0
@@ -700,7 +703,7 @@ def ScreenFromDetails(models,details,callback=None,setup=None,appendExamples=0,
   else:
     partialVote = 0
 
-  if type(models) not in [types.ListType,types.TupleType]:
+  if type(models) not in [list, tuple]:
     models = (models,)
 
   nModels = len(models)
@@ -909,7 +912,7 @@ def ScreenToHtml(nGood,nBad,nRej,avgGood,avgBad,avgSkip,voteTable,imgDir='.',
      a string containing HTML
 
   """
-  if type(nGood) == types.TupleType:
+  if type(nGood) == tuple:
     multModels=1
   else:
     multModels=0
@@ -946,14 +949,14 @@ def ScreenToHtml(nGood,nBad,nRej,avgGood,avgBad,avgSkip,voteTable,imgDir='.',
 
   outTxt.append('<center><table border=1>')
   outTxt.append('<tr><td></td>')
-  for i in xrange(nPoss):
+  for i in range(nPoss):
     outTxt.append('<th>%d</th>'%i)
   outTxt.append('<th>% Accurate</th>')
   outTxt.append('</tr>')
   #outTxt.append('<th rowspan=%d>Predicted</th></tr>'%(nPoss+1))
-  for i in xrange(nPoss):
+  for i in range(nPoss):
     outTxt.append('<tr><th>%d</th>'%(i))
-    for j in xrange(nPoss):
+    for j in range(nPoss):
       if i == j:
         if not multModels:
           outTxt.append('<td bgcolor="#A0A0FF">%d</td>'%(voteTable[j,i]))
@@ -1188,18 +1191,18 @@ def Usage():
   command line and then exits
 
   """
-  print __doc__
+  print(__doc__)
   sys.exit(-1)
 
 def ShowVersion(includeArgs=0):
   """ prints the version number of the program
 
   """
-  print 'This is ScreenComposite.py version %s'%(__VERSION_STRING)
+  print('This is ScreenComposite.py version %s'%(__VERSION_STRING))
   if includeArgs:
     import sys
-    print 'command line was:'
-    print ' '.join(sys.argv)
+    print('command line was:')
+    print(' '.join(sys.argv))
 
 def ParseArgs(details):
   import getopt
@@ -1454,24 +1457,24 @@ if __name__ == '__main__':
           MakePredPlot(details,testIdx,tmpD,goodVotes,badVotes,nRes,verbose=1)
 
         if hasattr(details,'showAll') and details.showAll:
-          print '-v-v-v-v-v-v-v-    All Votes      -v-v-v-v-v-v-v-'
-          print 'id, prediction, confidence, flag(-1=skipped,0=wrong,1=correct)'
+          print('-v-v-v-v-v-v-v-    All Votes      -v-v-v-v-v-v-v-')
+          print('id, prediction, confidence, flag(-1=skipped,0=wrong,1=correct)')
           for ans,pred,conf,idx in goodVotes:
             pt = tmpD[testIdx[idx]]
             assert model.GetActivityQuantBounds() or pt[-1]==ans,\
                    'bad point?: %s != %s'%(str(pt[-1]),str(ans))
-            print '%s, %d, %.4f, 1'%(str(pt[0]),pred,conf)
+            print('%s, %d, %.4f, 1'%(str(pt[0]),pred,conf))
           for ans,pred,conf,idx in badVotes:
             pt = tmpD[testIdx[idx]]
             assert model.GetActivityQuantBounds() or pt[-1]==ans,\
                    'bad point?: %s != %s'%(str(pt[-1]),str(ans))
-            print '%s, %d, %.4f, 0'%(str(pt[0]),pred,conf)
+            print('%s, %d, %.4f, 0'%(str(pt[0]),pred,conf))
           for ans,pred,conf,idx in noVotes:
             pt = tmpD[testIdx[idx]]
             assert model.GetActivityQuantBounds() or pt[-1]==ans,\
                    'bad point?: %s != %s'%(str(pt[-1]),str(ans))
-            print '%s, %d, %.4f, -1'%(str(pt[0]),pred,conf)
-          print '-^-^-^-^-^-^-^-  -^-^-^-^-^-^-^-'
+            print('%s, %d, %.4f, -1'%(str(pt[0]),pred,conf))
+          print('-^-^-^-^-^-^-^-  -^-^-^-^-^-^-^-')
 
         nGood[modelIdx] = g
         nBad[modelIdx] = b
@@ -1479,11 +1482,11 @@ if __name__ == '__main__':
         confGood[modelIdx] = aG
         confBad[modelIdx] = aB
         confSkip[modelIdx] = aS
-      print 
+      print() 
         
       if nModels > 1:
-        print '-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*'
-        print 'AVERAGES:'
+        print('-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*')
+        print('AVERAGES:')
 
         avgNBad = sum(nBad)/nModels
         devNBad = numpy.sqrt(sum((nBad-avgNBad)**2)/(nModels-1))
@@ -1507,27 +1510,27 @@ if __name__ == '__main__':
 
         nClassified = avgNGood + avgNBad
         nExamples = nClassified + avgNSkip
-        print 'Misclassifications: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d'%(100*avgNBad/nExamples,
+        print('Misclassifications: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d'%(100*avgNBad/nExamples,
                                                                          100*devNBad/nExamples,
                                                                           avgNBad,devNBad,
-                                                                          nExamples)
+                                                                          nExamples))
         if avgNSkip>0:
-          print '\tthreshold: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d'%(100*avgNBad/nClassified,
+          print('\tthreshold: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d'%(100*avgNBad/nClassified,
                                                                                100*devNBad/nClassified,
                                                                                avgNBad,devNBad,
-                                                                               nClassified)
-          print
-          print 'Number Skipped: %%%4.2f(%%%4.2f)    %4.2f(%4.2f)'%(100*avgNSkip/nExamples,
+                                                                               nClassified))
+          print()
+          print('Number Skipped: %%%4.2f(%%%4.2f)    %4.2f(%4.2f)'%(100*avgNSkip/nExamples,
                                                                     100*devNSkip/nExamples,
-                                                                    avgNSkip,devNSkip)
+                                                                    avgNSkip,devNSkip))
 
 
-        print
-        print 'Confidences:'
-        print '\tCorrect: \t%4.2f(%4.2f)'%(100*avgConfGood,100*devConfGood)
-        print '\tIncorrect: \t%4.2f(%4.2f)'%(100*avgConfBad,100*devConfBad)
+        print()
+        print('Confidences:')
+        print('\tCorrect: \t%4.2f(%4.2f)'%(100*avgConfGood,100*devConfGood))
+        print('\tIncorrect: \t%4.2f(%4.2f)'%(100*avgConfBad,100*devConfBad))
         if avgNSkip>0:
-          print '\tSkipped: \t%4.2f(%4.2f)'%(100*avgConfSkip,100*devConfSkip)
+          print('\tSkipped: \t%4.2f(%4.2f)'%(100*avgConfSkip,100*devConfSkip))
 
         if details.detailedScreen:
           message('Results Table:')
@@ -1535,7 +1538,7 @@ if __name__ == '__main__':
           nResultCodes = len(voteTab)
           colCounts = numpy.sum(voteTab,0)
           rowCounts = numpy.sum(voteTab,1)
-          print 
+          print() 
           for i in range(nResultCodes):
             if rowCounts[i]==0: rowCounts[i]=1
             row = voteTab[i]
@@ -1560,28 +1563,28 @@ if __name__ == '__main__':
             message('   Enrichment of value %d: %.4f (%.4f)'%(details.enrichTgt,mean,dev))
       else:
         bestIdx=0
-      print '------------------------------------------------'
-      print 'Best Model: ',bestIdx+1
+      print('------------------------------------------------')
+      print('Best Model: ',bestIdx+1)
       bestBad = nBad[bestIdx]
       bestGood = nGood[bestIdx]
       bestSkip = nSkip[bestIdx]
       nClassified = bestGood + bestBad
       nExamples = nClassified + bestSkip
-      print 'Misclassifications: \t%%%5.2f   %d / %d'%(100*bestBad/nExamples,
-                                                          bestBad,nExamples)
+      print('Misclassifications: \t%%%5.2f   %d / %d'%(100*bestBad/nExamples,
+                                                          bestBad,nExamples))
       if bestSkip>0:
-        print '\tthreshold: \t%%%5.2f   %d / %d'%(100*bestBad/nClassified,
-                                                     bestBad,nClassified)
-        print
-        print 'Number Skipped: %%%4.2f    %d'%(100*bestSkip/nExamples,
-                                                   bestSkip)
+        print('\tthreshold: \t%%%5.2f   %d / %d'%(100*bestBad/nClassified,
+                                                     bestBad,nClassified))
+        print()
+        print('Number Skipped: %%%4.2f    %d'%(100*bestSkip/nExamples,
+                                                   bestSkip))
 
-      print
-      print 'Confidences:'
-      print '\tCorrect: \t%4.2f'%(100*confGood[bestIdx])
-      print '\tIncorrect: \t%4.2f'%(100*confBad[bestIdx])
+      print()
+      print('Confidences:')
+      print('\tCorrect: \t%4.2f'%(100*confGood[bestIdx]))
+      print('\tIncorrect: \t%4.2f'%(100*confBad[bestIdx]))
       if bestSkip>0:
-        print '\tSkipped: \t%4.2f'%(100*confSkip[bestIdx])
+        print('\tSkipped: \t%4.2f'%(100*confSkip[bestIdx]))
 
       if nModels == 1 and details.detailedScreen:
         message('')

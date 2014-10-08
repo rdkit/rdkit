@@ -14,6 +14,7 @@ descriptors.
   The MOE-like VSA descriptors are also calculated here
 
 """
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem.PeriodicTable import numTable
 from rdkit.Chem import Crippen
@@ -185,8 +186,8 @@ def pyPEOE_VSA_(mol,bins=None,force=1):
         return res
   if bins is None: bins = chgBins
   Crippen._Init()
-  #print '\ts:',repr(mol.GetMol())
-  #print '\t\t:',len(mol.GetAtoms())
+  #print('\ts:',repr(mol.GetMol()))
+  #print('\t\t:',len(mol.GetAtoms()))
   rdPartialCharges.ComputeGasteigerCharges(mol)
   
   #propContribs = [float(x.GetProp('_GasteigerCharge'))  for x in mol.GetAtoms()]
@@ -378,7 +379,7 @@ def _pyTPSAContribs(mol,verbose=False):
           tmp = 30.5 - numNeighbors * 8.2 + nHs * 1.5
           if tmp < 0.0: tmp = 0.0
       elif atNum==8:
-        #print nHs,nSing,chg
+        #print(nHs,nSing,chg)
         if numNeighbors == 1:
           if nHs==0 and nDoub==1 and chg==0: tmp = 17.07
           elif nHs==1 and nSing==1 and chg==0: tmp = 20.23
@@ -393,7 +394,7 @@ def _pyTPSAContribs(mol,verbose=False):
           tmp = 28.5 - numNeighbors * 8.6 + nHs * 1.5
           if tmp < 0.0: tmp = 0.0
       if verbose:
-        print '\t',atom.GetIdx(),atom.GetSymbol(),atNum,nHs,nSing,nDoub,nTrip,nArom,chg,tmp
+        print('\t',atom.GetIdx(),atom.GetSymbol(),atNum,nHs,nSing,nDoub,nTrip,nArom,chg,tmp)
         
       res[atom.GetIdx()] = tmp
   return res
@@ -426,11 +427,11 @@ if __name__ == '__main__':
   smis = ['C(=O)O','c1ccccc1']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)
-    #print smi, LabuteASA(m);
-    print '-----------\n',smi
-    #print 'M:',['% 4.2f'%x for x in SMR_VSA_(m)]
-    #print 'L:',['% 4.2f'%x for x in SlogP_VSA_(m)]
-    print 'P:',['% 4.2f'%x for x in PEOE_VSA_(m)]
-    print 'P:',['% 4.2f'%x for x in PEOE_VSA_(m)]
-    print
+    #print(smi, LabuteASA(m))
+    print('-----------\n',smi)
+    #print('M:',['% 4.2f'%x for x in SMR_VSA_(m)])
+    #print('L:',['% 4.2f'%x for x in SlogP_VSA_(m)])
+    print('P:',['% 4.2f'%x for x in PEOE_VSA_(m)])
+    print('P:',['% 4.2f'%x for x in PEOE_VSA_(m)])
+    print()
     

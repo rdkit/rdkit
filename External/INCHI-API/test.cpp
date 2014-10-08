@@ -226,6 +226,33 @@ void testGithubIssue68(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue296(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 296: problems with chiral S and inchi" << std::endl;
+  {
+    std::string smiles="C[S@@](=O)C(C)(C)C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C5H12OS/c1-5(2,3)7(4)6/h1-4H3/t7-/m1/s1");
+    delete m;
+  }
+
+  {
+    std::string fName= getenv("RDBASE");
+    fName += "/External/INCHI-API/test_data/github296.mol";
+    ROMol *m = static_cast<ROMol *>(MolFileToMol(fName));
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C5H12OS/c1-5(2,3)7(4)6/h1-4H3/t7-/m1/s1");
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -238,4 +265,5 @@ int main(){
   testGithubIssue40();
   testGithubIssue67();
   testGithubIssue68();
+  testGithubIssue296();
 }

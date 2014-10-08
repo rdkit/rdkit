@@ -2,6 +2,7 @@
 # Copyright (C) 2003 Rational Discovery LLC
 # All rights are reserved.
 #
+from __future__ import print_function
 from elementtree.ElementTree import ElementTree,Element,SubElement
 import time
 
@@ -129,7 +130,8 @@ def PackageToXml(pkg,summary="N/A",trainingDataId='N/A',
 
 
 if __name__=='__main__':
-  import sys,cPickle
+  import sys
+  from rdkit.six.moves import cPickle
   from cStringIO import StringIO
   pkg = cPickle.load(open(sys.argv[1],'rb'))
   perf = (.80,.95,.70,[[4,1],[1,4]])
@@ -140,6 +142,6 @@ if __name__=='__main__':
   header = """<?xml version="1.0"?>
 <!DOCTYPE RDModelInfo PUBLIC "-//RD//DTD RDModelInfo //EN" "RD_Model.dtd">
 """
-  print header
-  print txt.replace('><','>\n<')
+  print(header)
+  print(txt.replace('><','>\n<'))
   

@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 import random
+from rdkit.six.moves import range
 from rdkit import Chem
 
 def RandomizeMolBlock(molB):
@@ -24,8 +25,8 @@ def RandomizeMolBlock(molB):
   idx+=1
   atLines = splitB[idx:idx+nAts]
 
-  order = range(nAts)
-  random.shuffle(order)
+  order = list(range(nAts))
+  random.shuffle(order,random=random.random)
 
   for i in order:
     res.append(atLines[i])
@@ -58,7 +59,7 @@ def CheckCanonicalization(mol,nReps=10):
     m2 = RandomizeMol(mol)
     smi = Chem.MolToSmiles(m2,False)
     if smi!=refSmi:
-      raise ValueError,'\nRef: %s\n   : %s'%(refSmi,smi)
+      raise ValueError('\nRef: %s\n   : %s'%(refSmi,smi))
 
 
              

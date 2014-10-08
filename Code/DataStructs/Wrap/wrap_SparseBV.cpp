@@ -22,7 +22,9 @@ struct sbv_pickle_suite : python::pickle_suite
   static python::tuple
   getinitargs(const SparseBitVect& self)
   {
-    return python::make_tuple(self.toString());
+    std::string res=self.toString();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return python::make_tuple(retval);
   };
 };
 
@@ -75,7 +77,7 @@ struct SBV_wrapper {
       .def("GetOnBits",
            (IntVect (*)(const SBV&))GetOnBits,
            "Returns a tuple containing IDs of the on bits.\n")
-      .def("ToBinary",&SBV::toString,
+      .def("ToBinary",(python::object (*)(const SBV&))BVToBinary,
            "Returns an internal binary representation of the vector.\n")
       .def("FromBase64",
            (void (*)(SBV &,const std::string &))InitFromBase64,

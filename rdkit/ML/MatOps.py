@@ -14,6 +14,7 @@
   **NOTE**: the two functions defined here have been moved to ML.Data.Stats
 
 """
+from __future__ import print_function
 from rdkit.ML.Data import Stats
 
 FormCovarianceMatrix = Stats.FormCovarianceMatrix
@@ -26,8 +27,8 @@ if __name__ == '__main__':
   fileN = sys.argv[1]
   iV,dV = files.ReadDataFile(fileN)
   eVals,eVects=PrincipalComponents(iV)
-  print 'eVals: ', eVals
-  print 'eVects:', eVects
+  print('eVals: ', eVals)
+  print('eVects:', eVects)
   
 
   

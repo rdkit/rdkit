@@ -21,6 +21,7 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 #include <GraphMol/ROMol.h>
 
 
@@ -74,15 +75,20 @@ namespace RDKit {
     return ivec;
   }
 
-  void alignMolConfs(ROMol &mol, python::object atomIds=python::list(),
-                     python::object confIds=python::list(), 
-                     python::object weights=python::list(),
-                     bool reflect=false, unsigned int maxIters=50) {
+  void alignMolConfs(ROMol &mol, python::object atomIds,
+                     python::object confIds,
+                     python::object weights,
+                     bool reflect, unsigned int maxIters,
+                     python::object RMSlist) {
     
     RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
     std::vector<unsigned int> *aIds = _translateIds(atomIds);
     std::vector<unsigned int> *cIds = _translateIds(confIds);
-    MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters);
+    std::vector<double> *RMSvector = 0;
+    if(RMSlist != python::object()){
+      RMSvector = new std::vector<double>();
+    }
+    MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters, RMSvector);
     if (wtsVec) {
       delete wtsVec;
     }
@@ -91,6 +97,13 @@ namespace RDKit {
     }
     if (cIds) {
       delete cIds;
+    }
+    if(RMSvector){
+      python::list &pyl = static_cast<python::list &>(RMSlist);
+      for(unsigned int i = 0; i < (*RMSvector).size(); ++i){
+	pyl.append((*RMSvector)[i]);
+      }
+      delete RMSvector;
     }
   }
     
@@ -363,7 +376,7 @@ namespace RDKit {
 }
 
 BOOST_PYTHON_MODULE(rdMolAlign) {
-  import_array();
+  rdkit_import_array();
   python::scope().attr("__doc__") =
     "Module containing functions to align a molecule to a second molecule";
     
@@ -441,15 +454,17 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
       - maxIters  maximum number of iterations used in mimizing the RMSD\n\
+      - RMSlist   if provided, fills in the RMS values between the reference\n\
+		  conformation and the other aligned conformations\n\
        \n\
-      RETURNS\n\
-      RMSD value\n\
     \n";
   python::def("AlignMolConformers", RDKit::alignMolConfs,
               (python::arg("mol"), python::arg("atomIds")=python::list(), 
                python::arg("confIds")=python::list(),
                python::arg("weights")=python::list(),
-               python::arg("reflect")=false, python::arg("maxIters")=50),
+               python::arg("reflect")=false,
+               python::arg("maxIters")=50,
+               python::arg("RMSlist")=python::object()),
               docString.c_str());
 
   docString = "Perform a random transformation on a molecule\n\

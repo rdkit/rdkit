@@ -3560,6 +3560,7 @@ void testAtomAtomMatch(){
   aamatchtest("OCO","[CH4]",true,1,0);
   aamatchtest("O[CH2]O","C",true,1,0);
   aamatchtest("O[CH2]O","[CH4]",true,1,0);
+  aamatchtest("OCO","[CH2]",false,1,0); // doesn't match due to radical count
   aamatchtest("O[CH2]O","[CH2]",false,1,0); // doesn't match due to radical count
   aamatchtest("O[CH]O","[CH3]",true,1,0);
   aamatchtest("O[CH]O","[CH2]",false,1,0); // doesn't match due to radical count
@@ -4347,15 +4348,29 @@ namespace{
       TEST_ASSERT(nm);
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+
+      // checking the SSS is a test for Github #317
+      MatchVectType mv; 
+      TEST_ASSERT(SubstructMatch(*m,*nm,mv));
+      TEST_ASSERT(mv.size()==nm->getNumAtoms());
+      
       std::string nSmi=MolToSmiles(*nm,true);
       TEST_ASSERT(nSmi==refSmi);
       delete nm;
     }
   }
 }
+
 void testRenumberAtoms()
 {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms" << std::endl;
+  {
+    std::string smiles="CC1CCCC(C)C1C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
   {
     std::string smiles="C[C@H]1C[C@H](F)C1";
     ROMol *m = SmilesToMol(smiles);

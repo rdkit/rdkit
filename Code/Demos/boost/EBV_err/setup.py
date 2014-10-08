@@ -1,5 +1,6 @@
 # Run this with:
 #  python setup.py install --install-lib=.
+from __future__ import print_function
 from distutils.core import setup,Extension
 import RDConfig
 
@@ -7,7 +8,7 @@ import RDConfig
 from distutils import sysconfig
 save_init_posix = sysconfig._init_posix
 def my_init_posix():
-    print 'my_init_posix: changing gcc to g++'
+    print('my_init_posix: changing gcc to g++')
     save_init_posix()
     g = sysconfig.get_config_vars()
     g['CC'] = 'g++'

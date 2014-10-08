@@ -1790,6 +1790,7 @@ void testMorganAtomInfo(){
     TEST_ASSERT(bitInfo.size()==2);
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
         iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->first<2048);
       TEST_ASSERT(fp->getBit(iter->first));
     }
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
@@ -1804,6 +1805,7 @@ void testMorganAtomInfo(){
     TEST_ASSERT(bitInfo.size()==5);
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
         iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->first<2048);
       TEST_ASSERT(fp->getBit(iter->first));
     }
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
@@ -1813,6 +1815,32 @@ void testMorganAtomInfo(){
     }
     delete fp;
   
+    delete mol;
+  }
+
+  { // this was github issue #295
+
+    ROMol *mol;
+    MorganFingerprints::BitInfoMap bitInfo1,bitInfo2;
+
+    mol = SmilesToMol("CCCCC");
+
+    ExplicitBitVect *fp;
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,2,2048,0,0,false,true,false,&bitInfo1);
+    delete fp;
+
+    SparseIntVect<boost::uint32_t> *iv;
+    iv = MorganFingerprints::getHashedFingerprint(*mol,2,2048,0,0,false,true,false,&bitInfo2);
+    delete iv;
+
+    TEST_ASSERT(bitInfo1.size()==bitInfo2.size());
+    
+    for(MorganFingerprints::BitInfoMap::const_iterator iter1=bitInfo1.begin();
+        iter1!=bitInfo1.end();++iter1){
+      TEST_ASSERT(iter1->first<2048);
+      TEST_ASSERT(bitInfo2.find(iter1->first)!=bitInfo2.end());
+    }
+    
     delete mol;
   }
 
@@ -2788,7 +2816,52 @@ void testMultithreadedPatternFP(){
 }
 #endif
 
+void testGitHubIssue334(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 334: explicit Hs in SMILES modifies atom pair (and topological torsion) FP." << std::endl;
 
+  {
+    ROMol *m1 = SmilesToMol("N#C");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int32_t> *fp1;
+    fp1 = AtomPairs::getAtomPairFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    delete m1;
+
+    m1 = SmilesToMol("N#[CH]");
+    SparseIntVect<boost::int32_t> *fp2;
+    fp2 = AtomPairs::getAtomPairFingerprint(*m1);
+    TEST_ASSERT(fp2);
+    delete m1;
+
+    TEST_ASSERT(fp1->getTotalVal()==fp2->getTotalVal());
+    TEST_ASSERT(fp1->getNonzeroElements().size()==fp2->getNonzeroElements().size());
+    TEST_ASSERT(*fp1==*fp2);
+    delete fp1;
+    delete fp2;
+  }
+  {
+    ROMol *m1 = SmilesToMol("N#C");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int64_t> *fp1;
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    delete m1;
+
+    m1 = SmilesToMol("N#[CH]");
+    SparseIntVect<boost::int64_t> *fp2;
+    fp2 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    TEST_ASSERT(fp2);
+    delete m1;
+
+    TEST_ASSERT(fp1->getTotalVal()==fp2->getTotalVal());
+    TEST_ASSERT(fp1->getNonzeroElements().size()==fp2->getNonzeroElements().size());
+    TEST_ASSERT(*fp1==*fp2);
+    delete fp1;
+    delete fp2;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -2836,6 +2909,7 @@ int main(int argc,char *argv[]){
   testMultithreadedPatternFP();
 #endif
   testGitHubIssue258();
+  testGitHubIssue334();
 
   return 0;
 }

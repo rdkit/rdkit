@@ -34,7 +34,7 @@ c1.drawLines([(100,100,200,200),(100,200,200,100)],color=pid.Color(0,0,0),width=
 c1.save()
 
 # save the log by pickling it.
-import cPickle
+from rdkit.six.moves import cPickle
 cPickle.dump(c1._LoggerGetLog(),open('foo.pkl','wb+'))
 
 # create a new canvas

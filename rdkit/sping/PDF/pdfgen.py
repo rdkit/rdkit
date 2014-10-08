@@ -50,6 +50,7 @@ Progress Reports:
 ##                
 ##
 ##
+from __future__ import print_function
 import os
 import sys
 import string
@@ -577,12 +578,12 @@ class Canvas:
         try: 
             from PIL import Image
         except ImportError:
-            print 'Python Imaging Library not available'
+            print('Python Imaging Library not available')
             return
         try:
             import zlib
         except ImportError:
-            print 'zlib not available'
+            print('zlib not available')
             return
             
         self._currentPageHasImages = 1
@@ -600,7 +601,7 @@ class Canvas:
                     colorSpace = 'DeviceRGB'
                 else: #maybe should generate an error, is this right for CMYK?
                     colorSpace = 'DeviceCMYK'
-                imageFile.seek(0)		#reset file pointer
+                imageFile.seek(0)               #reset file pointer
                 imagedata = []
                 imagedata.append('BI')   # begin image
                 # this describes what is in the image itself
@@ -614,7 +615,7 @@ class Canvas:
                 encoded = pdfutils._AsciiBase85Encode(compressed)
                 outstream = cStringIO.StringIO(encoded)
                 dataline = outstream.read(60)
-                while dataline <> "":
+                while dataline != "":
                     imagedata.append(dataline)
                     dataline = outstream.read(60)
                 imagedata.append('EI')
@@ -652,7 +653,7 @@ class Canvas:
             #write in blocks of (??) 60 characters per line to a list
             outstream = cStringIO.StringIO(encoded)
             dataline = outstream.read(60)
-            while dataline <> "":
+            while dataline != "":
                 imagedata.append(dataline)
                 dataline = outstream.read(60)
             imagedata.append('EI')
@@ -687,48 +688,48 @@ class Canvas:
     # This is based on Thomas Merz's code from GhostScript (viewjpeg.ps)
     def readJPEGInfo(self, image):
         "Read width, height and number of components from JPEG file"
-    	import struct
+        import struct
 
-	#Acceptable JPEG Markers:
-	#  SROF0=baseline, SOF1=extended sequential or SOF2=progressive
-	validMarkers = [0xC0, 0xC1, 0xC2]
+        #Acceptable JPEG Markers:
+        #  SROF0=baseline, SOF1=extended sequential or SOF2=progressive
+        validMarkers = [0xC0, 0xC1, 0xC2]
 
-	#JPEG markers without additional parameters
-	noParamMarkers = \
-	    [ 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0x01 ]
+        #JPEG markers without additional parameters
+        noParamMarkers = \
+            [ 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0x01 ]
 
-	#Unsupported JPEG Markers
-	unsupportedMarkers = \
-	    [ 0xC3, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF ]
+        #Unsupported JPEG Markers
+        unsupportedMarkers = \
+            [ 0xC3, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF ]
 
-	#read JPEG marker segments until we find SOFn marker or EOF
-	done = 0
-	while not done:
-	    x = struct.unpack('B', image.read(1))
-	    if x[0] == 0xFF:			#found marker
-	    	x = struct.unpack('B', image.read(1))
-		#print "Marker: ", '%0.2x' % x[0]
-		#check marker type is acceptable and process it
-		if x[0] in validMarkers:
-		    image.seek(2, 1)		#skip segment length
-		    x = struct.unpack('B', image.read(1)) #data precision
-		    if x[0] != 8:
-			raise PDFError, ' JPEG must have 8 bits per component'
-		    y = struct.unpack('BB', image.read(2))
-		    height = (y[0] << 8) + y[1] 
-		    y = struct.unpack('BB', image.read(2))
-		    width =  (y[0] << 8) + y[1]
-		    y = struct.unpack('B', image.read(1))
-		    color =  y[0]
-		    return width, height, color
-		    done = 1
-		elif x[0] in unsupportedMarkers:
-		    raise PDFError, ' Unsupported JPEG marker: %0.2x' % x[0]
-		elif x[0] not in noParamMarkers:
-		    #skip segments with parameters
-		    #read length and skip the data
-		    x = struct.unpack('BB', image.read(2))
-		    image.seek( (x[0] << 8) + x[1] - 2, 1)	
+        #read JPEG marker segments until we find SOFn marker or EOF
+        done = 0
+        while not done:
+            x = struct.unpack('B', image.read(1))
+            if x[0] == 0xFF:                    #found marker
+                x = struct.unpack('B', image.read(1))
+                #print "Marker: ", '%0.2x' % x[0]
+                #check marker type is acceptable and process it
+                if x[0] in validMarkers:
+                    image.seek(2, 1)            #skip segment length
+                    x = struct.unpack('B', image.read(1)) #data precision
+                    if x[0] != 8:
+                        raise PDFError(' JPEG must have 8 bits per component')
+                    y = struct.unpack('BB', image.read(2))
+                    height = (y[0] << 8) + y[1] 
+                    y = struct.unpack('BB', image.read(2))
+                    width =  (y[0] << 8) + y[1]
+                    y = struct.unpack('B', image.read(1))
+                    color =  y[0]
+                    return width, height, color
+                    done = 1
+                elif x[0] in unsupportedMarkers:
+                    raise PDFError(' Unsupported JPEG marker: {%0.2x}'.format(x[0]))
+                elif x[0] not in noParamMarkers:
+                    #skip segments with parameters
+                    #read length and skip the data
+                    x = struct.unpack('BB', image.read(2))
+                    image.seek( (x[0] << 8) + x[1] - 2, 1)      
 
     def setPageCompression(self, onoff=1):
         """Possible values 1 or 0 (1 for 'on' is the default).
@@ -770,17 +771,17 @@ class Canvas:
         if direction in [0,90,180,270]:
             direction_arg = '/Di /%d' % direction
         else:
-            raise PDFError, ' directions allowed are 0,90,180,270'
+            raise PDFError(' directions allowed are 0,90,180,270')
         
         if dimension in ['H', 'V']:
             dimension_arg = '/Dm /%s' % dimension
         else:
-            raise PDFError,'dimension values allowed are H and V'
+            raise PDFError('dimension values allowed are H and V')
         
         if motion in ['I','O']:
             motion_arg = '/M /%s' % motion
         else:
-            raise PDFError,'motion values allowed are I and O'
+            raise PDFError('motion values allowed are I and O')
 
 
         # this says which effects require which argument types from above
@@ -796,7 +797,7 @@ class Canvas:
         try:
             args = PageTransitionEffects[effectname]
         except KeyError:
-            raise PDFError, 'Unknown Effect Name "%s"' % effectname
+            raise PDFError('Unknown Effect Name "{%s}"'.format(effectname))
             self._pageTransitionString = ''
             return
         
@@ -1046,7 +1047,7 @@ class PDFTextObject:
         elif type(stuff) == TupleType:
             lines = stuff
         else:
-            raise ValueError, "argument to textlines must be string,, list or tuple"
+            raise ValueError("argument to textlines must be string, list or tuple")
         
         for line in lines:
             escaped_text = self._canvas._escape(line)
@@ -1062,4 +1063,4 @@ class PDFTextObject:
 
 
 if __name__ == '__main__':
-    print 'For test scripts, run testpdfgen.py'
+    print('For test scripts, run testpdfgen.py')

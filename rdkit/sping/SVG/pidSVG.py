@@ -598,7 +598,7 @@ class SVGCanvas( Canvas ):
         pathStr = pathStr + self._FormArcStr(x1,y1,x2,y2,theta1,extent)
 
       else:
-        raise TypeError, "unknown figure operator: "+op
+        raise TypeError("unknown figure operator: "+op)
 
     if closed == 1:
       pathStr = pathStr + 'Z'

@@ -1552,42 +1552,42 @@ void testMolFileQueryToSmarts(){
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m,true);
-  TEST_ASSERT(sma=="[#6&$(*(@*)@*)&!$(*(@*)(@*)@*)]-[#6]")
+  TEST_ASSERT(sma=="[#6&x2]-[#6]")
   
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_3.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m,true);
-  TEST_ASSERT(sma=="[#6&$(*(@*)(@*)@*)&!$(*(@*)(@*)(@*)@*)]-[#6]")
+  TEST_ASSERT(sma=="[#6&x3]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_0.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m,true);
-  TEST_ASSERT(sma=="[#6&!$(*@*)]-[#6]")
+  TEST_ASSERT(sma=="[#6&x0]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_4.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m,true);
-  TEST_ASSERT(sma=="[#16&$(*(@*)(@*)(@*)@*)&!$(*(@*)(@*)(@*)(@*)@*)]-[#6]")
+  TEST_ASSERT(sma=="[#16&x4]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m,true);
-  TEST_ASSERT(sma=="[#6&!$(*@*)]-[#6]")
+  TEST_ASSERT(sma=="[#6&x0]-[#6]")
   
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star2.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m,true);
-  TEST_ASSERT(sma.find("[#6&$(*(@*)@*)&!$(*(@*)(@*)@*)]")!=std::string::npos);
+  TEST_ASSERT(sma.find("[#6&x2]")!=std::string::npos);
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/unsaturation.mol";
@@ -3905,6 +3905,24 @@ void testPDBResidues(){
 }
 
 
+void testGithub337(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 337: No double bond stereo perception from CTABs when sanitization is turned off" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"unsanitized_stereo.mol",false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+    std::string molBlock = MolToMolBlock(*m);
+    TEST_ASSERT(molBlock.find("  1  2  2  0")!=std::string::npos);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3980,5 +3998,6 @@ int main(int argc,char *argv[]){
   testGithub191();
   testGithub210();
   testPDBResidues();
+  testGithub337();
   return 0;
 }

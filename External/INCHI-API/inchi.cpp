@@ -1786,23 +1786,24 @@ namespace RDKit {
         }
         Atom::ChiralType chiralTag;
         if ((chiralTag = atom->getChiralTag()) != Atom::CHI_UNSPECIFIED) {
+          bool pushIt=false;
           std::string cipCode("");
           if (atom->hasProp("_CIPCode"))
             atom->getProp("_CIPCode", cipCode);
           if (cipCode == "R") {
             stereo0D.parity = INCHI_PARITY_EVEN;
-            stereo0DEntries.push_back(stereo0D);
+            pushIt=true;
           } else if (cipCode == "S") {
             stereo0D.parity = INCHI_PARITY_ODD;
-            stereo0DEntries.push_back(stereo0D);
+            pushIt=true;
           } else if (cipCode == "") {
             // empty cipCode. try read tag directly
             if (chiralTag == Atom::CHI_TETRAHEDRAL_CW) {
               stereo0D.parity = INCHI_PARITY_EVEN;
-              stereo0DEntries.push_back(stereo0D);
+              pushIt=true;
             } else if (chiralTag == Atom::CHI_TETRAHEDRAL_CCW) {
               stereo0D.parity = INCHI_PARITY_ODD;
-              stereo0DEntries.push_back(stereo0D);
+              pushIt=true;
             } else {
               BOOST_LOG(rdWarningLog) << "unrecognized chirality tag ("
                 << chiralTag << ") on atom " << i << " is ignored."
@@ -1812,6 +1813,27 @@ namespace RDKit {
             BOOST_LOG(rdWarningLog) << "unrecognized chirality (" << cipCode <<
               ") on atom " << i << " is ignored." << std::endl;
           }
+          if(pushIt){
+            // this was github #296
+            // with molecules like C[S@@](=O)C(C)(C)C the stereochem of the sulfur from
+            // the inchi comes back reversed if we don't have wedged bonds. There must
+            // be something with the way S stereochem is being handled that I'm not 
+            // getting.
+            // There's something of an explanation at around line 258 of inchi_api.h
+            // but that didn't help that much.
+            // For want of a better idea, detect this pattern
+            // and flip the stereochem:
+            if(atom->getAtomicNum()==16 &&
+               atom->getDegree()==3 && atom->getExplicitValence()==4){
+              if(stereo0D.parity==INCHI_PARITY_EVEN){
+                stereo0D.parity=INCHI_PARITY_ODD;
+              } else if(stereo0D.parity==INCHI_PARITY_ODD){
+                stereo0D.parity=INCHI_PARITY_EVEN;
+              } 
+            }
+            stereo0DEntries.push_back(stereo0D);
+          }
+          
         } else {
           //std::string molParity;
           //atom->getProp("molParity", molParity);

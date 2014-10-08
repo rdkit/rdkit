@@ -8,7 +8,7 @@
 
 """
 import unittest
-import cPickle
+from rdkit.six.moves import cPickle, xrange
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
 from rdkit import RDConfig
@@ -17,7 +17,8 @@ from rdkit import RDConfig
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    self.examples = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','rb'))
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','rb') as pklF:
+      self.examples = cPickle.load(pklF)
     self.varNames = ['composition','max_atomic','has3d','has4d','has5d','elconc','atvol','isferro']
     self.qBounds = [[],[1.89,3.53],[],[],[],[0.55,0.73],[11.81,14.52],[]]
     self.nPoss= [0,3,2,2,2,3,3,2]
@@ -36,11 +37,12 @@ class TestCase(unittest.TestCase):
     composite.SetQuantBounds(qBounds,nPoss)    
     for i in xrange(len(examples)):
       qEx = composite.QuantizeExample(examples[i])
-      assert qEx == answers[i],'quantization of %s failed'%(str(examples[i]))
+      self.assertEqual(qEx,answers[i])
       
   def testTreeGrow(self):
     " testing tree-based composite "
-    self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb'))
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
+      self.refCompos = cPickle.load(pklF)
 
     composite = Composite.Composite()
     composite._varNames=self.varNames
@@ -52,27 +54,21 @@ class TestCase(unittest.TestCase):
                    pruner=pruner,nTries=100,silent=1)
     composite.AverageErrors()
     composite.SortModels()
+
+    #with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','wb') as pklF:
+    #  cPickle.dump(composite,pklF)
+
     self.treeComposite = composite
-    assert len(composite) == len(self.refCompos),'length mismatch %d!=%d'%(len(composite),len(self.refCompos))
+    self.assertEqual(len(composite),len(self.refCompos))
     for i in xrange(len(composite)):
       t1,c1,e1 = composite[i]
       t2,c2,e2 = self.refCompos[i]
-      assert e1 == e2, 'error mismatch'
+      self.assertEqual(e1,e2)
       # we used to check for equality here, but since there are redundant errors,
       #  that's non-trivial.
       #assert t1 == t2, 'tree mismatch'
       #assert c1 == c2, 'count mismatch'
 
-  def testTreeScreen(self):
-    " testing tree-based composite screening "
-    self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb'))
-    testCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unittree.pkl','rb'))
-    for example in self.examples:
-      res,conf = testCompos.ClassifyExample(example)
-      cRes,cConf = self.refCompos.ClassifyExample(example)
-      assert res==cRes,'result mismatch'
-      assert conf==cConf,'confidence mismatch'
-    
   def testErrorEstimate(self):
     " testing out-of-bag error estimates "
 

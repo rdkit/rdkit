@@ -16,6 +16,7 @@
 
 
 """
+from __future__ import print_function
 import os
 from rdkit import RDConfig
 from rdkit import Chem
@@ -35,7 +36,9 @@ def _ReadPatts(fileName):
   """
   patts = {}
   order = []
-  for line in open(fileName,'r').xreadlines():
+  with open(fileName,'r') as f:
+    lines = f.readlines()
+  for line in lines:
     if line[0] != '#':
       splitLine = line.split('\t')
       if len(splitLine)>=4 and splitLine[0] != '':
@@ -63,7 +66,7 @@ def _ReadPatts(fileName):
               l.append((sma,p,logP,mr))
               patts[cha] = l
             else:
-              print 'Problems parsing smarts: %s'%(sma)
+              print('Problems parsing smarts: %s'%(sma))
   return order,patts
 
 _GetAtomContribs=rdMolDescriptors._CalcCrippenContribs
@@ -94,14 +97,14 @@ def _pyGetAtomContribs(mol,patts=None,order=None,verbose=0,force=0):
   for cha in order:
     pattVect = patts[cha]
     for sma,patt,logp,mr in pattVect:
-      #print 'try:',entry[0]
+      #print('try:',entry[0])
       for match in mol.GetSubstructMatches(patt,False,False):
         firstIdx = match[0]
         if not doneAtoms[firstIdx]:
           doneAtoms[firstIdx]=1
           atomContribs[firstIdx] = (logp,mr)
           if verbose:
-            print '\tAtom %d: %s %4.4f %4.4f'%(match[0],sma,logp,mr)
+            print('\tAtom %d: %s %4.4f %4.4f'%(match[0],sma,logp,mr))
           nAtomsFound+=1
           if nAtomsFound>=nAtoms:
             done=True
@@ -201,13 +204,13 @@ if __name__=='__main__':
       ms.append((smi,Chem.MolFromSmiles(smi)))
 
     for smi,m in ms:
-      print 'Mol: %s'%(smi)
+      print('Mol: %s'%(smi))
       logp = MolLogP(m,verbose=verbose)
-      print '----'
+      print('----')
       mr = MolMR(m,verbose=verbose)
-      print 'Res:',logp,mr
+      print('Res:',logp,mr)
       newM = Chem.AddHs(m)
       logp = MolLogP(newM,addHs=0)
       mr = MolMR(newM,addHs=0)
-      print '\t',logp,mr
-      print '-*-*-*-*-*-*-*-*'
+      print('\t',logp,mr)
+      print('-*-*-*-*-*-*-*-*')

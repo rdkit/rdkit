@@ -2,6 +2,7 @@
 
 This module puts the various PIDDLE backends through their paces.
 """
+from __future__ import print_function
 
 from sping import pagesizes
 from sping.pid import *
@@ -223,8 +224,8 @@ def drawRotstring(canvas):
 		canvas.drawString(s2, 150, 150, angle=ang)
 		cnum = (cnum+1) % len(colors)
 
-      	canvas.drawString( "This is  a\nrotated\nmulti-line string!!!", 350, 100, angle= -90, font=Font(underline=1) )
-        #canvas.drawString( "This is  a\nrotated\nmulti-line string!!!", 400, 175, angle= -45, font=Font(underline=1) )
+	canvas.drawString( "This is  a\nrotated\nmulti-line string!!!", 350, 100, angle= -90, font=Font(underline=1) )
+	#canvas.drawString( "This is  a\nrotated\nmulti-line string!!!", 400, 175, angle= -45, font=Font(underline=1) )
 	return canvas
 
 #----------------------------------------------------------------------
@@ -235,14 +236,14 @@ def tkTest(testfunc):
 		import sping.TK
 		import Tkinter
 	except:
-		print "A module needed for sping.TK is not available, select another backend"
+		print("A module needed for sping.TK is not available, select another backend")
 		return
 
 	root = Tkinter.Tk()
 	frame = Tkinter.Frame(root)  # label='piddletestTK'
 
-        # try new Tk canvas
-        tkcanvas = sping.TK.TKCanvas(size=(400,400), name='sping-testTK', master = frame)
+	# try new Tk canvas
+	tkcanvas = sping.TK.TKCanvas(size=(400,400), name='sping-testTK', master = frame)
 	bframe = Tkinter.Frame(root)
 
 	minimalB=Tkinter.Button(bframe, text='minimal test',
@@ -273,11 +274,11 @@ def tkTest(testfunc):
 		drawStrings(tkcanvas)
 	elif testfunc == rotstring :
 		drawRotstring(tkcanvas)
-        else :
-                print "Illegal testfunc handed to tkTest"
-                raise ValueError,"Unsupported testfunc"
+	else :
+		print("Illegal testfunc handed to tkTest")
+		raise ValueError("Unsupported testfunc")
 
-        tkcanvas.flush() 
+	tkcanvas.flush() 
 	root.mainloop()
 
 #----------------------------------------------------------------------
@@ -286,25 +287,25 @@ def wxTest(testfunc):
 		import sping.WX
 		from wxPython.wx import wxApp
 	except:
-		print "A module needed for sping.WX is not available, select another backend"
+		print("A module needed for sping.WX is not available, select another backend")
 		return
 
-        global wx_app
-        if not globals().has_key("wx_app"):
-                class CanvasApp(wxApp):
-                        "The wxApp that runs canvas.  Initializes windows, and handles redrawing"
-                        def OnInit(self):
-                                return 1
+	global wx_app
+	if not globals().has_key("wx_app"):
+		class CanvasApp(wxApp):
+			"The wxApp that runs canvas.  Initializes windows, and handles redrawing"
+			def OnInit(self):
+				return 1
 
-                wx_app = CanvasApp(0)
+		wx_app = CanvasApp(0)
 
 	# run the test, passing the canvas class and returning the canvas
 	canvas = testfunc(sping.WX.WXCanvas)
 	
 	canvas.flush()
 
-        # Run the main loop
-        wx_app.MainLoop()
+	# Run the main loop
+	wx_app.MainLoop()
 
 
 def runtest(backend, testfunc):
@@ -319,34 +320,34 @@ def runtest(backend, testfunc):
 		return
 
 	# import the relevant module		
-        modname = 'sping.' + backend
-        print "importing ", modname
+	modname = 'sping.' + backend
+	print("importing ", modname)
 	module = __import__('sping.'+backend, globals(), locals(), [backend])
-        
+	
 	# figure out the canvas class name (e.g., "PILCanvas") and get that
 	#canvasClass = getattr(module, backend[6:]+"Canvas")
-        #canvasClass = getattr(module, backend+"Canvas")
-        # from spam.ham import eggs
-        # __import('spam.ham', 'globals(), local
-        
-        canvasClass = getattr(module, backend+"Canvas")
-        
+	#canvasClass = getattr(module, backend+"Canvas")
+	# from spam.ham import eggs
+	# __import('spam.ham', 'globals(), local
+	
+	canvasClass = getattr(module, backend+"Canvas")
+	
 	# run the test, passing the canvas class and returning the canvas
 	canvas = testfunc(canvasClass)
 	
 	# do post-test cleanup
 	canvas.flush()
-        # handle save's here
+	# handle save's here
 	if backend == 'PIL':
-                # I'm saving twice because sometimes jpeg doesn't work when png does
-		canvas.save(file=canvas.name+".jpg")    # save as a jpeg file
-                canvas.save(format='png')		# save as a png file
-        elif backend == 'piddleVCR':
+		# I'm saving twice because sometimes jpeg doesn't work when png does
+		canvas.save(file=canvas.name+".jpg")	# save as a jpeg file
+		canvas.save(format='png')		# save as a png file
+	elif backend == 'piddleVCR':
 		filename = canvas.name + ".vcr"
 		canvas.save(filename)
-		print filename, "saved"
-        else:     # if backend == 'PS' or backend== 'PDF':
-                canvas.save()  # should be "pass'ed" by Canvas's that don't use save
+		print(filename, "saved")
+	else:	  # if backend == 'PS' or backend== 'PDF':
+		canvas.save()  # should be "pass'ed" by Canvas's that don't use save
 
 
 def mainLoop():
@@ -366,12 +367,12 @@ def mainLoop():
 			else: bflag = ''
 			if i == test: tflag = '==>'
 			else: tflag = ''
-			print "%10s %-20s %10s %-20s" % (bflag, bstr, tflag, tstr)
+			print("%10s %-20s %10s %-20s" % (bflag, bstr, tflag, tstr))
 			i = i+1		
-		print
+		print()
 		
 		inp = raw_input("Selection (0 to exit): ")
-		print
+		print()
 
 		if inp == '0': return
 		if inp:
@@ -382,17 +383,17 @@ def mainLoop():
 			if backinp:
 				backend = int(backinp)-1
 				if backend < len(backends):
-                                        docstr = __import__('sping.'+backends[backend], globals(), locals(), backends[backend]).__doc__
+					docstr = __import__('sping.'+backends[backend], globals(), locals(), backends[backend]).__doc__
 					#docstr = __import__('sping.'+backends[backend]).__doc__
-					if docstr: print docstr
-					else: print "<no doc string>"
+					if docstr: print(docstr)
+					else: print("<no doc string>")
 				else: backend = None
 			if testinp:
 				test = ord(string.upper(testinp[0])) - ord('A')
 				if test >= 0 and test < len(tests):
 					docstr = tests[test].__doc__
 					if docstr:
-                                          print docstr
+					  print(docstr)
 				else: test = None
 		print
 		

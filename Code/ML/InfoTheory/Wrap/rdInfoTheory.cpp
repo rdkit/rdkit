@@ -10,6 +10,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include <RDBoost/Wrap.h>
 #include "numpy/oldnumeric.h"
+#include <RDBoost/import_array.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 
@@ -119,7 +120,7 @@ BOOST_PYTHON_MODULE(rdInfoTheory)
     "Module containing bunch of functions for information metrics and a ranker to rank bits"
     ;
   
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 

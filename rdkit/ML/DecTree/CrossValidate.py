@@ -8,10 +8,11 @@ cross validation == evaluating the accuracy of a tree.
 
 
 """
+from __future__ import print_function
 from rdkit.ML.DecTree import ID3
 from rdkit.ML.Data import SplitData
 import numpy
-from rdkit import RDRandom
+from rdkit.six.moves import xrange
 
 def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
                       nPossibleVals,treeBuilder,nQuantBounds=[],
@@ -64,11 +65,9 @@ def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
     argD = {'initialVar':attrs[i]}
     argD.update(kwargs)
     if nQuantBounds is None or nQuantBounds == []:
-      trees[i] = apply(treeBuilder,(trainExamples,attrs,nPossibleVals),
-                       argD)
+      trees[i] = treeBuilder(trainExamples,attrs,nPossibleVals,**argd)
     else:
-      trees[i] = apply(treeBuilder,(trainExamples,attrs,nPossibleVals,nQuantBounds),
-                       argD)
+      trees[i] = treeBuilder(trainExamples,attrs,nPossibleVals,nQuantBounds,**argD)
     if trees[i]:
       errs[i],foo = CrossValidate(trees[i],examples,appendExamples=0)
     else:
@@ -174,7 +173,7 @@ def CrossValidationDriver(examples,attrs,nPossibleVals,holdOutFrac=.3,silent=0,
   
   nTrain = len(trainExamples)
   if not silent:
-    print 'Training with %d examples'%(nTrain)
+    print('Training with %d examples'%(nTrain))
 
   if not lessGreedy:
     if nQuantBounds is None or nQuantBounds == []:
@@ -190,13 +189,13 @@ def CrossValidationDriver(examples,attrs,nPossibleVals,holdOutFrac=.3,silent=0,
 
   nTest = len(testExamples)
   if not silent:
-    print 'Testing with %d examples'%nTest
+    print('Testing with %d examples'%nTest)
   if not calcTotalError:
     xValError,badExamples = CrossValidate(tree,testExamples,appendExamples=1)
   else:
     xValError,badExamples = CrossValidate(tree,examples,appendExamples=0)    
   if not silent:
-    print 'Validation error was %%%4.2f'%(100*xValError)
+    print('Validation error was %%%4.2f'%(100*xValError))
   tree.SetBadExamples(badExamples)
   tree.SetTrainingExamples(trainExamples)
   tree.SetTestExamples(testExamples)
@@ -217,9 +216,9 @@ def TestRun():
   
   import copy
   t2 = copy.deepcopy(tree)
-  print 't1 == t2',tree==t2
+  print('t1 == t2',tree==t2)
   l = [tree]
-  print 't2 in [tree]', t2 in l, l.index(t2)
+  print('t2 in [tree]', t2 in l, l.index(t2))
 
 if __name__  == '__main__':
   TestRun()

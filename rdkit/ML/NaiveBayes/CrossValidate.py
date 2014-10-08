@@ -7,6 +7,7 @@
 and evaluation of individual models
 
 """
+from __future__ import print_function
 from rdkit.ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
 from rdkit.ML.Data import SplitData
 try:
@@ -76,7 +77,7 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, nQuantBounds,
     xValError,badExamples = CrossValidate(NBmodel, examples,appendExamples=0)
 
   if not silent:
-    print 'Validation error was %%%4.2f'%(100*xValError)
+    print('Validation error was %%%4.2f'%(100*xValError))
   NBmodel._trainIndices = trainIndices
   return NBmodel, xValError
 

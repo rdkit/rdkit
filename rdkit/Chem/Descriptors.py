@@ -25,7 +25,7 @@ def _setupDescriptors(namespace):
 
   otherMods = [Chem]
 
-  for nm,thing in namespace.iteritems():
+  for nm,thing in namespace.items():
     if nm[0]!='_' and _isCallable(thing):
       _descList.append((nm,thing))
   

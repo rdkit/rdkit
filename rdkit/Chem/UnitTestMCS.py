@@ -23,13 +23,13 @@ class MCSTestCase(unittest.TestCase):
     def assert_result(self, result, completed=_ignore, numAtoms=_ignore,
                       numBonds=_ignore, smarts=_ignore):
         if completed is not _ignore:
-            self.assertEquals(result.completed, completed)
+            self.assertEqual(result.completed, completed)
         if numAtoms is not _ignore:
-            self.assertEquals(result.numAtoms, numAtoms)
+            self.assertEqual(result.numAtoms, numAtoms)
         if numBonds is not _ignore:
-            self.assertEquals(result.numBonds, numBonds)
+            self.assertEqual(result.numBonds, numBonds)
         if smarts is not _ignore:
-            self.assertEquals(result.smarts, smarts)
+            self.assertEqual(result.smarts, smarts)
 
 simple_mols = load_smiles("""
 c1ccccc1O phenol

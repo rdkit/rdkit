@@ -12,6 +12,7 @@
 """
 
 import unittest
+from rdkit.six.moves import cPickle
 from rdkit.DataStructs import BitVect
 
 def feq(v1,v2,tol=1e-4):
@@ -278,7 +279,7 @@ class TestCase(unittest.TestCase):
       5x1024, 5x512, 3x256)
     """  
     from rdkit import DataStructs
-    import cPickle,os
+    import os
     from rdkit import RDConfig
     fps = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
                                          'pubchem_fps.pkl'),'rb'))
@@ -298,7 +299,7 @@ class TestCase(unittest.TestCase):
       verify that the bounded similarity (tanimoto) works
     """  
     from rdkit import DataStructs
-    import cPickle,os
+    import os
     from rdkit import RDConfig
     fps = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
                                          'pubchem_fps.pkl'),'rb'))

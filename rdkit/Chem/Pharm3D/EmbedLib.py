@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 from rdkit import RDConfig
 
 import sys,time,math
@@ -83,16 +84,16 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
    feature form a regular polygon, are listed in order
    (i.e. pt 0 is a neighbor to pt 1 and pt N-1)
    and that the replacement point goes at the center:
-   >>> print ', '.join(['%.3f'%x for x in bm[-1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
    0.577, 0.577, 0.577, 0.000
-   >>> print ', '.join(['%.3f'%x for x in bm[:,-1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
    1.155, 1.155, 1.155, 0.000
 
    The slop argument (default = 0.01) is fractional:
    >>> bm,idx = ReplaceGroup(match,boundsMat)
-   >>> print ', '.join(['%.3f'%x for x in bm[-1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
    0.572, 0.572, 0.572, 0.000
-   >>> print ', '.join(['%.3f'%x for x in bm[:,-1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
    1.166, 1.166, 1.166, 0.000
 
 
@@ -179,7 +180,7 @@ def EmbedMol(mol,bm,atomMatch=None,weight=2.0,randomSeed=-1,
         weights.append((i,idx,weight))
   coords = DG.EmbedBoundsMatrix(bm,weights=weights,numZeroFail=1,randomSeed=randomSeed)
   #for row in coords:
-  #  print ', '.join(['%.2f'%x for x in row])
+  #  print(', '.join(['%.2f'%x for x in row]))
 
   conf = Chem.Conformer(nAts)
   conf.SetId(0)
@@ -189,7 +190,7 @@ def EmbedMol(mol,bm,atomMatch=None,weight=2.0,randomSeed=-1,
     for vol in excludedVolumes:
       vol.pos = numpy.array(coords[vol.index])
     
-  #print >>sys.stderr,'   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(coords[-1])
+  #print('   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(coords[-1]), file=sys.stderr)
   mol.AddConformer(conf)
 
 def AddExcludedVolumes(bm,excludedVolumes,smoothIt=True):
@@ -211,9 +212,9 @@ def AddExcludedVolumes(bm,excludedVolumes,smoothIt=True):
    >>> boundsMat.shape == (3, 3)
    True
 
-   >>> print ', '.join(['%.3f'%x for x in bm[-1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
    0.500, 1.500, 1.500, 0.000
-   >>> print ', '.join(['%.3f'%x for x in bm[:,-1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
    1.000, 3.000, 3.000, 0.000
 
   """
@@ -277,11 +278,11 @@ def UpdatePharmacophoreBounds(bm,atomMatch,pcophore,useDirs=False,
      True
 
      this means, of course, that the input boundsMat is altered:
-     >>> print ', '.join(['%.3f'%x for x in boundsMat[0]])
+     >>> print(', '.join(['%.3f'%x for x in boundsMat[0]]))
      0.000, 2.000, 3.000
-     >>> print ', '.join(['%.3f'%x for x in boundsMat[1]])
+     >>> print(', '.join(['%.3f'%x for x in boundsMat[1]]))
      1.000, 0.000, 3.000
-     >>> print ', '.join(['%.3f'%x for x in boundsMat[2]])
+     >>> print(', '.join(['%.3f'%x for x in boundsMat[2]]))
      2.000, 2.000, 0.000
 
   """
@@ -377,7 +378,7 @@ def EmbedPharmacophore(mol,atomMatch,pcophore,randomSeed=-1,count=10,smoothFirst
     bm = AddExcludedVolumes(bm,excludedVolumes,smoothIt=False)
 
   if not DG.DoTriangleSmoothing(bm):
-    raise ValueError,"could not smooth bounds matrix"
+    raise ValueError("could not smooth bounds matrix")
 
   #print '------------'
   #print 'post replace and smooth'
@@ -558,13 +559,13 @@ def OptimizeMol(mol,bm,atomMatches=None,excludedVolumes=None,
   ff.Initialize()
   e1 = ff.CalcEnergy()
   if isNaN(e1):
-    raise ValueError,'bogus energy'
+    raise ValueError('bogus energy')
 
   if verbose:
-    print Chem.MolToMolBlock(mol)
+    print(Chem.MolToMolBlock(mol))
     for i,vol in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
-      print >>sys.stderr,'   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(pos)
+      print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(pos), file=sys.stderr)
   needsMore=ff.Minimize()
   nPasses=0
   while needsMore and nPasses<maxPasses:
@@ -572,14 +573,14 @@ def OptimizeMol(mol,bm,atomMatches=None,excludedVolumes=None,
     nPasses+=1
   e2 = ff.CalcEnergy()
   if isNaN(e2):
-    raise ValueError,'bogus energy'
+    raise ValueError('bogus energy')
 
   if verbose:
-    print '--------'
-    print Chem.MolToMolBlock(mol)
+    print('--------')
+    print(Chem.MolToMolBlock(mol))
     for i,vol in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
-      print >>sys.stderr,'   % 7.4f   % 7.4f   % 7.4f Sb  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(pos)
+      print('   % 7.4f   % 7.4f   % 7.4f Sb  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(pos), file=sys.stderr)
   ff = None
   return e1,e2
 
@@ -665,7 +666,8 @@ def EmbedOne(mol,name,match,pcophore,count=1,silent=0,**kwargs):
     e4 = -1.0
     e4d=-1.0
   if not silent:
-    print '%s(%d): %.2f(%.2f) -> %.2f(%.2f) : %.2f(%.2f) -> %.2f(%.2f)'%(name,nFailed,e1,e1d,e2,e2d,e3,e3d,e4,e4d)
+    print('%s(%d): %.2f(%.2f) -> %.2f(%.2f) : %.2f(%.2f) -> %.2f(%.2f)' % 
+          (name,nFailed,e1,e1d,e2,e2d,e3,e3d,e4,e4d))
   return e1,e1d,e2,e2d,e3,e3d,e4,e4d,nFailed
 
 def MatchPharmacophoreToMol(mol, featFactory, pcophore):
@@ -718,8 +720,8 @@ def _getFeatDict(mol,featFactory,features):
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> d =_getFeatDict(m,featFactory,activeFeats)
-    >>> d.keys()
-    ['Donor', 'Acceptor']
+    >>> sorted(list(d.keys()))
+    ['Acceptor', 'Donor']
     >>> donors = d['Donor']
     >>> len(donors)
     1
@@ -737,7 +739,7 @@ def _getFeatDict(mol,featFactory,features):
   molFeats = {}
   for feat in features:
     family = feat.GetFamily()
-    if not molFeats.has_key(family):
+    if not family in molFeats:
       matches = featFactory.GetFeaturesForMol(mol,includeOnly=family)
       molFeats[family] = matches
   return molFeats
@@ -793,9 +795,9 @@ def CombiEnum(sequence):
   provides all combinations of the elements of the subsequences:
 
   >>> gen = CombiEnum(((1,2),(10,20)))
-  >>> gen.next()
+  >>> next(gen)
   [1, 10]
-  >>> gen.next()
+  >>> next(gen)
   [1, 20]
 
   >>> [x for x in CombiEnum(((1,2),(10,20)))]
@@ -836,9 +838,9 @@ def DownsampleBoundsMatrix(bm,indices,maxThresh=4.0):
    >>> boundsMat.shape == (3, 3)
    True
    
-   >>> print ', '.join(['%.3f'%x for x in bm[0]])
+   >>> print(', '.join(['%.3f'%x for x in bm[0]]))
    0.000, 3.000
-   >>> print ', '.join(['%.3f'%x for x in bm[1]])
+   >>> print(', '.join(['%.3f'%x for x in bm[1]]))
    2.000, 0.000
 
    if the threshold is high enough, we don't do anything:
@@ -946,9 +948,10 @@ def CoarseScreenPharmacophore(atomMatch,bounds,pcophore,verbose=False):
           if bounds[idx1,idx0] >= pcophore.getUpperBound(k, l) or \
              bounds[idx0,idx1] <= pcophore.getLowerBound(k, l) :
             if verbose:
-              print '\t  (%d,%d) [%d,%d] fail'%(idx1,idx0,k,l)
-              print '\t    %f,%f - %f,%f'%(bounds[idx1,idx0],pcophore.getUpperBound(k,l),
-                                           bounds[idx0,idx1],pcophore.getLowerBound(k,l))
+              print('\t  (%d,%d) [%d,%d] fail'%(idx1,idx0,k,l))
+              print('\t    %f,%f - %f,%f' %
+                    (bounds[idx1,idx0],pcophore.getUpperBound(k,l),
+                     bounds[idx0,idx1],pcophore.getLowerBound(k,l)))
             #logger.debug('\t >%s'%str(atomMatch))
             #logger.debug()
             #logger.debug('\t    %f,%f - %f,%f'%(bounds[idx1,idx0],pcophore.getUpperBound(k,l),
@@ -984,11 +987,11 @@ def Check2DBounds(atomMatch,mol,pcophore):
           try:
             dij = min(dij,dm[atomI,atomJ])
           except IndexError:
-            print 'bad indices:',atomI,atomJ
-            print '  shape:',dm.shape
-            print '  match:',atomMatch
-            print '    mol:'
-            print Chem.MolToMolBlock(mol)
+            print('bad indices:',atomI,atomJ)
+            print('  shape:',dm.shape)
+            print('  match:',atomMatch)
+            print('    mol:')
+            print(Chem.MolToMolBlock(mol))
             raise IndexError
       if dij<lowerB or dij>upperB:
         return False
@@ -1094,26 +1097,26 @@ def GetAllPharmacophoreMatches(matches,bounds,pcophore,useDownsampling=0,
     if atomMatch and use2DLimits and mol:
       pass2D = Check2DBounds(atomMatch,mol,pcophore)
       if verbose:
-        print '..',atomMatch
-        print '  ..Pass2d:',pass2D
+        print('..',atomMatch)
+        print('  ..Pass2d:',pass2D)
     else:
       pass2D = True
     if atomMatch and pass2D and \
        CoarseScreenPharmacophore(atomMatch,bounds,pcophore,verbose=verbose):
       if verbose:
-        print '  ..CoarseScreen: Pass'
+        print('  ..CoarseScreen: Pass')
 
       bm = bounds.copy()
       if verbose:
-        print 'pre update:'
+        print('pre update:')
         for row in bm:
-          print ' ',' '.join(['% 4.2f'%x for x in row])
+          print(' ',' '.join(['% 4.2f'%x for x in row]))
       bm = UpdatePharmacophoreBounds(bm,atomMatch,pcophore);
       sz = bm.shape[0]
       if verbose:
-        print 'pre downsample:'
+        print('pre downsample:')
         for row in bm:
-          print ' ',' '.join(['% 4.2f'%x for x in row])
+          print(' ',' '.join(['% 4.2f'%x for x in row]))
 
       if useDownsampling:
         indices = []
@@ -1121,14 +1124,14 @@ def GetAllPharmacophoreMatches(matches,bounds,pcophore,useDownsampling=0,
           indices += list(entry)
         bm = DownsampleBoundsMatrix(bm,indices)
       if verbose:
-        print 'post downsample:'
+        print('post downsample:')
         for row in bm:
-          print ' ',' '.join(['% 4.2f'%x for x in row])
+          print(' ',' '.join(['% 4.2f'%x for x in row]))
         
       if DG.DoTriangleSmoothing(bm):
         res.append(match)
       elif verbose:
-        print 'cannot smooth'
+        print('cannot smooth')
       nDone+=1
       if progressCallback:
         progressCallback(nDone)

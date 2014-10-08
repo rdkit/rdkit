@@ -11,8 +11,9 @@
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 
-#include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
+#include <RDBoost/pyint_api.h>
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
 
