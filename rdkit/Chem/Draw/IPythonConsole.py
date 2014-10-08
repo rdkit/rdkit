@@ -11,7 +11,7 @@ else:
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
-from rdkit.six import BytesIO
+from rdkit.six import BytesIO,StringIO
 import copy
 import os
 import json
