@@ -13,20 +13,20 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <boost/cstdint.hpp>
 #include "../RDKitBase.h"
 
 namespace RDKit
 {
  namespace MolHash
  {
-    typedef unsigned long HashCodeT;    // 32 bits !!!
-//    typedef unsigned long long HashCodeT;
+    typedef boost::uint32_t HashCodeType;
 
-    HashCodeT generateMoleculeHashCode(const ROMol &mol,
+    HashCodeType generateMoleculeHashCode(const ROMol &mol,
         const std::vector<unsigned> *atomsToUse=0,
         const std::vector<unsigned> *bondsToUse=0,  // ?? listed bonds between/to/from excluded atom(s) ??
-        const std::vector<unsigned> *atomCodes =0,
-        const std::vector<unsigned> *bondCodes =0);
+        const std::vector<boost::uint32_t> *atomCodes =0,
+        const std::vector<boost::uint32_t> *bondCodes =0);
 
     enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
     {
@@ -47,23 +47,23 @@ namespace RDKit
         CF_ALL = 0xFFFF,
     };
 
-    void fillAtomBondCodes(const ROMol &mol, unsigned flags     // CodeFlags constants combination
-                          , std::vector<unsigned> *atomCodes    // NULL is allowed
-                          , std::vector<unsigned> *bondCodes);  // NULL is allowed
+    void fillAtomBondCodes(const ROMol &mol, boost::uint64_t flags     // CodeFlags constants combination
+                          , std::vector<boost::uint32_t> *atomCodes    // NULL is allowed
+                          , std::vector<boost::uint32_t> *bondCodes);  // NULL is allowed
 
 #pragma pack(push,1)
     struct HashSet
     {
-        unsigned short  Version;
-        unsigned short  Reserved;
-        unsigned short  NumAtoms;
-        unsigned short  NumBonds;
-        unsigned long   FormulaCRC32;
-        HashCodeT       NonChiralAtomsHash;
-        HashCodeT       NonChiralBondsHash;
-        HashCodeT       ChiralAtomsHash;
-        HashCodeT       ChiralBondsHash;
-        HashCodeT       ChiralityHash;
+        boost::uint16_t  Version;
+        boost::uint16_t  Reserved;
+        boost::uint16_t  NumAtoms;
+        boost::uint16_t  NumBonds;
+        boost::uint32_t  FormulaCRC32;
+        HashCodeType     NonChiralAtomsHash;
+        HashCodeType     NonChiralBondsHash;
+        HashCodeType     ChiralAtomsHash;
+        HashCodeType     ChiralBondsHash;
+        HashCodeType     ChiralityHash;
     public:
         HashSet() { memset(this, 0, sizeof(*this));}
     };

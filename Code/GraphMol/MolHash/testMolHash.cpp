@@ -25,7 +25,7 @@ namespace RDKit
     {
         BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
         BOOST_LOG(rdInfoLog) << "Testing MolHash test1 DEFAULT ARGUMENTS"<< std::endl;
-        std::cout<<"Hash size = "<< 8*sizeof(HashCodeT) <<" bits.\n";
+        std::cout<<"Hash size = "<< 8*sizeof(HashCodeType) <<" bits.\n";
         const char* smi[] = 
         {
             "CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1",
@@ -50,8 +50,8 @@ namespace RDKit
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
             std::vector<unsigned> atomsToUse;
             std::vector<unsigned> bondsToUse;
-            std::vector<unsigned> atomCodes(mol->getNumAtoms());
-            std::vector<unsigned> bondCodes(mol->getNumBonds());
+            std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
+            std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
 
             unsigned n;
             n = mol->getNumAtoms();
@@ -72,10 +72,10 @@ namespace RDKit
 
             fillAtomBondCodes(*mol, CF_NO_LABELS, &atomCodes, &bondCodes);
 
-            HashCodeT res0 = generateMoleculeHashCode(*mol);
-            HashCodeT res1 = generateMoleculeHashCode(*mol, &atomsToUse, 0, &atomCodes, &bondCodes);
-            HashCodeT res2 = generateMoleculeHashCode(*mol, 0, &bondsToUse, &atomCodes, &bondCodes);
-            HashCodeT res3 = generateMoleculeHashCode(*mol, &atomsToUse, &bondsToUse, &atomCodes, &bondCodes);
+            HashCodeType res0 = generateMoleculeHashCode(*mol);
+            HashCodeType res1 = generateMoleculeHashCode(*mol, &atomsToUse, 0, &atomCodes, &bondCodes);
+            HashCodeType res2 = generateMoleculeHashCode(*mol, 0, &bondsToUse, &atomCodes, &bondCodes);
+            HashCodeType res3 = generateMoleculeHashCode(*mol, &atomsToUse, &bondsToUse, &atomCodes, &bondCodes);
 
             std::cout << res0 <<" = "<< encode(&res0, sizeof(res0)) << std::endl;
             std::cout << res1 <<" = "<< encode(&res1, sizeof(res1)) << std::endl;
@@ -92,7 +92,7 @@ namespace RDKit
     {
         BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
         BOOST_LOG(rdInfoLog) << "Testing MolHash test2 CHIRALITY == ATOM"<< std::endl;
-        std::cout<<"Hash size = "<< 8*sizeof(HashCodeT) <<" bits.\n";
+        std::cout<<"Hash size = "<< 8*sizeof(HashCodeType) <<" bits.\n";
         const char* smi[] = 
         {
             //equal non-chiral hash
@@ -102,20 +102,20 @@ namespace RDKit
             "[13CH3]C(F)Cl",
         };
 
-        std::vector<HashCodeT> HashNonChiral;
+        std::vector<HashCodeType> HashNonChiral;
 
         for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
-            std::vector<unsigned> atomCodes(mol->getNumAtoms());
-            std::vector<unsigned> bondCodes(mol->getNumBonds());
+            std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
+            std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
 
             fillAtomBondCodes(*mol, CF_ELEMENT|CF_CHARGE/*|CF_VALENCE*/
                                 | CF_ATOM_AROMATIC
                              , &atomCodes, &bondCodes);
 
 //            fillAtomBondCodes(*mol, CF_ATOM_ALL &(~(CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE)), &atomCodes, &bondCodes);
-            HashCodeT res = generateMoleculeHashCode(*mol, 0, 0, &atomCodes, &bondCodes);
+            HashCodeType res = generateMoleculeHashCode(*mol, 0, 0, &atomCodes, &bondCodes);
             HashNonChiral.push_back(res);
             std::cout << res <<" = "<< encode(&res, sizeof(res)) <<" | "<< smi[i]<<std::endl;
         }
@@ -132,7 +132,7 @@ namespace RDKit
     {
         BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
         BOOST_LOG(rdInfoLog) << "Testing MolHash test21 CHIRALITY == BOND"<< std::endl;
-        std::cout<<"Hash size = "<< 8*sizeof(HashCodeT) <<" bits.\n";
+        std::cout<<"Hash size = "<< 8*sizeof(HashCodeType) <<" bits.\n";
         const char* smi[] = 
         {
             //equal non-chiral BOND hash
@@ -141,16 +141,16 @@ namespace RDKit
             "C/C=C\\C",
         };
 
-        std::vector<HashCodeT> HashNonChiral;
+        std::vector<HashCodeType> HashNonChiral;
 
         for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
-            std::vector<unsigned> atomCodes(mol->getNumAtoms());
-            std::vector<unsigned> bondCodes(mol->getNumBonds());
+            std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
+            std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
 
             fillAtomBondCodes(*mol, CF_BOND_ALL &(~(CF_BOND_CHIRALITY)), &atomCodes, &bondCodes);
-            HashCodeT res = generateMoleculeHashCode(*mol, 0, 0, &atomCodes, &bondCodes);
+            HashCodeType res = generateMoleculeHashCode(*mol, 0, 0, &atomCodes, &bondCodes);
             HashNonChiral.push_back(res);
             std::cout << res <<" = "<< encode(&res, sizeof(res)) <<" | "<< smi[i]<<std::endl;
         }
@@ -180,16 +180,16 @@ namespace RDKit
             "CC1CCC(C)CC1",
         };
 
-        std::vector<HashCodeT> HashChiral;
+        std::vector<HashCodeType> HashChiral;
 
         for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
-            std::vector<unsigned> atomCodes(mol->getNumAtoms());
-            std::vector<unsigned> bondCodes(mol->getNumBonds());
+            std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
+            std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
 
             fillAtomBondCodes(*mol, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
-            HashCodeT resC = generateMoleculeHashCode(*mol, 0, 0, &atomCodes, &bondCodes);
+            HashCodeType resC = generateMoleculeHashCode(*mol, 0, 0, &atomCodes, &bondCodes);
             HashChiral.push_back(resC);
 
             std::cout << resC <<" = "<< encode(&resC, sizeof(resC)) <<"  "<< smi[i]<<std::endl;
@@ -234,7 +234,7 @@ namespace RDKit
 
     void doUnitTest()
     {
-        std::cout<<"Hash size = "<< 8*sizeof(HashCodeT) <<" bits.\n";
+        std::cout<<"Hash size = "<< 8*sizeof(HashCodeType) <<" bits.\n";
 
         BOOST_LOG(rdInfoLog) << "*******************************************************\n";
             test1();
@@ -261,10 +261,10 @@ namespace RDKit
         return std::string(smiles, n);
     }
 
-    HashCodeT computeHash(const ROMol &mol, CodeFlags flags)
+    HashCodeType computeHash(const ROMol &mol, CodeFlags flags)
     {
-        std::vector<unsigned> atomCodes;
-        std::vector<unsigned> bondCodes;
+        std::vector<boost::uint32_t> atomCodes;
+        std::vector<boost::uint32_t> bondCodes;
 
         fillAtomBondCodes(mol, flags, &atomCodes, &bondCodes);
 
@@ -298,7 +298,7 @@ namespace RDKit
     struct HashResult
     {
         unsigned    Line;     // molecule Id [1, ...)
-        HashCodeT   Hash;
+        HashCodeType   Hash;
 //        unsigned   ChiralInfo;
         HashResult(unsigned id = 0) : Line(id), Hash(0)//, ChiralInfo(0)
         {
@@ -351,7 +351,7 @@ namespace RDKit
         std::cout<<"Total: "<<cn<<" hash collisions found in "<<res.size()<<" molecules.\n";
     }
 
-    void testFileSMILES(const char* file, HashCodeT bitMask)
+    void testFileSMILES(const char* file, HashCodeType bitMask)
     {
         unsigned line=0;
         std::list<HashResult> res;
@@ -397,11 +397,11 @@ namespace RDKit
         std::cout<<"Test COMPLETED.\n";
     }
 
-void checkCollisions(const char* file, unsigned bits=0)
+void checkCollisions(const char* file, boost::uint32_t bits=0)
 {
-    HashCodeT bitMask = 0;
-    if(0 == bits || 8*sizeof(HashCodeT) < bits)
-        bits = 8*sizeof(HashCodeT);
+    HashCodeType bitMask = 0;
+    if(0 == bits || 8*sizeof(HashCodeType) < bits)
+        bits = 8*sizeof(HashCodeType);
     for(unsigned i=0; i < bits; i++)
         bitMask |= 1ULL << i;
     std::cout<<"Hash size = "<<bits<<" bits. Mask = "<<bitMask<<"\n";
