@@ -82,18 +82,31 @@ static
                 if(0!=(CF_VALENCE & flags))
                     (*atomCodes)[i] |= (atom->getExplicitValence()) << 13; //getTotalValence()
                 if(0!=(CF_ATOM_CHIRALITY & flags)){
+                  char v=0;
                   if(atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
                      atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW){
                     if(atom->hasProp("_CIPCode")){
                       std::string code=atom->getProp<std::string>("_CIPCode");
-                      char v=0;
                       if(code=="R") v=1;
                       else if(code=="S") v=2;
-                      (*atomCodes)[i] |= (v) << 18;   // 2 bits
+                    } else if(atom->hasProp("_ringStereoAtoms")){
+                      const INT_VECT &ringStereoAtoms=atom->getProp<INT_VECT>("_ringStereoAtoms");
+                      if(ringStereoAtoms.size()){
+                        if(ringStereoAtoms[0]<0){
+                          v=1;
+                        } else {
+                          v=2;
+                        }
+                        if(ringStereoAtoms.size()>1){
+                          BOOST_LOG(rdWarningLog)<<"Warning: atom with more than 1 ring-stereo atoms found."<<std::endl;
+                        }
+                      }
+                      
                     }
                   } else {
-                    (*atomCodes)[i] |= (atom->getChiralTag()) << 18;   // 2 bits
+                    v=atom->getChiralTag();
                   }
+                  (*atomCodes)[i] |= v << 18;   // 2 bits
                 }
                 if(0!=(CF_ATOM_AROMATIC & flags))
                     (*atomCodes)[i] |= (atom->getIsAromatic() ? 1 : 0) << 20; // 1 bit

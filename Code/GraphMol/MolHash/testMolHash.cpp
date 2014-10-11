@@ -177,9 +177,8 @@ namespace RDKit
             "CC(F)Cl",
             "[13CH3]C(F)Cl",
 
-            // FIX: these cases fail b/c ring stereo isn't being correctly captured
-            //"C[C@H]1CC[C@H](C)CC1",
-            //"C[C@H]1CC[C@@H](C)CC1",
+            "C[C@H]1CC[C@H](C)CC1",
+            "C[C@H]1CC[C@@H](C)CC1",
             "CC1CCC(C)CC1",
         };
 
@@ -305,9 +304,8 @@ namespace RDKit
             "CC(F)Cl",
             "[13CH3]C(F)Cl",
             //different chiral hash
-            // FIX: these cases fail b/c ring stereo isn't being correctly captured
-            //"C[C@H]1CC[C@H](C)CC1",   
-            //"C[C@H]1CC[C@@H](C)CC1",
+            "C[C@H]1CC[C@H](C)CC1",   
+            "C[C@H]1CC[C@@H](C)CC1",
             "CC1CCC(C)CC1",
         };
 
