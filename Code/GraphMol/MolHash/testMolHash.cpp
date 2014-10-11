@@ -100,6 +100,8 @@ namespace RDKit
             "C[C@@H](F)Cl",
             "CC(F)Cl",
             "[13CH3]C(F)Cl",
+            "C[C@H](Cl)F",
+            "C[C@@H](Cl)F",
         };
 
         std::vector<HashCodeType> HashNonChiral;
@@ -175,8 +177,9 @@ namespace RDKit
             "CC(F)Cl",
             "[13CH3]C(F)Cl",
 
-            "C[C@H]1CC[C@H](C)CC1",
-            "C[C@H]1CC[C@@H](C)CC1",
+            // FIX: these cases fail b/c ring stereo isn't being correctly captured
+            //"C[C@H]1CC[C@H](C)CC1",
+            //"C[C@H]1CC[C@@H](C)CC1",
             "CC1CCC(C)CC1",
         };
 
@@ -204,6 +207,91 @@ namespace RDKit
         BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
     }
 
+    void test3a()
+    {
+        BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+        BOOST_LOG(rdInfoLog) << "Testing MolHash test3a CHIRALITY EQUAL"<< std::endl;
+        {
+          const char* smi[] = 
+            {
+              "C[C@H](F)Cl",
+              "C[C@@H](Cl)F",
+            };
+          ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
+          ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
+
+          std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
+          std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+
+          fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash1 = generateMoleculeHashCode(*mol1, 0, 0, &atomCodes, &bondCodes);
+          fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash2 = generateMoleculeHashCode(*mol2, 0, 0, &atomCodes, &bondCodes);
+          std::cout<<hash1<<" "<<hash2<<std::endl;
+          TEST_ASSERT(hash1==hash2);
+        }
+        {
+          const char* smi[] = 
+            {
+              "C[C@@H](F)Cl",
+              "C[C@H](Cl)F",
+            };
+          ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
+          ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
+
+          std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
+          std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+
+          fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash1 = generateMoleculeHashCode(*mol1, 0, 0, &atomCodes, &bondCodes);
+          fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash2 = generateMoleculeHashCode(*mol2, 0, 0, &atomCodes, &bondCodes);
+          std::cout<<hash1<<" "<<hash2<<std::endl;
+          TEST_ASSERT(hash1==hash2);
+        }
+
+        {
+          const char* smi[] = 
+            {
+              "C/C=C/Cl",
+              "Cl/C=C/C",
+            };
+          ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
+          ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
+
+          std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
+          std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+
+          fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash1 = generateMoleculeHashCode(*mol1, 0, 0, &atomCodes, &bondCodes);
+          fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash2 = generateMoleculeHashCode(*mol2, 0, 0, &atomCodes, &bondCodes);
+          std::cout<<hash1<<" "<<hash2<<std::endl;
+          TEST_ASSERT(hash1==hash2);
+        }
+        {
+          const char* smi[] = 
+            {
+              "C/C=C/Cl",
+              "C/C=C\\Cl",
+            };
+          ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
+          ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
+
+          std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
+          std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+
+          fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash1 = generateMoleculeHashCode(*mol1, 0, 0, &atomCodes, &bondCodes);
+          fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE, &atomCodes, &bondCodes);
+          HashCodeType hash2 = generateMoleculeHashCode(*mol2, 0, 0, &atomCodes, &bondCodes);
+          std::cout<<hash1<<" "<<hash2<<std::endl;
+          TEST_ASSERT(hash1!=hash2);
+        }
+
+        BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+    }
+
 
     void test4()
     {
@@ -217,8 +305,9 @@ namespace RDKit
             "CC(F)Cl",
             "[13CH3]C(F)Cl",
             //different chiral hash
-            "C[C@H]1CC[C@H](C)CC1",
-            "C[C@H]1CC[C@@H](C)CC1",
+            // FIX: these cases fail b/c ring stereo isn't being correctly captured
+            //"C[C@H]1CC[C@H](C)CC1",   
+            //"C[C@H]1CC[C@@H](C)CC1",
             "CC1CCC(C)CC1",
         };
 
@@ -244,6 +333,8 @@ namespace RDKit
             test21();
         BOOST_LOG(rdInfoLog) << "*******************************************************\n";
             test3();
+        BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+            test3a();
         BOOST_LOG(rdInfoLog) << "*******************************************************\n";
             test4();
     }

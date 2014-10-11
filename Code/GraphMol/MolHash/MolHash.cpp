@@ -81,8 +81,20 @@ static
                     (*atomCodes)[i] |= (atom->getFormalCharge()+8) << 8;   // allowed range [-8, +8]
                 if(0!=(CF_VALENCE & flags))
                     (*atomCodes)[i] |= (atom->getExplicitValence()) << 13; //getTotalValence()
-                if(0!=(CF_ATOM_CHIRALITY & flags))
+                if(0!=(CF_ATOM_CHIRALITY & flags)){
+                  if(atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+                     atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW){
+                    if(atom->hasProp("_CIPCode")){
+                      std::string code=atom->getProp<std::string>("_CIPCode");
+                      char v=0;
+                      if(code=="R") v=1;
+                      else if(code=="S") v=2;
+                      (*atomCodes)[i] |= (v) << 18;   // 2 bits
+                    }
+                  } else {
                     (*atomCodes)[i] |= (atom->getChiralTag()) << 18;   // 2 bits
+                  }
+                }
                 if(0!=(CF_ATOM_AROMATIC & flags))
                     (*atomCodes)[i] |= (atom->getIsAromatic() ? 1 : 0) << 20; // 1 bit
                 //if(0!=( & flags))
@@ -150,11 +162,10 @@ static
                     (*bondCodes)[i] |= ((bond->getIsAromatic() ? 1 : 0)) << 8;
                 if(0!=(CF_BOND_CHIRALITY & flags))
                 {
-                    (*bondCodes)[i] |= (bond->getBeginAtom()->getChiralTag()) << 9;
-                    (*bondCodes)[i] |= (bond->getEndAtom  ()->getChiralTag()) << 11;
+                  (*bondCodes)[i] |= bond->getStereo() << 9;
                 }
                 if(0!=(CF_BOND_IN_RING & flags))
-                    (*bondCodes)[i] |= (bondsInRing.end() != bondsInRing.find(bond->getIdx()) ? 1 : 0) << 13; // 1 bit
+                    (*bondCodes)[i] |= (bondsInRing.end() != bondsInRing.find(bond->getIdx()) ? 1 : 0) << 11; // 1 bit
             }
         }
     }
