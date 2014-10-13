@@ -131,6 +131,19 @@ namespace RDKit{
       return static_cast<double>(nCSP3)/nC;
     }
 
+    const std::string NumHeterocyclesVersion="1.0.0";
+    unsigned int calcNumHeterocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->atomRings()){
+        BOOST_FOREACH(int i,iv){
+          if(mol.getAtomWithIdx(i)->getAtomicNum()!=6){
+            ++res;
+            break;
+          }
+        }
+      }
+      return res;
+    }
     const std::string NumAromaticRingsVersion="1.0.0";
     unsigned int calcNumAromaticRings(const ROMol &mol){
       unsigned int res=0;

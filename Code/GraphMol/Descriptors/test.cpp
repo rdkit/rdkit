@@ -1540,6 +1540,8 @@ void testRingDescriptors(){
     TEST_ASSERT(iv==calcNumAliphaticHeterocycles(*mol));
     mol->getProp("NumAliphaticCarbocycles",iv);
     TEST_ASSERT(iv==calcNumAliphaticCarbocycles(*mol));
+    mol->getProp("NumHeterocycles",iv);
+    TEST_ASSERT(iv==calcNumHeterocycles(*mol));
     
     delete mol;
   }
