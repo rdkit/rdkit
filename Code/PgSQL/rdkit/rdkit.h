@@ -151,6 +151,7 @@ extern "C" {
   int MolNumAromaticCarbocycles(CROMol i);
   int MolNumAliphaticCarbocycles(CROMol i);
   int MolNumSaturatedCarbocycles(CROMol i);
+  int MolNumHeterocycles(CROMol i);
 
   double MolFractionCSP3(CROMol i);
   double MolTPSA(CROMol i);

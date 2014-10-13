@@ -463,6 +463,7 @@ MOLDESCR(NumSaturatedHeterocycles,RDKit::Descriptors::calcNumSaturatedHeterocycl
 MOLDESCR(NumAromaticCarbocycles,RDKit::Descriptors::calcNumAromaticCarbocycles,int)
 MOLDESCR(NumAliphaticCarbocycles,RDKit::Descriptors::calcNumAliphaticCarbocycles,int)
 MOLDESCR(NumSaturatedCarbocycles,RDKit::Descriptors::calcNumSaturatedCarbocycles,int)
+MOLDESCR(NumHeterocycles,RDKit::Descriptors::calcNumHeterocycles,int)
 
 MOLDESCR(NumRotatableBonds,RDKit::Descriptors::calcNumRotatableBonds,int)
 MOLDESCR(Chi0v,RDKit::Descriptors::calcChi0v,double)
