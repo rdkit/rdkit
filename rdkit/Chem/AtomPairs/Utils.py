@@ -106,7 +106,10 @@ def NumPiElectrons(atom):
   elif atom.GetHybridization() != Chem.HybridizationType.SP3:
     # the number of pi electrons is just the number of
     # unsaturations (valence - degree):
-    res = atom.GetExplicitValence() - atom.GetDegree()
+    res = atom.GetExplicitValence()  - atom.GetNumExplicitHs()
+    if res<atom.GetDegree():
+      raise ValueError("explicit valence exceeds atom degree")
+    res -= atom.GetDegree()
   return res
 
 
