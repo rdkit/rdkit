@@ -2,8 +2,9 @@
 (Changes relative to Release_2014.03.1)
 
 Acknowledgements:
-Paolo Tosco, Riccardo Vianello, Jan Domanski, Nadine Schneider, Alexander Savelyev, Sereina Riniker, Noel O'Boyle, Matt Swain, Patrick Fuller, Roger Sayle
- 
+Paolo Tosco, Riccardo Vianello, Jan Domanski, Nadine Schneider,
+Alexander Savelyev, Sereina Riniker, Noel O'Boyle, Matt Swain, Patrick
+Fuller, Roger Sayle
 
 Bug Fixes:
 - Bond query information not written to CTAB
@@ -44,8 +45,12 @@ Bug Fixes:
  (github issue 326)
 - Linking error with ICC 15.0 on Linux
  (github issue 327)
+- Using explicit hydrogens in the SMILES lead to the same AP FP for two different molecules 
+ (github issue 334)
 - memory leaks when smiles/smarts parsers fail
  (github issue 335)
+- No double bond stereo perception from CTABs when sanitization is turned off
+ (github issue 337)
 - Fixed a weakness in the angular restraint code
  (github pull 261 from ptosco)
 - A few fixes to improve MMFF/UFF robustness
@@ -74,6 +79,8 @@ New Features:
  (github issue 286)
 - support partial fragmentation with fragmentOnSomeBonds 
  (github issue 288)
+- Add calcNumHeterocycles() descriptor
+ (github issue 351)
 - C++ implementation of FMCS algorithm
 - Reordering feature for Butina clustering
  (github pull 302 from sriniker)
