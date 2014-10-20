@@ -13,7 +13,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 
 enable_testing()
 
-set(CMAKE_MODULE_PATH 
+set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
@@ -47,8 +47,8 @@ set(RDK_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 set(RDK_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 # Also place the python extension where the source tree would expect them
 set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
- 
-#------- 
+
+#-------
 # Config variables:
 set(RDKit_Year "2014")
 set(RDKit_Month "09")
@@ -92,7 +92,7 @@ configure_file (
     ${RDKit_SOURCE_DIR}/rdkit-config-version.cmake.in
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake @ONLY)
 
-install(FILES 
+install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir})
@@ -103,7 +103,7 @@ if(MSVC)
 endif(MSVC)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
-  #------- 
+  #-------
   # pull in python:
   find_package(PythonInterp)
   find_package(PythonLibs)
@@ -116,10 +116,21 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
-     find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+    # Find boost-python3 using name specified as command line option then fall back to commonly used names
+    set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
+    foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py34" "python-py33" "python-py32" "python-py31" "python3")
+      find_package(Boost 1.45.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
+      if(Boost_FOUND)
+        break()
+      endif()
+    endforeach()
+    # If boost-python3 not found, just find boost-python and hope that it is compatible with python3
+    if(NOT Boost_FOUND)
+      find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+    endif()
   else(PYTHON_VERSION_MAJOR EQUAL 3)
      find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
-  endif(PYTHON_VERSION_MAJOR EQUAL 3) 
+  endif(PYTHON_VERSION_MAJOR EQUAL 3)
 
 
   if(RDK_INSTALL_INTREE)
@@ -138,12 +149,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     message("Python Install directory ${PYTHON_INSTDIR}")
     install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
       COMPONENT python
-      PATTERN ".svn" EXCLUDE 
-      PATTERN "test_data" EXCLUDE 
-      PATTERN "testData" EXCLUDE 
-      PATTERN "test_list*" EXCLUDE 
-      PATTERN "CMake*" EXCLUDE 
-      PATTERN "Basement" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
+      PATTERN "test_data" EXCLUDE
+      PATTERN "testData" EXCLUDE
+      PATTERN "test_list*" EXCLUDE
+      PATTERN "CMake*" EXCLUDE
+      PATTERN "Basement" EXCLUDE
       PATTERN "UnitTest*" EXCLUDE
       )
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
@@ -191,18 +202,18 @@ if(NOT RDK_INSTALL_INTREE)
   install(DIRECTORY Data DESTINATION
       ${RDKit_ShareDir}
       COMPONENT data
-      PATTERN ".svn" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
       )
   install(DIRECTORY Docs DESTINATION
       ${RDKit_ShareDir}
       COMPONENT docs
-      PATTERN ".svn" EXCLUDE 
-      PATTERN "_build" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
+      PATTERN "_build" EXCLUDE
       )
   install(DIRECTORY Contrib DESTINATION
       ${RDKit_ShareDir}
       COMPONENT extras
-      PATTERN ".svn" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
       )
   if(RDK_BUILD_PYTHON_WRAPPERS)
     install(DIRECTORY Projects DESTINATION
