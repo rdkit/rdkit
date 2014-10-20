@@ -2,94 +2,96 @@
 (Changes relative to Release_2014.03.1)
 
 Acknowledgements:
-Paolo Tosco, Riccardo Vianello, Jan Domanski, Nadine Schneider,
-Alexander Savelyev, Sereina Riniker, Noel O'Boyle, Matt Swain, Patrick
-Fuller, Roger Sayle
+Andrew Dalke, Jan Domanski, Patrick Fuller, Noel O'Boyle, Sereina
+Riniker, Alexander Savelyev, Roger Sayle, Nadine Schneider, Matt
+Swain, Paolo Tosco, Riccardo Vianello
 
 Bug Fixes:
 - Bond query information not written to CTAB
- (github issue 266)
+ (github issue #266)
 - Bond topology queries not written to CTABs
- (github issue 268)
+ (github issue #268)
 - Combined bond query + topology query not correctly parsed from CTAB
- (github issue 269)
+ (github issue #269)
 - SWIG wrapped suppliers leak memory on .next()
- (github issue 270)
+ (github issue #270)
 - SWIG wrappers don't build with SWIG 3.0.x
- (github issue 277)
+ (github issue #277)
 - core leak from DataStructs.ConvertToNumpyArray
- (github issue 281)
+ (github issue #281)
 - MolTransforms not exposed to Java wrapper
- (github issue 285)
+ (github issue #285)
 - Seg fault in ReactionFromRxnBlock
- (github issue 290)
+ (github issue #290)
 - BitInfo from GetHashedMorganFingerprint() has non-folded values
- (github issue 295)
+ (github issue #295)
 - bad inchi for chiral S when the molecule is sanitized
- (github issue 296)
+ (github issue #296)
 - Cannot generate smiles for ChEBI 50252
- (github issue 298)
+ (github issue #298)
 - Either molecule-molecule substruct matching is wrong *OR* the docs for Atom::Match incorrect 
- (github issue 304)
+ (github issue #304)
 - fluorine F-F  gives segmentation fault with MMFF forcefield
- (github issue 308)
+ (github issue #308)
 - cartridge: MACCS similarity wrong when using the builtin popcount and the index
- (github issue 311)
+ (github issue #311)
 - Substructure Search via SMARTS implicit hydrogens
- (github issue 313)
+ (github issue #313)
 - SMARTS output for [x] is wrong
- (github issue 314)
+ (github issue #314)
 - Bonds not being set up properly in renumberAtoms
- (github issue 317)
+ (github issue #317)
 - Python 2 code in python 3 branch
- (github issue 326)
+ (github issue #326)
 - Linking error with ICC 15.0 on Linux
- (github issue 327)
+ (github issue #327)
 - Using explicit hydrogens in the SMILES lead to the same AP FP for two different molecules 
- (github issue 334)
+ (github issue #334)
 - memory leaks when smiles/smarts parsers fail
- (github issue 335)
+ (github issue #335)
 - No double bond stereo perception from CTABs when sanitization is turned off
- (github issue 337)
+ (github issue #337)
+- missing MACCS key 44 might be found
+ (github issue #352)
 - Fixed a weakness in the angular restraint code
- (github pull 261 from ptosco)
+ (github pull #261 from ptosco)
 - A few fixes to improve MMFF/UFF robustness
- (github pull 274 from ptosco)
+ (github pull #274 from ptosco)
 - Static webGL rendering fix
- (github pull 287 from patrickfuller)
+ (github pull #287 from patrickfuller)
 - Revert #include ordering in SmilesMolSupplier.cpp
- (github pull 297 from mcs07)
+ (github pull #297 from mcs07)
 - Add missing include for RDDepict::compute2DCoords
- (github pull 301 from baoilleach)
+ (github pull #301 from baoilleach)
 - Herschbach-Laurie fallback implemented to fix GitHub 308
- (github pull 312 from ptosco)
+ (github pull #312 from ptosco)
 - Issue #320 Making GetBestRMS more idiot-proof
- (github pull 322 from jandom)
+ (github pull #322 from jandom)
 
 New Features:
 - Should be able to do intramolecular bond breaking in reactions.
- (github issue 58)
+ (github issue #58)
 - Support reactions in cartridge
- (github issue 223)
+ (github issue #223)
 - Documentation of Inchi methods
- (github issue 240)
+ (github issue #240)
 - add DescribeQuery() to Bond python wrapper
- (github issue 267)
+ (github issue #267)
 - support avalon fingerprint in cartridge
- (github issue 286)
+ (github issue #286)
 - support partial fragmentation with fragmentOnSomeBonds 
- (github issue 288)
+ (github issue #288)
 - Add calcNumHeterocycles() descriptor
- (github issue 351)
+ (github issue #351)
 - C++ implementation of FMCS algorithm
 - Reordering feature for Butina clustering
- (github pull 302 from sriniker)
+ (github pull #302 from sriniker)
 - Changes and new functions for the calculation of RMS values between conformers of a molecule
- (github pull 306 from sriniker)
+ (github pull #306 from sriniker)
 - Extended chemical reaction functionality and add chemical reactions to cartridge
- (github pull 315 from NadineSchneider)
+ (github pull #315 from NadineSchneider)
 - Custom color to highlight atoms in Mol2Image
- (github pull 316 from jandom)
+ (github pull #316 from jandom)
 - Several different fingerprint algorithms for chemical reactions are now available
 
  
