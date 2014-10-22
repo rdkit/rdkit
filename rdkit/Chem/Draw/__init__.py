@@ -350,3 +350,29 @@ def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
     res.paste(nimg,(i*subImgSize[0],0))
   return res
 
+
+def MolToQPixmap(mol, size=(300,300), kekulize=True,  wedgeBonds=True,
+                 fitImage=False, options=None, **kwargs):
+    """ Generates a drawing of a molecule on a Qt QPixmap
+    """
+    if not mol:
+        raise ValueError('Null molecule provided')
+    from rdkit.Chem.Draw.qtCanvas import Canvas
+    canvas = Canvas(size)
+    if options is None:
+        options = DrawingOptions()
+    options.bgColor = None
+    if fitImage:
+        options.dotsPerAngstrom = int(min(size) / 10)
+    options.wedgeDashedBonds=wedgeBonds
+    if kekulize:
+        from rdkit import Chem
+        mol = Chem.Mol(mol.ToBinary())
+        Chem.Kekulize(mol)
+    if not mol.GetNumConformers():
+        from rdkit.Chem import AllChem
+        AllChem.Compute2DCoords(mol)
+    drawer = MolDrawing(canvas=canvas, drawingOptions=options)
+    drawer.AddMol(mol, **kwargs)
+    canvas.flush()
+    return canvas.pixmap
