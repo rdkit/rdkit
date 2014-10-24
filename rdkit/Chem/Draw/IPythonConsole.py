@@ -3,15 +3,15 @@ import IPython
 if IPython.release.version < '0.11':
     raise ImportError('this module requires at least v0.11 of IPython')
 elif IPython.release.version < '2.0':
-    install_nbextension=None
-    _canUse3D=False
+    install_nbextension = None
+    _canUse3D = False
 else:
     from IPython.html.nbextensions import install_nbextension
-    _canUse3D=True
+    _canUse3D = True
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
-from rdkit.six import BytesIO,StringIO
+from rdkit.six import BytesIO, StringIO
 import copy
 import os
 import json
@@ -93,10 +93,10 @@ def _toJSON(mol):
 
 
 def _toPNG(mol):
-    if hasattr(mol,'__sssAtoms'):
-        highlightAtoms=mol.__sssAtoms
+    if hasattr(mol, '__sssAtoms'):
+        highlightAtoms = mol.__sssAtoms
     else:
-        highlightAtoms=[]
+        highlightAtoms = []
     try:
         mol.GetAtomWithIdx(0).GetExplicitValence()
     except RuntimeError:
@@ -104,15 +104,16 @@ def _toPNG(mol):
 
     mc = copy.deepcopy(mol)
     try:
-        img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
-                            highlightAtoms=highlightAtoms)
+        img = Draw.MolToImage(mc, size=molSize, kekulize=kekulizeStructures,
+                              highlightAtoms=highlightAtoms)
     except ValueError:  # <- can happen on a kekulization failure
         mc = copy.deepcopy(mol)
-        img = Draw.MolToImage(mc,size=molSize,kekulize=False,
-                            highlightAtoms=highlightAtoms)
+        img = Draw.MolToImage(mc, size=molSize, kekulize=False,
+                              highlightAtoms=highlightAtoms)
     bio = BytesIO()
-    img.save(bio,format='PNG')
+    img.save(bio, format='PNG')
     return bio.getvalue()
+
 
 def _toSVG(mol):
     if not ipython_useSVG:
@@ -149,10 +150,12 @@ def _toSVG(mol):
 
 def _toReactionPNG(rxn):
     rc = copy.deepcopy(rxn)
-    img = Draw.ReactionToImage(rc,subImgSize=(int(molSize[0]/3), molSize[1]))
+    img = Draw.ReactionToImage(
+        rc, subImgSize=(int(molSize[0] / 3), molSize[1]))
     bio = BytesIO()
-    img.save(bio,format='PNG')
+    img.save(bio, format='PNG')
     return bio.getvalue()
+
 
 def _GetSubstructMatch(mol, query, **kwargs):
     res = mol.__GetSubstructMatch(query, **kwargs)
@@ -176,8 +179,9 @@ def _GetSubstructMatches(mol, query, **kwargs):
 def display_pil_image(img):
     """displayhook function for PIL Images, rendered as PNG"""
     bio = BytesIO()
-    img.save(bio,format='PNG')
+    img.save(bio, format='PNG')
     return bio.getvalue()
+
 
 def InstallIPythonRenderer():
     rdchem.Mol._repr_png_ = _toPNG

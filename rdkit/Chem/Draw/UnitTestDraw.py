@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2011  greg Landrum 
+#  Copyright (C) 2011  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -11,175 +11,176 @@
 """ unit testing code for molecule drawing
 """
 from rdkit import RDConfig
-import unittest,os,tempfile
+import unittest
+import os
+import tempfile
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.RDLogger import logger
 logger = logger()
 
+
 class TestCase(unittest.TestCase):
-  def setUp(self):
-    self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
-  def testCairoFile(self):
-    try:
-      from rdkit.Chem.Draw.cairoCanvas import Canvas
-    except ImportError:
-      logger.info("Skipping cairo test")
-      return
-    os.environ['RDKIT_CANVAS']='cairo'
+    def setUp(self):
+        self.mol = Chem.MolFromSmiles(
+            'c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
-    foo,fn=tempfile.mkstemp(suffix='.png')
-    foo=None
-    self.assertEqual(os.path.getsize(fn),0)
+    def testCairoFile(self):
+        try:
+            from rdkit.Chem.Draw.cairoCanvas import Canvas
+        except ImportError:
+            logger.info("Skipping cairo test")
+            return
+        os.environ['RDKIT_CANVAS'] = 'cairo'
 
-    Draw.MolToFile(self.mol,fn)
+        foo, fn = tempfile.mkstemp(suffix='.png')
+        foo = None
+        self.assertEqual(os.path.getsize(fn), 0)
 
-    self.assertNotEqual(os.path.getsize(fn),0)
-    try:
-      os.unlink(fn)
-    except:
-      pass
-    
-  def testAggFile(self):
-    try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
-    except ImportError:
-      logger.info("Skipping agg test")
-      return
-    os.environ['RDKIT_CANVAS']='agg'
+        Draw.MolToFile(self.mol, fn)
 
-    foo,fn=tempfile.mkstemp(suffix='.png')
-    foo=None
-    self.assertEqual(os.path.getsize(fn),0)
+        self.assertNotEqual(os.path.getsize(fn), 0)
+        try:
+            os.unlink(fn)
+        except:
+            pass
 
-    Draw.MolToFile(self.mol,fn)
+    def testAggFile(self):
+        try:
+            from rdkit.Chem.Draw.aggCanvas import Canvas
+        except ImportError:
+            logger.info("Skipping agg test")
+            return
+        os.environ['RDKIT_CANVAS'] = 'agg'
 
-    self.assertNotEqual(os.path.getsize(fn),0)
-    try:
-      os.unlink(fn)
-    except:
-      pass
+        foo, fn = tempfile.mkstemp(suffix='.png')
+        foo = None
+        self.assertEqual(os.path.getsize(fn), 0)
 
-  def testSpingFile(self):
-    try:
-      from rdkit.Chem.Draw.spingCanvas import Canvas
-    except ImportError:
-      logger.info("Skipping sping test")
-      return
-    os.environ['RDKIT_CANVAS']='sping'
+        Draw.MolToFile(self.mol, fn)
 
-    foo,fn=tempfile.mkstemp(suffix='.png')
-    foo=None
-    self.assertEqual(os.path.getsize(fn),0)
+        self.assertNotEqual(os.path.getsize(fn), 0)
+        try:
+            os.unlink(fn)
+        except:
+            pass
 
-    Draw.MolToFile(self.mol,fn)
+    def testSpingFile(self):
+        try:
+            from rdkit.Chem.Draw.spingCanvas import Canvas
+        except ImportError:
+            logger.info("Skipping sping test")
+            return
+        os.environ['RDKIT_CANVAS'] = 'sping'
 
-    self.assertNotEqual(os.path.getsize(fn),0)
-    try:
-      os.unlink(fn)
-    except:
-      pass
+        foo, fn = tempfile.mkstemp(suffix='.png')
+        foo = None
+        self.assertEqual(os.path.getsize(fn), 0)
 
-  def testCairoImage(self):
-    try:
-      from rdkit.Chem.Draw.cairoCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='cairo'
+        Draw.MolToFile(self.mol, fn)
 
-    img=Draw.MolToImage(self.mol,size=(300,300))
-    self.assertTrue(img)
-    self.assertEqual(img.size[0],300)
-    self.assertEqual(img.size[1],300)
-    
-  def testAggImage(self):
-    try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='agg'
-    img=Draw.MolToImage(self.mol,size=(300,300))
-    self.assertTrue(img)
-    self.assertEqual(img.size[0],300)
-    self.assertEqual(img.size[1],300)
+        self.assertNotEqual(os.path.getsize(fn), 0)
+        try:
+            os.unlink(fn)
+        except:
+            pass
 
-  def testSpingImage(self):
-    try:
-      from rdkit.Chem.Draw.spingCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='sping'
-    img=Draw.MolToImage(self.mol,size=(300,300))
-    self.assertTrue(img)
-    self.assertEqual(img.size[0],300)
-    self.assertEqual(img.size[1],300)
+    def testCairoImage(self):
+        try:
+            from rdkit.Chem.Draw.cairoCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'cairo'
 
-  def testCairoImageDash(self):
-    try:
-      from rdkit.Chem.Draw.cairoCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='cairo'
+        img = Draw.MolToImage(self.mol, size=(300, 300))
+        self.assertTrue(img)
+        self.assertEqual(img.size[0], 300)
+        self.assertEqual(img.size[1], 300)
 
-    img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
-    self.assertTrue(img)
-    self.assertEqual(img.size[0],300)
-    self.assertEqual(img.size[1],300)
-    
-  def testAggImageDash(self):
-    try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='agg'
-    img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
-    self.assertTrue(img)
-    self.assertEqual(img.size[0],300)
-    self.assertEqual(img.size[1],300)
+    def testAggImage(self):
+        try:
+            from rdkit.Chem.Draw.aggCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'agg'
+        img = Draw.MolToImage(self.mol, size=(300, 300))
+        self.assertTrue(img)
+        self.assertEqual(img.size[0], 300)
+        self.assertEqual(img.size[1], 300)
 
-  def testSpingImageDash(self):
-    try:
-      from rdkit.Chem.Draw.spingCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='sping'
-    img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
-    self.assertTrue(img)
-    self.assertEqual(img.size[0],300)
-    self.assertEqual(img.size[1],300)
+    def testSpingImage(self):
+        try:
+            from rdkit.Chem.Draw.spingCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'sping'
+        img = Draw.MolToImage(self.mol, size=(300, 300))
+        self.assertTrue(img)
+        self.assertEqual(img.size[0], 300)
+        self.assertEqual(img.size[1], 300)
 
-  def testGithubIssue54(self):
-    try:
-      from rdkit.Chem.Draw.spingCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='sping'
-    mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
-    img = Draw.MolToImage(mol)
-    self.assertTrue(img)
-    
-  def testGithubIssue86(self):
-    mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
-    for b in mol.GetBonds():
-      self.assertEqual(b.GetBondDir(),Chem.BondDir.NONE)
-    img = Draw.MolToImage(mol,kekulize=False)
-    self.assertTrue(img)
-    for b in mol.GetBonds():
-      self.assertEqual(b.GetBondDir(),Chem.BondDir.NONE)
+    def testCairoImageDash(self):
+        try:
+            from rdkit.Chem.Draw.cairoCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'cairo'
 
-    Chem.WedgeMolBonds(mol,mol.GetConformer())
-    obds = [x.GetBondDir() for x in mol.GetBonds()]
-    self.assertEqual(obds.count(Chem.BondDir.NONE),2)
-    img = Draw.MolToImage(mol,kekulize=False)
-    self.assertTrue(img)
-    nbds = [x.GetBondDir() for x in mol.GetBonds()]
-    self.assertEqual(obds,nbds)
+        img = Draw.MolToImage(self.mol, size=(300, 300), kekulize=False)
+        self.assertTrue(img)
+        self.assertEqual(img.size[0], 300)
+        self.assertEqual(img.size[1], 300)
 
-    
+    def testAggImageDash(self):
+        try:
+            from rdkit.Chem.Draw.aggCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'agg'
+        img = Draw.MolToImage(self.mol, size=(300, 300), kekulize=False)
+        self.assertTrue(img)
+        self.assertEqual(img.size[0], 300)
+        self.assertEqual(img.size[1], 300)
+
+    def testSpingImageDash(self):
+        try:
+            from rdkit.Chem.Draw.spingCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'sping'
+        img = Draw.MolToImage(self.mol, size=(300, 300), kekulize=False)
+        self.assertTrue(img)
+        self.assertEqual(img.size[0], 300)
+        self.assertEqual(img.size[1], 300)
+
+    def testGithubIssue54(self):
+        try:
+            from rdkit.Chem.Draw.spingCanvas import Canvas
+        except ImportError:
+            return
+        os.environ['RDKIT_CANVAS'] = 'sping'
+        mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
+        img = Draw.MolToImage(mol)
+        self.assertTrue(img)
+
+    def testGithubIssue86(self):
+        mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
+        for b in mol.GetBonds():
+            self.assertEqual(b.GetBondDir(), Chem.BondDir.NONE)
+        img = Draw.MolToImage(mol, kekulize=False)
+        self.assertTrue(img)
+        for b in mol.GetBonds():
+            self.assertEqual(b.GetBondDir(), Chem.BondDir.NONE)
+
+        Chem.WedgeMolBonds(mol, mol.GetConformer())
+        obds = [x.GetBondDir() for x in mol.GetBonds()]
+        self.assertEqual(obds.count(Chem.BondDir.NONE), 2)
+        img = Draw.MolToImage(mol, kekulize=False)
+        self.assertTrue(img)
+        nbds = [x.GetBondDir() for x in mol.GetBonds()]
+        self.assertEqual(obds, nbds)
 
 
-    
 if __name__ == '__main__':
-  unittest.main()
-
+    unittest.main()
