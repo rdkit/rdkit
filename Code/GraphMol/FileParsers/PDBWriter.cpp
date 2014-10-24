@@ -260,7 +260,7 @@ namespace RDKit {
         ss<<"\n";
         res += ss.str();
         res += MolToPDBBody(mol,conf,flavor,atm_count,ter_count,conect_count);
-        res += "ENDM\n";
+        res += "ENDMDL\n";
       }
     } else {
       if(confId<0 && mol.getNumConformers()==0){
