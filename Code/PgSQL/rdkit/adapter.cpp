@@ -521,7 +521,7 @@ MolInchi(CROMol i){
   const ROMol *im = (ROMol*)i;
   ExtraInchiReturnValues rv;
   try {
-    inchi = MolToInchi(*im,rv);
+    inchi = MolToInchi(*im,rv,"/AuxNone");
   } catch (MolSanitizeException &e){
     inchi="";
     elog(ERROR, "MolInchi: cannot kekulize molecule");

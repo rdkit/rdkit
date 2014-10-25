@@ -2,9 +2,9 @@
 (Changes relative to Release_2014.03.1)
 
 Acknowledgements:
-Andrew Dalke, Jan Domanski, Patrick Fuller, Noel O'Boyle, Sereina
-Riniker, Alexander Savelyev, Roger Sayle, Nadine Schneider, Matt
-Swain, Paolo Tosco, Riccardo Vianello
+Andrew Dalke, James Davidson, Jan Domanski, Patrick Fuller, Noel
+O'Boyle, Sereina Riniker, Alexander Savelyev, Roger Sayle, Nadine
+Schneider, Matt Swain, Paolo Tosco, Riccardo Vianello 
 
 Bug Fixes:
 - Bond query information not written to CTAB
@@ -53,6 +53,8 @@ Bug Fixes:
  (github issue #337)
 - missing MACCS key 44 might be found
  (github issue #352)
+- Hydrogens in mol blocks have a valence value set
+ (github issue #357)
 - Fixed a weakness in the angular restraint code
  (github pull #261 from ptosco)
 - A few fixes to improve MMFF/UFF robustness
