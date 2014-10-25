@@ -935,7 +935,11 @@ namespace RDKit {
     // stereochemistry
     // NOTE that we are explicitly excluding double bonds in rings
     // with this test.
-    if(!mol.getRingInfo()->isInitialized()) MolOps::fastFindRings(mol);
+    bool resetRings=false;
+    if(!mol.getRingInfo()->isInitialized()){
+      resetRings=true;
+      MolOps::fastFindRings(mol);
+    }
 
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
@@ -978,6 +982,7 @@ namespace RDKit {
     }
 
     if(!bondsInPlay.size()){
+      if(resetRings) mol.getRingInfo()->reset();
       return;
     }
 
@@ -1003,5 +1008,6 @@ namespace RDKit {
          ++pairIter){
       updateDoubleBondNeighbors(mol,pairIter->second,conf,needsDir,singleBondCounts);
     }
+    if(resetRings) mol.getRingInfo()->reset();
   }
 }
