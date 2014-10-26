@@ -2,9 +2,10 @@
 (Changes relative to Release_2014.03.1)
 
 Acknowledgements:
-Andrew Dalke, James Davidson, Jan Domanski, Patrick Fuller, Noel
-O'Boyle, Sereina Riniker, Alexander Savelyev, Roger Sayle, Nadine
-Schneider, Matt Swain, Paolo Tosco, Riccardo Vianello 
+Andrew Dalke, James Davidson, Jan Domanski, Patrick Fuller, Seiji
+Matsuoka, Noel O'Boyle, Sereina Riniker, Alexander Savelyev, Roger
+Sayle, Nadine Schneider, Matt Swain, Paolo Tosco, Riccardo Vianello,
+Richard West
 
 Bug Fixes:
 - Bond query information not written to CTAB
@@ -55,6 +56,8 @@ Bug Fixes:
  (github issue #352)
 - Hydrogens in mol blocks have a valence value set
  (github issue #357)
+- Computed props on non-sanitized molecule interfering with substructure matching
+ (github issue #360)
 - Fixed a weakness in the angular restraint code
  (github pull #261 from ptosco)
 - A few fixes to improve MMFF/UFF robustness
@@ -69,6 +72,8 @@ Bug Fixes:
  (github pull #312 from ptosco)
 - Issue #320 Making GetBestRMS more idiot-proof
  (github pull #322 from jandom)
+- Update URLs to InChI API after inchi-trust.org website redesign.
+ (github pull #341 from rwest)
 
 New Features:
 - Should be able to do intramolecular bond breaking in reactions.
@@ -95,6 +100,8 @@ New Features:
 - Custom color to highlight atoms in Mol2Image
  (github pull #316 from jandom)
 - Several different fingerprint algorithms for chemical reactions are now available
+- add Chem.Draw.MolToQPixmap
+ (github pull #355 from mojaie)
 
  
 New Database Cartridge Features: 
