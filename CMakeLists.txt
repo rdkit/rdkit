@@ -118,7 +118,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names
     set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
-    foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py34" "python-py33" "python-py32" "python-py31" "python3")
+    foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
       find_package(Boost 1.45.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
       if(Boost_FOUND)
         break()
