@@ -620,8 +620,8 @@ namespace RDKit{
 \n\
     - mol: the molecule to use.\n\
 \n\
-  RETURNS: the number of rings found\n\
-         This will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
+  RETURNS: a sequence of sequences containing the rings found as atom ids\n\
+         The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
       python::def("GetSSSR", getSSSR, 
                   docString.c_str());
@@ -637,7 +637,7 @@ namespace RDKit{
 \n\
     - mol: the molecule to use.\n\
 \n\
-  RETURNS: the number of rings found\n\
+  RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
       python::def("GetSymmSSSR", getSymmSSSR,
                   docString.c_str());
