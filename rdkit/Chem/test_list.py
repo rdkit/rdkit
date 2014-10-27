@@ -25,6 +25,7 @@ tests=[
   ("python","BRICS.py",{}),
   ("python","UnitTestDescriptors.py",{}),
   ("python","AllChem.py",{}),
+  ("python","TorsionFingerprints.py",{}),
   ("python","PropertyMol.py",{}),
   ("python","UnitTestInchi.py",{}),
   ("python","SaltRemover.py",{}),
