@@ -115,6 +115,16 @@ New Java Wrapper Features:
 - Possible core leak in some of the MolSuppliers was fixed
 
 Deprecated modules (to be removed in next release):
+- Projects/SDView4
+- rdkit/utils/
+  - GUIDs.py
+  - GenLicense.py
+  - Licensing.py
+  - PiddleTools.py
+  - PilTools.py
+  - REFile.py
+  - SliceTools.py
+- rdkit/Logger
 
 Removed modules:
 
