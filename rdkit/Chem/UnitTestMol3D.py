@@ -48,6 +48,10 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rmat[0], AllChem.GetBestRMS(m1, m2, 1, 0), 3)
     self.assertAlmostEqual(rmat[1], AllChem.GetBestRMS(m1, m2, 2, 0), 3)
 
+    # test the prealigned option
+    rmat2 = AllChem.GetConformerRMSMatrix(m1, prealigned=True)
+    self.assertAlmostEqual(rmat[0], rmat2[0])
+
 
 if __name__ == '__main__':
   unittest.main()
