@@ -5,18 +5,16 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-""" Torsion Fingerprints
+""" Torsion Fingerprints (Deviation) (TFD)
+    According to a paper from Schulz-Gasch et al., JCIM, 52, 1499-1512 (2012).
 
 """
 from rdkit import rdBase
 from rdkit import RDConfig
 from rdkit import Geometry
 from rdkit import Chem
-from rdkit.Chem import AllChem
-import math, os, copy
-from rdkit.RDLogger import logger
-logger = logger()
-import warnings
+from rdkit.Chem import rdMolDescriptors
+import math, os
 
 def _doMatch(inv, atoms):
   """ Helper function to check if all atoms in the list are the same
@@ -89,11 +87,25 @@ def _getAtomInvariantsWithRadius(mol, radius):
   inv = []
   for i in range(mol.GetNumAtoms()):
     info = {}
-    fp = AllChem.GetMorganFingerprint(mol, radius, fromAtoms=[i], bitInfo=info)
+    fp = rdMolDescriptors.GetMorganFingerprint(mol, radius, fromAtoms=[i], bitInfo=info)
     for k in info.keys():
       if info[k][0][1] == radius:
         inv.append(k)
   return inv
+
+def _getHeavyAtomNeighbors(atom1, aid2=-1):
+  """ Helper function to calculate the number of heavy atom neighbors.
+
+      Arguments:
+      - atom1:    the atom of interest
+      - aid2:     atom index that should be excluded from neighbors (default: none)
+
+      Return: a list of heavy atom neighbors of the given atom
+  """
+  if aid2 < 0:
+    return [n for n in atom1.GetNeighbors() if n.GetSymbol()!='H']
+  else:
+    return [n for n in atom1.GetNeighbors() if (n.GetSymbol()!='H' and n.GetIdx()!=aid2)]
 
 def _getIndexforTorsion(neighbors, inv):
   """ Helper function to calculate the index of the reference atom for 
@@ -139,15 +151,15 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
     if b.IsInRing(): continue
     a1 = b.GetBeginAtomIdx()
     a2 = b.GetEndAtomIdx()
-    nb1 = [n for n in b.GetBeginAtom().GetNeighbors() if (n.GetSymbol()!='H' and n.GetIdx()!=a2)]
-    nb2 = [n for n in b.GetEndAtom().GetNeighbors() if (n.GetSymbol()!='H' and n.GetIdx()!=a1)]
+    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
+    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
     if nb1 and nb2: # no terminal bonds
       bonds.append((b, a1, a2, nb1, nb2))
   # get atom invariants
   if symmRadius > 0:
     inv = _getAtomInvariantsWithRadius(mol, symmRadius)
   else:
-    inv = AllChem.GetConnectivityInvariants(mol)
+    inv = rdMolDescriptors.GetConnectivityInvariants(mol)
   # get the torsions
   tors_list = [] # to store the atom indices of the torsions
   for b, a1, a2, nb1, nb2 in bonds:
@@ -259,15 +271,21 @@ def _findCentralBond(mol, distmat):
   # get the most central atom = atom with the least STD of shortest distances
   stds = []
   for i in range(mol.GetNumAtoms()):
+    # only consider non-terminal atoms
+    if len(_getHeavyAtomNeighbors(mol.GetAtomWithIdx(i))) < 2: continue
     tmp = [d for d in distmat[i]]
     tmp.pop(i)
     stds.append((std(tmp), i))
   stds.sort()
   aid1 = stds[0][1]
   # find the second most central bond that is bonded to aid1
-  nbs = [nb.GetIdx() for nb in [n for n in mol.GetAtomWithIdx(aid1).GetNeighbors() if n.GetSymbol()!='H'] if len([n for n in nb.GetNeighbors() if n.GetSymbol()!='H']) > 0]
-  nbs = [s for s in stds if s[1] in nbs]
-  aid2 = nbs[0][1]
+  i = 1
+  while 1:
+    if mol.GetBondBetweenAtoms(aid1, stds[i][1]) is None:
+      i += 1
+    else:
+      aid2 = stds[i][1]
+      break
   return aid1, aid2 # most central atom comes first
 
 def _calculateBeta(mol, distmat, aid1):
@@ -285,9 +303,9 @@ def _calculateBeta(mol, distmat, aid1):
   # get all non-terminal bonds
   bonds = []
   for b in mol.GetBonds():
-    nb1 = [n for n in b.GetBeginAtom().GetNeighbors() if n.GetSymbol()!='H']
-    nb2 = [n for n in b.GetEndAtom().GetNeighbors() if n.GetSymbol()!='H']
-    if nb2 > 1 and nb2 > 1:
+    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
+    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
+    if len(nb2) > 1 and len(nb2) > 1:
         bonds.append(b)
   # get shortest distance
   dmax = 0
@@ -315,7 +333,7 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
       Return: list of torsion weights (both non-ring and ring)
   """
   # get distance matrix
-  distmat = AllChem.GetDistanceMatrix(mol)
+  distmat = Chem.GetDistanceMatrix(mol)
   if aid1 < 0 and aid2 < 0:
     aid1, aid2 = _findCentralBond(mol, distmat)
   else:
@@ -328,29 +346,24 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
   bonds = []
   for b in mol.GetBonds():
     if b.IsInRing(): continue
-    nb1 = [n for n in b.GetBeginAtom().GetNeighbors() if n.GetSymbol()!='H']
-    nb2 = [n for n in b.GetEndAtom().GetNeighbors() if n.GetSymbol()!='H']
-    if nb1 > 1 and nb2 > 1:
+    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
+    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
+    if len(nb1) > 1 and len(nb2) > 1:
       bonds.append(b)
-  # get shortest paths
-  shortest_distances = []
+  # get shortest paths and calculate weights
+  weights = []
   for b in bonds:
     bid1 = b.GetBeginAtom().GetIdx()
     bid2 = b.GetEndAtom().GetIdx()
-    if (set([bid1, bid2]) == set([aid1, aid2])):
+    if ({bid1, bid2} == {aid1, aid2}): # if it's the most central bond itself
       d = 0
     else:
       # get shortest distance between the 4 atoms and add 1 to get bond distance
-      d = {distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1], distmat[aid2][bid2]}.pop()+1
-    shortest_distances.append(d)
-  # calculate weights
-  weights = []
-  for d in shortest_distances:
+      d = min(distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1], distmat[aid2][bid2])+1
     w = math.exp(-beta*(d*d))
     weights.append(w)
 
   ## RINGS
-  shortest_distances = []
   rings = mol.GetRingInfo()
   for r in rings.BondRings():
     # get shortest distances
@@ -361,18 +374,19 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
       bid1 = b.GetBeginAtomIdx()
       bid2 = b.GetEndAtomIdx()
       # get shortest distance between the 4 atoms and add 1 to get bond distance
-      d = {distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1], distmat[aid2][bid2]}.pop()+1
+      d = min(distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1], distmat[aid2][bid2])+1
       tmp.append(d)
-    shortest_distances.append(tmp)
-  # calculate weights and append to list
-  for dists in shortest_distances:
-    w = [math.exp(-beta*(d*d)) for d in dists]
-    w = sum(w)/2.0
-    weights.append(w)
+    # calculate weights and append to list
+    # Note: the description in the paper is not very clear, the following
+    #       formula was found to give the same weights as shown in Fig. 1
+    #       For a ring of size N: w = N/2 * exp(-beta*(sum(w of each bond in ring)/N)^2)
+    w = sum(tmp)/float(num)
+    w = math.exp(-beta*(w*w))
+    weights.append(w*(num/2.0))
   return weights
 
-def CalculateTDF(torsions1, torsions2, weights=None):
-  """ Calculate the torsion deviation fingerprint (TDF) given two lists of
+def CalculateTFD(torsions1, torsions2, weights=None):
+  """ Calculate the torsion deviation fingerprint (TFD) given two lists of
       torsion angles.
 
       Arguments;
@@ -380,7 +394,7 @@ def CalculateTDF(torsions1, torsions2, weights=None):
       - torsions2:  torsion angles of conformation 2
       - weights:    list of torsion weights (default: None)
 
-      Return: TDF value (float)
+      Return: TFD value (float)
   """
   if len(torsions1) != len(torsions2):
     raise ValueError("List of torsions angles must have the same size.")
