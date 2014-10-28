@@ -1,7 +1,7 @@
 SET rdkit.ignore_reaction_agents=false;
 SET rdkit.agent_FP_bit_ratio=0.2;
-SET rdkit.rdkit_difference_FP_weight_agents=1;
-SET rdkit.rdkit_difference_FP_weight_nonagents=10;
+SET rdkit.difference_FP_weight_agents=1;
+SET rdkit.difference_FP_weight_nonagents=10;
 SET rdkit.move_unmmapped_reactants_to_agents=true;
 SET rdkit.threshold_unmapped_reactant_atoms=0.2;
 SET rdkit.init_reaction=true;
@@ -164,8 +164,8 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5)
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',5));
 
 SET rdkit.agent_FP_bit_ratio=0.5;
-SET rdkit.rdkit_difference_FP_weight_agents=-3;
-SET rdkit.rdkit_difference_FP_weight_nonagents=7;
+SET rdkit.difference_FP_weight_agents=-3;
+SET rdkit.difference_FP_weight_nonagents=7;
 
 SELECT tanimoto_sml(reaction_difference_fp('c1ccccc1>>c1ccncc1',1), reaction_difference_fp('c1ccccc1>>c1ccncc1',1));
 SELECT tanimoto_sml(reaction_difference_fp('c1ccccc1>>c1ccncc1',1), reaction_difference_fp('c1ncccc1>>c1ncncc1',1));

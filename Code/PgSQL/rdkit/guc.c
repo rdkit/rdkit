@@ -133,7 +133,7 @@ initRDKitGUC()
                            );
 
   DefineCustomIntVariable(
-                           "rdkit.ss_fp_size",
+                           "rdkit.sss_fp_size",
                            "Size (in bits) of the fingerprint used for substructure screening",
                            "Size (in bits) of the fingerprint used for substructure screening",
                            &rdkit_sss_fp_size,
@@ -383,7 +383,7 @@ initRDKitGUC()
                              NULL
                              );
   DefineCustomIntVariable(
-                           "rdkit.rdkit_difference_FP_weight_agents",
+                           "rdkit.difference_FP_weight_agents",
                            "In reaction difference fingerprints weight factor for agents comapred to reactants and products",
                            "In reaction difference fingerprints weight factor for agents comapred to reactants and products",
                            &rdkit_difference_FP_weight_agents,
