@@ -105,6 +105,7 @@ New Features:
 
  
 New Database Cartridge Features: 
+- *NOTE:* the configuration variable rdkit.ss_fp_size has been renamed to rdkit.sss_fp_size
 - Chemical reactions and several operations on them are now supported
 - Avalon fingerprints now supported (when support has been compiled in)
 
