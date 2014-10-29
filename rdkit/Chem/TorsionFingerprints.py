@@ -179,12 +179,16 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
       else: # three neighbors
         tors_list.append(([(nb.GetIdx(), a1, a2, d2[0].GetIdx()) for nb in d1], 60.0))
     else: # both symmetric
+      tmp = []
+      for n1 in d1:
+        for n2 in d2:
+          tmp.append((n1.GetIdx(), a1, a2, n2.GetIdx()))
       if len(nb1) == 2 and len(nb2) == 2: # case 9
-        tors_list.append(([[(n1.GetIdx(), a1, a2, n2.GetIdx()) for n1 in d1] for n2 in d2], 90.0))
+        tors_list.append((tmp, 90.0))
       elif len(nb1) == 3 and len(nb2) == 3: # case 21
-        tors_list.append(([[(n1.GetIdx(), a1, a2, n2.GetIdx()) for n1 in d1] for n2 in d2], 60.0))
+        tors_list.append((tmp, 60.0))
       else: # case 15
-        tors_list.append(([[(n1.GetIdx(), a1, a2, n2.GetIdx()) for n1 in d1] for n2 in d2], 30.0))
+        tors_list.append((tmp, 30.0))
   # maximal possible deviation for non-cyclic bonds
   if maxDev == 'equal':
     tors_list = [(t,180.0) for t,d in tors_list] 
