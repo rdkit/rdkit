@@ -1,4 +1,4 @@
-# $Id$
+#  Copyright (C) 2014 Sereina Riniker
 #
 #  This file is part of the RDKit.
 #  The contents are covered by the terms of the BSD license
@@ -136,10 +136,11 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
       Arguments:
       - mol:      the molecule of interest
       - maxDev:   maximal deviation used for normalization
-                  'equal': all torsions are normalized using 180.0
+                  'equal': all torsions are normalized using 180.0 (default)
                   'spec':  each torsion is normalized using its specific
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
+                    (default: 2)
 
       Return: two lists of torsions: non-ring and ring torsions
   """
@@ -219,7 +220,7 @@ def _getTorsionAtomPositions(atoms, conf):
   return p1, p2, p3, p4
 
 def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
-  """ Calculate the torsion angels for a list of non-ring and 
+  """ Calculate the torsion angles for a list of non-ring and 
       a list of ring torsions.
 
       Arguments:
@@ -415,14 +416,113 @@ def CalculateTFD(torsions1, torsions2, weights=None):
     tfd /= sum_weights
   return tfd
 
+# some wrapper functions
+def GetTFDBetweenConfomers(mol, confId1, confId2, useWeights=True, maxDev='equal', symmRadius=2):
+  """ Wrapper to calculate the TFD between two list of conformers 
+      of a molecule
 
-#------------------------------------
-#
-#  doctest boilerplate
-#
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
+      Arguments:
+      - mol:      the molecule of interest
+      - confId1:  first list of conformer indices
+      - confId2:  second list of conformer indices
+      - useWeights: flag for using torsion weights in the TFD calculation
+      - maxDev:   maximal deviation used for normalization
+                  'equal': all torsions are normalized using 180.0 (default)
+                  'spec':  each torsion is normalized using its specific
+                           maximal deviation as given in the paper
+      - symmRadius: radius used for calculating the atom invariants
+                    (default: 2)
+
+      Return: list of TFD values
+  """
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
+  torsions1 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confId1]
+  torsions2 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confId2]
+  tfd = []
+  if useWeights:
+    weights = CalculateTorsionWeights(mol)
+    for t1 in torsions1:
+      for t2 in torsions2:
+        tfd.append(CalculateTFD(t1, t2, weights=weights))
+  else:
+    for t1 in torsions1:
+      for t2 in torsions2:
+        tfd.append(CalculateTFD(t1, t2))
+  return tfd
+
+def GetTFDBetweenMolecules(mol1, mol2, confId1, confId2, useWeights=True, maxDev='equal', symmRadius=2):
+  """ Wrapper to calculate the TFD between two list of conformers 
+      of two molecules.
+      Important: The two molecules must be instances of the same molecule
+
+      Arguments:
+      - mol1:     first instance of the molecule of interest
+      - mol2:     second instance the molecule of interest
+      - confId1:  list of conformer indices from mol1
+      - confId2:  list of conformer indices from mol2
+      - useWeights: flag for using torsion weights in the TFD calculation
+      - maxDev:   maximal deviation used for normalization
+                  'equal': all torsions are normalized using 180.0 (default)
+                  'spec':  each torsion is normalized using its specific
+                           maximal deviation as given in the paper
+      - symmRadius: radius used for calculating the atom invariants
+                    (default: 2)
+
+      Return: list of TFD values
+  """
+  if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
+    raise ValueError("The two molecules must be instances of the same molecule!")
+  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius)
+  torsions1 = [CalculateTorsionAngles(mol1, tl, tlr, confId=cid) for cid in confId1]
+  torsions2 = [CalculateTorsionAngles(mol2, tl, tlr, confId=cid) for cid in confId2]
+  tfd = []
+  if useWeights:
+    weights = CalculateTorsionWeights(mol1)
+    for t1 in torsions1:
+      for t2 in torsions2:
+        tfd.append(CalculateTFD(t1, t2, weights=weights))
+  else:
+    for t1 in torsions1:
+      for t2 in torsions2:
+        tfd.append(CalculateTFD(t1, t2))
+  return tfd
+
+def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
+  """ Wrapper to calculate the matrix of TFD values for the
+      conformers of a molecule.
+
+      Arguments:
+      - mol:      the molecule of interest
+      - useWeights: flag for using torsion weights in the TFD calculation
+      - maxDev:   maximal deviation used for normalization
+                  'equal': all torsions are normalized using 180.0 (default)
+                  'spec':  each torsion is normalized using its specific
+                           maximal deviation as given in the paper
+      - symmRadius: radius used for calculating the atom invariants
+                    (default: 2)
+
+      Return: matrix of TFD values
+      Note that the returned matrix is symmetrical, i.e. it is the
+      lower half of the matrix, e.g. for 5 conformers:
+      matrix = [ a,
+                 b, c,
+                 d, e, f,
+                 g, h, i, j]
+  """
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
+  numconf = mol.GetNumConformers()
+  torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in range(numconf)]
+  tfdmat = []
+  if useWeights:
+    weights = CalculateTorsionWeights(mol)
+    for i in range(0, numconf):
+      for j in range(0, i):
+        tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
+  else:
+    for i in range(0, numconf):
+      for j in range(0, i):
+        tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
+  return tfdmat
 
 
 if __name__ == '__main__':

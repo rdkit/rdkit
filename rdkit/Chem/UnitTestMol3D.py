@@ -67,12 +67,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(tors_list[-1][1] == 180.0)
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, maxDev='spec')
     self.assertTrue(tors_list[-1][1] == 90.0)
-    try:
-      tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, maxDev='test')
-    except ValueError:
-      pass
-    else:
-      raise AssertionError("should have raised an exception")
+    self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionLists, mol, maxDev='test')
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, symmRadius=0)
     self.assertTrue(len(tors_list[0][0]) == 2)
 
@@ -82,12 +77,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(weights) == len(tors_list+tors_list_rings))
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, 15, 14)
     self.assertAlmostEqual(weights[3], 1.0)
-    try:
-      weights = TorsionFingerprints.CalculateTorsionWeights(mol, 15, 3)
-    except ValueError:
-      pass
-    else:
-      raise AssertionError("should have raised an exception")
+    self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionWeights, mol, 15, 3)
 
     # the torsion angles
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
