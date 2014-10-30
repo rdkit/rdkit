@@ -10,10 +10,34 @@
 #include <list>
 #include <algorithm>
 #include <math.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <iostream>
+#include <sstream>
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
 
 namespace RDKit {
+
+    void parseMCSParametersJSON (const char* json, MCSParameters* params) {
+        if(params && json && 0!=strlen(json)) {
+            std::istringstream ss;
+            ss.str(json);
+            std::istream& iss = ss;
+            boost::property_tree::ptree pt;
+            boost::property_tree::read_json(ss, pt);
+
+            RDKit::MCSParameters& p = *params;
+            p.MaximizeBonds = pt.get<bool>("MaximizeBonds", p.MaximizeBonds);
+            p.Threshold = pt.get<double>("Threshold", p.Threshold);
+            p.Timeout = pt.get<unsigned>("Timeout", p.Timeout);
+            p.AtomCompareParameters.MatchValences = pt.get<bool>("MatchValences", p.AtomCompareParameters.MatchValences);
+            p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>("RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
+            p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>("CompleteRingsOnly", p.BondCompareParameters.CompleteRingsOnly);
+        }
+
+    }
+
     MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params) {
         MCSParameters p;
         if(0 == params)
@@ -58,14 +82,14 @@ namespace RDKit {
     //=== BOND COMPARE ========================================================
 
     class BondMatchOrderMatrix {
-        bool MatchMatrix [Bond::OTHER+1] [Bond::OTHER+1];
+        bool MatchMatrix [Bond::ZERO+1] [Bond::ZERO+1];
     public:
         BondMatchOrderMatrix(bool ignoreAromatization) {
             memset(MatchMatrix, 0, sizeof(MatchMatrix));
-            for(size_t i=0; i <= Bond::OTHER; i++) { // fill cells of the same and unspecified type
+            for(size_t i=0; i <= Bond::ZERO; i++) { // fill cells of the same and unspecified type
                 MatchMatrix[i][i] = true;
                 MatchMatrix[Bond::UNSPECIFIED][i] = MatchMatrix[i][Bond::UNSPECIFIED] = true;
-                MatchMatrix[Bond::OTHER][i] = MatchMatrix[i][Bond::OTHER] = true;
+                MatchMatrix[Bond::ZERO][i] = MatchMatrix[i][Bond::ZERO] = true;
             }
             if(ignoreAromatization) {
                 MatchMatrix[Bond::SINGLE][Bond::AROMATIC] = MatchMatrix[Bond::AROMATIC][Bond::SINGLE] = true;
