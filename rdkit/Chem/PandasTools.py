@@ -245,11 +245,11 @@ def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):
   '''
   frame[molCol] = frame.apply(lambda x: remover.StripMol(x[molCol]), axis = 1)
 
-def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
+def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmiles=False):
   '''
   Saves smi file. SMILES are generated from column with RDKit molecules. Column with names is optional.
   '''
-  w = Chem.SmilesWriter(outFile)
+  w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
   if NamesCol != '':
     for m,n in zip(frame[molCol], map(str,frame[NamesCol])):
       m.SetProp('_Name',n)
