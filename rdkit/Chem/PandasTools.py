@@ -215,7 +215,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
-def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False):
+def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False):
   """ Read file in SDF format and return as Panda data frame """
   df = None
   if type(filename) is str:
@@ -226,7 +226,7 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
-    row[smilesName] = Chem.MolToSmiles(mol)
+    row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
     row = pd.DataFrame(row, index=[i])
     if df is None:
       df = row
