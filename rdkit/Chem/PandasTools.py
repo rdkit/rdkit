@@ -260,6 +260,73 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
       w.write(m)
     w.close()
 
+import numpy as np
+import os
+
+def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
+    """
+    Saves pandas DataFrame as a xlsx file with embedded images.
+    It maps numpy data types to excel cell types:
+    int, float -> number
+    datetime -> datetime
+    object -> string (limited to 32k character - xlsx limitations)
+
+    Due to xlsxwriter limitations (other python xlsx writers have the same problem) 
+    temporary image files have to be written to the hard drive.
+
+    Cells with compound images are a bit larger than images due to excel.
+    Column width weirdness explained (from xlsxwriter docs):
+    The width corresponds to the column width value that is specified in Excel. 
+    It is approximately equal to the length of a string in the default font of Calibri 11. 
+    Unfortunately, there is no way to specify “AutoFit” for a column in the Excel file format.
+    This feature is only available at runtime from within Excel.
+    """
+
+    import xlsxwriter # don't want to make this a RDKit dependency
+
+    cols = list(frame.columns)
+    print cols
+    cols.remove(molCol)
+    dataTypes = dict(frame.dtypes)
+
+    workbook = xlsxwriter.Workbook(outFile) # New workbook
+    worksheet = workbook.add_worksheet() # New work sheet
+    worksheet.set_column('A:A', size[0]/6.) # column width
+
+    # Write first row with column names
+    c2 = 1
+    for x in cols:
+        worksheet.write_string(0, c2, x)
+        c2 += 1
+
+    c = 1
+    tmpfiles = []
+    for index, row in frame.iterrows():
+        imfile = "xlsx_tmp_img_%i.png" %c
+        tmpfiles.append(imfile)
+        worksheet.set_row(c, height=size[1]) # looks like height is not in px?
+        Draw.MolToFile(row[molCol], imfile, size=size)  # has to save a file on disk in order for xlsxwriter to incorporate the image
+        worksheet.insert_image(c, 0, imfile)
+
+        c2 = 1
+        # Write data in columns and make some basic translation of numpy dtypes to excel data types
+        for x in cols:
+            if str(dataTypes[x]) == "object":
+                worksheet.write_string(c, c2, str(row[x])[:32000]) # string length is limited in xlsx
+            elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
+                if (row[x] != np.nan) or (row[x] != np.inf):
+                    worksheet.write_number(c, c2, row[x])
+            elif 'datetime' in str(dataTypes[x]):
+                worksheet.write_datetime(c, c2, row[x])
+            c2 += 1
+        c += 1
+
+    workbook.close()
+    # remove temporary files
+    for f in tmpfiles:
+        os.remove(f)
+
+
 def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
   '''
   Draw grid image of mols in pandas DataFrame.
