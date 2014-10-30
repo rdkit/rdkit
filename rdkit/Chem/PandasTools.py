@@ -271,16 +271,15 @@ def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
   return img
 
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.Chem import MolToSmiles
 
 def AddMurckoToFrame(frame, molCol = 'ROMol', MurckoCol = 'Murcko_SMILES', Generic = False):
   '''
   Adds column with SMILES of Murcko scaffolds to pandas DataFrame. Generic set to true results in SMILES of generic framework.
   '''
   if Generic:
-    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
+    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
   else:
-    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
+    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
 
 
 from rdkit.Chem import AllChem
