@@ -285,7 +285,6 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     import xlsxwriter # don't want to make this a RDKit dependency
 
     cols = list(frame.columns)
-    print cols
     cols.remove(molCol)
     dataTypes = dict(frame.dtypes)
 
