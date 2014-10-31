@@ -47,6 +47,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/MolHash/MolHash.h>
+#include <GraphMol/FMCS/FMCS.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
 #include <boost/integer_traits.hpp>
@@ -1897,6 +1898,7 @@ extern "C" char *
 computeMolHash(CROMol data, int* len) {
     const  ROMol& mol = *(ROMol*)data;
     static string text;
+    text.clear();
     try {
         //RDKit::MolHash::HashCodeT hash = RDKit::MolHash::generateMoleculeHashCode(mol);
         //text = RDKit::MolHash::encode(&hash, sizeof(hash));
@@ -1906,6 +1908,39 @@ computeMolHash(CROMol data, int* len) {
         text.clear();
     }       
     *len = text.length();
-    return (char*)text.c_str();               
+    return (char*)text.c_str();
+}
+
+extern "C" char *
+findMCS(CROMol* mols, int len, char* params)
+{
+    static string mcs;
+    mcs.clear();
+
+    std::vector<RDKit::ROMOL_SPTR> molecules(len);
+    for(int i=0; i<len; i++) {
+        molecules[i] = RDKit::ROMOL_SPTR((RDKit::ROMol*)(mols[i]));
+    }
+
+    RDKit::MCSParameters p;
+
+    if(params && 0!=strlen(params)) {
+        try {
+            RDKit::parseMCSParametersJSON(params, &p);
+        } catch (...) {
+            //mcs = params; //DEBUG
+            ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: Invalid argument \'params\'")));
+            return (char*)mcs.c_str();
+        }       
+    }
+
+    try {
+        MCSResult res = RDKit::findMCS(molecules, &p);
+        mcs = res.SmartsString;
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
+        mcs.clear();
+    }
+    return (char*)mcs.c_str();
 }
 

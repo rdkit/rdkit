@@ -596,6 +596,33 @@ void testSimpleFast() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testJSONParameters() {
+
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "Testing FMCS testJSONParameters"<< std::endl;
+    MCSParameters pj;
+
+    parseMCSParametersJSON (NULL, &pj);
+    parseMCSParametersJSON ("{}", NULL);
+
+    pj = MCSParameters();
+    parseMCSParametersJSON ("", &pj);
+    TEST_ASSERT(pj.MaximizeBonds == true && pj.Threshold == 1.0 && pj.Timeout == -1 &&
+                pj.AtomCompareParameters.MatchValences == false &&
+                pj.BondCompareParameters.RingMatchesRingOnly == false &&
+                pj.BondCompareParameters.CompleteRingsOnly == false);
+
+    pj = MCSParameters();
+    const char json[]="{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3,"
+                      " \"MatchValences\": true,\"RingMatchesRingOnly\": true, \"CompleteRingsOnly\": true}";
+    parseMCSParametersJSON (json, &pj);
+    TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 && pj.Timeout == 3 &&
+                pj.AtomCompareParameters.MatchValences == true &&
+                pj.BondCompareParameters.RingMatchesRingOnly == true &&
+                pj.BondCompareParameters.CompleteRingsOnly == true);
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -605,8 +632,6 @@ int main(int argc, const char* argv[]) {
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     BOOST_LOG(rdInfoLog) << "FMCS Unit Test \n";
 
-
-
 // use maximum CPU resoures to increase time measuring accuracy and stability in multi process environment
 #ifdef WIN32
 //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
@@ -614,6 +639,8 @@ int main(int argc, const char* argv[]) {
 #else
     setpriority(PRIO_PROCESS, getpid(), -20);
 #endif
+
+    testJSONParameters();
 
     T0 = nanoClock();
     t0 = nanoClock();
@@ -636,10 +663,9 @@ int main(int argc, const char* argv[]) {
 
     test18();
     test504();
-#if 0 //disable these by default because they are very long.
-    test330();  // SLOW test
-    test45();   // SLOW
-#endif
+    //test330();  // SLOW test
+    //test45();   // SLOW
+
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
     printf("TOTAL Time elapsed %.2lf seconds\n", sec);

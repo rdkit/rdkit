@@ -310,3 +310,19 @@ mol_hash(PG_FUNCTION_ARGS) {
   Assert(str != 0 && strlen(str) != 0);
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
+
+PG_FUNCTION_INFO_V1(fmcs);
+Datum           fmcs(PG_FUNCTION_ARGS);
+Datum
+fmcs(PG_FUNCTION_ARGS) {
+  char    *str;
+  int     len;
+  char    *params = PG_GETARG_CSTRING(0);
+  CROMol  mols[2] = {0,0};
+
+  str = findMCS(mols, 2*0, params);
+  Assert(str != 0);
+  PG_RETURN_CSTRING(pnstrdup(str, strlen(str)));
+}
+
+

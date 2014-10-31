@@ -87,6 +87,7 @@ namespace RDKit {
         }
     };
 
+    void      parseMCSParametersJSON (const char* json, MCSParameters* params);
     MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params=0);
 
 } // namespace RDKit
