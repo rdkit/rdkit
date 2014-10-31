@@ -215,7 +215,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
-def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False):
+def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False):
   """ Read file in SDF format and return as Panda data frame """
   df = None
   if type(filename) is str:
@@ -226,7 +226,7 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
-    row[smilesName] = Chem.MolToSmiles(mol)
+    row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
     row = pd.DataFrame(row, index=[i])
     if df is None:
       df = row
@@ -245,11 +245,11 @@ def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):
   '''
   frame[molCol] = frame.apply(lambda x: remover.StripMol(x[molCol]), axis = 1)
 
-def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
+def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmiles=False):
   '''
   Saves smi file. SMILES are generated from column with RDKit molecules. Column with names is optional.
   '''
-  w = Chem.SmilesWriter(outFile)
+  w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
   if NamesCol != '':
     for m,n in zip(frame[molCol], map(str,frame[NamesCol])):
       m.SetProp('_Name',n)
@@ -271,16 +271,15 @@ def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
   return img
 
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.Chem import MolToSmiles
 
 def AddMurckoToFrame(frame, molCol = 'ROMol', MurckoCol = 'Murcko_SMILES', Generic = False):
   '''
   Adds column with SMILES of Murcko scaffolds to pandas DataFrame. Generic set to true results in SMILES of generic framework.
   '''
   if Generic:
-    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
+    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
   else:
-    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
+    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
 
 
 from rdkit.Chem import AllChem
