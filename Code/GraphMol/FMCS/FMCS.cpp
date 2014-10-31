@@ -58,14 +58,14 @@ namespace RDKit {
     //=== BOND COMPARE ========================================================
 
     class BondMatchOrderMatrix {
-        bool MatchMatrix [Bond::OTHER+1] [Bond::OTHER+1];
+        bool MatchMatrix [Bond::ZERO+1] [Bond::ZERO+1];
     public:
         BondMatchOrderMatrix(bool ignoreAromatization) {
             memset(MatchMatrix, 0, sizeof(MatchMatrix));
-            for(size_t i=0; i <= Bond::OTHER; i++) { // fill cells of the same and unspecified type
+            for(size_t i=0; i <= Bond::ZERO; i++) { // fill cells of the same and unspecified type
                 MatchMatrix[i][i] = true;
                 MatchMatrix[Bond::UNSPECIFIED][i] = MatchMatrix[i][Bond::UNSPECIFIED] = true;
-                MatchMatrix[Bond::OTHER][i] = MatchMatrix[i][Bond::OTHER] = true;
+                MatchMatrix[Bond::ZERO][i] = MatchMatrix[i][Bond::ZERO] = true;
             }
             if(ignoreAromatization) {
                 MatchMatrix[Bond::SINGLE][Bond::AROMATIC] = MatchMatrix[Bond::AROMATIC][Bond::SINGLE] = true;
