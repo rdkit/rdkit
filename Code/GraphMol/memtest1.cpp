@@ -44,6 +44,18 @@ void testSMILES()
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
 
+void testMol()
+{
+  RWMol *m1 = new RWMol();
+  m1->addAtom(new Atom(6),true,true);
+  m1->addAtom(new Atom(6),true,true);
+  m1->addAtom(new Atom(7),true,true);
+  m1->addAtom(new Atom(6),true,true);
+  m1->addBond(0,1,Bond::SINGLE);
+  m1->addBond(1,2,Bond::SINGLE);
+  m1->addBond(2,3,Bond::SINGLE);
+  MolOps::sanitizeMol(*m1);
+}
 
 // -------------------------------------------------------------------
 int main()
@@ -52,8 +64,9 @@ int main()
   //boost::logging::enable_logs("rdApp.info");
   // test1();  // <- this doesn't seem to actually do anything
 #if 1
-  testBasics();
+  //testBasics();
   testSMILES();
+  testMol();
 #endif
 
   return 0;
