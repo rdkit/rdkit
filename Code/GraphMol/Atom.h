@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -496,20 +496,22 @@ namespace RDKit{
 
     bool df_isAromatic; 
     bool df_noImplicit;
-    int d_dativeFlag;
-    unsigned int d_numExplicitHs;
-    int d_formalCharge;
-    unsigned int d_atomicNum;
+    char d_dativeFlag;
+    unsigned char d_numExplicitHs;
+    char d_formalCharge;
+    unsigned char d_atomicNum;
+    char d_implicitValence, d_explicitValence;
+    unsigned char d_numRadicalElectrons;
+
+    unsigned short d_isotope;
     unsigned int d_index;
+
     // NOTE that these cannot be signed ints, they are calculated using
     // a lazy scheme and are initialized to -1 to indicate that the
     // calculation has not yet been done.
-    int d_implicitValence, d_explicitValence;
-    unsigned int d_numRadicalElectrons;
     ChiralType d_chiralTag;
     HybridizationType d_hybrid;
     double d_mass;
-    unsigned int d_isotope;
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;
