@@ -475,4 +475,21 @@ namespace SmilesParseOps{
     }
   };
 
+  void CleanupAfterParsing(RWMol *mol){
+    PRECONDITION(mol,"no molecule");
+    for(RWMol::AtomIterator atomIt=mol->beginAtoms();
+        atomIt!=mol->endAtoms();++atomIt){
+      if((*atomIt)->hasProp("_RingClosures"))
+        (*atomIt)->clearProp("_RingClosures");
+      if((*atomIt)->hasProp("_SmilesStart"))
+        (*atomIt)->clearProp("_SmilesStart");
+    }
+    for(RWMol::BondIterator bondIt=mol->beginBonds();
+        bondIt!=mol->endBonds();++bondIt){
+      if((*bondIt)->hasProp("_unspecifiedOrder"))
+        (*bondIt)->clearProp("_unspecifiedOrder");
+    }
+  }
+
+
 } // end of namespace SmilesParseOps

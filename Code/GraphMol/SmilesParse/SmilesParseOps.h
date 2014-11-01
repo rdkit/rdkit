@@ -27,6 +27,7 @@ namespace SmilesParseOps {
 					       const RDKit::Atom *atom2);
   void CloseMolRings(RDKit::RWMol *mol,bool toleratePartials);
   void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
+  void CleanupAfterParsing(RDKit::RWMol *mol);
 };
 
 #endif
