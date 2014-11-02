@@ -38,8 +38,26 @@ void testSMILES()
   BOOST_LOG(rdInfoLog)  << "-----------------------\n SMILES Read" << std::endl;
   string smi="CCOC";
   ROMol *m = SmilesToMol(smi);
+  m = SmilesToMol(smi,0,false);
   smi="C1COC1";
-  ROMol *m2 = SmilesToMol(smi);
+  RWMol *m2 = SmilesToMol(smi);
+  m2 = SmilesToMol(smi,0,false);
+  m2 = SmilesToMol(smi,0,false);
+  unsigned int failed;
+  MolOps::sanitizeMol(*m2,failed,MolOps::SANITIZE_CLEANUP|MolOps::SANITIZE_PROPERTIES);
+  m2 = SmilesToMol(smi,0,false);
+  MolOps::sanitizeMol(*m2,failed,MolOps::SANITIZE_CLEANUP|MolOps::SANITIZE_PROPERTIES);
+  MolOps::symmetrizeSSSR(*m2);
+  m2 = SmilesToMol(smi,0,false);
+  MolOps::sanitizeMol(*m2);
+
+  m2 = SmilesToMol(smi,0,false);
+  MolOps::sanitizeMol(*m2);
+  MolOps::assignStereochemistry(*m2,true,true,false);
+
+  m2 = SmilesToMol(smi,0,false);
+  MolOps::sanitizeMol(*m2);
+  MolOps::assignStereochemistry(*m2,true,true,true);
 
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
@@ -73,9 +91,64 @@ void testMols()
     "EOS"
   };
   for(int i=0;smis[i]!="EOS";++i){
-    RWMol *m=SmilesToMol(smis[i]);
+    RWMol *m=SmilesToMol(smis[i],0,false);
+  }
+  for(int i=0;smis[i]!="EOS";++i){
+    RWMol *m=SmilesToMol(smis[i],0,false);
+    MolOps::sanitizeMol(*m);
   }
 }
+
+
+
+void testProps()
+{
+  BOOST_LOG(rdInfoLog)  << "-----------------------\n properties" << std::endl;
+  string smi="C1COC1";
+  RWMol *m = SmilesToMol(smi,0,false);
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,true);
+  }
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::BondIterator ai=m->beginBonds();ai!=m->endBonds();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,true);
+  }
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,true);
+    (*ai)->setProp("bar",1,true);
+  }
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,true);
+    (*ai)->setProp("bar",1,true);
+    (*ai)->setProp("baz",1,true);
+  }
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,false);
+  }
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,false);
+    (*ai)->setProp("bar",1,false);
+  }
+  m = SmilesToMol(smi,0,false);
+  for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
+    unsigned int v=1;
+    (*ai)->setProp("foo",1,false);
+    (*ai)->setProp("bar",1,false);
+    (*ai)->setProp("baz",1,false);
+  }
+}
+
 
 // -------------------------------------------------------------------
 int main()
@@ -87,7 +160,9 @@ int main()
   //testBasics();
   //testSMILES();
   //testMol();
-  testMols();
+  //testMols();
+  testProps();
+
 #endif
 
   return 0;
