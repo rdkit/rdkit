@@ -57,6 +57,26 @@ void testMol()
   MolOps::sanitizeMol(*m1);
 }
 
+void testMols()
+{
+  std::string smis[] = {
+    "CN1CCC[C@H]1c2cccnc2",
+    "CC1(C)[C@@H](N2[C@@H](CC2=O)S1(=O)=O)C(=O)O",
+    "C[C@]1(Cn2ccnn2)[C@@H](N3[C@@H](CC3=O)S1(=O)=O)C(=O)O",
+    "CCN(CC)C(=O)[C@@H]1CN(C)[C@H]2Cc3c[nH]c4cccc(C2=C1)c34",
+    "CCCN(CCC)[C@H]1CCc2c(O)cccc2C1",
+    "CC(=O)NC[C@H]1CN(C(=O)O1)c2ccc(cc2)C(=O)C",
+    "CC1(C)Oc2ccc3C=CC(=O)Oc3c2[C@@H](OC(=O)C45CCC(C)(C(=O)O4)C5(C)C)[C@H]1OC(=O)C67CCC(C)(C(=O)O6)C7(C)C",
+    "CCC(C)(C)C(=O)C(=O)N1CCC[C@H]1C(=O)OCCCc2cccnc2",
+    "CN1N=C(S/C/1=N/C(=O)C)S(=O)(=O)N",
+    "COc1ccc(cc1)[C@@H]2Sc3ccccc3N(CCN(C)C)C(=O)[C@@H]2OC(=O)C",
+    "EOS"
+  };
+  for(int i=0;smis[i]!="EOS";++i){
+    RWMol *m=SmilesToMol(smis[i]);
+  }
+}
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -65,8 +85,9 @@ int main()
   // test1();  // <- this doesn't seem to actually do anything
 #if 1
   //testBasics();
-  testSMILES();
-  testMol();
+  //testSMILES();
+  //testMol();
+  testMols();
 #endif
 
   return 0;
