@@ -15,7 +15,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+#include <RDGeneral/Dict.h>
+
 
 #include <iostream>
 using namespace std;
@@ -147,9 +148,25 @@ void testProps()
     (*ai)->setProp("bar",1,false);
     (*ai)->setProp("baz",1,false);
   }
+  BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
 
-
+void testDict()
+{
+  BOOST_LOG(rdInfoLog)  << "-----------------------\n dict" << std::endl;
+  int val=1;
+  Dict *d = new Dict();
+  d = new Dict();
+  d->setVal<int>("foo",val);
+  d = new Dict();
+  d->setVal<int>("foo",val);
+  d->setVal<int>("bar",val);
+  d = new Dict();
+  d->setVal<int>("foo",val);
+  d->setVal<int>("bar",val);
+  d->setVal<int>("baz",val);
+  BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
+}
 // -------------------------------------------------------------------
 int main()
 {
@@ -161,7 +178,8 @@ int main()
   //testSMILES();
   //testMol();
   //testMols();
-  testProps();
+  //testProps();
+  testDict();
 
 #endif
 
