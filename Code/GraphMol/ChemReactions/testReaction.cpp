@@ -4710,7 +4710,7 @@ void test51RNXSmilesFromPatentData(){
     std::string smi = "[Na+].[Na+].[NH2:23][CH2:22][CH2:21][CH2:20][CH2:19][CH2:18][CH2:17][CH2:16][CH2:15][CH2:14][NH2:13].O=C([O-])[O-].[Cl:12][c:8]1[cH:9][cH:10][c:11]2[c:2](Cl)[n:3][cH:4][n:5][c:6]2[cH:7]1>CC(C)O>[Cl:12][c:8]1[cH:9][cH:10][c:11]2[c:6]([cH:7]1)[n:5][cH:4][n:3][c:2]2[NH:23][CH2:22][CH2:21][CH2:20][CH2:19][CH2:18][CH2:17][CH2:16][CH2:15][CH2:14][NH:13][c:2]1[n:3][cH:4][n:5][c:6]2[cH:7][c:8]([Cl:12])[cH:9][cH:10][c:11]21";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     delete rxn;
@@ -4746,7 +4746,7 @@ void test52RedundantProductMappingNumbersAndRunReactants(){
     std::string smi = "[C:1]-[OH:2]>>[C:1]-[O:2]-[C:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
     rxn->initReactantMatchers();
 
@@ -4772,7 +4772,7 @@ void test52RedundantProductMappingNumbersAndRunReactants(){
     std::string smi = "[C:1]-[OH:2]>>[C:1]-[O:2]-[C:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
     rxn->initReactantMatchers();
 
@@ -4800,7 +4800,7 @@ void test52RedundantProductMappingNumbersAndRunReactants(){
     std::string smi = "[O:1]-[C:2]>>[O:1]-[C:2]-C-[C:2]-[O:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
     rxn->initReactantMatchers();
 
@@ -4940,7 +4940,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     smi = "[C:1][O:2]>>[C:1][O:2]N[O:2][C:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
     rxn->initReactantMatchers();
 
@@ -4983,7 +4983,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     smi = "[C@:1][O:2]>>[C@:1][O:2]N[O:2][C@@:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
     rxn->initReactantMatchers();
 
@@ -5025,7 +5025,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     smi = "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5]N[O:5][C@:2]([F:3])([Cl:1])[Br:4]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
@@ -5069,7 +5069,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     smi = "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5]N[O:5][C@@:2]([F:3])([Cl:1])[Br:4]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
@@ -5113,7 +5113,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     smi = "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5][C@:2]([F:3])([Cl:1])[Br:4]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
@@ -5157,7 +5157,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     smi = "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5][C@@:2]([F:3])([Cl:1])[Br:4]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
@@ -5211,7 +5211,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry(){
     smi = "[CH3:1]\\[CH:2]=[CH:3]\\[CH3:4]>>[CH3:1]\\[CH:2]=[CH:3]\\[CH2:4][CH2:4]\\[CH:3]=[CH:2]\\[CH3:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
@@ -5254,7 +5254,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry(){
     smi = "[CH3:1]\\[CH:2]=[CH:3]\\[CH3:4]>>[CH3:1]\\[CH:2]=[CH:3]\\[CH2:4][CH2:4]\\[CH:3]=[CH:2]/[CH3:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
@@ -5297,7 +5297,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry(){
     smi = "[CH3:1]\\[CH:2]=[CH:3]\\[CH3:4]>>[CH3:1]\\[CH:2]=[CH:3]\\[CH:3]=[CH:2]\\[CH3:1]";
 	ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
     TEST_ASSERT(rxn->validate(nWarn,nError,false));
-    TEST_ASSERT(!nWarn==0);
+    TEST_ASSERT(nWarn!=0);
     TEST_ASSERT(nError==0);
 
     MOL_SPTR_VECT reacts;
