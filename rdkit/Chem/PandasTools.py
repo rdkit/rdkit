@@ -263,6 +263,10 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
 import numpy as np
 import os
 
+import numpy as np
+import os
+from io import BytesIO
+
 def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     """
     Saves pandas DataFrame as a xlsx file with embedded images.
@@ -270,10 +274,10 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     int, float -> number
     datetime -> datetime
     object -> string (limited to 32k character - xlsx limitations)
-
+    
     Due to xlsxwriter limitations (other python xlsx writers have the same problem) 
-    temporary image files have to be written to the hard drive.
-
+    temporary image file has to be written to the hard drive.
+    
     Cells with compound images are a bit larger than images due to excel.
     Column width weirdness explained (from xlsxwriter docs):
     The width corresponds to the column width value that is specified in Excel. 
@@ -281,31 +285,34 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     Unfortunately, there is no way to specify “AutoFit” for a column in the Excel file format.
     This feature is only available at runtime from within Excel.
     """
-
+    
     import xlsxwriter # don't want to make this a RDKit dependency
-
+       
     cols = list(frame.columns)
+    print cols
     cols.remove(molCol)
     dataTypes = dict(frame.dtypes)
 
     workbook = xlsxwriter.Workbook(outFile) # New workbook
     worksheet = workbook.add_worksheet() # New work sheet
     worksheet.set_column('A:A', size[0]/6.) # column width
-
+    
     # Write first row with column names
     c2 = 1
     for x in cols:
         worksheet.write_string(0, c2, x)
         c2 += 1
-
+    
     c = 1
-    tmpfiles = []
     for index, row in frame.iterrows():
-        imfile = "xlsx_tmp_img_%i.png" %c
-        tmpfiles.append(imfile)
+        imfile = "xlsxwriter_tmp_img.png"
+        
         worksheet.set_row(c, height=size[1]) # looks like height is not in px?
-        Draw.MolToFile(row[molCol], imfile, size=size)  # has to save a file on disk in order for xlsxwriter to incorporate the image
-        worksheet.insert_image(c, 0, imfile)
+        Draw.MolToFile(row[molCol], imfile, size=size, imageType='png')  # has to save a file on disk in order for xlsxwriter to incorporate the image
+        image_file = open(imfile, 'rb')
+        image_data = BytesIO(image_file.read())
+        image_file.close()
+        worksheet.insert_image(c, 0, "f", {'image_data': image_data})
 
         c2 = 1
         # Write data in columns and make some basic translation of numpy dtypes to excel data types
@@ -321,9 +328,8 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
         c += 1
 
     workbook.close()
-    # remove temporary files
-    for f in tmpfiles:
-        os.remove(f)
+    
+    os.remove(imfile)
 
 
 def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
