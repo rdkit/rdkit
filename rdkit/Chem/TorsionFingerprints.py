@@ -242,13 +242,15 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
       t = t[0]
       p1, p2, p3, p4 = _getTorsionAtomPositions(t, conf)
       tors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
+      if tors < 0: tors += 360.0 # angle between 0 and 360
     else:
       # loop over torsions and take minimum
       tors = 360.0
       for t2 in t:
         p1, p2, p3, p4 = _getTorsionAtomPositions(t2, conf)
         tmp = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
-        if abs(tmp) < tors: tors = abs(tmp)
+        if tmp < 0: tmp += 360.0 # angle between 0 and 360
+        if tmp < tors: tors = tmp
     torsions.append((tors, maxdev))
   # rings
   for t,maxdev in tors_list_rings:
@@ -406,7 +408,10 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   # calculate deviations and normalize (divide by max. possible deviation)
   deviations = []
   for t1, t2 in zip(torsions1, torsions2):
-    deviations.append(abs(t1[0]-t2[0])/t1[1])
+    diff = abs(t1[0]-t2[0])
+    if (360.0-diff) < diff: # we do not care about direction
+      diff = 360.0 - diff
+    deviations.append(diff/t1[1])
   # do we use weights?
   if weights is not None:
     if len(weights) != len(torsions1):
@@ -421,14 +426,14 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   return tfd
 
 # some wrapper functions
-def GetTFDBetweenConfomers(mol, confId1, confId2, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDBetweenConfomers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2):
   """ Wrapper to calculate the TFD between two list of conformers 
       of a molecule
 
       Arguments:
       - mol:      the molecule of interest
-      - confId1:  first list of conformer indices
-      - confId2:  second list of conformer indices
+      - confIds1:  first list of conformer indices
+      - confIds2:  second list of conformer indices
       - useWeights: flag for using torsion weights in the TFD calculation
       - maxDev:   maximal deviation used for normalization
                   'equal': all torsions are normalized using 180.0 (default)
@@ -440,8 +445,8 @@ def GetTFDBetweenConfomers(mol, confId1, confId2, useWeights=True, maxDev='equal
       Return: list of TFD values
   """
   tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
-  torsions1 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confId1]
-  torsions2 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confId2]
+  torsions1 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds1]
+  torsions2 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds2]
   tfd = []
   if useWeights:
     weights = CalculateTorsionWeights(mol)
@@ -454,7 +459,7 @@ def GetTFDBetweenConfomers(mol, confId1, confId2, useWeights=True, maxDev='equal
         tfd.append(CalculateTFD(t1, t2))
   return tfd
 
-def GetTFDBetweenMolecules(mol1, mol2, confId1, confId2, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True, maxDev='equal', symmRadius=2):
   """ Wrapper to calculate the TFD between two list of conformers 
       of two molecules.
       Important: The two molecules must be instances of the same molecule
@@ -462,8 +467,8 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1, confId2, useWeights=True, maxDev
       Arguments:
       - mol1:     first instance of the molecule of interest
       - mol2:     second instance the molecule of interest
-      - confId1:  list of conformer indices from mol1
-      - confId2:  list of conformer indices from mol2
+      - confIds1:  list of conformer indices from mol1 (default: first conformer)
+      - confIds2:  list of conformer indices from mol2 (default: first conformer)
       - useWeights: flag for using torsion weights in the TFD calculation
       - maxDev:   maximal deviation used for normalization
                   'equal': all torsions are normalized using 180.0 (default)
@@ -477,8 +482,16 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1, confId2, useWeights=True, maxDev
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
   tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius)
-  torsions1 = [CalculateTorsionAngles(mol1, tl, tlr, confId=cid) for cid in confId1]
-  torsions2 = [CalculateTorsionAngles(mol2, tl, tlr, confId=cid) for cid in confId2]
+  # first molecule
+  if confIds1 < 0:
+    torsions1 = [CalculateTorsionAngles(mol1, tl, tlr)]
+  else:
+    torsions1 = [CalculateTorsionAngles(mol1, tl, tlr, confId=cid) for cid in confIds1]
+  # second molecule
+  if confIds2 < 0:
+    torsions2 = [CalculateTorsionAngles(mol2, tl, tlr)]
+  else:
+    torsions2 = [CalculateTorsionAngles(mol2, tl, tlr, confId=cid) for cid in confIds2]
   tfd = []
   if useWeights:
     weights = CalculateTorsionWeights(mol1)
@@ -515,7 +528,7 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
   """
   tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
   numconf = mol.GetNumConformers()
-  torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in range(numconf)]
+  torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId()) for conf in mol.GetConformers()]
   tfdmat = []
   if useWeights:
     weights = CalculateTorsionWeights(mol)
