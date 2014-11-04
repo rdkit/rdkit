@@ -262,10 +262,7 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
 
 import numpy as np
 import os
-
-import numpy as np
-import os
-from io import BytesIO
+from cStringIO import StringIO
 
 def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     """
@@ -274,10 +271,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     int, float -> number
     datetime -> datetime
     object -> string (limited to 32k character - xlsx limitations)
-    
-    Due to xlsxwriter limitations (other python xlsx writers have the same problem) 
-    temporary image file has to be written to the hard drive.
-    
+ 
     Cells with compound images are a bit larger than images due to excel.
     Column width weirdness explained (from xlsxwriter docs):
     The width corresponds to the column width value that is specified in Excel. 
@@ -305,17 +299,14 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     
     c = 1
     for index, row in frame.iterrows():
-        imfile = "xlsxwriter_tmp_img.png"
+        image_data = StringIO()
+        img = Draw.MolToImage(row[molCol], size=size)
+        img.save(image_data, format='PNG')
         
         worksheet.set_row(c, height=size[1]) # looks like height is not in px?
-        Draw.MolToFile(row[molCol], imfile, size=size, imageType='png')  # has to save a file on disk in order for xlsxwriter to incorporate the image
-        image_file = open(imfile, 'rb')
-        image_data = BytesIO(image_file.read())
-        image_file.close()
         worksheet.insert_image(c, 0, "f", {'image_data': image_data})
 
         c2 = 1
-        # Write data in columns and make some basic translation of numpy dtypes to excel data types
         for x in cols:
             if str(dataTypes[x]) == "object":
                 worksheet.write_string(c, c2, str(row[x])[:32000]) # string length is limited in xlsx
@@ -328,8 +319,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
         c += 1
 
     workbook.close()
-    
-    os.remove(imfile)
+    image_data.close()
 
 
 def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
