@@ -381,39 +381,6 @@ This produces:
 
 The RDKit contains a range of 3D functionalities such as:
 
-Examples of using it:
-
-.. testcode:: 
-
-  smis=("c1cccc[nH+]1",
-        "C[N+](C)(C)C","c1ccccc1[NH3+]",
-        "CC(=O)[O-]","c1ccccc1[O-]",
-        "CCS",
-        "C[N-]S(=O)(=O)C",
-        "C[N-]C=C","C[N-]N=C",
-        "c1ccc[n-]1",
-        "CC[N-]C(=O)CC")
-  for smi in smis:
-      (molSmiles, neutralised) = NeutraliseCharges(smi)
-      print smi,"->",molSmiles
-
-This produces:
-
-.. testoutput::
-
-    c1cccc[nH+]1 -> c1ccncc1
-    C[N+](C)(C)C -> C[N+](C)(C)C
-    c1ccccc1[NH3+] -> Nc1ccccc1
-    CC(=O)[O-] -> CC(=O)O
-    c1ccccc1[O-] -> Oc1ccccc1
-    CCS -> CCS
-    C[N-]S(=O)(=O)C -> CNS(C)(=O)=O
-    C[N-]C=C -> C=CNC
-    C[N-]N=C -> C=NNC
-    c1ccc[n-]1 -> c1cc[nH]c1
-    CC[N-]C(=O)CC -> CCNC(=O)CC
-
-
 +---------------------------------+
 | Shape alignment                 |
 +---------------------------------+
