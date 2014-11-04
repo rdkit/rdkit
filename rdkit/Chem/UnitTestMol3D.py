@@ -7,6 +7,7 @@ from rdkit import RDConfig
 import unittest,os
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import TorsionFingerprints
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol
@@ -52,6 +53,51 @@ class TestCase(unittest.TestCase):
     rmat2 = AllChem.GetConformerRMSMatrix(m1, prealigned=True)
     self.assertAlmostEqual(rmat[0], rmat2[0])
 
+  def testTorsionFingerprints(self):
+    # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
+    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1DWD_ligand.pdb')
+    ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+    mol = Chem.MolFromPDBFile(refFile)
+    mol = AllChem.AssignBondOrdersFromTemplate(ref, mol)
+    
+    # the torsion lists
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
+    self.assertTrue(len(tors_list) == 11)
+    self.assertTrue(len(tors_list_rings) == 4)
+    self.assertTrue(tors_list[-1][1] == 180.0)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, maxDev='spec')
+    self.assertTrue(tors_list[-1][1] == 90.0)
+    self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionLists, mol, maxDev='test')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, symmRadius=0)
+    self.assertTrue(len(tors_list[0][0]) == 2)
+
+    # the weights
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol)
+    self.assertAlmostEqual(weights[4], 1.0)
+    self.assertTrue(len(weights) == len(tors_list+tors_list_rings))
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol, 15, 14)
+    self.assertAlmostEqual(weights[3], 1.0)
+    self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionWeights, mol, 15, 3)
+
+    # the torsion angles
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
+    torsions = TorsionFingerprints.CalculateTorsionAngles(mol, tors_list, tors_list_rings)
+    self.assertTrue(len(weights) == len(torsions))
+    self.assertTrue(feq(torsions[2][0], -127.4653))
+
+    # the torsion fingerprint deviation
+    tfd = TorsionFingerprints.CalculateTFD(torsions, torsions)
+    self.assertAlmostEqual(tfd, 0.0)
+    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1PPC_ligand.pdb')
+    mol2 = Chem.MolFromPDBFile(refFile)
+    mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
+    torsions2 = TorsionFingerprints.CalculateTorsionAngles(mol2, tors_list, tors_list_rings)
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol)
+    tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2, weights=weights)
+    print tfd
+    self.assertTrue(feq(tfd, 0.0660))
+    tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2)
+    self.assertTrue(feq(tfd, 0.1160))
 
 if __name__ == '__main__':
   unittest.main()
