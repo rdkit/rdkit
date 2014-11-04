@@ -421,8 +421,8 @@ This produces:
 
 .. testoutput::
 
-  1.55001955728
-  0.376459885045
+    1.55001955728
+    0.376459885045
 
 If a molecule contains more than one conformer, they can be aligned 
 with respect to the first conformer. If a list is provided to the
@@ -450,8 +450,8 @@ This produces:
 
 .. testoutput::
 
-  50
-  49
+    50
+    49
 
 For shape comparison, the RDKit provides two Shape-based distances 
 that can be calculated for two prealigned molecules or conformers.
@@ -478,7 +478,7 @@ This produces:
 
 .. testoutput::
 
-  1.55001955728 0.18069102331 0.0962800875274
+    1.55001955728 0.18069102331 0.0962800875274
 
 A 3D pharmacophore fingerprint can be calculated using the RDKit
 by feeding a 3D distance matrix to the 2D-pharmacophore machinery.
@@ -507,7 +507,7 @@ This produces:
 
 .. testoutput::
 
-  0.451665312754  
+    0.451665312754  
 
 The RDKit provides an implementation of the torsion fingerprint
 deviation (TFD) approach developed by Schulz-Gasch et al. 
@@ -545,7 +545,7 @@ This produces:
 
 .. testoutput::
 
- [0.06450035322926886] [0.16803037890459122] [0.06752301190398982]
+   [0.06450035322926886] [0.16803037890459122] [0.06752301190398982]
 
 If the TFD between conformers of the same molecule is to be
 calculated, the function GetTFDBetweenConformers() should be
@@ -569,7 +569,7 @@ This produces:
 
 .. testoutput::
 
-  [0.06450035322926886]
+    [0.06450035322926886]
 
 For the conformer RMS and TFD values, the RDKit provides
 convenience functions that calculated directly the symmetric
