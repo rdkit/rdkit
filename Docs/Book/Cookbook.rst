@@ -396,7 +396,7 @@ The RDKit contains a range of 3D functionalities such as:
 +---------------------------------+
 
 There are two alignment methods currently available in the RDKit.
-As an example we use two crystal structures from the PDB of the same molecule.
+As an example we use two crystal structures from the PDB of the same molecule:
 
 .. testcode::
 
