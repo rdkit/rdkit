@@ -426,7 +426,7 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   return tfd
 
 # some wrapper functions
-def GetTFDBetweenConfomers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2):
   """ Wrapper to calculate the TFD between two list of conformers 
       of a molecule
 
