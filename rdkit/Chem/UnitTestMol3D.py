@@ -9,9 +9,6 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import TorsionFingerprints
 
-def feq(n1,n2,tol=1e-4):
-  return abs(n1-n2)<=tol
-
 class TestCase(unittest.TestCase):
 
   def testConformerRMS(self):
@@ -31,7 +28,7 @@ class TestCase(unittest.TestCase):
 
     # the RMS with itself must be zero
     rms2 = AllChem.GetConformerRMS(m1, 0, 0, prealigned=True)
-    self.assertTrue(feq(rms2, 0.0))
+    self.assertAlmostEqual(rms2, 0.0, 4)
 
 
   def testConformerRMSMatrix(self):
@@ -43,7 +40,7 @@ class TestCase(unittest.TestCase):
 
     # test that the RMS matrix has the correct size
     rmat = AllChem.GetConformerRMSMatrix(m1)
-    self.assertTrue(len(rmat), 3)
+    self.assertEqual(len(rmat), 3)
 
     # test that the elements are in the right order
     self.assertAlmostEqual(rmat[0], AllChem.GetBestRMS(m1, m2, 1, 0), 3)
@@ -62,19 +59,19 @@ class TestCase(unittest.TestCase):
     
     # the torsion lists
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
-    self.assertTrue(len(tors_list) == 11)
-    self.assertTrue(len(tors_list_rings) == 4)
-    self.assertTrue(tors_list[-1][1] == 180.0)
+    self.assertEqual(len(tors_list), 11)
+    self.assertEqual(len(tors_list_rings), 4)
+    self.assertAlmostEqual(tors_list[-1][1], 180.0, 4)
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, maxDev='spec')
-    self.assertTrue(tors_list[-1][1] == 90.0)
+    self.assertAlmostEqual(tors_list[-1][1], 90.0, 4)
     self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionLists, mol, maxDev='test')
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, symmRadius=0)
-    self.assertTrue(len(tors_list[0][0]) == 2)
+    self.assertEqual(len(tors_list[0][0]), 2)
 
     # the weights
     weights = TorsionFingerprints.CalculateTorsionWeights(mol)
     self.assertAlmostEqual(weights[4], 1.0)
-    self.assertTrue(len(weights) == len(tors_list+tors_list_rings))
+    self.assertEqual(len(weights),len(tors_list+tors_list_rings))
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, 15, 14)
     self.assertAlmostEqual(weights[3], 1.0)
     self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionWeights, mol, 15, 3)
@@ -82,8 +79,8 @@ class TestCase(unittest.TestCase):
     # the torsion angles
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     torsions = TorsionFingerprints.CalculateTorsionAngles(mol, tors_list, tors_list_rings)
-    self.assertTrue(len(weights) == len(torsions))
-    self.assertTrue(feq(torsions[2][0], -127.4653))
+    self.assertEqual(len(weights), len(torsions))
+    self.assertAlmostEqual(torsions[2][0], 232.5346, 4)
 
     # the torsion fingerprint deviation
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions)
@@ -94,10 +91,9 @@ class TestCase(unittest.TestCase):
     torsions2 = TorsionFingerprints.CalculateTorsionAngles(mol2, tors_list, tors_list_rings)
     weights = TorsionFingerprints.CalculateTorsionWeights(mol)
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2, weights=weights)
-    print tfd
-    self.assertTrue(feq(tfd, 0.0660))
+    self.assertAlmostEqual(tfd, 0.0645,4)
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2)
-    self.assertTrue(feq(tfd, 0.1160))
+    self.assertAlmostEqual(tfd, 0.1680,4)
 
 if __name__ == '__main__':
   unittest.main()
