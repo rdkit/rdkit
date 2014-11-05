@@ -541,8 +541,3 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
         tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
   return tfdmat
 
-
-if __name__ == '__main__':
-  import sys
-  failed,tried = _test()
-  sys.exit(failed)
