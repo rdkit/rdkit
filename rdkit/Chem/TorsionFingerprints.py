@@ -538,6 +538,6 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
   else:
     for i in range(0, numconf):
       for j in range(0, i):
-        tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
+        tfdmat.append(CalculateTFD(torsions[i], torsions[j]))
   return tfdmat
 
