@@ -160,7 +160,12 @@ mol: atomd {
   }
   mp->addBond($2);
   delete $2;
+}
 
+| mol SEPARATOR_TOKEN atomd {
+  RWMol *mp = (*molList)[$$];
+  $3->setProp("_SmilesStart",1,true);
+  mp->addAtom($3,true,true);
 }
 
 | mol ring_number {
@@ -222,16 +227,6 @@ mol: atomd {
   delete m2_p;
   int sz = molList->size();
   if ( sz==$2+1) {
-    molList->resize( sz-1 );
-  }
-}
-
-| mol SEPARATOR_TOKEN mol {
-  RWMol *m1_p = (*molList)[$1],*m2_p=(*molList)[$3];
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
-  delete m2_p;
-  int sz = molList->size();
-  if ( sz==$3+1) {
     molList->resize( sz-1 );
   }
 }
