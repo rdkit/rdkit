@@ -3419,13 +3419,26 @@ void testGithub378(){
     TEST_ASSERT(m);
     TEST_ASSERT(m->getBondBetweenAtoms(0,1));
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
-    delete m;
     TEST_ASSERT(m->getBondBetweenAtoms(3,4));
     TEST_ASSERT(m->getBondBetweenAtoms(3,4)->getBondType()==Bond::SINGLE);
     TEST_ASSERT(!m->getBondBetweenAtoms(1,3));
-
-
+    delete m;
   }
+  {
+    RWMol *m;
+    std::string smiles="C1(O.C1)CO1.N1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4));
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondBetweenAtoms(2,3));
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
