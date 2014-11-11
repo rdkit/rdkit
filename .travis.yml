@@ -33,7 +33,7 @@ install:
  - conda install -q numpy pillow pandas # matplotlib
  
  # install the conda boost packages from the RDKit binstar channel.
- - conda install -q -c rdkit boost
+ - conda install -q -c rdkit boost=1.55.0
 
 
 before_script:

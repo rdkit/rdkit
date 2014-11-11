@@ -1543,6 +1543,33 @@ void testGithub314(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub378(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong thing for odd dot-disconnected construct" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="C1.C1CO1.N1";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(m->getBondBetweenAtoms(3,4));
+    TEST_ASSERT(!m->getBondBetweenAtoms(1,3));
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1(O.C1)CO1.N1";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4));
+    TEST_ASSERT(!m->getBondBetweenAtoms(2,3));
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
   
 
 int
@@ -1581,6 +1608,7 @@ main(int argc, char *argv[])
 #endif
   testGithub313();
   testGithub314();
+  testGithub378();
   
   return 0;
 }
