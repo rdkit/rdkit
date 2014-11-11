@@ -23,6 +23,7 @@
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Dict.h>
+#include <GraphMol/details.h>
 
 namespace RDKit{
   class ROMol;
@@ -496,22 +497,22 @@ namespace RDKit{
 
     bool df_isAromatic; 
     bool df_noImplicit;
-    char d_dativeFlag;
-    unsigned char d_numExplicitHs;
-    char d_formalCharge;
-    unsigned char d_atomicNum;
+    boost::int8_t d_dativeFlag;
+    boost::uint8_t d_numExplicitHs;
+    boost::int8_t d_formalCharge;
+    boost::uint8_t d_atomicNum;
     // NOTE that these cannot be signed, they are calculated using
     // a lazy scheme and are initialized to -1 to indicate that the
     // calculation has not yet been done.
-    char d_implicitValence, d_explicitValence;
-    unsigned char d_numRadicalElectrons;
-    unsigned char d_chiralTag;
-    unsigned char d_hybrid;
+    boost::int8_t d_implicitValence, d_explicitValence;
+    boost::uint8_t d_numRadicalElectrons;
+    boost::uint8_t d_chiralTag;
+    boost::uint8_t d_hybrid;
 
-    unsigned short d_isotope;
-    unsigned int d_index;
+    atomindex_t d_index;
+    boost::uint16_t d_isotope;
 
-    double d_mass;
+    float d_mass;
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;

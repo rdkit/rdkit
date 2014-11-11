@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 // FIX: grn...
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
+#include <GraphMol/details.h>
 
 namespace RDKit{
   class ROMol;
@@ -416,11 +417,11 @@ namespace RDKit{
     //void setOwningMol(ROMol &other) {setOwningMol(&other);};
     bool df_isAromatic;
     bool df_isConjugated;
-    unsigned char d_bondType;
-    unsigned char d_dirTag;
-    unsigned char d_stereo;
-    unsigned int d_index;
-    unsigned int d_beginAtomIdx,d_endAtomIdx;
+    boost::uint8_t d_bondType;
+    boost::uint8_t d_dirTag;
+    boost::uint8_t d_stereo;
+    atomindex_t d_index;
+    atomindex_t d_beginAtomIdx,d_endAtomIdx;
     ROMol *dp_mol;
     Dict *dp_props;
     INT_VECT d_stereoAtoms;
