@@ -262,7 +262,7 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmi
 
 import numpy as np
 import os
-from cStringIO import StringIO
+from rdkit.six.moves import cStringIO as StringIO
 
 def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     """
@@ -276,14 +276,13 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     Column width weirdness explained (from xlsxwriter docs):
     The width corresponds to the column width value that is specified in Excel. 
     It is approximately equal to the length of a string in the default font of Calibri 11. 
-    Unfortunately, there is no way to specify “AutoFit” for a column in the Excel file format.
+    Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
     This feature is only available at runtime from within Excel.
     """
     
     import xlsxwriter # don't want to make this a RDKit dependency
        
     cols = list(frame.columns)
-    print cols
     cols.remove(molCol)
     dataTypes = dict(frame.dtypes)
 
