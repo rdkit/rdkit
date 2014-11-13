@@ -143,13 +143,13 @@ void test3(){
     ExplicitBitVect bv(2048);
     AvalonTools::getAvalonFP("c1cocc1",true,bv,2048,false,true,0x006FFF);
     BOOST_LOG(rdInfoLog) << "c1cocc1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==48);
+    TEST_ASSERT(bv.getNumOnBits()==53);
   }
   {
     ExplicitBitVect bv(2048);
     AvalonTools::getAvalonFP("C1=COC=C1",true,bv,2048,false,true,0x006FFF);
     BOOST_LOG(rdInfoLog) << "C1=COC=C1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==48);
+    TEST_ASSERT(bv.getNumOnBits()==53);
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
