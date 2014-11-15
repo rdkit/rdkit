@@ -794,8 +794,8 @@ namespace RDKit {
       d_maxIters(maxIters)
     {
       ROMol *workPrbMol = (extWorkPrbMol ? extWorkPrbMol : new ROMol(prbMol));
-      Conformer &prbConf = workPrbMol->getConformer();
-      const Conformer &refConf = refMol.getConformer();
+      Conformer &prbConf = workPrbMol->getConformer(prbCid);
+      const Conformer &refConf = refMol.getConformer(refCid);
       unsigned int accuracy = options & O3_ACCURACY_MASK;
       bool local = options & O3_LOCAL_ONLY;
       unsigned int refNAtoms = refMol.getNumAtoms();
@@ -970,8 +970,8 @@ namespace RDKit {
       }
       O3AFuncData data;
       ROMol extWorkPrbMol(prbMol);
-      data.prbConf = &(extWorkPrbMol.getConformer());
-      data.refConf = &(refMol.getConformer());
+      data.prbConf = &(extWorkPrbMol.getConformer(prbCid));
+      data.refConf = &(refMol.getConformer(refCid));
       data.prbProp = prbProp;
       data.refProp = refProp;
       unsigned int refNAtoms = refMol.getNumAtoms();
