@@ -303,6 +303,7 @@ extern "C" {
 
   char* computeMolHash(CROMol data, int* len);
 
+  char* findMCSsmiles(char* smiles, char* params);
   char* findMCS(CROMol* mols, int len, char* params);
 
 #ifdef __cplusplus

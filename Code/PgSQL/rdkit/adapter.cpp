@@ -1912,6 +1912,49 @@ computeMolHash(CROMol data, int* len) {
 }
 
 extern "C" char *
+findMCSsmiles(char* smiles, char* params){
+
+    static string mcs;
+    mcs.clear();
+
+    char *str = smiles;
+    char *s  = str;
+    int  len, nmols=0;
+    std::vector<RDKit::ROMOL_SPTR> molecules;
+    while(*s > ' ') {
+       len = 0;
+       while(s[len] > ' ')
+          len++;
+       s[len] = '\0';
+       if(0==strlen(s))
+          continue;
+       molecules.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol( s )));
+       s += len;
+       s++;
+    }
+
+    RDKit::MCSParameters p;
+
+    if(params && 0!=strlen(params)) {
+        try {
+            RDKit::parseMCSParametersJSON(params, &p);
+        } catch (...) {
+            ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: Invalid argument \'params\'")));
+            return (char*)mcs.c_str();
+        }       
+    }
+
+    try {
+        MCSResult res = RDKit::findMCS(molecules, &p);
+        mcs = res.SmartsString;
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
+        mcs.clear();
+    }
+    return (char*)mcs.c_str();
+}
+
+extern "C" char *
 findMCS(CROMol* mols, int len, char* params)
 {
     static string mcs;

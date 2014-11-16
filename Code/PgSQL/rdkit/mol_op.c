@@ -311,18 +311,28 @@ mol_hash(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING(pnstrdup(str, len));
 }
 
-PG_FUNCTION_INFO_V1(fmcs);
-Datum           fmcs(PG_FUNCTION_ARGS);
-Datum
-fmcs(PG_FUNCTION_ARGS) {
-  char    *str;
-  int     len;
-  char    *params = PG_GETARG_CSTRING(0);
-  CROMol  mols[2] = {0,0};
+/*** fmcs ***/
 
-  str = findMCS(mols, 2*0, params);
+/*TMP: */
+PG_FUNCTION_INFO_V1(fmcs_smiles);
+Datum           fmcs_smiles(PG_FUNCTION_ARGS);
+Datum
+fmcs_smiles(PG_FUNCTION_ARGS) {
+  char    *str = PG_GETARG_CSTRING(0);
+  char    *params = PG_GETARG_CSTRING(1);
+
+  str = findMCSsmiles(str, params);
   Assert(str != 0);
   PG_RETURN_CSTRING(pnstrdup(str, strlen(str)));
 }
 
+/*
+
+PG_FUNCTION_INFO_V1(mol_add2list);
+Datum           mol_add2list(PG_FUNCTION_ARGS);
+Datum
+mol_add2list(PG_FUNCTION_ARGS) {
+//  PG_RETURN_CSTRING(pnstrdup(str, strlen(str)));
+}
+*/
 
