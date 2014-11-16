@@ -32,14 +32,13 @@ namespace ForceFields {
 
       */
       VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-        MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
-        const MMFFVdW *mmffVdWParamsAtom2);
+        const MMFFVdWRijstarEps *mmffVdWConstants);
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
     
     private:
       int d_at1Idx, d_at2Idx;
-      double d_R_star_ij;       //!< the preferred length of the contact
+      double d_R_ij_star;       //!< the preferred length of the contact
       double d_wellDepth; //!< the vdW well depth (strength of the interaction)
 
     };

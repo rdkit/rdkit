@@ -362,7 +362,8 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
   for b in bonds:
     bid1 = b.GetBeginAtom().GetIdx()
     bid2 = b.GetEndAtom().GetIdx()
-    if ({bid1, bid2} == {aid1, aid2}): # if it's the most central bond itself
+    if ((bid1, bid2) == (aid1, aid2)
+      or (bid2, bid1) == (aid1, aid2)): # if it's the most central bond itself
       d = 0
     else:
       # get shortest distance between the 4 atoms and add 1 to get bond distance

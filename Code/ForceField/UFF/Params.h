@@ -35,6 +35,39 @@ namespace ForceFields {
       }
     }
 
+    //! class to store UFF parameters for bond stretching
+    class UFFBond {
+    public:
+      double kb;
+      double r0;
+    };
+
+    //! class to store UFF parameters for angle bending
+    class UFFAngle {
+    public:
+      double ka;
+      double theta0;
+    };
+
+    //! class to store UFF parameters for torsions
+    class UFFTor {
+    public:
+      double V;
+    };
+
+    //! class to store UFF parameters for inversions
+    class UFFInv {
+    public:
+      double K;
+    };
+
+    //! class to store UFF parameters for van der Waals interactions
+    class UFFVdW {
+    public:
+      double x_ij;
+      double D_ij;
+    };
+
     void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg);
 
     //! class to store atomic parameters for the Universal Force Field
