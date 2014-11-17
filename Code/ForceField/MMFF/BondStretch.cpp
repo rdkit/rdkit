@@ -40,7 +40,7 @@ namespace ForceFields {
       {
         double distTerm = distance - r0;
         double distTerm2 = distTerm * distTerm;
-        double const c1 = 143.9325;
+        double const c1 = MDYNE_A_TO_KCAL_MOL;
         double const cs = -2.0;
         double const c3 = 7.0 / 12.0;
         
@@ -87,7 +87,7 @@ namespace ForceFields {
       double *g1 = &(grad[3 * d_at1Idx]);
       double *g2 = &(grad[3 * d_at2Idx]);
       double const cs = -2.0;
-      double const c1 = 143.9325;
+      double const c1 = MDYNE_A_TO_KCAL_MOL;
       double const c3 = 7.0 / 12.0;
       double distTerm = dist - d_r0;
       double dE_dr = c1 * d_kb * distTerm

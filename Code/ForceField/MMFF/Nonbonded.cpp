@@ -90,28 +90,18 @@ namespace ForceFields {
     } // end of namespace utils
     
     VdWContrib::VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-      MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsIAtom,
-      const MMFFVdW *mmffVdWParamsJAtom)
+      const MMFFVdWRijstarEps *mmffVdWConstants)
     {
       PRECONDITION(owner, "bad owner");
-      PRECONDITION(mmffVdW, "bad MMFFVdWCollection");
-      PRECONDITION(mmffVdWParamsIAtom, "bad MMFFVdW parameters for atom " +
-                   boost::lexical_cast<std::string>(idx1));
-      PRECONDITION(mmffVdWParamsJAtom, "bad MMFFVdW parameters for atom " +
-                   boost::lexical_cast<std::string>(idx2));
+      PRECONDITION(mmffVdWConstants, "bad MMFFVdW parameters");
       RANGE_CHECK(0, idx1, owner->positions().size() - 1);
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
       d_at2Idx = idx2;
-
-      d_R_star_ij = Utils::calcUnscaledVdWMinimum
-          (mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-      d_wellDepth = Utils::calcUnscaledVdWWellDepth
-          (d_R_star_ij, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-      Utils::scaleVdWParams(d_R_star_ij, d_wellDepth,
-        mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
+      d_R_ij_star = mmffVdWConstants->R_ij_star;
+      d_wellDepth = mmffVdWConstants->epsilon;
     }
 
     double VdWContrib::getEnergy(double *pos) const
@@ -121,7 +111,7 @@ namespace ForceFields {
 
       double dist = dp_forceField->distance
         (d_at1Idx, d_at2Idx, pos);
-      return Utils::calcVdWEnergy(dist, d_R_star_ij, d_wellDepth);
+      return Utils::calcVdWEnergy(dist, d_R_ij_star, d_wellDepth);
     }
 
 
@@ -141,7 +131,7 @@ namespace ForceFields {
       double *at2Coords = &(pos[3 * d_at2Idx]);
       double *g1 = &(grad[3 * d_at1Idx]);
       double *g2 = &(grad[3 * d_at2Idx]);
-      double q = dist / d_R_star_ij;
+      double q = dist / d_R_ij_star;
       double q2 = q * q;
       double q6 = q2 * q2 * q2;
       double q7 = q6 * q;
@@ -149,13 +139,13 @@ namespace ForceFields {
       double t = vdw1 / (q + vdw1 - 1.0);
       double t2 = t * t;
       double t7 = t2 * t2 * t2 * t;
-      double dE_dr = d_wellDepth / d_R_star_ij
+      double dE_dr = d_wellDepth / d_R_ij_star
         * t7 * (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1)
         + ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
       for (unsigned int i = 0; i < 3; ++i) {
         double dGrad;
         dGrad = ((dist > 0.0)
-          ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : d_R_star_ij * 0.01);
+          ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : d_R_ij_star * 0.01);
         g1[i] += dGrad;
         g2[i] -= dGrad;
       }    

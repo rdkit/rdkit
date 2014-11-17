@@ -37,6 +37,7 @@ namespace ForceFields {
 
     const double DEG2RAD = M_PI / 180.0;
     const double RAD2DEG = 180.0 / M_PI;
+    const double MDYNE_A_TO_KCAL_MOL = 143.9325;
     inline bool isDoubleZero(const double x) {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     }
@@ -145,6 +146,14 @@ namespace ForceFields {
       double G_i;
       double R_star;
       boost::uint8_t DA;
+    };
+
+    class MMFFVdWRijstarEps {
+    public:
+      double R_ij_starUnscaled;
+      double epsilonUnscaled;
+      double R_ij_star;
+      double epsilon;
     };
 
     class MMFFAromCollection {

@@ -26,6 +26,7 @@ namespace RDKit {
   class Bond;
 
   namespace MMFF {
+    using namespace ForceFields::MMFF;
     class MMFFAtomProperties {
     public:
       MMFFAtomProperties() :
@@ -189,6 +190,25 @@ namespace RDKit {
       {
         return d_valid;
       };
+      bool getMMFFBondStretchParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2,
+        unsigned int &bondType, MMFFBond &mmffBondStretchParams);
+      bool getMMFFAngleBendParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+        unsigned int &angleType, MMFFAngle &mmffAngleBendParams);
+      bool getMMFFStretchBendParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+        unsigned int &stretchBendType, MMFFStbn &mmffStretchBendParams,
+        MMFFBond mmffBondStretchParams[2], MMFFAngle &mmffAngleBendParams);
+      bool getMMFFTorsionParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2,
+        const unsigned int idx3, const unsigned int idx4,
+        unsigned int &torsionType, MMFFTor &mmffTorsionParams);
+      bool getMMFFOopBendParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+        const unsigned int idx4, MMFFOop &mmffOopBendParams);
+      bool getMMFFVdWParams(const unsigned int idx1,
+        const unsigned int idx2, MMFFVdWRijstarEps &mmffVdWParams);
     private:
       void setMMFFHeavyAtomType(const Atom *atom);
       void setMMFFHydrogenType(const Atom *atom);

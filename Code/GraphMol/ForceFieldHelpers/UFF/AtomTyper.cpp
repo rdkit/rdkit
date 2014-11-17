@@ -11,6 +11,11 @@
 #include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <ForceField/UFF/Params.h>
+#include <ForceField/UFF/BondStretch.h>
+#include <ForceField/UFF/AngleBend.h>
+#include <ForceField/UFF/TorsionAngle.h>
+#include <ForceField/UFF/Inversion.h>
+#include <ForceField/UFF/Nonbonded.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include "AtomTyper.h"
@@ -318,5 +323,194 @@ namespace RDKit {
       return std::make_pair(paramVect,foundAll);
     }
 
+    bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, UFFBond &uffBondStretchParams) {
+      ParamCollection *params = ParamCollection::getParams();
+      unsigned int idx[2] = { idx1, idx2 };
+      AtomicParamVect paramVect(2);
+      unsigned int i;
+      const Bond *bond = mol.getBondBetweenAtoms(idx1, idx2);
+      bool res = (bond ? true : false);
+      for (i = 0; res && (i < 2); ++i) {
+        const Atom *atom = mol.getAtomWithIdx(idx[i]);
+        std::string atomKey = Tools::getAtomLabel(atom);
+        paramVect[i] = (*params)(atomKey);
+        res = (paramVect[i] ? true : false);
+      }
+      if (res) {
+        double bondOrder = bond->getBondTypeAsDouble();
+        uffBondStretchParams.r0 = Utils::calcBondRestLength
+          (bondOrder, paramVect[0], paramVect[1]);
+        uffBondStretchParams.kb = Utils::calcBondForceConstant
+          (uffBondStretchParams.r0, paramVect[0], paramVect[1]);
+      }
+      return res;
+    }
+
+    bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, unsigned int idx3, UFFAngle &uffAngleBendParams) {
+      ParamCollection *params = ParamCollection::getParams();
+      unsigned int idx[3] = { idx1, idx2, idx3 };
+      AtomicParamVect paramVect(3);
+      unsigned int i;
+      const Bond *bond[2];
+      bool res = true;
+      for (i = 0; res && (i < 3); ++i) {
+        if (i < 2) {
+          bond[i] = mol.getBondBetweenAtoms(idx[i], idx[i + 1]);
+          res = (bond[i] ? true : false);
+        }
+        if (res) {
+          const Atom *atom = mol.getAtomWithIdx(idx[i]);
+          std::string atomKey = Tools::getAtomLabel(atom);
+          paramVect[i] = (*params)(atomKey);
+          res = (paramVect[i] ? true : false);
+        }
+      }
+      if (res) {
+        double bondOrder12 = bond[0]->getBondTypeAsDouble();
+        double bondOrder23 = bond[1]->getBondTypeAsDouble();
+        uffAngleBendParams.theta0 = RAD2DEG * paramVect[1]->theta0;
+        uffAngleBendParams.ka = Utils::calcAngleForceConstant
+          (uffAngleBendParams.theta0, bondOrder12, bondOrder23,
+          paramVect[0], paramVect[1], paramVect[2]);
+      }
+      return res;
+    }
+
+    bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, unsigned int idx3, unsigned int idx4,
+      UFFTor &uffTorsionParams) {
+      ParamCollection *params = ParamCollection::getParams();
+      unsigned int idx[4] = { idx1, idx2, idx3, idx4 };
+      AtomicParamVect paramVect(2);
+      unsigned int i;
+      const Bond *bond = mol.getBondBetweenAtoms(idx2, idx3);
+      int atNum[2];
+      Atom::HybridizationType hyb[2];
+      bool res = true;
+      bool hasSP2 = false;
+      for (i = 0; res && (i < 4); ++i) {
+        if (i < 3) {
+          res = (mol.getBondBetweenAtoms(idx[i], idx[i + 1]) ? true : false);
+        }
+        const Atom *atom = mol.getAtomWithIdx(idx[i]);
+        if ((i == 1) || (i == 2)) {
+          unsigned int j = i - 1;
+          atNum[j] = atom->getAtomicNum();
+          hyb[j] = atom->getHybridization();
+          std::string atomKey = Tools::getAtomLabel(atom);
+          paramVect[j] = (*params)(atomKey);
+          res = (paramVect[j] ? true : false);
+        }
+        else if (atom->getHybridization() == Atom::SP2) {
+          hasSP2 = true;
+        }
+      }
+      if (res) {
+        res = (((hyb[0] == RDKit::Atom::SP2) || (hyb[0] == RDKit::Atom::SP3))
+          && ((hyb[1] == RDKit::Atom::SP2) || (hyb[1] == RDKit::Atom::SP3)));
+      }
+      if (res) {
+        double bondOrder = bond->getBondTypeAsDouble();
+        if ((hyb[0] == RDKit::Atom::SP3) && (hyb[1] == RDKit::Atom::SP3)) {
+          // general case:
+          uffTorsionParams.V = sqrt(paramVect[0]->V1 * paramVect[1]->V1);
+          // special case for single bonds between group 6 elements:
+          if (((int)(bondOrder * 10) == 10) &&
+            Utils::isInGroup6(atNum[0]) && Utils::isInGroup6(atNum[1])) {
+            double V2 = 6.8;
+            double V3 = 6.8;
+            if (atNum[0] == 8) V2 = 2.0;
+            if (atNum[1] == 8) V3 = 2.0;
+            uffTorsionParams.V = sqrt(V2 * V3);
+          }
+        }
+        else if ((hyb[0] == RDKit::Atom::SP2) && (hyb[1] == RDKit::Atom::SP2)) {
+          uffTorsionParams.V = Utils::equation17(bondOrder, paramVect[0], paramVect[1]);
+        }
+        else {
+          // SP2 - SP3,  this is, by default, independent of atom type in UFF:
+          uffTorsionParams.V = 1.0;
+          if ((int)(bondOrder * 10) == 10) {
+            // special case between group 6 sp3 and non-group 6 sp2:
+            if (((hyb[0] == RDKit::Atom::SP3) && Utils::isInGroup6(atNum[0])
+              && (!Utils::isInGroup6(atNum[1])))
+              || ((hyb[1] == RDKit::Atom::SP3) && Utils::isInGroup6(atNum[1])
+              && (!Utils::isInGroup6(atNum[0])))) {
+              uffTorsionParams.V = Utils::equation17(bondOrder, paramVect[0], paramVect[1]);
+            }
+            // special case for sp3 - sp2 - sp2
+            // (i.e. the sp2 has another sp2 neighbor, like propene)
+            else if (hasSP2) {
+              uffTorsionParams.V = 2.0;
+            }
+          }
+        }
+      }
+      return res;
+    }
+
+    bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, unsigned int idx3, unsigned int idx4,
+      UFFInv &uffInversionParams) {
+      unsigned int idx[4] = { idx1, idx2, idx3, idx4 };
+      bool res = (mol.getBondBetweenAtoms(idx1, idx2)
+        && mol.getBondBetweenAtoms(idx2, idx3) && mol.getBondBetweenAtoms(idx2, idx4));
+      unsigned int i;
+      bool isAtom2C = false;
+      bool isBoundToSP2O = false;
+      unsigned int at2AtomicNum = 0;
+      for (i = 0; res && (i < 4); ++i) {
+        const Atom *atom = mol.getAtomWithIdx(idx[i]);
+        if (i == 1) {
+          at2AtomicNum = atom->getAtomicNum();
+          if (res) {
+            // if the central atom is not carbon, nitrogen, oxygen,
+            // phosphorous, arsenic, antimonium or bismuth, skip it
+            res = (!(((at2AtomicNum != 6) && (at2AtomicNum != 7) && (at2AtomicNum != 8)
+              && (at2AtomicNum != 15) && (at2AtomicNum != 33) && (at2AtomicNum != 51)
+              && (at2AtomicNum != 83)) || (atom->getDegree() != 3)));
+          }
+          if (res) {
+            // if the central atom is carbon, nitrogen or oxygen
+            // but hybridization is not sp2, skip it
+            res = (!(((at2AtomicNum == 6) || (at2AtomicNum == 7) || (at2AtomicNum == 8))
+              && (atom->getHybridization() != Atom::SP2)));
+          }
+        }
+        else if ((atom->getAtomicNum() == 8) && (atom->getHybridization() == Atom::SP2)) {
+          isBoundToSP2O = true;
+        }
+      }
+      if (res) {
+        isBoundToSP2O = (isBoundToSP2O && (at2AtomicNum == 6));
+        boost::tuple<double, double, double, double> invCoeffForceCon =
+          Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum, isBoundToSP2O);
+        uffInversionParams.K = boost::tuples::get<0>(invCoeffForceCon);
+      }
+      return res;
+    }
+
+    bool getUFFVdWParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, UFFVdW &uffVdWParams)
+    {
+      bool res = true;
+      ParamCollection *params = ParamCollection::getParams();
+      unsigned int idx[2] = { idx1, idx2 };
+      AtomicParamVect paramVect(2);
+      unsigned int i;
+      for (i = 0; res && (i < 2); ++i) {
+        const Atom *atom = mol.getAtomWithIdx(idx[i]);
+        std::string atomKey = Tools::getAtomLabel(atom);
+        paramVect[i] = (*params)(atomKey);
+        res = (paramVect[i] ? true : false);
+      }
+      if (res) {
+        uffVdWParams.x_ij = Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
+        uffVdWParams.D_ij = Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
+      }
+      return res;
+    }
   }
 }

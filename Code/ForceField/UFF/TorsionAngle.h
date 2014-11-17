@@ -96,6 +96,9 @@ namespace ForceFields {
 				 const RDGeom::Point3D &p3,const RDGeom::Point3D &p4);
       void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t,
         double *d, double **g, double &sinTerm, double &cosPhi);
+      double equation17(double bondOrder23, const AtomicParams *at2Params,
+        const AtomicParams *at3Params);
+      bool isInGroup6(int num);
     }
   }
 }
