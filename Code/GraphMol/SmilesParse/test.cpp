@@ -3442,6 +3442,27 @@ void testGithub378(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub389(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 389: Add option to SmilesWriter to allow writing of all explicit hydrogens" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="CCO";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    std::string csmiles=MolToSmiles(*m,true,false,-1,true,false,true);
+    TEST_ASSERT(csmiles!="");
+    TEST_ASSERT(csmiles.find("[CH3]")!=std::string::npos);
+    TEST_ASSERT(csmiles.find("[CH2]")!=std::string::npos);
+    TEST_ASSERT(csmiles.find("[OH]")!=std::string::npos);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -3499,5 +3520,6 @@ main(int argc, char *argv[])
 #endif
   testGithub298();
   testGithub378();
+  testGithub389();
   //testBug1719046();
 }
