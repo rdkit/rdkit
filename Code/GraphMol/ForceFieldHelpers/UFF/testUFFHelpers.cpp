@@ -25,6 +25,7 @@
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <boost/math/special_functions/round.hpp>
 
 using namespace RDKit;
 #if 1
