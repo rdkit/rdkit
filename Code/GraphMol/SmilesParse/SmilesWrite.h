@@ -28,9 +28,11 @@ namespace RDKit{
         lower case for the atom label)
       \param bondIn : the bond we came into the atom on (used for
         chirality calculation
+      \param allHsExplicit : if true, hydrogen counts will be provided for every atom.
     */
     std::string GetAtomSmiles(const Atom *atom,bool doKekule=false,
-                              const Bond *bondIn=0);
+                              const Bond *bondIn=0,
+                              bool allHsExplicit=false);
 
     //! \brief returns the SMILES for a bond
     /*!
@@ -55,11 +57,13 @@ namespace RDKit{
         The resulting SMILES is not, of course, canonical.
     \param canonical : if false, no attempt will be made to canonicalize the SMILES
     \param allBondsExplicit : if true, symbols will be included for all bonds.
+    \param allHsExplicit : if true, hydrogen counts will be provided for every atom.
    */
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles=false,
 			  bool doKekule=false,int rootedAtAtom=-1,
                           bool canonical=true,
-                          bool allBondsExplicit=false);
+                          bool allBondsExplicit=false,
+                          bool allHsExplicit=false);
 
   //! \brief returns canonical SMILES for part of a molecule
   /*!
@@ -76,6 +80,7 @@ namespace RDKit{
         The resulting SMILES is not, of course, canonical.
     \param canonical : if false, no attempt will be made to canonicalize the SMILES
     \param allBondsExplicit : if true, symbols will be included for all bonds.
+    \param allHsExplicit : if true, hydrogen counts will be provided for every atom.
    */
   std::string MolFragmentToSmiles(const ROMol &mol,
                                   const std::vector<int> &atomsToUse,
@@ -85,7 +90,8 @@ namespace RDKit{
                                   bool doIsomericSmiles=false,
                                   bool doKekule=false,int rootedAtAtom=-1,
                                   bool canonical=true,
-                                  bool allBondsExplicit=false);
+                                  bool allBondsExplicit=false,
+                                  bool allHsExplicit=false);
 
 }
 #endif

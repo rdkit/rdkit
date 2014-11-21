@@ -197,7 +197,8 @@ namespace RDKit{
                                         bool doKekule,
                                         int rootedAtAtom,
                                         bool canonical,
-                                        bool allBondsExplicit
+                                        bool allBondsExplicit,
+                                        bool allHsExplicit
                                         ){
     std::vector<int> *avect=pythonObjectToVect(atomsToUse,static_cast<int>(mol.getNumAtoms()));
     if(!avect || !(avect->size())){
@@ -215,7 +216,7 @@ namespace RDKit{
     
     std::string res=MolFragmentToSmiles(mol,*avect,bvect,asymbols,bsymbols,
                                         doIsomericSmiles,doKekule,rootedAtAtom,
-                                        canonical,allBondsExplicit);
+                                        canonical,allBondsExplicit,allHsExplicit);
     delete avect;
     delete bvect;
     delete asymbols;
@@ -587,6 +588,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
+    - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -598,7 +601,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("kekuleSmiles")=false,
 	       python::arg("rootedAtAtom")=-1,
 	       python::arg("canonical")=true,
-               python::arg("allBondsExplicit")=false),
+               python::arg("allBondsExplicit")=false,
+               python::arg("allHsExplicit")=false),
 	      docString.c_str());
 
   docString="Returns the canonical SMILES string for a fragment of a molecule\n\
@@ -623,6 +627,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
+    - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -638,7 +644,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("kekuleSmiles")=false,
 	       python::arg("rootedAtAtom")=-1,
 	       python::arg("canonical")=true,
-               python::arg("allBondsExplicit")=false),
+               python::arg("allBondsExplicit")=false,
+               python::arg("allHsExplicit")=false),
 	      docString.c_str());
 
   

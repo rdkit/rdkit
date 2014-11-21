@@ -46,7 +46,7 @@ namespace ForceFields {
 
       double calcOopBendEnergy(const double chi, const double koop)
       {
-        double const c2 = 0.043844;
+        double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
         return (0.5 * c2 * koop * chi * chi);
       }
     } // end of namespace Utils
@@ -125,7 +125,7 @@ namespace ForceFields {
       
       RDGeom::Point3D n = (-rJI).crossProduct(rJK);
       n /= n.length();
-      double const c2 = 0.043844;
+      double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
       double sinChi = rJL.dotProduct(n);
       clipToOne(sinChi);
       double cosChiSq = 1.0 - sinChi * sinChi;

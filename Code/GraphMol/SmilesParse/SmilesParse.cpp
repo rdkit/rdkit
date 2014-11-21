@@ -153,6 +153,7 @@ namespace RDKit{
 	if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){
 	  res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
 	}
+	SmilesParseOps::CleanupAfterParsing(res);
         molVect[0]=0; // NOTE: to avoid leaks on failures, this should occur last in this if.
       }
     } catch (SmilesParseException &e) {
