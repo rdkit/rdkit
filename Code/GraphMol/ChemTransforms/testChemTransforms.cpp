@@ -1191,6 +1191,24 @@ void testFragmentOnBonds()
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms()==5);
+    unsigned int indices[]={0,1};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<unsigned int> cutsPerAtom(mol->getNumAtoms());
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,bindices,false,0,0,&cutsPerAtom);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==5);
+    TEST_ASSERT(cutsPerAtom[0]==1);
+    TEST_ASSERT(cutsPerAtom[1]==2);
+    TEST_ASSERT(cutsPerAtom[2]==1);
+    TEST_ASSERT(cutsPerAtom[3]==0);
+    delete mol;
+    delete nmol;
+  }
+  {
+    std::string smi = "OCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
     TEST_ASSERT(mol->getBondBetweenAtoms(0,1));
     TEST_ASSERT(mol->getBondBetweenAtoms(3,4));
     unsigned int indices[]={0,3};
