@@ -62,7 +62,7 @@ namespace RDKit {
                              bool addDummies=true,
                              const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0,
                              const std::vector< Bond::BondType > *bondTypes=0,
-                             std::vector<unsigned int> *nCutsPerAtom=0);
+                             std::vector<std::vector<unsigned int> > *nCutsPerAtom=0);
 
 
     //! \brief Fragments a molecule by breaking all BRICS bonds

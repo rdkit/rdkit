@@ -1481,6 +1481,28 @@ void testFragmentOnSomeBonds()
     delete mol;
   }
 
+
+  {
+    std::string smi = "OCCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={0,2,4};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    std::vector<std::vector<unsigned int> > cpa;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,2,false,NULL,NULL,&cpa);
+    TEST_ASSERT(frags.size()==3);
+    TEST_ASSERT(cpa.size()==3);
+    TEST_ASSERT(cpa[0].size()==mol->getNumAtoms());
+    TEST_ASSERT(cpa[1].size()==mol->getNumAtoms());
+    TEST_ASSERT(cpa[2].size()==mol->getNumAtoms());
+
+    
+    delete mol;
+  }
+
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

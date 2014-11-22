@@ -285,10 +285,9 @@ namespace RDKit{
                              bool addDummies,
                              const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
                              const std::vector< Bond::BondType > *bondTypes,
-                             std::vector<unsigned int> *nCutsPerAtom){
+                             std::vector< std::vector<unsigned int> > *nCutsPerAtom){
       PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
       PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
-      PRECONDITION( ( !nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms() ), "bad nCutsPerAtom vector");
       if(bondIndices.size()>63) throw ValueErrorException("currently can only fragment on up to 63 bonds");
       boost::uint64_t state=(0x1<<maxToCut)-1;
       boost::uint64_t stop=0x1<<bondIndices.size();
@@ -311,7 +310,12 @@ namespace RDKit{
             ++nSeen;
           }
         }
-        ROMol *nm=fragmentOnBonds(mol,fragmentHere,addDummies,dummyLabelsHere,bondTypesHere,nCutsPerAtom);
+        std::vector<unsigned int> *lCutsPerAtom=0;
+        if(nCutsPerAtom){
+          nCutsPerAtom->push_back(std::vector<unsigned int>(mol.getNumAtoms()));
+          lCutsPerAtom=&(nCutsPerAtom->back());
+        }
+        ROMol *nm=fragmentOnBonds(mol,fragmentHere,addDummies,dummyLabelsHere,bondTypesHere,lCutsPerAtom);
         resMols.push_back(ROMOL_SPTR(nm));
         
         state = nextBitCombo(state);

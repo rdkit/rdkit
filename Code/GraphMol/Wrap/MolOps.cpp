@@ -37,7 +37,7 @@ namespace RDKit{
                                           bool addDummies,
                                           python::object pyDummyLabels,
                                           python::object pyBondTypes,
-                                          python::list pyCutsPerAtom){
+                                          bool returnCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
@@ -60,14 +60,9 @@ namespace RDKit{
         (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
       }
     }
-    std::vector<unsigned int> *cutsPerAtom=0;
-    if(pyCutsPerAtom){
-      cutsPerAtom= new std::vector<unsigned int>;
-      unsigned int nAts=python::extract<unsigned int>(pyCutsPerAtom.attr("__len__")());
-      if(nAts<mol.getNumAtoms()){
-        throw_value_error("cutsPerAtom shorter than the number of atoms");
-      }
-      cutsPerAtom->resize(nAts);
+    std::vector<std::vector<unsigned int> > *cutsPerAtom=0;
+    if(returnCutsPerAtom){
+      cutsPerAtom= new std::vector<std::vector<unsigned int> >;
     }
 
     std::vector<ROMOL_SPTR> frags;
@@ -76,16 +71,26 @@ namespace RDKit{
     for(unsigned int i=0;i<frags.size();++i){
       res.append(frags[i]);
     }
-    if(cutsPerAtom){
-      for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        pyCutsPerAtom[i]=(*cutsPerAtom)[i];
-      }
-      delete cutsPerAtom;
-    }
     delete bondIndices;
     delete dummyLabels;
     delete bondTypes;
-    return python::tuple(res);
+    if(cutsPerAtom){
+      python::list pyCutsPerAtom;
+      for(unsigned int i=0;i<cutsPerAtom->size();++i){
+        python::list localL;
+        for(unsigned int j=0;j<mol.getNumAtoms();++j){
+          localL.append((*cutsPerAtom)[i][j]);
+        }
+        pyCutsPerAtom.append(python::tuple(localL));
+      }
+      delete cutsPerAtom;
+      python::list tres;
+      tres.append(python::tuple(pyCutsPerAtom));
+      tres.append(python::tuple(res));
+      return python::tuple(tres);
+    } else {
+      return python::tuple(res);
+    }
   }
 
   ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
@@ -1586,7 +1591,7 @@ namespace RDKit{
                    python::arg("addDummies")=true,
                    python::arg("dummyLabels")=python::object(),
                    python::arg("bondTypes")=python::object(),
-                   python::arg("cutsPerAtom")=python::list()
+                   python::arg("returnCutsPerAtom")=false
                    ),
                   docString.c_str());
 
