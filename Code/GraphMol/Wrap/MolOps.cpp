@@ -85,8 +85,8 @@ namespace RDKit{
       }
       delete cutsPerAtom;
       python::list tres;
-      tres.append(python::tuple(pyCutsPerAtom));
       tres.append(python::tuple(res));
+      tres.append(python::tuple(pyCutsPerAtom));
       return python::tuple(tres);
     } else {
       return python::tuple(res);
