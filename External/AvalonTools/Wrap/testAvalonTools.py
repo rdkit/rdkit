@@ -10,7 +10,9 @@ from rdkit.Avalon import pyAvalonTools
 
 struchk_conf_path = os.path.join(RDConfig.RDDataDir, 'struchk', '')
 struchk_log_path = ''
-STRUCHK_INIT = '''-ta %(struchk_conf_path)scheckfgs.trn
+STRUCHK_INIT = '''-tm
+-ta %(struchk_conf_path)scheckfgs.trn
+-tm
 -or
 -ca %(struchk_conf_path)scheckfgs.chk
 -cc

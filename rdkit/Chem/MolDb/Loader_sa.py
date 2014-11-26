@@ -87,7 +87,7 @@ def ProcessMol(session,mol,globalProps,nDone,nameProp='_Name',nameCol='compound_
     for pi,pn in enumerate(pns):
       if pn.lower()==nameCol.lower(): continue
       pv = mol.GetProp(pn).strip()
-      if globalProps.has_key(pn):
+      if pn in globalProps:
         setattr(cmpd,pn.lower(),pv)
   return cmpd
 
@@ -116,14 +116,14 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   if not skipProps:
     while numForPropScan>0:
       try:
-        m = sIter.next()
+        m = next(sIter)
       except StopIteration:
         numForPropScan=0
         break
       if not m: continue
       for pn in m.GetPropNames():
         if pn.lower()==nameCol.lower(): continue
-        if not globalProps.has_key(pn):
+        if pn not in globalProps:
           globalProps[pn]=1
           setattr(Compound,pn.lower(),Column(pn.lower(),String,default=defaultVal))
       numForPropScan-=1
