@@ -18,6 +18,7 @@ rdkit_headers(Atom.h
               Canon.h
               Chirality.h
               Conformer.h
+              details.h
               GraphMol.h
               MolOps.h
               MolPickler.h
