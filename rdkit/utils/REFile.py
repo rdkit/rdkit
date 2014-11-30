@@ -4,6 +4,8 @@
 """ contains class REFile, for working with files containing comments
 
 """
+from __future__ import print_function
+
 import re
 
 class REFile:
@@ -89,15 +91,15 @@ if __name__ == '__main__':
   fName = 'retest.txt'
   ref = REFile(fName)
   lines = ref.readlines()
-  print 'readlines:'
+  print('readlines:')
   for i in xrange(len(lines)):
-    print '\t%d: %s'%(i,lines[i])
+    print('\t%d: %s'%(i,lines[i]))
   ref.rewind()
-  print 'readline:'
+  print('readline:')
   inStr = ref.readline()
   nRead = 0
   while inStr != '':
-    print '\t%d: %s'%(nRead,inStr)
+    print('\t%d: %s'%(nRead,inStr))
     nRead=nRead+1
     inStr = ref.readline()
   

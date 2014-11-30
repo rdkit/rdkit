@@ -31,7 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, July 2013
-
+from __future__ import print_function
 
 import sys
 import re
@@ -112,6 +112,6 @@ for line in sys.stdin:
         tversky = sc.getSimilarity(intfp)
 
         if(tversky >= 0.9):
-            print "%s,%s,%s,%s,%s,%s" % (qsub,qsmi,qid,dbsmi,dbid,tversky)
+            print("%s,%s,%s,%s,%s,%s" % (qsub,qsmi,qid,dbsmi,dbid,tversky))
 
 

@@ -128,14 +128,14 @@ namespace AvalonTools {
 
   std::string getCanonSmiles(ROMol &mol,int flags){
     if(flags==-1) flags=DB_STEREO | CENTER_STEREO;
-    std::string rdSmi=MolToSmiles(mol,true);
-    char *canSmiles = CanSmiles(const_cast<char *>(rdSmi.c_str()),flags);
     std::string res;
-    if(canSmiles){
-      res=canSmiles;
-      MyFree(canSmiles);
-    }else {
-      BOOST_LOG(rdErrorLog)<<"ERROR: no smiles generated for molecule."<<std::endl;
+    if(!mol.getNumConformers()){
+      std::string rdSmi=MolToSmiles(mol,true);
+      res = getCanonSmiles(rdSmi,true,flags);
+    } else {
+      std::string rdMB=MolToMolBlock(mol);
+      res = getCanonSmiles(rdMB,false,flags);
+      
     }
     return res;
   }

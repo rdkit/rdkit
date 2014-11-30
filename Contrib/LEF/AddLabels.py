@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import BRICS
 import sys,cPickle,re
@@ -54,7 +55,7 @@ hLabels = [x[0] for x in fglines]
 patts = [Chem.MolFromSmarts(x[1]) for x in fglines]
 
 labels = inLs[0].strip().split(delim) + hLabels + ['HasBRICSBond?']
-print delim.join(labels)
+print(delim.join(labels))
 for line in inLs[1:]:
     splitL = line.strip().split(delim)
     mol = Chem.MolFromSmiles(splitL[1])
@@ -69,5 +70,5 @@ for line in inLs[1:]:
         splitL.append('True')
     else:
         splitL.append('False')
-    print delim.join(splitL)
+    print(delim.join(splitL))
 

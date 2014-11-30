@@ -72,6 +72,10 @@ namespace RDKit{
     //! calculates the number of saturated SSSR rings
     unsigned int calcNumSaturatedRings(const ROMol &mol);
 
+    extern const std::string NumHeterocyclesVersion;
+    //! calculates the number of SSSR heterocycles
+    unsigned int calcNumHeterocycles(const ROMol &mol);
+
     extern const std::string NumAromaticHeterocyclesVersion;
     //! calculates the number of aromatic SSSR heterocycles
     unsigned int calcNumAromaticHeterocycles(const ROMol &mol);

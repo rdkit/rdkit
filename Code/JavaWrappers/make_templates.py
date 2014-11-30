@@ -6,6 +6,7 @@
 becomes this
     %template(OnBitProjSimilarityEBV) OnBitProjSimilarity<ExplicitBitVect,ExplicitBitVect>;
 """
+from __future__ import print_function
 
 import re
 template_match = re.compile(r"""template\s*\<(.+)\>\s*.*\s+(\w+)\s*\(.*""")
@@ -20,7 +21,7 @@ def handle_template_line(template_line,  suffix,  template_type):
     types = match.group(1)
     name = match.group(2)
     template_types = len(types.split(',')) * [template_type]
-    print make_entry(name,  suffix,  template_types)
+    print(make_entry(name,  suffix,  template_types))
     
 def find_declarations(file_name,  suffix,  template_type):
     f = open(file_name)

@@ -16,7 +16,7 @@ if RDConfig.molViewer in ('WEBLAB','DSVIEWER'):
 elif RDConfig.molViewer=='PYMOL':
   from rdkit.Chem.PyMol import *
 else:
-  raise ValueError,'invalid RD_MOLVIEWER specified'
+  raise ValueError('invalid RD_MOLVIEWER specified')
 
   
   

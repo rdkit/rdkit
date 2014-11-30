@@ -804,6 +804,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_CalcNumSaturatedRings_version")=RDKit::Descriptors::NumSaturatedRingsVersion;
 
+  docString="returns the number of heterocycles for a molecule";
+  python::def("CalcNumHeterocycles",
+	      RDKit::Descriptors::calcNumHeterocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumHeterocycles_version")=RDKit::Descriptors::NumHeterocyclesVersion;
+
   docString="returns the number of aromatic heterocycles for a molecule";
   python::def("CalcNumAromaticHeterocycles",
 	      RDKit::Descriptors::calcNumAromaticHeterocycles,

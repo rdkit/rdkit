@@ -472,6 +472,28 @@ namespace RDKit{
     }
   }
 
+  bool hasNonDefaultValence(const Atom *atom){
+    if (atom->getNumRadicalElectrons() != 0)
+      return true;
+    if (atom->hasQuery())
+      return false;
+    switch (atom->getAtomicNum()) {
+    case 1:  // H
+    case 5:  // B
+    case 6:  // C
+    case 7:  // N
+    case 8:  // O
+    case 9:  // F
+    case 15: // P
+    case 16: // S
+    case 17: // Cl
+    case 35: // Br
+    case 53: // I
+      return false;
+    }
+    return true;
+  }
+
   void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
                                 int &totValence, int &atomMapNumber, unsigned int &parityFlag,
                                 double &x, double &y, double &z){
@@ -495,12 +517,8 @@ namespace RDKit{
          atom->getTotalDegree()==4 ){
         parityFlag=getAtomParityFlag(atom,conf);
       }
-    } 
-    if (atom->getNumRadicalElectrons()!=0 ||
-        (!atom->hasQuery() && (atom->getAtomicNum()<5 || atom->getAtomicNum()>9) &&
-         (atom->getAtomicNum()<15 || atom->getAtomicNum()>17) &&
-         (atom->getAtomicNum()!=35 && atom->getAtomicNum()!=53)
-         ) ){
+    }
+    if(hasNonDefaultValence(atom)){
       if(atom->getTotalDegree()==0){
         // Specify zero valence for elements/metals without neighbors
         // or hydrogens (degree 0) instead of writing them as radicals.
@@ -628,7 +646,38 @@ namespace RDKit{
 	  dirCode = 3;
 	} else if(!(bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) &&
 		  bond->getBeginAtom()->getDegree()>1 && bond->getEndAtom()->getDegree()>1){
-          dirCode = 3;
+          // we don't know that it's explicitly unspecified (covered above with the ==STEREOANY check)
+          // look to see if one of the atoms has a bond with direction set
+          if(bond->getBondDir()==Bond::EITHERDOUBLE){
+            dirCode = 3;
+          } else {
+            bool nbrHasDir=false;
+            
+            ROMol::OEDGE_ITER beg,end;
+            boost::tie(beg,end) = bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
+            while(beg!=end && !nbrHasDir){
+              const BOND_SPTR nbrBond=bond->getOwningMol()[*beg];
+              if(nbrBond->getBondType()==Bond::SINGLE &&
+                 ( nbrBond->getBondDir()==Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir()==Bond::ENDDOWNRIGHT ) ){
+                nbrHasDir=true;
+              }
+              ++beg;
+            }
+            boost::tie(beg,end) = bond->getOwningMol().getAtomBonds(bond->getEndAtom());
+            while(beg!=end && !nbrHasDir){
+              const BOND_SPTR nbrBond=bond->getOwningMol()[*beg];
+              if(nbrBond->getBondType()==Bond::SINGLE &&
+                 ( nbrBond->getBondDir()==Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir()==Bond::ENDDOWNRIGHT ) ){
+                nbrHasDir=true;
+              }
+              ++beg;
+            }
+            if(!nbrHasDir){
+              dirCode=3;
+            }
+          }
         }
       }
     }

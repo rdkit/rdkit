@@ -2204,6 +2204,16 @@ void testMACCS(){
     delete m1;
     delete fp1;
   }
+  {
+    // check that bit 44 "OTHER" gets properly set:
+    std::string smi = "CC[SeH]";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1=MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT((*fp1)[44]);
+    delete m1;
+    delete fp1;
+  }
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
@@ -2816,7 +2826,52 @@ void testMultithreadedPatternFP(){
 }
 #endif
 
+void testGitHubIssue334(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 334: explicit Hs in SMILES modifies atom pair (and topological torsion) FP." << std::endl;
 
+  {
+    ROMol *m1 = SmilesToMol("N#C");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int32_t> *fp1;
+    fp1 = AtomPairs::getAtomPairFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    delete m1;
+
+    m1 = SmilesToMol("N#[CH]");
+    SparseIntVect<boost::int32_t> *fp2;
+    fp2 = AtomPairs::getAtomPairFingerprint(*m1);
+    TEST_ASSERT(fp2);
+    delete m1;
+
+    TEST_ASSERT(fp1->getTotalVal()==fp2->getTotalVal());
+    TEST_ASSERT(fp1->getNonzeroElements().size()==fp2->getNonzeroElements().size());
+    TEST_ASSERT(*fp1==*fp2);
+    delete fp1;
+    delete fp2;
+  }
+  {
+    ROMol *m1 = SmilesToMol("N#C");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int64_t> *fp1;
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    delete m1;
+
+    m1 = SmilesToMol("N#[CH]");
+    SparseIntVect<boost::int64_t> *fp2;
+    fp2 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    TEST_ASSERT(fp2);
+    delete m1;
+
+    TEST_ASSERT(fp1->getTotalVal()==fp2->getTotalVal());
+    TEST_ASSERT(fp1->getNonzeroElements().size()==fp2->getNonzeroElements().size());
+    TEST_ASSERT(*fp1==*fp2);
+    delete fp1;
+    delete fp2;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -2864,6 +2919,7 @@ int main(int argc,char *argv[]){
   testMultithreadedPatternFP();
 #endif
   testGitHubIssue258();
+  testGitHubIssue334();
 
   return 0;
 }

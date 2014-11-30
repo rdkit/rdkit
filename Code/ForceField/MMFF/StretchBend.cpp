@@ -24,22 +24,18 @@ namespace ForceFields {
   namespace MMFF {
     namespace Utils {
 
-      std::pair<double, double> calcStbnForceConstants
-        (const std::pair<bool, const MMFFStbn *> mmffStbnParams)
+      std::pair<double, double> calcStbnForceConstants(const MMFFStbn *mmffStbnParams)
       {
-        PRECONDITION(mmffStbnParams.second, "stretch-bend parameters not found");
+        PRECONDITION(mmffStbnParams, "stretch-bend parameters not found");
         
-        return (mmffStbnParams.first
-          ? std::make_pair((mmffStbnParams.second)->kbaKJI, (mmffStbnParams.second)->kbaIJK)
-          : std::make_pair((mmffStbnParams.second)->kbaIJK, (mmffStbnParams.second)->kbaKJI));
+        return std::make_pair(mmffStbnParams->kbaIJK, mmffStbnParams->kbaKJI);
       }
 
       std::pair<double, double> calcStretchBendEnergy
         (const double deltaDist1, const double deltaDist2,
         const double deltaTheta, const std::pair<double, double> forceConstants)
       {
-        double const c5 = 2.51210;
-        double factor = c5 * deltaTheta;
+        double factor = MDYNE_A_TO_KCAL_MOL * DEG2RAD * deltaTheta;
         
         return std::make_pair(factor * forceConstants.first * deltaDist1,
           factor * forceConstants.second * deltaDist2);
@@ -48,9 +44,8 @@ namespace ForceFields {
     
     StretchBendContrib::StretchBendContrib(ForceField *owner,
       const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
-      const std::pair<bool, const MMFFStbn *> mmffStbnParams,
-      const MMFFAngle *mmffAngleParams, const MMFFBond *mmffBondParams1,
-      const MMFFBond *mmffBondParams2)
+      const MMFFStbn *mmffStbnParams,const MMFFAngle *mmffAngleParams,
+      const MMFFBond *mmffBondParams1, const MMFFBond *mmffBondParams2)
     {
       PRECONDITION(owner, "bad owner");
       PRECONDITION(((idx1 != idx2) && (idx2 != idx3) && (idx1 != idx3)), "degenerate points");
@@ -113,7 +108,7 @@ namespace ForceFields {
 
       RDGeom::Point3D p12 = (p1 - p2) / dist1;
       RDGeom::Point3D p32 = (p3 - p2) / dist2;
-      double const c5 = 2.51210;
+      double const c5 = MDYNE_A_TO_KCAL_MOL * DEG2RAD;
       double cosTheta = p12.dotProduct(p32);
       clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;

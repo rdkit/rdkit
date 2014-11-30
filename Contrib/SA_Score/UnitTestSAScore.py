@@ -1,19 +1,21 @@
+from __future__ import print_function
 from rdkit import RDConfig
 from rdkit import Chem
 import unittest,os.path
 import sascorer
-print sascorer.__file__
+print(sascorer.__file__)
 
 class TestCase(unittest.TestCase):
   def test1(self):
-   testData = [x.strip().split('\t') for x in file('data/zim.100.txt').readlines()]
-   testData.pop(0)
-   for row in testData:
-     smi = row[0]
-     m = Chem.MolFromSmiles(smi)
-     tgt = float(row[2])
-     val = sascorer.calculateScore(m)
-     self.failUnlessAlmostEqual(tgt,val,3)
+    with open('data/zim.100.txt') as f:
+      testData = [x.strip().split('\t') for x in f]
+    testData.pop(0)
+    for row in testData:
+      smi = row[0]
+      m = Chem.MolFromSmiles(smi)
+      tgt = float(row[2])
+      val = sascorer.calculateScore(m)
+      self.assertAlmostEqual(tgt,val,3)
 
 if __name__ == '__main__':
   import sys,getopt,re

@@ -201,6 +201,7 @@ MOLDESCR(numsaturatedheterocycles,MolNumSaturatedHeterocycles,INT32)
 MOLDESCR(numaromaticcarbocycles,MolNumAromaticCarbocycles,INT32)
 MOLDESCR(numaliphaticcarbocycles,MolNumAliphaticCarbocycles,INT32)
 MOLDESCR(numsaturatedcarbocycles,MolNumSaturatedCarbocycles,INT32)
+MOLDESCR(numheterocycles,MolNumHeterocycles,INT32)
 
 MOLDESCR(fractioncsp3,MolFractionCSP3,FLOAT4)
 MOLDESCR(chi0n,MolChi0n,FLOAT4)

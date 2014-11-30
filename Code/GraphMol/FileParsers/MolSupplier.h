@@ -240,7 +240,7 @@ namespace RDKit {
     ROMol *processLine(std::string inLine);
     void processTitleLine();
     std::string nextLine();
-    int skipComments();
+    long int skipComments();
     void checkForEnd();
     
     bool df_end; // have we reached the end of the file?

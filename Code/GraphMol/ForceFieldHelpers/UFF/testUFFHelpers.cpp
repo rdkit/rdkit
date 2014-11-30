@@ -25,6 +25,7 @@
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <boost/math/special_functions/round.hpp>
 
 using namespace RDKit;
 #if 1
@@ -883,6 +884,39 @@ void testGitHubIssue62() {
     BOOST_LOG(rdErrorLog) << "  done" << std::endl;
   }
 }
+void testUFFParamGetters()
+{
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test UFF force-field parameter getters." << std::endl;
+  {
+    ROMol *mol = SmilesToMol("c1ccccc1CCNN");
+    TEST_ASSERT(mol);
+    ROMol *molH = MolOps::addHs(*mol);
+    TEST_ASSERT(molH);
+    ForceFields::UFF::UFFBond uffBondStretchParams;
+    TEST_ASSERT(UFF::getUFFBondStretchParams(*molH, 6, 7, uffBondStretchParams));
+    TEST_ASSERT(((int)boost::math::round(uffBondStretchParams.kb * 1000) == 699592)
+      && ((int)boost::math::round(uffBondStretchParams.r0 * 1000) == 1514));
+    TEST_ASSERT(!UFF::getUFFBondStretchParams(*molH, 0, 7, uffBondStretchParams));
+    ForceFields::UFF::UFFAngle uffAngleBendParams;
+    TEST_ASSERT(UFF::getUFFAngleBendParams(*molH, 6, 7, 8, uffAngleBendParams));
+    TEST_ASSERT(((int)boost::math::round(uffAngleBendParams.ka * 1000) == 143325)
+      && ((int)boost::math::round(uffAngleBendParams.theta0 * 1000) == 109470));
+    TEST_ASSERT(!UFF::getUFFAngleBendParams(*molH, 0, 7, 8, uffAngleBendParams));
+    ForceFields::UFF::UFFTor uffTorsionParams;
+    TEST_ASSERT(UFF::getUFFTorsionParams(*molH, 6, 7, 8, 9, uffTorsionParams));
+    TEST_ASSERT(((int)boost::math::round(uffTorsionParams.V * 1000) == 976));
+    TEST_ASSERT(!UFF::getUFFTorsionParams(*molH, 0, 7, 8, 9, uffTorsionParams));
+    ForceFields::UFF::UFFInv uffInversionParams;
+    TEST_ASSERT(UFF::getUFFInversionParams(*molH, 6, 5, 4, 0, uffInversionParams));
+    TEST_ASSERT(((int)boost::math::round(uffInversionParams.K * 1000) == 2000));
+    TEST_ASSERT(!UFF::getUFFInversionParams(*molH, 6, 5, 4, 1, uffInversionParams));
+    ForceFields::UFF::UFFVdW uffVdWParams;
+    TEST_ASSERT(UFF::getUFFVdWParams(*molH, 0, 9, uffVdWParams));
+    TEST_ASSERT(((int)boost::math::round(uffVdWParams.x_ij * 1000) == 3754)
+      && ((int)boost::math::round(uffVdWParams.D_ij * 1000) == 85));
+  }
+}
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
@@ -983,6 +1017,7 @@ int main(){
   testIssue242();
   testSFIssue1653802();
   testSFIssue2378119();
+  testUFFParamGetters();
 #endif
   testMissingParams();
   testSFIssue3009337();

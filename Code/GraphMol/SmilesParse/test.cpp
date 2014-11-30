@@ -3173,6 +3173,7 @@ void testBug253(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     std::string csmiles1 = MolToSmiles(*m,true);
+    std::cerr<<"--"<<csmiles1<<std::endl;
     TEST_ASSERT(csmiles1=="C(CC1CCCCC12CCCCC2)C1CCCC1");
   }
 
@@ -3403,10 +3404,64 @@ void testGithub298(){
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==80);
     TEST_ASSERT(m->getNumBonds()==210);
-    
+    delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testGithub378(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong thing for odd dot-disconnected construct" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="C1.C1CO1.N1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,4));
+    TEST_ASSERT(m->getBondBetweenAtoms(3,4)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondBetweenAtoms(1,3));
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1(O.C1)CO1.N1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4));
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondBetweenAtoms(2,3));
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub389(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 389: Add option to SmilesWriter to allow writing of all explicit hydrogens" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="CCO";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    std::string csmiles=MolToSmiles(*m,true,false,-1,true,false,true);
+    TEST_ASSERT(csmiles!="");
+    TEST_ASSERT(csmiles.find("[CH3]")!=std::string::npos);
+    TEST_ASSERT(csmiles.find("[CH2]")!=std::string::npos);
+    TEST_ASSERT(csmiles.find("[OH]")!=std::string::npos);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -3464,5 +3519,7 @@ main(int argc, char *argv[])
   testGithub210();
 #endif
   testGithub298();
+  testGithub378();
+  testGithub389();
   //testBug1719046();
 }

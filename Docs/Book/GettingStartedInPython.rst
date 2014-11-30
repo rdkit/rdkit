@@ -548,6 +548,27 @@ MMFF-related methods.
 >>> AllChem.MMFFOptimizeMolecule(m2)
 0
 
+With the RDKit, also multiple conformers can be generated. The option numConfs allows the user to set the number of conformers that should be generated.
+These conformers can be aligned to each other and the RMS values calculated.
+
+>>> m = Chem.MolFromSmiles('C1CCC1OC')
+>>> m2=Chem.AddHs(m)
+>>> cids = AllChem.EmbedMultipleConfs(m2, numConfs=10)
+>>> print len(cids)
+10
+>>> for cid in cids:
+...    _ = AllChem.MMFFOptimizeMolecule(m2, confId=cid)
+>>> rmslist = []
+>>> AllChem.AlignMolConformers(m2, RMSlist=rmslist)
+>>> print len(rmslist)
+9
+
+rmslist contains the RMS values between the first conformer and all others.
+The RMS between two specific conformers (e.g. 1 and 9) can also be calculated. The flag prealigned lets the user specify if the conformers are already aligned (by default, the function aligns them).
+
+>>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
+
+More 3D functionality of the RDKit is described in the Cookbook.
 
 
 *Disclaimer/Warning*: Conformation generation is a difficult and subtle task.

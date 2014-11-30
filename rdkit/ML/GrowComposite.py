@@ -93,6 +93,7 @@
   - -V: print the version number and exit
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import numpy
 from rdkit.ML.Data import DataUtils,SplitData
@@ -377,18 +378,18 @@ def ShowVersion(includeArgs=0):
   """ prints the version number
 
   """
-  print 'This is GrowComposite.py version %s'%(__VERSION_STRING)
+  print('This is GrowComposite.py version %s'%(__VERSION_STRING))
   if includeArgs:
     import sys
-    print 'command line was:'
-    print ' '.join(sys.argv)
+    print('command line was:')
+    print(' '.join(sys.argv))
 
 def Usage():
   """ provides a list of arguments for when this is used from the command line
 
   """
   import sys
-  print __doc__
+  print(__doc__)
   sys.exit(-1)
 
 def SetDefaults(runDetails=None):
@@ -491,7 +492,7 @@ def ParseArgs(runDetails):
       ShowVersion()
       sys.exit(0)
     else:
-      print >>sys.stderr,'bad argument:',arg
+      print('bad argument:',arg,file=sys.stderr)
       Usage()
   runDetails.tableName=extra[0]
   if not runDetails.balDb:

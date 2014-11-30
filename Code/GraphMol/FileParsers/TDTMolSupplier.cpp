@@ -167,7 +167,7 @@ namespace RDKit {
   
   bool TDTMolSupplier::advanceToNextRecord(){
     PRECONDITION(dp_inStream,"no stream");
-    unsigned int pos;
+    std::streampos pos;
     bool res=false;
     while(1){
       if(dp_inStream->eof()) return false;
@@ -336,9 +336,9 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"no stream");
     unsigned int holder=d_last;
     moveTo(idx);
-    unsigned int begP=d_molpos[idx];
+    std::streampos begP=d_molpos[idx];
     bool endHolder=df_end;
-    unsigned int endP;
+    std::streampos endP;
     try {
       moveTo(idx+1);
       endP=d_molpos[idx+1];

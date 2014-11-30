@@ -37,7 +37,7 @@ Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
 import numpy, os
 from rdkit.RDLogger import logger
 logger = logger()
-
+import warnings
 def TransformMol(mol,tform,confId=-1,keepConfs=False):
   """  Applies the transformation (usually a 4x4 double matrix) to a molecule
   if keepConfs is False then all but that conformer are removed
@@ -175,12 +175,21 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
       If not provided, these will be generated using a substructure
       search.
 
+  Note: 
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial 
+  explosion' especially if hydrogens are present.  
+  Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing the
+  atom order.
+
   """
   if not maps:
     matches = ref.GetSubstructMatches(probe,uniquify=False)
     if not matches:
       raise ValueError('mol %s does not match mol %s'%(ref.GetProp('_Name'),
                                                        probe.GetProp('_Name')))
+    if len(matches) > 1e6: 
+      warnings.warn("{} matches detected for molecule {}, this may lead to a performance slowdown.".format(len(matches), probe.GetProp('_Name')))
     maps = [list(enumerate(match)) for match in matches]
   bestRMS=1000.
   for amap in maps:
@@ -229,7 +238,7 @@ def GetConformerRMS(mol,confId1,confId2,atomIds=None,prealigned=False):
   ssr /= mol.GetNumAtoms()
   return numpy.sqrt(ssr)
 
-def GetConformerRMSMatrix(mol,atomIds=None):
+def GetConformerRMSMatrix(mol,atomIds=None,prealigned=False):
   """ Returns the RMS matrix of the conformers of a molecule.
   As a side-effect, the conformers will be aligned to the first
   conformer (i.e. the reference) and will left in the aligned state.
@@ -238,6 +247,9 @@ def GetConformerRMSMatrix(mol,atomIds=None):
     - mol:     the molecule
     - atomIds: (optional) list of atom ids to use a points for
                alingment - defaults to all atoms
+    - prealigned: (optional) by default the conformers are assumed
+                  be unaligned and will therefore be aligned to the
+                  first conformer
     
   Note that the returned RMS matrix is symmetrically, i.e. it is the
   lower half of the matrix, e.g. for 5 conformers:
@@ -249,13 +261,17 @@ def GetConformerRMSMatrix(mol,atomIds=None):
   clustering.
       
   """
-  # align the conformers
+  # if necessary, align the conformers
   # Note: the reference conformer is always the first one
   rmsvals = []
-  if atomIds:
-    AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
-  else:
-    AlignMolConformers(mol, RMSlist=rmsvals)
+  if not prealigned:
+    if atomIds:
+      AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
+    else:
+      AlignMolConformers(mol, RMSlist=rmsvals)
+  else: # already prealigned
+    for i in range(1, mol.GetNumConformers()):
+      rmsvals.append(GetConformerRMS(mol, 0, i, atomIds=atomIds, prealigned=prealigned))
   # loop over the conformations (except the reference one)
   cmat = []
   for i in range(1, mol.GetNumConformers()):

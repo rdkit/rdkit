@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 lines= []
 lines.append("This is a test of the <i>stringformat</i> module.")
 lines.append("This module allows you to insert html-like formating tags")
@@ -8,12 +10,12 @@ lines.append("allows use of <b>boldface</b>, <i>italic</i>, <u>underline</u>, <s
 lines.append("<sub>sub</sub>script and greek letter symbols like &alpha;, &omega;, and &phi;, as") 
 lines.append("specified in MathML")
 
-print """
+print("""
 This is an example using formatted strings.  It renders its output to
 a portable document file called "formatted-strings.pdf" and a
 postscript file called "formatted-strings.ps" for viewing with Acrobat
 Reader or for printing to a postscript printer.
-"""
+""")
 
 
 import sping.stringformat
