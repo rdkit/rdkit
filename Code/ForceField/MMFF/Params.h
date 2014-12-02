@@ -49,8 +49,6 @@ namespace ForceFields {
       }
     }
 
-    void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg);
-    
     //! class to store MMFF atom type equivalence levels
     class MMFFDef {
     public:

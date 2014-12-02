@@ -20,6 +20,15 @@
 
 namespace ForceFields {
   namespace MMFF {
+    void _pretreatDihedrals(double &minDihedralDeg, double &maxDihedralDeg)
+    {
+      if (minDihedralDeg < 0.0) minDihedralDeg += 360.0;
+      if (maxDihedralDeg < 0.0) maxDihedralDeg += 360.0;
+      minDihedralDeg = fmod(minDihedralDeg, 360.0);
+      maxDihedralDeg = fmod(maxDihedralDeg, 360.0);
+      if (maxDihedralDeg < minDihedralDeg) maxDihedralDeg += 360.0;
+    }
+    
     TorsionConstraintContrib::TorsionConstraintContrib(ForceField *owner,
       unsigned int idx1, unsigned int idx2, unsigned int idx3,
       unsigned int idx4, double minDihedralDeg, double maxDihedralDeg,
@@ -30,7 +39,9 @@ namespace ForceFields {
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
       RANGE_CHECK(0, idx3, owner->positions().size() - 1);
       RANGE_CHECK(0, idx4, owner->positions().size() - 1);
-      _pretreatAngles(minDihedralDeg, maxDihedralDeg);
+      PRECONDITION((!(maxDihedralDeg < minDihedralDeg))
+        && ((maxDihedralDeg - minDihedralDeg) < 360.0), "bad bounds");
+      _pretreatDihedrals(minDihedralDeg, maxDihedralDeg);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
@@ -53,6 +64,8 @@ namespace ForceFields {
       RANGE_CHECK(0, idx2, pos.size() - 1);
       RANGE_CHECK(0, idx3, pos.size() - 1);
       RANGE_CHECK(0, idx4, pos.size() - 1);
+      PRECONDITION((!(maxDihedralDeg < minDihedralDeg))
+        && ((maxDihedralDeg - minDihedralDeg) < 360.0), "bad bounds");
 
       double dihedral = 0.0;
       if (relative) {
@@ -81,7 +94,7 @@ namespace ForceFields {
       d_at4Idx = idx4;
       minDihedralDeg += dihedral;
       maxDihedralDeg += dihedral;
-      _pretreatAngles(minDihedralDeg, maxDihedralDeg);
+      _pretreatDihedrals(minDihedralDeg, maxDihedralDeg);
       d_minDihedralDeg = minDihedralDeg;
       d_maxDihedralDeg = maxDihedralDeg;
       d_forceConstant = forceConst;
@@ -120,8 +133,7 @@ namespace ForceFields {
       // we want a signed dihedral, that's why we use atan2 instead of acos
       double dihedral = RAD2DEG * (-atan2(m.dotProduct(n234) / sqrt(n234SqLength * m.lengthSq()),
         n123.dotProduct(n234) / sqrt(n123SqLength * n234SqLength)));
-      double ave = 0.5 * (d_minDihedralDeg + d_maxDihedralDeg);
-      dihedral += 360.0 * boost::math::round((ave - dihedral) / 360.0);
+      if (dihedral < 0.0) dihedral += 360.0;
       double dihedralTerm = 0.0;
       if (dihedral < d_minDihedralDeg) {
         dihedralTerm = dihedral - d_minDihedralDeg;
@@ -189,9 +201,8 @@ namespace ForceFields {
       // we want a signed dihedral, that's why we use atan2 instead of acos
       double dihedral = RAD2DEG * (-atan2(m.dotProduct(n234) / sqrt(n234SqLength * m.lengthSq()),
         n123.dotProduct(n234) / sqrt(n123SqLength * n234SqLength)));
+      if (dihedral < 0.0) dihedral += 360.0;
       //double dihedral = RAD2DEG * acos(cosPhi);
-      double ave = 0.5 * (d_minDihedralDeg + d_maxDihedralDeg);
-      dihedral += 360.0 * boost::math::round((ave - dihedral) / 360.0);
       double dihedralTerm = 0.0;
       if (dihedral < d_minDihedralDeg) {
         dihedralTerm = dihedral - d_minDihedralDeg;
@@ -199,6 +210,7 @@ namespace ForceFields {
       else if (dihedral > d_maxDihedralDeg) {
         dihedralTerm = dihedral - d_maxDihedralDeg;
       }
+      if (dihedral > 180.0) dihedralTerm = -dihedralTerm;
       double dE_dPhi = DEG2RAD * d_forceConstant * dihedralTerm;
       
       // FIX: use a tolerance here
