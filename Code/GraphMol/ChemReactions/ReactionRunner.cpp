@@ -725,6 +725,7 @@ namespace RDKit {
         productConf->resize(product->getNumAtoms());
         generateProductConformers(productConf, *reactant, mapping);
       }
+      delete(mapping);
     } // end of addReactantAtomsAndBonds
 
 

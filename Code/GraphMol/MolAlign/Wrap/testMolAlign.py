@@ -380,8 +380,11 @@ class TestCase(unittest.TestCase):
           ms = []
           cids = [x.GetId() for x in multiConfMol.GetConformers()]
           for cid in cids:
-              newmol = Chem.MolToMolBlock(multiConfMol, confId=cid)
-              newmol = Chem.MolFromMolBlock(newmol, removeHs=False)
+              newmol = Chem.Mol(multiConfMol)
+              for ocid in cids:
+                if ocid==cid:
+                  continue
+                newmol.RemoveConformer(ocid)
               ms.append(newmol)
           return ms      
       reference = Chem.MolFromSmiles("c1ccccc1N2CCC(NS(=O)(=O)C(F)(F)F)CC2")

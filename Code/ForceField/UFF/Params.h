@@ -68,8 +68,6 @@ namespace ForceFields {
       double D_ij;
     };
 
-    void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg);
-
     //! class to store atomic parameters for the Universal Force Field
     class AtomicParams {
     public:

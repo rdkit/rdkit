@@ -21,6 +21,7 @@ def _getCanvas():
         useAGG=True
       except ImportError:
         from rdkit.Chem.Draw.spingCanvas import Canvas
+        useSping=True
   else:
     canv=os.environ['RDKIT_CANVAS'].lower()
     if canv =='cairo':
@@ -30,8 +31,10 @@ def _getCanvas():
       from rdkit.Chem.Draw.aggCanvas import Canvas
       useAGG=True
     else:
-      DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from rdkit.Chem.Draw.spingCanvas import Canvas      
+      useSping=True
+  if useSping:
+    DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
   return useAGG,useCairo,Canvas
 
 def _createCanvas(size):
