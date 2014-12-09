@@ -10,6 +10,7 @@ from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 def _getCanvas():
   useAGG=False
   useCairo=False
+  useSping=False
   Canvas=None
   if not os.environ.get('RDKIT_CANVAS',''):
     try:

@@ -15,23 +15,11 @@
 namespace python = boost::python;
 
 namespace RDKit {
-    typedef enum {
-        AtomCompareAny,
-        AtomCompareElements,
-        AtomCompareIsotopes
-    } AtomComparator_;
-    typedef enum {
-        BondCompareAny,
-        BondCompareOrder,
-        BondCompareOrderExact
-    } BondComparator_;
-
-
     MCSResult *FindMCSWrapper(python::object mols,bool maximizeBonds,double threshold,
                               unsigned timeout,bool verbose,
                               bool matchValences,
                               bool ringMatchesRingOnly,bool completeRingsOnly,
-                              AtomComparator_ atomComp, BondComparator_ bondComp) {
+                              AtomComparator atomComp, BondComparator bondComp) {
         std::vector<ROMOL_SPTR> ms;
         unsigned int nElems=python::extract<unsigned int>(mols.attr("__len__")());
         ms.resize(nElems);
@@ -39,38 +27,10 @@ namespace RDKit {
             if(!mols[i]) throw_value_error("molecule is None");
             ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
         }
-        MCSParameters *ps=new MCSParameters();
-        ps->MaximizeBonds=maximizeBonds;
-        ps->Threshold=threshold;
-        ps->Timeout=timeout;
-        ps->Verbose=verbose;
-        ps->AtomCompareParameters.MatchValences=matchValences;
-        switch(atomComp) {
-        case AtomCompareAny:
-            ps->AtomTyper=MCSAtomCompareAny;
-            break;
-        case AtomCompareElements:
-            ps->AtomTyper=MCSAtomCompareElements;
-            break;
-        case AtomCompareIsotopes:
-            ps->AtomTyper=MCSAtomCompareIsotopes;
-            break;
-        }
-        switch(bondComp) {
-        case BondCompareAny:
-            ps->BondTyper=MCSBondCompareAny;
-            break;
-        case BondCompareOrder:
-            ps->BondTyper=MCSBondCompareOrder;
-            break;
-        case BondCompareOrderExact:
-            ps->BondTyper=MCSBondCompareOrderExact;
-            break;
-        }
-        ps->BondCompareParameters.RingMatchesRingOnly=ringMatchesRingOnly;
-        ps->BondCompareParameters.CompleteRingsOnly=completeRingsOnly;
-        MCSResult *res=new MCSResult(findMCS(ms,ps));
-        delete ps;
+
+        MCSResult *res= new MCSResult(findMCS (ms,maximizeBonds,threshold,timeout,verbose,
+                                               matchValences,ringMatchesRingOnly,completeRingsOnly,
+                                               atomComp,bondComp));
         return res;
     }
 }
@@ -89,17 +49,16 @@ namespace {
 }
 
 BOOST_PYTHON_MODULE(rdFMCS) {
-
     python::scope().attr("__doc__") =
         "Module containing a C++ implementation of the FMCS algorithm";
     mcsresult_wrapper::wrap();
 
-    python::enum_<RDKit::AtomComparator_>("AtomCompare")
+    python::enum_<RDKit::AtomComparator>("AtomCompare")
     .value("CompareAny",RDKit::AtomCompareAny)
     .value("CompareElements",RDKit::AtomCompareElements)
     .value("CompareIsotopes",RDKit::AtomCompareIsotopes)
     ;
-    python::enum_<RDKit::BondComparator_>("BondCompare")
+    python::enum_<RDKit::BondComparator>("BondCompare")
     .value("CompareAny",RDKit::BondCompareAny)
     .value("CompareOrder",RDKit::BondCompareOrder)
     .value("CompareOrderExact",RDKit::BondCompareOrderExact)
