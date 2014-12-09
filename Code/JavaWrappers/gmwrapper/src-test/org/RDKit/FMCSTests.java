@@ -55,6 +55,23 @@ public class FMCSTests extends GraphMolTest {
                 assertEquals(false,mcs.getCanceled());
 
 	}
+	@Test 
+	public void test2Basics() {
+		ROMol_Vect mols = new ROMol_Vect();
+		mols.add(RWMol.MolFromSmiles("c1ccccc1OC"));
+		mols.add(RWMol.MolFromSmiles("c1ccccc1C"));
+		mols.add(RWMol.MolFromSmiles("c1c(C)cccc1OC"));
+		mols.add(RWMol.MolFromSmiles("C1CCCCC1C"));
+                
+                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,
+                                               AtomComparator.AtomCompareElements,
+                                               BondComparator.BondCompareAny);
+                assertEquals(6,mcs.getNumAtoms());
+                assertEquals(6,mcs.getNumBonds());
+                assertEquals("[#6]1:,-[#6]:,-[#6]:,-[#6]:,-[#6]:,-[#6]:,-1",mcs.getSmartsString());
+                assertEquals(false,mcs.getCanceled());
+
+	}
 
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FMCSTests");
