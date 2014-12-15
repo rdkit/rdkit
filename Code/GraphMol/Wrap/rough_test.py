@@ -2580,7 +2580,14 @@ CAS<~>
     self.assertEqual(len(frags[1]),4)
     self.assertEqual(len(frags[2]),2)
 
-    
+    pieces,cpa = Chem.FragmentOnSomeBonds(m,(0,2,4),2,returnCutsPerAtom=True)
+    self.assertEqual(len(pieces),3)
+    self.assertEqual(len(cpa),3)
+    self.assertEqual(len(cpa[0]),m.GetNumAtoms())
+    print(cpa)
+
+
+        
 if __name__ == '__main__':
   unittest.main()
 

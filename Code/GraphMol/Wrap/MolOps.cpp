@@ -36,7 +36,8 @@ namespace RDKit{
                                           unsigned int nToBreak,
                                           bool addDummies,
                                           python::object pyDummyLabels,
-                                          python::object pyBondTypes){
+                                          python::object pyBondTypes,
+                                          bool returnCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
@@ -59,8 +60,13 @@ namespace RDKit{
         (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
       }
     }
+    std::vector<std::vector<unsigned int> > *cutsPerAtom=0;
+    if(returnCutsPerAtom){
+      cutsPerAtom= new std::vector<std::vector<unsigned int> >;
+    }
+
     std::vector<ROMOL_SPTR> frags;
-    MolFragmenter::fragmentOnSomeBonds(mol,*bondIndices,frags,nToBreak,addDummies,dummyLabels,bondTypes);
+    MolFragmenter::fragmentOnSomeBonds(mol,*bondIndices,frags,nToBreak,addDummies,dummyLabels,bondTypes,cutsPerAtom);
     python::list res;
     for(unsigned int i=0;i<frags.size();++i){
       res.append(frags[i]);
@@ -68,13 +74,30 @@ namespace RDKit{
     delete bondIndices;
     delete dummyLabels;
     delete bondTypes;
-    return python::tuple(res);
+    if(cutsPerAtom){
+      python::list pyCutsPerAtom;
+      for(unsigned int i=0;i<cutsPerAtom->size();++i){
+        python::list localL;
+        for(unsigned int j=0;j<mol.getNumAtoms();++j){
+          localL.append((*cutsPerAtom)[i][j]);
+        }
+        pyCutsPerAtom.append(python::tuple(localL));
+      }
+      delete cutsPerAtom;
+      python::list tres;
+      tres.append(python::tuple(res));
+      tres.append(python::tuple(pyCutsPerAtom));
+      return python::tuple(tres);
+    } else {
+      return python::tuple(res);
+    }
   }
 
   ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
                                bool addDummies,
                                python::object pyDummyLabels,
-                               python::object pyBondTypes){
+                               python::object pyBondTypes,
+                               python::list pyCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
@@ -97,8 +120,24 @@ namespace RDKit{
         (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
       }
     }
+    std::vector<unsigned int> *cutsPerAtom=0;
+    if(pyCutsPerAtom){
+      cutsPerAtom= new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(pyCutsPerAtom.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("cutsPerAtom shorter than the number of atoms");
+      }
+      cutsPerAtom->resize(nAts);
+    }
     
-    ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes);
+    ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes,cutsPerAtom);
+    if(cutsPerAtom){
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        pyCutsPerAtom[i]=(*cutsPerAtom)[i];
+      }
+      delete cutsPerAtom;
+    }
+
     delete bondIndices;
     delete dummyLabels;
     delete bondTypes;
@@ -1529,6 +1568,7 @@ namespace RDKit{
           dummies are labeled with atom indices.\n\
       - bondTypes - used to provide the bond type to use between the\n\
           fragments and the dummy atoms. If not provided, defaults to single. \n\
+      - cutsPerAtom - used to return the number of cuts made at each atom. \n\
 \n\
   RETURNS:\n\
       a new Mol with the modifications\n\
@@ -1538,7 +1578,9 @@ namespace RDKit{
                    python::arg("bondIndices"),
                    python::arg("addDummies")=true,
                    python::arg("dummyLabels")=python::object(),
-                   python::arg("bondTypes")=python::object()),
+                   python::arg("bondTypes")=python::object(),
+                   python::arg("cutsPerAtom")=python::list()
+                   ),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
       docString="fragment on some bonds";
@@ -1548,7 +1590,9 @@ namespace RDKit{
                    python::arg("numToBreak")=1,
                    python::arg("addDummies")=true,
                    python::arg("dummyLabels")=python::object(),
-                   python::arg("bondTypes")=python::object()),
+                   python::arg("bondTypes")=python::object(),
+                   python::arg("returnCutsPerAtom")=false
+                   ),
                   docString.c_str());
 
 
