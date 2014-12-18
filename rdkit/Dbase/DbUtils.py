@@ -425,26 +425,26 @@ def DatabaseToDatabase(fromDb,fromTbl,toDb,toTbl,
    FIX: at the moment this is a hack
    
   """
-  import cStringIO
-  io = cStringIO.StringIO()
-  io.write(DatabaseToText(fromDb,fromTbl,fields=fields,join=join,where=where,
+  from io import StringIO
+  sio = StringIO()
+  sio.write(DatabaseToText(fromDb,fromTbl,fields=fields,join=join,where=where,
                           user=user,password=password))
-  io.seek(-1)
-  TextFileToDatabase(toDb,toTbl,io,user=user,password=password,keyCol=keyCol,
+  sio.seek(-1)
+  TextFileToDatabase(toDb,toTbl,sio,user=user,password=password,keyCol=keyCol,
                      nullMarker=nullMarker)
 
 
 if __name__=='__main__':
-  import cStringIO
+  from io import StringIO
 
-  io = cStringIO.StringIO()
-  io.write('foo,bar,baz\n')
-  io.write('1,2,3\n')
-  io.write('1.1,4,5\n')
-  io.write('4,foo,6\n')
-  io.seek(0)
+  sio = StringIO()
+  sio.write('foo,bar,baz\n')
+  sio.write('1,2,3\n')
+  sio.write('1.1,4,5\n')
+  sio.write('4,foo,6\n')
+  sio.seek(0)
   from rdkit import RDConfig
   import os
   dirLoc = os.path.join(RDConfig.RDCodeDir,'Dbase','TEST.GDB')
 
-  TextFileToDatabase(dirLoc,'fromtext',io)
+  TextFileToDatabase(dirLoc,'fromtext',sio)

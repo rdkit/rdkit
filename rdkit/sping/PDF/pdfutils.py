@@ -3,7 +3,7 @@
 from __future__ import print_function
 import os
 import string
-import cStringIO
+from io import StringIO
 
 LINEEND = '\015\012'
 
@@ -32,7 +32,7 @@ def cacheImageFile(filename):
     encoded = _AsciiBase85Encode(compressed) #...sadly this isn't
     
     #write in blocks of 60 characters per line
-    outstream = cStringIO.StringIO(encoded)
+    outstream = StringIO(encoded)
     dataline = outstream.read(60)
     while dataline != "":
         code.append(dataline)
@@ -111,7 +111,7 @@ def _AsciiHexEncode(input):
     """This is a verbose encoding used for binary data within
     a PDF file.  One byte binary becomes two bytes of ASCII."""
     "Helper function used by images"
-    output = cStringIO.StringIO()
+    output = StringIO()
     for char in input:
         output.write('%02x' % ord(char))
     output.write('>')
@@ -126,7 +126,7 @@ def _AsciiHexDecode(input):
     stripped = stripped[:-1]  #chop off terminator
     assert len(stripped) % 2 == 0, 'Ascii Hex stream has odd number of bytes'
     i = 0
-    output = cStringIO.StringIO()
+    output = StringIO()
     while i < len(stripped):
         twobytes = stripped[i:i+2]
         output.write(chr(eval('0x'+twobytes)))
@@ -150,7 +150,7 @@ def _AsciiBase85Encode(input):
     """This is a compact encoding used for binary data within
     a PDF file.  Four bytes of binary data become five bytes of
     ASCII.  This is the default method used for encoding images."""
-    outstream = cStringIO.StringIO()
+    outstream = StringIO()
     # special rules apply if not a multiple of four bytes.  
     whole_word_count, remainder_size = divmod(len(input), 4)
     cut = 4 * whole_word_count
@@ -217,7 +217,7 @@ def _AsciiBase85Encode(input):
 def _AsciiBase85Decode(input):
     """This is not used - Acrobat Reader decodes for you - but a round
     trip is essential for testing."""
-    outstream = cStringIO.StringIO()
+    outstream = StringIO()
     #strip all whitespace
     stripped = string.join(string.split(input),'')
     #check end

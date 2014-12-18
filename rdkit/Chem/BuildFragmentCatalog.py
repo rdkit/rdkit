@@ -556,7 +556,7 @@ if __name__=='__main__':
   import time
   details = RunDetails()
   ParseArgs(details)
-  from cStringIO import StringIO
+  from io import StringIO
   suppl = SupplierFromDetails(details)
 
   cat = None

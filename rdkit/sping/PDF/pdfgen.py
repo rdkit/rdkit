@@ -56,7 +56,7 @@ import sys
 import string
 import time
 import tempfile
-import cStringIO
+from io import StringIO
 import exceptions
 from types import *
 from math import sin, cos, tan, pi, ceil
@@ -613,7 +613,7 @@ class Canvas:
                 #write in blocks of (??) 60 characters per line to a list
                 compressed = imageFile.read()
                 encoded = pdfutils._AsciiBase85Encode(compressed)
-                outstream = cStringIO.StringIO(encoded)
+                outstream = StringIO(encoded)
                 dataline = outstream.read(60)
                 while dataline != "":
                     imagedata.append(dataline)
@@ -651,7 +651,7 @@ class Canvas:
             encoded = pdfutils._AsciiBase85Encode(compressed) #...sadly this isn't
 
             #write in blocks of (??) 60 characters per line to a list
-            outstream = cStringIO.StringIO(encoded)
+            outstream = StringIO(encoded)
             dataline = outstream.read(60)
             while dataline != "":
                 imagedata.append(dataline)

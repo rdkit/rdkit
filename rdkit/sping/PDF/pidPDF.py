@@ -16,8 +16,7 @@ self.pdf which offers numerous lower-level drawing routines.
 
 #standard python library modules
 import string
-import cStringIO
-import pdfmetrics
+import .pdfmetrics
 import glob
 import os
 import types
@@ -26,8 +25,8 @@ from math import sin, cos, pi, ceil
 # app specific
 from rdkit.sping import pagesizes
 from rdkit.sping.pid import *
-import pdfgen
-import pdfgeom
+import .pdfgen
+import .pdfgeom
 
 #edit this is the setting offends you, or set it in the constructor
 DEFAULT_PAGE_SIZE = pagesizes.A4

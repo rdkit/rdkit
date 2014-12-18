@@ -38,7 +38,8 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 #            convention: use flag _inXFlag
 from __future__ import print_function
 from rdkit.sping.pid import *
-import string, cStringIO
+import string
+from io import StringIO
 import psmetrics # for font info
 import exceptions
 import math
@@ -927,7 +928,7 @@ translate
        hex_encoded = self._AsciiHexEncode(rawimage)
        
        # write in blocks of 78 chars per line
-       outstream = cStringIO.StringIO(hex_encoded)
+       outstream = StringIO(hex_encoded)
 
        dataline = outstream.read(78)
        while dataline != "":
@@ -941,7 +942,7 @@ translate
        
     def _AsciiHexEncode(self, input):  # also based on piddlePDF
         "Helper function used by images"
-        output = cStringIO.StringIO()
+        output = StringIO()
         for char in input:
             output.write('%02x' % ord(char))
         output.reset()
@@ -1018,7 +1019,7 @@ translate
         hex_encoded = self._AsciiHexEncode(rawimage)
        
         # write in blocks of 78 chars per line
-        outstream = cStringIO.StringIO(hex_encoded)
+        outstream = StringIO(hex_encoded)
 
         dataline = outstream.read(78)
         while dataline != "":

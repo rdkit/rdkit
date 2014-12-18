@@ -19,7 +19,6 @@ import sys
 import string
 import time
 import tempfile
-import cStringIO
 from types import *
 from math import sin, cos, pi, ceil
 

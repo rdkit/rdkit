@@ -265,7 +265,7 @@ class QtCanvas( pid.Canvas ):
   def drawImage(self, image, x1,y1, x2=None,y2=None, **kwargs):
     """
     """
-    from cStringIO import StringIO
+    from io import StringIO
     sio = StringIO()
     image.save(sio,format='png')
     base = QPixmap()

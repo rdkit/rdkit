@@ -1,6 +1,6 @@
 from rdkit import RDConfig
 from rdkit.Dbase import DbUtils
-from cStringIO import StringIO
+from io import StringIO
 
 ferro_quant="""COMPOUND,MAX_DED,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,ISFERROMAGNETIC
 AlFe3,2,1,1,1,0,0,1
