@@ -170,14 +170,14 @@ def PrintDefaultMolRep(x):
 #Chem.Mol.__str__ = lambda x: '<img src="data:image/png;base64,%s" alt="Mol"/>'%get_image(Draw.MolToImage(x))
 Chem.Mol.__str__ = PrintAsBase64PNGString
 
-def _MolPlusFingerprintFromSmiles(smi):
+def _MolPlusFingerprint(m):
   '''Precomputes fingerprints and stores results in molecule objects to accelerate substructure matching
   '''
-  m = Chem.MolFromSmiles(smi)
+  #m = Chem.MolFromSmiles(smi)
   if m is not None:
     m._substructfp=_fingerprinter(m,False)
   return m
-  
+
 def RenderImagesInAllDataFrames(images=True):
   '''Changes the default dataframe rendering to not escape HTML characters, thus allowing rendered images in all dataframes.
   IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want to change the rendering only 
@@ -196,7 +196,7 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   if not includeFingerprints:
     frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprintFromSmiles(x[smilesCol]), axis=1) 
+    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1) 
   RenderImagesInAllDataFrames(images=True)
   #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
   #frame.head = types.MethodType(patchPandasHeadMethod,frame)
@@ -227,13 +227,17 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
     row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+    if not includeFingerprints:
+        row[molColName] = mol
+    else:
+        row[molColName] = _MolPlusFingerprint(mol)
     row = pd.DataFrame(row, index=[i])
     if df is None:
       df = row
     else:
       df = df.append(row)
   f.close()
-  AddMoleculeColumnToFrame(df, smilesCol=smilesName, molCol = molColName,includeFingerprints=includeFingerprints)
+  RenderImagesInAllDataFrames(images=True)
   return df
 
 from rdkit.Chem import SaltRemover
