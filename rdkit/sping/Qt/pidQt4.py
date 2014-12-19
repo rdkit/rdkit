@@ -29,7 +29,7 @@ Greg Landrum (glandrum@users.sourceforge.net)
 """
 
 from rdkit.sping import pid
-import string, os, types
+import types
 from PyQt4 import QtCore, QtGui, QtSvg
 from math import *
 import copy

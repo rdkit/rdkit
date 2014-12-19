@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from __future__ import print_function
 
 """piddleQt
 
@@ -35,7 +36,6 @@ Greg Landrum (Landrum@RationalDiscovery.com) 29 Octover, 2002
 """
 
 from rdkit.sping import pid
-import string, os, types
 from qt import *
 from qtcanvas import *
 from math import *
@@ -88,7 +88,7 @@ class QtCanvas( pid.Canvas ):
 
   def _initOutput(self):
     for obj in self.objs:
-      if type(obj)==types.TupleType:
+      if type(obj)==tuple:
         obj[0].hide()
       else:
         obj.hide()

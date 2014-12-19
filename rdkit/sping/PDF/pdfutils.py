@@ -4,6 +4,8 @@ from __future__ import print_function
 import os
 import string
 from io import StringIO
+from rdkit.six import string_types
+import glob
 
 LINEEND = '\015\012'
 
@@ -27,7 +29,7 @@ def cacheImageFile(filename):
     code.append('ID')
     #use a flate filter and Ascii Base 85
     raw = img.tostring()
-    assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
+    assert(len(raw) == imgwidth * imgheight, "Wrong amount of data for image")
     compressed = zlib.compress(raw)   #this bit is very fast...
     encoded = _AsciiBase85Encode(compressed) #...sadly this isn't
     
@@ -53,8 +55,7 @@ def preProcessImages(spec):
     of image filenames, crunches them all to save time.  Run this
     to save huge amounts of time when repeatedly building image
     documents."""
-    import types
-    if type(spec) is types.StringType:
+    if isinstance(spec, string_types):
         filelist = glob.glob(spec)
     else:  #list or tuple OK
         filelist = spec
@@ -163,7 +164,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(body[offset+2])
         b4 = ord(body[offset+3])
     
-        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
 
         if num == 0:
             #special case
@@ -194,7 +195,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(lastbit[2])
         b4 = ord(lastbit[3])
 
-        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
 
         #solve for c1..c5
         temp, c5 = divmod(num, 85)

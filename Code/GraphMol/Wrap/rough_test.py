@@ -822,7 +822,6 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m.GetNumAtoms()==23)
     m = six.next(sdSup)
     self.assertTrue(m)
-    print(m.GetNumAtoms())
     self.assertTrue(m.GetNumAtoms()==28)
 
     sdSup = Chem.SDMolSupplier(fileN,removeHs=False)
@@ -841,7 +840,6 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m.GetNumAtoms()==23)
     m = six.next(sdSup)
     self.assertTrue(m)
-    print(m.GetNumAtoms())
     self.assertTrue(m.GetNumAtoms()==28)
 
     sdSup.SetData(d,removeHs=False)

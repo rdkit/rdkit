@@ -65,7 +65,7 @@
 """
 from __future__ import print_function
 import sys,os
-from rdkit.six.moves import cPickle
+from rdkit.six.moves import cPickle  #@UnresolvedImport #pylint: disable=F0401
 from rdkit.six import next
 from rdkit import Chem
 from rdkit import RDConfig
