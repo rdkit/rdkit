@@ -476,6 +476,13 @@ void Atom::updatePropertyCache(bool strict) {
   calcImplicitValence(strict);
 }
 
+bool Atom::needsUpdatePropertyCache() const{
+  if(this->d_explicitValence >= 0 && this->d_implicitValence >=	0 ){
+	  return false;
+  }
+  return true;
+}
+
 // returns the number of swaps required to convert the ordering
 // of the probe list to match the order of our incoming bonds:
 //

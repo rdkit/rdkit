@@ -525,6 +525,18 @@ namespace RDKit{
     }
   }
 
+  bool ROMol::needsUpdatePropertyCache() const{
+    for(ConstAtomIterator atomIt=this->beginAtoms();
+      atomIt!=this->endAtoms();
+      ++atomIt){
+      if((*atomIt)->needsUpdatePropertyCache()){
+        return true;
+      }
+    }
+    // there is no test for bonds yet since they do not obtain a valence property
+    return false;
+  }
+
   const Conformer &ROMol::getConformer(int id) const {
     // make sure we have more than one conformation
     if (d_confs.size() == 0) {
