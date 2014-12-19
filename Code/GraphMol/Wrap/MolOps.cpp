@@ -28,10 +28,21 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 
+#include <GraphMol/MolDrawing/MolDrawing.h>
+#include <GraphMol/MolDrawing/DrawingToSVG.h>
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  std::string molToSVG(const ROMol &mol,python::object pyHighlightAtoms,bool kekulize,
+                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles){
+
+    std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
+
+    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(mol,highlightAtoms,kekulize,includeAtomCircles);
+    delete highlightAtoms;
+    return RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize,includeAtomCircles);
+  }
   python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,python::object pyBondIndices,
                                           unsigned int nToBreak,
                                           bool addDummies,
@@ -1633,6 +1644,15 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
+      // ------------------------------------------------------------------------
+      docString="Returns svg for a molecule";
+      python::def("MolToSVG", molToSVG,
+                  (python::arg("mol"),python::arg("highlightAtoms")=python::object(),
+                   python::arg("kekulize")=true,
+                   python::arg("lineWidthMult")=2,
+                   python::arg("fontSize")=50,
+                   python::arg("includeAtomCircles")=false),
+                  docString.c_str());
 
     };
   };
