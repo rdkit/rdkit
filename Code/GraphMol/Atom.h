@@ -470,6 +470,8 @@ namespace RDKit{
     */
     void updatePropertyCache(bool strict=true);
 
+    bool needsUpdatePropertyCache() const;
+
     //! calculates and returns our explicit valence
     /*!
       <b>Notes:</b>
