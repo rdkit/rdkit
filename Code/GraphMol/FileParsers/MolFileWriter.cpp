@@ -878,6 +878,9 @@ namespace RDKit{
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     // NOTE: kekulize the molecule before writing it out
     // because of the way mol files handle aromaticity
+    if(trwmol.needsUpdatePropertyCache()){
+      trwmol.updatePropertyCache(false);
+    }
     if(kekulize) MolOps::Kekulize(trwmol);
 
 #if 0
