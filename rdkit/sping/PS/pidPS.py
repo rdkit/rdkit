@@ -239,7 +239,7 @@ class PSCanvas(Canvas):
        Canvas.__init__(self,size,name)
        width, height = self.size = size
        self.filename = name
-        if len(name) < 3 or name[-3:].lower() != '.ps':
+       if len(name) < 3 or name[-3:].lower() != '.ps':
            self.filename = name + ".ps"
 
        # select between postscript level 1 or level 2
