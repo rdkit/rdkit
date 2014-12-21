@@ -21,6 +21,52 @@ namespace RDKit {
         RDKit::FMCS::MaximumCommonSubgraph fmcs(params);
         return fmcs.find(mols);
     }
+    MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols,
+                       bool maximizeBonds,
+                       double threshold,
+                       unsigned timeout,
+                       bool verbose,
+                       bool matchValences,
+                       bool ringMatchesRingOnly,
+                       bool completeRingsOnly,
+                       AtomComparator atomComp,
+                       BondComparator bondComp){ 
+        MCSParameters *ps=new MCSParameters();
+        ps->MaximizeBonds=maximizeBonds;
+        ps->Threshold=threshold;
+        ps->Timeout=timeout;
+        ps->Verbose=verbose;
+        ps->AtomCompareParameters.MatchValences=matchValences;
+        switch(atomComp) {
+        case AtomCompareAny:
+            ps->AtomTyper=MCSAtomCompareAny;
+            break;
+        case AtomCompareElements:
+            ps->AtomTyper=MCSAtomCompareElements;
+            break;
+        case AtomCompareIsotopes:
+            ps->AtomTyper=MCSAtomCompareIsotopes;
+            break;
+        }
+        switch(bondComp) {
+        case BondCompareAny:
+            ps->BondTyper=MCSBondCompareAny;
+            break;
+        case BondCompareOrder:
+            ps->BondTyper=MCSBondCompareOrder;
+            break;
+        case BondCompareOrderExact:
+            ps->BondTyper=MCSBondCompareOrderExact;
+            break;
+        }
+        ps->BondCompareParameters.RingMatchesRingOnly=ringMatchesRingOnly;
+        ps->BondCompareParameters.CompleteRingsOnly=completeRingsOnly;
+        MCSResult res=findMCS(mols,ps);
+        delete ps;
+        return res;
+    }
+
+
 
     bool MCSProgressCallbackTimeout(const MCSProgressData& stat, const MCSParameters &params, void* userData) {
         unsigned long long* t0 = (unsigned long long*)userData;
@@ -58,14 +104,14 @@ namespace RDKit {
     //=== BOND COMPARE ========================================================
 
     class BondMatchOrderMatrix {
-        bool MatchMatrix [Bond::OTHER+1] [Bond::OTHER+1];
+        bool MatchMatrix [Bond::ZERO+1] [Bond::ZERO+1];
     public:
         BondMatchOrderMatrix(bool ignoreAromatization) {
             memset(MatchMatrix, 0, sizeof(MatchMatrix));
-            for(size_t i=0; i <= Bond::OTHER; i++) { // fill cells of the same and unspecified type
+            for(size_t i=0; i <= Bond::ZERO; i++) { // fill cells of the same and unspecified type
                 MatchMatrix[i][i] = true;
                 MatchMatrix[Bond::UNSPECIFIED][i] = MatchMatrix[i][Bond::UNSPECIFIED] = true;
-                MatchMatrix[Bond::OTHER][i] = MatchMatrix[i][Bond::OTHER] = true;
+                MatchMatrix[Bond::ZERO][i] = MatchMatrix[i][Bond::ZERO] = true;
             }
             if(ignoreAromatization) {
                 MatchMatrix[Bond::SINGLE][Bond::AROMATIC] = MatchMatrix[Bond::AROMATIC][Bond::SINGLE] = true;

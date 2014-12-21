@@ -127,7 +127,6 @@ void testRoundTrip(){
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
   smi=MolToSmiles(*m,true);
-  std::cerr<<"smi: "<<smi<<std::endl;
   delete m;
   m=SmilesToMol(smi);
   TEST_ASSERT(m);

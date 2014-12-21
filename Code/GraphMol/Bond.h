@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 // FIX: grn...
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
+#include <GraphMol/details.h>
 
 namespace RDKit{
   class ROMol;
@@ -112,7 +113,7 @@ namespace RDKit{
     virtual Bond *copy() const;
 
     //! returns our \c bondType
-    BondType getBondType() const { return d_bondType; };
+    BondType getBondType() const { return static_cast<BondType>(d_bondType); };
     //! sets our \c bondType
     void setBondType(BondType bT) { d_bondType = bT; };
     //! \brief returns our \c bondType as a double
@@ -264,12 +265,12 @@ namespace RDKit{
     //! sets our direction
     void setBondDir(BondDir what) { d_dirTag = what; };
     //! returns our direction
-    BondDir getBondDir() const { return d_dirTag; };
+    BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); };
   
     //! sets our stereo code
     void setStereo(BondStereo what) { d_stereo = what; };
     //! returns our stereo code
-    BondStereo getStereo() const { return d_stereo; };
+    BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
 
     //! returns the indices of our stereo atoms
     const INT_VECT &getStereoAtoms() const { return d_stereoAtoms; };
@@ -414,17 +415,16 @@ namespace RDKit{
     //void setOwningMol(ROMol *other);
     //! sets our owning molecule
     //void setOwningMol(ROMol &other) {setOwningMol(&other);};
-    BondType d_bondType;
-    ROMol *dp_mol;
     bool df_isAromatic;
     bool df_isConjugated;
-    unsigned int d_index;
-    unsigned int d_beginAtomIdx,d_endAtomIdx;
-    BondDir d_dirTag;
-    BondStereo d_stereo;
-    INT_VECT d_stereoAtoms;
-    //Atom::ATOM_SPTR dsp_beginAtom,dsp_endAtom;
+    boost::uint8_t d_bondType;
+    boost::uint8_t d_dirTag;
+    boost::uint8_t d_stereo;
+    atomindex_t d_index;
+    atomindex_t d_beginAtomIdx,d_endAtomIdx;
+    ROMol *dp_mol;
     Dict *dp_props;
+    INT_VECT d_stereoAtoms;
 
     void initBond();
   };

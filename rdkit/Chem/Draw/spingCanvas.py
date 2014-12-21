@@ -26,16 +26,16 @@ def convertColor(color):
 class Canvas(CanvasBase):
   def __init__(self, size, name, imageType='png'):
     if imageType=="pdf":
-      from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
+      from rdkit.sping.PDF.pidPDF import PDFCanvas as _Canvas
     elif imageType=="ps":
-      from rdkit.sping.PS.pidPS import PSCanvas as Canvas
+      from rdkit.sping.PS.pidPS import PSCanvas as _Canvas  #@UnresolvedImport
     elif imageType=="svg":
-      from rdkit.sping.SVG.pidSVG import SVGCanvas as Canvas
+      from rdkit.sping.SVG.pidSVG import SVGCanvas as _Canvas
     elif imageType=="png":
-      from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
+      from rdkit.sping.PIL.pidPIL import PILCanvas as _Canvas
     else:
       raise ValueError('unrecognized format: %s'%imageType)
-    self.canvas = Canvas(size=size, name=name)
+    self.canvas = _Canvas(size=size, name=name)
     if hasattr(self.canvas,'_image'):
       self._image = self.canvas._image
     else:

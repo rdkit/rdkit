@@ -10,10 +10,10 @@
 #
 from __future__ import print_function
 import unittest,os,gzip
-from rdkit.six.moves import cPickle
+from rdkit.six.moves import cPickle  #@UnresolvedImport #pylint: disable=F0401
 from rdkit import Chem
 from rdkit import RDConfig
-from rdkit.Chem.AtomPairs import Pairs,Torsions
+from rdkit.Chem.AtomPairs import Pairs,Torsions,Utils
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -66,6 +66,14 @@ class TestCase(unittest.TestCase):
       self.assertTrue(tt==torsions[i])
       self.assertTrue(tt!=torsions[i-1])
 
+  def testGithub334(self):
+    m1 = Chem.MolFromSmiles('N#C')
+    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(0)),2)
+    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(1)),2)
+
+    m1 = Chem.MolFromSmiles('N#[CH]')
+    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(0)),2)
+    self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(1)),2)
 
 if __name__ == '__main__':
   unittest.main()

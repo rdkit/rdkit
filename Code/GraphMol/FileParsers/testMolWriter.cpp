@@ -1282,6 +1282,34 @@ void testGithub268(){
   }
 }  
 
+void testGithub357(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 357: Hydrogens in mol blocks have a valence value set" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("O");
+    TEST_ASSERT(m1);
+    ROMol *m2=MolOps::addHs(*m1);
+    TEST_ASSERT(m2);
+    delete m1;
+    std::string mb=MolToMolBlock(*m2);
+    TEST_ASSERT(mb.find("    0.0000    0.0000    0.0000 H   0  0  0  0  0  1")==std::string::npos);
+  }
+}
+
+void testNeedsUpdatePropertyCacheSDWriter(){
+  BOOST_LOG(rdInfoLog) << "testing test needsUpdatePropertyCache functionality in SDwriter" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("c1ccccc1[NH]C(=O)",0,false);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->needsUpdatePropertyCache()==true);
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    ROMol *m2=MolBlockToMol(mb);
+    TEST_ASSERT(m2);
+    delete m2;
+  }
+}
+
+
 
 int main() {
   RDLog::InitLogs();
@@ -1404,5 +1432,13 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub268();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub357();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testNeedsUpdatePropertyCacheSDWriter();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
 }

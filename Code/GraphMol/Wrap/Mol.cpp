@@ -369,6 +369,9 @@ struct mol_wrapper {
 	   (python::arg("self"),python::arg("strict")=true),
 	    "Regenerates computed properties like implicit valence and ring information.\n\n")
 
+       .def("NeedsUpdatePropertyCache", &ROMol::needsUpdatePropertyCache,
+        (python::arg("self")),
+         "Returns true or false depending on whether implicit and explicit valence of the molecule have already been calculated.\n\n")
 
       .def("GetPropNames",&ROMol::getPropList,
 	   (python::arg("self"),python::arg("includePrivate")=false,

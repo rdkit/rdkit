@@ -361,6 +361,51 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(d, distOS[i], 1)
       # molW.close()
 
+    def test14Github385(self):
+      """ test github issue 385:
+        O3A code generating incorrect results for multiconformer molecules
+      """
+      def _multiConfFromSmiles(smiles, nConfs=10, maxIters=500):
+          """Adds hydrogens to molecule and optimises a chosen number of conformers.  Returns the optimised RDKit mol."""
+          idea = Chem.MolFromSmiles(smiles)
+          idea = Chem.AddHs(idea)
+          confs = rdDistGeom.EmbedMultipleConfs(idea, nConfs)
+
+          for conf in confs:
+              opt = ChemicalForceFields.MMFFOptimizeMolecule(idea, confId=conf, maxIters=maxIters)
+          return idea
+      def _confsToAlignedMolsList(multiConfMol):
+          """Input is a multiconformer RDKit mol.  Output is an aligned set of conformers as a list of RDKit mols."""
+          rdMolAlign.AlignMolConformers(multiConfMol)
+          ms = []
+          cids = [x.GetId() for x in multiConfMol.GetConformers()]
+          for cid in cids:
+              newmol = Chem.Mol(multiConfMol)
+              for ocid in cids:
+                if ocid==cid:
+                  continue
+                newmol.RemoveConformer(ocid)
+              ms.append(newmol)
+          return ms      
+      reference = Chem.MolFromSmiles("c1ccccc1N2CCC(NS(=O)(=O)C(F)(F)F)CC2")
+      reference = Chem.AddHs(reference)
+      rdDistGeom.EmbedMolecule(reference)
+      idea1 = _multiConfFromSmiles("c1ccccc1C2CCCCC2", 10)      
+      
+      idea1_mols = _confsToAlignedMolsList(idea1)
+      cids = [x.GetId() for x in idea1.GetConformers()]
+
+      refParams = ChemicalForceFields.MMFFGetMoleculeProperties(reference)
+      prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(idea1)
+
+      for i in range(len(cids)):
+          o3a1 = rdMolAlign.GetO3A(idea1_mols[i],reference,prbParams,refParams)
+          score1 = o3a1.Score()
+
+          o3a2 = rdMolAlign.GetO3A(idea1,reference,prbParams,refParams,prbCid=cids[i])
+          score2 = o3a2.Score()
+          self.assertAlmostEqual(score1,score2,3)
+
 
 if __name__ == '__main__':
     print("Testing MolAlign Wrappers")

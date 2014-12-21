@@ -11,9 +11,8 @@ If you have questions or suggestions, please subscribe to the
 rdkit-discuss mailing list: 
 http://lists.sourceforge.net/mailman/listinfo/rdkit-discuss
 
-Please see the file license.txt for details about the "New BSD"
+Please see the file LICENSE for details about the "New BSD"
 license which covers this software and its associated data and
 documents. 
 
-# $Id$
-# Copyright (C) 2008-2013 Greg Landrum
+# Copyright (C) 2008-2015 Greg Landrum

@@ -136,6 +136,12 @@ def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
     Returns:
     the standard InChI string returned by InChI API for the input molecule
     """
+    if options.find('AuxNone')==-1:
+        if options:
+          options += " /AuxNone"
+        else:
+          options += "/AuxNone"
+          
     try:
         inchi, aux = MolToInchiAndAuxInfo(mol, options, logLevel=logLevel,
                 treatWarningAsError=treatWarningAsError)

@@ -10,7 +10,7 @@
 find_package(PythonInterp REQUIRED)
 IF(PYTHON_EXECUTABLE)
   FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/det_npp.py 
-       "try: import numpy; print numpy.get_include()\nexcept: pass\n")
+       "try: import numpy; print(numpy.get_include())\nexcept: pass\n")
   EXEC_PROGRAM("${PYTHON_EXECUTABLE}"
     ARGS "\"${CMAKE_CURRENT_BINARY_DIR}/det_npp.py\""
     OUTPUT_VARIABLE NUMPY_PATH

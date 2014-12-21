@@ -3,6 +3,7 @@
 #  Created by Greg Landrum August, 2006
 #
 #
+from __future__ import print_function
 from rdkit import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
@@ -75,11 +76,10 @@ Usage: TemplateExpand [options] template <sidechains>
 
 """
 def Usage():
-  import sys
-  print >>sys.stderr,_usage
+  print(_usage, file=sys.stderr)
   sys.exit(-1)
 
- 
+#pylint: disable=C0111,C0103,C0322,C0324,C0323
 nDumped=0 
 def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName='',
               resetCounter=True,do3D=False,useTethers=False):
@@ -114,9 +114,9 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
             except:
               import traceback
               traceback.print_exc()
-              print >>sys.stderr,Chem.MolToSmiles(r)
+              print(Chem.MolToSmiles(r), file=sys.stderr)
           else:
-            print >>sys.stderr,'>>> no match'
+            print('>>> no match', file=sys.stderr)
             AllChem.Compute2DCoords(r)
         else:
           r = Chem.AddHs(r)
@@ -162,8 +162,8 @@ def Explode(template,sidechains,outF,autoNames=True,do3D=False,useTethers=False)
                        templateName=templateName,do3D=do3D,useTethers=useTethers):
     outF.write(Chem.MolToMolBlock(mol))
     for pN in mol.GetPropNames():
-      print >>outF,'>  <%s>\n%s\n'%(pN,mol.GetProp(pN))
-    print >>outF,'$$$$'
+      print('>  <%s>\n%s\n'%(pN,mol.GetProp(pN)), file=outF)
+    print('$$$$', file=outF)
 
 def MoveDummyNeighborsToBeginning(mol,useAll=False):
   dummyPatt=Chem.MolFromSmiles('[*]')
@@ -245,8 +245,8 @@ def ConstructSidechains(suppl,sma=None,replace=True,useAll=False):
   return res
 
 if __name__=='__main__':
-  import getopt,sys
-  print >>sys.stderr,_greet
+  import getopt
+  print(_greet, file=sys.stderr)
   
   try:
     args,extras = getopt.getopt(sys.argv[1:],'o:h',[
@@ -320,7 +320,7 @@ if __name__=='__main__':
 
     
   if templateSmarts:
-    splitL = templateSmarts.split(' ')
+    splitL = templateSmarts.split(' ')   #pylint: disable=E1103
     templateSmarts = []
     for i,sma in enumerate(splitL):
       patt = Chem.MolFromSmarts(sma)
@@ -423,12 +423,12 @@ if __name__=='__main__':
     count *= len(chain)
   count *= len(templates)
   if not sidechains or not count:
-    print >>sys.stderr,"No molecules to be generated."
+    print("No molecules to be generated.", file=sys.stderr)
     sys.exit(0)
 
   if not forceIt and count>tooLong:
-    print >>sys.stderr,"This will generate %d molecules."%count
-    print >>sys.stderr,"Continue anyway? [no] ",
+    print("This will generate %d molecules."%count, file=sys.stderr)
+    print("Continue anyway? [no] ", file=sys.stderr, end='')
     sys.stderr.flush()
     ans = sys.stdin.readline().strip()
     if ans not in ('y','yes','Y','YES'):

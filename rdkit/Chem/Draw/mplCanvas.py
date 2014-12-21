@@ -15,7 +15,7 @@ from matplotlib.pyplot import figure
 #from matplotlib import textpath,font_manager
 import numpy
 
-from canvasbase import CanvasBase
+from rdkit.Chem.Draw.canvasbase import CanvasBase
 class Canvas(CanvasBase):
   def __init__(self, size, name='', imageType='png'):
     self._name = name

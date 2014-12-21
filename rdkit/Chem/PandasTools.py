@@ -215,7 +215,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
-def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False):
+def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False):
   """ Read file in SDF format and return as Panda data frame """
   df = None
   if type(filename) is str:
@@ -226,7 +226,7 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
-    row[smilesName] = Chem.MolToSmiles(mol)
+    row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
     row = pd.DataFrame(row, index=[i])
     if df is None:
       df = row
@@ -245,11 +245,11 @@ def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):
   '''
   frame[molCol] = frame.apply(lambda x: remover.StripMol(x[molCol]), axis = 1)
 
-def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
+def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmiles=False):
   '''
   Saves smi file. SMILES are generated from column with RDKit molecules. Column with names is optional.
   '''
-  w = Chem.SmilesWriter(outFile)
+  w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
   if NamesCol != '':
     for m,n in zip(frame[molCol], map(str,frame[NamesCol])):
       m.SetProp('_Name',n)
@@ -259,6 +259,67 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol=''):
     for m in frame[molCol]:
       w.write(m)
     w.close()
+
+import numpy as np
+import os
+from rdkit.six.moves import cStringIO as StringIO
+
+def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
+    """
+    Saves pandas DataFrame as a xlsx file with embedded images.
+    It maps numpy data types to excel cell types:
+    int, float -> number
+    datetime -> datetime
+    object -> string (limited to 32k character - xlsx limitations)
+ 
+    Cells with compound images are a bit larger than images due to excel.
+    Column width weirdness explained (from xlsxwriter docs):
+    The width corresponds to the column width value that is specified in Excel. 
+    It is approximately equal to the length of a string in the default font of Calibri 11. 
+    Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
+    This feature is only available at runtime from within Excel.
+    """
+    
+    import xlsxwriter # don't want to make this a RDKit dependency
+       
+    cols = list(frame.columns)
+    cols.remove(molCol)
+    dataTypes = dict(frame.dtypes)
+
+    workbook = xlsxwriter.Workbook(outFile) # New workbook
+    worksheet = workbook.add_worksheet() # New work sheet
+    worksheet.set_column('A:A', size[0]/6.) # column width
+    
+    # Write first row with column names
+    c2 = 1
+    for x in cols:
+        worksheet.write_string(0, c2, x)
+        c2 += 1
+    
+    c = 1
+    for index, row in frame.iterrows():
+        image_data = StringIO()
+        img = Draw.MolToImage(row[molCol], size=size)
+        img.save(image_data, format='PNG')
+        
+        worksheet.set_row(c, height=size[1]) # looks like height is not in px?
+        worksheet.insert_image(c, 0, "f", {'image_data': image_data})
+
+        c2 = 1
+        for x in cols:
+            if str(dataTypes[x]) == "object":
+                worksheet.write_string(c, c2, str(row[x])[:32000]) # string length is limited in xlsx
+            elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
+                if (row[x] != np.nan) or (row[x] != np.inf):
+                    worksheet.write_number(c, c2, row[x])
+            elif 'datetime' in str(dataTypes[x]):
+                worksheet.write_datetime(c, c2, row[x])
+            c2 += 1
+        c += 1
+
+    workbook.close()
+    image_data.close()
+
 
 def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
   '''
@@ -271,16 +332,15 @@ def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
   return img
 
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.Chem import MolToSmiles
 
 def AddMurckoToFrame(frame, molCol = 'ROMol', MurckoCol = 'Murcko_SMILES', Generic = False):
   '''
   Adds column with SMILES of Murcko scaffolds to pandas DataFrame. Generic set to true results in SMILES of generic framework.
   '''
   if Generic:
-    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
+    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
   else:
-    frame[MurckoCol] = frame.apply(lambda x: MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
+    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
 
 
 from rdkit.Chem import AllChem

@@ -8,14 +8,14 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from aggdraw import Brush, Pen
-from aggdraw import Font
+from aggdraw import Brush, Pen  #@UnresolvedImport #pylint: disable=F0401
+from aggdraw import Font  #@UnresolvedImport #pylint: disable=F0401
 import math
 from rdkit import RDConfig
 import os,re
 
-from aggdraw import Draw
-from canvasbase import CanvasBase
+from aggdraw import Draw  #@UnresolvedImport #pylint: disable=F0401
+from rdkit.Chem.Draw.canvasbase import CanvasBase
 
 faceMap={'sans':os.path.join(RDConfig.RDCodeDir,'Chem','Draw','FreeSans.ttf')}
 

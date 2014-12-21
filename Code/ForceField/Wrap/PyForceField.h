@@ -10,6 +10,7 @@
 //
 #include <ForceField/ForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
+#include <ForceField/MMFF/Params.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <algorithm>
@@ -76,6 +77,22 @@ namespace ForceFields {
     double getMMFFPartialCharge(unsigned int idx) {
       return mmffMolProperties->getMMFFPartialCharge(idx);
     };
+    PyObject *getMMFFBondStretchParams(const RDKit::ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2);
+    PyObject *getMMFFAngleBendParams(const RDKit::ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2,
+      const unsigned int idx3);
+    PyObject *getMMFFStretchBendParams(const RDKit::ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2,
+      const unsigned int idx3);
+    PyObject *getMMFFTorsionParams(const RDKit::ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2,
+      const unsigned int idx3, const unsigned int idx4);
+    PyObject *getMMFFOopBendParams(const RDKit::ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2,
+      const unsigned int idx3, const unsigned int idx4);
+    PyObject *getMMFFVdWParams
+      (const unsigned int idx1, const unsigned int idx2);
     void setMMFFDielectricModel(boost::uint8_t dielModel)
     {
       mmffMolProperties->setMMFFDielectricModel(dielModel);
@@ -122,4 +139,15 @@ namespace ForceFields {
     };
     boost::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
   };
+  PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2);
+  PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2, const unsigned int idx3);
+  PyObject *getUFFTorsionParams(const RDKit::ROMol &mol, const unsigned int idx1,
+    const unsigned int idx2, const unsigned int idx3, const unsigned int idx4);
+  PyObject *getUFFInversionParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3, const unsigned int idx4);
+  PyObject *getUFFVdWParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2);
 }

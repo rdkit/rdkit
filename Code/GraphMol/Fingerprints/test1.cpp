@@ -2204,6 +2204,16 @@ void testMACCS(){
     delete m1;
     delete fp1;
   }
+  {
+    // check that bit 44 "OTHER" gets properly set:
+    std::string smi = "CC[SeH]";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1=MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT((*fp1)[44]);
+    delete m1;
+    delete fp1;
+  }
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 

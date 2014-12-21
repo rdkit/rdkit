@@ -1039,6 +1039,38 @@ void testAtomResidues()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testNeedsUpdatePropertyCache()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing function needsUpdatePropertyCache" << std::endl;
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(0));
+    TEST_ASSERT(m.needsUpdatePropertyCache()==true);
+    m.updatePropertyCache();
+
+    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence()==0);
+    TEST_ASSERT(m.needsUpdatePropertyCache()==false);
+  }
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(6));
+    for(ROMol::AtomIterator atomIt=m.beginAtoms();
+      atomIt!=m.endAtoms(); ++atomIt){
+      (*atomIt)->calcExplicitValence(false);
+      (*atomIt)->calcImplicitValence(false);
+    }
+    m.addAtom(new Atom(6));
+    m.addBond(0,1,Bond::SINGLE);
+    TEST_ASSERT(m.needsUpdatePropertyCache()==true);
+    m.updatePropertyCache();
+    TEST_ASSERT(m.needsUpdatePropertyCache()==false);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -1062,6 +1094,8 @@ int main()
   testIssue284();
   testClearMol();
   testAtomResidues();
+  testNeedsUpdatePropertyCache();
+
 
   return 0;
 }

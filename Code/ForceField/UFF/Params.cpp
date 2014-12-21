@@ -27,23 +27,6 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
   namespace UFF {
 
-    void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg)
-    {
-      minDihedralDeg -= (floor(minDihedralDeg / 360.0) * 360.0);
-      maxDihedralDeg -= (floor(maxDihedralDeg / 360.0) * 360.0);
-      if (minDihedralDeg < 0.0) {
-        minDihedralDeg += 360.0;
-      }
-      if (maxDihedralDeg < 0.0) {
-        maxDihedralDeg += 360.0;
-      }
-      if (minDihedralDeg > maxDihedralDeg) {
-        double t = minDihedralDeg;
-        minDihedralDeg = maxDihedralDeg;
-        maxDihedralDeg = t;
-      }
-    }
-    
     class ParamCollection * ParamCollection::ds_instance = 0;
 
     extern const std::string defaultParamData;

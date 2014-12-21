@@ -12,7 +12,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
-#include <ForceField/MMFF/Params.h>
+#include <ForceField/MMFF/Nonbonded.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <boost/dynamic_bitset.hpp>
@@ -2381,6 +2381,7 @@ namespace RDKit {
     unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond)
     {
       PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+      PRECONDITION(bond, "invalid bond");
 
       MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
       const ForceFields::MMFF::MMFFProp *mmffPropAtom1 =
@@ -3408,6 +3409,234 @@ namespace RDKit {
         pChg = (1.0 - M * v) * q0 + v * sumFormalCharge + sumPartialCharge;
         this->setMMFFPartialCharge(atom->getIdx(), pChg);
       }
+    }
+
+    
+    bool MMFFMolProperties::getMMFFBondStretchParams(const ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2,
+      unsigned int &bondType, MMFFBond &mmffBondStretchParams)
+    {
+      MMFFBondCollection *mmffBond = MMFFBondCollection::getMMFFBond();
+      bool res = false;
+      if (isValid()) {
+        unsigned int iAtomType = getMMFFAtomType(idx1);
+        unsigned int jAtomType = getMMFFAtomType(idx2);
+        const Bond *bond = mol.getBondBetweenAtoms(idx1, idx2);
+        if (bond) {
+          bondType = getMMFFBondType(bond);
+          bool areMMFFBondParamsEmpirical = false;
+          const MMFFBond *mmffBondParams = (*mmffBond)(bondType, iAtomType, jAtomType);
+          if (!mmffBondParams) {
+            mmffBondParams = getMMFFBondStretchEmpiricalRuleParams(mol, bond);
+            areMMFFBondParamsEmpirical = true;
+          }
+          if (mmffBondParams) {
+            mmffBondStretchParams = *mmffBondParams;
+            if (areMMFFBondParamsEmpirical) {
+              delete mmffBondParams;
+            }
+            res = true;
+          }
+        }
+      }
+      return res;
+    }
+
+
+    bool MMFFMolProperties::getMMFFAngleBendParams(const ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+      unsigned int &angleType, MMFFAngle &mmffAngleBendParams)
+    {
+      bool res = false;
+      if (isValid() && mol.getBondBetweenAtoms(idx1, idx2)
+        && mol.getBondBetweenAtoms(idx2, idx3)) {
+        MMFFAngleCollection *mmffAngle = MMFFAngleCollection::getMMFFAngle();
+        MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+        unsigned int idx[3] = { idx1, idx2, idx3 };
+        MMFFBond mmffBondParams[2];
+        unsigned int atomType[3];
+        unsigned int i;
+        angleType = getMMFFAngleType(mol, idx1, idx2, idx3);
+        bool areMMFFAngleParamsEmpirical = false;
+        for (i = 0; i < 3; ++i) {
+          atomType[i] = getMMFFAtomType(idx[i]);
+        }
+        const MMFFAngle *mmffAngleParams = (*mmffAngle)(angleType, atomType[0], atomType[1], atomType[2]);
+        const MMFFProp *mmffPropParamsCentralAtom = (*mmffProp)(atomType[1]);
+        if ((!mmffAngleParams) || (isDoubleZero(mmffAngleParams->ka))) {
+          areMMFFAngleParamsEmpirical = true;
+          for (i = 0; areMMFFAngleParamsEmpirical && (i < 2); ++i) {
+            unsigned int bondType;
+            areMMFFAngleParamsEmpirical = getMMFFBondStretchParams
+              (mol, idx[i], idx[i + 1], bondType, mmffBondParams[i]);
+          }
+          if (areMMFFAngleParamsEmpirical) {
+            mmffAngleParams = getMMFFAngleBendEmpiricalRuleParams
+              (mol, mmffAngleParams, mmffPropParamsCentralAtom,
+              &mmffBondParams[0], &mmffBondParams[1], idx[0], idx[1], idx[2]);
+          }
+        }
+        if (mmffAngleParams) {
+          mmffAngleBendParams = *mmffAngleParams;
+          res = true;
+          if (areMMFFAngleParamsEmpirical) {
+            delete mmffAngleParams;
+          }
+        }
+      }
+      return res;
+    }
+
+
+    bool MMFFMolProperties::getMMFFStretchBendParams(const ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+      unsigned int &stretchBendType, MMFFStbn &mmffStretchBendParams,
+      MMFFBond mmffBondStretchParams[2], MMFFAngle &mmffAngleBendParams)
+    {
+      bool res = false;
+      if (isValid()) {
+        MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+        MMFFStbnCollection *mmffStbn = MMFFStbnCollection::getMMFFStbn();
+        MMFFDfsbCollection *mmffDfsb = MMFFDfsbCollection::getMMFFDfsb();
+        unsigned int idx[3] = { idx1, idx2, idx3 };
+        unsigned int atomType[3];
+        unsigned int bondType[2];
+        unsigned int angleType;
+        const MMFFProp *mmffPropParamsCentralAtom = (*mmffProp)(getMMFFAtomType(idx[1]));
+        if (!(mmffPropParamsCentralAtom->linh)) {
+          res = true;
+          unsigned int i = 0;
+          for (i = 0; i < 3; ++i) {
+            atomType[i] = getMMFFAtomType(idx[i]);
+          }
+          for (i = 0; res && (i < 2); ++i) {
+            res = getMMFFBondStretchParams(mol, idx[i], idx[i + 1],
+              bondType[i], mmffBondStretchParams[i]);
+          }
+          if (res) {
+            res = getMMFFAngleBendParams(mol, idx1, idx2, idx3,
+              angleType, mmffAngleBendParams);
+          }
+          std::pair<bool, const MMFFStbn *> mmffStbnParams;
+          if (res) {
+            stretchBendType = getMMFFStretchBendType
+              (angleType, (atomType[0] <= atomType[2]) ? bondType[0] : bondType[1],
+              (atomType[0] < atomType[2]) ? bondType[1] : bondType[0]);
+            mmffStbnParams = mmffStbn->getMMFFStbnParams(stretchBendType,
+              bondType[0], bondType[1], atomType[0], atomType[1], atomType[2]);
+            if (!(mmffStbnParams.second)) {
+              mmffStbnParams = mmffDfsb->getMMFFDfsbParams
+                (getPeriodicTableRow(mol.getAtomWithIdx(idx1)->getAtomicNum()),
+                getPeriodicTableRow(mol.getAtomWithIdx(idx2)->getAtomicNum()),
+                getPeriodicTableRow(mol.getAtomWithIdx(idx3)->getAtomicNum()));
+            }
+            res = (!(isDoubleZero((mmffStbnParams.second)->kbaIJK)
+              && isDoubleZero((mmffStbnParams.second)->kbaKJI)));
+          }
+          if (res) {
+            if (mmffStbnParams.first) {
+              mmffStretchBendParams.kbaIJK = (mmffStbnParams.second)->kbaKJI;
+              mmffStretchBendParams.kbaKJI = (mmffStbnParams.second)->kbaIJK;
+            }
+            else {
+              mmffStretchBendParams = *(mmffStbnParams.second);
+            }
+          }
+        }
+      }
+      return res;
+    }
+
+
+    bool MMFFMolProperties::getMMFFTorsionParams(const ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2,
+      const unsigned int idx3, const unsigned int idx4,
+      unsigned int &torsionType, MMFFTor &mmffTorsionParams)
+    {
+      bool res = false;
+      if (isValid() && mol.getBondBetweenAtoms(idx1, idx2)
+        && mol.getBondBetweenAtoms(idx2, idx3) && mol.getBondBetweenAtoms(idx3, idx4)) {
+        unsigned int i;
+        unsigned int idx[4] = { idx1, idx2, idx3, idx4 };
+        unsigned int atomType[4];
+        MMFFTorCollection *mmffTor = MMFFTorCollection::getMMFFTor(getMMFFVariant() == "MMFF94s");
+        for (i = 0; i < 4; ++i) {
+          atomType[i] = getMMFFAtomType(idx[i]);
+        }
+        const std::pair<unsigned int, unsigned int> torTypePair =
+          getMMFFTorsionType(mol, idx1, idx2, idx3, idx4);
+        bool areMMFFTorParamsEmpirical = false;
+        const std::pair<const unsigned int, const MMFFTor *> mmffTorPair =
+          mmffTor->getMMFFTorParams(torTypePair, atomType[0], atomType[1], atomType[2], atomType[3]);
+        torsionType = (mmffTorPair.first ? mmffTorPair.first : torTypePair.first);
+        const MMFFTor *mmffTorParams = mmffTorPair.second;
+        if (!mmffTorParams) {
+          torsionType = torTypePair.first;
+          mmffTorParams = getMMFFTorsionEmpiricalRuleParams(mol, idx2, idx3);
+          areMMFFTorParamsEmpirical = true;
+        }
+        res = (!(isDoubleZero(mmffTorParams->V1) && isDoubleZero(mmffTorParams->V2)
+          && isDoubleZero(mmffTorParams->V3)));
+        if (res) {
+          mmffTorsionParams = *mmffTorParams;
+        }
+        if(areMMFFTorParamsEmpirical){
+          delete mmffTorParams;
+        }
+      }
+      return res;
+    }
+
+
+    bool MMFFMolProperties::getMMFFOopBendParams(const ROMol &mol,
+      const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+      const unsigned int idx4, MMFFOop &mmffOopBendParams)
+    {
+      bool res = false;
+      if (isValid() && mol.getBondBetweenAtoms(idx1, idx2)
+        && mol.getBondBetweenAtoms(idx2, idx3) && mol.getBondBetweenAtoms(idx2, idx4)) {
+        unsigned int i;
+        unsigned int idx[4] = { idx1, idx2, idx3, idx4 };
+        unsigned int atomType[4];
+
+        MMFFOopCollection *mmffOop = MMFFOopCollection::getMMFFOop(getMMFFVariant() == "MMFF94s");
+        for (i = 0; i < 4; ++i) {
+          atomType[i] = getMMFFAtomType(idx[i]);
+        }
+        const MMFFOop *mmffOopParams = (*mmffOop)(atomType[0], atomType[1], atomType[2], atomType[3]);
+        // if no parameters could be found, we exclude this term (SURDOX02)
+        if (mmffOopParams) {
+          mmffOopBendParams = *mmffOopParams;
+          res = true;
+        }
+      }
+      return res;
+    }
+
+
+    bool MMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
+      const unsigned int idx2, MMFFVdWRijstarEps &mmffVdWParams)
+    {
+      bool res = false;
+      if (isValid()) {
+        MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
+        const unsigned int iAtomType = getMMFFAtomType(idx1);
+        const unsigned int jAtomType = getMMFFAtomType(idx2);
+        const MMFFVdW *mmffVdWParamsIAtom = (*mmffVdW)(iAtomType);
+        const MMFFVdW *mmffVdWParamsJAtom = (*mmffVdW)(jAtomType);
+        if (mmffVdWParamsIAtom && mmffVdWParamsJAtom) {
+          mmffVdWParams.R_ij_starUnscaled = Utils::calcUnscaledVdWMinimum
+            (mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
+          mmffVdWParams.epsilonUnscaled = Utils::calcUnscaledVdWWellDepth
+            (mmffVdWParams.R_ij_starUnscaled, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
+          mmffVdWParams.R_ij_star = mmffVdWParams.R_ij_starUnscaled;
+          mmffVdWParams.epsilon = mmffVdWParams.epsilonUnscaled;
+          Utils::scaleVdWParams(mmffVdWParams.R_ij_star, mmffVdWParams.epsilon,
+            mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
+          res = true;
+        }
+      }
+      return res;
     }
   }
 }

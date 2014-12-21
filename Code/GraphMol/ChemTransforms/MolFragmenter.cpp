@@ -284,7 +284,8 @@ namespace RDKit{
                              unsigned int maxToCut,
                              bool addDummies,
                              const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
-                             const std::vector< Bond::BondType > *bondTypes){
+                             const std::vector< Bond::BondType > *bondTypes,
+                             std::vector< std::vector<unsigned int> > *nCutsPerAtom){
       PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
       PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
       if(bondIndices.size()>63) throw ValueErrorException("currently can only fragment on up to 63 bonds");
@@ -309,7 +310,12 @@ namespace RDKit{
             ++nSeen;
           }
         }
-        ROMol *nm=fragmentOnBonds(mol,fragmentHere,addDummies,dummyLabelsHere,bondTypesHere);
+        std::vector<unsigned int> *lCutsPerAtom=0;
+        if(nCutsPerAtom){
+          nCutsPerAtom->push_back(std::vector<unsigned int>(mol.getNumAtoms()));
+          lCutsPerAtom=&(nCutsPerAtom->back());
+        }
+        ROMol *nm=fragmentOnBonds(mol,fragmentHere,addDummies,dummyLabelsHere,bondTypesHere,lCutsPerAtom);
         resMols.push_back(ROMOL_SPTR(nm));
         
         state = nextBitCombo(state);
@@ -321,9 +327,16 @@ namespace RDKit{
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                            bool addDummies,
                            const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
-                           const std::vector< Bond::BondType > *bondTypes){
+                           const std::vector< Bond::BondType > *bondTypes,
+                           std::vector<unsigned int> *nCutsPerAtom){
       PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
       PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
+      PRECONDITION( ( !nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms() ), "bad nCutsPerAtom vector");
+      if(nCutsPerAtom){
+        BOOST_FOREACH(unsigned int &nCuts,*nCutsPerAtom){
+          nCuts=0;
+        }
+      }
       RWMol *res=new RWMol(mol);
       std::vector<Bond *> bondsToRemove;
       bondsToRemove.reserve(bondIndices.size());
@@ -334,8 +347,12 @@ namespace RDKit{
         const Bond *bond=bondsToRemove[i];
         unsigned int bidx=bond->getBeginAtomIdx();
         unsigned int eidx=bond->getEndAtomIdx();
-	    Bond::BondType bT=bond->getBondType();
-        res->removeBond(bond->getBeginAtomIdx(),bond->getEndAtomIdx());
+        Bond::BondType bT=bond->getBondType();
+        res->removeBond(bidx,eidx);
+        if(nCutsPerAtom){
+          (*nCutsPerAtom)[bidx]+=1;
+          (*nCutsPerAtom)[eidx]+=1;
+        }
         if(addDummies){
           Atom *at1,*at2;
           at1 = new Atom(0);
@@ -366,7 +383,9 @@ namespace RDKit{
     }
 
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns,
-                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons){
+                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons,
+                           std::vector<unsigned int> *nCutsPerAtom){
+      PRECONDITION( ( !nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms() ), "bad nCutsPerAtom vector");
       std::vector<unsigned int> bondIndices;
       std::vector< std::pair<unsigned int,unsigned int> > dummyLabels;
       std::vector<Bond::BondType> bondTypes;
@@ -412,7 +431,7 @@ namespace RDKit{
           bondTypes.push_back(fbt.bondType);
         }
       }
-      return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes);
+      return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes,nCutsPerAtom);
     }
 
     boost::flyweight<std::vector<FragmenterBondType>,boost::flyweights::no_tracking> bondPatterns;

@@ -88,7 +88,7 @@ extern int yysmarts_debug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 52 "smarts.yy" /* yacc.c:1909  */
+#line 51 "smarts.yy" /* yacc.c:1909  */
 
   int                      moli;
   RDKit::QueryAtom * atom;

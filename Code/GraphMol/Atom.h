@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,6 +23,7 @@
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Dict.h>
+#include <GraphMol/details.h>
 
 namespace RDKit{
   class ROMol;
@@ -241,12 +242,12 @@ namespace RDKit{
     //! inverts our \c chiralTag
     void invertChirality();
     //! returns our \c chiralTag
-    ChiralType getChiralTag() const { return d_chiralTag; };
+    ChiralType getChiralTag() const { return static_cast<ChiralType>(d_chiralTag); };
 
     //! sets our hybridization
     void setHybridization(HybridizationType what) { d_hybrid = what; };
     //! returns our hybridization
-    HybridizationType getHybridization() const { return d_hybrid; };
+    HybridizationType getHybridization() const { return static_cast<HybridizationType>(d_hybrid); };
 
     // ------------------------------------
     // Some words of explanation before getting down into
@@ -469,6 +470,8 @@ namespace RDKit{
     */
     void updatePropertyCache(bool strict=true);
 
+    bool needsUpdatePropertyCache() const;
+
     //! calculates and returns our explicit valence
     /*!
       <b>Notes:</b>
@@ -496,20 +499,22 @@ namespace RDKit{
 
     bool df_isAromatic; 
     bool df_noImplicit;
-    int d_dativeFlag;
-    unsigned int d_numExplicitHs;
-    int d_formalCharge;
-    unsigned int d_atomicNum;
-    unsigned int d_index;
-    // NOTE that these cannot be signed ints, they are calculated using
+    boost::int8_t d_dativeFlag;
+    boost::uint8_t d_numExplicitHs;
+    boost::int8_t d_formalCharge;
+    boost::uint8_t d_atomicNum;
+    // NOTE that these cannot be signed, they are calculated using
     // a lazy scheme and are initialized to -1 to indicate that the
     // calculation has not yet been done.
-    int d_implicitValence, d_explicitValence;
-    unsigned int d_numRadicalElectrons;
-    ChiralType d_chiralTag;
-    HybridizationType d_hybrid;
-    double d_mass;
-    unsigned int d_isotope;
+    boost::int8_t d_implicitValence, d_explicitValence;
+    boost::uint8_t d_numRadicalElectrons;
+    boost::uint8_t d_chiralTag;
+    boost::uint8_t d_hybrid;
+
+    atomindex_t d_index;
+    boost::uint16_t d_isotope;
+
+    float d_mass;
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;

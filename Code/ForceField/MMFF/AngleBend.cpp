@@ -53,12 +53,11 @@ namespace ForceFields {
       {
         double angle = RAD2DEG * acos(cosTheta) - theta0;
         double const cb = -0.006981317;
-        double const c1 = 143.9325;
-        double const c2 = 0.043844;
+        double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
         double res = 0.0;
         
         if (isLinear) {
-          res = c1 * ka * (1.0 + cosTheta);
+          res = MDYNE_A_TO_KCAL_MOL * ka * (1.0 + cosTheta);
         }
         else {
           res = 0.5 * c2 * ka * angle * angle * (1.0 + cb * angle);
@@ -172,10 +171,9 @@ namespace ForceFields {
       // dE/dTheta is independent of cartesians:
       double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
       double const cb = -0.006981317;
-      double const c1 = 143.9325;
-      double const c2 = 0.043844;
+      double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
         
-      double dE_dTheta = (d_isLinear ? -c1 * d_ka * sinTheta
+      double dE_dTheta = (d_isLinear ? -MDYNE_A_TO_KCAL_MOL * d_ka * sinTheta
         : RAD2DEG * c2 * d_ka * angleTerm * (1.0 + 1.5 * cb * angleTerm));
     
       Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);

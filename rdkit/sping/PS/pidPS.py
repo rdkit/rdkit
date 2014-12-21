@@ -36,12 +36,14 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 
 #  DSC: plan uses flags for keeping track of BeginX/EndX pairs.
 #            convention: use flag _inXFlag
+#pylint: disable=W0311,E1103,E1101
 from __future__ import print_function
 from rdkit.sping.pid import *
-import string, cStringIO
-import psmetrics # for font info
+from io import StringIO
+from .import psmetrics # for font info
 import exceptions
 import math
+from rdkit.six import string_types
 
 class PostScriptLevelException(exceptions.ValueError):
     pass
@@ -237,7 +239,7 @@ class PSCanvas(Canvas):
        Canvas.__init__(self,size,name)
        width, height = self.size = size
        self.filename = name
-       if len(name) < 3 or string.lower(name[-3:]) != '.ps':
+       if len(name) < 3 or name[-3:].lower() != '.ps':
            self.filename = name + ".ps"
 
        # select between postscript level 1 or level 2
@@ -359,14 +361,14 @@ translate
     def _findFont(self,font):
 
         requested = font.face or "Serif"  # Serif is the default
-        if type(requested) == StringType:
+        if isinstance(requested, string_types):
             requested = [requested]
 
         # once again, fall back to default, redundant, no?
-        face = string.lower(PiddleLegalFonts["serif"])  
+        face = PiddleLegalFonts["serif"].lower()  
         for reqFace in requested:
-            if PiddleLegalFonts.has_key(string.lower(reqFace)):
-                face = string.lower(PiddleLegalFonts[string.lower(reqFace)])
+            if reqFace.lower() in PiddleLegalFonts:
+                face = PiddleLegalFonts[reqFace.lower()].lower()
                 break
 
         if font.bold:
@@ -407,7 +409,7 @@ translate
             }
 
         try:
-            face = piddle_font_map[string.lower(font.face)]
+            face = piddle_font_map[font.facereqFace.lower()]
         except:
             return 'Helvetica'
 
@@ -483,7 +485,7 @@ translate
         # save() will now become part of the spec.
         file = file or self.filename
         fileobj = getFileObject(file)
-        fileobj.write(string.join(self.code, linesep))
+        fileobj.write(self.code.join(linesep))
         # here's a hack. we might want to be able to add more after saving so
         # preserve the current code ???
         preserveCode = self.code        
@@ -501,7 +503,7 @@ translate
 
         self.psEndDocument()  # depends on _inDocumentFlag :(
 
-        fileobj.write(string.join(finalizationCode, linesep))
+        fileobj.write(finalizationCode.join(linesep))
         #  fileobj.close()  ### avoid this for now
         ## clean up my mess: This is not a good way to do things FIXME!!! ???
         self.code = preserveCode
@@ -602,9 +604,9 @@ translate
         # escaped" with backslashes."""
         # Have not handled characters that are converted normally in python strings
         # i.e. \n -> newline 
-        str = string.replace(s, chr(0x5C), r'\\' )
-        str = string.replace(str, '(', '\(' )
-        str = string.replace(str, ')', '\)')
+        str = s.replace(chr(0x5C), r'\\' )
+        str = str.replace('(', '\(' )
+        str = str.replace(')', '\)')
         return str 
 
     # ??? check to see if \n response is handled correctly (should move cursor down)
@@ -647,7 +649,7 @@ translate
         self._updateFont(font)
         if self._currentColor != transparent:
 
-            lines = string.split(s, '\n')   
+            lines = s.split('\n')   
             lineHeight = self.fontHeight(font)
 
             if angle == 0 :   # do special case of angle = 0 first. Avoids a bunch of gsave/grestore ops
@@ -927,7 +929,7 @@ translate
        hex_encoded = self._AsciiHexEncode(rawimage)
        
        # write in blocks of 78 chars per line
-       outstream = cStringIO.StringIO(hex_encoded)
+       outstream = StringIO(hex_encoded)
 
        dataline = outstream.read(78)
        while dataline != "":
@@ -941,7 +943,7 @@ translate
        
     def _AsciiHexEncode(self, input):  # also based on piddlePDF
         "Helper function used by images"
-        output = cStringIO.StringIO()
+        output = StringIO()
         for char in input:
             output.write('%02x' % ord(char))
         output.reset()
@@ -1018,7 +1020,7 @@ translate
         hex_encoded = self._AsciiHexEncode(rawimage)
        
         # write in blocks of 78 chars per line
-        outstream = cStringIO.StringIO(hex_encoded)
+        outstream = StringIO(hex_encoded)
 
         dataline = outstream.read(78)
         while dataline != "":

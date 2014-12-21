@@ -286,13 +286,13 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
 This SQL function makes that pattern easy::
 
   chembl_14=# create or replace function get_mfp2_neighbors(smiles text)
-        returns table(molregno numeric, m mol, similarity double precision) as
-      $$
-      select molregno,m,tanimoto_sml(morganbv_fp($1::mol),mfp2) as similarity
-      from rdk.fps join rdk.mols using (molregno) 
-      where morganbv_fp($1::mol)%mfp2 
-      order by morganbv_fp($1::mol)<%>mfp2;
-      $$ language sql stable ;
+      returns table(molregno integer, m mol, similarity double precision) as
+    $$
+    select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
+    from rdk.fps join rdk.mols using (molregno)
+    where morganbv_fp(mol_from_smiles($1::cstring))%mfp2
+    order by morganbv_fp(mol_from_smiles($1::cstring))<%>mfp2;
+    $$ language sql stable ;
   CREATE FUNCTION
   Time: 0.856 ms
   chembl_14=# 

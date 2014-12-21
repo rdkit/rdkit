@@ -17,8 +17,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <GraphMol/RDKitBase.h>
-#include <Geometry/point.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <Geometry/point.h>
 
 /***********
   Return Format: vector of ints
@@ -144,10 +144,12 @@ namespace RDKit {
     // **************************************************************************
     std::vector<ElementType> DrawMol(const ROMol &mol,int confId=-1,
                                      const std::vector<int> *highlightAtoms=0,
+                                     bool includeAtomCircles=false,
                                      unsigned int dotsPerAngstrom=100,
                                      double dblBondOffset=0.3,
                                      double dblBondLengthFrac=0.8,
-                                     double angstromsPerChar=0.20){
+                                     double angstromsPerChar=0.20
+                                     ){
       if(!mol.getRingInfo()->isInitialized()){
         MolOps::findSSSR(mol);
       }
@@ -383,14 +385,16 @@ namespace RDKit {
         std::string symbol;
         OrientType orient;
         boost::tie(symbol,orient)=atomSymbols[a1Idx];
-        if(symbol!=""){
+        if(symbol!="" || includeAtomCircles ){
           res.push_back(ATOM);
           res.push_back(mol[*bAts]->getAtomicNum());
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
           res.push_back(static_cast<ElementType>(symbol.length()));
-          BOOST_FOREACH(char c, symbol){
-            res.push_back(static_cast<ElementType>(c));
+          if(symbol.length()){
+            BOOST_FOREACH(char c, symbol){
+              res.push_back(static_cast<ElementType>(c));
+            }
           }
           res.push_back(static_cast<ElementType>(orient));
         }
@@ -402,7 +406,7 @@ namespace RDKit {
     }
 
     std::vector<int> MolToDrawing(const RDKit::ROMol &mol,const std::vector<int> *highlightAtoms=0,
-                                  bool kekulize=true){
+                                  bool kekulize=true,bool includeAtomCircles=false){
       RDKit::RWMol *cp = new RDKit::RWMol(mol);
       if(kekulize){
         try{
@@ -415,7 +419,7 @@ namespace RDKit {
       if(!mol.getNumConformers()) {
         RDDepict::compute2DCoords(*cp);
       }
-      std::vector<int> drawing=DrawMol(*cp,-1,highlightAtoms);
+      std::vector<int> drawing=DrawMol(*cp,-1,highlightAtoms,includeAtomCircles);
       delete cp;
       return drawing;
     }

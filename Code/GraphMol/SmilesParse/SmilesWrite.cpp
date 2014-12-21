@@ -39,7 +39,8 @@ namespace RDKit{
     }
 
 
-    std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
+    std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn,
+                              bool allHsExplicit){
       PRECONDITION(atom,"bad atom");
       INT_VECT atomicSmilesVect(atomicSmiles,
                                 atomicSmiles+(sizeof(atomicSmiles)-1)/sizeof(atomicSmiles[0]));
@@ -56,7 +57,7 @@ namespace RDKit{
         symb=PeriodicTable::getTable()->getElementSymbol(num);
       }
       //symb = atom->getSymbol();
-      if(inOrganicSubset(num)){
+      if(!allHsExplicit && inOrganicSubset(num)){
         // it's a member of the organic subset
         //if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
 
@@ -262,7 +263,7 @@ namespace RDKit{
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
                                         UINT_VECT &ranks,bool doKekule,bool canonical,
-                                        bool allBondsExplicit,
+                                        bool allBondsExplicit,bool allHsExplicit,
                                         std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,
                                         const std::vector<std::string> *atomSymbols=0,
@@ -296,7 +297,7 @@ namespace RDKit{
           }
           //std::cout<<"\t\tAtom: "<<mSE.obj.atom->getIdx()<<std::endl;
           if(!atomSymbols){
-            res << GetAtomSmiles(mSE.obj.atom,doKekule,bond);
+            res << GetAtomSmiles(mSE.obj.atom,doKekule,bond,allHsExplicit);
           } else {
             res << (*atomSymbols)[mSE.obj.atom->getIdx()];
           }
@@ -366,7 +367,7 @@ namespace RDKit{
 
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
-                          bool allBondsExplicit){
+                          bool allBondsExplicit,bool allHsExplicit){
     if(!mol.getNumAtoms()) return "";
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
@@ -445,7 +446,8 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,allBondsExplicit,
+                                                    ranks,doKekule,canonical,
+                                                    allBondsExplicit,allHsExplicit,
                                                     atomOrdering);
 
       res += subSmi;
@@ -467,7 +469,8 @@ namespace RDKit{
                                   bool doKekule,
                                   int rootedAtAtom,
                                   bool canonical,
-                                  bool allBondsExplicit){
+                                  bool allBondsExplicit,
+                                  bool allHsExplicit){
     PRECONDITION(atomsToUse.size(),
                  "no atoms provided");
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
@@ -601,7 +604,8 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,allBondsExplicit,
+                                                    ranks,doKekule,canonical,
+                                                    allBondsExplicit,allHsExplicit,
                                                     atomOrdering,
                                                     &bondsInPlay,
                                                     atomSymbols,bondSymbols);
