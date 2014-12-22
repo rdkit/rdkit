@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/RankAtoms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>

@@ -16,7 +16,6 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
-#include <GraphMol/RankAtoms.h>
 
 namespace RDKit {
   namespace Canon{
