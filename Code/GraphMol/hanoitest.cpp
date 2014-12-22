@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/roger_canon.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 

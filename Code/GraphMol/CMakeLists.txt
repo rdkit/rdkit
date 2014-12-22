@@ -6,7 +6,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp
-              roger_canon.cpp
+              new_canon.cpp
               SHARED 
               LINK_LIBRARIES RDGeometryLib RDGeneral 
                  ${RDKit_THREAD_LIBS})
@@ -35,6 +35,7 @@ rdkit_headers(Atom.h
               RWMol.h
               SanitException.h
               MonomerInfo.h
+              new_canon.h
               DEST GraphMol)
 
 add_subdirectory(Depictor)
