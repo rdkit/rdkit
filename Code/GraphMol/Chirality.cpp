@@ -10,7 +10,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/Ranking.h>
-#include <GraphMol/roger_canon.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <algorithm>

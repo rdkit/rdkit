@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include "roger_canon.h"
+#include "new_canon.h"
 
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>

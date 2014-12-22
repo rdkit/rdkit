@@ -14,7 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
-#include <GraphMol/roger_canon.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/RDLog.h>
 
 namespace RDKit {

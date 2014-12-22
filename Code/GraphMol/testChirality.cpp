@@ -17,7 +17,7 @@
 //#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
-#include <GraphMol/roger_canon.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
