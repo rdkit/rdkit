@@ -27,7 +27,6 @@ rdkit_headers(Atom.h
               QueryAtom.h
               QueryBond.h
               QueryOps.h
-              RankAtoms.h
               RDKitBase.h
               RDKitQueries.h
               RingInfo.h
