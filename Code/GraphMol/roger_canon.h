@@ -391,7 +391,7 @@ namespace RDKit {
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
-          const BOND_SPTR bond=(*dp_mol)[*beg];
+          const BOND_SPTR bond=(*dp_mol)[*beg++];
           if(bond->getOtherAtom(at)->getAtomicNum()==1) continue;
           int stereo=0;
           switch(bond->getStereo()){
@@ -404,9 +404,24 @@ namespace RDKit {
           default:
             stereo=0;
           }
-          nbrs.push_back(bondholder(Bond::SINGLE,stereo,
-                                    dp_atoms[bond->getOtherAtomIdx(i)].index+1));
-          ++beg;
+          unsigned int nReps;
+          switch(bond->getBondType()){
+          case Bond::SINGLE:
+            nReps=2;break;
+          case Bond::DOUBLE:
+            nReps=4;break;
+          case Bond::AROMATIC:
+            nReps=3;break;
+          case Bond::TRIPLE:
+            nReps=6;break;
+          default:
+            nReps = static_cast<unsigned int>(2.*bond->getBondTypeAsDouble());
+          }
+          while(nReps>0){
+            nbrs.push_back(bondholder(Bond::SINGLE,stereo,
+                                      dp_atoms[bond->getOtherAtomIdx(i)].index+1));
+            --nReps;
+          }
         }
         std::sort(nbrs.begin(),nbrs.end());
       }
