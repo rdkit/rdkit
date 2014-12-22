@@ -17,6 +17,7 @@
 //#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/roger_canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -1356,8 +1357,8 @@ void testBondDirRemoval(){
     std::string smi1=MolToSmiles(*m,true);
 
     // check removal of redundant bond direction information:
-    std::vector<int> oranks(m->getNumAtoms(),0);
-    MolOps::rankAtoms(*m,oranks);
+    std::vector<unsigned int> oranks(m->getNumAtoms(),0);
+    Canon::rankMolAtoms(*m,oranks);
     std::vector<Canon::AtomColors> colors(m->getNumAtoms());
     Canon::MolStack stack;
     std::vector<unsigned int> ranks(oranks.size());
