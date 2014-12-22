@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,22 +8,21 @@
 //  of the RDKit source tree.
 //
 
-//! \file RankAtoms.h
+//! \file Ranking.h
 /*!
-    \brief Utility functionality used by atom rankers.
+    \brief Utility functionality used to rank sequences
+
+    Much of this used to be in GraphMol/RankAtoms.h
 */
-#ifndef _RD_RANKATOMS_H_
-#define _RD_RANKATOMS_H_
+#ifndef RD_RANKING_H
+#define RD_RANKING_H
 
 #include <vector>
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/cstdint.hpp>
 
-namespace RDKit{
-  class ROMol;
-}
-namespace RankAtoms {
+namespace Rankers {
   //! functor for implementing > on two std::pairs.  The first entries are compared.
   template <typename T1, typename T2>
   struct pairGreater : public std::binary_function<std::pair<T1,T2>,std::pair<T1,T2>,bool> {

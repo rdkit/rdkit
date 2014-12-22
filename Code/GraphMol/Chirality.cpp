@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/RankAtoms.h>
+#include <RDGeneral/Ranking.h>
 #include <GraphMol/roger_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
@@ -131,7 +131,7 @@ namespace RDKit{
 #endif  
 
       // rank those:
-      RankAtoms::rankVect(invars,ranks);
+      Rankers::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
       for(unsigned int i=0;i<numAtoms;++i){
@@ -252,7 +252,7 @@ namespace RDKit{
         // 
         lastNumRanks=numRanks;
 
-        RankAtoms::rankVect(cipEntries,ranks);
+        Rankers::rankVect(cipEntries,ranks);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
 
         // now truncate each vector and stick the rank at the end
@@ -591,7 +591,7 @@ namespace RDKit{
             --unassignedAtoms;
 
             // sort the list of neighbors by their CIP ranks:
-            std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<int,int>());
+            std::sort(nbrs.begin(),nbrs.end(),Rankers::pairLess<int,int>());
 
             // collect the list of neighbor indices:
             std::list<int> nbrIndices;
