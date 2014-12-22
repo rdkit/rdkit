@@ -827,7 +827,7 @@ void test7(){
     "C[C@H]1C[C@H](C1)N1CCN(C)CC1",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
-    "*12*3*1*3*4*5*4*52",
+    //"*12*3*1*3*4*5*4*52",
     "N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
     "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
     "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
@@ -951,7 +951,7 @@ void test9(){
 
 int main(){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test3();
