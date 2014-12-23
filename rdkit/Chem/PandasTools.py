@@ -104,6 +104,8 @@ try:
 except Exception as e:
   pd = None
 
+highlightSubstructures=True
+
 
 def patchPandasHTMLrepr(self,**kwargs):
   '''
@@ -155,14 +157,28 @@ def _molge(x,y):
       y._substructfp=_fingerprinter(y,True)
     if not DataStructs.AllProbeBitsMatch(y._substructfp,x._substructfp):
       return False
-  return x.HasSubstructMatch(y)
+  match = x.GetSubstructMatch(y)
+  if match:
+    if highlightSubstructures:
+        x.__sssAtoms=list(match)
+    else:
+        x.__sssAtoms=[]
+    return True
+  else:
+    return False
+
 
 Chem.Mol.__ge__ = _molge # lambda x,y: x.HasSubstructMatch(y)
 
 def PrintAsBase64PNGString(x,renderer = None):
   '''returns the molecules as base64 encoded PNG image
   '''
-  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x))
+  if highlightSubstructures and hasattr(x,'__sssAtoms'):
+      highlightAtoms=x.__sssAtoms
+  else:
+      highlightAtoms=[]
+  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms))
+
 
 def PrintDefaultMolRep(x):
   return str(x.__repr__())
