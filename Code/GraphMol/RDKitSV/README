@@ -1,0 +1,15 @@
+This project contains a simple Qt-based program for displaying 2D
+molecule depictions and matching SMARTS patterns against them.  It
+uses the RDKit (www.rdkit.org) cheminformatics toolkit for the
+molecule handling.  It is primarily a vehicle for development of new
+drawing classes to replace the current ones in the RDKit toolkit.  It
+is, however, useful in its own right.
+
+It requires Qt5, Boost 1.54 or similar, RDKit at least 2013_03 and
+cmake version 2.8.9 or higher.
+
+It has only been tried on linux machines (Centos 6 and Ubuntu 14.04).
+There's no reason in principle why it shouldn't work on Windows and
+Macs, but I have nothing on which to try this.
+
+davidacosgroveaz@gmail.com
