@@ -18,6 +18,8 @@
 #include <cassert>
 #include <vector>
 
+//#define VERBOSE_CANON 1
+
 namespace RDKit {
   namespace Canon{
     struct canon_atom{
@@ -384,8 +386,9 @@ namespace RDKit {
         unsigned int res=0;
         const Atom *at=dp_atoms[i].atom;
         nbrs.resize(0);
-        nbrs.reserve(4);
+        nbrs.reserve(8);
         for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
+          nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
           nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
         }
         ROMol::OEDGE_ITER beg,end;
@@ -424,6 +427,8 @@ namespace RDKit {
           }
         }
         std::sort(nbrs.begin(),nbrs.end());
+        // FIX: don't want to be doing this long-term
+        std::reverse(nbrs.begin(),nbrs.end());
       }
 
       int basecomp(int i,int j) const {
@@ -454,7 +459,7 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
 
-        // first atom stereochem:
+        // atom stereochem:
         ivi=0;
         ivj=0;
         if(dp_atoms[i].atom->hasProp("_CIPCode")){

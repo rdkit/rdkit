@@ -867,6 +867,7 @@ void test8(){
 void test9(){
   BOOST_LOG(rdInfoLog) << "testing chiral invariants." << std::endl;
   std::string rdbase = getenv("RDBASE");
+
   {
     std::string smi="C[C@](F)(Cl)I";
     RWMol *m =SmilesToMol(smi,0,0);
@@ -942,7 +943,49 @@ void test9(){
     TEST_ASSERT(atomRanks[3]<atomRanks[11]);
   }
 
+  {
+    // are double bonds being handled correctly?
+    std::string smi="OC[C@H](F)C=O";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]<atomRanks[5]);
+    TEST_ASSERT(atomRanks[1]<atomRanks[4]);
+  }
+  {
+    // are double bonds being handled correctly?
+    std::string smi="O=C[C@H](F)CO";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]>atomRanks[5]);
+    TEST_ASSERT(atomRanks[1]>atomRanks[4]);
+  }
 
+  {
+    // are double bonds being handled correctly?
+    std::string smi="CC[C@](C)(CF)C=O";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[4]>atomRanks[6]);
+    TEST_ASSERT(atomRanks[1]<atomRanks[4]);
+  }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -957,9 +1000,9 @@ int main(){
   test4();
   test5();
   test6();
-#endif
   test7();
   test8();
+#endif
   test9();
   return 0;
 }
