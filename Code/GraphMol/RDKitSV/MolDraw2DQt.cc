@@ -139,9 +139,9 @@ void MolDraw2DQt::getStringSize( const string &label , float &label_width ,
 
   for( int i = 0 , is = label.length() ; i < is ; ++i ) {
 
-    // set_string_draw_mode moves i along to the end of any <sub> or <sup>
+    // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
-    if( '<' == label[i] && set_string_draw_mode( label , draw_mode , i ) ) {
+    if( '<' == label[i] && setStringDrawMode( label , draw_mode , i ) ) {
       continue;
     }
 

@@ -9,10 +9,10 @@
 // One purpose of this is to make it easier to overlay annotations on top of
 // the molecule drawing, which is difficult to do from the output of
 // MolDrawing.h
-// The class design philosophy echoes that of the OpenEye's original OEDepict
-// classes, with a virtual base class defining the interface and doing all
-// the heavy lifting and concrete derived classes that implement
-// library-specific drawing code such as drawing a line, writing a string
+// The class design philosophy echoes a standard one:
+// a virtual base class defines the interface and does all
+// the heavy lifting and concrete derived classes implement
+// library-specific drawing code such as drawing lines, writing strings
 // etc.
 
 #ifndef RDKITMOLDRAW2D_H
@@ -38,7 +38,7 @@ public :
   MolDraw2D( int width , int height );
   virtual ~MolDraw2D() {}
 
-  virtual void DrawMolecule( const ROMol &mol ,
+  virtual void drawMolecule( const ROMol &mol ,
                              const std::vector<int> &highlight_atoms = std::vector<int>() ,
                              const std::map<int,DrawColour> &highlight_map = std::map<int,DrawColour>() );
 
@@ -68,7 +68,7 @@ public :
   // establishes whether to put string draw mode into super- or sub-script
   // mode based on contents of instring from i onwards. Increments i appropriately
   // and returns true or false depending on whether it did something or not
-  bool set_string_draw_mode( const std::string &instring , int &draw_mode ,
+  bool setStringDrawMode( const std::string &instring , int &draw_mode ,
                              int &i ) const;
 
 private :
@@ -114,50 +114,50 @@ private :
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
-  DrawColour get_colour( int atom_idx ,
+  DrawColour getColour( int atom_idx ,
                          const std::vector<int> &highlight_atoms ,
                          const std::map<int,DrawColour> &highlight_map );
-  DrawColour get_colour_by_atomic_num( int atomic_num );
+  DrawColour getColourByAtomicNum( int atomic_num );
 
-  void extract_atom_coords( const ROMol &mol );
-  void extract_atom_symbols( const ROMol &mol );
+  void extractAtomCoords( const ROMol &mol );
+  void extractAtomSymbols( const ROMol &mol );
 
-  void draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
+  void drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                   int at1_idx , int at2_idx ,
                   const std::vector<int> &highlight_atoms ,
                   const std::map<int,DrawColour> &highlight_map );
-  void draw_wedged_bond( const std::pair<float,float> &cds1 ,
+  void drawWedgedBond( const std::pair<float,float> &cds1 ,
                          const std::pair<float,float> &cds2 ,
                          bool draw_dashed , const DrawColour &col1 ,
                          const DrawColour &col2 );
-  void draw_atom_label( int atom_num ,
+  void drawAtomLabel( int atom_num ,
                         const std::vector<int> &highlight_atoms ,
                         const std::map<int,DrawColour> &highlight_map );
 
   // calculate normalised perpendicular to vector between two coords
-  std::pair<float,float> calc_perpendicular( const std::pair<float,float> &cds1 ,
+  std::pair<float,float> calcPerpendicular( const std::pair<float,float> &cds1 ,
                                              const std::pair<float,float> &cds2 );
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing into
   // the ring.
-  std::pair<float,float> bond_inside_ring( const ROMol &mol , const BOND_SPTR &bond ,
+  std::pair<float,float> bondInsideRing( const ROMol &mol , const BOND_SPTR &bond ,
                                            const std::pair<float,float> &cds1 ,
                                            const std::pair<float,float> &cds2 );
   // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the perpendicular
   // pointing into the inside of the bond
-  std::pair<float,float> bond_inside_double_bond( const ROMol &mol , const BOND_SPTR &bond );
+  std::pair<float,float> bondInsideDoubleBond( const ROMol &mol , const BOND_SPTR &bond );
   // calculate normalised perpendicular to vector between two coords, such that
   // it's inside the angle made between (1 and 2) and (2 and 3).
-  std::pair<float,float> calc_inner_perpendicular( const std::pair<float,float> &cds1 ,
+  std::pair<float,float> calcInnerPerpendicular( const std::pair<float,float> &cds1 ,
                                                    const std::pair<float,float> &cds2 ,
                                                    const std::pair<float,float> &cds3 );
 
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to accommodate
   // the label associated with it.
-  void adjust_bond_end_for_label( int atnum , const std::pair<float,float> &nbr_cds ,
+  void adjustBondEndForLabel( int atnum , const std::pair<float,float> &nbr_cds ,
                                   std::pair<float,float> &cds ) const;
 
   // adds LaTeX-like annotation for super- and sub-script.
-  std::pair<std::string,OrientType> get_atom_symbol_and_orientation( const Atom &atom ,
+  std::pair<std::string,OrientType> getAtomSymbolAndOrientation( const Atom &atom ,
                                                                      const std::pair<float,float> &nbr_sum );
 };
 

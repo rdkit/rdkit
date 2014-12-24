@@ -27,13 +27,13 @@ width_( width ) , height_( height ) , scale_( 1.0 ) , x_trans_( 0.0 ) ,
 }
 
 // ****************************************************************************
-void MolDraw2D::DrawMolecule( const ROMol &mol ,
+void MolDraw2D::drawMolecule( const ROMol &mol ,
                               const vector<int> &highlight_atoms ,
                               const map<int,DrawColour> &highlight_map ) {
 
   clearDrawing();
-  extract_atom_coords( mol );
-  extract_atom_symbols( mol );
+  extractAtomCoords( mol );
+  extractAtomSymbols( mol );
   calculateScale();
   setFontSize( font_size_ );
 
@@ -48,7 +48,7 @@ void MolDraw2D::DrawMolecule( const ROMol &mol ,
       ++nbr;
       int nbr_idx = bond->getOtherAtomIdx( this_idx );
       if( nbr_idx < static_cast<int>( at_cds_.size() ) && nbr_idx > this_idx ) {
-        draw_bond( mol , bond , this_idx , nbr_idx , highlight_atoms ,
+        drawBond( mol , bond , this_idx , nbr_idx , highlight_atoms ,
                    highlight_map );
       }
     }
@@ -57,7 +57,7 @@ void MolDraw2D::DrawMolecule( const ROMol &mol ,
 
   for( int i = 0 , is = atom_syms_.size() ; i < is ; ++i ) {
     if( !atom_syms_[i].first.empty() ) {
-      draw_atom_label( i , highlight_atoms , highlight_map );
+      drawAtomLabel( i , highlight_atoms , highlight_map );
     }
   }
 
@@ -172,7 +172,7 @@ void MolDraw2D::calculateScale() {
 // establishes whether to put string draw mode into super- or sub-script
 // mode based on contents of instring from i onwards. Increments i appropriately
 // and returns true or false depending on whether it did something or not.
-bool MolDraw2D::set_string_draw_mode( const string &instring , int &draw_mode ,
+bool MolDraw2D::setStringDrawMode( const string &instring , int &draw_mode ,
                                       int &i ) const {
 
   string bit1 = instring.substr( i , 5 );
@@ -237,9 +237,9 @@ void MolDraw2D::drawString( const string &str ,
 
   for( int i = 0 , is = str.length() ; i < is ; ++i ) {
 
-    // set_string_draw_mode moves i along to the end of any <sub> or <sup>
+    // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
-    if( '<' == str[i] && set_string_draw_mode( str , draw_mode , i ) ) {
+    if( '<' == str[i] && setStringDrawMode( str , draw_mode , i ) ) {
       continue;
     }
 
@@ -270,11 +270,11 @@ void MolDraw2D::drawString( const string &str ,
 }
 
 // ****************************************************************************
-MolDraw2D::DrawColour MolDraw2D::get_colour( int atom_idx ,
+MolDraw2D::DrawColour MolDraw2D::getColour( int atom_idx ,
                                              const std::vector<int> &highlight_atoms ,
                                              const std::map<int,DrawColour> &highlight_map ) {
 
-  DrawColour retval = get_colour_by_atomic_num( atomic_nums_[atom_idx] );
+  DrawColour retval = getColourByAtomicNum( atomic_nums_[atom_idx] );
 
   // set contents of highlight_atoms to red
   if( highlight_atoms.end() != find( highlight_atoms.begin() ,
@@ -292,7 +292,7 @@ MolDraw2D::DrawColour MolDraw2D::get_colour( int atom_idx ,
 }
 
 // ****************************************************************************
-MolDraw2D::DrawColour MolDraw2D::get_colour_by_atomic_num( int atomic_num ) {
+MolDraw2D::DrawColour MolDraw2D::getColourByAtomicNum( int atomic_num ) {
 
   // RGB values taken from Qt's QColor. The seem to work pretty well on my
   // machine. Using them as fractions of 255, as that's the way Cairo does it.
@@ -316,7 +316,7 @@ MolDraw2D::DrawColour MolDraw2D::get_colour_by_atomic_num( int atomic_num ) {
 }
 
 // ****************************************************************************
-void MolDraw2D::extract_atom_coords( const ROMol &mol ) {
+void MolDraw2D::extractAtomCoords( const ROMol &mol ) {
 
   at_cds_.clear();
   atomic_nums_.clear();
@@ -332,7 +332,7 @@ void MolDraw2D::extract_atom_coords( const ROMol &mol ) {
 }
 
 // ****************************************************************************
-void MolDraw2D::extract_atom_symbols( const ROMol &mol ) {
+void MolDraw2D::extractAtomSymbols( const ROMol &mol ) {
 
   ROMol::VERTEX_ITER atom , end_atom;
   tie( atom , end_atom ) = mol.getVertices();
@@ -349,14 +349,14 @@ void MolDraw2D::extract_atom_symbols( const ROMol &mol ) {
       nbr_sum.first += at2_cds.first - at1_cds.first;
       nbr_sum.second += at2_cds.second - at1_cds.second;
     }
-    atom_syms_.push_back( get_atom_symbol_and_orientation( *at1 , nbr_sum ) );
+    atom_syms_.push_back( getAtomSymbolAndOrientation( *at1 , nbr_sum ) );
     atomic_nums_.push_back( at1->getAtomicNum() );
     ++atom;
   }
 }
 
 // ****************************************************************************
-void MolDraw2D::draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
+void MolDraw2D::drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                            int at1_idx , int at2_idx ,
                            const vector<int> &highlight_atoms ,
                            const map<int,DrawColour> &highlight_map ) {
@@ -368,17 +368,17 @@ void MolDraw2D::draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
   pair<float,float> at1_cds = at_cds_[at1_idx];
   pair<float,float> at2_cds = at_cds_[at2_idx];
 
-  adjust_bond_end_for_label( at1_idx , at2_cds , at1_cds );
-  adjust_bond_end_for_label( at2_idx , at1_cds , at2_cds );
+  adjustBondEndForLabel( at1_idx , at2_cds , at1_cds );
+  adjustBondEndForLabel( at2_idx , at1_cds , at2_cds );
 
-  DrawColour col1 = get_colour( at1_idx , highlight_atoms , highlight_map );
-  DrawColour col2 = get_colour( at2_idx , highlight_atoms , highlight_map );
+  DrawColour col1 = getColour( at1_idx , highlight_atoms , highlight_map );
+  DrawColour col2 = getColour( at2_idx , highlight_atoms , highlight_map );
 
   // it it's a double bond and one end is 1-connected, do two lines parallel
   // to the atom-atom line.
   if( ( bond->getBondType() == Bond::DOUBLE ) &&
       ( 1 == at1->getDegree() || 1 == at2->getDegree() ) ) {
-    pair<float,float> perp = calc_perpendicular( at1_cds , at2_cds );
+    pair<float,float> perp = calcPerpendicular( at1_cds , at2_cds );
     drawLine( make_pair( at1_cds.first + double_bond_offset * perp.first ,
                          at1_cds.second + double_bond_offset * perp.second ) ,
               make_pair( at2_cds.first + double_bond_offset * perp.first ,
@@ -398,9 +398,9 @@ void MolDraw2D::draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
       swap( col1 , col2 );
     }
     if( Bond::BEGINWEDGE == bond->getBondDir() ) {
-      draw_wedged_bond( at1_cds , at2_cds , false , col1 , col2 );
+      drawWedgedBond( at1_cds , at2_cds , false , col1 , col2 );
     } else {
-      draw_wedged_bond( at1_cds , at2_cds , true , col1 , col2 );
+      drawWedgedBond( at1_cds , at2_cds , true , col1 , col2 );
     }
   } else {
     // in all other cases, we will definitely want to draw a line between the
@@ -408,7 +408,7 @@ void MolDraw2D::draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
     drawLine( at1_cds , at2_cds , col1 , col2 );
     if( Bond::TRIPLE == bond->getBondType() ) {
       // 2 further lines, a bit shorter and offset on the perpendicular
-      pair<float,float> perp = calc_perpendicular( at1_cds , at2_cds );
+      pair<float,float> perp = calcPerpendicular( at1_cds , at2_cds );
       float dbo = 2.0 * double_bond_offset;
       float end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
       float end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
@@ -430,9 +430,9 @@ void MolDraw2D::draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
       pair<float,float> perp;
       if( mol.getRingInfo()->numBondRings( bond->getIdx() ) ) {
         // in a ring, we need to draw the bond inside the ring
-        perp = bond_inside_ring( mol , bond , at1_cds , at2_cds );
+        perp = bondInsideRing( mol , bond , at1_cds , at2_cds );
       } else {
-        perp = bond_inside_double_bond( mol , bond );
+        perp = bondInsideDoubleBond( mol , bond );
       }
       float dbo = 2.0 * double_bond_offset;
       float bv[2] = { at1_cds.first - at2_cds.first , at1_cds.second - at2_cds.second };
@@ -447,12 +447,12 @@ void MolDraw2D::draw_bond( const ROMol &mol , const BOND_SPTR &bond ,
 }
 
 // ****************************************************************************
-void MolDraw2D::draw_wedged_bond( const pair<float, float> &cds1 ,
+void MolDraw2D::drawWedgedBond( const pair<float, float> &cds1 ,
                                   const pair<float, float> &cds2 ,
                                   bool draw_dashed , const DrawColour &col1 ,
                                   const DrawColour &col2) {
 
-  pair<float,float> perp = calc_perpendicular( cds1 , cds2 );
+  pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
   pair<float,float> disp( 0.1 * perp.first , 0.1 * perp.second );
   pair<float,float> end1 , end2;
   end1.first = cds2.first + disp.first;
@@ -494,18 +494,18 @@ void MolDraw2D::draw_wedged_bond( const pair<float, float> &cds1 ,
 }
 
 // ****************************************************************************
-void MolDraw2D::draw_atom_label( int atom_num ,
+void MolDraw2D::drawAtomLabel( int atom_num ,
                                  const std::vector<int> &highlight_atoms ,
                                  const std::map<int,DrawColour> &highlight_map ) {
 
-  setColour( get_colour( atom_num , highlight_atoms , highlight_map ) );
+  setColour( getColour( atom_num , highlight_atoms , highlight_map ) );
   drawString( atom_syms_[atom_num].first , at_cds_[atom_num] );
 
 }
 
 // ****************************************************************************
 // calculate normalised perpendicular to vector between two coords
-pair<float,float> MolDraw2D::calc_perpendicular( const pair<float,float> &cds1 ,
+pair<float,float> MolDraw2D::calcPerpendicular( const pair<float,float> &cds1 ,
                                                  const pair<float,float> &cds2 ) {
 
   float bv[2] = { cds1.first - cds2.first , cds1.second - cds2.second };
@@ -520,7 +520,7 @@ pair<float,float> MolDraw2D::calc_perpendicular( const pair<float,float> &cds1 ,
 // ****************************************************************************
 // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing into
 // the ring
-pair<float,float> MolDraw2D::bond_inside_ring( const ROMol &mol , const BOND_SPTR &bond ,
+pair<float,float> MolDraw2D::bondInsideRing( const ROMol &mol , const BOND_SPTR &bond ,
                                                const pair<float,float> &cds1 ,
                                                const pair<float,float> &cds2 ) {
 
@@ -546,18 +546,18 @@ pair<float,float> MolDraw2D::bond_inside_ring( const ROMol &mol , const BOND_SPT
       // bond and bond2 are in the same ring, so use their vectors to define
       // the sign of the perpendicular.
       int atom3 = bond2->getOtherAtomIdx( bond->getBeginAtomIdx() );
-      return calc_inner_perpendicular( cds1 , cds2 , at_cds_[atom3] );
+      return calcInnerPerpendicular( cds1 , cds2 , at_cds_[atom3] );
     }
   }
 
-  return calc_perpendicular( cds1 , cds2 );
+  return calcPerpendicular( cds1 , cds2 );
 
 }
 
 // ****************************************************************************
 // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the perpendicular
 // pointing into the inside of the bond
-pair<float,float> MolDraw2D::bond_inside_double_bond( const ROMol &mol , const BOND_SPTR &bond ) {
+pair<float,float> MolDraw2D::bondInsideDoubleBond( const ROMol &mol , const BOND_SPTR &bond ) {
 
   // a chain double bond, were it looks nicer IMO if the 2nd line is inside
   // the angle of outgoing bond. Unless it's an allene, where nothing
@@ -584,7 +584,7 @@ pair<float,float> MolDraw2D::bond_inside_double_bond( const ROMol &mol , const B
     }
   }
 
-  return calc_inner_perpendicular( at_cds_[end_atom->getIdx()] ,
+  return calcInnerPerpendicular( at_cds_[end_atom->getIdx()] ,
       at_cds_[bond_atom->getIdx()] , at_cds_[at3] );
 
 }
@@ -592,11 +592,11 @@ pair<float,float> MolDraw2D::bond_inside_double_bond( const ROMol &mol , const B
 // ****************************************************************************
 // calculate normalised perpendicular to vector between two coords, such that
 // it's inside the angle made between (1 and 2) and (2 and 3).
-pair<float,float> MolDraw2D::calc_inner_perpendicular( const pair<float,float> &cds1 ,
+pair<float,float> MolDraw2D::calcInnerPerpendicular( const pair<float,float> &cds1 ,
                                                        const pair<float,float> &cds2 ,
                                                        const pair<float,float> &cds3 ) {
 
-  pair<float,float> perp = calc_perpendicular( cds1 , cds2 );
+  pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
   float v1[2] = { cds1.first - cds2.first , cds1.second - cds2.second };
   float v2[2] = { cds2.first - cds3.first , cds2.second - cds3.second };
   float obv[2] = { v1[0] - v2[0] , v1[1] - v2[1] };
@@ -615,7 +615,7 @@ pair<float,float> MolDraw2D::calc_inner_perpendicular( const pair<float,float> &
 // ****************************************************************************
 // take the coords for atnum, with neighbour nbr_cds, and move cds out to accommodate
 // the label associated with it.
-void MolDraw2D::adjust_bond_end_for_label( int atnum , const std::pair<float,float> &nbr_cds ,
+void MolDraw2D::adjustBondEndForLabel( int atnum , const std::pair<float,float> &nbr_cds ,
                                            std::pair<float,float> &cds ) const {
 
   if( atom_syms_[atnum].first.empty() ) {
@@ -663,7 +663,7 @@ void MolDraw2D::adjust_bond_end_for_label( int atnum , const std::pair<float,flo
 // ****************************************************************************
 // adds XML-like annotation for super- and sub-script, in the same manner
 // as MolDrawing.py. My first thought was for a LaTeX-like system, obviously...
-pair<string,MolDraw2D::OrientType> MolDraw2D::get_atom_symbol_and_orientation( const Atom &atom ,
+pair<string,MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation( const Atom &atom ,
                                                                                const pair<float, float> &nbr_sum ) {
 
   string symbol( "" );
