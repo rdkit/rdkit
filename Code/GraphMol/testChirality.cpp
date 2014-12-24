@@ -2062,7 +2062,7 @@ int main(){
   testChiralityFrom3D();
   testIterativeChirality();
   testBondDirRemoval();
-  testIssue2705543();
+  //testIssue2705543();
   testIssue2762917();
   testIssue3009911();
   testIssue3139534();
