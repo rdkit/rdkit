@@ -79,7 +79,7 @@ This can be reverted using the ChangeMoleculeRendering method
 from __future__ import print_function
 
 from base64 import b64encode
-import types
+import types,copy
 
 from rdkit.six import BytesIO
 from rdkit import Chem
@@ -103,6 +103,8 @@ try:
     defPandasRendering = pd.core.frame.DataFrame.to_html
 except Exception as e:
   pd = None
+
+highlightSubstructures=True
 
 
 def patchPandasHTMLrepr(self,**kwargs):
@@ -155,14 +157,28 @@ def _molge(x,y):
       y._substructfp=_fingerprinter(y,True)
     if not DataStructs.AllProbeBitsMatch(y._substructfp,x._substructfp):
       return False
-  return x.HasSubstructMatch(y)
+  match = x.GetSubstructMatch(y)
+  if match:
+    if highlightSubstructures:
+        x.__sssAtoms=list(match)
+    else:
+        x.__sssAtoms=[]
+    return True
+  else:
+    return False
+
 
 Chem.Mol.__ge__ = _molge # lambda x,y: x.HasSubstructMatch(y)
 
 def PrintAsBase64PNGString(x,renderer = None):
   '''returns the molecules as base64 encoded PNG image
   '''
-  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x))
+  if highlightSubstructures and hasattr(x,'__sssAtoms'):
+      highlightAtoms=x.__sssAtoms
+  else:
+      highlightAtoms=[]
+  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms))
+
 
 def PrintDefaultMolRep(x):
   return str(x.__repr__())
@@ -170,14 +186,14 @@ def PrintDefaultMolRep(x):
 #Chem.Mol.__str__ = lambda x: '<img src="data:image/png;base64,%s" alt="Mol"/>'%get_image(Draw.MolToImage(x))
 Chem.Mol.__str__ = PrintAsBase64PNGString
 
-def _MolPlusFingerprintFromSmiles(smi):
+def _MolPlusFingerprint(m):
   '''Precomputes fingerprints and stores results in molecule objects to accelerate substructure matching
   '''
-  m = Chem.MolFromSmiles(smi)
+  #m = Chem.MolFromSmiles(smi)
   if m is not None:
     m._substructfp=_fingerprinter(m,False)
   return m
-  
+
 def RenderImagesInAllDataFrames(images=True):
   '''Changes the default dataframe rendering to not escape HTML characters, thus allowing rendered images in all dataframes.
   IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want to change the rendering only 
@@ -196,7 +212,7 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   if not includeFingerprints:
     frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprintFromSmiles(x[smilesCol]), axis=1) 
+    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1) 
   RenderImagesInAllDataFrames(images=True)
   #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
   #frame.head = types.MethodType(patchPandasHeadMethod,frame)
@@ -215,8 +231,8 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
-def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False):
-  """ Read file in SDF format and return as Panda data frame """
+def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None):
+  """ Read file in SDF format and return as Pandas data frame """
   df = None
   if type(filename) is str:
     f = open(filename, 'rb') #'rU')
@@ -226,15 +242,52 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
-    row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+    if smilesName is not None:
+      row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+    if not includeFingerprints:
+        row[molColName] = mol
+    else:
+        row[molColName] = _MolPlusFingerprint(mol)
     row = pd.DataFrame(row, index=[i])
     if df is None:
       df = row
     else:
       df = df.append(row)
   f.close()
-  AddMoleculeColumnToFrame(df, smilesCol=smilesName, molCol = molColName,includeFingerprints=includeFingerprints)
+  RenderImagesInAllDataFrames(images=True)
   return df
+
+from rdkit.Chem import SDWriter
+
+def WriteSDF(df,out,molColumn,properties=None,allNumeric=False,titleColumn=None):
+  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specific in the "properties" list.
+   The "allNumeric" flag allows to automatically include all numeric columns in the output.
+   "titleColumn" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
+  '''
+  writer = SDWriter(out)
+  if properties is None:
+    properties=[]
+  if allNumeric:   
+    properties.extend([dt for dt in df.dtypes.keys() if (np.issubdtype(df.dtypes[dt],float) or np.issubdtype(df.dtypes[dt],int))])
+    
+  if molColumn in properties:
+    properties.remove(molColumn)
+  if titleColumn in properties:
+    properties.remove(titleColumn)
+  writer.SetProps(properties)
+  for row in df.iterrows():
+    mol = copy.deepcopy(row[1][molColumn])
+    if titleColumn is not None:
+      if titleColumn == 'RowID':
+        mol.SetProp('_Name',str(row[0]))
+      else:
+        mol.SetProp('_Name',row[1][titleColumn])
+    for p in properties:
+      mol.SetProp(p,str(row[1][p]))
+    writer.write(mol)
+  writer.close()
+    
+
 
 from rdkit.Chem import SaltRemover
 remover = SaltRemover.SaltRemover()
