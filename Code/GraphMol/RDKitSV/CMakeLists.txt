@@ -37,13 +37,13 @@ include_directories(
 
 set(EXECUTABLE_OUTPUT_PATH ${RDKitSV_SOURCE_DIR}/exe_${CMAKE_BUILD_TYPE})
 
+add_library(MolDraw2D SHARED MolDraw2D.cc MolDraw2DQt.cc )
+
 set( RDKitSV_SRCS ${RDKitSV_SOURCE_DIR}/QTDemo/rdkitsv_main.cc
   ${RDKitSV_SOURCE_DIR}/QTDemo/MolDisplay2DWidget.cc
   ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVMainWindow.cc
   ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVPanel.cc
   ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVSettings.cc
-  ${RDKitSV_SOURCE_DIR}/MolDraw2D.cc
-  ${RDKitSV_SOURCE_DIR}/MolDraw2DQt.cc
   ${RDKitSV_SOURCE_DIR}/QTDemo/QTGet2Strings.cc
   ${RDKitSV_SOURCE_DIR}/QTDemo/QT4SelectItems.cc )
 
@@ -63,5 +63,5 @@ set( LIBS ${Qt5Widgets_LIBRARIES}
 
 add_executable( rdkitsv ${RDKitSV_SRCS}
   ${RDKitSV_MOC_SRCS} ${RDKitSV_INCS} )
-target_link_libraries( rdkitsv ${LIBS} )
+target_link_libraries( rdkitsv MolDraw2D ${LIBS}  )
 
