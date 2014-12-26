@@ -460,7 +460,6 @@ void MolDraw2D::drawWedgedBond( const pair<float, float> &cds1 ,
   end2.first = cds2.first - disp.first;
   end2.second = cds2.second - disp.second;
 
-  std::cerr<<"draw wedged"<<std::endl;
   setColour( col1 );
   if( draw_dashed ) {
     pair<float,float> e1( end1.first - cds1.first , end1.second - cds1.second );

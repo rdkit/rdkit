@@ -98,8 +98,6 @@ namespace RDKit {
     std::pair<float,float> c2 = getDrawCoords( cds2 );
     std::pair<float,float> c3 = getDrawCoords( cds3 );
 
-    std::cerr<<"triangle!"<<std::endl;
-
     std::string col=DrawColourToSVG(getColour());
     unsigned int width=2;
     std::string dashString="";
