@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build_utils/CMak
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
 
-find_package( Boost 1.46.0)
+find_package( Boost 1.46.0 COMPONENTS system REQUIRED )
 
 # RDKit using my FindMyRDKit.cmake file in build_utils
 # gcc 4.7.7 is really picky about the order of these libraries
@@ -37,10 +37,11 @@ include_directories(
   ${Qt5OpenGL_INCLUDE_DIRS}
   )
 
-  set(QTDRAW2D_SRC MolDraw2DQt.cc)
+set(QTDRAW2D_SRC MolDraw2DQt.cc)
 endif(RDK_BUILD_QT_SUPPORT)
   
 add_library(MolDraw2D SHARED MolDraw2D.cc ${QTDRAW2D_SRC} )
+target_link_libraries(MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES})
 
 if(RDK_BUILD_QT_DEMO)
   add_subdirectory(QTDemo)
