@@ -82,6 +82,16 @@ namespace RDKit {
   // ****************************************************************************
   // draw the char, with the bottom left hand corner at cds
   void MolDraw2DSVG::drawChar( char c , const std::pair<float,float> &cds ) {
+    unsigned int fontSz=scale()*fontSize();
+    std::string col = DrawColourToSVG(getColour());
+
+    d_os<<"<svg:text";
+    d_os<<" x='" << cds.first;
+    d_os<< "' y='" << cds.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
+    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
+    d_os<<" >";
+    d_os<<c;
+    d_os<<"</svg:text>";
 
     // QRectF br = qp_.boundingRect( 0 , 0 , 100 , 100 , Qt::AlignLeft | Qt::AlignBottom ,
     //                               QString( c ) );
@@ -106,15 +116,6 @@ namespace RDKit {
     d_os<<"style='fill:"<<col<<";fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
     d_os<<" />\n";
 
-    // qp_.save();
-    // QPointF points[3] = { QPointF( c1.first , c1.second ) ,
-    //                       QPointF( c2.first , c2.second ) ,
-    //                       QPointF( c3.first , c3.second ) };
-
-    // qp_.drawConvexPolygon( points , 3 );
-
-    // qp_.restore();
-
   }
 
   // ****************************************************************************
@@ -130,7 +131,7 @@ namespace RDKit {
   
   // ****************************************************************************
   void MolDraw2DSVG::setFontSize( float new_size ) {
-
+    std::cerr<<"sfs: "<<new_size<<" "<<scale()<<std::endl;
     MolDraw2D::setFontSize( new_size );
     float font_size_in_points = fontSize() * scale();
 
@@ -161,37 +162,35 @@ namespace RDKit {
     label_height = 0.0;
 
     int draw_mode = 0; // 0 for normal, 1 for superscript, 2 for subscript
-    // QString next_char( " " );
-    // bool had_a_super = false;
 
-    // for( int i = 0 , is = label.length() ; i < is ; ++i ) {
+    bool had_a_super = false;
 
-    //   // setStringDrawMode moves i along to the end of any <sub> or <sup>
-    //   // markup
-    //   if( '<' == label[i] && setStringDrawMode( label , draw_mode , i ) ) {
-    //     continue;
-    //   }
+    for( int i = 0 , is = label.length() ; i < is ; ++i ) {
 
-    //   next_char[0] = label[i];
-    //   QRectF br = qp_.boundingRect( 0 , 0 , 100 , 100 ,
-    //                                 Qt::AlignBottom | Qt::AlignLeft , next_char );
-    //   label_height = br.height() / scale();
-    //   float char_width = br.width() / scale();
-    //   if( 2 == draw_mode ) {
-    //     char_width *= 0.5;
-    //   } else if( 1 == draw_mode ) {
-    //     char_width *= 0.5;
-    //     had_a_super = true;
-    //   }
-    //   label_width += char_width;
+      // setStringDrawMode moves i along to the end of any <sub> or <sup>
+      // markup
+      if( '<' == label[i] && setStringDrawMode( label , draw_mode , i ) ) {
+        continue;
+      }
 
-    // }
+      label_height = fontSize()*scale() / scale();
+      float char_width = fontSize()*scale() / scale();
+      char_width *= 0.75; // extremely empirical
+      if( 2 == draw_mode ) {
+        char_width *= 0.75;
+      } else if( 1 == draw_mode ) {
+        char_width *= 0.75;
+        had_a_super = true;
+      }
+      label_width += char_width;
 
-    // // subscript keeps its bottom in line with the bottom of the bit chars,
-    // // superscript goes above the original char top by a quarter
-    // if( had_a_super ) {
-    //   label_height *= 1.25;
-    // }
+    }
+
+    // subscript keeps its bottom in line with the bottom of the bit chars,
+    // superscript goes above the original char top by a quarter
+    if( had_a_super ) {
+      label_height *= 1.25;
+    }
 
   }
 

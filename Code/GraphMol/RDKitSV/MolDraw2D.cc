@@ -252,12 +252,12 @@ void MolDraw2D::drawString( const string &str ,
     // tweaking for a more general solution.
     if( 2 == draw_mode ) {
       // y goes from top to bottom, so add for a subscript!
-      setFontSize( 0.5 * full_font_size );
+      setFontSize( 0.75 * full_font_size );
       char_width *= 0.5;
       drawChar( next_c , getDrawCoords( make_pair( draw_x , draw_y + 0.5 * char_height ) ) );
       setFontSize( full_font_size );
     } else if( 1 == draw_mode ) {
-      setFontSize( 0.5 * full_font_size );
+      setFontSize( 0.75 * full_font_size );
       char_width *= 0.5;
       drawChar( next_c , getDrawCoords( make_pair( draw_x , draw_y - 0.25 * char_height ) ) );
       setFontSize( full_font_size );
