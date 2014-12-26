@@ -11,7 +11,24 @@
 namespace RDKit {
 
   namespace {
-
+    std::string DrawColourToSVG(const MolDraw2D::DrawColour &col){
+      const char *convert="0123456789ABCDEF";
+      std::string res(7,' ');
+      res[0]='#';
+      unsigned int v;
+      unsigned int i=1;
+      v=int(255 * col.get<0>());
+      res[i++] = convert[v/16];
+      res[i++] = convert[v%16];
+      v=int(255 * col.get<1>());
+      res[i++] = convert[v/16];
+      res[i++] = convert[v%16];
+      v=int(255 * col.get<2>());
+      res[i++] = convert[v/16];
+      res[i++] = convert[v%16];
+      return res;
+    }
+    
   }
   
   void MolDraw2DSVG::initDrawing() {
@@ -53,8 +70,13 @@ namespace RDKit {
 
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
-
-    // qp_.drawLine( QPointF( c1.first , c1.second ) , QPointF( c2.first , c2.second ) );
+    std::string col=DrawColourToSVG(getColour());
+    unsigned int width=2;
+    std::string dashString="";
+    d_os<<"<svg:path ";
+    d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << "' ";
+    d_os<<"style='fill:none;fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+    d_os<<" />\n";
   }
 
   // ****************************************************************************
@@ -75,6 +97,16 @@ namespace RDKit {
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
     std::pair<float,float> c3 = getDrawCoords( cds3 );
+
+    std::cerr<<"triangle!"<<std::endl;
+
+    std::string col=DrawColourToSVG(getColour());
+    unsigned int width=2;
+    std::string dashString="";
+    d_os<<"<svg:path ";
+    d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << " " << c3.first << "," << c3.second << "' ";
+    d_os<<"style='fill:"<<col<<";fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+    d_os<<" />\n";
 
     // qp_.save();
     // QPointF points[3] = { QPointF( c1.first , c1.second ) ,
