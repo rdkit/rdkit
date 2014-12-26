@@ -43,6 +43,11 @@ endif(RDK_BUILD_QT_SUPPORT)
 add_library(MolDraw2D SHARED MolDraw2D.cc MolDraw2DSVG.cc ${QTDRAW2D_SRC} )
 target_link_libraries(MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(test1 test1.cc)
+target_link_libraries(test1 MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES})
+
+
 if(RDK_BUILD_QT_DEMO)
   add_subdirectory(QTDemo)
 endif(RDK_BUILD_QT_DEMO)
+

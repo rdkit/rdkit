@@ -21,9 +21,8 @@ namespace RDKit {
 class MolDraw2DSVG : public MolDraw2D {
 
 public :
-
   MolDraw2DSVG( int width , int height , std::ostream &os ) : 
-    MolDraw2D( width , height ) , m_os( os ) { };
+    MolDraw2D( width , height ) , d_os( os ) { initDrawing(); };
 
   // set font size in molecule coordinate units. That's probably Angstrom for
   // RDKit. It will turned into drawing units using scale_, which might be
@@ -31,9 +30,12 @@ public :
   void setFontSize( float new_size );
   void setColour( const DrawColour &col );
 
-private :
+  // not sure if this goes here or if we should do a dtor since initDrawing() is called in the ctor,
+  // but we'll start here
+  void finishDrawing();
 
-  std::ostream &m_os;
+private :
+  std::ostream &d_os;
 
   void drawLine( const std::pair<float,float> &cds1 ,
                  const std::pair<float,float> &cds2 );
@@ -46,6 +48,8 @@ private :
   // using the current scale, work out the size of the label in molecule coordinates
   void getStringSize( const std::string &label , float &label_width ,
                       float &label_height ) const;
+
+  void initDrawing();
 
 };
 
