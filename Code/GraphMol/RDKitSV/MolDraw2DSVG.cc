@@ -191,7 +191,6 @@ namespace RDKit {
     if( had_a_super ) {
       label_height *= 1.25;
     }
-
   }
 
 } // EO namespace RDKit
