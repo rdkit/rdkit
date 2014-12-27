@@ -193,4 +193,62 @@ namespace RDKit {
     }
   }
 
+  // ****************************************************************************
+  // draws the string centred on cds
+  void MolDraw2DSVG::drawString( const std::string &str ,
+                                 const std::pair<float,float> &cds ) {
+
+    unsigned int fontSz=scale()*fontSize();
+    std::string col = DrawColourToSVG(getColour());
+
+    float string_width , string_height;
+    getStringSize( str , string_width , string_height );
+
+    float draw_x = cds.first - string_width / 2.0;
+    float draw_y = cds.second - string_height / 2.0;
+    std::pair<float,float> draw_coords = getDrawCoords(std::make_pair(draw_x,draw_y));
+
+    d_os<<"<svg:text";
+    d_os<<" x='" << draw_coords.first;
+    d_os<< "' y='" << draw_coords.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
+    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
+    d_os<<" >";
+
+    int draw_mode = 0; // 0 for normal, 1 for superscript, 2 for subscript
+    std::string span;
+    bool first_span=true;
+    for( int i = 0 , is = str.length() ; i < is ; ++i ) {
+      // setStringDrawMode moves i along to the end of any <sub> or <sup>
+      // markup
+      if( '<' == str[i] && setStringDrawMode( str , draw_mode , i ) ) {
+        if(!first_span){
+          d_os<<span<<"</svg:tspan>";
+          span="";
+        }
+        first_span=false;
+        d_os<<"<svg:tspan";
+        switch(draw_mode){
+        case 1:
+          d_os<<" style='baseline-shift:super;font-size:"<<fontSz*0.75<<"px;"<< "'"; break;
+        case 2:
+          d_os<<" style='baseline-shift:sub;font-size:"<<fontSz*0.75<<"px;"<< "'"; break;
+        default:
+          break;
+        }
+        d_os<<">";
+        continue;
+      }
+      if(first_span){
+        first_span=false;
+        d_os<<"<svg:tspan>";
+        span="";
+      }
+      span += str[i];
+    }
+    d_os<<span<<"</svg:tspan>";
+    d_os<<"</svg:text>\n";
+
+
+  }
+
 } // EO namespace RDKit

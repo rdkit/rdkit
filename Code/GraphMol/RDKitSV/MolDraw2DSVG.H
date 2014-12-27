@@ -40,6 +40,7 @@ private :
   void drawLine( const std::pair<float,float> &cds1 ,
                  const std::pair<float,float> &cds2 );
   void drawChar( char c , const std::pair<float,float> &cds );
+  void drawString( const std::string &str, const std::pair<float,float> &cds );
   void drawTriangle( const std::pair<float,float> &cds1 ,
                      const std::pair<float,float> &cds2 ,
                      const std::pair<float,float> &cds3 );
