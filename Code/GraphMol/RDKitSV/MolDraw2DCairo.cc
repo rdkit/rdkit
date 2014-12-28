@@ -58,22 +58,12 @@ namespace RDKit {
     double twidth=extents.width,theight=extents.height;
 
     unsigned int fontSz=scale()*fontSize();
-    cairo_set_font_size (d_cr, fontSz);
     std::pair<float,float> c1 = cds ;// getDrawCoords( cds );
 
     cairo_move_to(d_cr,c1.first,c1.second+theight);
     cairo_show_text(d_cr,txt);
     cairo_stroke(d_cr);
     
-#if 0
-    d_os<<"<svg:text";
-    d_os<<" x='" << cds.first;
-    d_os<< "' y='" << cds.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
-    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
-    d_os<<" >";
-    d_os<<c;
-    d_os<<"</svg:text>";
-#endif
   }
 
   // ****************************************************************************
@@ -94,14 +84,6 @@ namespace RDKit {
     cairo_fill_preserve(d_cr);
     cairo_stroke(d_cr);
 
-#if 0
-    unsigned int width=2;
-    std::string dashString="";
-    d_os<<"<svg:path ";
-    d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << " " << c3.first << "," << c3.second << "' ";
-    d_os<<"style='fill:"<<col<<";fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
-    d_os<<" />\n";
-#endif
   }
 
   // ****************************************************************************
@@ -118,23 +100,7 @@ namespace RDKit {
   void MolDraw2DCairo::setFontSize( float new_size ) {
     MolDraw2D::setFontSize( new_size );
     float font_size_in_points = fontSize() * scale();
-
-    // QFont font( qp_.font() );
-    // font.setPointSizeF( font_size_in_points );
-    // qp_.setFont( font );
-
-    // while( 1 ) {
-    //   float old_font_size_in_points = font_size_in_points;
-    //   float font_size_in_points = fontSize() * scale();
-    //   if( fabs( font_size_in_points - old_font_size_in_points ) < 0.1 ) {
-    //     break;
-    //   }
-    //   QFont font( qp_.font() );
-    //   font.setPointSizeF( font_size_in_points );
-    //   qp_.setFont( font );
-    //   calculateScale();
-    // }
-
+    cairo_set_font_size (d_cr, font_size_in_points);
   }
 
   // ****************************************************************************
@@ -148,6 +114,8 @@ namespace RDKit {
 
     bool had_a_super = false;
 
+    char txt[2];
+    txt[1]=0;
     for( int i = 0 , is = label.length() ; i < is ; ++i ) {
 
       // setStringDrawMode moves i along to the end of any <sub> or <sup>
@@ -156,9 +124,15 @@ namespace RDKit {
         continue;
       }
 
-      label_height = fontSize()*scale() / scale();
-      float char_width = fontSize()*scale() / scale();
-      char_width *= 0.75; // extremely empirical
+
+      txt[0]=label[i];
+      cairo_text_extents_t extents;
+      cairo_text_extents(d_cr,txt,&extents);
+      double twidth=extents.x_advance,theight=extents.height;
+
+      label_height = theight/scale();
+      float char_width = twidth/scale();
+
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {
@@ -174,6 +148,7 @@ namespace RDKit {
     if( had_a_super ) {
       label_height *= 1.25;
     }
+    label_height *= 1.2; // empirical
   }
 #if 0
   // ****************************************************************************

@@ -42,7 +42,7 @@ void test1(){
 #include "MolDraw2DCairo.H"
 void test2(){
   {
-    std::string smiles="C[C@H](O)C1=C(O[C@H](F)Cl)C=C1ONNC[NH3+]";
+    std::string smiles="O[C@H](O)C1=C(O[C@H](F)Cl)C=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
