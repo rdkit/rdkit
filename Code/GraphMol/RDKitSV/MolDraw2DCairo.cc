@@ -15,6 +15,7 @@ namespace RDKit {
   }
   
   void MolDraw2DCairo::initDrawing() {
+    
   }
 
   // ****************************************************************************
@@ -80,13 +81,10 @@ namespace RDKit {
 
   // ****************************************************************************
   void MolDraw2DCairo::clearDrawing() {
-#if 0
-    d_os << "<svg:rect";
-    d_os << " style='opacity:1.0;fill:#eeeeee;stroke:none'";
-    d_os << " width='" << width() << "' height='" << height() << "'";
-    d_os << " x='0' y='0'";
-    d_os << "> </svg:rect>\n";
-#endif
+    
+    cairo_set_source_rgb (d_cr, 0.9, 0.9, 0.9);
+    cairo_rectangle(d_cr,0,0,width(),height());
+    cairo_fill(d_cr);
   }
 
 
