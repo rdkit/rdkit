@@ -69,6 +69,17 @@ namespace RDKit {
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
     std::pair<float,float> c3 = getDrawCoords( cds3 );
+
+    unsigned int width=1;
+    cairo_set_line_width(d_cr,width);
+    cairo_set_dash(d_cr,0,0,0);
+    cairo_move_to(d_cr,c1.first,c1.second);
+    cairo_line_to(d_cr,c2.first,c2.second);
+    cairo_line_to(d_cr,c3.first,c3.second);
+    cairo_close_path(d_cr);
+    cairo_fill_preserve(d_cr);
+    cairo_stroke(d_cr);
+
 #if 0
     unsigned int width=2;
     std::string dashString="";
