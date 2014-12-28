@@ -15,6 +15,7 @@ namespace RDKit {
   }
   
   void MolDraw2DCairo::initDrawing() {
+    cairo_select_font_face(d_cr, "sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     
   }
 
@@ -48,10 +49,23 @@ namespace RDKit {
   // ****************************************************************************
   // draw the char, with the bottom left hand corner at cds
   void MolDraw2DCairo::drawChar( char c , const std::pair<float,float> &cds ) {
-#if 0
+    char txt[2];
+    txt[0]=c;
+    txt[1]=0;
+
+    cairo_text_extents_t extents;
+    cairo_text_extents(d_cr,txt,&extents);
+    double twidth=extents.width,theight=extents.height;
+
     unsigned int fontSz=scale()*fontSize();
+    cairo_set_font_size (d_cr, fontSz);
+    std::pair<float,float> c1 = cds ;// getDrawCoords( cds );
 
-
+    cairo_move_to(d_cr,c1.first,c1.second+theight);
+    cairo_show_text(d_cr,txt);
+    cairo_stroke(d_cr);
+    
+#if 0
     d_os<<"<svg:text";
     d_os<<" x='" << cds.first;
     d_os<< "' y='" << cds.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
