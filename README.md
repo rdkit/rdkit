@@ -20,19 +20,19 @@
   * [Wiki](https://code.google.com/p/rdkit/w/list)
   * [Documentation](http://www.rdkit.org/docs/index.html)
 
-### Code
+#### Code
 
   * [GitHub code](https://github.com/rdkit) and [bug tracker](https://github.com/rdkit/rdkit/issues)
   * [Sourceforge](http://sourceforge.net/projects/rdkit)
   * [Google code](http://code.google.com/p/rdkit/)
 
-### Community
+#### Community
 
   * [Mailing list](https://sourceforge.net/p/rdkit/mailman/)
   * [Google +](https://plus.google.com/u/0/116996224395614252219)
   * [LinkedIn](https://www.linkedin.com/groups/RDKit-8192558/about)
 
-### Materials from user group meetings
+#### Materials from user group meetings
 
   * [2012 UGM](http://www.rdkit.org/UGM/2012/)
   * [2013 UGM](https://github.com/rdkit/UGM_2013)
