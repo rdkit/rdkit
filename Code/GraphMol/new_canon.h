@@ -388,9 +388,11 @@ namespace RDKit {
         nbrs.resize(0);
         nbrs.reserve(8);
         // add Hs that aren't in the graph::
-        for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
-          nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
-          nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
+        if(!at->needsUpdatePropertyCache()){
+          for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
+          }
         }
         //std::cerr<<"gac: "<<i<<" "<<at->getTotalNumHs()<<std::endl;
         ROMol::OEDGE_ITER beg,end;
