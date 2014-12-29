@@ -951,6 +951,7 @@ void test11()
   m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
   delete m;
+  std::cerr<<"-------------------------------"<<std::endl;
   smi = "[CH2-][C@](C)(F)Br";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -4578,7 +4579,6 @@ int main(){
   test8();
   test9();
   test10();
-  test11();
   test12();
   testIssue183();
   testIssue188();
@@ -4628,13 +4628,14 @@ int main(){
   testGitHubIssue72();
   testRenumberAtoms();
   testGithubIssue141();
-#endif
   testZBO();
   testMolAssignment();
 
   testAtomAtomMatch();
   testGithubIssue190();
   testMolFragsWithQuery();
+#endif
+  test11();
   return 0;
 }
 

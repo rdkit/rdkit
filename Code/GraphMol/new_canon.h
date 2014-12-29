@@ -18,7 +18,7 @@
 #include <cassert>
 #include <vector>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
   namespace Canon{
@@ -502,10 +502,14 @@ namespace RDKit {
           std::vector<bondholder> nbrsi,nbrsj;
           getAtomNeighborhood(i,nbrsi);
           getAtomNeighborhood(j,nbrsj);
-          for(unsigned int ii=0;ii<nbrsi.size();++ii){
-            // FIX: make sure that nbrsj is actually long enough.
+          for(unsigned int ii=0;ii<nbrsi.size() && ii<nbrsj.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
             if(cmp) return cmp;
+          }
+          if(nbrsi.size()<nbrsj.size()){
+            return -1;
+          } else if(nbrsi.size()>nbrsj.size()) {
+            return 1;
           }
         }
         return 0;
