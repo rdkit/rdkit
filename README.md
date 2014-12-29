@@ -44,6 +44,13 @@ Available on [RDKit page](http://www.rdkit.org/docs/index.html) and in [Docs](ht
 
 Installation instructions are available in [Docs/Book/Install.rst](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.rst).
 
+#### Binary distributions, anaconda, homebrew
+
+  * Windows binaries are available with each [release](https://github.com/rdkit/rdkit/releases).
+  * [RPMs](https://copr.fedoraproject.org/coprs/giallu/rdkit/) for RedHat Enterprise Linux, Centos, and Fedora. Contributed by Gianluca Sforna.
+  * [homebrew](https://github.com/rdkit/homebrew-rdkit) formula for building on the Mac. Contributed by Eddie Cao.
+  * [recipes](https://github.com/rdkit/conda-rdkit) for building using the excellent conda package manager. Contributed by Riccardo Vianello.
+  
 ## License
 
 Code released under the [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt).
