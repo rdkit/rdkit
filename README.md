@@ -11,6 +11,7 @@
   * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) generation for machine learning
   * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL
   * Cheminformatics nodes for [KNIME](http://tech.knime.org/community/rdkit)
+  * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful software harnessing the power of RDKit
 
 ## Web presence
 
@@ -50,7 +51,18 @@ Installation instructions are available in [Docs/Book/Install.rst](https://githu
   * [RPMs](https://copr.fedoraproject.org/coprs/giallu/rdkit/) for RedHat Enterprise Linux, Centos, and Fedora. Contributed by Gianluca Sforna.
   * [homebrew](https://github.com/rdkit/homebrew-rdkit) formula for building on the Mac. Contributed by Eddie Cao.
   * [recipes](https://github.com/rdkit/conda-rdkit) for building using the excellent conda package manager. Contributed by Riccardo Vianello.
-  
+
+## Projects using RDKit
+
+  * [ChEMBL Beaker](https://github.com/mnowotka/chembl_beaker) - standalone web server wrapper for RDKit and OSRA
+  * [myChEMBL](https://github.com/chembl/mychembl) ([blog post](http://chembl.blogspot.de/2013/10/chembl-virtual-machine-aka-mychembl.html), [paper](http://bioinformatics.oxfordjournals.org/content/early/2013/11/20/bioinformatics.btt666)) - A virtual machine implementation of open data and cheminformatics tools
+  * [sdf_viewer.py](https://github.com/apahl/sdf_viewer) - an interactive SDF viewer
+  * [sdf2ppt](https://github.com/dkuhn/sdf2ppt) - Reads an SDFile and displays molecules as image grid in powerpoint/openoffice presentation.
+  * [MolGears](https://github.com/admed/molgears) - A cheminformatics tool for bioactive molecules
+  * [PYPL](http://www.biochemfusion.com/downloads/#OracleUtilities) - Simple cartridge that lets you call Python scripts from Oracle PL/SQL.
+  * [shape-it-rdkit](https://github.com/jandom/shape-it-rdkit) - Gaussian molecular overlap code shape-it (from silicos it) ported to RDKit backend
+
+
 ## License
 
 Code released under the [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt).
