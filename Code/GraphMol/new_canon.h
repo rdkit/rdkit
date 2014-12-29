@@ -387,15 +387,17 @@ namespace RDKit {
         const Atom *at=dp_atoms[i].atom;
         nbrs.resize(0);
         nbrs.reserve(8);
+        // add Hs that aren't in the graph::
         for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
           nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
           nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,0));
         }
+        //std::cerr<<"gac: "<<i<<" "<<at->getTotalNumHs()<<std::endl;
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg++];
-          if(bond->getOtherAtom(at)->getAtomicNum()==1) continue;
+          //std::cerr<<"    "<<bond->getOtherAtom(at)->getIdx()<<std::endl;
           int stereo=0;
           switch(bond->getStereo()){
           case Bond::STEREOZ:
@@ -420,6 +422,7 @@ namespace RDKit {
           default:
             nReps = static_cast<unsigned int>(2.*bond->getBondTypeAsDouble());
           }
+          //std::cerr<<"          "<<nReps<<std::endl;
           while(nReps>0){
             nbrs.push_back(bondholder(Bond::SINGLE,stereo,
                                       dp_atoms[bond->getOtherAtomIdx(i)].index+1));
@@ -493,7 +496,6 @@ namespace RDKit {
         PRECONDITION(dp_mol,"no molecule");
         PRECONDITION(i!=j,"bad call");
         int v=basecomp(i,j);
-	//std::cerr<<"           cbc: "<<i<<"-"<<j<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
@@ -501,8 +503,8 @@ namespace RDKit {
           getAtomNeighborhood(i,nbrsi);
           getAtomNeighborhood(j,nbrsj);
           for(unsigned int ii=0;ii<nbrsi.size();++ii){
+            // FIX: make sure that nbrsj is actually long enough.
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
-            //std::cerr<<"                 cbc: "<<i<<"("<<nbrsi[ii].nbrIdx<<")-"<<j<<"("<<nbrsj[ii].nbrIdx<<")"<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
           }
         }

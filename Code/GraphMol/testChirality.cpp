@@ -1403,36 +1403,16 @@ void testIssue2705543(){
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m,true);
 
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
-    TEST_ASSERT(cip=="S");
-
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
-    TEST_ASSERT(cip=="R");
-
-    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
-    m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
-    TEST_ASSERT(cip=="S");
-
-    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
-    TEST_ASSERT(cip=="S");
-
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_CIPCode"));
-    m->getAtomWithIdx(4)->getProp("_CIPCode",cip);
-    TEST_ASSERT(cip=="R");
-
-    delete m;
-  }
-  {
-    fName = rdbase+"/Code/GraphMol/test_data/Issue2705543.2h.mol";
-    m = MolFileToMol(fName,true,false);
-    TEST_ASSERT(m);
-
-    MolOps::assignChiralTypesFrom3D(*m);
-    MolOps::assignStereochemistry(*m,true);
-
+#if 0
+    std::cerr<<"-----------------------"<<std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"));
+      unsigned int rnk;
+      m->getAtomWithIdx(i)->getProp("_CIPRank",rnk);
+      std::cerr<<"   "<<i<<" "<<rnk<<std::endl;
+    }
+#endif
+    
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
@@ -1464,6 +1444,15 @@ void testIssue2705543(){
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m,true);
 
+#if 0
+    std::cerr<<"-----------------------"<<std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"));
+      unsigned int rnk;
+      m->getAtomWithIdx(i)->getProp("_CIPRank",rnk);
+      std::cerr<<"   "<<i<<" "<<rnk<<std::endl;
+    }
+#endif
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
@@ -1486,6 +1475,36 @@ void testIssue2705543(){
 
     TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_CIPCode"));
     TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    m->getAtomWithIdx(4)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    delete m;
+  }
+  {
+    fName = rdbase+"/Code/GraphMol/test_data/Issue2705543.2h.mol";
+    m = MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+
+    MolOps::assignChiralTypesFrom3D(*m);
+    MolOps::assignStereochemistry(*m,true);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_CIPCode"));
     m->getAtomWithIdx(4)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
 
@@ -2062,7 +2081,6 @@ int main(){
   testChiralityFrom3D();
   testIterativeChirality();
   testBondDirRemoval();
-  //testIssue2705543();
   testIssue2762917();
   testIssue3009911();
   testIssue3139534();
@@ -2070,8 +2088,9 @@ int main(){
   testIssue3453172();
   testRingStereochemistry();
   testGithub87();
-#endif
   testGithub90();
+#endif
+  testIssue2705543();
   return 0;
 }
 
