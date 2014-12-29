@@ -1068,6 +1068,15 @@ void testNeedsUpdatePropertyCache()
     m.updatePropertyCache();
     TEST_ASSERT(m.needsUpdatePropertyCache()==false);
   }
+  {
+    RWMol m;
+    m.addAtom(new Atom(6));
+    m.getAtomWithIdx(0)->calcExplicitValence(false);
+    TEST_ASSERT(m.getAtomWithIdx(0)->needsUpdatePropertyCache());
+    m.getAtomWithIdx(0)->setNoImplicit(true);
+    TEST_ASSERT(!m.getAtomWithIdx(0)->needsUpdatePropertyCache());
+
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
