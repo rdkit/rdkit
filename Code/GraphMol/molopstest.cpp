@@ -951,6 +951,7 @@ void test11()
   m->getAtomWithIdx(2)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="S");
   delete m;
+  std::cerr<<"-------------------------------"<<std::endl;
   smi = "[CH2-][C@](C)(F)Br";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -4715,7 +4716,6 @@ int main(){
   test8();
   test9();
   test10();
-  test11();
   test12();
   testIssue183();
   testIssue188();
@@ -4771,10 +4771,8 @@ int main(){
   testAtomAtomMatch();
   testGithubIssue190();
   testMolFragsWithQuery();
-  testGithubIssue418();
-  testGithubIssue432();
 #endif
-  testGithubIssue443();
+  test11();
   return 0;
 }
 
