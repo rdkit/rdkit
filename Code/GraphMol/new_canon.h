@@ -403,6 +403,7 @@ namespace RDKit {
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg++];
+          const Atom *nbr=bond->getOtherAtom(at);
           //std::cerr<<"    "<<bond->getOtherAtom(at)->getIdx()<<std::endl;
           int stereo=0;
           switch(bond->getStereo()){
@@ -416,17 +417,24 @@ namespace RDKit {
             stereo=0;
           }
           unsigned int nReps;
-          switch(bond->getBondType()){
-          case Bond::SINGLE:
-            nReps=2;break;
-          case Bond::DOUBLE:
-            nReps=4;break;
-          case Bond::AROMATIC:
-            nReps=3;break;
-          case Bond::TRIPLE:
-            nReps=6;break;
-          default:
-            nReps = static_cast<unsigned int>(2.*bond->getBondTypeAsDouble());
+
+          if(bond->getBondType()==Bond::DOUBLE &&
+             nbr->getAtomicNum()==15 &&
+             (nbr->getDegree()==4 || nbr->getDegree()==3) ) {
+            // a special case for chiral phophorous compounds
+            // (this was leading to incorrect assignment of
+            // R/S labels ):
+            nReps=1;
+
+            // general justification of this is:
+            // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
+            // Multiple-Bond Unsaturation and Aromaticity". It contains several
+            // conventions of which convention (b) is the one applying here:
+            // "(b) Contibutions by d orbitals to bonds of quadriligant atoms are
+            // neglected."
+            // FIX: this applies to more than just P
+          } else {
+            nReps = static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()));
           }
           //std::cerr<<"          "<<nReps<<std::endl;
           while(nReps>0){
