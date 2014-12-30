@@ -297,12 +297,16 @@ namespace RDKit {
         // a possible future more efficient check. These break on this
         // lovely double-diamond pathological case:
         //   *12*3*1*3*4*5*4*52
-        ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx());
-        ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx());
-        if(ivi<ivj)
-          return -1;
-        else if(ivi>ivj)
-          return 1;
+        //
+        // probably going to regret allowing this to be skipped some day
+        if(dp_mol->getRingInfo()->isInitialized()){ 
+          ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx());
+          ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx());
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
+        }
         
         // chirality if we're using it
         if(df_useChirality){
