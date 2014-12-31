@@ -211,31 +211,31 @@ namespace RDKit {
       // however: since we use the current class of the nbr, there's some
       // heavy bookkeeping to really remove it
       unsigned int getAtomRingNbrCode(unsigned int i) const {
-	const Atom *at=dp_atoms[i].atom;
-	ROMol::ADJ_ITER beg,end;
-	boost::tie(beg,end) = dp_mol->getAtomNeighbors(at);
-	while(beg!=end){
-	  const ATOM_SPTR nbr=(*dp_mol)[*beg];
-	  ++beg;
-	  if((nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-	      nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-	     nbr->hasProp("_ringStereoAtoms")){
-	    // we have a neighbor with stereochem
-	    unsigned int nidx=1;
-	    ROMol::ADJ_ITER nbeg,nend;
-	    boost::tie(nbeg,nend) = dp_mol->getAtomNeighbors(nbr);
-	    while(nbeg!=nend){
-	      const ATOM_SPTR nnbr=(*dp_mol)[*nbeg];
-	      if(nnbr->getIdx()==at->getIdx()){
-		//std::cerr<<"  "<<at->getIdx()<<"-"<<nbr->getIdx()<<" "<<nidx<<std::endl;
-		return dp_atoms[nbr->getIdx()].index*1000000+nidx;
-	      }
-	      ++nidx;
-	      ++nbeg;
-	    }
-	  }
-	}
-	return 0;
+        const Atom *at=dp_atoms[i].atom;
+        ROMol::ADJ_ITER beg,end;
+        boost::tie(beg,end) = dp_mol->getAtomNeighbors(at);
+        while(beg!=end){
+          const ATOM_SPTR nbr=(*dp_mol)[*beg];
+          ++beg;
+          if((nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+              nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
+             nbr->hasProp("_ringStereoAtoms")){
+            // we have a neighbor with stereochem
+            unsigned int nidx=1;
+            ROMol::ADJ_ITER nbeg,nend;
+            boost::tie(nbeg,nend) = dp_mol->getAtomNeighbors(nbr);
+            while(nbeg!=nend){
+              const ATOM_SPTR nnbr=(*dp_mol)[*nbeg];
+              if(nnbr->getIdx()==at->getIdx()){
+                //std::cerr<<"  "<<at->getIdx()<<"-"<<nbr->getIdx()<<" "<<nidx<<std::endl;
+                return dp_atoms[nbr->getIdx()].index*1000000+nidx;
+              }
+              ++nidx;
+              ++nbeg;
+            }
+          }
+        }
+        return 0;
       }
 
       int basecomp(int i,int j) const {
@@ -336,16 +336,16 @@ namespace RDKit {
           else if(ivi>ivj)
             return 1;
           
-	  // ring stereochemistry
-	  if(dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx()) &&
-	     dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx()) ){
-	    ivi=getAtomRingNbrCode(i);
-	    ivj=getAtomRingNbrCode(j);
-	    if(ivi<ivj)
-	      return -1;
-	    else if(ivi>ivj)
-	      return 1;
-	  }
+          // ring stereochemistry
+          if(dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx()) &&
+             dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx()) ){
+            ivi=getAtomRingNbrCode(i);
+            ivj=getAtomRingNbrCode(j);
+            if(ivi<ivj)
+              return -1;
+            else if(ivi>ivj)
+              return 1;
+          }
           // bond stereo is taken care of in the neighborhood comparison
         }
         return 0;
@@ -367,7 +367,7 @@ namespace RDKit {
         PRECONDITION(dp_mol,"no molecule");
         PRECONDITION(i!=j,"bad call");
         int v=basecomp(i,j);
-	// std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
+        // std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
@@ -376,7 +376,7 @@ namespace RDKit {
           getAtomNeighborhood(j,nbrsj);
           for(unsigned int ii=0;ii<nbrsi.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
-	    // std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
+            // std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
           }
         }
@@ -567,18 +567,18 @@ namespace RDKit {
         len = count[partition]; 
         offset = atoms[partition].index;
         start = order+offset;
-	// std::cerr<<"\n\n**************************************************************"<<std::endl;
+        // std::cerr<<"\n\n**************************************************************"<<std::endl;
         // std::cerr<<"  sort: "<<atoms[partition].index<<" "<<len<<std::endl;
         //  for(unsigned int ii=0;ii<nAtoms;++ii){
         //    std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         //  }
         hanoisort(start,len,count,changed, compar);
-	// std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
-	// for(unsigned int ii=0;ii<nAtoms;++ii){
+        // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
+        // for(unsigned int ii=0;ii<nAtoms;++ii){
         //    std::cerr<<order[ii]<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         //  }
         index = start[0];
-	// std::cerr<<"  len:"<<len<<" index:"<<index<<" count:"<<count[index]<<std::endl;
+        // std::cerr<<"  len:"<<len<<" index:"<<index<<" count:"<<count[index]<<std::endl;
         for( i=count[index]; i<len; i++ ) {
           index = start[i];
           if( count[index] )
@@ -597,7 +597,7 @@ namespace RDKit {
               int nbroffset = atoms[nbor].index;
               changed[nbor]=1;
               partition = order[nbroffset];
-	      // std::cerr<<"            changed: "<<index<<" "<<nbor<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
+              // std::cerr<<"            changed: "<<index<<" "<<nbor<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
               if( (count[partition]>1) &&
                   (next[partition]==-2) ) {
                 next[partition] = activeset;

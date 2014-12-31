@@ -515,6 +515,7 @@ namespace RDKit{
           codesSeen[ranks[otherIdx]]=1;
           nbrs.push_back(std::make_pair(ranks[otherIdx],
                                         mol[*beg]->getIdx()));
+          //std::cerr<<"      "<< atom->getIdx() << " " << mol[*beg]->getIdx() << " " << otherIdx << "(" << ranks[otherIdx] <<")"<<std::endl;
           ++beg;
         }
 
@@ -607,6 +608,10 @@ namespace RDKit{
               ++nSwaps;
             }
           
+            // std::cerr<<"nbrs from "<<atom->getIdx()<<" ";
+            // std::copy(nbrIndices.begin(),nbrIndices.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+            // std::cerr<<"nSwaps: "<<nSwaps<<" tag: "<<tag<<std::endl;
+            
             // if that number is odd, we'll change our chirality:
             if(nSwaps%2){
               if(tag == Atom::CHI_TETRAHEDRAL_CCW) tag=Atom::CHI_TETRAHEDRAL_CW;
@@ -827,7 +832,7 @@ namespace RDKit{
             bondIt!=mol.endBonds();
             ++bondIt){
           if( (*bondIt)->getBondType()==Bond::DOUBLE &&
-	      (*bondIt)->getStereo() != Bond::STEREOANY ){
+              (*bondIt)->getStereo() != Bond::STEREOANY ){
             (*bondIt)->setStereo(Bond::STEREONONE);
             (*bondIt)->getStereoAtoms().clear();
           }
@@ -951,7 +956,7 @@ namespace RDKit{
             Bond *dblBond=*bondIt;
             // if the bond is flagged as EITHERDOUBLE, we ignore it:
             if(dblBond->getBondDir()==Bond::EITHERDOUBLE ||
-	       dblBond->getStereo()==Bond::STEREOANY ){
+               dblBond->getStereo()==Bond::STEREOANY ){
               break;
             }
             // proceed only if we either want to clean the stereocode on this bond
