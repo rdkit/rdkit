@@ -522,6 +522,7 @@ void testIssue3525000() {
     std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000.sdf";
     RWMol *mol = MolFileToMol(fname);
     TEST_ASSERT(mol);
+
     std::string cip;
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
@@ -541,11 +542,11 @@ void testIssue3525000() {
     TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode,cip);
-    TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
+    mol->getAtomWithIdx(14)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+    mol->getAtomWithIdx(15)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
 
     std::string mb=MolToMolBlock(*mol);
@@ -570,11 +571,11 @@ void testIssue3525000() {
     TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode,cip);
-    TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
+    mol->getAtomWithIdx(14)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+    mol->getAtomWithIdx(15)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
   }  
   {
@@ -1375,12 +1376,6 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
-  testIssue3525000();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue265()\n";
   testIssue265();
   BOOST_LOG(rdInfoLog) << "Finished\n";
@@ -1391,7 +1386,6 @@ int main() {
   testMolFileChiralFlag();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-#endif
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileTotalValence();
@@ -1441,4 +1435,11 @@ int main() {
   testNeedsUpdatePropertyCacheSDWriter();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
+#endif
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
+  testIssue3525000();
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 }
