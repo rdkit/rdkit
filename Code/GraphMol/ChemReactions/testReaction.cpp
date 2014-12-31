@@ -5005,7 +5005,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     TEST_ASSERT(prods[0].size()==1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
+    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5093,7 +5093,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     TEST_ASSERT(prods[0].size()==1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
+    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5181,7 +5181,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     TEST_ASSERT(prods[0].size()==1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@](Cl)(Br)O[C@](F)(Cl)Br";
+    smi = "F[C@@](Cl)(Br)O[C@@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5275,7 +5275,8 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry(){
     TEST_ASSERT(prods[0].size()==1);
     TEST_ASSERT(prods[1].size()==1);
 
-    smi = "C/C=C/CC/C=C\\C";
+    smi = "C/C=C\\CC/C=C/C";
+    //std::cerr<<MolToSmiles(*prods[0][0],true)<<std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
     TEST_ASSERT(MolToSmiles(*prods[1][0], true) == smi);
 
