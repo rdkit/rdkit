@@ -597,6 +597,7 @@ namespace RDKit{
 
     //@}
     
+#if 0
     //! \name Canonicalization
     //@{
 
@@ -658,7 +659,7 @@ namespace RDKit{
                              std::vector<std::vector<int> > *rankHistory=0);
 
     // @}
-
+#endif
     //! \name Stereochemistry
     //@{
 
