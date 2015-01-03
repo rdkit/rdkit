@@ -1896,79 +1896,28 @@ void testBug1842174(){
 void testBug1844617(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1844617: oscillating chirality in canonical smiles" << std::endl;
-
-#if 0 // just in to test that double ring closures aren't the problem 
   {
     RWMol *mol;
     std::string smi,smi2;
     std::string label;
   
-    smi ="CN1CC[C@]23[C@H]4CO[C@H]2C(=O)CC[C@@]35[C@H]1CC4.O5";
-    mol = SmilesToMol(smi);
-    TEST_ASSERT(mol);
-    mol->debugMol(std::cout);
-    MolOps::assignStereochemistry(*mol);
-    mol->debugMol(std::cout);
-
-    for(unsigned int i=0;i<mol->getNumAtoms();++i){
-      if(mol->getAtomWithIdx(i)->hasProp("_CIPCode")){
-        mol->getAtomWithIdx(i)->getProp("_CIPCode",label);
-        std::cerr<<" atom: "<<i<<": "<<label<<std::endl;
-      }
-    }
-  
-    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
-    TEST_ASSERT(label=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(5)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(5)->getProp("_CIPCode",label);
-    TEST_ASSERT(label=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(8)->getProp("_CIPCode",label);
-    TEST_ASSERT(label=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(13)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(13)->getProp("_CIPCode",label);
-    TEST_ASSERT(label=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(14)->getProp("_CIPCode",label);
-    TEST_ASSERT(label=="R");
-    delete mol;
-  }
-#endif
-
-  {
-    RWMol *mol;
-    std::string smi,smi2;
-    std::string label;
-  
-#if 0
-    smi ="O=C1C2OCC[C@@]22C(CC1)CNCC2";
-    mol = SmilesToMol(smi);
-    TEST_ASSERT(mol);
-    MolOps::assignStereochemistry(*mol);
-    //mol->debugMol(std::cout);
-    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
-    TEST_ASSERT(label=="S");
-  
-    smi = MolToSmiles(*mol,true);
-    BOOST_LOG(rdInfoLog) << smi << std::endl;
-    delete mol;
-    mol = SmilesToMol(smi);
-    TEST_ASSERT(mol);
-    smi2 = MolToSmiles(*mol,true);
-    BOOST_LOG(rdInfoLog) << smi2 << std::endl;
-    TEST_ASSERT(smi==smi2);
-  
-    delete mol;
-#endif
-
     smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
     mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     //mol->debugMol(std::cout);
     MolOps::assignStereochemistry(*mol);
     //mol->debugMol(std::cout);
+
+#if 0
+    std::cerr<<"-----------------------"<<std::endl;
+    for(unsigned int i=0;i<mol->getNumAtoms();++i){
+      TEST_ASSERT(mol->getAtomWithIdx(i)->hasProp("_CIPRank"));
+      unsigned int rnk;
+      mol->getAtomWithIdx(i)->getProp("_CIPRank",rnk);
+      std::cerr<<"   "<<i<<" "<<rnk<<std::endl;
+    }
+#endif
+
 
     for(unsigned int i=0;i<mol->getNumAtoms();++i){
       if(mol->getAtomWithIdx(i)->hasProp("_CIPCode")){

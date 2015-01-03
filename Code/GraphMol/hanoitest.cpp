@@ -943,6 +943,24 @@ void test9(){
     TEST_ASSERT(atomRanks[3]<atomRanks[11]);
   }
 
+
+  {
+    // this one was a chiral ranking problem 
+    std::string smi="COC(C)CC(C)(C)O";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[1]>atomRanks[8]);
+    TEST_ASSERT(atomRanks[5]>atomRanks[2]);
+  }
+
+
+  
   {
     // are double bonds being handled correctly?
     std::string smi="OC[C@H](F)C=O";
@@ -993,7 +1011,7 @@ void test9(){
 
 int main(){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test3();
