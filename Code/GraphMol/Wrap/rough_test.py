@@ -2346,7 +2346,7 @@ CAS<~>
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondsToUse=[1,2])
     self.assertEqual(fsmi,"CCC")
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],atomSymbols=["","[A]","[C]","[B]","",""])
-    self.assertEqual(fsmi,"[C]1[B][A]1")
+    self.assertEqual(fsmi,"[A]1[B][C]1")
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondSymbols=["","%","%","","","%"])
     self.assertEqual(fsmi,"C1%C%C%1")
     
