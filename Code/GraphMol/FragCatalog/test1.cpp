@@ -203,7 +203,7 @@ void test1(){
   catGen.addFragsFromMol(*tmpMol, fcat3);
   TEST_ASSERT(fcat3->getNumEntries()==1);
   //std::cout << fcat3->getEntryWithBitId(0)->getDescription() << std::endl;
-  TEST_ASSERT(fcat3->getEntryWithBitId(0)->getDescription()=="C<-O>C(<-O>)<-N>");
+  TEST_ASSERT(fcat3->getEntryWithBitId(0)->getDescription()=="C(<-O>)<-N>C<-O>");
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 
   delete tmpMol;

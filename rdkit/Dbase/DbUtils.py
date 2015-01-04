@@ -20,8 +20,10 @@ def _take(fromL,what):
   return map(lambda x,y=fromL:y[x],what)
 
 from rdkit.Dbase import DbModule
-import sys,types,string
+import sys
 from rdkit.Dbase import DbInfo
+from rdkit.six.moves import xrange  #@UnresolvedImport #pylint: disable=F0401
+from rdkit.six import string_types
 
 def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
                join='',cn=None):
@@ -195,7 +197,7 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
       their columns.
 
   """
-  priorities={types.FloatType:3,types.IntType:2,types.StringType:1,-1:-1}
+  priorities={float:3,int:2,str:1,-1:-1}
   res = [None]*nCols
   for col in xrange(nCols):
     typeHere = [-1,1]
@@ -203,8 +205,8 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
       d = data[row][col]
       if d is not None:
         locType = type(d)
-        if locType != types.FloatType and locType != types.IntType:
-          locType = types.StringType
+        if locType != float and locType != int:
+          locType = str
           try:
             d = str(d)
           except UnicodeError as msg:
@@ -213,19 +215,19 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
             raise UnicodeError(msg)
         else:
           typeHere[1] = max(typeHere[1],len(str(d)))
-        if locType == types.StringType:
+        if isinstance(d, string_types):
           if nullMarker is None or d != nullMarker:
             l = max(len(d),typeHere[1])
-            typeHere = [types.StringType,l]
+            typeHere = [str,l]
         else:
           try:
             fD = float(int(d))
           except OverflowError:
-            locType = types.FloatType
+            locType = float
           else:
             if fD == d:
-              locType = types.IntType
-          if typeHere[0]!=types.StringType and \
+              locType = int
+          if not isinstance(typeHere[0], string_types) and \
              priorities[locType] > priorities[typeHere[0]]:
             typeHere[0] = locType
     res[col] = typeHere
@@ -240,14 +242,14 @@ def _AdjustColHeadings(colHeadings,maxColLabelLen):
   """
   for i in xrange(len(colHeadings)):
     # replace unallowed characters and strip extra white space
-    colHeadings[i] = string.strip(colHeadings[i])
-    colHeadings[i] = string.replace(colHeadings[i],' ','_')
-    colHeadings[i] = string.replace(colHeadings[i],'-','_')
-    colHeadings[i] = string.replace(colHeadings[i],'.','_')
+    colHeadings[i] = colHeadings[i].strip()
+    colHeadings[i] = colHeadings[i].replace(' ','_')
+    colHeadings[i] = colHeadings[i].replace('-','_')
+    colHeadings[i] = colHeadings[i].replace('.','_')
 
     if len(colHeadings[i]) > maxColLabelLen:
       # interbase (at least) has a limit on the maximum length of a column name
-      newHead = string.replace(colHeadings[i],'_','')
+      newHead = colHeadings[i].replace('_','')
       newHead = newHead[:maxColLabelLen]
       print('\tHeading %s too long, changed to %s'%(colHeadings[i],newHead))
       colHeadings[i] = newHead
@@ -258,13 +260,13 @@ def GetTypeStrings(colHeadings,colTypes,keyCol=None):
   """
   typeStrs=[]
   for i in xrange(len(colTypes)):
-    type = colTypes[i]
-    if type[0] == types.FloatType:
+    typ = colTypes[i]
+    if typ[0] == float:
       typeStrs.append('%s double precision'%colHeadings[i])
-    elif type[0] == types.IntType:
+    elif typ[0] == int:
       typeStrs.append('%s integer'%colHeadings[i])
     else:
-      typeStrs.append('%s varchar(%d)'%(colHeadings[i],type[1]))
+      typeStrs.append('%s varchar(%d)'%(colHeadings[i],typ[1]))
     if colHeadings[i] == keyCol:
       typeStrs[-1] = '%s not null primary key'%(typeStrs[-1])
   return typeStrs 
@@ -327,9 +329,9 @@ def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
     for col in xrange(len(row)):
       if row[col] is not None and \
          (nullMarker is None or row[col] != nullMarker):
-        if colTypes[col][0] == types.FloatType:
+        if colTypes[col][0] == float:
           entries[col] = float(row[col])
-        elif colTypes[col][0] == types.IntType:
+        elif colTypes[col][0] == int:
           entries[col] = int(row[col])
         else:
           entries[col] = str(row[col])
@@ -425,26 +427,26 @@ def DatabaseToDatabase(fromDb,fromTbl,toDb,toTbl,
    FIX: at the moment this is a hack
    
   """
-  import cStringIO
-  io = cStringIO.StringIO()
-  io.write(DatabaseToText(fromDb,fromTbl,fields=fields,join=join,where=where,
+  from io import StringIO
+  sio = StringIO()
+  sio.write(DatabaseToText(fromDb,fromTbl,fields=fields,join=join,where=where,
                           user=user,password=password))
-  io.seek(-1)
-  TextFileToDatabase(toDb,toTbl,io,user=user,password=password,keyCol=keyCol,
+  sio.seek(-1)
+  TextFileToDatabase(toDb,toTbl,sio,user=user,password=password,keyCol=keyCol,
                      nullMarker=nullMarker)
 
 
 if __name__=='__main__':
-  import cStringIO
+  from io import StringIO
 
-  io = cStringIO.StringIO()
-  io.write('foo,bar,baz\n')
-  io.write('1,2,3\n')
-  io.write('1.1,4,5\n')
-  io.write('4,foo,6\n')
-  io.seek(0)
+  sio = StringIO()
+  sio.write('foo,bar,baz\n')
+  sio.write('1,2,3\n')
+  sio.write('1.1,4,5\n')
+  sio.write('4,foo,6\n')
+  sio.seek(0)
   from rdkit import RDConfig
   import os
   dirLoc = os.path.join(RDConfig.RDCodeDir,'Dbase','TEST.GDB')
 
-  TextFileToDatabase(dirLoc,'fromtext',io)
+  TextFileToDatabase(dirLoc,'fromtext',sio)

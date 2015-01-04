@@ -14,6 +14,7 @@ rdkit_headers(BadFileException.h
               utils.h
               versions.h
               LocaleSwitcher.h
+              Ranking.h
               DEST RDGeneral)
 if (NOT RDK_INSTALL_INTREE)
   install(DIRECTORY hash DESTINATION ${RDKit_HdrDir}/RDGeneral/hash

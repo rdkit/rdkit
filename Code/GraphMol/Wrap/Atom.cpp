@@ -307,6 +307,14 @@ struct atom_wrapper {
            "Returns a list of the properties set on the Atom.\n\n"
            )
 
+      .def("UpdatePropertyCache", &Atom::updatePropertyCache,
+       (python::arg("self"),python::arg("strict")=true),
+        "Regenerates computed properties like implicit valence and ring information.\n\n")
+
+      .def("NeedsUpdatePropertyCache", &Atom::needsUpdatePropertyCache,
+       (python::arg("self")),
+        "Returns true or false depending on whether implicit and explicit valence of the molecule have already been calculated.\n\n")
+
       .def("GetMonomerInfo",
 	   AtomGetMonomerInfo,
 	   python::return_internal_reference<1,

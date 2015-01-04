@@ -12,7 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
-#include <GraphMol/roger_canon.h>
+#include <GraphMol/new_canon.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>

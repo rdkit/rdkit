@@ -9,14 +9,13 @@
 //  of the RDKit source tree.
 //
 
-#include "roger_canon.h"
+#include "new_canon.h"
 
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <cstring>
 #include <iostream>
 #include <cassert>
-#include <GraphMol/RankAtoms.h>
 
 namespace RDKit {
   namespace Canon{
@@ -104,10 +103,10 @@ namespace RDKit {
       if(breakTies){
         BreakTies(mol,atoms,ftor,true,order,count,activeset,next,changed);
 #ifdef VERBOSE_CANON
-	std::cerr<<"3--------"<<std::endl;
-	for(unsigned int i=0;i<mol.getNumAtoms();++i){
-	  std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
-	}
+        std::cerr<<"3--------"<<std::endl;
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+        }
 #endif
       }
       free(count); free(next);
@@ -152,7 +151,5 @@ namespace RDKit {
       }
       free(order); 
     } // end of rankMolAtoms()
-
-    
   } // end of Canon namespace
 } // end of RDKit namespace

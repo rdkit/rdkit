@@ -231,7 +231,7 @@ def RaiseChemDraw():
   
 try:
   from PIL import Image
-  import cStringIO
+  from io import StringIO
   def SmilesToPilImage(smilesStr):
     """takes a SMILES string and returns a PIL image using chemdraw
 
@@ -243,7 +243,7 @@ try:
     """
     # do the conversion...
     res = CDXConvert(dataStr,inFormat,outFormat)
-    dataFile = cStringIO.StringIO(str(res))
+    dataFile = StringIO(str(res))
     img = Image.open(dataFile).convert('RGB')
     return img
 except ImportError:

@@ -56,15 +56,15 @@ import sys
 import string
 import time
 import tempfile
-import cStringIO
+from io import StringIO
 import exceptions
 from types import *
 from math import sin, cos, tan, pi, ceil
 
-import pdfutils
-import pdfdoc
-import pdfmetrics
-import pdfgeom
+from . import pdfutils
+from . import pdfdoc
+from . import pdfmetrics
+from . import pdfgeom
 
 
 class PDFError(exceptions.ValueError):
@@ -528,7 +528,7 @@ class Canvas:
         """Two notations.  pass two numbers, or an array and phase"""
         if type(array) == IntType or type(array) == FloatType:
             self._code.append('[%s %s] 0 d' % (array, phase))
-        elif type(array) == ListType or type(Array) == TupleType:
+        elif type(array) == ListType or type(array) == TupleType:
             assert phase <= len(array), "setDash phase must be l.t.e. length of array"
             textarray = string.join(map(str, array))
             self._code.append('[%s] %s d' % (textarray, phase))
@@ -613,7 +613,7 @@ class Canvas:
                 #write in blocks of (??) 60 characters per line to a list
                 compressed = imageFile.read()
                 encoded = pdfutils._AsciiBase85Encode(compressed)
-                outstream = cStringIO.StringIO(encoded)
+                outstream = StringIO(encoded)
                 dataline = outstream.read(60)
                 while dataline != "":
                     imagedata.append(dataline)
@@ -651,7 +651,7 @@ class Canvas:
             encoded = pdfutils._AsciiBase85Encode(compressed) #...sadly this isn't
 
             #write in blocks of (??) 60 characters per line to a list
-            outstream = cStringIO.StringIO(encoded)
+            outstream = StringIO(encoded)
             dataline = outstream.read(60)
             while dataline != "":
                 imagedata.append(dataline)

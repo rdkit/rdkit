@@ -10,7 +10,7 @@
 #
 from __future__ import print_function
 import unittest,os,gzip
-from rdkit.six.moves import cPickle
+from rdkit.six.moves import cPickle  #@UnresolvedImport #pylint: disable=F0401
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem.AtomPairs import Pairs,Torsions,Utils

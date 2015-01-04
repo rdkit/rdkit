@@ -19,7 +19,6 @@ import sys
 import string
 import time
 import tempfile
-import cStringIO
 from types import *
 from math import sin, cos, pi, ceil
 
@@ -29,11 +28,11 @@ except:
     print("zlib not available, page compression not available")
 
 
-from pdfgeom import bezierArc
+from .pdfgeom import bezierArc
 
-import pdfutils
-from pdfutils import LINEEND   # this constant needed in both
-import pdfmetrics
+from . import pdfutils
+from .pdfutils import LINEEND   # this constant needed in both
+from . import pdfmetrics
 ##############################################################
 #
 #            Constants and declarations
@@ -190,7 +189,7 @@ class PDFDocument:
         #way so the system knows it is a PDF file.
         #This supplied by Joe Strout
         if os.name == 'mac':
-            import macfs
+            import macfs  #@UnresolvedImport
             try: 
                 macfs.FSSpec(filename).SetCreatorType('CARO','PDF ')
             except:
@@ -212,7 +211,7 @@ class PDFDocument:
             i = i + 1
         self.printXref()
         self.printTrailer()
-        print("%%EOF",end='')
+        print("%%EOF" , end='')
 
     def addPage(self, page):
         """adds page and stream at end.  Maintains pages list"""

@@ -15,7 +15,7 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/RankAtoms.h>
+#include <RDGeneral/Ranking.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -456,7 +456,7 @@ namespace RDKit{
         vs.push_back(std::make_pair(idx,v));
         ++nbrIdx;
       }
-      std::sort(vs.begin(),vs.end(),RankAtoms::pairLess<unsigned int,RDGeom::Point3D>());
+      std::sort(vs.begin(),vs.end(),Rankers::pairLess<unsigned int,RDGeom::Point3D>());
       double vol;
       if(vs.size()==4) {
         vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
@@ -878,6 +878,9 @@ namespace RDKit{
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     // NOTE: kekulize the molecule before writing it out
     // because of the way mol files handle aromaticity
+    if(trwmol.needsUpdatePropertyCache()){
+      trwmol.updatePropertyCache(false);
+    }
     if(kekulize) MolOps::Kekulize(trwmol);
 
 #if 0

@@ -114,7 +114,7 @@ def GetStandardizedWeights(weights):
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250), sigma=None, 
+def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250), sigma=None,  #@UndefinedVariable  #pylint: disable=E1101
                                 coordScale=1.5, step=0.01, colors='k', contourLines=10, alpha=0.5, **kwargs):
   """
   Generates the similarity map for a molecule given the atomic weights.

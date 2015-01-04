@@ -1191,6 +1191,24 @@ void testFragmentOnBonds()
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms()==5);
+    unsigned int indices[]={0,1};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<unsigned int> cutsPerAtom(mol->getNumAtoms());
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,bindices,false,0,0,&cutsPerAtom);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==5);
+    TEST_ASSERT(cutsPerAtom[0]==1);
+    TEST_ASSERT(cutsPerAtom[1]==2);
+    TEST_ASSERT(cutsPerAtom[2]==1);
+    TEST_ASSERT(cutsPerAtom[3]==0);
+    delete mol;
+    delete nmol;
+  }
+  {
+    std::string smi = "OCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
     TEST_ASSERT(mol->getBondBetweenAtoms(0,1));
     TEST_ASSERT(mol->getBondBetweenAtoms(3,4));
     unsigned int indices[]={0,3};
@@ -1462,6 +1480,28 @@ void testFragmentOnSomeBonds()
     
     delete mol;
   }
+
+
+  {
+    std::string smi = "OCCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={0,2,4};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    std::vector<std::vector<unsigned int> > cpa;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,2,false,NULL,NULL,&cpa);
+    TEST_ASSERT(frags.size()==3);
+    TEST_ASSERT(cpa.size()==3);
+    TEST_ASSERT(cpa[0].size()==mol->getNumAtoms());
+    TEST_ASSERT(cpa[1].size()==mol->getNumAtoms());
+    TEST_ASSERT(cpa[2].size()==mol->getNumAtoms());
+
+    
+    delete mol;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

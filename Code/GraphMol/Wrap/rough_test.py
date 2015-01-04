@@ -822,7 +822,6 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m.GetNumAtoms()==23)
     m = six.next(sdSup)
     self.assertTrue(m)
-    print(m.GetNumAtoms())
     self.assertTrue(m.GetNumAtoms()==28)
 
     sdSup = Chem.SDMolSupplier(fileN,removeHs=False)
@@ -841,7 +840,6 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m.GetNumAtoms()==23)
     m = six.next(sdSup)
     self.assertTrue(m)
-    print(m.GetNumAtoms())
     self.assertTrue(m.GetNumAtoms()==28)
 
     sdSup.SetData(d,removeHs=False)
@@ -2580,7 +2578,14 @@ CAS<~>
     self.assertEqual(len(frags[1]),4)
     self.assertEqual(len(frags[2]),2)
 
-    
+    pieces,cpa = Chem.FragmentOnSomeBonds(m,(0,2,4),2,returnCutsPerAtom=True)
+    self.assertEqual(len(pieces),3)
+    self.assertEqual(len(cpa),3)
+    self.assertEqual(len(cpa[0]),m.GetNumAtoms())
+    print(cpa)
+
+
+        
 if __name__ == '__main__':
   unittest.main()
 

@@ -7,14 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/roger_canon.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/RankAtoms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>
@@ -827,7 +826,7 @@ void test7(){
     "C[C@H]1C[C@H](C1)N1CCN(C)CC1",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
     "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
-    "*12*3*1*3*4*5*4*52",
+    //"*12*3*1*3*4*5*4*52",
     "N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
     "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
     "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
@@ -868,6 +867,7 @@ void test8(){
 void test9(){
   BOOST_LOG(rdInfoLog) << "testing chiral invariants." << std::endl;
   std::string rdbase = getenv("RDBASE");
+
   {
     std::string smi="C[C@](F)(Cl)I";
     RWMol *m =SmilesToMol(smi,0,0);
@@ -944,6 +944,66 @@ void test9(){
   }
 
 
+  {
+    // this one was a chiral ranking problem 
+    std::string smi="COC(C)CC(C)(C)O";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[1]>atomRanks[8]);
+    TEST_ASSERT(atomRanks[5]>atomRanks[2]);
+  }
+
+
+  
+  {
+    // are double bonds being handled correctly?
+    std::string smi="OC[C@H](F)C=O";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]<atomRanks[5]);
+    TEST_ASSERT(atomRanks[1]<atomRanks[4]);
+  }
+  {
+    // are double bonds being handled correctly?
+    std::string smi="O=C[C@H](F)CO";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[0]>atomRanks[5]);
+    TEST_ASSERT(atomRanks[1]>atomRanks[4]);
+  }
+
+  {
+    // are double bonds being handled correctly?
+    std::string smi="CC[C@](C)(CF)C=O";
+    RWMol *m =SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr<<smi<<std::endl;
+    RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
+    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    std::cerr<<std::endl;
+    TEST_ASSERT(atomRanks[4]>atomRanks[6]);
+    TEST_ASSERT(atomRanks[1]<atomRanks[4]);
+  }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -958,9 +1018,9 @@ int main(){
   test4();
   test5();
   test6();
-#endif
   test7();
   test8();
+#endif
   test9();
   return 0;
 }

@@ -98,7 +98,8 @@ namespace RDKit {
         }
       }
 
-      void drawAtom(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,unsigned int fontSz){
+      void drawAtom(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,unsigned int fontSz,
+                    bool includeAtomCircles=false){
         int atNum=*pos++;
         int xp=*pos++;
         int yp=*pos++;
@@ -108,25 +109,35 @@ namespace RDKit {
           label+=(char)*pos++;
         }
         int orient=*pos++;
-        int width=fontSz*label.length();
-        int height=fontSz;
-        sstr<<"<svg:g transform='translate("<<xp<<","<<yp<<")'><svg:rect ";
-        sstr<<"style='opacity:1.0;fill:#FFFFFF;stroke:none'";
-        sstr<<" width='"<<width<<"' height='"<<height<<"'";
-        sstr<<" x='-"<<width/2<<"' y='-"<<height/2<<"'";
-        sstr<<"> </svg:rect>\n";
-        sstr<<"<svg:text";
-        sstr<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans;text-anchor:middle"<<";fill:"<<getColor(atNum)<<"'";
-        sstr<<" y='"<<.75*fontSz/2<<"'>";
-        sstr<<"<svg:tspan>";
-        sstr<<label<<"</svg:tspan>";
-        sstr<<"</svg:text>";
-        sstr<<"</svg:g>\n";
+        if(label.length()){
+          int width=fontSz*label.length();
+          int height=fontSz;
+          sstr<<"<svg:g transform='translate("<<xp<<","<<yp<<")'><svg:rect ";
+          sstr<<"style='opacity:1.0;fill:#FFFFFF;stroke:none'";
+          sstr<<" width='"<<width<<"' height='"<<height<<"'";
+          sstr<<" x='-"<<width/2<<"' y='-"<<height/2<<"'";
+          sstr<<"> </svg:rect>\n";
+          sstr<<"<svg:text";
+          sstr<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:middle"<<";fill:"<<getColor(atNum)<<"'";
+          sstr<<" y='"<<.75*fontSz/2<<"'>";
+          sstr<<"<svg:tspan>";
+          sstr<<label<<"</svg:tspan>";
+          sstr<<"</svg:text>";
+          sstr<<"</svg:g>\n";
+        }
+        if(includeAtomCircles){
+#if 0          
+          sstr<<"<svg:circle cx='"<<xp<<"' cy='"<<yp<<"' r='5' />\n"; 
+#else
+          sstr<<"<svg:circle cx='"<<xp<<"' cy='"<<yp<<"' r='0' style='fill:none;stroke:none' />\n";
+#endif
+        }
       }
     } // end of anonymous namespace 
 
     std::string DrawingToSVG(const std::vector<int> &drawing,
-                             unsigned int lineWidthMult=2,unsigned int fontSize=50){
+                             unsigned int lineWidthMult=2,unsigned int fontSize=50,
+                             bool includeAtomCircles=false){
       std::vector<int>::const_iterator pos=drawing.begin()+2;
       if(*pos!= RDKit::Drawing::BOUNDS){
         std::cerr<<"no bounds token found"<<std::endl;
@@ -156,7 +167,7 @@ namespace RDKit {
           drawLine(pos,sstr,lineWidthMult);
           break;
         case  RDKit::Drawing::ATOM:
-          drawAtom(pos,sstr,fontSize);
+          drawAtom(pos,sstr,fontSize,includeAtomCircles);
           break;
         default:
           std::cerr<<"unrecognized token: "<<token<<std::endl;

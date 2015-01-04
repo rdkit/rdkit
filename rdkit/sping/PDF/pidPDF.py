@@ -14,10 +14,11 @@ self.pdf which offers numerous lower-level drawing routines.
 # paths so I left it unchanged.
 
 
+#pylint: disable=E1103,W0311,E1101
+from __future__ import print_function
 #standard python library modules
 import string
-import cStringIO
-import pdfmetrics
+from . import pdfmetrics
 import glob
 import os
 import types
@@ -26,8 +27,8 @@ from math import sin, cos, pi, ceil
 # app specific
 from rdkit.sping import pagesizes
 from rdkit.sping.pid import *
-import pdfgen
-import pdfgeom
+from . import pdfgen
+from . import pdfgeom
 
 #edit this is the setting offends you, or set it in the constructor
 DEFAULT_PAGE_SIZE = pagesizes.A4

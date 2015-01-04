@@ -16,7 +16,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include "MolFileStereochem.h"
-#include <GraphMol/RankAtoms.h>
+#include <RDGeneral/Ranking.h>
 
 namespace RDKit {
   typedef std::list<double> DOUBLE_LIST;
@@ -385,7 +385,7 @@ namespace RDKit {
     std::vector< unsigned int > indices(mol.getNumAtoms());
     for(unsigned int i=0;i<mol.getNumAtoms();++i) indices[i]=i; 
     if(chiNbrs){
-      std::sort(indices.begin(),indices.end(),RankAtoms::argless<INT_VECT>(nChiralNbrs));
+      std::sort(indices.begin(),indices.end(),Rankers::argless<INT_VECT>(nChiralNbrs));
     }
 #if 0
     std::cerr<<"  nbrs: ";
@@ -441,7 +441,7 @@ namespace RDKit {
       // as it seems like it is. (I'm going into this knowing that it's bound to 
       // happen; I'll kick myself and do the hard solution at that point.)
       CHECK_INVARIANT(nbrScores.size(),"no eligible neighbors for chiral center");
-      std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<int,int>());
+      std::sort(nbrScores.begin(),nbrScores.end(),Rankers::pairLess<int,int>());
       res[nbrScores[0].second] = idx;
     }
     return res;

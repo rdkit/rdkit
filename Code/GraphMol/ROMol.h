@@ -636,6 +636,9 @@ namespace RDKit{
     */
     void updatePropertyCache(bool strict=true);
 
+
+    bool needsUpdatePropertyCache() const;
+
     //@}
 
 

@@ -3,7 +3,9 @@
 from __future__ import print_function
 import os
 import string
-import cStringIO
+from io import StringIO
+from rdkit.six import string_types
+import glob
 
 LINEEND = '\015\012'
 
@@ -27,12 +29,12 @@ def cacheImageFile(filename):
     code.append('ID')
     #use a flate filter and Ascii Base 85
     raw = img.tostring()
-    assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
+    assert(len(raw) == imgwidth * imgheight, "Wrong amount of data for image")
     compressed = zlib.compress(raw)   #this bit is very fast...
     encoded = _AsciiBase85Encode(compressed) #...sadly this isn't
     
     #write in blocks of 60 characters per line
-    outstream = cStringIO.StringIO(encoded)
+    outstream = StringIO(encoded)
     dataline = outstream.read(60)
     while dataline != "":
         code.append(dataline)
@@ -53,8 +55,7 @@ def preProcessImages(spec):
     of image filenames, crunches them all to save time.  Run this
     to save huge amounts of time when repeatedly building image
     documents."""
-    import types
-    if type(spec) is types.StringType:
+    if isinstance(spec, string_types):
         filelist = glob.glob(spec)
     else:  #list or tuple OK
         filelist = spec
@@ -111,7 +112,7 @@ def _AsciiHexEncode(input):
     """This is a verbose encoding used for binary data within
     a PDF file.  One byte binary becomes two bytes of ASCII."""
     "Helper function used by images"
-    output = cStringIO.StringIO()
+    output = StringIO()
     for char in input:
         output.write('%02x' % ord(char))
     output.write('>')
@@ -126,7 +127,7 @@ def _AsciiHexDecode(input):
     stripped = stripped[:-1]  #chop off terminator
     assert len(stripped) % 2 == 0, 'Ascii Hex stream has odd number of bytes'
     i = 0
-    output = cStringIO.StringIO()
+    output = StringIO()
     while i < len(stripped):
         twobytes = stripped[i:i+2]
         output.write(chr(eval('0x'+twobytes)))
@@ -150,7 +151,7 @@ def _AsciiBase85Encode(input):
     """This is a compact encoding used for binary data within
     a PDF file.  Four bytes of binary data become five bytes of
     ASCII.  This is the default method used for encoding images."""
-    outstream = cStringIO.StringIO()
+    outstream = StringIO()
     # special rules apply if not a multiple of four bytes.  
     whole_word_count, remainder_size = divmod(len(input), 4)
     cut = 4 * whole_word_count
@@ -163,7 +164,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(body[offset+2])
         b4 = ord(body[offset+3])
     
-        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
 
         if num == 0:
             #special case
@@ -194,7 +195,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(lastbit[2])
         b4 = ord(lastbit[3])
 
-        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
 
         #solve for c1..c5
         temp, c5 = divmod(num, 85)
@@ -217,7 +218,7 @@ def _AsciiBase85Encode(input):
 def _AsciiBase85Decode(input):
     """This is not used - Acrobat Reader decodes for you - but a round
     trip is essential for testing."""
-    outstream = cStringIO.StringIO()
+    outstream = StringIO()
     #strip all whitespace
     stripped = string.join(string.split(input),'')
     #check end

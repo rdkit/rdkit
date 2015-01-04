@@ -9,8 +9,8 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/RankAtoms.h>
-#include <GraphMol/roger_canon.h>
+#include <RDGeneral/Ranking.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <algorithm>
@@ -131,7 +131,7 @@ namespace RDKit{
 #endif  
 
       // rank those:
-      RankAtoms::rankVect(invars,ranks);
+      Rankers::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
       for(unsigned int i=0;i<numAtoms;++i){
@@ -252,7 +252,7 @@ namespace RDKit{
         // 
         lastNumRanks=numRanks;
 
-        RankAtoms::rankVect(cipEntries,ranks);
+        Rankers::rankVect(cipEntries,ranks);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
 
         // now truncate each vector and stick the rank at the end
@@ -515,6 +515,7 @@ namespace RDKit{
           codesSeen[ranks[otherIdx]]=1;
           nbrs.push_back(std::make_pair(ranks[otherIdx],
                                         mol[*beg]->getIdx()));
+          //std::cerr<<"      "<< atom->getIdx() << " " << mol[*beg]->getIdx() << " " << otherIdx << "(" << ranks[otherIdx] <<")"<<std::endl;
           ++beg;
         }
 
@@ -591,7 +592,7 @@ namespace RDKit{
             --unassignedAtoms;
 
             // sort the list of neighbors by their CIP ranks:
-            std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<int,int>());
+            std::sort(nbrs.begin(),nbrs.end(),Rankers::pairLess<int,int>());
 
             // collect the list of neighbor indices:
             std::list<int> nbrIndices;
@@ -607,6 +608,10 @@ namespace RDKit{
               ++nSwaps;
             }
           
+            // std::cerr<<"nbrs from "<<atom->getIdx()<<" ";
+            // std::copy(nbrIndices.begin(),nbrIndices.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+            // std::cerr<<"nSwaps: "<<nSwaps<<" tag: "<<tag<<std::endl;
+            
             // if that number is odd, we'll change our chirality:
             if(nSwaps%2){
               if(tag == Atom::CHI_TETRAHEDRAL_CCW) tag=Atom::CHI_TETRAHEDRAL_CW;
@@ -827,7 +832,7 @@ namespace RDKit{
             bondIt!=mol.endBonds();
             ++bondIt){
           if( (*bondIt)->getBondType()==Bond::DOUBLE &&
-	      (*bondIt)->getStereo() != Bond::STEREOANY ){
+              (*bondIt)->getStereo() != Bond::STEREOANY ){
             (*bondIt)->setStereo(Bond::STEREONONE);
             (*bondIt)->getStereoAtoms().clear();
           }
@@ -951,7 +956,7 @@ namespace RDKit{
             Bond *dblBond=*bondIt;
             // if the bond is flagged as EITHERDOUBLE, we ignore it:
             if(dblBond->getBondDir()==Bond::EITHERDOUBLE ||
-	       dblBond->getStereo()==Bond::STEREOANY ){
+               dblBond->getStereo()==Bond::STEREOANY ){
               break;
             }
             // proceed only if we either want to clean the stereocode on this bond

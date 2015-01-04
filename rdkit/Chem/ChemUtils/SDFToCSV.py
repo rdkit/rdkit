@@ -61,7 +61,7 @@ class TestCase(unittest.TestCase):
     pass
   def test1(self):
     import os
-    from rdkit.six.moves import cStringIO as StringIO
+    from rdkit.six.moves import cStringIO as StringIO  #@UnresolvedImport #pylint: disable=F0401
     fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()
@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(line0[0]=='SMILES')
   def test2(self):
     import os
-    from rdkit.six.moves import cStringIO as StringIO
+    from rdkit.six.moves import cStringIO as StringIO  #@UnresolvedImport #pylint: disable=F0401
     fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()

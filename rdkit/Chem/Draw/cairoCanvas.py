@@ -9,6 +9,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+#pylint: disable=F0401,C0324,C0322,W0142
 import sys
 try:
   import cairo
@@ -36,7 +37,7 @@ else:
   pango=None
   pangocairo=None
 
-from canvasbase import CanvasBase
+from rdkit.Chem.Draw.canvasbase import CanvasBase
 try:
   import Image
 except ImportError:

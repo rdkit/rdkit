@@ -1,5 +1,5 @@
 ******  Release_2015.03.1 *******
-(Changes relative to Release_2014.09.1)
+(Changes relative to Release_2014.09.2)
 
 Acknowledgements:
 
@@ -18,6 +18,24 @@ Removed modules:
 Contrib updates:
 
 Other:
+
+******  Release_2014.09.2 *******
+(Changes relative to Release_2014.09.1)
+
+Acknowledgements:
+Sereina Riniker, Nadine Schneider, Paolo Tosco
+
+Bug Fixes:
+- SMILES parser doing the wrong thing for odd dot-disconnected construct
+ (github issue #378)
+- O3A code generating incorrect results for multiconformer molecules
+ (github issue #385)
+- Suppliers probably not safe to read really large files
+ (github issue #392)
+- Torsion constraints not worrking properly for negative torsions
+ (github issue #393)
+- Core leak in reactions
+ (github issue #396)
 
 
 ******  Release_2014.09.1 *******
