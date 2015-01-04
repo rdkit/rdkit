@@ -3095,7 +3095,7 @@ void testFragmentSmiles(){
     int as[]={0,1,2,4};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    TEST_ASSERT(csmiles=="CC(C)=C");
+    TEST_ASSERT(csmiles=="C=C(C)C");
     delete m;
   }
   {
@@ -3108,7 +3108,8 @@ void testFragmentSmiles(){
     std::string labels[6]={"a","b","","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    TEST_ASSERT(csmiles=="CaC(aC)bC");
+    std::cerr<<csmiles<<std::endl;
+    TEST_ASSERT(csmiles=="CbC(aC)aC");
     delete m;
   }
   {
@@ -3121,7 +3122,8 @@ void testFragmentSmiles(){
     std::string labels[6]={"b","a","","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    TEST_ASSERT(csmiles=="CaC(aC)bC");
+    std::cerr<<csmiles<<std::endl;
+    TEST_ASSERT(csmiles=="CaC(aC)bC" );
     delete m;
   }
   {
@@ -3134,7 +3136,8 @@ void testFragmentSmiles(){
     std::string labels[6]={"b","b","","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    TEST_ASSERT(csmiles=="CaC(bC)bC");
+    std::cerr<<csmiles<<std::endl;
+    TEST_ASSERT(csmiles=="CaC(bC)bC" || csmiles=="CbC(aC)bC");
     delete m;
   }
   {
@@ -3145,6 +3148,7 @@ void testFragmentSmiles(){
     int as[]={0,4};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,0,false,false,-1,false);
+    std::cerr<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="O.C");
     delete m;
   }
@@ -3530,7 +3534,7 @@ main(int argc, char *argv[])
   testBug1719046();
 #endif
   testBug1844617();
-#if 0  // POSTPONED during canonicalization rewrite
+#if 1  // POSTPONED during canonicalization rewrite
   testFragmentSmiles();
   testGithub12();
 #endif

@@ -268,6 +268,7 @@ namespace RDKit{
       PRECONDITION(!bondsInPlay||bondsInPlay->size()>=mol.getNumBonds(),"bad bondsInPlay");
       PRECONDITION(!atomSymbols||atomSymbols->size()>=mol.getNumAtoms(),"bad atomSymbols");
       PRECONDITION(!bondSymbols||bondSymbols->size()>=mol.getNumBonds(),"bad bondSymbols");
+
       Canon::MolStack molStack;
       // try to prevent excessive reallocation
       molStack.reserve(mol.getNumAtoms()+
@@ -560,7 +561,10 @@ namespace RDKit{
       }
     }
     if(canonical){
-      UNDER_CONSTRUCTION("not implemented");
+      Canon::rankFragmentAtoms(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,
+                               true,
+                               doIsomericSmiles,doIsomericSmiles);
+      Canon::rankFragmentAtoms(tmol,ranks,atomsInPlay,bondsInPlay);
       //MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
