@@ -10,7 +10,7 @@
 //
 
 #include "new_canon.h"
-
+#include <GraphMol/RDKitBase.h>
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <cstring>
@@ -119,6 +119,8 @@ namespace RDKit {
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
         atoms[i].atom=mol.getAtomWithIdx(i);
         atoms[i].index=i;
+        atoms[i].degree=mol.getAtomWithIdx(i)->getDegree();
+        atoms[i].p_symbol=NULL;
       }
       AtomCompareFunctor ftor(&atoms.front(),mol);
       ftor.df_useIsotopes=includeIsotopes;
@@ -134,6 +136,50 @@ namespace RDKit {
       free(order); 
     } // end of rankMolAtoms()
 
+    void rankFragmentAtoms(const ROMol &mol,std::vector<unsigned int> &res,
+                           const boost::dynamic_bitset<> &atomsInPlay,
+                           const boost::dynamic_bitset<> &bondsInPlay,
+                           const std::vector<std::string> *atomSymbols,
+                           bool breakTies,
+                           bool includeChirality,bool includeIsotopes) {
+      PRECONDITION(atomsInPlay.size()==mol.getNumAtoms(),"bad atomsInPlay size");
+      PRECONDITION(bondsInPlay.size()==mol.getNumBonds(),"bad bondsInPlay size");
+      PRECONDITION(!atomSymbols || atomSymbols->size()==mol.getNumAtoms(),"bad atomSymbols size");
+
+      std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        atoms[i].atom=mol.getAtomWithIdx(i);
+        atoms[i].index=i;
+        atoms[i].degree=0;
+        if(atomSymbols){
+          atoms[i].p_symbol=&(*atomSymbols)[i];
+        } else {
+          atoms[i].p_symbol=0;
+        }
+      }
+      for(ROMol::ConstBondIterator bI=mol.beginBonds();
+          bI!=mol.endBonds();++bI){
+        if(!bondsInPlay[(*bI)->getIdx()])
+          continue;
+        atoms[(*bI)->getBeginAtomIdx()].degree++;
+        atoms[(*bI)->getEndAtomIdx()].degree++;
+      }
+      AtomCompareFunctor ftor(&atoms.front(),mol,
+                              &atomsInPlay,&bondsInPlay);
+      ftor.df_useIsotopes=includeIsotopes;
+      ftor.df_useChirality=includeChirality;
+
+      int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
+      rankWithFunctor(ftor,breakTies,order);
+
+      res.resize(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        res[order[i]]=atoms[order[i]].index;
+      }
+      free(order); 
+    } // end of rankFragmentAtoms()
+
+    
     void chiralRankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res){
       std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){

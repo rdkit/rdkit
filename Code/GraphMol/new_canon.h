@@ -13,6 +13,7 @@
 #include <GraphMol/RingInfo.h>
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <cstring>
 #include <iostream>
 #include <cassert>
@@ -25,6 +26,8 @@ namespace RDKit {
     struct canon_atom{
       const Atom *atom;
       int index;
+      unsigned int degree;
+      const std::string *p_symbol; // if provided, this is used to order atoms
     };
 
     template <typename CompareFunc>
@@ -189,21 +192,24 @@ namespace RDKit {
 
     class AtomCompareFunctor {
       void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
-        unsigned int res=0;
-        const Atom *at=dp_atoms[i].atom;
         nbrs.resize(0);
+        if(dp_atomsInPlay && !(*dp_atomsInPlay)[i])
+          return;
+        const Atom *at=dp_atoms[i].atom;
         nbrs.reserve(at->getDegree());
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg];
+          ++beg;
+          if(dp_bondsInPlay && !(*dp_bondsInPlay)[bond->getIdx()])
+            continue;
           if(df_useChirality)
             nbrs.push_back(bondholder(bond->getBondType(),bond->getStereo(),
                                       dp_atoms[bond->getOtherAtomIdx(i)].index));
           else
             nbrs.push_back(bondholder(bond->getBondType(),Bond::STEREONONE,
                                       dp_atoms[bond->getOtherAtomIdx(i)].index));
-          ++beg;
         }
         std::sort(nbrs.begin(),nbrs.end());
       }
@@ -251,13 +257,22 @@ namespace RDKit {
           return 1;
 
         // start by comparing degree
-        ivi= dp_atoms[i].atom->getDegree();
-        ivj= dp_atoms[j].atom->getDegree();
+        ivi= dp_atoms[i].degree;
+        ivj= dp_atoms[j].degree;
         if(ivi<ivj)
           return -1;
         else if(ivi>ivj)
           return 1;
 
+        if(dp_atoms[i].p_symbol &&
+           dp_atoms[j].p_symbol ) {
+          if( *(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol) )
+            return -1;
+          else if( *(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol) )
+            return 1;
+          else
+            return 0;
+        }
         // move onto atomic number
         ivi= dp_atoms[i].atom->getAtomicNum();
         ivj= dp_atoms[j].atom->getAtomicNum();
@@ -353,19 +368,29 @@ namespace RDKit {
     public:
       Canon::canon_atom *dp_atoms;
       const ROMol *dp_mol;
+      const boost::dynamic_bitset<> *dp_atomsInPlay,*dp_bondsInPlay;
       bool df_useNbrs;
       bool df_useIsotopes;
       bool df_useChirality;
-      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false),
+      AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
+                             dp_atomsInPlay(NULL), dp_bondsInPlay(NULL),
+                             df_useNbrs(false),
                              df_useIsotopes(true), df_useChirality(true) {
       };
-      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m) : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false),
-                                                                     df_useIsotopes(true), df_useChirality(true) {
+      AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
+                         const boost::dynamic_bitset<> *atomsInPlay=NULL,
+                         const boost::dynamic_bitset<> *bondsInPlay=NULL ) :
+        dp_atoms(atoms), dp_mol(&m),
+        dp_atomsInPlay(atomsInPlay),dp_bondsInPlay(bondsInPlay),
+        df_useNbrs(false),df_useIsotopes(true), df_useChirality(true) {
       };
       int operator()(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
         PRECONDITION(dp_mol,"no molecule");
         PRECONDITION(i!=j,"bad call");
+        if(dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])){
+          return 0;
+        }
         int v=basecomp(i,j);
         // std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
         if(v) return v;
@@ -374,10 +399,15 @@ namespace RDKit {
           std::vector<bondholder> nbrsi,nbrsj;
           getAtomNeighborhood(i,nbrsi);
           getAtomNeighborhood(j,nbrsj);
-          for(unsigned int ii=0;ii<nbrsi.size();++ii){
+          for(unsigned int ii=0;ii<nbrsi.size() && ii<nbrsj.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
             // std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
+          }
+          if(nbrsi.size()<nbrsj.size()){
+            return -1;
+          } else if(nbrsi.size()>nbrsj.size()) {
+            return 1;
           }
         }
         return 0;
@@ -670,6 +700,13 @@ namespace RDKit {
                       bool breakTies=true,
                       bool includeChirality=true,
                       bool includeIsotopes=true);
+    void rankFragmentAtoms(const ROMol &mol,std::vector<unsigned int> &res, 
+                           const boost::dynamic_bitset<> &atomsInPlay,
+                           const boost::dynamic_bitset<> &bondsInPlay,
+                           const std::vector<std::string> *atomSymbols=NULL,
+                           bool breakTies=true,
+                           bool includeChirality=true,
+                           bool includeIsotopes=true);
     void chiralRankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res);
 
   } // end of Canon namespace
