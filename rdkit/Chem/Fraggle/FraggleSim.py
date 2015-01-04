@@ -80,8 +80,8 @@ def delete_bonds(mol,bonds,ftype,hac):
     #as the valencies should be okay
     modifiedMol = em.GetMol()
 
-    #do not sanitise!
-    #Chem.SanitizeMol(modifiedMol)
+    #do not do a full sanitization, but do find rings and calculate valences:
+    Chem.SanitizeMol(modifiedMol,Chem.SanitizeFlags.SANITIZE_PROPERTIES|Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
 
     fragmented_smi = Chem.MolToSmiles(modifiedMol,True)
 
