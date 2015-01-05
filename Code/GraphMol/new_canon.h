@@ -176,6 +176,7 @@ namespace RDKit {
           return bondStereo<o.bondStereo;
         return nbrIdx<o.nbrIdx;
       }
+
       static int compare(const bondholder &x,const bondholder &y,unsigned int div=1){
         if(x.bondType<y.bondType)
           return -1;
@@ -188,6 +189,7 @@ namespace RDKit {
 
         return x.nbrIdx/div-y.nbrIdx/div;
       }
+
     };
 
     class AtomCompareFunctor {
@@ -421,13 +423,6 @@ namespace RDKit {
         const Atom *at=dp_atoms[i].atom;
         nbrs.resize(0);
         nbrs.reserve(8);
-        // add Hs that aren't in the graph::
-        if(!at->needsUpdatePropertyCache()){
-          for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET));
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET));
-          }
-        }
         //std::cerr<<"gac: "<<i<<" "<<at->getTotalNumHs()<<std::endl;
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
@@ -467,19 +462,26 @@ namespace RDKit {
             nReps = static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()));
           }
           //std::cerr<<"          "<<nReps<<std::endl;
-          while(nReps>0){
-            // we push on both the atomic number and the index using the ATNUM_CLASS_OFFSET
-            // pre-multiplier. This allows us to first compare the full set of neighbors based
-            // on atomic number and then based on the ranks that have already been computed.
-            nbrs.push_back(bondholder(Bond::SINGLE,stereo,
-                                      nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+
-                                      dp_atoms[bond->getOtherAtomIdx(i)].index+1));
-            --nReps;
-          }
+          // we push on both the atomic number and the index using the ATNUM_CLASS_OFFSET
+          // pre-multiplier. This allows us to first compare the full set of neighbors based
+          // on atomic number and then based on the ranks that have already been computed.
+          bondholder bh(Bond::SINGLE,stereo,
+                         nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+
+                         dp_atoms[bond->getOtherAtomIdx(i)].index+1);
+          std::vector<bondholder>::iterator iPos=std::lower_bound(nbrs.begin(),nbrs.end(),bh);
+          nbrs.insert(iPos,nReps,bh);
         }
-        std::sort(nbrs.begin(),nbrs.end());
+
         // FIX: don't want to be doing this long-term
         std::reverse(nbrs.begin(),nbrs.end());
+
+        // add Hs that aren't in the graph, we know they go at the end:
+        if(!at->needsUpdatePropertyCache()){
+          for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET));
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET));
+          }
+        }
       }
 
       int basecomp(int i,int j) const {
