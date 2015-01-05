@@ -38,7 +38,7 @@ if(RDK_BUILD_QT_SUPPORT)
     ${Qt5OpenGL_INCLUDE_DIRS}
     )
 
-  set(QTDRAW2D_SRC MolDraw2DQt.cc)
+  set(QTDRAW2D_SRC MolDraw2DQt.cpp)
 endif(RDK_BUILD_QT_SUPPORT)
   
 if(RDK_BUILD_CAIRO_SUPPORT)
@@ -46,13 +46,13 @@ if(RDK_BUILD_CAIRO_SUPPORT)
   include_directories( ${CAIRO_INCLUDE_DIRS} )
   set(EXTRA_LOCAL_LIBS ${CAIRO_LIBRARIES} )
   ADD_DEFINITIONS("-DRDK_CAIRO_BUILD")
-  set(CAIRODRAW2D_SRC MolDraw2DCairo.cc)
+  set(CAIRODRAW2D_SRC MolDraw2DCairo.cpp)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
-add_library(MolDraw2D SHARED MolDraw2D.cc MolDraw2DSVG.cc ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}  )
+add_library(MolDraw2D SHARED MolDraw2D.cpp MolDraw2DSVG.cpp ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}  )
 target_link_libraries(MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES}  ${EXTRA_LOCAL_LIBS} )
 
-add_executable(test1 test1.cc)
+add_executable(test1 test1.cpp)
 target_link_libraries(test1 MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES} ${EXTRA_LOCAL_LIBS} )
 
 if(RDK_BUILD_QT_DEMO)
