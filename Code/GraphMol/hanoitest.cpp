@@ -1011,7 +1011,7 @@ void test9(){
 
 int main(){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test3();
