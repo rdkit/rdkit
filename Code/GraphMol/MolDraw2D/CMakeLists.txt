@@ -1,7 +1,7 @@
 
 option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" OFF )
 option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
-option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" ON )
+option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 
 
 if(RDK_BUILD_QT_SUPPORT)
