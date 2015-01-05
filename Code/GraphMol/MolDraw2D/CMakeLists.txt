@@ -1,32 +1,8 @@
-cmake_minimum_required( VERSION 2.8.9 )
 
-project(RDKitSV)
-
-option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" ON )
-option(RDK_BUILD_QT_DEMO "build the QT drawing demo" ON )
+option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" OFF )
+option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" ON )
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build_utils/CMakeModules/")
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
-
-find_package( Boost 1.46.0 COMPONENTS system REQUIRED )
-
-# RDKit using my FindMyRDKit.cmake file in build_utils
-# gcc 4.7.7 is really picky about the order of these libraries
-find_package( MyRDKit COMPONENTS FileParsers SmilesParse Depictor RDGeometryLib
-  RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib )
-
-if(CMAKE_COMPILER_IS_GNUCXX)
-  ADD_DEFINITIONS("-fPIC")
-endif()
-
-include_directories(
-  ${Boost_INCLUDE_DIRS}
-  ${RDKIT_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR} )
-
-set(EXECUTABLE_OUTPUT_PATH ${RDKitSV_SOURCE_DIR}/exe_${CMAKE_BUILD_TYPE})
 
 if(RDK_BUILD_QT_SUPPORT)
   #find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
@@ -49,11 +25,17 @@ if(RDK_BUILD_CAIRO_SUPPORT)
   set(CAIRODRAW2D_SRC MolDraw2DCairo.cpp)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
-add_library(MolDraw2D SHARED MolDraw2D.cpp MolDraw2DSVG.cpp ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}  )
-target_link_libraries(MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES}  ${EXTRA_LOCAL_LIBS} )
+rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
+  ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC} 
+  LINK_LIBRARIES
+  FileParsers SmilesParse Depictor RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
+  ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
-add_executable(test1 test1.cpp)
-target_link_libraries(test1 MolDraw2D ${RDKIT_LIBRARIES} ${Boost_LIBRARIES} ${EXTRA_LOCAL_LIBS} )
+rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES 
+  FileParsers SmilesParse Depictor RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
+  MolDraw2D ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
 if(RDK_BUILD_QT_DEMO)
   add_subdirectory(QTDemo)
