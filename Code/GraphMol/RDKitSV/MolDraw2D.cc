@@ -451,8 +451,7 @@ namespace RDKit {
                                   const pair<float, float> &cds2 ,
                                   bool draw_dashed , const DrawColour &col1 ,
                                   const DrawColour &col2) {
-
-    pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
+    pair<float,float> perp = calc_perpendicular( cds1 , cds2 );
     pair<float,float> disp( 0.1 * perp.first , 0.1 * perp.second );
     pair<float,float> end1 , end2;
     end1.first = cds2.first + disp.first;
@@ -465,7 +464,7 @@ namespace RDKit {
       pair<float,float> e1( end1.first - cds1.first , end1.second - cds1.second );
       pair<float,float> e2( end2.first - cds1.first , end2.second - cds1.second );
       for( int i = 1 ; i < 11 ; ++i ) {
-        if( 5 == i ) {
+        if( 6 == i ) {
           setColour( col2 );
         }
         pair<float,float> e11( cds1.first + float( i ) * 0.1 * e1.first ,
