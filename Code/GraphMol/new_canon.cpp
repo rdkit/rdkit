@@ -112,6 +112,23 @@ namespace RDKit {
       free(count); free(next);
     }
 
+    namespace {
+      bool hasRingNbr(const ROMol &mol,const Atom *at) {
+        ROMol::ADJ_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomNeighbors(at);
+        while(beg!=end){
+          const ATOM_SPTR nbr=mol[*beg];
+          ++beg;
+          if((nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+              nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
+             nbr->hasProp("_ringStereoAtoms")){
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
                       bool breakTies,
                       bool includeChirality,bool includeIsotopes) {
@@ -120,6 +137,7 @@ namespace RDKit {
         atoms[i].atom=mol.getAtomWithIdx(i);
         atoms[i].index=i;
         atoms[i].degree=mol.getAtomWithIdx(i)->getDegree();
+        atoms[i].hasRingNbr=hasRingNbr(mol,atoms[i].atom);
         atoms[i].p_symbol=NULL;
       }
       AtomCompareFunctor ftor(&atoms.front(),mol);
@@ -151,6 +169,7 @@ namespace RDKit {
         atoms[i].atom=mol.getAtomWithIdx(i);
         atoms[i].index=i;
         atoms[i].degree=0;
+        atoms[i].hasRingNbr=hasRingNbr(mol,atoms[i].atom);
         if(atomSymbols){
           atoms[i].p_symbol=&(*atomSymbols)[i];
         } else {

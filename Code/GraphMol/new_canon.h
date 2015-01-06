@@ -27,6 +27,7 @@ namespace RDKit {
       const Atom *atom;
       int index;
       unsigned int degree;
+      bool hasRingNbr;
       const std::string *p_symbol; // if provided, this is used to order atoms
     };
 
@@ -219,6 +220,8 @@ namespace RDKit {
       // however: since we use the current class of the nbr, there's some
       // heavy bookkeeping to really remove it
       unsigned int getAtomRingNbrCode(unsigned int i) const {
+        if(!dp_atoms[i].hasRingNbr) return 0;
+
         const Atom *at=dp_atoms[i].atom;
         ROMol::ADJ_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomNeighbors(at);
@@ -354,8 +357,9 @@ namespace RDKit {
             return 1;
           
           // ring stereochemistry
-          if(dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx()) &&
-             dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx()) ){
+          if(dp_mol->getRingInfo()->isInitialized() &&
+             (dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx()) &&
+              dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx()) ) ){
             ivi=getAtomRingNbrCode(i);
             ivj=getAtomRingNbrCode(j);
             if(ivi<ivj)
@@ -428,9 +432,10 @@ namespace RDKit {
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg++];
-          const Atom *nbr=bond->getOtherAtom(at);
+          unsigned int nbrIdx=bond->getOtherAtomIdx(i);
+          const Atom *nbr=dp_mol->getAtomWithIdx(nbrIdx);
           //std::cerr<<"    "<<bond->getOtherAtom(at)->getIdx()<<std::endl;
-          int stereo=0;
+          unsigned int stereo=0;
           switch(bond->getStereo()){
           case Bond::STEREOZ:
             stereo=1;
@@ -467,7 +472,7 @@ namespace RDKit {
           // on atomic number and then based on the ranks that have already been computed.
           bondholder bh(Bond::SINGLE,stereo,
                          nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+
-                         dp_atoms[bond->getOtherAtomIdx(i)].index+1);
+                         dp_atoms[nbrIdx].index+1);
           std::vector<bondholder>::iterator iPos=std::lower_bound(nbrs.begin(),nbrs.end(),bh);
           nbrs.insert(iPos,nReps,bh);
         }
