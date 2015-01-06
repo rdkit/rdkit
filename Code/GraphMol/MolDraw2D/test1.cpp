@@ -14,8 +14,8 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 
 
-#include "MolDraw2D.H"
-#include "MolDraw2DSVG.H"
+#include "MolDraw2D.h"
+#include "MolDraw2DSVG.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -39,7 +39,7 @@ void test1(){
 
 #ifdef RDK_CAIRO_BUILD
 #include <cairo.h>
-#include "MolDraw2DCairo.H"
+#include "MolDraw2DCairo.h"
 void test2(){
   {
     std::string smiles="O[C@H](O)C1=C(O[C@H](F)Cl)C=C1ONNC[NH3+]";

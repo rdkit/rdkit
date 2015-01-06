@@ -6,7 +6,7 @@
 // derived from Dave Cosgrove's MolDraw2DQT
 //
 
-#include "MolDraw2DSVG.H"
+#include "MolDraw2DSVG.h"
 
 namespace RDKit {
 

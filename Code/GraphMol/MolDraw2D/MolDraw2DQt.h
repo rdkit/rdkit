@@ -10,7 +10,7 @@
 #ifndef MOLDRAW2DQT_H
 #define MOLDRAW2DQT_H
 
-#include "MolDraw2D.H"
+#include "MolDraw2D.h"
 
 class QPainter;
 class QString;

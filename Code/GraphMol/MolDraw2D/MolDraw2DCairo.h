@@ -11,7 +11,7 @@
 #ifndef MOLDRAW2DCAIRO_H
 #define MOLDRAW2DCAIRO_H
 
-#include "MolDraw2D.H"
+#include "MolDraw2D.h"
 #include <cairo.h>
 
 // ****************************************************************************

@@ -5,7 +5,7 @@
 // 27th May 2014
 //
 
-#include "MolDraw2D.H"
+#include "MolDraw2D.h"
 
 #include <cstdlib>
 #include <limits>

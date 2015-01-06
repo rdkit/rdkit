@@ -6,7 +6,7 @@
 // derived from Dave Cosgrove's MolDraw2DQT
 //
 
-#include "MolDraw2DCairo.H"
+#include "MolDraw2DCairo.h"
 #include <cairo.h>
 
 namespace RDKit {

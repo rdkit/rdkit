@@ -12,7 +12,7 @@
 #define MOLDRAW2DSVG_H
 
 #include <iostream>
-#include "MolDraw2D.H"
+#include "MolDraw2D.h"
 
 // ****************************************************************************
 

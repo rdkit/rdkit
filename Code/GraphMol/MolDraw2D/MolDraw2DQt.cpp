@@ -5,7 +5,7 @@
 // 19th June 2014
 //
 
-#include "MolDraw2DQt.H"
+#include "MolDraw2DQt.h"
 
 #include <QPainter>
 #include <QString>
