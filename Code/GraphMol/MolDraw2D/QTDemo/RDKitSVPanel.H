@@ -10,7 +10,7 @@
 #ifndef RDKITSVPANEL_H
 #define RDKITSVPANEL_H
 
-#include "MolDraw2D.H"
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 #include <QWidget>
 

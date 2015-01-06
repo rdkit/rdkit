@@ -8,7 +8,7 @@
 #include "MolDisplay2DWidget.H"
 
 #include "stddefs.H"
-#include "MolDraw2DQt.H"
+#include <GraphMol/MolDraw2D/MolDraw2DQt.h>
 
 #include <QColor>
 #include <QMouseEvent>

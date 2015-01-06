@@ -23,27 +23,28 @@ include_directories(
   ${RDKIT_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR} )
 
-set( RDKitSV_SRCS ${RDKitSV_SOURCE_DIR}/QTDemo/rdkitsv_main.cc
-  ${RDKitSV_SOURCE_DIR}/QTDemo/MolDisplay2DWidget.cc
-  ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVMainWindow.cc
-  ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVPanel.cc
-  ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVSettings.cc
-  ${RDKitSV_SOURCE_DIR}/QTDemo/QTGet2Strings.cc
-  ${RDKitSV_SOURCE_DIR}/QTDemo/QT4SelectItems.cc )
+set( RDKitSV_SRCS rdkitsv_main.cc
+  MolDisplay2DWidget.cc
+  RDKitSVMainWindow.cc
+  RDKitSVPanel.cc
+  RDKitSVSettings.cc
+  QTGet2Strings.cc
+  QT4SelectItems.cc )
 
-set( RDKitSV_INCS ${RDKitSV_SOURCE_DIR}/QTDemo/MolDisplay2DWidget.H
-  ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVMainWindow.H
-  ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVPanel.H
-  ${RDKitSV_SOURCE_DIR}/QTDemo/RDKitSVSettings.H
-  ${RDKitSV_SOURCE_DIR}/MolDraw2D.H
-  ${RDKitSV_SOURCE_DIR}/MolDraw2DQt.H
-  ${RDKitSV_SOURCE_DIR}/QTDemo/QTGet2Strings.H
-  ${RDKitSV_SOURCE_DIR}/QTDemo/QT4SelectItems.H )
+set( RDKitSV_INCS MolDisplay2DWidget.H
+  RDKitSVMainWindow.H
+  RDKitSVPanel.H
+  RDKitSVSettings.H
+  QTGet2Strings.H
+  QT4SelectItems.H )
 
 set( LIBS ${Qt5Widgets_LIBRARIES}
   ${Qt5OpenGL_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${RDKIT_LIBRARIES} z )
+  ${RDKit_THREAD_LIBS}
+  FileParsers SmilesParse Depictor RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
+   z )
 
 add_executable( rdkitsv ${RDKitSV_SRCS}
   ${RDKitSV_MOC_SRCS} ${RDKitSV_INCS} )
