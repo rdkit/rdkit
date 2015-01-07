@@ -208,17 +208,17 @@ namespace RDKit {
           ++beg;
           if(dp_bondsInPlay && !(*dp_bondsInPlay)[bond->getIdx()])
             continue;
-          if(df_useChirality)
-            nbrs.push_back(bondholder(bond->getBondType(),bond->getStereo(),
-                                      dp_atoms[bond->getOtherAtomIdx(i)].index));
-          else
-            nbrs.push_back(bondholder(bond->getBondType(),Bond::STEREONONE,
-                                      dp_atoms[bond->getOtherAtomIdx(i)].index));
 
+          Bond::BondStereo stereo=Bond::STEREONONE;
+          if(df_useChirality){
+            stereo=bond->getStereo();
+          }
+          bondholder bh(bondholder(bond->getBondType(),stereo,
+                                   dp_atoms[bond->getOtherAtomIdx(i)].index));
+          nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh),1,bh);
           // std::cerr<<" "<<bond->getOtherAtomIdx(i)+1<<"("<<dp_atoms[bond->getOtherAtomIdx(i)].index<<")";
         }
         // std::cerr<<std::endl;
-        std::sort(nbrs.begin(),nbrs.end());
         std::reverse(nbrs.begin(),nbrs.end());
       }
       // EFF: it's stupid inefficient to be calling this frequently
