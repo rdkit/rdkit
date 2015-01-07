@@ -82,7 +82,7 @@ namespace RDKit {
 #ifdef VERBOSE_CANON
       std::cerr<<"1--------"<<std::endl;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+        std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       }
 #endif
       ftor.df_useNbrs=true;
@@ -90,14 +90,14 @@ namespace RDKit {
 #ifdef VERBOSE_CANON
       std::cerr<<"1a--------"<<std::endl;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+        std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       }
 #endif
       RefinePartitions(mol,atoms,ftor,true,order,count,activeset,next,changed);
 #ifdef VERBOSE_CANON
       std::cerr<<"2--------"<<std::endl;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+        std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       }
 #endif
       if(breakTies){
@@ -105,7 +105,7 @@ namespace RDKit {
 #ifdef VERBOSE_CANON
         std::cerr<<"3--------"<<std::endl;
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
-          std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+          std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
         }
 #endif
       }

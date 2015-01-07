@@ -631,16 +631,16 @@ void test6(){
       TEST_ASSERT(!seen[atomRanks[i]]);
       seen.set(atomRanks[i],1);
     }
-    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    //std::cerr<<std::endl;
+    // std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    // std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[0]==2);
-    TEST_ASSERT(atomRanks[1]==7);
-    TEST_ASSERT(atomRanks[2]==8);
+    TEST_ASSERT(atomRanks[1]==9);
+    TEST_ASSERT(atomRanks[2]==7);
     TEST_ASSERT(atomRanks[3]==3);
     TEST_ASSERT(atomRanks[4]==0);
     TEST_ASSERT(atomRanks[5]==5);
     TEST_ASSERT(atomRanks[6]==6);
-    TEST_ASSERT(atomRanks[7]==9);
+    TEST_ASSERT(atomRanks[7]==8);
     TEST_ASSERT(atomRanks[8]==4);
     TEST_ASSERT(atomRanks[9]==1);
     delete m;
@@ -655,7 +655,7 @@ void test6(){
     RDKit::Canon::rankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
+      // std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
       TEST_ASSERT(!seen[atomRanks[i]]);
       seen.set(atomRanks[i],1);
     }
@@ -687,7 +687,7 @@ void test6(){
     RDKit::Canon::rankMolAtoms(*m,atomRanks);
     boost::dynamic_bitset<> seen(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      //std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
+      // std::cerr<<i<<" "<<atomRanks[i]<<std::endl;
       TEST_ASSERT(!seen[atomRanks[i]]);
       seen.set(atomRanks[i],1);
     }
@@ -797,6 +797,12 @@ namespace{
         std::cerr<<"  input: "<<inSmiles<<std::endl;
         std::cerr<<osmi<<std::endl;
         std::cerr<<smi<<std::endl;
+
+        m->setProp("_Name","orig");
+        std::cerr<<MolToMolBlock(*m)<<std::endl;
+        nm->setProp("_Name","renumber");
+        std::cerr<<MolToMolBlock(*nm)<<std::endl;
+        
       }
       TEST_ASSERT(smi==osmi);
 
@@ -804,6 +810,41 @@ namespace{
     }
   }
 }
+
+void test7a() {
+  BOOST_LOG(rdInfoLog) << "testing some specific ordering problems" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase+"/Code/GraphMol/test_data/canon_reorder1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr <<">--------------" << std::endl;
+    RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
+    std::cerr <<"---------------" << std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
+    }
+    std::cerr <<"---------------" << std::endl;
+    delete m;
+  }
+  {
+    std::string fName = rdbase+"/Code/GraphMol/test_data/canon_reorder2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    std::vector<unsigned int> atomRanks;
+    std::cerr <<">--------------" << std::endl;
+    RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
+    std::cerr <<"---------------" << std::endl;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
+    }
+    std::cerr <<"---------------" << std::endl;
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 void test7(){
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
@@ -831,6 +872,10 @@ void test7(){
     "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
     "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
     "N[C@@H]1[C@H]2CN(c3nc4c(cc3F)c(=O)c(C(=O)O)cn4C3CC3)C[C@@H]12",
+    // three examples that came up while doing a torture test in ZINC
+    "CN1CCCNCCN(C)CCC[NH2+]CC1",
+    "CN1CCC[NH2+]CCN(C)CCC[NH+](C)CC1",
+    "O=P([O-])([O-])C[NH+]1CCCN(CP(=O)([O-])O)CC[NH+](CP(=O)([O-])[O-])CCC[NH+](CP(=O)([O-])[O-])CC1",
     "EOS"
   };
   unsigned int i=0;
@@ -874,10 +919,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[0]<atomRanks[2]);
     TEST_ASSERT(atomRanks[0]<atomRanks[3]);
     TEST_ASSERT(atomRanks[0]<atomRanks[4]);
@@ -892,10 +937,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[1]<atomRanks[3]);
     TEST_ASSERT(atomRanks[1]<atomRanks[4]);
     TEST_ASSERT(atomRanks[1]<atomRanks[5]);
@@ -911,10 +956,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[0]==atomRanks[2]);
     TEST_ASSERT(atomRanks[0]<atomRanks[3]);
     TEST_ASSERT(atomRanks[0]<atomRanks[4]);
@@ -929,10 +974,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[0]>atomRanks[1]);
     TEST_ASSERT(atomRanks[0]<atomRanks[9]);
     TEST_ASSERT(atomRanks[2]==atomRanks[6]);
@@ -951,10 +996,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[1]>atomRanks[8]);
     TEST_ASSERT(atomRanks[5]>atomRanks[2]);
   }
@@ -968,10 +1013,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[0]<atomRanks[5]);
     TEST_ASSERT(atomRanks[1]<atomRanks[4]);
   }
@@ -982,10 +1027,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[0]>atomRanks[5]);
     TEST_ASSERT(atomRanks[1]>atomRanks[4]);
   }
@@ -997,10 +1042,10 @@ void test9(){
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr<<smi<<std::endl;
+    //std::cerr<<smi<<std::endl;
     RDKit::Canon::chiralRankMolAtoms(*m,atomRanks);
-    std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
-    std::cerr<<std::endl;
+    //std::copy(atomRanks.begin(),atomRanks.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+    //std::cerr<<std::endl;
     TEST_ASSERT(atomRanks[4]>atomRanks[6]);
     TEST_ASSERT(atomRanks[1]<atomRanks[4]);
   }
@@ -1018,10 +1063,11 @@ int main(){
   test4();
   test5();
   test6();
-  test7();
   test8();
-#endif
   test9();
+#endif
+  test7();
+  //test7a();
   return 0;
 }
 

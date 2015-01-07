@@ -202,6 +202,7 @@ namespace RDKit {
         nbrs.reserve(at->getDegree());
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
+        // std::cerr<< "                   nbrs: "<<i+1;
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg];
           ++beg;
@@ -213,8 +214,12 @@ namespace RDKit {
           else
             nbrs.push_back(bondholder(bond->getBondType(),Bond::STEREONONE,
                                       dp_atoms[bond->getOtherAtomIdx(i)].index));
+
+          // std::cerr<<" "<<bond->getOtherAtomIdx(i)+1<<"("<<dp_atoms[bond->getOtherAtomIdx(i)].index<<")";
         }
+        // std::cerr<<std::endl;
         std::sort(nbrs.begin(),nbrs.end());
+        std::reverse(nbrs.begin(),nbrs.end());
       }
       // EFF: it's stupid inefficient to be calling this frequently
       // however: since we use the current class of the nbr, there's some
@@ -398,7 +403,7 @@ namespace RDKit {
           return 0;
         }
         int v=basecomp(i,j);
-        // std::cerr<<"           bc: "<<i<<"-"<<j<<": "<<v<<std::endl;
+        // std::cerr<<"           bc: "<<i+1<<"-"<<j+1<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
