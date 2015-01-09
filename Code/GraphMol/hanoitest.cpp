@@ -814,24 +814,28 @@ namespace{
 void test7a() {
   BOOST_LOG(rdInfoLog) << "testing some specific ordering problems" << std::endl;
   std::string rdbase = getenv("RDBASE");
+  std::string smi1,smi2;
   {
     std::string fName = rdbase+"/Code/GraphMol/test_data/canon_reorder1.mol";
-    RWMol *m = MolFileToMol(fName);
+    RWMol *m = MolFileToMol(fName,false,false);
     TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr <<">--------------" << std::endl;
+    std::cerr <<"\n\n\n\n\n\n\n\n\n\n\n\n>--------------" << std::endl;
     RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
     std::cerr <<"---------------" << std::endl;
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
     }
     std::cerr <<"---------------" << std::endl;
+    smi1=MolToSmiles(*m,true);
     delete m;
   }
   {
     std::string fName = rdbase+"/Code/GraphMol/test_data/canon_reorder2.mol";
-    RWMol *m = MolFileToMol(fName);
+    RWMol *m = MolFileToMol(fName,false,false);
     TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
     std::cerr <<">--------------" << std::endl;
     RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
@@ -840,8 +844,12 @@ void test7a() {
       std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
     }
     std::cerr <<"---------------" << std::endl;
+    smi2=MolToSmiles(*m,true);
     delete m;
   }
+  std::cerr<<smi1<<std::endl;
+  std::cerr<<smi2<<std::endl;
+  TEST_ASSERT(smi1==smi2);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -872,10 +880,12 @@ void test7(){
     "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
     "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
     "N[C@@H]1[C@H]2CN(c3nc4c(cc3F)c(=O)c(C(=O)O)cn4C3CC3)C[C@@H]12",
-    // three examples that came up while doing a torture test in ZINC
+    // some examples that came up while doing a torture test in ZINC
     "CN1CCCNCCN(C)CCC[NH2+]CC1",
     "CN1CCC[NH2+]CCN(C)CCC[NH+](C)CC1",
     "O=P([O-])([O-])C[NH+]1CCCN(CP(=O)([O-])O)CC[NH+](CP(=O)([O-])[O-])CCC[NH+](CP(=O)([O-])[O-])CC1",
+    "O=C(CCNC(=O)Cn1cnc2ccccc2c1=O)NCCc1c[nH]c2ccccc12",
+    "C1CNCC[NH2+]CC(C2CNCC[NH2+]CCC[NH2+]CCNC2)CNCC[NH2+]C1",
     "EOS"
   };
   unsigned int i=0;
@@ -1056,7 +1066,7 @@ void test9(){
 
 int main(){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -1066,8 +1076,8 @@ int main(){
   test8();
   test9();
 #endif
-  test7();
-  //test7a();
+  //test7();
+  test7a();
   return 0;
 }
 
