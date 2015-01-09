@@ -470,6 +470,10 @@ of the replacements argument.",
   python::def("HasReactantTemplateSubstructMatch",RDKit::hasReactantTemplateSubstructMatch,
 		  (python::arg("reaction"), python::arg("queryReaction")),
           "tests if the reactants of a queryReaction are substructures of the reactants of a reaction");
-
+  python::def("UpdateProductsStereochemistry",RDKit::updateProductsStereochem,
+          (python::arg("reaction")),
+          "Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.\
+          This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.\
+          The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction");
 }
               
