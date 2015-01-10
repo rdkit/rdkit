@@ -1,8 +1,11 @@
 //
-// file test1.cc
-// Greg Landrum
-// 26 Dec 2014
+//  Copyright (C) 2015 Greg Landrum 
 //
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 
 #include <RDGeneral/utils.h>
@@ -13,9 +16,8 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 
-
-#include "MolDraw2D.h"
-#include "MolDraw2DSVG.h"
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>

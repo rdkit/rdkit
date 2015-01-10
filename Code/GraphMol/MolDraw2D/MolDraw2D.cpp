@@ -1,11 +1,15 @@
 //
-// file MolDraw2D.cc
-// David Cosgrove
-// AstraZeneca
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// Original author: David Cosgrove (AstraZeneca)
 // 27th May 2014
 //
 
-#include "MolDraw2D.h"
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 #include <cstdlib>
 #include <limits>
@@ -21,16 +25,14 @@ namespace RDKit {
 
   // ****************************************************************************
   MolDraw2D::MolDraw2D( int width, int height ) :
-    width_( width ) , height_( height ) , scale_( 1.0 ) , x_trans_( 0.0 ) ,
+  width_( width ) , height_( height ) , scale_( 1.0 ) , x_trans_( 0.0 ) ,
     y_trans_( 0.0 ) , font_size_( 0.5 ) {
-
   }
 
   // ****************************************************************************
   void MolDraw2D::drawMolecule( const ROMol &mol ,
                                 const vector<int> &highlight_atoms ,
                                 const map<int,DrawColour> &highlight_map ) {
-
     clearDrawing();
     extractAtomCoords( mol );
     extractAtomSymbols( mol );
@@ -60,55 +62,43 @@ namespace RDKit {
         drawAtomLabel( i , highlight_atoms , highlight_map );
       }
     }
-
   }
 
   // ****************************************************************************
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates
   pair<float,float> MolDraw2D::getDrawCoords( const std::pair<float, float> &mol_cds ) const {
-
     float x = scale_ * ( mol_cds.first - x_min_ + x_trans_ );
     float y = scale_ * ( mol_cds.second - y_min_ + y_trans_ );
 
     return make_pair( x , y );
-
   }
 
   // ****************************************************************************
   pair<float,float> MolDraw2D::getDrawCoords( int at_num ) const {
-
     return getDrawCoords( at_cds_[at_num] );
-
   }
 
   // ****************************************************************************
   pair<float,float> MolDraw2D::getAtomCoords( const pair<int, int> &screen_cds) const {
-
     int x = int( float( screen_cds.first ) / scale_ + x_min_ - x_trans_ );
     int y = int( float( screen_cds.second ) / scale_ + y_min_ - y_trans_ );
 
     return make_pair( x , y );
-
   }
 
   // ****************************************************************************
   pair<float,float> MolDraw2D::getAtomCoords( int at_num ) const {
-
     return at_cds_[at_num];
-
   }
 
   // ****************************************************************************
   void MolDraw2D::setFontSize( float new_size ) {
-
     font_size_ = new_size;
-
   }
 
   // ****************************************************************************
   void MolDraw2D::calculateScale() {
-
     x_min_ = y_min_ = numeric_limits<float>::max();
     float x_max( -numeric_limits<float>::max() ) , y_max( -numeric_limits<float>::max() );
     for( int i = 0 , is = at_cds_.size() ; i < is ; ++i ) {
@@ -165,7 +155,6 @@ namespace RDKit {
     pair<float,float> mid = getDrawCoords( make_pair( x_mid , y_mid ) );
     x_trans_ = ( width_ / 2 - mid.first ) / scale_;
     y_trans_ = ( height_ / 2 - mid.second ) / scale_;
-
   }
 
   // ****************************************************************************
@@ -198,7 +187,6 @@ namespace RDKit {
     }
 
     return false;
-
   }
 
   // ****************************************************************************
@@ -217,7 +205,6 @@ namespace RDKit {
       setColour( col2 );
       drawLine( mid , cds2 );
     }
-
   }
 
   // ****************************************************************************
@@ -266,7 +253,6 @@ namespace RDKit {
       }
       draw_x += char_width;
     }
-
   }
 
   // ****************************************************************************
@@ -288,7 +274,6 @@ namespace RDKit {
     }
 
     return retval;
-
   }
 
   // ****************************************************************************
@@ -312,7 +297,6 @@ namespace RDKit {
     }
 
     return DrawColour( this_col[0] , this_col[1] , this_col[2] );
-
   }
 
   // ****************************************************************************
@@ -328,7 +312,6 @@ namespace RDKit {
       at_cds_.push_back( make_pair( locs[this_idx].x , locs[this_idx].y ) );
       ++this_at;
     }
-
   }
 
   // ****************************************************************************
@@ -443,7 +426,6 @@ namespace RDKit {
         drawLine( make_pair( px1 , py1 ) , make_pair( px2 , py2 ) , col1 , col2 );
       }
     }
-
   }
 
   // ****************************************************************************
@@ -489,7 +471,6 @@ namespace RDKit {
         drawTriangle( mid1 , mid2 , end2 );
       }
     }
-
   }
 
   // ****************************************************************************
@@ -499,7 +480,6 @@ namespace RDKit {
 
     setColour( getColour( atom_num , highlight_atoms , highlight_map ) );
     drawString( atom_syms_[atom_num].first , at_cds_[atom_num] );
-
   }
 
   // ****************************************************************************
@@ -513,7 +493,6 @@ namespace RDKit {
     perp[0] /= perp_len; perp[1] /= perp_len;
 
     return make_pair( perp[0] , perp[1] );
-
   }
 
   // ****************************************************************************
@@ -550,7 +529,6 @@ namespace RDKit {
     }
 
     return calcPerpendicular( cds1 , cds2 );
-
   }
 
   // ****************************************************************************
@@ -585,7 +563,6 @@ namespace RDKit {
 
     return calcInnerPerpendicular( at_cds_[end_atom->getIdx()] ,
                                    at_cds_[bond_atom->getIdx()] , at_cds_[at3] );
-
   }
 
   // ****************************************************************************
@@ -608,7 +585,6 @@ namespace RDKit {
     }
 
     return perp;
-
   }
 
   // ****************************************************************************
@@ -656,7 +632,6 @@ namespace RDKit {
 
     cds.first += x_offset;
     cds.second += y_offset;
-
   }
 
   // ****************************************************************************
@@ -724,9 +699,7 @@ namespace RDKit {
         }
       }
     }
-
     return make_pair( symbol , orient );
-
   }
 
 } // EO namespace RDKit

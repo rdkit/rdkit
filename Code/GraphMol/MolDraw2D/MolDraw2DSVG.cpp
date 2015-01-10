@@ -1,9 +1,13 @@
 //
-// file MolDraw2DSVG.cc
-// Greg Landrum
-// 26 Dec 2014
+//  Copyright (C) 2015 Greg Landrum 
 //
-// derived from Dave Cosgrove's MolDraw2DQT
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// derived from Dave Cosgrove's MolDraw2D
 //
 
 #include "MolDraw2DSVG.h"
@@ -28,7 +32,6 @@ namespace RDKit {
       res[i++] = convert[v%16];
       return res;
     }
-    
   }
   
   void MolDraw2DSVG::initDrawing() {
@@ -50,18 +53,6 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2DSVG::setColour( const DrawColour &col ) {
     MolDraw2D::setColour( col );
-    // QColor this_col( int( 255.0 * col.get<0>() ) , int( 255.0 * col.get<1>() ) ,
-    //                  int( 255.0 * col.get<2>() ) );
-
-    // QPen pen( this_col );
-    // pen.setJoinStyle( Qt::RoundJoin );
-    // pen.setColor( this_col );
-    // qp_.setPen( pen );
-
-    // QBrush brush( this_col );
-    // brush.setStyle( Qt::SolidPattern );
-    // qp_.setBrush( brush );
-
   }
 
   // ****************************************************************************
@@ -92,12 +83,6 @@ namespace RDKit {
     d_os<<" >";
     d_os<<c;
     d_os<<"</svg:text>";
-
-    // QRectF br = qp_.boundingRect( 0 , 0 , 100 , 100 , Qt::AlignLeft | Qt::AlignBottom ,
-    //                               QString( c ) );
-    // qp_.drawText( QRectF( cds.first , cds.second , br.width() , br.height() ) ,
-    //               Qt::AlignLeft | Qt::AlignBottom , QString( c ) , &br );
-
   }
 
   // ****************************************************************************
@@ -131,26 +116,8 @@ namespace RDKit {
   
   // ****************************************************************************
   void MolDraw2DSVG::setFontSize( float new_size ) {
-    std::cerr<<"sfs: "<<new_size<<" "<<scale()<<std::endl;
     MolDraw2D::setFontSize( new_size );
     float font_size_in_points = fontSize() * scale();
-
-    // QFont font( qp_.font() );
-    // font.setPointSizeF( font_size_in_points );
-    // qp_.setFont( font );
-
-    // while( 1 ) {
-    //   float old_font_size_in_points = font_size_in_points;
-    //   float font_size_in_points = fontSize() * scale();
-    //   if( fabs( font_size_in_points - old_font_size_in_points ) < 0.1 ) {
-    //     break;
-    //   }
-    //   QFont font( qp_.font() );
-    //   font.setPointSizeF( font_size_in_points );
-    //   qp_.setFont( font );
-    //   calculateScale();
-    // }
-
   }
 
   // ****************************************************************************
@@ -175,7 +142,7 @@ namespace RDKit {
 
       label_height = fontSize();
       float char_width = fontSize() * static_cast<float>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
-    //char_width *= 0.75; // extremely empirical
+      //char_width *= 0.75; // extremely empirical
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {
@@ -247,8 +214,5 @@ namespace RDKit {
     }
     d_os<<span<<"</svg:tspan>";
     d_os<<"</svg:text>\n";
-
-
   }
-
 } // EO namespace RDKit

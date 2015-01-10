@@ -1,7 +1,11 @@
 //
-// file MolDraw2DQt.cc
-// David Cosgrove
-// AstraZeneca
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// Original author: David Cosgrove (AstraZeneca)
 // 19th June 2014
 //
 
@@ -17,7 +21,7 @@ namespace RDKit {
 
   // ****************************************************************************
   MolDraw2DQt::MolDraw2DQt( int width , int height , QPainter &qp ) :
-    MolDraw2D( width , height ) , qp_( qp ) {
+  MolDraw2D( width , height ) , qp_( qp ) {
 
   }
 
