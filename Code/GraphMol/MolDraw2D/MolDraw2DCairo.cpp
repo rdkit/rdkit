@@ -86,7 +86,7 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2DCairo::clearDrawing() {
     
-    cairo_set_source_rgb (d_cr, 0.9, 0.9, 0.9);
+    cairo_set_source_rgb (d_cr, 1.0, 1.0, 1.0);
     cairo_rectangle(d_cr,0,0,width(),height());
     cairo_fill(d_cr);
   }

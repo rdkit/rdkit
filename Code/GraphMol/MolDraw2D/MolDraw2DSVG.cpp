@@ -106,7 +106,7 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2DSVG::clearDrawing() {
     d_os << "<svg:rect";
-    d_os << " style='opacity:1.0;fill:#eeeeee;stroke:none'";
+    d_os << " style='opacity:1.0;fill:#ffffff;stroke:none'";
     d_os << " width='" << width() << "' height='" << height() << "'";
     d_os << " x='0' y='0'";
     d_os << "> </svg:rect>\n";
