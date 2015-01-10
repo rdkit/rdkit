@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1018,6 +1018,24 @@ void testGitHubIssue15(){
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testGitHubIssue409(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 409" << std::endl;
+  {
+    std::string smi="FC(F)(F)CC(F)(F)F";
+    ROMol *mol = SmilesToMol(smi);
+    std::vector< MatchVectType > matches;
+    unsigned int matched=SubstructMatch(*mol,*mol,matches,false,true,false,false);
+    TEST_ASSERT(matches.size()==72);
+    matched=SubstructMatch(*mol,*mol,matches,false,true,false,false,16);
+    TEST_ASSERT(matches.size()==16);
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
 int main(int argc,char *argv[])
 {
 #if 1
@@ -1037,6 +1055,7 @@ int main(int argc,char *argv[])
   testCisTransMatch();
 #endif
   testGitHubIssue15();
+  testGitHubIssue409();
   return 0;
 }
 
