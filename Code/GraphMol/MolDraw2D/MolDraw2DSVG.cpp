@@ -7,9 +7,9 @@
 //
 
 #include "MolDraw2DSVG.h"
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 namespace RDKit {
-
   namespace {
     std::string DrawColourToSVG(const MolDraw2D::DrawColour &col){
       const char *convert="0123456789ABCDEF";
@@ -173,9 +173,9 @@ namespace RDKit {
         continue;
       }
 
-      label_height = fontSize()*scale() / scale();
-      float char_width = fontSize()*scale() / scale();
-      char_width *= 0.75; // extremely empirical
+      label_height = fontSize();
+      float char_width = fontSize() * static_cast<float>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
+    //char_width *= 0.75; // extremely empirical
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {
