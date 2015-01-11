@@ -644,8 +644,21 @@ namespace RDKit {
             symclass = offset+i;
           atoms[index].index = symclass;
           std::cerr<<" "<<index+1<<"("<<symclass<<")";
+          //if(mode && (activeset<0 || count[index]>count[activeset]) ){
+          //  activeset=index;
+          //}
         }
         std::cerr<<std::endl;
+
+
+        std::cerr<<" here we go: "<<partition<<" "<<count[partition]<<" "<<len<<":";
+        index=start[0];
+        for( i=count[index]; i<len; i++ ) {
+          std::cerr<<" "<<i<<"-"<<index;
+          index=start[i];
+        }
+        std::cerr<<std::endl;
+
         if( mode ) {
           index=start[0];
           for( i=count[index]; i<len; i++ ) {
@@ -658,7 +671,7 @@ namespace RDKit {
               int nbroffset = atoms[nbor].index;
               changed[nbor]=1;
               partition = order[nbroffset];
-              std::cerr<<"            changed: "<<index+1<<" "<<nbor+1<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
+              //std::cerr<<"            changed: "<<index+1<<" "<<nbor+1<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
               if( (count[partition]>1) &&
                   (next[partition]==-2) ) {
                 next[partition] = activeset;
