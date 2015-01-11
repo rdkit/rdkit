@@ -90,9 +90,10 @@ namespace RDKit {
 
   PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,bool uniquify=true,
                                 bool useChirality=false,
-                                bool useQueryQueryMatches=false){
+                                bool useQueryQueryMatches=false,
+                                unsigned int maxMatches = 1000){
     std::vector< MatchVectType >  matches;
-    int matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality,useQueryQueryMatches);
+    int matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality,useQueryQueryMatches,maxMatches);
     PyObject *res = PyTuple_New(matched);
     for(int idx=0;idx<matched;idx++){
       PyTuple_SetItem(res,idx,convertMatches(matches[idx]));
@@ -320,7 +321,8 @@ struct mol_wrapper {
 	   (python::arg("self"),python::arg("query"),
 	    python::arg("uniquify")=true,
 	    python::arg("useChirality")=false,
-            python::arg("useQueryQueryMatches")=false),
+            python::arg("useQueryQueryMatches")=false,
+            python::arg("maxMatches")=1000),
 	   "Returns tuples of the indices of the molecule's atoms that match a substructure query.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - query: a Molecule.\n"

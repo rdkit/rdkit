@@ -566,7 +566,8 @@ namespace boost{
      *
      ------------------------------------------------------------*/
     template <class SubState,class DoubleBackInsertionSequence>
-    bool match(node_id c1[], node_id c2[], SubState &s, DoubleBackInsertionSequence &res) {
+    bool match(node_id c1[], node_id c2[], SubState &s, DoubleBackInsertionSequence &res,
+               unsigned int max_results) {
       if (s.IsGoal()){
         s.GetCoreSet(c1, c2);
         if(s.MatchChecks(c1,c2)) {
@@ -575,6 +576,7 @@ namespace boost{
             newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
           }
           res.push_back(newSeq);
+          if(res.size()>=max_results) return true;
         }
         return false;
       }
@@ -587,7 +589,7 @@ namespace boost{
         if (s.IsFeasiblePair(n1, n2)){
           SubState *s1=s.Clone();
           s1->AddPair(n1, n2);
-          if (match(c1, c2, *s1,res)){
+          if (match(c1, c2, *s1,res,max_results)){
             s1->BackTrack(); 
             delete s1;
             return true;
@@ -641,7 +643,8 @@ namespace boost{
                VertexLabeling& vertex_labeling,
                EdgeLabeling& edge_labeling,
                MatchChecking& match_checking,
-               DoubleBackInsertionSequence& F) {
+               DoubleBackInsertionSequence& F,
+               unsigned int max_results=1000) {
     detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling,MatchChecking> s0(&g1,&g2,vertex_labeling,
                                                                                   edge_labeling,match_checking,false);
     detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
@@ -650,7 +653,7 @@ namespace boost{
     F.clear();
     F.resize(0);
 
-    match(ni1,ni2,s0,F);
+    match(ni1,ni2,s0,F,max_results);
 
     delete [] ni1;
     delete [] ni2;
