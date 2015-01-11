@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -53,7 +53,12 @@ namespace RDKit{
       \param useChirality  use atomic CIP codes as part of the comparison
       \param useQueryQueryMatches  if set, the contents of atom and bond queries
                                    will be used as part of the matching
-
+      \param maxMatches  The maximum number of matches that will be returned.
+                         In high-symmetry cases with medium-sized molecules, it is very
+                         easy to end up with a combinatorial explosion in the number of
+                         possible matches. This argument prevents that from having
+                         unintended consequences
+                                   
       \return the number of matches found
     
   */
@@ -61,7 +66,8 @@ namespace RDKit{
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify=true,bool recursionPossible=true,
 			      bool useChirality=false,
-                              bool useQueryQueryMatches=false);
+                              bool useQueryQueryMatches=false,
+                              unsigned int maxMatches = 1000);
 }
 
 #endif
