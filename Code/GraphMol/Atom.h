@@ -339,10 +339,10 @@ namespace RDKit{
 
     //! \overload
     template <typename T>
-    void setProp(const std::string key, T val, bool computed=false) const {
+    void setProp(const std::string &key, T val, bool computed=false) const {
       if (computed) {
 	STR_VECT compLst;
-	if(hasProp(detail::computedPropName)) getProp(detail::computedPropName, compLst);
+	getPropIfPresent(detail::computedPropName, compLst);
 	if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
 	  compLst.push_back(key);
 	  dp_props->setVal(detail::computedPropName, compLst);
@@ -372,9 +372,10 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    void getProp(const std::string key,T &res) const {
+    void getProp(const std::string &key,T &res) const {
       dp_props->getVal(key,res);
     }
+
     //! \overload
     template <typename T>
     T getProp(const char *key) const {
@@ -382,8 +383,20 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    T getProp(const std::string key) const {
+    T getProp(const std::string &key) const {
       return dp_props->getVal<T>(key);
+    }
+
+    //! returns whether or not we have a \c property with name \c key
+    //!  and assigns the value if we do
+    template <typename T>
+    bool getPropIfPresent(const char *key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
+    }
+    //! \overload
+    template <typename T>
+    bool getPropIfPresent(const std::string &key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
     }
 
     //! returns whether or not we have a \c property with name \c key
@@ -392,7 +405,7 @@ namespace RDKit{
       return dp_props->hasVal(key);
     };
     //! \overload
-    bool hasProp(const std::string key) const {
+    bool hasProp(const std::string &key) const {
       if(!dp_props) return false;
       return dp_props->hasVal(key);
     };
@@ -411,10 +424,9 @@ namespace RDKit{
       clearProp(what);
     };
     //! \overload
-    void clearProp(const std::string key) const {
-      if(hasProp(detail::computedPropName)){
-	STR_VECT compLst;
-	getProp(detail::computedPropName, compLst);
+    void clearProp(const std::string &key) const {
+      STR_VECT compLst;
+      if(getPropIfPresent(detail::computedPropName, compLst)) {
 	STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
 	if (svi != compLst.end()) {
 	  compLst.erase(svi);
@@ -426,14 +438,15 @@ namespace RDKit{
 
     //! clears all of our \c computed \c properties
     void clearComputedProps() const {
-      if(!hasProp(detail::computedPropName)) return;
       STR_VECT compLst;
-      getProp(detail::computedPropName, compLst);
-      BOOST_FOREACH(const std::string &sv,compLst){
-	dp_props->clearVal(sv);
+      if (getPropIfPresent(detail::computedPropName, compLst))
+      {
+	BOOST_FOREACH(const std::string &sv,compLst){
+	  dp_props->clearVal(sv);
+	}
+	compLst.clear();
+	dp_props->setVal(detail::computedPropName, compLst);
       }
-      compLst.clear();
-      dp_props->setVal(detail::computedPropName, compLst);
     }
 
     //! returns the perturbation order for a list of integers

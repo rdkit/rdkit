@@ -2247,8 +2247,8 @@ namespace RDKit {
                                            | MolOps::SANITIZE_SETHYBRIDIZATION
                                            | MolOps::SANITIZE_CLEANUPCHIRALITY
                                            | MolOps::SANITIZE_ADJUSTHS));
-        if (!(mol.hasProp("_MMFFSanitized"))) {
-          mol.setProp("_MMFFSanitized",1,true);
+        if (!(mol.hasProp(common_properties::_MMFFSanitized))) {
+          mol.setProp(common_properties::_MMFFSanitized,1,true);
         }
       } catch (MolSanitizeException &e){
       
@@ -2280,7 +2280,7 @@ namespace RDKit {
       d_oStream(&oStream),
       d_MMFFAtomPropertiesPtrVect(mol.getNumAtoms()) {
       ROMol::AtomIterator it;
-      if (!(mol.hasProp("_MMFFSanitized"))) {
+      if (!(mol.hasProp(common_properties::_MMFFSanitized))) {
         bool isAromaticSet = false;
         for (it = mol.beginAtoms(); (!isAromaticSet) && (it != mol.endAtoms()); ++it) {
           isAromaticSet = (*it)->getIsAromatic();
@@ -2288,7 +2288,7 @@ namespace RDKit {
         if (isAromaticSet) {
           MolOps::Kekulize((RWMol &)mol, true);
         }
-        mol.setProp("_MMFFSanitized",1,true);
+        mol.setProp(common_properties::_MMFFSanitized,1,true);
       }      
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
         d_MMFFAtomPropertiesPtrVect[i]

@@ -65,7 +65,7 @@ void test2(){
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
-  m->setProp("_Name","monkey");
+  m->setProp(common_properties::_Name,"monkey");
   io::filtering_ostream outStrm;
   outStrm.push(io::gzip_compressor());
   outStrm.push(io::back_inserter(buff));

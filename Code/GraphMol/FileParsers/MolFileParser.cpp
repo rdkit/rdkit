@@ -109,7 +109,7 @@ namespace RDKit{
       if(atom->getFormalCharge()!=0){
 	qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
       }
-      if(atom->hasProp("_hasMassQuery")){
+      if(atom->hasProp(common_properties::_hasMassQuery)){
 	qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
       }
       mol->replaceAtom(idx,&qa);
@@ -541,7 +541,7 @@ namespace RDKit{
               q->setVal(0);break;
             case -2:
               q->setVal(-0xDEADBEEF);
-              mol->setProp("_NeedsQueryScan",1);
+              mol->setProp(common_properties::_NeedsQueryScan,1);
               break;
             case 1:
             case 2:
@@ -837,9 +837,9 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
-        atom->setProp("_MolFileRLabel",rLabel);
+        atom->setProp(common_properties::_MolFileRLabel,rLabel);
         std::string dLabel="R"+boost::lexical_cast<std::string>(rLabel);
-        atom->setProp("dummyLabel",dLabel);
+        atom->setProp(common_properties::dummyLabel,dLabel);
         atom->setIsotope(rLabel);
         atom->setQuery(makeAtomNullQuery());
       }
@@ -886,13 +886,13 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         QueryAtom qatom(*(mol->getAtomWithIdx(atIdx)));
-        qatom.setProp("_MolFileRLabel",rLabel);
+        qatom.setProp(common_properties::_MolFileRLabel,rLabel);
 
         // set the dummy label so that this is shown correctly
         // in other pieces of the code :
         // (this was sf.net issue 3316600)
         std::string dLabel="R"+boost::lexical_cast<std::string>(rLabel);
-        qatom.setProp("dummyLabel",dLabel);
+        qatom.setProp(common_properties::dummyLabel,dLabel);
         
         // the CTFile spec (June 2005 version) technically only allows
         // R labels up to 32. Since there are three digits, we'll accept
@@ -920,7 +920,7 @@ namespace RDKit{
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
       Atom *at = mol->getAtomWithIdx(idx);
-      at->setProp("molFileAlias",nextLine);
+      at->setProp(common_properties::molFileAlias,nextLine);
     };
   
     void ParseAtomValue(RWMol *mol,std::string text,unsigned int line){
@@ -938,7 +938,7 @@ namespace RDKit{
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
       Atom *at = mol->getAtomWithIdx(idx);
-      at->setProp("molFileValue",text.substr(7,text.length()-7));
+      at->setProp(common_properties::molFileValue,text.substr(7,text.length()-7));
     };
 
     Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,unsigned int line) {
@@ -1065,7 +1065,7 @@ namespace RDKit{
         res->setIsotope(dIso);
         res->setMass(PeriodicTable::getTable()->getMassForIsotope(res->getAtomicNum(),
                                                                   dIso));
-	res->setProp("_hasMassQuery",true);
+	res->setProp(common_properties::_hasMassQuery,true);
       }
     
       if(text.size()>=42 && text.substr(39,3)!="  0"){
@@ -1078,7 +1078,7 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(39,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molParity",parity);
+        res->setProp(common_properties::molParity,parity);
       }
 
       if(text.size()>=48 && text.substr(45,3)!="  0"){
@@ -1105,7 +1105,7 @@ namespace RDKit{
         }
         if(totValence!=0){
           // only set if it's a non-default value
-          res->setProp("molTotValence",totValence);
+          res->setProp(common_properties::molTotValence,totValence);
         }
       }
       if(text.size()>=57 && text.substr(54,3)!="  0"){
@@ -1120,7 +1120,7 @@ namespace RDKit{
         }
         if(rxnRole!=0){
           // only set if it's a non-default value
-          res->setProp("molRxnRole",rxnRole);
+          res->setProp(common_properties::molRxnRole,rxnRole);
         }
       }
       if(text.size()>=60 && text.substr(57,3)!="  0"){
@@ -1135,7 +1135,7 @@ namespace RDKit{
         }
         if(rxnComponent!=0){
           // only set if it's a non-default value
-          res->setProp("molRxnComponent",rxnComponent);
+          res->setProp(common_properties::molRxnComponent,rxnComponent);
         }
       }
       if(text.size()>=63 && text.substr(60,3)!="  0"){
@@ -1148,7 +1148,7 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(60,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molAtomMapNumber",atomMapNumber);
+        res->setProp(common_properties::molAtomMapNumber,atomMapNumber);
       }
       if(text.size()>=66 && text.substr(63,3)!="  0"){
         int inversionFlag=0;
@@ -1160,7 +1160,7 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(63,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molInversionFlag",inversionFlag);
+        res->setProp(common_properties::molInversionFlag,inversionFlag);
       }
       if(text.size()>=69 && text.substr(66,3)!="  0"){
         int exactChangeFlag=0;
@@ -1611,7 +1611,7 @@ namespace RDKit{
           case 1:
           case 2:
           case 3:
-            atom->setProp("molParity",cfg);
+            atom->setProp(common_properties::molParity,cfg);
             break;
           default:
             errout << "Unrecognized CFG value : " << val << " for atom "<< atom->getIdx()+1 <<" on line " << line<< std::endl;
@@ -1645,7 +1645,7 @@ namespace RDKit{
         } else if(prop=="VAL"){
 	  if(val!="0"){
 	    int totval=FileParserUtils::toInt(val);
-	    atom->setProp("molTotValence",totval);
+	    atom->setProp(common_properties::molTotValence,totval);
 	  }
         } else if(prop=="RGROUPS"){
           ParseV3000RGroups(mol,atom,val,line);
@@ -1780,7 +1780,7 @@ namespace RDKit{
         }
         int mapNum=atoi(token->c_str());
 	if(mapNum>0){
-	  atom->setProp("molAtomMapNumber",mapNum);
+	  atom->setProp(common_properties::molAtomMapNumber,mapNum);
 	}
         ++token;
         
@@ -1800,12 +1800,12 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      if(mol->hasProp("_2DConf")){
+      if(mol->hasProp(common_properties::_2DConf)){
         conf->set3D(false);
-        mol->clearProp("_2DConf");
-      } else if(mol->hasProp("_3DConf")){
+        mol->clearProp(common_properties::_2DConf);
+      } else if(mol->hasProp(common_properties::_3DConf)){
         conf->set3D(true);
-        mol->clearProp("_3DConf");
+        mol->clearProp(common_properties::_3DConf);
       }
     }
     void ParseV3000BondBlock(std::istream *inStream,unsigned int &line,
@@ -1963,9 +1963,9 @@ namespace RDKit{
           atomIt!=mol->endAtoms();
           ++atomIt) {
         Atom *atom=*atomIt;
-        if(atom->hasProp("molTotValence") && !atom->hasProp("_ZBO_H")){
-          int totV;
-          atom->getProp("molTotValence",totV);
+        int totV;
+        if(atom->getPropIfPresent(common_properties::molTotValence, totV) &&
+           !atom->hasProp("_ZBO_H")){
           if(totV==0) continue;
           atom->setNoImplicit(true);
           if(totV==15 // V2000
@@ -2139,12 +2139,12 @@ namespace RDKit{
         } else {
           ParseMolBlockAtoms(inStream,line,nAtoms,mol,conf);
 
-          if(mol->hasProp("_2DConf")){
+          if(mol->hasProp(common_properties::_2DConf)){
             conf->set3D(false);
-            mol->clearProp("_2DConf");
-          } else if(mol->hasProp("_3DConf")){
+            mol->clearProp(common_properties::_2DConf);
+          } else if(mol->hasProp(common_properties::_3DConf)){
             conf->set3D(true);
-            mol->clearProp("_3DConf");
+            mol->clearProp(common_properties::_3DConf);
           }
         }
         mol->addConformer(conf, true);
@@ -2177,7 +2177,7 @@ namespace RDKit{
       return NULL;
     }
     RWMol *res = new RWMol();
-    res->setProp("_Name", tempStr);
+    res->setProp(common_properties::_Name, tempStr);
 
     // info
     line++;
@@ -2185,10 +2185,10 @@ namespace RDKit{
     res->setProp("_MolFileInfo", tempStr);
     if(tempStr.length()>=22){
       std::string dimLabel=tempStr.substr(20,2);
-      if(dimLabel=="2d"||dimLabel=="2D"){
-        res->setProp("_2DConf",1);
+      if(dimLabel=="2d"||dimLabel==common_properties::TWOD){
+        res->setProp(common_properties::_2DConf,1);
       } else if(dimLabel=="3d"||dimLabel=="3D"){
-        res->setProp("_3DConf",1);
+        res->setProp(common_properties::_3DConf,1);
       }
     }
     // comments
@@ -2291,7 +2291,7 @@ namespace RDKit{
     }
 
     if(chiralFlag){
-      res->setProp("_MolFileChiralFlag",chiralFlag);
+      res->setProp(common_properties::_MolFileChiralFlag,chiralFlag);
     }
 
     Conformer *conf=0;
@@ -2417,8 +2417,8 @@ namespace RDKit{
         DetectBondStereoChemistry(*res, &conf);
       }
 
-      if(res->hasProp("_NeedsQueryScan")){
-        res->clearProp("_NeedsQueryScan");
+      if(res->hasProp(common_properties::_NeedsQueryScan)){
+        res->clearProp(common_properties::_NeedsQueryScan);
         CompleteMolQueries(res);
       }
     }

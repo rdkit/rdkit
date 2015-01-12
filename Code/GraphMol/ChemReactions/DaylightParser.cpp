@@ -47,20 +47,20 @@ namespace RDKit {
           prodIt!=rxn->endProductTemplates();++prodIt){
         for(ROMol::AtomIterator prodAtomIt=(*prodIt)->beginAtoms();
             prodAtomIt!=(*prodIt)->endAtoms();++prodAtomIt){
-          if(!(*prodAtomIt)->hasProp("molAtomMapNumber")){
+          int mapNum;
+          if(!(*prodAtomIt)->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)){
             // if we have stereochemistry specified, it's automatically creating stereochem:
-            (*prodAtomIt)->setProp("molInversionFlag",4);
+            (*prodAtomIt)->setProp(common_properties::molInversionFlag,4);
             continue;
           } 
-          int mapNum;
-          (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
           for(MOL_SPTR_VECT::const_iterator reactIt=rxn->beginReactantTemplates();
               reactIt!=rxn->endReactantTemplates();++reactIt){
             for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
                 reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
-              if(!(*reactAtomIt)->hasProp("molAtomMapNumber")) continue;
               int reactMapNum;
-              (*reactAtomIt)->getProp("molAtomMapNumber",reactMapNum);
+              if(!(*reactAtomIt)->getPropIfPresent(common_properties::molAtomMapNumber,
+					       reactMapNum))
+                  continue;
               if(reactMapNum==mapNum){
                 // finally, in the bowels of the nesting, we get to some actual
                 // work:
@@ -70,22 +70,22 @@ namespace RDKit {
                      (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER){
                     // both have stereochem specified:
                     if((*reactAtomIt)->getChiralTag()==(*prodAtomIt)->getChiralTag()){
-                      (*prodAtomIt)->setProp("molInversionFlag",2);
+                      (*prodAtomIt)->setProp(common_properties::molInversionFlag,2);
                     } else {
                       // FIX: this is technically fragile: it should be checking
                       // if the atoms both have tetrahedral chirality. However,
                       // at the moment that's the only chirality available, so there's
                       // no need to go monkeying around.
-                      (*prodAtomIt)->setProp("molInversionFlag",1);
+                      (*prodAtomIt)->setProp(common_properties::molInversionFlag,1);
                     }
                   } else {
                     // stereochem in the product, but not in the reactant
-                    (*prodAtomIt)->setProp("molInversionFlag",4);
+                    (*prodAtomIt)->setProp(common_properties::molInversionFlag,4);
                   }
                 } else if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
                           (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER){
                   // stereochem in the reactant, but not the product:
-                  (*prodAtomIt)->setProp("molInversionFlag",3);                  
+                  (*prodAtomIt)->setProp(common_properties::molInversionFlag,3);                  
                 }
               }
             }

@@ -207,7 +207,7 @@ namespace RDKit{
           int val;
           if(attribVal=="f" || attribName =="f"){
             fTag="_SLN_";
-            atom->setProp("_Unfinished_SLN_",1);
+            atom->setProp(common_properties::_Unfinished_SLN_,1);
             val=-666;
           }
           if(attribName=="rbc"){
@@ -317,8 +317,8 @@ namespace RDKit{
       // we need to loop over the atom's query tree and finalize any
       // attributes that had "f" in the original SLN. We will recognize
       // these by the fact that their names start with "_SLN_"
-      if(!doingQuery || !atom->hasQuery() || !atom->hasProp("_Unfinished_SLN_")) return;
-      atom->clearProp("_Unfinished_SLN_");
+      if(!doingQuery || !atom->hasQuery() || !atom->hasProp(common_properties::_Unfinished_SLN_)) return;
+      atom->clearProp(common_properties::_Unfinished_SLN_);
       std::list<QueryAtom::QUERYATOM_QUERY *> q;
       q.push_back(atom->getQuery());
       while(!q.empty()){
@@ -425,7 +425,7 @@ namespace RDKit{
           attribVal.erase(--(attribVal.end()));
         }
         if(attribName=="name"){
-          mol->setProp("_Name",attribVal);
+          mol->setProp(common_properties::_Name,attribVal);
         } else {
           mol->setProp(attribName,attribVal);
         }
@@ -437,11 +437,10 @@ namespace RDKit{
       for(RWMol::AtomIterator atomIt=mol->beginAtoms();
           atomIt != mol->endAtoms();
           atomIt++){
-        if((*atomIt)->hasProp("_SLN_s")){
+        std::string attribVal;
+        if((*atomIt)->getPropIfPresent(common_properties::_SLN_s, attribVal)){
           // the atom is marked as chiral, translate the sln chirality into
           // RDKit chirality
-          std::string attribVal;
-          (*atomIt)->getProp("_SLN_s",attribVal);
           
           // start with a straight map of the chirality value:
           // as a reminder, here are some SLN <-> SMILES pairs

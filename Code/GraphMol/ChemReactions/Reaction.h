@@ -86,7 +86,7 @@ namespace RDKit{
 
      NOTES:
        - to allow more control over the reaction, it is possible to flag reactant
-         atoms as being protected by setting the "_protected" property on those
+         atoms as being protected by setting the common_properties::_protected property on those
          atoms. Here's an example:
          \verbatim
             std::string smi="[O:1]>>[N:1]";
@@ -103,7 +103,7 @@ namespace RDKit{
             // here prods has two entries, because there are two Os in the
             // reactant. 
 
-            reacts[0]->getAtomWithIdx(0)->setProp("_protected",1);
+            reacts[0]->getAtomWithIdx(0)->setProp(common_properties::_protected,1);
             prods = rxn->runReactants(reacts);
             // here prods only has one entry, the reaction at atom 0
             // has been blocked by the _protected property

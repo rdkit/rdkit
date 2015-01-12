@@ -352,7 +352,7 @@ void test5QueryRoot(){
   q1->addAtom(new QueryAtom(8),true);
   q1->addAtom(new QueryAtom(6),true);
   q1->addBond(0,1,Bond::UNSPECIFIED);
-  q1->setProp("_queryRootAtom",1);
+  q1->setProp(common_properties::_queryRootAtom,1);
   
   // here's the main query
   q2 = new RWMol();

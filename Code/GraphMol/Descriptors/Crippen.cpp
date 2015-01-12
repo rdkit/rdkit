@@ -44,10 +44,10 @@ namespace RDKit{
                    "bad atomTypes vector");
       PRECONDITION((!atomTypeLabels || atomTypeLabels->size()==mol.getNumAtoms()),
                    "bad atomTypeLabels vector");
-      if(!force && mol.hasProp("_crippenLogPContribs")){
+      if(!force && mol.hasProp(common_properties::_crippenLogPContribs)){
 	std::vector<double> tmpVect1,tmpVect2;
-	mol.getProp("_crippenLogPContribs",tmpVect1);
-	mol.getProp("_crippenMRContribs",tmpVect2);
+	mol.getProp(common_properties::_crippenLogPContribs,tmpVect1);
+	mol.getProp(common_properties::_crippenMRContribs,tmpVect2);
 	if(tmpVect1.size()==mol.getNumAtoms() &&
 	   tmpVect2.size()==mol.getNumAtoms() ){
 	  logpContribs=tmpVect1;
@@ -78,14 +78,14 @@ namespace RDKit{
 	// no need to keep matching stuff if we already found all the atoms:
 	if(atomNeeded.none()) break;
       }
-      mol.setProp("_crippenLogPContribs",logpContribs,true);
-      mol.setProp("_crippenMRContribs",mrContribs,true);
+      mol.setProp(common_properties::_crippenLogPContribs,logpContribs,true);
+      mol.setProp(common_properties::_crippenMRContribs,mrContribs,true);
     }
     void calcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs,
 				bool force){
-      if(!force && mol.hasProp("_crippenLogP")){
-	mol.getProp("_crippenLogP",logp);
-	mol.getProp("_crippenMR",mr);
+      if(!force && mol.hasProp(common_properties::_crippenLogP)){
+	mol.getProp(common_properties::_crippenLogP,logp);
+	mol.getProp(common_properties::_crippenMR,mr);
 	return;
       }
 
@@ -113,8 +113,8 @@ namespace RDKit{
 	delete workMol;
       }
 
-      mol.setProp("_crippenLogP",logp,true);
-      mol.setProp("_crippenMR",mr,true);
+      mol.setProp(common_properties::_crippenLogP,logp,true);
+      mol.setProp(common_properties::_crippenMR,mr,true);
     };
 
     typedef boost::flyweight<boost::flyweights::key_value<std::string,CrippenParamCollection>,

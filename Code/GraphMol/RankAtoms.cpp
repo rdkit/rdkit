@@ -385,9 +385,8 @@ namespace RankAtoms{
       invariant = (invariant << 1) | chgSign;
       if(includeChirality ){
         int isR=0;
-        if( atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          atom->getProp("_CIPCode",cipCode);
+        std::string cipCode;
+        if( atom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
           if(cipCode=="R"){
             isR=1;
           } else {
@@ -431,9 +430,9 @@ namespace RankAtoms{
         Atom const *atom = *atIt;
         if((atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
             atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-           atom->hasProp("_ringStereoAtoms")){
-          //atom->hasProp("_CIPRank") &&
-          //!atom->hasProp("_CIPCode")){
+           atom->hasProp(common_properties::_ringStereoAtoms)){
+          //atom->hasProp(common_properties::_CIPRank) &&
+          //!atom->hasProp(common_properties::_CIPCode)){
           ROMol::ADJ_ITER beg,end;
           boost::tie(beg,end) = mol.getAtomNeighbors(atom);
           unsigned int nCount=0;
@@ -511,9 +510,8 @@ namespace RankAtoms{
 
       if(includeChirality ){
         int isR=0;
-        if( atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          atom->getProp("_CIPCode",cipCode);
+        std::string cipCode;
+        if( atom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
           if(cipCode=="R"){
             isR=1;
           } else {

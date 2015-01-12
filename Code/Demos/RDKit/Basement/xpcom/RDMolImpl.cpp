@@ -63,13 +63,13 @@ NS_IMETHODIMP RDMolecule::LogP(double *_retval)
 {
   if(!dp_mol) return NS_ERROR_NOT_INITIALIZED;
   double logp;
-  if(dp_mol->hasProp("_CrippenLogP")) {
-    dp_mol->getProp("_CrippenLogP",logp);
+  if(dp_mol->hasProp(common_properties::_CrippenLogP)) {
+    dp_mol->getProp(common_properties::_CrippenLogP,logp);
   } else {
     double mr;
     RDKit::Descriptors::CalcCrippenDescriptors(dp_mol,logp,mr);
-    dp_mol->setProp("_CrippenLogP",logp,true);
-    dp_mol->setProp("_CrippenMR",mr,true);
+    dp_mol->setProp(common_properties::_CrippenLogP,logp,true);
+    dp_mol->setProp(common_properties::_CrippenMR,mr,true);
   }
   *_retval=logp;
   return NS_OK;
@@ -80,13 +80,13 @@ NS_IMETHODIMP RDMolecule::MR(double *_retval)
 {
   if(!dp_mol) return NS_ERROR_NOT_INITIALIZED;
   double mr;
-  if(dp_mol->hasProp("_CrippenMR")) {
-    dp_mol->getProp("_CrippenMR",mr);
+  if(dp_mol->hasProp(common_properties::_CrippenMR)) {
+    dp_mol->getProp(common_properties::_CrippenMR,mr);
   } else {
     double logp;
     RDKit::Descriptors::CalcCrippenDescriptors(dp_mol,logp,mr);
-    dp_mol->setProp("_CrippenLogP",logp,true);
-    dp_mol->setProp("_CrippenMR",mr,true);
+    dp_mol->setProp(common_properties::_CrippenLogP,logp,true);
+    dp_mol->setProp(common_properties::_CrippenMR,mr,true);
   }
   *_retval=mr;
   return NS_OK;

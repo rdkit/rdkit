@@ -199,13 +199,13 @@ namespace RDKit {
         std::ostringstream tstr;
         tstr << d_line;
         std::string mname = tstr.str();
-        res->setProp("_Name", mname);
+        res->setProp(common_properties::_Name, mname);
       }
       else {
         if(d_name>=static_cast<int>(recs.size())){
           BOOST_LOG(rdWarningLog)<<"WARNING: no name column found on line "<<d_line<<std::endl;
         } else {
-          res->setProp("_Name", recs[d_name]);
+          res->setProp(common_properties::_Name, recs[d_name]);
         }
       }
 

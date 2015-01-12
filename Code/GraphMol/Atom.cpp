@@ -130,10 +130,8 @@ void Atom::setOwningMol(ROMol *other)
 std::string Atom::getSymbol() const {
   std::string res;
   // handle dummies differently:
-  if(d_atomicNum != 0 || !hasProp("dummyLabel") ){
+  if(d_atomicNum != 0 || !getPropIfPresent<std::string>(common_properties::dummyLabel, res)) {
     res = PeriodicTable::getTable()->getElementSymbol(d_atomicNum);
-  } else {
-    res=getProp<std::string>("dummyLabel");
   }
   return res;
 }

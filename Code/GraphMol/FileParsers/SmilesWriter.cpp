@@ -124,9 +124,7 @@ namespace RDKit {
     std::string name, smi = MolToSmiles(mol,df_isomericSmiles,df_kekuleSmiles);
     (*dp_ostream) << smi;
     if(d_nameHeader!=""){
-      if (mol.hasProp("_Name") ) {
-        mol.getProp("_Name", name);
-      } else {
+      if (!mol.getPropIfPresent(common_properties::_Name, name)) {
         std::stringstream tstream;
         tstream << d_molid;
         name = tstream.str();
@@ -138,15 +136,13 @@ namespace RDKit {
     STR_VECT_CI pi;
     for (pi = d_props.begin(); pi != d_props.end(); pi++) {
       std::string pval;
-      if (mol.hasProp(*pi)) {
-	// FIX: we will assume that any property that the user requests is castable to
-	// a std::string 
-	mol.getProp((*pi), pval);
+      // FIX: we will assume that any property that the user requests is castable to
+      // a std::string 
+      if(mol.getPropIfPresent(*pi, pval)) {
+        (*dp_ostream) << d_delim << pval;
+      } else {
+         (*dp_ostream) << d_delim << "";
       }
-      else {
-	pval = "";
-      }
-      (*dp_ostream) << d_delim << pval;
     }
     (*dp_ostream) << "\n";
     d_molid++;

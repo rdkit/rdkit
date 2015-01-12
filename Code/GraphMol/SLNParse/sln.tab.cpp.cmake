@@ -1910,7 +1910,7 @@ yyreduce:
   } else {
     (yyval.atom_T) = new RDKit::QueryAtom(1);
   }
-  (yyval.atom_T)->setProp("_starred",1,true);
+  (yyval.atom_T)->setProp(RDKit::common_properties::_starred,1,true);
 ;}
     break;
 
@@ -1922,7 +1922,7 @@ yyreduce:
   } else {
     (yyval.atom_T) = new RDKit::QueryAtom(1);
   }
-  (yyval.atom_T)->setProp("_AtomID",static_cast<unsigned int>((yyvsp[(2) - (3)].ival_T)));
+  (yyval.atom_T)->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>((yyvsp[(2) - (3)].ival_T)));
 ;}
     break;
 
@@ -1934,7 +1934,7 @@ yyreduce:
   } else {
     (yyval.atom_T) = new RDKit::QueryAtom(1);
   }
-  (yyval.atom_T)->setProp("_AtomID",static_cast<unsigned int>((yyvsp[(2) - (5)].ival_T)));
+  (yyval.atom_T)->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>((yyvsp[(2) - (5)].ival_T)));
   SLNParse::parseAtomAttribs((yyval.atom_T),*(yyvsp[(4) - (5)].attriblist_T),doQueries);
   delete (yyvsp[(4) - (5)].attriblist_T);
 ;}
@@ -1956,14 +1956,14 @@ yyreduce:
   case 35:
 #line 363 "sln.yy"
     {
-  (yyval.atom_T)->setProp("_starred",1,true);
+  (yyval.atom_T)->setProp(RDKit::common_properties::_starred,1,true);
 ;}
     break;
 
   case 36:
 #line 366 "sln.yy"
     {
-  (yyvsp[(1) - (4)].atom_T)->setProp("_AtomID",static_cast<unsigned int>((yyvsp[(3) - (4)].ival_T)));
+  (yyvsp[(1) - (4)].atom_T)->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>((yyvsp[(3) - (4)].ival_T)));
   (yyval.atom_T)=(yyvsp[(1) - (4)].atom_T);
 ;}
     break;
@@ -1971,7 +1971,7 @@ yyreduce:
   case 37:
 #line 370 "sln.yy"
     {
-  (yyvsp[(1) - (6)].atom_T)->setProp("_AtomID",static_cast<unsigned int>((yyvsp[(3) - (6)].ival_T)));
+  (yyvsp[(1) - (6)].atom_T)->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>((yyvsp[(3) - (6)].ival_T)));
   SLNParse::parseAtomAttribs((yyvsp[(1) - (6)].atom_T),*(yyvsp[(5) - (6)].attriblist_T),doQueries);
   delete (yyvsp[(5) - (6)].attriblist_T);
   (yyval.atom_T)=(yyvsp[(1) - (6)].atom_T);

@@ -78,7 +78,7 @@ namespace RDKit {
            atom.getFormalCharge()!=0 ||
            isotope ||
            atom.getNumRadicalElectrons()!=0 ||
-           atom.hasProp("molAtomMapNumber") ||
+           atom.hasProp(common_properties::molAtomMapNumber) ||
            atom.getDegree()==0 ){
           symbol=atom.getSymbol();
           bool leftToRight=true;
@@ -88,9 +88,9 @@ namespace RDKit {
           if(isotope){
             symbol = boost::lexical_cast<std::string>(isotope)+symbol;
           }
-          if(atom.hasProp("molAtomMapNumber")){
+          if(atom.hasProp(common_properties::molAtomMapNumber)){
             std::string mapNum;
-            atom.getProp("molAtomMapNumber",mapNum);
+            atom.getProp(common_properties::molAtomMapNumber,mapNum);
             symbol += ":" + mapNum;
           }
           int nHs=atom.getTotalNumHs();

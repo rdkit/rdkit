@@ -177,7 +177,7 @@ namespace RDKit{
           //e.g. 5ring with N.pl3 as NH atom or other atoms without ar specification in aromatic ring
           //FIX: do we need make sure this only happens for atoms in ring?
           std::string tATT;
-          at->getProp("_TriposAtomType",tATT);
+          at->getProp(common_properties::_TriposAtomType,tATT);
           MolOps::findSSSR(*res);
           if (tATT.find("ar")==std::string::npos && at->getIsAromatic() && 
               res->getRingInfo()->isAtomInRingOfSize(at->getIdx(),5)){
@@ -189,7 +189,7 @@ namespace RDKit{
           //(at least in most cases) - anyway, throw a warning!
           if (noAromBonds==3 && tATT=="N.ar"){
             std::string nm;
-            res->getProp("_Name",nm);
+            res->getProp(common_properties::_Name,nm);
             BOOST_LOG(rdWarningLog)<<nm<<": warning - aromatic N with 3 aromatic bonds - "
               "skipping charge guess for this atom"<<std::endl;
             continue;
@@ -267,7 +267,7 @@ namespace RDKit{
         std::string tAT;
         Atom *at = *atIt;
         unsigned int idx=at->getIdx();
-        at->getProp("_TriposAtomType",tAT);
+        at->getProp(common_properties::_TriposAtomType,tAT);
 
         if (tAT=="N.4"){
           at->setFormalCharge(1);
@@ -285,7 +285,7 @@ namespace RDKit{
           //this should return only the C.2 
           Atom *nbr=res->getAtomWithIdx(*nbrIdxIt);
           std::string tATT;
-          nbr->getProp("_TriposAtomType",tATT);
+          nbr->getProp(common_properties::_TriposAtomType,tATT);
           //carboxylates
           if (tATT=="C.2" || tATT=="S.o2" ){
             //this should return only the bond between C.2 and O.co2
@@ -308,7 +308,7 @@ namespace RDKit{
             }
           }else{
             std::string nm;
-            res->getProp("_Name",nm);
+            res->getProp(common_properties::_Name,nm);
             BOOST_LOG(rdWarningLog)<<nm<<": warning - O.co2 with non C.2 or S.o2 neighbor."<<std::endl;
             return false;
           }
@@ -338,7 +338,7 @@ namespace RDKit{
           }
           if(noNNeighbors<2 || noNNeighbors>3){
             std::string nm;
-            res->getProp("_Name",nm);
+            res->getProp(common_properties::_Name,nm);
             BOOST_LOG(rdWarningLog)<<nm<<": Error - C.Cat with bad number of N neighbors."<<std::endl;
             return false;
           } else if(noNNeighbors == 2){
@@ -360,7 +360,7 @@ namespace RDKit{
                 //since I cannot think of a case where this is a problem - throw a warning
                 if(isFixed[*nbrIdxIt]){
                    std::string nm;
-                   res->getProp("_Name",nm);
+                   res->getProp(common_properties::_Name,nm);
                    BOOST_LOG(rdWarningLog)<<nm<<": warning - charged amidine and isFixed atom."<<std::endl;
                 }
                 isFixed[*nbrIdxIt]=1;
@@ -415,7 +415,7 @@ namespace RDKit{
                 while (nbrNbrIdxIt!=nbrEndNbrsIdxIt){
                   if(res->getAtomWithIdx(*nbrNbrIdxIt)->getAtomicNum()>1){
                     std::string nbrAT;
-                    res->getAtomWithIdx(*nbrNbrIdxIt)->getProp("_TriposAtomType",nbrAT);
+                    res->getAtomWithIdx(*nbrNbrIdxIt)->getProp(common_properties::_TriposAtomType,nbrAT);
                     if (nbrAT=="C.cat"){
                       hvyAtDeg+=2;//that way we reduce the risk of ionising the N attached to another C.cat ...
                     } else{
@@ -545,7 +545,7 @@ namespace RDKit{
 
       //now assign the properties
       res->setProp("_TriposAtomName",tAN); //maybe remove that since it's useless?
-      res->setProp("_TriposAtomType",tAT);
+      res->setProp(common_properties::_TriposAtomType,tAT);
       //no implicit hydrogens for mol2 files
       res->setNoImplicit(true);
 
@@ -669,7 +669,7 @@ namespace RDKit{
       //mol2 files need to have hydrogen atoms otherwise formal charge estimation will be problematic
       if(!hasHAtoms){
         std::string nm;
-        res->getProp("_Name",nm);
+        res->getProp(common_properties::_Name,nm);
         BOOST_LOG(rdWarningLog) << nm<<": Warning - no explicit hydrogens in mol2 file but needed for formal charge estimation." << std::endl;
       }
       //create conformer based on 3DPoints and add to RWMol
@@ -777,7 +777,7 @@ namespace RDKit{
     tempStr = getLine(inStream);
     RWMol *res = new RWMol();
     boost::trim_right(tempStr);
-    res->setProp("_Name",tempStr);
+    res->setProp(common_properties::_Name,tempStr);
 
     tempStr = getLine(inStream);
     tokenizer tokens(tempStr,sep);
@@ -890,7 +890,7 @@ namespace RDKit{
       catch (MolSanitizeException &se){
         BOOST_LOG(rdWarningLog)<<"sanitise ";
         std::string molName;
-        res->getProp("_Name",molName);
+        res->getProp(common_properties::_Name,molName);
         BOOST_LOG(rdWarningLog)<<molName<<": ";
         delete res;
         throw se;

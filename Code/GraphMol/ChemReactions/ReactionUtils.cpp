@@ -153,7 +153,7 @@ bool hasReactionAtomMapping(const ChemicalReaction &rxn)
   RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, Reactant);
   for(; begin != end; ++begin){
     const ROMol &reactant = *begin->get();
-    if(MolOps::getNumAtomsWithDistinctProperty(reactant, "molAtomMapNumber")){
+    if(MolOps::getNumAtomsWithDistinctProperty(reactant, common_properties::molAtomMapNumber)){
       return true;
     }
   }
@@ -161,7 +161,7 @@ bool hasReactionAtomMapping(const ChemicalReaction &rxn)
   end = getEndIterator(rxn, Product);
   for(; begin != end; ++begin){
     const ROMol &reactant = *begin->get();
-    if(MolOps::getNumAtomsWithDistinctProperty(reactant, "molAtomMapNumber")){
+    if(MolOps::getNumAtomsWithDistinctProperty(reactant, common_properties::molAtomMapNumber)){
       return true;
     }
   }
@@ -170,7 +170,7 @@ bool hasReactionAtomMapping(const ChemicalReaction &rxn)
 
 bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold)
 {
-  unsigned numMappedAtoms = MolOps::getNumAtomsWithDistinctProperty(mol, "molAtomMapNumber");
+  unsigned numMappedAtoms = MolOps::getNumAtomsWithDistinctProperty(mol, common_properties::molAtomMapNumber);
   unsigned numAtoms = mol.getNumHeavyAtoms();
   if(numAtoms > 0 &&
        static_cast<double>(numMappedAtoms)/static_cast<double>(numAtoms) >= agentThreshold){

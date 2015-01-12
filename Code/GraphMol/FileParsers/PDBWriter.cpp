@@ -234,10 +234,8 @@ namespace RDKit {
     MolOps::Kekulize(trwmol);
 
     std::string res;
-
-    if(mol.hasProp("_Name")){
-      std::string name;
-      mol.getProp("_Name",name);
+    std::string name;
+    if(mol.getPropIfPresent(common_properties::_Name, name)){
       if(!name.empty()) {
         res += "COMPND    ";
         res += name;
