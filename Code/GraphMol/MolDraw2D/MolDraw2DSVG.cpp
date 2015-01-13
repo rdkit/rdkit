@@ -61,7 +61,7 @@ namespace RDKit {
 
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
-    std::string col=DrawColourToSVG(getColour());
+    std::string col=DrawColourToSVG(colour());
     unsigned int width=2;
     std::string dashString="";
     d_os<<"<svg:path ";
@@ -74,7 +74,7 @@ namespace RDKit {
   // draw the char, with the bottom left hand corner at cds
   void MolDraw2DSVG::drawChar( char c , const std::pair<float,float> &cds ) {
     unsigned int fontSz=scale()*fontSize();
-    std::string col = DrawColourToSVG(getColour());
+    std::string col = DrawColourToSVG(colour());
 
     d_os<<"<svg:text";
     d_os<<" x='" << cds.first;
@@ -93,7 +93,7 @@ namespace RDKit {
     std::pair<float,float> c2 = getDrawCoords( cds2 );
     std::pair<float,float> c3 = getDrawCoords( cds3 );
 
-    std::string col=DrawColourToSVG(getColour());
+    std::string col=DrawColourToSVG(colour());
     unsigned int width=2;
     std::string dashString="";
     d_os<<"<svg:path ";
@@ -166,7 +166,7 @@ namespace RDKit {
                                  const std::pair<float,float> &cds ) {
 
     unsigned int fontSz=scale()*fontSize();
-    std::string col = DrawColourToSVG(getColour());
+    std::string col = DrawColourToSVG(colour());
 
     float string_width , string_height;
     getStringSize( str , string_width , string_height );

@@ -66,7 +66,8 @@ namespace RDKit {
     virtual void setFontSize( float new_size );
     virtual void calculateScale();
     virtual void setColour( const DrawColour &col ) { curr_colour_ = col; }
-    virtual DrawColour getColour() const { return curr_colour_; }
+    virtual DrawColour colour() const { return curr_colour_; }
+
 
     // establishes whether to put string draw mode into super- or sub-script
     // mode based on contents of instring from i onwards. Increments i appropriately

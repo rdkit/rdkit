@@ -73,7 +73,7 @@ namespace RDKit {
 #ifdef NOTYET
     QBrush brush( "Black" );
     brush.setStyle( Qt::SolidPattern );
-    DrawColour cc = getColour();
+    DrawColour cc = colour();
     brush.setColor( QColor( 255.0 * cc.get<0>() , 255.0 * cc.get<1>() , 255.0 * cc.get<2>() ) );
 #endif
 
