@@ -69,7 +69,8 @@ namespace RDKit {
     if(dashes.size()){
       std::stringstream dss;
       dss<<";stroke-dasharray:";
-      std::copy(dashes.begin(),dashes.end(),std::ostream_iterator<unsigned int>(dss,","));
+      std::copy(dashes.begin(),dashes.end()-1,std::ostream_iterator<unsigned int>(dss,","));
+      dss<<dashes.back();
       dashString = dss.str();
     }
     d_os<<"<svg:path ";
