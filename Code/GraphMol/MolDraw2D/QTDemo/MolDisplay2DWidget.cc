@@ -162,7 +162,9 @@ void MolDisplay2DWidget::draw_molecule( QPainter &qp ) {
   }
 
   mol_drawer_.reset( new RDKit::MolDraw2DQt( rect().width() , h , qp ) );
-  mol_drawer_->drawMolecule( *disp_mol_ , &selected_atoms() );
+  
+  vector<int> sa = selected_atoms();
+  mol_drawer_->drawMolecule( *disp_mol_ , &sa );
   add_molecule_title( qp , mol_name , h );
 
   identify_selected_atoms( qp );

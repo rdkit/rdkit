@@ -54,9 +54,13 @@ namespace RDKit {
     if(dashes.size()){
       QVector<qreal> dd;
       for(unsigned int di=0;di<dashes.size();++di) dd << dashes[di];
-      qp_.setDashPattern(dd);
+      QPen pen=qp_.pen();
+      pen.setDashPattern(dd);
+      qp_.setPen(pen);
     } else {
-      qp_.setStyle(Qt::SolidLine);
+      QPen pen=qp_.pen();
+      pen.setStyle(Qt::SolidLine);
+      qp_.setPen(pen);
     }
     qp_.drawLine( QPointF( c1.first , c1.second ) , QPointF( c2.first , c2.second ) );
 
