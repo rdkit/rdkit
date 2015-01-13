@@ -31,19 +31,20 @@
 // ****************************************************************************
 
 namespace RDKit {
-
+ 
   class MolDraw2D {
   public :
 
     typedef enum { C = 0 , N , E , S , W } OrientType;
     typedef boost::tuple<float,float,float> DrawColour;
+    typedef std::vector<unsigned int> DashPattern;
 
     MolDraw2D( int width , int height );
     virtual ~MolDraw2D() {}
 
     virtual void drawMolecule( const ROMol &mol ,
-                               const std::vector<int> &highlight_atoms = std::vector<int>() ,
-                               const std::map<int,DrawColour> &highlight_map = std::map<int,DrawColour>() );
+                               const std::vector<int> *highlight_atoms = NULL,
+                               const std::map<int,DrawColour> *highlight_map = NULL );
 
     // transform a set of coords in the molecule's coordinate system
     // to drawing system coordinates and vice versa. Note that the coordinates have
@@ -68,6 +69,8 @@ namespace RDKit {
     virtual void setColour( const DrawColour &col ) { curr_colour_ = col; }
     virtual DrawColour colour() const { return curr_colour_; }
 
+    virtual void setDash( const DashPattern &patt ) { curr_dash_ = patt; }
+    virtual const DashPattern &dash() const { return curr_dash_; }
 
     // establishes whether to put string draw mode into super- or sub-script
     // mode based on contents of instring from i onwards. Increments i appropriately
@@ -85,6 +88,7 @@ namespace RDKit {
     // than the default width of a double bond)
     float font_size_;
     DrawColour curr_colour_;
+    DashPattern curr_dash_;
 
     std::vector<std::pair<float,float> > at_cds_; // from mol
     std::vector<int> atomic_nums_;

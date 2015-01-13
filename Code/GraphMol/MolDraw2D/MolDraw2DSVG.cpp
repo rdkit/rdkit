@@ -12,6 +12,7 @@
 
 #include "MolDraw2DSVG.h"
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <sstream>
 
 namespace RDKit {
   namespace {
@@ -64,6 +65,13 @@ namespace RDKit {
     std::string col=DrawColourToSVG(colour());
     unsigned int width=2;
     std::string dashString="";
+    const DashPattern &dashes=dash();
+    if(dashes.size()){
+      std::stringstream dss;
+      dss<<";stroke-dasharray:";
+      std::copy(dashes.begin(),dashes.end(),std::ostream_iterator<unsigned int>(dss,","));
+      dashString = dss.str();
+    }
     d_os<<"<svg:path ";
     d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << "' ";
     d_os<<"style='fill:none;fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";

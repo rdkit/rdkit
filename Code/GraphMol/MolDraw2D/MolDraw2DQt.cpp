@@ -50,6 +50,14 @@ namespace RDKit {
     pair<float,float> c1 = getDrawCoords( cds1 );
     pair<float,float> c2 = getDrawCoords( cds2 );
 
+    const DashPattern &dashes=dash();
+    if(dashes.size()){
+      QVector<qreal> dd;
+      for(unsigned int di=0;di<dashes.size();++di) dd << dashes[di];
+      qp_.setDashPattern(dd);
+    } else {
+      qp_.setStyle(Qt::SolidLine);
+    }
     qp_.drawLine( QPointF( c1.first , c1.second ) , QPointF( c2.first , c2.second ) );
 
   }

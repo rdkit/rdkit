@@ -17,6 +17,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
+#include <boost/assign/list_of.hpp>
 
 using namespace boost;
 using namespace std;
@@ -257,22 +258,25 @@ namespace RDKit {
 
   // ****************************************************************************
   MolDraw2D::DrawColour MolDraw2D::getColour( int atom_idx ,
-                                              const std::vector<int> &highlight_atoms ,
-                                              const std::map<int,DrawColour> &highlight_map ) {
+                                              const std::vector<int> *highlight_atoms ,
+                                              const std::map<int,DrawColour> *highlight_map ) {
 
+    PRECONDITION(atom_idx>=0,"bad atom_idx");
+    PRECONDITION(atomic_nums_.size()>atom_idx,"bad atom_idx");
     DrawColour retval = getColourByAtomicNum( atomic_nums_[atom_idx] );
 
     // set contents of highlight_atoms to red
-    if( highlight_atoms.end() != find( highlight_atoms.begin() ,
-                                       highlight_atoms.end() , atom_idx )  ) {
+    if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
+                                                           highlight_atoms->end() , atom_idx )  ) {
       retval = DrawColour( 1.0 , 0.0 , 0.0 );
     }
     // over-ride with explicit colour from highlight_map if there is one
-    map<int,DrawColour>::const_iterator p = highlight_map.find( atom_idx );
-    if( p != highlight_map.end() ) {
-      retval = p->second;
+    if(highlight_map){
+      map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
+      if( p != highlight_map->end() ) {
+        retval = p->second;
+      }
     }
-
     return retval;
   }
 
@@ -343,6 +347,9 @@ namespace RDKit {
                             int at1_idx , int at2_idx ,
                             const vector<int> *highlight_atoms ,
                             const map<int,DrawColour> *highlight_map ) {
+    static const DashPattern noDash;
+    static const DashPattern dots=assign::list_of(2)(6);
+    static const DashPattern dashes=assign::list_of(6)(6);
 
     const Atom *at1 = mol.getAtomWithIdx( at1_idx );
     const Atom *at2 = mol.getAtomWithIdx( at2_idx );
@@ -357,7 +364,7 @@ namespace RDKit {
     DrawColour col1 = getColour( at1_idx , highlight_atoms , highlight_map );
     DrawColour col2 = getColour( at2_idx , highlight_atoms , highlight_map );
 
-    // it it's a double bond and one end is 1-connected, do two lines parallel
+    // it's a double bond and one end is 1-connected, do two lines parallel
     // to the atom-atom line.
     if( ( bond->getBondType() == Bond::DOUBLE ) &&
         ( 1 == at1->getDegree() || 1 == at2->getDegree() ) ) {
@@ -409,7 +416,7 @@ namespace RDKit {
       }
       // all we have left now are double bonds in a ring or not in a ring
       // and multiply connected
-      if( Bond::DOUBLE == bond->getBondType() ) {
+      else if( Bond::DOUBLE == bond->getBondType() || Bond::AROMATIC == bond->getBondType() ) {
         pair<float,float> perp;
         if( mol.getRingInfo()->numBondRings( bond->getIdx() ) ) {
           // in a ring, we need to draw the bond inside the ring
@@ -423,7 +430,9 @@ namespace RDKit {
         float py1 = at1_cds.second - 0.1 * bv[1] + dbo * perp.second;
         float px2 = at2_cds.first + 0.1 * bv[0] + dbo * perp.first;
         float py2 = at2_cds.second + 0.1 * bv[1] + dbo * perp.second;
+        if(bond->getBondType()==Bond::AROMATIC) setDash(dashes);
         drawLine( make_pair( px1 , py1 ) , make_pair( px2 , py2 ) , col1 , col2 );
+        if(bond->getBondType()==Bond::AROMATIC) setDash(noDash);
       }
     }
   }

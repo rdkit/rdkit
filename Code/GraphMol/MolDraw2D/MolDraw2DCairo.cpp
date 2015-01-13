@@ -39,7 +39,16 @@ namespace RDKit {
     std::string dashString="";
 
     cairo_set_line_width(d_cr,width);
-    cairo_set_dash(d_cr,0,0,0);
+
+    const DashPattern &dashes=dash();
+    if(dashes.size()){
+      double dd[dashes.size()];
+      for(unsigned int di=0;di<dashes.size();++di) dd[di]=dashes[di]*1.5;
+      cairo_set_dash(d_cr,dd,dashes.size(),0);
+    } else {
+      cairo_set_dash(d_cr,0,0,0);
+    }
+
     cairo_move_to(d_cr,c1.first,c1.second);
     cairo_line_to(d_cr,c2.first,c2.second);
     cairo_stroke(d_cr);
