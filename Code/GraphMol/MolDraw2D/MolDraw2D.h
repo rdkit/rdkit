@@ -119,8 +119,8 @@ namespace RDKit {
     // return a DrawColour based on the contents of highlight_atoms or
     // highlight_map, falling back to atomic number by default
     DrawColour getColour( int atom_idx ,
-                          const std::vector<int> &highlight_atoms ,
-                          const std::map<int,DrawColour> &highlight_map );
+                          const std::vector<int> *highlight_atoms=NULL ,
+                          const std::map<int,DrawColour> *highlight_map=NULL );
     DrawColour getColourByAtomicNum( int atomic_num );
 
     void extractAtomCoords( const ROMol &mol );
@@ -128,15 +128,15 @@ namespace RDKit {
 
     void drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                    int at1_idx , int at2_idx ,
-                   const std::vector<int> &highlight_atoms ,
-                   const std::map<int,DrawColour> &highlight_map );
+                   const std::vector<int> *highlight_atoms=NULL ,
+                   const std::map<int,DrawColour> *highlight_map=NULL );
     void drawWedgedBond( const std::pair<float,float> &cds1 ,
                          const std::pair<float,float> &cds2 ,
                          bool draw_dashed , const DrawColour &col1 ,
                          const DrawColour &col2 );
     void drawAtomLabel( int atom_num ,
-                        const std::vector<int> &highlight_atoms ,
-                        const std::map<int,DrawColour> &highlight_map );
+                        const std::vector<int> *highlight_atoms=NULL ,
+                        const std::map<int,DrawColour> *highlight_map=NULL );
 
     // calculate normalised perpendicular to vector between two coords
     std::pair<float,float> calcPerpendicular( const std::pair<float,float> &cds1 ,

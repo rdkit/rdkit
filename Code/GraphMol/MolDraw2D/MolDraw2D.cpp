@@ -31,8 +31,8 @@ namespace RDKit {
 
   // ****************************************************************************
   void MolDraw2D::drawMolecule( const ROMol &mol ,
-                                const vector<int> &highlight_atoms ,
-                                const map<int,DrawColour> &highlight_map ) {
+                                const vector<int> *highlight_atoms ,
+                                const map<int,DrawColour> *highlight_map ) {
     clearDrawing();
     extractAtomCoords( mol );
     extractAtomSymbols( mol );
@@ -341,8 +341,8 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2D::drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                             int at1_idx , int at2_idx ,
-                            const vector<int> &highlight_atoms ,
-                            const map<int,DrawColour> &highlight_map ) {
+                            const vector<int> *highlight_atoms ,
+                            const map<int,DrawColour> *highlight_map ) {
 
     const Atom *at1 = mol.getAtomWithIdx( at1_idx );
     const Atom *at2 = mol.getAtomWithIdx( at2_idx );
@@ -475,8 +475,8 @@ namespace RDKit {
 
   // ****************************************************************************
   void MolDraw2D::drawAtomLabel( int atom_num ,
-                                 const std::vector<int> &highlight_atoms ,
-                                 const std::map<int,DrawColour> &highlight_map ) {
+                                 const std::vector<int> *highlight_atoms ,
+                                 const std::map<int,DrawColour> *highlight_map ) {
 
     setColour( getColour( atom_num , highlight_atoms , highlight_map ) );
     drawString( atom_syms_[atom_num].first , at_cds_[atom_num] );
