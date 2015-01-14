@@ -5363,6 +5363,98 @@ void test56TestOldPickleVersion(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test57IntroductionOfNewChiralCenters(){
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing introduction of new atoms with chirality" << std::endl;
+
+  { // a reaction that induces new atoms with stereochem
+    std::string smi = "[F:1][C:2]([Cl:3])([Br:4])[I:5]>>[F:1][C@@:2]([Cl:3])([N:4][C@:6]([Cl:7])[Br:8])[I:5]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "FC(Cl)(Br)I";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="F[C@](Cl)(I)N[C@H](Cl)Br");
+
+    delete rxn;
+  }
+
+  { // a reaction that induces new atoms with stereochem
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality.rxn";
+    ChemicalReaction *rxn = RxnFileToChemicalReaction(fName);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    BOOST_LOG(rdInfoLog)<<ChemicalReactionToRxnSmiles(*rxn)<<std::endl;
+    rxn->initReactantMatchers();
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality1.sdf";
+    ROMol *mol = MolFileToMol(fName);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@@H](Cl)CCC[C@H](C)F");
+
+    delete rxn;
+  }
+
+  { // a reaction that induces new atoms with stereochem
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality2.sdf";
+    ROMol *mol = MolFileToMol(fName);
+    ChemicalReaction *rxn = new ChemicalReaction();
+    rxn->addReactantTemplate(ROMOL_SPTR(mol));
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality3.sdf";
+    mol = MolFileToMol(fName);
+    rxn->addProductTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    BOOST_LOG(rdInfoLog)<<ChemicalReactionToRxnSmiles(*rxn)<<std::endl;
+    rxn->initReactantMatchers();
+    updateProductsStereochem(rxn);
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality1.sdf";
+    mol = MolFileToMol(fName);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@@H](Cl)CCC[C@H](C)F");
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -5429,6 +5521,7 @@ int main() {
   test54RedundantProductMappingNumbersAndRSChirality();
   test55RedundantProductMappingNumbersAndEZStereochemistry();;
   test56TestOldPickleVersion();
+  test57IntroductionOfNewChiralCenters();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
