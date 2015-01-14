@@ -1,7 +1,9 @@
 ******  Release_2015.03.1 *******
 (Changes relative to Release_2014.09.2)
 
-Acknowledgements:
+!!!!!! IMPORTANT !!!!!!
+
+Acknowledgements: David Cosgrove
 
 Bug Fixes:
 
@@ -12,6 +14,10 @@ New Database Cartridge Features:
 New Java Wrapper Features:
 
 Deprecated modules (to be removed in next release):
+- C++: The functionality in $RDBASE/Code/GraphMol/MolDrawing has been
+  superseded by the new drawing code in $RDBASE/Code/GraphMol and will
+  be removed in the next release.
+
 
 Removed modules:
 
