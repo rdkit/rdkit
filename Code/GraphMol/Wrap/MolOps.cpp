@@ -28,20 +28,25 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 
-#include <GraphMol/MolDrawing/MolDrawing.h>
-#include <GraphMol/MolDrawing/DrawingToSVG.h>
+#include <sstream>
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
-  std::string molToSVG(const ROMol &mol,python::object pyHighlightAtoms,bool kekulize,
-                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles){
-
+  std::string molToSVG(const ROMol &mol,
+                       unsigned int width, unsigned int height,
+                       python::object pyHighlightAtoms,bool kekulize,
+                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles
+                       ){
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
-
-    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(mol,highlightAtoms,kekulize,includeAtomCircles);
+    std::stringstream outs;
+    MolDraw2DSVG drawer(width,height,outs);
+    drawer.setFontSize(fontSize/24.);
+    drawer.drawMolecule(mol,highlightAtoms);
     delete highlightAtoms;
-    return RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize,includeAtomCircles);
+    drawer.finishDrawing();
+    return outs.str();
   }
   python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,python::object pyBondIndices,
                                           unsigned int nToBreak,
@@ -1647,10 +1652,13 @@ namespace RDKit{
       // ------------------------------------------------------------------------
       docString="Returns svg for a molecule";
       python::def("MolToSVG", molToSVG,
-                  (python::arg("mol"),python::arg("highlightAtoms")=python::object(),
+                  (python::arg("mol"),
+                   python::arg("width")=300,
+                   python::arg("height")=300,
+                   python::arg("highlightAtoms")=python::object(),
                    python::arg("kekulize")=true,
                    python::arg("lineWidthMult")=2,
-                   python::arg("fontSize")=50,
+                   python::arg("fontSize")=12,
                    python::arg("includeAtomCircles")=false),
                   docString.c_str());
 
