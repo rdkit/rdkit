@@ -19,7 +19,7 @@
 #include <cassert>
 #include <vector>
 
-#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
   namespace Canon{
@@ -202,7 +202,7 @@ namespace RDKit {
         nbrs.reserve(at->getDegree());
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = dp_mol->getAtomBonds(at);
-         std::cerr<< "                   nbrs: "<<i+1;
+        // std::cerr<< "                   nbrs: "<<i+1;
         while(beg!=end){
           const BOND_SPTR bond=(*dp_mol)[*beg];
           ++beg;
@@ -216,9 +216,9 @@ namespace RDKit {
           bondholder bh(bondholder(bond->getBondType(),stereo,
                                    dp_atoms[bond->getOtherAtomIdx(i)].index));
           nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh),1,bh);
-           std::cerr<<" "<<bond->getOtherAtomIdx(i)+1<<"("<<dp_atoms[bond->getOtherAtomIdx(i)].index<<")";
+          // std::cerr<<" "<<bond->getOtherAtomIdx(i)+1<<"("<<dp_atoms[bond->getOtherAtomIdx(i)].index<<")";
         }
-         std::cerr<<std::endl;
+        // std::cerr<<std::endl;
         std::reverse(nbrs.begin(),nbrs.end());
       }
       // EFF: it's stupid inefficient to be calling this frequently
@@ -403,7 +403,7 @@ namespace RDKit {
           return 0;
         }
         int v=basecomp(i,j);
-        std::cerr<<"           bc: "<<i+1<<"-"<<j+1<<": "<<v<<std::endl;
+        // std::cerr<<"           bc: "<<i+1<<"-"<<j+1<<": "<<v<<std::endl;
         if(v) return v;
 
         if(df_useNbrs){
@@ -412,7 +412,7 @@ namespace RDKit {
           getAtomNeighborhood(j,nbrsj);
           for(unsigned int ii=0;ii<nbrsi.size() && ii<nbrsj.size();++ii){
             int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
-             std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
+            // std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
             if(cmp) return cmp;
           }
           if(nbrsi.size()<nbrsj.size()){
@@ -602,7 +602,7 @@ namespace RDKit {
       register int index;
       register int len;
       register int i;
-      std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
+      // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
       while( activeset != -1 ) {
         //std::cerr<<"ITER: "<<activeset<<" next: "<<next[activeset]<<std::endl;
         // std::cerr<<" next: ";
@@ -621,18 +621,18 @@ namespace RDKit {
         len = count[partition]; 
         offset = atoms[partition].index;
         start = order+offset;
-        std::cerr<<"\n\n**************************************************************"<<std::endl;
-        std::cerr<<"  sort - class:"<<atoms[partition].index<<" len: "<<len<<":";
-        for(unsigned int ii=0;ii<len;++ii){
-          std::cerr<<" "<<order[offset+ii]+1;
-        }
-        std::cerr<<std::endl;
+        // std::cerr<<"\n\n**************************************************************"<<std::endl;
+        // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len: "<<len<<":";
+        // for(unsigned int ii=0;ii<len;++ii){
+        //   std::cerr<<" "<<order[offset+ii]+1;
+        // }
+        // std::cerr<<std::endl;
         // for(unsigned int ii=0;ii<nAtoms;++ii){
         //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         // }
         hanoisort(start,len,count,changed, compar);
-        std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
-        std::cerr<<"  result:";
+        // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
+        // std::cerr<<"  result:";
         // for(unsigned int ii=0;ii<nAtoms;++ii){
         //    std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         //  }
@@ -643,11 +643,25 @@ namespace RDKit {
           if( count[index] )
             symclass = offset+i;
           atoms[index].index = symclass;
-          std::cerr<<" "<<index+1<<"("<<symclass<<")";
+          // std::cerr<<" "<<index+1<<"("<<symclass<<")";
+          //if(mode && (activeset<0 || count[index]>count[activeset]) ){
+          //  activeset=index;
+          //}
         }
-        std::cerr<<std::endl;
+        // std::cerr<<std::endl;
+
+
+        // std::cerr<<" here we go: "<<partition<<" "<<count[partition]<<" "<<len<<":";
+        index=start[0];
+        for( i=count[index]; i<len; i++ ) {
+          // std::cerr<<" "<<i<<"-"<<index;
+          index=start[i];
+        }
+        // std::cerr<<std::endl;
+
         if( mode ) {
           index=start[0];
+          std::set<int> touchedPartitions;
           for( i=count[index]; i<len; i++ ) {
             index=start[i];
             ROMol::ADJ_ITER nbrIdx,endNbrs;
@@ -655,15 +669,16 @@ namespace RDKit {
             while(nbrIdx!=endNbrs){
               int nbor=mol[*nbrIdx]->getIdx();
               ++nbrIdx;
-              int nbroffset = atoms[nbor].index;
               changed[nbor]=1;
-              partition = order[nbroffset];
-              std::cerr<<"            changed: "<<index+1<<" "<<nbor+1<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
-              if( (count[partition]>1) &&
-                  (next[partition]==-2) ) {
-                next[partition] = activeset;
-                activeset = partition;
-              }
+              touchedPartitions.insert(atoms[nbor].index);
+            }
+          }
+          BOOST_FOREACH(const int &nbrOffset,touchedPartitions){
+            partition = order[nbrOffset];
+            if( (count[partition]>1) &&
+                (next[partition]==-2) ) {
+              next[partition] = activeset;
+              activeset = partition;
             }
           }
         }
