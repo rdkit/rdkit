@@ -75,9 +75,11 @@ namespace RDKit {
       int activeset;
       int *next=(int *)malloc(nAts*sizeof(int));
       int *changed=(int *)malloc(nAts*sizeof(int));
+      char *touched=(char *)malloc(nAts*sizeof(int));
+      memset(touched,0,nAts*sizeof(int));
       CreateSinglePartition(nAts,order,count,atoms);
       ActivatePartitions(nAts,order,count,activeset,next,changed);
-      RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed);
+      RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed,touched);
       //#define VERBOSE_CANON 1
 #ifdef VERBOSE_CANON
       std::cerr<<"1--------"<<std::endl;
@@ -93,7 +95,7 @@ namespace RDKit {
         std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       }
 #endif
-      RefinePartitions(mol,atoms,ftor,true,order,count,activeset,next,changed);
+      RefinePartitions(mol,atoms,ftor,true,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
       std::cerr<<"2--------"<<std::endl;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -101,7 +103,7 @@ namespace RDKit {
       }
 #endif
       if(breakTies){
-        BreakTies(mol,atoms,ftor,true,order,count,activeset,next,changed);
+        BreakTies(mol,atoms,ftor,true,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
         std::cerr<<"3--------"<<std::endl;
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -109,7 +111,7 @@ namespace RDKit {
         }
 #endif
       }
-      free(count); free(next);
+      free(count); free(next); free(touched);
     }
 
     namespace {
