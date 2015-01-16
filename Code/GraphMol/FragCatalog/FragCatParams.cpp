@@ -75,10 +75,10 @@ namespace RDKit{
 	funcGroup != d_funcGroups.end();
 	funcGroup++){
       std::string text;
-      (*funcGroup)->getProp("_Name",text);
+      (*funcGroup)->getProp(common_properties::_Name,text);
       ss << text;
       ss << "\t";
-      (*funcGroup)->getProp("_fragSMARTS",text);
+      (*funcGroup)->getProp(common_properties::_fragSMARTS,text);
       ss << text;
       ss << "\n";
     }

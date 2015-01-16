@@ -326,7 +326,7 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
-  $$->setProp("_starred",1,true);
+  $$->setProp(RDKit::common_properties::_starred,1,true);
 }
 | H_BRACKET_TOKEN  number CLOSE_BRACKET_TOKEN {
   if(!doQueries){
@@ -334,7 +334,7 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
-  $$->setProp("_AtomID",static_cast<unsigned int>($2));
+  $$->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>($2));
 }
 | H_BRACKET_TOKEN number COLON_TOKEN attriblist CLOSE_BRACKET_TOKEN {
   if(!doQueries){
@@ -342,7 +342,7 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
-  $$->setProp("_AtomID",static_cast<unsigned int>($2));
+  $$->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>($2));
   SLNParse::parseAtomAttribs($$,*$4,doQueries);
   delete $4;
 }
@@ -359,14 +359,14 @@ hatom: H_ASTERIX_TOKEN {
 
 primatom: ATOM_TOKEN 
 | primatom ASTERIX_TOKEN{
-  $$->setProp("_starred",1,true);
+  $$->setProp(RDKit::common_properties::_starred,1,true);
 }
 | primatom OPEN_BRACKET_TOKEN number CLOSE_BRACKET_TOKEN {
-  $1->setProp("_AtomID",static_cast<unsigned int>($3));
+  $1->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>($3));
   $$=$1;
 }
 | primatom OPEN_BRACKET_TOKEN number COLON_TOKEN attriblist CLOSE_BRACKET_TOKEN {
-  $1->setProp("_AtomID",static_cast<unsigned int>($3));
+  $1->setProp(RDKit::common_properties::_AtomID,static_cast<unsigned int>($3));
   SLNParse::parseAtomAttribs($1,*$5,doQueries);
   delete $5;
   $$=$1;

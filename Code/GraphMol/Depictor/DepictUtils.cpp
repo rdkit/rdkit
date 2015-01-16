@@ -446,8 +446,8 @@ namespace RDDepict {
     int rank;
     for (ci = commAtms.begin(); ci != commAtms.end(); ci++) {
       const RDKit::Atom *at=mol.getAtomWithIdx(*ci);
-      if(at->hasProp("_CIPRank")){
-        at->getProp("_CIPRank", rank);
+      if(at->hasProp(RDKit::common_properties::_CIPRank)){
+        at->getProp(RDKit::common_properties::_CIPRank, rank);
       } else {
         rank = 2*mol.getNumAtoms()+(*ci);
       }

@@ -641,11 +641,10 @@ namespace RDKit {
           res = "!" + res;
         }
       }
-      if(qatom->hasProp("molAtomMapNumber")){
-	needParen=true;
-	std::string mapNum;
-	qatom->getProp("molAtomMapNumber",mapNum);
-	res += ":"+mapNum;
+      std::string mapNum;
+      if(qatom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)){
+        needParen=true;
+        res += ":"+mapNum;
       }
       if (needParen ) {
         res = "[" + res + "]";

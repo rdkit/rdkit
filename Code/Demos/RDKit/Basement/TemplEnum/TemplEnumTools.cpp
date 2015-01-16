@@ -184,14 +184,14 @@ namespace TemplateEnum {
   // Loop through all the atoms and bookmark the attachment points
   //
   //  attachment points are assumed to have one of these properties:
-  //   - "molFileAlias" (set by the mol file parser)
-  //   - "dummyLabel"   (set by the SMILES parser)
+  //   - common_properties::molFileAlias (set by the mol file parser)
+  //   - common_properties::dummyLabel   (set by the SMILES parser)
   //  frontMarker is the "recognition character" to be used to pick
   //  valid labels.  e.g. if the frontMarker is 'X', a label beginning
   //  with 'Y' will not be marked.
   //
   //  In addition to bookmarking the attachment points, we also set
-  //  the "maxAttachIdx" property, which holds an integer with the
+  //  the common_properties::maxAttachIdx property, which holds an integer with the
   //  maximum attachment bookmark index. This is used in the
   //  enumeration to prevent us from having to scan through all the
   //  molecule's bookmarks
@@ -212,10 +212,10 @@ namespace TemplateEnum {
     for(atomIt=mol->beginAtoms();atomIt!=mol->endAtoms();atomIt++){
       // start by finding possible attachment point properties:
       std::string attachLabel="";
-      if((*atomIt)->hasProp("molFileAlias")){
-	(*atomIt)->getProp("molFileAlias",attachLabel);
-      } else if((*atomIt)->hasProp("dummyLabel")){
-	(*atomIt)->getProp("dummyLabel",attachLabel);
+      if((*atomIt)->hasProp(common_properties::molFileAlias)){
+	(*atomIt)->getProp(common_properties::molFileAlias,attachLabel);
+      } else if((*atomIt)->hasProp(common_properties::dummyLabel)){
+	(*atomIt)->getProp(common_properties::dummyLabel,attachLabel);
       }
 
       // if we got one and it starts with the appropriate front
@@ -237,7 +237,7 @@ namespace TemplateEnum {
       }
     }
     if(maxAttachIdx){
-      mol->setProp("maxAttachIdx",maxAttachIdx);
+      mol->setProp(common_properties::maxAttachIdx,maxAttachIdx);
     }
   }
 
@@ -270,11 +270,11 @@ namespace TemplateEnum {
 
     // if there's no attachment point on the molecule or no
     // sidechains, return now: 
-    if(!templateMol->hasProp("maxAttachIdx") || sidechains.size()==0 )
+    if(!templateMol->hasProp(common_properties::maxAttachIdx) || sidechains.size()==0 )
       return res;
 
     int maxIdx;
-    templateMol->getProp("maxAttachIdx",maxIdx);
+    templateMol->getProp(common_properties::maxAttachIdx,maxIdx);
 
     tmp.clear();
     // loop over the sidechains and attach them
@@ -305,8 +305,8 @@ namespace TemplateEnum {
 	  for(templMolIt=res.begin();templMolIt!=res.end();templMolIt++){
 	    RWMol *templ =  new RWMol(**templMolIt);
 	    std::string name,tmpStr;
-	    if(templ->hasProp("_Name")){
-	      templ->getProp("_Name",tmpStr);
+	    if(templ->hasProp(common_properties::_Name)){
+	      templ->getProp(common_properties::_Name,tmpStr);
 	      name = name + " " + tmpStr;
 	    }
 	    while(templ->hasAtomBookmark(tgtMark)){
@@ -326,8 +326,8 @@ namespace TemplateEnum {
 	      molAddSidechain(templ,sidechain,
 			      at->getIdx(),sidechainAtomIdx,
 			      Bond::SINGLE);
-	      if(sidechain->hasProp("_Name")){
-		sidechain->getProp("_Name",tmpStr);
+	      if(sidechain->hasProp(common_properties::_Name)){
+		sidechain->getProp(common_properties::_Name,tmpStr);
 		name = name + " " + tmpStr;
 	      }
 	      templ->clearAtomBookmark(tgtMark,at);
@@ -336,7 +336,7 @@ namespace TemplateEnum {
 	      }
 	    }
 	    //std::cout << templ << "> " << MolToSmiles(*templ) << std::endl;
-	    if(name != "") templ->setProp("_Name",name);
+	    if(name != "") templ->setProp(common_properties::_Name,name);
 	    tmp.push_back(RWMOL_SPTR(templ));
 	  }
 	}

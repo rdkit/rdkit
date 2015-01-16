@@ -1477,7 +1477,7 @@ yyreduce:
   int sz     = molList->size();
   molList->resize( sz + 1);
   (*molList)[ sz ] = new RWMol();
-  (yyvsp[0].atom)->setProp("_SmilesStart",1);
+  (yyvsp[0].atom)->setProp(common_properties::_SmilesStart,1);
   (*molList)[ sz ]->addAtom((yyvsp[0].atom),true,true);
   //delete $1;
   (yyval.moli) = sz;
@@ -1507,7 +1507,7 @@ yyreduce:
   			    Queries::COMPOSITE_OR,
   			    true);
   }
-  newB->setProp("_unspecifiedOrder",1);
+  newB->setProp(common_properties::_unspecifiedOrder,1);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
@@ -1546,7 +1546,7 @@ yyreduce:
 #line 165 "smarts.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
-  (yyvsp[0].atom)->setProp("_SmilesStart",1,true);
+  (yyvsp[0].atom)->setProp(common_properties::_SmilesStart,1,true);
   mp->addAtom((yyvsp[0].atom),true,true);
 }
 #line 1553 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp" /* yacc.c:1646  */
@@ -1572,18 +1572,17 @@ yyreduce:
   			    Queries::COMPOSITE_OR,
   			    true);
   }
-  newB->setProp("_unspecifiedOrder",1);
+  newB->setProp(common_properties::_unspecifiedOrder,1);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,(yyvsp[0].ival));
 
   mp->setAtomBookmark(atom,(yyvsp[0].ival));
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
-  }
+  atom->getPropIfPresent(common_properties::_RingClosures,tmp);
+
   tmp.push_back(-((yyvsp[0].ival)+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(common_properties::_RingClosures,tmp);
 
 }
 #line 1590 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp" /* yacc.c:1646  */
@@ -1601,11 +1600,10 @@ yyreduce:
 
   mp->setAtomBookmark(atom,(yyvsp[0].ival));
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
-  }
+  atom->getPropIfPresent(common_properties::_RingClosures,tmp);
+
   tmp.push_back(-((yyvsp[0].ival)+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(common_properties::_RingClosures,tmp);
 
 }
 #line 1612 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp" /* yacc.c:1646  */
@@ -1615,7 +1613,7 @@ yyreduce:
 #line 222 "smarts.yy" /* yacc.c:1646  */
     {
   RWMol *m1_p = (*molList)[(yyval.moli)],*m2_p=(*molList)[(yyvsp[0].moli)];
-  m2_p->getAtomWithIdx(0)->setProp("_SmilesStart",1);
+  m2_p->getAtomWithIdx(0)->setProp(common_properties::_SmilesStart,1);
   // FIX: handle generic bonds here
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
   delete m2_p;
@@ -1658,7 +1656,7 @@ yyreduce:
 #line 255 "smarts.yy" /* yacc.c:1646  */
     {
   (yyval.atom) = new QueryAtom(1);
-  (yyval.atom)->setProp("molAtomMapNumber",(yyvsp[-1].ival));
+  (yyval.atom)->setProp(common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
 #line 1664 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp" /* yacc.c:1646  */
     break;
@@ -1675,7 +1673,7 @@ yyreduce:
 #line 264 "smarts.yy" /* yacc.c:1646  */
     {
   (yyval.atom) = (yyvsp[-3].atom);
-  (yyval.atom)->setProp("molAtomMapNumber",(yyvsp[-1].ival));
+  (yyval.atom)->setProp(common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
 #line 1681 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp" /* yacc.c:1646  */
     break;

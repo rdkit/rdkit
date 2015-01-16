@@ -41,7 +41,6 @@
 
 namespace RDKit {
   namespace DaylightParserUtils {
-    
     std::vector<std::string> splitSmartsIntoComponents(const std::string &reactText){
       std::vector<std::string> res;
       unsigned int pos=0;

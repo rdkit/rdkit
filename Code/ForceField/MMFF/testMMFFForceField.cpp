@@ -432,8 +432,8 @@ int mmffValidationSuite(int argc, char *argv[])
             DGeomHelpers::EmbedMolecule(*mol);
           }
           MMFF::sanitizeMMFFMol((RWMol &)(*mol));
-          if (mol->hasProp("_Name")) {
-            mol->getProp("_Name", molName);
+          if (mol->hasProp(common_properties::_Name)) {
+            mol->getProp(common_properties::_Name, molName);
             rdkFStream << molName << std::endl;
             nameArray.push_back(molName);
           }

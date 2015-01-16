@@ -21,8 +21,8 @@ namespace RDKit{
     namespace detail {
       void hkDeltas(const ROMol &mol,std::vector<double> &deltas,bool force){
         PRECONDITION(deltas.size()>=mol.getNumAtoms(),"bad vector size");
-        if(!force && mol.hasProp("_connectivityHKDeltas")){
-          mol.getProp("_connectivityHKDeltas",deltas);
+        if(!force && mol.hasProp(common_properties::_connectivityHKDeltas)){
+          mol.getProp(common_properties::_connectivityHKDeltas,deltas);
           return;
         }
         const PeriodicTable *tbl = PeriodicTable::getTable();
@@ -41,14 +41,14 @@ namespace RDKit{
           if(deltas[at->getIdx()]!=0.0) deltas[at->getIdx()]=1./sqrt(deltas[at->getIdx()]);
           ++atBegin;
         }
-        mol.setProp("_connectivityHKDeltas",deltas,true);
+        mol.setProp(common_properties::_connectivityHKDeltas,deltas,true);
       }
 
 
       void nVals(const ROMol &mol,std::vector<double> &nVs,bool force){
         PRECONDITION(nVs.size()>=mol.getNumAtoms(),"bad vector size");
-        if(!force && mol.hasProp("_connectivityNVals")){
-          mol.getProp("_connectivityNVals",nVs);
+        if(!force && mol.hasProp(common_properties::_connectivityNVals)){
+          mol.getProp(common_properties::_connectivityNVals,nVs);
           return;
         }
         const PeriodicTable *tbl = PeriodicTable::getTable();
@@ -63,7 +63,7 @@ namespace RDKit{
           nVs[at->getIdx()]=v;
           ++atBegin;
         }
-        mol.setProp("_connectivityNVals",nVs,true);
+        mol.setProp(common_properties::_connectivityNVals,nVs,true);
       }
 
       double getAlpha(const Atom &atom,bool &found){

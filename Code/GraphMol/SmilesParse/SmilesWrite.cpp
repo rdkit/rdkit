@@ -50,9 +50,7 @@ namespace RDKit{
 
       bool needsBracket=false;
       std::string symb;
-      if(atom->hasProp("smilesSymbol")){
-        atom->getProp("smilesSymbol",symb);
-      } else {
+      if(!atom->getPropIfPresent(common_properties::smilesSymbol, symb)){
         symb=PeriodicTable::getTable()->getElementSymbol(num);
       }
       //symb = atom->getSymbol();
@@ -85,14 +83,14 @@ namespace RDKit{
         if(fc || nonStandard){
           needsBracket=true;
         }
-        if(atom->getOwningMol().hasProp("_doIsoSmiles")){
+        if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)){
           if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
             needsBracket = true;
           } else if(isotope){
             needsBracket=true;
           }
         }
-        if(atom->hasProp("molAtomMapNumber")){
+        if(atom->hasProp(common_properties::molAtomMapNumber)){
           needsBracket=true;
         }
       } else {
@@ -100,7 +98,7 @@ namespace RDKit{
       }
       if( needsBracket ) res << "[";
 
-      if(isotope && atom->getOwningMol().hasProp("_doIsoSmiles")){
+      if(isotope && atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)){
         res <<isotope;
       }
       // this was originally only done for the organic subset,
@@ -110,10 +108,10 @@ namespace RDKit{
       }
       res << symb;
 
-      if(atom->getOwningMol().hasProp("_doIsoSmiles") &&
+      if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles) &&
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
         INT_LIST trueOrder;
-        atom->getProp("_TraversalBondIndexOrder",trueOrder);
+        atom->getProp(common_properties::_TraversalBondIndexOrder,trueOrder);
         int nSwaps=  atom->getPerturbationOrder(trueOrder);
         if(atom->getDegree()==3 && !bondIn){
           // This is a special case. Here's an example:
@@ -157,10 +155,9 @@ namespace RDKit{
           res << "-";
           if(fc < -1) res << -fc;
         }
-    
-        if(atom->hasProp("molAtomMapNumber")){
-          int mapNum;
-          atom->getProp("molAtomMapNumber",mapNum);
+
+        int mapNum;
+        if(atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)){
           res<<":"<<mapNum;
         }
         res << "]";
@@ -168,9 +165,8 @@ namespace RDKit{
 
       // If the atom has this property, the contained string will
       // be inserted directly in the SMILES:
-      if(atom->hasProp("_supplementalSmilesLabel")){
-        std::string label;
-        atom->getProp("_supplementalSmilesLabel",label);
+      std::string label;
+      if(atom->getPropIfPresent(common_properties::_supplementalSmilesLabel, label)){
         res << label;
       }
 
@@ -196,11 +192,11 @@ namespace RDKit{
 
       Bond::BondDir dir= bond->getBondDir();
 
-      if(bond->hasProp("_TraversalRingClosureBond")){
+      if(bond->hasProp(common_properties::_TraversalRingClosureBond)){
         //std::cerr<<"FLIP: "<<bond->getIdx()<<" "<<bond->getBeginAtomIdx()<<"-"<<bond->getEndAtomIdx()<<std::endl;
         //if(dir==Bond::ENDDOWNRIGHT) dir=Bond::ENDUPRIGHT;
         //else if(dir==Bond::ENDUPRIGHT) dir=Bond::ENDDOWNRIGHT;
-        bond->clearProp("_TraversalRingClosureBond");
+        bond->clearProp(common_properties::_TraversalRingClosureBond);
       }
   
       switch(bond->getBondType()){
@@ -208,10 +204,10 @@ namespace RDKit{
         if( dir != Bond::NONE && dir != Bond::UNKNOWN ){
           switch(dir){
           case Bond::ENDDOWNRIGHT:
-            if(bond->getOwningMol().hasProp("_doIsoSmiles"))  res << "\\";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if(bond->getOwningMol().hasProp("_doIsoSmiles"))  res << "/";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "/";
             break;
           default:
             break;
@@ -236,10 +232,10 @@ namespace RDKit{
         if ( dir != Bond::NONE && dir != Bond::UNKNOWN ){
           switch(dir){
           case Bond::ENDDOWNRIGHT:
-            if(bond->getOwningMol().hasProp("_doIsoSmiles"))  res << "\\";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if(bond->getOwningMol().hasProp("_doIsoSmiles"))  res << "/";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "/";
             break;
           default:
             break;
@@ -279,7 +275,7 @@ namespace RDKit{
 
       std::map<int,int> ringClosureMap;
       int ringIdx,closureVal;
-      if(!canonical) mol.setProp("_StereochemDone",1);
+      if(!canonical) mol.setProp(common_properties::_StereochemDone,1);
       std::list<unsigned int> ringClosuresToErase;
 
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
@@ -373,7 +369,7 @@ namespace RDKit{
 
     ROMol tmol(mol,true);
     if(doIsomericSmiles){
-      tmol.setProp("_doIsoSmiles",1);
+      tmol.setProp(common_properties::_doIsoSmiles,1);
     }
 #if 0
     std::cout << "----------------------------" << std::endl;
@@ -395,17 +391,16 @@ namespace RDKit{
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
-      if(!mol.hasProp("_StereochemDone")){
+      if(!mol.hasProp(common_properties::_StereochemDone)){
         MolOps::assignStereochemistry(tmol,true);
       } else {
-        tmol.setProp("_StereochemDone",1);
+        tmol.setProp(common_properties::_StereochemDone,1);
         // we need the CIP codes:
         for(unsigned int aidx=0;aidx<tmol.getNumAtoms();++aidx){
           const Atom *oAt=mol.getAtomWithIdx(aidx);
-          if(oAt->hasProp("_CIPCode")){
-            std::string cipCode;
-            oAt->getProp("_CIPCode",cipCode);
-            tmol.getAtomWithIdx(aidx)->setProp("_CIPCode",cipCode);
+          std::string cipCode;
+          if(oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)){
+            tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,cipCode);
           }
         }
       }
@@ -455,7 +450,7 @@ namespace RDKit{
         res += ".";
       }
     }
-    mol.setProp("_smilesAtomOutputOrder",atomOrdering,true);
+    mol.setProp(common_properties::_smilesAtomOutputOrder,atomOrdering,true);
     return res;
   } // end of MolToSmiles()
 
@@ -484,7 +479,7 @@ namespace RDKit{
 
     ROMol tmol(mol,true);
     if(doIsomericSmiles){
-      tmol.setProp("_doIsoSmiles",1);
+      tmol.setProp(common_properties::_doIsoSmiles,1);
     }
     std::string res;
 
@@ -549,17 +544,16 @@ namespace RDKit{
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
-      if(!mol.hasProp("_StereochemDone")){
+      if(!mol.hasProp(common_properties::_StereochemDone)){
         MolOps::assignStereochemistry(tmol,true);
       } else {
-        tmol.setProp("_StereochemDone",1);
+        tmol.setProp(common_properties::_StereochemDone,1);
         // we need the CIP codes:
         BOOST_FOREACH(int aidx,atomsToUse){
           const Atom *oAt=mol.getAtomWithIdx(aidx);
-          if(oAt->hasProp("_CIPCode")){
-            std::string cipCode;
-            oAt->getProp("_CIPCode",cipCode);
-            tmol.getAtomWithIdx(aidx)->setProp("_CIPCode",cipCode);
+          std::string cipCode;
+          if(oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)){
+            tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,cipCode);
           }
         }
       }
@@ -614,7 +608,7 @@ namespace RDKit{
         res += ".";
       }
     }
-    mol.setProp("_smilesAtomOutputOrder",atomOrdering,true);
+    mol.setProp(common_properties::_smilesAtomOutputOrder,atomOrdering,true);
     return res;
   } // end of MolFragmentToSmiles()
 }

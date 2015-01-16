@@ -71,6 +71,46 @@ namespace RDKit{
     }
   };
 
+    bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
+    //
+    //  We're going to try and be somewhat crafty about this getVal stuff to make these
+    //  containers a little bit more generic.  The normal behavior here is that the
+    //  value being queried must be directly castable to type T.  We'll robustify a
+    //  little bit by trying that and, if the cast fails, attempting a couple of 
+    //  other casts, which will then be lexically cast to type T.
+    //
+    DataType::const_iterator pos=_data.find(what);
+    if (pos==_data.end())
+      return false;
+    const boost::any &val = pos->second;
+    try{
+      res = boost::any_cast<std::string>(val);
+    } catch (const boost::bad_any_cast &) {
+      if(val.type()==typeid(int)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<int>(val));
+      } else if(val.type()==typeid(unsigned int)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<unsigned int>(val));
+      } else if(val.type()==typeid(long)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<long>(val));
+      } else if(val.type()==typeid(unsigned long)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<unsigned long>(val));
+      } else if(val.type()==typeid(float)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<float>(val));
+      } else if(val.type()==typeid(double)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<double>(val));
+      } else if(val.type()==typeid(const char *)){
+        res = std::string(boost::any_cast<const char *>(val));
+      } else if(val.type()==typeid(std::vector<unsigned int>)){
+        res = vectToString<unsigned int>(val);
+      } else if(val.type()==typeid(std::vector<int>)){
+        res = vectToString<int>(val);
+      } else {
+        return false;
+      }
+    }
+    return true;
+  };
+
   namespace {
     template <class T>
     typename boost::enable_if<boost::is_arithmetic<T>, T>::type 

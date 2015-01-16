@@ -79,14 +79,14 @@ namespace RDKit {
       const ROMol *fGroup;
       for(unsigned int i=0;i<fGroups.size()-1;i++){
 	fGroup=params->getFuncGroup(*fGroupIdx);
-	fGroup->getProp("_Name",temp);
+	fGroup->getProp(common_properties::_Name,temp);
 	label += "(<" + temp + ">)";
 	fGroupIdx++;
       }
       fGroup=params->getFuncGroup(*fGroupIdx);
-      fGroup->getProp("_Name",temp);
+      fGroup->getProp(common_properties::_Name,temp);
       label += "<"+temp+">";
-      dp_mol->getAtomWithIdx(atIdx)->setProp("_supplementalSmilesLabel",label);
+      dp_mol->getAtomWithIdx(atIdx)->setProp(common_properties::_supplementalSmilesLabel,label);
     }
     std::string smi = MolToSmiles(*dp_mol);
     //std::cout << "----" << smi << "----" << std::endl;
@@ -155,8 +155,8 @@ namespace RDKit {
 
   Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
     Subgraphs::DiscrimTuple res;
-    if (this->hasProp("Discrims")) {
-      this->getProp("Discrims", res);
+    if (this->hasProp(common_properties::Discrims)) {
+      this->getProp(common_properties::Discrims, res);
     }
     else {
       PATH_TYPE path;
@@ -179,7 +179,7 @@ namespace RDKit {
         funcGpInvars.push_back(invar);
       }
       res = Subgraphs::calcPathDiscriminators(*dp_mol,path,true,&funcGpInvars);
-      this->setProp("Discrims", res);
+      this->setProp(common_properties::Discrims, res);
     }
 
     //std::cout << "DISCRIMS: " << d_descrip  << " ";

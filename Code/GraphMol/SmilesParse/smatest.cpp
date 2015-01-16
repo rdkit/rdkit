@@ -925,16 +925,16 @@ void testAtomMap(){
   sma = "[C:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,mapNum);
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
   sma = "[CH3:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,mapNum);
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
@@ -980,25 +980,25 @@ void testIssue1804420(){
   sma = "[N;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N,O;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N&R;X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[NH0&R;D3,X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
     

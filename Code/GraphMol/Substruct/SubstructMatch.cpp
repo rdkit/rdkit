@@ -346,11 +346,11 @@ namespace RDKit{
 	matches.reserve(pms.size());
 	for(std::list<detail::ssPairType>::const_iterator iter1=pms.begin();
 	    iter1!=pms.end();++iter1){
-	  if(!query.hasProp("_queryRootAtom")){
+	  if(!query.hasProp(common_properties::_queryRootAtom)){
 	    matches.push_back(iter1->begin()->second);
 	  } else {
 	    int rootIdx;
-	    query.getProp("_queryRootAtom",rootIdx);
+	    query.getProp(common_properties::_queryRootAtom,rootIdx);
 	    bool found=false;
 	    for(detail::ssPairType::const_iterator pairIter=iter1->begin();
 		pairIter!=iter1->end();++pairIter){
