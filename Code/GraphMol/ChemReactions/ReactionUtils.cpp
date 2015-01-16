@@ -153,7 +153,7 @@ bool hasReactionAtomMapping(const ChemicalReaction &rxn)
   RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, Reactant);
   for(; begin != end; ++begin){
     const ROMol &reactant = *begin->get();
-    if(MolOps::getNumAtomsWithDistinctProperty(reactant, "molAtomMapNumber")){
+    if(MolOps::getNumAtomsWithDistinctProperty(reactant, common_properties::molAtomMapNumber)){
       return true;
     }
   }
@@ -161,7 +161,7 @@ bool hasReactionAtomMapping(const ChemicalReaction &rxn)
   end = getEndIterator(rxn, Product);
   for(; begin != end; ++begin){
     const ROMol &reactant = *begin->get();
-    if(MolOps::getNumAtomsWithDistinctProperty(reactant, "molAtomMapNumber")){
+    if(MolOps::getNumAtomsWithDistinctProperty(reactant, common_properties::molAtomMapNumber)){
       return true;
     }
   }
@@ -170,7 +170,7 @@ bool hasReactionAtomMapping(const ChemicalReaction &rxn)
 
 bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold)
 {
-  unsigned numMappedAtoms = MolOps::getNumAtomsWithDistinctProperty(mol, "molAtomMapNumber");
+  unsigned numMappedAtoms = MolOps::getNumAtomsWithDistinctProperty(mol, common_properties::molAtomMapNumber);
   unsigned numAtoms = mol.getNumHeavyAtoms();
   if(numAtoms > 0 &&
        static_cast<double>(numMappedAtoms)/static_cast<double>(numAtoms) >= agentThreshold){
@@ -206,16 +206,16 @@ void updateProductsStereochem(ChemicalReaction *rxn)
       prodIt!=rxn->endProductTemplates();++prodIt){
     for(ROMol::AtomIterator prodAtomIt=(*prodIt)->beginAtoms();
         prodAtomIt!=(*prodIt)->endAtoms();++prodAtomIt){
-      if((*prodAtomIt)->hasProp("molInversionFlag")){
+      if((*prodAtomIt)->hasProp(common_properties::molInversionFlag)){
         continue;
       }
-      if(!(*prodAtomIt)->hasProp("molAtomMapNumber")){
+      if(!(*prodAtomIt)->hasProp(common_properties::molAtomMapNumber)){
         // if we have stereochemistry specified, it's automatically creating stereochem:
-        (*prodAtomIt)->setProp("molInversionFlag",4);
+        (*prodAtomIt)->setProp(common_properties::molInversionFlag,4);
         continue;
       }
       int mapNum;
-      (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
+      (*prodAtomIt)->getProp(common_properties::molAtomMapNumber,mapNum);
       if(reactantMapping.find(mapNum) != reactantMapping.end()){
         if((*prodAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
             (*prodAtomIt)->getChiralTag()!=Atom::CHI_OTHER) {
@@ -223,30 +223,30 @@ void updateProductsStereochem(ChemicalReaction *rxn)
               reactantMapping[mapNum]!=Atom::CHI_OTHER){
             // both have stereochem specified:
             if(reactantMapping[mapNum]==(*prodAtomIt)->getChiralTag()){
-              (*prodAtomIt)->setProp("molInversionFlag",2);
+              (*prodAtomIt)->setProp(common_properties::molInversionFlag,2);
             }
             else{
               // FIX: this is technically fragile: it should be checking
               // if the atoms both have tetrahedral chirality. However,
               // at the moment that's the only chirality available, so there's
               // no need to go monkeying around.
-              (*prodAtomIt)->setProp("molInversionFlag",1);
+              (*prodAtomIt)->setProp(common_properties::molInversionFlag,1);
             }
           }
           else{
             // stereochem in the product, but not in the reactant
-            (*prodAtomIt)->setProp("molInversionFlag",4);
+            (*prodAtomIt)->setProp(common_properties::molInversionFlag,4);
           }
         }
         else if(reactantMapping[mapNum]!=Atom::CHI_UNSPECIFIED &&
             reactantMapping[mapNum]!=Atom::CHI_OTHER){
           // stereochem in the reactant, but not the product:
-          (*prodAtomIt)->setProp("molInversionFlag",3);
+          (*prodAtomIt)->setProp(common_properties::molInversionFlag,3);
         }
       }
       else {
         // introduction of new stereocenter by the reaction
-        (*prodAtomIt)->setProp("molInversionFlag",4);
+        (*prodAtomIt)->setProp(common_properties::molInversionFlag,4);
       }
     }
   }

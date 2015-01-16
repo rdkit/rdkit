@@ -104,11 +104,11 @@ namespace RDKit{
     std::string tempStr;
     res << "BioCAD format, all rights reserved"<<std::endl;
     res << "Output from RDKit"<<std::endl;
-    if(!mol.hasProp("_Name")){
+    if(!mol.hasProp(common_properties::_Name)){
       BOOST_LOG(rdWarningLog)<<"Molecule has no name; arbitrary name assigned.\n";
       tempStr = "Unnamed molecule";
     } else {
-      mol.getProp("_Name",tempStr);
+      mol.getProp(common_properties::_Name,tempStr);
     }
     res << "NAME "<<tempStr<<std::endl;
     res << "PROP 7 1"<<std::endl;

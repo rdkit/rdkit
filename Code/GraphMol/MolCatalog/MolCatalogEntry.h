@@ -59,7 +59,7 @@ namespace RDKit {
     }
 
     //! \overload
-    template <typename T> void setProp(const std::string key, T &val) const {
+    template <typename T> void setProp(const std::string &key, T &val) const {
       setProp(key.c_str(), val);
     }
 
@@ -70,7 +70,7 @@ namespace RDKit {
     }
     //! \overload
     template <typename T>
-      void getProp(const std::string key, T &res) const {
+      void getProp(const std::string &key, T &res) const {
       getProp(key.c_str(), res);
     }
     
@@ -80,7 +80,7 @@ namespace RDKit {
       return dp_props->hasVal(key);
     }
     //! \overload
-    bool hasProp(const std::string key) const {
+    bool hasProp(const std::string &key) const {
       return hasProp(key.c_str());
     }
     
@@ -89,7 +89,7 @@ namespace RDKit {
       dp_props->clearVal(key);
     }
     //! \overload
-    void clearProp(const std::string key) const {
+    void clearProp(const std::string &key) const {
       clearProp(key.c_str());
     }
 

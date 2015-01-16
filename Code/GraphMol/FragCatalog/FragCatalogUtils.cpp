@@ -52,8 +52,8 @@ namespace RDKit {
 
       mol = SmartsToMol(smarts);
       CHECK_INVARIANT(mol,smarts);
-      mol->setProp("_Name", name);
-      mol->setProp("_fragSMARTS",smarts);
+      mol->setProp(common_properties::_Name, name);
+      mol->setProp(common_properties::_fragSMARTS,smarts);
       return mol;
     }    
   } // end of local utility namespace
@@ -118,7 +118,7 @@ namespace RDKit {
     for (fgci = fgrps.begin(); fgci != fgrps.end(); fgci++) {
       const ROMol *fgrp = fgci->get();
       std::string fname;
-      (*fgci)->getProp("_Name", fname);
+      (*fgci)->getProp(common_properties::_Name, fname);
       //std::cout << "Groups number: " << fname << "\n";
       //(*fgci)->debugMol(std::cout);
       //mol->debugMol(std::cout);

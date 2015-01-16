@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
       MolOps::sanitizeMol(*m);
 
       int nar;
-      m->getProp("numArom", nar);
+      m->getProp(common_properties::numArom, nar);
       BOOST_LOG(rdInfoLog)<< nar << "\n";
 
       //MolOps::setHybridization(*m);

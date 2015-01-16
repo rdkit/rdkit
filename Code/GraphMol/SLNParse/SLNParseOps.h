@@ -48,9 +48,8 @@ namespace RDKit{
       void bookmarkAtomID(RWMol *mp,Atom *atom){
         PRECONDITION(mp,"bad molecule");
         PRECONDITION(atom,"bad atom");
-        if(atom->hasProp("_AtomID")){
-          unsigned int label;
-          atom->getProp("_AtomID",label);
+        unsigned int label;
+        if(atom->getPropIfPresent(common_properties::_AtomID, label)){
           if(mp->hasAtomBookmark(label)){
             std::stringstream err;
             err << "SLN Parser error: Atom ID " << label << " used a second time.";

@@ -42,7 +42,9 @@ bool testForSameRXNRoleOfAllMoleculeAtoms(const RDKit::ROMol &mol, int role)
   RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
   while(atItP.first != atItP.second ){
     const RDKit::Atom *oAtom=mol[*(atItP.first++)].get();
-    if(oAtom->hasProp("molRxnRole") && oAtom->getProp<int>("molRxnRole")!=role){
+    int current_role;
+    if(oAtom->getPropIfPresent(RDKit::common_properties::molRxnRole, current_role) &&
+       current_role!=role){
   	  return false;
     }
   }
@@ -54,8 +56,9 @@ int getRXNRoleOfMolecule(const RDKit::ROMol &mol)
   RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
   while(atItP.first != atItP.second ){
     const RDKit::Atom *oAtom=mol[*(atItP.first++)].get();
-    if(oAtom->hasProp("molRxnRole")){
-  	  return oAtom->getProp<int>("molRxnRole");
+    int molRxnRole;
+    if(oAtom->getPropIfPresent(RDKit::common_properties::molRxnRole, molRxnRole)){
+      return molRxnRole;
     }
   }
   return -1;

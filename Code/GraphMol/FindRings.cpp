@@ -241,7 +241,7 @@ namespace FindRings {
       }
     }
   
-    mol.setProp("extraRings", extras, true);
+    mol.setProp(common_properties::extraRings, extras, true);
   }
 
   void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res, 
@@ -986,11 +986,11 @@ namespace RDKit {
       }
  
       // now check if there are any extra rings on the molecule 
-      if (!mol.hasProp("extraRings")) {
+      if (!mol.hasProp(common_properties::extraRings)) {
         // no extra rings nothign to be done
         return res.size();
       }
-      const VECT_INT_VECT &extras=mol.getProp<VECT_INT_VECT>("extraRings");
+      const VECT_INT_VECT &extras=mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
 
 
       // convert the rings to bond ids
@@ -1039,8 +1039,8 @@ namespace RDKit {
         res.push_back(exr);
         FindRings::storeRingInfo(mol, exr);
       }
-      if (mol.hasProp("extraRings")) {
-        mol.clearProp("extraRings");
+      if (mol.hasProp(common_properties::extraRings)) {
+        mol.clearProp(common_properties::extraRings);
       }
       return res.size();
     }

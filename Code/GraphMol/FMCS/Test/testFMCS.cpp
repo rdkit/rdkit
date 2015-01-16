@@ -390,7 +390,7 @@ void test504() {
     unsigned nq = qm->getNumAtoms();
     for(size_t ai = 0; ai < nq; ai++) {
         Atom* atom = qm->getAtomWithIdx(ai);
-        atom->setProp("molAtomMapNumber", (int)ai);
+        atom->setProp(common_properties::molAtomMapNumber, (int)ai);
     }
     std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
     mols.push_back(ROMOL_SPTR(qm));   // with RING INFO

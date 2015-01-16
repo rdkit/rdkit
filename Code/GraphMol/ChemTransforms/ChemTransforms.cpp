@@ -454,7 +454,7 @@ namespace RDKit{
     // start by getting the shortest paths matrix:
     MolOps::getDistanceMat(mol,false,false,true);
     boost::shared_array<int> pathMat;
-    mol.getProp("DistanceMatrix_Paths",pathMat);
+    mol.getProp(common_properties::DistanceMatrix_Paths,pathMat);
 
     boost::dynamic_bitset<> keepAtoms(nAtoms);
     const RingInfo *ringInfo=res->getRingInfo();

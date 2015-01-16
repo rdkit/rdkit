@@ -145,7 +145,7 @@ void testMolProps()
   CHECK_INVARIANT(tmpS=="2","");
 
   tmpS="name";
-  m2.setProp("_Name",tmpS);
+  m2.setProp(common_properties::_Name,tmpS);
 
   propNames=m2.getPropList(false,false);
   TEST_ASSERT(propNames.size()==1);

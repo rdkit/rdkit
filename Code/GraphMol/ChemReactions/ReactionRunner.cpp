@@ -84,7 +84,7 @@ namespace RDKit {
           bool keep=true;
           int pIdx,mIdx;
           BOOST_FOREACH(boost::tie(pIdx,mIdx),match){
-            if(reactants[i]->getAtomWithIdx(mIdx)->hasProp("_protected")){
+            if(reactants[i]->getAtomWithIdx(mIdx)->hasProp(common_properties::_protected)){
               keep=false;
               break;
             }
@@ -131,14 +131,14 @@ namespace RDKit {
         // return
         return;
       }
-      if(!prodAtom->hasProp("_QueryFormalCharge")){
+      if(!prodAtom->hasProp(common_properties::_QueryFormalCharge)){
         prodAtom->setFormalCharge(reactAtom->getFormalCharge());
       }
-      if(!prodAtom->hasProp("_QueryIsotope")){
+      if(!prodAtom->hasProp(common_properties::_QueryIsotope)){
         prodAtom->setIsotope(reactAtom->getIsotope());
       }
-      if(!prodAtom->hasProp("_ReactionDegreeChanged")){
-        if(!prodAtom->hasProp("_QueryHCount")){
+      if(!prodAtom->hasProp(common_properties::_ReactionDegreeChanged)){
+        if(!prodAtom->hasProp(common_properties::_QueryHCount)){
           prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
         }
         prodAtom->setNoImplicit(reactAtom->getNoImplicit());
@@ -169,45 +169,36 @@ namespace RDKit {
         Atom *oAtom=(*prodTemplate)[*(atItP.first++)].get();
         Atom *newAtom=new Atom(*oAtom);
         res->addAtom(newAtom,false,true);
-        if(newAtom->hasProp("molAtomMapNumber")){
+        int mapNum;
+        if(newAtom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)){
           // set bookmarks for the mapped atoms:
-          int mapNum;
-          newAtom->getProp("molAtomMapNumber",mapNum);
           res->setAtomBookmark(newAtom,mapNum);
           // now clear the molAtomMapNumber property so that it doesn't
           // end up in the products (this was bug 3140490):
-          newAtom->clearProp("molAtomMapNumber");
+          newAtom->clearProp(common_properties::molAtomMapNumber);
         }
 
         newAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
         // if the product-template atom has the inversion flag set
         // to 4 (=SET), then bring its stereochem over, otherwise we'll
         // ignore it:
-        if(oAtom->hasProp("molInversionFlag")){
-          int iFlag;
-          oAtom->getProp("molInversionFlag",iFlag);
+        int iFlag;
+        if(oAtom->getPropIfPresent(common_properties::molInversionFlag, iFlag)){
           if(iFlag==4) newAtom->setChiralTag(oAtom->getChiralTag());
         }
 
         // check for properties we need to set:
-        if(newAtom->hasProp("_QueryFormalCharge")){
-          int val;
-          newAtom->getProp("_QueryFormalCharge",val);
+        int val;
+        if(newAtom->getPropIfPresent(common_properties::_QueryFormalCharge, val)){
           newAtom->setFormalCharge(val);
         }
-        if(newAtom->hasProp("_QueryHCount")){
-          int val;
-          newAtom->getProp("_QueryHCount",val);
+        if(newAtom->getPropIfPresent(common_properties::_QueryHCount, val)){
           newAtom->setNumExplicitHs(val);
         }
-        if(newAtom->hasProp("_QueryMass")){
-          int val;
-          newAtom->getProp("_QueryMass",val);
+        if(newAtom->getPropIfPresent(common_properties::_QueryMass, val)){
           newAtom->setMass(val);
         }
-        if(newAtom->hasProp("_QueryIsotope")){
-          int val;
-          newAtom->getProp("_QueryIsotope",val);
+        if(newAtom->getPropIfPresent(common_properties::_QueryIsotope, val)){
           newAtom->setIsotope(val);
         }
       }
@@ -241,7 +232,7 @@ namespace RDKit {
               newB->setIsAromatic(false);
             }
           } else if(queryDescription=="BondNull") {
-            newB->setProp("NullBond",1);
+            newB->setProp(common_properties::NullBond,1);
           }
         }
       }
@@ -269,10 +260,8 @@ namespace RDKit {
       ReactantProductAtomMapping *mapping = new ReactantProductAtomMapping(numReactAtoms);
       for(unsigned int i=0;i<match.size();i++){
         const Atom *templateAtom=reactantTemplate.getAtomWithIdx(match[i].first);
-        if(templateAtom->hasProp("molAtomMapNumber")){
-          int molAtomMapNumber;
-          templateAtom->getProp("molAtomMapNumber",molAtomMapNumber);
-
+	    int molAtomMapNumber;
+        if(templateAtom->getPropIfPresent(common_properties::molAtomMapNumber, molAtomMapNumber)){
           if(product->hasAtomBookmark(molAtomMapNumber)){
         	RWMol::ATOM_PTR_LIST atomIdxs = product->getAllAtomsWithBookmark(molAtomMapNumber);
         	for(RWMol::ATOM_PTR_LIST::iterator iter = atomIdxs.begin();
@@ -306,7 +295,7 @@ namespace RDKit {
       while(bondItP.first != bondItP.second ){
         BOND_SPTR pBond=(*product)[*(bondItP.first)];
         ++bondItP.first;
-        if(pBond->hasProp("NullBond")){
+        if(pBond->hasProp(common_properties::NullBond)){
           if(mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx())!=mapping->prodReactAtomMap.end() &&
         	  mapping->prodReactAtomMap.find(pBond->getEndAtomIdx())!=mapping->prodReactAtomMap.end() ){
             // the bond is between two mapped atoms from this reactant:
@@ -317,7 +306,7 @@ namespace RDKit {
             pBond->setBondType(rBond->getBondType());
             pBond->setBondDir(rBond->getBondDir());
             pBond->setIsAromatic(rBond->getIsAromatic());
-            pBond->clearProp("NullBond");
+            pBond->clearProp(common_properties::NullBond);
           }
         }
       }
@@ -326,7 +315,7 @@ namespace RDKit {
     void checkProductChirality(Atom::ChiralType reactantChirality, Atom *productAtom)
     {
       int flagVal;
-      productAtom->getProp("molInversionFlag",flagVal);
+      productAtom->getProp(common_properties::molInversionFlag,flagVal);
 
       switch(flagVal){
       case 0:
@@ -372,8 +361,8 @@ namespace RDKit {
         productAtom->setIsotope(reactantAtom.getIsotope());
 
         // remove dummy labels (if present)
-        if(productAtom->hasProp("dummyLabel")) productAtom->clearProp("dummyLabel");
-        if(productAtom->hasProp("_MolFileRLabel")) productAtom->clearProp("_MolFileRLabel");
+        if(productAtom->hasProp(common_properties::dummyLabel)) productAtom->clearProp(common_properties::dummyLabel);
+        if(productAtom->hasProp(common_properties::_MolFileRLabel)) productAtom->clearProp(common_properties::_MolFileRLabel);
       }
       if(setImplicitProperties){
         updateImplicitAtomProperties(productAtom,&reactantAtom);
@@ -388,7 +377,7 @@ namespace RDKit {
       // FIX: this should be free-standing, not in this function.
       if(reactantAtom.getChiralTag()!=Atom::CHI_UNSPECIFIED &&
          reactantAtom.getChiralTag()!=Atom::CHI_OTHER &&
-         productAtom->hasProp("molInversionFlag")){
+         productAtom->hasProp(common_properties::molInversionFlag)){
         checkProductChirality(reactantAtom.getChiralTag(), productAtom);
       }
     }
@@ -517,7 +506,7 @@ namespace RDKit {
         if(productAtom->getChiralTag() != Atom::CHI_UNSPECIFIED ||
            reactantAtom.getChiralTag() == Atom::CHI_UNSPECIFIED ||
            reactantAtom.getChiralTag() == Atom::CHI_OTHER ||
-           productAtom->hasProp("molInversionFlag")){
+           productAtom->hasProp(common_properties::molInversionFlag)){
         	continue;
         }
         // we can only do something sensible here if we have the same number of bonds

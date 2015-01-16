@@ -27,11 +27,11 @@ namespace RDKit{
 				 bool includeHs,
 				 bool force){
       TEST_ASSERT(Vi.size()==mol.getNumAtoms());
-      if(!force && mol.hasProp("_labuteAtomContribs")){
-	mol.getProp("_labuteAtomContribs",Vi);
-	mol.getProp("_labuteAtomHContrib",hContrib);
+      if(!force && mol.hasProp(common_properties::_labuteAtomContribs)){
+	mol.getProp(common_properties::_labuteAtomContribs,Vi);
+	mol.getProp(common_properties::_labuteAtomHContrib,hContrib);
 	double res;
-	mol.getProp("_labuteASA",res);
+	mol.getProp(common_properties::_labuteASA,res);
 	return res;
       }
       unsigned int nAtoms=mol.getNumAtoms();
@@ -81,16 +81,16 @@ namespace RDKit{
 	hContrib = M_PI*Rj*(4.*Rj-hContrib);
 	res+=hContrib;
       }
-      mol.setProp("_labuteAtomContribs",Vi,true);
-      mol.setProp("_labuteAtomHContrib",hContrib,true);
-      mol.setProp("_labuteASA",res,true);
+      mol.setProp(common_properties::_labuteAtomContribs,Vi,true);
+      mol.setProp(common_properties::_labuteAtomHContrib,hContrib,true);
+      mol.setProp(common_properties::_labuteASA,res,true);
 
       return res;
     }
     double calcLabuteASA(const ROMol &mol,bool includeHs,bool force){
-      if(!force && mol.hasProp("_labuteASA")){
+      if(!force && mol.hasProp(common_properties::_labuteASA)){
 	double res;
-	mol.getProp("_labuteASA",res);
+	mol.getProp(common_properties::_labuteASA,res);
 	return res;
       }
       std::vector<double> contribs;
@@ -107,9 +107,9 @@ namespace RDKit{
                                bool force){
       TEST_ASSERT(Vi.size()>=mol.getNumAtoms());
       double res=0;
-      if(!force && mol.hasProp("_tpsaAtomContribs")){
-	mol.getProp("_tpsaAtomContribs",Vi);
-	mol.getProp("_tpsa",res);
+      if(!force && mol.hasProp(common_properties::_tpsaAtomContribs)){
+	mol.getProp(common_properties::_tpsaAtomContribs,Vi);
+	mol.getProp(common_properties::_tpsa,res);
 	return res;
       }
       unsigned int nAtoms=mol.getNumAtoms();
@@ -219,14 +219,14 @@ namespace RDKit{
         res+=tmp;
       }
 
-      mol.setProp("_tpsaAtomContribs",Vi,true);
-      mol.setProp("_tpsa",res,true);
+      mol.setProp(common_properties::_tpsaAtomContribs,Vi,true);
+      mol.setProp(common_properties::_tpsa,res,true);
       return res;
     }
     double calcTPSA(const ROMol &mol,bool force){
-      if(!force && mol.hasProp("_tpsa")){
+      if(!force && mol.hasProp(common_properties::_tpsa)){
 	double res;
-	mol.getProp("_tpsa",res);
+	mol.getProp(common_properties::_tpsa,res);
 	return res;
       }
       std::vector<double> contribs;

@@ -63,10 +63,9 @@ namespace RDKit{
       if(typeIdx==nTypes) --typeIdx;
       code |= typeIdx<<(numBranchBits+numPiBits);
       if(includeChirality){
-        if(atom->hasProp("_CIPCode")){
+        std::string cipCode;
+        if(atom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
           boost::uint32_t offset=numBranchBits+numPiBits+numTypeBits;
-          std::string cipCode;
-          atom->getProp("_CIPCode",cipCode);
           if(cipCode=="R"){
             code |= 1<<offset;
           } else if (cipCode=="S"){

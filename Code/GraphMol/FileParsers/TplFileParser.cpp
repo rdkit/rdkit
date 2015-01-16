@@ -119,7 +119,7 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
     std::ostringstream propName;
-    propName << "Conf_" <<mol->getNumConformers()<<"_Name";
+    propName << "Conf_" <<mol->getNumConformers()<<common_properties::_Name;
     mol->setProp(propName.str(),boost::trim_copy(tempStr.substr(4,tempStr.size()-4)));
     
     Conformer *conf=new Conformer(mol->getNumAtoms());
@@ -184,7 +184,7 @@ namespace RDKit{
     RWMol *res = new RWMol();
     if(tempStr.size()>=4 && tempStr.substr(0,4)=="NAME"){
       tempStr = boost::trim_copy(tempStr.substr(4,tempStr.size()-4));
-      res->setProp("_Name",tempStr);
+      res->setProp(common_properties::_Name,tempStr);
       line++;
       tempStr = getLine(inStream);
       if(inStream->eof()){

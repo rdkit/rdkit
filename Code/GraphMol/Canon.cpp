@@ -262,7 +262,7 @@ namespace Canon {
       firstFromAtom2->setBondDir(atom2Dir);
 
       // this block of code is no longer needed
-      // if(firstFromAtom2->hasProp("_TraversalRingClosureBond")){
+      // if(firstFromAtom2->hasProp(common_properties::_TraversalRingClosureBond)){
       //   // another nice one: we're traversing and come to a ring
       //   // closure bond that has directionality set. This is going to
       //   // have its direction swapped on writing so we need to
@@ -342,7 +342,7 @@ namespace Canon {
         // Here we set the bond direction to be opposite the other one (since
         // both come after the atom connected to the double bond).
         Bond::BondDir otherDir;
-        if(!secondFromAtom2->hasProp("_TraversalRingClosureBond")){
+        if(!secondFromAtom2->hasProp(common_properties::_TraversalRingClosureBond)){
           otherDir = (firstFromAtom2->getBondDir()==Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT;
         } else {
           // another one those irritating little reversal things due to
@@ -374,7 +374,7 @@ namespace Canon {
       if( bondVisitOrders[atom1ControllingBond->getIdx()] >
           atomVisitOrders[atom1->getIdx()]){
         if(bondDirCounts[atom1ControllingBond->getIdx()]==1){
-          if(!atom1ControllingBond->hasProp("_TraversalRingClosureBond") ){
+          if(!atom1ControllingBond->hasProp(common_properties::_TraversalRingClosureBond) ){
             //std::cerr<<"  switcheroo 1"<<std::endl;
             switchBondDir(atom1ControllingBond);
           }
@@ -587,10 +587,10 @@ namespace Canon {
         travList.push_back(bIdx);
         Bond *bond = mol.getBondWithIdx(bIdx);
         seenFromHere.set(bond->getOtherAtomIdx(atomIdx));
-        if(bond->hasProp("_TraversalRingClosureBond")){
+        unsigned int ringIdx;
+        if(bond->getPropIfPresent(common_properties::_TraversalRingClosureBond, ringIdx)){
           // this is end of the ring closure
           // we can just pull the ring index from the bond itself:
-          unsigned int ringIdx=bond->getProp<unsigned int>("_TraversalRingClosureBond");
           molStack.push_back(MolStackElem(bond,atomIdx));
           bondVisitOrders[bIdx]=molStack.size();
           molStack.push_back(MolStackElem(ringIdx));
@@ -607,7 +607,7 @@ namespace Canon {
           unsigned int lowestRingIdx =  cAIt-cyclesAvailable.begin();
           cyclesAvailable[lowestRingIdx] = 0;
           ++lowestRingIdx;
-          bond->setProp("_TraversalRingClosureBond",lowestRingIdx);
+          bond->setProp(common_properties::_TraversalRingClosureBond,lowestRingIdx);
           molStack.push_back(MolStackElem(lowestRingIdx));
         }
       }
@@ -691,8 +691,8 @@ namespace Canon {
       unsigned int lowestRingIdx;
       INT_VECT::const_iterator cAIt;
       // ww might have some residual data from earlier calls, clean that up:
-      if(otherAtom->hasProp("_TraversalBondIndexOrder")){
-        otherAtom->clearProp("_TraversalBondIndexOrder");
+      if(otherAtom->hasProp(common_properties::_TraversalBondIndexOrder)){
+        otherAtom->clearProp(common_properties::_TraversalBondIndexOrder);
       }
       travList.push_back(bond->getIdx());
       if(possiblesIt+1 != possibles.end()){
@@ -903,7 +903,7 @@ namespace Canon {
     boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
     
     // make sure that we've done the stereo perception:
-    if(!mol.hasProp("_StereochemDone")){
+    if(!mol.hasProp(common_properties::_StereochemDone)){
       MolOps::assignStereochemistry(mol,false);
     }
 
@@ -924,7 +924,7 @@ namespace Canon {
     // used later in SMILES generation:
     for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
       if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
-        (*atomIt)->setProp("_TraversalBondIndexOrder",atomTraversalBondOrder[(*atomIt)->getIdx()]);
+        (*atomIt)->setProp(common_properties::_TraversalBondIndexOrder,atomTraversalBondOrder[(*atomIt)->getIdx()]);
       }
     }
 
@@ -969,12 +969,12 @@ namespace Canon {
         }
       }
       if(msI->type == MOL_STACK_ATOM &&
-         msI->obj.atom->hasProp("_ringStereoAtoms")){
+         msI->obj.atom->hasProp(common_properties::_ringStereoAtoms)){
         if(!ringStereoChemAdjusted[msI->obj.atom->getIdx()]){
           msI->obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
           ringStereoChemAdjusted.set(msI->obj.atom->getIdx());
         }
-        const INT_VECT &ringStereoAtoms=msI->obj.atom->getProp<INT_VECT>("_ringStereoAtoms");
+        const INT_VECT &ringStereoAtoms=msI->obj.atom->getProp<INT_VECT>(common_properties::_ringStereoAtoms);
         BOOST_FOREACH(int nbrV,ringStereoAtoms){
           int nbrIdx=abs(nbrV)-1;
           if(!ringStereoChemAdjusted[nbrIdx] &&

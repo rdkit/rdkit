@@ -72,7 +72,7 @@ namespace RDKit {
       dp_props->setVal(key, val);
     }
 
-    template <typename T> void setProp(const std::string key, T &val) const {
+    template <typename T> void setProp(const std::string &key, T &val) const {
       setProp(key.c_str(), val);
     }
 
@@ -80,7 +80,7 @@ namespace RDKit {
       dp_props->setVal(key, val);
     }
 
-    void setProp(const std::string key, int val) const {
+    void setProp(const std::string &key, int val) const {
       setProp(key.c_str(), val);
     }
 
@@ -88,11 +88,11 @@ namespace RDKit {
       dp_props->setVal(key, val);
     }
 
-    void setProp(const std::string key, float val) const {
+    void setProp(const std::string &key, float val) const {
       setProp(key.c_str(), val);
     }
 
-    void setProp(const std::string key, std::string val) const {
+    void setProp(const std::string &key, std::string &val) const {
       setProp(key.c_str(), val);
     }
     
@@ -109,7 +109,7 @@ namespace RDKit {
       if (!dp_props) return false;
       return dp_props->hasVal(key);
     }
-    bool hasProp(const std::string key) const {
+    bool hasProp(const std::string &key) const {
       return hasProp(key.c_str());
     }
     
@@ -117,7 +117,7 @@ namespace RDKit {
       dp_props->clearVal(key);
     }
 
-    void clearProp(const std::string key) const {
+    void clearProp(const std::string &key) const {
       clearProp(key.c_str());
     }
 

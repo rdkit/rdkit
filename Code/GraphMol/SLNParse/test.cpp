@@ -1281,8 +1281,8 @@ void test11(){
   //mol->debugMol(std::cerr);
 #if 0
   RDKit::MolOps::assignAtomChiralCodes(*mol);
-  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
-  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(RDKit::common_properties::_CIPCode));
+  mol->getAtomWithIdx(1)->getProp(RDKit::common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");
 #endif
   std::cerr << sln << " -> " << MolToSmiles(*mol,true) << " " << mol->getNumAtoms() << std::endl;
@@ -1621,9 +1621,9 @@ void test15(){
     sln = "CH4<name=methane>";
     mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->hasProp("_Name"));
+    TEST_ASSERT(mol->hasProp(RDKit::common_properties::_Name));
     std::string sval;
-    mol->getProp("_Name",sval);
+    mol->getProp(RDKit::common_properties::_Name,sval);
     TEST_ASSERT(sval=="methane");
     delete mol;
   }
@@ -1656,7 +1656,7 @@ void test15(){
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->hasProp("blah"));
     std::string sval;
-    mol->getProp("_Name",sval);
+    mol->getProp(RDKit::common_properties::_Name,sval);
     TEST_ASSERT(sval=="methane");
     mol->getProp("coord2d",sval);
     TEST_ASSERT(sval=="(1,0)");
