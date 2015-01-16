@@ -661,6 +661,7 @@ namespace RDKit {
 
         if( mode ) {
           index=start[0];
+          std::set<int> touchedPartitions;
           for( i=count[index]; i<len; i++ ) {
             index=start[i];
             ROMol::ADJ_ITER nbrIdx,endNbrs;
@@ -668,15 +669,16 @@ namespace RDKit {
             while(nbrIdx!=endNbrs){
               int nbor=mol[*nbrIdx]->getIdx();
               ++nbrIdx;
-              int nbroffset = atoms[nbor].index;
               changed[nbor]=1;
-              partition = order[nbroffset];
-              //std::cerr<<"            changed: "<<index+1<<" "<<nbor+1<<" "<<nbroffset<<" count["<<partition<<"]:"<<count[partition]<<" "<<next[partition]<<std::endl;
-              if( (count[partition]>1) &&
-                  (next[partition]==-2) ) {
-                next[partition] = activeset;
-                activeset = partition;
-              }
+              touchedPartitions.insert(atoms[nbor].index);
+            }
+          }
+          BOOST_FOREACH(const int &nbrOffset,touchedPartitions){
+            partition = order[nbrOffset];
+            if( (count[partition]>1) &&
+                (next[partition]==-2) ) {
+              next[partition] = activeset;
+              activeset = partition;
             }
           }
         }
