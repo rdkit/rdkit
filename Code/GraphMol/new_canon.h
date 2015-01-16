@@ -654,15 +654,6 @@ namespace RDKit {
         }
         // std::cerr<<std::endl;
 
-
-        // std::cerr<<" here we go: "<<partition<<" "<<count[partition]<<" "<<len<<":";
-        index=start[0];
-        for( i=count[index]; i<len; i++ ) {
-          // std::cerr<<" "<<i<<"-"<<index;
-          index=start[i];
-        }
-        // std::cerr<<std::endl;
-
         if( mode ) {
           index=start[0];
           for( i=count[index]; i<len; i++ ) {
