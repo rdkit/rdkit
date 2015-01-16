@@ -1066,7 +1066,7 @@ void test9(){
 
 int main(){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test3();
@@ -1076,8 +1076,8 @@ int main(){
   test8();
   test9();
 #endif
-  //test7();
-  test7a();
+  test7();
+  //test7a();
   return 0;
 }
 
