@@ -17,6 +17,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
+#include <cstring>
 #include <vector>
 
 // #define VERBOSE_CANON 1
@@ -593,7 +594,8 @@ namespace RDKit {
                           int *order,
                           int *count,
                           int &activeset, int *next,
-                          int *changed){
+                          int *changed,
+                          char *touchedPartitions){
       unsigned int nAtoms=mol.getNumAtoms();
       register int partition;
       register int symclass;
@@ -602,6 +604,8 @@ namespace RDKit {
       register int index;
       register int len;
       register int i;
+      //std::vector<char> touchedPartitions(mol.getNumAtoms(),0);
+      
       // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
       while( activeset != -1 ) {
         //std::cerr<<"ITER: "<<activeset<<" next: "<<next[activeset]<<std::endl;
@@ -661,7 +665,6 @@ namespace RDKit {
 
         if( mode ) {
           index=start[0];
-          std::set<int> touchedPartitions;
           for( i=count[index]; i<len; i++ ) {
             index=start[i];
             ROMol::ADJ_ITER nbrIdx,endNbrs;
@@ -670,15 +673,18 @@ namespace RDKit {
               int nbor=mol[*nbrIdx]->getIdx();
               ++nbrIdx;
               changed[nbor]=1;
-              touchedPartitions.insert(atoms[nbor].index);
+              touchedPartitions[atoms[nbor].index]=1;
             }
           }
-          BOOST_FOREACH(const int &nbrOffset,touchedPartitions){
-            partition = order[nbrOffset];
-            if( (count[partition]>1) &&
-                (next[partition]==-2) ) {
-              next[partition] = activeset;
-              activeset = partition;
+          for(unsigned int ii=0; ii<nAtoms; ++ii) {
+            if(touchedPartitions[ii]){
+              partition = order[ii];
+              if( (count[partition]>1) &&
+                  (next[partition]==-2) ) {
+                next[partition] = activeset;
+                activeset = partition;
+              }
+              touchedPartitions[ii] = 0;
             }
           }
         }
@@ -692,7 +698,8 @@ namespace RDKit {
                    int *order,
                    int *count,
                    int &activeset, int *next,
-                   int *changed){
+                   int *changed,
+                   char *touchedPartitions){
       unsigned int nAtoms=mol.getNumAtoms();
       register int partition;
       register int *start;
@@ -725,7 +732,7 @@ namespace RDKit {
               activeset = npart;
             }
           }
-          RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next,changed);
+          RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next,changed,touchedPartitions);
         } 
       }
     } // end of BreakTies()
