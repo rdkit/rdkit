@@ -208,5 +208,13 @@ class TestCase(unittest.TestCase):
 #     self.assertTrue(fixed_mol)
 #     self.assertNotEqual(fixed_mol.GetAtomWithIdx(0).GetChiralTag(),Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
 
+
+  def testAvalonCountFPs(self):
+    cv1 = pyAvalonTools.GetAvalonCountFP('c1ccccc1',True,nBits=4096)
+    cv2 = pyAvalonTools.GetAvalonCountFP('c1ccccc1.c1ccccc1',True,nBits=4096)
+    for idx,v in cv1.GetNonzeroElements().items():
+        self.assertEqual(2*v,cv2[idx])
+
+
 if __name__ == '__main__':
     unittest.main()

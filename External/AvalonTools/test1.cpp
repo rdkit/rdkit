@@ -344,6 +344,7 @@ void testCountFps(){
     AvalonTools::getAvalonCountFP("c1ccccc1",true,cv1,512);
     AvalonTools::getAvalonCountFP("c1ccccc1.c1ccccc1",true,cv2,512);
     for(unsigned int i=0;i<cv1.size();++i){
+      if(cv1[i]) std::cerr<<i<<": "<<cv1[i]<<" "<<cv2[i]<<std::endl;
       if(cv1[i] && (cv2[i]!=2*cv1[i])){
         std::cerr<<"  mismatch: "<<i<<" "<<cv1[i]<<" "<<cv2[i]<<std::endl;
       }

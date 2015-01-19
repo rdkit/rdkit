@@ -39,6 +39,7 @@ namespace AvalonTools {
                      bool isQuery,unsigned int nBytes){
       PRECONDITION(molPtr,"bad molecule");
       int *res = TypeAlloc(nBytes*sizeof(int), int);
+      memset(res,0,nBytes*sizeof(int));
       SetFingerprintCountsWithFocus(molPtr,
                                     res,static_cast<int>(nBytes),
                                     static_cast<int>(bitFlags),
