@@ -8,8 +8,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdmolfiles import MolFromSmarts
-from rdPartialCharges import ComputeGasteigerCharges
+from rdkit.Chem.rdmolfiles import MolFromSmarts
+from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 
 def _get_positions(mol,confId=-1):
     conf = mol.GetConformer(confId)
