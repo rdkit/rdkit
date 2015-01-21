@@ -72,7 +72,6 @@ namespace RDKit {
         periodicTableRow = 5;
       }
       if (((atomicNum >= 21) && (atomicNum <= 30))
-        || ((atomicNum >= 39) && (atomicNum <= 48))
         || ((atomicNum >= 39) && (atomicNum <= 48))) {
         periodicTableRow *= 10;
       }
