@@ -81,7 +81,7 @@ GASTEIGER\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK",
         atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines + ["\n"]
         atom_lines = "\n".join(atom_lines)
             
-        bond_lines = [ "{:>5} {:>5} {:>5} {:>2}".format(bid+1, b.GetBeginAtomIdx()+1, b.GetEndAtomIdx()+1,  "ar" if int(b.GetBondType()) > 2 else str(int(b.GetBondType())) ) for bid, (b) in enumerate(mol.GetBonds()) ]
+        bond_lines = [ "{:>5} {:>5} {:>5} {:>2}".format(bid+1, b.GetBeginAtomIdx()+1, b.GetEndAtomIdx()+1,  "ar" if int(b.GetBondType()) > 2 else "am" if _amide_bond(b) else str(int(b.GetBondType())) ) for bid, (b) in enumerate(mol.GetBonds()) ]
         bond_lines = ["@<TRIPOS>BOND"] + bond_lines + [ "\n"]
         bond_lines = "\n".join(bond_lines)
         
@@ -141,6 +141,16 @@ def _atom_matches_smarts(atom, smarts):
     for m in atom.GetOwningMol().GetSubstructMatches(patt):
         if idx in m:
             return True
+    return False
+
+def _amide_bond(bond): 
+    a1 = bond.GetBeginAtom()
+    a2 = bond.GetEndAtom()
+    if a1.GetAtomicNum() == 6 and a2.GetAtomicNum() == 7 or a2.GetAtomicNum() == 6 and a1.GetAtomicNum() == 7:
+        patt = MolFromSmarts('C(=O)-N') # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+        for m in bond.GetOwningMol().GetSubstructMatches(patt):
+            if a1.GetIdx() in m and a2.GetIdx() in m:
+                return True
     return False
 
 __all__ = ["MolToMol2Block", "MolToMol2File"]    
