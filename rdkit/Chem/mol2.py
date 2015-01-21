@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from rdmolfiles import MolFromSmarts
 
 def _get_positions(mol,confId=-1):
     conf = mol.GetConformer(confId)
@@ -46,7 +47,7 @@ def MolToMol2Block(mol, confId=-1):
     #
     # References 
     # - Format specs http://www.tripos.com/data/support/mol2.pdf
-    # 
+    #
     
     confIds = (confId,)
     
@@ -66,10 +67,10 @@ USER_CHARGES\n""".format(mol.GetProp("_Name") if "_Name" in mol.GetPropNames() e
         # FIXME "SMALL" means small molecule but could become "PROTEIN"
         
         pos = _get_positions(mol, confId)
-        atom_lines = atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:>4} {} {} {:>7.4f}".format(a.GetIdx()+1, 
-                                                                                                         a.GetProp("_TriposAtomName") if "_TriposAtomName" in a.GetPropNames() else a.GetSymbol()+str(a.GetIdx()+1), 
+        atom_lines = atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:<5} {} {} {:>7.4f}".format(a.GetIdx()+1, 
+                                                                                                         a.GetSymbol(), 
                                                                                                          float(pos[a.GetIdx()][0]), float(pos[a.GetIdx()][1]), float(pos[a.GetIdx()][2]), 
-                                                                                                         a.GetProp("_TriposAtomType") if "_TriposAtomType" in a.GetPropNames() else a.GetSymbol(), 
+                                                                                                         _sybyl_atom_type(a), 
                                                                                                          1, "UNL", 
                                                                                                          float(a.GetProp("_TriposPartialCharge")) if "_TriposPartialCharge" in a.GetPropNames() else 0.0) for a in mol.GetAtoms()]
         atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines + ["\n"]
@@ -82,5 +83,59 @@ USER_CHARGES\n""".format(mol.GetProp("_Name") if "_Name" in mol.GetPropNames() e
         block = molecule + atom_lines + bond_lines
         blocks.append(block)   
     return "".join(blocks)
+
+def _sybyl_atom_type(atom):
+    """ Asign sybyl atom type
+    Reference: http://www.tripos.com/mol2/atom_types.html
+    """
+    sybyl = None
+    atom_symbol = atom.GetSymbol()
+    atomic_num = atom.GetAtomicNum()
+    hyb = atom.GetHybridization()-1 # -1 since 1 = sp, 2 = sp1 etc
+    hyb = 3 if hyb > 3 else hyb # cap at 3
+    if atomic_num == 6:
+        if atom.GetIsAromatic():
+            sybyl = 'C.ar'
+        elif _atom_matches_smarts(atom, 'C(=N)(N)N*'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+            sybyl = 'C.cat'
+        else:
+            sybyl = '%s.%i' % (atom_symbol, hyb if hyb < 3 else 3)
+    elif atomic_num == 7:
+        if atom.GetIsAromatic():
+            sybyl = 'N.ar'
+        elif _atom_matches_smarts(atom, 'C(=O)-N'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+            sybyl = 'N.am'
+        elif _atom_matches_smarts(atom, '[$([nX3](:*):*),$([nX2](:*):*),$([#7X2]=*),$([NX3](=*)=*),$([#7X3+](-*)=*),$([#7X3+H]=*)]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+            sybyl = 'N.pl3'
+        elif hyb == 3 and atom.GetFormalCharge():
+            sybyl = 'N.4'
+        else:
+            sybyl = '%s.%i' % (atom_symbol, hyb)
+    elif atomic_num == 8:
+        if _atom_matches_smarts(atom, 'C(=O)[O;H,-]'):
+            sybyl = 'O.co2'
+        else:
+            sybyl = '%s.%i' % (atom_symbol, hyb)
+    elif atomic_num == 16:
+        if _atom_matches_smarts(atom, '[$([#16X3]=[OX1]),$([#16X3+][OX1-])]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+            sybyl = 'S.O'
+        elif _atom_matches_smarts(atom, 'S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+            sybyl = 'S.O2'
+        else:
+            sybyl = '%s.%i' % (atom_symbol, hyb)
+    elif atomic_num == 15 and hyb == 3:
+        sybyl = '%s.%i' % (atom_symbol, hyb)
     
+    if not sybyl:
+        sybyl = atom_symbol
+    return sybyl
+
+def _atom_matches_smarts(atom, smarts):
+    idx = atom.GetIdx()
+    patt = MolFromSmarts(smarts)
+    for m in atom.GetOwningMol().GetSubstructMatches(patt):
+        if idx in m:
+            return True
+    return False
+
 __all__ = ["MolToMol2Block", "MolToMol2File"]    
