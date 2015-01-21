@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 from rdmolfiles import MolFromSmarts
+from rdPartialCharges import ComputeGasteigerCharges
 
 def _get_positions(mol,confId=-1):
     conf = mol.GetConformer(confId)
@@ -55,24 +56,28 @@ def MolToMol2Block(mol, confId=-1):
         confIds = Chem.Mol.GetNumConformers()
     
     blocks = []
+    
+    # compute charges
+    ComputeGasteigerCharges(mol)
+    
     for confId in confIds:
         
         molecule = """@<TRIPOS>MOLECULE
 {}
 {} {} 0 0 0
 SMALL
-USER_CHARGES\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK", mol.GetNumAtoms(), mol.GetNumBonds())
+GASTEIGER\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK", mol.GetNumAtoms(), mol.GetNumBonds())
 
         # FIXME "USER_CHARGES" could become 'Gasteiger charges'
         # FIXME "SMALL" means small molecule but could become "PROTEIN"
         
         pos = _get_positions(mol, confId)
-        atom_lines = atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:<5} {} {} {:>7.4f}".format(a.GetIdx()+1, 
+        atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:<5} {} {} {:>7.4f}".format(a.GetIdx()+1, 
                                                                                                          a.GetSymbol(), 
                                                                                                          float(pos[a.GetIdx()][0]), float(pos[a.GetIdx()][1]), float(pos[a.GetIdx()][2]), 
                                                                                                          _sybyl_atom_type(a), 
                                                                                                          1, "UNL", 
-                                                                                                         float(a.GetProp("_TriposPartialCharge")) if "_TriposPartialCharge" in a.GetPropNames() else 0.0) for a in mol.GetAtoms()]
+                                                                                                         float(a.GetProp('_GasteigerCharge').replace(',','.')) if a.HasProp('_GasteigerCharge') else 0.0) for a in mol.GetAtoms()]
         atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines + ["\n"]
         atom_lines = "\n".join(atom_lines)
             
