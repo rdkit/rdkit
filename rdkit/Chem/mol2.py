@@ -61,7 +61,7 @@ def MolToMol2Block(mol, confId=-1):
 {}
 {} {} 0 0 0
 SMALL
-USER_CHARGES\n""".format(mol.GetProp("_Name") if "_Name" in mol.GetPropNames() else "UNK", mol.GetNumAtoms(), mol.GetNumBonds())
+USER_CHARGES\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK", mol.GetNumAtoms(), mol.GetNumBonds())
 
         # FIXME "USER_CHARGES" could become 'Gasteiger charges'
         # FIXME "SMALL" means small molecule but could become "PROTEIN"
