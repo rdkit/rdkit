@@ -42,6 +42,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/tokenizer.hpp>
+#include "ReactionUtils.h"
 
 
 namespace RDKit {
@@ -334,7 +335,7 @@ namespace RDKit {
         FileParserUtils::replaceAtomWithQueryAtom((RWMol *)iter->get(),(*atomIt));
       }
     }
-
+    updateProductsStereochem(res);
     
     // RXN-based reactions do not have implicit properties
     res->setImplicitPropertiesFlag(false);

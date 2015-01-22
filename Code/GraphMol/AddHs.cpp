@@ -196,7 +196,7 @@ namespace RDKit{
         // Three other neighbors:
         // --------------------------------------------------------------------------
         boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(heavyAtom);
-        if(heavyAtom->hasProp("_CIPCode")){
+        if(heavyAtom->hasProp(common_properties::_CIPCode)){
           // if the central atom is chiral, we'll order the neighbors
           // by CIP rank:
           std::vector< std::pair<int,int> >  nbrs;
@@ -204,9 +204,7 @@ namespace RDKit{
             if(*nbrIdx != hydIdx){
               const Atom *tAtom=mol->getAtomWithIdx(*nbrIdx);
               int cip=0;
-              if(tAtom->hasProp("_CIPRank")){
-                cip=tAtom->getProp<int>("_CIPRank");
-              }
+              tAtom->getPropIfPresent<int>(common_properties::_CIPRank, cip);
               nbrs.push_back(std::make_pair(cip,*nbrIdx));
             }
             ++nbrIdx;
@@ -246,7 +244,8 @@ namespace RDKit{
           if(fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect)))<0.1){
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
-            if(heavyAtom->hasProp("_CIPCode")){
+            std::string cipCode;
+            if(heavyAtom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
               // the heavy atom is a chiral center, make sure
               // that we went go the right direction to preserve
               // its chirality. We use the chiral volume for this:
@@ -254,7 +253,6 @@ namespace RDKit{
               RDGeom::Point3D v2=nbr1Vect-nbr3Vect;
               RDGeom::Point3D v3=nbr2Vect-nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              std::string cipCode=heavyAtom->getProp<std::string>("_CIPCode");
               if( (cipCode=="S" && vol<0) || (cipCode=="R" && vol>0) ){
                 dirVect*=-1;
               }
@@ -333,12 +331,12 @@ namespace RDKit{
             mol.addBond(aidx,newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            mol.getAtomWithIdx(newIdx)->setProp("isImplicit",1);
+            mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit,1);
             mol.getAtomWithIdx(newIdx)->updatePropertyCache();
             if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",newAt->getNoImplicit(), true);
+          newAt->setProp(common_properties::origNoImplicit,newAt->getNoImplicit(), true);
           newAt->setNoImplicit(true);
         }
         // update the atom's derived properties (valence count, etc.)
@@ -379,7 +377,7 @@ namespace RDKit{
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
 
-          if(atom->hasProp("isImplicit")){
+          if(atom->hasProp(common_properties::isImplicit)){
             removeIt=true;
           } else if(!implicitOnly && !atom->getIsotope() && atom->getDegree()==1){
             ROMol::ADJ_ITER begin,end;
@@ -451,7 +449,7 @@ namespace RDKit{
             // stereochem
             if(bond->getBondDir()==Bond::UNKNOWN
                && bond->getBeginAtomIdx()==heavyAtom->getIdx()){
-              heavyAtom->setProp("_UnknownStereo",1);
+              heavyAtom->setProp(common_properties::_UnknownStereo,1);
             }
 
             mol.removeAtom(atom);
@@ -462,12 +460,13 @@ namespace RDKit{
         } else {
           // only increment the atom idx if we don't remove the atom
           currIdx++;
-          if(atom->hasProp("origNoImplicit")){
+          bool origNoImplicit;
+          if(atom->getPropIfPresent(common_properties::origNoImplicit, origNoImplicit)){
             // we'll get in here if we haven't already processed the atom's implicit
             //  hydrogens. (this is protection for the case that removeHs() is called
             //  multiple times on a single molecule without intervening addHs() calls)
-            atom->setNoImplicit(atom->getProp<bool>("origNoImplicit"));
-            atom->clearProp("origNoImplicit");
+            atom->setNoImplicit(origNoImplicit);
+            atom->clearProp(common_properties::origNoImplicit);
           }
         }
       }

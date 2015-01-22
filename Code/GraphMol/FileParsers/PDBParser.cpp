@@ -367,7 +367,7 @@ namespace RDKit {
     else if (len > 10)
       title = std::string(ptr+10,len-10);
     if (!title.empty())
-      mol->setProp("_Name",title);
+      mol->setProp(common_properties::_Name,title);
   }
 
   static void PDBConformerLine(RWMol *mol, const char *ptr, unsigned int len,
@@ -459,8 +459,8 @@ namespace RDKit {
             !StandardPDBChiralAtom(info->getResidueName().c_str(),
                                    info->getName().c_str())) {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-          if (atom->hasProp("_CIPCode"))
-            atom->clearProp("_CIPCode");
+          if (atom->hasProp(common_properties::_CIPCode))
+            atom->clearProp(common_properties::_CIPCode);
         }
       }
     }

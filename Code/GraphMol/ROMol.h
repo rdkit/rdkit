@@ -511,17 +511,16 @@ namespace RDKit{
                          bool includeComputed=true) const {
       const STR_VECT &tmp=dp_props->keys();
       STR_VECT res,computed;
-      if(!includeComputed && hasProp(detail::computedPropName)){
-        getProp(detail::computedPropName,computed);
+      if(!includeComputed && getPropIfPresent(detail::computedPropName, computed)){
         computed.push_back(detail::computedPropName);
       }
       
       STR_VECT::const_iterator pos = tmp.begin();
       while(pos!=tmp.end()){
         if((includePrivate || (*pos)[0]!='_') &&
-	 std::find(computed.begin(),computed.end(),*pos)==computed.end()){
+           std::find(computed.begin(),computed.end(),*pos)==computed.end()){
           res.push_back(*pos);
-	}
+        }
         pos++;
       }
       return res;
@@ -544,7 +543,7 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    void setProp(const std::string key, T val, bool computed=false) const {
+    void setProp(const std::string &key, T val, bool computed=false) const {
       if (computed) {
         STR_VECT compLst;
         dp_props->getVal(detail::computedPropName,compLst);
@@ -576,7 +575,7 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    void getProp(const std::string key, T &res) const {
+    void getProp(const std::string &key, T &res) const {
       dp_props->getVal(key, res);
     }
     //! \overload
@@ -586,8 +585,20 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    T getProp(const std::string key) const {
+    T getProp(const std::string &key) const {
       return dp_props->getVal<T>(key);
+    }
+
+    //! returns whether or not we have a \c property with name \c key
+    //!  and assigns the value if we do
+    template <typename T>
+    bool getPropIfPresent(const char *key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
+    }
+    //! \overload
+    template <typename T>
+    bool getPropIfPresent(const std::string &key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
     }
 
     //! returns whether or not we have a \c property with name \c key
@@ -596,7 +607,7 @@ namespace RDKit{
       return dp_props->hasVal(key);
     }
     //! \overload
-    bool hasProp(const std::string key) const {
+    bool hasProp(const std::string &key) const {
       if (!dp_props) return false;
       return dp_props->hasVal(key);
       //return hasProp(key.c_str());
@@ -615,7 +626,7 @@ namespace RDKit{
       clearProp(what);
     };
     //! \overload
-    void clearProp(const std::string key) const {
+    void clearProp(const std::string &key) const {
       STR_VECT compLst;
       getProp(detail::computedPropName, compLst);
       STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);

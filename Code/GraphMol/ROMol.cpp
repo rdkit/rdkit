@@ -492,8 +492,7 @@ namespace RDKit{
     if(includeRings) this->dp_ringInfo->reset();
 
     STR_VECT compLst;
-    if(hasProp(detail::computedPropName)){
-      getProp(detail::computedPropName, compLst);
+    if(getPropIfPresent(detail::computedPropName, compLst)){
       BOOST_FOREACH(std::string &sv,compLst){
         dp_props->clearVal(sv);
       }

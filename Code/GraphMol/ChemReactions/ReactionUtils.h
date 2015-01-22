@@ -69,6 +69,9 @@ namespace RDKit{
 
   bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold);
 
+  void updateProductsStereochem(ChemicalReaction *rxn);
+
+
 } // end of RDKit namespace
 
 #endif

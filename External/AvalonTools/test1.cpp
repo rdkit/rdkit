@@ -333,9 +333,50 @@ void testGithub336() {
     delete m;
   }  
 
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+
+void testCountFps(){
+  BOOST_LOG(rdInfoLog) << "testing substructure fingerprints " << std::endl;
+  {
+    SparseIntVect<boost::uint32_t> cv1(5000),cv2(5000);
+    AvalonTools::getAvalonCountFP("c1ccccc1",true,cv1,5000);
+    AvalonTools::getAvalonCountFP("c1ccccc1.c1ccccc1",true,cv2,5000);
+    for(unsigned int i=0;i<cv1.size();++i){
+      if(cv1[i] && (cv2[i]!=2*cv1[i])){
+        std::cerr<<"  mismatch: "<<i<<" "<<cv1[i]<<" "<<cv2[i]<<std::endl;
+      }
+    }
+    for(unsigned int i=0;i<cv1.size();++i){
+      TEST_ASSERT(!cv1[i] || (cv2[i]==2*cv1[i]) );
+    }
+  }
+  {
+    ROMol *m1 = static_cast<ROMol *>(SmilesToMol("c1ccccc1"));
+    TEST_ASSERT(m1);
+    ROMol *m2 = static_cast<ROMol *>(SmilesToMol("c1ccccc1.c1ccccc1"));
+    TEST_ASSERT(m2);
+
+    SparseIntVect<boost::uint32_t> cv1(5000),cv2(5000);
+    AvalonTools::getAvalonCountFP(*m1,cv1,5000);
+    AvalonTools::getAvalonCountFP(*m2,cv2,5000);
+    for(unsigned int i=0;i<cv1.size();++i){
+      if(cv1[i] && (cv2[i]!=2*cv1[i])){
+        std::cerr<<"  mismatch: "<<i<<" "<<cv1[i]<<" "<<cv2[i]<<std::endl;
+      }
+    }
+    for(unsigned int i=0;i<cv1.size();++i){
+      TEST_ASSERT(!cv1[i] || (cv2[i]==2*cv1[i]) );
+    }
+    delete m1;
+    delete m2;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -348,9 +389,10 @@ int main(int argc,char *argv[]){
   testSubstructFps();
   testStruChk();
   testBadMolfile();
-#endif  
   testSmilesSegFault();
   testGithub336();
+#endif  
+  testCountFps();
 
   return 0;
 }

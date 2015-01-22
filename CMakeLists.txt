@@ -32,6 +32,7 @@ option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (d
 option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
+option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
@@ -194,12 +195,36 @@ endif()
 
 
 # setup our compiler flags:
-if(CMAKE_COMPILER_IS_GNUCXX)
-  ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
-endif()
-if(CMAKE_COMPILER_IS_CLANG)
-  ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
-endif()
+if (RDK_TEST_COVERAGE)
+ if (NOT RDK_USE_FLEXBISON)
+   message(FATAL_ERROR, "Test coverage doesn't current work unless FLEX and BISON are run.")
+ endif(NOT RDK_USE_FLEXBISON)
+
+ message("====== Installing test coverage support ======")
+ message("  To run:")
+ message("   make install")
+ message("   make RDKit_coverage")
+ message("")
+ message(" open <build_dir>/coverage/index.html")
+ message("")
+ message(" If any of the RDKit tests fail, coverage will probably not be generated.")
+ message("====== Installing test coverage support ======")
+ message("")
+ 
+ INCLUDE(CodeCoverage)
+ SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+ SET(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+ message("== setup_target_for_coverage(${PROJECT_NAME}_coverage test coverage)")
+ setup_target_for_coverage(${PROJECT_NAME}_coverage ctest coverage)
+
+else(RDK_TEST_COVERAGE)
+ if(CMAKE_COMPILER_IS_GNUCXX)
+   ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+ endif()
+ if(CMAKE_COMPILER_IS_CLANG)
+   ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
+ endif()
+endif(RDK_TEST_COVERAGE)
 
 if(NOT RDK_INSTALL_INTREE)
   install(DIRECTORY Data DESTINATION
@@ -286,6 +311,7 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSIO
 #  SET(CPACK_SOURCE_STRIP_FILES "")
 #ENDIF(WIN32 AND NOT UNIX)
 #SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable")
+
 
 SET(CPACK_SET_DESTDIR ON)
 

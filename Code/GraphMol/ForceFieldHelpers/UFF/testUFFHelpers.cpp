@@ -866,8 +866,8 @@ void testGitHubIssue62() {
       ROMol *mol = MolOps::addHs(*(smiSupplier[i]));
       TEST_ASSERT(mol);
       std::string molName = "";
-      if (mol->hasProp("_Name")) {
-        mol->getProp("_Name", molName);
+      if (mol->hasProp(common_properties::_Name)) {
+        mol->getProp(common_properties::_Name, molName);
       }
       DGeomHelpers::EmbedMolecule(*mol);
       ForceFields::ForceField *field = UFF::constructForceField(*mol);

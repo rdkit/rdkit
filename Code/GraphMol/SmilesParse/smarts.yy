@@ -108,7 +108,7 @@ mol: atomd {
   int sz     = molList->size();
   molList->resize( sz + 1);
   (*molList)[ sz ] = new RWMol();
-  $1->setProp("_SmilesStart",1);
+  $1->setProp(RDKit::common_properties::_SmilesStart,1);
   (*molList)[ sz ]->addAtom($1,true,true);
   //delete $1;
   $$ = sz;
@@ -133,7 +133,7 @@ mol: atomd {
   			    Queries::COMPOSITE_OR,
   			    true);
   }
-  newB->setProp("_unspecifiedOrder",1);
+  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
@@ -164,7 +164,7 @@ mol: atomd {
 
 | mol SEPARATOR_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
-  $3->setProp("_SmilesStart",1,true);
+  $3->setProp(RDKit::common_properties::_SmilesStart,1,true);
   mp->addAtom($3,true,true);
 }
 
@@ -186,18 +186,18 @@ mol: atomd {
   			    Queries::COMPOSITE_OR,
   			    true);
   }
-  newB->setProp("_unspecifiedOrder",1);
+  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
 
   mp->setAtomBookmark(atom,$2);
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
+  if(atom->hasProp(RDKit::common_properties::_RingClosures)){
+    atom->getProp(RDKit::common_properties::_RingClosures,tmp);
   }
   tmp.push_back(-($2+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 
 }
 
@@ -211,17 +211,17 @@ mol: atomd {
 
   mp->setAtomBookmark(atom,$3);
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
+  if(atom->hasProp(RDKit::common_properties::_RingClosures)){
+    atom->getProp(RDKit::common_properties::_RingClosures,tmp);
   }
   tmp.push_back(-($3+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 
 }
 
 | mol branch {
   RWMol *m1_p = (*molList)[$$],*m2_p=(*molList)[$2];
-  m2_p->getAtomWithIdx(0)->setProp("_SmilesStart",1);
+  m2_p->getAtomWithIdx(0)->setProp(RDKit::common_properties::_SmilesStart,1);
   // FIX: handle generic bonds here
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
   delete m2_p;
@@ -254,7 +254,7 @@ atomd:	simple_atom
 | ATOM_OPEN_TOKEN H_TOKEN COLON_TOKEN number ATOM_CLOSE_TOKEN
 {
   $$ = new QueryAtom(1);
-  $$->setProp("molAtomMapNumber",$4);
+  $$->setProp(RDKit::common_properties::molAtomMapNumber,$4);
 }
 | ATOM_OPEN_TOKEN atom_expr ATOM_CLOSE_TOKEN
 {
@@ -263,7 +263,7 @@ atomd:	simple_atom
 | ATOM_OPEN_TOKEN atom_expr COLON_TOKEN number ATOM_CLOSE_TOKEN
 {
   $$ = $2;
-  $$->setProp("molAtomMapNumber",$4);
+  $$->setProp(RDKit::common_properties::molAtomMapNumber,$4);
 }
 ;
 

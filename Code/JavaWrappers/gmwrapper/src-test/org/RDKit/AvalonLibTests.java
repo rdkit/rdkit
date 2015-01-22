@@ -101,14 +101,48 @@ public class AvalonLibTests extends GraphMolTest {
 	bv1 = new ExplicitBitVect(1024);
 	bv2 = new ExplicitBitVect(1024);
 	RDKFuncs.getAvalonFP(m1,bv1,1024,false,false,RDKFuncs.getAvalonSimilarityBits());
-	RDKFuncs.getAvalonFP(m2,bv2,1024,false,false,RDKFuncs.getAvalonSimilarityBits()
-);
+	RDKFuncs.getAvalonFP(m2,bv2,1024,false,false,RDKFuncs.getAvalonSimilarityBits());
 	assertEquals(RDKFuncs.TanimotoSimilarity(bv1,bv1),1.0,0.001);
 	assertEquals(RDKFuncs.TanimotoSimilarity(bv2,bv2),1.0,0.001);
 	assertTrue(RDKFuncs.TanimotoSimilarity(bv1,bv2)<1.0);
 	assertTrue(bv1.getNumOnBits()>0);
 	assertTrue(bv2.getNumOnBits()>0);
 	assertTrue(bv1.getNumOnBits()<bv2.getNumOnBits());
+    }
+
+    @Test public void testAvalonTools5() {
+	ROMol m1,m2;
+	m1 = RWMol.MolFromSmiles("c1ccccc1");
+	m2 = RWMol.MolFromSmiles("c1ccccc1.c1ccccc1");
+	SparseIntVectu32 sv1,sv2;
+	sv1 = new SparseIntVectu32(5000);
+	sv2 = new SparseIntVectu32(5000);
+	RDKFuncs.getAvalonCountFP(m1,sv1,5000);
+	RDKFuncs.getAvalonCountFP(m2,sv2,5000);
+        assertTrue(sv1.getTotalVal()>0);
+        assertTrue(sv2.getTotalVal()>0);
+        int i;
+        for(i=0;i<5000;i++){
+            if(sv1.getVal(i)>0){
+                assertEquals(2*sv1.getVal(i),sv2.getVal(i));
+            }
+        }
+    }
+
+    @Test public void testAvalonTools6() {
+	SparseIntVectu32 sv1,sv2;
+	sv1 = new SparseIntVectu32(5000);
+	sv2 = new SparseIntVectu32(5000);
+	RDKFuncs.getAvalonCountFP("c1ccccc1",true,sv1,5000);
+	RDKFuncs.getAvalonCountFP("c1ccccc1.c1ccccc1",true,sv2,5000);
+        assertTrue(sv1.getTotalVal()>0);
+        assertTrue(sv2.getTotalVal()>0);
+        int i;
+        for(i=0;i<5000;i++){
+            if(sv1.getVal(i)>0){
+                assertEquals(2*sv1.getVal(i),sv2.getVal(i));
+            }
+        }
     }
 
     public static void main(String args[]) {

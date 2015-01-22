@@ -907,7 +907,7 @@ namespace RDKit {
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::SINGLE) {
         if ((*bondIt)->getBondDir() == Bond::UNKNOWN)
-          (*bondIt)->setProp("_UnknownStereo", 1);
+          (*bondIt)->setProp(common_properties::_UnknownStereo, 1);
         (*bondIt)->setBondDir(Bond::NONE);
       }
     }

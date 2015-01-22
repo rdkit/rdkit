@@ -143,7 +143,7 @@ namespace RDKit {
       Atom *oatom;
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
-          if ((*ati)->hasProp("_CIPCode")) { 
+          if ((*ati)->hasProp(common_properties::_CIPCode)) { 
             // make a chiral set from the neighbors
             nbrs.clear();
             nbrs.reserve(4);
@@ -152,8 +152,8 @@ namespace RDKit {
             boost::tie(beg,end) = mol.getAtomBonds(*ati);
             while (beg != end) {
               oatom = mol[*beg]->getOtherAtom(*ati);
-              unsigned int rank;
-              oatom->getProp("_CIPRank", rank);
+              int rank;
+              oatom->getProp(common_properties::_CIPRank, rank);
               INT_PAIR rAid(rank, oatom->getIdx());
               nbrs.push_back(rAid);
               ++beg;
@@ -166,8 +166,8 @@ namespace RDKit {
 
             std::sort(nbrs.begin(), nbrs.end());
             if (nbrs.size() < 4) {
-              unsigned int rank;
-              (*ati)->getProp("_CIPRank", rank);
+              int rank;
+              (*ati)->getProp(common_properties::_CIPRank, rank);
               INT_PAIR rAid(rank, (*ati)->getIdx());
               nbrs.insert(nbrs.begin(), rAid); 
               includeSelf = true;
@@ -175,7 +175,7 @@ namespace RDKit {
                             
             // now create a chiral set and set the upper and lower bound on the volume
             std::string cipCode;
-            (*ati)->getProp("_CIPCode", cipCode);
+            (*ati)->getProp(common_properties::_CIPCode, cipCode);
             
             if (cipCode == "S") { 
               // postive chiral volume

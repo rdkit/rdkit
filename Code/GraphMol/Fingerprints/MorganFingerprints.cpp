@@ -298,8 +298,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
               // add an extra value to the invariant to reflect chirality:
               Atom const *tAt=mol.getAtomWithIdx(atomIdx);
               std::string cip="";
-              if(tAt->hasProp("_CIPCode")){
-                tAt->getProp("_CIPCode",cip);
+              if(tAt->hasProp(common_properties::_CIPCode)){
+                tAt->getProp(common_properties::_CIPCode,cip);
               }
               if(cip=="R"){
                 gboost::hash_combine(invar, 3);

@@ -43,7 +43,83 @@ namespace detail {
 
 
 namespace RDKit {
-
+    namespace common_properties {
+        extern const std::string TWOD;
+        extern const std::string BalabanJ;
+        extern const std::string BalanbanJ;
+        extern const std::string Discrims;
+        extern const std::string DistanceMatrix_Paths;
+        extern const std::string MolFileComments;
+        extern const std::string MolFileInfo;
+        extern const std::string NullBond;
+        extern const std::string _2DConf;
+        extern const std::string _3DConf;
+        extern const std::string _AtomID;
+        extern const std::string _BondsPotentialStereo;
+        extern const std::string _CIPCode;
+        extern const std::string _CIPRank;
+        extern const std::string _ChiralityPossible;
+        extern const std::string _CrippenLogP;
+        extern const std::string _CrippenMR;
+        extern const std::string _MMFFSanitized;
+        extern const std::string _MolFileChiralFlag;
+        extern const std::string _MolFileRLabel;
+        extern const std::string _Name;
+        extern const std::string _NeedsQueryScan;
+        extern const std::string _QueryFormalCharge;
+        extern const std::string _QueryHCount;
+        extern const std::string _QueryIsotope;
+        extern const std::string _QueryMass;
+        extern const std::string _ReactionDegreeChanged;
+        extern const std::string _RingClosures;
+        extern const std::string _SLN_s;
+        extern const std::string _SmilesStart;
+        extern const std::string _StereochemDone;
+        extern const std::string _TraversalBondIndexOrder;
+        extern const std::string _TraversalRingClosureBond;
+        extern const std::string _TriposAtomType;
+        extern const std::string _Unfinished_SLN_;
+        extern const std::string _UnknownStereo;
+        extern const std::string _connectivityHKDeltas;
+        extern const std::string _connectivityNVals;
+        extern const std::string _crippenLogP;
+        extern const std::string _crippenLogPContribs;
+        extern const std::string _crippenMR;
+        extern const std::string _crippenMRContribs;
+        extern const std::string _doIsoSmiles;
+        extern const std::string _fragSMARTS;
+        extern const std::string _hasMassQuery;
+        extern const std::string _labuteASA;
+        extern const std::string _labuteAtomContribs;
+        extern const std::string _labuteAtomHContrib;
+        extern const std::string _protected;
+        extern const std::string _queryRootAtom;
+        extern const std::string _ringStereoAtoms;
+        extern const std::string _ringStereoWarning;
+        extern const std::string _ringStereochemCand;
+        extern const std::string _smilesAtomOutputOrder;
+        extern const std::string _starred;
+        extern const std::string _supplementalSmilesLabel;
+        extern const std::string _tpsa;
+        extern const std::string _tpsaAtomContribs;
+        extern const std::string _unspecifiedOrder;
+        extern const std::string dummyLabel;
+        extern const std::string extraRings;
+        extern const std::string isImplicit;
+        extern const std::string maxAttachIdx;
+        extern const std::string molAtomMapNumber;
+        extern const std::string molFileAlias;
+        extern const std::string molFileValue;
+        extern const std::string molInversionFlag;
+        extern const std::string molParity;
+        extern const std::string molRxnComponent;
+        extern const std::string molRxnRole;
+        extern const std::string molTotValence;
+        extern const std::string numArom;
+        extern const std::string origNoImplicit;
+        extern const std::string ringMembership;
+        extern const std::string smilesSymbol;
+    } // end common_properties
 #ifndef WIN32
   typedef long long int LONGINT;
 #else

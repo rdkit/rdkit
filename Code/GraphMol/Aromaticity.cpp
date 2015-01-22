@@ -715,7 +715,7 @@ namespace RDKit {
         }
       }
     
-      mol.setProp("numArom", narom, true);
+      mol.setProp(common_properties::numArom, narom, true);
 
       return narom;
     }

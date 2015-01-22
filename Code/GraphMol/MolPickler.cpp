@@ -870,13 +870,13 @@ namespace RDKit{
   namespace {
     bool getAtomMapNumber(const Atom *atom,int &mapNum){
       PRECONDITION(atom,"bad atom");
-      if(!atom->hasProp("molAtomMapNumber")) return false;
+      if(!atom->hasProp(common_properties::molAtomMapNumber)) return false;
       bool res=true;
       int tmpInt;
       try{
-        atom->getProp("molAtomMapNumber",tmpInt);
+        atom->getProp(common_properties::molAtomMapNumber,tmpInt);
       } catch (boost::bad_any_cast &exc) {
-        const std::string &tmpSVal=atom->getProp<std::string>("molAtomMapNumber");
+        const std::string &tmpSVal=atom->getProp<std::string>(common_properties::molAtomMapNumber);
         try{
           tmpInt = boost::lexical_cast<int>(tmpSVal);
         } catch(boost::bad_lexical_cast &lexc) {
@@ -905,7 +905,7 @@ namespace RDKit{
     if(atom->getNoImplicit()) flags |= 0x1<<5;
     if(atom->hasQuery()) flags |= 0x1<<4;
     if(getAtomMapNumber(atom,tmpInt)) flags |= 0x1<<3;
-    if(atom->hasProp("dummyLabel")) flags |= 0x1<<2;
+    if(atom->hasProp(common_properties::dummyLabel)) flags |= 0x1<<2;
     if(atom->getMonomerInfo()) flags |= 0x1<<1;
 
     streamWrite(ss,flags);
@@ -972,8 +972,8 @@ namespace RDKit{
       tmpChar=static_cast<char>(tmpInt%256);
       streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
     }
-    if(atom->hasProp("dummyLabel")){
-      streamWrite(ss,ATOM_DUMMYLABEL,atom->getProp<std::string>("dummyLabel"));
+    if(atom->hasProp(common_properties::dummyLabel)){
+      streamWrite(ss,ATOM_DUMMYLABEL,atom->getProp<std::string>(common_properties::dummyLabel));
     }
     if(atom->getMonomerInfo()){
       streamWrite(ss,BEGIN_ATOM_MONOMER);
@@ -1208,7 +1208,7 @@ namespace RDKit{
           int tmpInt;
           streamRead(ss,tmpChar,version);
           tmpInt=tmpChar;
-          atom->setProp("molAtomMapNumber",tmpInt);
+          atom->setProp(common_properties::molAtomMapNumber,tmpInt);
         } else {
           ss.seekg(sPos);
         }
@@ -1222,7 +1222,7 @@ namespace RDKit{
           int tmpInt;
           streamRead(ss,tmpChar,version);
           tmpInt=tmpChar;
-          atom->setProp("molAtomMapNumber",tmpInt);
+          atom->setProp(common_properties::molAtomMapNumber,tmpInt);
         }
         if(hasDummyLabel){
           streamRead(ss,tag,version);
@@ -1231,7 +1231,7 @@ namespace RDKit{
           }
           std::string tmpStr;
           streamRead(ss,tmpStr,version);
-          atom->setProp("dummyLabel",tmpStr);
+          atom->setProp(common_properties::dummyLabel,tmpStr);
         }
       }
     }

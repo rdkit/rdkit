@@ -57,10 +57,9 @@
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
-#include <GraphMol/MolDrawing/MolDrawing.h>
-#include <GraphMol/MolDrawing/DrawingToSVG.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
-
+#include <sstream>
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
@@ -416,19 +415,32 @@
 
 
 %extend RDKit::ROMol {
-  std::string ToSVG(int lineWidthMult=2,int fontSize=50){
-    if(lineWidthMult<0) lineWidthMult *=2;
-    if(fontSize<0) fontSize*=2;
-    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(*($self),0);
-    std::string svg=RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize);
-    return svg;
-  }
   std::string ToSVG(const std::vector<int> &highlightAtoms,
                     int lineWidthMult=2,int fontSize=50){
-    if(lineWidthMult<0) lineWidthMult *=2;
+    // FIX: not sure any more what these are for
     if(fontSize<0) fontSize*=2;
-    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(*($self),&highlightAtoms);
-    std::string svg=RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize);
-    return svg;
+    if(lineWidthMult<0) lineWidthMult *=2;
+    std::stringstream outs;
+    RDKit::MolDraw2DSVG drawer(300,300,outs);
+    //drawer.setFontSize(static_cast<float>(fontSize)*drawer.fontSize()/50);
+    drawer.drawMolecule(*($self),&highlightAtoms);
+    drawer.finishDrawing();
+    outs.flush();
+
+    return outs.str();
+  }
+  std::string ToSVG(int lineWidthMult=2,int fontSize=50){
+    // FIX: not sure any more what these are for
+    if(fontSize<0) fontSize*=2;
+    if(lineWidthMult<0) lineWidthMult *=2;
+    std::stringstream outs;
+    RDKit::MolDraw2DSVG drawer(300,300,outs);
+    //drawer.setFontSize(static_cast<float>(fontSize)*drawer.fontSize()/50);
+    drawer.drawMolecule(*($self));
+    drawer.finishDrawing();
+    outs.flush();
+
+    return outs.str();
+
   }
 }

@@ -333,7 +333,7 @@ void test3() {
   while (!sdsup.atEnd()) {
     ROMol *mol = sdsup.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     RDGeom::PointPtrVect origCoords, newCoords;
     nat = mol->getNumAtoms();
     Conformer &conf = mol->getConformer(0);
@@ -480,7 +480,7 @@ void testTemp() {
     _computeStats(energies, mean, stdDev);
     std::string mname;
     cnt++;
-    m->getProp("_Name", mname);
+    m->getProp(common_properties::_Name, mname);
     BOOST_LOG(rdDebugLog) << cnt << "," << mname << "," << mean << "," << stdDev << "\n";
     delete m;
   }
