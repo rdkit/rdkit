@@ -170,7 +170,7 @@ namespace RDKit {
             std::sort(nbrs.begin(), nbrs.end());
             if (nbrs.size() < 4) {
               unsigned int rank;
-              (*ati)->getProp("_CIPRank", rank);
+              (*ati)->getProp(common_properties::_CIPRank, rank);
               INT_PAIR rAid(rank, (*ati)->getIdx());
               nbrs.insert(nbrs.begin(), rAid); 
               includeSelf = true;
