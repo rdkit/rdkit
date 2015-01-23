@@ -97,7 +97,7 @@ def _sybyl_atom_type(atom):
     atom_symbol = atom.GetSymbol()
     atomic_num = atom.GetAtomicNum()
     hyb = atom.GetHybridization()-1 # -1 since 1 = sp, 2 = sp1 etc
-    hyb = 3 if hyb > 3 else hyb # cap at 3
+    hyb = min(hyb, 3)
     if atomic_num == 6:
         if atom.GetIsAromatic():
             sybyl = 'C.ar'
