@@ -1653,56 +1653,56 @@ CAS<~>
     """
     mol = Chem.MolFromSmiles('C1CCC1')
     self.assertTrue(type(mol)==Chem.Mol)
-    
-    rwmol = Chem.EditableMol(mol)
-    self.assertTrue(type(rwmol)==Chem.EditableMol)
-    newAt = Chem.Atom(8)
-    rwmol.ReplaceAtom(0,newAt)
-    self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='C1COC1')
 
-    rwmol.RemoveBond(0,1)
-    self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='CCCO')
-    a = Chem.Atom(7)
-    idx=rwmol.AddAtom(a)
-    self.assertEqual(rwmol.GetMol().GetNumAtoms(),5)
-    self.assertEqual(idx,4)
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      self.assertTrue(type(rwmol) in [Chem.EditableMol, Chem.RWMol])
+      newAt = Chem.Atom(8)
+      rwmol.ReplaceAtom(0,newAt)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='C1COC1')
 
-    idx=rwmol.AddBond(0,4,order=Chem.BondType.SINGLE)
-    self.assertEqual(idx,4)
+      rwmol.RemoveBond(0,1)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='CCCO')
+      a = Chem.Atom(7)
+      idx=rwmol.AddAtom(a)
+      self.assertEqual(rwmol.GetMol().GetNumAtoms(),5)
+      self.assertEqual(idx,4)
 
-    self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='CCCON')
-    rwmol.AddBond(4,1,order=Chem.BondType.SINGLE)
-    self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='C1CNOC1')
-    
-    rwmol.RemoveAtom(3)
-    self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='CCNO')
-    
-    # practice shooting ourselves in the foot:
-    m = Chem.MolFromSmiles('c1ccccc1')
-    em=Chem.EditableMol(m)
-    em.RemoveAtom(0)
-    m2 = em.GetMol()
-    self.assertRaises(ValueError,lambda : Chem.SanitizeMol(m2))
-    m = Chem.MolFromSmiles('c1ccccc1')
-    em=Chem.EditableMol(m)
-    em.RemoveBond(0,1)
-    m2 = em.GetMol()
-    self.assertRaises(ValueError,lambda : Chem.SanitizeMol(m2))
-                    
-    # boundary cases: 
-    
-    # removing non-existent bonds:
-    m = Chem.MolFromSmiles('c1ccccc1')
-    em=Chem.EditableMol(m)
-    em.RemoveBond(0,2)
-    m2 = em.GetMol()
-    Chem.SanitizeMol(m2)
-    self.assertTrue(Chem.MolToSmiles(m2)=='c1ccccc1')
-    
-    # removing non-existent atoms:
-    m = Chem.MolFromSmiles('c1ccccc1')
-    em=Chem.EditableMol(m)
-    self.assertRaises(RuntimeError,lambda:em.RemoveAtom(12))
+      idx=rwmol.AddBond(0,4,order=Chem.BondType.SINGLE)
+      self.assertEqual(idx,4)
+
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='CCCON')
+      rwmol.AddBond(4,1,order=Chem.BondType.SINGLE)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='C1CNOC1')
+
+      rwmol.RemoveAtom(3)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol())=='CCNO')
+
+      # practice shooting ourselves in the foot:
+      m = Chem.MolFromSmiles('c1ccccc1')
+      em=Chem.EditableMol(m)
+      em.RemoveAtom(0)
+      m2 = em.GetMol()
+      self.assertRaises(ValueError,lambda : Chem.SanitizeMol(m2))
+      m = Chem.MolFromSmiles('c1ccccc1')
+      em=Chem.EditableMol(m)
+      em.RemoveBond(0,1)
+      m2 = em.GetMol()
+      self.assertRaises(ValueError,lambda : Chem.SanitizeMol(m2))
+
+      # boundary cases: 
+
+      # removing non-existent bonds:
+      m = Chem.MolFromSmiles('c1ccccc1')
+      em=Chem.EditableMol(m)
+      em.RemoveBond(0,2)
+      m2 = em.GetMol()
+      Chem.SanitizeMol(m2)
+      self.assertTrue(Chem.MolToSmiles(m2)=='c1ccccc1')
+
+      # removing non-existent atoms:
+      m = Chem.MolFromSmiles('c1ccccc1')
+      em=Chem.EditableMol(m)
+      self.assertRaises(RuntimeError,lambda:em.RemoveAtom(12))
 
   def test47SmartsPieces(self):
     """ test the GetAtomSmarts and GetBondSmarts functions
@@ -2586,7 +2586,7 @@ CAS<~>
     self.assertEqual(len(frags[0]),4)
     self.assertEqual(len(frags[1]),4)
     self.assertEqual(len(frags[2]),2)
-
+    print (m)
     pieces,cpa = Chem.FragmentOnSomeBonds(m,(0,2,4),2,returnCutsPerAtom=True)
     self.assertEqual(len(pieces),3)
     self.assertEqual(len(cpa),3)
@@ -2608,7 +2608,7 @@ CAS<~>
     self.assertEqual(ranks[0], ranks[2])
     self.assertEqual(ranks[1], ranks[3])
     
-  def test91RankAtomsInFragment(self):
+  def test92RankAtomsInFragment(self):
     m = Chem.MolFromSmiles('ONCS.ONCS')
     ranks = Chem.CanonicalRankAtomsInFragment(m,
                                               [0,1,2,3],
@@ -2627,9 +2627,19 @@ CAS<~>
                       [0,1,0,1,-1,-1,-1,-1])
     self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False)),
                       [-1,-1,-1,-1,0,1,0,1])
+  def test93RWMolsAsROMol(self):
+    """ test the RWMol class as a proper ROMol
 
+    """
+    mol = Chem.MolFromSmiles('C1CCC1')
+    self.assertTrue(type(mol)==Chem.Mol)
+    rwmol = Chem.RWMol(mol)
+    self.assertEqual(Chem.MolToSmiles(rwmol,True),Chem.MolToSmiles(rwmol.GetMol()))
+    newAt = Chem.Atom(8)
+    rwmol.ReplaceAtom(0,newAt)
+    self.assertEqual(Chem.MolToSmiles(rwmol,True),Chem.MolToSmiles(rwmol.GetMol()))
 
-        
+    
 if __name__ == '__main__':
   unittest.main()
 
