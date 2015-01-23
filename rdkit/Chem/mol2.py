@@ -81,7 +81,7 @@ GASTEIGER\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK",
         atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines + ["\n"]
         atom_lines = "\n".join(atom_lines)
             
-        bond_lines = [ "{:>5} {:>5} {:>5} {:>2}".format(bid+1, b.GetBeginAtomIdx()+1, b.GetEndAtomIdx()+1,  "ar" if int(b.GetBondType()) > 2 else "am" if _amide_bond(b) else str(int(b.GetBondType())) ) for bid, (b) in enumerate(mol.GetBonds()) ]
+        bond_lines = [ "{:>5} {:>5} {:>5} {:>2}".format(bid+1, b.GetBeginAtomIdx()+1, b.GetEndAtomIdx()+1,  "ar" if b.GetBondTypeAsDouble() == 1.5 else "am" if _amide_bond(b) else str(int(b.GetBondTypeAsDouble())) ) for bid, (b) in enumerate(mol.GetBonds()) ]
         bond_lines = ["@<TRIPOS>BOND"] + bond_lines + [ "\n"]
         bond_lines = "\n".join(bond_lines)
         
