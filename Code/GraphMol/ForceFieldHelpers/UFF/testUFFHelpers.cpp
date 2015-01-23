@@ -1164,12 +1164,12 @@ int main(){
   testSFIssue1653802();
   testSFIssue2378119();
   testUFFParamGetters();
-#endif
   testMissingParams();
   testSFIssue3009337();
-  testGitHubIssue62();
 #ifdef RDK_TEST_MULTITHREADED
   testUFFMultiThread();
   testUFFMultiThread2();
 #endif
+#endif
+  testGitHubIssue62();
 }

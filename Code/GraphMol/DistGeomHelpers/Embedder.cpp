@@ -156,7 +156,7 @@ namespace RDKit {
             while (beg != end) {
               oatom = mol[*beg]->getOtherAtom(*ati);
               unsigned int rank;
-              oatom->getProp("_CIPRank", rank);
+              oatom->getProp(common_properties::_CIPRank, rank);
               INT_PAIR rAid(rank, oatom->getIdx());
               nbrs.push_back(rAid);
               ++beg;
