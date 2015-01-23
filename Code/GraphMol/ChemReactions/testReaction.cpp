@@ -5415,7 +5415,7 @@ void test57IntroductionOfNewChiralCenters(){
     TEST_ASSERT(prods.size()==1);
     TEST_ASSERT(prods[0].size()==1);
     BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@@H](Cl)CCC[C@H](C)F");
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }
@@ -5448,7 +5448,7 @@ void test57IntroductionOfNewChiralCenters(){
     TEST_ASSERT(prods.size()==1);
     TEST_ASSERT(prods[0].size()==1);
     BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@@H](Cl)CCC[C@H](C)F");
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }

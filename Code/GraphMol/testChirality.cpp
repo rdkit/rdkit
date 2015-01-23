@@ -1475,17 +1475,17 @@ void testIssue2705543(){
     TEST_ASSERT(cip=="R");
 
     TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
-    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
     m->getAtomWithIdx(2)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
-    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
-    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(4)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
 
