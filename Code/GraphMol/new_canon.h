@@ -337,18 +337,12 @@ namespace RDKit {
         // chirality if we're using it
         if(df_useChirality){
           // first atom stereochem:
-          ivi=0;
-          ivj=0;
-          if(dp_atoms[i].atom->hasProp("_CIPCode")){
-            std::string cipCode;
-            dp_atoms[i].atom->getProp("_CIPCode",cipCode);
-            ivi=cipCode=="R"?2:1;
-          }
-          if(dp_atoms[j].atom->hasProp("_CIPCode")){
-            std::string cipCode;
-            dp_atoms[j].atom->getProp("_CIPCode",cipCode);
-            ivj=cipCode=="R"?2:1;
-          }
+          std::string cipCode="";
+          dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
+          ivi = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
+          cipCode="";
+          dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
+          ivj = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
           if(ivi<ivj)
             return -1;
           else if(ivi>ivj)
@@ -524,18 +518,13 @@ namespace RDKit {
           return 1;
 
         // atom stereochem:
-        ivi=0;
-        ivj=0;
-        if(dp_atoms[i].atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          dp_atoms[i].atom->getProp("_CIPCode",cipCode);
-          ivi=cipCode=="R"?2:1;
-        }
-        if(dp_atoms[j].atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          dp_atoms[j].atom->getProp("_CIPCode",cipCode);
-          ivj=cipCode=="R"?2:1;
-        }
+        std::string cipCode="";
+        dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
+        ivi = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
+        cipCode="";
+        dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
+        ivj = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
+
         if(ivi<ivj)
           return -1;
         else if(ivi>ivj)
