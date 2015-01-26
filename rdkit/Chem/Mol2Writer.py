@@ -13,8 +13,10 @@ from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from rdkit.Chem.rdmolops import AddHs
 
 def _get_positions(mol,confId=-1):
-    conf = mol.GetConformer(confId)
-    return [conf.GetAtomPosition(i) for i in range(conf.GetNumAtoms())]
+    if mol.GetNumConformers() > 0:
+        conf = mol.GetConformer(confId)
+        return [conf.GetAtomPosition(i) for i in range(conf.GetNumAtoms())]
+    return [(0,0,0) for i in range(mol.GetNumAtoms())]
 
 
 def MolToMol2File(mol, filename, confId=-1, addHs = True):
@@ -60,7 +62,8 @@ def MolToMol2Block(mol, confId=-1, addHs = True):
     
     # add explicit hydrogens (since mol2 reader requires them)
     if addHs:
-        mol = AddHs(mol, addCoords=True)
+        h_coords = mol.GetNumConformers() > 0 and mol.GetConformer(-1).Is3D()
+        mol = AddHs(mol, addCoords=h_coords)
     
     # compute charges
     ComputeGasteigerCharges(mol)
