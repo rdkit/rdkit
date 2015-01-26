@@ -10,13 +10,14 @@
 #
 from rdkit.Chem.rdmolfiles import MolFromSmarts
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
+from rdkit.Chem.rdmolops import AddHs
 
 def _get_positions(mol,confId=-1):
     conf = mol.GetConformer(confId)
     return [conf.GetAtomPosition(i) for i in range(conf.GetNumAtoms())]
 
 
-def MolToMol2File(mol, filename, confId=-1):
+def MolToMol2File(mol, filename, confId=-1, addHs = True):
     """Writes a Mol2 file for a molecule
       ARGUMENTS:
 
@@ -29,10 +30,10 @@ def MolToMol2File(mol, filename, confId=-1):
 
         None
     """      
-    block = MolToMol2Block(mol, confId)
+    block = MolToMol2Block(mol, confId, addHs = addHs)
     open(filename, "w").writelines(block)
     
-def MolToMol2Block(mol, confId=-1):
+def MolToMol2Block(mol, confId=-1, addHs = True):
     """Returns a Mol2 string block for a molecule
       ARGUMENTS:
 
@@ -60,6 +61,10 @@ def MolToMol2Block(mol, confId=-1):
     # compute charges
     ComputeGasteigerCharges(mol)
     
+    # add explicit hydrogens (since mol2 reader requires them)
+    if addHs:
+        mol = AddHs(mol, addCoords=True)
+    
     for confId in confIds:
         
         molecule = """@<TRIPOS>MOLECULE
@@ -78,8 +83,8 @@ GASTEIGER\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK",
                                                                                                          _sybyl_atom_type(a), 
                                                                                                          1, "UNL", 
                                                                                                          float(a.GetProp('_GasteigerCharge').replace(',','.')) if a.HasProp('_GasteigerCharge') else 0.0) for a in mol.GetAtoms()]
-        atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines + ["\n"]
-        atom_lines = "\n".join(atom_lines)
+        atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines
+        atom_lines = "\n".join(atom_lines)+"\n"
             
         bond_lines = [ "{:>5} {:>5} {:>5} {:>2}".format(bid+1, b.GetBeginAtomIdx()+1, b.GetEndAtomIdx()+1,  "ar" if b.GetBondTypeAsDouble() == 1.5 else "am" if _amide_bond(b) else str(int(b.GetBondTypeAsDouble())) ) for bid, (b) in enumerate(mol.GetBonds()) ]
         bond_lines = ["@<TRIPOS>BOND"] + bond_lines + [ "\n"]

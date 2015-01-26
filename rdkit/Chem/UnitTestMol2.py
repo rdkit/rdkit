@@ -15,6 +15,7 @@ from rdkit import RDConfig
 import unittest,cPickle,os
 from rdkit import Chem
 import tempfile, os
+import gzip
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -27,30 +28,37 @@ class TestCase(unittest.TestCase):
         pass
 
   def testMol2(self, removeHs=False):
-    self.testMol2String(True)
-    self.testMol2String(False)
-    self.testMol2File(True)
-    self.testMol2File(False)
+    self._testMol2String(True)
+    self._testMol2String(False)
+    self._testMol2File(True)
+    self._testMol2File(False)
+    pass
     
-  def testMol2String(self, removeHs=False): 
+  def _testMol2String(self, removeHs=False): 
     " testing 5k molecule pickles "
-    mol = Chem.MolFromMol2File('{}/CSAR_2014_01_FXA_gtc101/Decoys.mol2'.format(RDConfig.RDDataDir), removeHs=removeHs)
-    mol_block = Chem.MolToMol2Block(mol)
-    mol2 = Chem.MolFromMol2Block(mol_block, removeHs=removeHs)
-    self.assertEqual(mol.GetNumAtoms(), mol2.GetNumAtoms())
-    self.assertEqual(mol.GetNumBonds(), mol2.GetNumBonds())
+    for mol1 in Chem.ForwardSDMolSupplier(gzip.open('{}/Regress/Data/mols.1000.sdf.gz'.format(RDConfig.RDBaseDir))):
+        if mol1:
+            mol2 = Chem.MolFromMol2Block(Chem.MolToMol2Block(mol1))
+            if mol2:
+                self.assertEqual(mol1.GetNumAtoms(), mol2.GetNumAtoms())
+                self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2))
+            else:
+                print 'Could not read molecule back from mol2'
 
-  def testMol2File(self, removeHs=False): 
+  def _testMol2File(self, removeHs=False): 
     " testing 5k molecule pickles "
     import tempfile
     fileN, filename = tempfile.mkstemp(suffix='.mol2')
     
-    mol = Chem.MolFromMol2File('{}/CSAR_2014_01_FXA_gtc101/Decoys.mol2'.format(RDConfig.RDDataDir), removeHs=removeHs)
-    Chem.MolToMol2File(mol, filename)
-    mol2 = Chem.MolFromMol2File(filename, removeHs=removeHs)
-    self.assertEqual(mol.GetNumAtoms(), mol2.GetNumAtoms())
-    self.assertEqual(mol.GetNumBonds(), mol2.GetNumBonds())    
-
+    for mol1 in Chem.ForwardSDMolSupplier(gzip.open('{}/Regress/Data/mols.1000.sdf.gz'.format(RDConfig.RDBaseDir))):
+        if mol1:
+            Chem.MolToMol2File(mol1, filename)
+            mol2 = Chem.MolFromMol2File(filename)
+            if mol2:
+                self.assertEqual(mol1.GetNumAtoms(), mol2.GetNumAtoms())
+                self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2))
+            else:
+                print 'Could not read molecule back from mol2'
 
 if __name__ == '__main__':
   unittest.main()
