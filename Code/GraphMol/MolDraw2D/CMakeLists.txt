@@ -4,6 +4,11 @@ option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 
 
+rdkit_headers(MolDraw2D.h
+  MolDraw2DSVG.h
+  MolDraw2Dwx.h
+)
+
 if(RDK_BUILD_QT_SUPPORT)
   #find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
   find_package(Qt5Widgets REQUIRED)
@@ -16,7 +21,7 @@ if(RDK_BUILD_QT_SUPPORT)
 
   set(QTDRAW2D_SRC MolDraw2DQt.cpp)
   set(EXTRA_LOCAL_LIBS ${EXTRA_LOCAL_LIBS} ${Qt5Widgets_LIBRARIES}  ${Qt5OpenGL_LIBRARIES} )
-
+  rdkit_headers(MolDraw2DQt.h)
 endif(RDK_BUILD_QT_SUPPORT)
   
 if(RDK_BUILD_CAIRO_SUPPORT)
@@ -25,6 +30,7 @@ if(RDK_BUILD_CAIRO_SUPPORT)
   set(EXTRA_LOCAL_LIBS ${EXTRA_LOCAL_LIBS} ${CAIRO_LIBRARIES} )
   ADD_DEFINITIONS("-DRDK_CAIRO_BUILD")
   set(CAIRODRAW2D_SRC MolDraw2DCairo.cpp)
+  rdkit_headers(MolDraw2DCairo.h)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
