@@ -10,6 +10,7 @@
 //
 
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 #include <cstdlib>
 #include <limits>
@@ -721,6 +722,12 @@ namespace RDKit {
     drawPolygon(pts);
   };
 
+  void MolDraw2D::drawEllipse(const std::pair<float,float> &cds1 ,
+                              const std::pair<float,float> &cds2){
+    std::vector< std::pair<float,float> > pts;
+    MolDraw2D_detail::arcPoints(cds1,cds2,pts,0,360);
+    drawPolygon(pts);
+  }
 
 
 } // EO namespace RDKit

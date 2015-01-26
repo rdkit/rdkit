@@ -99,11 +99,13 @@ namespace RDKit {
     virtual void drawString( const std::string &str ,
                              const std::pair<float,float> &cds );
 
-    // draw a filled triangle
+    // draw polygons:
     virtual void drawPolygon( const std::vector<std::pair<float,float> > &cds ) = 0;
     virtual void drawTriangle( const std::pair<float,float> &cds1 ,
                                const std::pair<float,float> &cds2 ,
                                const std::pair<float,float> &cds3 );
+    virtual void drawEllipse(  const std::pair<float,float> &cds1 ,
+                               const std::pair<float,float> &cds2 );
 
 
 

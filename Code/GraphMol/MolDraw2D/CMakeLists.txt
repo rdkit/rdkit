@@ -34,7 +34,8 @@ if(RDK_BUILD_CAIRO_SUPPORT)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-  ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC} 
+  ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}
+  MolDraw2DDetails.cpp
   LINK_LIBRARIES
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
