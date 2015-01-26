@@ -382,8 +382,8 @@ namespace RDKit {
       }
     } else if( Bond::SINGLE == bond->getBondType() &&
                ( Bond::BEGINWEDGE == bond->getBondDir() || Bond::BEGINDASH == bond->getBondDir() ) ) {
-      if( bond->getBeginAtom()->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          bond->getBeginAtom()->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW ) {
+      if( at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW ) {
         swap( at1_cds , at2_cds );
         swap( col1 , col2 );
       }
