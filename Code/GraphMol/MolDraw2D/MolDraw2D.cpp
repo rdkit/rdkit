@@ -27,7 +27,7 @@ namespace RDKit {
   // ****************************************************************************
   MolDraw2D::MolDraw2D( int width, int height ) :
   width_( width ) , height_( height ) , scale_( 1.0 ) , x_trans_( 0.0 ) ,
-    y_trans_( 0.0 ) , font_size_( 0.5 ) {
+    y_trans_( 0.0 ) , font_size_( 0.5 ), curr_width_(2) {
   }
 
   // ****************************************************************************

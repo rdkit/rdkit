@@ -37,9 +37,6 @@ namespace RDKit {
     // but we'll start here
     void finishDrawing();
 
-  private :
-    cairo_t *d_cr;
-
     void drawLine( const std::pair<float,float> &cds1 ,
                    const std::pair<float,float> &cds2 );
     void drawChar( char c , const std::pair<float,float> &cds );
@@ -52,6 +49,10 @@ namespace RDKit {
     // using the current scale, work out the size of the label in molecule coordinates
     void getStringSize( const std::string &label , float &label_width ,
                         float &label_height ) const;
+
+
+  private :
+    cairo_t *d_cr;
 
     void initDrawing();
   };

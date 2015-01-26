@@ -60,12 +60,15 @@ namespace RDKit {
 
     virtual int width() const { return width_; }
     virtual int height() const { return height_; }
+
     virtual float scale() const { return scale_; }
+    virtual void calculateScale();
+
     virtual float fontSize() const { return font_size_; }
     // set font size in molecule coordinate units. That's probably Angstrom for
     // RDKit.
     virtual void setFontSize( float new_size );
-    virtual void calculateScale();
+
     virtual void setColour( const DrawColour &col ) { curr_colour_ = col; }
     virtual DrawColour colour() const { return curr_colour_; }
 
@@ -77,6 +80,28 @@ namespace RDKit {
     // and returns true or false depending on whether it did something or not
     bool setStringDrawMode( const std::string &instring , int &draw_mode ,
                             int &i ) const;
+
+    virtual void clearDrawing() = 0;
+
+    virtual void drawLine( const std::pair<float,float> &cds1 ,
+                           const std::pair<float,float> &cds2 ) = 0;
+
+    // using the current scale, work out the size of the label in molecule coordinates.
+    // Bear in mind when implementing this, that, for example, NH2 will appear as
+    // NH<sub>2</sub> to convey that the 2 is a subscript, and this needs to accounted
+    // for in the width and height.
+    virtual void getStringSize( const std::string &label , float &label_width ,
+                                float &label_height ) const = 0;
+    // drawString centres the string on cds.
+    virtual void drawString( const std::string &str ,
+                             const std::pair<float,float> &cds );
+
+    // draw a filled triangle
+    virtual void drawTriangle( const std::pair<float,float> &cds1 ,
+                               const std::pair<float,float> &cds2 ,
+                               const std::pair<float,float> &cds3 ) = 0;
+
+
 
   private :
 
@@ -94,31 +119,8 @@ namespace RDKit {
     std::vector<int> atomic_nums_;
     std::vector<std::pair<std::string,OrientType> > atom_syms_;
 
-    virtual void drawLine( const std::pair<float,float> &cds1 ,
-                           const std::pair<float,float> &cds2 ) = 0;
-    virtual void drawLine( const std::pair<float,float> &cds1 ,
-                           const std::pair<float,float> &cds2 ,
-                           const DrawColour &col1 ,
-                           const DrawColour &col2 );
     // draw the char, with the bottom left hand corner at cds
     virtual void drawChar( char c , const std::pair<float,float> &cds ) = 0;
-
-    // drawString centres the string on cds.
-    virtual void drawString( const std::string &str ,
-                             const std::pair<float,float> &cds );
-    // draw a filled triangle
-    virtual void drawTriangle( const std::pair<float,float> &cds1 ,
-                               const std::pair<float,float> &cds2 ,
-                               const std::pair<float,float> &cds3 ) = 0;
-
-    virtual void clearDrawing() = 0;
-
-    // using the current scale, work out the size of the label in molecule coordinates.
-    // Bear in mind when implementing this, that, for example, NH2 will appear as
-    // NH<sub>2</sub> to convey that the 2 is a subscript, and this needs to accounted
-    // for in the width and height.
-    virtual void getStringSize( const std::string &label , float &label_width ,
-                                float &label_height ) const = 0;
 
     // return a DrawColour based on the contents of highlight_atoms or
     // highlight_map, falling back to atomic number by default
@@ -130,6 +132,10 @@ namespace RDKit {
     void extractAtomCoords( const ROMol &mol );
     void extractAtomSymbols( const ROMol &mol );
 
+    virtual void drawLine( const std::pair<float,float> &cds1 ,
+                           const std::pair<float,float> &cds2 ,
+                           const DrawColour &col1 ,
+                           const DrawColour &col2 );
     void drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                    int at1_idx , int at2_idx ,
                    const std::vector<int> *highlight_atoms=NULL ,

@@ -59,11 +59,6 @@ namespace RDKit {
       m_dc.SetBrush(wxBrush(colour));      
     }
 
-
-  private :
-
-    wxDC &m_dc;
-
     void drawLine( const std::pair<float,float> &cds1,  const std::pair<float,float> &cds2 )
     {
       std::pair<float,float> c1 = getDrawCoords( cds1 );
@@ -110,6 +105,10 @@ namespace RDKit {
 	  label_height = float(height) / scale();
 	}
     }
+
+  private :
+
+    wxDC &m_dc;
 
   };
 

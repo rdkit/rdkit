@@ -34,10 +34,6 @@ namespace RDKit {
     void setFontSize( float new_size );
     void setColour( const DrawColour &col );
 
-  private :
-
-    QPainter &qp_;
-
     void drawLine( const std::pair<float,float> &cds1 ,
                    const std::pair<float,float> &cds2 );
     void drawChar( char c , const std::pair<float,float> &cds );
@@ -49,6 +45,11 @@ namespace RDKit {
     // using the current scale, work out the size of the label in molecule coordinates
     void getStringSize( const std::string &label , float &label_width ,
                         float &label_height ) const;
+
+
+  private :
+
+    QPainter &qp_;
 
   };
 
