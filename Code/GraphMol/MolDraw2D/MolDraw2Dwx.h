@@ -78,6 +78,7 @@ namespace RDKit {
         std::pair<float,float> c1 = getDrawCoords( cds[i] );
         lines[i] = wxPoint(c1.first,c1.second);
       }
+      // FIX: deal with toggling fills
       m_dc.DrawPolygon(cds.size(),lines);  
     };
 

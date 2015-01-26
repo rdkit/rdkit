@@ -106,11 +106,12 @@ namespace RDKit {
                                const std::pair<float,float> &cds3 );
     virtual void drawEllipse(  const std::pair<float,float> &cds1 ,
                                const std::pair<float,float> &cds2 );
+    bool fillPolys() const { return fill_polys_; }
+    bool setFillPolys(bool val) { fill_polys_ = val; }
 
 
 
   private :
-
     int width_ , height_;
     float scale_;
     float x_min_ , y_min_ , x_range_ , y_range_;
@@ -119,6 +120,7 @@ namespace RDKit {
     // than the default width of a double bond)
     float font_size_;
     int curr_width_;
+    bool fill_polys_;
     DrawColour curr_colour_;
     DashPattern curr_dash_;
 

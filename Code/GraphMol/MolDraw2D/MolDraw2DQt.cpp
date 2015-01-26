@@ -87,7 +87,12 @@ namespace RDKit {
 #endif
 
     qp_.save();
-    //   qp_.setBrush( brush );
+    QBrush brush=qp_.brush();
+    if(fillPolys())
+      brush.setStyle(Qt::SolidPattern);
+    else 
+      brush.setStyle(Qt::NoBrush);
+    qp_.setBrush( brush );
 
     QPointF points[cds.size()];
     for(unsigned int i=0;i<cds.size();++i){

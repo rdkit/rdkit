@@ -49,6 +49,22 @@ void test1(){
     drawer.finishDrawing();
     outs.flush();
   }
+  {
+    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    std::ofstream outs("test1_3.svg");
+    MolDraw2DSVG drawer(300,300,outs);
+    std::vector<int> highlights;
+    highlights.push_back(0);
+    highlights.push_back(4);
+    highlights.push_back(5);
+    drawer.drawMolecule(*m,&highlights);
+    drawer.finishDrawing();
+    outs.flush();
+  }
 }
 
 #ifdef RDK_CAIRO_BUILD
@@ -91,6 +107,29 @@ void test2(){
 
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "test2_2.png");
+    cairo_surface_destroy (surface);
+  }
+  {
+    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+
+    MolDraw2DCairo drawer(300,300,cr);
+    std::vector<int> highlights;
+    highlights.push_back(0);
+    highlights.push_back(4);
+    highlights.push_back(5);
+    drawer.drawMolecule(*m,&highlights);
+    drawer.finishDrawing();
+
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "test2_3.png");
     cairo_surface_destroy (surface);
   }
 }

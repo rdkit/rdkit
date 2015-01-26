@@ -87,7 +87,7 @@ namespace RDKit {
     }
 
     cairo_close_path(d_cr);
-    cairo_fill_preserve(d_cr);
+    if(fillPolys()) cairo_fill_preserve(d_cr);
     cairo_stroke(d_cr);
   }
 

@@ -107,8 +107,13 @@ namespace RDKit {
       std::pair<float,float> c1 = getDrawCoords( cds[i] );
       d_os << " " << c1.first << "," << c1.second;
     }
-    d_os<<"' ";
-    d_os<<"style='fill:"<<col<<";fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+    d_os<<"' style='";
+    if(fillPolys())
+      d_os<<"fill:"<<col<<";fill-rule:evenodd";
+    else
+      d_os<<"fill:none;";
+
+    d_os<<"stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
     d_os<<" />\n";
 
   }

@@ -28,7 +28,7 @@ namespace RDKit {
   // ****************************************************************************
   MolDraw2D::MolDraw2D( int width, int height ) :
   width_( width ) , height_( height ) , scale_( 1.0 ) , x_trans_( 0.0 ) ,
-    y_trans_( 0.0 ) , font_size_( 0.5 ), curr_width_(2) {
+    y_trans_( 0.0 ) , font_size_( 0.5 ), curr_width_(2), fill_polys_(true) {
   }
 
   // ****************************************************************************
@@ -40,6 +40,33 @@ namespace RDKit {
     extractAtomSymbols( mol );
     calculateScale();
     setFontSize( font_size_ );
+
+#if 0
+    if(highlight_atoms){
+      ROMol::VERTEX_ITER this_at , end_at;
+      boost::tie( this_at , end_at ) = mol.getVertices();
+      setFillPolys(false);
+      while( this_at != end_at ) {
+        int this_idx = mol[*this_at]->getIdx();
+        if(std::find(highlight_atoms->begin(),highlight_atoms->end(),this_idx) != highlight_atoms->end()){
+          if(highlight_map && highlight_map->find(this_idx)!=highlight_map->end()){
+            setColour(highlight_map->find(this_idx)->second);
+          } else {
+            setColour(DrawColour(1,0,1));
+          }
+          std::pair<double,double> p1=at_cds_[this_idx];
+          std::pair<double,double> p2=at_cds_[this_idx];
+          p1.first -= 0.3;
+          p1.second -= 0.3;
+          p2.first += 0.3;
+          p2.second += 0.3;
+          drawEllipse(p1,p2);
+        }
+        ++this_at;
+      }
+      setFillPolys(true);
+    }
+#endif
 
     ROMol::VERTEX_ITER this_at , end_at;
     boost::tie( this_at , end_at ) = mol.getVertices();
