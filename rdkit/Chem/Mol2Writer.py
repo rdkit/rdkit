@@ -58,12 +58,12 @@ def MolToMol2Block(mol, confId=-1, addHs = True):
     
     blocks = []
     
-    # compute charges
-    ComputeGasteigerCharges(mol)
-    
     # add explicit hydrogens (since mol2 reader requires them)
     if addHs:
         mol = AddHs(mol, addCoords=True)
+    
+    # compute charges
+    ComputeGasteigerCharges(mol)
     
     for confId in confIds:
         
