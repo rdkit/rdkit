@@ -77,10 +77,8 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DQt::drawTriangle( const pair<float , float> &cds1 ,
-                                  const pair<float , float> &cds2 ,
-                                  const pair<float, float> &cds3 ) {
-
+  void MolDraw2DQt::drawPolygon( const vector<pair<float , float> > &cds ) {
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 #ifdef NOTYET
     QBrush brush( "Black" );
     brush.setStyle( Qt::SolidPattern );
@@ -91,18 +89,13 @@ namespace RDKit {
     qp_.save();
     //   qp_.setBrush( brush );
 
-    pair<float,float> c1 = getDrawCoords( cds1 );
-    pair<float,float> c2 = getDrawCoords( cds2 );
-    pair<float,float> c3 = getDrawCoords( cds3 );
-
-    QPointF points[3] = { QPointF( c1.first , c1.second ) ,
-                          QPointF( c2.first , c2.second ) ,
-                          QPointF( c3.first , c3.second ) };
-
-    qp_.drawConvexPolygon( points , 3 );
-
+    QPointF points[cds.size()];
+    for(unsigned int i=0;i<cds.size();++i){
+      pair<float,float> lc = getDrawCoords( cds[i] );
+      points[i] = QPointF( lc.first, lc.second );
+    }
+    qp_.drawConvexPolygon( points , cds.size() );
     qp_.restore();
-
   }
 
   // ****************************************************************************

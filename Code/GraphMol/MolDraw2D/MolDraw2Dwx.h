@@ -71,14 +71,15 @@ namespace RDKit {
       m_dc.DrawText(wxString(c),cds.first,cds.second);
     }
 
-    void drawTriangle( const std::pair<float,float> &cds1, const std::pair<float,float> &cds2, const std::pair<float,float> &cds3 )
-    {
-      std::pair<float,float> c1 = getDrawCoords( cds1 );
-      std::pair<float,float> c2 = getDrawCoords( cds2 );
-      std::pair<float,float> c3 = getDrawCoords( cds3 );
-      wxPoint lines[] = {wxPoint(c1.first,c1.second), wxPoint(c2.first,c2.second), wxPoint(c3.first,c3.second)};
-      m_dc.DrawPolygon(3,lines);  
-    }
+    void drawPolygon( const std::vector<std::pair<float,float> > &cds ){
+      PRECONDITION(cds.size()>=3,"must have at least three points");
+      wxPoint lines[cds.size()];
+      for(unsigned int i=0;i<cds.size();++i){
+        std::pair<float,float> c1 = getDrawCoords( cds[i] );
+        lines[i] = wxPoint(c1.first,c1.second);
+      }
+      m_dc.DrawPolygon(cds.size(),lines);  
+    };
 
     void clearDrawing()
     {

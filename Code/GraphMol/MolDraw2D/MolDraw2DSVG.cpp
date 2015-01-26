@@ -95,18 +95,19 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DSVG::drawTriangle( const std::pair<float , float> &cds1 ,
-                                   const std::pair<float , float> &cds2 ,
-                                   const std::pair<float, float> &cds3 ) {
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
-    std::pair<float,float> c3 = getDrawCoords( cds3 );
+  void MolDraw2DSVG::drawPolygon( const std::vector< std::pair<float , float> > &cds ){
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 
     std::string col=DrawColourToSVG(colour());
-    unsigned int width=1;
+    unsigned int width=lineWidth();
     std::string dashString="";
     d_os<<"<svg:path ";
-    d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << " " << c3.first << "," << c3.second << "' ";
+    d_os<<"d='M";
+    for(unsigned int i=0;i<cds.size();++i){
+      std::pair<float,float> c1 = getDrawCoords( cds[i] );
+      d_os << " " << c1.first << "," << c1.second;
+    }
+    d_os<<"' ";
     d_os<<"style='fill:"<<col<<";fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
     d_os<<" />\n";
 

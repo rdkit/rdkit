@@ -711,4 +711,16 @@ namespace RDKit {
     return make_pair( symbol , orient );
   }
 
+  void MolDraw2D::drawTriangle( const std::pair<float,float> &cds1 ,
+                                const std::pair<float,float> &cds2 ,
+                                const std::pair<float,float> &cds3 ) {
+    std::vector< std::pair<float,float> > pts(3);
+    pts[0]=cds1;
+    pts[1]=cds2;
+    pts[2]=cds3;
+    drawPolygon(pts);
+  };
+
+
+
 } // EO namespace RDKit

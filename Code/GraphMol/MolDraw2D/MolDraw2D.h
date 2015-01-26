@@ -100,9 +100,10 @@ namespace RDKit {
                              const std::pair<float,float> &cds );
 
     // draw a filled triangle
+    virtual void drawPolygon( const std::vector<std::pair<float,float> > &cds ) = 0;
     virtual void drawTriangle( const std::pair<float,float> &cds1 ,
                                const std::pair<float,float> &cds2 ,
-                               const std::pair<float,float> &cds3 ) = 0;
+                               const std::pair<float,float> &cds3 );
 
 
 

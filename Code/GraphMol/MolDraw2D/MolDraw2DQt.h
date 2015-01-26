@@ -37,9 +37,7 @@ namespace RDKit {
     void drawLine( const std::pair<float,float> &cds1 ,
                    const std::pair<float,float> &cds2 );
     void drawChar( char c , const std::pair<float,float> &cds );
-    void drawTriangle( const std::pair<float,float> &cds1 ,
-                       const std::pair<float,float> &cds2 ,
-                       const std::pair<float,float> &cds3 );
+    void drawPolygon( const std::vector<std::pair<float,float> > &cds );
     void clearDrawing();
 
     // using the current scale, work out the size of the label in molecule coordinates
