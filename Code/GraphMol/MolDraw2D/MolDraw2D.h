@@ -75,6 +75,9 @@ namespace RDKit {
     virtual void setDash( const DashPattern &patt ) { curr_dash_ = patt; }
     virtual const DashPattern &dash() const { return curr_dash_; }
 
+    virtual void setLineWidth( int width ) { curr_width_ = width; }
+    virtual const int lineWidth() const { return curr_width_; }
+    
     // establishes whether to put string draw mode into super- or sub-script
     // mode based on contents of instring from i onwards. Increments i appropriately
     // and returns true or false depending on whether it did something or not
@@ -112,6 +115,7 @@ namespace RDKit {
     // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
     // than the default width of a double bond)
     float font_size_;
+    int curr_width_;
     DrawColour curr_colour_;
     DashPattern curr_dash_;
 

@@ -35,7 +35,7 @@ namespace RDKit {
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
 
-    unsigned int width=2;
+    unsigned int width=lineWidth();
     std::string dashString="";
 
     cairo_set_line_width(d_cr,width);

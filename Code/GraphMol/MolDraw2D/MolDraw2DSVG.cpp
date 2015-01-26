@@ -63,7 +63,7 @@ namespace RDKit {
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
     std::string col=DrawColourToSVG(colour());
-    unsigned int width=2;
+    unsigned int width=lineWidth();
     std::string dashString="";
     const DashPattern &dashes=dash();
     if(dashes.size()){
@@ -103,7 +103,7 @@ namespace RDKit {
     std::pair<float,float> c3 = getDrawCoords( cds3 );
 
     std::string col=DrawColourToSVG(colour());
-    unsigned int width=2;
+    unsigned int width=1;
     std::string dashString="";
     d_os<<"<svg:path ";
     d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << " " << c3.first << "," << c3.second << "' ";
