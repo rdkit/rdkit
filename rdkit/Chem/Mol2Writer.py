@@ -109,7 +109,7 @@ def _sybyl_atom_type(atom):
     if atomic_num == 6:
         if atom.GetIsAromatic():
             sybyl = 'C.ar'
-        elif _atom_matches_smarts(atom, 'C(=N)(N)N*'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+        elif _atom_matches_smarts(atom, 'NC(=N)N'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
             sybyl = 'C.cat'
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb if hyb < 3 else 3)
@@ -125,7 +125,7 @@ def _sybyl_atom_type(atom):
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb)
     elif atomic_num == 8:
-        if _atom_matches_smarts(atom, 'C(=O)[O;H,-]'):
+        if _atom_matches_smarts(atom, '[CX3](=O)[OX1H0-,OX2H1]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
             sybyl = 'O.co2'
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb)
@@ -133,7 +133,7 @@ def _sybyl_atom_type(atom):
         if _atom_matches_smarts(atom, '[$([#16X3]=[OX1]),$([#16X3+][OX1-])]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
             sybyl = 'S.O'
         elif _atom_matches_smarts(atom, 'S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
-            sybyl = 'S.O2'
+            sybyl = 'S.o2'
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb)
     elif atomic_num == 15 and hyb == 3:
