@@ -87,8 +87,10 @@ namespace RDKit {
 
     d_os<<"<svg:text";
     d_os<<" x='" << cds.first;
-    d_os<< "' y='" << cds.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
-    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
+    // doesn't seem like the inclusion of the fontSz should be necessary, but vertical text alignment seems impossible
+    // The 0.9 is an empirical factor to account for the descender on the font.
+    d_os<< "' y='" << cds.second + 0.9*fontSz <<"'"; 
+    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
     d_os<<" >";
     d_os<<c;
     d_os<<"</svg:text>";
@@ -185,7 +187,6 @@ namespace RDKit {
 
       label_height = fontSize();
       float char_width = fontSize() * static_cast<float>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
-      //char_width *= 0.75; // extremely empirical
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {
@@ -197,9 +198,9 @@ namespace RDKit {
     }
 
     // subscript keeps its bottom in line with the bottom of the bit chars,
-    // superscript goes above the original char top by a quarter
+    // superscript goes above the original char top by a bit (empirical)
     if( had_a_super ) {
-      label_height *= 1.25;
+      label_height *= 1.1;
     }
   }
 
@@ -220,8 +221,12 @@ namespace RDKit {
 
     d_os<<"<svg:text";
     d_os<<" x='" << draw_coords.first;
-    d_os<< "' y='" << draw_coords.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
-    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
+    
+    // doesn't seem like the inclusion of the fontSz should be necessary, but vertical text alignment seems impossible
+    // The 0.9 is an empirical factor to account for the descender on the font.
+    d_os<< "' y='" << draw_coords.second + 0.9*fontSz <<"'"; 
+
+    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
     d_os<<" >";
 
     int draw_mode = 0; // 0 for normal, 1 for superscript, 2 for subscript
