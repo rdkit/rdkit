@@ -109,7 +109,7 @@ def _sybyl_atom_type(atom):
     if atomic_num == 6:
         if atom.GetIsAromatic():
             sybyl = 'C.ar'
-        elif _atom_matches_smarts(atom, 'NC(=N)N'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+        elif _atom_matches_smarts(atom, '[NX3H1,NX2,NX3H2]C(=[NH1])[NH2]'):
             sybyl = 'C.cat'
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb if hyb < 3 else 3)
@@ -119,6 +119,8 @@ def _sybyl_atom_type(atom):
         elif _atom_matches_smarts(atom, 'C(=O)-N'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
             sybyl = 'N.am'
         elif _atom_matches_smarts(atom, '[$([nX3](:*):*),$([nX2](:*):*),$([#7X2]=*),$([NX3](=*)=*),$([#7X3+](-*)=*),$([#7X3+H]=*)]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+            sybyl = 'N.pl3'
+        elif _atom_matches_smarts(atom, '[NX3H1,NX2,NX3H2]C(=[NH1])[NH2]'): # guanidine has N.pl3
             sybyl = 'N.pl3'
         elif hyb == 3 and atom.GetFormalCharge():
             sybyl = 'N.4'
