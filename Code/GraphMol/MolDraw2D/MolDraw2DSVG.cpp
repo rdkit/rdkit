@@ -118,6 +118,34 @@ namespace RDKit {
 
   }
 
+  void MolDraw2DSVG::drawEllipse( const std::pair<float,float> &cds1 ,
+                                  const std::pair<float,float> &cds2 ) {
+    std::pair<float,float> c1 = getDrawCoords( cds1 );
+    std::pair<float,float> c2 = getDrawCoords( cds2 );
+    float w = c2.first - c1.first;
+    float h = c2.second - c1.second;
+    float cx=c1.first + w/2;
+    float cy=c1.second + h/2;
+    w = w>0 ? w : -1*w;
+    h = h>0 ? h : -1*h;
+    
+    std::string col=DrawColourToSVG(colour());
+    unsigned int width=lineWidth();
+    std::string dashString="";
+    d_os<<"<svg:ellipse" <<" cx='"<<cx<<"'" <<" cy='"<<cy<<"'" <<" rx='"<<w/2<<"'" <<" ry='"<<h/2<<"'";
+
+    d_os<<" style='";
+    if(fillPolys())
+      d_os<<"fill:"<<col<<";fill-rule:evenodd";
+    else
+      d_os<<"fill:none;";
+
+    d_os<<"stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+    d_os<<" />\n";
+  }
+  
+
+
   // ****************************************************************************
   void MolDraw2DSVG::clearDrawing() {
     d_os << "<svg:rect";
