@@ -14,6 +14,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # unless it's in a directory that actualy has a target. So in order to 
   # cleanup files created by the python tests we have to put something
   # here with the ugly relative path
+  IF(COMMAND cmake_policy)
+     CMAKE_POLICY(SET CMP0009 NEW)
+  ENDIF(COMMAND cmake_policy)
   FILE(GLOB_RECURSE RDK_PYC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../../rdkit/*.pyc")
   FILE(GLOB_RECURSE RDK_PROJECTSQLT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../../Projects/*.sqlt")
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
