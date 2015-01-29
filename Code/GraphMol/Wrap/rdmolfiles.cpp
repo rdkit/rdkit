@@ -10,9 +10,11 @@
 //
 #include "rdmolops.h"
 #include <boost/python.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -222,6 +224,55 @@ namespace RDKit{
     delete asymbols;
     delete bsymbols;
     return res;
+  }
+
+  std::vector<int> CanonicalRankAtoms(const ROMol &mol,
+                                      bool breakTies=true,
+                                      bool includeChirality=true,
+                                      bool includeIsotopes=true)
+  {
+    std::vector<int> ranks(mol.getNumAtoms());
+    MolOps::rankAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
+    return ranks;
+  }
+
+  std::vector<int> CanonicalRankAtomsInFragment(
+                         const ROMol &mol,
+                         python::object atomsToUse,
+                         python::object bondsToUse,
+                         python::object atomSymbols,
+                         python::object bondSymbols,
+                         bool breakTies=true)
+
+  {
+    std::vector<int> *avect=pythonObjectToVect(
+                            atomsToUse,static_cast<int>(mol.getNumAtoms()));
+    if(!avect || !(avect->size())){
+      throw_value_error("atomsToUse must not be empty");
+    }
+    std::vector<int> *bvect=pythonObjectToVect(
+                            bondsToUse,static_cast<int>(mol.getNumBonds()));
+    std::vector<std::string> *asymbols=pythonObjectToVect<std::string>(atomSymbols);
+    std::vector<std::string> *bsymbols=pythonObjectToVect<std::string>(bondSymbols);
+    if(asymbols && asymbols->size()!=mol.getNumAtoms()){
+      throw_value_error("length of atom symbol list != number of atoms");
+    }
+    if(bsymbols && bsymbols->size()!=mol.getNumBonds()){
+      throw_value_error("length of bond symbol list != number of bonds");
+    }
+
+    boost::dynamic_bitset<> atoms(mol.getNumAtoms());
+    for(size_t i=0; i<avect->size(); ++i)
+      atoms[(*avect)[i]] = true;
+    boost::dynamic_bitset<> bonds(mol.getNumBonds());
+    for(size_t i=0; i<bvect->size(); ++i)
+      bonds[(*bvect)[i]] = true;
+    
+    std::vector<int> ranks(mol.getNumAtoms());    
+    MolOps::rankAtomsInFragment(mol, ranks,
+                                atoms, bonds,
+                                asymbols, bsymbols, breakTies);
+    return ranks;
   }
 
 }
@@ -801,6 +852,58 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("confId")=-1,python::arg("flavor")=0),
 	      docString.c_str());
 
+  docString="Returns the canonical atom ranking for each atom of a molecule fragment\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse : a list of atoms to include in the fragment\n\
+    - bondsToUse : (optional) a list of bonds to include in the fragment\n\
+                   if not provided, all bonds between the atoms provided\n\
+                   will be included.\n\
+    - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
+                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
+                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+    - breakTies: (optional) force breaking of ranked ties\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("CanonicalRankAtoms",CanonicalRankAtoms,
+	      (python::arg("mol"),
+	       python::arg("breakTies")=true,
+	       python::arg("includeChirality")=true,
+	       python::arg("includeIsotopes")=true),
+	      docString.c_str());
+  
+  docString="Returns the canonical atom ranking for each atom of a molecule fragment\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse : a list of atoms to include in the fragment\n\
+    - bondsToUse : (optional) a list of bonds to include in the fragment\n\
+                   if not provided, all bonds between the atoms provided\n\
+                   will be included.\n\
+    - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
+                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
+                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+    - breakTies: (optional) force breaking of ranked ties\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("CanonicalRankAtomsInFragment",CanonicalRankAtomsInFragment,
+	      (python::arg("mol"),
+               python::arg("atomsToUse"),
+               python::arg("bondsToUse")=0,
+               python::arg("atomSymbols")=0,
+               python::arg("bondSymbols")=0,
+	       python::arg("breakTies")=true),
+	      docString.c_str());
+  
   /********************************************************
    * MolSupplier stuff
    *******************************************************/

@@ -2584,6 +2584,32 @@ CAS<~>
     self.assertEqual(len(cpa[0]),m.GetNumAtoms())
     print(cpa)
 
+  def test91RankAtoms(self):
+    m = Chem.MolFromSmiles('ONCS.ONCS')
+    ranks = Chem.CanonicalRankAtoms(m,breakTies=False)
+    self.assertEqual(list(ranks[0:4]), list(ranks[4:]))
+
+    m = Chem.MolFromSmiles("c1ccccc1")
+    ranks = Chem.CanonicalRankAtoms(m,breakTies=False)
+    for x in ranks:
+      self.assertEqual(x, 0)
+
+    m = Chem.MolFromSmiles("C1NCN1")
+    ranks = Chem.CanonicalRankAtoms(m,breakTies=False)
+    self.assertEqual(ranks[0], ranks[2])
+    self.assertEqual(ranks[1], ranks[3])
+    
+  def test91RankAtomsInFragment(self):
+    m = Chem.MolFromSmiles('ONCS.ONCS')
+    ranks = Chem.CanonicalRankAtomsInFragment(m,
+                                              [0,1,2,3],
+                                              [0,1,2])
+    
+    ranks2 = Chem.CanonicalRankAtomsInFragment(m,
+                                               [4,5,6,7],
+                                               [3,4,5])
+    self.assertEquals(list(ranks[0:4]),list(ranks2[4:]))
+
 
         
 if __name__ == '__main__':
