@@ -35,7 +35,7 @@ def MolToMol2File(mol, filename, confId=-1, addHs = True):
     block = MolToMol2Block(mol, confId, addHs = addHs)
     open(filename, "w").writelines(block)
     
-def MolToMol2Block(mol, confId=-1, addHs = True):
+def MolToMol2Block(mol, confId=-1, addHs = True, addCharges = True):
     """Returns a Mol2 string block for a molecule
       ARGUMENTS:
 
@@ -64,10 +64,14 @@ def MolToMol2Block(mol, confId=-1, addHs = True):
     # add explicit hydrogens (since mol2 reader requires them)
     if addHs:
         h_coords = mol.GetNumConformers() > 0 and mol.GetConformer(-1).Is3D()
-        mol = AddHs(mol, addCoords=h_coords)
+        try:
+            mol = AddHs(mol, addCoords=h_coords)
+        except RuntimeError:
+            mol = AddHs(mol, addCoords=False)
     
     # compute charges
-    ComputeGasteigerCharges(mol)
+    if addCharges:
+        ComputeGasteigerCharges(mol)
     
     for confId in confIds:
         
