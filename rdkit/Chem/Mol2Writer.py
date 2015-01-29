@@ -51,6 +51,7 @@ def MolToMol2Block(mol, confId=-1, addHs = True):
     #
     # References 
     # - Format specs http://www.tripos.com/data/support/mol2.pdf
+    # - Atom typing http://www.sdsc.edu/CCMS/Packages/cambridge/pluto/atom_types.html
     #
     
     confIds = (confId,)
@@ -106,33 +107,45 @@ def _sybyl_atom_type(atom):
     atomic_num = atom.GetAtomicNum()
     hyb = atom.GetHybridization()-1 # -1 since 1 = sp, 2 = sp1 etc
     hyb = min(hyb, 3)
+    degree = atom.GetDegree()
+    
+    ### define groups for atom types
+    #guanidine = '[NX3]([!O])([!O])!:C(!:[NX3([!O])([!O]))]!:[NX3]([!O])([!O])' # strict
+    #guanidine = '[NX3]([!O])([!O])!:C!:[NX3]([!O])([!O])' # corina compatible
+    guanidine = '[NX3]!:C(!:[NX3])!:[NX3,NX2]'
+    guanidine = '[NX3]C([NX3])=[NX2]'
+    #guanidine = '[NX3H1,NX2,NX3H2]C(=[NH1])[NH2]' # previous
+    ###
+    
     if atomic_num == 6:
         if atom.GetIsAromatic():
             sybyl = 'C.ar'
-        elif _atom_matches_smarts(atom, '[NX3H1,NX2,NX3H2]C(=[NH1])[NH2]'):
+        elif degree == 3 and _atom_matches_smarts(atom, guanidine):
             sybyl = 'C.cat'
         else:
-            sybyl = '%s.%i' % (atom_symbol, hyb if hyb < 3 else 3)
+            sybyl = '%s.%i' % (atom_symbol, hyb)
     elif atomic_num == 7:
         if atom.GetIsAromatic():
             sybyl = 'N.ar'
-        elif _atom_matches_smarts(atom, 'C(=O)-N'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+        elif degree == 3 and _atom_matches_smarts(atom, 'C(=[O,S])-N'):
             sybyl = 'N.am'
-        elif _atom_matches_smarts(atom, '[$([nX3](:*):*),$([nX2](:*):*),$([#7X2]=*),$([NX3](=*)=*),$([#7X3+](-*)=*),$([#7X3+H]=*)]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+        elif  degree == 3 and _atom_matches_smarts(atom, '[$(N!-*),$([NX3H1]-*!-*)]'):
             sybyl = 'N.pl3'
-        elif _atom_matches_smarts(atom, '[NX3H1,NX2,NX3H2]C(=[NH1])[NH2]'): # guanidine has N.pl3
+        elif degree == 3 and _atom_matches_smarts(atom, guanidine): # guanidine has N.pl3
             sybyl = 'N.pl3'
-        elif hyb == 3 and atom.GetFormalCharge():
+        elif degree == 4 or hyb == 3 and atom.GetFormalCharge():
             sybyl = 'N.4'
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb)
     elif atomic_num == 8:
-        if _atom_matches_smarts(atom, '[CX3](=O)[OX1H0-,OX2H1]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+        if degree == 1 and _atom_matches_smarts(atom, '[CX3](=O)[OX1H0-,OX2H1]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
             sybyl = 'O.co2'
+        elif degree >= 2:
+            sybyl = 'O.3'
         else:
-            sybyl = '%s.%i' % (atom_symbol, hyb)
+            sybyl = 'O.2'
     elif atomic_num == 16:
-        if _atom_matches_smarts(atom, '[$([#16X3]=[OX1]),$([#16X3+][OX1-])]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+        if degree == 3 and _atom_matches_smarts(atom, '[$([#16X3]=[OX1]),$([#16X3+][OX1-])]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
             sybyl = 'S.O'
         elif _atom_matches_smarts(atom, 'S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]'): # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
             sybyl = 'S.o2'
