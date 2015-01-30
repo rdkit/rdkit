@@ -1067,7 +1067,7 @@ mol-4,CCOC
 
     m1 = Chem.MolFromSmiles('[H]CCl')
     self.assertTrue(m1.GetNumAtoms()==2)
-    self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs()==0)
+    self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs()==1)
     m1 = Chem.MolFromSmiles('[H][CH2]Cl')
     self.assertTrue(m1.GetNumAtoms()==2)
     self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs()==3)
