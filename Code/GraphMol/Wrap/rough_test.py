@@ -392,6 +392,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m2.GetNumAtoms(),2)
     self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
     
+    m = Chem.MolFromSmiles('CC[H]',False)
+    self.assertEqual(m.GetNumAtoms(),3)
+    m1 = Chem.RemoveHs(m)
+    self.assertEqual(m1.GetNumAtoms(),2)
+    self.assertEqual(m1.GetAtomWithIdx(1).GetNumExplicitHs(),0)    
+    m1 = Chem.RemoveHs(m,updateExplicitCount=True)
+    self.assertEqual(m1.GetNumAtoms(),2)
+    self.assertEqual(m1.GetAtomWithIdx(1).GetNumExplicitHs(),1)    
+
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
     self.assertTrue(m.GetNumAtoms()==4)

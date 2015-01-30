@@ -267,9 +267,6 @@ namespace RDKit{
   ROMol *addHs(const ROMol &orig,bool explicitOnly=false,bool addCoords=false){
     return MolOps::addHs(orig,explicitOnly,addCoords);
   }
-  ROMol *removeHs(const ROMol &orig,bool implicitOnly=false){
-    return MolOps::removeHs(orig,implicitOnly);
-  }
   int getSSSR(ROMol &mol) {
     VECT_INT_VECT rings;
     int nr = MolOps::findSSSR(mol, rings);
@@ -749,14 +746,21 @@ namespace RDKit{
     - implicitOnly: (optional) if this toggle is set, only implicit Hs will\n\
       be removed from the graph.  Default value is 0 (remove implicit and explicit Hs).\n\
 \n\
+    - updateExplicitCount: (optional) if this toggle is set, the explicit H count on atoms with \n\
+      Hs will be updated. Default value is 0 (do not update explicit H count).\n\
+\n\
+    - sanitize: (optional) if this toggle is set, the molecule will be sanitized after the Hs\n\
+      are removed. Default value is 1 (do sanitize).\n\
+\n\
   RETURNS: a new molecule with the Hs removed\n\
 \n\
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
 \n";
-      python::def("RemoveHs", removeHs,
-                  (python::arg("mol"),python::arg("implicitOnly")=false),
+      python::def("RemoveHs", (ROMol *(*)(const ROMol &,bool,bool,bool))MolOps::removeHs,
+                  (python::arg("mol"),python::arg("implicitOnly")=false,
+                   python::arg("updateExplicitCount")=false,python::arg("sanitize")=true),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
