@@ -2593,6 +2593,41 @@ CAS<~>
     self.assertEqual(len(cpa[0]),m.GetNumAtoms())
     print(cpa)
 
+  def test91RankAtoms(self):
+    m = Chem.MolFromSmiles('ONCS.ONCS')
+    ranks = Chem.CanonicalRankAtoms(m,breakTies=False)
+    self.assertEqual(list(ranks[0:4]), list(ranks[4:]))
+
+    m = Chem.MolFromSmiles("c1ccccc1")
+    ranks = Chem.CanonicalRankAtoms(m,breakTies=False)
+    for x in ranks:
+      self.assertEqual(x, 0)
+
+    m = Chem.MolFromSmiles("C1NCN1")
+    ranks = Chem.CanonicalRankAtoms(m,breakTies=False)
+    self.assertEqual(ranks[0], ranks[2])
+    self.assertEqual(ranks[1], ranks[3])
+    
+  def test91RankAtomsInFragment(self):
+    m = Chem.MolFromSmiles('ONCS.ONCS')
+    ranks = Chem.CanonicalRankAtomsInFragment(m,
+                                              [0,1,2,3],
+                                              [0,1,2])
+    
+    ranks2 = Chem.CanonicalRankAtomsInFragment(m,
+                                               [4,5,6,7],
+                                               [3,4,5])
+    self.assertEquals(list(ranks[0:4]),list(ranks2[4:]))
+    self.assertEquals(list(ranks[4:]), [-1]*4)
+    self.assertEquals(list(ranks2[0:4]), [-1]*4)
+
+    # doc tests
+    mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
+    self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False)),
+                      [0,1,0,1,-1,-1,-1,-1])
+    self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False)),
+                      [-1,-1,-1,-1,0,1,0,1])
+
 
         
 if __name__ == '__main__':
