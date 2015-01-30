@@ -264,8 +264,9 @@ namespace RDKit{
     boost::dynamic_bitset<> atoms(mol.getNumAtoms());
     for(size_t i=0; i<avect->size(); ++i)
       atoms[(*avect)[i]] = true;
+    
     boost::dynamic_bitset<> bonds(mol.getNumBonds());
-    for(size_t i=0; i<bvect->size(); ++i)
+    for(size_t i=0; bvect && i<bvect->size(); ++i)
       bonds[(*bvect)[i]] = true;
     
     std::vector<int> ranks(mol.getNumAtoms());    
@@ -860,19 +861,25 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("confId")=-1,python::arg("flavor")=0),
 	      docString.c_str());
 
-  docString="Returns the canonical atom ranking for each atom of a molecule fragment\n\
+  docString="Returns the canonical atom ranking for each atom of a molecule fragment.\n\
+  If breakTies is False, this returns the symmetry class for each atom.  The symmetry\n\
+  class is used by the canonicalization routines to type each atom based on the whole\n\
+  chemistry of the molecular graph.  Any atom with the same rank (symmetry class) is\n\
+  indistinguishable.  For example:\n\
+\n\
+    > mol = MolFromSmiles('C1NCN1')\n\
+    > list(CanonicalRankAtoms(mol, breakTies=False))\n\
+    [0,1,0,1]\n\
+\n\
+  In this case the carbons have the same symmetry class and the nitrogens have the same\n\
+  symmetry class.  From the perspective of the Molecular Graph, they are indentical.\n\
+\n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule\n\
-    - atomsToUse : a list of atoms to include in the fragment\n\
-    - bondsToUse : (optional) a list of bonds to include in the fragment\n\
-                   if not provided, all bonds between the atoms provided\n\
-                   will be included.\n\
-    - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
-                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
-    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
-    - breakTies: (optional) force breaking of ranked ties\n\
+    - breakTies: (optional) force breaking of ranked ties [default=True]\n\
+    - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
+    - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -886,6 +893,14 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      docString.c_str());
   
   docString="Returns the canonical atom ranking for each atom of a molecule fragment\n\
+  See help(CanonicalRankAtoms) for more information.\n\
+\n\
+   > mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
+   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
+   [0,1,0,1,-1,-1,-1,-1]\n\
+   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
+   [-1,-1,-1,-1,0,1,0,1]\n\
+\n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule\n\
