@@ -5507,47 +5507,27 @@ void test58MolFileValueRoundTrip(){
     "M  END";
   
   rxn = RxnBlockToChemicalReaction(rxnB);
-  // ensure we have mol file values
-  bool found = false;
+  // check the mol file values
   for (MOL_SPTR_VECT::const_iterator template_mol = rxn->beginReactantTemplates();
-       template_mol != rxn->endReactantTemplates(); ++template_mol)
-    {
-      for(ROMol::AtomIterator atIt=template_mol->get()->beginAtoms();
-          atIt!=template_mol->get()->endAtoms();++atIt){
-        if ((*atIt)->getIdx() == 1) {
-          found = true;
-          TEST_ASSERT((*atIt)->hasProp(common_properties::molFileValue));
-          TEST_ASSERT((*atIt)->getProp<std::string>(common_properties::molFileValue) ==
-                      "aldehyde");
-        }
-        
-      }
-    }
-  TEST_ASSERT(found);
+       template_mol != rxn->endReactantTemplates(); ++template_mol) {
+    const Atom *at=(*template_mol)->getAtomWithIdx(1);
+    TEST_ASSERT(at->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
+                "aldehyde");
+  }
 
-  found = false;  
   ChemicalReaction *rxn2 = RxnBlockToChemicalReaction(ChemicalReactionToRxnBlock(*rxn));
 
   for (MOL_SPTR_VECT::const_iterator template_mol = rxn2->beginReactantTemplates();
-       template_mol != rxn2->endReactantTemplates(); ++template_mol)
-    {
-      for(ROMol::AtomIterator atIt=template_mol->get()->beginAtoms();
-          atIt!=template_mol->get()->endAtoms();++atIt){
-        if ((*atIt)->getIdx() == 1) {
-          found = true;
-          TEST_ASSERT((*atIt)->hasProp(common_properties::molFileValue));
-          TEST_ASSERT((*atIt)->getProp<std::string>(common_properties::molFileValue) ==
-                      "aldehyde");
-        }
-        
-      }
-    }
+       template_mol != rxn2->endReactantTemplates(); ++template_mol) {
+    const Atom *at=(*template_mol)->getAtomWithIdx(1);
+    TEST_ASSERT(at->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
+                "aldehyde");
+  }
   
   delete rxn;
   delete rxn2;
-  
-  TEST_ASSERT(found);
-
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
