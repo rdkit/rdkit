@@ -2609,6 +2609,8 @@ CAS<~>
                                                [4,5,6,7],
                                                [3,4,5])
     self.assertEquals(list(ranks[0:4]),list(ranks2[4:]))
+    self.assertEquals(list(ranks[4:]), [-1]*4)
+    self.assertEquals(list(ranks2[0:4]), [-1]*4)
 
 
         

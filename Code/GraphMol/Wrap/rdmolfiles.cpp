@@ -272,6 +272,14 @@ namespace RDKit{
     MolOps::rankAtomsInFragment(mol, ranks,
                                 atoms, bonds,
                                 asymbols, bsymbols, breakTies);
+
+    // set unused ranks to -1 for the Python interface
+    for(size_t i=0; i<atoms.size(); ++i)
+    {
+      if (!atoms[i])
+        ranks[i] = -1;
+    }
+    
     return ranks;
   }
 
