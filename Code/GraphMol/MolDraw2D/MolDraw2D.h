@@ -106,8 +106,8 @@ namespace RDKit {
                                const std::pair<float,float> &cds3 );
     virtual void drawEllipse(  const std::pair<float,float> &cds1 ,
                                const std::pair<float,float> &cds2 );
-    bool fillPolys() const { return fill_polys_; }
-    bool setFillPolys(bool val) { fill_polys_ = val; }
+    virtual bool fillPolys() const { return fill_polys_; }
+    virtual void setFillPolys(bool val) { fill_polys_ = val; }
 
 
 

@@ -42,6 +42,8 @@ namespace RDKit {
                    const std::pair<float,float> &cds2 );
     void drawString( const std::string &str, const std::pair<float,float> &cds );
     void drawPolygon( const std::vector<std::pair<float,float> > &cds );
+    void drawEllipse( const std::pair<float,float> &cds1 ,
+                      const std::pair<float,float> &cds2 );
     void clearDrawing();
 
     // using the current scale, work out the size of the label in molecule coordinates
