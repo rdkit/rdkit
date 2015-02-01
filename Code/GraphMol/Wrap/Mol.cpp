@@ -192,7 +192,35 @@ namespace RDKit {
     return mol.getNumAtoms(onlyExplicit);
   }
 
+  class ReadWriteMol : public RWMol {
+  public:
+    ReadWriteMol(const ROMol &m) : RWMol(m){
+    };
 
+    void RemoveAtom(unsigned int idx){
+      removeAtom(idx);
+    };
+    void RemoveBond(unsigned int idx1,unsigned int idx2){
+      removeBond(idx1,idx2);
+    };
+    int AddBond(unsigned int begAtomIdx,
+                 unsigned int endAtomIdx,
+                 Bond::BondType order=Bond::UNSPECIFIED)
+    {
+      return addBond(begAtomIdx,endAtomIdx,order);
+    };
+    int AddAtom(Atom *atom){
+      PRECONDITION(atom,"bad atom");
+      return addAtom(atom,true,false);
+    };
+    void ReplaceAtom(unsigned int idx,Atom *atom){
+      replaceAtom(idx,atom);
+    };
+    ROMol *GetMol() const{
+      ROMol *res=new ROMol(*this);
+      return res;
+    }
+  };
 
   std::string molClassDoc = "The Molecule class.\n\n\
   In addition to the expected Atoms and Bonds, molecules contain:\n\
@@ -206,6 +234,15 @@ namespace RDKit {
           molecule itself is modified, for example).\n\
         Molecules also have the concept of *private* properties, which are tagged\n\
           by beginning the property name with an underscore (_).\n";
+  std::string rwmolClassDoc = "The RW molecule class (read/write)\n\n\
+  This class is a more-performant version of the EditableMolecule class in that\n\
+  it is a 'live' molecule and shares the interface from the Mol class.\n\
+  All changes are performed without the need to create a copy of the\n\
+  molecule using GetMol() (this is still available, however).\n\
+  \n\
+  n.b. Eventually this class may become a direct replacement for EditableMol";
+
+
 struct mol_wrapper {
   static void wrap(){
     python::register_exception_translator<ConformerException>(&rdExceptionTranslator);
@@ -437,7 +474,30 @@ struct mol_wrapper {
                 "    - useQueryQueryMatches: use query-query matching logic\n\n"
 		"  RETURNS: True or False\n");
 
-    
+
+    python::class_<ReadWriteMol, python::bases<ROMol> >("RWMol",
+                                                        rwmolClassDoc.c_str(),
+        python::init<const ROMol &>("Construct from a Mol"))
+      .def("RemoveAtom",&ReadWriteMol::RemoveAtom,
+      "Remove the specified atom from the molecule")
+      .def("RemoveBond",&ReadWriteMol::RemoveBond,
+      "Remove the specified bond from the molecule")
+      
+      .def("AddBond",&ReadWriteMol::AddBond,
+                     (python::arg("mol"),python::arg("beginAtomIdx"),python::arg("endAtomIdx"),
+                      python::arg("order")=Bond::UNSPECIFIED),
+      "add a bond, returns the index of the newly added bond")
+      
+      .def("AddAtom",&ReadWriteMol::AddAtom,
+                     (python::arg("mol"),python::arg("atom")),
+      "add an atom, returns the index of the newly added atom")
+      .def("ReplaceAtom",&ReadWriteMol::ReplaceAtom,
+                     (python::arg("mol"),python::arg("index"),python::arg("newAtom")),
+      "replaces the specified atom with the provided one")
+      .def("GetMol",&ReadWriteMol::GetMol,
+           "Returns a Mol (a normal molecule)",
+           python::return_value_policy<python::manage_new_object>())
+      ;
   };
 };
 }// end of namespace
