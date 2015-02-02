@@ -177,7 +177,7 @@ namespace RDKit{
       PRECONDITION(bond,"bad bond");
       if(atomToLeftIdx<0) atomToLeftIdx=bond->getBeginAtomIdx();
 
-      std::stringstream res;
+      std::string res="";
       bool aromatic=false;
       if( !doKekule &&
           (bond->getBondType() == Bond::SINGLE ||
@@ -204,10 +204,10 @@ namespace RDKit{
         if( dir != Bond::NONE && dir != Bond::UNKNOWN ){
           switch(dir){
           case Bond::ENDDOWNRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "\\";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "/";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "/";
             break;
           default:
             break;
@@ -219,40 +219,40 @@ namespace RDKit{
           // FIX: we should be able to dump kekulized smiles
           //   currently this is possible by removing all
           //   isAromatic flags, but there should maybe be another way
-          if(allBondsExplicit) res<<"-";
-          else if( aromatic && !bond->getIsAromatic() ) res << "-";
+          if(allBondsExplicit) res = "-";
+          else if( aromatic && !bond->getIsAromatic() ) res = "-";
         }
         break;
       case Bond::DOUBLE:
         // see note above
-        if( !aromatic || !bond->getIsAromatic() ) res << "=";
+        if( !aromatic || !bond->getIsAromatic() ) res = "=";
         break;
-      case Bond::TRIPLE: res << "#"; break;
+      case Bond::TRIPLE: res = "#"; break;
       case Bond::AROMATIC:
         if ( dir != Bond::NONE && dir != Bond::UNKNOWN ){
           switch(dir){
           case Bond::ENDDOWNRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "\\";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "/";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "/";
             break;
           default:
             break;
           }
         } else if(allBondsExplicit || !aromatic ){
-          res << ":";
+          res = ":";
         }
         break;
       case Bond::DATIVE:
         if(atomToLeftIdx>=0 &&
-           bond->getBeginAtomIdx()==static_cast<unsigned int>(atomToLeftIdx) ) res << ">";
-        else res << "<";
+           bond->getBeginAtomIdx()==static_cast<unsigned int>(atomToLeftIdx) ) res = ">";
+        else res = "<";
         break;
       default:
-        res << "~";
+        res = "~";
       }
-      return res.str();
+      return res;
     }
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
