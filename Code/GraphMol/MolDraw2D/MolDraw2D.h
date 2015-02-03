@@ -31,7 +31,13 @@
 // ****************************************************************************
 
 namespace RDKit {
- 
+
+  struct MolDrawOptions {
+    bool dummiesAreAttachments; // draws "breaks" at dummy atoms
+
+    MolDrawOptions() : dummiesAreAttachments(false) {};
+  };
+  
   class MolDraw2D {
   public :
 
@@ -109,7 +115,8 @@ namespace RDKit {
     virtual bool fillPolys() const { return fill_polys_; }
     virtual void setFillPolys(bool val) { fill_polys_ = val; }
 
-
+    MolDrawOptions &drawOptions() { return options_; }
+    const MolDrawOptions &drawOptions() const { return options_; }
 
   private :
     int width_ , height_;
@@ -123,6 +130,7 @@ namespace RDKit {
     bool fill_polys_;
     DrawColour curr_colour_;
     DashPattern curr_dash_;
+    MolDrawOptions options_;
 
     std::vector<std::pair<float,float> > at_cds_; // from mol
     std::vector<int> atomic_nums_;
