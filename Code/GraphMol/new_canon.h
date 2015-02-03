@@ -50,6 +50,13 @@ namespace RDKit {
           return bondStereo<o.bondStereo;
         return nbrSymClass<o.nbrSymClass;
       }
+      static bool greater(const bondholder &lhs,const bondholder &rhs){
+        if(lhs.bondType!=rhs.bondType)
+          return lhs.bondType>rhs.bondType;
+        if(lhs.bondStereo!=rhs.bondStereo)
+          return lhs.bondStereo>rhs.bondStereo;
+        return lhs.nbrSymClass>rhs.nbrSymClass;
+      }
 
       static int compare(const bondholder &x,const bondholder &y,unsigned int div=1){
         if(x.bondType<y.bondType)
@@ -215,8 +222,7 @@ namespace RDKit {
           unsigned newSymClass = dp_atoms[nbrs.at(j).nbrIdx].index;
           nbrs.at(j).nbrSymClass = newSymClass;
         }
-        std::sort(nbrs.begin(),nbrs.end());
-        std::reverse(nbrs.begin(),nbrs.end());
+        std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
       }
 
       unsigned int getAtomRingNbrCode(unsigned int i) const {
@@ -236,94 +242,90 @@ namespace RDKit {
         PRECONDITION(dp_atoms,"no atoms");
         unsigned int ivi,ivj;
 
-        if(mode==1){
-          // always start with the current class:
-          ivi= dp_atoms[i].index;
-          ivj= dp_atoms[j].index;
-          if(ivi<ivj)
+        // always start with the current class:
+        ivi= dp_atoms[i].index;
+        ivj= dp_atoms[j].index;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // start by comparing degree
+        ivi= dp_atoms[i].degree;
+        ivj= dp_atoms[j].degree;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        if(dp_atoms[i].p_symbol &&
+            dp_atoms[j].p_symbol ) {
+          if( *(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol) )
             return -1;
-          else if(ivi>ivj)
+          else if( *(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol) )
             return 1;
+          else
+            return 0;
+        }
+        // move onto atomic number
+        ivi= dp_atoms[i].atom->getAtomicNum();
+        ivj= dp_atoms[j].atom->getAtomicNum();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
 
-          // start by comparing degree
-          ivi= dp_atoms[i].degree;
-          ivj= dp_atoms[j].degree;
-          if(ivi<ivj)
-            return -1;
-          else if(ivi>ivj)
-            return 1;
-
-          if(dp_atoms[i].p_symbol &&
-              dp_atoms[j].p_symbol ) {
-            if( *(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol) )
-              return -1;
-            else if( *(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol) )
-              return 1;
-            else
-              return 0;
-          }
-          // move onto atomic number
-          ivi= dp_atoms[i].atom->getAtomicNum();
-          ivj= dp_atoms[j].atom->getAtomicNum();
-          if(ivi<ivj)
-            return -1;
-          else if(ivi>ivj)
-            return 1;
-
-          // isotopes if we're using them
-          if(df_useIsotopes){
-            ivi=dp_atoms[i].atom->getIsotope();
-            ivj=dp_atoms[j].atom->getIsotope();
-            if(ivi<ivj)
-              return -1;
-            else if(ivi>ivj)
-              return 1;
-          }
-
-          // nHs
-          ivi=dp_atoms[i].totalNumHs;
-          ivj=dp_atoms[j].totalNumHs;
-          if(ivi<ivj)
-            return -1;
-          else if(ivi>ivj)
-            return 1;
-
-          // charge
-          ivi=dp_atoms[i].atom->getFormalCharge();
-          ivj=dp_atoms[j].atom->getFormalCharge();
-          if(ivi<ivj)
-            return -1;
-          else if(ivi>ivj)
-            return 1;
-
-          // ring membership
-          // initial passes at this were just checking "isInRing" to allow
-          // a possible future more efficient check. These break on this
-          // lovely double-diamond pathological case:
-          //   *12*3*1*3*4*5*4*52
-          //
-          // probably going to regret allowing this to be skipped some day
-          ivi=dp_atoms[i].numRingMember;
-          ivj=dp_atoms[j].numRingMember;
+        // isotopes if we're using them
+        if(df_useIsotopes){
+          ivi=dp_atoms[i].atom->getIsotope();
+          ivj=dp_atoms[j].atom->getIsotope();
           if(ivi<ivj)
             return -1;
           else if(ivi>ivj)
             return 1;
         }
 
+        // nHs
+        ivi=dp_atoms[i].totalNumHs;
+        ivj=dp_atoms[j].totalNumHs;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // charge
+        ivi=dp_atoms[i].atom->getFormalCharge();
+        ivj=dp_atoms[j].atom->getFormalCharge();
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+        // ring membership
+        // initial passes at this were just checking "isInRing" to allow
+        // a possible future more efficient check. These break on this
+        // lovely double-diamond pathological case:
+        //   *12*3*1*3*4*5*4*52
+        //
+        // probably going to regret allowing this to be skipped some day
+        ivi=dp_atoms[i].numRingMember;
+        ivj=dp_atoms[j].numRingMember;
+        if(ivi<ivj)
+          return -1;
+        else if(ivi>ivj)
+          return 1;
+
+
         // chirality if we're using it
-        if(mode==2 && df_useChirality){
+        if(df_useChirality){
           // first atom stereochem:
           ivi=0;
           ivj=0;
-          if(dp_atoms[i].atom->hasProp("_CIPCode")){
-            std::string cipCode;
-            dp_atoms[i].atom->getProp("_CIPCode",cipCode);
+          std::string cipCode;
+          if(dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
             ivi=cipCode=="R"?2:1;
           }
-          if(dp_atoms[j].atom->hasProp("_CIPCode")){
-            std::string cipCode;
-            dp_atoms[j].atom->getProp("_CIPCode",cipCode);
+          if(dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
             ivj=cipCode=="R"?2:1;
           }
           if(ivi<ivj)
@@ -340,7 +342,7 @@ namespace RDKit {
             return 1;
 
         }
-        if(mode==3 && df_useChiralityRings){
+        if(df_useChiralityRings){
           // ring stereochemistry
           if(dp_atoms[i].numRingMember && dp_atoms[j].numRingMember){
             ivi=getAtomRingNbrCode(i);
@@ -385,14 +387,6 @@ namespace RDKit {
 
         int v=basecomp(i,j,1);
         if(v) return v;
-        if(df_useChirality){
-          v=basecomp(i,j,2);
-          if(v) return v;
-        }
-        if(df_useChiralityRings){
-          v=basecomp(i,j,3);
-          if(v) return v;
-        }
 
         if(df_useNbrs){
           getAtomNeighborhood(i,dp_atoms[i].bonds);
@@ -424,9 +418,8 @@ namespace RDKit {
           const Atom *nbr = dp_atoms[nbrIdx].atom;
           nbrs.at(j).nbrSymClass = nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+dp_atoms[nbrIdx].index+1;
         }
-        std::sort(nbrs.begin(),nbrs.end());
+        std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
         // FIX: don't want to be doing this long-term
-        std::reverse(nbrs.begin(),nbrs.end());
       }
 
       int basecomp(int i,int j) const {
@@ -460,14 +453,11 @@ namespace RDKit {
         // atom stereochem:
         ivi=0;
         ivj=0;
-        if(dp_atoms[i].atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          dp_atoms[i].atom->getProp("_CIPCode",cipCode);
+        std::string cipCode;
+        if(dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
           ivi=cipCode=="R"?2:1;
         }
-        if(dp_atoms[j].atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          dp_atoms[j].atom->getProp("_CIPCode",cipCode);
+        if(dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
           ivj=cipCode=="R"?2:1;
         }
         if(ivi<ivj)

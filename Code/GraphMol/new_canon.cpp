@@ -151,7 +151,7 @@ namespace RDKit {
         }
       }
 
-      void getBonds(const ROMol &mol,const Atom *at,bool includeChirality,std::vector<bondholder> &nbrs){
+      void getBonds(const ROMol &mol,const Atom *at,std::vector<bondholder> &nbrs,bool includeChirality){
 
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = mol.getAtomBonds(at);
@@ -164,9 +164,8 @@ namespace RDKit {
           }
           unsigned int idx = bond->getOtherAtomIdx(at->getIdx());
           bondholder bh(bondholder(bond->getBondType(),stereo,idx,idx));
-          nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh),1,bh);
+          nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh,bondholder::greater),1,bh);
         }
-        std::reverse(nbrs.begin(),nbrs.end());
       }
 
       void getChiralBonds(const ROMol &mol,const Atom *at,std::vector<bondholder> &nbrs){
@@ -223,65 +222,64 @@ namespace RDKit {
         }
       }
 
+      void basicInitCanonAtom(const ROMol &mol,Canon::canon_atom &atom,const int &idx){
+        atom.atom=mol.getAtomWithIdx(idx);
+        atom.index=idx;
+        atom.p_symbol=NULL;
+        atom.degree=atom.atom->getDegree();
+        atom.nbrIds=(int *)malloc(atom.degree*sizeof(int));
+        getNbrs(mol, atom.atom,atom.nbrIds);
+      }
+
+      void advancedInitCanonAtom(const ROMol &mol,Canon::canon_atom &atom,const int &idx){
+        atom.totalNumHs=atom.atom->getTotalNumHs();
+        atom.numRingMember=getNumRingMember(mol,idx);
+        atom.isRingStereoAtom=(atom.atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+            atom.atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
+                atom.atom->hasProp("_ringStereoAtoms");
+        atom.hasRingNbr=hasRingNbr(mol,atom.atom);
+      }
+
     }
+
 
     void initCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms,
         bool includeChirality){
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        atoms[i].atom=mol.getAtomWithIdx(i);
-        atoms[i].index=i;
-        atoms[i].p_symbol=NULL;
-        atoms[i].degree=atoms[i].atom->getDegree();
-        atoms[i].totalNumHs=atoms[i].atom->getTotalNumHs();
-        atoms[i].numRingMember=getNumRingMember(mol,i);
-        atoms[i].isRingStereoAtom=(atoms[i].atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-            atoms[i].atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-            atoms[i].atom->hasProp("_ringStereoAtoms");
-        atoms[i].nbrIds=(int *)malloc(atoms[i].degree*sizeof(int));
-        getNbrs(mol, atoms[i].atom,atoms[i].nbrIds);
+        basicInitCanonAtom(mol,atoms[i],i);
+        advancedInitCanonAtom(mol,atoms[i],i);
         atoms[i].bonds.reserve(atoms[i].degree);
-        getBonds(mol,atoms[i].atom,includeChirality,atoms[i].bonds);
-        /* this could be realized using the neighbors above */
-        atoms[i].hasRingNbr=hasRingNbr(mol,atoms[i].atom);
+        getBonds(mol,atoms[i].atom,atoms[i].bonds,includeChirality);
       }
     }
+
 
     void initFragmentCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms,
         bool includeChirality, const std::vector<std::string> *atomSymbols){
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        atoms[i].atom=mol.getAtomWithIdx(i);
-        atoms[i].index=i;
+        basicInitCanonAtom(mol,atoms[i],i);
+        atoms[i].degree=0;
         if(atomSymbols){
           atoms[i].p_symbol=&(*atomSymbols)[i];
         }
         else{
           atoms[i].p_symbol=0;
         }
-        atoms[i].degree=0;
-        atoms[i].totalNumHs=atoms[i].atom->getTotalNumHs();
-        atoms[i].numRingMember=getNumRingMember(mol,i);
-        atoms[i].isRingStereoAtom=(atoms[i].atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-            atoms[i].atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-            atoms[i].atom->hasProp("_ringStereoAtoms");
-        atoms[i].nbrIds=(int *)malloc(atoms[i].degree*sizeof(int));
-        getNbrs(mol, atoms[i].atom,atoms[i].nbrIds);
+        advancedInitCanonAtom(mol,atoms[i],i);
         atoms[i].bonds.reserve(atoms[i].degree);
-        getBonds(mol,atoms[i].atom,includeChirality,atoms[i].bonds);
+        getBonds(mol,atoms[i].atom,atoms[i].bonds,includeChirality);
         /* this could be realized using the neighbors above */
-        atoms[i].hasRingNbr=hasRingNbr(mol,atoms[i].atom);
       }
     }
 
+
     void initChiralCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms){
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        atoms[i].atom=mol.getAtomWithIdx(i);
-        atoms[i].index=i;
-        atoms[i].degree=atoms[i].atom->getDegree();
-        atoms[i].nbrIds=(int *)malloc(atoms[i].degree*sizeof(int));
-        getNbrs(mol, atoms[i].atom,atoms[i].nbrIds);
+        basicInitCanonAtom(mol,atoms[i],i);
         getChiralBonds(mol,atoms[i].atom,atoms[i].bonds);
       }
     }
+
 
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
                       bool breakTies,
