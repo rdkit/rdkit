@@ -2650,10 +2650,10 @@ CAS<~>
     # doc tests
     mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
     self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False)),
-                      [0,1,0,1,-1,-1,-1,-1])
+                      [0,6,0,6,-1,-1,-1,-1])
     self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False)),
-                      [-1,-1,-1,-1,0,1,0,1])
-
+                      [-1,-1,-1,-1,3,6,3,6])
+    
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
 
