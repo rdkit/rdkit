@@ -35,7 +35,7 @@ namespace RDKit {
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
 
-    unsigned int width=2;
+    unsigned int width=lineWidth();
     std::string dashString="";
 
     cairo_set_line_width(d_cr,width);
@@ -74,21 +74,20 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DCairo::drawTriangle( const std::pair<float , float> &cds1 ,
-                                   const std::pair<float , float> &cds2 ,
-                                   const std::pair<float, float> &cds3 ) {
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
-    std::pair<float,float> c3 = getDrawCoords( cds3 );
+  void MolDraw2DCairo::drawPolygon( const std::vector<std::pair<float , float> > &cds){
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 
-    unsigned int width=1;
-    cairo_set_line_width(d_cr,width);
+    cairo_set_line_width(d_cr,lineWidth());
     cairo_set_dash(d_cr,0,0,0);
-    cairo_move_to(d_cr,c1.first,c1.second);
-    cairo_line_to(d_cr,c2.first,c2.second);
-    cairo_line_to(d_cr,c3.first,c3.second);
+
+    for(unsigned int i=0;i<cds.size();++i){
+      std::pair<float,float> lc= getDrawCoords( cds[i] );
+      if( !i ) cairo_move_to(d_cr,lc.first,lc.second);
+      else cairo_line_to(d_cr,lc.first,lc.second);
+    }
+
     cairo_close_path(d_cr);
-    cairo_fill_preserve(d_cr);
+    if(fillPolys()) cairo_fill_preserve(d_cr);
     cairo_stroke(d_cr);
   }
 

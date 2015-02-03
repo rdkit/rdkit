@@ -63,7 +63,7 @@ namespace RDKit {
     std::pair<float,float> c1 = getDrawCoords( cds1 );
     std::pair<float,float> c2 = getDrawCoords( cds2 );
     std::string col=DrawColourToSVG(colour());
-    unsigned int width=2;
+    unsigned int width=lineWidth();
     std::string dashString="";
     const DashPattern &dashes=dash();
     if(dashes.size()){
@@ -87,30 +87,66 @@ namespace RDKit {
 
     d_os<<"<svg:text";
     d_os<<" x='" << cds.first;
-    d_os<< "' y='" << cds.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
-    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
+    // doesn't seem like the inclusion of the fontSz should be necessary, but vertical text alignment seems impossible
+    // The 0.9 is an empirical factor to account for the descender on the font.
+    d_os<< "' y='" << cds.second + 0.9*fontSz <<"'"; 
+    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
     d_os<<" >";
     d_os<<c;
     d_os<<"</svg:text>";
   }
 
   // ****************************************************************************
-  void MolDraw2DSVG::drawTriangle( const std::pair<float , float> &cds1 ,
-                                   const std::pair<float , float> &cds2 ,
-                                   const std::pair<float, float> &cds3 ) {
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
-    std::pair<float,float> c3 = getDrawCoords( cds3 );
+  void MolDraw2DSVG::drawPolygon( const std::vector< std::pair<float , float> > &cds ){
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 
     std::string col=DrawColourToSVG(colour());
-    unsigned int width=2;
+    unsigned int width=lineWidth();
     std::string dashString="";
     d_os<<"<svg:path ";
-    d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << " " << c3.first << "," << c3.second << "' ";
-    d_os<<"style='fill:"<<col<<";fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+    d_os<<"d='M";
+    for(unsigned int i=0;i<cds.size();++i){
+      std::pair<float,float> c1 = getDrawCoords( cds[i] );
+      d_os << " " << c1.first << "," << c1.second;
+    }
+    d_os<<"' style='";
+    if(fillPolys())
+      d_os<<"fill:"<<col<<";fill-rule:evenodd";
+    else
+      d_os<<"fill:none;";
+
+    d_os<<"stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
     d_os<<" />\n";
 
   }
+
+  void MolDraw2DSVG::drawEllipse( const std::pair<float,float> &cds1 ,
+                                  const std::pair<float,float> &cds2 ) {
+    std::pair<float,float> c1 = getDrawCoords( cds1 );
+    std::pair<float,float> c2 = getDrawCoords( cds2 );
+    float w = c2.first - c1.first;
+    float h = c2.second - c1.second;
+    float cx=c1.first + w/2;
+    float cy=c1.second + h/2;
+    w = w>0 ? w : -1*w;
+    h = h>0 ? h : -1*h;
+    
+    std::string col=DrawColourToSVG(colour());
+    unsigned int width=lineWidth();
+    std::string dashString="";
+    d_os<<"<svg:ellipse" <<" cx='"<<cx<<"'" <<" cy='"<<cy<<"'" <<" rx='"<<w/2<<"'" <<" ry='"<<h/2<<"'";
+
+    d_os<<" style='";
+    if(fillPolys())
+      d_os<<"fill:"<<col<<";fill-rule:evenodd";
+    else
+      d_os<<"fill:none;";
+
+    d_os<<"stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
+    d_os<<" />\n";
+  }
+  
+
 
   // ****************************************************************************
   void MolDraw2DSVG::clearDrawing() {
@@ -151,7 +187,6 @@ namespace RDKit {
 
       label_height = fontSize();
       float char_width = fontSize() * static_cast<float>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
-      //char_width *= 0.75; // extremely empirical
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {
@@ -163,9 +198,9 @@ namespace RDKit {
     }
 
     // subscript keeps its bottom in line with the bottom of the bit chars,
-    // superscript goes above the original char top by a quarter
+    // superscript goes above the original char top by a bit (empirical)
     if( had_a_super ) {
-      label_height *= 1.25;
+      label_height *= 1.1;
     }
   }
 
@@ -186,8 +221,12 @@ namespace RDKit {
 
     d_os<<"<svg:text";
     d_os<<" x='" << draw_coords.first;
-    d_os<< "' y='" << draw_coords.second + fontSz <<"'"; // doesn't seem like this should be necessary, but vertical text alignment seems impossible
-    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
+    
+    // doesn't seem like the inclusion of the fontSz should be necessary, but vertical text alignment seems impossible
+    // The 0.9 is an empirical factor to account for the descender on the font.
+    d_os<< "' y='" << draw_coords.second + 0.9*fontSz <<"'"; 
+
+    d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
     d_os<<" >";
 
     int draw_mode = 0; // 0 for normal, 1 for superscript, 2 for subscript

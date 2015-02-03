@@ -60,58 +60,34 @@ namespace RDKit {
 
     virtual int width() const { return width_; }
     virtual int height() const { return height_; }
+
     virtual float scale() const { return scale_; }
+    virtual void calculateScale();
+
     virtual float fontSize() const { return font_size_; }
     // set font size in molecule coordinate units. That's probably Angstrom for
     // RDKit.
     virtual void setFontSize( float new_size );
-    virtual void calculateScale();
+
     virtual void setColour( const DrawColour &col ) { curr_colour_ = col; }
     virtual DrawColour colour() const { return curr_colour_; }
 
     virtual void setDash( const DashPattern &patt ) { curr_dash_ = patt; }
     virtual const DashPattern &dash() const { return curr_dash_; }
 
+    virtual void setLineWidth( int width ) { curr_width_ = width; }
+    virtual const int lineWidth() const { return curr_width_; }
+    
     // establishes whether to put string draw mode into super- or sub-script
     // mode based on contents of instring from i onwards. Increments i appropriately
     // and returns true or false depending on whether it did something or not
     bool setStringDrawMode( const std::string &instring , int &draw_mode ,
                             int &i ) const;
 
-  private :
-
-    int width_ , height_;
-    float scale_;
-    float x_min_ , y_min_ , x_range_ , y_range_;
-    float x_trans_ , y_trans_;
-    // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
-    // than the default width of a double bond)
-    float font_size_;
-    DrawColour curr_colour_;
-    DashPattern curr_dash_;
-
-    std::vector<std::pair<float,float> > at_cds_; // from mol
-    std::vector<int> atomic_nums_;
-    std::vector<std::pair<std::string,OrientType> > atom_syms_;
+    virtual void clearDrawing() = 0;
 
     virtual void drawLine( const std::pair<float,float> &cds1 ,
                            const std::pair<float,float> &cds2 ) = 0;
-    virtual void drawLine( const std::pair<float,float> &cds1 ,
-                           const std::pair<float,float> &cds2 ,
-                           const DrawColour &col1 ,
-                           const DrawColour &col2 );
-    // draw the char, with the bottom left hand corner at cds
-    virtual void drawChar( char c , const std::pair<float,float> &cds ) = 0;
-
-    // drawString centres the string on cds.
-    virtual void drawString( const std::string &str ,
-                             const std::pair<float,float> &cds );
-    // draw a filled triangle
-    virtual void drawTriangle( const std::pair<float,float> &cds1 ,
-                               const std::pair<float,float> &cds2 ,
-                               const std::pair<float,float> &cds3 ) = 0;
-
-    virtual void clearDrawing() = 0;
 
     // using the current scale, work out the size of the label in molecule coordinates.
     // Bear in mind when implementing this, that, for example, NH2 will appear as
@@ -119,6 +95,41 @@ namespace RDKit {
     // for in the width and height.
     virtual void getStringSize( const std::string &label , float &label_width ,
                                 float &label_height ) const = 0;
+    // drawString centres the string on cds.
+    virtual void drawString( const std::string &str ,
+                             const std::pair<float,float> &cds );
+
+    // draw polygons:
+    virtual void drawPolygon( const std::vector<std::pair<float,float> > &cds ) = 0;
+    virtual void drawTriangle( const std::pair<float,float> &cds1 ,
+                               const std::pair<float,float> &cds2 ,
+                               const std::pair<float,float> &cds3 );
+    virtual void drawEllipse(  const std::pair<float,float> &cds1 ,
+                               const std::pair<float,float> &cds2 );
+    virtual bool fillPolys() const { return fill_polys_; }
+    virtual void setFillPolys(bool val) { fill_polys_ = val; }
+
+
+
+  private :
+    int width_ , height_;
+    float scale_;
+    float x_min_ , y_min_ , x_range_ , y_range_;
+    float x_trans_ , y_trans_;
+    // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
+    // than the default width of a double bond)
+    float font_size_;
+    int curr_width_;
+    bool fill_polys_;
+    DrawColour curr_colour_;
+    DashPattern curr_dash_;
+
+    std::vector<std::pair<float,float> > at_cds_; // from mol
+    std::vector<int> atomic_nums_;
+    std::vector<std::pair<std::string,OrientType> > atom_syms_;
+
+    // draw the char, with the bottom left hand corner at cds
+    virtual void drawChar( char c , const std::pair<float,float> &cds ) = 0;
 
     // return a DrawColour based on the contents of highlight_atoms or
     // highlight_map, falling back to atomic number by default
@@ -130,6 +141,10 @@ namespace RDKit {
     void extractAtomCoords( const ROMol &mol );
     void extractAtomSymbols( const ROMol &mol );
 
+    virtual void drawLine( const std::pair<float,float> &cds1 ,
+                           const std::pair<float,float> &cds2 ,
+                           const DrawColour &col1 ,
+                           const DrawColour &col2 );
     void drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                    int at1_idx , int at2_idx ,
                    const std::vector<int> *highlight_atoms=NULL ,

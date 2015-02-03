@@ -10,6 +10,7 @@
 //
 
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 #include <cstdlib>
 #include <limits>
@@ -27,7 +28,7 @@ namespace RDKit {
   // ****************************************************************************
   MolDraw2D::MolDraw2D( int width, int height ) :
   width_( width ) , height_( height ) , scale_( 1.0 ) , x_trans_( 0.0 ) ,
-    y_trans_( 0.0 ) , font_size_( 0.5 ) {
+    y_trans_( 0.0 ) , font_size_( 0.5 ), curr_width_(2), fill_polys_(true) {
   }
 
   // ****************************************************************************
@@ -39,6 +40,33 @@ namespace RDKit {
     extractAtomSymbols( mol );
     calculateScale();
     setFontSize( font_size_ );
+
+#if 0
+    if(highlight_atoms){
+      ROMol::VERTEX_ITER this_at , end_at;
+      boost::tie( this_at , end_at ) = mol.getVertices();
+      setFillPolys(false);
+      while( this_at != end_at ) {
+        int this_idx = mol[*this_at]->getIdx();
+        if(std::find(highlight_atoms->begin(),highlight_atoms->end(),this_idx) != highlight_atoms->end()){
+          if(highlight_map && highlight_map->find(this_idx)!=highlight_map->end()){
+            setColour(highlight_map->find(this_idx)->second);
+          } else {
+            setColour(DrawColour(1,0,1));
+          }
+          std::pair<double,double> p1=at_cds_[this_idx];
+          std::pair<double,double> p2=at_cds_[this_idx];
+          p1.first -= 0.3;
+          p1.second -= 0.3;
+          p2.first += 0.3;
+          p2.second += 0.3;
+          drawEllipse(p1,p2);
+        }
+        ++this_at;
+      }
+      setFillPolys(true);
+    }
+#endif
 
     ROMol::VERTEX_ITER this_at , end_at;
     boost::tie( this_at , end_at ) = mol.getVertices();
@@ -382,8 +410,8 @@ namespace RDKit {
       }
     } else if( Bond::SINGLE == bond->getBondType() &&
                ( Bond::BEGINWEDGE == bond->getBondDir() || Bond::BEGINDASH == bond->getBondDir() ) ) {
-      if( bond->getBeginAtom()->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          bond->getBeginAtom()->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW ) {
+      if( at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW ) {
         swap( at1_cds , at2_cds );
         swap( col1 , col2 );
       }
@@ -710,5 +738,23 @@ namespace RDKit {
     }
     return make_pair( symbol , orient );
   }
+
+  void MolDraw2D::drawTriangle( const std::pair<float,float> &cds1 ,
+                                const std::pair<float,float> &cds2 ,
+                                const std::pair<float,float> &cds3 ) {
+    std::vector< std::pair<float,float> > pts(3);
+    pts[0]=cds1;
+    pts[1]=cds2;
+    pts[2]=cds3;
+    drawPolygon(pts);
+  };
+
+  void MolDraw2D::drawEllipse(const std::pair<float,float> &cds1 ,
+                              const std::pair<float,float> &cds2){
+    std::vector< std::pair<float,float> > pts;
+    MolDraw2D_detail::arcPoints(cds1,cds2,pts,0,360);
+    drawPolygon(pts);
+  }
+
 
 } // EO namespace RDKit

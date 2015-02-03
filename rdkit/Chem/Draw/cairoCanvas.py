@@ -24,7 +24,7 @@ import math
 import rdkit.RDConfig
 import os,re
 import array
-if not os.environ.has_key('RDK_NOPANGO'):
+if not 'RDK_NOPANGO' in os.environ:
   try:
     import pangocairo
   except ImportError:

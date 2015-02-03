@@ -5456,6 +5456,83 @@ void test57IntroductionOfNewChiralCenters(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test58MolFileValueRoundTrip(){
+  ChemicalReaction *rxn;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing round trip molFileValue" << std::endl;
+
+  
+  const char *rxnB="$RXN\n" \
+    "\n"                        \
+    "      ISIS     090220091541\n"               \
+    "\n"                                          \
+    "  2  1\n"                                    \
+    "$MOL\n"                                      \
+    "\n"                                          \
+    "  -ISIS-  09020915412D\n"                    \
+    "\n"                                          \
+    "  3  2  0  0  0  0  0  0  0  0999 V2000\n"                           \
+    "   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n" \
+    "   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n" \
+    "   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+    "  1  2  1  0  0  0  0\n"                                             \
+    "  2  3  2  0  0  0  0\n"                                             \
+    "V    2 aldehyde\n"                                                   \
+    "M  RGP  1   1   1\n"                                                 \
+    "M  END\n"                                                            \
+    "$MOL\n"                                                              \
+    "\n"                                                                  \
+    "  -ISIS-  09020915412D\n"                                            \
+    "\n"                                                                  \
+    "  2  1  0  0  0  0  0  0  0  0999 V2000\n"                           \
+    "    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n" \
+    "    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n" \
+    "  1  2  1  0  0  0  0\n"                                             \
+    "V    2 aldehyde\n"                                                      \
+    "M  RGP  1   1   2\n"                                                 \
+    "M  END\n"                                                            \
+    "$MOL\n"                                                              \
+    "\n"                                                                  \
+    "  -ISIS-  09020915412D\n"                                            \
+    "\n"                                                                  \
+    "  4  3  0  0  0  0  0  0  0  0999 V2000\n"                           \
+    "   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n" \
+    "   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n" \
+    "   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n" \
+    "   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n" \
+    "  1  3  1  0  0  0  0\n"                                             \
+    "  1  2  1  0  0  0  0\n"                                             \
+    "  3  4  1  0  0  0  0\n"                                             \
+    "M  RGP  2   2   1   4   2\n"                                         \
+    "M  END";
+  
+  rxn = RxnBlockToChemicalReaction(rxnB);
+  // check the mol file values
+  for (MOL_SPTR_VECT::const_iterator template_mol = rxn->beginReactantTemplates();
+       template_mol != rxn->endReactantTemplates(); ++template_mol) {
+    const Atom *at=(*template_mol)->getAtomWithIdx(1);
+    TEST_ASSERT(at->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
+                "aldehyde");
+  }
+
+  ChemicalReaction *rxn2 = RxnBlockToChemicalReaction(ChemicalReactionToRxnBlock(*rxn));
+
+  for (MOL_SPTR_VECT::const_iterator template_mol = rxn2->beginReactantTemplates();
+       template_mol != rxn2->endReactantTemplates(); ++template_mol) {
+    const Atom *at=(*template_mol)->getAtomWithIdx(1);
+    TEST_ASSERT(at->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
+                "aldehyde");
+  }
+  
+  delete rxn;
+  delete rxn2;
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -5524,6 +5601,8 @@ int main() {
   test56TestOldPickleVersion();
   test57IntroductionOfNewChiralCenters();
 
+  test58MolFileValueRoundTrip();
+  
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
 }

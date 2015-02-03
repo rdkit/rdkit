@@ -51,17 +51,16 @@ namespace RDKit {
     pair<float,float> c2 = getDrawCoords( cds2 );
 
     const DashPattern &dashes=dash();
+    QPen pen=qp_.pen();
     if(dashes.size()){
       QVector<qreal> dd;
       for(unsigned int di=0;di<dashes.size();++di) dd << dashes[di];
-      QPen pen=qp_.pen();
       pen.setDashPattern(dd);
-      qp_.setPen(pen);
     } else {
-      QPen pen=qp_.pen();
       pen.setStyle(Qt::SolidLine);
-      qp_.setPen(pen);
     }
+    pen.setWidth(lineWidth());
+    qp_.setPen(pen);
     qp_.drawLine( QPointF( c1.first , c1.second ) , QPointF( c2.first , c2.second ) );
 
   }
@@ -78,10 +77,8 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DQt::drawTriangle( const pair<float , float> &cds1 ,
-                                  const pair<float , float> &cds2 ,
-                                  const pair<float, float> &cds3 ) {
-
+  void MolDraw2DQt::drawPolygon( const vector<pair<float , float> > &cds ) {
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 #ifdef NOTYET
     QBrush brush( "Black" );
     brush.setStyle( Qt::SolidPattern );
@@ -90,20 +87,20 @@ namespace RDKit {
 #endif
 
     qp_.save();
-    //   qp_.setBrush( brush );
+    QBrush brush=qp_.brush();
+    if(fillPolys())
+      brush.setStyle(Qt::SolidPattern);
+    else 
+      brush.setStyle(Qt::NoBrush);
+    qp_.setBrush( brush );
 
-    pair<float,float> c1 = getDrawCoords( cds1 );
-    pair<float,float> c2 = getDrawCoords( cds2 );
-    pair<float,float> c3 = getDrawCoords( cds3 );
-
-    QPointF points[3] = { QPointF( c1.first , c1.second ) ,
-                          QPointF( c2.first , c2.second ) ,
-                          QPointF( c3.first , c3.second ) };
-
-    qp_.drawConvexPolygon( points , 3 );
-
+    QPointF points[cds.size()];
+    for(unsigned int i=0;i<cds.size();++i){
+      pair<float,float> lc = getDrawCoords( cds[i] );
+      points[i] = QPointF( lc.first, lc.second );
+    }
+    qp_.drawConvexPolygon( points , cds.size() );
     qp_.restore();
-
   }
 
   // ****************************************************************************

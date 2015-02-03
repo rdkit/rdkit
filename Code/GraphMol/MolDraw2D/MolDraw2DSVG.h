@@ -38,22 +38,22 @@ namespace RDKit {
     // but we'll start here
     void finishDrawing();
 
-  private :
-    std::ostream &d_os;
-
     void drawLine( const std::pair<float,float> &cds1 ,
                    const std::pair<float,float> &cds2 );
-    void drawChar( char c , const std::pair<float,float> &cds );
     void drawString( const std::string &str, const std::pair<float,float> &cds );
-    void drawTriangle( const std::pair<float,float> &cds1 ,
-                       const std::pair<float,float> &cds2 ,
-                       const std::pair<float,float> &cds3 );
+    void drawPolygon( const std::vector<std::pair<float,float> > &cds );
+    void drawEllipse( const std::pair<float,float> &cds1 ,
+                      const std::pair<float,float> &cds2 );
     void clearDrawing();
 
     // using the current scale, work out the size of the label in molecule coordinates
     void getStringSize( const std::string &label , float &label_width ,
                         float &label_height ) const;
 
+  private :
+    std::ostream &d_os;
+
+    void drawChar( char c , const std::pair<float,float> &cds );
     void initDrawing();
 
   };
