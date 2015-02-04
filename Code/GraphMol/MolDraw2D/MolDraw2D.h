@@ -37,8 +37,7 @@ namespace RDKit {
 
   struct MolDrawOptions {
     bool dummiesAreAttachments; // draws "breaks" at dummy atoms
-
-    MolDrawOptions() : dummiesAreAttachments(false) {};
+    bool circleAtoms;           // draws circles under highlighted atoms
     DrawColour highlightColour; // default highlight color
 
     MolDrawOptions() :
@@ -47,7 +46,7 @@ namespace RDKit {
       highlightColour(1,0,0)
     {};
   };
-  
+
   class MolDraw2D {
   public :
 
@@ -59,6 +58,12 @@ namespace RDKit {
     virtual void drawMolecule( const ROMol &mol ,
                                const std::vector<int> *highlight_atoms = NULL,
                                const std::map<int,DrawColour> *highlight_map = NULL );
+
+    virtual void drawMolecule( const ROMol &mol ,
+                               const std::vector<int> *highlight_atoms,
+                               const std::vector<int> *highlight_bonds,
+                               const std::map<int,DrawColour> *highlight_atom_map = NULL,
+                               const std::map<int,DrawColour> *highlight_bond_map = NULL );
 
     // transform a set of coords in the molecule's coordinate system
     // to drawing system coordinates and vice versa. Note that the coordinates have
@@ -164,7 +169,9 @@ namespace RDKit {
     void drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                    int at1_idx , int at2_idx ,
                    const std::vector<int> *highlight_atoms=NULL ,
-                   const std::map<int,DrawColour> *highlight_map=NULL );
+                   const std::map<int,DrawColour> *highlight_atom_map=NULL,
+                   const std::vector<int> *highlight_bonds=NULL ,
+                   const std::map<int,DrawColour> *highlight_bond_map=NULL );
     void drawWedgedBond( const std::pair<float,float> &cds1 ,
                          const std::pair<float,float> &cds2 ,
                          bool draw_dashed , const DrawColour &col1 ,
