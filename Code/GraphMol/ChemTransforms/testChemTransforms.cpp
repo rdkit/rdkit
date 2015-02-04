@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006-2011 Greg Landrum
+//  Copyright (C) 2006-2015 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1507,6 +1507,42 @@ void testFragmentOnSomeBonds()
 }
 
 
+void testGithubIssue429() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 429: fragmentOnSomeBonds() should update implicit H count on aromatic heteroatoms when addDummies is False"<< std::endl;
+
+  {
+    std::string smi = "c1cccn1CC1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={4,5};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,1,false);
+    TEST_ASSERT(frags.size()==2);
+    std::vector<std::vector<int> > fragMap;
+    
+    BOOST_FOREACH(ROMOL_SPTR romol,frags){
+      RWMol *rwmol=(RWMol *)(romol.get());
+      MolOps::sanitizeMol(*rwmol);
+    }
+
+    // we actually changed fragmentOnBonds(), check that too:
+    RWMol *nmol=(RWMol *)MolFragmenter::fragmentOnBonds(*mol,bindices,false);
+    MolOps::sanitizeMol(*nmol);
+    delete nmol;
+
+    delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1539,6 +1575,7 @@ int main() {
 #endif
   testFragmentOnSomeBonds();
   //benchFragmentOnBRICSBonds();
+  testGithubIssue429();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

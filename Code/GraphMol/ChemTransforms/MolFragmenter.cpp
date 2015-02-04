@@ -376,6 +376,16 @@ namespace RDKit{
             conf->setAtomPos(idx1,conf->getAtomPos(bidx));
             conf->setAtomPos(idx2,conf->getAtomPos(eidx));
           }
+        } else {
+          // was github issue 429
+          Atom *tatom=res->getAtomWithIdx(bidx);
+          if(tatom->getIsAromatic() && tatom->getAtomicNum()!=6){
+            tatom->setNumExplicitHs(tatom->getNumExplicitHs()+1);
+          }
+          tatom=res->getAtomWithIdx(eidx);
+          if(tatom->getIsAromatic() && tatom->getAtomicNum()!=6){
+            tatom->setNumExplicitHs(tatom->getNumExplicitHs()+1);
+          }
         }
       }
       res->clearComputedProps();
