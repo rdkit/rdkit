@@ -55,6 +55,9 @@ namespace RDKit{
                                           python::object pyBondTypes,
                                           bool returnCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+	throw_value_error("empty bond indices");
+      
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
@@ -115,6 +118,8 @@ namespace RDKit{
                                python::object pyBondTypes,
                                python::list pyCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+	throw_value_error("empty bond indices");
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());

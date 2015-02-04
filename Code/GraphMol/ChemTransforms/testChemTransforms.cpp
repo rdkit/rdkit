@@ -1539,6 +1539,38 @@ void testGithubIssue429()
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+void testGithubIssue430() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 430: fragmentOnSomeBonds() crashes if bond list is empty"<< std::endl;
+
+  {
+    std::string smi = "c1cccn1CC1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    std::vector<unsigned int> bindices;
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,1,false);
+    TEST_ASSERT(frags.size()==0);
+    delete mol;
+  }
+
+  {
+    std::string smi = "c1cccn1CC1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={4,5};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,0,false);
+    TEST_ASSERT(frags.size()==0);
+    delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 
 
@@ -1576,6 +1608,7 @@ int main() {
   testFragmentOnSomeBonds();
   //benchFragmentOnBRICSBonds();
   testGithubIssue429();
+  testGithubIssue430();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

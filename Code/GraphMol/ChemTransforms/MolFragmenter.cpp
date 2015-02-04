@@ -289,6 +289,8 @@ namespace RDKit{
       PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
       PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
       if(bondIndices.size()>63) throw ValueErrorException("currently can only fragment on up to 63 bonds");
+      if(!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) return;
+
       boost::uint64_t state=(0x1<<maxToCut)-1;
       boost::uint64_t stop=0x1<<bondIndices.size();
       std::vector<unsigned int> fragmentHere(maxToCut);
@@ -338,6 +340,8 @@ namespace RDKit{
         }
       }
       RWMol *res=new RWMol(mol);
+      if(!mol.getNumAtoms()) return res;
+
       std::vector<Bond *> bondsToRemove;
       bondsToRemove.reserve(bondIndices.size());
       BOOST_FOREACH(unsigned int bondIdx,bondIndices){
