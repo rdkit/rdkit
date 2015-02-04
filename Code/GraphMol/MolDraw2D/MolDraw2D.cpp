@@ -309,6 +309,7 @@ namespace RDKit {
   }
 
   // ****************************************************************************
+  DrawColour MolDraw2D::getColourByAtomicNum( int atomic_num ) {
   MolDraw2D::DrawColour MolDraw2D::getColourByAtomicNum( int atomic_num ) {
 
     // RGB values taken from Qt's QColor. The seem to work pretty well on my

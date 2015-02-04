@@ -32,18 +32,26 @@
 
 namespace RDKit {
 
+  typedef boost::tuple<float,float,float> DrawColour;
+  typedef std::vector<unsigned int> DashPattern;
+
   struct MolDrawOptions {
     bool dummiesAreAttachments; // draws "breaks" at dummy atoms
 
     MolDrawOptions() : dummiesAreAttachments(false) {};
+    DrawColour highlightColour; // default highlight color
+
+    MolDrawOptions() :
+      dummiesAreAttachments(false),
+      circleAtoms(true),
+      highlightColour(1,0,0)
+    {};
   };
   
   class MolDraw2D {
   public :
 
     typedef enum { C = 0 , N , E , S , W } OrientType;
-    typedef boost::tuple<float,float,float> DrawColour;
-    typedef std::vector<unsigned int> DashPattern;
 
     MolDraw2D( int width , int height );
     virtual ~MolDraw2D() {}
