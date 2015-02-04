@@ -715,43 +715,52 @@ namespace RDKit {
                                                                              const pair<float, float> &nbr_sum ) {
 
     string symbol( "" );
+
+    // -----------------------------------
+    // start with the symbol
+    if(drawOptions().atomLabels &&
+       drawOptions().atomLabels->find(atom.getIdx()) != drawOptions().atomLabels->end() ){
+      symbol = drawOptions().atomLabels->find(atom.getIdx())->second;
+    } else {
+      if( 6 != atom.getAtomicNum() ) {
+        symbol = atom.getSymbol();
+      }
+
+      if( 0 != atom.getIsotope() ) {
+        symbol = lexical_cast<string>( atom.getIsotope() ) + symbol;
+      }
+
+      if( atom.hasProp( "molAtomMapNumber" ) ) {
+        string map_num;
+        atom.getProp( "molAtomMapNumber" , map_num );
+        symbol += string( ":" ) + map_num;
+      }
+
+      int num_h = 6 == atom.getAtomicNum() ? 0 : atom.getTotalNumHs();
+      if( num_h > 0 ) {
+        string h( "H" );
+        if( num_h > 1 ) {
+          // put the number as a subscript
+          h += string( "<sub>" ) + lexical_cast<string>( num_h ) + string( "</sub>" );
+        }
+        symbol += h;
+      }
+
+      if( 0 != atom.getFormalCharge() ) {
+        int chg = atom.getFormalCharge();
+        string sgn = chg > 0 ? string( "+" ) : string( "-" );
+        chg = abs( chg );
+        if( chg > 1 ) {
+          sgn += lexical_cast<string>( chg );
+        }
+        // put the charge as a superscript
+        symbol += string( "<sup>" ) + sgn + string( "</sup>" );
+      }
+    }
+
+    // -----------------------------------
+    // now consider the orientation
     OrientType orient = C;
-
-    if( 6 != atom.getAtomicNum() ) {
-      symbol = atom.getSymbol();
-    }
-
-    if( 0 != atom.getIsotope() ) {
-      symbol = lexical_cast<string>( atom.getIsotope() ) + symbol;
-    }
-
-    if( atom.hasProp( "molAtomMapNumber" ) ) {
-      string map_num;
-      atom.getProp( "molAtomMapNumber" , map_num );
-      symbol += string( ":" ) + map_num;
-    }
-
-    int num_h = 6 == atom.getAtomicNum() ? 0 : atom.getTotalNumHs();
-    if( num_h > 0 ) {
-      string h( "H" );
-      if( num_h > 1 ) {
-        // put the number as a subscript
-        h += string( "<sub>" ) + lexical_cast<string>( num_h ) + string( "</sub>" );
-      }
-      symbol += h;
-    }
-
-    if( 0 != atom.getFormalCharge() ) {
-      int chg = atom.getFormalCharge();
-      string sgn = chg > 0 ? string( "+" ) : string( "-" );
-      chg = abs( chg );
-      if( chg > 1 ) {
-        sgn += lexical_cast<string>( chg );
-      }
-      // put the charge as a superscript
-      symbol += string( "<sup>" ) + sgn + string( "</sup>" );
-    }
-
     if( 1 == atom.getDegree() ) {
       float islope = 0.0;
       if( fabs( nbr_sum.second ) > 1.0 ) {
