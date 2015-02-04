@@ -31,13 +31,28 @@
 // ****************************************************************************
 
 namespace RDKit {
- 
+
+  typedef boost::tuple<float,float,float> DrawColour;
+  typedef std::vector<unsigned int> DashPattern;
+
+  struct MolDrawOptions {
+    bool dummiesAreAttachments; // draws "breaks" at dummy atoms
+    bool circleAtoms;           // draws circles under highlighted atoms
+    DrawColour highlightColour; // default highlight color
+    std::map<int,std::string> *atomLabels; // replacement labels for atoms
+    
+    MolDrawOptions() :
+      dummiesAreAttachments(false),
+      circleAtoms(true),
+      highlightColour(1,0,0),
+      atomLabels(NULL)
+    {};
+  };
+
   class MolDraw2D {
   public :
 
     typedef enum { C = 0 , N , E , S , W } OrientType;
-    typedef boost::tuple<float,float,float> DrawColour;
-    typedef std::vector<unsigned int> DashPattern;
 
     MolDraw2D( int width , int height );
     virtual ~MolDraw2D() {}
@@ -45,6 +60,12 @@ namespace RDKit {
     virtual void drawMolecule( const ROMol &mol ,
                                const std::vector<int> *highlight_atoms = NULL,
                                const std::map<int,DrawColour> *highlight_map = NULL );
+
+    virtual void drawMolecule( const ROMol &mol ,
+                               const std::vector<int> *highlight_atoms,
+                               const std::vector<int> *highlight_bonds,
+                               const std::map<int,DrawColour> *highlight_atom_map = NULL,
+                               const std::map<int,DrawColour> *highlight_bond_map = NULL );
 
     // transform a set of coords in the molecule's coordinate system
     // to drawing system coordinates and vice versa. Note that the coordinates have
@@ -109,7 +130,8 @@ namespace RDKit {
     virtual bool fillPolys() const { return fill_polys_; }
     virtual void setFillPolys(bool val) { fill_polys_ = val; }
 
-
+    MolDrawOptions &drawOptions() { return options_; }
+    const MolDrawOptions &drawOptions() const { return options_; }
 
   private :
     int width_ , height_;
@@ -123,6 +145,7 @@ namespace RDKit {
     bool fill_polys_;
     DrawColour curr_colour_;
     DashPattern curr_dash_;
+    MolDrawOptions options_;
 
     std::vector<std::pair<float,float> > at_cds_; // from mol
     std::vector<int> atomic_nums_;
@@ -148,7 +171,9 @@ namespace RDKit {
     void drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                    int at1_idx , int at2_idx ,
                    const std::vector<int> *highlight_atoms=NULL ,
-                   const std::map<int,DrawColour> *highlight_map=NULL );
+                   const std::map<int,DrawColour> *highlight_atom_map=NULL,
+                   const std::vector<int> *highlight_bonds=NULL ,
+                   const std::map<int,DrawColour> *highlight_bond_map=NULL );
     void drawWedgedBond( const std::pair<float,float> &cds1 ,
                          const std::pair<float,float> &cds2 ,
                          bool draw_dashed , const DrawColour &col1 ,

@@ -34,25 +34,42 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2D::drawMolecule( const ROMol &mol ,
                                 const vector<int> *highlight_atoms ,
-                                const map<int,DrawColour> *highlight_map ) {
+                                const map<int,DrawColour> *highlight_atom_map ) {
+    vector<int> highlight_bonds;
+    if(highlight_atoms){
+      for(vector<int>::const_iterator ai=highlight_atoms->begin();
+          ai!=highlight_atoms->end();++ai){
+        for(vector<int>::const_iterator aj=ai+1;
+            aj!=highlight_atoms->end();++aj){
+          const Bond *bnd=mol.getBondBetweenAtoms(*ai,*aj);
+          if(bnd) highlight_bonds.push_back(bnd->getIdx());
+        }
+      }
+    }
+    drawMolecule(mol,highlight_atoms,&highlight_bonds,highlight_atom_map);
+  }
+  void MolDraw2D::drawMolecule( const ROMol &mol ,
+                                const vector<int> *highlight_atoms ,
+                                const vector<int> *highlight_bonds ,
+                                const map<int,DrawColour> *highlight_atom_map,
+                                const map<int,DrawColour> *highlight_bond_map ) {
     clearDrawing();
     extractAtomCoords( mol );
     extractAtomSymbols( mol );
     calculateScale();
     setFontSize( font_size_ );
 
-#if 0
-    if(highlight_atoms){
+    if(drawOptions().circleAtoms && highlight_atoms){
       ROMol::VERTEX_ITER this_at , end_at;
       boost::tie( this_at , end_at ) = mol.getVertices();
       setFillPolys(false);
       while( this_at != end_at ) {
         int this_idx = mol[*this_at]->getIdx();
         if(std::find(highlight_atoms->begin(),highlight_atoms->end(),this_idx) != highlight_atoms->end()){
-          if(highlight_map && highlight_map->find(this_idx)!=highlight_map->end()){
-            setColour(highlight_map->find(this_idx)->second);
+          if(highlight_atom_map && highlight_atom_map->find(this_idx)!=highlight_atom_map->end()){
+            setColour(highlight_atom_map->find(this_idx)->second);
           } else {
-            setColour(DrawColour(1,0,1));
+            setColour(drawOptions().highlightColour);
           }
           std::pair<double,double> p1=at_cds_[this_idx];
           std::pair<double,double> p2=at_cds_[this_idx];
@@ -66,7 +83,7 @@ namespace RDKit {
       }
       setFillPolys(true);
     }
-#endif
+
 
     ROMol::VERTEX_ITER this_at , end_at;
     boost::tie( this_at , end_at ) = mol.getVertices();
@@ -80,7 +97,7 @@ namespace RDKit {
         int nbr_idx = bond->getOtherAtomIdx( this_idx );
         if( nbr_idx < static_cast<int>( at_cds_.size() ) && nbr_idx > this_idx ) {
           drawBond( mol , bond , this_idx , nbr_idx , highlight_atoms ,
-                    highlight_map );
+                    highlight_atom_map, highlight_bonds, highlight_bond_map );
         }
       }
       ++this_at;
@@ -88,7 +105,7 @@ namespace RDKit {
 
     for( int i = 0 , is = atom_syms_.size() ; i < is ; ++i ) {
       if( !atom_syms_[i].first.empty() ) {
-        drawAtomLabel( i , highlight_atoms , highlight_map );
+        drawAtomLabel( i , highlight_atoms , highlight_atom_map );
       }
     }
   }
@@ -285,9 +302,9 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  MolDraw2D::DrawColour MolDraw2D::getColour( int atom_idx ,
-                                              const std::vector<int> *highlight_atoms ,
-                                              const std::map<int,DrawColour> *highlight_map ) {
+  DrawColour MolDraw2D::getColour( int atom_idx ,
+                                   const std::vector<int> *highlight_atoms ,
+                                   const std::map<int,DrawColour> *highlight_map ) {
 
     PRECONDITION(atom_idx>=0,"bad atom_idx");
     PRECONDITION(atomic_nums_.size()>atom_idx,"bad atom_idx");
@@ -296,7 +313,7 @@ namespace RDKit {
     // set contents of highlight_atoms to red
     if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
                                                            highlight_atoms->end() , atom_idx )  ) {
-      retval = DrawColour( 1.0 , 0.0 , 0.0 );
+      retval = drawOptions().highlightColour;
     }
     // over-ride with explicit colour from highlight_map if there is one
     if(highlight_map){
@@ -309,7 +326,7 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  MolDraw2D::DrawColour MolDraw2D::getColourByAtomicNum( int atomic_num ) {
+  DrawColour MolDraw2D::getColourByAtomicNum( int atomic_num ) {
 
     // RGB values taken from Qt's QColor. The seem to work pretty well on my
     // machine. Using them as fractions of 255, as that's the way Cairo does it.
@@ -374,7 +391,10 @@ namespace RDKit {
   void MolDraw2D::drawBond( const ROMol &mol , const BOND_SPTR &bond ,
                             int at1_idx , int at2_idx ,
                             const vector<int> *highlight_atoms ,
-                            const map<int,DrawColour> *highlight_map ) {
+                            const map<int,DrawColour> *highlight_atom_map ,
+                            const vector<int> *highlight_bonds ,
+                            const map<int,DrawColour> *highlight_bond_map
+                            ) {
     static const DashPattern noDash;
     static const DashPattern dots=assign::list_of(2)(6);
     static const DashPattern dashes=assign::list_of(6)(6);
@@ -389,8 +409,25 @@ namespace RDKit {
     adjustBondEndForLabel( at1_idx , at2_cds , at1_cds );
     adjustBondEndForLabel( at2_idx , at1_cds , at2_cds );
 
-    DrawColour col1 = getColour( at1_idx , highlight_atoms , highlight_map );
-    DrawColour col2 = getColour( at2_idx , highlight_atoms , highlight_map );
+    bool highlight_bond=false;
+    if(highlight_bonds &&
+       std::find(highlight_bonds->begin(),highlight_bonds->end(),bond->getIdx()) != highlight_bonds->end()){
+      highlight_bond=true;
+    }
+    
+    DrawColour col1,col2;
+    if( !highlight_bond ){
+      col1 = getColour( at1_idx );
+      col2 = getColour( at2_idx );
+    } else {
+      if(highlight_bond_map &&
+         highlight_bond_map->find(bond->getIdx())!=highlight_bond_map->end()){
+        col1 = col2 = highlight_bond_map->find(bond->getIdx())->second;
+      } else {
+        col1 = col2 = drawOptions().highlightColour;
+      }
+    }
+             
 
     // it's a double bond and one end is 1-connected, do two lines parallel
     // to the atom-atom line.
@@ -678,43 +715,52 @@ namespace RDKit {
                                                                              const pair<float, float> &nbr_sum ) {
 
     string symbol( "" );
+
+    // -----------------------------------
+    // start with the symbol
+    if(drawOptions().atomLabels &&
+       drawOptions().atomLabels->find(atom.getIdx()) != drawOptions().atomLabels->end() ){
+      symbol = drawOptions().atomLabels->find(atom.getIdx())->second;
+    } else {
+      if( 6 != atom.getAtomicNum() ) {
+        symbol = atom.getSymbol();
+      }
+
+      if( 0 != atom.getIsotope() ) {
+        symbol = lexical_cast<string>( atom.getIsotope() ) + symbol;
+      }
+
+      if( atom.hasProp( "molAtomMapNumber" ) ) {
+        string map_num;
+        atom.getProp( "molAtomMapNumber" , map_num );
+        symbol += string( ":" ) + map_num;
+      }
+
+      int num_h = 6 == atom.getAtomicNum() ? 0 : atom.getTotalNumHs();
+      if( num_h > 0 ) {
+        string h( "H" );
+        if( num_h > 1 ) {
+          // put the number as a subscript
+          h += string( "<sub>" ) + lexical_cast<string>( num_h ) + string( "</sub>" );
+        }
+        symbol += h;
+      }
+
+      if( 0 != atom.getFormalCharge() ) {
+        int chg = atom.getFormalCharge();
+        string sgn = chg > 0 ? string( "+" ) : string( "-" );
+        chg = abs( chg );
+        if( chg > 1 ) {
+          sgn += lexical_cast<string>( chg );
+        }
+        // put the charge as a superscript
+        symbol += string( "<sup>" ) + sgn + string( "</sup>" );
+      }
+    }
+
+    // -----------------------------------
+    // now consider the orientation
     OrientType orient = C;
-
-    if( 6 != atom.getAtomicNum() ) {
-      symbol = atom.getSymbol();
-    }
-
-    if( 0 != atom.getIsotope() ) {
-      symbol = lexical_cast<string>( atom.getIsotope() ) + symbol;
-    }
-
-    if( atom.hasProp( "molAtomMapNumber" ) ) {
-      string map_num;
-      atom.getProp( "molAtomMapNumber" , map_num );
-      symbol += string( ":" ) + map_num;
-    }
-
-    int num_h = 6 == atom.getAtomicNum() ? 0 : atom.getTotalNumHs();
-    if( num_h > 0 ) {
-      string h( "H" );
-      if( num_h > 1 ) {
-        // put the number as a subscript
-        h += string( "<sub>" ) + lexical_cast<string>( num_h ) + string( "</sub>" );
-      }
-      symbol += h;
-    }
-
-    if( 0 != atom.getFormalCharge() ) {
-      int chg = atom.getFormalCharge();
-      string sgn = chg > 0 ? string( "+" ) : string( "-" );
-      chg = abs( chg );
-      if( chg > 1 ) {
-        sgn += lexical_cast<string>( chg );
-      }
-      // put the charge as a superscript
-      symbol += string( "<sup>" ) + sgn + string( "</sup>" );
-    }
-
     if( 1 == atom.getDegree() ) {
       float islope = 0.0;
       if( fabs( nbr_sum.second ) > 1.0 ) {

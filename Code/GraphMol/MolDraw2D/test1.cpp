@@ -138,8 +138,88 @@ void test2(){
 }
 #endif
 
+
+void test3(){
+  {
+    std::string smiles="C1CC1CC1ON1";
+    std::string nameBase="test3_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    static const int ha[] = {0,3,4,5};
+    std::vector<int> highlight_atoms(ha, ha+sizeof(ha)/sizeof(int));
+    std::map<int,std::string> atomLabels;
+    atomLabels[2]="C1";
+    atomLabels[1]="a<sub>3</sub><sup>4</sup>";
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      cairo_surface_t *surface =
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_t *cr = cairo_create (surface);
+
+      MolDraw2DCairo drawer(300,300,cr);
+      drawer.drawOptions().atomLabels = &atomLabels;
+      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.finishDrawing();
+
+      cairo_destroy (cr);
+      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
+      cairo_surface_destroy (surface);
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawOptions().atomLabels = &atomLabels;
+      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+  }
+  {
+    std::string smiles="C1CC1CC1ON1";
+    std::string nameBase="test3_2";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    static const int ha[] = {0,3,4,5};
+    std::vector<int> highlight_atoms(ha, ha+sizeof(ha)/sizeof(int));
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      cairo_surface_t *surface =
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_t *cr = cairo_create (surface);
+
+      MolDraw2DCairo drawer(300,300,cr);
+      drawer.drawOptions().circleAtoms=false;
+      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.finishDrawing();
+
+      cairo_destroy (cr);
+      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
+      cairo_surface_destroy (surface);
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawOptions().circleAtoms=false;
+      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+  }
+}
+
+
+
 int main(){
   RDLog::InitLogs();
   test1();
   test2();
+  test3();
 }

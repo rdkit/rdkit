@@ -16,7 +16,7 @@
 
 namespace RDKit {
   namespace {
-    std::string DrawColourToSVG(const MolDraw2D::DrawColour &col){
+    std::string DrawColourToSVG(const DrawColour &col){
       const char *convert="0123456789ABCDEF";
       std::string res(7,' ');
       res[0]='#';
