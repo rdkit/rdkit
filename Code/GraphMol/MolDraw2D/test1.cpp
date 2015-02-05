@@ -36,6 +36,7 @@ void test1(){
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    delete m;
   }
   {
     std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
@@ -48,6 +49,7 @@ void test1(){
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    delete m;
   }
   {
     std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
@@ -64,6 +66,7 @@ void test1(){
     drawer.drawMolecule(*m,&highlights);
     drawer.finishDrawing();
     outs.flush();
+    delete m;
   }
 }
 
@@ -89,6 +92,7 @@ void test2(){
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "test2_1.png");
     cairo_surface_destroy (surface);
+    delete m;
   }
   {
     std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
@@ -108,6 +112,7 @@ void test2(){
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "test2_2.png");
     cairo_surface_destroy (surface);
+    delete m;
   }
   {
     std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
@@ -131,6 +136,7 @@ void test2(){
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "test2_3.png");
     cairo_surface_destroy (surface);
+    delete m;
   }
 }
 #else // RDK_CAIRO_BUILD
@@ -177,6 +183,7 @@ void test3(){
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   {
     std::string smiles="C1CC1CC1ON1";
@@ -212,6 +219,7 @@ void test3(){
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
 }
 
