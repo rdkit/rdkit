@@ -221,6 +221,42 @@ void test3(){
     }
     delete m;
   }
+  {
+    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
+    std::string nameBase="test3_3";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    static const int ha[] = {11,12,13,14,15,16};
+    std::vector<int> highlight_atoms(ha, ha+sizeof(ha)/sizeof(int));
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      cairo_surface_t *surface =
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_t *cr = cairo_create (surface);
+
+      MolDraw2DCairo drawer(300,300,cr);
+      drawer.drawOptions().circleAtoms=true;
+      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.finishDrawing();
+
+      cairo_destroy (cr);
+      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
+      cairo_surface_destroy (surface);
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawOptions().circleAtoms=true;
+      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
 }
 
 
