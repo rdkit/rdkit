@@ -40,12 +40,14 @@ namespace RDKit {
     bool circleAtoms;           // draws circles under highlighted atoms
     DrawColour highlightColour; // default highlight color
     std::map<int,std::string> *atomLabels; // replacement labels for atoms
+    bool continuousHighlight;   // highlight by drawing an outline *underneath* the molecule
     
     MolDrawOptions() :
       dummiesAreAttachments(false),
       circleAtoms(true),
       highlightColour(1,0,0),
-      atomLabels(NULL)
+      atomLabels(NULL),
+      continuousHighlight(false)
     {};
   };
 
@@ -207,6 +209,13 @@ namespace RDKit {
     // adds LaTeX-like annotation for super- and sub-script.
     std::pair<std::string,OrientType> getAtomSymbolAndOrientation( const Atom &atom ,
                                                                    const std::pair<float,float> &nbr_sum );
+
+    virtual void doContinuousHighlighting( const ROMol &mol ,
+                                           const std::vector<int> *highlight_atoms,
+                                           const std::vector<int> *highlight_bonds,
+                                           const std::map<int,DrawColour> *highlight_atom_map,
+                                           const std::map<int,DrawColour> *highlight_bond_map );
+
   };
 
 }

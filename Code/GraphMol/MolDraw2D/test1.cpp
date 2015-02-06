@@ -281,6 +281,48 @@ void test3(){
     }
     delete m;
   }
+  {
+    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
+    std::string nameBase="test3_4";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    static const int ha[] = {11,12,13,14,15,16,3};
+    std::vector<int> highlight_atoms(ha, ha+sizeof(ha)/sizeof(int));
+    std::map<int,DrawColour> highlight_colors;
+    highlight_colors[12]=DrawColour(.5,.5,1);
+    highlight_colors[13]=DrawColour(.5,1,.5);
+    MolDrawOptions options;
+    options.circleAtoms=true;
+    options.highlightColour=DrawColour(1,.5,.5);
+    options.continuousHighlight=true;
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      cairo_surface_t *surface =
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_t *cr = cairo_create (surface);
+
+      MolDraw2DCairo drawer(300,300,cr);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
+      drawer.finishDrawing();
+      cairo_destroy (cr);
+      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
+      cairo_surface_destroy (surface);
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
   std::cout << " Done" << std::endl;
 }
 

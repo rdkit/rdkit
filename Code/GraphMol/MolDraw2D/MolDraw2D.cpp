@@ -48,6 +48,70 @@ namespace RDKit {
     }
     drawMolecule(mol,highlight_atoms,&highlight_bonds,highlight_atom_map);
   }
+
+  void MolDraw2D::doContinuousHighlighting( const ROMol &mol ,
+                                            const vector<int> *highlight_atoms ,
+                                            const vector<int> *highlight_bonds ,
+                                            const map<int,DrawColour> *highlight_atom_map,
+                                            const map<int,DrawColour> *highlight_bond_map ) {
+    int orig_lw=lineWidth();
+    bool orig_fp=fillPolys();
+    ROMol::VERTEX_ITER this_at , end_at;
+    if(highlight_bonds){
+      boost::tie( this_at , end_at ) = mol.getVertices();
+      while( this_at != end_at ) {
+        int this_idx = mol[*this_at]->getIdx();
+        ROMol::OEDGE_ITER nbr , end_nbr;
+        boost::tie( nbr , end_nbr ) = mol.getAtomBonds( mol[*this_at].get() );
+        while( nbr != end_nbr ) {
+          const BOND_SPTR bond = mol[*nbr];
+          ++nbr;
+          int nbr_idx = bond->getOtherAtomIdx( this_idx );
+          if( nbr_idx < static_cast<int>( at_cds_.size() ) && nbr_idx > this_idx ) {
+            if(std::find(highlight_bonds->begin(),highlight_bonds->end(),bond->getIdx()) != highlight_bonds->end()){
+              DrawColour col=drawOptions().highlightColour;
+              if(highlight_bond_map &&
+                 highlight_bond_map->find(bond->getIdx())!=highlight_bond_map->end()){
+                col = highlight_bond_map->find(bond->getIdx())->second;
+              }
+              setLineWidth(orig_lw*8);
+              pair<float,float> at1_cds = at_cds_[this_idx];
+              pair<float,float> at2_cds = at_cds_[nbr_idx];
+              drawLine( at1_cds , at2_cds , col , col);
+            }
+          }
+        }
+        ++this_at;
+      }
+    }
+    if(highlight_atoms){
+      boost::tie( this_at , end_at ) = mol.getVertices();
+      while( this_at != end_at ) {
+        int this_idx = mol[*this_at]->getIdx();
+        if(std::find(highlight_atoms->begin(),highlight_atoms->end(),this_idx) != highlight_atoms->end()){
+          DrawColour col=drawOptions().highlightColour;
+          if(highlight_atom_map &&
+             highlight_atom_map->find(this_idx)!=highlight_atom_map->end()){
+            col = highlight_atom_map->find(this_idx)->second;
+          }
+          std::pair<double,double> p1=at_cds_[this_idx];
+          std::pair<double,double> p2=at_cds_[this_idx];
+          p1.first -= 0.4;
+          p1.second -= 0.4;
+          p2.first += 0.4;
+          p2.second += 0.4;
+          setColour(col);
+          setFillPolys(true);
+          setLineWidth(1);
+          drawEllipse(p1,p2);
+        }
+        ++this_at;
+      }
+    }
+    setLineWidth(orig_lw);
+    setFillPolys(orig_fp);
+  }
+
   void MolDraw2D::drawMolecule( const ROMol &mol ,
                                 const vector<int> *highlight_atoms ,
                                 const vector<int> *highlight_bonds ,
@@ -59,7 +123,14 @@ namespace RDKit {
     calculateScale();
     setFontSize( font_size_ );
 
-    if(drawOptions().circleAtoms && highlight_atoms){
+    if(drawOptions().continuousHighlight){
+      // if we're doing continuous highlighting, start by drawing the highlights
+      doContinuousHighlighting(mol,highlight_atoms,highlight_bonds,
+                               highlight_atom_map,highlight_bond_map);
+      // at this point we shouldn't be doing any more higlighting, so blow out those variables:
+      highlight_bonds=NULL;
+      highlight_atoms=NULL;
+    } else if(drawOptions().circleAtoms && highlight_atoms){
       ROMol::VERTEX_ITER this_at , end_at;
       boost::tie( this_at , end_at ) = mol.getVertices();
       setFillPolys(false);
@@ -414,7 +485,7 @@ namespace RDKit {
        std::find(highlight_bonds->begin(),highlight_bonds->end(),bond->getIdx()) != highlight_bonds->end()){
       highlight_bond=true;
     }
-    
+
     DrawColour col1,col2;
     int orig_lw=lineWidth();
     if( !highlight_bond ){
@@ -427,7 +498,11 @@ namespace RDKit {
       } else {
         col1 = col2 = drawOptions().highlightColour;
       }
-      setLineWidth(orig_lw*2);
+      if( drawOptions().continuousHighlight ){
+        setLineWidth(orig_lw*8);
+      } else {
+        setLineWidth(orig_lw*2);
+      }
     }
              
 
