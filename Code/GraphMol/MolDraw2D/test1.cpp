@@ -215,7 +215,7 @@ void test3(){
     WedgeMolBonds(*m,&(m->getConformer()));
     static const int ha[] = {0,3,4,5};
     std::vector<int> highlight_atoms(ha, ha+sizeof(ha)/sizeof(int));
-    
+
 #ifdef RDK_CAIRO_BUILD
     {
       cairo_surface_t *surface =
@@ -251,6 +251,9 @@ void test3(){
     WedgeMolBonds(*m,&(m->getConformer()));
     static const int ha[] = {11,12,13,14,15,16};
     std::vector<int> highlight_atoms(ha, ha+sizeof(ha)/sizeof(int));
+    std::map<int,DrawColour> highlight_colors;
+    highlight_colors[12]=DrawColour(0,0,1);
+    highlight_colors[13]=DrawColour(0,1,0);
     
 #ifdef RDK_CAIRO_BUILD
     {
@@ -260,7 +263,7 @@ void test3(){
 
       MolDraw2DCairo drawer(300,300,cr);
       drawer.drawOptions().circleAtoms=true;
-      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
       drawer.finishDrawing();
 
       cairo_destroy (cr);
@@ -272,7 +275,7 @@ void test3(){
       std::ofstream outs((nameBase+".svg").c_str());
       MolDraw2DSVG drawer(300,300,outs);
       drawer.drawOptions().circleAtoms=true;
-      drawer.drawMolecule(*m,&highlight_atoms);
+      drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
       drawer.finishDrawing();
       outs.flush();
     }
