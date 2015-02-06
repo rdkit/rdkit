@@ -40,6 +40,8 @@
 %template(INT_DRAWCOLOUR_MAP) std::map< int, RDKit::DrawColour >;
 %template(DrawColour) boost::tuple<float,float,float>;
 
+%ignore RDKit::MolDraw2DSVG::MolDraw2DSVG(int,int,std::ostream &);
+
 %include <GraphMol/MolDraw2D/MolDraw2D.h>
 %include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 

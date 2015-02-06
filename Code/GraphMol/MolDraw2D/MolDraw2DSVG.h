@@ -16,6 +16,7 @@
 #define MOLDRAW2DSVG_H
 
 #include <iostream>
+#include <sstream>
 #include "MolDraw2D.h"
 
 // ****************************************************************************
@@ -25,8 +26,12 @@ namespace RDKit {
   class MolDraw2DSVG : public MolDraw2D {
 
   public :
+    // initialize to use a particular ostream
     MolDraw2DSVG( int width , int height , std::ostream &os ) : 
       MolDraw2D( width , height ) , d_os( os ) { initDrawing(); };
+    // initialize to use the internal stringstream
+    MolDraw2DSVG( int width , int height ) : 
+      MolDraw2D( width , height ) , d_os(d_ss) { initDrawing(); };
 
     // set font size in molecule coordinate units. That's probably Angstrom for
     // RDKit. It will turned into drawing units using scale_, which might be
@@ -50,8 +55,11 @@ namespace RDKit {
     void getStringSize( const std::string &label , float &label_width ,
                         float &label_height ) const;
 
+    // this only makes sense if the object was initialized without a stream
+    std::string getDrawingText() const {return d_ss.str(); };
   private :
     std::ostream &d_os;
+    std::stringstream d_ss;
 
     void drawChar( char c , const std::pair<float,float> &cds );
     void initDrawing();

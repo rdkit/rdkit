@@ -39,6 +39,21 @@ void test1(){
     delete m;
   }
   {
+    // make sure this works with the stringstream too:
+    std::string smiles="CO[C@@H](O)C1=C(O[C@H](F)Cl)C=C1ONNC[NH3+]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    MolDraw2DSVG drawer(300,300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    TEST_ASSERT(text.find("<svg:svg")!=std::string::npos);
+    TEST_ASSERT(text.find("</svg:svg>")!=std::string::npos);
+    delete m;
+  }
+  {
     std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
