@@ -416,6 +416,7 @@ namespace RDKit {
     }
     
     DrawColour col1,col2;
+    int orig_lw=lineWidth();
     if( !highlight_bond ){
       col1 = getColour( at1_idx );
       col2 = getColour( at2_idx );
@@ -426,6 +427,7 @@ namespace RDKit {
       } else {
         col1 = col2 = drawOptions().highlightColour;
       }
+      setLineWidth(orig_lw*2);
     }
              
 
@@ -500,6 +502,10 @@ namespace RDKit {
         if(bond->getBondType()==Bond::AROMATIC) setDash(noDash);
       }
     }
+    if(highlight_bond){
+      setLineWidth(orig_lw);
+    }
+
   }
 
   // ****************************************************************************
