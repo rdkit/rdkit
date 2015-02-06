@@ -401,22 +401,24 @@ namespace RDKit {
 
     // RGB values taken from Qt's QColor. The seem to work pretty well on my
     // machine. Using them as fractions of 255, as that's the way Cairo does it.
-    float this_col[3] = { 0 , 1.0 , 1.0 }; // default to cyan
+    DrawColour res(0.,1.,1.); // default to cyan
 
     switch( atomic_num ) {
-    case 6 : this_col[0] = 0.0; this_col[1] = 0.0; this_col[2] = 0.0; break;
-    case 7 : this_col[0] = 0.0; this_col[1] = 0.0; this_col[2] = 1.0; break;
-    case 8 : this_col[0] = 1.0; this_col[1] = 0.0; this_col[2] = 0.0; break;
-    case 9 : this_col[0] = 0.565; this_col[1] = 0.933; this_col[2] = 0.565; break;
-    case 15 : this_col[0] = 1.0; this_col[1] = 0.647; this_col[2] = 0.0; break;
-    case 16 : this_col[0] = 1.0; this_col[1] = 1.0; this_col[2] = 0.0; break;
-    case 17 : this_col[0] = 0.0; this_col[1] = 0.502; this_col[2] = 0.0; break;
-    case 37 : this_col[0] = 0.647; this_col[1] = 0.165; this_col[2] = 0.165; break;
-    case 53 : this_col[0] = 0.502; this_col[1] = 0.0; this_col[2] = 0.502; break;
+    case 0 : res=DrawColour(0.5,0.5,0.5); break;
+    case 1 : res=DrawColour(0.55,0.55,0.55); break;
+    case 6 : res=DrawColour(0.0,0.0,0.0); break;
+    case 7 : res=DrawColour(0.0,0.0,1.0); break;
+    case 8 : res=DrawColour(1.0,0.0,0.0); break;
+    case 9 : res=DrawColour(0.2,0.8,0.8); break;
+    case 15 : res=DrawColour(1.0,0.5,0.0); break;
+    case 16 : res=DrawColour(0.8,0.8,0.0); break;
+    case 17 : res=DrawColour(0.0,0.802,0.0); break;
+    case 35 : res=DrawColour(0.5,0.3,0.1); break;
+    case 53 : res=DrawColour(0.63,0.12,0.94); break;
     default : break;
     }
 
-    return DrawColour( this_col[0] , this_col[1] , this_col[2] );
+    return res;
   }
 
   // ****************************************************************************
