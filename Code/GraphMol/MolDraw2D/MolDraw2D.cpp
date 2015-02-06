@@ -55,6 +55,10 @@ namespace RDKit {
                                             const map<int,DrawColour> *highlight_atom_map,
                                             const map<int,DrawColour> *highlight_bond_map ) {
     int orig_lw=lineWidth();
+    int tgt_lw=lineWidth()*8;
+    // try to scale lw to reflect the overall scaling:
+    tgt_lw = max(orig_lw*2,min(tgt_lw,(int)(scale_/25.*tgt_lw))); // the 25 here is extremely empirical
+    std::cerr<<orig_lw<<" "<<scale_<<" "<<tgt_lw<<std::endl;
     bool orig_fp=fillPolys();
     ROMol::VERTEX_ITER this_at , end_at;
     if(highlight_bonds){
@@ -74,7 +78,7 @@ namespace RDKit {
                  highlight_bond_map->find(bond->getIdx())!=highlight_bond_map->end()){
                 col = highlight_bond_map->find(bond->getIdx())->second;
               }
-              setLineWidth(orig_lw*8);
+              setLineWidth(tgt_lw);
               pair<float,float> at1_cds = at_cds_[this_idx];
               pair<float,float> at2_cds = at_cds_[nbr_idx];
               drawLine( at1_cds , at2_cds , col , col);
