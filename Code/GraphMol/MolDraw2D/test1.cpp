@@ -13,6 +13,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 
@@ -274,11 +275,72 @@ void test3(){
   }
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <boost/thread.hpp>  
+namespace {
+  void runblock(const std::vector<ROMol *> &mols,const std::vector<std::string> &refData,
+                unsigned int count,unsigned int idx){
+    for(unsigned int j=0;j<500;j++){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+        MolDraw2DSVG drawer(300,300);
+        drawer.drawMolecule(*mol);
+        drawer.finishDrawing();
+        std::string text = drawer.getDrawingText();
+        TEST_ASSERT(text==refData[i]);
+      }
+    }
+  }
+}
 
+void testMultiThreaded(){
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_200.props.sdf";
+  RDKit::SDMolSupplier suppl(fName);
+  std::cerr<<"reading molecules"<<std::endl;
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+  }
+
+  std::cerr<<"generating reference drawings"<<std::endl;
+  std::vector<std::string> refData(mols.size());
+  for(unsigned int i=0;i<mols.size();++i){
+    MolDraw2DSVG drawer(300,300);
+    drawer.drawMolecule(*(mols[i]));
+    drawer.finishDrawing();
+    refData[i]=drawer.getDrawingText();
+    TEST_ASSERT(refData[i].find("<svg:svg")!=std::string::npos);
+    TEST_ASSERT(refData[i].find("</svg:svg>")!=std::string::npos);
+  }
+
+  boost::thread_group tg;
+  unsigned int count=4;
+  std::cerr<<"processing"<<std::endl;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,refData,count,i));
+  }
+  tg.join_all();
+  std::cerr<<" done"<<std::endl;
+}
+#else
+void testMultiThreaded(){
+}
+#endif
 
 int main(){
   RDLog::InitLogs();
   test1();
   test2();
   test3();
+  testMultiThreaded();
 }
