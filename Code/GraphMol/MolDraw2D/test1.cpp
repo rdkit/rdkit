@@ -26,6 +26,7 @@
 using namespace RDKit;
 
 void test1(){
+  std::cout << " ----------------- Test 1" << std::endl;
   {
     std::string smiles="CO[C@@H](O)C1=C(O[C@H](F)Cl)C=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
@@ -84,12 +85,14 @@ void test1(){
     outs.flush();
     delete m;
   }
+  std::cout << " Done" << std::endl;
 }
 
 #ifdef RDK_CAIRO_BUILD
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 void test2(){
+  std::cout << " ----------------- Test 2" << std::endl;
   {
     std::string smiles="CO[C@@H](O)C1=C(O[C@H](F)Cl)C=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
@@ -154,6 +157,7 @@ void test2(){
     cairo_surface_destroy (surface);
     delete m;
   }
+  std::cout << " Done" << std::endl;
 }
 #else // RDK_CAIRO_BUILD
 void test2(){
@@ -162,6 +166,7 @@ void test2(){
 
 
 void test3(){
+  std::cout << " ----------------- Test 3" << std::endl;
   {
     std::string smiles="C1CC1CC1ON1";
     std::string nameBase="test3_1";
@@ -273,6 +278,7 @@ void test3(){
     }
     delete m;
   }
+  std::cout << " Done" << std::endl;
 }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -295,6 +301,7 @@ namespace {
 }
 
 void testMultiThreaded(){
+  std::cout << " ----------------- Test multi-threaded drawing" << std::endl;
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
   RDKit::SDMolSupplier suppl(fName);
@@ -330,7 +337,7 @@ void testMultiThreaded(){
     tg.add_thread(new boost::thread(runblock,mols,refData,count,i));
   }
   tg.join_all();
-  std::cerr<<" done"<<std::endl;
+  std::cerr<<" Done"<<std::endl;
 }
 #else
 void testMultiThreaded(){
