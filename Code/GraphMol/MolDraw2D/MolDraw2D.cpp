@@ -58,7 +58,6 @@ namespace RDKit {
     int tgt_lw=lineWidth()*8;
     // try to scale lw to reflect the overall scaling:
     tgt_lw = max(orig_lw*2,min(tgt_lw,(int)(scale_/25.*tgt_lw))); // the 25 here is extremely empirical
-    std::cerr<<orig_lw<<" "<<scale_<<" "<<tgt_lw<<std::endl;
     bool orig_fp=fillPolys();
     ROMol::VERTEX_ITER this_at , end_at;
     if(highlight_bonds){
