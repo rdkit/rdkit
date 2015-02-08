@@ -17,7 +17,7 @@ Deprecated modules (to be removed in next release):
 - C++: The functionality in $RDBASE/Code/GraphMol/MolDrawing has been
   superseded by the new drawing code in $RDBASE/Code/GraphMol and will
   be removed in the next release.
-
+- rdkit/Dbase/Pubmed
 
 Removed modules:
 
