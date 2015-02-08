@@ -241,15 +241,19 @@ namespace RDKit {
         if( !atom_syms_[i].first.empty() ) {
           float atsym_width , atsym_height;
           getStringSize( atom_syms_[i].first , atsym_width , atsym_height );
-          float this_x = at_cds_[i].first;
-          float this_y = at_cds_[i].second + atsym_height;
+          float this_x_min = at_cds_[i].first;
+          float this_x_max = at_cds_[i].first;
+          float this_y = at_cds_[i].second - atsym_height/2;
           if( W == atom_syms_[i].second ) {
-            this_x -= atsym_width;
+            this_x_min -= atsym_width;
           } else if( E == atom_syms_[i].second ) {
-            this_x += atsym_width;
+            this_x_max += atsym_width;
+          } else {
+            this_x_max += atsym_width/2;
+            this_x_min -= atsym_width/2;
           }
-          x_max = std::max( x_max , this_x );
-          x_min_ = std::min( x_min_ , this_x );
+          x_max = std::max( x_max , this_x_max );
+          x_min_ = std::min( x_min_ , this_x_min );
           y_max = std::max( y_max , this_y );
         }
       }

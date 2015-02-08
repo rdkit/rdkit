@@ -132,9 +132,9 @@ namespace RDKit {
       txt[0]=label[i];
       cairo_text_extents_t extents;
       cairo_text_extents(d_cr,txt,&extents);
-      double twidth=extents.x_advance,theight=extents.height;
+      float twidth=extents.x_advance,theight=extents.height;
 
-      label_height = theight/scale();
+      label_height = std::max(label_height,theight/scale());
       float char_width = twidth/scale();
 
       if( 2 == draw_mode ) {
