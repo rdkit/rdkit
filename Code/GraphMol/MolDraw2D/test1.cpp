@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 
@@ -371,6 +372,46 @@ void test3(){
   std::cout << " Done" << std::endl;
 }
 
+void test4(){
+  std::cout << " ----------------- Test 4" << std::endl;
+  {
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/MolDraw2D/test_dir";
+    fName += "/clash.mol";
+    ROMol *m = MolFileToMol(fName);
+    std::string nameBase="test4_1";
+    TEST_ASSERT(m);
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      cairo_surface_t *surface =
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_t *cr = cairo_create (surface);
+
+      MolDraw2DCairo drawer(300,300,cr);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+
+      cairo_destroy (cr);
+      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
+      cairo_surface_destroy (surface);
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
+
+  std::cout << " Done" << std::endl;
+}
+
+
+
 #ifdef RDK_TEST_MULTITHREADED
 #include <boost/thread.hpp>  
 namespace {
@@ -436,8 +477,9 @@ void testMultiThreaded(){
 
 int main(){
   RDLog::InitLogs();
-  //test1();
-  //test2();
+  test1();
+  test2();
   test3();
-  //testMultiThreaded();
+  test4();
+  testMultiThreaded();
 }

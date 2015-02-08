@@ -41,13 +41,15 @@ namespace RDKit {
     DrawColour highlightColour; // default highlight color
     std::map<int,std::string> *atomLabels; // replacement labels for atoms
     bool continuousHighlight;   // highlight by drawing an outline *underneath* the molecule
+    int flagCloseContactsDist; // if positive, this will be used as a cutoff (in pixels) for highlighting close contacts
     
     MolDrawOptions() :
       dummiesAreAttachments(false),
       circleAtoms(true),
       highlightColour(1,.5,.5),
       atomLabels(NULL),
-      continuousHighlight(true)
+      continuousHighlight(true),
+      flagCloseContactsDist(3)
     {};
   };
 
@@ -219,6 +221,8 @@ namespace RDKit {
                                            const std::vector<int> *highlight_bonds,
                                            const std::map<int,DrawColour> *highlight_atom_map,
                                            const std::map<int,DrawColour> *highlight_bond_map );
+
+    virtual void highlightCloseContacts();
 
   };
 

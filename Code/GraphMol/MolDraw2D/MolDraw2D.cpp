@@ -184,8 +184,47 @@ namespace RDKit {
         drawAtomLabel( i , highlight_atoms , highlight_atom_map );
       }
     }
+
+    if(drawOptions().flagCloseContactsDist>=0){
+      highlightCloseContacts();
+    }
   }
 
+  void MolDraw2D::highlightCloseContacts(){
+    if(drawOptions().flagCloseContactsDist<0) return;
+    int tol=drawOptions().flagCloseContactsDist * drawOptions().flagCloseContactsDist;
+    boost::dynamic_bitset<> flagged(at_cds_.size());
+    for(unsigned int i=0;i<at_cds_.size();++i){
+      if(flagged[i]) continue;
+      pair<float,float> ci=getDrawCoords(at_cds_[i]);
+      for(unsigned int j=i+1;j<at_cds_.size();++j){
+        if(flagged[j]) continue;
+        pair<float,float> cj=getDrawCoords(at_cds_[j]);
+        float d=(cj.first-ci.first)*(cj.first-ci.first) + (cj.second-ci.second)*(cj.second-ci.second);
+        if( d<= tol ){
+          flagged.set(i);
+          flagged.set(j);
+          break;
+        }
+      }
+      if(flagged[i]){
+        pair<float,float> p1=at_cds_[i];
+        pair<float,float> p2=p1;
+        p1.first-=0.1;
+        p1.second-=0.1;
+        p2.first+=0.1;
+        p2.second+=0.1;
+        bool ofp=fillPolys();
+        setFillPolys(false);
+        DrawColour odc=colour();
+        setColour(DrawColour(1,0,0));
+        drawRect(p1,p2);
+        setColour(odc);
+        setFillPolys(ofp);
+      }
+    }
+  }
+  
   // ****************************************************************************
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates
