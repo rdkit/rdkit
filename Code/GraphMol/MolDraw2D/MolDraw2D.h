@@ -45,9 +45,9 @@ namespace RDKit {
     MolDrawOptions() :
       dummiesAreAttachments(false),
       circleAtoms(true),
-      highlightColour(1,0,0),
+      highlightColour(1,.5,.5),
       atomLabels(NULL),
-      continuousHighlight(false)
+      continuousHighlight(true)
     {};
   };
 
