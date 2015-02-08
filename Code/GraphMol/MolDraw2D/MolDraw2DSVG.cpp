@@ -105,10 +105,13 @@ namespace RDKit {
     std::string dashString="";
     d_os<<"<svg:path ";
     d_os<<"d='M";
-    for(unsigned int i=0;i<cds.size();++i){
-      std::pair<float,float> c1 = getDrawCoords( cds[i] );
-      d_os << " " << c1.first << "," << c1.second;
+    std::pair<float,float> c0 = getDrawCoords( cds[0] );
+    d_os << " " << c0.first << "," << c0.second;
+    for(unsigned int i=1;i<cds.size();++i){
+      std::pair<float,float> ci = getDrawCoords( cds[i] );
+      d_os << " " << ci.first << "," << ci.second;
     }
+    d_os << " " << c0.first << "," << c0.second;
     d_os<<"' style='";
     if(fillPolys())
       d_os<<"fill:"<<col<<";fill-rule:evenodd";
