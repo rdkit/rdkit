@@ -127,8 +127,10 @@ namespace RDKit {
     virtual void drawTriangle( const std::pair<float,float> &cds1 ,
                                const std::pair<float,float> &cds2 ,
                                const std::pair<float,float> &cds3 );
-    virtual void drawEllipse(  const std::pair<float,float> &cds1 ,
-                               const std::pair<float,float> &cds2 );
+    virtual void drawEllipse( const std::pair<float,float> &cds1 ,
+                              const std::pair<float,float> &cds2 );
+    virtual void drawRect( const std::pair<float,float> &cds1 ,
+                           const std::pair<float,float> &cds2 );
     virtual bool fillPolys() const { return fill_polys_; }
     virtual void setFillPolys(bool val) { fill_polys_ = val; }
 

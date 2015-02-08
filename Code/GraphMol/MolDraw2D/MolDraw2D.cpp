@@ -891,6 +891,15 @@ namespace RDKit {
     MolDraw2D_detail::arcPoints(cds1,cds2,pts,0,360);
     drawPolygon(pts);
   }
+  void MolDraw2D::drawRect(const std::pair<float,float> &cds1 ,
+                           const std::pair<float,float> &cds2){
+    std::vector< std::pair<float,float> > pts(4);
+    pts[0]=cds1;
+    pts[1]=std::make_pair(cds1.x,cds2.y);
+    pts[2]=cds2;
+    pts[3]=std::make_pair(cds2.x,cds1.y;
+    drawPolygon(pts);
+  }
 
 
 } // EO namespace RDKit
