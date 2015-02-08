@@ -45,6 +45,7 @@ namespace RDKit{
     MolDraw2DSVG drawer(width,height,outs);
     drawer.setFontSize(fontSize/24.);
     drawer.setLineWidth(drawer.lineWidth()*lineWidthMult);
+    drawer.drawOptions().circleAtoms=includeAtomCircles;
     drawer.drawMolecule(mol,highlightAtoms,NULL,confId);
     delete highlightAtoms;
     drawer.finishDrawing();
@@ -1668,9 +1669,9 @@ namespace RDKit{
                    python::arg("height")=300,
                    python::arg("highlightAtoms")=python::object(),
                    python::arg("kekulize")=true,
-                   python::arg("lineWidthMult")=2,
+                   python::arg("lineWidthMult")=1,
                    python::arg("fontSize")=12,
-                   python::arg("includeAtomCircles")=false),
+                   python::arg("includeAtomCircles")=true),
                   docString.c_str());
 
     };
