@@ -37,13 +37,15 @@ namespace RDKit{
   std::string molToSVG(const ROMol &mol,
                        unsigned int width, unsigned int height,
                        python::object pyHighlightAtoms,bool kekulize,
-                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles
+                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
+                       int confId
                        ){
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
     std::stringstream outs;
     MolDraw2DSVG drawer(width,height,outs);
     drawer.setFontSize(fontSize/24.);
-    drawer.drawMolecule(mol,highlightAtoms);
+    drawer.setLineWidth(drawer.lineWidth()*lineWidthMult);
+    drawer.drawMolecule(mol,highlightAtoms,NULL,confId);
     delete highlightAtoms;
     drawer.finishDrawing();
     return outs.str();

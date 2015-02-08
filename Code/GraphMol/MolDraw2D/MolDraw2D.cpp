@@ -34,7 +34,8 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2D::drawMolecule( const ROMol &mol ,
                                 const vector<int> *highlight_atoms ,
-                                const map<int,DrawColour> *highlight_atom_map ) {
+                                const map<int,DrawColour> *highlight_atom_map,
+                                int confId) {
     vector<int> highlight_bonds;
     if(highlight_atoms){
       for(vector<int>::const_iterator ai=highlight_atoms->begin();
@@ -46,7 +47,7 @@ namespace RDKit {
         }
       }
     }
-    drawMolecule(mol,highlight_atoms,&highlight_bonds,highlight_atom_map);
+    drawMolecule(mol,highlight_atoms,&highlight_bonds,highlight_atom_map,NULL,confId);
   }
 
   void MolDraw2D::doContinuousHighlighting( const ROMol &mol ,
@@ -119,9 +120,10 @@ namespace RDKit {
                                 const vector<int> *highlight_atoms ,
                                 const vector<int> *highlight_bonds ,
                                 const map<int,DrawColour> *highlight_atom_map,
-                                const map<int,DrawColour> *highlight_bond_map ) {
+                                const map<int,DrawColour> *highlight_bond_map,
+                                int confId ) {
     clearDrawing();
-    extractAtomCoords( mol );
+    extractAtomCoords( mol, confId );
     extractAtomSymbols( mol );
     calculateScale();
     setFontSize( font_size_ );
@@ -429,11 +431,11 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2D::extractAtomCoords( const ROMol &mol ) {
+  void MolDraw2D::extractAtomCoords( const ROMol &mol,int confId ) {
 
     at_cds_.clear();
     atomic_nums_.clear();
-    const RDGeom::POINT3D_VECT &locs = mol.getConformer( -1 ).getPositions();
+    const RDGeom::POINT3D_VECT &locs = mol.getConformer( confId ).getPositions();
     ROMol::VERTEX_ITER this_at , end_at;
     tie( this_at , end_at ) = mol.getVertices();
     while( this_at != end_at ) {
@@ -895,9 +897,9 @@ namespace RDKit {
                            const std::pair<float,float> &cds2){
     std::vector< std::pair<float,float> > pts(4);
     pts[0]=cds1;
-    pts[1]=std::make_pair(cds1.x,cds2.y);
+    pts[1]=std::make_pair(cds1.first,cds2.second);
     pts[2]=cds2;
-    pts[3]=std::make_pair(cds2.x,cds1.y;
+    pts[3]=std::make_pair(cds2.first,cds1.second);
     drawPolygon(pts);
   }
 

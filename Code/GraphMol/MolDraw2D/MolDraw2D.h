@@ -61,13 +61,15 @@ namespace RDKit {
 
     virtual void drawMolecule( const ROMol &mol ,
                                const std::vector<int> *highlight_atoms = NULL,
-                               const std::map<int,DrawColour> *highlight_map = NULL );
+                               const std::map<int,DrawColour> *highlight_map = NULL,
+                               int confId=-1);
 
     virtual void drawMolecule( const ROMol &mol ,
                                const std::vector<int> *highlight_atoms,
                                const std::vector<int> *highlight_bonds,
                                const std::map<int,DrawColour> *highlight_atom_map = NULL,
-                               const std::map<int,DrawColour> *highlight_bond_map = NULL );
+                               const std::map<int,DrawColour> *highlight_bond_map = NULL,
+                               int confId=-1 );
 
     // transform a set of coords in the molecule's coordinate system
     // to drawing system coordinates and vice versa. Note that the coordinates have
@@ -165,7 +167,7 @@ namespace RDKit {
                           const std::map<int,DrawColour> *highlight_map=NULL );
     DrawColour getColourByAtomicNum( int atomic_num );
 
-    void extractAtomCoords( const ROMol &mol );
+    void extractAtomCoords( const ROMol &mol,int confId );
     void extractAtomSymbols( const ROMol &mol );
 
     virtual void drawLine( const std::pair<float,float> &cds1 ,
