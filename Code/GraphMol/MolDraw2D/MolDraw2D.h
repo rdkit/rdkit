@@ -39,15 +39,14 @@ namespace RDKit {
     bool dummiesAreAttachments; // draws "breaks" at dummy atoms
     bool circleAtoms;           // draws circles under highlighted atoms
     DrawColour highlightColour; // default highlight color
-    std::map<int,std::string> *atomLabels; // replacement labels for atoms
     bool continuousHighlight;   // highlight by drawing an outline *underneath* the molecule
     int flagCloseContactsDist; // if positive, this will be used as a cutoff (in pixels) for highlighting close contacts
+    std::map<int,std::string> atomLabels; // replacement labels for atoms
     
     MolDrawOptions() :
       dummiesAreAttachments(false),
       circleAtoms(true),
       highlightColour(1,.5,.5),
-      atomLabels(NULL),
       continuousHighlight(true),
       flagCloseContactsDist(3)
     {};

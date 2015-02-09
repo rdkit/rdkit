@@ -849,9 +849,8 @@ namespace RDKit {
 
     // -----------------------------------
     // start with the symbol
-    if(drawOptions().atomLabels &&
-       drawOptions().atomLabels->find(atom.getIdx()) != drawOptions().atomLabels->end() ){
-      symbol = drawOptions().atomLabels->find(atom.getIdx())->second;
+    if(drawOptions().atomLabels.find(atom.getIdx()) != drawOptions().atomLabels.end() ){
+      symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
     } else {
       if( 6 != atom.getAtomicNum() ) {
         symbol = atom.getSymbol();

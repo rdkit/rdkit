@@ -190,7 +190,7 @@ void test3(){
       cairo_t *cr = cairo_create (surface);
 
       MolDraw2DCairo drawer(300,300,cr);
-      drawer.drawOptions().atomLabels = &atomLabels;
+      drawer.drawOptions().atomLabels = atomLabels;
       drawer.drawMolecule(*m,&highlight_atoms);
       drawer.finishDrawing();
 
@@ -202,7 +202,7 @@ void test3(){
     {
       std::ofstream outs((nameBase+".svg").c_str());
       MolDraw2DSVG drawer(300,300,outs);
-      drawer.drawOptions().atomLabels = &atomLabels;
+      drawer.drawOptions().atomLabels = atomLabels;
       drawer.drawMolecule(*m,&highlight_atoms);
       drawer.finishDrawing();
       outs.flush();

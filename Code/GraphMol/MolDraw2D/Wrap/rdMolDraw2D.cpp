@@ -14,6 +14,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <Geometry/point.h>
+#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
 namespace python = boost::python;
 
@@ -60,14 +61,21 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     "Module containing a C++ implementation of 2D molecule drawing";
    
   std::string docString;
+
+  python::class_<std::map<int,std::string> >("IntStringMap")
+    .def(python::map_indexing_suite<std::map<int,std::string>, true >())
+    ;
+
+
   docString="Drawing options";
-  python::class_<RDKit::MolDrawOptions>("MolDrawOptions",docString.c_str())
+  python::class_<RDKit::MolDrawOptions,boost::noncopyable>("MolDrawOptions",docString.c_str())
     .def_readwrite("dummiesAreAttachments",&RDKit::MolDrawOptions::dummiesAreAttachments)
     .def_readwrite("circleAtoms",&RDKit::MolDrawOptions::circleAtoms)
     //.def_readwrite("highlightColour",&RDKit::MolDrawOptions::highlightColour)
-    .def_readwrite("atomLabels",&RDKit::MolDrawOptions::atomLabels)
+    .def_readwrite("atomLabels",&RDKit::MolDrawOptions::atomLabels,"maps indices to atom labels")
     .def_readwrite("continuousHighlight",&RDKit::MolDrawOptions::continuousHighlight)
     .def_readwrite("flagCloseContactsDist",&RDKit::MolDrawOptions::flagCloseContactsDist)
+
     ;
   docString="Drawer abstract base class";
   python::class_<RDKit::MolDraw2D,boost::noncopyable>("MolDraw2D",docString.c_str(),python::no_init)
@@ -101,7 +109,6 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     .def("GetDrawingText",&RDKit::MolDraw2DSVG::getDrawingText,
          "return the SVG")
     ;
-  
 
 
 }
