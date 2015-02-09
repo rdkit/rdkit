@@ -412,6 +412,48 @@ void test4(){
 
 
 
+void test5(){
+  std::cout << " ----------------- Test 5" << std::endl;
+  {
+    std::string smiles="*c1cc(*)cc(*)c1";
+    std::string nameBase="test5_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    MolDrawOptions options;
+    options.dummiesAreAttachments=true;
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      cairo_surface_t *surface =
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_t *cr = cairo_create (surface);
+
+      MolDraw2DCairo drawer(300,300,cr);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      cairo_destroy (cr);
+      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
+      cairo_surface_destroy (surface);
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
+  std::cout << " Done" << std::endl;
+}
+
+
+
 #ifdef RDK_TEST_MULTITHREADED
 #include <boost/thread.hpp>  
 namespace {
@@ -481,5 +523,6 @@ int main(){
   test2();
   test3();
   test4();
-  testMultiThreaded();
+  test5();
+  //testMultiThreaded();
 }

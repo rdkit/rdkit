@@ -179,6 +179,25 @@ namespace RDKit {
       ++this_at;
     }
 
+    if(drawOptions().dummiesAreAttachments){
+      ROMol::VERTEX_ITER atom , end_atom;
+      tie( atom , end_atom ) = mol.getVertices();
+      while( atom != end_atom ) {
+        const Atom *at1 = mol[*atom].get();
+        if(at1->getAtomicNum()==0 && at1->getDegree()==1){
+          pair<float,float> &at1_cds = at_cds_[at1->getIdx()];
+          ROMol::ADJ_ITER nbrIdx,endNbrs;
+          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(at1);
+          const ATOM_SPTR at2 = mol[*nbrIdx];
+          pair<float,float> &at2_cds = at_cds_[at2->getIdx()];
+          drawAttachmentLine(at2_cds,at1_cds,DrawColour(.5,0,.5));
+        }
+        ++atom;
+      }
+      
+
+    }
+    
     for( int i = 0 , is = atom_syms_.size() ; i < is ; ++i ) {
       if( !atom_syms_[i].first.empty() ) {
         drawAtomLabel( i , highlight_atoms , highlight_atom_map );
@@ -850,7 +869,10 @@ namespace RDKit {
     // -----------------------------------
     // start with the symbol
     if(drawOptions().atomLabels.find(atom.getIdx()) != drawOptions().atomLabels.end() ){
+      // specified labels are trump: no matter what else happens we will show them.
       symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+    } else if(drawOptions().dummiesAreAttachments && atom.getAtomicNum()==0 && atom.getDegree()==1) {
+      symbol="";
     } else {
       if( 6 != atom.getAtomicNum() ) {
         symbol = atom.getSymbol();
@@ -925,12 +947,14 @@ namespace RDKit {
     drawPolygon(pts);
   };
 
+  // ****************************************************************************
   void MolDraw2D::drawEllipse(const std::pair<float,float> &cds1 ,
                               const std::pair<float,float> &cds2){
     std::vector< std::pair<float,float> > pts;
     MolDraw2D_detail::arcPoints(cds1,cds2,pts,0,360);
     drawPolygon(pts);
   }
+  // ****************************************************************************
   void MolDraw2D::drawRect(const std::pair<float,float> &cds1 ,
                            const std::pair<float,float> &cds2){
     std::vector< std::pair<float,float> > pts(4);
@@ -940,6 +964,25 @@ namespace RDKit {
     pts[3]=std::make_pair(cds2.first,cds1.second);
     drawPolygon(pts);
   }
+
+  // ****************************************************************************
+  //  we draw the line at cds2, perpendicular to the line cds1-cds2
+  void MolDraw2D::drawAttachmentLine( const pair<float, float> &cds1 ,
+                                      const pair<float, float> &cds2 ,   
+                                      const DrawColour &col,
+                                      float len,
+                                      unsigned int nSegments ) {
+    if(nSegments%2) ++nSegments; // we're going to assume an even number of segments
+    pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
+    pair<float,float> p1 = make_pair(cds2.first-perp.first*len/2,
+                                     cds2.second-perp.second*len/2);
+    pair<float,float> p2 = make_pair(cds2.first+perp.first*len/2,
+                                     cds2.second+perp.second*len/2);
+    setColour( col );
+    drawLine(p1,p2);
+  }
+
+
 
 
 } // EO namespace RDKit
