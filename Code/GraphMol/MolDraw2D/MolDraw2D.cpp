@@ -100,10 +100,9 @@ namespace RDKit {
           }
           Point2D p1=at_cds_[this_idx];
           Point2D p2=at_cds_[this_idx];
-          p1.x -= 0.4;
-          p1.y -= 0.4;
-          p2.x += 0.4;
-          p2.y += 0.4;
+          Point2D offset(0.4,0.4);
+          p1 -= offset;
+          p2 += offset;
           setColour(col);
           setFillPolys(true);
           setLineWidth(1);
@@ -149,10 +148,9 @@ namespace RDKit {
           }
           Point2D p1=at_cds_[this_idx];
           Point2D p2=at_cds_[this_idx];
-          p1.x -= 0.3;
-          p1.y -= 0.3;
-          p2.x += 0.3;
-          p2.y += 0.3;
+          Point2D offset(0.3,0.3);
+          p1 -= offset;
+          p2 += offset;
           drawEllipse(p1,p2);
         }
         ++this_at;
@@ -221,7 +219,7 @@ namespace RDKit {
       for(unsigned int j=i+1;j<at_cds_.size();++j){
         if(flagged[j]) continue;
         Point2D cj=getDrawCoords(at_cds_[j]);
-        double d=(cj.x-ci.x)*(cj.x-ci.x) + (cj.y-ci.y)*(cj.y-ci.y);
+        double d=(cj-ci).lengthSq();
         if( d<= tol ){
           flagged.set(i);
           flagged.set(j);
@@ -231,10 +229,9 @@ namespace RDKit {
       if(flagged[i]){
         Point2D p1=at_cds_[i];
         Point2D p2=p1;
-        p1.x-=0.1;
-        p1.y-=0.1;
-        p2.x+=0.1;
-        p2.y+=0.1;
+        Point2D offset(0.1,0.1);
+        p1 -= offset;
+        p2 += offset;
         bool ofp=fillPolys();
         setFillPolys(false);
         DrawColour odc=colour();
@@ -384,8 +381,9 @@ namespace RDKit {
       setColour( col1 );
       drawLine( cds1 , cds2 );
     } else {
-      Point2D mid( 0.5 * ( cds1.x + cds2.x ) ,
-                             0.5 * ( cds1.y + cds2.y ) );
+      Point2D mid=(cds1+cds2);
+      mid *= .5;
+
       setColour( col1 );
       drawLine( cds1 , mid );
       setColour( col2 );
@@ -520,8 +518,7 @@ namespace RDKit {
         const BOND_SPTR bond = mol[*nbr];
         ++nbr;
         Point2D &at2_cds = at_cds_[bond->getOtherAtomIdx( at1->getIdx() )];
-        nbr_sum.x += at2_cds.x - at1_cds.x;
-        nbr_sum.y += at2_cds.y - at1_cds.y;
+        nbr_sum += at2_cds-at1_cds;
       }
       atom_syms_.push_back( getAtomSymbolAndOrientation( *at1 , nbr_sum ) );
       atomic_nums_.push_back( at1->getAtomicNum() );
