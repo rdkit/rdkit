@@ -57,11 +57,11 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DSVG::drawLine( const std::pair<float,float> &cds1 ,
-                               const std::pair<float,float> &cds2 ) {
+  void MolDraw2DSVG::drawLine( const Point2D &cds1 ,
+                               const Point2D &cds2 ) {
 
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
+    Point2D c1 = getDrawCoords( cds1 );
+    Point2D c2 = getDrawCoords( cds2 );
     std::string col=DrawColourToSVG(colour());
     unsigned int width=lineWidth();
     std::string dashString="";
@@ -74,22 +74,22 @@ namespace RDKit {
       dashString = dss.str();
     }
     d_os<<"<svg:path ";
-    d_os<< "d='M " << c1.first << "," << c1.second << " " << c2.first << "," << c2.second << "' ";
+    d_os<< "d='M " << c1.x << "," << c1.y << " " << c2.x << "," << c2.y << "' ";
     d_os<<"style='fill:none;fill-rule:evenodd;stroke:"<<col<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
     d_os<<" />\n";
   }
 
   // ****************************************************************************
   // draw the char, with the bottom left hand corner at cds
-  void MolDraw2DSVG::drawChar( char c , const std::pair<float,float> &cds ) {
+  void MolDraw2DSVG::drawChar( char c , const Point2D &cds ) {
     unsigned int fontSz=scale()*fontSize();
     std::string col = DrawColourToSVG(colour());
 
     d_os<<"<svg:text";
-    d_os<<" x='" << cds.first;
+    d_os<<" x='" << cds.x;
     // doesn't seem like the inclusion of the fontSz should be necessary, but vertical text alignment seems impossible
     // The 0.9 is an empirical factor to account for the descender on the font.
-    d_os<< "' y='" << cds.second + 0.9*fontSz <<"'"; 
+    d_os<< "' y='" << cds.y + 0.9*fontSz <<"'"; 
     d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
     d_os<<" >";
     d_os<<c;
@@ -97,7 +97,7 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DSVG::drawPolygon( const std::vector< std::pair<float , float> > &cds ){
+  void MolDraw2DSVG::drawPolygon( const std::vector< Point2D > &cds ){
     PRECONDITION(cds.size()>=3,"must have at least three points");
 
     std::string col=DrawColourToSVG(colour());
@@ -105,13 +105,13 @@ namespace RDKit {
     std::string dashString="";
     d_os<<"<svg:path ";
     d_os<<"d='M";
-    std::pair<float,float> c0 = getDrawCoords( cds[0] );
-    d_os << " " << c0.first << "," << c0.second;
+    Point2D c0 = getDrawCoords( cds[0] );
+    d_os << " " << c0.x << "," << c0.y;
     for(unsigned int i=1;i<cds.size();++i){
-      std::pair<float,float> ci = getDrawCoords( cds[i] );
-      d_os << " " << ci.first << "," << ci.second;
+      Point2D ci = getDrawCoords( cds[i] );
+      d_os << " " << ci.x << "," << ci.y;
     }
-    d_os << " " << c0.first << "," << c0.second;
+    d_os << " " << c0.x << "," << c0.y;
     d_os<<"' style='";
     if(fillPolys())
       d_os<<"fill:"<<col<<";fill-rule:evenodd";
@@ -123,14 +123,14 @@ namespace RDKit {
 
   }
 
-  void MolDraw2DSVG::drawEllipse( const std::pair<float,float> &cds1 ,
-                                  const std::pair<float,float> &cds2 ) {
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
-    float w = c2.first - c1.first;
-    float h = c2.second - c1.second;
-    float cx=c1.first + w/2;
-    float cy=c1.second + h/2;
+  void MolDraw2DSVG::drawEllipse( const Point2D &cds1 ,
+                                  const Point2D &cds2 ) {
+    Point2D c1 = getDrawCoords( cds1 );
+    Point2D c2 = getDrawCoords( cds2 );
+    double w = c2.x - c1.x;
+    double h = c2.y - c1.y;
+    double cx=c1.x + w/2;
+    double cy=c1.y + h/2;
     w = w>0 ? w : -1*w;
     h = h>0 ? h : -1*h;
     
@@ -163,15 +163,15 @@ namespace RDKit {
 
   
   // ****************************************************************************
-  void MolDraw2DSVG::setFontSize( float new_size ) {
+  void MolDraw2DSVG::setFontSize( double new_size ) {
     MolDraw2D::setFontSize( new_size );
-    float font_size_in_points = fontSize() * scale();
+    double font_size_in_points = fontSize() * scale();
   }
 
   // ****************************************************************************
   // using the current scale, work out the size of the label in molecule coordinates
-  void MolDraw2DSVG::getStringSize( const std::string &label , float &label_width ,
-                                    float &label_height ) const {
+  void MolDraw2DSVG::getStringSize( const std::string &label , double &label_width ,
+                                    double &label_height ) const {
 
     label_width = 0.0;
     label_height = 0.0;
@@ -189,7 +189,7 @@ namespace RDKit {
       }
 
       label_height = fontSize();
-      float char_width = fontSize() * static_cast<float>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
+      double char_width = fontSize() * static_cast<double>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {
@@ -210,24 +210,24 @@ namespace RDKit {
   // ****************************************************************************
   // draws the string centred on cds
   void MolDraw2DSVG::drawString( const std::string &str ,
-                                 const std::pair<float,float> &cds ) {
+                                 const Point2D &cds ) {
 
     unsigned int fontSz=scale()*fontSize();
     std::string col = DrawColourToSVG(colour());
 
-    float string_width , string_height;
+    double string_width , string_height;
     getStringSize( str , string_width , string_height );
 
-    float draw_x = cds.first - string_width / 2.0;
-    float draw_y = cds.second - string_height / 2.0;
-    std::pair<float,float> draw_coords = getDrawCoords(std::make_pair(draw_x,draw_y));
+    double draw_x = cds.x - string_width / 2.0;
+    double draw_y = cds.y - string_height / 2.0;
+    Point2D draw_coords = getDrawCoords(Point2D(draw_x,draw_y));
 
     d_os<<"<svg:text";
-    d_os<<" x='" << draw_coords.first;
+    d_os<<" x='" << draw_coords.x;
     
     // doesn't seem like the inclusion of the fontSz should be necessary, but vertical text alignment seems impossible
     // The 0.9 is an empirical factor to account for the descender on the font.
-    d_os<< "' y='" << draw_coords.second + 0.9*fontSz <<"'"; 
+    d_os<< "' y='" << draw_coords.y + 0.9*fontSz <<"'"; 
 
     d_os<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;"<<"fill:"<<col<<"'";
     d_os<<" >";

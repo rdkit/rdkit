@@ -79,8 +79,8 @@ namespace RDKit {
                 col = highlight_bond_map->find(bond->getIdx())->second;
               }
               setLineWidth(tgt_lw);
-              pair<float,float> at1_cds = at_cds_[this_idx];
-              pair<float,float> at2_cds = at_cds_[nbr_idx];
+              Point2D at1_cds = at_cds_[this_idx];
+              Point2D at2_cds = at_cds_[nbr_idx];
               drawLine( at1_cds , at2_cds , col , col);
             }
           }
@@ -98,12 +98,12 @@ namespace RDKit {
              highlight_atom_map->find(this_idx)!=highlight_atom_map->end()){
             col = highlight_atom_map->find(this_idx)->second;
           }
-          std::pair<double,double> p1=at_cds_[this_idx];
-          std::pair<double,double> p2=at_cds_[this_idx];
-          p1.first -= 0.4;
-          p1.second -= 0.4;
-          p2.first += 0.4;
-          p2.second += 0.4;
+          Point2D p1=at_cds_[this_idx];
+          Point2D p2=at_cds_[this_idx];
+          p1.x -= 0.4;
+          p1.y -= 0.4;
+          p2.x += 0.4;
+          p2.y += 0.4;
           setColour(col);
           setFillPolys(true);
           setLineWidth(1);
@@ -147,12 +147,12 @@ namespace RDKit {
           } else {
             setColour(drawOptions().highlightColour);
           }
-          std::pair<double,double> p1=at_cds_[this_idx];
-          std::pair<double,double> p2=at_cds_[this_idx];
-          p1.first -= 0.3;
-          p1.second -= 0.3;
-          p2.first += 0.3;
-          p2.second += 0.3;
+          Point2D p1=at_cds_[this_idx];
+          Point2D p2=at_cds_[this_idx];
+          p1.x -= 0.3;
+          p1.y -= 0.3;
+          p2.x += 0.3;
+          p2.y += 0.3;
           drawEllipse(p1,p2);
         }
         ++this_at;
@@ -190,11 +190,11 @@ namespace RDKit {
           continue;
         }
         if(at1->getAtomicNum()==0 && at1->getDegree()==1){
-          pair<float,float> &at1_cds = at_cds_[at1->getIdx()];
+          Point2D &at1_cds = at_cds_[at1->getIdx()];
           ROMol::ADJ_ITER nbrIdx,endNbrs;
           boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(at1);
           const ATOM_SPTR at2 = mol[*nbrIdx];
-          pair<float,float> &at2_cds = at_cds_[at2->getIdx()];
+          Point2D &at2_cds = at_cds_[at2->getIdx()];
           drawAttachmentLine(at2_cds,at1_cds,DrawColour(.5,.5,.5));
         }
       }
@@ -217,11 +217,11 @@ namespace RDKit {
     boost::dynamic_bitset<> flagged(at_cds_.size());
     for(unsigned int i=0;i<at_cds_.size();++i){
       if(flagged[i]) continue;
-      pair<float,float> ci=getDrawCoords(at_cds_[i]);
+      Point2D ci=getDrawCoords(at_cds_[i]);
       for(unsigned int j=i+1;j<at_cds_.size();++j){
         if(flagged[j]) continue;
-        pair<float,float> cj=getDrawCoords(at_cds_[j]);
-        float d=(cj.first-ci.first)*(cj.first-ci.first) + (cj.second-ci.second)*(cj.second-ci.second);
+        Point2D cj=getDrawCoords(at_cds_[j]);
+        double d=(cj.x-ci.x)*(cj.x-ci.x) + (cj.y-ci.y)*(cj.y-ci.y);
         if( d<= tol ){
           flagged.set(i);
           flagged.set(j);
@@ -229,12 +229,12 @@ namespace RDKit {
         }
       }
       if(flagged[i]){
-        pair<float,float> p1=at_cds_[i];
-        pair<float,float> p2=p1;
-        p1.first-=0.1;
-        p1.second-=0.1;
-        p2.first+=0.1;
-        p2.second+=0.1;
+        Point2D p1=at_cds_[i];
+        Point2D p2=p1;
+        p1.x-=0.1;
+        p1.y-=0.1;
+        p2.x+=0.1;
+        p2.y+=0.1;
         bool ofp=fillPolys();
         setFillPolys(false);
         DrawColour odc=colour();
@@ -249,51 +249,51 @@ namespace RDKit {
   // ****************************************************************************
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates
-  pair<float,float> MolDraw2D::getDrawCoords( const std::pair<float, float> &mol_cds ) const {
-    float x = scale_ * ( mol_cds.first - x_min_ + x_trans_ );
-    float y = scale_ * ( mol_cds.second - y_min_ + y_trans_ );
+  Point2D MolDraw2D::getDrawCoords( const Point2D &mol_cds ) const {
+    double x = scale_ * ( mol_cds.x - x_min_ + x_trans_ );
+    double y = scale_ * ( mol_cds.y - y_min_ + y_trans_ );
 
-    return make_pair( x , y );
+    return Point2D( x , y );
   }
 
   // ****************************************************************************
-  pair<float,float> MolDraw2D::getDrawCoords( int at_num ) const {
+  Point2D MolDraw2D::getDrawCoords( int at_num ) const {
     return getDrawCoords( at_cds_[at_num] );
   }
 
   // ****************************************************************************
-  pair<float,float> MolDraw2D::getAtomCoords( const pair<int, int> &screen_cds) const {
-    int x = int( float( screen_cds.first ) / scale_ + x_min_ - x_trans_ );
-    int y = int( float( screen_cds.second ) / scale_ + y_min_ - y_trans_ );
+  Point2D MolDraw2D::getAtomCoords( const pair<int, int> &screen_cds) const {
+    int x = int( double( screen_cds.first ) / scale_ + x_min_ - x_trans_ );
+    int y = int( double( screen_cds.second ) / scale_ + y_min_ - y_trans_ );
 
-    return make_pair( x , y );
+    return Point2D( x , y );
   }
 
   // ****************************************************************************
-  pair<float,float> MolDraw2D::getAtomCoords( int at_num ) const {
+  Point2D MolDraw2D::getAtomCoords( int at_num ) const {
     return at_cds_[at_num];
   }
 
   // ****************************************************************************
-  void MolDraw2D::setFontSize( float new_size ) {
+  void MolDraw2D::setFontSize( double new_size ) {
     font_size_ = new_size;
   }
 
   // ****************************************************************************
   void MolDraw2D::calculateScale() {
-    x_min_ = y_min_ = numeric_limits<float>::max();
-    float x_max( -numeric_limits<float>::max() ) , y_max( -numeric_limits<float>::max() );
+    x_min_ = y_min_ = numeric_limits<double>::max();
+    double x_max( -numeric_limits<double>::max() ) , y_max( -numeric_limits<double>::max() );
     for( int i = 0 , is = at_cds_.size() ; i < is ; ++i ) {
-      const pair<float,float> &pt = at_cds_[i];
-      x_min_ = std::min( pt.first , x_min_ );
-      y_min_ = std::min( pt.second , y_min_ );
-      x_max = std::max( pt.first , x_max );
-      y_max = std::max( pt.second , y_max );
+      const Point2D &pt = at_cds_[i];
+      x_min_ = std::min( pt.x , x_min_ );
+      y_min_ = std::min( pt.y , y_min_ );
+      x_max = std::max( pt.x , x_max );
+      y_max = std::max( pt.y , y_max );
     }
 
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
-    scale_ = std::min( float( width_ ) / x_range_ , float( height_ ) / y_range_ );
+    scale_ = std::min( double( width_ ) / x_range_ , double( height_ ) / y_range_ );
 
     // we may need to adjust the scale if there are atom symbols that go off
     // the edges, and we probably need to do it iteratively because get_string_size
@@ -301,11 +301,11 @@ namespace RDKit {
     while( 1 ) {
       for( int i = 0 , is = atom_syms_.size() ; i < is ; ++i ) {
         if( !atom_syms_[i].first.empty() ) {
-          float atsym_width , atsym_height;
+          double atsym_width , atsym_height;
           getStringSize( atom_syms_[i].first , atsym_width , atsym_height );
-          float this_x_min = at_cds_[i].first;
-          float this_x_max = at_cds_[i].first;
-          float this_y = at_cds_[i].second - atsym_height/2;
+          double this_x_min = at_cds_[i].x;
+          double this_x_max = at_cds_[i].x;
+          double this_y = at_cds_[i].y - atsym_height/2;
           if( W == atom_syms_[i].second ) {
             this_x_min -= atsym_width;
           } else if( E == atom_syms_[i].second ) {
@@ -319,10 +319,10 @@ namespace RDKit {
           y_max = std::max( y_max , this_y );
         }
       }
-      float old_scale = scale_;
+      double old_scale = scale_;
       x_range_ = x_max - x_min_;
       y_range_ = y_max - y_min_;
-      scale_ = std::min( float( width_ ) / x_range_ , float( height_ ) / y_range_ );
+      scale_ = std::min( double( width_ ) / x_range_ , double( height_ ) / y_range_ );
       if( fabs( scale_ - old_scale ) < 0.1 ) {
         break;
       }
@@ -334,13 +334,13 @@ namespace RDKit {
     y_min_ -= 0.05 * y_range_;
     y_range_ *= 1.1;
 
-    scale_ = std::min( float( width_ ) / x_range_ , float( height_ ) / y_range_ );
+    scale_ = std::min( double( width_ ) / x_range_ , double( height_ ) / y_range_ );
 
-    float x_mid = x_min_ + 0.5 * x_range_;
-    float y_mid = y_min_ + 0.5 * y_range_;
-    pair<float,float> mid = getDrawCoords( make_pair( x_mid , y_mid ) );
-    x_trans_ = ( width_ / 2 - mid.first ) / scale_;
-    y_trans_ = ( height_ / 2 - mid.second ) / scale_;
+    double x_mid = x_min_ + 0.5 * x_range_;
+    double y_mid = y_min_ + 0.5 * y_range_;
+    Point2D mid = getDrawCoords( Point2D( x_mid , y_mid ) );
+    x_trans_ = ( width_ / 2 - mid.x ) / scale_;
+    y_trans_ = ( height_ / 2 - mid.y ) / scale_;
   }
 
   // ****************************************************************************
@@ -376,16 +376,16 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2D::drawLine( const pair<float, float> &cds1 ,
-                            const pair<float, float> &cds2 ,
+  void MolDraw2D::drawLine( const Point2D &cds1 ,
+                            const Point2D &cds2 ,
                             const DrawColour &col1 , const DrawColour &col2) {
 
     if( col1 == col2 ) {
       setColour( col1 );
       drawLine( cds1 , cds2 );
     } else {
-      pair<float,float> mid( 0.5 * ( cds1.first + cds2.first ) ,
-                             0.5 * ( cds1.second + cds2.second ) );
+      Point2D mid( 0.5 * ( cds1.x + cds2.x ) ,
+                             0.5 * ( cds1.y + cds2.y ) );
       setColour( col1 );
       drawLine( cds1 , mid );
       setColour( col2 );
@@ -396,15 +396,15 @@ namespace RDKit {
   // ****************************************************************************
   // draws the string centred on cds
   void MolDraw2D::drawString( const string &str ,
-                              const pair<float,float> &cds ) {
+                              const Point2D &cds ) {
 
-    float string_width , string_height;
+    double string_width , string_height;
     getStringSize( str , string_width , string_height );
 
-    float draw_x = cds.first - string_width / 2.0;
-    float draw_y = cds.second - string_height / 2.0;
+    double draw_x = cds.x - string_width / 2.0;
+    double draw_y = cds.y - string_height / 2.0;
 
-    float full_font_size = fontSize();
+    double full_font_size = fontSize();
     int draw_mode = 0; // 0 for normal, 1 for superscript, 2 for subscript
     string next_char( " " );
 
@@ -418,7 +418,7 @@ namespace RDKit {
 
       char next_c = str[i];
       next_char[0] = next_c;
-      float char_width , char_height;
+      double char_width , char_height;
       getStringSize( next_char , char_width , char_height );
 
       // these font sizes and positions work best for Qt, IMO. They may want
@@ -427,15 +427,15 @@ namespace RDKit {
         // y goes from top to bottom, so add for a subscript!
         setFontSize( 0.75 * full_font_size );
         char_width *= 0.5;
-        drawChar( next_c , getDrawCoords( make_pair( draw_x , draw_y + 0.5 * char_height ) ) );
+        drawChar( next_c , getDrawCoords( Point2D( draw_x , draw_y + 0.5 * char_height ) ) );
         setFontSize( full_font_size );
       } else if( 1 == draw_mode ) {
         setFontSize( 0.75 * full_font_size );
         char_width *= 0.5;
-        drawChar( next_c , getDrawCoords( make_pair( draw_x , draw_y - 0.25 * char_height ) ) );
+        drawChar( next_c , getDrawCoords( Point2D( draw_x , draw_y - 0.25 * char_height ) ) );
         setFontSize( full_font_size );
       } else {
-        drawChar( next_c , getDrawCoords( make_pair( draw_x , draw_y ) ) );
+        drawChar( next_c , getDrawCoords( Point2D( draw_x , draw_y ) ) );
       }
       draw_x += char_width;
     }
@@ -500,7 +500,7 @@ namespace RDKit {
     tie( this_at , end_at ) = mol.getVertices();
     while( this_at != end_at ) {
       int this_idx = mol[*this_at]->getIdx();
-      at_cds_.push_back( make_pair( locs[this_idx].x , locs[this_idx].y ) );
+      at_cds_.push_back( Point2D( locs[this_idx].x , locs[this_idx].y ) );
       ++this_at;
     }
   }
@@ -514,14 +514,14 @@ namespace RDKit {
       ROMol::OEDGE_ITER nbr , end_nbrs;
       const Atom *at1 = mol[*atom].get();
       tie( nbr , end_nbrs ) = mol.getAtomBonds( at1 );
-      pair<float,float> &at1_cds = at_cds_[at1->getIdx()];
-      pair<float,float> nbr_sum( 0.0 , 0.0 );
+      Point2D &at1_cds = at_cds_[at1->getIdx()];
+      Point2D nbr_sum( 0.0 , 0.0 );
       while( nbr != end_nbrs ) {
         const BOND_SPTR bond = mol[*nbr];
         ++nbr;
-        pair<float,float> &at2_cds = at_cds_[bond->getOtherAtomIdx( at1->getIdx() )];
-        nbr_sum.first += at2_cds.first - at1_cds.first;
-        nbr_sum.second += at2_cds.second - at1_cds.second;
+        Point2D &at2_cds = at_cds_[bond->getOtherAtomIdx( at1->getIdx() )];
+        nbr_sum.x += at2_cds.x - at1_cds.x;
+        nbr_sum.y += at2_cds.y - at1_cds.y;
       }
       atom_syms_.push_back( getAtomSymbolAndOrientation( *at1 , nbr_sum ) );
       atomic_nums_.push_back( at1->getAtomicNum() );
@@ -543,10 +543,10 @@ namespace RDKit {
 
     const Atom *at1 = mol.getAtomWithIdx( at1_idx );
     const Atom *at2 = mol.getAtomWithIdx( at2_idx );
-    const float double_bond_offset = 0.1;
+    const double double_bond_offset = 0.1;
 
-    pair<float,float> at1_cds = at_cds_[at1_idx];
-    pair<float,float> at2_cds = at_cds_[at2_idx];
+    Point2D at1_cds = at_cds_[at1_idx];
+    Point2D at2_cds = at_cds_[at2_idx];
 
     adjustBondEndForLabel( at1_idx , at2_cds , at1_cds );
     adjustBondEndForLabel( at2_idx , at1_cds , at2_cds );
@@ -581,15 +581,15 @@ namespace RDKit {
     // to the atom-atom line.
     if( ( bond->getBondType() == Bond::DOUBLE ) &&
         ( 1 == at1->getDegree() || 1 == at2->getDegree() ) ) {
-      pair<float,float> perp = calcPerpendicular( at1_cds , at2_cds );
-      drawLine( make_pair( at1_cds.first + double_bond_offset * perp.first ,
-                           at1_cds.second + double_bond_offset * perp.second ) ,
-                make_pair( at2_cds.first + double_bond_offset * perp.first ,
-                           at2_cds.second + double_bond_offset * perp.second ) , col1 , col2 );
-      drawLine( make_pair( at1_cds.first - double_bond_offset * perp.first ,
-                           at1_cds.second - double_bond_offset * perp.second ) ,
-                make_pair( at2_cds.first - double_bond_offset * perp.first ,
-                           at2_cds.second - double_bond_offset * perp.second ) , col1 , col2 );
+      Point2D perp = calcPerpendicular( at1_cds , at2_cds );
+      drawLine( Point2D( at1_cds.x + double_bond_offset * perp.x ,
+                           at1_cds.y + double_bond_offset * perp.y ) ,
+                Point2D( at2_cds.x + double_bond_offset * perp.x ,
+                           at2_cds.y + double_bond_offset * perp.y ) , col1 , col2 );
+      drawLine( Point2D( at1_cds.x - double_bond_offset * perp.x ,
+                           at1_cds.y - double_bond_offset * perp.y ) ,
+                Point2D( at2_cds.x - double_bond_offset * perp.x ,
+                           at2_cds.y - double_bond_offset * perp.y ) , col1 , col2 );
       if( bond->getBondType() == Bond::TRIPLE ) {
         drawLine( at1_cds , at2_cds , col1 , col2 );
       }
@@ -611,40 +611,40 @@ namespace RDKit {
       drawLine( at1_cds , at2_cds , col1 , col2 );
       if( Bond::TRIPLE == bond->getBondType() ) {
         // 2 further lines, a bit shorter and offset on the perpendicular
-        pair<float,float> perp = calcPerpendicular( at1_cds , at2_cds );
-        float dbo = 2.0 * double_bond_offset;
-        float end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
-        float end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
-        float bv[2] = { at1_cds.first - at2_cds.first , at1_cds.second - at2_cds.second };
-        float px1 = at1_cds.first - end1_trunc * bv[0] + dbo * perp.first;
-        float py1 = at1_cds.second - end1_trunc * bv[1] + dbo * perp.second;
-        float px2 = at2_cds.first + end2_trunc * bv[0] + dbo * perp.first;
-        float py2 = at2_cds.second + end2_trunc * bv[1] + dbo * perp.second;
-        drawLine( make_pair( px1 , py1 ) , make_pair( px2 , py2 ) , col1 , col2 );
-        px1 = at1_cds.first - end1_trunc * bv[0] - dbo * perp.first;
-        py1 = at1_cds.second - end1_trunc * bv[1] - dbo * perp.second;
-        px2 = at2_cds.first + end2_trunc * bv[0] - dbo * perp.first;
-        py2 = at2_cds.second + end2_trunc * bv[1] - dbo * perp.second;
-        drawLine( make_pair( px1 , py1 ) , make_pair( px2 , py2 ) , col1 , col2 );
+        Point2D perp = calcPerpendicular( at1_cds , at2_cds );
+        double dbo = 2.0 * double_bond_offset;
+        double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
+        double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
+        double bv[2] = { at1_cds.x - at2_cds.x , at1_cds.y - at2_cds.y };
+        double px1 = at1_cds.x - end1_trunc * bv[0] + dbo * perp.x;
+        double py1 = at1_cds.y - end1_trunc * bv[1] + dbo * perp.y;
+        double px2 = at2_cds.x + end2_trunc * bv[0] + dbo * perp.x;
+        double py2 = at2_cds.y + end2_trunc * bv[1] + dbo * perp.y;
+        drawLine( Point2D( px1 , py1 ) , Point2D( px2 , py2 ) , col1 , col2 );
+        px1 = at1_cds.x - end1_trunc * bv[0] - dbo * perp.x;
+        py1 = at1_cds.y - end1_trunc * bv[1] - dbo * perp.y;
+        px2 = at2_cds.x + end2_trunc * bv[0] - dbo * perp.x;
+        py2 = at2_cds.y + end2_trunc * bv[1] - dbo * perp.y;
+        drawLine( Point2D( px1 , py1 ) , Point2D( px2 , py2 ) , col1 , col2 );
       }
       // all we have left now are double bonds in a ring or not in a ring
       // and multiply connected
       else if( Bond::DOUBLE == bond->getBondType() || Bond::AROMATIC == bond->getBondType() ) {
-        pair<float,float> perp;
+        Point2D perp;
         if( mol.getRingInfo()->numBondRings( bond->getIdx() ) ) {
           // in a ring, we need to draw the bond inside the ring
           perp = bondInsideRing( mol , bond , at1_cds , at2_cds );
         } else {
           perp = bondInsideDoubleBond( mol , bond );
         }
-        float dbo = 2.0 * double_bond_offset;
-        float bv[2] = { at1_cds.first - at2_cds.first , at1_cds.second - at2_cds.second };
-        float px1 = at1_cds.first - 0.1 * bv[0] + dbo * perp.first;
-        float py1 = at1_cds.second - 0.1 * bv[1] + dbo * perp.second;
-        float px2 = at2_cds.first + 0.1 * bv[0] + dbo * perp.first;
-        float py2 = at2_cds.second + 0.1 * bv[1] + dbo * perp.second;
+        double dbo = 2.0 * double_bond_offset;
+        double bv[2] = { at1_cds.x - at2_cds.x , at1_cds.y - at2_cds.y };
+        double px1 = at1_cds.x - 0.1 * bv[0] + dbo * perp.x;
+        double py1 = at1_cds.y - 0.1 * bv[1] + dbo * perp.y;
+        double px2 = at2_cds.x + 0.1 * bv[0] + dbo * perp.x;
+        double py2 = at2_cds.y + 0.1 * bv[1] + dbo * perp.y;
         if(bond->getBondType()==Bond::AROMATIC) setDash(dashes);
-        drawLine( make_pair( px1 , py1 ) , make_pair( px2 , py2 ) , col1 , col2 );
+        drawLine( Point2D( px1 , py1 ) , Point2D( px2 , py2 ) , col1 , col2 );
         if(bond->getBondType()==Bond::AROMATIC) setDash(noDash);
       }
     }
@@ -655,42 +655,42 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2D::drawWedgedBond( const pair<float, float> &cds1 ,
-                                  const pair<float, float> &cds2 ,
+  void MolDraw2D::drawWedgedBond( const Point2D &cds1 ,
+                                  const Point2D &cds2 ,
                                   bool draw_dashed , const DrawColour &col1 ,
                                   const DrawColour &col2) {
-    pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
-    pair<float,float> disp( 0.1 * perp.first , 0.1 * perp.second );
-    pair<float,float> end1 , end2;
-    end1.first = cds2.first + disp.first;
-    end1.second = cds2.second + disp.second;
-    end2.first = cds2.first - disp.first;
-    end2.second = cds2.second - disp.second;
+    Point2D perp = calcPerpendicular( cds1 , cds2 );
+    Point2D disp( 0.1 * perp.x , 0.1 * perp.y );
+    Point2D end1 , end2;
+    end1.x = cds2.x + disp.x;
+    end1.y = cds2.y + disp.y;
+    end2.x = cds2.x - disp.x;
+    end2.y = cds2.y - disp.y;
 
     setColour( col1 );
     if( draw_dashed ) {
-      pair<float,float> e1( end1.first - cds1.first , end1.second - cds1.second );
-      pair<float,float> e2( end2.first - cds1.first , end2.second - cds1.second );
+      Point2D e1( end1.x - cds1.x , end1.y - cds1.y );
+      Point2D e2( end2.x - cds1.x , end2.y - cds1.y );
       for( int i = 1 ; i < 11 ; ++i ) {
         if( 6 == i ) {
           setColour( col2 );
         }
-        pair<float,float> e11( cds1.first + float( i ) * 0.1 * e1.first ,
-                               cds1.second + float( i ) * 0.1 * e1.second );
-        pair<float,float> e22( cds1.first + float( i ) * 0.1 * e2.first ,
-                               cds1.second + float( i ) * 0.1 * e2.second );
+        Point2D e11( cds1.x + double( i ) * 0.1 * e1.x ,
+                               cds1.y + double( i ) * 0.1 * e1.y );
+        Point2D e22( cds1.x + double( i ) * 0.1 * e2.x ,
+                               cds1.y + double( i ) * 0.1 * e2.y );
         drawLine( e11 , e22 );
       }
     } else {
       if( col1 == col2 ) {
         drawTriangle( cds1 , end1 , end2 );
       } else {
-        pair<float,float> e1( end1.first - cds1.first , end1.second - cds1.second );
-        pair<float,float> e2( end2.first - cds1.first , end2.second - cds1.second );
-        pair<float,float> mid1( cds1.first + 0.5 * e1.first ,
-                                cds1.second + 0.5 * e1.second );
-        pair<float,float> mid2( cds1.first + 0.5 * e2.first ,
-                                cds1.second + 0.5 * e2.second );
+        Point2D e1( end1.x - cds1.x , end1.y - cds1.y );
+        Point2D e2( end2.x - cds1.x , end2.y - cds1.y );
+        Point2D mid1( cds1.x + 0.5 * e1.x ,
+                                cds1.y + 0.5 * e1.y );
+        Point2D mid2( cds1.x + 0.5 * e2.x ,
+                                cds1.y + 0.5 * e2.y );
         drawTriangle( cds1 , mid1 , mid2 );
         setColour( col2 );
         drawTriangle( mid1 , end2 , end1 );
@@ -710,23 +710,23 @@ namespace RDKit {
 
   // ****************************************************************************
   // calculate normalised perpendicular to vector between two coords
-  pair<float,float> MolDraw2D::calcPerpendicular( const pair<float,float> &cds1 ,
-                                                  const pair<float,float> &cds2 ) {
+  Point2D MolDraw2D::calcPerpendicular( const Point2D &cds1 ,
+                                                  const Point2D &cds2 ) {
 
-    float bv[2] = { cds1.first - cds2.first , cds1.second - cds2.second };
-    float perp[2] = { -bv[1] , bv[0] };
-    float perp_len = sqrt( perp[0] * perp[0] + perp[1] * perp[1] );
+    double bv[2] = { cds1.x - cds2.x , cds1.y - cds2.y };
+    double perp[2] = { -bv[1] , bv[0] };
+    double perp_len = sqrt( perp[0] * perp[0] + perp[1] * perp[1] );
     perp[0] /= perp_len; perp[1] /= perp_len;
 
-    return make_pair( perp[0] , perp[1] );
+    return Point2D( perp[0] , perp[1] );
   }
 
   // ****************************************************************************
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing into
   // the ring
-  pair<float,float> MolDraw2D::bondInsideRing( const ROMol &mol , const BOND_SPTR &bond ,
-                                               const pair<float,float> &cds1 ,
-                                               const pair<float,float> &cds2 ) {
+  Point2D MolDraw2D::bondInsideRing( const ROMol &mol , const BOND_SPTR &bond ,
+                                               const Point2D &cds1 ,
+                                               const Point2D &cds2 ) {
 
     Atom *bgn_atom = bond->getBeginAtom();
     ROMol::OEDGE_ITER nbr2 , end_nbrs2;
@@ -760,7 +760,7 @@ namespace RDKit {
   // ****************************************************************************
   // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the perpendicular
   // pointing into the inside of the bond
-  pair<float,float> MolDraw2D::bondInsideDoubleBond( const ROMol &mol , const BOND_SPTR &bond ) {
+  Point2D MolDraw2D::bondInsideDoubleBond( const ROMol &mol , const BOND_SPTR &bond ) {
 
     // a chain double bond, were it looks nicer IMO if the 2nd line is inside
     // the angle of outgoing bond. Unless it's an allene, where nothing
@@ -794,20 +794,20 @@ namespace RDKit {
   // ****************************************************************************
   // calculate normalised perpendicular to vector between two coords, such that
   // it's inside the angle made between (1 and 2) and (2 and 3).
-  pair<float,float> MolDraw2D::calcInnerPerpendicular( const pair<float,float> &cds1 ,
-                                                       const pair<float,float> &cds2 ,
-                                                       const pair<float,float> &cds3 ) {
+  Point2D MolDraw2D::calcInnerPerpendicular( const Point2D &cds1 ,
+                                                       const Point2D &cds2 ,
+                                                       const Point2D &cds3 ) {
 
-    pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
-    float v1[2] = { cds1.first - cds2.first , cds1.second - cds2.second };
-    float v2[2] = { cds2.first - cds3.first , cds2.second - cds3.second };
-    float obv[2] = { v1[0] - v2[0] , v1[1] - v2[1] };
+    Point2D perp = calcPerpendicular( cds1 , cds2 );
+    double v1[2] = { cds1.x - cds2.x , cds1.y - cds2.y };
+    double v2[2] = { cds2.x - cds3.x , cds2.y - cds3.y };
+    double obv[2] = { v1[0] - v2[0] , v1[1] - v2[1] };
 
     // if dot product of centre_dir and perp < 0.0, they're pointing in opposite
     // directions, so reverse perp
-    if( obv[0] * perp.first + obv[1] * perp.second < 0.0 ) {
-      perp.first *= -1.0;
-      perp.second *= - 1.0;
+    if( obv[0] * perp.x + obv[1] * perp.y < 0.0 ) {
+      perp.x *= -1.0;
+      perp.y *= - 1.0;
     }
 
     return perp;
@@ -816,55 +816,55 @@ namespace RDKit {
   // ****************************************************************************
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to accommodate
   // the label associated with it.
-  void MolDraw2D::adjustBondEndForLabel( int atnum , const std::pair<float,float> &nbr_cds ,
-                                         std::pair<float,float> &cds ) const {
+  void MolDraw2D::adjustBondEndForLabel( int atnum , const Point2D &nbr_cds ,
+                                         Point2D &cds ) const {
 
     if( atom_syms_[atnum].first.empty() ) {
       return;
     }
 
-    float label_width , label_height;
+    double label_width , label_height;
     getStringSize( atom_syms_[atnum].first , label_width , label_height );
 
-    float lw2 = label_width / 2.0;
-    float lh2 = label_height / 2.0;
+    double lw2 = label_width / 2.0;
+    double lh2 = label_height / 2.0;
 
-    float x_offset = 0.0 , y_offset = 0.0;
-    if( fabs( nbr_cds.second - cds.second ) < 1.0e-5 ) {
+    double x_offset = 0.0 , y_offset = 0.0;
+    if( fabs( nbr_cds.y - cds.y ) < 1.0e-5 ) {
       // if the bond is horizontal
       x_offset = lw2;
     } else {
-      x_offset = fabs( lh2 * ( nbr_cds.first - cds.first ) / ( nbr_cds.second - cds.second ) );
+      x_offset = fabs( lh2 * ( nbr_cds.x - cds.x ) / ( nbr_cds.y - cds.y ) );
       if( x_offset >= lw2 ) {
         x_offset = lw2;
       }
     }
-    if( nbr_cds.first < cds.first ) {
+    if( nbr_cds.x < cds.x ) {
       x_offset *= -1.0;
     }
 
-    if( fabs( nbr_cds.first - cds.first ) < 1.0e-5 ) {
+    if( fabs( nbr_cds.x - cds.x ) < 1.0e-5 ) {
       // if the bond is vertical
       y_offset = lh2;
     } else {
-      y_offset = fabs( lw2 * ( cds.second - nbr_cds.second ) / ( nbr_cds.first - cds.first ) );
+      y_offset = fabs( lw2 * ( cds.y - nbr_cds.y ) / ( nbr_cds.x - cds.x ) );
       if( y_offset >= lh2 ) {
         y_offset = lh2;
       }
     }
-    if( nbr_cds.second < cds.second ) {
+    if( nbr_cds.y < cds.y ) {
       y_offset *= -1.0;
     }
 
-    cds.first += x_offset;
-    cds.second += y_offset;
+    cds.x += x_offset;
+    cds.y += y_offset;
   }
 
   // ****************************************************************************
   // adds XML-like annotation for super- and sub-script, in the same manner
   // as MolDrawing.py. My first thought was for a LaTeX-like system, obviously...
   pair<string,MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation( const Atom &atom ,
-                                                                             const pair<float, float> &nbr_sum ) {
+                                                                             const Point2D &nbr_sum ) {
 
     string symbol( "" );
 
@@ -916,11 +916,11 @@ namespace RDKit {
     // now consider the orientation
     OrientType orient = C;
     if( 1 == atom.getDegree() ) {
-      float islope = 0.0;
-      if( fabs( nbr_sum.second ) > 1.0 ) {
-        islope = nbr_sum.first / fabs( nbr_sum.second );
+      double islope = 0.0;
+      if( fabs( nbr_sum.y ) > 1.0 ) {
+        islope = nbr_sum.x / fabs( nbr_sum.y );
       } else {
-        islope = nbr_sum.first;
+        islope = nbr_sum.x;
       }
       if( fabs( islope ) > 0.85 ) {
         if( islope > 0.0 ) {
@@ -929,20 +929,20 @@ namespace RDKit {
           orient = E;
         }
       } else {
-        if( nbr_sum.second > 0.0 ) {
+        if( nbr_sum.y > 0.0 ) {
           orient = N;
         } else {
           orient = S;
         }
       }
     }
-    return make_pair( symbol , orient );
+    return std::make_pair( symbol , orient );
   }
 
-  void MolDraw2D::drawTriangle( const std::pair<float,float> &cds1 ,
-                                const std::pair<float,float> &cds2 ,
-                                const std::pair<float,float> &cds3 ) {
-    std::vector< std::pair<float,float> > pts(3);
+  void MolDraw2D::drawTriangle( const Point2D &cds1 ,
+                                const Point2D &cds2 ,
+                                const Point2D &cds3 ) {
+    std::vector< Point2D > pts(3);
     pts[0]=cds1;
     pts[1]=cds2;
     pts[2]=cds3;
@@ -950,36 +950,36 @@ namespace RDKit {
   };
 
   // ****************************************************************************
-  void MolDraw2D::drawEllipse(const std::pair<float,float> &cds1 ,
-                              const std::pair<float,float> &cds2){
-    std::vector< std::pair<float,float> > pts;
+  void MolDraw2D::drawEllipse(const Point2D &cds1 ,
+                              const Point2D &cds2){
+    std::vector< Point2D > pts;
     MolDraw2D_detail::arcPoints(cds1,cds2,pts,0,360);
     drawPolygon(pts);
   }
   // ****************************************************************************
-  void MolDraw2D::drawRect(const std::pair<float,float> &cds1 ,
-                           const std::pair<float,float> &cds2){
-    std::vector< std::pair<float,float> > pts(4);
+  void MolDraw2D::drawRect(const Point2D &cds1 ,
+                           const Point2D &cds2){
+    std::vector< Point2D > pts(4);
     pts[0]=cds1;
-    pts[1]=std::make_pair(cds1.first,cds2.second);
+    pts[1]=Point2D(cds1.x,cds2.y);
     pts[2]=cds2;
-    pts[3]=std::make_pair(cds2.first,cds1.second);
+    pts[3]=Point2D(cds2.x,cds1.y);
     drawPolygon(pts);
   }
 
   // ****************************************************************************
   //  we draw the line at cds2, perpendicular to the line cds1-cds2
-  void MolDraw2D::drawAttachmentLine( const pair<float, float> &cds1 ,
-                                      const pair<float, float> &cds2 ,   
+  void MolDraw2D::drawAttachmentLine( const Point2D &cds1 ,
+                                      const Point2D &cds2 ,   
                                       const DrawColour &col,
-                                      float len,
+                                      double len,
                                       unsigned int nSegments ) {
     if(nSegments%2) ++nSegments; // we're going to assume an even number of segments
-    pair<float,float> perp = calcPerpendicular( cds1 , cds2 );
-    pair<float,float> p1 = make_pair(cds2.first-perp.first*len/2,
-                                     cds2.second-perp.second*len/2);
-    pair<float,float> p2 = make_pair(cds2.first+perp.first*len/2,
-                                     cds2.second+perp.second*len/2);
+    Point2D perp = calcPerpendicular( cds1 , cds2 );
+    Point2D p1 = Point2D(cds2.x-perp.x*len/2,
+                                     cds2.y-perp.y*len/2);
+    Point2D p2 = Point2D(cds2.x+perp.x*len/2,
+                                     cds2.y+perp.y*len/2);
     setColour( col );
     drawLine(p1,p2);
   }
