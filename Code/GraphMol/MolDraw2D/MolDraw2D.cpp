@@ -578,15 +578,9 @@ namespace RDKit {
     // to the atom-atom line.
     if( ( bond->getBondType() == Bond::DOUBLE ) &&
         ( 1 == at1->getDegree() || 1 == at2->getDegree() ) ) {
-      Point2D perp = calcPerpendicular( at1_cds , at2_cds );
-      drawLine( Point2D( at1_cds.x + double_bond_offset * perp.x ,
-                           at1_cds.y + double_bond_offset * perp.y ) ,
-                Point2D( at2_cds.x + double_bond_offset * perp.x ,
-                           at2_cds.y + double_bond_offset * perp.y ) , col1 , col2 );
-      drawLine( Point2D( at1_cds.x - double_bond_offset * perp.x ,
-                           at1_cds.y - double_bond_offset * perp.y ) ,
-                Point2D( at2_cds.x - double_bond_offset * perp.x ,
-                           at2_cds.y - double_bond_offset * perp.y ) , col1 , col2 );
+      Point2D perp = calcPerpendicular( at1_cds , at2_cds ) * double_bond_offset ;
+      drawLine(at1_cds + perp, at2_cds + perp, col1,col2);
+      drawLine(at1_cds - perp, at2_cds - perp, col1,col2);
       if( bond->getBondType() == Bond::TRIPLE ) {
         drawLine( at1_cds , at2_cds , col1 , col2 );
       }
@@ -608,21 +602,17 @@ namespace RDKit {
       drawLine( at1_cds , at2_cds , col1 , col2 );
       if( Bond::TRIPLE == bond->getBondType() ) {
         // 2 further lines, a bit shorter and offset on the perpendicular
-        Point2D perp = calcPerpendicular( at1_cds , at2_cds );
         double dbo = 2.0 * double_bond_offset;
+        Point2D perp = calcPerpendicular( at1_cds , at2_cds );
         double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
         double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
-        double bv[2] = { at1_cds.x - at2_cds.x , at1_cds.y - at2_cds.y };
-        double px1 = at1_cds.x - end1_trunc * bv[0] + dbo * perp.x;
-        double py1 = at1_cds.y - end1_trunc * bv[1] + dbo * perp.y;
-        double px2 = at2_cds.x + end2_trunc * bv[0] + dbo * perp.x;
-        double py2 = at2_cds.y + end2_trunc * bv[1] + dbo * perp.y;
-        drawLine( Point2D( px1 , py1 ) , Point2D( px2 , py2 ) , col1 , col2 );
-        px1 = at1_cds.x - end1_trunc * bv[0] - dbo * perp.x;
-        py1 = at1_cds.y - end1_trunc * bv[1] - dbo * perp.y;
-        px2 = at2_cds.x + end2_trunc * bv[0] - dbo * perp.x;
-        py2 = at2_cds.y + end2_trunc * bv[1] - dbo * perp.y;
-        drawLine( Point2D( px1 , py1 ) , Point2D( px2 , py2 ) , col1 , col2 );
+        Point2D bv=at1_cds - at2_cds;
+        Point2D p1=at1_cds - (bv*end1_trunc) + perp*dbo;
+        Point2D p2=at2_cds + (bv*end2_trunc) + perp*dbo;
+        drawLine( p1 , p2 , col1 , col2 );
+        p1=at1_cds - (bv*end1_trunc) - perp*dbo;
+        p2=at2_cds + (bv*end2_trunc) - perp*dbo;
+        drawLine( p1 , p2 , col1 , col2 );
       }
       // all we have left now are double bonds in a ring or not in a ring
       // and multiply connected
@@ -635,13 +625,11 @@ namespace RDKit {
           perp = bondInsideDoubleBond( mol , bond );
         }
         double dbo = 2.0 * double_bond_offset;
-        double bv[2] = { at1_cds.x - at2_cds.x , at1_cds.y - at2_cds.y };
-        double px1 = at1_cds.x - 0.1 * bv[0] + dbo * perp.x;
-        double py1 = at1_cds.y - 0.1 * bv[1] + dbo * perp.y;
-        double px2 = at2_cds.x + 0.1 * bv[0] + dbo * perp.x;
-        double py2 = at2_cds.y + 0.1 * bv[1] + dbo * perp.y;
+        Point2D bv=at1_cds - at2_cds;
+        Point2D p1 = at1_cds - bv * 0.1 + perp * dbo;
+        Point2D p2 = at2_cds + bv * 0.1 + perp * dbo;
         if(bond->getBondType()==Bond::AROMATIC) setDash(dashes);
-        drawLine( Point2D( px1 , py1 ) , Point2D( px2 , py2 ) , col1 , col2 );
+        drawLine( p1, p2, col1 , col2 );
         if(bond->getBondType()==Bond::AROMATIC) setDash(noDash);
       }
     }
@@ -657,37 +645,30 @@ namespace RDKit {
                                   bool draw_dashed , const DrawColour &col1 ,
                                   const DrawColour &col2) {
     Point2D perp = calcPerpendicular( cds1 , cds2 );
-    Point2D disp( 0.1 * perp.x , 0.1 * perp.y );
-    Point2D end1 , end2;
-    end1.x = cds2.x + disp.x;
-    end1.y = cds2.y + disp.y;
-    end2.x = cds2.x - disp.x;
-    end2.y = cds2.y - disp.y;
+    Point2D disp = perp*0.1;
+    Point2D end1 = cds2 + disp;
+    Point2D end2 = cds2 - disp;
 
     setColour( col1 );
     if( draw_dashed ) {
-      Point2D e1( end1.x - cds1.x , end1.y - cds1.y );
-      Point2D e2( end2.x - cds1.x , end2.y - cds1.y );
+      Point2D e1=end1-cds1;
+      Point2D e2=end2-cds1;
       for( int i = 1 ; i < 11 ; ++i ) {
         if( 6 == i ) {
           setColour( col2 );
         }
-        Point2D e11( cds1.x + double( i ) * 0.1 * e1.x ,
-                               cds1.y + double( i ) * 0.1 * e1.y );
-        Point2D e22( cds1.x + double( i ) * 0.1 * e2.x ,
-                               cds1.y + double( i ) * 0.1 * e2.y );
+        Point2D e11 = cds1 + e1*0.1*i;
+        Point2D e22 = cds1 + e2*0.1*i;
         drawLine( e11 , e22 );
       }
     } else {
       if( col1 == col2 ) {
         drawTriangle( cds1 , end1 , end2 );
       } else {
-        Point2D e1( end1.x - cds1.x , end1.y - cds1.y );
-        Point2D e2( end2.x - cds1.x , end2.y - cds1.y );
-        Point2D mid1( cds1.x + 0.5 * e1.x ,
-                                cds1.y + 0.5 * e1.y );
-        Point2D mid2( cds1.x + 0.5 * e2.x ,
-                                cds1.y + 0.5 * e2.y );
+        Point2D e1 = end1 - cds1;
+        Point2D e2 = end2 - cds1;
+        Point2D mid1 = cds1 + e1*0.5;
+        Point2D mid2 = cds1 + e2*0.5;
         drawTriangle( cds1 , mid1 , mid2 );
         setColour( col2 );
         drawTriangle( mid1 , end2 , end1 );
