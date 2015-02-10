@@ -423,7 +423,7 @@ void test5(){
     WedgeMolBonds(*m,&(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments=true;
-    
+    options.atomLabels[0]="R1";
 #ifdef RDK_CAIRO_BUILD
     {
       cairo_surface_t *surface =
@@ -524,5 +524,5 @@ int main(){
   test3();
   test4();
   test5();
-  //testMultiThreaded();
+  testMultiThreaded();
 }

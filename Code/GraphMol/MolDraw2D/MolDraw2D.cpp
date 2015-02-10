@@ -184,18 +184,20 @@ namespace RDKit {
       tie( atom , end_atom ) = mol.getVertices();
       while( atom != end_atom ) {
         const Atom *at1 = mol[*atom].get();
+        ++atom;
+        if(drawOptions().atomLabels.find(at1->getIdx()) != drawOptions().atomLabels.end() ){
+          // skip dummies that explicitly have a label provided
+          continue;
+        }
         if(at1->getAtomicNum()==0 && at1->getDegree()==1){
           pair<float,float> &at1_cds = at_cds_[at1->getIdx()];
           ROMol::ADJ_ITER nbrIdx,endNbrs;
           boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(at1);
           const ATOM_SPTR at2 = mol[*nbrIdx];
           pair<float,float> &at2_cds = at_cds_[at2->getIdx()];
-          drawAttachmentLine(at2_cds,at1_cds,DrawColour(.5,0,.5));
+          drawAttachmentLine(at2_cds,at1_cds,DrawColour(.5,.5,.5));
         }
-        ++atom;
       }
-      
-
     }
     
     for( int i = 0 , is = atom_syms_.size() ; i < is ; ++i ) {
