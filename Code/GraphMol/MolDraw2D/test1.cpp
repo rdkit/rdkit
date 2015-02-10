@@ -346,7 +346,7 @@ void test3(){
 #ifdef RDK_CAIRO_BUILD
     {
       cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 200, 200);
       cairo_t *cr = cairo_create (surface);
 
       MolDraw2DCairo drawer(200,200,cr);
