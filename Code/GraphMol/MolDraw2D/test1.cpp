@@ -459,7 +459,7 @@ void test5(){
 namespace {
   void runblock(const std::vector<ROMol *> &mols,const std::vector<std::string> &refData,
                 unsigned int count,unsigned int idx){
-    for(unsigned int j=0;j<500;j++){
+    for(unsigned int j=0;j<200;j++){
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
         ROMol *mol = mols[i];
