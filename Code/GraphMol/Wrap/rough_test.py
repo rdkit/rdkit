@@ -2523,6 +2523,10 @@ CAS<~>
     smi = Chem.MolToSmiles(nm,True)
     self.assertEqual(smi,'[2*]=O.[3*]=C(CC)CC(=[6*])C.[5*]=O')
 
+    # github issue 430:
+    m = Chem.MolFromSmiles('OCCCCN')
+    self.assertRaises(ValueError,lambda : Chem.FragmentOnBonds(m,()))
+    
   def test88QueryAtoms(self):
     from rdkit.Chem import rdqueries
     m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
@@ -2586,13 +2590,21 @@ CAS<~>
     self.assertEqual(len(frags[0]),4)
     self.assertEqual(len(frags[1]),4)
     self.assertEqual(len(frags[2]),2)
-    print (m)
+
     pieces,cpa = Chem.FragmentOnSomeBonds(m,(0,2,4),2,returnCutsPerAtom=True)
     self.assertEqual(len(pieces),3)
     self.assertEqual(len(cpa),3)
     self.assertEqual(len(cpa[0]),m.GetNumAtoms())
-    print(cpa)
+    
+    # github issue 430:
+    m = Chem.MolFromSmiles('OCCCCN')
+    self.assertRaises(ValueError,lambda : Chem.FragmentOnSomeBonds(m,()))
+    
+    pieces = Chem.FragmentOnSomeBonds(m,(0,2,4),0)
+    self.assertEqual(len(pieces),0)
+    
 
+    
   def test91RankAtoms(self):
     m = Chem.MolFromSmiles('ONCS.ONCS')
     ranks = Chem.CanonicalRankAtoms(m,breakTies=False)

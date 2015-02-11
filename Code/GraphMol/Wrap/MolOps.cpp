@@ -37,13 +37,16 @@ namespace RDKit{
   std::string molToSVG(const ROMol &mol,
                        unsigned int width, unsigned int height,
                        python::object pyHighlightAtoms,bool kekulize,
-                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles
+                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
+                       int confId
                        ){
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
     std::stringstream outs;
     MolDraw2DSVG drawer(width,height,outs);
     drawer.setFontSize(fontSize/24.);
-    drawer.drawMolecule(mol,highlightAtoms);
+    drawer.setLineWidth(drawer.lineWidth()*lineWidthMult);
+    drawer.drawOptions().circleAtoms=includeAtomCircles;
+    drawer.drawMolecule(mol,highlightAtoms,NULL,confId);
     delete highlightAtoms;
     drawer.finishDrawing();
     return outs.str();
@@ -55,6 +58,9 @@ namespace RDKit{
                                           python::object pyBondTypes,
                                           bool returnCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+	throw_value_error("empty bond indices");
+      
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
@@ -115,6 +121,8 @@ namespace RDKit{
                                python::object pyBondTypes,
                                python::list pyCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+	throw_value_error("empty bond indices");
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
@@ -1661,9 +1669,9 @@ namespace RDKit{
                    python::arg("height")=300,
                    python::arg("highlightAtoms")=python::object(),
                    python::arg("kekulize")=true,
-                   python::arg("lineWidthMult")=2,
+                   python::arg("lineWidthMult")=1,
                    python::arg("fontSize")=12,
-                   python::arg("includeAtomCircles")=false),
+                   python::arg("includeAtomCircles")=true),
                   docString.c_str());
 
     };

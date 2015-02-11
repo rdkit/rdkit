@@ -29,16 +29,25 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+%include "boost_tuple.i"
+%include "std_vector.i"
+%include "std_pair.i"
 %{
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <map>
+#include <vector>
+#include <utility>
 %}
-%include "boost_tuple.i"
+
 %template(INT_STRING_MAP) std::map< int, std::string >;
 %template(INT_DRAWCOLOUR_MAP) std::map< int, RDKit::DrawColour >;
 %template(DrawColour) boost::tuple<float,float,float>;
+%template(Float_Pair) std::pair<float,float>;
+%template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
+
+%ignore RDKit::MolDraw2DSVG::MolDraw2DSVG(int,int,std::ostream &);
 
 %include <GraphMol/MolDraw2D/MolDraw2D.h>
 %include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
