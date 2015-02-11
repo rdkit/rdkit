@@ -619,38 +619,45 @@ namespace RDKit {
                    char *touchedPartitions){
       unsigned int nAtoms=mol.getNumAtoms();
       register int partition;
-      register int *start;
       register int offset;
       register int index;
       register int len;
+      int oldPart = 0;
 
       for(unsigned int i=0; i<nAtoms; i++ ) {
         partition = order[i];
+        oldPart = atoms[partition].index;
         while( count[partition] > 1 ) {
           len = count[partition];
-          offset = i+len-1;
+          offset = atoms[partition].index+len-1;
           index = order[offset];
           atoms[index].index = offset;
           count[partition] = len-1;
           count[index] = 1;
 
-          ROMol::ADJ_ITER nbrIdx,endNbrs;
-          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atoms[index].atom);
-          while(nbrIdx!=endNbrs){
-            int nbor=mol[*nbrIdx]->getIdx();
-            ++nbrIdx;
-
-            offset = atoms[nbor].index;
+          for(unsigned j = 0; j < atoms[index].degree; ++j){
+            unsigned int nbor = atoms[index].nbrIds[j];
+            touchedPartitions[atoms[nbor].index]=1;
             changed[nbor]=1;
-            int npart = order[offset];
-            if( (count[npart]>1) &&
-                (next[npart]==-2) ) {
-              next[npart] = activeset;
-              activeset = npart;
+          }
+
+          for(unsigned int ii=0; ii<nAtoms; ++ii) {
+            if(touchedPartitions[ii]){
+              int npart = order[ii];
+              if( (count[npart]>1) &&
+                  (next[npart]==-2) ) {
+                next[npart] = activeset;
+                activeset = npart;
+              }
+              touchedPartitions[ii] = 0;
             }
           }
           RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next,changed,touchedPartitions);
-        } 
+        }
+        //not sure if this works each time
+        if(atoms[partition].index != oldPart){
+          i-=1;
+        }
       }
     } // end of BreakTies()
 
