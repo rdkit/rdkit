@@ -239,8 +239,8 @@ namespace RDKit{
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        UINT_VECT &ranks,bool doKekule,bool canonical,
-                                        bool allBondsExplicit,
+                                        const UINT_VECT &ranks,bool doKekule,bool canonical,
+                                        bool allBondsExplicit,bool allHsExplicit,
                                         std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,
                                         const std::vector<std::string> *atomSymbols=0,
