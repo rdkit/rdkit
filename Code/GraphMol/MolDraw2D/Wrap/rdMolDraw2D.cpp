@@ -19,14 +19,31 @@
 namespace python = boost::python;
 
 namespace RDKit {
+  namespace {
+    std::map<int,DrawColour> *pyDictToColourMap(python::object pyo){
+      std::map<int,DrawColour> *res=NULL;
+      if(pyo){
+        res = new std::map<int,DrawColour>;
+        python::dict tDict = python::extract<python::dict>(pyo);
+        for(unsigned int i=0;i<python::extract<unsigned int>(tDict.keys().attr("__len__")());++i){
+          python::tuple tpl=python::extract<python::tuple>(tDict.values()[i]);
+          float r=python::extract<float>(tpl[0]);
+          float g=python::extract<float>(tpl[1]);
+          float b=python::extract<float>(tpl[2]);
+          DrawColour clr(r,g,b);
+          (*res)[python::extract<int>(tDict.keys()[i])]=clr;
+        }
+      }
+      return res;
+    }
+  }
   void drawMoleculeHelper1(MolDraw2D &self,
                           const ROMol &mol ,
                           python::object highlight_atoms,
                           python::object highlight_atom_map,
                           int confId=-1){
     std::vector<int> *highlightAtoms=pythonObjectToVect(highlight_atoms,static_cast<int>(mol.getNumAtoms()));
-    // FIX: support these
-    std::map<int,DrawColour> *ham=NULL;
+    std::map<int,DrawColour> *ham=pyDictToColourMap(highlight_atom_map);
 
     self.drawMolecule(mol,highlightAtoms,ham,confId);
     
@@ -43,8 +60,8 @@ namespace RDKit {
     std::vector<int> *highlightAtoms=pythonObjectToVect(highlight_atoms,static_cast<int>(mol.getNumAtoms()));
     std::vector<int> *highlightBonds=pythonObjectToVect(highlight_bonds,static_cast<int>(mol.getNumBonds()));
     // FIX: support these
-    std::map<int,DrawColour> *ham=NULL;
-    std::map<int,DrawColour> *hbm=NULL;
+    std::map<int,DrawColour> *ham=pyDictToColourMap(highlight_atom_map);
+    std::map<int,DrawColour> *hbm=pyDictToColourMap(highlight_bond_map);
 
     self.drawMolecule(mol,highlightAtoms,highlightBonds,ham,hbm,confId);
     
@@ -82,7 +99,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     .def("DrawMolecule",RDKit::drawMoleculeHelper1,
          (python::arg("self"),python::arg("mol"),
           python::arg("highlightAtoms")=python::object(),
-          python::arg("highlightAtomMap")=python::object(),
+          python::arg("highlightAtomColors")=python::object(),
           python::arg("confId")=-1
           ),
          "renders a molecule\n")
@@ -90,8 +107,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
          (python::arg("self"),python::arg("mol"),
           python::arg("highlightAtoms"),
           python::arg("highlightBonds"),
-          python::arg("highlightAtomMap")=python::object(),
-          python::arg("highlightBondMap")=python::object(),
+          python::arg("highlightAtomColors")=python::object(),
+          python::arg("highlightBondColors")=python::object(),
           python::arg("confId")=-1
           ),
          "renders a molecule\n")
