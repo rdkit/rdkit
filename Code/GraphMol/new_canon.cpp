@@ -268,10 +268,8 @@ namespace RDKit {
         advancedInitCanonAtom(mol,atoms[i],i);
         atoms[i].bonds.reserve(atoms[i].degree);
         getBonds(mol,atoms[i].atom,atoms[i].bonds,includeChirality);
-        /* this could be realized using the neighbors above */
       }
     }
-
 
     void initChiralCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms){
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -280,6 +278,13 @@ namespace RDKit {
       }
     }
 
+    void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms){
+      for(unsigned int i=0;i<atoms.size();++i){
+        if(atoms[i].nbrIds){
+          free(atoms[i].nbrIds);
+        }
+      }
+    }
 
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
                       bool breakTies,
@@ -299,6 +304,7 @@ namespace RDKit {
         res[order[i]]=atoms[order[i]].index;
       }
       free(order); 
+      freeCanonAtoms(atoms);
     } // end of rankMolAtoms()
 
     void rankFragmentAtoms(const ROMol &mol,std::vector<unsigned int> &res,
@@ -332,7 +338,8 @@ namespace RDKit {
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
         res[order[i]]=atoms[order[i]].index;
       }
-      free(order); 
+      free(order);
+      freeCanonAtoms(atoms);
     } // end of rankFragmentAtoms()
 
     
@@ -348,7 +355,8 @@ namespace RDKit {
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
         res[order[i]]=atoms[order[i]].index;
       }
-      free(order); 
+      free(order);
+      freeCanonAtoms(atoms);
     } // end of rankMolAtoms()
   } // end of Canon namespace
 } // end of RDKit namespace
