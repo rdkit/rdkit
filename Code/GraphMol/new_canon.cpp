@@ -163,7 +163,8 @@ namespace RDKit {
             stereo=bond->getStereo();
           }
           unsigned int idx = bond->getOtherAtomIdx(at->getIdx());
-          bondholder bh(bondholder(bond->getBondType(),stereo,idx,idx));
+          Bond::BondType bt = bond->getIsAromatic() ? Bond::AROMATIC : bond->getBondType();
+          bondholder bh(bondholder(bt,stereo,idx,idx));
           nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh,bondholder::greater),1,bh);
         }
       }
