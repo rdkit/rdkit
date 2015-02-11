@@ -111,31 +111,12 @@ namespace RDKit{
 
       if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles) &&
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
-        INT_LIST trueOrder;
-        atom->getProp(common_properties::_TraversalBondIndexOrder,trueOrder);
-        int nSwaps=  atom->getPerturbationOrder(trueOrder);
-        if(atom->getDegree()==3 && !bondIn){
-          // This is a special case. Here's an example:
-          //   Our internal representation of a chiral center is equivalent to:
-          //     [C@](F)(O)(C)[H]
-          //   we'll be dumping it without the H, which entails a reordering:
-          //     [C@@H](F)(O)C
-          ++nSwaps;
-        }
-        //BOOST_LOG(rdErrorLog)<<">>>> "<<atom->getIdx()<<" "<<nSwaps<<" "<<atom->getChiralTag()<<std::endl;
-        std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
-          if(!(nSwaps%2))
-            res += "@@";
-          else
-            res += "@";
+          res += "@@";
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
-          if(!(nSwaps%2))
-            res += "@";
-          else
-            res += "@@";
+          res += "@";
           break;
         default:
           break;
