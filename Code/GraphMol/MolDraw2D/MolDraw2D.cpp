@@ -179,7 +179,7 @@ namespace RDKit {
 
     if(drawOptions().dummiesAreAttachments){
       ROMol::VERTEX_ITER atom , end_atom;
-      tie( atom , end_atom ) = mol.getVertices();
+      boost::tie( atom , end_atom ) = mol.getVertices();
       while( atom != end_atom ) {
         const Atom *at1 = mol[*atom].get();
         ++atom;
@@ -495,7 +495,7 @@ namespace RDKit {
     atomic_nums_.clear();
     const RDGeom::POINT3D_VECT &locs = mol.getConformer( confId ).getPositions();
     ROMol::VERTEX_ITER this_at , end_at;
-    tie( this_at , end_at ) = mol.getVertices();
+    boost::tie( this_at , end_at ) = mol.getVertices();
     while( this_at != end_at ) {
       int this_idx = mol[*this_at]->getIdx();
       at_cds_.push_back( Point2D( locs[this_idx].x , locs[this_idx].y ) );
@@ -507,11 +507,11 @@ namespace RDKit {
   void MolDraw2D::extractAtomSymbols( const ROMol &mol ) {
 
     ROMol::VERTEX_ITER atom , end_atom;
-    tie( atom , end_atom ) = mol.getVertices();
+    boost::tie( atom , end_atom ) = mol.getVertices();
     while( atom != end_atom ) {
       ROMol::OEDGE_ITER nbr , end_nbrs;
       const Atom *at1 = mol[*atom].get();
-      tie( nbr , end_nbrs ) = mol.getAtomBonds( at1 );
+      boost::tie( nbr , end_nbrs ) = mol.getAtomBonds( at1 );
       Point2D &at1_cds = at_cds_[at1->getIdx()];
       Point2D nbr_sum( 0.0 , 0.0 );
       while( nbr != end_nbrs ) {
@@ -708,7 +708,7 @@ namespace RDKit {
 
     Atom *bgn_atom = bond->getBeginAtom();
     ROMol::OEDGE_ITER nbr2 , end_nbrs2;
-    tie( nbr2 , end_nbrs2 ) = mol.getAtomBonds( bgn_atom );
+    boost::tie( nbr2 , end_nbrs2 ) = mol.getAtomBonds( bgn_atom );
     while( nbr2 != end_nbrs2 ) {
       const BOND_SPTR bond2 = mol[*nbr2];
       ++nbr2;
@@ -755,7 +755,7 @@ namespace RDKit {
     }
     int at3 = -1; // to stop the compiler whinging.
     ROMol::OEDGE_ITER nbr2 , end_nbrs2;
-    tie( nbr2 , end_nbrs2 ) = mol.getAtomBonds( bond_atom );
+    boost::tie( nbr2 , end_nbrs2 ) = mol.getAtomBonds( bond_atom );
     while( nbr2 != end_nbrs2 ) {
       const BOND_SPTR bond2 = mol[*nbr2];
       ++nbr2;
