@@ -426,7 +426,7 @@ namespace Canon {
   // finds cycles
   void dfsFindCycles(ROMol &mol,int atomIdx,int inBondIdx,
                      std::vector<AtomColors> &colors,
-                     UINT_VECT &ranks,
+                     const UINT_VECT &ranks,
                      INT_VECT &atomOrders,
                      VECT_INT_VECT &atomRingClosures,
                      const boost::dynamic_bitset<> *bondsInPlay,
@@ -494,7 +494,7 @@ namespace Canon {
             rank += (hsh%MAX_NATOMS)*MAX_NATOMS*MAX_NATOMS;
           }
         }
-        //std::cerr<<"   p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
+       //std::cerr<<"aIdx: "<< atomIdx <<"   p: "<<otherIdx<<" Rank: "<<ranks[otherIdx] <<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
         possibles.push_back(PossibleType(rank,otherIdx,theBond.get()));
       }
     }
@@ -548,7 +548,7 @@ namespace Canon {
   void dfsBuildStack(ROMol &mol,int atomIdx,int inBondIdx,
                      std::vector<AtomColors> &colors,
                      VECT_INT_VECT &cycles,
-                     UINT_VECT &ranks,
+                     const UINT_VECT &ranks,
                      INT_VECT &cyclesAvailable,
                      MolStack &molStack,
                      INT_VECT &atomOrders,
@@ -669,7 +669,6 @@ namespace Canon {
     // ---------------------
     std::sort(possibles.begin(),possibles.end(),_possibleCompare());
 
-
     // ---------------------
     //
     //  Now work the children
@@ -717,7 +716,7 @@ namespace Canon {
   void canonicalDFSTraversal(ROMol &mol,int atomIdx,int inBondIdx,
                              std::vector<AtomColors> &colors,
                              VECT_INT_VECT &cycles,
-                             UINT_VECT &ranks,
+                             const UINT_VECT &ranks,
                              INT_VECT &cyclesAvailable,
                              MolStack &molStack,
                              INT_VECT &atomOrders,
@@ -880,7 +879,7 @@ namespace Canon {
 
   void canonicalizeFragment(ROMol &mol,int atomIdx,
                             std::vector<AtomColors> &colors,
-                            UINT_VECT &ranks,
+                            const UINT_VECT &ranks,
                             MolStack &molStack,
                             const boost::dynamic_bitset<> *bondsInPlay,
                             const std::vector<std::string> *bondSymbols){
