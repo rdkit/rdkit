@@ -2029,6 +2029,8 @@ void testIssue252() {
   for(ROMol::BondIterator it=mol->beginBonds();
       it!=mol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
+    TEST_ASSERT((*it)->getBondType()==Bond::AROMATIC);
+
   }
   std::string asmi = MolToSmiles(*mol);
   // check if we can do it in the aromatic form
@@ -2036,11 +2038,13 @@ void testIssue252() {
   for(ROMol::BondIterator it=nmol->beginBonds();
       it!=nmol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
+    TEST_ASSERT((*it)->getBondType()==Bond::AROMATIC);
   }
 
   std::string nsmi = MolToSmiles(*nmol);
   delete mol;
   delete nmol;
+
   // This is a check for Issue253
   CHECK_INVARIANT(asmi == nsmi, "");
 
