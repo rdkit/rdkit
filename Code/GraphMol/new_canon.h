@@ -20,7 +20,7 @@
 #include <cstring>
 #include <vector>
 
-// #define VERBOSE_CANON 1
+//#define VERBOSE_CANON 1
 
 namespace RDKit {
   namespace Canon{
@@ -82,10 +82,13 @@ namespace RDKit {
       bool isRingStereoAtom;
       int* nbrIds;
       const std::string *p_symbol; // if provided, this is used to order atoms
+      unsigned int neighborNum;
+      unsigned int revistedNeighbors;
       std::vector<bondholder> bonds;
 
       canon_atom() : atom(NULL),index(-1),degree(0),totalNumHs(0),numRingMember(0),
-          hasRingNbr(false), isRingStereoAtom(false), nbrIds(NULL), p_symbol(NULL) {};
+          hasRingNbr(false), isRingStereoAtom(false), nbrIds(NULL),
+          p_symbol(NULL), neighborNum(0), revistedNeighbors(0) {};
     };
 
     template <typename CompareFunc>
@@ -214,6 +217,48 @@ namespace RDKit {
                             int &activeset,int *next,
                             int *changed);
 
+    class SpecialAtomCompareFunctor {
+
+    public:
+      Canon::canon_atom *dp_atoms;
+      const ROMol *dp_mol;
+      const boost::dynamic_bitset<> *dp_atomsInPlay,*dp_bondsInPlay;
+
+      SpecialAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
+          dp_atomsInPlay(NULL), dp_bondsInPlay(NULL){
+      };
+      SpecialAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
+          const boost::dynamic_bitset<> *atomsInPlay=NULL,
+          const boost::dynamic_bitset<> *bondsInPlay=NULL ) :
+            dp_atoms(atoms), dp_mol(&m),
+            dp_atomsInPlay(atomsInPlay),dp_bondsInPlay(bondsInPlay) {
+      };
+      int operator()(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        PRECONDITION(dp_mol,"no molecule");
+        PRECONDITION(i!=j,"bad call");
+        if(dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])){
+          return 0;
+        }
+
+        if(dp_atoms[i].neighborNum < dp_atoms[j].neighborNum){
+          return 1;
+        }
+        else if(dp_atoms[i].neighborNum > dp_atoms[j].neighborNum){
+          return -1;
+        }
+
+        if(dp_atoms[i].revistedNeighbors < dp_atoms[j].revistedNeighbors){
+          return 1;
+        }
+        else if(dp_atoms[i].revistedNeighbors > dp_atoms[j].revistedNeighbors){
+          return -1;
+        }
+        return 0;
+      }
+
+    };
+
     class AtomCompareFunctor {
       void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
         if(dp_atomsInPlay && !(*dp_atomsInPlay)[i])
@@ -238,7 +283,7 @@ namespace RDKit {
         return 0;
       }
 
-      int basecomp(int i,int j,int mode) const {
+      int basecomp(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
         unsigned int ivi,ivj;
 
@@ -385,8 +430,10 @@ namespace RDKit {
           return 0;
         }
 
-        int v=basecomp(i,j,1);
-        if(v) return v;
+        int v=basecomp(i,j);
+        if(v){
+          return v;
+        }
 
         if(df_useNbrs){
           getAtomNeighborhood(i,dp_atoms[i].bonds);
