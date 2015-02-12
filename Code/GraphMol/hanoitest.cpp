@@ -665,10 +665,10 @@ void test6(){
     //    std::cerr<<ii<<":"<<atomRanks[ii]<<std::endl;
     // }
     TEST_ASSERT(atomRanks[0]==0);
-    TEST_ASSERT(atomRanks[1]==3);
+    TEST_ASSERT(atomRanks[1]==4);
     TEST_ASSERT(atomRanks[2]==9);
     TEST_ASSERT(atomRanks[3]==5);
-    TEST_ASSERT(atomRanks[4]==4);
+    TEST_ASSERT(atomRanks[4]==3);
     TEST_ASSERT(atomRanks[5]==6);
     TEST_ASSERT(atomRanks[6]==10);
     TEST_ASSERT(atomRanks[7]==7);
