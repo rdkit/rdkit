@@ -17,7 +17,7 @@
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #ifdef RDK_CAIRO_BUILD
 #include <cairo.h>
-#include "MolDraw2DCairo.h"
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
 
 namespace python = boost::python;
@@ -75,11 +75,6 @@ namespace RDKit {
     delete hbm;
   }
 
-#ifdef RDK_CAIRO_BUILD
-  static boost::shared_ptr<MolDraw2DCairo> makeCairoDrawer(int width,int height){
-    
-  }
-#endif
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -141,14 +136,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   docString="Cairo molecule drawer";
   python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>, boost::noncopyable >("MolDraw2DCairo",
                                                                                               docString.c_str(),
-                                                                                              python::no_init)
-    .def("__init__",python::make_constructor(RDKit::makeCairoDrawer))
-    .def("FinishDrawing",&RDKit::MolDraw2DSVG::finishDrawing,
-         "add the last bits of SVG to finish the drawing")
-    .def("GetDrawingText",&RDKit::MolDraw2DSVG::getDrawingText,
-         "return the SVG")
+                                                                                              python::init<int,int>())
+    .def("FinishDrawing",&RDKit::MolDraw2DCairo::finishDrawing,
+         "add the last bits to finish the drawing")
+    .def("GetDrawingText",&RDKit::MolDraw2DCairo::getDrawingText,
+         "return the PNG data as a string")
+    .def("WriteDrawingText",&RDKit::MolDraw2DCairo::writeDrawingText,
+         "write the PNG data to the named file")
     ;
-#endif
-
 #endif
 }
