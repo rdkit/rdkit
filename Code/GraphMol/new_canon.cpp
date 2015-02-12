@@ -179,9 +179,9 @@ namespace RDKit {
       }
       if(useSpecial && ties){
         SpecialAtomCompareFunctor sftor(atoms,mol);
-        ActivatePartitions(nAts,order,count,activeset,next,changed);
         compareRingAtomsConcerningNumNeighbors(atoms, nAts);
-        RefinePartitions(mol,atoms,sftor,false,order,count,activeset,next,changed,touched);
+        ActivatePartitions(nAts,order,count,activeset,next,changed);
+        RefinePartitions(mol,atoms,sftor,true,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
         std::cerr<<"2a--------"<<std::endl;
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -367,6 +367,14 @@ namespace RDKit {
           free(atoms[i].nbrIds);
         }
       }
+    }
+
+    void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs) {
+      for(unsigned j=0; j < nbrs.size(); ++j){
+        unsigned newSymClass = atoms[nbrs.at(j).nbrIdx].index;
+        nbrs.at(j).nbrSymClass = newSymClass;
+      }
+      std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
     }
 
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
