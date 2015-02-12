@@ -4818,7 +4818,7 @@ void test52RedundantProductMappingNumbersAndRunReactants(){
     TEST_ASSERT(prods[0].size()==1);
     TEST_ASSERT(prods[1].size()==1);
 
-    smi = "C([13C]1NCO1)[13C]1NCO1";
+    smi = "C1N[13C](C[13C]2NCO2)O1";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
     smi = "C(C1N[13C]O1)C1N[13C]O1";
     TEST_ASSERT(MolToSmiles(*prods[1][0], true) == smi);

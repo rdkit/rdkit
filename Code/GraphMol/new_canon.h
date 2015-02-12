@@ -77,7 +77,6 @@ namespace RDKit {
       int index;
       unsigned int degree;
       unsigned int totalNumHs;
-      unsigned int numRingMember;
       bool hasRingNbr;
       bool isRingStereoAtom;
       int* nbrIds;
@@ -86,7 +85,7 @@ namespace RDKit {
       unsigned int revistedNeighbors;
       std::vector<bondholder> bonds;
 
-      canon_atom() : atom(NULL),index(-1),degree(0),totalNumHs(0),numRingMember(0),
+      canon_atom() : atom(NULL),index(-1),degree(0),totalNumHs(0),
           hasRingNbr(false), isRingStereoAtom(false), nbrIds(NULL),
           p_symbol(NULL), neighborNum(0), revistedNeighbors(0) {};
     };
@@ -346,21 +345,6 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
 
-        // ring membership
-        // initial passes at this were just checking "isInRing" to allow
-        // a possible future more efficient check. These break on this
-        // lovely double-diamond pathological case:
-        //   *12*3*1*3*4*5*4*52
-        //
-        // probably going to regret allowing this to be skipped some day
-        ivi=dp_atoms[i].numRingMember;
-        ivj=dp_atoms[j].numRingMember;
-        if(ivi<ivj)
-          return -1;
-        else if(ivi>ivj)
-          return 1;
-
-
         // chirality if we're using it
         if(df_useChirality){
           // first atom stereochem:
@@ -389,14 +373,12 @@ namespace RDKit {
         }
         if(df_useChiralityRings){
           // ring stereochemistry
-          if(dp_atoms[i].numRingMember && dp_atoms[j].numRingMember){
-            ivi=getAtomRingNbrCode(i);
-            ivj=getAtomRingNbrCode(j);
-            if(ivi<ivj)
-              return -1;
-            else if(ivi>ivj)
-              return 1;
-          }
+          ivi=getAtomRingNbrCode(i);
+          ivj=getAtomRingNbrCode(j);
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
           // bond stereo is taken care of in the neighborhood comparison
         }
         return 0;

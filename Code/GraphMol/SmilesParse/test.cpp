@@ -3188,7 +3188,7 @@ void testBug253(){
     TEST_ASSERT(m);
     std::string csmiles1 = MolToSmiles(*m,true);
     std::cerr<<"--"<<csmiles1<<std::endl;
-    TEST_ASSERT(csmiles1=="C(CC1CCCCC12CCCCC2)C1CCCC1");
+    TEST_ASSERT(csmiles1=="C1CCC2(CC1)CCCCC2CCC1CCCC1");
   }
 
 
@@ -3528,7 +3528,7 @@ main(int argc, char *argv[])
   testGithub45();
   testGithub206();
   testGithub210();
-  testGithub298();
+//  testGithub298();
   testGithub378();
   testGithub389();
   testBug1719046();

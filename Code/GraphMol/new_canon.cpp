@@ -319,7 +319,6 @@ namespace RDKit {
 
       void advancedInitCanonAtom(const ROMol &mol,Canon::canon_atom &atom,const int &idx){
         atom.totalNumHs=atom.atom->getTotalNumHs();
-        atom.numRingMember=getNumRingMember(mol,idx);
         atom.isRingStereoAtom=(atom.atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
             atom.atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
                 atom.atom->hasProp("_ringStereoAtoms");
