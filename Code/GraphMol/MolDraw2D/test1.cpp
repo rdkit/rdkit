@@ -95,24 +95,6 @@ void test1(){
 void test2(){
   std::cout << " ----------------- Test 2" << std::endl;
   {
-    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m);
-    WedgeMolBonds(*m,&(m->getConformer()));
-
-    MolDraw2DCairo drawer(300,300);
-    std::vector<int> highlights;
-    highlights.push_back(0);
-    highlights.push_back(4);
-    highlights.push_back(5);
-    drawer.drawMolecule(*m,&highlights);
-    drawer.finishDrawing();
-    
-    drawer.writeDrawingText("test2_3.png");
-    delete m;
-  }
-  {
     std::string smiles="CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -140,6 +122,33 @@ void test2(){
     std::string drawing=drawer.getDrawingText();
     std::ofstream ofs("test2_2.png");
     ofs.write(drawing.c_str(),drawing.size());
+    delete m;
+  }
+  {
+    // ensure we still work with a client-provided drawing context
+    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+
+
+    MolDraw2DCairo drawer(300,300,cr);
+    std::vector<int> highlights;
+    highlights.push_back(0);
+    highlights.push_back(4);
+    highlights.push_back(5);
+    drawer.drawMolecule(*m,&highlights);
+    drawer.finishDrawing();
+    
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "test2_3.png");
+    cairo_surface_destroy (surface);
+
     delete m;
   }
   std::cout << " Done" << std::endl;
