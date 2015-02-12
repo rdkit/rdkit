@@ -758,55 +758,95 @@ void test6(){
 
 
 namespace{
-  void _renumberTest(const ROMol *m,std::string inSmiles){
+
+  ROMol* _renumber(const ROMol *m,std::vector<unsigned int>& nVect,std::string inSmiles){
+    ROMol *nm=MolOps::renumberAtoms(*m,nVect);
+    TEST_ASSERT(nm);
+    TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
+    TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
+    MolOps::assignStereochemistry(*nm,true,true);
+    for(unsigned int ii=0;ii<nm->getNumAtoms();++ii){
+      if(nm->getAtomWithIdx(ii)->hasProp("_CIPCode")){
+        TEST_ASSERT(m->getAtomWithIdx(nVect[ii])->hasProp("_CIPCode"));
+        std::string ocip=m->getAtomWithIdx(nVect[ii])->getProp<std::string>("_CIPCode");
+        std::string ncip=nm->getAtomWithIdx(ii)->getProp<std::string>("_CIPCode");
+        if(ocip!=ncip){
+          std::cerr<<"  cip mismatch: "<<inSmiles<<std::endl;
+          std::cerr<<"      "<<nVect[ii]<<": "<<ocip<<" -> "<<ii<<": "<<ncip<<std::endl;
+          std::cerr<<"      "<<MolToSmiles(*nm,true)<<std::endl;
+        }
+        TEST_ASSERT(ocip==ncip);
+      }
+    }
+    return nm;
+  }
+
+  void _renumberTest(const ROMol *m,std::string inSmiles,unsigned int numRenumbers){
     PRECONDITION(m,"no molecule");
-    //std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
+//    std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
     std::string osmi=MolToSmiles(*m,true);
     std::vector<unsigned int> idxV(m->getNumAtoms());
     for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
 
     std::srand(0xF00D);
-    for(unsigned int i=0;i<50;++i){
-      //std::cerr<<"---------------------------------------------------"<<std::endl;
+    for(unsigned int i=0;i<numRenumbers;++i){
+//      std::cerr<<"---------------------------------------------------"<<std::endl;
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
-      //for(unsigned int j=0;j<m->getNumAtoms();++j){
-      //  std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
-      //}
+//      for(unsigned int j=0;j<m->getNumAtoms();++j){
+//        std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
+//      }
       
-      ROMol *nm=MolOps::renumberAtoms(*m,nVect);
-      TEST_ASSERT(nm);
-      TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
-      TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
-      MolOps::assignStereochemistry(*nm,true,true);
-      for(unsigned int ii=0;ii<nm->getNumAtoms();++ii){
-        if(nm->getAtomWithIdx(ii)->hasProp("_CIPCode")){
-          TEST_ASSERT(m->getAtomWithIdx(nVect[ii])->hasProp("_CIPCode"));
-          std::string ocip=m->getAtomWithIdx(nVect[ii])->getProp<std::string>("_CIPCode");
-          std::string ncip=nm->getAtomWithIdx(ii)->getProp<std::string>("_CIPCode");
-          if(ocip!=ncip){
-            std::cerr<<"  cip mismatch: "<<inSmiles<<std::endl;
-            std::cerr<<"      "<<nVect[ii]<<": "<<ocip<<" -> "<<ii<<": "<<ncip<<std::endl;
-            std::cerr<<"      "<<MolToSmiles(*nm,true)<<std::endl;
-          }
-          TEST_ASSERT(ocip==ncip);
-        }
-      }
+      ROMol *nm= _renumber(m,nVect,inSmiles);
       
       std::string smi=MolToSmiles(*nm,true);
       if(smi!=osmi){
-        std::cerr<<"  input: "<<inSmiles<<std::endl;
+        std::cerr<<"  input: "<<inSmiles<<", Renumbering round: " << i <<std::endl;
         std::cerr<<osmi<<std::endl;
         std::cerr<<smi<<std::endl;
-
         m->setProp("_Name","orig");
         std::cerr<<MolToMolBlock(*m)<<std::endl;
         nm->setProp("_Name","renumber");
         std::cerr<<MolToMolBlock(*nm)<<std::endl;
-        
+        for(unsigned int j=0;j<m->getNumAtoms();++j){
+          std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
+        }
       }
       TEST_ASSERT(smi==osmi);
+      delete nm;
+    }
+  }
 
+  void _renumberTest2(const ROMol *m,std::string inSmiles,unsigned int numRenumbers){
+    PRECONDITION(m,"no molecule");
+
+    unsigned int nAtoms=m->getNumAtoms();
+    std::vector<unsigned int> idxV(m->getNumAtoms());
+    for(unsigned int i=0;i<m->getNumAtoms();++i) idxV[i]=i;
+
+    std::srand(0xF00D);
+    for(unsigned int i=0;i<numRenumbers;++i){
+      std::vector<unsigned int> nVect(idxV);
+      std::random_shuffle(nVect.begin(),nVect.end());
+
+      ROMol *nm= _renumber(m,nVect,inSmiles);
+
+      UINT_VECT ranks(nAtoms);
+      Canon::rankMolAtoms(*nm,ranks,true);
+      char *ranksSet=(char *)malloc(nAtoms*sizeof(char));
+      memset(ranksSet,0,nAtoms*sizeof(char));
+      for(unsigned int i=0;i<ranks.size();i++){
+        ranksSet[ranks[i]]=1;
+      }
+      for(unsigned int i=0;i<nAtoms;i++){
+        if(ranksSet[i]!=1){
+          std::cerr << "Molecule has non unique ranks: " << MolToSmiles(*nm,true) <<  ", Renumbering round: " << i <<std::endl;
+          for(unsigned int i=0;i<nAtoms;i++){
+            std::cerr << "AtomIdx: " << i << " Rank: " << ranks[i] << std::endl;
+          }
+        }
+        TEST_ASSERT(ranksSet[i]==1);
+      }
       delete nm;
     }
   }
@@ -822,13 +862,13 @@ void test7a() {
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr <<"\n\n\n\n\n\n\n\n\n\n\n\n>--------------" << std::endl;
+//    std::cerr <<"\n\n\n\n\n\n\n\n\n\n\n\n>--------------" << std::endl;
     RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
-    std::cerr <<"---------------" << std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
-    }
-    std::cerr <<"---------------" << std::endl;
+//    std::cerr <<"---------------" << std::endl;
+//    for(unsigned int i=0;i<m->getNumAtoms();++i){
+//      std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
+//    }
+//    std::cerr <<"---------------" << std::endl;
     smi1=MolToSmiles(*m,true);
     delete m;
   }
@@ -838,68 +878,79 @@ void test7a() {
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
     std::vector<unsigned int> atomRanks;
-    std::cerr <<">--------------" << std::endl;
+//    std::cerr <<">--------------" << std::endl;
     RDKit::Canon::rankMolAtoms(*m,atomRanks,false);
-    std::cerr <<"---------------" << std::endl;
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
-    }
-    std::cerr <<"---------------" << std::endl;
+//    std::cerr <<"---------------" << std::endl;
+//    for(unsigned int i=0;i<m->getNumAtoms();++i){
+//      std::cerr<<" "<<i+1<<" "<<atomRanks[i]<<std::endl;
+//    }
+//    std::cerr <<"---------------" << std::endl;
     smi2=MolToSmiles(*m,true);
     delete m;
   }
-  std::cerr<<smi1<<std::endl;
-  std::cerr<<smi2<<std::endl;
+  if(smi1!=smi2){
+    std::cerr<<smi1<<"\n"<<smi2<<std::endl;
+  }
   TEST_ASSERT(smi1==smi2);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+std::string smis[]={
+  "C[C@@H]1CCC[C@H](C)[C@H]1C",
+  "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
+  "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
+  "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
+  "CCCN[C@H]1CC[C@H](NC)CC1",
+  "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
+  "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
+  "O=[N+]([O-])c1ccccc1S(=O)(=O)NC[C@H]1CC[C@H](CNCC2Cc3ccccc3CC2)CC1",
+  "Oc1ccc2c(Cc3ccc(OCCN4CCCCC4)cc3)c([C@H]3CC[C@H](O)CC3)sc2c1",
+  "O=C(c1ccc(OCCN2CCCCC2)cc1)c1c2ccc(O)cc2sc1[C@H]1CC[C@H](O)CC1",
+  "N#Cc1ccc2c(c1)CCN(CC[C@@H]1CC[C@@H](NC(=O)c3ccnc4ccccc34)CC1)C2",
+  "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
+  "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
+  "CCC1=C(C)CN(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)N[C@H]3CC[C@H](C)CC3)cc2)C1=O",
+  "C[C@H]1C[C@H](C1)N1CCC1",
+  "C[C@H]1C[C@H](C1)N1CCN(C)CC1",
+  "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
+  "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
+  "C12C3C1C3C4C5C4C52",
+  "N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
+  "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
+  "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
+  "N[C@@H]1[C@H]2CN(c3nc4c(cc3F)c(=O)c(C(=O)O)cn4C3CC3)C[C@@H]12",
+  // some examples that came up while doing a torture test in ZINC
+  "CN1CCCNCCN(C)CCC[NH2+]CC1",
+  "CN1CCC[NH2+]CCN(C)CCC[NH+](C)CC1",
+  "O=P([O-])([O-])C[NH+]1CCCN(CP(=O)([O-])O)CC[NH+](CP(=O)([O-])[O-])CCC[NH+](CP(=O)([O-])[O-])CC1",
+  "O=C(CCNC(=O)Cn1cnc2ccccc2c1=O)NCCc1c[nH]c2ccccc12",
+  "C1CNCC[NH2+]CC(C2CNCC[NH2+]CCC[NH2+]CCNC2)CNCC[NH2+]C1",
+  // C60
+  "C12=C3C4=C5C6=C1C7=C8C9=C1C%10=C%11C(=C29)C3=C2C3=C4C4=C5C5=C9C6=C7C6=C7C8=C1C1=C8C%10=C%10C%11=C2C2=C3C3=C4C4=C5C5=C%11C%12=C(C6=C95)C7=C1C1=C%12C5=C%11C4=C3C3=C5C(=C81)C%10=C23",
+  // C70
+  "C12=C3C4=C5C6=C7C8=C9C%10=C%11C%12=C%13C%10=C%10C8=C5C1=C%10C1=C%13C5=C8C1=C2C1=C3C2=C3C%10=C%13C%14=C3C1=C8C1=C3C5=C%12C5=C8C%11=C%11C9=C7C7=C9C6=C4C2=C2C%10=C4C(=C29)C2=C6C(=C8C8=C9C6=C4C%13=C9C(=C%141)C3=C85)C%11=C27",
+  //Bernd's example1
+  "C12C3C4C3C3C1C2C43",
+  //Bernd's example2
+  "C12C3C1C1C4C5C4C4C6C(C6C3C3C1C43)C25",
+  //doubled house
+  "C12C3C45C67C8C9C66C14C21C35C78C961",
+  "C12C3C45C6C7C11C27C41C356",
+  //Problematic round-tripping
+  "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(/C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
+  "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(\\C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
+  "EOS"
+};
 
 void test7(){
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
-  std::string smis[]={
-    "C[C@@H]1CCC[C@H](C)[C@H]1C",
-    "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
-    "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
-    "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
-    "CCCN[C@H]1CC[C@H](NC)CC1",
-    "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
-    "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
-    "O=[N+]([O-])c1ccccc1S(=O)(=O)NC[C@H]1CC[C@H](CNCC2Cc3ccccc3CC2)CC1",
-    "Oc1ccc2c(Cc3ccc(OCCN4CCCCC4)cc3)c([C@H]3CC[C@H](O)CC3)sc2c1",
-    "O=C(c1ccc(OCCN2CCCCC2)cc1)c1c2ccc(O)cc2sc1[C@H]1CC[C@H](O)CC1",
-    "N#Cc1ccc2c(c1)CCN(CC[C@@H]1CC[C@@H](NC(=O)c3ccnc4ccccc34)CC1)C2",
-    "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
-    "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
-    "CCC1=C(C)CN(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)N[C@H]3CC[C@H](C)CC3)cc2)C1=O",
-    "C[C@H]1C[C@H](C1)N1CCC1",
-    "C[C@H]1C[C@H](C1)N1CCN(C)CC1",
-    "CN1CCN(CC1)[C@H]1C[C@H](C1)c1ncc2c(N)nccn12",
-    "CN1CCN(CC1)[C@H]1C[C@H](C1)c1nc(-c2ccc3ccc(nc3c2)-c2ccccc2)c2c(N)nccn12",
-    //"*12*3*1*3*4*5*4*52",
-    "N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
-    "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
-    "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
-    "N[C@@H]1[C@H]2CN(c3nc4c(cc3F)c(=O)c(C(=O)O)cn4C3CC3)C[C@@H]12",
-    // some examples that came up while doing a torture test in ZINC
-    "CN1CCCNCCN(C)CCC[NH2+]CC1",
-    "CN1CCC[NH2+]CCN(C)CCC[NH+](C)CC1",
-    "O=P([O-])([O-])C[NH+]1CCCN(CP(=O)([O-])O)CC[NH+](CP(=O)([O-])[O-])CCC[NH+](CP(=O)([O-])[O-])CC1",
-    "O=C(CCNC(=O)Cn1cnc2ccccc2c1=O)NCCc1c[nH]c2ccccc12",
-    "C1CNCC[NH2+]CC(C2CNCC[NH2+]CCC[NH2+]CCNC2)CNCC[NH2+]C1",
-    // C60
-    "C12=C3C4=C5C6=C1C7=C8C9=C1C%10=C%11C(=C29)C3=C2C3=C4C4=C5C5=C9C6=C7C6=C7C8=C1C1=C8C%10=C%10C%11=C2C2=C3C3=C4C4=C5C5=C%11C%12=C(C6=C95)C7=C1C1=C%12C5=C%11C4=C3C3=C5C(=C81)C%10=C23",
-    // C70 
-    //"C12=C3C4=C5C6=C7C8=C9C%10=C%11C%12=C%13C%10=C%10C8=C5C1=C%10C1=C%13C5=C8C1=C2C1=C3C2=C3C%10=C%13C%14=C3C1=C8C1=C3C5=C%12C5=C8C%11=C%11C9=C7C7=C9C6=C4C2=C2C%10=C4C(=C29)C2=C6C(=C8C8=C9C6=C4C%13=C9C(=C%141)C3=C85)C%11=C27",
-    "EOS"
-  };
   unsigned int i=0;
   while(smis[i]!="EOS"){
     std::string smiles=smis[i++];
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     MolOps::assignStereochemistry(*m,true);
-    _renumberTest(m,smiles);
+    _renumberTest(m,smiles,500);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -921,6 +972,29 @@ void test8(){
     TEST_ASSERT(smi1==smi2);
     delete m;
   }
+
+  {
+    unsigned int i=0;
+    while(smis[i]!="EOS"){
+      std::string smiles=smis[i++];
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+//      std::cerr<<"MolToSMILES 1"<<std::endl;
+      std::string smi1=MolToSmiles(*m, true);
+      delete m;
+
+      m = SmilesToMol(smi1);
+      TEST_ASSERT(m);
+//      std::cerr<<"MolToSMILES 2"<<std::endl;
+      std::string smi2=MolToSmiles(*m, true);
+      delete m;
+      if(smi1!=smi2){
+        std::cerr<<"Input smiles: "<<smiles<<"\n1. Iter: "<<smi1<<"\n2. Iter: "<<smi2<<std::endl;
+      }
+      TEST_ASSERT(smi1==smi2);
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -1003,7 +1077,6 @@ void test9(){
     TEST_ASSERT(atomRanks[3]<atomRanks[11]);
   }
 
-
   {
     // this one was a chiral ranking problem 
     std::string smi="COC(C)CC(C)(C)O";
@@ -1018,8 +1091,6 @@ void test9(){
     TEST_ASSERT(atomRanks[1]>atomRanks[8]);
     TEST_ASSERT(atomRanks[5]>atomRanks[2]);
   }
-
-
   
   {
     // are double bonds being handled correctly?
@@ -1035,6 +1106,7 @@ void test9(){
     TEST_ASSERT(atomRanks[0]<atomRanks[5]);
     TEST_ASSERT(atomRanks[1]<atomRanks[4]);
   }
+
   {
     // are double bonds being handled correctly?
     std::string smi="O=C[C@H](F)CO";
@@ -1069,6 +1141,21 @@ void test9(){
 }
 
 
+void test10(){
+  BOOST_LOG(rdInfoLog) << "testing unique ranks in w.r.t. renumbering." << std::endl;
+  unsigned int i=0;
+  while(smis[i]!="EOS"){
+    std::string smiles=smis[i++];
+//    std::cerr<< ">>>Molecule: " << smiles << std::endl;
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m,true);
+    _renumberTest2(m,smiles,1);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
 #if 1
@@ -1078,11 +1165,12 @@ int main(){
   test4();
   test5();
   test6();
+  test7();
+  test7a();
   test8();
   test9();
+  test10();
 #endif
-  test7();
-  //test7a();
   return 0;
 }
 
