@@ -65,10 +65,74 @@ namespace RDKit {
       }
     }
 
+    void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms, unsigned int nAtoms) {
+
+      for(unsigned idx = 0; idx < nAtoms; ++idx){
+        std::deque<int> neighbors;
+        neighbors.push_back(idx);
+        char *visited=(char *)malloc(nAtoms*sizeof(char));
+        memset(visited,0,nAtoms*sizeof(char));
+        unsigned count = 1;
+        std::vector<int> nextLevelNbrs;
+        std::set<int> lastLevelNbrs;
+        std::set<int> currentLevelNbrs;
+        while(!neighbors.empty()){
+          unsigned int revisitedNeighbors=0;
+          unsigned int numLevelNbrs=0;
+          nextLevelNbrs.resize(0);
+          while(!neighbors.empty()){
+            int nidx = neighbors.front();
+            const Canon::canon_atom &atom = atoms[nidx];
+            lastLevelNbrs.insert(nidx);
+            visited[nidx]=1;
+            neighbors.pop_front();
+            for(unsigned int j=0; j<atom.degree; j++){
+              int iidx = atom.nbrIds[j];
+              if(!visited[iidx]){
+                currentLevelNbrs.insert(iidx);
+                numLevelNbrs++;
+                visited[iidx]=1;
+                nextLevelNbrs.push_back(iidx);
+              }
+            }
+          }
+          for(std::set<int>::iterator iter=currentLevelNbrs.begin(); iter != currentLevelNbrs.end();iter++){
+            const Canon::canon_atom &natom = atoms[*iter];
+            for(unsigned int k=0; k<natom.degree; k++){
+              int jidx = natom.nbrIds[k];
+              if(currentLevelNbrs.count(jidx) || lastLevelNbrs.count(jidx)){
+                revisitedNeighbors+=1;
+              }
+            }
+          }
+          lastLevelNbrs.clear();
+          lastLevelNbrs.insert(currentLevelNbrs.begin(),currentLevelNbrs.end());
+          currentLevelNbrs.clear();
+          if(revisitedNeighbors < 10){
+            atoms[idx].revistedNeighbors = (atoms[idx].revistedNeighbors*10) + revisitedNeighbors;
+          }
+          else{
+            atoms[idx].revistedNeighbors = (atoms[idx].revistedNeighbors*100) + revisitedNeighbors;
+          }
+
+          if(numLevelNbrs < 0){
+            atoms[idx].neighborNum  = (atoms[idx].neighborNum*10) +numLevelNbrs;
+          }
+          else{
+            atoms[idx].neighborNum  = (atoms[idx].neighborNum*100) +numLevelNbrs;
+          }
+          neighbors.insert(neighbors.end(),nextLevelNbrs.begin(),nextLevelNbrs.end());
+          count++;
+        }
+        free(visited);
+      }
+    }
+
+
     template <typename T>
     void rankWithFunctor(T &ftor,
                          bool breakTies,
-                         int *order){
+                         int *order, bool useSpecial=false){
       const ROMol &mol=*ftor.dp_mol;
       canon_atom *atoms=ftor.dp_atoms;
       unsigned int nAts=mol.getNumAtoms();
@@ -82,7 +146,6 @@ namespace RDKit {
       CreateSinglePartition(nAts,order,count,atoms);
       ActivatePartitions(nAts,order,count,activeset,next,changed);
       RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed,touched);
-      //#define VERBOSE_CANON 1
 #ifdef VERBOSE_CANON
       std::cerr<<"1--------"<<std::endl;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -104,6 +167,28 @@ namespace RDKit {
         std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
       }
 #endif
+      bool ties=false;
+      unsigned countCls=0;
+      for(unsigned i=0; i<nAts; ++i){
+        if(count[i]){
+          countCls++;
+        }
+        else{
+          ties=true;
+        }
+      }
+      if(useSpecial && ties){
+        SpecialAtomCompareFunctor sftor(atoms,mol);
+        ActivatePartitions(nAts,order,count,activeset,next,changed);
+        compareRingAtomsConcerningNumNeighbors(atoms, nAts);
+        RefinePartitions(mol,atoms,sftor,false,order,count,activeset,next,changed,touched);
+#ifdef VERBOSE_CANON
+        std::cerr<<"2a--------"<<std::endl;
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+        }
+#endif
+      }
       if(breakTies){
         BreakTies(mol,atoms,ftor,true,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
@@ -240,9 +325,7 @@ namespace RDKit {
                 atom.atom->hasProp("_ringStereoAtoms");
         atom.hasRingNbr=hasRingNbr(mol,atom.atom);
       }
-
-    }
-
+    }//end anonymous namespace
 
     void initCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms,
         bool includeChirality){
@@ -298,7 +381,7 @@ namespace RDKit {
       ftor.df_useChiralityRings=includeChirality;
 
       int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
-      rankWithFunctor(ftor,breakTies,order);
+      rankWithFunctor(ftor,breakTies,order,true);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -333,7 +416,8 @@ namespace RDKit {
       ftor.df_useChirality=includeChirality;
 
       int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
-      rankWithFunctor(ftor,breakTies,order);
+
+      rankWithFunctor(ftor,breakTies,order,true);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
