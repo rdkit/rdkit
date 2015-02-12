@@ -939,6 +939,10 @@ std::string smis[]={
   //Problematic round-tripping
   "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(/C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
   "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(\\C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
+  "c1cc2ccc(ccc3ccc1cc3)cc2",
+  "C13C6C1C2C4C2C3C5C4C56",
+  "C45C1C6C3C6C5C4C2C3C12",
+  "C45C2C6C3C6C5C4C1C3C12",
   "EOS"
 };
 
