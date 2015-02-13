@@ -101,20 +101,31 @@ void test2(){
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m,&(m->getConformer()));
 
-    cairo_surface_t *surface =
-      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-    cairo_t *cr = cairo_create (surface);
-
-    MolDraw2DCairo drawer(300,300,cr);
+    MolDraw2DCairo drawer(300,300);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
-
-    cairo_destroy (cr);
-    cairo_surface_write_to_png (surface, "test2_1.png");
-    cairo_surface_destroy (surface);
+    
+    drawer.writeDrawingText("test2_1.png");
     delete m;
   }
   {
+    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+
+    MolDraw2DCairo drawer(300,300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+
+    std::string drawing=drawer.getDrawingText();
+    std::ofstream ofs("test2_2.png");
+    ofs.write(drawing.c_str(),drawing.size());
+    delete m;
+  }
+  {
+    // ensure we still work with a client-provided drawing context
     std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -125,25 +136,6 @@ void test2(){
       cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
     cairo_t *cr = cairo_create (surface);
 
-    MolDraw2DCairo drawer(300,300,cr);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-
-    cairo_destroy (cr);
-    cairo_surface_write_to_png (surface, "test2_2.png");
-    cairo_surface_destroy (surface);
-    delete m;
-  }
-  {
-    std::string smiles="Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m);
-    WedgeMolBonds(*m,&(m->getConformer()));
-
-    cairo_surface_t *surface =
-      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-    cairo_t *cr = cairo_create (surface);
 
     MolDraw2DCairo drawer(300,300,cr);
     std::vector<int> highlights;
@@ -152,10 +144,11 @@ void test2(){
     highlights.push_back(5);
     drawer.drawMolecule(*m,&highlights);
     drawer.finishDrawing();
-
+    
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "test2_3.png");
     cairo_surface_destroy (surface);
+
     delete m;
   }
   std::cout << " Done" << std::endl;
@@ -185,18 +178,12 @@ void test3(){
     
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(300,300,cr);
+      MolDraw2DCairo drawer(300,300);
       drawer.drawOptions().atomLabels = atomLabels;
       drawer.drawMolecule(*m,&highlight_atoms);
       drawer.finishDrawing();
 
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {
@@ -222,18 +209,11 @@ void test3(){
 
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(300,300,cr);
+      MolDraw2DCairo drawer(300,300);
       drawer.drawOptions().circleAtoms=false;
       drawer.drawMolecule(*m,&highlight_atoms);
       drawer.finishDrawing();
-
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {
@@ -261,18 +241,11 @@ void test3(){
     
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(300,300,cr);
+      MolDraw2DCairo drawer(300,300);
       drawer.drawOptions().circleAtoms=true;
       drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
       drawer.finishDrawing();
-
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {
@@ -304,17 +277,11 @@ void test3(){
     
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(300,300,cr);
+      MolDraw2DCairo drawer(300,300);
       drawer.drawOptions() = options;
       drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
       drawer.finishDrawing();
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {
@@ -345,17 +312,11 @@ void test3(){
     
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 200, 200);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(200,200,cr);
+      MolDraw2DCairo drawer(200,200);
       drawer.drawOptions() = options;
       drawer.drawMolecule(*m,&highlight_atoms,&highlight_colors);
       drawer.finishDrawing();
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {
@@ -384,17 +345,10 @@ void test4(){
     
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(300,300,cr);
+      MolDraw2DCairo drawer(300,300);
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {
@@ -426,17 +380,11 @@ void test5(){
     options.atomLabels[0]="R1";
 #ifdef RDK_CAIRO_BUILD
     {
-      cairo_surface_t *surface =
-        cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-      cairo_t *cr = cairo_create (surface);
-
-      MolDraw2DCairo drawer(300,300,cr);
+      MolDraw2DCairo drawer(300,300);
       drawer.drawOptions() = options;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-      cairo_destroy (cr);
-      cairo_surface_write_to_png (surface, (nameBase+".png").c_str());
-      cairo_surface_destroy (surface);
+      drawer.writeDrawingText(nameBase+".png");
     }
 #endif    
     {

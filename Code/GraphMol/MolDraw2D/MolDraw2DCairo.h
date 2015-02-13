@@ -24,8 +24,26 @@ namespace RDKit {
 
   class MolDraw2DCairo : public MolDraw2D {
   public :
+    // does not take ownership of the drawing context
     MolDraw2DCairo( int width , int height , cairo_t *cr ) : 
-      MolDraw2D( width , height ) , d_cr( cr ) { initDrawing(); };
+      MolDraw2D( width , height ) , dp_cr( cr ) {
+      cairo_reference(dp_cr);
+      initDrawing(); };
+    MolDraw2DCairo( int width , int height ) : 
+      MolDraw2D( width , height ) {
+      cairo_surface_t *surf = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
+      dp_cr = cairo_create(surf);
+      cairo_surface_destroy (surf); // dp_cr has a reference to this now;
+      initDrawing();
+    };
+    ~MolDraw2DCairo() {
+      if(dp_cr) {
+        if(cairo_get_reference_count(dp_cr)>0){
+          cairo_destroy(dp_cr);
+        }
+        dp_cr=NULL;
+      }
+    }
 
     // set font size in molecule coordinate units. That's probably Angstrom for
     // RDKit. It will turned into drawing units using scale_, which might be
@@ -48,9 +66,13 @@ namespace RDKit {
     void getStringSize( const std::string &label , double &label_width ,
                         double &label_height ) const;
 
-
+    // returns the PNG data in a string
+    std::string getDrawingText() const;
+    // writes the PNG data to a file
+    void writeDrawingText(const std::string &fName) const;
+    
   private :
-    cairo_t *d_cr;
+    cairo_t *dp_cr;
 
     void initDrawing();
   };

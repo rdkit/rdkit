@@ -15,6 +15,10 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <Geometry/point.h>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
+#ifdef RDK_CAIRO_BUILD
+#include <cairo.h>
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#endif
 
 namespace python = boost::python;
 
@@ -70,6 +74,7 @@ namespace RDKit {
     delete ham;
     delete hbm;
   }
+
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -127,5 +132,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
          "return the SVG")
     ;
 
-
+#ifdef RDK_CAIRO_BUILD
+  docString="Cairo molecule drawer";
+  python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>, boost::noncopyable >("MolDraw2DCairo",
+                                                                                              docString.c_str(),
+                                                                                              python::init<int,int>())
+    .def("FinishDrawing",&RDKit::MolDraw2DCairo::finishDrawing,
+         "add the last bits to finish the drawing")
+    .def("GetDrawingText",&RDKit::MolDraw2DCairo::getDrawingText,
+         "return the PNG data as a string")
+    .def("WriteDrawingText",&RDKit::MolDraw2DCairo::writeDrawingText,
+         "write the PNG data to the named file")
+    ;
+#endif
 }
