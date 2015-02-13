@@ -1,10 +1,15 @@
 # -------------------------
 #     Variables used and default values:
-# USE_INCHI=0      # enables InChI functions; requires rdkit built with inchi support
-# USE_AVALON=0     # enables avalon fingerprint; requires rdkit built with avalon support
-# USE_POPCOUNT=0   # enables use of the CPU's popcount instruction
-# USE_THREADS=0    # links against boost.system; required with non-ancient boost versions if inchi is enabled or the rdkit is built with threadsafe SSS
-# STATIC_LINK=1    # link against the static RDKit libraries
+# USE_INCHI enables InChI functions; requires rdkit built with inchi support:
+#USE_INCHI=0
+# USE_AVALON enables the avalon fingerprint; requires rdkit built with avalon support:
+#USE_AVALON=0
+# ENABLE_POPCOUNT enables use of the CPU's popcount instruction:
+#USE_POPCOUNT=0
+# USE_THREADS links against boost.system; required with non-ancient boost versions if inchi is enabled or the rdkit is built with threadsafe SSS:
+#USE_THREADS=0
+# STATIC_LINK links against the static RDKit libraries:
+#STATIC_LINK=1
 # -------------------------
 
 
