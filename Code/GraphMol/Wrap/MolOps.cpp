@@ -37,13 +37,16 @@ namespace RDKit{
   std::string molToSVG(const ROMol &mol,
                        unsigned int width, unsigned int height,
                        python::object pyHighlightAtoms,bool kekulize,
-                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles
+                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
+                       int confId
                        ){
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
     std::stringstream outs;
     MolDraw2DSVG drawer(width,height,outs);
     drawer.setFontSize(fontSize/24.);
-    drawer.drawMolecule(mol,highlightAtoms);
+    drawer.setLineWidth(drawer.lineWidth()*lineWidthMult);
+    drawer.drawOptions().circleAtoms=includeAtomCircles;
+    drawer.drawMolecule(mol,highlightAtoms,NULL,confId);
     delete highlightAtoms;
     drawer.finishDrawing();
     return outs.str();
@@ -55,6 +58,9 @@ namespace RDKit{
                                           python::object pyBondTypes,
                                           bool returnCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+	throw_value_error("empty bond indices");
+      
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
@@ -115,6 +121,8 @@ namespace RDKit{
                                python::object pyBondTypes,
                                python::list pyCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+	throw_value_error("empty bond indices");
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
@@ -266,9 +274,6 @@ namespace RDKit{
 
   ROMol *addHs(const ROMol &orig,bool explicitOnly=false,bool addCoords=false){
     return MolOps::addHs(orig,explicitOnly,addCoords);
-  }
-  ROMol *removeHs(const ROMol &orig,bool implicitOnly=false){
-    return MolOps::removeHs(orig,implicitOnly);
   }
   int getSSSR(ROMol &mol) {
     VECT_INT_VECT rings;
@@ -749,14 +754,21 @@ namespace RDKit{
     - implicitOnly: (optional) if this toggle is set, only implicit Hs will\n\
       be removed from the graph.  Default value is 0 (remove implicit and explicit Hs).\n\
 \n\
+    - updateExplicitCount: (optional) if this toggle is set, the explicit H count on atoms with \n\
+      Hs will be updated. Default value is 0 (do not update explicit H count).\n\
+\n\
+    - sanitize: (optional) if this toggle is set, the molecule will be sanitized after the Hs\n\
+      are removed. Default value is 1 (do sanitize).\n\
+\n\
   RETURNS: a new molecule with the Hs removed\n\
 \n\
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
 \n";
-      python::def("RemoveHs", removeHs,
-                  (python::arg("mol"),python::arg("implicitOnly")=false),
+      python::def("RemoveHs", (ROMol *(*)(const ROMol &,bool,bool,bool))MolOps::removeHs,
+                  (python::arg("mol"),python::arg("implicitOnly")=false,
+                   python::arg("updateExplicitCount")=false,python::arg("sanitize")=true),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
@@ -1657,9 +1669,9 @@ namespace RDKit{
                    python::arg("height")=300,
                    python::arg("highlightAtoms")=python::object(),
                    python::arg("kekulize")=true,
-                   python::arg("lineWidthMult")=2,
+                   python::arg("lineWidthMult")=1,
                    python::arg("fontSize")=12,
-                   python::arg("includeAtomCircles")=false),
+                   python::arg("includeAtomCircles")=true),
                   docString.c_str());
 
     };

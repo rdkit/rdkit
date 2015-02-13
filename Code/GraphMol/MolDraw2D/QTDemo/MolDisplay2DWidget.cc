@@ -208,8 +208,8 @@ void MolDisplay2DWidget::identify_selected_atoms( QPainter &qp ) {
   // put an orange square round selected atoms.
   vector<int> sa = selected_atoms();
   for( int i = 0 , is = sa.size() ; i < is ; ++i ) {
-    pair<float,float> at_cds = mol_drawer()->getDrawCoords( sa[i] );
-    qp.drawRect( at_cds.first - pick_circle_rad() , at_cds.second - pick_circle_rad() ,
+    Point2D at_cds = mol_drawer()->getDrawCoords( sa[i] );
+    qp.drawRect( at_cds.x - pick_circle_rad() , at_cds.y - pick_circle_rad() ,
                  2 * pick_circle_rad() , 2 * pick_circle_rad() );
   }
 
@@ -221,9 +221,9 @@ int MolDisplay2DWidget::find_nearest_atom( int x_screen_pos , int y_screen_pos )
   int nearest_at = -1 , nearest_dist = numeric_limits<int>::max();
 
   for( int i = 0 , is = disp_mol_->getNumAtoms() ; i < is ; ++i ) {
-    pair<float,float> screen_cds = mol_drawer_->getDrawCoords( i );
-    int dist = DACLIB::square( screen_cds.first - x_screen_pos ) +
-        DACLIB::square( screen_cds.second - y_screen_pos );
+    Point2D screen_cds = mol_drawer_->getDrawCoords( i );
+    int dist = DACLIB::square( screen_cds.x - x_screen_pos ) +
+        DACLIB::square( screen_cds.y - y_screen_pos );
     if( dist < nearest_dist ) {
       nearest_dist = dist;
       nearest_at = i;

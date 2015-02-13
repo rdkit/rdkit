@@ -44,7 +44,7 @@ namespace RDKit{
       PRECONDITION(atom,"bad atom");
       INT_VECT atomicSmilesVect(atomicSmiles,
                                 atomicSmiles+(sizeof(atomicSmiles)-1)/sizeof(atomicSmiles[0]));
-      std::stringstream res;
+      std::string res;
       int fc = atom->getFormalCharge();
       int num = atom->getAtomicNum();
       int isotope = atom->getIsotope();
@@ -97,88 +97,69 @@ namespace RDKit{
       } else {
         needsBracket = true;
       }
-      if( needsBracket ) res << "[";
+      if( needsBracket ) res += "[";
 
       if(isotope && atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)){
-        res <<isotope;
+        res += boost::lexical_cast<std::string>(isotope);
       }
       // this was originally only done for the organic subset,
       // applying it to other atom-types is a fix for Issue 3152751: 
       if(!doKekule && atom->getIsAromatic() && symb[0]>='A' && symb[0] <= 'Z'){
         symb[0] -= ('A'-'a');
       }
-      res << symb;
+      res += symb;
 
       if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles) &&
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
-        INT_LIST trueOrder;
-        atom->getProp(common_properties::_TraversalBondIndexOrder,trueOrder);
-        int nSwaps=  atom->getPerturbationOrder(trueOrder);
-        if(atom->getDegree()==3 && !bondIn){
-          // This is a special case. Here's an example:
-          //   Our internal representation of a chiral center is equivalent to:
-          //     [C@](F)(O)(C)[H]
-          //   we'll be dumping it without the H, which entails a reordering:
-          //     [C@@H](F)(O)C
-          ++nSwaps;
-        }
-        //BOOST_LOG(rdErrorLog)<<">>>> "<<atom->getIdx()<<" "<<nSwaps<<" "<<atom->getChiralTag()<<std::endl;
-        std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
-          if(!(nSwaps%2))
-            atStr = "@@";
-          else
-            atStr = "@";
+          res += "@@";
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
-          if(!(nSwaps%2))
-            atStr = "@";
-          else
-            atStr = "@@";
+          res += "@";
           break;
         default:
           break;
         }
-        res << atStr;
       }
 
       if(needsBracket){
         unsigned int totNumHs=atom->getTotalNumHs();
         if(totNumHs > 0){
-          res << "H";
-          if(totNumHs > 1) res << totNumHs;
+          res += "H";
+          if(totNumHs > 1) res += boost::lexical_cast<std::string>(totNumHs);
         }
         if(fc > 0){
-          res << "+";
-          if(fc > 1) res << fc;
+          res += "+";
+          if(fc > 1) res += boost::lexical_cast<std::string>(fc);
         } else if(fc < 0) {
-          res << "-";
-          if(fc < -1) res << -fc;
+          if(fc < -1) res += boost::lexical_cast<std::string>(fc);
+          else res+="-";
         }
 
         int mapNum;
         if(atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)){
-          res<<":"<<mapNum;
+          res += ":";
+          res += boost::lexical_cast<std::string>(mapNum);
         }
-        res << "]";
+        res += "]";
       }
 
       // If the atom has this property, the contained string will
       // be inserted directly in the SMILES:
       std::string label;
       if(atom->getPropIfPresent(common_properties::_supplementalSmilesLabel, label)){
-        res << label;
+        res += label;
       }
 
-      return res.str();
+      return res;
     }
 
     std::string GetBondSmiles(const Bond *bond,int atomToLeftIdx,bool doKekule,bool allBondsExplicit){
       PRECONDITION(bond,"bad bond");
       if(atomToLeftIdx<0) atomToLeftIdx=bond->getBeginAtomIdx();
 
-      std::stringstream res;
+      std::string res="";
       bool aromatic=false;
       if( !doKekule &&
           (bond->getBondType() == Bond::SINGLE ||
@@ -205,10 +186,10 @@ namespace RDKit{
         if( dir != Bond::NONE && dir != Bond::UNKNOWN ){
           switch(dir){
           case Bond::ENDDOWNRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "\\";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "/";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "/";
             break;
           default:
             break;
@@ -220,45 +201,45 @@ namespace RDKit{
           // FIX: we should be able to dump kekulized smiles
           //   currently this is possible by removing all
           //   isAromatic flags, but there should maybe be another way
-          if(allBondsExplicit) res<<"-";
-          else if( aromatic && !bond->getIsAromatic() ) res << "-";
+          if(allBondsExplicit) res = "-";
+          else if( aromatic && !bond->getIsAromatic() ) res = "-";
         }
         break;
       case Bond::DOUBLE:
         // see note above
-        if( !aromatic || !bond->getIsAromatic() ) res << "=";
+        if( !aromatic || !bond->getIsAromatic() ) res = "=";
         break;
-      case Bond::TRIPLE: res << "#"; break;
+      case Bond::TRIPLE: res = "#"; break;
       case Bond::AROMATIC:
         if ( dir != Bond::NONE && dir != Bond::UNKNOWN ){
           switch(dir){
           case Bond::ENDDOWNRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "\\";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res << "/";
+            if(bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))  res = "/";
             break;
           default:
             break;
           }
         } else if(allBondsExplicit || !aromatic ){
-          res << ":";
+          res = ":";
         }
         break;
       case Bond::DATIVE:
         if(atomToLeftIdx>=0 &&
-           bond->getBeginAtomIdx()==static_cast<unsigned int>(atomToLeftIdx) ) res << ">";
-        else res << "<";
+           bond->getBeginAtomIdx()==static_cast<unsigned int>(atomToLeftIdx) ) res = ">";
+        else res = "<";
         break;
       default:
-        res << "~";
+        res = "~";
       }
-      return res.str();
+      return res;
     }
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        UINT_VECT &ranks,bool doKekule,bool canonical,
+                                        const UINT_VECT &ranks,bool doKekule,bool canonical,
                                         bool allBondsExplicit,bool allHsExplicit,
                                         std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,

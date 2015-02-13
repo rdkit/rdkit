@@ -20,16 +20,74 @@
 #include <cstring>
 #include <vector>
 
-// #define VERBOSE_CANON 1
+//#define VERBOSE_CANON 1
 
 namespace RDKit {
   namespace Canon{
+
+    struct bondholder {
+      Bond::BondType bondType;
+      unsigned int bondStereo;
+      unsigned int nbrSymClass;
+      unsigned int nbrIdx;
+      bondholder() : bondType(Bond::UNSPECIFIED),
+          bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
+          nbrIdx(0), nbrSymClass(0) {};
+      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni,unsigned int nsc) :
+        bondType(bt),
+        bondStereo(static_cast<unsigned int>(bs)),
+        nbrIdx(ni),
+        nbrSymClass(nsc) {};
+      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni,unsigned int nsc) :
+        bondType(bt),
+        bondStereo(bs),
+        nbrIdx(ni),
+        nbrSymClass(nsc) {};
+      bool operator<(const bondholder &o) const {
+        if(bondType!=o.bondType)
+          return bondType<o.bondType;
+        if(bondStereo!=o.bondStereo)
+          return bondStereo<o.bondStereo;
+        return nbrSymClass<o.nbrSymClass;
+      }
+      static bool greater(const bondholder &lhs,const bondholder &rhs){
+        if(lhs.bondType!=rhs.bondType)
+          return lhs.bondType>rhs.bondType;
+        if(lhs.bondStereo!=rhs.bondStereo)
+          return lhs.bondStereo>rhs.bondStereo;
+        return lhs.nbrSymClass>rhs.nbrSymClass;
+      }
+
+      static int compare(const bondholder &x,const bondholder &y,unsigned int div=1){
+        if(x.bondType<y.bondType)
+          return -1;
+        else if(x.bondType>y.bondType)
+          return 1;
+        if(x.bondStereo<y.bondStereo)
+          return -1;
+        else if(x.bondStereo>y.bondStereo)
+          return 1;
+
+        return x.nbrSymClass/div-y.nbrSymClass/div;
+      }
+    };
+
     struct canon_atom{
       const Atom *atom;
       int index;
       unsigned int degree;
+      unsigned int totalNumHs;
       bool hasRingNbr;
+      bool isRingStereoAtom;
+      int* nbrIds;
       const std::string *p_symbol; // if provided, this is used to order atoms
+      unsigned int neighborNum;
+      unsigned int revistedNeighbors;
+      std::vector<bondholder> bonds;
+
+      canon_atom() : atom(NULL),index(-1),degree(0),totalNumHs(0),
+          hasRingNbr(false), isRingStereoAtom(false), nbrIds(NULL),
+          p_symbol(NULL), neighborNum(0), revistedNeighbors(0) {};
     };
 
     template <typename CompareFunc>
@@ -48,7 +106,7 @@ namespace RDKit {
       } else if( nel == 2 ) {
         n1 = base[0];
         n2 = base[1];
-        int stat = (!changed || changed[n1]||changed[n2]) ? compar(n1,n2) : 0;
+        int stat = (/*!changed || */changed[n1]||changed[n2]) ? compar(n1,n2) : 0;
         if( stat == 0 ) {
           count[n1] = 2;
           count[n2] = 0;
@@ -88,7 +146,7 @@ namespace RDKit {
 
       while( true ) {
         assert(*s1!=*s2);
-        int stat = (!changed || changed[*s1]||changed[*s2]) ? compar(*s1,*s2) : 0;
+        int stat = (/*!changed || */changed[*s1]||changed[*s2]) ? compar(*s1,*s2) : 0;
         int len1 = count[*s1];
         int len2 = count[*s2];
         assert(len1>0);
@@ -156,100 +214,80 @@ namespace RDKit {
                             int *order,
                             int *count,
                             int &activeset,int *next,
-                            int *changed);    
+                            int *changed);
 
-    struct bondholder {
-      Bond::BondType bondType;
-      unsigned int bondStereo;
-      unsigned int nbrIdx;
-      bondholder() : bondType(Bond::UNSPECIFIED),
-                     bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
-                     nbrIdx(0) {};
-      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni) : bondType(bt),
-                                                                          bondStereo(static_cast<unsigned int>(bs)),
-                                                                          nbrIdx(ni) {};
-      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni) : bondType(bt),
-                                                                   bondStereo(bs),
-                                                                   nbrIdx(ni) {};
-      bool operator<(const bondholder &o) const {
-        if(bondType!=o.bondType)
-          return bondType<o.bondType;
-        if(bondStereo!=o.bondStereo)
-          return bondStereo<o.bondStereo;
-        return nbrIdx<o.nbrIdx;
-      }
 
-      static int compare(const bondholder &x,const bondholder &y,unsigned int div=1){
-        if(x.bondType<y.bondType)
-          return -1;
-        else if(x.bondType>y.bondType)
+    void updateAtomNeighborIndex(
+        canon_atom* atoms, std::vector<bondholder> &nbrs);
+
+    class SpecialAtomCompareFunctor {
+
+    public:
+      Canon::canon_atom *dp_atoms;
+      const ROMol *dp_mol;
+      const boost::dynamic_bitset<> *dp_atomsInPlay,*dp_bondsInPlay;
+
+      SpecialAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
+          dp_atomsInPlay(NULL), dp_bondsInPlay(NULL) {
+      };
+      SpecialAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
+          const boost::dynamic_bitset<> *atomsInPlay=NULL,
+          const boost::dynamic_bitset<> *bondsInPlay=NULL ) :
+            dp_atoms(atoms), dp_mol(&m),
+            dp_atomsInPlay(atomsInPlay),dp_bondsInPlay(bondsInPlay) {
+      };
+      int operator()(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        PRECONDITION(dp_mol,"no molecule");
+        PRECONDITION(i!=j,"bad call");
+        if(dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])){
+          return 0;
+        }
+
+        if(dp_atoms[i].neighborNum < dp_atoms[j].neighborNum){
           return 1;
-        if(x.bondStereo<y.bondStereo)
+        }
+        else if(dp_atoms[i].neighborNum > dp_atoms[j].neighborNum){
           return -1;
-        else if(x.bondStereo>y.bondStereo)
+        }
+
+        if(dp_atoms[i].revistedNeighbors < dp_atoms[j].revistedNeighbors){
           return 1;
+        }
+        else if(dp_atoms[i].revistedNeighbors > dp_atoms[j].revistedNeighbors){
+          return -1;
+        }
 
-        return x.nbrIdx/div-y.nbrIdx/div;
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
+        }
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
+        }
+        for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
+          int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii]);
+          if(cmp) return cmp;
+        }
+
+        if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
+          return -1;
+        } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
+          return 1;
+        }
+        return 0;
       }
-
     };
 
     class AtomCompareFunctor {
-      void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
-        nbrs.resize(0);
-        if(dp_atomsInPlay && !(*dp_atomsInPlay)[i])
-          return;
-        const Atom *at=dp_atoms[i].atom;
-        nbrs.reserve(at->getDegree());
-        ROMol::OEDGE_ITER beg,end;
-        boost::tie(beg,end) = dp_mol->getAtomBonds(at);
-        // std::cerr<< "                   nbrs: "<<i+1;
-        while(beg!=end){
-          const BOND_SPTR bond=(*dp_mol)[*beg];
-          ++beg;
-          if(dp_bondsInPlay && !(*dp_bondsInPlay)[bond->getIdx()])
-            continue;
 
-          Bond::BondStereo stereo=Bond::STEREONONE;
-          if(df_useChirality){
-            stereo=bond->getStereo();
-          }
-          bondholder bh(bondholder(bond->getBondType(),stereo,
-                                   dp_atoms[bond->getOtherAtomIdx(i)].index));
-          nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh),1,bh);
-          // std::cerr<<" "<<bond->getOtherAtomIdx(i)+1<<"("<<dp_atoms[bond->getOtherAtomIdx(i)].index<<")";
-        }
-        // std::cerr<<std::endl;
-        std::reverse(nbrs.begin(),nbrs.end());
-      }
-      // EFF: it's stupid inefficient to be calling this frequently
-      // however: since we use the current class of the nbr, there's some
-      // heavy bookkeeping to really remove it
       unsigned int getAtomRingNbrCode(unsigned int i) const {
         if(!dp_atoms[i].hasRingNbr) return 0;
 
         const Atom *at=dp_atoms[i].atom;
-        ROMol::ADJ_ITER beg,end;
-        boost::tie(beg,end) = dp_mol->getAtomNeighbors(at);
-        while(beg!=end){
-          const ATOM_SPTR nbr=(*dp_mol)[*beg];
-          ++beg;
-          if((nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-              nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-             nbr->hasProp("_ringStereoAtoms")){
-            // we have a neighbor with stereochem
-            unsigned int nidx=1;
-            ROMol::ADJ_ITER nbeg,nend;
-            boost::tie(nbeg,nend) = dp_mol->getAtomNeighbors(nbr);
-            while(nbeg!=nend){
-              const ATOM_SPTR nnbr=(*dp_mol)[*nbeg];
-              if(nnbr->getIdx()==at->getIdx()){
-                //std::cerr<<"  "<<at->getIdx()<<"-"<<nbr->getIdx()<<" "<<nidx<<std::endl;
-                return dp_atoms[nbr->getIdx()].index*1000000+nidx;
-              }
-              ++nidx;
-              ++nbeg;
-            }
+        int *nbrs = dp_atoms[i].nbrIds;
+        for(unsigned j=0; j<dp_atoms[i].degree; ++j){
+          if(dp_atoms[dp_atoms[i].nbrIds[j]].isRingStereoAtom){
+            return dp_atoms[dp_atoms[i].nbrIds[j]].index*1000000+j;
           }
         }
         return 0;
@@ -276,7 +314,7 @@ namespace RDKit {
           return 1;
 
         if(dp_atoms[i].p_symbol &&
-           dp_atoms[j].p_symbol ) {
+            dp_atoms[j].p_symbol ) {
           if( *(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol) )
             return -1;
           else if( *(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol) )
@@ -303,13 +341,13 @@ namespace RDKit {
         }
 
         // nHs
-        ivi=dp_atoms[i].atom->getTotalNumHs();
-        ivj=dp_atoms[j].atom->getTotalNumHs();
+        ivi=dp_atoms[i].totalNumHs;
+        ivj=dp_atoms[j].totalNumHs;
         if(ivi<ivj)
           return -1;
         else if(ivi>ivj)
           return 1;
-        
+
         // charge
         ivi=dp_atoms[i].atom->getFormalCharge();
         ivj=dp_atoms[j].atom->getFormalCharge();
@@ -317,32 +355,19 @@ namespace RDKit {
           return -1;
         else if(ivi>ivj)
           return 1;
-        
-        // ring membership
-        // initial passes at this were just checking "isInRing" to allow
-        // a possible future more efficient check. These break on this
-        // lovely double-diamond pathological case:
-        //   *12*3*1*3*4*5*4*52
-        //
-        // probably going to regret allowing this to be skipped some day
-        if(dp_mol->getRingInfo()->isInitialized()){ 
-          ivi=dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx());
-          ivj=dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx());
-          if(ivi<ivj)
-            return -1;
-          else if(ivi>ivj)
-            return 1;
-        }
-        
+
         // chirality if we're using it
         if(df_useChirality){
           // first atom stereochem:
-          std::string cipCode="";
-          dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
-          ivi = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
-          cipCode="";
-          dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
-          ivj = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
+          ivi=0;
+          ivj=0;
+          std::string cipCode;
+          if(dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
+            ivi=cipCode=="R"?2:1;
+          }
+          if(dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
+            ivj=cipCode=="R"?2:1;
+          }
           if(ivi<ivj)
             return -1;
           else if(ivi>ivj)
@@ -355,18 +380,16 @@ namespace RDKit {
             return -1;
           else if(ivi>ivj)
             return 1;
-          
+
+        }
+        if(df_useChiralityRings){
           // ring stereochemistry
-          if(dp_mol->getRingInfo()->isInitialized() &&
-             (dp_mol->getRingInfo()->numAtomRings(dp_atoms[i].atom->getIdx()) &&
-              dp_mol->getRingInfo()->numAtomRings(dp_atoms[j].atom->getIdx()) ) ){
-            ivi=getAtomRingNbrCode(i);
-            ivj=getAtomRingNbrCode(j);
-            if(ivi<ivj)
-              return -1;
-            else if(ivi>ivj)
-              return 1;
-          }
+          ivi=getAtomRingNbrCode(i);
+          ivj=getAtomRingNbrCode(j);
+          if(ivi<ivj)
+            return -1;
+          else if(ivi>ivj)
+            return 1;
           // bond stereo is taken care of in the neighborhood comparison
         }
         return 0;
@@ -378,17 +401,19 @@ namespace RDKit {
       bool df_useNbrs;
       bool df_useIsotopes;
       bool df_useChirality;
+      bool df_useChiralityRings;
+
       AtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
                              dp_atomsInPlay(NULL), dp_bondsInPlay(NULL),
                              df_useNbrs(false),
-                             df_useIsotopes(true), df_useChirality(true) {
+                             df_useIsotopes(true), df_useChirality(true), df_useChiralityRings(true) {
       };
       AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
                          const boost::dynamic_bitset<> *atomsInPlay=NULL,
                          const boost::dynamic_bitset<> *bondsInPlay=NULL ) :
         dp_atoms(atoms), dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),dp_bondsInPlay(bondsInPlay),
-        df_useNbrs(false),df_useIsotopes(true), df_useChirality(true) {
+        df_useNbrs(false),df_useIsotopes(true), df_useChirality(true), df_useChiralityRings(true) {
       };
       int operator()(int i,int j) const {
         PRECONDITION(dp_atoms,"no atoms");
@@ -397,22 +422,28 @@ namespace RDKit {
         if(dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])){
           return 0;
         }
+
         int v=basecomp(i,j);
-        // std::cerr<<"           bc: "<<i+1<<"-"<<j+1<<": "<<v<<std::endl;
-        if(v) return v;
+        if(v){
+          return v;
+        }
 
         if(df_useNbrs){
-          std::vector<bondholder> nbrsi,nbrsj;
-          getAtomNeighborhood(i,nbrsi);
-          getAtomNeighborhood(j,nbrsj);
-          for(unsigned int ii=0;ii<nbrsi.size() && ii<nbrsj.size();++ii){
-            int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
-            // std::cerr<<"              : "<<nbrsi[ii].nbrIdx<<"-"<<nbrsj[ii].nbrIdx<<": "<<cmp<<std::endl;
+          if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+            updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
+          }
+          if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+            updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
+          }
+
+          for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
+            int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii]);
             if(cmp) return cmp;
           }
-          if(nbrsi.size()<nbrsj.size()){
+
+          if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
             return -1;
-          } else if(nbrsi.size()>nbrsj.size()) {
+          } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
             return 1;
           }
         }
@@ -422,71 +453,18 @@ namespace RDKit {
 
     const unsigned int ATNUM_CLASS_OFFSET=10000;
     class ChiralAtomCompareFunctor {
-      void getAtomNeighborhood(unsigned int i,std::vector<bondholder> &nbrs) const{
-        unsigned int res=0;
-        const Atom *at=dp_atoms[i].atom;
-        nbrs.resize(0);
-        nbrs.reserve(8);
-        //std::cerr<<"gac: "<<i<<" "<<at->getTotalNumHs()<<std::endl;
-        ROMol::OEDGE_ITER beg,end;
-        boost::tie(beg,end) = dp_mol->getAtomBonds(at);
-        while(beg!=end){
-          const BOND_SPTR bond=(*dp_mol)[*beg++];
-          unsigned int nbrIdx=bond->getOtherAtomIdx(i);
-          const Atom *nbr=dp_mol->getAtomWithIdx(nbrIdx);
-          //std::cerr<<"    "<<bond->getOtherAtom(at)->getIdx()<<std::endl;
-          unsigned int stereo=0;
-          switch(bond->getStereo()){
-          case Bond::STEREOZ:
-            stereo=1;
-            break;
-          case Bond::STEREOE:
-            stereo=2;
-            break;
-          default:
-            stereo=0;
+      void getAtomNeighborhood(std::vector<bondholder> &nbrs) const{
+        for(unsigned j=0; j < nbrs.size(); ++j){
+          unsigned int nbrIdx = nbrs.at(j).nbrIdx;
+          if(nbrIdx == ATNUM_CLASS_OFFSET){
+            // Ignore the Hs
+            continue;
           }
-          unsigned int nReps;
-
-          if(bond->getBondType()==Bond::DOUBLE &&
-             nbr->getAtomicNum()==15 &&
-             (nbr->getDegree()==4 || nbr->getDegree()==3) ) {
-            // a special case for chiral phophorous compounds
-            // (this was leading to incorrect assignment of
-            // R/S labels ):
-            nReps=1;
-
-            // general justification of this is:
-            // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
-            // Multiple-Bond Unsaturation and Aromaticity". It contains several
-            // conventions of which convention (b) is the one applying here:
-            // "(b) Contibutions by d orbitals to bonds of quadriligant atoms are
-            // neglected."
-            // FIX: this applies to more than just P
-          } else {
-            nReps = static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()));
-          }
-          //std::cerr<<"          "<<nReps<<std::endl;
-          // we push on both the atomic number and the index using the ATNUM_CLASS_OFFSET
-          // pre-multiplier. This allows us to first compare the full set of neighbors based
-          // on atomic number and then based on the ranks that have already been computed.
-          bondholder bh(Bond::SINGLE,stereo,
-                         nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+
-                         dp_atoms[nbrIdx].index+1);
-          std::vector<bondholder>::iterator iPos=std::lower_bound(nbrs.begin(),nbrs.end(),bh);
-          nbrs.insert(iPos,nReps,bh);
+          const Atom *nbr = dp_atoms[nbrIdx].atom;
+          nbrs.at(j).nbrSymClass = nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+dp_atoms[nbrIdx].index+1;
         }
-
+        std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
         // FIX: don't want to be doing this long-term
-        std::reverse(nbrs.begin(),nbrs.end());
-
-        // add Hs that aren't in the graph, we know they go at the end:
-        if(!at->needsUpdatePropertyCache()){
-          for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET));
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET));
-          }
-        }
       }
 
       int basecomp(int i,int j) const {
@@ -518,13 +496,15 @@ namespace RDKit {
           return 1;
 
         // atom stereochem:
-        std::string cipCode="";
-        dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
-        ivi = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
-        cipCode="";
-        dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode);
-        ivj = cipCode=="" ? 0 : (cipCode=="R" ? 2 : 1);
-
+        ivi=0;
+        ivj=0;
+        std::string cipCode;
+        if(dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
+          ivi=cipCode=="R"?2:1;
+        }
+        if(dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,cipCode)){
+          ivj=cipCode=="R"?2:1;
+        }
         if(ivi<ivj)
           return -1;
         else if(ivi>ivj)
@@ -549,24 +529,23 @@ namespace RDKit {
         if(v) return v;
 
         if(df_useNbrs){
-          std::vector<bondholder> nbrsi,nbrsj;
-          getAtomNeighborhood(i,nbrsi);
-          getAtomNeighborhood(j,nbrsj);
+          getAtomNeighborhood(dp_atoms[i].bonds);
+          getAtomNeighborhood(dp_atoms[j].bonds);
 
           // we do two passes through the neighbor lists. The first just uses the
           // atomic numbers (by passing the optional 10000 to bondholder::compare),
           // the second takes the already-computed index into account
-          for(unsigned int ii=0;ii<nbrsi.size() && ii<nbrsj.size();++ii){
-            int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii],ATNUM_CLASS_OFFSET);
+          for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
+            int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii],ATNUM_CLASS_OFFSET);
             if(cmp) return cmp;
           }
-          for(unsigned int ii=0;ii<nbrsi.size() && ii<nbrsj.size();++ii){
-            int cmp=bondholder::compare(nbrsi[ii],nbrsj[ii]);
+          for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
+            int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii]);
             if(cmp) return cmp;
           }
-          if(nbrsi.size()<nbrsj.size()){
+          if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
             return -1;
-          } else if(nbrsi.size()>nbrsj.size()) {
+          } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
             return 1;
           }
         }
@@ -629,6 +608,10 @@ namespace RDKit {
         // for(unsigned int ii=0;ii<nAtoms;++ii){
         //    std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         //  }
+        for(unsigned k = 0; k < len; ++k){
+          changed[start[k]]=0;
+        }
+
         index = start[0];
         // std::cerr<<"  len:"<<len<<" index:"<<index<<" count:"<<count[index]<<std::endl;
         for( i=count[index]; i<len; i++ ) {
@@ -640,6 +623,9 @@ namespace RDKit {
           //if(mode && (activeset<0 || count[index]>count[activeset]) ){
           //  activeset=index;
           //}
+          for(unsigned j = 0; j < atoms[index].degree; ++j){
+            changed[atoms[index].nbrIds[j]]=1;
+          }
         }
         // std::cerr<<std::endl;
 
@@ -647,12 +633,8 @@ namespace RDKit {
           index=start[0];
           for( i=count[index]; i<len; i++ ) {
             index=start[i];
-            ROMol::ADJ_ITER nbrIdx,endNbrs;
-            boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atoms[index].atom);
-            while(nbrIdx!=endNbrs){
-              int nbor=mol[*nbrIdx]->getIdx();
-              ++nbrIdx;
-              changed[nbor]=1;
+            for(unsigned j = 0; j < atoms[index].degree; ++j){
+              unsigned int nbor = atoms[index].nbrIds[j];
               touchedPartitions[atoms[nbor].index]=1;
             }
           }
@@ -682,38 +664,45 @@ namespace RDKit {
                    char *touchedPartitions){
       unsigned int nAtoms=mol.getNumAtoms();
       register int partition;
-      register int *start;
       register int offset;
       register int index;
       register int len;
+      int oldPart = 0;
 
       for(unsigned int i=0; i<nAtoms; i++ ) {
         partition = order[i];
+        oldPart = atoms[partition].index;
         while( count[partition] > 1 ) {
           len = count[partition];
-          offset = i+len-1;
+          offset = atoms[partition].index+len-1;
           index = order[offset];
           atoms[index].index = offset;
           count[partition] = len-1;
           count[index] = 1;
 
-          ROMol::ADJ_ITER nbrIdx,endNbrs;
-          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atoms[index].atom);
-          while(nbrIdx!=endNbrs){
-            int nbor=mol[*nbrIdx]->getIdx();
-            ++nbrIdx;
-
-            offset = atoms[nbor].index;
+          for(unsigned j = 0; j < atoms[index].degree; ++j){
+            unsigned int nbor = atoms[index].nbrIds[j];
+            touchedPartitions[atoms[nbor].index]=1;
             changed[nbor]=1;
-            int npart = order[offset];
-            if( (count[npart]>1) &&
-                (next[npart]==-2) ) {
-              next[npart] = activeset;
-              activeset = npart;
+          }
+
+          for(unsigned int ii=0; ii<nAtoms; ++ii) {
+            if(touchedPartitions[ii]){
+              int npart = order[ii];
+              if( (count[npart]>1) &&
+                  (next[npart]==-2) ) {
+                next[npart] = activeset;
+                activeset = npart;
+              }
+              touchedPartitions[ii] = 0;
             }
           }
           RefinePartitions(mol,atoms,compar,mode,order,count,activeset,next,changed,touchedPartitions);
-        } 
+        }
+        //not sure if this works each time
+        if(atoms[partition].index != oldPart){
+          i-=1;
+        }
       }
     } // end of BreakTies()
 
@@ -729,6 +718,9 @@ namespace RDKit {
                            bool includeChirality=true,
                            bool includeIsotopes=true);
     void chiralRankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res);
+    void initCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms,
+                        bool includeChirality=true);
+
 
   } // end of Canon namespace
 } // end of RDKit namespace

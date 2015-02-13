@@ -29,13 +29,13 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DCairo::drawLine( const std::pair<float,float> &cds1 ,
-                               const std::pair<float,float> &cds2 ) {
+  void MolDraw2DCairo::drawLine( const Point2D &cds1 ,
+                               const Point2D &cds2 ) {
 
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
+    Point2D c1 = getDrawCoords( cds1 );
+    Point2D c2 = getDrawCoords( cds2 );
 
-    unsigned int width=2;
+    unsigned int width=lineWidth();
     std::string dashString="";
 
     cairo_set_line_width(d_cr,width);
@@ -49,14 +49,14 @@ namespace RDKit {
       cairo_set_dash(d_cr,0,0,0);
     }
 
-    cairo_move_to(d_cr,c1.first,c1.second);
-    cairo_line_to(d_cr,c2.first,c2.second);
+    cairo_move_to(d_cr,c1.x,c1.y);
+    cairo_line_to(d_cr,c2.x,c2.y);
     cairo_stroke(d_cr);
   }
 
   // ****************************************************************************
   // draw the char, with the bottom left hand corner at cds
-  void MolDraw2DCairo::drawChar( char c , const std::pair<float,float> &cds ) {
+  void MolDraw2DCairo::drawChar( char c , const Point2D &cds ) {
     char txt[2];
     txt[0]=c;
     txt[1]=0;
@@ -66,29 +66,28 @@ namespace RDKit {
     double twidth=extents.width,theight=extents.height;
 
     unsigned int fontSz=scale()*fontSize();
-    std::pair<float,float> c1 = cds ;// getDrawCoords( cds );
+    Point2D c1 = cds ;// getDrawCoords( cds );
 
-    cairo_move_to(d_cr,c1.first,c1.second+theight);
+    cairo_move_to(d_cr,c1.x,c1.y+theight);
     cairo_show_text(d_cr,txt);
     cairo_stroke(d_cr);
   }
 
   // ****************************************************************************
-  void MolDraw2DCairo::drawTriangle( const std::pair<float , float> &cds1 ,
-                                   const std::pair<float , float> &cds2 ,
-                                   const std::pair<float, float> &cds3 ) {
-    std::pair<float,float> c1 = getDrawCoords( cds1 );
-    std::pair<float,float> c2 = getDrawCoords( cds2 );
-    std::pair<float,float> c3 = getDrawCoords( cds3 );
+  void MolDraw2DCairo::drawPolygon( const std::vector<Point2D> &cds){
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 
-    unsigned int width=1;
-    cairo_set_line_width(d_cr,width);
+    cairo_set_line_width(d_cr,lineWidth());
     cairo_set_dash(d_cr,0,0,0);
-    cairo_move_to(d_cr,c1.first,c1.second);
-    cairo_line_to(d_cr,c2.first,c2.second);
-    cairo_line_to(d_cr,c3.first,c3.second);
+
+    for(unsigned int i=0;i<cds.size();++i){
+      Point2D lc= getDrawCoords( cds[i] );
+      if( !i ) cairo_move_to(d_cr,lc.x,lc.y);
+      else cairo_line_to(d_cr,lc.x,lc.y);
+    }
+
     cairo_close_path(d_cr);
-    cairo_fill_preserve(d_cr);
+    if(fillPolys()) cairo_fill_preserve(d_cr);
     cairo_stroke(d_cr);
   }
 
@@ -103,16 +102,16 @@ namespace RDKit {
 
   
   // ****************************************************************************
-  void MolDraw2DCairo::setFontSize( float new_size ) {
+  void MolDraw2DCairo::setFontSize( double new_size ) {
     MolDraw2D::setFontSize( new_size );
-    float font_size_in_points = fontSize() * scale();
+    double font_size_in_points = fontSize() * scale();
     cairo_set_font_size (d_cr, font_size_in_points);
   }
 
   // ****************************************************************************
   // using the current scale, work out the size of the label in molecule coordinates
-  void MolDraw2DCairo::getStringSize( const std::string &label , float &label_width ,
-                                    float &label_height ) const {
+  void MolDraw2DCairo::getStringSize( const std::string &label , double &label_width ,
+                                    double &label_height ) const {
     label_width = 0.0;
     label_height = 0.0;
 
@@ -135,8 +134,8 @@ namespace RDKit {
       cairo_text_extents(d_cr,txt,&extents);
       double twidth=extents.x_advance,theight=extents.height;
 
-      label_height = theight/scale();
-      float char_width = twidth/scale();
+      label_height = std::max(label_height,theight/scale());
+      double char_width = twidth/scale();
 
       if( 2 == draw_mode ) {
         char_width *= 0.75;

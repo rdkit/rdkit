@@ -608,6 +608,7 @@ void testRingStereochemistry(){
     std::string smi1=MolToSmiles(*m,true);
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1=="B[C@H]1CC[C@H](C)CC1");
+
     delete m;
 #if 0
     smi="B[C@@H]1CC[C@@H](C)CC1";
@@ -623,7 +624,7 @@ void testRingStereochemistry(){
     std::string smi = "C1[C@@H](B)CC[C@H](C)C1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1=MolToSmiles(*m,true);
-    smi = "B[C@@H]1CC[C@@H](C)CC1";
+    smi = "B[C@H]1CC[C@H](C)CC1";
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1==smi);
     delete m;
