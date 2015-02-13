@@ -2029,6 +2029,8 @@ void testIssue252() {
   for(ROMol::BondIterator it=mol->beginBonds();
       it!=mol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
+    TEST_ASSERT((*it)->getBondType()==Bond::AROMATIC);
+
   }
   std::string asmi = MolToSmiles(*mol);
   // check if we can do it in the aromatic form
@@ -2036,11 +2038,13 @@ void testIssue252() {
   for(ROMol::BondIterator it=nmol->beginBonds();
       it!=nmol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
+    TEST_ASSERT((*it)->getBondType()==Bond::AROMATIC);
   }
 
   std::string nsmi = MolToSmiles(*nmol);
   delete mol;
   delete nmol;
+
   // This is a check for Issue253
   CHECK_INVARIANT(asmi == nsmi, "");
 
@@ -4564,6 +4568,47 @@ void testMolFragsWithQuery()
 }
 
 
+void testGithubIssue418()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 418: removeHs not updating H count." << std::endl;
+  {
+    RWMol *m2 = new RWMol();
+    m2->addAtom(new Atom(7),true,true);
+    m2->addAtom(new Atom(1),true,true);
+    m2->addAtom(new Atom(1),true,true);
+    m2->addAtom(new Atom(1),true,true);
+    m2->addAtom(new Atom(1),true,true);
+    m2->addBond(0,1,Bond::SINGLE);
+    m2->addBond(0,2,Bond::SINGLE);
+    m2->addBond(0,3,Bond::SINGLE);
+    m2->addBond(0,4,Bond::SINGLE);
+    MolOps::removeHs(*m2,false,true,false);
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getNumExplicitHs()==4);
+    delete m2;
+  }
+  {
+    std::string smiles="[H][N+]([H])([H])[H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==4);
+    delete m;
+  }
+  {
+    std::string smiles="[H]N([H])([H])[H]";
+    bool ok=false;
+    try{
+      RWMol *m = SmilesToMol(smiles);
+    } catch(MolSanitizeException &e) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4636,6 +4681,7 @@ int main(){
   testMolFragsWithQuery();
 #endif
   test11();
+  testGithubIssue418();
   return 0;
 }
 

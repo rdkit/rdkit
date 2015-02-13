@@ -110,7 +110,7 @@ namespace Canon {
    */
   void canonicalizeFragment(ROMol &mol,int atomIdx,
 			    std::vector<AtomColors> &colors,
-			    std::vector<unsigned int> &ranks,
+			    const std::vector<unsigned int> &ranks,
 			    MolStack &molStack,
                             const boost::dynamic_bitset<> *bondsInPlay=0,
                             const std::vector<std::string> *bondSymbols=0

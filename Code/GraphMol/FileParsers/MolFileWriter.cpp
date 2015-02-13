@@ -258,10 +258,17 @@ namespace RDKit{
     }    
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
+      bool wrote_query = false;
       if(!listQs[(*atomIt)->getIdx()] && hasComplexQuery(*atomIt)){
-	std::string sma=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
-	ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
+        std::string sma=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
+        ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
+        wrote_query = true;
       }
+      std::string molFileValue;
+      if (!wrote_query &&
+          (*atomIt)->getPropIfPresent(common_properties::molFileValue,
+                                      molFileValue))
+        ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<molFileValue<<std::endl;
     }
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){

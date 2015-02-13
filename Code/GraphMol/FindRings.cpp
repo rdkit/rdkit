@@ -561,7 +561,7 @@ namespace FindRings {
     std::deque<int> bfsq;
     bfsq.push_back(root);
     int curr=-1;
-    unsigned int curSize=256;
+    unsigned int curSize=UINT_MAX;
     while (bfsq.size() > 0) {
       curr = bfsq.front();
       bfsq.pop_front();

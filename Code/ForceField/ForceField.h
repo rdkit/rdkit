@@ -64,7 +64,7 @@ namespace ForceFields {
     void initialize();
 
 
-    //! calculates and returns the energy based on existing positions in the forcefield
+    //! calculates and returns the energy (in kcal/mol) based on existing positions in the forcefield
     /*!
 
     \return the current energy
