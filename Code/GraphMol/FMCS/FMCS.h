@@ -87,28 +87,8 @@ namespace RDKit {
         }
     };
 
-    MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params);
-
-    typedef enum {
-        AtomCompareAny,
-        AtomCompareElements,
-        AtomCompareIsotopes
-    } AtomComparator;
-    typedef enum {
-        BondCompareAny,
-        BondCompareOrder,
-        BondCompareOrderExact
-    } BondComparator;
-    MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols,
-                       bool maximizeBonds=true,
-                       double threshold=1.0,
-                       unsigned timeout=3600,
-                       bool verbose=false,
-                       bool matchValences=false,
-                       bool ringMatchesRingOnly=false,
-                       bool completeRingsOnly=false,
-                       AtomComparator atomComp=AtomCompareElements,
-                       BondComparator bondComp=BondCompareOrder);
+    void      parseMCSParametersJSON (const char* json, MCSParameters* params);
+    MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params=0);
 
 } // namespace RDKit
 

@@ -956,4 +956,22 @@ AS
     FUNCTION    7   gslfp_same (bytea, bytea, internal),
 STORAGE         bytea;
 
+CREATE OR REPLACE FUNCTION mol_hash(mol)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'mol_hash'
+    LANGUAGE C STRICT IMMUTABLE;
+
+/*** FMCS ***/
+
+CREATE OR REPLACE FUNCTION fmcs_smiles(cstring, cstring)  -- find MCS in 'space' separated SMILES string
+    RETURNS cstring
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION fmcs_smiles(text, text)  -- find MCS in 'space' separated SMILES string
+    RETURNS text
+    AS 'SELECT CAST( fmcs_smiles(CAST($1 AS CSTRING), CAST($2 AS CSTRING)) AS text);'
+    LANGUAGE SQL IMMUTABLE;
+
+
 

@@ -1366,4 +1366,168 @@ CREATE OR REPLACE FUNCTION reaction_structural_bfp(reaction,int default 5)
 RETURNS bfp
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
-  
+
+CREATE OR REPLACE FUNCTION mol_hash(mol)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'mol_hash'
+    LANGUAGE C STRICT IMMUTABLE;
+
+/*** FMCS ***/
+
+CREATE OR REPLACE FUNCTION fmcs_smiles(cstring, cstring)  -- find MCS in 'space' separated SMILES string
+    RETURNS cstring
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION fmcs_smiles(text, text)  -- find MCS in 'space' separated SMILES string
+    RETURNS text
+    AS 'SELECT CAST( fmcs_smiles(CAST($1 AS CSTRING), CAST($2 AS CSTRING)) AS text);'
+    LANGUAGE SQL IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION fmcs_smiles(text)  -- find MCS in 'space' separated SMILES string WITH default params
+    RETURNS text
+    AS 'SELECT CAST( fmcs_smiles(CAST($1 AS CSTRING), CAST('''' AS CSTRING)) AS text);'
+    LANGUAGE SQL IMMUTABLE;
+
+--// fmcs_smiles aggregate function
+CREATE OR REPLACE FUNCTION fmcs_smiles_transition(text, text)
+    RETURNS text              -- state_data_type 
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+CREATE AGGREGATE fmcs (
+    BASETYPE  = text,         -- item type
+    SFUNC     = fmcs_smiles_transition, -- transition function
+    STYPE     = text,         -- state type
+    FINALFUNC = fmcs_smiles   -- final calculation function
+);
+
+/*********
+CREATE OR REPLACE FUNCTION fmcs_mol2s_transition(text, mol)
+    RETURNS text              -- state_data_type 
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+CREATE AGGREGATE fmcs (
+    BASETYPE  = mol,         -- item type
+    SFUNC     = fmcs_mol2s_transition, -- transition function
+    STYPE     = text,         -- state type
+    FINALFUNC = fmcs_smiles   -- final calculation function
+);
+*********/
+--// ==========================================
+--// fmcs_mols aggregate function
+CREATE OR REPLACE FUNCTION fmcs_mols(internal)
+    RETURNS text              -- state_data_type 
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+CREATE OR REPLACE FUNCTION fmcs_mol_transition(internal, mol)
+    RETURNS internal              -- state_data_type 
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+CREATE AGGREGATE fmcs (
+    BASETYPE  = mol,       -- item type
+    SFUNC     = fmcs_mol_transition, -- transition function
+    STYPE     = internal,       -- state type
+    FINALFUNC = fmcs_mols  -- final calculation function
+);
+--// ==========================================
+
+/*
+use:
+SELECT fmcs_smiles(CAST(str AS CSTRING), CAST('{"Timeout": 7}' AS CSTRING)) FROM (SELECT string_agg(str,' ') AS str FROM testsmiles) AS str;
+SELECT fmcs_smiles(str, '{"Timeout": 7}') FROM (SELECT string_agg(str,' ') AS str FROM testsmiles) AS str;
+SELECT fmcs_smiles(str) FROM (SELECT string_agg(str,' ') AS str FROM testsmiles) AS str;
+SELECT fmcs_smiles(str) FROM (SELECT string_agg(str,' ') AS str FROM testsmiles GROUP BY gid) AS str;
+------ aggregate function -------
+select fmcs(str) from testsmiles group by gid;
+select fmcs(mol_from_smiles(CAST(str AS CSTRING))) from testsmiles group by gid;
+
+where testsmiles is a table like:
+DROP  TABLE testsmiles;
+CREATE TABLE testsmiles (
+  gid int NOT NULL,         -- Group ID
+  str VARCHAR(16) NOT NULL  -- mol SMILES
+);
+INSERT INTO testsmiles (gid,str) VALUES (1,'CCC');
+INSERT INTO testsmiles (gid,str) VALUES (1,'CCCC');
+INSERT INTO testsmiles (gid,str) VALUES (2,'CCCNC');
+INSERT INTO testsmiles (gid,str) VALUES (2,'CNCCC');
+SELECT * FROM testsmiles;
+
+result is:
+  fmcs_smiles   
+----------------
+ [#6]-[#6]-[#6]
+(1 row)
+*/
+
+
+/*---------------------------------*/
+/*
+--	CREATE OR REPLACE FUNCTION mol_recv(internal)
+--	RETURNS mol
+--	AS 'MODULE_PATHNAME'
+--	LANGUAGE C STRICT IMMUTABLE;
+*/
+/*---------------------------------*/
+
+/*---------------------------------
+CREATE OR REPLACE FUNCTION fmcs_transition(internal, text, text) --// mol_add2list transition function to collect selected mols in internal array
+    RETURNS internal --//state_data_type 
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION fmcs_final(internal) --// find MCS
+    RETURNS text
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE AGGREGATE fmcs (
+    BASETYPE  = text         -- item type
+    SFUNC     = fmcs_transition, -- transition function
+    STYPE     = internal,     -- state type
+    FINALFUNC = fmcs_final    -- final calculation function
+);
+
+------------------------------------*/
+
+
+/*
+CREATE OR REPLACE FUNCTION con_smiles(text, text) -- transition function
+    RETURNS text
+    AS 'SELECT $1 || '' '' || $2 AS str;' --// 'string_agg($1, '' '')';
+    LANGUAGE SQL IMMUTABLE;
+
+CREATE AGGREGATE fmcs (
+    BASETYPE  = text,
+    SFUNC     = con_smiles,
+    STYPE     = text,
+    FINALFUNC = fmcs_smiles
+);
+*/
+
+
+/* -- ---------
+CREATE AGGREGATE fmcs1 (
+    BASETYPE  = text,
+    SFUNC     = con_smiles,
+    STYPE     = text
+);
+
+
+CREATE AGGREGATE fmcs2 (
+    BASETYPE  = text,
+    SFUNC     = string_agg,
+    STYPE     = text,
+    FINALFUNC = fmcs_smiles
+);
+*/
+
+
+/*
+CREATE OR REPLACE FUNCTION fmcs_smiles_t(text, text, text)
+    RETURNS text
+    AS 'SELECT fmcs_smiles(str, $3) FROM (SELECT string_agg($2,||'' ''||) AS str FROM $1) AS str';
+    LANGUAGE SQL IMMUTABLE;
+SELECT fmcs_smiles_t('testsmiles', 'str', '{"Timeout": 7}');
+*/
+ 

@@ -301,8 +301,14 @@ extern "C" {
   /* Reaction difference fingerprint */
   MolSparseFingerPrint makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType);
 
+  char* computeMolHash(CROMol data, int* len);
+
+  char* findMCSsmiles(char* smiles, char* params);
+  void* addMol2list(void* lst, Mol* mol);
+  char* findMCS(void* lst, char* params);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+
