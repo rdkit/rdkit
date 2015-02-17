@@ -1896,18 +1896,18 @@ makeReactionBFP(CChemicalReaction data, int size, int fpType) {
 
 extern "C" char *
 computeMolHash(CROMol data, int* len) {
-    const  ROMol& mol = *(ROMol*)data;
-    static string text;
+  ROMol& mol = *(ROMol*)data;
+  static string text;
+  text.clear();
+  try {
+    // FIX: once R/S values are stored on the atoms, this will no longer be needed
+    MolOps::assignStereochemistry(mol);
+    text = RDKit::MolHash::generateMoleculeHashSet(mol);
+  } catch (...) {
+    ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
     text.clear();
-    try {
-        //RDKit::MolHash::HashCodeT hash = RDKit::MolHash::generateMoleculeHashCode(mol);
-        //text = RDKit::MolHash::encode(&hash, sizeof(hash));
-        text = RDKit::MolHash::generateMoleculeHashSet(mol);
-    } catch (...) {
-        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
-        text.clear();
-    }       
-    *len = text.length();
-    return (char*)text.c_str();
+  }       
+  *len = text.length();
+  return (char*)text.c_str();
 }
 
