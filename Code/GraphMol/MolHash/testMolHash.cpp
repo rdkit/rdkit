@@ -318,6 +318,50 @@ namespace RDKit
         BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
     }
 
+    void test5()
+    {
+        BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+        BOOST_LOG(rdInfoLog) << "Testing MolHash test5 "<< std::endl;
+        const char* smi[] = 
+        {
+          // different chiral hash and equal non-chiral hash
+          // groups of 3
+          "C[CH](F)Cl",
+          "C[C@H](F)Cl",
+          "C[C@@H](F)Cl",
+          //
+          "c1cc(C[CH](F)Cl)cnc1",
+          "c1cc(C[C@H](F)Cl)cnc1",
+          "c1cc(C[C@@H](F)Cl)cnc1"
+        };
+
+        for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i+=3)
+        {
+            ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[i]));
+            TEST_ASSERT(mol1);
+            ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[i+1]));
+            TEST_ASSERT(mol2);
+            ROMOL_SPTR mol3 = ROMOL_SPTR(SmilesToMol(smi[i+2]));
+            TEST_ASSERT(mol3);
+            {
+              std::string hash1=generateMoleculeHashSet(*mol1);
+              std::string hash2=generateMoleculeHashSet(*mol2);
+              std::string hash3=generateMoleculeHashSet(*mol3);
+              TEST_ASSERT(hash1!=hash2);
+              TEST_ASSERT(hash1!=hash3);
+              TEST_ASSERT(hash3!=hash2);
+            }
+            // {
+            //   std::string hash1=generateMoleculeHashSet(*mol1);
+            //   std::string hash2=generateMoleculeHashSet(*mol2);
+            //   std::cout << hash1 <<"  "<< smi[i] << std::endl;
+            //   std::cout << hash2 <<"  "<< smi[i+1] << std::endl;
+            //   TEST_ASSERT(hash1!=hash2);
+            // }
+        }
+        BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+    }
+
 
     void doUnitTest()
     {
@@ -335,6 +379,8 @@ namespace RDKit
             test3a();
         BOOST_LOG(rdInfoLog) << "*******************************************************\n";
             test4();
+        BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+            test5();
     }
 
 //=============================================================================
