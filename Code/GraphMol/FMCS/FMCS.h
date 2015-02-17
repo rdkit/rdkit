@@ -101,7 +101,7 @@ namespace RDKit {
         BondCompareOrderExact
     } BondComparator;
     MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols,
-                       bool maximizeBonds=true,
+                       bool maximizeBonds,
                        double threshold=1.0,
                        unsigned timeout=3600,
                        bool verbose=false,
