@@ -963,3 +963,15 @@ CREATE OR REPLACE FUNCTION mol_hash(mol)
 
 /*** FMCS ***/
 
+CREATE OR REPLACE FUNCTION fmcs_smiles(cstring, cstring)  -- find MCS in 'space' separated SMILES string
+    RETURNS cstring
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION fmcs_smiles(text, text)  -- find MCS in 'space' separated SMILES string
+    RETURNS text
+    AS 'SELECT CAST( fmcs_smiles(CAST($1 AS CSTRING), CAST($2 AS CSTRING)) AS text);'
+    LANGUAGE SQL IMMUTABLE;
+
+
+
