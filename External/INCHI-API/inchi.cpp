@@ -1680,9 +1680,8 @@ namespace RDKit {
     RWMol *m = new RWMol(mol);
 
     // assign stereochem:
-    if(!mol.hasProp("_StereochemDone")){
+    if(mol.needsUpdatePropertyCache()){
       m->updatePropertyCache(false);
-      MolOps::assignStereochemistry(*m,true,false);
     }
     // kekulize
     MolOps::Kekulize(*m, false);
