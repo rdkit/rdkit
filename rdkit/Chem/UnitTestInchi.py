@@ -296,9 +296,9 @@ class TestCase(unittest.TestCase):
                 else:
                     same += 1
             print(green + "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (same, diff, reasonable) + reset)
-            self.assertEqual(same, 544)
-            self.assertEqual(diff, 1)
-            self.assertEqual(reasonable, 636)
+            self.assertEqual(same, 548)
+            self.assertEqual(diff, 0)
+            self.assertEqual(reasonable, 633)
 
     def test2InchiOptions(self):
         m = MolFromSmiles("CC=C(N)C")
