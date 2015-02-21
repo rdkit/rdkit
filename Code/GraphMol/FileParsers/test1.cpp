@@ -4020,6 +4020,5 @@ int main(int argc,char *argv[]){
   testPDBResidues();
   testGithub337();
   testGithub360();
-  testGithub438();
   return 0;
 }
