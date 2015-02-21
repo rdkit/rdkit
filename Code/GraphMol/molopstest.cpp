@@ -2602,22 +2602,20 @@ void testAromaticityEdges()
   TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
   delete m;
 
-  smi = "c1cccc[n+]1";
+  smi = "c1cccc[n+]1";  // disqualified because N has a radical
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
-  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
   delete m;
 
-#if 0 // currently fails
-  smi = "[n]1cccc1";
+  smi = "[N]1C=CC=C1";// disqualified because N has a radical
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
-  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
   delete m;
-#endif
   
   smi = "[n]1ccccc1";
   m = SmilesToMol(smi);
@@ -4602,6 +4600,41 @@ void testGithubIssue418()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue432()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 432: problems caused by aromatic Ns with radical electrons." << std::endl;
+  {
+    std::string smiles="C1=NN=N[N]1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(!m->getAtomWithIdx(4)->getIsAromatic());
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+  { // test round-tripping:
+    std::string smiles="C1=NN=N[N]1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(smiles);    
+    TEST_ASSERT(m);
+    delete m;
+  }
+  { // test round-tripping:
+    std::string smiles="OC(=O)C(=O)Nc1cccc(c1)C2=NN=N[N]2";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(smiles);    
+    TEST_ASSERT(m);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 
 int main(){
@@ -4677,6 +4710,7 @@ int main(){
   testGithubIssue190();
   testMolFragsWithQuery();
   testGithubIssue418();
+  testGithubIssue432();
   return 0;
 }
 
