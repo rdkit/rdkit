@@ -1,6 +1,7 @@
 import unittest
 import numpy
 import os
+import io
 
 from rdkit.six.moves import cPickle
 
@@ -151,7 +152,10 @@ class TestCase(unittest.TestCase):
         self.assertTrue(res is not None)    
 
     def test4Issue237(self) :
-        with open(os.path.join(RDConfig.RDBaseDir,'Code','ML','InfoTheory','Wrap','testData','Issue237.pkl'),'rb') as inF:
+        with open(os.path.join(RDConfig.RDBaseDir,'Code','ML','InfoTheory','Wrap','testData','Issue237.pkl'),'r') as inTF:
+            buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+            inTF.close()
+        with io.BytesIO(buf) as inF:
             examples,avail,bias,nB,nPoss = cPickle.load(inF, encoding='bytes')
         ranker = rdit.InfoBitRanker(nB,nPoss,rdit.InfoType.BIASENTROPY)
         ranker.SetMaskBits(avail)
