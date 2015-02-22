@@ -151,7 +151,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(res is not None)    
 
     def test4Issue237(self) :
-        with open(os.path.join(RDConfig.RDBaseDir,'Code','ML','InfoTheory','Wrap','testData','Issue237.pkl'),'rb') as inF:
+        with open(os.path.join(RDConfig.RDBaseDir,'Code','ML','InfoTheory','Wrap','testData','Issue237.pkl'),'r') as inF:
             examples,avail,bias,nB,nPoss = cPickle.load(inF, encoding='bytes')
         ranker = rdit.InfoBitRanker(nB,nPoss,rdit.InfoType.BIASENTROPY)
         ranker.SetMaskBits(avail)

@@ -1231,9 +1231,23 @@ void testIssue381() {
 void testSetStreamIndices() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  int tmpIndices[16]={0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
-				     23729, 26147, 28331, 32541, 33991};
-  std::vector<std::streampos> indices(tmpIndices,tmpIndices+16);
+  std::ifstream ifs(fname.c_str(), std::ios_base::binary);
+  std::vector<std::streampos> indices;
+  bool addIndex = true;
+  bool notEof = true;
+  std::streampos pos = 0;
+  std::string line;
+  while (notEof) {
+    if (addIndex)
+      pos = ifs.tellg();
+    notEof = (std::getline(ifs, line) ? true : false);
+    if (notEof) {
+      if (addIndex)
+        indices.push_back(pos);
+      addIndex = (line.substr(0, 4) == "$$$$");
+    }
+  }
+  ifs.close();
   SDMolSupplier *sdsup;
 
   ROMol *nmol=0;  

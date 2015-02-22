@@ -130,7 +130,7 @@ class TestCase(unittest.TestCase):
     with open(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/DataStructs/Wrap/testData/dvvs.pkl'),
-      'rb'
+      'r'
       ) as inF:
     
       v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)

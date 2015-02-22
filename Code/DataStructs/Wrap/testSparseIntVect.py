@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
     with open(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/DataStructs/Wrap/testData/lsiv.pkl'), 
-      'rb'
+      'r'
       ) as f:
       v3 = cPickle.load(f)
       self.assertTrue(v3==v1)
@@ -115,7 +115,7 @@ class TestCase(unittest.TestCase):
     with open(
       os.path.join(RDConfig.RDBaseDir, 
                    'Code/DataStructs/Wrap/testData/isiv.pkl'),
-      'rb'
+      'r'
       ) as f:
       v3 = cPickle.load(f)
       self.assertTrue(v3==v1)

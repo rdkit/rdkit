@@ -59,7 +59,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(actual,expected)
   def testMQNDetails(self):
     refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','MQNs_regress.pkl')
-    with open(refFile,'rb') as inf:
+    with open(refFile,'r') as inf:
       pkl = inf.read()
     refData  = cPickle.loads(pkl,encoding='bytes')
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')

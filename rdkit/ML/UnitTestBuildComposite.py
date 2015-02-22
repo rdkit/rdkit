@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10.pkl'
 
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklF:
       refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
@@ -96,7 +96,7 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10_3.pkl'
 
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklF:
       refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
@@ -111,7 +111,7 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10_3_lessgreedy.pkl'
 
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklF:
       refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
@@ -127,7 +127,7 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_50_3.pkl'
 
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklF:
       refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_noquant'
     refComposName = 'ferromag_auto_10_3.pkl'
 
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklF:
       refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
@@ -159,7 +159,7 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_noquant_realact'
     refComposName = 'ferromag_auto_10_3.pkl'
 
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklF:
       refCompos = pickle.load(pklF)
 
     # first make sure the data are intact
@@ -175,7 +175,7 @@ class TestCase(unittest.TestCase):
     """ Test composite of naive bayes"""
     self.details.tableName = 'ferro_noquant'
     refComposName = 'ferromag_NaiveBayes.pkl'
-    with open(os.path.join(self.baseDir,refComposName), 'rb') as pklFile:
+    with open(os.path.join(self.baseDir,refComposName), 'r') as pklFile:
       refCompos = pickle.load(pklFile)
     self._init(refCompos,copyBounds=1)
     self.details.useTrees = 0
