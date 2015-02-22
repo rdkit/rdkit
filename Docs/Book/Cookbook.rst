@@ -547,7 +547,7 @@ This produces:
 
 .. testoutput::
 
-   [0.06450035322926886] [0.16803037890459122] [0.06752301190398982]
+   [0.0645...] [0.168...] [0.0675...]
 
 If the TFD between conformers of the same molecule is to be
 calculated, the function GetTFDBetweenConformers() should be
@@ -571,7 +571,7 @@ This produces:
 
 .. testoutput::
 
-    [0.06450035322926886]
+    [0.0645...]
 
 For the conformer RMS and TFD values, the RDKit provides
 convenience functions that calculated directly the symmetric
