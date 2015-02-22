@@ -276,7 +276,7 @@ def CreateDb(options,dataFilename='',supplier=None):
 
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
-    calc = cPickle.load(open(options.descriptorCalcFilename,'rb'))
+    calc = cPickle.load(open(options.descriptorCalcFilename,'r'))
     nms = [x for x in calc.GetDescriptorNames()]
     descrCurs = descrConn.GetCursor()
     descrs = ['guid integer not null primary key','%s varchar not null unique'%options.molIdName]

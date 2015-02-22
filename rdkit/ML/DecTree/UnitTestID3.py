@@ -41,7 +41,7 @@ class ID3TestCase(unittest.TestCase):
   def testBasicTree(self):
     " testing basic tree growth "
     self._setupBasicTree()
-    with open(self.basicTreeName,'rb') as inFile:
+    with open(self.basicTreeName,'r') as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
@@ -65,7 +65,7 @@ class ID3TestCase(unittest.TestCase):
   def testMultiTree(self):
     " testing multivalued tree growth "
     self._setupMultiTree()
-    with open(self.multiTreeName,'rb') as inFile:
+    with open(self.multiTreeName,'r') as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     
@@ -117,7 +117,7 @@ class ID3TestCase(unittest.TestCase):
   def testPyBasicTree(self):
     " testing basic tree growth (python entropy code) "
     self._setupPyBasicTree()
-    with open(self.basicTreeName,'rb') as inFile:
+    with open(self.basicTreeName,'r') as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
@@ -145,7 +145,7 @@ class ID3TestCase(unittest.TestCase):
   def testPyMultiTree(self):
     " testing multivalued tree growth (python entropy code) "
     self._setupPyMultiTree()
-    with open(self.multiTreeName,'rb') as inFile:
+    with open(self.multiTreeName,'r') as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     

@@ -17,7 +17,7 @@ from rdkit import RDConfig
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','rb') as pklF:
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','r') as pklF:
       self.examples = cPickle.load(pklF)
     self.varNames = ['composition','max_atomic','has3d','has4d','has5d','elconc','atvol','isferro']
     self.qBounds = [[],[1.89,3.53],[],[],[],[0.55,0.73],[11.81,14.52],[]]
@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
       
   def testTreeGrow(self):
     " testing tree-based composite "
-    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','r') as pklF:
       self.refCompos = cPickle.load(pklF)
 
     composite = Composite.Composite()

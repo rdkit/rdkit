@@ -51,7 +51,7 @@ class TestCase(unittest.TestCase):
         infil.close()
 
         infile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data', 'PP_combi_charges.pkl')
-        with open(infile, 'rb') as cchFile:
+        with open(infile, 'r') as cchFile:
             combiCharges = pickle.load(cchFile)
 
         for lin in lines :

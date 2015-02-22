@@ -73,7 +73,7 @@ class TestCase(unittest.TestCase):
       return 0
     
   def test1SearchFullMat(self):
-    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
+    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'r')
     #outF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.new.gz'),'wb+')
     nDone = 0
     nHits = 0
@@ -94,7 +94,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(nHits,47)
     
   def test2SearchDownsample(self):
-    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
+    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'r')
     nDone = 0
     nHits = 0
     hits = []
@@ -118,7 +118,7 @@ class TestCase(unittest.TestCase):
       'mol_223':(259.19,6.27,134.13,1.12,134.06,1.12,85.74,0.61,0.00),
       'mol_269':(204.51,7.89,103.89,1.20,102.66,1.20,88.07,1.21,6.00),
       }
-    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
+    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'r')
     nDone = 0
     nHits = 0
     while 1:
@@ -182,7 +182,7 @@ class TestCase(unittest.TestCase):
     pcophore.setUpperBound(1,2,2.881)
     pcophore.setUpperBound2D(1,2,6)
 
-    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
+    inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'r')
     nDone = 0
     nMatches = 0
     nHits = 0
@@ -227,7 +227,7 @@ class TestCase(unittest.TestCase):
     m2 = Chem.MolFromMolFile(os.path.join(self.dataDir,
                                           'Issue268_Mol2.mol'))
     with open(os.path.join(self.dataDir,
-                           'Issue268_Pcop.pkl'),'rb') as inF:
+                           'Issue268_Pcop.pkl'),'r') as inF:
       pcop = cPickle.load(inF, encoding='latin1')
     #pcop._boundsMat=numpy.array(pcop._boundsMat)
     #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)

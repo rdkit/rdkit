@@ -37,7 +37,7 @@ class TestCase(unittest.TestCase):
 
   def testSaveState(self):
     fName = os.path.join(RDConfig.RDCodeDir,'ML/Descriptors/test_data','molcalc.dsc')
-    with open(fName,'rb') as inF:
+    with open(fName,'r') as inF:
       calc = cPickle.load(inF)
     self.assertEqual(calc.GetDescriptorNames(),tuple(self.descs))
     self.assertEqual(calc.GetDescriptorVersions(),tuple(self.vers))

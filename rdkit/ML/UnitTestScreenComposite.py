@@ -34,7 +34,7 @@ class TestCase(unittest.TestCase):
   def test1(self):
     """ basics """
     self.details.tableName = 'ferro_quant'
-    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 5
     self.assertEqual(len(compos),tgt)
@@ -56,7 +56,7 @@ class TestCase(unittest.TestCase):
     self.details.doHoldout=1
     self.details.doTraining=0
     
-    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 5
     self.assertEqual(len(compos),tgt)
@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase):
     self.details.doHoldout=0
     self.details.doTraining=1
 
-    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 5
     self.assertEqual(len(compos),tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
@@ -101,7 +101,7 @@ class TestCase(unittest.TestCase):
     self.details.doHoldout=0
     self.details.doTraining=0
 
-    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 5
     self.assertEqual(len(compos),tgt)
@@ -122,7 +122,7 @@ class TestCase(unittest.TestCase):
     """ basics """
     self.details.tableName = 'ferro_noquant'
 
-    with open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase):
   def test6(self):
     """ multiple models """
     self.details.tableName = 'ferro_noquant'
-    with open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -168,7 +168,7 @@ class TestCase(unittest.TestCase):
   def test7(self):
     """ shuffle """
     self.details.tableName = 'ferro_noquant'
-    with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),'rb') as pklF:
+    with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -188,7 +188,7 @@ class TestCase(unittest.TestCase):
     """ shuffle with segmentation """
     self.details.tableName = 'ferro_noquant'
     with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
-              'rb') as pklF:
+              'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -209,7 +209,7 @@ class TestCase(unittest.TestCase):
     """ shuffle with segmentation2 """
     self.details.tableName = 'ferro_noquant'
     with open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
-              'rb') as pklF:
+              'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -230,7 +230,7 @@ class TestCase(unittest.TestCase):
     """ filtering """
     self.details.tableName = 'ferro_noquant'
     with open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
-              'rb') as pklF:
+              'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -252,7 +252,7 @@ class TestCase(unittest.TestCase):
     """ filtering with segmentation """
     self.details.tableName = 'ferro_noquant'
     with open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
-              'rb') as pklF:
+              'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
@@ -276,7 +276,7 @@ class TestCase(unittest.TestCase):
     """ test the naive bayes composite"""
     self.details.tableName = 'ferro_noquant'
     with open(os.path.join(self.baseDir,'ferromag_NaiveBayes.pkl'),
-              'rb') as pklF:
+              'r') as pklF:
       compos = pickle.load(pklF)
     tgt = 10
     self.assertEqual(len(compos),tgt)
