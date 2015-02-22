@@ -20,7 +20,6 @@ The rules are relatively straightforward.
 Aromaticity is a property of atoms and bonds in rings.
 An aromatic bond must be between aromatic atoms, but a bond between aromatic atoms does not need to be aromatic.
 
-
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
 .. image:: images/picture_9.png
@@ -82,6 +81,31 @@ True
 True
 >>> m.GetBondBetweenAtoms(6,7).GetIsAromatic()
 False
+
+A special case, heteroatoms with radicals are not considered candidates for aromaticity:
+
+.. image:: images/picture_10.png 
+
+>>> m = Chem.MolFromSmiles('C1=C[N]C=C1')
+>>> m.GetAtomWithIdx(0).GetIsAromatic()
+False
+>>> m.GetAtomWithIdx(2).GetIsAromatic()
+False
+>>> m.GetAtomWithIdx(2).GetNumRadicalElectrons()
+1
+
+Carbons with radicals, however, are still considered:
+
+.. image:: images/picture_11.png 
+
+>>> m = Chem.MolFromSmiles('C1=[C]NC=C1')
+>>> m.GetAtomWithIdx(0).GetIsAromatic()
+True
+>>> m.GetAtomWithIdx(1).GetIsAromatic()
+True
+>>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
+1
+
 
 **Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
 
