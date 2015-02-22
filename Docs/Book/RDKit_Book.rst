@@ -307,10 +307,6 @@ the information to be preserved. You can help by providing mapping
 information:
 
 
-
-
-
-
 Rules and caveats
 -----------------
 
@@ -543,7 +539,67 @@ This leads to the following behavior:
 +----------+---------+-------+
 
 
+Implementation Details
+**********************
 
+"Magic" Property Values
+=======================
+
+The following property values are regularly used in the RDKit codebase and may be useful to client code.
+
+ROMol  (Mol in Python)
+------------------------
+
++------------------------+---------------------------------------------------+
+| Property Name          | Use                                               | 
++========================+===================================================+
+| MolFileComments        |   Read from/written to the comment line of CTABs. |
++------------------------+---------------------------------------------------+
+| MolFileInfo            |   Read from/written to the info line of CTABs.    |
++------------------------+---------------------------------------------------+
+| _MolFileChiralFlag     |   Read from/written to the chiral flag of CTABs.  |
++------------------------+---------------------------------------------------+
+| _Name                  |   Read from/written to the name line of CTABs.    |
++------------------------+---------------------------------------------------+
+| _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
++------------------------+---------------------------------------------------+
+
+Atom
+----
+
++------------------------+-------------------------------------------------------------------------------------------------+
+| Property Name          | Use                                                                                             | 
++========================+=================================================================================================+
+| _CIPCode               | the CIP code (R or S) of the atom                                                               |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _CIPRank               | the integer CIP rank of the atom                                                                |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _ChiralityPossible     | set if an atom is a possible chiral center                                                      |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _MolFileRLabel         | integer R group label for an atom, read from/written to CTABs.                                  |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _ReactionDegreeChanged | set on an atom in a product template of a reaction if its degree changes in the reaction        |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _protected             | atoms with this property set will not be considered as matching reactant queries in reactions   |
++------------------------+-------------------------------------------------------------------------------------------------+
+| dummyLabel             | (on dummy atoms) read from/written to CTABs as the atom symbol                                  |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molAtomMapNumber       | the atom map number for an atom, read from/written to SMILES and CTABs                          |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molfileAlias           | the mol file alias for an atom (follows A tags), read from/written to CTABs                     |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molFileValue           | the mol file value for an atom (follows V tags), read from/written to CTABs                     |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molFileInversionFlag   | used to flag whether stereochemistry at an atom changes in a reaction,                          | 
+|                        | read from/written to CTABs, determined automatically from SMILES                                |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molRxnComponent        | which component of a reaction an atom belongs to, read from/written to CTABs                    |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molRxnRole             | which role an atom plays in a reaction (1=Reactant, 2=Product, 3=Agent),                        |
+|                        | read from/written to CTABs                                                                      |
++------------------------+-------------------------------------------------------------------------------------------------+
+| smilesSymbol           | determines the symbol that will be written to a SMILES for the atom                             |
++------------------------+-------------------------------------------------------------------------------------------------+
 
 .. rubric:: Footnotes
 
