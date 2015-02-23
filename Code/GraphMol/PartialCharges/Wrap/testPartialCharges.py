@@ -1,6 +1,7 @@
 from __future__ import print_function
 import unittest
 import os
+import io
 
 from rdkit.six.moves import cPickle as pickle
 
@@ -51,7 +52,10 @@ class TestCase(unittest.TestCase):
         infil.close()
 
         infile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data', 'PP_combi_charges.pkl')
-        with open(infile, 'rb') as cchFile:
+        with open(infile, 'r') as cchtFile:
+            buf = cchtFile.read().replace('\r\n', '\n').encode('utf-8')
+            cchtFile.close()
+        with io.BytesIO(buf) as cchFile:
             combiCharges = pickle.load(cchFile)
 
         for lin in lines :

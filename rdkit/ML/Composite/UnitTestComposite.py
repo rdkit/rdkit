@@ -8,6 +8,7 @@
 
 """
 import unittest
+import io
 from rdkit.six.moves import cPickle, xrange
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
@@ -17,7 +18,10 @@ from rdkit import RDConfig
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','rb') as pklF:
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/ferro.pkl','r') as pklTF:
+      buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
+      pklTF.close()
+    with io.BytesIO(buf) as pklF:
       self.examples = cPickle.load(pklF)
     self.varNames = ['composition','max_atomic','has3d','has4d','has5d','elconc','atvol','isferro']
     self.qBounds = [[],[1.89,3.53],[],[],[],[0.55,0.73],[11.81,14.52],[]]
@@ -41,7 +45,10 @@ class TestCase(unittest.TestCase):
       
   def testTreeGrow(self):
     " testing tree-based composite "
-    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb') as pklF:
+    with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','r') as pklTF:
+      buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
+      pklTF.close()
+    with io.BytesIO(buf) as pklF:
       self.refCompos = cPickle.load(pklF)
 
     composite = Composite.Composite()

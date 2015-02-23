@@ -5,6 +5,7 @@
 """ unit tests for the ID3 implementation """
 from __future__ import print_function
 import unittest
+import io
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.ML.DecTree import ID3,DecTree
@@ -41,7 +42,10 @@ class ID3TestCase(unittest.TestCase):
   def testBasicTree(self):
     " testing basic tree growth "
     self._setupBasicTree()
-    with open(self.basicTreeName,'rb') as inFile:
+    with open(self.basicTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
@@ -65,7 +69,10 @@ class ID3TestCase(unittest.TestCase):
   def testMultiTree(self):
     " testing multivalued tree growth "
     self._setupMultiTree()
-    with open(self.multiTreeName,'rb') as inFile:
+    with open(self.multiTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     
@@ -117,7 +124,10 @@ class ID3TestCase(unittest.TestCase):
   def testPyBasicTree(self):
     " testing basic tree growth (python entropy code) "
     self._setupPyBasicTree()
-    with open(self.basicTreeName,'rb') as inFile:
+    with open(self.basicTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
@@ -145,7 +155,10 @@ class ID3TestCase(unittest.TestCase):
   def testPyMultiTree(self):
     " testing multivalued tree growth (python entropy code) "
     self._setupPyMultiTree()
-    with open(self.multiTreeName,'rb') as inFile:
+    with open(self.multiTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     

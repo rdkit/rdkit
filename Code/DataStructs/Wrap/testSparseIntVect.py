@@ -5,6 +5,7 @@
 #  @@ All Rights Reserved @@
 #
 import os,sys
+import io
 import unittest
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
@@ -87,8 +88,11 @@ class TestCase(unittest.TestCase):
     with open(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/DataStructs/Wrap/testData/lsiv.pkl'), 
-      'rb'
-      ) as f:
+      'r'
+      ) as tf:
+      buf = tf.read().replace('\r\n', '\n').encode('utf-8')
+      tf.close()
+    with io.BytesIO(buf) as f:
       v3 = cPickle.load(f)
       self.assertTrue(v3==v1)
     
@@ -115,8 +119,11 @@ class TestCase(unittest.TestCase):
     with open(
       os.path.join(RDConfig.RDBaseDir, 
                    'Code/DataStructs/Wrap/testData/isiv.pkl'),
-      'rb'
-      ) as f:
+      'r'
+      ) as tf:
+      buf = tf.read().replace('\r\n', '\n').encode('utf-8')
+      tf.close()
+    with io.BytesIO(buf) as f:
       v3 = cPickle.load(f)
       self.assertTrue(v3==v1)
 

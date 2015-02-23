@@ -63,6 +63,7 @@ from rdkit.Chem.MolDb import Loader
 
 logger = logger()
 import sys,os
+import io
 from rdkit.six.moves import cPickle
 from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory,LayeredOptions
 from rdkit.Chem.MolDb import FingerprintUtils
@@ -276,7 +277,10 @@ def CreateDb(options,dataFilename='',supplier=None):
 
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
-    calc = cPickle.load(open(options.descriptorCalcFilename,'rb'))
+    with open(options.descriptorCalcFilename,'r') as inTF:
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+    calc = cPickle.load(io.BytesIO(buf))
     nms = [x for x in calc.GetDescriptorNames()]
     descrCurs = descrConn.GetCursor()
     descrs = ['guid integer not null primary key','%s varchar not null unique'%options.molIdName]
