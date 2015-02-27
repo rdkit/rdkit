@@ -323,9 +323,4 @@ ATOM_NULL_QUERY *makeAtomNullQuery(){
   return res;
 }
 
-ATOM_PROP_QUERY *makeAtomHasPropQuery(const std::string &property)
-{
-  return new AtomHasPropQuery(property);
-}
-  
 };

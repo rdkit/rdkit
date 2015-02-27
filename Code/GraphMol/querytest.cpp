@@ -615,7 +615,7 @@ void testGithub165(){
 void testHasPropMatch()
 {
   QueryAtom qA;
-  qA.setQuery(makeAtomHasPropQuery("foo"));
+  qA.setQuery(makeHasPropQuery<Atom>("foo"));
   Atom a1(6);
   TEST_ASSERT(!qA.Match(&a1));
   a1.setProp<int>("foo", 1);
@@ -626,7 +626,7 @@ void testHasPropWithValueMatch()
 {
   {
     QueryAtom qA;
-    qA.setQuery(makeAtomPropQuery<int>("foo", 2));
+    qA.setQuery(makePropQuery<Atom,int>("foo", 2));
     Atom a1(6);
     TEST_ASSERT(!qA.Match(&a1));
     a1.setProp<int>("foo", 1);
@@ -641,25 +641,61 @@ void testHasPropWithValueMatch()
 
   {
     QueryAtom qA;
-    qA.setQuery(makeAtomPropQuery<std::string>("foo", "bar"));
+    qA.setQuery(makePropQuery<Atom,std::string>("foo", "bar"));
     Atom a1(6);
     TEST_ASSERT(!qA.Match(&a1));
     a1.setProp<std::string>("foo", "bar");
     TEST_ASSERT(qA.Match(&a1));    
   }
+
+  {
+    QueryBond qA;
+    qA.setQuery(makePropQuery<Bond,int>("foo", 2));
+    Bond a1;
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<int>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<int>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
     
+    a1.clearProp("foo");
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
+
+  {
+    QueryBond qA;
+    qA.setQuery(makePropQuery<Bond,std::string>("foo", "bar"));
+    Bond a1;
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<std::string>("foo", "bar");
+    TEST_ASSERT(qA.Match(&a1));    
+  }
+  
 }
 
 void testHasPropWithDoubleValueMatch()
 {
-  QueryAtom qA;
-  qA.setQuery(makeAtomPropQuery<double>("foo", 2));
-  Atom a1(6);
-  TEST_ASSERT(!qA.Match(&a1));
-  a1.setProp<double>("foo", 1);
-  TEST_ASSERT(!qA.Match(&a1));
-  a1.setProp<double>("foo", 2);
-  TEST_ASSERT(qA.Match(&a1));
+  {
+    QueryAtom qA;
+    qA.setQuery(makePropQuery<Atom, double>("foo", 2));
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
+  }
+  {
+    QueryBond qA;
+    qA.setQuery(makePropQuery<Bond, double>("foo", 2));
+    Bond a1;
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
+  }
 }
 
 int main(){
