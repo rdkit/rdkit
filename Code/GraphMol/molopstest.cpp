@@ -4339,8 +4339,8 @@ namespace{
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
-      //std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
-      //std::cerr<<std::endl;
+      // std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
+      // std::cerr<<std::endl;
 
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
       TEST_ASSERT(nm);
@@ -4351,7 +4351,24 @@ namespace{
       MatchVectType mv; 
       TEST_ASSERT(SubstructMatch(*m,*nm,mv));
       TEST_ASSERT(mv.size()==nm->getNumAtoms());
+
+      for(unsigned int j=0;j<m->getNumAtoms();++j){
+        TEST_ASSERT( m->getAtomWithIdx(nVect[j])->getAtomicNum() == nm->getAtomWithIdx(j)->getAtomicNum() );
+      }
       
+
+      // checking the conformation is a test for Github #441
+      TEST_ASSERT(m->getNumConformers()==nm->getNumConformers());
+      if(m->getNumConformers()){
+        for(unsigned int j=0;j<m->getNumAtoms();++j){
+          RDGeom::Point3D po=m->getConformer().getAtomPos(nVect[j]);
+          RDGeom::Point3D pn=nm->getConformer().getAtomPos(j);
+          TEST_ASSERT( po.x==pn.x );
+          TEST_ASSERT( po.y==pn.y );
+          TEST_ASSERT( po.z==pn.z );
+        }
+      }
+
       std::string nSmi=MolToSmiles(*nm,true);
       TEST_ASSERT(nSmi==refSmi);
       delete nm;
@@ -4379,6 +4396,14 @@ void testRenumberAtoms()
   {
     std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
     ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  { // github issue #441
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue266.mol");  // no significance to choice of files, we just need something with coords
     TEST_ASSERT(m);
     _renumberTest(m);
     delete m;
