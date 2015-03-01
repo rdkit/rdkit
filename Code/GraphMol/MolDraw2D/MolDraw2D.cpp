@@ -127,6 +127,33 @@ namespace RDKit {
     calculateScale();
     setFontSize( font_size_ );
 
+    if(drawOptions().includeAtomTags){
+      tagAtoms(mol);
+    }
+    if(drawOptions().atomRegions.size()){
+      BOOST_FOREACH(const std::vector<int> &region, drawOptions().atomRegions){
+        if(region.size()>1){
+          Point2D minv=at_cds_[region[0]];
+          Point2D maxv=at_cds_[region[0]];
+          BOOST_FOREACH(int idx,region){
+            const Point2D &pt=at_cds_[idx];
+            minv.x = std::min(minv.x,pt.x);
+            minv.y = std::min(minv.y,pt.y);
+            maxv.x = std::max(maxv.x,pt.x);
+            maxv.y = std::max(maxv.y,pt.y);
+          }
+          Point2D center=(maxv+minv)/2;
+          Point2D size=(maxv-minv);
+          size *= 0.2;
+          minv -= size/2;
+          maxv += size/2;
+          setColour(DrawColour(.8,.8,.8));
+          //drawEllipse(minv,maxv);
+          drawRect(minv,maxv);
+        }
+      }
+    }
+    
     if(drawOptions().continuousHighlight){
       // if we're doing continuous highlighting, start by drawing the highlights
       doContinuousHighlighting(mol,highlight_atoms,highlight_bonds,

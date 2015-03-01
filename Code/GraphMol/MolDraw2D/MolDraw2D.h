@@ -43,14 +43,17 @@ namespace RDKit {
     DrawColour highlightColour; // default highlight color
     bool continuousHighlight;   // highlight by drawing an outline *underneath* the molecule
     int flagCloseContactsDist; // if positive, this will be used as a cutoff (in pixels) for highlighting close contacts
+    bool includeAtomTags;      // toggles inclusion of atom tags in the output. does not make sense for all renderers.
     std::map<int,std::string> atomLabels; // replacement labels for atoms
+    std::vector<std::vector<int> > atomRegions; // regions
     
     MolDrawOptions() :
       dummiesAreAttachments(false),
       circleAtoms(true),
       highlightColour(1,.5,.5),
       continuousHighlight(true),
-      flagCloseContactsDist(3)
+      flagCloseContactsDist(3),
+      includeAtomTags(false)
     {};
   };
 
@@ -143,12 +146,16 @@ namespace RDKit {
                                      unsigned int nSegments=8 );
     
 
+    virtual void tagAtoms( const ROMol &mol ) {};
+
     virtual bool fillPolys() const { return fill_polys_; }
     virtual void setFillPolys(bool val) { fill_polys_ = val; }
 
     MolDrawOptions &drawOptions() { return options_; }
     const MolDrawOptions &drawOptions() const { return options_; }
 
+    const std::vector<Point2D > & atomCoords() const { return at_cds_; };
+    const std::vector<std::pair<std::string,OrientType> > & atomSyms() const { return atom_syms_; };
   private :
     int width_ , height_;
     double scale_;

@@ -196,7 +196,7 @@ void test3(){
     }
     delete m;
   }
-#if 0
+
   {
     std::string smiles="C1CC1CC1ON1";
     std::string nameBase="test3_2";
@@ -329,7 +329,45 @@ void test3(){
     }
     delete m;
   }
-#endif
+
+  {
+    std::string smiles="CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1";
+    std::string nameBase="test3_6";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+
+    MolDrawOptions options;
+    static const int ha1[] = {17,18,19,20,21};
+    std::vector<int> highlight_atoms1(ha1, ha1+sizeof(ha1)/sizeof(int));
+    options.atomRegions.push_back(highlight_atoms1);
+    static const int ha2[] = {6,7,8,9,31,32};
+    std::vector<int> highlight_atoms2(ha2, ha2+sizeof(ha2)/sizeof(int));
+    options.atomRegions.push_back(highlight_atoms2);
+    options.includeAtomTags=true;
+
+    
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300,300);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase+".png");
+    }
+#endif    
+    {
+      std::ofstream outs((nameBase+".svg").c_str());
+      MolDraw2DSVG drawer(300,300,outs);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
+
   std::cout << " Done" << std::endl;
 }
 
