@@ -127,6 +127,9 @@ namespace RDKit {
     calculateScale();
     setFontSize( font_size_ );
 
+    if(drawOptions().includeAtomTags){
+      tagAtoms(mol);
+    }
     if(drawOptions().continuousHighlight){
       // if we're doing continuous highlighting, start by drawing the highlights
       doContinuousHighlighting(mol,highlight_atoms,highlight_bonds,

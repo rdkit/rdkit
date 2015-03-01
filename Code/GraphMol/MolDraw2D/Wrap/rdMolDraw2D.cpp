@@ -97,6 +97,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     .def_readwrite("atomLabels",&RDKit::MolDrawOptions::atomLabels,"maps indices to atom labels")
     .def_readwrite("continuousHighlight",&RDKit::MolDrawOptions::continuousHighlight)
     .def_readwrite("flagCloseContactsDist",&RDKit::MolDrawOptions::flagCloseContactsDist)
+    .def_readwrite("includeAtomTags",&RDKit::MolDrawOptions::includeAtomTags,"include atom tags in output")
 
     ;
   docString="Drawer abstract base class";
