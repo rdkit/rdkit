@@ -45,6 +45,7 @@ namespace RDKit {
     int flagCloseContactsDist; // if positive, this will be used as a cutoff (in pixels) for highlighting close contacts
     bool includeAtomTags;      // toggles inclusion of atom tags in the output. does not make sense for all renderers.
     std::map<int,std::string> atomLabels; // replacement labels for atoms
+    std::vector<std::vector<int> > atomRegions; // regions
     
     MolDrawOptions() :
       dummiesAreAttachments(false),
