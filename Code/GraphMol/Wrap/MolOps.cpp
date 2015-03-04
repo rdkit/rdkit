@@ -46,7 +46,7 @@ namespace RDKit{
     drawer.setFontSize(fontSize/24.);
     drawer.setLineWidth(drawer.lineWidth()*lineWidthMult);
     drawer.drawOptions().circleAtoms=includeAtomCircles;
-    drawer.drawMolecule(mol,highlightAtoms,NULL,confId);
+    drawer.drawMolecule(mol,highlightAtoms,NULL,NULL,confId);
     delete highlightAtoms;
     drawer.finishDrawing();
     return outs.str();

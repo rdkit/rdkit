@@ -68,6 +68,7 @@ namespace RDKit {
     virtual void drawMolecule( const ROMol &mol ,
                                const std::vector<int> *highlight_atoms = NULL,
                                const std::map<int,DrawColour> *highlight_map = NULL,
+                               const std::map<int,double> *highlight_radii = NULL,
                                int confId=-1);
 
     virtual void drawMolecule( const ROMol &mol ,
@@ -75,6 +76,7 @@ namespace RDKit {
                                const std::vector<int> *highlight_bonds,
                                const std::map<int,DrawColour> *highlight_atom_map = NULL,
                                const std::map<int,DrawColour> *highlight_bond_map = NULL,
+                               const std::map<int,double> *highlight_radii = NULL,
                                int confId=-1 );
 
     // transform a set of coords in the molecule's coordinate system
@@ -235,7 +237,8 @@ namespace RDKit {
                                            const std::vector<int> *highlight_atoms,
                                            const std::vector<int> *highlight_bonds,
                                            const std::map<int,DrawColour> *highlight_atom_map,
-                                           const std::map<int,DrawColour> *highlight_bond_map );
+                                           const std::map<int,DrawColour> *highlight_bond_map,
+                                           const std::map<int,double> *highlight_radii );
 
     virtual void highlightCloseContacts();
 

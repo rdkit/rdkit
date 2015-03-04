@@ -35,6 +35,7 @@ namespace RDKit {
   void MolDraw2D::drawMolecule( const ROMol &mol ,
                                 const vector<int> *highlight_atoms ,
                                 const map<int,DrawColour> *highlight_atom_map,
+                                const std::map<int,double> *highlight_radii,
                                 int confId) {
     vector<int> highlight_bonds;
     if(highlight_atoms){
@@ -47,14 +48,16 @@ namespace RDKit {
         }
       }
     }
-    drawMolecule(mol,highlight_atoms,&highlight_bonds,highlight_atom_map,NULL,confId);
+    drawMolecule(mol,highlight_atoms,&highlight_bonds,highlight_atom_map,NULL,highlight_radii,confId);
   }
 
   void MolDraw2D::doContinuousHighlighting( const ROMol &mol ,
                                             const vector<int> *highlight_atoms ,
                                             const vector<int> *highlight_bonds ,
                                             const map<int,DrawColour> *highlight_atom_map,
-                                            const map<int,DrawColour> *highlight_bond_map ) {
+                                            const map<int,DrawColour> *highlight_bond_map,
+                                            const std::map<int,double> *highlight_radii
+                                            ) {
     int orig_lw=lineWidth();
     int tgt_lw=lineWidth()*8;
     // try to scale lw to reflect the overall scaling:
@@ -100,7 +103,11 @@ namespace RDKit {
           }
           Point2D p1=at_cds_[this_idx];
           Point2D p2=at_cds_[this_idx];
-          Point2D offset(0.4,0.4);
+          double radius=0.4;
+          if(highlight_radii && highlight_radii->find(this_idx)!=highlight_radii->end()){
+            radius = highlight_radii->find(this_idx)->second;
+          }
+          Point2D offset(radius,radius);
           p1 -= offset;
           p2 += offset;
           setColour(col);
@@ -120,6 +127,7 @@ namespace RDKit {
                                 const vector<int> *highlight_bonds ,
                                 const map<int,DrawColour> *highlight_atom_map,
                                 const map<int,DrawColour> *highlight_bond_map,
+                                const std::map<int,double> *highlight_radii,
                                 int confId ) {
     clearDrawing();
     extractAtomCoords( mol, confId );
@@ -157,7 +165,7 @@ namespace RDKit {
     if(drawOptions().continuousHighlight){
       // if we're doing continuous highlighting, start by drawing the highlights
       doContinuousHighlighting(mol,highlight_atoms,highlight_bonds,
-                               highlight_atom_map,highlight_bond_map);
+                               highlight_atom_map,highlight_bond_map,highlight_radii);
       // at this point we shouldn't be doing any more higlighting, so blow out those variables:
       highlight_bonds=NULL;
       highlight_atoms=NULL;
@@ -175,7 +183,11 @@ namespace RDKit {
           }
           Point2D p1=at_cds_[this_idx];
           Point2D p2=at_cds_[this_idx];
-          Point2D offset(0.3,0.3);
+          double radius=0.3;
+          if(highlight_radii && highlight_radii->find(this_idx)!=highlight_radii->end()){
+            radius = highlight_radii->find(this_idx)->second;
+          }
+          Point2D offset(radius,radius);
           p1 -= offset;
           p2 += offset;
           drawEllipse(p1,p2);

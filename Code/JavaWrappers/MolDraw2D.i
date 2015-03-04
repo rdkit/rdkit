@@ -43,6 +43,7 @@
 
 %template(INT_STRING_MAP) std::map< int, std::string >;
 %template(INT_DRAWCOLOUR_MAP) std::map< int, RDKit::DrawColour >;
+%template(INT_DOUBLE_MAP) std::map< int, double >;
 %template(DrawColour) boost::tuple<float,float,float>;
 %template(Float_Pair) std::pair<float,float>;
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
