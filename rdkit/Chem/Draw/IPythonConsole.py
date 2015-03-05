@@ -60,8 +60,8 @@ def _toJSON(mol):
     # IPython >=2.0 does this by copying the file into ~/.ipython/nbextensions
     # Fallback support provided by grabbing js from remote server
     local_path = "/nbextensions/imolecule.min"
-    remote_path = ("https://raw.githubusercontent.com/patrickfuller/"
-                   "imolecule/master/build/imolecule.min")
+    remote_path = ("https://cdn.rawgit.com/patrickfuller/imolecule/master/js"
+                   "/build/imolecule.min")
     filepath = os.path.normpath(os.path.dirname(__file__))
     install_nbextension([os.path.join(filepath, "imolecule.min.js")],
                         verbose=0)
