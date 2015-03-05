@@ -2,7 +2,7 @@ import IPython
 
 if IPython.release.version < '0.11':
     raise ImportError('this module requires at least v0.11 of IPython')
-elif IPython.release.version < '2.0':
+elif IPython.release.version < '3.0':
     install_nbextension=None
     _canUse3D=False
 else:
