@@ -4661,6 +4661,44 @@ void testGithubIssue432()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue443()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 443: kekulization problems caused by any bonds." << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github443.min.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    MolOps::Kekulize(*m);
+    delete m;
+  }
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github443.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(19)->getIsAromatic());
+    TEST_ASSERT(m->getAtomWithIdx(12)->getIsAromatic());
+    // we might normally expect these to be aromatic because the outer porphyrin ring
+    // is 4n+2 aromatic. However, the current fused ring aromaticity perception uses
+    // the symmetrized SSSR rings and only works if all atoms are aromatic. This cannot
+    // happen when the Mg is involved
+    //TEST_ASSERT(m->getAtomWithIdx(13)->getIsAromatic());
+    //TEST_ASSERT(m->getAtomWithIdx(11)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(13,20));
+    TEST_ASSERT(m->getBondBetweenAtoms(19,20));
+    TEST_ASSERT(m->getBondBetweenAtoms(11,20));
+    TEST_ASSERT(m->getBondBetweenAtoms(12,20));
+    MolOps::Kekulize(*m);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -4727,7 +4765,6 @@ int main(){
   testGitHubIssue72();
   testRenumberAtoms();
   testGithubIssue141();
-#endif
   testZBO();
   testMolAssignment();
 
@@ -4736,6 +4773,8 @@ int main(){
   testMolFragsWithQuery();
   testGithubIssue418();
   testGithubIssue432();
+#endif
+  testGithubIssue443();
   return 0;
 }
 

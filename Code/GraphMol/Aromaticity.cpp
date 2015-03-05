@@ -324,6 +324,11 @@ namespace {
     } else if (rup==2) {
       aromatic = true;
     }
+#if 0
+    std::cerr <<" ring: ";
+    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
+    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
+#endif
     return aromatic;
   }
     
@@ -589,7 +594,8 @@ namespace RDKit {
       boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
       while(beg!=end){
         BOND_SPTR bond=at->getOwningMol()[*beg];
-        if(bond->getBondType()==Bond::ZERO) --degree;
+        if(bond->getBondType()==Bond::UNSPECIFIED  // query bonds should not contribute; this was github issue #443 
+           || bond->getBondType()==Bond::ZERO ) --degree;
         ++beg;
       }
 
