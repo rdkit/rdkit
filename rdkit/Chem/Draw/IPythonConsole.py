@@ -63,7 +63,7 @@ def _toJSON(mol):
     remote_path = ("https://cdn.rawgit.com/patrickfuller/imolecule/master/js"
                    "/build/imolecule.min")
     filepath = os.path.normpath(os.path.dirname(__file__))
-    install_nbextension([os.path.join(filepath, "imolecule.min.js")],
+    install_nbextension(os.path.join(filepath, "imolecule.min.js",
                         verbose=0)
 
     # Convert the relevant parts of the molecule into JSON for rendering
