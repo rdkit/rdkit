@@ -923,8 +923,8 @@ namespace Canon {
     PRECONDITION(molStack.begin()->type == MOL_STACK_ATOM, "Corrupted stack. First element should be an atom.");
 
     // collect some information about traversal order on chiral atoms
-    char *numSwapsChiralAtoms=(char *)malloc(nAtoms*sizeof(char));
-    memset(numSwapsChiralAtoms,0,nAtoms*sizeof(char));
+    bool *numSwapsChiralAtoms=(bool *)malloc(nAtoms*sizeof(bool));
+    memset(numSwapsChiralAtoms,0,nAtoms*sizeof(bool));
     for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
       if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
         INT_LIST trueOrder = atomTraversalBondOrder[(*atomIt)->getIdx()];
@@ -939,7 +939,9 @@ namespace Canon {
             //     [C@@H](F)(O)C
             ++nSwaps;
           }
-          numSwapsChiralAtoms[(*atomIt)->getIdx()] = (nSwaps%2);
+          if(nSwaps%2){
+            numSwapsChiralAtoms[(*atomIt)->getIdx()] = 1;
+          }
         }
       }
     }
@@ -1000,26 +1002,18 @@ namespace Canon {
               if(nbrV<0){
                 mol.getAtomWithIdx(nbrIdx)->invertChirality();
               }
-
               //Odd number of swaps for first chiral ring atom --> needs to be swapped but we want to retain chirality
-              if(numSwapsChiralAtoms[msI->obj.atom->getIdx()]%2){
+              if(numSwapsChiralAtoms[msI->obj.atom->getIdx()]){
                 //Odd number of swaps for chiral ring neighbor --> needs to be swapped but we want to retain chirality
-                if(numSwapsChiralAtoms[nbrIdx]%2){
-                  continue;
-                }
-                //Even number of swaps for chiral ring neihbor --> we need to swap it to retain chirality of first atom
-                else{
+                if(!numSwapsChiralAtoms[nbrIdx]){
                   mol.getAtomWithIdx(nbrIdx)->invertChirality();
                 }
               }
               //Even number of swaps for first chiral ring atom --> don't need to be swapped
               else{
                 //Odd number of swaps for chiral ring neighbor --> needs to be swapped
-                if(numSwapsChiralAtoms[nbrIdx]%2){
+                if(numSwapsChiralAtoms[nbrIdx]){
                   mol.getAtomWithIdx(nbrIdx)->invertChirality();
-                }
-                else{
-                  continue;
                 }
               }
               ringStereoChemAdjusted.set(nbrIdx);
@@ -1028,12 +1022,12 @@ namespace Canon {
         }
         else{
           if(msI->obj.atom->getChiralTag()== Atom::CHI_TETRAHEDRAL_CW){
-            if((numSwapsChiralAtoms[msI->obj.atom->getIdx()]%2)){
+            if((numSwapsChiralAtoms[msI->obj.atom->getIdx()])){
               msI->obj.atom->invertChirality();
             }
           }
           else if(msI->obj.atom->getChiralTag()== Atom::CHI_TETRAHEDRAL_CCW){
-            if((numSwapsChiralAtoms[msI->obj.atom->getIdx()]%2)){
+            if((numSwapsChiralAtoms[msI->obj.atom->getIdx()])){
               msI->obj.atom->invertChirality();
             }
           }

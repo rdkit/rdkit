@@ -29,20 +29,23 @@ namespace RDKit {
       Bond::BondType bondType;
       unsigned int bondStereo;
       unsigned int nbrSymClass;
+      unsigned int numSwaps;
       unsigned int nbrIdx;
       bondholder() : bondType(Bond::UNSPECIFIED),
           bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
-          nbrIdx(0), nbrSymClass(0) {};
-      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni,unsigned int nsc) :
+          nbrIdx(0), nbrSymClass(0), numSwaps(0) {};
+      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni,unsigned int nsc,unsigned int nsw) :
         bondType(bt),
         bondStereo(static_cast<unsigned int>(bs)),
         nbrIdx(ni),
-        nbrSymClass(nsc) {};
-      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni,unsigned int nsc) :
+        nbrSymClass(nsc),
+        numSwaps(nsw) {};
+      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni,unsigned int nsc,unsigned int nsw) :
         bondType(bt),
         bondStereo(bs),
         nbrIdx(ni),
-        nbrSymClass(nsc) {};
+        nbrSymClass(nsc),
+        numSwaps(nsw) {};
       bool operator<(const bondholder &o) const {
         if(bondType!=o.bondType)
           return bondType<o.bondType;
@@ -67,7 +70,6 @@ namespace RDKit {
           return -1;
         else if(x.bondStereo>y.bondStereo)
           return 1;
-
         return x.nbrSymClass/div-y.nbrSymClass/div;
       }
     };
@@ -92,7 +94,7 @@ namespace RDKit {
 
     template <typename CompareFunc>
     bool hanoi( int* base, int nel, int *temp, int *count, int *changed, CompareFunc compar ) {
-      //std::cerr<<"  hanoi: "<<nel<<std::endl;
+//      std::cerr<<"  hanoi: "<<nel<< " start " << (*base)+1 << std::endl;
       register int *b1,*b2;
       register int *t1,*t2;
       register int *s1,*s2;
@@ -217,20 +219,75 @@ namespace RDKit {
                             int *changed);
 
 
-    void updateAtomNeighborIndex(
-        canon_atom* atoms, std::vector<bondholder> &nbrs);
+    void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs);
+    void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx);
 
-    class SpecialAtomCompareFunctor {
+    class SpecialChiralityAtomCompareFunctor {
 
     public:
       Canon::canon_atom *dp_atoms;
       const ROMol *dp_mol;
       const boost::dynamic_bitset<> *dp_atomsInPlay,*dp_bondsInPlay;
 
-      SpecialAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
+      SpecialChiralityAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
           dp_atomsInPlay(NULL), dp_bondsInPlay(NULL) {
       };
-      SpecialAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
+      SpecialChiralityAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
+          const boost::dynamic_bitset<> *atomsInPlay=NULL,
+          const boost::dynamic_bitset<> *bondsInPlay=NULL ) :
+            dp_atoms(atoms), dp_mol(&m),
+            dp_atomsInPlay(atomsInPlay),dp_bondsInPlay(bondsInPlay) {
+      };
+      int operator()(int i,int j) const {
+        PRECONDITION(dp_atoms,"no atoms");
+        PRECONDITION(dp_mol,"no molecule");
+        PRECONDITION(i!=j,"bad call");
+        if(dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])){
+          return 0;
+        }
+
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[i].bonds,i);
+        }
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[j].bonds,j);
+        }
+        for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
+          int cmp=dp_atoms[i].bonds[ii].numSwaps-dp_atoms[j].bonds[ii].numSwaps;
+          if(cmp) return cmp;
+        }
+
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
+        }
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
+        }
+        for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
+          int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii]);
+          if(cmp) return cmp;
+        }
+
+        if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
+          return -1;
+        } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
+          return 1;
+        }
+        return 0;
+      }
+    };
+
+    class SpecialSymmetryAtomCompareFunctor {
+
+    public:
+      Canon::canon_atom *dp_atoms;
+      const ROMol *dp_mol;
+      const boost::dynamic_bitset<> *dp_atomsInPlay,*dp_bondsInPlay;
+
+      SpecialSymmetryAtomCompareFunctor() : dp_atoms(NULL), dp_mol(NULL),
+          dp_atomsInPlay(NULL), dp_bondsInPlay(NULL) {
+      };
+      SpecialSymmetryAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
           const boost::dynamic_bitset<> *atomsInPlay=NULL,
           const boost::dynamic_bitset<> *bondsInPlay=NULL ) :
             dp_atoms(atoms), dp_mol(&m),
@@ -285,12 +342,14 @@ namespace RDKit {
 
         const Atom *at=dp_atoms[i].atom;
         int *nbrs = dp_atoms[i].nbrIds;
+        unsigned int code=0;
         for(unsigned j=0; j<dp_atoms[i].degree; ++j){
-          if(dp_atoms[dp_atoms[i].nbrIds[j]].isRingStereoAtom){
-            return dp_atoms[dp_atoms[i].nbrIds[j]].index*1000000+j;
+          if(dp_atoms[nbrs[j]].isRingStereoAtom){
+
+            code += dp_atoms[nbrs[j]].index*10000+1;//j;
           }
         }
-        return 0;
+        return code;
       }
 
       int basecomp(int i,int j) const {
@@ -455,13 +514,13 @@ namespace RDKit {
     class ChiralAtomCompareFunctor {
       void getAtomNeighborhood(std::vector<bondholder> &nbrs) const{
         for(unsigned j=0; j < nbrs.size(); ++j){
-          unsigned int nbrIdx = nbrs.at(j).nbrIdx;
+          unsigned int nbrIdx = nbrs[j].nbrIdx;
           if(nbrIdx == ATNUM_CLASS_OFFSET){
             // Ignore the Hs
             continue;
           }
           const Atom *nbr = dp_atoms[nbrIdx].atom;
-          nbrs.at(j).nbrSymClass = nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+dp_atoms[nbrIdx].index+1;
+          nbrs[j].nbrSymClass = nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+dp_atoms[nbrIdx].index+1;
         }
         std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
         // FIX: don't want to be doing this long-term

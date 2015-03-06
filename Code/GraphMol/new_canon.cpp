@@ -74,8 +74,10 @@ namespace RDKit {
         memset(visited,0,nAtoms*sizeof(char));
         unsigned count = 1;
         std::vector<int> nextLevelNbrs;
-        std::set<int> lastLevelNbrs;
-        std::set<int> currentLevelNbrs;
+        char *lastLevelNbrs=(char *)malloc(nAtoms*sizeof(char));
+        memset(lastLevelNbrs,0,nAtoms*sizeof(char));
+        char *currentLevelNbrs=(char *)malloc(nAtoms*sizeof(char));
+        memset(currentLevelNbrs,0,nAtoms*sizeof(char));
         while(!neighbors.empty()){
           unsigned int revisitedNeighbors=0;
           unsigned int numLevelNbrs=0;
@@ -83,31 +85,37 @@ namespace RDKit {
           while(!neighbors.empty()){
             int nidx = neighbors.front();
             const Canon::canon_atom &atom = atoms[nidx];
-            lastLevelNbrs.insert(nidx);
+            lastLevelNbrs[nidx]=1;
             visited[nidx]=1;
             neighbors.pop_front();
             for(unsigned int j=0; j<atom.degree; j++){
               int iidx = atom.nbrIds[j];
               if(!visited[iidx]){
-                currentLevelNbrs.insert(iidx);
+                currentLevelNbrs[iidx];
                 numLevelNbrs++;
                 visited[iidx]=1;
                 nextLevelNbrs.push_back(iidx);
               }
             }
           }
-          for(std::set<int>::iterator iter=currentLevelNbrs.begin(); iter != currentLevelNbrs.end();iter++){
-            const Canon::canon_atom &natom = atoms[*iter];
-            for(unsigned int k=0; k<natom.degree; k++){
-              int jidx = natom.nbrIds[k];
-              if(currentLevelNbrs.count(jidx) || lastLevelNbrs.count(jidx)){
-                revisitedNeighbors+=1;
+          for(unsigned i=0; i<nAtoms; ++i){
+            if(currentLevelNbrs[i]){
+              const Canon::canon_atom &natom = atoms[i];
+              for(unsigned int k=0; k<natom.degree; k++){
+                int jidx = natom.nbrIds[k];
+                if(currentLevelNbrs[jidx] || lastLevelNbrs[jidx]){
+                  revisitedNeighbors+=1;
+                }
               }
             }
           }
-          lastLevelNbrs.clear();
-          lastLevelNbrs.insert(currentLevelNbrs.begin(),currentLevelNbrs.end());
-          currentLevelNbrs.clear();
+          memset(lastLevelNbrs,0,nAtoms*sizeof(char));
+          for(unsigned i=0; i<nAtoms; ++i){
+            if(currentLevelNbrs[i]){
+              lastLevelNbrs[i]=1;
+            }
+          }
+          memset(currentLevelNbrs,0,nAtoms*sizeof(char));
           if(revisitedNeighbors < 10){
             atoms[idx].revistedNeighbors = (atoms[idx].revistedNeighbors*10) + revisitedNeighbors;
           }
@@ -115,7 +123,7 @@ namespace RDKit {
             atoms[idx].revistedNeighbors = (atoms[idx].revistedNeighbors*100) + revisitedNeighbors;
           }
 
-          if(numLevelNbrs < 0){
+          if(numLevelNbrs < 10){
             atoms[idx].neighborNum  = (atoms[idx].neighborNum*10) +numLevelNbrs;
           }
           else{
@@ -125,6 +133,8 @@ namespace RDKit {
           count++;
         }
         free(visited);
+        free(currentLevelNbrs);
+        free(lastLevelNbrs);
       }
     }
 
@@ -132,7 +142,8 @@ namespace RDKit {
     template <typename T>
     void rankWithFunctor(T &ftor,
                          bool breakTies,
-                         int *order, bool useSpecial=false){
+                         int *order, bool useSpecial=false,
+                         bool useChirality=false){
       const ROMol &mol=*ftor.dp_mol;
       canon_atom *atoms=ftor.dp_atoms;
       unsigned int nAts=mol.getNumAtoms();
@@ -168,6 +179,17 @@ namespace RDKit {
       }
 #endif
       bool ties=false;
+      for(unsigned i=0; i<nAts; ++i){
+        if(!count[i]){
+          ties=true;
+        }
+      }
+      if(useChirality && ties){
+        SpecialChiralityAtomCompareFunctor scftor(atoms,mol);
+        ActivatePartitions(nAts,order,count,activeset,next,changed);
+        RefinePartitions(mol,atoms,scftor,true,order,count,activeset,next,changed,touched);
+      }
+      ties=false;
       unsigned countCls=0;
       for(unsigned i=0; i<nAts; ++i){
         if(count[i]){
@@ -177,8 +199,8 @@ namespace RDKit {
           ties=true;
         }
       }
-      if(useSpecial && ties){
-        SpecialAtomCompareFunctor sftor(atoms,mol);
+      if(useSpecial && ties && static_cast<float>(countCls)/nAts < 0.5){
+        SpecialSymmetryAtomCompareFunctor sftor(atoms,mol);
         compareRingAtomsConcerningNumNeighbors(atoms, nAts);
         ActivatePartitions(nAts,order,count,activeset,next,changed);
         RefinePartitions(mol,atoms,sftor,true,order,count,activeset,next,changed,touched);
@@ -217,21 +239,17 @@ namespace RDKit {
         return false;
       }
 
-      unsigned int getNumRingMember(const ROMol &mol,unsigned int idx){
-        if(mol.getRingInfo()->isInitialized()){
-          return mol.getRingInfo()->numAtomRings(idx);
-        }
-        return 0;
-      }
-
       void getNbrs(const ROMol &mol,const Atom *at, int *ids){
-        ROMol::ADJ_ITER beg,end;
-        boost::tie(beg,end) = mol.getAtomNeighbors(at);
+
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomBonds(at);
         unsigned int idx=0;
+
         while(beg!=end){
-          const ATOM_SPTR nbr=(mol)[*beg];
+          const BOND_SPTR bond=(mol)[*beg];
           ++beg;
-          ids[idx] = nbr->getIdx();
+          unsigned int nbrIdx = bond->getOtherAtomIdx(at->getIdx());
+          ids[idx] = nbrIdx;
           ++idx;
         }
       }
@@ -249,9 +267,10 @@ namespace RDKit {
           }
           unsigned int idx = bond->getOtherAtomIdx(at->getIdx());
           Bond::BondType bt = bond->getIsAromatic() ? Bond::AROMATIC : bond->getBondType();
-          bondholder bh(bondholder(bt,stereo,idx,idx));
-          nbrs.insert(std::lower_bound(nbrs.begin(),nbrs.end(),bh,bondholder::greater),1,bh);
+          bondholder bh(bondholder(bt,stereo,idx,0,0));
+          nbrs.push_back(bh);
         }
+        std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
       }
 
       void getChiralBonds(const ROMol &mol,const Atom *at,std::vector<bondholder> &nbrs){
@@ -294,7 +313,7 @@ namespace RDKit {
             nReps = static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()));
           }
           unsigned int symclass = nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+nbrIdx+1;
-          bondholder bh(bondholder(Bond::SINGLE,stereo,nbrIdx,symclass));
+          bondholder bh(bondholder(Bond::SINGLE,stereo,nbrIdx,symclass,0));
           std::vector<bondholder>::iterator iPos=std::lower_bound(nbrs.begin(),nbrs.end(),bh);
           nbrs.insert(iPos,nReps,bh);
         }
@@ -302,8 +321,8 @@ namespace RDKit {
 
         if(!at->needsUpdatePropertyCache()){
           for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET));
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET));
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET,0));
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET,0));
           }
         }
       }
@@ -371,10 +390,50 @@ namespace RDKit {
 
     void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs) {
       for(unsigned j=0; j < nbrs.size(); ++j){
-        unsigned newSymClass = atoms[nbrs.at(j).nbrIdx].index;
+        unsigned nbrIdx = nbrs[j].nbrIdx;
+        unsigned newSymClass = atoms[nbrIdx].index;
         nbrs.at(j).nbrSymClass = newSymClass;
       }
       std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
+    }
+
+    void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx) {
+      for(unsigned j=0; j < nbrs.size(); ++j){
+        unsigned nbrIdx = nbrs[j].nbrIdx;
+
+        if(atoms[nbrIdx].atom->getChiralTag()!=0){
+          std::vector<int> ref,probe;
+          for(unsigned i=0; i<atoms[nbrIdx].degree; ++i){
+            ref.push_back(atoms[nbrIdx].nbrIds[i]);
+          }
+
+          probe.push_back(atomIdx);
+          updateAtomNeighborIndex(atoms, atoms[nbrIdx].bonds);
+          for(unsigned i=0; i<atoms[nbrIdx].bonds.size(); ++i){
+            if(atoms[nbrIdx].bonds.at(i).nbrIdx != atomIdx){
+              probe.push_back(atoms[nbrIdx].bonds.at(i).nbrIdx);
+            }
+          }
+
+          int nSwaps=static_cast<int>(countSwapsToInterconvert(ref,probe));
+          if(atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW){
+            if(nSwaps%2){
+              nbrs.at(j).numSwaps=2;
+            }
+            else{
+              nbrs.at(j).numSwaps=1;
+            }
+          }
+          else if(atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW){
+            if(nSwaps%2){
+              nbrs.at(j).numSwaps=1;
+            }
+            else{
+              nbrs.at(j).numSwaps=2;
+            }
+          }
+        }
+      }
     }
 
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
@@ -388,7 +447,7 @@ namespace RDKit {
       ftor.df_useChiralityRings=includeChirality;
 
       int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
-      rankWithFunctor(ftor,breakTies,order,true);
+      rankWithFunctor(ftor,breakTies,order,true,includeChirality);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -424,7 +483,7 @@ namespace RDKit {
 
       int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
 
-      rankWithFunctor(ftor,breakTies,order,true);
+      rankWithFunctor(ftor,breakTies,order,true,includeChirality);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){

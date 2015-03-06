@@ -899,6 +899,7 @@ std::string smis[]={
   "C[C@@H]1CCC[C@H](C)[C@H]1C",
   "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
   "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
+  "CC(C)CCCC[C@@H]1C[C@H](/C=C/[C@]2(C)CC[C@H](O)CC2)[C@@H](O)[C@H]1O",
   "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
   "CCCN[C@H]1CC[C@H](NC)CC1",
   "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
@@ -918,6 +919,7 @@ std::string smis[]={
   "N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
   "O=C(CN1CCN(c2ccc(C(F)(F)F)cn2)CC1)N[C@H]1C2CC3CC1C[C@](O)(C3)C2",
   "COc1cc([C@H]2[C@H](C)[C@H](C)[C@H]2c2ccc(O)c(OC)c2)ccc1O",
+  "N[C@@H]1[C@H]2CNC[C@@H]12",
   "N[C@@H]1[C@H]2CN(c3nc4c(cc3F)c(=O)c(C(=O)O)cn4C3CC3)C[C@@H]12",
   // some examples that came up while doing a torture test in ZINC
   "CN1CCCNCCN(C)CCC[NH2+]CC1",
@@ -943,6 +945,19 @@ std::string smis[]={
   "C13C6C1C2C4C2C3C5C4C56",
   "C45C1C6C3C6C5C4C2C3C12",
   "C45C2C6C3C6C5C4C1C3C12",
+  "Cl[C@H]1[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H]1Cl",
+  "N[C@]1(C(=O)O)C[C@H](n2oc(=O)[nH]c2=O)C1",
+  "CC1CC(C)CC(C)C1",
+  "C[C@H]1C[C@@H](C)C[C@H](C)C1",
+  "C[C@H]1C[C@@H](C)C[C@@H](C)C1",
+  //Stereochemistry in large rings
+  "C1[C@@H](C(C)=O)[C@H]2[C@H](C(C)=C1)[C@@H]1O[C@H]2[C@@H](O)C/C=C\\CC1",
+  //Chembl 20 examples
+  "COC(=O)CC[C@]12C[C@]13CC[C@]1(C)[C@@H]4[C@@H](C[C@@]1(C)[C@@H]3CC[C@H]2C(C)(C)O)O[C@@]1(C[C@@H](C)C(=O)O1)C[C@H]4C",
+  "C/C=C/[C@H](O)C(C)(C)[C@@H]1CC=CC=CC=C[C@H](OC)Cc2nc(co2)C(=O)O[C@H](C(C)(C)[C@@H](O)/C=C/C)CC=C[C@H]2O[C@H]2C=CC=Cc2nc(co2)C(=O)O1",
+  "N[C@]1(C(=O)O)C[C@@H](n2oc(=O)[nH]c2=O)C1",
+  "COc1ccc([C@H]2C3(CO)C4[N@](C)C5C2(CO)C2[N@](C)C3C4(CO)[C@H](c3ccc(OC)cc3)C52CO)cc1",
+  "NCCNC(=O)[C@]1(O)C[C@@H](O)[C@H](O)[C@H](O)C1",
   "EOS"
 };
 
