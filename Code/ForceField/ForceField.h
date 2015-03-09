@@ -17,7 +17,7 @@
 namespace ForceFields {
   class ForceFieldContrib;
   typedef std::vector<int> INT_VECT;
-  typedef boost::shared_ptr<ForceFieldContrib> ContribPtr;
+  typedef boost::shared_ptr<const ForceFieldContrib> ContribPtr;
   typedef std::vector<ContribPtr> ContribPtrVect;
   
   //-------------------------------------------------------
