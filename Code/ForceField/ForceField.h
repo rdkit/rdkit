@@ -201,6 +201,10 @@ namespace ForceFields {
 
     //! initializes our internal distance matrix
     void initDistanceMatrix();
+  private:
+    //! disable the copy constructor
+    ForceField(const ForceField &other);
+
   };
 }
 #endif
