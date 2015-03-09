@@ -29,7 +29,9 @@ namespace RDKit {
       \param ignoreInterfragInteractions if true, nonbonded terms will not be added between
                                          fragments
 
-      \return 0 if the optimization converged, 1 if more iterations are required.
+      \return a pair with:
+         first: 0 if the optimization converged, 1 if more iterations are required.
+         second: the energy
     */
     std::pair<int,double> UFFOptimizeMolecule(ROMol &mol, int maxIters=1000,
                             double vdwThresh=10.0, int confId=-1,
@@ -42,6 +44,31 @@ namespace RDKit {
       delete ff;
       return std::make_pair(res,e);
     }
-  }
-}
+    //! Convenience function for optimizing all of a molecule's conformations using UFF
+    /*
+      \param mol        the molecule to use
+      \param res        vector of (needsMore,energy) pairs
+      \param maxIters   the maximum number of force-field iterations
+      \param vdwThresh  the threshold to be used in adding van der Waals terms
+                        to the force field. Any non-bonded contact whose current
+			distance is greater than \c vdwThresh * the minimum value
+			for that contact will not be included.
+      \param ignoreInterfragInteractions if true, nonbonded terms will not be added between
+                                         fragments
+
+    */
+    void UFFOptimizeMoleculeConfs(ROMol &mol, 
+                                  std::vector< std::pair<int, double> > &res,
+                                  int maxIters=1000,
+                                  double vdwThresh=10.0,
+                                  bool ignoreInterfragInteractions=true ){
+      res.clear();
+      for(ROMol::ConformerIterator cit=mol.beginConformers();
+          cit!=mol.endConformers();++cit){
+        res.push_back(UFFOptimizeMolecule(mol,maxIters,vdwThresh,(*cit)->getId(),
+                                          ignoreInterfragInteractions));
+      }
+    }
+  } // end of namespace UFF
+} // end of namespace RDKit 
 #endif

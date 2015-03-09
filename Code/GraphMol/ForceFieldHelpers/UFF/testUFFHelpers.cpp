@@ -353,6 +353,38 @@ void testUFFBuilder2(){
     delete field;
   }
 
+  { // make sure the confId argument works
+    RWMol *mol = MolFileToMol(pathName+"/small1.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    Conformer *newConf = new Conformer(mol->getConformer());
+    newConf->setId(111);
+    mol->addConformer(newConf,false);
+    RDGeom::Point3D p0=mol->getConformer().getAtomPos(0);
+    RDGeom::Point3D p1=mol->getConformer().getAtomPos(1);
+
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol,100,111);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    //std::cout << MolToMolBlock(mol);
+    
+    RDGeom::Point3D np0=mol->getConformer().getAtomPos(0);
+    RDGeom::Point3D np1=mol->getConformer().getAtomPos(1);
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+    TEST_ASSERT( feq(p1.x, np1.x) );
+    TEST_ASSERT( feq(p1.y, np1.y) );
+    TEST_ASSERT( feq(p1.z, np1.z) );
+
+    delete mol;
+    delete field;
+  }
+
+  
   {
     RWMol *mol = MolFileToMol(pathName+"/small2.mol",false);
     TEST_ASSERT(mol);
@@ -433,6 +465,40 @@ void testUFFBuilder2(){
     for(unsigned int i=0;i<mol->getNumAtoms();++i){
       const RDGeom::Point3D p1=mol->getConformer().getAtomPos(i);
       const RDGeom::Point3D p2=mol2->getConformer().getAtomPos(i);
+      TEST_ASSERT( feq(p1.x, p2.x) );
+      TEST_ASSERT( feq(p1.y, p2.y) );
+      TEST_ASSERT( feq(p1.z, p2.z) );
+    }
+    
+    delete mol;
+    delete mol2;
+  }
+
+  { // test the convenience function for all confs
+    RWMol *mol = MolFileToMol(pathName+"/small1.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    Conformer *newConf = new Conformer(mol->getConformer());
+    newConf->setId(111);
+    mol->addConformer(newConf,false);
+    RWMol *mol2 = new RWMol(*mol);
+
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol,100,111);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    delete field;
+
+    std::vector<std::pair<int,double> > res;
+    UFF::UFFOptimizeMoleculeConfs(*mol2,res);
+    TEST_ASSERT(res.size()==2);
+    TEST_ASSERT(!res[0].first)
+    TEST_ASSERT(!res[1].first)
+    for(unsigned int i=0;i<mol->getNumAtoms();++i){
+      const RDGeom::Point3D p1=mol->getConformer(111).getAtomPos(i);
+      const RDGeom::Point3D p2=mol2->getConformer(111).getAtomPos(i);
       TEST_ASSERT( feq(p1.x, p2.x) );
       TEST_ASSERT( feq(p1.y, p2.y) );
       TEST_ASSERT( feq(p1.z, p2.z) );
