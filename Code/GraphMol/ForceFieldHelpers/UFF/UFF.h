@@ -31,15 +31,16 @@ namespace RDKit {
 
       \return 0 if the optimization converged, 1 if more iterations are required.
     */
-    int UFFOptimizeMolecule(ROMol &mol, int maxIters=1000,
+    std::pair<int,double> UFFOptimizeMolecule(ROMol &mol, int maxIters=1000,
                             double vdwThresh=10.0, int confId=-1,
                             bool ignoreInterfragInteractions=true ){
       ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId,
                                                            ignoreInterfragInteractions);
       ff->initialize();
       int res=ff->minimize(maxIters);
+      int e=ff->calcEnergy();
       delete ff;
-      return res;
+      return std::make_pair(res,e);
     }
   }
 }

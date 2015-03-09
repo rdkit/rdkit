@@ -25,12 +25,18 @@
 namespace python = boost::python;
 
 namespace RDKit {
+  int UFFHelper(ROMol &mol,
+                int maxIters,
+                double vdwThresh,
+                int confId,
+                bool ignoreInterfragInteractions ){
+    return UFF::UFFOptimizeMolecule(mol,maxIters,vdwThresh,confId,ignoreInterfragInteractions).first;
+  }
 
   ForceFields::PyForceField *UFFGetMoleculeForceField(ROMol &mol,
                                                       double vdwThresh=10.0,
                                                       int confId=-1,
                                                       bool ignoreInterfragInteractions=true ){
-
     ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId,
                                                          ignoreInterfragInteractions);
     ForceFields::PyForceField *res=new ForceFields::PyForceField(ff);
@@ -192,7 +198,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
 \n\
  RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
 \n";
-  python::def("UFFOptimizeMolecule", RDKit::UFF::UFFOptimizeMolecule,
+  python::def("UFFOptimizeMolecule", RDKit::UFFHelper,
 	      (python::arg("self"),python::arg("maxIters")=200,
 	       python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
                python::arg("ignoreInterfragInteractions")=true),

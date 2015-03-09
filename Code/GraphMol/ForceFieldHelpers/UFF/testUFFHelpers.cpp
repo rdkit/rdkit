@@ -428,7 +428,7 @@ void testUFFBuilder2(){
     TEST_ASSERT(!needMore);
     delete field;
 
-    needMore = UFF::UFFOptimizeMolecule(*mol2);
+    needMore = UFF::UFFOptimizeMolecule(*mol2).first;
     TEST_ASSERT(!needMore);
     for(unsigned int i=0;i<mol->getNumAtoms();++i){
       const RDGeom::Point3D p1=mol->getConformer().getAtomPos(i);
