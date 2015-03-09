@@ -23,6 +23,7 @@
 
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <boost/math/special_functions/round.hpp>
@@ -334,80 +335,112 @@ void testUFFBuilder2(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Testing UFF builder+minimization." << std::endl;
 
-  RWMol *mol;
-  std::string key;
-  int needMore;
-
-  ForceFields::ForceField *field;
-
   std::string pathName=getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
-  mol = MolFileToMol(pathName+"/small1.mol",false);
-  TEST_ASSERT(mol);
-  MolOps::sanitizeMol(*mol);
+  {
+    RWMol *mol = MolFileToMol(pathName+"/small1.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
 
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  needMore = field->minimize();
-  TEST_ASSERT(!needMore);
-  //std::cout << MolToMolBlock(mol);
-  delete mol;
-  delete field;
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    //std::cout << MolToMolBlock(mol);
+    delete mol;
+    delete field;
+  }
 
-  mol = MolFileToMol(pathName+"/small2.mol",false);
-  TEST_ASSERT(mol);
-  MolOps::sanitizeMol(*mol);
+  {
+    RWMol *mol = MolFileToMol(pathName+"/small2.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
 
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  needMore = field->minimize(150);
-  TEST_ASSERT(!needMore);
-  //std::cout << MolToMolBlock(mol);
-  delete mol;
-  delete field;
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize(150);
+    TEST_ASSERT(!needMore);
+    //std::cout << MolToMolBlock(mol);
+    delete mol;
+    delete field;
+  }
+  {
+    RWMol *mol = MolFileToMol(pathName+"/benzene.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
 
-  mol = MolFileToMol(pathName+"/benzene.mol",false);
-  TEST_ASSERT(mol);
-  MolOps::sanitizeMol(*mol);
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    //std::cout << MolToMolBlock(mol);
+    delete mol;
+    delete field;
+  }
+  {
+    RWMol *mol = MolFileToMol(pathName+"/toluene.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
 
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  needMore = field->minimize();
-  TEST_ASSERT(!needMore);
-  //std::cout << MolToMolBlock(mol);
-  delete mol;
-  delete field;
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    //std::cout << MolToMolBlock(mol);
+    delete mol;
+    delete field;
+  }
+  {
+    RWMol *mol = MolFileToMol(pathName+"/complex1.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    //std::cout << MolToMolBlock(mol);
+    delete mol;
+    delete field;
+  }
   
-  mol = MolFileToMol(pathName+"/toluene.mol",false);
-  TEST_ASSERT(mol);
-  MolOps::sanitizeMol(*mol);
+  { // test the convenience function
+    RWMol *mol = MolFileToMol(pathName+"/small1.mol",false);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    RWMol *mol2 = new RWMol(*mol);
 
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  needMore = field->minimize();
-  TEST_ASSERT(!needMore);
-  //std::cout << MolToMolBlock(mol);
-  delete mol;
-  delete field;
+    ForceFields::ForceField *field;
+    field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    int needMore = field->minimize();
+    TEST_ASSERT(!needMore);
+    delete field;
 
-  mol = MolFileToMol(pathName+"/complex1.mol",false);
-  TEST_ASSERT(mol);
-  MolOps::sanitizeMol(*mol);
-
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  needMore = field->minimize();
-  TEST_ASSERT(!needMore);
-  //std::cout << MolToMolBlock(mol);
-  delete mol;
-  delete field;
-
-  
+    needMore = UFF::UFFOptimizeMolecule(*mol2);
+    TEST_ASSERT(!needMore);
+    for(unsigned int i=0;i<mol->getNumAtoms();++i){
+      const RDGeom::Point3D p1=mol->getConformer().getAtomPos(i);
+      const RDGeom::Point3D p2=mol2->getConformer().getAtomPos(i);
+      TEST_ASSERT( feq(p1.x, p2.x) );
+      TEST_ASSERT( feq(p1.y, p2.y) );
+      TEST_ASSERT( feq(p1.z, p2.z) );
+    }
+    
+    delete mol;
+    delete mol2;
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
