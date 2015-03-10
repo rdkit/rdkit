@@ -475,13 +475,13 @@ void testUFFBuilder2(){
   }
 
   { // test the convenience function for all confs
-    RWMol *mol = MolFileToMol(pathName+"/small1.mol",false);
+    RWMol *mol = MolFileToMol(pathName+"/complex1.mol",false);
     TEST_ASSERT(mol);
     MolOps::sanitizeMol(*mol);
+    RWMol *mol2 = new RWMol(*mol);
     Conformer *newConf = new Conformer(mol->getConformer());
     newConf->setId(111);
     mol->addConformer(newConf,false);
-    RWMol *mol2 = new RWMol(*mol);
 
     ForceFields::ForceField *field;
     field=UFF::constructForceField(*mol,100,111);
@@ -491,14 +491,24 @@ void testUFFBuilder2(){
     TEST_ASSERT(!needMore);
     delete field;
 
+
+    // the first conf is the same as above,
+    // but we add a second that's already minimized
+    newConf = new Conformer(mol->getConformer(111));
+    newConf->setId(112);
+    mol2->addConformer(newConf,false);
+
     std::vector<std::pair<int,double> > res;
     UFF::UFFOptimizeMoleculeConfs(*mol2,res);
     TEST_ASSERT(res.size()==2);
-    TEST_ASSERT(!res[0].first)
-    TEST_ASSERT(!res[1].first)
+    TEST_ASSERT(!res[0].first);
+    TEST_ASSERT(!res[1].first);
+    // we expect the energy to go down at least a little bit.
+    TEST_ASSERT(res[1].second<res[0].second); 
+    
     for(unsigned int i=0;i<mol->getNumAtoms();++i){
       const RDGeom::Point3D p1=mol->getConformer(111).getAtomPos(i);
-      const RDGeom::Point3D p2=mol2->getConformer(111).getAtomPos(i);
+      const RDGeom::Point3D p2=mol2->getConformer(0).getAtomPos(i);
       TEST_ASSERT( feq(p1.x, p2.x) );
       TEST_ASSERT( feq(p1.y, p2.y) );
       TEST_ASSERT( feq(p1.z, p2.z) );
@@ -1098,6 +1108,27 @@ void testUFFMultiThread(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testUFFMultiThread2(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test UFF multithreading2" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  ROMol *m=suppl[4];
+  TEST_ASSERT(m);
+  for(unsigned int i=0;i<1000;++i){
+    m->addConformer(new Conformer(m->getConformer()),true);
+  }
+  std::vector<std::pair<int,double> > res;
+  UFF::UFFOptimizeMoleculeConfs(*m,res,4);
+  for(unsigned int i=1;i<res.size();++i){
+    TEST_ASSERT(!res[i].first);
+    TEST_ASSERT(feq(res[i].second,res[0].second,.00001));
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 #endif
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1123,5 +1154,6 @@ int main(){
   testGitHubIssue62();
 #ifdef RDK_TEST_MULTITHREADED
   testUFFMultiThread();
+  testUFFMultiThread2();
 #endif
 }

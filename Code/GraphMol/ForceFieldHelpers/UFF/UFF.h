@@ -10,8 +10,11 @@
 #ifndef RD_UFFCONVENIENCE_H
 #define RD_UFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
-
 #include "Builder.h"
+
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread.hpp>  
+#endif
 
 namespace RDKit {
   class ROMol;
@@ -40,14 +43,35 @@ namespace RDKit {
                                                            ignoreInterfragInteractions);
       ff->initialize();
       int res=ff->minimize(maxIters);
-      int e=ff->calcEnergy();
+      double e=ff->calcEnergy();
       delete ff;
       return std::make_pair(res,e);
     }
+#ifdef RDK_THREADSAFE_SSS
+    namespace detail {
+      void UFFOptimizeMoleculeConfsHelper_(ROMol &mol, 
+                                      std::vector< std::pair<int, double> > &res,
+                                      unsigned int threadIdx,
+                                      unsigned int numThreads,
+                                      int maxIters,
+                                      double vdwThresh,
+                                      bool ignoreInterfragInteractions){
+        unsigned int i=0;
+        for(ROMol::ConformerIterator cit=mol.beginConformers();
+            cit!=mol.endConformers();++cit,++i){
+          if(i%numThreads != threadIdx) continue;
+          res[i] = UFFOptimizeMolecule(mol,maxIters,vdwThresh,(*cit)->getId(),
+                                       ignoreInterfragInteractions);
+        }
+      }        
+    } //end of detail namespace
+#endif
     //! Convenience function for optimizing all of a molecule's conformations using UFF
     /*
       \param mol        the molecule to use
       \param res        vector of (needsMore,energy) pairs
+      \param numThreads the number of simultaneous threads to use (only has an
+                        effect if the RDKit is compiled with thread support).
       \param maxIters   the maximum number of force-field iterations
       \param vdwThresh  the threshold to be used in adding van der Waals terms
                         to the force field. Any non-bonded contact whose current
@@ -59,15 +83,33 @@ namespace RDKit {
     */
     void UFFOptimizeMoleculeConfs(ROMol &mol, 
                                   std::vector< std::pair<int, double> > &res,
+                                  unsigned int numThreads=1,
                                   int maxIters=1000,
                                   double vdwThresh=10.0,
                                   bool ignoreInterfragInteractions=true ){
-      res.clear();
-      for(ROMol::ConformerIterator cit=mol.beginConformers();
-          cit!=mol.endConformers();++cit){
-        res.push_back(UFFOptimizeMolecule(mol,maxIters,vdwThresh,(*cit)->getId(),
-                                          ignoreInterfragInteractions));
+      res.resize(mol.getNumConformers());
+#ifndef RDK_THREADSAFE_SSS
+      numThreads=1;
+#endif
+      if(numThreads<=1){
+        unsigned int i=0;
+        for(ROMol::ConformerIterator cit=mol.beginConformers();
+            cit!=mol.endConformers();++cit,++i){
+          res[i] = UFFOptimizeMolecule(mol,maxIters,vdwThresh,(*cit)->getId(),
+                                       ignoreInterfragInteractions);
+        }
       }
+#ifdef RDK_THREADSAFE_SSS
+      else {
+        boost::thread_group tg;
+        for(unsigned int ti=0;ti<numThreads;++ti){
+          tg.add_thread(new boost::thread(detail::UFFOptimizeMoleculeConfsHelper_,
+                                          mol,res,ti,numThreads,maxIters,
+                                          vdwThresh,ignoreInterfragInteractions));
+        }
+        tg.join_all();
+      }
+#endif
     }
   } // end of namespace UFF
 } // end of namespace RDKit 
