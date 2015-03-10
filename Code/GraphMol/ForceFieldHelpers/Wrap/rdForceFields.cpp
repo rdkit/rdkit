@@ -32,6 +32,21 @@ namespace RDKit {
                 bool ignoreInterfragInteractions ){
     return UFF::UFFOptimizeMolecule(mol,maxIters,vdwThresh,confId,ignoreInterfragInteractions).first;
   }
+  python::object UFFConfsHelper(ROMol &mol,
+                                                      unsigned int numThreads,
+                                                      int maxIters,
+                                                      double vdwThresh,
+                                                      int confId,
+                                                      bool ignoreInterfragInteractions ){
+    std::vector< std::pair<int, double> >  res;
+    UFF::UFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,
+                                  vdwThresh,ignoreInterfragInteractions);
+    python::list pyres;
+    for(unsigned int i=0;i<res.size();++i){
+      pyres.append(python::make_tuple(res[i].first,res[i].second));
+    }
+    return pyres;
+  }
 
   ForceFields::PyForceField *UFFGetMoleculeForceField(ROMol &mol,
                                                       double vdwThresh=10.0,
@@ -204,6 +219,30 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
                python::arg("ignoreInterfragInteractions")=true),
 	      docString.c_str());
 
+  docString = "uses UFF to optimize all of a molecule's conformations\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - numThreads : the number of threads to use, only has an effect if the RDKit\n\
+                   was built with thread support (defaults to 1)\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+    - vdwThresh : used to exclude long-range van der Waals interactions\n\
+                  (defaults to 10.0)\n\
+    - confId : indicates which conformer to optimize\n\
+    - ignoreInterfragInteractions : if true, nonbonded terms between\n\
+                  fragments will not be added to the forcefield.\n\
+\n\
+ RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
+\n";
+  python::def("UFFOptimizeMoleculeConfs", RDKit::UFFConfsHelper,
+	      (python::arg("self"),
+               python::arg("numThreads")=1,
+               python::arg("maxIters")=200,
+	       python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
+               python::arg("ignoreInterfragInteractions")=true),
+	      docString.c_str());
+
+  
   docString = "returns a UFF force field for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
