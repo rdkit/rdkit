@@ -1118,15 +1118,31 @@ void testUFFMultiThread2(){
   SDMolSupplier suppl(pathName + "/bulk.sdf");
   ROMol *m=suppl[4];
   TEST_ASSERT(m);
+  ROMol *om = new ROMol(*m);
   for(unsigned int i=0;i<1000;++i){
     m->addConformer(new Conformer(m->getConformer()),true);
   }
   std::vector<std::pair<int,double> > res;
+
+  UFF::UFFOptimizeMolecule(*om);
   UFF::UFFOptimizeMoleculeConfs(*m,res,4);
   for(unsigned int i=1;i<res.size();++i){
     TEST_ASSERT(!res[i].first);
     TEST_ASSERT(feq(res[i].second,res[0].second,.00001));
   }
+  for(unsigned int i=0;i<m->getNumAtoms();++i){
+    RDGeom::Point3D p0=om->getConformer().getAtomPos(i);
+    RDGeom::Point3D np0=m->getConformer().getAtomPos(i);
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+    np0=m->getConformer(11).getAtomPos(i); // pick some random other conformer
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+  }
+  delete m;
+  delete om;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 #endif

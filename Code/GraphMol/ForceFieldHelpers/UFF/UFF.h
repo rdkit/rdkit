@@ -49,18 +49,18 @@ namespace RDKit {
     }
 #ifdef RDK_THREADSAFE_SSS
     namespace detail {
-      void UFFOptimizeMoleculeConfsHelper_(ROMol &mol, 
-                                      std::vector< std::pair<int, double> > &res,
+      void UFFOptimizeMoleculeConfsHelper_(ROMol *mol, 
+                                      std::vector< std::pair<int, double> > *res,
                                       unsigned int threadIdx,
                                       unsigned int numThreads,
                                       int maxIters,
                                       double vdwThresh,
                                       bool ignoreInterfragInteractions){
         unsigned int i=0;
-        for(ROMol::ConformerIterator cit=mol.beginConformers();
-            cit!=mol.endConformers();++cit,++i){
+        for(ROMol::ConformerIterator cit=mol->beginConformers();
+            cit!=mol->endConformers();++cit,++i){
           if(i%numThreads != threadIdx) continue;
-          res[i] = UFFOptimizeMolecule(mol,maxIters,vdwThresh,(*cit)->getId(),
+          (*res)[i] = UFFOptimizeMolecule(*mol,maxIters,vdwThresh,(*cit)->getId(),
                                        ignoreInterfragInteractions);
         }
       }        
@@ -104,7 +104,7 @@ namespace RDKit {
         boost::thread_group tg;
         for(unsigned int ti=0;ti<numThreads;++ti){
           tg.add_thread(new boost::thread(detail::UFFOptimizeMoleculeConfsHelper_,
-                                          mol,res,ti,numThreads,maxIters,
+                                          &mol,&res,ti,numThreads,maxIters,
                                           vdwThresh,ignoreInterfragInteractions));
         }
         tg.join_all();
