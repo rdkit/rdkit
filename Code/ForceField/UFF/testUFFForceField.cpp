@@ -1479,8 +1479,6 @@ void testUFFCopy(){
     "M  END\n";
   {
 
-  
-    // distance constraints
     RDKit::RWMol *mol = RDKit::MolBlockToMol(molBlock, true, false);
     TEST_ASSERT(mol);
     RDKit::RWMol *cmol = new RDKit::RWMol(*mol);

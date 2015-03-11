@@ -49,19 +49,24 @@ namespace RDKit {
     }
 #ifdef RDK_THREADSAFE_SSS
     namespace detail {
-      void UFFOptimizeMoleculeConfsHelper_(ROMol *mol, 
-                                      std::vector< std::pair<int, double> > *res,
-                                      unsigned int threadIdx,
-                                      unsigned int numThreads,
-                                      int maxIters,
-                                      double vdwThresh,
-                                      bool ignoreInterfragInteractions){
+      void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff,
+                                           ROMol *mol, 
+                                           std::vector< std::pair<int, double> > *res,
+                                           unsigned int threadIdx,
+                                           unsigned int numThreads,
+                                           int maxIters){
         unsigned int i=0;
+        ff.positions().resize(mol->getNumAtoms());
         for(ROMol::ConformerIterator cit=mol->beginConformers();
             cit!=mol->endConformers();++cit,++i){
           if(i%numThreads != threadIdx) continue;
-          (*res)[i] = UFFOptimizeMolecule(*mol,maxIters,vdwThresh,(*cit)->getId(),
-                                       ignoreInterfragInteractions);
+          for(unsigned int aidx=0;aidx<mol->getNumAtoms();++aidx){
+            ff.positions()[aidx]=&(*cit)->getAtomPos(aidx);
+          }
+          ff.initialize();
+          int needsMore=ff.minimize(maxIters);
+          double e=ff.calcEnergy();
+          (*res)[i] = std::make_pair(needsMore,e);
         }
       }        
     } //end of detail namespace
@@ -101,13 +106,17 @@ namespace RDKit {
       }
 #ifdef RDK_THREADSAFE_SSS
       else {
+        ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, -1,
+                                                             ignoreInterfragInteractions);
         boost::thread_group tg;
         for(unsigned int ti=0;ti<numThreads;++ti){
           tg.add_thread(new boost::thread(detail::UFFOptimizeMoleculeConfsHelper_,
-                                          &mol,&res,ti,numThreads,maxIters,
-                                          vdwThresh,ignoreInterfragInteractions));
+                                          *ff,
+                                          &mol,&res,ti,numThreads,maxIters));
+
         }
         tg.join_all();
+        delete ff;
       }
 #endif
     }
