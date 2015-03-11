@@ -16,6 +16,7 @@
 #include "seqs.hpp"
 // ours
 #include <RDBoost/pyint_api.h>
+#include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -30,7 +31,10 @@ namespace RDKit {
 
   python::object MolToBinary(const ROMol &self){
     std::string res;
-    MolPickler::pickleMol(self,res);
+    {
+      NOGIL gil;
+      MolPickler::pickleMol(self,res);
+    }
     python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
     return retval;
   }
@@ -51,6 +55,7 @@ namespace RDKit {
   bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
 			    bool recursionPossible=true,bool useChirality=false,
                             bool useQueryQueryMatches=false){
+    NOGIL gil;
     ROMol *mol;
     try {
       mol = new ROMol(pkl);
@@ -69,6 +74,7 @@ namespace RDKit {
   bool HasSubstructMatch(const ROMol &mol, const ROMol &query,
 			 bool recursionPossible=true,bool useChirality=false,
                             bool useQueryQueryMatches=false){
+    NOGIL gil;
     MatchVectType res;
     return SubstructMatch(mol,query,res,recursionPossible,useChirality,useQueryQueryMatches);
   }
@@ -83,6 +89,7 @@ namespace RDKit {
   }
   PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false,
                             bool useQueryQueryMatches=false){
+    NOGIL gil;
     MatchVectType matches;
     SubstructMatch(mol,query,matches,true,useChirality,useQueryQueryMatches);
     return convertMatches(matches);

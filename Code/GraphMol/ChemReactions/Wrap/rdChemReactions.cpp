@@ -79,6 +79,7 @@ namespace RDKit {
   template <typename T>
   PyObject* RunReactants(ChemicalReaction *self,T reactants){
     if(!self->isInitialized()){
+      NOGIL gil;    
       self->initReactantMatchers();
     }
     MOL_SPTR_VECT reacts;
@@ -89,7 +90,10 @@ namespace RDKit {
       if(!reacts[i]) throw_value_error("reaction called with None reactants");
     }
     std::vector<MOL_SPTR_VECT> mols;
-    mols = self->runReactants(reacts);
+    {
+      NOGIL gil;
+      mols = self->runReactants(reacts);
+    }
     PyObject *res=PyTuple_New(mols.size());
     
     for(unsigned int i=0;i<mols.size();++i){
