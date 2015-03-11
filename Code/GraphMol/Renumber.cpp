@@ -77,8 +77,9 @@ namespace RDKit {
           ++oConf){
         Conformer *nConf=new Conformer(nAts);
         for(unsigned int i=0;i<nAts;++i){
-          nConf->setAtomPos(i,(*oConf)->getAtomPos(revOrder[i]));
+          nConf->setAtomPos(i,(*oConf)->getAtomPos(newOrder[i]));
         }
+        nConf->setId((*oConf)->getId());
         res->addConformer(nConf);
       }
 

@@ -57,6 +57,8 @@ namespace RDKit {
 
     // this only makes sense if the object was initialized without a stream
     std::string getDrawingText() const {return d_ss.str(); };
+
+    void tagAtoms( const ROMol &mol );
   private :
     std::ostream &d_os;
     std::stringstream d_ss;

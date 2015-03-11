@@ -11,6 +11,7 @@
 from __future__ import print_function
 from rdkit import RDConfig
 import unittest,sys,os
+import io
 from rdkit.six import PY3
 from rdkit.six.moves import cPickle
 from rdkit import Chem
@@ -227,7 +228,10 @@ class TestCase(unittest.TestCase):
     m2 = Chem.MolFromMolFile(os.path.join(self.dataDir,
                                           'Issue268_Mol2.mol'))
     with open(os.path.join(self.dataDir,
-                           'Issue268_Pcop.pkl'),'rb') as inF:
+                           'Issue268_Pcop.pkl'),'r') as inTF:
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+    with io.BytesIO(buf) as inF:
       pcop = cPickle.load(inF, encoding='latin1')
     #pcop._boundsMat=numpy.array(pcop._boundsMat)
     #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)

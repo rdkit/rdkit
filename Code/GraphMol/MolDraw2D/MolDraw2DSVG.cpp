@@ -38,7 +38,8 @@ namespace RDKit {
   void MolDraw2DSVG::initDrawing() {
     d_os<<"<?xml version='1.0' encoding='iso-8859-1'?>\n";
     d_os << "<svg:svg version='1.1' baseProfile='full'\n      \
-        xmlns:svg='http://www.w3.org/2000/svg'\n                \
+        xmlns:svg='http://www.w3.org/2000/svg'\n              \
+        xmlns:rdkit='http://www.rdkit.org/xml'\n              \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
     d_os<<"width='"<<width()<<"px' height='"<<height()<<"px' >\n";
@@ -265,5 +266,23 @@ namespace RDKit {
     }
     d_os<<span<<"</svg:tspan>";
     d_os<<"</svg:text>\n";
+  }
+
+  void MolDraw2DSVG::tagAtoms( const ROMol &mol ){
+    PRECONDITION(d_os,"no output stream");
+    ROMol::VERTEX_ITER this_at , end_at;
+    boost::tie( this_at , end_at ) = mol.getVertices();
+    while( this_at != end_at ) {
+      int this_idx = mol[*this_at]->getIdx();
+      ++this_at;
+      Point2D pos=getDrawCoords(atomCoords()[this_idx]);
+      std::string lbl=atomSyms()[this_idx].first;
+      
+      d_os << "<rdkit:atom"<<" idx=\""<<this_idx+1<<"\"";
+      if(lbl!=""){
+        d_os<< " label=\"" << lbl<< "\"";
+      }
+      d_os << " x=\""<<pos.x<<"\"" <<" y=\""<<pos.y<<"\""<< " />"<<std::endl;
+    }    
   }
 } // EO namespace RDKit
