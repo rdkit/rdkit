@@ -22,6 +22,7 @@
 
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/MMFF/Params.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -786,6 +787,44 @@ void testMMFFMultiThread(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testMMFFMultiThread2(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading2" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  ROMol *m=suppl[4];
+  TEST_ASSERT(m);
+  ROMol *om = new ROMol(*m);
+  for(unsigned int i=0;i<1000;++i){
+    m->addConformer(new Conformer(m->getConformer()),true);
+  }
+  std::vector<std::pair<int,double> > res;
+
+  MMFF::MMFFOptimizeMolecule(*om);
+  MMFF::MMFFOptimizeMoleculeConfs(*m,res,4);
+  for(unsigned int i=1;i<res.size();++i){
+    TEST_ASSERT(!res[i].first);
+    TEST_ASSERT(feq(res[i].second,res[0].second,.00001));
+  }
+  for(unsigned int i=0;i<m->getNumAtoms();++i){
+    RDGeom::Point3D p0=om->getConformer().getAtomPos(i);
+    RDGeom::Point3D np0=m->getConformer().getAtomPos(i);
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+    np0=m->getConformer(11).getAtomPos(i); // pick some random other conformer
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+  }
+  delete m;
+  delete om;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 #endif
 
 void testGithub224()
@@ -837,6 +876,7 @@ int main()
   testMMFFParamGetters();
 #ifdef RDK_TEST_MULTITHREADED
   testMMFFMultiThread();
+  testMMFFMultiThread2();
 #endif
   testGithub162();
 #endif
