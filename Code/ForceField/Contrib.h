@@ -16,6 +16,8 @@ namespace ForceFields {
   //! abstract base class for contributions to ForceFields
   class ForceFieldContrib {
   public:
+    friend class ForceField;
+
     ForceFieldContrib() : dp_forceField(0) {};
     virtual ~ForceFieldContrib() {};
 
@@ -24,7 +26,10 @@ namespace ForceFields {
 
     //! calculates our contribution to the gradients of a position
     virtual void getGrad(double *pos,double *grad) const = 0;
-    
+
+    //! return a copy
+    virtual ForceFieldContrib *copy() const = 0;
+
   protected:
     ForceField *dp_forceField;  //!< our owning ForceField
   };

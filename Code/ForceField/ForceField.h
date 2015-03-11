@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <boost/smart_ptr.hpp>
+#include <boost/foreach.hpp>
 #include <Geometry/point.h>
 
 namespace ForceFields {
@@ -60,6 +61,10 @@ namespace ForceFields {
 
     ~ForceField();
 
+    //! copy ctor, copies contribs.
+    ForceField(const ForceField &other);
+    
+    
     //! does initialization
     void initialize();
 
@@ -201,9 +206,6 @@ namespace ForceFields {
 
     //! initializes our internal distance matrix
     void initDistanceMatrix();
-  private:
-    //! disable the copy constructor
-    ForceField(const ForceField &other);
 
   };
 }

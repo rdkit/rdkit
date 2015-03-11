@@ -68,6 +68,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
       void getGrad(double *pos,double *grad) const;
       void scaleForceConstant(unsigned int count) { this->d_forceConstant /= static_cast<double>(count); };
+      virtual TorsionAngleContrib *copy() const { return new TorsionAngleContrib(*this); };
     private:
       int d_at1Idx,d_at2Idx,d_at3Idx,d_at4Idx;
       unsigned int d_order;
