@@ -504,7 +504,7 @@ namespace {
                     const std::vector<ROMol *> &mols,const std::vector<double> &rmsds,
                     const std::vector<double> &scores,
                     unsigned int count,unsigned int idx){
-    for(unsigned int rep=0;rep<100;++rep){
+    for(unsigned int rep=0;rep<30;++rep){
       MMFF::MMFFMolProperties refMP(*refMol);
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
@@ -524,7 +524,7 @@ namespace {
                     const std::vector<double> &scores,
                     unsigned int count,unsigned int idx){
     ROMol refMolCopy(*refMol);
-    for(unsigned int rep=0;rep<100;++rep){
+    for(unsigned int rep=0;rep<30;++rep){
       unsigned int refNAtoms = refMolCopy.getNumAtoms();
       std::vector<double> refLogpContribs(refNAtoms);
       std::vector<double> refMRContribs(refNAtoms);
