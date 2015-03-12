@@ -48,6 +48,14 @@ namespace RDKit{
     return res;
   }
 
+  void expandQuery(QueryBond *self,const QueryBond *other,
+                          Queries::CompositeQueryType how,
+                          bool maintainOrder){
+    if(other->hasQuery()){
+      const QueryBond::QUERYBOND_QUERY *qry=other->getQuery();
+      self->expandQuery(qry->copy(),how,maintainOrder);
+    }
+  }
 
 
   int BondHasProp(const Bond *bond, const char *key) {
@@ -55,8 +63,9 @@ namespace RDKit{
     return res;
   }
 
-  void BondSetProp(const Bond *bond, const char *key,std::string val) {
-    bond->setProp(key, val);
+  template<class T>
+  void BondSetProp(const Bond *bond, const char *key, const T&val) {
+    bond->setProp<T>(key, val);
   }
   void BondClearProp(const Bond *bond, const char *key){
     if (!bond->hasProp(key)) {
@@ -65,14 +74,14 @@ namespace RDKit{
     bond->clearProp(key);
   }
 
-
-  std::string BondGetProp(const Bond *bond, const char *key) {
+  template<class T>
+  T BondGetProp(const Bond *bond, const char *key) {
     if (!bond->hasProp(key)) {
       PyErr_SetString(PyExc_KeyError,key);
       throw python::error_already_set();
     }
-    std::string res;
-    bond->getProp(key, res);
+    T res;
+    bond->getProp<T>(key, res);
     return res;
   }
 
@@ -199,7 +208,7 @@ struct bond_wrapper {
               "returns the SMARTS (or SMILES) string for a Bond")
 
       // properties
-      .def("SetProp",BondSetProp,
+      .def("SetProp",BondSetProp<std::string>,
 	   (python::arg("self"), python::arg("key"),
 	    python::arg("val")),
 	   "Sets a bond property\n\n"
@@ -208,7 +217,7 @@ struct bond_wrapper {
 	   "    - value: the property value (a string).\n\n"
            )
 
-      .def("GetProp", BondGetProp,
+      .def("GetProp", BondGetProp<std::string>,
            "Returns the value of the property.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - key: the name of the property to return (a string).\n\n"
@@ -216,11 +225,63 @@ struct bond_wrapper {
 	   "  NOTE:\n"
 	   "    - If the property has not been set, a KeyError exception will be raised.\n")
 
+      .def("SetIntProp",BondSetProp<int>,
+	   (python::arg("self"), python::arg("key"),
+	    python::arg("val")),
+	   "Sets a bond property\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be set (a string).\n"
+	   "    - value: the property value (an int).\n\n"
+           )
+
+      .def("GetIntProp", BondGetProp<int>,
+           "Returns the value of the property.\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to return (an int).\n\n"
+	   "  RETURNS: an int\n\n"
+	   "  NOTE:\n"
+	   "    - If the property has not been set, a KeyError exception will be raised.\n")
+
+      .def("SetDoubleProp",BondSetProp<double>,
+	   (python::arg("self"), python::arg("key"),
+	    python::arg("val")),
+	   "Sets a bond property\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be set (a string).\n"
+	   "    - value: the property value (a double).\n\n"
+           )
+
+      .def("GetDoubleProp", BondGetProp<double>,
+           "Returns the value of the property.\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to return (a double).\n\n"
+	   "  RETURNS: a double\n\n"
+	   "  NOTE:\n"
+	   "    - If the property has not been set, a KeyError exception will be raised.\n")
+
+      .def("SetBoolProp",BondSetProp<bool>,
+	   (python::arg("self"), python::arg("key"),
+	    python::arg("val")),
+	   "Sets a bond property\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be set (a string).\n"
+	   "    - value: the property value (a boolean).\n\n"
+           )
+
+      .def("GetBoolProp", BondGetProp<bool>,
+           "Returns the value of the property.\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to return (a boolean).\n\n"
+	   "  RETURNS: a boolean\n\n"
+	   "  NOTE:\n"
+	   "    - If the property has not been set, a KeyError exception will be raised.\n")
+
+      
       .def("HasProp", BondHasProp,
            "Queries a Bond to see if a particular property has been assigned.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - key: the name of the property to check for (a string).\n")
-
+      
       .def("ClearProp", BondClearProp,
            "Removes a particular property from an Bond (does nothing if not already set).\n\n"
 	   "  ARGUMENTS:\n"
@@ -271,6 +332,12 @@ struct bond_wrapper {
       .value("STEREOZ",Bond::STEREOZ)
       .value("STEREOE",Bond::STEREOE)
       ;
+
+    bondClassDoc="The class to store QueryBonds.\n\
+These cannot currently be constructed directly from Python\n";
+    python::class_<QueryBond,python::bases<Bond> >("QueryBond",bondClassDoc.c_str(),python::no_init)
+      ;
+    
   };
   
 };
