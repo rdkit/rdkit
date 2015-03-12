@@ -5,7 +5,7 @@ rdkit_library(ForceFieldHelpers UFF/AtomTyper.cpp UFF/Builder.cpp
 rdkit_headers(UFF/AtomTyper.h
               UFF/Builder.h UFF/UFF.h DEST GraphMol/ForceFieldHelpers/UFF)
 rdkit_headers(MMFF/AtomTyper.h
-              MMFF/Builder.h DEST GraphMol/ForceFieldHelpers/MMFF)
+              MMFF/Builder.h MMFF/MMFF.h DEST GraphMol/ForceFieldHelpers/MMFF)
 
 add_subdirectory(MMFF)
 add_subdirectory(UFF)
