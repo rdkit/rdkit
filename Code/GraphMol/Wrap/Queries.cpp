@@ -74,9 +74,28 @@ namespace RDKit{
   QAFUNC2(IsAliphaticQueryAtom,makeAtomAliphaticQuery,int);
   QAFUNC2(IsInRingQueryAtom,makeAtomInRingQuery,int);
 
+ QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {       \
+    QueryAtom *res=new QueryAtom();\
+    res->setQuery(makeHasPropQuery<Atom>(propname));    \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
 
+ QueryBond *HasPropQueryBond(const std::string &propname, bool negate) {       \
+    QueryBond *res=new QueryBond();\
+    res->setQuery(makeHasPropQuery<Bond>(propname));    \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
 
-
+template<class Ret, class T>
+Ret *PropQuery(const std::string &propname, const T &v, bool negate) { \
+    QueryAtom *res=new QueryAtom();\
+    res->setQuery(makePropQuery<Atom,T>(propname,v));   \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
+      
 struct queries_wrapper {
   static void wrap(){
 #define QADEF1(_funcname_)     python::def(# _funcname_ "EqualsQueryAtom",_funcname_##EqualsQueryAtom,\
@@ -117,6 +136,15 @@ struct queries_wrapper {
     QADEF2(IsAliphatic);
     QADEF2(IsInRing);
 
+    python::def("HasPropQueryAtom",HasPropQueryAtom,
+                (python::arg("propname"),python::arg("negate")=false),
+                "Returns a QueryAtom that matches when the propery 'propname' exists in the atom.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasPropQueryBond",HasPropQueryBond,
+                (python::arg("propname"),python::arg("negate")=false),
+                "Returns a QueryBond that matches when the propery 'propname' exists in the bond.",
+                python::return_value_policy<python::manage_new_object>());
     
   };
 };
