@@ -522,7 +522,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  (weights default to 100.0)\n\
        \n\
       RETURNS\n\
-      RMSD value\n\
+      The O3A object\n\
     \n";
   python::def("GetO3A", RDKit::MolAlign::getMMFFO3A,
               (python::arg("prbMol"), python::arg("refMol"),
@@ -566,7 +566,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  (weights default to 100.0)\n\
        \n\
       RETURNS\n\
-      RMSD value\n\
+      The O3A object\n\
     \n";
   python::def("GetCrippenO3A", RDKit::MolAlign::getCrippenO3A,
               (python::arg("prbMol"), python::arg("refMol"),
