@@ -130,4 +130,22 @@ std::vector<T> *pythonObjectToVect(const python::object &obj){
   return res;
 }
 
+class NOGIL
+{
+public:
+    inline NOGIL()
+    {
+        m_thread_state = PyEval_SaveThread();
+    }
+
+    inline ~NOGIL()
+    {
+        PyEval_RestoreThread(m_thread_state);
+        m_thread_state = NULL;
+    }
+
+private:
+    PyThreadState * m_thread_state;
+};
+
 #endif
