@@ -300,14 +300,14 @@ namespace RDKit {
     }
 
 
-    std::vector<boost::shared_ptr<PyO3A> > getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol,
-                                                              unsigned int numThreads,
-                                                              python::object prbProps,
-                                                              python::object refProps,
-                                                              int refCid = -1, bool reflect = false,
-                                                              unsigned int maxIters = 50, unsigned int options = 0,
-                                                              python::list constraintMap = python::list(),
-                                                              python::list constraintWeights = python::list())
+    python::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol,
+                                     unsigned int numThreads,
+                                     python::object prbProps,
+                                     python::object refProps,
+                                     int refCid = -1, bool reflect = false,
+                                     unsigned int maxIters = 50, unsigned int options = 0,
+                                     python::list constraintMap = python::list(),
+                                     python::list constraintWeights = python::list())
     {
       MatchVectType *cMap = (python::len(constraintMap)
         ? _translateAtomMap(constraintMap) : NULL);
@@ -359,10 +359,9 @@ namespace RDKit {
                           MolAlign::O3A::MMFF94, refCid,
                           reflect, maxIters, options, cMap, cWts);
 
-      std::vector<boost::shared_ptr<PyO3A> > pyres;
-      pyres.resize(res.size());
+      python::list pyres;
       for(unsigned int i=0;i<res.size();++i){
-        pyres[i].reset(new PyO3A(res[i]));
+        pyres.append(new PyO3A(res[i]));
       }
 
       if(!prbPyMMFFMolProperties) delete prbMolProps;
@@ -374,7 +373,7 @@ namespace RDKit {
         delete cWts;
       }
       
-      return pyres;
+      return python::tuple(pyres);
     }
 
     PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
@@ -453,14 +452,14 @@ namespace RDKit {
       return pyO3A;
     }
 
-    std::vector<boost::shared_ptr<PyO3A> > getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol,
-                                                                 unsigned int numThreads,
-                                                                 python::list prbCrippenContribs,
-                                                                 python::list refCrippenContribs,
-                                                                 int refCid = -1, bool reflect = false,
-                                                                 unsigned int maxIters = 50, unsigned int options = 0,
-                                                                 python::list constraintMap = python::list(),
-                                                                 python::list constraintWeights = python::list())
+    python::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol,
+                                        unsigned int numThreads,
+                                        python::list prbCrippenContribs,
+                                        python::list refCrippenContribs,
+                                        int refCid = -1, bool reflect = false,
+                                        unsigned int maxIters = 50, unsigned int options = 0,
+                                        python::list constraintMap = python::list(),
+                                        python::list constraintWeights = python::list())
     {
       MatchVectType *cMap = (python::len(constraintMap)
         ? _translateAtomMap(constraintMap) : NULL);
@@ -522,10 +521,9 @@ namespace RDKit {
                           MolAlign::O3A::CRIPPEN, refCid,
                           reflect, maxIters, options, cMap, cWts);
 
-      std::vector<boost::shared_ptr<PyO3A> > pyres;
-      pyres.resize(res.size());
+      python::list pyres;
       for(unsigned int i=0;i<res.size();++i){
-        pyres[i].reset(new PyO3A(res[i]));
+        pyres.append(new PyO3A(res[i]));
       }
 
       if (cMap) {
@@ -535,7 +533,7 @@ namespace RDKit {
         delete cWts;
       }
       
-      return pyres;
+      return python::tuple(pyres);
     }
   } // end of namespace MolAlign
 } // end of namespace RDKit
@@ -661,6 +659,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
     .def("Weights",&RDKit::MolAlign::PyO3A::weights, (python::arg("self")),
 	 "returns the weight vector as found by Open3DALIGN")
     ;
+
   docString = "Get an O3A object with atomMap and weights vectors to overlay\n\
       the probe molecule onto the reference molecule based on\n\
       MMFF atom types and charges\n\
@@ -762,8 +761,6 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  by SetupMMFFForceField()\n\
       - refPyMMFFMolProperties   PyMMFFMolProperties object for the reference molecule as returned\n\
                                  by SetupMMFFForceField()\n\
-      - prbCid                   ID of the conformation in the probe to be used \n\
-                                 for the alignment (defaults to first conformation)\n\
       - refCid                   ID of the conformation in the ref molecule to which \n\
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
@@ -809,8 +806,6 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - refCrippenContribs       Crippen atom contributions for the reference molecule\n\
                                  as a list of (logp, mr) tuples, as returned\n\
                                  by _CalcCrippenContribs()\n\
-      - prbCid                   ID of the conformation in the probe to be used \n\
-                                 for the alignment (defaults to first conformation)\n\
       - refCid                   ID of the conformation in the ref molecule to which \n\
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
