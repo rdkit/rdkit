@@ -23,6 +23,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 namespace python = boost::python;
 
@@ -199,6 +200,101 @@ namespace RDKit {
     return mol.getNumAtoms(onlyExplicit);
   }
 
+  //----------------------------------------------------------------------------
+  // Atom Bookmark Interface
+  void SetAtomBookmark(ROMol *mol, Atom *atom, int mark)
+  {
+    // dangerous as there is not concept of shared pointers here (or internal
+    //  to the underlying function.  I.e. the atom can be deleted
+    //  EVEN if stored as a bookmark
+    mol->setAtomBookmark(atom, mark);
+  }
+
+  void ReplaceAtomBookmark(ROMol *mol, Atom *atom, int mark)
+  {
+    // dangerous as there is not concept of shared pointers here (or internal
+    //  to the underlying function.  I.e. the atom can be deleted
+    //  EVEN if stored as a bookmark
+    mol->replaceAtomBookmark(atom, mark);
+  }
+
+  typedef std::vector<Atom*> AtomVector;
+  AtomVector *GetAllAtomsWithBookmark(ROMol *mol, int mark)
+  {
+    // another dangerous function, these pointers stay live
+    // after their owners go away
+    AtomVector *res = new AtomVector;
+    ROMol::ATOM_PTR_LIST &atoms = mol->getAllAtomsWithBookmark(mark);
+    for( ROMol::ATOM_PTR_LIST::iterator it=atoms.begin();
+         it != atoms.end();
+         ++it)
+      res->push_back(*it);
+    return res;
+  }
+
+  void ClearAtomBookmark(ROMol *mol, int mark, const Atom *atom=0)
+  {
+    if (atom)
+      mol->clearAtomBookmark(mark, atom);
+    else
+      mol->clearAtomBookmark(mark);
+      
+  }
+
+  void ClearAllAtomBookmarks(ROMol *mol)
+  {
+    mol->clearAllAtomBookmarks();
+  }
+
+  bool HasAtomBookmark(ROMol *mol, int mark)
+  {
+    return mol->hasAtomBookmark(mark);
+  }
+
+  //----------------------------------------------------------------------------
+  // Bond Bookmark Interface
+  void SetBondBookmark(ROMol *mol, Bond *bond, int mark)
+  {
+    // dangerous as there is not concept of shared pointers here (or internal
+    //  to the underlying function.  I.e. the bond can be deleted
+    //  EVEN if stored as a bookmark
+    mol->setBondBookmark(bond, mark);
+  }
+
+  typedef std::vector<Bond*> BondVector;
+  BondVector *GetAllBondsWithBookmark(ROMol *mol, int mark)
+  {
+    // another dangerous function, these pointers stay live
+    // after their owners go away
+    BondVector *res = new BondVector;
+    ROMol::BOND_PTR_LIST &bonds = mol->getAllBondsWithBookmark(mark);
+    for( ROMol::BOND_PTR_LIST::iterator it=bonds.begin();
+         it != bonds.end();
+         ++it)
+      res->push_back(*it);
+    return res;
+  }
+
+  void ClearBondBookmark(ROMol *mol, int mark, const Bond *bond=0)
+  {
+    if (bond)
+      mol->clearBondBookmark(mark, bond);
+    else
+      mol->clearBondBookmark(mark);
+      
+  }
+
+  void ClearAllBondBookmarks(ROMol *mol)
+  {
+    mol->clearAllBondBookmarks();
+  }
+
+  bool HasBondBookmark(ROMol *mol, int mark)
+  {
+    return mol->hasBondBookmark(mark);
+  }
+
+  // ===================================================
   class ReadWriteMol : public RWMol {
   public:
     ReadWriteMol(const ROMol &m) : RWMol(m){
@@ -254,6 +350,12 @@ struct mol_wrapper {
   static void wrap(){
     python::register_exception_translator<ConformerException>(&rdExceptionTranslator);
 
+    python::class_<AtomVector>("AtomVector")
+      .def(python::vector_indexing_suite<AtomVector>() );
+    
+    python::class_<BondVector>("BondVector")
+      .def(python::vector_indexing_suite<BondVector>() );
+    
     python::class_<ROMol,ROMOL_SPTR,boost::noncopyable>("Mol",
 			  molClassDoc.c_str(),
 			  python::init<>("Constructor, takes no arguments"))
@@ -460,8 +562,67 @@ struct mol_wrapper {
       .def("GetRingInfo",&ROMol::getRingInfo,
       python::return_value_policy<python::reference_existing_object>(),
        "Returns the number of molecule's RingInfo object.\n\n")
+
+      // ----Atom Bookmarks
+      .def("SetAtomBookmark",SetAtomBookmark,
+           "Sets an atom bookmark\n\n")
+      
+      .def("ReplaceAtomBookmark",ReplaceAtomBookmark,
+           "Replaces an atom bookmark (removes all existing atoms)\n\n")
+      
+     .def("ClearAtomBookmark",ClearAtomBookmark,
+          (python::arg("self"),python::arg("mark"), python::arg("atom")=0),
+          "Clears the atom bookmark\n\n")
+      
+
+    .def("ClearAllAtomBookmarks",&ROMol::clearAllAtomBookmarks,
+         "Clears all the atom bookmarks\n\n")
+
+      .def("HasAtomBookmark",&ROMol::hasAtomBookmark,
+         "Returns True if the atom book mark `mark` exists.\n\n")
+
+    .def("GetAtomWithBookmark",&ROMol::getAtomWithBookmark,
+         (python::arg("self"), python::arg("mark")),
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the atom for the bookmark (or None)\n\n")
+      
+    .def("GetAllAtomsWithBookmark",GetAllAtomsWithBookmark,
+         python::return_value_policy<python::manage_new_object,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the atom for the bookmark (or None)\n\n")
+
+      // ----Bond Bookmarks
+      .def("SetBondBookmark",SetBondBookmark,
+           "Sets an bond bookmark\n\n")
+      
+     .def("ClearBondBookmark",ClearBondBookmark,
+          (python::arg("self"),python::arg("mark"), python::arg("bond")=0),
+          "Clears the bond bookmark\n\n")
+      
+
+    .def("ClearAllBondBookmarks",&ROMol::clearAllBondBookmarks,
+         "Clears all the bond bookmarks\n\n")
+
+      .def("HasBondBookmark",&ROMol::hasBondBookmark,
+         "Returns True if the bond book mark `mark` exists.\n\n")
+
+    .def("GetBondWithBookmark",&ROMol::getBondWithBookmark,
+         (python::arg("self"), python::arg("mark")),
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the bond for the bookmark (or None)\n\n")
+      
+    .def("GetAllBondsWithBookmark",GetAllBondsWithBookmark,
+         python::return_value_policy<python::manage_new_object,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the bond for the bookmark (or None)\n\n")
+      
       ;
-        
+      
+    
+      
+
     // ---------------------------------------------------------------------------------------------
     python::def("_HasSubstructMatchStr",
                 HasSubstructMatchStr,
