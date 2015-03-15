@@ -2786,8 +2786,8 @@ CAS<~>
     try:
       m.SetAtomBookmark(other_atom, 1000)
       self.assertFalse("Should have been a runtime error!")
-    except RuntimeError, m:
-      self.assertEquals(str(m), "Pre-condition Violation")
+    except RuntimeError:
+      pass
     
   def testBondBookmarks(self):
     m = Chem.MolFromSmiles("C" * 14)
@@ -2820,8 +2820,8 @@ CAS<~>
     try:
       m.SetBondBookmark(other_bond, 1000)
       self.assertFalse("Should have been a runtime error!")
-    except RuntimeError, m:
-      self.assertEquals(str(m), "Pre-condition Violation")
+    except RuntimeError:
+      pass
 
     
           
