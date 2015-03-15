@@ -41,13 +41,17 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
-    int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
-                                          seed, clearConfs,
-					  useRandomCoords,boxSizeMult,
-					  randNegEig,
-                                          numZeroFail,
-                                          pMapPtr,forceTol,
-                                          ignoreSmoothingFailures);
+    int res;
+    {
+      NOGIL gil;
+      res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
+                                        seed, clearConfs,
+                                        useRandomCoords,boxSizeMult,
+                                        randNegEig,
+                                        numZeroFail,
+                                        pMapPtr,forceTol,
+                                        ignoreSmoothingFailures);
+    }
     return res;
   }
 
@@ -74,15 +78,17 @@ namespace RDKit {
     }
 
     INT_VECT res;
-    DGeomHelpers::EmbedMultipleConfs(mol,res,
-                                     numConfs,numThreads,
-                                     maxAttempts,
-                                     seed, clearConfs,
-                                     useRandomCoords,boxSizeMult, 
-                                     randNegEig, numZeroFail,
-                                     pruneRmsThresh,pMapPtr,forceTol,
-                                     ignoreSmoothingFailures);
-
+    {
+      NOGIL gil;
+      DGeomHelpers::EmbedMultipleConfs(mol,res,
+                                       numConfs,numThreads,
+                                       maxAttempts,
+                                       seed, clearConfs,
+                                       useRandomCoords,boxSizeMult, 
+                                       randNegEig, numZeroFail,
+                                       pruneRmsThresh,pMapPtr,forceTol,
+                                       ignoreSmoothingFailures);
+    }
     return res;
   } 
 
