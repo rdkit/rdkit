@@ -17,6 +17,7 @@
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
+#include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -204,25 +205,28 @@ namespace RDKit {
   // Atom Bookmark Interface
   void SetAtomBookmark(ROMol *mol, Atom *atom, int mark)
   {
-    // dangerous as there is not concept of shared pointers here (or internal
-    //  to the underlying function.  I.e. the atom can be deleted
-    //  EVEN if stored as a bookmark
+    // the internal precondition is that atom->getOwningMol() == mol
+    //  so this function is safe because the atom can't be
+    //  deleted under the hood (RWMol will auto-remove the atom
+    //   from the book mark on removal)
     mol->setAtomBookmark(atom, mark);
   }
 
   void ReplaceAtomBookmark(ROMol *mol, Atom *atom, int mark)
   {
-    // dangerous as there is not concept of shared pointers here (or internal
-    //  to the underlying function.  I.e. the atom can be deleted
-    //  EVEN if stored as a bookmark
+    // the internal precondition is that atom->getOwningMol() == mol
+    //  so this function is safe because the atom can't be
+    //  deleted under the hood (RWMol will auto-remove the atom
+    //   from the book mark on removal)
     mol->replaceAtomBookmark(atom, mark);
   }
 
   typedef std::vector<Atom*> AtomVector;
   AtomVector *GetAllAtomsWithBookmark(ROMol *mol, int mark)
   {
-    // another dangerous function, these pointers stay live
-    // after their owners go away
+    // the internal precondition is that atoms are owned
+    //  by the mol, so the CANNOT go away unless we are
+    //  in a RWMol, ROMol's are totally safe.
     AtomVector *res = new AtomVector;
     ROMol::ATOM_PTR_LIST &atoms = mol->getAllAtomsWithBookmark(mark);
     for( ROMol::ATOM_PTR_LIST::iterator it=atoms.begin();
@@ -255,17 +259,20 @@ namespace RDKit {
   // Bond Bookmark Interface
   void SetBondBookmark(ROMol *mol, Bond *bond, int mark)
   {
-    // dangerous as there is not concept of shared pointers here (or internal
-    //  to the underlying function.  I.e. the bond can be deleted
-    //  EVEN if stored as a bookmark
+    // if we force the bond to be owned by this mol, we are safe
+    //  here.
+    // The C++ code heavily uses adding bonds from other molecules
+    //  in the parsers and fMCS so we add the precondition here
+    PRECONDITION(bond, "Null bond provided");
+    PRECONDITION(mol == &bond->getOwningMol(),
+                 "Python API can only bookmark bonds owned by this molecule");
     mol->setBondBookmark(bond, mark);
   }
 
   typedef std::vector<Bond*> BondVector;
   BondVector *GetAllBondsWithBookmark(ROMol *mol, int mark)
   {
-    // another dangerous function, these pointers stay live
-    // after their owners go away
+    // see precondition above
     BondVector *res = new BondVector;
     ROMol::BOND_PTR_LIST &bonds = mol->getAllBondsWithBookmark(mark);
     for( ROMol::BOND_PTR_LIST::iterator it=bonds.begin();
@@ -337,12 +344,15 @@ namespace RDKit {
           molecule itself is modified, for example).\n\
         Molecules also have the concept of *private* properties, which are tagged\n\
           by beginning the property name with an underscore (_).\n";
+
   std::string rwmolClassDoc = "The RW molecule class (read/write)\n\n\
   This class is a more-performant version of the EditableMolecule class in that\n\
   it is a 'live' molecule and shares the interface from the Mol class.\n\
   All changes are performed without the need to create a copy of the\n\
   molecule using GetMol() (this is still available, however).\n\
-  \n\
+  n.b. it is NOT generally safe to hold onto atom and bonds objects\n\
+   when using a RWMol as they can be removed under the hood.  Note\n\
+   that this is not the case for a normal Molecule so use with caution.\n\
   n.b. Eventually this class may become a direct replacement for EditableMol";
 
 
@@ -589,7 +599,7 @@ struct mol_wrapper {
       
     .def("GetAllAtomsWithBookmark",GetAllAtomsWithBookmark,
          python::return_value_policy<python::manage_new_object,
-          python::with_custodian_and_ward_postcall<0,1> >(),
+         python::with_custodian_and_ward_postcall<0,1> >(),
          "Returns the atom for the bookmark (or None)\n\n")
 
       // ----Bond Bookmarks

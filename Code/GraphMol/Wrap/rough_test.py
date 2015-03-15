@@ -2780,6 +2780,14 @@ CAS<~>
                       [a.GetIdx() for a in m.GetAllAtomsWithBookmark(-1)])
     m.ClearAllAtomBookmarks()
     self.assertFalse(m.HasAtomBookmark(-1))
+
+    m2 = Chem.MolFromSmiles("C")
+    other_atom = list(m2.GetAtoms())[0]
+    try:
+      m.SetAtomBookmark(other_atom, 1000)
+      self.assertFalse("Should have been a runtime error!")
+    except RuntimeError, m:
+      self.assertEquals(str(m), "Pre-condition Violation")
     
   def testBondBookmarks(self):
     m = Chem.MolFromSmiles("C" * 14)
@@ -2806,6 +2814,14 @@ CAS<~>
                       [a.GetIdx() for a in m.GetAllBondsWithBookmark(-1)])
     m.ClearAllBondBookmarks()
     self.assertFalse(m.HasBondBookmark(-1))
+
+    m2 = Chem.MolFromSmiles("CC")
+    other_bond = list(m2.GetBonds())[0]
+    try:
+      m.SetBondBookmark(other_bond, 1000)
+      self.assertFalse("Should have been a runtime error!")
+    except RuntimeError, m:
+      self.assertEquals(str(m), "Pre-condition Violation")
 
     
           
