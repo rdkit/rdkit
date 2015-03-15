@@ -17,6 +17,7 @@
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/WrapList.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
@@ -221,21 +222,6 @@ namespace RDKit {
     mol->replaceAtomBookmark(atom, mark);
   }
 
-  typedef std::vector<Atom*> AtomVector;
-  AtomVector *GetAllAtomsWithBookmark(ROMol *mol, int mark)
-  {
-    // the internal precondition is that atoms are owned
-    //  by the mol, so the CANNOT go away unless we are
-    //  in a RWMol, ROMol's are totally safe.
-    AtomVector *res = new AtomVector;
-    ROMol::ATOM_PTR_LIST &atoms = mol->getAllAtomsWithBookmark(mark);
-    for( ROMol::ATOM_PTR_LIST::iterator it=atoms.begin();
-         it != atoms.end();
-         ++it)
-      res->push_back(*it);
-    return res;
-  }
-
   void ClearAtomBookmark(ROMol *mol, int mark, const Atom *atom=0)
   {
     if (atom)
@@ -267,19 +253,6 @@ namespace RDKit {
     PRECONDITION(mol == &bond->getOwningMol(),
                  "Python API can only bookmark bonds owned by this molecule");
     mol->setBondBookmark(bond, mark);
-  }
-
-  typedef std::vector<Bond*> BondVector;
-  BondVector *GetAllBondsWithBookmark(ROMol *mol, int mark)
-  {
-    // see precondition above
-    BondVector *res = new BondVector;
-    ROMol::BOND_PTR_LIST &bonds = mol->getAllBondsWithBookmark(mark);
-    for( ROMol::BOND_PTR_LIST::iterator it=bonds.begin();
-         it != bonds.end();
-         ++it)
-      res->push_back(*it);
-    return res;
   }
 
   void ClearBondBookmark(ROMol *mol, int mark, const Bond *bond=0)
@@ -356,15 +329,14 @@ namespace RDKit {
   n.b. Eventually this class may become a direct replacement for EditableMol";
 
 
+typedef std::list<Atom*> atomlist;
+
 struct mol_wrapper {
   static void wrap(){
     python::register_exception_translator<ConformerException>(&rdExceptionTranslator);
 
-    python::class_<AtomVector>("AtomVector")
-      .def(python::vector_indexing_suite<AtomVector>() );
-    
-    python::class_<BondVector>("BondVector")
-      .def(python::vector_indexing_suite<BondVector>() );
+    export_ConstSTLListOfPtrs<Atom*>("ConstAtomList");
+    export_ConstSTLListOfPtrs<Bond*>("ConstBondList");
     
     python::class_<ROMol,ROMOL_SPTR,boost::noncopyable>("Mol",
 			  molClassDoc.c_str(),
@@ -597,14 +569,14 @@ struct mol_wrapper {
           python::with_custodian_and_ward_postcall<0,1> >(),
          "Returns the atom for the bookmark (or None)\n\n")
       
-    .def("GetAllAtomsWithBookmark",GetAllAtomsWithBookmark,
-         python::return_value_policy<python::manage_new_object,
-         python::with_custodian_and_ward_postcall<0,1> >(),
-         "Returns the atom for the bookmark (or None)\n\n")
+    .def("GetAllAtomsWithBookmark",&ROMol::getAllAtomsWithBookmark,
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the list of atoms for the bookmark\n\n")
 
-      // ----Bond Bookmarks
-      .def("SetBondBookmark",SetBondBookmark,
-           "Sets an bond bookmark\n\n")
+    // ----Bond Bookmarks
+    .def("SetBondBookmark",SetBondBookmark,
+         "Sets an bond bookmark\n\n")
       
      .def("ClearBondBookmark",ClearBondBookmark,
           (python::arg("self"),python::arg("mark"), python::arg("bond")=0),
@@ -622,12 +594,11 @@ struct mol_wrapper {
          python::return_internal_reference<1,
           python::with_custodian_and_ward_postcall<0,1> >(),
          "Returns the bond for the bookmark (or None)\n\n")
-      
-    .def("GetAllBondsWithBookmark",GetAllBondsWithBookmark,
-         python::return_value_policy<python::manage_new_object,
+
+    .def("GetAllBondsWithBookmark",&ROMol::getAllBondsWithBookmark,
+         python::return_internal_reference<1,
           python::with_custodian_and_ward_postcall<0,1> >(),
-         "Returns the bond for the bookmark (or None)\n\n")
-      
+         "Returns the list of bonds for the bookmark\n\n")
       ;
       
     
