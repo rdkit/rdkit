@@ -35,6 +35,7 @@ namespace ForceFields {
         const MMFFVdWRijstarEps *mmffVdWConstants);
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
+      virtual VdWContrib *copy() const { return new VdWContrib(*this); };
     
     private:
       int d_at1Idx, d_at2Idx;
@@ -60,6 +61,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
     
+      virtual EleContrib *copy() const { return new EleContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx;
       double d_chargeTerm;    //!< q1 * q2 / D

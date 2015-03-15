@@ -40,6 +40,8 @@ namespace RDGeom {
     virtual double length() const = 0;
     virtual double lengthSq() const = 0;
     virtual unsigned int dimension() const = 0;
+
+    virtual Point *copy() const = 0;
   };
    
   //typedef class Point3D Point;
@@ -57,6 +59,10 @@ namespace RDGeom {
 
     Point3D(const Point3D &other) :
       Point(other), x(other.x), y(other.y), z(other.z) {
+    }
+
+    virtual Point *copy() const {
+      return new Point3D(*this);
     }
 
     inline unsigned int dimension() const {return 3;}
@@ -267,6 +273,10 @@ namespace RDGeom {
     Point2D(const Point2D &other) : Point(other), x(other.x), y(other.y) {
     }
 
+    virtual Point *copy() const {
+      return new Point2D(*this);
+    }
+
     inline unsigned int dimension() const {return 2;}
 
     inline double operator[](unsigned int i) const {
@@ -396,6 +406,10 @@ namespace RDGeom {
     PointND(const PointND &other) : Point(other) {
       RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(*other.getStorage());
       dp_storage.reset(nvec);
+    }
+
+    virtual Point *copy() const {
+      return new PointND(*this);
     }
 
 #if 0
