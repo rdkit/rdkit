@@ -12,7 +12,7 @@
 #include "Grid3D.h"
 #include "UniformGrid3D.h"
 #include "point.h"
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <DataStructs/DiscreteValueVect.h>
 #include <cmath>
 

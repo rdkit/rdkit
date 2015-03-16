@@ -13,7 +13,7 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>

@@ -11,7 +11,7 @@
 #include "RDKitBase.h"
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <RDGeneral/utils.h>
 #include <vector>

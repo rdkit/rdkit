@@ -10,7 +10,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 

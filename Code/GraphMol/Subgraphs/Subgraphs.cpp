@@ -14,7 +14,7 @@
 #include "SubgraphUtils.h"
 
 #include <RDGeneral/utils.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <iostream>
 #include <cstring>
