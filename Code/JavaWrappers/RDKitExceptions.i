@@ -34,7 +34,7 @@
 // Defines all of the C++ -> Java exception handling
 
 %{
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <JavaWrappers/GenericRDKitException.h>
 %}
 
@@ -116,7 +116,7 @@
 }
 
 // Note that these files must follow the typemap declarations
-%include <RDBoost/Exceptions.h>
+%include <RDGeneral/Exceptions.h>
 %include <JavaWrappers/GenericRDKitException.h>
 
 %exception {

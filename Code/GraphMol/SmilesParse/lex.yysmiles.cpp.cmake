@@ -569,7 +569,7 @@ static yyconst flex_int16_t yy_chk[303] =
 #include <io.h> 	 
 #endif
 
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>

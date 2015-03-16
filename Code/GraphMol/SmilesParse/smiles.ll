@@ -16,7 +16,7 @@
 #include <io.h> 	 
 #endif
 
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
