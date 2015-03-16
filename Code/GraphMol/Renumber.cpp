@@ -9,7 +9,7 @@
 //
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolOps.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <boost/foreach.hpp>

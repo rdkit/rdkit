@@ -11,7 +11,7 @@
 
 #include <boost/python.hpp>
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
