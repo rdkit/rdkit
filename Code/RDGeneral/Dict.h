@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <boost/any.hpp>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <boost/lexical_cast.hpp>
 
 namespace RDKit{
