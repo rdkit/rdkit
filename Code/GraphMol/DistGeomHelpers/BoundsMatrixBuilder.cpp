@@ -17,7 +17,7 @@
 
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <Numerics/SymmMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <boost/dynamic_bitset.hpp>

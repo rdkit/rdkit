@@ -17,7 +17,7 @@
 #include <Geometry/Transform3D.h>
 #include <stack>
 #include <boost/dynamic_bitset.hpp>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #define EIGEN_TOLERANCE 1.0e-2
 namespace MolTransforms {

@@ -13,7 +13,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
 #include <boost/python/converter/shared_ptr_to_python.hpp>

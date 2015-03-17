@@ -22,7 +22,7 @@
 #include <GraphMol/Conformer.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <Geometry/Transform3D.h>
 #include <Numerics/Alignment/AlignPoints.h>

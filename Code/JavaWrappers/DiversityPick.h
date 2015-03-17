@@ -3,7 +3,7 @@
 #include <DataStructs/BitOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <SimDivPickers/MaxMinPicker.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 namespace {
   class taniFunctor {

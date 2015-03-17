@@ -11,7 +11,7 @@
 #include "UniformGrid3D.h"
 #include <DataStructs/DiscreteValueVect.h>
 #include <RDGeneral/StreamOps.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include "point.h"
 #include <fstream>
 #include <boost/cstdint.hpp>
