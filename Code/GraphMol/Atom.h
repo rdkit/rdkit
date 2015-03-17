@@ -527,7 +527,7 @@ namespace RDKit{
     atomindex_t d_index;
     boost::uint16_t d_isotope;
 
-    float d_mass;
+    double d_mass;
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;
