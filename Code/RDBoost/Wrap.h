@@ -46,7 +46,7 @@
 #include <vector>
 #include <list>
 #include <iostream>
-#include "Exceptions.h"
+#include <RDGeneral/Exceptions.h>
 
 namespace python = boost::python;
 
