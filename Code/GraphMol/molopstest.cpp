@@ -4700,6 +4700,71 @@ void testGithubIssue443()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+void testGithubIssue447()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 447: Radicals are not correctly assigned when reading from SMILES." << std::endl;
+  {
+    std::string smiles="C[S]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH3]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH4]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH4+]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+
+  {
+    std::string smiles="C[P]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[PH2]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4773,8 +4838,9 @@ int main(){
   testMolFragsWithQuery();
   testGithubIssue418();
   testGithubIssue432();
-#endif
   testGithubIssue443();
+#endif
+  testGithubIssue447();
   return 0;
 }
 
