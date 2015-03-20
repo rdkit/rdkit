@@ -143,7 +143,9 @@ namespace RDKit {
     void rankWithFunctor(T &ftor,
                          bool breakTies,
                          int *order, bool useSpecial=false,
-                         bool useChirality=false){
+                         bool useChirality=false,
+                         const boost::dynamic_bitset<> *atomsInPlay=NULL,
+                         const boost::dynamic_bitset<> *bondsInPlay=NULL){
       const ROMol &mol=*ftor.dp_mol;
       canon_atom *atoms=ftor.dp_atoms;
       unsigned int nAts=mol.getNumAtoms();
@@ -185,9 +187,15 @@ namespace RDKit {
         }
       }
       if(useChirality && ties){
-        SpecialChiralityAtomCompareFunctor scftor(atoms,mol);
+        SpecialChiralityAtomCompareFunctor scftor(atoms,mol,atomsInPlay,bondsInPlay);
         ActivatePartitions(nAts,order,count,activeset,next,changed);
         RefinePartitions(mol,atoms,scftor,true,order,count,activeset,next,changed,touched);
+#ifdef VERBOSE_CANON
+        std::cerr<<"2a--------"<<std::endl;
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
+        }
+#endif
       }
       ties=false;
       unsigned countCls=0;
@@ -200,12 +208,12 @@ namespace RDKit {
         }
       }
       if(useSpecial && ties && static_cast<float>(countCls)/nAts < 0.5){
-        SpecialSymmetryAtomCompareFunctor sftor(atoms,mol);
+        SpecialSymmetryAtomCompareFunctor sftor(atoms,mol,atomsInPlay,bondsInPlay);
         compareRingAtomsConcerningNumNeighbors(atoms, nAts);
         ActivatePartitions(nAts,order,count,activeset,next,changed);
         RefinePartitions(mol,atoms,sftor,true,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
-        std::cerr<<"2a--------"<<std::endl;
+        std::cerr<<"2b--------"<<std::endl;
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
           std::cerr<<order[i]+1<<" "<<" index: "<<atoms[order[i]].index<<" count: "<<count[order[i]]<<std::endl;
         }
@@ -483,7 +491,7 @@ namespace RDKit {
 
       int *order=(int *)malloc(mol.getNumAtoms()*sizeof(int));
 
-      rankWithFunctor(ftor,breakTies,order,true,includeChirality);
+      rankWithFunctor(ftor,breakTies,order,true,includeChirality,&atomsInPlay,&bondsInPlay);
 
       res.resize(mol.getNumAtoms());
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
