@@ -318,7 +318,7 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
   >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
   >>> m2=BreakBRICSBonds(m)
   >>> Chem.MolToSmiles(m2,True)
-  '[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1'
+  '[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O'
 
 
   can also specify a limited set of bonds to work with:
