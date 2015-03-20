@@ -240,7 +240,7 @@ namespace RDKit {
           ++beg;
           if((nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
               nbr->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-             nbr->hasProp("_ringStereoAtoms")){
+             nbr->hasProp(common_properties::_ringStereoAtoms)){
             return true;
           }
         }
@@ -271,11 +271,14 @@ namespace RDKit {
           ++beg;
           Bond::BondStereo stereo=Bond::STEREONONE;
           if(includeChirality){
-            stereo=bond->getStereo();
+            stereo = bond->getStereo();
+            if(stereo == Bond::STEREOANY){
+              stereo=Bond::STEREONONE;
+            }
           }
           unsigned int idx = bond->getOtherAtomIdx(at->getIdx());
           Bond::BondType bt = bond->getIsAromatic() ? Bond::AROMATIC : bond->getBondType();
-          bondholder bh(bondholder(bt,stereo,idx,0,0));
+          bondholder bh(bondholder(bt,stereo,idx,0));
           nbrs.push_back(bh);
         }
         std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
@@ -321,7 +324,7 @@ namespace RDKit {
             nReps = static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()));
           }
           unsigned int symclass = nbr->getAtomicNum()*ATNUM_CLASS_OFFSET+nbrIdx+1;
-          bondholder bh(bondholder(Bond::SINGLE,stereo,nbrIdx,symclass,0));
+          bondholder bh(bondholder(Bond::SINGLE,stereo,nbrIdx,symclass));
           std::vector<bondholder>::iterator iPos=std::lower_bound(nbrs.begin(),nbrs.end(),bh);
           nbrs.insert(iPos,nReps,bh);
         }
@@ -329,8 +332,8 @@ namespace RDKit {
 
         if(!at->needsUpdatePropertyCache()){
           for(unsigned int ii=0;ii<at->getTotalNumHs();++ii){
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET,0));
-            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET,0));
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET));
+            nbrs.push_back(bondholder(Bond::SINGLE,Bond::STEREONONE,ATNUM_CLASS_OFFSET,ATNUM_CLASS_OFFSET));
           }
         }
       }
@@ -405,7 +408,8 @@ namespace RDKit {
       std::sort(nbrs.begin(),nbrs.end(),bondholder::greater);
     }
 
-    void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx) {
+    void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs,
+        unsigned int atomIdx, std::vector<unsigned int>& result) {
       for(unsigned j=0; j < nbrs.size(); ++j){
         unsigned nbrIdx = nbrs[j].nbrIdx;
 
@@ -426,22 +430,26 @@ namespace RDKit {
           int nSwaps=static_cast<int>(countSwapsToInterconvert(ref,probe));
           if(atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW){
             if(nSwaps%2){
-              nbrs.at(j).numSwaps=2;
+              result.push_back(2);
             }
             else{
-              nbrs.at(j).numSwaps=1;
+              result.push_back(1);
             }
           }
           else if(atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW){
             if(nSwaps%2){
-              nbrs.at(j).numSwaps=1;
+              result.push_back(1);
             }
             else{
-              nbrs.at(j).numSwaps=2;
+              result.push_back(2);
             }
           }
         }
+        else{
+          result.push_back(0);
+        }
       }
+      sort(result.begin(),result.end());
     }
 
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
