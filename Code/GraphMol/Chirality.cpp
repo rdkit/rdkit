@@ -804,7 +804,9 @@ namespace RDKit{
       // later we're going to need ring information, get it now if we don't
       // have it already:
       if(!mol.getRingInfo()->isInitialized()){
-        MolOps::symmetrizeSSSR(mol);
+//        MolOps::symmetrizeSSSR(mol);
+        MolOps::fastFindRings(mol);
+
       }
 
 

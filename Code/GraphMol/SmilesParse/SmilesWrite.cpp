@@ -349,8 +349,19 @@ namespace RDKit{
                             const std::vector<std::vector<int> > &frags){
     std::string result;
     std::vector<std::string> vfragsmi;
+    ROMol tmol(mol,true);
+
+    if(doIsomericSmiles){
+      if(tmol.needsUpdatePropertyCache()){
+        for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
+          (*atIt)->updatePropertyCache(false);
+        }
+      }
+      MolOps::assignStereochemistry(tmol,canonical);
+    }
+
     for(unsigned i=0;i<frags.size();++i){
-      std::string smii = MolFragmentToSmiles(mol,frags[i],NULL,NULL,NULL,
+      std::string smii = MolFragmentToSmiles(tmol,frags[i],NULL,NULL,NULL,
                                       doIsomericSmiles,doKekule,rootedAtAtom,canonical,
                                       allBondsExplicit,allHsExplicit);
       vfragsmi.push_back(smii);
@@ -550,9 +561,10 @@ namespace RDKit{
         }
       }
     }
-    
-    for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
-      (*atIt)->updatePropertyCache(false);
+    if(tmol.needsUpdatePropertyCache()){
+      for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
+        (*atIt)->updatePropertyCache(false);
+      }
     }
 
     UINT_VECT ranks(tmol.getNumAtoms());
@@ -580,7 +592,6 @@ namespace RDKit{
       Canon::rankFragmentAtoms(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,
                                true,
                                doIsomericSmiles,doIsomericSmiles);
-      Canon::rankFragmentAtoms(tmol,ranks,atomsInPlay,bondsInPlay);
       //MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
