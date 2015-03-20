@@ -207,7 +207,8 @@ namespace RDKit {
           ties=true;
         }
       }
-      if(useSpecial && ties && static_cast<float>(countCls)/nAts < 0.5){
+      unsigned int nAts2 = atomsInPlay ? atomsInPlay->count() : nAts;
+      if(useSpecial && ties && static_cast<float>(countCls)/nAts2 < 0.5){
         SpecialSymmetryAtomCompareFunctor sftor(atoms,mol,atomsInPlay,bondsInPlay);
         compareRingAtomsConcerningNumNeighbors(atoms, nAts);
         ActivatePartitions(nAts,order,count,activeset,next,changed);
