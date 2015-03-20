@@ -2522,7 +2522,7 @@ CAS<~>
     self.assertEqual(len(frags),5)
     self.assertEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
     smi = Chem.MolToSmiles(nm,True)
-    self.assertEqual(smi,'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]')
+    self.assertEqual(smi,'[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1')
 
     m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
     bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))

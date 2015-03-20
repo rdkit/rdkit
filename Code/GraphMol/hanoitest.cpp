@@ -1175,6 +1175,38 @@ void test10(){
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+void test11(){
+  BOOST_LOG(rdInfoLog) << "testing mol fragments." << std::endl;
+  {
+    std::string smi="C[C@H]([C@H](c1ccccc1)O)N2CCCCC2.C[C@@H]([C@H](c1ccccc1)O)N2CCCCC2";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::vector<std::string> vfragsmi;
+    std::vector<std::vector<int> > frags;
+    unsigned int numFrag = MolOps::getMolFrags(*m,frags);
+    for(unsigned i=0;i<numFrag;++i){
+      std::string smii = MolFragmentToSmiles(*m,frags[i],0,0,0,true);
+      std::cout << smii << std::endl;
+      vfragsmi.push_back(smii);
+    }
+    std::string smi1 = MolToSmiles(*m,true);
+    delete m;
+
+    smi="C[C@@H]([C@H](c1ccccc1)O)N2CCCCC2.C[C@H]([C@H](c1ccccc1)O)N2CCCCC2";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::string smi2 = MolToSmiles(*m,true);
+    delete m;
+    std::cout << smi1 << "\n" << smi2 << std::endl;
+    TEST_ASSERT(smi1==smi2);
+
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
 #if 1
@@ -1190,6 +1222,7 @@ int main(){
   test9();
   test10();
 #endif
+  test11();
   return 0;
 }
 

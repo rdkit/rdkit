@@ -343,12 +343,44 @@ namespace RDKit{
   } // end of namespace SmilesWrite
 
 
+  std::string MolToSmilesForFragments(const ROMol &mol,bool doIsomericSmiles,
+                            bool doKekule,int rootedAtAtom,bool canonical,
+                            bool allBondsExplicit,bool allHsExplicit,
+                            const std::vector<std::vector<int> > &frags){
+    std::string result;
+    std::vector<std::string> vfragsmi;
+    for(unsigned i=0;i<frags.size();++i){
+      std::string smii = MolFragmentToSmiles(mol,frags[i],NULL,NULL,NULL,
+                                      doIsomericSmiles,doKekule,rootedAtAtom,canonical,
+                                      allBondsExplicit,allHsExplicit);
+      vfragsmi.push_back(smii);
+      if(canonical){
+        std::sort(vfragsmi.begin(),vfragsmi.end());
+      }
+    }
+    for(unsigned i=0; i<vfragsmi.size(); ++i){
+      result+=vfragsmi[i];
+      if(i < vfragsmi.size()-1){
+        result+=".";
+      }
+    }
+    return result;
+  }
+
+
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
                           bool allBondsExplicit,bool allHsExplicit){
     if(!mol.getNumAtoms()) return "";
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
+
+    std::vector<std::vector<int> > frags;
+    unsigned int numFrag = MolOps::getMolFrags(mol,frags);
+    if(numFrag>1){
+       return MolToSmilesForFragments(mol,doIsomericSmiles, doKekule,rootedAtAtom, canonical,
+                              allBondsExplicit,allHsExplicit,frags);
+    }
 
     ROMol tmol(mol,true);
     if(doIsomericSmiles){
@@ -491,28 +523,30 @@ namespace RDKit{
     }
 
     // copy over the rings that only involve atoms/bonds in this fragment:
-    tmol.getRingInfo()->reset();
-    tmol.getRingInfo()->initialize();
-    for(unsigned int ridx=0;ridx<mol.getRingInfo()->numRings();++ridx){
-      const INT_VECT &aring=mol.getRingInfo()->atomRings()[ridx];
-      const INT_VECT &bring=mol.getRingInfo()->bondRings()[ridx];
-      bool keepIt=true;
-      BOOST_FOREACH(int aidx,aring){
-        if(!atomsInPlay[aidx]){
-          keepIt=false;
-          break;
-        }
-      }
-      if(keepIt){
-        BOOST_FOREACH(int bidx,bring){
-          if(!bondsInPlay[bidx]){
+    if(mol.getRingInfo()->isInitialized()){
+      tmol.getRingInfo()->reset();
+      tmol.getRingInfo()->initialize();
+      for(unsigned int ridx=0;ridx<mol.getRingInfo()->numRings();++ridx){
+        const INT_VECT &aring=mol.getRingInfo()->atomRings()[ridx];
+        const INT_VECT &bring=mol.getRingInfo()->bondRings()[ridx];
+        bool keepIt=true;
+        BOOST_FOREACH(int aidx,aring){
+          if(!atomsInPlay[aidx]){
             keepIt=false;
             break;
           }
         }
-      }
-      if(keepIt){
-        tmol.getRingInfo()->addRing(aring,bring);
+        if(keepIt){
+          BOOST_FOREACH(int bidx,bring){
+            if(!bondsInPlay[bidx]){
+              keepIt=false;
+              break;
+            }
+          }
+        }
+        if(keepIt){
+          tmol.getRingInfo()->addRing(aring,bring);
+        }
       }
     }
     
