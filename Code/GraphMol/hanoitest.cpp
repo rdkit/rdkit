@@ -20,6 +20,8 @@
 #include <vector>
 #include <boost/random.hpp>
 #include <cstdlib>
+#include "ChemReactions/Reaction.h"
+#include "ChemReactions/ReactionParser.h"
 
 using namespace RDKit;
 
@@ -1206,6 +1208,21 @@ void test11(){
 }
 
 
+void test12(){
+  BOOST_LOG(rdInfoLog) << "test canon reactions" << std::endl;
+  {
+    std::string smi="CC[C@H](C)[C@@H](C(=O)N[C@@H](Cc1cncn1C(c2ccccc2)(c3ccccc3)c4ccccc4)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H]([C@@H](C)OO)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N5CCC[C@H]5C(=O)N[C@@H](C)C(=O)N[C@@H](CC(=O)OC(C)(C)C)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc6cn(c7c6cccc7)C(=O)OC(C)(C)C)C(=O)N[C@@H](CC(=O)OC(C)(C)C)C(=O)N[C@@H](Cc8cn(c9c8cccc9)C(=O)OC(C)(C)C)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CC(=O)NC(c1ccccc1)(c1ccccc1)c1ccccc1)C(=O)N[C@@H](CCCCNC(=O)OC(C)(C)C)C(=O)C(=O)CCc1cccc(c1)C(c1ccc(cc1OC)OC)[NH])N.CC[C@H](C)[C@@H](C(=O)N[C@@H](Cc1cncn1C(c2ccccc2)(c3ccccc3)c4ccccc4)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H]([C@@H](C)OO)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N5CCC[C@H]5C(=O)N[C@@H](C)C(=O)N[C@@H](CC(=O)OC(C)(C)C)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc6cn(c7c6cccc7)C(=O)OC(C)(C)C)C(=O)N[C@@H](CC(=O)OC(C)(C)C)C(=O)N[C@@H](Cc8cn(c9c8cccc9)C(=O)OC(C)(C)C)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CC(=O)NC(c1ccccc1)(c1ccccc1)c1ccccc1)C(=O)N[C@@H](CCCCNC(=O)OC(C)(C)C)C(=O)C(=O)CCc1cccc(c1)C(c1ccc(cc1OC)OC)[NH])NC(=O)[C@@H]1CCC(=O)N1C(=O)OC(C)(C)C.CC[C@H](C)[C@@H](C(=O)N[C@@H](CC(=O)NC(c1ccccc1)(c2ccccc2)c3ccccc3)C(=O)N[C@@H](CCCCNC(=O)OC(C)(C)C)C(=O)C(=O)CCc4cccc(c4)C(c5ccc(cc5OC)OC)[NH])NC(=O)[C@H](Cc6cn(c7c6cccc7)C(=O)OC(C)(C)C)NC(=O)[C@H](CC(=O)OC(C)(C)C)NC(=O)[C@H](Cc8cn(c9c8cccc9)C(=O)OC(C)(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC(=O)OC(C)(C)C)NC(=O)[C@H](C)NC(=O)[C@@H]1CCCN1C(=O)[C@H]([C@@H](C)CC)NC(=O)[C@H]([C@@H](C)OO)NC(=O)[C@H](C(C)C)NC(=O)[C@H](Cc1cncn1C(c1ccccc1)(c1ccccc1)c1ccccc1)NC(=O)[C@H]([C@@H](C)CC)NC(=O)OCC1c2ccccc2-c2c1cccc2.CC(C)(C)OC(=O)N1[C@@H](CCC1=O)C(=O)O>>CC[C@H](C)[C@@H](C(=O)N[C@@H](Cc1cnc[nH]1)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H]([C@@H](C)O)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N2CCC[C@H]2C(=O)N[C@@H](C)C(=O)N[C@@H](CC(=O)O)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc3c[nH]c4c3cccc4)C(=O)N[C@@H](CC(=O)O)C(=O)N[C@@H](Cc5c[nH]c6c5cccc6)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CC(=O)N)C(=O)N[C@@H](CCCCN)C(=O)N)NC(=O)[C@@H]7CCC(=O)N7";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ROMol* m = ChemicalReactionToRxnMol(*rxn);
+    std::string smi1 = MolToSmiles(*m,true);
+    delete m;
+    delete rxn;
+    std::cout << smi1 << std::endl;;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -1221,8 +1238,9 @@ int main(){
   test8();
   test9();
   test10();
-#endif
   test11();
+  test12();
+#endif
   return 0;
 }
 
