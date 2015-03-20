@@ -55,6 +55,7 @@ namespace RDKit{
         symb=PeriodicTable::getTable()->getElementSymbol(num);
       }
       //symb = atom->getSymbol();
+      std::string atString="";
       if(!allHsExplicit && inOrganicSubset(num)){
         // it's a member of the organic subset
         //if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
@@ -85,7 +86,17 @@ namespace RDKit{
           needsBracket=true;
         }
         if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)){
-          if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
+          if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED && !atom->hasProp(common_properties::_brokenChirality ) ){
+            switch(atom->getChiralTag()){
+             case Atom::CHI_TETRAHEDRAL_CW:
+               atString = "@@";
+               break;
+             case Atom::CHI_TETRAHEDRAL_CCW:
+               atString = "@";
+               break;
+             default:
+               break;
+             }
             needsBracket = true;
           } else if(isotope){
             needsBracket=true;
@@ -109,19 +120,7 @@ namespace RDKit{
       }
       res += symb;
 
-      if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles) &&
-         atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
-        switch(atom->getChiralTag()){
-        case Atom::CHI_TETRAHEDRAL_CW:
-          res += "@@";
-          break;
-        case Atom::CHI_TETRAHEDRAL_CCW:
-          res += "@";
-          break;
-        default:
-          break;
-        }
-      }
+      res += atString;
 
       if(needsBracket){
         unsigned int totNumHs=atom->getTotalNumHs();
@@ -240,6 +239,7 @@ namespace RDKit{
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
                                         const UINT_VECT &ranks,bool doKekule,bool canonical,
+                                        bool doIsomericSmiles,
                                         bool allBondsExplicit,bool allHsExplicit,
                                         std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,
@@ -262,7 +262,7 @@ namespace RDKit{
       std::list<unsigned int> ringClosuresToErase;
 
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
-                                  molStack,bondsInPlay,bondSymbols);
+                                  molStack,bondsInPlay,bondSymbols,doIsomericSmiles);
       Bond *bond=0;
       BOOST_FOREACH(Canon::MolStackElem mSE,molStack){
         switch(mSE.type){
@@ -423,7 +423,7 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,
+                                                    ranks,doKekule,canonical,doIsomericSmiles,
                                                     allBondsExplicit,allHsExplicit,
                                                     atomOrdering);
                                                     
@@ -584,7 +584,7 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,
+                                                    ranks,doKekule,canonical,doIsomericSmiles,
                                                     allBondsExplicit,allHsExplicit,
                                                     atomOrdering,
                                                     &bondsInPlay,
