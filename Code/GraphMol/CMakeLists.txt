@@ -96,7 +96,7 @@ rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDG
 
 #rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse_static FileParsers_static GraphMol_static
 #    RDGeometryLib_static RDGeneral_static ${RDKit_THREAD_LIBS} )
-rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse FileParsers GraphMol
+rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse ChemReactions FileParsers GraphMol
      RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)

@@ -3019,7 +3019,7 @@ void testFragmentSmiles(){
     std::string labels[5]={"[A]","[B]","[B]","",""};
     std::vector<std::string> atomLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,&atomLabels);
-    TEST_ASSERT(csmiles=="[B][B][A]");
+    TEST_ASSERT(csmiles=="[A][B][B]");
     delete m;
   }
   {
@@ -3032,7 +3032,7 @@ void testFragmentSmiles(){
     std::string labels[5]={"","","[B]","[B]","[A]"};
     std::vector<std::string> atomLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,&atomLabels);
-    TEST_ASSERT(csmiles=="[B][B][A]");
+    TEST_ASSERT(csmiles=="[A][B][B]");
     delete m;
   }
   {

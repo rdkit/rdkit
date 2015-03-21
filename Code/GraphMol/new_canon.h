@@ -29,23 +29,20 @@ namespace RDKit {
       Bond::BondType bondType;
       unsigned int bondStereo;
       unsigned int nbrSymClass;
-      unsigned int numSwaps;
       unsigned int nbrIdx;
       bondholder() : bondType(Bond::UNSPECIFIED),
           bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
-          nbrIdx(0), nbrSymClass(0), numSwaps(0) {};
-      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni,unsigned int nsc,unsigned int nsw) :
+          nbrIdx(0), nbrSymClass(0){};
+      bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni,unsigned int nsc) :
         bondType(bt),
         bondStereo(static_cast<unsigned int>(bs)),
         nbrIdx(ni),
-        nbrSymClass(nsc),
-        numSwaps(nsw) {};
-      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni,unsigned int nsc,unsigned int nsw) :
+        nbrSymClass(nsc){};
+      bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni,unsigned int nsc) :
         bondType(bt),
         bondStereo(bs),
         nbrIdx(ni),
-        nbrSymClass(nsc),
-        numSwaps(nsw) {};
+        nbrSymClass(nsc){};
       bool operator<(const bondholder &o) const {
         if(bondType!=o.bondType)
           return bondType<o.bondType;
@@ -220,7 +217,8 @@ namespace RDKit {
 
 
     void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs);
-    void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx);
+    void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs,
+        unsigned int atomIdx, std::vector<unsigned int>& result);
 
     class SpecialChiralityAtomCompareFunctor {
 
@@ -247,31 +245,33 @@ namespace RDKit {
         }
 
         if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
-          updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[i].bonds,i);
-        }
-        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
-          updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[j].bonds,j);
-        }
-        for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
-          int cmp=dp_atoms[i].bonds[ii].numSwaps-dp_atoms[j].bonds[ii].numSwaps;
-          if(cmp) return cmp;
-        }
-
-        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
           updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
         }
-        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay){
           updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
         }
         for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
           int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii]);
           if(cmp) return cmp;
         }
+//
+//        if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
+//          return -1;
+//        } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
+//          return 1;
+//        }
 
-        if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
-          return -1;
-        } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
-          return 1;
+        std::vector<unsigned int> swapsi;
+        std::vector<unsigned int> swapsj;
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+           updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[i].bonds,i,swapsi);
+        }
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay){
+           updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[j].bonds,j,swapsj);
+        }
+        for(unsigned int ii=0;ii<swapsi.size() && ii<swapsj.size();++ii){
+          int cmp=swapsi[ii]-swapsj[ii];
+          if(cmp) return cmp;
         }
         return 0;
       }
@@ -318,7 +318,7 @@ namespace RDKit {
         if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
           updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
         }
-        if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+        if((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay){
           updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
         }
         for(unsigned int ii=0;ii<dp_atoms[i].bonds.size() && ii<dp_atoms[j].bonds.size();++ii){
@@ -491,7 +491,7 @@ namespace RDKit {
           if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
             updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
           }
-          if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
+          if((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay){
             updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
           }
 
