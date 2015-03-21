@@ -36,7 +36,7 @@
 #include <GraphMol/SLNParse/SLNParse.h>
 
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/FileParseException.h>
 

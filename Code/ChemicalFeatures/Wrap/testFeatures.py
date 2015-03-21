@@ -6,6 +6,7 @@
 #
 from __future__ import print_function
 import os,sys
+import io
 import unittest
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
@@ -76,8 +77,11 @@ class TestCase(unittest.TestCase):
       self.assertTrue(ptFeq(ffeat2.GetPos(),ffeat.GetPos()))
 
       # Check that the old pickled versions have not been broken        
-      inF = open(os.path.join(RDConfig.RDBaseDir,
-                              'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),'rb')
+      inTF = open(os.path.join(RDConfig.RDBaseDir,
+                              'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),'r')
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+      inF = io.BytesIO(buf)
       ffeat2=cPickle.load(inF, encoding='bytes')
       # this version (1.0) does not have an id in the byte stream 
       self.assertTrue(ffeat2.GetFamily()==ffeat.GetFamily())
@@ -89,8 +93,11 @@ class TestCase(unittest.TestCase):
       # uncomment the following to generate (overrwrite) new version of pickled
       # data file
       #cPickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
-      inF = open(os.path.join(RDConfig.RDBaseDir,
-                              'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'rb')
+      inTF = open(os.path.join(RDConfig.RDBaseDir,
+                              'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'r')
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+      inF = io.BytesIO(buf)
       ffeat2=cPickle.load(inF, encoding='bytes')
       self.assertTrue(ffeat2.GetId()==ffeat.GetId());
       self.assertTrue(ffeat2.GetFamily()==ffeat.GetFamily())

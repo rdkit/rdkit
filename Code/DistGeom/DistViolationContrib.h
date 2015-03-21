@@ -34,6 +34,7 @@ namespace DistGeom {
     double getEnergy(double *pos) const;
     
     void getGrad(double *pos, double *grad) const;
+    virtual DistViolationContrib *copy() const { return new DistViolationContrib(*this); };
 
   private:
     unsigned int d_end1Idx,d_end2Idx; //!< indices of end points

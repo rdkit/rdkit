@@ -77,6 +77,19 @@ namespace ForceFields {
     dp_distMat=0;
   }
 
+  ForceField::ForceField(const ForceField &other) : d_dimension(other.d_dimension),
+                                                    df_init(false),
+                                                    d_numPoints(other.d_numPoints),
+                                                    dp_distMat(0) {
+    d_contribs.clear();
+    BOOST_FOREACH(const ContribPtr &contrib,other.d_contribs){
+      ForceFieldContrib *ncontrib=contrib->copy();
+      ncontrib->dp_forceField=this;
+      d_contribs.push_back(ContribPtr(ncontrib));
+    }
+  };
+
+
   double ForceField::distance(unsigned int i,unsigned int j,double *pos) {
     PRECONDITION(df_init,"not initialized");
     RANGE_CHECK(0,i,d_numPoints-1);

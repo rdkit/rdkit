@@ -53,6 +53,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
       void getGrad(double *pos,double *grad) const;
     
+      virtual AngleBendContrib *copy() const { return new AngleBendContrib(*this); };
     private:
       int d_at1Idx,d_at2Idx,d_at3Idx;
       unsigned int d_order;

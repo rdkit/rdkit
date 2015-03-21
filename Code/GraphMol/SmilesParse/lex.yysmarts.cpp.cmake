@@ -595,7 +595,7 @@ static yyconst flex_int16_t yy_chk[345] =
 #include <io.h> 	 
 #endif
 
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 

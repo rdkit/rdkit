@@ -248,6 +248,27 @@ void testAtomProps()
   CHECK_INVARIANT(!a2->hasProp("bogus"),"");
   CHECK_INVARIANT(!a3->hasProp("bogus"),"");
 
+
+  bool ok=false;
+  a1->setProp<double>("dprop",4);
+  TEST_ASSERT(a1->hasProp("dprop"));
+  try{
+    a1->getProp<int>("dprop");
+  } catch(const boost::bad_any_cast &e){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  a1->setProp<int>("iprop",4);
+  TEST_ASSERT(a1->hasProp("iprop"));
+  ok=false;
+  try{
+    a1->getProp<double>("iprop");
+  } catch(const boost::bad_any_cast &e){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+
   int tmp;
   a1->getProp("prop1",tmp);
   CHECK_INVARIANT(tmp==3,"");
@@ -263,7 +284,7 @@ void testAtomProps()
   CHECK_INVARIANT(tmp==4,"");
 
 
-  // ceck for computed properties
+  // check for computed properties
   a1->setProp("cprop1", 1, true);
   a1->setProp("cprop2", 2, true);
   STR_VECT cplst;

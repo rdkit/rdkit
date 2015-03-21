@@ -364,6 +364,28 @@ class TestCase(unittest.TestCase) :
         algMap = list(zip(range(5),range(5)))
         ssd = rdMolAlign.AlignMol(probe,ref,atomMap=algMap)
         self.assertTrue(ssd<0.1)
+
+
+    def test8MultiThreadMultiConf(self):
+        mol = Chem.AddHs(Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC"))
+        cids = rdDistGeom.EmbedMultipleConfs(mol,200,maxAttempts=30,randomSeed=100)
+        energies = []
+        for cid in cids:
+            ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
+            ee = ff.CalcEnergy()
+            energies.append(ee)
+
+        mol = Chem.AddHs(Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC"))
+        cids = rdDistGeom.EmbedMultipleConfs(mol,200,maxAttempts=30,randomSeed=100,numThreads=4)
+        nenergies = []
+        for cid in cids:
+            ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
+            ee = ff.CalcEnergy()
+            nenergies.append(ee)
+
+        self.assertTrue(lstEq(energies, nenergies,tol=1e-6))
+            
+
             
 if __name__ == '__main__':
   unittest.main()

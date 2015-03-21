@@ -31,6 +31,7 @@ namespace DistGeom {
     
     //! calculate the contribution of this contrib to the gradient at a given state
     void getGrad(double *pos, double *grad) const;
+    virtual ChiralViolationContrib *copy() const { return new ChiralViolationContrib(*this); };
 
   private:
     unsigned int d_idx1, d_idx2, d_idx3, d_idx4;

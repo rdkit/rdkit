@@ -841,7 +841,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms()==30)
 
-    with open(fileN,'r') as dFile:
+    with open(fileN,'rb') as dFile:
       d = dFile.read()
     sdSup.SetData(d)
     m = six.next(sdSup)
@@ -1524,11 +1524,25 @@ CAS<~>
   def test41SetStreamIndices(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf')
+    allIndices = []
+    ifs = open(fileN, 'rb')
+    addIndex = True;
+    line = True;
+    pos = 0;
+    while (line):
+      if (addIndex):
+        pos = ifs.tell();
+      line = ifs.readline().decode('utf-8')
+      if (line):
+        if (addIndex):
+          allIndices.append(pos);
+        addIndex = (line[:4] == '$$$$')
+    ifs.close()
+    indices = allIndices
     sdSup = Chem.SDMolSupplier(fileN)
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
             "192", "203", "210", "211", "213", "220", "229", "256"]
-    indices=[0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
-	     23729, 26147, 28331, 32541, 33991]
+    
     sdSup._SetStreamIndices(indices)
     self.assertTrue(len(sdSup) == 16)
     mol = sdSup[5]
@@ -1544,14 +1558,14 @@ CAS<~>
     self.assertTrue(ns == molNames)
 
     # this can also be used to skip molecules in the file:
-    indices=[0, 6198, 12292]
+    indices = [allIndices[0], allIndices[2], allIndices[5]]
     sdSup._SetStreamIndices(indices)
     self.assertTrue(len(sdSup) == 3)
     mol = sdSup[2]
     self.assertTrue(mol.GetProp("_Name") == "170")
 
     # or to reorder them:
-    indices=[0, 12292, 6198]
+    indices = [allIndices[0], allIndices[5], allIndices[2]]
     sdSup._SetStreamIndices(indices)
     self.assertTrue(len(sdSup) == 3)
     mol = sdSup[1]
@@ -2355,7 +2369,7 @@ CAS<~>
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondsToUse=[1,2])
     self.assertEqual(fsmi,"CCC")
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],atomSymbols=["","[A]","[C]","[B]","",""])
-    self.assertEqual(fsmi,"[A]1[B][C]1")
+    self.assertEqual(fsmi,"[C]1[B][A]1")
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondSymbols=["","%","%","","","%"])
     self.assertEqual(fsmi,"C1%C%C%1")
     
@@ -2508,7 +2522,7 @@ CAS<~>
     self.assertEqual(len(frags),5)
     self.assertEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
     smi = Chem.MolToSmiles(nm,True)
-    self.assertEqual(smi,'[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1')
+    self.assertEqual(smi,'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]')
 
     m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
     bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))
@@ -2652,6 +2666,95 @@ CAS<~>
     rwmol.ReplaceAtom(0,newAt)
     self.assertEqual(Chem.MolToSmiles(rwmol,True),Chem.MolToSmiles(rwmol.GetMol()))
 
+  def testAtomPropQueries(self):
+    """ test the property queries
+    """
+    from rdkit.Chem import rdqueries
+
+    m = Chem.MolFromSmiles("C" * 14)
+    atoms = m.GetAtoms()
+    atoms[0].SetProp("hah", "hah")
+    atoms[1].SetIntProp("bar", 1)
+    atoms[2].SetIntProp("bar", 2)
+    atoms[3].SetBoolProp("baz", True)
+    atoms[4].SetBoolProp("baz", False)
+    atoms[5].SetProp("boo", "hoo")
+    atoms[6].SetProp("boo", "-urns")
+    atoms[7].SetDoubleProp("boot", 1.0)
+    atoms[8].SetDoubleProp("boot", 4.0)
+    atoms[9].SetDoubleProp("number", 4.0)
+    atoms[10].SetIntProp("number", 4)
+    
+
+    tests = (
+      (rdqueries.HasIntPropWithValueQueryAtom, "bar", {1:[1], 2:[2]}),
+      (rdqueries.HasBoolPropWithValueQueryAtom, "baz", {True:[3], False:[4]}),
+      (rdqueries.HasStringPropWithValueQueryAtom, "boo", {"hoo":[5], "-urns":[6]}),
+      (rdqueries.HasDoublePropWithValueQueryAtom, "boot", {1.0:[7], 4.0:[8]})
+      )
+
+    for query, name, lookups in tests:
+      for t,v in lookups.items():
+        q = query(name, t)
+        self.assertEqual( v, [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)] )
+        q = query(name, t, negate=True)
+        self.assertEqual( sorted(set(range(14)) - set(v)), [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)] )
+
+    # check tolerances
+    self.assertEqual([x.GetIdx() for x in m.GetAtomsMatchingQuery(
+      rdqueries.HasDoublePropWithValueQueryAtom("boot", 1.0, tolerance=3.))],
+                     [7,8])
+
+    # numbers are numbers?, i.e. int!=double
+    self.assertEqual([x.GetIdx() for x in m.GetAtomsMatchingQuery(
+      rdqueries.HasIntPropWithValueQueryAtom("number", 4))],
+                     [10])
+    
+  def testBondPropQueries(self):
+    """ test the property queries
+    """
+    from rdkit.Chem import rdqueries
+
+    m = Chem.MolFromSmiles("C" * 14)
+    bonds = m.GetBonds()
+    bonds[0].SetProp("hah", "hah")
+    bonds[1].SetIntProp("bar", 1)
+    bonds[2].SetIntProp("bar", 2)
+    bonds[3].SetBoolProp("baz", True)
+    bonds[4].SetBoolProp("baz", False)
+    bonds[5].SetProp("boo", "hoo")
+    bonds[6].SetProp("boo", "-urns")
+    bonds[7].SetDoubleProp("boot", 1.0)
+    bonds[8].SetDoubleProp("boot", 4.0)
+    bonds[9].SetDoubleProp("number", 4.0)
+    bonds[10].SetIntProp("number", 4)
+    
+
+    tests = (
+      (rdqueries.HasIntPropWithValueQueryBond, "bar", {1:[1], 2:[2]}),
+      (rdqueries.HasBoolPropWithValueQueryBond, "baz", {True:[3], False:[4]}),
+      (rdqueries.HasStringPropWithValueQueryBond, "boo", {"hoo":[5], "-urns":[6]}),
+      (rdqueries.HasDoublePropWithValueQueryBond, "boot", {1.0:[7], 4.0:[8]})
+      )
+
+    for query, name, lookups in tests:
+      for t,v in lookups.items():
+        q = query(name, t)
+        self.assertEqual( v, [x.GetIdx() for x in m.GetBonds() if q.Match(x)] )
+        q = query(name, t, negate=True)
+        self.assertEqual( sorted(set(range(13)) - set(v)),
+                          [x.GetIdx() for x in m.GetBonds() if q.Match(x)])
+
+    # check tolerances
+    q = rdqueries.HasDoublePropWithValueQueryBond("boot", 1.0, tolerance=3.)
+    self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)],
+                     [7,8])
+
+    # numbers are numbers?, i.e. int!=double
+    q = rdqueries.HasIntPropWithValueQueryBond("number", 4)
+    self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)],
+                     [10])
+    
     
 if __name__ == '__main__':
   unittest.main()

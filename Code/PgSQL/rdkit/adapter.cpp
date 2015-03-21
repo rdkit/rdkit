@@ -521,7 +521,7 @@ MolInchi(CROMol i){
   const ROMol *im = (ROMol*)i;
   ExtraInchiReturnValues rv;
   try {
-    inchi = MolToInchi(*im,rv,"/AuxNone");
+    inchi = MolToInchi(*im,rv,"/AuxNone /WarnOnEmptyStructure");
   } catch (MolSanitizeException &e){
     inchi="";
     elog(ERROR, "MolInchi: cannot kekulize molecule");
@@ -539,7 +539,7 @@ MolInchiKey(CROMol i){
   const ROMol *im = (ROMol*)i;
   ExtraInchiReturnValues rv;
   try {
-    std::string inchi=MolToInchi(*im,rv);
+    std::string inchi=MolToInchi(*im,rv,"/AuxNone /WarnOnEmptyStructure");
     key = InchiToInchiKey(inchi);
   } catch (MolSanitizeException &e){
     key="";

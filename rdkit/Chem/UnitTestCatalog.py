@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 import os
+import io
 import unittest
 from rdkit import RDConfig
 from rdkit import Chem
@@ -87,7 +88,10 @@ class TestCase(unittest.TestCase):
   def test3CatFilePickle(self):
     with open(os.path.join(RDConfig.RDCodeDir,'Chem',
                            'test_data','simple_catalog.pkl'),
-              'rb') as pklFile:
+              'r') as pklTFile:
+      buf = pklTFile.read().replace('\r\n', '\n').encode('utf-8')
+      pklTFile.close()
+    with io.BytesIO(buf) as pklFile:
       cat = cPickle.load(pklFile, encoding='bytes')
     assert cat.GetNumEntries()==21
     assert cat.GetFPLength()==21
