@@ -4855,7 +4855,6 @@ int main(){
   testGithubIssue418();
   testGithubIssue432();
   testGithubIssue443();
-#endif
   testGithubIssue447();
   return 0;
 }
