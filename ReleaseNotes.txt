@@ -24,7 +24,7 @@ Bug Fixes:
  (github issue #418)
 - Fixed two trivial bugs
  (github issue #419)
-- RDKit learns how to round grip MOLFile values.
+- RDKit learns how to roundtrip MOLFile values.
  (github issue #420)
 - cairoCanvas.py python3 compatibility
  (github issue #426)
