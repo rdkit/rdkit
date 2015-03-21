@@ -2086,49 +2086,36 @@ ValueError: Sanitization error: Can't kekulize mol
 <BLANKLINE>
 
 More complex transformations can be carried out using the
-:api:`rdkit.Chem.rdchem.EditableMol` class:
+:api:`rdkit.Chem.rdchem.RWMol` class:
 
->>> m = Chem.MolFromSmiles('CC(=O)O') 
->>> em = Chem.EditableMol(m) 
->>> em.ReplaceAtom(3,Chem.Atom(7)) 
->>> em.AddAtom(Chem.Atom(6)) 
-4
->>> em.AddAtom(Chem.Atom(6)) 
-5
->>> em.AddBond(3,4,Chem.BondType.SINGLE) 
-4
->>> em.AddBond(4,5,Chem.BondType.DOUBLE) 
-5
->>> em.RemoveAtom(0) 
+>>> m = Chem.MolFromSmiles('CC(=O)C=CC=C')
+>>> mw = Chem.RWMol(m)
+>>> mw.ReplaceAtom(4,Chem.Atom(7))
+>>> mw.AddAtom(Chem.Atom(6))
+7
+>>> mw.AddAtom(Chem.Atom(6))
+8
+>>> mw.AddBond(6,7,Chem.BondType.SINGLE)
+7
+>>> mw.AddBond(7,8,Chem.BondType.DOUBLE)
+8
+>>> mw.AddBond(8,3,Chem.BondType.SINGLE)
+9
+>>> mw.RemoveAtom(0)
+>>> mw.GetNumAtoms()
+8
 
-Note that the :api:`rdkit.Chem.rdchem.EditableMol` must be converted
-back into a standard :api:`rdkit.Chem.rdchem.Mol` before much else can
-be done with it:
 
->>> em.GetNumAtoms()
-Traceback (most recent call last):
-  File "/usr/lib/python2.6/doctest.py", line 1253, in __run
-    compileflags, 1) in test.globs
-  File "<doctest default[0]>", line 1, in <module>
-    em.GetNumAtoms()
-AttributeError: 'EditableMol' object has no attribute 'GetNumAtoms'
->>> Chem.MolToSmiles(em) 
-Traceback (most recent call last):
-  File "/usr/lib/python2.6/doctest.py", line 1253, in __run
-    compileflags, 1) in test.globs
-  File "<doctest default[1]>", line 1, in <module>
-    Chem.MolToSmiles(em)
-ArgumentError: Python argument types in
-    rdkit.Chem.rdmolfiles.MolToSmiles(EditableMol)
-did not match C++ signature:
-    MolToSmiles(RDKit::ROMol {lvalue} mol, bool isomericSmiles=False, bool kekuleSmiles=False, int rootedAtAtom=-1, bool canonical=True)
->>> m2 = em.GetMol()
->>> Chem.SanitizeMol(m2)
+The RWMol can be used just like an ROMol:
+
+>>> Chem.MolToSmiles(mw)
+'O=CC1=NC=CC=C1'
+>>> Chem.SanitizeMol(mw)
 rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
->>> Chem.MolToSmiles(m2)
-'C=CNC=O'
+>>> Chem.MolToSmiles(mw)
+'O=Cc1ccccn1'
 
-It is even easier to generate nonsense using the EditableMol than it
+It is even easier to generate nonsense using the RWMol than it
 is with standard molecules.  If you need chemically reasonable
 results, be certain to sanitize the results.
 
