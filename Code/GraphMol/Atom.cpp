@@ -52,7 +52,6 @@ Atom::Atom( const Atom & other){
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
   df_isAromatic = other.df_isAromatic;
-  d_dativeFlag = other.d_dativeFlag;
   d_numExplicitHs = other.d_numExplicitHs;
   d_numRadicalElectrons = other.d_numRadicalElectrons;
   d_mass = other.d_mass;
@@ -79,7 +78,6 @@ Atom::Atom( const Atom & other){
 void Atom::initAtom(){
   df_isAromatic = false;
   df_noImplicit = false;
-  d_dativeFlag=0;
   d_numExplicitHs = 0;
   d_numRadicalElectrons=0;
   d_formalCharge = 0;

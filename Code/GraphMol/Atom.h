@@ -219,24 +219,6 @@ namespace RDKit{
     //! returns our isotope number
     unsigned int getIsotope() const {return d_isotope; };
 
-    //! sets our \c dativeFlag
-    // intended to be used only in construction.
-    // NOTE: the dative flag is not currently used anywhere
-    void setDativeFlag(int what) {
-      d_dativeFlag = what;
-    };
-    //! returns our \c dativeFlag
-    // NOTE: the dative flag is not currently used anywhere
-    int getDativeFlag() const {
-      return d_dativeFlag;
-    };
-    bool hasDativeFlag(int what) const {
-      return d_dativeFlag==what;
-    };
-    //! clears our \c dativeFlag
-    // NOTE: the dative flag is not currently used anywhere
-    void clearDativeFlag(){ d_dativeFlag = 0; };
-
     //! sets our \c chiralTag
     void setChiralTag(ChiralType what) { d_chiralTag = what; };
     //! inverts our \c chiralTag
@@ -512,7 +494,6 @@ namespace RDKit{
 
     bool df_isAromatic; 
     bool df_noImplicit;
-    boost::int8_t d_dativeFlag;
     boost::uint8_t d_numExplicitHs;
     boost::int8_t d_formalCharge;
     boost::uint8_t d_atomicNum;
