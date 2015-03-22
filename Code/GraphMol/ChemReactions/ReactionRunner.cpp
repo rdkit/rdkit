@@ -196,7 +196,8 @@ namespace RDKit {
           newAtom->setNumExplicitHs(val);
         }
         if(newAtom->getPropIfPresent(common_properties::_QueryMass, val)){
-          newAtom->setMass(val);
+          // FIX: technically should do something with this
+          //newAtom->setMass(val);
         }
         if(newAtom->getPropIfPresent(common_properties::_QueryIsotope, val)){
           newAtom->setIsotope(val);

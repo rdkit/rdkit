@@ -325,22 +325,6 @@ void test5(){
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-void test6(){
-  BOOST_LOG(rdErrorLog) << "---------------------- Test6" << std::endl;
-  Mol m;
-
-  Atom *a = new Atom(6);
-  int massVal;
-  massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(12.011*massIntegerConversionFactor)));
-
-  a->setMass(13);
-  massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.000*massIntegerConversionFactor)));
-  
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
-}
-
 void testQueryQueryMatches(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing query--query matches" << std::endl;
@@ -529,9 +513,9 @@ void testIssue2892580(){
   massVal=queryAtomMass(a);
   TEST_ASSERT(massVal==static_cast<int>(RDKit::round(12.011*massIntegerConversionFactor)));
 
-  a->setMass(13);
+  a->setIsotope(13);
   massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.000*massIntegerConversionFactor)));
+  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.003*massIntegerConversionFactor)));
   
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
@@ -706,7 +690,6 @@ int main(){
   test3();
   test4();
   test5();
-  test6();
   testQueryQueryMatches();
   testIssue2892580();
   testGithub153();

@@ -91,13 +91,17 @@ New Database Cartridge Features:
 
 New Java Wrapper Features:
 
-Deprecated modules (to be removed in next release):
+Deprecated code (to be removed in next release):
 - C++: The functionality in $RDBASE/Code/GraphMol/MolDrawing has been
   superseded by the new drawing code in $RDBASE/Code/GraphMol and will
   be removed in the next release.
 - rdkit/Dbase/Pubmed
 
-Removed modules:
+Removed code:
+- the method Atom::setMass() has been removed. Please use setIsotope()
+instead.
+- the methods involving an atom's dativeFlag have been removed.
+
 
 Contrib updates:
 

@@ -543,7 +543,6 @@ namespace RDKit{
         res=query;
       } else{
         res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
-        res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
       }
 
       //now assign the properties
