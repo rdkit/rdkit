@@ -508,7 +508,9 @@ namespace {
       MMFF::MMFFMolProperties refMP(*refMol);
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
-        if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        if(!(rep%10)){
+          BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        }
         ROMol prbMol(*mols[i]);
         MMFF::MMFFMolProperties prbMP(prbMol);
         MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
@@ -534,7 +536,9 @@ namespace {
         refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
-        if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        if(!(rep%10)){
+          BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        }
         ROMol prbMol(*mols[i]);
         unsigned int prbNAtoms = prbMol.getNumAtoms();
         std::vector<double> prbLogpContribs(prbNAtoms);
