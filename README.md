@@ -18,14 +18,12 @@
 
   * [RDKit web page](https://github.com/rdkit/rdkit)
   * [Blog](https://rdkit.blogspot.com)
-  * [Wiki](https://code.google.com/p/rdkit/w/list)
-  * [Documentation](http://www.rdkit.org/docs/index.html)
+  * [Documentation](http://www.rdkit.org/docs/index.html) also
+    available at [ReadTheDocs](http://rdkit.readthedocs.org/en/latest/)
 
 #### Code
 
   * [GitHub code](https://github.com/rdkit) and [bug tracker](https://github.com/rdkit/rdkit/issues)
-  * [Sourceforge](http://sourceforge.net/projects/rdkit)
-  * [Google code](http://code.google.com/p/rdkit/)
 
 #### Community
 
@@ -40,7 +38,8 @@
   * [2014 UGM](https://github.com/rdkit/UGM_2014)
 
 ## Documentation
-Available on [RDKit page](http://www.rdkit.org/docs/index.html) and in [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on GitHub
+Available on the [RDKit page](http://www.rdkit.org/docs/index.html)
+and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on GitHub
 
 ## Installation
 
