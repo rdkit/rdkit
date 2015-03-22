@@ -102,10 +102,12 @@ Removed code:
 instead.
 - the methods involving an atom's dativeFlag have been removed.
 
-
 Contrib updates:
 
 Other:
+- The RDKit molecule objects (ROMol and RWMol) now require about 15%
+less memory to store
+
 
 ******  Release_2014.09.2 *******
 (Changes relative to Release_2014.09.1)
