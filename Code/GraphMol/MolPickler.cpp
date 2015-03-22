@@ -1090,12 +1090,16 @@ namespace RDKit{
       if(version<7000){
         if(version<6030){
           streamRead(ss,tmpSchar,version);
-          atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
-                        static_cast<int>(tmpSchar));
+          // FIX: technically should be handling this in order to maintain true
+          // backwards compatibility
+          //atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
+          //              static_cast<int>(tmpSchar));
         } else {
           float tmpFloat;
           streamRead(ss,tmpFloat,version);
-          atom->setMass(tmpFloat);
+          // FIX: technically should be handling this in order to maintain true
+          // backwards compatibility
+          //atom->setMass(tmpFloat);
         }
 
         streamRead(ss,tmpSchar,version);
@@ -1118,7 +1122,6 @@ namespace RDKit{
       } else {
         int propFlags;
         streamRead(ss,propFlags,version);
-        atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
         if(propFlags&1){
           float tmpFloat;
           streamRead(ss,tmpFloat,version);
@@ -1193,8 +1196,6 @@ namespace RDKit{
       if(tag != ENDQUERY){
         throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
       }
-    
-      atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
       atom->setNumExplicitHs(0);
 
     }
@@ -1536,9 +1537,6 @@ namespace RDKit{
       if(atom->getChiralTag() != 0){
 	streamWrite(ss,ATOM_CHIRALTAG,atom->getChiralTag());
       }
-      if(atom->getMass() != 0.0){
-	streamWrite(ss,ATOM_MASS,atom->getMass());
-      }
       if(atom->getIsAromatic()){
 	streamWrite(ss,ATOM_ISAROMATIC,static_cast<char>(atom->getIsAromatic()));
       }
@@ -1625,7 +1623,8 @@ namespace RDKit{
 	break;
       case ATOM_MASS:
 	streamRead(ss,dblVar,version);
-	atom->setMass(dblVar);
+        // we don't need to set this anymore, but we do need to read it in order to
+        // maintain backwards compatibility
 	break;
       case ATOM_ISAROMATIC:
 	streamRead(ss,charVar,version);

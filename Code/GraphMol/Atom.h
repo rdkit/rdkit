@@ -209,10 +209,8 @@ namespace RDKit{
     //! returns our \c isAromatic flag
     bool getIsAromatic() const { return df_isAromatic; };
 
-    //! sets our mass (should no longer be used)
-    void setMass( double what) { d_mass = what; };
     //! returns our mass
-    double getMass() const {return d_mass; };
+    double getMass() const;
 
     //! sets our isotope number
     void setIsotope(unsigned int what);
@@ -508,7 +506,6 @@ namespace RDKit{
     atomindex_t d_index;
     boost::uint16_t d_isotope;
 
-    double d_mass;
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;
