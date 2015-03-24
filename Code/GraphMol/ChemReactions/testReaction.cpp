@@ -4181,7 +4181,7 @@ void test45SmilesWriter(){
       res += MolToSmiles(**iter,true);
     }
 
-    smi = ChemicalReactionToRxnSmiles(*rxn);
+    smi = ChemicalReactionToRxnSmiles(*rxn, false);
     TEST_ASSERT(smi==res)
     TEST_ASSERT(smi!="C=O.N>>N~C=O");
     TEST_ASSERT(smi=="O=S.N>>N~S=O");
@@ -5533,6 +5533,57 @@ void test58MolFileValueRoundTrip(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test59ReactionCanonicalization(){
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing canonicatization of reactions" << std::endl;
+
+  { //with mapping numbers
+    std::string smi = "[K+].[NH4+].[C:2]([CH:4]([CH2:9][CH3:10])[CH2:5][C:6]([OH:8])=[O:7])#[N:3]>Cl.[OH-]>[CH2:2]([CH:4]([CH2:9][CH3:10])[CH2:5][C:6]([OH:8])=[O:7])[NH2:3].[K+].[NH4+]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi = ChemicalReactionToRxnSmiles(*rxn);
+    delete rxn;
+
+    rxn = RxnSmartsToChemicalReaction(rxnsmi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi2 = ChemicalReactionToRxnSmiles(*rxn);
+
+    TEST_ASSERT(rxnsmi==rxnsmi2);
+
+    delete rxn;
+  }
+  { //without mapping numbers
+    std::string smi = "[K+].[NH4+].CCC(CC(O)=O)C#N>Cl.[OH-]>CCC(CC(O)=O)CN.[K+].[NH4+]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi = ChemicalReactionToRxnSmiles(*rxn);
+    delete rxn;
+
+    rxn = RxnSmartsToChemicalReaction(rxnsmi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi2 = ChemicalReactionToRxnSmiles(*rxn);
+
+    TEST_ASSERT(rxnsmi==rxnsmi2);
+
+    delete rxn;
+  }
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -5603,6 +5654,8 @@ int main() {
 
   test58MolFileValueRoundTrip();
   
+  test59ReactionCanonicalization();
+
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
 }
