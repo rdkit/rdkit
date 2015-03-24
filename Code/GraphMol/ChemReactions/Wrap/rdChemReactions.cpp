@@ -405,7 +405,7 @@ of the replacements argument.",
       (python::arg("reaction")),
       "construct a reaction SMARTS string for a ChemicalReaction");
   python::def("ReactionToSmiles",RDKit::ChemicalReactionToRxnSmiles,
-      (python::arg("reaction")),
+      (python::arg("reaction"),python::arg("canonical")=true),
       "construct a reaction SMILES string for a ChemicalReaction");
   python::def("ReactionToRxnBlock",RDKit::ChemicalReactionToRxnBlock,
       (python::arg("reaction"), python::arg("separateAgents")=false),
