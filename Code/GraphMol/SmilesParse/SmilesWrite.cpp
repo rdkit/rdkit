@@ -365,9 +365,9 @@ namespace RDKit{
                                       doIsomericSmiles,doKekule,rootedAtAtom,canonical,
                                       allBondsExplicit,allHsExplicit);
       vfragsmi.push_back(smii);
-      if(canonical){
-        std::sort(vfragsmi.begin(),vfragsmi.end());
-      }
+    }
+    if(canonical){
+      std::sort(vfragsmi.begin(),vfragsmi.end());
     }
     for(unsigned i=0; i<vfragsmi.size(); ++i){
       result+=vfragsmi[i];

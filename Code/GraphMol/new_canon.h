@@ -218,7 +218,7 @@ namespace RDKit {
 
     void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs);
     void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs,
-        unsigned int atomIdx, std::vector<unsigned int>& result);
+        unsigned int atomIdx, std::vector<std::pair<unsigned int, unsigned int> >& result);
 
     class SpecialChiralityAtomCompareFunctor {
 
@@ -261,8 +261,8 @@ namespace RDKit {
 //          return 1;
 //        }
 
-        std::vector<unsigned int> swapsi;
-        std::vector<unsigned int> swapsj;
+        std::vector<std::pair<unsigned int, unsigned int> > swapsi;
+        std::vector<std::pair<unsigned int, unsigned int> > swapsj;
         if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
            updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[i].bonds,i,swapsi);
         }
@@ -270,7 +270,7 @@ namespace RDKit {
            updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[j].bonds,j,swapsj);
         }
         for(unsigned int ii=0;ii<swapsi.size() && ii<swapsj.size();++ii){
-          int cmp=swapsi[ii]-swapsj[ii];
+          int cmp=swapsi[ii].second-swapsj[ii].second;
           if(cmp) return cmp;
         }
         return 0;
