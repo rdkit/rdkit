@@ -90,10 +90,10 @@ namespace RDKit{
 
 
   //! returns the reaction SMARTS for a reaction
-  std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);
+  std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn);
 
   //! returns the reaction SMILES for a reaction
-  std::string ChemicalReactionToRxnSmiles(ChemicalReaction &rxn);
+  std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn, bool canonical=true);
 
   //! returns an RXN block for a reaction
   /*!
