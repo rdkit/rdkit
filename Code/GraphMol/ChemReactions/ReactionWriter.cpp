@@ -32,6 +32,7 @@
 
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -56,32 +57,36 @@ std::string molToString(RDKit::ROMol &mol, bool toSmiles)
     return MolToSmarts(mol,true);
 }
 
-std::string ChemicalReactionToRxnToString(RDKit::ChemicalReaction &rxn, bool toSmiles)
+std::string chemicalReactionTemplatesToString(
+    const RDKit::ChemicalReaction &rxn, RDKit::ReactionMoleculeType type, bool toSmiles, bool canonical)
 {
   std::string res="";
-  for(RDKit::MOL_SPTR_VECT::const_iterator iter=rxn.beginReactantTemplates();
-  iter != rxn.endReactantTemplates();++iter){
-    if(iter!=rxn.beginReactantTemplates()){
-    	res +=".";
-    }
-    res += molToString(**iter, toSmiles);
+  std::vector<std::string> vfragsmi;
+  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(rxn, type);
+  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, type);
+  for(; begin != end; ++begin){
+    vfragsmi.push_back(molToString(**begin, toSmiles));
   }
+  if(canonical){
+    std::sort(vfragsmi.begin(),vfragsmi.end());
+  }
+  for(unsigned i=0; i<vfragsmi.size(); ++i){
+    res+=vfragsmi[i];
+    if(i < vfragsmi.size()-1){
+      res+=".";
+    }
+  }
+  return res;
+}
+
+std::string chemicalReactionToRxnToString(const RDKit::ChemicalReaction &rxn, bool toSmiles, bool canonical)
+{
+  std::string res="";
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles, canonical);
   res += ">";
-  for(RDKit::MOL_SPTR_VECT::const_iterator iter=rxn.beginAgentTemplates();
-  iter != rxn.endAgentTemplates();++iter){
-    if(iter!=rxn.beginAgentTemplates()){
-      res +=".";
-    }
-    res += molToString(**iter, toSmiles);
-  }
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Agent, toSmiles, canonical);
   res += ">";
-  for(RDKit::MOL_SPTR_VECT::const_iterator iter=rxn.beginProductTemplates();
-  iter != rxn.endProductTemplates();++iter){
-    if(iter!=rxn.beginProductTemplates()){
-      res +=".";
-    }
-    res += molToString(**iter, toSmiles);
-  }
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, canonical);
   return res;
 }
 }
@@ -89,13 +94,13 @@ std::string ChemicalReactionToRxnToString(RDKit::ChemicalReaction &rxn, bool toS
 namespace RDKit {
 
   //! returns the reaction SMARTS for a reaction
-  std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn){
-	return ChemicalReactionToRxnToString(rxn, false);
+  std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn){
+	return chemicalReactionToRxnToString(rxn, false, false);
   };
 
   //! returns the reaction SMILES for a reaction
-  std::string ChemicalReactionToRxnSmiles(ChemicalReaction &rxn){
-	  return ChemicalReactionToRxnToString(rxn, true);
+  std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn, bool canonical){
+	  return chemicalReactionToRxnToString(rxn, true, canonical);
   };
 
 #if 1
