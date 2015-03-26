@@ -4117,7 +4117,7 @@ void test45SmilesWriter(){
 
     smi = ChemicalReactionToRxnSmiles(*rxn);
     TEST_ASSERT(smi==res)
-    TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[N:3]~[C:1]=[O:2]");
+    TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[C:1](=[O:2])~[N:3]");
 
     delete rxn;
     rxn = RxnSmartsToChemicalReaction(smi, 0, true);

@@ -970,6 +970,8 @@ std::string smis[]={
   "COc1cc([C@H]2[C@@](NC(=O)c3ccc(NC(=O)OC(C)(C)C)cc3)(C(=O)O)[C@@H](c3ccc(OC(=O)c4cccs4)c(OC)c3)[C@]2(NC(=O)c2ccc(NC(=O)OC(C)(C)C)cc2)C(=O)O)ccc1OC(=O)c1cccs1",
   "COc1cc([C@H]2[C@](NC(=O)c3ccc(NC(=O)OC(C)(C)C)cc3)(C(=O)O)[C@H](c3ccc(OC(=O)c4cccs4)c(OC)c3)[C@]2(NC(=O)c2ccc(NC(=O)OC(C)(C)C)cc2)C(=O)O)ccc1OC(=O)c1cccs1",
   "CCC[C@H]1CC[C@H]([C@H]2CC[C@H](OC(=O)[C@H]3[C@@H](c4ccc(O)cc4)[C@H](C(=O)O[C@H]4CC[C@H]([C@H]5CC[C@H](CCC)CC5)CC4)[C@@H]3c3ccc(O)cc3)CC2)CC1",
+    //test molecules with atom-mapping numbers
+  "[O:1]=[C:2]([CH2:3][C:4]1=[CH:5][CH:6]=[CH:7][CH:8]=[CH:9]1)[NH2:10]",
   "EOS"
 };
 
