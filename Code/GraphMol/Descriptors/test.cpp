@@ -1705,8 +1705,7 @@ void testGitHubIssue463(){
     delete nm;
   }  
 
-
-  { // now chi values, where the problem was reported:
+  { // now chiNv values, where the problem was reported:
 
     RWMol *mol;
     mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
@@ -1719,6 +1718,26 @@ void testGitHubIssue463(){
 
     double cv=calcChi3v(*mol);
     double ncv=calcChi3v(*nm);    
+    
+    TEST_ASSERT(feq(cv,ncv));
+
+    delete mol;
+    delete nm;
+  }  
+
+  { // now chiNn values, where the problem was reported:
+
+    RWMol *mol;
+    mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+    unsigned int order[]={0, 11, 8, 7, 2, 4, 5, 13, 10, 12, 9, 3, 1, 6};
+    std::vector<unsigned int> nVect(order,order+sizeof(order)/sizeof(unsigned int));
+    ROMol *nm=MolOps::renumberAtoms(*mol,nVect);
+    TEST_ASSERT(nm);
+
+    double cv=calcChi3n(*mol);
+    double ncv=calcChi3n(*nm);    
     
     TEST_ASSERT(feq(cv,ncv));
 
