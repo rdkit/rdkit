@@ -1706,7 +1706,7 @@ void testGitHubIssue463(){
   }  
 
 
-  { // now chi values, where the problem was retported:
+  { // now chi values, where the problem was reported:
 
     RWMol *mol;
     mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
@@ -1725,6 +1725,24 @@ void testGitHubIssue463(){
     delete mol;
     delete nm;
   }  
+
+  { // the root cause was handling of rings
+    RWMol *mol;
+    mol = SmilesToMol("C1CC1");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==3);
+    std::vector<double> hkds(mol->getNumAtoms());
+    Descriptors::detail::hkDeltas(*mol,hkds,true);
+
+    double cv=calcChi3v(*mol);
+    TEST_ASSERT(feq(hkds[0],hkds[1]));
+    TEST_ASSERT(feq(hkds[1],hkds[2]));
+    TEST_ASSERT(feq(cv,hkds[0]*hkds[0]*hkds[0]));
+      
+
+    delete mol;
+  }  
+
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
