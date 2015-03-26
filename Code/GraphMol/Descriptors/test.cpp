@@ -1678,6 +1678,57 @@ void testGitHubIssue92(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue463(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Github362: order dependence  in Kier-Hall descriptors." << std::endl;
+
+  { // start with the hall-kier delta values:
+    RWMol *mol;
+    mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+    unsigned int order[]={0, 11, 8, 7, 2, 4, 5, 13, 10, 12, 9, 3, 1, 6};
+    std::vector<unsigned int> nVect(order,order+sizeof(order)/sizeof(unsigned int));
+    ROMol *nm=MolOps::renumberAtoms(*mol,nVect);
+    TEST_ASSERT(nm);
+
+    std::vector<double> hkds(mol->getNumAtoms());
+    Descriptors::detail::hkDeltas(*mol,hkds,true);
+    std::vector<double> nhkds(mol->getNumAtoms());
+    Descriptors::detail::hkDeltas(*nm,nhkds,true);
+    
+    for(unsigned int j=0;j<mol->getNumAtoms();++j){
+      TEST_ASSERT(feq(hkds[nVect[j]],nhkds[j]));
+    }
+
+    delete mol;
+    delete nm;
+  }  
+
+
+  { // now chi values, where the problem was retported:
+
+    RWMol *mol;
+    mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+    unsigned int order[]={0, 11, 8, 7, 2, 4, 5, 13, 10, 12, 9, 3, 1, 6};
+    std::vector<unsigned int> nVect(order,order+sizeof(order)/sizeof(unsigned int));
+    ROMol *nm=MolOps::renumberAtoms(*mol,nVect);
+    TEST_ASSERT(nm);
+
+    double cv=calcChi3v(*mol);
+    double ncv=calcChi3v(*nm);    
+    
+    TEST_ASSERT(feq(cv,ncv));
+
+    delete mol;
+    delete nm;
+  }  
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1708,8 +1759,9 @@ int main(){
   testRingDescriptors();
   testMiscCountDescriptors();
   testMQNs();
-#endif
   testGitHubIssue56();
   testGitHubIssue92();
+#endif
+  testGitHubIssue463();
 
 }
