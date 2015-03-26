@@ -2533,7 +2533,8 @@ void testAtomMaps(){
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
 
-    smiles = MolToSmiles(*m,true);
+    //changed: smiles does not need to be canonical
+    smiles = MolToSmiles(*m,true,false,-1,false);
     TEST_ASSERT(smiles=="[*:1]CCC([C:200])C");
 
     delete m;
