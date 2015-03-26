@@ -364,6 +364,16 @@ namespace RDKit {
         else if(ivi>ivj)
           return 1;
 
+        // use the atom-mapping numbers if they were assigned
+        std::string molAtomMapNumber_i="";
+        std::string molAtomMapNumber_j="";
+        dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,molAtomMapNumber_i);
+        dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,molAtomMapNumber_j);
+        if(molAtomMapNumber_i<molAtomMapNumber_j)
+          return -1;
+        else if(molAtomMapNumber_i>molAtomMapNumber_j)
+          return 1;
+
         // start by comparing degree
         ivi= dp_atoms[i].degree;
         ivj= dp_atoms[j].degree;

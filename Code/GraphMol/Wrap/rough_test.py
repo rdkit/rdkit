@@ -2432,7 +2432,7 @@ CAS<~>
     m = Chem.MolFromSmiles('CC*')
     m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
     smi=Chem.MolToSmiles(m)
-    self.assertEqual(smi,'[*:30]CC')
+    self.assertEqual(smi,'CC[*:30]')
 
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
