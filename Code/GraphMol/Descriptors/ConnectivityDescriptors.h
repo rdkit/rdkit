@@ -166,6 +166,12 @@ namespace RDKit {
     double calcKappa3(const ROMol &mol);
     const std::string kappa3Version="1.1.0";
 
+
+
+    namespace detail {
+      void hkDeltas(const ROMol &mol,std::vector<double> &deltas,bool force);
+    }
+    
   } // end of namespace Descriptors
 }
 
