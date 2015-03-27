@@ -28,6 +28,7 @@
 #include <Numerics/Alignment/AlignPoints.h>
 #include <DistGeom/ChiralSet.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 #ifdef RDK_THREADSAFE_SSS
@@ -242,6 +243,52 @@ namespace RDKit {
       return res;
     }
 
+    // the minimization using experimental torsion angle preferences
+    void _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
+                              DistGeom::BoundsMatPtr mmat,
+                              double optimizerForceTol, double basinThresh,
+                              std::vector<std::pair<int, int> > bonds,
+                              std::vector<std::pair<int, int> > angles,
+                              std::vector<std::vector<int> > expTorsionAtoms,
+                              std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles) {
+
+
+      // convert to 3D positions and create coordMap
+			RDGeom::Point3DPtrVect positions3D;
+			for (unsigned int p = 0; p < positions.size(); ++p) {
+				positions3D.push_back(new RDGeom::Point3D((*positions[p])[0], (*positions[p])[1], (*positions[p])[2]));
+			}
+
+			// create the force field
+			ForceFields::ForceField *field = DistGeom::construct3DForceField(*mmat, positions3D,
+																																				bonds, angles,
+																																				expTorsionAtoms,
+																																				expTorsionAngles);
+
+			// minimize!
+			int nPasses = 0;
+			field->initialize();
+			//std::cout << "Field with torsion constraints: " << field->calcEnergy() << " " << ERROR_TOL << std::endl;
+			if (field->calcEnergy() > ERROR_TOL) {
+				int needMore = 1;
+				while (needMore) {
+							needMore = field->minimize(200, optimizerForceTol);
+							++nPasses;
+				}
+			}
+			//std::cout << field->calcEnergy() << std::endl;
+
+			delete field;
+
+			// overwrite positions and delete the 3D ones
+			for (unsigned int i = 0; i < positions3D.size(); ++i) {
+				(*positions[i])[0] = (*positions3D[i])[0];
+				(*positions[i])[1] = (*positions3D[i])[1];
+				(*positions[i])[2] = (*positions3D[i])[2];
+				delete positions3D[i];
+			}
+    }
+
     int EmbedMolecule(ROMol &mol, unsigned int maxIterations, int seed,
                       bool clearConfs,
                       bool useRandomCoords,double boxSizeMult,
@@ -249,13 +296,16 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap,
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
-                      double basinThresh){
+                      bool useExpTorsionAnglePrefs,
+											bool verbose,
+											double basinThresh) {
 
       INT_VECT confIds;
       EmbedMultipleConfs(mol,confIds,1,1,maxIterations,seed,clearConfs,
                          useRandomCoords,boxSizeMult,randNegEig,
                          numZeroFail,-1.0,coordMap,optimizerForceTol,
-                         ignoreSmoothingFailures,basinThresh);
+                         ignoreSmoothingFailures,
+                         useExpTorsionAnglePrefs, verbose, basinThresh);
 
       int res;
       if(confIds.size()){
@@ -318,6 +368,11 @@ namespace RDKit {
         int seed;
         unsigned int maxIterations;
         DistGeom::VECT_CHIRALSET const *chiralCenters;
+        bool useExpTorsionAnglePrefs;
+        std::vector<std::pair<int, int> > *bonds;
+				std::vector<std::pair<int, int> > *angles;
+        std::vector<std::vector<int> > *expTorsionAtoms;
+				std::vector<std::pair<std::vector<int>, std::vector<double> > > *expTorsionAngles;
       } EmbedArgs;
       void embedHelper_(int threadId,
                         int numThreads,
@@ -347,6 +402,12 @@ namespace RDKit {
                                         eargs->basinThresh, (ci+1)*eargs->seed,
                                         eargs->maxIterations, eargs->chiralCenters);
           if (gotCoords) {
+          	// experimental torsion ranges
+						if (eargs->useExpTorsionAnglePrefs) {
+							_minimizeWithExpTorsions(positions, eargs->mmat, eargs->optimizerForceTol,
+																			 eargs->basinThresh, *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
+																			 *eargs->expTorsionAngles);
+						}
             Conformer *conf = (*eargs->confs)[ci];
             unsigned int fragAtomIdx=0;
             for (unsigned int i = 0; i < (*eargs->confs)[0]->getNumAtoms();++i){
@@ -381,7 +442,9 @@ namespace RDKit {
                             const std::map<int,RDGeom::Point3D>  *coordMap,
                             double optimizerForceTol,
                             bool ignoreSmoothingFailures,
-                            double basinThresh){
+														bool useExpTorsionAnglePrefs,
+														bool verbose,
+														double basinThresh){
       if(!mol.getNumAtoms()){
         throw ValueErrorException("molecule has no atoms");
       }
@@ -413,7 +476,16 @@ namespace RDKit {
         initBoundsMat(mmat);
       
         double tol=0.0;
-        setTopolBounds(*piece, mmat, true, false);
+        std::vector<std::vector<int> > expTorsionAtoms;
+				std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
+				std::vector<std::pair<int, int> > bonds;
+				std::vector<std::pair<int, int> > angles;
+				if (useExpTorsionAnglePrefs) {
+					ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,verbose);
+					setTopolBounds(*piece, mmat, bonds, angles, true, false);
+				} else {
+					setTopolBounds(*piece, mmat, true, false);
+				}
         if(coordMap){
           adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
           tol=0.05;
@@ -477,7 +549,10 @@ namespace RDKit {
                                  randNegEig, numZeroFail,
                                  optimizerForceTol,
                                  basinThresh, seed,
-                                 maxIterations, &chiralCenters};
+                                 maxIterations, &chiralCenters,
+                                 useExpTorsionAnglePrefs,
+                                 &bonds, &angles, &expTorsionAtoms,
+                                 &expTorsionAngles};
         if(numThreads==1){
           detail::embedHelper_(0,1,&eargs);
         }
@@ -517,6 +592,8 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
+                                bool useExpTorsionAnglePrefs,
+                                bool verbose,
                                 double basinThresh){
       INT_VECT res;
       EmbedMultipleConfs(mol,res,numConfs,1,
@@ -527,6 +604,8 @@ namespace RDKit {
                          coordMap,
                          optimizerForceTol,
                          ignoreSmoothingFailures,
+                         useExpTorsionAnglePrefs,
+                         verbose,
                          basinThresh);
       return res;
     }

@@ -109,6 +109,27 @@ namespace DistGeom {
                                                std::map< std::pair<int,int>,double> *extraWeights=0,
                                                double basinSizeTol=5.0);
 
+  //! Force field with experimental torsion angle preferences and 1-2/1-3 distance constraints
+    /*!
+
+      \param mmat            Distance bounds matrix
+      \param positions       A vector of pointers to 3D Points to write out the resulting coordinates
+      \param bonds           A list of 1-2 partners (bonds)
+      \param angles          A list of 1-3 partners (angles)
+      \param expTorsionAtoms A list of groups of 4 atom indices for experimental torsions
+      \param expTorsionAngles   A list of corresponding torsion angle-potential parameters
+
+      \return a pointer to a ForceField suitable for imposing experimental torsion angle preferences
+        <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+  */
+  ForceFields::ForceField *construct3DForceField(const BoundsMatrix &mmat,
+  							   RDGeom::Point3DPtrVect &positions,
+  							   std::vector<std::pair<int, int> > &bonds,
+  							   std::vector<std::pair<int, int> > &angles,
+  							   std::vector<std::vector<int> > &expTorsionAtoms,
+  							   std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles);
+
 }
     
 #endif
