@@ -1144,6 +1144,62 @@ namespace RDKit {
       setLowerBoundVDW(mol, mmat, scaleVDW,distMatrix);
     }
 
+    void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+												std::vector<std::pair<int,int> > &bonds,
+												std::vector<std::pair<int,int> > &angles,
+												bool set15bounds, bool scaleVDW) {
+			PRECONDITION(mmat.get(),"bad pointer");
+			unsigned int nb = mol.getNumBonds();
+			unsigned int na = mol.getNumAtoms();
+			if (!na) {
+				throw ValueErrorException("molecule has no atoms");
+			}
+			ComputedData accumData(na, nb);
+			double *distMatrix=0;
+			distMatrix = MolOps::getDistanceMat(mol);
+
+			set12Bounds(mol, mmat, accumData);
+
+			// store the 1,2-interactions
+			ROMol::ConstBondIterator bi;
+			for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
+				unsigned int begId = (*bi)->getBeginAtomIdx();
+				unsigned int endId = (*bi)->getEndAtomIdx();
+				bonds.push_back(std::make_pair(begId, endId));
+			}
+
+			set13Bounds(mol, mmat, accumData);
+
+			// store the 1,3-interactions
+			for (unsigned int bid1 = 0; bid1 < nb-1; ++bid1) {
+				for (unsigned int bid2 = bid1+1; bid2 < nb; ++bid2) {
+					if (accumData.bondAngles->getVal(bid1, bid2) != -1.0) {
+						int aid11 = mol.getBondWithIdx(bid1)->getBeginAtomIdx();
+						int aid12 = mol.getBondWithIdx(bid1)->getEndAtomIdx();
+						int aid21 = mol.getBondWithIdx(bid2)->getBeginAtomIdx();
+						int aid22 = mol.getBondWithIdx(bid2)->getEndAtomIdx();
+						if (aid12 == aid21) {
+							angles.push_back(std::make_pair(aid11, aid22));
+						} else if (aid12 == aid22) {
+							angles.push_back(std::make_pair(aid11, aid21));
+						} else if (aid11 == aid21) {
+							angles.push_back(std::make_pair(aid12, aid22));
+						} else if (aid11 == aid22) {
+							angles.push_back(std::make_pair(aid12, aid21));
+						}
+					}
+				}
+			}
+
+			set14Bounds(mol, mmat, accumData, distMatrix);
+
+			if (set15bounds) {
+				set15Bounds(mol, mmat, accumData, distMatrix);
+			}
+
+			setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
+		}
+
 
     // some helper functions to set 15 distances
     

@@ -25,13 +25,15 @@ namespace python = boost::python;
 namespace RDKit {
   int EmbedMolecule(ROMol &mol, unsigned int maxAttempts,
                     int seed, bool clearConfs,
-		    bool useRandomCoords,double boxSizeMult,
+                    bool useRandomCoords,double boxSizeMult,
                     bool randNegEig, unsigned int numZeroFail,
-                    python::dict &coordMap,double forceTol,
-                    bool ignoreSmoothingFailures){
-    std::map<int,RDGeom::Point3D> pMap;
-    python::list ks = coordMap.keys();
-    unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
+                    python::dict &coordMap, double forceTol,
+                    bool ignoreSmoothingFailures,
+                    bool useExpTorsionAnglePrefs,
+                    bool printExpTorsionAngles) {
+		std::map<int,RDGeom::Point3D> pMap;
+		python::list ks = coordMap.keys();
+		unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
     for(unsigned int i=0;i<nKeys;++i){
       unsigned int id = python::extract<unsigned int>(ks[i]);
       pMap[id]= python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -43,23 +45,27 @@ namespace RDKit {
 
     int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
                                           seed, clearConfs,
-					  useRandomCoords,boxSizeMult,
-					  randNegEig,
+																					useRandomCoords,boxSizeMult,
+																					randNegEig,
                                           numZeroFail,
                                           pMapPtr,forceTol,
-                                          ignoreSmoothingFailures);
+                                          ignoreSmoothingFailures,
+                                          useExpTorsionAnglePrefs,
+                                          printExpTorsionAngles);
     return res;
   }
 
   INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
-			      unsigned int maxAttempts,
+			      									unsigned int maxAttempts,
                               int seed, bool clearConfs,
-			      bool useRandomCoords,double boxSizeMult,
+                              bool useRandomCoords,double boxSizeMult,
                               bool randNegEig, unsigned int numZeroFail,
-			      double pruneRmsThresh,python::dict &coordMap,
+                              double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
                               bool ignoreSmoothingFailures,
-                              int numThreads) {
+                              int numThreads,
+                              bool useExpTorsionAnglePrefs,
+                              bool printExpTorsionAngles) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -81,7 +87,9 @@ namespace RDKit {
                                      useRandomCoords,boxSizeMult, 
                                      randNegEig, numZeroFail,
                                      pruneRmsThresh,pMapPtr,forceTol,
-                                     ignoreSmoothingFailures);
+                                     ignoreSmoothingFailures,
+                                     useExpTorsionAnglePrefs,
+                                     printExpTorsionAngles);
 
     return res;
   } 
@@ -144,6 +152,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+  	- useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+  	- printExpTorsionAngles : print the output from the experimental torsion angles\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -152,11 +162,13 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               (python::arg("mol"), python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
-	       python::arg("boxSizeMult")=2.0,
+               python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
-               python::arg("ignoreSmoothingFailures")=false),
+               python::arg("ignoreSmoothingFailures")=false,
+               python::arg("useExpTorsionAnglePrefs")=false,
+               python::arg("printExpTorsionAngles")=false),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -201,6 +213,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  of the bounds matrix fails.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
                  was built with multi-thread support..\n\
+  	- useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+  	- printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -209,13 +223,15 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
-	       python::arg("boxSizeMult")=2.0,
+               python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
-	       python::arg("pruneRmsThresh")=-1.0,
+               python::arg("pruneRmsThresh")=-1.0,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
-               python::arg("numThreads")=1),
+               python::arg("numThreads")=1,
+               python::arg("useExpTorsionAnglePrefs")=false,
+               python::arg("printExpTorsionAngles")=false),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\

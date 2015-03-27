@@ -1,3 +1,5 @@
+ADD_DEFINITIONS("-DBOOST_PYTHON_MAX_ARITY=32")
+
 rdkit_python_extension(rdDistGeom rdDistGeom.cpp
                        DEST Chem
                        LINK_LIBRARIES
