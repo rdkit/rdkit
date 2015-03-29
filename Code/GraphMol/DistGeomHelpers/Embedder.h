@@ -82,8 +82,8 @@ namespace RDKit {
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
                       bool useExpTorsionAnglePrefs=false,
-											bool verbose=false,
-											double basinThresh=5.0);
+                      bool verbose=false,
+                      double basinThresh=5.0);
 
     //*! Embed multiple conformations for a molecule
     /*!
@@ -169,9 +169,9 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
-																bool useExpTorsionAnglePrefs=false,
-																bool verbose=false,
-																double basinThresh=5.0);
+                                bool useExpTorsionAnglePrefs=false,
+                                bool verbose=false,
+                                double basinThresh=5.0);
 
   }
 }

@@ -20,52 +20,54 @@
 
 namespace ForceFields {
   namespace CrystalFF {
-	using namespace MMFF;
+    using namespace MMFF;
 
-	double calcTorsionEnergyM6(const std::vector<double> V, const std::vector<int> signs,
-								 const double cosPhi) {
-		double cosPhi2 = cosPhi * cosPhi;
-		double cosPhi3 = cosPhi * cosPhi2;
-		double cosPhi4 = cosPhi * cosPhi3;
-		double cosPhi5 = cosPhi * cosPhi4;
-		double cosPhi6 = cosPhi * cosPhi5;
+    double calcTorsionEnergyM6(const std::vector<double> V, const std::vector<int> signs,
+                               const double cosPhi) {
+      double cosPhi2 = cosPhi * cosPhi;
+      double cosPhi3 = cosPhi * cosPhi2;
+      double cosPhi4 = cosPhi * cosPhi3;
+      double cosPhi5 = cosPhi * cosPhi4;
+      double cosPhi6 = cosPhi * cosPhi5;
 
-		double cos2Phi = 2.0 * cosPhi2 - 1.0;
-		double cos3Phi = 4.0 * cosPhi3 - 3.0 * cosPhi;
-		double cos4Phi = 8.0 * cosPhi4 - 8.0 * cosPhi2 + 1.0;
-		double cos5Phi = 16.0 * cosPhi5 - 20.0 * cosPhi3 + 5.0 * cosPhi;
-		double cos6Phi = 32.0 * cosPhi6 - 48.0 * cosPhi4 + 18.0 * cosPhi2 - 1.0;
+      double cos2Phi = 2.0 * cosPhi2 - 1.0;
+      double cos3Phi = 4.0 * cosPhi3 - 3.0 * cosPhi;
+      double cos4Phi = 8.0 * cosPhi4 - 8.0 * cosPhi2 + 1.0;
+      double cos5Phi = 16.0 * cosPhi5 - 20.0 * cosPhi3 + 5.0 * cosPhi;
+      double cos6Phi = 32.0 * cosPhi6 - 48.0 * cosPhi4 + 18.0 * cosPhi2 - 1.0;
 
-		return (V[0] * (1.0 + signs[0] * cosPhi)
-				+ V[1] * (1.0 + signs[1] * cos2Phi)
-				+ V[2] * (1.0 + signs[2] * cos3Phi)
-				+ V[3] * (1.0 + signs[3] * cos4Phi)
-				+ V[4] * (1.0 + signs[4] * cos5Phi)
-				+ V[5] * (1.0 + signs[5] * cos6Phi));
-	}
+      return (V[0] * (1.0 + signs[0] * cosPhi)
+              + V[1] * (1.0 + signs[1] * cos2Phi)
+              + V[2] * (1.0 + signs[2] * cos3Phi)
+              + V[3] * (1.0 + signs[3] * cos4Phi)
+              + V[4] * (1.0 + signs[4] * cos5Phi)
+              + V[5] * (1.0 + signs[5] * cos6Phi));
+    }
 
-    TorsionAngleContribM6::TorsionAngleContribM6(ForceFields::ForceField *owner, unsigned int idx1, unsigned int idx2,
-                  unsigned int idx3, unsigned int idx4, const std::vector<double> V, const std::vector<int> signs) {
-    	  PRECONDITION(owner, "bad owner");
-		  PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4)
-			&& (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4), "degenerate points");
-		  RANGE_CHECK(0, idx1, owner->positions().size() - 1);
-		  RANGE_CHECK(0, idx2, owner->positions().size() - 1);
-		  RANGE_CHECK(0, idx3, owner->positions().size() - 1);
-		  RANGE_CHECK(0, idx4, owner->positions().size() - 1);
+    TorsionAngleContribM6::TorsionAngleContribM6(ForceFields::ForceField *owner, 
+                                                 unsigned int idx1, unsigned int idx2,
+                                                 unsigned int idx3, unsigned int idx4, 
+                                                 const std::vector<double> V, 
+                                                 const std::vector<int> signs) {
+      PRECONDITION(owner, "bad owner");
+      PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4)
+        && (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4), "degenerate points");
+      RANGE_CHECK(0, idx1, owner->positions().size() - 1);
+      RANGE_CHECK(0, idx2, owner->positions().size() - 1);
+      RANGE_CHECK(0, idx3, owner->positions().size() - 1);
+      RANGE_CHECK(0, idx4, owner->positions().size() - 1);
 
-		  dp_forceField = owner;
-		  d_at1Idx = idx1;
-		  d_at2Idx = idx2;
-		  d_at3Idx = idx3;
-		  d_at4Idx = idx4;
-		  d_V= V;
-		  d_sign = signs;
+      dp_forceField = owner;
+      d_at1Idx = idx1;
+      d_at2Idx = idx2;
+      d_at3Idx = idx3;
+      d_at4Idx = idx4;
+      d_V= V;
+      d_sign = signs;
     }
 
   
-    double TorsionAngleContribM6::getEnergy(double *pos) const
-    {
+    double TorsionAngleContribM6::getEnergy(double *pos) const {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
 
@@ -79,11 +81,10 @@ namespace ForceFields {
         pos[3 * d_at4Idx + 1], pos[3 * d_at4Idx + 2]);
 
       return calcTorsionEnergyM6(d_V, d_sign,
-    		  Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
+                                 Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
     }
 
-    void TorsionAngleContribM6::getGrad(double *pos, double *grad) const
-    {
+    void TorsionAngleContribM6::getGrad(double *pos, double *grad) const {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
       PRECONDITION(grad,"bad vector");
@@ -132,11 +133,11 @@ namespace ForceFields {
       double cosPhi5 = cosPhi * cosPhi4;
       // dE/dPhi is independent of cartesians:
       double dE_dPhi = (-d_V[0] * d_sign[0] * sinPhi
-    		            - 2.0 * d_V[1] * d_sign[1] * (2.0 * cosPhi * sinPhi)
-    		            - 3.0 * d_V[2] * d_sign[2] * (4.0 * cosPhi2 * sinPhi - sinPhi)
-    		            - 4.0 * d_V[3] * d_sign[3] * (8.0 * cosPhi3 * sinPhi - 4.0 * cosPhi * sinPhi)
-    		            - 5.0 * d_V[4] * d_sign[4] * (16.0 * cosPhi4 * sinPhi - 12.0 * cosPhi2 * sinPhi + sinPhi)
-    		            - 6.0 * d_V[4] * d_sign[4] * (32.0 * cosPhi5 * sinPhi - 32.0 * cosPhi3 * sinPhi + 6.0 * sinPhi));
+                        - 2.0 * d_V[1] * d_sign[1] * (2.0 * cosPhi * sinPhi)
+                        - 3.0 * d_V[2] * d_sign[2] * (4.0 * cosPhi2 * sinPhi - sinPhi)
+                        - 4.0 * d_V[3] * d_sign[3] * (8.0 * cosPhi3 * sinPhi - 4.0 * cosPhi * sinPhi)
+                        - 5.0 * d_V[4] * d_sign[4] * (16.0 * cosPhi4 * sinPhi - 12.0 * cosPhi2 * sinPhi + sinPhi)
+                        - 6.0 * d_V[4] * d_sign[4] * (32.0 * cosPhi5 * sinPhi - 32.0 * cosPhi3 * sinPhi + 6.0 * sinPhi));
 
       // FIX: use a tolerance here
       // this is hacky, but it's per the

@@ -117,18 +117,18 @@ namespace DistGeom {
       \param bonds           A list of 1-2 partners (bonds)
       \param angles          A list of 1-3 partners (angles)
       \param expTorsionAtoms A list of groups of 4 atom indices for experimental torsions
-      \param expTorsionAngles   A list of corresponding torsion angle-potential parameters
+      \param expTorsionAngles A list of corresponding torsion angle-potential parameters
 
       \return a pointer to a ForceField suitable for imposing experimental torsion angle preferences
         <b>NOTE:</b> the caller is responsible for deleting this force field.
 
   */
   ForceFields::ForceField *construct3DForceField(const BoundsMatrix &mmat,
-  							   RDGeom::Point3DPtrVect &positions,
-  							   std::vector<std::pair<int, int> > &bonds,
-  							   std::vector<std::pair<int, int> > &angles,
-  							   std::vector<std::vector<int> > &expTorsionAtoms,
-  							   std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles);
+                                                 RDGeom::Point3DPtrVect &positions,
+                                                 const std::vector<std::pair<int, int> > &bonds,
+                                                 const std::vector<std::pair<int, int> > &angles,
+                                                 const std::vector<std::vector<int> > &expTorsionAtoms,
+                                                 const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles);
 
 }
     
