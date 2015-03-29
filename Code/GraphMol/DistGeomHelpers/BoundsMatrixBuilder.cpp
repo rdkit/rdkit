@@ -167,7 +167,7 @@ namespace RDKit {
       \param mmat            Bounds matrix to which the bounds are written
       \param useTopolScaling If true scale the sum of the vdW radii while setting lower bounds
                              so that a smaller value (0.7*(vdw1 + vdw2) ) is used for paths
-                that are less 5 bonds apart.
+                             that are less 5 bonds apart.
     */
     void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool useTopolScaling=true);
 
@@ -699,7 +699,7 @@ namespace RDKit {
     //     \ / \                                         T.S.I.Left Blank
     //      2   5  <- 2 is an oxygen/nitrogen
     bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
-          const Atom *atm2, const Atom *atm3, const Atom *atm4) { 
+                            const Atom *atm2, const Atom *atm3, const Atom *atm4) { 
       unsigned int a1Num = atm1->getAtomicNum();
       unsigned int a2Num = atm2->getAtomicNum();
       unsigned int a3Num = atm3->getAtomicNum();
@@ -718,31 +718,30 @@ namespace RDKit {
     bool _isCarbonyl(const ROMol &mol,const Atom *at){
       PRECONDITION(at,"bad atom");
       if(at->getAtomicNum()==6 && at->getDegree()>2 ){
-  ROMol::ADJ_ITER nbrIdx,endNbrs;
-  boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(at);
-  while(nbrIdx!=endNbrs){
-    unsigned int atNum=mol.getAtomWithIdx(*nbrIdx)->getAtomicNum();
-    if( (atNum==8 || atNum==7) &&
-        mol.getBondBetweenAtoms(at->getIdx(),*nbrIdx)->getBondType()==Bond::DOUBLE) {
-      return true;
-    }
-    ++nbrIdx;
-  }
+        ROMol::ADJ_ITER nbrIdx,endNbrs;
+        boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(at);
+        while(nbrIdx!=endNbrs){
+          unsigned int atNum=mol.getAtomWithIdx(*nbrIdx)->getAtomicNum();
+          if( (atNum==8 || atNum==7) &&
+              mol.getBondBetweenAtoms(at->getIdx(),*nbrIdx)->getBondType()==Bond::DOUBLE) {
+            return true;
+          }
+          ++nbrIdx;
+        }
       }
       return false;
     }
 
     bool _checkAmideEster15(const ROMol &mol,
-          const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
-          const Atom *atm2, const Atom *atm3, const Atom *atm4) { 
+                            const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
+                            const Atom *atm2, const Atom *atm3, const Atom *atm4) { 
       unsigned int a2Num = atm2->getAtomicNum();
       if ( (a2Num == 8) || 
            ((a2Num == 7) && (atm2->getTotalNumHs() == 1)) ) {
         if ((atm1->getAtomicNum() != 1) && (bnd1->getBondType() == Bond::SINGLE)) {
           if ((atm3->getAtomicNum() == 6) && 
               (bnd3->getBondType() == Bond::SINGLE) &&
-        _isCarbonyl(mol,atm3)
-        ) {
+              _isCarbonyl(mol,atm3)) {
             return true;
           }
         }
@@ -859,30 +858,30 @@ namespace RDKit {
         } else if (( _checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                    ( _checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
 
-    // It's an amide or ester:
-    //
-    //        4    <- 4 is the O
-    //        |    <- That's the double bond
-    //    1   3
-    //     \ / \                                         T.S.I.Left Blank
-    //      2   5  <- 2 is an oxygen/nitrogen
-    // 
-    // Here we set the distance between atoms 1 and 4,
-    //  we'll handle atoms 1 and 5 below.
+          // It's an amide or ester:
+          //
+          //        4    <- 4 is the O
+          //        |    <- That's the double bond
+          //    1   3
+          //     \ / \                                         T.S.I.Left Blank
+          //      2   5  <- 2 is an oxygen/nitrogen
+          // 
+          // Here we set the distance between atoms 1 and 4,
+          //  we'll handle atoms 1 and 5 below.
 
 
           // fix for issue 251 - we were marking this as a cis configuration earlier
-    // -------------------------------------------------------
-    // Issue284:
-    //   As this code originally stood, we forced amide bonds to be trans. This is
-    //   convenient a lot of the time for generating nice-looking structures, but is
-    //   unfortunately totally bogus.  So here we'll allow the distance to
-    //   roam from cis to trans and hope that the force field planarizes things later.
-    //
-    //   What we'd really like to be able to do is specify multiple possible ranges
-    //   for the distances, but a single bounds matrix doesn't support this kind
-    //   of fanciness. 
-    //
+          // -------------------------------------------------------
+          // Issue284:
+          //   As this code originally stood, we forced amide bonds to be trans. This is
+          //   convenient a lot of the time for generating nice-looking structures, but is
+          //   unfortunately totally bogus.  So here we'll allow the distance to
+          //   roam from cis to trans and hope that the force field planarizes things later.
+          //
+          //   What we'd really like to be able to do is specify multiple possible ranges
+          //   for the distances, but a single bounds matrix doesn't support this kind
+          //   of fanciness. 
+          //
 #ifdef FORCE_TRANS_AMIDES    
           dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23); 
           path14.type = Path14Configuration::TRANS;
@@ -905,33 +904,33 @@ namespace RDKit {
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
 
-    //BOOST_LOG(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": " << dl << "->" << du << "\n";
+          //BOOST_LOG(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": " << dl << "->" << du << "\n";
         } else if (( _checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                    ( _checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-    // it's an amide or ester. 
-    //
-    //        4    <- 4 is the O
-    //        |    <- That's the double bond
-    //    1   3
-    //     \ / \                                          T.S.I.Left Blank
-    //      2   5  <- 2 is oxygen or nitrogen
-    // 
-    // we set the 1-4 contact above.
+          // it's an amide or ester. 
+          //
+          //        4    <- 4 is the O
+          //        |    <- That's the double bond
+          //    1   3
+          //     \ / \                                          T.S.I.Left Blank
+          //      2   5  <- 2 is oxygen or nitrogen
+          // 
+          // we set the 1-4 contact above.
 
-    // If we're going to have a hope of getting good geometries
-    // out of here we need to set some reasonably smart bounds between 1
-    // and 5 (ref Issue355):
+          // If we're going to have a hope of getting good geometries
+          // out of here we need to set some reasonably smart bounds between 1
+          // and 5 (ref Issue355):
 
-    // NOTE THAT WE REVERSE THE ORDER HERE:
+          // NOTE THAT WE REVERSE THE ORDER HERE:
 
 #ifdef FORCE_TRANS_AMIDES
-    // amide is trans, we're cis:
+          // amide is trans, we're cis:
           dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23); 
           path14.type = Path14Configuration::CIS;
           accumData.cisPaths[bid1*nb*nb + bid2*nb + bid3] = 1;
           accumData.cisPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
 #else
-    // amide is cis, we're trans:
+          // amide is cis, we're trans:
           if(atm2->getAtomicNum()==7 && atm2->getDegree()==3 &&
              atm1->getAtomicNum()==1 && atm2->getTotalNumHs(true)==1){
             // secondary amide, this is the H
@@ -946,7 +945,7 @@ namespace RDKit {
           du = dl;
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
-    //BOOST_LOG(rdDebugLog) << "    amide neighbor: " << aid1 << " " << aid4 << ": " << dl << "->" << du << "\n";
+          //BOOST_LOG(rdDebugLog) << "    amide neighbor: " << aid1 << " " << aid4 << ": " << dl << "->" << du << "\n";
         } else {
           dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23); 
           du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
@@ -1069,8 +1068,8 @@ namespace RDKit {
                   if (ringBondPairs[pid1] || ringBondPairs[pid2] 
                       || ringBondPairs[pid3] || ringBondPairs[pid4]) {
                     // either (bid1, bid2) or (bid2, bid3) are in the
-        // same ring (note all three cannot be in the same
-        // ring; we dealt with that before)
+                    // same ring (note all three cannot be in the same
+                    // ring; we dealt with that before)
                     _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat, distMatrix);
                   } else if ( ((rinfo->numBondRings(bid1) > 0) && (rinfo->numBondRings(bid2) > 0)) ||
                               ((rinfo->numBondRings(bid2) > 0) && (rinfo->numBondRings(bid3) > 0)) ) {
@@ -1105,18 +1104,18 @@ namespace RDKit {
 
 
     void initBoundsMat(DistGeom::BoundsMatrix *mmat,double defaultMin,
-           double defaultMax){
+                       double defaultMax){
       unsigned int npt = mmat->numRows();
       
       for (unsigned int i = 1; i < npt; i++) {
-  for (unsigned int j = 0; j < i; j++) {
-    mmat->setUpperBound(i,j,defaultMax);
-    mmat->setLowerBound(i,j,defaultMin);
-  }
+        for (unsigned int j = 0; j < i; j++) {
+          mmat->setUpperBound(i,j,defaultMax);
+          mmat->setLowerBound(i,j,defaultMin);
+        }
       }
     }
     void initBoundsMat(DistGeom::BoundsMatPtr mmat,double defaultMin,
-           double defaultMax){
+                       double defaultMax){
       initBoundsMat(mmat.get(),defaultMin,defaultMax);
     };
 

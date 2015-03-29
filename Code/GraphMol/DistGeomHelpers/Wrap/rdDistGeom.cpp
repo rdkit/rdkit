@@ -106,8 +106,8 @@ namespace RDKit {
     DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW);
     PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
-     static_cast<void *>(mat->getData()),
-     nats*nats*sizeof(double));
+           static_cast<void *>(mat->getData()),
+           nats*nats*sizeof(double));
      
     return PyArray_Return(res);
   }
