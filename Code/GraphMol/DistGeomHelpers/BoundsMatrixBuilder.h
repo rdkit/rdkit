@@ -23,9 +23,9 @@ namespace RDKit {
 
     */
     void initBoundsMat(DistGeom::BoundsMatrix *mmat,double defaultMin=0.0,
-		       double defaultMax=1000.0);
+                       double defaultMax=1000.0);
     void initBoundsMat(DistGeom::BoundsMatPtr mmat,double defaultMin=0.0,
-		       double defaultMax=1000.0);
+                       double defaultMax=1000.0);
 
     //! Set upper and lower distance bounds between atoms in a molecule based on topology
     /*!   
@@ -41,7 +41,7 @@ namespace RDKit {
       \param set15bounds  If true try to set 1-5 bounds also based on topology
       \param scaleVDW     If true scale the sum of the vdW radii while setting lower bounds
                           so that a smaller value (0.7*(vdw1 + vdw2) ) is used for paths
-			  that are less five bonds apart.
+                          that are less five bonds apart.
 
       <b>Note</b>
       For some strained systems the bounds matrix resulting from setting 1-5 bounds may
@@ -49,7 +49,7 @@ namespace RDKit {
       recompute the bounds matrix with no 1-5 bounds and with vdW scaling. 
     */
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-			bool set15bounds=true, bool scaleVDW=false);
+                        bool set15bounds=true, bool scaleVDW=false);
 
     /*! Overload for experimental torsion angle preferences */
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,

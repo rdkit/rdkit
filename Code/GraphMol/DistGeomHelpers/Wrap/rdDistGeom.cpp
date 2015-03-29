@@ -31,9 +31,9 @@ namespace RDKit {
                     bool ignoreSmoothingFailures,
                     bool useExpTorsionAnglePrefs,
                     bool printExpTorsionAngles) {
-		std::map<int,RDGeom::Point3D> pMap;
-		python::list ks = coordMap.keys();
-		unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
+    std::map<int,RDGeom::Point3D> pMap;
+    python::list ks = coordMap.keys();
+    unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
     for(unsigned int i=0;i<nKeys;++i){
       unsigned int id = python::extract<unsigned int>(ks[i]);
       pMap[id]= python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -56,7 +56,7 @@ namespace RDKit {
   }
 
   INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
-			      									unsigned int maxAttempts,
+                              unsigned int maxAttempts,
                               int seed, bool clearConfs,
                               bool useRandomCoords,double boxSizeMult,
                               bool randNegEig, unsigned int numZeroFail,
@@ -106,9 +106,9 @@ namespace RDKit {
     DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW);
     PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
-	   static_cast<void *>(mat->getData()),
-	   nats*nats*sizeof(double));
-	   
+     static_cast<void *>(mat->getData()),
+     nats*nats*sizeof(double));
+     
     return PyArray_Return(res);
   }
 }
@@ -152,8 +152,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
-  	- useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
-  	- printExpTorsionAngles : print the output from the experimental torsion angles\n\
+    - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+    - printExpTorsionAngles : print the output from the experimental torsion angles\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -213,8 +213,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  of the bounds matrix fails.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
                  was built with multi-thread support..\n\
-  	- useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
-  	- printExpTorsionAngles : print the output from the experimental torsion angles\n\
+    - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+    - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";

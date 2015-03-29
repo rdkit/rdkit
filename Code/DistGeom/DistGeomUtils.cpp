@@ -242,55 +242,58 @@ namespace DistGeom {
   } // constructForceField
 
   ForceFields::ForceField *construct3DForceField(const BoundsMatrix &mmat,
-							   RDGeom::Point3DPtrVect &positions,
-							   std::vector<std::pair<int, int> > &bonds,
-							   std::vector<std::pair<int, int> > &angles,
-							   std::vector<std::vector<int> > &expTorsionAtoms,
-							   std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles) {
-	unsigned int N = mmat.numRows();
-	CHECK_INVARIANT(N == positions.size(), "");
-	CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
-	ForceFields::ForceField *field = new ForceFields::ForceField(positions[0]->dimension());
-	for (unsigned int i = 0; i < N; ++i){
-	  field->positions().push_back(positions[i]);
-	}
+                                                 RDGeom::Point3DPtrVect &positions,
+                                                 const std::vector<std::pair<int, int> > &bonds,
+                                                 const std::vector<std::pair<int, int> > &angles,
+                                                 const std::vector<std::vector<int> > &expTorsionAtoms,
+                                                 const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles) {
+    unsigned int N = mmat.numRows();
+    CHECK_INVARIANT(N == positions.size(), "");
+    CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
+    ForceFields::ForceField *field = new ForceFields::ForceField(positions[0]->dimension());
+    for (unsigned int i = 0; i < N; ++i){
+      field->positions().push_back(positions[i]);
+    }
 
-	// torsion constraints
-	for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
-	  int i = expTorsionAtoms[t][0];
-	  int j = expTorsionAtoms[t][1];
-	  int k = expTorsionAtoms[t][2];
-	  int l = expTorsionAtoms[t][3];
-	  // expTorsionAngles[t][0] = (signs, V's)
-	  ForceFields::CrystalFF::TorsionAngleContribM6 *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
-	  field->contribs().push_back(ForceFields::ContribPtr(contrib));
-	} // torsion constraints
+    // torsion constraints
+    for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
+      int i = expTorsionAtoms[t][0];
+      int j = expTorsionAtoms[t][1];
+      int k = expTorsionAtoms[t][2];
+      int l = expTorsionAtoms[t][3];
+      // expTorsionAngles[t][0] = (signs, V's)
+      ForceFields::CrystalFF::TorsionAngleContribM6 *contrib = 
+        new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    } // torsion constraints
 
-	double fdist = 100.0; // force constant
-	// 1,2 distance constraints
-	std::vector<std::pair<int, int> >::iterator bi;
-	for (bi = bonds.begin(); bi != bonds.end(); bi++) {
-	  unsigned int i = bi->first;
-	  unsigned int j = bi->second;
-	  double d = ((*positions[i]) - (*positions[j])).length();
-	  double l = d-0.01;
-	  double u = d+0.01;
-	  ForceFields::UFF::DistanceConstraintContrib *contrib = new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
-	  field->contribs().push_back(ForceFields::ContribPtr(contrib));
-	}
+    double fdist = 100.0; // force constant
+    // 1,2 distance constraints
+    std::vector<std::pair<int, int> >::const_iterator bi;
+    for (bi = bonds.begin(); bi != bonds.end(); bi++) {
+      unsigned int i = bi->first;
+      unsigned int j = bi->second;
+      double d = ((*positions[i]) - (*positions[j])).length();
+      double l = d-0.01;
+      double u = d+0.01;
+      ForceFields::UFF::DistanceConstraintContrib *contrib = 
+        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    }
 
-	// 1,3 distance constraints
+    // 1,3 distance constraints
     for (bi = angles.begin(); bi != angles.end(); bi++) {
-	  unsigned int i = bi->first;
-	  unsigned int j = bi->second;
-	  double d = ((*positions[i]) - (*positions[j])).length();
-	  double l = d-0.01;
-	  double u = d+0.01;
-	  ForceFields::UFF::DistanceConstraintContrib *contrib = new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
-	  field->contribs().push_back(ForceFields::ContribPtr(contrib));
-	}
+      unsigned int i = bi->first;
+      unsigned int j = bi->second;
+      double d = ((*positions[i]) - (*positions[j])).length();
+      double l = d-0.01;
+      double u = d+0.01;
+      ForceFields::UFF::DistanceConstraintContrib *contrib = 
+        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    }
 
-	return field;
+    return field;
   } // construct3DForceField
 
 }
