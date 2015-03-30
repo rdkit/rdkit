@@ -2808,7 +2808,76 @@ CAS<~>
     self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)],
                      [10])
     
+  def testAtomBookmarks(self):
+    m = Chem.MolFromSmiles("C" * 14)
+    self.assertEquals(m.HasAtomBookmark(0), False)
     
+    atoms = list(m.GetAtoms())
+    for i in range(10):
+      self.assertFalse(m.HasAtomBookmark(i))
+
+    for atom in m.GetAtoms():
+      idx = atom.GetIdx()
+      m.SetAtomBookmark(atom, idx)
+
+    for i in range(len(m.GetAtoms())):
+      at = m.GetAtomWithBookmark(i)
+      self.assertEquals(at.GetIdx(),  i)
+      self.assertEquals([i], [a.GetIdx() for a in m.GetAllAtomsWithBookmark(i)])
+      m.ClearAtomBookmark(i,at)
+      self.assertFalse(m.HasAtomBookmark(i))
+
+    for atom in m.GetAtoms():
+      m.SetAtomBookmark(atom, -1)
+    self.assertEquals([a.GetIdx() for a in m.GetAtoms()],
+                      [a.GetIdx() for a in m.GetAllAtomsWithBookmark(-1)])
+    m.ClearAllAtomBookmarks()
+    self.assertFalse(m.HasAtomBookmark(-1))
+
+    m2 = Chem.MolFromSmiles("C")
+    other_atom = list(m2.GetAtoms())[0]
+    try:
+      m.SetAtomBookmark(other_atom, 1000)
+      self.assertFalse("Should have been a runtime error!")
+    except RuntimeError:
+      pass
+    
+  def testBondBookmarks(self):
+    m = Chem.MolFromSmiles("C" * 14)
+    self.assertEquals(m.HasBondBookmark(0), False)
+    
+    bonds = list(m.GetBonds())
+    for i in range(10):
+      self.assertFalse(m.HasBondBookmark(i))
+
+    for bond in m.GetBonds():
+      idx = bond.GetIdx()
+      m.SetBondBookmark(bond, idx)
+
+    for i in range(len(m.GetBonds())):
+      at = m.GetBondWithBookmark(i)
+      self.assertEquals(at.GetIdx(),  i)
+      self.assertEquals([i], [a.GetIdx() for a in m.GetAllBondsWithBookmark(i)])
+      m.ClearBondBookmark(i,at)
+      self.assertFalse(m.HasBondBookmark(i))
+
+    for bond in m.GetBonds():
+      m.SetBondBookmark(bond, -1)
+    self.assertEquals([a.GetIdx() for a in m.GetBonds()],
+                      [a.GetIdx() for a in m.GetAllBondsWithBookmark(-1)])
+    m.ClearAllBondBookmarks()
+    self.assertFalse(m.HasBondBookmark(-1))
+
+    m2 = Chem.MolFromSmiles("CC")
+    other_bond = list(m2.GetBonds())[0]
+    try:
+      m.SetBondBookmark(other_bond, 1000)
+      self.assertFalse("Should have been a runtime error!")
+    except RuntimeError:
+      pass
+
+    
+          
 if __name__ == '__main__':
   unittest.main()
 

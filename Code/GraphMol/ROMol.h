@@ -232,16 +232,27 @@ namespace RDKit{
     //@{
 
     //! associates an Atom pointer with a bookmark
-    void setAtomBookmark(ATOM_SPTR at,int mark) {d_atomBookmarks[mark].push_back(at.get());};
+    void setAtomBookmark(ATOM_SPTR at,int mark) {
+      setAtomBookmark(at.get(), mark);
+    }
     //! \overload
-    void setAtomBookmark(Atom *at,int mark) {d_atomBookmarks[mark].push_back(at);};
+    void setAtomBookmark(Atom *at,int mark) {
+      PRECONDITION(at, "NULL atom provided");
+      PRECONDITION(&at->getOwningMol()==this,
+                   "Can only bookmark atoms owned by this molecule");
+
+      d_atomBookmarks[mark].push_back(at);};
+
     //! associates an Atom pointer with a bookmark
     void replaceAtomBookmark(ATOM_SPTR at,int mark) {
-      d_atomBookmarks[mark].clear();
-      d_atomBookmarks[mark].push_back(at.get());
+      replaceAtomBookmark(at.get(), mark);
     };
     //! \overload
     void replaceAtomBookmark(Atom *at,int mark) {
+      PRECONDITION(at, "NULL atom provided");
+      PRECONDITION(&at->getOwningMol()==this,
+                   "Can only bookmark atoms owned by this molecule");
+      
       d_atomBookmarks[mark].clear();
       d_atomBookmarks[mark].push_back(at);
     };
@@ -263,9 +274,16 @@ namespace RDKit{
     ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; };
 
     //! associates a Bond pointer with a bookmark
-    void setBondBookmark(BOND_SPTR bond,int mark) {d_bondBookmarks[mark].push_back(bond.get());};
+    void setBondBookmark(BOND_SPTR bond,int mark) {
+      setBondBookmark(bond.get(), mark);
+    }
     //! \overload
-    void setBondBookmark(Bond *bond,int mark) {d_bondBookmarks[mark].push_back(bond);};
+    void setBondBookmark(Bond *bond,int mark) {
+      //      PRECONDITION(bond, "NULL atom provided");
+      //PRECONDITION(&bond->getOwningMol()==this,
+      //             "Can only bookmark bonds owned by this molecule");
+
+      d_bondBookmarks[mark].push_back(bond);};
     //! returns the first Bond associated with the \c bookmark provided
     Bond *getBondWithBookmark(int mark);
     //! returns all bonds associated with the \c bookmark provided

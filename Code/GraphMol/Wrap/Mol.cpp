@@ -17,12 +17,15 @@
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/WrapList.h>
+#include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 namespace python = boost::python;
 
@@ -199,6 +202,79 @@ namespace RDKit {
     return mol.getNumAtoms(onlyExplicit);
   }
 
+  //----------------------------------------------------------------------------
+  // Atom Bookmark Interface
+  void SetAtomBookmark(ROMol *mol, Atom *atom, int mark)
+  {
+    // the internal precondition is that atom->getOwningMol() == mol
+    //  so this function is safe because the atom can't be
+    //  deleted under the hood (RWMol will auto-remove the atom
+    //   from the book mark on removal)
+    mol->setAtomBookmark(atom, mark);
+  }
+
+  void ReplaceAtomBookmark(ROMol *mol, Atom *atom, int mark)
+  {
+    // the internal precondition is that atom->getOwningMol() == mol
+    //  so this function is safe because the atom can't be
+    //  deleted under the hood (RWMol will auto-remove the atom
+    //   from the book mark on removal)
+    mol->replaceAtomBookmark(atom, mark);
+  }
+
+  void ClearAtomBookmark(ROMol *mol, int mark, const Atom *atom=0)
+  {
+    if (atom)
+      mol->clearAtomBookmark(mark, atom);
+    else
+      mol->clearAtomBookmark(mark);
+      
+  }
+
+  void ClearAllAtomBookmarks(ROMol *mol)
+  {
+    mol->clearAllAtomBookmarks();
+  }
+
+  bool HasAtomBookmark(ROMol *mol, int mark)
+  {
+    return mol->hasAtomBookmark(mark);
+  }
+
+  //----------------------------------------------------------------------------
+  // Bond Bookmark Interface
+  void SetBondBookmark(ROMol *mol, Bond *bond, int mark)
+  {
+    // if we force the bond to be owned by this mol, we are safe
+    //  here.
+    // The C++ code heavily uses adding bonds from other molecules
+    //  in the parsers and fMCS so we add the precondition here
+    PRECONDITION(bond, "Null bond provided");
+    PRECONDITION(mol == &bond->getOwningMol(),
+                 "Python API can only bookmark bonds owned by this molecule");
+    mol->setBondBookmark(bond, mark);
+  }
+
+  void ClearBondBookmark(ROMol *mol, int mark, const Bond *bond=0)
+  {
+    if (bond)
+      mol->clearBondBookmark(mark, bond);
+    else
+      mol->clearBondBookmark(mark);
+      
+  }
+
+  void ClearAllBondBookmarks(ROMol *mol)
+  {
+    mol->clearAllBondBookmarks();
+  }
+
+  bool HasBondBookmark(ROMol *mol, int mark)
+  {
+    return mol->hasBondBookmark(mark);
+  }
+
+  // ===================================================
   class ReadWriteMol : public RWMol {
   public:
     ReadWriteMol(const ROMol &m,bool quickCopy=false,int confId=-1) : RWMol(m,quickCopy,confId){
@@ -241,19 +317,27 @@ namespace RDKit {
           molecule itself is modified, for example).\n\
         Molecules also have the concept of *private* properties, which are tagged\n\
           by beginning the property name with an underscore (_).\n";
+
   std::string rwmolClassDoc = "The RW molecule class (read/write)\n\n\
   This class is a more-performant version of the EditableMolecule class in that\n\
   it is a 'live' molecule and shares the interface from the Mol class.\n\
   All changes are performed without the need to create a copy of the\n\
   molecule using GetMol() (this is still available, however).\n\
-  \n\
+  n.b. it is NOT generally safe to hold onto atom and bonds objects\n\
+   when using a RWMol as they can be removed under the hood.  Note\n\
+   that this is not the case for a normal Molecule so use with caution.\n\
   n.b. Eventually this class may become a direct replacement for EditableMol";
 
+
+typedef std::list<Atom*> atomlist;
 
 struct mol_wrapper {
   static void wrap(){
     python::register_exception_translator<ConformerException>(&rdExceptionTranslator);
 
+    export_ConstSTLListOfPtrs<Atom*>("ConstAtomList");
+    export_ConstSTLListOfPtrs<Bond*>("ConstBondList");
+    
     python::class_<ROMol,ROMOL_SPTR,boost::noncopyable>("Mol",
 			  molClassDoc.c_str(),
 			  python::init<>("Constructor, takes no arguments"))
@@ -462,8 +546,66 @@ struct mol_wrapper {
       .def("GetRingInfo",&ROMol::getRingInfo,
       python::return_value_policy<python::reference_existing_object>(),
        "Returns the number of molecule's RingInfo object.\n\n")
+
+      // ----Atom Bookmarks
+      .def("SetAtomBookmark",SetAtomBookmark,
+           "Sets an atom bookmark\n\n")
+      
+      .def("ReplaceAtomBookmark",ReplaceAtomBookmark,
+           "Replaces an atom bookmark (removes all existing atoms)\n\n")
+      
+     .def("ClearAtomBookmark",ClearAtomBookmark,
+          (python::arg("self"),python::arg("mark"), python::arg("atom")=0),
+          "Clears the atom bookmark\n\n")
+      
+
+    .def("ClearAllAtomBookmarks",&ROMol::clearAllAtomBookmarks,
+         "Clears all the atom bookmarks\n\n")
+
+      .def("HasAtomBookmark",&ROMol::hasAtomBookmark,
+         "Returns True if the atom book mark `mark` exists.\n\n")
+
+    .def("GetAtomWithBookmark",&ROMol::getAtomWithBookmark,
+         (python::arg("self"), python::arg("mark")),
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the atom for the bookmark (or None)\n\n")
+      
+    .def("GetAllAtomsWithBookmark",&ROMol::getAllAtomsWithBookmark,
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the list of atoms for the bookmark\n\n")
+
+    // ----Bond Bookmarks
+    .def("SetBondBookmark",SetBondBookmark,
+         "Sets an bond bookmark\n\n")
+      
+     .def("ClearBondBookmark",ClearBondBookmark,
+          (python::arg("self"),python::arg("mark"), python::arg("bond")=0),
+          "Clears the bond bookmark\n\n")
+      
+
+    .def("ClearAllBondBookmarks",&ROMol::clearAllBondBookmarks,
+         "Clears all the bond bookmarks\n\n")
+
+      .def("HasBondBookmark",&ROMol::hasBondBookmark,
+         "Returns True if the bond book mark `mark` exists.\n\n")
+
+    .def("GetBondWithBookmark",&ROMol::getBondWithBookmark,
+         (python::arg("self"), python::arg("mark")),
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the bond for the bookmark (or None)\n\n")
+
+    .def("GetAllBondsWithBookmark",&ROMol::getAllBondsWithBookmark,
+         python::return_internal_reference<1,
+          python::with_custodian_and_ward_postcall<0,1> >(),
+         "Returns the list of bonds for the bookmark\n\n")
       ;
-        
+      
+    
+      
+
     // ---------------------------------------------------------------------------------------------
     python::def("_HasSubstructMatchStr",
                 HasSubstructMatchStr,

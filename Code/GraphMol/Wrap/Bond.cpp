@@ -121,7 +121,7 @@ Note: unlike Atoms, is it currently impossible to construct Bonds from\n\
 Python.\n";
 struct bond_wrapper {
   static void wrap(){
-    python::class_<Bond>("Bond",bondClassDoc.c_str(),python::no_init)
+    python::class_<Bond,Bond*>("Bond",bondClassDoc.c_str(),python::no_init)
 
       .def("GetOwningMol",&Bond::getOwningMol,
 	   "Returns the Mol that owns this bond.\n",
