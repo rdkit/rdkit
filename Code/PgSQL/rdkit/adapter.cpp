@@ -46,6 +46,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/MolHash/MolHash.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
 #include <boost/integer_traits.hpp>
@@ -1891,5 +1892,22 @@ makeReactionBFP(CChemicalReaction data, int size, int fpType) {
   else {
 	return NULL;
   }
+}
+
+extern "C" char *
+computeMolHash(CROMol data, int* len) {
+  ROMol& mol = *(ROMol*)data;
+  static string text;
+  text.clear();
+  try {
+    // FIX: once R/S values are stored on the atoms, this will no longer be needed
+    MolOps::assignStereochemistry(mol);
+    text = RDKit::MolHash::generateMoleculeHashSet(mol);
+  } catch (...) {
+    ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
+    text.clear();
+  }       
+  *len = text.length();
+  return (char*)text.c_str();
 }
 

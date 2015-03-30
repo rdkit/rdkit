@@ -64,6 +64,7 @@ add_subdirectory(MolDrawing)
 add_subdirectory(MolDraw2D)
 
 add_subdirectory(FMCS)
+add_subdirectory(MolHash)
 
 
 

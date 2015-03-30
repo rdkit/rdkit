@@ -292,3 +292,22 @@ mol_murckoscaffold(PG_FUNCTION_ARGS) {
 
   PG_RETURN_MOL_P(res);           
 }
+
+PG_FUNCTION_INFO_V1(mol_hash);
+Datum           mol_hash(PG_FUNCTION_ARGS);
+Datum
+mol_hash(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  Assert(mol != 0);
+  str = computeMolHash(mol, &len);
+  Assert(str != 0 && strlen(str) != 0);
+  PG_RETURN_CSTRING(pnstrdup(str, len));
+}
+
