@@ -2666,6 +2666,59 @@ CAS<~>
     rwmol.ReplaceAtom(0,newAt)
     self.assertEqual(Chem.MolToSmiles(rwmol,True),Chem.MolToSmiles(rwmol.GetMol()))
 
+  def test94CopyWithConfs(self):
+    """ test copying Mols with some conformers
+
+    """
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','cmpd2.tpl')
+    m1 = Chem.MolFromTPLFile(fileN)
+    self.assertTrue(m1 is not None)
+    self.assertEquals(m1.GetNumAtoms(),12)
+    self.assertEquals(m1.GetNumConformers(),2)
+    self.assertEquals(m1.GetConformer(0).GetNumAtoms(),12)    
+    self.assertEquals(m1.GetConformer(1).GetNumAtoms(),12)    
+    
+    m2 = Chem.Mol(m1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),2)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.Mol(m1,False,0)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+
+    m2 = Chem.Mol(m1,False,1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.Mol(m1,True)
+    self.assertTrue(m2.GetNumAtoms()==12)
+    self.assertTrue(m2.GetNumConformers()==0)
+
+    m2 = Chem.RWMol(m1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),2)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.RWMol(m1,False,0)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+
+    m2 = Chem.RWMol(m1,False,1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.RWMol(m1,True)
+    self.assertTrue(m2.GetNumAtoms()==12)
+    self.assertTrue(m2.GetNumConformers()==0)
+
   def testAtomPropQueries(self):
     """ test the property queries
     """
