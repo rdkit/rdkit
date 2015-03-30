@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -50,7 +49,7 @@ namespace RDKit{
     MolPickler::molFromPickle(pickle,*this);
   }
 
-  void ROMol::initFromOther(const ROMol &other,bool quickCopy){
+  void ROMol::initFromOther(const ROMol &other,bool quickCopy,int confId){
     if(this == &other) return;
 
     //std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
@@ -82,8 +81,10 @@ namespace RDKit{
       // copy conformations
       for (ConstConformerIterator ci = other.beginConformers();
 	   ci != other.endConformers(); ++ci) {
-        Conformer *conf = new Conformer(*(*ci));
-        this->addConformer(conf);
+        if(confId<0 || (*ci)->getId()==confId){
+          Conformer *conf = new Conformer(*(*ci));
+          this->addConformer(conf);
+        }
       }
 
       if (other.dp_props) {
