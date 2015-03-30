@@ -396,6 +396,7 @@ namespace RDKit {
       for(unsigned int i=0;i<atoms.size();++i){
         if(atoms[i].nbrIds){
           free(atoms[i].nbrIds);
+          atoms[i].nbrIds=NULL;
         }
       }
     }
