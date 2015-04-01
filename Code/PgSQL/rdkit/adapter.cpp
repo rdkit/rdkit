@@ -150,7 +150,13 @@ parseMolText(char *data,bool asSmarts,bool warnOnFail) {
   try {
     StringData.assign(data);
     if(!asSmarts){
-      mol = SmilesToMol(StringData);
+      // Allow No-Structure construction.
+      if (StringData.empty()) {
+        mol = new ROMol();
+      }
+      else {
+        mol = SmilesToMol(StringData);
+      }
     } else {
       mol = SmartsToMol(StringData,0,false);
     }
@@ -225,6 +231,10 @@ isValidSmiles(char *data) {
   bool res;
   try {
     StringData.assign(data);
+    if (StringData.empty()) {
+      // Pass the test - No-Structure input is allowed. No cleanup necessary.
+      return true;
+    }
     mol = SmilesToMol(StringData,0,0);
     if(mol){
       MolOps::cleanUp(*mol);
