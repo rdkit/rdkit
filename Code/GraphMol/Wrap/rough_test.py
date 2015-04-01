@@ -2486,6 +2486,45 @@ CAS<~>
     ri = m2.GetRingInfo()
     self.assertTrue(ri)
     self.assertEqual(ri.NumRings(),1)
+
+  def test85MolCopying2(self):
+    import copy
+    m1 = Chem.MolFromSmiles('CC')
+    m1.SetProp('Foo','bar')
+    m1.foo=[1]
+    m2 = copy.copy(m1)
+    m3 = copy.copy(m2)
+    m4 = copy.deepcopy(m1)
+    m5 = copy.deepcopy(m2)
+    m6 = copy.deepcopy(m4)
+
+    self.assertEquals(m1.GetProp('Foo'),'bar')
+    self.assertEquals(m2.GetProp('Foo'),'bar')
+    self.assertEquals(m3.GetProp('Foo'),'bar')
+    self.assertEquals(m4.GetProp('Foo'),'bar')
+    self.assertEquals(m5.GetProp('Foo'),'bar')
+    self.assertEquals(m6.GetProp('Foo'),'bar')
+
+    m2.foo.append(4)
+    self.assertEquals(m1.foo,[1,4])
+    self.assertEquals(m2.foo,[1,4])
+    self.assertEquals(m3.foo,[1,4])
+    self.assertEquals(m4.foo,[1])
+    self.assertEquals(m5.foo,[1])
+    self.assertEquals(m6.foo,[1])
+
+    m7 = Chem.RWMol(m1)
+    self.failIf(hasattr(m7,'foo'))
+    m7.foo=[1]
+    m8 = copy.copy(m7)
+    m9 = copy.deepcopy(m7)
+    m8.foo.append(4)
+    self.assertEquals(m7.GetProp('Foo'),'bar')
+    self.assertEquals(m8.GetProp('Foo'),'bar')
+    self.assertEquals(m9.GetProp('Foo'),'bar')
+    self.assertEquals(m8.foo,[1,4])
+    self.assertEquals(m9.foo,[1])
+
     
   def test86MolRenumbering(self):
     import random
@@ -2807,7 +2846,6 @@ CAS<~>
     q = rdqueries.HasIntPropWithValueQueryBond("number", 4)
     self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)],
                      [10])
-    
     
 if __name__ == '__main__':
   unittest.main()
