@@ -31,3 +31,15 @@ Chr(10) ||
  InChI=1S//
 (1 row)
 
+select mol_inchi('');
+ mol_inchi  
+------------
+ InChI=1S//
+(1 row)
+
+select mol_inchikey('');
+        mol_inchikey         
+-----------------------------
+ MOSFIJXAXDLOML-UHFFFAOYSA-N
+(1 row)
+
