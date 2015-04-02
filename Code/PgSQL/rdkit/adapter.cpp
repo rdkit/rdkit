@@ -144,18 +144,18 @@ deconstructROMol(CROMol data) {
 }
 
 extern "C" CROMol 
-parseMolText(char *data,bool asSmarts,bool warnOnFail) {
-  ROMol   *mol = NULL;
+parseMolText(char *data,bool asSmarts,bool warnOnFail,bool asQuery) {
+  RWMol   *mol = NULL;
 
   try {
     StringData.assign(data);
     if(!asSmarts){
-      // Allow No-Structure construction.
-      if (StringData.empty()) {
-        mol = new ROMol();
-      }
-      else {
+      if(!asQuery){
         mol = SmilesToMol(StringData);
+      } else {
+        mol = SmilesToMol(StringData,0,false);
+        MolOps::sanitizeMol(*mol);
+        MolOps::mergeQueryHs(*mol);
       }
     } else {
       mol = SmartsToMol(StringData,0,false);
@@ -198,12 +198,17 @@ parseMolBlob(char *data,int len) {
   return (CROMol)mol;
 }
 extern "C" CROMol 
-parseMolCTAB(char *data,bool keepConformer,bool warnOnFail) {
-  ROMol   *mol = NULL;
+parseMolCTAB(char *data,bool keepConformer,bool warnOnFail,bool asQuery) {
+  RWMol   *mol = NULL;
 
   try {
     StringData.assign(data);
-    mol = MolBlockToMol(StringData);
+    if(!asQuery){
+      mol = MolBlockToMol(StringData);
+    } else {
+      mol = MolBlockToMol(StringData,true,false);
+      MolOps::mergeQueryHs(*mol);
+    }
   } catch (...) {
     mol=NULL;
   }
