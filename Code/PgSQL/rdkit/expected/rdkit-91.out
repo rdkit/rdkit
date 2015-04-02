@@ -92,6 +92,18 @@ SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
  c1ccncc1
 (1 row)
 
+SELECT is_valid_smiles('');
+ is_valid_smiles 
+-----------------
+ t
+(1 row)
+
+SELECT mol_from_smiles('');
+ mol_from_smiles 
+-----------------
+ 
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
