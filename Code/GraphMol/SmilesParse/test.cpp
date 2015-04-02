@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
+#include "SmartsWrite.h"
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
@@ -3462,6 +3463,34 @@ void testGithub389(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testEmptyStrings(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing handling of empty SMILES/SMARTS strings" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==0);
+
+    std::string csmiles=MolToSmiles(*m);
+    TEST_ASSERT(csmiles=="");
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==0);
+
+    std::string csmiles=MolToSmarts(*m);
+    TEST_ASSERT(csmiles=="");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -3521,5 +3550,6 @@ main(int argc, char *argv[])
   testGithub298();
   testGithub378();
   testGithub389();
+  testEmptyStrings();
   //testBug1719046();
 }
