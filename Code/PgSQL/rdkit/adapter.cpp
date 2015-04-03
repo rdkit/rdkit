@@ -234,6 +234,10 @@ isValidSmiles(char *data) {
   bool res;
   try {
     StringData.assign(data);
+    if (StringData.empty()) {
+      // Pass the test - No-Structure input is allowed. No cleanup necessary.
+      return true;
+    }
     mol = SmilesToMol(StringData,0,0);
     if(mol){
       MolOps::cleanUp(*mol);
