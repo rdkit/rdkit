@@ -550,6 +550,41 @@ void testMultipleConfs() {
 
 }
 
+void testMultipleConfsExpTors() {
+  std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
+  ROMol *m = SmilesToMol(smi, 0, 1);
+  /* default values and order of arguments for:
+     EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
+                                  unsigned int maxIterations=30,
+                                  int seed=-1, bool clearConfs=true,
+                                  bool useRandomCoords=false,double boxSizeMult=2.0,
+                                  bool randNegEig=true, unsigned int numZeroFail=1,
+                                  double pruneRmsThresh=-1.0,
+                                  const std::map<int,RDGeom::Point3D> *coordMap=0,
+                                  double optimizerForceTol=1e-3,
+                                  bool ignoreSmoothingFailures=false,
+                                  bool useExpTorsionAnglePrefs=false,
+                                  bool verbose=false,
+                                  double basinThresh=5.0);*/
+  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true,
+               false,-1, true, 1, -1.0, 0, 1e-3, false, true, false);
+  INT_VECT_CI ci;
+  SDWriter writer("junk.sdf");
+  double energy;
+
+  for (ci = cids.begin(); ci != cids.end(); ci++) {
+    writer.write(*m, *ci);
+    ForceFields::ForceField *ff=UFF::constructForceField(*m, 10, *ci);
+    ff->initialize();
+    energy = ff->calcEnergy();
+    //BOOST_LOG(rdInfoLog) << energy << std::endl;
+    TEST_ASSERT(energy>100.0);
+    TEST_ASSERT(energy<300.0);
+    delete ff;
+  }
+
+}
+
 void testOrdering() {
   std::string smi = "CC(C)(C)C(=O)NC(C1)CC(N2C)CCC12";
   ROMol *m = SmilesToMol(smi, 0, 1);
@@ -1410,6 +1445,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testMultipleConfs \n\n";
   testMultipleConfs();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t testMultipleConfsExpTors \n\n";
+  testMultipleConfsExpTors();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue227 \n\n";

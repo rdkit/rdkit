@@ -430,6 +430,7 @@ namespace ForceFields {
      "[a:1][a:2]!@[CX3:3]=[CX3H2:4] 1 0.0 -1 1.3 1 0.0 1 0.0 1 0.0 1 0.0\n"
      "[a:1][a:2]!@[CX3:3]=[CX3H1:4] 1 0.0 -1 5.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
      "[*:1][SX2:2]!@[SX2:3][*:4] 1 0.0 1 12.9 1 0.0 1 0.0 1 0.0 1 0.0\n"
+     "[*:1][CX3:2]=[CX3:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n" // non-aromatic double bonds
     ;
 
     //! A structure used to the experimental torsion patterns
@@ -504,7 +505,8 @@ namespace ForceFields {
         }
         inLine = RDKit::getLine(inStream);
       } // while loop
-      //std::cerr << "Exp. torsion angles = " << d_params.size() << std::endl;
+      //std::cerr << "Exp. torsion angles = " << d_params.size() << " "
+      //    << d_params[d_params.size()-1].smarts << std::endl;
     }
 
     void getExperimentalTorsions(const RDKit::ROMol &mol, 
@@ -517,10 +519,15 @@ namespace ForceFields {
         throw ValueErrorException("molecule has no atoms");
       }
 
+      // check that vectors are empty
+      expTorsionAtoms.clear();
+      expTorsionAngles.clear();
+
       unsigned int aid1, aid2, aid3, aid4;
       unsigned int bid2, bid1, bid3, id1, id2;
 
       BIT_SET donePaths(nb*nb*nb);
+      std::vector<bool> doneBonds(nb, false);
 
       // first, we set the torsion angles with experimental data
       const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
@@ -539,26 +546,40 @@ namespace ForceFields {
           aid3 = (*matchIt)[it->idx[2]].second;
           aid4 = (*matchIt)[it->idx[3]].second;
           // FIX: check if bond is NULL
-          if (mol.getBondBetweenAtoms(aid2, aid3)->getBondType() != Bond::SINGLE)
+          if (mol.getBondBetweenAtoms(aid2, aid3)->getBondType() != Bond::SINGLE &&
+              it->smarts != "[*:1][CX3:2]=[CX3:3][*:4]") {
             continue;
+          }
           bid1 = mol.getBondBetweenAtoms(aid1, aid2)->getIdx();
           bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
           bid3 = mol.getBondBetweenAtoms(aid3, aid4)->getIdx();
           id1 = nb*nb*bid1 + nb*bid2 + bid3;
           id2 = nb*nb*bid3 + nb*bid2 + bid1;
           if ((!donePaths[id1]) && (!donePaths[id2])) {
-            donePaths[id1] = 1;
-            donePaths[id2] = 1;
-            std::vector<int> atoms(4);
-            atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
-            expTorsionAtoms.push_back(atoms);
-            expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
-            if (verbose) {
-              std::cout << it->smarts << ": " << aid1 << " " << aid2 << " " << aid3 << " " << aid4 << ", (";
-              for (unsigned int i = 0; i < it->V.size()-1; ++i) {
-                std::cout << it->V[i] << ", ";
+            bool notDone = true;
+            // if bond 1 and 3 are not in a ring, we only do 1 torsion potential per bond 2
+            /*if (mol.getBondWithIdx(bid1)->getOwningMol().getRingInfo()->numBondRings(bid1)==0
+                && mol.getBondWithIdx(bid3)->getOwningMol().getRingInfo()->numBondRings(bid3)==0) {
+              if (doneBonds[bid2] == 1) {
+                notDone = false;
+              } else {
+                doneBonds[bid2] = 1;
               }
-              std::cout << it->V[it->V.size()-1] << ") " << std::endl;
+            }*/
+            if (notDone) {
+              donePaths[id1] = 1;
+              donePaths[id2] = 1;
+              std::vector<int> atoms(4);
+              atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
+              expTorsionAtoms.push_back(atoms);
+              expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
+              if (verbose) {
+                std::cout << it->smarts << ": " << aid1 << " " << aid2 << " " << aid3 << " " << aid4 << ", (";
+                for (unsigned int i = 0; i < it->V.size()-1; ++i) {
+                  std::cout << it->V[i] << ", ";
+                }
+                std::cout << it->V[it->V.size()-1] << ") " << std::endl;
+              }
             }
           } // if not donePaths
         } // end loop over matches
@@ -592,6 +613,10 @@ namespace ForceFields {
             std::vector<double> fconsts(6, 0.0);
             fconsts[1] = 7.0; // MMFF force constants for aromatic rings
             expTorsionAngles.push_back(std::make_pair(signs, fconsts));
+            if (verbose) {
+              std::cout << "aromatic ring: " << aid1 << " " << aid2 << " " << aid3 << " " << aid4
+                  << ", (0, 7.0, 0, 0, 0, 0)" << std::endl;
+            }
           }
         }
       } // loop over rings
