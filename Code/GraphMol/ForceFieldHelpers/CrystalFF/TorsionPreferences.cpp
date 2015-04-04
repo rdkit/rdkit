@@ -527,7 +527,7 @@ namespace ForceFields {
       unsigned int bid2, bid1, bid3, id1, id2;
 
       BIT_SET donePaths(nb*nb*nb);
-      std::vector<bool> doneBonds(nb, false);
+      BIT_SET doneBonds(nb);
 
       // first, we set the torsion angles with experimental data
       const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
@@ -560,7 +560,7 @@ namespace ForceFields {
             // if bond 1 and 3 are not in a ring, we only do 1 torsion potential per bond 2
             /*if (mol.getBondWithIdx(bid1)->getOwningMol().getRingInfo()->numBondRings(bid1)==0
                 && mol.getBondWithIdx(bid3)->getOwningMol().getRingInfo()->numBondRings(bid3)==0) {
-              if (doneBonds[bid2] == 1) {
+              if (doneBonds[bid2]) {
                 notDone = false;
               } else {
                 doneBonds[bid2] = 1;
