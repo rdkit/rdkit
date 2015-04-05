@@ -106,7 +106,14 @@ instead.
 
 Contrib updates:
 
-Other:
+Other: 
+- Python 2.6 support is deprecated. Starting with the next RDKit
+release, we will only support python 2.7 and python 3.4 and
+higher. Python 2.6 has not been supported since October 2013. If you
+believe that you are stuck with python 2.6 because of the version of
+RHEL you are running, please read this post to learn about your
+options:
+http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html
 - The RDKit molecule objects (ROMol and RWMol) now require about 15%
 less memory to store
 
