@@ -812,7 +812,7 @@ namespace RDKit {
         }
 
 
-// call it for each target, if fail perform full match check
+// call it for each target, if failed perform full match check
         bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
             // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
@@ -824,10 +824,12 @@ namespace RDKit {
             TargetMatch& match = seed.MatchResult[itarget];
             if(match.empty())
                 return false;
-if(Parameters.AtomCompareParameters.MatchChiralTag) {   // TEMP
-    match.clear();
-    return false;
+/* // CHIRALITY: FinalMatchCheck:
+if(Parameters.AtomCompareParameters.MatchChiralTag || Parameters.FinalMatchChecker) {   // TEMP
+        match.clear();
+        return false;
 }
+*/
             bool matched = false;
             for(unsigned newBondSeedIdx = match.MatchedBondSize; newBondSeedIdx < seed.getNumBonds(); newBondSeedIdx++) {
                 matched = false;
@@ -886,20 +888,6 @@ if(Parameters.AtomCompareParameters.MatchChiralTag) {   // TEMP
                             matched = target.AtomMatchTable.at(newBondAnotherAtomQueryIdx, newBondAnotherAtomTargetIdx)
                                    && target.BondMatchTable.at(seed.MoleculeFragment.BondsIdx[newBondSeedIdx], tb->getIdx());
 
-                            if(matched && Parameters.FinalMatchChecker) {
-                                short unsigned c1[4096];//match.MatchedAtomSize+1];
-                                short unsigned c2[4096];//match.MatchedAtomSize+1];
-                                int mi;
-                                for(mi=0; mi < match.MatchedAtomSize; mi++) {
-                                    c1[mi] = mi;
-                                    c2[mi] = match.TargetAtomIdx[mi];
-                                }
-                                c1[mi] = mi;
-                                c2[mi] = newBondAnotherAtomTargetIdx;
-
-                                matched = Parameters.FinalMatchChecker(c1, c2, *QueryMolecule, seed.Topology, *target.Molecule, target.Topology
-                                        , &Parameters); // CHIRALITY
-                            }
                             if(matched) {
                                 atomAdded = true;
                                 break;
@@ -927,7 +915,18 @@ if(Parameters.AtomCompareParameters.MatchChiralTag) {   // TEMP
                 match.clear();
                 return false;
             }
-
+            // CHIRALITY: FinalMatchCheck
+            if(matched && Parameters.FinalMatchChecker) {
+                short unsigned c1[4096]; //match.MatchedAtomSize];
+                short unsigned c2[4096]; //match.MatchedAtomSize];
+                int mi;
+                for(mi=0; mi < match.MatchedAtomSize; mi++) {
+                    c1[mi] = mi; // index in the seed topology
+                    c2[mi] = match.TargetAtomIdx[mi];
+                }
+                matched = Parameters.FinalMatchChecker(c1, c2, *QueryMolecule, seed.Topology, *target.Molecule, target.Topology
+                        , &Parameters); // CHIRALITY
+            }
 #ifdef VERBOSE_STATISTICS_ON
             if(matched) {
 #ifdef MULTI_THREAD
@@ -936,7 +935,6 @@ if(Parameters.AtomCompareParameters.MatchChiralTag) {   // TEMP
                 ++VerboseStatistics.FastMatchCallTrue;
             }
 #endif
-
             return matched;
         }
 

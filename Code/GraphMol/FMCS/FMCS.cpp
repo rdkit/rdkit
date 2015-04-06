@@ -57,8 +57,8 @@ namespace RDKit {
     // PREDEFINED FUNCTORS:
 
     //=== ATOM COMPARE ========================================================
-
-    bool checkAtomChirtality    (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
+    static
+    bool checkAtomChirality    (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         Atom::ChiralType ac1 = a1.getChiralTag();
@@ -71,7 +71,7 @@ namespace RDKit {
 
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ) {
         if(p.MatchChiralTag)
-            return checkAtomChirtality(p, mol1, atom1, mol2, atom2);
+            return checkAtomChirality(p, mol1, atom1, mol2, atom2);
         return true;
     }
 
@@ -79,11 +79,11 @@ namespace RDKit {
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         if(a1.getAtomicNum() != a2.getAtomicNum())
-          return false;
+            return false;
         if(p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
             return false;
         if(p.MatchChiralTag)
-            return checkAtomChirtality(p, mol1, atom1, mol2, atom2);
+            return checkAtomChirality(p, mol1, atom1, mol2, atom2);
         return true;
     }
 
@@ -96,7 +96,7 @@ namespace RDKit {
         if(a1.getIsotope() != a2.getIsotope())
             return false;
         if(p.MatchChiralTag)
-            return checkAtomChirtality(p, mol1, atom1, mol2, atom2);
+            return checkAtomChirality(p, mol1, atom1, mol2, atom2);
         return true;
     }
 
@@ -126,12 +126,12 @@ namespace RDKit {
         }
     };
 
-
+    static
     bool checkBondStereo (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2) {
         const Bond* b1 = mol1.getBondWithIdx(bond1);
         const Bond* b2 = mol2.getBondWithIdx(bond2);
-           Bond::BondStereo bs1 = b1->getStereo();
-           Bond::BondStereo bs2 = b2->getStereo();
+        Bond::BondStereo bs1 = b1->getStereo();
+        Bond::BondStereo bs2 = b2->getStereo();
         if(b1->getBondType()==Bond::DOUBLE && b2->getBondType()==Bond::DOUBLE) {
            if((bs1==Bond::STEREOZ || bs1==Bond::STEREOE)
            &&!(bs2==Bond::STEREOZ || bs2==Bond::STEREOE))
@@ -140,6 +140,7 @@ namespace RDKit {
         return true;
     }
 
+    static
     bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* v_ringMatchMatrixSet) {
         if(!v_ringMatchMatrixSet)
             throw "v_ringMatchMatrixSet is NULL";   // never
@@ -260,8 +261,8 @@ std::cerr << std::endl;
               ||(qPermCount%2 != mPermCount%2 && a1.getChiralTag() == a2.getChiralTag()) )
                 return false;
         }          
-        // check double bonds ONLY (why ???)
 
+        // check double bonds ONLY (why ???)
         const unsigned int   qnb = boost::num_edges(query);
         std::map<unsigned int,unsigned int> qMap;
         for(unsigned int j=0; j < qna; ++j)
@@ -274,15 +275,12 @@ std::cerr << std::endl;
             if(qBnd->getBondType()!=Bond::DOUBLE
             ||(qBnd->getStereo()!=Bond::STEREOZ && qBnd->getStereo()!=Bond::STEREOE))
                 continue;
-
-continue;//TO DO:
-
             // don't think this can actually happen, but check to be sure:
-            if(qBnd->getStereoAtoms().size()!=2)
+            if(qBnd->getStereoAtoms().size()!=2) // MUST check it in the seed, not in full query molecule, but never happens !!!
                 continue;
 
-            const Bond *mBnd=mol2.getBondBetweenAtoms(c2[qMap[qBnd->getBeginAtomIdx()]],
-                                                      c2[qMap[qBnd->getEndAtomIdx()]]);
+            const Bond *mBnd=mol2.getBondBetweenAtoms(target[c2[qMap[qBnd->getBeginAtomIdx()]]],
+                                                      target[c2[qMap[qBnd->getEndAtomIdx  ()]]]);
             CHECK_INVARIANT(mBnd,"Matching bond not found");
             if(mBnd->getBondType()!=Bond::DOUBLE
             ||(mBnd->getStereo()!=Bond::STEREOZ &&  mBnd->getStereo()!=Bond::STEREOE))
@@ -292,15 +290,15 @@ continue;//TO DO:
 
             unsigned int end1Matches=0;
             unsigned int end2Matches=0;
-            if(c2[qMap[qBnd->getBeginAtomIdx()]]==mBnd->getBeginAtomIdx()){
+            if(target[c2[qMap[qBnd->getBeginAtomIdx()]]]==mBnd->getBeginAtomIdx()){
                 // query Begin == mol Begin
-                if(c2[qMap[qBnd->getStereoAtoms()[0]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
-                if(c2[qMap[qBnd->getStereoAtoms()[1]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
             } else {
                 // query End == mol Begin
-                if(c2[qMap[qBnd->getStereoAtoms()[0]]]==mBnd->getStereoAtoms()[1])
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[1])
                     end1Matches=1;
-                if(c2[qMap[qBnd->getStereoAtoms()[1]]]==mBnd->getStereoAtoms()[0])
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[0])
                     end2Matches=1;
             }
             //std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" - "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<" "<<end2Matches<<std::endl;
@@ -311,50 +309,5 @@ continue;//TO DO:
         }
         return true;
     }
-/*
-      bool operator()(const boost::detail::node_id c1[], const boost::detail::node_id c2[]) const
-      { ..............................
-        // now check double bonds
-        for(unsigned int i=0;i<d_query.getNumBonds();++i){
-          const Bond *qBnd=d_query.getBondWithIdx(i);
-          if(qBnd->getBondType()!=Bond::DOUBLE ||
-             (qBnd->getStereo()!=Bond::STEREOZ &&
-              qBnd->getStereo()!=Bond::STEREOE)) continue;
-
-          // don't think this can actually happen, but check to be sure:
-          if(qBnd->getStereoAtoms().size()!=2) continue;
-
-          std::map<unsigned int,unsigned int> qMap;
-          for(unsigned int j=0;j<d_query.getNumAtoms();++j){
-            qMap[c1[j]]=j;
-          }
-          const Bond *mBnd=d_mol.getBondBetweenAtoms(c2[qMap[qBnd->getBeginAtomIdx()]],
-                                                     c2[qMap[qBnd->getEndAtomIdx()]]);
-          CHECK_INVARIANT(mBnd,"Matching bond not found");
-          if(mBnd->getBondType()!=Bond::DOUBLE ||
-             (mBnd->getStereo()!=Bond::STEREOZ &&
-              mBnd->getStereo()!=Bond::STEREOE)) continue;
-          // don't think this can actually happen, but check to be sure:
-          if(mBnd->getStereoAtoms().size()!=2) continue;
-
-          unsigned int end1Matches=0;
-          unsigned int end2Matches=0;
-          if(c2[qMap[qBnd->getBeginAtomIdx()]]==mBnd->getBeginAtomIdx()){
-            // query Begin == mol Begin
-            if(c2[qMap[qBnd->getStereoAtoms()[0]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
-            if(c2[qMap[qBnd->getStereoAtoms()[1]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
-          } else {
-            // query End == mol Begin
-            if(c2[qMap[qBnd->getStereoAtoms()[0]]]==mBnd->getStereoAtoms()[1]) end1Matches=1;
-            if(c2[qMap[qBnd->getStereoAtoms()[1]]]==mBnd->getStereoAtoms()[0]) end2Matches=1;
-          }
-          //std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" - "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<" "<<end2Matches<<std::endl;
-          if(mBnd->getStereo()==qBnd->getStereo() && (end1Matches+end2Matches)==1) return false;
-          if(mBnd->getStereo()!=qBnd->getStereo() && (end1Matches+end2Matches)!=1) return false;
-        }
-        return true;
-      }
-*/
-
 }   // namespace RDKit
 
