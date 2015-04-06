@@ -15,6 +15,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>
 using namespace std;
@@ -1101,6 +1102,50 @@ void testNeedsUpdatePropertyCache()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace
+{
+  std::string qhelper(Atom::QUERYATOM_QUERY *q,unsigned int depth=0){
+    std::string res="";
+    if(q){
+      for (unsigned int i=0;i<depth;++i) res+="  ";
+      res += q->getFullDescription()+"\n";
+      for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci=q->beginChildren();
+          ci!=q->endChildren();++ci){
+        res +=  qhelper((*ci).get(),depth+1);
+      }
+    }
+    return res;
+  }
+}
+void testAtomListLineRoundTrip()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test AtomListLine RoundTrip" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase+"/Code/GraphMol/test_data/m_als_round_trip.mol";
+  const bool sanitize=false;
+  RWMol *m = MolFileToMol(fName, sanitize);
+  std::string desc = qhelper(m->getAtomWithIdx(3)->getQuery());
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==9);
+  std::string molblock = MolToMolBlock(*m);
+  std::istringstream inStream(molblock);
+  const bool removeHs=true;
+  const bool strictParsing=true;
+  unsigned int line = 0;
+  RWMol *m2 = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
+  Atom::ATOM_SPTR cl(new Atom(17));
+  Atom::ATOM_SPTR o(new Atom(17));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m->getAtomWithIdx(3))->Match(cl));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m->getAtomWithIdx(3))->Match(o));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m2->getAtomWithIdx(3))->Match(cl));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m2->getAtomWithIdx(3))->Match(o));
+  delete m;
+  delete m2;
+}
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -1125,7 +1170,7 @@ int main()
   testClearMol();
   testAtomResidues();
   testNeedsUpdatePropertyCache();
-
+  testAtomListLineRoundTrip();
 
   return 0;
 }

@@ -278,12 +278,12 @@ namespace RDKit{
         ss<<"M  ALS "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" ";
         ss<<std::setw(2)<<vals.size();
         if((*atomIt)->getQuery()->getNegation()){
-          ss<<" T";
+          ss<<" T ";
         } else {
-          ss<<" F";
+          ss<<" F ";
         }
         BOOST_FOREACH(int val,vals){
-          ss<<" "<<std::setw(3)<<std::left<<(PeriodicTable::getTable()->getElementSymbol(val));
+          ss<<std::setw(4)<<std::left<<(PeriodicTable::getTable()->getElementSymbol(val));
         }
         ss<<"\n";
       }
