@@ -38,8 +38,6 @@ namespace RDKit {
     typedef bool (*MCSBondCompareFunction)(const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* userData);
 
     // Some predefined functors:
-    bool FinalChiralityCheckFunction (const short unsigned c1[], const short unsigned c2[],
-                 const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p);
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* userData);
 
     bool MCSAtomCompareElements (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* userData);
