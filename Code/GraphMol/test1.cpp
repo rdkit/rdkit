@@ -1117,6 +1117,32 @@ namespace
     return res;
   }
 }
+
+const char *m_als_mol = \
+"\n" \
+"  Marvin  08200814552D          \n" \
+"\n" \
+"  9  8  0  0  0  0            999 V2000\n" \
+"   -1.9152    1.6205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -1.0902    1.6205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.5068    2.2039    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -2.3277    0.9061    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -2.3277    2.3350    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.1527    2.3350    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.6830    2.8727    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.1527    0.9061    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.6771    0.2814    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  2  2  0  0  0  0\n" \
+"  2  3  1  0  0  0  0\n" \
+"  1  4  1  0  0  0  0\n" \
+"  1  5  1  0  0  0  0\n" \
+"  5  6  2  0  0  0  0\n" \
+"  6  7  1  0  0  0  0\n" \
+"  4  8  2  0  0  0  0\n" \
+"  8  9  1  0  0  0  0\n" \
+"M  ALS   4  2 F O   Cl  \n" \
+"M  END\n";
+
 void testAtomListLineRoundTrip()
 {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
@@ -1124,16 +1150,19 @@ void testAtomListLineRoundTrip()
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase+"/Code/GraphMol/test_data/m_als_round_trip.mol";
   const bool sanitize=false;
-  RWMol *m = MolFileToMol(fName, sanitize);
-  std::string desc = qhelper(m->getAtomWithIdx(3)->getQuery());
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms()==9);
-  std::string molblock = MolToMolBlock(*m);
-  std::istringstream inStream(molblock);
   const bool removeHs=true;
   const bool strictParsing=true;
   unsigned int line = 0;
-  RWMol *m2 = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  
+  std::istringstream inStream(m_als_mol);
+  RWMol *m = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  std::string desc = qhelper(m->getAtomWithIdx(3)->getQuery());
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==9);
+
+  std::string molblock = MolToMolBlock(*m);
+  std::istringstream inStream2(molblock);
+  RWMol *m2 = MolDataStreamToMol(inStream2, line, sanitize, removeHs, strictParsing);
   TEST_ASSERT(m2);
   TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
   Atom::ATOM_SPTR cl(new Atom(17));
