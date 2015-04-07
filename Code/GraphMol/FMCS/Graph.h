@@ -20,6 +20,9 @@ namespace RDKit {
 
         class Graph : public Graph_t {
         public:
+            typedef edge_iterator EDGE_ITER;
+            typedef std::pair<EDGE_ITER,EDGE_ITER> BOND_ITER_PAIR;
+
             void addAtom(unsigned atom) {
                 Graph::vertex_descriptor which = boost::add_vertex(*this);
                 (*this)[which] = atom;

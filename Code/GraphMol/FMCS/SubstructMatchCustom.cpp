@@ -18,12 +18,30 @@
 
 namespace RDKit {
     namespace FMCS {
-        class MolMatchFinalCheckFunctor {   // always TRUE. We DO NOT check Chirality
-        public:
-            MolMatchFinalCheckFunctor(const ROMol &mol1, const ROMol &mol2)
+
+        class MolMatchFinalCheckFunctor {
+            const FMCS::Graph& QueryTopology;
+            const FMCS::Graph& TargetTopology;
+            const ROMol &d_query;
+            const ROMol &d_mol;
+            const MCSParameters* Parameters;
+       public:
+            MolMatchFinalCheckFunctor( const FMCS::Graph& query, const FMCS::Graph& target
+                            , const ROMol& querySrc
+                            , const ROMol& mol    // target
+                            , const MCSParameters* parameters
+                            )
+                : QueryTopology(query), TargetTopology(target)
+                , d_query(querySrc)
+                , d_mol(mol)
+                , Parameters(parameters)
             {};
-            bool operator()(const boost::detail::node_id[], const boost::detail::node_id[])const {
-                return true;
+
+            bool operator()(const boost::detail::node_id c1[], const boost::detail::node_id c2[])const {
+                if((unsigned)c1[0] >= boost::num_vertices(QueryTopology))
+                    return false; // invalid index - match failed, see v2f implementation
+                MCSFinalMatchCheckFunction compare = Parameters ? Parameters->FinalMatchChecker : 0;
+                return compare ? compare(c1, c2, d_query, QueryTopology, d_mol, TargetTopology, Parameters): true;
             }
         };
         //=================================================================================================
@@ -53,12 +71,13 @@ namespace RDKit {
             }
         };
 
-        bool SubstructMatchCustomTable(const FMCS::Graph& target, const FMCS::Graph& query, const MatchTable& atomMatchTable, const MatchTable& bondMatchTable, match_V_t* match) {
+        bool SubstructMatchCustomTable(const FMCS::Graph& target, const ROMol& mol, const FMCS::Graph& query, const ROMol& querySrc
+            , const MatchTable& atomMatchTable, const MatchTable& bondMatchTable, const MCSParameters* p, match_V_t* match) {
             if(query.m_vertices.size() > target.m_vertices.size()   // query > target
                     ||query.m_edges.size() > target.m_edges.size())
                 return false;
-            ROMol mo;
-            MolMatchFinalCheckFunctor mc(mo, mo); // unused dummy item, just required by vf2() external implementation
+
+            MolMatchFinalCheckFunctor mc(query, target, querySrc, mol, p);
 
             AtomTableCompareFunctor ac(query, target, atomMatchTable);
             BondTableCompareFunctor bc(query, target, bondMatchTable);
@@ -127,12 +146,13 @@ namespace RDKit {
         bool SubstructMatchCustom(const FMCS::Graph& target, const ROMol &mol
                                   , const FMCS::Graph&  query, const ROMol &querySrc // seed and full source query molecule
                                   , MCSAtomCompareFunction atomCompare, MCSBondCompareFunction bondCompare
+                                  , MCSFinalMatchCheckFunction finalCompare
                                   , const MCSAtomCompareParameters& acp
                                   , const MCSBondCompareParameters& bcp
                                   , void* ud
                                   , match_V_t* match
                                  ) {
-            MolMatchFinalCheckFunctor matchChecker(querySrc, mol);
+            MolMatchFinalCheckFunctor matchChecker(query, target, querySrc, mol, 0);
             AtomLabelFunctor atomLabeler(query, target, querySrc, mol, atomCompare, acp, ud);
             BondLabelFunctor bondLabeler(query, target, querySrc, mol, bondCompare, bcp, ud);
 
@@ -143,3 +163,4 @@ namespace RDKit {
         }
     }
 }
+

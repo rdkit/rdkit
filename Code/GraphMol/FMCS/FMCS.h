@@ -12,32 +12,40 @@
 #include <string>
 #include <stdexcept>
 #include "../RDKitBase.h"
+#include "Graph.h"
 
 namespace RDKit {
+    struct MCSParameters;
+
     struct MCSAtomCompareParameters {
         bool    MatchValences;
+        bool    MatchChiralTag;
     public:
-        MCSAtomCompareParameters() : MatchValences(false) {}
+        MCSAtomCompareParameters() : MatchValences(false), MatchChiralTag(false) {}
     };
 
     struct MCSBondCompareParameters {
         bool    RingMatchesRingOnly;
         bool    CompleteRingsOnly;
+        bool    MatchStereo;
     public:
-        MCSBondCompareParameters() : RingMatchesRingOnly(false), CompleteRingsOnly(false) {}
+        MCSBondCompareParameters() : RingMatchesRingOnly(false), CompleteRingsOnly(false), MatchStereo(false) {}
     };
 
+    typedef bool (*MCSFinalMatchCheckFunction)(const short unsigned c1[], const short unsigned c2[],
+                 const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p);
     typedef bool (*MCSAtomCompareFunction)(const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* userData);
     typedef bool (*MCSBondCompareFunction)(const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* userData);
 
     // Some predefined functors:
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* userData);
+
     bool MCSAtomCompareElements (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* userData);
     bool MCSAtomCompareIsotopes (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* userData);
 
     bool MCSBondCompareAny      (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* userData);
     bool MCSBondCompareOrder    (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* userData); // ignore Aromatization
-    bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* userData);
+    bool MCSBondCompareOrderExact(const MCSBondCompareParameters&p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2, void* userData);
 
     struct MCSProgressData {
         unsigned NumAtoms;
@@ -46,7 +54,7 @@ namespace RDKit {
     public:
         MCSProgressData() : NumAtoms(0), NumBonds(0), SeedProcessed(0) {}
     };
-    struct MCSParameters;
+
     typedef bool (*MCSProgressCallback)(const MCSProgressData& stat, const MCSParameters &params, void* userData);
     bool MCSProgressCallbackTimeout(const MCSProgressData& stat, const MCSParameters &params, void* userData);
 
@@ -62,6 +70,7 @@ namespace RDKit {
         void*                       CompareFunctionsUserData;
         MCSProgressCallback         ProgressCallback;       // return false to interrupt execution
         void*                       ProgressCallbackUserData;
+        MCSFinalMatchCheckFunction  FinalMatchChecker;      // FinalChiralityCheckFunction() to check chirality
     public:
         MCSParameters(): MaximizeBonds(true)
             , Threshold(1.0)    // match to all
@@ -72,7 +81,8 @@ namespace RDKit {
             , CompareFunctionsUserData(0)
             , ProgressCallback(MCSProgressCallbackTimeout)
             , ProgressCallbackUserData(0)
-        {}
+            , FinalMatchChecker(0)
+       {}
     };
 
     struct MCSResult {
@@ -89,27 +99,6 @@ namespace RDKit {
 
     void      parseMCSParametersJSON (const char* json, MCSParameters* params);
     MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params=0);
-
-    typedef enum {
-        AtomCompareAny,
-        AtomCompareElements,
-        AtomCompareIsotopes
-    } AtomComparator;
-    typedef enum {
-        BondCompareAny,
-        BondCompareOrder,
-        BondCompareOrderExact
-    } BondComparator;
-    MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols,
-                       bool maximizeBonds,
-                       double threshold=1.0,
-                       unsigned timeout=3600,
-                       bool verbose=false,
-                       bool matchValences=false,
-                       bool ringMatchesRingOnly=false,
-                       bool completeRingsOnly=false,
-                       AtomComparator atomComp=AtomCompareElements,
-                       BondComparator bondComp=BondCompareOrder);
 
 } // namespace RDKit
 

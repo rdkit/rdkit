@@ -33,6 +33,10 @@ namespace RDKit {
             Parameters = ( 0 != params ? *params : MCSParameters());
             if (Parameters.ProgressCallback == MCSProgressCallbackTimeout)
                 Parameters.ProgressCallbackUserData = &To;
+            if (Parameters.AtomCompareParameters.MatchChiralTag && 0==Parameters.FinalMatchChecker) {
+                Parameters.FinalMatchChecker = FinalChiralityCheckFunction;
+                Parameters.BondCompareParameters.MatchStereo = true;
+            }
             To = nanoClock();
         }
 
@@ -419,7 +423,7 @@ namespace RDKit {
             for(std::vector<Target>::const_iterator tag = mcsIdx.Targets.begin(); tag != mcsIdx.Targets.end(); tag++, itarget++) {
                 match_V_t match;    // THERE IS NO Bonds match INFO !!!!
                 bool target_matched =
-                    SubstructMatchCustomTable(tag->Topology, seed.Topology, tag->AtomMatchTable, tag->BondMatchTable, &match);
+                    SubstructMatchCustomTable(tag->Topology, *tag->Molecule, seed.Topology, *QueryMolecule, tag->AtomMatchTable, tag->BondMatchTable, &Parameters, &match);
                 if(!target_matched)
                     continue;
                 atomMatchResult[itarget].resize(seed.getNumAtoms());
@@ -458,8 +462,12 @@ namespace RDKit {
                     QueryAtom a; // generate [#6] instead of C or c !
                     a.setQuery(makeAtomNumQuery((*atom)->getAtomicNum()));
                     //for all atomMatchSet[ai] items add atom query to template like [#6,#17,#9, ... ]
-                    for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++)
+                    for(std::map<unsigned, const Atom*>::const_iterator am = atomMatchSet[ai].begin(); am != atomMatchSet[ai].end(); am++) {
                         a.expandQuery(makeAtomNumQuery(am->second->getAtomicNum()), Queries::COMPOSITE_OR);
+                        if(Parameters.AtomCompareParameters.MatchChiralTag 
+                          &&(am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW || am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))
+                            a.setChiralTag(am->second->getChiralTag());
+                    }
                     mol.addAtom(&a, true, false);
                 }
             }
@@ -472,8 +480,12 @@ namespace RDKit {
                 b.setEndAtomIdx  (endAtomIdx);
                 b.setQuery(makeBondOrderEqualsQuery((*bond)->getBondType()));
                 // add OR template if need
-                for(std::map<unsigned, const Bond*>::const_iterator bm = bondMatchSet[bi].begin(); bm != bondMatchSet[bi].end(); bm++)
+                for(std::map<unsigned, const Bond*>::const_iterator bm = bondMatchSet[bi].begin(); bm != bondMatchSet[bi].end(); bm++) {
                     b.expandQuery(makeBondOrderEqualsQuery(bm->second->getBondType()) , Queries::COMPOSITE_OR);
+                    if(Parameters.BondCompareParameters.MatchStereo 
+                        &&(bm->second->getStereo() == Bond::STEREOZ || bm->second->getStereo() == Bond::STEREOE))
+                        b.setStereo(bm->second->getStereo());
+                }
                 mol.addBond(&b, false);
             }
 
@@ -497,7 +509,7 @@ namespace RDKit {
 
             match_V_t match;
             bool target_matched =
-                SubstructMatchCustomTable(newQuery.Topology, mcs.Topology, newQuery.AtomMatchTable, newQuery.BondMatchTable, &match);
+                SubstructMatchCustomTable(newQuery.Topology, *newQuery.Molecule, mcs.Topology, *McsIdx.QueryMolecule, newQuery.AtomMatchTable, newQuery.BondMatchTable, &Parameters, &match);
             if(!target_matched)
                 return false;
 
@@ -559,9 +571,13 @@ namespace RDKit {
                 init();
                 if(Targets.empty())
                     break;
-
-                makeInitialSeeds();
-
+                {
+                    MCSFinalMatchCheckFunction tff =  Parameters.FinalMatchChecker;
+                    if(FinalChiralityCheckFunction == Parameters.FinalMatchChecker)
+                        Parameters.FinalMatchChecker = 0; //skip final chirality check for initial seed to allow future growing of it
+                    makeInitialSeeds();
+                    Parameters.FinalMatchChecker = tff;   // restore final functor
+                }
                 if(Parameters.Verbose)
                     std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<" "<<QueryMolecule->getNumAtoms()<<"("<<QueryMoleculeMatchedAtoms<<") atoms, "
                              <<QueryMolecule->getNumBonds()<<"("<<QueryMoleculeMatchedBonds<<") bonds\n";
@@ -569,13 +585,28 @@ namespace RDKit {
                 if(Seeds.empty())
                     break;
                 res.Canceled = growSeeds() ? false : true;
-                if(i+1 < Molecules.size() - ThresholdCount) {
+                // verify MCS what is equal to one of initial seed for chirality match
+                if(FinalChiralityCheckFunction == Parameters.FinalMatchChecker && 1==getMaxNumberBonds()) {
+                    McsIdx = MCS(); // clear
+                    makeInitialSeeds(); // check all possible initial seeds
+                    if(!Seeds.empty()) {
+                        const Seed& fs = Seeds.front();
+                        McsIdx.QueryMolecule = QueryMolecule;
+                        McsIdx.Atoms    = fs.MoleculeFragment.Atoms;
+                        McsIdx.Bonds    = fs.MoleculeFragment.Bonds;
+                        McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
+                        McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+                    }
+
+                }
+                else if(i+1 < Molecules.size() - ThresholdCount) {
                     Seed seed;
                     if(createSeedFromMCS(i, seed)) // MCS matched with new query
                         Seeds.push_back(seed);
                     std::swap(Molecules[0], Molecules[i+1]); // change query molecule for threshold < 1.
                 }
             }
+
             res.NumAtoms     = getMaxNumberAtoms();
             res.NumBonds     = getMaxNumberBonds();
             if (res.NumBonds > 0)
@@ -684,7 +715,7 @@ namespace RDKit {
                             ++VerboseStatistics.ExactMatchCall;
 #endif
                             // EXACT MATCH
-                            foundInCache = SubstructMatchCustomTable((*g), seed.Topology, QueryAtomMatchTable, QueryBondMatchTable);
+                            foundInCache = SubstructMatchCustomTable((*g), *QueryMolecule, seed.Topology, *QueryMolecule, QueryAtomMatchTable, QueryBondMatchTable, &Parameters);
 #ifdef VERBOSE_STATISTICS_ON
                             if(foundInCache)
                                 ++VerboseStatistics.ExactMatchCallTrue;
@@ -748,7 +779,7 @@ namespace RDKit {
                 if(!target_matched) { // slow full match
                     match_V_t match;    // THERE IS NO Bonds match INFO !!!!
                     target_matched =
-                        SubstructMatchCustomTable(tag->Topology, seed.Topology, tag->AtomMatchTable, tag->BondMatchTable, &match);
+                        SubstructMatchCustomTable(tag->Topology, *tag->Molecule, seed.Topology, *QueryMolecule, tag->AtomMatchTable, tag->BondMatchTable, &Parameters, &match);
                     // save current match info
                     if(target_matched) {
                         if (seed.MatchResult.empty())
@@ -781,7 +812,7 @@ namespace RDKit {
         }
 
 
-// call it for each target, if fail perform full match check
+// call it for each target, if failed perform full match check
         bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
             // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
@@ -793,6 +824,12 @@ namespace RDKit {
             TargetMatch& match = seed.MatchResult[itarget];
             if(match.empty())
                 return false;
+/* // CHIRALITY: FinalMatchCheck:
+if(Parameters.AtomCompareParameters.MatchChiralTag || Parameters.FinalMatchChecker) {   // TEMP
+        match.clear();
+        return false;
+}
+*/
             bool matched = false;
             for(unsigned newBondSeedIdx = match.MatchedBondSize; newBondSeedIdx < seed.getNumBonds(); newBondSeedIdx++) {
                 matched = false;
@@ -848,9 +885,10 @@ namespace RDKit {
                             }
 
                             //check AnotherAtom and bond
-                            matched = target.AtomMatchTable.at(newBondAnotherAtomQueryIdx, newBondAnotherAtomTargetIdx);
+                            matched = target.AtomMatchTable.at(newBondAnotherAtomQueryIdx, newBondAnotherAtomTargetIdx)
+                                   && target.BondMatchTable.at(seed.MoleculeFragment.BondsIdx[newBondSeedIdx], tb->getIdx());
+
                             if(matched) {
-                                matched = target.BondMatchTable.at(seed.MoleculeFragment.BondsIdx[newBondSeedIdx], tb->getIdx());
                                 atomAdded = true;
                                 break;
                             }
@@ -877,7 +915,18 @@ namespace RDKit {
                 match.clear();
                 return false;
             }
-
+            // CHIRALITY: FinalMatchCheck
+            if(matched && Parameters.FinalMatchChecker) {
+                short unsigned c1[4096]; //match.MatchedAtomSize];
+                short unsigned c2[4096]; //match.MatchedAtomSize];
+                int mi;
+                for(mi=0; mi < match.MatchedAtomSize; mi++) {
+                    c1[mi] = mi; // index in the seed topology
+                    c2[mi] = match.TargetAtomIdx[mi];
+                }
+                matched = Parameters.FinalMatchChecker(c1, c2, *QueryMolecule, seed.Topology, *target.Molecule, target.Topology
+                        , &Parameters); // CHIRALITY
+            }
 #ifdef VERBOSE_STATISTICS_ON
             if(matched) {
 #ifdef MULTI_THREAD
@@ -886,7 +935,6 @@ namespace RDKit {
                 ++VerboseStatistics.FastMatchCallTrue;
             }
 #endif
-
             return matched;
         }
 
