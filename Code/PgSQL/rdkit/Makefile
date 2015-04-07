@@ -7,7 +7,6 @@
 # ENABLE_POPCOUNT enables use of the CPU's popcount instruction:
 #USE_POPCOUNT=0
 # USE_THREADS links against boost.system; required with non-ancient boost versions if inchi is enabled or the rdkit is built with threadsafe SSS:
-#USE_THREADS=0
 # STATIC_LINK links against the static RDKit libraries:
 #STATIC_LINK=1
 # -------------------------
@@ -36,7 +35,7 @@ ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_system
 endif
 
-RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lChemReactions -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral 
+RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lChemReactions -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral -lMolHash -lFMCS
 
 ifeq ($(STATIC_LINK),0)
   SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}

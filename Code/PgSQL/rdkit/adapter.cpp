@@ -46,6 +46,8 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/MolHash/MolHash.h>
+#include <GraphMol/FMCS/FMCS.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
 #include <boost/integer_traits.hpp>
@@ -1907,4 +1909,140 @@ makeReactionBFP(CChemicalReaction data, int size, int fpType) {
 	return NULL;
   }
 }
+
+extern "C" char *
+computeMolHash(CROMol data, int* len) {
+    const  ROMol& mol = *(ROMol*)data;
+    static string text;
+    text.clear();
+    try {
+        //RDKit::MolHash::HashCodeT hash = RDKit::MolHash::generateMoleculeHashCode(mol);
+        //text = RDKit::MolHash::encode(&hash, sizeof(hash));
+        text = RDKit::MolHash::generateMoleculeHashSet(mol);
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
+        text.clear();
+    }       
+    *len = text.length();
+    return (char*)text.c_str();
+}
+
+extern "C" char *	//TEMP
+Mol2Smiles(CROMol data) {
+    const  ROMol& mol = *(ROMol*)data;
+    static string text;
+    text.clear();
+    try {
+        text = RDKit::MolToSmiles(mol);
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("Mol2Smiles(): failed")));
+        text.clear();
+    }       
+    return (char*)text.c_str();
+}
+
+extern "C" char *
+findMCSsmiles(char* smiles, char* params){
+
+    static string mcs;
+    mcs.clear();
+
+    char *str = smiles;
+    char *s  = str;
+    int  len, nmols=0;
+    std::vector<RDKit::ROMOL_SPTR> molecules;
+    while(*s && *s <= ' ')
+       s++;
+    while(*s > ' ') {
+       len = 0;
+       while(s[len] > ' ')
+          len++;
+       s[len] = '\0';
+       if(0==strlen(s))
+          continue;
+       molecules.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol( s )));
+//elog(WARNING, s);
+       s += len;
+       s++; //do s++; while(*s && *s <= ' ');
+    }
+
+    RDKit::MCSParameters p;
+
+    if(params && 0!=strlen(params)) {
+        try {
+            RDKit::parseMCSParametersJSON(params, &p);
+        } catch (...) {
+            ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: Invalid argument \'params\'")));
+            return (char*)mcs.c_str();
+        }       
+    }
+
+    try {
+        MCSResult res = RDKit::findMCS(molecules, &p);
+        mcs = res.SmartsString;
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
+        mcs.clear();
+    }
+    return mcs.empty() ? (char*)"" : (char*)mcs.c_str();
+}
+
+
+extern "C" void *
+addMol2list(void* lst, Mol* mol) {
+    try {
+        if(!lst)
+        {
+//elog(WARNING, "addMol2list: allocate new list");
+            lst = new std::vector<RDKit::ROMOL_SPTR>;
+        }
+        std::vector<RDKit::ROMOL_SPTR>& mlst = *(std::vector<RDKit::ROMOL_SPTR>*) lst;
+//elog(WARNING, "addMol2list: create a copy of new mol");
+        ROMol* m = (ROMol*) constructROMol(mol);//new ROMol(*(const ROMol*)mol, false); // create a copy
+//elog(WARNING, "addMol2list: append new mol into list");
+        mlst.push_back(RDKit::ROMOL_SPTR(m));
+//elog(WARNING, "addMol2list: finished");
+    } catch (...) {
+//elog(WARNING, "addMol2list: ERROR");
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("addMol2list: failed")));
+    }       
+    return lst;
+}
+
+extern "C" char *
+findMCS(void* vmols, char* params)
+{
+    static string mcs;
+    mcs.clear();
+    std::vector<RDKit::ROMOL_SPTR> *molecules = (std::vector<RDKit::ROMOL_SPTR>*) vmols;
+//char t[256];
+//sprintf(t,"findMCS(): lst=%p, size=%u", molecules, molecules->size());
+//elog(WARNING, t);
+
+    RDKit::MCSParameters p;
+
+    if(params && 0!=strlen(params)) {
+        try {
+            RDKit::parseMCSParametersJSON(params, &p);
+        } catch (...) {
+            //mcs = params; //DEBUG
+            ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: Invalid argument \'params\'")));
+            return (char*)mcs.c_str();
+        }       
+    }
+
+    try {
+        MCSResult res = RDKit::findMCS(*molecules, &p);
+        mcs = res.SmartsString;
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
+        mcs.clear();
+    }
+//sprintf(t,"findMCS(): MCS='%s'", mcs.c_str());
+//elog(WARNING, t);
+    delete molecules;
+//elog(WARNING, "findMCS(): molecules deleted. FINISHED.");
+    return (char*)mcs.c_str();
+}
+
 
