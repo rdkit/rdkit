@@ -2,7 +2,7 @@ import IPython
 
 if IPython.release.version < '0.11':
     raise ImportError('this module requires at least v0.11 of IPython')
-elif IPython.release.version < '2.0':
+elif IPython.release.version < '3.0':
     install_nbextension=None
     _canUse3D=False
 else:
@@ -60,10 +60,10 @@ def _toJSON(mol):
     # IPython >=2.0 does this by copying the file into ~/.ipython/nbextensions
     # Fallback support provided by grabbing js from remote server
     local_path = "/nbextensions/imolecule.min"
-    remote_path = ("https://raw.githubusercontent.com/patrickfuller/"
-                   "imolecule/master/build/imolecule.min")
+    remote_path = ("https://cdn.rawgit.com/patrickfuller/imolecule/master/js"
+                   "/build/imolecule.min")
     filepath = os.path.normpath(os.path.dirname(__file__))
-    install_nbextension([os.path.join(filepath, "imolecule.min.js")],
+    install_nbextension(os.path.join(filepath, "imolecule.min.js"),
                         verbose=0)
 
     # Convert the relevant parts of the molecule into JSON for rendering
