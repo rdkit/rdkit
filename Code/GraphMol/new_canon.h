@@ -90,22 +90,18 @@ namespace RDKit {
           p_symbol(NULL), neighborNum(0), revistedNeighbors(0) {};
     };
 
-
-    void CreateSinglePartition(unsigned int nAtoms,
-                               int *order,
-                               int *count,
-                               canon_atom *atoms);
-
-    void ActivatePartitions(unsigned int nAtoms,
-                            int *order,
-                            int *count,
-                            int &activeset,int *next,
-                            int *changed);
-
-
     void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs);
+
     void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs,
         unsigned int atomIdx, std::vector<std::pair<unsigned int, unsigned int> >& result);
+
+    /*
+     * Different types of atom compare functions:
+     *
+     * - SpecialChiralityAtomCompareFunctor: Allows canonizing molecules exhibiting dependent chirality
+     * - SpecialSymmetryAtomCompareFunctor: Very specialized, allows canonizing highly symmetrical graphs/molecules
+     * - AtomCompareFunctor: Basic atom compare function which also allows to include neighbors within the ranking
+     */
 
     class SpecialChiralityAtomCompareFunctor {
 
@@ -141,12 +137,6 @@ namespace RDKit {
           int cmp=bondholder::compare(dp_atoms[i].bonds[ii],dp_atoms[j].bonds[ii]);
           if(cmp) return cmp;
         }
-//
-//        if(dp_atoms[i].bonds.size()<dp_atoms[j].bonds.size()){
-//          return -1;
-//        } else if(dp_atoms[i].bonds.size()>dp_atoms[j].bonds.size()) {
-//          return 1;
-//        }
 
         std::vector<std::pair<unsigned int, unsigned int> > swapsi;
         std::vector<std::pair<unsigned int, unsigned int> > swapsj;
@@ -407,6 +397,11 @@ namespace RDKit {
       }
     };
 
+    /*
+     * A compare function to discriminate chiral atoms, similar to the CIP rules.
+     * This functionality is currently not used.
+     */
+
     const unsigned int ATNUM_CLASS_OFFSET=10000;
     class ChiralAtomCompareFunctor {
       void getAtomNeighborhood(std::vector<bondholder> &nbrs) const{
@@ -509,7 +504,9 @@ namespace RDKit {
       }
     };
 
-
+    /*
+     * Basic canonicalization function to organize the partitions which will be sorted next.
+     * */
 
     template <typename CompareFunc>
     void RefinePartitions(const ROMol &mol,
@@ -609,6 +606,8 @@ namespace RDKit {
       }
     } // end of RefinePartitions()
 
+
+
     template <typename CompareFunc>
     void BreakTies(const ROMol &mol,
                    canon_atom *atoms,
@@ -662,10 +661,23 @@ namespace RDKit {
       }
     } // end of BreakTies()
 
+
+    void CreateSinglePartition(unsigned int nAtoms,
+                               int *order,
+                               int *count,
+                               canon_atom *atoms);
+
+    void ActivatePartitions(unsigned int nAtoms,
+                            int *order,
+                            int *count,
+                            int &activeset,int *next,
+                            int *changed);
+
     void rankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res,
                       bool breakTies=true,
                       bool includeChirality=true,
                       bool includeIsotopes=true);
+
     void rankFragmentAtoms(const ROMol &mol,std::vector<unsigned int> &res, 
                            const boost::dynamic_bitset<> &atomsInPlay,
                            const boost::dynamic_bitset<> &bondsInPlay,
@@ -673,7 +685,9 @@ namespace RDKit {
                            bool breakTies=true,
                            bool includeChirality=true,
                            bool includeIsotopes=true);
+
     void chiralRankMolAtoms(const ROMol &mol,std::vector<unsigned int> &res);
+
     void initCanonAtoms(const ROMol &mol,std::vector<Canon::canon_atom> &atoms,
                         bool includeChirality=true);
 
