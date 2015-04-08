@@ -278,7 +278,10 @@ namespace RDKit{
       if(!ranks.size()) ranks.resize(mol.getNumAtoms());
       unsigned int numAtoms = mol.getNumAtoms();
 
-      Canon::chiralRankMolAtoms(mol,ranks);
+      // get the initial invariants:		
+      DOUBLE_VECT invars(numAtoms,0);		
+      buildCIPInvariants(mol,invars);		
+      iterateCIPRanks(mol,invars,ranks,false);		
       
       // copy the ranks onto the atoms:
       for(unsigned int i=0;i<numAtoms;++i){
