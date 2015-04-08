@@ -31,6 +31,7 @@ ipython_3d = False
 molSize_3d = (450, 450)
 drawing_type_3d = "ball and stick"
 camera_type_3d = "perspective"
+shader_3d = "lambert"
 
 
 def _toJSON(mol):
@@ -38,6 +39,12 @@ def _toJSON(mol):
 
     if not ipython_3d or not mol.GetNumConformers():
         return None
+
+    try:
+        import imolecule
+    except ImportError:
+        raise ImportError("Cannot import 3D rendering. Please install "
+                          "with `pip install imolecule`.")
 
     conf = mol.GetConformer()
     if not conf.Is3D():
@@ -56,16 +63,6 @@ def _toJSON(mol):
     avgP = numpy.average(atomps, 0)
     atomps -= avgP
 
-    # If the javascript lib has not yet been loaded, do so.
-    # IPython >=2.0 does this by copying the file into ~/.ipython/nbextensions
-    # Fallback support provided by grabbing js from remote server
-    local_path = "/nbextensions/imolecule.min"
-    remote_path = ("https://raw.githubusercontent.com/patrickfuller/"
-                   "imolecule/master/build/imolecule.min")
-    filepath = os.path.normpath(os.path.dirname(__file__))
-    install_nbextension([os.path.join(filepath, "imolecule.min.js")],
-                        verbose=0)
-
     # Convert the relevant parts of the molecule into JSON for rendering
     atoms = [{"element": atom.GetSymbol(),
               "location": list(atomps[atom.GetIdx()])}
@@ -75,21 +72,10 @@ def _toJSON(mol):
               "order": int(bond.GetBondTypeAsDouble())}
              for bond in mol.GetBonds()]
     mol = {"atoms": atoms, "bonds": bonds}
-    json_mol = json.dumps(mol, separators=(",", ":"))
-
-    div_id = uuid.uuid4()
-    return """<div id="molecule_%s"></div>
-           <script type="text/javascript">
-           requirejs.config({paths: {imolecule: ['%s', '%s']}});
-           require(['imolecule'], function () {
-               var $d = $('#molecule_%s');
-               $d.width(%d); $d.height(%d);
-               $d.imolecule = jQuery.extend({}, imolecule);
-               $d.imolecule.create($d, {drawingType: '%s', cameraType: '%s'});
-               $d.imolecule.draw(%s);
-           });
-           </script>""" % (div_id, local_path, remote_path, div_id, size[0],
-                           size[1], drawing_type_3d, camera_type_3d, json_mol)
+    return imolecule.draw({"atoms": atoms, "bonds": bonds}, format="json",
+                          size=molSize_3d, drawing_type=drawing_type_3d,
+                          camera_type=camera_type_3d, shader=shader_3d,
+                          display_html=False)
 
 
 def _toPNG(mol):
