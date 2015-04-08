@@ -10,11 +10,14 @@
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/hanoiSort.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
 
 #include <iostream>
 #include <vector>
@@ -82,7 +85,7 @@ void hs1(  const std::vector< std::vector<int> > &vects){
     int *count=(int *)malloc(vects[i].size()*sizeof(int));
     int *changed=(int *)malloc(vects[i].size()*sizeof(int));
     memset(changed, 1, vects[i].size()*sizeof(int));
-    RDKit::Canon::hanoisort(indices,vects[i].size(),count,changed,icmp);
+    RDKit::hanoisort(indices,vects[i].size(),count,changed,icmp);
     for(unsigned int j=1;j<vects[i].size();++j){
       TEST_ASSERT(data[indices[j]]>=data[indices[j-1]]);
     }
@@ -206,7 +209,7 @@ void test2(){
     int *count=(int *)malloc(atoms.size()*sizeof(int));
     int *changed=(int *)malloc(atoms.size()*sizeof(int));
     memset(changed, 1, atoms.size()*sizeof(int));
-    RDKit::Canon::hanoisort(data,atoms.size(),count,changed,ftor);
+    RDKit::hanoisort(data,atoms.size(),count,changed,ftor);
 
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       //std::cerr<<indices[i]<<" "<<" index: "<<atoms[indices[i]].index<<" count: "<<count[indices[i]]<<std::endl;
