@@ -21,11 +21,22 @@ def _get_positions(mol,confId=-1):
 
 class Mol2MolSupplier:
     def __init__(self, filename, *args, **kwargs):
+        """Reads a multi-mol Mol2 file 
+          ARGUMENTS:
+          
+            - filename: the file to read  or file-like object
+            - args, kwargs: arbitrary arguments to pass to internal MolFromMol2Block
+
+          RETURNS:
+
+            None
+        """      
         self.f = filename
         self._args = args
         self._kwargs = kwargs
     
     def __iter__(self):
+        """ Iterates over molecules in file """
         block = ''
         data = ''
         n = 0
@@ -50,6 +61,16 @@ class Mol2MolSupplier:
 
 class Mol2Writer:
     def __init__(self, filename, *args, **kwargs):
+        """Writes a multi-mol Mol2 file
+          ARGUMENTS:
+          
+            - filename: the file to write or file-like object
+            - args, kwargs: arbitrary arguments to pass to internal MolToMol2Block
+
+          RETURNS:
+
+            None
+        """
         if hasattr(filename, 'write') and hasattr(self.f, 'close'):
             self.f = filename
         else:
@@ -57,10 +78,20 @@ class Mol2Writer:
         self._args = args
         self._kwargs = kwargs
     
-    def write(self, mol, *args):
+    def write(self, mol):
+        """Writes a multi-mol Mol2 file
+          ARGUMENTS:
+          
+            - mol: the molecule to be written
+
+          RETURNS:
+
+            bool
+        """
         return self.f.write(MolToMol2Block(mol, *self._args, **self._kwargs))
     
     def close(self):
+        """ Closes file for writing """
         return self.f.close()
 
 
