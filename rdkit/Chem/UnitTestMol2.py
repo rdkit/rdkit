@@ -36,12 +36,12 @@ class TestCase(unittest.TestCase):
     
   def _testMol2String(self, removeHs=False): 
     " testing 5k molecule pickles "
-    for mol1 in Chem.ForwardSDMolSupplier(gzip.open('{}/Regress/Data/mols.1000.sdf.gz'.format(RDConfig.RDBaseDir))):
+    for mol1 in Chem.Mol2MolSupplier(gzip.open('{}/Regress/Data/mols.1000.mol2.gz'.format(RDConfig.RDBaseDir))):
         if mol1:
             mol2 = Chem.MolFromMol2Block(Chem.MolToMol2Block(mol1))
             if mol2:
                 self.assertEqual(mol1.GetNumAtoms(), mol2.GetNumAtoms())
-                self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2))
+                self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2).replace('[*-]', '[*]'))
             else:
                 print 'Could not read molecule back from mol2'
 

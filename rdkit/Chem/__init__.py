@@ -19,7 +19,7 @@ from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
 from rdkit.Chem import PeriodicTable as pyPeriodicTable
 from rdkit.Chem import rdchem
-from rdkit.Chem.Mol2Writer import MolToMol2Block, MolToMol2File
+from rdkit.Chem.Mol2Writer import MolToMol2Block, MolToMol2File, Mol2MolSupplier, Mol2Writer
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
 from rdkit.Chem.rdchem import *
 from rdkit.Chem.rdmolfiles import *

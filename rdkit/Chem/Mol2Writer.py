@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.Chem.rdmolfiles import MolFromSmarts
+from rdkit.Chem.rdmolfiles import MolFromSmarts, MolFromMol2Block
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from rdkit.Chem.rdmolops import AddHs
 
@@ -17,6 +17,51 @@ def _get_positions(mol,confId=-1):
         conf = mol.GetConformer(confId)
         return [conf.GetAtomPosition(i) for i in range(conf.GetNumAtoms())]
     return [(0,0,0) for i in range(mol.GetNumAtoms())]
+
+
+class Mol2MolSupplier:
+    def __init__(self, filename, *args, **kwargs):
+        self.f = filename
+        self._args = args
+        self._kwargs = kwargs
+    
+    def __iter__(self):
+        block = ''
+        data = ''
+        n = 0
+        if hasattr(self.f, 'read') and hasattr(self.f, 'close'):
+            f = self.f
+        else:
+            f = open(self.f)
+        for line in f:
+            if line[:1] == '#':
+                data += line
+            elif line[:17] == '@<TRIPOS>MOLECULE':
+                if n>0: #skip `zero` molecule (any preciding comments and spaces)
+                    yield MolFromMol2Block(block, *self._args, **self._kwargs)
+                n += 1
+                block = data
+                data = ''
+            block += line
+        # open last molecule
+        if block:
+            yield MolFromMol2Block(block, *self._args, **self._kwargs)
+        f.close()
+
+class Mol2Writer:
+    def __init__(self, filename, *args, **kwargs):
+        if hasattr(filename, 'write') and hasattr(self.f, 'close'):
+            self.f = filename
+        else:
+            self.f = open(filename, 'w')
+        self._args = args
+        self._kwargs = kwargs
+    
+    def write(self, mol, *args):
+        return self.f.write(MolToMol2Block(mol, *self._args, **self._kwargs))
+    
+    def close(self):
+        return self.f.close()
 
 
 def MolToMol2File(mol, filename, confId=-1, addHs = True):
@@ -114,10 +159,10 @@ def _sybyl_atom_type(atom):
     degree = atom.GetDegree()
     
     ### define groups for atom types
-    #guanidine = '[NX3]([!O])([!O])!:C(!:[NX3([!O])([!O]))]!:[NX3]([!O])([!O])' # strict
+    guanidine = '[NX3,NX2]([!O,!S])!@C(!@[NX3,NX2]([!O,!S]))!@[NX3,NX2]([!O,!S])' # strict
     #guanidine = '[NX3]([!O])([!O])!:C!:[NX3]([!O])([!O])' # corina compatible
-    guanidine = '[NX3]!:C(!:[NX3])!:[NX3,NX2]'
-    guanidine = '[NX3]C([NX3])=[NX2]'
+    #guanidine = '[NX3]!@C(!@[NX3])!@[NX3,NX2]'
+    #guanidine = '[NX3]C([NX3])=[NX2]'
     #guanidine = '[NX3H1,NX2,NX3H2]C(=[NH1])[NH2]' # previous
     ###
     
@@ -142,7 +187,7 @@ def _sybyl_atom_type(atom):
         else:
             sybyl = '%s.%i' % (atom_symbol, hyb)
     elif atomic_num == 8:
-        if degree == 1 and _atom_matches_smarts(atom, '[CX3](=O)[OX1H0-,OX2H1]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
+        if degree == 1 and _atom_matches_smarts(atom, '[CX3](=O)[OX1H0-]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
             sybyl = 'O.co2'
         elif hyb >= 3:
             sybyl = 'O.3'
