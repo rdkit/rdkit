@@ -9,7 +9,7 @@
   * [Python (2.x and 3.x) wrapper](http://www.rdkit.org/docs/GettingStartedInPython.html) generated using Boost.Python
   * Java and C# wrappers generated with SWIG
   * 2D and 3D molecular operations
-  * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) generation for machine learning
+  * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
   * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL
   * Cheminformatics nodes for [KNIME](http://tech.knime.org/community/rdkit)
   * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful software harnessing the power of RDKit
