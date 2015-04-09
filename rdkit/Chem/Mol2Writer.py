@@ -144,7 +144,7 @@ def _sybyl_atom_type(atom):
     elif atomic_num == 8:
         if degree == 1 and _atom_matches_smarts(atom, '[CX3](=O)[OX1H0-,OX2H1]'): # http://www.daylight.com/dayhtml_tutorials/languages/smarts/smarts_examples.html
             sybyl = 'O.co2'
-        elif degree >= 2:
+        elif hyb >= 3:
             sybyl = 'O.3'
         else:
             sybyl = 'O.2'
