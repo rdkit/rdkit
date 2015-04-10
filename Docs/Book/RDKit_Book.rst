@@ -20,7 +20,6 @@ The rules are relatively straightforward.
 Aromaticity is a property of atoms and bonds in rings.
 An aromatic bond must be between aromatic atoms, but a bond between aromatic atoms does not need to be aromatic.
 
-
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
 .. image:: images/picture_9.png
@@ -82,6 +81,31 @@ True
 True
 >>> m.GetBondBetweenAtoms(6,7).GetIsAromatic()
 False
+
+A special case, heteroatoms with radicals are not considered candidates for aromaticity:
+
+.. image:: images/picture_10.png 
+
+>>> m = Chem.MolFromSmiles('C1=C[N]C=C1')
+>>> m.GetAtomWithIdx(0).GetIsAromatic()
+False
+>>> m.GetAtomWithIdx(2).GetIsAromatic()
+False
+>>> m.GetAtomWithIdx(2).GetNumRadicalElectrons()
+1
+
+Carbons with radicals, however, are still considered:
+
+.. image:: images/picture_11.png 
+
+>>> m = Chem.MolFromSmiles('C1=[C]NC=C1')
+>>> m.GetAtomWithIdx(0).GetIsAromatic()
+True
+>>> m.GetAtomWithIdx(1).GetIsAromatic()
+True
+>>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
+1
+
 
 **Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
 
@@ -281,10 +305,6 @@ But it fails if two or more bonds are formed:
 In this case, there's just not sufficient information present to allow
 the information to be preserved. You can help by providing mapping
 information:
-
-
-
-
 
 
 Rules and caveats
@@ -519,6 +539,122 @@ This leads to the following behavior:
 +----------+---------+-------+
 
 
+Implementation Details
+**********************
+
+"Magic" Property Values
+=======================
+
+The following property values are regularly used in the RDKit codebase and may be useful to client code.
+
+ROMol  (Mol in Python)
+------------------------
+
++------------------------+---------------------------------------------------+
+| Property Name          | Use                                               | 
++========================+===================================================+
+| MolFileComments        |   Read from/written to the comment line of CTABs. |
++------------------------+---------------------------------------------------+
+| MolFileInfo            |   Read from/written to the info line of CTABs.    |
++------------------------+---------------------------------------------------+
+| _MolFileChiralFlag     |   Read from/written to the chiral flag of CTABs.  |
++------------------------+---------------------------------------------------+
+| _Name                  |   Read from/written to the name line of CTABs.    |
++------------------------+---------------------------------------------------+
+| _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
++------------------------+---------------------------------------------------+
+
+Atom
+----
+
++------------------------+-------------------------------------------------------------------------------------------------+
+| Property Name          | Use                                                                                             | 
++========================+=================================================================================================+
+| _CIPCode               | the CIP code (R or S) of the atom                                                               |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _CIPRank               | the integer CIP rank of the atom                                                                |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _ChiralityPossible     | set if an atom is a possible chiral center                                                      |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _MolFileRLabel         | integer R group label for an atom, read from/written to CTABs.                                  |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _ReactionDegreeChanged | set on an atom in a product template of a reaction if its degree changes in the reaction        |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _protected             | atoms with this property set will not be considered as matching reactant queries in reactions   |
++------------------------+-------------------------------------------------------------------------------------------------+
+| dummyLabel             | (on dummy atoms) read from/written to CTABs as the atom symbol                                  |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molAtomMapNumber       | the atom map number for an atom, read from/written to SMILES and CTABs                          |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molfileAlias           | the mol file alias for an atom (follows A tags), read from/written to CTABs                     |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molFileValue           | the mol file value for an atom (follows V tags), read from/written to CTABs                     |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molFileInversionFlag   | used to flag whether stereochemistry at an atom changes in a reaction,                          | 
+|                        | read from/written to CTABs, determined automatically from SMILES                                |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molRxnComponent        | which component of a reaction an atom belongs to, read from/written to CTABs                    |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molRxnRole             | which role an atom plays in a reaction (1=Reactant, 2=Product, 3=Agent),                        |
+|                        | read from/written to CTABs                                                                      |
++------------------------+-------------------------------------------------------------------------------------------------+
+| smilesSymbol           | determines the symbol that will be written to a SMILES for the atom                             |
++------------------------+-------------------------------------------------------------------------------------------------+
+
+Thread safety and the RDKit
+===========================
+
+While writing the RDKit, we did attempt to ensure that the code would
+work in a multi-threaded environment by avoiding use of global
+variables, etc. However, making code thread safe is not a completely
+trivial thing, so there are no doubt some gaps. This section describes
+which pieces of the code base have explicitly been tested for thread safety.
+
+**Note:** With the exception of the small number of methods/functions
+  that take a ``numThreads`` argument, this section does not apply to
+  using the RDKit from Python threads. Boost.Python ensures that only
+  one thread is calling into the C++ code at any point. To get
+  concurrent execution in Python, use the multiprocessing module or
+  one of the other standard python approaches for this .
+
+What has been tested
+--------------------
+
+  - Reading molecules from SMILES/SMARTS/Mol blocks
+  - Writing molecules to SMILES/SMARTS/Mol blocks
+  - Generating 2D coordinates
+  - Generating 3D conformations with the distance geometry code
+  - Optimizing molecules with UFF or MMFF
+  - Generating fingerprints
+  - The descriptor calculators in $RDBASE/Code/GraphMol/Descriptors
+  - Substructure searching (Note: if a query molecule contains
+    recursive queries, it may not be safe to use it concurrently on
+    multiple threads, see below)
+  - The Subgraph code
+  - The ChemTransforms code
+  - The chemical reactions code
+  - The Open3DAlign code
+  - The MolDraw2D drawing code
+
+Known Problems
+--------------
+
+  - InChI generation and (probably) parsing. This seems to be a
+    limitation of the IUPAC InChI code. In order to allow the code to
+    be used in a multi-threaded environment, a mutex is used to ensure
+    that only one thread is using the IUPAC code at a time. This is
+    only enabled if the RDKit is built with the ``RDK_TEST_MULTITHREADED``
+    option enabled.
+  - The MolSuppliers (e.g. SDMolSupplier, SmilesMolSupplier?) change
+    their internal state when a molecule is read. It is not safe to
+    use one supplier on more than one thread.
+  - Substructure searching using query molecules that include
+    recursive queries. The recursive queries modify their internal
+    state when a search is run, so it's not safe to use the same query
+    concurrently on multiple threads. If the code is built using the
+    ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
+    we provide), a mutex is used to ensure that only one thread is
+    using a given recursive query at a time.
 
 
 .. rubric:: Footnotes

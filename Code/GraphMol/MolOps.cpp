@@ -211,7 +211,20 @@ namespace RDKit{
         }
 
         // applies to later (more electronegative) elements:
-        int numRadicals = std::max(baseCount - nOuter - totalValence + chg,0);
+        int numRadicals = baseCount - nOuter - totalValence + chg;
+        if(numRadicals<0){
+          numRadicals=0;
+          // can the atom be "hypervalent"?  (was github #447)
+          const INT_VECT &valens = PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
+          if(valens.size()>1){
+            BOOST_FOREACH(int val,valens){
+              if(val - totalValence + chg >= 0){
+                numRadicals = val - totalValence + chg;
+                break;
+              }
+            }
+          }
+        }
         // applies to earlier elements:
         int numRadicals2 = nOuter - totalValence - chg;
         if(numRadicals2>=0){

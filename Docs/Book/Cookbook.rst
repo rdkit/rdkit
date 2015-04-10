@@ -515,17 +515,17 @@ The RDKit provides an implementation of the torsion fingerprint
 deviation (TFD) approach developed by Schulz-Gasch et al. 
 (J. Chem. Inf. Model, 52, 1499, 2012). The RDKit implementation
 allows the user to customize the torsion fingerprints:
-* In the original approach, the torsions are weighted based on
-their distance to the center of the molecule. By default, this
-weighting is performed, but can be turned off using the flag
-useWeights=False
-* The similarity between atoms is determined by comparing the 
-hash codes from the Morgan algorithm at a given radius (default: 
-radius = 2). 
-* In the original approach, the maximal deviation used for
-normalization is 180.0 degrees for all torsions (default). If
-maxDev='spec', a torsion-type dependent maximal deviation is 
-used for the normalization.
+  * In the original approach, the torsions are weighted based on
+    their distance to the center of the molecule. By default, this
+    weighting is performed, but can be turned off using the flag
+    useWeights=False
+  * The similarity between atoms is determined by comparing the 
+    hash codes from the Morgan algorithm at a given radius (default: 
+    radius = 2). 
+  * In the original approach, the maximal deviation used for
+    normalization is 180.0 degrees for all torsions (default). If
+    maxDev='spec', a torsion-type dependent maximal deviation is 
+    used for the normalization.
 
 Examples of using it:
 
@@ -547,7 +547,7 @@ This produces:
 
 .. testoutput::
 
-   [0.06450035322926886] [0.16803037890459122] [0.06752301190398982]
+   [0.0645...] [0.168...] [0.0675...]
 
 If the TFD between conformers of the same molecule is to be
 calculated, the function GetTFDBetweenConformers() should be
@@ -571,7 +571,7 @@ This produces:
 
 .. testoutput::
 
-    [0.06450035322926886]
+    [0.0645...]
 
 For the conformer RMS and TFD values, the RDKit provides
 convenience functions that calculated directly the symmetric

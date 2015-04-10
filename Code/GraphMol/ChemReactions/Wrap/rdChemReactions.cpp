@@ -36,7 +36,7 @@
 #include <GraphMol/Depictor/DepictUtils.h>
 
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
@@ -79,6 +79,7 @@ namespace RDKit {
   template <typename T>
   PyObject* RunReactants(ChemicalReaction *self,T reactants){
     if(!self->isInitialized()){
+      NOGIL gil;    
       self->initReactantMatchers();
     }
     MOL_SPTR_VECT reacts;
@@ -89,7 +90,10 @@ namespace RDKit {
       if(!reacts[i]) throw_value_error("reaction called with None reactants");
     }
     std::vector<MOL_SPTR_VECT> mols;
-    mols = self->runReactants(reacts);
+    {
+      NOGIL gil;
+      mols = self->runReactants(reacts);
+    }
     PyObject *res=PyTuple_New(mols.size());
     
     for(unsigned int i=0;i<mols.size();++i){
@@ -309,6 +313,7 @@ Sample Usage:\n\
   python::class_<RDKit::ChemicalReaction>("ChemicalReaction",docString.c_str(),
                                           python::init<>("Constructor, takes no arguments"))
     .def(python::init<const std::string &>())
+    .def(python::init<const RDKit::ChemicalReaction&>())
     .def("GetNumReactantTemplates",&RDKit::ChemicalReaction::getNumReactantTemplates,
          "returns the number of reactants this reaction expects")
     .def("GetNumProductTemplates",&RDKit::ChemicalReaction::getNumProductTemplates,

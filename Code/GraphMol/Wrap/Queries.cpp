@@ -74,9 +74,36 @@ namespace RDKit{
   QAFUNC2(IsAliphaticQueryAtom,makeAtomAliphaticQuery,int);
   QAFUNC2(IsInRingQueryAtom,makeAtomInRingQuery,int);
 
+ QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {       \
+    QueryAtom *res=new QueryAtom();\
+    res->setQuery(makeHasPropQuery<Atom>(propname));    \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
 
+ QueryBond *HasPropQueryBond(const std::string &propname, bool negate) {       \
+    QueryBond *res=new QueryBond();\
+    res->setQuery(makeHasPropQuery<Bond>(propname));    \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
 
+template<class Ob, class Ret, class T>
+Ret *PropQuery(const std::string &propname, const T &v, bool negate) { \
+    Ret *res=new Ret();\
+    res->setQuery(makePropQuery<Ob,T>(propname,v));  \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
 
+template<class Ob, class Ret, class T>
+Ret *PropQueryWithTol(const std::string &propname, const T &v, bool negate, const T &tol=T() ) { \
+    Ret *res=new Ret();\
+    res->setQuery(makePropQuery<Ob,T>(propname,v, tol));  \
+    if(negate) res->getQuery()->setNegation(true);\
+    return res;\
+  }
+  
 struct queries_wrapper {
   static void wrap(){
 #define QADEF1(_funcname_)     python::def(# _funcname_ "EqualsQueryAtom",_funcname_##EqualsQueryAtom,\
@@ -117,6 +144,77 @@ struct queries_wrapper {
     QADEF2(IsAliphatic);
     QADEF2(IsInRing);
 
+    python::def("HasPropQueryAtom",HasPropQueryAtom,
+                (python::arg("propname"),python::arg("negate")=false),
+                "Returns a QueryAtom that matches when the propery 'propname' exists in the atom.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasPropQueryBond",HasPropQueryBond,
+                (python::arg("propname"),python::arg("negate")=false),
+                "Returns a QueryBond that matches when the propery 'propname' exists in the bond.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasIntPropWithValueQueryAtom",PropQueryWithTol<Atom, QueryAtom, int>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false,
+                 python::arg("tolerance")=0),
+                "Returns a QueryAtom that matches when the propery 'propname' has the specified int value.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasBoolPropWithValueQueryAtom",PropQuery<Atom, QueryAtom, bool>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false),
+                "Returns a QueryAtom that matches when the propery 'propname' has the specified boolean"
+                " value.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasStringPropWithValueQueryAtom",PropQuery<Atom, QueryAtom, std::string>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false),
+                "Returns a QueryAtom that matches when the propery 'propname' has the specified string "
+                "value.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasDoublePropWithValueQueryAtom",PropQueryWithTol<Atom, QueryAtom, double>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false,
+                 python::arg("tolerance")=0.0),
+                "Returns a QueryAtom that matches when the propery 'propname' has the specified "
+                "value +- tolerance",
+                python::return_value_policy<python::manage_new_object>());
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    //  Bond Queries
+    python::def("HasPropQueryBond",HasPropQueryBond,
+                (python::arg("propname"),python::arg("negate")=false),
+                "Returns a QueryBond that matches when the propery 'propname' exists in the bond.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasPropQueryBond",HasPropQueryBond,
+                (python::arg("propname"),python::arg("negate")=false),
+                "Returns a QueryBond that matches when the propery 'propname' exists in the bond.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasIntPropWithValueQueryBond",PropQueryWithTol<Bond, QueryBond, int>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false,
+                 python::arg("tolerance")=0),
+                "Returns a QueryBond that matches when the propery 'propname' has the specified int value.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasBoolPropWithValueQueryBond",PropQuery<Bond, QueryBond, bool>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false),
+                "Returns a QueryBond that matches when the propery 'propname' has the specified boolean"
+                " value.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasStringPropWithValueQueryBond",PropQuery<Bond, QueryBond, std::string>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false),
+                "Returns a QueryBond that matches when the propery 'propname' has the specified string "
+                "value.",
+                python::return_value_policy<python::manage_new_object>());
+
+    python::def("HasDoublePropWithValueQueryBond",PropQueryWithTol<Bond, QueryBond, double>,
+                (python::arg("propname"),python::arg("val"),python::arg("negate")=false,
+                 python::arg("tolerance")=0.0),
+                "Returns a QueryBond that matches when the propery 'propname' has the specified "
+                "value +- tolerance",
+                python::return_value_policy<python::manage_new_object>());
     
   };
 };

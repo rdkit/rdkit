@@ -42,6 +42,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
 
       void getGrad(double *pos, double *grad) const;
+      virtual InversionContrib *copy() const { return new InversionContrib(*this); };
     
     private:
       int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;

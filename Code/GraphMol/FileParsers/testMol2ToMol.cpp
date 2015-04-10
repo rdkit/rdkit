@@ -306,6 +306,31 @@ void testIssue114(std::string rdbase) {
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
+void testGithub438(std::string rdbase) {
+
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- testing GitHub issue #438: problems with metals in mol2 files  --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/github438_1.mol2";
+    RWMol *mol = Mol2FileToMol(fName);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge()==1);
+    delete mol;
+  }  
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/github438_2.mol2";
+    RWMol *mol = Mol2FileToMol(fName);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge()==2);
+    delete mol;
+  }  
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+}
+
   //FIX still missing chirality by 3D structure  
   //  still missing input std::string
 
@@ -318,6 +343,7 @@ int main(int argc,char *argv[]){
   testAromaticChargedFail(rdbase);
   testIssue3399798(rdbase);
   testIssue114(rdbase);
+  testGithub438(rdbase);
   
   return 0;
 }

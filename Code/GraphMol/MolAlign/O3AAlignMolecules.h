@@ -322,6 +322,17 @@ namespace RDKit {
     int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx, double hSum, void *data);
     double o3aCrippenWeightFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
     double o3aCrippenScoringFunc(const unsigned int prbIdx, const unsigned int refIdx, void *data);
+
+    void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol,
+                             void *prbProp, void *refProp,
+                             std::vector<boost::shared_ptr<O3A> > &res,
+                             unsigned int numThreads=1,
+                             O3A::AtomTypeScheme atomTypes = O3A::MMFF94,
+                             const int refCid = -1,
+                             const bool reflect = false, const unsigned int maxIters = 50,
+                             unsigned int options = 0, const MatchVectType *constraintMap = NULL,
+                             const RDNumeric::DoubleVector *constraintWeights = NULL);
+
   }
 }
 #endif

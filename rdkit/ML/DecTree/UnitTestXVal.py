@@ -5,6 +5,7 @@
 """ unit testing code for cross validation """
 from __future__ import print_function
 import unittest, random
+import io
 from rdkit import RDConfig
 from rdkit.ML.DecTree import CrossValidate
 
@@ -40,7 +41,10 @@ class XValTestCase(unittest.TestCase):
 
     from rdkit.six.moves import cPickle
     #cPickle.dump(tree,open(self.origTreeName,'w+'))
-    with open(self.origTreeName,'rb') as inFile:
+    with open(self.origTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
       oTree = cPickle.load(inFile)
 
     assert oTree==tree,'Random CrossValidation test failed'

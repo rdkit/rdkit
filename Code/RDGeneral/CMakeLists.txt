@@ -4,7 +4,8 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp SHARED)
 
-rdkit_headers(BadFileException.h
+rdkit_headers(Exceptions.h
+              BadFileException.h
               Dict.h
               FileParseException.h
               Invariant.h

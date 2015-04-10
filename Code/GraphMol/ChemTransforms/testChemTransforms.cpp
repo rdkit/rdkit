@@ -19,7 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 using namespace RDKit;
 

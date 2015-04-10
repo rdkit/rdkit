@@ -2607,22 +2607,20 @@ void testAromaticityEdges()
   TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
   delete m;
 
-  smi = "c1cccc[n+]1";
+  smi = "c1cccc[n+]1";  // disqualified because N has a radical
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
-  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
   delete m;
 
-#if 0 // currently fails
-  smi = "[n]1cccc1";
+  smi = "[N]1C=CC=C1";// disqualified because N has a radical
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
-  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
   delete m;
-#endif
   
   smi = "[n]1ccccc1";
   m = SmilesToMol(smi);
@@ -4346,8 +4344,8 @@ namespace{
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       std::vector<unsigned int> nVect(idxV);
       std::random_shuffle(nVect.begin(),nVect.end());
-      //std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
-      //std::cerr<<std::endl;
+      // std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,", "));
+      // std::cerr<<std::endl;
 
       ROMol *nm=MolOps::renumberAtoms(*m,nVect);
       TEST_ASSERT(nm);
@@ -4358,7 +4356,24 @@ namespace{
       MatchVectType mv; 
       TEST_ASSERT(SubstructMatch(*m,*nm,mv));
       TEST_ASSERT(mv.size()==nm->getNumAtoms());
+
+      for(unsigned int j=0;j<m->getNumAtoms();++j){
+        TEST_ASSERT( m->getAtomWithIdx(nVect[j])->getAtomicNum() == nm->getAtomWithIdx(j)->getAtomicNum() );
+      }
       
+
+      // checking the conformation is a test for Github #441
+      TEST_ASSERT(m->getNumConformers()==nm->getNumConformers());
+      if(m->getNumConformers()){
+        for(unsigned int j=0;j<m->getNumAtoms();++j){
+          RDGeom::Point3D po=m->getConformer().getAtomPos(nVect[j]);
+          RDGeom::Point3D pn=nm->getConformer().getAtomPos(j);
+          TEST_ASSERT( po.x==pn.x );
+          TEST_ASSERT( po.y==pn.y );
+          TEST_ASSERT( po.z==pn.z );
+        }
+      }
+
       std::string nSmi=MolToSmiles(*nm,true);
       TEST_ASSERT(nSmi==refSmi);
       delete nm;
@@ -4386,6 +4401,14 @@ void testRenumberAtoms()
   {
     std::string smiles="C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
     ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    _renumberTest(m);
+    delete m;
+  }
+  { // github issue #441
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue266.mol");  // no significance to choice of files, we just need something with coords
     TEST_ASSERT(m);
     _renumberTest(m);
     delete m;
@@ -4607,7 +4630,155 @@ void testGithubIssue418()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue432()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 432: problems caused by aromatic Ns with radical electrons." << std::endl;
+  {
+    std::string smiles="C1=NN=N[N]1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(!m->getAtomWithIdx(4)->getIsAromatic());
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+  { // test round-tripping:
+    std::string smiles="C1=NN=N[N]1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(smiles);    
+    TEST_ASSERT(m);
+    delete m;
+  }
+  { // test round-tripping:
+    std::string smiles="OC(=O)C(=O)Nc1cccc(c1)C2=NN=N[N]2";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(smiles);    
+    TEST_ASSERT(m);
+    delete m;
+  }
+  {
+    std::string smiles="C1=C[N]C=C1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(!m->getAtomWithIdx(2)->getIsAromatic());
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
+void testGithubIssue443()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 443: kekulization problems caused by any bonds." << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github443.min.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    MolOps::Kekulize(*m);
+    delete m;
+  }
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"github443.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(19)->getIsAromatic());
+    TEST_ASSERT(m->getAtomWithIdx(12)->getIsAromatic());
+    // we might normally expect these to be aromatic because the outer porphyrin ring
+    // is 4n+2 aromatic. However, the current fused ring aromaticity perception uses
+    // the symmetrized SSSR rings and only works if all atoms are aromatic. This cannot
+    // happen when the Mg is involved
+    //TEST_ASSERT(m->getAtomWithIdx(13)->getIsAromatic());
+    //TEST_ASSERT(m->getAtomWithIdx(11)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(13,20));
+    TEST_ASSERT(m->getBondBetweenAtoms(19,20));
+    TEST_ASSERT(m->getBondBetweenAtoms(11,20));
+    TEST_ASSERT(m->getBondBetweenAtoms(12,20));
+    MolOps::Kekulize(*m);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+void testGithubIssue447()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 447: Radicals are not correctly assigned when reading from SMILES." << std::endl;
+  {
+    std::string smiles="C[S]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH3]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH4]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH4+]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+
+  {
+    std::string smiles="C[P]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[PH2]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -4682,6 +4853,10 @@ int main(){
 #endif
   test11();
   testGithubIssue418();
+  testGithubIssue432();
+  testGithubIssue443();
+#endif
+  testGithubIssue447();
   return 0;
 }
 
