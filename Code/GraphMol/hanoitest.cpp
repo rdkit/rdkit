@@ -958,6 +958,16 @@ std::string smis[]={
   "N[C@]1(C(=O)O)C[C@@H](n2oc(=O)[nH]c2=O)C1",
   "COc1ccc([C@H]2C3(CO)C4[N@](C)C5C2(CO)C2[N@](C)C3C4(CO)[C@H](c3ccc(OC)cc3)C52CO)cc1",
   "NCCNC(=O)[C@]1(O)C[C@@H](O)[C@H](O)[C@H](O)C1",
+  //CIP renumber problems
+//  "O=P(O)(O)O[C@@H]1[C@H](OP(=O)(O)O)[C@@H](OP(=O)(O)O)[C@H](OP(=O)(O)O)[C@@H](OP(=O)(O)O[32P](=O)(O)O)[C@@H]1OP(=O)(O)O",
+//  "O=C(NCCO[C@H]1[C@@H](O)[C@H](OP(=O)(O)O)[C@@H](OP(=O)(O)O)[C@H](O)[C@H]1OP(=O)(O)O)NCCO[C@H]1[C@@H](O)[C@H](OP(=O)(O)O)[C@@H](O[PH](O)(O)O)[C@H](O)[C@H]1OP(=O)(O)O",
+//  "O=C(NCCO[C@@H]1[C@H](OP(=O)(O)O)[C@@H](OP(=O)(O)O)[C@H](O[PH](O)(O)O)[C@@H](OP(=O)(O)O)[C@@H]1OP(=O)(O)O)NCCO[C@H]1[C@@H](OP(=O)(O)O)[C@H](O)[C@@H](OP(=O)(O)O)[C@H](OP(=O)(O)O)[C@H]1O",
+//  "O=C(O)[C@H]1[C@@H](C(=O)O)[C@@H](C(=O)O)[C@@H]1C(=O)O",
+  "C[C@H]1[C@H](C)[C@@H](C)[C@H]1C",
+  "COc1cc([C@H]2[C@@](NC(=O)c3ccc(NC(=O)C4CCCC4)cc3)(C(=O)O)[C@@H](c3ccc(OC(=O)c4cccs4)c(OC)c3)[C@]2(NC(=O)c2ccc(NC(=O)C3CCCC3)cc2)C(=O)O)ccc1OC(=O)c1cccs1",
+  "COc1cc([C@H]2[C@@](NC(=O)c3ccc(NC(=O)OC(C)(C)C)cc3)(C(=O)O)[C@@H](c3ccc(OC(=O)c4cccs4)c(OC)c3)[C@]2(NC(=O)c2ccc(NC(=O)OC(C)(C)C)cc2)C(=O)O)ccc1OC(=O)c1cccs1",
+  "COc1cc([C@H]2[C@](NC(=O)c3ccc(NC(=O)OC(C)(C)C)cc3)(C(=O)O)[C@H](c3ccc(OC(=O)c4cccs4)c(OC)c3)[C@]2(NC(=O)c2ccc(NC(=O)OC(C)(C)C)cc2)C(=O)O)ccc1OC(=O)c1cccs1",
+  "CCC[C@H]1CC[C@H]([C@H]2CC[C@H](OC(=O)[C@H]3[C@@H](c4ccc(O)cc4)[C@H](C(=O)O[C@H]4CC[C@H]([C@H]5CC[C@H](CCC)CC5)CC4)[C@@H]3c3ccc(O)cc3)CC2)CC1",
   "EOS"
 };
 
@@ -974,6 +984,68 @@ void test7(){
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+std::string molbl1 =
+"CHEMBL1950780                                                        \n"
+"     RDKit          2D                                               \n"
+"                                                                     \n"
+" 12 12  0  0  0  0  0  0  0  0999 V2000                              \n"
+"   16.2083   -6.1750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   16.2083   -7.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   16.9204   -7.4083    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   17.6324   -7.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   17.6324   -6.1750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   16.9204   -5.7583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   16.9204   -4.9333    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   18.3480   -5.7646    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   18.3462   -7.4135    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   16.9204   -8.2333    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   15.4945   -7.4135    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   15.4927   -5.7646    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"  5  6  1  0                                                         \n"
+"  6  7  1  6                                                         \n"
+"  1  2  1  0                                                         \n"
+"  5  8  1  6                                                         \n"
+"  1  6  1  0                                                         \n"
+"  4  9  1  6                                                         \n"
+"  2  3  1  0                                                         \n"
+"  3 10  1  1                                                         \n"
+"  3  4  1  0                                                         \n"
+"  2 11  1  6                                                         \n"
+"  4  5  1  0                                                         \n"
+"  1 12  1  6                                                         \n"
+"M  END";
+
+std::string molbl2 =
+"CHEMBL1874247                                                        \n"
+"     RDKit          2D                                               \n"
+"                                                                     \n"
+" 12 12  0  0  0  0  0  0  0  0999 V2000                              \n"
+"    0.0000    1.6500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    1.4289    0.8250    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -1.4289    0.8250    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    1.4289   -0.8250    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -1.4289   -0.8250    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    0.0000   -1.6500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    0.0000    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    0.0000   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"  7  1  1  1                                                         \n"
+"  8  2  1  1                                                         \n"
+"  9  3  1  1                                                         \n"
+" 10  4  1  6                                                         \n"
+" 11  5  1  6                                                         \n"
+" 12  6  1  1                                                         \n"
+"  7  8  1  0                                                         \n"
+"  7  9  1  0                                                         \n"
+"  8 10  1  0                                                         \n"
+"  9 11  1  0                                                         \n"
+" 10 12  1  0                                                         \n"
+" 11 12  1  0                                                         \n"
+"M  END";
 
 void test8(){
   BOOST_LOG(rdInfoLog) << "testing smiles round-tripping." << std::endl;
@@ -1011,6 +1083,38 @@ void test8(){
         std::cerr<<"Input smiles: "<<smiles<<"\n1. Iter: "<<smi1<<"\n2. Iter: "<<smi2<<std::endl;
       }
       TEST_ASSERT(smi1==smi2);
+    }
+    {
+      ROMol *m = MolBlockToMol(molbl1);
+      TEST_ASSERT(m);
+      std::string smiles=MolToSmiles(*m, true);
+
+      m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      //      std::cerr<<"MolToSMILES 1"<<std::endl;
+      std::string smi1=MolToSmiles(*m, true);
+      delete m;
+
+      if(smiles!=smi1){
+        std::cerr<<smiles<<"\n"<<smi1<<std::endl;
+      }
+      TEST_ASSERT(smiles==smi1);
+    }
+    {
+      ROMol *m = MolBlockToMol(molbl2);
+      TEST_ASSERT(m);
+      std::string smiles=MolToSmiles(*m, true);
+
+      m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      //      std::cerr<<"MolToSMILES 1"<<std::endl;
+      std::string smi1=MolToSmiles(*m, true);
+      delete m;
+
+      if(smiles!=smi1){
+        std::cerr<<smiles<<"\n"<<smi1<<std::endl;
+      }
+      TEST_ASSERT(smiles==smi1);
     }
   }
 
@@ -1216,13 +1320,13 @@ int main(){
   test4();
   test5();
   test6();
-  test7();
   test7a();
   test8();
   test9();
   test10();
-#endif
   test11();
+#endif
+  test7();
   return 0;
 }
 
