@@ -410,7 +410,7 @@ namespace RDKit {
     }
 
     void updateAtomNeighborNumSwaps(canon_atom* atoms, std::vector<bondholder> &nbrs,
-        unsigned int atomIdx, std::vector<unsigned int>& result) {
+        unsigned int atomIdx, std::vector<std::pair<unsigned int, unsigned int> >& result) {
       for(unsigned j=0; j < nbrs.size(); ++j){
         unsigned nbrIdx = nbrs[j].nbrIdx;
 
@@ -431,23 +431,23 @@ namespace RDKit {
           int nSwaps=static_cast<int>(countSwapsToInterconvert(ref,probe));
           if(atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW){
             if(nSwaps%2){
-              result.push_back(2);
+              result.push_back(std::make_pair(nbrs[j].nbrSymClass, 2));
             }
             else{
-              result.push_back(1);
+              result.push_back(std::make_pair(nbrs[j].nbrSymClass, 1));
             }
           }
           else if(atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW){
             if(nSwaps%2){
-              result.push_back(1);
+              result.push_back(std::make_pair(nbrs[j].nbrSymClass, 1));
             }
             else{
-              result.push_back(2);
+              result.push_back(std::make_pair(nbrs[j].nbrSymClass, 2));
             }
           }
         }
         else{
-          result.push_back(0);
+          result.push_back(std::make_pair(nbrs[j].nbrSymClass, 0));
         }
       }
       sort(result.begin(),result.end());
