@@ -385,7 +385,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m2.GetNumAtoms(),8)
     m2 = Chem.RemoveHs(m2)
     self.assertEqual(m2.GetNumAtoms(),4)
-
+    
     m = Chem.MolFromSmiles('CC[H]',False)
     self.assertEqual(m.GetNumAtoms(),3)
     m2 = Chem.MergeQueryHs(m)
@@ -400,6 +400,25 @@ class TestCase(unittest.TestCase):
     m1 = Chem.RemoveHs(m,updateExplicitCount=True)
     self.assertEqual(m1.GetNumAtoms(),2)
     self.assertEqual(m1.GetAtomWithIdx(1).GetNumExplicitHs(),1)    
+
+    # test merging of mapped hydrogens
+    m = Chem.MolFromSmiles('CC[H]',False)
+    m.GetAtomWithIdx(2).SetProp("molAtomMapNumber", "1")
+    self.assertEqual(m.GetNumAtoms(),3)
+    m2 = Chem.MergeQueryHs(m, merge_unmapped_only=True)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(),3)
+    self.assertFalse(m2.GetAtomWithIdx(1).HasQuery())
+
+    # map somthing else BUT they hydrogen
+    #  should be the same as merging all
+    m = Chem.MolFromSmiles('CC[H]',False)
+    m.GetAtomWithIdx(1).SetProp("molAtomMapNumber", "1")
+    self.assertEqual(m.GetNumAtoms(),3)
+    m2 = Chem.MergeQueryHs(m, merge_unmapped_only=True)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(),2)
+    self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
 
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
