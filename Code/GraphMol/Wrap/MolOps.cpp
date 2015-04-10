@@ -780,8 +780,8 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
-      python::def("MergeQueryHs", (ROMol *(*)(const ROMol &))&MolOps::mergeQueryHs,
-                  (python::arg("mol")),
+      python::def("MergeQueryHs", (ROMol *(*)(const ROMol &,bool))&MolOps::mergeQueryHs,
+                  (python::arg("mol"), python::arg("merge_unmapped_only")=false),
                   "merges hydrogens into their neighboring atoms as queries",
                   python::return_value_policy<python::manage_new_object>());
 
