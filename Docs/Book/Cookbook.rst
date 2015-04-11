@@ -751,7 +751,7 @@ Clustering molecules
 
 For large sets of molecules (more than 1000-2000), it's most efficient to use the Butina clustering algorithm.
 
-Here's some code for diong that for a set of fingerprints::
+Here's some code for doing that for a set of fingerprints::
 
   def ClusterFps(fps,cutoff=0.2):
       from rdkit import DataStructs
