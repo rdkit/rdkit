@@ -107,8 +107,7 @@ namespace RDKit {
         if(field->calcEnergy() > ERROR_TOL){
           int needMore = 1;
           while(needMore){
-            needMore = field->minimize(200,optimizerForceTol);
-            //needMore = field->minimize(200,1e-6);
+            needMore = field->minimize(400,optimizerForceTol);
             ++nPasses;
           }
         }
@@ -130,7 +129,7 @@ namespace RDKit {
               needMore = field2->minimize(200,optimizerForceTol);
               ++nPasses2;
             }
-            //std::cerr<<"   "<<field2->calcEnergy()<<" after npasses: "<<nPasses2<<std::endl;
+            //std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2: "<<nPasses2<<std::endl;
           }
           delete field2;
         }
