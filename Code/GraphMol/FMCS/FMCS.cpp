@@ -48,6 +48,62 @@ namespace RDKit {
         return fmcs.find(mols);
     }
 
+    MCSResult findMCS_P (const std::vector<ROMOL_SPTR>& mols, const char* params_json) {
+       MCSParameters p;
+       parseMCSParametersJSON(params_json, &p);
+       return findMCS(mols, &p);
+    }
+
+    MCSResult findMCS (const std::vector<ROMOL_SPTR>& mols,
+                       bool maximizeBonds,
+                       double threshold,
+                       unsigned timeout,
+                       bool verbose,
+                       bool matchValences,
+                       bool ringMatchesRingOnly,
+                       bool completeRingsOnly,
+                       bool matchChiralTag,
+                       AtomComparator atomComp,
+                       BondComparator bondComp){ 
+
+                       //AtomComparator atomComp=AtomCompareElements;
+                       //BondComparator bondComp=BondCompareOrder;
+        MCSParameters *ps=new MCSParameters();
+        ps->MaximizeBonds=maximizeBonds;
+        ps->Threshold=threshold;
+        ps->Timeout=timeout;
+        ps->Verbose=verbose;
+        ps->AtomCompareParameters.MatchValences=matchValences;
+        ps->AtomCompareParameters.MatchChiralTag=matchChiralTag;
+        switch(atomComp) {
+        case AtomCompareAny:
+            ps->AtomTyper=MCSAtomCompareAny;
+            break;
+        case AtomCompareElements:
+            ps->AtomTyper=MCSAtomCompareElements;
+            break;
+        case AtomCompareIsotopes:
+            ps->AtomTyper=MCSAtomCompareIsotopes;
+            break;
+        }
+        switch(bondComp) {
+        case BondCompareAny:
+            ps->BondTyper=MCSBondCompareAny;
+            break;
+        case BondCompareOrder:
+            ps->BondTyper=MCSBondCompareOrder;
+            break;
+        case BondCompareOrderExact:
+            ps->BondTyper=MCSBondCompareOrderExact;
+            break;
+        }
+        ps->BondCompareParameters.RingMatchesRingOnly=ringMatchesRingOnly;
+        ps->BondCompareParameters.CompleteRingsOnly=completeRingsOnly;
+        MCSResult res=findMCS(mols,ps);
+        delete ps;
+        return res;
+    }
+
     bool MCSProgressCallbackTimeout(const MCSProgressData& stat, const MCSParameters &params, void* userData) {
         unsigned long long* t0 = (unsigned long long*)userData;
         unsigned long long  t  = nanoClock();
