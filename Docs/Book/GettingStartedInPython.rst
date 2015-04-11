@@ -802,7 +802,7 @@ and removing cores:
 
 >>> tmp = Chem.ReplaceCore(m1,core)
 >>> Chem.MolToSmiles(tmp)
-'[*]CCBr.[*]C(=O)O' 
+'[*]C(=O)O.[*]CCBr' 
 
 To get more detail about the sidechains (e.g. sidechain labels), use isomeric smiles:
 
@@ -840,13 +840,13 @@ into scaffolds:
 >>> m1 = cdk2mols[0]
 >>> core = MurckoScaffold.GetScaffoldForMol(m1)
 >>> Chem.MolToSmiles(core)
-'c1nc2cncnc2[nH]1'
+'c1ncc2nc[nH]c2n1'
 
 or into a generic framework:
 
 >>> fw = MurckoScaffold.MakeScaffoldGeneric(core)
 >>> Chem.MolToSmiles(fw)
-'C1CC2CCCCC2C1'
+'C1CCC2CCCC2C1'
 
 
 Maximum Common Substructure
@@ -1581,10 +1581,10 @@ method for fragmenting molecules along synthetically accessible bonds:
 >>> cdk2mols = Chem.SDMolSupplier('data/cdk2.sdf')
 >>> m1 = cdk2mols[0]
 >>> list(BRICS.BRICSDecompose(m1))
-['[4*]CC(=O)C(C)C', '[14*]c1nc(N)nc2[nH]cnc21', '[3*]O[3*]']
+['[4*]CC(=O)C(C)C', '[14*]c1nc(N)nc2[nH]cnc12', '[3*]O[3*]']
 >>> m2 = cdk2mols[20]
 >>> list(BRICS.BRICSDecompose(m2))
-['[3*]OC', '[1*]C(=O)NN(C)C', '[14*]c1[nH]nc2c1C(=O)c1c-2cccc1[16*]', '[5*]N[5*]', '[16*]c1ccc([16*])cc1']
+['[3*]OC', '[1*]C(=O)NN(C)C', '[14*]c1[nH]nc2c1C(=O)c1c([16*])cccc1-2', '[5*]N[5*]', '[16*]c1ccc([16*])cc1']
 
 Notice that RDKit BRICS implementation returns the unique fragments
 generated from a molecule and that the dummy atoms are tagged to
@@ -1600,7 +1600,7 @@ group of molecules:
 >>> len(allfrags)
 90
 >>> list(allfrags)[:5]
-['[4*]CC[NH3+]', '[14*]c1cnc[nH]1', '[16*]c1cc([16*])c2c3c(ccc2F)NC(=O)c31', '[16*]c1ccc([16*])c(Cl)c1', '[15*]C1CCCC1']
+['[4*]CC[NH3+]', '[14*]c1cnc[nH]1', '[16*]c1ccc([16*])c(Cl)c1', '[15*]C1CCCC1', '[7*]C1C(=O)Nc2ccc(S([12*])(=O)=O)cc21']
 
 The BRICS module also provides an option to apply the BRICS rules to a
 set of fragments to create new molecules:
@@ -1687,8 +1687,7 @@ with label 1:
 ...    bs.append(b.GetIdx())
 >>> nm = Chem.FragmentOnBonds(m,bs,dummyLabels=labels)
 >>> Chem.MolToSmiles(nm,True)
-'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]'
-
+'[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1'
 
 
 Chemical Features and Pharmacophores
@@ -1853,9 +1852,9 @@ This is more easily demonstrated than explained:
 >>> fcgen.AddFragsFromMol(m,fcat)
 3
 >>> fcat.GetEntryDescription(0)
-'CC<-O>'
+'C<-O>C'
 >>> fcat.GetEntryDescription(1)
-'C<-C(=O)O>=C'
+'C=C<-C(=O)O>'
 >>> fcat.GetEntryDescription(2)
 'C<-C(=O)O>=CC<-O>'
 
@@ -1896,13 +1895,13 @@ method:
 >>> fcgen.AddFragsFromMol(m,fcat)
 15
 >>> fcat.GetEntryDescription(0)
-'CC<-O>'
+'C<-O>C'
 >>> fcat.GetEntryDescription(1)
 'CN<-cPropyl>'
 >>> list(fcat.GetEntryDownIds(0))
 [3, 4]
 >>> fcat.GetEntryDescription(3)
-'CCC<-O>'
+'C<-O>CC'
 >>> fcat.GetEntryDescription(4)
 'C<-O>CN<-cPropyl>'
 
@@ -1915,7 +1914,7 @@ The fragments from multiple molecules can be added to a catalog:
 >>> fcat.GetNumEntries()
 1169
 >>> fcat.GetEntryDescription(0)
-'cC'
+'Cc'
 >>> fcat.GetEntryDescription(100)
 'cc-nc(C)n'
 
