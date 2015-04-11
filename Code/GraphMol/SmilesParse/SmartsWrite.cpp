@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/RDLog.h>
 
 namespace RDKit {
@@ -471,7 +472,7 @@ namespace RDKit {
     
     std::string FragmentSmartsConstruct(ROMol &mol,unsigned int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        INT_VECT &ranks){
+                                        UINT_VECT &ranks){
       Canon::MolStack molStack;
       molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
       std::stringstream res;
@@ -694,7 +695,7 @@ namespace RDKit {
     if(!nAtoms) return "";
 
     ROMol mol(inmol);
-    INT_VECT ranks;
+    UINT_VECT ranks;
     ranks.resize(nAtoms);
     // For smiles writing we would be canonicalizing but we will not do that here.
     // We will simple use the atom indices as the rank
@@ -711,7 +712,7 @@ namespace RDKit {
     colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
     while (colorIt != colors.end()) {
       unsigned int nextAtomIdx=0;
-      int nextRank;
+      unsigned int nextRank;
       std::string subSmi;
       nextRank = nAtoms + 1;
       for (unsigned int i = 0; i < nAtoms; i++) {

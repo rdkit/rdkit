@@ -443,7 +443,7 @@ namespace RDDepict {
     //res.reserve(natms);
     //RDKit::INT_VECT_CI ci;
     typename T::const_iterator ci;
-    int rank;
+    unsigned int rank;
     for (ci = commAtms.begin(); ci != commAtms.end(); ci++) {
       const RDKit::Atom *at=mol.getAtomWithIdx(*ci);
       if(at->hasProp(RDKit::common_properties::_CIPRank)){
