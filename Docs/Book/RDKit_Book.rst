@@ -320,7 +320,7 @@ Rules and caveats
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C1NCCCC1'),))[0]]
 ['C1CCCCC1']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
-['c1cccc-c1']
+['c1ccccc-1']
 
   So if you want to copy the bond order from the reactant, use an “Any” bond:
 
