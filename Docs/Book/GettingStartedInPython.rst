@@ -548,6 +548,8 @@ MMFF-related methods.
 >>> AllChem.MMFFOptimizeMolecule(m2)
 0
 
+Note the calls to `Chem.AddHs()` in the examples above. By default RDKit molecules do not have H atoms explicity present in the graph, but they are important for getting realistic geometries, so they generally should be added. 
+
 With the RDKit, also multiple conformers can be generated. The option numConfs allows the user to set the number of conformers that should be generated.
 These conformers can be aligned to each other and the RMS values calculated.
 

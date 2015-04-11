@@ -841,7 +841,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms()==30)
 
-    with open(fileN,'r') as dFile:
+    with open(fileN,'rb') as dFile:
       d = dFile.read()
     sdSup.SetData(d)
     m = six.next(sdSup)
@@ -1524,11 +1524,25 @@ CAS<~>
   def test41SetStreamIndices(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf')
+    allIndices = []
+    ifs = open(fileN, 'rb')
+    addIndex = True;
+    line = True;
+    pos = 0;
+    while (line):
+      if (addIndex):
+        pos = ifs.tell();
+      line = ifs.readline().decode('utf-8')
+      if (line):
+        if (addIndex):
+          allIndices.append(pos);
+        addIndex = (line[:4] == '$$$$')
+    ifs.close()
+    indices = allIndices
     sdSup = Chem.SDMolSupplier(fileN)
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
             "192", "203", "210", "211", "213", "220", "229", "256"]
-    indices=[0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
-	     23729, 26147, 28331, 32541, 33991]
+    
     sdSup._SetStreamIndices(indices)
     self.assertTrue(len(sdSup) == 16)
     mol = sdSup[5]
@@ -1544,14 +1558,14 @@ CAS<~>
     self.assertTrue(ns == molNames)
 
     # this can also be used to skip molecules in the file:
-    indices=[0, 6198, 12292]
+    indices = [allIndices[0], allIndices[2], allIndices[5]]
     sdSup._SetStreamIndices(indices)
     self.assertTrue(len(sdSup) == 3)
     mol = sdSup[2]
     self.assertTrue(mol.GetProp("_Name") == "170")
 
     # or to reorder them:
-    indices=[0, 12292, 6198]
+    indices = [allIndices[0], allIndices[5], allIndices[2]]
     sdSup._SetStreamIndices(indices)
     self.assertTrue(len(sdSup) == 3)
     mol = sdSup[1]

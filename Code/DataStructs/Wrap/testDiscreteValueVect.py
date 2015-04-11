@@ -5,6 +5,7 @@
 #  @@ All Rights Reserved @@
 #
 import os
+import io
 import sys
 import unittest
 
@@ -130,9 +131,11 @@ class TestCase(unittest.TestCase):
     with open(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/DataStructs/Wrap/testData/dvvs.pkl'),
-      'rb'
-      ) as inF:
-    
+      'r'
+      ) as inTF:
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+    with io.BytesIO(buf) as inF:
       v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)
       for i in range(15):
         v1[2*i] = 1

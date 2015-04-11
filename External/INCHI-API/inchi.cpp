@@ -1536,31 +1536,31 @@ namespace RDKit {
                 if (stereo0DPtr->neighbor[0] == stereo0DPtr->central_atom) {
                   // 3-neighbor case
                   nid = 1;
-                  if (atom->getTotalNumHs() == 1)
+                  if(atom->getDegree()==3){
+                    // this happens with chiral three-coordinate S
                     nSwaps = 1;
+                  }
                 } 
+                //if (atom->getTotalNumHs(true) == 1)
+                //  nSwaps = 1;
+                //std::cerr<<"build atom: "<<c<<" "<<atom->getTotalNumHs(true);
                 std::list<int> neighbors;
                 for (; nid < 4; nid ++) {
                   unsigned end = indexToAtomIndexMapping[stereo0DPtr->neighbor[nid]];
                   Bond* bond = m->getBondBetweenAtoms(c, end);
                   neighbors.push_back(bond->getIdx());
+                  //std::cerr<<" "<<end<<"("<<bond->getIdx()<<")";
                 }
                 nSwaps += atom->getPerturbationOrder(neighbors);
-
+                //std::cerr<<" swaps: "<<nSwaps<<" parity: "<<
+                //  (stereo0DPtr->parity==INCHI_PARITY_EVEN?"even":"odd")<<std::endl;
                 if (stereo0DPtr->parity == INCHI_PARITY_ODD) {
-                  atom->setProp("_CIPCode", "R", true);
-                  if (nSwaps % 2) {
-                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-                  } else {
-                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-                  }
+                  atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
                 } else {
-                  atom->setProp("_CIPCode", "S", true);
-                  if (nSwaps % 2) {
-                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-                  } else {
-                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-                  }
+                  atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                }
+                if (nSwaps % 2) {
+                  atom->invertChirality();
                 }
                 break;
               }
@@ -1680,9 +1680,8 @@ namespace RDKit {
     RWMol *m = new RWMol(mol);
 
     // assign stereochem:
-    if(!mol.hasProp("_StereochemDone")){
+    if(mol.needsUpdatePropertyCache()){
       m->updatePropertyCache(false);
-      MolOps::assignStereochemistry(*m,true,false);
     }
     // kekulize
     MolOps::Kekulize(*m, false);
@@ -1767,41 +1766,47 @@ namespace RDKit {
         std::vector<std::pair<unsigned int, unsigned int> > neighbors;
         while (nbrIter != endNbrIter) {
           int cip = 0;
-          if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
-            m->getAtomWithIdx(*nbrIter)->getProp("_CIPRank", cip);
+          // if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
+          //   m->getAtomWithIdx(*nbrIter)->getProp("_CIPRank", cip);
           neighbors.push_back(std::make_pair(cip, *nbrIter));
-          nbrIter ++;
+          ++nbrIter;
         }
-        std::sort(neighbors.begin(), neighbors.end());
+        //std::sort(neighbors.begin(), neighbors.end());
         unsigned char nid = 0;
         std::pair<unsigned int, unsigned int> p;
+        //std::cerr<<" at: "<<atom->getIdx();
         BOOST_FOREACH( p, neighbors )
         {
           stereo0D.neighbor[nid++] = p.second;
+          //std::cerr<<" "<<p.second;
         }
         if (nid == 3) {
-          for (; nid > 0; nid --)
+          //std::cerr<<" nid==3, reorder";
+          //std::cerr<<" "<<i;
+          for (; nid > 0; nid --){
             stereo0D.neighbor[nid] = stereo0D.neighbor[nid - 1];
+            //std::cerr<<" "<<stereo0D.neighbor[nid];
+          }
           stereo0D.neighbor[0] = i;
         }
+        //std::cerr<<std::endl;
         Atom::ChiralType chiralTag;
         if ((chiralTag = atom->getChiralTag()) != Atom::CHI_UNSPECIFIED) {
           bool pushIt=false;
-          std::string cipCode("");
-          if (atom->hasProp("_CIPCode"))
-            atom->getProp("_CIPCode", cipCode);
-          if (cipCode == "R") {
-            stereo0D.parity = INCHI_PARITY_EVEN;
-            pushIt=true;
-          } else if (cipCode == "S") {
-            stereo0D.parity = INCHI_PARITY_ODD;
-            pushIt=true;
-          } else if (cipCode == "") {
-            // empty cipCode. try read tag directly
+          if(atom->getDegree()==4){
             if (chiralTag == Atom::CHI_TETRAHEDRAL_CW) {
               stereo0D.parity = INCHI_PARITY_EVEN;
               pushIt=true;
-            } else if (chiralTag == Atom::CHI_TETRAHEDRAL_CCW) {
+            } else {
+              stereo0D.parity = INCHI_PARITY_ODD;
+              pushIt=true;
+            }
+          } else {
+            //std::cerr<<"tag: "<<chiralTag<<std::endl;
+            if (chiralTag == Atom::CHI_TETRAHEDRAL_CCW) {
+              stereo0D.parity = INCHI_PARITY_EVEN;
+              pushIt=true;
+            } else if (chiralTag == Atom::CHI_TETRAHEDRAL_CW) {
               stereo0D.parity = INCHI_PARITY_ODD;
               pushIt=true;
             } else {
@@ -1809,9 +1814,6 @@ namespace RDKit {
                 << chiralTag << ") on atom " << i << " is ignored."
                 << std::endl;
             }
-          } else {
-            BOOST_LOG(rdWarningLog) << "unrecognized chirality (" << cipCode <<
-              ") on atom " << i << " is ignored." << std::endl;
           }
           if(pushIt){
             // this was github #296
@@ -1823,14 +1825,14 @@ namespace RDKit {
             // but that didn't help that much.
             // For want of a better idea, detect this pattern
             // and flip the stereochem:
-            if(atom->getAtomicNum()==16 &&
-               atom->getDegree()==3 && atom->getExplicitValence()==4){
-              if(stereo0D.parity==INCHI_PARITY_EVEN){
-                stereo0D.parity=INCHI_PARITY_ODD;
-              } else if(stereo0D.parity==INCHI_PARITY_ODD){
-                stereo0D.parity=INCHI_PARITY_EVEN;
-              } 
-            }
+            // if(atom->getAtomicNum()==16 &&
+            //    atom->getDegree()==3 && atom->getExplicitValence()==4){
+            //   if(stereo0D.parity==INCHI_PARITY_EVEN){
+            //     stereo0D.parity=INCHI_PARITY_ODD;
+            //   } else if(stereo0D.parity==INCHI_PARITY_ODD){
+            //     stereo0D.parity=INCHI_PARITY_EVEN;
+            //   } 
+            // }
             stereo0DEntries.push_back(stereo0D);
           }
           
