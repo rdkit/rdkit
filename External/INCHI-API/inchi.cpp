@@ -1387,7 +1387,7 @@ namespace RDKit {
         INT_PAIR_VECT zBondPairs, eBondPairs;
         if (numStereo0D) {
           // calculate CIPCode as they might be used
-          INT_VECT ranks;
+          UINT_VECT ranks;
           Chirality::assignAtomCIPRanks(*m, ranks);
           for (int i = 0; i < numStereo0D; i ++) {
             inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;

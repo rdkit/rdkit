@@ -81,6 +81,9 @@ namespace RDKit{
     \param canonical : if false, no attempt will be made to canonicalize the SMILES
     \param allBondsExplicit : if true, symbols will be included for all bonds.
     \param allHsExplicit : if true, hydrogen counts will be provided for every atom.
+
+    \b NOTE: the bondSymbols are *not* currently used in the canonicalization.
+    
    */
   std::string MolFragmentToSmiles(const ROMol &mol,
                                   const std::vector<int> &atomsToUse,

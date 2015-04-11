@@ -103,6 +103,7 @@ namespace RDKit {
         extern const std::string _tpsa;
         extern const std::string _tpsaAtomContribs;
         extern const std::string _unspecifiedOrder;
+        extern const std::string _brokenChirality;
         extern const std::string dummyLabel;
         extern const std::string extraRings;
         extern const std::string isImplicit;

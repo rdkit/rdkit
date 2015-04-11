@@ -17,7 +17,6 @@ namespace RDKit {
   class ROMol;
   class Atom;
   class Bond;
-};
 
 namespace Canon {
   const int MAX_NATOMS=5000; //!< used in the canonical traversal code
@@ -42,15 +41,15 @@ namespace Canon {
 
   //! used to store components in the molecular stack
   typedef union{
-    RDKit::Atom *atom;
-    RDKit::Bond *bond;
+    Atom *atom;
+    Bond *bond;
   } MolStackUnion;
 
   //! these are the actual elements in the molecular stack
   class MolStackElem {
   public:
     //! construct an Atom node
-    explicit MolStackElem(RDKit::Atom *at) {
+    explicit MolStackElem(Atom *at) {
       type = MOL_STACK_ATOM;
       obj.atom = at;
     };
@@ -61,7 +60,7 @@ namespace Canon {
        \param idx   index of the Atom traversed before this Bond
          (beginAtom in the canonical traversal order)
     */
-    explicit MolStackElem(RDKit::Bond *bond,int idx) {
+    explicit MolStackElem(Bond *bond,int idx) {
       type = MOL_STACK_BOND;
       obj.bond = bond;
       number = idx;
@@ -93,7 +92,7 @@ namespace Canon {
 
 
   //! used to represent possible branches from an atom
-  typedef boost::tuple<int,int,RDKit::Bond *> PossibleType;
+  typedef boost::tuple<int,int,Bond *> PossibleType;
 
   //! constructs the canonical traversal order for a molecular fragment
   /*!
@@ -109,14 +108,14 @@ namespace Canon {
         and the like are changed to fit the canonical traversal order
 
    */
-  void canonicalizeFragment(RDKit::ROMol &mol,int atomIdx,
+  void canonicalizeFragment(ROMol &mol,int atomIdx,
 			    std::vector<AtomColors> &colors,
-			    std::vector<int> &ranks,
+			    const std::vector<unsigned int> &ranks,
 			    MolStack &molStack,
                             const boost::dynamic_bitset<> *bondsInPlay=0,
-                            const std::vector<std::string> *bondSymbols=0
-                            );
+                            const std::vector<std::string> *bondSymbols=0,
+                            bool doIsomericSmiles=false);
 
-};
-
+} // end of namespace Canon
+} // end of namespace RDKit
 #endif
