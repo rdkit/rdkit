@@ -3,9 +3,10 @@ rdkit_library(GraphMol
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp 
               atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp 
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
-              MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp RankAtoms.cpp 
+              MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp
+              new_canon.cpp
               SHARED 
               LINK_LIBRARIES RDGeometryLib RDGeneral 
                  ${RDKit_THREAD_LIBS})
@@ -26,7 +27,6 @@ rdkit_headers(Atom.h
               QueryAtom.h
               QueryBond.h
               QueryOps.h
-              RankAtoms.h
               RDKitBase.h
               RDKitQueries.h
               RingInfo.h
@@ -35,6 +35,7 @@ rdkit_headers(Atom.h
               RWMol.h
               SanitException.h
               MonomerInfo.h
+              new_canon.h
               DEST GraphMol)
 
 add_subdirectory(Depictor)
@@ -74,7 +75,7 @@ endif()
 
 add_subdirectory(Wrap)
 
-rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeometryLib RDGeneral)
 
@@ -94,6 +95,12 @@ rdkit_test(graphmoltestPickler testPickler.cpp
 
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
+#rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse_static FileParsers_static GraphMol_static
+#    RDGeometryLib_static RDGeneral_static ${RDKit_THREAD_LIBS} )
+rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse FileParsers GraphMol
+     RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
+
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
+
 
 

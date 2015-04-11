@@ -15,7 +15,7 @@
 #include <string>
 #include <RDGeneral/Invariant.h>
 #include <sstream>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/StreamOps.h>
 #include <boost/cstdint.hpp>
 

@@ -16,6 +16,7 @@
 #include "seqs.hpp"
 // ours
 #include <RDBoost/pyint_api.h>
+#include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -30,7 +31,10 @@ namespace RDKit {
 
   python::object MolToBinary(const ROMol &self){
     std::string res;
-    MolPickler::pickleMol(self,res);
+    {
+      NOGIL gil;
+      MolPickler::pickleMol(self,res);
+    }
     python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
     return retval;
   }
@@ -51,6 +55,7 @@ namespace RDKit {
   bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
 			    bool recursionPossible=true,bool useChirality=false,
                             bool useQueryQueryMatches=false){
+    NOGIL gil;
     ROMol *mol;
     try {
       mol = new ROMol(pkl);
@@ -69,6 +74,7 @@ namespace RDKit {
   bool HasSubstructMatch(const ROMol &mol, const ROMol &query,
 			 bool recursionPossible=true,bool useChirality=false,
                             bool useQueryQueryMatches=false){
+    NOGIL gil;
     MatchVectType res;
     return SubstructMatch(mol,query,res,recursionPossible,useChirality,useQueryQueryMatches);
   }
@@ -83,6 +89,7 @@ namespace RDKit {
   }
   PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false,
                             bool useQueryQueryMatches=false){
+    NOGIL gil;
     MatchVectType matches;
     SubstructMatch(mol,query,matches,true,useChirality,useQueryQueryMatches);
     return convertMatches(matches);
@@ -194,7 +201,7 @@ namespace RDKit {
 
   class ReadWriteMol : public RWMol {
   public:
-    ReadWriteMol(const ROMol &m) : RWMol(m){
+    ReadWriteMol(const ROMol &m,bool quickCopy=false,int confId=-1) : RWMol(m,quickCopy,confId){
     };
 
     void RemoveAtom(unsigned int idx){
@@ -252,6 +259,10 @@ struct mol_wrapper {
 			  python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
       .def(python::init<const ROMol &>())
+      .def(python::init<const ROMol &,bool>())
+      .def(python::init<const ROMol &,bool,int>())
+      .def("__copy__",&generic__copy__<ROMol>)
+      .def("__deepcopy__",&generic__deepcopy__<ROMol>)
       .def("GetNumAtoms",getMolNumAtoms,
 	   (python::arg("onlyHeavy")=-1,
             python::arg("onlyExplicit")=true),
@@ -478,6 +489,10 @@ struct mol_wrapper {
     python::class_<ReadWriteMol, python::bases<ROMol> >("RWMol",
                                                         rwmolClassDoc.c_str(),
         python::init<const ROMol &>("Construct from a Mol"))
+      .def(python::init<const ROMol &,bool>())
+      .def(python::init<const ROMol &,bool,int>())
+      .def("__copy__",&generic__copy__<ReadWriteMol>)
+      .def("__deepcopy__",&generic__deepcopy__<ReadWriteMol>)
       .def("RemoveAtom",&ReadWriteMol::RemoveAtom,
       "Remove the specified atom from the molecule")
       .def("RemoveBond",&ReadWriteMol::RemoveBond,

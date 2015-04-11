@@ -39,6 +39,7 @@ namespace ForceFields {
         unsigned int idx3, unsigned int idx4, const MMFFOop *mmffOopParams);
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
+      virtual OopBendContrib *copy() const { return new OopBendContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
       double d_koop;

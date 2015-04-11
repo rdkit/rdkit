@@ -43,6 +43,8 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
 
       void getGrad(double *pos, double *grad) const;
+
+      virtual AngleConstraintContrib *copy() const { return new AngleConstraintContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx, d_at3Idx; //!< indices of atoms forming the angle
       double d_minAngleDeg, d_maxAngleDeg;        //!< rest amplitudes of the angle

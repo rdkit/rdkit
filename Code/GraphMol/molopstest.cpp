@@ -811,11 +811,11 @@ void test10()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
 
-  INT_VECT ranks;
+  UINT_VECT ranks;
   ranks.resize(m->getNumAtoms());
   Chirality::assignAtomCIPRanks(*m,ranks);
 
-  int cip1,cip2;
+  unsigned int cip1,cip2;
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPRank));
   m->getAtomWithIdx(0)->getProp(common_properties::_CIPRank,cip1);
   TEST_ASSERT(cip1==ranks[0]);
@@ -838,7 +838,7 @@ void test10()
   ranks.resize(m->getNumAtoms());
   Chirality::assignAtomCIPRanks(*m,ranks);
   for(unsigned int i=0;i<m->getNumAtoms();i++){
-    int cip;
+    unsigned int cip;
     TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank));
     m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,cip);
   }
@@ -951,6 +951,7 @@ void test11()
   m->getAtomWithIdx(2)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="S");
   delete m;
+  std::cerr<<"-------------------------------"<<std::endl;
   smi = "[CH2-][C@](C)(F)Br";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1452,11 +1453,11 @@ void testIssue188()
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 188: bad CIP rankings" << std::endl;
   ROMol *m;
   std::string smi;
-  int cip1,cip2,cip3;
+  unsigned int cip1,cip2,cip3;
 
   smi = "OC[C@H](C=C)C";
   m = SmilesToMol(smi);
-  INT_VECT ranks;
+  UINT_VECT ranks;
   ranks.resize(m->getNumAtoms());
   Chirality::assignAtomCIPRanks(*m,ranks);
   TEST_ASSERT(m);
@@ -2028,6 +2029,8 @@ void testIssue252() {
   for(ROMol::BondIterator it=mol->beginBonds();
       it!=mol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
+    TEST_ASSERT((*it)->getBondType()==Bond::AROMATIC);
+
   }
   std::string asmi = MolToSmiles(*mol);
   // check if we can do it in the aromatic form
@@ -2035,11 +2038,13 @@ void testIssue252() {
   for(ROMol::BondIterator it=nmol->beginBonds();
       it!=nmol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
+    TEST_ASSERT((*it)->getBondType()==Bond::AROMATIC);
   }
 
   std::string nsmi = MolToSmiles(*nmol);
   delete mol;
   delete nmol;
+
   // This is a check for Issue253
   CHECK_INVARIANT(asmi == nsmi, "");
 
@@ -4658,6 +4663,16 @@ void testGithubIssue432()
     TEST_ASSERT(m);
     delete m;
   }
+  {
+    std::string smiles="C1=C[N]C=C1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(!m->getAtomWithIdx(2)->getIsAromatic());
+    TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -4700,6 +4715,71 @@ void testGithubIssue443()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+void testGithubIssue447()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 447: Radicals are not correctly assigned when reading from SMILES." << std::endl;
+  {
+    std::string smiles="C[S]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH3]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH4]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smiles="C[SH4+]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+
+  {
+    std::string smiles="C[P]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smiles="C[PH2]C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4715,7 +4795,6 @@ int main(){
   test8();
   test9();
   test10();
-  test11();
   test12();
   testIssue183();
   testIssue188();
@@ -4771,10 +4850,12 @@ int main(){
   testAtomAtomMatch();
   testGithubIssue190();
   testMolFragsWithQuery();
+#endif
+  test11();
   testGithubIssue418();
   testGithubIssue432();
-#endif
   testGithubIssue443();
+  testGithubIssue447();
   return 0;
 }
 

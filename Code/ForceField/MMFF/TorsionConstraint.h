@@ -46,6 +46,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
 
       void getGrad(double *pos, double *grad) const;
+      virtual TorsionConstraintContrib *copy() const { return new TorsionConstraintContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx; //!< indices of atoms forming the dihedral angle
       double d_minDihedralDeg, d_maxDihedralDeg;        //!< rest amplitudes of the dihedral angle

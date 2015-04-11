@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/new_canon.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -54,6 +55,7 @@ namespace RDKit{
         symb=PeriodicTable::getTable()->getElementSymbol(num);
       }
       //symb = atom->getSymbol();
+      std::string atString="";
       if(!allHsExplicit && inOrganicSubset(num)){
         // it's a member of the organic subset
         //if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
@@ -84,7 +86,17 @@ namespace RDKit{
           needsBracket=true;
         }
         if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)){
-          if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
+          if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED && !atom->hasProp(common_properties::_brokenChirality ) ){
+            switch(atom->getChiralTag()){
+             case Atom::CHI_TETRAHEDRAL_CW:
+               atString = "@@";
+               break;
+             case Atom::CHI_TETRAHEDRAL_CCW:
+               atString = "@";
+               break;
+             default:
+               break;
+             }
             needsBracket = true;
           } else if(isotope){
             needsBracket=true;
@@ -108,38 +120,7 @@ namespace RDKit{
       }
       res += symb;
 
-      if(atom->getOwningMol().hasProp(common_properties::_doIsoSmiles) &&
-         atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
-        INT_LIST trueOrder;
-        atom->getProp(common_properties::_TraversalBondIndexOrder,trueOrder);
-        int nSwaps=  atom->getPerturbationOrder(trueOrder);
-        if(atom->getDegree()==3 && !bondIn){
-          // This is a special case. Here's an example:
-          //   Our internal representation of a chiral center is equivalent to:
-          //     [C@](F)(O)(C)[H]
-          //   we'll be dumping it without the H, which entails a reordering:
-          //     [C@@H](F)(O)C
-          ++nSwaps;
-        }
-        //BOOST_LOG(rdErrorLog)<<">>>> "<<atom->getIdx()<<" "<<nSwaps<<" "<<atom->getChiralTag()<<std::endl;
-        std::string atStr="";
-        switch(atom->getChiralTag()){
-        case Atom::CHI_TETRAHEDRAL_CW:
-          if(!(nSwaps%2))
-            res += "@@";
-          else
-            res += "@";
-          break;
-        case Atom::CHI_TETRAHEDRAL_CCW:
-          if(!(nSwaps%2))
-            res += "@";
-          else
-            res += "@@";
-          break;
-        default:
-          break;
-        }
-      }
+      res += atString;
 
       if(needsBracket){
         unsigned int totNumHs=atom->getTotalNumHs();
@@ -257,7 +238,8 @@ namespace RDKit{
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        INT_VECT &ranks,bool doKekule,bool canonical,
+                                        const UINT_VECT &ranks,bool doKekule,bool canonical,
+                                        bool doIsomericSmiles,
                                         bool allBondsExplicit,bool allHsExplicit,
                                         std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,
@@ -267,6 +249,7 @@ namespace RDKit{
       PRECONDITION(!bondsInPlay||bondsInPlay->size()>=mol.getNumBonds(),"bad bondsInPlay");
       PRECONDITION(!atomSymbols||atomSymbols->size()>=mol.getNumAtoms(),"bad atomSymbols");
       PRECONDITION(!bondSymbols||bondSymbols->size()>=mol.getNumBonds(),"bad bondSymbols");
+
       Canon::MolStack molStack;
       // try to prevent excessive reallocation
       molStack.reserve(mol.getNumAtoms()+
@@ -279,7 +262,7 @@ namespace RDKit{
       std::list<unsigned int> ringClosuresToErase;
 
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
-                                  molStack,bondsInPlay,bondSymbols);
+                                  molStack,bondsInPlay,bondSymbols,doIsomericSmiles);
       Bond *bond=0;
       BOOST_FOREACH(Canon::MolStackElem mSE,molStack){
         switch(mSE.type){
@@ -360,12 +343,55 @@ namespace RDKit{
   } // end of namespace SmilesWrite
 
 
+  std::string MolToSmilesForFragments(const ROMol &mol,bool doIsomericSmiles,
+                            bool doKekule,int rootedAtAtom,bool canonical,
+                            bool allBondsExplicit,bool allHsExplicit,
+                            const std::vector<std::vector<int> > &frags){
+    std::string result;
+    std::vector<std::string> vfragsmi;
+    ROMol tmol(mol,true);
+
+    if(doIsomericSmiles){
+      if(tmol.needsUpdatePropertyCache()){
+        for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
+          (*atIt)->updatePropertyCache(false);
+        }
+      }
+      MolOps::assignStereochemistry(tmol,canonical);
+    }
+
+    for(unsigned i=0;i<frags.size();++i){
+      std::string smii = MolFragmentToSmiles(tmol,frags[i],NULL,NULL,NULL,
+                                      doIsomericSmiles,doKekule,rootedAtAtom,canonical,
+                                      allBondsExplicit,allHsExplicit);
+      vfragsmi.push_back(smii);
+    }
+    if(canonical){
+      std::sort(vfragsmi.begin(),vfragsmi.end());
+    }
+    for(unsigned i=0; i<vfragsmi.size(); ++i){
+      result+=vfragsmi[i];
+      if(i < vfragsmi.size()-1){
+        result+=".";
+      }
+    }
+    return result;
+  }
+
+
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
                           bool allBondsExplicit,bool allHsExplicit){
     if(!mol.getNumAtoms()) return "";
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
+
+    std::vector<std::vector<int> > frags;
+    unsigned int numFrag = MolOps::getMolFrags(mol,frags);
+    if(numFrag>1){
+       return MolToSmilesForFragments(mol,doIsomericSmiles, doKekule,rootedAtAtom, canonical,
+                              allBondsExplicit,allHsExplicit,frags);
+    }
 
     ROMol tmol(mol,true);
     if(doIsomericSmiles){
@@ -384,7 +410,7 @@ namespace RDKit{
     }
 
     unsigned int nAtoms=tmol.getNumAtoms();
-    INT_VECT ranks(nAtoms,-1);
+    UINT_VECT ranks(nAtoms);
 
     std::vector<unsigned int> atomOrdering;
 
@@ -406,7 +432,7 @@ namespace RDKit{
       }
     }
     if(canonical){
-      MolOps::rankAtoms(tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
+      Canon::rankMolAtoms(tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
     }
@@ -429,7 +455,7 @@ namespace RDKit{
         nextAtomIdx=rootedAtAtom;
         rootedAtAtom=-1;
       } else {
-        int nextRank = nAtoms+1;
+        unsigned int nextRank = nAtoms+1;
         for(unsigned int i=0;i<nAtoms;i++){
           if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
             nextRank = ranks[i];
@@ -440,9 +466,10 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,
+                                                    ranks,doKekule,canonical,doIsomericSmiles,
                                                     allBondsExplicit,allHsExplicit,
                                                     atomOrdering);
+                                                    
 
       res += subSmi;
       colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
@@ -508,36 +535,39 @@ namespace RDKit{
     }
 
     // copy over the rings that only involve atoms/bonds in this fragment:
-    tmol.getRingInfo()->reset();
-    tmol.getRingInfo()->initialize();
-    for(unsigned int ridx=0;ridx<mol.getRingInfo()->numRings();++ridx){
-      const INT_VECT &aring=mol.getRingInfo()->atomRings()[ridx];
-      const INT_VECT &bring=mol.getRingInfo()->bondRings()[ridx];
-      bool keepIt=true;
-      BOOST_FOREACH(int aidx,aring){
-        if(!atomsInPlay[aidx]){
-          keepIt=false;
-          break;
-        }
-      }
-      if(keepIt){
-        BOOST_FOREACH(int bidx,bring){
-          if(!bondsInPlay[bidx]){
+    if(mol.getRingInfo()->isInitialized()){
+      tmol.getRingInfo()->reset();
+      tmol.getRingInfo()->initialize();
+      for(unsigned int ridx=0;ridx<mol.getRingInfo()->numRings();++ridx){
+        const INT_VECT &aring=mol.getRingInfo()->atomRings()[ridx];
+        const INT_VECT &bring=mol.getRingInfo()->bondRings()[ridx];
+        bool keepIt=true;
+        BOOST_FOREACH(int aidx,aring){
+          if(!atomsInPlay[aidx]){
             keepIt=false;
             break;
           }
         }
-      }
-      if(keepIt){
-        tmol.getRingInfo()->addRing(aring,bring);
+        if(keepIt){
+          BOOST_FOREACH(int bidx,bring){
+            if(!bondsInPlay[bidx]){
+              keepIt=false;
+              break;
+            }
+          }
+        }
+        if(keepIt){
+          tmol.getRingInfo()->addRing(aring,bring);
+        }
       }
     }
-    
-    for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
-      (*atIt)->updatePropertyCache(false);
+    if(tmol.needsUpdatePropertyCache()){
+      for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
+        (*atIt)->updatePropertyCache(false);
+      }
     }
 
-    INT_VECT ranks(tmol.getNumAtoms(),-1);
+    UINT_VECT ranks(tmol.getNumAtoms());
 
     std::vector<unsigned int> atomOrdering;
 
@@ -559,7 +589,10 @@ namespace RDKit{
       }
     }
     if(canonical){
-      MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
+      Canon::rankFragmentAtoms(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,
+                               true,
+                               doIsomericSmiles,doIsomericSmiles);
+      //MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
     }
@@ -596,7 +629,7 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,
+                                                    ranks,doKekule,canonical,doIsomericSmiles,
                                                     allBondsExplicit,allHsExplicit,
                                                     atomOrdering,
                                                     &bondsInPlay,

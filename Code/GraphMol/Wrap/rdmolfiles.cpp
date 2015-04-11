@@ -15,6 +15,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -23,7 +24,7 @@
 #include <RDGeneral/FileParseException.h>
 
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
 
@@ -226,13 +227,13 @@ namespace RDKit{
     return res;
   }
 
-  std::vector<int> CanonicalRankAtoms(const ROMol &mol,
+  std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                       bool breakTies=true,
                                       bool includeChirality=true,
                                       bool includeIsotopes=true)
   {
-    std::vector<int> ranks(mol.getNumAtoms());
-    MolOps::rankAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
+    std::vector<unsigned int> ranks(mol.getNumAtoms());
+    Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
     return ranks;
   }
 
@@ -269,19 +270,23 @@ namespace RDKit{
     for(size_t i=0; bvect && i<bvect->size(); ++i)
       bonds[(*bvect)[i]] = true;
     
-    std::vector<int> ranks(mol.getNumAtoms());    
-    MolOps::rankAtomsInFragment(mol, ranks,
-                                atoms, bonds,
-                                asymbols, bsymbols, breakTies);
+    std::vector<unsigned int> ranks(mol.getNumAtoms());    
+    Canon::rankFragmentAtoms(mol, ranks,
+                             atoms, bonds,
+                             asymbols, bsymbols, breakTies);
 
+    std::vector<int> resRanks(mol.getNumAtoms());
     // set unused ranks to -1 for the Python interface
     for(size_t i=0; i<atoms.size(); ++i)
     {
-      if (!atoms[i])
-        ranks[i] = -1;
+      if (!atoms[i]){
+        resRanks[i] = -1;
+      } else {
+        resRanks[i] = static_cast<int>(ranks[i]);
+      }
     }
     
-    return ranks;
+    return resRanks;
   }
 
 }

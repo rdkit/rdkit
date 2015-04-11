@@ -116,7 +116,7 @@ M  END"""
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
     ff.UFFAddTorsionConstraint(1, 3, 6, 8, False, -10.0, -8.0, 1.0e5)
-    r = ff.Minimize(1000)
+    r = ff.Minimize(2000)
     self.assertTrue(r == 0)
     conf = m.GetConformer()
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)

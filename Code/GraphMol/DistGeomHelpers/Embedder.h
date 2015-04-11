@@ -90,7 +90,10 @@ namespace RDKit {
 
 
       \param mol            Molecule of interest
+      \param res            Used to return the resulting conformer ids
       \param numConfs       Number of conformations to be generated
+      \param numThreads     Sets the number of threads to use (more than one thread will only
+                            be used if the RDKit was build with multithread support)
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
                             not obtained successfully. The default value is 10x the number of atoms.
       \param seed           provides a seed for the random number generator (so that the same
@@ -133,9 +136,22 @@ namespace RDKit {
                             (this shouldn't normally be altered in client code).
 
 
-      \return an INT_VECT of conformer ids
 
     */
+    void EmbedMultipleConfs(ROMol &mol,
+                            INT_VECT &res,
+                            unsigned int numConfs=10,
+                            int numThreads=1,
+                            unsigned int maxIterations=30, 
+                            int seed=-1, bool clearConfs=true, 
+                            bool useRandomCoords=false,double boxSizeMult=2.0,
+                            bool randNegEig=true, unsigned int numZeroFail=1,
+                            double pruneRmsThresh=-1.0,
+                            const std::map<int,RDGeom::Point3D> *coordMap=0,
+                            double optimizerForceTol=1e-3,
+                            bool ignoreSmoothingFailures=false,
+                            double basinThresh=5.0);
+    //! \overload
     INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
                                 unsigned int maxIterations=30, 
                                 int seed=-1, bool clearConfs=true, 

@@ -52,10 +52,8 @@ Atom::Atom( const Atom & other){
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
   df_isAromatic = other.df_isAromatic;
-  d_dativeFlag = other.d_dativeFlag;
   d_numExplicitHs = other.d_numExplicitHs;
   d_numRadicalElectrons = other.d_numRadicalElectrons;
-  d_mass = other.d_mass;
   d_isotope = other.d_isotope;
   //d_pos = other.d_pos;
   d_chiralTag=other.d_chiralTag;
@@ -79,16 +77,10 @@ Atom::Atom( const Atom & other){
 void Atom::initAtom(){
   df_isAromatic = false;
   df_noImplicit = false;
-  d_dativeFlag=0;
   d_numExplicitHs = 0;
   d_numRadicalElectrons=0;
   d_formalCharge = 0;
   d_index = 0;
-  if(d_atomicNum){
-    d_mass = PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
-  } else{
-    d_mass = 0.0;
-  }
   d_isotope=0;
   d_chiralTag=CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
@@ -415,10 +407,15 @@ int Atom::calcImplicitValence(bool strict) {
 
 void Atom::setIsotope(unsigned int what){
   d_isotope=what;
+}
+
+double Atom::getMass() const {
   if(d_isotope){
-    d_mass=PeriodicTable::getTable()->getMassForIsotope(d_atomicNum,d_isotope);
+    double res=PeriodicTable::getTable()->getMassForIsotope(d_atomicNum,d_isotope);
+    if(d_atomicNum!=0 && res==0.0) res = d_isotope;
+    return res;
   } else {
-    d_mass = PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
+    return PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
   }
 }
 

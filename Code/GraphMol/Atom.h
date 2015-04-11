@@ -209,33 +209,13 @@ namespace RDKit{
     //! returns our \c isAromatic flag
     bool getIsAromatic() const { return df_isAromatic; };
 
-    //! sets our mass (should no longer be used)
-    void setMass( double what) { d_mass = what; };
     //! returns our mass
-    double getMass() const {return d_mass; };
+    double getMass() const;
 
     //! sets our isotope number
     void setIsotope(unsigned int what);
     //! returns our isotope number
     unsigned int getIsotope() const {return d_isotope; };
-
-    //! sets our \c dativeFlag
-    // intended to be used only in construction.
-    // NOTE: the dative flag is not currently used anywhere
-    void setDativeFlag(int what) {
-      d_dativeFlag = what;
-    };
-    //! returns our \c dativeFlag
-    // NOTE: the dative flag is not currently used anywhere
-    int getDativeFlag() const {
-      return d_dativeFlag;
-    };
-    bool hasDativeFlag(int what) const {
-      return d_dativeFlag==what;
-    };
-    //! clears our \c dativeFlag
-    // NOTE: the dative flag is not currently used anywhere
-    void clearDativeFlag(){ d_dativeFlag = 0; };
 
     //! sets our \c chiralTag
     void setChiralTag(ChiralType what) { d_chiralTag = what; };
@@ -512,7 +492,6 @@ namespace RDKit{
 
     bool df_isAromatic; 
     bool df_noImplicit;
-    boost::int8_t d_dativeFlag;
     boost::uint8_t d_numExplicitHs;
     boost::int8_t d_formalCharge;
     boost::uint8_t d_atomicNum;
@@ -527,7 +506,6 @@ namespace RDKit{
     atomindex_t d_index;
     boost::uint16_t d_isotope;
 
-    float d_mass;
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;

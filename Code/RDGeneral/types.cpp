@@ -75,6 +75,7 @@ namespace RDKit{
         const std::string _tpsa = "_tpsa";
         const std::string _tpsaAtomContribs = "_tpsaAtomContribs";
         const std::string _unspecifiedOrder = "_unspecifiedOrder";
+        const std::string _brokenChirality = "_brokenChirality";
         const std::string dummyLabel = "dummyLabel";
         const std::string extraRings = "extraRings";
         const std::string isImplicit = "isImplicit";

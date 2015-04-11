@@ -21,6 +21,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/round.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread.hpp>  
+#endif
 
 #define square(x) ((x) * (x))
 
@@ -1204,5 +1207,82 @@ namespace RDKit {
       MolTransforms::transformConformer(conf,
         zRotAndTrans * yRot * xRot * transToOrigin);
     }
-  }
-}
+
+
+#ifdef RDK_THREADSAFE_SSS
+    namespace detail {
+      typedef struct {
+        O3A::AtomTypeScheme atomTypes;
+        int refCid;
+        bool reflect;
+        unsigned int maxIters;
+        unsigned int options;
+        MatchVectType const *constraintMap;
+        RDNumeric::DoubleVector const *constraintWeights;
+      } O3AHelperArgs_;
+      void O3AHelper_(ROMol *prbMol, const ROMol *refMol,
+                      void *prbProp, void *refProp,
+                      std::vector<boost::shared_ptr<O3A> > *res,
+                      unsigned int threadIdx,
+                      unsigned int numThreads,const O3AHelperArgs_ *args){
+        unsigned int i=0;
+        for(ROMol::ConstConformerIterator cit=prbMol->beginConformers();
+            cit!=prbMol->endConformers();++cit,++i){
+          if(i%numThreads != threadIdx) continue;
+
+          O3A *lres=new O3A(*prbMol,*refMol,prbProp,refProp,args->atomTypes,
+                            (*cit)->getId(),args->refCid,
+                            args->reflect,args->maxIters,args->options,
+                            args->constraintMap,args->constraintWeights);
+          (*res)[i].reset(lres);
+        }
+      }        
+    } //end of detail namespace
+#endif
+
+
+    void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol,
+                             void *prbProp, void *refProp,
+                             std::vector<boost::shared_ptr<O3A> > &res,
+                             unsigned int numThreads,
+                             O3A::AtomTypeScheme atomTypes,
+                             const int refCid,
+                             const bool reflect, const unsigned int maxIters,
+                             unsigned int options, const MatchVectType *constraintMap,
+                             const RDNumeric::DoubleVector *constraintWeights){
+#ifndef RDK_THREADSAFE_SSS
+      numThreads=1;
+#endif
+      res.resize(prbMol.getNumConformers());
+      if(numThreads<=1){
+        unsigned int i=0;
+        for(ROMol::ConstConformerIterator cit=prbMol.beginConformers();
+            cit!=prbMol.endConformers();++cit,++i){
+          O3A *lres=new O3A(prbMol,refMol,prbProp,refProp,atomTypes,
+                            (*cit)->getId(),refCid,
+                            reflect,maxIters,options,
+                            constraintMap,constraintWeights);
+          res[i].reset(lres);
+        }
+      }
+#ifdef RDK_THREADSAFE_SSS
+      else {
+        boost::thread_group tg;
+        detail::O3AHelperArgs_ args={atomTypes,
+                                     refCid,
+                                     reflect,maxIters,options,
+                                     constraintMap,constraintWeights};
+        for(unsigned int ti=0;ti<numThreads;++ti){
+          tg.add_thread(new boost::thread(detail::O3AHelper_,
+                                          &prbMol,&refMol,prbProp,refProp,
+                                          &res,
+                                          ti,numThreads,
+                                          &args));
+        }
+        tg.join_all();
+      }
+#endif      
+    }
+
+  } // end of namespace MolAlign
+} // end of namespace RDKit
