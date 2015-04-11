@@ -695,13 +695,13 @@ The code:
 
 .. testcode::
 
+  from rdkit import Chem
+  from rdkit.Chem import rdFMCS
+
   # our test molecules:
   smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
         "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
   ms = [Chem.MolFromSmiles(x) for x in smis]
-
-  from rdkit import Chem
-  from rdkit.Chem import MCS
   
   def label(a):
     " a simple hash combining atom number and hybridization "
@@ -713,14 +713,13 @@ The code:
     for at in nm.GetAtoms():
         at.SetIsotope(label(at))
 
-  mcs=MCS.FindMCS(nms,atomCompare='isotopes')
-  print mcs.smarts
+  mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+  print mcs.smartsString
 
 This generates the following output:
 
 .. testoutput::
-
-  [406*]-[308*]-[306*]:1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)(-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[307*]-[306*]:1:[307*]:[306*]:2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*]
+  [406*]-[308*]-[306*]1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[307*]-[306*]1:[307*]:[306*]2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*])(-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1
 
 That's what we asked for, but it's not exactly readable. We can get to a more readable form in a two step process:
 
@@ -732,7 +731,7 @@ This works because we know that the atom indices in the copies and the original 
 .. testcode::
 
   def getMCSSmiles(mol,labelledMol,mcs):
-      mcsp = Chem.MolFromSmarts(mcs.smarts)
+      mcsp = Chem.MolFromSmarts(mcs.smartsString)
       match = labelledMol.GetSubstructMatch(mcsp)
       return Chem.MolFragmentToSmiles(ms[0],atomsToUse=match,
                                       isomericSmiles=True,
