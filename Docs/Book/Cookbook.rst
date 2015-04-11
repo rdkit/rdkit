@@ -747,10 +747,51 @@ This works because we know that the atom indices in the copies and the original 
 That's what we were looking for.
 
 
+Clustering molecules
+--------------------
+
+For large sets of molecules (more than 1000-2000), it's most efficient to use the Butina clustering algorithm.
+
+Here's some code for diong that for a set of fingerprints::
+
+  def ClusterFps(fps,cutoff=0.2):
+      from rdkit import DataStructs
+      from rdkit.ML.Cluster import Butina
+  
+      # first generate the distance matrix:
+      dists = []
+      nfps = len(fps)
+      for i in range(1,nfps):
+          sims = DataStructs.BulkTanimotoSimilarity(fps[i],fps[:i])
+          dists.extend([1-x for x in sims])
+  
+      # now cluster the data:
+      cs = Butina.ClusterData(dists,nfps,cutoff,isDistData=True)
+      return cs
+
+The return value is a tuple of clusters, where each cluster is a tuple of ids.
+
+Example usage::
+
+  from rdkit import Chem
+  from rdkit.Chem import AllChem
+  import gzip
+  ms = [x for x in Chem.ForwardSDMolSupplier(gzip.open('zdd.sdf.gz')) if x is not None]
+  fps = [AllChem.GetMorganFingerprintAsBitVect(x,2,1024) for x in ms]
+  clusters=ClusterFps(fps,cutoff=0.4)
+
+
+The variable `clusters` contains the results::
+
+  >>> print clusters[200]
+  (6164, 1400, 1403, 1537, 1543, 6575, 6759)
+
+That cluster contains 7 points, the centroid is point 6164.
+
 License
 *******
 
-This document is copyright (C) 2012-2014 by Greg Landrum
+This document is copyright (C) 2012-2015 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
