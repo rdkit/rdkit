@@ -3,11 +3,12 @@ rdkit_library(FMCS
               LINK_LIBRARIES Depictor FileParsers ChemTransforms SubstructMatch)
 
 rdkit_headers(FMCS.h
+              Graph.h
               Seed.h
               SeedSet.h
-			  MatchTable.h
-			  RingMatchTableSet.h
-			  SubstructureCache.h
+              MatchTable.h
+              RingMatchTableSet.h
+              SubstructureCache.h
               SubstructMatchCustom.h
               MaximumCommonSubgraph.h
               DEST GraphMol/FMCS)
