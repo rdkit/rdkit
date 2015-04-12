@@ -3,118 +3,182 @@
 
 !!!!!! IMPORTANT !!!!!!
 
-Acknowledgements: David Cosgrove
+ - This release has a new algorithm for canonical atom ordering. This means that canonical SMILES generated with the new version will be different from those generated with previous versions.
+
+Acknowledgements: 
+David Cosgrove, Andrew Dalke, JP Ebejer, Niko Fechner, Patrick Fuller,
+David Hall, J Bach Hardie, Jan Holst Jensen, Brian Kelley, Rich Lewis,
+John May, Sereina Riniker, Alexander Savelyev, Roger Sayle, Nadine
+Schneider, Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
+
+Highlights:
+
+  - A new algorithm for generating canonical atom orders. The new
+    algorithm is faster and more robust than the old one.
+  - C++-based molecule drawing code, allows consistent molecule
+    renderings from C++, Java, and Python. This will become the
+    default renderer in the next release.
+  - General performance improvements and reduction of memory usage.
+  - Torsion Fingerprints for comparing 3D conformations to each other
+  - MCS code now available from the PostgreSQL cartridge
 
 Bug Fixes:
-- fmcs: use the zero bond type instead of other
- (github issue #368)
-- bug fixed in TorsionFingerprints.GetTFDMatrix
- (github issue #376)
-- rdkit.Chem.MolDb.Loader_sa does not work with python3.4
- (github issue #390)
-- ChemReactions: Bugfix/Memleak-fix in runReactants
- (github issue #394)
-- TorsionConstraint bug fix
- (github issue #395)
-- GetSubstructMatches() consumes all available memory
- (github issue #409)
-- - fixed two minor bugs in MMFF code
- (github issue #416)
-- Varied sanitise rejection with hydrogen representation
- (github issue #418)
-- Fixed two trivial bugs
- (github issue #419)
-- RDKit learns how to roundtrip MOLFile values.
- (github issue #420)
-- cairoCanvas.py python3 compatibility
- (github issue #426)
-- Chem.FragmentOnSomeBonds() should update implicit H count on aromatic heteroatoms when  addDummies is False
- (github issue #429)
-- Chem.FragmentOnSomeBonds() crashes if the bond list is empty
- (github issue #430)
-- Increase limit for smallest ring size
- (github issue #431)
-- Problems caused by heteroatoms with radicals in aromatic rings.
- (github issue #432)
-- Metals in mol2 blocks handled incorrectly
- (github issue #438)
-- Conformers not copied correctly in renumberAtoms
- (github issue #441)
+
+  - fmcs: use the zero bond type instead of other
+    (github issue #368 from AlexanderSavelyev)
+  - bug fixed in TorsionFingerprints.GetTFDMatrix
+    (github issue #376 from sriniker)
+  - rdkit.Chem.MolDb.Loader_sa does not work with python3.4
+    (github issue #390)
+  - ChemReactions: Bugfix/Memleak-fix in runReactants
+    (github issue #394 from NadineSchneider)
+  - TorsionConstraint bug fix
+    (github issue #395 from ptosco)
+  - Fixed LoadSDF to keep 3D info
+    (github pull #401 from samoturk)
+  - Incorrect expected absolute stereochemistries in a test
+    (github issue #407)
+  - GetSubstructMatches() consumes all available memory
+    (github issue #409)
+  - Bugfix in the chirality handling of chemical reactions
+    (github pull #410 from NadineSchneider)
+  - fixed two minor bugs in MMFF code
+    (github issue #416 from ptosco)
+  - Varied sanitise rejection with hydrogen representation
+    (github issue #418)
+  - Fixed two trivial bugs
+    (github issue #419 from ptosco)
+  - RDKit learns how to roundtrip MOLFile values.
+    (github issue #420 from bp-kelley)
+  - cairoCanvas.py python3 compatibility
+    (github issue #426 from bach-hardie)
+  - Chem.FragmentOnSomeBonds() should update implicit H count on aromatic heteroatoms when  addDummies is False
+    (github issue #429)
+  - Chem.FragmentOnSomeBonds() crashes if the bond list is empty
+    (github issue #430)
+  - Increase limit for smallest ring size
+    (github issue #431 from cowsandmilk)
+  - Problems caused by heteroatoms with radicals in aromatic rings.
+    (github issue #432)
+  - Metals in mol2 blocks handled incorrectly
+    (github issue #438)
+  - Fixed a few tests failing when the Windows git client is used
+    (github pull #439 from ptosco)
+  - Fixed tests failing on Windows when retrieving sources through the  Windows git client
+    (github pull #440 from ptosco)
+  - Conformers not copied correctly in renumberAtoms
+    (github issue #441)
+  - Radicals are not correctly assigned when reading from SMILES
+    (github issue #447)
+  - moving RDBoost/Exceptions.h to RDGeneral
+    (github pull #458 from rvianello)
+  - Add code to accept blank SMILES input.
+    (github issue #468 from janholstjensen)
+  - Accept empty SMILES and SMARTS
+    (github issue #470)
+  - Fix MolFile Atom Line List Writer
+    (github issue #471 from bp-kelley)
+  - Moved 3D ipython renderer to dependency
+    (github pull #472 from patrickfuller)
+  - Windows build/test failure fixes
+    (github issue #473 from ptosco)
 
 New Features:
-- Isomeric fix in PandasTools
- (github issue #369)
-- added SaveXlsxFromFrame - first version
- (github issue #371)
-- New feature: Torsion fingerprints
- (github issue #372)
-- Added C++ and Python helpers to retrieve force-field parameters
- (github issue #387)
-- Support providing all options to SWIG-wrapped FMCS
- (github issue #397)
-- Add function to request if calling UpdatePropertyCache is necessary
- (github issue #399)
-- Add function to test if UpdatePropertyCache is necessary
- (github issue #400)
-- Substructure highlighting in pandas dataframe (fixes #362)
- (github issue #403)
-- Added SDF Export to PandasTools and adjusted SDF Import
- (github issue #404)
-- support count-based avalon fingerprint
- (github issue #408)
-- New C++ drawing code
- (github issue #412)
-- RDKit learns how to compute code coverage for tests
- (github issue #413)
-- Dictionary access is saniztized and optimized.
- (github issue #414)
-- expose MolOps::rankAtoms() and MolOps::rankAtomsInFragment() to python
- (github issue #421)
-- Dev/expose rank atoms to python
- (github issue #422)
-- rdkit learns how to wrap a proper RWMol in python
- (github issue #423)
-- Docs: document "magic" property values that are used throughout the code
- (github issue #425)
-- MolDraw2D: expose class to Python
- (github issue #433)
-- RDKit learns how to query properties on Atoms
- (github issue #442)
-- Issue445: provide helper functions for multithreaded evaluation of some expensive functions
- (github issue #448)
-- Support a confId argument to the atom pair fingerprinting code
- (github issue #453)
-- Cartridge: Support converting no structs to InChI
- (github issue #455)
- 
+
+  - Isomeric fix in PandasTools
+    (github issue #369 from samoturk)
+  - added SaveXlsxFromFrame - first version
+    (github issue #371 from samoturk)
+  - New feature: Torsion fingerprints
+    (github issue #372 from sriniker)
+  - Add function to extract a molecule with a single (particular) conformer from a multiconf mol
+    (github issue #384)
+  - Added C++ and Python helpers to retrieve force-field parameters
+    (github issue #387 from ptosco)
+  - Support providing all options to SWIG-wrapped FMCS
+    (github issue #397)
+  - Add function to request if calling UpdatePropertyCache is necessary
+    (github issue #399)
+  - Add function to test if UpdatePropertyCache is necessary
+    (github issue #400 from NadineSchneider)
+  - Substructure highlighting in pandas dataframe (fixes #362)
+    (github issue #403 from nhfechner)
+  - Added SDF Export to PandasTools and adjusted SDF Import
+    (github issue #404 from nhfechner)
+  - support count-based avalon fingerprint
+    (github issue #408)
+  - New C++ drawing code
+    (github issue #412 from greglandrum)
+  - RDKit learns how to compute code coverage for tests
+    (github issue #413 from bp-kelley)
+  - Dictionary access is saniztized and optimized.
+    (github issue #414 from bp-kelley)
+  - expose MolOps::rankAtoms() and MolOps::rankAtomsInFragment() to python
+    (github issue #421)
+  - Dev/expose rank atoms to python
+    (github issue #422 from bp-kelley)
+  - rdkit learns how to wrap a proper RWMol in python
+    (github issue #423 from bp-kelley)
+  - Docs: document "magic" property values that are used throughout the code
+    (github issue #425)
+  - MolDraw2D: expose class to Python
+    (github issue #433)
+  - RDKit learns how to query properties on Atoms
+    (github issue #442 from bp-kelley)
+  - Issue445: provide helper functions for multithreaded evaluation of some expensive functions
+    (github issue #448 from greglandrum)
+  - RDKit learns how to release the GIL in python
+    (github pull #449 from bp-kelley)
+  - Dev/property queries
+    (github pull #450 from bp-kelley)
+  - Support a confId argument to the atom pair fingerprinting code
+    (github issue #453)
+  - Save the atom bookmarks so we can deconvolute reaction products.
+    (github pull #454 from bp-kelley)
+  - Cartridge: Support converting no structs to InChI
+    (github issue #455)
+  - RDKit learns how to expose ChemicalReaction copy constructor to python
+    (github pull #456 from bp-kelley)
+  - chirality flag was implemented for fmcs() function
+    (github pull #466 from AlexanderSavelyev)
+  - Support copy and deepcopy properly for at least Mol and RWMol
+    (github issue #467)
+  - Cartridge: add query_mol_from_smiles() and query_mol_from_ctab()
+    (github issue #469)
+  - restore java and python wrappers. New parameter (matchChiralTag) 
+    (github issue #477 from AlexanderSavelyev)
+
 New Database Cartridge Features: 
 
 New Java Wrapper Features:
 
 Deprecated code (to be removed in next release):
-- C++: The functionality in $RDBASE/Code/GraphMol/MolDrawing has been
-  superseded by the new drawing code in $RDBASE/Code/GraphMol and will
-  be removed in the next release.
-- Python: rdkit/Dbase/Pubmed
-- Cartridge: support for v8.x of PostgreSQL (v8.4 is no longer
-supported by the PostgreSQL project team as of July 2014)
+
+  - C++: The functionality in $RDBASE/Code/GraphMol/MolDrawing has been
+    superseded by the new drawing code in $RDBASE/Code/GraphMol and will
+    be removed in the next release.
+  - Python: 
+     - rdkit/Dbase/Pubmed
+     - rdkit/Chem/fmcs (this has been superseded by the C++ implementation)
+  - Cartridge: support for v8.x of PostgreSQL (v8.4 is no longer
+    supported by the PostgreSQL project team as of July 2014)
 
 Removed code:
-- the method Atom::setMass() has been removed. Please use setIsotope()
-instead.
-- the methods involving an atom's dativeFlag have been removed.
+  - the method Atom::setMass() has been removed. Please use setIsotope()
+    instead.
+  - the methods involving an atom's dativeFlag have been removed.
 
 Contrib updates:
 
 Other: 
-- Python 2.6 support is deprecated. Starting with the next RDKit
+  - Python 2.6 support is deprecated. Starting with the next RDKit
 release, we will only support python 2.7 and python 3.4 and
 higher. Python 2.6 has not been supported since October 2013. If you
 believe that you are stuck with python 2.6 because of the version of
 RHEL you are running, please read this post to learn about your
 options:
 http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html
-- The RDKit molecule objects (ROMol and RWMol) now require about 15%
+  - The RDKit molecule objects (ROMol and RWMol) now require about 15%
 less memory to store
 
 
