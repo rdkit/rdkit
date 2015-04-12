@@ -366,6 +366,7 @@ namespace RDKit{
                                  UINT_VECT &neighbors, bool checkDir=false) {
       PRECONDITION(atom,"bad atom");
       PRECONDITION(refBond,"bad bond");
+      neighbors.clear();
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(atom);
       while (beg != end) {
@@ -810,9 +811,7 @@ namespace RDKit{
       // later we're going to need ring information, get it now if we don't
       // have it already:
       if(!mol.getRingInfo()->isInitialized()){
-//        MolOps::symmetrizeSSSR(mol);
         MolOps::fastFindRings(mol);
-
       }
 
 
@@ -822,30 +821,66 @@ namespace RDKit{
       mol.debugMol(std::cerr);
 #endif
       
-      if(cleanIt){
-        for(ROMol::AtomIterator atIt=mol.beginAtoms();
-            atIt!=mol.endAtoms();++atIt){
+      // as part of the preparation, we'll loop over the atoms and
+      // bonds to see if anything has stereochemistry
+      // indicated. There's no point in doing the work here if there
+      // are neither stereocenters nor bonds that we need to consider.
+      // The exception to this is when flagPossibleStereoCenters is
+      // true; then we always need to do the work
+      bool hasStereoAtoms=flagPossibleStereoCenters;
+      for(ROMol::AtomIterator atIt=mol.beginAtoms();
+          atIt!=mol.endAtoms();++atIt){
+        if(cleanIt){
           if((*atIt)->hasProp(common_properties::_CIPCode)){
             (*atIt)->clearProp(common_properties::_CIPCode);
           }
           if((*atIt)->hasProp(common_properties::_ChiralityPossible)){
             (*atIt)->clearProp(common_properties::_ChiralityPossible);
           }
-        }        
-        for(ROMol::BondIterator bondIt=mol.beginBonds();
-            bondIt!=mol.endBonds();
-            ++bondIt){
+        }
+        if( !hasStereoAtoms &&
+           (*atIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+           (*atIt)->getChiralTag()!=Atom::CHI_OTHER ){
+          hasStereoAtoms=true;
+        }
+      }        
+      bool hasStereoBonds=false;
+      for(ROMol::BondIterator bondIt=mol.beginBonds();
+          bondIt!=mol.endBonds();
+          ++bondIt){
+        if(cleanIt){
           if( (*bondIt)->getBondType()==Bond::DOUBLE &&
               (*bondIt)->getStereo() != Bond::STEREOANY ){
             (*bondIt)->setStereo(Bond::STEREONONE);
             (*bondIt)->getStereoAtoms().clear();
           }
         }
+        if(!hasStereoBonds && (*bondIt)->getBondType()==Bond::DOUBLE ){
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = mol.getAtomBonds((*bondIt)->getBeginAtom());
+          while(!hasStereoBonds && beg!=end){
+            const BOND_SPTR nbond = mol[*beg];
+            ++beg;
+            if(nbond->getBondDir()==Bond::ENDDOWNRIGHT ||
+               nbond->getBondDir()==Bond::ENDUPRIGHT){
+              hasStereoBonds=true;
+            }
+          }
+          boost::tie(beg,end) = mol.getAtomBonds((*bondIt)->getEndAtom());
+          while(!hasStereoBonds && beg!=end){
+            const BOND_SPTR nbond = mol[*beg];
+            ++beg;
+            if(nbond->getBondDir()==Bond::ENDDOWNRIGHT ||
+               nbond->getBondDir()==Bond::ENDUPRIGHT){
+              hasStereoBonds=true;
+            }
+          }
+        }
       }
+
       UINT_VECT atomRanks;
-      bool keepGoing=true;
-      bool hasStereoAtoms=true,changedStereoAtoms;
-      bool hasStereoBonds=true,changedStereoBonds;
+      bool keepGoing=hasStereoAtoms|hasStereoBonds;
+      bool changedStereoAtoms,changedStereoBonds;
       while(keepGoing){
         if(hasStereoAtoms){
           boost::tie(hasStereoAtoms,changedStereoAtoms) = Chirality::assignAtomChiralCodes(mol,atomRanks,
