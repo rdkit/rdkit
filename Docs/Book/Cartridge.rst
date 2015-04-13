@@ -376,6 +376,53 @@ By default, the minimum similarity returned with a similarity search is 0.5. Thi
 
 
 
+Using the MCS code
+******************
+
+The most straightforward use of the MCS code is to find the maximum common substructure of a group of molecules::
+
+    chembl_20=# select fmcs(m) from rdk.mols join compound_records using (molregno) where doc_id=3;                                                                                           fmcs                                                                                           
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#6]1(-[#7](-[#6](-[#6]2:[#6]:[#6]:[#6](:[#6]:[#6]:2)-[#7]-[#6](-[#6]2:[#6](-[#6]3:[#6]:[#6]:[#6]:[#6]:[#6]:3):[#6]:[#6]:[#6]:[#6]:2)=[#8])=[#8])-[#6]-[#6]-[#6]):[#6]:[#16]:[#6]:[#6]:1
+    (1 row)
+
+    chembl_20=# select fmcs(m) from rdk.mols join compound_records using (molregno) where doc_id=4;
+                                      fmcs                                  
+    ------------------------------------------------------------------------
+     [#6](-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#7]-[#6]-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+The same thing can be done with a SMILES column::
+
+    chembl_20=# select fmcs(canonical_smiles) from compound_structures join compound_records using (molregno) where doc_id=4;
+                                      fmcs                                  
+    ------------------------------------------------------------------------
+     [#6](-[#7]-[#6]-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+It's also possible to adjust some of the parameters to the FMCS algorithm, though this is somewhat more painful as of this writing (the 2015_03_1 release). Here's an example::
+
+    chembl_20=# select fmcs_smiles(str,'{"Threshold":0.8}') from 
+    chembl_20-#   (select string_agg(m::text,' ') as str from rdk.mols 
+    chembl_20(#   join compound_records using (molregno) where doc_id=4) as str ;
+                                                                               fmcs_smiles                                                                            
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#6]-[#6]-[#8]-[#6](-[#6](=[#8])-[#7]-[#6](-[#6])-[#6](-,:[#6])-,:[#6])-[#6](-[#8])-[#6](-[#8])-[#6](-[#8]-[#6]-[#6])-[#6]-[#7]-[#6](-[#6])-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+Available parameters and their default values are:
+
+  - MaximizeBonds (true)
+  - Threshold (1.0)
+  - Timeout (-1, no timeout) 
+  - MatchValences (false)
+  - MatchChiralTag (false) Applies to atoms
+  - RingMatchesRingOnly (false)
+  - CompleteRingsOnly (false)
+  - MatchStereo (false)  Applies to bonds
+
+ 
+    
 Reference Guide
 +++++++++++++++
 
@@ -393,6 +440,15 @@ Parameters
 * `rdkit.tanimoto_threshold` : threshold value for the Tanimoto similarity operator. Searches done using Tanimoto similarity will only return results with a similarity of at least this value.
 * `rdkit.dice_threshold` : threshold value for the Dice similiarty operator. Searches done using Dice similarity will only return results with a similarity of at least this value.
 * `rdkit.do_chiral_sss` : toggles whether or not stereochemistry is used in substructure matching. (*available from 2013_03 release*).
+* `rdkit.sss_fp_size` : the size (in bits) of the fingerprint used for substructure screening.
+* `rdkit.morgan_fp_size` : the size (in bits) of morgan fingerprints
+* `rdkit.featmorgan_fp_size` : the size (in bits) of featmorgan fingerprints
+* `rdkit.layered_fp_size` : the size (in bits) of layered fingerprints
+* `rdkit.rdkit_fp_size` : the size (in bits) of RDKit fingerprints
+* `rdkit.torsion_fp_size` : the size (in bits) of topological torsion bit vector fingerprints
+* `rdkit.atompair_fp_size` : the size (in bits) of atom pair bit vector fingerprints
+* `rdkit.avalon_fp_size` : the size (in bits) of avalon fingerprints
+
 
 Operators
 *********
@@ -488,6 +544,8 @@ Molecule I/O and Validation
 * `mol_from_ctab(ctab, bool default false)` : returns a molecule for a CTAB (mol block) string, NULL if the molecule construction fails. The optional second argument controls whether or not the molecule's coordinates are saved.
 * `mol_from_pkl(bytea)` : returns a molecule for a binary string (bytea), NULL if the molecule construction fails. (*available from Q3 2012 (2012_09) release*)
 
+* `qmol_from_smiles(smiles)` : returns a query molecule for a SMILES string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom.
+* `qmol_from_ctab(ctab, bool default false)` : returns a query molecule for a CTAB (mol block) string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom. The optional second argument controls whether or not the molecule's coordinates are saved.
 * `mol_to_smiles(mol)` : returns the canonical SMILES for a molecule.
 * `mol_to_smarts(mol)` : returns SMARTS string for a molecule.
 * `mol_to_pkl(mol)` : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012_09) release*)
@@ -537,6 +595,12 @@ Connectivity Descriptors
 * `mol_chi0n(mol)` - `mol_chi4n(mol)` :  returns the ChiXn value for a molecule for X=0-4 (*available from 2012_01 release*).
 * `mol_kappa1(mol)` - `mol_kappa3(mol)` :  returns the kappaX value for a molecule for X=1-3 (*available from 2012_01 release*).
 
+
+MCS
+:::
+
+* `fmcs(mols)` : an aggregation function that calculates the MCS for a set of molecules
+* `fmcs_smiles(text, json default '')` : calculates the MCS for a space-separated set of SMILES. The optional json argument is used to provide parameters to the MCS code.
 
 
 Other
