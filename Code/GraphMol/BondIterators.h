@@ -32,9 +32,9 @@ namespace RDKit{
     BondIterator_(ROMol *mol,ROMol::EDGE_ITER pos);
     BondIterator_(const BondIterator_ &other);
     BondIterator_ &operator=(const BondIterator_ &other);
-    bool operator==(const BondIterator_ &other);
-    bool operator!=(const BondIterator_ &other);
-    Bond *operator*();
+    bool operator==(const BondIterator_ &other) const;
+    bool operator!=(const BondIterator_ &other) const;
+    Bond *operator*() const;
     // pre-increment
     BondIterator_ &operator++();
     BondIterator_ operator++(int);
@@ -54,9 +54,9 @@ namespace RDKit{
     ConstBondIterator_(ROMol const *mol,ROMol::EDGE_ITER pos);
     ConstBondIterator_(const ConstBondIterator_ &other);
     ConstBondIterator_ &operator=(const ConstBondIterator_ &other);
-    bool operator==(const ConstBondIterator_ &other);
-    bool operator!=(const ConstBondIterator_ &other);
-    Bond const *operator*();
+    bool operator==(const ConstBondIterator_ &other) const;
+    bool operator!=(const ConstBondIterator_ &other) const;
+    Bond const *operator*() const;
     // pre-increment
     ConstBondIterator_ &operator++();
     ConstBondIterator_ operator++(int);
