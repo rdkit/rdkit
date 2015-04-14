@@ -36,22 +36,22 @@ namespace RDKit{
     AtomIterator_ &operator=(const ThisType &other);
     AtomIterator_ &operator+=(int val);
     AtomIterator_ &operator-=(int val);
-    AtomIterator_ operator+(int val);
-    AtomIterator_ operator-(int val);
+    AtomIterator_ operator+(int val) const;
+    AtomIterator_ operator-(int val) const;
 
     // iterator subtraction
-    int operator-(ThisType &other);
+    int operator-(ThisType &other) const;
 
     // dereference 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
     // random access
-    Atom_ * operator[](const int which);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
-    bool operator<(const ThisType &other);
-    bool operator<=(const ThisType &other);
-    bool operator>(const ThisType &other);
-    bool operator>=(const ThisType &other);
+    Atom_ * operator[](const int which) const;
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
+    bool operator<(const ThisType &other) const;
+    bool operator<=(const ThisType &other) const;
+    bool operator>(const ThisType &other) const;
+    bool operator>=(const ThisType &other) const;
 
     // pre-increment
     ThisType &operator++();
@@ -78,10 +78,10 @@ namespace RDKit{
     ~HeteroatomIterator_();
     HeteroatomIterator_(const ThisType &other);
     HeteroatomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
@@ -112,10 +112,10 @@ namespace RDKit{
     ~AromaticAtomIterator_();
     AromaticAtomIterator_(const ThisType &other);
     AromaticAtomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
@@ -143,10 +143,10 @@ namespace RDKit{
     ~QueryAtomIterator_();
     QueryAtomIterator_(const ThisType &other);
     QueryAtomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
@@ -175,10 +175,10 @@ namespace RDKit{
     ~MatchingAtomIterator_();
     MatchingAtomIterator_(const ThisType &other);
     MatchingAtomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
