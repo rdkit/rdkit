@@ -10,6 +10,7 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
+#include <boost/format.hpp>
 #include <boost/crc.hpp>
 #include <boost/cstdint.hpp>
 #include "../Descriptors/MolDescriptors.h"
@@ -261,9 +262,9 @@ static
         std::string str;
         HashSet     res;
         generateMoleculeHashSet(mol, res, atomsToUse, bondsToUse);
-        char buf[64];
-        snprintf(buf, sizeof(buf),"%u-%u-%u-", res.Version, res.NumAtoms,res.NumBonds);
-        str  = buf;
+        //char buf[64];
+        //snprintf(buf, sizeof(buf),"%u-%u-%u-", res.Version, res.NumAtoms,res.NumBonds);
+        str  = (boost::format("%u-%u-%u-")%(res.Version)%(res.NumAtoms)%(res.NumBonds)).str() ;
         str += encode(&res.FormulaCRC32, sizeof(res.FormulaCRC32));
         str += "-";
         str += encode(&res.NonChiralAtomsHash, sizeof(res.NonChiralAtomsHash));
