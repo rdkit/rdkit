@@ -635,6 +635,10 @@ namespace RDKit {
           count[partition] = len-1;
           count[index] = 1;
 
+          //test for ions, water molecules with no
+          if(atoms[index].degree < 1){
+            continue;
+          }
           for(unsigned j = 0; j < atoms[index].degree; ++j){
             unsigned int nbor = atoms[index].nbrIds[j];
             touchedPartitions[atoms[nbor].index]=1;

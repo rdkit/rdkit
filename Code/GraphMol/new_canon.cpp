@@ -91,7 +91,7 @@ namespace RDKit {
             for(unsigned int j=0; j<atom.degree; j++){
               int iidx = atom.nbrIds[j];
               if(!visited[iidx]){
-                currentLevelNbrs[iidx];
+                currentLevelNbrs[iidx]=1;
                 numLevelNbrs++;
                 visited[iidx]=1;
                 nextLevelNbrs.push_back(iidx);
@@ -157,8 +157,8 @@ namespace RDKit {
       memset(touched,0,nAts*sizeof(char));
       memset(changed,1,nAts*sizeof(int));
       CreateSinglePartition(nAts,order,count,atoms);
-      ActivatePartitions(nAts,order,count,activeset,next,changed);
-      RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed,touched);
+      //ActivatePartitions(nAts,order,count,activeset,next,changed);
+      //RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
       std::cerr<<"1--------"<<std::endl;
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -198,8 +198,18 @@ namespace RDKit {
 #endif
       }
       ties=false;
+      unsigned symRingAtoms=0;
       unsigned countCls=0;
+      RingInfo *ringInfo=mol.getRingInfo();
+      if(!ringInfo->isInitialized()){
+        ringInfo->initialize();
+      }
       for(unsigned i=0; i<nAts; ++i){
+        if(ringInfo->numAtomRings(ftor.dp_atoms[i].atom->getIdx()) > 1){
+          if(count[i] != 1){
+            symRingAtoms += 1;
+          }
+        }
         if(count[i]){
           countCls++;
         }
@@ -208,7 +218,7 @@ namespace RDKit {
         }
       }
       unsigned int nAts2 = atomsInPlay ? atomsInPlay->count() : nAts;
-      if(useSpecial && ties && static_cast<float>(countCls)/nAts2 < 0.5){
+      if(useSpecial && ties && static_cast<float>(countCls)/nAts2 < 0.5 && symRingAtoms>0){
         SpecialSymmetryAtomCompareFunctor sftor(atoms,mol,atomsInPlay,bondsInPlay);
         compareRingAtomsConcerningNumNeighbors(atoms, nAts);
         ActivatePartitions(nAts,order,count,activeset,next,changed);

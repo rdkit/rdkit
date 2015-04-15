@@ -797,7 +797,6 @@ namespace{
 //      for(unsigned int j=0;j<m->getNumAtoms();++j){
 //        std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
 //      }
-      
       ROMol *nm= _renumber(m,nVect,inSmiles);
       
       std::string smi=MolToSmiles(*nm,true);
@@ -971,6 +970,17 @@ std::string smis[]={
   "CCC[C@H]1CC[C@H]([C@H]2CC[C@H](OC(=O)[C@H]3[C@@H](c4ccc(O)cc4)[C@H](C(=O)O[C@H]4CC[C@H]([C@H]5CC[C@H](CCC)CC5)CC4)[C@@H]3c3ccc(O)cc3)CC2)CC1",
     //test molecules with atom-mapping numbers
   "[O:1]=[C:2]([CH2:3][C:4]1=[CH:5][CH:6]=[CH:7][CH:8]=[CH:9]1)[NH2:10]",
+  //chembl molecules with multiple fragments
+  //CHEMBL439119
+  "CCCCCCC1C23C4=c5c6c7c8c9c%10c%11c%12c%13c%14c%15c%16c%17c%18c%19c%20c%21c%22c%23c(c5c5c6c6c8c%11c8c%11c%12c%15c%12c(c%20%16)c%21c%15c%23c5c(c68)c%15c%12%11)C2(C[N+]1(C)C)C%22C%19c1c-%18c2c5c(c13)C4C7C9=C5C1(C2C%17%14)C(CCCCCC)[N+](C)(C)CC%10%131.[I-].[I-]",
+  //CHEMBL1203199
+  "C[C@H](NC(=O)[C@H]1Cc2c(sc3ccccc23)CN1)c1ccccc1.Cl",
+  //CHEMBL501667
+  "CCn1c2ccc3cc2c2cc(ccc21)C(=O)c1ccc(cc1)Cn1cc[n+](c1)Cc1ccc(cc1)-c1cccc(-c2ccc(cc2)C[n+]2ccn(c2)Cc2ccc(cc2)C3=O)c1C(=O)O.[Br-].[Br-]",
+  //CHEMBL12438
+  "CCCCCCCCCCCCCCCCCCNC(=O)OC[C@H]1C[C@H]([C@@H2]OC(=O)N(Cc2cccc[n+]2CC)C(C)=O)C1.[I-]",
+  //CHEMBL1172371
+  "CC.CCCCCCCCCC(C(=O)NCCc1ccc(OP(=S)(Oc2ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc2)N(C)/N=C/c2ccc(OP3(Oc4ccc(/C=N/N(C)P(=S)(Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)cc4)=NP(Oc4ccc(/C=N/N(C)P(=S)(Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)cc4)(Oc4ccc(/C=N/N(C)P(=S)(Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)cc4)=NP(Oc4ccc(/C=N/N(C)P(=S)(Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)cc4)(Oc4ccc(/C=N/N(C)P(=S)(Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)Oc5ccc(CCNC(=O)C(CCCCCCCCC)P(=O)([O-])O)cc5)cc4)=N3)cc2)cc1)P(=O)([O-])O.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO.CCCCCCCCCCCCCCCC[NH2+]OC(CO)C(O)C(OC1OC(CO)C(O)C(O)C1O)C(O)CO",
   "EOS"
 };
 
@@ -1050,6 +1060,7 @@ std::string molbl2 =
 " 11 12  1  0                                                         \n"
 "M  END";
 
+
 void test8(){
   BOOST_LOG(rdInfoLog) << "testing smiles round-tripping." << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -1091,6 +1102,7 @@ void test8(){
       ROMol *m = MolBlockToMol(molbl1);
       TEST_ASSERT(m);
       std::string smiles=MolToSmiles(*m, true);
+      delete m;
 
       m = SmilesToMol(smiles);
       TEST_ASSERT(m);
@@ -1107,6 +1119,7 @@ void test8(){
       ROMol *m = MolBlockToMol(molbl2);
       TEST_ASSERT(m);
       std::string smiles=MolToSmiles(*m, true);
+      delete m;
 
       m = SmilesToMol(smiles);
       TEST_ASSERT(m);
@@ -1294,7 +1307,7 @@ void test11(){
     unsigned int numFrag = MolOps::getMolFrags(*m,frags);
     for(unsigned i=0;i<numFrag;++i){
       std::string smii = MolFragmentToSmiles(*m,frags[i],0,0,0,true);
-      std::cout << smii << std::endl;
+      //std::cout << "Test "<< smii << std::endl;
       vfragsmi.push_back(smii);
     }
     std::string smi1 = MolToSmiles(*m,true);
@@ -1312,7 +1325,25 @@ void test11(){
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test12(){
+  BOOST_LOG(rdInfoLog) << "testing protein round-tripping." << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase+"/Code/GraphMol/FileParsers/test_data/2FVD.pdb";
+    ROMol *m = PDBFileToMol(fName);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    delete m;
 
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2 = MolToSmiles(*m,true);
+    delete m;
+    //std::cout << smi1 << "\n" << smi2 << std::endl;
+    TEST_ASSERT(smi1==smi2);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -1324,12 +1355,13 @@ int main(){
   test5();
   test6();
   test7a();
-  test8();
   test9();
   test10();
   test11();
-#endif
+  test8();
   test7();
+#endif
+  test12();
   return 0;
 }
 
