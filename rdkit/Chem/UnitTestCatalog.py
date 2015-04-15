@@ -123,7 +123,7 @@ class TestCase(unittest.TestCase):
               (12,'C=CCC',3,()),
               (13,'CC=CC',3,()),
               (14,'C<-O>=CCC',3,(34,)),
-              (15,'CC=C<-O>C',3,(34,)),
+              (15,'CC<-O>=CC',3,(34,)),
               (16,'C=CC<-O>',2,(34,)),
              ]
     for i in range(len(descrs)):

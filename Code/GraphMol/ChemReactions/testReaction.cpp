@@ -4671,7 +4671,7 @@ void test49ParensInProducts2(){
     TEST_ASSERT(prods[0][0]->getNumAtoms()==11);
     TEST_ASSERT(prods[0][0]->getNumBonds()==11);
 
-    smi = "CCCOc1ccn(NC)c1";
+    smi = "CCCOc1ccn(c1)NC";
     TEST_ASSERT(MolToSmiles(*prods[0][0]) == smi);
 
     delete rxn;

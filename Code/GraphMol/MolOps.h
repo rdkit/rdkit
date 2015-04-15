@@ -82,15 +82,21 @@ namespace RDKit{
       \param sanitizeFrags  toggles sanitization of the fragments after
                             they are built
       \param frags used to return the mapping of Atoms->fragments.
-         if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long 
-	 on return and will contain the fragment assignment for each Atom
-
+         if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long
+	     on return and will contain the fragment assignment for each Atom
+      \param fragsMolAtomMapping  used to return the Atoms in each fragment
+         On return \c mapping will be \c numFrags long, and each entry
+         will contain the indices of the Atoms in that fragment.
+       \param copyConformers  toggles copying conformers of the fragments after
+                            they are built
       \return a vector of the fragments as smart pointers to ROMols
       
     */
     std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
                                                        bool sanitizeFrags=true,
-                                                       std::vector<int> *frags=0);
+                                                       std::vector<int> *frags=0,
+                                                       std::vector<std::vector<int> > *fragsMolAtomMapping=0,
+                                                       bool copyConformers=true);
 
     //! splits a molecule into pieces based on labels assigned using a query
     /*!
