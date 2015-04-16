@@ -719,6 +719,7 @@ The code:
 This generates the following output:
 
 .. testoutput::
+
   [406*]-[308*]-[306*]1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[307*]-[306*]1:[307*]:[306*]2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*])(-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1
 
 That's what we asked for, but it's not exactly readable. We can get to a more readable form in a two step process:
