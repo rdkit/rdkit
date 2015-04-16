@@ -8,11 +8,12 @@
    different from those generated with previous versions.
 
 Acknowledgements: 
-David Cosgrove, Andrew Dalke, JP Ebejer, Niko Fechner, Igor Filippov,
-Patrick Fuller, David Hall, J Bach Hardie, Jan Holst Jensen, Brian
-Kelley, Rich Lewis, John May, Sereina Riniker, Alexander Savelyev,
-Roger Sayle, Nadine Schneider, Paolo Tosco, Samo Turk, JL Varjo,
-Riccardo Vianello
+
+David Cosgrove, Andrew Dalke, James Davidson, JP Ebejer, Niko Fechner,
+Igor Filippov, Patrick Fuller, David Hall, J Bach Hardie, Jan Holst
+Jensen, Brian Kelley, Rich Lewis, John May, Sereina Riniker, Alexander
+Savelyev, Roger Sayle, Nadine Schneider, Paolo Tosco, Samo Turk, JL
+Varjo, Riccardo Vianello
 
 Highlights:
 
