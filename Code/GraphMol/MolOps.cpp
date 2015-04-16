@@ -329,7 +329,6 @@ namespace RDKit{
       }
       unsigned int nFrags=getMolFrags(mol,*mapping);
       std::vector<ROMOL_SPTR> res;
-      std::vector<int> ids(mol.getNumAtoms(),-1);
       if(nFrags==1){
         ROMol *tmp=new ROMol(mol);
         ROMOL_SPTR sptr(tmp);
@@ -342,6 +341,7 @@ namespace RDKit{
           (*fragsMolAtomMapping).push_back(comp);
         }
       } else {
+        std::vector<int> ids(mol.getNumAtoms(),-1);
         boost::dynamic_bitset<> copiedAtoms(mol.getNumAtoms(),0);
         boost::dynamic_bitset<> copiedBonds(mol.getNumBonds(),0);
         res.reserve(nFrags);
@@ -464,12 +464,6 @@ namespace RDKit{
           }
         }
 
-        if(sanitizeFrags){
-          for(std::vector<ROMOL_SPTR>::iterator iter=res.begin();
-              iter!=res.end();++iter){
-            sanitizeMol(*static_cast<RWMol *>(iter->get()));
-          }
-        }
         if(fragsMolAtomMapping){
           for (INT_INT_VECT_MAP_CI mci = comMap.begin();
               mci != comMap.end();
@@ -478,6 +472,14 @@ namespace RDKit{
           }
         }
       }
+
+      if(sanitizeFrags){
+        for(std::vector<ROMOL_SPTR>::iterator iter=res.begin();
+            iter!=res.end();++iter){
+          sanitizeMol(*static_cast<RWMol *>(iter->get()));
+        }
+      }
+
       if(ownIt){
         delete mapping;
       }
