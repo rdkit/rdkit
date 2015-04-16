@@ -343,29 +343,103 @@ namespace RDKit{
   } // end of namespace SmilesWrite
 
 
-  std::string MolToSmilesForFragments(const ROMol &mol,bool doIsomericSmiles,
-                            bool doKekule,int rootedAtAtom,bool canonical,
-                            bool allBondsExplicit,bool allHsExplicit,
-                            const std::vector<std::vector<int> > &frags){
-    std::string result;
-    std::vector<std::string> vfragsmi;
-    ROMol tmol(mol,true);
+  std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
+                          bool doKekule,int rootedAtAtom,bool canonical,
+                          bool allBondsExplicit,bool allHsExplicit){
+    if(!mol.getNumAtoms()) return "";
+    PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
+                 "rootedAtomAtom must be less than the number of atoms");
 
-    if(doIsomericSmiles){
-      if(tmol.needsUpdatePropertyCache()){
-        for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
-          (*atIt)->updatePropertyCache(false);
+    std::vector<ROMOL_SPTR> mols = MolOps::getMolFrags(mol,false,NULL,NULL,false);
+    std::vector<std::string> vfragsmi;
+
+//    for(unsigned i=0; i<fragsMolAtomMapping.size(); i++){
+//      std::cout << i << ": ";
+//      for(unsigned j=0; j<fragsMolAtomMapping[i].size(); j++){
+//        std::cout << j <<"("<<fragsMolAtomMapping[i][j]<<") ";
+//      }
+//      std::cout << std::endl;
+//    }
+
+    for (unsigned i = 0; i < mols.size(); i++){
+      ROMol* tmol=mols[i].get();
+
+       if(tmol->needsUpdatePropertyCache()){
+          for(ROMol::AtomIterator atIt=tmol->beginAtoms();atIt!=tmol->endAtoms();atIt++){
+            (*atIt)->updatePropertyCache(false);
+         }
+       }
+
+      // clean up the chirality on any atom that is marked as chiral,
+      // but that should not be:
+      if(doIsomericSmiles){
+        tmol->setProp(common_properties::_doIsoSmiles,1);
+        if(!mol.hasProp(common_properties::_StereochemDone)){
+          MolOps::assignStereochemistry(*tmol,true);
         }
       }
-      MolOps::assignStereochemistry(tmol,canonical);
+#if 0
+      std::cout << "----------------------------" << std::endl;
+      std::cout << "MolToSmiles:"<< std::endl;
+      tmol->debugMol(std::cout);
+      std::cout << "----------------------------" << std::endl;
+#endif
+      std::string res;
+
+      unsigned int nAtoms=tmol->getNumAtoms();
+      UINT_VECT ranks(nAtoms);
+      std::vector<unsigned int> atomOrdering;
+
+      if(canonical){
+        Canon::rankMolAtoms(*tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
+      } else {
+        for(unsigned int i=0;i<tmol->getNumAtoms();++i) ranks[i]=i;
+      }
+#ifdef VERBOSE_CANON
+      for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){
+        std::cout << tmpI << " " << ranks[tmpI] << " " << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
+      }
+#endif
+
+      std::vector<Canon::AtomColors> colors(nAtoms,Canon::WHITE_NODE);
+      std::vector<Canon::AtomColors>::iterator colorIt;
+      colorIt = colors.begin();
+      // loop to deal with the possibility that there might be disconnected fragments
+      while(colorIt != colors.end()){
+        int nextAtomIdx=-1;
+        std::string subSmi;
+
+        // find the next atom for a traverse
+        if(rootedAtAtom>=0){
+          nextAtomIdx=rootedAtAtom;
+          rootedAtAtom=-1;
+        } else {
+          unsigned int nextRank = nAtoms+1;
+          for(unsigned int i=0;i<nAtoms;i++){
+            if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
+              nextRank = ranks[i];
+              nextAtomIdx = i;
+            }
+          }
+        }
+        CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
+
+        subSmi = SmilesWrite::FragmentSmilesConstruct(*tmol, nextAtomIdx, colors,
+            ranks,doKekule,canonical,doIsomericSmiles,
+            allBondsExplicit,allHsExplicit,
+            atomOrdering);
+
+        res += subSmi;
+        colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
+        if(colorIt != colors.end()){
+          res += ".";
+        }
+      }
+      mol.setProp(common_properties::_smilesAtomOutputOrder,atomOrdering,true);
+      vfragsmi.push_back(res);
     }
 
-    for(unsigned i=0;i<frags.size();++i){
-      std::string smii = MolFragmentToSmiles(tmol,frags[i],NULL,NULL,NULL,
-                                      doIsomericSmiles,doKekule,rootedAtAtom,canonical,
-                                      allBondsExplicit,allHsExplicit);
-      vfragsmi.push_back(smii);
-    }
+    std::string result;
     if(canonical){
       std::sort(vfragsmi.begin(),vfragsmi.end());
     }
@@ -376,109 +450,6 @@ namespace RDKit{
       }
     }
     return result;
-  }
-
-
-  std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
-                          bool doKekule,int rootedAtAtom,bool canonical,
-                          bool allBondsExplicit,bool allHsExplicit){
-    if(!mol.getNumAtoms()) return "";
-    PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
-                 "rootedAtomAtom must be less than the number of atoms");
-
-    std::vector<std::vector<int> > frags;
-    unsigned int numFrag = MolOps::getMolFrags(mol,frags);
-    if(numFrag>1){
-       return MolToSmilesForFragments(mol,doIsomericSmiles, doKekule,rootedAtAtom, canonical,
-                              allBondsExplicit,allHsExplicit,frags);
-    }
-
-    ROMol tmol(mol,true);
-    if(doIsomericSmiles){
-      tmol.setProp(common_properties::_doIsoSmiles,1);
-    }
-#if 0
-    std::cout << "----------------------------" << std::endl;
-    std::cout << "MolToSmiles:"<< std::endl;
-    tmol.debugMol(std::cout);
-    std::cout << "----------------------------" << std::endl;
-#endif  
-    std::string res;
-
-    for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
-      (*atIt)->updatePropertyCache(false);
-    }
-
-    unsigned int nAtoms=tmol.getNumAtoms();
-    UINT_VECT ranks(nAtoms);
-
-    std::vector<unsigned int> atomOrdering;
-
-    // clean up the chirality on any atom that is marked as chiral,
-    // but that should not be:
-    if(doIsomericSmiles){
-      if(!mol.hasProp(common_properties::_StereochemDone)){
-        MolOps::assignStereochemistry(tmol,true);
-      } else {
-        tmol.setProp(common_properties::_StereochemDone,1);
-        // we need the CIP codes:
-        for(unsigned int aidx=0;aidx<tmol.getNumAtoms();++aidx){
-          const Atom *oAt=mol.getAtomWithIdx(aidx);
-          std::string cipCode;
-          if(oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)){
-            tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,cipCode);
-          }
-        }
-      }
-    }
-    if(canonical){
-      Canon::rankMolAtoms(tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
-    } else {
-      for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
-    }
-#ifdef VERBOSE_CANON
-    for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){
-      std::cout << tmpI << " " << ranks[tmpI] << " " << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
-    }
-#endif
-
-    std::vector<Canon::AtomColors> colors(nAtoms,Canon::WHITE_NODE);
-    std::vector<Canon::AtomColors>::iterator colorIt;
-    colorIt = colors.begin();
-    // loop to deal with the possibility that there might be disconnected fragments
-    while(colorIt != colors.end()){
-      int nextAtomIdx=-1;
-      std::string subSmi;
-
-      // find the next atom for a traverse
-      if(rootedAtAtom>=0){
-        nextAtomIdx=rootedAtAtom;
-        rootedAtAtom=-1;
-      } else {
-        unsigned int nextRank = nAtoms+1;
-        for(unsigned int i=0;i<nAtoms;i++){
-          if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
-            nextRank = ranks[i];
-            nextAtomIdx = i;
-          }
-        }
-      }
-      CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
-
-      subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,doIsomericSmiles,
-                                                    allBondsExplicit,allHsExplicit,
-                                                    atomOrdering);
-                                                    
-
-      res += subSmi;
-      colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
-      if(colorIt != colors.end()){
-        res += ".";
-      }
-    }
-    mol.setProp(common_properties::_smilesAtomOutputOrder,atomOrdering,true);
-    return res;
   } // end of MolToSmiles()
 
   std::string MolFragmentToSmiles(const ROMol &mol,
