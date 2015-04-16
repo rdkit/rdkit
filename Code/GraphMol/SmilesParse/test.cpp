@@ -3506,6 +3506,20 @@ void testEmptyStrings(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testSmilesWriteForModifiedMolecules(){
+  BOOST_LOG(rdInfoLog) << "testing smiles writing/canonicalization for modified molecules." << std::endl;
+  {
+    std::string smiles="c1ccccc1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    m->getAtomWithIdx(0)->setAtomicNum(8);
+    std::string smi = MolToSmiles(*m, true);
+    //std::cerr<< smi <<std::endl;
+    TEST_ASSERT(smi=="c1ccocc1");
+    delete m;
+  }
+}
 
 int
 main(int argc, char *argv[])
@@ -3561,6 +3575,14 @@ main(int argc, char *argv[])
 //  testGithub298();
   testGithub378();
   testGithub389();
-  testEmptyStrings();
-  //testBug1719046();
+  testBug1719046();
+#endif
+  testBug1844617();
+#if 1  // POSTPONED during canonicalization rewrite
+  //testGithub298();
+  testFragmentSmiles();
+  testGithub12();
+#endif
+  testSmilesWriteForModifiedMolecules();
+
 }

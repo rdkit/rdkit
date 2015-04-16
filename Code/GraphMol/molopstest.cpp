@@ -4780,6 +4780,78 @@ void testGithubIssue447()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGetMolFrags()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing generation of new molecules from molecule fragments" << std::endl;
+  {
+    std::string smiles="c1ccccc1.O.CCC(=O)O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    INT_VECT fragsMapping;
+    VECT_INT_VECT fragsMolAtomMapping;
+    std::vector<ROMOL_SPTR> frags = MolOps::getMolFrags(*m,false,&fragsMapping,&fragsMolAtomMapping);
+
+    TEST_ASSERT(frags.size()==3)
+    TEST_ASSERT(fragsMapping.size()==m->getNumAtoms());
+
+    TEST_ASSERT(fragsMapping[2]==0);
+    TEST_ASSERT(fragsMapping[6]==1);
+    TEST_ASSERT(fragsMapping[8]==2);
+    TEST_ASSERT(fragsMolAtomMapping[0].size()==frags[0]->getNumAtoms());
+    TEST_ASSERT(fragsMolAtomMapping[1].size()==frags[1]->getNumAtoms());
+    TEST_ASSERT(fragsMolAtomMapping[2].size()==frags[2]->getNumAtoms());
+    TEST_ASSERT(fragsMolAtomMapping[0][1]==1);
+    TEST_ASSERT(fragsMolAtomMapping[1][0]==6);
+    TEST_ASSERT(fragsMolAtomMapping[2][1]==8);
+
+    TEST_ASSERT(MolToSmiles(*frags[0],true)=="c1ccccc1");
+    TEST_ASSERT(MolToSmiles(*frags[1],true)=="O");
+    TEST_ASSERT(MolToSmiles(*frags[2],true)=="CCC(=O)O");
+    delete m;
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"chembl1203199.mol");
+    TEST_ASSERT(m);
+    std::string smi="C[C@H](NC(=O)[C@H]1Cc2c(sc3ccccc23)CN1)c1ccccc1.Cl";
+    TEST_ASSERT(MolToSmiles(*m,true)==smi);
+
+    INT_VECT fragsMapping;
+    VECT_INT_VECT fragsMolAtomMapping;
+    std::vector<ROMOL_SPTR> frags = MolOps::getMolFrags(*m,false,&fragsMapping,&fragsMolAtomMapping,true);
+
+    TEST_ASSERT(frags.size()==2)
+    TEST_ASSERT(fragsMapping.size()==m->getNumAtoms());
+    TEST_ASSERT(fragsMapping[2]==0);
+    TEST_ASSERT(fragsMapping[24]==1);
+    TEST_ASSERT(fragsMolAtomMapping[0].size()==frags[0]->getNumAtoms());
+    TEST_ASSERT(fragsMolAtomMapping[1].size()==frags[1]->getNumAtoms());
+    TEST_ASSERT(fragsMolAtomMapping[0][1]==1);
+    TEST_ASSERT(fragsMolAtomMapping[1][0]==24);
+
+    TEST_ASSERT(frags[0]->getNumConformers()==1);
+    TEST_ASSERT(frags[1]->getNumConformers()==1);
+
+    TEST_ASSERT(frags[0]->getConformer(0).getAtomPos(0).x==m->getConformer(0).getAtomPos(0).x);
+    TEST_ASSERT(frags[0]->getConformer(0).getAtomPos(0).y==m->getConformer(0).getAtomPos(0).y);
+    TEST_ASSERT(frags[0]->getConformer(0).getAtomPos(0).z==m->getConformer(0).getAtomPos(0).z);
+
+    TEST_ASSERT(frags[0]->getConformer(0).getAtomPos(3).x==m->getConformer(0).getAtomPos(3).x);
+    TEST_ASSERT(frags[0]->getConformer(0).getAtomPos(3).y==m->getConformer(0).getAtomPos(3).y);
+    TEST_ASSERT(frags[0]->getConformer(0).getAtomPos(3).z==m->getConformer(0).getAtomPos(3).z);
+
+    TEST_ASSERT(frags[1]->getConformer(0).getAtomPos(0).x==m->getConformer(0).getAtomPos(24).x);
+    TEST_ASSERT(frags[1]->getConformer(0).getAtomPos(0).y==m->getConformer(0).getAtomPos(24).y);
+    TEST_ASSERT(frags[1]->getConformer(0).getAtomPos(0).z==m->getConformer(0).getAtomPos(24).z);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4854,6 +4926,7 @@ int main(){
   testGithubIssue432();
   testGithubIssue443();
   testGithubIssue447();
+  testGetMolFrags();
   return 0;
 }
 

@@ -364,11 +364,11 @@ namespace RDKit{
     for (unsigned i = 0; i < mols.size(); i++){
       ROMol* tmol=mols[i].get();
 
-       if(tmol->needsUpdatePropertyCache()){
-          for(ROMol::AtomIterator atIt=tmol->beginAtoms();atIt!=tmol->endAtoms();atIt++){
-            (*atIt)->updatePropertyCache(false);
-         }
-       }
+      //update property cache
+      for(ROMol::AtomIterator atomIt=tmol->beginAtoms();
+          atomIt!=tmol->endAtoms();++atomIt){
+        (*atomIt)->updatePropertyCache(false);
+      }
 
       // clean up the chirality on any atom that is marked as chiral,
       // but that should not be:
@@ -384,8 +384,8 @@ namespace RDKit{
       tmol->debugMol(std::cout);
       std::cout << "----------------------------" << std::endl;
 #endif
-      std::string res;
 
+      std::string res;
       unsigned int nAtoms=tmol->getNumAtoms();
       UINT_VECT ranks(nAtoms);
       std::vector<unsigned int> atomOrdering;
