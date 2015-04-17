@@ -2108,7 +2108,7 @@ More complex transformations can be carried out using the
 The RWMol can be used just like an ROMol:
 
 >>> Chem.MolToSmiles(mw)
-'O=CC1=NC=CC=C1'
+'O=CC1C=CC=CN=1'
 >>> Chem.SanitizeMol(mw)
 rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> Chem.MolToSmiles(mw)
