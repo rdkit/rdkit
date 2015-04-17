@@ -36,6 +36,22 @@ namespace RDKit {
             p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>("RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
             p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>("CompleteRingsOnly", p.BondCompareParameters.CompleteRingsOnly);
             p.BondCompareParameters.MatchStereo = pt.get<bool>("MatchStereo", p.BondCompareParameters.MatchStereo);
+
+            std::string s = pt.get<std::string>("AtomCompare", "def");
+            if(0==strcmp("Any", s.c_str()))
+                p.AtomTyper = MCSAtomCompareAny;
+            else if(0==strcmp("Elements", s.c_str()))
+                p.AtomTyper = MCSAtomCompareElements;
+            else if(0==strcmp("Isotopes", s.c_str()))
+                p.AtomTyper = MCSAtomCompareIsotopes;
+
+            s = pt.get<std::string>("BondCompare", "def");
+            if(0==strcmp("Any", s.c_str()))
+                p.BondTyper = MCSBondCompareAny;
+            else if(0==strcmp("Order", s.c_str()))
+                p.BondTyper = MCSBondCompareOrder;
+            else if(0==strcmp("OrderExact", s.c_str()))
+                p.BondTyper = MCSBondCompareOrderExact;
         }
 
     }
