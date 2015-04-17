@@ -37,11 +37,11 @@ build:
 # scripts to run before build
 before_build:
   - echo Running cmake...
-  - dir c:\Libraries\boost
+  - dir "%BOOST_LIBRARYDIR%"
   - cd c:\projects\RDKit
   - mkdir c:\projects\RDKit\build
   - cd c:\projects\RDKit\build
-  - cmake -G "Visual Studio 12 Win64" -DCMAKE_INSTALL_PREFIX=%P% -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_SWIG_WRAPPERS=ON       -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
+  - cmake -G "Visual Studio 12 Win64" -DCMAKE_INSTALL_PREFIX=%P% -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF       -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
 
 test_script:
   - cd c:\projects\RDKit\build
