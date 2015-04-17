@@ -37,8 +37,9 @@ build:
 # scripts to run before build
 before_build:
   - echo Running cmake...
-  - dir %BOOST_ROOT%
-  - dir %BOOST_LIBRARYDIR%
+  - dir c:\Libraries\boost
+  - dir c:\Libraries\boost\stage
+  - dir c:\Libraries\boost\stage\lib
   - cd c:\projects\RDKit
   - mkdir c:\projects\RDKit\build
   - cd c:\projects\RDKit\build
