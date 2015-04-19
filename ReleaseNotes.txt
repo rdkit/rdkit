@@ -63,6 +63,8 @@ Bug Fixes:
     (github issue #431 from cowsandmilk)
   - Problems caused by heteroatoms with radicals in aromatic rings.
     (github issue #432)
+  - Conversion from mol to InChI getting ring stereo wrong
+    (github issue #437)
   - Metals in mol2 blocks handled incorrectly
     (github issue #438)
   - Fixed a few tests failing when the Windows git client is used
