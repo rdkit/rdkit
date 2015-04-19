@@ -413,6 +413,20 @@ void testGithubIssue437(){
     std::string smi2 = MolToSmiles(*m,true);
     TEST_ASSERT(smi1==smi2);
   }
+  {
+    // this was the original molecule in the bug report
+    std::string smiles="OC(=NCCc1ccccc1)[C@H]1CC[C@H](Cn2c(O)nc3ccccc3c2=O)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C24H27N3O3/c28-22(25-15-14-17-6-2-1-3-7-17)19-12-10-18(11-13-19)16-27-23(29)20-8-4-5-9-21(20)26-24(27)30/h1-9,18-19H,10-16H2,(H,25,28)(H,26,30)/t18-,19-");
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
