@@ -179,17 +179,17 @@ namespace RDKit {
         }
 
         if(dp_atoms[i].neighborNum < dp_atoms[j].neighborNum){
-          return 1;
+          return -1;
         }
         else if(dp_atoms[i].neighborNum > dp_atoms[j].neighborNum){
-          return -1;
+          return 1;
         }
 
         if(dp_atoms[i].revistedNeighbors < dp_atoms[j].revistedNeighbors){
-          return 1;
+          return -1;
         }
         else if(dp_atoms[i].revistedNeighbors > dp_atoms[j].revistedNeighbors){
-          return -1;
+          return 1;
         }
 
         if((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay){
