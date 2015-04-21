@@ -2847,6 +2847,14 @@ CAS<~>
     self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)],
                      [10])
     
+  def testGetShortestPath(self):
+    """ test the GetShortestPath() wrapper
+    """
+    smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O"
+    m = Chem.MolFromSmiles(smi)
+    path = Chem.GetShortestPath(m, 1, 20)
+    self.assertEqual(path, [1, 2, 3, 16, 17, 18, 20])
+    
 if __name__ == '__main__':
   unittest.main()
 
