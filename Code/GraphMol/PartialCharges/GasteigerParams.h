@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2015 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #define _RD_GASTEIGERPARAMS_H
 
 #include <RDGeneral/types.h>
+#include <RDGeneral/Exceptions.h>
 #include <string>
 #include <map>
 
@@ -55,14 +56,14 @@ namespace RDKit {
 	  message += elem;
 	  message += " Mode: ";
 	  message += mode;
-	  throw message.c_str();
+	  throw ValueErrorException(message);
 	} else {
           iter=d_paramMap.find(std::make_pair(std::string("X"),std::string("*")));
           if (iter != d_paramMap.end()) {
             return iter->second;
           } else {
             std::string message = "ERROR: Default Gasteiger Partial Charge parameters are missing";
-            throw message.c_str();
+            throw ValueErrorException(message);
           }
 	}
       }
