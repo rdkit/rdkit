@@ -1312,6 +1312,30 @@ void testNeedsUpdatePropertyCacheSDWriter(){
   }
 }
 
+void testGithub488(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 488: SmilesWriter not creating automatic name values for molecules read from CTABs" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("O");
+    TEST_ASSERT(m1);
+    m1->setProp("_Name","");
+    std::stringstream ss;
+    SmilesWriter w(&ss);
+    w.write(*m1);
+    m1->setProp("_Name","foo");
+    w.write(*m1);
+    m1->clearProp("_Name");
+    w.write(*m1);
+    m1->setProp("_Name"," ");
+    w.write(*m1);
+    w.close();
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("O 0")!=std::string::npos);
+    TEST_ASSERT(txt.find("O foo")!=std::string::npos);
+    TEST_ASSERT(txt.find("O 2")!=std::string::npos);
+    TEST_ASSERT(txt.find("O  \n")!=std::string::npos);
+  }
+}
+
 
 
 int main() {
@@ -1444,4 +1468,10 @@ int main() {
   testIssue3525000();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub488();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+
 }
