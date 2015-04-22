@@ -115,12 +115,12 @@ namespace RDKit{
     }
   }
 
-    python::list getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
+    python::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
       if(aid1<0 || aid1>=mol.getNumAtoms() ||
          aid2<0 || aid2>=mol.getNumAtoms() ){
         throw_value_error("bad atom index");
       }
-      return static_cast<python::list>(MolOps::getShortestPath(mol, aid1, aid2));
+      return static_cast<python::tuple>(MolOps::getShortestPath(mol, aid1, aid2));
     }
 
     ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
