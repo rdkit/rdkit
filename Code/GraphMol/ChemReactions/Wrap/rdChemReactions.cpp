@@ -41,6 +41,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 namespace python = boost::python;
 
@@ -310,6 +311,10 @@ Sample Usage:\n\
 'CN(C)C=O'\n\
 \n\
 ";
+  
+  python::class_<RDKit::MOL_SPTR_VECT>("ROMolList")
+    .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>() );
+
   python::class_<RDKit::ChemicalReaction>("ChemicalReaction",docString.c_str(),
                                           python::init<>("Constructor, takes no arguments"))
     .def(python::init<const std::string &>())
@@ -378,6 +383,17 @@ Sample Usage:\n\
          (python::arg("reaction"), python::arg("queries")=python::dict(),
           python::arg("propName")="molFileValue", python::arg("getLabels")=false),
          "adds recursive queries and returns reactant labels")
+    
+    .def("GetReactants", &RDKit::ChemicalReaction::getReactants,
+         python::return_value_policy<python::reference_existing_object>(),
+         "get the reactant templates")
+    .def("GetProducts", &RDKit::ChemicalReaction::getProducts,
+         python::return_value_policy<python::reference_existing_object>(),
+         "get the product templates")
+    .def("GetAgents", &RDKit::ChemicalReaction::getAgents,
+         python::return_value_policy<python::reference_existing_object>(),
+         "get the agent templates")
+    
     // enable pickle support
     .def_pickle(RDKit::reaction_pickle_suite())
   ;
