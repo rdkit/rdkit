@@ -410,8 +410,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m2.GetNumAtoms(),3)
     self.assertFalse(m2.GetAtomWithIdx(1).HasQuery())
 
-    # map somthing else BUT they hydrogen
-    #  should be the same as merging all
+    # here the hydrogen is unmapped
+    #  should be the same as merging all hydrogens
     m = Chem.MolFromSmiles('CC[H]',False)
     m.GetAtomWithIdx(1).SetProp("molAtomMapNumber", "1")
     self.assertEqual(m.GetNumAtoms(),3)
