@@ -504,10 +504,22 @@ M  END
     # currently ToBinary does not save atom props
     # rxn2 = rdChemReactions.ChemicalReaction(rxn.ToBinary())
 
+  def test21CheckRawIters(self):
+    RLABEL     = "_MolFileRLabel"
+    amine_rxn =  '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'
+    rxn = rdChemReactions.ReactionFromRxnBlock(amine_rxn)
+    reactants = rxn.GetReactants()
+    self.assertEquals( len(reactants), rxn.GetNumReactantTemplates() )
+    products = rxn.GetProducts()
+    self.assertEquals( len(products), rxn.GetNumProductTemplates() )
+    agents = rxn.GetAgents()
+    self.assertEquals( len(agents), rxn.GetNumAgentTemplates() )
 
-
-
-    
+    for i in range(rxn.GetNumReactantTemplates()):
+      p = rxn.GetReactantTemplate(i)
+      mb1 = Chem.MolToMolBlock(p)
+      mb2 = Chem.MolToMolBlock(reactants[i])
+      self.assertEquals(mb1, mb2)
 
 if __name__ == '__main__':
   unittest.main()
