@@ -509,7 +509,7 @@ namespace RDKit{
     //   - By default all hydrogens are removed, however if
     //     merge_unmapped_only is true, any hydrogen participating
     //     in an atom map will be retained
-    void mergeQueryHs(RWMol &mol, bool merge_unmapped_only){
+    void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly){
       std::vector<unsigned int> atomsToRemove;
       
       unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
@@ -524,7 +524,7 @@ namespace RDKit{
             Atom &bgn = *mol.getAtomWithIdx(*begin);
             if(bgn.getAtomicNum() == 1 &&
                bgn.getDegree() == 1 &&
-               (!merge_unmapped_only || !bgn.hasProp(common_properties::molAtomMapNumber))
+               (!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber))
                ){
               atomsToRemove.push_back(*begin);
               ++numHsToRemove;
@@ -596,9 +596,9 @@ namespace RDKit{
       }
 
     };
-    ROMol *mergeQueryHs(const ROMol &mol, bool merge_unmapped_only){
+    ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly){
       RWMol *res = new RWMol(mol);
-      mergeQueryHs(*res, merge_unmapped_only);
+      mergeQueryHs(*res, mergeUnmappedOnly);
       return static_cast<ROMol *>(res);
     };
 
