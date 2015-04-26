@@ -222,14 +222,14 @@ namespace RDKit{
           all atoms removed.
         - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
         - By default all hydrogens are removed, however if
-          merge_unmapped_only is true, any hydrogen participating
+          mergeUnmappedOnly is true, any hydrogen participating
           in an atom map will be retained
 	
     */
-    ROMol *mergeQueryHs(const ROMol &mol, bool merge_unmapped_only=false);
+    ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly=false);
     //! \overload
     // modifies the molecule in place
-    void mergeQueryHs(RWMol &mol, bool merge_unmapped_only=false);
+    void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly=false);
 
     //! returns a copy of a molecule with the atoms renumbered
     /*!
