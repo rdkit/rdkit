@@ -824,12 +824,13 @@ namespace RDKit {
             TargetMatch& match = seed.MatchResult[itarget];
             if(match.empty())
                 return false;
-/* // CHIRALITY: FinalMatchCheck:
+// testGithubIssue481() workaround
+// CHIRALITY: FinalMatchCheck:
 if(Parameters.AtomCompareParameters.MatchChiralTag || Parameters.FinalMatchChecker) {   // TEMP
         match.clear();
         return false;
 }
-*/
+
             bool matched = false;
             for(unsigned newBondSeedIdx = match.MatchedBondSize; newBondSeedIdx < seed.getNumBonds(); newBondSeedIdx++) {
                 matched = false;

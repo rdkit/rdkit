@@ -133,7 +133,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual( fcat.GetFPLength(), 1)
         for i in range(fcat.GetFPLength()):
             self.assertEqual(fcat.GetBitOrder(i),6)
-            self.assertEqual(fcat.GetBitDescription(i),"C<-O>1CCCCO1")
+            self.assertEqual(fcat.GetBitDescription(i),"C1CC<-O>OCC1")
             self.assertEqual(tuple(fcat.GetBitFuncGroupIds(i)),(1,))
             
         

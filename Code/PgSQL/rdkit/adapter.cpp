@@ -1980,6 +1980,8 @@ findMCSsmiles(char* smiles, char* params){
     try {
         MCSResult res = RDKit::findMCS(molecules, &p);
         mcs = res.SmartsString;
+        if(!res.isCompleted())
+          ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS timed out, result is not maximal")));
     } catch (...) {
         ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
         mcs.clear();
@@ -2033,6 +2035,8 @@ findMCS(void* vmols, char* params)
 
     try {
         MCSResult res = RDKit::findMCS(*molecules, &p);
+        if(!res.isCompleted())
+          ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS timed out, result is not maximal")));
         mcs = res.SmartsString;
     } catch (...) {
         ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));

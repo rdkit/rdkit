@@ -1318,7 +1318,7 @@ void test11(){
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m,true);
     delete m;
-    std::cout << smi1 << "\n" << smi2 << std::endl;
+    //std::cout << smi1 << "\n" << smi2 << std::endl;
     TEST_ASSERT(smi1==smi2);
 
   }
@@ -1360,8 +1360,8 @@ int main(){
   test11();
   test8();
   test7();
-#endif
   test12();
+#endif
   return 0;
 }
 

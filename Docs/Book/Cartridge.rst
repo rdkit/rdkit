@@ -400,7 +400,8 @@ The same thing can be done with a SMILES column::
      [#6](-[#7]-[#6]-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#6](-,:[#6])-,:[#6]
     (1 row)
 
-It's also possible to adjust some of the parameters to the FMCS algorithm, though this is somewhat more painful as of this writing (the 2015_03_1 release). Here's an example::
+It's also possible to adjust some of the parameters to the FMCS algorithm, though this is somewhat more painful as of this writing (the 2015_03_1 release). 
+Here are a couple of examples::
 
     chembl_20=# select fmcs_smiles(str,'{"Threshold":0.8}') from 
     chembl_20-#   (select string_agg(m::text,' ') as str from rdk.mols 
@@ -408,6 +409,26 @@ It's also possible to adjust some of the parameters to the FMCS algorithm, thoug
                                                                                fmcs_smiles                                                                            
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------
      [#6]-[#6]-[#8]-[#6](-[#6](=[#8])-[#7]-[#6](-[#6])-[#6](-,:[#6])-,:[#6])-[#6](-[#8])-[#6](-[#8])-[#6](-[#8]-[#6]-[#6])-[#6]-[#7]-[#6](-[#6])-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+    chembl_20=# select fmcs_smiles(str,'{"AtomCompare":"Any"}') from 
+    chembl_20-# (select string_agg(m::text,' ') as str from rdk.mols 
+    chembl_20(# join compound_records using (molregno) where doc_id=4) as str ;
+                                                                                  fmcs_smiles                                                                               
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#6]-,:[#6,#7]-[#8,#6]-[#6,#7](-[#6,#8]-[#7,#6]-,:[#6,#7]-,:[#6,#7]-,:[#7,#6]-,:[#6])-[#6,#7]-[#6]-[#6](-[#8,#6]-[#6])-[#6,#7]-[#7,#6]-[#6]-,:[#6,#8]-,:[#7,#6]-,:[#6]
+    (1 row)
+
+*Note* The combination of ``"AtomCompare":"Any"`` and a value of ``"Threshold"`` that is less than 1.0 does a quite generic search and can results in very long search times. 
+Using ``"Timeout"`` with this combination is recommended::
+
+    chembl_20=# select fmcs_smiles(str,'{"AtomCompare":"Any","CompleteRingsOnly":true,"Threshold":0.8,"Timeout":60}') from
+    chembl_20-#  (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_20(#   join compound_records using (molregno) where doc_id=3) as str ;
+    WARNING:  findMCS timed out, result is not maximal
+                                                                                              fmcs_smiles                                                                                          
+    -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#8]=[#6](-[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](=[#8])-[#7]1-[#6]-[#6]-[#6]-[#6,#7]-[#6]2:[#6]-1:[#6]:[#6]:[#16]:2)-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1
     (1 row)
 
 Available parameters and their default values are:
@@ -420,8 +441,8 @@ Available parameters and their default values are:
   - RingMatchesRingOnly (false)
   - CompleteRingsOnly (false)
   - MatchStereo (false)  Applies to bonds
-
- 
+  - AtomCompare ("Elements") can be "Elements", "Isotopes", or "Any"
+  - BondCompare ("Order") can be "Order", "OrderExact", or "Any"
     
 Reference Guide
 +++++++++++++++

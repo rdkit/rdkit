@@ -432,7 +432,6 @@ namespace RDKit {
           }
 
           probe.push_back(atomIdx);
-          updateAtomNeighborIndex(atoms, atoms[nbrIdx].bonds);
           for(unsigned i=0; i<atoms[nbrIdx].bonds.size(); ++i){
             if(atoms[nbrIdx].bonds.at(i).nbrIdx != atomIdx){
               probe.push_back(atoms[nbrIdx].bonds.at(i).nbrIdx);

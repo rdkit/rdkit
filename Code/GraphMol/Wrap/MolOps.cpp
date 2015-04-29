@@ -59,7 +59,7 @@ namespace RDKit{
                                           bool returnCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
     if(!bondIndices)
-	throw_value_error("empty bond indices");
+        throw_value_error("empty bond indices");
       
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
@@ -75,7 +75,7 @@ namespace RDKit{
     if(pyBondTypes){
       unsigned int nVs=python::extract<unsigned int>(pyBondTypes.attr("__len__")());
       if(nVs!=bondIndices->size()) {
-	throw_value_error("bondTypes shorter than bondIndices");
+        throw_value_error("bondTypes shorter than bondIndices");
       }
       bondTypes = new std::vector< Bond::BondType >(nVs);
       for(unsigned int i=0;i<nVs;++i){
@@ -115,14 +115,22 @@ namespace RDKit{
     }
   }
 
-  ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
+    python::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
+      if(aid1<0 || aid1>=mol.getNumAtoms() ||
+         aid2<0 || aid2>=mol.getNumAtoms() ){
+        throw_value_error("bad atom index");
+      }
+      return static_cast<python::tuple>(MolOps::getShortestPath(mol, aid1, aid2));
+    }
+
+    ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
                                bool addDummies,
                                python::object pyDummyLabels,
                                python::object pyBondTypes,
                                python::list pyCutsPerAtom){
     std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
     if(!bondIndices)
-	throw_value_error("empty bond indices");
+        throw_value_error("empty bond indices");
     std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
     if(pyDummyLabels){
       unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
@@ -137,7 +145,7 @@ namespace RDKit{
     if(pyBondTypes){
       unsigned int nVs=python::extract<unsigned int>(pyBondTypes.attr("__len__")());
       if(nVs!=bondIndices->size()) {
-	throw_value_error("bondTypes shorter than bondIndices");
+        throw_value_error("bondTypes shorter than bondIndices");
       }
       bondTypes = new std::vector< Bond::BondType >(nVs);
       for(unsigned int i=0;i<nVs;++i){
@@ -772,8 +780,8 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
-      python::def("MergeQueryHs", (ROMol *(*)(const ROMol &))&MolOps::mergeQueryHs,
-                  (python::arg("mol")),
+      python::def("MergeQueryHs", (ROMol *(*)(const ROMol &,bool))&MolOps::mergeQueryHs,
+                  (python::arg("mol"), python::arg("mergeUnmappedOnly")=false),
                   "merges hydrogens into their neighboring atoms as queries",
                   python::return_value_policy<python::manage_new_object>());
 
@@ -1279,6 +1287,17 @@ namespace RDKit{
 \n";
       python::def("GetFormalCharge", &MolOps::getFormalCharge,docString.c_str());
 
+
+      // ------------------------------------------------------------------------
+      docString="Find the shortest path between two atoms using the Bellman-Ford algorithm.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - idx1: index of the first atom\n\
+    - idx2: index of the second atom\n\
+\n";
+      python::def("GetShortestPath", getShortestPathHelper, docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Does the CIP stereochemistry assignment \n\
