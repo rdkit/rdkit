@@ -117,13 +117,16 @@ namespace RDKit {
                 stmp = strip(tempStr);
               }
               mol->setProp(dlabel, prop);
+              
             }
         } else {
           // at this point we should always be at a line starting with '>'
-          // following a blank line. If this is not true throw an exception
+          // following a blank line. If this is not true issue a warning
           // FIX: should we be deleting the molecule (which is probably fine)
           // because we couldn't read the data ???
-          throw FileParseException("Problems encountered parsing data fields");
+          BOOST_LOG(rdWarningLog)
+            << "Ignoring spurious lines encountered parsing data fields"
+            << std::endl;
         }
       }
       d_line++;
