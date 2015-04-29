@@ -4,15 +4,15 @@
 
 [RDKit](https://github.com/rdkit/rdkit) is a collection of cheminformatics and machine-learning software written in C++ and Python.
 
-  * [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt)
+  * [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt) - a business friendly license for open source
   * Core data structures and algorithms in C++
   * [Python (2.x and 3.x) wrapper](http://www.rdkit.org/docs/GettingStartedInPython.html) generated using Boost.Python
   * Java and C# wrappers generated with SWIG
   * 2D and 3D molecular operations
   * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
-  * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL
+  * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL supporting substructure and similarity searches as well as many descriptor calculators
   * Cheminformatics nodes for [KNIME](http://tech.knime.org/community/rdkit)
-  * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful software harnessing the power of RDKit
+  * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful community-contributed software harnessing the power of the RDKit
 
 ## Web presence
 
