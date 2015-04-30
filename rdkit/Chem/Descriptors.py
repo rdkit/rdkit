@@ -58,7 +58,7 @@ MolWt.version=_rdMolDescriptors._CalcMolWt_version
 MolWt.__doc__="""The average molecular weight of the molecule
 
   >>> MolWt(Chem.MolFromSmiles('CC'))
-  30.069...
+  30.07
   >>> MolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
   53.49...
 
@@ -70,7 +70,7 @@ HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring 
   >>> HeavyAtomMolWt(Chem.MolFromSmiles('CC'))
   24.02...
   >>> HeavyAtomMolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
-  49.459...
+  49.46
 
 """
 HeavyAtomMolWt.version="1.0.0"

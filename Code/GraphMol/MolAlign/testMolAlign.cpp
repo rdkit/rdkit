@@ -504,11 +504,13 @@ namespace {
                     const std::vector<ROMol *> &mols,const std::vector<double> &rmsds,
                     const std::vector<double> &scores,
                     unsigned int count,unsigned int idx){
-    for(unsigned int rep=0;rep<100;++rep){
+    for(unsigned int rep=0;rep<30;++rep){
       MMFF::MMFFMolProperties refMP(*refMol);
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
-        if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        if(!(rep%10)){
+          BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        }
         ROMol prbMol(*mols[i]);
         MMFF::MMFFMolProperties prbMP(prbMol);
         MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP);
@@ -524,7 +526,7 @@ namespace {
                     const std::vector<double> &scores,
                     unsigned int count,unsigned int idx){
     ROMol refMolCopy(*refMol);
-    for(unsigned int rep=0;rep<100;++rep){
+    for(unsigned int rep=0;rep<30;++rep){
       unsigned int refNAtoms = refMolCopy.getNumAtoms();
       std::vector<double> refLogpContribs(refNAtoms);
       std::vector<double> refMRContribs(refNAtoms);
@@ -534,7 +536,9 @@ namespace {
         refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
       for(unsigned int i=0;i<mols.size();++i){
         if(i%count != idx) continue;
-        if(!(rep%10)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        if(!(rep%10)){
+          BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        }
         ROMol prbMol(*mols[i]);
         unsigned int prbNAtoms = prbMol.getNumAtoms();
         std::vector<double> prbLogpContribs(prbNAtoms);
@@ -667,10 +671,81 @@ void testCrippenO3AMultiThread() {
 #endif
 
 
+
+void testGetO3AForProbeConfs() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
+
+  SDMolSupplier suppl(sdf, true, false);
+  ROMol *refMol=suppl[13];
+  TEST_ASSERT(refMol);
+  
+  sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/probe_mol.sdf";
+  SDMolSupplier psuppl(sdf, true, false);
+  ROMol *prbMol=psuppl.next();
+  TEST_ASSERT(prbMol);
+  while(!psuppl.atEnd()){
+    ROMol *mol=psuppl.next();
+    if(!mol) continue;
+    Conformer *conf= new Conformer(mol->getConformer());
+    prbMol->addConformer(conf,true);
+    delete mol;
+  }
+  TEST_ASSERT(prbMol->getNumConformers()==50);
+
+
+  MMFF::MMFFMolProperties refMP(*refMol);
+  MMFF::MMFFMolProperties prbMP(*prbMol);
+
+  std::vector<std::pair<double,double> > oscores;
+  for(unsigned int i=0;i<prbMol->getNumConformers();++i){
+    MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP, MolAlign::O3A::MMFF94, i);
+    double rmsd=o3a.align();
+    double score=o3a.score();
+    oscores.push_back(std::make_pair(rmsd,score));
+  }
+
+  {
+    std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
+    MolAlign::getO3AForProbeConfs(*prbMol, *refMol, &prbMP, &refMP, o3s);
+    TEST_ASSERT(o3s.size()==prbMol->getNumConformers());
+    for(unsigned int i=0;i<prbMol->getNumConformers();++i){
+      TEST_ASSERT(feq(oscores[i].first,o3s[i]->align()));
+      TEST_ASSERT(feq(oscores[i].second,o3s[i]->score()));
+    }  
+  }  
+#ifdef RDK_TEST_MULTITHREADED
+  {
+
+    ROMol prbMol2(*prbMol);
+    unsigned int nDups=10;
+    for(unsigned int j=0;j<nDups;++j){
+      for(unsigned int i=0;i<prbMol->getNumConformers();++i){
+        prbMol2.addConformer(new Conformer(prbMol->getConformer(i)),true);
+      }
+    }
+    
+    std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
+    MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 4);
+    TEST_ASSERT(o3s.size()==prbMol2.getNumConformers());
+    for(unsigned int i=0;i < prbMol2.getNumConformers(); ++i){
+      TEST_ASSERT(feq(oscores[i%prbMol->getNumConformers()].first,o3s[i]->align()));
+      TEST_ASSERT(feq(oscores[i%prbMol->getNumConformers()].second,o3s[i]->score()));
+    }
+  }
+   
+#endif
+  delete refMol;
+  delete prbMol;
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
+#if 1
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -730,6 +805,12 @@ int main() {
   std::cout << "\t testCrippenO3A multithreading\n\n";
   testCrippenO3AMultiThread();
 #endif
+#endif
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test getO3AForProbeConfs\n\n";
+  testGetO3AForProbeConfs();
+
   std::cout << "***********************************************************\n";
 
 }

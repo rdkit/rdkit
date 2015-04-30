@@ -322,5 +322,5 @@ ATOM_NULL_QUERY *makeAtomNullQuery(){
   res->setDescription("AtomNull");
   return res;
 }
-  
+
 };

@@ -1,5 +1,6 @@
 # RDKit
 [![Build status](https://travis-ci.org/rdkit/rdkit.svg)](https://travis-ci.org/rdkit/rdkit)
+[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
 
 [RDKit](https://github.com/rdkit/rdkit) is a collection of cheminformatics and machine-learning software written in C++ and Python.
 
@@ -8,7 +9,7 @@
   * [Python (2.x and 3.x) wrapper](http://www.rdkit.org/docs/GettingStartedInPython.html) generated using Boost.Python
   * Java and C# wrappers generated with SWIG
   * 2D and 3D molecular operations
-  * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) generation for machine learning
+  * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
   * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL
   * Cheminformatics nodes for [KNIME](http://tech.knime.org/community/rdkit)
   * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful software harnessing the power of RDKit
@@ -17,14 +18,12 @@
 
   * [RDKit web page](https://github.com/rdkit/rdkit)
   * [Blog](https://rdkit.blogspot.com)
-  * [Wiki](https://code.google.com/p/rdkit/w/list)
-  * [Documentation](http://www.rdkit.org/docs/index.html)
+  * [Documentation](http://www.rdkit.org/docs/index.html) also
+    available at [ReadTheDocs](http://rdkit.readthedocs.org/en/latest/)
 
 #### Code
 
   * [GitHub code](https://github.com/rdkit) and [bug tracker](https://github.com/rdkit/rdkit/issues)
-  * [Sourceforge](http://sourceforge.net/projects/rdkit)
-  * [Google code](http://code.google.com/p/rdkit/)
 
 #### Community
 
@@ -39,7 +38,8 @@
   * [2014 UGM](https://github.com/rdkit/UGM_2014)
 
 ## Documentation
-Available on [RDKit page](http://www.rdkit.org/docs/index.html) and in [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on GitHub
+Available on the [RDKit page](http://www.rdkit.org/docs/index.html)
+and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on GitHub
 
 ## Installation
 

@@ -15,10 +15,13 @@
 namespace python = boost::python;
 
 namespace RDKit {
+   
+
     MCSResult *FindMCSWrapper(python::object mols,bool maximizeBonds,double threshold,
                               unsigned timeout,bool verbose,
                               bool matchValences,
                               bool ringMatchesRingOnly,bool completeRingsOnly,
+                              bool matchChiralTag,
                               AtomComparator atomComp, BondComparator bondComp) {
         std::vector<ROMOL_SPTR> ms;
         unsigned int nElems=python::extract<unsigned int>(mols.attr("__len__")());
@@ -28,8 +31,8 @@ namespace RDKit {
             ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
         }
 
-        MCSResult *res= new MCSResult(findMCS (ms,maximizeBonds,threshold,timeout,verbose,
-                                               matchValences,ringMatchesRingOnly,completeRingsOnly,
+        MCSResult *res= new MCSResult(findMCS(ms,maximizeBonds,threshold,timeout,verbose,
+                                               matchValences,ringMatchesRingOnly,completeRingsOnly,matchChiralTag,
                                                atomComp,bondComp));
         return res;
     }
@@ -74,6 +77,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                  python::arg("matchValences")=false,
                  python::arg("ringMatchesRingOnly")=false,
                  python::arg("completeRingsOnly")=false,
+                 python::arg("matchChiralTag")=false,
                  python::arg("atomCompare")=RDKit::AtomCompareElements,
                  python::arg("bondCompare")=RDKit::BondCompareOrder
                 ),

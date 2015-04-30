@@ -190,25 +190,32 @@ include_directories(${RDKit_CodeDir})
 # detect it.
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
-if(RDK_TEST_MULTITHREADED)
-  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
-endif()
-
-if (EMSCRIPTEN)
-  # No threading, nothing to do here.
+if(EMSCRIPTEN)
+  # no threading, nothing to do here
+  # don't want to test for pthreads when cross
+  #  compiling since we can't really run the compiled
+  #  binary yet
 else()
+    if(RDK_TEST_MULTITHREADED)
+      ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED -DBOOST_ALL_NO_LIB")
+    endif()
+
+    if(RDK_TEST_MULTITHREADED OR RDK_BUILD_THREADSAFE_SSS)
+      ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
+    endif()
+
+
     find_package (Threads)
     if(RDK_BUILD_THREADSAFE_SSS)
-       set(T_LIBS ${Boost_LIBRARIES})
-       find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
-       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-       ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
-       set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+      set(T_LIBS ${Boost_LIBRARIES})
+      find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
+      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+      ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
+      set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
     else()
       set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
     endif()
- endif()
-
+endif()
 
 # setup our compiler flags:
 if (RDK_TEST_COVERAGE)

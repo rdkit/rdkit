@@ -207,8 +207,11 @@ namespace RDKit{
           //the hypothesis is that we prefer positively charged atoms over negatively charged ones
           //for multi default valence atoms (e.g. CS(O)(O) should end up being C[S+]([O-])[O-] rather
           //than C[S-][O-][O-] but that might change based no different examples
-          int assignChg=expVal - (*valens.begin());
-          if (assignChg>0){
+          int nElectrons=PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
+          int assignChg;
+          if(nElectrons>=4) assignChg = expVal - (*valens.begin());
+          else assignChg = (*valens.begin()) - expVal;
+          if (assignChg>0 && nElectrons>=4){
             for (vi = valens.begin(); vi != valens.end(); ++vi) {
               //Since we do this only for nocharged atoms we can get away without including the
               //charge into this
@@ -540,7 +543,6 @@ namespace RDKit{
         res=query;
       } else{
         res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
-        res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
       }
 
       //now assign the properties

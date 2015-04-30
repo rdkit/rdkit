@@ -2676,7 +2676,7 @@ namespace RDKit {
           
           case 2:
             // if the central atom is oxygen
-            if (atomicNum[1] == 6) {
+            if (atomicNum[1] == 8) {
               mmffAngleParams->theta0 = 105.0;
             }
             // if the central atom is linear
@@ -2689,7 +2689,7 @@ namespace RDKit {
             if ((mmffPropParamsCentralAtom->val == 3)
               && (mmffPropParamsCentralAtom->mltb == 0)) {
               // if the central atom is nitrogen
-              if (atomicNum[1] == 5) {
+              if (atomicNum[1] == 7) {
                 mmffAngleParams->theta0 = 107.0;
               }
               else {

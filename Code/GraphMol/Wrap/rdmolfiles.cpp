@@ -10,9 +10,12 @@
 //
 #include "rdmolops.h"
 #include <boost/python.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -21,7 +24,7 @@
 #include <RDGeneral/FileParseException.h>
 
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
 
@@ -222,6 +225,68 @@ namespace RDKit{
     delete asymbols;
     delete bsymbols;
     return res;
+  }
+
+  std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
+                                      bool breakTies=true,
+                                      bool includeChirality=true,
+                                      bool includeIsotopes=true)
+  {
+    std::vector<unsigned int> ranks(mol.getNumAtoms());
+    Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
+    return ranks;
+  }
+
+  std::vector<int> CanonicalRankAtomsInFragment(
+                         const ROMol &mol,
+                         python::object atomsToUse,
+                         python::object bondsToUse,
+                         python::object atomSymbols,
+                         python::object bondSymbols,
+                         bool breakTies=true)
+
+  {
+    std::vector<int> *avect=pythonObjectToVect(
+                            atomsToUse,static_cast<int>(mol.getNumAtoms()));
+    if(!avect || !(avect->size())){
+      throw_value_error("atomsToUse must not be empty");
+    }
+    std::vector<int> *bvect=pythonObjectToVect(
+                            bondsToUse,static_cast<int>(mol.getNumBonds()));
+    std::vector<std::string> *asymbols=pythonObjectToVect<std::string>(atomSymbols);
+    std::vector<std::string> *bsymbols=pythonObjectToVect<std::string>(bondSymbols);
+    if(asymbols && asymbols->size()!=mol.getNumAtoms()){
+      throw_value_error("length of atom symbol list != number of atoms");
+    }
+    if(bsymbols && bsymbols->size()!=mol.getNumBonds()){
+      throw_value_error("length of bond symbol list != number of bonds");
+    }
+
+    boost::dynamic_bitset<> atoms(mol.getNumAtoms());
+    for(size_t i=0; i<avect->size(); ++i)
+      atoms[(*avect)[i]] = true;
+    
+    boost::dynamic_bitset<> bonds(mol.getNumBonds());
+    for(size_t i=0; bvect && i<bvect->size(); ++i)
+      bonds[(*bvect)[i]] = true;
+    
+    std::vector<unsigned int> ranks(mol.getNumAtoms());    
+    Canon::rankFragmentAtoms(mol, ranks,
+                             atoms, bonds,
+                             asymbols, bsymbols, breakTies);
+
+    std::vector<int> resRanks(mol.getNumAtoms());
+    // set unused ranks to -1 for the Python interface
+    for(size_t i=0; i<atoms.size(); ++i)
+    {
+      if (!atoms[i]){
+        resRanks[i] = -1;
+      } else {
+        resRanks[i] = static_cast<int>(ranks[i]);
+      }
+    }
+    
+    return resRanks;
   }
 
 }
@@ -801,6 +866,72 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("confId")=-1,python::arg("flavor")=0),
 	      docString.c_str());
 
+  docString="Returns the canonical atom ranking for each atom of a molecule fragment.\n\
+  If breakTies is False, this returns the symmetry class for each atom.  The symmetry\n\
+  class is used by the canonicalization routines to type each atom based on the whole\n\
+  chemistry of the molecular graph.  Any atom with the same rank (symmetry class) is\n\
+  indistinguishable.  For example:\n\
+\n\
+    > mol = MolFromSmiles('C1NCN1')\n\
+    > list(CanonicalRankAtoms(mol, breakTies=False))\n\
+    [0,1,0,1]\n\
+\n\
+  In this case the carbons have the same symmetry class and the nitrogens have the same\n\
+  symmetry class.  From the perspective of the Molecular Graph, they are indentical.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - breakTies: (optional) force breaking of ranked ties [default=True]\n\
+    - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
+    - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("CanonicalRankAtoms",CanonicalRankAtoms,
+	      (python::arg("mol"),
+	       python::arg("breakTies")=true,
+	       python::arg("includeChirality")=true,
+	       python::arg("includeIsotopes")=true),
+	      docString.c_str());
+  
+  docString="Returns the canonical atom ranking for each atom of a molecule fragment\n\
+  See help(CanonicalRankAtoms) for more information.\n\
+\n\
+   > mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
+   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
+   [0,1,0,1,-1,-1,-1,-1]\n\
+   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
+   [-1,-1,-1,-1,0,1,0,1]\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse : a list of atoms to include in the fragment\n\
+    - bondsToUse : (optional) a list of bonds to include in the fragment\n\
+                   if not provided, all bonds between the atoms provided\n\
+                   will be included.\n\
+    - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
+                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
+                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+    - breakTies: (optional) force breaking of ranked ties\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("CanonicalRankAtomsInFragment",CanonicalRankAtomsInFragment,
+	      (python::arg("mol"),
+               python::arg("atomsToUse"),
+               python::arg("bondsToUse")=0,
+               python::arg("atomSymbols")=0,
+               python::arg("bondSymbols")=0,
+	       python::arg("breakTies")=true),
+	      docString.c_str());
+  
   /********************************************************
    * MolSupplier stuff
    *******************************************************/

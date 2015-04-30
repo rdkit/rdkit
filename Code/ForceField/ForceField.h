@@ -12,12 +12,13 @@
 
 #include <vector>
 #include <boost/smart_ptr.hpp>
+#include <boost/foreach.hpp>
 #include <Geometry/point.h>
 
 namespace ForceFields {
   class ForceFieldContrib;
   typedef std::vector<int> INT_VECT;
-  typedef boost::shared_ptr<ForceFieldContrib> ContribPtr;
+  typedef boost::shared_ptr<const ForceFieldContrib> ContribPtr;
   typedef std::vector<ContribPtr> ContribPtrVect;
   
   //-------------------------------------------------------
@@ -60,11 +61,15 @@ namespace ForceFields {
 
     ~ForceField();
 
+    //! copy ctor, copies contribs.
+    ForceField(const ForceField &other);
+    
+    
     //! does initialization
     void initialize();
 
 
-    //! calculates and returns the energy based on existing positions in the forcefield
+    //! calculates and returns the energy (in kcal/mol) based on existing positions in the forcefield
     /*!
 
     \return the current energy
@@ -201,6 +206,7 @@ namespace ForceFields {
 
     //! initializes our internal distance matrix
     void initDistanceMatrix();
+
   };
 }
 #endif

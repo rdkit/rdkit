@@ -30,7 +30,7 @@
 #include <ForceField/ForceField.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <math.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -1344,6 +1344,34 @@ void testGithub256() {
   }
 }
 
+
+#ifdef RDK_TEST_MULTITHREADED
+void testMultiThreadMultiConf() {
+  std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
+  ROMol *m = SmilesToMol(smi, 0, 1);
+  INT_VECT cids;
+  ROMol m2(*m);
+  DGeomHelpers::EmbedMultipleConfs(*m, cids, 200, 1, 30, 100, true,
+                                  false,-1);
+  DGeomHelpers::EmbedMultipleConfs(m2, cids, 200, 4, 30, 100, true,
+                                  false,-1);
+  INT_VECT_CI ci;
+ 
+  for (ci = cids.begin(); ci != cids.end(); ci++) {
+    ForceFields::ForceField *ff=UFF::constructForceField(*m, 100, *ci);
+    ff->initialize();
+    double e1=ff->calcEnergy();
+    TEST_ASSERT(e1>100.0);
+    TEST_ASSERT(e1<300.0);
+    delete ff;
+    ff=UFF::constructForceField(m2, 100, *ci);
+    ff->initialize();
+    double e2=ff->calcEnergy();
+    TEST_ASSERT(feq(e1,e2));
+  }
+}
+#endif
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1471,6 +1499,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test github issue 256: handling of zero-atom molecules\n\n";
   testGithub256();
 
+#ifdef RDK_TEST_MULTITHREADED
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test multi-threaded multi-conf embedding \n\n";
+  testMultiThreadMultiConf();
+#endif
 
 
 

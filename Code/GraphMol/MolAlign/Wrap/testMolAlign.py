@@ -406,6 +406,40 @@ class TestCase(unittest.TestCase):
           score2 = o3a2.Score()
           self.assertAlmostEqual(score1,score2,3)
 
+    def test15MultiConfs(self):
+      " test multi-conf alignment "
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      suppl = Chem.SDMolSupplier(sdf,removeHs=False)
+      refMol = suppl[13]
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'probe_mol.sdf')
+      prbSuppl = Chem.SDMolSupplier(sdf,removeHs=False)
+      tms = [x for x in prbSuppl]
+      prbMol=tms[0]
+      for tm in tms[1:]:
+        prbMol.AddConformer(tm.GetConformer(),True)
+      self.failUnlessEqual(prbMol.GetNumConformers(),50)
+
+      refParams = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+      prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+      cp = Chem.Mol(prbMol)
+      o3s = rdMolAlign.GetO3AForProbeConfs(cp,refMol,1,prbParams,refParams)
+      for i in range(prbMol.GetNumConformers()):
+        cp2 = Chem.Mol(prbMol)
+        o3 = rdMolAlign.GetO3A(cp2,refMol,prbParams,refParams,prbCid=i)
+        self.failUnlessAlmostEqual(o3s[i].Align(),o3.Align(),6)
+        self.failUnlessAlmostEqual(o3s[i].Score(),o3.Score(),6)
+
+      cp = Chem.Mol(prbMol)
+      o3s = rdMolAlign.GetCrippenO3AForProbeConfs(cp,refMol)
+      for i in range(prbMol.GetNumConformers()):
+        cp2 = Chem.Mol(prbMol)
+        o3 = rdMolAlign.GetCrippenO3A(cp2,refMol,prbCid=i)
+        self.failUnlessAlmostEqual(o3s[i].Align(),o3.Align(),6)
+        self.failUnlessAlmostEqual(o3s[i].Score(),o3.Score(),6)
+
+        
 
 if __name__ == '__main__':
     print("Testing MolAlign Wrappers")

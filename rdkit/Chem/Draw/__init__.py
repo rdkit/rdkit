@@ -6,6 +6,7 @@
 import os
 from rdkit.six import iteritems
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
+from rdkit.Chem.Draw.rdMolDraw2D import *
 
 def _getCanvas():
   useAGG=False

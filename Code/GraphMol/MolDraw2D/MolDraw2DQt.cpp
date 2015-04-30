@@ -44,44 +44,41 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DQt::drawLine( const pair<float,float> &cds1 ,
-                              const pair<float,float> &cds2 ) {
+  void MolDraw2DQt::drawLine( const Point2D &cds1 ,
+                              const Point2D &cds2 ) {
 
-    pair<float,float> c1 = getDrawCoords( cds1 );
-    pair<float,float> c2 = getDrawCoords( cds2 );
+    Point2D c1 = getDrawCoords( cds1 );
+    Point2D c2 = getDrawCoords( cds2 );
 
     const DashPattern &dashes=dash();
+    QPen pen=qp_.pen();
     if(dashes.size()){
       QVector<qreal> dd;
       for(unsigned int di=0;di<dashes.size();++di) dd << dashes[di];
-      QPen pen=qp_.pen();
       pen.setDashPattern(dd);
-      qp_.setPen(pen);
     } else {
-      QPen pen=qp_.pen();
       pen.setStyle(Qt::SolidLine);
-      qp_.setPen(pen);
     }
-    qp_.drawLine( QPointF( c1.first , c1.second ) , QPointF( c2.first , c2.second ) );
+    pen.setWidth(lineWidth());
+    qp_.setPen(pen);
+    qp_.drawLine( QPointF( c1.x , c1.y ) , QPointF( c2.x , c2.y ) );
 
   }
 
   // ****************************************************************************
   // draw the char, with the bottom left hand corner at cds
-  void MolDraw2DQt::drawChar( char c , const std::pair<float,float> &cds ) {
+  void MolDraw2DQt::drawChar( char c , const Point2D &cds ) {
 
     QRectF br = qp_.boundingRect( 0 , 0 , 100 , 100 , Qt::AlignLeft | Qt::AlignBottom ,
                                   QString( c ) );
-    qp_.drawText( QRectF( cds.first , cds.second , br.width() , br.height() ) ,
+    qp_.drawText( QRectF( cds.x , cds.y , br.width() , br.height() ) ,
                   Qt::AlignLeft | Qt::AlignBottom , QString( c ) , &br );
 
   }
 
   // ****************************************************************************
-  void MolDraw2DQt::drawTriangle( const pair<float , float> &cds1 ,
-                                  const pair<float , float> &cds2 ,
-                                  const pair<float, float> &cds3 ) {
-
+  void MolDraw2DQt::drawPolygon( const vector<Point2D > &cds ) {
+    PRECONDITION(cds.size()>=3,"must have at least three points");
 #ifdef NOTYET
     QBrush brush( "Black" );
     brush.setStyle( Qt::SolidPattern );
@@ -90,20 +87,20 @@ namespace RDKit {
 #endif
 
     qp_.save();
-    //   qp_.setBrush( brush );
+    QBrush brush=qp_.brush();
+    if(fillPolys())
+      brush.setStyle(Qt::SolidPattern);
+    else 
+      brush.setStyle(Qt::NoBrush);
+    qp_.setBrush( brush );
 
-    pair<float,float> c1 = getDrawCoords( cds1 );
-    pair<float,float> c2 = getDrawCoords( cds2 );
-    pair<float,float> c3 = getDrawCoords( cds3 );
-
-    QPointF points[3] = { QPointF( c1.first , c1.second ) ,
-                          QPointF( c2.first , c2.second ) ,
-                          QPointF( c3.first , c3.second ) };
-
-    qp_.drawConvexPolygon( points , 3 );
-
+    QPointF points[cds.size()];
+    for(unsigned int i=0;i<cds.size();++i){
+      Point2D lc = getDrawCoords( cds[i] );
+      points[i] = QPointF( lc.x, lc.y );
+    }
+    qp_.drawConvexPolygon( points , cds.size() );
     qp_.restore();
-
   }
 
   // ****************************************************************************
@@ -115,10 +112,10 @@ namespace RDKit {
   }
 
   // ****************************************************************************
-  void MolDraw2DQt::setFontSize( float new_size ) {
+  void MolDraw2DQt::setFontSize( double new_size ) {
 
     MolDraw2D::setFontSize( new_size );
-    float font_size_in_points = fontSize() * scale();
+    double font_size_in_points = fontSize() * scale();
 #ifdef NOTYET
     cout << "initial font size in points : " << qp_.font().pointSizeF() << endl;
     cout << "font_size_in_points : " << font_size_in_points << endl;
@@ -128,8 +125,8 @@ namespace RDKit {
     qp_.setFont( font );
 
     while( 1 ) {
-      float old_font_size_in_points = font_size_in_points;
-      float font_size_in_points = fontSize() * scale();
+      double old_font_size_in_points = font_size_in_points;
+      double font_size_in_points = fontSize() * scale();
       if( fabs( font_size_in_points - old_font_size_in_points ) < 0.1 ) {
         break;
       }
@@ -143,8 +140,8 @@ namespace RDKit {
 
   // ****************************************************************************
   // using the current scale, work out the size of the label in molecule coordinates
-  void MolDraw2DQt::getStringSize( const string &label , float &label_width ,
-                                   float &label_height ) const {
+  void MolDraw2DQt::getStringSize( const string &label , double &label_width ,
+                                   double &label_height ) const {
 
     label_width = 0.0;
     label_height = 0.0;
@@ -165,7 +162,7 @@ namespace RDKit {
       QRectF br = qp_.boundingRect( 0 , 0 , 100 , 100 ,
                                     Qt::AlignBottom | Qt::AlignLeft , next_char );
       label_height = br.height() / scale();
-      float char_width = br.width() / scale();
+      double char_width = br.width() / scale();
       if( 2 == draw_mode ) {
         char_width *= 0.5;
       } else if( 1 == draw_mode ) {

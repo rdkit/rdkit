@@ -22,6 +22,9 @@ SELECT mol_to_smiles(mol_from_smiles('c1ccccc1'));
 SELECT mol_to_smarts(mol_from_smiles('c1ccccc1'));
 SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
 SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
+SELECT is_valid_smiles('');
+SELECT mol_from_smiles('');
+SELECT mol_to_smiles(mol_from_smiles(''));
 
 
 CREATE TABLE pgmol (id int, m mol);
@@ -222,3 +225,78 @@ set rdkit.do_chiral_sss=false;
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol,false);
+
+-- special queries
+select 'c1ccc[nH]1'::mol@>mol_from_smiles('c1cccn1[H]') as match;
+select 'c1cccn1C'::mol@>mol_from_smiles('c1cccn1[H]') as match;
+select 'c1ccc[nH]1'::mol@>qmol_from_smiles('c1cccn1[H]') as match;
+select 'c1cccn1C'::mol@>qmol_from_smiles('c1cccn1[H]') as match;
+select 'c1ccc[nH]1'::mol@>mol_from_ctab('query
+  Mrv0541 04021509592D          
+
+  6  6  0  0  0  0            999 V2000
+   -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2652   -0.1002    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  4  5  2  0  0  0  0
+  1  5  1  0  0  0  0
+  3  4  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  END') as match;
+select 'c1cccn1C'::mol@>mol_from_ctab('query
+  Mrv0541 04021509592D          
+
+  6  6  0  0  0  0            999 V2000
+   -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2652   -0.1002    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  4  5  2  0  0  0  0
+  1  5  1  0  0  0  0
+  3  4  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  END') as match;
+select 'c1ccc[nH]1'::mol@>qmol_from_ctab('query
+  Mrv0541 04021509592D          
+
+  6  6  0  0  0  0            999 V2000
+   -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2652   -0.1002    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  4  5  2  0  0  0  0
+  1  5  1  0  0  0  0
+  3  4  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  END') as match;
+select 'c1cccn1C'::mol@>qmol_from_ctab('query
+  Mrv0541 04021509592D          
+
+  6  6  0  0  0  0            999 V2000
+   -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9796    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4493    1.1373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2652   -0.1002    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  4  5  2  0  0  0  0
+  1  5  1  0  0  0  0
+  3  4  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  END') as match;
+

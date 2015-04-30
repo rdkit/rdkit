@@ -11,7 +11,7 @@
 
 #include <boost/python.hpp>
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
@@ -222,7 +222,7 @@ BOOST_PYTHON_MODULE(rdForceField) {
 
   python::class_<PyForceField>("ForceField","A force field",python::no_init)
     .def("CalcEnergy",(double (PyForceField::*)() const)&PyForceField::calcEnergy,
-	 "Returns the energy of the current arrangement")
+	 "Returns the energy (in kcal/mol) of the current arrangement")
     .def("Minimize",&PyForceField::minimize,(python::arg("maxIts")=200,
 					   python::arg("forceTol")=1e-4,
 					   python::arg("energyTol")=1e-6),

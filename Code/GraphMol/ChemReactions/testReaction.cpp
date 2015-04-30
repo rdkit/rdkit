@@ -4117,7 +4117,7 @@ void test45SmilesWriter(){
 
     smi = ChemicalReactionToRxnSmiles(*rxn);
     TEST_ASSERT(smi==res)
-    TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[N:3]~[C:1]=[O:2]");
+    TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[C:1](=[O:2])~[N:3]");
 
     delete rxn;
     rxn = RxnSmartsToChemicalReaction(smi, 0, true);
@@ -4181,7 +4181,7 @@ void test45SmilesWriter(){
       res += MolToSmiles(**iter,true);
     }
 
-    smi = ChemicalReactionToRxnSmiles(*rxn);
+    smi = ChemicalReactionToRxnSmiles(*rxn, false);
     TEST_ASSERT(smi==res)
     TEST_ASSERT(smi!="C=O.N>>N~C=O");
     TEST_ASSERT(smi=="O=S.N>>N~S=O");
@@ -4671,7 +4671,7 @@ void test49ParensInProducts2(){
     TEST_ASSERT(prods[0][0]->getNumAtoms()==11);
     TEST_ASSERT(prods[0][0]->getNumBonds()==11);
 
-    smi = "CCCOc1ccn(NC)c1";
+    smi = "CCCOc1ccn(c1)NC";
     TEST_ASSERT(MolToSmiles(*prods[0][0]) == smi);
 
     delete rxn;
@@ -4818,7 +4818,7 @@ void test52RedundantProductMappingNumbersAndRunReactants(){
     TEST_ASSERT(prods[0].size()==1);
     TEST_ASSERT(prods[1].size()==1);
 
-    smi = "C([13C]1NCO1)[13C]1NCO1";
+    smi = "C1N[13C](C[13C]2NCO2)O1";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
     smi = "C(C1N[13C]O1)C1N[13C]O1";
     TEST_ASSERT(MolToSmiles(*prods[1][0], true) == smi);
@@ -5005,7 +5005,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     TEST_ASSERT(prods[0].size()==1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
+    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5093,7 +5093,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     TEST_ASSERT(prods[0].size()==1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
+    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5181,7 +5181,7 @@ void test54RedundantProductMappingNumbersAndRSChirality(){
     TEST_ASSERT(prods[0].size()==1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@](Cl)(Br)O[C@](F)(Cl)Br";
+    smi = "F[C@@](Cl)(Br)O[C@@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5275,7 +5275,8 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry(){
     TEST_ASSERT(prods[0].size()==1);
     TEST_ASSERT(prods[1].size()==1);
 
-    smi = "C/C=C/CC/C=C\\C";
+    smi = "C/C=C\\CC/C=C/C";
+    //std::cerr<<MolToSmiles(*prods[0][0],true)<<std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
     TEST_ASSERT(MolToSmiles(*prods[1][0], true) == smi);
 
@@ -5414,7 +5415,7 @@ void test57IntroductionOfNewChiralCenters(){
     TEST_ASSERT(prods.size()==1);
     TEST_ASSERT(prods[0].size()==1);
     BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@@H](Cl)CCC[C@H](C)F");
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }
@@ -5447,12 +5448,140 @@ void test57IntroductionOfNewChiralCenters(){
     TEST_ASSERT(prods.size()==1);
     TEST_ASSERT(prods[0].size()==1);
     BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@@H](Cl)CCC[C@H](C)F");
+    TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test58MolFileValueRoundTrip(){
+  ChemicalReaction *rxn;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing round trip molFileValue" << std::endl;
+
+  
+  const char *rxnB="$RXN\n" \
+    "\n"                        \
+    "      ISIS     090220091541\n"               \
+    "\n"                                          \
+    "  2  1\n"                                    \
+    "$MOL\n"                                      \
+    "\n"                                          \
+    "  -ISIS-  09020915412D\n"                    \
+    "\n"                                          \
+    "  3  2  0  0  0  0  0  0  0  0999 V2000\n"                           \
+    "   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n" \
+    "   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n" \
+    "   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+    "  1  2  1  0  0  0  0\n"                                             \
+    "  2  3  2  0  0  0  0\n"                                             \
+    "V    2 aldehyde\n"                                                   \
+    "M  RGP  1   1   1\n"                                                 \
+    "M  END\n"                                                            \
+    "$MOL\n"                                                              \
+    "\n"                                                                  \
+    "  -ISIS-  09020915412D\n"                                            \
+    "\n"                                                                  \
+    "  2  1  0  0  0  0  0  0  0  0999 V2000\n"                           \
+    "    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n" \
+    "    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n" \
+    "  1  2  1  0  0  0  0\n"                                             \
+    "V    2 aldehyde\n"                                                      \
+    "M  RGP  1   1   2\n"                                                 \
+    "M  END\n"                                                            \
+    "$MOL\n"                                                              \
+    "\n"                                                                  \
+    "  -ISIS-  09020915412D\n"                                            \
+    "\n"                                                                  \
+    "  4  3  0  0  0  0  0  0  0  0999 V2000\n"                           \
+    "   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n" \
+    "   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n" \
+    "   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n" \
+    "   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n" \
+    "  1  3  1  0  0  0  0\n"                                             \
+    "  1  2  1  0  0  0  0\n"                                             \
+    "  3  4  1  0  0  0  0\n"                                             \
+    "M  RGP  2   2   1   4   2\n"                                         \
+    "M  END";
+  
+  rxn = RxnBlockToChemicalReaction(rxnB);
+  // check the mol file values
+  for (MOL_SPTR_VECT::const_iterator template_mol = rxn->beginReactantTemplates();
+       template_mol != rxn->endReactantTemplates(); ++template_mol) {
+    const Atom *at=(*template_mol)->getAtomWithIdx(1);
+    TEST_ASSERT(at->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
+                "aldehyde");
+  }
+
+  ChemicalReaction *rxn2 = RxnBlockToChemicalReaction(ChemicalReactionToRxnBlock(*rxn));
+
+  for (MOL_SPTR_VECT::const_iterator template_mol = rxn2->beginReactantTemplates();
+       template_mol != rxn2->endReactantTemplates(); ++template_mol) {
+    const Atom *at=(*template_mol)->getAtomWithIdx(1);
+    TEST_ASSERT(at->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
+                "aldehyde");
+  }
+  
+  delete rxn;
+  delete rxn2;
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test59ReactionCanonicalization(){
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing canonicatization of reactions" << std::endl;
+
+  { //with mapping numbers
+    std::string smi = "[K+].[NH4+].[C:2]([CH:4]([CH2:9][CH3:10])[CH2:5][C:6]([OH:8])=[O:7])#[N:3]>Cl.[OH-]>[CH2:2]([CH:4]([CH2:9][CH3:10])[CH2:5][C:6]([OH:8])=[O:7])[NH2:3].[K+].[NH4+]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi = ChemicalReactionToRxnSmiles(*rxn);
+    delete rxn;
+
+    rxn = RxnSmartsToChemicalReaction(rxnsmi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi2 = ChemicalReactionToRxnSmiles(*rxn);
+
+    TEST_ASSERT(rxnsmi==rxnsmi2);
+
+    delete rxn;
+  }
+  { //without mapping numbers
+    std::string smi = "[K+].[NH4+].CCC(CC(O)=O)C#N>Cl.[OH-]>CCC(CC(O)=O)CN.[K+].[NH4+]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi = ChemicalReactionToRxnSmiles(*rxn);
+    delete rxn;
+
+    rxn = RxnSmartsToChemicalReaction(rxnsmi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==3);
+    TEST_ASSERT(rxn->getNumProductTemplates()==3);
+    TEST_ASSERT(rxn->getNumAgentTemplates()==2);
+    std::string rxnsmi2 = ChemicalReactionToRxnSmiles(*rxn);
+
+    TEST_ASSERT(rxnsmi==rxnsmi2);
+
+    delete rxn;
+  }
 }
 
 int main() { 
@@ -5522,6 +5651,10 @@ int main() {
   test55RedundantProductMappingNumbersAndEZStereochemistry();;
   test56TestOldPickleVersion();
   test57IntroductionOfNewChiralCenters();
+
+  test58MolFileValueRoundTrip();
+  
+  test59ReactionCanonicalization();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

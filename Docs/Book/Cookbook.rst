@@ -515,17 +515,17 @@ The RDKit provides an implementation of the torsion fingerprint
 deviation (TFD) approach developed by Schulz-Gasch et al. 
 (J. Chem. Inf. Model, 52, 1499, 2012). The RDKit implementation
 allows the user to customize the torsion fingerprints:
-* In the original approach, the torsions are weighted based on
-their distance to the center of the molecule. By default, this
-weighting is performed, but can be turned off using the flag
-useWeights=False
-* The similarity between atoms is determined by comparing the 
-hash codes from the Morgan algorithm at a given radius (default: 
-radius = 2). 
-* In the original approach, the maximal deviation used for
-normalization is 180.0 degrees for all torsions (default). If
-maxDev='spec', a torsion-type dependent maximal deviation is 
-used for the normalization.
+  * In the original approach, the torsions are weighted based on
+    their distance to the center of the molecule. By default, this
+    weighting is performed, but can be turned off using the flag
+    useWeights=False
+  * The similarity between atoms is determined by comparing the 
+    hash codes from the Morgan algorithm at a given radius (default: 
+    radius = 2). 
+  * In the original approach, the maximal deviation used for
+    normalization is 180.0 degrees for all torsions (default). If
+    maxDev='spec', a torsion-type dependent maximal deviation is 
+    used for the normalization.
 
 Examples of using it:
 
@@ -547,7 +547,7 @@ This produces:
 
 .. testoutput::
 
-   [0.06450035322926886] [0.16803037890459122] [0.06752301190398982]
+   [0.0645...] [0.168...] [0.0675...]
 
 If the TFD between conformers of the same molecule is to be
 calculated, the function GetTFDBetweenConformers() should be
@@ -571,7 +571,7 @@ This produces:
 
 .. testoutput::
 
-    [0.06450035322926886]
+    [0.0645...]
 
 For the conformer RMS and TFD values, the RDKit provides
 convenience functions that calculated directly the symmetric
@@ -695,13 +695,13 @@ The code:
 
 .. testcode::
 
+  from rdkit import Chem
+  from rdkit.Chem import rdFMCS
+
   # our test molecules:
   smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
         "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
   ms = [Chem.MolFromSmiles(x) for x in smis]
-
-  from rdkit import Chem
-  from rdkit.Chem import MCS
   
   def label(a):
     " a simple hash combining atom number and hybridization "
@@ -713,14 +713,14 @@ The code:
     for at in nm.GetAtoms():
         at.SetIsotope(label(at))
 
-  mcs=MCS.FindMCS(nms,atomCompare='isotopes')
-  print mcs.smarts
+  mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+  print mcs.smartsString
 
 This generates the following output:
 
 .. testoutput::
 
-  [406*]-[308*]-[306*]:1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)(-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[307*]-[306*]:1:[307*]:[306*]:2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*]
+  [406*]-[308*]-[306*]1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[307*]-[306*]1:[307*]:[306*]2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*])(-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1
 
 That's what we asked for, but it's not exactly readable. We can get to a more readable form in a two step process:
 
@@ -732,7 +732,7 @@ This works because we know that the atom indices in the copies and the original 
 .. testcode::
 
   def getMCSSmiles(mol,labelledMol,mcs):
-      mcsp = Chem.MolFromSmarts(mcs.smarts)
+      mcsp = Chem.MolFromSmarts(mcs.smartsString)
       match = labelledMol.GetSubstructMatch(mcsp)
       return Chem.MolFragmentToSmiles(ms[0],atomsToUse=match,
                                       isomericSmiles=True,
@@ -747,10 +747,51 @@ This works because we know that the atom indices in the copies and the original 
 That's what we were looking for.
 
 
+Clustering molecules
+--------------------
+
+For large sets of molecules (more than 1000-2000), it's most efficient to use the Butina clustering algorithm.
+
+Here's some code for doing that for a set of fingerprints::
+
+  def ClusterFps(fps,cutoff=0.2):
+      from rdkit import DataStructs
+      from rdkit.ML.Cluster import Butina
+  
+      # first generate the distance matrix:
+      dists = []
+      nfps = len(fps)
+      for i in range(1,nfps):
+          sims = DataStructs.BulkTanimotoSimilarity(fps[i],fps[:i])
+          dists.extend([1-x for x in sims])
+  
+      # now cluster the data:
+      cs = Butina.ClusterData(dists,nfps,cutoff,isDistData=True)
+      return cs
+
+The return value is a tuple of clusters, where each cluster is a tuple of ids.
+
+Example usage::
+
+  from rdkit import Chem
+  from rdkit.Chem import AllChem
+  import gzip
+  ms = [x for x in Chem.ForwardSDMolSupplier(gzip.open('zdd.sdf.gz')) if x is not None]
+  fps = [AllChem.GetMorganFingerprintAsBitVect(x,2,1024) for x in ms]
+  clusters=ClusterFps(fps,cutoff=0.4)
+
+
+The variable `clusters` contains the results::
+
+  >>> print clusters[200]
+  (6164, 1400, 1403, 1537, 1543, 6575, 6759)
+
+That cluster contains 7 points, the centroid is point 6164.
+
 License
 *******
 
-This document is copyright (C) 2012-2014 by Greg Landrum
+This document is copyright (C) 2012-2015 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

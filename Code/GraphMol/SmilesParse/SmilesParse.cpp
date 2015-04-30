@@ -141,6 +141,8 @@ namespace RDKit{
   RWMol *toMol(std::string inp,int func(const std::string &,
 					std::vector<RDKit::RWMol *> &),
                std::string origInp){
+    // empty strings produce empty molecules:
+    if(inp=="") return new RWMol();
     RWMol *res = 0;
     std::vector<RDKit::RWMol *> molVect;
     try {
@@ -202,7 +204,7 @@ namespace RDKit{
       // this triggers a sanitization, so we do not need to
       // worry about doing one here:
       try {
-        MolOps::removeHs(*res,false,false);
+        MolOps::removeHs(*res,false,true);
         // figure out stereochemistry:
         MolOps::assignStereochemistry(*res,true,true,true);
       } catch (...) {
