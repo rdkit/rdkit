@@ -39,8 +39,14 @@ if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
 endif()
 
-include(TestBigEndian)
-TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
+if (EMSCRIPTEN)
+  # Hard coded in the toolchain file.
+else()
+   include(TestBigEndian)
+   TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
+endif(EMSCRIPTEN)
+
+
 
 # At build time put runtime binaries in the bin subdirectory
 set(RDK_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
@@ -55,6 +61,12 @@ set(RDKit_Year "2015")
 set(RDKit_Month "03")
 set(RDKit_Revision "1pre")
 set(RDKit_ABI "1")
+
+if (EMSCRIPTEN)
+  # emscripten NEEDS the .so extension to know what to do
+  #  linux is happy with RDGeneral.so.1.pre
+  set(RDKit_Revision "${RDKit_Revision}.so")
+endif()
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
@@ -182,16 +194,20 @@ if(RDK_TEST_MULTITHREADED)
   ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
 endif()
 
-find_package (Threads)
-if(RDK_BUILD_THREADSAFE_SSS)
-  set(T_LIBS ${Boost_LIBRARIES})
-  find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
-  set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-  ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
-  set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+if (EMSCRIPTEN)
+  # No threading, nothing to do here.
 else()
-  set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
-endif()
+    find_package (Threads)
+    if(RDK_BUILD_THREADSAFE_SSS)
+       set(T_LIBS ${Boost_LIBRARIES})
+       find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
+       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+       ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
+       set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    else()
+      set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
+    endif()
+ endif()
 
 
 # setup our compiler flags:
