@@ -87,6 +87,18 @@ Bug Fixes:
     (github pull #472 from patrickfuller)
   - Windows build/test failure fixes
     (github issue #473 from ptosco)
+  - install missing FMCS/Graph.h header file
+    (github pull #478 from rvianello)
+  - added const qualifiers to some methods of Atom/Bond iterator classes
+    (github pull #479 from rvianello)
+  - Bugfix in SmilesWrite and some additional tests for getMolFrags function
+    (github issue #482 from NadineSchneider)
+  - Removed a while(1) {} in BFGSOpt.h which might result in an infinite loop
+    (github issue #484 from ptosco)
+  - SmilesWriter not creating automatic name values for molecules read from CTABs
+    (github issue #488)
+  - Fix StringType access, remove unused imports
+    (github issue #494 from bp-kelley)
 
 New Features:
 
@@ -152,7 +164,11 @@ New Features:
     (github issue #469)
   - restore java and python wrappers. New parameter (matchChiralTag) 
     (github issue #477 from AlexanderSavelyev)
-
+  - Added a Python wrapper for getShortestPath()
+    (github issue #487 from ptosco)
+  - Dev/merge query hs no unmapped atoms
+    (github issue #490 from bp-kelley)
+p
 New Database Cartridge Features:
 
   - The MCS code is now available within the cartridge
