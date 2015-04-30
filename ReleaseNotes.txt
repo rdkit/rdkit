@@ -10,9 +10,9 @@
 Acknowledgements: 
 David Cosgrove, Andrew Dalke, JP Ebejer, Niko Fechner, Igor Filippov,
 Patrick Fuller, David Hall, J Bach Hardie, Jan Holst Jensen, Brian
-Kelley, Rich Lewis, John May, Sereina Riniker, Alexander Savelyev,
-Roger Sayle, Nadine Schneider, Paolo Tosco, Samo Turk, JL Varjo,
-Riccardo Vianello
+Kelley, Rich Lewis, John May, Michael Reutlinger, Sereina Riniker,
+Alexander Savelyev, Roger Sayle, Nadine Schneider, Paolo Tosco, Samo
+Turk, JL Varjo, Riccardo Vianello
 
 Highlights:
 
@@ -95,6 +95,8 @@ Bug Fixes:
     (github issue #482 from NadineSchneider)
   - Removed a while(1) {} in BFGSOpt.h which might result in an infinite loop
     (github issue #484 from ptosco)
+  - Gasteiger charge calculation fails with hexavalent sulfur #485
+    (github issue #485)
   - SmilesWriter not creating automatic name values for molecules read from CTABs
     (github issue #488)
   - Fix StringType access, remove unused imports
@@ -168,7 +170,7 @@ New Features:
     (github issue #487 from ptosco)
   - Dev/merge query hs no unmapped atoms
     (github issue #490 from bp-kelley)
-p
+
 New Database Cartridge Features:
 
   - The MCS code is now available within the cartridge
