@@ -35,16 +35,15 @@
       unsigned int countMatches(const RDKit::ROMol &mol) const {
         PRECONDITION(m_matcher,"no matcher");
         std::vector<RDKit::MatchVectType> matches;
-        unsigned int res=0;
         // This is an ugly one. Recursive queries aren't thread safe.
         // Unfortunately we have to take a performance hit here in order
         // to guarantee thread safety
         if(m_needCopies){
 	  const RDKit::ROMol nm(*(m_matcher),true);
-          res=RDKit::SubstructMatch(mol,nm,matches);
+          RDKit::SubstructMatch(mol,nm,matches);
         } else {
           const RDKit::ROMol &nm=*m_matcher;
-          res=RDKit::SubstructMatch(mol,nm,matches);
+          RDKit::SubstructMatch(mol,nm,matches);
         }
         return matches.size();
       }
@@ -88,7 +87,19 @@ namespace RDKit{
       return res;
     }
 
-    SMARTSCOUNTFUNC(NumRotatableBonds, "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]", "1.0.1" ) ;
+    const std::string NumRotatableBondsVersion="2.0.0";
+    unsigned int calcNumRotatableBonds(const ROMol &mol,bool strict){
+      if(strict){
+        std::string strict_pattern="[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]=[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])[CH3])]";
+        pattern_flyweight m(strict_pattern);
+        return m.get().countMatches(mol);
+      } else {
+        std::string pattern="[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
+        pattern_flyweight m(pattern);
+        return m.get().countMatches(mol);
+      }
+    }
+
     //SMARTSCOUNTFUNC(NumHBD, "[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]","2.0.1" ) ;
     SMARTSCOUNTFUNC(NumHBD, "[N&!H0&v3,N&!H0&+1&v4,O&H1&+0,S&H1&+0,n&H1&+0]","2.0.1" ) ;
     SMARTSCOUNTFUNC(NumHBA, "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N;v3;!$(N-*=!@[O,N,P,S])]),$([nH0,o,s;+0])]","2.0.1") ;
@@ -120,6 +131,19 @@ namespace RDKit{
       return static_cast<double>(nCSP3)/nC;
     }
 
+    const std::string NumHeterocyclesVersion="1.0.0";
+    unsigned int calcNumHeterocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->atomRings()){
+        BOOST_FOREACH(int i,iv){
+          if(mol.getAtomWithIdx(i)->getAtomicNum()!=6){
+            ++res;
+            break;
+          }
+        }
+      }
+      return res;
+    }
     const std::string NumAromaticRingsVersion="1.0.0";
     unsigned int calcNumAromaticRings(const ROMol &mol){
       unsigned int res=0;

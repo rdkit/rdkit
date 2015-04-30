@@ -88,6 +88,15 @@ namespace Queries {
       return res;
     };
 
+
+    std::string getFullDescription() const {
+      std::ostringstream res;
+      res<<this->getDescription();
+      if(this->getNegation()) res<<" ! ";
+      res<<" "<<this->d_lower<<" val "<<this->d_upper;
+      return res.str();
+    };
+
   protected:
     MatchFuncArgType d_upper,d_lower;
     MatchFuncArgType d_tol;

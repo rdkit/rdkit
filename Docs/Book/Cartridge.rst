@@ -286,13 +286,13 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
 This SQL function makes that pattern easy::
 
   chembl_14=# create or replace function get_mfp2_neighbors(smiles text)
-        returns table(molregno numeric, m mol, similarity double precision) as
-      $$
-      select molregno,m,tanimoto_sml(morganbv_fp($1::mol),mfp2) as similarity
-      from rdk.fps join rdk.mols using (molregno) 
-      where morganbv_fp($1::mol)%mfp2 
-      order by morganbv_fp($1::mol)<%>mfp2;
-      $$ language sql stable ;
+      returns table(molregno integer, m mol, similarity double precision) as
+    $$
+    select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
+    from rdk.fps join rdk.mols using (molregno)
+    where morganbv_fp(mol_from_smiles($1::cstring))%mfp2
+    order by morganbv_fp(mol_from_smiles($1::cstring))<%>mfp2;
+    $$ language sql stable ;
   CREATE FUNCTION
   Time: 0.856 ms
   chembl_14=# 
@@ -376,6 +376,74 @@ By default, the minimum similarity returned with a similarity search is 0.5. Thi
 
 
 
+Using the MCS code
+******************
+
+The most straightforward use of the MCS code is to find the maximum common substructure of a group of molecules::
+
+    chembl_20=# select fmcs(m) from rdk.mols join compound_records using (molregno) where doc_id=3;                                                                                           fmcs                                                                                           
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#6]1(-[#7](-[#6](-[#6]2:[#6]:[#6]:[#6](:[#6]:[#6]:2)-[#7]-[#6](-[#6]2:[#6](-[#6]3:[#6]:[#6]:[#6]:[#6]:[#6]:3):[#6]:[#6]:[#6]:[#6]:2)=[#8])=[#8])-[#6]-[#6]-[#6]):[#6]:[#16]:[#6]:[#6]:1
+    (1 row)
+
+    chembl_20=# select fmcs(m) from rdk.mols join compound_records using (molregno) where doc_id=4;
+                                      fmcs                                  
+    ------------------------------------------------------------------------
+     [#6](-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#7]-[#6]-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+The same thing can be done with a SMILES column::
+
+    chembl_20=# select fmcs(canonical_smiles) from compound_structures join compound_records using (molregno) where doc_id=4;
+                                      fmcs                                  
+    ------------------------------------------------------------------------
+     [#6](-[#7]-[#6]-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+It's also possible to adjust some of the parameters to the FMCS algorithm, though this is somewhat more painful as of this writing (the 2015_03_1 release). 
+Here are a couple of examples::
+
+    chembl_20=# select fmcs_smiles(str,'{"Threshold":0.8}') from 
+    chembl_20-#   (select string_agg(m::text,' ') as str from rdk.mols 
+    chembl_20(#   join compound_records using (molregno) where doc_id=4) as str ;
+                                                                               fmcs_smiles                                                                            
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#6]-[#6]-[#8]-[#6](-[#6](=[#8])-[#7]-[#6](-[#6])-[#6](-,:[#6])-,:[#6])-[#6](-[#8])-[#6](-[#8])-[#6](-[#8]-[#6]-[#6])-[#6]-[#7]-[#6](-[#6])-[#6](-,:[#6])-,:[#6]
+    (1 row)
+
+    chembl_20=# select fmcs_smiles(str,'{"AtomCompare":"Any"}') from 
+    chembl_20-# (select string_agg(m::text,' ') as str from rdk.mols 
+    chembl_20(# join compound_records using (molregno) where doc_id=4) as str ;
+                                                                                  fmcs_smiles                                                                               
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#6]-,:[#6,#7]-[#8,#6]-[#6,#7](-[#6,#8]-[#7,#6]-,:[#6,#7]-,:[#6,#7]-,:[#7,#6]-,:[#6])-[#6,#7]-[#6]-[#6](-[#8,#6]-[#6])-[#6,#7]-[#7,#6]-[#6]-,:[#6,#8]-,:[#7,#6]-,:[#6]
+    (1 row)
+
+*Note* The combination of ``"AtomCompare":"Any"`` and a value of ``"Threshold"`` that is less than 1.0 does a quite generic search and can results in very long search times. 
+Using ``"Timeout"`` with this combination is recommended::
+
+    chembl_20=# select fmcs_smiles(str,'{"AtomCompare":"Any","CompleteRingsOnly":true,"Threshold":0.8,"Timeout":60}') from
+    chembl_20-#  (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_20(#   join compound_records using (molregno) where doc_id=3) as str ;
+    WARNING:  findMCS timed out, result is not maximal
+                                                                                              fmcs_smiles                                                                                          
+    -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     [#8]=[#6](-[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](=[#8])-[#7]1-[#6]-[#6]-[#6]-[#6,#7]-[#6]2:[#6]-1:[#6]:[#6]:[#16]:2)-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1
+    (1 row)
+
+Available parameters and their default values are:
+
+  - MaximizeBonds (true)
+  - Threshold (1.0)
+  - Timeout (-1, no timeout) 
+  - MatchValences (false)
+  - MatchChiralTag (false) Applies to atoms
+  - RingMatchesRingOnly (false)
+  - CompleteRingsOnly (false)
+  - MatchStereo (false)  Applies to bonds
+  - AtomCompare ("Elements") can be "Elements", "Isotopes", or "Any"
+  - BondCompare ("Order") can be "Order", "OrderExact", or "Any"
+    
 Reference Guide
 +++++++++++++++
 
@@ -393,6 +461,15 @@ Parameters
 * `rdkit.tanimoto_threshold` : threshold value for the Tanimoto similarity operator. Searches done using Tanimoto similarity will only return results with a similarity of at least this value.
 * `rdkit.dice_threshold` : threshold value for the Dice similiarty operator. Searches done using Dice similarity will only return results with a similarity of at least this value.
 * `rdkit.do_chiral_sss` : toggles whether or not stereochemistry is used in substructure matching. (*available from 2013_03 release*).
+* `rdkit.sss_fp_size` : the size (in bits) of the fingerprint used for substructure screening.
+* `rdkit.morgan_fp_size` : the size (in bits) of morgan fingerprints
+* `rdkit.featmorgan_fp_size` : the size (in bits) of featmorgan fingerprints
+* `rdkit.layered_fp_size` : the size (in bits) of layered fingerprints
+* `rdkit.rdkit_fp_size` : the size (in bits) of RDKit fingerprints
+* `rdkit.torsion_fp_size` : the size (in bits) of topological torsion bit vector fingerprints
+* `rdkit.atompair_fp_size` : the size (in bits) of atom pair bit vector fingerprints
+* `rdkit.avalon_fp_size` : the size (in bits) of avalon fingerprints
+
 
 Operators
 *********
@@ -485,12 +562,15 @@ Molecule I/O and Validation
 
 * `mol_from_smiles(smiles)` : returns a molecule for a SMILES string, NULL if the molecule construction fails.
 * `mol_from_smarts(smarts)` : returns a molecule for a SMARTS string, NULL if the molecule construction fails.
-* `mol_from_ctab(ctab)` : returns a molecule for a CTAB (mol block) string, NULL if the molecule construction fails.
+* `mol_from_ctab(ctab, bool default false)` : returns a molecule for a CTAB (mol block) string, NULL if the molecule construction fails. The optional second argument controls whether or not the molecule's coordinates are saved.
 * `mol_from_pkl(bytea)` : returns a molecule for a binary string (bytea), NULL if the molecule construction fails. (*available from Q3 2012 (2012_09) release*)
 
+* `qmol_from_smiles(smiles)` : returns a query molecule for a SMILES string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom.
+* `qmol_from_ctab(ctab, bool default false)` : returns a query molecule for a CTAB (mol block) string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom. The optional second argument controls whether or not the molecule's coordinates are saved.
 * `mol_to_smiles(mol)` : returns the canonical SMILES for a molecule.
 * `mol_to_smarts(mol)` : returns SMARTS string for a molecule.
 * `mol_to_pkl(mol)` : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012_09) release*)
+* `mol_to_ctab(mol,bool default true)` : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. (*available from the 2014_03 release*)
 
 
 Substructure operations
@@ -525,6 +605,9 @@ Descriptors
 * `mol_numsaturatedcarbocycles(mol)` : returns the number of saturated carbocycles in a molecule (*available from 2013_03 release*).
 * `mol_inchi(mol)` : returns an InChI for the molecule. (*available from the 2011_06 release, requires that the RDKit be built with InChI support*).
 * `mol_inchikey(mol)` : returns an InChI key for the molecule. (*available from the 2011_06 release, requires that the RDKit be built with InChI support*).
+* `mol_formula(mol,bool default false, bool default true)` : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H].
+(*available from the 2014_03 release*)
+
 
 Connectivity Descriptors
 ::::::::::::::::::::::::
@@ -534,6 +617,12 @@ Connectivity Descriptors
 * `mol_kappa1(mol)` - `mol_kappa3(mol)` :  returns the kappaX value for a molecule for X=1-3 (*available from 2012_01 release*).
 
 
+MCS
+:::
+
+* `fmcs(mols)` : an aggregation function that calculates the MCS for a set of molecules
+* `fmcs_smiles(text, json default '')` : calculates the MCS for a space-separated set of SMILES. The optional json argument is used to provide parameters to the MCS code.
+
 
 Other
 -----
@@ -541,6 +630,41 @@ Other
 * `rdkit_version()` : returns a string with the cartridge version number.
 
 There are additional functions defined in the cartridge, but these are used for internal purposes.
+
+
+Using the Cartridge from Python
++++++++++++++++++++++++++++++++
+
+The recommended adapter for connecting to postgresql is pyscopg2
+(https://pypi.python.org/pypi/psycopg2). 
+
+Here's an example of connecting to our local copy of ChEMBL and doing
+a basic substructure search:: 
+
+  >>> import psycopg2
+  >>> conn = psycopg2.connect(database='chembl_16')
+  >>> curs = conn.cursor()
+  >>> curs.execute('select * from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
+  >>> curs.fetchone()
+  (9830, 'CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1')
+
+That returns a SMILES for each molecule. If you plan to do more work
+with the molecules after retrieving them, it is much more efficient to
+ask postgresql to give you the molecules in pickled form::
+
+  >>> curs.execute('select molregno,mol_send(m) from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
+  >>> row = curs.fetchone()
+  >>> row
+  (9830, <read-only buffer for 0x...>)
+
+These pickles can then be converted into molecules:: 
+
+  >>> from rdkit import Chem
+  >>> m = Chem.Mol(str(row[1]))
+  >>> Chem.MolToSmiles(m,True)
+  'CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1'
+
+
 
 License
 +++++++

@@ -16,39 +16,44 @@
 
 namespace RDKit{
 
-  bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
+  bool atomCompat(const ATOM_SPTR &a1,const ATOM_SPTR &a2,bool useQueryQueryMatches){
     PRECONDITION(a1,"bad atom");
     PRECONDITION(a2,"bad atom");
     //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
-    bool res = a1->Match(a2);
+    bool res;
+    if(useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()){
+      res = static_cast<QueryAtom *>(a1.get())->QueryMatch(static_cast<QueryAtom *>(a2.get()));
+    } else {
+      res = a1->Match(a2);
+    }
     return res;
   }
 
-  bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
+  bool chiralAtomCompat(const ATOM_SPTR &a1,const ATOM_SPTR &a2){
     PRECONDITION(a1,"bad atom");
     PRECONDITION(a2,"bad atom");
     //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
     bool res = a1->Match(a2);
     if(res){
-      if(a1->hasProp("_CIPCode") || a2->hasProp("_CIPCode")){
-        // if either atom has a CIPCode, they need to both have it and match:
-        if(a1->hasProp("_CIPCode") && a2->hasProp("_CIPCode")){
-          std::string s1,s2;
-          a1->getProp("_CIPCode",s1);
-          a2->getProp("_CIPCode",s2);
-          if(s1!=s2) res=false;
-        } else {
-          res=false;
-        }
+      std::string s1, s2;
+      bool hascode1 = a1->getPropIfPresent(common_properties::_CIPCode, s1);
+      bool hascode2 = a2->getPropIfPresent(common_properties::_CIPCode, s2);
+      if(hascode1 || hascode2) {
+          res = hascode1 && hascode2 && s1 == s2;
       }
     }
     return res;
   }
 
-  bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2){
+  bool bondCompat(const BOND_SPTR &b1,const BOND_SPTR &b2,bool useQueryQueryMatches){
     PRECONDITION(b1,"bad bond");
     PRECONDITION(b2,"bad bond");
-    bool res = b1->Match(b2);
+    bool res;
+    if(useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()){
+      res = static_cast<QueryBond *>(b1.get())->QueryMatch(static_cast<QueryBond *>(b2.get()));
+    } else {
+      res = b1->Match(b2);
+    }
     //std::cout << "\t\tbondCompat: "<< b1->getIdx() << "-" << b2->getIdx() << ": " << res << std::endl;
     return res;
   }

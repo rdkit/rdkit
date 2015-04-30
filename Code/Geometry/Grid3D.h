@@ -43,10 +43,6 @@ namespace RDGeom {
     virtual unsigned int getVal(unsigned int pointId) const = 0;
     virtual void setVal(unsigned int pointId, unsigned int val) = 0;
 
-    virtual bool compareParams(const Grid3D &other) const {
-      return false;
-    };
-
     virtual unsigned int getSize() const = 0;
 
     virtual const RDKit::DiscreteValueVect *getOccupancyVect() const = 0;

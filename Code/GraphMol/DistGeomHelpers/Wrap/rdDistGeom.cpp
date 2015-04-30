@@ -15,6 +15,7 @@
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -40,13 +41,17 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
-    int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
-                                          seed, clearConfs,
-					  useRandomCoords,boxSizeMult,
-					  randNegEig,
-                                          numZeroFail,
-                                          pMapPtr,forceTol,
-                                          ignoreSmoothingFailures);
+    int res;
+    {
+      NOGIL gil;
+      res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
+                                        seed, clearConfs,
+                                        useRandomCoords,boxSizeMult,
+                                        randNegEig,
+                                        numZeroFail,
+                                        pMapPtr,forceTol,
+                                        ignoreSmoothingFailures);
+    }
     return res;
   }
 
@@ -57,7 +62,8 @@ namespace RDKit {
                               bool randNegEig, unsigned int numZeroFail,
 			      double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
-                              bool ignoreSmoothingFailures) {
+                              bool ignoreSmoothingFailures,
+                              int numThreads) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -71,13 +77,18 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
-    INT_VECT res = DGeomHelpers::EmbedMultipleConfs(mol, numConfs, maxAttempts,
-                                                    seed, clearConfs,
-						    useRandomCoords,boxSizeMult, 
-                                                    randNegEig, numZeroFail,
-                                                    pruneRmsThresh,pMapPtr,forceTol,
-                                                    ignoreSmoothingFailures);
-
+    INT_VECT res;
+    {
+      NOGIL gil;
+      DGeomHelpers::EmbedMultipleConfs(mol,res,
+                                       numConfs,numThreads,
+                                       maxAttempts,
+                                       seed, clearConfs,
+                                       useRandomCoords,boxSizeMult, 
+                                       randNegEig, numZeroFail,
+                                       pruneRmsThresh,pMapPtr,forceTol,
+                                       ignoreSmoothingFailures);
+    }
     return res;
   } 
 
@@ -105,7 +116,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     "Module containing functions to compute atomic coordinates in 3D using distance geometry"
     ;
 
-  import_array();
+  rdkit_import_array();
 
   //RegisterListConverter<RDKit::Atom*>();
 
@@ -194,6 +205,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
+                 was built with multi-thread support..\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -207,7 +220,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 	       python::arg("pruneRmsThresh")=-1.0,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
-               python::arg("ignoreSmoothingFailures")=false),
+               python::arg("ignoreSmoothingFailures")=false,
+               python::arg("numThreads")=1),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\

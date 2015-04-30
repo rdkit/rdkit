@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -30,6 +30,8 @@ namespace RDKit{
                        (pre-existing contents will be deleted)
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
+      \param useQueryQueryMatches  if set, the contents of atom and bond queries
+                                   will be used as part of the matching
 
       \return whether or not a match was found
     
@@ -37,7 +39,8 @@ namespace RDKit{
   bool SubstructMatch(const ROMol &mol,const ROMol &query,
 		      MatchVectType &matchVect,
 		      bool recursionPossible=true,
-		      bool useChirality=false);
+		      bool useChirality=false,
+                      bool useQueryQueryMatches=false);
 
   //! Find all substructure matches for a query in a molecule
   /*!
@@ -48,14 +51,23 @@ namespace RDKit{
       \param uniquify  Toggles uniquification (by atom index) of the results
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-
+      \param useQueryQueryMatches  if set, the contents of atom and bond queries
+                                   will be used as part of the matching
+      \param maxMatches  The maximum number of matches that will be returned.
+                         In high-symmetry cases with medium-sized molecules, it is very
+                         easy to end up with a combinatorial explosion in the number of
+                         possible matches. This argument prevents that from having
+                         unintended consequences
+                                   
       \return the number of matches found
     
   */
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify=true,bool recursionPossible=true,
-			      bool useChirality=false);
+			      bool useChirality=false,
+                              bool useQueryQueryMatches=false,
+                              unsigned int maxMatches = 1000);
 }
 
 #endif

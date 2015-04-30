@@ -2,8 +2,6 @@
 //
 // Copyright (C)  2013 Paolo Tosco
 //
-// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
-//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -15,11 +13,17 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <ForceField/MMFF/Params.h>
+#include <ForceField/MMFF/DistanceConstraint.h>
+#include <ForceField/MMFF/AngleConstraint.h>
+#include <ForceField/MMFF/TorsionConstraint.h>
+#include <ForceField/MMFF/PositionConstraint.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <ForceField/ForceField.h>
 #include <iostream>
 #include <iomanip>
@@ -67,7 +71,7 @@ bool fgrep(std::fstream &rdkFStream, std::string key)
 }
 
 
-bool getLineByNum(std::istream& stream,
+bool getLineByNum(std::fstream &stream,
   std::streampos startPos, unsigned int n, std::string& line)
 {
   std::streampos current = stream.tellg();
@@ -264,7 +268,7 @@ void fixTorsionInstance(TorsionInstance *torsionInstance)
 }
 
 
-int main(int argc, char *argv[])
+int mmffValidationSuite(int argc, char *argv[])
 {
   std::string arg;
   std::string ffVariant = "";
@@ -337,6 +341,8 @@ int main(int argc, char *argv[])
     
     return -1;
   }
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Official MMFF validation suite." << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/ForceField/MMFF/test_data/";
   if (molFile != "") {
@@ -401,12 +407,12 @@ int main(int argc, char *argv[])
           ((*molFileIt).substr(0, (*molFileIt).length() - 4) + "_min"
           + ((*molTypeIt == "smi") ? "_from_SMILES" : "") + ".sdf");
         ROMol *mol;
-        MMFF::MMFFMolProperties *mmffMolProperties;
         std::string molName;
         std::vector<std::string> nameArray;
 
         rdkFStream.open(rdk.c_str(), (firstTest
-          ? std::fstream::out : (std::fstream::out | std::fstream::app)));
+          ? std::fstream::out | std::fstream::binary
+          : (std::fstream::out | std::fstream::binary | std::fstream::app)));
         std::string computingKey = (*ffIt) + " energies for " + (*molFileIt);
         std::cerr << std::endl << "Computing " << computingKey << "..." << std::endl;
         for (i = 0; i < computingKey.length(); ++i) {
@@ -426,8 +432,8 @@ int main(int argc, char *argv[])
             DGeomHelpers::EmbedMolecule(*mol);
           }
           MMFF::sanitizeMMFFMol((RWMol &)(*mol));
-          if (mol->hasProp("_Name")) {
-            mol->getProp("_Name", molName);
+          if (mol->hasProp(common_properties::_Name)) {
+            mol->getProp(common_properties::_Name, molName);
             rdkFStream << molName << std::endl;
             nameArray.push_back(molName);
           }
@@ -451,8 +457,8 @@ int main(int argc, char *argv[])
         sdfWriter->close();
         rdkFStream.close();
         std::cerr << "Checking against " << ref << "..." << std::endl;
-        rdkFStream.open(rdk.c_str(), std::fstream::in);
-        refFStream.open(ref.c_str(), std::fstream::in);
+        rdkFStream.open(rdk.c_str(), std::fstream::in | std::fstream::binary);
+        refFStream.open(ref.c_str(), std::fstream::in | std::fstream::binary);
         
         bool found = false;
         std::string skip;
@@ -1369,5 +1375,305 @@ int main(int argc, char *argv[])
   }
    
   TEST_ASSERT(!testFailure);
+  std::cerr << "  done" << std::endl;
+  return 0;
+}
+
+void testMMFFAllConstraints(){
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Unit tests for all MMFF constraint terms." << std::endl;
+
+  std::string molBlock =
+    "butane\n"
+    "     RDKit          3D\n"
+    "butane\n"
+    " 17 16  0  0  0  0  0  0  0  0999 V2000\n"
+    "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.4280    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.2660    0.9927 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.9040    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    2.0271    0.3782 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    1.5664   -1.3411 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.3320    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6953    1.5162   -1.3532 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.8080    0.0192    0.0649 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.7431   -0.6243 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.1966    1.0697 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8980    0.0192    0.0649 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6954    2.0627    0.3408 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.7267   -0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.7267    0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633   -0.9926    0.2660 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.2660   -0.9926 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  1 15  1  0  0  0  0\n"
+    "  1 16  1  0  0  0  0\n"
+    "  1 17  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  1  0  0  0  0\n"
+    "  2 14  1  0  0  0  0\n"
+    "  4  5  1  0  0  0  0\n"
+    "  4  6  1  0  0  0  0\n"
+    "  4  7  1  0  0  0  0\n"
+    "  7  8  1  0  0  0  0\n"
+    "  7  9  1  0  0  0  0\n"
+    "  7 13  1  0  0  0  0\n"
+    "  9 10  1  0  0  0  0\n"
+    "  9 11  1  0  0  0  0\n"
+    "  9 12  1  0  0  0  0\n"
+    "M  END\n";
+  RDKit::RWMol *mol;
+  ForceFields::ForceField *field;
+  MMFF::MMFFMolProperties *mmffMolProperties;
+
+  // distance constraints
+  ForceFields::MMFF::DistanceConstraintContrib *dc;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  TEST_ASSERT(field);
+  field->initialize();
+  dc = new ForceFields::MMFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  field->minimize();
+  TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
+  delete field;
+  delete mmffMolProperties;
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  field->initialize();
+  dc = new ForceFields::MMFF::DistanceConstraintContrib(field, 1, 3, true, -0.2, 0.2, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  field->minimize();
+  TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.79);
+  delete field;
+  delete mmffMolProperties;
+  delete mol;
+  
+  // angle constraints
+  ForceFields::MMFF::AngleConstraintContrib *ac;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  TEST_ASSERT(field);
+  field->initialize();
+  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, 90.0, 90.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6) == 90);
+  delete field;
+  delete mmffMolProperties;
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  field->initialize();
+  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, true, -10.0, 10.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6) == 100);
+  delete field;
+  delete mmffMolProperties;
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  field->initialize();
+  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, false, -10.0, 10.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6) == 10);
+  delete field;
+  delete mmffMolProperties;
+  delete mol;
+  
+  // torsion constraints
+  ForceFields::MMFF::TorsionConstraintContrib *tc;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, 50.0);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  TEST_ASSERT(field);
+  field->initialize();
+  tc = new ForceFields::MMFF::TorsionConstraintContrib(field, 1, 3, 6, 8, 10.0, 20.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(tc));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == 20);
+  delete field;
+  delete mmffMolProperties;
+  MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, -30.0);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  field->initialize();
+  tc = new ForceFields::MMFF::TorsionConstraintContrib(field, 1, 3, 6, 8, true, -10.0, -8.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(tc));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == -40);
+  delete field;
+  delete mmffMolProperties;
+  MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, 30.0);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  field->initialize();
+  tc = new ForceFields::MMFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false, -10.0, -8.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(tc));
+  field->minimize(500);
+  TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == -10);
+  delete field;
+  delete mmffMolProperties;
+  delete mol;
+  
+  // position constraints
+  ForceFields::MMFF::PositionConstraintContrib *pc;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+  TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
+  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+  TEST_ASSERT(field);
+  field->initialize();
+  RDGeom::Point3D p = mol->getConformer().getAtomPos(1);
+  pc = new ForceFields::MMFF::PositionConstraintContrib(field, 1, 0.3, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(pc));
+  field->minimize();
+  RDGeom::Point3D q = mol->getConformer().getAtomPos(1);
+  TEST_ASSERT((p - q).length() < 0.3);
+  delete field;
+  delete mmffMolProperties;
+  delete mol;
+  
+  // fixed atoms
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  field = RDKit::MMFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  RDGeom::Point3D fp = mol->getConformer().getAtomPos(1);
+  field->fixedPoints().push_back(1);
+  field->minimize();
+  RDGeom::Point3D fq = mol->getConformer().getAtomPos(1);
+  TEST_ASSERT((fp - fq).length() < 0.01);
+  delete field;
+  delete mol;
+
+  std::cerr << "  done" << std::endl;
+}
+
+void testMMFFCopy(){
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Unit tests for copying MMFF ForceFields." << std::endl;
+
+  std::string molBlock =
+    "butane\n"
+    "     RDKit          3D\n"
+    "butane\n"
+    " 17 16  0  0  0  0  0  0  0  0999 V2000\n"
+    "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.4280    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.2660    0.9927 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.9040    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    2.0271    0.3782 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    1.5664   -1.3411 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.3320    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6953    1.5162   -1.3532 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.8080    0.0192    0.0649 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.7431   -0.6243 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.1966    1.0697 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8980    0.0192    0.0649 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6954    2.0627    0.3408 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.7267   -0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.7267    0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633   -0.9926    0.2660 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.2660   -0.9926 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  1 15  1  0  0  0  0\n"
+    "  1 16  1  0  0  0  0\n"
+    "  1 17  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  1  0  0  0  0\n"
+    "  2 14  1  0  0  0  0\n"
+    "  4  5  1  0  0  0  0\n"
+    "  4  6  1  0  0  0  0\n"
+    "  4  7  1  0  0  0  0\n"
+    "  7  8  1  0  0  0  0\n"
+    "  7  9  1  0  0  0  0\n"
+    "  7 13  1  0  0  0  0\n"
+    "  9 10  1  0  0  0  0\n"
+    "  9 11  1  0  0  0  0\n"
+    "  9 12  1  0  0  0  0\n"
+    "M  END\n";
+
+  {
+    RDKit::RWMol *mol = RDKit::MolBlockToMol(molBlock, true, false);
+    TEST_ASSERT(mol);
+    RDKit::RWMol *cmol = new RDKit::RWMol(*mol);
+    TEST_ASSERT(cmol);
+
+    MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties);
+    TEST_ASSERT(mmffMolProperties->isValid());
+    ForceFields::ForceField *field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
+    TEST_ASSERT(field);
+    field->initialize();
+    ForceFields::MMFF::DistanceConstraintContrib *dc = new ForceFields::MMFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0, 1.0e5);
+    field->contribs().push_back(ForceFields::ContribPtr(dc));
+    field->minimize();
+    TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
+
+
+    ForceFields::ForceField *cfield=new ForceFields::ForceField(*field);
+    cfield->positions().clear();
+    
+    for(unsigned int i=0;i<cmol->getNumAtoms();i++){
+      cfield->positions().push_back(&cmol->getConformer().getAtomPos(i));
+    }
+    cfield->initialize();
+    cfield->minimize();
+    TEST_ASSERT(MolTransforms::getBondLength(cmol->getConformer(), 1, 3) > 1.99);
+    TEST_ASSERT(RDKit::feq(field->calcEnergy(),cfield->calcEnergy()));
+    
+    const RDKit::Conformer &conf = mol->getConformer();
+    const RDKit::Conformer &cconf = cmol->getConformer();
+    for(unsigned int i=0;i<mol->getNumAtoms();i++){
+      RDGeom::Point3D p=conf.getAtomPos(i);
+      RDGeom::Point3D cp=cconf.getAtomPos(i);
+      TEST_ASSERT(RDKit::feq(p.x,cp.x));
+      TEST_ASSERT(RDKit::feq(p.y,cp.y));
+      TEST_ASSERT(RDKit::feq(p.z,cp.z));
+    }
+
+    delete field;
+    delete cfield;
+    delete mmffMolProperties;
+    delete mol;
+    delete cmol;
+  }
+  std::cerr << "  done" << std::endl;
+}
+
+
+int main(int argc, char *argv[])
+{
+  if (!mmffValidationSuite(argc, argv)) {
+    testMMFFAllConstraints();
+    testMMFFCopy();
+  }
+  
   return 0;
 }

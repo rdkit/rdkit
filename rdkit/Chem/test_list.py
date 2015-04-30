@@ -15,6 +15,7 @@ tests=[
   ("python","UnitTestSmiles.py",{}),
   ("python","UnitTestSuppliers.py",{}),
   ("python","UnitTestSurf.py",{}),
+  ("python","UnitTestMol3D.py",{}),
   ("python","FragmentMatcher.py",{}),
   ("python","MACCSkeys.py",{}),
   ("python","Descriptors.py",{}),
@@ -43,6 +44,7 @@ tests=[
   ("python","test_list.py",{'dir':'Scaffolds'}),
   ("python","test_list.py",{'dir':'Draw'}),
   ("python","test_list.py",{'dir':'Fraggle'}),
+  ("python","test_list.py",{'dir':'SimpleEnum'}),
   ]
 
 

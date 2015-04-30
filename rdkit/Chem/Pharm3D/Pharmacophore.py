@@ -70,9 +70,9 @@ class Pharmacophore:
     " raises ValueError on failure "
     nf = len(self._feats)
     if (i < 0) or (i >= nf):
-      raise ValueError, "Index out of bound"
+      raise ValueError("Index out of bound")
     if (j < 0) or (j >= nf):
-      raise ValueError, "Index out of bound"
+      raise ValueError("Index out of bound")
     return True
 
   def setUpperBound(self, i, j, val, checkBounds=False):
@@ -136,7 +136,7 @@ class ExplicitPharmacophore:
 
   def _initializeFeats(self,feats,radii):
     if len(feats)!=len(radii):
-      raise ValueError,'len(feats)!=len(radii)'
+      raise ValueError('len(feats)!=len(radii)')
     self._feats = []
     self._radii = []
     for feat,rad in zip(feats,radii):

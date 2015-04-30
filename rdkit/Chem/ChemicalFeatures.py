@@ -8,8 +8,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdMolChemicalFeatures import *
-from rdChemicalFeatures import *
+from rdkit.Chem.rdMolChemicalFeatures import *
+from rdkit.Chem.rdChemicalFeatures import *
 
 def MCFF_GetFeaturesForMol(self,mol,includeOnly=""):
   res = []

@@ -48,8 +48,8 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 
 from rdkit.sping.pid import *
 from rdkit.sping.PDF import pdfmetrics # for font info
-import string, os, types
-
+import string
+from types import StringType
 from math import *
 
 #SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
@@ -598,7 +598,7 @@ class SVGCanvas( Canvas ):
         pathStr = pathStr + self._FormArcStr(x1,y1,x2,y2,theta1,extent)
 
       else:
-        raise TypeError, "unknown figure operator: "+op
+        raise TypeError("unknown figure operator: "+op)
 
     if closed == 1:
       pathStr = pathStr + 'Z'

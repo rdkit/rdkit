@@ -46,9 +46,9 @@ def FormCounts(bitVects,actVals,whichBit,nPossibleActs,nPossibleBitVals=2):
     This is really intended for internal use.
 
   """
-  if len(bitVects) != len(actVals): raise ValueError,'var and activity lists should be the same length'
+  if len(bitVects) != len(actVals): raise ValueError('var and activity lists should be the same length')
   res = numpy.zeros((nPossibleBitVals,nPossibleActs),numpy.integer)
-  for i in xrange(len(bitVects)):
+  for i in range(len(bitVects)):
     res[bitVects[i][whichBit],actVals[i]] += 1
   return res
 
@@ -71,11 +71,11 @@ def CalcInfoGains(bitVects,actVals,nPossibleActs,nPossibleBitVals=2):
      a list of floats
 
   """
-  if len(bitVects) != len(actVals): raise ValueError,'var and activity lists should be the same length'
+  if len(bitVects) != len(actVals): raise ValueError('var and activity lists should be the same length')
   nBits = len(bitVects[0])
   res = numpy.zeros(nBits,Float)
 
-  for bit in xrange(nBits):
+  for bit in range(nBits):
     counts = FormCounts(bitVects,actVals,bit,nPossibleActs,
                         nPossibleBitVals=nPossibleBitVals)
     res[bit] = entropy.InfoGain(counts)
@@ -133,7 +133,7 @@ def AnalyzeSparseVects(bitVects,actVals):
 
   """
   nPts = len(bitVects)
-  if nPts != len(actVals): raise ValueError,'var and activity lists should be the same length'
+  if nPts != len(actVals): raise ValueError('var and activity lists should be the same length')
   nBits = bitVects[0].GetSize()
 
   actives = numpy.zeros(nBits,numpy.integer)
@@ -154,7 +154,7 @@ def AnalyzeSparseVects(bitVects,actVals):
   res = []
   gains = []
   counts = []
-  for bit in xrange(nBits):
+  for bit in range(nBits):
     nAct,nInact = actives[bit],inactives[bit]
     if nAct or nInact:
       resTbl[0,0] = nAct

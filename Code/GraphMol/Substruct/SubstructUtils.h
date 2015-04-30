@@ -22,9 +22,9 @@ namespace RDKit{
   
   double toPrime(const MatchVectType &v);
   void removeDuplicates(std::vector<MatchVectType> &v,unsigned int nAtoms);
-  bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2);
-  bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2);
-  bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2);
+  bool atomCompat(const ATOM_SPTR &a1,const ATOM_SPTR &a2,bool useQueryQueryMatches=false);
+  bool chiralAtomCompat(const ATOM_SPTR &a1,const ATOM_SPTR &a2);
+  bool bondCompat(const BOND_SPTR &b1,const BOND_SPTR &b2,bool useQueryQueryMatches=false);
 }
 
 

@@ -43,6 +43,7 @@
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 %ignore fragmentOnBonds;
+%ignore fragmentOnSomeBonds;
 %ignore constructFragmenterAtomTypes;
 %ignore constructBRICSAtomTypes;
 %ignore constructFragmenterBondTypes;

@@ -1,2 +1,2 @@
 # package 
-from pidPIL import *
+from .pidPIL import *

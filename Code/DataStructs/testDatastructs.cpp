@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,7 +21,7 @@
 #include "DiscreteValueVect.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <DataStructs/SparseIntVect.h>
 
 #include <stdlib.h>
@@ -1284,6 +1284,29 @@ void test12SimilaritiesSparseBV() {
 	TEST_ASSERT(feq(AllBitSimilarity(sbv,sbv2),0.6));
 }
 
+void test13BitVectAllOnes() {
+  {
+    ExplicitBitVect bv(32, false);
+    TEST_ASSERT(bv.getNumOnBits()==0);
+    TEST_ASSERT(bv[0]==0);
+
+    ExplicitBitVect bv2(32, true);
+    TEST_ASSERT(bv2.getNumOnBits()==32);
+    TEST_ASSERT(bv2[0]==1);
+  }
+}
+
+void test18BitVectConcatenation() {
+ {
+   ExplicitBitVect bv(32, false);
+   ExplicitBitVect bv2(32, true);
+   ExplicitBitVect bv3 = bv + bv2;
+   TEST_ASSERT(bv3.getNumBits() == 64);
+   TEST_ASSERT(bv3.getNumOnBits() == 32);
+   TEST_ASSERT(bv3.getNumOffBits() == 32);
+  }
+}
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -1347,6 +1370,12 @@ int main(){
 
   BOOST_LOG(rdInfoLog) << " Test Similarity Measures SparseBitVect -------------------------------" << std::endl;
     test12SimilaritiesSparseBV();
+
+  BOOST_LOG(rdInfoLog) << " Test BitVect with all ones -------------------------------" << std::endl;
+  test13BitVectAllOnes();
+
+  BOOST_LOG(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  -------------------------------" << std::endl;
+  test18BitVectConcatenation();
 
   return 0;
   

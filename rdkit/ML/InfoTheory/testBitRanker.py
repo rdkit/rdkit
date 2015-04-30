@@ -1,3 +1,4 @@
+from __future__ import print_function
 from rdkit import RDConfig
 RDConfig.usePgSQL=0
 import unittest
@@ -5,7 +6,7 @@ from rdkit.ML import InfoTheory
 from rdkit import DataStructs
 from rdkit.Dbase.DbConnection import DbConnect
 import os
-import cPickle as pickle
+from rdkit.six.moves import cPickle as pickle
 
 def feq(v1,v2,tol2=1e-4):
     return abs(v1-v2)<=tol2
@@ -51,7 +52,7 @@ class TestCase(unittest.TestCase):
         sl = len(fps.values()[0])
         rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.ENTROPY)
         
-        print "Collecting Votes ...."
+        print("Collecting Votes ....")
         for key in nameAct.keys() :
             if nameAct[key] == 100 :
                 rnkr.AccumulateVotes(fps[key], 0)
@@ -59,14 +60,14 @@ class TestCase(unittest.TestCase):
                 rnkr.AccumulateVotes(fps[key], 1)
 
         # now do the ranking
-        print "ranking bits ...."
+        print("ranking bits ....")
         topN = rnkr.GetTopN(nbits)
         
         # get the combichem ranked list from a file
         cfile = os.path.join('test_data', 'combiRank.out')
         combiInfo = ReadCombiInfo(cfile)
         # now check if the infocontents are the same as the combichem stuff
-        print "Comparing bit info contents ...."
+        print("Comparing bit info contents ....")
         for i in range(900) :
             assert feq(topN[i,1], combiInfo[i])
 
@@ -82,7 +83,7 @@ class TestCase(unittest.TestCase):
         sl = len(fps.values()[0])
         rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.BIASENTROPY)
         rnkr.SetBiasList([0])
-        print "Collecting Votes ...."
+        print("Collecting Votes ....")
         for key in nameAct.keys() :
             if nameAct[key] == 100 :
                 rnkr.AccumulateVotes(fps[key], 0)
@@ -90,14 +91,14 @@ class TestCase(unittest.TestCase):
                 rnkr.AccumulateVotes(fps[key], 1)
 
         # now do the ranking
-        print "ranking bits ...."
+        print("ranking bits ....")
         topN = rnkr.GetTopN(nbits)
 
         # get the combichem ranked list from a file
         cfile = os.path.join('test_data', 'combiRank.out')
         combiInfo = ReadCombiInfo(cfile)
         # now check if the infocontents are the same as the combichem stuff
-        print "Comparing bit info contents ...."
+        print("Comparing bit info contents ....")
         for i in range(nbits) :
             assert feq(topN[i,1], combiInfo[i])
             
@@ -110,7 +111,7 @@ class TestCase(unittest.TestCase):
         sl = len(fps.values()[0])
         rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.BIASCHISQUARE)
         rnkr.SetBiasList([0])
-        print "Collecting Votes ...."
+        print("Collecting Votes ....")
         for key in nameAct.keys() :
             if nameAct[key] == 100 :
                 rnkr.AccumulateVotes(fps[key], 0)
@@ -118,14 +119,14 @@ class TestCase(unittest.TestCase):
                 rnkr.AccumulateVotes(fps[key], 1)
 
         # now do the ranking
-        print "ranking bits ...."
+        print("ranking bits ....")
         topN = rnkr.GetTopN(nbits)
 
         # get the combichem ranked list from a file
         cfile = os.path.join('test_data', 'combiRankChi.out')
         combiInfo = ReadCombiInfo(cfile)
         # now check if the infocontents are the same as the combichem stuff
-        print "Comparing bit info contents ...."
+        print("Comparing bit info contents ....")
         for i in range(nbits) :
             assert feq(topN[i,1], combiInfo[i])
         #rnkr.WriteTopBitsToFile("chiBitsBias.txt")

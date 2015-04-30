@@ -129,6 +129,32 @@ public class Chemv2Tests extends GraphMolTest {
 		assertEquals(1.5, c.getAtomPos(a0.getIdx()).getY(), defaultDoubleTol);
 	}
 
+
+	@Test
+	public void testGenerateSVG() {
+		ROMol m = RWMol.MolFromSmiles("[C@H]1(C)CO1");
+		m.compute2DCoords();
+		Conformer c = m.getConformer();
+		m.WedgeMolBonds(c);
+                String svg=m.ToSVG(8,50);
+                assertTrue(svg.indexOf("<svg:svg")>-1);
+                assertTrue(svg.indexOf("</svg:svg>")>-1);
+	}
+
+	@Test
+	public void testMolDraw2DSVG() {
+		ROMol m = RWMol.MolFromSmiles("[C@H]1(C)CO1");
+		m.compute2DCoords();
+		Conformer c = m.getConformer();
+		m.WedgeMolBonds(c);
+                MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
+                drawer.drawMolecule(m);
+                drawer.finishDrawing();
+                String svg=drawer.getDrawingText();
+                assertTrue(svg.indexOf("<svg:svg")>-1);
+                assertTrue(svg.indexOf("</svg:svg>")>-1);
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
 	}

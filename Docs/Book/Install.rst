@@ -28,7 +28,7 @@ Gianluca Sforna creates binary RPMs that can be found here: <http://giallu.fedor
 MacOS
 -----
 
-Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit <https://github.com/edc/homebrew-rdkit>_
+Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit <https://github.com/rdkit/homebrew-rdkit>_
 
 
 Building from Source
@@ -313,7 +313,7 @@ Recommended extras
 Installation of RDKit binaries
 ******************************
 
-  * Get the appropriate windows binary build from: <http://rdkit.googlecode.com/files>_
+  * Get the appropriate windows binary build from: <https://sourceforge.net/projects/rdkit/files/rdkit/>_
   * Extract the zip file somewhere without a space in the name, i.e. ``c:/``
   * The rest of this will assume that the installation is in ``c:/RDKit_2012_12_1``
   * Set the following environment variables:
@@ -341,7 +341,7 @@ Extra software to install
   * cmake : (http://www.cmake.org/cmake/resources/software.html) should be installed.
   * boost : It is strongly recommended to download and use a
     precompiled version of the boost libraries from
-    http://www.boostpro.com/download/ . When you run the installer,
+    http://sourceforge.net/projects/boost/files/boost-binaries/ . When you run the installer,
     the only binary libraries you need are python, regex, and system.
     If you want to install boost from source, download a copy from
     http://www.boost.org and follow the instructions
@@ -352,10 +352,14 @@ Extra software to install
     http://git-scm.com/downloads .
   * Optional packages
 
-    * If you would like to install the RDKit InChI support (first
-      available in the Q2 2011 release), follow the instructions in
-      $RDBASE/External/INCHI-API to get a copy of the InChI source and
-      put it in the appropriate place.
+    * If you would like to install the RDKit InChI support, follow the
+      instructions in $RDBASE/External/INCHI-API/README to get a copy
+      of the InChI source and put it in the appropriate place.
+
+    * If you would like to install the RDKit Avalon toolkit support,
+      follow the instructions in $RDBASE/External/AvalonTool/README to
+      get a copy of the Avalon toolkit source and put it in the
+      appropriate place.
 
 Setup and Preparation
 ---------------------
@@ -368,14 +372,6 @@ these conditions is not true, just change the corresponding paths.
   * If you install things in paths that have spaces in their names,
     be sure to use quotes properly in your environment variable
     definitions.
-
-  * If you have more than one version of visual studio installed,
-    the instructions below may not use the correct compiler. In this
-    case you need to use a different ``--toolset`` argument to specify
-    the version of the compiler used in all commands. Information
-    for this situation is covered in
-    the boost.build documentation
-    (http://www.boost.org/doc/libs/1_50_0/more/getting_started/windows.html). 
 
   * If you are planning on using a development version of the RDKit:
     get a copy of the current RDKit source using git. If you're
@@ -399,8 +395,9 @@ Building from the command line (recommended)
 --------------------------------------------
 
   * Create a directory ``c:\RDKit\build`` and cd into it
-  * Run cmake. Here's an example basic command line for 64bit windows:
-    ``cmake -DBOOST_ROOT=c:/boost -G"Visual Studio 10 Win64" ..``
+  * Run cmake. Here's an example basic command line for 64bit windows that assumes the InChI and
+    Avalon toolkit sources are available (see above):
+    ``cmake -DRDK_BUILD_PYTHON_WRAPPERS=0N -DAVALONTOOLS_DIR=c:/avalontoolkit_beta/sourcedistribution -DBOOST_ROOT=c:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -G"Visual Studio 10 Win64" ..`` 
   * Build the code. Here's an example command line:
     ``c:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj``
 
@@ -424,7 +421,7 @@ Building the Code Using GUIs (not recommended)
     * build the "ALL_BUILD" target; this will take a while and generate warnings, but there should be no errors. Note: if you are building the SWIG wrappers you may get an error the first time you try to build them. If you see this error, try building ALL_BUILD again; it should work the second time.
     * build the "INSTALL" target
 
-Testing the Build (optional by recommended)
+Testing the Build (optional, but recommended)
 -------------------------------------------
   
   * cd to ``c:\RDKit\build`` and run ctest.

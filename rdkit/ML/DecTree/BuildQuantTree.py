@@ -8,12 +8,13 @@
 """ 
 
 """
-
+from __future__ import print_function
 import numpy
 import random
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
+from rdkit.six.moves import range
 
 def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
              nPossibleVals,attrs,exIndices=None,**kwargs):
@@ -22,7 +23,7 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
   bestBounds = []
 
   if exIndices is None:
-    exIndices=range(len(examples))
+    exIndices=list(range(len(examples)))
   
   if not len(exIndices):
     return best,bestGain,bestBounds
@@ -31,10 +32,9 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
   if nToTake > 0:
     nAttrs = len(attrs)
     if nToTake < nAttrs:
-      ids = range(nAttrs)
-      random.shuffle(ids)
+      ids = list(range(nAttrs))
+      random.shuffle(ids,random=random.random)
       tmp = [attrs[x] for x in ids[:nToTake]]
-      #print '\tavail:',tmp
       attrs = tmp
 
   for var in attrs:
@@ -44,11 +44,11 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
       try:
         vTable = [examples[x][var] for x in exIndices]
       except IndexError:
-        print 'index error retrieving variable: %d'%var
+        print('index error retrieving variable: %d'%var)
         raise
       qBounds,gainHere = Quantize.FindVarMultQuantBounds(vTable,nBounds,
                                                          resCodes,nPossibleRes)
-      #print '\tvar:',var,qBounds,gainHere
+      #print('\tvar:',var,qBounds,gainHere)
     elif nBounds==0:
       vTable = ID3.GenVarTable((examples[x] for x in exIndices),
                                nPossibleVals,[var])[0]
@@ -66,25 +66,25 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
         best = var
         bestBounds = qBounds
   if best == -1:
-    print 'best unaltered'
-    print '\tattrs:',attrs
-    print '\tnBounds:',take(nBoundsPerVar,attrs)
-    print '\texamples:'
+    print('best unaltered')
+    print('\tattrs:',attrs)
+    print('\tnBounds:',take(nBoundsPerVar,attrs))
+    print('\texamples:')
     for example in (examples[x] for x in exIndices):
-      print '\t\t',example
+      print('\t\t',example)
       
 
   if 0:
-    print 'BEST:',len(exIndices),best,bestGain,bestBounds
+    print('BEST:',len(exIndices),best,bestGain,bestBounds)
     if(len(exIndices)<10):
-      print len(exIndices),len(resCodes),len(examples)
+      print(len(exIndices),len(resCodes),len(examples))
       exs = [examples[x] for x in exIndices]
       vals = [x[best] for x in exs]
       sortIdx = numpy.argsort(vals)
       sortVals = [exs[x] for x in sortIdx]
       sortResults = [resCodes[x] for x in sortIdx]
       for i in range(len(vals)):
-        print '   ',i,['%.4f'%x for x in sortVals[i][1:-1]],sortResults[i]
+        print('   ',i,['%.4f'%x for x in sortVals[i][1:-1]],sortResults[i])
   return best,bestGain,bestBounds
 
 
@@ -121,7 +121,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
   nPossibleRes = nPossibleVals[-1]
 
   if exIndices is None:
-    exIndices=range(len(examples))
+    exIndices=list(range(len(examples)))
   
   # counts of each result code:
   resCodes = [int(x[-1]) for x in (examples[y] for y in exIndices)]
@@ -153,7 +153,6 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
                                         nPossibleRes,nPossibleVals,attrs,
                                         exIndices=exIndices,
                                         **kwargs)
-
     # remove that variable from the lists of possible variables
     nextAttrs = attrs[:]
     if not kwargs.get('recycleVars',0):
@@ -206,7 +205,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
                                          exIndices=nextExamples,
                                          **kwargs))
     else:
-      for val in xrange(nPossibleVals[best]):
+      for val in range(nPossibleVals[best]):
         nextExamples = []
         for idx in exIndices:
           if examples[idx][best] == val:
@@ -233,7 +232,7 @@ def QuantTreeBoot(examples,attrs,nPossibleVals,nBoundsPerVar,initialVar=None,
      split.
      
   """
-  attrs = attrs[:]
+  attrs = list(attrs)
   for i in range(len(nBoundsPerVar)):
     if nBoundsPerVar[i]==-1 and i in attrs:
       attrs.remove(i)
@@ -269,15 +268,15 @@ def QuantTreeBoot(examples,attrs,nPossibleVals,nBoundsPerVar,initialVar=None,
   tree.SetLabel(best)
   tree.SetTerminal(0)
   tree.SetQuantBounds(qBounds)
-  nextAttrs = attrs[:]
+  nextAttrs = list(attrs)
   if not kwargs.get('recycleVars',0):
     nextAttrs.remove(best)
 
-  indices = range(len(examples))
+  indices = list(range(len(examples)))
   if len(qBounds) > 0:
     for bound in qBounds:
       nextExamples = []
-      for index in indices[:]:
+      for index in list(indices):
         ex = examples[index]
         if ex[best] < bound:
           nextExamples.append(ex)
@@ -306,7 +305,7 @@ def QuantTreeBoot(examples,attrs,nPossibleVals,nBoundsPerVar,initialVar=None,
       v =  numpy.argmax(counts)
       tree.AddChild('%d??'%(v),label=v,data=0.0,isTerminal=1)
   else:
-    for val in xrange(nPossibleVals[best]):
+    for val in range(nPossibleVals[best]):
       nextExamples = []
       for example in examples:
         if example[best] == val:
@@ -336,7 +335,7 @@ def TestTree():
               ['p7',1,1,0,2],
               ['p8',1,1,1,0]
               ]
-  attrs = range(1,len(examples1[0])-1)
+  attrs = list(range(1,len(examples1[0])-1))
   nPossibleVals = [0,2,2,2,3]
   t1 = ID3.ID3Boot(examples1,attrs,nPossibleVals,maxDepth=1)
   t1.Print()
@@ -355,16 +354,16 @@ def TestQuantTree():
               ['p7',1,1,0.1,2],
               ['p8',1,1,1.1,0]
               ]
-  attrs = range(1,len(examples1[0])-1)
+  attrs = list(range(1,len(examples1[0])-1))
   nPossibleVals = [0,2,2,0,3]
   boundsPerVar=[0,0,0,1,0]
   
-  print 'base'
+  print('base')
   t1 = QuantTreeBoot(examples1,attrs,nPossibleVals,boundsPerVar)
   t1.Pickle('test_data/QuantTree1.pkl')
   t1.Print()
 
-  print 'depth limit'
+  print('depth limit')
   t1 = QuantTreeBoot(examples1,attrs,nPossibleVals,boundsPerVar,maxDepth=1)
   t1.Pickle('test_data/QuantTree1.pkl')
   t1.Print()
@@ -382,7 +381,7 @@ def TestQuantTree2():
               ['p7',1.1,1,0.1,2],
               ['p8',1.1,1,1.1,0]
               ]
-  attrs = range(1,len(examples1[0])-1)
+  attrs = list(range(1,len(examples1[0])-1))
   nPossibleVals = [0,0,2,0,3]
   boundsPerVar=[0,1,0,1,0]
   
@@ -391,8 +390,8 @@ def TestQuantTree2():
   t1.Pickle('test_data/QuantTree2.pkl')
 
   for example in examples1:
-    print example,t1.ClassifyExample(example)
-
+    print(example,t1.ClassifyExample(example))
+    
 if __name__ == "__main__":
   TestTree()
   TestQuantTree()

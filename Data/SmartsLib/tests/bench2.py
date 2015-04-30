@@ -1,6 +1,8 @@
+from __future__ import print_function
 from rdkit import Chem
 from rdkit import RDConfig
-import time,cPickle,sys,gzip
+import time,sys,gzip
+from rdkit.six.moves import cPickle
 from rdkit.RDLogger import logger
 logger = logger()
 
@@ -13,7 +15,7 @@ for line in file(RDConfig.RDDataDir+'/SmartsLib/RLewis_smarts.txt','r').readline
     line = line.split(' ')
     p = Chem.MolFromSmarts(line[0])
     if not p:
-        print >>sys.stderr,line[0]
+        print(line[0],file=sys.stderr)
         continue
     smas.append(line[0])
     qs.append(p)
@@ -31,7 +33,7 @@ for i,m in enumerate(ms):
     for j,q in enumerate(qs):
         o=m.GetSubstructMatches(q)
         if len(o)!=refFps[i][j]:
-            print '  >',i,j,o,refFps[i][j],Chem.MolToSmiles(m),smas[j]
+            print('  >',i,j,o,refFps[i][j],Chem.MolToSmiles(m),smas[j])
             nFail += 1
             if nFail==10:
                 raise ValueError
@@ -40,11 +42,11 @@ for i,m in enumerate(ms):
     if not i%50:
         logger.info('Done %d'%i)
 t2 = time.time()
-print '%.2f'%(t2-t1)
+print('%.2f'%(t2-t1))
 
 #cPickle.dump(fps,file('fps.1000.counts.pkl','wb+'))
 nFail=0
 for i,fp in enumerate(fps):
     if fp!=refFps[i]:
         nFail+=1
-print '%d mismatches'%nFail
+print('%d mismatches'%nFail)

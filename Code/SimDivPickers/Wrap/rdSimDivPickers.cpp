@@ -11,7 +11,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
 #include <RDBoost/Wrap.h>
 #include "numpy/oldnumeric.h"
-
+#include <RDBoost/import_array.h>
 
 namespace python = boost::python;
 
@@ -24,7 +24,7 @@ BOOST_PYTHON_MODULE(rdSimDivPickers)
     "Module containing the diversity and similarity pickers"
     ;
 
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 

@@ -36,22 +36,22 @@ namespace RDKit{
     AtomIterator_ &operator=(const ThisType &other);
     AtomIterator_ &operator+=(int val);
     AtomIterator_ &operator-=(int val);
-    AtomIterator_ operator+(int val);
-    AtomIterator_ operator-(int val);
+    AtomIterator_ operator+(int val) const;
+    AtomIterator_ operator-(int val) const;
 
     // iterator subtraction
-    int operator-(ThisType &other);
+    int operator-(ThisType &other) const;
 
     // dereference 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
     // random access
-    Atom_ * operator[](const int which);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
-    bool operator<(const ThisType &other);
-    bool operator<=(const ThisType &other);
-    bool operator>(const ThisType &other);
-    bool operator>=(const ThisType &other);
+    Atom_ * operator[](const int which) const;
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
+    bool operator<(const ThisType &other) const;
+    bool operator<=(const ThisType &other) const;
+    bool operator>(const ThisType &other) const;
+    bool operator>=(const ThisType &other) const;
 
     // pre-increment
     ThisType &operator++();
@@ -61,7 +61,7 @@ namespace RDKit{
     ThisType &operator--();
     ThisType operator--(int);
   
-  private:
+    //private:
     int _pos,_max;
     Mol_ * _mol;
   };
@@ -78,10 +78,10 @@ namespace RDKit{
     ~HeteroatomIterator_();
     HeteroatomIterator_(const ThisType &other);
     HeteroatomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
@@ -101,8 +101,6 @@ namespace RDKit{
     int _findPrev(int from);
   };
 
-
-
   //! Iterate over aromatic atoms, this is bidirectional
   template <class Atom_, class Mol_>
   class AromaticAtomIterator_ {
@@ -114,10 +112,10 @@ namespace RDKit{
     ~AromaticAtomIterator_();
     AromaticAtomIterator_(const ThisType &other);
     AromaticAtomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
@@ -133,8 +131,6 @@ namespace RDKit{
     int _findNext(int from);  
     int _findPrev(int from);
   };
-
-
   
   //! Iterate over atoms matching a query. This is bidirectional.
   template <class Atom_, class Mol_>
@@ -147,10 +143,10 @@ namespace RDKit{
     ~QueryAtomIterator_();
     QueryAtomIterator_(const ThisType &other);
     QueryAtomIterator_ &operator=(const ThisType &other);
-    bool operator==(const ThisType &other);
-    bool operator!=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
 
-    Atom_ * operator*();
+    Atom_ * operator*() const;
 
     // pre-increment
     ThisType &operator++();
@@ -168,6 +164,39 @@ namespace RDKit{
     int _findPrev(int from);
   };
 
+  //! Iterate over atoms matching a query function. This is bidirectional.
+  template <class Atom_, class Mol_>
+  class MatchingAtomIterator_ {
+  public:
+    typedef MatchingAtomIterator_<Atom_,Mol_> ThisType;
+    MatchingAtomIterator_() : _end(-1),_pos(-1),_mol(0),_qF(0) {}; 
+    MatchingAtomIterator_(Mol_ * mol,bool (*fn)(Atom_ *));
+    MatchingAtomIterator_(Mol_ * mol,int pos);
+    ~MatchingAtomIterator_();
+    MatchingAtomIterator_(const ThisType &other);
+    MatchingAtomIterator_ &operator=(const ThisType &other);
+    bool operator==(const ThisType &other) const;
+    bool operator!=(const ThisType &other) const;
+
+    Atom_ * operator*() const;
+
+    // pre-increment
+    ThisType &operator++();
+    ThisType operator++(int);
+
+    // pre-decrement
+    ThisType &operator--();
+    ThisType operator--(int);
+  private:
+    int _end,_pos;
+    Mol_ * _mol;
+    bool (*_qF)(Atom_ *);
+
+    int _findNext(int from);  
+    int _findPrev(int from);
+  };
+
+  
 
 }  /* end o namespace */
 

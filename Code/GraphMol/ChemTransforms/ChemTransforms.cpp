@@ -12,7 +12,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitQueries.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
@@ -134,7 +135,8 @@ namespace RDKit{
 
   std::vector<ROMOL_SPTR>
   replaceSubstructs(const ROMol &mol, const ROMol &query,const ROMol &replacement,
-                    bool replaceAll) {
+                    bool replaceAll,unsigned int replacementConnectionPoint) {
+    PRECONDITION(replacementConnectionPoint<replacement.getNumAtoms(),"bad replacementConnectionPoint");
     std::vector<ROMOL_SPTR> res;
     std::vector<MatchVectType> fgpMatches;
 
@@ -188,7 +190,8 @@ namespace RDKit{
         if(!std::binary_search(sortMatch.begin(),sortMatch.end(),int(*nbrIdx))){
           Bond *oBond=newMol->getBondBetweenAtoms(match[0],*nbrIdx);
           CHECK_INVARIANT(oBond,"required bond not found");
-          newMol->addBond(numOrigAtoms,*nbrIdx,oBond->getBondType());
+          newMol->addBond(numOrigAtoms+replacementConnectionPoint,
+                          *nbrIdx,oBond->getBondType());
         }
         nbrIdx++;
       }
@@ -445,13 +448,13 @@ namespace RDKit{
 
   ROMol *MurckoDecompose(const ROMol &mol){
     RWMol *res=new RWMol(mol);
-    int nAtoms=res->getNumAtoms();
-    if(nAtoms==0) return res;
+    unsigned int nAtoms=res->getNumAtoms();
+    if(!nAtoms) return res;
 
     // start by getting the shortest paths matrix:
     MolOps::getDistanceMat(mol,false,false,true);
     boost::shared_array<int> pathMat;
-    mol.getProp("DistanceMatrix_Paths",pathMat);
+    mol.getProp(common_properties::DistanceMatrix_Paths,pathMat);
 
     boost::dynamic_bitset<> keepAtoms(nAtoms);
     const RingInfo *ringInfo=res->getRingInfo();
@@ -480,7 +483,7 @@ namespace RDKit{
       }
     }
 
-    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+    boost::dynamic_bitset<> removedAtoms(nAtoms);
     std::vector<Atom *> atomsToRemove;
     for(unsigned int i=0;i<nAtoms;++i){
       if(!keepAtoms[i]){
@@ -607,7 +610,7 @@ namespace RDKit{
 
   void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
                          bool standardize,std::string delimiter,std::string comment,
-                         int nameColumn,int smartsColumn){
+                         unsigned int nameColumn,unsigned int smartsColumn){
     PRECONDITION(inStream,"no stream");
     queryDefs.clear();
 
@@ -654,13 +657,20 @@ namespace RDKit{
   }
   void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
                          bool standardize,std::string delimiter,std::string comment,
-                         int nameColumn,int smartsColumn){
+                         unsigned int nameColumn,unsigned int smartsColumn){
     std::ifstream inStream(filename.c_str());
     if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;
       errout << "Bad input file " << filename;
       throw BadFileException(errout.str());
     }
+    parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
+  }
+  void parseQueryDefText(const std::string &queryDefText,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize,std::string delimiter,std::string comment,
+                         unsigned int nameColumn,unsigned int smartsColumn){
+    std::stringstream inStream(queryDefText);
     parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
   }
 }  // end of namespace RDKit

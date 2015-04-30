@@ -41,5 +41,11 @@
 %}
 
 
+%newobject RDKit::ForwardSDMolSupplier::next;
+%newobject RDKit::SDMolSupplier::next;
+%newobject RDKit::SmilesMolSupplier::next;
+%newobject RDKit::TDTMolSupplier::next;
+%newobject RDKit::PDBMolSupplier::next;
+
 %include <GraphMol/FileParsers/MolSupplier.h>
 

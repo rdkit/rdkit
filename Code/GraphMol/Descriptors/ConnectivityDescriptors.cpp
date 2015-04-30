@@ -21,8 +21,8 @@ namespace RDKit{
     namespace detail {
       void hkDeltas(const ROMol &mol,std::vector<double> &deltas,bool force){
         PRECONDITION(deltas.size()>=mol.getNumAtoms(),"bad vector size");
-        if(!force && mol.hasProp("_connectivityHKDeltas")){
-          mol.getProp("_connectivityHKDeltas",deltas);
+        if(!force && mol.hasProp(common_properties::_connectivityHKDeltas)){
+          mol.getProp(common_properties::_connectivityHKDeltas,deltas);
           return;
         }
         const PeriodicTable *tbl = PeriodicTable::getTable();
@@ -41,14 +41,14 @@ namespace RDKit{
           if(deltas[at->getIdx()]!=0.0) deltas[at->getIdx()]=1./sqrt(deltas[at->getIdx()]);
           ++atBegin;
         }
-        mol.setProp("_connectivityHKDeltas",deltas,true);
+        mol.setProp(common_properties::_connectivityHKDeltas,deltas,true);
       }
 
 
       void nVals(const ROMol &mol,std::vector<double> &nVs,bool force){
         PRECONDITION(nVs.size()>=mol.getNumAtoms(),"bad vector size");
-        if(!force && mol.hasProp("_connectivityNVals")){
-          mol.getProp("_connectivityNVals",nVs);
+        if(!force && mol.hasProp(common_properties::_connectivityNVals)){
+          mol.getProp(common_properties::_connectivityNVals,nVs);
           return;
         }
         const PeriodicTable *tbl = PeriodicTable::getTable();
@@ -63,7 +63,7 @@ namespace RDKit{
           nVs[at->getIdx()]=v;
           ++atBegin;
         }
-        mol.setProp("_connectivityNVals",nVs,true);
+        mol.setProp(common_properties::_connectivityNVals,nVs,true);
       }
 
       double getAlpha(const Atom &atom,bool &found){
@@ -171,9 +171,14 @@ namespace RDKit{
       PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
       double res=0.0;
       BOOST_FOREACH(PATH_TYPE p,ps){
+        TEST_ASSERT(p.size()==n+1);
         double accum=1.0;
-        BOOST_FOREACH(int aidx,p){
-          accum*=hkDs[aidx];
+        for(unsigned int i=0;i<n;++i){
+          accum*=hkDs[p[i]];
+        }
+        // only push on the last element if this isn't a ring; this was github 463:
+        if(p[n]!=p[0]){ 
+          accum*=hkDs[p[n]];
         }
         res+=accum;
       }
@@ -185,10 +190,17 @@ namespace RDKit{
       PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
       double res=0.0;
       BOOST_FOREACH(PATH_TYPE p,ps){
+
+        TEST_ASSERT(p.size()==n+1);
         double accum=1.0;
-        BOOST_FOREACH(int aidx,p){
-          accum*=nVs[aidx];
+        for(unsigned int i=0;i<n;++i){
+          accum*=nVs[p[i]];
         }
+        // only push on the last element if this isn't a ring; this was github 463:
+        if(p[n]!=p[0]){ 
+          accum*=nVs[p[n]];
+        }
+
         res+=accum;
       }
       return res;

@@ -10,6 +10,7 @@
 #include <math.h>
 #include <RDGeneral/Invariant.h>
 #include <cstring>
+#include <algorithm>
 
 namespace BFGSOpt {
   const double FUNCTOL=1e-4;  //!< Default tolerance for function convergence in the minimizer
@@ -50,10 +51,11 @@ namespace BFGSOpt {
     PRECONDITION(dir,"bad input array");
     PRECONDITION(newPt,"bad input array");
 
+    const unsigned int MAX_ITER_LINEAR_SEARCH = 1000;
     double sum=0.0,slope=0.0,test=0.0,lambda=0.0;
     double lambda2=0.0,lambdaMin=0.0,tmpLambda=0.0,val2=0.0;
 
-    resCode=0;
+    resCode=-1;
 
     // get the length of the direction vector:
     sum=0.0;
@@ -64,7 +66,7 @@ namespace BFGSOpt {
     // rescale if we're trying to move too far:
     if(sum>maxStep){
       for(unsigned int i=0;i<dim;i++)
-	dir[i] *= maxStep/sum;
+        dir[i] *= maxStep/sum;
     }
       
     // make sure our direction has at least some component along
@@ -74,7 +76,6 @@ namespace BFGSOpt {
       slope += dir[i]*grad[i];
     }
     if(slope>=0.0){
-      resCode=-1;
       return;
     }
 
@@ -86,56 +87,59 @@ namespace BFGSOpt {
 
     lambdaMin = MOVETOL/test;
     lambda = 1.0;
-    while(1){
+    unsigned int it = 0;
+    while(it < MAX_ITER_LINEAR_SEARCH){
       //std::cout << "\t" << lambda << " " << lambdaMin << std::endl;
       if(lambda<lambdaMin){
-	// the position change is too small... set the resCode and return
-	for(unsigned int i=0;i<dim;i++){
-	  newPt[i]=oldPt[i];
-        }
-	resCode=1;
-	return;
+        // the position change is too small
+        resCode=1;
+        break;
       }
       for(unsigned int i=0;i<dim;i++){
-	newPt[i]=oldPt[i]+lambda*dir[i];
+        newPt[i]=oldPt[i]+lambda*dir[i];
       }
       newVal = func(newPt);
 
       if( newVal-oldVal <= FUNCTOL*lambda*slope ){
-	// we're converged on the function:
-	return;
+        // we're converged on the function:
+        resCode=0;
+        return;
+      }
+      // if we made it this far, we need to backtrack:
+      if(it == 0){
+        // it's the first step:
+        tmpLambda = -slope / (2.0*(newVal-oldVal-slope));
       } else {
-	// if we made it this far, we need to backtrack:
-	if(lambda==1.0){
-	  // it's the first step:
-	  tmpLambda = -slope / (2.0*(newVal-oldVal-slope));
-	} else {
-	  double rhs1 = newVal-oldVal-lambda*slope;
-	  double rhs2 = val2-oldVal-lambda2*slope;
-	  double a = (rhs1/(lambda*lambda) - rhs2/(lambda2*lambda2))/
-	    (lambda-lambda2);
-	  double b = (-lambda2*rhs1/(lambda*lambda)+lambda*rhs2/(lambda2*lambda2))/
-	    (lambda-lambda2);
-	  if( a==0.0 ){
-	    tmpLambda = -slope/(2.0*b);
-	  } else {
-	    double disc=b*b-3*a*slope;
-	    if(disc<0.0){
-	      tmpLambda = 0.5*lambda;
-	    } else if(b<=0.0) {
-	      tmpLambda = (-b+sqrt(disc))/(3.0*a);
-	    } else {
-	      tmpLambda = -slope/(b+sqrt(disc));
-	    }
-	  }
-	  if( tmpLambda > 0.5*lambda ){
-	    tmpLambda = 0.5*lambda;
-	  }
-	}
+        double rhs1 = newVal-oldVal-lambda*slope;
+        double rhs2 = val2-oldVal-lambda2*slope;
+        double a = (rhs1/(lambda*lambda) - rhs2/(lambda2*lambda2))/
+          (lambda-lambda2);
+        double b = (-lambda2*rhs1/(lambda*lambda)+lambda*rhs2/(lambda2*lambda2))/
+          (lambda-lambda2);
+        if( a==0.0 ){
+          tmpLambda = -slope/(2.0*b);
+        } else {
+          double disc=b*b-3*a*slope;
+          if(disc<0.0){
+            tmpLambda = 0.5*lambda;
+          } else if(b<=0.0) {
+            tmpLambda = (-b+sqrt(disc))/(3.0*a);
+          } else {
+            tmpLambda = -slope/(b+sqrt(disc));
+          }
+        }
+        if( tmpLambda > 0.5*lambda ){
+          tmpLambda = 0.5*lambda;
+        }
       }
       lambda2 = lambda;
       val2 = newVal;
       lambda = std::max(tmpLambda,0.1*lambda);
+      ++it;
+    }
+    // nothing was done
+    for(unsigned int i=0;i<dim;i++){
+      newPt[i]=oldPt[i];
     }
   }
 

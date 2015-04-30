@@ -13,14 +13,16 @@
   This provides a workout for the SMARTS matcher
 
 """
+from __future__ import print_function
 from rdkit import RDConfig
-import unittest,cPickle,os
+import unittest,os
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import Lipinski
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.inFileName = '%s/NCI/first_200.props.sdf'%(RDConfig.RDDataDir)
   def test1(self):
     " testing first 200 mols from NCI "
@@ -59,15 +61,15 @@ class TestCase(unittest.TestCase):
 
   def testIssue2183420(self):
     " testing a problem with the acceptor definition "
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CN(C)C'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC(=O)'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC(=O)C'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC(=O)'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC(=O)C'))==1)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=CNC(=O)C'))==2)
-    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=C(C)NC(=O)C'))==2)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CN(C)C'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC(=O)'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC(=O)C'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC(=O)'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC(=O)C'))==1)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=CNC(=O)C'))==2)
+    self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=C(C)NC(=O)C'))==2)
       
 
 if __name__ == '__main__':

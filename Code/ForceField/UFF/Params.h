@@ -21,6 +21,53 @@
 namespace ForceFields {
   namespace UFF {
 
+    const double DEG2RAD = M_PI / 180.0;
+    const double RAD2DEG = 180.0 / M_PI;
+    inline bool isDoubleZero(const double x) {
+      return ((x < 1.0e-10) && (x > -1.0e-10));
+    }
+    inline void clipToOne(double &x) {
+      if (x > 1.0) {
+        x = 1.0;
+      }
+      else if (x < -1.0) {
+        x = -1.0;
+      }
+    }
+
+    //! class to store UFF parameters for bond stretching
+    class UFFBond {
+    public:
+      double kb;
+      double r0;
+    };
+
+    //! class to store UFF parameters for angle bending
+    class UFFAngle {
+    public:
+      double ka;
+      double theta0;
+    };
+
+    //! class to store UFF parameters for torsions
+    class UFFTor {
+    public:
+      double V;
+    };
+
+    //! class to store UFF parameters for inversions
+    class UFFInv {
+    public:
+      double K;
+    };
+
+    //! class to store UFF parameters for van der Waals interactions
+    class UFFVdW {
+    public:
+      double x_ij;
+      double D_ij;
+    };
+
     //! class to store atomic parameters for the Universal Force Field
     class AtomicParams {
     public:

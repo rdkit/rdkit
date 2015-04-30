@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -47,11 +47,18 @@ namespace RDKit{
   namespace {
     int smiles_parse(const std::string &inp,
 		     std::vector<RDKit::RWMol *> &molVect){
-      void *scanner;
-      TEST_ASSERT(!yysmiles_lex_init(&scanner));
-      setup_smiles_string(inp,scanner);
       std::list<unsigned int> branchPoints;
-      int res=yysmiles_parse(inp.c_str(),&molVect,&branchPoints,scanner);
+      void *scanner;
+      int res;
+
+      TEST_ASSERT(!yysmiles_lex_init(&scanner));
+      try {
+        setup_smiles_string(inp,scanner);
+        res = yysmiles_parse(inp.c_str(),&molVect,&branchPoints,scanner);
+      } catch(...) {
+        yysmiles_lex_destroy(scanner);
+        throw;
+      }
       yysmiles_lex_destroy(scanner);
       if(!branchPoints.empty()){
         throw SmilesParseException("extra open parentheses");
@@ -61,9 +68,15 @@ namespace RDKit{
     int smarts_parse(const std::string &inp,
 		     std::vector<RDKit::RWMol *> &molVect){
       void *scanner;
+      int res;
       TEST_ASSERT(!yysmarts_lex_init(&scanner));
-      setup_smarts_string(inp,scanner);
-      int res=yysmarts_parse(inp.c_str(),&molVect,scanner);
+      try {
+        setup_smarts_string(inp,scanner);
+        res=yysmarts_parse(inp.c_str(),&molVect,scanner);
+      } catch(...) {
+        yysmarts_lex_destroy(scanner);
+        throw;
+      }
       yysmarts_lex_destroy(scanner);
       return res;
     }
@@ -128,21 +141,22 @@ namespace RDKit{
   RWMol *toMol(std::string inp,int func(const std::string &,
 					std::vector<RDKit::RWMol *> &),
                std::string origInp){
-    RWMol *res;
+    // empty strings produce empty molecules:
+    if(inp=="") return new RWMol();
+    RWMol *res = 0;
     std::vector<RDKit::RWMol *> molVect;
     try {
       func(inp,molVect);
-      if(molVect.size()<=0){
-	res = 0;
-      } else {
+      if(molVect.size()>0){
 	res = molVect[0];
-	molVect[0]=0;
 	SmilesParseOps::CloseMolRings(res,false);
 	SmilesParseOps::AdjustAtomChiralityFlags(res);
 	// No sense leaving this bookmark intact:
 	if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){
 	  res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
 	}
+	SmilesParseOps::CleanupAfterParsing(res);
+        molVect[0]=0; // NOTE: to avoid leaks on failures, this should occur last in this if.
       }
     } catch (SmilesParseException &e) {
       std::string nm="SMILES";
@@ -154,7 +168,11 @@ namespace RDKit{
       res = 0;
     }
     BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
-      if(molPtr) delete molPtr;
+      if (molPtr) {
+        // Clean-up the bond bookmarks when not calling CloseMolRings
+        SmilesParseOps::CleanupAfterParseError(molPtr);
+        delete molPtr;
+      }
     }
 
     return res;
@@ -186,9 +204,9 @@ namespace RDKit{
       // this triggers a sanitization, so we do not need to
       // worry about doing one here:
       try {
-        MolOps::removeHs(*res,false,false);
+        MolOps::removeHs(*res,false,true);
         // figure out stereochemistry:
-        MolOps::assignStereochemistry(*res,true);
+        MolOps::assignStereochemistry(*res,true,true,true);
       } catch (...) {
         delete res;
         throw;

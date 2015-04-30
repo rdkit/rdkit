@@ -3,15 +3,17 @@
 #
 
 """ unit tests for the ID3 implementation """
-from rdkit import RDConfig
+from __future__ import print_function
 import unittest
+import io
+from rdkit.six.moves import cPickle
+from rdkit import RDConfig
 from rdkit.ML.DecTree import ID3,DecTree
-import cPickle
 from rdkit.ML.Data import MLData
 
 class ID3TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     self.basicTreeName=RDConfig.RDCodeDir+'/ML/DecTree/test_data/BasicTree.pkl'
     self.multiTreeName=RDConfig.RDCodeDir+'/ML/DecTree/test_data/MultiTree.pkl'
   def _setupBasicTree(self):
@@ -40,8 +42,11 @@ class ID3TestCase(unittest.TestCase):
   def testBasicTree(self):
     " testing basic tree growth "
     self._setupBasicTree()
-    inFile = open(self.basicTreeName,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.basicTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def _setupMultiTree(self):
@@ -64,8 +69,11 @@ class ID3TestCase(unittest.TestCase):
   def testMultiTree(self):
     " testing multivalued tree growth "
     self._setupMultiTree()
-    inFile = open(self.multiTreeName,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.multiTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     
   def testClassify(self):
@@ -116,8 +124,11 @@ class ID3TestCase(unittest.TestCase):
   def testPyBasicTree(self):
     " testing basic tree growth (python entropy code) "
     self._setupPyBasicTree()
-    inFile = open(self.basicTreeName,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.basicTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def _setupPyMultiTree(self):
@@ -144,8 +155,11 @@ class ID3TestCase(unittest.TestCase):
   def testPyMultiTree(self):
     " testing multivalued tree growth (python entropy code) "
     self._setupPyMultiTree()
-    inFile = open(self.multiTreeName,'r')
-    t2 = cPickle.load(inFile)
+    with open(self.multiTreeName,'r') as inTFile:
+      buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+      inTFile.close()
+    with io.BytesIO(buf) as inFile:
+      t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     
   def testPyClassify(self):

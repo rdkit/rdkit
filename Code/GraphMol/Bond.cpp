@@ -34,7 +34,11 @@ Bond::Bond(const Bond &other){
   d_endAtomIdx = other.d_endAtomIdx;
   d_dirTag = other.d_dirTag;
   d_stereo = other.d_stereo;
-  d_stereoAtoms = other.d_stereoAtoms;
+  if(other.dp_stereoAtoms){
+    dp_stereoAtoms = new INT_VECT(*other.dp_stereoAtoms);
+  } else {
+    dp_stereoAtoms = NULL;
+  }
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
@@ -47,7 +51,8 @@ Bond::Bond(const Bond &other){
 
 Bond::~Bond()
 {
-  if(dp_props) delete dp_props;
+  delete dp_props;
+  delete dp_stereoAtoms;
 }
 
 Bond &Bond::operator=(const Bond &other){
@@ -56,7 +61,11 @@ Bond &Bond::operator=(const Bond &other){
   d_beginAtomIdx = other.d_beginAtomIdx;
   d_endAtomIdx = other.d_endAtomIdx;
   d_dirTag = other.d_dirTag;
-  d_stereoAtoms = other.d_stereoAtoms;
+  if(other.dp_stereoAtoms){
+    dp_stereoAtoms = new INT_VECT(*other.dp_stereoAtoms);
+  } else {
+    dp_stereoAtoms = NULL;
+  }
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
@@ -65,7 +74,6 @@ Bond &Bond::operator=(const Bond &other){
   }else{
     dp_props = new Dict();
   }
-
     
   return *this;
 }
@@ -154,6 +162,7 @@ double Bond::getBondTypeAsDouble() const {
   case AROMATIC: return 1.5; break;
   case DATIVEONE: return 1.0; break; // FIX: this should probably be different
   case DATIVE: return 1.0; break; //FIX: again probably wrong
+  case ZERO: return 0; break; 
   default:
     UNDER_CONSTRUCTION("Bad bond type");
   }
@@ -187,6 +196,7 @@ double Bond::getValenceContrib(const Atom *atom) const {
     if(atom->getIdx()==getEndAtomIdx())return 1.0;
     else return 0.0;
     break;
+  case ZERO: return 0; break; 
   default:
     UNDER_CONSTRUCTION("Bad bond type");
 
@@ -232,13 +242,13 @@ void Bond::initBond(){
   d_bondType = UNSPECIFIED;
   d_dirTag = NONE;
   d_stereo = STEREONONE;
-  d_stereoAtoms.clear();
   dp_mol = 0;
   d_beginAtomIdx = 0;
   d_endAtomIdx = 0;
   df_isAromatic = 0;
   d_index = 0;
   df_isConjugated = 0;
+  dp_stereoAtoms=NULL;
 };
 
 }; // end o' namespace

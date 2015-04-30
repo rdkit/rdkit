@@ -22,7 +22,7 @@ Other compatibility notes:
 
 
 """
-
+from __future__ import print_function
 import numpy
 from rdkit.ML.Composite import Composite
 
@@ -51,7 +51,7 @@ class BayesComposite(Composite.Composite):
     self.resultProbs = numpy.zeros(nResults,numpy.float)
     self.condProbs = [None]*nModels
 
-    for i in xrange(nModels):
+    for i in range(nModels):
       self.condProbs[i] = numpy.zeros((nResults,nResults),numpy.float)
     # FIX: this is a quick hack which may slow things down a lot
     for example in data:
@@ -85,14 +85,14 @@ class BayesComposite(Composite.Composite):
     self.resultProbs /= sum(self.resultProbs)
 
     if verbose:
-      print '**** Bayesian Results'
-      print 'Result probabilities'
-      print '\t',self.resultProbs
-      print 'Model by model breakdown of conditional probs'
+      print('**** Bayesian Results')
+      print('Result probabilities')
+      print('\t',self.resultProbs)
+      print('Model by model breakdown of conditional probs')
       for mat in self.condProbs:
         for row in mat:
-          print '\t',row
-        print
+          print('\t',row)
+        print()
       
 
       
@@ -124,16 +124,16 @@ class BayesComposite(Composite.Composite):
 
     nPossibleRes = self.nPossibleVals[-1]
     votes = [0.]*nPossibleRes
-    for i in xrange(len(self)):
+    for i in range(len(self)):
       predict = self.modelVotes[i]
-      for j in xrange(nPossibleRes):
+      for j in range(nPossibleRes):
         votes[j] += self.condProbs[i][predict,j]
 
     #totVotes = sum(votes)
     res = numpy.argmax(votes)
     conf = votes[res] / len(self)
     if verbose:
-      print votes,conf,example[-1]
+      print(votes,conf,example[-1])
     if conf > threshold:
       return res,conf
     else:

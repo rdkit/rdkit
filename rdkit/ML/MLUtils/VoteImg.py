@@ -9,7 +9,7 @@
   Uses *Numeric* and *PIL*
 
 """
-
+from __future__ import print_function
 import numpy
 from PIL import Image, ImageDraw
 
@@ -146,10 +146,10 @@ def VoteAndBuildImage(composite,data,badOnly=0,sortTrueVals=0,
 
   """
   nModels = len(composite)+3
-  print 'nModels:',nModels-3
+  print('nModels:',nModels-3)
 
   res,values,trueValues,misCount = CollectVotes(composite,data,badOnly)
-  print '%d examples were misclassified'%misCount
+  print('%d examples were misclassified'%misCount)
   img = BuildVoteImage(nModels,res,values,trueValues,sortTrueVals,
                        xScale,yScale,addLine)
   return img
@@ -160,23 +160,23 @@ def Usage():
   """
   import sys
 
-  print 'Usage: VoteImg.py [optional arguments] <modelfile.pkl> <datafile.qdat>'
-  print 'Optional Arguments:'
-  print '\t-o outfilename: the name of the output image file.'
-  print '\t                The extension determines the type of image saved.'
-  print '\t-b: only include bad (misclassified) examples'
-  print '\t-t: sort the results by the true (input) classification'
-  print '\t-x scale: scale the image along the x axis (default: 10)'
-  print '\t-y scale: scale the image along the y axis (default: 2)'
-  print '\t-d databasename: instead of using a qdat file, pull the data from'
-  print '\t                 a database.  In this case the filename argument'
-  print '\t                 is used to indicate the name of the table in the database.'
+  print('Usage: VoteImg.py [optional arguments] <modelfile.pkl> <datafile.qdat>')
+  print('Optional Arguments:')
+  print('\t-o outfilename: the name of the output image file.')
+  print('\t                The extension determines the type of image saved.')
+  print('\t-b: only include bad (misclassified) examples')
+  print('\t-t: sort the results by the true (input) classification')
+  print('\t-x scale: scale the image along the x axis (default: 10)')
+  print('\t-y scale: scale the image along the y axis (default: 2)')
+  print('\t-d databasename: instead of using a qdat file, pull the data from')
+  print('\t                 a database.  In this case the filename argument')
+  print('\t                 is used to indicate the name of the table in the database.')
 
   sys.exit(-1)
     
 if __name__ == '__main__':
   import sys,getopt
-  import cPickle
+  from rdkit.six.moves import cPickle
   from rdkit.ML.Data import DataUtils
 
   args,extra = getopt.getopt(sys.argv[1:],'o:bthx:y:d:')

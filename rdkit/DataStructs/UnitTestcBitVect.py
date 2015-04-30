@@ -10,8 +10,9 @@
 #
 """ unit testing code for the C++ BitVects
 """
+from __future__ import print_function
 import unittest,os,sys
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit.DataStructs import cDataStructs
 klass = cDataStructs.SparseBitVect
 
@@ -22,7 +23,7 @@ def ieq(n1,n2):
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
     sys.stdout.flush()
   def testSparseIdx(self):
     """ test indexing into SparseBitVects

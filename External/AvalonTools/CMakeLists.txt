@@ -1,4 +1,5 @@
 if(RDK_BUILD_AVALON_SUPPORT)
+string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
 set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
 
 add_definitions(-DBUILD_AVALON_SUPPORT)
@@ -47,6 +48,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_SRC_PATH})
 
 rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
+rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
            LINK_LIBRARIES AvalonLib avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
 

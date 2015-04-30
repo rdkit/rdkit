@@ -60,7 +60,7 @@ class KNNClassificationModel(KNNModel.KNNModel) :
     clsCnt = {}
     for knn in knnLst :
       cls = knn[1][-1]
-      if (clsCnt.has_key(cls)) :
+      if (cls in clsCnt) :
         clsCnt[cls] += 1
       else :
         clsCnt[cls] = 1

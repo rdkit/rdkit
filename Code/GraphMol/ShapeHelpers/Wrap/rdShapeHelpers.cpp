@@ -13,6 +13,7 @@
 #include "numpy/oldnumeric.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 
 #include <Geometry/Transform3D.h>
 #include <Geometry/UniformGrid3D.h>
@@ -126,26 +127,26 @@ namespace RDKit {
 
 BOOST_PYTHON_MODULE(rdShapeHelpers) {
   python::scope().attr("__doc__") =
-    "Module containing functions to encode ans compre the shapes of molecules"
+    "Module containing functions to encode and compare the shapes of molecules"
     ;
   
-  import_array();
+  rdkit_import_array();
   
   //RegisterListConverter<RDKit::Atom*>();
   
-  std::string docString = "Encode the shape of a molecule (one of it conformer) onto a grid\n\n\
+  std::string docString = "Encode the shape of a molecule (one of its conformer) onto a grid\n\n\
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
     - grid : grid onto which the encoding is written \n\
     - confId : id of the conformation of interest on mol (defaults to the first one) \n\
-    - trans : any transformation that needs to be used to encode onto the grid (note the molecule remain unchanged) \n\
+    - trans : any transformation that needs to be used to encode onto the grid (note the molecule remains unchanged) \n\
     - vdwScale : Scaling factor for the radius of the atoms to determine the base radius \n\
-                 used in the encoding - grid points inside this sphere carry the maximum occupany \n\
+                 used in the encoding - grid points inside this sphere carry the maximum occupancy \n\
     - setpSize : thickness of the layers outside the base radius, the occupancy value is decreased \n\
                  from layer to layer from the maximum value \n\
-    - maxLayers : the maximum number of layers - defaults to the number allowed the number of bits \n\
-                  use per grid point - e.g. two bits per grid point will allow 3 layers\n\
+    - maxLayers : the maximum number of layers - defaults to the number of bits \n\
+                  used per grid point - e.g. two bits per grid point will allow 3 layers\n\
     - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n";
   python::def("EncodeShape", RDKit::EncodeMolShape,
               (python::arg("mol"), python::arg("grid"),
@@ -162,14 +163,14 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
     - confId1 : Conformer in the first molecule (defaults to first conformer) \n\
     - confId2 : Conformer in the second molecule (defaults to first conformer) \n\
     - gridSpacing : resolution of the grid used to encode the molecular shapes \n\
-    - bitsPerPoint : number of bit used to encode the occupancy at each grid point \n\
+    - bitsPerPoint : number of bits used to encode the occupancy at each grid point \n\
                           defaults to two bits per grid point \n\
     - vdwScale : Scaling factor for the radius of the atoms to determine the base radius \n\
-                used in the encoding - grid points inside this sphere carry the maximum occupan \n\
+                used in the encoding - grid points inside this sphere carry the maximum occupancy \n\
     - stepSize : thickness of the each layer outside the base radius, the occupancy value is decreased \n\
                  from layer to layer from the maximum value \n\
-    - maxLayers : the maximum number of layers - defaults to the number allowed the number of bits \n\
-                  use per grid point - e.g. two bits per grid point will allow 3 layers \n\
+    - maxLayers : the maximum number of layers - defaults to the number of bits \n\
+                  used per grid point - e.g. two bits per grid point will allow 3 layers \n\
     - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n";
                   
   python::def("ShapeTanimotoDist", RDKit::tanimotoMolShapes,
@@ -192,11 +193,11 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
     - bitsPerPoint : number of bit used to encode the occupancy at each grid point \n\
                           defaults to two bits per grid point \n\
     - vdwScale : Scaling factor for the radius of the atoms to determine the base radius \n\
-                used in the encoding - grid points inside this sphere carry the maximum occupan \n\
+                used in the encoding - grid points inside this sphere carry the maximum occupancy \n\
     - stepSize : thickness of the each layer outside the base radius, the occupancy value is decreased \n\
                  from layer to layer from the maximum value \n\
-    - maxLayers : the maximum number of layers - defaults to the number allowed the number of bits \n\
-                  use per grid point - e.g. two bits per grid point will allow 3 layers \n\
+    - maxLayers : the maximum number of layers - defaults to the number of bits \n\
+                  used per grid point - e.g. two bits per grid point will allow 3 layers \n\
     - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n\
     - allowReordering : when set, the order will be automatically updated so that the value calculated\n\
                         is the protrusion of the smaller shape from the larger one.\n";
@@ -223,7 +224,7 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
                python::arg("padding")=2.0), docString.c_str());
   
   docString = "Compute the union of two boxes, so that all the points in both boxes are \n\
-    contain in the new box";
+    contained in the new box";
   python::def("ComputeUnionBox", RDKit::getUnionOfTwoBox, docString.c_str());
               
 }

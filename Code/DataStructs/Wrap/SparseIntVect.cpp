@@ -18,13 +18,23 @@
 
 using namespace RDKit;
 
+
+namespace {
+  template <typename IndexType>
+  python::object SIVToBinaryText(const SparseIntVect<IndexType> &siv){
+    std::string res=siv.toString();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+  }
+}
+
 template <typename IndexType>
 struct siv_pickle_suite : python::pickle_suite
 {
   static python::tuple
   getinitargs(const SparseIntVect<IndexType>& self)
   {
-    return python::make_tuple(self.toString());
+    return python::make_tuple(SIVToBinaryText(self));
   };
 };
 
@@ -144,7 +154,7 @@ struct sparseIntVec_wrapper {
 	   "Get the sum of the values in the vector, basically L1 norm")
       .def("GetLength", &SparseIntVect<IndexType>::getLength,
 	   "Returns the length of the vector")
-      .def("ToBinary", &SparseIntVect<IndexType>::toString,
+      .def("ToBinary", &SIVToBinaryText<IndexType>,
 	   "returns a binary (pickle) representation of the vector")
       .def("UpdateFromSequence",
 	   &pyUpdateFromSequence<IndexType>,

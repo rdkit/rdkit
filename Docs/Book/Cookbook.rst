@@ -376,6 +376,229 @@ This produces:
     CC[N-]C(=O)CC -> CCNC(=O)CC
 
 
+3D functionality in the RDKit
+-----------------------------
+
+The RDKit contains a range of 3D functionalities such as:
+
++---------------------------------+
+| Shape alignment                 |
++---------------------------------+
+| RMS calculation                 |
++---------------------------------+
+| Shape Tanimoto Distance         |
++---------------------------------+
+| Shape Protrude Distance         |
++---------------------------------+
+| 3D pharmacophore fingerprint    |
++---------------------------------+
+| Torsion fingerprint (deviation) |
++---------------------------------+
+
+There are two alignment methods currently available in the RDKit.
+As an example we use two crystal structures from the PDB of the same molecule.
+
+The code:
+
+.. testcode::
+
+  from rdkit import Chem, RDConfig
+  from rdkit.Chem import AllChem, rdMolAlign
+  # The reference molecule
+  ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  # The PDB conformations
+  mol1 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1DWD_ligand.pdb')
+  mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
+  mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
+  mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
+  # Align them
+  rms = rdMolAlign.AlignMol(mol1, mol2)
+  print rms
+  # Align them with OPEN3DAlign
+  pyO3A = rdMolAlign.GetO3A(mol1, mol2)
+  score = pyO3A.Align()
+  print score
+
+This produces:
+
+.. testoutput::
+
+    1.55001955728
+    0.376459885045
+
+If a molecule contains more than one conformer, they can be aligned 
+with respect to the first conformer. If a list is provided to the
+option RMSlist, the RMS value from the alignment are stored.
+The RMS value of two conformers of a molecule can also be calculated
+separately, either with or without alignment (using the flag prealigned).
+
+Examples of using it:
+
+.. testcode::
+
+  from rdkit import Chem
+  from rdkit.Chem import AllChem
+  mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  cids = AllChem.EmbedMultipleConfs(mol, numConfs=50, maxAttempts=1000, pruneRmsThresh=0.1)
+  print len(cids)
+  # align the conformers
+  rmslist = []
+  AllChem.AlignMolConformers(mol, RMSlist=rmslist)
+  print len(rmslist)
+  # calculate RMS of confomers 1 and 9 separately
+  rms = AllChem.GetConformerRMS(mol, 1, 9, prealigned=True)
+
+This produces:
+
+.. testoutput::
+
+    50
+    49
+
+For shape comparison, the RDKit provides two Shape-based distances 
+that can be calculated for two prealigned molecules or conformers.
+Shape protrude distance focusses on the volume mismatch, while
+Shape Tanimoto distance takes the volume overlay overall into account.
+
+Examples of using it:
+
+.. testcode::
+
+  from rdkit import Chem, RDConfig
+  from rdkit.Chem import AllChem, rdMolAlign, rdShapeHelpers
+  ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  mol1 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1DWD_ligand.pdb')
+  mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
+  mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
+  mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
+  rms = rdMolAlign.AlignMol(mol1, mol2)
+  tani = rdShapeHelpers.ShapeTanimotoDist(mol1, mol2)
+  prtr = rdShapeHelpers.ShapeProtrudeDist(mol1, mol2)
+  print rms, tani, prtr
+
+This produces:
+
+.. testoutput::
+
+    1.55001955728 0.18069102331 0.0962800875274
+
+A 3D pharmacophore fingerprint can be calculated using the RDKit
+by feeding a 3D distance matrix to the 2D-pharmacophore machinery.
+
+Examples of using it:
+
+.. testcode::
+  
+  from rdkit import Chem, DataStructs, RDConfig
+  from rdkit.Chem import AllChem
+  from rdkit.Chem.Pharm2D import Gobbi_Pharm2D, Generate
+  ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  mol1 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1DWD_ligand.pdb')
+  mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
+  mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
+  mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
+  # pharmacophore fingerprint
+  factory = Gobbi_Pharm2D.factory
+  fp1 = Generate.Gen2DFingerprint(mol1, factory, dMat=Chem.Get3DDistanceMatrix(mol1))
+  fp2 = Generate.Gen2DFingerprint(mol2, factory, dMat=Chem.Get3DDistanceMatrix(mol2))
+  # Tanimoto similarity
+  tani = DataStructs.TanimotoSimilarity(fp1, fp2)
+  print tani
+
+This produces:
+
+.. testoutput::
+
+    0.451665312754  
+
+The RDKit provides an implementation of the torsion fingerprint
+deviation (TFD) approach developed by Schulz-Gasch et al. 
+(J. Chem. Inf. Model, 52, 1499, 2012). The RDKit implementation
+allows the user to customize the torsion fingerprints:
+  * In the original approach, the torsions are weighted based on
+    their distance to the center of the molecule. By default, this
+    weighting is performed, but can be turned off using the flag
+    useWeights=False
+  * The similarity between atoms is determined by comparing the 
+    hash codes from the Morgan algorithm at a given radius (default: 
+    radius = 2). 
+  * In the original approach, the maximal deviation used for
+    normalization is 180.0 degrees for all torsions (default). If
+    maxDev='spec', a torsion-type dependent maximal deviation is 
+    used for the normalization.
+
+Examples of using it:
+
+.. testcode::
+
+  from rdkit import Chem, RDConfig
+  from rdkit.Chem import AllChem, TorsionFingerprints
+  ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  mol1 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1DWD_ligand.pdb')
+  mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
+  mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
+  mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
+  tfd1 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2)
+  tfd2 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, useWeights=False)
+  tfd3 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, maxDev='spec')
+  print tfd1, tfd2, tfd3
+
+This produces:
+
+.. testoutput::
+
+   [0.0645...] [0.168...] [0.0675...]
+
+If the TFD between conformers of the same molecule is to be
+calculated, the function GetTFDBetweenConformers() should be
+used for performance reasons.
+
+Examples of using it:
+
+.. testcode::
+
+  from rdkit import Chem, RDConfig
+  from rdkit.Chem import AllChem, TorsionFingerprints
+  ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  mol1 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1DWD_ligand.pdb')
+  mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
+  mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
+  mol1.AddConformer(mol2.GetConformer(), assignId=True)
+  tfd = TorsionFingerprints.GetTFDBetweenConformers(mol1, confIds1=[0], confIds2=[1])
+  print tfd
+
+This produces:
+
+.. testoutput::
+
+    [0.0645...]
+
+For the conformer RMS and TFD values, the RDKit provides
+convenience functions that calculated directly the symmetric
+matrix which can be fed into a clustering algorithm such
+as Butina clustering. The flag reordering ensures that the
+number of neighbors of the unclustered molecules is updated 
+every time a cluster is created.
+
+Examples of using it:
+
+.. testcode::
+
+  from rdkit import Chem
+  from rdkit.Chem import AllChem, TorsionFingerprints
+  from rdkit.ML.Cluster import Butina
+  mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+  cids = AllChem.EmbedMultipleConfs(mol, numConfs=50, maxAttempts=1000, pruneRmsThresh=0.1)
+  # RMS matrix
+  rmsmat = AllChem.GetConformerRMSMatrix(mol, prealigned=False)
+  # TFD matrix
+  tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
+  # clustering
+  num = mol.GetNumConformers()
+  rms_clusters = Butina.ClusterData(rmsmat, num, 2.0, isDistData=True, reordering=True)
+  tfd_clusters = Butina.ClusterData(tfdmat, num, 0.3, isDistData=True, reordering=True)
+
+
 Using scikit-learn with RDKit
 -----------------------------
 
@@ -453,10 +676,122 @@ This produces:
 .. image:: images/similarity_map_rf.png
 
 
+Using custom MCS atom types
+---------------------------
+
+Mailing list discussion:
+http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg03676.html
+
+IPython notebook:
+http://nbviewer.ipython.org/gist/greglandrum/8351725
+https://gist.github.com/greglandrum/8351725
+
+The goal is to be able to use custom atom types in the MCS code, yet
+still be able to get a readable SMILES for the MCS. We will use the
+MCS code's option to use isotope information in the matching and then
+set bogus isotope values that contain our isotope information.
+
+The code:
+
+.. testcode::
+
+  from rdkit import Chem
+  from rdkit.Chem import rdFMCS
+
+  # our test molecules:
+  smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
+        "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
+  ms = [Chem.MolFromSmiles(x) for x in smis]
+  
+  def label(a):
+    " a simple hash combining atom number and hybridization "
+    return 100*int(a.GetHybridization())+a.GetAtomicNum()
+
+  # copy the molecules, since we will be changing them
+  nms = [Chem.Mol(x) for x in ms]
+  for nm in nms:
+    for at in nm.GetAtoms():
+        at.SetIsotope(label(at))
+
+  mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+  print mcs.smartsString
+
+This generates the following output:
+
+.. testoutput::
+
+  [406*]-[308*]-[306*]1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[307*]-[306*]1:[307*]:[306*]2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*])(-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1
+
+That's what we asked for, but it's not exactly readable. We can get to a more readable form in a two step process:
+
+  1) Do a substructure match of the MCS onto a copied molecule
+  2) Generate SMILES for the original molecule, using only the atoms that matched in the copy.
+
+This works because we know that the atom indices in the copies and the original molecules are the same.
+  
+.. testcode::
+
+  def getMCSSmiles(mol,labelledMol,mcs):
+      mcsp = Chem.MolFromSmarts(mcs.smartsString)
+      match = labelledMol.GetSubstructMatch(mcsp)
+      return Chem.MolFragmentToSmiles(ms[0],atomsToUse=match,
+                                      isomericSmiles=True,
+                                      canonical=False)
+
+  print getMCSSmiles(ms[0],nms[0],mcs)
+
+.. testoutput::
+
+  COc1ccc(C(Nc2nc3c(ncn3COC)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1
+
+That's what we were looking for.
+
+
+Clustering molecules
+--------------------
+
+For large sets of molecules (more than 1000-2000), it's most efficient to use the Butina clustering algorithm.
+
+Here's some code for doing that for a set of fingerprints::
+
+  def ClusterFps(fps,cutoff=0.2):
+      from rdkit import DataStructs
+      from rdkit.ML.Cluster import Butina
+  
+      # first generate the distance matrix:
+      dists = []
+      nfps = len(fps)
+      for i in range(1,nfps):
+          sims = DataStructs.BulkTanimotoSimilarity(fps[i],fps[:i])
+          dists.extend([1-x for x in sims])
+  
+      # now cluster the data:
+      cs = Butina.ClusterData(dists,nfps,cutoff,isDistData=True)
+      return cs
+
+The return value is a tuple of clusters, where each cluster is a tuple of ids.
+
+Example usage::
+
+  from rdkit import Chem
+  from rdkit.Chem import AllChem
+  import gzip
+  ms = [x for x in Chem.ForwardSDMolSupplier(gzip.open('zdd.sdf.gz')) if x is not None]
+  fps = [AllChem.GetMorganFingerprintAsBitVect(x,2,1024) for x in ms]
+  clusters=ClusterFps(fps,cutoff=0.4)
+
+
+The variable `clusters` contains the results::
+
+  >>> print clusters[200]
+  (6164, 1400, 1403, 1537, 1543, 6575, 6759)
+
+That cluster contains 7 points, the centroid is point 6164.
+
 License
 *******
 
-This document is copyright (C) 2012 by Greg Landrum
+This document is copyright (C) 2012-2015 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

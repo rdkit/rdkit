@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os, sys, re
 
 from roundup import instance, date, hyperdb
@@ -45,7 +46,7 @@ def create(db, **issue):
   # next we create the issue itself
   issue_id = db.issue.create(**issue)
 
-  print "Created issue%s"%issue_id
+  print("Created issue%s"%issue_id)
 
 
 if __name__ == '__main__':

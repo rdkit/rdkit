@@ -10,8 +10,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.Chem.FeatMaps import FeatMaps
 import copy
+from rdkit.six.moves import range
+from rdkit.Chem.FeatMaps import FeatMaps
 
 class MergeMethod(object):
   WeightedAverage=0
@@ -87,7 +88,7 @@ def GetFeatFeatDistMatrix(fm,mergeMetric,mergeTol,dirMergeMode,compatFunc):
             dists[i][j]=score
             dists[j][i]=score
   else:
-    raise ValueError,'unrecognized mergeMetric'
+    raise ValueError('unrecognized mergeMetric')
 
   return dists
 
@@ -130,7 +131,7 @@ def MergeFeatPoints(fm,mergeMetric=MergeMetric.NoMerge,mergeTol=1.5,
 
   # progressively merge nearest neighbors until there
   # are no more points left to merge
-  featsInPlay=range(fm.GetNumFeatures())
+  featsInPlay=list(range(fm.GetNumFeatures()))
   featsToRemove = []
   #print '--------------------------------'
   while featsInPlay:
@@ -184,7 +185,7 @@ def MergeFeatPoints(fm,mergeMetric=MergeMetric.NoMerge,mergeTol=1.5,
           newPos=nbrFeat.GetPos()
           newWeight = nbrFeat.weight
       else:
-        raise ValueError,"bad mergeMethod"
+        raise ValueError("bad mergeMethod")
 
       featI.SetPos(newPos)
       featI.weight = newWeight

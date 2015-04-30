@@ -12,6 +12,7 @@
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #include "numpy/arrayobject.h"
+#include <RDBoost/import_array.h>
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
@@ -140,10 +141,8 @@ namespace RDNumeric {
         }
       }
       
-      
-      if (wtsVec) {
-        delete wtsVec;
-      }
+      delete wtsVec;
+
       for (unsigned int i = 0; i < npt; ++i) {
         delete probePts[i];
         delete refPts[i];
@@ -159,12 +158,10 @@ namespace RDNumeric {
 
 BOOST_PYTHON_MODULE(rdAlignment) {
 
-  import_array();
+  rdkit_import_array();
   python::scope().attr("__doc__") =
     "Module containing functions to align pairs of points in 3D"
     ;
-
-  import_array();
 
   std::string docString = "Compute the optimal alignment (minimum RMSD) between two set of points \n\n\
  \n\

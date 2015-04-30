@@ -73,9 +73,22 @@ namespace ForceFields {
     d_numPoints=0;
     d_positions.clear();
     d_contribs.clear();
-    if(dp_distMat) delete [] dp_distMat;
+    delete [] dp_distMat;
     dp_distMat=0;
   }
+
+  ForceField::ForceField(const ForceField &other) : d_dimension(other.d_dimension),
+                                                    df_init(false),
+                                                    d_numPoints(other.d_numPoints),
+                                                    dp_distMat(0) {
+    d_contribs.clear();
+    BOOST_FOREACH(const ContribPtr &contrib,other.d_contribs){
+      ForceFieldContrib *ncontrib=contrib->copy();
+      ncontrib->dp_forceField=this;
+      d_contribs.push_back(ContribPtr(ncontrib));
+    }
+  };
+
 
   double ForceField::distance(unsigned int i,unsigned int j,double *pos) {
     PRECONDITION(df_init,"not initialized");
@@ -140,7 +153,7 @@ namespace ForceFields {
   void ForceField::initialize(){
     // clean up if we have used this already:
     df_init=false;
-    if(dp_distMat) delete [] dp_distMat;
+    delete [] dp_distMat;
     dp_distMat=0;
     
     d_numPoints = d_positions.size();

@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/RDLog.h>
 
 namespace RDKit {
@@ -129,6 +130,9 @@ namespace RDKit {
       if (descrip == "AtomImplicitHCount") {
         res << "h" << query->getVal();
         needParen = true;
+      }else if (descrip == "AtomHasImplicitH") {
+        res << "h";
+        needParen = true;
       } else if (descrip == "AtomTotalValence") {
         res << "v" << query->getVal();
         needParen = true;
@@ -140,6 +144,9 @@ namespace RDKit {
         needParen = true;
       } else if (descrip == "AtomTotalDegree") {
         res << "X" << query->getVal();
+        needParen = true;
+      } else if (descrip == "AtomHasRingBond") {
+        res << "x";
         needParen = true;
       } else if (descrip == "AtomHCount") {
         res << "H" << query->getVal();
@@ -192,28 +199,11 @@ namespace RDKit {
       } else if (descrip == "AtomIsotope") {
         res << query->getVal()<<"*";
         needParen = true;
+      } else if (descrip == "AtomHasRingBond") {
+        res << "x";
+        needParen = true;
       } else if (descrip == "AtomRingBondCount") {
-        int count=query->getVal();
-        if(count==0){
-          res<<"!";
-        }
-        res<<"$(*";
-        while(count>1){
-          res<<"(@*)";
-          --count;
-        }
-        res<<"@*)";
-        count=query->getVal()+1;
-        if(count>1){
-          // put in a counter query for the next highest number of ring
-          // bonds:
-          res<<"&!$(*";
-          while(count>1){
-            res<<"(@*)";
-            --count;
-          }
-          res<<"@*)";
-        }
+        res << "x" << query->getVal();
         needParen = true;
       } else if (descrip == "AtomUnsaturated") {
         res<<"$(*=,:,#*)";
@@ -482,7 +472,7 @@ namespace RDKit {
     
     std::string FragmentSmartsConstruct(ROMol &mol,unsigned int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        INT_VECT &ranks){
+                                        UINT_VECT &ranks){
       Canon::MolStack molStack;
       molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
       std::stringstream res;
@@ -652,11 +642,10 @@ namespace RDKit {
           res = "!" + res;
         }
       }
-      if(qatom->hasProp("molAtomMapNumber")){
-	needParen=true;
-	std::string mapNum;
-	qatom->getProp("molAtomMapNumber",mapNum);
-	res += ":"+mapNum;
+      std::string mapNum;
+      if(qatom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)){
+        needParen=true;
+        res += ":"+mapNum;
       }
       if (needParen ) {
         res = "[" + res + "]";
@@ -706,7 +695,7 @@ namespace RDKit {
     if(!nAtoms) return "";
 
     ROMol mol(inmol);
-    INT_VECT ranks;
+    UINT_VECT ranks;
     ranks.resize(nAtoms);
     // For smiles writing we would be canonicalizing but we will not do that here.
     // We will simple use the atom indices as the rank
@@ -723,7 +712,7 @@ namespace RDKit {
     colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
     while (colorIt != colors.end()) {
       unsigned int nextAtomIdx=0;
-      int nextRank;
+      unsigned int nextRank;
       std::string subSmi;
       nextRank = nAtoms + 1;
       for (unsigned int i = 0; i < nAtoms; i++) {

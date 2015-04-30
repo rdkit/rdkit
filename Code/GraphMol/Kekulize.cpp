@@ -483,18 +483,26 @@ namespace RDKit {
     void Kekulize(RWMol &mol, bool markAtomsBonds,
                   unsigned int maxBackTracks) {
 
-
+      // there's no point doing kekulization if there are no aromatic bonds:
+      bool foundAromatic=false;
+      for (ROMol::BondIterator bi = mol.beginBonds();
+           bi != mol.endBonds() && !foundAromatic; ++bi) {
+        if((*bi)->getIsAromatic()) foundAromatic=true;
+      }
+      
       // before everything do implicit valence calculation and store them
       // we will repeat after kekulization and compare for the sake of error
       // checking
       INT_VECT valences;
-      // REVIEW
       int numAtoms=mol.getNumAtoms();
       valences.reserve(numAtoms);
       for (ROMol::AtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {
-        valences.push_back((*ai)->getImplicitValence());
+        (*ai)->calcImplicitValence(false);
+        valences.push_back((*ai)->getTotalValence());
+        if(!foundAromatic && (*ai)->getIsAromatic()) foundAromatic=true;
       }
+      if(!foundAromatic) return;
     
       // A bit on the state of the molecule at this point
       // - aromatic and non aromatic atoms and bonds may be mixed up
@@ -551,6 +559,10 @@ namespace RDKit {
       if (markAtomsBonds) {
         // if we want the atoms and bonds to be marked non-aromatic do
         // that here.
+        for (ROMol::BondIterator bi = mol.beginBonds();
+             bi != mol.endBonds(); ++bi) {
+          (*bi)->setIsAromatic(false);
+        }
         for (ROMol::AtomIterator ai = mol.beginAtoms();
              ai != mol.endAtoms(); ++ai) {
           if((*ai)->getIsAromatic()){
@@ -562,11 +574,16 @@ namespace RDKit {
               throw MolSanitizeException(msg);
             }
             (*ai)->setIsAromatic(false);
+            // make sure "explicit" Hs on things like pyrroles don't hang around
+            // this was Github Issue 141
+            if(( (*ai)->getAtomicNum()==7 || (*ai)->getAtomicNum()==15 ) &&
+               (*ai)->getFormalCharge()==0 &&
+               (*ai)->getNumExplicitHs()==1){
+              (*ai)->setNoImplicit(false);
+              (*ai)->setNumExplicitHs(0);
+              (*ai)->updatePropertyCache(false);
+            }
           }
-        }
-        for (ROMol::BondIterator bi = mol.beginBonds();
-             bi != mol.endBonds(); ++bi) {
-          (*bi)->setIsAromatic(false);
         }
       }
 
@@ -576,7 +593,7 @@ namespace RDKit {
       int i = 0;
       for (ROMol::AtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {
-        int val = (*ai)->getImplicitValence();
+        int val = (*ai)->getTotalValence();
         if (val != valences[i]) {
           std::ostringstream errout;
           errout << "Kekulization somehow screwed up valence on " << (*ai)->getIdx() <<": "<<val<<"!="<<valences[i]<<std::endl;

@@ -20,13 +20,13 @@ from rdkit import RDConfig
 
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
-import PeriodicTable as pyPeriodicTable
-import rdchem
+from rdkit.Chem import PeriodicTable as pyPeriodicTable
+from rdkit.Chem import rdchem
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
-from rdchem import *
-from rdmolfiles import *
-from rdmolops import *
-from inchi import *
+from rdkit.Chem.rdchem import *
+from rdkit.Chem.rdmolfiles import *
+from rdkit.Chem.rdmolops import *
+from rdkit.Chem.inchi import *
 
 def QuickSmartsMatch(smi,sma,unique=True,display=False):
   m = MolFromSmiles(smi)
@@ -55,7 +55,7 @@ def SupplierFromFilename(fileN,delim='',**kwargs):
   elif ext=='tdt':
     suppl = TDTMolSupplier(fileN,delimiter=delim,**kwargs)
   else:
-    raise ValueError,"unrecognized extension: %s"%ext
+    raise ValueError("unrecognized extension: %s"%ext)
     
   return suppl
 
@@ -74,18 +74,18 @@ def FindMolChiralCenters(mol,force=True,includeUnassigned=False):
 
     By default unassigned stereo centers are not reported:
     >>> mol = Chem.MolFromSmiles('C[C@H](F)C(F)(Cl)Br')
-    >>> FindMolChiralCenters(mol)
+    >>> FindMolChiralCenters(mol,force=True)
     [(1, 'S')]
 
     but this can be changed:
-    >>> FindMolChiralCenters(mol,includeUnassigned=True)
+    >>> FindMolChiralCenters(mol,force=True,includeUnassigned=True)
     [(1, 'S'), (3, '?')]
 
-    The handling of dependent stereochemistry is not correct:
+    The handling of unassigned stereocenters for dependent stereochemistry is not correct:
     >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1CC(C)C(C)C(C)C1'),includeUnassigned=True)
     [(2, '?'), (6, '?')]
     >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1C[C@H](C)C(C)[C@H](C)C1'),includeUnassigned=True)
-    [(2, 'S'), (6, 'R')]
+    [(2, 'S'), (4, '?'), (6, 'R')]
     
   """
   AssignStereochemistry(mol,force=force, flagPossibleStereoCenters=includeUnassigned)

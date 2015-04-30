@@ -11,6 +11,7 @@
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
+#include <RDBoost/iterator_next.h>
 #include <string>
 
 //ours
@@ -22,12 +23,12 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  
+
   SmilesMolSupplier *SmilesSupplierFromText(std::string text,
 				      std::string delimiter=" ",
 				      int smilesColumn=0,
-				      int nameColumn=1, 
-				      bool titleLine=true,		   
+				      int nameColumn=1,
+				      bool titleLine=true,
 				      bool sanitize=true){
     SmilesMolSupplier *res=new SmilesMolSupplier();
     res->setData(text,delimiter,smilesColumn,
@@ -100,7 +101,7 @@ namespace RDKit {
 	.def(python::init<>())
 	.def("__iter__", (SmilesMolSupplier *(*)(SmilesMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
-	.def("next", (ROMol *(*)(SmilesMolSupplier *))&MolSupplNext,
+	.def(NEXT_METHOD, (ROMol *(*)(SmilesMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("__getitem__", (ROMol *(*)(SmilesMolSupplier *,int))&MolSupplGetItem,

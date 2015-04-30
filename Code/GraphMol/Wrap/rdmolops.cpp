@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,7 +17,8 @@
 #include <RDGeneral/types.h>
 
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDBoost/import_array.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 
 namespace python = boost::python;
@@ -35,11 +36,10 @@ void wrap_molops();
 
 BOOST_PYTHON_MODULE(rdmolops)
 {
-
   python::scope().attr("__doc__") =
-    "Module containing RDKit functionality for manipulating and querying molecules."
+    "Module containing RDKit functionality for manipulating molecules."
     ;
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);

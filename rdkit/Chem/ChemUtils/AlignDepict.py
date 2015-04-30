@@ -3,6 +3,7 @@
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit import Geometry
@@ -21,10 +22,10 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
   """
   if core and corePattern:
     if not core.GetNumAtoms(onlyExplicit=True)==corePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError,'When a pattern is provided, it must have the same number of atoms as the core'
+      raise ValueError('When a pattern is provided, it must have the same number of atoms as the core')
     coreMatch = core.GetSubstructMatch(corePattern)
     if not coreMatch:
-      raise ValueError,"Core does not map to itself"
+      raise ValueError("Core does not map to itself")
   else:
     coreMatch = range(core.GetNumAtoms(onlyExplicit=True))
   if corePattern:
@@ -34,7 +35,7 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
 
   if not match:
     if not acceptFailure:
-      raise ValueError,'Substructure match with core not found.'
+      raise ValueError('Substructure match with core not found.')
     else:
       coordMap={}
   else:
@@ -54,7 +55,7 @@ if __name__=='__main__':
   
   args,extras = getopt.getopt(sys.argv[1:],'p:ho:',['smiles','pattern='])
   if len(extras)!=2:
-    print >>sys.stderr,'ERROR: Not enough arguments'
+    print('ERROR: Not enough arguments', file=sys.stderr)
     Usage()
     sys.exit(1)
   patt = None
@@ -89,7 +90,7 @@ if __name__=='__main__':
   else:
     outF = sys.stdout
 
-  print >>outF,Chem.MolToMolBlock(mol)  
+  print(Chem.MolToMolBlock(mol), file=outF)
   
   
   

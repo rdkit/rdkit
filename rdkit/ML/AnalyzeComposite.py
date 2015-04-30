@@ -26,9 +26,10 @@ Usage:  AnalyzeComposite [optional args] <models>
 
       -v: be verbose whilst screening
 """
-
+from __future__ import print_function
 import numpy
-import sys,cPickle
+import sys
+from rdkit.six.moves import cPickle
 from rdkit.ML.DecTree import TreeUtils,Tree
 from rdkit.ML.Data import Stats
 from rdkit.Dbase.DbConnection import DbConnect
@@ -48,8 +49,8 @@ def ProcessIt(composites,nToConsider=3,verbose=0):
     descNames = {}
     for composite in composites:
       if verbose > 0:
-        print '#------------------------------------'
-        print 'Doing: ',nDone
+        print('#------------------------------------')
+        print('Doing: ',nDone)
       nModels = len(composite)  
       nDone += 1
       res = {}
@@ -70,25 +71,25 @@ def ProcessIt(composites,nToConsider=3,verbose=0):
         for k in res.keys():
           name = descNames[k]
           strRes = ', '.join(['%4.2f'%x for x in res[k]])
-          print '%s,%s,%5.4f'%(name,strRes,sum(res[k]))
+          print('%s,%s,%5.4f'%(name,strRes,sum(res[k])))
         
-        print
+        print()
 
 
     if verbose >= 0:
-      print '# Average Descriptor Positions'
+      print('# Average Descriptor Positions')
     retVal = []
     for k in globalRes.keys():
       name = descNames[k]
       if verbose >= 0:
         strRes = ', '.join(['%4.2f'%x for x in globalRes[k]])
-        print '%s,%s,%5.4f'%(name,strRes,sum(globalRes[k]))
+        print('%s,%s,%5.4f'%(name,strRes,sum(globalRes[k])))
       tmp = [name]
       tmp.extend(globalRes[k])
       tmp.append(sum(globalRes[k]))
       retVal.append(tmp)
     if verbose >= 0:
-      print
+      print()
   else:
     retVal = []
   return retVal
@@ -197,69 +198,69 @@ def ShowStats(statD,enrich=1):
 # Error Statistics:
 \tOverall: %(oAvg)6.3f%% (%(oDev)6.3f)  %(oCorrectConf)4.1f/%(oIncorrectConf)4.1f
 \t\tBest: %(oBestIdx)d %(oBestErr)6.3f%%"""%(statD)
-  if statD.has_key('hAvg'):
+  if 'hAvg' in statD:
     statD['hBestIdx'] = statD['hBestIdx']+1
     txt += """
 \tHoldout: %(hAvg)6.3f%% (%(hDev)6.3f)  %(hCorrectConf)4.1f/%(hIncorrectConf)4.1f
 \t\tBest: %(hBestIdx)d %(hBestErr)6.3f%%
   """%(statD)
-  print txt
-  print
-  print '# Results matrices:'
-  print '\tOverall:'
+  print(txt)
+  print()
+  print('# Results matrices:')
+  print('\tOverall:')
   tmp = transpose(statD['oResultMat'])
   colCounts = sum(tmp)
   rowCounts = sum(tmp,1)
   for i in range(len(tmp)):
     if rowCounts[i]==0: rowCounts[i]=1
     row = tmp[i]
-    print '\t\t',
+    print('\t\t', end='')
     for j in range(len(row)):
-      print '% 6.2f'%row[j],
-    print '\t| % 4.2f'%(100.*tmp[i,i]/rowCounts[i])  
-  print '\t\t',
+      print('% 6.2f'%row[j], end='')
+    print('\t| % 4.2f'%(100.*tmp[i,i]/rowCounts[i]))
+  print('\t\t', end='')
   for i in range(len(tmp)):
-    print '------',
-  print
-  print '\t\t',
+    print('------',end='')
+  print()
+  print('\t\t',end='')
   for i in range(len(tmp)):
     if colCounts[i]==0: colCounts[i]=1
-    print '% 6.2f'%(100.*tmp[i,i]/colCounts[i]),
-  print
-  if enrich>-1 and statD.has_key('oAvgEnrich'):
-    print '\t\tEnrich(%d): %.3f (%.3f)'%(enrich,statD['oAvgEnrich'],statD['oDevEnrich'])
+    print('% 6.2f'%(100.*tmp[i,i]/colCounts[i]), end='')
+  print()
+  if enrich>-1 and 'oAvgEnrich' in statD:
+    print('\t\tEnrich(%d): %.3f (%.3f)'%(enrich,statD['oAvgEnrich'],statD['oDevEnrich']))
 
 
-  if statD.has_key('hResultMat'):
-    print '\tHoldout:'
+  if 'hResultMat' in statD:
+    print('\tHoldout:')
     tmp = transpose(statD['hResultMat'])
     colCounts = sum(tmp)
     rowCounts = sum(tmp,1)
     for i in range(len(tmp)):
       if rowCounts[i]==0: rowCounts[i]=1
       row = tmp[i]
-      print '\t\t',
+      print('\t\t', end='')
       for j in range(len(row)):
-        print '% 6.2f'%row[j],
-      print '\t| % 4.2f'%(100.*tmp[i,i]/rowCounts[i])  
-    print '\t\t',
+        print('% 6.2f'%row[j], end='')
+      print('\t| % 4.2f'%(100.*tmp[i,i]/rowCounts[i]))
+    print('\t\t',end='')
     for i in range(len(tmp)):
-      print '------',
-    print
-    print '\t\t',
+      print('------',end='')
+    print()
+    print('\t\t',end='')
     for i in range(len(tmp)):
       if colCounts[i]==0: colCounts[i]=1
-      print '% 6.2f'%(100.*tmp[i,i]/colCounts[i]),
-    print
-    if enrich>-1 and statD.has_key('hAvgEnrich'):
-      print '\t\tEnrich(%d): %.3f (%.3f)'%(enrich,statD['hAvgEnrich'],statD['hDevEnrich'])
+      print('% 6.2f'%(100.*tmp[i,i]/colCounts[i]),end='')
+    print()
+    if enrich>-1 and 'hAvgEnrich' in statD:
+      print('\t\tEnrich(%d): %.3f (%.3f)'%(enrich,statD['hAvgEnrich'],statD['hDevEnrich']))
 
 
   return
 
 
 def Usage():
-  print __doc__
+  print(__doc__)
   sys.exit(-1)
 
 if __name__ == "__main__":
@@ -313,7 +314,7 @@ if __name__ == "__main__":
   if len(composites):
     ProcessIt(composites,count,verbose=verbose)
   elif not skip:
-    print 'ERROR: no composite models found'
+    print('ERROR: no composite models found')
     sys.exit(-1)
 
   if db:

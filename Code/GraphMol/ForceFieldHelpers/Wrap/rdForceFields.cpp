@@ -15,30 +15,69 @@
 
 #include <ForceField/ForceField.h>
 #include <ForceField/Wrap/PyForceField.h>
+#include <ForceField/UFF/Params.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
 
 namespace python = boost::python;
 
 namespace RDKit {
-  int UFFOptimizeMolecule(ROMol &mol, int maxIters=200,
-			  double vdwThresh=10.0, int confId=-1,
-                          bool ignoreInterfragInteractions=true ){
-    ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId,
-                                                         ignoreInterfragInteractions);
-    ff->initialize();
-    int res=ff->minimize(maxIters);
-    delete ff;
-    return res;
+  int UFFHelper(ROMol &mol,
+                int maxIters,
+                double vdwThresh,
+                int confId,
+                bool ignoreInterfragInteractions ){
+    NOGIL gil;
+    return UFF::UFFOptimizeMolecule(mol,maxIters,vdwThresh,confId,ignoreInterfragInteractions).first;
+  }
+  python::object UFFConfsHelper(ROMol &mol,
+                                unsigned int numThreads,
+                                int maxIters,
+                                double vdwThresh,
+                                int confId,
+                                bool ignoreInterfragInteractions ){
+    std::vector< std::pair<int, double> >  res;
+    {
+      NOGIL gil;
+      UFF::UFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,
+                                    vdwThresh,ignoreInterfragInteractions);
+    }
+    python::list pyres;
+    for(unsigned int i=0;i<res.size();++i){
+      pyres.append(python::make_tuple(res[i].first,res[i].second));
+    }
+    return pyres;
   }
 
+  python::object MMFFConfsHelper(ROMol &mol,
+                                 unsigned int numThreads,
+                                 int maxIters,
+                                 std::string mmffVariant,
+                                 double nonBondedThresh,
+                                 int confId,
+                                 bool ignoreInterfragInteractions ){
+    std::vector< std::pair<int, double> >  res;
+    {
+      NOGIL gil;
+      MMFF::MMFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,mmffVariant,
+                                      nonBondedThresh,ignoreInterfragInteractions);
+    }
+    python::list pyres;
+    for(unsigned int i=0;i<res.size();++i){
+      pyres.append(python::make_tuple(res[i].first,res[i].second));
+    }
+    return pyres;
+  }
+
+  
   ForceFields::PyForceField *UFFGetMoleculeForceField(ROMol &mol,
                                                       double vdwThresh=10.0,
                                                       int confId=-1,
                                                       bool ignoreInterfragInteractions=true ){
-
     ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId,
                                                          ignoreInterfragInteractions);
     ForceFields::PyForceField *res=new ForceFields::PyForceField(ff);
@@ -61,6 +100,7 @@ namespace RDKit {
     
     MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
     if (mmffMolProperties.isValid()) {
+      NOGIL gil;
       ForceFields::ForceField *ff = MMFF::constructForceField(mol,
         &mmffMolProperties, nonBondedThresh, confId, ignoreInterfragInteractions);
       ff->initialize();
@@ -121,11 +161,70 @@ namespace RDKit {
     
     return mmffMolProperties.isValid();
   }
+};
+
+namespace ForceFields {
+  PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2) {
+    PyObject *res = NULL;
+    ForceFields::UFF::UFFBond uffBondStretchParams;
+    if (RDKit::UFF::getUFFBondStretchParams(mol, idx1, idx2, uffBondStretchParams)) {
+      res = PyTuple_New(2);
+      PyTuple_SetItem(res, 0, PyFloat_FromDouble(uffBondStretchParams.kb));
+      PyTuple_SetItem(res, 1, PyFloat_FromDouble(uffBondStretchParams.r0));
+    }
+    return res;
+  };
+
+  PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2, const unsigned int idx3) {
+    PyObject *res = NULL;
+    ForceFields::UFF::UFFAngle uffAngleBendParams;
+    if (RDKit::UFF::getUFFAngleBendParams(mol, idx1, idx2, idx3, uffAngleBendParams)) {
+      res = PyTuple_New(2);
+      PyTuple_SetItem(res, 0, PyFloat_FromDouble(uffAngleBendParams.ka));
+      PyTuple_SetItem(res, 1, PyFloat_FromDouble(uffAngleBendParams.theta0));
+    }
+    return res;
+  };
+
+  PyObject *getUFFTorsionParams(const RDKit::ROMol &mol, const unsigned int idx1,
+    const unsigned int idx2, const unsigned int idx3, const unsigned int idx4) {
+    PyObject *res = NULL;
+    ForceFields::UFF::UFFTor uffTorsionParams;
+    if (RDKit::UFF::getUFFTorsionParams(mol, idx1, idx2, idx3, idx4, uffTorsionParams)) {
+      res = PyFloat_FromDouble(uffTorsionParams.V);
+    }
+    return res;
+  };
+
+  PyObject *getUFFInversionParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3, const unsigned int idx4) {
+    PyObject *res = NULL;
+    ForceFields::UFF::UFFInv uffInversionParams;
+    if (RDKit::UFF::getUFFInversionParams(mol, idx1, idx2, idx3, idx4, uffInversionParams)) {
+      res = PyFloat_FromDouble(uffInversionParams.K);
+    }
+    return res;
+  };
+
+  PyObject *getUFFVdWParams(const RDKit::ROMol &mol,
+    const unsigned int idx1, const unsigned int idx2) {
+    PyObject *res = NULL;
+    ForceFields::UFF::UFFVdW uffVdWParams;
+    if (RDKit::UFF::getUFFVdWParams(mol, idx1, idx2, uffVdWParams)) {
+      res = PyTuple_New(2);
+      PyTuple_SetItem(res, 0, PyFloat_FromDouble(uffVdWParams.x_ij));
+      PyTuple_SetItem(res, 1, PyFloat_FromDouble(uffVdWParams.D_ij));
+    }
+    return res;
+  };
 }
 
 BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
   python::scope().attr("__doc__") =
-    "Module containing functions to handle UFF force field"
+    "Module containing functions to handle force fields"
     ;
 
   std::string docString = "uses UFF to optimize a molecule's structure\n\n\
@@ -141,12 +240,36 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
 \n\
  RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
 \n";
-  python::def("UFFOptimizeMolecule", RDKit::UFFOptimizeMolecule,
+  python::def("UFFOptimizeMolecule", RDKit::UFFHelper,
 	      (python::arg("self"),python::arg("maxIters")=200,
 	       python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
                python::arg("ignoreInterfragInteractions")=true),
 	      docString.c_str());
 
+  docString = "uses UFF to optimize all of a molecule's conformations\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - numThreads : the number of threads to use, only has an effect if the RDKit\n\
+                   was built with thread support (defaults to 1)\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+    - vdwThresh : used to exclude long-range van der Waals interactions\n\
+                  (defaults to 10.0)\n\
+    - confId : indicates which conformer to optimize\n\
+    - ignoreInterfragInteractions : if true, nonbonded terms between\n\
+                  fragments will not be added to the forcefield.\n\
+\n\
+ RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
+\n";
+  python::def("UFFOptimizeMoleculeConfs", RDKit::UFFConfsHelper,
+	      (python::arg("self"),
+               python::arg("numThreads")=1,
+               python::arg("maxIters")=200,
+	       python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
+               python::arg("ignoreInterfragInteractions")=true),
+	      docString.c_str());
+
+  
   docString = "returns a UFF force field for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
@@ -171,10 +294,6 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
   python::def("UFFHasAllMoleculeParams", RDKit::UFFHasAllMoleculeParams,
 	      (python::arg("mol")),
 	      docString.c_str());
-
-  python::scope().attr("__doc__") =
-    "Module containing functions to handle MMFF force field"
-    ;
 
   docString = "uses MMFF to optimize a molecule's structure\n\n\
  \n\
@@ -252,4 +371,52 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
 	      (python::arg("mol")),
 	      docString.c_str());
 
+  docString = "uses MMFF to optimize all of a molecule's conformations\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - numThreads : the number of threads to use, only has an effect if the RDKit\n\
+                   was built with thread support (defaults to 1)\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+    - mmffVariant : \"MMFF94\" or \"MMFF94s\"\n\
+    - nonBondedThresh : used to exclude long-range non-bonded\n\
+                  interactions (defaults to 100.0)\n\
+    - confId : indicates which conformer to optimize\n\
+    - ignoreInterfragInteractions : if true, nonbonded terms between\n\
+                  fragments will not be added to the forcefield.\n\
+\n\
+ RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
+\n";
+  python::def("MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper,
+	      (python::arg("self"),
+               python::arg("numThreads")=1,
+               python::arg("maxIters")=200,
+               python::arg("mmffVariant")="MMFF94",
+	       python::arg("nonBondedThresh")=10.0,python::arg("confId")=-1,
+               python::arg("ignoreInterfragInteractions")=true),
+	      docString.c_str());
+
+
+  python::def("GetUFFBondStretchParams", ForceFields::getUFFBondStretchParams,
+    (python::arg("mol"), python::arg("idx1"), python::arg("idx2")),
+    "Retrieves UFF bond stretch parameters for atoms with indexes idx1, idx2 "
+    "as a (kb, r0) tuple, or None if no parameters could be found");
+  python::def("GetUFFAngleBendParams", ForceFields::getUFFAngleBendParams,
+    (python::arg("mol"), python::arg("idx1"), python::arg("idx2"),
+    python::arg("idx3")), "Retrieves UFF angle bend parameters for atoms with indexes "
+    "idx1, idx2, idx3 as a (ka, theta0) tuple, or None if no parameters could be found");
+  python::def("GetUFFTorsionParams", ForceFields::getUFFTorsionParams,
+    (python::arg("mol"), python::arg("idx1"), python::arg("idx2"),
+    python::arg("idx3"), python::arg("idx4")), "Retrieves UFF torsion parameters for atoms "
+    "with indexes idx1, idx2, idx3, idx4 as a V float value, or None if no parameters "
+    "could be found");
+  python::def("GetUFFInversionParams", ForceFields::getUFFInversionParams,
+    (python::arg("mol"), python::arg("idx1"), python::arg("idx2"),
+    python::arg("idx3"), python::arg("idx4")), "Retrieves UFF inversion parameters for atoms "
+    "with indexes idx1, idx2, idx3, idx4 as a K float value, or None if no parameters "
+    "could be found");
+  python::def("GetUFFVdWParams", ForceFields::getUFFVdWParams,
+    (python::arg("mol"), python::arg("idx1"), python::arg("idx2")),
+    "Retrieves UFF van der Waals parameters for atoms with indexes idx1, idx2 "
+    "as a (x_ij, D_ij) tuple, or None if no parameters could be found");
 }

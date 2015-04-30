@@ -72,15 +72,14 @@ namespace SmilesParseOps{
     //
     for(RWMol::AtomIterator atomIt=frag->beginAtoms();
         atomIt!=frag->endAtoms();atomIt++){
-      if((*atomIt)->hasProp("_RingClosures")){
-        INT_VECT tmpVect;
-        (*atomIt)->getProp("_RingClosures",tmpVect);
+      INT_VECT tmpVect;
+      if((*atomIt)->getPropIfPresent(common_properties::_RingClosures, tmpVect)){
         BOOST_FOREACH(int &v, tmpVect){
           // if the ring closure is not already a bond, don't touch it:
           if(v>=0) v += nOrigBonds;
         }
         Atom *newAtom = mol->getAtomWithIdx(nOrigAtoms+(*atomIt)->getIdx());
-        newAtom->setProp("_RingClosures",tmpVect);
+        newAtom->setProp(common_properties::_RingClosures,tmpVect);
       }
     }
 
@@ -97,14 +96,17 @@ namespace SmilesParseOps{
       atomIdx2 = lastAt->getIdx();
       if(frag->hasBondBookmark(ci_LEADING_BOND)){
         //std::cout << "found it" << std::endl;
-        Bond *leadingBond = frag->getBondWithBookmark(ci_LEADING_BOND);
-        // we've already got a bond, so just set its local info
-        // and then add it to the molecule intact (no sense doing
-        // any extra work).
-        leadingBond->setOwningMol(mol);
-        leadingBond->setBeginAtomIdx(atomIdx2);
-        leadingBond->setEndAtomIdx(atomIdx1);
-        mol->addBond(leadingBond,true);
+        const ROMol::BOND_PTR_LIST &leadingBonds=frag->getAllBondsWithBookmark(ci_LEADING_BOND);
+        BOOST_FOREACH(Bond *leadingBond,leadingBonds){
+          // we've already got a bond, so just set its local info
+          // and then add it to the molecule intact (no sense doing
+          // any extra work).
+          leadingBond->setOwningMol(mol);
+          leadingBond->setEndAtomIdx(leadingBond->getBeginAtomIdx()+nOrigAtoms);
+          leadingBond->setBeginAtomIdx(atomIdx2);
+          mol->addBond(leadingBond,true);
+        }
+        mol->clearBondBookmark(ci_LEADING_BOND);
       } else {
         if(!doingQuery){
           if(bondOrder == Bond::UNSPECIFIED){
@@ -226,8 +228,8 @@ namespace SmilesParseOps{
         // need to insert into the list in a particular order
         //
         INT_VECT ringClosures;
-        if((*atomIt)->hasProp("_RingClosures"))
-          (*atomIt)->getProp("_RingClosures",ringClosures);
+        (*atomIt)->getPropIfPresent(common_properties::_RingClosures, ringClosures);
+
 #if 0
         std::cout << "CLOSURES: ";
         std::copy(ringClosures.begin(),ringClosures.end(),
@@ -292,7 +294,7 @@ namespace SmilesParseOps{
         //
         int nSwaps=(*atomIt)->getPerturbationOrder(bondOrdering);
         // FIX: explain this one:
-        if((*atomIt)->getDegree()==3 && (*atomIt)->hasProp("_SmilesStart")) ++nSwaps;
+        if((*atomIt)->getDegree()==3 && (*atomIt)->hasProp(common_properties::_SmilesStart)) ++nSwaps;
         if(nSwaps%2){
           (*atomIt)->invertChirality();
         }
@@ -382,7 +384,7 @@ namespace SmilesParseOps{
             //   bond, we'll just take the first one and ignore others
             //   NOTE: we used to do this the other way (take the last specification),
             //   but that turned out to be troublesome in odd cases like C1CC11CC1.
-            if(!bond1->hasProp("_unspecifiedOrder")){
+            if(!bond1->hasProp(common_properties::_unspecifiedOrder)){
               matchedBond = bond1;
               matchedBond->setEndAtomIdx(atom2->getIdx());
               delete bond2;
@@ -430,27 +432,27 @@ namespace SmilesParseOps{
             // we found a bond, so update the atom's _RingClosures
             // property:
             if(bondIdx>-1){
-              CHECK_INVARIANT(atom1->hasProp("_RingClosures") &&
-                  atom2->hasProp("_RingClosures"),
+              CHECK_INVARIANT(atom1->hasProp(common_properties::_RingClosures) &&
+                  atom2->hasProp(common_properties::_RingClosures),
                   "somehow atom doesn't have _RingClosures property.");
               INT_VECT closures;
-              atom1->getProp("_RingClosures",closures);
+              atom1->getProp(common_properties::_RingClosures,closures);
               INT_VECT::iterator closurePos= std::find(closures.begin(),
                   closures.end(),
                   -(bookmarkIt->first+1));
               CHECK_INVARIANT(closurePos!=closures.end(),
                   "could not find bookmark in atom _RingClosures");
               *closurePos = bondIdx-1;
-              atom1->setProp("_RingClosures",closures);
+              atom1->setProp(common_properties::_RingClosures,closures);
 
-              atom2->getProp("_RingClosures",closures);
+              atom2->getProp(common_properties::_RingClosures,closures);
               closurePos= std::find(closures.begin(),
                   closures.end(),
                   -(bookmarkIt->first+1));
               CHECK_INVARIANT(closurePos!=closures.end(),
                   "could not find bookmark in atom _RingClosures");
               *closurePos = bondIdx-1;
-              atom2->setProp("_RingClosures",closures);
+              atom2->setProp(common_properties::_RingClosures,closures);
             }
             bookmarkedAtomsToRemove.push_back(atom1);
             bookmarkedAtomsToRemove.push_back(atom2);
@@ -471,5 +473,22 @@ namespace SmilesParseOps{
       }
     }
   };
+
+  void CleanupAfterParsing(RWMol *mol){
+    PRECONDITION(mol,"no molecule");
+    for(RWMol::AtomIterator atomIt=mol->beginAtoms();
+        atomIt!=mol->endAtoms();++atomIt){
+      if((*atomIt)->hasProp(common_properties::_RingClosures))
+        (*atomIt)->clearProp(common_properties::_RingClosures);
+      if((*atomIt)->hasProp(common_properties::_SmilesStart))
+        (*atomIt)->clearProp(common_properties::_SmilesStart);
+    }
+    for(RWMol::BondIterator bondIt=mol->beginBonds();
+        bondIt!=mol->endBonds();++bondIt){
+      if((*bondIt)->hasProp(common_properties::_unspecifiedOrder))
+        (*bondIt)->clearProp(common_properties::_unspecifiedOrder);
+    }
+  }
+
 
 } // end of namespace SmilesParseOps

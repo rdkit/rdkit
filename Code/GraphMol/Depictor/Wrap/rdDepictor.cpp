@@ -13,6 +13,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL Depictor_array_API
 #include "numpy/oldnumeric.h"
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Depictor/EmbeddedFrag.h>
@@ -113,7 +114,7 @@ BOOST_PYTHON_MODULE(rdDepictor)
     "Module containing the functionality to compute 2D coordinates for a molecule"
     ;
 
-  import_array();
+  rdkit_import_array();
 
   std::string docString;
   

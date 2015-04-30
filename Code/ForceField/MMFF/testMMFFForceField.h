@@ -1,3 +1,15 @@
+// $Id$
+//
+// Copyright (C)  2013 Paolo Tosco
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+
 class BondStretchInstance {
   public:
     unsigned int idx;
@@ -53,9 +65,6 @@ class TorsionInstance {
 bool fexist(std::string filename);
 bool fgrep(std::fstream &fStream, std::string key);
 bool fgrep(std::fstream &fStream, std::string key, std::string &line);
-#ifndef RDK_NOGZIP
-void fgunzip(std::string filename);
-#endif
 void skipLines(std::istream& stream, unsigned int nLines);
 bool sortAngleBendInstanceVec(AngleBendInstance *a, AngleBendInstance *b);
 bool sortBondStretchInstanceVec(BondStretchInstance *a, BondStretchInstance *b);

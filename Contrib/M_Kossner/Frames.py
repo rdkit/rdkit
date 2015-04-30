@@ -17,6 +17,7 @@
 #    - sd files containing all molecules belonging to one frame (1.sdf, 2.sdf etc)
 #    - frames.smi containing the (caninical) smiles and count of occurrence
 #
+from __future__ import print_function
 
 import os,sys
 from Chem import AllChem as Chem
@@ -72,7 +73,7 @@ def GetFrame(mol, mode='Scaff'):
 		NewPaths = []
 		for P in Paths:
 			if P == None:
-				print 'ooh'
+				print('ooh')
 			else:
 				for neighbor in mol.GetAtomWithIdx(P[-1]).GetNeighbors():
 					if neighbor.GetIdx() not in P:
@@ -148,7 +149,7 @@ def GetFrame(mol, mode='Scaff'):
 
 if __name__=='__main__':
 	if len(sys.argv) < 2:
-		print "No input file provided: Frames.py filetosprocess.ext"
+		print("No input file provided: Frames.py filetosprocess.ext")
 		sys.exit(1)
 
 
@@ -172,7 +173,7 @@ if __name__=='__main__':
 			i.SetProp('Scaffold',key)
 			i.SetProp('Cluster',str(counter))
 			d.write(i)
-		print key,len(item)
+		print(key,len(item))
 		w.write(key+'\t'+str(len(item))+'\n')
 	w.close
-	print 'number of Clusters: %d' %(counter)
+	print('number of Clusters: %d' %(counter))

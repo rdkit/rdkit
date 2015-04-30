@@ -577,7 +577,6 @@ namespace RDKit {
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
 
-        unsigned int nAtoms=mol.getNumAtoms();
         unsigned int idx[4];
         unsigned int n[4];
         const Atom *atom[4];

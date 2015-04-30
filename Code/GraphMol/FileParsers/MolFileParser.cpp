@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -68,6 +68,8 @@ namespace RDKit{
     }
 
     std::string getV3000Line(std::istream *inStream,unsigned int &line){
+      // FIX: technically V3K blocks are case-insensitive. We should really be
+      // up-casing everything here.
       PRECONDITION(inStream,"bad stream");
       std::string res,tempStr;
 
@@ -107,7 +109,7 @@ namespace RDKit{
       if(atom->getFormalCharge()!=0){
 	qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
       }
-      if(atom->hasProp("_hasMassQuery")){
+      if(atom->hasProp(common_properties::_hasMassQuery)){
 	qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
       }
       mol->replaceAtom(idx,&qa);
@@ -202,7 +204,7 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         RANGE_CHECK(0,atNum,200);  // goofy!
-        q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(atNum)));
+        q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
         if(!i) a.setAtomicNum(atNum);
       }
     
@@ -276,23 +278,25 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      int spos = 9;
+      unsigned int spos = 9;
       for (int ie = 0; ie < nent; ie++) {
         if(text.size()<spos+8){
           std::ostringstream errout;
           errout << "SGroup line too short: '" << text<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
+#if 0        
         int nbr;
         try {
           nbr = FileParserUtils::toInt(text.substr(spos,4));
-          spos += 4;
         } 
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
           errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
+#endif
+        spos += 4;
         std::string typ = text.substr(spos+1,3);
         if(!SGroupOK(typ)){
           std::ostringstream errout;
@@ -377,7 +381,6 @@ namespace RDKit{
       unsigned int spos = 9;
       for (unsigned int ie = 0; ie < nent; ie++) {
         unsigned int aid;
-        int mass;
         try {
           aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
           spos += 4;
@@ -390,8 +393,6 @@ namespace RDKit{
               atom->setIsotope(isotope);
               spos += 4;
             }
-          } else {
-            atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
           }
         }
         catch (boost::bad_lexical_cast &) {
@@ -538,7 +539,7 @@ namespace RDKit{
               q->setVal(0);break;
             case -2:
               q->setVal(-0xDEADBEEF);
-              mol->setProp("_NeedsQueryScan",1);
+              mol->setProp(common_properties::_NeedsQueryScan,1);
               break;
             case 1:
             case 2:
@@ -561,6 +562,158 @@ namespace RDKit{
             }
             atom->expandQuery(q,Queries::COMPOSITE_AND);
             spos += 4;
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+
+    void ParseZCHLine(RWMol *mol, const std::string &text,unsigned int line){
+      // part of Alex Clark's ZBO proposal
+      // from JCIM 51:3149-57 (2011)
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  ZCH"),"bad ZCH line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int aid=0;
+        int val=0;
+        try {
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos,4));
+          }
+          if(!aid || aid>mol->getNumAtoms() || aid==0 ){
+            std::ostringstream errout;
+            errout << "Bad ZCH specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --aid;
+          Atom *atom=mol->getAtomWithIdx(aid);
+          if(!atom){
+            std::ostringstream errout;
+            errout << "Atom "<<aid<<" from ZCH specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            atom->setFormalCharge(val);
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+    void ParseHYDLine(RWMol *mol, const std::string &text,unsigned int line){
+      // part of Alex Clark's ZBO proposal
+      // from JCIM 51:3149-57 (2011)
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  HYD"),"bad HYD line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int aid=0;
+        int val=-1;
+        try {
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos,4));
+          }
+          if(!aid || aid>mol->getNumAtoms() || aid==0 ){
+            std::ostringstream errout;
+            errout << "Bad HYD specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --aid;
+          Atom *atom=mol->getAtomWithIdx(aid);
+          if(!atom){
+            std::ostringstream errout;
+            errout << "Atom "<<aid<<" from HYD specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            if(val >=0 ){
+              atom->setProp("_ZBO_H",true);
+              atom->setNumExplicitHs(val);
+            }
+          }
+        }
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+    }
+    void ParseZBOLine(RWMol *mol, const std::string &text,unsigned int line){
+      // part of Alex Clark's ZBO proposal
+      // from JCIM 51:3149-57 (2011)
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  ZBO"),"bad ZBO line");
+    
+      unsigned int nent;
+      try {
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int spos = 9;
+      for (unsigned int ie = 0; ie < nent; ie++) {
+        unsigned int bid=0;
+        unsigned int order=0;
+        try {
+          bid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          spos += 4;
+          if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+            order = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          }
+          if(!bid || bid>mol->getNumBonds() || bid==0){
+            std::ostringstream errout;
+            errout << "Bad ZBO specification on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          spos += 4;
+          --bid;
+          Bond *bnd=mol->getBondWithIdx(bid);
+          if(!bnd){
+            std::ostringstream errout;
+            errout << "Bond "<<bid<<" from ZBO specification on line "<<line<<" not found";
+            throw FileParseException(errout.str()) ;
+          } else {
+            if(order==0){
+              bnd->setBondType(Bond::ZERO);
+            } else {
+              bnd->setBondType(static_cast<Bond::BondType>(order));
+            }
           }
         }
         catch (boost::bad_lexical_cast &) {
@@ -619,10 +772,10 @@ namespace RDKit{
           // replace the query:
           Atom::QUERYATOM_QUERY *oq=a->getQuery();
           a->setAtomicNum(atNum);
-          a->setQuery(makeAtomNumEqualsQuery(atNum));
+          a->setQuery(makeAtomNumQuery(atNum));
           delete oq;
         } else {
-          a->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
+          a->expandQuery(makeAtomNumQuery(atNum),Queries::COMPOSITE_OR,true);
         }
       }
       ASSERT_INVARIANT(a,"no atom built");
@@ -643,6 +796,53 @@ namespace RDKit{
       mol->replaceAtom(idx,a); 
     };
   
+    void ParseV3000RGroups(RWMol *mol,Atom *&atom,const std::string &text,unsigned int line){
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(atom,"bad atom");
+      if(text[0]!='('||text[text.size()-1]!=')'){
+        std::ostringstream errout;
+        errout << "Bad RGROUPS specification " << text << " on line "<<line<<". Missing parens.";
+        throw FileParseException(errout.str()) ;
+      }
+      std::vector<std::string> splitToken;
+      std::string resid=text.substr(1,text.size()-2);
+      boost::split(splitToken,resid,boost::is_any_of(" "));
+      if(splitToken.size()<1){
+        std::ostringstream errout;
+        errout << "Bad RGROUPS specification " << text << " on line "<<line<<". Missing values.";
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int nRs;
+      try {
+        nRs = FileParserUtils::stripSpacesAndCast<unsigned int>(splitToken[0]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << splitToken[0] << " to int on line"<<line;
+        throw FileParseException(errout.str()) ;
+      }
+      if(splitToken.size()<nRs+1){
+        std::ostringstream errout;
+        errout << "Bad RGROUPS specification " << text << " on line "<<line<<". Not enough values.";
+        throw FileParseException(errout.str()) ;
+      }
+      for(unsigned int i=0;i<nRs;++i){
+        unsigned int rLabel;
+        try {
+          rLabel = FileParserUtils::stripSpacesAndCast<unsigned int>(splitToken[i+1]);
+        } catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << splitToken[i+1] << " to int on line"<<line;
+          throw FileParseException(errout.str()) ;
+        }
+        atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
+        atom->setProp(common_properties::_MolFileRLabel,rLabel);
+        std::string dLabel="R"+boost::lexical_cast<std::string>(rLabel);
+        atom->setProp(common_properties::dummyLabel,dLabel);
+        atom->setIsotope(rLabel);
+        atom->setQuery(makeAtomNullQuery());
+      }
+    }
+    
     void ParseRGroupLabels(RWMol *mol,const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  RGP"),"bad R group label line");
@@ -684,13 +884,13 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         QueryAtom qatom(*(mol->getAtomWithIdx(atIdx)));
-        qatom.setProp("_MolFileRLabel",rLabel);
+        qatom.setProp(common_properties::_MolFileRLabel,rLabel);
 
         // set the dummy label so that this is shown correctly
         // in other pieces of the code :
         // (this was sf.net issue 3316600)
         std::string dLabel="R"+boost::lexical_cast<std::string>(rLabel);
-        qatom.setProp("dummyLabel",dLabel);
+        qatom.setProp(common_properties::dummyLabel,dLabel);
         
         // the CTFile spec (June 2005 version) technically only allows
         // R labels up to 32. Since there are three digits, we'll accept
@@ -718,7 +918,7 @@ namespace RDKit{
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
       Atom *at = mol->getAtomWithIdx(idx);
-      at->setProp("molFileAlias",nextLine);
+      at->setProp(common_properties::molFileAlias,nextLine);
     };
   
     void ParseAtomValue(RWMol *mol,std::string text,unsigned int line){
@@ -736,7 +936,7 @@ namespace RDKit{
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
       Atom *at = mol->getAtomWithIdx(idx);
-      at->setProp("molFileValue",text.substr(7,text.length()-7));
+      at->setProp(common_properties::molFileValue,text.substr(7,text.length()-7));
     };
 
     Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,unsigned int line) {
@@ -808,11 +1008,11 @@ namespace RDKit{
             ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
             q->setDescription("AtomOr");
             q->setNegation(true);
-            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(6)));
-            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(1)));
+            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
+            q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
             query->setQuery(q);
           } else if(symb=="A"){
-            query->setQuery(makeAtomNumEqualsQuery(1));
+            query->setQuery(makeAtomNumQuery(1));
             query->getQuery()->setNegation(true);
           }
           delete res;
@@ -843,7 +1043,6 @@ namespace RDKit{
         res->setIsotope(3);
       } else {
         res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
-        res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
       }
     
       //res->setPos(pX,pY,pZ);
@@ -861,9 +1060,7 @@ namespace RDKit{
           BOOST_LOG(rdWarningLog) << " atom "<<res->getIdx()<<" has a negative isotope offset. line:  "<<line<<std::endl;
         }
         res->setIsotope(dIso);
-        res->setMass(PeriodicTable::getTable()->getMassForIsotope(res->getAtomicNum(),
-                                                                  dIso));
-	res->setProp("_hasMassQuery",true);
+	res->setProp(common_properties::_hasMassQuery,true);
       }
     
       if(text.size()>=42 && text.substr(39,3)!="  0"){
@@ -876,7 +1073,7 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(39,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molParity",parity);
+        res->setProp(common_properties::molParity,parity);
       }
 
       if(text.size()>=48 && text.substr(45,3)!="  0"){
@@ -903,7 +1100,7 @@ namespace RDKit{
         }
         if(totValence!=0){
           // only set if it's a non-default value
-          res->setProp("molTotValence",totValence);
+          res->setProp(common_properties::molTotValence,totValence);
         }
       }
       if(text.size()>=57 && text.substr(54,3)!="  0"){
@@ -918,7 +1115,7 @@ namespace RDKit{
         }
         if(rxnRole!=0){
           // only set if it's a non-default value
-          res->setProp("molRxnRole",rxnRole);
+          res->setProp(common_properties::molRxnRole,rxnRole);
         }
       }
       if(text.size()>=60 && text.substr(57,3)!="  0"){
@@ -933,7 +1130,7 @@ namespace RDKit{
         }
         if(rxnComponent!=0){
           // only set if it's a non-default value
-          res->setProp("molRxnComponent",rxnComponent);
+          res->setProp(common_properties::molRxnComponent,rxnComponent);
         }
       }
       if(text.size()>=63 && text.substr(60,3)!="  0"){
@@ -946,7 +1143,7 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(60,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molAtomMapNumber",atomMapNumber);
+        res->setProp(common_properties::molAtomMapNumber,atomMapNumber);
       }
       if(text.size()>=66 && text.substr(63,3)!="  0"){
         int inversionFlag=0;
@@ -958,7 +1155,7 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(63,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molInversionFlag",inversionFlag);
+        res->setProp(common_properties::molInversionFlag,inversionFlag);
       }
       if(text.size()>=69 && text.substr(66,3)!="  0"){
         int exactChangeFlag=0;
@@ -1081,22 +1278,26 @@ namespace RDKit{
       if( text.size() >= 18 && text.substr(15,3)!="  0"){
         try {
           int topology = FileParserUtils::toInt(text.substr(15,3));
-          QueryBond *qBond=new QueryBond(*res);
-          BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
-          switch(topology){
-          case 1:
-            break;
-          case 2:
-            q->setNegation(true);
-            break;
-          default:
-            std::ostringstream errout;
-            errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
-            throw FileParseException(errout.str()) ;
+          if(topology){
+            if(!res->hasQuery()){
+              QueryBond *qBond=new QueryBond(*res);
+              delete res;
+              res = qBond;
+            }
+            BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
+            switch(topology){
+            case 1:
+              break;
+            case 2:
+              q->setNegation(true);
+              break;
+            default:
+              std::ostringstream errout;
+              errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
+              throw FileParseException(errout.str()) ;
+            }
+            res->expandQuery(q);          
           }
-          qBond->expandQuery(q);          
-          delete res;
-          res = qBond;
         } catch (boost::bad_lexical_cast) {
           ;
         }
@@ -1192,7 +1393,7 @@ namespace RDKit{
             errout << "negative skip value "<<nToSkip<<" on line "<<line;
             throw FileParseException(errout.str()) ;
           }
-          for(unsigned int i=0;i<nToSkip;++i){
+          for(unsigned int i=0;i<static_cast<unsigned int>(nToSkip);++i){
             ++line;
             tempStr=getLine(inStream);
           }
@@ -1214,6 +1415,9 @@ namespace RDKit{
         else if(lineBeg=="M  STY") {
           ParseSGroup2000STYLine(mol, tempStr,line);
         }
+        else if(lineBeg=="M  ZBO") ParseZBOLine(mol,tempStr,line);
+        else if(lineBeg=="M  ZCH") ParseZCHLine(mol,tempStr,line);
+        else if(lineBeg=="M  HYD") ParseHYDLine(mol,tempStr,line);
         line++;
         tempStr = getLine(inStream);
         lineBeg=tempStr.substr(0,6);
@@ -1226,7 +1430,6 @@ namespace RDKit{
 
     Atom *ParseV3000AtomSymbol(std::string token,unsigned int &line){
       bool negate=false;
-
       boost::trim(token);
       std::string cpy=token;
       boost::to_upper(cpy);
@@ -1257,7 +1460,7 @@ namespace RDKit{
           if(!res){
             res = new QueryAtom(atNum);
           } else {
-            res->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
+            res->expandQuery(makeAtomNumQuery(atNum),Queries::COMPOSITE_OR,true);
           }
         }
         res->getQuery()->setNegation(negate);
@@ -1268,7 +1471,10 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         // it's a normal CTAB atom symbol:
-        if(token=="R#" || token=="A" || token=="Q" || token=="*"){
+        // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to support them anyway
+        if(token=="R" || 
+           (token[0]=='R' && token>="R0" && token<="R99") ||
+           token=="R#" || token=="A" || token=="Q" || token=="*"){
           if(token=="A"||token=="Q"||token=="*"){
             res=new QueryAtom(0);
             if(token=="*"){
@@ -1278,17 +1484,29 @@ namespace RDKit{
               ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
               q->setDescription("AtomOr");
               q->setNegation(true);
-              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(6)));
-              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(1)));
+              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
+              q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
               res->setQuery(q);
             } else if(token=="A"){
-              res->setQuery(makeAtomNumEqualsQuery(1));
+              res->setQuery(makeAtomNumQuery(1));
               res->getQuery()->setNegation(true);
             }
             // queries have no implicit Hs:
             res->setNoImplicit(true);
           } else {
+            res = new Atom(1);
             res->setAtomicNum(0);
+          }
+          if(token[0]=='R' && token>="R0" && token<="R99"){
+            std::string rlabel="";
+            rlabel = token.substr(1,token.length()-1);
+            int rnumber;
+            try {
+              rnumber = boost::lexical_cast<int>(rlabel);
+            } catch (boost::bad_lexical_cast &) {
+              rnumber=-1;
+            }
+            if(rnumber>=0) res->setIsotope(rnumber);
           }
         } else if( token=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
           res = new Atom(1);
@@ -1298,9 +1516,9 @@ namespace RDKit{
           res->setIsotope(3);
         } else {
           res = new Atom(PeriodicTable::getTable()->getAtomicNumber(token));
-          res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
         }
       }
+      
       
       POSTCONDITION(res,"no atom built");
       return res;
@@ -1355,15 +1573,29 @@ namespace RDKit{
             throw FileParseException(errout.str()) ;
           }
         } else if(prop=="MASS"){
-          double v=FileParserUtils::toDouble(val);
-          if(v<=0){
+          // the documentation for V3000 CTABs says that this should contain the "absolute atomic weight" (whatever that means).
+          // Online examples seem to have integer (isotope) values and Marvin won't even read something that has a float.
+          // We'll go with the int
+          int v;
+          double dv;
+          try{
+            v=FileParserUtils::toInt(val);
+          } catch (boost::bad_lexical_cast &) {
+            try{
+              dv=FileParserUtils::toDouble(val);
+              v = static_cast<int>(floor(dv));
+            } catch (boost::bad_lexical_cast &){
+              v=-1;
+            }
+          }
+          if(v<0){
             errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 <<" on line "<<line << std::endl;
             throw FileParseException(errout.str()) ;
           } else {
 	    if(!atom->hasQuery()) {
-	      atom->setMass(v);
+	      atom->setIsotope(v);
 	    } else {
-	      atom->expandQuery(makeAtomMassQuery(static_cast<int>(v)));
+	      atom->expandQuery(makeAtomIsotopeQuery(v));
 	    }
 	  }
         } else if(prop=="CFG"){
@@ -1373,7 +1605,7 @@ namespace RDKit{
           case 1:
           case 2:
           case 3:
-            atom->setProp("molParity",cfg);
+            atom->setProp(common_properties::molParity,cfg);
             break;
           default:
             errout << "Unrecognized CFG value : " << val << " for atom "<< atom->getIdx()+1 <<" on line " << line<< std::endl;
@@ -1407,12 +1639,67 @@ namespace RDKit{
         } else if(prop=="VAL"){
 	  if(val!="0"){
 	    int totval=FileParserUtils::toInt(val);
-	    atom->setProp("molTotValence",totval);
+	    atom->setProp(common_properties::molTotValence,totval);
 	  }
+        } else if(prop=="RGROUPS"){
+          ParseV3000RGroups(mol,atom,val,line);
+          // FIX
         }
         ++token;
       }
     }
+
+    void tokenizeV3000Line(std::string line,std::vector<std::string> &tokens){
+      bool inQuotes=false,inParens=false;
+      unsigned int start=0;
+      unsigned int pos=0;
+      while(pos<line.size()){
+        if(line[pos]==' ' || line[pos]=='\t'){
+          if(start == pos){
+            ++start;
+            ++pos;
+          } else if( !inQuotes && !inParens){
+            tokens.push_back(line.substr(start,pos-start));
+            ++pos;
+            start=pos;
+          } else {
+            ++pos;
+          }
+        } else if(line[pos]==')' && inParens){
+          tokens.push_back(line.substr(start,pos-start+1));
+          inParens=false;
+          ++pos;
+          start=pos;
+        } else if(line[pos]=='(' && !inQuotes){
+          inParens=true;
+          ++pos;
+        } else if(line[pos]=='"' && !inParens){
+          if(pos+1<line.size() && line[pos+1]=='"'){
+            pos+=2;
+          } else if(inQuotes){
+            // don't push on the quotes themselves
+            tokens.push_back(line.substr(start+1,pos-start-1));
+            ++pos;
+            start=pos;
+            inQuotes=false;
+          } else {
+            ++pos;
+            inQuotes=true;
+          }
+        } else {
+          ++pos;
+        }
+      }
+      if(start!=pos){
+        tokens.push_back(line.substr(start,line.size()-start));
+      }
+#if 0
+      std::cerr<<"tokens: ";
+      std::copy(tokens.begin(),tokens.end(),std::ostream_iterator<std::string>(std::cerr,"|"));
+      std::cerr<<std::endl;
+#endif
+    }
+
     void ParseV3000AtomBlock(std::istream *inStream,unsigned int &line,
                              unsigned int nAtoms,RWMol *mol, Conformer *conf){
       PRECONDITION(inStream,"bad stream");
@@ -1432,9 +1719,11 @@ namespace RDKit{
 
         tempStr = getV3000Line(inStream,line);
         std::string trimmed=boost::trim_copy(tempStr);
-        boost::escaped_list_separator<char> els(""," \t","'\"");
-        boost::tokenizer<boost::escaped_list_separator<char> > tokens(trimmed,els);
-        boost::tokenizer<boost::escaped_list_separator<char> >::iterator token;
+
+        std::vector<std::string> tokens;
+        std::vector<std::string>::iterator token;
+
+        tokenizeV3000Line(trimmed,tokens);
         token=tokens.begin();
 
         if(token==tokens.end()) {
@@ -1485,7 +1774,7 @@ namespace RDKit{
         }
         int mapNum=atoi(token->c_str());
 	if(mapNum>0){
-	  atom->setProp("molAtomMapNumber",mapNum);
+	  atom->setProp(common_properties::molAtomMapNumber,mapNum);
 	}
         ++token;
         
@@ -1505,12 +1794,12 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      if(mol->hasProp("_2DConf")){
+      if(mol->hasProp(common_properties::_2DConf)){
         conf->set3D(false);
-        mol->clearProp("_2DConf");
-      } else if(mol->hasProp("_3DConf")){
+        mol->clearProp(common_properties::_2DConf);
+      } else if(mol->hasProp(common_properties::_3DConf)){
         conf->set3D(true);
-        mol->clearProp("_3DConf");
+        mol->clearProp(common_properties::_3DConf);
       }
     }
     void ParseV3000BondBlock(std::istream *inStream,unsigned int &line,
@@ -1668,9 +1957,9 @@ namespace RDKit{
           atomIt!=mol->endAtoms();
           ++atomIt) {
         Atom *atom=*atomIt;
-        if(atom->hasProp("molTotValence")){
-          int totV;
-          atom->getProp("molTotValence",totV);
+        int totV;
+        if(atom->getPropIfPresent(common_properties::molTotValence, totV) &&
+           !atom->hasProp("_ZBO_H")){
           if(totV==0) continue;
           atom->setNoImplicit(true);
           if(totV==15 // V2000
@@ -1735,7 +2024,7 @@ namespace RDKit{
       }
       conf = new Conformer(nAtoms);
       
-      unsigned int nSgroups,n3DConstraints,chiralFlag;
+      unsigned int nSgroups=0,n3DConstraints=0,chiralFlag=0;
       if(splitLine.size()>2) nSgroups = FileParserUtils::toInt(splitLine[2]);
       if(splitLine.size()>3) n3DConstraints = FileParserUtils::toInt(splitLine[3]);
       if(splitLine.size()>4) chiralFlag = FileParserUtils::toInt(splitLine[4]);
@@ -1844,12 +2133,12 @@ namespace RDKit{
         } else {
           ParseMolBlockAtoms(inStream,line,nAtoms,mol,conf);
 
-          if(mol->hasProp("_2DConf")){
+          if(mol->hasProp(common_properties::_2DConf)){
             conf->set3D(false);
-            mol->clearProp("_2DConf");
-          } else if(mol->hasProp("_3DConf")){
+            mol->clearProp(common_properties::_2DConf);
+          } else if(mol->hasProp(common_properties::_3DConf)){
             conf->set3D(true);
-            mol->clearProp("_3DConf");
+            mol->clearProp(common_properties::_3DConf);
           }
         }
         mol->addConformer(conf, true);
@@ -1882,7 +2171,7 @@ namespace RDKit{
       return NULL;
     }
     RWMol *res = new RWMol();
-    res->setProp("_Name", tempStr);
+    res->setProp(common_properties::_Name, tempStr);
 
     // info
     line++;
@@ -1890,10 +2179,10 @@ namespace RDKit{
     res->setProp("_MolFileInfo", tempStr);
     if(tempStr.length()>=22){
       std::string dimLabel=tempStr.substr(20,2);
-      if(dimLabel=="2d"||dimLabel=="2D"){
-        res->setProp("_2DConf",1);
+      if(dimLabel=="2d"||dimLabel==common_properties::TWOD){
+        res->setProp(common_properties::_2DConf,1);
       } else if(dimLabel=="3d"||dimLabel=="3D"){
-        res->setProp("_3DConf",1);
+        res->setProp(common_properties::_3DConf,1);
       }
     }
     // comments
@@ -1974,7 +2263,8 @@ namespace RDKit{
         std::ostringstream errout;
         errout<<"CTAB version string invalid at line "<<line;
         if(strictParsing){
-          if(res) delete res;
+          delete res;
+          res=NULL;
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -1985,10 +2275,8 @@ namespace RDKit{
         std::ostringstream errout;
         errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "' at line " << line;
         if(strictParsing){
-          if(res){
-            delete res;
-            res = NULL;
-          }
+          delete res;
+          res = NULL;
           throw FileParseException(errout.str()) ;
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() <<std::endl;
@@ -1997,7 +2285,7 @@ namespace RDKit{
     }
 
     if(chiralFlag){
-      res->setProp("_MolFileChiralFlag",chiralFlag);
+      res->setProp(common_properties::_MolFileChiralFlag,chiralFlag);
     }
 
     Conformer *conf=0;
@@ -2011,10 +2299,8 @@ namespace RDKit{
           std::ostringstream errout;
           errout << "V3000 mol blocks should have 0s in the initial counts line. (line: "<<line<<")";
           if(strictParsing){
-            if(res){
-              delete res;
-              res = NULL;
-            }
+            delete res;
+            res = NULL;
             throw FileParseException(errout.str()) ;
           } else {
             BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl ;
@@ -2026,8 +2312,8 @@ namespace RDKit{
       }
     } catch (MolFileUnhandledFeatureException &e) { 
       // unhandled mol file feature, just delete the result 
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<" on line: "<<line<<". Molecule skipped."<<std::endl;
@@ -2044,16 +2330,16 @@ namespace RDKit{
         fileComplete=false;        
     } catch (FileParseException &e) { 
       // catch our exceptions and throw them back after cleanup
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       throw e;
     }
 
     if(!fileComplete){
-      if(res) delete res;
-      if(conf) delete conf;
+      delete res;
+      delete conf;
       res=NULL;
       conf=NULL;
       std::ostringstream errout;
@@ -2090,9 +2376,8 @@ namespace RDKit{
       // cleanUp(), then detect the stereochemistry.
       // (this was Issue 148)
       //
+      const Conformer &conf = res->getConformer();
       if(chiralityPossible){
-        const Conformer &conf = res->getConformer();
-        // if we aren't sanitizing, we technically shouldn't be doing this...
         MolOps::cleanUp(*res);
         DetectAtomStereoChemistry(*res, &conf);
       }
@@ -2112,19 +2397,22 @@ namespace RDKit{
       
           // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry 
           // here after sanitization because we need the ring information:
-          const Conformer &conf = res->getConformer();
           DetectBondStereoChemistry(*res, &conf);
         }
         catch (...){
-          if(res) delete res;
+          delete res;
           res=NULL;
           throw;
         }
-        MolOps::assignStereochemistry(*res,true);
+        MolOps::assignStereochemistry(*res,true,true,true);
+      } else {
+        // we still need to do something about double bond stereochemistry
+        // (was github issue 337)
+        DetectBondStereoChemistry(*res, &conf);
       }
 
-      if(res->hasProp("_NeedsQueryScan")){
-        res->clearProp("_NeedsQueryScan");
+      if(res->hasProp(common_properties::_NeedsQueryScan)){
+        res->clearProp(common_properties::_NeedsQueryScan);
         CompleteMolQueries(res);
       }
     }

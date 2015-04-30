@@ -46,6 +46,7 @@ namespace  {
     RDKit::ROMol *bit_40;
     RDKit::ROMol *bit_41;
     RDKit::ROMol *bit_43;
+    RDKit::ROMol *bit_44;
     RDKit::ROMol *bit_45;
     RDKit::ROMol *bit_47;
     RDKit::ROMol *bit_48;
@@ -182,6 +183,7 @@ namespace  {
       bit_40(RDKit::SmartsToMol("[#16]-[#8]")),
       bit_41(RDKit::SmartsToMol("[#6]#[#7]")),
       bit_43(RDKit::SmartsToMol("[!#6!#1!H0]~*~[!#6!#1!H0]")),
+      bit_44(RDKit::SmartsToMol("[!#1;!#6;!#7;!#8;!#9;!#14;!#15;!#16;!#17;!#35;!#53]")),
       bit_45(RDKit::SmartsToMol("[#6]=[#6]~[#7]")),
       bit_47(RDKit::SmartsToMol("[#16]~*~[#7]")),
       bit_48(RDKit::SmartsToMol("[#8]~[!#6!#1](~[#8])~[#8]")),
@@ -302,6 +304,8 @@ namespace  {
     const Patterns &pats=*(gpats.get().front());
     PRECONDITION(fp.size()==167,"bad fingerprint");
     fp.clearBits();
+
+    if(!mol.getNumAtoms()) return;
 
     std::vector<RDKit::MatchVectType> matches;
     RDKit::RWMol::ConstAtomIterator atom;
@@ -498,6 +502,8 @@ namespace  {
       fp.setBit(41);
     if (RDKit::SubstructMatch(mol,*pats.bit_43,match,true))
       fp.setBit(43);
+    if (RDKit::SubstructMatch(mol,*pats.bit_44,match,true))
+      fp.setBit(44);
     if (RDKit::SubstructMatch(mol,*pats.bit_45,match,true))
       fp.setBit(45);
     if (RDKit::SubstructMatch(mol,*pats.bit_47,match,true))

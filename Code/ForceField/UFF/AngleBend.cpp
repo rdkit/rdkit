@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2013 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,22 +21,48 @@ namespace ForceFields {
 
     namespace Utils {
       double calcAngleForceConstant(double theta0,
-            double bondOrder12,double bondOrder23,
-            const AtomicParams *at1Params,
-            const AtomicParams *at2Params,
-            const AtomicParams *at3Params){
-  double cosTheta0=cos(theta0);
-  double r12 = calcBondRestLength(bondOrder12,at1Params,at2Params);
-  double r23 = calcBondRestLength(bondOrder23,at2Params,at3Params);
-  double r13 = sqrt(r12*r12 + r23*r23 - 2.*r12*r23*cosTheta0);
-  double beta = 2.*Params::G/(r12*r23);
+                                    double bondOrder12,double bondOrder23,
+                                    const AtomicParams *at1Params,
+                                    const AtomicParams *at2Params,
+                                    const AtomicParams *at3Params){
+        double cosTheta0=cos(theta0);
+        double r12 = calcBondRestLength(bondOrder12,at1Params,at2Params);
+        double r23 = calcBondRestLength(bondOrder23,at2Params,at3Params);
+        double r13 = sqrt(r12*r12 + r23*r23 - 2.*r12*r23*cosTheta0);
+        double beta = 2.*Params::G/(r12*r23);
 
-  double preFactor = beta*at1Params->Z1*at3Params->Z1 / int_pow<5>(r13);
-  double rTerm = r12*r23;
-  double innerBit = 3.*rTerm*(1.-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
-            
-  double res=preFactor*rTerm*innerBit;
-  return res;
+        double preFactor = beta*at1Params->Z1*at3Params->Z1 / int_pow<5>(r13);
+        double rTerm = r12*r23;
+        double innerBit = 3.*rTerm*(1.-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
+        double res=preFactor*rTerm*innerBit;
+        return res;
+      }
+      
+      void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+        double **g, double &dE_dTheta, double &cosTheta, double &sinTheta)
+      {
+        // -------
+        // dTheta/dx is trickier:
+        double dCos_dS[6] = {
+          1.0 / dist[0] * (r[1].x - cosTheta * r[0].x),
+          1.0 / dist[0] * (r[1].y - cosTheta * r[0].y),
+          1.0 / dist[0] * (r[1].z - cosTheta * r[0].z),
+          1.0 / dist[1] * (r[0].x - cosTheta * r[1].x),
+          1.0 / dist[1] * (r[0].y - cosTheta * r[1].y),
+          1.0 / dist[1] * (r[0].z - cosTheta * r[1].z)
+        };
+
+        g[0][0] += dE_dTheta * dCos_dS[0] / (-sinTheta);
+        g[0][1] += dE_dTheta * dCos_dS[1] / (-sinTheta);
+        g[0][2] += dE_dTheta * dCos_dS[2] / (-sinTheta);
+
+        g[1][0] += dE_dTheta * (-dCos_dS[0] - dCos_dS[3]) / (-sinTheta);
+        g[1][1] += dE_dTheta * (-dCos_dS[1] - dCos_dS[4]) / (-sinTheta);
+        g[1][2] += dE_dTheta * (-dCos_dS[2] - dCos_dS[5]) / (-sinTheta);
+      
+        g[2][0] += dE_dTheta * dCos_dS[3] / (-sinTheta);
+        g[2][1] += dE_dTheta * dCos_dS[4] / (-sinTheta);
+        g[2][2] += dE_dTheta * dCos_dS[5] / (-sinTheta);
       }
     } // end of namespace Utils
   
@@ -81,15 +107,15 @@ namespace ForceFields {
       d_at2Idx = idx2;
       d_at3Idx = idx3;
       d_order = order;
-      this->d_forceConstant = Utils::calcAngleForceConstant
+      d_forceConstant = Utils::calcAngleForceConstant
                   (theta0, bondOrder12,bondOrder23,
                   at1Params,at2Params,at3Params);
       if(order==0){
   double sinTheta0=sin(theta0);
   double cosTheta0=cos(theta0);
-  this->d_C2 = 1./(4.*std::max(sinTheta0*sinTheta0,1e-8));
-  this->d_C1 = -4.*this->d_C2*cosTheta0;
-  this->d_C0 = this->d_C2*(2.*cosTheta0*cosTheta0 + 1.);
+  d_C2 = 1./(4.*std::max(sinTheta0*sinTheta0,1e-8));
+  d_C1 = -4.*d_C2*cosTheta0;
+  d_C0 = d_C2*(2.*cosTheta0*cosTheta0 + 1.);
       }
     }
 
@@ -97,26 +123,27 @@ namespace ForceFields {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
 
-      double dist1=this->dp_forceField->distance(this->d_at1Idx,this->d_at2Idx,pos);
-      double dist2=this->dp_forceField->distance(this->d_at2Idx,this->d_at3Idx,pos);
+      double dist1=dp_forceField->distance(d_at1Idx,d_at2Idx,pos);
+      double dist2=dp_forceField->distance(d_at2Idx,d_at3Idx,pos);
 
-      RDGeom::Point3D p1(pos[3*this->d_at1Idx],
-       pos[3*this->d_at1Idx+1],
-       pos[3*this->d_at1Idx+2]);
-      RDGeom::Point3D p2(pos[3*this->d_at2Idx],
-       pos[3*this->d_at2Idx+1],
-       pos[3*this->d_at2Idx+2]);
-      RDGeom::Point3D p3(pos[3*this->d_at3Idx],
-       pos[3*this->d_at3Idx+1],
-       pos[3*this->d_at3Idx+2]);
+      RDGeom::Point3D p1(pos[3*d_at1Idx],
+       pos[3*d_at1Idx+1],
+       pos[3*d_at1Idx+2]);
+      RDGeom::Point3D p2(pos[3*d_at2Idx],
+       pos[3*d_at2Idx+1],
+       pos[3*d_at2Idx+2]);
+      RDGeom::Point3D p3(pos[3*d_at3Idx],
+       pos[3*d_at3Idx+1],
+       pos[3*d_at3Idx+2]);
       RDGeom::Point3D p12=p1-p2;
       RDGeom::Point3D p32=p3-p2;
       double cosTheta = p12.dotProduct(p32)/(dist1*dist2);
+      clipToOne(cosTheta);
       // we need sin^2(theta) to get cos(2*theta), so compute that:
       double sinThetaSq = 1.-cosTheta*cosTheta;
     
-      double angleTerm = this->getEnergyTerm(cosTheta,sinThetaSq);
-      double res = this->d_forceConstant*angleTerm;
+      double angleTerm = getEnergyTerm(cosTheta,sinThetaSq);
+      double res = d_forceConstant*angleTerm;
 
       return res;
     }
@@ -126,28 +153,30 @@ namespace ForceFields {
       PRECONDITION(pos,"bad vector");
       PRECONDITION(grad,"bad vector");
 
-      double dist1=this->dp_forceField->distance(this->d_at1Idx,this->d_at2Idx,pos);
-      double dist2=this->dp_forceField->distance(this->d_at2Idx,this->d_at3Idx,pos);
+      double dist[2] = {
+        dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
+        dp_forceField->distance(d_at2Idx, d_at3Idx, pos)
+      };
 
-      //std::cout << "\tAngle("<<this->d_at1Idx<<","<<this->d_at2Idx<<","<<this->d_at3Idx<<") " << dist1 << " " << dist2 << std::endl;
-      
-      RDGeom::Point3D p1(pos[3*this->d_at1Idx],
-       pos[3*this->d_at1Idx+1],
-       pos[3*this->d_at1Idx+2]);
-      RDGeom::Point3D p2(pos[3*this->d_at2Idx],
-       pos[3*this->d_at2Idx+1],
-       pos[3*this->d_at2Idx+2]);
-      RDGeom::Point3D p3(pos[3*this->d_at3Idx],
-       pos[3*this->d_at3Idx+1],
-       pos[3*this->d_at3Idx+2]);
-      double *g1=&(grad[3*this->d_at1Idx]);
-      double *g2=&(grad[3*this->d_at2Idx]);
-      double *g3=&(grad[3*this->d_at3Idx]);
-
-      RDGeom::Point3D p12=p1-p2;
-      RDGeom::Point3D p32=p3-p2;
-      double cosTheta = p12.dotProduct(p32)/(dist1*dist2);
-      double sinTheta = std::max(sqrt(1.0-cosTheta*cosTheta),1e-8);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1], pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1], pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1], pos[3 * d_at3Idx + 2]);
+      double *g[3] = {
+        &(grad[3 * d_at1Idx]),
+        &(grad[3 * d_at2Idx]),
+        &(grad[3 * d_at3Idx])
+      };
+      RDGeom::Point3D r[2] = {
+        (p1 - p2) / dist[0],
+        (p3 - p2) / dist[1]
+      };
+      double cosTheta = r[0].dotProduct(r[1]);
+      clipToOne(cosTheta);
+      double sinThetaSq = 1.0 - cosTheta * cosTheta;
+      double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
       //std::cerr << "GRAD: " << cosTheta << " (" << acos(cosTheta)<< "), ";
       //std::cerr << sinTheta << " (" << asin(sinTheta)<< ")" << std::endl;
@@ -158,42 +187,20 @@ namespace ForceFields {
       // dE/dTheta is independent of cartesians:
       double dE_dTheta=getThetaDeriv(cosTheta,sinTheta);
     
-      // -------
-      // dTheta/dx is trickier:
-      double dCos_dS1=1./dist1 * (p32.x/dist2 - cosTheta*p12.x/dist1);
-      double dCos_dS2=1./dist1 * (p32.y/dist2 - cosTheta*p12.y/dist1);
-      double dCos_dS3=1./dist1 * (p32.z/dist2 - cosTheta*p12.z/dist1);
-
-      double dCos_dS4=1./dist2 * (p12.x/dist1 - cosTheta*p32.x/dist2);
-      double dCos_dS5=1./dist2 * (p12.y/dist1 - cosTheta*p32.y/dist2);
-      double dCos_dS6=1./dist2 * (p12.z/dist1 - cosTheta*p32.z/dist2);
-
-    
-      g1[0] += dE_dTheta*dCos_dS1/(-sinTheta);
-      g1[1] += dE_dTheta*dCos_dS2/(-sinTheta);
-      g1[2] += dE_dTheta*dCos_dS3/(-sinTheta);
-
-      g2[0] += dE_dTheta*(-dCos_dS1 - dCos_dS4)/(-sinTheta);
-      g2[1] += dE_dTheta*(-dCos_dS2 - dCos_dS5)/(-sinTheta);
-      g2[2] += dE_dTheta*(-dCos_dS3 - dCos_dS6)/(-sinTheta);
-    
-      g3[0] += dE_dTheta*dCos_dS4/(-sinTheta);
-      g3[1] += dE_dTheta*dCos_dS5/(-sinTheta);
-      g3[2] += dE_dTheta*dCos_dS6/(-sinTheta);
-
+      Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
     }
 
 
     double AngleBendContrib::getEnergyTerm(double cosTheta,double sinThetaSq) const {
-      PRECONDITION(this->d_order==0||this->d_order==1||this->d_order==2||this->d_order==3||this->d_order==4,"bad order");
+      PRECONDITION(d_order==0||d_order==1||d_order==2||d_order==3||d_order==4,"bad order");
       // cos(2x) = cos^2(x) - sin^2(x);
       double cos2Theta = cosTheta*cosTheta - sinThetaSq;
 
       double res=0.0;
-      if(this->d_order==0){
-  res=this->d_C0 + this->d_C1*cosTheta + this->d_C2*cos2Theta;
+      if(d_order==0){
+  res=d_C0 + d_C1*cosTheta + d_C2*cos2Theta;
       } else {
-  switch(this->d_order){
+  switch(d_order){
   case 1:
     res=-cosTheta;
     break;
@@ -210,7 +217,7 @@ namespace ForceFields {
     break;
   }
   res = 1.-res;
-  res /= (double)(this->d_order*this->d_order);
+  res /= (double)(d_order*d_order);
       }
       return res;
     }
@@ -218,14 +225,14 @@ namespace ForceFields {
 
   
     double AngleBendContrib::getThetaDeriv(double cosTheta,double sinTheta) const {
-      PRECONDITION(this->d_order==0||this->d_order==1||this->d_order==2||this->d_order==3||this->d_order==4,"bad order");
+      PRECONDITION(d_order==0||d_order==1||d_order==2||d_order==3||d_order==4,"bad order");
 
       double dE_dTheta=0.0;
       double sin2Theta = 2.*sinTheta*cosTheta;
 
-      if(this->d_order==0){
-  dE_dTheta =  -1.*this->d_forceConstant*(this->d_C1*sinTheta +
-                 2.*this->d_C2*sin2Theta);
+      if(d_order==0){
+  dE_dTheta =  -1.*d_forceConstant*(d_C1*sinTheta +
+                 2.*d_C2*sin2Theta);
       } else {
   // E = k/n^2 [1-cos(n theta)]
   // dE = - k/n^2 * d cos(n theta)
@@ -233,7 +240,7 @@ namespace ForceFields {
   // these all use:
   // d cos(ax) = -a sin(ax)
       
-  switch(this->d_order){
+  switch(d_order){
   case 1:
     dE_dTheta = -sinTheta;
     break;
@@ -250,7 +257,7 @@ namespace ForceFields {
     dE_dTheta = cosTheta*sinTheta*(4.-8.*sinTheta*sinTheta);
     break;
   }
-  dE_dTheta *= this->d_forceConstant/(double)(this->d_order);
+  dE_dTheta *= d_forceConstant/(double)(d_order);
       }
       return dE_dTheta;
     }

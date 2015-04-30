@@ -17,9 +17,11 @@
 
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
+#include <RDGeneral/Exceptions.h>
 #include <Numerics/SymmMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <boost/dynamic_bitset.hpp>
+#include <algorithm>
 
 const double DIST12_DELTA = 0.01;
 const double ANGLE_DELTA = 0.0837;
@@ -301,8 +303,11 @@ namespace RDKit {
       }
     }
     
-    bool lessVector( const INT_VECT &v1, const INT_VECT &v2)  {
-      return v1.size() < v2.size();
+
+    struct lessVector : public std::binary_function<INT_VECT,INT_VECT,bool> {
+      bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
+        return v1.size() < v2.size();
+      }
     };
 
   void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, ComputedData &accumData) {
@@ -325,7 +330,7 @@ namespace RDKit {
       double angle;
 
       VECT_INT_VECT atomRings = rinfo->atomRings();
-      std::sort(atomRings.begin(), atomRings.end(), lessVector); 
+      std::sort(atomRings.begin(), atomRings.end(), lessVector()); 
       // sort the rings based on the ring size
       VECT_INT_VECT_CI rii;
       INT_VECT visited(npt, 0);
@@ -1117,8 +1122,12 @@ namespace RDKit {
 
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                         bool set15bounds, bool scaleVDW) {
+      PRECONDITION(mmat.get(),"bad pointer");
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
+      if(!na){
+        throw ValueErrorException("molecule has no atoms");
+      }
       ComputedData accumData(na, nb);
       double *distMatrix=0;
       distMatrix = MolOps::getDistanceMat(mol);

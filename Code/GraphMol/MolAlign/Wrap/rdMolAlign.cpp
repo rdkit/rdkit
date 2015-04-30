@@ -18,10 +18,12 @@
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <ForceField/Wrap/PyForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
+#include <GraphMol/Descriptors/Crippen.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 #include <GraphMol/ROMol.h>
-//#include "PyO3A.h"
+
 
 namespace python = boost::python;
 
@@ -73,15 +75,23 @@ namespace RDKit {
     return ivec;
   }
 
-  void alignMolConfs(ROMol &mol, python::object atomIds=python::list(),
-                     python::object confIds=python::list(), 
-                     python::object weights=python::list(),
-                     bool reflect=false, unsigned int maxIters=50) {
+  void alignMolConfs(ROMol &mol, python::object atomIds,
+                     python::object confIds,
+                     python::object weights,
+                     bool reflect, unsigned int maxIters,
+                     python::object RMSlist) {
     
     RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
     std::vector<unsigned int> *aIds = _translateIds(atomIds);
     std::vector<unsigned int> *cIds = _translateIds(confIds);
-    MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters);
+    std::vector<double> *RMSvector = 0;
+    if(RMSlist != python::object()){
+      RMSvector = new std::vector<double>();
+    }
+    {
+      NOGIL gil;
+      MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters, RMSvector);
+    }
     if (wtsVec) {
       delete wtsVec;
     }
@@ -90,6 +100,13 @@ namespace RDKit {
     }
     if (cIds) {
       delete cIds;
+    }
+    if(RMSvector){
+      python::list &pyl = static_cast<python::list &>(RMSlist);
+      for(unsigned int i = 0; i < (*RMSvector).size(); ++i){
+	pyl.append((*RMSvector)[i]);
+      }
+      delete RMSvector;
     }
   }
     
@@ -133,8 +150,12 @@ namespace RDKit {
       }
     }
     RDGeom::Transform3D trans;
-    double rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
-                                                  wtsVec, reflect, maxIters);
+    double rmsd;
+    {
+      NOGIL gil;
+      rmsd=MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
+                                      wtsVec, reflect, maxIters);
+    }
     if (aMap) {
       delete aMap;
     } 
@@ -163,8 +184,13 @@ namespace RDKit {
         throw_value_error("Incorrect number of weights specified");
       }
     }
-    double rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, 
-                                     wtsVec, reflect, maxIters);
+
+    double rmsd;
+    {
+      NOGIL gil;
+      rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, 
+                                wtsVec, reflect, maxIters);
+    }
     if (aMap) {
       delete aMap;
     } 
@@ -178,16 +204,18 @@ namespace RDKit {
     class PyO3A {
     public:
       PyO3A(O3A *o) : o3a(o) {};
+      PyO3A(boost::shared_ptr<O3A> o) : o3a(o) {};
       ~PyO3A() {};
       double align() {
-        return o3a->align();
+        return o3a.get()->align();
       };
       PyObject *trans() {
-        std::pair<double, RDGeom::Transform3D *> transPair = o3a->trans();
-        return RDKit::generateRmsdTransPyTuple(transPair.first, *(transPair.second));
+        RDGeom::Transform3D trans;
+        double rmsd = o3a.get()->trans(trans);
+        return RDKit::generateRmsdTransPyTuple(rmsd, trans);
       };
       double score() {
-        return o3a->score();
+        return o3a.get()->score();
       };
       boost::python::list matches() {
         boost::python::list matchList;
@@ -214,12 +242,35 @@ namespace RDKit {
       };
       boost::shared_ptr<O3A> o3a;
     };
-    PyO3A *getO3A(ROMol &prbMol, ROMol &refMol,
+    PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol,
                   python::object prbProps,
                   python::object refProps,
                   int prbCid = -1, int refCid = -1, bool reflect = false,
-                  unsigned int maxIters = 50, unsigned int accuracy = 0)
+                  unsigned int maxIters = 50, unsigned int options = 0,
+                  python::list constraintMap = python::list(),
+                  python::list constraintWeights = python::list())
     {
+      MatchVectType *cMap = (python::len(constraintMap)
+        ? _translateAtomMap(constraintMap) : NULL);
+      RDNumeric::DoubleVector *cWts = NULL;
+      if (cMap) {
+        cWts = _translateWeights(constraintWeights);
+        if (cWts) {
+          if ((*cMap).size() != (*cWts).size()) {
+            throw_value_error("The number of weights should match the number of constraints");
+          }
+        }
+        for (unsigned int i = 0; i < (*cMap).size(); ++i) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+            throw_value_error("Constrained atom idx out of range");
+          }
+          if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
+            || (refMol[(*cMap)[i].second]->getAtomicNum() == 1)) {
+            throw_value_error("Constrained atoms must be heavy atoms");
+          }
+        }
+      }
       ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties=NULL;
       MMFF::MMFFMolProperties *prbMolProps=NULL;
       ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties=NULL;
@@ -230,29 +281,290 @@ namespace RDKit {
         prbMolProps=prbPyMMFFMolProperties->mmffMolProperties.get();
       } else {
         prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+        if(!prbMolProps->isValid()){
+          throw_value_error("missing MMFF94 parameters for probe molecule");
+        }
       }
       if(refProps != python::object()){
         refPyMMFFMolProperties=python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
         refMolProps=refPyMMFFMolProperties->mmffMolProperties.get();
       } else {
         refMolProps = new MMFF::MMFFMolProperties(refMol);
+        if(!refMolProps->isValid()){
+          throw_value_error("missing MMFF94 parameters for reference molecule");
+        }
       }
-      
-      O3A *o3a = new MolAlign::O3A(prbMol, refMol,
-                                   prbMolProps,refMolProps,
-                                   prbCid, refCid, reflect, maxIters, accuracy);
+      O3A *o3a;
+      {
+        NOGIL gil;
+        o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps,refMolProps,
+                                MolAlign::O3A::MMFF94, prbCid, refCid,
+                                reflect, maxIters, options, cMap, cWts);
+      }
       PyO3A *pyO3A = new PyO3A(o3a);
 
       if(!prbPyMMFFMolProperties) delete prbMolProps;
       if(!refPyMMFFMolProperties) delete refMolProps;
+      if (cMap) {
+        delete cMap;
+      } 
+      if (cWts) {
+        delete cWts;
+      }
       
       return pyO3A;
     }
-  }
-}
+
+
+    python::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol,
+                                     unsigned int numThreads,
+                                     python::object prbProps,
+                                     python::object refProps,
+                                     int refCid = -1, bool reflect = false,
+                                     unsigned int maxIters = 50, unsigned int options = 0,
+                                     python::list constraintMap = python::list(),
+                                     python::list constraintWeights = python::list())
+    {
+      MatchVectType *cMap = (python::len(constraintMap)
+        ? _translateAtomMap(constraintMap) : NULL);
+      RDNumeric::DoubleVector *cWts = NULL;
+      if (cMap) {
+        cWts = _translateWeights(constraintWeights);
+        if (cWts) {
+          if ((*cMap).size() != (*cWts).size()) {
+            throw_value_error("The number of weights should match the number of constraints");
+          }
+        }
+        for (unsigned int i = 0; i < (*cMap).size(); ++i) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+            throw_value_error("Constrained atom idx out of range");
+          }
+          if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
+            || (refMol[(*cMap)[i].second]->getAtomicNum() == 1)) {
+            throw_value_error("Constrained atoms must be heavy atoms");
+          }
+        }
+      }
+      ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties=NULL;
+      MMFF::MMFFMolProperties *prbMolProps=NULL;
+      ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties=NULL;
+      MMFF::MMFFMolProperties *refMolProps=NULL;
+      
+      if(prbProps != python::object()){
+        prbPyMMFFMolProperties=python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
+        prbMolProps=prbPyMMFFMolProperties->mmffMolProperties.get();
+      } else {
+        prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+        if(!prbMolProps->isValid()){
+          throw_value_error("missing MMFF94 parameters for probe molecule");
+        }
+      }
+      if(refProps != python::object()){
+        refPyMMFFMolProperties=python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
+        refMolProps=refPyMMFFMolProperties->mmffMolProperties.get();
+      } else {
+        refMolProps = new MMFF::MMFFMolProperties(refMol);
+        if(!refMolProps->isValid()){
+          throw_value_error("missing MMFF94 parameters for reference molecule");
+        }
+      }
+      std::vector<boost::shared_ptr<O3A> > res;
+      {
+        NOGIL gil;
+        getO3AForProbeConfs(prbMol,refMol, prbMolProps,refMolProps,
+                            res,numThreads,
+                            MolAlign::O3A::MMFF94, refCid,
+                            reflect, maxIters, options, cMap, cWts);
+      }
+
+      python::list pyres;
+      for(unsigned int i=0;i<res.size();++i){
+        pyres.append(new PyO3A(res[i]));
+      }
+
+      if(!prbPyMMFFMolProperties) delete prbMolProps;
+      if(!refPyMMFFMolProperties) delete refMolProps;
+      if (cMap) {
+        delete cMap;
+      } 
+      if (cWts) {
+        delete cWts;
+      }
+      
+      return python::tuple(pyres);
+    }
+
+    PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
+                  python::list prbCrippenContribs,
+                  python::list refCrippenContribs,
+                  int prbCid = -1, int refCid = -1, bool reflect = false,
+                  unsigned int maxIters = 50, unsigned int options = 0,
+                  python::list constraintMap = python::list(),
+                  python::list constraintWeights = python::list())
+    {
+      MatchVectType *cMap = (python::len(constraintMap)
+        ? _translateAtomMap(constraintMap) : NULL);
+      RDNumeric::DoubleVector *cWts = NULL;
+      if (cMap) {
+        cWts = _translateWeights(constraintWeights);
+        if (cWts) {
+          if ((*cMap).size() != (*cWts).size()) {
+            throw_value_error("The number of weights should match the number of constraints");
+          }
+        }
+        for (unsigned int i = 0; i < (*cMap).size(); ++i) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+            throw_value_error("Constrained atom idx out of range");
+          }
+          if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
+            || (refMol[(*cMap)[i].second]->getAtomicNum() == 1)) {
+            throw_value_error("Constrained atoms must be heavy atoms");
+          }
+        }
+      }
+      unsigned int prbNAtoms = prbMol.getNumAtoms();
+      std::vector<double> prbLogpContribs(prbNAtoms);
+      unsigned int refNAtoms = refMol.getNumAtoms();
+      std::vector<double> refLogpContribs(refNAtoms);
+      
+      if ((prbCrippenContribs != python::list())
+        && (python::len(prbCrippenContribs) == prbNAtoms)) {
+        for (unsigned int i = 0; i < prbNAtoms; ++i) {
+          python::tuple logpMRTuple = python::extract<python::tuple>(prbCrippenContribs[i]);
+          prbLogpContribs[i] = python::extract<double>(logpMRTuple[0]);
+        }
+      }
+      else {
+        std::vector<double> prbMRContribs(prbNAtoms);
+        std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+        std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+        Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
+          prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+      }
+      if ((refCrippenContribs != python::list())
+        && (python::len(refCrippenContribs) == refNAtoms)) {
+        for (unsigned int i = 0; i < refNAtoms; ++i) {
+          python::tuple logpMRTuple = python::extract<python::tuple>(refCrippenContribs[i]);
+          refLogpContribs[i] = python::extract<double>(logpMRTuple[0]);
+        }
+      }
+      else {
+        std::vector<double> refMRContribs(refNAtoms);
+        std::vector<unsigned int> refAtomTypes(refNAtoms);
+        std::vector<std::string> refAtomTypeLabels(refNAtoms);
+        Descriptors::getCrippenAtomContribs(refMol, refLogpContribs,
+          refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+      }
+      O3A *o3a;
+      {
+        NOGIL gil;
+        o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
+                                MolAlign::O3A::CRIPPEN, prbCid, refCid,
+                                reflect, maxIters, options, cMap, cWts);
+      }
+      PyO3A *pyO3A = new PyO3A(o3a);
+      if (cMap) {
+        delete cMap;
+      } 
+      if (cWts) {
+        delete cWts;
+      }
+      
+      return pyO3A;
+    }
+
+    python::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol,
+                                        unsigned int numThreads,
+                                        python::list prbCrippenContribs,
+                                        python::list refCrippenContribs,
+                                        int refCid = -1, bool reflect = false,
+                                        unsigned int maxIters = 50, unsigned int options = 0,
+                                        python::list constraintMap = python::list(),
+                                        python::list constraintWeights = python::list())
+    {
+      MatchVectType *cMap = (python::len(constraintMap)
+        ? _translateAtomMap(constraintMap) : NULL);
+      RDNumeric::DoubleVector *cWts = NULL;
+      if (cMap) {
+        cWts = _translateWeights(constraintWeights);
+        if (cWts) {
+          if ((*cMap).size() != (*cWts).size()) {
+            throw_value_error("The number of weights should match the number of constraints");
+          }
+        }
+        for (unsigned int i = 0; i < (*cMap).size(); ++i) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+            throw_value_error("Constrained atom idx out of range");
+          }
+          if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
+            || (refMol[(*cMap)[i].second]->getAtomicNum() == 1)) {
+            throw_value_error("Constrained atoms must be heavy atoms");
+          }
+        }
+      }
+      unsigned int prbNAtoms = prbMol.getNumAtoms();
+      std::vector<double> prbLogpContribs(prbNAtoms);
+      unsigned int refNAtoms = refMol.getNumAtoms();
+      std::vector<double> refLogpContribs(refNAtoms);
+      
+      if ((prbCrippenContribs != python::list())
+        && (python::len(prbCrippenContribs) == prbNAtoms)) {
+        for (unsigned int i = 0; i < prbNAtoms; ++i) {
+          python::tuple logpMRTuple = python::extract<python::tuple>(prbCrippenContribs[i]);
+          prbLogpContribs[i] = python::extract<double>(logpMRTuple[0]);
+        }
+      }
+      else {
+        std::vector<double> prbMRContribs(prbNAtoms);
+        std::vector<unsigned int> prbAtomTypes(prbNAtoms);
+        std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
+        Descriptors::getCrippenAtomContribs(prbMol, prbLogpContribs,
+          prbMRContribs, true, &prbAtomTypes, &prbAtomTypeLabels);
+      }
+      if ((refCrippenContribs != python::list())
+        && (python::len(refCrippenContribs) == refNAtoms)) {
+        for (unsigned int i = 0; i < refNAtoms; ++i) {
+          python::tuple logpMRTuple = python::extract<python::tuple>(refCrippenContribs[i]);
+          refLogpContribs[i] = python::extract<double>(logpMRTuple[0]);
+        }
+      }
+      else {
+        std::vector<double> refMRContribs(refNAtoms);
+        std::vector<unsigned int> refAtomTypes(refNAtoms);
+        std::vector<std::string> refAtomTypeLabels(refNAtoms);
+        Descriptors::getCrippenAtomContribs(refMol, refLogpContribs,
+          refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
+      }
+      std::vector<boost::shared_ptr<O3A> > res;
+      {
+        NOGIL gil;
+        getO3AForProbeConfs(prbMol,refMol, &prbLogpContribs,&refLogpContribs,
+                            res,numThreads,
+                            MolAlign::O3A::CRIPPEN, refCid,
+                            reflect, maxIters, options, cMap, cWts);
+      }
+      python::list pyres;
+      for(unsigned int i=0;i<res.size();++i){
+        pyres.append(new PyO3A(res[i]));
+      }
+
+      if (cMap) {
+        delete cMap;
+      } 
+      if (cWts) {
+        delete cWts;
+      }
+      
+      return python::tuple(pyres);
+    }
+  } // end of namespace MolAlign
+} // end of namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolAlign) {
-  import_array();
+  rdkit_import_array();
   python::scope().attr("__doc__") =
     "Module containing functions to align a molecule to a second molecule";
     
@@ -330,18 +642,37 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
       - maxIters  maximum number of iterations used in mimizing the RMSD\n\
+      - RMSlist   if provided, fills in the RMS values between the reference\n\
+		  conformation and the other aligned conformations\n\
        \n\
-      RETURNS\n\
-      RMSD value\n\
     \n";
   python::def("AlignMolConformers", RDKit::alignMolConfs,
               (python::arg("mol"), python::arg("atomIds")=python::list(), 
                python::arg("confIds")=python::list(),
                python::arg("weights")=python::list(),
-               python::arg("reflect")=false, python::arg("maxIters")=50),
+               python::arg("reflect")=false,
+               python::arg("maxIters")=50,
+               python::arg("RMSlist")=python::object()),
               docString.c_str());
 
-  python::class_<RDKit::MolAlign::PyO3A>("O3A","Open3DALIGN object",python::no_init)
+  docString = "Perform a random transformation on a molecule\n\
+     \n\
+     ARGUMENTS\n\
+      - mol    molecule that is to be transformed\n\
+      - cid    ID of the conformation in the mol to be transformed\n\
+               (defaults to first conformation)\n\
+      - seed   seed used to initialize the random generator\n\
+               (defaults to -1, that is no seeding)\n\
+       \n\
+    \n";
+  python::def("RandomTransform", RDKit::MolAlign::randomTransform,
+              (python::arg("mol"), python::arg("cid")=-1,
+               python::arg("seed")=-1),docString.c_str());
+
+  python::class_<RDKit::MolAlign::PyO3A,
+                 boost::shared_ptr<RDKit::MolAlign::PyO3A> >("O3A",
+                                                             "Open3DALIGN object",
+                                                             python::no_init)
     .def("Align",&RDKit::MolAlign::PyO3A::align, (python::arg("self")),
 	 "aligns probe molecule onto reference molecule")
     .def("Trans",&RDKit::MolAlign::PyO3A::trans, (python::arg("self")),
@@ -353,34 +684,181 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
     .def("Weights",&RDKit::MolAlign::PyO3A::weights, (python::arg("self")),
 	 "returns the weight vector as found by Open3DALIGN")
     ;
+
   docString = "Get an O3A object with atomMap and weights vectors to overlay\n\
-      the probe molecule onto the reference molecule\n\
+      the probe molecule onto the reference molecule based on\n\
+      MMFF atom types and charges\n\
      \n\
      ARGUMENTS\n\
       - prbMol                   molecule that is to be aligned\n\
       - refMol                   molecule used as the reference for the alignment\n\
       - prbPyMMFFMolProperties   PyMMFFMolProperties object for the probe molecule as returned\n\
-                                      by SetupMMFFForceField()\n\
+                                 by SetupMMFFForceField()\n\
       - refPyMMFFMolProperties   PyMMFFMolProperties object for the reference molecule as returned\n\
-                                      by SetupMMFFForceField()\n\
+                                 by SetupMMFFForceField()\n\
       - prbCid                   ID of the conformation in the probe to be used \n\
-                                      for the alignment (defaults to first conformation)\n\
+                                 for the alignment (defaults to first conformation)\n\
       - refCid                   ID of the conformation in the ref molecule to which \n\
-                                      the alignment is computed (defaults to first conformation)\n\
+                                 the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
+                                 (defaults to false)\n\
       - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
-      - accuracy                 0: maximum (the default); 3: minimum\n\
+                                 (defaults to 50)\n\
+      - options                  least 2 significant bits encode accuracy\n\
+                                 (0: maximum, 3: minimum; defaults to 0)\n\
+                                 bit 3 triggers local optimization of the alignment\n\
+                                 (no computation of the cost matrix; defaults: off)\n\
+      - constraintMap            a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
+                                 which shall be used for the alignment (defaults to [])\n\
+      - constraintWeights        optionally specify weights for each of the constraints\n\
+                                 (weights default to 100.0)\n\
        \n\
       RETURNS\n\
-      RMSD value\n\
+      The O3A object\n\
     \n";
-  python::def("GetO3A", RDKit::MolAlign::getO3A,
+  python::def("GetO3A", RDKit::MolAlign::getMMFFO3A,
               (python::arg("prbMol"), python::arg("refMol"),
                python::arg("prbPyMMFFMolProperties") = python::object(),
                python::arg("refPyMMFFMolProperties") = python::object(),
                python::arg("prbCid") = -1, python::arg("refCid") = -1,
                python::arg("reflect") = false, python::arg("maxIters") = 50,
-               python::arg("accuracy") = 0),
+               python::arg("options") = 0,
+               python::arg("constraintMap") = python::list(),
+               python::arg("constraintWeights") = python::list()),
                python::return_value_policy<python::manage_new_object>(),
-              docString.c_str());
+               docString.c_str());
+  docString = "Get an O3A object with atomMap and weights vectors to overlay\n\
+      the probe molecule onto the reference molecule based on\n\
+      Crippen logP atom contributions\n\
+     \n\
+     ARGUMENTS\n\
+      - prbMol                   molecule that is to be aligned\n\
+      - refMol                   molecule used as the reference for the alignment\n\
+      - prbCrippenContribs       Crippen atom contributions for the probe molecule\n\
+                                 as a list of (logp, mr) tuples, as returned\n\
+                                 by _CalcCrippenContribs()\n\
+      - refCrippenContribs       Crippen atom contributions for the reference molecule\n\
+                                 as a list of (logp, mr) tuples, as returned\n\
+                                 by _CalcCrippenContribs()\n\
+      - prbCid                   ID of the conformation in the probe to be used \n\
+                                 for the alignment (defaults to first conformation)\n\
+      - refCid                   ID of the conformation in the ref molecule to which \n\
+                                 the alignment is computed (defaults to first conformation)\n\
+      - reflect                  if true reflect the conformation of the probe molecule\n\
+                                 (defaults to false)\n\
+      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+                                 (defaults to 50)\n\
+      - options                  least 2 significant bits encode accuracy\n\
+                                 (0: maximum, 3: minimum; defaults to 0)\n\
+                                 bit 3 triggers local optimization of the alignment\n\
+                                 (no computation of the cost matrix; defaults: off)\n\
+      - constraintMap            a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
+                                 which shall be used for the alignment (defaults to [])\n\
+      - constraintWeights        optionally specify weights for each of the constraints\n\
+                                 (weights default to 100.0)\n\
+       \n\
+      RETURNS\n\
+      The O3A object\n\
+    \n";
+  python::def("GetCrippenO3A", RDKit::MolAlign::getCrippenO3A,
+              (python::arg("prbMol"), python::arg("refMol"),
+               python::arg("prbCrippenContribs") = python::list(),
+               python::arg("refCrippenContribs") = python::list(),
+               python::arg("prbCid") = -1, python::arg("refCid") = -1,
+               python::arg("reflect") = false, python::arg("maxIters") = 50,
+               python::arg("options") = 0,
+               python::arg("constraintMap") = python::list(),
+               python::arg("constraintWeights") = python::list()),
+               python::return_value_policy<python::manage_new_object>(),
+               docString.c_str());
+
+
+  docString = "Get a vector of O3A objects for the overlay of all \n\
+      the probe molecule's conformations onto the reference molecule based on\n\
+      MMFF atom types and charges\n\
+     \n\
+     ARGUMENTS\n\
+      - prbMol                   molecule that is to be aligned\n\
+      - refMol                   molecule used as the reference for the alignment\n\
+      - numThreads :             the number of threads to use, only has an effect if\n\
+                                 the RDKit was built with thread support (defaults to 1)\n\
+      - prbPyMMFFMolProperties   PyMMFFMolProperties object for the probe molecule as returned\n\
+                                 by SetupMMFFForceField()\n\
+      - refPyMMFFMolProperties   PyMMFFMolProperties object for the reference molecule as returned\n\
+                                 by SetupMMFFForceField()\n\
+      - refCid                   ID of the conformation in the ref molecule to which \n\
+                                 the alignment is computed (defaults to first conformation)\n\
+      - reflect                  if true reflect the conformation of the probe molecule\n\
+                                 (defaults to false)\n\
+      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+                                 (defaults to 50)\n\
+      - options                  least 2 significant bits encode accuracy\n\
+                                 (0: maximum, 3: minimum; defaults to 0)\n\
+                                 bit 3 triggers local optimization of the alignment\n\
+                                 (no computation of the cost matrix; defaults: off)\n\
+      - constraintMap            a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
+                                 which shall be used for the alignment (defaults to [])\n\
+      - constraintWeights        optionally specify weights for each of the constraints\n\
+                                 (weights default to 100.0)\n\
+       \n\
+      RETURNS\n\
+      A vector of O3A objects\n\
+    \n";
+  python::def("GetO3AForProbeConfs", RDKit::MolAlign::getMMFFO3AForConfs,
+              (python::arg("prbMol"), python::arg("refMol"),
+               python::arg("numThreads")=1,
+               python::arg("prbPyMMFFMolProperties") = python::object(),
+               python::arg("refPyMMFFMolProperties") = python::object(),
+               python::arg("refCid") = -1,
+               python::arg("reflect") = false, python::arg("maxIters") = 50,
+               python::arg("options") = 0,
+               python::arg("constraintMap") = python::list(),
+               python::arg("constraintWeights") = python::list()),
+               docString.c_str());
+
+  docString = "Get a vector of O3A objects for the overlay of all \n\
+      the probe molecule's conformations onto the reference molecule based on\n\
+      MMFF atom types and charges\n\
+     \n\
+     ARGUMENTS\n\
+      - prbMol                   molecule that is to be aligned\n\
+      - refMol                   molecule used as the reference for the alignment\n\
+      - numThreads :             the number of threads to use, only has an effect if\n\
+                                 the RDKit was built with thread support (defaults to 1)\n\
+      - prbCrippenContribs       Crippen atom contributions for the probe molecule\n\
+                                 as a list of (logp, mr) tuples, as returned\n\
+                                 by _CalcCrippenContribs()\n\
+      - refCrippenContribs       Crippen atom contributions for the reference molecule\n\
+                                 as a list of (logp, mr) tuples, as returned\n\
+                                 by _CalcCrippenContribs()\n\
+      - refCid                   ID of the conformation in the ref molecule to which \n\
+                                 the alignment is computed (defaults to first conformation)\n\
+      - reflect                  if true reflect the conformation of the probe molecule\n\
+                                 (defaults to false)\n\
+      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+                                 (defaults to 50)\n\
+      - options                  least 2 significant bits encode accuracy\n\
+                                 (0: maximum, 3: minimum; defaults to 0)\n\
+                                 bit 3 triggers local optimization of the alignment\n\
+                                 (no computation of the cost matrix; defaults: off)\n\
+      - constraintMap            a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
+                                 which shall be used for the alignment (defaults to [])\n\
+      - constraintWeights        optionally specify weights for each of the constraints\n\
+                                 (weights default to 100.0)\n\
+       \n\
+      RETURNS\n\
+      A vector of O3A objects\n\
+    \n";
+  python::def("GetCrippenO3AForProbeConfs", RDKit::MolAlign::getCrippenO3AForConfs,
+              (python::arg("prbMol"), python::arg("refMol"),
+               python::arg("numThreads")=1,
+               python::arg("prbCrippenContribs") = python::list(),
+               python::arg("refCrippenContribs") = python::list(),
+               python::arg("refCid") = -1,
+               python::arg("reflect") = false, python::arg("maxIters") = 50,
+               python::arg("options") = 0,
+               python::arg("constraintMap") = python::list(),
+               python::arg("constraintWeights") = python::list()),
+               docString.c_str());
+
 }

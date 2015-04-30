@@ -32,8 +32,9 @@
 
 INCHI_AVAILABLE = True
 
-import rdinchi
 import logging
+
+from rdkit.Chem import rdinchi
 from rdkit import RDLogger
 logger = RDLogger.logger()
 
@@ -68,7 +69,7 @@ def MolFromInchi(inchi, sanitize=True, removeHs=True, logLevel=None,
     """
     try:
         mol, retcode, message, log = rdinchi.InchiToMol(inchi, sanitize, removeHs)
-    except ValueError,e :
+    except ValueError as e :
         logger.error(str(e))
         return None
 
@@ -135,11 +136,17 @@ def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
     Returns:
     the standard InChI string returned by InChI API for the input molecule
     """
+    if options.find('AuxNone')==-1:
+        if options:
+          options += " /AuxNone"
+        else:
+          options += "/AuxNone"
+          
     try:
         inchi, aux = MolToInchiAndAuxInfo(mol, options, logLevel=logLevel,
                 treatWarningAsError=treatWarningAsError)
-    except InchiReadWriteError,inst:
-        inchi, aux, message = inst
+    except InchiReadWriteError as inst:
+        inchi, aux, message = inst.args
         raise InchiReadWriteError(inchi, message)
     return inchi
 

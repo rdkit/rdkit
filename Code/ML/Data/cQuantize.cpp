@@ -7,30 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef WIN32
-#define CQUANTIZE_EXPORTS
-#endif
-#include "cQuantize.h"
 #include <cstring>
+
+#include <RDBoost/Wrap.h>
 #include <numpy/oldnumeric.h>
+#include <RDBoost/import_array.h>
+
+namespace python = boost::python;
+
 #include <ML/InfoTheory/InfoGainFuncs.h>
-#ifdef WIN32
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID lpReserved
-					 )
-{
-    switch (ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-		case DLL_THREAD_ATTACH:
-		case DLL_THREAD_DETACH:
-		case DLL_PROCESS_DETACH:
-			break;
-    }
-    return TRUE;
-}
-#endif
 
 /***********************************************
 
@@ -229,23 +214,12 @@ RecurseHelper(double *vals,int nVals,long int *cuts,int nCuts,int which,
     - this is a drop-in replacement for *ML.Data.Quantize._PyRecurseBounds*
 						
  ***********************************************/
-static PyObject *
-cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
+static python::tuple
+cQuantize_RecurseOnBounds(python::object vals, python::list pyCuts, int which, 
+			  python::list pyStarts, python::object results, int nPossibleRes)
 {
-  PyObject *vals,*results;
-  PyObject *pyCuts,*pyStarts;
-  int which,nPossibleRes;
-
   PyArrayObject *contigVals,*contigResults;
   long int *cuts,*starts;
-  PyObject *res,*cutObj;
-  double gain;
-  int i,nCuts,nStarts;
-
-  if (!PyArg_ParseTuple(args, "OOiOOi",&vals,
-			&pyCuts,&which,&pyStarts,
-			&results,&nPossibleRes))
-    return NULL;
 
   /*
     -------
@@ -254,34 +228,37 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
 
     -------
   */
-  contigVals = (PyArrayObject *)PyArray_ContiguousFromObject(vals,PyArray_DOUBLE,1,1);
+  contigVals 
+    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(vals.ptr(),PyArray_DOUBLE,1,1));
   if(!contigVals){
-    PyErr_SetString(PyExc_ValueError,
-                    "could not convert value argument");
-    return 0;
+    throw_value_error("could not convert value argument");
   }
-  contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
+
+  contigResults 
+    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(results.ptr(),PyArray_LONG,1,1));
   if(!contigResults){
-    PyErr_SetString(PyExc_ValueError,
-                    "could not convert results argument");
-    return 0;
+    throw_value_error("could not convert results argument");
   }
-  
-  nCuts = PyList_Size(pyCuts);
+
+  python::ssize_t nCuts = python::len(pyCuts);
   cuts = (long int *)calloc(nCuts,sizeof(long int));
-  for(i=0;i<nCuts;i++){
-    cuts[i] = PyInt_AsLong(PyList_GetItem(pyCuts,i));
+  for (python::ssize_t i=0; i<nCuts; i++) {
+    python::object elem = pyCuts[i];
+    cuts[i] = python::extract<long int>(elem);
   }
-  nStarts = PyList_Size(pyStarts);
+
+  python::ssize_t nStarts = python::len(pyStarts);
   starts = (long int *)calloc(nStarts,sizeof(long int));
-  for(i=0;i<nStarts;i++){
-    starts[i] = PyInt_AsLong(PyList_GetItem(pyStarts,i));
+  for (python::ssize_t i=0; i<nStarts; i++){
+    python::object elem = pyStarts[i];
+    starts[i] = python::extract<long int>(elem);
   }
 
   // do the real work
-  gain = RecurseHelper((double *)contigVals->data,contigVals->dimensions[0],
-		       cuts,nCuts,which,starts,nStarts,
-		       (long int *)contigResults->data,nPossibleRes);
+  double gain 
+    = RecurseHelper((double *)contigVals->data,contigVals->dimensions[0],
+		    cuts,nCuts,which,starts,nStarts,
+		    (long int *)contigResults->data,nPossibleRes);
 		       
   /*
     -------
@@ -290,52 +267,39 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
 
     -------
   */
-  res = PyTuple_New(2);
-  PyTuple_SetItem(res,0,PyFloat_FromDouble(gain));
-  
-  cutObj = PyList_New(nCuts);
-  for(i=0;i<nCuts;i++){
-    PyList_SetItem(cutObj,i,PyInt_FromLong((long int)cuts[i]));
+  python::list cutObj;
+  for (python::ssize_t i=0; i<nCuts; i++) {
+    cutObj.append(cuts[i]);
   }
-  PyTuple_SetItem(res,1,cutObj);
   free(cuts);
   free(starts);
-  Py_DECREF(contigVals);
-  Py_DECREF(contigResults);
-  return res;
-    
+  return python::make_tuple(gain, cutObj); 
 }
 
-static PyObject *
-cQuantize_FindStartPoints(PyObject *self, PyObject *args)
+static python::list
+cQuantize_FindStartPoints(python::object values, python::object results, 
+			  int nData)
 {
-  PyObject *values,*results;
-  PyArrayObject *contigVals,*contigResults;
-  int nData;
-
-  if (!PyArg_ParseTuple(args, "OOi",&values,&results,&nData)){
-    return NULL;
-  }
-  PyObject *startPts = PyList_New(0);
+  python::list startPts;
 
   if(nData<2){
     return startPts;
   }
 
-  contigVals = (PyArrayObject *)PyArray_ContiguousFromObject(values,PyArray_DOUBLE,1,1);
+  PyArrayObject *contigVals 
+    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(values.ptr(),PyArray_DOUBLE,1,1));
   if(!contigVals){
-    PyErr_SetString(PyExc_ValueError,
-                    "could not convert value argument");
-    return 0;
+    throw_value_error("could not convert value argument");
   }
+
   double *vals=(double *)contigVals->data;
 
-  contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
+  PyArrayObject *contigResults 
+    = reinterpret_cast<PyArrayObject *>(PyArray_ContiguousFromObject(results.ptr(),PyArray_LONG,1,1));
   if(!contigResults){
-    PyErr_SetString(PyExc_ValueError,
-                    "could not convert results argument");
-    return 0;
+    throw_value_error("could not convert results argument");
   }
+
   long *res=(long *)contigResults->data;
 
   bool firstBlock=true;
@@ -357,9 +321,7 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
       lastDiv=i;
     } else {
       if(blockAct==-1 || lastBlockAct==-1 || blockAct!=lastBlockAct){
-        PyObject *pyint=PyInt_FromLong(lastDiv);
-        PyList_Append(startPts,pyint);
-        Py_DECREF(pyint);
+	startPts.append(lastDiv);
         lastDiv=i;
         lastBlockAct=blockAct;
       } else {
@@ -372,24 +334,25 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
 
   // catch the case that the last point also sets a bin:
   if( blockAct != lastBlockAct ){
-    PyObject *pyint=PyInt_FromLong(lastDiv);
-    PyList_Append(startPts,pyint);
-    Py_DECREF(pyint);
+    startPts.append(lastDiv);
   }
-  Py_DECREF(contigVals);
-  Py_DECREF(contigResults);
+
   return startPts;
 }
-static PyMethodDef cQuantizeMethods[] = {
-  {"_RecurseOnBounds",cQuantize_RecurseOnBounds,METH_VARARGS},
-  {"_FindStartPoints",cQuantize_FindStartPoints,METH_VARARGS},
-  {NULL,NULL}
-};
 
-CQUANTIZE_API void initcQuantize()
-{
-  (void) Py_InitModule("cQuantize",cQuantizeMethods);
-  import_array();
+BOOST_PYTHON_MODULE(cQuantize) {
+
+  rdkit_import_array();
+
+  python::def("_RecurseOnBounds", cQuantize_RecurseOnBounds,
+	      ( python::arg("vals"), python::arg("pyCuts"), 
+		python::arg("which"), python::arg("pyStarts"), 
+		python::arg("results"), python::arg("nPossibleRes") ),
+	      "TODO: provide docstring");
+  python::def("_FindStartPoints", cQuantize_FindStartPoints,
+	      ( python::arg("values"), python::arg("results"), 
+		python::arg("nData") ),
+	      "TODO: provide docstring");
 }
 
 

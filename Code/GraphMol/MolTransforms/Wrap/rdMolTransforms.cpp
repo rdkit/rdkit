@@ -13,6 +13,7 @@
 #include "numpy/arrayobject.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/Transform3D.h>
@@ -58,7 +59,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
   python::scope().attr("__doc__") =
     "Module containing functions to perform 3D operations like rotate and translate conformations";
    
-  import_array();
+  rdkit_import_array();
 
   std::string docString = "Compute the centroid of the conformation - hydrogens are ignored and no attention\n\
                            if paid to the difference in sizes of the heavy atoms\n";

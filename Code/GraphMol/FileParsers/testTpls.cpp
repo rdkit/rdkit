@@ -32,8 +32,8 @@ void test1(){
   TEST_ASSERT(m->getNumAtoms()==12);
   TEST_ASSERT(m->getNumBonds()==12);
   TEST_ASSERT(m->getNumConformers()==2);
-  TEST_ASSERT(m->hasProp("_Name"));
-  m->getProp("_Name",propVal);
+  TEST_ASSERT(m->hasProp(common_properties::_Name));
+  m->getProp(common_properties::_Name,propVal);
   TEST_ASSERT(propVal=="compound 2");
   TEST_ASSERT(m->hasProp("Conf_1_Name"));
   m->getProp("Conf_1_Name",propVal);
@@ -79,8 +79,8 @@ void test2(){
   TEST_ASSERT(m->getNumAtoms()==18);
   TEST_ASSERT(m->getNumBonds()==18);
   TEST_ASSERT(m->getNumConformers()==9);
-  TEST_ASSERT(m->hasProp("_Name"));
-  m->getProp("_Name",propVal);
+  TEST_ASSERT(m->hasProp(common_properties::_Name));
+  m->getProp(common_properties::_Name,propVal);
   TEST_ASSERT(propVal=="compound 1");
   TEST_ASSERT(m->hasProp("Conf_1_Name"));
   m->getProp("Conf_1_Name",propVal);
@@ -95,8 +95,8 @@ void test2(){
   TEST_ASSERT(m2->getNumAtoms()==18);
   TEST_ASSERT(m2->getNumBonds()==18);
   TEST_ASSERT(m2->getNumConformers()==9);
-  TEST_ASSERT(m2->hasProp("_Name"));
-  m2->getProp("_Name",propVal);
+  TEST_ASSERT(m2->hasProp(common_properties::_Name));
+  m2->getProp(common_properties::_Name,propVal);
   TEST_ASSERT(propVal=="compound 1");
   TEST_ASSERT(m2->hasProp("Conf_1_Name"));
   m2->getProp("Conf_1_Name",propVal);
@@ -112,8 +112,8 @@ void test2(){
   TEST_ASSERT(m2->getNumAtoms()==18);
   TEST_ASSERT(m2->getNumBonds()==18);
   TEST_ASSERT(m2->getNumConformers()==8);
-  TEST_ASSERT(m2->hasProp("_Name"));
-  m2->getProp("_Name",propVal);
+  TEST_ASSERT(m2->hasProp(common_properties::_Name));
+  m2->getProp(common_properties::_Name,propVal);
   TEST_ASSERT(propVal=="compound 1");
   TEST_ASSERT(m2->hasProp("Conf_1_Name"));
   m2->getProp("Conf_1_Name",propVal);

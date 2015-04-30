@@ -14,10 +14,8 @@
 namespace RDKit{
 
 QueryAtom::~QueryAtom(){
-  if( dp_query ){
-    delete dp_query;
-    dp_query=0;
-  }
+  delete dp_query;
+  dp_query=NULL;
 };
 
 Atom *QueryAtom::copy() const {
@@ -56,7 +54,7 @@ void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
   }
 }
 
-bool QueryAtom::Match(const Atom::ATOM_SPTR what) const {
+bool QueryAtom::Match(const Atom::ATOM_SPTR &what) const {
   return Match(what.get());
 }
   
@@ -149,6 +147,11 @@ bool QueryAtom::Match(const Atom::ATOM_SPTR what) const {
   } //end of local namespace
 
 bool QueryAtom::Match(Atom const *what) const {
+  PRECONDITION(what,"bad query atom");
+  PRECONDITION(dp_query,"no query set");
+  return dp_query->Match(what);
+}
+bool QueryAtom::QueryMatch(QueryAtom const *what) const {
   PRECONDITION(what,"bad query atom");
   PRECONDITION(dp_query,"no query set");
   if(!what->hasQuery()){

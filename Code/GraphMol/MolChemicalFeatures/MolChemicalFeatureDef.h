@@ -14,7 +14,7 @@
 #include <vector>
 #include <list>
 #include <GraphMol/ROMol.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 namespace RDKit {

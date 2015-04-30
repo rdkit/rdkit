@@ -395,5 +395,45 @@ namespace RDKit{
       return res;
  
     }
+
+    double *get3DDistanceMat(const ROMol &mol,
+                             int confId,
+                             bool useAtomWts,
+                             bool force,
+                             const char *propNamePrefix){
+      const Conformer &conf=mol.getConformer(confId);
+      std::string propName;
+      boost::shared_array<double> sptr;
+      if(propNamePrefix){
+	propName = propNamePrefix;
+      } else {
+	propName = "_";
+      }
+      propName+="3DDistanceMatrix_Conf"+boost::lexical_cast<std::string>(conf.getId());
+      if(!force && mol.hasProp(propName)){
+	mol.getProp(propName,sptr);
+	return sptr.get();
+      }    
+
+      unsigned int nAts=mol.getNumAtoms();
+      double *dMat = new double[nAts*nAts];
+      sptr.reset(dMat);
+
+      for(unsigned int i=0;i<nAts;++i){
+        if(useAtomWts){
+          dMat[i*nAts+i]=6.0/mol.getAtomWithIdx(i)->getAtomicNum();
+        } else {
+          dMat[i*nAts+i]=0.0;
+        }
+        for(unsigned int j=i+1;j<nAts;++j){
+          double dist = (conf.getAtomPos(i)-conf.getAtomPos(j)).length();
+          dMat[i*nAts+j]=dist;
+          dMat[j*nAts+i]=dist;          
+        }
+      }
+      
+      mol.setProp(propName,sptr,true);
+      return dMat;
+    }
   } // end of namespace MolOps
 } // end of namespace RDKit

@@ -24,6 +24,7 @@ namespace ForceFields {
         RDGeom::Point3D t2=r3.crossProduct(r4);
         double d1=t1.length(),d2=t2.length();
         double cosPhi=t1.dotProduct(t2)/(d1*d2);
+        clipToOne(cosPhi);
         return cosPhi;
       }
 
@@ -39,6 +40,42 @@ namespace ForceFields {
         return 5.*sqrt(at2Params->U1*at3Params->U1)*(1.+4.18*log(bondOrder23));
       }
 
+      void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t,
+        double *d, double **g, double &sinTerm, double &cosPhi)
+      {
+        // -------
+        // dTheta/dx is trickier:
+        double dCos_dT[6] = {
+          1.0 / d[0] * (t[1].x - cosPhi * t[0].x),
+          1.0 / d[0] * (t[1].y - cosPhi * t[0].y),
+          1.0 / d[0] * (t[1].z - cosPhi * t[0].z),
+          1.0 / d[1] * (t[0].x - cosPhi * t[1].x),
+          1.0 / d[1] * (t[0].y - cosPhi * t[1].y),
+          1.0 / d[1] * (t[0].z - cosPhi * t[1].z)
+        };
+      
+        g[0][0] += sinTerm * (dCos_dT[2] * r[1].y - dCos_dT[1] * r[1].z);
+        g[0][1] += sinTerm * (dCos_dT[0] * r[1].z - dCos_dT[2] * r[1].x);
+        g[0][2] += sinTerm * (dCos_dT[1] * r[1].x - dCos_dT[0] * r[1].y);
+
+        g[1][0] += sinTerm * (dCos_dT[1] * (r[1].z - r[0].z)
+          + dCos_dT[2] * (r[0].y - r[1].y) + dCos_dT[4] * (-r[3].z) + dCos_dT[5] * (r[3].y));
+        g[1][1] += sinTerm * (dCos_dT[0] * (r[0].z - r[1].z)
+          + dCos_dT[2] * (r[1].x - r[0].x) + dCos_dT[3] * (r[3].z) + dCos_dT[5] * (-r[3].x));
+        g[1][2] += sinTerm * (dCos_dT[0] * (r[1].y - r[0].y)
+          + dCos_dT[1] * (r[0].x - r[1].x) + dCos_dT[3] * (-r[3].y) + dCos_dT[4] * (r[3].x));
+
+        g[2][0] += sinTerm * (dCos_dT[1] * (r[0].z) + dCos_dT[2] * (-r[0].y) +
+          dCos_dT[4] * (r[3].z - r[2].z) + dCos_dT[5] * (r[2].y - r[3].y));
+        g[2][1] += sinTerm * (dCos_dT[0] * (-r[0].z) + dCos_dT[2] * (r[0].x) +
+          dCos_dT[3] * (r[2].z - r[3].z) + dCos_dT[5] * (r[3].x - r[2].x));
+        g[2][2] += sinTerm * (dCos_dT[0] * (r[0].y) + dCos_dT[1] * (-r[0].x) +
+          dCos_dT[3] * (r[3].y - r[2].y) + dCos_dT[4] * (r[2].x - r[3].x));
+
+        g[3][0] += sinTerm * (dCos_dT[4] * r[2].z - dCos_dT[5] * r[2].y);
+        g[3][1] += sinTerm * (dCos_dT[5] * r[2].x - dCos_dT[3] * r[2].z);
+        g[3][2] += sinTerm * (dCos_dT[3] * r[2].y - dCos_dT[4] * r[2].x);
+      }
     }
 
 
@@ -68,7 +105,7 @@ namespace ForceFields {
       d_at3Idx = idx3;
       d_at4Idx = idx4;
     
-      this->calcTorsionParams(bondOrder23,atNum2,atNum3,hyb2,hyb3,
+      calcTorsionParams(bondOrder23,atNum2,atNum3,hyb2,hyb3,
                               at2Params,at3Params,endAtomIsSP2);
     }
 
@@ -132,27 +169,27 @@ namespace ForceFields {
     double TorsionAngleContrib::getEnergy(double *pos) const {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
-      PRECONDITION(this->d_order==2||this->d_order==3||this->d_order==6,"bad order");
+      PRECONDITION(d_order==2||d_order==3||d_order==6,"bad order");
 
-      RDGeom::Point3D p1(pos[3*this->d_at1Idx],
-                         pos[3*this->d_at1Idx+1],
-                         pos[3*this->d_at1Idx+2]);
-      RDGeom::Point3D p2(pos[3*this->d_at2Idx],
-                         pos[3*this->d_at2Idx+1],
-                         pos[3*this->d_at2Idx+2]);
-      RDGeom::Point3D p3(pos[3*this->d_at3Idx],
-                         pos[3*this->d_at3Idx+1],
-                         pos[3*this->d_at3Idx+2]);
-      RDGeom::Point3D p4(pos[3*this->d_at4Idx],
-                         pos[3*this->d_at4Idx+1],
-                         pos[3*this->d_at4Idx+2]);
+      RDGeom::Point3D p1(pos[3*d_at1Idx],
+                         pos[3*d_at1Idx+1],
+                         pos[3*d_at1Idx+2]);
+      RDGeom::Point3D p2(pos[3*d_at2Idx],
+                         pos[3*d_at2Idx+1],
+                         pos[3*d_at2Idx+2]);
+      RDGeom::Point3D p3(pos[3*d_at3Idx],
+                         pos[3*d_at3Idx+1],
+                         pos[3*d_at3Idx+2]);
+      RDGeom::Point3D p4(pos[3*d_at4Idx],
+                         pos[3*d_at4Idx+1],
+                         pos[3*d_at4Idx+2]);
 
       double cosPhi=Utils::calculateCosTorsion(p1,p2,p3,p4);
       double sinPhiSq=1-cosPhi*cosPhi;
 
       // E(phi) = V/2 * (1 - cos(n*phi_0)*cos(n*phi))
       double cosNPhi=0.0;
-      switch(this->d_order){
+      switch(d_order){
       case 2:
         cosNPhi = cosPhi*cosPhi - sinPhiSq;
         break;
@@ -165,9 +202,9 @@ namespace ForceFields {
         cosNPhi = 1 + sinPhiSq*(-32.*sinPhiSq*sinPhiSq + 48.*sinPhiSq - 18.);
         break;
       }
-      double res=this->d_forceConstant/2.0 * (1. - this->d_cosTerm*cosNPhi);
-      //std::cout << " torsion(" << this->d_at1Idx << "," << this->d_at2Idx << "," << this->d_at3Idx << "," << this->d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " -> " << res << std::endl;
-      //if(this->d_at2Idx==5&&this->d_at3Idx==6) std::cerr << " torsion(" << this->d_at1Idx << "," << this->d_at2Idx << "," << this->d_at3Idx << "," << this->d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " -> " << res << std::endl;
+      double res=d_forceConstant/2.0 * (1. - d_cosTerm*cosNPhi);
+      //std::cout << " torsion(" << d_at1Idx << "," << d_at2Idx << "," << d_at3Idx << "," << d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " -> " << res << std::endl;
+      //if(d_at2Idx==5&&d_at3Idx==6) std::cerr << " torsion(" << d_at1Idx << "," << d_at2Idx << "," << d_at3Idx << "," << d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " -> " << res << std::endl;
       return res;
     }
 
@@ -176,103 +213,72 @@ namespace ForceFields {
       PRECONDITION(pos,"bad vector");
       PRECONDITION(grad,"bad vector");
 
-      RDGeom::Point3D p1(pos[3*this->d_at1Idx],
-                         pos[3*this->d_at1Idx+1],
-                         pos[3*this->d_at1Idx+2]);
-      RDGeom::Point3D p2(pos[3*this->d_at2Idx],
-                         pos[3*this->d_at2Idx+1],
-                         pos[3*this->d_at2Idx+2]);
-      RDGeom::Point3D p3(pos[3*this->d_at3Idx],
-                         pos[3*this->d_at3Idx+1],
-                         pos[3*this->d_at3Idx+2]);
-      RDGeom::Point3D p4(pos[3*this->d_at4Idx],
-                         pos[3*this->d_at4Idx+1],
-                         pos[3*this->d_at4Idx+2]);
-      double *g1=&(grad[3*this->d_at1Idx]);
-      double *g2=&(grad[3*this->d_at2Idx]);
-      double *g3=&(grad[3*this->d_at3Idx]);
-      double *g4=&(grad[3*this->d_at4Idx]);
+      RDGeom::Point3D iPoint(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1], pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D jPoint(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1], pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D kPoint(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1], pos[3 * d_at3Idx + 2]);
+      RDGeom::Point3D lPoint(pos[3 * d_at4Idx],
+        pos[3 * d_at4Idx + 1], pos[3 * d_at4Idx + 2]);
+      double *g[4] = {
+        &(grad[3 * d_at1Idx]),
+        &(grad[3 * d_at2Idx]),
+        &(grad[3 * d_at3Idx]),
+        &(grad[3 * d_at4Idx])
+      };
 
-      RDGeom::Point3D r1=p1-p2,r2=p3-p2,r3=p2-p3,r4=p4-p3;
-      RDGeom::Point3D t1=r1.crossProduct(r2);
-      RDGeom::Point3D t2=r3.crossProduct(r4);
-      double d1=t1.length(),d2=t2.length();
-      if(d1==0.0 || d2==0.0){
+      RDGeom::Point3D r[4] = {
+        iPoint - jPoint,
+        kPoint - jPoint,
+        jPoint - kPoint,
+        lPoint - kPoint
+      };
+      RDGeom::Point3D t[2] = {
+        r[0].crossProduct(r[1]),
+        r[2].crossProduct(r[3])
+      };
+      double d[2] = {
+        t[0].length(),
+        t[1].length()
+      };
+      if (isDoubleZero(d[0]) || isDoubleZero(d[1])) {
         return;
       }
-      
-      double cosPhi=t1.dotProduct(t2)/(d1*d2);
-      double sinPhi=1-cosPhi*cosPhi;
-      if(sinPhi>=0.0) {
-        sinPhi=sqrt(sinPhi);
-      } else {
-        sinPhi=0.0;
-      }
+      t[0] /= d[0];
+      t[1] /= d[1];
+      double cosPhi = t[0].dotProduct(t[1]);
+      clipToOne(cosPhi);
+      double sinPhiSq = 1.0 - cosPhi * cosPhi;
+      double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+
       // dE/dPhi is independent of cartesians:
       double dE_dPhi=getThetaDeriv(cosPhi,sinPhi);
 #if 0
       if(dE_dPhi!=dE_dPhi){
-        std::cout << "\tNaN in Torsion("<<this->d_at1Idx<<","<<this->d_at2Idx<<","<<this->d_at3Idx<<","<<this->d_at4Idx<<")"<< std::endl;
+        std::cout << "\tNaN in Torsion("<<d_at1Idx<<","<<d_at2Idx<<","<<d_at3Idx<<","<<d_at4Idx<<")"<< std::endl;
         std::cout << "sin: " << sinPhi << std::endl;
         std::cout << "cos: " << cosPhi << std::endl;
       } 
       
 #endif
       
-      // -------
-      // dTheta/dx is trickier:
-      double dCos_dT1=1./d1 * (t2.x/d2 - cosPhi*t1.x/d1);
-      double dCos_dT2=1./d1 * (t2.y/d2 - cosPhi*t1.y/d1);
-      double dCos_dT3=1./d1 * (t2.z/d2 - cosPhi*t1.z/d1);
-                                                    
-      double dCos_dT4=1./d2 * (t1.x/d1 - cosPhi*t2.x/d2);
-      double dCos_dT5=1./d2 * (t1.y/d1 - cosPhi*t2.y/d2);
-      double dCos_dT6=1./d2 * (t1.z/d1 - cosPhi*t2.z/d2);
-    
-      double sinTerm;
-      // FIX: use a tolerance here:
-      if(sinPhi==0.0){
-        // this is hacky, but it's per the
-        // recommendation from Niketic and Rasmussen:
-        sinTerm = 1/cosPhi; 
-      } else {
-        sinTerm = 1/sinPhi;
-      }
+      double sinTerm = dE_dPhi * (isDoubleZero(sinPhi)
+        ? (1.0 / cosPhi) : (1.0 / sinPhi));
 
-      g1[0] += dE_dPhi*sinTerm*(dCos_dT3*r2.y - dCos_dT2*r2.z);
-      g1[1] += dE_dPhi*sinTerm*(dCos_dT1*r2.z - dCos_dT3*r2.x);
-      g1[2] += dE_dPhi*sinTerm*(dCos_dT2*r2.x - dCos_dT1*r2.y);
-
-      g2[0] += dE_dPhi*sinTerm*(dCos_dT2*(r2.z-r1.z) + dCos_dT3*(r1.y-r2.y) +
-                                dCos_dT5*(-1*r4.z) + dCos_dT6*(r4.y));
-      g2[1] += dE_dPhi*sinTerm*(dCos_dT1*(r1.z-r2.z) + dCos_dT3*(r2.x-r1.x) +
-                                dCos_dT4*(r4.z) + dCos_dT6*(-1*r4.x));
-      g2[2] += dE_dPhi*sinTerm*(dCos_dT1*(r2.y-r1.y) + dCos_dT2*(r1.x-r2.x) +
-                                dCos_dT4*(-1*r4.y) + dCos_dT5*(r4.x));
-    
-      g3[0] += dE_dPhi*sinTerm*(dCos_dT2*(r1.z) + dCos_dT3*(-1*r1.y) +
-                                dCos_dT5*(r4.z-r3.z) + dCos_dT6*(r3.y-r4.y));
-      g3[1] += dE_dPhi*sinTerm*(dCos_dT1*(-1*r1.z) + dCos_dT3*(r1.x) +
-                                dCos_dT4*(r3.z-r4.z) + dCos_dT6*(r4.x-r3.x));
-      g3[2] += dE_dPhi*sinTerm*(dCos_dT1*(r1.y) + dCos_dT2*(-1*r1.x) +
-                                dCos_dT4*(r4.y-r3.y) + dCos_dT5*(r3.x-r4.x));
-
-    
-      g4[0] += dE_dPhi*sinTerm*(dCos_dT5*r3.z - dCos_dT6*r3.y);
-      g4[1] += dE_dPhi*sinTerm*(dCos_dT6*r3.x - dCos_dT4*r3.z);
-      g4[2] += dE_dPhi*sinTerm*(dCos_dT4*r3.y - dCos_dT5*r3.x);
+      Utils::calcTorsionGrad(r, t, d, g, sinTerm, cosPhi);
 
     }
 
 
   
     double TorsionAngleContrib::getThetaDeriv(double cosTheta,double sinTheta) const {
-      PRECONDITION(this->d_order==2||this->d_order==3||this->d_order==6,"bad order");
+      PRECONDITION(d_order==2||d_order==3||d_order==6,"bad order");
       double sinThetaSq=sinTheta*sinTheta;
       // cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
 
       double res=0.0;
-      switch(this->d_order){
+      switch(d_order){
       case 2:
         res = 2*sinTheta*cosTheta;
         break;
@@ -285,7 +291,7 @@ namespace ForceFields {
         res = cosTheta*sinTheta * (32*sinThetaSq * (sinThetaSq-1) + 6);
         break;
       }
-      res *= this->d_forceConstant/2.0 * this->d_cosTerm * -1 * this->d_order;
+      res *= d_forceConstant/2.0 * d_cosTerm * -1 * d_order;
 
       return res;
     }

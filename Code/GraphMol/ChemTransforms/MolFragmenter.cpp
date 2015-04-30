@@ -13,12 +13,13 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/cstdint.hpp>
 #include <vector>
 #include <algorithm>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -270,13 +271,77 @@ namespace RDKit{
       constructFragmenterBondTypes(BRICSdefs,atTypes,defs,"//",true,false);
     }
 
+    namespace {
+      boost::uint64_t nextBitCombo(boost::uint64_t v){
+        // code from: http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
+        boost::uint64_t t = (v | (v - 1)) + 1;  
+        return t | ((((t & -t) / (v & -v)) >> 1) - 1);  
+      }
+    }
+    
+    void fragmentOnSomeBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
+                             std::vector<ROMOL_SPTR> &resMols,
+                             unsigned int maxToCut,
+                             bool addDummies,
+                             const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
+                             const std::vector< Bond::BondType > *bondTypes,
+                             std::vector< std::vector<unsigned int> > *nCutsPerAtom){
+      PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
+      PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
+      if(bondIndices.size()>63) throw ValueErrorException("currently can only fragment on up to 63 bonds");
+      if(!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) return;
+
+      boost::uint64_t state=(0x1<<maxToCut)-1;
+      boost::uint64_t stop=0x1<<bondIndices.size();
+      std::vector<unsigned int> fragmentHere(maxToCut);
+      std::vector< std::pair<unsigned int,unsigned int> > *dummyLabelsHere=NULL;
+      if(dummyLabels){
+        dummyLabelsHere=new std::vector< std::pair<unsigned int,unsigned int> >(maxToCut);
+      }
+      std::vector< Bond::BondType > *bondTypesHere=NULL;
+      if(bondTypes){
+        bondTypesHere=new std::vector< Bond::BondType >(maxToCut);
+      }
+      while(state<stop){
+        unsigned int nSeen=0;
+        for(unsigned int i=0;i<bondIndices.size() && nSeen<maxToCut;++i){
+          if(state&(0x1<<i)){
+            fragmentHere[nSeen]=bondIndices[i];
+            if(dummyLabelsHere) (*dummyLabelsHere)[nSeen]=(*dummyLabels)[i];
+            if(bondTypesHere) (*bondTypesHere)[nSeen]=(*bondTypes)[i];
+            ++nSeen;
+          }
+        }
+        std::vector<unsigned int> *lCutsPerAtom=0;
+        if(nCutsPerAtom){
+          nCutsPerAtom->push_back(std::vector<unsigned int>(mol.getNumAtoms()));
+          lCutsPerAtom=&(nCutsPerAtom->back());
+        }
+        ROMol *nm=fragmentOnBonds(mol,fragmentHere,addDummies,dummyLabelsHere,bondTypesHere,lCutsPerAtom);
+        resMols.push_back(ROMOL_SPTR(nm));
+        
+        state = nextBitCombo(state);
+      }
+      delete dummyLabelsHere;
+      delete bondTypesHere;
+    }
+
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                            bool addDummies,
                            const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
-                           const std::vector< Bond::BondType > *bondTypes){
+                           const std::vector< Bond::BondType > *bondTypes,
+                           std::vector<unsigned int> *nCutsPerAtom){
       PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
       PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
+      PRECONDITION( ( !nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms() ), "bad nCutsPerAtom vector");
+      if(nCutsPerAtom){
+        BOOST_FOREACH(unsigned int &nCuts,*nCutsPerAtom){
+          nCuts=0;
+        }
+      }
       RWMol *res=new RWMol(mol);
+      if(!mol.getNumAtoms()) return res;
+
       std::vector<Bond *> bondsToRemove;
       bondsToRemove.reserve(bondIndices.size());
       BOOST_FOREACH(unsigned int bondIdx,bondIndices){
@@ -286,7 +351,12 @@ namespace RDKit{
         const Bond *bond=bondsToRemove[i];
         unsigned int bidx=bond->getBeginAtomIdx();
         unsigned int eidx=bond->getEndAtomIdx();
-        res->removeBond(bond->getBeginAtomIdx(),bond->getEndAtomIdx());
+        Bond::BondType bT=bond->getBondType();
+        res->removeBond(bidx,eidx);
+        if(nCutsPerAtom){
+          (*nCutsPerAtom)[bidx]+=1;
+          (*nCutsPerAtom)[eidx]+=1;
+        }
         if(addDummies){
           Atom *at1,*at2;
           at1 = new Atom(0);
@@ -299,7 +369,6 @@ namespace RDKit{
             at2->setIsotope(eidx);
           }
           unsigned int idx1=res->addAtom(at1,false,true);
-          Bond::BondType bT=bond->getBondType();
           if(bondTypes) bT=(*bondTypes)[i];
           res->addBond(eidx,at1->getIdx(),bT);
           unsigned int idx2=res->addAtom(at2,false,true);
@@ -311,6 +380,16 @@ namespace RDKit{
             conf->setAtomPos(idx1,conf->getAtomPos(bidx));
             conf->setAtomPos(idx2,conf->getAtomPos(eidx));
           }
+        } else {
+          // was github issue 429
+          Atom *tatom=res->getAtomWithIdx(bidx);
+          if(tatom->getIsAromatic() && tatom->getAtomicNum()!=6){
+            tatom->setNumExplicitHs(tatom->getNumExplicitHs()+1);
+          }
+          tatom=res->getAtomWithIdx(eidx);
+          if(tatom->getIsAromatic() && tatom->getAtomicNum()!=6){
+            tatom->setNumExplicitHs(tatom->getNumExplicitHs()+1);
+          }
         }
       }
       res->clearComputedProps();
@@ -318,7 +397,9 @@ namespace RDKit{
     }
 
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns,
-                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons){
+                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons,
+                           std::vector<unsigned int> *nCutsPerAtom){
+      PRECONDITION( ( !nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms() ), "bad nCutsPerAtom vector");
       std::vector<unsigned int> bondIndices;
       std::vector< std::pair<unsigned int,unsigned int> > dummyLabels;
       std::vector<Bond::BondType> bondTypes;
@@ -356,7 +437,7 @@ namespace RDKit{
           }
           bondsUsed.set(bond->getIdx());
           bondIndices.push_back(bond->getIdx());
-          if(bond->getBeginAtomIdx()==mv[0].second){
+          if(bond->getBeginAtomIdx()==static_cast<unsigned int>(mv[0].second)){
             dummyLabels.push_back(std::make_pair(fbt.atom1Label,fbt.atom2Label));
           } else {
             dummyLabels.push_back(std::make_pair(fbt.atom2Label,fbt.atom1Label));
@@ -364,7 +445,7 @@ namespace RDKit{
           bondTypes.push_back(fbt.bondType);
         }
       }
-      return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes);
+      return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes,nCutsPerAtom);
     }
 
     boost::flyweight<std::vector<FragmenterBondType>,boost::flyweights::no_tracking> bondPatterns;

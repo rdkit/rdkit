@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <string>
+#include <ForceField/UFF/Params.h>
 
 namespace ForceFields {
   namespace UFF {
@@ -26,6 +27,16 @@ namespace RDKit {
     typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 
     std::pair<AtomicParamVect,bool> getAtomTypes(const ROMol &mol,const std::string &paramData="");
+    bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, ForceFields::UFF::UFFBond &uffBondStretchParams);
+    bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, unsigned int idx3, ForceFields::UFF::UFFAngle &uffAngleBendParams);
+    bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
+      unsigned int idx3, unsigned int idx4, ForceFields::UFF::UFFTor &uffTorsionParams);
+    bool getUFFInversionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
+      unsigned int idx3, unsigned int idx4, ForceFields::UFF::UFFInv &uffInversionParams);
+    bool getUFFVdWParams(const ROMol &mol, unsigned int idx1,
+      unsigned int idx2, ForceFields::UFF::UFFVdW &uffVdWParams);
 
     namespace Tools {
       // these functions are primarily exposed so they can be tested.

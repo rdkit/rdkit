@@ -70,7 +70,7 @@ def RDIdToInt(id,validate=1):
 
   """
   if validate and not ValidateRDId(id):
-    raise ValueError,"Bad RD Id"
+    raise ValueError("Bad RD Id")
   id = id.replace('_','-')
   terms = id.split('-')[1:-1]
   res = 0
@@ -113,7 +113,7 @@ def IndexToRDId(idx,leadText='RDCmpd'):
 
   """
   if idx < 0:
-    raise ValueError,'indices must be >= zero'
+    raise ValueError('indices must be >= zero')
   
   res = leadText+'-'
   tmpIdx = idx
@@ -209,7 +209,7 @@ def RegisterItems(conn,table,values,columnName,rows,
   """
   """
   if rows and len(rows) != len(values):
-    raise ValueError,"length mismatch between rows and values"
+    raise ValueError("length mismatch between rows and values")
   nVals = len(values)
   origOrder={}
   for i,v in enumerate(values):

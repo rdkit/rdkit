@@ -41,7 +41,7 @@ namespace ForceFields {
         const MMFFAngle *mmffAngleParams, const MMFFProp *mmffPropParamsCentralAtom);
       double getEnergy(double *pos) const;
       void getGrad(double *pos,double *grad) const;
-    
+      virtual AngleBendContrib *copy() const { return new AngleBendContrib(*this); };
     private:
       bool d_isLinear;
       int d_at1Idx, d_at2Idx, d_at3Idx;
@@ -58,7 +58,9 @@ namespace ForceFields {
       //! calculates and returns the angle bending MMFF energy
       double calcAngleBendEnergy(const double theta0,
         const double ka, bool isLinear, const double cosTheta);
-    }  
+      void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+        double **g, double &dE_dTheta, double &cosTheta, double &sinTheta);
+    }
   }
 }
 #endif

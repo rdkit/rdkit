@@ -8,11 +8,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 from rdkit import RDConfig
 import os,sys,time
-if sys.version_info[0]>2 or sys.version_info[1]>=4:
+try:
   import subprocess
-else:
+except ImportError:
   subprocess=None
 
 TEST_FAILED=-1
@@ -24,18 +25,18 @@ def RunTest(exeName,args,extras):
   args = args.split(' ')  
 
   startDir = os.getcwd()
-  if extras.has_key('dir'):
+  if 'dir' in extras:
     os.chdir(extras['dir'])
   expectedReturn = extras.get('returns',0)
   if not subprocess:
-    raise NotImplementedError,'cannot run tests if the subprocess module is not available.'
+    raise NotImplementedError('cannot run tests if the subprocess module is not available.')
   else:
     try:
       retVal = subprocess.call([exeName]+list(args))
     except OSError:
-      print >>sys.stderr,"Could not find executable: %s."%exeName
+      print("Could not find executable: %s."%exeName, file=sys.stderr)
       return TEST_FAILED
-  if extras.has_key('dir'):
+  if 'dir' in extras:
     os.chdir(startDir)
   if retVal!=expectedReturn:
     return TEST_FAILED
@@ -77,7 +78,7 @@ def RunScript(script,doLongTests,verbose):
     try:
       exeName,args,extras  = entry
     except ValueError:
-      print 'bad entry:',entry
+      print('bad entry:',entry)
       sys.exit(-1)
     try:
       res = RunTest(exeName,args,extras)

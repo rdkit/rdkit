@@ -27,11 +27,29 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+
+
 //#define VERBOSE_FINGERPRINTING 1
-//#define REPORT_FP_STATS 1
-#ifdef REPORT_FP_STATS
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#endif
+
+  namespace {
+    class ss_matcher {
+    public:
+      ss_matcher() {};
+      ss_matcher(const std::string &pattern){
+        RDKit::RWMol *p=RDKit::SmartsToMol(pattern);
+        TEST_ASSERT(p);
+        m_matcher.reset(p);
+      };
+
+      //const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
+      const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
+    private:
+      RDKit::ROMOL_SPTR m_matcher;
+    };
+  }
 
 namespace RDKit{
   const char *pqs[]={ "[*]~[*]",
@@ -46,11 +64,15 @@ namespace RDKit{
                       //"[*]~[R]~1[R]~[R]~1~[*]",
                       "[R]~1~[R]~[R]~[R]~[R]~1",
                       "[R]~1~[R]~[R]~[R]~[R]~[R]~1",
-                      "[R2]~[R1]~[R2]",
-                      "[R2]~[R1]~[R1]~[R2]",
-                      "[*]!@[R]~[R]!@[*]",
-                      "[*]!@[R]~[R]~[R]!@[*]",
-
+                      //"[R2]~[R1]~[R2]", Github #151: can't have ring counts in an SSS pattern
+                      //"[R2]~[R1]~[R1]~[R2]",  Github #151: can't have ring counts in an SSS pattern
+                      "[R](@[R])(@[R])~[R]~[R](@[R])(@[R])",
+                      "[R](@[R])(@[R])~[R]@[R]~[R](@[R])(@[R])",
+                      
+                      //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
+                      //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
+                      "[*]~[R](@[R])@[R](@[R])~[*]",
+                      "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",
@@ -73,6 +95,7 @@ namespace RDKit{
                       "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
 #endif
                       ""};
+  typedef boost::flyweight<boost::flyweights::key_value<std::string,ss_matcher>,boost::flyweights::no_tracking > pattern_flyweight;
 
   namespace detail {
     void getAtomNumbers(const Atom *a,std::vector<int> &atomNums){
@@ -122,9 +145,20 @@ namespace RDKit{
       }
       return;
     }
-  }    
+  }   
 
-
+  namespace {
+    bool isPatternComplexQuery(const Bond *b){
+      if( !b->hasQuery()) return false;
+      // negated things are always complex:
+      if( b->getQuery()->getNegation()) return true;
+      std::string descr=b->getQuery()->getDescription();
+      //std::cerr<<"   !!!!!! "<<b->getIdx()<<" "<<b->getBeginAtomIdx()<<"-"<<b->getEndAtomIdx()<<" "<<descr<<std::endl;
+      if(descr=="BondOrder") return false;
+      return true;
+    }
+  }
+  
   // caller owns the result, it must be deleted
   ExplicitBitVect *PatternFingerprintMol(const ROMol &mol,
                                          unsigned int fpSize,
@@ -134,26 +168,20 @@ namespace RDKit{
     PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
     PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits()==fpSize,"bad setOnlyBits size");
 
-    static std::vector<ROMOL_SPTR> patts;
-    // FIX: need a mutex here to be threadsafe
-    if(patts.size()==0){
-      unsigned int idx=0;
-      while(1){
-        std::string pq=pqs[idx];
-        if(pq=="") break;
-        idx++;
-        RWMol *tm;
-        try {
-          tm = SmartsToMol(pq);
-        }catch (...) {
-          tm=NULL;
-        }
-        if(!tm) continue;
-        patts.push_back(ROMOL_SPTR(static_cast<ROMol *>(tm)));
-      }
+    std::vector<const ROMol *> patts;
+    patts.reserve(10);
+    unsigned int idx=0;
+    while(1){
+      std::string pq=pqs[idx];
+      if(pq=="") break;
+      ++idx;
+      const ROMol *matcher=pattern_flyweight(pq).get().getMatcher();
+      CHECK_INVARIANT(matcher,"bad smarts");
+      patts.push_back(matcher);
     }
+
     if(!mol.getRingInfo()->isInitialized()){
-      MolOps::findSSSR(mol);
+      MolOps::fastFindRings(mol);
     }
 
     boost::dynamic_bitset<> isQueryAtom(mol.getNumAtoms()),isQueryBond(mol.getNumBonds());
@@ -161,28 +189,33 @@ namespace RDKit{
     boost::tie(firstA,lastA) = mol.getVertices();  
     while(firstA!=lastA){
       const Atom *at=mol[*firstA].get();
-      if(Fingerprints::detail::isComplexQuery(at)) isQueryAtom.set(at->getIdx());
+      if(Fingerprints::detail::isComplexQuery(at)){
+        isQueryAtom.set(at->getIdx());
+        //std::cerr<<"   complex atom: "<<at->getIdx()<<std::endl;
+      }
       ++firstA;
     }
     ROMol::EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
       const Bond *bond = mol[*firstB].get();
-      if( Fingerprints::detail::isComplexQuery(bond) ){
+      //if( Fingerprints::detail::isComplexQuery(bond) ){
+      if( isPatternComplexQuery(bond) ){
         isQueryBond.set(bond->getIdx());
+        //std::cerr<<"   complex bond: "<<bond->getIdx()<<std::endl;
       }
       ++firstB;
     }
     
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     unsigned int pIdx=0;
-    BOOST_FOREACH(ROMOL_SPTR patt,patts){
+    BOOST_FOREACH(const ROMol *patt,patts){
       ++pIdx;
       std::vector<MatchVectType> matches;
       // uniquify matches?
       //   time for 10K molecules w/ uniquify: 5.24s
       //   time for 10K molecules w/o uniquify: 4.87s
-      SubstructMatch(mol,*(patt.get()),matches,false); 
+      SubstructMatch(mol,*patt,matches,false); 
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
       BOOST_FOREACH(MatchVectType &mv,matches){
 #ifdef VERBOSE_FINGERPRINTING
@@ -191,6 +224,9 @@ namespace RDKit{
         // collect bits counting the number of occurances of the pattern:
         gboost::hash_combine(mIdx,0xBEEF);
         res->setBit(mIdx%fpSize);
+#ifdef VERBOSE_FINGERPRINTING
+        std::cerr<<"count: "<<mIdx%fpSize<<" | ";
+#endif          
 
         bool isQuery=false;
         boost::uint32_t bitId=pIdx;
@@ -212,19 +248,40 @@ namespace RDKit{
         if(isQuery) continue;
         ROMol::EDGE_ITER firstB,lastB;
         boost::tie(firstB,lastB) = patt->getEdges();
-        while(firstB!=lastB){
-          BOND_SPTR pbond = (*patt.get())[*firstB];
+#ifdef VERBOSE_FINGERPRINTING
+        std::cerr<<" bs:|| ";
+#endif
+        while(!isQuery && firstB!=lastB){
+          BOND_SPTR pbond = (*patt)[*firstB];
           ++firstB;
-          if(isQueryBond[pbond->getIdx()]){
+          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
+                                                    amap[pbond->getEndAtomIdx()]);
+
+          if(isQueryBond[mbond->getIdx()]){
             isQuery=true;
 #ifdef VERBOSE_FINGERPRINTING
-            std::cerr<<"bond query: "<<pbond->getIdx();
+            std::cerr<<"bond query: "<<mbond->getIdx();
 #endif
             break;
           }
-          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
-                                                    amap[pbond->getEndAtomIdx()]);
-          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+          // makes sure aromatic bonds and single bonds from SMARTS always hash the same:
+          //if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
+          //   mbond->getBondType()!=Bond::AROMATIC){
+          if(!mbond->getIsAromatic()){
+            gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<mbond->getBondType()<<" ";
+#endif
+          } else {
+            gboost::hash_combine(bitId,(boost::uint32_t)Bond::AROMATIC);
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<Bond::AROMATIC<<" ";
+#endif
+          }
+            //} else {
+            //  gboost::hash_combine(bitId,(boost::uint32_t)Bond::SINGLE);
+            //          }
+
         }
         if(!isQuery){
 #ifdef VERBOSE_FINGERPRINTING

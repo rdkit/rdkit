@@ -38,6 +38,7 @@ from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors as rdMD
 from rdkit.Chem import rdmolops
 from rdkit.Chem import Draw
+from rdkit.six import iteritems
 import numpy
 import math
 import copy
@@ -113,7 +114,7 @@ def GetStandardizedWeights(weights):
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250), sigma=None, 
+def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250), sigma=None,  #@UndefinedVariable  #pylint: disable=E1101
                                 coordScale=1.5, step=0.01, colors='k', contourLines=10, alpha=0.5, **kwargs):
   """
   Generates the similarity map for a molecule given the atomic weights.
@@ -151,7 +152,9 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(
   # coloring
   fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower', extent=(0,1,0,1), vmin=-maxScale, vmax=maxScale)
   # contour lines
-  fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
+  # only draw them when at least one weight is not zero
+  if len([w for w in weights if w != 0.0]):
+      fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
   return fig
 
 
@@ -245,13 +248,13 @@ def GetTTFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, targetSize=4, 
 # usage:   lambda m,i: GetMorganFingerprint(m, i, radius, fpType, nBits, useFeatures)
 def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useFeatures=False):
   """
-  Calculates the Morgan fingerprint with the counts of atomId removed.
+  Calculates the Morgan fingerprint with the environments of atomId removed.
 
   Parameters:
     mol -- the molecule of interest
     radius -- the maximum radius
     fpType -- the type of Morgan fingerprint: 'count' or 'bv'
-    atomId -- the atom to remove the counts for (if -1, no count is removed)
+    atomId -- the atom to remove the environments for (if -1, no environments is removed)
     nBits -- the size of the bit vector (only for fpType = 'bv')
     useFeatures -- if false: ConnectivityMorgan, if true: FeatureMorgan
   """
@@ -264,7 +267,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     # construct the bit map
     if fpType == 'bv': bitmap = [DataStructs.ExplicitBitVect(nBits) for x in range(mol.GetNumAtoms())]
     else: bitmap = [[] for x in range(mol.GetNumAtoms())]
-    for bit, es in info.iteritems():
+    for bit, es in iteritems(info):
       for at1, rad in es:
         if rad == 0: # for radius 0
           if fpType == 'bv': bitmap[at1][bit] = 1
@@ -290,4 +293,35 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
       # delete the bits with atomId
       for bit in mol._fpInfo[1][atomId]:
         molFp[bit] -= 1
+    return molFp
+
+# usage:   lambda m,i: GetRDKFingerprint(m, i, fpType, nBits, minPath, maxPath, nBitsPerHash)
+def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPath=5, nBitsPerHash=2):
+  """
+  Calculates the RDKit fingerprint with the paths of atomId removed.
+
+  Parameters:
+    mol -- the molecule of interest
+    atomId -- the atom to remove the paths for (if -1, no path is removed)
+    fpType -- the type of RDKit fingerprint: 'bv'
+    nBits -- the size of the bit vector
+    minPath -- minimum path length
+    maxPath -- maximum path length
+    nBitsPerHash -- number of to set per path
+  """
+  if fpType not in ['bv', '']: raise ValueError("Unknown RDKit fingerprint type")
+  fpType = 'bv'
+  if not hasattr(mol, '_fpInfo'):
+    info = [] # list with bits for each atom
+    # get the fingerprint
+    molFp = Chem.RDKFingerprint(mol, fpSize=nBits, minPath=minPath, maxPath=maxPath, nBitsPerHash=nBitsPerHash, atomBits=info)
+    mol._fpInfo = (molFp, info)
+
+  if atomId < 0:
+    return mol._fpInfo[0]
+  else: # remove the bits of atomId
+    if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
+    if len(mol._fpInfo) != 2: raise ValueError("_fpInfo not set")
+    molFp = copy.deepcopy(mol._fpInfo[0])
+    molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
     return molFp

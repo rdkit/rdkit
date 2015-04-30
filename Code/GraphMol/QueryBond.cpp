@@ -19,10 +19,8 @@ QueryBond::QueryBond(BondType bT) : Bond(bT) {
 
 
 QueryBond::~QueryBond(){
-  if( dp_query ) {
-    delete dp_query;
-    dp_query=0;
-  }
+  delete dp_query;
+  dp_query=NULL;
 };
 
 QueryBond &QueryBond::operator=(const QueryBond &other){
@@ -31,7 +29,7 @@ QueryBond &QueryBond::operator=(const QueryBond &other){
   dp_mol = 0;
   d_bondType = other.d_bondType;
   dp_query = other.dp_query->copy();
-  if(dp_props) delete dp_props;
+  delete dp_props;
   if(other.dp_props)
     dp_props = new Dict(*other.dp_props);
   return *this;
@@ -46,10 +44,9 @@ Bond *QueryBond::copy() const {
 void QueryBond::setBondType(BondType bT) {
   // NOTE: calling this blows out any existing query
   d_bondType = bT;
-  if(dp_query){
-    delete dp_query;
-    dp_query = 0;
-  }
+  delete dp_query;
+  dp_query = NULL;
+
   dp_query = makeBondOrderEqualsQuery(bT);
 }
 
@@ -63,10 +60,8 @@ void QueryBond::setBondDir(BondDir bD) {
   //
   d_dirTag = bD;
 #if 0  
-  if(dp_query){
-    delete dp_query;
-    dp_query = 0;
-  }
+  delete dp_query;
+  dp_query = NULL;
   dp_query = makeBondDirEqualsQuery(bD);
 #endif
 }
@@ -192,6 +187,12 @@ bool QueryBond::Match(const Bond::BOND_SPTR what) const {
   } //end of local namespace
 
 bool QueryBond::Match(Bond const *what) const {
+  PRECONDITION(what,"bad query bond");
+  PRECONDITION(dp_query,"no query set");
+  return dp_query->Match(what);
+}
+bool QueryBond::QueryMatch(QueryBond const *what) const {
+  PRECONDITION(what,"bad query bond");
   PRECONDITION(dp_query,"no query set");
   if(!what->hasQuery()){
     return dp_query->Match(what);

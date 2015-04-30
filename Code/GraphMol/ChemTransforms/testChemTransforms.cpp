@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006-2011 Greg Landrum
+//  Copyright (C) 2006-2015 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,7 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 using namespace RDKit;
 
@@ -177,6 +177,49 @@ void testReplaceSubstructs()
   TEST_ASSERT(mol1->getNumAtoms()==4);
   TEST_ASSERT(vect[0]->getNumAtoms()==3);
   TEST_ASSERT(vect[0]->getNumBonds()==3);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+void testReplaceSubstructs2() 
+{
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "More testing of replaceSubstruct" << std::endl;
+
+  {
+    std::string smi = "CCC(=O)O";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    std::string sma = "[$(O-C(=O))]";
+    ROMol *matcher1 = SmartsToMol(sma);
+    TEST_ASSERT(matcher1);
+
+    std::string repl = "NC";
+    ROMol *frag = SmilesToMol(repl);
+    TEST_ASSERT(frag);
+
+    std::vector<ROMOL_SPTR> vect=replaceSubstructs(*mol1,*matcher1,*frag);
+    TEST_ASSERT(vect.size()==1);
+    TEST_ASSERT(mol1->getNumAtoms()==5);
+    TEST_ASSERT(vect[0]->getNumAtoms()==6);
+    std::string csmi1 = MolToSmiles(*vect[0],true);
+
+    repl = "CN";
+    delete frag;
+    frag = SmilesToMol(repl);
+    TEST_ASSERT(frag);
+    vect=replaceSubstructs(*mol1,*matcher1,*frag,true,1);
+    TEST_ASSERT(vect.size()==1);
+    TEST_ASSERT(mol1->getNumAtoms()==5);
+    TEST_ASSERT(vect[0]->getNumAtoms()==6);
+    std::string csmi2 = MolToSmiles(*vect[0],true);
+    TEST_ASSERT(csmi2==csmi1);
+    delete mol1;
+    delete matcher1;
+  }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -844,7 +887,6 @@ void testIssue3453144()
 
 void testIssue3537675() 
 {
-  ROMol *mol1=0,*matcher1=0,*replacement=0;
   std::string smi,sma;
   
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -1149,6 +1191,24 @@ void testFragmentOnBonds()
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms()==5);
+    unsigned int indices[]={0,1};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<unsigned int> cutsPerAtom(mol->getNumAtoms());
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,bindices,false,0,0,&cutsPerAtom);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==5);
+    TEST_ASSERT(cutsPerAtom[0]==1);
+    TEST_ASSERT(cutsPerAtom[1]==2);
+    TEST_ASSERT(cutsPerAtom[2]==1);
+    TEST_ASSERT(cutsPerAtom[3]==0);
+    delete mol;
+    delete nmol;
+  }
+  {
+    std::string smi = "OCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
     TEST_ASSERT(mol->getBondBetweenAtoms(0,1));
     TEST_ASSERT(mol->getBondBetweenAtoms(3,4));
     unsigned int indices[]={0,3};
@@ -1235,7 +1295,7 @@ void testFragmentOnBRICSBonds()
     TEST_ASSERT(nmol->getBondBetweenAtoms(6,7));
 
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="[3*]OC.[16*]c1ccccc1");
+    TEST_ASSERT(smi=="[16*]c1ccccc1.[3*]OC");
 
     TEST_ASSERT(nmol->getAtomWithIdx(8)->getAtomicNum()==0);
     TEST_ASSERT(nmol->getAtomWithIdx(8)->getIsotope()==3);
@@ -1284,7 +1344,7 @@ void testFragmentOnBRICSBonds()
     TEST_ASSERT(nmol->getNumAtoms()==7);
 
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="[7*]=CC.[7*]=C(C)O");
+    TEST_ASSERT(smi=="[7*]=C(C)O.[7*]=CC");
     
     delete mol;
     delete nmol;
@@ -1299,7 +1359,7 @@ void testFragmentOnBRICSBonds()
     TEST_ASSERT(nmol);
     TEST_ASSERT(nmol->getNumAtoms()==10);
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="[3*]OC.[16*]c1ccccc1");
+    TEST_ASSERT(smi=="[16*]c1ccccc1.[3*]OC");
     
     delete mol;
     delete nmol;
@@ -1316,7 +1376,7 @@ void testFragmentOnBRICSBonds()
     
     TEST_ASSERT(nmol->getNumAtoms()==7);
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="[7*]=CC.[7*]=C(C)O");
+    TEST_ASSERT(smi=="[7*]=C(C)O.[7*]=CC");
     
     delete mol;
     delete nmol;
@@ -1333,10 +1393,10 @@ void testFragmentOnBRICSBonds()
     
     TEST_ASSERT(nmol->getNumAtoms()==20);
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1");
+    TEST_ASSERT(smi=="[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O");
     MolOps::sanitizeMol(static_cast<RWMol &>(*nmol));
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1");
+    TEST_ASSERT(smi=="[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O");
     
     delete mol;
     delete nmol;
@@ -1353,10 +1413,10 @@ void testFragmentOnBRICSBonds()
     TEST_ASSERT(nmol->getNumAtoms()==28);
     smi = MolToSmiles(*nmol,true);
     //std::cerr<<smi<<std::endl;
-    TEST_ASSERT(smi=="Cl.[1*]C(C)=O.[3*]O[3*].[15*]C1([15*])CCN(C)[C@H]2CCCC[C@@H]21.[16*]c1ccccc1");
+    TEST_ASSERT(smi=="Cl.[1*]C(C)=O.[15*]C1([15*])CCN(C)[C@H]2CCCC[C@@H]21.[16*]c1ccccc1.[3*]O[3*]");
     MolOps::sanitizeMol(static_cast<RWMol &>(*nmol));
     smi = MolToSmiles(*nmol,true);
-    TEST_ASSERT(smi=="Cl.[1*]C(C)=O.[3*]O[3*].[15*]C1([15*])CCN(C)[C@H]2CCCC[C@@H]21.[16*]c1ccccc1");
+    TEST_ASSERT(smi=="Cl.[1*]C(C)=O.[15*]C1([15*])CCN(C)[C@H]2CCCC[C@@H]21.[16*]c1ccccc1.[3*]O[3*]");
     
     delete mol;
     delete nmol;
@@ -1383,6 +1443,137 @@ void benchFragmentOnBRICSBonds()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testFragmentOnSomeBonds() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing fragmentOnSomeBonds"<< std::endl;
+
+  {
+    std::string smi = "OCCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={0,2,4};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,2);
+    TEST_ASSERT(frags.size()==3);
+    std::vector<std::vector<int> > fragMap;
+
+    TEST_ASSERT(MolOps::getMolFrags(*frags[0],fragMap)==3);
+    TEST_ASSERT(fragMap.size()==3);
+    TEST_ASSERT(fragMap[0].size()==2);
+    TEST_ASSERT(fragMap[1].size()==4);
+    TEST_ASSERT(fragMap[2].size()==4);
+
+    TEST_ASSERT(MolOps::getMolFrags(*frags[1],fragMap)==3);
+    TEST_ASSERT(fragMap.size()==3);
+    TEST_ASSERT(fragMap[0].size()==2);
+    TEST_ASSERT(fragMap[1].size()==6);
+    TEST_ASSERT(fragMap[2].size()==2);
+
+    TEST_ASSERT(MolOps::getMolFrags(*frags[2],fragMap)==3);
+    TEST_ASSERT(fragMap.size()==3);
+    TEST_ASSERT(fragMap[0].size()==4);
+    TEST_ASSERT(fragMap[1].size()==4);
+    TEST_ASSERT(fragMap[2].size()==2);
+    
+    delete mol;
+  }
+
+
+  {
+    std::string smi = "OCCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={0,2,4};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    std::vector<std::vector<unsigned int> > cpa;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,2,false,NULL,NULL,&cpa);
+    TEST_ASSERT(frags.size()==3);
+    TEST_ASSERT(cpa.size()==3);
+    TEST_ASSERT(cpa[0].size()==mol->getNumAtoms());
+    TEST_ASSERT(cpa[1].size()==mol->getNumAtoms());
+    TEST_ASSERT(cpa[2].size()==mol->getNumAtoms());
+
+    
+    delete mol;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+void testGithubIssue429() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 429: fragmentOnSomeBonds() should update implicit H count on aromatic heteroatoms when addDummies is False"<< std::endl;
+
+  {
+    std::string smi = "c1cccn1CC1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={4,5};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,1,false);
+    TEST_ASSERT(frags.size()==2);
+    std::vector<std::vector<int> > fragMap;
+    
+    BOOST_FOREACH(ROMOL_SPTR romol,frags){
+      RWMol *rwmol=(RWMol *)(romol.get());
+      MolOps::sanitizeMol(*rwmol);
+    }
+
+    // we actually changed fragmentOnBonds(), check that too:
+    RWMol *nmol=(RWMol *)MolFragmenter::fragmentOnBonds(*mol,bindices,false);
+    MolOps::sanitizeMol(*nmol);
+    delete nmol;
+
+    delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+void testGithubIssue430() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 430: fragmentOnSomeBonds() crashes if bond list is empty"<< std::endl;
+
+  {
+    std::string smi = "c1cccn1CC1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    std::vector<unsigned int> bindices;
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,1,false);
+    TEST_ASSERT(frags.size()==0);
+    delete mol;
+  }
+
+  {
+    std::string smi = "c1cccn1CC1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms());
+    unsigned int indices[]={4,5};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(*mol,bindices,frags,0,false);
+    TEST_ASSERT(frags.size()==0);
+    delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1393,6 +1584,7 @@ int main() {
 #if 1
   testDeleteSubstruct();
   testReplaceSubstructs();
+  testReplaceSubstructs2();
   testReplaceSidechains();
   testReplaceCore();
   testReplaceCoreLabels();
@@ -1411,9 +1603,12 @@ int main() {
   testIssue275();
 
   testFragmentOnBonds();
-#endif
   testFragmentOnBRICSBonds();
+#endif
+  testFragmentOnSomeBonds();
   //benchFragmentOnBRICSBonds();
+  testGithubIssue429();
+  testGithubIssue430();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

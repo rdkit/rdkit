@@ -14,7 +14,7 @@ from xml.etree import ElementTree
 import re
 vers = re.split("[a-zA-Z]",ElementTree.VERSION)[0]
 if vers < '1.2':
-  raise ImportError,'The PubMed record interface requires a version of ElementTree >= 1.2'
+  raise ImportError('The PubMed record interface requires a version of ElementTree >= 1.2')
 
 
 class Record(object):
@@ -23,7 +23,7 @@ class Record(object):
         setattr(self,field,'')
     self._element = element
   def toXML(self):
-    from cStringIO import StringIO
+    from io import StringIO
     sio = StringIO()
     ElementTree.ElementTree(self._element).write(sio)
     return sio.getvalue()

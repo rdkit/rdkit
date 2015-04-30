@@ -171,6 +171,8 @@ namespace RDKit{
       Query<int,Atom const *,true> *tmpQuery;
       if(descr=="AtomRingBondCount"){
         query->setDataFunc(queryAtomRingBondCount);
+      } else if(descr=="AtomHasRingBond"){
+        query->setDataFunc(queryAtomHasRingBond);
       } else if(descr=="AtomRingSize"){
         tmpQuery=makeAtomInRingOfSizeQuery(static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
         query->setDataFunc(tmpQuery->getDataFunc());
@@ -193,6 +195,8 @@ namespace RDKit{
         query->setDataFunc(queryAtomHCount);
       } else if(descr=="AtomImplicitHCount"){
         query->setDataFunc(queryAtomImplicitHCount);
+      } else if(descr=="AtomHasImplicitH"){
+        query->setDataFunc(queryAtomHasImplicitH);
       } else if(descr=="AtomIsAromatic"){
         query->setDataFunc(queryAtomAromatic);
       } else if(descr=="AtomIsAliphatic"){
@@ -866,13 +870,13 @@ namespace RDKit{
   namespace {
     bool getAtomMapNumber(const Atom *atom,int &mapNum){
       PRECONDITION(atom,"bad atom");
-      if(!atom->hasProp("molAtomMapNumber")) return false;
+      if(!atom->hasProp(common_properties::molAtomMapNumber)) return false;
       bool res=true;
       int tmpInt;
       try{
-        atom->getProp("molAtomMapNumber",tmpInt);
+        atom->getProp(common_properties::molAtomMapNumber,tmpInt);
       } catch (boost::bad_any_cast &exc) {
-        const std::string &tmpSVal=atom->getProp<std::string>("molAtomMapNumber");
+        const std::string &tmpSVal=atom->getProp<std::string>(common_properties::molAtomMapNumber);
         try{
           tmpInt = boost::lexical_cast<int>(tmpSVal);
         } catch(boost::bad_lexical_cast &lexc) {
@@ -890,7 +894,6 @@ namespace RDKit{
     PRECONDITION(atom,"empty atom");
     char tmpChar;
     signed char tmpSchar;
-    float tmpFloat;
     int tmpInt;
     char flags;
 
@@ -902,7 +905,7 @@ namespace RDKit{
     if(atom->getNoImplicit()) flags |= 0x1<<5;
     if(atom->hasQuery()) flags |= 0x1<<4;
     if(getAtomMapNumber(atom,tmpInt)) flags |= 0x1<<3;
-    if(atom->hasProp("dummyLabel")) flags |= 0x1<<2;
+    if(atom->hasProp(common_properties::dummyLabel)) flags |= 0x1<<2;
     if(atom->getMonomerInfo()) flags |= 0x1<<1;
 
     streamWrite(ss,flags);
@@ -936,19 +939,16 @@ namespace RDKit{
         propFlags |= 1<<4;
         streamWrite(tss,tmpChar);
       }
-
-      tmpChar = static_cast<char>(atom->getExplicitValence());
-      if(tmpChar!=0){
+      if(atom->d_explicitValence>0){
+        tmpChar = static_cast<char>(atom->d_explicitValence);
         propFlags |= 1<<5;
         streamWrite(tss,tmpChar);
       }
-
-      tmpChar = static_cast<char>(atom->getImplicitValence());
-      if(tmpChar!=0){
+      if(atom->d_implicitValence>0){
+        tmpChar = static_cast<char>(atom->d_implicitValence);
         propFlags |= 1<<6;
         streamWrite(tss,tmpChar);
       }
-
       tmpChar = static_cast<char>(atom->getNumRadicalElectrons());
       if(tmpChar!=0){
         propFlags |= 1<<7;
@@ -972,8 +972,8 @@ namespace RDKit{
       tmpChar=static_cast<char>(tmpInt%256);
       streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
     }
-    if(atom->hasProp("dummyLabel")){
-      streamWrite(ss,ATOM_DUMMYLABEL,atom->getProp<std::string>("dummyLabel"));
+    if(atom->hasProp(common_properties::dummyLabel)){
+      streamWrite(ss,ATOM_DUMMYLABEL,atom->getProp<std::string>(common_properties::dummyLabel));
     }
     if(atom->getMonomerInfo()){
       streamWrite(ss,BEGIN_ATOM_MONOMER);
@@ -1090,12 +1090,16 @@ namespace RDKit{
       if(version<7000){
         if(version<6030){
           streamRead(ss,tmpSchar,version);
-          atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
-                        static_cast<int>(tmpSchar));
+          // FIX: technically should be handling this in order to maintain true
+          // backwards compatibility
+          //atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
+          //              static_cast<int>(tmpSchar));
         } else {
           float tmpFloat;
           streamRead(ss,tmpFloat,version);
-          atom->setMass(tmpFloat);
+          // FIX: technically should be handling this in order to maintain true
+          // backwards compatibility
+          //atom->setMass(tmpFloat);
         }
 
         streamRead(ss,tmpSchar,version);
@@ -1118,7 +1122,6 @@ namespace RDKit{
       } else {
         int propFlags;
         streamRead(ss,propFlags,version);
-        atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
         if(propFlags&1){
           float tmpFloat;
           streamRead(ss,tmpFloat,version);
@@ -1193,8 +1196,6 @@ namespace RDKit{
       if(tag != ENDQUERY){
         throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
       }
-    
-      atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
       atom->setNumExplicitHs(0);
 
     }
@@ -1208,7 +1209,7 @@ namespace RDKit{
           int tmpInt;
           streamRead(ss,tmpChar,version);
           tmpInt=tmpChar;
-          atom->setProp("molAtomMapNumber",tmpInt);
+          atom->setProp(common_properties::molAtomMapNumber,tmpInt);
         } else {
           ss.seekg(sPos);
         }
@@ -1222,7 +1223,7 @@ namespace RDKit{
           int tmpInt;
           streamRead(ss,tmpChar,version);
           tmpInt=tmpChar;
-          atom->setProp("molAtomMapNumber",tmpInt);
+          atom->setProp(common_properties::molAtomMapNumber,tmpInt);
         }
         if(hasDummyLabel){
           streamRead(ss,tag,version);
@@ -1231,7 +1232,7 @@ namespace RDKit{
           }
           std::string tmpStr;
           streamRead(ss,tmpStr,version);
-          atom->setProp("dummyLabel",tmpStr);
+          atom->setProp(common_properties::dummyLabel,tmpStr);
         }
       }
     }
@@ -1313,7 +1314,7 @@ namespace RDKit{
     int begIdx,endIdx;
     T tmpT;
 
-    Bond *bond;
+    Bond *bond=NULL;
     streamRead(ss,tmpT,version);
     if(directMap){
       begIdx=tmpT;
@@ -1384,9 +1385,14 @@ namespace RDKit{
     }
     if(version>5000 && hasQuery) {
       Tags tag;
-      Bond *tbond=bond;
-      bond = new QueryBond(*bond);
-      delete tbond;
+      if(bond){
+        Bond *tbond=bond;
+        bond = new QueryBond(*bond);
+        delete tbond;
+      } else {
+        bond = new QueryBond();
+      }
+
       // we have a query:
       streamRead(ss,tag,version);
       if(tag != BEGINQUERY){
@@ -1398,9 +1404,11 @@ namespace RDKit{
         throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
       }
     }
-    bond->setBeginAtomIdx(begIdx);
-    bond->setEndAtomIdx(endIdx);
-    mol->addBond(bond,true);
+    if(bond){
+      bond->setBeginAtomIdx(begIdx);
+      bond->setEndAtomIdx(endIdx);
+      mol->addBond(bond,true);
+    }
     return bond;
   }
 
@@ -1450,40 +1458,40 @@ namespace RDKit{
 
     if(numRings>0){
       ringInfo->preallocate(mol->getNumAtoms(),mol->getNumBonds());
-    }
-    
-    for(unsigned int i=0;i<numRings;i++){
-      T tmpT;
-      T ringSize;
-      streamRead(ss,ringSize,version);
+      for(unsigned int i=0;i<static_cast<unsigned int>(numRings);i++){
+        T tmpT;
+        T ringSize;
+        streamRead(ss,ringSize,version);
 
-      INT_VECT atoms(static_cast<int>(ringSize));
-      INT_VECT bonds(static_cast<int>(ringSize));
-      for(unsigned int j=0; j<ringSize; j++){
-        streamRead(ss,tmpT,version);
-        if(directMap){
-          atoms[j] = static_cast<int>(tmpT);
-        } else {
-          atoms[j] = mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
-        }
-      }
-      if(version<7000){
-        for(unsigned int j=0; j<ringSize; j++){
+        INT_VECT atoms(static_cast<int>(ringSize));
+        INT_VECT bonds(static_cast<int>(ringSize));
+        for(unsigned int j=0; j<static_cast<unsigned int>(ringSize); j++){
           streamRead(ss,tmpT,version);
           if(directMap){
-            bonds[j] = static_cast<int>(tmpT);
+            atoms[j] = static_cast<int>(tmpT);
           } else {
-            bonds[j] = mol->getBondWithBookmark(static_cast<int>(tmpT))->getIdx();
+            atoms[j] = mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
           }
         }
-      } else {
-        for(unsigned int j=1;j<ringSize;++j){
-          bonds[j-1]=mol->getBondBetweenAtoms(atoms[j-1],atoms[j])->getIdx();
+        if(version<7000){
+          for(unsigned int j=0; j<static_cast<unsigned int>(ringSize); j++){
+            streamRead(ss,tmpT,version);
+            if(directMap){
+              bonds[j] = static_cast<int>(tmpT);
+            } else {
+              bonds[j] = mol->getBondWithBookmark(static_cast<int>(tmpT))->getIdx();
+            }
+          }
+        } else {
+          for(unsigned int j=1;j<static_cast<unsigned int>(ringSize);++j){
+            bonds[j-1]=mol->getBondBetweenAtoms(atoms[j-1],atoms[j])->getIdx();
+          }
+          bonds[ringSize-1]=mol->getBondBetweenAtoms(atoms[0],atoms[ringSize-1])->getIdx();
         }
-        bonds[ringSize-1]=mol->getBondBetweenAtoms(atoms[0],atoms[ringSize-1])->getIdx();
+        ringInfo->addRing(atoms,bonds);
       }
-      ringInfo->addRing(atoms,bonds);
     }
+
   }
 
 
@@ -1528,9 +1536,6 @@ namespace RDKit{
       }
       if(atom->getChiralTag() != 0){
 	streamWrite(ss,ATOM_CHIRALTAG,atom->getChiralTag());
-      }
-      if(atom->getMass() != 0.0){
-	streamWrite(ss,ATOM_MASS,atom->getMass());
       }
       if(atom->getIsAromatic()){
 	streamWrite(ss,ATOM_ISAROMATIC,static_cast<char>(atom->getIsAromatic()));
@@ -1618,7 +1623,8 @@ namespace RDKit{
 	break;
       case ATOM_MASS:
 	streamRead(ss,dblVar,version);
-	atom->setMass(dblVar);
+        // we don't need to set this anymore, but we do need to read it in order to
+        // maintain backwards compatibility
 	break;
       case ATOM_ISAROMATIC:
 	streamRead(ss,charVar,version);

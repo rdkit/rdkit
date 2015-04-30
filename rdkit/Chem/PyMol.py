@@ -65,7 +65,7 @@ class MolViewer(object):
     return id
 
   def ShowMol(self,mol,name='molecule',showOnly=True,highlightFeatures=[],
-              molB="",confId=-1,zoom=True):
+              molB="",confId=-1,zoom=True,forcePDB=False):
     """ special case for displaying a molecule or mol block """
   
     server = self.server
@@ -74,7 +74,7 @@ class MolViewer(object):
     if showOnly:
       self.DeleteAll()
 
-    if mol.GetNumAtoms()<999:
+    if not forcePDB and mol.GetNumAtoms()<999 :
       if not molB:
         molB = Chem.MolToMolBlock(mol,confId=confId)
       mid = server.loadMolBlock(molB,name)

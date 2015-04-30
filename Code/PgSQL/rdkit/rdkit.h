@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -68,12 +68,41 @@ extern "C" {
 #define PG_GETARG_SPARSEFINGERPRINT_P_COPY(x) DatumGetSparseFingerPrintPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_SPARSEFINGERPRINT_P(x)        PG_RETURN_DATUM(SparseFingerPrintPGetDatum(x))
 
+  typedef bytea ChemReactionBA;
+
+#define DatumGetChemReactionP(x)         ((ChemReactionBA*)PG_DETOAST_DATUM(x))
+#define DatumGetChemReactionPCopy(x)     ((ChemReactionBA*)PG_DETOAST_DATUM_COPY(x))
+#define ChemReactionPGetDatum(x)         (PointerGetDatum(x))
+
+#define PG_GETARG_CHEMREACTION_P(x)      DatumGetChemReactionP(PG_GETARG_DATUM(x))
+#define PG_GETARG_CHEMREACTION_P_COPY(x) DatumGetChemReactionPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_CHEMREACTION_P(x)      PG_RETURN_DATUM(ChemReactionPGetDatum(x))
+
   /*
    * GUC
    */
   extern double getTanimotoLimit(void);
   extern double getDiceLimit(void);
   extern bool getDoChiralSSS(void);
+  extern int getSubstructFpSize(void);
+  extern int getMorganFpSize(void);
+  extern int getFeatMorganFpSize(void);
+  extern int getLayeredFpSize(void);
+  extern int getRDKitFpSize(void);
+  extern int getHashedTorsionFpSize(void);
+  extern int getHashedAtomPairFpSize(void);
+  extern int getAvalonFpSize(void);
+  extern int getReactionSubstructFpSize(void);
+  extern int getReactionSubstructFpType(void);
+  extern int getReactionDifferenceFpSize(void);
+  extern int getReactionDifferenceFpType(void);
+  extern bool getIgnoreReactionAgents(void);
+  extern double getReactionStructuralFPAgentBitRatio(void);
+  extern bool getMoveUnmappedReactantsToAgents(void);
+  extern double getThresholdUnmappedReactantAtoms(void);
+  extern bool getInitReaction(void);
+  extern int getReactionDifferenceFPWeightNonagents(void);
+  extern int getReactionDifferenceFPWeightAgents(void);
 
   /*
    * From/to C/C++
@@ -88,9 +117,10 @@ extern "C" {
 
   CROMol parseMolBlob(char *data,int len);
   char *makeMolBlob(CROMol data, int *len);
-  CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail);
-  CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail);
+  CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail,bool asQuery);
+  CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail,bool asQuery);
   char *makeMolText(CROMol data, int *len,bool asSmarts);
+  char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
   bool isValidSmiles(char *data);
   bool isValidSmarts(char *data);
   bool isValidCTAB(char *data);
@@ -121,6 +151,7 @@ extern "C" {
   int MolNumAromaticCarbocycles(CROMol i);
   int MolNumAliphaticCarbocycles(CROMol i);
   int MolNumSaturatedCarbocycles(CROMol i);
+  int MolNumHeterocycles(CROMol i);
 
   double MolFractionCSP3(CROMol i);
   double MolTPSA(CROMol i);
@@ -137,6 +168,8 @@ extern "C" {
   double MolKappa1(CROMol i);
   double MolKappa2(CROMol i);
   double MolKappa3(CROMol i);
+
+  char *makeMolFormulaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes);
 
   const char *MolInchi(CROMol i);
   const char *MolInchiKey(CROMol i);
@@ -194,6 +227,7 @@ extern "C" {
   MolBitmapFingerPrint makeAtomPairBFP(CROMol data);
   MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data);
   MolBitmapFingerPrint makeMACCSBFP(CROMol data);
+  MolBitmapFingerPrint makeAvalonBFP(CROMol data,bool isQuery,unsigned int bitFlags);
 
   /*
    * Indexes
@@ -217,13 +251,15 @@ extern "C" {
 #define RDKitContains                   (3)
 #define RDKitContained                  (4)
 #define RDKitEquals                     (6)
+#define RDKitSmaller                    (7)
+#define RDKitGreater                    (8)
 
   bool calcConsistency(bool isLeaf, uint16 strategy, 
                        double nCommonUp, double nCommonDown, double nKey, double nQuery);
 
 
   /*
-   *  Cache subsystem. Moleculas and fingerprints I/O is extremely expensive.
+   *  Cache subsystem. Molecules and fingerprints I/O is extremely expensive.
    */
   struct MemoryContextData; /* forward declaration to prevent conflicts with C++ */
   void* SearchMolCache( void *cache, struct MemoryContextData * ctx, Datum a, 
@@ -233,7 +269,46 @@ extern "C" {
   void* SearchSparseFPCache( void *cache, struct MemoryContextData * ctx, Datum a, 
                              SparseFingerPrint **f, MolSparseFingerPrint *fp, bytea **val);
 
+  /* Chemical Reactions
+   * RDKit::ChemicalReaction */
+  typedef void * CChemicalReaction;
+
+  void* SearchChemReactionCache( void *cache, struct MemoryContextData * ctx, Datum a,
+                          ChemReactionBA **r, CChemicalReaction *rxn, bytea **sign);
+
+  void    freeChemReaction(CChemicalReaction data);
+
+  CChemicalReaction constructChemReact(ChemReactionBA* data);
+  ChemReactionBA * deconstructChemReact(CChemicalReaction data);
+
+  CChemicalReaction parseChemReactBlob(char *data,int len);
+  CChemicalReaction parseChemReactText(char *data,bool asSmarts,bool warnOnFail);
+  CChemicalReaction parseChemReactCTAB(char *data,bool warnOnFail);
+  char *makeChemReactBlob(CChemicalReaction data, int *len);
+  char *makeChemReactText(CChemicalReaction data, int *len,bool asSmarts);
+  char *makeCTABChemReact(CChemicalReaction data, int *len);
+
+  int ChemReactNumReactants(CChemicalReaction rxn);
+  int ChemReactNumProducts(CChemicalReaction rxn);
+  int ChemReactNumAgents(CChemicalReaction rxn);
+
+  /* Reaction substructure search */
+  bytea *makeReactionSign(CChemicalReaction data);
+  int ReactionSubstruct(CChemicalReaction rxn, CChemicalReaction rxn2);
+  int reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2);
+  MolBitmapFingerPrint makeReactionBFP(CChemicalReaction data, int size, int fpType);
+
+  /* Reaction difference fingerprint */
+  MolSparseFingerPrint makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType);
+
+  char* computeMolHash(CROMol data, int* len);
+
+  char* findMCSsmiles(char* smiles, char* params);
+  void* addMol2list(void* lst, Mol* mol);
+  char* findMCS(void* lst, char* params);
+
 #ifdef __cplusplus
 }
 #endif
 #endif
+

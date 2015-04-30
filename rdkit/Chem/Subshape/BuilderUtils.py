@@ -5,6 +5,7 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
+from __future__ import print_function
 from rdkit import Geometry
 from rdkit.Chem.Subshape import SubshapeObjects
 import math
@@ -48,7 +49,7 @@ def ComputeShapeGridCentroid(pt,shapeGrid,winRad):
       centroid += tPt*wt
       count+=wt
   if not count:
-    raise ValueError,'found no weight in sphere'
+    raise ValueError('found no weight in sphere')
   centroid /= count
   #print 'csgc:','(%2f,%2f,%2f)'%tuple(pt),'(%2f,%2f,%2f)'%tuple(centroid),count
   return count,centroid
@@ -212,7 +213,7 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
   shapeVect = shapeGrid.GetOccupancyVect()
   nGridPts = len(shapeVect)
   # find all possible skeleton points
-  print 'generate all possible'
+  print('generate all possible')
   for i in range(nGridPts):
     if shapeVect[i]<maxGridVal:
       continue
@@ -226,7 +227,7 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
     if ok:
       skelPts.append(SubshapeObjects.SkeletonPoint(location=posI))
   # now start removing them
-  print 'Compute centroids:',len(skelPts)
+  print('Compute centroids:',len(skelPts))
   gridBoxVolume=shapeGrid.GetSpacing()**3
   maxVol = 4.0*math.pi/3.0 * winRad**3 * maxGridVal / gridBoxVolume
   i=0
@@ -244,7 +245,7 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
       pt.location.z = centroid.z
       i+=1
 
-  print 'remove points:',len(skelPts)
+  print('remove points:',len(skelPts))
   res = termPts+skelPts
   i=0
   while i<len(res):
@@ -347,5 +348,5 @@ def AssignMolFeatsToPoints(pts,mol,featFactory,winRad):
         typ = feat.GetFamily()
         if typ not in pt.molFeatures:
           pt.molFeatures.append(typ)
-    print i,pt.molFeatures
+    print(i,pt.molFeatures)
 

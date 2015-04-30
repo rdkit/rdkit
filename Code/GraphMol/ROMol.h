@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -60,6 +60,8 @@ namespace RDKit{
   class HeteroatomIterator_;
   template <class T1,class T2>
   class QueryAtomIterator_;
+  template <class T1,class T2>
+  class MatchingAtomIterator_;
 
 
 
@@ -162,6 +164,8 @@ namespace RDKit{
     typedef class HeteroatomIterator_<const Atom,const ROMol> ConstHeteroatomIterator;
     typedef class QueryAtomIterator_<Atom,ROMol> QueryAtomIterator;
     typedef class QueryAtomIterator_<const Atom,const ROMol> ConstQueryAtomIterator;
+    typedef class MatchingAtomIterator_<Atom,ROMol> MatchingAtomIterator;
+    typedef class MatchingAtomIterator_<const Atom,const ROMol> ConstMatchingAtomIterator;
 
 
     typedef CONF_SPTR_LIST_I ConformerIterator;
@@ -178,13 +182,18 @@ namespace RDKit{
       \param quickCopy (optional) if this is true, the resulting ROMol will not
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
+      \param confId (optional) if this is >=0, the resulting ROMol will contain only
+           the specified conformer from \c other.
     */
-    ROMol(const ROMol &other,bool quickCopy=false) {dp_props=0;dp_ringInfo=0;initFromOther(other,quickCopy);};
+    ROMol(const ROMol &other,bool quickCopy=false,int confId=-1) {
+      dp_props=0;
+      dp_ringInfo=0;
+      initFromOther(other,quickCopy,confId);
+    };
     //! construct a molecule from a pickle string
     ROMol(const std::string &binStr);
 
     virtual ~ROMol() { destroy(); };
-  
 
     //! \name Atoms
     //@{
@@ -226,6 +235,16 @@ namespace RDKit{
     void setAtomBookmark(ATOM_SPTR at,int mark) {d_atomBookmarks[mark].push_back(at.get());};
     //! \overload
     void setAtomBookmark(Atom *at,int mark) {d_atomBookmarks[mark].push_back(at);};
+    //! associates an Atom pointer with a bookmark
+    void replaceAtomBookmark(ATOM_SPTR at,int mark) {
+      d_atomBookmarks[mark].clear();
+      d_atomBookmarks[mark].push_back(at.get());
+    };
+    //! \overload
+    void replaceAtomBookmark(Atom *at,int mark) {
+      d_atomBookmarks[mark].clear();
+      d_atomBookmarks[mark].push_back(at);
+    };
     //! returns the first Atom associated with the \c bookmark provided
     Atom *getAtomWithBookmark(int mark);
     //! returns all Atoms associated with the \c bookmark provided
@@ -458,10 +477,19 @@ namespace RDKit{
     QueryAtomIterator beginQueryAtoms(QueryAtom const *query);
     //! \overload
     ConstQueryAtomIterator beginQueryAtoms(QueryAtom const *) const;
-    //! gte an AtomIterator pointing at the end of our Atoms
+    //! get an AtomIterator pointing at the end of our Atoms
     QueryAtomIterator endQueryAtoms();
     //! \overload
     ConstQueryAtomIterator endQueryAtoms() const;
+
+    //! get an AtomIterator pointing at our first Atom that matches \c query
+    MatchingAtomIterator beginMatchingAtoms(bool (*query)(Atom *));
+    //! \overload
+    ConstMatchingAtomIterator beginMatchingAtoms(bool (*query)(const Atom *)) const;
+    //! get an AtomIterator pointing at the end of our Atoms
+    MatchingAtomIterator endMatchingAtoms();
+    //! \overload
+    ConstMatchingAtomIterator endMatchingAtoms() const;
 
     inline ConformerIterator beginConformers() {
       return d_confs.begin();
@@ -489,17 +517,16 @@ namespace RDKit{
                          bool includeComputed=true) const {
       const STR_VECT &tmp=dp_props->keys();
       STR_VECT res,computed;
-      if(!includeComputed && hasProp(detail::computedPropName)){
-        getProp(detail::computedPropName,computed);
+      if(!includeComputed && getPropIfPresent(detail::computedPropName, computed)){
         computed.push_back(detail::computedPropName);
       }
       
       STR_VECT::const_iterator pos = tmp.begin();
       while(pos!=tmp.end()){
         if((includePrivate || (*pos)[0]!='_') &&
-	 std::find(computed.begin(),computed.end(),*pos)==computed.end()){
+           std::find(computed.begin(),computed.end(),*pos)==computed.end()){
           res.push_back(*pos);
-	}
+        }
         pos++;
       }
       return res;
@@ -522,7 +549,7 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    void setProp(const std::string key, T val, bool computed=false) const {
+    void setProp(const std::string &key, T val, bool computed=false) const {
       if (computed) {
         STR_VECT compLst;
         dp_props->getVal(detail::computedPropName,compLst);
@@ -554,7 +581,7 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    void getProp(const std::string key, T &res) const {
+    void getProp(const std::string &key, T &res) const {
       dp_props->getVal(key, res);
     }
     //! \overload
@@ -564,8 +591,20 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    T getProp(const std::string key) const {
+    T getProp(const std::string &key) const {
       return dp_props->getVal<T>(key);
+    }
+
+    //! returns whether or not we have a \c property with name \c key
+    //!  and assigns the value if we do
+    template <typename T>
+    bool getPropIfPresent(const char *key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
+    }
+    //! \overload
+    template <typename T>
+    bool getPropIfPresent(const std::string &key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
     }
 
     //! returns whether or not we have a \c property with name \c key
@@ -574,7 +613,7 @@ namespace RDKit{
       return dp_props->hasVal(key);
     }
     //! \overload
-    bool hasProp(const std::string key) const {
+    bool hasProp(const std::string &key) const {
       if (!dp_props) return false;
       return dp_props->hasVal(key);
       //return hasProp(key.c_str());
@@ -593,7 +632,7 @@ namespace RDKit{
       clearProp(what);
     };
     //! \overload
-    void clearProp(const std::string key) const {
+    void clearProp(const std::string &key) const {
       STR_VECT compLst;
       getProp(detail::computedPropName, compLst);
       STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
@@ -613,6 +652,9 @@ namespace RDKit{
          - this calls \c updatePropertyCache() on each of our Atoms and Bonds
     */
     void updatePropertyCache(bool strict=true);
+
+
+    bool needsUpdatePropertyCache() const;
 
     //@}
 
@@ -637,7 +679,7 @@ namespace RDKit{
     Dict *dp_props;
     RingInfo *dp_ringInfo;
     CONF_SPTR_LIST d_confs;
-    ROMol &operator=(const ROMol &); // disable assignment
+    ROMol &operator=(const ROMol &); // disable assignment, RWMol's support assignment 
 
 #ifdef WIN32
   protected:
@@ -693,11 +735,13 @@ namespace RDKit{
     //! initializes from the contents of another molecule
     /*!
       \param other     the molecule to be copied
-      \param quickCopy (optional) if this is true, we will not 
+      \param quickCopy if this is true, we will not 
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
+      \param confId if this is >=0, the resulting ROMol will contain only
+           the specified conformer from \c other.
     */
-    void initFromOther(const ROMol &other,bool quickCopy);
+    void initFromOther(const ROMol &other,bool quickCopy,int confId);
 
   };
 

@@ -31,8 +31,9 @@
 #
 # Created by Greg Landrum, October 2006
 #
+import os,weakref,re
+from rdkit.six.moves import cStringIO as StringIO
 from rdkit import RDConfig
-import os,weakref,cStringIO,re
 
 class FGHierarchyNode(object):
   children=None
@@ -79,12 +80,12 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
     fileNm = os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt')
 
   if fileNm:
-    inF = file(fileNm,'r')
+    inF = open(fileNm,'r')
     lastFilename = fileNm
   elif data:
-    inF = cStringIO.StringIO(data)
+    inF = StringIO(data)
   else:
-    raise ValueError,"need data or filename"
+    raise ValueError("need data or filename")
 
   groupDefns={}
   res = []
@@ -97,16 +98,16 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
       continue
     splitL = splitter.split(line)
     if len(splitL)<3:
-      raise FuncGroupFileParseError,"Input line %d (%s) is not long enough."%(lineNo,repr(line))
+      raise FuncGroupFileParseError("Input line %d (%s) is not long enough."%(lineNo,repr(line)))
     label = splitL[0].strip()
-    if groupDefns.has_key(label):
-      raise FuncGroupFileParseError,"Duplicate label on line %d."%lineNo
+    if label in groupDefns:
+      raise FuncGroupFileParseError("Duplicate label on line %d."%lineNo)
     labelHierarchy = label.split('.')
     if len(labelHierarchy)>1:
       for i in range(len(labelHierarchy)-1):
         tmp = '.'.join(labelHierarchy[:i+1])
-        if not groupDefns.has_key(tmp):
-          raise FuncGroupFileParseError,"Hierarchy member %s (line %d) not found."%(tmp,lineNo)
+        if not tmp in groupDefns:
+          raise FuncGroupFileParseError("Hierarchy member %s (line %d) not found."%(tmp,lineNo))
       parent = groupDefns['.'.join(labelHierarchy[:-1])]
     else:
       parent = None
@@ -118,7 +119,7 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
       traceback.print_exc()
       patt = None
     if not patt:
-      raise FuncGroupFileParseError,'Smarts "%s" (line %d) could not be parsed.'%(smarts,lineNo)
+      raise FuncGroupFileParseError('Smarts "%s" (line %d) could not be parsed.'%(smarts,lineNo))
       
     name = splitL[2].strip()
     

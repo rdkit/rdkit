@@ -20,9 +20,6 @@
 
 namespace ForceFields {
   namespace UFF {
-    inline bool isDoubleZero(double x) {
-      return ((x < 1.0e-10) && (x > -1.0e-10));
-    }
     namespace Utils {
       double calculateCosY(const RDGeom::Point3D &iPoint,
         const RDGeom::Point3D &jPoint, const RDGeom::Point3D &kPoint,
@@ -119,26 +116,26 @@ namespace ForceFields {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
 
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-        pos[3 * this->d_at1Idx + 1],
-        pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-        pos[3 * this->d_at2Idx + 1],
-        pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-        pos[3 * this->d_at3Idx + 1],
-        pos[3 * this->d_at3Idx + 2]);
-      RDGeom::Point3D p4(pos[3 * this->d_at4Idx],
-        pos[3 * this->d_at4Idx + 1],
-        pos[3 * this->d_at4Idx + 2]);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1],
+        pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1],
+        pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1],
+        pos[3 * d_at3Idx + 2]);
+      RDGeom::Point3D p4(pos[3 * d_at4Idx],
+        pos[3 * d_at4Idx + 1],
+        pos[3 * d_at4Idx + 2]);
 
       double cosY = Utils::calculateCosY(p1, p2, p3, p4);
       double sinYSq = 1.0 - cosY * cosY;
       double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
       // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
       double cos2W = 2.0 * sinY * sinY - 1.0;
-      double res = this->d_forceConstant * (this->d_C0
-        + this->d_C1 * sinY + this->d_C2 * cos2W);
+      double res = d_forceConstant * (d_C0
+        + d_C1 * sinY + d_C2 * cos2W);
       //std::cout << d_at1Idx + 1 << "," << d_at2Idx + 1 << "," << d_at3Idx + 1 << "," << d_at4Idx + 1 << " Inversion: " << res << std::endl;
 
       return res;
@@ -148,22 +145,22 @@ namespace ForceFields {
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
 
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-        pos[3 * this->d_at1Idx + 1],
-        pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-        pos[3 * this->d_at2Idx + 1],
-        pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-        pos[3 * this->d_at3Idx + 1],
-        pos[3 * this->d_at3Idx + 2]);
-      RDGeom::Point3D p4(pos[3 * this->d_at4Idx],
-        pos[3 * this->d_at4Idx + 1],
-        pos[3 * this->d_at4Idx + 2]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
-      double *g3 = &(grad[3 * this->d_at3Idx]);
-      double *g4 = &(grad[3 * this->d_at4Idx]);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1],
+        pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1],
+        pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1],
+        pos[3 * d_at3Idx + 2]);
+      RDGeom::Point3D p4(pos[3 * d_at4Idx],
+        pos[3 * d_at4Idx + 1],
+        pos[3 * d_at4Idx + 2]);
+      double *g1 = &(grad[3 * d_at1Idx]);
+      double *g2 = &(grad[3 * d_at2Idx]);
+      double *g3 = &(grad[3 * d_at3Idx]);
+      double *g4 = &(grad[3 * d_at4Idx]);
 
       RDGeom::Point3D rJI = p1 - p2;
       RDGeom::Point3D rJK = p3 - p2;
@@ -181,14 +178,16 @@ namespace ForceFields {
       RDGeom::Point3D n = (-rJI).crossProduct(rJK);
       n /= n.length();
       double cosY = n.dotProduct(rJL);
+      clipToOne(cosY);
       double sinYSq = 1.0 - cosY * cosY;
       double sinY = std::max(((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0), 1.0e-8);
       double cosTheta = rJI.dotProduct(rJK);
+      clipToOne(cosTheta);
       double sinThetaSq = std::max(1.0 - cosTheta * cosTheta, 1.0e-8);
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
       // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)
-      double dE_dW = -this->d_forceConstant
-        * (this->d_C1 * cosY - 4.0 * this->d_C2 * cosY * sinY);
+      double dE_dW = -d_forceConstant
+        * (d_C1 * cosY - 4.0 * d_C2 * cosY * sinY);
       RDGeom::Point3D t1 = rJL.crossProduct(rJK);
       RDGeom::Point3D t2 = rJI.crossProduct(rJL);
       RDGeom::Point3D t3 = rJK.crossProduct(rJI);

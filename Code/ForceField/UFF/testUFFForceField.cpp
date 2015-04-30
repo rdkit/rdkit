@@ -22,8 +22,14 @@
 #include <ForceField/UFF/Nonbonded.h>
 #include <ForceField/UFF/TorsionAngle.h>
 #include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/UFF/AngleConstraint.h>
+#include <ForceField/UFF/TorsionConstraint.h>
+#include <ForceField/UFF/PositionConstraint.h>
 
 #include <GraphMol/Atom.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 using namespace RDGeom;
 
@@ -1269,6 +1275,256 @@ void testUFFDistanceConstraints(){
   std::cerr << "  done" << std::endl;
 }
 
+void testUFFAllConstraints(){
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Unit tests for all UFF constraint terms." << std::endl;
+
+  std::string molBlock =
+    "butane\n"
+    "     RDKit          3D\n"
+    "butane\n"
+    " 17 16  0  0  0  0  0  0  0  0999 V2000\n"
+    "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.4280    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.2660    0.9927 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.9040    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    2.0271    0.3782 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    1.5664   -1.3411 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.3320    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6953    1.5162   -1.3532 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.8080    0.0192    0.0649 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.7431   -0.6243 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.1966    1.0697 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8980    0.0192    0.0649 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6954    2.0627    0.3408 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.7267   -0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.7267    0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633   -0.9926    0.2660 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.2660   -0.9926 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  1 15  1  0  0  0  0\n"
+    "  1 16  1  0  0  0  0\n"
+    "  1 17  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  1  0  0  0  0\n"
+    "  2 14  1  0  0  0  0\n"
+    "  4  5  1  0  0  0  0\n"
+    "  4  6  1  0  0  0  0\n"
+    "  4  7  1  0  0  0  0\n"
+    "  7  8  1  0  0  0  0\n"
+    "  7  9  1  0  0  0  0\n"
+    "  7 13  1  0  0  0  0\n"
+    "  9 10  1  0  0  0  0\n"
+    "  9 11  1  0  0  0  0\n"
+    "  9 12  1  0  0  0  0\n"
+    "M  END\n";
+  RDKit::RWMol *mol;
+  ForceFields::ForceField *field;
+  
+  // distance constraints
+  ForceFields::UFF::DistanceConstraintContrib *dc;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  field = RDKit::UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  field->minimize();
+  TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
+  delete field;
+  field = RDKit::UFF::constructForceField(*mol);
+  field->initialize();
+  dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, true, -0.2, 0.2, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  field->minimize();
+  TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.79);
+  delete field;
+  delete mol;
+  
+  // angle constraints
+  ForceFields::UFF::AngleConstraintContrib *ac;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  field = RDKit::UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, 90.0, 90.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6) == 90);
+  delete field;
+  field = RDKit::UFF::constructForceField(*mol);
+  field->initialize();
+  ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, true, -10.0, 10.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6) == 100);
+  delete field;
+  field = RDKit::UFF::constructForceField(*mol);
+  field->initialize();
+  ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, false, -10.0, 10.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6) == 10);
+  delete field;
+  delete mol;
+  
+  // torsion constraints
+  ForceFields::UFF::TorsionConstraintContrib *tc;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, 50.0);
+  field = RDKit::UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, 10.0, 20.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(tc));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == 20);
+  delete field;
+  MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, -30.0);
+  field = RDKit::UFF::constructForceField(*mol);
+  field->initialize();
+  tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, true, -10.0, -8.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(tc));
+  field->minimize();
+  TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == -40);
+  delete field;
+  MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, 30.0);
+  field = RDKit::UFF::constructForceField(*mol);
+  field->initialize();
+  tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false, -10.0, -8.0, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(tc));
+  field->minimize(500);
+  TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == -10);
+  delete field;
+  delete mol;
+  
+  // position constraints
+  ForceFields::UFF::PositionConstraintContrib *pc;
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  field = RDKit::UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  RDGeom::Point3D p = mol->getConformer().getAtomPos(1);
+  pc = new ForceFields::UFF::PositionConstraintContrib(field, 1, 0.3, 1.0e5);
+  field->contribs().push_back(ForceFields::ContribPtr(pc));
+  field->minimize();
+  RDGeom::Point3D q = mol->getConformer().getAtomPos(1);
+  TEST_ASSERT((p - q).length() < 0.3);
+  delete field;
+  delete mol;
+  
+  // fixed atoms
+  mol = RDKit::MolBlockToMol(molBlock, true, false);
+  TEST_ASSERT(mol);
+  field = RDKit::UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  RDGeom::Point3D fp = mol->getConformer().getAtomPos(1);
+  field->fixedPoints().push_back(1);
+  field->minimize();
+  RDGeom::Point3D fq = mol->getConformer().getAtomPos(1);
+  TEST_ASSERT((fp - fq).length() < 0.01);
+  delete field;
+  delete mol;
+
+  std::cerr << "  done" << std::endl;
+}
+
+void testUFFCopy(){
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Unit tests for copying UFF ForceFields." << std::endl;
+
+  std::string molBlock =
+    "butane\n"
+    "     RDKit          3D\n"
+    "butane\n"
+    " 17 16  0  0  0  0  0  0  0  0999 V2000\n"
+    "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.4280    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.2660    0.9927 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.9040    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    2.0271    0.3782 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.5407    1.5664   -1.3411 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.3320    1.3004   -0.3485 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6953    1.5162   -1.3532 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.8080    0.0192    0.0649 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.7431   -0.6243 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.4447   -0.1966    1.0697 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8980    0.0192    0.0649 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6954    2.0627    0.3408 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    1.7913   -0.7267   -0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.7267    0.7267 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633   -0.9926    0.2660 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -0.3633    0.2660   -0.9926 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  1 15  1  0  0  0  0\n"
+    "  1 16  1  0  0  0  0\n"
+    "  1 17  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  1  0  0  0  0\n"
+    "  2 14  1  0  0  0  0\n"
+    "  4  5  1  0  0  0  0\n"
+    "  4  6  1  0  0  0  0\n"
+    "  4  7  1  0  0  0  0\n"
+    "  7  8  1  0  0  0  0\n"
+    "  7  9  1  0  0  0  0\n"
+    "  7 13  1  0  0  0  0\n"
+    "  9 10  1  0  0  0  0\n"
+    "  9 11  1  0  0  0  0\n"
+    "  9 12  1  0  0  0  0\n"
+    "M  END\n";
+  {
+
+    RDKit::RWMol *mol = RDKit::MolBlockToMol(molBlock, true, false);
+    TEST_ASSERT(mol);
+    RDKit::RWMol *cmol = new RDKit::RWMol(*mol);
+    TEST_ASSERT(cmol);
+    
+    ForceFields::ForceField *field = RDKit::UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    ForceFields::UFF::DistanceConstraintContrib *dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0, 1.0e5);
+    field->contribs().push_back(ForceFields::ContribPtr(dc));
+    field->minimize();
+    TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
+
+    ForceFields::ForceField *cfield=new ForceFields::ForceField(*field);
+    cfield->positions().clear();
+    
+    for(unsigned int i=0;i<cmol->getNumAtoms();i++){
+      cfield->positions().push_back(&cmol->getConformer().getAtomPos(i));
+    }
+    cfield->initialize();
+    cfield->minimize();
+    TEST_ASSERT(MolTransforms::getBondLength(cmol->getConformer(), 1, 3) > 1.99);
+    TEST_ASSERT(RDKit::feq(field->calcEnergy(),cfield->calcEnergy()));
+    
+    const RDKit::Conformer &conf = mol->getConformer();
+    const RDKit::Conformer &cconf = cmol->getConformer();
+    for(unsigned int i=0;i<mol->getNumAtoms();i++){
+      RDGeom::Point3D p=conf.getAtomPos(i);
+      RDGeom::Point3D cp=cconf.getAtomPos(i);
+      TEST_ASSERT(RDKit::feq(p.x,cp.x));
+      TEST_ASSERT(RDKit::feq(p.y,cp.y));
+      TEST_ASSERT(RDKit::feq(p.z,cp.z));
+    }
+    
+    delete field;
+    delete cfield;
+    delete mol;
+    delete cmol;
+  }
+  std::cerr << "  done" << std::endl;
+}
+  
+
+
+
+
 int main(){
 #if 1
   test1();
@@ -1285,4 +1541,6 @@ int main(){
   
 #endif
   testUFFDistanceConstraints();
+  testUFFAllConstraints();
+  testUFFCopy();
 }

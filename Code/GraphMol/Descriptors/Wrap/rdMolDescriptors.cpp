@@ -99,13 +99,14 @@ namespace {
                                                                python::object fromAtoms,
                                                                python::object ignoreAtoms,
                                                                python::object atomInvariants,
-                                                               bool includeChirality){
+                                                               bool includeChirality,
+                                                               bool use2D,int confId){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
-                                                   fvect,ivect,invvect,includeChirality);
+                                                   fvect,ivect,invvect,includeChirality,use2D,confId);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -118,13 +119,16 @@ namespace {
                                                                      python::object fromAtoms,
                                                                      python::object ignoreAtoms,
                                                                      python::object atomInvariants,
-                                                                     bool includeChirality){
+                                                                     bool includeChirality,
+                                                                     bool use2D,
+                                                                     int confId){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
-                                                         fvect,ivect,invvect,includeChirality);
+                                                         fvect,ivect,invvect,includeChirality,
+                                                         use2D,confId);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -204,7 +208,8 @@ namespace {
                                                          python::object ignoreAtoms,
                                                          python::object atomInvariants,
                                                          unsigned int nBitsPerEntry,
-                                                         bool includeChirality
+                                                         bool includeChirality,
+                                                         bool use2D,int confId
                                                          ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
@@ -213,7 +218,8 @@ namespace {
     res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
                                                                   minLength,maxLength,
                                                                   fvect,ivect,invvect,
-                                                                  nBitsPerEntry,includeChirality);
+                                                                  nBitsPerEntry,includeChirality,
+                                                                  use2D,confId);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -255,6 +261,7 @@ namespace {
                                  bool useChirality,
                                  bool useBondTypes,
                                  bool useFeatures,
+                                 bool useCounts,
                                  python::object bitInfo){
       std::vector<boost::uint32_t> *invars=0;
       if(invariants){
@@ -292,8 +299,8 @@ namespace {
       if(nBits<0){
         res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                         static_cast<unsigned int>(radius),
-                                                        invars,froms,useChirality,useBondTypes,
-                                                        false,bitInfoMap);
+                                                        invars,froms,useChirality,
+                                                        useBondTypes,useCounts,false,bitInfoMap);
       } else {
         res = RDKit::MorganFingerprints::getHashedFingerprint(mol,
                                                         static_cast<unsigned int>(radius),
@@ -326,9 +333,10 @@ namespace {
                                                               bool useChirality,
                                                               bool useBondTypes,
                                                               bool useFeatures,
+                                                              bool useCounts,
                                                               python::object bitInfo){
     return MorganFingerprintHelper(mol,radius,-1,invariants,fromAtoms,useChirality,useBondTypes,
-                                   useFeatures,bitInfo);
+                                   useFeatures,useCounts,bitInfo);
   }
   RDKit::SparseIntVect<boost::uint32_t> *GetHashedMorganFingerprint(const RDKit::ROMol &mol,
                                                                     int radius,
@@ -340,7 +348,7 @@ namespace {
                                                               bool useFeatures,
                                                               python::object bitInfo){
     return MorganFingerprintHelper(mol,radius,nBits,invariants,fromAtoms,useChirality,useBondTypes,
-                                   useFeatures,bitInfo);
+                                   useFeatures,true,bitInfo);
   }
 
   ExplicitBitVect *GetMorganFingerprintBV(const RDKit::ROMol &mol,
@@ -550,7 +558,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
-               python::arg("includeChirality")=false),
+               python::arg("includeChirality")=false,
+               python::arg("use2D")=true,
+               python::arg("confId")=-1),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -564,7 +574,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
-               python::arg("includeChirality")=false),
+               python::arg("includeChirality")=false,
+               python::arg("use2D")=true,
+               python::arg("confId")=-1),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -579,7 +591,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
                python::arg("nBitsPerEntry")=4,
-               python::arg("includeChirality")=false),
+               python::arg("includeChirality")=false,
+               python::arg("use2D")=true,
+               python::arg("confId")=-1),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -627,6 +641,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("useChirality")=false,
                python::arg("useBondTypes")=true,
                python::arg("useFeatures")=false,
+               python::arg("useCounts")=true,
                python::arg("bitInfo")=python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
@@ -764,12 +779,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumHBA_version")=RDKit::Descriptors::NumHBAVersion;
-  docString="returns the number of rotatable bonds for a molecule";
+  docString="returns the number of rotatable bonds for a molecule. The strict option (default) does not count things like amide or ester bonds";
   python::def("CalcNumRotatableBonds",
 	      RDKit::Descriptors::calcNumRotatableBonds,
-	      (python::arg("mol")),
+	      (python::arg("mol"),
+               python::arg("strict")=true),
               docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version")=RDKit::Descriptors::NumRotatableBondsVersion;
+
   docString="returns the number of rings for a molecule";
   python::def("CalcNumRings",
 	      RDKit::Descriptors::calcNumRings,
@@ -790,6 +807,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumSaturatedRings_version")=RDKit::Descriptors::NumSaturatedRingsVersion;
+
+  docString="returns the number of heterocycles for a molecule";
+  python::def("CalcNumHeterocycles",
+	      RDKit::Descriptors::calcNumHeterocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumHeterocycles_version")=RDKit::Descriptors::NumHeterocyclesVersion;
 
   docString="returns the number of aromatic heterocycles for a molecule";
   python::def("CalcNumAromaticHeterocycles",

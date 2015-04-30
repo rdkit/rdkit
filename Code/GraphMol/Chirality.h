@@ -26,11 +26,11 @@ namespace RDKit{
                     Should be at least mol.getNumAtoms() long.
     
       <b>Notes:</b>
-         - All atoms gain a property "_CIPRank" with their overall
+         - All atoms gain a property common_properties::_CIPRank with their overall
            CIP ranking.
     
     */
-    void assignAtomCIPRanks(const ROMol &mol,INT_VECT &ranks);
+    void assignAtomCIPRanks(const ROMol &mol,UINT_VECT &ranks);
   }
 }
 /// @endcond

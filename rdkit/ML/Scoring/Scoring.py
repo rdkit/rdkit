@@ -28,7 +28,7 @@ def CalcROC(scores, col):
     numInactives = 0
 
     # loop over score list
-    for i in xrange(numMol):
+    for i in range(numMol):
         if scores[i][col]: 
             numActives += 1
         else:
@@ -55,7 +55,7 @@ def CalcAUC(scores, col):
     AUC = 0
 
     # loop over score list
-    for i in xrange(0, numMol-1):
+    for i in range(0, numMol-1):
         AUC += (TNR[i+1]-TNR[i]) * (TPR[i+1]+TPR[i])
 
     return 0.5*AUC
@@ -71,7 +71,7 @@ def _RIEHelper(scores, col, alpha):
     sum_exp = 0
 
     # loop over score list
-    for i in xrange(numMol):
+    for i in range(numMol):
         active = scores[i][col]
         if active:
             numActives += 1
@@ -131,7 +131,7 @@ def CalcEnrichment(scores, col, fractions):
     enrich = []
 
     # loop over score list
-    for i in xrange(numMol):
+    for i in range(numMol):
         if i > (numPerFrac[0]-1) and i > 0:
             enrich.append(1.0*numActives*numMol / i)
             numPerFrac.pop(0)

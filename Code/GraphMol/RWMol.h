@@ -38,9 +38,14 @@ namespace RDKit{
       \param quickCopy (optional) if this is true, the resulting ROMol will not
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
+      \param confId if this is >=0, the resulting ROMol will contain only
+           the specified conformer from \c other.
     */
-    RWMol(const ROMol &other,bool quickCopy=false) {d_partialBonds.clear(); initFromOther(other,quickCopy);};
-
+    RWMol(const ROMol &other,bool quickCopy=false,int confId=-1) {
+      d_partialBonds.clear();
+      initFromOther(other,quickCopy,confId);
+    };
+    RWMol &operator=(const RWMol &);
 
     //! insert the atoms and bonds from \c other into this molecule
     void insertMol( const ROMol &other);
@@ -210,16 +215,18 @@ namespace RDKit{
       d_bondBookmarks.clear();
       d_graph.clear();
       d_confs.clear();
-      if(dp_props) dp_props->reset();
+      if(dp_props){
+        dp_props->reset();
+        STR_VECT computed;
+        dp_props->setVal(detail::computedPropName, computed);
+      }
       if(dp_ringInfo) dp_ringInfo->reset();
-      
     };
 
 
   private:
     std::vector<BOND_SPTR> d_partialBonds;
     void destroy();
-    ROMol &operator=(const ROMol &); // disable assignment
 
   };
 

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -68,6 +67,50 @@ void testQueryCopying()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testConformerCopying()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing copying conformers" << std::endl;
+
+  {
+    std::string smi="CCC";
+    ROMol *m=static_cast<ROMol *>(SmilesToMol(smi));
+    TEST_ASSERT(m);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setId(1);
+    m->addConformer(conf,false);
+    conf=new Conformer(m->getNumAtoms());
+    conf->setId(2);
+    m->addConformer(conf,false);
+    {
+      ROMol *m2 = new ROMol(*m);
+      TEST_ASSERT(m2->getNumConformers()==2);
+      delete m2;
+    }
+    {
+      ROMol *m2 = new ROMol(*m,false,1);
+      TEST_ASSERT(m2->getNumConformers()==1);
+      TEST_ASSERT(m2->getConformer().getId()==1);
+      delete m2;
+    }
+    {
+      ROMol *m2 = new ROMol(*m,false,2);
+      TEST_ASSERT(m2->getNumConformers()==1);
+      TEST_ASSERT(m2->getConformer().getId()==2);
+      delete m2;
+    }
+    {
+      ROMol *m2 = new ROMol(*m,false,3);
+      TEST_ASSERT(m2->getNumConformers()==0);
+      delete m2;
+    }
+
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 
@@ -79,5 +122,6 @@ int main()
   test2();
 #endif
   testQueryCopying();
+  testConformerCopying();
   return 0;
 }

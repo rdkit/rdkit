@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,8 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/RankAtoms.h>
+#include <RDGeneral/Ranking.h>
+#include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <algorithm>
@@ -43,11 +44,6 @@ namespace RDKit{
       BOOST_LOG(rdDebugLog) << outS.str() << std::endl;
     }
   
-    // compare the first elements of two pairs of integers
-    int _pairComp(const INT_PAIR &arg1,const INT_PAIR &arg2){
-      return (arg1.first < arg2.first);
-    }
-
     // --------------------------------------------------
     //
     // Calculates chiral invariants for the atoms of a molecule
@@ -89,6 +85,7 @@ namespace RDKit{
         if(mass < 0) mass = 0;
         else mass = mass % 16;
 
+#if 0
         // NOTE: the inclusion of hybridization in the invariant (as
         // suggested in the original paper), leads to the situation
         // that 
@@ -107,6 +104,7 @@ namespace RDKit{
         case Atom::SP3D2: hyb=2;break;
         default: break;
         }
+#endif
 
         invariant = num; // 7 bits here
         invariant = (invariant << 4) | mass;
@@ -115,40 +113,37 @@ namespace RDKit{
       }
     }
 
-    void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, INT_VECT &ranks,bool seedWithInvars){
+    void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,bool seedWithInvars){
       PRECONDITION(invars.size()==mol.getNumAtoms(),"bad invars size");
       PRECONDITION(ranks.size()>=mol.getNumAtoms(),"bad ranks size");
 
-      int numAtoms = mol.getNumAtoms();
+      unsigned int numAtoms = mol.getNumAtoms();
       CIP_ENTRY_VECT cipEntries(numAtoms);
       INT_LIST allIndices;
-      INT_LIST activeIndices;
-      for(int i=0;i<numAtoms;++i){
-        activeIndices.push_back(i);
+      for(unsigned int i=0;i<numAtoms;++i){
         allIndices.push_back(i);
       }
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
-      for(int i=0;i<numAtoms;i++){
+      for(unsigned int i=0;i<numAtoms;i++){
         BOOST_LOG(rdDebugLog) << i << ": " << invars[i] << std::endl;
       }
 #endif  
 
       // rank those:
-      RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
+      Rankers::rankVect(invars,ranks);
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
-      for(int i=0;i<numAtoms;++i){
+      for(unsigned int i=0;i<numAtoms;++i){
         BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
       }
 #endif  
-      RankAtoms::updateInPlayIndices(ranks,activeIndices);
       // Start each atom's rank vector with its atomic number:
       //  Note: in general one should avoid the temptation to
       //  use invariants here, those lead to incorrect answers
-      for(int i=0;i<numAtoms;i++){
+      for(unsigned int i=0;i<numAtoms;i++){
         if(!seedWithInvars){
-          cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
+          cipEntries[i].push_back(mol[i]->getAtomicNum());
           cipEntries[i].push_back(static_cast<int>(ranks[i]));
         } else {
           cipEntries[i].push_back(static_cast<int>(invars[i]));
@@ -165,11 +160,12 @@ namespace RDKit{
       //      maximum number of steps required for two atoms to 
       //      "feel" each other (each influences one additional 
       //      neighbor shell per iteration). 
-      int maxIts=numAtoms/2+1;
-      int numIts=0;
+      unsigned int maxIts=numAtoms/2+1;
+      unsigned int numIts=0;
       int lastNumRanks=-1;
-      int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
-      while( !activeIndices.empty() && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
+      unsigned int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
+      while( numRanks<numAtoms && numIts<maxIts && (lastNumRanks<0 ||
+                                                    static_cast<unsigned int>(lastNumRanks)<numRanks) ){
         unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
@@ -183,12 +179,12 @@ namespace RDKit{
 
           // start by pushing on our neighbors' ranks:
           ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(mol.getAtomWithIdx(*it));
+          boost::tie(beg,end) = mol.getAtomBonds(mol[*it].get());
           while(beg!=end){
             const Bond *bond=mol[*beg].get();
             ++beg;
             unsigned int nbrIdx=bond->getOtherAtomIdx(*it);
-            const Atom *nbr=mol.getAtomWithIdx(nbrIdx);
+            const Atom *nbr=mol[nbrIdx].get();
             
             int rank=ranks[nbrIdx]+1;
             // put the neighbor in 2N times where N is the bond order as a double.
@@ -222,9 +218,9 @@ namespace RDKit{
           }
           // add a zero for each coordinated H:
           // (as long as we're not a query atom)
-          if(!mol.getAtomWithIdx(*it)->hasQuery()){
+          if(!mol[*it]->hasQuery()){
             localEntry.insert(localEntry.begin(),
-                              mol.getAtomWithIdx(*it)->getTotalNumHs(),
+                              mol[*it]->getTotalNumHs(),
                               0);
           }
 
@@ -255,8 +251,8 @@ namespace RDKit{
         // sort the new ranks and update the list of active indices:
         // 
         lastNumRanks=numRanks;
-        RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
-        RankAtoms::updateInPlayIndices(ranks,activeIndices);
+
+        Rankers::rankVect(cipEntries,ranks);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
 
         // now truncate each vector and stick the rank at the end
@@ -268,7 +264,7 @@ namespace RDKit{
         ++numIts;
 #ifdef VERBOSE_CANON
         BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
-        for(int i=0;i<numAtoms;i++){
+        for(unsigned int i=0;i<numAtoms;i++){
           BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << " > ";
           debugVect(cipEntries[i]);
         }
@@ -276,19 +272,23 @@ namespace RDKit{
       }
     }
     // Figure out the CIP ranks for the atoms of a molecule
-    void assignAtomCIPRanks(const ROMol &mol, INT_VECT &ranks){
+    void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks){
       PRECONDITION((!ranks.size() || ranks.size()>=mol.getNumAtoms()),
                    "bad ranks size");
       if(!ranks.size()) ranks.resize(mol.getNumAtoms());
-      int numAtoms = mol.getNumAtoms();
-      // get the initial invariants:
-      DOUBLE_VECT invars(numAtoms,0);
-      buildCIPInvariants(mol,invars);
-      iterateCIPRanks(mol,invars,ranks,false);
-
+      unsigned int numAtoms = mol.getNumAtoms();
+#ifndef USE_NEW_STEREOCHEMISTRY
+      // get the initial invariants:		
+      DOUBLE_VECT invars(numAtoms,0);		
+      buildCIPInvariants(mol,invars);		
+      iterateCIPRanks(mol,invars,ranks,false);		
+#else
+      Canon::chiralRankMolAtoms(mol,ranks);
+#endif
+      
       // copy the ranks onto the atoms:
-      for(int i=0;i<numAtoms;i++){
-        mol.getAtomWithIdx(i)->setProp("_CIPRank",ranks[i],1);
+      for(unsigned int i=0;i<numAtoms;++i){
+        mol[i]->setProp(common_properties::_CIPRank,ranks[i],1);
       }
     }
    
@@ -299,7 +299,7 @@ namespace RDKit{
     // set.
     void findAtomNeighborDirHelper(const ROMol &mol,const Atom *atom,
                                    const Bond *refBond,
-                                   INT_VECT &ranks,
+                                   UINT_VECT &ranks,
                                    INT_PAIR_VECT &neighbors,
                                    bool& hasExplicitUnknownStereo){
       PRECONDITION(atom,"bad atom");
@@ -312,10 +312,11 @@ namespace RDKit{
         const BOND_SPTR bond = mol[*beg];
         // check whether this bond is explictly set to have unknown stereo
         if (!hasExplicitUnknownStereo) {
-          if (bond->hasProp("_UnknownStereo") &&
-              bond->getProp<int>("_UnknownStereo")){
-              hasExplicitUnknownStereo = true;
-          }
+	  int explicit_unknown_stereo;
+	  if (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+				      explicit_unknown_stereo) &&
+	      explicit_unknown_stereo)
+	    hasExplicitUnknownStereo = true;
         }
 
         Bond::BondDir dir=bond->getBondDir();
@@ -362,9 +363,10 @@ namespace RDKit{
     // find the neighbors for an atoms that are not connected by single bond that is not refBond
     // if checkDir is true only neighbor atoms with bonds marked with a direction will be returned
     void findAtomNeighborsHelper(const ROMol &mol,const Atom *atom,const Bond *refBond,
-                                 INT_VECT &neighbors, bool checkDir=false) {
+                                 UINT_VECT &neighbors, bool checkDir=false) {
       PRECONDITION(atom,"bad atom");
       PRECONDITION(refBond,"bad bond");
+      neighbors.clear();
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(atom);
       while (beg != end) {
@@ -387,9 +389,7 @@ namespace RDKit{
     bool atomIsCandidateForRingStereochem(const ROMol &mol,const Atom *atom){
       PRECONDITION(atom,"bad atom");
       bool res=false;
-      if(atom->hasProp("_ringStereochemCand")){
-        res=atom->getProp<bool>("_ringStereochemCand");
-      } else {
+      if(!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
         const RingInfo *ringInfo=mol.getRingInfo();
         if(ringInfo->isInitialized() &&
            ringInfo->numAtomRings(atom->getIdx())){
@@ -407,7 +407,7 @@ namespace RDKit{
             ++beg;
           }
 
-          int rank1=0,rank2=0;
+          unsigned int rank1=0,rank2=0;
           switch(nonRingNbrs.size()){
           case 0:
             // don't do spiro:
@@ -417,10 +417,8 @@ namespace RDKit{
             if(ringNbrs.size()==2) res=true;
             break;
           case 2:
-            if( nonRingNbrs[0]->hasProp("_CIPRank") &&
-                nonRingNbrs[1]->hasProp("_CIPRank") ){
-              nonRingNbrs[0]->getProp("_CIPRank",rank1);
-              nonRingNbrs[1]->getProp("_CIPRank",rank2);
+            if( nonRingNbrs[0]->getPropIfPresent(common_properties::_CIPRank, rank1) &&
+                nonRingNbrs[1]->getPropIfPresent(common_properties::_CIPRank, rank2) ){
               if(rank1==rank2){
                 res=false;
               } else {
@@ -432,7 +430,7 @@ namespace RDKit{
             res=false;
           }
         }
-        atom->setProp("_ringStereochemCand",res,1);
+        atom->setProp(common_properties::_ringStereochemCand,res,1);
       }
       return res;
     }
@@ -455,9 +453,8 @@ namespace RDKit{
         // check for another chiral tagged
         // atom without stereochem in this atom's rings:
         INT_VECT ringStereoAtoms(0);
-        if(atom->hasProp("_ringStereoAtoms")){
-          ringStereoAtoms=atom->getProp<INT_VECT>("_ringStereoAtoms");
-        }
+        atom->getPropIfPresent(common_properties::_ringStereoAtoms, ringStereoAtoms);
+
         const VECT_INT_VECT atomRings=ringInfo->atomRings();
         for(VECT_INT_VECT::const_iterator ringIt=atomRings.begin();
             ringIt!=atomRings.end();++ringIt){
@@ -468,7 +465,7 @@ namespace RDKit{
               int same=1;
               if(*idxIt!=static_cast<int>(atom->getIdx()) &&
                  mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                 !mol.getAtomWithIdx(*idxIt)->hasProp("_CIPCode") &&
+                 !mol.getAtomWithIdx(*idxIt)->hasProp(common_properties::_CIPCode) &&
                  atomIsCandidateForRingStereochem(mol,mol.getAtomWithIdx(*idxIt)) ){
                 // we get to keep the stereochem specification on this atom:
                 if(mol.getAtomWithIdx(*idxIt)->getChiralTag()!=atom->getChiralTag()){
@@ -476,24 +473,24 @@ namespace RDKit{
                 }
                 ringStereoAtoms.push_back(same*(*idxIt+1));
                 INT_VECT oAtoms(0);
-                if(mol.getAtomWithIdx(*idxIt)->hasProp("_ringStereoAtoms")){
-                  oAtoms=mol.getAtomWithIdx(*idxIt)->getProp<INT_VECT>("_ringStereoAtoms");
-                }
+                mol.getAtomWithIdx(*idxIt)->getPropIfPresent(common_properties::_ringStereoAtoms,
+							 oAtoms);
+
                 oAtoms.push_back(same*(atom->getIdx()+1));
-                mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms,true);
+                mol.getAtomWithIdx(*idxIt)->setProp(common_properties::_ringStereoAtoms,oAtoms,true);
               }
             }
           }
         }
         if(ringStereoAtoms.size()){
-          atom->setProp("_ringStereoAtoms",ringStereoAtoms,true);
+          atom->setProp(common_properties::_ringStereoAtoms,ringStereoAtoms,true);
           return true;
         }
       }
       return false;
     }
 
-    std::pair<bool,bool> isAtomPotentialChiralCenter(const Atom *atom,const ROMol &mol,const INT_VECT &ranks,
+    std::pair<bool,bool> isAtomPotentialChiralCenter(const Atom *atom,const ROMol &mol,const UINT_VECT &ranks,
                                      Chirality::INT_PAIR_VECT &nbrs){
       // loop over all neighbors and form a decorated list of their
       // ranks:
@@ -521,6 +518,7 @@ namespace RDKit{
           codesSeen[ranks[otherIdx]]=1;
           nbrs.push_back(std::make_pair(ranks[otherIdx],
                                         mol[*beg]->getIdx()));
+          //std::cerr<<"      "<< atom->getIdx() << " " << mol[*beg]->getIdx() << " " << otherIdx << "(" << ranks[otherIdx] <<")"<<std::endl;
           ++beg;
         }
 
@@ -551,7 +549,7 @@ namespace RDKit{
     // returns a pair:
     //   1) are there unassigned stereoatoms
     //   2) did we assign any?
-    std::pair<bool,bool> assignAtomChiralCodes(ROMol &mol,INT_VECT &ranks,
+    std::pair<bool,bool> assignAtomChiralCodes(ROMol &mol,UINT_VECT &ranks,
                                                bool flagPossibleStereoCenters){
       PRECONDITION( (!ranks.size() || ranks.size()==mol.getNumAtoms()),
                     "bad rank vector size");
@@ -570,7 +568,7 @@ namespace RDKit{
         // we understand:
         if(flagPossibleStereoCenters || (tag != Atom::CHI_UNSPECIFIED &&
                                          tag != Atom::CHI_OTHER) ){
-          if(atom->hasProp("_CIPCode")){
+          if(atom->hasProp(common_properties::_CIPCode)){
             continue;
           }
 
@@ -585,7 +583,7 @@ namespace RDKit{
             ++unassignedAtoms;
           }
           if(legalCenter && !hasDupes && flagPossibleStereoCenters){
-            atom->setProp("_ChiralityPossible",1);
+            atom->setProp(common_properties::_ChiralityPossible,1);
           }
 
           if( legalCenter && !hasDupes &&
@@ -597,7 +595,7 @@ namespace RDKit{
             --unassignedAtoms;
 
             // sort the list of neighbors by their CIP ranks:
-            std::sort(nbrs.begin(),nbrs.end(),Chirality::_pairComp);
+            std::sort(nbrs.begin(),nbrs.end(),Rankers::pairLess<int,int>());
 
             // collect the list of neighbor indices:
             std::list<int> nbrIndices;
@@ -613,6 +611,10 @@ namespace RDKit{
               ++nSwaps;
             }
           
+            // std::cerr<<"nbrs from "<<atom->getIdx()<<" ";
+            // std::copy(nbrIndices.begin(),nbrIndices.end(),std::ostream_iterator<unsigned int>(std::cerr," "));
+            // std::cerr<<"nSwaps: "<<nSwaps<<" tag: "<<tag<<std::endl;
+            
             // if that number is odd, we'll change our chirality:
             if(nSwaps%2){
               if(tag == Atom::CHI_TETRAHEDRAL_CCW) tag=Atom::CHI_TETRAHEDRAL_CW;
@@ -622,7 +624,7 @@ namespace RDKit{
             std::string cipCode;
             if(tag==Atom::CHI_TETRAHEDRAL_CCW) cipCode="S";
             else cipCode="R";
-            atom->setProp("_CIPCode",cipCode,true);
+            atom->setProp(common_properties::_CIPCode,cipCode,true);
           }
         }
       }
@@ -632,7 +634,7 @@ namespace RDKit{
     // returns a pair:
     //   1) are there unassigned stereo bonds?
     //   2) did we assign any?
-    std::pair<bool,bool> assignBondStereoCodes(ROMol &mol,INT_VECT &ranks){
+    std::pair<bool,bool> assignBondStereoCodes(ROMol &mol,UINT_VECT &ranks){
       PRECONDITION( (!ranks.size() || ranks.size()==mol.getNumAtoms()),
                     "bad rank vector size");
       bool assignedABond=false;
@@ -668,6 +670,13 @@ namespace RDKit{
               // the pairs here are: atomrank,bonddir
               Chirality::INT_PAIR_VECT begAtomNeighbors,endAtomNeighbors;
               bool hasExplicitUnknownStereo = false;
+              int bgn_stereo=false, end_stereo=false;
+              if((dblBond->getBeginAtom()->getPropIfPresent(common_properties::_UnknownStereo,
+						     bgn_stereo) && bgn_stereo) ||
+                 (dblBond->getEndAtom()->getPropIfPresent(common_properties::_UnknownStereo,
+						      end_stereo) && end_stereo)) {
+                hasExplicitUnknownStereo=true;
+              }
               Chirality::findAtomNeighborDirHelper(mol,begAtom,dblBond,
                                                    ranks,begAtomNeighbors,
                                                    hasExplicitUnknownStereo);
@@ -728,7 +737,7 @@ namespace RDKit{
 
     // reassign atom ranks by supplementing the current ranks
     // with information about known chirality
-    void rerankAtoms(const ROMol &mol, INT_VECT &ranks) {
+    void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
       PRECONDITION(ranks.size()==mol.getNumAtoms(),"bad rank vector size");
       unsigned int factor=100;
       while(factor<mol.getNumAtoms()) factor*=10;
@@ -746,9 +755,8 @@ namespace RDKit{
         invars[i] = ranks[i]*factor;
         const Atom *atom=mol.getAtomWithIdx(i);
         // Priority order: R > S > nothing
-        if(atom->hasProp("_CIPCode")){
-          std::string cipCode;
-          atom->getProp("_CIPCode",cipCode);
+        std::string cipCode;
+        if(atom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
           if(cipCode=="S"){
             invars[i]+=10;
           } else if(cipCode=="R"){
@@ -772,7 +780,7 @@ namespace RDKit{
       iterateCIPRanks(mol,invars,ranks,true);
       // copy the ranks onto the atoms:
       for(unsigned int i=0;i<mol.getNumAtoms();i++){
-        mol.getAtomWithIdx(i)->setProp("_CIPRank",ranks[i],1);
+        mol.getAtomWithIdx(i)->setProp(common_properties::_CIPRank,ranks[i],1);
       }
 
 #ifdef VERBOSE_CANON
@@ -796,14 +804,14 @@ namespace RDKit{
              repeat the above steps as necessary
      */
     void assignStereochemistry(ROMol &mol,bool cleanIt,bool force,bool flagPossibleStereoCenters){
-      if(!force && mol.hasProp("_StereochemDone")){
+      if(!force && mol.hasProp(common_properties::_StereochemDone)){
         return;
       }
 
       // later we're going to need ring information, get it now if we don't
       // have it already:
       if(!mol.getRingInfo()->isInitialized()){
-        MolOps::symmetrizeSSSR(mol);
+        MolOps::fastFindRings(mol);
       }
 
 
@@ -813,27 +821,66 @@ namespace RDKit{
       mol.debugMol(std::cerr);
 #endif
       
-      if(cleanIt){
-        for(ROMol::AtomIterator atIt=mol.beginAtoms();
-            atIt!=mol.endAtoms();++atIt){
-          if((*atIt)->hasProp("_CIPCode")){
-            (*atIt)->clearProp("_CIPCode");
+      // as part of the preparation, we'll loop over the atoms and
+      // bonds to see if anything has stereochemistry
+      // indicated. There's no point in doing the work here if there
+      // are neither stereocenters nor bonds that we need to consider.
+      // The exception to this is when flagPossibleStereoCenters is
+      // true; then we always need to do the work
+      bool hasStereoAtoms=flagPossibleStereoCenters;
+      for(ROMol::AtomIterator atIt=mol.beginAtoms();
+          atIt!=mol.endAtoms();++atIt){
+        if(cleanIt){
+          if((*atIt)->hasProp(common_properties::_CIPCode)){
+            (*atIt)->clearProp(common_properties::_CIPCode);
           }
-        }        
-        for(ROMol::BondIterator bondIt=mol.beginBonds();
-            bondIt!=mol.endBonds();
-            ++bondIt){
+          if((*atIt)->hasProp(common_properties::_ChiralityPossible)){
+            (*atIt)->clearProp(common_properties::_ChiralityPossible);
+          }
+        }
+        if( !hasStereoAtoms &&
+           (*atIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+           (*atIt)->getChiralTag()!=Atom::CHI_OTHER ){
+          hasStereoAtoms=true;
+        }
+      }        
+      bool hasStereoBonds=false;
+      for(ROMol::BondIterator bondIt=mol.beginBonds();
+          bondIt!=mol.endBonds();
+          ++bondIt){
+        if(cleanIt){
           if( (*bondIt)->getBondType()==Bond::DOUBLE &&
-	      (*bondIt)->getStereo() != Bond::STEREOANY ){
+              (*bondIt)->getStereo() != Bond::STEREOANY ){
             (*bondIt)->setStereo(Bond::STEREONONE);
             (*bondIt)->getStereoAtoms().clear();
           }
         }
+        if(!hasStereoBonds && (*bondIt)->getBondType()==Bond::DOUBLE ){
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = mol.getAtomBonds((*bondIt)->getBeginAtom());
+          while(!hasStereoBonds && beg!=end){
+            const BOND_SPTR nbond = mol[*beg];
+            ++beg;
+            if(nbond->getBondDir()==Bond::ENDDOWNRIGHT ||
+               nbond->getBondDir()==Bond::ENDUPRIGHT){
+              hasStereoBonds=true;
+            }
+          }
+          boost::tie(beg,end) = mol.getAtomBonds((*bondIt)->getEndAtom());
+          while(!hasStereoBonds && beg!=end){
+            const BOND_SPTR nbond = mol[*beg];
+            ++beg;
+            if(nbond->getBondDir()==Bond::ENDDOWNRIGHT ||
+               nbond->getBondDir()==Bond::ENDUPRIGHT){
+              hasStereoBonds=true;
+            }
+          }
+        }
       }
-      INT_VECT atomRanks;
-      bool keepGoing=true;
-      bool hasStereoAtoms=true,changedStereoAtoms;
-      bool hasStereoBonds=true,changedStereoBonds;
+
+      UINT_VECT atomRanks;
+      bool keepGoing=hasStereoAtoms|hasStereoBonds;
+      bool changedStereoAtoms,changedStereoBonds;
       while(keepGoing){
         if(hasStereoAtoms){
           boost::tie(hasStereoAtoms,changedStereoAtoms) = Chirality::assignAtomChiralCodes(mol,atomRanks,
@@ -862,14 +909,14 @@ namespace RDKit{
       if(cleanIt){
         for(ROMol::AtomIterator atIt=mol.beginAtoms();
             atIt!=mol.endAtoms();++atIt){
-          if((*atIt)->hasProp("_ringStereochemCand")) (*atIt)->clearProp("_ringStereochemCand");
-          if((*atIt)->hasProp("_ringStereoAtoms")) (*atIt)->clearProp("_ringStereoAtoms");
+          if((*atIt)->hasProp(common_properties::_ringStereochemCand)) (*atIt)->clearProp(common_properties::_ringStereochemCand);
+          if((*atIt)->hasProp(common_properties::_ringStereoAtoms)) (*atIt)->clearProp(common_properties::_ringStereoAtoms);
         }
         for(ROMol::AtomIterator atIt=mol.beginAtoms();
             atIt!=mol.endAtoms();++atIt){
           Atom *atom=*atIt;
           if(atom->getChiralTag()!=Atom::CHI_UNSPECIFIED
-             && !atom->hasProp("_CIPCode") &&
+             && !atom->hasProp(common_properties::_CIPCode) &&
              !Chirality::checkChiralAtomSpecialCases(mol,atom) ){
             atom->setChiralTag(Atom::CHI_UNSPECIFIED);
             
@@ -899,7 +946,7 @@ namespace RDKit{
           }
         }
       }
-      mol.setProp("_StereochemDone",1,true);
+      mol.setProp(common_properties::_StereochemDone,1,true);
 
 #if 0
       std::cerr<<"---\n";
@@ -933,10 +980,10 @@ namespace RDKit{
       //  more than just checking the CIPranks for the neighbors - SP 05/04/04
 
       // make this function callable multiple times
-      if ((mol.hasProp("_BondsPotentialStereo")) && (!cleanIt)) {
+      if ((mol.hasProp(common_properties::_BondsPotentialStereo)) && (!cleanIt)) {
         return;
       } else {
-        INT_VECT ranks;
+        UINT_VECT ranks;
         ranks.resize(mol.getNumAtoms());
         bool cipDone=false;
 
@@ -948,7 +995,7 @@ namespace RDKit{
             Bond *dblBond=*bondIt;
             // if the bond is flagged as EITHERDOUBLE, we ignore it:
             if(dblBond->getBondDir()==Bond::EITHERDOUBLE ||
-	       dblBond->getStereo()==Bond::STEREOANY ){
+               dblBond->getStereo()==Bond::STEREOANY ){
               break;
             }
             // proceed only if we either want to clean the stereocode on this bond
@@ -966,7 +1013,7 @@ namespace RDKit{
                   cipDone=true;
                 }
                 // find the neighbors for the begin atom and the endAtom
-                INT_VECT begAtomNeighbors,endAtomNeighbors;
+                UINT_VECT begAtomNeighbors,endAtomNeighbors;
                 Chirality::findAtomNeighborsHelper(mol,begAtom,dblBond,begAtomNeighbors);
                 Chirality::findAtomNeighborsHelper(mol,endAtom,dblBond,endAtomNeighbors);
                 if(begAtomNeighbors.size()>0 && endAtomNeighbors.size()>0){
@@ -1020,7 +1067,7 @@ namespace RDKit{
             } // end of we want it or CIP code is not set
           } // end of double bond
         } // end of for loop over all bonds
-        mol.setProp("_BondsPotentialStereo", 1, true);
+        mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
       }
     }
 
@@ -1046,8 +1093,8 @@ namespace RDKit{
       // perceived, remove the flags that indicate
       // this... what we're about to do will require
       // that we go again.
-      if(mol.hasProp("_StereochemDone")){
-        mol.clearProp("_StereochemDone");
+      if(mol.hasProp(common_properties::_StereochemDone)){
+        mol.clearProp(common_properties::_StereochemDone);
       }
       
       for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
@@ -1090,17 +1137,17 @@ namespace RDKit{
     }
 
     void removeStereochemistry(ROMol &mol){
-      if(mol.hasProp("_StereochemDone")){
-        mol.clearProp("_StereochemDone");
+      if(mol.hasProp(common_properties::_StereochemDone)){
+        mol.clearProp(common_properties::_StereochemDone);
       }
       for(ROMol::AtomIterator atIt=mol.beginAtoms();
           atIt!=mol.endAtoms();++atIt){
         (*atIt)->setChiralTag(Atom::CHI_UNSPECIFIED);
-        if((*atIt)->hasProp("_CIPCode")){
-          (*atIt)->clearProp("_CIPCode");
+        if((*atIt)->hasProp(common_properties::_CIPCode)){
+          (*atIt)->clearProp(common_properties::_CIPCode);
         }
-        if((*atIt)->hasProp("_CIPRank")){
-          (*atIt)->clearProp("_CIPRank");
+        if((*atIt)->hasProp(common_properties::_CIPRank)){
+          (*atIt)->clearProp(common_properties::_CIPRank);
         }
 
       }        

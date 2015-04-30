@@ -21,7 +21,9 @@ struct ebv_pickle_suite : python::pickle_suite
   static python::tuple
   getinitargs(const ExplicitBitVect& self)
   {
-    return python::make_tuple(self.toString());
+    std::string res=self.toString();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return python::make_tuple(retval);
   };
 };
 
@@ -50,12 +52,15 @@ struct EBV_wrapper {
     boost::shared_ptr<ExplicitBitVect> >("ExplicitBitVect",ebvClassDoc.c_str(),
                                   python::init<unsigned int>())
     .def(python::init<std::string>())
+    .def(python::init<unsigned int, bool>())
     .def("SetBit",(bool (EBV::*)(unsigned int))&EBV::setBit,
-         "Turns on a particular bit on.  Returns the original state of the bit.\n")
+         "Turns on a particular bit.  Returns the original state of the bit.\n")
     .def("SetBitsFromList",(void (*)(EBV *,python::object))SetBitsFromList,
          "Turns on a set of bits.  The argument should be a tuple or list of bit ids.\n")
     .def("UnSetBit",(bool (EBV::*)(unsigned int))&EBV::unsetBit,
-         "Turns on a particular bit off.  Returns the original state of the bit.\n")
+         "Turns off a particular bit.  Returns the original state of the bit.\n")
+    .def("UnSetBitsFromList",(void (*)(EBV *,python::object))UnSetBitsFromList,
+         "Turns off a set of bits.  The argument should be a tuple or list of bit ids.\n")
     .def("GetBit",(bool (EBV::*)(unsigned int) const)&EBV::getBit,
          "Returns the value of a bit.\n")
     .def("GetNumBits",&EBV::getNumBits,
@@ -72,7 +77,7 @@ struct EBV_wrapper {
     .def("GetOnBits",
          (IntVect (*)(const EBV&))GetOnBits,
          "Returns a tuple containing IDs of the on bits.\n")
-    .def("ToBinary",&EBV::toString,
+    .def("ToBinary",(python::object (*)(const EBV&))BVToBinary,
          "Returns an internal binary representation of the vector.\n")
     .def("FromBase64",
          (void (*)(EBV &,const std::string &))InitFromBase64,
@@ -83,9 +88,11 @@ struct EBV_wrapper {
     .def(python::self & python::self)
     .def(python::self | python::self)
     .def(python::self ^ python::self)
+    .def(python::self + python::self)
     .def(~python::self)
     .def(python::self == python::self)
     .def(python::self != python::self)
+    .def(python::self += python::self)
 
     .def_pickle(ebv_pickle_suite())
   ;

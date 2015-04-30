@@ -29,13 +29,21 @@ class Compound(decBase):
   guid=Column(Integer,primary_key=True)
   molpkl=Column(Binary)
 
-
 def RegisterSchema(dbUrl,echo=False):
   engine = create_engine(dbUrl,echo=echo)
   decBase.metadata.create_all(engine)
   maker = sessionmaker(bind=engine)
   return maker
+  
 ConnectToSchema=RegisterSchema
+
+def _ConnectToSchema(dbUrl,echo=False):
+  engine = create_engine(dbUrl,echo=echo)
+  meta
+  decBase.metadata.create_all(engine)
+  maker = sessionmaker(bind=engine)
+  return maker
+  
   
 #set up the logger:
 import rdkit.RDLogger as logging
@@ -47,7 +55,7 @@ def ProcessMol(session,mol,globalProps,nDone,nameProp='_Name',nameCol='compound_
                skipProps=False,addComputedProps=False,
                skipSmiles=False):
   if not mol:
-    raise ValueError,'no molecule'
+    raise ValueError('no molecule')
   if keepHs:
     Chem.SanitizeMol(mol)
   try:
@@ -79,7 +87,7 @@ def ProcessMol(session,mol,globalProps,nDone,nameProp='_Name',nameCol='compound_
     for pi,pn in enumerate(pns):
       if pn.lower()==nameCol.lower(): continue
       pv = mol.GetProp(pn).strip()
-      if globalProps.has_key(pn):
+      if pn in globalProps:
         setattr(cmpd,pn.lower(),pv)
   return cmpd
 
@@ -101,34 +109,31 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   if startAnew:
     if os.path.exists(dbName):
       os.unlink(dbName)
-    sIter=iter(suppl)
-    setattr(Compound,nameCol.lower(),Column(nameCol.lower(),String,default=defaultVal,unique=uniqNames))
-    if not skipSmiles:
-      Compound.smiles = Column(Text,unique=True)
-    if not skipProps:
-      while numForPropScan>0:
-        try:
-          m = sIter.next()
-        except StopIteration:
-          numForPropScan=0
-          break
-        if not m: continue
-        for pn in m.GetPropNames():
-          if pn.lower()==nameCol.lower(): continue
-          if not globalProps.has_key(pn):
-            globalProps[pn]=1
-            setattr(Compound,pn.lower(),Column(pn.lower(),String,default=defaultVal))
-        numForPropScan-=1
-      if addComputedProps:
-        Compound.DonorCount=Column(Integer)
-        Compound.AcceptorCount=Column(Integer)
-        Compound.RotatableBondCount=Column(Integer)
-        Compound.AMW=Column(Float)
-        Compound.MolLogP=Column(Float)
-    session=RegisterSchema('sqlite:///%s'%(dbName))()
-  else:
-    raise NotImplementedError,'updating existing databases is not yet supported'
-
+  sIter=iter(suppl)
+  setattr(Compound,nameCol.lower(),Column(nameCol.lower(),String,default=defaultVal,unique=uniqNames))
+  if not skipSmiles:
+    Compound.smiles = Column(Text,unique=True)
+  if not skipProps:
+    while numForPropScan>0:
+      try:
+        m = next(sIter)
+      except StopIteration:
+        numForPropScan=0
+        break
+      if not m: continue
+      for pn in m.GetPropNames():
+        if pn.lower()==nameCol.lower(): continue
+        if pn not in globalProps:
+          globalProps[pn]=1
+          setattr(Compound,pn.lower(),Column(pn.lower(),String,default=defaultVal))
+      numForPropScan-=1
+    if addComputedProps:
+      Compound.DonorCount=Column(Integer)
+      Compound.AcceptorCount=Column(Integer)
+      Compound.RotatableBondCount=Column(Integer)
+      Compound.AMW=Column(Float)
+      Compound.MolLogP=Column(Float)
+  session=RegisterSchema('sqlite:///%s'%(dbName))()
     
   nDone = 0
   cache=[]
@@ -168,6 +173,8 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   try:
     session.commit()
   except:
+    import traceback
+    traceback.print_exc()
     session.rollback()
     for cmpd in cache:
       try:
@@ -182,4 +189,4 @@ if __name__=='__main__':
   db =sys.argv[2]
   LoadDb(sdf,db,addComputedProps=False)
   session = RegisterSchema('sqlite:///%s'%(db))()
-  print '>>>>', len(session.query(Compound).all())
+  print('>>>>', len(session.query(Compound).all()))

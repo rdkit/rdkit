@@ -30,6 +30,7 @@ Rev history:
 May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
 
 """
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit import DataStructs
@@ -79,7 +80,7 @@ smartsPatts={
   41:('[#6]#[#7]',0), # CTN
   42:('F',0), # F
   43:('[!#6;!#1;!H0]~*~[!#6;!#1;!H0]',0), # QHAQH
-  44:('?',0), # OTHER
+  44:('[!#1;!#6;!#7;!#8;!#9;!#14;!#15;!#16;!#17;!#35;!#53]',0), # OTHER
   45:('[#6]=[#6]~[#7]',0), # C=CN
   46:('Br',0), # BR
   47:('[#16]~*~[#7]',0), # SAN
@@ -221,7 +222,7 @@ def _InitKeys(keyList,keyDict):
       except:
         sma = None
       if not sma:
-        print 'SMARTS parser error for key #%d: %s'%(key,patt)
+        print('SMARTS parser error for key #%d: %s'%(key,patt))
       else:
         keyList[key-1] = sma,count
       

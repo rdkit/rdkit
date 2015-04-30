@@ -20,7 +20,6 @@
 #include <ForceField/ForceField.h>
 #include <ForceField/MMFF/Params.h>
 #include <ForceField/MMFF/Contribs.h>
-#include <ForceField/MMFF/BondStretch.h>
 #include "AtomTyper.h"
 #include "Builder.h"
 #include <stdio.h>
@@ -44,7 +43,6 @@ namespace RDKit {
         PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
-        MMFFBondCollection *mmffBond = MMFFBondCollection::getMMFFBond();
         double totalBondStretchEnergy = 0.0;
         if (mmffMolProperties->getMMFFVerbosity()) {
           if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
@@ -62,46 +60,40 @@ namespace RDKit {
           bi != mol.endBonds(); ++bi) {
           unsigned int idx1 = (*bi)->getBeginAtomIdx();
           unsigned int idx2 = (*bi)->getEndAtomIdx();
-          unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
-          unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx2);
-          unsigned int bondType = mmffMolProperties->getMMFFBondType(*bi);
+          unsigned int bondType;
           BondStretchContrib *contrib;
-          bool areMMFFBondParamsEmpirical = false;
-          const MMFFBond *mmffBondParams = (*mmffBond)(bondType, iAtomType, jAtomType);
-          if (!mmffBondParams) {
-            mmffBondParams = mmffMolProperties->getMMFFBondStretchEmpiricalRuleParams(mol, *bi);
-            areMMFFBondParamsEmpirical = true;
-          }
-          contrib = new BondStretchContrib(field, idx1, idx2, mmffBondParams);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
-          if (mmffMolProperties->getMMFFVerbosity()) {
-            const Atom *iAtom = (*bi)->getBeginAtom();
-            const Atom *jAtom = (*bi)->getEndAtom();
-            const double r0 = Utils::calcBondRestLength(mmffBondParams);
-            const double kb = Utils::calcBondForceConstant(mmffBondParams);
-            const double dist = field->distance(idx1, idx2);
-            const double bondStretchEnergy = Utils::calcBondStretchEnergy(r0, kb, dist);
-            if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
-              oStream << std::left
-                << std::setw(2) << iAtom->getSymbol()
-                << " #" << std::setw(5) << idx1 + 1
-                << std::setw(2) << jAtom->getSymbol()
-                << " #" << std::setw(5) << idx2 + 1
-                << std::right << std::setw(5) << iAtomType
-                << std::setw(5) << jAtomType
-                << std::setw(6) << bondType << "  "
-                << std::fixed << std::setprecision(3)
-                << std::setw(9) << dist
-                << std::setw(9) << r0
-                << std::setw(9) << dist - r0
-                << std::setw(10) << bondStretchEnergy
-                << std::setw(10) << kb
-                << std::endl;
+          MMFFBond mmffBondParams;
+          if (mmffMolProperties->getMMFFBondStretchParams
+            (mol, idx1, idx2, bondType, mmffBondParams)) {
+            contrib = new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
+            field->contribs().push_back(ForceFields::ContribPtr(contrib));
+            if (mmffMolProperties->getMMFFVerbosity()) {
+              unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
+              unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx2);
+              const Atom *iAtom = (*bi)->getBeginAtom();
+              const Atom *jAtom = (*bi)->getEndAtom();
+              const double dist = field->distance(idx1, idx2);
+              const double bondStretchEnergy = Utils::calcBondStretchEnergy
+                (mmffBondParams.r0, mmffBondParams.kb, dist);
+              if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+                oStream << std::left
+                  << std::setw(2) << iAtom->getSymbol()
+                  << " #" << std::setw(5) << idx1 + 1
+                  << std::setw(2) << jAtom->getSymbol()
+                  << " #" << std::setw(5) << idx2 + 1
+                  << std::right << std::setw(5) << iAtomType
+                  << std::setw(5) << jAtomType
+                  << std::setw(6) << bondType << "  "
+                  << std::fixed << std::setprecision(3)
+                  << std::setw(9) << dist
+                  << std::setw(9) << mmffBondParams.r0
+                  << std::setw(9) << dist - mmffBondParams.r0
+                  << std::setw(10) << bondStretchEnergy
+                  << std::setw(10) << mmffBondParams.kb
+                  << std::endl;
+              }
+              totalBondStretchEnergy += bondStretchEnergy;
             }
-            totalBondStretchEnergy += bondStretchEnergy;
-          }
-          if (areMMFFBondParamsEmpirical) {
-            delete mmffBondParams;
           }
         }
         if (mmffMolProperties->getMMFFVerbosity()) {
@@ -239,8 +231,6 @@ namespace RDKit {
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx[3];
-        MMFFAngleCollection *mmffAngle = MMFFAngleCollection::getMMFFAngle();
-        MMFFBondCollection *mmffBond = MMFFBondCollection::getMMFFBond();
         MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
         AngleBendContrib *contrib;
         ROMol::ADJ_ITER nbr1Idx;
@@ -282,78 +272,50 @@ namespace RDKit {
               }
               const Atom *kAtom = mol[*nbr2Idx].get();
               idx[2] = kAtom->getIdx();
-              unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
-              unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
-              unsigned int angleType = mmffMolProperties->getMMFFAngleType
-                (mol, idx[0], idx[1], idx[2]);
-              bool areMMFFBondParamsEmpirical[2] = { false, false };
-              bool areMMFFAngleParamsEmpirical = false;
-              const MMFFAngle *mmffAngleParams = (*mmffAngle)(angleType, iAtomType, jAtomType, kAtomType);
-              const MMFFBond *mmffBondParams[2] = { NULL, NULL };
-              if ((!mmffAngleParams) || (isDoubleZero(mmffAngleParams->ka))) {
-                areMMFFAngleParamsEmpirical = true;
-                for (unsigned int i = 0; i < 2; ++i) {
-                  const Bond *bond = mol.getBondBetweenAtoms(idx[i], idx[i + 1]);
-                  unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[i]);
-                  unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx[i + 1]);
-                  unsigned int bondType = mmffMolProperties->getMMFFBondType(bond);
-                  mmffBondParams[i] = (*mmffBond)(bondType, iAtomType, jAtomType);
-                  if (!(mmffBondParams[i])) {
-                    mmffBondParams[i] = mmffMolProperties->getMMFFBondStretchEmpiricalRuleParams(mol, bond);
-                    areMMFFBondParamsEmpirical[i] = true;
+              unsigned int angleType;
+              MMFFAngle mmffAngleParams;
+              if (mmffMolProperties->getMMFFAngleBendParams(mol,
+                idx[0], idx[1], idx[2], angleType, mmffAngleParams)) {
+                contrib = new AngleBendContrib(field, idx[0], idx[1], idx[2],
+                  &mmffAngleParams, mmffPropParamsCentralAtom);
+                field->contribs().push_back(ForceFields::ContribPtr(contrib));
+                if (mmffMolProperties->getMMFFVerbosity()) {
+                  unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
+                  unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
+                  const RDGeom::Point3D p1((*(points[idx[0]]))[0],
+                    (*(points[idx[0]]))[1], (*(points[idx[0]]))[2]);
+                  const RDGeom::Point3D p2((*(points[idx[1]]))[0],
+                    (*(points[idx[1]]))[1], (*(points[idx[1]]))[2]);
+                  const RDGeom::Point3D p3((*(points[idx[2]]))[0],
+                    (*(points[idx[2]]))[1], (*(points[idx[2]]))[2]);
+                  const double cosTheta = Utils::calcCosTheta(p1, p2, p3,
+                    field->distance(idx[0], idx[1]), field->distance(idx[1], idx[2]));
+                  const double theta = RAD2DEG * acos(cosTheta);
+                  const double angleBendEnergy = Utils::calcAngleBendEnergy
+                    (mmffAngleParams.theta0, mmffAngleParams.ka,
+                    mmffPropParamsCentralAtom->linh, cosTheta);
+                  if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+                    oStream << std::left
+                      << std::setw(2) << iAtom->getSymbol()
+                      << " #" << std::setw(5) << idx[0] + 1
+                      << std::setw(2) << jAtom->getSymbol()
+                      << " #" << std::setw(5) << idx[1] + 1
+                      << std::setw(2) << kAtom->getSymbol()
+                      << " #" << std::setw(5) << idx[2] + 1
+                      << std::right << std::setw(5) << iAtomType
+                      << std::setw(5) << jAtomType
+                      << std::setw(5) << kAtomType
+                      << std::setw(6) << angleType << "  "
+                      << std::fixed << std::setprecision(3)
+                      << std::setw(10) << theta
+                      << std::setw(10) << mmffAngleParams.theta0
+                      << std::setw(10) << theta - mmffAngleParams.theta0
+                      << std::setw(10) << angleBendEnergy
+                      << std::setw(10) << mmffAngleParams.ka
+                      << std::endl;
                   }
+                  totalAngleBendEnergy += angleBendEnergy;
                 }
-                mmffAngleParams = getMMFFAngleBendEmpiricalRuleParams
-                  (mol, mmffAngleParams, mmffPropParamsCentralAtom,
-                  mmffBondParams[0], mmffBondParams[1], idx[0], idx[1], idx[2]);
-              }
-              contrib = new AngleBendContrib(field, idx[0], idx[1], idx[2],
-                mmffAngleParams, mmffPropParamsCentralAtom);
-              field->contribs().push_back(ForceFields::ContribPtr(contrib));
-              if (mmffMolProperties->getMMFFVerbosity()) {
-                const double theta0 = Utils::calcAngleRestValue(mmffAngleParams);
-                const double ka = Utils::calcAngleForceConstant(mmffAngleParams);
-                const RDGeom::Point3D p1((*(points[idx[0]]))[0],
-                  (*(points[idx[0]]))[1], (*(points[idx[0]]))[2]);
-                const RDGeom::Point3D p2((*(points[idx[1]]))[0],
-                  (*(points[idx[1]]))[1], (*(points[idx[1]]))[2]);
-                const RDGeom::Point3D p3((*(points[idx[2]]))[0],
-                  (*(points[idx[2]]))[1], (*(points[idx[2]]))[2]);
-                const double cosTheta = Utils::calcCosTheta(p1, p2, p3,
-                  field->distance(idx[0], idx[1]), field->distance(idx[1], idx[2]));
-                const double theta = RAD2DEG * acos(cosTheta);
-                const double angleBendEnergy = Utils::calcAngleBendEnergy
-                  (theta0, ka, mmffPropParamsCentralAtom->linh, cosTheta);
-                if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
-                  oStream << std::left
-                    << std::setw(2) << iAtom->getSymbol()
-                    << " #" << std::setw(5) << idx[0] + 1
-                    << std::setw(2) << jAtom->getSymbol()
-                    << " #" << std::setw(5) << idx[1] + 1
-                    << std::setw(2) << kAtom->getSymbol()
-                    << " #" << std::setw(5) << idx[2] + 1
-                    << std::right << std::setw(5) << iAtomType
-                    << std::setw(5) << jAtomType
-                    << std::setw(5) << kAtomType
-                    << std::setw(6) << angleType << "  "
-                    << std::fixed << std::setprecision(3)
-                    << std::setw(10) << theta
-                    << std::setw(10) << theta0
-                    << std::setw(10) << theta - theta0
-                    << std::setw(10) << angleBendEnergy
-                    << std::setw(10) << ka
-                    << std::endl;
-                }
-                totalAngleBendEnergy += angleBendEnergy;
-              }
-              if (areMMFFAngleParamsEmpirical) {
-                delete mmffAngleParams;
-              }
-              if (areMMFFBondParamsEmpirical[0]) {
-                delete mmffBondParams[0];
-              }
-              if (areMMFFBondParamsEmpirical[1]) {
-                delete mmffBondParams[1];
               }
             }
           }
@@ -383,10 +345,6 @@ namespace RDKit {
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx[3];
         unsigned int bondType[2];
-        MMFFStbnCollection *mmffStbn = MMFFStbnCollection::getMMFFStbn();
-        MMFFDfsbCollection *mmffDfsb = MMFFDfsbCollection::getMMFFDfsb();
-        MMFFAngleCollection *mmffAngle = MMFFAngleCollection::getMMFFAngle();
-        MMFFBondCollection *mmffBond = MMFFBondCollection::getMMFFBond();
         MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
         std::pair<bool, const MMFFStbn *> mmffStbnParams;
         const MMFFAngle *mmffAngleParams = NULL;
@@ -436,48 +394,19 @@ namespace RDKit {
               }
               idx[0] = iAtom->getIdx();
               idx[2] = kAtom->getIdx();
-              unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
-              unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
-              unsigned int angleType = mmffMolProperties->getMMFFAngleType
-                (mol, idx[0], idx[1], idx[2]);
-              bool areMMFFBondParamsEmpirical[2] = { false, false };
-              bool areMMFFAngleParamsEmpirical = false;
-              mmffAngleParams = (*mmffAngle)(angleType, iAtomType, jAtomType, kAtomType);
-              const MMFFBond *mmffBondParams[2] = { NULL, NULL };
-              for (unsigned int i = 0; i < 2; ++i) {
-                const Bond *bond = mol.getBondBetweenAtoms(idx[i], idx[i + 1]);
-                unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[i]);
-                unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx[i + 1]);
-                bondType[i] = mmffMolProperties->getMMFFBondType(bond);
-                mmffBondParams[i] = (*mmffBond)(bondType[i], iAtomType, jAtomType);
-                if (!(mmffBondParams[i])) {
-                  mmffBondParams[i] = mmffMolProperties->getMMFFBondStretchEmpiricalRuleParams(mol, bond);
-                  areMMFFBondParamsEmpirical[i] = true;
-                }
-              }
-              if ((!mmffAngleParams) || isDoubleZero(mmffAngleParams->ka)) {
-                mmffAngleParams = getMMFFAngleBendEmpiricalRuleParams
-                  (mol, mmffAngleParams, mmffPropParamsCentralAtom,
-                  mmffBondParams[0], mmffBondParams[1], idx[0], idx[1], idx[2]);
-              }
-              unsigned int stretchBendType = MMFF::getMMFFStretchBendType
-                (angleType, (iAtomType <= kAtomType) ? bondType[0] : bondType[1],
-                (iAtomType < kAtomType) ? bondType[1] : bondType[0]);
-              mmffStbnParams = mmffStbn->getMMFFStbnParams(stretchBendType,
-                bondType[0], bondType[1], iAtomType, jAtomType, kAtomType);
-              if (!(mmffStbnParams.second)) {
-                mmffStbnParams = mmffDfsb->getMMFFDfsbParams(getPeriodicTableRow(iAtom->getAtomicNum()),
-                  getPeriodicTableRow(jAtom->getAtomicNum()), getPeriodicTableRow(kAtom->getAtomicNum()));
-              }
-              if (!(isDoubleZero((mmffStbnParams.second)->kbaIJK)
-                && isDoubleZero((mmffStbnParams.second)->kbaKJI))) {
+              unsigned int stretchBendType;
+              MMFFStbn mmffStbnParams;
+              MMFFBond mmffBondParams[2];
+              MMFFAngle mmffAngleParams;
+              if (mmffMolProperties->getMMFFStretchBendParams(mol, idx[0], idx[1],
+                idx[2], stretchBendType, mmffStbnParams, mmffBondParams, mmffAngleParams)) {
                 contrib = new StretchBendContrib(field, idx[0], idx[1], idx[2],
-                  mmffStbnParams, mmffAngleParams, mmffBondParams[0], mmffBondParams[1]);
+                  &mmffStbnParams, &mmffAngleParams, &mmffBondParams[0], &mmffBondParams[1]);
                 field->contribs().push_back(ForceFields::ContribPtr(contrib));
                 if (mmffMolProperties->getMMFFVerbosity()) {
-                  const double theta0 = Utils::calcAngleRestValue(mmffAngleParams);
-                  const double restLen1 = Utils::calcBondRestLength(mmffBondParams[0]);
-                  const double restLen2 = Utils::calcBondRestLength(mmffBondParams[1]);
+                  unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
+                  unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx[1]);
+                  unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
                   const double dist1 = field->distance(idx[0], idx[1]);
                   const double dist2 = field->distance(idx[1], idx[2]);
                   const RDGeom::Point3D p1((*(points[idx[0]]))[0],
@@ -489,10 +418,11 @@ namespace RDKit {
                   const double cosTheta = Utils::calcCosTheta(p1, p2, p3, dist1, dist2);
                   const double theta = RAD2DEG * acos(cosTheta);
                   const std::pair<double, double> forceConstants =
-                    Utils::calcStbnForceConstants(mmffStbnParams);
+                    Utils::calcStbnForceConstants(&mmffStbnParams);
                   const std::pair<double, double> stretchBendEnergies
-                    = Utils::calcStretchBendEnergy(dist1 - restLen1,
-                    dist2 - restLen2, theta - theta0, forceConstants);
+                    = Utils::calcStretchBendEnergy(dist1 - mmffBondParams[0].r0,
+                    dist2 - mmffBondParams[1].r0, theta - mmffAngleParams.theta0,
+                    forceConstants);
                   if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
                     if (!isDoubleZero(forceConstants.first)) {
                       oStream << std::left
@@ -508,11 +438,11 @@ namespace RDKit {
                         << std::setw(6) << stretchBendType << "  "
                         << std::fixed << std::setprecision(3)
                         << std::setw(10) << theta
-                        << std::setw(10) << theta - theta0
-                        << std::setw(10) << dist1 - restLen1
-                        << std::setw(10) << dist2 - restLen2
+                        << std::setw(10) << theta - mmffAngleParams.theta0
+                        << std::setw(10) << dist1 - mmffBondParams[0].r0
+                        << std::setw(10) << dist2 - mmffBondParams[1].r0
                         << std::setw(10) << stretchBendEnergies.first
-                        << std::setw(10) << forceConstants.first
+                        << std::setw(10) << mmffStbnParams.kbaIJK
                         << std::endl;
                     }
                     if (!isDoubleZero(forceConstants.second)) {
@@ -529,25 +459,16 @@ namespace RDKit {
                         << std::setw(6) << stretchBendType << "  "
                         << std::fixed << std::setprecision(3)
                         << std::setw(10) << theta
-                        << std::setw(10) << theta - theta0
-                        << std::setw(10) << dist1 - restLen1
-                        << std::setw(10) << dist2 - restLen2
+                        << std::setw(10) << theta - mmffAngleParams.theta0
+                        << std::setw(10) << dist1 - mmffBondParams[0].r0
+                        << std::setw(10) << dist2 - mmffBondParams[1].r0
                         << std::setw(10) << stretchBendEnergies.second
-                        << std::setw(10) << forceConstants.second
+                        << std::setw(10) << mmffStbnParams.kbaKJI
                         << std::endl;
                     }
                   }
                   totalStretchBendEnergy += (stretchBendEnergies.first + stretchBendEnergies.second);
                 }
-              }
-              if (areMMFFAngleParamsEmpirical) {
-                delete mmffAngleParams;
-              }
-              if (areMMFFBondParamsEmpirical[0]) {
-                delete mmffBondParams[0];
-              }
-              if (areMMFFBondParamsEmpirical[1]) {
-                delete mmffBondParams[1];
               }
               ++j;
             }
@@ -579,10 +500,7 @@ namespace RDKit {
         ROMol::ADJ_ITER nbrIdx;
         ROMol::ADJ_ITER endNbrs;
 
-        MMFFOopCollection *mmffOop = MMFFOopCollection::getMMFFOop
-          (mmffMolProperties->getMMFFVariant() == "MMFF94s");
         OopBendContrib *contrib;
-        const MMFFOop *mmffOopParams;
         double totalOopBendEnergy = 0.0;
         RDGeom::PointPtrVect points;
         if (mmffMolProperties->getMMFFVerbosity()) {
@@ -615,9 +533,10 @@ namespace RDKit {
             }
             ++i;
           }
-          mmffOopParams = (*mmffOop)(atomType[0], atomType[1], atomType[2], atomType[3]);
+          MMFFOop mmffOopParams;
           // if no parameters could be found, we exclude this term (SURDOX02)
-          if (!mmffOopParams) {
+          if (!(mmffMolProperties->getMMFFOopBendParams
+            (mol, idx[0], idx[1], idx[2], idx[3], mmffOopParams))) {
             continue;
           }
           for (unsigned int i = 0; i < 3; ++i) {
@@ -642,7 +561,7 @@ namespace RDKit {
               break;
             }
             contrib = new OopBendContrib
-              (field, idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], mmffOopParams);
+              (field, idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], &mmffOopParams);
             field->contribs().push_back(ForceFields::ContribPtr(contrib));
             if (mmffMolProperties->getMMFFVerbosity()) {
               const RDGeom::Point3D p1((*(points[idx[n[0]]]))[0],
@@ -654,8 +573,8 @@ namespace RDKit {
               const RDGeom::Point3D p4((*(points[idx[n[3]]]))[0],
                 (*(points[idx[n[3]]]))[1], (*(points[idx[n[3]]]))[2]);
               const double chi = Utils::calcOopChi(p1, p2, p3, p4);
-              const double koop = Utils::calcOopBendForceConstant(mmffOopParams);
-              const double oopBendEnergy = Utils::calcOopBendEnergy(chi, koop);
+              const double oopBendEnergy = Utils::calcOopBendEnergy
+                (chi, mmffOopParams.koop);
               if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
                 oStream << std::left
                   << std::setw(2) << atom[0]->getSymbol()
@@ -673,7 +592,7 @@ namespace RDKit {
                   << std::fixed << std::setprecision(3)
                   << std::setw(10) << chi
                   << std::setw(10) << oopBendEnergy
-                  << std::setw(10) << koop
+                  << std::setw(10) << mmffOopParams.koop
                   << std::endl;
               }
               totalOopBendEnergy += oopBendEnergy;
@@ -704,16 +623,10 @@ namespace RDKit {
         PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
-        unsigned int idx1;
-        unsigned int idx2;
-        unsigned int idx3;
-        unsigned int idx4;
         ROMol::ADJ_ITER nbr1Idx;
         ROMol::ADJ_ITER end1Nbrs;
         ROMol::ADJ_ITER nbr2Idx;
         ROMol::ADJ_ITER end2Nbrs;
-        MMFFTorCollection *mmffTor = MMFFTorCollection::getMMFFTor
-          (mmffMolProperties->getMMFFVariant() == "MMFF94s");
         double totalTorsionEnergy = 0.0;
         RDGeom::PointPtrVect points;
         if (mmffMolProperties->getMMFFVerbosity()) {
@@ -721,7 +634,7 @@ namespace RDKit {
             oStream <<
               "\n"
               "T O R S I O N A L\n\n"
-              "--------------ATOMS---------------      ---ATOM TYPES---     FF     TORSION              -----FORCE CONSTANTS-----\n"
+              "--------------ATOMS---------------      ---ATOM TYPES---     FF     TORSION              -----FORCE Params-----\n"
               "  I        J        K        L          I    J    K    L   CLASS     ANGLE    ENERGY       V1        V2        V3\n"
               "------------------------------------------------------------------------------------------------------------------"
               << std::endl;
@@ -762,30 +675,20 @@ namespace RDKit {
                     if (idx4 != idx1) {
                       // we now have a torsion involving atoms (bonds):
                       //  bIdx - (tBond1) - idx1 - (bond) - idx2 - (tBond2) - eIdx
-                      const Atom *iAtom = mol.getAtomWithIdx(idx1);
-                      const Atom *lAtom = mol.getAtomWithIdx(idx4);
-                      TorsionAngleContrib *contrib;
-                      unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
-                      unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx2);
-                      unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx3);
-                      unsigned int lAtomType = mmffMolProperties->getMMFFAtomType(idx4);
-                      const std::pair<unsigned int, unsigned int> torTypePair =
-                        mmffMolProperties->getMMFFTorsionType(mol, idx1, idx2, idx3, idx4);
-                      bool areMMFFTorParamsEmpirical = false;
-                      const std::pair<const unsigned int, const MMFFTor *> mmffTorPair =
-                        mmffTor->getMMFFTorParams(torTypePair, iAtomType, jAtomType, kAtomType, lAtomType);
-                      unsigned int torType = (mmffTorPair.first ? mmffTorPair.first : torTypePair.first);
-                      const MMFFTor *mmffTorParams = mmffTorPair.second;
-                      if (!mmffTorParams) {
-                        torType = torTypePair.first;
-                        mmffTorParams = mmffMolProperties->getMMFFTorsionEmpiricalRuleParams(mol, idx2, idx3);
-                        areMMFFTorParamsEmpirical = true;
-                      }
-                      if (!(isDoubleZero(mmffTorParams->V1) && isDoubleZero(mmffTorParams->V2)
-                        && isDoubleZero(mmffTorParams->V3))) {
-                        contrib = new TorsionAngleContrib(field, idx1, idx2, idx3, idx4, mmffTorParams);
+                      unsigned int torType;
+                      MMFFTor mmffTorParams;
+                      if (mmffMolProperties->getMMFFTorsionParams(mol,
+                        idx1, idx2, idx3, idx4, torType, mmffTorParams)) {
+                        TorsionAngleContrib *contrib = new TorsionAngleContrib
+                          (field, idx1, idx2, idx3, idx4, &mmffTorParams);
                         field->contribs().push_back(ForceFields::ContribPtr(contrib));
                         if (mmffMolProperties->getMMFFVerbosity()) {
+                          const Atom *iAtom = mol.getAtomWithIdx(idx1);
+                          const Atom *lAtom = mol.getAtomWithIdx(idx4);
+                          unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
+                          unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx2);
+                          unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx3);
+                          unsigned int lAtomType = mmffMolProperties->getMMFFAtomType(idx4);
                           const RDGeom::Point3D p1((*(points[idx1]))[0],
                             (*(points[idx1]))[1], (*(points[idx1]))[2]);
                           const RDGeom::Point3D p2((*(points[idx2]))[0],
@@ -795,11 +698,8 @@ namespace RDKit {
                           const RDGeom::Point3D p4((*(points[idx4]))[0],
                             (*(points[idx4]))[1], (*(points[idx4]))[2]);
                           const double cosPhi = Utils::calcTorsionCosPhi(p1, p2, p3, p4);
-                          const boost::tuple<double, double, double> forceConstants =
-                            Utils::calcTorsionForceConstant(mmffTorParams);
                           const double torsionEnergy = Utils::calcTorsionEnergy
-                            (boost::tuples::get<0>(forceConstants), boost::tuples::get<1>(forceConstants),
-                            boost::tuples::get<2>(forceConstants), cosPhi);
+                            (mmffTorParams.V1, mmffTorParams.V2, mmffTorParams.V3, cosPhi);
                           if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
                             oStream << std::left
                               << std::setw(2) << iAtom->getSymbol()
@@ -818,9 +718,9 @@ namespace RDKit {
                               << std::fixed << std::setprecision(3)
                               << std::setw(10) << RAD2DEG * acos(cosPhi)
                               << std::setw(10) << torsionEnergy
-                              << std::setw(10) << boost::tuples::get<0>(forceConstants)
-                              << std::setw(10) << boost::tuples::get<1>(forceConstants)
-                              << std::setw(10) << boost::tuples::get<2>(forceConstants)
+                              << std::setw(10) << mmffTorParams.V1
+                              << std::setw(10) << mmffTorParams.V2
+                              << std::setw(10) << mmffTorParams.V3
                               << std::endl;
                           }
                           totalTorsionEnergy += torsionEnergy;
@@ -859,7 +759,6 @@ namespace RDKit {
         PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
-        MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
         INT_VECT fragMapping;
         if (ignoreInterfragInteractions) {
           std::vector<ROMOL_SPTR> molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
@@ -889,40 +788,34 @@ namespace RDKit {
               if (dist > nonBondedThresh) {
                 continue;
               }
-              const unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);
-              const unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(j);
-              const MMFFVdW *mmffVdWParamsIAtom = (*mmffVdW)(iAtomType);
-              const MMFFVdW *mmffVdWParamsJAtom = (*mmffVdW)(jAtomType);
-              VdWContrib *contrib;
-              contrib = new VdWContrib(field, i, j,
-                mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-              field->contribs().push_back(ForceFields::ContribPtr(contrib));
-              if (mmffMolProperties->getMMFFVerbosity()) {
-                const Atom *iAtom = mol.getAtomWithIdx(i);
-                const Atom *jAtom = mol.getAtomWithIdx(j);
-                double R_star_ij = Utils::calcUnscaledVdWMinimum
-                  (mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-                double wellDepth = Utils::calcUnscaledVdWWellDepth
-                  (R_star_ij, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-                Utils::scaleVdWParams(R_star_ij, wellDepth,
-                  mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-                const double vdWEnergy = Utils::calcVdWEnergy(dist, R_star_ij, wellDepth);
-                if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
-                  oStream << std::left
-                    << std::setw(2) << iAtom->getSymbol()
-                    << " #" << std::setw(5) << i + 1
-                    << std::setw(2) << jAtom->getSymbol()
-                    << " #" << std::setw(5) << j + 1
-                    << std::right << std::setw(5) << iAtomType
-                    << std::setw(5) << jAtomType << "  "
-                    << std::fixed << std::setprecision(3)
-                    << std::setw(9) << dist
-                    << std::setw(10) << vdWEnergy
-                    << std::setw(9) << R_star_ij
-                    << std::setw(9) << wellDepth
-                    << std::endl;
+              MMFFVdWRijstarEps mmffVdWParams;
+              if (mmffMolProperties->getMMFFVdWParams(i, j, mmffVdWParams)) {
+                VdWContrib *contrib = new VdWContrib(field, i, j, &mmffVdWParams);
+                field->contribs().push_back(ForceFields::ContribPtr(contrib));
+                if (mmffMolProperties->getMMFFVerbosity()) {
+                  const Atom *iAtom = mol.getAtomWithIdx(i);
+                  const Atom *jAtom = mol.getAtomWithIdx(j);
+                  const double vdWEnergy = Utils::calcVdWEnergy(dist,
+                    mmffVdWParams.R_ij_star, mmffVdWParams.epsilon);
+                  if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+                    unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);
+                    unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(j);
+                    oStream << std::left
+                      << std::setw(2) << iAtom->getSymbol()
+                      << " #" << std::setw(5) << i + 1
+                      << std::setw(2) << jAtom->getSymbol()
+                      << " #" << std::setw(5) << j + 1
+                      << std::right << std::setw(5) << iAtomType
+                      << std::setw(5) << jAtomType << "  "
+                      << std::fixed << std::setprecision(3)
+                      << std::setw(9) << dist
+                      << std::setw(10) << vdWEnergy
+                      << std::setw(9) << mmffVdWParams.R_ij_star
+                      << std::setw(9) << mmffVdWParams.epsilon
+                      << std::endl;
+                  }
+                  totalVdWEnergy += vdWEnergy;
                 }
-                totalVdWEnergy += vdWEnergy;
               }
             }
           }
@@ -951,7 +844,6 @@ namespace RDKit {
         PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
-        MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
         INT_VECT fragMapping;
         if (ignoreInterfragInteractions) {
           std::vector<ROMOL_SPTR> molFrags = MolOps::getMolFrags(mol, true, &fragMapping);

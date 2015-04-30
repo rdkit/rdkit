@@ -27,6 +27,15 @@ namespace RDKit{
     d_partialBonds.resize(0);
   };
 
+  RWMol &RWMol::operator=(const RWMol &other) {
+    if(this!=&other){
+      this->clear();
+      d_partialBonds.clear();
+      initFromOther(other,false,-1);
+    }
+    return *this;
+  }
+
   void RWMol::insertMol(const ROMol &other)
   {
     std::vector<unsigned int> newAtomIds(other.getNumAtoms());
@@ -120,7 +129,7 @@ namespace RDKit{
   void RWMol::removeAtom(Atom *atom) {
     PRECONDITION(atom,"NULL atom provided");
     PRECONDITION(static_cast<RWMol *>(&atom->getOwningMol())==this,"atom not owned by this molecule");
-    int idx=atom->getIdx();
+    unsigned int idx=atom->getIdx();
     
     // remove any bookmarks which point to this atom:
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
@@ -210,7 +219,8 @@ namespace RDKit{
     RANGE_CHECK(0,atomIdx1,getNumAtoms()-1);
     RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
     PRECONDITION(atomIdx1!=atomIdx2,"attempt to add self-bond");
-    PRECONDITION(!getBondBetweenAtoms(atomIdx1,atomIdx2),"bond already exists");
+    PRECONDITION(!(boost::edge(atomIdx1,atomIdx2,d_graph).second),"bond already exists");
+
     Bond *b = new Bond(bondType);
     b->setOwningMol(this);
     if(bondType==Bond::AROMATIC){
@@ -235,7 +245,7 @@ namespace RDKit{
 
     // if both atoms have a degree>1, reset our ring info structure,
     // because there's a non-trivial chance that it's now wrong.
-    if(boost::out_degree(atomIdx1,d_graph)>1 && boost::out_degree(atomIdx2,d_graph)>1){
+    if(dp_ringInfo && dp_ringInfo->isInitialized() && boost::out_degree(atomIdx1,d_graph)>1 && boost::out_degree(atomIdx2,d_graph)>1){
       dp_ringInfo->reset();      
     }
     

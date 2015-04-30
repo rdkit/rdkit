@@ -240,6 +240,8 @@ import sys
 
 try:
     from rdkit import Chem
+    from rdkit.six import next
+    from rdkit.six.moves import range
 except ImportError:
     sys.stderr.write("Please install RDKit from http://www.rdkit.org/\n")
     raise
@@ -1152,7 +1154,7 @@ def get_closure_label(bond_smarts, closure):
         return bond_smarts + "%%%02d" % closure
 
 # Precompute the initial closure heap. *Overall* performance went from 0.73 to 0.64 seconds!
-_available_closures = range(1, 101)
+_available_closures = list(range(1, 101))
 heapify(_available_closures)
 
 # The Weininger paper calls this 'GENES'; I call it "generate_smiles."
@@ -1345,13 +1347,17 @@ def nonempty_powerset(iterable):
     "nonempty_powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
     s = list(iterable)
     it = chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
-    it.next()
+    next(it)
     return it
 
 
 # Call this to get a new unique function. Used to break ties in the
 # priority queue.
-tiebreaker = itertools.count().next
+#tiebreaker = itertools.count().next
+def _Counter():
+    c = itertools.count()
+    return lambda: next(c)
+tiebreaker = _Counter()
 
 ### The enumeration code
 
@@ -1882,7 +1888,8 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
         #  1055.2s sorting by (if bond.is_in_ring: 2; else: -(atom1.is_in_ring + atom2.is_in_ring))
         #  1037.4s sorting by (atom1.is_in_ring + atom2.is_in_ring)
         sorted_bonds = list(enumerate(mol.bonds))
-        def get_bond_ring_score((bond_index, bond), atoms=mol.atoms):
+        def get_bond_ring_score(bond_data, atoms=mol.atoms):
+            bond_index, bond = bond_data
             a1, a2 = bond.atom_indices
             return bond.is_in_ring + atoms[a1].is_in_ring + atoms[a2].is_in_ring
         sorted_bonds.sort(key = get_bond_ring_score)
@@ -1978,7 +1985,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
 # Assign a unique identifier to every unique key
 class Uniquer(dict):
     def __init__(self):
-        self.counter = itertools.count().next
+        self.counter = _Counter()
     def __missing__(self, key):
         self[key] = count = self.counter()
         return count
@@ -2632,7 +2639,7 @@ def main(args=None):
         if atom_class_tag is not None:
             try:
                 assign_isotopes_from_class_tag(mol, atom_class_tag)
-            except ValueError, err:
+            except ValueError as err:
                 raise SystemExit("Structure #%d: %s" % (molno+1, err))
         structures.append(mol)
         if args.verbosity > 1:

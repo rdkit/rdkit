@@ -46,7 +46,7 @@
 #include <vector>
 #include <list>
 #include <iostream>
-#include "Exceptions.h"
+#include <RDGeneral/Exceptions.h>
 
 namespace python = boost::python;
 
@@ -129,5 +129,74 @@ std::vector<T> *pythonObjectToVect(const python::object &obj){
   }
   return res;
 }
+
+class NOGIL
+{
+public:
+    inline NOGIL()
+    {
+        m_thread_state = PyEval_SaveThread();
+    }
+
+    inline ~NOGIL()
+    {
+        PyEval_RestoreThread(m_thread_state);
+        m_thread_state = NULL;
+    }
+
+private:
+    PyThreadState * m_thread_state;
+};
+
+
+// -------------------
+// This block was adapted from this mailing list post by Matthew Scouten:
+// https://mail.python.org/pipermail/cplusplus-sig/2009-May/014505.html
+// Matthew credits Hans Meine in his post.
+template<class T>
+inline PyObject * managingPyObject(T *p)
+{
+    return typename python::manage_new_object::apply<T *>::type()(p);
+}
+
+template<class Copyable>
+python::object
+generic__copy__(python::object copyable)
+{
+  Copyable *newCopyable(new Copyable(python::extract<const Copyable
+                                                     &>(copyable)));
+  python::object
+    result(python::detail::new_reference(managingPyObject(newCopyable)));
+
+  python::extract<python::dict>(result.attr("__dict__"))().update(
+                                                                  copyable.attr("__dict__"));
+
+  return result;
+}
+
+template<class Copyable>
+python::object
+generic__deepcopy__(python::object copyable, python::dict memo)
+{
+  python::object copyMod = python::import("copy");
+  python::object deepcopy = copyMod.attr("deepcopy");
+
+  Copyable *newCopyable(new Copyable(python::extract<const Copyable
+                                                     &>(copyable)));
+  python::object
+    result(python::detail::new_reference(managingPyObject(newCopyable)));
+
+  // HACK: copyableId shall be the same as the result of id(copyable) in Python -
+  // please tell me that there is a better way! (and which ;-p)
+  size_t copyableId = (size_t)(copyable.ptr());
+  memo[copyableId] = result;
+
+  python::extract<python::dict>(result.attr("__dict__"))().update(
+                                deepcopy(python::extract<python::dict>(copyable.attr("__dict__"))(),
+                                         memo));
+  return result;
+}
+// -------------------
+
 
 #endif

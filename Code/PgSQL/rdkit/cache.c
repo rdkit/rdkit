@@ -42,7 +42,8 @@
 typedef enum EntryKind {
   MolKind,
   BitmapFpKind,
-  SparseFpKind
+  SparseFpKind,
+  ChemReactionKind
 } EntryKind;
 
 typedef struct ValueCacheEntry {
@@ -62,6 +63,10 @@ typedef struct ValueCacheEntry {
       SparseFingerPrint               *value;
       MolSparseFingerPrint    fp;
     } sparse;
+    struct {
+      ChemReactionBA                  *value;
+      CChemicalReaction       rxn;
+    } chemreact;
   }                               detoasted;
   bytea                   *sign;
         
@@ -149,6 +154,10 @@ cleanupData(ValueCacheEntry *entry)
     case SparseFpKind:
       if (entry->detoasted.sparse.value) pfree( entry->detoasted.sparse.value );
       if (entry->detoasted.sparse.fp) freeMolSparseFingerPrint( entry->detoasted.sparse.fp );
+      break;
+    case ChemReactionKind:
+      if (entry->detoasted.chemreact.value) pfree( entry->detoasted.chemreact.value );
+      if (entry->detoasted.chemreact.rxn) freeChemReaction( entry->detoasted.chemreact.rxn );
       break;
     default:
       elog(ERROR, "Unknown kind: %d", entry->kind);
@@ -454,6 +463,42 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
         }
       break;
       break;
+    case ChemReactionKind:
+      if (detoasted) 
+        {
+          if (entry->detoasted.chemreact.value == NULL)
+            {
+              ChemReactionBA *detoastedRxn;
+
+              detoastedRxn = DatumGetChemReactionP(entry->toastedValue);
+              entry->detoasted.chemreact.value = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedRxn));
+              memcpy( entry->detoasted.chemreact.value, detoastedRxn, VARSIZE(detoastedRxn));
+            }
+          *detoasted = entry->detoasted.chemreact.value;
+        }
+
+      if (internal)
+        {
+          if (entry->detoasted.chemreact.rxn == NULL)
+            {
+              fetchData(ac, entry, &_tmp, NULL, NULL);
+              entry->detoasted.chemreact.rxn = constructChemReact(entry->detoasted.chemreact.value);
+            }
+          *internal = entry->detoasted.chemreact.rxn;
+        }
+
+      if (sign)
+      {
+    	  if (entry->sign == NULL)
+    	  {
+    		  fetchData(ac, entry, NULL, &_tmp, NULL);
+    		  old = MemoryContextSwitchTo( ac->ctx );
+    		  entry->sign = makeReactionSign(entry->detoasted.chemreact.rxn);
+    		  MemoryContextSwitchTo(old);
+    	  }
+    	  *sign = entry->sign;
+      }
+      break;
     default:
       elog(ERROR, "Unknown kind: %d", entry->kind);
     }
@@ -570,4 +615,14 @@ SearchSparseFPCache(void *cache, struct MemoryContextData * ctx, Datum a,
                            cache, ctx, 
                            /*  input: */ a, SparseFpKind, 
                            /* output: */ (void**)f, (void**)fp, (void**)val);
+}
+
+void* 
+SearchChemReactionCache(void *cache, struct MemoryContextData * ctx, Datum a, 
+               ChemReactionBA **rxnBA, CChemicalReaction *rxn, bytea ** val)
+{
+  return  SearchValueCache( 
+                           cache, ctx, 
+                           /*  input: */ a, ChemReactionKind, 
+                           /* output: */ (void**)rxnBA, (void**)rxn, (void**)val);
 }

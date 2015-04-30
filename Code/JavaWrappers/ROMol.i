@@ -57,9 +57,9 @@
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
-#include <GraphMol/MolDrawing/MolDrawing.h>
-#include <GraphMol/MolDrawing/DrawingToSVG.h>
-
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+#include <GraphMol/PartialCharges/GasteigerCharges.h>
+#include <sstream>
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
@@ -72,12 +72,21 @@
 %ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
 %ignore RDKit::ROMol::setBondBookmark(Bond *,int);
 %ignore RDKit::ROMol::clearBondBookmark(int, const Bond *);
+%ignore RDKit::ROMol::replaceAtomBookmark(Atom *,int);
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
 %ignore RDKit::ROMol::clearProp(std::string const) const ;
 %ignore RDKit::ROMol::getAtomWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
 %ignore RDKit::ROMol::getAtomNeighbors(Atom const *at) const;
+%ignore RDKit::ROMol::getAtomNeighbors(ATOM_SPTR at) const;
+%ignore RDKit::ROMol::getAtomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::getVertices() ;
+%ignore RDKit::ROMol::getVertices() const ;
+%ignore RDKit::ROMol::getEdges() ;
+%ignore RDKit::ROMol::getEdges() const ;
+%ignore RDKit::ROMol::getTopology() const ;
+
 
 /*
  * Special handling for Conformer objects which should not be GCed until the molecule is destroyed
@@ -186,7 +195,7 @@
     return RDKit::replaceCore(*($self), coreQuery, replaceDummies, labelByIndex);
   };
 
-  void AssignAtomCIPRanks(RDKit::INT_VECT &ranks) {
+  void AssignAtomCIPRanks(RDKit::UINT_VECT &ranks) {
     RDKit::Chirality::assignAtomCIPRanks(*($self), ranks);
   };
 
@@ -262,14 +271,14 @@
                                            int sampleSeed=25,
                                            bool permuteDeg4Nodes=true) {
     return RDDepict::compute2DCoordsMimicDistMat(*($self),
-                                           dmat,
-                                           canonOrient,
-                                           clearConfs,
-                                           weightDistMat,
-                                           nFlipsPerSample,
-                                           nSamples,
-                                           sampleSeed,
-                                           permuteDeg4Nodes);
+                                                 dmat,
+                                                 canonOrient,
+                                                 clearConfs,
+                                                 weightDistMat,
+                                                 nFlipsPerSample,
+                                                 nSamples,
+                                                 sampleSeed,
+                                                 permuteDeg4Nodes);
 
   }
 
@@ -289,23 +298,23 @@
 
   /* From Matrices.cpp, MolOps.h */
   double *getDistanceMat(bool useBO=false,
-          bool useAtomWts=false,
-          bool force=false,
-          const char *propNamePrefix=0) {
+                         bool useAtomWts=false,
+                         bool force=false,
+                         const char *propNamePrefix=0) {
     return RDKit::MolOps::getDistanceMat(*($self), useBO, useAtomWts, force, propNamePrefix);
   }
 
   double *getDistanceMat(const std::vector<int> &activeAtoms,
-      const std::vector<const Bond *> &bonds,
-      bool useBO=false,
-      bool useAtomWts=false) {
+                         const std::vector<const Bond *> &bonds,
+                         bool useBO=false,
+                         bool useAtomWts=false) {
     return RDKit::MolOps::getDistanceMat(*($self), activeAtoms, bonds, useBO, useAtomWts);
   }
 
   double *getAdjacencyMatrix(bool useBO=false,
-           int emptyVal=0,
-           bool force=false,
-           const char *propNamePrefix=0) {
+                             int emptyVal=0,
+                             bool force=false,
+                             const char *propNamePrefix=0) {
     return RDKit::MolOps::getAdjacencyMatrix(*($self), useBO, emptyVal, force, propNamePrefix);
   }
 
@@ -362,55 +371,76 @@
 
   /* From GraphMol/MolAlign/AlignMolecules */
   double alignMol(const RDKit::ROMol &refMol, 
-                        int prbCid=-1, int refCid=-1,
-                        const std::vector<std::pair<int,int> > *atomMap=0, 
-                        const RDNumeric::DoubleVector *weights=0, 
-                        bool reflect=false, unsigned int maxIters=50) {
+                  int prbCid=-1, int refCid=-1,
+                  const std::vector<std::pair<int,int> > *atomMap=0, 
+                  const RDNumeric::DoubleVector *weights=0, 
+                  bool reflect=false, unsigned int maxIters=50) {
     return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
 
   void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds=0,
-                        const std::vector<unsigned int> *confIds=0,
-                        const RDNumeric::DoubleVector  *weights=0, 
-                        bool reflect=false, unsigned int maxIters=50) {
+                          const std::vector<unsigned int> *confIds=0,
+                          const RDNumeric::DoubleVector  *weights=0, 
+                          bool reflect=false, unsigned int maxIters=50) {
     RDKit::MolAlign::alignMolConformers(*($self), atomIds, confIds, weights, reflect, maxIters);
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */
   std::pair<double,double> O3AAlignMol(RDKit::ROMol &refMol, 
-                     int prbCid=-1, int refCid=-1,
-                     bool reflect=false, unsigned int maxIters=50,
-                     unsigned int accuracy=0) {
+                                       int prbCid=-1, int refCid=-1,
+                                       bool reflect=false, unsigned int maxIters=50,
+                                       unsigned int accuracy=0) {
     RDKit::MMFF::MMFFMolProperties prbMP(*($self));
     RDKit::MMFF::MMFFMolProperties refMP(refMol);
     
-    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, prbCid, refCid,
-                      reflect,maxIters,accuracy);
+    RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, RDKit::MolAlign::O3A::MMFF94,
+                             prbCid, refCid,
+                             reflect,maxIters,accuracy);
     double rmsd=o3a.align();
     double score = o3a.score();
     return std::make_pair(rmsd,score);
   }
 
-
+  void computeGasteigerCharges(const RDKit::ROMol *mol,int nIter=12,bool throwOnParamFailure=false){
+    RDKit::computeGasteigerCharges(*mol,nIter,throwOnParamFailure);
+  }
+  void computeGasteigerCharges(const RDKit::ROMol *mol,
+                               std::vector<double> &charges,
+                               int nIter=12,bool throwOnParamFailure=false){
+    RDKit::computeGasteigerCharges(*mol,charges,nIter,throwOnParamFailure);
+  }
 }
 
 
 
 
 %extend RDKit::ROMol {
-  std::string ToSVG(int lineWidthMult=2,int fontSize=50){
-    if(lineWidthMult<0) lineWidthMult *=2;
-    if(fontSize<0) fontSize*=2;
-    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(*($self),0);
-    std::string svg=RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize);
-    return svg;
-  }
   std::string ToSVG(const std::vector<int> &highlightAtoms,
                     int lineWidthMult=2,int fontSize=50){
-    if(lineWidthMult<0) lineWidthMult *=2;
+    // FIX: not sure any more what these are for
     if(fontSize<0) fontSize*=2;
-    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(*($self),&highlightAtoms);
-    std::string svg=RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize);
-    return svg;
+    if(lineWidthMult<0) lineWidthMult *=2;
+    std::stringstream outs;
+    RDKit::MolDraw2DSVG drawer(300,300,outs);
+    //drawer.setFontSize(static_cast<float>(fontSize)*drawer.fontSize()/50);
+    drawer.drawMolecule(*($self),&highlightAtoms);
+    drawer.finishDrawing();
+    outs.flush();
+
+    return outs.str();
+  }
+  std::string ToSVG(int lineWidthMult=2,int fontSize=50){
+    // FIX: not sure any more what these are for
+    if(fontSize<0) fontSize*=2;
+    if(lineWidthMult<0) lineWidthMult *=2;
+    std::stringstream outs;
+    RDKit::MolDraw2DSVG drawer(300,300,outs);
+    //drawer.setFontSize(static_cast<float>(fontSize)*drawer.fontSize()/50);
+    drawer.drawMolecule(*($self));
+    drawer.finishDrawing();
+    outs.flush();
+
+    return outs.str();
+
   }
 }

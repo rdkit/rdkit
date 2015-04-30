@@ -6,11 +6,10 @@
 #
 
 
-import exceptions
-class DescriptorCalculationError(exceptions.Exception):
+class DescriptorCalculationError(Exception):
   """ used to signal problems generating descriptor values """
   pass
-class ClassificationError(exceptions.Exception):
+class ClassificationError(Exception):
   """ used to signal problems generating predictions """
   pass
 
@@ -65,7 +64,7 @@ class ModelPackage(object):
     try:
       descs = self._descCalc.CalcDescriptors(obj)
     except:
-      raise DescriptorCalculationError,'problems encountered generating descriptors'
+      raise DescriptorCalculationError('problems encountered generating descriptors')
 
     argVect = [label]+list(descs)+[0]
     try:
@@ -73,7 +72,7 @@ class ModelPackage(object):
     except:
       import traceback
       traceback.print_exc()
-      raise ClassificationError,'problems encountered generating prediction'
+      raise ClassificationError('problems encountered generating prediction')
 
     return res
 

@@ -11,13 +11,15 @@
 """unit testing code for the SATIS numbers
 
 """
+from __future__ import print_function
 import unittest
 from rdkit.Chem import *
 from rdkit.Chem import SATIS
+from rdkit.six.moves import xrange
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    print '\n%s: '%self.shortDescription(),
+    print('\n%s: '%self.shortDescription(),end='')
 
   def test1(self):
     """ first set of test cases

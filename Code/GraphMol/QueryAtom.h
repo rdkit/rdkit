@@ -28,8 +28,8 @@ namespace RDKit{
     typedef Queries::Query<int,Atom const *,true> QUERYATOM_QUERY;
 
     QueryAtom() : Atom(), dp_query(NULL) {};
-    explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumEqualsQuery(num)) {};
-    explicit QueryAtom(const Atom &other) : Atom(other), dp_query(makeAtomNumEqualsQuery(other.getAtomicNum())) {};
+    explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)) {};
+    explicit QueryAtom(const Atom &other) : Atom(other), dp_query(makeAtomNumQuery(other.getAtomicNum())) {};
     QueryAtom( const QueryAtom & other) : Atom(other){
       dp_query  = other.dp_query->copy();
     };
@@ -66,9 +66,12 @@ namespace RDKit{
 		     bool maintainOrder=true);
 
     //! returns true if we match Atom \c what
-    bool Match(const Atom::ATOM_SPTR what) const;
+    bool Match(const Atom::ATOM_SPTR &what) const;
     //! \overload
     bool Match(Atom const *what) const;
+    
+    //! returns true if our query details match those of QueryAtom \c what
+    bool QueryMatch(QueryAtom const *what) const;
 
   private:
     QUERYATOM_QUERY *dp_query;

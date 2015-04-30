@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/MonomerInfo.h> 
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
@@ -27,10 +28,221 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 
+#include <sstream>
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  std::string molToSVG(const ROMol &mol,
+                       unsigned int width, unsigned int height,
+                       python::object pyHighlightAtoms,bool kekulize,
+                       unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
+                       int confId
+                       ){
+    std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
+    std::stringstream outs;
+    MolDraw2DSVG drawer(width,height,outs);
+    drawer.setFontSize(fontSize/24.);
+    drawer.setLineWidth(drawer.lineWidth()*lineWidthMult);
+    drawer.drawOptions().circleAtoms=includeAtomCircles;
+    drawer.drawMolecule(mol,highlightAtoms,NULL,NULL,confId);
+    delete highlightAtoms;
+    drawer.finishDrawing();
+    return outs.str();
+  }
+  python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,python::object pyBondIndices,
+                                          unsigned int nToBreak,
+                                          bool addDummies,
+                                          python::object pyDummyLabels,
+                                          python::object pyBondTypes,
+                                          bool returnCutsPerAtom){
+    std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+        throw_value_error("empty bond indices");
+      
+    std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
+    if(pyDummyLabels){
+      unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+      dummyLabels = new std::vector<std::pair<unsigned int,unsigned int> >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        unsigned int v1=python::extract<unsigned int>(pyDummyLabels[i][0]);
+        unsigned int v2=python::extract<unsigned int>(pyDummyLabels[i][1]);
+        (*dummyLabels)[i] = std::make_pair(v1,v2);
+      }
+    }
+    std::vector< Bond::BondType > *bondTypes=0;
+    if(pyBondTypes){
+      unsigned int nVs=python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+      if(nVs!=bondIndices->size()) {
+        throw_value_error("bondTypes shorter than bondIndices");
+      }
+      bondTypes = new std::vector< Bond::BondType >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
+      }
+    }
+    std::vector<std::vector<unsigned int> > *cutsPerAtom=0;
+    if(returnCutsPerAtom){
+      cutsPerAtom= new std::vector<std::vector<unsigned int> >;
+    }
+
+    std::vector<ROMOL_SPTR> frags;
+    MolFragmenter::fragmentOnSomeBonds(mol,*bondIndices,frags,nToBreak,addDummies,dummyLabels,bondTypes,cutsPerAtom);
+    python::list res;
+    for(unsigned int i=0;i<frags.size();++i){
+      res.append(frags[i]);
+    }
+    delete bondIndices;
+    delete dummyLabels;
+    delete bondTypes;
+    if(cutsPerAtom){
+      python::list pyCutsPerAtom;
+      for(unsigned int i=0;i<cutsPerAtom->size();++i){
+        python::list localL;
+        for(unsigned int j=0;j<mol.getNumAtoms();++j){
+          localL.append((*cutsPerAtom)[i][j]);
+        }
+        pyCutsPerAtom.append(python::tuple(localL));
+      }
+      delete cutsPerAtom;
+      python::list tres;
+      tres.append(python::tuple(res));
+      tres.append(python::tuple(pyCutsPerAtom));
+      return python::tuple(tres);
+    } else {
+      return python::tuple(res);
+    }
+  }
+
+    python::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
+      if(aid1<0 || aid1>=mol.getNumAtoms() ||
+         aid2<0 || aid2>=mol.getNumAtoms() ){
+        throw_value_error("bad atom index");
+      }
+      return static_cast<python::tuple>(MolOps::getShortestPath(mol, aid1, aid2));
+    }
+
+    ROMol *fragmentOnBondsHelper(const ROMol &mol,python::object pyBondIndices,
+                               bool addDummies,
+                               python::object pyDummyLabels,
+                               python::object pyBondTypes,
+                               python::list pyCutsPerAtom){
+    std::vector<unsigned int> *bondIndices=pythonObjectToVect(pyBondIndices,mol.getNumBonds());
+    if(!bondIndices)
+        throw_value_error("empty bond indices");
+    std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0;
+    if(pyDummyLabels){
+      unsigned int nVs=python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+      dummyLabels = new std::vector<std::pair<unsigned int,unsigned int> >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        unsigned int v1=python::extract<unsigned int>(pyDummyLabels[i][0]);
+        unsigned int v2=python::extract<unsigned int>(pyDummyLabels[i][1]);
+        (*dummyLabels)[i] = std::make_pair(v1,v2);
+      }
+    }
+    std::vector< Bond::BondType > *bondTypes=0;
+    if(pyBondTypes){
+      unsigned int nVs=python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+      if(nVs!=bondIndices->size()) {
+        throw_value_error("bondTypes shorter than bondIndices");
+      }
+      bondTypes = new std::vector< Bond::BondType >(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*bondTypes)[i] = python::extract< Bond::BondType >(pyBondTypes[i]);
+      }
+    }
+    std::vector<unsigned int> *cutsPerAtom=0;
+    if(pyCutsPerAtom){
+      cutsPerAtom= new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(pyCutsPerAtom.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("cutsPerAtom shorter than the number of atoms");
+      }
+      cutsPerAtom->resize(nAts);
+    }
+    
+    ROMol *res=MolFragmenter::fragmentOnBonds(mol,*bondIndices,addDummies,dummyLabels,bondTypes,cutsPerAtom);
+    if(cutsPerAtom){
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        pyCutsPerAtom[i]=(*cutsPerAtom)[i];
+      }
+      delete cutsPerAtom;
+    }
+
+    delete bondIndices;
+    delete dummyLabels;
+    delete bondTypes;
+    return res;
+  }
+
+  ROMol *renumberAtomsHelper(const ROMol &mol,python::object &pyNewOrder){
+    if(python::extract<unsigned int>(pyNewOrder.attr("__len__")())<mol.getNumAtoms()){
+      throw_value_error("atomCounts shorter than the number of atoms");
+    }
+    std::vector<unsigned int> *newOrder=pythonObjectToVect(pyNewOrder,mol.getNumAtoms());
+    ROMol *res = MolOps::renumberAtoms(mol,*newOrder);
+    delete newOrder;
+    return res;
+  }
+
+  namespace {
+    std::string getResidue(const ROMol &m,const Atom *at){
+      if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
+      return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
+    }
+    std::string getChainId(const ROMol &m,const Atom *at){
+      if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
+      return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getChainId();
+    }
+  }
+  python::dict splitMolByPDBResidues(const ROMol &mol,
+                                     python::object pyWhiteList,
+                                     bool negateList){
+
+    std::vector<std::string> *whiteList=NULL;
+    if(pyWhiteList){
+      unsigned int nVs=python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+      whiteList=new std::vector<std::string>(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
+      }
+    }
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getResidue,false,
+                                                                                     whiteList,negateList);
+    delete whiteList;
+
+    python::dict pyres;
+    for(std::map<std::string,boost::shared_ptr<ROMol> >::const_iterator iter=res.begin();
+        iter!=res.end();++iter){
+      pyres[iter->first]=iter->second;
+    }
+    return pyres;
+  }
+  python::dict splitMolByPDBChainId(const ROMol &mol,
+                                     python::object pyWhiteList,
+                                     bool negateList){
+                                    
+    std::vector<std::string> *whiteList=NULL;
+    if(pyWhiteList){
+      unsigned int nVs=python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+      whiteList=new std::vector<std::string>(nVs);
+      for(unsigned int i=0;i<nVs;++i){
+        (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
+      }
+    }
+    std::map<std::string,boost::shared_ptr<ROMol> > res=MolOps::getMolFragsWithQuery(mol,getChainId,false,
+                                                                                     whiteList,negateList);
+    delete whiteList;
+
+    python::dict pyres;
+    for(std::map<std::string,boost::shared_ptr<ROMol> >::const_iterator iter=res.begin();
+        iter!=res.end();++iter){
+      pyres[iter->first]=iter->second;
+    }
+    return pyres;
+  }
+  
   python::dict parseQueryDefFileHelper(python::object &input,bool standardize,
                                        std::string delimiter,std::string comment,
                                        unsigned int nameColumn,unsigned int smartsColumn){
@@ -71,9 +283,6 @@ namespace RDKit{
   ROMol *addHs(const ROMol &orig,bool explicitOnly=false,bool addCoords=false){
     return MolOps::addHs(orig,explicitOnly,addCoords);
   }
-  ROMol *removeHs(const ROMol &orig,bool implicitOnly=false){
-    return MolOps::removeHs(orig,implicitOnly);
-  }
   int getSSSR(ROMol &mol) {
     VECT_INT_VECT rings;
     int nr = MolOps::findSSSR(mol, rings);
@@ -83,9 +292,11 @@ namespace RDKit{
   PyObject* replaceSubstructures(const ROMol &orig,
                                  const ROMol &query,
                                  const ROMol &replacement,
-                                 bool replaceAll=false) {
+                                 bool replaceAll=false,
+                                 unsigned int replacementConnectionPoint=0) {
     std::vector<ROMOL_SPTR> v=replaceSubstructs(orig, query,
-                                                replacement, replaceAll);
+                                                replacement, replaceAll,
+                                                replacementConnectionPoint);
     PyObject *res=PyTuple_New(v.size());
     for(unsigned int i=0;i<v.size();++i){
       PyTuple_SetItem(res,i,
@@ -112,7 +323,7 @@ namespace RDKit{
 
     
     if(!preserveExistingQuery){
-      if(oAt->getQuery()) delete oAt->getQuery();
+      delete oAt->getQuery();
       oAt->setQuery(q);
     } else {
       oAt->expandQuery(q,Queries::COMPOSITE_AND);
@@ -194,6 +405,24 @@ namespace RDKit{
     double *distMat;
     
     distMat = MolOps::getDistanceMat(mol, useBO, useAtomWts,force,prefix);
+    
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
+    
+    memcpy(static_cast<void *>(res->data),
+         static_cast<void *>(distMat),nats*nats*sizeof(double));
+    
+    return PyArray_Return(res);
+  }
+  PyObject *get3DDistanceMatrix(ROMol &mol, int confId=-1,
+                              bool useAtomWts=false,bool force=false,
+                              const char *prefix=0) {
+    int nats = mol.getNumAtoms();
+    npy_intp dims[2];
+    dims[0] = nats;
+    dims[1] = nats;
+    double *distMat;
+    
+    distMat = MolOps::get3DDistanceMat(mol, confId, useAtomWts,force,prefix);
     
     PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     
@@ -288,9 +517,8 @@ namespace RDKit{
       }
       delete atomCountsV;
     }
-    if(lFromAtoms){
-      delete lFromAtoms;
-    }
+    delete lFromAtoms;
+
     return res;
   }
   ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol,
@@ -351,12 +579,9 @@ namespace RDKit{
                                    useHs,tgtDensity,minSize,branchedPaths,
                                    useBondOrder,lAtomInvariants,lFromAtoms,lAtomBits);
 
-    if(lAtomInvariants){
-      delete lAtomInvariants;
-    }
-    if(lFromAtoms){
-      delete lFromAtoms;
-    }
+    delete lAtomInvariants;
+    delete lFromAtoms;
+
     if(lAtomBits){
       python::list &pyl=static_cast<python::list &>(atomBits);
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -463,8 +688,8 @@ namespace RDKit{
 \n\
     - mol: the molecule to use.\n\
 \n\
-  RETURNS: the number of rings found\n\
-         This will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
+  RETURNS: a sequence of sequences containing the rings found as atom ids\n\
+         The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
       python::def("GetSSSR", getSSSR, 
                   docString.c_str());
@@ -480,7 +705,7 @@ namespace RDKit{
 \n\
     - mol: the molecule to use.\n\
 \n\
-  RETURNS: the number of rings found\n\
+  RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
       python::def("GetSymmSSSR", getSymmSSSR,
                   docString.c_str());
@@ -537,19 +762,26 @@ namespace RDKit{
     - implicitOnly: (optional) if this toggle is set, only implicit Hs will\n\
       be removed from the graph.  Default value is 0 (remove implicit and explicit Hs).\n\
 \n\
+    - updateExplicitCount: (optional) if this toggle is set, the explicit H count on atoms with \n\
+      Hs will be updated. Default value is 0 (do not update explicit H count).\n\
+\n\
+    - sanitize: (optional) if this toggle is set, the molecule will be sanitized after the Hs\n\
+      are removed. Default value is 1 (do sanitize).\n\
+\n\
   RETURNS: a new molecule with the Hs removed\n\
 \n\
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
 \n";
-      python::def("RemoveHs", removeHs,
-                  (python::arg("mol"),python::arg("implicitOnly")=false),
+      python::def("RemoveHs", (ROMol *(*)(const ROMol &,bool,bool,bool))MolOps::removeHs,
+                  (python::arg("mol"),python::arg("implicitOnly")=false,
+                   python::arg("updateExplicitCount")=false,python::arg("sanitize")=true),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
-      python::def("MergeQueryHs", (ROMol *(*)(const ROMol &))&MolOps::mergeQueryHs,
-                  (python::arg("mol")),
+      python::def("MergeQueryHs", (ROMol *(*)(const ROMol &,bool))&MolOps::mergeQueryHs,
+                  (python::arg("mol"), python::arg("mergeUnmappedOnly")=false),
                   "merges hydrogens into their neighboring atoms as queries",
                   python::return_value_policy<python::manage_new_object>());
 
@@ -620,6 +852,8 @@ namespace RDKit{
       the query will be replaced in a single result, otherwise each result will\n\
       contain a separate replacement.\n\
       Default value is False (return multiple replacements)\n\
+    - replacementConnectionPoint: (optional) index of the atom in the replacement that\n\
+      the bond should be made to.\n\
 \n\
   RETURNS: a tuple of new molecules with the substructures replaced removed\n\
 \n\
@@ -637,11 +871,14 @@ namespace RDKit{
     - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
 \n\
     - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
+\n\
+    - ReplaceSubstructs('COCCOC','OC','CN',True,1) -> ('CNCCNC',)\n\
 \n";
       python::def("ReplaceSubstructs", replaceSubstructures,
                   (python::arg("mol"),python::arg("query"),
                    python::arg("replacement"),
-                   python::arg("replaceAll")=false),
+                   python::arg("replaceAll")=false,
+                   python::arg("replacementConnectionPoint")=0),
                   docString.c_str());
 
       // ------------------------------------------------------------------------
@@ -683,6 +920,34 @@ namespace RDKit{
 \n";
       python::def("GetDistanceMatrix", getDistanceMatrix,
                   (python::arg("mol"),python::arg("useBO")=false,
+                   python::arg("useAtomWts")=false,
+                   python::arg("force")=false,
+                   python::arg("prefix")=""),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
+      docString="Returns the molecule's 3D distance matrix.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - confId: (optional) chooses the conformer Id to use\n\
+      Default value is -1.\n\
+\n\
+    - useAtomWts: (optional) toggles using atom weights for the diagonal elements of the\n\
+      matrix (to return a \"Balaban\" distance matrix).\n\
+      Default value is 0.\n\
+\n\
+    - force: (optional) forces the calculation to proceed, even if there is a cached value.\n\
+      Default value is 0.\n\
+\n\
+    - prefix: (optional, internal use) sets the prefix used in the property cache\n\
+      Default value is "".\n\
+\n\
+  RETURNS: a Numeric array of floats with the distance matrix\n\
+\n";
+      python::def("Get3DDistanceMatrix", get3DDistanceMatrix,
+                  (python::arg("mol"),python::arg("confId")=-1,
                    python::arg("useAtomWts")=false,
                    python::arg("force")=false,
                    python::arg("prefix")=""),
@@ -979,6 +1244,41 @@ namespace RDKit{
                   docString.c_str());
 
       // ------------------------------------------------------------------------
+      docString="Splits a molecule into pieces based on PDB residue information.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - whiteList: only residues in this list will be returned\n\
+    - negateList: if set, negates the white list inclusion logic\n\
+\n\
+  RETURNS: a dictionary keyed by residue name with molecules as the values\n\
+\n";
+      python::def("SplitMolByPDBResidues", &splitMolByPDBResidues,
+                  (python::arg("mol"),
+                   python::arg("whiteList")=python::object(),
+                   python::arg("negateList")=false),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
+      docString="Splits a molecule into pieces based on PDB chain information.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - whiteList: only residues in this list will be returned\n\
+    - negateList: if set, negates the white list inclusion logic\n\
+\n\
+  RETURNS: a dictionary keyed by chain id with molecules as the values\n\
+\n";
+      python::def("SplitMolByPDBChainId", &splitMolByPDBChainId,
+                  (python::arg("mol"),
+                   python::arg("whiteList")=python::object(),
+                   python::arg("negateList")=false),
+                  docString.c_str());
+
+
+
+      // ------------------------------------------------------------------------
       docString="Returns the formal charge for the molecule.\n\
 \n\
   ARGUMENTS:\n\
@@ -987,6 +1287,17 @@ namespace RDKit{
 \n";
       python::def("GetFormalCharge", &MolOps::getFormalCharge,docString.c_str());
 
+
+      // ------------------------------------------------------------------------
+      docString="Find the shortest path between two atoms using the Bellman-Ford algorithm.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - idx1: index of the first atom\n\
+    - idx2: index of the second atom\n\
+\n";
+      python::def("GetShortestPath", getShortestPathHelper, docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Does the CIP stereochemistry assignment \n\
@@ -1289,6 +1600,48 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
+      docString="Return a new molecule with all specified bonds broken\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+      - mol            - the molecule to be modified\n\
+      - bondIndices    - indices of the bonds to be broken\n\
+      - addDummies  - toggles addition of dummy atoms to indicate where \n\
+          bonds were broken\n\
+      - dummyLabels - used to provide the labels to be used for the dummies.\n\
+          the first element in each pair is the label for the dummy\n\
+          that replaces the bond's beginAtom, the second is for the \n\
+          dummy that replaces the bond's endAtom. If not provided, the\n\
+          dummies are labeled with atom indices.\n\
+      - bondTypes - used to provide the bond type to use between the\n\
+          fragments and the dummy atoms. If not provided, defaults to single. \n\
+      - cutsPerAtom - used to return the number of cuts made at each atom. \n\
+\n\
+  RETURNS:\n\
+      a new Mol with the modifications\n\
+";
+      python::def("FragmentOnBonds", fragmentOnBondsHelper,
+                  (python::arg("mol"),
+                   python::arg("bondIndices"),
+                   python::arg("addDummies")=true,
+                   python::arg("dummyLabels")=python::object(),
+                   python::arg("bondTypes")=python::object(),
+                   python::arg("cutsPerAtom")=python::list()
+                   ),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+      docString="fragment on some bonds";
+      python::def("FragmentOnSomeBonds", fragmentOnSomeBondsHelper,
+                  (python::arg("mol"),
+                   python::arg("bondIndices"),
+                   python::arg("numToBreak")=1,
+                   python::arg("addDummies")=true,
+                   python::arg("dummyLabels")=python::object(),
+                   python::arg("bondTypes")=python::object(),
+                   python::arg("returnCutsPerAtom")=false
+                   ),
+                  docString.c_str());
+
 
       // ------------------------------------------------------------------------
       docString="Adds a recursive query to an atom\n\
@@ -1310,6 +1663,35 @@ namespace RDKit{
                    python::arg("atomIdx"),python::arg("preserveExistingQuery")=true),
                   docString.c_str());
 
+      // ------------------------------------------------------------------------
+      docString="Returns a copy of a molecule with renumbered atoms\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - newOrder: the new ordering the atoms (should be numAtoms long)\n\
+         for example: if newOrder is [3,2,0,1], then atom 3 in the original \n\
+         molecule will be atom 0 in the new one\n\
+\n\
+\n";
+      python::def("RenumberAtoms", renumberAtomsHelper,
+                  (python::arg("mol"),python::arg("newOrder")),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+
+      // ------------------------------------------------------------------------
+      docString="Returns svg for a molecule";
+      python::def("MolToSVG", molToSVG,
+                  (python::arg("mol"),
+                   python::arg("width")=300,
+                   python::arg("height")=300,
+                   python::arg("highlightAtoms")=python::object(),
+                   python::arg("kekulize")=true,
+                   python::arg("lineWidthMult")=1,
+                   python::arg("fontSize")=12,
+                   python::arg("includeAtomCircles")=true),
+                  docString.c_str());
 
     };
   };

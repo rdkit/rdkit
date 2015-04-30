@@ -88,10 +88,8 @@ namespace RDDepict {
     // now for points that new atoms will be added to later on we need to do some setup
     //RDKit::INT_DEQUE_CI dai;
     RDKit::INT_LIST_CI dai;
-    int deg;
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
     for (dai = d_attachPts.begin(); dai != d_attachPts.end(); dai++) {
-      deg = dp_mol->getAtomWithIdx(*dai)->getDegree();
       boost::tie(nbrIdx,endNbrs) = dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(*dai));
       // find the neighbors that are already embedded for each of these atoms
       RDKit::INT_VECT doneNbrs;
@@ -423,7 +421,7 @@ namespace RDDepict {
     RDGeom::Point2D rcr = d_eatoms[commAid].loc;
     
     // find the coordinate for the same atom in the other system
-    INT_EATOM_MAP_CI eati = other.d_eatoms.find(commAid);
+    //INT_EATOM_MAP_CI eati = other.d_eatoms.find(commAid);
     const EmbeddedAtom &oeatm = other.GetEmbeddedAtom(commAid);
     RDGeom::Point2D ccr = oeatm.loc;
     int onb1 = oeatm.nbr1;
@@ -550,7 +548,6 @@ namespace RDDepict {
     double densityReflect = 0.0;
     INT_EATOM_MAP_CI oci, tci;
     int oaid;
-    double closestD, rclosestD;
     RDGeom::Point2D loc1, rloc1, loc2, t1, rt1;
     const INT_EATOM_MAP &oatoms = embFrag.GetEmbeddedAtoms();
     for (oci = oatoms.begin(); oci != oatoms.end(); oci++) {

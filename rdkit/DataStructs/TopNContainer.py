@@ -8,6 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from __future__ import print_function
 import bisect
 class TopNContainer(object):
   """ maintains a sorted list of a particular number of data elements.
@@ -67,6 +68,6 @@ if __name__ == '__main__':
   c = TopNContainer(4)
   for pt in pts:
     c.Insert(pt,extra=str(pt))
-  print c.GetPts()
-  print c.GetExtras()
+  print(c.GetPts())
+  print(c.GetExtras())
     

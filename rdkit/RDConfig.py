@@ -13,7 +13,7 @@
 """
 
 import os,sys
-if os.environ.has_key('RDBASE'):
+if 'RDBASE' in os.environ:
   RDBaseDir=os.environ['RDBASE']
   RDCodeDir=os.path.join(RDBaseDir,'rdkit')
   RDDataDir=os.path.join(RDBaseDir,'Data')
@@ -21,8 +21,21 @@ if os.environ.has_key('RDBASE'):
   RDDemoDir=os.path.join(RDBaseDir,'Demo')
   RDBinDir=os.path.join(RDBaseDir,'bin')
   RDProjDir=os.path.join(RDBaseDir,'Projects')
+elif 'CONDA_DEFAULT_ENV' in os.environ:
+  # we are running in a conda environ.
+  RDCodeDir=os.path.dirname(__file__)
+  splitdir = RDCodeDir.split(os.path.sep)
+  condaDir = splitdir[:-4]
+  if condaDir[0]=='':
+    condaDir[0] = os.path.sep
+  condaDir += ['share','RDKit']
+  _share = os.path.join(*condaDir)
+  RDDataDir=os.path.join(_share,'Data')
+  RDDocsDir=os.path.join(_share,'Docs')
+  RDProjDir=os.path.join(_share,'Projects')
 else:
-  from RDPaths import *
+  from rdkit.RDPaths import *
+
 
 rpcTestPort=8423
 pythonTestCommand="python"
@@ -30,10 +43,9 @@ pythonTestCommand="python"
 defaultDBUser='sysdba'
 defaultDBPassword='masterkey'
 
-import exceptions
-class ObsoleteCodeError(exceptions.Exception):
+class ObsoleteCodeError(Exception):
   pass
-class UnimplementedCodeError(exceptions.Exception):
+class UnimplementedCodeError(Exception):
   pass
 
 # ---------------------

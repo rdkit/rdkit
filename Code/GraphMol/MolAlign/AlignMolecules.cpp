@@ -87,7 +87,8 @@ namespace RDKit {
     void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
                             const std::vector<unsigned int> *confIds,
                             const RDNumeric::DoubleVector *weights, 
-                            bool reflect, unsigned int maxIters) {
+                            bool reflect, unsigned int maxIters,
+                            std::vector<double> *RMSlist) {
       if (mol.getNumConformers() == 0) {
         // nothing to be done ;
         return ;
@@ -100,9 +101,10 @@ namespace RDKit {
       }
       const Conformer &refCnf = mol.getConformer(cid);
       _fillAtomPositions(refPoints, refCnf, atomIds);
-      
+
       // now loop throught the remaininf conformations and transform them
       RDGeom::Transform3D trans;
+      double ssd;
       if (confIds == 0) {
         unsigned int i=0;
         ROMol::ConformerIterator cnfi;
@@ -114,9 +116,13 @@ namespace RDKit {
             continue;
           }
           _fillAtomPositions(prbPoints, *(*cnfi), atomIds);
-          RDNumeric::Alignments::AlignPoints(refPoints, prbPoints, 
-                                                          trans, weights, reflect, 
-                                                          maxIters);
+          ssd = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints,
+						   trans, weights, reflect, 
+						   maxIters);
+          if (RMSlist) {
+            ssd /= (prbPoints.size());
+            RMSlist->push_back(sqrt(ssd));
+          }
           MolTransforms::transformConformer(*(*cnfi), trans);
         }
       } else {
@@ -129,9 +135,13 @@ namespace RDKit {
           }
           Conformer &conf = mol.getConformer(*cai);
           _fillAtomPositions(prbPoints, conf, atomIds);
-          RDNumeric::Alignments::AlignPoints(refPoints, prbPoints, 
-                                                          trans, weights, reflect, 
-                                                          maxIters);
+          ssd = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints,
+						   trans, weights, reflect, 
+						   maxIters);
+          if (RMSlist) {
+	    ssd /= (prbPoints.size());
+	    RMSlist->push_back(sqrt(ssd));
+	  }
           MolTransforms::transformConformer(conf, trans);
         }
       }

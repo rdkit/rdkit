@@ -1,5 +1,10 @@
-FIND_PACKAGE(BISON)
-FIND_PACKAGE(FLEX)
+if(RDK_USE_FLEXBISON)
+  FIND_PACKAGE(BISON)
+  FIND_PACKAGE(FLEX)
+else(RDK_USE_FLEXBISON)
+  set(FLEX_EXECUTABLE "")
+  set(BISON_EXECUTABLE "")
+endif(RDK_USE_FLEXBISON)
 
 if(MSVC)
 ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
@@ -58,7 +63,7 @@ rdkit_headers(primes.h
               SmilesParseOps.h
               SmilesWrite.h DEST GraphMol/SmilesParse)
 
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
 

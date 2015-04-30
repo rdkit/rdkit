@@ -35,8 +35,10 @@ namespace ForceFields {
       {
         RDGeom::Point3D p12 = p1 - p2;
         RDGeom::Point3D p32 = p3 - p2;
-        
-        return p12.dotProduct(p32) / (dist1 * dist2);
+        double cosTheta = p12.dotProduct(p32) / (dist1 * dist2);
+        clipToOne(cosTheta);
+
+        return cosTheta;
       }
       
       double calcAngleForceConstant(const MMFFAngle *mmffAngleParams)
@@ -51,16 +53,44 @@ namespace ForceFields {
       {
         double angle = RAD2DEG * acos(cosTheta) - theta0;
         double const cb = -0.006981317;
+        double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
         double res = 0.0;
         
         if (isLinear) {
-          res = 143.9325 * ka * (1.0 + cosTheta);
+          res = MDYNE_A_TO_KCAL_MOL * ka * (1.0 + cosTheta);
         }
         else {
-          res = 0.043844 * ka / 2.0 * angle * angle * (1.0 + cb * angle);
+          res = 0.5 * c2 * ka * angle * angle * (1.0 + cb * angle);
         }
 
         return res;
+      }
+      
+      void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+        double **g, double &dE_dTheta, double &cosTheta, double &sinTheta)
+      {
+        // -------
+        // dTheta/dx is trickier:
+        double dCos_dS[6] = {
+          1.0 / dist[0] * (r[1].x - cosTheta * r[0].x),
+          1.0 / dist[0] * (r[1].y - cosTheta * r[0].y),
+          1.0 / dist[0] * (r[1].z - cosTheta * r[0].z),
+          1.0 / dist[1] * (r[0].x - cosTheta * r[1].x),
+          1.0 / dist[1] * (r[0].y - cosTheta * r[1].y),
+          1.0 / dist[1] * (r[0].z - cosTheta * r[1].z)
+        };
+
+        g[0][0] += dE_dTheta * dCos_dS[0] / (-sinTheta);
+        g[0][1] += dE_dTheta * dCos_dS[1] / (-sinTheta);
+        g[0][2] += dE_dTheta * dCos_dS[2] / (-sinTheta);
+
+        g[1][0] += dE_dTheta * (-dCos_dS[0] - dCos_dS[3]) / (-sinTheta);
+        g[1][1] += dE_dTheta * (-dCos_dS[1] - dCos_dS[4]) / (-sinTheta);
+        g[1][2] += dE_dTheta * (-dCos_dS[2] - dCos_dS[5]) / (-sinTheta);
+      
+        g[2][0] += dE_dTheta * dCos_dS[3] / (-sinTheta);
+        g[2][1] += dE_dTheta * dCos_dS[4] / (-sinTheta);
+        g[2][2] += dE_dTheta * dCos_dS[5] / (-sinTheta);
       }
     } // end of namespace Utils
     
@@ -80,30 +110,29 @@ namespace ForceFields {
       d_at3Idx = idx3;
       d_isLinear = (mmffPropParamsCentralAtom->linh ? true : false);
 
-      this->d_theta0 = mmffAngleParams->theta0;
-      this->d_ka = mmffAngleParams->ka;
+      d_theta0 = mmffAngleParams->theta0;
+      d_ka = mmffAngleParams->ka;
     }
 
     double AngleBendContrib::getEnergy(double *pos) const {
       PRECONDITION(dp_forceField,"no owner");
       PRECONDITION(pos,"bad vector");
 
-      double dist1 = this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos);
-      double dist2 = this->dp_forceField->distance(this->d_at2Idx, this->d_at3Idx, pos);
-      double res = 0.0;
+      double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+      double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
+
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+			  pos[3 * d_at1Idx + 1],
+			  pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+			  pos[3 * d_at2Idx + 1],
+			  pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+			  pos[3 * d_at3Idx + 1],
+			  pos[3 * d_at3Idx + 2]);
       
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-			  pos[3 * this->d_at1Idx + 1],
-			  pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-			  pos[3 * this->d_at2Idx + 1],
-			  pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-			  pos[3 * this->d_at3Idx + 1],
-			  pos[3 * this->d_at3Idx + 2]);
-      
-      return Utils::calcAngleBendEnergy(this->d_theta0,
-        this->d_ka, this->d_isLinear, Utils::calcCosTheta(p1, p2, p3, dist1, dist2));
+      return Utils::calcAngleBendEnergy(d_theta0,
+        d_ka, d_isLinear, Utils::calcCosTheta(p1, p2, p3, dist1, dist2));
     }
 
     void AngleBendContrib::getGrad(double *pos, double *grad) const
@@ -111,21 +140,28 @@ namespace ForceFields {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
       PRECONDITION(grad, "bad vector");
-      double dist1 = this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos);
-      double dist2 = this->dp_forceField->distance(this->d_at2Idx, this->d_at3Idx, pos);
+      double dist[2] = {
+        dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
+        dp_forceField->distance(d_at2Idx, d_at3Idx, pos)
+      };
 
-      RDGeom::Point3D p1(pos[3 * this->d_at1Idx],
-        pos[3 * this->d_at1Idx + 1], pos[3 * this->d_at1Idx + 2]);
-      RDGeom::Point3D p2(pos[3 * this->d_at2Idx],
-        pos[3 * this->d_at2Idx + 1], pos[3 * this->d_at2Idx + 2]);
-      RDGeom::Point3D p3(pos[3 * this->d_at3Idx],
-        pos[3 * this->d_at3Idx + 1], pos[3 * this->d_at3Idx + 2]);
-      double *g1 = &(grad[3 * this->d_at1Idx]);
-      double *g2 = &(grad[3 * this->d_at2Idx]);
-      double *g3 = &(grad[3 * this->d_at3Idx]);
-      RDGeom::Point3D p12 = (p1 - p2) / dist1;
-      RDGeom::Point3D p32 = (p3 - p2) / dist2;
-      double cosTheta = p12.dotProduct(p32);
+      RDGeom::Point3D p1(pos[3 * d_at1Idx],
+        pos[3 * d_at1Idx + 1], pos[3 * d_at1Idx + 2]);
+      RDGeom::Point3D p2(pos[3 * d_at2Idx],
+        pos[3 * d_at2Idx + 1], pos[3 * d_at2Idx + 2]);
+      RDGeom::Point3D p3(pos[3 * d_at3Idx],
+        pos[3 * d_at3Idx + 1], pos[3 * d_at3Idx + 2]);
+      double *g[3] = {
+        &(grad[3 * d_at1Idx]),
+        &(grad[3 * d_at2Idx]),
+        &(grad[3 * d_at3Idx])
+      };
+      RDGeom::Point3D r[2] = {
+        (p1 - p2) / dist[0],
+        (p3 - p2) / dist[1]
+      };
+      double cosTheta = r[0].dotProduct(r[1]);
+      clipToOne(cosTheta);
       double sinThetaSq = 1.0 - cosTheta * cosTheta;
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
@@ -133,34 +169,14 @@ namespace ForceFields {
       // dE/dx = dE/dTheta * dTheta/dx
 
       // dE/dTheta is independent of cartesians:
-      double angleTerm = RAD2DEG * acos(cosTheta) - this->d_theta0;
+      double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
       double const cb = -0.006981317;
+      double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
         
-      double dE_dTheta = (this->d_isLinear ? -143.9325 * this->d_ka * sinTheta
-        : RAD2DEG * 0.043844 * this->d_ka * angleTerm * (1.0 + 1.5 * cb * angleTerm));
+      double dE_dTheta = (d_isLinear ? -MDYNE_A_TO_KCAL_MOL * d_ka * sinTheta
+        : RAD2DEG * c2 * d_ka * angleTerm * (1.0 + 1.5 * cb * angleTerm));
     
-      // -------
-      // dTheta/dx is trickier:
-      double dCos_dS1 = 1.0 / dist1 * (p32.x - cosTheta * p12.x);
-      double dCos_dS2 = 1.0 / dist1 * (p32.y - cosTheta * p12.y);
-      double dCos_dS3 = 1.0 / dist1 * (p32.z - cosTheta * p12.z);
-
-      double dCos_dS4 = 1.0 / dist2 * (p12.x - cosTheta * p32.x);
-      double dCos_dS5 = 1.0 / dist2 * (p12.y - cosTheta * p32.y);
-      double dCos_dS6 = 1.0 / dist2 * (p12.z - cosTheta * p32.z);
-
-
-      g1[0] += dE_dTheta * dCos_dS1 / (-sinTheta);
-      g1[1] += dE_dTheta * dCos_dS2 / (-sinTheta);
-      g1[2] += dE_dTheta * dCos_dS3 / (-sinTheta);
-
-      g2[0] += dE_dTheta * (-dCos_dS1 - dCos_dS4) / (-sinTheta);
-      g2[1] += dE_dTheta * (-dCos_dS2 - dCos_dS5) / (-sinTheta);
-      g2[2] += dE_dTheta * (-dCos_dS3 - dCos_dS6) / (-sinTheta);
-    
-      g3[0] += dE_dTheta * dCos_dS4 / (-sinTheta);
-      g3[1] += dE_dTheta * dCos_dS5 / (-sinTheta);
-      g3[2] += dE_dTheta * dCos_dS6 / (-sinTheta);
+      Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
     }
   }
 }

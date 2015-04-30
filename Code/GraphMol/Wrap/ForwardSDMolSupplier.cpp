@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python_streambuf.h>
+#include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
 
@@ -116,7 +117,8 @@ namespace RDKit {
                python::arg("sanitize")=true,
                python::arg("removeHs")=true,
                python::arg("strictParsing")=true)))
-        .def("next", (ROMol *(*)(LocalForwardSDMolSupplier *))&MolSupplNext,
+        .def(NEXT_METHOD, 
+	     (ROMol *(*)(LocalForwardSDMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("atEnd", &ForwardSDMolSupplier::atEnd,

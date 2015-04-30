@@ -44,6 +44,7 @@ namespace ForceFields {
         unsigned int idx3, unsigned int idx4, const MMFFTor *mmffTorParams);
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
+      virtual TorsionAngleContrib *copy() const { return new TorsionAngleContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
       double d_V1, d_V2, d_V3;
@@ -60,6 +61,8 @@ namespace ForceFields {
       //! calculates and returns the torsional MMFF energy
       double calcTorsionEnergy(const double V1,
         const double V2, const double V3, const double cosPhi);
+      void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t,
+        double *d, double **g, double &sinTerm, double &cosPhi);
     }
   }
 }

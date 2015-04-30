@@ -1,6 +1,7 @@
 // $Id: MolPickler.cpp 1123 2009-06-01 13:04:33Z glandrum $
 //
 //  Copyright (C) 2009 Greg Landrum
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,7 +24,7 @@ using boost::uint32_t;
 
 namespace RDKit{
   const int32_t ReactionPickler::versionMajor=1;
-  const int32_t ReactionPickler::versionMinor=0;
+  const int32_t ReactionPickler::versionMinor=1;
   const int32_t ReactionPickler::versionPatch=0;
   const int32_t ReactionPickler::endianId=0xDEADBEEF;
 
@@ -101,9 +102,12 @@ namespace RDKit{
     streamWrite(ss,tmpInt);
     tmpInt = static_cast<int32_t>(rxn->getNumProductTemplates());
     streamWrite(ss,tmpInt);
+    tmpInt = static_cast<int32_t>(rxn->getNumAgentTemplates());
+    streamWrite(ss,tmpInt);
 
     uint32_t flag = 0;
     if(rxn->getImplicitPropertiesFlag()) flag |= 0x1;
+    if(rxn->df_needsInit) flag |= 0x2;
     streamWrite(ss,flag);
 
     // -------------------
@@ -124,7 +128,15 @@ namespace RDKit{
       MolPickler::pickleMol(tmpl->get(),ss);
     }
     streamWrite(ss,ENDPRODUCTS);
-  
+
+    if(rxn->getNumAgentTemplates()){
+      streamWrite(ss,BEGINAGENTS);
+      for(MOL_SPTR_VECT::const_iterator tmpl=rxn->beginAgentTemplates();
+          tmpl!=rxn->endAgentTemplates();++tmpl){
+        MolPickler::pickleMol(tmpl->get(),ss);
+      }
+      streamWrite(ss,ENDAGENTS);
+    }
     streamWrite(ss,ENDREACTION);
   } // end of _pickle
 
@@ -132,15 +144,17 @@ namespace RDKit{
     PRECONDITION(rxn,"empty reaction");
 
     Tags tag;
-    uint32_t numReactants,numProducts;
+    uint32_t numReactants,numProducts,numAgents=0;
     
     streamRead(ss,numReactants);
     streamRead(ss,numProducts);
-
+    if(version>1000){
+      streamRead(ss,numAgents);
+    }
+    // we use this here and below to set df_needsInit, so don't re-use the variable
     uint32_t flag = 0;
     streamRead(ss,flag);
     rxn->setImplicitPropertiesFlag(flag & 0x1);
-
 
     // -------------------
     //
@@ -173,5 +187,24 @@ namespace RDKit{
     if(tag != ENDPRODUCTS){
       throw ReactionPicklerException("Bad pickle format: ENDPRODUCTS tag not found.");
     }
+    if(numAgents!=0){
+      streamRead(ss,tag);
+      if(tag != BEGINAGENTS){
+        throw ReactionPicklerException("Bad pickle format: BEGINAGENTS tag not found.");
+      }
+      for(unsigned int i=0;i<numAgents;++i){
+        ROMol *mol=new ROMol();
+        MolPickler::molFromPickle(ss,mol);
+        rxn->addAgentTemplate(ROMOL_SPTR(mol));
+      }
+      streamRead(ss,tag);
+      if(tag != ENDAGENTS){
+        throw ReactionPicklerException("Bad pickle format: ENDAGENTS tag not found.");
+      }
+    }
+
+    // need to do this after we add reactants and products
+    rxn->df_needsInit = flag & 0x2;
+
   } // end of _depickle
 }; // end of RDKit namespace

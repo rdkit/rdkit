@@ -12,7 +12,7 @@
 #include "Grid3D.h"
 #include "UniformGrid3D.h"
 #include "point.h"
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <DataStructs/DiscreteValueVect.h>
 #include <cmath>
 
@@ -61,10 +61,9 @@ namespace RDGeom {
     //if(gridIdxCache.count(radInGrid)>0){
     //  return gridIdxCache[radInGrid];
     //}
-    unsigned int dX,dY,dZ;
+    unsigned int dX,dY;
     dX = grid.getNumX();
     dY = grid.getNumY();
-    dZ = grid.getNumZ();
     std::vector<int> res;
     for(int i=-radInGrid;i<=radInGrid;++i){
       for(int j=-radInGrid;j<=radInGrid;++j){

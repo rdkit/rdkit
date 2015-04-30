@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ namespace RDKit{
 
      NOTES:
        - to allow more control over the reaction, it is possible to flag reactant
-         atoms as being protected by setting the "_protected" property on those
+         atoms as being protected by setting the common_properties::_protected property on those
          atoms. Here's an example:
          \verbatim
             std::string smi="[O:1]>>[N:1]";
@@ -103,7 +103,7 @@ namespace RDKit{
             // here prods has two entries, because there are two Os in the
             // reactant. 
 
-            reacts[0]->getAtomWithIdx(0)->setProp("_protected",1);
+            reacts[0]->getAtomWithIdx(0)->setProp(common_properties::_protected,1);
             prods = rxn->runReactants(reacts);
             // here prods only has one entry, the reaction at atom 0
             // has been blocked by the _protected property
@@ -111,13 +111,16 @@ namespace RDKit{
 
   */
   class ChemicalReaction {
+    friend class ReactionPickler;
+
   public:
     ChemicalReaction() : df_needsInit(true), df_implicitProperties(false) {};
     ChemicalReaction(const ChemicalReaction &other){
-        df_needsInit=true;
+        df_needsInit=other.df_needsInit;
         df_implicitProperties=other.df_implicitProperties;
         m_reactantTemplates=other.m_reactantTemplates;
         m_productTemplates=other.m_productTemplates;
+        m_agentTemplates=other.m_agentTemplates;
     }
     //! construct a reaction from a pickle string
     ChemicalReaction(const std::string &binStr);
@@ -133,6 +136,16 @@ namespace RDKit{
       return this->m_reactantTemplates.size();
     }
 
+    //! Adds a new agent template
+    /*!
+      \return the number of agent
+
+    */
+    unsigned int addAgentTemplate(ROMOL_SPTR mol){
+      this->m_agentTemplates.push_back(mol);
+      return this->m_agentTemplates.size();
+    }
+
     //! Adds a new product template
     /*!
       \return the number of products
@@ -143,6 +156,23 @@ namespace RDKit{
       return this->m_productTemplates.size();
     }
     
+    //! Removes the reactant templates from a reaction if atom mapping ratio is below a given threshold
+    /*! By default the removed reactant templates were attached to the agent templates.
+        An alternative will be to provide a pointer to a molecule vector where these reactants should be saved.
+    */
+    void removeUnmappedReactantTemplates(
+      double thresholdUnmappedAtoms = 0.2,
+      bool moveToAgentTemplates = true,
+      MOL_SPTR_VECT *targetVector = NULL);
+
+    //! Removes the product templates from a reaction if its atom mapping ratio is below a given threshold
+    /*! By default the removed products templates were attached to the agent templates.
+        An alternative will be to provide a pointer to a molecule vector where these products should be saved.
+    */
+    void removeUnmappedProductTemplates(
+      double thresholdUnmappedAtoms =0.2,
+      bool moveToAgentTemplates = true,
+      MOL_SPTR_VECT *targetVector = NULL);
       
     //! Runs the reaction on a set of reactants
     /*!
@@ -159,6 +189,10 @@ namespace RDKit{
     */
     std::vector<MOL_SPTR_VECT> runReactants(const MOL_SPTR_VECT reactants) const;
 
+    const MOL_SPTR_VECT & getReactants() const { return this->m_reactantTemplates; }
+    const MOL_SPTR_VECT & getAgents()    const { return this->m_agentTemplates; }
+    const MOL_SPTR_VECT & getProducts()  const { return this->m_productTemplates; }
+
     MOL_SPTR_VECT::const_iterator beginReactantTemplates() const {
         return this->m_reactantTemplates.begin();    
     }
@@ -171,6 +205,13 @@ namespace RDKit{
     }
     MOL_SPTR_VECT::const_iterator endProductTemplates() const {
         return this->m_productTemplates.end();    
+    }
+
+    MOL_SPTR_VECT::const_iterator beginAgentTemplates() const {
+        return this->m_agentTemplates.begin();
+    }
+    MOL_SPTR_VECT::const_iterator endAgentTemplates() const {
+        return this->m_agentTemplates.end();
     }
 
     MOL_SPTR_VECT::iterator beginReactantTemplates() {
@@ -186,8 +227,16 @@ namespace RDKit{
     MOL_SPTR_VECT::iterator endProductTemplates() {
         return this->m_productTemplates.end();    
     }
+
+    MOL_SPTR_VECT::iterator beginAgentTemplates() {
+        return this->m_agentTemplates.begin();
+    }
+    MOL_SPTR_VECT::iterator endAgentTemplates() {
+        return this->m_agentTemplates.end();
+    }
     unsigned int getNumReactantTemplates() const { return this->m_reactantTemplates.size(); };
     unsigned int getNumProductTemplates() const { return this->m_productTemplates.size(); };
+    unsigned int getNumAgentTemplates() const { return this->m_agentTemplates.size(); };
 
     //! initializes our internal reactant-matching datastructures.
     /*! 
@@ -242,10 +291,8 @@ namespace RDKit{
   private:
     bool df_needsInit;
     bool df_implicitProperties;
-    MOL_SPTR_VECT m_reactantTemplates,m_productTemplates;
+    MOL_SPTR_VECT m_reactantTemplates,m_productTemplates,m_agentTemplates;
     ChemicalReaction &operator=(const ChemicalReaction &); // disable assignment
-    MOL_SPTR_VECT generateOneProductSet(const MOL_SPTR_VECT &reactants,
-                                        const std::vector<MatchVectType> &reactantsMatch) const;
   };
 
   //! tests whether or not the molecule has a substructure match
@@ -255,6 +302,9 @@ namespace RDKit{
   //! of reactants on return
   bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
                                       unsigned int &which);
+  //! \overload
+  bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
+  
   //! tests whether or not the molecule has a substructure match
   //! to any of the reaction's products
   //! the \c which argument is used to return which of the products
@@ -262,11 +312,23 @@ namespace RDKit{
   //! of products on return
   bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
                                    unsigned int &which);
+  //! \overload
+  bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
+
+  //! tests whether or not the molecule has a substructure match
+  //! to any of the reaction's agents
+  //! the \c which argument is used to return which of the agents
+  //! the molecule matches. If there's no match, it is equal to the number
+  //! of agents on return
+  bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
+                                   unsigned int &which);
+  //! \overload
+  bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn,const ROMol &mol);
 
   //! returns indices of the atoms in each reactant that are changed
   //! in the reaction
   /*!
-    \param rxn the reaction were are interested in
+    \param rxn the reaction we are interested in
 
     \param mappedAtomsOnly if set, atoms that are not mapped will not be included in
          the list of changed atoms (otherwise they are automatically included)
@@ -292,7 +354,28 @@ namespace RDKit{
   VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,bool mappedAtomsOnly=false);
 
   //! add the recursive queries to the reactants of a reaction
-  void addRecursiveQueriesToReaction(ChemicalReaction &rxn, const std::map<std::string,ROMOL_SPTR> &queries,
+  /*!
+    This does its work using RDKit::addRecursiveQueries()
+
+      \param rxn the reaction we are interested in
+      \param queries        - the dictionary of named queries to add
+      \param propName       - the atom property to use to get query names
+      optional:
+      \param reactantLabels - to store pairs of (atom index, query string)
+                              per reactant
+  
+      NOTES:
+        - existing query information, if present, will be supplemented (AND logic)
+        - non-query atoms will be replaced with query atoms using only the query
+          logic
+        - query names can be present as comma separated lists, they will then
+          be combined using OR logic.
+        - throws a KeyErrorException if a particular query name is not present
+          in \c queries
+
+   */  
+  void addRecursiveQueriesToReaction(ChemicalReaction &rxn,
+                                     const std::map<std::string,ROMOL_SPTR> &queries,
 		  std::string propName,
 		  std::vector<std::vector<std::pair<unsigned int,std::string> > > *reactantLabels=NULL);
 
@@ -302,7 +385,7 @@ namespace RDDepict {
   //! \brief Generate 2D coordinates (a depiction) for a reaction
   /*! 
 
-    \param rxn the reaction were are interested in
+    \param rxn the reaction we are interested in
 
     \param spacing the spacing between components of the reaction
 

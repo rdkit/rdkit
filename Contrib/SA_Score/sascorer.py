@@ -15,16 +15,19 @@
 #
 # peter ertl & greg landrum, september 2013
 #
+from __future__ import print_function
 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
+from rdkit.six.moves import cPickle
+from rdkit.six import iteritems
 
 import math
 from collections import defaultdict
 
 _fscores = None
 def readFragmentScores(name='fpscores'):
-    import cPickle,gzip
+    import gzip
     global _fscores
     _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
     outDict = {}
@@ -75,7 +78,7 @@ def calculateScore(m):
   fps = fp.GetNonzeroElements()
   score1 = 0.
   nf = 0
-  for bitId,v in fps.iteritems():
+  for bitId,v in iteritems(fps):
     nf += v
     sfp = bitId
     score1 += _fscores.get(sfp,-4)*v
@@ -126,7 +129,7 @@ def calculateScore(m):
 
 def processMols(mols,outf):
   
-  print 'smiles\tName\tsa_score'
+  print('smiles\tName\tsa_score')
   count = {}
   for i,m in enumerate(mols):
     if m is None:
@@ -135,7 +138,7 @@ def processMols(mols,outf):
     s = calculateScore(m)
 
     smiles = Chem.MolToSmiles(m)
-    print smiles+"\t"+m.GetProp('_Name') + "\t%3f"%s
+    print(smiles+"\t"+m.GetProp('_Name') + "\t%3f"%s)
 
 
 if __name__=='__main__':
@@ -152,7 +155,7 @@ if __name__=='__main__':
   processMols(suppl,outf)
   t4=time.time()
 
-  print >>sys.stderr,'Reading took %.2f seconds. Calculating took %.2f seconds'%((t2-t1),(t4-t3))
+  print('Reading took %.2f seconds. Calculating took %.2f seconds'%((t2-t1),(t4-t3)), file=sys.stderr)
 
   
 #

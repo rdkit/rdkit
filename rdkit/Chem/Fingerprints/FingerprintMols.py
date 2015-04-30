@@ -21,12 +21,13 @@ Sample Usage:
 
 
 """
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
 from rdkit import DataStructs
 import sys
-import cPickle
+from rdkit.six.moves import cPickle
 
 _cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1
@@ -357,7 +358,7 @@ def Usage():
   """  prints a usage string and exits
 
   """
-  print _usageDoc
+  print(_usageDoc)
   sys.exit(-1)
 
 _usageDoc="""

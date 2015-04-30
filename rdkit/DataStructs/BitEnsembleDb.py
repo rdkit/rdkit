@@ -40,7 +40,7 @@ def _ScoreToDb(self,sig,dbConn,tableName=None,id=None,act=None):
     try:
       tableName = self._dbTableName
     except AttributeError:
-      raise ValueError,'table name not set in BitEnsemble pre call to ScoreToDb()'
+      raise ValueError('table name not set in BitEnsemble pre call to ScoreToDb()')
   if id is not None:
     cols = [id]
   else:

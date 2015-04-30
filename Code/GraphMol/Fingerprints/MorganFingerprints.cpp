@@ -155,12 +155,16 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       }
     } // end of getConnectivityInvariants()
 
-    uint32_t updateElement(SparseIntVect<uint32_t> &v,unsigned int elem){
+    uint32_t updateElement(SparseIntVect<uint32_t> &v,unsigned int elem, bool counting){
       uint32_t bit=elem%v.getLength();
-      v.setVal(bit,v.getVal(bit)+1);
-      return elem;
+      if (counting) {
+          v.setVal(bit,v.getVal(bit)+1);
+      } else {
+          v.setVal(bit,1);
+      }
+      return bit;
     }
-    uint32_t updateElement(ExplicitBitVect &v,unsigned int elem){
+    uint32_t updateElement(ExplicitBitVect &v,unsigned int elem, bool counting=false){
       uint32_t bit=elem%v.getNumBits();
       v.setBit(bit);
       return bit;
@@ -173,6 +177,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          const std::vector<uint32_t> *fromAtoms,
                          bool useChirality,
                          bool useBondTypes,
+                         bool useCounts,
                          bool onlyNonzeroInvariants,
                          BitInfoMap *atomsSettingBits,
                          T &res){
@@ -191,8 +196,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       for(unsigned int i=0;i<nAtoms;++i){
         if(!fromAtoms ||
            std::find(fromAtoms->begin(),fromAtoms->end(),i)!=fromAtoms->end()){
-          if( !onlyNonzeroInvariants || (*invariants)[i]){
-            uint32_t bit=updateElement(res,(*invariants)[i]);
+          if(!onlyNonzeroInvariants || (*invariants)[i]){
+            uint32_t bit=updateElement(res,(*invariants)[i], useCounts);
             if(atomsSettingBits) (*atomsSettingBits)[bit].push_back(std::make_pair(i,0));
           }
         }
@@ -293,8 +298,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
               // add an extra value to the invariant to reflect chirality:
               Atom const *tAt=mol.getAtomWithIdx(atomIdx);
               std::string cip="";
-              if(tAt->hasProp("_CIPCode")){
-                tAt->getProp("_CIPCode",cip);
+              if(tAt->hasProp(common_properties::_CIPCode)){
+                tAt->getProp(common_properties::_CIPCode,cip);
               }
               if(cip=="R"){
                 gboost::hash_combine(invar, 3);
@@ -325,7 +330,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                        iter->get<0>())==neighborhoods.end()){
             if(!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]){
               if(includeAtoms[iter->get<2>()]){
-                uint32_t bit=updateElement(res,iter->get<1>());
+                uint32_t bit=updateElement(res,iter->get<1>(), useCounts);
                 if(atomsSettingBits) (*atomsSettingBits)[bit].push_back(std::make_pair(iter->get<2>(),
                                                                                        layer+1));
               }
@@ -358,11 +363,12 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                    std::vector<uint32_t> *invariants,
                    const std::vector<uint32_t> *fromAtoms,
                    bool useChirality,bool useBondTypes,
+                   bool useCounts,
                    bool onlyNonzeroInvariants,
                    BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,useCounts,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
@@ -377,7 +383,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,true,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }
@@ -392,7 +398,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                             bool onlyNonzeroInvariants,
                             BitInfoMap *atomsSettingBits){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,false,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;
     }

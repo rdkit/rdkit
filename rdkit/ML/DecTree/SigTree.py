@@ -57,4 +57,4 @@ class SigTreeNode(DecTree.DecTreeNode):
       return self.children[val].ClassifyExample(example,appendExamples=appendExamples)
 
   def __init__(self,*args,**kwargs):
-    apply(DecTree.DecTreeNode.__init__,(self,)+args,kwargs)
+    DecTree.DecTreeNode.__init__(self,*args,**kwargs)

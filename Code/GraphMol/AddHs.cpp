@@ -196,7 +196,7 @@ namespace RDKit{
         // Three other neighbors:
         // --------------------------------------------------------------------------
         boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(heavyAtom);
-        if(heavyAtom->hasProp("_CIPCode")){
+        if(heavyAtom->hasProp(common_properties::_CIPCode)){
           // if the central atom is chiral, we'll order the neighbors
           // by CIP rank:
           std::vector< std::pair<int,int> >  nbrs;
@@ -204,9 +204,7 @@ namespace RDKit{
             if(*nbrIdx != hydIdx){
               const Atom *tAtom=mol->getAtomWithIdx(*nbrIdx);
               int cip=0;
-              if(tAtom->hasProp("_CIPRank")){
-                cip=tAtom->getProp<int>("_CIPRank");
-              }
+              tAtom->getPropIfPresent<int>(common_properties::_CIPRank, cip);
               nbrs.push_back(std::make_pair(cip,*nbrIdx));
             }
             ++nbrIdx;
@@ -246,7 +244,8 @@ namespace RDKit{
           if(fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect)))<0.1){
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
-            if(heavyAtom->hasProp("_CIPCode")){
+            std::string cipCode;
+            if(heavyAtom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
               // the heavy atom is a chiral center, make sure
               // that we went go the right direction to preserve
               // its chirality. We use the chiral volume for this:
@@ -254,7 +253,6 @@ namespace RDKit{
               RDGeom::Point3D v2=nbr1Vect-nbr3Vect;
               RDGeom::Point3D v3=nbr2Vect-nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              std::string cipCode=heavyAtom->getProp<std::string>("_CIPCode");
               if( (cipCode=="S" && vol<0) || (cipCode=="R" && vol>0) ){
                 dirVect*=-1;
               }
@@ -333,12 +331,12 @@ namespace RDKit{
             mol.addBond(aidx,newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            mol.getAtomWithIdx(newIdx)->setProp("isImplicit",1);
+            mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit,1);
             mol.getAtomWithIdx(newIdx)->updatePropertyCache();
             if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",newAt->getNoImplicit(), true);
+          newAt->setProp(common_properties::origNoImplicit,newAt->getNoImplicit(), true);
           newAt->setNoImplicit(true);
         }
         // update the atom's derived properties (valence count, etc.)
@@ -363,10 +361,15 @@ namespace RDKit{
     //   - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),
     //     will not be removed.
     //   - two coordinate Hs, like the central H in C[H-]C, will not be removed
+    //   - Hs connected to dummy atoms will not be removed
     //
     void removeHs(RWMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       unsigned int currIdx=0,origIdx=0;
       std::map<unsigned int,unsigned int> idxMap;
+      for(ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms(); ++atIt) {
+        if ((*atIt)->getAtomicNum() == 1) continue;
+        (*atIt)->updatePropertyCache(false);
+      }
       while(currIdx < mol.getNumAtoms()){
         Atom *atom = mol.getAtomWithIdx(currIdx);
         idxMap[origIdx]=currIdx;
@@ -374,12 +377,12 @@ namespace RDKit{
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
 
-          if(atom->hasProp("isImplicit")){
+          if(atom->hasProp(common_properties::isImplicit)){
             removeIt=true;
           } else if(!implicitOnly && !atom->getIsotope() && atom->getDegree()==1){
             ROMol::ADJ_ITER begin,end;
             boost::tie(begin,end) = mol.getAtomNeighbors(atom);
-            if(mol.getAtomWithIdx(*begin)->getAtomicNum() != 1){
+            if(mol.getAtomWithIdx(*begin)->getAtomicNum() > 1){
               removeIt=true;
             }
           }
@@ -392,6 +395,9 @@ namespace RDKit{
             // :-) 
             const BOND_SPTR bond = mol[*beg];
             Atom *heavyAtom =bond->getOtherAtom(atom);
+            int heavyAtomNum = heavyAtom->getAtomicNum();
+            const INT_VECT &defaultVs =
+              PeriodicTable::getTable()->getValenceList(heavyAtomNum);
 
             // we'll update the atom's explicit H count if we were told to
             // *or* if the atom is chiral, in which case the H is needed
@@ -404,12 +410,14 @@ namespace RDKit{
               // this is a special case related to Issue 228 and the
               // "disappearing Hydrogen" problem discussed in MolOps::adjustHs
               //
-              // If we remove a hydrogen from an aromatic N, we need to
-              // be *sure* to increment the explicit count, even if the
-              // H itself isn't marked as explicit
-              if(heavyAtom->getAtomicNum()==7 && heavyAtom->getIsAromatic()
-                 && heavyAtom->getFormalCharge()==0){
-                heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs()+1);
+              // If we remove a hydrogen from an aromatic N or P, or if
+              // the heavy atom it is connected to is not in its default
+              // valence state, we need to be *sure* to increment the
+              // explicit count, even if the H itself isn't marked as explicit
+              if (((heavyAtomNum == 7 || heavyAtomNum == 15)
+                && heavyAtom->getIsAromatic()) || (std::find(defaultVs.begin() + 1,
+                defaultVs.end(), heavyAtom->getTotalValence()) != defaultVs.end())) {
+                heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
               }
             }
 
@@ -434,6 +442,16 @@ namespace RDKit{
                 heavyAtom->invertChirality();
               }
             }     
+
+            // if it's a wavy bond, then we need to 
+            // mark the beginning atom with the _UnknownStereo tag.
+            // so that we know later that something was affecting its
+            // stereochem
+            if(bond->getBondDir()==Bond::UNKNOWN
+               && bond->getBeginAtomIdx()==heavyAtom->getIdx()){
+              heavyAtom->setProp(common_properties::_UnknownStereo,1);
+            }
+
             mol.removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom
@@ -442,12 +460,13 @@ namespace RDKit{
         } else {
           // only increment the atom idx if we don't remove the atom
           currIdx++;
-          if(atom->hasProp("origNoImplicit")){
+          bool origNoImplicit;
+          if(atom->getPropIfPresent(common_properties::origNoImplicit, origNoImplicit)){
             // we'll get in here if we haven't already processed the atom's implicit
             //  hydrogens. (this is protection for the case that removeHs() is called
             //  multiple times on a single molecule without intervening addHs() calls)
-            atom->setNoImplicit(atom->getProp<bool>("origNoImplicit"));
-            atom->clearProp("origNoImplicit");
+            atom->setNoImplicit(origNoImplicit);
+            atom->clearProp(common_properties::origNoImplicit);
           }
         }
       }
@@ -470,7 +489,7 @@ namespace RDKit{
       try{
         removeHs(*res,implicitOnly,updateExplicitCount,sanitize);
       } catch (MolSanitizeException &se){
-        if(res) delete res;
+        delete res;
         throw se;
       }
       return static_cast<ROMol *>(res);
@@ -487,7 +506,10 @@ namespace RDKit{
     //     removed.  This prevents molecules like "[H][H]" from having
     //     all atoms removed.
     //
-    void mergeQueryHs(RWMol &mol){
+    //   - By default all hydrogens are removed, however if
+    //     merge_unmapped_only is true, any hydrogen participating
+    //     in an atom map will be retained
+    void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly){
       std::vector<unsigned int> atomsToRemove;
       
       unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
@@ -497,9 +519,13 @@ namespace RDKit{
           unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
           boost::tie(begin,end) = mol.getAtomNeighbors(atom);
+
           while(begin!=end){
-            if(mol.getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
-               mol.getAtomWithIdx(*begin)->getDegree() == 1 ){
+            Atom &bgn = *mol.getAtomWithIdx(*begin);
+            if(bgn.getAtomicNum() == 1 &&
+               bgn.getDegree() == 1 &&
+               (!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber))
+               ){
               atomsToRemove.push_back(*begin);
               ++numHsToRemove;
             }
@@ -544,7 +570,7 @@ namespace RDKit{
               }
             } else {
               // it wasn't a query atom, we need to replace it so that we can add a query:
-              ATOM_EQUALS_QUERY *tmp=makeAtomNumEqualsQuery(atom->getAtomicNum());
+              ATOM_EQUALS_QUERY *tmp=makeAtomNumQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
               newAt->setQuery(tmp);
               mol.replaceAtom(atom->getIdx(),newAt);
@@ -570,9 +596,9 @@ namespace RDKit{
       }
 
     };
-    ROMol *mergeQueryHs(const ROMol &mol){
+    ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly){
       RWMol *res = new RWMol(mol);
-      mergeQueryHs(*res);
+      mergeQueryHs(*res, mergeUnmappedOnly);
       return static_cast<ROMol *>(res);
     };
 

@@ -26,6 +26,7 @@ namespace RDKit {
   class Bond;
 
   namespace MMFF {
+    using namespace ForceFields::MMFF;
     class MMFFAtomProperties {
     public:
       MMFFAtomProperties() :
@@ -54,8 +55,8 @@ namespace RDKit {
         boost::uint8_t verbosity = MMFF_VERBOSITY_NONE,
         std::ostream &oStream = std::cout);
       ~MMFFMolProperties() {};
-      const unsigned int getMMFFBondType(const Bond *bond);
-      const unsigned int getMMFFAngleType(const ROMol &mol,
+      unsigned int getMMFFBondType(const Bond *bond);
+      unsigned int getMMFFAngleType(const ROMol &mol,
         const unsigned int idx1, const unsigned int idx2,
         const unsigned int idx3);
       const std::pair<unsigned int, unsigned int> getMMFFTorsionType
@@ -66,19 +67,19 @@ namespace RDKit {
         (const ROMol &mol, unsigned int idx2, unsigned int idx3);
       const ForceFields::MMFF::MMFFBond *getMMFFBondStretchEmpiricalRuleParams
         (const ROMol &mol, const Bond *bond);
-      const boost::uint8_t getMMFFAtomType(const unsigned int idx)
+      boost::uint8_t getMMFFAtomType(const unsigned int idx)
       {
         RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
       };
-      const double getMMFFFormalCharge(const unsigned int idx)
+      double getMMFFFormalCharge(const unsigned int idx)
       {
         RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge;
       };
-      const double getMMFFPartialCharge(const unsigned int idx)
+      double getMMFFPartialCharge(const unsigned int idx)
       {
         RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
@@ -88,7 +89,7 @@ namespace RDKit {
       {
         this->d_bondTerm = state;
       };
-      const bool getMMFFBondTerm()
+      bool getMMFFBondTerm()
       {
         return this->d_bondTerm;
       };
@@ -96,7 +97,7 @@ namespace RDKit {
       {
         this->d_angleTerm = state;
       };
-      const bool getMMFFAngleTerm()
+      bool getMMFFAngleTerm()
       {
         return this->d_angleTerm;
       };
@@ -104,7 +105,7 @@ namespace RDKit {
       {
         this->d_stretchBendTerm = state;
       };
-      const bool getMMFFStretchBendTerm()
+      bool getMMFFStretchBendTerm()
       {
         return this->d_stretchBendTerm;
       };
@@ -112,7 +113,7 @@ namespace RDKit {
       {
         this->d_oopTerm = state;
       };
-      const bool getMMFFOopTerm()
+      bool getMMFFOopTerm()
       {
         return this->d_oopTerm;
       };
@@ -120,7 +121,7 @@ namespace RDKit {
       {
         this->d_torsionTerm = state;
       };
-      const bool getMMFFTorsionTerm()
+      bool getMMFFTorsionTerm()
       {
         return this->d_torsionTerm;
       };
@@ -128,7 +129,7 @@ namespace RDKit {
       {
         this->d_vdWTerm = state;
       };
-      const bool getMMFFVdWTerm()
+      bool getMMFFVdWTerm()
       {
         return this->d_vdWTerm;
       };
@@ -136,7 +137,7 @@ namespace RDKit {
       {
         this->d_eleTerm = state;
       };
-      const bool getMMFFEleTerm()
+      bool getMMFFEleTerm()
       {
         return this->d_eleTerm;
       };
@@ -189,6 +190,25 @@ namespace RDKit {
       {
         return d_valid;
       };
+      bool getMMFFBondStretchParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2,
+        unsigned int &bondType, MMFFBond &mmffBondStretchParams);
+      bool getMMFFAngleBendParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+        unsigned int &angleType, MMFFAngle &mmffAngleBendParams);
+      bool getMMFFStretchBendParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+        unsigned int &stretchBendType, MMFFStbn &mmffStretchBendParams,
+        MMFFBond mmffBondStretchParams[2], MMFFAngle &mmffAngleBendParams);
+      bool getMMFFTorsionParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2,
+        const unsigned int idx3, const unsigned int idx4,
+        unsigned int &torsionType, MMFFTor &mmffTorsionParams);
+      bool getMMFFOopBendParams(const ROMol &mol,
+        const unsigned int idx1, const unsigned int idx2, const unsigned int idx3,
+        const unsigned int idx4, MMFFOop &mmffOopBendParams);
+      bool getMMFFVdWParams(const unsigned int idx1,
+        const unsigned int idx2, MMFFVdWRijstarEps &mmffVdWParams);
     private:
       void setMMFFHeavyAtomType(const Atom *atom);
       void setMMFFHydrogenType(const Atom *atom);
@@ -231,9 +251,9 @@ namespace RDKit {
       const unsigned int ringSize, const unsigned int numAtoms, ...);
     unsigned int sanitizeMMFFMol(RWMol &mol);
     void setMMFFAromaticity(RWMol &mol);
-    const unsigned int getMMFFStretchBendType(const unsigned int angleType,
+    unsigned int getMMFFStretchBendType(const unsigned int angleType,
       const unsigned int bondType1, const unsigned int bondType2);
-    const unsigned int getPeriodicTableRow(const int atomicNum);
+    unsigned int getPeriodicTableRow(const int atomicNum);
     const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams
       (const ROMol &mol, const ForceFields::MMFF::MMFFAngle *oldMMFFAngleParams,
       const ForceFields::MMFF::MMFFProp *mmffPropParamsCentralAtom,

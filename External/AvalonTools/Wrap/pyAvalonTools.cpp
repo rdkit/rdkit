@@ -19,6 +19,25 @@ extern "C" {
 namespace python = boost::python;
 
 namespace {
+
+
+  RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const RDKit::ROMol &mol,
+                               unsigned int nBits,
+                               bool isQuery,
+                               unsigned int bitFlags){
+    RDKit::SparseIntVect<boost::uint32_t> *res=new RDKit::SparseIntVect<boost::uint32_t>(nBits);
+    AvalonTools::getAvalonCountFP(mol,*res,nBits,isQuery,bitFlags);
+    return res;
+  }
+  RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const std::string &data,bool isSmiles,
+                                                   unsigned int nBits,
+                                                   bool isQuery,
+                                                   unsigned int bitFlags){
+    RDKit::SparseIntVect<boost::uint32_t> *res=new RDKit::SparseIntVect<boost::uint32_t>(nBits);
+    AvalonTools::getAvalonCountFP(data,isSmiles,*res,nBits,isQuery,bitFlags);
+    return res;
+  }
+
   ExplicitBitVect *getAvalonFP(const RDKit::ROMol &mol,
                                unsigned int nBits,
                                bool isQuery,
@@ -116,6 +135,8 @@ The functions currently exposed are:\n\
   - GetCanonSmiles()   : return the canonical smiles for a molecule\n\
   - GetAvalonFP()      : return the Avalon fingerprint for a molecule as\n\
                          an RDKit ExplicitBitVector\n\
+  - GetAvalonCountFP()      : return the Avalon fingerprint for a molecule as\n\
+                              an RDKit SparseIntVector\n\
   - Generate2DCoords() : use the Avalon coordinate generator to create\n\
                          a set of 2D coordinates for a molecule\n\
 Each function can be called with either an RDKit molecule or some\n\
@@ -177,6 +198,30 @@ MDL mol data is assumed.";
                python::arg("resetVect")=false,
                python::arg("bitFlags")=AvalonTools::avalonSimilarityBits),
               docString.c_str());
+
+
+  docString = "returns the Avalon count fingerprint for an RDKit molecule";
+  python::def("GetAvalonCountFP",
+              (RDKit::SparseIntVect<boost::uint32_t> *(*)(const RDKit::ROMol &,unsigned int,bool,unsigned int))getAvalonCountFP,
+              (python::arg("mol"),
+               python::arg("nBits")=512,
+               python::arg("isQuery")=false,
+               python::arg("bitFlags")=AvalonTools::avalonSimilarityBits),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "returns the Avalon count fingerprint for some molecule data.\n\
+If the isSmiles argument is true, the data is assumed to be SMILES, otherwise\n\
+MDL mol data is assumed.";
+  python::def("GetAvalonCountFP",
+              (RDKit::SparseIntVect<boost::uint32_t> *(*)(const std::string&,bool,unsigned int,bool,unsigned int))getAvalonCountFP,
+              (python::arg("molData"),python::arg("isSmiles"),
+               python::arg("nBits")=512,
+               python::arg("isQuery")=false,
+               python::arg("bitFlags")=AvalonTools::avalonSimilarityBits),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+
 
   docString = "returns the Avalon fingerprint for some molecule data as a list of ints.\n\
 If the isSmiles argument is true, the data is assumed to be SMILES, otherwise\n\

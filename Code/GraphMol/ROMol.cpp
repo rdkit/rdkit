@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -49,8 +48,10 @@ namespace RDKit{
     initMol();
     MolPickler::molFromPickle(pickle,*this);
   }
-  
-  void ROMol::initFromOther(const ROMol &other,bool quickCopy){
+
+  void ROMol::initFromOther(const ROMol &other,bool quickCopy,int confId){
+    if(this == &other) return;
+
     //std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
     // copy over the atoms
     const MolGraph &oGraph=other.d_graph;
@@ -80,8 +81,10 @@ namespace RDKit{
       // copy conformations
       for (ConstConformerIterator ci = other.beginConformers();
 	   ci != other.endConformers(); ++ci) {
-        Conformer *conf = new Conformer(*(*ci));
-        this->addConformer(conf);
+        if(confId<0 || (*ci)->getId()==confId){
+          Conformer *conf = new Conformer(*(*ci));
+          this->addConformer(conf);
+        }
       }
 
       if (other.dp_props) {
@@ -342,8 +345,7 @@ namespace RDKit{
     d_graph[which].reset(atom_p);
     atom_p->setIdx(which);
     if(updateLabel){
-      if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
-      setAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
+      replaceAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
     }
     for (ConformerIterator cfi = this->beginConformers();
 	 cfi != this->endConformers(); ++cfi) {
@@ -361,8 +363,9 @@ namespace RDKit{
     RANGE_CHECK(0,bond_pin->getEndAtomIdx(),getNumAtoms()-1);
     PRECONDITION(bond_pin->getBeginAtomIdx()!=bond_pin->getEndAtomIdx(),
                  "attempt to add self-bond");
-    PRECONDITION(!getBondBetweenAtoms(bond_pin->getBeginAtomIdx(),
-                                      bond_pin->getEndAtomIdx()),"bond already exists");
+    PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
+                               bond_pin->getEndAtomIdx(),d_graph).second),"bond already exists");
+
     Bond *bond_p;
     if(!takeOwnership) bond_p = bond_pin->copy();
     else bond_p = bond_pin;
@@ -454,6 +457,18 @@ namespace RDKit{
   ROMol::ConstQueryAtomIterator ROMol::endQueryAtoms() const{
     return ConstQueryAtomIterator(this,getNumAtoms());
   }
+  ROMol::MatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(Atom *)) {
+    return MatchingAtomIterator(this,what);
+  }
+  ROMol::ConstMatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(const Atom *)) const {
+    return ConstMatchingAtomIterator(this,what);
+  }
+  ROMol::MatchingAtomIterator ROMol::endMatchingAtoms(){
+    return MatchingAtomIterator(this,getNumAtoms());
+  }
+  ROMol::ConstMatchingAtomIterator ROMol::endMatchingAtoms() const{
+    return ConstMatchingAtomIterator(this,getNumAtoms());
+  }
 
   ROMol::BondIterator ROMol::beginBonds(){
     return BondIterator(this);
@@ -478,11 +493,12 @@ namespace RDKit{
     if(includeRings) this->dp_ringInfo->reset();
 
     STR_VECT compLst;
-    getProp(detail::computedPropName, compLst);
-    BOOST_FOREACH(std::string &sv,compLst){
-      dp_props->clearVal(sv);
+    if(getPropIfPresent(detail::computedPropName, compLst)){
+      BOOST_FOREACH(std::string &sv,compLst){
+        dp_props->clearVal(sv);
+      }
+      compLst.clear();
     }
-    compLst.clear();
     dp_props->setVal(detail::computedPropName, compLst);
     for(ConstAtomIterator atomIt=this->beginAtoms();
         atomIt!=this->endAtoms();
@@ -507,6 +523,18 @@ namespace RDKit{
         ++bondIt){
       (*bondIt)->updatePropertyCache(strict);
     }
+  }
+
+  bool ROMol::needsUpdatePropertyCache() const{
+    for(ConstAtomIterator atomIt=this->beginAtoms();
+      atomIt!=this->endAtoms();
+      ++atomIt){
+      if((*atomIt)->needsUpdatePropertyCache()){
+        return true;
+      }
+    }
+    // there is no test for bonds yet since they do not obtain a valence property
+    return false;
   }
 
   const Conformer &ROMol::getConformer(int id) const {

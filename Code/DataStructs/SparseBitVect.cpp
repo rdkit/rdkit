@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "SparseBitVect.h"
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include "base64.h"
 #include <RDGeneral/StreamOps.h>
@@ -80,7 +80,7 @@ SparseBitVect&
 SparseBitVect::operator=(const SparseBitVect& other)
 {
   IntSet *bv=other.dp_bits;
-  if(dp_bits) delete dp_bits;
+  delete dp_bits;
   d_size = other.getNumBits();
   dp_bits = new IntSet;
   std::copy(bv->begin(),bv->end(),std::inserter(*dp_bits,dp_bits->end()));
@@ -338,6 +338,6 @@ std::string SparseBitVect::toString() const {
 
 void SparseBitVect::_initForSize(unsigned int size){
   d_size=size;
-  if(dp_bits) delete dp_bits;
+  delete dp_bits;
   dp_bits=new IntSet;
 };

@@ -27,7 +27,9 @@ namespace RDGeom {
     static python::tuple
     getinitargs(const UniformGrid3D& self)
     {
-      return python::make_tuple(self.toString());
+      std::string res=self.toString();
+      python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+      return python::make_tuple(retval);
     };
   };
 
@@ -61,6 +63,15 @@ namespace RDGeom {
     Point3D centroid=computeGridCentroid(grid,pt,windowRadius,weightSum);
     return python::make_tuple(weightSum,centroid);
   }
+  python::tuple getGridIndicesWrap(const UniformGrid3D &grid, unsigned int idx){
+    unsigned int xi,yi,zi;
+    grid.getGridIndices(idx,xi,yi,zi);
+    python::list pyRes;
+    pyRes.append(xi);
+    pyRes.append(yi);
+    pyRes.append(zi);
+    return python::tuple(pyRes);
+  }
   python::tuple findGridTerminalPointsWrap(const UniformGrid3D &grid, double windowRadius,
                                               double inclusionFraction){
     std::vector<Point3D> res=findGridTerminalPoints(grid,windowRadius,inclusionFraction);
@@ -83,6 +94,10 @@ namespace RDGeom {
                                     python::init<std::string>("pickle constructor"))
         .def("GetGridPointIndex", &UniformGrid3D::getGridPointIndex, 
              "Get the index to the grid point closest to the specified point")
+        .def("GetGridIndex", &UniformGrid3D::getGridIndex, 
+             "Get the index to the grid point with the three integer indices provided")
+        .def("GetGridIndices", &getGridIndicesWrap, 
+             "Returns the integer indices of the grid index provided.")
         .def("GetValPoint", getValPoint,
              "Get the value at the closest grid point")
         .def("GetVal", getValIndex,

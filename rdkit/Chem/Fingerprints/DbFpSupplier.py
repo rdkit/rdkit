@@ -15,7 +15,8 @@
 from rdkit import RDConfig
 from rdkit.VLib.Node import VLibNode
 from rdkit import DataStructs
-import cPickle
+from rdkit import six
+from rdkit.six.moves import cPickle
 import sys
 def warning(msg,dest=sys.stderr):
   dest.write(msg)
@@ -38,7 +39,7 @@ class DbFpSupplier(VLibNode):
     self._fpColName = fpColName.upper()
     self._colNames = [x.upper() for x in self._data.GetColumnNames()]
     if self._fpColName not in self._colNames:
-      raise ValueError,'fp column name "%s" not found in result set: %s'%(self._fpColName,str(self._colNames))
+      raise ValueError('fp column name "%s" not found in result set: %s'%(self._fpColName,str(self._colNames)))
     self.fpCol = self._colNames.index(self._fpColName)
     del self._colNames[self.fpCol]
     self._colNames = tuple(self._colNames)
@@ -50,12 +51,15 @@ class DbFpSupplier(VLibNode):
 
   def _BuildFp(self,data):
     data = list(data)
-    pkl = str(data[self.fpCol])
+    if six.PY3:
+      pkl = bytes(data[self.fpCol],encoding='Latin1')
+    else:
+      pkl = str(data[self.fpCol])
     del data[self.fpCol]
     self._numProcessed+=1;
     try:
       if self._usePickles:
-        newFp = cPickle.loads(pkl)
+        newFp = cPickle.loads(pkl,encoding='bytes')          
       else:
         newFp = DataStructs.ExplicitBitVect(pkl)
     except:
@@ -71,6 +75,9 @@ class DbFpSupplier(VLibNode):
     if itm is None:
       raise StopIteration
     return itm
+
+  __next__ = next # py3
+
   
 class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration

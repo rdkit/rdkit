@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, May 2013
-
+from __future__ import print_function
 import sys
 from optparse import OptionParser
 from rdkit import Chem
@@ -61,11 +61,11 @@ if __name__ == '__main__':
     if( (options.cutoff >= 0) and (options.cutoff <= 1) ):
         fraggle_cutoff = options.cutoff
     else:
-        print "Fraggle cutoff must be in range 0-1"
+        print("Fraggle cutoff must be in range 0-1")
         sys.exit(1)
 
 
-    print "SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,RDK5_Similarity"
+    print("SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,RDK5_Similarity")
 
     #create some data structure to store results
     id_to_smi = {}
@@ -129,5 +129,5 @@ if __name__ == '__main__':
     for qID in frag_sim:
         for id_ in frag_sim[qID]:
             if(frag_sim[qID][id_] >= fraggle_cutoff):
-                print "%s,%s,%s,%s,%s,%s" % (id_to_smi[id_],id_,id_to_smi[qID],qID,frag_sim[qID][id_],day_sim[qID][id_])
+                print("%s,%s,%s,%s,%s,%s" % (id_to_smi[id_],id_,id_to_smi[qID],qID,frag_sim[qID][id_],day_sim[qID][id_]))
 

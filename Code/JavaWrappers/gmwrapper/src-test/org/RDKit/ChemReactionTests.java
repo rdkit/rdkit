@@ -66,7 +66,7 @@ public class ChemReactionTests extends GraphMolTest {
 		rxn.addReactantTemplate(r1);
 		assertEquals( 1,rxn.getNumReactantTemplates() );
 
-		r1 = RWMol.MolFromSmarts("[N:3]");
+		r1 = RWMol.MolFromSmarts("[N;!$(N-C=O):3]");
 		rxn.addReactantTemplate(r1);
 		assertEquals( 2,rxn.getNumReactantTemplates() );
 
@@ -85,6 +85,10 @@ public class ChemReactionTests extends GraphMolTest {
 		assertEquals( 1,prods.size() );
 		assertEquals( 1,prods.get(0).size() );
 		assertEquals( 3,prods.get(0).get(0).getNumAtoms() );
+                assertEquals( true, RDKFuncs.isMoleculeReactantOfReaction(rxn,reacts.get(0)) );
+                assertEquals( false, RDKFuncs.isMoleculeReactantOfReaction(rxn,prods.get(0).get(0)) );
+                assertEquals( true, RDKFuncs.isMoleculeProductOfReaction(rxn,prods.get(0).get(0)) );
+                assertEquals( false, RDKFuncs.isMoleculeProductOfReaction(rxn,reacts.get(0)) );
 	}
 
 	@Test
@@ -364,7 +368,7 @@ public class ChemReactionTests extends GraphMolTest {
 	public void test10DotSeparation() {
 		ROMol mol = RWMol.MolFromSmiles("C1ON1");
 		ChemicalReaction rxn = 
-			ChemicalReaction.ReactionFromSmarts("[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1");
+			ChemicalReaction.ReactionFromSmarts("[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)");
 		ROMol_Vect reactants = new ROMol_Vect();
 		reactants.add(mol);
 		ROMol_Vect_Vect products = rxn.runReactants(reactants);
@@ -414,6 +418,32 @@ public class ChemReactionTests extends GraphMolTest {
 			assertEquals( 1,products.get(prodSet).size() );
 			assertEquals("CC",products.get(prodSet).get(0).MolToSmiles());
 		}
+	}
+
+
+    // @Test
+	public void test99MemoryLeak() {
+		ChemicalReaction rxn = 
+			ChemicalReaction.ReactionFromSmarts("[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]");
+		assertNotNull(rxn );;
+		assertEquals( 2,rxn.getNumReactantTemplates() );
+		assertEquals( 1,rxn.getNumProductTemplates() );
+		assertTrue(rxn.getImplicitPropertiesFlag());
+
+		ROMol_Vect reacts = new ROMol_Vect();
+		for (String react : new String[] {"C(=O)O","N"})
+			reacts.add(RWMol.MolFromSmiles(react));		
+		// Do not need the initReactantMatchers call here
+                for(Integer i=0;i<1000000;i++){
+                    ROMol_Vect_Vect prods = rxn.runReactants(reacts);;
+                    assertEquals( 1,prods.size() );
+                    assertEquals( 1,prods.get(0).size() );
+                    assertEquals( 3,prods.get(0).get(0).getNumAtoms() );
+                    //prods.get(0).get(0).delete();
+                    //prods.get(0).delete();
+                    //prods.delete();
+                }
+
 	}
 
 	public static void main(String args[]) {

@@ -7,12 +7,10 @@ This is, perhaps, a little misleading.  For the purposes of this module,
 cross validation == evaluating the accuracy of a net.
 
 """
-
+from __future__ import print_function
 from rdkit.ML.Neural import Network,Trainers
 from rdkit.ML.Data import SplitData
 import math
-
-from rdkit import RDRandom
 
 def CrossValidate(net,testExamples,tolerance,appendExamples=0):
   """ Determines the classification error for the testExamples
@@ -39,7 +37,7 @@ def CrossValidate(net,testExamples,tolerance,appendExamples=0):
   nTest = len(testExamples)
   nBad = 0
   badExamples = []
-  for i in xrange(nTest):
+  for i in range(nTest):
     testEx = testExamples[i]
     trueRes = testExamples[i][-1]
     res = net.ClassifyExample(testEx)
@@ -103,7 +101,7 @@ def CrossValidationDriver(examples,attrs=[],nPossibleVals=[],holdOutFrac=.3,sile
 
   nTrain = len(trainExamples)
   if not silent:
-    print 'Training with %d examples'%(nTrain)
+    print('Training with %d examples'%(nTrain))
 
   nInput = len(examples[0])-1
   nOutput = 1
@@ -119,13 +117,13 @@ def CrossValidationDriver(examples,attrs=[],nPossibleVals=[],holdOutFrac=.3,sile
 
   nTest = len(testExamples)
   if not silent:
-    print 'Testing with %d examples'%nTest
+    print('Testing with %d examples'%nTest)
   if not calcTotalError:
     xValError,badExamples = CrossValidate(net,testExamples,tolerance)
   else:
     xValError,badExamples = CrossValidate(net,allExamples,tolerance)
   if not silent:
-    print 'Validation error was %%%4.2f'%(100*xValError)
+    print('Validation error was %%%4.2f'%(100*xValError))
   net._trainIndices=trainIndices
   return net,xValError
 

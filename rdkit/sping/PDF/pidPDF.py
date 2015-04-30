@@ -14,10 +14,11 @@ self.pdf which offers numerous lower-level drawing routines.
 # paths so I left it unchanged.
 
 
+#pylint: disable=E1103,W0311,E1101
+from __future__ import print_function
 #standard python library modules
 import string
-import cStringIO
-import pdfmetrics
+from . import pdfmetrics
 import glob
 import os
 import types
@@ -26,8 +27,8 @@ from math import sin, cos, pi, ceil
 # app specific
 from rdkit.sping import pagesizes
 from rdkit.sping.pid import *
-import pdfgen
-import pdfgeom
+from . import pdfgen
+from . import pdfgeom
 
 #edit this is the setting offends you, or set it in the constructor
 DEFAULT_PAGE_SIZE = pagesizes.A4
@@ -134,7 +135,7 @@ class PDFCanvas(Canvas):
                
         #if they specified a size smaller than page,
         # be helpful and centre their diagram
-        if self.pagesize <> self.drawingsize:
+        if self.pagesize != self.drawingsize:
             dx = 0.5 * (self.pagesize[0] - self.drawingsize[0])
             dy = 0.5 * (self.pagesize[1] - self.drawingsize[1])
             self.pdf.translate(dx, dy)
@@ -305,8 +306,8 @@ class PDFCanvas(Canvas):
         else:
             self.pdf.drawPath(
                         path,
-                        (edge <> transparent),  #whether to stroke
-                        (fill <> transparent)   #whether to fill
+                        (edge != transparent),  #whether to stroke
+                        (fill != transparent)   #whether to fill
                         )
         
     #------------- drawing methods --------------
@@ -375,7 +376,7 @@ class PDFCanvas(Canvas):
             # inserting basic commands here  to see if can get working
             textobj = self.pdf.beginText()
 
-            if col <> self.defaultFillColor:
+            if col != self.defaultFillColor:
                 textobj.setFillColorRGB(col.red,col.green, col.blue)
 
             if angle != 0 :
@@ -589,7 +590,7 @@ class PDFCanvas(Canvas):
 ##            args = list(tuple[1:])
 ##            start = args[0:2]
 ##            # lineTo the start if not coincident with end of last segment
-##            if start <> end:
+##            if start != end:
 ##                p1.lineTo(start[0], start[1])
 ##                p2.lineTo(start[0], start[1])
 ##                

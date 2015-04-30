@@ -1,0 +1,73 @@
+# adapted from http://conda.pydata.org/docs/travis.html
+language: python
+python:
+ # We don't actually use the Travis Python, but this keeps it organized.
+ - "2.7"
+ - "3.4"
+
+before_install:
+ - sudo apt-get update -qq
+
+ # download and install miniconda
+ - wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh;
+ - bash miniconda.sh -b -p $HOME/conda
+ - export PATH="$HOME/conda/bin:$PATH"
+ - hash -r
+ - conda config --set always_yes yes --set changeps1 no
+ - conda update -q conda
+ # Useful for debugging any issues with conda
+ - conda info -a
+
+ # create and activate the build/test environment
+ - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION pip cmake
+ - source activate tenv
+
+install:
+ # install the build tools
+ - sudo apt-get install -qq build-essential
+
+ # and the base dependencies
+ - sudo apt-get install -qq openjdk-7-jdk swig # for the java wrappers
+
+ - sudo apt-get install libjpeg62 # for pillow
+ - conda install -q numpy pillow pandas # matplotlib
+ 
+ # install the conda boost packages from the RDKit binstar channel.
+ - conda install -q -c rdkit boost=1.55.0
+
+
+before_script:
+ # RDKit
+ - export RDBASE=`pwd`
+ - echo $RDBASE
+ - export PYTHONPATH=${RDBASE}
+ - export LD_LIBRARY_PATH=${RDBASE}/lib
+
+ - mkdir $RDBASE/External/java_lib
+ - wget http://search.maven.org/remotecontent?filepath=junit/junit/4.10/junit-4.10.jar -O $RDBASE/External/java_lib/junit.jar
+ - ls -l $RDBASE/External/java_lib
+
+ - mkdir $RDBASE/External/AvalonTools/distrib
+ - wget https://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar/download -O $RDBASE/External/AvalonTools/distrib/AvalonToolkit_1.2.0.source.tar
+ - cd $RDBASE/External/AvalonTools/distrib
+ - tar xf AvalonToolkit_1.2.0.source.tar
+ - ls -l $RDBASE/External/AvalonTools/distrib
+ 
+ - export PYTHON=`which python`
+ - echo $PYTHON
+ - export PY_PREFIX=`$PYTHON -c "import sys; print(sys.prefix)"`
+ - echo $PY_PREFIX
+ - export PY_SP_DIR=$PY_PREFIX/lib/python$TRAVIS_PYTHON_VERSION/site-packages
+ - echo $PY_SP_DIR
+
+
+script:
+ - cd $RDBASE
+ - mkdir build
+ - cd build
+ - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D AVALONTOOLS_DIR=$RDBASE/External/AvalonTools/distrib/SourceDistribution -D RDK_BUILD_AVALON_SUPPORT=ON ..
+ - cat CMakeCache.txt # useful for debugging/troubleshooting
+
+ - make -j2
+ - make install
+ - ctest --output-on-failure

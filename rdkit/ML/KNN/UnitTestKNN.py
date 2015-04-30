@@ -9,7 +9,7 @@ from rdkit.ML.Data import DataUtils, MLData
 from rdkit.ML.KNN import CrossValidate,DistFunctions
 from rdkit.ML.KNN import KNNModel,KNNClassificationModel,KNNRegressionModel
 import os.path
-import cPickle
+from rdkit.six.moves import cPickle
 from rdkit import RDRandom
 
 def feq(a,b,tol=1e-4):
@@ -47,7 +47,7 @@ class TestCase(unittest.TestCase):
     attrs = range(1,nvars+1)
     numNeigh = 11
     mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, numNeigh,silent=1)
-    assert feq(err,0.02312),err
+    self.assertAlmostEqual(err,0.01075,4)
 
   def test3Regress(self):
     """ a carefully laid out regression data set where the results are clear:
@@ -82,7 +82,7 @@ class TestCase(unittest.TestCase):
     mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, numNeigh,silent=1,
                                                    modelBuilder=CrossValidate.makeRegressionModel)
     # NOTE: this number hasn't been extensively checked
-    assert feq(err,0.07725),err
+    self.assertAlmostEqual(err,0.0777,4)
 
 
       

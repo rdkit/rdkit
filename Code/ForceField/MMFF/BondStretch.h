@@ -40,6 +40,7 @@ namespace ForceFields {
 
       void getGrad(double *pos,double *grad) const;
     
+      virtual BondStretchContrib *copy() const { return new BondStretchContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx; //!< indices of end points
       double d_r0;        //!< rest length of the bond

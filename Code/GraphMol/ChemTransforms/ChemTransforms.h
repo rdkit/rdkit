@@ -62,6 +62,8 @@ namespace RDKit{
       \param replacement the ROMol to be inserted
       \param replaceAll  if this is true, only a single result, with all occurances
                          of the substructure replaced, will be returned.
+      \param replacementConnectionPoint   index of the atom in the replacement that
+                                          the bond should made to
 
       \return a vector of pointers to copies of \c mol with the matching atoms
           and bonds (if any) replaced
@@ -69,7 +71,8 @@ namespace RDKit{
   */
   std::vector<ROMOL_SPTR> replaceSubstructs(const ROMol &mol, const ROMol &query,
 					    const ROMol &replacement,
-					    bool replaceAll=false);
+					    bool replaceAll=false,
+                                            unsigned int replacementConnectionPoint=0);
 
   //! \brief Returns a copy of an ROMol with the atoms and bonds that 
   //!      don't fall within a substructure match removed.
@@ -146,7 +149,6 @@ namespace RDKit{
       \param mol            - the molecule to be modified
       \param queries        - the dictionary of named queries to add
       \param propName       - the atom property to use to get query names
-      optional:
       \param reactantLabels - to store pairs of (atom index, query string)
 
 
@@ -163,12 +165,32 @@ namespace RDKit{
   void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName,
                            std::vector<std::pair<unsigned int, std::string> > *reactantLabels=NULL);
 
+
+
+  //! \brief parses a query definition file and sets up a set of definitions
+  //!  suitable for use by addRecursiveQueries()
+  /*!
+
+      \param filename         - the name of the file to be read
+      \param queryDefs        - the dictionary of named queries (return value)
+      \param standardize      - if true, query names will be converted to lower case
+      \param delimiter        - the line delimiter in the file
+      \param comment          - text used to recognize comment lines
+      \param nameColumn       - column with the names of queries
+      \param smartsColumn     - column with the SMARTS definitions of the queries
+
+  */
   void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
                          bool standardize=true,std::string delimiter="\t",std::string comment="//",
-                         int nameColumn=0,int smartsColumn=1);
+                         unsigned int nameColumn=0,unsigned int smartsColumn=1);
+  //! \overload
   void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
                          bool standardize=true,std::string delimiter="\t",std::string comment="//",
-                         int nameColumn=0,int smartsColumn=1);
+                         unsigned int nameColumn=0,unsigned int smartsColumn=1);
+  //! \brief equivalent to parseQueryDefFile() but the query definitions are explicitly passed in
+  void parseQueryDefText(const std::string &queryDefText,std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize=true,std::string delimiter="\t",std::string comment="//",
+                         unsigned int nameColumn=0,unsigned int smartsColumn=1);
   
 }
 

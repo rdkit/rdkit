@@ -266,7 +266,7 @@ namespace {
           return true;
         }
        }
-      beg++;
+      ++beg;
     }
     return false;
   }
@@ -289,7 +289,15 @@ namespace {
 
   bool incidentMultipleBond(const Atom *at) {
     PRECONDITION(at,"bad atom");
-    return at->getExplicitValence()!=static_cast<int>(at->getDegree()+at->getNumExplicitHs());
+    int deg=at->getDegree()+at->getNumExplicitHs();
+    ROMol::OEDGE_ITER beg,end;
+    boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
+    while(beg!=end){
+      BOND_SPTR bond=at->getOwningMol()[*beg];
+      if(bond->getBondType()==Bond::ZERO) --deg;
+      ++beg;
+    }
+    return at->getExplicitValence()!=static_cast<int>(deg);
   }
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring,
@@ -316,6 +324,11 @@ namespace {
     } else if (rup==2) {
       aromatic = true;
     }
+#if 0
+    std::cerr <<" ring: ";
+    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
+    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
+#endif
     return aromatic;
   }
     
@@ -438,12 +451,17 @@ namespace {
       return(false);      
     }
 
-
     // atoms that aren't in their default valence state also get shut out
     int defVal=PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
     if(defVal>0 &&
        at->getTotalValence()>(PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()-
                                                                            at->getFormalCharge()))){
+      return false;
+    }
+
+    // heretoratoms with radicals also disqualify us from being considered.
+    // This was github issue 432
+    if(at->getNumRadicalElectrons() && at->getAtomicNum()!=6){
       return false;
     }
 
@@ -571,6 +589,16 @@ namespace RDKit {
 
       // total atom degree:
       int degree=at->getDegree() + at->getTotalNumHs(); 
+
+      ROMol::OEDGE_ITER beg,end;
+      boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
+      while(beg!=end){
+        BOND_SPTR bond=at->getOwningMol()[*beg];
+        if(bond->getBondType()==Bond::UNSPECIFIED  // query bonds should not contribute; this was github issue #443 
+           || bond->getBondType()==Bond::ZERO ) --degree;
+        ++beg;
+      }
+
       // if we are more than 3 coordinated we should not be aromatic
       if (degree > 3) {
         return -1;
@@ -698,7 +726,7 @@ namespace RDKit {
         }
       }
     
-      mol.setProp("numArom", narom, true);
+      mol.setProp(common_properties::numArom, narom, true);
 
       return narom;
     }

@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <boost/any.hpp>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <boost/lexical_cast.hpp>
 
 namespace RDKit{
@@ -32,14 +32,12 @@ namespace RDKit{
   //!
   class Dict {
   public:
-    typedef std::map<const std::string, boost::any> DataType;
+    typedef std::map<std::string, boost::any> DataType;
     Dict(){
       _data.clear();
     };
 
-    Dict(const Dict &other) {
-      _data = other._data;
-    };
+    Dict(const Dict &other) : _data(other._data) {};
 
     Dict &operator=(const Dict &other) {
       _data = other._data;
@@ -117,6 +115,44 @@ namespace RDKit{
     //! \overload
     void getVal(const char *what, std::string &res) const { getVal(std::string(what),res); };
 
+    //----------------------------------------------------------
+    //! \brief Potentially gets the value associated with a particular key
+    //!        returns true on success/false on failure.
+    /*!
+       \param what  the key to lookup
+       \param res   a reference used to return the result
+    
+       <B>Notes:</b>
+        - If \c res is a \c std::string, every effort will be made
+          to convert the specified element to a string using the
+          \c boost::lexical_cast machinery.
+        - If the dictionary does not contain the key \c what,
+          a KeyErrorException will be thrown.
+    */
+
+    template <typename T>
+    bool getValIfPresent(const std::string &what,T &res) const {
+      DataType::const_iterator pos=_data.find(what);
+      if(pos==_data.end())
+	return false;
+      const boost::any &val = pos->second;
+      res = fromany<T>(val);
+      return true;
+    };
+
+    template <typename T>
+    bool getValIfPresent(const char *what,T &res) const {
+      std::string key(what);
+      return getValIfPresent<T>(key, res);
+    };
+
+    //! \overload
+    bool getValIfPresent(const std::string &what, std::string &res) const;
+    //! \overload
+    bool getValIfPresent(const char *what, std::string &res) const {
+      return getValIfPresent(std::string(what),res);
+    };
+    
     //----------------------------------------------------------
     //! \brief Sets the value associated with a key
     /*!

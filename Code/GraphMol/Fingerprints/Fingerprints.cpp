@@ -60,22 +60,40 @@ namespace RDKit{
       
         return true;
       }
+
+      bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query,bool &hasAtNum){
+        if(!query) return false;
+        if(query->getNegation()) return true;
+        std::string descr=query->getDescription();
+        //std::cerr<<" |"<<descr;
+        if(descr=="AtomAtomicNum"){
+          hasAtNum=true;
+          return false;
+        }
+        if(descr=="AtomOr" || descr=="AtomXor") return true;
+        if(descr=="AtomAnd"){
+          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=query->beginChildren();
+          while(childIt!=query->endChildren()){
+            if(_complexQueryHelper(childIt->get(),hasAtNum)) return true;
+            ++childIt;
+          }
+        }
+        return false;
+      }
       bool isComplexQuery(const Atom *a){
         if( !a->hasQuery()) return false;
+        //std::cerr<<"\n"<<a->getIdx();
         // negated things are always complex:
         if( a->getQuery()->getNegation()) return true;
         std::string descr=a->getQuery()->getDescription();
+        //std::cerr<<" "<<descr;
         if(descr=="AtomAtomicNum") return false;
         if(descr=="AtomOr" || descr=="AtomXor") return true;
         if(descr=="AtomAnd"){
-          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-          if( (*childIt)->getDescription()=="AtomAtomicNum" &&
-              ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
-               (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
-              (childIt+2)==a->getQuery()->endChildren()){
-            return false;
-          }
-          return true;
+          bool hasAtNum=false;
+          if(_complexQueryHelper(a->getQuery(),hasAtNum)) return true;
+          if(hasAtNum) return false;
+          else return true;
         }
       
         return true;
@@ -113,11 +131,11 @@ namespace RDKit{
     } //end of detail namespace
   } // end of Fingerprint namespace
   namespace {
-    uint32_t hashBond(const Bond *bnd,const std::vector<uint32_t> &atomInvariants,
-                      const std::vector<uint32_t> &atomDegrees,uint32_t bondDegree,
+    boost::uint32_t hashBond(const Bond *bnd,const std::vector<boost::uint32_t> &atomInvariants,
+                      const std::vector<boost::uint32_t> &atomDegrees,boost::uint32_t bondDegree,
                       bool useBondOrder){
       PRECONDITION(bnd,"bad bond");
-      uint32_t res;
+      boost::uint32_t res;
       if(useBondOrder) {
         if(bnd->getIsAromatic()){
           res = Bond::AROMATIC;
@@ -127,10 +145,10 @@ namespace RDKit{
       } else {
         res = 1;
       }
-      uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
-      uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
-      uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
-      uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
+      boost::uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
+      boost::uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
+      boost::uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
+      boost::uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
       
       if(iv1>iv2){
         std::swap(iv1,iv2);
@@ -145,12 +163,12 @@ namespace RDKit{
       //std::cerr<<"---->("<<bnd->getIdx()<<") "<<bnd->getBeginAtomIdx()<<"-"<<bnd->getEndAtomIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2<<":"<<deg1<<"-"<<deg2<<std::endl;
       return res;
     }
-    uint32_t canonicalPathHash(const PATH_TYPE &path,
+    boost::uint32_t canonicalPathHash(const PATH_TYPE &path,
                                const ROMol &mol,
                                const std::vector<const Bond *> &bondCache,
-                               const std::vector<uint32_t> &bondHashes){
+                               const std::vector<boost::uint32_t> &bondHashes){
       std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > stack;
-      uint32_t best;
+      boost::uint32_t best;
       //std::cerr<<" hash: ";
       //std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
 
@@ -175,7 +193,7 @@ namespace RDKit{
       }
       //std::cerr<<std::endl;
 
-      uint32_t res=best;
+      boost::uint32_t res=best;
       //std::cerr<<"  best: "<<best<<std::endl;
       if(path.size()==1) return res;
       best = std::numeric_limits<boost::uint32_t>::max();
@@ -323,7 +341,7 @@ namespace RDKit{
         }
       }
     }
-    std::vector<uint32_t> bondInvariants(mol.getNumBonds());
+    std::vector<boost::uint32_t> bondInvariants(mol.getNumBonds());
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
 
@@ -358,7 +376,7 @@ namespace RDKit{
 #endif
 
 #ifdef REPORT_FP_STATS
-    std::map<uint32_t,std::set<std::string> > bitSmiles;
+    std::map<boost::uint32_t,std::set<std::string> > bitSmiles;
 #endif    
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
@@ -436,14 +454,6 @@ namespace RDKit{
               bondHash = bi->getBondType();
             }
           }
-          boost::uint32_t nBitsInHash=0;
-          // boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here
-          // nBitsInHash+=3;
-          // ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
-          // nBitsInHash+=4;
-          // ourHash |= a1Hash<<nBitsInHash; // 8 bits
-          // nBitsInHash+=8;
-          // ourHash |= a2Hash<<nBitsInHash; // 8 bits
           boost::uint32_t ourHash=bondNbrs[i];
           gboost::hash_combine(ourHash,bondHash);
           gboost::hash_combine(ourHash,a1Hash);

@@ -14,7 +14,7 @@
 //
 #define RDKIT_WRAP_SOURCE
 #include "Wrap.h"
-#include "Exceptions.h"
+#include "pyint_api.h"
 #include <sstream>
 #include <iostream>
 

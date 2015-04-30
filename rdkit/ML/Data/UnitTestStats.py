@@ -64,9 +64,9 @@ class TestCase(unittest.TestCase):
     " test the PCA calculation "
     eVals,eVects = Stats.PrincipalComponents(self.d)
     tVals = numpy.array([ 1.76877414, 0.92707592,  0.30414995])
-    tVect = numpy.array([[-0.64200458, -0.68636164,  0.34166917],
-                   [ 0.38467229,  0.09713033,  0.91792861],
-                   [ 0.66321742, -0.72074503, -0.20166619]])
+    tVect = numpy.array([[-0.64200458, -0.66321742,  0.38467229],
+                         [ 0.34166917,  0.20166619,  0.91792861],
+                         [-0.68636164,  0.72074503,  0.09713033]])
     assert max((abs(eVals-tVals)).ravel()) < FLOAT_TOL,'bad variances from PCA'
     for i in range(eVects.shape[0]):
       assert max((abs(eVects[i]-tVect[i])).ravel()) < FLOAT_TOL or\
@@ -77,9 +77,20 @@ class TestCase(unittest.TestCase):
     " test transformation to PCA frame "
     eVals,eVects = Stats.PrincipalComponents(self.d)
     pts = Stats.TransformPoints(eVects,self.d)
-    p0 = numpy.array([-1.12488653,-1.84061768, -0.1294482])
-    p3 = numpy.array([-3.82295273,-3.09754194,0.24549203])
-    p5 = numpy.array([ 2.29785176, 3.4726933, -0.36094115])
+    refPs=[numpy.array([-1.20362098, -1.79265006,  0.08776266]),
+           numpy.array([ 4.63540648,  1.1669869 ,  0.47026415]),
+           numpy.array([ 0.8709456 , -0.50012821,  0.24763993]),
+           numpy.array([-3.94140499, -2.88350573,  0.64863041]),
+           numpy.array([-0.97015382,  2.42239972,  0.51066736]),
+           numpy.array([ 2.43084762,  3.3115892 , -0.77094542]),
+           numpy.array([ 0.74360559, -2.67765459,  0.73974091]),
+           numpy.array([-1.2274861 ,  3.6819975 , -0.07856395]),
+           numpy.array([-0.4342764 ,  0.04320715,  0.28202332]),
+           numpy.array([-0.903863  , -2.77224188, -2.13721937])]
+
+    p0 = refPs[0]
+    p3 = refPs[3]
+    p5 = refPs[5]
     assert max(abs(pts[0]-p0)) < FLOAT_TOL,'p0 comparison failed %s!=%s'%(str(pts[0]),str(p0))
     assert max(abs(pts[3]-p3)) < FLOAT_TOL,'p3 comparison failed %s!=%s'%(str(pts[3]),str(p3))
     assert max(abs(pts[5]-p5)) < FLOAT_TOL,'p5 comparison failed %s!=%s'%(str(pts[5]),str(p5))

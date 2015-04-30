@@ -81,6 +81,8 @@ void testPass(){
     "[C:1]",
     "[C:0]",  // issue 3525776
     "[$([#0].[#0])]", // sf.net issue 281
+    //"CC((C)C)", // github #102
+    "c1ccccb1", // github 220
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
@@ -367,12 +369,9 @@ void testMatches3(){
   // -----
   // This block is connected to GitHub #60
   //
-  std::cerr<<"1"<<std::endl;
   _checkMatches("[#7h1]","c1cnc[nH]1", 1,1);
-  std::cerr<<"2"<<std::endl;
   _checkNoMatches("[#7h1]","c1cnc[nH]1",true);
 
-  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -926,16 +925,16 @@ void testAtomMap(){
   sma = "[C:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,mapNum);
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
   sma = "[CH3:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,mapNum);
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
@@ -966,7 +965,6 @@ void testAtomMap(){
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
   sma=MolToSmarts(*matcher1);
-  std::cerr<<"sma: "<<sma<<std::endl;
   TEST_ASSERT(sma=="[C&$(C=O):2]-[O:3]");
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -982,25 +980,25 @@ void testIssue1804420(){
   sma = "[N;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N,O;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N&R;X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[NH0&R;D3,X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
     
@@ -1479,7 +1477,100 @@ void testReplacementPatterns(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub313(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github #313: problems with 'h' in SMARTS" << std::endl;
 
+  {
+    // basics: does it parse correctly and generate the right results?
+    _checkMatches("N[Ch]","FC(Cl)Nc1ccccc1", 1,2);
+    _checkMatches("N[Ch1]","CNC(F)c1ccccc1", 1,2);
+    _checkMatches("N[Ch]","CNCc1ccccc1", 2,2);
+    _checkMatches("N[Ch]","CNc1ccccc1", 1,2);
+    _checkNoMatches("N[Ch]","FC(Cl)(O)Nc1ccccc1", false);
+  }
+
+  {
+    // next: can we write it?
+    std::string sma="[h]";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[h]");
+    delete matcher;
+
+    sma="[h1]";
+    matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[h1]");
+    delete matcher;    
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGithub314(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github #314: problems with 'x' in SMARTS" << std::endl;
+
+  {
+    // basics: does it parse correctly and generate the right results?
+    _checkMatches("[x]","C1CC1", 3,1);
+    _checkNoMatches("[x]","CCC");
+    _checkMatches("[x2]","C1CC1", 3,1);
+    _checkNoMatches("[x3]","C1CC1");
+    _checkNoMatches("[x3]","CC1CC1");
+  }
+
+  {
+    // next: can we write it?
+    std::string sma="[x]";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[x]");
+    delete matcher;
+
+    sma="[x1]";
+    matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+    sma=MolToSmarts(*matcher);
+    TEST_ASSERT(sma=="[x1]");
+    delete matcher;    
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGithub378(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong thing for odd dot-disconnected construct" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="C1.C1CO1.N1";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(m->getBondBetweenAtoms(3,4));
+    TEST_ASSERT(!m->getBondBetweenAtoms(1,3));
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1(O.C1)CO1.N1";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4));
+    TEST_ASSERT(!m->getBondBetweenAtoms(2,3));
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+  
 
 int
 main(int argc, char *argv[])
@@ -1512,9 +1603,12 @@ main(int argc, char *argv[])
   testIssue2884178_part1();
   testIssue2884178_part2();
   testIssue3000399();
-#endif
   testRecursiveSerialNumbers();
   testReplacementPatterns();
-
+#endif
+  testGithub313();
+  testGithub314();
+  testGithub378();
+  
   return 0;
 }

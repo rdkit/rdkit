@@ -46,6 +46,7 @@ namespace DistGeom {
       unsigned int pid = d_idx*dp_forceField->dimension() + 3;
       grad[pid] += d_weight*pos[pid];
     }
+    virtual FourthDimContrib *copy() const { return new FourthDimContrib(*this); };
   private:
     unsigned int d_idx;
     double d_weight;

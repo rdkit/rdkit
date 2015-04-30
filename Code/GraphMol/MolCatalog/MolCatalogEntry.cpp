@@ -44,20 +44,18 @@ namespace RDKit {
 
   MolCatalogEntry::~MolCatalogEntry() { 
     //std::cerr << "mce: " << dp_mol <<" " <<dp_props << std::endl;
-    if(dp_mol){
-      delete dp_mol;
-      dp_mol=0;
-    }
-    if(dp_props){
-      delete dp_props;
-      dp_props=0;
-    }
+    delete dp_mol;
+    dp_mol=NULL;
+
+    delete dp_props;
+    dp_props=NULL;
+
     //std::cerr << "<< done" << std::endl;
   }
 
   void MolCatalogEntry::setMol(const ROMol *omol){
     PRECONDITION(omol,"bad mol");
-    if(dp_mol) delete dp_mol;
+    delete dp_mol;
     dp_mol = omol;
   }
 
@@ -85,14 +83,10 @@ namespace RDKit {
   }
 
   void MolCatalogEntry::initFromStream(std::istream &ss){
-    if(dp_mol){
-      delete dp_mol;
-      dp_mol=0;
-    }
-    if(dp_props){
-      delete dp_props;
-      dp_props=0;
-    }
+    delete dp_mol;
+    dp_mol=NULL;
+    delete dp_props;
+    dp_props=NULL;
 
     // the molecule:
     dp_mol = new ROMol();

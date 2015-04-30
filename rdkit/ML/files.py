@@ -3,7 +3,7 @@
 """ Generic file manipulation stuff
 
 """
-
+from __future__ import print_function
 import numpy
 import string,re
 
@@ -90,7 +90,7 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
   nIndVars = len(string.split(dataLines[0]))-1
   indVarMat = numpy.zeros((nPts,nIndVars),dataType)
   depVarVect = numpy.zeros(nPts,dataType)
-  for i in xrange(nPts):
+  for i in range(nPts):
     splitLine = string.split(dataLines[i])
     depVarVect[i] = _convfunc(splitLine[depVarCol])
     del splitLine[depVarCol]
@@ -104,6 +104,6 @@ if __name__ == '__main__':
 
   fileN = sys.argv[1]
   iV,dV = ReadDataFile(fileN)
-  print 'iV:', iV
-  print 'dV:', dV
+  print('iV:', iV)
+  print('dV:', dV)
   

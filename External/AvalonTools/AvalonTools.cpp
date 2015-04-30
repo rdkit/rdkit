@@ -1,4 +1,4 @@
-// $Id$
+// $Id: AvalonTools.cpp 2355 2013-01-08 05:35:03Z glandrum $
 //
 // Created by Greg Landrum, July 2008
 //
@@ -35,6 +35,26 @@ extern int RunStruchk(struct reaccs_molecule_t **mpp,
 namespace AvalonTools {
   using namespace RDKit;
   namespace {
+    int *getCountFp(struct reaccs_molecule_t *molPtr,unsigned int bitFlags,
+                     bool isQuery,unsigned int nBytes){
+      PRECONDITION(molPtr,"bad molecule");
+      int *res = TypeAlloc(nBytes*sizeof(int), int);
+      memset(res,0,nBytes*sizeof(int));
+      SetFingerprintCountsWithFocus(molPtr,
+                                    res,static_cast<int>(nBytes),
+                                    static_cast<int>(bitFlags),
+                                    static_cast<int>(isQuery),
+                                    0,
+                                    0);
+      if(!isQuery){
+        SetFingerprintCountsWithFocus(molPtr,res,static_cast<int>(nBytes),
+                                      static_cast<int>(bitFlags),
+                                      static_cast<int>(1),
+                                      ACCUMULATE_BITS|USE_DY_AROMATICITY,
+                                      0);
+      }
+      return res;
+    }
     char *getFp(struct reaccs_molecule_t *molPtr,unsigned int bitFlags,
                 bool isQuery,unsigned int nBytes){
       PRECONDITION(molPtr,"bad molecule");
@@ -63,6 +83,20 @@ namespace AvalonTools {
       }
 
       MyFree(fingerprint);
+    };
+  
+    void reaccsToCounts(struct reaccs_molecule_t *molPtr,SparseIntVect<boost::uint32_t> &res,
+                        unsigned int bitFlags=32767U,bool isQuery=false,
+                        unsigned int nBytes=64){
+      PRECONDITION(molPtr,"bad molecule");
+      PRECONDITION(res.getLength()>=nBytes,"res too small");
+
+      int *fingerprint=getCountFp(molPtr,bitFlags,isQuery,nBytes);
+
+      for(unsigned int i=0;i<nBytes;++i){
+        res.setVal(i,fingerprint[i]);
+      }
+      MyFree((char *)fingerprint);
     };
   
     void reaccsToFingerprint(struct reaccs_molecule_t *molPtr,ExplicitBitVect &res,
@@ -128,16 +162,27 @@ namespace AvalonTools {
 
   std::string getCanonSmiles(ROMol &mol,int flags){
     if(flags==-1) flags=DB_STEREO | CENTER_STEREO;
-    std::string rdSmi=MolToSmiles(mol,true);
-    char *canSmiles = CanSmiles(const_cast<char *>(rdSmi.c_str()),flags);
     std::string res;
-    if(canSmiles){
-      res=canSmiles;
-      MyFree(canSmiles);
-    }else {
-      BOOST_LOG(rdErrorLog)<<"ERROR: no smiles generated for molecule."<<std::endl;
+    if(!mol.getNumConformers()){
+      std::string rdSmi=MolToSmiles(mol,true);
+      res = getCanonSmiles(rdSmi,true,flags);
+    } else {
+      std::string rdMB=MolToMolBlock(mol);
+      res = getCanonSmiles(rdMB,false,flags);
+      
     }
     return res;
+  }
+
+
+  void getAvalonCountFP(const ROMol &mol,SparseIntVect<boost::uint32_t> &res,
+                        unsigned int nBits,
+                        bool isQuery,
+                        bool resetVect,
+                        unsigned int bitFlags){
+    struct reaccs_molecule_t *mp=molToReaccs(mol);
+    reaccsToCounts(mp,res,bitFlags,isQuery,nBits);
+    FreeMolecule(mp);
   }
 
   void getAvalonFP(const ROMol &mol,ExplicitBitVect &res,
@@ -170,8 +215,6 @@ namespace AvalonTools {
   unsigned int set2DCoords(ROMol &mol,bool clearConfs){
     struct reaccs_molecule_t *mp=molToReaccs(mol);
     struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-    //std::cerr<<"----\n"<<MolToMolStr(mp2)<<"--------\n";
-
     TEST_ASSERT(mp2->n_atoms==mol.getNumAtoms());
 
     RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
@@ -201,10 +244,10 @@ namespace AvalonTools {
     std::string res="";
     if(mp){
       struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-      FreeMolecule(mp);
       Utils::LocaleSwitcher ls;
       char *molB = MolToMolStr(mp2);
       res=molB;
+      FreeMolecule(mp);
       FreeMolecule(mp2);
       MyFree(molB);
     } 
@@ -236,6 +279,18 @@ namespace AvalonTools {
     return res;
   }
 
+  void getAvalonCountFP(const std::string &data,bool isSmiles,SparseIntVect<boost::uint32_t> &res,
+                        unsigned int nBits,
+                        bool isQuery,
+                        unsigned int bitFlags){
+    struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
+    if(mp){
+      reaccsToCounts(mp,res,bitFlags,isQuery,nBits);
+      FreeMolecule(mp);
+    } else {
+      BOOST_LOG(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
+    }
+  }
   void getAvalonFP(const std::string &data,bool isSmiles,ExplicitBitVect &res,
                    unsigned int nBits,
                    bool isQuery,
@@ -292,6 +347,9 @@ namespace AvalonTools {
    **/
   int checkMolString(const std::string &data, const bool isSmiles,
 		     struct reaccs_molecule_t **mp) {
+	// clean msg list from previous call (if no previous call, freemsglist does nothing)	
+    FreeMsgList();
+
     int errs = 0;
     if(isSmiles){
       *mp = SMIToMOL(data.c_str(),DY_AROMATICITY);
@@ -311,7 +369,19 @@ namespace AvalonTools {
     return InitCheckMol((char *) optString.c_str());
   }
 
+  std::string getCheckMolLog()
+  {
+	  char *buf = GetMsgList();
+	  std::string res = buf;
+	  MyFree(buf);
+
+	  return res;
+  }
+
   RDKit::ROMOL_SPTR checkMol(int &errs, RDKit::ROMol& inMol) {
+	// clean msg list from previous call (if no previous call, freemsglist does nothing)	
+    FreeMsgList();
+
     struct reaccs_molecule_t *mp;
     RDKit::ROMol *rMol = 0;
     mp = molToReaccs(inMol);

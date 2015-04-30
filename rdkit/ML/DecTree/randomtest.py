@@ -2,6 +2,7 @@ import numpy
 import random
 from rdkit.ML.DecTree import ID3
 from rdkit.ML.DecTree import CrossValidate
+from rdkit.six.moves import xrange
 
 def GenRandomExamples(nVars=10,randScale=0.3,bitProb=0.5,nExamples=500,seed=(0,0),
                       addResults=1):
@@ -18,12 +19,12 @@ def GenRandomExamples(nVars=10,randScale=0.3,bitProb=0.5,nExamples=500,seed=(0,0
         examples[i] = varVals
 
     nPossibleVals = [2]*(nExamples+1)
-    attrs = range(nVars)
+    attrs = list(range(nVars))
 
     return (examples,attrs,nPossibleVals)
     
 if __name__ == '__main__':
-    import cPickle
+    from rdkit.six.moves import cPickle
     examples,attrs,nPossibleVals = GenRandomExamples()
     outF = open('random.dat.pkl','wb+')
     cPickle.dump(examples,outF)

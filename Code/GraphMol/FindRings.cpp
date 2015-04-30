@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,7 @@
 #include "RDKitBase.h"
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <RDGeneral/utils.h>
 #include <vector>
@@ -184,14 +184,16 @@ namespace FindRings {
       } // end if (dupCand.size() > 1) 
     } // end of loop over all set of duplicate candidates
   }
-
-  bool compRingSize(const INT_VECT &ring1, const INT_VECT &ring2) {
-    return (ring1.size() < ring2.size());
-  }
+  
+  struct compRingSize : public std::binary_function<INT_VECT,INT_VECT,bool> {
+    bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
+      return v1.size() < v2.size();
+    }
+  };
 
   void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt, const ROMol &mol) {
     // sort on size
-    std::sort(res.begin(), res.end(), compRingSize);
+    std::sort(res.begin(), res.end(), compRingSize());
 
     // change the rings from atom IDs to bondIds
     VECT_INT_VECT brings;
@@ -239,7 +241,7 @@ namespace FindRings {
       }
     }
   
-    mol.setProp("extraRings", extras, true);
+    mol.setProp(common_properties::extraRings, extras, true);
   }
 
   void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res, 
@@ -250,7 +252,7 @@ namespace FindRings {
                         ) {
     // place to record any duplicate rings discovered from the current d2 nodes
     RINGINVAR_INT_VECT_MAP dupD2Cands;
-    int cand, nsmall;
+    int cand;
     INT_VECT_CI d2i;
 
     INT_INT_VECT_MAP dupMap;
@@ -273,7 +275,7 @@ namespace FindRings {
       //std::cerr<<"    smallest rings bfs: "<<cand<<std::endl;
       VECT_INT_VECT srings;
       // we have to find all non duplicate possible smallest rings for each node
-      nsmall = smallestRingsBfs(tMol, cand, srings, activeBonds);
+      smallestRingsBfs(tMol, cand, srings, activeBonds);
       for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
@@ -434,7 +436,7 @@ namespace FindRings {
         VECT_INT_VECT trings;
         INT_VECT forb;
         forb.push_back(f2);
-        int nrngs = smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
+        smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
           boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
@@ -448,7 +450,7 @@ namespace FindRings {
         trings.clear();
         forb.clear();
         forb.push_back(f1);
-        nrngs = smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
+        smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
           boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
@@ -559,7 +561,7 @@ namespace FindRings {
     std::deque<int> bfsq;
     bfsq.push_back(root);
     int curr=-1;
-    unsigned int curSize=256;
+    unsigned int curSize=UINT_MAX;
     while (bfsq.size() > 0) {
       curr = bfsq.front();
       bfsq.pop_front();
@@ -750,24 +752,43 @@ namespace RDKit {
 
       RINGINVAR_SET invars;
 
-      int nats = mol.getNumAtoms();
+      unsigned int nats = mol.getNumAtoms();
       boost::dynamic_bitset<> activeAtoms(nats);
       activeAtoms.set();
       int nbnds = mol.getNumBonds();
       boost::dynamic_bitset<> activeBonds(nbnds);
       activeBonds.set();
+
+      // Zero-order bonds are not candidates for rings
+      ROMol::EDGE_ITER firstB,lastB;
+      boost::tie(firstB,lastB) = mol.getEdges();
+      while(firstB!=lastB){
+        BOND_SPTR bond = mol[*firstB];
+        if(bond->getBondType()==Bond::ZERO) activeBonds[bond->getIdx()]=0;
+        ++firstB;
+      }
+
+      
       boost::dynamic_bitset<> ringBonds(nbnds);
       boost::dynamic_bitset<> ringAtoms(nats);
 
       INT_VECT atomDegrees(nats);
       for(unsigned int i=0;i<nats;++i){
-        atomDegrees[i] = mol.getAtomWithIdx(i)->getDegree();
+        const Atom *atom=mol.getAtomWithIdx(i);
+        atomDegrees[i] = atom->getDegree();
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomBonds(atom);
+        while(beg!=end){
+          BOND_SPTR bond=mol[*beg];
+          if(bond->getBondType()==Bond::ZERO) atomDegrees[i]--;
+          ++beg;
+        }
       }
       
       // find the number of fragments in the molecule - we will loop over them
       VECT_INT_VECT frags;
       INT_VECT curFrag;
-      int nfrags = getMolFrags(mol, frags);
+      unsigned int nfrags = getMolFrags(mol, frags);
       for (unsigned int fi = 0; fi < nfrags; fi++) { // loop over the fragments in a molecule
         VECT_INT_VECT fragRes;
         curFrag = frags[fi];
@@ -854,11 +875,12 @@ namespace RDKit {
         } // done finding rings in this fragement
 
         // calculate the cyclomatic number for the fragment:
-        int nbnds=0;
+        unsigned int nbnds=0;
         for(ROMol::ConstBondIterator bndIt=mol.beginBonds();
             bndIt!=mol.endBonds();++bndIt){
           if(std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getBeginAtomIdx())!=curFrag.end() &&
-             std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getEndAtomIdx())!=curFrag.end()) {
+             std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getEndAtomIdx())!=curFrag.end() &&
+             (*bndIt)->getBondType()!=Bond::ZERO ) {
             ++nbnds;
           }
         }
@@ -964,11 +986,11 @@ namespace RDKit {
       }
  
       // now check if there are any extra rings on the molecule 
-      if (!mol.hasProp("extraRings")) {
+      if (!mol.hasProp(common_properties::extraRings)) {
         // no extra rings nothign to be done
         return res.size();
       }
-      const VECT_INT_VECT &extras=mol.getProp<VECT_INT_VECT>("extraRings");
+      const VECT_INT_VECT &extras=mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
 
 
       // convert the rings to bond ids
@@ -1017,8 +1039,8 @@ namespace RDKit {
         res.push_back(exr);
         FindRings::storeRingInfo(mol, exr);
       }
-      if (mol.hasProp("extraRings")) {
-        mol.clearProp("extraRings");
+      if (mol.hasProp(common_properties::extraRings)) {
+        mol.clearProp(common_properties::extraRings);
       }
       return res.size();
     }
@@ -1079,7 +1101,7 @@ namespace RDKit {
         mol.getRingInfo()->initialize();
       }
 
-      int nats = mol.getNumAtoms();
+      unsigned int nats = mol.getNumAtoms();
 
       INT_VECT atomColors(nats,0);
 

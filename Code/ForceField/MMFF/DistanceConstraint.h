@@ -33,6 +33,8 @@ namespace ForceFields {
       */
       DistanceConstraintContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
 				double minLen, double maxLen, double forceConst);
+      DistanceConstraintContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
+				bool relative, double minLen, double maxLen, double forceConst);
 
       ~DistanceConstraintContrib() {
 	//std::cerr << " ==== Destroy constraint " << d_end1Idx << " " << d_end2Idx << std::endl;
@@ -40,6 +42,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
 
       void getGrad(double *pos, double *grad) const;
+      virtual DistanceConstraintContrib *copy() const { return new DistanceConstraintContrib(*this); };
     private:
       int d_end1Idx, d_end2Idx; //!< indices of end points
       double d_minLen, d_maxLen;        //!< rest length of the bond

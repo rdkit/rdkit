@@ -29,7 +29,7 @@ Greg Landrum (glandrum@users.sourceforge.net)
 """
 
 from rdkit.sping import pid
-import string, os, types
+import types
 from PyQt4 import QtCore, QtGui, QtSvg
 from math import *
 import copy
@@ -236,7 +236,7 @@ class QtCanvas( pid.Canvas ):
   def drawImage(self, image, x,y, **kwargs):
     """
     """
-    from cStringIO import StringIO
+    from io import StringIO
     sio = StringIO()
     image.save(sio,format='png')
     base = QtGui.QPixmap()

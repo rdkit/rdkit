@@ -8,14 +8,14 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from aggdraw import Brush, Pen
-from aggdraw import Font
+from aggdraw import Brush, Pen  #@UnresolvedImport #pylint: disable=F0401
+from aggdraw import Font  #@UnresolvedImport #pylint: disable=F0401
 import math
 from rdkit import RDConfig
 import os,re
 
-from aggdraw import Draw
-from canvasbase import CanvasBase
+from aggdraw import Draw  #@UnresolvedImport #pylint: disable=F0401
+from rdkit.Chem.Draw.canvasbase import CanvasBase
 
 faceMap={'sans':os.path.join(RDConfig.RDCodeDir,'Chem','Draw','FreeSans.ttf')}
 
@@ -38,7 +38,7 @@ class Canvas(CanvasBase):
       except ImportError:
         from PIL import Image
       if size is None:
-        raise ValueError,'please provide either an image or a size'
+        raise ValueError('please provide either an image or a size')
       img = Image.new('RGBA',size,"white")
     self.image = img
     self.draw = Draw(img)
@@ -48,7 +48,7 @@ class Canvas(CanvasBase):
     else:
       self.size = size
     if imageType and imageType not in ('png','jpg'):
-      raise ValueError,'unsupported image type for agg canvas'
+      raise ValueError('unsupported image type for agg canvas')
     self.drawType=imageType
     self.fileName=fileName
     
@@ -91,13 +91,9 @@ class Canvas(CanvasBase):
     subH=0
     if not len(blocks):
       w,h=self.draw.textsize(text,aggFont)
-      bw,bh=w*1.1,h*1.1
-      dPos = pos[0]-bw/2.,pos[1]-bh/2.
-      bgColor=kwargs.get('bgColor',(1,1,1))
-      bgColor = convertColor(bgColor)
-      self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
-                       None,Brush(bgColor))
-      dPos = pos[0]-w/2.,pos[1]-h/2.
+      tw,th=w,h
+      offset = w*pos[2]
+      dPos = pos[0]-w/2.+offset,pos[1]-h/2.
       self.draw.text(dPos,text,aggFont)
     else:
       dblocks=[]
@@ -135,23 +131,20 @@ class Canvas(CanvasBase):
         h = max(h,th)
         dblocks.append((tblock,'',tw,th))
         
-      supH *= 0.25
-      subH *= 0.25
+      supH *= 0.5
+      subH *= 0.5
       h += supH + subH
-      bw,bh=w*1.1,h
+      bw,bh=w+h*0.4,w*1.4
+      offset = w*pos[2]
       #dPos = pos[0]-bw/2.,pos[1]-bh/2.
-      dPos = [pos[0]-w/2.,pos[1]-h/2.]
+      dPos = [pos[0]-w/2.+offset,pos[1]-h/2.]
       if orientation=='W':
-        dPos = [pos[0]-w,pos[1]-h/2.]
+        dPos = [pos[0]-w+offset,pos[1]-h/2.]
       elif orientation=='E':
-        dPos = [pos[0],pos[1]-h/2.]
+        dPos = [pos[0]+offset,pos[1]-h/2.]
       else:
-        dPos = [pos[0]-w/2,pos[1]-h/2.]
+        dPos = [pos[0]-w/2+offset,pos[1]-h/2.]
 
-      bgColor=kwargs.get('bgColor',(1,1,1))
-      bgColor = convertColor(bgColor)
-      self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
-                          None,Brush(bgColor))
       if supH: dPos[1]+=supH
       for txt,fmt,tw,th in dblocks:
         tPos = dPos[:]
@@ -165,6 +158,7 @@ class Canvas(CanvasBase):
           lFont = aggFont
         self.draw.text(tPos,txt,lFont)
         dPos[0]+=tw
+    return (tw+th*.4,th+th*.4,offset)
 
 
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
