@@ -1394,7 +1394,7 @@ void testUFFAllConstraints(){
   MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, 30.0);
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
-  tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false, -10.0, -8.0, 1.0e5);
+  tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false, -10.0, -8.0, 1.0e6);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize(500);
   TEST_ASSERT((int)MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8) == -10);
