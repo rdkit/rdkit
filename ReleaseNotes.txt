@@ -11,8 +11,8 @@ Acknowledgements:
 David Cosgrove, Andrew Dalke, JP Ebejer, Niko Fechner, Igor Filippov,
 Patrick Fuller, David Hall, J Bach Hardie, Jan Holst Jensen, Brian
 Kelley, Rich Lewis, John May, Michael Reutlinger, Sereina Riniker,
-Alexander Savelyev, Roger Sayle, Nadine Schneider, Paolo Tosco, Samo
-Turk, JL Varjo, Riccardo Vianello
+Alexander Savelyev, Roger Sayle, Nadine Schneider, Gianluca Sforna,
+Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
 
 Highlights:
 
