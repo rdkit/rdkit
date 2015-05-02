@@ -84,7 +84,10 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
       if(df_owner) {
         delete dp_ostream;
         df_owner=false;
@@ -218,7 +221,10 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
       if(df_owner) {
         delete dp_ostream;
         df_owner=false;
@@ -273,7 +279,10 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
       if(df_owner) {
         delete dp_ostream;
         df_owner=false;
