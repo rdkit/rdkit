@@ -2873,6 +2873,15 @@ CAS<~>
     m = Chem.MolFromSmiles(smi)
     path = Chem.GetShortestPath(m, 1, 20)
     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
+
+  def testGithub498(self):
+    import gzip,tempfile
+    outf = gzip.open(tempfile.mktemp(),'w+')
+    m = Chem.MolFromSmiles('C')
+    w = Chem.SDWriter(outf)
+    w.write(m)
+    w.close()
+    w=None
     
 if __name__ == '__main__':
   unittest.main()
