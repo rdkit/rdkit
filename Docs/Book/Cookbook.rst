@@ -802,7 +802,7 @@ The following program (written in python 2.7) takes an SDF file as an input and 
 
 So for an SDF with 5 conformers we will get 10 RMSD scores - typical n choose k problem, without repetition i.e. 5! / 2!(5-2)!
 
-.. testcode::
+The code:
 
   #!/usr/bin/python
   '''
@@ -858,7 +858,7 @@ So for an SDF with 5 conformers we will get 10 RMSD scores - typical n choose k 
             # show something is being done ... because for large mol_count this will take some time
             print "Aligning molecule #%d with molecule #%d (%d molecules in all)" % (i, j, mol_count)
             # calculate RMSD and store in an array
-            # unlike AlignMol this takes care of symettry
+            # unlike AlignMol this takes care of symmetry
             spread_values.append(str(AllChem.GetBestRMS(mols[i], mols[j])))
     # return that array
     return spread_values
@@ -907,7 +907,7 @@ This program may be executed at the command line in the following manner (provid
 
   calculate_spread.py -f my_conformers.sdf -o my_conformers.rmsd_spread.txt
 
-**TL;DR** : The line ``AllChem.GetBestRMS(mol1, mol2)`` returns the RMSD as a float and is the gist of this program. ``GetBestRMS()`` takes care of symettry unlike ``AlignMol()``
+**TL;DR** : The line ``AllChem.GetBestRMS(mol1, mol2)`` returns the RMSD as a float and is the gist of this program. ``GetBestRMS()`` takes care of symmetry unlike ``AlignMol()``
 
 
 License
