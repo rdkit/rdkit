@@ -802,7 +802,7 @@ The following program (written in python 2.7) takes an SDF file as an input and 
 
 So for an SDF with 5 conformers we will get 10 RMSD scores - typical n choose k problem, without repetition i.e. 5! / 2!(5-2)!
 
-The code:
+The code::
 
   #!/usr/bin/python
   '''
