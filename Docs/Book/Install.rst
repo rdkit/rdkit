@@ -169,6 +169,12 @@ You can completely disable building of the python wrappers by setting the config
 
     cmake -D RDK_BUILD_PYTHON_WRAPPERS= ..
 
+Recommended extras
+------------------
+
+  * for structure depiction cairo (for use with Python2) or cairocffi (for use with Python3) and their respective Python bindings are recommended.
+
+    
 Building the Java wrappers
 ==========================
 
