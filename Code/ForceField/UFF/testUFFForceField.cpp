@@ -1332,7 +1332,7 @@ void testUFFAllConstraints(){
   dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(dc));
   field->minimize();
-  TEST_ASSERT(RDKit::round(MolTransforms::getBondLength(mol->getConformer(), 1, 3)) == 2);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getBondLength(mol->getConformer(), 1, 3), 2.0, 0.1));
   delete field;
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
@@ -1354,14 +1354,14 @@ void testUFFAllConstraints(){
   ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, 90.0, 90.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(ac));
   field->minimize();
-  TEST_ASSERT(RDKit::round(MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6)) == 90);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 90.0, 0.5));
   delete field;
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, true, -10.0, 10.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(ac));
   field->minimize();
-  TEST_ASSERT(RDKit::round(MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6)) == 100);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 100.0, 0.5));
   delete field;
   MolTransforms::setAngleDeg(mol->getConformer(), 1, 3, 6, 0.0);
   field = RDKit::UFF::constructForceField(*mol);
@@ -1369,7 +1369,7 @@ void testUFFAllConstraints(){
   ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, false, -10.0, 10.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(ac));
   field->minimize();
-  TEST_ASSERT(RDKit::round(MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6)) == 10);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 10.0, 0.5));
   delete field;
   delete mol;
   
@@ -1384,7 +1384,7 @@ void testUFFAllConstraints(){
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, 10.0, 20.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize();
-  TEST_ASSERT(RDKit::round(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8)) == 20);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8), 20.0, 0.5));
   delete field;
   MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, -30.0);
   field = RDKit::UFF::constructForceField(*mol);
@@ -1392,7 +1392,7 @@ void testUFFAllConstraints(){
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, true, -10.0, -8.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize();
-  TEST_ASSERT(RDKit::round(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8)) == -40);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8), -40.0, 0.5));
   delete field;
   MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, -10.0);
   field = RDKit::UFF::constructForceField(*mol);
@@ -1400,7 +1400,7 @@ void testUFFAllConstraints(){
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false, -10.0, -8.0, 1.0e6);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize(500);
-  TEST_ASSERT(RDKit::round(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8)) == -10);
+  TEST_ASSERT(RDKit::feq(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8), -10.0, 0.5));
   delete field;
   delete mol;
   
