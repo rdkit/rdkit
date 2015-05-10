@@ -878,7 +878,126 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms()==30)
 
+    # test strictParsing1:
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','strictLax1.sdf')
+    #strict from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = True);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      if (i == 0):
+        self.assertTrue(not mol.HasProp("ID"))
+      self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
     
+    #lax from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = False);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
+
+    #strict from text
+    with open(fileN,'rb') as dFile:
+      d = dFile.read()
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = True)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      if (i == 0):
+        self.assertTrue(not mol.HasProp("ID"))
+      self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
+    
+    #lax from text
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = False)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
+
+    # test strictParsing2:
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','strictLax2.sdf')
+    #strict from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = True);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig1")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
+        "No blank line before dollars\n" \
+        "$$$$\n" \
+        "Structure1\n" \
+        "csChFnd70/05230312262D")
+      i += 1
+    self.assertTrue(i == 1)
+    
+    #lax from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = False);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig2")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
+      i += 1
+    self.assertTrue(i == 1)
+
+    #strict from text
+    with open(fileN,'rb') as dFile:
+      d = dFile.read()
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = True)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig1")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
+        "No blank line before dollars\n" \
+        "$$$$\n" \
+        "Structure1\n" \
+        "csChFnd70/05230312262D")
+      i += 1
+    self.assertTrue(i == 1)
+    
+    #lax from text
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = False)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig2")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
+      i += 1
+    self.assertTrue(i == 1)
+
   def test26SmiMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','first_200.tpsa.csv')
