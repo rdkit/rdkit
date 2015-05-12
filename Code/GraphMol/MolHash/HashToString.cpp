@@ -8,12 +8,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <algorithm>
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
 #include <string>
 #include <sstream>
-#include <algorithm>
 
 #include "MolHash.h"
 

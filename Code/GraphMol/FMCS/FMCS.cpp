@@ -16,6 +16,7 @@
 #include <sstream>
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
+#include "Geometry/point.h"
 
 namespace RDKit {
 
@@ -33,6 +34,7 @@ namespace RDKit {
             p.Timeout = pt.get<unsigned>("Timeout", p.Timeout);
             p.AtomCompareParameters.MatchValences = pt.get<bool>("MatchValences" , p.AtomCompareParameters.MatchValences );
             p.AtomCompareParameters.MatchChiralTag= pt.get<bool>("MatchChiralTag", p.AtomCompareParameters.MatchChiralTag);
+            p.AtomCompareParameters.DistanceCutoff = pt.get<float>("DistanceCutoff", p.AtomCompareParameters.DistanceCutoff);
             p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>("RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
             p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>("CompleteRingsOnly", p.BondCompareParameters.CompleteRingsOnly);
             p.BondCompareParameters.MatchStereo = pt.get<bool>("MatchStereo", p.BondCompareParameters.MatchStereo);
@@ -79,6 +81,7 @@ namespace RDKit {
                        bool ringMatchesRingOnly,
                        bool completeRingsOnly,
                        bool matchChiralTag,
+                       float distanceCutoff,
                        AtomComparator atomComp,
                        BondComparator bondComp){ 
 
@@ -91,6 +94,7 @@ namespace RDKit {
         ps->Verbose=verbose;
         ps->AtomCompareParameters.MatchValences=matchValences;
         ps->AtomCompareParameters.MatchChiralTag=matchChiralTag;
+        ps->AtomCompareParameters.DistanceCutoff=distanceCutoff;
         switch(atomComp) {
         case AtomCompareAny:
             ps->AtomTyper=MCSAtomCompareAny;
@@ -130,7 +134,7 @@ namespace RDKit {
 
     //=== ATOM COMPARE ========================================================
     static
-    bool checkAtomChirality    (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
+    bool checkAtomChirality    (const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         Atom::ChiralType ac1 = a1.getChiralTag();
@@ -139,12 +143,32 @@ namespace RDKit {
             return (ac2==Atom::CHI_TETRAHEDRAL_CW || ac2==Atom::CHI_TETRAHEDRAL_CCW);
         return true;
     }
+ 
+    static
+    bool checkAtomDistance    (float cutoff, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
+        const Atom& a1 = *mol1.getAtomWithIdx(atom1);
+        const Atom& a2 = *mol2.getAtomWithIdx(atom2);
+        RDGeom::Point3D p1 = a1.getOwningMol().getConformer().getAtomPos(a1.getIdx());
+        RDGeom::Point3D p2 = a2.getOwningMol().getConformer().getAtomPos(a2.getIdx());
+        float dx = p1.x-p2.x;
+        float dy = p1.y-p2.y;
+        float dz = p1.z-p2.z;
+        float distance = sqrt(dx*dx+dy*dy+dz*dz);
+        if(distance < cutoff)
+            return true;
+        return false;
+    }
 
+    bool checkChiralityAndDistance(const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
+        if(p.MatchChiralTag && !checkAtomChirality(mol1, atom1, mol2, atom2))
+            return false;
+        if(p.DistanceCutoff <= 0 && !checkAtomDistance(p.DistanceCutoff, mol1, atom1, mol2, atom2))
+            return false;
+        return true;
+    } 
 
     bool MCSAtomCompareAny      (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ) {
-        if(p.MatchChiralTag)
-            return checkAtomChirality(p, mol1, atom1, mol2, atom2);
-        return true;
+        return checkChiralityAndDistance(p, mol1, atom1, mol2, atom2);
     }
 
     bool MCSAtomCompareElements (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ) {
@@ -154,9 +178,7 @@ namespace RDKit {
             return false;
         if(p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
             return false;
-        if(p.MatchChiralTag)
-            return checkAtomChirality(p, mol1, atom1, mol2, atom2);
-        return true;
+        return checkChiralityAndDistance(p, mol1, atom1, mol2, atom2);
     }
 
     bool MCSAtomCompareIsotopes (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ud) {
@@ -167,9 +189,7 @@ namespace RDKit {
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         if(a1.getIsotope() != a2.getIsotope())
             return false;
-        if(p.MatchChiralTag)
-            return checkAtomChirality(p, mol1, atom1, mol2, atom2);
-        return true;
+        return checkChiralityAndDistance(p, mol1, atom1, mol2, atom2);
     }
 
     //=== BOND COMPARE ========================================================

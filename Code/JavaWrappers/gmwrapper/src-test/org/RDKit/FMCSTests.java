@@ -63,7 +63,7 @@ public class FMCSTests extends GraphMolTest {
 		mols.add(RWMol.MolFromSmiles("c1c(C)cccc1OC"));
 		mols.add(RWMol.MolFromSmiles("C1CCCCC1C"));
                 
-                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,
+                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,0,
                                                AtomComparator.AtomCompareElements,
                                                BondComparator.BondCompareAny);
                 assertEquals(6,mcs.getNumAtoms());

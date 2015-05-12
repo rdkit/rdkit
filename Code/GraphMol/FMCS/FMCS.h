@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <limits>
 #include "../RDKitBase.h"
 #include "Graph.h"
 
@@ -20,8 +21,12 @@ namespace RDKit {
     struct MCSAtomCompareParameters {
         bool    MatchValences;
         bool    MatchChiralTag;
+        float   DistanceCutoff; // if DistanceCutoff <= 0, then ignored.
     public:
-        MCSAtomCompareParameters() : MatchValences(false), MatchChiralTag(false) {}
+        MCSAtomCompareParameters() : 
+            MatchValences(false),
+            MatchChiralTag(false),
+            DistanceCutoff(0) {}
     };
 
     struct MCSBondCompareParameters {
@@ -121,6 +126,7 @@ namespace RDKit {
                        bool ringMatchesRingOnly=false,
                        bool completeRingsOnly=false,
                        bool matchChiralTag=false,
+                       float distanceCutoff=0,
                        AtomComparator atomComp=AtomCompareElements,
                        BondComparator bondComp=BondCompareOrder);
 
