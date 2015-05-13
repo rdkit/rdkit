@@ -737,7 +737,6 @@ void testAtomCompareDistance() {
         TEST_ASSERT(mcs_res.NumBonds==4);
     }
 
-
     {
         MCSParameters p;
         p.AtomCompareParameters.MatchChiralTag = false;
@@ -749,6 +748,7 @@ void testAtomCompareDistance() {
     }
 
     mols.clear();
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithubIssue481() {
