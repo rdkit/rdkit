@@ -148,13 +148,13 @@ namespace RDKit {
     bool checkAtomDistance    (float cutoff, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
-        RDGeom::Point3D p1 = a1.getOwningMol().getConformer().getAtomPos(a1.getIdx());
-        RDGeom::Point3D p2 = a2.getOwningMol().getConformer().getAtomPos(a2.getIdx());
+        RDGeom::Point3D p1 = mol1.getConformer().getAtomPos(atom1);
+        RDGeom::Point3D p2 = mol2.getConformer().getAtomPos(atom2);
         float dx = p1.x-p2.x;
         float dy = p1.y-p2.y;
         float dz = p1.z-p2.z;
-        float distance = sqrt(dx*dx+dy*dy+dz*dz);
-        if(distance < cutoff)
+        float distancesq = (p1-p2).lengthSq();
+        if(distancesq < cutoff*cutoff)
             return true;
         return false;
     }

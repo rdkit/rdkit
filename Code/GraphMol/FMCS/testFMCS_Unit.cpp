@@ -717,12 +717,9 @@ void testAtomCompareDistance() {
     ROMOL_SPTR mol2(SmilesToMol(s1));
 
     DGeomHelpers::EmbedMolecule(*mol1);
-    Conformer &conf1 = mol1->getConformer();
-
-    Conformer second(conf1);
-    Conformer &conf2 = second;
-    conf2.setAtomPos(0, RDGeom::Point3D(0,0,0));
-    mol2->addConformer(&conf2);
+    Conformer *conf2 = new Conformer(mol1->getConformer());
+    conf2->setAtomPos(0, RDGeom::Point3D(0,0,0));
+    mol2->addConformer(conf2);
 
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(mol1);
