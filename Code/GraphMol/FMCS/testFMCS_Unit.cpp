@@ -54,6 +54,8 @@
 #include "FMCS.h"
 #include "DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
 
+#include "../DistGeomHelpers/Embedder.h" // for conformer generation
+
 #include "../Substruct/SubstructMatch.h"
 
 using namespace RDKit;
@@ -705,6 +707,50 @@ void testJSONParameters() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testAtomCompareDistance() {
+
+    BOOST_LOG(rdInfoLog) << "\n-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "Testing Atom Compare Distance Cutoff" << std::endl;
+
+    std::string s1="CCCCC";
+    ROMOL_SPTR mol1(SmilesToMol(s1));
+    ROMOL_SPTR mol2(SmilesToMol(s1));
+
+    DGeomHelpers::EmbedMolecule(*mol1);
+    Conformer &conf1 = mol1->getConformer();
+
+    Conformer second(conf1);
+    Conformer &conf2 = second;
+    conf2.setAtomPos(0, RDGeom::Point3D(0,0,0));
+    mol2->addConformer(&conf2);
+
+    std::vector<ROMOL_SPTR> mols;
+    mols.push_back(mol1);
+    mols.push_back(mol2);
+
+    {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = false;
+        p.BondCompareParameters.MatchStereo = false;
+        MCSResult mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==5);
+        TEST_ASSERT(mcs_res.NumBonds==4);
+    }
+
+
+    {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = false;
+        p.BondCompareParameters.MatchStereo = false;
+        p.AtomCompareParameters.DistanceCutoff = 0.001;
+        MCSResult mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==4);
+        TEST_ASSERT(mcs_res.NumBonds==3);
+    }
+
+    mols.clear();
+}
+
 void testGithubIssue481() {
     BOOST_LOG(rdInfoLog) << "\n-------------------------------------" << std::endl;
     BOOST_LOG(rdInfoLog) << "Testing github #481 : order dependence in FMCS with chirality" << std::endl;
@@ -839,6 +885,7 @@ int main(int argc, const char* argv[]) {
     testThreshold();
     testRing1();
 
+    testAtomCompareDistance();
     testAtomCompareIsotopes();
     testAtomCompareAnyAtom();
     testAtomCompareAnyAtomBond();

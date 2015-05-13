@@ -162,8 +162,9 @@ namespace RDKit {
     bool checkChiralityAndDistance(const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
         if(p.MatchChiralTag && !checkAtomChirality(mol1, atom1, mol2, atom2))
             return false;
-        if(p.DistanceCutoff <= 0 && !checkAtomDistance(p.DistanceCutoff, mol1, atom1, mol2, atom2))
+        if(p.DistanceCutoff > 0 && !checkAtomDistance(p.DistanceCutoff, mol1, atom1, mol2, atom2)) {
             return false;
+        }
         return true;
     } 
 

@@ -14,7 +14,7 @@ rdkit_headers(FMCS.h
               DEST GraphMol/FMCS)
 
 rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
-FMCS ChemTransforms Depictor FileParsers SmilesParse 
+FMCS ChemTransforms Depictor DistGeomHelpers FileParsers SmilesParse 
 GraphMol RDGeneral RDGeometryLib SubstructMatch  ${RDKit_THREAD_LIBS})
 
 add_subdirectory(Wrap)
