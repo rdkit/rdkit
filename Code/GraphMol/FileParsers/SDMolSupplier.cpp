@@ -81,7 +81,7 @@ namespace RDKit {
     d_last = 0;
   }
 
-  void SDMolSupplier::setData(const std::string &text,
+  void SDMolSupplier::setDataCommon(const std::string &text,
                               bool sanitize, bool removeHs){
     if(dp_inStream && df_owner) delete dp_inStream;
     init();
@@ -98,6 +98,18 @@ namespace RDKit {
       d_len=0;
     }
     POSTCONDITION(dp_inStream,"bad instream");
+  }
+  
+  void SDMolSupplier::setData(const std::string &text,
+                              bool sanitize, bool removeHs){
+    df_strictParsing=true;
+    setDataCommon(text, sanitize, removeHs);
+  }
+                                
+  void SDMolSupplier::setData(const std::string &text,
+                              bool sanitize, bool removeHs, bool strictParsing){
+    df_strictParsing=strictParsing;
+    setDataCommon(text, sanitize, removeHs);
   }
 
   
