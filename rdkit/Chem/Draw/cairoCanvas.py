@@ -16,9 +16,13 @@ import sys
 if sys.version_info[0] > 2:
   try:
     import cairocffi as cairo
-
   except ImportError:
     import cairo
+else:
+  try:
+    import cairo
+  except ImportError:
+    import cairocffi as cairo
 
 if not hasattr(cairo.ImageSurface,'get_data') and \
    not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
