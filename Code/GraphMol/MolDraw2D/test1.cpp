@@ -540,6 +540,27 @@ void testMultiThreaded(){
 }
 #endif
 
+void test6() {
+  std::cout << " ----------------- Test 6 (atom labels)" << std::endl;
+  {
+    std::string smiles="CC[13CH2][CH2:7][CH-]C[15NH2+]C";
+    std::string nameBase="test5_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    MolDraw2DSVG drawer(300,300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt=drawer.getDrawingText();
+    std::ofstream outs("test6_1.svg");
+    outs<<txt;
+    //TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+  }
+  std::cerr<<" Done"<<std::endl;
+
+}
+
 int main(){
   RDLog::InitLogs();
   test1();
@@ -548,4 +569,5 @@ int main(){
   test4();
   test5();
   testMultiThreaded();
+  test6();
 }
