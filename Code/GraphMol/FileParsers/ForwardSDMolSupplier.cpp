@@ -59,7 +59,10 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"no stream");
     PRECONDITION(mol,"no molecule");
     d_line++;
+    bool hasProp = false;
+    bool warningIssued = false;
     std::string tempStr;
+    std::string dlabel = "";
     std::getline(*dp_inStream,tempStr);
 
     // FIX: report files missing the $$$$ marker
@@ -73,6 +76,8 @@ namespace RDKit {
             // have to contain a data label (instead can have something line field 
             // id into a MACCS db). But we do not currently know what to do in this 
             // situation - so ignore such data items for now
+            hasProp = true;
+            warningIssued = false;
             tempStr.erase(0,1); // remove the first ">" sign
             int sl = tempStr.find("<"); // begin datalabel
             int se = tempStr.find(">"); // end datalabel
@@ -89,7 +94,7 @@ namespace RDKit {
                 if(dp_inStream->eof()) throw FileParseException("End of data field name not found");
               }
             } else {
-              std::string dlabel = tempStr.substr(sl+1, se-sl-1);
+              dlabel = tempStr.substr(sl+1, se-sl-1);
               // we know the label - now read in the relevant properties
               // until we hit a blank line
               d_line++;
@@ -119,11 +124,29 @@ namespace RDKit {
               mol->setProp(dlabel, prop);
             }
         } else {
+          if (df_strictParsing) {
           // at this point we should always be at a line starting with '>'
-          // following a blank line. If this is not true throw an exception
+          // following a blank line. If this is not true and df_strictParsing
+          // is true, then throw an exception, otherwise truncate the rest of
+          // the data field following the blank line until the next '>' or EOF
+          // and issue a warning
           // FIX: should we be deleting the molecule (which is probably fine)
           // because we couldn't read the data ???
-          throw FileParseException("Problems encountered parsing data fields");
+            throw FileParseException("Problems encountered parsing data fields");
+          }
+          else {
+            if (!warningIssued) {
+              if (hasProp)
+                BOOST_LOG(rdWarningLog)
+                  << "Property <" << dlabel << "> will be truncated after "
+                  << "the first blank line" << std::endl;
+              else
+                BOOST_LOG(rdWarningLog)
+                  << "Spurious data before the first property will be "
+                    "ignored" << std::endl;
+              warningIssued = true;
+            }
+          }
         }
       }
       d_line++;

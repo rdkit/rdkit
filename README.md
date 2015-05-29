@@ -4,15 +4,15 @@
 
 [RDKit](https://github.com/rdkit/rdkit) is a collection of cheminformatics and machine-learning software written in C++ and Python.
 
-  * [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt)
+  * [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt) - a business friendly license for open source
   * Core data structures and algorithms in C++
   * [Python (2.x and 3.x) wrapper](http://www.rdkit.org/docs/GettingStartedInPython.html) generated using Boost.Python
   * Java and C# wrappers generated with SWIG
   * 2D and 3D molecular operations
   * [Descriptor](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
-  * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL
+  * Molecular database [cartridge](http://www.rdkit.org/docs/Cartridge.html) for PostgreSQL supporting substructure and similarity searches as well as many descriptor calculators
   * Cheminformatics nodes for [KNIME](http://tech.knime.org/community/rdkit)
-  * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful software harnessing the power of RDKit
+  * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful community-contributed software harnessing the power of the RDKit
 
 ## Web presence
 
@@ -61,6 +61,8 @@ Installation instructions are available in [Docs/Book/Install.rst](https://githu
   * [MolGears](https://github.com/admed/molgears) - A cheminformatics tool for bioactive molecules
   * [PYPL](http://www.biochemfusion.com/downloads/#OracleUtilities) - Simple cartridge that lets you call Python scripts from Oracle PL/SQL.
   * [shape-it-rdkit](https://github.com/jandom/shape-it-rdkit) - Gaussian molecular overlap code shape-it (from silicos it) ported to RDKit backend
+  * [WONKA](http://wonka.sgc.ox.ac.uk/WONKA/) - Tool for analysis and interrogation of protein-ligand crystal structures
+  * [OOMMPPAA](http://oommppaa.sgc.ox.ac.uk/OOMMPPAA/) - Tool for directed synthesis and data analysis based on protein-ligand crystal structures
 
 
 ## License
