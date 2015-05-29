@@ -40,12 +40,25 @@ if(RDK_BUILD_SWIG_WRAPPERS!=ON)
 endif()
 
 if (EMSCRIPTEN)
-  # Hard coded in the toolchain file.
+  # Hard coded in the toolchain file
+  # hard code boost::
+  set(BOOSTROOT "$ENV{BOOST_ROOT}")
+  if (BOOSTROOT)
+    set (Boost_INCLUDE_DIR CACHE STRING "${BOOSTROOT}/include")
+    set (Boost_LIBRARY_DIR CACHE STRING "${BOOSTROOT}/lib")
+    # we are going to use FindEmscriptenBoost.cmake instead of
+    #  FindBoost.cmake - FindBoost.cmake can fail even if we
+    #   set the correct BOOSTROOT
+    set (BOOST_PACKAGE "EmscriptenBoost")
+  else()
+     message(FATAL_ERROR "Please set  BOOST_ROOT and point to an emscripten built boost when cross compiling to javascript")
+  endif(not BOOSTROOT)
+
 else()
    include(TestBigEndian)
    TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
+   set (BOOST_PACKAGE "Boost")
 endif(EMSCRIPTEN)
-
 
 
 # At build time put runtime binaries in the bin subdirectory
@@ -63,7 +76,7 @@ set(RDKit_Revision "1pre")
 set(RDKit_ABI "1")
 
 if (EMSCRIPTEN)
-  # emscripten NEEDS the .so extension to know what to do
+  # emscripten NEEDS the .so extension at the end to know what to do
   #  linux is happy with RDGeneral.so.1.pre
   set(RDKit_Revision "${RDKit_Revision}.so")
 endif()
@@ -116,6 +129,10 @@ if(MSVC)
 endif(MSVC)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
+  if (EMSCRIPTEN)
+    message(FATAL_ERROR "Building EMSCRIPTEN and PYTHON together is not a good idea")
+  endif (EMSCRIPTEN)
+
   #-------
   # pull in python:
   find_package(PythonInterp)
@@ -177,7 +194,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif(RDK_INSTALL_INTREE)
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
-  find_package(Boost 1.39.0 REQUIRED)
+  find_package(${BOOST_PACKAGE} 1.39.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 include_directories(${Boost_INCLUDE_DIRS})
