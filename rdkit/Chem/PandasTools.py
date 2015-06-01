@@ -231,8 +231,8 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
-def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None):
-  """ Read file in SDF format and return as Pandas data frame """
+def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None, embedProps=False):
+  """ Read file in SDF format and return as Pandas data frame. If embedProps=True all properties also get embedded in Mol objects in the molecule column. """
   df = None
   if type(filename) is str:
     f = open(filename, 'rb') #'rU')
@@ -241,6 +241,10 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+    if embedProps == False:
+      embeded_props = [x for x in mol.GetPropNames()]
+      for prop in embeded_props:
+            mol.ClearProp(prop)
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
       row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
