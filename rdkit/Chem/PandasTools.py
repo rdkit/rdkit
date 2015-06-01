@@ -264,42 +264,42 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
 from rdkit.Chem import SDWriter
 
 def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
-    '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specified in the "properties" list. "properties=list(df.columns)" would exort all columns. 
-    The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that corect data type is assigned to column.
-    "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
-    '''
-    writer = SDWriter(out)
-    if properties is None:
-        properties=[]
-    if allNumeric:   
-        properties.extend([dt for dt in df.dtypes.keys() if (np.issubdtype(df.dtypes[dt],float) or np.issubdtype(df.dtypes[dt],int))])
+  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specified in the "properties" list. "properties=list(df.columns)" would exort all columns. 
+  The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that corect data type is assigned to column.
+  "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
+  '''
+  writer = SDWriter(out)
+  if properties is None:
+    properties=[]
+  if allNumeric:   
+    properties.extend([dt for dt in df.dtypes.keys() if (np.issubdtype(df.dtypes[dt],float) or np.issubdtype(df.dtypes[dt],int))])
+  
+  if molColName in properties:
+    properties.remove(molColName)
+  if idName in properties:
+    properties.remove(idName)
+  writer.SetProps(properties)
+  for row in df.iterrows():
+    mol = copy.deepcopy(row[1][molColName])
+    # Remove embeded props
+    embeded_props = [x for x in mol.GetPropNames()]
+    for prop in embeded_props:
+      mol.ClearProp(prop)
     
-    if molColName in properties:
-        properties.remove(molColName)
-    if idName in properties:
-        properties.remove(idName)
-    writer.SetProps(properties)
-    for row in df.iterrows():
-        mol = copy.deepcopy(row[1][molColName])
-        # Remove embeded props
-        embeded_props = [x for x in mol.GetPropNames()]
-        for prop in embeded_props:
-            mol.ClearProp(prop)
-        
-        if idName is not None:
-            if idName == 'RowID':
-                mol.SetProp('_Name',str(row[0]))
-            else:
-                mol.SetProp('_Name',str(row[1][idName]))
-        for p in properties:
-            cell_value = row[1][p]
-            # Make sure float does not get formatted in E notation
-            if np.issubdtype(type(cell_value),float):
-                mol.SetProp(p,'{:f}'.format(cell_value).rstrip('0'))
-            else:
-                mol.SetProp(p,str(cell_value))
-        writer.write(mol)
-    writer.close()
+    if idName is not None:
+      if idName == 'RowID':
+        mol.SetProp('_Name',str(row[0]))
+      else:
+        mol.SetProp('_Name',str(row[1][idName]))
+    for p in properties:
+      cell_value = row[1][p]
+      # Make sure float does not get formatted in E notation
+      if np.issubdtype(type(cell_value),float):
+        mol.SetProp(p,'{:f}'.format(cell_value).rstrip('0'))
+      else:
+        mol.SetProp(p,str(cell_value))
+    writer.write(mol)
+  writer.close()
     
 
 
