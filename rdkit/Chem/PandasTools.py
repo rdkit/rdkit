@@ -241,9 +241,8 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
-    if embedProps == False:
-      embeded_props = [x for x in mol.GetPropNames()]
-      for prop in embeded_props:
+    if not embedProps:
+      for prop in mol.GetPropNames():
             mol.ClearProp(prop)
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
@@ -264,8 +263,8 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
 from rdkit.Chem import SDWriter
 
 def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
-  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specified in the "properties" list. "properties=list(df.columns)" would exort all columns. 
-  The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that corect data type is assigned to column.
+  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export all columns. 
+  The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that correct data type is assigned to column.
   "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
   '''
   writer = SDWriter(out)
@@ -282,8 +281,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   for row in df.iterrows():
     mol = copy.deepcopy(row[1][molColName])
     # Remove embeded props
-    embeded_props = [x for x in mol.GetPropNames()]
-    for prop in embeded_props:
+    for prop in mol.GetPropNames():
       mol.ClearProp(prop)
     
     if idName is not None:
