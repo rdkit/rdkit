@@ -243,7 +243,7 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if not embedProps:
       for prop in mol.GetPropNames():
-            mol.ClearProp(prop)
+        mol.ClearProp(prop)
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
       row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
