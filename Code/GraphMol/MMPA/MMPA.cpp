@@ -17,6 +17,7 @@
 //#include <sstream>
 //#include <boost/property_tree/ptree.hpp>
 
+#include "../MolOps.h"
 #include "../SmilesParse/SmilesParse.h"
 #include "../SmilesParse/SmilesWrite.h"
 #include "../Substruct/SubstructMatch.h"
@@ -29,6 +30,48 @@ namespace RDKit {
   namespace MMPA {
 
     typedef std::vector< std::pair<unsigned, unsigned> >  BondVector_t; //pair of BeginAtomIdx, EndAtomIdx
+
+
+    static inline
+    unsigned long long computeMorganCodeHash(const ROMol& mol) {
+        size_t nv = mol.getNumAtoms();
+        size_t ne = mol.getNumBonds();
+        std::vector<unsigned long> currCodes(nv);
+        std::vector<unsigned long> prevCodes(nv);
+        size_t nIterations = mol.getNumBonds();
+        if (nIterations > 5)
+            nIterations = 5;
+
+        for(unsigned ai = 0; ai < nv; ai++) {
+            const Atom& a = *mol.getAtomWithIdx(ai);
+            currCodes[ai] = a.getAtomicNum();
+        }
+
+        for (size_t iter = 0; iter < nIterations; iter++) {
+            for (size_t i = 0; i < nv; i++)
+                prevCodes[i] = currCodes[i];
+
+            for (size_t bi= 0; bi< ne; bi++) {
+                const Bond* bond = mol.getBondWithIdx(bi);
+                unsigned order =  bond->getBondType();
+                unsigned atom1 = bond->getBeginAtomIdx();
+                unsigned atom2 = bond->getEndAtomIdx  ();
+                unsigned v1 = prevCodes[atom1];
+                unsigned v2 = prevCodes[atom2];
+
+                currCodes[atom1] += v2*v2 + (v2 + 23) * (order + 1721);
+                currCodes[atom2] += v1*v1 + (v1 + 23) * (order + 1721);
+            }
+        }
+
+        unsigned long long result = 0;
+        for(unsigned ai = 0; ai < nv; ai++) {
+            unsigned long code = currCodes[ai];
+            result += code * (code + 6849) + 29;
+        }
+        return result;
+    }
+
 
     static inline
     void convertMatchingToBondVect(std::vector<BondVector_t >& matching_bonds,
@@ -74,8 +117,112 @@ namespace RDKit {
             // keep track of where to put isotopes
             isotope_track[newAtomA] = isotope;
             isotope_track[newAtomB] = isotope;
+            //# add isotope lables
+            em.getAtomWithIdx(newAtomA)->setProp("molAtomMapNumber", (int)isotope);
+            em.getAtomWithIdx(newAtomB)->setProp("molAtomMapNumber", (int)isotope);
+//            em.getAtomWithIdx(newAtomA)->setIsotope(isotope); //it makes [1*]C instead of [*:1]C
+//            em.getAtomWithIdx(newAtomB)->setIsotope(isotope);
         }
             
+        RWMol *core=NULL, *side_chains=NULL;   // core & side_chains output molecules
+
+        if(isotope == 1){
+            side_chains = new RWMol(em); // output = '%s,%s,,%s.%s'
+// DEBUG PRINT
+#ifdef _DEBUG
+std::cout<<res.size()+1<<" isotope="<< isotope <<","<< MolToSmiles(*side_chains, true) <<"\n";
+#endif
+/*
+// replace any [*] with [:1]
+//            fragmented_smi_noIsotopes = re.sub('\[\*\]', '[*:1]', fragmented_smi_noIsotopes)
+            boost::split(fragments, fragmented_smi_noIsotopes, boost::is_any_of("."), boost::token_compress_on);
+            RWMol* s1 = SmilesToMol(fragments[0]);
+            RWMol* s2 = SmilesToMol(fragments[1]);
+
+// DEBUG PRINT
+            //#need to cansmi again as smiles can be different
+            std::cout<<"smi,id,,"<< MolToSmiles(*s1, true)<<"."<<MolToSmiles(*s2, true)<<"\n";
+*/
+        } else if(isotope >= 2){
+
+        std::vector<std::vector<int> > frags;
+        unsigned int nFrags = MolOps::getMolFrags(em, frags);
+        // find_correct()
+        size_t iCore = 0;
+        bool sideChainHasIons = false;
+        side_chains = new RWMol;
+        std::map<unsigned, unsigned>     visitedBonds;// key is bond index in source molecule
+        for(size_t i=0; i < frags.size(); i++) {
+            unsigned nLabels = 0;
+            for(size_t ai=0; ai < frags[i].size(); ai++) {
+                Atom* a = em.getAtomWithIdx(frags[i][ai]);
+                if(isotope_track.end() != isotope_track.find(frags[i][ai])) // == if(a->hasProp("molAtomMapNumber"))
+                    ++nLabels;
+            }
+            if(1==nLabels) { // build side-chain set of molecules from selected fragment
+                if( ! sideChainHasIons) {
+                    ;;; // add SMILES '.'  -- do nothing
+                }
+                std::map<unsigned, unsigned> newAtomMap;  // key is atom index in source molecule
+                for(size_t ai=0; ai < frags[i].size(); ai++) {
+                    Atom* a = em.getAtomWithIdx(frags[i][ai]);
+                    newAtomMap[frags[i][ai]] = side_chains->addAtom(a->copy(), true, true);
+                }
+                //add all bonds from this fragment
+                for(size_t ai=0; ai < frags[i].size(); ai++) {
+                    Atom* a = em.getAtomWithIdx(frags[i][ai]);
+                    ROMol::OEDGE_ITER beg,end;
+                    for(boost::tie(beg,end) = em.getAtomBonds(a); beg!=end; ++beg){
+                        const BOND_SPTR bond = em[*beg];
+                        if(newAtomMap.end() == newAtomMap.find(bond->getBeginAtomIdx())
+                        || newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx())
+                        || visitedBonds.end() != visitedBonds.find(bond->getIdx()) )
+                            continue;
+                        unsigned ai1 = newAtomMap.at(bond->getBeginAtomIdx());
+                        unsigned ai2 = newAtomMap.at(bond->getEndAtomIdx());
+                        unsigned bi  = side_chains->addBond(ai1, ai2, bond->getBondType());
+                        visitedBonds[bond->getIdx()] = bi;
+                    }
+                }
+                sideChainHasIons = true;
+            }
+            else { // it is very strange algorithm to select the core
+                iCore = i;
+            }
+        }
+        // build core molecule from selected fragment
+        core = new RWMol;
+        visitedBonds.clear();
+        std::map<unsigned, unsigned> newAtomMap;  // key is atom index in source molecule
+        for(size_t i=0; i < frags[iCore].size(); i++) {
+            unsigned ai = frags[iCore][i];
+            Atom* a = em.getAtomWithIdx(ai);
+            newAtomMap[ai] = core->addAtom(a->copy(), true, true);
+        }
+        //add all bonds from this fragment
+        for(size_t ai=0; ai < frags[iCore].size(); ai++) {
+            Atom* a = em.getAtomWithIdx(frags[iCore][ai]);
+            ROMol::OEDGE_ITER beg,end;
+            for(boost::tie(beg,end) = em.getAtomBonds(a); beg!=end; ++beg){
+                const BOND_SPTR bond = em[*beg];
+                if(newAtomMap.end() == newAtomMap.find(bond->getBeginAtomIdx())
+                || newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx())
+                || visitedBonds.end() != visitedBonds.find(bond->getIdx()) )
+                    continue;
+                unsigned ai1 = newAtomMap.at(bond->getBeginAtomIdx());
+                unsigned ai2 = newAtomMap.at(bond->getEndAtomIdx());
+                unsigned bi  = core->addBond(ai1, ai2, bond->getBondType());
+                visitedBonds[bond->getIdx()] = bi;
+            }
+        }
+
+// DEBUG PRINT
+#ifdef _DEBUG
+std::cout<<res.size()+1<<" isotope="<< isotope <<" "<< MolToSmiles(*core, true)<<", "<<MolToSmiles(*side_chains, true)<<"\n";
+#endif
+
+//TMP:
+/*
         // should be able to get away without sanitising mol as the existing valencies/atoms not changed
         ROMol modifiedMol(em);
         // Split ions:
@@ -86,7 +233,7 @@ namespace RDKit {
         bool valid = true;
         std::vector<std::string> fragments;
 
-        //#check if it's a valid triple cut
+        //#check if it's a valid triple cut ----????
         if(isotope == 3){
             valid = false;
             boost::split(fragments, fragmented_smi_noIsotopes, boost::is_any_of("."), boost::token_compress_on);
@@ -97,26 +244,9 @@ namespace RDKit {
                 }
             }
         }
-
-        RWMol *m1=NULL, *m2=NULL;   // core & side_chains molecules
         if(!valid)
             return;
-// DEBUG PRINT
-std::cout<<"isotope="<< isotope <<"\n";
-        if(isotope == 1){
-            m2 = new RWMol(em); // output = '%s,%s,,%s.%s'
-// * DEBUG PRINT
-//? replace any [*] with [:1]
-//?            fragmented_smi_noIsotopes = re.sub('\[\*\]', '[*:1]', fragmented_smi_noIsotopes)
-            boost::split(fragments, fragmented_smi_noIsotopes, boost::is_any_of("."), boost::token_compress_on);
-            RWMol* s1 = SmilesToMol(fragments[0]);
-            RWMol* s2 = SmilesToMol(fragments[1]);
-
-            //#need to cansmi again as smiles can be different
-            std::cout<<"smi,id,,"<< MolToSmiles(*s1, true)<<"."<<MolToSmiles(*s2, true)<<"\n";
-// * /
-        }
-        else if(isotope >= 2){
+*/
 /*
             #add the isotope labels
             for key in isotope_track:
@@ -173,8 +303,36 @@ std::cout<<"isotope="<< isotope <<"\n";
                 out.add(output)
 */
         }
-
-        res.push_back(std::pair<ROMOL_SPTR,ROMOL_SPTR>(ROMOL_SPTR(m1), ROMOL_SPTR(m2)));
+        // check for dublicates:
+        bool resFound = false;
+        for(size_t ri=0; ri < res.size(); ri++) {
+            const std::pair<ROMOL_SPTR,ROMOL_SPTR>& r = res[ri];
+            if(  side_chains->getNumAtoms() == r.second->getNumAtoms()
+              && side_chains->getNumBonds() == r.second->getNumBonds()
+              &&((NULL==core && NULL==r.first.get()) 
+               ||(NULL!=core && NULL!=r.first.get()
+                && core->getNumAtoms() == r.first->getNumAtoms() 
+                && core->getNumBonds() == r.first->getNumBonds()) )   ) {
+                // ToDo accurate check:
+//TODO: replace it with a comparition of sorted arrays of the source indecies 
+                // 1. compare hash code
+                if(computeMorganCodeHash(*side_chains) == computeMorganCodeHash(*r.second)
+                 &&(NULL==core
+                    || computeMorganCodeHash(*core) == computeMorganCodeHash(*r.first)) ) {
+                // 2. final check to exclude collisions
+    //..................................................
+    //..................................................
+                    resFound = true;
+                    break;
+                }
+            }
+        }
+        if(!resFound)
+            res.push_back(std::pair<ROMOL_SPTR,ROMOL_SPTR>(ROMOL_SPTR(core), ROMOL_SPTR(side_chains)));
+#ifdef _DEBUG
+        else
+std::cout<<res.size()+1<<" isotope="<< isotope <<" --- DUPLICATE Result FOUND ---\n";
+#endif
     }
 
     static

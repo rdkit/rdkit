@@ -126,30 +126,37 @@ std::string getSmilesOnly(const char* smiles, std::string* id=0) { // remove lab
 
 void test1() {
     BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdInfoLog) << "MMPA test1()" << std::endl;
-
+    BOOST_LOG(rdInfoLog) << "MMPA test1()\n" << std::endl;
+/*
+// DEBUG PRINT
+    RWMol *m = SmartsToMol("[*:1]C.[*:1]c1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]");
+    Atom  *a = m->getAtomWithIdx(0);
+    std::cout<<"DEBUG: "<< MolToSmiles(*m, true) <<"\n";
+    delete m;
+//-----
+*/
     const char* smi[] = {
         "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717",
     };
 
-    const char* fs[] = {
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]NC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]CCO",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]O.[*:1]CCNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]C(=O)NCCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]C[*:2],[*:1]CO.[*:2]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]CO",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CO.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CC[*:2],[*:1]O.[*:2]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CNC([*:2])=O,[*:1]CO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CCNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]c1c([*:2])[n+](=O)c2ccccc2n1[O-],[*:1]C.[*:2]C(=O)NCCO",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]NC([*:2])=O,[*:1]CCO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]NC([*:2])=O,[*:1]CCO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CCO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CCNC([*:2])=O,[*:1]O.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]C[*:2],[*:1]O.[*:2]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+    const char* fs[] = { // 16 reordered reference results
         "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]C.[*:1]c1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]c1c([*:2])[n+](=O)c2ccccc2n1[O-],[*:1]C.[*:2]C(=O)NCCO",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CNC([*:2])=O,[*:1]CO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]C[*:2],[*:1]CO.[*:2]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]NC([*:2])=O,[*:1]CCO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]NC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]CCO",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]CO",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CCNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]C(=O)NCCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CCO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
 
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CO.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]O.[*:1]CCNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]NC([*:2])=O,[*:1]CCO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CC[*:2],[*:1]O.[*:2]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CCNC([*:2])=O,[*:1]O.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]C[*:2],[*:1]O.[*:2]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
     };
 
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++) {
@@ -162,7 +169,8 @@ void test1() {
         RDKit::MMPA::fragmentMol(*mol, res);
         printTime();
         delete mol;
-        std::cout << "TEST "<< i+1 << " mol: " << smi[i] <<"\n";
+        std::map<size_t, size_t> fs2res;
+        std::cout << "\nTEST "<< i+1 << " mol: " << smi[i] <<"\n";
         for(size_t j=0; j<res.size(); j++) {
 //            std::cout <<"   "<< j+1 << ": ";
 //            std::cout << (res[j].first.get()  ? MolToSmiles(*res[j].first ) : es) <<", ";
@@ -171,13 +179,33 @@ void test1() {
             ss << smiles << "," << id << ",";
             ss << (res[j].first.get()  ? MolToSmiles(*res[j].first, true) : "") <<",";
             ss << (res[j].second.get() ? MolToSmiles(*res[j].second,true) : "");
-            std::cout << j+1 << ":\n";
-            if(0!=strcmp(std::string(ss.str()).c_str(), fs[j]))
-                std::cout << "ss: " << ss.str() << "\n"
-                << "FS: " << fs[j] << "\n";
+            bool failed = true;
+            size_t matchedRefRes = -1;
+            for(size_t r=0; r < sizeof(fs)/sizeof(fs[0]); r++) {
+                if(0==strcmp(std::string(ss.str()).c_str(), fs[r])) { // PASSED
+                    failed = false;
+                    matchedRefRes = r;
+                    fs2res[r] = j;
+                    break;
+                }
+            }
+            if(j<9)
+                std::cout << " ";
+            if(failed) { //0!=strcmp(std::string(ss.str()).c_str(), fs[j])) { // FAILED
+                std::cout << j+1 << ":*FAILED* " << ss.str() <<"\n";//<< "FS: " << fs[j] <<"\n";
 //tmp            TEST_ASSERT(0==strcmp(std::string(ss.str()).c_str(), fs[j]));
+            }
+            else
+                std::cout << j+1 << ": PASSED. matchedRefRes = "<< matchedRefRes+1 <<"\n";//ok: << "ss: " << ss.str() <<"\n";
+            std::cout.flush();
+        }
+        std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
+        for(size_t r=0; r < sizeof(fs)/sizeof(fs[0]); r++) {
+            if(fs2res.end() == fs2res.find(r))
+                std::cout <<(r<9?" ":"")<< r+1 << ": " << fs[r] <<"\n";
         }
     }
+    std::cout << " -----------------------------------\n";
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -200,11 +228,11 @@ int main(int argc, const char* argv[]) {
     t0 = nanoClock();
 
     test1();
-
+/*
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
     printf("TOTAL Time elapsed %.4lf seconds\n", sec);
-
+*/
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     return 0;
 }
