@@ -4850,8 +4850,20 @@ void testGetMolFrags()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue510()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: Hexafluorophosphate cannot be handled" << std::endl;
+  {
+    std::string smiles="F[P-](F)(F)(F)(F)F";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==-1);
+    delete m;
+  }
 
-
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4929,6 +4941,7 @@ int main(){
   testGithubIssue443();
   testGithubIssue447();
   testGetMolFrags();
+  testGithubIssue510();
   return 0;
 }
 

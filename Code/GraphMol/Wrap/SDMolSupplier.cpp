@@ -24,6 +24,10 @@
 namespace python = boost::python;
 
 namespace RDKit {
+  void setDataHelper(SDMolSupplier &self,const std::string &text,
+    bool sanitize, bool removeHs, bool strictParsing){
+    self.setData(text, sanitize, removeHs, strictParsing);
+  }
   void setStreamIndices(SDMolSupplier &self,python::object arg){
     std::vector<std::streampos> loc;
     PySequenceHolder<int> seq(arg);
@@ -88,10 +92,10 @@ namespace RDKit {
 	.def("reset", &SDMolSupplier::reset,
 	     "Resets our position in the file to the beginning.\n")
 	.def("__len__", &SDMolSupplier::length)
-	.def("SetData", &SDMolSupplier::setData,
+	.def("SetData", setDataHelper,
 	     "Sets the text to be parsed",
 	     (python::arg("self"),python::arg("data"),python::arg("sanitize")=true,
-              python::arg("removeHs")=true))
+              python::arg("removeHs")=true, python::arg("strictParsing")=true))
 	.def("_SetStreamIndices", setStreamIndices,
 	     "Sets the locations of mol beginnings in the input stream. Be *very* careful with this method.",
 	     (python::arg("self"),python::arg("locs")))
