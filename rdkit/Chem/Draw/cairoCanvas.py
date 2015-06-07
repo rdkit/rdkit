@@ -12,8 +12,12 @@
 #pylint: disable=F0401,C0324,C0322,W0142
 import sys
 
+from rdkit import six
+if not six.PY3:
+  bytes = buffer
+
 # for Python3, import cairocffi preferably
-if sys.version_info[0] > 2:
+if six.PY3:
   try:
     import cairocffi as cairo
   except ImportError:
@@ -119,10 +123,10 @@ class Canvas(CanvasBase):
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
       if hasattr(self.surface,'get_data'):
-        self.image.fromstring(self.surface.get_data(),
+        self.image.fromstring(bytes(self.surface.get_data()),
                               "raw","BGRA",0,1)
       else:
-        self.image.fromstring(self.surface.get_data_as_rgba(),
+        self.image.fromstring(bytes(surface.get_data_as_rgba()),
                               "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
