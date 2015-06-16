@@ -488,15 +488,17 @@ namespace RDKit {
     DrawColour retval = getColourByAtomicNum( atomic_nums_[atom_idx] );
 
     // set contents of highlight_atoms to red
-    if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
-                                                           highlight_atoms->end() , atom_idx )  ) {
-      retval = drawOptions().highlightColour;
-    }
-    // over-ride with explicit colour from highlight_map if there is one
-    if(highlight_map){
-      map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
-      if( p != highlight_map->end() ) {
-        retval = p->second;
+    if(!drawOptions().circleAtoms && !drawOptions().continuousHighlight){
+      if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
+          highlight_atoms->end() , atom_idx )  ) {
+        retval = drawOptions().highlightColour;
+      }
+      // over-ride with explicit colour from highlight_map if there is one
+      if(highlight_map){
+        map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
+        if( p != highlight_map->end() ) {
+          retval = p->second;
+        }
       }
     }
     return retval;
