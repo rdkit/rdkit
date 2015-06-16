@@ -65,9 +65,16 @@ namespace RDKit {
       }
     }
 
-    void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms, unsigned int nAtoms) {
-
+    void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms, unsigned int nAtoms, const ROMol &mol) {
+      RingInfo *ringInfo=mol.getRingInfo();
+      if(!ringInfo->isInitialized()){
+        ringInfo->initialize();
+      }
       for(unsigned idx = 0; idx < nAtoms; ++idx){
+        const Canon::canon_atom &a = atoms[idx];
+        if(ringInfo->numAtomRings(a.atom->getIdx()) < 1){
+          continue;
+        }
         std::deque<int> neighbors;
         neighbors.push_back(idx);
         char *visited=(char *)malloc(nAtoms*sizeof(char));
@@ -84,10 +91,13 @@ namespace RDKit {
           nextLevelNbrs.resize(0);
           while(!neighbors.empty()){
             int nidx = neighbors.front();
+            neighbors.pop_front();
             const Canon::canon_atom &atom = atoms[nidx];
+            if(ringInfo->numAtomRings(atom.atom->getIdx()) < 1){
+              continue;
+            }
             lastLevelNbrs[nidx]=1;
             visited[nidx]=1;
-            neighbors.pop_front();
             for(unsigned int j=0; j<atom.degree; j++){
               int iidx = atom.nbrIds[j];
               if(!visited[iidx]){
@@ -220,7 +230,7 @@ namespace RDKit {
       unsigned int nAts2 = atomsInPlay ? atomsInPlay->count() : nAts;
       if(useSpecial && ties && static_cast<float>(countCls)/nAts2 < 0.5 && symRingAtoms>0){
         SpecialSymmetryAtomCompareFunctor sftor(atoms,mol,atomsInPlay,bondsInPlay);
-        compareRingAtomsConcerningNumNeighbors(atoms, nAts);
+        compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
         ActivatePartitions(nAts,order,count,activeset,next,changed);
         RefinePartitions(mol,atoms,sftor,true,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON

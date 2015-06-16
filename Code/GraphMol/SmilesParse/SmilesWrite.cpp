@@ -391,7 +391,16 @@ namespace RDKit{
       std::vector<unsigned int> atomOrdering;
 
       if(canonical){
-        Canon::rankMolAtoms(*tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
+        if(tmol->hasProp("_canonicalRankingNumbers")){
+          for(unsigned int i=0;i<tmol->getNumAtoms();++i){
+            unsigned int rankNum;
+            tmol->getAtomWithIdx(i)->getPropIfPresent("_canonicalRankingNumber",rankNum);
+            ranks[i]=rankNum;
+          }
+        }
+        else{
+          Canon::rankMolAtoms(*tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
+        }
       } else {
         for(unsigned int i=0;i<tmol->getNumAtoms();++i) ranks[i]=i;
       }
@@ -400,6 +409,7 @@ namespace RDKit{
         std::cout << tmpI << " " << ranks[tmpI] << " " << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
       }
 #endif
+
 
       std::vector<Canon::AtomColors> colors(nAtoms,Canon::WHITE_NODE);
       std::vector<Canon::AtomColors>::iterator colorIt;
