@@ -109,7 +109,7 @@ static inline unsigned long long nanoClock (void) { // actually returns microsec
 void printTime() {
     unsigned long long t1 = nanoClock();
     double sec = double(t1-t0) / 1000000.;
-    printf("Time elapsed %.4lf seconds\n", sec);
+    printf("Time elapsed %.6lf seconds\n", sec);
     t0 = nanoClock();
 }
 
@@ -121,41 +121,127 @@ std::string getSmilesOnly(const char* smiles, std::string* id=0) { // remove lab
     return std::string(smiles, n);
 }
 
+void debugTest1(const char* init_mol) {
+    std::auto_ptr<RWMol> m(SmilesToMol(init_mol));
+    std::cout<<"INIT MOL: "<< init_mol <<"\n";
+    std::cout<<"CONV MOL: "<< MolToSmiles(*m, true) <<"\n";
+}
+/*
+ * Work-around functions for RDKit canonical
+ */
+std::string createCanonicalFromSmiles(const char* smiles) {
+    std::auto_ptr<RWMol> m( SmilesToMol(smiles));
+    std::string res = MolToSmiles(*m, true);
+//    replaceAllMap(res);
+    return res;
+}
+
+std::string createCanonicalFromSmiles(std::string smiles) {
+    return createCanonicalFromSmiles(smiles.c_str());
+}
+
 // UNIT Test Set:
 //=========================================================================
-
 void test1() {
     BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
     BOOST_LOG(rdInfoLog) << "MMPA test1()\n" << std::endl;
-/*
-// DEBUG PRINT
-    RWMol *m = SmartsToMol("[*:1]C.[*:1]c1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]");
-    Atom  *a = m->getAtomWithIdx(0);
-    std::cout<<"DEBUG: "<< MolToSmiles(*m, true) <<"\n";
-    delete m;
+
+// DEBUG PRINT.      MolToSmiles() fails with new RDKit version
+   
 //-----
-*/
+
     const char* smi[] = {
         "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717",
     };
+/*
+C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]
+Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]
+ * 
+*/
+    
+    const char* fs_sm[] = {  // 15 reference result's SMILES.
+        "","C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]",
+//ORIGINAL:        "","[*:1]C.[*:1]c1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]",
 
-    const char* fs[] = { // 16 reordered reference results
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=[n+]1c([*:2])c([*:1])n([O-])c2ccccc21,C[*:1].O=C(NCCO)[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NCC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:1]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,OCC[*:1].Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,C[*:1].O=C(NCCO)c1c([*:1])n([O-])c2ccccc2[n+]1=O",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].OCC[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OCC[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C(C[*:2])[*:1],Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:1]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,O=C(NCCO)[*:1].Cc1c([*:1])[n+](=O)c2ccccc2n1[O-]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c(C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].O[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].OC[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
-      "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]"
+        "[*:1]c1c([*:2])[n+](=O)c2ccccc2n1[O-]","[*:1]C.[*:2]C(=O)NCCO",
+        "[*:2]CNC([*:1])=O","[*:2]CO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "[*:2]C[*:1]","[*:2]CO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "[*:2]NC([*:1])=O","[*:2]CCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "[*:2]NC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O","[*:1]C.[*:2]CCO",
+        "[*:2]CNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O","[*:1]C.[*:2]CO",
+        "[*:2]CCNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O","[*:1]C.[*:2]O",
+
+        "","Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]",
+//ORIGINAL:        "","[*:1]C(=O)NCCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+
+        "","[*:1]CCO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "","[*:1]CO.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "","[*:1]O.[*:1]CCNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "[*:2]CC[*:1]","[*:2]O.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "[*:2]CCNC([*:1])=O","[*:2]O.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "[*:2]C[*:1]","[*:2]O.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
     };
+    char  fs[15][256];    // 15 reference results with updated RDKit's SMARTS Writer
+    const char* fs1[] = { // 15+1dup reordered reference results
+//Fix for updated RDKit. new SMILES for the same molecule:
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]",
+//was "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]C.[*:1]c1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]",
+
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]c1c([*:2])[n+](=O)c2ccccc2n1[O-],[*:1]C.[*:2]C(=O)NCCO",
+// exchanged atom mapping labels (1<->2):
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CNC([*:1])=O,[*:2]CO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+//was   "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CNC([*:2])=O,[*:1]CO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+// exchanged atom mapping labels (1<->2):
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]C[*:1],[*:2]CO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+//was   "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]C[*:2],[*:1]CO.[*:2]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+// exchanged atom mapping labels (1<->2):
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]NC([*:1])=O,[*:2]CCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+//was   "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]NC([*:2])=O,[*:1]CCO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]NC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]CCO",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]CO",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CCNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O,[*:1]C.[*:2]O",
+
+//Fix for updated RDKit. new SMILES for the same molecule:
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]",
+//was   "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]C(=O)NCCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CCO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+//#10
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]CO.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,[*:1]O.[*:1]CCNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+// exchanged atom mapping labels (1<->2):
+///-- dup of #5: "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]NC([*:1])=O,[*:2]CCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CC[*:1],[*:2]O.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]CCNC([*:1])=O,[*:2]O.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:2]C[*:1],[*:2]O.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+/* ORIGINALS of exchanged atom mapping labels (1<->2):
+///dup of #5:  "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]NC([*:2])=O,[*:1]CCO.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CC[*:2],[*:1]O.[*:2]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]CCNC([*:2])=O,[*:1]O.[*:2]c1c(C)n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,[*:1]C[*:2],[*:1]O.[*:2]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+*/
+    };
+
+// FIX RDKit update. But MolToSmiles() fails with new RDKit version
+    for(size_t r=0; r < sizeof(fs)/sizeof(fs[0]); r++) {
+//        strcpy(fs[r], fs1[r]);
+//MolToSmiles() fails with new RDKit version in DEBUG Build
+        char core[256]="", side[256];
+        if(fs_sm[2*r] [0]) {
+            RWMol * m = SmilesToMol(fs_sm[2*r]);
+            strcpy(core, MolToSmiles(*m, true).c_str());
+            delete m;
+        }
+        if(fs_sm[2*r+1] [0]) {
+            RWMol * m = SmilesToMol(fs_sm[2*r+1]);
+            strcpy(side, MolToSmiles(*m, true).c_str());
+            delete m;
+        }
+        sprintf(fs[r], "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,%s,%s", core, side);
+    }
+    strcpy(fs[0], fs1[0]);
+    strcpy(fs[8], fs1[8]);
+//-----------------------------------
 
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++) {
         static const std::string es("NULL");
@@ -164,11 +250,16 @@ void test1() {
         ROMol* mol = SmilesToMol( smiles );
         std::vector< std::pair<ROMOL_SPTR,ROMOL_SPTR> > res;
         t0 = nanoClock();
-        RDKit::MMPA::fragmentMol(*mol, res);
+        RDKit::MMPA::fragmentMol(*mol, res, 3);
         printTime();
         delete mol;
+        std::cout << "TEST FINISHED !!!\n*******************************************************\n"
+                     "  --- VERIFY RESULTS ---\n";
+
+    // === VERIFY RESULTS ===
         std::map<size_t, size_t> fs2res;
         std::cout << "\nTEST "<< i+1 << " mol: " << smi[i] <<"\n";
+        bool test_failed = false;
         for(size_t j=0; j<res.size(); j++) {
 //            std::cout <<"   "<< j+1 << ": ";
 //            std::cout << (res[j].first.get()  ? MolToSmiles(*res[j].first ) : es) <<", ";
@@ -177,8 +268,8 @@ void test1() {
             ss << smiles << "," << id << ",";
             ss << (res[j].first.get()  ? MolToSmiles(*res[j].first, true) : "") <<",";
             ss << (res[j].second.get() ? MolToSmiles(*res[j].second,true) : "");
-            bool failed = true;
             size_t matchedRefRes = -1;
+            bool failed = true;
             for(size_t r=0; r < sizeof(fs)/sizeof(fs[0]); r++) {
                 if(0==strcmp(std::string(ss.str()).c_str(), fs[r])) { // PASSED
                     failed = false;
@@ -189,9 +280,9 @@ void test1() {
             }
             if(j<9)
                 std::cout << " ";
-            if(failed) { //0!=strcmp(std::string(ss.str()).c_str(), fs[j])) { // FAILED
-                std::cout << j+1 << ":*FAILED* " << ss.str() <<"\n";//<< "FS: " << fs[j] <<"\n";
-//tmp            TEST_ASSERT(0==strcmp(std::string(ss.str()).c_str(), fs[j]));
+            if(failed) {
+                test_failed = true;
+                std::cout << j+1 << ":*FAILED* " << ss.str() <<"\n";// << "FS: " << fs[j] <<"\n";
             }
             else
                 std::cout << j+1 << ": PASSED. matchedRefRes = "<< matchedRefRes+1 <<"\n";//ok: << "ss: " << ss.str() <<"\n";
@@ -199,12 +290,122 @@ void test1() {
         }
         std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
         for(size_t r=0; r < sizeof(fs)/sizeof(fs[0]); r++) {
-            if(fs2res.end() == fs2res.find(r))
+            if(fs2res.end() == fs2res.find(r)) {
+                test_failed = true;
                 std::cout <<(r<9?" ":"")<< r+1 << ": " << fs[r] <<"\n";
+            }
+        }
+        std::cout << " -----------------------------------\n"
+            <<"DO TEST_ASSERT():\n";
+        TEST_ASSERT(!test_failed);
+    }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test2() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "MMPA test2()\n" << std::endl;
+    
+    const char* smi[] = {
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717",
+    };
+
+    const char* fs[] = {// 16 reordered reference results
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=[n+]1c([*:2])c([*:1])n([O-])c2ccccc21,C[*:1].O=C(NCCO)[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NCC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:1]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,OCC[*:1].Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,C[*:1].O=C(NCCO)c1c([*:1])n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].OCC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OCC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C(C[*:2])[*:1],Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:1]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,O=C(NCCO)[*:1].Cc1c([*:1])[n+](=O)c2ccccc2n1[O-]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c(C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].OC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]"
+    };
+
+    for (int i = 0; i<sizeof (smi) / sizeof (smi[0]); i++) {
+        static const std::string es("NULL");
+        std::string id;
+        std::string smiles = getSmilesOnly(smi[i], &id);
+        std::auto_ptr<ROMol> mol(SmilesToMol(smiles));
+
+        std::vector< std::pair<ROMOL_SPTR, ROMOL_SPTR> > res;
+
+        t0 = nanoClock();
+        /*
+         * General test fragment
+         */
+        RDKit::MMPA::fragmentMol(*mol, res);
+
+        printTime();
+        std::map<size_t, size_t> fs2res;
+        std::map<std::string, size_t> ref_map;
+        std::stringstream ref_str;
+        std::string s_token;
+        /*
+         * Create reference map
+         */
+        for (size_t r = 0; r < sizeof (fs) / sizeof (fs[0]); r++) {
+            std::stringstream ss_token(fs[r]);
+            
+            int token_num = 0;
+            ref_str.str("");
+            while (getline(ss_token, s_token, ',')) {
+                if (token_num == 2)
+                    ref_str << createCanonicalFromSmiles(s_token.c_str()) <<",";
+                if (token_num == 3)
+                    ref_str << createCanonicalFromSmiles(s_token.c_str());
+                token_num++;
+            }
+            ref_map[ref_str.str()] = r;
+        }
+        std::cout << "\nTEST " << i + 1 << " mol: " << smi[i] << "\n";
+        bool has_failed = false;
+        for (size_t res_idx = 0; res_idx < res.size(); res_idx++) {
+            std::cout << "   " << res_idx + 1 << ": ";
+            /*
+             * Somehow canonical smiles does not return the same result after just saving.
+             * Workaround is: save -> load -> save 
+             */
+            std::string first_res = (res[res_idx].first.get() ? createCanonicalFromSmiles(MolToSmiles(*res[res_idx].first, true)) : "");
+            std::string second_res = (res[res_idx].second.get() ? createCanonicalFromSmiles(MolToSmiles(*res[res_idx].second, true)) : "");
+
+            std::cout << (res[res_idx].first.get() ? first_res : es) << ", ";
+            std::cout << (res[res_idx].second.get() ? second_res : es) << "\n";
+
+            std::stringstream res_str;
+            res_str << first_res << "," << second_res;
+
+            if (res_idx < 9)
+                std::cout << " ";
+            
+            if (ref_map.find(res_str.str()) != ref_map.end()) {
+                size_t matchedRefRes = ref_map[res_str.str()];
+                fs2res[matchedRefRes] = res_idx;
+                std::cout << res_idx + 1 << ": PASSED. matchedRefRes = " << matchedRefRes + 1 << "\n"; //ok: << "ss: " << ss.str() <<"\n";
+            } else {
+                std::cout << res_idx + 1 << ": FAILED " << res_str.str() << "\n"; //<< "FS: " << fs[j] <<"\n";
+                has_failed = true;
+            }
+            std::cout.flush();
+        }
+        if (has_failed) {
+            std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
+            for (size_t r = 0; r < sizeof (fs) / sizeof (fs[0]); r++) {
+                if (fs2res.end() == fs2res.find(r))
+                    std::cout << (r < 9 ? " " : "") << r + 1 << ": " << fs[r] << "\n";
+            }
+        } else {
+            std::cout << "\n --- ALL PASSED --- \n";
         }
     }
     std::cout << " -----------------------------------\n";
-    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+    BOOST_LOG(rdInfoLog) << "\tDone" << std::endl;
 }
 
 //====================================================================================================
@@ -225,7 +426,10 @@ int main(int argc, const char* argv[]) {
     T0 = nanoClock();
     t0 = nanoClock();
 
-    test1();
+    test2();
+    
+//    debugTest1("C[*:1].O=C(NCCO)c1c([*:1])n([O-])c2ccccc2[n+]1=O");
+//    debugTest1("C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]");
 /*
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
