@@ -118,6 +118,7 @@ namespace DistGeom {
       \param angles          A list of 1-3 partners (angles)
       \param expTorsionAtoms A list of groups of 4 atom indices for experimental torsions
       \param expTorsionAngles A list of corresponding torsion angle-potential parameters
+      \param atomNums        A list of atomic numbers for all atoms in the molecule
 
       \return a pointer to a ForceField suitable for imposing experimental torsion angle preferences
         <b>NOTE:</b> the caller is responsible for deleting this force field.
@@ -128,7 +129,8 @@ namespace DistGeom {
                                                  const std::vector<std::pair<int, int> > &bonds,
                                                  const std::vector<std::pair<int, int> > &angles,
                                                  const std::vector<std::vector<int> > &expTorsionAtoms,
-                                                 const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles);
+                                                 const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                                 const std::vector<int> atomNums);
 
 }
     
