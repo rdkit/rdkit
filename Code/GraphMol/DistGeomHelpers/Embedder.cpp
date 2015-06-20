@@ -250,7 +250,8 @@ namespace RDKit {
                                   std::vector<std::pair<int, int> > bonds,
                                   std::vector<std::pair<int, int> > angles,
                                   std::vector<std::vector<int> > expTorsionAtoms,
-                                  std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles) {
+                                  std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles,
+                                  std::vector<int> atomNums) {
 
 
       // convert to 3D positions and create coordMap
@@ -263,7 +264,8 @@ namespace RDKit {
       ForceFields::ForceField *field = DistGeom::construct3DForceField(*mmat, positions3D,
                                                                        bonds, angles,
                                                                        expTorsionAtoms,
-                                                                       expTorsionAngles);
+                                                                       expTorsionAngles,
+                                                                       atomNums);
 
       // minimize!
       int nPasses = 0;
@@ -373,6 +375,7 @@ namespace RDKit {
         std::vector<std::pair<int, int> > *angles;
         std::vector<std::vector<int> > *expTorsionAtoms;
         std::vector<std::pair<std::vector<int>, std::vector<double> > > *expTorsionAngles;
+        std::vector<int> *atomNums;
       } EmbedArgs;
       void embedHelper_(int threadId,
                         int numThreads,
@@ -406,7 +409,7 @@ namespace RDKit {
             if (eargs->useExpTorsionAnglePrefs) {
               _minimizeWithExpTorsions(positions, eargs->mmat, eargs->optimizerForceTol,
                                        eargs->basinThresh, *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
-                                       *eargs->expTorsionAngles);
+                                       *eargs->expTorsionAngles, *eargs->atomNums);
             }
             Conformer *conf = (*eargs->confs)[ci];
             unsigned int fragAtomIdx=0;
@@ -480,9 +483,13 @@ namespace RDKit {
         std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
         std::vector<std::pair<int, int> > bonds;
         std::vector<std::pair<int, int> > angles;
+        std::vector<int> atomNums(nAtoms);
         if (useExpTorsionAnglePrefs) {
           ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,verbose);
           setTopolBounds(*piece, mmat, bonds, angles, true, false);
+          for (int i = 0; i < nAtoms; ++i) {
+            atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
+          }
         } else {
           setTopolBounds(*piece, mmat, true, false);
         }
@@ -552,7 +559,8 @@ namespace RDKit {
                                  maxIterations, &chiralCenters,
                                  useExpTorsionAnglePrefs,
                                  &bonds, &angles, &expTorsionAtoms,
-                                 &expTorsionAngles};
+                                 &expTorsionAngles,
+                                 &atomNums};
         if(numThreads==1){
           detail::embedHelper_(0,1,&eargs);
         }

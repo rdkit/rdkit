@@ -18,6 +18,7 @@
 #include <Numerics/Vector.h>
 #include <RDGeneral/Invariant.h>
 #include <Numerics/EigenSolvers/PowerEigenSolver.h>
+#include <GraphMol/PeriodicTable.h>
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
@@ -246,7 +247,8 @@ namespace DistGeom {
                                                  const std::vector<std::pair<int, int> > &bonds,
                                                  const std::vector<std::pair<int, int> > &angles,
                                                  const std::vector<std::vector<int> > &expTorsionAtoms,
-                                                 const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles) {
+                                                 const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                                 const std::vector<int> atomNums) {
     unsigned int N = mmat.numRows();
     CHECK_INVARIANT(N == positions.size(), "");
     CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
@@ -267,16 +269,21 @@ namespace DistGeom {
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     } // torsion constraints
 
+
+    // keep track which atoms are 1,2- or 1,3-restrained
+    std::vector<std::vector<int> > atomPairs(N, std::vector<int>(N, 0));
+
     double fdist = 100.0; // force constant
     // 1,2 distance constraints
     std::vector<std::pair<int, int> >::const_iterator bi;
     for (bi = bonds.begin(); bi != bonds.end(); bi++) {
       unsigned int i = bi->first;
       unsigned int j = bi->second;
+      atomPairs[i][j] = atomPairs[j][i] = 1;
       double d = ((*positions[i]) - (*positions[j])).length();
       double l = d-0.01;
       double u = d+0.01;
-      ForceFields::UFF::DistanceConstraintContrib *contrib = 
+      ForceFields::UFF::DistanceConstraintContrib *contrib =
         new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
@@ -285,12 +292,30 @@ namespace DistGeom {
     for (bi = angles.begin(); bi != angles.end(); bi++) {
       unsigned int i = bi->first;
       unsigned int j = bi->second;
+      atomPairs[i][j] = atomPairs[j][i] = 1;
       double d = ((*positions[i]) - (*positions[j])).length();
       double l = d-0.01;
       double u = d+0.01;
-      ForceFields::UFF::DistanceConstraintContrib *contrib = 
+      ForceFields::UFF::DistanceConstraintContrib *contrib =
         new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    }
+
+    // minimum distance for all other atom pairs
+    fdist = 10.0;
+    for (unsigned int i = 1; i < N; i++) {
+      for (unsigned int j = 0; j < i; j++) {
+        if (!atomPairs[i][j]) {
+          double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
+          double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
+          double l = (vw1+vw2);
+          double u = 1000.0;
+          DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
+          //ForceFields::UFF::DistanceConstraintContrib *contrib =
+          //        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
+      }
     }
 
     return field;
