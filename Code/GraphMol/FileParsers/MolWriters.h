@@ -88,11 +88,12 @@ namespace RDKit {
         dp_ostream->flush();
       } catch(...){
       }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -160,11 +161,12 @@ namespace RDKit {
         dp_ostream->flush();
       } catch(...){
       }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -225,11 +227,12 @@ namespace RDKit {
         dp_ostream->flush();
       } catch(...){
       }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -283,11 +286,12 @@ namespace RDKit {
         dp_ostream->flush();
       } catch(...){
       }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
