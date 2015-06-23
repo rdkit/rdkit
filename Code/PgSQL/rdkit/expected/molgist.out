@@ -71,3 +71,28 @@ SET enable_indexscan=on;
 SET enable_bitmapscan=on;
 SET enable_seqscan=on;
 DROP INDEX molidx;
+-- ###############################
+-- github issue #525
+CREATE TABLE chemblmol (molregno int, m mol);
+\copy chemblmol from 'data/chembl20_100.csv' (format csv)
+CREATE INDEX mol_idx2 ON chemblmol using gist(m);
+-- start with a direct seq scan to verify that there is a result
+SET enable_indexscan=off;
+SET enable_bitmapscan=off;
+SET enable_seqscan=on;
+select count(*) from chemblmol where m@='Cc1cc(-n2ncc(=O)[nH]c2=O)ccc1C(=O)c1ccccc1Cl'::mol;
+ count 
+-------
+     1
+(1 row)
+
+-- now enable the index to trigger the bug:
+SET enable_indexscan=on;
+SET enable_bitmapscan=off;
+SET enable_seqscan=on;
+select count(*) from chemblmol where m@='Cc1cc(-n2ncc(=O)[nH]c2=O)ccc1C(=O)c1ccccc1Cl'::mol;
+ count 
+-------
+     1
+(1 row)
+
