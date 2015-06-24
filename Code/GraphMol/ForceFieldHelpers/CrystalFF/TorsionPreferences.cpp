@@ -432,7 +432,7 @@ namespace ForceFields {
         "[a:1][a:2]!@;-[CX3:3]=[CX3H1:4] 1 0.0 -1 5.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
         "[*:1][SX2:2]!@;-a[SX2:3][*:4] 1 0.0 1 12.9 1 0.0 1 0.0 1 0.0 1 0.0\n"
          // ------
-         //  these pattterns were added as part of the ET-DG work
+         //  these patterns were added as part of the ET-DG work
          // non-aromatic double bonds
          "[*:1][CX3:2]=[CX3:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
     ;

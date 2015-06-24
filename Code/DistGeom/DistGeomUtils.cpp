@@ -257,21 +257,22 @@ namespace DistGeom {
       field->positions().push_back(positions[i]);
     }
 
+    // keep track which atoms are 1,2- or 1,3-restrained
+    std::vector<std::vector<int> > atomPairs(N, std::vector<int>(N, 0));
+
     // torsion constraints
     for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
       int i = expTorsionAtoms[t][0];
       int j = expTorsionAtoms[t][1];
       int k = expTorsionAtoms[t][2];
       int l = expTorsionAtoms[t][3];
+      atomPairs[i][l] = atomPairs[l][i] = 1;
       // expTorsionAngles[t][0] = (signs, V's)
       ForceFields::CrystalFF::TorsionAngleContribM6 *contrib = 
         new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     } // torsion constraints
 
-
-    // keep track which atoms are 1,2- or 1,3-restrained
-    std::vector<std::vector<int> > atomPairs(N, std::vector<int>(N, 0));
 
     double fdist = 100.0; // force constant
     // 1,2 distance constraints
