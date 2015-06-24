@@ -273,10 +273,10 @@ namespace RDKit {
       //std::cout << "Field with torsion constraints: " << field->calcEnergy() << " " << ERROR_TOL << std::endl;
       if (field->calcEnergy() > ERROR_TOL) {
         int needMore = 1;
-        while (needMore) {
-              needMore = field->minimize(200, optimizerForceTol);
-              ++nPasses;
-        }
+        //while (needMore) {
+              needMore = field->minimize(300, optimizerForceTol);
+        //      ++nPasses;
+        //}
       }
       //std::cout << field->calcEnergy() << std::endl;
 
