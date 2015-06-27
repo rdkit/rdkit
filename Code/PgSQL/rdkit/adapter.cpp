@@ -61,6 +61,8 @@
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
+#include <boost/format.hpp>
+
 using namespace std;
 using namespace RDKit;
 
@@ -388,6 +390,9 @@ makeMolSign(CROMol data) {
   ExplicitBitVect *res=NULL;
   bytea                   *ret = NULL;
 
+  std::string smi=MolToSmiles(*mol);
+  elog(NOTICE, ">>> makeMolSign: %s",smi.c_str());
+
   try {
     res = RDKit::PatternFingerprintMol(*mol,getSubstructFpSize());
     //res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
@@ -397,6 +402,14 @@ makeMolSign(CROMol data) {
       ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)&sres);
       delete res;
       res=0;
+
+      unsigned char   *k = (unsigned char*)VARDATA(ret);
+      std::string txt="";
+      for(unsigned int i=0; i<VARSIZE(ret)-VARHDRSZ; i++){
+        txt += (boost::format("%d ") % int(k[i])).str();
+      }
+      elog(NOTICE, "  %s",txt.c_str());
+
     }
   } catch (...) {
     elog(ERROR, "makeMolSign: Unknown exception");
@@ -410,6 +423,7 @@ extern "C" int
 molcmp(CROMol i, CROMol a) {
   ROMol *im = (ROMol*)i;
   ROMol *am = (ROMol*)a;
+  elog(NOTICE, ">>> molcmp");
 
   if(!im){
     if(!am) return 0;
