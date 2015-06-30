@@ -758,7 +758,7 @@ calcConsistency(bool isLeaf, uint16 strategy,
 {
   bool res = false;
 
-  elog(NOTICE, "calcConsistency");
+  //elog(NOTICE, "calcConsistency");
 
   /*
    * We don't wish to use RDKit's functions to compute similarity
