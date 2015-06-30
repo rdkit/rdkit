@@ -391,7 +391,7 @@ makeMolSign(CROMol data) {
   bytea                   *ret = NULL;
 
   std::string smi=MolToSmiles(*mol);
-  elog(NOTICE, ">>> makeMolSign: %s",smi.c_str());
+  //elog(NOTICE, ">>> makeMolSign: %s",smi.c_str());
 
   try {
     res = RDKit::PatternFingerprintMol(*mol,getSubstructFpSize());
@@ -403,13 +403,14 @@ makeMolSign(CROMol data) {
       delete res;
       res=0;
 
+#if 0
       unsigned char   *k = (unsigned char*)VARDATA(ret);
       std::string txt="";
       for(unsigned int i=0; i<VARSIZE(ret)-VARHDRSZ; i++){
         txt += (boost::format("%d ") % int(k[i])).str();
       }
       elog(NOTICE, "  %s",txt.c_str());
-
+#endif
     }
   } catch (...) {
     elog(ERROR, "makeMolSign: Unknown exception");
@@ -423,7 +424,7 @@ extern "C" int
 molcmp(CROMol i, CROMol a) {
   ROMol *im = (ROMol*)i;
   ROMol *am = (ROMol*)a;
-  elog(NOTICE, ">>> molcmp");
+  //elog(NOTICE, ">>> molcmp");
 
   if(!im){
     if(!am) return 0;
