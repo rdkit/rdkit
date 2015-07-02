@@ -3002,18 +3002,30 @@ CAS<~>
     try:
       w.write(m)
     except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon writing to SDWriter without crashing the RDKit\n')
       e = True
     else:
       e = (sys.version_info < (3, 0))
     try:
       w.close()
     except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing SDWriter without crashing the RDKit\n')
       e = True
     else:
       if (not e):
         e = (sys.version_info < (3, 0))
     w=None
-    outf.close()
+    try:
+      outf.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing the stream without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
     self.assertTrue(e)
     
   def testGithub498(self):
