@@ -75,9 +75,10 @@ def _ShortestPathsMatch(match,featureSet,sig,dMat,sigFactory):
     sig[idx] = sig[idx]+1
   else:
     sig.SetBit(idx)
+  return idx
   
 
-def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
+def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None,bitInfo=None):
   """ generates a 2D fingerprint for a molecule using the
    parameters in _sig_
 
@@ -93,6 +94,8 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
        pharmacophore combinations are allowed
 
      - dMat: (optional) the distance matrix to be used
+
+     - bitInfo: (optional) used to return the atoms involved in the bits
 
   """
   if not isinstance(sigFactory,SigFactory.SigFactory):
@@ -152,5 +155,9 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
     
     for match in matchesToMap:
       if sigFactory.shortestPathsOnly:
-        _ShortestPathsMatch(match,perm,sig,dMat,sigFactory)
+        idx=_ShortestPathsMatch(match,perm,sig,dMat,sigFactory)
+        if idx is not None and bitInfo is not None:
+          l = bitInfo.get(idx,[])
+          l.append(match)
+          bitInfo[idx] = l
   return sig
