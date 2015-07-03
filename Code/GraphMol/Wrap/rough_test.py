@@ -2993,14 +2993,50 @@ CAS<~>
     path = Chem.GetShortestPath(m, 1, 20)
     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
 
+  def testGithub497(self):
+    import gzip,tempfile,sys
+    outf = gzip.open(tempfile.mktemp(),'wb+')
+    m = Chem.MolFromSmiles('C')
+    w = Chem.SDWriter(outf)
+    e = False
+    try:
+      w.write(m)
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon writing to SDWriter without crashing the RDKit\n')
+      e = True
+    else:
+      e = (sys.version_info < (3, 0))
+    try:
+      w.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing SDWriter without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
+    w=None
+    try:
+      outf.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing the stream without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
+    self.assertTrue(e)
+    
   def testGithub498(self):
     import gzip,tempfile
-    outf = gzip.open(tempfile.mktemp(),'w+')
+    outf = gzip.open(tempfile.mktemp(),'wt+')
     m = Chem.MolFromSmiles('C')
     w = Chem.SDWriter(outf)
     w.write(m)
     w.close()
     w=None
+    outf.close()
     
 if __name__ == '__main__':
   unittest.main()
