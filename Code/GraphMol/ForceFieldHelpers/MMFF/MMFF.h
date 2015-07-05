@@ -105,21 +105,25 @@ namespace RDKit {
 #ifndef RDK_THREADSAFE_SSS
       numThreads=1;
 #endif
-      if(numThreads<=1){
-        unsigned int i=0;
-        for(ROMol::ConformerIterator cit=mol.beginConformers();
+      MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
+      if(mmffMolProperties.isValid()) {
+        ForceFields::ForceField *ff=MMFF::constructForceField(mol,nonBondedThresh, -1,
+                                                              ignoreInterfragInteractions);
+        if(numThreads<=1){
+          unsigned int i=0;
+          for(ROMol::ConformerIterator cit=mol.beginConformers();
             cit!=mol.endConformers();++cit,++i){
-          res[i] = MMFFOptimizeMolecule(mol,maxIters,mmffVariant,
-                                        nonBondedThresh,(*cit)->getId(),
-                                        ignoreInterfragInteractions);
+            for(unsigned int aidx=0;aidx<mol.getNumAtoms();++aidx){
+              ff->positions()[aidx]=&(*cit)->getAtomPos(aidx);
+            }
+            ff->initialize();
+            int needsMore=ff->minimize(maxIters);
+            double e=ff->calcEnergy();
+            res[i] = std::make_pair(needsMore,e);
+          }
         }
-      }
 #ifdef RDK_THREADSAFE_SSS
-      else {
-        MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
-        if(mmffMolProperties.isValid()) {
-          ForceFields::ForceField *ff=MMFF::constructForceField(mol,nonBondedThresh, -1,
-                                                                ignoreInterfragInteractions);
+        else {
           boost::thread_group tg;
           for(unsigned int ti=0;ti<numThreads;++ti){
             tg.add_thread(new boost::thread(detail::MMFFOptimizeMoleculeConfsHelper_,
@@ -128,14 +132,14 @@ namespace RDKit {
 
           }
           tg.join_all();
-          delete ff;
-        } else {
-          for(unsigned int i=0;i<mol.getNumConformers();++i){
-            res[i] = std::make_pair(static_cast<int>(-1),static_cast<double>(-1));
-          }
+        }
+#endif
+        delete ff;
+      } else {
+        for(unsigned int i=0;i<mol.getNumConformers();++i){
+          res[i] = std::make_pair(static_cast<int>(-1),static_cast<double>(-1));
         }
       }
-#endif
     }
   } // end of namespace UFF
 } // end of namespace RDKit 
