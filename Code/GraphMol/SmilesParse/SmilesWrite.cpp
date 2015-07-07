@@ -471,18 +471,20 @@ namespace RDKit{
       std::sort(tmp.begin(), tmp.end(), SortBasedOnFirstElement);
 
       for(unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
-        vfragsmi[ti] = tmp[ti].first;
+        result += tmp[ti].first;
+        if (ti < vfragsmi.size() - 1)
+          result += ".";
         flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), tmp[ti].second.begin(), tmp[ti].second.end());
       }
     }
-    else {
+    else { // Not canonical
       for(unsigned int i = 0; i<allAtomOrdering.size(); ++i)
         flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), allAtomOrdering[i].begin(), allAtomOrdering[i].end());
-    }
-    for(unsigned i=0; i<vfragsmi.size(); ++i){
-      result+=vfragsmi[i];
-      if(i < vfragsmi.size()-1){
-        result+=".";
+      for(unsigned i=0; i<vfragsmi.size(); ++i){
+        result+=vfragsmi[i];
+        if(i < vfragsmi.size()-1){
+          result+=".";
+        }
       }
     }
     mol.setProp(common_properties::_smilesAtomOutputOrder,flattenedAtomOrdering,true);
