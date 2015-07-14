@@ -3030,7 +3030,11 @@ CAS<~>
     
   def testGithub498(self):
     import gzip,tempfile
-    outf = gzip.open(tempfile.mktemp(),'wt+')
+    if (sys.version_info < (3, 0)):
+      mode = 'w+'
+    else:
+      mode = 'wt+'
+    outf = gzip.open(tempfile.mktemp(), mode)
     m = Chem.MolFromSmiles('C')
     w = Chem.SDWriter(outf)
     w.write(m)
