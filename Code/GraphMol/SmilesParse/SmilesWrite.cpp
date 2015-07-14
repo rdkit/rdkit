@@ -342,6 +342,10 @@ namespace RDKit{
 
   } // end of namespace SmilesWrite
 
+  static bool SortBasedOnFirstElement(const std::pair<std::string, std::vector<unsigned int> > &a,
+                               const std::pair<std::string, std::vector<unsigned int> > &b) {
+    return a.first < b.first;
+  }
 
   std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
@@ -350,7 +354,8 @@ namespace RDKit{
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
 
-    std::vector<ROMOL_SPTR> mols = MolOps::getMolFrags(mol,false,NULL,NULL,false);
+    std::vector<std::vector<int> > fragsMolAtomMapping;
+    std::vector<ROMOL_SPTR> mols = MolOps::getMolFrags(mol,false,NULL,&fragsMolAtomMapping,false);
     std::vector<std::string> vfragsmi;
 
 //    for(unsigned i=0; i<fragsMolAtomMapping.size(); i++){
@@ -360,7 +365,8 @@ namespace RDKit{
 //      }
 //      std::cout << std::endl;
 //    }
-
+    
+    std::vector<std::vector<RDKit::UINT> > allAtomOrdering;
     for (unsigned i = 0; i < mols.size(); i++){
       ROMol* tmol=mols[i].get();
 
@@ -445,20 +451,43 @@ namespace RDKit{
           res += ".";
         }
       }
-      mol.setProp(common_properties::_smilesAtomOutputOrder,atomOrdering,true);
       vfragsmi.push_back(res);
+
+      for(std::vector<RDKit::UINT>::iterator vit = atomOrdering.begin(); vit != atomOrdering.end(); ++vit) {
+        *vit = fragsMolAtomMapping[i][*vit]; // Lookup the Id in the original molecule
+      }
+      allAtomOrdering.push_back(atomOrdering);
     }
 
     std::string result;
+    std::vector<unsigned int> flattenedAtomOrdering;
     if(canonical){
-      std::sort(vfragsmi.begin(),vfragsmi.end());
-    }
-    for(unsigned i=0; i<vfragsmi.size(); ++i){
-      result+=vfragsmi[i];
-      if(i < vfragsmi.size()-1){
-        result+=".";
+      // Sort the vfragsmi, but also sort the atom order vectors into the same order
+      typedef std::pair<std::string, std::vector<unsigned int> > PairStrAndVec; 
+      std::vector<PairStrAndVec> tmp(vfragsmi.size());
+      for(unsigned int ti = 0; ti < vfragsmi.size(); ++ti)
+        tmp[ti] = PairStrAndVec(vfragsmi[ti], allAtomOrdering[ti]);
+      
+      std::sort(tmp.begin(), tmp.end(), SortBasedOnFirstElement);
+
+      for(unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
+        result += tmp[ti].first;
+        if (ti < vfragsmi.size() - 1)
+          result += ".";
+        flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), tmp[ti].second.begin(), tmp[ti].second.end());
       }
     }
+    else { // Not canonical
+      for(unsigned int i = 0; i<allAtomOrdering.size(); ++i)
+        flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), allAtomOrdering[i].begin(), allAtomOrdering[i].end());
+      for(unsigned i=0; i<vfragsmi.size(); ++i){
+        result+=vfragsmi[i];
+        if(i < vfragsmi.size()-1){
+          result+=".";
+        }
+      }
+    }
+    mol.setProp(common_properties::_smilesAtomOutputOrder,flattenedAtomOrdering,true);
     return result;
   } // end of MolToSmiles()
 
