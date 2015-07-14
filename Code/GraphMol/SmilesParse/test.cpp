@@ -3519,6 +3519,50 @@ void testSmilesWriteForModifiedMolecules(){
   }
 }
 
+void testGithub532(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 532: _smilesAtomOutputOrder incorrect for dot disconnected molecules" << std::endl;
+  {
+    std::string smiles="O.CO";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    m->getAtomWithIdx(0)->setAtomicNum(8);
+    std::string smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi=="CO.O");
+
+    std::vector<unsigned int> atmOrder;
+    TEST_ASSERT(m->hasProp(common_properties::_smilesAtomOutputOrder));
+    m->getProp(common_properties::_smilesAtomOutputOrder, atmOrder);
+    TEST_ASSERT(atmOrder.size()==3);
+    TEST_ASSERT(atmOrder[0]==1);
+    TEST_ASSERT(atmOrder[1]==2);
+    TEST_ASSERT(atmOrder[2]==0);
+
+    delete m;
+  }
+  {
+    std::string smiles="CO.O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    m->getAtomWithIdx(0)->setAtomicNum(8);
+    std::string smi = MolToSmiles(*m, true);
+    std::cerr<<"SMI: "<<smi<<std::endl;
+    TEST_ASSERT(smi=="CO.O");
+
+    std::vector<unsigned int> atmOrder;
+    TEST_ASSERT(m->hasProp(common_properties::_smilesAtomOutputOrder));
+    m->getProp(common_properties::_smilesAtomOutputOrder, atmOrder);
+    TEST_ASSERT(atmOrder.size()==3);
+    TEST_ASSERT(atmOrder[2]==1);
+    TEST_ASSERT(atmOrder[0]==2);
+    TEST_ASSERT(atmOrder[1]==0);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -3581,5 +3625,6 @@ main(int argc, char *argv[])
   testGithub12();
 #endif
   testSmilesWriteForModifiedMolecules();
+  testGithub532();
 
 }
