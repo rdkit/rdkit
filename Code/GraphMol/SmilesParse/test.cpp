@@ -3526,7 +3526,6 @@ void testGithub532(){
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
-    m->getAtomWithIdx(0)->setAtomicNum(8);
     std::string smi = MolToSmiles(*m, true);
     TEST_ASSERT(smi=="CO.O");
 
@@ -3545,18 +3544,16 @@ void testGithub532(){
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
-    m->getAtomWithIdx(0)->setAtomicNum(8);
     std::string smi = MolToSmiles(*m, true);
-    std::cerr<<"SMI: "<<smi<<std::endl;
     TEST_ASSERT(smi=="CO.O");
 
     std::vector<unsigned int> atmOrder;
     TEST_ASSERT(m->hasProp(common_properties::_smilesAtomOutputOrder));
     m->getProp(common_properties::_smilesAtomOutputOrder, atmOrder);
     TEST_ASSERT(atmOrder.size()==3);
-    TEST_ASSERT(atmOrder[2]==1);
-    TEST_ASSERT(atmOrder[0]==2);
-    TEST_ASSERT(atmOrder[1]==0);
+    TEST_ASSERT(atmOrder[0]==0);
+    TEST_ASSERT(atmOrder[1]==1);
+    TEST_ASSERT(atmOrder[2]==2);
 
     delete m;
   }
