@@ -46,6 +46,7 @@ add_subdirectory(ChemReactions)
 add_subdirectory(ChemTransforms)
 
 add_subdirectory(Subgraphs)
+add_subdirectory(FilterCatalog)
 add_subdirectory(FragCatalog)
 add_subdirectory(Descriptors)
 

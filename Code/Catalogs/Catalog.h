@@ -37,6 +37,9 @@ namespace RDCatalog {
   template <class entryType, class paramType>
   class Catalog {
   public:
+    typedef entryType entryType_t;
+    typedef paramType paramType_t;
+    
     //------------------------------------
     Catalog() : d_fpLength(0), dp_cParams(0) {};
 
