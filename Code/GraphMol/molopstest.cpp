@@ -4864,6 +4864,29 @@ void testGithubIssue510()
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+
+void testGithubIssue526()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 526: Bad ring finding in a complex fused ring" << std::endl;
+  {
+    std::string smiles="N1C2[C@@H]3N[C@H]4[C@@H]5N[C@@H]([C@@H]1C35)C24";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getRingInfo()->numRings()==6);
+    delete m;
+  }
+  {
+    std::string smiles="NN1C2C3[C@@H]4[C@@H]1C1[C@H]2N([C@H]3[C@@H]1N4N1C(=O)C2=C(C=CC=C2)C1=O)N1C(=O)C2=C(C=CC=C2)C1=O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getRingInfo()->numRings()==10);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4934,7 +4957,6 @@ int main(){
   testAtomAtomMatch();
   testGithubIssue190();
   testMolFragsWithQuery();
-#endif
   test11();
   testGithubIssue418();
   testGithubIssue432();
@@ -4942,6 +4964,8 @@ int main(){
   testGithubIssue447();
   testGetMolFrags();
   testGithubIssue510();
+#endif
+  testGithubIssue526();
   return 0;
 }
 
