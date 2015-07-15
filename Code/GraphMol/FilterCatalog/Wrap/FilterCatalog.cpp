@@ -98,7 +98,22 @@ namespace RDKit{
     return fm.atomPairs;
   }
   */
+  python::object FilterCatalogEntry_Serialize(const FilterCatalogEntry &cat) {
+    std::string res = cat.Serialize();
+    python::object retval = python::object(python::handle<>(
+               PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+    
+  }
 
+  python::object FilterCatalog_Serialize(const FilterCatalog &cat) {
+    std::string res = cat.Serialize();
+    python::object retval = python::object(python::handle<>(
+               PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+    
+  }
+  
   int GetMatchVectItem(std::pair<int,int> &pair, size_t idx) {
     static const int def = 0xDEADBEEF;
     if (idx == 0)
@@ -356,7 +371,7 @@ namespace RDKit{
              (python::args("mol")),
              "Returns True if the catalog entry contains filters that match the molecule")
 
-        .def("Serialize", &FilterCatalogEntry::Serialize)
+        .def("Serialize", &FilterCatalogEntry_Serialize)
         .def("GetPropList", &FilterCatalogEntry::getPropList)
         .def("SetProp", (void (FilterCatalogEntry::*)
                           (const std::string &, std::string) )
@@ -404,7 +419,7 @@ namespace RDKit{
                                     python::init<>())
         .def(python::init<const std::string&>())        
         .def(python::init<const FilterCatalogParams&>())
-        .def("Serialize", &FilterCatalog::Serialize)
+        .def("Serialize", &FilterCatalog_Serialize)
         .def("AddEntry", &filter_catalog_add_entry,
              (python::args("entry"), python::args("updateFPLength")=false),
              "Add a FilterCatalogEntry to the catalog")
