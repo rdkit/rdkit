@@ -29,10 +29,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, July 2013
+#
+# Modifications and optimizations by Greg Landrum, July 2015
+# 
 from __future__ import print_function
 import sys
 import re
 from rdkit import Chem
+from rdkit.Chem import rdMMPA
 
 def find_correct(f_array):
 
@@ -184,47 +188,11 @@ def fragment_mol(smi,id):
     if(mol == None):
         sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
     else:
-        #SMARTS for "acyclic and not in a functional group"
-        smarts = Chem.MolFromSmarts("[#6+0;!$(*=,#[!#6])]!@!=!#[*]")
-
-        #finds the relevant bonds to break
-        #find the atoms maches
-        matching_atoms = mol.GetSubstructMatches(smarts)
-
-        total = len(matching_atoms)
-
-        #catch case where there are no bonds to fragment
-        if(total == 0):
-            output = '%s,%s,,' % (smi,id)
-            if( (output in outlines) == False ):
+        frags = rdMMPA.FragmentMol(mol,pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]",resultsAsMols=False)
+        for core,chains in frags:
+            output = '%s,%s,%s,%s' % (smi,id,core,chains)
+            if( not (output in outlines) ):
                 outlines.add(output)
-
-        bonds_selected = []
-
-        #loop to generate every single, double and triple cut in the molecule
-        for x in xrange( total ):
-            #print matches[x]
-            bonds_selected.append(matching_atoms[x])
-            delete_bonds(smi,id,mol,bonds_selected,outlines)
-            bonds_selected = []
-
-            for y in xrange(x+1,total):
-                #print matching_atoms[x],matching_atoms[y]
-                bonds_selected.append(matching_atoms[x])
-                bonds_selected.append(matching_atoms[y])
-                delete_bonds(smi,id,mol,bonds_selected,outlines)
-                bonds_selected = []
-
-                for z in xrange(y+1, total):
-                    #print matching_atoms[x],matching_atoms[y],matching_atoms[z]
-                    bonds_selected.append(matching_atoms[x])
-                    bonds_selected.append(matching_atoms[y])
-                    bonds_selected.append(matching_atoms[z])
-                    delete_bonds(smi,id,mol,bonds_selected,outlines)
-                    bonds_selected = []
-
-            #right, we are done.
-
     return outlines
 
 if __name__=='__main__':
@@ -256,3 +224,15 @@ if __name__=='__main__':
 
 
 
+"""
+optimization work.
+
+Original:
+~/RDKit_git/Contrib/mmpa > time head -100 ../../Data/Zinc/zim.smi | python rfrag.py > zim.frags.o
+
+real	0m9.752s
+user	0m9.704s
+sys	0m0.043s
+
+
+"""                        
