@@ -168,7 +168,7 @@ namespace RDKit{
   };
 
   bool FilterCatalogRemoveEntry(FilterCatalog &fc, const boost::python::object &obj) {
-    if(PyInt_Check(obj.ptr())) {
+    if(PyLong_Check(obj.ptr())) {
       return fc.removeEntry(python::extract<unsigned int>(obj));
     }
     unsigned int idx = fc.getIdxForEntry(python::extract<FilterCatalogEntry*>(obj));
