@@ -81,7 +81,7 @@ namespace RDCatalog {
     
     //------------------------------------
     //! sets our parameters by copying the \c params argument
-    void setCatalogParams(paramType *params) {
+    virtual void setCatalogParams(paramType *params) {
       PRECONDITION(params,"bad parameter object");
       //if we already have a paramter object throw an exception
       PRECONDITION(!dp_cParams,"A parameter object already exists on the catalog" );
