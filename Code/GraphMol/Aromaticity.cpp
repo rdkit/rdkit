@@ -609,7 +609,7 @@ namespace RDKit {
       nlp = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - dv; 
 
       // subtract the charge to get the true number of lone pair electrons:
-      nlp -= at->getFormalCharge(); 
+      nlp = std::max(nlp - at->getFormalCharge(), 0);
 
       int nRadicals=at->getNumRadicalElectrons();
       
