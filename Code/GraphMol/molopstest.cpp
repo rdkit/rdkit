@@ -4887,6 +4887,42 @@ void testGithubIssue526()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue539()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 539: Lack of conjugation in allyl cations" << std::endl;
+  {
+    std::string smiles="C=C-[CH2+]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    bool allConjugated = true;
+    for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i)
+      allConjugated = m->getBondWithIdx(i)->getIsConjugated();
+    TEST_ASSERT(allConjugated);
+    delete m;
+  }
+  {
+    std::vector<std::string> smilesVec;
+    smilesVec.push_back("C1=C-[CH+]1");
+    smilesVec.push_back("C1=CC=C[CH+]C=C1");
+    for (std::vector<std::string>::const_iterator smiles = smilesVec.begin();
+      smiles != smilesVec.end(); ++smiles) {
+      RWMol *m = SmilesToMol(*smiles);
+      TEST_ASSERT(m);
+      bool allConjugated = true;
+      for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i)
+        allConjugated = m->getBondWithIdx(i)->getIsConjugated();
+      TEST_ASSERT(allConjugated);
+      bool allAromatic = true;
+      for (unsigned int i = 0; allAromatic && i < m->getNumBonds(); ++i)
+        allAromatic = m->getBondWithIdx(i)->getIsAromatic();
+      TEST_ASSERT(allAromatic);
+      delete m;
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4966,6 +5002,7 @@ int main(){
   testGithubIssue510();
 #endif
   testGithubIssue526();
+  testGithubIssue539();
   return 0;
 }
 
