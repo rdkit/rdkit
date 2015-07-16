@@ -688,8 +688,7 @@ namespace RDKit {
           // the Huckel rule later
           edon[*ivi] = getAtomDonorTypeArom(at);
           acands[*ivi]=isAtomCandForArom(at, edon[*ivi]);
-          if(!acands[*ivi])
-            allAromatic=false;
+          if(!acands[*ivi]) allAromatic=false;
         }
         if(allAromatic){
           cRings.push_back((*vivi));
