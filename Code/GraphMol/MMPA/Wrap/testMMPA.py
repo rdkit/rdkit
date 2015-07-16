@@ -74,6 +74,17 @@ class TestCase(unittest.TestCase):
         
         self.failUnlessEqual(frags[0][1],'CO[*:1].c1ccc(cc1)[*:1]')
 
+    def test4(self): # currently failing
+        m = Chem.MolFromSmiles('Cc1ccccc1NC(=O)C(C)[NH+]1CCCC1') # ZINC00000051
+        frags = rdMMPA.FragmentMol(m,resultsAsMols=False)
+        for frag in sorted(frags):
+            print(frag)
+        cores = set(x[0] for x in frags)
+        self.failUnless('C([*:1])([*:2])[*:3]' in cores)
+        self.failUnless('O=C(N[*:3])C([*:1])[*:2]' in cores)
+        self.failUnlessEqual(len(frags),18)
+        for frag in frags:
+            self.failUnlessEqual(len(frag),2)        
 
 
 
