@@ -448,7 +448,6 @@ namespace {
     case AnyElectronDonorType:
       break;
     default:
-      std::cerr << "defaulting to false!" << std::endl;
       return(false);      
     }
 
@@ -689,10 +688,8 @@ namespace RDKit {
           // the Huckel rule later
           edon[*ivi] = getAtomDonorTypeArom(at);
           acands[*ivi]=isAtomCandForArom(at, edon[*ivi]);
-          if(!acands[*ivi]) {
+          if(!acands[*ivi])
             allAromatic=false;
-            std::cerr << "*** allAromatic=false ***" << std::endl;
-          }
         }
         if(allAromatic){
           cRings.push_back((*vivi));
