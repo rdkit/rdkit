@@ -448,6 +448,7 @@ namespace {
     case AnyElectronDonorType:
       break;
     default:
+      std::cerr << "defaulting to false!" << std::endl;
       return(false);      
     }
 
@@ -549,6 +550,10 @@ namespace {
         // require that the atom have at least one multiple bond
         if(incidentMultipleBond(at)){
           res = OneElectronDonorType;
+        }
+        // account for the tropylium and cyclopropenyl cation cases
+        else if(at->getFormalCharge() == 1) {
+          res = VacantElectronDonorType;
         }
       }
     }
@@ -684,7 +689,10 @@ namespace RDKit {
           // the Huckel rule later
           edon[*ivi] = getAtomDonorTypeArom(at);
           acands[*ivi]=isAtomCandForArom(at, edon[*ivi]);
-          if(!acands[*ivi]) allAromatic=false;
+          if(!acands[*ivi]) {
+            allAromatic=false;
+            std::cerr << "*** allAromatic=false ***" << std::endl;
+          }
         }
         if(allAromatic){
           cRings.push_back((*vivi));
