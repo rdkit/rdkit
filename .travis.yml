@@ -5,9 +5,10 @@ python:
  - "2.7"
  - "3.4"
 
-before_install:
- - sudo apt-get update -qq
+# switch to new infrastructure
+sudo: false
 
+before_install:
  # download and install miniconda
  - wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh;
  - bash miniconda.sh -b -p $HOME/conda
@@ -22,14 +23,16 @@ before_install:
  - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION pip cmake
  - source activate tenv
 
+# additional .debs we need:
+addons:
+ apt:
+  packages:
+    - build-essential
+    - openjdk-7-jdk
+    - swig
+    - libjpeg-dev
+
 install:
- # install the build tools
- - sudo apt-get install -qq build-essential
-
- # and the base dependencies
- - sudo apt-get install -qq openjdk-7-jdk swig # for the java wrappers
-
- - sudo apt-get install libjpeg62 # for pillow
  - conda install -q numpy pillow pandas # matplotlib
  
  # install the conda boost packages from the RDKit binstar channel.
