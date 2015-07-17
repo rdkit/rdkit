@@ -197,6 +197,8 @@ int Atom::calcExplicitValence(bool strict) {
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
   if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
+  // special case for carbon - see GitHub #539
+  if (d_atomicNum == 6 && chr > 0) chr=-chr;
   if (accum > (dv + chr) && this->getIsAromatic()){
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
