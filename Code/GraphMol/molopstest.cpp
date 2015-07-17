@@ -4889,7 +4889,8 @@ void testGithubIssue526()
 
 void testGithubIssue539()
 {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 539: Lack of conjugation in allyl cations" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 539: Lack of conjugation in allyl cations, "
+    "lack of aromaticity perception/ability to kekulize aromatic carbocations such as cyclopropenyl and tropylium" << std::endl;
   {
     std::string smiles="C=C-[CH2+]";
     RWMol *m = SmilesToMol(smiles);
@@ -4902,8 +4903,10 @@ void testGithubIssue539()
   }
   {
     std::vector<std::string> smilesVec;
-    smilesVec.push_back("C1=C-[CH+]1");
+    smilesVec.push_back("C1=C[CH+]1");
     smilesVec.push_back("C1=CC=C[CH+]C=C1");
+    smilesVec.push_back("c1c[cH+]1");
+    smilesVec.push_back("c1ccc[cH+]cc1");
     for (std::vector<std::string>::const_iterator smiles = smilesVec.begin();
       smiles != smilesVec.end(); ++smiles) {
       RWMol *m = SmilesToMol(*smiles);
