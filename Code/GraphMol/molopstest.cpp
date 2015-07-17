@@ -4923,6 +4923,72 @@ void testGithubIssue539()
     }
   }
 
+
+  {
+    std::string smiles="C=C-C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+
+  {
+    std::string smiles="C=C-O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+
+  {
+    std::string smiles="C=C-N";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+  
+  {
+    std::string smiles="C=C-[NH3+]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+  {
+    std::string smiles="Cc1ccccc1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::SINGLE);
+    // the bond to the CH3 should not be conjugated, but the others are
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsConjugated());
+    for(unsigned int i=1;i<m->getNumBonds();++i){
+      TEST_ASSERT(m->getBondWithIdx(i)->getIsConjugated());
+    }
+    delete m;
+  }
+  {
+    std::string smiles="Fc1c[nH]c(=O)[nH]c1=O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::SINGLE);
+    // the bond to the F should not be conjugated, but the others are
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsConjugated());
+    for(unsigned int i=1;i<m->getNumBonds();++i){
+      TEST_ASSERT(m->getBondWithIdx(i)->getIsConjugated());
+    }
+    delete m;
+  }
+
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
