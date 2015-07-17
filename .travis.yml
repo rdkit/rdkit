@@ -48,7 +48,7 @@ before_script:
  - ls -l $RDBASE/External/java_lib
 
  - mkdir $RDBASE/External/AvalonTools/distrib
- - wget https://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar/download -O $RDBASE/External/AvalonTools/distrib/AvalonToolkit_1.2.0.source.tar
+ - curl -L https://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar/download -o $RDBASE/External/AvalonTools/distrib/AvalonToolkit_1.2.0.source.tar
  - cd $RDBASE/External/AvalonTools/distrib
  - tar xf AvalonToolkit_1.2.0.source.tar
  - ls -l $RDBASE/External/AvalonTools/distrib
