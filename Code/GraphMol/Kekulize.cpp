@@ -161,6 +161,8 @@ namespace RDKit {
           int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
           int chrg = at->getFormalCharge();
           if(isEarlyAtom(at->getAtomicNum())) chrg*=-1; // fix for GitHub #65
+          // special case for carbon - see GitHub #539
+          if (at->getAtomicNum() == 6 && chrg > 0) chrg=-chrg;
           dv += chrg;
           int tbo = at->getTotalValence();
           int nRadicals=at->getNumRadicalElectrons();
