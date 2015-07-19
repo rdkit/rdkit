@@ -22,6 +22,7 @@
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/UFF/Inversion.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
 
 namespace DistGeom {
@@ -248,6 +249,7 @@ namespace DistGeom {
                                                  const std::vector<std::pair<int, int> > &angles,
                                                  const std::vector<std::vector<int> > &expTorsionAtoms,
                                                  const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                                 const std::vector<std::vector<int> > &improperAtoms,
                                                  const std::vector<int> atomNums) {
     unsigned int N = mmat.numRows();
     CHECK_INVARIANT(N == positions.size(), "");
@@ -272,6 +274,41 @@ namespace DistGeom {
         new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     } // torsion constraints
+
+    // improper torsions / out-of-plane bend / inversion
+    for (unsigned int t = 0; t < improperAtoms.size(); ++t) {
+      /*std::vector<int> n(4);
+      for (unsigned int i = 0; i < 3; ++i) {
+        n[1] = 1;
+        switch (i) {
+          case 0:
+            n[0] = 0;
+            n[2] = 2;
+            n[3] = 3;
+          break;
+
+          case 1:
+            n[0] = 0;
+            n[2] = 3;
+            n[3] = 2;
+          break;
+
+          case 2:
+            n[0] = 2;
+            n[2] = 3;
+            n[3] = 0;
+          break;
+        }
+        ForceFields::UFF::InversionContrib *contrib =
+            new ForceFields::UFF::InversionContrib(field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
+            improperAtoms[t][n[2]], improperAtoms[t][n[3]], improperAtoms[t][4], improperAtoms[t][5]);
+        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      }*/
+      ForceFields::UFF::InversionContrib *contrib =
+          new ForceFields::UFF::InversionContrib(field, improperAtoms[t][0], improperAtoms[t][1],
+          improperAtoms[t][2], improperAtoms[t][3], improperAtoms[t][4], improperAtoms[t][5]);
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    }
 
 
     double fdist = 100.0; // force constant

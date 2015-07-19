@@ -516,6 +516,7 @@ namespace ForceFields {
     void getExperimentalTorsions(const RDKit::ROMol &mol, 
                                  std::vector<std::vector<int> > &expTorsionAtoms,
                                  std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                 std::vector<std::vector<int> > &improperAtoms,
                                  bool verbose) {
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
@@ -530,7 +531,6 @@ namespace ForceFields {
       unsigned int aid1, aid2, aid3, aid4;
       unsigned int bid2, bid1, bid3, id1, id2;
 
-      BIT_SET donePaths(nb*nb*nb);
       BIT_SET doneBonds(nb);
 
       // first, we set the torsion angles with experimental data
@@ -550,61 +550,52 @@ namespace ForceFields {
           aid3 = (*matchIt)[it->idx[2]].second;
           aid4 = (*matchIt)[it->idx[3]].second;
           // FIX: check if bond is NULL
-          bid1 = mol.getBondBetweenAtoms(aid1, aid2)->getIdx();
           bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-          bid3 = mol.getBondBetweenAtoms(aid3, aid4)->getIdx();
-          id1 = nb*nb*bid1 + nb*bid2 + bid3;
-          id2 = nb*nb*bid3 + nb*bid2 + bid1;
-          if ((!donePaths[id1]) && (!donePaths[id2])) {
-            bool notDone = true;
-            // if bond 1 and 3 are not in a ring, we only do 1 torsion potential per bond 2
-            if (mol.getBondWithIdx(bid1)->getOwningMol().getRingInfo()->numBondRings(bid1)==0
-                && mol.getBondWithIdx(bid3)->getOwningMol().getRingInfo()->numBondRings(bid3)==0) {
-              if (doneBonds[bid2]) {
-                notDone = false;
-              } else {
-                doneBonds[bid2] = 1;
+          if (!doneBonds[bid2]) {
+            doneBonds[bid2] = 1;
+            std::vector<int> atoms(4);
+            atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
+            expTorsionAtoms.push_back(atoms);
+            expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
+            if (verbose) {
+              std::cout << it->smarts << ": " << aid1 << " " << aid2 << " " << aid3 << " " << aid4 << ", (";
+              for (unsigned int i = 0; i < it->V.size()-1; ++i) {
+                std::cout << it->V[i] << ", ";
               }
-            }
-            if (notDone) {
-              donePaths[id1] = 1;
-              donePaths[id2] = 1;
-              std::vector<int> atoms(4);
-              atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
-              expTorsionAtoms.push_back(atoms);
-              expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
-              if (verbose) {
-                std::cout << it->smarts << ": " << aid1 << " " << aid2 << " " << aid3 << " " << aid4 << ", (";
-                for (unsigned int i = 0; i < it->V.size()-1; ++i) {
-                  std::cout << it->V[i] << ", ";
-                }
-                std::cout << it->V[it->V.size()-1] << ") " << std::endl;
-              }
+              std::cout << it->V[it->V.size()-1] << ") " << std::endl;
             }
           } // if not donePaths
         } // end loop over matches
 
       } // end loop over patterns
 
+      BIT_SET doneAtoms(na);
+
       // second, we make the aromatic rings flat
       const RingInfo *rinfo = mol.getRingInfo(); // FIX: make sure we have ring info
       CHECK_INVARIANT(rinfo, "");
       const VECT_INT_VECT &atomRings = rinfo->atomRings();
+      ROMol::ADJ_ITER nbrIdx;
+      ROMol::ADJ_ITER endNbrs;
       for (VECT_INT_VECT_CI rii = atomRings.begin(); rii != atomRings.end(); rii++) {
         unsigned int rSize = rii->size();
-        // we don't need deal with 3 membered rings
+        // we don't need to deal with 3 membered rings
         if (rSize < 4) {
           continue;
         }
         // loop over ring atoms
         for (unsigned int i = 0; i < rSize; ++i) {
+          // proper torsions
           aid1 = (*rii)[i];
           aid2 = (*rii)[(i+1)%rSize];
           aid3 = (*rii)[(i+2)%rSize];
           aid4 = (*rii)[(i+3)%rSize];
-          // if all 4 atoms are aromatic, add improper torsion
-          if (mol.getAtomWithIdx(aid1)->getIsAromatic() && mol.getAtomWithIdx(aid2)->getIsAromatic()
+          bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+          // if all 4 atoms are aromatic, add torsion
+          if (!(doneBonds[bid2])
+              && mol.getAtomWithIdx(aid1)->getIsAromatic() && mol.getAtomWithIdx(aid2)->getIsAromatic()
               && mol.getAtomWithIdx(aid3)->getIsAromatic() && mol.getAtomWithIdx(aid4)->getIsAromatic()) {
+            doneBonds[bid2] = 1;
             std::vector<int> atoms(4);
             atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
             expTorsionAtoms.push_back(atoms);
@@ -613,12 +604,53 @@ namespace ForceFields {
             std::vector<double> fconsts(6, 0.0);
             fconsts[1] = 7.0; // MMFF force constants for aromatic rings
             expTorsionAngles.push_back(std::make_pair(signs, fconsts));
-            if (verbose) {
+            /*if (verbose) {
               std::cout << "aromatic ring: " << aid1 << " " << aid2 << " " << aid3 << " " << aid4
                   << ", (0, 7.0, 0, 0, 0, 0)" << std::endl;
-            }
+            }*/
           }
-        }
+
+          // improper torsions / out-of-plane bends / inversion
+          if (!(doneAtoms[aid2])) {
+            std::vector<int> atoms(4, -1);
+            atoms[1] = aid2;
+            const Atom *atom2 = mol.getAtomWithIdx(atoms[1]);
+            int at2AtomicNum = atom2->getAtomicNum();
+
+            // if atom is a N,O or C and SP2-hybridized
+            if (((at2AtomicNum == 6) || (at2AtomicNum == 7) || (at2AtomicNum == 8))
+                && (atom2->getHybridization() == Atom::SP2)) {
+              // get neighbors
+              boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom2);
+              // check if enough neighbours
+              if (std::distance(nbrIdx,endNbrs) != 3) {
+                continue;
+              }
+              unsigned int i = 0;
+              unsigned int isBoundToSP2O = 0; // false
+              for (; nbrIdx != endNbrs; ++nbrIdx) {
+                const Atom *atomX = mol[*nbrIdx].get();
+                atoms[i] = atomX->getIdx();
+                // if the central atom is sp2 carbon and is bound to sp2 oxygen, set a flag
+                if (!isBoundToSP2O) {
+                  isBoundToSP2O = ((at2AtomicNum == 6) && (atomX->getAtomicNum() == 8)
+                    && (atomX->getHybridization() == Atom::SP2));
+                }
+                if (!i) {
+                  ++i;
+                }
+                ++i;
+              }
+              atoms.push_back(at2AtomicNum);
+              atoms.push_back(isBoundToSP2O);
+              improperAtoms.push_back(atoms);
+              /*if (verbose) {
+                std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1] << " "
+                    << atoms[2] << " " << atoms[3] << std::endl;
+              }*/
+            }
+          } // if atom is a N,O or C and SP2-hybridized
+        } // loop over atoms in ring
       } // loop over rings
 
     } // end function

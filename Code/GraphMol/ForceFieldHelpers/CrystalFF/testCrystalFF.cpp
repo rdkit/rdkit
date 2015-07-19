@@ -120,8 +120,9 @@ void testTorsionPrefs() {
 
   std::vector<std::vector<int> > expTorsionAtoms;
   std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
+  std::vector<std::vector<int> > improperAtoms;
 
-  ForceFields::CrystalFF::getExperimentalTorsions(*mol, expTorsionAtoms, expTorsionAngles, false);
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, expTorsionAtoms, expTorsionAngles, improperAtoms, false);
   TEST_ASSERT(expTorsionAtoms.size()==1);
   TEST_ASSERT(expTorsionAngles.size()==1);
   TEST_ASSERT(expTorsionAtoms[0][0]==0);
@@ -133,7 +134,7 @@ void testTorsionPrefs() {
   mol = SmilesToMol("CCCCC");
   TEST_ASSERT(mol);
 
-  ForceFields::CrystalFF::getExperimentalTorsions(*mol, expTorsionAtoms, expTorsionAngles, false);
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, expTorsionAtoms, expTorsionAngles, improperAtoms, false);
   TEST_ASSERT(expTorsionAtoms.size()==2);
   TEST_ASSERT(expTorsionAngles.size()==2);
 

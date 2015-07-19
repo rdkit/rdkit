@@ -251,6 +251,7 @@ namespace RDKit {
                                   std::vector<std::pair<int, int> > angles,
                                   std::vector<std::vector<int> > expTorsionAtoms,
                                   std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles,
+                                  std::vector<std::vector<int> > improperAtoms,
                                   std::vector<int> atomNums) {
 
 
@@ -265,6 +266,7 @@ namespace RDKit {
                                                                        bonds, angles,
                                                                        expTorsionAtoms,
                                                                        expTorsionAngles,
+                                                                       improperAtoms,
                                                                        atomNums);
 
       // minimize!
@@ -375,6 +377,7 @@ namespace RDKit {
         std::vector<std::pair<int, int> > *angles;
         std::vector<std::vector<int> > *expTorsionAtoms;
         std::vector<std::pair<std::vector<int>, std::vector<double> > > *expTorsionAngles;
+        std::vector<std::vector<int> > *improperAtoms;
         std::vector<int> *atomNums;
       } EmbedArgs;
       void embedHelper_(int threadId,
@@ -409,7 +412,7 @@ namespace RDKit {
             if (eargs->useExpTorsionAnglePrefs) {
               _minimizeWithExpTorsions(positions, eargs->mmat, eargs->optimizerForceTol,
                                        eargs->basinThresh, *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
-                                       *eargs->expTorsionAngles, *eargs->atomNums);
+                                       *eargs->expTorsionAngles, *eargs->improperAtoms, *eargs->atomNums);
             }
             Conformer *conf = (*eargs->confs)[ci];
             unsigned int fragAtomIdx=0;
@@ -481,11 +484,13 @@ namespace RDKit {
         double tol=0.0;
         std::vector<std::vector<int> > expTorsionAtoms;
         std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
+        std::vector<std::vector<int> > improperAtoms;
         std::vector<std::pair<int, int> > bonds;
         std::vector<std::pair<int, int> > angles;
         std::vector<int> atomNums(nAtoms);
         if (useExpTorsionAnglePrefs) {
-          ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,verbose);
+          ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,
+              improperAtoms, verbose);
           setTopolBounds(*piece, mmat, bonds, angles, true, false);
           for (int i = 0; i < nAtoms; ++i) {
             atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
@@ -560,6 +565,7 @@ namespace RDKit {
                                  useExpTorsionAnglePrefs,
                                  &bonds, &angles, &expTorsionAtoms,
                                  &expTorsionAngles,
+                                 &improperAtoms,
                                  &atomNums};
         if(numThreads==1){
           detail::embedHelper_(0,1,&eargs);
