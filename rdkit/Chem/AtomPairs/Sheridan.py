@@ -18,8 +18,8 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit import DataStructs
 
-from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint,GetHashedAtomPairFingerprint
-GetAtomPairFingerprintAsIntVect=rdMolDescriptors.GetAtomPairFingerprint
+from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint,GetTopologicalTorsionFingerprint
+
 
 numPathBits=rdMolDescriptors.AtomPairsParameters.numPathBits
 _maxPathLen=(1<<numPathBits)-1
@@ -78,6 +78,22 @@ def GetBPFingerprint(mol,fpfn=GetAtomPairFingerprint):
     typs = [typMap[x] for x in AssignPattyTypes(mol)]
     fp = fpfn(mol,atomInvariants=typs)
     return fp
+
+def GetBTFingerprint(mol,fpfn=GetTopologicalTorsionFingerprint):
+    """
+    >>> from rdkit import Chem
+    >>> mol = Chem.MolFromSmiles('OCC(N)O')
+    >>> AssignPattyTypes(mol)
+    ['POL', 'HYD', 'HYD', 'CAT', 'POL']
+    >>> fp = GetBTFingerprint(mol)
+    >>> fp.GetTotalVal()
+    2
+    >>> nze=fp.GetNonzeroElements()
+    >>> sorted([(k,v) for k,v in nze.items()])
+    [(538446850L, 1), (538446852L, 1)]
+    
+    """
+    return GetBPFingerprint(mol,fpfn=fpfn)
                 
         
         
