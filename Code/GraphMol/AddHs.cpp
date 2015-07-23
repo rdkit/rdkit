@@ -584,7 +584,19 @@ namespace RDKit{
                 atom->expandQuery(tmp);
               }
             }
-          }
+          } // end of numHsToRemove test
+
+          // recurse if needed (was github isusue 544)
+          if(atom->hasQuery()){
+            // FIX: shouldn't be repeating this code
+            for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI iter=atom->getQuery()->beginChildren();
+                iter!=atom->getQuery()->endChildren();++iter){
+              if((*iter)->getDescription()=="RecursiveStructure"){
+                RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(iter->get())->getQueryMol()));
+                mergeQueryHs(*rqm,mergeUnmappedOnly);
+              }
+            }
+          } // end of recursion loop
         }
         ++currIdx;
       }
