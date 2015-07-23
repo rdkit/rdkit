@@ -588,6 +588,11 @@ namespace RDKit{
 
           // recurse if needed (was github isusue 544)
           if(atom->hasQuery()){
+            if(atom->getQuery()->getDescription()=="RecursiveStructure"){
+              RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(atom->getQuery())->getQueryMol()));
+              mergeQueryHs(*rqm,mergeUnmappedOnly);
+            }
+
             // FIX: shouldn't be repeating this code
             for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI iter=atom->getQuery()->beginChildren();
                 iter!=atom->getQuery()->endChildren();++iter){

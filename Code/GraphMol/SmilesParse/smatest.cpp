@@ -1643,6 +1643,58 @@ void testGithub544(){
     delete p;
     delete m;
   }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="O=C=C=O";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+
+    delete m;
+    delete p;
+  }
+  {
+    std::cerr<<"----------------------------------"<<std::endl;
+    RWMol *p;
+    std::string smiles="[$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="O=CC=O";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    smiles="[#6;$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    smiles="[$([#6]-[#1]);#6]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete m;
+    delete p;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
