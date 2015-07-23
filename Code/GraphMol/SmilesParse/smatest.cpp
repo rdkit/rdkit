@@ -1572,6 +1572,83 @@ void testGithub378(){
 }
   
 
+void testGithub544(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 544: merging query Hs failing on recursive SMARTS" << std::endl;
+  {
+    RWMol *p;
+    std::string smiles="O[H]";
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[O;$(O[H])]";
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[O;$(O[H])]";
+    p = SmartsToMol(smiles,false,true);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="C[O;$([O;$(O[H])])]"; // test nesting
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+  
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1609,6 +1686,7 @@ main(int argc, char *argv[])
   testGithub313();
   testGithub314();
   testGithub378();
+  testGithub544();
   
   return 0;
 }
