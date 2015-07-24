@@ -1587,6 +1587,7 @@ void testGithub544(){
     MatchVectType mV;
     TEST_ASSERT(!SubstructMatch(*m,*p,mV));
     MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
     TEST_ASSERT(SubstructMatch(*m,*p,mV));
 
     delete p;
@@ -1661,7 +1662,6 @@ void testGithub544(){
     delete p;
   }
   {
-    std::cerr<<"----------------------------------"<<std::endl;
     RWMol *p;
     std::string smiles="[$([#6]-[#1])]"; 
     p = SmartsToMol(smiles);
@@ -1692,6 +1692,30 @@ void testGithub544(){
     TEST_ASSERT(SubstructMatch(*m,*p,mV));
 
     delete m;
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="C(-[!#1])-[!#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==3);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==3);
+
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="[!#1]-[#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+
     delete p;
   }
 
@@ -1734,10 +1758,10 @@ main(int argc, char *argv[])
   testIssue3000399();
   testRecursiveSerialNumbers();
   testReplacementPatterns();
-#endif
   testGithub313();
   testGithub314();
   testGithub378();
+#endif
   testGithub544();
   
   return 0;

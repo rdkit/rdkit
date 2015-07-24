@@ -515,7 +515,7 @@ namespace RDKit{
       unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
       while(currIdx < stopIdx){
         Atom *atom = mol.getAtomWithIdx(currIdx);
-        if(atom->getAtomicNum()!=1){
+        if(atom->getAtomicNum()!=1 || (atom->hasQuery() && atom->getQuery()->getNegation())){
           unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
           boost::tie(begin,end) = mol.getAtomNeighbors(atom);
@@ -524,7 +524,8 @@ namespace RDKit{
             Atom &bgn = *mol.getAtomWithIdx(*begin);
             if(bgn.getAtomicNum() == 1 &&
                bgn.getDegree() == 1 &&
-               (!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber))
+               (!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber)) &&
+               (!bgn.hasQuery() || !bgn.getQuery()->getNegation())
                ){
               atomsToRemove.push_back(*begin);
               ++numHsToRemove;
