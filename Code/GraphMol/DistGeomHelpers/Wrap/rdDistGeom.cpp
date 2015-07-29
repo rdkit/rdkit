@@ -30,6 +30,7 @@ namespace RDKit {
                     python::dict &coordMap, double forceTol,
                     bool ignoreSmoothingFailures,
                     bool useExpTorsionAnglePrefs,
+                    bool useBasicKnowledge,
                     bool printExpTorsionAngles) {
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -51,6 +52,7 @@ namespace RDKit {
                                           pMapPtr,forceTol,
                                           ignoreSmoothingFailures,
                                           useExpTorsionAnglePrefs,
+                                          useBasicKnowledge,
                                           printExpTorsionAngles);
     return res;
   }
@@ -65,6 +67,7 @@ namespace RDKit {
                               bool ignoreSmoothingFailures,
                               int numThreads,
                               bool useExpTorsionAnglePrefs,
+                              bool useBasicKnowledge,
                               bool printExpTorsionAngles) {
 
     std::map<int,RDGeom::Point3D> pMap;
@@ -89,6 +92,7 @@ namespace RDKit {
                                      pruneRmsThresh,pMapPtr,forceTol,
                                      ignoreSmoothingFailures,
                                      useExpTorsionAnglePrefs,
+                                     useBasicKnowledge,
                                      printExpTorsionAngles);
 
     return res;
@@ -153,6 +157,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+    - useBasicKnowledge : impose basic knowledge such as flat rings\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
 \n\
  RETURNS:\n\n\
@@ -168,6 +173,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
                python::arg("useExpTorsionAnglePrefs")=false,
+               python::arg("useBasicKnowledge")=false,
                python::arg("printExpTorsionAngles")=false),
               docString.c_str());
 
@@ -214,6 +220,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
                  was built with multi-thread support..\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+    - useBasicKnowledge : impose basic knowledge such as flat rings\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
@@ -231,6 +238,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("ignoreSmoothingFailures")=false,
                python::arg("numThreads")=1,
                python::arg("useExpTorsionAnglePrefs")=false,
+               python::arg("useBasicKnowledge")=false,
                python::arg("printExpTorsionAngles")=false),
               docString.c_str());
 

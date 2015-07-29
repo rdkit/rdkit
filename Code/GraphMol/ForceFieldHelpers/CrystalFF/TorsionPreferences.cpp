@@ -517,7 +517,7 @@ namespace ForceFields {
                                  std::vector<std::vector<int> > &expTorsionAtoms,
                                  std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
                                  std::vector<std::vector<int> > &improperAtoms,
-                                 bool verbose) {
+                                 bool useBasicKnowledge, bool verbose) {
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
       if (!na) {
@@ -533,7 +533,7 @@ namespace ForceFields {
 
       BIT_SET doneBonds(nb);
 
-      // first, we set the torsion angles with experimental data
+      // we set the torsion angles with experimental data
       const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
 
       // loop over patterns
@@ -569,48 +569,18 @@ namespace ForceFields {
 
       } // end loop over patterns
 
-      BIT_SET doneAtoms(na);
 
-      // second, we make the aromatic rings flat
-      const RingInfo *rinfo = mol.getRingInfo(); // FIX: make sure we have ring info
-      CHECK_INVARIANT(rinfo, "");
-      const VECT_INT_VECT &atomRings = rinfo->atomRings();
-      ROMol::ADJ_ITER nbrIdx;
-      ROMol::ADJ_ITER endNbrs;
-      for (VECT_INT_VECT_CI rii = atomRings.begin(); rii != atomRings.end(); rii++) {
-        unsigned int rSize = rii->size();
-        // we don't need to deal with 3 membered rings
-        if (rSize < 4) {
-          continue;
-        }
-        // loop over ring atoms
-        for (unsigned int i = 0; i < rSize; ++i) {
-          // proper torsions
-          aid1 = (*rii)[i];
-          aid2 = (*rii)[(i+1)%rSize];
-          aid3 = (*rii)[(i+2)%rSize];
-          aid4 = (*rii)[(i+3)%rSize];
-          bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-          // if all 4 atoms are aromatic, add torsion
-          if (!(doneBonds[bid2])
-              && mol.getAtomWithIdx(aid1)->getIsAromatic() && mol.getAtomWithIdx(aid2)->getIsAromatic()
-              && mol.getAtomWithIdx(aid3)->getIsAromatic() && mol.getAtomWithIdx(aid4)->getIsAromatic()) {
-            doneBonds[bid2] = 1;
-            std::vector<int> atoms(4);
-            atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
-            expTorsionAtoms.push_back(atoms);
-            std::vector<int> signs(6, 1);
-            signs[1] = -1; // MMFF sign for m = 2
-            std::vector<double> fconsts(6, 0.0);
-            fconsts[1] = 7.0; // MMFF force constants for aromatic rings
-            expTorsionAngles.push_back(std::make_pair(signs, fconsts));
-            /*if (verbose) {
-              std::cout << "aromatic ring: " << aid1 << " " << aid2 << " " << aid3 << " " << aid4
-                  << ", (0, 7.0, 0, 0, 0, 0)" << std::endl;
-            }*/
-          }
+      // apply basic knowledge such as flat aromatic rings, other sp2-centers,
+      // straight triple bonds, etc.
+      if (useBasicKnowledge) {
 
-          // improper torsions / out-of-plane bends / inversion
+        BIT_SET doneAtoms(na);
+        ROMol::ADJ_ITER nbrIdx;
+        ROMol::ADJ_ITER endNbrs;
+
+        // inversion terms (improper torsions / out-of-plane bends / inversion)
+        // loop over atoms
+        for (int aid2 = 0; aid2 < na; ++aid2) {
           if (!(doneAtoms[aid2])) {
             std::vector<int> atoms(4, -1);
             atoms[1] = aid2;
@@ -650,8 +620,48 @@ namespace ForceFields {
               }*/
             }
           } // if atom is a N,O or C and SP2-hybridized
-        } // loop over atoms in ring
-      } // loop over rings
+        }
+
+        // torsions for flat rings
+        const RingInfo *rinfo = mol.getRingInfo(); // FIX: make sure we have ring info
+        CHECK_INVARIANT(rinfo, "");
+        const VECT_INT_VECT &atomRings = rinfo->atomRings();
+        for (VECT_INT_VECT_CI rii = atomRings.begin(); rii != atomRings.end(); rii++) {
+          unsigned int rSize = rii->size();
+          // we don't need to deal with 3 membered rings
+          if (rSize < 4) {
+            continue;
+          }
+          // loop over ring atoms
+          for (unsigned int i = 0; i < rSize; ++i) {
+            // proper torsions
+            aid1 = (*rii)[i];
+            aid2 = (*rii)[(i+1)%rSize];
+            aid3 = (*rii)[(i+2)%rSize];
+            aid4 = (*rii)[(i+3)%rSize];
+            bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+            // if all 4 atoms are aromatic, add torsion
+            if (!(doneBonds[bid2])
+                && mol.getAtomWithIdx(aid1)->getIsAromatic() && mol.getAtomWithIdx(aid2)->getIsAromatic()
+                && mol.getAtomWithIdx(aid3)->getIsAromatic() && mol.getAtomWithIdx(aid4)->getIsAromatic()) {
+              doneBonds[bid2] = 1;
+              std::vector<int> atoms(4);
+              atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
+              expTorsionAtoms.push_back(atoms);
+              std::vector<int> signs(6, 1);
+              signs[1] = -1; // MMFF sign for m = 2
+              std::vector<double> fconsts(6, 0.0);
+              fconsts[1] = 7.0; // MMFF force constants for aromatic rings
+              expTorsionAngles.push_back(std::make_pair(signs, fconsts));
+              /*if (verbose) {
+                std::cout << "aromatic ring: " << aid1 << " " << aid2 << " " << aid3 << " " << aid4
+                    << ", (0, 7.0, 0, 0, 0, 0)" << std::endl;
+              }*/
+            }
+
+          } // loop over atoms in ring
+        } // loop over rings
+      } // if useBasicKnowledge
 
     } // end function
 

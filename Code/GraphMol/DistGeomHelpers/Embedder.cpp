@@ -248,11 +248,12 @@ namespace RDKit {
                                   DistGeom::BoundsMatPtr mmat,
                                   double optimizerForceTol, double basinThresh,
                                   std::vector<std::pair<int, int> > bonds,
-                                  std::vector<std::pair<int, int> > angles,
+                                  std::vector<std::vector<int> > angles,
                                   std::vector<std::vector<int> > expTorsionAtoms,
                                   std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles,
                                   std::vector<std::vector<int> > improperAtoms,
-                                  std::vector<int> atomNums) {
+                                  std::vector<int> atomNums,
+                                  bool useBasicKnowledge) {
 
 
       // convert to 3D positions and create coordMap
@@ -262,12 +263,21 @@ namespace RDKit {
       }
 
       // create the force field
-      ForceFields::ForceField *field = DistGeom::construct3DForceField(*mmat, positions3D,
-                                                                       bonds, angles,
-                                                                       expTorsionAtoms,
-                                                                       expTorsionAngles,
-                                                                       improperAtoms,
-                                                                       atomNums);
+      ForceFields::ForceField *field;
+      if (useBasicKnowledge) { // ET-BK-DG
+        field = DistGeom::construct3DForceField(*mmat, positions3D,
+                                                                         bonds, angles,
+                                                                         expTorsionAtoms,
+                                                                         expTorsionAngles,
+                                                                         improperAtoms,
+                                                                         atomNums);
+      } else { // plain ETDG
+        field = DistGeom::constructPlain3DForceField(*mmat, positions3D,
+                                                                         bonds, angles,
+                                                                         expTorsionAtoms,
+                                                                         expTorsionAngles,
+                                                                         atomNums);
+      }
 
       // minimize!
       int nPasses = 0;
@@ -301,6 +311,7 @@ namespace RDKit {
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
                       bool useExpTorsionAnglePrefs,
+                      bool useBasicKnowledge,
                       bool verbose,
                       double basinThresh) {
 
@@ -309,7 +320,8 @@ namespace RDKit {
                          useRandomCoords,boxSizeMult,randNegEig,
                          numZeroFail,-1.0,coordMap,optimizerForceTol,
                          ignoreSmoothingFailures,
-                         useExpTorsionAnglePrefs, verbose, basinThresh);
+                         useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+                         basinThresh);
 
       int res;
       if(confIds.size()){
@@ -373,8 +385,9 @@ namespace RDKit {
         unsigned int maxIterations;
         DistGeom::VECT_CHIRALSET const *chiralCenters;
         bool useExpTorsionAnglePrefs;
+        bool useBasicKnowledge;
         std::vector<std::pair<int, int> > *bonds;
-        std::vector<std::pair<int, int> > *angles;
+        std::vector<std::vector<int> > *angles;
         std::vector<std::vector<int> > *expTorsionAtoms;
         std::vector<std::pair<std::vector<int>, std::vector<double> > > *expTorsionAngles;
         std::vector<std::vector<int> > *improperAtoms;
@@ -412,7 +425,8 @@ namespace RDKit {
             if (eargs->useExpTorsionAnglePrefs) {
               _minimizeWithExpTorsions(positions, eargs->mmat, eargs->optimizerForceTol,
                                        eargs->basinThresh, *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
-                                       *eargs->expTorsionAngles, *eargs->improperAtoms, *eargs->atomNums);
+                                       *eargs->expTorsionAngles, *eargs->improperAtoms, *eargs->atomNums,
+                                       eargs->useBasicKnowledge);
             }
             Conformer *conf = (*eargs->confs)[ci];
             unsigned int fragAtomIdx=0;
@@ -449,10 +463,16 @@ namespace RDKit {
                             double optimizerForceTol,
                             bool ignoreSmoothingFailures,
                             bool useExpTorsionAnglePrefs,
+                            bool useBasicKnowledge,
                             bool verbose,
                             double basinThresh){
       if(!mol.getNumAtoms()){
         throw ValueErrorException("molecule has no atoms");
+      }
+
+      // BasicKnowledge can only be used in conjunction with ExpTorsionAngle
+      if (useBasicKnowledge && !(useExpTorsionAnglePrefs)) {
+        throw ValueErrorException("basic knowledge can only be imposed in conjunction with exp. torsion preferences");
       }
 
       INT_VECT fragMapping;
@@ -486,11 +506,11 @@ namespace RDKit {
         std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
         std::vector<std::vector<int> > improperAtoms;
         std::vector<std::pair<int, int> > bonds;
-        std::vector<std::pair<int, int> > angles;
+        std::vector<std::vector<int> > angles;
         std::vector<int> atomNums(nAtoms);
         if (useExpTorsionAnglePrefs) {
           ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,
-              improperAtoms, verbose);
+              improperAtoms, useBasicKnowledge, verbose);
           setTopolBounds(*piece, mmat, bonds, angles, true, false);
           for (int i = 0; i < nAtoms; ++i) {
             atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
@@ -563,6 +583,7 @@ namespace RDKit {
                                  basinThresh, seed,
                                  maxIterations, &chiralCenters,
                                  useExpTorsionAnglePrefs,
+                                 useBasicKnowledge,
                                  &bonds, &angles, &expTorsionAtoms,
                                  &expTorsionAngles,
                                  &improperAtoms,
@@ -607,6 +628,7 @@ namespace RDKit {
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
                                 bool useExpTorsionAnglePrefs,
+                                bool useBasicKnowledge,
                                 bool verbose,
                                 double basinThresh){
       INT_VECT res;
@@ -619,6 +641,7 @@ namespace RDKit {
                          optimizerForceTol,
                          ignoreSmoothingFailures,
                          useExpTorsionAnglePrefs,
+                         useBasicKnowledge,
                          verbose,
                          basinThresh);
       return res;

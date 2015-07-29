@@ -66,6 +66,7 @@ namespace RDKit {
                                       smoothing fails
 
       \param useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
+      \param useBasicKnowledge        impose "basic knowledge" terms such as flat aromatic rings, ketones, etc.
       \param verbose        print output of experimental torsion-angle preferences
 
       \param basinThresh    set the basin threshold for the DGeom force field,
@@ -82,6 +83,7 @@ namespace RDKit {
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
                       bool useExpTorsionAnglePrefs=false,
+                      bool useBasicKnowledge=false,
                       bool verbose=false,
                       double basinThresh=5.0);
 
@@ -138,6 +140,7 @@ namespace RDKit {
                                       smoothing fails
 
       \param useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
+      \param useBasicKnowledge        impose "basic knowledge" terms such as flat aromatic rings, ketones, etc.
       \param verbose        print output of experimental torsion-angle preferences
 
       \param basinThresh    set the basin threshold for the DGeom force field,
@@ -157,6 +160,7 @@ namespace RDKit {
                             double optimizerForceTol=1e-3,
                             bool ignoreSmoothingFailures=false,
                             bool useExpTorsionAnglePrefs=false,
+                            bool useBasicKnowledge=false,
                             bool verbose=false,
                             double basinThresh=5.0);
     //! \overload
@@ -170,6 +174,7 @@ namespace RDKit {
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
                                 bool useExpTorsionAnglePrefs=false,
+                                bool useBasicKnowledge=false,
                                 bool verbose=false,
                                 double basinThresh=5.0);
 

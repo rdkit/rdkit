@@ -22,6 +22,7 @@
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/Inversion.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
 
@@ -246,7 +247,7 @@ namespace DistGeom {
   ForceFields::ForceField *construct3DForceField(const BoundsMatrix &mmat,
                                                  RDGeom::Point3DPtrVect &positions,
                                                  const std::vector<std::pair<int, int> > &bonds,
-                                                 const std::vector<std::pair<int, int> > &angles,
+                                                 const std::vector<std::vector<int> > &angles,
                                                  const std::vector<std::vector<int> > &expTorsionAtoms,
                                                  const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
                                                  const std::vector<std::vector<int> > &improperAtoms,
@@ -277,7 +278,7 @@ namespace DistGeom {
 
     // improper torsions / out-of-plane bend / inversion
     for (unsigned int t = 0; t < improperAtoms.size(); ++t) {
-      /*std::vector<int> n(4);
+      std::vector<int> n(4);
       for (unsigned int i = 0; i < 3; ++i) {
         n[1] = 1;
         switch (i) {
@@ -303,11 +304,11 @@ namespace DistGeom {
             new ForceFields::UFF::InversionContrib(field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
             improperAtoms[t][n[2]], improperAtoms[t][n[3]], improperAtoms[t][4], improperAtoms[t][5]);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
-      }*/
-      ForceFields::UFF::InversionContrib *contrib =
+      }
+      /*ForceFields::UFF::InversionContrib *contrib =
           new ForceFields::UFF::InversionContrib(field, improperAtoms[t][0], improperAtoms[t][1],
           improperAtoms[t][2], improperAtoms[t][3], improperAtoms[t][4], improperAtoms[t][5]);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));*/
     }
 
 
@@ -327,16 +328,24 @@ namespace DistGeom {
     }
 
     // 1,3 distance constraints
-    for (bi = angles.begin(); bi != angles.end(); bi++) {
-      unsigned int i = bi->first;
-      unsigned int j = bi->second;
-      atomPairs[i][j] = atomPairs[j][i] = 1;
-      double d = ((*positions[i]) - (*positions[j])).length();
-      double l = d-0.01;
-      double u = d+0.01;
-      ForceFields::UFF::DistanceConstraintContrib *contrib =
-        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    for (unsigned int a = 1; a < angles.size(); a++) {
+      unsigned int i = angles[a][0];
+      unsigned int j = angles[a][1];
+      unsigned int k = angles[a][2];
+      atomPairs[i][k] = atomPairs[k][i] = 1;
+      // check for triple bonds
+      if (angles[a][3]) {
+        ForceFields::UFF::AngleConstraintContrib *contrib =
+              new ForceFields::UFF::AngleConstraintContrib(field, i, j, k, 179.0, 180.0, fdist);
+            field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      } else {
+        double d = ((*positions[i]) - (*positions[k])).length();
+        double l = d-0.01;
+        double u = d+0.01;
+        ForceFields::UFF::DistanceConstraintContrib *contrib =
+          new ForceFields::UFF::DistanceConstraintContrib(field, i, k, l, u, fdist);
+        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      }
     }
 
     // minimum distance for all other atom pairs
@@ -358,5 +367,84 @@ namespace DistGeom {
 
     return field;
   } // construct3DForceField
+
+  ForceFields::ForceField *constructPlain3DForceField(const BoundsMatrix &mmat,
+                                                   RDGeom::Point3DPtrVect &positions,
+                                                   const std::vector<std::pair<int, int> > &bonds,
+                                                   const std::vector<std::vector<int> > &angles,
+                                                   const std::vector<std::vector<int> > &expTorsionAtoms,
+                                                   const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                                   const std::vector<int> atomNums) {
+      unsigned int N = mmat.numRows();
+      CHECK_INVARIANT(N == positions.size(), "");
+      CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
+      ForceFields::ForceField *field = new ForceFields::ForceField(positions[0]->dimension());
+      for (unsigned int i = 0; i < N; ++i){
+        field->positions().push_back(positions[i]);
+      }
+
+      // keep track which atoms are 1,2- or 1,3-restrained
+      std::vector<std::vector<int> > atomPairs(N, std::vector<int>(N, 0));
+
+      // torsion constraints
+      for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
+        int i = expTorsionAtoms[t][0];
+        int j = expTorsionAtoms[t][1];
+        int k = expTorsionAtoms[t][2];
+        int l = expTorsionAtoms[t][3];
+        atomPairs[i][l] = atomPairs[l][i] = 1;
+        // expTorsionAngles[t][0] = (signs, V's)
+        ForceFields::CrystalFF::TorsionAngleContribM6 *contrib =
+          new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
+        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      } // torsion constraints
+
+      double fdist = 100.0; // force constant
+      // 1,2 distance constraints
+      std::vector<std::pair<int, int> >::const_iterator bi;
+      for (bi = bonds.begin(); bi != bonds.end(); bi++) {
+        unsigned int i = bi->first;
+        unsigned int j = bi->second;
+        atomPairs[i][j] = atomPairs[j][i] = 1;
+        double d = ((*positions[i]) - (*positions[j])).length();
+        double l = d-0.01;
+        double u = d+0.01;
+        ForceFields::UFF::DistanceConstraintContrib *contrib =
+          new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      }
+
+      // 1,3 distance constraints
+      for (unsigned int a = 1; a < angles.size(); a++) {
+        unsigned int i = angles[a][0];
+        unsigned int j = angles[a][2];
+        atomPairs[i][j] = atomPairs[j][i] = 1;
+        double d = ((*positions[i]) - (*positions[j])).length();
+        double l = d-0.01;
+        double u = d+0.01;
+        ForceFields::UFF::DistanceConstraintContrib *contrib =
+          new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      }
+
+      // minimum distance for all other atom pairs
+      fdist = 10.0;
+      for (unsigned int i = 1; i < N; i++) {
+        for (unsigned int j = 0; j < i; j++) {
+          if (!atomPairs[i][j]) {
+            double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
+            double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
+            double l = (vw1+vw2);
+            double u = 1000.0;
+            DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
+            //ForceFields::UFF::DistanceConstraintContrib *contrib =
+            //        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+            field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          }
+        }
+      }
+
+      return field;
+    } // constructPlain3DForceField
 
 }

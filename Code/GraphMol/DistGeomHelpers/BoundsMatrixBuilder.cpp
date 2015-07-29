@@ -273,9 +273,9 @@ namespace RDKit {
                             const ROMol &mol) {
       unsigned int bid1 = mol.getBondBetweenAtoms(aid1, aid)->getIdx();
       unsigned int bid2 = mol.getBondBetweenAtoms(aid, aid3)->getIdx();
-      double dl = RDGeom::compute13Dist(accumData.bondLengths[bid1], accumData.bondLengths[bid2], 
+      double dl = RDGeom::compute13Dist(accumData.bondLengths[bid1], accumData.bondLengths[bid2],
                                         angle);
-      double du = dl + DIST13_TOL; 
+      double du = dl + DIST13_TOL;
       dl -= DIST13_TOL;
       _checkAndSetBounds(aid1, aid3, dl, du, mmat);
     }
@@ -1145,7 +1145,7 @@ namespace RDKit {
 
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                         std::vector<std::pair<int,int> > &bonds,
-                        std::vector<std::pair<int,int> > &angles,
+                        std::vector<std::vector<int> > &angles,
                         bool set15bounds, bool scaleVDW) {
       PRECONDITION(mmat.get(),"bad pointer");
       unsigned int nb = mol.getNumBonds();
@@ -1177,15 +1177,22 @@ namespace RDKit {
             int aid12 = mol.getBondWithIdx(bid1)->getEndAtomIdx();
             int aid21 = mol.getBondWithIdx(bid2)->getBeginAtomIdx();
             int aid22 = mol.getBondWithIdx(bid2)->getEndAtomIdx();
-            if (aid12 == aid21) {
-              angles.push_back(std::make_pair(aid11, aid22));
-            } else if (aid12 == aid22) {
-              angles.push_back(std::make_pair(aid11, aid21));
-            } else if (aid11 == aid21) {
-              angles.push_back(std::make_pair(aid12, aid22));
-            } else if (aid11 == aid22) {
-              angles.push_back(std::make_pair(aid12, aid21));
+            std::vector<int> tmp(4, 0); // elements: aid1, aid2, flag for triple bonds
+            if ((mol.getBondWithIdx(bid1)->getBondType() == Bond::TRIPLE)
+                || (mol.getBondWithIdx(bid2)->getBondType() == Bond::TRIPLE)) {
+              tmp[3] = 1;
             }
+
+            if (aid12 == aid21) {
+              tmp[0] = aid11; tmp[1] = aid12; tmp[2] = aid22;
+            } else if (aid12 == aid22) {
+              tmp[0] = aid11; tmp[1] = aid12; tmp[2] = aid21;
+            } else if (aid11 == aid21) {
+              tmp[0] = aid12; tmp[1] = aid11; tmp[2] = aid22;
+            } else if (aid11 == aid22) {
+              tmp[0] = aid12; tmp[1] = aid11; tmp[2] = aid21;
+            }
+            angles.push_back(tmp);
           }
         }
       }
