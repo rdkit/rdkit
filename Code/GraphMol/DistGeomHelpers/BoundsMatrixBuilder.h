@@ -54,7 +54,7 @@ namespace RDKit {
     /*! Overload for experimental torsion angle preferences */
     void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                         std::vector<std::pair<int,int> > &bonds,
-                        std::vector<std::pair<int,int> > &angles,
+                        std::vector<std::vector<int> > &angles,
                         bool set15bounds=true, bool scaleVDW=false);
   }
 }
