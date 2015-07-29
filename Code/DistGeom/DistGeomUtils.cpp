@@ -328,7 +328,7 @@ namespace DistGeom {
     }
 
     // 1,3 distance constraints
-    for (unsigned int a = 1; a < angles.size(); a++) {
+    for (unsigned int a = 0; a < angles.size(); a++) {
       unsigned int i = angles[a][0];
       unsigned int j = angles[a][1];
       unsigned int k = angles[a][2];
