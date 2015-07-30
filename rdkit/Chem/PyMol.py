@@ -12,7 +12,13 @@
 
 """
 from rdkit import Chem
-import xmlrpclib,os,tempfile
+import os, tempfile
+
+# Python3 compatibility
+try:
+  from xmlrpclib import Server
+except ImportError:
+  from xmlrpc.client import Server
 
 
 _server=None
@@ -25,12 +31,12 @@ class MolViewer(object):
       if not host:
         host=os.environ.get('PYMOL_RPCHOST','localhost')
       _server=None
-      serv = xmlrpclib.Server('http://%s:%d'%(host,port))
+      serv = Server('http://%s:%d'%(host,port))
       serv.ping()
       _server = serv
       self.server=serv
     self.InitializePyMol()
-    
+
   def InitializePyMol(self):
     """ does some initializations to set up PyMol according to our
     tastes
@@ -42,7 +48,7 @@ class MolViewer(object):
     self.server.do('set line_width,2')
     self.server.do('set selection_width,10')
     self.server.do('set auto_zoom,0')
-    
+
 
   def DeleteAll(self):
     " blows out everything in the viewer "
@@ -67,7 +73,7 @@ class MolViewer(object):
   def ShowMol(self,mol,name='molecule',showOnly=True,highlightFeatures=[],
               molB="",confId=-1,zoom=True,forcePDB=False):
     """ special case for displaying a molecule or mol block """
-  
+
     server = self.server
     if not zoom:
       self.server.do('view rdinterface,store')
@@ -82,7 +88,7 @@ class MolViewer(object):
       if not molB:
         molB = Chem.MolToPDBBlock(mol,confId=confId)
       mid = server.loadPDB(molB,name)
-      
+
     if highlightFeatures:
       nm = name+'-features'
       conf = mol.GetConformer(confId)
@@ -108,7 +114,7 @@ class MolViewer(object):
         whichSelection = sels[-1]
       else:
         whichSelection=None
-    if whichSelection:   
+    if whichSelection:
       items = self.server.index(whichSelection)
     else:
       items = []
@@ -122,9 +128,9 @@ class MolViewer(object):
     ids += ')'
     cmd = 'select %s,%s and %s'%(selName,ids,itemId)
     self.server.do(cmd)
-  
+
   def HighlightAtoms(self,indices,where,extraHighlight=False):
-    " highlights a set of atoms " 
+    " highlights a set of atoms "
     if extraHighlight:
       idxText = ','.join(['%s and (id %d)'%(where,x) for x in indices])
       self.server.do('edit %s'%idxText)
@@ -143,7 +149,7 @@ class MolViewer(object):
     """ selects the area of a protein around a specified object/selection name;
     optionally adds a surface to that """
     self.server.do('select %(name)s,byres (%(aroundObj)s around %(distance)f) and %(inObj)s'%locals())
-    
+
 
     if showSurface:
       self.server.do('show surface,%s'%name)
@@ -157,7 +163,7 @@ class MolViewer(object):
       self.server.sphere(loc,sphereRad,colors[i],label,1)
     self.server.do('enable %s'%label)
     self.server.do('view rdinterface,recall')
-    
+
 
   def SetDisplayUpdate(self,val):
     if not val:
@@ -166,7 +172,7 @@ class MolViewer(object):
       self.server.do('set defer_update,0')
 
   def GetAtomCoords(self,sels):
-    " returns the coordinates of the selected atoms " 
+    " returns the coordinates of the selected atoms "
     res = {}
     for label,idx in sels:
       coords = self.server.getAtomCoords('(%s and id %d)'%(label,idx))
@@ -243,5 +249,5 @@ class MolViewer(object):
         frac = float(w)/sz[0]
         h *= frac
         h = int(h)
-        img=img.resize((w,h),True)        
+        img=img.resize((w,h),True)
     return img
