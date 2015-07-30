@@ -572,6 +572,7 @@ namespace RDKit{
                6.0/(atomic number)
       \param force           forces calculation of the matrix, even if already computed
       \param propNamePrefix  used to set the cached property name
+                             (if set to an empty string, the matrix will not be cached)
 
       \return the distance matrix.
 
