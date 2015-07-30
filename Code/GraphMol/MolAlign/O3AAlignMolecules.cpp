@@ -835,9 +835,9 @@ namespace RDKit {
       }
       else {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, "")));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, "")));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
         lap->computeCostMatrix(prbMol, *prbHist,
           refMol, *refHist, o3aConstraintVect, costFunc, data);
@@ -1025,9 +1025,9 @@ namespace RDKit {
       LAP *lap = NULL;
       if (!local) {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, "")));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, "")));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       }
       for (l = 0, score[0] = 0.0;
