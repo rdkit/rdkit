@@ -71,7 +71,7 @@ class MolViewer(object):
     return id
 
   def ShowMol(self,mol,name='molecule',showOnly=True,highlightFeatures=[],
-              molB="",confId=-1,zoom=True,forcePDB=False):
+              molB="",confId=-1,zoom=True,forcePDB=False, showSticks=False):
     """ special case for displaying a molecule or mol block """
 
     server = self.server
@@ -104,6 +104,8 @@ class MolViewer(object):
       server.zoom('visible')
     else:
       self.server.do('view rdinterface,recall')
+    if showSticks:  # show molecule in stick view
+      self.server.do('show sticks, {}'.format(name))
     return mid
 
   def GetSelectedAtoms(self,whichSelection=None):
