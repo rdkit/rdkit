@@ -495,6 +495,71 @@ namespace RDKit{
       return static_cast<ROMol *>(res);
     }
 
+
+    namespace {
+      bool isQueryH(const Atom *atom){
+        PRECONDITION(atom,"bogus atom");
+        if( atom->getAtomicNum()==1){
+          // the simple case: the atom is flagged as being an H and
+          // has no query
+          if( !atom->hasQuery() ||
+              ( !atom->getQuery()->getNegation() &&
+                atom->getQuery()->getDescription()=="AtomAtomicNum"
+                )
+              ){
+            return true;
+          }
+        }
+
+        if( atom->getDegree() != 1){
+          // only degree 1
+          return false;
+        }
+
+        if(atom->hasQuery() && atom->getQuery()->getNegation() ){
+          // we will not merge negated queries
+          return false;
+        }
+
+        bool hasHQuery=false,hasOr=false;
+        if(atom->hasQuery()){
+          if(atom->getQuery()->getDescription()=="AtomOr"){
+            hasOr=true;
+          }
+          std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
+                                                                       atom->getQuery()->endChildren());
+          // the logic gets too complicated if there's an OR in the children, so just punt on those (with a warning)
+          while( !(hasHQuery && hasOr) && childStack.size() ){
+            QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
+            childStack.pop_front();
+            //std::cerr<<"                        "<<query->getDescription()<<std::endl;
+            if(query->getDescription()=="AtomHCount"){
+              hasHQuery=true;
+            } else if(query->getDescription()=="AtomOr") {
+              hasOr=true;
+            } else if(query->getDescription()=="AtomAtomicNum") {
+              if(static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal()!=1){
+                return false;  // we are safe here because we don't do anything with OR queries
+              }
+            } else {
+              QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
+              for(child1=query->beginChildren();
+                  child1!=query->endChildren();
+                  ++child1){
+                childStack.push_back(*child1);
+              }
+            }
+          }
+          //std::cerr<<"   !!!1 "<<atom->getIdx()<<" "<<hasHQuery<<" "<<hasOr<<std::endl;
+          if(hasHQuery && hasOr){
+            BOOST_LOG(rdWarningLog)<<"WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"<<std::endl;
+            return false;
+          }
+        }
+        return hasHQuery;
+      }
+    } 
+
     //
     //  This routine removes explicit hydrogens (and bonds to them) from
     //  the molecular graph and adds them as queries to the heavy atoms
@@ -511,24 +576,26 @@ namespace RDKit{
     //     in an atom map will be retained
     void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly){
       std::vector<unsigned int> atomsToRemove;
-      
+
+      boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        hatoms[i] = isQueryH(mol.getAtomWithIdx(i));
+      }
       unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
       while(currIdx < stopIdx){
         Atom *atom = mol.getAtomWithIdx(currIdx);
-        if(atom->getAtomicNum()!=1 || (atom->hasQuery() && atom->getQuery()->getNegation())){
+        if(!hatoms[currIdx]){
           unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
           boost::tie(begin,end) = mol.getAtomNeighbors(atom);
 
           while(begin!=end){
-            Atom &bgn = *mol.getAtomWithIdx(*begin);
-            if(bgn.getAtomicNum() == 1 &&
-               bgn.getDegree() == 1 &&
-               (!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber)) &&
-               (!bgn.hasQuery() || !bgn.getQuery()->getNegation())
-               ){
-              atomsToRemove.push_back(*begin);
-              ++numHsToRemove;
+            if(hatoms[*begin]){
+              Atom &bgn = *mol.getAtomWithIdx(*begin);
+              if(!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber)){
+                atomsToRemove.push_back(*begin);
+                ++numHsToRemove;
+              }
             }
             ++begin;
           }
@@ -551,25 +618,8 @@ namespace RDKit{
             //  otherwise.
             //
             //  First we'll search for an H query:
-            bool hasHQuery=false;
-            if(atom->hasQuery()){
-              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
-                                                                           atom->getQuery()->endChildren());
-              while( !hasHQuery && childStack.size() ){
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-                childStack.pop_front();
-                if(query->getDescription()=="AtomHCount"){
-                  hasHQuery=true;
-                } else {
-                  QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-                  for(child1=query->beginChildren();
-                      child1!=query->endChildren();
-                      ++child1){
-                    childStack.push_back(*child1);
-                  }
-                }
-              }
-            } else {
+            bool hasHQuery=false,hasOr=false;
+            if(!atom->hasQuery()){
               // it wasn't a query atom, we need to replace it so that we can add a query:
               ATOM_EQUALS_QUERY *tmp=makeAtomNumQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;

@@ -1719,6 +1719,37 @@ void testGithub544(){
     delete p;
   }
 
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#1,#6]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#6,#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#6;H1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
