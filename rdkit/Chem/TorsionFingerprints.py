@@ -14,6 +14,8 @@ from rdkit import RDConfig
 from rdkit import Geometry
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdMolTransforms
+from rdkit.Chem import rdDepictor
 import math, os
 
 def _doMatch(inv, atoms):
@@ -146,16 +148,45 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
   """
   if maxDev not in ['equal', 'spec']:
     raise ValueError("maxDev must be either equal or spec")
+  # conformer
+  try:
+    conf = mol.GetConformer()
+  except:
+    rdDepictor.Compute2DCoords(mol)
+    conf = mol.GetConformer()
   # get non-terminal, non-cyclic bonds
   bonds = []
+  doneBonds = [0]*mol.GetNumBonds()
   for b in mol.GetBonds():
     if b.IsInRing(): continue
     a1 = b.GetBeginAtomIdx()
     a2 = b.GetEndAtomIdx()
     nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
     nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
-    if nb1 and nb2: # no terminal bonds
-      bonds.append((b, a1, a2, nb1, nb2))
+    if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
+      # check for triple bonds:
+      while nb1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160: 
+          doneBonds[b.GetIdx()] = 1;
+          a1old = a1
+          a1 = nb1[0].GetIdx()
+          b = mol.GetBondBetweenAtoms(a1old, a1)
+          if b.GetEndAtom().GetIdx() == a1old:
+            nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
+          else:
+            nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
+      while nb2 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160: 
+          doneBonds[b.GetIdx()] = 1;
+          a2old = a2
+          a2 = nb2[0].GetIdx()
+          b = mol.GetBondBetweenAtoms(a2old, a2)
+          if b.GetBeginAtom().GetIdx() == a2old:
+            nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
+          else:
+            nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
+      #print a1, a2
+      doneBonds[b.GetIdx()] = 1;
+      if nb1 and nb2:
+        bonds.append((a1, a2, nb1, nb2))
   # get atom invariants
   if symmRadius > 0:
     inv = _getAtomInvariantsWithRadius(mol, symmRadius)
@@ -163,7 +194,7 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
     inv = rdMolDescriptors.GetConnectivityInvariants(mol)
   # get the torsions
   tors_list = [] # to store the atom indices of the torsions
-  for b, a1, a2, nb1, nb2 in bonds:
+  for a1, a2, nb1, nb2 in bonds:
     d1 = _getIndexforTorsion(nb1, inv)
     d2 = _getIndexforTorsion(nb2, inv)
     if len(d1) == 1 and len(d2) == 1: # case 1, 2, 4, 5, 7, 10, 16, 12, 17, 19
