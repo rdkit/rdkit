@@ -1750,6 +1750,55 @@ void testGithub544(){
     delete p;
   }
 
+  // along the way there were some problems with merging in recursive subqueries of ORs,
+  // these next few test those.
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#7]),$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6]-[#1])]");
+
+    //std::cerr<<"--------------------------"<<std::endl;
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6&!H0])]");
+
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#7]),$([#6]-[#1]),$([#6])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    //std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6]-[#1]),$([#6])]");
+
+    //std::cerr<<"--------------------------"<<std::endl;
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    //std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6&!H0]),$([#6])]");
+
+    delete p;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

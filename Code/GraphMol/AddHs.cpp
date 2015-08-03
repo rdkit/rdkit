@@ -639,17 +639,26 @@ namespace RDKit{
 
           // recurse if needed (was github isusue 544)
           if(atom->hasQuery()){
+            //std::cerr<<"  q: "<<atom->getQuery()->getDescription()<<std::endl;
             if(atom->getQuery()->getDescription()=="RecursiveStructure"){
               RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(atom->getQuery())->getQueryMol()));
               mergeQueryHs(*rqm,mergeUnmappedOnly);
             }
 
-            // FIX: shouldn't be repeating this code
-            for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI iter=atom->getQuery()->beginChildren();
-                iter!=atom->getQuery()->endChildren();++iter){
-              if((*iter)->getDescription()=="RecursiveStructure"){
-                RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(iter->get())->getQueryMol()));
+            // FIX: shouldn't be repeating this code here
+            std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
+                                                                         atom->getQuery()->endChildren());
+            while(childStack.size()){
+              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
+              childStack.pop_front();
+              //std::cerr<<"      child: "<<qry->getDescription()<<std::endl;
+              if(qry->getDescription()=="RecursiveStructure"){
+                //std::cerr<<"    recurse"<<std::endl;
+                RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(qry.get())->getQueryMol()));
                 mergeQueryHs(*rqm,mergeUnmappedOnly);
+                //std::cerr<<"    back"<<std::endl;
+              } else if (qry->beginChildren()!=qry->endChildren()){
+                childStack.insert(childStack.end(),qry->beginChildren(),qry->endChildren());
               }
             }
           } // end of recursion loop
