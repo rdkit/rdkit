@@ -35,7 +35,10 @@ namespace RDKit
 {
   const char * DEFAULT_FILTERMATCHERBASE_NAME = "Unnamed FilterMatcherBase";
   const char * SMARTS_MATCH_NAME_DEFAULT = "Unnamed SmartsMatcher";
-
+  namespace {
+    const int debugParse = 0;
+    const bool mergeHs = true;
+  }
   SmartsMatcher::SmartsMatcher(const ROMol &pattern,
                                unsigned int minCount,
                                unsigned int maxCount) :
@@ -60,7 +63,7 @@ namespace RDKit
                                unsigned int minCount,
                                unsigned int maxCount) :
     FilterMatcherBase(name),
-    d_pattern(SmartsToMol(smarts)),
+    d_pattern(SmartsToMol(smarts, debugParse, mergeHs)),
     d_min_count(minCount),
     d_max_count(maxCount) {
   }
@@ -75,7 +78,7 @@ namespace RDKit
 
 
   void SmartsMatcher::setPattern(const std::string &smarts) {
-    d_pattern.reset( SmartsToMol(smarts) );
+    d_pattern.reset( SmartsToMol(smarts, debugParse, mergeHs) );
   }
   
   void SmartsMatcher::setPattern(const ROMol&mol) {
