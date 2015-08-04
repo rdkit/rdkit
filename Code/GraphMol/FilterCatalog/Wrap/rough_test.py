@@ -120,10 +120,10 @@ class TestCase(unittest.TestCase):
         
 
     def test2FilterCatalogTest(self):
-        tests = ((FilterCatalogParams.FilterCatalogs.PAINS_A, 19),
+        tests = ((FilterCatalogParams.FilterCatalogs.PAINS_A, 16),
                  (FilterCatalogParams.FilterCatalogs.PAINS_B, 55),
                  (FilterCatalogParams.FilterCatalogs.PAINS_C, 409),
-                 (FilterCatalogParams.FilterCatalogs.PAINS, 409+19+55))
+                 (FilterCatalogParams.FilterCatalogs.PAINS, 409+16+55))
 
         
         for catalog_idx, num in tests:

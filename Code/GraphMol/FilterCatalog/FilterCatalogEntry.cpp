@@ -81,7 +81,9 @@ void FilterCatalogEntry::setDescription(const std::string &desc) {
   FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
                                              unsigned int num_props,
                                              const FilterProperty_t *props) {
-  ROMOL_SPTR pattern(SmartsToMol(data.smarts, 0, false));
+  const int debugParse = 0;
+  const bool mergeHs = true;
+  ROMOL_SPTR pattern(SmartsToMol(data.smarts, debugParse, mergeHs));
   if (!pattern.get())
     return 0;
 
