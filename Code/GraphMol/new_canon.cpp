@@ -77,6 +77,9 @@ namespace RDKit {
         }
         std::deque<int> neighbors;
         neighbors.push_back(idx);
+        unsigned currentRNIdx=0;
+        atoms[idx].neighborNum.reserve(1000);
+        atoms[idx].revistedNeighbors.assign(1000,0);
         char *visited=(char *)malloc(nAtoms*sizeof(char));
         memset(visited,0,nAtoms*sizeof(char));
         unsigned count = 1;
@@ -85,8 +88,9 @@ namespace RDKit {
         memset(lastLevelNbrs,0,nAtoms*sizeof(char));
         char *currentLevelNbrs=(char *)malloc(nAtoms*sizeof(char));
         memset(currentLevelNbrs,0,nAtoms*sizeof(char));
+        int *revisitedNeighbors=(int *)malloc(nAtoms*sizeof(int));
+        memset(revisitedNeighbors,0,nAtoms*sizeof(int));
         while(!neighbors.empty()){
-          unsigned int revisitedNeighbors=0;
           unsigned int numLevelNbrs=0;
           nextLevelNbrs.resize(0);
           while(!neighbors.empty()){
@@ -114,7 +118,7 @@ namespace RDKit {
               for(unsigned int k=0; k<natom.degree; k++){
                 int jidx = natom.nbrIds[k];
                 if(currentLevelNbrs[jidx] || lastLevelNbrs[jidx]){
-                  revisitedNeighbors+=1;
+                  revisitedNeighbors[jidx]+=1;
                 }
               }
             }
@@ -126,25 +130,36 @@ namespace RDKit {
             }
           }
           memset(currentLevelNbrs,0,nAtoms*sizeof(char));
-          if(revisitedNeighbors < 10){
-            atoms[idx].revistedNeighbors = (atoms[idx].revistedNeighbors*10) + revisitedNeighbors;
+          std::vector<int>tmp;
+          tmp.reserve(30);
+          for(unsigned i=0; i<nAtoms; ++i){
+            if(revisitedNeighbors[i]>0){
+              tmp.push_back(revisitedNeighbors[i]);
+            }
           }
-          else{
-            atoms[idx].revistedNeighbors = (atoms[idx].revistedNeighbors*100) + revisitedNeighbors;
+          std::sort(tmp.begin(),tmp.end());
+          tmp.push_back(-1);
+          for(unsigned i=0; i<tmp.size(); ++i){
+            if (currentRNIdx >= atoms[idx].revistedNeighbors.size()){
+              atoms[idx].revistedNeighbors.resize(atoms[idx].revistedNeighbors.size()+1000);
+            }
+            atoms[idx].revistedNeighbors[currentRNIdx] = tmp[i];
+            currentRNIdx++;
           }
+          memset(revisitedNeighbors,0,nAtoms*sizeof(int));
 
-          if(numLevelNbrs < 10){
-            atoms[idx].neighborNum  = (atoms[idx].neighborNum*10) +numLevelNbrs;
-          }
-          else{
-            atoms[idx].neighborNum  = (atoms[idx].neighborNum*100) +numLevelNbrs;
-          }
+          atoms[idx].neighborNum.push_back(numLevelNbrs);
+          atoms[idx].neighborNum.push_back(-1);
+
           neighbors.insert(neighbors.end(),nextLevelNbrs.begin(),nextLevelNbrs.end());
           count++;
         }
+        atoms[idx].revistedNeighbors.resize(currentRNIdx);
+
         free(visited);
         free(currentLevelNbrs);
         free(lastLevelNbrs);
+        free(revisitedNeighbors);
       }
     }
 
@@ -209,26 +224,29 @@ namespace RDKit {
       }
       ties=false;
       unsigned symRingAtoms=0;
-      unsigned countCls=0;
+      unsigned ringAtoms=0;
+      bool branchingRingAtom=false;
       RingInfo *ringInfo=mol.getRingInfo();
       if(!ringInfo->isInitialized()){
         ringInfo->initialize();
       }
       for(unsigned i=0; i<nAts; ++i){
-        if(ringInfo->numAtomRings(ftor.dp_atoms[i].atom->getIdx()) > 1){
-          if(count[i] != 1){
-            symRingAtoms += 1;
+        if(ringInfo->numAtomRings(order[i])){
+          if(count[order[i]] > 2){
+            symRingAtoms+=count[order[i]];
+          }
+          ringAtoms++;
+          if(ringInfo->numAtomRings(order[i]) > 1 && count[order[i]] > 1){
+            branchingRingAtom = true;
           }
         }
-        if(count[i]){
-          countCls++;
-        }
-        else{
+        if(!count[i]){
           ties=true;
         }
+
       }
-      unsigned int nAts2 = atomsInPlay ? atomsInPlay->count() : nAts;
-      if(useSpecial && ties && static_cast<float>(countCls)/nAts2 < 0.5 && symRingAtoms>0){
+//      std::cout << " " << ringAtoms << " "  << symRingAtoms << std::endl;
+      if(useSpecial && ties && ringAtoms > 0 && static_cast<float>(symRingAtoms)/ringAtoms > 0.5 && branchingRingAtom){
         SpecialSymmetryAtomCompareFunctor sftor(atoms,mol,atomsInPlay,bondsInPlay);
         compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
         ActivatePartitions(nAts,order,count,activeset,next,changed);

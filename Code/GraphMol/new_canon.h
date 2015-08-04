@@ -81,13 +81,13 @@ namespace RDKit {
       bool isRingStereoAtom;
       int* nbrIds;
       const std::string *p_symbol; // if provided, this is used to order atoms
-      unsigned int neighborNum;
-      unsigned int revistedNeighbors;
+      std::vector<int> neighborNum;
+      std::vector<int> revistedNeighbors;
       std::vector<bondholder> bonds;
 
       canon_atom() : atom(NULL),index(-1),degree(0),totalNumHs(0),
           hasRingNbr(false), isRingStereoAtom(false), nbrIds(NULL),
-          p_symbol(NULL), neighborNum(0), revistedNeighbors(0) {};
+          p_symbol(NULL) {};
     };
 
     void updateAtomNeighborIndex(canon_atom* atoms, std::vector<bondholder> &nbrs);
