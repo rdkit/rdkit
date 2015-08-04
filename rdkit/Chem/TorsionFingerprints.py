@@ -366,7 +366,7 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
       Arguments:
       - mol:   the molecule of interest
       - aid1:  index of the first atom (default: most central)
-      - aid2:  index of the second atom (default: second most cenral)
+      - aid2:  index of the second atom (default: second most central)
 
       Return: list of torsion weights (both non-ring and ring)
   """
@@ -378,21 +378,50 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
     b = mol.GetBondBetweenAtoms(aid1, aid2)
     if b is None:
       raise ValueError("Specified atoms must be connected by a bond.")
+  # conformer
+  try:
+    conf = mol.GetConformer()
+  except:
+    rdDepictor.Compute2DCoords(mol)
+    conf = mol.GetConformer()
   # calculate beta according to the formula in the paper
   beta = _calculateBeta(mol, distmat, aid1)
   # get non-terminal, non-cyclic bonds
   bonds = []
+  doneBonds = [0]*mol.GetNumBonds()
   for b in mol.GetBonds():
     if b.IsInRing(): continue
-    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
-    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
-    if len(nb1) > 1 and len(nb2) > 1:
-      bonds.append(b)
+    a1 = b.GetBeginAtomIdx()
+    a2 = b.GetEndAtomIdx()
+    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
+    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
+    if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
+      # check for triple bonds:
+      while nb1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160:
+          doneBonds[b.GetIdx()] = 1;
+          a1old = a1
+          a1 = nb1[0].GetIdx()
+          b = mol.GetBondBetweenAtoms(a1old, a1)
+          if b.GetEndAtom().GetIdx() == a1old:
+            nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
+          else:
+            nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
+      while nb2 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160:
+          doneBonds[b.GetIdx()] = 1;
+          a2old = a2
+          a2 = nb2[0].GetIdx()
+          b = mol.GetBondBetweenAtoms(a2old, a2)
+          if b.GetBeginAtom().GetIdx() == a2old:
+            nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
+          else:
+            nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
+      #print a1, a2
+      doneBonds[b.GetIdx()] = 1;
+      if nb1 and nb2:
+        bonds.append((a1, a2))
   # get shortest paths and calculate weights
   weights = []
-  for b in bonds:
-    bid1 = b.GetBeginAtom().GetIdx()
-    bid2 = b.GetEndAtom().GetIdx()
+  for bid1, bid2 in bonds:
     if ((bid1, bid2) == (aid1, aid2)
       or (bid2, bid1) == (aid1, aid2)): # if it's the most central bond itself
       d = 0
