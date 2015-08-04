@@ -488,6 +488,8 @@ namespace RDKit{
 
     unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
       mapping.resize(mol.getNumAtoms());
+      if(mapping.empty())
+          return 0;
       return boost::connected_components(mol.getTopology(),&mapping[0]);
     };
 
