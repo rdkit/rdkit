@@ -242,8 +242,12 @@ namespace RDKit {
           return 1;
 
         // use the atom-mapping numbers if they were assigned
+/* boost::any_cast FILED here:
         std::string molAtomMapNumber_i="";
         std::string molAtomMapNumber_j="";
+*/
+        int molAtomMapNumber_i= 0;
+        int molAtomMapNumber_j= 0;
         dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,molAtomMapNumber_i);
         dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,molAtomMapNumber_j);
         if(molAtomMapNumber_i<molAtomMapNumber_j)
