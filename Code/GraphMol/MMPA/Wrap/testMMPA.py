@@ -3,6 +3,9 @@ import unittest
 from rdkit import Chem
 from rdkit.Chem import rdMMPA
 
+def natoms(tpl):
+    return tuple(x.GetNumAtoms() if x is not None else 0 for x in tpl)
+
 class TestCase(unittest.TestCase):
     def setUp(self) :
         pass
@@ -13,7 +16,7 @@ class TestCase(unittest.TestCase):
         self.failUnlessEqual(len(frags),3)
         for frag in frags:
             self.failUnlessEqual(len(frag),2)        
-        frags = sorted(frags)
+        frags = sorted(frags,key=natoms)
         self.failUnlessEqual(frags[0][0],None)
         self.failUnlessEqual(frags[1][0],None)
         self.failIfEqual(frags[2][0],None)
