@@ -46,10 +46,25 @@ struct IntPair {
   int second;
 };
 
-bool check(MatchVectType v, const IntPair *match) {
+template<class T>
+void dump(std::string name, const T &v) {
+  std::cerr << name << " = { " << std::endl;
   for (size_t i=0; i<v.size(); ++i) {
-    if (v[i].first != match[i].first) return false;
-    if (v[i].second != match[i].second) return false;
+    std::cerr << "\t" << v[i].first << "," << v[i].second << "}," << std::endl;;
+  }
+  std::cerr << "}" << std::endl;
+}
+
+bool check(MatchVectType v, MatchVectType match) {
+  dump("v", v);
+  dump("match", match);
+  for (size_t i=0; i<v.size(); ++i) {
+    if (v[i].first != match[i].first) {
+      return false;
+    }
+    if (v[i].second != match[i].second) {
+      return false;
+    }
   }
   return true;
 }
@@ -69,12 +84,26 @@ void testFilterCatalog() {
     
     FilterCatalog catalog(params);
     boost::scoped_ptr<ROMol> mol;
-    const IntPair match1[] = {{0,23},{1,22},{2,20},{3,19},{4,25},{5,24},
+    const IntPair match1[10] = {{0,23},{1,22},{2,20},{3,19},{4,25},{5,24},
                               {6,18},{7,17},{8,16},{9,21}};
-    const IntPair match2[] = {{0,13},{1,12},{2,11},{3,14},{4,15},{5,10},
-                              {6,9},{7,8},{8,7},{9,6},{10,5},{11,17},{12,16}};
-    const IntPair match3[] = {{0,0},{1,1},{2,2},{3,4},{4,5},{5,6},{6,7},
-                              {7,8},{8,9},{9,14},{10,15},{11,16}};
+    MatchVectType matchvec1;
+    for (int i=0; i<10; ++i)
+      matchvec1.push_back(std::make_pair(match1[i].first,
+                                         match1[i].second));
+
+    const IntPair match2[13] = {{0,11},{1,12},{2,13},{3,14},{4,15},{5,10},
+                                {6,9},{7,8},{8,7},{9,6},{10,5},{11,17},{12,16}};
+    MatchVectType matchvec2;
+    for (int i=0; i<13; ++i)
+      matchvec2.push_back(std::make_pair(match2[i].first,
+                                         match2[i].second));
+
+    const IntPair match3[12] = {{0,0},{1,1},{2,2},{3,4},{4,5},{5,6},{6,7},
+                                {7,8},{8,9},{9,14},{10,15},{11,16}};
+    MatchVectType matchvec3;
+    for (int i=0; i<12; ++i)
+      matchvec3.push_back(std::make_pair(match3[i].first,
+                                         match3[i].second));
     int count = 0;
     while(!suppl.atEnd()){
       mol.reset(suppl.next());
@@ -109,9 +138,9 @@ void testFilterCatalog() {
             // Get the matching atom indices
             const MatchVectType &vect = fm.atomPairs;
             switch(count) {
-            case 0: TEST_ASSERT(check(vect, &match1[0])); break;
-            case 1: TEST_ASSERT(check(vect, &match2[0])); break;
-            case 2: TEST_ASSERT(check(vect, &match3[0])); break;
+            case 0: TEST_ASSERT(check(vect, matchvec1)); break;
+            case 1: TEST_ASSERT(check(vect, matchvec2)); break;
+            case 2: TEST_ASSERT(check(vect, matchvec3)); break;
             }
               
             // do something with these...
