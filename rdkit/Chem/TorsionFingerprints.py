@@ -480,7 +480,7 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   return tfd
 
 # some wrapper functions
-def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two list of conformers 
       of a molecule
 
@@ -495,6 +495,10 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: list of TFD values
   """
@@ -513,7 +517,7 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
         tfd.append(CalculateTFD(t1, t2))
   return tfd
 
-def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two list of conformers 
       of two molecules.
       Important: The two molecules must be instances of the same molecule
@@ -530,6 +534,10 @@ def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: list of TFD values
   """
@@ -558,7 +566,7 @@ def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True
         tfd.append(CalculateTFD(t1, t2))
   return tfd
 
-def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the matrix of TFD values for the
       conformers of a molecule.
 
@@ -571,6 +579,10 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: matrix of TFD values
       Note that the returned matrix is symmetrical, i.e. it is the
