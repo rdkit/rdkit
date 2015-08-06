@@ -502,12 +502,12 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
 
       Return: list of TFD values
   """
-  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   torsions1 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds1]
   torsions2 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds2]
   tfd = []
   if useWeights:
-    weights = CalculateTorsionWeights(mol)
+    weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
     for t1 in torsions1:
       for t2 in torsions2:
         tfd.append(CalculateTFD(t1, t2, weights=weights))
@@ -543,7 +543,7 @@ def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True
   """
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
-  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius)
+  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   # first molecule
   if confIds1 < 0:
     torsions1 = [CalculateTorsionAngles(mol1, tl, tlr)]
@@ -556,7 +556,7 @@ def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True
     torsions2 = [CalculateTorsionAngles(mol2, tl, tlr, confId=cid) for cid in confIds2]
   tfd = []
   if useWeights:
-    weights = CalculateTorsionWeights(mol1)
+    weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
     for t1 in torsions1:
       for t2 in torsions2:
         tfd.append(CalculateTFD(t1, t2, weights=weights))
@@ -592,12 +592,12 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColin
                  d, e, f,
                  g, h, i, j]
   """
-  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   numconf = mol.GetNumConformers()
   torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId()) for conf in mol.GetConformers()]
   tfdmat = []
   if useWeights:
-    weights = CalculateTorsionWeights(mol)
+    weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
     for i in range(0, numconf):
       for j in range(0, i):
         tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
