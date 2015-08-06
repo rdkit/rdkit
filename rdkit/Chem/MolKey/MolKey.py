@@ -177,7 +177,8 @@ def initStruchk(isSmiles=True,configDir=None,logFile=None):
     fd = tempfile.NamedTemporaryFile(suffix='.log',delete=False)
     fd.close()
     logFile= fd.name
-  struchk_init = '''-ta {0}checkfgs.trn
+  struchk_init = '''-tm
+  -ta {0}checkfgs.trn
 -tm
 -or
 -ca {0}checkfgs.chk
