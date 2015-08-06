@@ -167,7 +167,7 @@ def ctab_remove_chiral_flag(ctab_lines):
     return rval
 
 __initCalled=False
-def initStruchk(isSmiles=True,configDir=None,logFile=None):
+def initStruchk(configDir=None,logFile=None):
   global __initCalled
   if configDir is None:
     configDir=os.path.join(RDConfig.RDDataDir,'struchk')
@@ -337,6 +337,49 @@ def run_struchk(data,isSmiles=True,configDir=None,logFile=None):
   return rval
 
 def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
+    """
+    >>> from rdkit.Chem.MolKey import MolKey
+    >>> from rdkit.Avalon import pyAvalonTools
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl',True))
+    >>> key
+    '1|L7676nfGsSIU33wkx//NCg=='
+    >>> sc
+    'R_ONE'
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl',True))
+    >>> key
+    '1|Aj38EIxf13RuPDQG2A0UMw=='
+    >>> sc
+    'S_ABS'
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl',True))
+    >>> key
+    '1|9ypfMrhxn1w0ncRooN5HXw=='
+    >>> sc
+    'S_ABS'
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl',True))
+    >>> key
+    '1|c96jMSlbn7O9GW5d5uB9Mw=='
+    >>> sc
+    'S_PART'
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl',True))
+    >>> key
+    '1|+B+GCEardrJteE8xzYdGLA=='
+    >>> sc
+    'S_ABS'
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
+    >>> key
+    '1|5H9R3LvclagMXHp3Clrc/g=='
+    >>> sc 
+    'S_UNKN'
+    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
+    >>> key
+    '1|cqKWVsUEY6QNpGCbDaDTYA=='
+    >>> sc
+    'S_REL'
+    >>> 
+
+    """
+
+
     if logger is None:
         logger = logging
     try:
@@ -372,3 +415,16 @@ def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
 
     
 
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest,sys
+  return doctest.testmod(sys.modules["__main__"])
+
+
+if __name__ == '__main__':
+  import sys
+  failed,tried = _test()
+  sys.exit(failed)
