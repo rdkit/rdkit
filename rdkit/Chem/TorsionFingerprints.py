@@ -143,7 +143,7 @@ def _getBondsForTorsions(mol, ignoreColinearBonds):
                              atoms are used to define the torsion
   """
   # we need a 2D conformer
-  mol2d = Chem.MolFromSmiles(Chem.MolToSmiles(mol, canonical=False))
+  mol2d = Chem.Mol(mol.ToBinary())
   rdDepictor.Compute2DCoords(mol2d)
   conf = mol2d.GetConformer()
 
@@ -155,34 +155,34 @@ def _getBondsForTorsions(mol, ignoreColinearBonds):
     a2 = b.GetEndAtomIdx()
     nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
     nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
+    if (b.GetBondTypeAsDouble() == 3.0): # it's a triple bond
+      doneBonds[b.GetIdx()] = 1 
     if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
-      # what to do with colinear bonds
+      # check for single bonds adjacent to triple bonds
       ignore = False
-      if (ignoreColinearBonds):
-        if (b.GetBondTypeAsDouble() == 3.0): # it's a triple bond
-          ignore = True
-        if (mol.GetBondBetweenAtoms(a1, nb1[0].GetIdx()).GetBondTypeAsDouble() == 3.0) \
-           or (mol.GetBondBetweenAtoms(a2, nb2[0].GetIdx()).GetBondTypeAsDouble() == 3.0):
-          ignore = True # it's adjacent to a triple bond
-      else: # search for alternative not-covalently bound atoms
-        while nb1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160: 
-          doneBonds[b.GetIdx()] = 1;
-          a1old = a1
-          a1 = nb1[0].GetIdx()
-          b = mol.GetBondBetweenAtoms(a1old, a1)
-          if b.GetEndAtom().GetIdx() == a1old:
-            nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
-          else:
-            nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
-        while nb2 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160: 
-          doneBonds[b.GetIdx()] = 1;
-          a2old = a2
-          a2 = nb2[0].GetIdx()
-          b = mol.GetBondBetweenAtoms(a2old, a2)
-          if b.GetBeginAtom().GetIdx() == a2old:
-            nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
-          else:
-            nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
+      if (mol.GetBondBetweenAtoms(a1, nb1[0].GetIdx()).GetBondTypeAsDouble() == 3.0) \
+         or (mol.GetBondBetweenAtoms(a2, nb2[0].GetIdx()).GetBondTypeAsDouble() == 3.0):
+        if (ignoreColinearBonds):
+          ignore = True 
+        else: # search for alternative not-covalently bound atoms
+          while len(nb1)==1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160: 
+            doneBonds[b.GetIdx()] = 1;
+            a1old = a1
+            a1 = nb1[0].GetIdx()
+            b = mol.GetBondBetweenAtoms(a1old, a1)
+            if b.GetEndAtom().GetIdx() == a1old:
+              nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
+            else:
+              nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
+          while len(nb2)==1 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160: 
+            doneBonds[b.GetIdx()] = 1;
+            a2old = a2
+            a2 = nb2[0].GetIdx()
+            b = mol.GetBondBetweenAtoms(a2old, a2)
+            if b.GetBeginAtom().GetIdx() == a2old:
+              nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
+            else:
+              nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
 
       doneBonds[b.GetIdx()] = 1;
       if not ignore and (nb1 and nb2):
