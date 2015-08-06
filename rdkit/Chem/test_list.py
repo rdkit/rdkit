@@ -45,6 +45,7 @@ tests=[
   ("python","test_list.py",{'dir':'Draw'}),
   ("python","test_list.py",{'dir':'Fraggle'}),
   ("python","test_list.py",{'dir':'SimpleEnum'}),
+  ("python","test_list.py",{'dir':'MolKey'}),
   ]
 
 
