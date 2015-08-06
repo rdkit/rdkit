@@ -136,18 +136,17 @@ def _getBondsForTorsions(mol, ignoreColinearBonds):
       torsions should be calculated.
 
       Arguments:
-      - mol: the molecule of interest
+      - refmol: the molecule of interest
       - ignoreColinearBonds: if True (default), single bonds adjacent to
                              triple bonds are ignored
                              if False, alternative not-covalently bound
                              atoms are used to define the torsion
   """
-  # conformer
-  try:
-    conf = mol.GetConformer()
-  except:
-    rdDepictor.Compute2DCoords(mol)
-    conf = mol.GetConformer()
+  # we need a 2D conformer
+  mol2d = Chem.MolFromSmiles(Chem.MolToSmiles(mol, canonical=False))
+  rdDepictor.Compute2DCoords(mol2d)
+  conf = mol2d.GetConformer()
+
   bonds = []
   doneBonds = [0]*mol.GetNumBonds()
   for b in mol.GetBonds():
@@ -156,12 +155,12 @@ def _getBondsForTorsions(mol, ignoreColinearBonds):
     a2 = b.GetEndAtomIdx()
     nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
     nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
-    if (b.GetBondTypeAsDouble() == 3.0): # it's a triple bond
-      doneBonds[b.GetIdx()] = 1
     if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
       # what to do with colinear bonds
       ignore = False
       if (ignoreColinearBonds):
+        if (b.GetBondTypeAsDouble() == 3.0): # it's a triple bond
+          ignore = True
         if (mol.GetBondBetweenAtoms(a1, nb1[0].GetIdx()).GetBondTypeAsDouble() == 3.0) \
            or (mol.GetBondBetweenAtoms(a2, nb2[0].GetIdx()).GetBondTypeAsDouble() == 3.0):
           ignore = True # it's adjacent to a triple bond
