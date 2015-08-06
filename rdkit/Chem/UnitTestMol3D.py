@@ -95,6 +95,28 @@ class TestCase(unittest.TestCase):
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2)
     self.assertAlmostEqual(tfd, 0.1680,4)
 
+  def testTorsionFingerprintsColinearBonds(self):
+    # test that single bonds adjacent to triple bonds are ignored
+    mol = Chem.MolFromSmiles('CCC#CCC')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
+    self.assertEqual(len(tors_list), 0)
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=True)
+    self.assertEqual(len(weights), 0)
+
+    # test that they are not ignored, but alternative atoms searched for
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
+    self.assertEqual(len(tors_list), 1)
+    self.assertEqual(tors_list[0][0][0], (0, 1, 4, 5))
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=False)
+    self.assertEqual(len(weights), 1)
+
+    # test that single bonds adjacent to terminal triple bonds are always ignored
+    mol = Chem.MolFromSmiles('C#CCC')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
+    self.assertEqual(len(tors_list), 0)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
+    self.assertEqual(len(tors_list), 0)
+
 if __name__ == '__main__':
   unittest.main()
 
