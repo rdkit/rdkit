@@ -131,7 +131,66 @@ def _getIndexforTorsion(neighbors, inv):
     raise ValueError("Atom neighbors are either all the same or all different")
   return [at] 
 
-def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
+def _getBondsForTorsions(mol, ignoreColinearBonds):
+  """ Determine the bonds (or pair of atoms treated like a bond) for which
+      torsions should be calculated.
+
+      Arguments:
+      - mol: the molecule of interest
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
+  """
+  # conformer
+  try:
+    conf = mol.GetConformer()
+  except:
+    rdDepictor.Compute2DCoords(mol)
+    conf = mol.GetConformer()
+  bonds = []
+  doneBonds = [0]*mol.GetNumBonds()
+  for b in mol.GetBonds():
+    if b.IsInRing(): continue
+    a1 = b.GetBeginAtomIdx()
+    a2 = b.GetEndAtomIdx()
+    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
+    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
+    if (b.GetBondTypeAsDouble() == 3.0): # it's a triple bond
+      doneBonds[b.GetIdx()] = 1
+    if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
+      # what to do with colinear bonds
+      ignore = False
+      if (ignoreColinearBonds):
+        if (mol.GetBondBetweenAtoms(a1, nb1[0].GetIdx()).GetBondTypeAsDouble() == 3.0) \
+           or (mol.GetBondBetweenAtoms(a2, nb2[0].GetIdx()).GetBondTypeAsDouble() == 3.0):
+          ignore = True # it's adjacent to a triple bond
+      else: # search for alternative not-covalently bound atoms
+        while nb1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160: 
+          doneBonds[b.GetIdx()] = 1;
+          a1old = a1
+          a1 = nb1[0].GetIdx()
+          b = mol.GetBondBetweenAtoms(a1old, a1)
+          if b.GetEndAtom().GetIdx() == a1old:
+            nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
+          else:
+            nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
+        while nb2 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160: 
+          doneBonds[b.GetIdx()] = 1;
+          a2old = a2
+          a2 = nb2[0].GetIdx()
+          b = mol.GetBondBetweenAtoms(a2old, a2)
+          if b.GetBeginAtom().GetIdx() == a2old:
+            nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
+          else:
+            nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
+
+      doneBonds[b.GetIdx()] = 1;
+      if not ignore and (nb1 and nb2):
+        bonds.append((a1, a2, nb1, nb2))
+  return bonds
+
+def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Calculate a list of torsions for a given molecule. For each torsion
       the four atom indices are determined and stored in a set.
 
@@ -143,50 +202,17 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: two lists of torsions: non-ring and ring torsions
   """
   if maxDev not in ['equal', 'spec']:
     raise ValueError("maxDev must be either equal or spec")
-  # conformer
-  try:
-    conf = mol.GetConformer()
-  except:
-    rdDepictor.Compute2DCoords(mol)
-    conf = mol.GetConformer()
   # get non-terminal, non-cyclic bonds
-  bonds = []
-  doneBonds = [0]*mol.GetNumBonds()
-  for b in mol.GetBonds():
-    if b.IsInRing(): continue
-    a1 = b.GetBeginAtomIdx()
-    a2 = b.GetEndAtomIdx()
-    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
-    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
-    if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
-      # check for triple bonds:
-      while nb1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160: 
-          doneBonds[b.GetIdx()] = 1;
-          a1old = a1
-          a1 = nb1[0].GetIdx()
-          b = mol.GetBondBetweenAtoms(a1old, a1)
-          if b.GetEndAtom().GetIdx() == a1old:
-            nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
-          else:
-            nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
-      while nb2 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160: 
-          doneBonds[b.GetIdx()] = 1;
-          a2old = a2
-          a2 = nb2[0].GetIdx()
-          b = mol.GetBondBetweenAtoms(a2old, a2)
-          if b.GetBeginAtom().GetIdx() == a2old:
-            nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
-          else:
-            nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
-      #print a1, a2
-      doneBonds[b.GetIdx()] = 1;
-      if nb1 and nb2:
-        bonds.append((a1, a2, nb1, nb2))
+  bonds = _getBondsForTorsions(mol, ignoreColinearBonds)
   # get atom invariants
   if symmRadius > 0:
     inv = _getAtomInvariantsWithRadius(mol, symmRadius)
@@ -356,7 +382,7 @@ def _calculateBeta(mol, distmat, aid1):
   beta = -math.log(0.1)/(dmax2*dmax2)
   return beta
 
-def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
+def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
   """ Calculate the weights for the torsions in a molecule.
       By default, the highest weight is given to the bond 
       connecting the two most central atoms.
@@ -367,6 +393,10 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
       - mol:   the molecule of interest
       - aid1:  index of the first atom (default: most central)
       - aid2:  index of the second atom (default: second most central)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: list of torsion weights (both non-ring and ring)
   """
@@ -378,50 +408,13 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
     b = mol.GetBondBetweenAtoms(aid1, aid2)
     if b is None:
       raise ValueError("Specified atoms must be connected by a bond.")
-  # conformer
-  try:
-    conf = mol.GetConformer()
-  except:
-    rdDepictor.Compute2DCoords(mol)
-    conf = mol.GetConformer()
   # calculate beta according to the formula in the paper
   beta = _calculateBeta(mol, distmat, aid1)
   # get non-terminal, non-cyclic bonds
-  bonds = []
-  doneBonds = [0]*mol.GetNumBonds()
-  for b in mol.GetBonds():
-    if b.IsInRing(): continue
-    a1 = b.GetBeginAtomIdx()
-    a2 = b.GetEndAtomIdx()
-    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
-    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
-    if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
-      # check for triple bonds:
-      while nb1 and rdMolTransforms.GetAngleDeg(conf, a2, a1, nb1[0].GetIdx()) > 160:
-          doneBonds[b.GetIdx()] = 1;
-          a1old = a1
-          a1 = nb1[0].GetIdx()
-          b = mol.GetBondBetweenAtoms(a1old, a1)
-          if b.GetEndAtom().GetIdx() == a1old:
-            nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
-          else:
-            nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
-      while nb2 and rdMolTransforms.GetAngleDeg(conf, a1, a2, nb2[0].GetIdx()) > 160:
-          doneBonds[b.GetIdx()] = 1;
-          a2old = a2
-          a2 = nb2[0].GetIdx()
-          b = mol.GetBondBetweenAtoms(a2old, a2)
-          if b.GetBeginAtom().GetIdx() == a2old:
-            nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
-          else:
-            nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
-      #print a1, a2
-      doneBonds[b.GetIdx()] = 1;
-      if nb1 and nb2:
-        bonds.append((a1, a2))
+  bonds = _getBondsForTorsions(mol, ignoreColinearBonds)
   # get shortest paths and calculate weights
   weights = []
-  for bid1, bid2 in bonds:
+  for bid1, bid2, nb1, nb2 in bonds:
     if ((bid1, bid2) == (aid1, aid2)
       or (bid2, bid1) == (aid1, aid2)): # if it's the most central bond itself
       d = 0
