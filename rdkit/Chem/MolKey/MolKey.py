@@ -36,6 +36,7 @@ from rdkit.Avalon import pyAvalonTools
 from rdkit.Chem.MolKey import inchi_info
 from rdkit import RDConfig
 from rdkit import Chem
+from collections import namedtuple
 import logging
 import os,re,uuid,base64,hashlib,tempfile
 
@@ -220,8 +221,20 @@ def check(ctab, isSmiles=True):
                 mol_str = '\n'.join(ctab_lines)
                 rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
     return rval
-      
+
+InchiResult = namedtuple('InchiResult',['error','inchi','fixed_ctab'])      
 def get_inchi(ctab):
+    """
+    >>> from rdkit.Chem.MolKey import MolKey
+    >>> from rdkit.Avalon import pyAvalonTools
+    >>> res = MolKey.get_inchi(pyAvalonTools.Generate2DCoords('c1cn[nH]c1C(Cl)Br',True))
+    >>> res.inchi
+    'InChI=1/C4H4BrClN2/c5-4(6)3-1-2-7-8-3/h1-2,4H,(H,7,8)/t4?/f/h8H'
+    >>> res = MolKey.get_inchi(pyAvalonTools.Generate2DCoords('c1c[nH]nc1C(Cl)Br',True))
+    >>> res.inchi
+    'InChI=1/C4H4BrClN2/c5-4(6)3-1-2-7-8-3/h1-2,4H,(H,7,8)/t4?/f/h7H'
+    >>> 
+    """
     inchi = None
     ctab_str = ctab
     (strucheck_err, fixed_mol) = check(ctab_str, False)
@@ -240,7 +253,7 @@ def get_inchi(ctab):
     except Chem.InchiReadWriteError:
         conversion_err = INCHI_READWRITE_ERROR
     # keep warnings from strucheck
-    return (strucheck_err | conversion_err, inchi, fixed_mol)
+    return InchiResult(strucheck_err | conversion_err, inchi, fixed_mol)
 
 def make_racemate_inchi(inchi):
     """ Normalize the stereo information (t-layer) to one selected isomer. """ 
@@ -336,46 +349,48 @@ def run_struchk(data,isSmiles=True,configDir=None,logFile=None):
   rval = pyAvalonTools.CheckMoleculeString(data,isSmiles)
   return rval
 
+MolKeyResult=namedtuple('MolKeyResult',['mol_key','error','inchi','fixed_ctab','stereo_code','stereo_comment'])
 def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
     """
     >>> from rdkit.Chem.MolKey import MolKey
     >>> from rdkit.Avalon import pyAvalonTools
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl',True))
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl',True))
+    >>> res.mol_key
     '1|L7676nfGsSIU33wkx//NCg=='
-    >>> sc
+    >>> res.stereo_code
     'R_ONE'
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl',True))
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl',True))
+    >>> res.mol_key
     '1|Aj38EIxf13RuPDQG2A0UMw=='
-    >>> sc
+    >>> res.stereo_code
     'S_ABS'
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl',True))
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl',True))
+    >>> res.mol_key
     '1|9ypfMrhxn1w0ncRooN5HXw=='
-    >>> sc
+    >>> res.stereo_code
     'S_ABS'
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl',True))
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl',True))
+    >>> res.mol_key
     '1|c96jMSlbn7O9GW5d5uB9Mw=='
-    >>> sc
+    >>> res.stereo_code
     'S_PART'
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl',True))
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl',True))
+    >>> res.mol_key
     '1|+B+GCEardrJteE8xzYdGLA=='
-    >>> sc
+    >>> res.stereo_code
     'S_ABS'
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
+    >>> res.mol_key
     '1|5H9R3LvclagMXHp3Clrc/g=='
-    >>> sc 
+    >>> res.stereo_code 
     'S_UNKN'
-    >>> key,err,inchi,mb,sc,comment=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
-    >>> key
+    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
+    >>> res.mol_key
     '1|cqKWVsUEY6QNpGCbDaDTYA=='
-    >>> sc
+    >>> res.stereo_code
     'S_REL'
-    >>> 
+    >>> res.inchi
+    'InChI=1/C8H6BrCl2F/c9-7(10)5-3-1-2-4-6(5)8(11)12/h1-4,7-8H/t7?,8?'
 
     """
 
@@ -388,7 +403,7 @@ def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
         logger.warn('Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab))
         err = NULL_MOL
         key = identify(err, '', '', None, None)
-        return (key, err, '', '', None, None)
+        return MolKeyResult(key, err, '', '', None, None)
 
     # read or estimate stereo category and/or extra structure description
     stereo_category = None
@@ -411,7 +426,7 @@ def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
     else:
         raise NotImplementedError("currently cannot generate correct SMREG keys for molecules with struchk errors")
     key = identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
-    return (key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
+    return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 
     
 
