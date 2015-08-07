@@ -349,11 +349,6 @@ def ErrorBitsToText(err):
             error_text_list.append(err_dict_key)
     return error_text_list
 
-  
-def run_struchk(data,isSmiles=True,configDir=None,logFile=None):
-  rval = pyAvalonTools.CheckMoleculeString(data,isSmiles)
-  return rval
-
 MolKeyResult=namedtuple('MolKeyResult',['mol_key','error','inchi','fixed_ctab','stereo_code','stereo_comment'])
 def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
     """
