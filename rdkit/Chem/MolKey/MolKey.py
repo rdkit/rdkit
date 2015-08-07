@@ -32,8 +32,11 @@
 # August 2012
 #
 #pylint: disable=C0111,W0311
-from rdkit.Avalon import pyAvalonTools
-from rdkit.Chem.MolKey import inchi_info
+try:
+    from rdkit.Avalon import pyAvalonTools
+except ImportError:
+    raise ImportError("This code requires the RDKit to be built with AvalonTools support")
+
 from rdkit.Chem.MolKey import InchiInfo
 from rdkit import RDConfig
 from rdkit import Chem
@@ -121,7 +124,7 @@ def _fix_chemdraw_header(my_string) :
     sbt = 'V2000'
     return _fix_all(pat, sbt, my_string)
 
-def ctab_has_atoms(ctab_lines):
+def _ctab_has_atoms(ctab_lines):
     ''' look at atom count position (line 4, characters 0:3) 
     Return True if the count is >0, False if 0. 
     Throw BadMoleculeException if there are no characters 
@@ -144,7 +147,7 @@ def ctab_has_atoms(ctab_lines):
 
     return rval
     
-def ctab_remove_chiral_flag(ctab_lines):
+def _ctab_remove_chiral_flag(ctab_lines):
     ''' read the chiral flag (line 4, characters 12:15) 
     and set it to 0. Return True if it was 1, False if 0.
     Throw BadMoleculeException if there are no characters 
@@ -194,7 +197,7 @@ def initStruchk(configDir=None,logFile=None):
     raise ValueError('bad result from InitializeCheckMol: '+str(initRes))
   __initCalled=True
 
-def check(ctab, isSmiles=True):
+def CheckCTAB(ctab, isSmiles=True):
     if not __initCalled:
         initStruchk()
     mol_str = ctab
@@ -215,8 +218,8 @@ def check(ctab, isSmiles=True):
             ctab_lines = mol_str.split('\n')
             if len(ctab_lines) <= 3:
                 raise BadMoleculeException('Not enough lines in CTAB')
-            ctab_remove_chiral_flag(ctab_lines)
-            if not ctab_has_atoms(ctab_lines):
+            _ctab_remove_chiral_flag(ctab_lines)
+            if not _ctab_has_atoms(ctab_lines):
                 rval = T_NULL_MOL
             else: # reassemble the ctab lines into one string.                             
                 mol_str = '\n'.join(ctab_lines)
@@ -224,21 +227,21 @@ def check(ctab, isSmiles=True):
     return rval
 
 InchiResult = namedtuple('InchiResult',['error','inchi','fixed_ctab'])      
-def get_inchi(ctab):
+def GetInchiForCTAB(ctab):
     """
     >>> from rdkit.Chem.MolKey import MolKey
     >>> from rdkit.Avalon import pyAvalonTools
-    >>> res = MolKey.get_inchi(pyAvalonTools.Generate2DCoords('c1cn[nH]c1C(Cl)Br',True))
+    >>> res = MolKey.GetInchiForCTAB(pyAvalonTools.Generate2DCoords('c1cn[nH]c1C(Cl)Br',True))
     >>> res.inchi
     'InChI=1/C4H4BrClN2/c5-4(6)3-1-2-7-8-3/h1-2,4H,(H,7,8)/t4?/f/h8H'
-    >>> res = MolKey.get_inchi(pyAvalonTools.Generate2DCoords('c1c[nH]nc1C(Cl)Br',True))
+    >>> res = MolKey.GetInchiForCTAB(pyAvalonTools.Generate2DCoords('c1c[nH]nc1C(Cl)Br',True))
     >>> res.inchi
     'InChI=1/C4H4BrClN2/c5-4(6)3-1-2-7-8-3/h1-2,4H,(H,7,8)/t4?/f/h7H'
     >>> 
     """
     inchi = None
     ctab_str = ctab
-    (strucheck_err, fixed_mol) = check(ctab_str, False)
+    (strucheck_err, fixed_mol) = CheckCTAB(ctab_str, False)
     if strucheck_err & BAD_SET:
         return (strucheck_err, None, fixed_mol)
 
@@ -256,7 +259,7 @@ def get_inchi(ctab):
     # keep warnings from strucheck
     return InchiResult(strucheck_err | conversion_err, inchi, fixed_mol)
 
-def make_racemate_inchi(inchi):
+def _make_racemate_inchi(inchi):
     """ Normalize the stereo information (t-layer) to one selected isomer. """ 
     # set stereo type = 3 (racemate) for consistency
     # reset inverted flag to m0 - not inverted
@@ -266,11 +269,11 @@ def make_racemate_inchi(inchi):
         inchi = stereo_match.group(1) + new_stereo + stereo_match.group(2)        
     return inchi
 
-def get_identification_string(err, ctab, inchi, stereo_category=None, extra_stereo=None):
+def _get_identification_string(err, ctab, inchi, stereo_category=None, extra_stereo=None):
     if err & NULL_MOL :
-        return get_null_mol_identification_string(extra_stereo)
+        return _get_null_mol_identification_string(extra_stereo)
     elif err & BAD_SET:       # bad molecules get special key
-        return get_bad_mol_identification_string(ctab, stereo_category, extra_stereo)
+        return _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo)
 
     # make key string
     pieces = []
@@ -285,11 +288,11 @@ def get_identification_string(err, ctab, inchi, stereo_category=None, extra_ster
     key_string = '/'.join(pieces)
     return key_string
 
-def get_null_mol_identification_string(extra_stereo) :
+def _get_null_mol_identification_string(extra_stereo) :
     key_string = str(uuid.uuid1 ())
     return key_string 
 
-def get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
+def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
     pieces = []
     ctab_str = ctab
     if ctab_str:       # make the ctab part of the key if available
@@ -308,18 +311,18 @@ def get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
     key_string = '/'.join(pieces)
     return key_string
 
-def identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
+def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
     """ Compute the molecule key based on the inchi string,  
     stereo category as well as extra structure 
     information """
-    key_string = get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
+    key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
     if key_string:
         return "{0}|{1}".format(MOL_KEY_VERSION, 
                                 base64.b64encode(hashlib.md5(key_string).digest())) #pylint: disable=E1101
     else:
         return None
 
-def get_chiral_identification_string(n_def, n_udf) :
+def _get_chiral_identification_string(n_def, n_udf) :
     assert n_def >= 0
     assert n_udf >= 0
     id_str = 'OTHER'
@@ -338,7 +341,8 @@ def get_chiral_identification_string(n_def, n_udf) :
             id_str = 'S_PART'   # -> assume single compound (can usually be separated)
     return id_str
 
-def err_bits_to_text(err):
+def ErrorBitsToText(err):
+    " returns a list of error bit descriptions for the error code provided "
     error_text_list = []
     for err_dict_key in ERROR_DICT:
         if (err & ERROR_DICT[err_dict_key]) > 0:
@@ -351,41 +355,41 @@ def run_struchk(data,isSmiles=True,configDir=None,logFile=None):
   return rval
 
 MolKeyResult=namedtuple('MolKeyResult',['mol_key','error','inchi','fixed_ctab','stereo_code','stereo_comment'])
-def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
+def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
     """
     >>> from rdkit.Chem.MolKey import MolKey
     >>> from rdkit.Avalon import pyAvalonTools
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl',True))
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl',True))
     >>> res.mol_key
     '1|L7676nfGsSIU33wkx//NCg=='
     >>> res.stereo_code
     'R_ONE'
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl',True))
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl',True))
     >>> res.mol_key
     '1|Aj38EIxf13RuPDQG2A0UMw=='
     >>> res.stereo_code
     'S_ABS'
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl',True))
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl',True))
     >>> res.mol_key
     '1|9ypfMrhxn1w0ncRooN5HXw=='
     >>> res.stereo_code
     'S_ABS'
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl',True))
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl',True))
     >>> res.mol_key
     '1|c96jMSlbn7O9GW5d5uB9Mw=='
     >>> res.stereo_code
     'S_PART'
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl',True))
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl',True))
     >>> res.mol_key
     '1|+B+GCEardrJteE8xzYdGLA=='
     >>> res.stereo_code
     'S_ABS'
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
     >>> res.mol_key
     '1|5H9R3LvclagMXHp3Clrc/g=='
     >>> res.stereo_code 
     'S_UNKN'
-    >>> res=MolKey.get_key_for_ctab(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
+    >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
     >>> res.mol_key
     '1|cqKWVsUEY6QNpGCbDaDTYA=='
     >>> res.stereo_code
@@ -394,16 +398,14 @@ def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
     'InChI=1/C8H6BrCl2F/c9-7(10)5-3-1-2-4-6(5)8(11)12/h1-4,7-8H/t7?,8?'
 
     """
-
-
     if logger is None:
         logger = logging
     try:
-        err, inchi, fixed_mol = get_inchi(ctab)
+        err, inchi, fixed_mol = GetInchiForCTAB(ctab)
     except BadMoleculeException:
         logger.warn('Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab))
         err = NULL_MOL
-        key = identify(err, '', '', None, None)
+        key = _identify(err, '', '', None, None)
         return MolKeyResult(key, err, '', '', None, None)
 
     # read or estimate stereo category and/or extra structure description
@@ -422,11 +424,11 @@ def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
     if not (err & BAD_SET):
         (n_stereo, n_undef_stereo, is_meso, dummy) = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
         if stereo_category == None or stereo_category == 'DEFAULT' :  # compute if not set
-            stereo_category = get_chiral_identification_string(n_stereo - n_undef_stereo,
+            stereo_category = _get_chiral_identification_string(n_stereo - n_undef_stereo,
                                                                n_undef_stereo)
     else:
         raise NotImplementedError("currently cannot generate correct SMREG keys for molecules with struchk errors")
-    key = identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
+    key = _identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
     return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 
     
