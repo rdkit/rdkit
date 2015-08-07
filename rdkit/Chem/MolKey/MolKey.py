@@ -34,6 +34,7 @@
 #pylint: disable=C0111,W0311
 from rdkit.Avalon import pyAvalonTools
 from rdkit.Chem.MolKey import inchi_info
+from rdkit.Chem.MolKey import InchiInfo
 from rdkit import RDConfig
 from rdkit import Chem
 from collections import namedtuple
@@ -419,7 +420,7 @@ def get_key_for_ctab(ctab,stereo_info=None,stereo_comment=None,logger=None):
             logger.warn('stereo code {0} not recognized. Using default value for ctab.'.format(code_fld))
                 
     if not (err & BAD_SET):
-        (n_stereo, n_undef_stereo, is_meso, dummy) = inchi_info.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
+        (n_stereo, n_undef_stereo, is_meso, dummy) = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
         if stereo_category == None or stereo_category == 'DEFAULT' :  # compute if not set
             stereo_category = get_chiral_identification_string(n_stereo - n_undef_stereo,
                                                                n_undef_stereo)

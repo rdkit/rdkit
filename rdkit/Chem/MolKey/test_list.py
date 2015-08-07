@@ -1,6 +1,6 @@
 
 tests=[
-  ("python","inchi_info.py",{}),
+  ("python","InchiInfo.py",{}),
   ("python","MolKey.py",{}),
   ]
 
