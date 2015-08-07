@@ -36,7 +36,7 @@ import re
 import unittest
 from rdkit import Chem
 
-def is_achiral_by_symmetry(INCHI) :
+def _is_achiral_by_symmetry(INCHI) :
     mol = Chem.MolFromInchi(INCHI)
     if not mol :
         mol = Chem.MolFromInchi('InChI=1/{0}'.format(INCHI))
@@ -137,7 +137,7 @@ class InchiInfo(object):
                     num_undef_stereo = len(undef_stereo_centers)
                     #    Meso centres    --    VT     --    2011.12.08
                     inchi_layer = self.parsed_inchi[con_layer][fixed_layer][iso_layer]
-                    is_meso = is_meso or (num_undef_stereo > 1 and is_achiral_by_symmetry(inchi_layer))
+                    is_meso = is_meso or (num_undef_stereo > 1 and _is_achiral_by_symmetry(inchi_layer))
                     sp3_stereo[fixed_layer][iso_layer] = (num_stereo, num_undef_stereo, is_meso, stereo)
         return sp3_stereo                    
 
