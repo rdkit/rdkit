@@ -36,6 +36,10 @@ import re
 import unittest
 from rdkit import Chem
 
+from rdkit.Chem import inchi
+if not inchi.INCHI_AVAILABLE:
+    raise ImportError("This code requires the RDKit to be built with InChI suport")
+
 def _is_achiral_by_symmetry(INCHI) :
     mol = Chem.MolFromInchi(INCHI)
     if not mol :
