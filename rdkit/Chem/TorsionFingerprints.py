@@ -14,8 +14,6 @@ from rdkit import RDConfig
 from rdkit import Geometry
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import rdMolTransforms
-from rdkit.Chem import rdDepictor
 import math, os
 
 def _doMatch(inv, atoms):
