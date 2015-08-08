@@ -49,7 +49,7 @@ tests=[
 
 # only attempt the MolKey tests if we have the pre-reqs:
 try:
-  from rdkit.Chem import MolKey
+  from rdkit.Chem.MolKey import MolKey
   tests.append(("python","test_list.py",{'dir':'MolKey'}))
 except ImportError:
   pass
