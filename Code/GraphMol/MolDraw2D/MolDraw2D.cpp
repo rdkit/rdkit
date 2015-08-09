@@ -910,7 +910,7 @@ namespace RDKit {
 
       std::string h="";
       int num_h=atom.getAtomicNum()==6 ? 0 : atom.getTotalNumHs(); // FIX: still not quite right
-      if( num_h > 0 ) {
+      if( num_h > 0 && !atom.hasQuery() ) {
         h = "H";
         if( num_h > 1 ) {
           // put the number as a subscript
