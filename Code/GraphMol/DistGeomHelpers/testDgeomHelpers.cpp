@@ -565,7 +565,7 @@ void testMultipleConfsExpTors() {
     ff->initialize();
     energy = ff->calcEnergy();
     //BOOST_LOG(rdInfoLog) << energy << std::endl;
-    TEST_ASSERT(energy>100.0);
+    TEST_ASSERT(energy>50.0);
     TEST_ASSERT(energy<300.0);
     delete ff;
   }
