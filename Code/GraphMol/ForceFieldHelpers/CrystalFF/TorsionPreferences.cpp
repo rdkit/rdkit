@@ -430,7 +430,7 @@ namespace ForceFields {
         "[a:1][c:2]!@;-[CX3:3]=[CX3H0:4] 1 0.0 -1 0.7 1 0.0 1 0.6 1 0.0 1 -0.5\n"
         "[a:1][a:2]!@;-[CX3:3]=[CX3H2:4] 1 0.0 -1 1.3 1 0.0 1 0.0 1 0.0 1 0.0\n"
         "[a:1][a:2]!@;-[CX3:3]=[CX3H1:4] 1 0.0 -1 5.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
-        "[*:1][SX2:2]!@;-a[SX2:3][*:4] 1 0.0 1 12.9 1 0.0 1 0.0 1 0.0 1 0.0\n"
+        "[*:1][SX2:2]!@;-[SX2:3][*:4] 1 0.0 1 12.9 1 0.0 1 0.0 1 0.0 1 0.0\n"
          // ------
          //  these patterns were added as part of the ET-DG work
          // non-aromatic double bonds
@@ -630,7 +630,8 @@ namespace ForceFields {
         for (VECT_INT_VECT_CI rii = atomRings.begin(); rii != atomRings.end(); rii++) {
           unsigned int rSize = rii->size();
           // we don't need to deal with 3 membered rings
-          if (rSize < 4) {
+          // and we do not treat rings greater than 6
+          if (rSize < 4 || rSize > 6) {
             continue;
           }
           // loop over ring atoms
@@ -643,8 +644,8 @@ namespace ForceFields {
             bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
             // if all 4 atoms are aromatic, add torsion
             if (!(doneBonds[bid2])
-                && mol.getAtomWithIdx(aid1)->getIsAromatic() && mol.getAtomWithIdx(aid2)->getIsAromatic()
-                && mol.getAtomWithIdx(aid3)->getIsAromatic() && mol.getAtomWithIdx(aid4)->getIsAromatic()) {
+                && (mol.getAtomWithIdx(aid1)->getHybridization() == Atom::SP2) && (mol.getAtomWithIdx(aid2)->getHybridization() == Atom::SP2)
+                && (mol.getAtomWithIdx(aid3)->getHybridization() == Atom::SP2) && (mol.getAtomWithIdx(aid4)->getHybridization() == Atom::SP2)) {
               doneBonds[bid2] = 1;
               std::vector<int> atoms(4);
               atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
