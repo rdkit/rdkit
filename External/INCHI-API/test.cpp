@@ -430,6 +430,29 @@ void testGithubIssue437(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue562(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 562: InChI radicals not properly converted" << std::endl;
+
+  {
+    std::string inchi="InChI=1S/HO/h1H";
+    ExtraInchiReturnValues tmp;
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit()==true);    
+
+    std::string oinchi=MolToInchi(*m,tmp);
+    
+    TEST_ASSERT(oinchi==inchi);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -446,4 +469,5 @@ int main(){
   testMultiThread();
 #endif
   testGithubIssue437();
+  testGithubIssue562();
 }
