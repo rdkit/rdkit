@@ -140,24 +140,21 @@ namespace RDKit {
     
     void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters) {
       ROMol::ConstAtomIterator ati;
-      INT_PAIR_VECT nbrs;
+      INT_VECT nbrs;
       ROMol::OEDGE_ITER beg,end;
       Atom *oatom;
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
-          if ((*ati)->hasProp(common_properties::_CIPCode)) { 
+          Atom::ChiralType chiralType=(*ati)->getChiralType();
+          if (chiralType==Atom::CHI_TETRAHEDRAL_CW || chiralType==Atom::CHI_TETRAHEDRAL_CCW) { 
             // make a chiral set from the neighbors
             nbrs.clear();
             nbrs.reserve(4);
             // find the neighbors of this atom and enter them into the
-            // nbr list along with their CIPRanks
+            // nbr list 
             boost::tie(beg,end) = mol.getAtomBonds(*ati);
             while (beg != end) {
-              oatom = mol[*beg]->getOtherAtom(*ati);
-              unsigned int rank;
-              oatom->getProp(common_properties::_CIPRank, rank);
-              INT_PAIR rAid(rank, oatom->getIdx());
-              nbrs.push_back(rAid);
+              nbrs.push_back(mol[*beg]->getOtherAtomIdx(*ati));
               ++beg;
             }
             // if we have less than 4 heavy atoms as neighbors,
@@ -166,33 +163,26 @@ namespace RDKit {
             bool includeSelf = false;
             CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
-            std::sort(nbrs.begin(), nbrs.end());
             if (nbrs.size() < 4) {
-              unsigned int rank;
-              (*ati)->getProp(common_properties::_CIPRank, rank);
-              INT_PAIR rAid(rank, (*ati)->getIdx());
-              nbrs.insert(nbrs.begin(), rAid); 
+              nbrs.insert(nbrs.begin(), (*ati)->getIdx()); 
               includeSelf = true;
             }
                             
             // now create a chiral set and set the upper and lower bound on the volume
-            std::string cipCode;
-            (*ati)->getProp(common_properties::_CIPCode, cipCode);
-            
-            if (cipCode == "S") { 
+            if (chiralType == Atom::CHI_TETRAHEDRAL_CW) { 
               // postive chiral volume
-              DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0].second,
-                                                                  nbrs[1].second,
-                                                                  nbrs[2].second,
-                                                                  nbrs[3].second,
+              DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0],
+                                                                  nbrs[1],
+                                                                  nbrs[2],
+                                                                  nbrs[3],
                                                                   5.0, 100.0);
               DistGeom::ChiralSetPtr cptr(cset);
               chiralCenters.push_back(cptr);
             } else {
-              DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0].second,
-                                                                  nbrs[1].second,
-                                                                  nbrs[2].second,
-                                                                  nbrs[3].second,
+              DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0],
+                                                                  nbrs[1],
+                                                                  nbrs[2],
+                                                                  nbrs[3],
                                                                   -100.0, -5.0);
               DistGeom::ChiralSetPtr cptr(cset);
               chiralCenters.push_back(cptr);
