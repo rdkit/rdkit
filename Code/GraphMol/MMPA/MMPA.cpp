@@ -19,6 +19,8 @@
 
 #include "MMPA.h"
 
+//#define _DEBUG // enable debug info output
+
 namespace RDKit {
   namespace MMPA {
 
@@ -82,13 +84,6 @@ namespace RDKit {
         }
     }
 
-    static inline
-    void appendBonds(BondVector_t& bonds,
-               const BondVector_t& matching_bonds){
-        for(BondVector_t::const_iterator b=matching_bonds.begin(); b!=matching_bonds.end(); ++b)
-            bonds.push_back(*b);
-    }
-
     static
     void addResult(std::vector< std::pair<ROMOL_SPTR,ROMOL_SPTR> >& res, //const SignatureVector& resSignature,
                    const ROMol& mol, const BondVector_t& bonds_selected, size_t maxCuts) {
@@ -100,9 +95,6 @@ std::cout<<res.size()+1<<": ";
         unsigned isotope = 0;
         std::map<unsigned, unsigned> isotope_track;
         for(size_t i=0; i < bonds_selected.size(); i++ ){
-            isotope += 1;
-            // remove the bond
-            em.removeBond(bonds_selected[i].first, bonds_selected[i].second);
 #ifdef _DEBUG
 {
     std::string symbol= em.getAtomWithIdx(bonds_selected[i].first)->getSymbol();
@@ -112,8 +104,8 @@ std::cout<<res.size()+1<<": ";
         sprintf(a1, "\'%s\'", symbol.c_str(), label);
     else
         sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
-    symbol = em.getAtomWithIdx(bonds_selected[i].second)->getSymbol();
-    em.getAtomWithIdx(bonds_selected[i].second)->getPropIfPresent(common_properties::molAtomMapNumber, label);
+    symbol =  em.getAtomWithIdx(bonds_selected[i].second)->getSymbol();
+    label =0; em.getAtomWithIdx(bonds_selected[i].second)->getPropIfPresent(common_properties::molAtomMapNumber, label);
     char a2[32];
     if(0==label)
         sprintf(a2, "\'%s\'", symbol.c_str(), label);
@@ -123,6 +115,10 @@ std::cout<<res.size()+1<<": ";
     std::cout<<"("<<bonds_selected[i].first<<a1<<","<<bonds_selected[i].second<<a2<<") ";
 }
 #endif
+            isotope += 1;
+            // remove the bond
+            em.removeBond(bonds_selected[i].first, bonds_selected[i].second);
+
             // now add attachement points and set attachment point lables
             Atom *a = new Atom(0);
             a->setProp(common_properties::molAtomMapNumber, (int)isotope);
@@ -170,8 +166,12 @@ std::cout<<"\n";
                         break;
                     }
                 }
-                if(!valid)
+                if(!valid) {
+#ifdef _DEBUG
+std::cout<<"isotope>=3: invalid fragments. fragment with maxCut connection points not found"<<"\n";
+#endif
                     return;
+                }
             }
 
             size_t iCore = -1;
@@ -283,13 +283,22 @@ std::cout<<res.size()+1<<" --- DUPLICATE Result FOUND --- ri="<<ri<<"\n";
 #endif
     }
 
-    static
+//=====================================================================
+    static inline
+    void appendBonds(BondVector_t& bonds,
+               const BondVector_t& matching_bonds){
+        for(BondVector_t::const_iterator b=matching_bonds.begin(); b!=matching_bonds.end(); ++b)
+            bonds.push_back(*b);
+    }
+
+    static inline
     void processCuts(size_t i, size_t maxCuts, BondVector_t& bonds_selected, const std::vector<BondVector_t>& matching_bonds,
                      const ROMol& mol, std::vector< std::pair<ROMOL_SPTR,ROMOL_SPTR> >& res){
+
         for(size_t x=i; x < matching_bonds.size(); x++ ){
             appendBonds(bonds_selected, matching_bonds[x]);
             addResult(res, mol, bonds_selected, maxCuts);
-            if(i < maxCuts-1)
+            if(bonds_selected.size() < maxCuts)
                 processCuts (x+1, maxCuts, bonds_selected, matching_bonds, mol, res);
             bonds_selected.pop_back();
         }
@@ -313,8 +322,7 @@ for(size_t i=0; i < mol.getNumAtoms(); i++)
         sprintf(a1, "\'%s\'", symbol.c_str(), label);
     else
         sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
-    std::cout<<"Atom "<<i<<": "<<a1<<" Bonds:";
-
+    std::cout<<"Atom "<<i<<": "<<a1;//<<" Bonds:";
     std::cout<<"\n";
 }
 #endif
@@ -324,39 +332,39 @@ for(size_t i=0; i < mol.getNumAtoms(); i++)
         std::vector<MatchVectType> matching_atoms; //one bond per match ! with default pattern
         unsigned int total = SubstructMatch(mol, *smarts, matching_atoms);
 #ifdef _DEBUG
-std::cout<<"total="<<total<<"\n";
+std::cout<<"total substructs ="<<total<<"\nmatching bonds (atom1, atom2):\n";
 #endif
         if(0==total) // Not found.  Return empty set of molecules
             return false;
 #ifdef _DEBUG
 for(size_t i=0; i < matching_atoms.size(); i++)
 {
-    std::string symbol= mol.getAtomWithIdx(matching_atoms[i][0].second)->getSymbol();
-    int         label=0;mol.getAtomWithIdx(matching_atoms[i][0].second)->getPropIfPresent(common_properties::molAtomMapNumber, label);
+    std::string symbol=   mol.getAtomWithIdx(matching_atoms[i][0].second)->getSymbol();
+    int         label =0; mol.getAtomWithIdx(matching_atoms[i][0].second)->getPropIfPresent(common_properties::molAtomMapNumber, label);
     char a1[32];
     if(0==label)
         sprintf(a1, "\'%s\'", symbol.c_str(), label);
     else
         sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
-    symbol = mol.getAtomWithIdx(matching_atoms[i][1].second)->getSymbol();
-    label  = mol.getAtomWithIdx(matching_atoms[i][1].second)->getIsotope();
+    symbol =    mol.getAtomWithIdx(matching_atoms[i][1].second)->getSymbol();
+    label  = 0; mol.getAtomWithIdx(matching_atoms[i][1].second)->getPropIfPresent(common_properties::molAtomMapNumber, label);
     char a2[32];
     if(0==label)
         sprintf(a2, "\'%s\'", symbol.c_str(), label);
     else
         sprintf(a2, "\'%s:%u\'", symbol.c_str(), label);
 
-    std::cout<<i+1<<": ("<<matching_atoms[i][0].second<<a1<<","<<matching_atoms[i][1].second<<a2<<") \n";
+    std::cout<<i<<": ("<<matching_atoms[i][0].second<<a1<<","<<matching_atoms[i][1].second<<a2<<") \n";
 }
 #endif
 
         std::vector<BondVector_t> matching_bonds; // List of matched query's bonds
         convertMatchingToBondVect(matching_bonds, matching_atoms, mol);
 #ifdef _DEBUG
-std::cout<<"matching_bonds="<<matching_bonds.size()<<"\n";
+std::cout<<"total matching_bonds = "<<matching_bonds.size()<<"\n";
 #endif
 
-        //loop to generate every single, double and triple cut in the molecule
+        //loop to generate every cut in the molecule
         BondVector_t bonds_selected;
         processCuts (0, maxCuts, bonds_selected, matching_bonds, mol, res);
         return true;

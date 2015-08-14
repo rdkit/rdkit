@@ -57,8 +57,9 @@
 
 using namespace RDKit;
 
-unsigned long long T0;
-unsigned long long t0;
+static unsigned n_failed = 0;
+static unsigned long long T0;
+static unsigned long long t0;
 
 #ifdef WIN32
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
@@ -282,7 +283,7 @@ Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]
                 std::cout << " ";
             if(failed) {
                 test_failed = true;
-                std::cout << j+1 << ":*FAILED* " << ss.str() <<"\n";// << "FS: " << fs[j] <<"\n";
+                std::cout << j+1 << ": NOREF. Reference data NOT LISTED in test case." << ss.str() <<"\n";// << "FS: " << fs[j] <<"\n";
             }
             else
                 std::cout << j+1 << ": PASSED. matchedRefRes = "<< matchedRefRes+1 <<"\n";//ok: << "ss: " << ss.str() <<"\n";
@@ -297,6 +298,8 @@ Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]
         }
         std::cout << " -----------------------------------\n"
             <<"DO TEST_ASSERT():\n";
+        if(test_failed)
+            n_failed++;
         TEST_ASSERT(!test_failed);
     }
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -389,12 +392,13 @@ void test2() {
                 fs2res[matchedRefRes] = res_idx;
                 std::cout << res_idx + 1 << ": PASSED. matchedRefRes = " << matchedRefRes + 1 << "\n"; //ok: << "ss: " << ss.str() <<"\n";
             } else {
-                std::cout << res_idx + 1 << ": FAILED " << res_str.str() << "\n"; //<< "FS: " << fs[j] <<"\n";
+                std::cout << res_idx + 1 << ": NOREF. Reference data NOT LISTED in test case." << res_str.str() << "\n"; //<< "FS: " << fs[j] <<"\n";
                 has_failed = true;
             }
             std::cout.flush();
         }
-        if (has_failed) {
+        if (has_failed && fs2res.size() < sizeof (fs) / sizeof (fs[0])) {
+            n_failed++;
             std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
             for (size_t r = 0; r < sizeof (fs) / sizeof (fs[0]); r++) {
                 if (fs2res.end() == fs2res.find(r))
@@ -469,12 +473,13 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
             fs2res[matchedRefRes] = res_idx;
             std::cout << res_idx + 1 << ": PASSED. matchedRefRes = " << matchedRefRes + 1 << "\n"; //ok: << "ss: " << ss.str() <<"\n";
         } else {
-            std::cout << res_idx + 1 << ": FAILED " << "\n";//res_str.str() << "\n"; //<< "FS: " << fs[j] <<"\n";
+            std::cout << res_idx + 1 << ": NOREF. Reference data NOT LISTED in test case." << "\n";//res_str.str() << "\n"; //<< "FS: " << fs[j] <<"\n";
             has_failed = true;
         }
         std::cout.flush();
     }
-    if (has_failed) {
+    if (has_failed && fs2res.size() < fs_size) {
+        n_failed++;
         std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
         for (size_t r = 0; r < fs_size; r++) {
             if (fs2res.end() == fs2res.find(r))
@@ -483,7 +488,6 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
     } else {
         std::cout << "\n --- ALL PASSED --- \n";
     }
-
     std::cout << " -----------------------------------\n";
 }
 
@@ -532,7 +536,8 @@ void test3() {
     { // Case1 (with additionally labeled central carbon [C:7]):
         const char* smi = "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1 Case1";
         const char* fs[] = {
-            "Cc1ccccc1NC(=O)C(C)[NH+]1CCCC1,Case1,[C:7]([*:1])([*:2])[*:3],C1CC[NH+]([*:1])C1.C[*:2].Cc1ccccc1NC(=O)[*:3]",
+              "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1,Case1,[*:1][C:7]([*:2])[*:3],C1CC[NH+]([*:3])C1.C[*:2].Cc1ccccc1NC(=O)[*:1]"
+//            "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1,Case1,[C:7]([*:1])([*:2])[*:3],C1CC[NH+]([*:1])C1.C[*:2].Cc1ccccc1NC(=O)[*:3]",
         };
         doTest(smi, fs, sizeof(fs)/sizeof(fs[0]));
     }
@@ -540,14 +545,42 @@ void test3() {
     { // Case2:
         const char* smi = "O=C(OCc1ccccc1)C(O)c1ccccc1 Case2";
         const char* fs[] = {
-            "O=C(OCc1ccccc1)C(O)c1ccccc1 Case2,C([*:1])([*:2])[*:3],O=C(OCc1ccccc1)[*:1].O[*:2].c1ccc([*:3])cc1",
+            "O=C(OCc1ccccc1)C(O)c1ccccc1,Case2,C([*:1])([*:2])[*:3],O=C(OCc1ccccc1)[*:1].O[*:2].c1ccc([*:3])cc1",
+        };
+        doTest(smi, fs, sizeof(fs)/sizeof(fs[0]));
+    }
+    BOOST_LOG(rdInfoLog) << "\tDone" << std::endl;
+}
+
+void testCase_1() {
+ // Case1 (with additionally labeled central carbon [C:7]):
+    const char* smi = "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1 Case1";
+    const char* fs[] = {
+        "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1,Case1,[*:1][C:7]([*:2])[*:3],C1CC[NH+]([*:3])C1.C[*:2].Cc1ccccc1NC(=O)[*:1]"
+    };
+    doTest(smi, fs, sizeof(fs)/sizeof(fs[0]));
+}
+/*
+void test4() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "MMPA test4()\n" << std::endl;
+    
+    {
+        const char* smi = "Cc1ccccc1NC(=O)[C:9](C)[NH+]1CCCC1 CASE-4-1";
+        const char* fs[] = { ""
         };
         doTest(smi, fs, sizeof(fs)/sizeof(fs[0]));
     }
 
+    {
+        const char* smi = "c1ccccc1NC(=O)[C:9](C)[NH+]1CCCC1 CASE-4-2";
+        const char* fs[] = { ""
+        };
+        doTest(smi, fs, sizeof(fs)/sizeof(fs[0]));
+    }
     BOOST_LOG(rdInfoLog) << "\tDone" << std::endl;
 }
-
+*/
 //====================================================================================================
 //====================================================================================================
 
@@ -566,9 +599,12 @@ int main(int argc, const char* argv[]) {
     T0 = nanoClock();
     t0 = nanoClock();
 
-//    test2();
+    testCase_1();
+// /*
+    test2();
     test3();
-    
+//    test4();
+// */    
 //    debugTest1("C[*:1].O=C(NCCO)c1c([*:1])n([O-])c2ccccc2[n+]1=O");
 //    debugTest1("C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]");
 /*
@@ -576,6 +612,13 @@ int main(int argc, const char* argv[]) {
     double sec = double(t1-T0) / 1000000.;
     printf("TOTAL Time elapsed %.4lf seconds\n", sec);
 */
+    BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+    if (0 != n_failed) {
+        std::cout << n_failed <<" TEST CASES FAILED \n";
+        TEST_ASSERT(0!=n_failed);
+    }
+    else
+        std::cout << " --- ALL TEST CASES PASSED --- \n";
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     return 0;
 }
