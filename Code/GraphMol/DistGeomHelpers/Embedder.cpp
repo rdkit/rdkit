@@ -145,7 +145,7 @@ namespace RDKit {
       Atom *oatom;
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
-          Atom::ChiralType chiralType=(*ati)->getChiralType();
+          Atom::ChiralType chiralType=(*ati)->getChiralTag();
           if (chiralType==Atom::CHI_TETRAHEDRAL_CW || chiralType==Atom::CHI_TETRAHEDRAL_CCW) { 
             // make a chiral set from the neighbors
             nbrs.clear();
@@ -154,7 +154,7 @@ namespace RDKit {
             // nbr list 
             boost::tie(beg,end) = mol.getAtomBonds(*ati);
             while (beg != end) {
-              nbrs.push_back(mol[*beg]->getOtherAtomIdx(*ati));
+              nbrs.push_back(mol[*beg]->getOtherAtom(*ati)->getIdx());
               ++beg;
             }
             // if we have less than 4 heavy atoms as neighbors,

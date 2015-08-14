@@ -1386,7 +1386,6 @@ void testGithub563() {
       MolOps::assignChiralTypesFrom3D(m2);
       MolOps::removeHs(m2);
       std::string smi = MolToSmiles(m2,true);
-      std::cerr<<smi<<std::endl;
       TEST_ASSERT(smi==csmi);
     }
     delete m;
@@ -1400,7 +1399,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 0
+#if 1
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2(); 
