@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
@@ -16,6 +15,7 @@
 #include <DistGeom/DistGeomUtils.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <iostream>
 #include "BoundsMatrixBuilder.h"
@@ -1372,13 +1372,35 @@ void testMultiThreadMultiConf() {
 }
 #endif
 
+
+void testGithub563() {
+  {
+    std::string smi = "[H][C@]1(C[NH3+])CC[C@]([H])(CNC)CC1";
+    ROMol *m = SmilesToMol(smi);
+    std::string csmi = MolToSmiles(*m,true);
+    std::cerr<<csmi<<std::endl;
+    for(unsigned int i=1;i<100;++i){
+      ROMol m2=ROMol(*m);
+      MolOps::addHs(m2);
+      DGeomHelpers::EmbedMolecule(m2,50,i);
+      MolOps::assignChiralTypesFrom3D(m2);
+      MolOps::removeHs(m2);
+      std::string smi = MolToSmiles(m2,true);
+      std::cerr<<smi<<std::endl;
+      TEST_ASSERT(smi==csmi);
+    }
+    delete m;
+  }
+}
+
+
 int main() { 
   RDLog::InitLogs();
     
   BOOST_LOG(rdInfoLog) << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 1
+#if 0
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2(); 
@@ -1488,7 +1510,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
   testGithub55();
 
-#endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
   test1();
@@ -1504,6 +1525,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test multi-threaded multi-conf embedding \n\n";
   testMultiThreadMultiConf();
 #endif
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 563: Incorrect ring stereochemistry after embedding\n\n";
+  testGithub563();
 
 
 
