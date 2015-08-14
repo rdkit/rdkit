@@ -146,7 +146,7 @@ namespace RDKit {
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
           Atom::ChiralType chiralType=(*ati)->getChiralTag();
-          if (chiralType==Atom::CHI_TETRAHEDRAL_CW || chiralType==Atom::CHI_TETRAHEDRAL_CCW) { 
+          if (chiralType==Atom::CHI_TETRAHEDRAL_CW || chiralType==Atom::CHI_TETRAHEDRAL_CCW) {
             // make a chiral set from the neighbors
             nbrs.clear();
             nbrs.reserve(4);
@@ -164,12 +164,12 @@ namespace RDKit {
             CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
             if (nbrs.size() < 4) {
-              nbrs.insert(nbrs.begin(), (*ati)->getIdx()); 
+              nbrs.insert(nbrs.end(), (*ati)->getIdx()); 
               includeSelf = true;
             }
                             
             // now create a chiral set and set the upper and lower bound on the volume
-            if (chiralType == Atom::CHI_TETRAHEDRAL_CW) { 
+            if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) { 
               // postive chiral volume
               DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0],
                                                                   nbrs[1],
