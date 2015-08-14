@@ -485,9 +485,9 @@ if __name__=='__main__':
         if(total == 1):
             continue
 
-        for xa in xrange(total):
+        for xa in range(total):
 
-            for xb in xrange(xa, total):
+            for xb in range(xa, total):
 
                 if(xa != xb):
                     #now generate the pairs

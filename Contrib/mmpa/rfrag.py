@@ -146,7 +146,7 @@ def delete_bonds(smi,id,mol,bonds,out):
             isotope_track = {}
             side_chain_fragments = side_chains.split(".")
 
-            for s in xrange( len(side_chain_fragments) ):
+            for s in range( len(side_chain_fragments) ):
                 matchObj = re.search( '\[\*\:([123])\]', side_chain_fragments[s] )
                 if matchObj:
                     #add to isotope_track with key: old_isotope, value:
@@ -202,20 +202,20 @@ def fragment_mol(smi,id):
         bonds_selected = []
 
         #loop to generate every single, double and triple cut in the molecule
-        for x in xrange( total ):
+        for x in range( total ):
             #print matches[x]
             bonds_selected.append(matching_atoms[x])
             delete_bonds(smi,id,mol,bonds_selected,outlines)
             bonds_selected = []
 
-            for y in xrange(x+1,total):
+            for y in range(x+1,total):
                 #print matching_atoms[x],matching_atoms[y]
                 bonds_selected.append(matching_atoms[x])
                 bonds_selected.append(matching_atoms[y])
                 delete_bonds(smi,id,mol,bonds_selected,outlines)
                 bonds_selected = []
 
-                for z in xrange(y+1, total):
+                for z in range(y+1, total):
                     #print matching_atoms[x],matching_atoms[y],matching_atoms[z]
                     bonds_selected.append(matching_atoms[x])
                     bonds_selected.append(matching_atoms[y])
