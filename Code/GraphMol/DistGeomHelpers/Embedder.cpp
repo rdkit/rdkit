@@ -111,7 +111,28 @@ namespace RDKit {
             ++nPasses;
           }
         }
+        delete field;
+        field=NULL;
         //std::cerr<<"   "<<field->calcEnergy()<<" after npasses: "<<nPasses<<std::endl;
+#if 0
+        if (chiralCenters->size()>0){
+          // do some additional iterations with a stronger chiral volume constraint
+
+          field = DistGeom::constructForceField(*mmat, *positions,
+                                                *chiralCenters,
+                                                5.0, 0.1, 
+                                                0,basinThresh);
+          field->initialize();
+          //std::cerr<<"FIELD E: "<<field->calcEnergy()<<std::endl;
+          if(field->calcEnergy() > ERROR_TOL){
+            int needMore = 1;
+            while(needMore){
+              needMore = field->minimize(400,optimizerForceTol);
+            }
+          }
+          delete field;
+        }
+#endif
         // now redo the minimization if we have a chiral center, this
         // time removing the chiral constraints and
         // increasing the weight on the fourth dimension
@@ -133,7 +154,6 @@ namespace RDKit {
           }
           delete field2;
         }
-        delete field;
       }
       return gotCoords;
     }
