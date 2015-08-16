@@ -1390,6 +1390,67 @@ void testGithub563() {
     }
     delete m;
   }
+  {
+    // sample molecules (either from ChEMBL or derived from ChEMBL) that were problematic
+    std::string smis[] = {"C1CN2C[C@@H]1[C@@]1(CN=CO1)C2",
+                          "OC(=O)[C@@H]1[C@H]2CC[C@H](O2)[C@@H]1C(=O)O",
+                          "O=C(CCc1ccccc1)OC[C@H]2C[C@@H]3O[C@H]2[C@@H]4[C@H]3C(=O)OC4=O",
+                          "Cn1cc(C2=NC[C@]3(CN4CC[C@@H]3C4)O2)c5ccccc15",
+                          "Nc1ncnc2c1ncn2[C@@H]3C=C(CO)[C@@H](O)[C@H]3O",
+                          "CO[C@H]1[C@@H](N)[C@@H](O)[C@@H](O)[C@H]1O",
+                          "CO[C@@H]1[C@@H](N)[C@@H](O)[C@@H](O)[C@H]1O",
+                          "CCS[C@@H]1[C@@H](N)[C@@H](O)[C@@H](O)[C@H]1O",
+                          "CCCCC[C@H](O)\\C=C\\[C@@]1(F)[C@H](O)C[C@H](O)[C@@H]1C\\C=C/CCCC(=O)OC",
+                          "CCCCC[C@@H](O)\\C=C\\[C@]1(F)[C@@H](O)C[C@@H](O)[C@H]1C\\C=C/CCCC(=O)OC",
+                          "CNC(=O)Oc1cccc2[C@@H]3[C@@H](CCN3C)COc12",
+                          "CNC(=O)Oc1ccc2OC[C@@H]3CCN(C)[C@@H]3c2c1",
+                          "CN1CC[C@H]2COc3c(O)cccc3[C@@H]12",
+                          "CC(=O)C[C@@]12CCC[C@H]1[C@@H]3CCC4=CC(=O)CC[C@@H]4[C@H]3CC2",
+                          "OC(=O)[C@@H]1C[C@H]2C[C@@H](CCc3nn[nH]n3)CC[C@H]2CN1",
+                          "COc1ccc2[C@H](O)[C@@H](COc2c1)N3CCC(O)(CC3)c4ccc(F)cc4",
+                          "O[C@@H]1[C@@H](COc2cc(O)ccc12)N3CCC(Cc4ccccc4)CC3",
+                          "O[C@H]1[C@H](COc2cc(O)ccc12)N3CCC(O)(CC3)c4ccccc4",
+                          "CC(=O)c1ccc2C[C@@H]3[C@@H]4CCCC[C@]4(CCN3CC5CC5)c2c1",
+                          "CC(=O)O[C@@H]1CC[C@@H]2CN3CCc4cc5OCOc5cc4[C@@H]3C[C@@H]2C1",
+                          "COc1cc2CCN3C[C@H]4CC[C@@H](O)C[C@H]4C[C@H]3c2cc1OC",
+                          "O[C@H]1C[C@H]2C[C@@H]3N(CCc4cc5OCOc5cc34)C[C@H]2C[C@H]1C#N",
+                          "COC(=O)[C@@H]1C[C@@](C)(NC(=O)N1)C(=O)O",
+                          "CC(=O)OC1=C(C[C@H]2Cc3cc4cccc(O)c4c(O)c3C(=O)[C@H]2C1)Sc5ccccc5",
+                          "Nc1ncnc2c1ncn2[C@H]3C[C@H](O)[C@@H](CO)C3",
+                          "C[C@@H](N1CC[C@@]23CCCC[C@@H]2[C@@H]1Cc4ccc(OCc5cccc(F)c5)cc34)C(=O)N",
+                          "CN1C(=O)CC[C@@]2(C)C1=CCc3cc(Cl)ccc23",
+                          "Cc1nc(COc2ccc3OC[C@H](Cc4cccnc4)[C@H](O)c3c2)ccc1[N+](=O)[O-]",
+                          "EOS"
+    };
+    for(unsigned int idx=0;smis[idx]!="EOS";++idx){
+      ROMol *m = SmilesToMol(smis[idx]);
+      std::string csmi = MolToSmiles(*m,true);
+      std::cerr<<csmi<<std::endl;
+      for(unsigned int i=1;i<20;++i){ // increase the limit here to make this a real torture test
+        RWMol m2=ROMol(*m);
+        MolOps::addHs(m2);
+        int cid=DGeomHelpers::EmbedMolecule(m2,50,i);
+        TEST_ASSERT(cid>=0);
+        MolOps::assignChiralTypesFrom3D(m2);
+
+        //m2.setProp("_Name",smis[idx]);
+        //std::cerr<<MolToMolBlock(m2)<<std::endl;
+        //TEST_ASSERT(0);
+        MolOps::removeHs(m2);
+        std::string smi = MolToSmiles(m2,true);
+        if(smi!=csmi){
+          std::cerr<<"-------------"<<std::endl;
+          std::cerr<<smis[idx]<<" "<<i<<std::endl;
+          std::cerr<<smi<<"\n"<<csmi<<std::endl;
+          m2.setProp("_Name",smis[idx]);
+          std::cerr<<MolToMolBlock(m2)<<std::endl;
+        }
+        TEST_ASSERT(smi==csmi);
+
+      }
+      delete m;
+    }
+  }
 }
 
 
