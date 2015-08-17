@@ -1390,6 +1390,9 @@ void testGithub563() {
     }
     delete m;
   }
+}
+
+void testGithub568() {
   {
     // sample molecules (either from ChEMBL or derived from ChEMBL) that were problematic
     std::string smis[] = {"C1CN2C[C@@H]1[C@@]1(CN=CO1)C2",
@@ -1590,6 +1593,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test github issue 563: Incorrect ring stereochemistry after embedding\n\n";
   testGithub563();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 568: Incorrect stereochemistry after embedding\n\n";
+  testGithub568();
 
 
 
