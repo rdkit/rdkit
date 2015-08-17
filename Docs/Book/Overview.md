@@ -1,10 +1,9 @@
-An overview of the RDKit
-========================
+# An overview of the RDKit
 
-What is it?
------------
 
--   Open source toolkit for cheminformatics
+# What is it?
+
+## Open source toolkit for cheminformatics
     -   BSD licensed
     -   Core data structures and algorithms in C++
     -   Python (2.x and 3.x) wrapper generated using Boost.Python
@@ -13,7 +12,7 @@ What is it?
     -   Descriptor generation for machine learning
     -   Molecular database cartridge for PostgreSQL
     -   Cheminformatics nodes for KNIME (distributed from the KNIME community site: <http://tech.knime.org/community/rdkit>)
--   Operational:
+## Operational:
     -   <http://www.rdkit.org>
     -   Supports Mac/Windows/Linux
     -   Releases every 6 months
@@ -33,63 +32,60 @@ What is it?
     -   Mailing lists at <https://sourceforge.net/p/rdkit/mailman/>, searchable archives available for  
         [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
 
--   History:
+## History:
     -   2000-2006: Developed and used at Rational Discovery for building predictive models for ADME, Tox, biological activity
     -   June 2006: Open-source (BSD license) release of software, Rational Discovery shuts down
     -   to present: Open-source development continues, use within Novartis, contributions from Novartis back to open-source version
 
-Functionality overview
-----------------------
+# Functionality overview
+    -   Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1], Corina mol2 [2], PDB
+    -   “Cheminformatics”:
+        -   Substructure searching
+        -   Canonical SMILES
+        -   Chirality support (i.e. R/S or E/Z labeling)
+        -   Chemical transformations (e.g. remove matching substructures)
+        -   Chemical reactions
+        -   Molecular serialization (e.g. mol \<-\> text)
+    -   2D depiction, including constrained depiction
+    -   2D-\>3D conversion/conformational analysis via distance geometry
+    -   UFF and MMFF94/MMFF94S implementations for cleaning up structures
+    -   Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, etc.
+    -   Similarity/diversity picking
+    -   2D pharmacophores [3]
+    -   Gasteiger-Marsili charges
+    -   Hierarchical subgraph/fragment analysis
+    -   Bemis and Murcko scaffold determination
+    -   RECAP and BRICS implementations
+    -   Multi-molecule maximum common substructure [4]
+    -   Feature maps
+    -   Shape-based similarity
+    -   RMSD-based molecule-molecule alignment
+    -   Shape-based alignment (subshape alignment [5]) [6]
+    -   Unsupervised molecule-molecule alignment using the Open3DAlign algorithm [7]
+    -   Integration with PyMOL for 3D visualization
+    -   Functional group filtering
+    -   Salt stripping
+    -   Molecular descriptor library:
+        -   Topological (κ3, Balaban J, etc.)
+        -   Compositional (Number of Rings, Number of Aromatic Heterocycles, etc.)
+        -   Electrotopological state (Estate)
+        -   clogP, MR (Wildman and Crippen approach)
+        -   “MOE like” VSA descriptors
+        -   Feature-map vectors [8]
 
--   Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1], Corina mol2 [2], PDB
--   “Cheminformatics”:
-    -   Substructure searching
-    -   Canonical SMILES
-    -   Chirality support (i.e. R/S or E/Z labeling)
-    -   Chemical transformations (e.g. remove matching substructures)
-    -   Chemical reactions
-    -   Molecular serialization (e.g. mol \<-\> text)
--   2D depiction, including constrained depiction
--   2D-\>3D conversion/conformational analysis via distance geometry
--   UFF and MMFF94/MMFF94S implementations for cleaning up structures
--   Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, etc.
--   Similarity/diversity picking
--   2D pharmacophores [3]
--   Gasteiger-Marsili charges
--   Hierarchical subgraph/fragment analysis
--   Bemis and Murcko scaffold determination
--   RECAP and BRICS implementations
--   Multi-molecule maximum common substructure [4]
--   Feature maps
--   Shape-based similarity
--   RMSD-based molecule-molecule alignment
--   Shape-based alignment (subshape alignment [5]) [6]
--   Unsupervised molecule-molecule alignment using the Open3DAlign algorithm [7]
--   Integration with PyMOL for 3D visualization
--   Functional group filtering
--   Salt stripping
--   Molecular descriptor library:
-    -   Topological (κ3, Balaban J, etc.)
-    -   Compositional (Number of Rings, Number of Aromatic Heterocycles, etc.)
-    -   Electrotopological state (Estate)
-    -   clogP, MR (Wildman and Crippen approach)
-    -   “MOE like” VSA descriptors
-    -   Feature-map vectors [8]
+        - MQN [9]
+    -   Similarity Maps [10]
+    -   Torsion Fingerprint Differences for comparing conformations [11]
+    -   Machine Learning:
+        -   Clustering (hierarchical, Butina)
+        -   Information theory (Shannon entropy, information gain, etc.)
+    -   Tight integration with the [IPython](http://ipython.org) notebook and qtconsole.
 
-    - MQN [9]
--   Similarity Maps [10]
--   Torsion Fingerprint Differences for comparing conformations [11]
--   Machine Learning:
-    -   Clustering (hierarchical, Butina)
-    -   Information theory (Shannon entropy, information gain, etc.)
--   Tight integration with the [IPython](http://ipython.org) notebook and qtconsole.
-
-The Contrib Directory
----------------------
+# The Contrib Directory
 
 The Contrib directory, part of the standard RDKit distribution, includes code that has been contributed by members of the community.
 
--   **LEF**: Local Environment Fingerprints
+## LEF: Local Environment Fingerprints
 
     Contains python source code from the publications:
 
@@ -98,13 +94,13 @@ The Contrib directory, part of the standard RDKit distribution, includes code th
 
     Contribution from Anna Vulpetti
 
--   **M\_Kossner**:
+## M\_Kossner
 
     Contains a set of pharmacophoric feature definitions as well as code for finding molecular frameworks.
 
     Contribution from Markus Kossner
 
--   **PBF**: Plane of best fit
+## PBF: Plane of best fit
 
     Contains C++ source code and sample data from the publication:
 
@@ -112,7 +108,7 @@ The Contrib directory, part of the standard RDKit distribution, includes code th
 
     Contribution from Nicholas Firth
 
--   **mmpa**: Matched molecular pairs
+## mmpa: Matched molecular pairs
 
     Python source and sample data for an implementation of the matched-molecular pair algorithm described in the publication:
 
@@ -124,7 +120,7 @@ The Contrib directory, part of the standard RDKit distribution, includes code th
 
     Contribution from Jameed Hussain.
 
--   **SA\_Score**: Synthetic assessibility score
+## SA\_Score: Synthetic assessibility score
 
     Python source for an implementation of the SA score algorithm described in the publication:
 
@@ -132,22 +128,21 @@ The Contrib directory, part of the standard RDKit distribution, includes code th
 
     Contribution from Peter Ertl
 
--   **fraggle**: A fragment-based molecular similarity algorithm
+## fraggle: A fragment-based molecular similarity algorithm
 
     Python source for an implementation of the fraggle similarity algorithm developed at GSK and described in this RDKit UGM presentation: <https://github.com/rdkit/UGM_2013/blob/master/Presentations/Hussain.Fraggle.pdf>
 
     Contribution from Jameed Hussain
 
--   **pzc**: Tools for building and validating classifiers
+## pzc: Tools for building and validating classifiers
 
     Contribution from Paul Czodrowski
 
--   **ConformerParser**: parser for Amber trajectory files
+## ConformerParser: parser for Amber trajectory files
 
     Contribution from Sereina Riniker
 
-License
--------
+# License
 
 This document is copyright (C) 2013-2015 by Greg Landrum
 
