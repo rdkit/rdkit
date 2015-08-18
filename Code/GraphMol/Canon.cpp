@@ -10,12 +10,12 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 
+namespace RDKit {
 namespace Canon {
-  using namespace RDKit;
   struct _possibleCompare : public std::binary_function<PossibleType,PossibleType,bool> {
     bool operator()(const PossibleType &arg1,const PossibleType &arg2) const {
       return (arg1.get<0>() < arg2.get<0>());
@@ -423,11 +423,10 @@ namespace Canon {
     }
   }
 
-
   // finds cycles
   void dfsFindCycles(ROMol &mol,int atomIdx,int inBondIdx,
                      std::vector<AtomColors> &colors,
-                     INT_VECT &ranks,
+                     const UINT_VECT &ranks,
                      INT_VECT &atomOrders,
                      VECT_INT_VECT &atomRingClosures,
                      const boost::dynamic_bitset<> *bondsInPlay,
@@ -495,7 +494,7 @@ namespace Canon {
             rank += (hsh%MAX_NATOMS)*MAX_NATOMS*MAX_NATOMS;
           }
         }
-        //std::cerr<<"   p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
+       //std::cerr<<"aIdx: "<< atomIdx <<"   p: "<<otherIdx<<" Rank: "<<ranks[otherIdx] <<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
         possibles.push_back(PossibleType(rank,otherIdx,theBond.get()));
       }
     }
@@ -549,7 +548,7 @@ namespace Canon {
   void dfsBuildStack(ROMol &mol,int atomIdx,int inBondIdx,
                      std::vector<AtomColors> &colors,
                      VECT_INT_VECT &cycles,
-                     INT_VECT &ranks,
+                     const UINT_VECT &ranks,
                      INT_VECT &cyclesAvailable,
                      MolStack &molStack,
                      INT_VECT &atomOrders,
@@ -647,7 +646,7 @@ namespace Canon {
           // ring closure or finished atom... skip it.
           continue;
         }
-        long rank=ranks[otherIdx];
+        unsigned long rank=ranks[otherIdx];
         if( theBond->getOwningMol().getRingInfo()->numBondRings(theBond->getIdx()) ){
           if(!bondSymbols){
             rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
@@ -669,7 +668,6 @@ namespace Canon {
     //
     // ---------------------
     std::sort(possibles.begin(),possibles.end(),_possibleCompare());
-
 
     // ---------------------
     //
@@ -718,7 +716,7 @@ namespace Canon {
   void canonicalDFSTraversal(ROMol &mol,int atomIdx,int inBondIdx,
                              std::vector<AtomColors> &colors,
                              VECT_INT_VECT &cycles,
-                             INT_VECT &ranks,
+                             const UINT_VECT &ranks,
                              INT_VECT &cyclesAvailable,
                              MolStack &molStack,
                              INT_VECT &atomOrders,
@@ -881,10 +879,11 @@ namespace Canon {
 
   void canonicalizeFragment(ROMol &mol,int atomIdx,
                             std::vector<AtomColors> &colors,
-                            INT_VECT &ranks,
+                            const UINT_VECT &ranks,
                             MolStack &molStack,
                             const boost::dynamic_bitset<> *bondsInPlay,
-                            const std::vector<std::string> *bondSymbols){
+                            const std::vector<std::string> *bondSymbols,
+                            bool doIsomericSmiles){
     PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
     PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
     PRECONDITION(!bondsInPlay || bondsInPlay->size()>=mol.getNumBonds(),"bondsInPlay too small");
@@ -920,11 +919,45 @@ namespace Canon {
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
                                  bondsInPlay,bondSymbols);
-    // collect some information about traversal order on chiral atoms that may be
-    // used later in SMILES generation:
-    for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
-      if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
-        (*atomIt)->setProp(common_properties::_TraversalBondIndexOrder,atomTraversalBondOrder[(*atomIt)->getIdx()]);
+
+    PRECONDITION(!molStack.empty(), "Empty stack.");
+    PRECONDITION(molStack.begin()->type == MOL_STACK_ATOM, "Corrupted stack. First element should be an atom.");
+
+    // collect some information about traversal order on chiral atoms
+    bool *numSwapsChiralAtoms=(bool *)malloc(nAtoms*sizeof(bool));
+    memset(numSwapsChiralAtoms,0,nAtoms*sizeof(bool));
+    if(doIsomericSmiles){
+      for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
+        if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = mol.getAtomBonds(*atomIt);
+          while(beg!=end){
+            if(bondsInPlay && !(*bondsInPlay)[mol[*beg]->getIdx()]){
+              (*atomIt)->setProp(common_properties::_brokenChirality,true);
+              break;
+            }
+            ++beg;
+          }
+          if((*atomIt)->hasProp(common_properties::_brokenChirality)){
+            continue;
+          }
+          INT_LIST trueOrder = atomTraversalBondOrder[(*atomIt)->getIdx()];
+          //Test if the atom is in current fragment
+          if(trueOrder.size()>0){
+            int nSwaps=  (*atomIt)->getPerturbationOrder(trueOrder);
+            if((*atomIt)->getDegree()==3 && molStack.begin()->obj.atom->getIdx() == (*atomIt)->getIdx()){
+              // This is a special case. Here's an example:
+              //   Our internal representation of a chiral center is equivalent to:
+              //     [C@](F)(O)(C)[H]
+              //   we'll be dumping it without the H, which entails a reordering:
+              //     [C@@H](F)(O)C
+              ++nSwaps;
+            }
+            if(nSwaps%2){
+              numSwapsChiralAtoms[(*atomIt)->getIdx()] = 1;
+            }
+          }
+        }
       }
     }
 
@@ -947,7 +980,7 @@ namespace Canon {
 
 
     //std::cerr<<"----->\ntraversal stack:"<<std::endl;
-    // traverse the stack and canonicalize double bonds and atoms with ring stereochemistry
+    // traverse the stack and canonicalize double bonds and atoms with (ring) stereochemistry
     for(MolStack::iterator msI=molStack.begin();
         msI!=molStack.end(); ++msI){
 #if 0
@@ -958,30 +991,63 @@ namespace Canon {
       else if(msI->type == MOL_STACK_BRANCH_CLOSE) std::cerr<<" branch close"<<std::endl;
 #endif      
       if(msI->type == MOL_STACK_BOND &&
-         msI->obj.bond->getBondType() == Bond::DOUBLE &&
-         msI->obj.bond->getStereo() > Bond::STEREOANY){
+          msI->obj.bond->getBondType() == Bond::DOUBLE &&
+          msI->obj.bond->getStereo() > Bond::STEREOANY){
         if(msI->obj.bond->getStereoAtoms().size()>=2){
           Canon::canonicalizeDoubleBond(msI->obj.bond,bondVisitOrders,atomVisitOrders,
-                                        bondDirCounts,atomDirCounts);
+              bondDirCounts,atomDirCounts);
         } else {
           // bad stereo spec:
           msI->obj.bond->setStereo(Bond::STEREONONE);
         }
       }
-      if(msI->type == MOL_STACK_ATOM &&
-         msI->obj.atom->hasProp(common_properties::_ringStereoAtoms)){
-        if(!ringStereoChemAdjusted[msI->obj.atom->getIdx()]){
-          msI->obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-          ringStereoChemAdjusted.set(msI->obj.atom->getIdx());
-        }
-        const INT_VECT &ringStereoAtoms=msI->obj.atom->getProp<INT_VECT>(common_properties::_ringStereoAtoms);
-        BOOST_FOREACH(int nbrV,ringStereoAtoms){
-          int nbrIdx=abs(nbrV)-1;
-          if(!ringStereoChemAdjusted[nbrIdx] &&
-             atomVisitOrders[nbrIdx]>atomVisitOrders[msI->obj.atom->getIdx()]){
-            mol.getAtomWithIdx(nbrIdx)->setChiralTag(msI->obj.atom->getChiralTag());
-            if(nbrV<0) mol.getAtomWithIdx(nbrIdx)->invertChirality();
-            ringStereoChemAdjusted.set(nbrIdx);
+      if(doIsomericSmiles){
+        if(msI->type == MOL_STACK_ATOM && msI->obj.atom->getChiralTag()!=Atom::CHI_UNSPECIFIED
+            && !msI->obj.atom->hasProp(common_properties::_brokenChirality)){
+          if(msI->obj.atom->hasProp(common_properties::_ringStereoAtoms)){
+            if(!ringStereoChemAdjusted[msI->obj.atom->getIdx()]){
+              msI->obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+              ringStereoChemAdjusted.set(msI->obj.atom->getIdx());
+            }
+            const INT_VECT &ringStereoAtoms=msI->obj.atom->getProp<INT_VECT>(common_properties::_ringStereoAtoms);
+            BOOST_FOREACH(int nbrV,ringStereoAtoms){
+              int nbrIdx=abs(nbrV)-1;
+              //Adjust the chiraliy flag of the ring stereo atoms according to the first one
+              if(!ringStereoChemAdjusted[nbrIdx] &&
+                  atomVisitOrders[nbrIdx]>atomVisitOrders[msI->obj.atom->getIdx()]){
+                mol.getAtomWithIdx(nbrIdx)->setChiralTag(msI->obj.atom->getChiralTag());
+                if(nbrV<0){
+                  mol.getAtomWithIdx(nbrIdx)->invertChirality();
+                }
+                //Odd number of swaps for first chiral ring atom --> needs to be swapped but we want to retain chirality
+                if(numSwapsChiralAtoms[msI->obj.atom->getIdx()]){
+                  //Odd number of swaps for chiral ring neighbor --> needs to be swapped but we want to retain chirality
+                  if(!numSwapsChiralAtoms[nbrIdx]){
+                    mol.getAtomWithIdx(nbrIdx)->invertChirality();
+                  }
+                }
+                //Even number of swaps for first chiral ring atom --> don't need to be swapped
+                else{
+                  //Odd number of swaps for chiral ring neighbor --> needs to be swapped
+                  if(numSwapsChiralAtoms[nbrIdx]){
+                    mol.getAtomWithIdx(nbrIdx)->invertChirality();
+                  }
+                }
+                ringStereoChemAdjusted.set(nbrIdx);
+              }
+            }
+          }
+          else{
+            if(msI->obj.atom->getChiralTag()== Atom::CHI_TETRAHEDRAL_CW){
+              if((numSwapsChiralAtoms[msI->obj.atom->getIdx()])){
+                msI->obj.atom->invertChirality();
+              }
+            }
+            else if(msI->obj.atom->getChiralTag()== Atom::CHI_TETRAHEDRAL_CCW){
+              if((numSwapsChiralAtoms[msI->obj.atom->getIdx()])){
+                msI->obj.atom->invertChirality();
+              }
+            }
           }
         }
       }
@@ -998,9 +1064,10 @@ namespace Canon {
     mol.debugMol(std::cerr);
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
-
+    free(numSwapsChiralAtoms);
   }
-};
+}
+}
 
 
 

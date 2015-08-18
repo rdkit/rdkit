@@ -6,7 +6,6 @@
 #include "ChiralViolationContrib.h"
 #include "ChiralSet.h"
 #include <ForceField/ForceField.h>
-#include <Geometry/point.h>
 
 namespace DistGeom {
   ChiralViolationContrib::ChiralViolationContrib(ForceFields::ForceField *owner, const ChiralSet* cset,
@@ -35,27 +34,9 @@ namespace DistGeom {
   double ChiralViolationContrib::getEnergy(double *pos) const {
     PRECONDITION(dp_forceField,"no owner");
     PRECONDITION(pos,"bad vector");
-
+    
     unsigned int dim = dp_forceField->dimension();
-    
-    // even if we are minimizing in higher dimension the chiral volume is 
-    // calculated using only the first 3 dimensions
-    RDGeom::Point3D v1(pos[d_idx1*dim] - pos[d_idx4*dim], 
-                       pos[d_idx1*dim+1] - pos[d_idx4*dim+1],
-                       pos[d_idx1*dim+2] - pos[d_idx4*dim+2]);
-    
-
-    RDGeom::Point3D v2(pos[d_idx2*dim] - pos[d_idx4*dim], 
-                       pos[d_idx2*dim+1] - pos[d_idx4*dim+1],
-                       pos[d_idx2*dim+2] - pos[d_idx4*dim+2]);
-    
-    RDGeom::Point3D v3(pos[d_idx3*dim] - pos[d_idx4*dim], 
-                       pos[d_idx3*dim+1] - pos[d_idx4*dim+1],
-                       pos[d_idx3*dim+2] - pos[d_idx4*dim+2]);
-
-    RDGeom::Point3D v2xv3 = v2.crossProduct(v3);
-    
-    double vol = v1.dotProduct(v2xv3);
+    double vol = calcChiralVolume(d_idx1,d_idx2,d_idx3,d_idx4,pos,dim);
     double res=0.0;
     if (vol < d_volLower) {
       res=d_weight*(vol - d_volLower)*(vol - d_volLower);

@@ -290,9 +290,6 @@ Neutralizing Charged Molecules
 Mailing list discussion:
 http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg02648.html
 
-Wiki page: 
-http://code.google.com/p/rdkit/wiki/NeutralisingCompounds
-
 The code:
 
 .. testcode::
@@ -515,17 +512,18 @@ The RDKit provides an implementation of the torsion fingerprint
 deviation (TFD) approach developed by Schulz-Gasch et al. 
 (J. Chem. Inf. Model, 52, 1499, 2012). The RDKit implementation
 allows the user to customize the torsion fingerprints:
+
 * In the original approach, the torsions are weighted based on
-their distance to the center of the molecule. By default, this
-weighting is performed, but can be turned off using the flag
-useWeights=False
+  their distance to the center of the molecule. By default, this
+  weighting is performed, but can be turned off using the flag
+  useWeights=False
 * The similarity between atoms is determined by comparing the 
-hash codes from the Morgan algorithm at a given radius (default: 
-radius = 2). 
+  hash codes from the Morgan algorithm at a given radius (default: 
+  radius = 2). 
 * In the original approach, the maximal deviation used for
-normalization is 180.0 degrees for all torsions (default). If
-maxDev='spec', a torsion-type dependent maximal deviation is 
-used for the normalization.
+  normalization is 180.0 degrees for all torsions (default). If
+  maxDev='spec', a torsion-type dependent maximal deviation is 
+  used for the normalization.
 
 Examples of using it:
 
@@ -695,13 +693,13 @@ The code:
 
 .. testcode::
 
+  from rdkit import Chem
+  from rdkit.Chem import rdFMCS
+
   # our test molecules:
   smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
         "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
   ms = [Chem.MolFromSmiles(x) for x in smis]
-
-  from rdkit import Chem
-  from rdkit.Chem import MCS
   
   def label(a):
     " a simple hash combining atom number and hybridization "
@@ -713,14 +711,14 @@ The code:
     for at in nm.GetAtoms():
         at.SetIsotope(label(at))
 
-  mcs=MCS.FindMCS(nms,atomCompare='isotopes')
-  print mcs.smarts
+  mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
+  print mcs.smartsString
 
 This generates the following output:
 
 .. testoutput::
 
-  [406*]-[308*]-[306*]:1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)(-[306*]:1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[307*]-[306*]:1:[307*]:[306*]:2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*]
+  [406*]-[308*]-[306*]1:[306*]:[306*]:[306*](:[306*]:[306*]:1)-[406*](-[307*]-[306*]1:[307*]:[306*]2:[306*](:[306*](:[307*]:1)=[308*]):[307*]:[306*]:[307*]:2-[406*]-[408*]-[406*])(-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1)-[306*]1:[306*]:[306*]:[306*]:[306*]:[306*]:1
 
 That's what we asked for, but it's not exactly readable. We can get to a more readable form in a two step process:
 
@@ -732,7 +730,7 @@ This works because we know that the atom indices in the copies and the original 
 .. testcode::
 
   def getMCSSmiles(mol,labelledMol,mcs):
-      mcsp = Chem.MolFromSmarts(mcs.smarts)
+      mcsp = Chem.MolFromSmarts(mcs.smartsString)
       match = labelledMol.GetSubstructMatch(mcsp)
       return Chem.MolFragmentToSmiles(ms[0],atomsToUse=match,
                                       isomericSmiles=True,
@@ -747,10 +745,175 @@ This works because we know that the atom indices in the copies and the original 
 That's what we were looking for.
 
 
+Clustering molecules
+--------------------
+
+For large sets of molecules (more than 1000-2000), it's most efficient to use the Butina clustering algorithm.
+
+Here's some code for doing that for a set of fingerprints::
+
+  def ClusterFps(fps,cutoff=0.2):
+      from rdkit import DataStructs
+      from rdkit.ML.Cluster import Butina
+  
+      # first generate the distance matrix:
+      dists = []
+      nfps = len(fps)
+      for i in range(1,nfps):
+          sims = DataStructs.BulkTanimotoSimilarity(fps[i],fps[:i])
+          dists.extend([1-x for x in sims])
+  
+      # now cluster the data:
+      cs = Butina.ClusterData(dists,nfps,cutoff,isDistData=True)
+      return cs
+
+The return value is a tuple of clusters, where each cluster is a tuple of ids.
+
+Example usage::
+
+  from rdkit import Chem
+  from rdkit.Chem import AllChem
+  import gzip
+  ms = [x for x in Chem.ForwardSDMolSupplier(gzip.open('zdd.sdf.gz')) if x is not None]
+  fps = [AllChem.GetMorganFingerprintAsBitVect(x,2,1024) for x in ms]
+  clusters=ClusterFps(fps,cutoff=0.4)
+
+
+The variable `clusters` contains the results::
+
+  >>> print clusters[200]
+  (6164, 1400, 1403, 1537, 1543, 6575, 6759)
+
+That cluster contains 7 points, the centroid is point 6164.
+
+
+RMSD Calculation between N molecules
+------------------------------------
+
+Introduction
+````````````
+
+We sometimes need to calculate RMSD distances between two (or more) molecules. This can be used to calculate how close two conformers are. Most RMSD calculations make sense only on similar compounds or, at least, for common parts in different compounds.
+
+Details
+```````
+
+The following program (written in python 2.7) takes an SDF file as an input and generates all the RMSD distances between the molecules in that file. These distances are written to an output file (user defined).
+
+So for an SDF with 5 conformers we will get 10 RMSD scores - typical n choose k problem, without repetition i.e. 5! / 2!(5-2)!
+
+The code::
+
+  #!/usr/bin/python
+  '''
+  calculates RMSD differences between all structures in a file
+  
+  @author: JP <jp@javaclass.co.uk>
+  '''
+  import os
+  import getopt
+  import sys
+  
+  # rdkit imports
+  from rdkit import Chem
+  from rdkit.Chem import AllChem
+  
+  '''
+  Write contents of a string to file
+  '''
+  def write_contents(filename, contents):
+    # do some basic checking, could use assert strictly speaking
+    assert filename is not None, "filename cannot be None"
+    assert contents is not None, "contents cannot be None"
+    f = open(filename, "w")
+    f.write(contents)
+    f.close() # close the file
+    
+  '''
+  Write a list to a file    
+  '''
+  def write_list_to_file(filename, list, line_sep = os.linesep):
+    # do some basic checking, could use assert strictly speaking
+    assert list is not None and len(list) > 0, "list cannot be None or empty"
+    write_contents(filename, line_sep.join(list))
+
+  '''
+  Calculate RMSD spread
+  '''
+  def calculate_spread(molecules_file):
+    
+    assert os.path.isfile(molecules_file), "File %s does not exist!" % molecules
+    
+    # get an iterator
+    mols = Chem.SDMolSupplier(molecules_file)
+    
+    spread_values = []
+    # how many molecules do we have in our file
+    mol_count = len(mols)
+    # we are going to compare each molecule with every other molecule
+    # typical n choose k scenario (n choose 2)
+    # where number of combinations is given by (n!) / k!(n-k)! ; if my maths isn't too rusty
+    for i in range(mol_count - 1):
+        for j in range(i+1, mol_count):
+            # show something is being done ... because for large mol_count this will take some time
+            print "Aligning molecule #%d with molecule #%d (%d molecules in all)" % (i, j, mol_count)
+            # calculate RMSD and store in an array
+            # unlike AlignMol this takes care of symmetry
+            spread_values.append(str(AllChem.GetBestRMS(mols[i], mols[j])))
+    # return that array
+    return spread_values
+
+
+  def main():
+    try:
+        # the options are as follows:
+        # f - the actual structure file
+        opts, args = getopt.getopt(sys.argv[1:], "vf:o:")
+    except getopt.GetoptError, err:
+        # print help information and exit:
+        print str(err) # will print something like "option -a not recognized"        
+        sys.exit(401)
+    
+    # DEFAULTS
+    molecules_file  = None
+    output_file = None
+    
+    for opt, arg in opts:
+        if opt == "-v":
+            print "RMSD Spread 1.1"
+            sys.exit()
+        elif opt == "-f":
+            molecules_file = arg
+        elif opt == "-o":
+            output_file = arg
+        else:
+            assert False, "Unhandled option: " + opt
+    
+    # assert the following - not the cleanest way to do this but this will work
+    assert molecules_file is not None, "file containing molecules must be specified, add -f to command line arguments"
+    assert output_file is not None, "output file must be specified, add -o to command line arguments"
+    # get the RMSD spread values
+    spread_values = calculate_spread(molecules_file)
+    # write them to file
+    write_list_to_file(output_file, spread_values)
+   
+    
+    
+  if __name__ == "__main__":
+    main()
+
+
+This program may be executed at the command line in the following manner (provided you have your python interpreter at ``/usr/bin/python``, otherwise edit the first line; the funnily named shebang)::
+
+  calculate_spread.py -f my_conformers.sdf -o my_conformers.rmsd_spread.txt
+
+**TL;DR** : The line ``AllChem.GetBestRMS(mol1, mol2)`` returns the RMSD as a float and is the gist of this program. ``GetBestRMS()`` takes care of symmetry unlike ``AlignMol()``
+
+
 License
 *******
 
-This document is copyright (C) 2012-2014 by Greg Landrum
+This document is copyright (C) 2012-2015 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

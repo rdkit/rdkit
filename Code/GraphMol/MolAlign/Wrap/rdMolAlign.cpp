@@ -88,7 +88,10 @@ namespace RDKit {
     if(RMSlist != python::object()){
       RMSvector = new std::vector<double>();
     }
-    MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters, RMSvector);
+    {
+      NOGIL gil;
+      MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters, RMSvector);
+    }
     if (wtsVec) {
       delete wtsVec;
     }
@@ -147,8 +150,12 @@ namespace RDKit {
       }
     }
     RDGeom::Transform3D trans;
-    double rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
-                                                  wtsVec, reflect, maxIters);
+    double rmsd;
+    {
+      NOGIL gil;
+      rmsd=MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
+                                      wtsVec, reflect, maxIters);
+    }
     if (aMap) {
       delete aMap;
     } 
@@ -177,8 +184,13 @@ namespace RDKit {
         throw_value_error("Incorrect number of weights specified");
       }
     }
-    double rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, 
-                                     wtsVec, reflect, maxIters);
+
+    double rmsd;
+    {
+      NOGIL gil;
+      rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, 
+                                wtsVec, reflect, maxIters);
+    }
     if (aMap) {
       delete aMap;
     } 
@@ -282,9 +294,13 @@ namespace RDKit {
           throw_value_error("missing MMFF94 parameters for reference molecule");
         }
       }
-      O3A *o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps,refMolProps,
-                                   MolAlign::O3A::MMFF94, prbCid, refCid,
-                                   reflect, maxIters, options, cMap, cWts);
+      O3A *o3a;
+      {
+        NOGIL gil;
+        o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps,refMolProps,
+                                MolAlign::O3A::MMFF94, prbCid, refCid,
+                                reflect, maxIters, options, cMap, cWts);
+      }
       PyO3A *pyO3A = new PyO3A(o3a);
 
       if(!prbPyMMFFMolProperties) delete prbMolProps;
@@ -354,10 +370,13 @@ namespace RDKit {
         }
       }
       std::vector<boost::shared_ptr<O3A> > res;
-      getO3AForProbeConfs(prbMol,refMol, prbMolProps,refMolProps,
-                          res,numThreads,
-                          MolAlign::O3A::MMFF94, refCid,
-                          reflect, maxIters, options, cMap, cWts);
+      {
+        NOGIL gil;
+        getO3AForProbeConfs(prbMol,refMol, prbMolProps,refMolProps,
+                            res,numThreads,
+                            MolAlign::O3A::MMFF94, refCid,
+                            reflect, maxIters, options, cMap, cWts);
+      }
 
       python::list pyres;
       for(unsigned int i=0;i<res.size();++i){
@@ -438,9 +457,13 @@ namespace RDKit {
         Descriptors::getCrippenAtomContribs(refMol, refLogpContribs,
           refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
       }
-      O3A *o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
-                                   MolAlign::O3A::CRIPPEN, prbCid, refCid,
-                                   reflect, maxIters, options, cMap, cWts);
+      O3A *o3a;
+      {
+        NOGIL gil;
+        o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
+                                MolAlign::O3A::CRIPPEN, prbCid, refCid,
+                                reflect, maxIters, options, cMap, cWts);
+      }
       PyO3A *pyO3A = new PyO3A(o3a);
       if (cMap) {
         delete cMap;
@@ -516,11 +539,13 @@ namespace RDKit {
           refMRContribs, true, &refAtomTypes, &refAtomTypeLabels);
       }
       std::vector<boost::shared_ptr<O3A> > res;
-      getO3AForProbeConfs(prbMol,refMol, &prbLogpContribs,&refLogpContribs,
-                          res,numThreads,
-                          MolAlign::O3A::CRIPPEN, refCid,
-                          reflect, maxIters, options, cMap, cWts);
-
+      {
+        NOGIL gil;
+        getO3AForProbeConfs(prbMol,refMol, &prbLogpContribs,&refLogpContribs,
+                            res,numThreads,
+                            MolAlign::O3A::CRIPPEN, refCid,
+                            reflect, maxIters, options, cMap, cWts);
+      }
       python::list pyres;
       for(unsigned int i=0;i<res.size();++i){
         pyres.append(new PyO3A(res[i]));

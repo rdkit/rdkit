@@ -44,16 +44,21 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
-    int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
-                                          seed, clearConfs,
-                                          useRandomCoords,boxSizeMult,
-                                          randNegEig,
-                                          numZeroFail,
-                                          pMapPtr,forceTol,
-                                          ignoreSmoothingFailures,
-                                          useExpTorsionAnglePrefs,
-                                          useBasicKnowledge,
-                                          printExpTorsionAngles);
+    
+    int res;
+    {
+      NOGIL gil;
+      res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
+                                        seed, clearConfs,
+                                        useRandomCoords,boxSizeMult,
+                                        randNegEig,
+                                        numZeroFail,
+                                        pMapPtr,forceTol,
+                                        ignoreSmoothingFailures,
+                                        useExpTorsionAnglePrefs,
+                                        useBasicKnowledge,
+                                        printExpTorsionAngles);
+    }
     return res;
   }
 
@@ -83,18 +88,20 @@ namespace RDKit {
     }
 
     INT_VECT res;
-    DGeomHelpers::EmbedMultipleConfs(mol,res,
-                                     numConfs,numThreads,
-                                     maxAttempts,
-                                     seed, clearConfs,
-                                     useRandomCoords,boxSizeMult, 
-                                     randNegEig, numZeroFail,
-                                     pruneRmsThresh,pMapPtr,forceTol,
-                                     ignoreSmoothingFailures,
-                                     useExpTorsionAnglePrefs,
-                                     useBasicKnowledge,
-                                     printExpTorsionAngles);
-
+    {
+      NOGIL gil;
+      DGeomHelpers::EmbedMultipleConfs(mol,res,
+                                       numConfs,numThreads,
+                                       maxAttempts,
+                                       seed, clearConfs,
+                                       useRandomCoords,boxSizeMult, 
+                                       randNegEig, numZeroFail,
+                                       pruneRmsThresh,pMapPtr,forceTol,
+                                       ignoreSmoothingFailures,
+                                       useExpTorsionAnglePrefs,
+                                       useBasicKnowledge,
+                                       printExpTorsionAngles);
+    }
     return res;
   } 
 

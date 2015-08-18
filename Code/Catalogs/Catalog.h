@@ -37,6 +37,9 @@ namespace RDCatalog {
   template <class entryType, class paramType>
   class Catalog {
   public:
+    typedef entryType entryType_t;
+    typedef paramType paramType_t;
+    
     //------------------------------------
     Catalog() : d_fpLength(0), dp_cParams(0) {};
 
@@ -78,7 +81,7 @@ namespace RDCatalog {
     
     //------------------------------------
     //! sets our parameters by copying the \c params argument
-    void setCatalogParams(paramType *params) {
+    virtual void setCatalogParams(paramType *params) {
       PRECONDITION(params,"bad parameter object");
       //if we already have a paramter object throw an exception
       PRECONDITION(!dp_cParams,"A parameter object already exists on the catalog" );

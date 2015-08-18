@@ -219,18 +219,11 @@ struct atom_wrapper {
       .def("GetNumExplicitHs",&Atom::getNumExplicitHs)
       .def("SetIsAromatic",&Atom::setIsAromatic)
       .def("GetIsAromatic",&Atom::getIsAromatic)
-      .def("SetMass",&Atom::setMass)
       .def("GetMass",&Atom::getMass)
       .def("SetIsotope",&Atom::setIsotope)
       .def("GetIsotope",&Atom::getIsotope)
       .def("SetNumRadicalElectrons",&Atom::setNumRadicalElectrons)
       .def("GetNumRadicalElectrons",&Atom::getNumRadicalElectrons)
-
-      // NOTE: these may be used at some point in the future, but they
-      //  aren't now, so there's no point in confusing things.
-      //.def("SetDativeFlag",&Atom::setDativeFlag)
-      //.def("GetDativeFlag",&Atom::getDativeFlag)
-      //.def("ClearDativeFlag",&Atom::clearDativeFlag)
 
       .def("SetChiralTag",&Atom::setChiralTag)
       .def("InvertChirality",&Atom::invertChirality)

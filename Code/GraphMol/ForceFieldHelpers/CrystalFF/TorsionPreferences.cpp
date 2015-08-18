@@ -13,7 +13,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include <iostream>

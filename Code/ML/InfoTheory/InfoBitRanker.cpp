@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <fstream>
 #include <RDGeneral/FileParseException.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <algorithm>
 #include <queue>
 

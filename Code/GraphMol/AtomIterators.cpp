@@ -53,14 +53,14 @@ namespace RDKit{
     return *this;
   }
   template <class Atom_, class Mol_>
-  AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator+(int val){
+  AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator+(int val) const {
     AtomIterator_<Atom_, Mol_> res(*this);
     res += val;
     // += takes care of the pre/post conditions for us, so we're safe to return
     return res;
   }
   template <class Atom_, class Mol_>
-  AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator-(int val){
+  AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator-(int val) const {
     AtomIterator_<Atom_, Mol_> res(*this);
     // -= takes care of the pre/post conditions for us, so we're safe to return
     res -= val;
@@ -69,46 +69,46 @@ namespace RDKit{
 
   // iterator subtraction
   template <class Atom_, class Mol_>
-  int AtomIterator_<Atom_, Mol_>::operator-(AtomIterator_<Atom_, Mol_> &other){
+  int AtomIterator_<Atom_, Mol_>::operator-(AtomIterator_<Atom_, Mol_> &other) const {
     PRECONDITION(_mol==other._mol,"bad operator- call");
     return _pos - other._pos;
   }
 
   // dereference 
   template <class Atom_, class Mol_>
-  Atom_ * AtomIterator_<Atom_, Mol_>::operator*() {
+  Atom_ * AtomIterator_<Atom_, Mol_>::operator*() const {
     RANGE_CHECK(0,_pos,_max-1);
     return (*_mol)[_pos].get();
   }
   // random access
   template <class Atom_, class Mol_>
-  Atom_ * AtomIterator_<Atom_, Mol_>::operator[](const int which){
+  Atom_ * AtomIterator_<Atom_, Mol_>::operator[](const int which) const {
     RANGE_CHECK(0,which,_max-1);
     return (*_mol)[which].get();
   }
 
   template <class Atom_, class Mol_>
-  bool AtomIterator_<Atom_, Mol_>::operator==(const AtomIterator_<Atom_, Mol_> &other){
+  bool AtomIterator_<Atom_, Mol_>::operator==(const AtomIterator_<Atom_, Mol_> &other) const {
     return _mol==other._mol && _pos==other._pos;
   }
   template <class Atom_, class Mol_>
-  bool AtomIterator_<Atom_, Mol_>::operator!=(const AtomIterator_<Atom_, Mol_> &other){
+  bool AtomIterator_<Atom_, Mol_>::operator!=(const AtomIterator_<Atom_, Mol_> &other) const {
     return _mol!=other._mol || _pos!=other._pos;
   }
   template <class Atom_, class Mol_>
-  bool AtomIterator_<Atom_, Mol_>::operator<(const AtomIterator_<Atom_, Mol_> &other){
+  bool AtomIterator_<Atom_, Mol_>::operator<(const AtomIterator_<Atom_, Mol_> &other) const {
     return _mol==other._mol && _pos<other._pos;
   }
   template <class Atom_, class Mol_>
-  bool AtomIterator_<Atom_, Mol_>::operator<=(const AtomIterator_<Atom_, Mol_> &other){
+  bool AtomIterator_<Atom_, Mol_>::operator<=(const AtomIterator_<Atom_, Mol_> &other) const {
     return _mol==other._mol && _pos<=other._pos;
   }
   template <class Atom_, class Mol_>
-  bool AtomIterator_<Atom_, Mol_>::operator>(const AtomIterator_<Atom_, Mol_> &other){
+  bool AtomIterator_<Atom_, Mol_>::operator>(const AtomIterator_<Atom_, Mol_> &other) const {
     return _mol==other._mol && _pos>other._pos;
   }
   template <class Atom_, class Mol_>
-  bool AtomIterator_<Atom_, Mol_>::operator>=(const AtomIterator_<Atom_, Mol_> &other){
+  bool AtomIterator_<Atom_, Mol_>::operator>=(const AtomIterator_<Atom_, Mol_> &other) const {
     return _mol==other._mol && _pos>=other._pos;
   }
 
@@ -186,16 +186,16 @@ namespace RDKit{
 
 
   template <class Atom_, class Mol_>
-  bool HeteroatomIterator_<Atom_,Mol_>::operator==(const ThisType &other){
+  bool HeteroatomIterator_<Atom_,Mol_>::operator==(const ThisType &other) const{
     return _mol==other._mol && _pos==other._pos;
   }
   template <class Atom_, class Mol_>
-  bool HeteroatomIterator_<Atom_,Mol_>::operator!=(const ThisType &other){
+  bool HeteroatomIterator_<Atom_,Mol_>::operator!=(const ThisType &other) const{
     return _mol!=other._mol || _pos!=other._pos;
   }
 
   template <class Atom_, class Mol_>
-  Atom_ * HeteroatomIterator_<Atom_,Mol_>::operator*() {
+  Atom_ * HeteroatomIterator_<Atom_,Mol_>::operator*() const{
     return (*_mol)[_pos].get();
   }
   // pre-increment
@@ -282,16 +282,16 @@ namespace RDKit{
 
 
   template <class Atom_, class Mol_>
-  bool AromaticAtomIterator_<Atom_,Mol_>::operator==(const ThisType &other){
+  bool AromaticAtomIterator_<Atom_,Mol_>::operator==(const ThisType &other) const{
     return _mol==other._mol && _pos==other._pos;
   }
   template <class Atom_, class Mol_>
-  bool AromaticAtomIterator_<Atom_,Mol_>::operator!=(const ThisType &other){
+  bool AromaticAtomIterator_<Atom_,Mol_>::operator!=(const ThisType &other) const{
     return _mol!=other._mol || _pos!=other._pos;
   }
 
   template <class Atom_, class Mol_>
-  Atom_ * AromaticAtomIterator_<Atom_,Mol_>::operator*() {
+  Atom_ * AromaticAtomIterator_<Atom_,Mol_>::operator*() const {
     return (*_mol)[_pos].get();
   }
   // pre-increment
@@ -390,16 +390,16 @@ namespace RDKit{
     return *this;
   }
   template <class Atom_, class Mol_>
-  bool QueryAtomIterator_<Atom_,Mol_>::operator==(const QueryAtomIterator_<Atom_,Mol_> &other){
+  bool QueryAtomIterator_<Atom_,Mol_>::operator==(const QueryAtomIterator_<Atom_,Mol_> &other) const{
     return _mol==other._mol && _pos==other._pos;
   }
   template <class Atom_, class Mol_>
-  bool QueryAtomIterator_<Atom_,Mol_>::operator!=(const QueryAtomIterator_<Atom_,Mol_> &other){
+  bool QueryAtomIterator_<Atom_,Mol_>::operator!=(const QueryAtomIterator_<Atom_,Mol_> &other) const{
     return _mol!=other._mol || _pos!=other._pos;
   }
 
   template <class Atom_, class Mol_>
-  Atom_ * QueryAtomIterator_<Atom_,Mol_>::operator*() {
+  Atom_ * QueryAtomIterator_<Atom_,Mol_>::operator*() const {
     PRECONDITION(_mol!=NULL,"no molecule");
     return (*_mol)[_pos].get();
   }
@@ -495,16 +495,16 @@ namespace RDKit{
     return *this;
   }
   template <class Atom_, class Mol_>
-  bool MatchingAtomIterator_<Atom_,Mol_>::operator==(const MatchingAtomIterator_<Atom_,Mol_> &other){
+  bool MatchingAtomIterator_<Atom_,Mol_>::operator==(const MatchingAtomIterator_<Atom_,Mol_> &other) const{
     return _mol==other._mol && _pos==other._pos;
   }
   template <class Atom_, class Mol_>
-  bool MatchingAtomIterator_<Atom_,Mol_>::operator!=(const MatchingAtomIterator_<Atom_,Mol_> &other){
+  bool MatchingAtomIterator_<Atom_,Mol_>::operator!=(const MatchingAtomIterator_<Atom_,Mol_> &other) const{
     return _mol!=other._mol || _pos!=other._pos;
   }
 
   template <class Atom_, class Mol_>
-  Atom_ * MatchingAtomIterator_<Atom_,Mol_>::operator*() {
+  Atom_ * MatchingAtomIterator_<Atom_,Mol_>::operator*() const {
     PRECONDITION(_mol!=NULL,"no molecule");
     return (*_mol)[_pos].get();
   }

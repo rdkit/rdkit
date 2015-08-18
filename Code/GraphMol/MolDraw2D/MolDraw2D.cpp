@@ -488,15 +488,17 @@ namespace RDKit {
     DrawColour retval = getColourByAtomicNum( atomic_nums_[atom_idx] );
 
     // set contents of highlight_atoms to red
-    if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
-                                                           highlight_atoms->end() , atom_idx )  ) {
-      retval = drawOptions().highlightColour;
-    }
-    // over-ride with explicit colour from highlight_map if there is one
-    if(highlight_map){
-      map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
-      if( p != highlight_map->end() ) {
-        retval = p->second;
+    if(!drawOptions().circleAtoms && !drawOptions().continuousHighlight){
+      if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
+          highlight_atoms->end() , atom_idx )  ) {
+        retval = drawOptions().highlightColour;
+      }
+      // over-ride with explicit colour from highlight_map if there is one
+      if(highlight_map){
+        map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
+        if( p != highlight_map->end() ) {
+          retval = p->second;
+        }
       }
     }
     return retval;
@@ -893,40 +895,52 @@ namespace RDKit {
     } else if(drawOptions().dummiesAreAttachments && atom.getAtomicNum()==0 && atom.getDegree()==1) {
       symbol="";
     } else {
-      if( 6 != atom.getAtomicNum() ) {
-        symbol = atom.getSymbol();
-      }
-
+      std::vector<std::string> preText,postText;
       if( 0 != atom.getIsotope() ) {
-        symbol = lexical_cast<string>( atom.getIsotope() ) + symbol;
+        preText.push_back( std::string("<sup>") + 
+                           lexical_cast<string>( atom.getIsotope() ) + 
+                           std::string("</sup>") );
       }
 
       if( atom.hasProp( "molAtomMapNumber" ) ) {
-        string map_num;
+        string map_num="";
         atom.getProp( "molAtomMapNumber" , map_num );
-        symbol += string( ":" ) + map_num;
+        postText.push_back(std::string(":") + map_num);
       }
 
-      int num_h = 6 == atom.getAtomicNum() ? 0 : atom.getTotalNumHs();
-      if( num_h > 0 ) {
-        string h( "H" );
+      std::string h="";
+      int num_h=atom.getAtomicNum()==6 ? 0 : atom.getTotalNumHs(); // FIX: still not quite right
+      if( num_h > 0 && !atom.hasQuery() ) {
+        h = "H";
         if( num_h > 1 ) {
           // put the number as a subscript
           h += string( "<sub>" ) + lexical_cast<string>( num_h ) + string( "</sub>" );
         }
-        symbol += h;
+        postText.push_back(h);
       }
 
       if( 0 != atom.getFormalCharge() ) {
-        int chg = atom.getFormalCharge();
-        string sgn = chg > 0 ? string( "+" ) : string( "-" );
-        chg = abs( chg );
-        if( chg > 1 ) {
-          sgn += lexical_cast<string>( chg );
+        int ichg = atom.getFormalCharge();
+        string sgn = ichg > 0 ? string( "+" ) : string( "-" );
+        ichg = abs( ichg );
+        if( ichg > 1 ) {
+          sgn += lexical_cast<string>( ichg );
         }
         // put the charge as a superscript
-        symbol += string( "<sup>" ) + sgn + string( "</sup>" );
+        postText.push_back(string( "<sup>" ) + sgn + string( "</sup>" ));
       }
+
+      symbol="";
+      BOOST_FOREACH(const std::string &se,preText){
+        symbol += se;
+      }
+      if(atom.getAtomicNum()!=6 || preText.size() || postText.size() ){
+        symbol += atom.getSymbol();
+      }
+      BOOST_FOREACH(const std::string &se,postText){
+        symbol += se;
+      }
+
     }
 
     // -----------------------------------

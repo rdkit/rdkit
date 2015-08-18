@@ -158,6 +158,9 @@ namespace RDKit {
             mode = "so2";
           } else if (no == 1) {
             mode = "so";
+          } else {
+            // some other sulfur state. Default to sp3
+            mode = "sp3";
           }
         }
       }

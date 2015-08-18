@@ -80,8 +80,8 @@ def delete_bonds(mol,bonds,ftype,hac):
     #as the valencies should be okay
     modifiedMol = em.GetMol()
 
-    #do not sanitise!
-    #Chem.SanitizeMol(modifiedMol)
+    #do not do a full sanitization, but do find rings and calculate valences:
+    Chem.SanitizeMol(modifiedMol,Chem.SanitizeFlags.SANITIZE_PROPERTIES|Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
 
     fragmented_smi = Chem.MolToSmiles(modifiedMol,True)
 
@@ -216,7 +216,7 @@ def generate_fraggle_fragmentation(mol):
     """
     >>> q = Chem.MolFromSmiles('COc1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12')
     >>> list(generate_fraggle_fragmentation(q))
-    ['[*]C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C(=O)c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC', '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]C(=O)c1cncc(C)c1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]NC(=O)c1cncc(C)c1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1', '[*]NC(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC', '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1', '[*]c1c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc(OC)c2ccccc12', '[*]c1c([*])c(OC)c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc1OC', '[*]c1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12', '[*]c1cc(OC)c2ccccc2c1OC.[*]N1CCC(NC(=O)c2cncc(C)c2)CC1', '[*]c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC']
+     ['[*]C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C(=O)c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C(=O)c1cncc(C)c1.[*]Cc1cc(OC)c2ccccc2c1OC', '[*]C(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC', '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]NC(=O)c1cncc(C)c1', '[*]Cc1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1', '[*]N1CCC(NC(=O)c2cncc(C)c2)CC1.[*]c1cc(OC)c2ccccc2c1OC', '[*]NC(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC', '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1', '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1', '[*]c1c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc(OC)c2ccccc12', '[*]c1c(OC)cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c1[*]', '[*]c1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12', '[*]c1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1']
     """
     #query mol heavy atom count
     hac = mol.GetNumAtoms()

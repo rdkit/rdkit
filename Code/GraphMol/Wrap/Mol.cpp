@@ -201,7 +201,7 @@ namespace RDKit {
 
   class ReadWriteMol : public RWMol {
   public:
-    ReadWriteMol(const ROMol &m) : RWMol(m){
+    ReadWriteMol(const ROMol &m,bool quickCopy=false,int confId=-1) : RWMol(m,quickCopy,confId){
     };
 
     void RemoveAtom(unsigned int idx){
@@ -259,6 +259,10 @@ struct mol_wrapper {
 			  python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
       .def(python::init<const ROMol &>())
+      .def(python::init<const ROMol &,bool>())
+      .def(python::init<const ROMol &,bool,int>())
+      .def("__copy__",&generic__copy__<ROMol>)
+      .def("__deepcopy__",&generic__deepcopy__<ROMol>)
       .def("GetNumAtoms",getMolNumAtoms,
 	   (python::arg("onlyHeavy")=-1,
             python::arg("onlyExplicit")=true),
@@ -485,6 +489,10 @@ struct mol_wrapper {
     python::class_<ReadWriteMol, python::bases<ROMol> >("RWMol",
                                                         rwmolClassDoc.c_str(),
         python::init<const ROMol &>("Construct from a Mol"))
+      .def(python::init<const ROMol &,bool>())
+      .def(python::init<const ROMol &,bool,int>())
+      .def("__copy__",&generic__copy__<ReadWriteMol>)
+      .def("__deepcopy__",&generic__deepcopy__<ReadWriteMol>)
       .def("RemoveAtom",&ReadWriteMol::RemoveAtom,
       "Remove the specified atom from the molecule")
       .def("RemoveBond",&ReadWriteMol::RemoveBond,

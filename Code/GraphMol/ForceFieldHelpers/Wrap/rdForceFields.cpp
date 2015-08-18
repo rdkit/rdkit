@@ -31,17 +31,21 @@ namespace RDKit {
                 double vdwThresh,
                 int confId,
                 bool ignoreInterfragInteractions ){
+    NOGIL gil;
     return UFF::UFFOptimizeMolecule(mol,maxIters,vdwThresh,confId,ignoreInterfragInteractions).first;
   }
   python::object UFFConfsHelper(ROMol &mol,
-                                                      unsigned int numThreads,
-                                                      int maxIters,
-                                                      double vdwThresh,
-                                                      int confId,
-                                                      bool ignoreInterfragInteractions ){
+                                unsigned int numThreads,
+                                int maxIters,
+                                double vdwThresh,
+                                int confId,
+                                bool ignoreInterfragInteractions ){
     std::vector< std::pair<int, double> >  res;
-    UFF::UFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,
-                                  vdwThresh,ignoreInterfragInteractions);
+    {
+      NOGIL gil;
+      UFF::UFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,
+                                    vdwThresh,ignoreInterfragInteractions);
+    }
     python::list pyres;
     for(unsigned int i=0;i<res.size();++i){
       pyres.append(python::make_tuple(res[i].first,res[i].second));
@@ -57,8 +61,11 @@ namespace RDKit {
                                  int confId,
                                  bool ignoreInterfragInteractions ){
     std::vector< std::pair<int, double> >  res;
-    MMFF::MMFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,mmffVariant,
-                                    nonBondedThresh,ignoreInterfragInteractions);
+    {
+      NOGIL gil;
+      MMFF::MMFFOptimizeMoleculeConfs(mol,res,numThreads,maxIters,mmffVariant,
+                                      nonBondedThresh,ignoreInterfragInteractions);
+    }
     python::list pyres;
     for(unsigned int i=0;i<res.size();++i){
       pyres.append(python::make_tuple(res[i].first,res[i].second));
@@ -93,6 +100,7 @@ namespace RDKit {
     
     MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
     if (mmffMolProperties.isValid()) {
+      NOGIL gil;
       ForceFields::ForceField *ff = MMFF::constructForceField(mol,
         &mmffMolProperties, nonBondedThresh, confId, ignoreInterfragInteractions);
       ff->initialize();

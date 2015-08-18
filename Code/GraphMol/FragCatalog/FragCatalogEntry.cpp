@@ -89,7 +89,7 @@ namespace RDKit {
       dp_mol->getAtomWithIdx(atIdx)->setProp(common_properties::_supplementalSmilesLabel,label);
     }
     std::string smi = MolToSmiles(*dp_mol);
-    //std::cout << "----" << smi << "----" << std::endl;
+    //std::cerr << "----" << smi << "----" << std::endl;
     d_descrip = smi;
   };
 

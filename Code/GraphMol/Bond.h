@@ -274,9 +274,17 @@ namespace RDKit{
     BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
 
     //! returns the indices of our stereo atoms
-    const INT_VECT &getStereoAtoms() const { return d_stereoAtoms; };
+    const INT_VECT &getStereoAtoms() const {
+      if(!dp_stereoAtoms){
+        const_cast<Bond *>(this)->dp_stereoAtoms = new INT_VECT();
+      }
+      return *dp_stereoAtoms;
+    };
     //! \overload
-    INT_VECT &getStereoAtoms() { return d_stereoAtoms; };
+    INT_VECT &getStereoAtoms() {
+      if(!dp_stereoAtoms) dp_stereoAtoms = new INT_VECT();
+      return *dp_stereoAtoms;
+    };
   
     // ------------------------------------
     //  Local Property Dict functionality
@@ -436,7 +444,7 @@ namespace RDKit{
     atomindex_t d_beginAtomIdx,d_endAtomIdx;
     ROMol *dp_mol;
     Dict *dp_props;
-    INT_VECT d_stereoAtoms;
+    INT_VECT *dp_stereoAtoms;
 
     void initBond();
   };

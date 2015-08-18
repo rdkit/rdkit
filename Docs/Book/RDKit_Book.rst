@@ -320,7 +320,7 @@ Rules and caveats
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C1NCCCC1'),))[0]]
 ['C1CCCCC1']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
-['c1cccc-c1']
+['c1ccccc-1']
 
   So if you want to copy the bond order from the reactant, use an “Any” bond:
 
@@ -600,6 +600,62 @@ Atom
 +------------------------+-------------------------------------------------------------------------------------------------+
 | smilesSymbol           | determines the symbol that will be written to a SMILES for the atom                             |
 +------------------------+-------------------------------------------------------------------------------------------------+
+
+Thread safety and the RDKit
+===========================
+
+While writing the RDKit, we did attempt to ensure that the code would
+work in a multi-threaded environment by avoiding use of global
+variables, etc. However, making code thread safe is not a completely
+trivial thing, so there are no doubt some gaps. This section describes
+which pieces of the code base have explicitly been tested for thread safety.
+
+**Note:** With the exception of the small number of methods/functions
+  that take a ``numThreads`` argument, this section does not apply to
+  using the RDKit from Python threads. Boost.Python ensures that only
+  one thread is calling into the C++ code at any point. To get
+  concurrent execution in Python, use the multiprocessing module or
+  one of the other standard python approaches for this .
+
+What has been tested
+--------------------
+
+  - Reading molecules from SMILES/SMARTS/Mol blocks
+  - Writing molecules to SMILES/SMARTS/Mol blocks
+  - Generating 2D coordinates
+  - Generating 3D conformations with the distance geometry code
+  - Optimizing molecules with UFF or MMFF
+  - Generating fingerprints
+  - The descriptor calculators in $RDBASE/Code/GraphMol/Descriptors
+  - Substructure searching (Note: if a query molecule contains
+    recursive queries, it may not be safe to use it concurrently on
+    multiple threads, see below)
+  - The Subgraph code
+  - The ChemTransforms code
+  - The chemical reactions code
+  - The Open3DAlign code
+  - The MolDraw2D drawing code
+
+Known Problems
+--------------
+
+  - InChI generation and (probably) parsing. This seems to be a
+    limitation of the IUPAC InChI code. In order to allow the code to
+    be used in a multi-threaded environment, a mutex is used to ensure
+    that only one thread is using the IUPAC code at a time. This is
+    only enabled if the RDKit is built with the ``RDK_TEST_MULTITHREADED``
+    option enabled.
+  - The MolSuppliers (e.g. SDMolSupplier, SmilesMolSupplier?) change
+    their internal state when a molecule is read. It is not safe to
+    use one supplier on more than one thread.
+  - Substructure searching using query molecules that include
+    recursive queries. The recursive queries modify their internal
+    state when a search is run, so it's not safe to use the same query
+    concurrently on multiple threads. If the code is built using the
+    ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
+    we provide), a mutex is used to ensure that only one thread is
+    using a given recursive query at a time.
+
 
 .. rubric:: Footnotes
 

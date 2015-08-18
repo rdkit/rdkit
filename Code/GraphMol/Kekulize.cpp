@@ -161,6 +161,8 @@ namespace RDKit {
           int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
           int chrg = at->getFormalCharge();
           if(isEarlyAtom(at->getAtomicNum())) chrg*=-1; // fix for GitHub #65
+          // special case for carbon - see GitHub #539
+          if (at->getAtomicNum() == 6 && chrg > 0) chrg=-chrg;
           dv += chrg;
           int tbo = at->getTotalValence();
           int nRadicals=at->getNumRadicalElectrons();
@@ -483,18 +485,26 @@ namespace RDKit {
     void Kekulize(RWMol &mol, bool markAtomsBonds,
                   unsigned int maxBackTracks) {
 
+      // there's no point doing kekulization if there are no aromatic bonds:
+      bool foundAromatic=false;
+      for (ROMol::BondIterator bi = mol.beginBonds();
+           bi != mol.endBonds() && !foundAromatic; ++bi) {
+        if((*bi)->getIsAromatic()) foundAromatic=true;
+      }
+      
       // before everything do implicit valence calculation and store them
       // we will repeat after kekulization and compare for the sake of error
       // checking
       INT_VECT valences;
-      // REVIEW
       int numAtoms=mol.getNumAtoms();
       valences.reserve(numAtoms);
       for (ROMol::AtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {
         (*ai)->calcImplicitValence(false);
         valences.push_back((*ai)->getTotalValence());
+        if(!foundAromatic && (*ai)->getIsAromatic()) foundAromatic=true;
       }
+      if(!foundAromatic) return;
     
       // A bit on the state of the molecule at this point
       // - aromatic and non aromatic atoms and bonds may be mixed up

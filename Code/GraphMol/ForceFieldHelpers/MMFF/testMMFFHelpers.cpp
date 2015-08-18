@@ -715,7 +715,9 @@ namespace {
         if(i%count != idx) continue;
         ROMol *mol = mols[i];
         ForceFields::ForceField *field = 0;
-        if(!(rep%100)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        if(!(rep%100)){
+          BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        }
         try {
           field = MMFF::constructForceField(*mol);
         } catch (...) {

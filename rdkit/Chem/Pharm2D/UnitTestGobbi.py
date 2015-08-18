@@ -166,6 +166,17 @@ class TestCase(unittest.TestCase):
           print(s1.difference(s2))
         self.assertEqual(sig1,sig2)
 
+  def testBitInfo(self):
+    m = Chem.MolFromSmiles('OCC=CC(=O)O')
+    bi = {}
+    sig = Generate.Gen2DFingerprint(m,Gobbi_Pharm2D.factory,bitInfo=bi)
+    self.assertEqual(sig.GetNumOnBits(),len(bi))
+    self.assertEqual(list(sig.GetOnBits()),sorted(bi.keys()))
+    self.assertEqual(sorted(bi.keys()),[23, 30, 150, 154, 157, 185, 28878, 30184])
+    self.assertEqual(sorted(bi[28878]),[[(0,), (5,), (6,)]])
+    self.assertEqual(sorted(bi[157]),[[(0,), (6,)], [(5,), (0,)]])
+    
+    
 
 if __name__ == '__main__':
   unittest.main()

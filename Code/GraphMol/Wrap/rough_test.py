@@ -385,7 +385,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m2.GetNumAtoms(),8)
     m2 = Chem.RemoveHs(m2)
     self.assertEqual(m2.GetNumAtoms(),4)
-
+    
     m = Chem.MolFromSmiles('CC[H]',False)
     self.assertEqual(m.GetNumAtoms(),3)
     m2 = Chem.MergeQueryHs(m)
@@ -400,6 +400,25 @@ class TestCase(unittest.TestCase):
     m1 = Chem.RemoveHs(m,updateExplicitCount=True)
     self.assertEqual(m1.GetNumAtoms(),2)
     self.assertEqual(m1.GetAtomWithIdx(1).GetNumExplicitHs(),1)    
+
+    # test merging of mapped hydrogens
+    m = Chem.MolFromSmiles('CC[H]',False)
+    m.GetAtomWithIdx(2).SetProp("molAtomMapNumber", "1")
+    self.assertEqual(m.GetNumAtoms(),3)
+    m2 = Chem.MergeQueryHs(m, mergeUnmappedOnly=True)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(),3)
+    self.assertFalse(m2.GetAtomWithIdx(1).HasQuery())
+
+    # here the hydrogen is unmapped
+    #  should be the same as merging all hydrogens
+    m = Chem.MolFromSmiles('CC[H]',False)
+    m.GetAtomWithIdx(1).SetProp("molAtomMapNumber", "1")
+    self.assertEqual(m.GetNumAtoms(),3)
+    m2 = Chem.MergeQueryHs(m, mergeUnmappedOnly=True)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(),2)
+    self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
 
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
@@ -859,7 +878,126 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms()==30)
 
+    # test strictParsing1:
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','strictLax1.sdf')
+    #strict from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = True);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      if (i == 0):
+        self.assertTrue(not mol.HasProp("ID"))
+      self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
     
+    #lax from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = False);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
+
+    #strict from text
+    with open(fileN,'rb') as dFile:
+      d = dFile.read()
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = True)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      if (i == 0):
+        self.assertTrue(not mol.HasProp("ID"))
+      self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
+    
+    #lax from text
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = False)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
+
+    # test strictParsing2:
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','strictLax2.sdf')
+    #strict from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = True);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig1")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
+        "No blank line before dollars\n" \
+        "$$$$\n" \
+        "Structure1\n" \
+        "csChFnd70/05230312262D")
+      i += 1
+    self.assertTrue(i == 1)
+    
+    #lax from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing = False);
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig2")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
+      i += 1
+    self.assertTrue(i == 1)
+
+    #strict from text
+    with open(fileN,'rb') as dFile:
+      d = dFile.read()
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = True)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig1")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
+        "No blank line before dollars\n" \
+        "$$$$\n" \
+        "Structure1\n" \
+        "csChFnd70/05230312262D")
+      i += 1
+    self.assertTrue(i == 1)
+    
+    #lax from text
+    sdSup = Chem.SDMolSupplier();
+    sdSup.SetData(d, strictParsing = False)
+      
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig2")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
+      i += 1
+    self.assertTrue(i == 1)
+
   def test26SmiMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','first_200.tpsa.csv')
@@ -2369,7 +2507,7 @@ CAS<~>
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondsToUse=[1,2])
     self.assertEqual(fsmi,"CCC")
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],atomSymbols=["","[A]","[C]","[B]","",""])
-    self.assertEqual(fsmi,"[C]1[B][A]1")
+    self.assertEqual(fsmi,"[A]1[B][C]1")
     fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondSymbols=["","%","%","","","%"])
     self.assertEqual(fsmi,"C1%C%C%1")
     
@@ -2432,7 +2570,7 @@ CAS<~>
     m = Chem.MolFromSmiles('CC*')
     m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
     smi=Chem.MolToSmiles(m)
-    self.assertEqual(smi,'[*:30]CC')
+    self.assertEqual(smi,'CC[*:30]')
 
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
@@ -2486,6 +2624,45 @@ CAS<~>
     ri = m2.GetRingInfo()
     self.assertTrue(ri)
     self.assertEqual(ri.NumRings(),1)
+
+  def test85MolCopying2(self):
+    import copy
+    m1 = Chem.MolFromSmiles('CC')
+    m1.SetProp('Foo','bar')
+    m1.foo=[1]
+    m2 = copy.copy(m1)
+    m3 = copy.copy(m2)
+    m4 = copy.deepcopy(m1)
+    m5 = copy.deepcopy(m2)
+    m6 = copy.deepcopy(m4)
+
+    self.assertEquals(m1.GetProp('Foo'),'bar')
+    self.assertEquals(m2.GetProp('Foo'),'bar')
+    self.assertEquals(m3.GetProp('Foo'),'bar')
+    self.assertEquals(m4.GetProp('Foo'),'bar')
+    self.assertEquals(m5.GetProp('Foo'),'bar')
+    self.assertEquals(m6.GetProp('Foo'),'bar')
+
+    m2.foo.append(4)
+    self.assertEquals(m1.foo,[1,4])
+    self.assertEquals(m2.foo,[1,4])
+    self.assertEquals(m3.foo,[1,4])
+    self.assertEquals(m4.foo,[1])
+    self.assertEquals(m5.foo,[1])
+    self.assertEquals(m6.foo,[1])
+
+    m7 = Chem.RWMol(m1)
+    self.failIf(hasattr(m7,'foo'))
+    m7.foo=[1]
+    m8 = copy.copy(m7)
+    m9 = copy.deepcopy(m7)
+    m8.foo.append(4)
+    self.assertEquals(m7.GetProp('Foo'),'bar')
+    self.assertEquals(m8.GetProp('Foo'),'bar')
+    self.assertEquals(m9.GetProp('Foo'),'bar')
+    self.assertEquals(m8.foo,[1,4])
+    self.assertEquals(m9.foo,[1])
+
     
   def test86MolRenumbering(self):
     import random
@@ -2522,7 +2699,7 @@ CAS<~>
     self.assertEqual(len(frags),5)
     self.assertEqual(frags,((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
     smi = Chem.MolToSmiles(nm,True)
-    self.assertEqual(smi,'[1*]C.[1*]O.[1*]CC[1*].[10*]C1CC1.[10*]C1CC([10*])C1[10*]')
+    self.assertEqual(smi,'[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1')
 
     m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
     bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))
@@ -2650,10 +2827,10 @@ CAS<~>
     # doc tests
     mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
     self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False)),
-                      [0,1,0,1,-1,-1,-1,-1])
+                      [0,6,0,6,-1,-1,-1,-1])
     self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False)),
-                      [-1,-1,-1,-1,0,1,0,1])
-
+                      [-1,-1,-1,-1,0,6,0,6])
+    
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
 
@@ -2665,6 +2842,59 @@ CAS<~>
     newAt = Chem.Atom(8)
     rwmol.ReplaceAtom(0,newAt)
     self.assertEqual(Chem.MolToSmiles(rwmol,True),Chem.MolToSmiles(rwmol.GetMol()))
+
+  def test94CopyWithConfs(self):
+    """ test copying Mols with some conformers
+
+    """
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','cmpd2.tpl')
+    m1 = Chem.MolFromTPLFile(fileN)
+    self.assertTrue(m1 is not None)
+    self.assertEquals(m1.GetNumAtoms(),12)
+    self.assertEquals(m1.GetNumConformers(),2)
+    self.assertEquals(m1.GetConformer(0).GetNumAtoms(),12)    
+    self.assertEquals(m1.GetConformer(1).GetNumAtoms(),12)    
+    
+    m2 = Chem.Mol(m1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),2)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.Mol(m1,False,0)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+
+    m2 = Chem.Mol(m1,False,1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.Mol(m1,True)
+    self.assertTrue(m2.GetNumAtoms()==12)
+    self.assertTrue(m2.GetNumConformers()==0)
+
+    m2 = Chem.RWMol(m1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),2)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.RWMol(m1,False,0)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(0).GetNumAtoms(),12)    
+
+    m2 = Chem.RWMol(m1,False,1)
+    self.assertEquals(m2.GetNumAtoms(),12)
+    self.assertEquals(m2.GetNumConformers(),1)
+    self.assertEquals(m2.GetConformer(1).GetNumAtoms(),12)    
+
+    m2 = Chem.RWMol(m1,True)
+    self.assertTrue(m2.GetNumAtoms()==12)
+    self.assertTrue(m2.GetNumConformers()==0)
 
   def testAtomPropQueries(self):
     """ test the property queries
@@ -2755,6 +2985,62 @@ CAS<~>
     self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)],
                      [10])
     
+  def testGetShortestPath(self):
+    """ test the GetShortestPath() wrapper
+    """
+    smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O"
+    m = Chem.MolFromSmiles(smi)
+    path = Chem.GetShortestPath(m, 1, 20)
+    self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
+
+  def testGithub497(self):
+    import gzip,tempfile,sys
+    outf = gzip.open(tempfile.mktemp(),'wb+')
+    m = Chem.MolFromSmiles('C')
+    w = Chem.SDWriter(outf)
+    e = False
+    try:
+      w.write(m)
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon writing to SDWriter without crashing the RDKit\n')
+      e = True
+    else:
+      e = (sys.version_info < (3, 0))
+    try:
+      w.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing SDWriter without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
+    w=None
+    try:
+      outf.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing the stream without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
+    self.assertTrue(e)
+    
+  def testGithub498(self):
+    import gzip,tempfile
+    if (sys.version_info < (3, 0)):
+      mode = 'w+'
+    else:
+      mode = 'wt+'
+    outf = gzip.open(tempfile.mktemp(), mode)
+    m = Chem.MolFromSmiles('C')
+    w = Chem.SDWriter(outf)
+    w.write(m)
+    w.close()
+    w=None
+    outf.close()
     
 if __name__ == '__main__':
   unittest.main()

@@ -453,7 +453,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     >>> template=AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
     >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4FTR_lig.mol'))
     >>> AllChem.MolToSmiles(mol)
-    'COC1CC(C2CCC3C(C2)NC2CCC(CC(O)N(C)C)CC2NC3O)CCC1N(O)O'
+    'COC1CC(C2CCC3C(O)NC4CC(CC(O)N(C)C)CCC4NC3C2)CCC1N(O)O'
     >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
     >>> AllChem.MolToSmiles(newMol)
     'COc1cc(-c2ccc3c(c2)Nc2ccc(CC(=O)N(C)C)cc2NC3=O)ccc1[N+](=O)[O-]'

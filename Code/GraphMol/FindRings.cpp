@@ -11,7 +11,7 @@
 #include "RDKitBase.h"
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <RDGeneral/utils.h>
 #include <vector>
@@ -195,6 +195,18 @@ namespace FindRings {
     // sort on size
     std::sort(res.begin(), res.end(), compRingSize());
 
+#if 0
+        std::cerr<<"\n\nSORTED\n";
+        for(VECT_INT_VECT::const_iterator iter=res.begin();
+            iter!=res.end();++iter){
+          std::cerr<<iter-res.begin()<<": ";
+          std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
+          std::cerr<<std::endl;          
+        }
+#endif
+
+
+
     // change the rings from atom IDs to bondIds
     VECT_INT_VECT brings;
     RingUtils::convertToBonds(res, brings, mol);
@@ -211,20 +223,47 @@ namespace FindRings {
     boost::dynamic_bitset<> availRings(res.size());
     availRings.set();
     boost::dynamic_bitset<> keepRings(res.size());
+    boost::dynamic_bitset<> munion(mol.getNumBonds());
 
     for(unsigned int i=0;i<res.size();++i){
+      // skip this ring if we've already seen all of its bonds
+      if(bitBrings[i].is_subset_of(munion)) availRings.set(i,0);
       if(!availRings[i]) continue;
+
+      munion |= bitBrings[i];
       keepRings.set(i);
-      boost::dynamic_bitset<> munion(mol.getNumBonds());
-      munion = bitBrings[i];
+
+      // from this ring we consider all others that are still available and the same size
+      boost::dynamic_bitset<> consider(res.size());
       for(unsigned int j=i+1;j<res.size();++j){
-        if(!availRings[j]) continue;
-        if(bitBrings[j].is_subset_of(munion)){
-          availRings.set(j,0);
+        //std::cerr<<"        "<<j<<" "<<brings[j].size()<<" - "<<brings[i].size()<<"  >"<<availRings[j]<<std::endl;
+        if(availRings[j] && (brings[j].size()==brings[i].size()) ) {
+          consider.set(j);
+        }
+      }
+
+      //std::cerr<<">>> "<<i<<" "<<consider.count()<<std::endl;
+      while(consider.count()){
+        unsigned int bestJ=i+1;
+        int bestOverlap=-1;
+        // loop over the available other rings in consideration and pick the one 
+        // that has the most overlapping bonds with what we've done so far.
+        // this is the fix to github #526
+        for(unsigned int j=i+1;j<res.size() && bitBrings[j].count()==bitBrings[i].count();++j){
+          if(!consider[j] || !availRings[j]) continue;
+          int overlap=(bitBrings[j] & munion).count();
+          if(overlap>bestOverlap){
+            bestOverlap=overlap;
+            bestJ=j;
+          }
+        }
+        consider.set(bestJ,0);
+        if(bitBrings[bestJ].is_subset_of(munion)){
+          availRings.set(bestJ,0);
         } else {
-          keepRings.set(j);
-          availRings.set(j,0);
-          munion |= bitBrings[j];
+          keepRings.set(bestJ);
+          availRings.set(bestJ,0);
+          munion |= bitBrings[bestJ];
         }
       }
     }
@@ -889,6 +928,7 @@ namespace RDKit {
         std::cerr<<"\n\nFOUND:\n";
         for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
             iter!=fragRes.end();++iter){
+          std::cerr<<iter-fragRes.begin()<<": ";
           std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
           std::cerr<<std::endl;          
         }
@@ -896,7 +936,9 @@ namespace RDKit {
         int nexpt = (nbnds - curFrag.size()+1);
         int ssiz = fragRes.size();
 
+
         // first check that we got at least the number of expected rings
+        //std::cerr<<"EXPT: "<<ssiz<<" "<<nexpt<<std::endl;
         if(ssiz<nexpt){
           // Issue 3514824: in certain highly fused ring systems, the algorithm
           // above would miss rings.
@@ -940,9 +982,19 @@ namespace RDKit {
         }
         // if we have more than expected we need to do some cleanup
         // otherwise do som clean up work
+        //std::cerr<<"  check: "<<ssiz<<" "<<nexpt<<std::endl;
         if (ssiz > nexpt) {
           FindRings::removeExtraRings(fragRes, nexpt, mol);
         }
+
+#if 0
+        std::cerr<<"\n\nKEEPING:\n";
+        for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
+            iter!=fragRes.end();++iter){
+          std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
+          std::cerr<<std::endl;          
+        }
+#endif
 
         res.reserve(res.size()+fragRes.size());
         for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
@@ -992,7 +1044,7 @@ namespace RDKit {
       }
       const VECT_INT_VECT &extras=mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
 
-
+      //std::cerr<<" extras "<<extras.size()<<std::endl;
       // convert the rings to bond ids
       VECT_INT_VECT bsrs, bextra;
       RingUtils::convertToBonds(sssrs, bsrs, mol);
@@ -1009,6 +1061,14 @@ namespace RDKit {
       // if all the union elements of the new set if same as munion we found a  symmetric ring
       for (srid = 0; srid < nsssr; srid++) {
         sr = bsrs[srid];
+#if 0
+        std::cerr<<"  consider: "<<srid<<std::endl;
+        std::copy(sssrs[srid].begin(),sssrs[srid].end(),std::ostream_iterator<int>(std::cerr," "));
+        std::cerr<<"  | ";
+        std::copy(sr.begin(),sr.end(),std::ostream_iterator<int>(std::cerr," "));
+        std::cerr<<std::endl;
+        std::cerr<<"------"<<std::endl;
+#endif
         ssiz = sr.size();
         INT_VECT exrid;
         exrid.push_back(srid);
@@ -1021,19 +1081,36 @@ namespace RDKit {
             continue;
           }
           exr = bextra[eid];
+#if 0
+          std::cerr<<"      "<<eid<<": ";
+          std::copy(extras[eid].begin(),extras[eid].end(),std::ostream_iterator<int>(std::cerr," "));
+          std::cerr<<"  | ";
+          std::copy(exr.begin(),exr.end(),std::ostream_iterator<int>(std::cerr," "));
+          std::cerr<<std::endl;
+#endif
           if (ssiz == exr.size()) {
+            //std::cerr<<"        possible"<<std::endl;
             INT_VECT eunion;
             Union(nunion, exr, eunion);
+#if 0
+            std::cerr<<"           munion: ";
+            std::copy(munion.begin(),munion.end(),std::ostream_iterator<int>(std::cerr," "));
+            std::cerr<<std::endl;
+            std::cerr<<"           eunion: ";
+            std::copy(eunion.begin(),eunion.end(),std::ostream_iterator<int>(std::cerr," "));
+            std::cerr<<std::endl;
+#endif            
             // now check if the eunion is same as the original union from the SSSRs
             if (eunion.size() == munion.size()) {
               //we found a symmetric ring
               symids.push_back(eid);
+              //std::cerr<<"        keep!"<<std::endl;
             }
           }
         }
       }
 
-      // add the symmertic rings
+      // add the symmetric rings
       for (eri = symids.begin(); eri != symids.end(); eri++) {
         exr = extras[*eri];
         res.push_back(exr);
