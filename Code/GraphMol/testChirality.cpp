@@ -17,6 +17,7 @@
 //#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -607,6 +608,7 @@ void testRingStereochemistry(){
     std::string smi1=MolToSmiles(*m,true);
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1=="B[C@H]1CC[C@H](C)CC1");
+
     delete m;
 #if 0
     smi="B[C@@H]1CC[C@@H](C)CC1";
@@ -622,7 +624,7 @@ void testRingStereochemistry(){
     std::string smi = "C1[C@@H](B)CC[C@H](C)C1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1=MolToSmiles(*m,true);
-    smi = "B[C@@H]1CC[C@@H](C)CC1";
+    smi = "B[C@H]1CC[C@H](C)CC1";
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1==smi);
     delete m;
@@ -1356,10 +1358,12 @@ void testBondDirRemoval(){
     std::string smi1=MolToSmiles(*m,true);
 
     // check removal of redundant bond direction information:
-    std::vector<int> ranks(m->getNumAtoms(),0);
-    MolOps::rankAtoms(*m,ranks);
+    std::vector<unsigned int> oranks(m->getNumAtoms(),0);
+    Canon::rankMolAtoms(*m,oranks);
     std::vector<Canon::AtomColors> colors(m->getNumAtoms());
     Canon::MolStack stack;
+    std::vector<unsigned int> ranks(oranks.size());
+    for(unsigned int i=0;i<ranks.size();++i) ranks[i]=oranks[i];
     Canon::canonicalizeFragment(*m,0,colors,ranks,stack);
 
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::NONE);
@@ -1423,9 +1427,10 @@ void testIssue2705543(){
     delete m;
   }
   {
-    fName = rdbase+"/Code/GraphMol/test_data/Issue2705543.2h.mol";
-    m = MolFileToMol(fName,true,false);
+    fName = rdbase+"/Code/GraphMol/test_data/Issue2705543.1.mol";
+    m = MolFileToMol(fName);
     TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==13);
 
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m,true);
@@ -1453,10 +1458,9 @@ void testIssue2705543(){
     delete m;
   }
   {
-    fName = rdbase+"/Code/GraphMol/test_data/Issue2705543.1.mol";
-    m = MolFileToMol(fName);
+    fName = rdbase+"/Code/GraphMol/test_data/Issue2705543.2h.mol";
+    m = MolFileToMol(fName,true,false);
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms()==13);
 
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m,true);
@@ -1472,17 +1476,17 @@ void testIssue2705543(){
     TEST_ASSERT(cip=="R");
 
     TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
-    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
     m->getAtomWithIdx(2)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
-    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
-    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(4)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
 
@@ -1679,7 +1683,7 @@ void testIssue3009911(){
     ranks = new int[m->getNumAtoms()];
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      int rank;
+      unsigned int rank;
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank))
       m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,rank);
       ranks[i]=rank;
@@ -1707,7 +1711,7 @@ void testIssue3009911(){
     ranks = new int[m->getNumAtoms()];
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
-      int rank;
+      unsigned int rank;
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank))
       m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,rank);
       ranks[i]=rank;
@@ -2044,6 +2048,61 @@ void testGithub90(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub553(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 553: Chirality not affected by atom-map index" << std::endl;
+
+  {
+    std::string smi="[*:1][C@H]([*:2])[*:3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(cip=="R");
+    delete m;
+  }
+
+  {
+    std::string smi="[*][C@H]([*:2])[*:3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(cip=="R");
+    delete m;
+  }
+
+  {
+    std::string smi="[*:1][C@@H]([*:2])[*:3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(cip=="S");
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(){
@@ -2059,7 +2118,6 @@ int main(){
   testChiralityFrom3D();
   testIterativeChirality();
   testBondDirRemoval();
-  testIssue2705543();
   testIssue2762917();
   testIssue3009911();
   testIssue3139534();
@@ -2067,8 +2125,10 @@ int main(){
   testIssue3453172();
   testRingStereochemistry();
   testGithub87();
-#endif
   testGithub90();
+#endif
+  testIssue2705543();
+  testGithub553();
   return 0;
 }
 

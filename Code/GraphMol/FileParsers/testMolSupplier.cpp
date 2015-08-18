@@ -1132,6 +1132,275 @@ void testSDSupplierFromText() {
   TEST_ASSERT(i==2);
 }
 
+void testSDSupplierFromTextStrLax1() {
+  std::string text;
+  text="Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  5  4  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "M  END\n"
+    "blah\n"
+    "\n"
+    "blah after blank line\n"
+    ">  <ID> (3)\n"
+    "Lig1\n"
+    "\n"
+    "This will be ignored\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "Value\n"
+    "\n"
+    "$$$$\n"
+    "Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  6  5  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8477    0.6988    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "  3  6  1  0  0  0  0\n"
+    "M  END\n"
+    ">  <ID> (4)\n"
+    "Lig2\n"
+    "\n"
+    "This will be ignored\n"
+    "\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "Value\n"
+    "\n"
+    "This will be ignored\n"
+    "\n"
+    "$$$$\n";
+
+  //strict
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      if (i==0) TEST_ASSERT(!mol->hasProp("ID"));
+      TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+  //lax
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+}
+
+void testSDSupplierFromTextStrLax2() {
+  std::string text;
+  text="Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  5  4  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "M  END\n"
+    ">  <ID> (3)\n"
+    "Lig1\n"
+    "\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "No blank line before dollars\n"
+    "$$$$\n"
+    "Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  6  5  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8477    0.6988    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "  3  6  1  0  0  0  0\n"
+    "M  END\n"
+    ">  <ID> (3)\n"
+    "Lig2\n"
+    "\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "Value2\n"
+    "\n"
+    "$$$$\n";
+
+  //strict
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig1");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
+        "csChFnd70/05230312262D");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+  //lax
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig2");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "Value2");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+}
+
+void testSDSupplierStrLax1() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
+  //strict
+  {
+    SDMolSupplier reader(fname, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      if (i==0) TEST_ASSERT(!mol->hasProp("ID"));
+      TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+  //lax
+  {
+    SDMolSupplier reader(fname, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+}
+
+void testSDSupplierStrLax2() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/strictLax2.sdf";
+  //strict
+  {
+    SDMolSupplier reader(fname, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig1");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
+        "csChFnd70/05230312262D");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+  //lax
+  {
+    SDMolSupplier reader(fname, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig2");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "Value2");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+}
+
 void testIssue265() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NotThere.sdf";
@@ -1231,9 +1500,23 @@ void testIssue381() {
 void testSetStreamIndices() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  int tmpIndices[16]={0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
-				     23729, 26147, 28331, 32541, 33991};
-  std::vector<std::streampos> indices(tmpIndices,tmpIndices+16);
+  std::ifstream ifs(fname.c_str(), std::ios_base::binary);
+  std::vector<std::streampos> indices;
+  bool addIndex = true;
+  bool notEof = true;
+  std::streampos pos = 0;
+  std::string line;
+  while (notEof) {
+    if (addIndex)
+      pos = ifs.tellg();
+    notEof = (std::getline(ifs, line) ? true : false);
+    if (notEof) {
+      if (addIndex)
+        indices.push_back(pos);
+      addIndex = (line.substr(0, 4) == "$$$$");
+    }
+  }
+  ifs.close();
   SDMolSupplier *sdsup;
 
   ROMol *nmol=0;  
@@ -1963,6 +2246,26 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierFromText();
   BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierFromText()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierStrLax1();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierStrLax1()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierStrLax2();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierStrLax2()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierFromTextStrLax1();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierFromTextStrLax1()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierFromTextStrLax2();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierFromTextStrLax2()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
 

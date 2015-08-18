@@ -52,8 +52,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2015")
-set(RDKit_Month "03")
-set(RDKit_Revision "1pre")
+set(RDKit_Month "09")
+set(RDKit_Revision "1.dev1")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
@@ -179,8 +179,13 @@ include_directories(${RDKit_CodeDir})
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 if(RDK_TEST_MULTITHREADED)
-  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
+  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED -DBOOST_ALL_NO_LIB")
 endif()
+
+if(RDK_TEST_MULTITHREADED OR RDK_BUILD_THREADSAFE_SSS)
+  ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
+endif()
+
 
 find_package (Threads)
 if(RDK_BUILD_THREADSAFE_SSS)

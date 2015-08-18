@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -182,8 +182,14 @@ namespace RDKit{
       \param quickCopy (optional) if this is true, the resulting ROMol will not
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
+      \param confId (optional) if this is >=0, the resulting ROMol will contain only
+           the specified conformer from \c other.
     */
-    ROMol(const ROMol &other,bool quickCopy=false) {dp_props=0;dp_ringInfo=0;initFromOther(other,quickCopy);};
+    ROMol(const ROMol &other,bool quickCopy=false,int confId=-1) {
+      dp_props=0;
+      dp_ringInfo=0;
+      initFromOther(other,quickCopy,confId);
+    };
     //! construct a molecule from a pickle string
     ROMol(const std::string &binStr);
 
@@ -729,11 +735,13 @@ namespace RDKit{
     //! initializes from the contents of another molecule
     /*!
       \param other     the molecule to be copied
-      \param quickCopy (optional) if this is true, we will not 
+      \param quickCopy if this is true, we will not 
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
+      \param confId if this is >=0, the resulting ROMol will contain only
+           the specified conformer from \c other.
     */
-    void initFromOther(const ROMol &other,bool quickCopy);
+    void initFromOther(const ROMol &other,bool quickCopy,int confId);
 
   };
 

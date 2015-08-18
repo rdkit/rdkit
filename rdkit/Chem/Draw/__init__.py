@@ -197,7 +197,10 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
   """ Generates a picture of a molecule and displays it in a Tkinter window
   """
   global tkRoot,tkLabel,tkPI
-  import Tkinter
+  try:
+    import Tkinter
+  except ImportError:
+    import tkinter as Tkinter
   try:
     import ImageTk
   except ImportError:

@@ -44,7 +44,7 @@
 #include <io.h> 	 
 #endif
 
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SLNParse/SLNAttribs.h>

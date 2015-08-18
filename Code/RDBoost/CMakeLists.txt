@@ -1,7 +1,7 @@
 rdkit_library(RDBoost Wrap.cpp
               LINK_LIBRARIES ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 
-rdkit_headers(Exceptions.h Wrap.h PySequenceHolder.h
+rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
               python_streambuf.h
               DEST RDBoost)

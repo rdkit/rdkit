@@ -13,7 +13,7 @@
 #include <RDGeneral/StreamOps.h>
 #include "DatastructsException.h"
 #include "DiscreteDistMat.h"
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <boost/cstdint.hpp>
 
 namespace RDKit {

@@ -2,9 +2,9 @@
 #define RDKIT_IMPORT_ARRAY_INCLUDED
 
 #if PY_MAJOR_VERSION >= 3
-  inline void * rdkit_import_array()
+  void * rdkit_import_array()
 #else
-  inline void rdkit_import_array()
+  void rdkit_import_array()
 #endif
   {
     // numpy's import_array is defined as a macro that expands into a block

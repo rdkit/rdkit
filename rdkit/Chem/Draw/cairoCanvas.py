@@ -11,14 +11,26 @@
 #
 #pylint: disable=F0401,C0324,C0322,W0142
 import sys
-try:
-  import cairo
-except ImportError:
-  import cairocffi as cairo
+
+from rdkit import six
+if not six.PY3:
+  bytes = buffer
+
+# for Python3, import cairocffi preferably
+if six.PY3:
+  try:
+    import cairocffi as cairo
+  except ImportError:
+    import cairo
+else:
+  try:
+    import cairo
+  except ImportError:
+    import cairocffi as cairo
+
 if not hasattr(cairo.ImageSurface,'get_data') and \
    not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
   raise ImportError('cairo version too old')
-
 
 import math
 import rdkit.RDConfig
@@ -78,12 +90,12 @@ class Canvas(CanvasBase):
       size=image.size[0], image.size[1]
       self.image=image
     elif ctx is None and size is not None:
-      if cairo.HAS_PDF_SURFACE and imageType == "pdf":
-        surface = cairo.PDFSurface (fileName, size[0], size[1])
-      elif cairo.HAS_SVG_SURFACE and imageType == "svg":
-        surface = cairo.SVGSurface (fileName, size[0], size[1])
-      elif cairo.HAS_PS_SURFACE and imageType == "ps":
-        surface = cairo.PSSurface (fileName, size[0], size[1])
+      if hasattr(cairo, "PDFSurface") and imageType == "pdf":
+        surface = cairo.PDFSurface(fileName, size[0], size[1])
+      elif hasattr(cairo, "SVGSurface") and imageType == "svg":
+        surface = cairo.SVGSurface(fileName, size[0], size[1])
+      elif hasattr(cairo, "PSSurface") and imageType == "ps":
+        surface = cairo.PSSurface(fileName, size[0], size[1])
       elif imageType == "png":
         surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, size[0], size[1])
       else:
@@ -92,16 +104,16 @@ class Canvas(CanvasBase):
       ctx.set_source_rgb(1,1,1)
       ctx.paint()
     else:
-      surface=ctx.get_target()
+      surface = ctx.get_target()
       if size is None:
         try:
-          size=surface.get_width(),surface.get_height() 
+          size = surface.get_width(),surface.get_height() 
         except AttributeError:
-          size=None
-    self.ctx=ctx
-    self.size=size
-    self.surface=surface
-    self.fileName=fileName
+          size = None
+    self.ctx = ctx
+    self.size = size
+    self.surface = surface
+    self.fileName = fileName
 
   def flush(self):
     """temporary interface, must be splitted to different methods,
@@ -111,10 +123,10 @@ class Canvas(CanvasBase):
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
       if hasattr(self.surface,'get_data'):
-        self.image.fromstring(self.surface.get_data(),
+        self.image.fromstring(bytes(self.surface.get_data()),
                               "raw","BGRA",0,1)
       else:
-        self.image.fromstring(self.surface.get_data_as_rgba(),
+        self.image.fromstring(bytes(surface.get_data_as_rgba()),
                               "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":

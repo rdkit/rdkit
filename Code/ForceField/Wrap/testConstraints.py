@@ -1,11 +1,70 @@
 from rdkit import RDConfig
-import os
+import sys, os
+from time import sleep
+from multiprocessing import Process, Value
 import unittest
 from rdkit import Chem
 from rdkit.Chem import ChemicalForceFields
 from rdkit.Chem import rdMolTransforms
 
+class OptSafe:
+  def __init__(self):
+    self.minInfLoop = """minInfLoop
+     RDKit          3D
+
+  7  5  0  0  0  0  0  0  0  0999 V2000
+    1.7321   -0.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+    0.8660   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.5000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5000   -1.3660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8660   -1.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5000    0.3660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2321   -0.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  3  5  1  0  0  0  0
+  3  6  1  0  0  0  0
+M  CHG  2   3   1   7  -1
+M  END"""
+
+  def uffOptFunc(self, v, mol):
+    ff = ChemicalForceFields.UFFGetMoleculeForceField(mol)
+    try:
+      ff.Minimize()
+    except RuntimeError:
+      pass
+    v.value = True
+    return
+
+  def mmffOptFunc(self, v, mol):
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(mol)
+    ff = ChemicalForceFields.MMFFGetMoleculeForceField(mol, mp)
+    try:
+      ff.Minimize()
+    except RuntimeError:
+      pass
+    v.value = True
+    return
+
+  def opt(self, mol, optFunc):
+    OPT_SLEEP_SEC = 0.2
+    MAX_OPT_SLEEP_SEC = 3
+    v = Value('b', False)
+    optProcess = Process(target = optFunc, args = (v, mol))
+    optProcess.start()
+    s = 0.0
+    while ((s < MAX_OPT_SLEEP_SEC) and (not v.value)):
+      s += OPT_SLEEP_SEC
+      sleep(OPT_SLEEP_SEC)
+    if (not v.value):
+      sys.stderr.write('Killing Minimize() or it will loop indefinitely\n')
+      optProcess.terminate()
+    optProcess.join()
+    return bool(v.value)
+
 class TestCase(unittest.TestCase):
+
   def setUp(self) :
     self.molB = """butane
      RDKit          3D
@@ -45,6 +104,18 @@ butane
   9 11  1  0  0  0  0
   9 12  1  0  0  0  0
 M  END"""
+
+  def testUFFMinInfLoop(self) :
+    os = OptSafe()
+    m = Chem.MolFromMolBlock(os.minInfLoop)
+    self.assertTrue(m)
+    ok = False
+    try:
+      ok = os.opt(m, os.uffOptFunc)
+    except RuntimeError:
+      ok = True
+      pass
+    self.assertTrue(ok)
 
   def testUFFDistanceConstraints(self) :
     m = Chem.MolFromMolBlock(self.molB, True, False)
@@ -115,8 +186,8 @@ M  END"""
     rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 30.0);
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
-    ff.UFFAddTorsionConstraint(1, 3, 6, 8, False, -10.0, -8.0, 1.0e5)
-    r = ff.Minimize(1000)
+    ff.UFFAddTorsionConstraint(1, 3, 6, 8, False, -10.0, -8.0, 1.0e6)
+    r = ff.Minimize(500)
     self.assertTrue(r == 0)
     conf = m.GetConformer()
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
@@ -145,6 +216,18 @@ M  END"""
     self.assertTrue(r == 0)
     fq = conf.GetAtomPosition(1)
     self.assertTrue((fp - fq).Length() < 0.01)
+
+  def testMMFFMinInfLoop(self) :
+    os = OptSafe()
+    m = Chem.MolFromMolBlock(os.minInfLoop)
+    self.assertTrue(m)
+    ok = False
+    try:
+      ok = os.opt(m, os.mmffOptFunc)
+    except RuntimeError:
+      ok = True
+      pass
+    self.assertTrue(ok)
 
   def testMMFFDistanceConstraints(self) :
     m = Chem.MolFromMolBlock(self.molB, True, False)

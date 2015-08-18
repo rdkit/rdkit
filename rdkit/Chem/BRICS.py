@@ -318,7 +318,7 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
   >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
   >>> m2=BreakBRICSBonds(m)
   >>> Chem.MolToSmiles(m2,True)
-  '[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1'
+  '[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O'
 
 
   can also specify a limited set of bonds to work with:
@@ -730,7 +730,7 @@ if __name__=='__main__':
       smis = [Chem.MolToSmiles(x,True) for x in res]
       self.assertTrue('c1ccc(-c2ccccc2)cc1' in smis)
       self.assertTrue('COc1ccccc1' in smis)
-      self.assertTrue('c1ccn(-c2ccccc2)c1' in smis)
+      self.assertTrue('c1ccc(-n2cccc2)cc1' in smis,smis)
 
     def test7(self):
       allNodes = set()
@@ -754,12 +754,13 @@ if __name__=='__main__':
       base = Chem.MolFromSmiles("n1cncnc1OCC(C1CC1)OC1CNC1")
       catalog = BRICSDecompose(base)
       self.assertTrue(len(catalog)==5,catalog)
-      
       catalog = [Chem.MolFromSmiles(x) for x in catalog]
-      ms = [Chem.MolToSmiles(x) for x in BRICSBuild(catalog,maxDepth=4)]
-      self.assertTrue(len(ms)==36,ms)
+      ms = list(BRICSBuild(catalog,maxDepth=4))
+      for m in ms:
+        Chem.SanitizeMol(m)
+      ms = [Chem.MolToSmiles(x) for x in ms]
+      self.assertEqual(len(ms),36)
 
-      
       ts = ['n1cnc(C2CNC2)nc1','n1cnc(-c2ncncn2)nc1','C(OC1CNC1)C(C1CC1)OC1CNC1',
             'n1cnc(OC(COC2CNC2)C2CC2)nc1','n1cnc(OCC(OC2CNC2)C2CNC2)nc1']
       ts = [Chem.MolToSmiles(Chem.MolFromSmiles(x),True) for x in ts]

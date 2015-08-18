@@ -1285,7 +1285,9 @@ namespace RDKit {
           } else if (inchiAtom->num_iso_H[3]) {
             isotopes.push_back(boost::make_tuple(3, i, inchiAtom->num_iso_H[3]));
           }
-          //atom->setNoImplicit(true);
+          // at this point the molecule has all Hs it should have. Set the noImplicit flag so
+          // we don't end up with extras later (this was github #562):
+          atom->setNoImplicit(true);
           // add atom to molecule
           unsigned int aid = m->addAtom(atom, false, true);
           indexToAtomIndexMapping.push_back(aid);
@@ -1387,7 +1389,7 @@ namespace RDKit {
         INT_PAIR_VECT zBondPairs, eBondPairs;
         if (numStereo0D) {
           // calculate CIPCode as they might be used
-          INT_VECT ranks;
+          UINT_VECT ranks;
           Chirality::assignAtomCIPRanks(*m, ranks);
           for (int i = 0; i < numStereo0D; i ++) {
             inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;

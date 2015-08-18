@@ -141,6 +141,8 @@ namespace RDKit{
   RWMol *toMol(std::string inp,int func(const std::string &,
 					std::vector<RDKit::RWMol *> &),
                std::string origInp){
+    // empty strings produce empty molecules:
+    if(inp=="") return new RWMol();
     RWMol *res = 0;
     std::vector<RDKit::RWMol *> molVect;
     try {

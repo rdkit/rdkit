@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "SparseBitVect.h"
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 
 #include "base64.h"
 #include <RDGeneral/StreamOps.h>

@@ -14,7 +14,7 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <cstdlib>
 #include "DistPicker.h"
 #include <boost/random.hpp>

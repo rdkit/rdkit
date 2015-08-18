@@ -131,7 +131,7 @@ namespace RDKit {
     
     class MolHistogram {
     public:
-      MolHistogram(const ROMol &mol, const double *dmat);
+      MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat=false);
       ~MolHistogram() {};
     inline int get(const unsigned int y, const unsigned int x) const {
       PRECONDITION(y < d_h.shape()[0], "Invalid index on MolHistogram");

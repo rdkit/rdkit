@@ -171,9 +171,14 @@ namespace RDKit{
       PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
       double res=0.0;
       BOOST_FOREACH(PATH_TYPE p,ps){
+        TEST_ASSERT(p.size()==n+1);
         double accum=1.0;
-        BOOST_FOREACH(int aidx,p){
-          accum*=hkDs[aidx];
+        for(unsigned int i=0;i<n;++i){
+          accum*=hkDs[p[i]];
+        }
+        // only push on the last element if this isn't a ring; this was github 463:
+        if(p[n]!=p[0]){ 
+          accum*=hkDs[p[n]];
         }
         res+=accum;
       }
@@ -185,10 +190,17 @@ namespace RDKit{
       PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
       double res=0.0;
       BOOST_FOREACH(PATH_TYPE p,ps){
+
+        TEST_ASSERT(p.size()==n+1);
         double accum=1.0;
-        BOOST_FOREACH(int aidx,p){
-          accum*=nVs[aidx];
+        for(unsigned int i=0;i<n;++i){
+          accum*=nVs[p[i]];
         }
+        // only push on the last element if this isn't a ring; this was github 463:
+        if(p[n]!=p[0]){ 
+          accum*=nVs[p[n]];
+        }
+
         res+=accum;
       }
       return res;

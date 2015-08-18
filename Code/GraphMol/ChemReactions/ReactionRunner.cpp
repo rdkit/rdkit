@@ -196,7 +196,8 @@ namespace RDKit {
           newAtom->setNumExplicitHs(val);
         }
         if(newAtom->getPropIfPresent(common_properties::_QueryMass, val)){
-          newAtom->setMass(val);
+          // FIX: technically should do something with this
+          //newAtom->setMass(val);
         }
         if(newAtom->getPropIfPresent(common_properties::_QueryIsotope, val)){
           newAtom->setIsotope(val);
@@ -754,7 +755,7 @@ namespace RDKit {
                                                   reactantsMatch.at(reactantId),
                                                   *iter, conf);
         }
-        product->clearAllAtomBookmarks();
+
         if(doConfs){
           product->addConformer(conf,true);
         }
@@ -774,6 +775,7 @@ namespace RDKit {
     }
     BOOST_FOREACH(ROMOL_SPTR msptr,reactants){
       CHECK_INVARIANT(msptr,"bad molecule in reactants");
+      msptr->clearAllAtomBookmarks(); // we use this as scratch space
     }
 
     std::vector<MOL_SPTR_VECT> productMols;

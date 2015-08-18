@@ -522,6 +522,7 @@ void testIssue3525000() {
     std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000.sdf";
     RWMol *mol = MolFileToMol(fname);
     TEST_ASSERT(mol);
+
     std::string cip;
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
@@ -542,6 +543,7 @@ void testIssue3525000() {
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
     TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+    // FIX: Marvin disagrees about this one:
     mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
     TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
@@ -571,6 +573,7 @@ void testIssue3525000() {
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
     TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+    // FIX: Marvin disagrees about this one:
     mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
     TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
@@ -1309,6 +1312,30 @@ void testNeedsUpdatePropertyCacheSDWriter(){
   }
 }
 
+void testGithub488(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 488: SmilesWriter not creating automatic name values for molecules read from CTABs" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("O");
+    TEST_ASSERT(m1);
+    m1->setProp("_Name","");
+    std::stringstream ss;
+    SmilesWriter w(&ss);
+    w.write(*m1);
+    m1->setProp("_Name","foo");
+    w.write(*m1);
+    m1->clearProp("_Name");
+    w.write(*m1);
+    m1->setProp("_Name"," ");
+    w.write(*m1);
+    w.close();
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("O 0")!=std::string::npos);
+    TEST_ASSERT(txt.find("O foo")!=std::string::npos);
+    TEST_ASSERT(txt.find("O 2")!=std::string::npos);
+    TEST_ASSERT(txt.find("O  \n")!=std::string::npos);
+  }
+}
+
 
 
 int main() {
@@ -1375,12 +1402,6 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
-  testIssue3525000();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue265()\n";
   testIssue265();
   BOOST_LOG(rdInfoLog) << "Finished\n";
@@ -1391,7 +1412,6 @@ int main() {
   testMolFileChiralFlag();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-#endif
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileTotalValence();
@@ -1440,5 +1460,18 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testNeedsUpdatePropertyCacheSDWriter();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+#endif
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
+  testIssue3525000();
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub488();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
 
 }

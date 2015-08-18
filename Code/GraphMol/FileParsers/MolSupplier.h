@@ -146,6 +146,7 @@ namespace RDKit {
     std::string getItemText(unsigned int idx);
     unsigned int length();
     void setData(const std::string &text,bool sanitize=true, bool removeHs=true);
+    void setData(const std::string &text,bool sanitize, bool removeHs, bool strictParsing);
 
     /*! Resets our internal state and sets the indices of molecules in the stream.
      *  The client should be *very* careful about calling this method, as it's trivial
@@ -161,6 +162,7 @@ namespace RDKit {
 
   private:
     void checkForEnd();
+    void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
     int d_len; // total number of mol blocks in the file (initialized to -1)
     int d_last; // the molecule we are ready to read
     std::vector<std::streampos> d_molpos;

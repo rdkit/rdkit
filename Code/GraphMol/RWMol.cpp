@@ -31,7 +31,7 @@ namespace RDKit{
     if(this!=&other){
       this->clear();
       d_partialBonds.clear();
-      initFromOther(other,false);
+      initFromOther(other,false,-1);
     }
     return *this;
   }
