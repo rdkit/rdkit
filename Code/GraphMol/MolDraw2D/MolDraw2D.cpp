@@ -914,6 +914,8 @@ namespace RDKit {
       symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
     } else if(drawOptions().dummiesAreAttachments && atom.getAtomicNum()==0 && atom.getDegree()==1) {
       symbol="";
+    } else if(isComplexQuery(&atom)) {
+      symbol="?";
     } else {
       std::vector<std::string> preText,postText;
       if( 0 != atom.getIsotope() ) {
