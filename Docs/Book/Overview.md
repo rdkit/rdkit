@@ -32,7 +32,7 @@
 
 # Functionality overview
 -   Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1](#footnote1), Corina mol2 [1](#footnote1), PDB
--   “Cheminformatics”:
+-   2D Cheminformatics:
     - Substructure searching
     - Canonical SMILES
     - Chirality support (i.e. R/S or E/Z labeling)
