@@ -131,8 +131,7 @@ def calculateScore(m):
   return sascore
     
 
-def processMols(mols,outf):
-  
+def processMols(mols):
   print('smiles\tName\tsa_score')
   for i,m in enumerate(mols):
     if m is None:
@@ -145,9 +144,7 @@ def processMols(mols,outf):
 
 
 if __name__=='__main__':
-  import sys,gzip,time
-
-  outf = None
+  import sys,time
 
   t1=time.time()
   readFragmentScores("fpscores")
@@ -155,7 +152,7 @@ if __name__=='__main__':
 
   suppl = Chem.SmilesMolSupplier(sys.argv[1])
   t3=time.time()
-  processMols(suppl,outf)
+  processMols(suppl)
   t4=time.time()
 
   print('Reading took %.2f seconds. Calculating took %.2f seconds'%((t2-t1),(t4-t3)), file=sys.stderr)
