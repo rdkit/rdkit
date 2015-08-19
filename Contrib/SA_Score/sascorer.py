@@ -25,10 +25,15 @@ from rdkit.six import iteritems
 import math
 from collections import defaultdict
 
+import os.path as op
+
 _fscores = None
 def readFragmentScores(name='fpscores'):
     import gzip
     global _fscores
+    # generate the full path filename:
+    if name == "fpscores":
+        name = op.join(op.dirname(__file__), name)
     _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
     outDict = {}
     for i in _fscores:
@@ -49,7 +54,6 @@ def numBridgeheadsAndSpiro(mol,ri=None):
   nSpiro=len(spiros)
 
   # find bonds that are shared between rings that share at least 2 bonds:
-  nBridge=0
   brings = [set(x) for x in ri.BondRings()]
   bridges=set()
   for i,bri in enumerate(brings):
@@ -130,7 +134,6 @@ def calculateScore(m):
 def processMols(mols,outf):
   
   print('smiles\tName\tsa_score')
-  count = {}
   for i,m in enumerate(mols):
     if m is None:
       continue
