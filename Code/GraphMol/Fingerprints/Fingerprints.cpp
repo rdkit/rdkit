@@ -36,98 +36,6 @@
 namespace RDKit{
   namespace Fingerprints {
     namespace detail {
-      bool isComplexQuery(const Bond *b){
-        if( !b->hasQuery()) return false;
-        // negated things are always complex:
-        if( b->getQuery()->getNegation()) return true;
-        std::string descr=b->getQuery()->getDescription();
-        if(descr=="BondOrder") return false;
-        if(descr=="BondAnd" || descr=="BondXor") return true;
-        if(descr=="BondOr") {
-          // detect the types of queries that appear for unspecified bonds in SMARTS:
-          if(b->getQuery()->endChildren()-b->getQuery()->beginChildren()==2){
-            for(Bond::QUERYBOND_QUERY::CHILD_VECT_CI child=b->getQuery()->beginChildren();
-                child!=b->getQuery()->endChildren();++child){
-              if((*child)->getDescription()!="BondOrder" || (*child)->getNegation())
-                return true;
-              if(static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::SINGLE &&
-                 static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::AROMATIC)
-                return true;
-              return false;
-            }
-          }
-        }
-      
-        return true;
-      }
-
-      bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query,bool &hasAtNum){
-        if(!query) return false;
-        if(query->getNegation()) return true;
-        std::string descr=query->getDescription();
-        //std::cerr<<" |"<<descr;
-        if(descr=="AtomAtomicNum"){
-          hasAtNum=true;
-          return false;
-        }
-        if(descr=="AtomOr" || descr=="AtomXor") return true;
-        if(descr=="AtomAnd"){
-          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=query->beginChildren();
-          while(childIt!=query->endChildren()){
-            if(_complexQueryHelper(childIt->get(),hasAtNum)) return true;
-            ++childIt;
-          }
-        }
-        return false;
-      }
-      bool isComplexQuery(const Atom *a){
-        if( !a->hasQuery()) return false;
-        //std::cerr<<"\n"<<a->getIdx();
-        // negated things are always complex:
-        if( a->getQuery()->getNegation()) return true;
-        std::string descr=a->getQuery()->getDescription();
-        //std::cerr<<" "<<descr;
-        if(descr=="AtomAtomicNum") return false;
-        if(descr=="AtomOr" || descr=="AtomXor") return true;
-        if(descr=="AtomAnd"){
-          bool hasAtNum=false;
-          if(_complexQueryHelper(a->getQuery(),hasAtNum)) return true;
-          if(hasAtNum) return false;
-          else return true;
-        }
-      
-        return true;
-      }
-      bool isAtomAromatic(const Atom *a){
-        bool res=false;
-        if( !a->hasQuery()){
-          res=a->getIsAromatic();
-        } else {
-
-          std::string descr=a->getQuery()->getDescription();
-          if(descr=="AtomAtomicNum"){
-            res = a->getIsAromatic();
-          } else if(descr=="AtomIsAromatic") {
-            res=true;
-            if( a->getQuery()->getNegation()) res = !res;
-          } else if(descr=="AtomIsAliphatic") {
-            res=false;
-            if( a->getQuery()->getNegation()) res = !res;
-          } else if(descr=="AtomAnd"){
-            Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-            if( (*childIt)->getDescription()=="AtomAtomicNum"){
-              if( a->getQuery()->getNegation()){
-                res = false;
-              } else if((*(childIt+1))->getDescription()=="AtomIsAliphatic"){
-                res=false;
-              } else if((*(childIt+1))->getDescription()=="AtomIsAromatic") {
-                res=true;
-              }
-            }
-          }
-        }
-        return res;
-      }
     } //end of detail namespace
   } // end of Fingerprint namespace
   namespace {
@@ -352,13 +260,13 @@ namespace RDKit{
       const Bond *bond = mol[*firstB].get();
       isQueryBond[bond->getIdx()] = 0x0;
       bondCache[bond->getIdx()]=bond;
-      if(Fingerprints::detail::isComplexQuery(bond)){
+      if(isComplexQuery(bond)){
         isQueryBond[bond->getIdx()] = 0x1;
       }
-      if(Fingerprints::detail::isComplexQuery(bond->getBeginAtom())){
+      if(isComplexQuery(bond->getBeginAtom())){
         isQueryBond[bond->getIdx()] |= 0x2;
       }
-      if(Fingerprints::detail::isComplexQuery(bond->getEndAtom())){
+      if(isComplexQuery(bond->getEndAtom())){
         isQueryBond[bond->getIdx()] |= 0x4;
       }
       ++firstB;
@@ -641,13 +549,13 @@ namespace RDKit{
       const Bond *bond = mol[*firstB].get();
       isQueryBond[bond->getIdx()] = 0x0;
       bondCache[bond->getIdx()]=bond;
-      if(Fingerprints::detail::isComplexQuery(bond)){
+      if(isComplexQuery(bond)){
         isQueryBond[bond->getIdx()] = 0x1;
       }
-      if(Fingerprints::detail::isComplexQuery(bond->getBeginAtom())){
+      if(isComplexQuery(bond->getBeginAtom())){
         isQueryBond[bond->getIdx()] |= 0x2;
       }
-      if(Fingerprints::detail::isComplexQuery(bond->getEndAtom())){
+      if(isComplexQuery(bond->getEndAtom())){
         isQueryBond[bond->getIdx()] |= 0x4;
       }
       ++firstB;
@@ -659,7 +567,7 @@ namespace RDKit{
     boost::tie(firstA,lastA) = mol.getVertices();
     while(firstA!=lastA){
       const Atom *atom = mol[*firstA].get();
-      if(Fingerprints::detail::isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
+      if(isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
       anums[atom->getIdx()]=atom->getAtomicNum();
       ++firstA;
     }

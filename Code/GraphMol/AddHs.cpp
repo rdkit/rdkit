@@ -253,6 +253,7 @@ namespace RDKit{
               RDGeom::Point3D v2=nbr1Vect-nbr3Vect;
               RDGeom::Point3D v3=nbr2Vect-nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
+              // FIX: this is almost certainly wrong and should use the chiral tag
               if( (cipCode=="S" && vol<0) || (cipCode=="R" && vol>0) ){
                 dirVect*=-1;
               }

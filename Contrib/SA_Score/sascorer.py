@@ -25,10 +25,15 @@ from rdkit.six import iteritems
 import math
 from collections import defaultdict
 
+import os.path as op
+
 _fscores = None
 def readFragmentScores(name='fpscores'):
     import gzip
     global _fscores
+    # generate the full path filename:
+    if name == "fpscores":
+        name = op.join(op.dirname(__file__), name)
     _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
     outDict = {}
     for i in _fscores:
@@ -49,7 +54,6 @@ def numBridgeheadsAndSpiro(mol,ri=None):
   nSpiro=len(spiros)
 
   # find bonds that are shared between rings that share at least 2 bonds:
-  nBridge=0
   brings = [set(x) for x in ri.BondRings()]
   bridges=set()
   for i,bri in enumerate(brings):
@@ -127,10 +131,8 @@ def calculateScore(m):
   return sascore
     
 
-def processMols(mols,outf):
-  
+def processMols(mols):
   print('smiles\tName\tsa_score')
-  count = {}
   for i,m in enumerate(mols):
     if m is None:
       continue
@@ -142,9 +144,7 @@ def processMols(mols,outf):
 
 
 if __name__=='__main__':
-  import sys,gzip,time
-
-  outf = None
+  import sys,time
 
   t1=time.time()
   readFragmentScores("fpscores")
@@ -152,7 +152,7 @@ if __name__=='__main__':
 
   suppl = Chem.SmilesMolSupplier(sys.argv[1])
   t3=time.time()
-  processMols(suppl,outf)
+  processMols(suppl)
   t4=time.time()
 
   print('Reading took %.2f seconds. Calculating took %.2f seconds'%((t2-t1),(t4-t3)), file=sys.stderr)
