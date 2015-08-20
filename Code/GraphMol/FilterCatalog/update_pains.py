@@ -1,6 +1,7 @@
 # must be run from this directory
-
-import csv
+from __future__ import print_function
+import csv, sys
+py3 = sys.version_info[0] == 3
 
 pains_a = ['ene_six_het_A(483)', 'hzone_phenol_A(479)', 'anil_di_alk_A(478)', 'indol_3yl_alk(461)', 'quinone_A(370)', 'azo_A(324)', 'imine_one_A(321)', 'mannich_A(296)', 'anil_di_alk_B(251)', 'anil_di_alk_C(246)', 'ene_rhod_A(235)', 'hzone_phenol_B(215)', 'ene_five_het_A(201)', 'anil_di_alk_D(198)', 'imine_one_isatin(189)', 'anil_di_alk_E(186)']
 
@@ -14,7 +15,7 @@ sc = set(pains_c)
 
 PAINS = {}
 
-for smiles, name in csv.reader(open("../../../data/PAINS/wehi_pains.csv")):
+for smiles, name in csv.reader(open("../../../Data/PAINS/wehi_pains.csv")):
     name = name.replace("<regId=","").replace(">","")
     PAINS[name] = smiles
 
@@ -47,5 +48,11 @@ t = (t.
      replace("{{ PAINS_B }}", PAINS_B).
      replace("{{ PAINS_C }}", PAINS_C))
 
-open("Filters.cpp",'w').write(t)
-print "done"
+if py3:
+    import io
+    f = io.open('Filters.cpp', 'w', newline='') # newline = don't convert
+    f.write(t)
+else:
+  # wb = means don't convert newline to windows style
+  open("Filters.cpp",'wb').write(t)
+print("done")
