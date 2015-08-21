@@ -670,6 +670,7 @@ namespace RDKit{
   bool isComplexQuery(const Bond *b);
   bool isComplexQuery(const Atom *a);
   bool isAtomAromatic(const Atom *a);
+
 };
 
 
