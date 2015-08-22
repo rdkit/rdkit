@@ -666,6 +666,10 @@ namespace RDKit{
       return new HasPropWithValueQuery<const Target *, T>(
          propname, val, tolerance);
     }
+
+  bool isComplexQuery(const Bond *b);
+  bool isComplexQuery(const Atom *a);
+  bool isAtomAromatic(const Atom *a);
 };
 
 

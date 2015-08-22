@@ -741,6 +741,68 @@ void testGetO3AForProbeConfs() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+
+void testO3AMultiThreadBug() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/bzr_data.sdf";
+
+  SDMolSupplier suppl(sdf, true, false);
+
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()){
+    ROMol *mol=suppl.next();
+    if(!mol) continue;
+
+    while(mol->getNumConformers()<50){
+      Conformer *conf= new Conformer(mol->getConformer(0));
+      mol->addConformer(conf,true);
+    }
+    mols.push_back(mol);
+  }
+  TEST_ASSERT(mols.size()==10);
+
+  ROMol *refMol=new ROMol(*mols[0]);
+  TEST_ASSERT(refMol);
+
+  
+  MMFF::MMFFMolProperties refMP(*refMol);
+
+#ifdef RDK_TEST_MULTITHREADED
+  {
+    for(unsigned int j=0;j<mols.size();++j){
+      ROMol prbMol = *(mols[j]);
+      TEST_ASSERT(prbMol.getNumConformers()==50);
+
+      MMFF::MMFFMolProperties prbMP(prbMol);
+
+      std::vector<std::pair<double,double> > oscores;
+      for(unsigned int i=0;i<prbMol.getNumConformers();++i){
+        MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP, MolAlign::O3A::MMFF94, i);
+        double rmsd=o3a.align();
+        double score=o3a.score();
+        oscores.push_back(std::make_pair(rmsd,score));
+      }
+
+      ROMol prbMol2 = *(mols[j]);
+      std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
+      MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 4);
+      TEST_ASSERT(o3s.size()==prbMol2.getNumConformers());
+      for(unsigned int i=0;i < prbMol2.getNumConformers(); ++i){
+        TEST_ASSERT(feq(oscores[i%prbMol.getNumConformers()].first,o3s[i]->align()));
+        TEST_ASSERT(feq(oscores[i%prbMol.getNumConformers()].second,o3s[i]->score()));
+      }
+    }
+  }
+   
+#endif
+  delete refMol;
+  for(unsigned int j=0;j<mols.size();++j) delete mols[j];
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
 int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
@@ -798,6 +860,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testMMFFO3A multithreading\n\n";
   testMMFFO3AMultiThread();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test O3A multithreading bug\n\n";
+  testO3AMultiThreadBug();
 #endif
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -805,11 +871,19 @@ int main() {
   std::cout << "\t testCrippenO3A multithreading\n\n";
   testCrippenO3AMultiThread();
 #endif
-#endif
 
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test getO3AForProbeConfs\n\n";
   testGetO3AForProbeConfs();
+#endif
+
+
+#ifdef RDK_TEST_MULTITHREADED
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test O3A multithreading bug\n\n";
+  testO3AMultiThreadBug();
+#endif
+
 
   std::cout << "***********************************************************\n";
 

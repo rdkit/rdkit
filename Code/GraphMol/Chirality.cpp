@@ -108,7 +108,12 @@ namespace RDKit{
 
         invariant = num; // 7 bits here
         invariant = (invariant << 4) | mass;
-      
+
+        int mapnum = -1;
+        atom->getPropIfPresent(common_properties::molAtomMapNumber,mapnum);
+        mapnum = (mapnum+1)%1024; // increment to allow map numbers of zero (though that would be stupid)
+        invariant = (invariant << 10) | mapnum;
+        
         res[atsSoFar++] = invariant;
       }
     }

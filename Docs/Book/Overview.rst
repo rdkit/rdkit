@@ -8,7 +8,7 @@ What is it?
 
   - BSD licensed
   - Core data structures and algorithms in C++
-  - Python (2.x) wrapper generated using Boost.Python
+  - Python (2.x and 3.x) wrapper generated using Boost.Python
   - Java and C# wrappers generated with SWIG
   - 2D and 3D molecular operations
   - Descriptor generation for machine learning
@@ -32,11 +32,7 @@ What is it?
 
     - Sourceforge (http://sourceforge.net/projects/rdkit) 
       
-      Mailing lists, Downloads
-
-    - Google code (http://code.google.com/p/rdkit/)
-      
-      wiki
+      Mailing lists
 
   - Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for
       `rdkit-discuss <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/>`_ and
@@ -73,16 +69,15 @@ Functionality overview
 - Bemis and Murcko scaffold determination
 - RECAP and BRICS implementations
 - Multi-molecule maximum common substructure [2]_
-- Feature maps
+- Feature maps 
 - Shape-based similarity
 - RMSD-based molecule-molecule alignment
 - Shape-based alignment (subshape alignment [3]_) [1]_
-- Unsupervised molecule-molecule alignment using Open3DAlign algorithm [4]_
+- Unsupervised molecule-molecule alignment using the Open3DAlign algorithm [4]_
 - Integration with PyMOL for 3D visualization
 - Functional group filtering
 - Salt stripping
 - Molecular descriptor library:
-
   - Topological (κ3, Balaban J, etc.)
   - Compositional (Number of Rings, Number of Aromatic Heterocycles, etc.)
   - Electrotopological state (Estate)
@@ -91,6 +86,7 @@ Functionality overview
   - Feature-map vectors [5]_
   - MQN [6]_
 - Similarity Maps [7]_
+- Torsion Fingerprint Differences for comparing conformations [8]_
 
 - Machine Learning:
 
@@ -102,7 +98,7 @@ Functionality overview
 
 .. [1] These implementations are functional but are not necessarily the best, fastest, or most complete.
 
-.. [2] Contribution from Andrew Dalke
+.. [2] Originally contributed by Andrew Dalke
 
 .. [3] Putta, S., Eksterowicz, J., Lemmen, C. & Stanton, R. "A Novel Subshape Molecular Descriptor" *Journal of Chemical Information and Computer Sciences* **43:1623–35** (2003).
 
@@ -113,6 +109,8 @@ Functionality overview
 .. [6] Nguyen, K. T., Blum, L. C., van Deursen, R. & Reymond, J.-L. Classification of Organic Molecules by Molecular Quantum Numbers. *ChemMedChem* **4:1803–5** (2009).
 
 .. [7] Riniker, S. & Landrum, G. A. Similarity maps - a visualization strategy for molecular fingerprints and machine-learning methods. *Journal of Cheminformatics* **5:43** (2013).
+
+.. [8] Schulz-Gasch, T., Schärfer, C., Guba, W. & Rarey, M. TFD: Torsion Fingerprints As a New Measure To Compare Small Molecule Conformations. *J. Chem. Inf. Model.* **52:1499–1512** (2012).
 
 The Contrib Directory
 =====================
@@ -169,12 +167,20 @@ The Contrib directory, part of the standard RDKit distribution, includes code th
 
   Contribution from Jameed Hussain
 
-  
+- **pzc**: Tools for building and validating classifiers
+
+  Contribution from Paul Czodrowski
+
+- **ConformerParser**: parser for Amber trajectory files
+
+  Contribution from Sereina Riniker
+
+
 
 License
 =======
 
-This document is copyright (C) 2013-2014 by Greg Landrum
+This document is copyright (C) 2013-2015 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

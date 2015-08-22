@@ -133,7 +133,7 @@ namespace RDKit {
     };
 
 
-    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat) :
+    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat) :
       d_h(boost::extents[mol.getNumHeavyAtoms()][O3_MAX_H_BINS]) {
       PRECONDITION(dmat,"empty distance matrix");
       unsigned int nAtoms = mol.getNumAtoms();
@@ -155,6 +155,7 @@ namespace RDKit {
         }
         ++y;
       }
+      if(cleanupDmat) delete [] dmat;
     }
 
 
@@ -835,9 +836,9 @@ namespace RDKit {
       }
       else {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, ""),true));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, ""),true));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
         lap->computeCostMatrix(prbMol, *prbHist,
           refMol, *refHist, o3aConstraintVect, costFunc, data);
@@ -1025,9 +1026,9 @@ namespace RDKit {
       LAP *lap = NULL;
       if (!local) {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, ""),true));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, ""),true));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       }
       for (l = 0, score[0] = 0.0;
