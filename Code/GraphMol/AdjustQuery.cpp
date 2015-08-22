@@ -71,12 +71,21 @@ namespace RDKit {
             mol.replaceAtom(i,qa);
             delete qa;
             qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
-            at = NULL;
+            at = static_cast<Atom *>(qa);
           } else {
             qa = static_cast<QueryAtom *>(at);
           }
           qa->expandQuery(makeAtomInNRingsQuery(nRings));
         } // end of adjust ring count
+        if(params.makeDummiesQueries && 
+           atomicNum == 0 && !at->hasQuery() &&
+           !at->getIsotope() ){
+            QueryAtom *qa = new QueryAtom();
+            qa->setQuery(makeAtomNullQuery());
+            mol.replaceAtom(i,qa);
+            delete qa;
+            at = mol.getAtomWithIdx(i);
+        } // end of makeDummiesQueries
       } // end of loop over atoms
     }
   } // end of MolOps namespace

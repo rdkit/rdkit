@@ -5142,6 +5142,53 @@ void testAdjustQueryProperties()
     delete aqm;
   }
 
+  { // dummies from SMILES
+    std::string smiles="C1CCC1*";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+
+    smiles = "C1CCC1CC";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MatchVectType match;
+    TEST_ASSERT(!SubstructMatch(*m,*qm,match));
+    TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+    delete aqm;
+    MolOps::AdjustQueryParameters aqp;
+    aqp.makeDummiesQueries=false;
+    aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+    TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+
+    delete m;
+    delete qm;
+    delete aqm;
+  }
+  { // dummies from SMILES 2
+    std::string smiles="C1CCC1[1*]";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(!SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    delete qm;
+    delete aqm;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

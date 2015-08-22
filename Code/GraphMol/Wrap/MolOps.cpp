@@ -639,6 +639,14 @@ namespace RDKit{
     return result;
   }
 
+  ROMol *adjustQueryPropertiesHelper(const ROMol &mol,python::object pyparams){
+    MolOps::AdjustQueryParameters params;
+    if(pyparams != python::object()){
+      params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
+    }
+    return MolOps::adjustQueryProperties(mol,&params);
+  }
+
   struct molops_wrapper {
     static void wrap() {
       std::string docString;
@@ -1692,6 +1700,31 @@ namespace RDKit{
                    python::arg("fontSize")=12,
                    python::arg("includeAtomCircles")=true),
                   docString.c_str());
+
+
+      python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
+        .value("ADJUST_EMPTY",MolOps::ADJUST_EMPTY)
+        .value("ADJUST_RINGSONLY",MolOps::ADJUST_RINGSONLY)
+        .value("ADJUST_IGNOREDUMMIES",MolOps::ADJUST_IGNOREDUMMIES)
+        .value("ADJUST_SETALL",MolOps::ADJUST_SETALL);
+
+      docString="Parameters controlling which components of the query atoms are adjusted";
+      python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",docString.c_str())
+        .def_readwrite("adjustDegree",&MolOps::AdjustQueryParameters::adjustDegree)
+        .def_readwrite("adjustDegreeFlags",&MolOps::AdjustQueryParameters::adjustDegreeFlags)
+        .def_readwrite("adjustRingCount",&MolOps::AdjustQueryParameters::adjustRingCount)
+        .def_readwrite("adjustRingCountFlags",&MolOps::AdjustQueryParameters::adjustRingCountFlags)
+        .def_readwrite("makeDummiesQueries",&MolOps::AdjustQueryParameters::makeDummiesQueries)
+        ;
+      
+      docString="modify query properties";
+      python::def("AdjustQueryProperties", 
+                  adjustQueryPropertiesHelper,
+                  (python::arg("mol"),python::arg("params")=python::object()),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+
+
 
     };
   };

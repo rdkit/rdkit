@@ -3041,6 +3041,26 @@ CAS<~>
     w.close()
     w=None
     outf.close()
+
+  def testAdjustQueryProperties(self):
+    m = Chem.MolFromSmarts('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    self.assertTrue(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(m))
+    self.assertFalse(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(am))
+
+    m = Chem.MolFromSmiles('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    qps = Chem.AdjustQueryParameters();
+    qps.makeDummiesQueries=False
+    am = Chem.AdjustQueryProperties(m,qps)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+
+    
+
     
 if __name__ == '__main__':
   unittest.main()

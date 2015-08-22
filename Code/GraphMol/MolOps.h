@@ -238,21 +238,26 @@ namespace RDKit{
       ADJUST_SETALL = 0xFFFFFFF
     } AdjustQueryWhichFlags;
     struct AdjustQueryParameters {
-      bool adjustDegree;
+      bool adjustDegree; /**< add degree queries */
       AdjustQueryWhichFlags adjustDegreeFlags;
-      bool adjustRingCount;
+      bool adjustRingCount; /**< add ring-count queries */
       AdjustQueryWhichFlags adjustRingCountFlags;
+
+      bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to any-atom queries */
 
       AdjustQueryParameters() :
         adjustDegree(true),
         adjustDegreeFlags(ADJUST_SETALL),
         adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_SETALL)
+        adjustRingCountFlags(ADJUST_SETALL),
+        makeDummiesQueries(true)
+
       {}
       };
     //! returns a copy of a molecule with query properties adjusted
     /*!
       \param mol the molecule to adjust
+      \param params controls the adjustments made
      
       \return the new molecule 
     */
