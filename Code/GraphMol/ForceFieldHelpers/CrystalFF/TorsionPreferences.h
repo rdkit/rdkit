@@ -20,7 +20,7 @@ namespace ForceFields {
     void getExperimentalTorsions(const RDKit::ROMol &mol, std::vector<std::vector<int> > &expTorsionAtoms,
                           std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
                           std::vector<std::vector<int> > &improperAtoms,
-                          bool useBasicKnowledge=false, bool verbose=false);
+                          bool useExpTorsions=false, bool useBasicKnowledge=false, bool verbose=false);
 
   }
 }

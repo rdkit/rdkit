@@ -476,7 +476,7 @@ namespace RDKit {
                                         eargs->maxIterations, eargs->chiralCenters);
           if (gotCoords) {
             // experimental torsion ranges
-            if (eargs->useExpTorsionAnglePrefs) {
+            if (eargs->useExpTorsionAnglePrefs || eargs->useBasicKnowledge) {
               _minimizeWithExpTorsions(positions, eargs->mmat, eargs->optimizerForceTol,
                                        eargs->basinThresh, *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
                                        *eargs->expTorsionAngles, *eargs->improperAtoms, *eargs->atomNums,
@@ -525,9 +525,9 @@ namespace RDKit {
       }
 
       // BasicKnowledge can only be used in conjunction with ExpTorsionAngle
-      if (useBasicKnowledge && !(useExpTorsionAnglePrefs)) {
+      /*if (useBasicKnowledge && !(useExpTorsionAnglePrefs)) {
         throw ValueErrorException("basic knowledge can only be imposed in conjunction with exp. torsion preferences");
-      }
+      }*/
 
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
@@ -562,9 +562,9 @@ namespace RDKit {
         std::vector<std::pair<int, int> > bonds;
         std::vector<std::vector<int> > angles;
         std::vector<int> atomNums(nAtoms);
-        if (useExpTorsionAnglePrefs) {
+        if (useExpTorsionAnglePrefs || useBasicKnowledge) {
           ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,
-              improperAtoms, useBasicKnowledge, verbose);
+              improperAtoms, useExpTorsionAnglePrefs, useBasicKnowledge, verbose);
           setTopolBounds(*piece, mmat, bonds, angles, true, false);
           for (int i = 0; i < nAtoms; ++i) {
             atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();

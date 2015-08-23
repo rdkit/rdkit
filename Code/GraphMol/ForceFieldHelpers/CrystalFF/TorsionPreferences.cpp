@@ -518,6 +518,7 @@ namespace ForceFields {
                                  std::vector<std::vector<int> > &expTorsionAtoms,
                                  std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
                                  std::vector<std::vector<int> > &improperAtoms,
+                                 bool useExpTorsions,
                                  bool useBasicKnowledge, bool verbose) {
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
@@ -528,48 +529,50 @@ namespace ForceFields {
       // check that vectors are empty
       expTorsionAtoms.clear();
       expTorsionAngles.clear();
+      improperAtoms.clear();
 
       unsigned int aid1, aid2, aid3, aid4;
       unsigned int bid2, bid1, bid3, id1, id2;
 
       BIT_SET doneBonds(nb);
 
-      // we set the torsion angles with experimental data
-      const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
+      if (useExpTorsions) {
+        // we set the torsion angles with experimental data
+        const ExpTorsionAngleCollection *params = ExpTorsionAngleCollection::getParams();
 
-      // loop over patterns
-      for (ExpTorsionAngleCollection::ParamsVect::const_iterator it = params->begin(); it != params->end(); ++it) {
-        std::vector<MatchVectType> matches;
-        SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
+        // loop over patterns
+        for (ExpTorsionAngleCollection::ParamsVect::const_iterator it = params->begin(); it != params->end(); ++it) {
+          std::vector<MatchVectType> matches;
+          SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
 
-        // loop over matches
-        for(std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
-          matchIt != matches.end(); ++matchIt) {
-          // get bond indices
-          aid1 = (*matchIt)[it->idx[0]].second;
-          aid2 = (*matchIt)[it->idx[1]].second;
-          aid3 = (*matchIt)[it->idx[2]].second;
-          aid4 = (*matchIt)[it->idx[3]].second;
-          // FIX: check if bond is NULL
-          bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-          if (!doneBonds[bid2]) {
-            doneBonds[bid2] = 1;
-            std::vector<int> atoms(4);
-            atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
-            expTorsionAtoms.push_back(atoms);
-            expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
-            if (verbose) {
-              std::cout << it->smarts << ": " << aid1 << " " << aid2 << " " << aid3 << " " << aid4 << ", (";
-              for (unsigned int i = 0; i < it->V.size()-1; ++i) {
-                std::cout << it->V[i] << ", ";
+          // loop over matches
+          for(std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
+            matchIt != matches.end(); ++matchIt) {
+            // get bond indices
+            aid1 = (*matchIt)[it->idx[0]].second;
+            aid2 = (*matchIt)[it->idx[1]].second;
+            aid3 = (*matchIt)[it->idx[2]].second;
+            aid4 = (*matchIt)[it->idx[3]].second;
+            // FIX: check if bond is NULL
+            bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+            if (!doneBonds[bid2]) {
+              doneBonds[bid2] = 1;
+              std::vector<int> atoms(4);
+              atoms[0] = aid1; atoms[1] = aid2; atoms[2] = aid3; atoms[3] = aid4;
+              expTorsionAtoms.push_back(atoms);
+              expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
+              if (verbose) {
+                std::cout << it->smarts << ": " << aid1 << " " << aid2 << " " << aid3 << " " << aid4 << ", (";
+                for (unsigned int i = 0; i < it->V.size()-1; ++i) {
+                  std::cout << it->V[i] << ", ";
+                }
+                std::cout << it->V[it->V.size()-1] << ") " << std::endl;
               }
-              std::cout << it->V[it->V.size()-1] << ") " << std::endl;
-            }
-          } // if not donePaths
-        } // end loop over matches
+            } // if not donePaths
+          } // end loop over matches
 
-      } // end loop over patterns
-
+        } // end loop over patterns
+      }
 
       // apply basic knowledge such as flat aromatic rings, other sp2-centers,
       // straight triple bonds, etc.
