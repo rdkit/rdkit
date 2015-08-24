@@ -501,7 +501,7 @@ struct mol_wrapper {
       .def("AddBond",&ReadWriteMol::AddBond,
                      (python::arg("mol"),python::arg("beginAtomIdx"),python::arg("endAtomIdx"),
                       python::arg("order")=Bond::UNSPECIFIED),
-      "add a bond, returns the index of the newly added bond")
+      "add a bond, returns the new number of bonds")
       
       .def("AddAtom",&ReadWriteMol::AddAtom,
                      (python::arg("mol"),python::arg("atom")),
