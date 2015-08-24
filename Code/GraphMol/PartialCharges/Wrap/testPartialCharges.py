@@ -113,6 +113,20 @@ class TestCase(unittest.TestCase):
             c1 = float(m1.GetAtomWithIdx(i).GetProp('_GasteigerCharge'))
             self.assertAlmostEqual(c1,chgs[i],3)
             
+    def testGithubIssue577(self):
+        """ tests handling of Github issue 577 """
+        m1 = Chem.MolFromSmiles('CCO')
+        from locale import setlocale, LC_NUMERIC
+        setlocale(LC_NUMERIC, "de_DE")
+        rdPartialCharges.ComputeGasteigerCharges(m1)
+        for at in m1.GetAtoms():
+            float(at.GetProp('_GasteigerCharge'))
+        setlocale(LC_NUMERIC, "C")
+        rdPartialCharges.ComputeGasteigerCharges(m1)
+        for at in m1.GetAtoms():
+            float(at.GetProp('_GasteigerCharge'))
+        
+            
 if __name__== '__main__':
     unittest.main()
 
