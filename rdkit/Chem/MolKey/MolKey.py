@@ -422,7 +422,7 @@ def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
             stereo_category = _get_chiral_identification_string(n_stereo - n_undef_stereo,
                                                                n_undef_stereo)
     else:
-        raise NotImplementedError("currently cannot generate correct SMREG keys for molecules with struchk errors")
+        raise NotImplementedError("currently cannot generate correct keys for molecules with struchk errors")
     key = _identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
     return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 
