@@ -639,6 +639,14 @@ namespace RDKit{
     return result;
   }
 
+  ROMol *adjustQueryPropertiesHelper(const ROMol &mol,python::object pyparams){
+    MolOps::AdjustQueryParameters params;
+    if(pyparams != python::object()){
+      params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
+    }
+    return MolOps::adjustQueryProperties(mol,&params);
+  }
+
   struct molops_wrapper {
     static void wrap() {
       std::string docString;
@@ -1692,6 +1700,51 @@ namespace RDKit{
                    python::arg("fontSize")=12,
                    python::arg("includeAtomCircles")=true),
                   docString.c_str());
+
+
+      python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
+        .value("ADJUST_EMPTY",MolOps::ADJUST_EMPTY)
+        .value("ADJUST_RINGSONLY",MolOps::ADJUST_RINGSONLY)
+        .value("ADJUST_IGNOREDUMMIES",MolOps::ADJUST_IGNOREDUMMIES)
+        .value("ADJUST_SETALL",MolOps::ADJUST_SETALL)
+        .export_values();
+
+      docString="Parameters controlling which components of the query atoms are adjusted.\n\
+\n\
+Attributes:\n\
+  - adjustDegree: \n\
+      modified atoms have an explicit-degree query added based on their degree in the query \n\
+  - adjustDegreeFlags: \n\
+      controls which atoms have a degree query added \n\
+  - adjustRingCount: \n\
+      modified atoms have a ring-count query added based on their ring count in the query \n\
+  - adjustRingCountFlags: \n\
+      controls which atoms have a ring-cout query added \n\
+  - makeDummiesQueries: \n\
+      dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
+\n\
+A note on the flags controlling which atoms are modified: \n\
+   These generally limit the set of atoms to be modified.\n\
+   For example if ADJUST_RINGSONLY is set, then only atoms in rings will be modified.\n\
+       ADJUST_EMPTY causes all atoms to be modified\n\
+       ADJUST_SETALL sets all of the ADJUST flags\n\
+";
+      python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",docString.c_str())
+        .def_readwrite("adjustDegree",&MolOps::AdjustQueryParameters::adjustDegree)
+        .def_readwrite("adjustDegreeFlags",&MolOps::AdjustQueryParameters::adjustDegreeFlags)
+        .def_readwrite("adjustRingCount",&MolOps::AdjustQueryParameters::adjustRingCount)
+        .def_readwrite("adjustRingCountFlags",&MolOps::AdjustQueryParameters::adjustRingCountFlags)
+        .def_readwrite("makeDummiesQueries",&MolOps::AdjustQueryParameters::makeDummiesQueries)
+        ;
+      
+      docString="Returns a new molecule where the query properties of atoms have been modified.";
+      python::def("AdjustQueryProperties", 
+                  adjustQueryPropertiesHelper,
+                  (python::arg("mol"),python::arg("params")=python::object()),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+
+
 
     };
   };

@@ -3041,6 +3041,38 @@ CAS<~>
     w.close()
     w=None
     outf.close()
+
+  def testAdjustQueryProperties(self):
+    m = Chem.MolFromSmarts('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    self.assertTrue(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(m))
+    self.assertFalse(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(am))
+
+    m = Chem.MolFromSmiles('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    qps = Chem.AdjustQueryParameters();
+    qps.makeDummiesQueries=False
+    am = Chem.AdjustQueryProperties(m,qps)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+
+  def testGithubIssue579(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Wrap',
+                                            'test_data','outNCI_few.sdf')
+    inf = open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    m0 = next(suppl)
+    self.assertTrue(m0 is not None)
+    inf.close()
+    del suppl
+    
+
+
+    
+
     
 if __name__ == '__main__':
   unittest.main()
