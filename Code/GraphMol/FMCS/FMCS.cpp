@@ -52,6 +52,8 @@ namespace RDKit {
                 p.BondTyper = MCSBondCompareOrder;
             else if(0==strcmp("OrderExact", s.c_str()))
                 p.BondTyper = MCSBondCompareOrderExact;
+
+            p.InitialSeed = pt.get<std::string>("InitialSeed", "");
         }
 
     }
@@ -294,12 +296,6 @@ namespace RDKit {
                  const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p) {
 
         const unsigned int   qna = boost::num_vertices(query);    // getNumAtoms()
-/*
-for(unsigned int i=0; i < qna; ++i)
- std::cerr << c1[i]<<" "<< c2[i]<<", ";
-std::cerr << std::endl;
-//return true;
-*/
         // check chiral atoms:
         for(unsigned int i=0; i < qna; ++i) { 
             const Atom& a1 = *mol1.getAtomWithIdx(query [c1[i]]);
@@ -381,5 +377,94 @@ std::cerr << std::endl;
         }
         return true;
     }
+
+    bool FinalChiralityCheckFunction_1 (const short unsigned c1[], const short unsigned c2[],
+                 const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p) {
+
+        const unsigned int   qna = boost::num_vertices(query);    // getNumAtoms()
+        // check chiral atoms:
+        for(unsigned int i=0; i < qna; ++i) { 
+            const Atom& a1 = *mol1.getAtomWithIdx(query [c1[i]]);
+            Atom::ChiralType ac1 = a1.getChiralTag();
+            if(!(ac1==Atom::CHI_TETRAHEDRAL_CW || ac1==Atom::CHI_TETRAHEDRAL_CCW))
+                continue; // skip non chiral center query atoms
+            const Atom& a2 = *mol2.getAtomWithIdx(target[c2[i]]);
+            Atom::ChiralType ac2 = a2.getChiralTag();
+            if(!(ac2==Atom::CHI_TETRAHEDRAL_CW || ac2==Atom::CHI_TETRAHEDRAL_CCW))
+                continue; // skip non chiral center TARGET atoms even if query atom is chiral
+////                return false;
+            // both atoms are chiral:
+            const unsigned a1Degree = boost::out_degree(c1[i], query);// a1.getDegree();
+            if(a1Degree != a2.getDegree()) // number of all connected atoms in seed
+                return false; // ???
+            INT_LIST qOrder;
+            for(unsigned int j=0; j < qna && qOrder.size() != a1Degree; ++j) {
+                const Bond *qB = mol1.getBondBetweenAtoms(query[c1[i]], query [c1[j]]);
+                if(qB)
+                   qOrder.push_back(qB->getIdx());
+            }
+
+            int qPermCount = a1.getPerturbationOrder(qOrder);
+            INT_LIST mOrder;
+            for(unsigned int j=0; j < qna && mOrder.size() != a2.getDegree(); ++j) {
+                const Bond *mB = mol2.getBondBetweenAtoms(target[c2[i]], target[c2[j]]);
+                if(mB)
+                    mOrder.push_back(mB->getIdx());
+            }
+            int mPermCount=a2.getPerturbationOrder(mOrder);
+
+            if( (qPermCount%2 == mPermCount%2 && a1.getChiralTag() != a2.getChiralTag())
+              ||(qPermCount%2 != mPermCount%2 && a1.getChiralTag() == a2.getChiralTag()) )
+                return false;
+        }          
+
+        // check double bonds ONLY (why ???)
+        const unsigned int   qnb = boost::num_edges(query);
+        std::map<unsigned int,unsigned int> qMap;
+        for(unsigned int j=0; j < qna; ++j)
+            qMap[query[c1[j]]] = j;
+        RDKit::FMCS::Graph::BOND_ITER_PAIR bpIter = boost::edges(query);
+        RDKit::FMCS::Graph::EDGE_ITER bIter = bpIter.first;
+        for(unsigned int i=0; i < qnb; i++, ++bIter) {
+            unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
+            const Bond *qBnd=mol1.getBondWithIdx(query[*bIter]);
+            if(qBnd->getBondType()!=Bond::DOUBLE
+            ||(qBnd->getStereo()!=Bond::STEREOZ && qBnd->getStereo()!=Bond::STEREOE))
+                continue;
+            // don't think this can actually happen, but check to be sure:
+            if(qBnd->getStereoAtoms().size()!=2) // MUST check it in the seed, not in full query molecule, but never happens !!!
+                continue;
+
+            const Bond *mBnd=mol2.getBondBetweenAtoms(target[c2[qMap[qBnd->getBeginAtomIdx()]]],
+                                                      target[c2[qMap[qBnd->getEndAtomIdx  ()]]]);
+            CHECK_INVARIANT(mBnd,"Matching bond not found");
+            if(mBnd->getBondType()!=Bond::DOUBLE
+            ||(mBnd->getStereo()!=Bond::STEREOZ &&  mBnd->getStereo()!=Bond::STEREOE))
+                continue;
+            // don't think this can actually happen, but check to be sure:
+            if(mBnd->getStereoAtoms().size()!=2) continue;
+
+            unsigned int end1Matches=0;
+            unsigned int end2Matches=0;
+            if(target[c2[qMap[qBnd->getBeginAtomIdx()]]]==mBnd->getBeginAtomIdx()){
+                // query Begin == mol Begin
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
+            } else {
+                // query End == mol Begin
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[1])
+                    end1Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[0])
+                    end2Matches=1;
+            }
+            //std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" - "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<" "<<end2Matches<<std::endl;
+            if(mBnd->getStereo()==qBnd->getStereo() && (end1Matches+end2Matches)==1)
+                return false;
+            if(mBnd->getStereo()!=qBnd->getStereo() && (end1Matches+end2Matches)!=1)
+                return false;
+        }
+        return true;
+    }
+
 }   // namespace RDKit
 
