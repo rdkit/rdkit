@@ -357,9 +357,9 @@ namespace DistGeom {
           double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
           double l = (vw1+vw2);
           double u = 1000.0;
-          DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
-          //ForceFields::UFF::DistanceConstraintContrib *contrib =
-          //        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+          //DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
+          ForceFields::UFF::DistanceConstraintContrib *contrib =
+                  new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
         }
       }
@@ -436,9 +436,9 @@ namespace DistGeom {
             double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
             double l = (vw1+vw2);
             double u = 1000.0;
-            DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
-            //ForceFields::UFF::DistanceConstraintContrib *contrib =
-            //        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
+            //DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
+            ForceFields::UFF::DistanceConstraintContrib *contrib =
+                    new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
             field->contribs().push_back(ForceFields::ContribPtr(contrib));
           }
         }
