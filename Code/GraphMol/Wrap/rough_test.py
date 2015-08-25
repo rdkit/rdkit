@@ -3059,6 +3059,18 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m,qps)
     self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
 
+  def testGithubIssue579(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Wrap',
+                                            'test_data','outNCI_few.sdf')
+    inf = open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    m0 = next(suppl)
+    self.assertTrue(m0 is not None)
+    inf.close()
+    del suppl
+    
+
+
     
 
     
