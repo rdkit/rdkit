@@ -435,7 +435,7 @@ namespace ForceFields {
          //  these patterns were added as part of the ET-DG work
          // non-aromatic double bonds
          //"[*:1][CX3:2]=[CX3:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
-        "[*:1][X3,X2:2]=[X3,X2:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
+        "[*:1][X3,X2:2]!@;=[X3,X2:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
     ;
 
     //! A structure used to the experimental torsion patterns
