@@ -93,6 +93,15 @@ namespace RDKit {
     delete har;
   }
 
+
+#ifdef RDK_CAIRO_BUILD
+  python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self){
+    std::string res=self.getDrawingText();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+  }
+#endif
+  
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -161,7 +170,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                                                                                               python::init<int,int>())
     .def("FinishDrawing",&RDKit::MolDraw2DCairo::finishDrawing,
          "add the last bits to finish the drawing")
-    .def("GetDrawingText",&RDKit::MolDraw2DCairo::getDrawingText,
+    .def("GetDrawingText",&RDKit::getCairoDrawingText,
          "return the PNG data as a string")
     .def("WriteDrawingText",&RDKit::MolDraw2DCairo::writeDrawingText,
          "write the PNG data to the named file")

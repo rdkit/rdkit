@@ -5,7 +5,7 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              Renumber.cpp
+              Renumber.cpp AdjustQuery.cpp
               new_canon.cpp
               SHARED 
               LINK_LIBRARIES RDGeometryLib RDGeneral 

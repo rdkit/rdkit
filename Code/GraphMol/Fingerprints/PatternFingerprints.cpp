@@ -189,7 +189,7 @@ namespace RDKit{
     boost::tie(firstA,lastA) = mol.getVertices();  
     while(firstA!=lastA){
       const Atom *at=mol[*firstA].get();
-      if(Fingerprints::detail::isComplexQuery(at)){
+      if(isComplexQuery(at)){
         isQueryAtom.set(at->getIdx());
         //std::cerr<<"   complex atom: "<<at->getIdx()<<std::endl;
       }
@@ -199,7 +199,7 @@ namespace RDKit{
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
       const Bond *bond = mol[*firstB].get();
-      //if( Fingerprints::detail::isComplexQuery(bond) ){
+      //if( isComplexQuery(bond) ){
       if( isPatternComplexQuery(bond) ){
         isQueryBond.set(bond->getIdx());
         //std::cerr<<"   complex bond: "<<bond->getIdx()<<std::endl;

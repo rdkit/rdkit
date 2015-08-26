@@ -4988,9 +4988,210 @@ void testGithubIssue539()
     delete m;
   }
 
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+void testAdjustQueryProperties()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing adjustQueryProperties()" << std::endl;
+  { // basics from SMILES
+    std::string smiles="C1CCC1C";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    {
+      smiles = "C1C(C)CC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+
+    delete qm;
+    delete aqm;
+  }
+  { // basics from SMARTS
+    std::string smiles="C1CCC1*";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    {
+      smiles = "C1C(C)CC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+
+    delete qm;
+    delete aqm;
+  }
+
+  { 
+    std::string smiles="C1CC(*)C1*";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==6);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==6);
+    {
+      smiles = "C1CC2C1CC2";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+      MolOps::AdjustQueryParameters aqp;
+
+      delete aqm;
+      aqp.adjustDegree=false;
+      aqp.adjustRingCount=false;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustDegree=false;
+      aqp.adjustRingCount=true;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustDegree=true;
+      aqp.adjustRingCount=false;
+      aqp.adjustDegreeFlags=MolOps::ADJUST_EMPTY;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      
+      delete m;
+    }    
+
+    {
+      smiles = "C1CC(C2CC2)C1C2CC2";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      delete aqm;
+      aqm = MolOps::adjustQueryProperties(*qm);
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+      MolOps::AdjustQueryParameters aqp;
+      
+      delete aqm;
+      aqp.adjustRingCount=true;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustRingCountFlags=MolOps::ADJUST_EMPTY; // neither "not dummy" nor "in ring" restrictions
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustRingCountFlags=MolOps::ADJUST_IGNOREDUMMIES; // no "in ring" restrictions
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      
+      delete m;
+    }    
+
+    delete qm;
+    delete aqm;
+  }
+
+  { // dummies from SMILES
+    std::string smiles="C1CCC1*";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+
+    smiles = "C1CCC1CC";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MatchVectType match;
+    TEST_ASSERT(!SubstructMatch(*m,*qm,match));
+    TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+    delete aqm;
+    MolOps::AdjustQueryParameters aqp;
+    aqp.makeDummiesQueries=false;
+    aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+    TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+
+    delete m;
+    delete qm;
+    delete aqm;
+  }
+  { // dummies from SMILES 2
+    std::string smiles="C1CCC1[1*]";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(!SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    delete qm;
+    delete aqm;
+  }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
 
 int main(){
   RDLog::InitLogs();
@@ -5069,9 +5270,10 @@ int main(){
   testGithubIssue447();
   testGetMolFrags();
   testGithubIssue510();
-#endif
   testGithubIssue526();
   testGithubIssue539();
+#endif
+  testAdjustQueryProperties();
   return 0;
 }
 

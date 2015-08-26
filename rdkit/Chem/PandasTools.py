@@ -129,7 +129,7 @@ def patchPandasHeadMethod(self,n=5):
 def _get_image(x):
   """displayhook function for PIL Images, rendered as PNG"""
   import pandas as pd
-  bio = BytesIO()    
+  bio = BytesIO()
   x.save(bio,format='PNG')
   s = b64encode(bio.getvalue()).decode('ascii')
   pd.set_option('display.max_columns',len(s)+1000)
@@ -148,7 +148,7 @@ except ImportError:
 
 def _molge(x,y):
   """Allows for substructure check using the >= operator (X has substructure Y -> X >= Y) by
-  monkey-patching the __ge__ function 
+  monkey-patching the __ge__ function
   This has the effect that the pandas/numpy rowfilter can be used for substructure filtering (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
   """
   if x is None or y is None: return False
@@ -196,7 +196,7 @@ def _MolPlusFingerprint(m):
 
 def RenderImagesInAllDataFrames(images=True):
   '''Changes the default dataframe rendering to not escape HTML characters, thus allowing rendered images in all dataframes.
-  IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want to change the rendering only 
+  IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want to change the rendering only
   for a single dataframe use the "ChangeMoleculeRendering" method instead.
   '''
   if images:
@@ -212,14 +212,14 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   if not includeFingerprints:
     frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1) 
+    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1)
   RenderImagesInAllDataFrames(images=True)
   #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
   #frame.head = types.MethodType(patchPandasHeadMethod,frame)
-  
-  
+
+
 def ChangeMoleculeRendering(frame=None, renderer='PNG'):
-  '''Allows to change the rendering of the molecules between base64 PNG images and string representations. 
+  '''Allows to change the rendering of the molecules between base64 PNG images and string representations.
   This serves two purposes: First it allows to avoid the generation of images if this is not desired and, secondly, it allows to enable image rendering for
   newly created dataframe that already contains molecules, without having to rerun the time-consuming AddMoleculeColumnToFrame. Note: this behaviour is, because some pandas methods, e.g. head()
   returns a new dataframe instance that uses the default pandas rendering (thus not drawing images for molecules) instead of the monkey-patched one.
@@ -230,7 +230,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
     Chem.Mol.__str__ = PrintAsBase64PNGString
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
-    
+
 def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None, embedProps=False):
   """ Read file in SDF format and return as Pandas data frame. If embedProps=True all properties also get embedded in Mol objects in the molecule column. """
   df = None
@@ -263,16 +263,16 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
 from rdkit.Chem import SDWriter
 
 def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
-  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export all columns. 
+  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export all columns.
   The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that correct data type is assigned to column.
   "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
   '''
   writer = SDWriter(out)
   if properties is None:
     properties=[]
-  if allNumeric:   
+  if allNumeric:
     properties.extend([dt for dt in df.dtypes.keys() if (np.issubdtype(df.dtypes[dt],float) or np.issubdtype(df.dtypes[dt],int))])
-  
+
   if molColName in properties:
     properties.remove(molColName)
   if idName in properties:
@@ -283,7 +283,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     # Remove embeded props
     for prop in mol.GetPropNames():
       mol.ClearProp(prop)
-    
+
     if idName is not None:
       if idName == 'RowID':
         mol.SetProp('_Name',str(row[0]))
@@ -298,7 +298,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
         mol.SetProp(p,str(cell_value))
     writer.write(mol)
   writer.close()
-    
+
 
 
 from rdkit.Chem import SaltRemover
@@ -319,7 +319,7 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmi
     for m,n in zip(frame[molCol], map(str,frame[NamesCol])):
       m.SetProp('_Name',n)
       w.write(m)
-    w.close()        
+    w.close()
   else:
     for m in frame[molCol]:
       w.write(m)
@@ -336,17 +336,17 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     int, float -> number
     datetime -> datetime
     object -> string (limited to 32k character - xlsx limitations)
- 
+
     Cells with compound images are a bit larger than images due to excel.
     Column width weirdness explained (from xlsxwriter docs):
-    The width corresponds to the column width value that is specified in Excel. 
-    It is approximately equal to the length of a string in the default font of Calibri 11. 
+    The width corresponds to the column width value that is specified in Excel.
+    It is approximately equal to the length of a string in the default font of Calibri 11.
     Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
     This feature is only available at runtime from within Excel.
     """
-    
+
     import xlsxwriter # don't want to make this a RDKit dependency
-       
+
     cols = list(frame.columns)
     cols.remove(molCol)
     dataTypes = dict(frame.dtypes)
@@ -354,19 +354,19 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300,300)):
     workbook = xlsxwriter.Workbook(outFile) # New workbook
     worksheet = workbook.add_worksheet() # New work sheet
     worksheet.set_column('A:A', size[0]/6.) # column width
-    
+
     # Write first row with column names
     c2 = 1
     for x in cols:
         worksheet.write_string(0, c2, x)
         c2 += 1
-    
+
     c = 1
     for index, row in frame.iterrows():
         image_data = StringIO()
         img = Draw.MolToImage(row[molCol], size=size)
         img.save(image_data, format='PNG')
-        
+
         worksheet.set_row(c, height=size[1]) # looks like height is not in px?
         worksheet.insert_image(c, 0, "f", {'image_data': image_data})
 
@@ -391,7 +391,10 @@ def FrameToGridImage(frame, column = 'ROMol', legendsCol=None, **kwargs):
   Draw grid image of mols in pandas DataFrame.
   '''
   if legendsCol:
-    img = Draw.MolsToGridImage(frame[column], legends=map(str, list(frame[legendsCol])), **kwargs)
+    if legendsCol == frame.index.name:
+      img = Draw.MolsToGridImage(frame[column], legends=list(map(str, list(frame.index))), **kwargs)
+    else:
+      img = Draw.MolsToGridImage(frame[column], legends=list(map(str, list(frame[legendsCol]))), **kwargs)
   else:
     img = Draw.MolsToGridImage(frame[column], **kwargs)
   return img
@@ -433,7 +436,7 @@ if __name__ == "__main__":
   else:
     v = pd.version.version.split('.')
     if v[0]=='0' and int(v[1])<10:
-      print("pandas installation >=0.10 not found, skipping tests", 
+      print("pandas installation >=0.10 not found, skipping tests",
             file=sys.stderr)
     else:
       import doctest
@@ -445,19 +448,19 @@ if __name__ == "__main__":
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
