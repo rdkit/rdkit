@@ -299,16 +299,16 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     writer.write(mol)
   writer.close()
 
-
-
-from rdkit.Chem import SaltRemover
-remover = SaltRemover.SaltRemover()
-
+_saltRemover = None
 def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):
   '''
   Removes salts from mols in pandas DataFrame's ROMol column
   '''
-  frame[molCol] = frame.apply(lambda x: remover.StripMol(x[molCol]), axis = 1)
+  global _saltRemover
+  if _saltRemover is None:
+      from rdkit.Chem import SaltRemover
+      _saltRemover = SaltRemover.SaltRemover()
+  frame[molCol] = frame.apply(lambda x: _saltRemover.StripMol(x[molCol]), axis = 1)
 
 def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmiles=False):
   '''
