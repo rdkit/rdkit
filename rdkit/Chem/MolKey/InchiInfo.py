@@ -190,11 +190,11 @@ class TestInchiInfo(unittest.TestCase):
     def doTest(self, inchi, numSp3=0, numUndefSp3=0, numMobileHGroups=0, layer='non-isotopic'):
         ii = InchiInfo(inchi)
         (nSp3, nUndefSp3, isMeso, sp3Atoms) = ii.get_sp3_stereo()['main'][layer]
-        self.assertEquals(nSp3, numSp3)
-        self.assertEquals(nUndefSp3, numUndefSp3)
+        self.assertEqual(nSp3, numSp3)
+        self.assertEqual(nUndefSp3, numUndefSp3)
             
         (nMobileHGroups, mobileHGroups) = ii.get_mobile_h()['main'][layer]    
-        self.assertEquals(nMobileHGroups, numMobileHGroups)    
+        self.assertEqual(nMobileHGroups, numMobileHGroups)    
         
     def testGuanine(self): 
       self.doTest(GUANINE, 0, 0, 1) 
