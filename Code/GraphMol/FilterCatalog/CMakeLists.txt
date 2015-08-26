@@ -8,6 +8,19 @@ else()
   message("== Making FilterCatalog without boost Serialization support")
 endif()
 
+find_package(PythonInterp)
+if (PYTHONINTERP_FOUND)
+      message("== Updating Filters.cpp from pains file")
+      execute_process(
+        COMMAND
+        ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/update_pains.py
+        RESULT_VARIABLE rc
+      )
+      if(NOT rc EQUAL 0)
+        message(FATAL_ERROR "Failed updating Filters.cpp from wehi_pains.csv")
+      endif(NOT rc EQUAL 0)
+endif(PYTHONINTERP_FOUND)
+
 rdkit_library(FilterCatalog
               Filters.cpp
               FilterCatalog.cpp
