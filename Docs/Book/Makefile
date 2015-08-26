@@ -41,7 +41,7 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
-RSTS_FROM_MD = Overview.rst Cartridge.rst
+RSTS_FROM_MD = Overview.rst Cartridge.rst Cookbook.rst
 
 $(RSTS_FROM_MD): %.rst: %.md
 	pandoc -t rst -f markdown_github -o $@ $<
