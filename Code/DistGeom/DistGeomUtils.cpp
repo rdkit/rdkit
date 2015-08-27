@@ -353,10 +353,10 @@ namespace DistGeom {
     for (unsigned int i = 1; i < N; i++) {
       for (unsigned int j = 0; j < i; j++) {
         if (!atomPairs[i][j]) {
-          double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
-          double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
-          double l = (vw1+vw2);
-          double u = 1000.0;
+          //double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
+          //double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
+          double l = mmat.getLowerBound(i,j); //(vw1+vw2);
+          double u = mmat.getUpperBound(i,j); //1000.0;
           //DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
           ForceFields::UFF::DistanceConstraintContrib *contrib =
                   new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
@@ -432,10 +432,10 @@ namespace DistGeom {
       for (unsigned int i = 1; i < N; i++) {
         for (unsigned int j = 0; j < i; j++) {
           if (!atomPairs[i][j]) {
-            double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
-            double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
-            double l = (vw1+vw2);
-            double u = 1000.0;
+            //double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
+            //double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
+            double l = mmat.getLowerBound(i,j); //(vw1+vw2);
+            double u = mmat.getUpperBound(i,j); //1000.0;
             //DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
             ForceFields::UFF::DistanceConstraintContrib *contrib =
                     new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
