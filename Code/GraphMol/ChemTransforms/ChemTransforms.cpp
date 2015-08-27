@@ -40,6 +40,7 @@ namespace RDKit{
           citer!=mol.endConformers();++citer){
         Conformer *newConf=new Conformer(res.getNumAtoms());
         newConf->setId((*citer)->getId());
+        newConf->set3D((*citer)->is3D());
         int aIdx=0;
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
           if(!removedAtoms[i]){
