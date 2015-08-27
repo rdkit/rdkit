@@ -80,6 +80,7 @@ namespace RDKit {
           nConf->setAtomPos(i,(*oConf)->getAtomPos(newOrder[i]));
         }
         nConf->setId((*oConf)->getId());
+        nConf->set3D((*oConf)->is3D());
         res->addConformer(nConf);
       }
 

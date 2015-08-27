@@ -4352,6 +4352,7 @@ namespace{
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
 
+
       // checking the SSS is a test for Github #317
       MatchVectType mv; 
       TEST_ASSERT(SubstructMatch(*m,*nm,mv));
@@ -4372,6 +4373,8 @@ namespace{
           TEST_ASSERT( po.y==pn.y );
           TEST_ASSERT( po.z==pn.z );
         }
+        // checking conformer dimensionality is a test for Github #584
+        TEST_ASSERT(m->getConformer().is3D()==nm->getConformer().is3D());
       }
 
       std::string nSmi=MolToSmiles(*nm,true);
@@ -4405,10 +4408,10 @@ void testRenumberAtoms()
     _renumberTest(m);
     delete m;
   }
-  { // github issue #441
+  { // github issue #441 and #584
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue266.mol");  // no significance to choice of files, we just need something with coords
+    RWMol *m = MolFileToMol(pathName+"Issue266.mol");  // no significance to choice of files, we just need something with 2D coords
     TEST_ASSERT(m);
     _renumberTest(m);
     delete m;
@@ -5191,7 +5194,6 @@ void testAdjustQueryProperties()
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-
 
 int main(){
   RDLog::InitLogs();
