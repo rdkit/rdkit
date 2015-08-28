@@ -36,6 +36,6 @@ rdkit_headers(FilterCatalogEntry.h
 
 add_subdirectory(Wrap)
 
-rdkit_test(filterCatalogTest filterCatalogTest.cpp
+rdkit_test(filterCatalogTest filtercatalogtest.cpp
            LINK_LIBRARIES ${Boost_SERIALIZATION_LIBRARY} FilterCatalog
            Catalogs SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
