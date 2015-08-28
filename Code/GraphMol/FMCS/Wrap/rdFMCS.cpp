@@ -64,7 +64,11 @@ namespace RDKit {
         p.BondCompareParameters.RingMatchesRingOnly=ringMatchesRingOnly;
         p.BondCompareParameters.CompleteRingsOnly=completeRingsOnly;
 
-        MCSResult *res= new MCSResult(findMCS(ms,&p));
+        MCSResult *res=0;
+        {
+          NOGIL gil;
+          res = new MCSResult(findMCS(ms,&p));
+        }
         return res;
     }
 }
