@@ -73,6 +73,25 @@ namespace RDKit {
       //std::cerr<<"civ:"<<chiralSet->d_idx0<<" "<<chiralSet->d_idx1<<" "<<chiralSet->d_idx2<<" "<<chiralSet->d_idx3<<" "<<chiralSet->d_idx4<<"->"<<res<<"|"<<std::endl;
       return res;
     }
+    bool _boundsFulfilled(const std::vector<int> &atoms, const DistGeom::BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions) {
+      unsigned int N = mmat.numRows();
+      //std::cerr << N << " " << atoms.size() << std::endl;
+      bool fulfilled = true;
+      // loop over all pair of atoms
+      for (unsigned int i = 0; i < atoms.size()-1; ++i) {
+        for (unsigned int j = i+1; j < atoms.size(); ++j) {
+          RDGeom::Point3D p0((*positions[i])[0],(*positions[i])[1],(*positions[i])[2]);
+          RDGeom::Point3D p1((*positions[j])[0],(*positions[j])[1],(*positions[j])[2]);
+          double d2 = (p0-p1).length(); // distance
+          double lb = mmat.getLowerBound(i,j); double ub = mmat.getUpperBound(i,j); // bounds
+          if (((d2 < lb) && (fabs(d2-lb) > 0.1)) || ((d2 > ub) && (fabs(d2-ub) > 0.1))) {
+            //std::cerr << i << " " << j << ":" << d2 << " " << lb << " " << ub << std::endl;
+            fulfilled = false;
+          }
+        }
+      }
+      return fulfilled;
+    }
     
     bool _embedPoints(RDGeom::PointPtrVect *positions, 
                       const DistGeom::BoundsMatPtr mmat,
@@ -181,7 +200,22 @@ namespace RDKit {
             delete field2;
 
             if (chiralCenters->size()>0){
-              BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
+              std::set<int> atoms;
+              BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
+                if(chiralSet->d_idx0 != chiralSet->d_idx4) {
+                  atoms.insert(chiralSet->d_idx0);
+                  atoms.insert(chiralSet->d_idx1);
+                  atoms.insert(chiralSet->d_idx2);
+                  atoms.insert(chiralSet->d_idx3);
+                  atoms.insert(chiralSet->d_idx4);
+                }
+              }
+              std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
+              if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
+                gotCoords=false;
+              }
+
+              /*BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
                 // it could happen that the centroid is outside the volume defined by the other
                 // four points. That is also a fail.
                 if(!_centerInVolume(chiralSet,*positions)){
@@ -189,7 +223,7 @@ namespace RDKit {
                   gotCoords=false;
                   break;
                 }
-              }
+              }*/
             }
           }
         } // if(gotCoords)
@@ -318,7 +352,7 @@ namespace RDKit {
 
       // create the force field
       ForceFields::ForceField *field;
-      if (useBasicKnowledge) { // ET-BK-DG
+      if (useBasicKnowledge) { // ETKDG or KDG
         field = DistGeom::construct3DForceField(*mmat, positions3D,
                                                                          bonds, angles,
                                                                          expTorsionAtoms,
