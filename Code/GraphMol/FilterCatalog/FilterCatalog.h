@@ -120,6 +120,12 @@ namespace RDKit {
     FilterCatalog() : FCatalog(), d_entries() {
     }
 
+    FilterCatalog(FilterCatalogParams::FilterCatalogs catalogs) :
+     FCatalog(), d_entries() {
+      setCatalogParams(new paramType_t(catalogs));
+    }
+
+    
     FilterCatalog(const paramType_t &params) : FCatalog(), d_entries() {
       setCatalogParams(new paramType_t(params));
     }

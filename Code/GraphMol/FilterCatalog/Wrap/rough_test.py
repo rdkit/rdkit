@@ -132,14 +132,15 @@ class TestCase(unittest.TestCase):
             print ("Testing:", catalog_idx, int(catalog_idx))
             self.assertTrue(params.AddCatalog(catalog_idx))
             catalog1 = FilterCatalog.FilterCatalog(params)
-
+            
             if FilterCatalog.FilterCatalogCanSerialize():
                 pickle = catalog1.Serialize();
                 catalog2 = FilterCatalog.FilterCatalog(pickle)
                 catalogs = [catalog1, catalog2]
             else:
                 catalogs = [catalog1]
-                
+
+            catalogs.append( FilterCatalog.FilterCatalog(catalog_idx) )
             for index,catalog in enumerate(catalogs):
                 self.assertEqual(catalog.GetNumEntries(),num)
 
