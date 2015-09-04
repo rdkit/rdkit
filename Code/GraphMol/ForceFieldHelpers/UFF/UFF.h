@@ -77,6 +77,7 @@ namespace RDKit {
       \param res        vector of (needsMore,energy)
       \param numThreads the number of simultaneous threads to use (only has an
                         effect if the RDKit is compiled with thread support).
+                        If set to zero, the max supported by the system will be used.
       \param maxIters   the maximum number of force-field iterations
       \param vdwThresh  the threshold to be used in adding van der Waals terms
                         to the force field. Any non-bonded contact whose current

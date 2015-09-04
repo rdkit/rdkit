@@ -84,6 +84,7 @@ namespace RDKit {
       \param res        vector of (needsMore,energy) pairs
       \param numThreads the number of simultaneous threads to use (only has an
                         effect if the RDKit is compiled with thread support).
+                        If set to zero, the max supported by the system will be used.
       \param maxIters   the maximum number of force-field iterations
       \param mmffVariant the MMFF variant to use, should be "MMFF94" or "MMFF94S"
       \param nonBondedThresh  the threshold to be used in adding non-bonded terms
