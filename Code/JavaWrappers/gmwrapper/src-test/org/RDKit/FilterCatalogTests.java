@@ -58,7 +58,7 @@ public class FilterCatalogTests extends GraphMolTest {
 
             mol = RWMol.MolFromSmiles("O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2");
             FilterCatalogEntry entry = catalog.getFirstMatch(mol);
-            //Str_Vect props = entry.getPropList();
+            Str_Vect props = entry.getPropList();
             
             //for (int i=0; i< props.size(); ++i) {
             String ref  = entry.getProp("Reference");
@@ -73,14 +73,11 @@ public class FilterCatalogTests extends GraphMolTest {
             assertEquals(source, "PAINS filters (family A)");
             assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
 
-            /*           
-            if (catalog.CanSerialize()) {
+            if (catalog.canSerialize()) {
                 String pickle = catalog.Serialize();
-                FilterCatalog catalog2 = FilterCatalog.FilterCatalog(pickle);
+                FilterCatalog catalog2 = new FilterCatalog(pickle);
                 assertEquals(16, catalog2.getNumEntries());
             }
-            */
-
 	}
 
 	public static void main(String args[]) {

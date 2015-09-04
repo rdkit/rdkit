@@ -75,10 +75,14 @@
     // dangerous, this can be delete from underneath you
     return self->getFirstMatch(mol).get();
   }
+
+  bool canSerialize() const {
+    return RDKit::FilterCatalogCanSerialize();
+  }
  }
 
 %ignore RDKit::FilterCatalog::getFirstMatch;
-%ignore RDKit::FilterCatalogEntry::getPropList;
+//%ignore RDKit::FilterCatalogEntry::getPropList;
 %ignore RDKit::Dict::getPropList;
 
 %include <GraphMol/FilterCatalog/FilterMatcherBase.h>
