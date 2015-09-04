@@ -15,7 +15,7 @@
 
 #include <boost/thread.hpp>
 namespace RDKit{
-  unsigned int getNumThreadsToUse(int target){
+  inline unsigned int getNumThreadsToUse(int target){
     if(target>=1){
       return static_cast<unsigned int>(target);
     }
@@ -31,7 +31,7 @@ namespace RDKit{
 #else
 
 namespace RDKit{
-  unsigned int getNumThreadsToUse(int target){
+  inline unsigned int getNumThreadsToUse(int target){
     return 1;
   }
 }
