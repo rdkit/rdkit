@@ -81,7 +81,7 @@ from __future__ import print_function
 from base64 import b64encode
 import types,copy
 
-from rdkit.six import BytesIO
+from rdkit.six import BytesIO, string_types
 from rdkit import Chem
 from rdkit.Chem import Draw
 
@@ -235,10 +235,18 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
 def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None, embedProps=False):
   """ Read file in SDF format and return as Pandas data frame. If embedProps=True all properties also get embedded in Mol objects in the molecule column. """
   df = None
-  if type(filename) is str:
-    f = open(filename, 'rb') #'rU')
+  if isinstance(filename, string_types):
+    if filename.lower()[-3:] == ".gz":
+      import gzip
+      f = gzip.open(filename, "rb")
+    else:
+      f = open(filename, 'rb')
+    close = f.close
   else:
     f = filename
+    close = None # don't close an open file that was passed in
+  records = []
+  indices = []
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
@@ -252,14 +260,12 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
         row[molColName] = mol
     else:
         row[molColName] = _MolPlusFingerprint(mol)
-    row = pd.DataFrame(row, index=[i])
-    if df is None:
-      df = row
-    else:
-      df = df.append(row)
-  f.close()
+    records.append(row)
+    indices.append(i)
+
+  if close is not None: close()
   RenderImagesInAllDataFrames(images=True)
-  return df
+  return pd.DataFrame(records, index=indices)
 
 from rdkit.Chem import SDWriter
 
