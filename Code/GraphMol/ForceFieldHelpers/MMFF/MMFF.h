@@ -104,12 +104,16 @@ namespace RDKit {
       res.resize(mol.getNumConformers());
 #ifndef RDK_THREADSAFE_SSS
       numThreads=1;
+#else
+      if(!numThreads){
+        numThreads = boost::thread::hardware_concurrency();
+      }
 #endif
       MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
       if(mmffMolProperties.isValid()) {
         ForceFields::ForceField *ff=MMFF::constructForceField(mol,nonBondedThresh, -1,
                                                               ignoreInterfragInteractions);
-        if(numThreads<=1){
+        if(numThreads==1){
           unsigned int i=0;
           for(ROMol::ConformerIterator cit=mol.beginConformers();
             cit!=mol.endConformers();++cit,++i){

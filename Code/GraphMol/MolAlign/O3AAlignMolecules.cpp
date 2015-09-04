@@ -1253,6 +1253,10 @@ namespace RDKit {
                              const RDNumeric::DoubleVector *constraintWeights){
 #ifndef RDK_THREADSAFE_SSS
       numThreads=1;
+#else
+      if(!numThreads){
+        numThreads = boost::thread::hardware_concurrency();
+      }
 #endif
       res.resize(prbMol.getNumConformers());
       if(numThreads<=1){
@@ -1267,6 +1271,9 @@ namespace RDKit {
         }
       }
 #ifdef RDK_THREADSAFE_SSS
+      else if(!numThreads){
+        numThreads = boost::thread::hardware_concurrency();
+      }
       else {
         boost::thread_group tg;
         detail::O3AHelperArgs_ args={atomTypes,

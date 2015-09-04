@@ -519,6 +519,9 @@ namespace RDKit {
         }
 #ifdef RDK_THREADSAFE_SSS
         boost::thread_group tg;
+        if(!numThreads){
+          numThreads = boost::thread::hardware_concurrency();
+        }
 #else
         numThreads=1;
 #endif

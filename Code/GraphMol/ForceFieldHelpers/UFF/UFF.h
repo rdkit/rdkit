@@ -74,7 +74,7 @@ namespace RDKit {
     //! Convenience function for optimizing all of a molecule's conformations using UFF
     /*
       \param mol        the molecule to use
-      \param res        vector of (needsMore,energy) pairs
+      \param res        vector of (needsMore,energy)
       \param numThreads the number of simultaneous threads to use (only has an
                         effect if the RDKit is compiled with thread support).
       \param maxIters   the maximum number of force-field iterations
@@ -95,8 +95,12 @@ namespace RDKit {
       res.resize(mol.getNumConformers());
 #ifndef RDK_THREADSAFE_SSS
       numThreads=1;
+#else
+      if(!numThreads){
+        numThreads = boost::thread::hardware_concurrency();
+      }
 #endif
-      if(numThreads<=1){
+      if(numThreads==1){
         unsigned int i=0;
         for(ROMol::ConformerIterator cit=mol.beginConformers();
             cit!=mol.endConformers();++cit,++i){

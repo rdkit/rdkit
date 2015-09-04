@@ -806,7 +806,7 @@ void testMMFFMultiThread2(){
   std::vector<std::pair<int,double> > res;
 
   MMFF::MMFFOptimizeMolecule(*om);
-  MMFF::MMFFOptimizeMoleculeConfs(*m,res,4);
+  MMFF::MMFFOptimizeMoleculeConfs(*m,res,0);
   for(unsigned int i=1;i<res.size();++i){
     TEST_ASSERT(!res[i].first);
     TEST_ASSERT(feq(res[i].second,res[0].second,.00001));
