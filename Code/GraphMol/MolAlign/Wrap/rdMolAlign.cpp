@@ -317,7 +317,7 @@ namespace RDKit {
 
 
     python::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol,
-                                     unsigned int numThreads,
+                                     int numThreads,
                                      python::object prbProps,
                                      python::object refProps,
                                      int refCid = -1, bool reflect = false,
@@ -476,7 +476,7 @@ namespace RDKit {
     }
 
     python::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol,
-                                        unsigned int numThreads,
+                                        int numThreads,
                                         python::list prbCrippenContribs,
                                         python::list refCrippenContribs,
                                         int refCid = -1, bool reflect = false,

@@ -10,11 +10,9 @@
 #ifndef RD_UFFCONVENIENCE_H
 #define RD_UFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
+#include <RDGeneral/RDThreads.h>
 #include "Builder.h"
 
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
 
 namespace RDKit {
   class ROMol;
@@ -89,18 +87,12 @@ namespace RDKit {
     */
     void UFFOptimizeMoleculeConfs(ROMol &mol, 
                                   std::vector< std::pair<int, double> > &res,
-                                  unsigned int numThreads=1,
+                                  int numThreads=1,
                                   int maxIters=1000,
                                   double vdwThresh=10.0,
                                   bool ignoreInterfragInteractions=true ){
       res.resize(mol.getNumConformers());
-#ifndef RDK_THREADSAFE_SSS
-      numThreads=1;
-#else
-      if(!numThreads){
-        numThreads = boost::thread::hardware_concurrency();
-      }
-#endif
+      numThreads = getNumThreadsToUse(numThreads);
       if(numThreads==1){
         unsigned int i=0;
         for(ROMol::ConformerIterator cit=mol.beginConformers();

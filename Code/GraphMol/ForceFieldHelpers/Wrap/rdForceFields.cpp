@@ -35,7 +35,7 @@ namespace RDKit {
     return UFF::UFFOptimizeMolecule(mol,maxIters,vdwThresh,confId,ignoreInterfragInteractions).first;
   }
   python::object UFFConfsHelper(ROMol &mol,
-                                unsigned int numThreads,
+                                int numThreads,
                                 int maxIters,
                                 double vdwThresh,
                                 int confId,
@@ -54,7 +54,7 @@ namespace RDKit {
   }
 
   python::object MMFFConfsHelper(ROMol &mol,
-                                 unsigned int numThreads,
+                                 int numThreads,
                                  int maxIters,
                                  std::string mmffVariant,
                                  double nonBondedThresh,

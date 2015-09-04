@@ -10,11 +10,10 @@
 #ifndef RD_MMFFCONVENIENCE_H
 #define RD_MMFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
+#include <RDGeneral/RDThreads.h>
 #include "Builder.h"
 
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
+
 
 namespace RDKit {
   class ROMol;
@@ -97,19 +96,13 @@ namespace RDKit {
     */
     void MMFFOptimizeMoleculeConfs(ROMol &mol, 
                                    std::vector< std::pair<int, double> > &res,
-                                   unsigned int numThreads=1,
+                                   int numThreads=1,
                                    int maxIters=1000,
                                    std::string mmffVariant="MMFF94",
                                    double nonBondedThresh=10.0,
                                    bool ignoreInterfragInteractions=true ){
       res.resize(mol.getNumConformers());
-#ifndef RDK_THREADSAFE_SSS
-      numThreads=1;
-#else
-      if(!numThreads){
-        numThreads = boost::thread::hardware_concurrency();
-      }
-#endif
+      numThreads = getNumThreadsToUse(numThreads);
       MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
       if(mmffMolProperties.isValid()) {
         ForceFields::ForceField *ff=MMFF::constructForceField(mol,nonBondedThresh, -1,

@@ -21,9 +21,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/round.hpp>
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
+#include <RDGeneral/RDThreads.h>
 
 #define square(x) ((x) * (x))
 
@@ -1225,7 +1223,7 @@ namespace RDKit {
                       void *prbProp, void *refProp,
                       std::vector<boost::shared_ptr<O3A> > *res,
                       unsigned int threadIdx,
-                      unsigned int numThreads,const O3AHelperArgs_ *args){
+                      int numThreads,const O3AHelperArgs_ *args){
         unsigned int i=0;
         for(ROMol::ConstConformerIterator cit=prbMol->beginConformers();
             cit!=prbMol->endConformers();++cit,++i){
@@ -1245,19 +1243,13 @@ namespace RDKit {
     void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol,
                              void *prbProp, void *refProp,
                              std::vector<boost::shared_ptr<O3A> > &res,
-                             unsigned int numThreads,
+                             int numThreads,
                              O3A::AtomTypeScheme atomTypes,
                              const int refCid,
                              const bool reflect, const unsigned int maxIters,
                              unsigned int options, const MatchVectType *constraintMap,
                              const RDNumeric::DoubleVector *constraintWeights){
-#ifndef RDK_THREADSAFE_SSS
-      numThreads=1;
-#else
-      if(!numThreads){
-        numThreads = boost::thread::hardware_concurrency();
-      }
-#endif
+      numThreads = getNumThreadsToUse(numThreads);
       res.resize(prbMol.getNumConformers());
       if(numThreads<=1){
         unsigned int i=0;
