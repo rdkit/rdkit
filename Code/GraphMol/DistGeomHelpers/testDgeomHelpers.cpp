@@ -1353,7 +1353,7 @@ void testMultiThreadMultiConf() {
   ROMol m2(*m);
   DGeomHelpers::EmbedMultipleConfs(*m, cids, 200, 1, 30, 100, true,
                                   false,-1);
-  DGeomHelpers::EmbedMultipleConfs(m2, cids, 200, 4, 30, 100, true,
+  DGeomHelpers::EmbedMultipleConfs(m2, cids, 200, 0, 30, 100, true,
                                   false,-1);
   INT_VECT_CI ci;
  

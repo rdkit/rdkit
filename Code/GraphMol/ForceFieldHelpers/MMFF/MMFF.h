@@ -10,11 +10,10 @@
 #ifndef RD_MMFFCONVENIENCE_H
 #define RD_MMFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
+#include <RDGeneral/RDThreads.h>
 #include "Builder.h"
 
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
+
 
 namespace RDKit {
   class ROMol;
@@ -84,6 +83,7 @@ namespace RDKit {
       \param res        vector of (needsMore,energy) pairs
       \param numThreads the number of simultaneous threads to use (only has an
                         effect if the RDKit is compiled with thread support).
+                        If set to zero, the max supported by the system will be used.
       \param maxIters   the maximum number of force-field iterations
       \param mmffVariant the MMFF variant to use, should be "MMFF94" or "MMFF94S"
       \param nonBondedThresh  the threshold to be used in adding non-bonded terms
@@ -96,20 +96,18 @@ namespace RDKit {
     */
     void MMFFOptimizeMoleculeConfs(ROMol &mol, 
                                    std::vector< std::pair<int, double> > &res,
-                                   unsigned int numThreads=1,
+                                   int numThreads=1,
                                    int maxIters=1000,
                                    std::string mmffVariant="MMFF94",
                                    double nonBondedThresh=10.0,
                                    bool ignoreInterfragInteractions=true ){
       res.resize(mol.getNumConformers());
-#ifndef RDK_THREADSAFE_SSS
-      numThreads=1;
-#endif
+      numThreads = getNumThreadsToUse(numThreads);
       MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
       if(mmffMolProperties.isValid()) {
         ForceFields::ForceField *ff=MMFF::constructForceField(mol,nonBondedThresh, -1,
                                                               ignoreInterfragInteractions);
-        if(numThreads<=1){
+        if(numThreads==1){
           unsigned int i=0;
           for(ROMol::ConformerIterator cit=mol.beginConformers();
             cit!=mol.endConformers();++cit,++i){

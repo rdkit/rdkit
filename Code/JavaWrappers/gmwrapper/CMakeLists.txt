@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+
 project (jGraphMolJava Java)
 
 include_directories( ${RDKit_ExternalDir} )
@@ -5,10 +7,12 @@ include_directories( ${RDKit_ExternalDir} )
 find_package(Java REQUIRED)
 find_package(JNI REQUIRED)
 
+include(UseJava)
+
 # Make sure we can access the junit.jar -- needed for compiling/running tests
-find_file(JUNIT_JAR junit.jar ${RDKit_JavaLibDir})
+find_jar(JUNIT_JAR junit PATHS ${RDKit_JavaLibDir})
 if (NOT JUNIT_JAR)
-	MESSAGE ("junit.jar is not found in ${RDKit_JavaLibDir}.  Please add it to this directory and rerun cmake.")
+	MESSAGE ("junit.jar was not found in classpath or ${RDKit_JavaLibDir}.  Please add it to this directory and rerun cmake.")
 	MESSAGE(FATAL_ERROR "Cannot find required JUnit library (junit.jar)")
 endif (NOT JUNIT_JAR)
 
