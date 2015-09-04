@@ -3,11 +3,12 @@ import os
 import unittest
 
 from rdkit.six.moves import cStringIO as StringIO
-
 from rdkit import RDConfig
 
-from  rdkit.Chem import PandasTools
+from rdkit.Chem import PandasTools
 import numpy
+import tempfile, shutil
+import gzip
 
 methane = """\
 Methane
@@ -99,6 +100,87 @@ class TestLoadSDF(unittest.TestCase):
         self.assertEqual(prop3[0], "yxcv")
         self.assertTrue(numpy.isnan(prop3[1]), prop3[1])
 
+class TestWriteSDF(unittest.TestCase):
+    def setUp(self):
+        sio = StringIO(methane + peroxide)
+        self.df = PandasTools.LoadSDF(sio)
+        
+    def test_default_write_does_not_include_tags(self):
+        sio = StringIO()
+        PandasTools.WriteSDF(self.df, sio)
+        s = sio.getvalue()
+        self.assertNotIn(s, "prop2")
+        
+    def test_identifier_from_a_column(self):
+        sio = StringIO()
+        PandasTools.WriteSDF(self.df, sio, idName="prop2")
+        s = sio.getvalue()
+        first_line = s.split("\n", 1)[0]
+        self.assertEqual(first_line, "qwe")
 
+    def test_all_numeric_with_no_numeric_columns(self):
+        sio = StringIO()
+        PandasTools.WriteSDF(self.df, sio, allNumeric=True)
+        s = sio.getvalue()
+        self.assertFalse(">" in s, s)
+        self.assertNotIn("7\n\n", s)  # double-check that the numeric tests don't pass by accident
+        self.assertNotIn("8\n\n", s)
+
+    def test_all_numeric_with_numeric_columns(self):
+        sio = StringIO()
+        df = self.df
+        df["len"] = df["ID"].map(len)
+        PandasTools.WriteSDF(df, sio, allNumeric=True)
+        s = sio.getvalue()
+        self.assertEqual(s.count("<len>"), 2)
+        self.assertIn("7\n\n", s)
+        self.assertIn("8\n\n", s)
+
+    def test_specify_numeric_column(self):
+        sio = StringIO()
+        df = self.df
+        df["len2"] = df["ID"].map(len)
+        PandasTools.WriteSDF(df, sio, properties=["len2"])
+        s = sio.getvalue()
+        self.assertEqual(s.count("<len2>"), 2)
+        self.assertIn("7\n\n", s)
+        self.assertIn("8\n\n", s)
+
+    def test_specify_numeric_column(self):
+        sio = StringIO()
+        df = self.df
+        df["len2"] = df["ID"].map(len)
+        df["len3"] = df["len2"].map(float)
+        PandasTools.WriteSDF(df, sio, properties=["len2", "len3"])
+        s = sio.getvalue()
+        self.assertEqual(s.count("<len2>"), 2)
+        self.assertEqual(s.count("<len3>"), 2)
+        self.assertIn("7\n\n", s)
+        self.assertIn("7.0\n\n", s)
+        self.assertIn("8\n\n", s)
+        self.assertIn("8.0\n\n", s)
+        
+    def test_write_to_sdf(self):
+        dirname = tempfile.mkdtemp()
+        try:
+            filename = os.path.join(dirname, "test.sdf")
+            PandasTools.WriteSDF(self.df, filename)
+            s = open(filename, "U").read()
+            self.assertEqual(s.count("\n$$$$\n"), 2)
+            self.assertEqual(s.split("\n", 1)[0], "Methane")
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_write_to_sdf_gz(self):
+        dirname = tempfile.mkdtemp()
+        try:
+            filename = os.path.join(dirname, "test.sdf.gz")
+            PandasTools.WriteSDF(self.df, filename)
+            s = gzip.open(filename).read()
+            self.assertEqual(s.count("\n$$$$\n"), 2)
+            self.assertEqual(s.split("\n", 1)[0], "Methane")
+        finally:
+            shutil.rmtree(dirname)
+                    
 if __name__ == '__main__':
   unittest.main()
