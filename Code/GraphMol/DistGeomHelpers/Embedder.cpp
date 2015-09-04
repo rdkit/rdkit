@@ -76,21 +76,21 @@ namespace RDKit {
     bool _boundsFulfilled(const std::vector<int> &atoms, const DistGeom::BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions) {
       unsigned int N = mmat.numRows();
       //std::cerr << N << " " << atoms.size() << std::endl;
-      bool fulfilled = true;
       // loop over all pair of atoms
       for (unsigned int i = 0; i < atoms.size()-1; ++i) {
         for (unsigned int j = i+1; j < atoms.size(); ++j) {
-          RDGeom::Point3D p0((*positions[i])[0],(*positions[i])[1],(*positions[i])[2]);
-          RDGeom::Point3D p1((*positions[j])[0],(*positions[j])[1],(*positions[j])[2]);
+          int a1 = atoms[i]; int a2 = atoms[j];
+          RDGeom::Point3D p0((*positions[a1])[0],(*positions[a1])[1],(*positions[a1])[2]);
+          RDGeom::Point3D p1((*positions[a2])[0],(*positions[a2])[1],(*positions[a2])[2]);
           double d2 = (p0-p1).length(); // distance
-          double lb = mmat.getLowerBound(i,j); double ub = mmat.getUpperBound(i,j); // bounds
-          if (((d2 < lb) && (fabs(d2-lb) > 0.1)) || ((d2 > ub) && (fabs(d2-ub) > 0.1))) {
-            //std::cerr << i << " " << j << ":" << d2 << " " << lb << " " << ub << std::endl;
-            fulfilled = false;
+          double lb = mmat.getLowerBound(a1,a2); double ub = mmat.getUpperBound(a1,a2); // bounds
+          if (((d2 < lb) && (fabs(d2-lb) > 0.15)) || ((d2 > ub) && (fabs(d2-ub) > 0.15))) {
+            //std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub << " " << fabs(d2-lb) << " " << fabs(d2-ub) << std::endl;
+            return false;
           }
         }
       }
-      return fulfilled;
+      return true;
     }
     
     bool _embedPoints(RDGeom::PointPtrVect *positions, 
@@ -211,8 +211,10 @@ namespace RDKit {
                 }
               }
               std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
-              if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
-                gotCoords=false;
+              if (atomsToCheck.size() > 0) {
+                if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
+                  gotCoords=false;
+                }
               }
 
               /*BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
