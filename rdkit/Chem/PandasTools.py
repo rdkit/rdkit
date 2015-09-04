@@ -105,6 +105,7 @@ except Exception as e:
   pd = None
 
 highlightSubstructures=True
+molSize = (200,200)
 
 
 def patchPandasHTMLrepr(self,**kwargs):
@@ -177,7 +178,7 @@ def PrintAsBase64PNGString(x,renderer = None):
       highlightAtoms=x.__sssAtoms
   else:
       highlightAtoms=[]
-  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms))
+  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms, size=molSize))
 
 
 def PrintDefaultMolRep(x):
