@@ -32,6 +32,26 @@ Windows users will use a slightly different command::
 
 For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
 
+### Installing and using the RDKit Postgresql cartridge from a conda environment
+
+Due to the conda python distribution being a different version to the system python, it is easiest to install postgres and the postgres client via conda.
+
+This is done simply by:
+
+    conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
+    
+The conda packages postgresql version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
+
+    [conda folder]/envs/my-rdkit-env/bin/initdb -D /folder/where/data/should/be/stored
+    
+You will then need to run postgresql as a daemon, one way to do this is using supervisor. The required configuration file will look something like this:
+
+    [program:postgresql]
+    command=[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored 
+    user=[your username]
+    autorestart=true
+
+All of the normal postgresql commands can then be run when your conda environment is activated
 
 ## Linux and the Mac
 
