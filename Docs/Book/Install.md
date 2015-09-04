@@ -12,6 +12,21 @@ Conda is an open-source, cross-platform, software package manager. It supports t
 
 The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](http://docs.continuum.io/anaconda/install.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](http://conda.pydata.org/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](http://conda.pydata.org/). 
 
+### How to install RDKit with Conda
+
+Creating a new conda environment with the RDKit installed using these  packages requires one single command similar to the following::
+
+  $ conda create -c <channel-url> -n my-rdkit-env rdkit
+
+where '<channel-url>' is to be replaced with the URL of the package repository where the packages have been placed for distribution.
+
+Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell::
+
+  $ source activate my-rdkit-env
+
+Windows users will use a slightly different command::
+
+  C:\> activate my-rdkit-env
 
 
 ## Linux and the Mac
