@@ -4,9 +4,14 @@ Below a number of installation recipies is presented, with varying degree of com
 
 ### Cross-platform under anaconda python (fastest install)
 
-Thanks to the efforts of Riccardo Vianello RDKit is now available via the anaconda python distribution. Anaconda is available via the installation link [http://continuum.io/downloads](http://continuum.io/downloads). This creates 
+### Introduction to anaconda
 
-The conda package is on the RDKit channel therefore you can create a
+Conda is an open-source, cross-platform, software package manager. It supports the packaging and distribution of software components, and manages their installation inside isolated execution environments. It has several analogies with pip and virtualenv, but it is designed to be more "python-agnostic" and more suitable for the distribution of binary packages and their dependencies.
+
+### How to get conda
+
+The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](http://docs.continuum.io/anaconda/install.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](http://conda.pydata.org/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](http://conda.pydata.org/). 
+
 
 
 ## Linux and the Mac
