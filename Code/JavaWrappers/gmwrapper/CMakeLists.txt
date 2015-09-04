@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+
 project (jGraphMolJava Java)
 
 include_directories( ${RDKit_ExternalDir} )
