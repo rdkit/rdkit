@@ -210,9 +210,9 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   If desired, a fingerprint can be computed and stored with the molecule objects to accelerate substructure matching
   '''
   if not includeFingerprints:
-    frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
+    frame[molCol]=frame[smilesCol].map(Chem.MolFromSmiles)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1)
+    frame[molCol]=frame[smilesCol].map(lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
   RenderImagesInAllDataFrames(images=True)
   #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
   #frame.head = types.MethodType(patchPandasHeadMethod,frame)
