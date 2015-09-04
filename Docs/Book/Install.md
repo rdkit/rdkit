@@ -28,6 +28,10 @@ Windows users will use a slightly different command::
 
   C:\> activate my-rdkit-env
 
+### How to build from source with Conda
+
+For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
+
 
 ## Linux and the Mac
 
