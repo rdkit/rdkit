@@ -43,7 +43,7 @@ This is done simply by:
 The conda packages postgresql version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
     [conda folder]/envs/my-rdkit-env/bin/initdb -D /folder/where/data/should/be/stored
-    
+
 You will then need to run postgresql as a daemon, one way to do this is using supervisor. The required configuration file will look something like this:
 
     [program:postgresql]
@@ -51,7 +51,11 @@ You will then need to run postgresql as a daemon, one way to do this is using su
     user=[your username]
     autorestart=true
 
-All of the normal postgresql commands can then be run when your conda environment is activated
+All of the normal postgresql commands can then be run when your conda environment is activated. Therefore to create a database you can run:
+
+    createdb my_rdkit_db
+    psql my_rdkit_db
+    #crreate extension rdkit;
 
 ## Linux and the Mac
 
