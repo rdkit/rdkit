@@ -78,10 +78,9 @@ std::string getSmilesOnlyTxt(const char* smiles, std::string* id=0) { // remove 
         if(id)
             *id = std::string(smiles, sp-smiles);
         sp++;
-        size_t i;
-        for(i = strlen(sp)-1; sp[i] < ' ' && i>=0; i--)
-            ;
-        return std::string(sp, i+1);
+        size_t i=strlen(sp);
+        while(i>0 && sp[i-1]<' ') --i;
+        return std::string(sp, i);
     } else
         return smiles;
 }
@@ -391,7 +390,7 @@ void test504() {
     unsigned nq = qm->getNumAtoms();
     for(size_t ai = 0; ai < nq; ai++) {
         Atom* atom = qm->getAtomWithIdx(ai);
-        atom->setProp("molAtomMapNumber", (int)ai);
+        atom->setProp(common_properties::molAtomMapNumber, (int)ai);
     }
     std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
     mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
@@ -438,7 +437,7 @@ std::string testChEMBL_Txt(const char* test, double th=1.0, const char* csv="che
 
     std::cout << "MCS : "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
     printTime();
-    fprintf(fres, "%s;%u;%.1f;%.4f;%u;%u;%s;", test, mols.size(), th, sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+    fprintf(fres, "%s;%lu;%.1f;%.4f;%u;%u;%s;", test, mols.size(), th, sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
 
     p.BondTyper = MCSBondCompareOrderExact;
     t0 = nanoClock();
@@ -449,7 +448,7 @@ std::string testChEMBL_Txt(const char* test, double th=1.0, const char* csv="che
 
     std::cout << "MCS : "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
     printTime();
-    fprintf(fres, "%.1f;%.4f;%u;%u;%s\n", sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+    fprintf(fres, "%.1f;%u;%u;%s\n", sec, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
 
     fclose(fres);
     return testsmi;
@@ -1112,7 +1111,7 @@ void testChEMBL_TxtALL_chembl_II_sets(double th=1.0) {
     FILE *fcmd = fopen("chembl_II_sets.bat", "wt");
     // commands for prepare Python test:
     fprintf(fcmd, "DEL %s\n", "chembl_II_sets.P.res.csv");   //clear before append results
-    fprintf(fcmd, "SET PATH=%PATH%;C:/LIB\n");
+    fprintf(fcmd, "SET PATH=%%PATH%%;C:/LIB\n");
     fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
     fprintf(fcmd, "ECHO P test;P Nmols;P status;P time,sec;P nAtoms;P nBonds;P MCS >%s\n", "chembl_II_sets.P.res.csv");
 
@@ -1441,7 +1440,7 @@ void testFileSDF_RandomSet_SMI(const char* path="benchmark", const char* test="c
             double t = (nanoClock() - t0) / 1000000.;
             printTime();
             std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-            fprintf(fcsv, "%u;%u;%s;%.3f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            fprintf(fcsv, "%u;%lu;%s;%.3f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
         }
         if(mols.size()>1) {
             p.BondTyper = MCSBondCompareOrderExact;
@@ -1450,7 +1449,7 @@ void testFileSDF_RandomSet_SMI(const char* path="benchmark", const char* test="c
             double t = (nanoClock() - t0) / 1000000.;
             printTime();
             std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-            fprintf(fcsv, "%u;%u;%s;%.3f;%u;%u;%s\n", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            fprintf(fcsv, "%u;%lu;%s;%.3f;%u;%u;%s\n", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
             p.BondTyper = MCSBondCompareOrder;
         }
         mols.clear();
@@ -1490,7 +1489,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
     }
     // commands for prepare Python test:
     fprintf(fcmd, "DEL %s\n", (std::string(path)+"_"+test+".P.csv").c_str());   //clear before append results
-    fprintf(fcmd, "SET PATH=%PATH%;C:/LIB\n");
+    fprintf(fcmd, "SET PATH=%%PATH%%;C:/LIB\n");
     fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
     fprintf(fcmd, "ECHO P test;P Nmols;P status;P time,sec;P nAtoms;P nBonds;P MCS >%s\n", (std::string(path)+"_"+test+".P.csv").c_str());
 
@@ -1528,7 +1527,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
                     t = 0.00001; // avoid division by zero
                 printTime();
                 std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-                fprintf(fcsv, "%u;%u;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+                fprintf(fcsv, "%u;%lu;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
             }
             if(mols.size()>1) {
                 p.BondTyper = MCSBondCompareOrderExact;
@@ -1570,7 +1569,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
                 t = 0.00001; // avoid division by zero
             printTime();
             std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
-            fprintf(fcsv, "%u;%u;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+            fprintf(fcsv, "%u;%lu;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
         }
         if(mols.size()>1) {
             p.BondTyper = MCSBondCompareOrderExact;
@@ -1609,7 +1608,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
 
     const unsigned n1 = n;
     fprintf(fcmd, "DEL %s\n", (std::string(path)+"_"+test+".BIG_MCS.P.csv").c_str());   //clear before append results
-    fprintf(fcmd, "SET PATH=%PATH%;C:/LIB\n");
+    fprintf(fcmd, "SET PATH=%%PATH%%;C:/LIB\n");
     fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
     fprintf(fcmd, "ECHO P test;P Nmols;P status;P time,sec;P nAtoms;P nBonds;P MCS >%s\n", (std::string(path)+"_"+test+".BIG_MCS.P.csv").c_str());
     for(size_t jn=0; jn < N_BigRandomTestsAttempts && n-n1 <= N_BigRandomTests; jn++) {
@@ -1636,7 +1635,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
             printTime();
             std::cout << n <<" MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
             if(res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
-                fprintf(fcsv, "%u;%u;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
+                fprintf(fcsv, "%u;%lu;%s;%.5f;%u;%u;%s;", n, mols.size(), res.isCompleted()?" ":"TIMEOUT", t, res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
                 fprintf(fcmd, "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n, p.Timeout, p.Threshold, smiName, (std::string(path)+"_"+test+".BIG_MCS.P.csv").c_str());   // command for the same Python test
                 n++;
             }

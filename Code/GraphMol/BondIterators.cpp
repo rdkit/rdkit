@@ -38,14 +38,14 @@ namespace RDKit{
     return *this;
   }
 
-  bool BondIterator_::operator==(const BondIterator_ &other){
+  bool BondIterator_::operator==(const BondIterator_ &other) const {
     return _mol==other._mol && _pos==other._pos;
   }
-  bool BondIterator_::operator!=(const BondIterator_ &other){
+  bool BondIterator_::operator!=(const BondIterator_ &other) const {
     return _mol!=other._mol || _pos!=other._pos;
   }
 
-  Bond *BondIterator_::operator*() {
+  Bond *BondIterator_::operator*() const {
     return (*_mol)[*_pos].get();
   }
   // pre-increment
@@ -99,14 +99,14 @@ namespace RDKit{
     _end = other._end;
     return *this;
   }
-  bool ConstBondIterator_::operator==(const ConstBondIterator_ &other){
+  bool ConstBondIterator_::operator==(const ConstBondIterator_ &other) const {
     return _mol==other._mol && _pos==other._pos;
   }
-  bool ConstBondIterator_::operator!=(const ConstBondIterator_ &other){
+  bool ConstBondIterator_::operator!=(const ConstBondIterator_ &other) const {
     return _mol!=other._mol || _pos!=other._pos;
   }
 
-  Bond const *ConstBondIterator_::operator*() {
+  Bond const *ConstBondIterator_::operator*() const {
     return (*_mol)[*_pos].get();
   }
   // pre-increment

@@ -324,6 +324,11 @@ namespace {
     } else if (rup==2) {
       aromatic = true;
     }
+#if 0
+    std::cerr <<" ring: ";
+    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
+    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
+#endif
     return aromatic;
   }
     
@@ -446,12 +451,17 @@ namespace {
       return(false);      
     }
 
-
     // atoms that aren't in their default valence state also get shut out
     int defVal=PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
     if(defVal>0 &&
        at->getTotalValence()>(PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()-
                                                                            at->getFormalCharge()))){
+      return false;
+    }
+
+    // heretoratoms with radicals also disqualify us from being considered.
+    // This was github issue 432
+    if(at->getNumRadicalElectrons() && at->getAtomicNum()!=6){
       return false;
     }
 
@@ -540,6 +550,10 @@ namespace {
         if(incidentMultipleBond(at)){
           res = OneElectronDonorType;
         }
+        // account for the tropylium and cyclopropenyl cation cases
+        else if(at->getFormalCharge() == 1) {
+          res = VacantElectronDonorType;
+        }
       }
     }
     else {
@@ -584,7 +598,8 @@ namespace RDKit {
       boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
       while(beg!=end){
         BOND_SPTR bond=at->getOwningMol()[*beg];
-        if(bond->getBondType()==Bond::ZERO) --degree;
+        if(bond->getBondType()==Bond::UNSPECIFIED  // query bonds should not contribute; this was github issue #443 
+           || bond->getBondType()==Bond::ZERO ) --degree;
         ++beg;
       }
 
@@ -598,7 +613,7 @@ namespace RDKit {
       nlp = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - dv; 
 
       // subtract the charge to get the true number of lone pair electrons:
-      nlp -= at->getFormalCharge(); 
+      nlp = std::max(nlp - at->getFormalCharge(), 0);
 
       int nRadicals=at->getNumRadicalElectrons();
       
@@ -715,7 +730,7 @@ namespace RDKit {
         }
       }
     
-      mol.setProp("numArom", narom, true);
+      mol.setProp(common_properties::numArom, narom, true);
 
       return narom;
     }

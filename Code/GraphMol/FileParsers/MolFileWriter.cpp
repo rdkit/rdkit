@@ -15,7 +15,7 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/RankAtoms.h>
+#include <RDGeneral/Ranking.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -258,10 +258,17 @@ namespace RDKit{
     }    
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
+      bool wrote_query = false;
       if(!listQs[(*atomIt)->getIdx()] && hasComplexQuery(*atomIt)){
-	std::string sma=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
-	ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
+        std::string sma=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
+        ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
+        wrote_query = true;
       }
+      std::string molFileValue;
+      if (!wrote_query &&
+          (*atomIt)->getPropIfPresent(common_properties::molFileValue,
+                                      molFileValue))
+        ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<molFileValue<<std::endl;
     }
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
@@ -271,12 +278,12 @@ namespace RDKit{
         ss<<"M  ALS "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" ";
         ss<<std::setw(2)<<vals.size();
         if((*atomIt)->getQuery()->getNegation()){
-          ss<<" T";
+          ss<<" T ";
         } else {
-          ss<<" F";
+          ss<<" F ";
         }
         BOOST_FOREACH(int val,vals){
-          ss<<" "<<std::setw(3)<<std::left<<(PeriodicTable::getTable()->getElementSymbol(val));
+          ss<<std::setw(4)<<std::left<<(PeriodicTable::getTable()->getElementSymbol(val));
         }
         ss<<"\n";
       }
@@ -290,9 +297,8 @@ namespace RDKit{
     unsigned int nEntries=0;
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
-      if((*atomIt)->hasProp("_MolFileRLabel")){
-        unsigned int lbl;
-        (*atomIt)->getProp("_MolFileRLabel",lbl);
+      unsigned int lbl;
+      if((*atomIt)->getPropIfPresent(common_properties::_MolFileRLabel, lbl)){
         ss<<" "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<std::setw(3)<<lbl;
         ++nEntries;
       }
@@ -307,9 +313,8 @@ namespace RDKit{
     std::stringstream ss;
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
-      if((*atomIt)->hasProp("molFileAlias")){
-        std::string lbl;
-        (*atomIt)->getProp("molFileAlias",lbl);
+      std::string lbl;
+      if((*atomIt)->getPropIfPresent(common_properties::molFileAlias, lbl)){
         if (!lbl.empty())
           ss<<"A  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<"\n"<<lbl<<"\n";
       }
@@ -379,13 +384,13 @@ namespace RDKit{
     PRECONDITION(atom,"");
 
     std::string res;
-    if(atom->hasProp("_MolFileRLabel")){
+    if(atom->hasProp(common_properties::_MolFileRLabel)){
       res="R#";
       //    } else if(!atom->hasQuery() && atom->getAtomicNum()){
     } else if(atom->getAtomicNum()){
       res=atom->getSymbol();
     } else {
-      if(!atom->hasProp("dummyLabel")){
+      if(!atom->hasProp(common_properties::dummyLabel)){
         if(atom->hasQuery() &&
            atom->getQuery()->getNegation() &&
            atom->getQuery()->getDescription()=="AtomAtomicNum" &&
@@ -411,7 +416,7 @@ namespace RDKit{
         }
       } else {
         std::string symb;
-        atom->getProp("dummyLabel",symb);
+        atom->getProp(common_properties::dummyLabel,symb);
         if(symb=="*") res="R";
         else if(symb=="X") res="R";
         else if(symb=="Xa") res="R1";
@@ -456,7 +461,7 @@ namespace RDKit{
         vs.push_back(std::make_pair(idx,v));
         ++nbrIdx;
       }
-      std::sort(vs.begin(),vs.end(),RankAtoms::pairLess<unsigned int,RDGeom::Point3D>());
+      std::sort(vs.begin(),vs.end(),Rankers::pairLess<unsigned int,RDGeom::Point3D>());
       double vol;
       if(vs.size()==4) {
         vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
@@ -472,6 +477,28 @@ namespace RDKit{
     }
   }
 
+  bool hasNonDefaultValence(const Atom *atom){
+    if (atom->getNumRadicalElectrons() != 0)
+      return true;
+    if (atom->hasQuery())
+      return false;
+    switch (atom->getAtomicNum()) {
+    case 1:  // H
+    case 5:  // B
+    case 6:  // C
+    case 7:  // N
+    case 8:  // O
+    case 9:  // F
+    case 15: // P
+    case 16: // S
+    case 17: // Cl
+    case 35: // Br
+    case 53: // I
+      return false;
+    }
+    return true;
+  }
+
   void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
                                 int &totValence, int &atomMapNumber, unsigned int &parityFlag,
                                 double &x, double &y, double &z){
@@ -481,8 +508,11 @@ namespace RDKit{
     parityFlag=0;
     x = y = z = 0.0;
 
-    if(atom->hasProp("molAtomMapNumber")){
-      atom->getProp("molAtomMapNumber",atomMapNumber);
+    if(!atom->getPropIfPresent(common_properties::molAtomMapNumber, atomMapNumber)) {
+      // XXX FIX ME->should we fail here? previously we would not assign
+        // the atomMapNumber if it didn't exist which could result in garbage
+        //  values.
+      atomMapNumber = 0;
     }
     
     if (conf) {
@@ -495,12 +525,8 @@ namespace RDKit{
          atom->getTotalDegree()==4 ){
         parityFlag=getAtomParityFlag(atom,conf);
       }
-    } 
-    if (atom->getNumRadicalElectrons()!=0 ||
-        (!atom->hasQuery() && (atom->getAtomicNum()<5 || atom->getAtomicNum()>9) &&
-         (atom->getAtomicNum()<15 || atom->getAtomicNum()>17) &&
-         (atom->getAtomicNum()!=35 && atom->getAtomicNum()!=53)
-         ) ){
+    }
+    if(hasNonDefaultValence(atom)){
       if(atom->getTotalDegree()==0){
         // Specify zero valence for elements/metals without neighbors
         // or hydrogens (degree 0) instead of writing them as radicals.
@@ -531,8 +557,8 @@ namespace RDKit{
     inversionFlag=0;
     exactChangeFlag=0;
 
-    if(atom->hasProp("molRxnRole")) atom->getProp("molRxnRole",rxnComponentType);
-    if(atom->hasProp("molRxnComponent")) atom->getProp("molRxnComponent",rxnComponentNumber);
+    atom->getPropIfPresent(common_properties::molRxnRole,rxnComponentType);
+    atom->getPropIfPresent(common_properties::molRxnComponent,rxnComponentNumber);
 
     std::string symbol = AtomGetMolFileSymbol(atom, true);
     std::stringstream ss;
@@ -628,7 +654,38 @@ namespace RDKit{
 	  dirCode = 3;
 	} else if(!(bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) &&
 		  bond->getBeginAtom()->getDegree()>1 && bond->getEndAtom()->getDegree()>1){
-          dirCode = 3;
+          // we don't know that it's explicitly unspecified (covered above with the ==STEREOANY check)
+          // look to see if one of the atoms has a bond with direction set
+          if(bond->getBondDir()==Bond::EITHERDOUBLE){
+            dirCode = 3;
+          } else {
+            bool nbrHasDir=false;
+            
+            ROMol::OEDGE_ITER beg,end;
+            boost::tie(beg,end) = bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
+            while(beg!=end && !nbrHasDir){
+              const BOND_SPTR nbrBond=bond->getOwningMol()[*beg];
+              if(nbrBond->getBondType()==Bond::SINGLE &&
+                 ( nbrBond->getBondDir()==Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir()==Bond::ENDDOWNRIGHT ) ){
+                nbrHasDir=true;
+              }
+              ++beg;
+            }
+            boost::tie(beg,end) = bond->getOwningMol().getAtomBonds(bond->getEndAtom());
+            while(beg!=end && !nbrHasDir){
+              const BOND_SPTR nbrBond=bond->getOwningMol()[*beg];
+              if(nbrBond->getBondType()==Bond::SINGLE &&
+                 ( nbrBond->getBondDir()==Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir()==Bond::ENDDOWNRIGHT ) ){
+                nbrHasDir=true;
+              }
+              ++beg;
+            }
+            if(!nbrHasDir){
+              dirCode=3;
+            }
+          }
         }
       }
     }
@@ -731,12 +788,8 @@ namespace RDKit{
       }
     }
     if (symbol == "R#"){
-      unsigned int rLabel;
-      if(atom->hasProp("_MolFileRLabel")){
-        atom->getProp("_MolFileRLabel",rLabel);
-      } else {
-        rLabel=1;
-      }
+      unsigned int rLabel=1;
+      atom->getPropIfPresent(common_properties::_MolFileRLabel,rLabel);
       ss << " RGROUPS=(1 " << rLabel << ")";
     }
     // HCOUNT - *query* hydrogen count. Not written by this writer.
@@ -829,6 +882,9 @@ namespace RDKit{
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     // NOTE: kekulize the molecule before writing it out
     // because of the way mol files handle aromaticity
+    if(trwmol.needsUpdatePropertyCache()){
+      trwmol.updatePropertyCache(false);
+    }
     if(kekulize) MolOps::Kekulize(trwmol);
 
 #if 0
@@ -860,9 +916,7 @@ namespace RDKit{
     nProducts=0;
     nIntermediates=0;
 
-    if(mol.hasProp("_MolFileChiralFlag")){
-      mol.getProp("_MolFileChiralFlag",chiralFlag);
-    }
+    mol.getPropIfPresent(common_properties::_MolFileChiralFlag,chiralFlag);
     
     const Conformer *conf;
     if(confId<0 && tmol.getNumConformers()==0){
@@ -871,18 +925,15 @@ namespace RDKit{
       conf = &(tmol.getConformer(confId));
     }
 
-    if(tmol.hasProp("_Name")){
-      std::string name;
-      tmol.getProp("_Name",name);
-      res += name;
+    std::string text;
+    if(tmol.getPropIfPresent(common_properties::_Name, text)){
+      res += text;
     }
     res += "\n";
 
     // info
-    if(tmol.hasProp("MolFileInfo")){
-      std::string info;
-      tmol.getProp("MolFileInfo",info);
-      res += info;
+    if(tmol.getPropIfPresent(common_properties::MolFileInfo, text)){
+      res += text;
     } else {
       std::stringstream ss;
       ss<<"  "<<std::setw(8)<<"RDKit";
@@ -891,17 +942,15 @@ namespace RDKit{
         if(conf->is3D()){
           ss<<"3D";
         } else {
-          ss<<"2D";
+          ss<<common_properties::TWOD;
         }
       }
       res += ss.str();
     }
     res += "\n";
     // comments
-    if(tmol.hasProp("MolFileComments")){
-      std::string info;
-      tmol.getProp("MolFileComments",info);
-      res += info;
+    if(tmol.getPropIfPresent(common_properties::MolFileComments, text)){
+      res += text;
     }
     res += "\n";
 

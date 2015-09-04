@@ -34,4 +34,13 @@
 #include <GraphMol/FMCS/FMCS.h>
 %}
 
+%ignore MCSParameters;
+%ignore findMCS(const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params);
 %include <GraphMol/FMCS/FMCS.h>
+
+%{
+
+  RDKit::MCSResult findMCS(const std::vector<RDKit::ROMOL_SPTR>& mols){
+    RDKit::findMCS(mols,static_cast<const RDKit::MCSParameters *>(NULL));
+  };
+%}

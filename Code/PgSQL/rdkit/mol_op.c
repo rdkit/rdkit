@@ -201,6 +201,7 @@ MOLDESCR(numsaturatedheterocycles,MolNumSaturatedHeterocycles,INT32)
 MOLDESCR(numaromaticcarbocycles,MolNumAromaticCarbocycles,INT32)
 MOLDESCR(numaliphaticcarbocycles,MolNumAliphaticCarbocycles,INT32)
 MOLDESCR(numsaturatedcarbocycles,MolNumSaturatedCarbocycles,INT32)
+MOLDESCR(numheterocycles,MolNumHeterocycles,INT32)
 
 MOLDESCR(fractioncsp3,MolFractionCSP3,FLOAT4)
 MOLDESCR(chi0n,MolChi0n,FLOAT4)
@@ -291,3 +292,331 @@ mol_murckoscaffold(PG_FUNCTION_ARGS) {
 
   PG_RETURN_MOL_P(res);           
 }
+
+PG_FUNCTION_INFO_V1(mol_hash);
+Datum           mol_hash(PG_FUNCTION_ARGS);
+Datum
+mol_hash(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  Assert(mol != 0);
+  str = computeMolHash(mol, &len);
+  Assert(str != 0 && strlen(str) != 0);
+  PG_RETURN_CSTRING(pnstrdup(str, len));
+}
+
+/*** fmcs ***/
+
+PG_FUNCTION_INFO_V1(fmcs_smiles);
+Datum           fmcs_smiles(PG_FUNCTION_ARGS);
+Datum
+fmcs_smiles(PG_FUNCTION_ARGS) {
+  char    *str = PG_GETARG_CSTRING(0);
+  char    *params = PG_GETARG_CSTRING(1);
+//elog(WARNING, str);
+
+  str = findMCSsmiles(str, params);
+//elog(WARNING, str);
+  Assert(str != 0);
+  PG_RETURN_CSTRING(pnstrdup(str, strlen(str)));
+}
+
+
+PG_FUNCTION_INFO_V1(fmcs_smiles_transition);
+Datum           fmcs_smiles_transition(PG_FUNCTION_ARGS);
+Datum
+fmcs_smiles_transition(PG_FUNCTION_ARGS) {
+
+    if ( ! AggCheckCallContext(fcinfo, NULL) || PG_ARGISNULL(0)){
+        ereport(ERROR, (errmsg("fmcs_smiles_transition() called in out of aggregate context")));
+    }
+    else if (!PG_ARGISNULL(0)) { // Called in aggregate context...
+        text *t0 = PG_GETARG_TEXT_P(0);
+        text *tsmiles = PG_GETARG_TEXT_P(1);
+// char    *s0 = VARDATA(t0);
+// char    *smiles = VARDATA(tsmiles);
+//elog(WARNING, "fmcs_trans: next iteration in the same run");
+//elog(WARNING, s0);
+//elog(WARNING, smiles);
+
+        int32 ts_size = VARSIZE(t0) + 1 + VARSIZE(tsmiles)-VARHDRSZ;
+        text* ts = (text*) palloc(ts_size); //new return value
+        SET_VARSIZE(ts, ts_size);
+        memcpy(VARDATA(ts), VARDATA(t0), VARSIZE(t0)-VARHDRSZ);
+        *(char*)(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ) = ' ';
+        memcpy(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ+1, VARDATA(tsmiles), VARSIZE(tsmiles)-VARHDRSZ);
+//elog(WARNING, VARDATA(ts));
+        PG_RETURN_TEXT_P(ts);
+    }
+}
+//------------------------
+
+char* Mol2Smiles(CROMol data);
+
+PG_FUNCTION_INFO_V1(fmcs_mol2s_transition);
+Datum           fmcs_mol2s_transition(PG_FUNCTION_ARGS);
+Datum
+fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
+//elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
+//elog(WARNING, (PG_ARGISNULL(1)) ? "arg 1 is NULL" : "arg 1 is NOT NULL");
+
+    if ( ! AggCheckCallContext(fcinfo, NULL)){
+//elog(WARNING, "fmcs_mol2s_transition() called in out of aggregate context");
+        ereport(ERROR, (errmsg("fmcs_mol2s_transition() called in out of aggregate context")));
+    }
+    if(PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // first call
+///elog(WARNING, "fmcs_mol2s_transition() called first time");
+        CROMol mol = PG_GETARG_DATUM(1);
+        int    len;
+char t[256];
+sprintf(t,"mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+elog(WARNING, t);
+        fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1),
+                                            NULL, &mol, NULL);
+
+        char *smiles = makeMolText(mol, &len,false);
+
+//        char *smiles= Mol2Smiles(mol);
+//        int   len   = strlen(smiles);
+///elog(WARNING, smiles);
+
+        int32 ts_size = len + VARHDRSZ;
+        text* ts = (text*) palloc(ts_size); //new return value
+        SET_VARSIZE(ts, ts_size);
+        memcpy(VARDATA(ts), smiles, len);
+        PG_RETURN_TEXT_P(ts);
+    }
+    else 
+    if (!PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // Called in aggregate context...
+        text *t0 = PG_GETARG_TEXT_P(0);
+///elog(WARNING, "fmcs_mol2s_transition(): next iteration in the same run");
+//elog(WARNING, VARDATA(t0));
+
+        //mol_to_smiles():
+        CROMol mol = PG_GETARG_DATUM(1);
+        int    len;
+char t[256];
+sprintf(t,"mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+elog(WARNING, t);
+        fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1),
+                                            NULL, &mol, NULL);
+
+        char *smiles = makeMolText(mol, &len,false);
+//        char *smiles= Mol2Smiles(mol);
+//        int   len   = strlen(smiles);
+///elog(WARNING, smiles);
+
+        int32 ts_size = VARSIZE(t0) + 1 + len;
+        text* ts = (text*) palloc(ts_size); //new return value
+        SET_VARSIZE(ts, ts_size);
+        memcpy(VARDATA(ts), VARDATA(t0), VARSIZE(t0)-VARHDRSZ);
+        *(char*)(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ) = ' ';
+        memcpy(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ+1, smiles, len);
+//elog(WARNING, VARDATA(ts));
+        PG_RETURN_TEXT_P(ts);
+    }
+//------
+///elog(WARNING, "fmcs_mol2s_transition(): return empty text block");
+    {
+        int32 ts_size = VARHDRSZ;
+        text* ts = (text*) palloc(ts_size); // return empty text block
+        SET_VARSIZE(ts, ts_size);
+        PG_RETURN_TEXT_P(ts);
+    }
+}
+//------------------------
+
+
+// fmcs_mol:
+PG_FUNCTION_INFO_V1(fmcs_mols);
+Datum           fmcs_mols(PG_FUNCTION_ARGS);
+Datum
+fmcs_mols(PG_FUNCTION_ARGS) {
+//elog(WARNING, "fmcs_mols() called. FINALFUNC");
+   void *lst = PG_GETARG_POINTER(0);
+//char t[256];
+//sprintf(t,"lst=%p, fcinfo: %p, %p", lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+//elog(WARNING, t);
+//  char *params = PG_GETARG_CSTRING(1);
+  char *str = findMCS(lst, NULL);//params);
+  Assert(str != 0);
+  int32 ts_size = VARHDRSZ + strlen(str);
+  text* ts = (text*) palloc(ts_size);
+  SET_VARSIZE(ts, ts_size);
+  memcpy(VARDATA(ts), str, strlen(str));
+  PG_RETURN_TEXT_P(ts);
+}
+
+PG_FUNCTION_INFO_V1(fmcs_mol_transition);
+Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
+Datum
+fmcs_mol_transition(PG_FUNCTION_ARGS) {
+//elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
+//elog(WARNING, (PG_ARGISNULL(1)) ? "arg 1 is NULL" : "arg 1 is NOT NULL");
+
+    if ( ! AggCheckCallContext(fcinfo, NULL)){
+        ereport(ERROR, (errmsg("fmcs_mol_transition() called in out of aggregate context")));
+    }
+    if(PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // first call
+//elog(WARNING, "fmcs_mol_transition() called first time");
+        void* lst = NULL;
+        CROMol mol = PG_GETARG_DATUM(1);
+        lst = addMol2list(NULL, mol);
+//char t[256];
+//sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+//elog(WARNING, t);
+	//fcinfo->flinfo->fn_extra = lst;
+        PG_RETURN_INT32((int32)lst);
+    }
+    else 
+    if (!PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // Called in aggregate context...
+//elog(WARNING, "fmcs_mol_transition(): next iteration in the same run");
+        CROMol mol = PG_GETARG_DATUM(1);
+        void* lst = addMol2list(PG_GETARG_POINTER(0), mol);
+//char t[256];
+//sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+//elog(WARNING, t);
+        PG_RETURN_POINTER(lst);
+    }
+}
+//------------------------
+
+
+
+//==================================
+/*
+#include <utils/array.h>
+PG_FUNCTION_INFO_V1(fmcs_mol);
+Datum           fmcs_mol(PG_FUNCTION_ARGS);
+Datum
+fmcs_mol(PG_FUNCTION_ARGS) {
+elog(WARNING, "fmcs_mol(): FINAL function in the same run.");
+  char *str = "";
+  ArrayType *ma = (ArrayType*)PG_GETARG_ARRAYTYPE_P(0);
+  Assert(ma != 0);
+  int   len = VARSIZE(ma) - VARHDRSZ;
+  if(len>1){
+    CROMol  *mols = (CROMol*) palloc(len*sizeof(CROMol));
+    int i;
+    for(i=0; i < len; i++){
+        mols[i] = ((CROMol*)ARR_DATA_PTR(ma))[i];
+
+elog(WARNING, "fmcs_mol(): call SearchMolCache(...).");
+//--*
+      fcinfo->flinfo->fn_extra = SearchMolCache(
+                                                fcinfo->flinfo->fn_extra,
+                                                fcinfo->flinfo->fn_mcxt,
+                                                ((CROMol*)ARR_DATA_PTR(ma))[i],
+                                                NULL, mols[i], NULL);
+//*--/
+      if(mols[i]==0){
+        pfree(mols);
+        mols = NULL;
+      }
+      Assert(mols[i] != 0);
+    }
+elog(WARNING, "fmcs_mol(): call findMCS(...).");
+    char *params = "";
+    str = findMCS(mols, len, params);
+    pfree(mols); mols = NULL;
+  }
+  else
+    elog(WARNING, "fmcs_mol(): mols is empty.");
+
+  Assert(str != 0);
+  len = strlen(str);
+  text* tmcs = (text*) palloc(len+1+VARHDRSZ);
+  SET_VARSIZE(tmcs, len+1+VARHDRSZ);
+  memcpy(VARDATA(tmcs), str, len+1);
+  PG_RETURN_TEXT_P(tmcs);
+}
+
+PG_FUNCTION_INFO_V1(fmcs_mol_transition);
+Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
+Datum
+fmcs_mol_transition(PG_FUNCTION_ARGS) {
+    if ( ! AggCheckCallContext(fcinfo, NULL)){
+      ereport(ERROR, (errmsg("fmcs_mol_transition() called in out of aggregate context")));
+      PG_RETURN_NULL();
+    }
+    else{ // Called in aggregate context...
+      ArrayType *mols = NULL;
+      if(PG_ARGISNULL(0)){
+elog(WARNING, "fmcs_mol_transition(): first call. Allocate state type array of CROMol pointers");
+if(PG_ARGISNULL(1))
+  elog(WARNING, "fmcs_mol_transition(): first call. Argument [1] is null.");
+
+         Oid elmtype = get_fn_expr_argtype(fcinfo->flinfo, 1);	// CROMol
+         mols = construct_empty_array(elmtype);
+         Assert(mols != 0);
+       }
+       else{
+elog(WARNING, "fmcs_mol_transition(): next iteration in the same run. Append CROMol pointer");
+
+         mols = PG_GETARG_ARRAYTYPE_P(0);
+         CROMol mol = PG_GETARG_DATUM(1);
+         mols;
+       }
+       PG_RETURN_ARRAYTYPE_P(mols);
+    }
+}
+*/
+
+
+
+/*
+PG_FUNCTION_INFO_V1(fmcs_transition);
+Datum           fmcs_transition(PG_FUNCTION_ARGS);
+Datum
+fmcs_transition(PG_FUNCTION_ARGS) {
+  text    *tsmiles = PG_GETARG_TEXT(1);
+//  int      tsmiles_len = VARSIZE(tsmiles);
+  char    *smiles = pgstrdup(VARDATA(tsmiles), VARSIZE(tsmiles));
+  char    *params = PG_GETARG_CSTRING(2);
+
+elog(WARNING, smiles);
+
+//  Assert(smiles != 0);
+    if (AggCheckCallContext(fcinfo, NULL))
+    {
+        // Called in aggregate context...
+        if (PG_ARGISNULL(0)) {
+            // ... for the first time in a run, so the state in the 1st
+            // argument is null. Create a state-holder array by copying the
+            // second input array and return it.
+elog(WARNING, "fmcs_trans: the first time in a run");
+  PG_RETURN_TEXT(tsmiles);
+//            PG_RETURN_POINTER(copy_intArrayType(b));
+        }
+        else {
+            // ... for a later invocation in the same run, so we'll modify the state array directly.
+elog(WARNING, "fmcs_trans: next iteration in the same run");
+  PG_RETURN_TEXT(tsmiles);
+        }
+    }
+    else 
+    {
+elog(WARNING, "fmcs_trans: Not in aggregate context");
+        // Not in aggregate context
+        if (PG_ARGISNULL(0))
+            ereport(ERROR, (errmsg("First operand must be non-null")));
+        else
+;;;;;;
+  PG_RETURN_TEXT(tsmiles);
+    }
+}
+
+*/
+

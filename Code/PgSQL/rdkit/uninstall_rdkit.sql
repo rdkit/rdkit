@@ -99,6 +99,10 @@ DROP FUNCTION IF EXISTS gslfp_picksplit(internal, internal) CASCADE;
 DROP FUNCTION IF EXISTS gslfp_union(bytea, internal) CASCADE;
 DROP FUNCTION IF EXISTS gslfp_same(bytea, bytea, internal) CASCADE;
 
+DROP FUNCTION IF EXISTS mol_hash(mol) CASCADE;
+DROP FUNCTION IF EXISTS fmcs_smiles(cstring, cstring) CASCADE;
+DROP FUNCTION IF EXISTS fmcs_smiles(text, text) CASCADE;
+
 DROP TYPE IF EXISTS mol CASCADE;
 DROP TYPE IF EXISTS bfp CASCADE;
 DROP TYPE IF EXISTS sfp CASCADE;

@@ -425,8 +425,8 @@ void test6(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -440,8 +440,8 @@ void test6(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -454,8 +454,8 @@ void test6(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="S");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -468,8 +468,8 @@ void test6(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="S");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -482,7 +482,7 @@ void test6(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==5);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
 #if 1
   smi = MolToSmiles(*m,true);
   TEST_ASSERT(smi=="CC(C)(Cl)Br");
@@ -534,8 +534,8 @@ void test7(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -544,8 +544,8 @@ void test7(){
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   MolOps::assignStereochemistry(*m2);
-  TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m2->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m2->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");  
   smi2 = MolToSmiles(*m2,true);
   TEST_ASSERT(smi==smi2);
@@ -558,8 +558,8 @@ void test7(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="S");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -569,8 +569,8 @@ void test7(){
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   MolOps::assignStereochemistry(*m2);
-  TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m2->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m2->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="S");  
   //smi2 = MolToSmiles(*m2,true);
   //TEST_ASSERT(smi==smi2);
@@ -583,8 +583,8 @@ void test7(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");  
 #if 1
   smi = MolToSmiles(*m,true);
@@ -616,14 +616,14 @@ void test7(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==9);
   MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");
-  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");
-  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
-  m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+  m->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
   TEST_ASSERT(cip=="R");
 #if 1
   smi = MolToSmiles(*m,true);
@@ -842,8 +842,8 @@ void testIssue399(){
   TEST_ASSERT(smi1=="C[C@H]1CO1");
 #endif  
   MolOps::assignStereochemistry(*m1);
-  TEST_ASSERT(m1->getAtomWithIdx(1)->hasProp("_CIPCode"));
-  m1->getAtomWithIdx(1)->getProp("_CIPCode",smi2);
+  TEST_ASSERT(m1->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  m1->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,smi2);
   TEST_ASSERT(smi2=="S");
 #if 1
   WedgeMolBonds(*m1,&m1->getConformer());
@@ -1083,27 +1083,27 @@ void testMolFileRGroups(){
   unsigned int idx;
   std::string label;
   
-  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-  m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+  m->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
   TEST_ASSERT(idx==2);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
   TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
 
  
-  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-  m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+  m->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
   TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
 
   //  test sf.net issue 3316600:
-  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
-  m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::dummyLabel));
+  m->getAtomWithIdx(3)->getProp(common_properties::dummyLabel,label);
   TEST_ASSERT(label=="R2");
   TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
   
-  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
-  m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::dummyLabel));
+  m->getAtomWithIdx(4)->getProp(common_properties::dummyLabel,label);
   TEST_ASSERT(label=="R1");
   TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
   
@@ -1137,14 +1137,14 @@ void testMolFileRGroups(){
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups2.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-  m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+  m->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
   TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),1));
   
-  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-  m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+  m->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
   TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
@@ -1175,13 +1175,13 @@ void testMolFileRGroups(){
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups3.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-  m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+  m->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
   TEST_ASSERT(idx==11);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
   TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),11));
-  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-  m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+  m->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
   TEST_ASSERT(idx==503);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
   TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),503));
@@ -1711,9 +1711,9 @@ void testAtomParity(){
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simple1.mol";
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
-    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==1);
 
     // if we don't perceive the stereochem first, no parity
@@ -1721,8 +1721,8 @@ void testAtomParity(){
     std::string molBlock = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     delete m2;
     
     // now perceive stereochem, then look for the parity
@@ -1731,9 +1731,9 @@ void testAtomParity(){
     molBlock = MolToMolBlock(*m);
     m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
-    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m2->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==1);
     delete m2;
 
@@ -1745,18 +1745,18 @@ void testAtomParity(){
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simple2.mol";
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
-    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==2);
 
     MolOps::assignChiralTypesFrom3D(*m);
     std::string molBlock = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
-    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m2->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==2);
     delete m2;
 
@@ -1769,18 +1769,18 @@ void testAtomParity(){
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simpleH1.mol";
     RWMol *m = MolFileToMol(fName,true,false);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
-    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==1);
 
     MolOps::assignChiralTypesFrom3D(*m);
     std::string molBlock = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(molBlock,true,false);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
-    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m2->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==1);
     delete m2;
 
@@ -1791,9 +1791,9 @@ void testAtomParity(){
     delete m2;
     m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
-    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m2->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==1);
     delete m2;
     delete m;
@@ -1805,18 +1805,18 @@ void testAtomParity(){
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simpleH2.mol";
     RWMol *m = MolFileToMol(fName,true,false);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
-    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==2);
 
     MolOps::assignChiralTypesFrom3D(*m);
     std::string molBlock = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(molBlock,true,false);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
-    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m2->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==2);
     delete m2;
 
@@ -1825,9 +1825,9 @@ void testAtomParity(){
     delete m2;
     m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
-    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m2->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==2);
     delete m2;
     delete m;
@@ -1839,17 +1839,17 @@ void testAtomParity(){
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.nitrogen.mol";
     RWMol *m = MolFileToMol(fName,true,false);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
-    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molParity));
+    m->getAtomWithIdx(1)->getProp(common_properties::molParity,parity);
     TEST_ASSERT(parity==1);
 
     MolOps::assignChiralTypesFrom3D(*m);
     std::string molBlock = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(molBlock,true,false);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     delete m2;
     delete m;
   }
@@ -1859,8 +1859,8 @@ void testAtomParity(){
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.twoHs.mol";
     RWMol *m = MolFileToMol(fName,true,false);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("molParity"));
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::molParity));
 
     // add a bogus chiral spec:
     m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
@@ -1870,8 +1870,8 @@ void testAtomParity(){
     delete m2;
     m2 = MolBlockToMol(molBlock,true,false);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     delete m2;
     delete m;
   }
@@ -1930,9 +1930,9 @@ void testMolFileAtomValues(){
     fName = rdbase+"test_data/AtomProps1.mol";
     m = MolFileToMol(fName);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molFileValue"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molFileValue"));
-    m->getAtomWithIdx(1)->getProp("molFileValue",val);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    m->getAtomWithIdx(1)->getProp(common_properties::molFileValue,val);
     TEST_ASSERT(val=="acidchloride");
 
     delete m;
@@ -1945,13 +1945,13 @@ void testMolFileAtomValues(){
     fName = rdbase+"test_data/AtomProps2.mol";
     m = MolFileToMol(fName);
     TEST_ASSERT(m);
-    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molFileValue"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molFileValue"));
-    m->getAtomWithIdx(1)->getProp("molFileValue",val);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    m->getAtomWithIdx(1)->getProp(common_properties::molFileValue,val);
     TEST_ASSERT(val=="acidchloride");
 
-    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("molFileValue"));
-    m->getAtomWithIdx(2)->getProp("molFileValue",val);
+    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::molFileValue));
+    m->getAtomWithIdx(2)->getProp(common_properties::molFileValue,val);
     TEST_ASSERT(val=="testing");
 
     TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge()==-1);
@@ -2071,8 +2071,8 @@ void testListsAndValues(){
 
     std::string value;
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molFileValue"));
-    m->getAtomWithIdx(1)->getProp("molFileValue",value);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    m->getAtomWithIdx(1)->getProp(common_properties::molFileValue,value);
     TEST_ASSERT(value=="halogen");
     
     TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
@@ -2419,22 +2419,22 @@ void test3V3K(){
     unsigned int idx;
     std::string label;
   
-    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+    m->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==2);
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
     TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+    m->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==1);
     TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
     TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
-    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
-    m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::dummyLabel));
+    m->getAtomWithIdx(3)->getProp(common_properties::dummyLabel,label);
     TEST_ASSERT(label=="R2");
     TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
-    m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::dummyLabel));
+    m->getAtomWithIdx(4)->getProp(common_properties::dummyLabel,label);
     TEST_ASSERT(label=="R1");
     TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
 
@@ -2442,22 +2442,22 @@ void test3V3K(){
     delete m;
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+    m->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==2);
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
     TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+    m->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==1);
     TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
     TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
-    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
-    m->getAtomWithIdx(3)->getProp("dummyLabel",label);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::dummyLabel));
+    m->getAtomWithIdx(3)->getProp(common_properties::dummyLabel,label);
     TEST_ASSERT(label=="R2");
     TEST_ASSERT(m->getAtomWithIdx(3)->getSymbol()=="R2");
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("dummyLabel"));
-    m->getAtomWithIdx(4)->getProp("dummyLabel",label);
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::dummyLabel));
+    m->getAtomWithIdx(4)->getProp(common_properties::dummyLabel,label);
     TEST_ASSERT(label=="R1");
     TEST_ASSERT(m->getAtomWithIdx(4)->getSymbol()=="R1");
 
@@ -2866,24 +2866,24 @@ void testIssue3313540(){
     TEST_ASSERT(m);
     unsigned int idx;
   
-    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+    m->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==2);
   
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+    m->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==1);
 
     std::string mb=MolToMolBlock(*m);
     RWMol *m2=MolBlockToMol(mb);
     TEST_ASSERT(m2);
     
-    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
-    m2->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp(common_properties::_MolFileRLabel));
+    m2->getAtomWithIdx(3)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==2);
   
-    TEST_ASSERT(m2->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
-    m2->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(m2->getAtomWithIdx(4)->hasProp(common_properties::_MolFileRLabel));
+    m2->getAtomWithIdx(4)->getProp(common_properties::_MolFileRLabel,idx);
     TEST_ASSERT(idx==1);
     
     delete m;
@@ -2923,9 +2923,9 @@ void testIssue3374639(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.2.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -2933,9 +2933,9 @@ void testIssue3374639(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.1.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -2943,9 +2943,9 @@ void testIssue3374639(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.full.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(16)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(16)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(16)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(16)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -2962,9 +2962,9 @@ void testThreeCoordinateChirality(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.1.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -2973,9 +2973,9 @@ void testThreeCoordinateChirality(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.2.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -2984,7 +2984,7 @@ void testThreeCoordinateChirality(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.3.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     delete m;
   }
   
@@ -2992,7 +2992,7 @@ void testThreeCoordinateChirality(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.4.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     delete m;
   }
   
@@ -3000,9 +3000,9 @@ void testThreeCoordinateChirality(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.5.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -3010,9 +3010,9 @@ void testThreeCoordinateChirality(){
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.6.mol";
     RWMol *m = MolFileToMol(fName);
 
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -3082,9 +3082,9 @@ void testChiralPhosphorous(){
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(5)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");  
     delete m;
   }
@@ -3093,9 +3093,9 @@ void testChiralPhosphorous(){
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
     std::string cip;
-    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    m->getAtomWithIdx(5)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");  
     delete m;
   }
@@ -3104,7 +3104,7 @@ void testChiralPhosphorous(){
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
     delete m;
   }
   {
@@ -3112,7 +3112,7 @@ void testChiralPhosphorous(){
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
     delete m;
   }
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
@@ -3338,9 +3338,9 @@ void testMolFileChiralFlag(){
     fName = rdbase+"chiral_flag.mol";
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
-    TEST_ASSERT(m1->hasProp("_MolFileChiralFlag"));
+    TEST_ASSERT(m1->hasProp(common_properties::_MolFileChiralFlag));
     unsigned int cflag;
-    m1->getProp("_MolFileChiralFlag",cflag);
+    m1->getProp(common_properties::_MolFileChiralFlag,cflag);
     TEST_ASSERT(cflag==1);
     delete m1;
   }
@@ -3518,15 +3518,15 @@ void testMolFileWithRxn(){
     TEST_ASSERT(m->getNumAtoms()==18);
     TEST_ASSERT(m->getNumBonds()==16);
 
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnRole)==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molRxnComponent));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnComponent)==1);
 
-    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
-    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
-    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
-    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnRole));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(common_properties::molRxnRole)==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnComponent));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(common_properties::molRxnComponent)==3);
 
 
 
@@ -3823,8 +3823,8 @@ void testGithub210(){
     pathName += "/Code/GraphMol/FileParsers/test_data/";
     RWMol *m = MolFileToMol(pathName+"github210.mol");
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_ChiralityPossible"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp(common_properties::_ChiralityPossible));
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -3905,6 +3905,44 @@ void testPDBResidues(){
 }
 
 
+void testGithub337(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 337: No double bond stereo perception from CTABs when sanitization is turned off" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *m = MolFileToMol(pathName+"unsanitized_stereo.mol",false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+    std::string molBlock = MolToMolBlock(*m);
+    TEST_ASSERT(molBlock.find("  1  2  2  0")!=std::string::npos);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub360(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 360: Computed props on non-sanitized molecule interfering with substructure matching" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *dbm = SmilesToMol("C1Cc2ccccc2CN1");
+    TEST_ASSERT(dbm);
+    RWMol *tmpl = MolFileToMol(pathName+"github360.mol",false);
+    TEST_ASSERT(tmpl);
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*dbm,*tmpl,mv));
+    
+    delete dbm;
+    delete tmpl;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3980,5 +4018,7 @@ int main(int argc,char *argv[]){
   testGithub191();
   testGithub210();
   testPDBResidues();
+  testGithub337();
+  testGithub360();
   return 0;
 }

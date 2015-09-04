@@ -39,6 +39,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
 
       void getGrad(double *pos, double *grad) const;
+      virtual PositionConstraintContrib *copy() const { return new PositionConstraintContrib(*this); };
     private:
       int d_atIdx; //!< index of the restrained atom
       double d_maxDispl;  //!< maximum allowed displacement

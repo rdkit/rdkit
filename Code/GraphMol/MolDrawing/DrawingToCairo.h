@@ -113,41 +113,43 @@ namespace RDKit {
           label+=(char)*pos++;
         }
         RDKit::Drawing::OrientType orient=static_cast<RDKit::Drawing::OrientType>(*pos++);
-        cairo_text_extents_t extents;
-        cairo_text_extents(cr,label.c_str(),&extents);
-        double twidth=extents.width,theight=extents.height;
+        if(label.length()){
+          cairo_text_extents_t extents;
+          cairo_text_extents(cr,label.c_str(),&extents);
+          double twidth=extents.width,theight=extents.height;
 
-        switch(orient){
-        case RDKit::Drawing::W:
-          xp -= twidth;
-          yp += theight/2;
-          break;
-        case RDKit::Drawing::E:
-          yp += theight/2;
-          break;
-        case RDKit::Drawing::S:
-          xp -= twidth/2;
-          yp += theight;
-          break;
-        case RDKit::Drawing::N:
-          xp -= twidth/2;
-          yp -= theight/2;
-          break;
-        default:
-          xp -= twidth/2;
-          yp += theight/2;
-        }
-        cairo_set_source_rgb (cr, 1.0, 1., 1.);
-        cairo_rectangle(cr,
-                        xp-10,yp-theight-10,
-                        twidth+20,theight+20);
-        cairo_fill(cr);
+          switch(orient){
+          case RDKit::Drawing::W:
+            xp -= twidth;
+            yp += theight/2;
+            break;
+          case RDKit::Drawing::E:
+            yp += theight/2;
+            break;
+          case RDKit::Drawing::S:
+            xp -= twidth/2;
+            yp += theight;
+            break;
+          case RDKit::Drawing::N:
+            xp -= twidth/2;
+            yp -= theight/2;
+            break;
+          default:
+            xp -= twidth/2;
+            yp += theight/2;
+          }
+          cairo_set_source_rgb (cr, 1.0, 1., 1.);
+          cairo_rectangle(cr,
+                          xp-10,yp-theight-10,
+                          twidth+20,theight+20);
+          cairo_fill(cr);
                   
 
-        cairo_move_to(cr,xp,yp);
-        setColorCairo(atNum,cr);
-        cairo_show_text(cr,label.c_str());
-        cairo_stroke(cr);
+          cairo_move_to(cr,xp,yp);
+          setColorCairo(atNum,cr);
+          cairo_show_text(cr,label.c_str());
+          cairo_stroke(cr);
+        }
       }
     } // end of anonymous namespace 
 

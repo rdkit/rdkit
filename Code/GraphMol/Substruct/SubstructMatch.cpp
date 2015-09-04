@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -252,7 +251,8 @@ namespace RDKit{
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matches,
 			      bool uniquify,bool recursionPossible,
-			      bool useChirality,bool useQueryQueryMatches){
+			      bool useChirality,bool useQueryQueryMatches,
+                              unsigned int maxMatches ){
 
     if(recursionPossible){
       detail::SUBQUERY_MAP subqueryMap;
@@ -279,7 +279,7 @@ namespace RDKit{
                                   atomLabeler,bondLabeler,pms);
 #else
     bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
-                              atomLabeler,bondLabeler,matchChecker,pms);
+                              atomLabeler,bondLabeler,matchChecker,pms,maxMatches);
 #endif
     unsigned int res=0;
     if(found){
@@ -346,11 +346,11 @@ namespace RDKit{
 	matches.reserve(pms.size());
 	for(std::list<detail::ssPairType>::const_iterator iter1=pms.begin();
 	    iter1!=pms.end();++iter1){
-	  if(!query.hasProp("_queryRootAtom")){
+	  if(!query.hasProp(common_properties::_queryRootAtom)){
 	    matches.push_back(iter1->begin()->second);
 	  } else {
 	    int rootIdx;
-	    query.getProp("_queryRootAtom",rootIdx);
+	    query.getProp(common_properties::_queryRootAtom,rootIdx);
 	    bool found=false;
 	    for(detail::ssPairType::const_iterator pairIter=iter1->begin();
 		pairIter!=iter1->end();++pairIter){

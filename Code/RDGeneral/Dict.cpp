@@ -19,12 +19,14 @@
 #include <list>
 #include <iostream>
 #include <sstream>
+#include <RDGeneral/LocaleSwitcher.h>
 
 namespace RDKit{
   namespace {
     template <class T>
     std::string vectToString(const boost::any &val){
       const std::vector<T> &tv=boost::any_cast<std::vector<T> >(val);
+      Utils::LocaleSwitcher ls;
       std::ostringstream sstr;
       sstr<<"[";
       std::copy(tv.begin(),tv.end(),std::ostream_iterator<T>(sstr,","));
@@ -44,6 +46,7 @@ namespace RDKit{
     //
     if(!hasVal(what) ) throw KeyErrorException(what);
     const boost::any &val = _data.find(what)->second;
+    Utils::LocaleSwitcher ls;
     try{
       res = boost::any_cast<std::string>(val);
     } catch (const boost::bad_any_cast &) {
@@ -71,12 +74,54 @@ namespace RDKit{
     }
   };
 
+    bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
+    //
+    //  We're going to try and be somewhat crafty about this getVal stuff to make these
+    //  containers a little bit more generic.  The normal behavior here is that the
+    //  value being queried must be directly castable to type T.  We'll robustify a
+    //  little bit by trying that and, if the cast fails, attempting a couple of 
+    //  other casts, which will then be lexically cast to type T.
+    //
+    DataType::const_iterator pos=_data.find(what);
+    if (pos==_data.end())
+      return false;
+    const boost::any &val = pos->second;
+    Utils::LocaleSwitcher ls;
+    try{
+      res = boost::any_cast<std::string>(val);
+    } catch (const boost::bad_any_cast &) {
+      if(val.type()==typeid(int)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<int>(val));
+      } else if(val.type()==typeid(unsigned int)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<unsigned int>(val));
+      } else if(val.type()==typeid(long)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<long>(val));
+      } else if(val.type()==typeid(unsigned long)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<unsigned long>(val));
+      } else if(val.type()==typeid(float)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<float>(val));
+      } else if(val.type()==typeid(double)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<double>(val));
+      } else if(val.type()==typeid(const char *)){
+        res = std::string(boost::any_cast<const char *>(val));
+      } else if(val.type()==typeid(std::vector<unsigned int>)){
+        res = vectToString<unsigned int>(val);
+      } else if(val.type()==typeid(std::vector<int>)){
+        res = vectToString<int>(val);
+      } else {
+        return false;
+      }
+    }
+    return true;
+  };
+
   namespace {
     template <class T>
     typename boost::enable_if<boost::is_arithmetic<T>, T>::type 
     _fromany(const boost::any &arg) {
       T res;
       if(arg.type()==typeid(std::string) || arg.type()==typeid(const char *)){
+        Utils::LocaleSwitcher ls;
         try {
           res = boost::any_cast<T>(arg);
         } catch (const boost::bad_any_cast &exc) {

@@ -22,7 +22,7 @@
 #include "RealValueVect.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <DataStructs/SparseIntVect.h>
 
 #include <stdlib.h>

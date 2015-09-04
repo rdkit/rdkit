@@ -65,7 +65,7 @@
 """
 from __future__ import print_function
 import sys,os
-from rdkit.six.moves import cPickle
+from rdkit.six.moves import cPickle  #@UnresolvedImport #pylint: disable=F0401
 from rdkit.six import next
 from rdkit import Chem
 from rdkit import RDConfig
@@ -556,7 +556,7 @@ if __name__=='__main__':
   import time
   details = RunDetails()
   ParseArgs(details)
-  from cStringIO import StringIO
+  from io import StringIO
   suppl = SupplierFromDetails(details)
 
   cat = None

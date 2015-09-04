@@ -22,8 +22,12 @@
 
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
 #include <ForceField/ForceField.h>
+#include <ForceField/MMFF/Params.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <boost/math/special_functions/round.hpp>
 
 using namespace RDKit;
 void testMMFFTyper1()
@@ -626,7 +630,82 @@ void testGithub162()
 }
 
 
-
+void testMMFFParamGetters()
+{
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test MMFF force-field parameter getters." << std::endl;
+  {
+    ROMol *mol = SmilesToMol("c1ccccc1CCNN");
+    TEST_ASSERT(mol);
+    ROMol *molH = MolOps::addHs(*mol);
+    TEST_ASSERT(molH);
+    MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*molH);
+    TEST_ASSERT(mmffMolProperties);
+    TEST_ASSERT(mmffMolProperties->isValid());
+    unsigned int bondType;
+    ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
+    TEST_ASSERT(mmffMolProperties->getMMFFBondStretchParams
+      (*molH, 6, 7, bondType, mmffBondStretchParams[0]));
+    TEST_ASSERT((bondType == 0)
+      && ((int)boost::math::round(mmffBondStretchParams[0].r0 * 1000) == 1508)
+      && ((int)boost::math::round(mmffBondStretchParams[0].kb * 1000) == 4258));
+    TEST_ASSERT(!(mmffMolProperties->getMMFFBondStretchParams
+      (*molH, 0, 7, bondType, mmffBondStretchParams[0])));
+    unsigned int angleType;
+    ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
+    TEST_ASSERT(mmffMolProperties->getMMFFAngleBendParams
+      (*molH, 6, 7, 8, angleType, mmffAngleBendParams));
+    TEST_ASSERT((angleType == 0)
+      && ((int)boost::math::round(mmffAngleBendParams.theta0 * 1000) == 108290)
+      && ((int)boost::math::round(mmffAngleBendParams.ka * 1000) == 777));
+    TEST_ASSERT(!(mmffMolProperties->getMMFFAngleBendParams
+      (*molH, 0, 7, 8, angleType, mmffAngleBendParams)));
+    unsigned int stretchBendType;
+    ForceFields::MMFF::MMFFStbn mmffStretchBendParams;
+    TEST_ASSERT(mmffMolProperties->getMMFFStretchBendParams
+      (*molH, 6, 7, 8, stretchBendType, mmffStretchBendParams,
+      mmffBondStretchParams, mmffAngleBendParams));
+    TEST_ASSERT((stretchBendType == 0)
+      && ((int)boost::math::round(mmffStretchBendParams.kbaIJK * 1000) == 136)
+      && ((int)boost::math::round(mmffStretchBendParams.kbaKJI * 1000) == 282)
+      && ((int)boost::math::round(mmffAngleBendParams.theta0 * 1000) == 108290)
+      && ((int)boost::math::round(mmffAngleBendParams.ka * 1000) == 777)
+      && ((int)boost::math::round(mmffBondStretchParams[0].r0 * 1000) == 1508)
+      && ((int)boost::math::round(mmffBondStretchParams[0].kb * 1000) == 4258)
+      && ((int)boost::math::round(mmffBondStretchParams[1].r0 * 1000) == 1451)
+      && ((int)boost::math::round(mmffBondStretchParams[1].kb * 1000) == 5084));
+    TEST_ASSERT(!(mmffMolProperties->getMMFFStretchBendParams
+      (*molH, 0, 7, 8, stretchBendType, mmffStretchBendParams,
+      mmffBondStretchParams, mmffAngleBendParams)));
+    unsigned int torType;
+    ForceFields::MMFF::MMFFTor mmffTorsionParams;
+    TEST_ASSERT(mmffMolProperties->getMMFFTorsionParams
+      (*molH, 6, 7, 8, 9, torType, mmffTorsionParams));
+    TEST_ASSERT((torType == 0)
+      && ((int)boost::math::round(mmffTorsionParams.V1 * 1000) == 0)
+      && ((int)boost::math::round(mmffTorsionParams.V2 * 1000) == -300)
+      && ((int)boost::math::round(mmffTorsionParams.V3 * 1000) == 500));
+    TEST_ASSERT(!(mmffMolProperties->getMMFFTorsionParams
+      (*molH, 0, 7, 8, 9, torType, mmffTorsionParams)));
+    ForceFields::MMFF::MMFFOop mmffOopBendParams;
+    TEST_ASSERT(mmffMolProperties->getMMFFOopBendParams(*molH,
+        6, 5, 4, 0, mmffOopBendParams));
+    TEST_ASSERT(((int)boost::math::round(mmffOopBendParams.koop * 1000) == 40));
+    TEST_ASSERT(!(mmffMolProperties->getMMFFOopBendParams(*molH,
+        6, 5, 4, 1, mmffOopBendParams)));
+    ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
+    RWMol *patt = SmartsToMol("NN[H]");
+    MatchVectType matchVect;
+    TEST_ASSERT(SubstructMatch(*molH, (ROMol &)*patt, matchVect));
+    unsigned int nIdx = matchVect[0].second;
+    unsigned int hIdx = matchVect[2].second;
+    TEST_ASSERT(mmffMolProperties->getMMFFVdWParams(nIdx, hIdx, mmffVdWParams));
+    TEST_ASSERT(((int)boost::math::round(mmffVdWParams.R_ij_starUnscaled * 1000) == 3321)
+      && ((int)boost::math::round(mmffVdWParams.epsilonUnscaled * 1000) == 34)
+      && ((int)boost::math::round(mmffVdWParams.R_ij_star * 1000) == 2657)
+      && ((int)boost::math::round(mmffVdWParams.epsilon * 1000) == 17));
+  }
+}
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
   void runblock_mmff(const std::vector<ROMol *> &mols,const std::vector<double> &energies,
@@ -636,7 +715,9 @@ namespace {
         if(i%count != idx) continue;
         ROMol *mol = mols[i];
         ForceFields::ForceField *field = 0;
-        if(!(rep%100)) BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        if(!(rep%100)){
+          BOOST_LOG(rdErrorLog) << "Rep: "<<rep<<" Mol:" << i << std::endl;
+        }
         try {
           field = MMFF::constructForceField(*mol);
         } catch (...) {
@@ -708,6 +789,44 @@ void testMMFFMultiThread(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testMMFFMultiThread2(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading2" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  ROMol *m=suppl[4];
+  TEST_ASSERT(m);
+  ROMol *om = new ROMol(*m);
+  for(unsigned int i=0;i<1000;++i){
+    m->addConformer(new Conformer(m->getConformer()),true);
+  }
+  std::vector<std::pair<int,double> > res;
+
+  MMFF::MMFFOptimizeMolecule(*om);
+  MMFF::MMFFOptimizeMoleculeConfs(*m,res,4);
+  for(unsigned int i=1;i<res.size();++i){
+    TEST_ASSERT(!res[i].first);
+    TEST_ASSERT(feq(res[i].second,res[0].second,.00001));
+  }
+  for(unsigned int i=0;i<m->getNumAtoms();++i){
+    RDGeom::Point3D p0=om->getConformer().getAtomPos(i);
+    RDGeom::Point3D np0=m->getConformer().getAtomPos(i);
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+    np0=m->getConformer(11).getAtomPos(i); // pick some random other conformer
+    TEST_ASSERT( feq(p0.x, np0.x) );
+    TEST_ASSERT( feq(p0.y, np0.y) );
+    TEST_ASSERT( feq(p0.z, np0.z) );
+  }
+  delete m;
+  delete om;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 #endif
 
 void testGithub224()
@@ -756,8 +875,10 @@ int main()
   testSFIssue1653802();
   testSFIssue2378119();
   testMMFFBatch();
+  testMMFFParamGetters();
 #ifdef RDK_TEST_MULTITHREADED
   testMMFFMultiThread();
+  testMMFFMultiThread2();
 #endif
   testGithub162();
 #endif

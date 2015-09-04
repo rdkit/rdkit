@@ -41,7 +41,7 @@ void testSmilesWriter() {
   ROMol *mol = nSup->next();
   while (mol) {
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
     names.push_back(mname);
     props.push_back(pval);
@@ -63,7 +63,7 @@ void testSmilesWriter() {
   mol = nSup->next();
   while (mol){
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
     CHECK_INVARIANT(mname == names[i], "");
     CHECK_INVARIANT(pval == props[i], "");
@@ -130,7 +130,7 @@ void testSmilesWriterNoNames() {
   while (mol) {
     std::string mname, pval;
     mol->getProp("Column_2", pval);
-    mol->setProp("_Name","bogus");
+    mol->setProp(common_properties::_Name,"bogus");
     props.push_back(pval);
     writer->write(*mol);
     delete mol;
@@ -150,7 +150,7 @@ void testSmilesWriterNoNames() {
   mol = nSup->next();
   while (mol){
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname!="bogus");
     mol->getProp("Column_2", pval);
     TEST_ASSERT(pval == props[i]);
@@ -180,7 +180,7 @@ void testSmilesWriterClose() {
   while (mol) {
     std::string mname, pval;
     mol->getProp("Column_2", pval);
-    mol->setProp("_Name","bogus");
+    mol->setProp(common_properties::_Name,"bogus");
     props.push_back(pval);
     writer->write(*mol);
     delete mol;
@@ -199,7 +199,7 @@ void testSmilesWriterClose() {
   mol = nSup->next();
   while (mol){
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname!="bogus");
     mol->getProp("Column_2", pval);
     TEST_ASSERT(pval == props[i]);
@@ -226,7 +226,7 @@ void testSDWriter() {
   while (!sdsup.atEnd()) {
     ROMol *mol = sdsup.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     names.push_back(mname);
 
     writer->write(*mol);
@@ -246,7 +246,7 @@ void testSDWriter() {
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     CHECK_INVARIANT(mname == names[i], "");
     
     delete mol;
@@ -260,7 +260,7 @@ void testSDWriter() {
   while (!nreader.atEnd()) {
     ROMol *mol = nreader.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     CHECK_INVARIANT(mname == names[i], "");
     i++;
     
@@ -325,7 +325,7 @@ void testSmilesWriterStrm() {
   ROMol *mol = nSup->next();
   while (mol) {
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
     names.push_back(mname);
     props.push_back(pval);
@@ -347,7 +347,7 @@ void testSmilesWriterStrm() {
   mol = nSup->next();
   while (mol){
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
     CHECK_INVARIANT(mname == names[i], "");
     CHECK_INVARIANT(pval == props[i], "");
@@ -379,7 +379,7 @@ void testSDWriterStrm() {
     while (!sdsup.atEnd()) {
       ROMol *mol = sdsup.next();
       std::string mname;
-      mol->getProp("_Name", mname);
+      mol->getProp(common_properties::_Name, mname);
       names.push_back(mname);
 
       writer->write(*mol);
@@ -395,7 +395,7 @@ void testSDWriterStrm() {
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
       std::string mname;
-      mol->getProp("_Name", mname);
+      mol->getProp(common_properties::_Name, mname);
       CHECK_INVARIANT(mname == names[i], "");
     
       delete mol;
@@ -483,7 +483,7 @@ void testSDMemoryCorruption() {
     //std::cerr<<"m:"<<mol<<std::endl;
     TEST_ASSERT(mol);
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     names.push_back(mname);
     //std::cerr<<"  w"<<std::endl;
     writer->write(*mol);
@@ -505,7 +505,7 @@ void testSDMemoryCorruption() {
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     CHECK_INVARIANT(mname == names[i], "");
 
     
@@ -522,59 +522,62 @@ void testIssue3525000() {
     std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000.sdf";
     RWMol *mol = MolFileToMol(fname);
     TEST_ASSERT(mol);
+
     std::string cip;
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(6)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(8)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(8)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(9)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(9)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(10)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(14)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+    // FIX: Marvin disagrees about this one:
+    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(15)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
 
     std::string mb=MolToMolBlock(*mol);
     delete mol;
     mol = MolBlockToMol(mb);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(6)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(8)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(8)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(9)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(9)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(10)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(14)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+    // FIX: Marvin disagrees about this one:
+    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(15)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
   }  
   {
@@ -585,40 +588,40 @@ void testIssue3525000() {
     MolOps::assignChiralTypesFrom3D(*mol);
     MolOps::assignStereochemistry(*mol);
     std::string cip;
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(4)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
 
     std::string mb=MolToMolBlock(*mol);
     delete mol;
     mol = MolBlockToMol(mb);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
-    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="R");
-    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
-    mol->getAtomWithIdx(4)->getProp("_CIPCode",cip);
+    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode,cip);
     TEST_ASSERT(cip=="S");
   }  
 }
@@ -655,16 +658,16 @@ void testMolFileChiralFlag() {
     std::string mb=MolToMolBlock(*m1);
     delete m1;
     m1 = MolBlockToMol(mb);
-    TEST_ASSERT(!m1->hasProp("_MolFileChiralFlag"));
+    TEST_ASSERT(!m1->hasProp(common_properties::_MolFileChiralFlag));
   }
   {
     ROMol *m1=SmilesToMol("C[C@H](Cl)F");
     TEST_ASSERT(m1);
-    m1->setProp("_MolFileChiralFlag",static_cast<unsigned int>(1));
+    m1->setProp(common_properties::_MolFileChiralFlag,static_cast<unsigned int>(1));
     std::string mb=MolToMolBlock(*m1);
     delete m1;
     m1 = MolBlockToMol(mb);
-    TEST_ASSERT(m1->hasProp("_MolFileChiralFlag"));
+    TEST_ASSERT(m1->hasProp(common_properties::_MolFileChiralFlag));
   }
 }
 
@@ -737,15 +740,15 @@ void testMolFileWithRxn(){
     TEST_ASSERT(m->getNumAtoms()==18);
     TEST_ASSERT(m->getNumBonds()==16);
 
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnRole)==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molRxnComponent));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnComponent)==1);
 
-    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
-    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
-    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
-    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnRole));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(common_properties::molRxnRole)==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnComponent));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(common_properties::molRxnComponent)==3);
 
     std::string mb=MolToMolBlock(*m);
     delete m;
@@ -754,15 +757,15 @@ void testMolFileWithRxn(){
     TEST_ASSERT(m->getNumAtoms()==18);
     TEST_ASSERT(m->getNumBonds()==16);
 
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnRole"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnRole")==1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molRxnComponent"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>("molRxnComponent")==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnRole)==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molRxnComponent));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnComponent)==1);
 
-    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnRole"));
-    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnRole")==2);
-    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp("molRxnComponent"));
-    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>("molRxnComponent")==3);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnRole));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(common_properties::molRxnRole)==2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnComponent));
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(common_properties::molRxnComponent)==3);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -1282,6 +1285,58 @@ void testGithub268(){
   }
 }  
 
+void testGithub357(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 357: Hydrogens in mol blocks have a valence value set" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("O");
+    TEST_ASSERT(m1);
+    ROMol *m2=MolOps::addHs(*m1);
+    TEST_ASSERT(m2);
+    delete m1;
+    std::string mb=MolToMolBlock(*m2);
+    TEST_ASSERT(mb.find("    0.0000    0.0000    0.0000 H   0  0  0  0  0  1")==std::string::npos);
+  }
+}
+
+void testNeedsUpdatePropertyCacheSDWriter(){
+  BOOST_LOG(rdInfoLog) << "testing test needsUpdatePropertyCache functionality in SDwriter" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("c1ccccc1[NH]C(=O)",0,false);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->needsUpdatePropertyCache()==true);
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    ROMol *m2=MolBlockToMol(mb);
+    TEST_ASSERT(m2);
+    delete m2;
+  }
+}
+
+void testGithub488(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 488: SmilesWriter not creating automatic name values for molecules read from CTABs" << std::endl;
+  {
+    ROMol *m1=SmilesToMol("O");
+    TEST_ASSERT(m1);
+    m1->setProp("_Name","");
+    std::stringstream ss;
+    SmilesWriter w(&ss);
+    w.write(*m1);
+    m1->setProp("_Name","foo");
+    w.write(*m1);
+    m1->clearProp("_Name");
+    w.write(*m1);
+    m1->setProp("_Name"," ");
+    w.write(*m1);
+    w.close();
+    std::string txt=ss.str();
+    TEST_ASSERT(txt.find("O 0")!=std::string::npos);
+    TEST_ASSERT(txt.find("O foo")!=std::string::npos);
+    TEST_ASSERT(txt.find("O 2")!=std::string::npos);
+    TEST_ASSERT(txt.find("O  \n")!=std::string::npos);
+  }
+}
+
+
 
 int main() {
   RDLog::InitLogs();
@@ -1347,12 +1402,6 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
-  testIssue3525000();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue265()\n";
   testIssue265();
   BOOST_LOG(rdInfoLog) << "Finished\n";
@@ -1363,7 +1412,6 @@ int main() {
   testMolFileChiralFlag();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-#endif
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testMolFileTotalValence();
@@ -1404,5 +1452,26 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub268();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub357();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testNeedsUpdatePropertyCacheSDWriter();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+#endif
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
+  testIssue3525000();
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub488();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+
 }

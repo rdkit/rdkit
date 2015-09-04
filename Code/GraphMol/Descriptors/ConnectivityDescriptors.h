@@ -31,7 +31,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi0v(const ROMol &mol,bool force=false);
-    const std::string chi0vVersion="1.1.0";
+    const std::string chi0vVersion="1.2.0";
     //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991) 
     /*!
       \param mol           the molecule of interest
@@ -39,7 +39,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi1v(const ROMol &mol,bool force=false);
-    const std::string chi1vVersion="1.1.0";
+    const std::string chi1vVersion="1.2.0";
     //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991) 
     /*!
       \param mol           the molecule of interest
@@ -47,7 +47,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi2v(const ROMol &mol,bool force=false);    
-    const std::string chi2vVersion="1.1.0";
+    const std::string chi2vVersion="1.2.0";
     //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991) 
     /*!
       \param mol           the molecule of interest
@@ -55,7 +55,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi3v(const ROMol &mol,bool force=false);    
-    const std::string chi3vVersion="1.1.0";
+    const std::string chi3vVersion="1.2.0";
     //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991) 
     /*!
       \param mol           the molecule of interest
@@ -63,7 +63,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi4v(const ROMol &mol,bool force=false);    
-    const std::string chi4vVersion="1.1.0";
+    const std::string chi4vVersion="1.2.0";
     //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991) 
     /*!
       \param mol           the molecule of interest
@@ -72,7 +72,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChiNv(const ROMol &mol,unsigned int n,bool force=false);    
-    const std::string chiNvVersion="1.1.0";
+    const std::string chiNvVersion="1.2.0";
 
     //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
     //!   This makes a big difference after we get out of the first row.
@@ -82,7 +82,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi0n(const ROMol &mol,bool force=false);
-    const std::string chi0nVersion="1.1.0";
+    const std::string chi0nVersion="1.2.0";
     //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
     //!   This makes a big difference after we get out of the first row.
     /*!
@@ -91,7 +91,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi1n(const ROMol &mol,bool force=false);
-    const std::string chi1nVersion="1.1.0";
+    const std::string chi1nVersion="1.2.0";
     //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
     //!   This makes a big difference after we get out of the first row.
     /*!
@@ -100,7 +100,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi2n(const ROMol &mol,bool force=false);    
-    const std::string chi2nVersion="1.1.0";
+    const std::string chi2nVersion="1.2.0";
     //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
     //!   This makes a big difference after we get out of the first row.
     /*!
@@ -109,7 +109,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi3n(const ROMol &mol,bool force=false);    
-    const std::string chi3nVersion="1.1.0";
+    const std::string chi3nVersion="1.2.0";
     //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
     //!   This makes a big difference after we get out of the first row.
     /*!
@@ -118,7 +118,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChi4n(const ROMol &mol,bool force=false);    
-    const std::string chi4nVersion="1.1.0";
+    const std::string chi4nVersion="1.2.0";
     //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
     //!   This makes a big difference after we get out of the first row.
     /*!
@@ -128,7 +128,7 @@ namespace RDKit {
                            of pulled from the cache
     */
     double calcChiNn(const ROMol &mol,unsigned int n,bool force=false);    
-    const std::string chiNnVersion="1.1.0";
+    const std::string chiNnVersion="1.2.0";
 
     //! calculate the Hall-Kier alpha value for a molecule
     //! From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
@@ -166,6 +166,12 @@ namespace RDKit {
     double calcKappa3(const ROMol &mol);
     const std::string kappa3Version="1.1.0";
 
+
+
+    namespace detail {
+      void hkDeltas(const ROMol &mol,std::vector<double> &deltas,bool force);
+    }
+    
   } // end of namespace Descriptors
 }
 

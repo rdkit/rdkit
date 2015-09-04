@@ -44,7 +44,7 @@ int testMolSup() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
@@ -57,7 +57,7 @@ int testMolSup() {
     for(unsigned int i=0;i<16;++i){
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
@@ -79,7 +79,7 @@ int testMolSup() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
@@ -94,7 +94,7 @@ int testMolSup() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
@@ -130,7 +130,7 @@ void testRandMolSup() {
   for (i = 0; i < 8; i++) {
     ROMol *mol = sdsup[2*i];
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     CHECK_INVARIANT(mname == names[i], "");
     delete mol;
   }
@@ -139,7 +139,7 @@ void testRandMolSup() {
   ROMol *mol = sdsup[5];
   TEST_ASSERT(mol);
   std::string mname;
-  mol->getProp("_Name", mname);
+  mol->getProp(common_properties::_Name, mname);
   delete mol;
   CHECK_INVARIANT(mname == "170", "");
 
@@ -180,7 +180,7 @@ void testSmilesSup() {
     TEST_ASSERT(!nSup2.atEnd())
     TEST_ASSERT(nSup2.length() == 10);
 
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     CHECK_INVARIANT(mname == "4", "");
     mol->getProp("TPSA", mname);
     CHECK_INVARIANT(mname == "82.78", "");
@@ -201,7 +201,7 @@ void testSmilesSup() {
     mol = nSup2[3];
     CHECK_INVARIANT(nSup2.length() == 10, "");
 
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     CHECK_INVARIANT(mname == "4", "");
     mol->getProp("TPSA", mname);
     CHECK_INVARIANT(mname == "82.78", "");
@@ -239,7 +239,7 @@ void testSmilesSup() {
   mol = smiSup.next();
   while (1) {
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     i++;
     delete mol;
     try {
@@ -260,7 +260,7 @@ void testSmilesSup() {
   mol = (*nSup)[3];
   
 
-  mol->getProp("_Name", mname);
+  mol->getProp(common_properties::_Name, mname);
   CHECK_INVARIANT(mname == "4", "");
   mol->getProp("Column_2", mname);
   CHECK_INVARIANT(mname == "82.78", "");
@@ -318,8 +318,8 @@ void testSmilesSupFromText() {
     mol = nSup2[2];
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==4);
-    TEST_ASSERT(mol->hasProp("_Name"));
-    mol->getProp("_Name",mname);
+    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    mol->getProp(common_properties::_Name,mname);
     TEST_ASSERT(mname=="2");
   }
   {
@@ -328,15 +328,15 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==4);
-    TEST_ASSERT(mol->hasProp("_Name"));
-    mol->getProp("_Name",mname);
+    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    mol->getProp(common_properties::_Name,mname);
     TEST_ASSERT(mname=="2");
     mol = nSup2[3];
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==6);
-    TEST_ASSERT(mol->hasProp("_Name"));
-    mol->getProp("_Name",mname);
+    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    mol->getProp(common_properties::_Name,mname);
     TEST_ASSERT(mname=="3");
   }
   {
@@ -345,15 +345,15 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==6);
-    TEST_ASSERT(mol->hasProp("_Name"));
-    mol->getProp("_Name",mname);
+    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    mol->getProp(common_properties::_Name,mname);
     TEST_ASSERT(mname=="3");
     mol = nSup2[2];
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==4);
-    TEST_ASSERT(mol->hasProp("_Name"));
-    mol->getProp("_Name",mname);
+    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    mol->getProp(common_properties::_Name,mname);
     TEST_ASSERT(mname=="2");
   }
   // --------------
@@ -369,7 +369,7 @@ void testSmilesSupFromText() {
   mol = nSup2[3];
   //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   CHECK_INVARIANT(nSup2.length() == 4, "");
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
@@ -383,7 +383,7 @@ void testSmilesSupFromText() {
   nSup2.setData(text," ",1,0,true,true);
   CHECK_INVARIANT(nSup2.length() == 3, "");
   mol = nSup2[2];
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-3");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="9.0");
@@ -400,7 +400,7 @@ void testSmilesSupFromText() {
   mol = nSup2[3];
   //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   TEST_ASSERT(nSup2.length() == 4);
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
@@ -419,7 +419,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
@@ -435,7 +435,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
@@ -457,7 +457,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
@@ -534,12 +534,12 @@ void testSmilesSupFromText() {
     ;
   nSup2.setData(text," ",1,0,true,true);
   mol = nSup2[2];
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-3");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="9.0");
   mol = nSup2[1];
-  mol->getProp("_Name",mname);
+  mol->getProp(common_properties::_Name,mname);
   TEST_ASSERT(mname=="mol-2");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="4.0");
@@ -585,7 +585,7 @@ void testSmilesWriter() {
   while (mol) {
     //BOOST_LOG(rdErrorLog) << "MOL: " << MolToSmiles(*mol) << std::endl;
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
     names.push_back(mname);
     props.push_back(pval);
@@ -607,7 +607,7 @@ void testSmilesWriter() {
   mol = nSup->next();
   while (mol){
     std::string mname, pval;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
     CHECK_INVARIANT(mname == names[i], "");
     CHECK_INVARIANT(pval == props[i], "");
@@ -637,7 +637,7 @@ void testSDWriter() {
   while (!sdsup.atEnd()) {
     ROMol *mol = sdsup.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     names.push_back(mname);
 
     writer->write(*mol);
@@ -654,7 +654,7 @@ void testSDWriter() {
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     BOOST_LOG(rdInfoLog) << mname << "\n";
     //CHECK_INVARIANT(mname == names[i], "");
     
@@ -670,7 +670,7 @@ void testSDWriter() {
   while (!nreader.atEnd()) {
     ROMol *mol = nreader.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     BOOST_LOG(rdInfoLog) << mname << "\n";
     //CHECK_INVARIANT(mname == names[i], "");
     i++;
@@ -692,7 +692,7 @@ void testSDSupplierEnding() {
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     i++;
     delete mol;
   }
@@ -806,7 +806,7 @@ void testCisTrans() {
   while (!reader->atEnd()) {
     ROMol *mol = reader->next();
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     BOOST_LOG(rdInfoLog) << mname << " ";
     BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, 1) << "\n";
     delete mol;
@@ -837,7 +837,7 @@ void testStereoRound() {
     ROMol *mol = smiSup->next();
     //mol->debugMol(std::cout);
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     nameSmi[mname] = MolToSmiles(*mol, 1);
       
     ROMol *nmol = SmilesToMol(nameSmi[mname]);
@@ -876,7 +876,7 @@ void testStereoRound() {
     //mol->debugMol(std::cout);
     std::string smiles = MolToSmiles(*mol, 1);
     std::string mname;
-    mol->getProp("_Name", mname);
+    mol->getProp(common_properties::_Name, mname);
     if (nameSmi[mname] != smiles) {
       BOOST_LOG(rdInfoLog) << mname << " " << nameSmi[mname] << " " << smiles << "\n";
     }
@@ -917,15 +917,15 @@ int testTDTSupplier1() {
         std::string prop1,prop2;
         TEST_ASSERT(nmol->getNumAtoms()>0);
         TEST_ASSERT(nmol->hasProp("PN"));
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("MFCD"));
 
         nmol->getProp("PN",prop1);
-        nmol->getProp("_Name",prop2);
+        nmol->getProp(common_properties::_Name,prop2);
         TEST_ASSERT(prop1==prop2);
       
         // we didn't ask for 2D conformers, so there should be a property 2D:
-        TEST_ASSERT(nmol->hasProp("2D"));
+        TEST_ASSERT(nmol->hasProp(common_properties::TWOD));
         // and no conformer:
         TEST_ASSERT(!nmol->getNumConformers());
       
@@ -945,15 +945,15 @@ int testTDTSupplier1() {
         std::string prop1,prop2;
         TEST_ASSERT(nmol->getNumAtoms()>0);
         TEST_ASSERT(nmol->hasProp("PN"));
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("MFCD"));
 
         nmol->getProp("PN",prop1);
-        nmol->getProp("_Name",prop2);
+        nmol->getProp(common_properties::_Name,prop2);
         TEST_ASSERT(prop1==prop2);
       
         // we didn't ask for 2D conformers, so there should be a property 2D:
-        TEST_ASSERT(nmol->hasProp("2D"));
+        TEST_ASSERT(nmol->hasProp(common_properties::TWOD));
         // and no conformer:
         TEST_ASSERT(!nmol->getNumConformers());
       
@@ -978,15 +978,15 @@ int testTDTSupplier2() {
     if (nmol) {
       TEST_ASSERT(nmol->getNumAtoms()>0);
       TEST_ASSERT(nmol->hasProp("PN"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
+      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
       TEST_ASSERT(nmol->hasProp("MFCD"));
 
       nmol->getProp("PN",prop1);
-      nmol->getProp("_Name",prop2);
+      nmol->getProp(common_properties::_Name,prop2);
       TEST_ASSERT(prop1==prop2);
       
       // we asked for 2D conformers, so there should be no property 2D:
-      TEST_ASSERT(!nmol->hasProp("2D"));
+      TEST_ASSERT(!nmol->hasProp(common_properties::TWOD));
       // and a conformer:
       TEST_ASSERT(nmol->getNumConformers()==1);
       // with id "2":
@@ -1026,10 +1026,10 @@ int testTDTSupplier3() {
     if (nmol) {
       TEST_ASSERT(nmol->getNumAtoms()>0);
       TEST_ASSERT(nmol->hasProp("CAS"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
+      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
 
       nmol->getProp("CAS",prop1);
-      nmol->getProp("_Name",prop2);
+      nmol->getProp(common_properties::_Name,prop2);
       TEST_ASSERT(prop1==prop2);
       
       // no conformers should have been read:
@@ -1056,10 +1056,10 @@ int testTDTSupplier3() {
     if (nmol) {
       TEST_ASSERT(nmol->getNumAtoms()>0);
       TEST_ASSERT(nmol->hasProp("CAS"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
+      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
 
       nmol->getProp("CAS",prop1);
-      nmol->getProp("_Name",prop2);
+      nmol->getProp(common_properties::_Name,prop2);
       TEST_ASSERT(prop1==prop2);
       
       // no conformers should have been read:
@@ -1124,12 +1124,281 @@ void testSDSupplierFromText() {
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     std::string mname;
-    TEST_ASSERT(mol->hasProp("_Name"));
+    TEST_ASSERT(mol->hasProp(common_properties::_Name));
     TEST_ASSERT(mol->hasProp("ID"));
     i++;
     delete mol;
   }
   TEST_ASSERT(i==2);
+}
+
+void testSDSupplierFromTextStrLax1() {
+  std::string text;
+  text="Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  5  4  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "M  END\n"
+    "blah\n"
+    "\n"
+    "blah after blank line\n"
+    ">  <ID> (3)\n"
+    "Lig1\n"
+    "\n"
+    "This will be ignored\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "Value\n"
+    "\n"
+    "$$$$\n"
+    "Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  6  5  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8477    0.6988    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "  3  6  1  0  0  0  0\n"
+    "M  END\n"
+    ">  <ID> (4)\n"
+    "Lig2\n"
+    "\n"
+    "This will be ignored\n"
+    "\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "Value\n"
+    "\n"
+    "This will be ignored\n"
+    "\n"
+    "$$$$\n";
+
+  //strict
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      if (i==0) TEST_ASSERT(!mol->hasProp("ID"));
+      TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+  //lax
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+}
+
+void testSDSupplierFromTextStrLax2() {
+  std::string text;
+  text="Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  5  4  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "M  END\n"
+    ">  <ID> (3)\n"
+    "Lig1\n"
+    "\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "No blank line before dollars\n"
+    "$$$$\n"
+    "Structure1\n"
+    "csChFnd70/05230312262D\n"
+    "\n"
+    "  6  5  0  0  0  0  0  0  0  0999 V2000\n"
+    "    1.2124    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    0.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    3.6373    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    2.4249    2.1000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    0.0000    0.7000    0.0000 Y   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "    4.8477    0.6988    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  1  0  0  0  0\n"
+    "  2  4  2  0  0  0  0\n"
+    "  1  5  1  0  0  0  0\n"
+    "  3  6  1  0  0  0  0\n"
+    "M  END\n"
+    ">  <ID> (3)\n"
+    "Lig2\n"
+    "\n"
+    ">  <ANOTHER_PROPERTY> (4)\n"
+    "Value2\n"
+    "\n"
+    "$$$$\n";
+
+  //strict
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig1");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
+        "csChFnd70/05230312262D");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+  //lax
+  {
+    SDMolSupplier reader;
+
+    reader.setData(text, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig2");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "Value2");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+}
+
+void testSDSupplierStrLax1() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
+  //strict
+  {
+    SDMolSupplier reader(fname, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      if (i==0) TEST_ASSERT(!mol->hasProp("ID"));
+      TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+  //lax
+  {
+    SDMolSupplier reader(fname, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==2);
+  }
+}
+
+void testSDSupplierStrLax2() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/strictLax2.sdf";
+  //strict
+  {
+    SDMolSupplier reader(fname, true, true, true);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig1");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
+        "csChFnd70/05230312262D");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
+  //lax
+  {
+    SDMolSupplier reader(fname, true, true, false);
+    
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->hasProp("ID"));
+      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      std::string s;
+      mol->getProp("ID", s);
+      TEST_ASSERT(s == "Lig2");
+      mol->getProp("ANOTHER_PROPERTY", s);
+      TEST_ASSERT(s == "Value2");
+      i++;
+      delete mol;
+    }
+    TEST_ASSERT(i==1);
+  }
 }
 
 void testIssue265() {
@@ -1231,9 +1500,23 @@ void testIssue381() {
 void testSetStreamIndices() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  int tmpIndices[16]={0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
-				     23729, 26147, 28331, 32541, 33991};
-  std::vector<std::streampos> indices(tmpIndices,tmpIndices+16);
+  std::ifstream ifs(fname.c_str(), std::ios_base::binary);
+  std::vector<std::streampos> indices;
+  bool addIndex = true;
+  bool notEof = true;
+  std::streampos pos = 0;
+  std::string line;
+  while (notEof) {
+    if (addIndex)
+      pos = ifs.tellg();
+    notEof = (std::getline(ifs, line) ? true : false);
+    if (notEof) {
+      if (addIndex)
+        indices.push_back(pos);
+      addIndex = (line.substr(0, 4) == "$$$$");
+    }
+  }
+  ifs.close();
   SDMolSupplier *sdsup;
 
   ROMol *nmol=0;  
@@ -1692,7 +1975,7 @@ int testForwardSDSupplier() {
       ROMol *nmol = sdsup.next();
       TEST_ASSERT(nmol || sdsup.atEnd());
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
         i++;
@@ -1740,7 +2023,7 @@ int testForwardSDSupplier() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
         i++;
@@ -1963,6 +2246,26 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierFromText();
   BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierFromText()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierStrLax1();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierStrLax1()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierStrLax2();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierStrLax2()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierFromTextStrLax1();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierFromTextStrLax1()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSDSupplierFromTextStrLax2();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSDSupplierFromTextStrLax2()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
 

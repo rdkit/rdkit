@@ -15,6 +15,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>
 using namespace std;
@@ -145,7 +146,7 @@ void testMolProps()
   CHECK_INVARIANT(tmpS=="2","");
 
   tmpS="name";
-  m2.setProp("_Name",tmpS);
+  m2.setProp(common_properties::_Name,tmpS);
 
   propNames=m2.getPropList(false,false);
   TEST_ASSERT(propNames.size()==1);
@@ -248,6 +249,27 @@ void testAtomProps()
   CHECK_INVARIANT(!a2->hasProp("bogus"),"");
   CHECK_INVARIANT(!a3->hasProp("bogus"),"");
 
+
+  bool ok=false;
+  a1->setProp<double>("dprop",4);
+  TEST_ASSERT(a1->hasProp("dprop"));
+  try{
+    a1->getProp<int>("dprop");
+  } catch(const boost::bad_any_cast &e){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  a1->setProp<int>("iprop",4);
+  TEST_ASSERT(a1->hasProp("iprop"));
+  ok=false;
+  try{
+    a1->getProp<double>("iprop");
+  } catch(const boost::bad_any_cast &e){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+
   int tmp;
   a1->getProp("prop1",tmp);
   CHECK_INVARIANT(tmp==3,"");
@@ -263,7 +285,7 @@ void testAtomProps()
   CHECK_INVARIANT(tmp==4,"");
 
 
-  // ceck for computed properties
+  // check for computed properties
   a1->setProp("cprop1", 1, true);
   a1->setProp("cprop2", 2, true);
   STR_VECT cplst;
@@ -1039,6 +1061,120 @@ void testAtomResidues()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testNeedsUpdatePropertyCache()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing function needsUpdatePropertyCache" << std::endl;
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(0));
+    TEST_ASSERT(m.needsUpdatePropertyCache()==true);
+    m.updatePropertyCache();
+
+    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence()==0);
+    TEST_ASSERT(m.needsUpdatePropertyCache()==false);
+  }
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(6));
+    for(ROMol::AtomIterator atomIt=m.beginAtoms();
+      atomIt!=m.endAtoms(); ++atomIt){
+      (*atomIt)->calcExplicitValence(false);
+      (*atomIt)->calcImplicitValence(false);
+    }
+    m.addAtom(new Atom(6));
+    m.addBond(0,1,Bond::SINGLE);
+    TEST_ASSERT(m.needsUpdatePropertyCache()==true);
+    m.updatePropertyCache();
+    TEST_ASSERT(m.needsUpdatePropertyCache()==false);
+  }
+  {
+    RWMol m;
+    m.addAtom(new Atom(6));
+    m.getAtomWithIdx(0)->calcExplicitValence(false);
+    TEST_ASSERT(m.getAtomWithIdx(0)->needsUpdatePropertyCache());
+    m.getAtomWithIdx(0)->setNoImplicit(true);
+    TEST_ASSERT(!m.getAtomWithIdx(0)->needsUpdatePropertyCache());
+
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+namespace
+{
+  std::string qhelper(Atom::QUERYATOM_QUERY *q,unsigned int depth=0){
+    std::string res="";
+    if(q){
+      for (unsigned int i=0;i<depth;++i) res+="  ";
+      res += q->getFullDescription()+"\n";
+      for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci=q->beginChildren();
+          ci!=q->endChildren();++ci){
+        res +=  qhelper((*ci).get(),depth+1);
+      }
+    }
+    return res;
+  }
+}
+
+const char *m_als_mol = \
+"\n" \
+"  Marvin  08200814552D          \n" \
+"\n" \
+"  9  8  0  0  0  0            999 V2000\n" \
+"   -1.9152    1.6205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -1.0902    1.6205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.5068    2.2039    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -2.3277    0.9061    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -2.3277    2.3350    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.1527    2.3350    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.6830    2.8727    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.1527    0.9061    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -3.6771    0.2814    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  2  2  0  0  0  0\n" \
+"  2  3  1  0  0  0  0\n" \
+"  1  4  1  0  0  0  0\n" \
+"  1  5  1  0  0  0  0\n" \
+"  5  6  2  0  0  0  0\n" \
+"  6  7  1  0  0  0  0\n" \
+"  4  8  2  0  0  0  0\n" \
+"  8  9  1  0  0  0  0\n" \
+"M  ALS   4  2 F O   Cl  \n" \
+"M  END\n";
+
+void testAtomListLineRoundTrip()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test AtomListLine RoundTrip" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase+"/Code/GraphMol/test_data/m_als_round_trip.mol";
+  const bool sanitize=false;
+  const bool removeHs=true;
+  const bool strictParsing=true;
+  unsigned int line = 0;
+  
+  std::istringstream inStream(m_als_mol);
+  RWMol *m = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  std::string desc = qhelper(m->getAtomWithIdx(3)->getQuery());
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==9);
+
+  std::string molblock = MolToMolBlock(*m);
+  std::istringstream inStream2(molblock);
+  RWMol *m2 = MolDataStreamToMol(inStream2, line, sanitize, removeHs, strictParsing);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
+  Atom::ATOM_SPTR cl(new Atom(17));
+  Atom::ATOM_SPTR o(new Atom(17));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m->getAtomWithIdx(3))->Match(cl));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m->getAtomWithIdx(3))->Match(o));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m2->getAtomWithIdx(3))->Match(cl));
+  TEST_ASSERT(dynamic_cast<QueryAtom*>(m2->getAtomWithIdx(3))->Match(o));
+  delete m;
+  delete m2;
+}
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -1062,6 +1198,8 @@ int main()
   testIssue284();
   testClearMol();
   testAtomResidues();
+  testNeedsUpdatePropertyCache();
+  testAtomListLineRoundTrip();
 
   return 0;
 }

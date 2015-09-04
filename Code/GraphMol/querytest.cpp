@@ -325,22 +325,6 @@ void test5(){
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-void test6(){
-  BOOST_LOG(rdErrorLog) << "---------------------- Test6" << std::endl;
-  Mol m;
-
-  Atom *a = new Atom(6);
-  int massVal;
-  massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(12.011*massIntegerConversionFactor)));
-
-  a->setMass(13);
-  massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.000*massIntegerConversionFactor)));
-  
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
-}
-
 void testQueryQueryMatches(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing query--query matches" << std::endl;
@@ -529,9 +513,9 @@ void testIssue2892580(){
   massVal=queryAtomMass(a);
   TEST_ASSERT(massVal==static_cast<int>(RDKit::round(12.011*massIntegerConversionFactor)));
 
-  a->setMass(13);
+  a->setIsotope(13);
   massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.000*massIntegerConversionFactor)));
+  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.003*massIntegerConversionFactor)));
   
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
@@ -612,8 +596,91 @@ void testGithub165(){
 }
 
 
+void testHasPropMatch()
+{
+  QueryAtom qA;
+  qA.setQuery(makeHasPropQuery<Atom>("foo"));
+  Atom a1(6);
+  TEST_ASSERT(!qA.Match(&a1));
+  a1.setProp<int>("foo", 1);
+  TEST_ASSERT(qA.Match(&a1));
+}
 
+void testHasPropWithValueMatch()
+{
+  {
+    QueryAtom qA;
+    qA.setQuery(makePropQuery<Atom,int>("foo", 2));
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<int>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<int>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
+    
+    a1.clearProp("foo");
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
 
+  {
+    QueryAtom qA;
+    qA.setQuery(makePropQuery<Atom,std::string>("foo", "bar"));
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<std::string>("foo", "bar");
+    TEST_ASSERT(qA.Match(&a1));    
+  }
+
+  {
+    QueryBond qA;
+    qA.setQuery(makePropQuery<Bond,int>("foo", 2));
+    Bond a1;
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<int>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<int>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
+    
+    a1.clearProp("foo");
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
+
+  {
+    QueryBond qA;
+    qA.setQuery(makePropQuery<Bond,std::string>("foo", "bar"));
+    Bond a1;
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<std::string>("foo", "bar");
+    TEST_ASSERT(qA.Match(&a1));    
+  }
+  
+}
+
+void testHasPropWithDoubleValueMatch()
+{
+  {
+    QueryAtom qA;
+    qA.setQuery(makePropQuery<Atom, double>("foo", 2));
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
+  }
+  {
+    QueryBond qA;
+    qA.setQuery(makePropQuery<Bond, double>("foo", 2));
+    Bond a1;
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 1);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setProp<double>("foo", 2);
+    TEST_ASSERT(qA.Match(&a1));
+  }
+}
 
 int main(){
   RDLog::InitLogs();
@@ -623,12 +690,14 @@ int main(){
   test3();
   test4();
   test5();
-  test6();
   testQueryQueryMatches();
   testIssue2892580();
   testGithub153();
   testQualifiedQueries();
   testGithub165();
+  testHasPropMatch();
+  testHasPropWithValueMatch();
+  testHasPropWithDoubleValueMatch();
 #endif
   return 0;
 }

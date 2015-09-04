@@ -1542,6 +1542,8 @@ void testRingDescriptors(){
     TEST_ASSERT(iv==calcNumAliphaticHeterocycles(*mol));
     mol->getProp("NumAliphaticCarbocycles",iv);
     TEST_ASSERT(iv==calcNumAliphaticCarbocycles(*mol));
+    mol->getProp("NumHeterocycles",iv);
+    TEST_ASSERT(iv==calcNumHeterocycles(*mol));
     
     delete mol;
   }
@@ -1829,6 +1831,93 @@ void testPBF() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue463(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Github362: order dependence  in Kier-Hall descriptors." << std::endl;
+
+  { // start with the hall-kier delta values:
+    RWMol *mol;
+    mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+    unsigned int order[]={0, 11, 8, 7, 2, 4, 5, 13, 10, 12, 9, 3, 1, 6};
+    std::vector<unsigned int> nVect(order,order+sizeof(order)/sizeof(unsigned int));
+    ROMol *nm=MolOps::renumberAtoms(*mol,nVect);
+    TEST_ASSERT(nm);
+
+    std::vector<double> hkds(mol->getNumAtoms());
+    Descriptors::detail::hkDeltas(*mol,hkds,true);
+    std::vector<double> nhkds(mol->getNumAtoms());
+    Descriptors::detail::hkDeltas(*nm,nhkds,true);
+    
+    for(unsigned int j=0;j<mol->getNumAtoms();++j){
+      TEST_ASSERT(feq(hkds[nVect[j]],nhkds[j]));
+    }
+
+    delete mol;
+    delete nm;
+  }  
+
+  { // now chiNv values, where the problem was reported:
+
+    RWMol *mol;
+    mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+    unsigned int order[]={0, 11, 8, 7, 2, 4, 5, 13, 10, 12, 9, 3, 1, 6};
+    std::vector<unsigned int> nVect(order,order+sizeof(order)/sizeof(unsigned int));
+    ROMol *nm=MolOps::renumberAtoms(*mol,nVect);
+    TEST_ASSERT(nm);
+
+    double cv=calcChi3v(*mol);
+    double ncv=calcChi3v(*nm);    
+    
+    TEST_ASSERT(feq(cv,ncv));
+
+    delete mol;
+    delete nm;
+  }  
+
+  { // now chiNn values, where the problem was reported:
+
+    RWMol *mol;
+    mol = SmilesToMol("O=C(Nc1nccs1)NC(C1CC1)C");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+    unsigned int order[]={0, 11, 8, 7, 2, 4, 5, 13, 10, 12, 9, 3, 1, 6};
+    std::vector<unsigned int> nVect(order,order+sizeof(order)/sizeof(unsigned int));
+    ROMol *nm=MolOps::renumberAtoms(*mol,nVect);
+    TEST_ASSERT(nm);
+
+    double cv=calcChi3n(*mol);
+    double ncv=calcChi3n(*nm);    
+    
+    TEST_ASSERT(feq(cv,ncv));
+
+    delete mol;
+    delete nm;
+  }  
+
+  { // the root cause was handling of rings
+    RWMol *mol;
+    mol = SmilesToMol("C1CC1");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==3);
+    std::vector<double> hkds(mol->getNumAtoms());
+    Descriptors::detail::hkDeltas(*mol,hkds,true);
+
+    double cv=calcChi3v(*mol);
+    TEST_ASSERT(feq(hkds[0],hkds[1]));
+    TEST_ASSERT(feq(hkds[1],hkds[2]));
+    TEST_ASSERT(feq(cv,hkds[0]*hkds[0]*hkds[0]));
+      
+
+    delete mol;
+  }  
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -1862,8 +1951,9 @@ int main(){
   testMQNs();
   testPMI();
   testPBF();
-#endif
   testGitHubIssue56();
   testGitHubIssue92();
+#endif
+  testGitHubIssue463();
 
 }

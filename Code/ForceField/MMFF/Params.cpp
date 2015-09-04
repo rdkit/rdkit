@@ -29,23 +29,6 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
   namespace MMFF {
 
-    void _pretreatAngles(double &minDihedralDeg, double &maxDihedralDeg)
-    {
-      minDihedralDeg -= (floor(minDihedralDeg / 360.0) * 360.0);
-      maxDihedralDeg -= (floor(maxDihedralDeg / 360.0) * 360.0);
-      if (minDihedralDeg < 0.0) {
-        minDihedralDeg += 360.0;
-      }
-      if (maxDihedralDeg < 0.0) {
-        maxDihedralDeg += 360.0;
-      }
-      if (minDihedralDeg > maxDihedralDeg) {
-        double t = minDihedralDeg;
-        minDihedralDeg = maxDihedralDeg;
-        maxDihedralDeg = t;
-      }
-    }
-    
     class MMFFAromCollection * MMFFAromCollection::ds_instance = NULL;
 
     extern const boost::uint8_t defaultMMFFArom[];
@@ -1999,11 +1982,16 @@ namespace ForceFields {
       "0	3	1.98	0.49	0.65\n"
       "0	4	2.03	0.51	0.80\n"
       "0	5	2.03	0.25	0.81\n"
+      "0	30	1.85	0.15	0.53\n"
+      "0	40	1.84	0.61	0.61\n"
+      "0	50	1.78	0.97	0.62\n"
       "1	1	1.91	0.68	0.68\n"
       "1	2	2.28	0.74	0.92\n"
       "1	3	2.35	0.85	1.02\n"
       "1	4	2.33	0.68	1.12\n"
       "1	5	2.50	0.97	1.22\n"
+      "1	30	2.08	1.14	0.97\n"
+      "1	40	2.34	1.17	1.08\n"
       "2	2	2.41	1.18	1.18\n"
       "2	3	2.52	1.02	1.28\n"
       "2	4	2.61	1.28	1.40\n"
@@ -2012,12 +2000,7 @@ namespace ForceFields {
       "3	4	2.66	0.86	1.48\n"
       "3	5	2.75	1.14	1.55\n"
       "4	4	2.85	1.62	1.62\n"
-      "4	5	2.76	1.25	1.51\n"
-      "0	30	1.85	0.15	0.53\n"
-      "0	40	1.84	0.61	0.61\n"
-      "0	50	1.78	0.97	0.62\n"
-      "1	30	2.08	1.14	0.97\n"
-      "1	40	2.34	1.17	1.08\n";
+      "4	5	2.76	1.25	1.51\n";
 
 
     class MMFFCovRadPauEleCollection * MMFFCovRadPauEleCollection::ds_instance = NULL;

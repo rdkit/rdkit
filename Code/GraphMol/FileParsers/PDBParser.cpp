@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013 Greg Landrum and NextMove Software
+//  Copyright (C) 2013-2014 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,6 +23,9 @@
 #include <GraphMol/MonomerInfo.h>
 
 
+// PDBWriter support multiple "flavors" of PDB output
+// flavor & 1 : Ignore atoms in alternate conformations and dummy atoms
+// flavor & 2 : Read each MODEL into a separate molecule.
 namespace RDKit {
 
   static Atom *PDBAtomFromSymbol(const char *symb) {
@@ -364,7 +367,43 @@ namespace RDKit {
     else if (len > 10)
       title = std::string(ptr+10,len-10);
     if (!title.empty())
-      mol->setProp("_Name",title);
+      mol->setProp(common_properties::_Name,title);
+  }
+
+  static void PDBConformerLine(RWMol *mol, const char *ptr, unsigned int len,
+                               Conformer *&conf, int &conformer_atmidx)
+  {
+    PRECONDITION(mol,"bad mol");
+    PRECONDITION(ptr,"bad char ptr");
+
+    if (len >= 38) {
+      RDGeom::Point3D pos;
+      try {
+        pos.x = FileParserUtils::toDouble(std::string(ptr+30,8));
+        if (len >= 46)
+          pos.y = FileParserUtils::toDouble(std::string(ptr+38,8));
+        if (len >= 54)
+          pos.z = FileParserUtils::toDouble(std::string(ptr+46,8));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with multi-conformer coordinates";
+        throw FileParseException(errout.str()) ;
+      }
+
+      if (conformer_atmidx == 0) {
+        conf = new RDKit::Conformer(mol->getNumAtoms());
+        conf->setId(mol->getNumConformers());
+        conf->set3D(pos.z!=0.0);
+        mol->addConformer(conf,false);
+      } else if (pos.z != 0.0)
+        conf->set3D(true);
+
+      if (conformer_atmidx < mol->getNumAtoms()) {
+        conf->setAtomPos(conformer_atmidx,pos);
+        conformer_atmidx++;
+      }
+    }
   }
 
 // This is a macro to allow its use for C++ constants
@@ -420,8 +459,8 @@ namespace RDKit {
             !StandardPDBChiralAtom(info->getResidueName().c_str(),
                                    info->getName().c_str())) {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-          if (atom->hasProp("_CIPCode"))
-            atom->clearProp("_CIPCode");
+          if (atom->hasProp(common_properties::_CIPCode))
+            atom->clearProp(common_properties::_CIPCode);
         }
       }
     }
@@ -435,6 +474,9 @@ namespace RDKit {
     std::map<Bond*,int> bmap;
     RWMol *mol = 0;
     Utils::LocaleSwitcher ls;
+    bool multi_conformer = false;
+    int conformer_atmidx = 0;
+    Conformer *conf = 0;
 
     while (*str) {
       unsigned int len;
@@ -460,18 +502,21 @@ namespace RDKit {
       // ATOM records
       if (str[0]=='A' && str[1]=='T' && str[2]=='O' &&
           str[3]=='M' && str[4]==' ' && str[5]==' ') {
-        if (!mol) mol = new RWMol();
-        PDBAtomLine(mol,str,len,flavor,amap);
-
+        if (!multi_conformer) {
+          if (!mol) mol = new RWMol();
+          PDBAtomLine(mol,str,len,flavor,amap);
+        } else PDBConformerLine(mol,str,len,conf,conformer_atmidx);
       // HETATM records
       } else if (str[0]=='H' && str[1]=='E' && str[2]=='T' &&
                  str[3]=='A' && str[4]=='T' && str[5]=='M') {
-        if (!mol) mol = new RWMol();
-        PDBAtomLine(mol,str,len,flavor,amap);
+        if (!multi_conformer) {
+          if (!mol) mol = new RWMol();
+          PDBAtomLine(mol,str,len,flavor,amap);
+        } else PDBConformerLine(mol,str,len,conf,conformer_atmidx);
       // CONECT records
       } else if (str[0]=='C' && str[1]=='O' && str[2]=='N' &&
                  str[3]=='E' && str[4]=='C' && str[5]=='T') {
-        if (mol)
+        if (mol && !multi_conformer)
           PDBBondLine(mol,str,len,amap,bmap);
       // COMPND records
       } else if (str[0]=='C' && str[1]=='O' && str[2]=='M' &&
@@ -484,6 +529,13 @@ namespace RDKit {
                  str[3]=='D' && str[4]=='E' && str[5]=='R') {
         if (!mol) mol = new RWMol();
         PDBTitleLine(mol,str,len<50?len:50);
+      // ENDMDL records
+      } else if (str[0]=='E' && str[1]=='N' && str[2]=='D' &&
+                 str[3]=='M' && str[4]=='D' && str[5]=='L') {
+        if (!mol) break;
+        multi_conformer = true;
+        conformer_atmidx = 0;
+        conf = 0;
       }
       str = next;
     }
@@ -533,8 +585,14 @@ namespace RDKit {
       buffer += line;
       buffer += '\n';
       ptr = line.c_str();
+      // Check for END
       if (ptr[0]=='E' && ptr[1]=='N' && ptr[2]=='D' &&
           (ptr[3]==' ' || ptr[3]=='\r' || ptr[3]=='\n' || !ptr[3]))
+        break;
+      // Check for ENDMDL
+      if ((flavor & 2) != 0 &&
+          ptr[0]=='E' && ptr[1]=='N' && ptr[2]=='D' &&
+          ptr[3]=='M' && ptr[4]=='D' && ptr[5]=='L')
         break;
     }
     return PDBBlockToMol(buffer.c_str(),sanitize,removeHs,flavor);

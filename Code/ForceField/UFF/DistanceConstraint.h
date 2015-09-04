@@ -42,6 +42,7 @@ namespace ForceFields {
       double getEnergy(double *pos) const;
 
       void getGrad(double *pos, double *grad) const;
+      virtual DistanceConstraintContrib *copy() const { return new DistanceConstraintContrib(*this); };
     private:
       int d_end1Idx, d_end2Idx; //!< indices of end points
       double d_minLen, d_maxLen;        //!< rest length of the bond

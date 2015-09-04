@@ -81,7 +81,7 @@ namespace RDKit{
   //! Parse a ROMol into a ChemicalReaction, RXN role must be set before
   /*!
      Alternative to build a reaction from a molecule (fragments) which have RXN roles
-     set as atom properties: "molRxnRole" (1=reactant, 2=product, 3=agent) 
+     set as atom properties: common_properties::molRxnRole (1=reactant, 2=product, 3=agent) 
 
      \param mol           ROMol with RXN roles set
    */
@@ -90,10 +90,10 @@ namespace RDKit{
 
 
   //! returns the reaction SMARTS for a reaction
-  std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);
+  std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn);
 
   //! returns the reaction SMILES for a reaction
-  std::string ChemicalReactionToRxnSmiles(ChemicalReaction &rxn);
+  std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn, bool canonical=true);
 
   //! returns an RXN block for a reaction
   /*!

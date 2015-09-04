@@ -48,6 +48,7 @@ namespace ForceFields {
 		 double threshMultiplier=10.0);
       double getEnergy(double *pos) const;
       void getGrad(double *pos,double *grad) const;
+      virtual vdWContrib *copy() const { return new vdWContrib(*this); };
     
     private:
       int d_at1Idx,d_at2Idx;

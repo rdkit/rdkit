@@ -44,6 +44,7 @@ namespace RDKit{
     static void wrap() {
       python::class_<Conformer, CONFORMER_SPTR>("Conformer",confClassDoc.c_str(),python::init<>())
         .def(python::init<unsigned int>("Constructor with the number of atoms specified"))
+        .def(python::init<const Conformer &>())
         
         .def("GetNumAtoms", &Conformer::getNumAtoms,
              "Get the number of atoms in the conformer\n")

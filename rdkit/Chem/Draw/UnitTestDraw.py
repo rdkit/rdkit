@@ -115,6 +115,19 @@ class TestCase(unittest.TestCase):
     self.assertEqual(img.size[0],300)
     self.assertEqual(img.size[1],300)
 
+  def testQtImage(self):
+    import sys
+    try:
+      from PySide import QtGui
+      from rdkit.Chem.Draw.qtCanvas import Canvas
+    except ImportError:
+      return
+    app = QtGui.QApplication(sys.argv)
+    img = Draw.MolToQPixmap(self.mol, size=(300, 300))
+    self.assertTrue(img)
+    self.assertEqual(img.size().height(), 300)
+    self.assertEqual(img.size().width(), 300)
+
   def testCairoImageDash(self):
     try:
       from rdkit.Chem.Draw.cairoCanvas import Canvas

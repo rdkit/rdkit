@@ -167,7 +167,7 @@ namespace RDKit {
   
   bool TDTMolSupplier::advanceToNextRecord(){
     PRECONDITION(dp_inStream,"no stream");
-    unsigned int pos;
+    std::streampos pos;
     bool res=false;
     while(1){
       if(dp_inStream->eof()) return false;
@@ -236,7 +236,7 @@ namespace RDKit {
         boost::trim_if(propName,boost::is_any_of(" \t"));
         startP = endP+1;
 
-        if(propName=="2D" && d_confId2D>=0){
+        if(propName==common_properties::TWOD && d_confId2D>=0){
           std::string rest=inLine.substr(startP,inLine.size()-startP);
           std::vector<double> coords;
           TDTParseUtils::ParseNumberList(rest,coords,dp_inStream);
@@ -277,7 +277,7 @@ namespace RDKit {
           } else {
             std::string propVal = inLine.substr(startP,endP-startP);
             res->setProp(propName,propVal);
-            if(propName==d_nameProp) res->setProp("_Name",propVal);
+            if(propName==d_nameProp) res->setProp(common_properties::_Name,propVal);
           }
         }
         std::getline(*dp_inStream,inLine);
@@ -336,9 +336,9 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"no stream");
     unsigned int holder=d_last;
     moveTo(idx);
-    unsigned int begP=d_molpos[idx];
+    std::streampos begP=d_molpos[idx];
     bool endHolder=df_end;
-    unsigned int endP;
+    std::streampos endP;
     try {
       moveTo(idx+1);
       endP=d_molpos[idx+1];

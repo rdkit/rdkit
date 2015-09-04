@@ -46,6 +46,8 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/MolHash/MolHash.h>
+#include <GraphMol/FMCS/FMCS.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
 #include <boost/integer_traits.hpp>
@@ -142,13 +144,19 @@ deconstructROMol(CROMol data) {
 }
 
 extern "C" CROMol 
-parseMolText(char *data,bool asSmarts,bool warnOnFail) {
-  ROMol   *mol = NULL;
+parseMolText(char *data,bool asSmarts,bool warnOnFail,bool asQuery) {
+  RWMol   *mol = NULL;
 
   try {
     StringData.assign(data);
     if(!asSmarts){
-      mol = SmilesToMol(StringData);
+      if(!asQuery){
+        mol = SmilesToMol(StringData);
+      } else {
+        mol = SmilesToMol(StringData,0,false);
+        MolOps::sanitizeMol(*mol);
+        MolOps::mergeQueryHs(*mol);
+      }
     } else {
       mol = SmartsToMol(StringData,0,false);
     }
@@ -190,12 +198,17 @@ parseMolBlob(char *data,int len) {
   return (CROMol)mol;
 }
 extern "C" CROMol 
-parseMolCTAB(char *data,bool keepConformer,bool warnOnFail) {
-  ROMol   *mol = NULL;
+parseMolCTAB(char *data,bool keepConformer,bool warnOnFail,bool asQuery) {
+  RWMol   *mol = NULL;
 
   try {
     StringData.assign(data);
-    mol = MolBlockToMol(StringData);
+    if(!asQuery){
+      mol = MolBlockToMol(StringData);
+    } else {
+      mol = MolBlockToMol(StringData,true,false);
+      MolOps::mergeQueryHs(*mol);
+    }
   } catch (...) {
     mol=NULL;
   }
@@ -223,6 +236,10 @@ isValidSmiles(char *data) {
   bool res;
   try {
     StringData.assign(data);
+    if (StringData.empty()) {
+      // Pass the test - No-Structure input is allowed. No cleanup necessary.
+      return true;
+    }
     mol = SmilesToMol(StringData,0,0);
     if(mol){
       MolOps::cleanUp(*mol);
@@ -463,6 +480,7 @@ MOLDESCR(NumSaturatedHeterocycles,RDKit::Descriptors::calcNumSaturatedHeterocycl
 MOLDESCR(NumAromaticCarbocycles,RDKit::Descriptors::calcNumAromaticCarbocycles,int)
 MOLDESCR(NumAliphaticCarbocycles,RDKit::Descriptors::calcNumAliphaticCarbocycles,int)
 MOLDESCR(NumSaturatedCarbocycles,RDKit::Descriptors::calcNumSaturatedCarbocycles,int)
+MOLDESCR(NumHeterocycles,RDKit::Descriptors::calcNumHeterocycles,int)
 
 MOLDESCR(NumRotatableBonds,RDKit::Descriptors::calcNumRotatableBonds,int)
 MOLDESCR(Chi0v,RDKit::Descriptors::calcChi0v,double)
@@ -520,7 +538,7 @@ MolInchi(CROMol i){
   const ROMol *im = (ROMol*)i;
   ExtraInchiReturnValues rv;
   try {
-    inchi = MolToInchi(*im,rv);
+    inchi = MolToInchi(*im,rv,"/AuxNone /WarnOnEmptyStructure");
   } catch (MolSanitizeException &e){
     inchi="";
     elog(ERROR, "MolInchi: cannot kekulize molecule");
@@ -538,7 +556,7 @@ MolInchiKey(CROMol i){
   const ROMol *im = (ROMol*)i;
   ExtraInchiReturnValues rv;
   try {
-    std::string inchi=MolToInchi(*im,rv);
+    std::string inchi=MolToInchi(*im,rv,"/AuxNone /WarnOnEmptyStructure");
     key = InchiToInchiKey(inchi);
   } catch (MolSanitizeException &e){
     key="";
@@ -1891,4 +1909,144 @@ makeReactionBFP(CChemicalReaction data, int size, int fpType) {
 	return NULL;
   }
 }
+
+extern "C" char *
+computeMolHash(CROMol data, int* len) {
+  ROMol& mol = *(ROMol*)data;
+  static string text;
+  text.clear();
+  try {
+    // FIX: once R/S values are stored on the atoms, this will no longer be needed
+    MolOps::assignStereochemistry(mol);
+    text = RDKit::MolHash::generateMoleculeHashSet(mol);
+  } catch (...) {
+    ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
+    text.clear();
+  }       
+  *len = text.length();
+  return (char*)text.c_str();
+}
+
+extern "C" char *	//TEMP
+Mol2Smiles(CROMol data) {
+    const  ROMol& mol = *(ROMol*)data;
+    static string text;
+    text.clear();
+    try {
+        text = RDKit::MolToSmiles(mol);
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("Mol2Smiles(): failed")));
+        text.clear();
+    }       
+    return (char*)text.c_str();
+}
+
+extern "C" char *
+findMCSsmiles(char* smiles, char* params){
+
+    static string mcs;
+    mcs.clear();
+
+    char *str = smiles;
+    char *s  = str;
+    int  len, nmols=0;
+    std::vector<RDKit::ROMOL_SPTR> molecules;
+    while(*s && *s <= ' ')
+       s++;
+    while(*s > ' ') {
+       len = 0;
+       while(s[len] > ' ')
+          len++;
+       s[len] = '\0';
+       if(0==strlen(s))
+          continue;
+       molecules.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol( s )));
+//elog(WARNING, s);
+       s += len;
+       s++; //do s++; while(*s && *s <= ' ');
+    }
+
+    RDKit::MCSParameters p;
+
+    if(params && 0!=strlen(params)) {
+        try {
+            RDKit::parseMCSParametersJSON(params, &p);
+        } catch (...) {
+            ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: Invalid argument \'params\'")));
+            return (char*)mcs.c_str();
+        }       
+    }
+
+    try {
+        MCSResult res = RDKit::findMCS(molecules, &p);
+        mcs = res.SmartsString;
+        if(!res.isCompleted())
+          ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS timed out, result is not maximal")));
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
+        mcs.clear();
+    }
+    return mcs.empty() ? (char*)"" : (char*)mcs.c_str();
+}
+
+
+extern "C" void *
+addMol2list(void* lst, Mol* mol) {
+    try {
+        if(!lst)
+        {
+//elog(WARNING, "addMol2list: allocate new list");
+            lst = new std::vector<RDKit::ROMOL_SPTR>;
+        }
+        std::vector<RDKit::ROMOL_SPTR>& mlst = *(std::vector<RDKit::ROMOL_SPTR>*) lst;
+//elog(WARNING, "addMol2list: create a copy of new mol");
+        ROMol* m = (ROMol*) constructROMol(mol);//new ROMol(*(const ROMol*)mol, false); // create a copy
+//elog(WARNING, "addMol2list: append new mol into list");
+        mlst.push_back(RDKit::ROMOL_SPTR(m));
+//elog(WARNING, "addMol2list: finished");
+    } catch (...) {
+//elog(WARNING, "addMol2list: ERROR");
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("addMol2list: failed")));
+    }       
+    return lst;
+}
+
+extern "C" char *
+findMCS(void* vmols, char* params)
+{
+    static string mcs;
+    mcs.clear();
+    std::vector<RDKit::ROMOL_SPTR> *molecules = (std::vector<RDKit::ROMOL_SPTR>*) vmols;
+//char t[256];
+//sprintf(t,"findMCS(): lst=%p, size=%u", molecules, molecules->size());
+//elog(WARNING, t);
+
+    RDKit::MCSParameters p;
+
+    if(params && 0!=strlen(params)) {
+        try {
+            RDKit::parseMCSParametersJSON(params, &p);
+        } catch (...) {
+            //mcs = params; //DEBUG
+            ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: Invalid argument \'params\'")));
+            return (char*)mcs.c_str();
+        }       
+    }
+
+    try {
+        MCSResult res = RDKit::findMCS(*molecules, &p);
+        if(!res.isCompleted())
+          ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS timed out, result is not maximal")));
+        mcs = res.SmartsString;
+    } catch (...) {
+        ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
+        mcs.clear();
+    }
+//sprintf(t,"findMCS(): MCS='%s'", mcs.c_str());
+//elog(WARNING, t);
+    delete molecules;
+//elog(WARNING, "findMCS(): molecules deleted. FINISHED.");
+    return (char*)mcs.c_str();
+}
+
 

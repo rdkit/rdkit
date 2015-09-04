@@ -13,6 +13,7 @@
 """
 from __future__ import print_function
 import unittest,sys,os
+import io
 
 import numpy
 
@@ -154,7 +155,10 @@ class TestCase(unittest.TestCase):
     self.assertTrue(nFails<nFailsAllowed)
   def testDetails(self):
     Crippen._Init()
-    with open(self.detailName,'rb') as inF:
+    with open(self.detailName,'r') as inTF:
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+    with io.BytesIO(buf) as inF:
       if 0:
         outF = open('tmp.pkl','wb+')
         self._writeDetailFile(inF,outF)
@@ -162,7 +166,10 @@ class TestCase(unittest.TestCase):
 
   def testDetails2(self):
     Crippen._Init()
-    with open(self.detailName2,'rb') as inF:
+    with open(self.detailName2,'r') as inTF:
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+    with io.BytesIO(buf) as inF:
       if 0:
         outF = open('tmp.pkl','wb+')
         self._writeDetailFile(inF,outF)

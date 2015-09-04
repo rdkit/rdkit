@@ -13,7 +13,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 
 enable_testing()
 
-set(CMAKE_MODULE_PATH 
+set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
@@ -33,6 +33,7 @@ option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" 
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_BUILD_EIGEN3 "use Eigen 3 library for solving eigenvalue problems in the Alignment Code" OFF )
+option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
@@ -48,12 +49,12 @@ set(RDK_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 set(RDK_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 # Also place the python extension where the source tree would expect them
 set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
- 
-#------- 
+
+#-------
 # Config variables:
-set(RDKit_Year "2014")
+set(RDKit_Year "2015")
 set(RDKit_Month "09")
-set(RDKit_Revision "1pre")
+set(RDKit_Revision "1.dev1")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
@@ -93,7 +94,7 @@ configure_file (
     ${RDKit_SOURCE_DIR}/rdkit-config-version.cmake.in
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake @ONLY)
 
-install(FILES 
+install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir})
@@ -104,9 +105,12 @@ if(MSVC)
 endif(MSVC)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
-  #------- 
+  #-------
   # pull in python:
   find_package(PythonInterp)
+  if (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
+    set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
+  endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
   find_package(PythonLibs)
   if(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
     include_directories(${PYTHON_INCLUDE_PATH})
@@ -117,10 +121,21 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
-     find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+    # Find boost-python3 using name specified as command line option then fall back to commonly used names
+    set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
+    foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
+      find_package(Boost 1.45.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
+      if(Boost_FOUND)
+        break()
+      endif()
+    endforeach()
+    # If boost-python3 not found, just find boost-python and hope that it is compatible with python3
+    if(NOT Boost_FOUND)
+      find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+    endif()
   else(PYTHON_VERSION_MAJOR EQUAL 3)
      find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
-  endif(PYTHON_VERSION_MAJOR EQUAL 3) 
+  endif(PYTHON_VERSION_MAJOR EQUAL 3)
 
 
   if(RDK_INSTALL_INTREE)
@@ -139,12 +154,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     message("Python Install directory ${PYTHON_INSTDIR}")
     install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
       COMPONENT python
-      PATTERN ".svn" EXCLUDE 
-      PATTERN "test_data" EXCLUDE 
-      PATTERN "testData" EXCLUDE 
-      PATTERN "test_list*" EXCLUDE 
-      PATTERN "CMake*" EXCLUDE 
-      PATTERN "Basement" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
+      PATTERN "test_data" EXCLUDE
+      PATTERN "testData" EXCLUDE
+      PATTERN "test_list*" EXCLUDE
+      PATTERN "CMake*" EXCLUDE
+      PATTERN "Basement" EXCLUDE
       PATTERN "UnitTest*" EXCLUDE
       )
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
@@ -165,8 +180,13 @@ include_directories(${RDKit_CodeDir})
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 if(RDK_TEST_MULTITHREADED)
-  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
+  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED -DBOOST_ALL_NO_LIB")
 endif()
+
+if(RDK_TEST_MULTITHREADED OR RDK_BUILD_THREADSAFE_SSS)
+  ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
+endif()
+
 
 find_package (Threads)
 if(RDK_BUILD_THREADSAFE_SSS)
@@ -185,29 +205,53 @@ if(RDK_BUILD_EIGEN3)
 endif()
 
 # setup our compiler flags:
-if(CMAKE_COMPILER_IS_GNUCXX)
-  ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
-endif()
-if(CMAKE_COMPILER_IS_CLANG)
-  ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
-endif()
+if (RDK_TEST_COVERAGE)
+ if (NOT RDK_USE_FLEXBISON)
+   message(FATAL_ERROR, "Test coverage doesn't current work unless FLEX and BISON are run.")
+ endif(NOT RDK_USE_FLEXBISON)
+
+ message("====== Installing test coverage support ======")
+ message("  To run:")
+ message("   make install")
+ message("   make RDKit_coverage")
+ message("")
+ message(" open <build_dir>/coverage/index.html")
+ message("")
+ message(" If any of the RDKit tests fail, coverage will probably not be generated.")
+ message("====== Installing test coverage support ======")
+ message("")
+ 
+ INCLUDE(CodeCoverage)
+ SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+ SET(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+ message("== setup_target_for_coverage(${PROJECT_NAME}_coverage test coverage)")
+ setup_target_for_coverage(${PROJECT_NAME}_coverage ctest coverage)
+
+else(RDK_TEST_COVERAGE)
+ if(CMAKE_COMPILER_IS_GNUCXX)
+   ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+ endif()
+ if(CMAKE_COMPILER_IS_CLANG)
+   ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
+ endif()
+endif(RDK_TEST_COVERAGE)
 
 if(NOT RDK_INSTALL_INTREE)
   install(DIRECTORY Data DESTINATION
       ${RDKit_ShareDir}
       COMPONENT data
-      PATTERN ".svn" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
       )
   install(DIRECTORY Docs DESTINATION
       ${RDKit_ShareDir}
       COMPONENT docs
-      PATTERN ".svn" EXCLUDE 
-      PATTERN "_build" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
+      PATTERN "_build" EXCLUDE
       )
   install(DIRECTORY Contrib DESTINATION
       ${RDKit_ShareDir}
       COMPONENT extras
-      PATTERN ".svn" EXCLUDE 
+      PATTERN ".svn" EXCLUDE
       )
   if(RDK_BUILD_PYTHON_WRAPPERS)
     install(DIRECTORY Projects DESTINATION
@@ -277,6 +321,7 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSIO
 #  SET(CPACK_SOURCE_STRIP_FILES "")
 #ENDIF(WIN32 AND NOT UNIX)
 #SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable")
+
 
 SET(CPACK_SET_DESTDIR ON)
 

@@ -6,6 +6,7 @@
 
 """
 import unittest,os.path
+import io
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import MoleculeDescriptors
@@ -37,7 +38,10 @@ class TestCase(unittest.TestCase):
 
   def testSaveState(self):
     fName = os.path.join(RDConfig.RDCodeDir,'ML/Descriptors/test_data','molcalc.dsc')
-    with open(fName,'rb') as inF:
+    with open(fName,'r') as inTF:
+      buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
+      inTF.close()
+    with io.BytesIO(buf) as inF:
       calc = cPickle.load(inF)
     self.assertEqual(calc.GetDescriptorNames(),tuple(self.descs))
     self.assertEqual(calc.GetDescriptorVersions(),tuple(self.vers))

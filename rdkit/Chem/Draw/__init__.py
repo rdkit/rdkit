@@ -6,10 +6,12 @@
 import os
 from rdkit.six import iteritems
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
+from rdkit.Chem.Draw.rdMolDraw2D import *
 
 def _getCanvas():
   useAGG=False
   useCairo=False
+  useSping=False
   Canvas=None
   if not os.environ.get('RDKIT_CANVAS',''):
     try:
@@ -21,6 +23,7 @@ def _getCanvas():
         useAGG=True
       except ImportError:
         from rdkit.Chem.Draw.spingCanvas import Canvas
+        useSping=True
   else:
     canv=os.environ['RDKIT_CANVAS'].lower()
     if canv =='cairo':
@@ -30,8 +33,10 @@ def _getCanvas():
       from rdkit.Chem.Draw.aggCanvas import Canvas
       useAGG=True
     else:
-      DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from rdkit.Chem.Draw.spingCanvas import Canvas      
+      useSping=True
+  if useSping:
+    DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
   return useAGG,useCairo,Canvas
 
 def _createCanvas(size):
@@ -192,7 +197,10 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
   """ Generates a picture of a molecule and displays it in a Tkinter window
   """
   global tkRoot,tkLabel,tkPI
-  import Tkinter
+  try:
+    import Tkinter
+  except ImportError:
+    import tkinter as Tkinter
   try:
     import ImageTk
   except ImportError:
@@ -350,3 +358,29 @@ def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
     res.paste(nimg,(i*subImgSize[0],0))
   return res
 
+
+def MolToQPixmap(mol, size=(300,300), kekulize=True,  wedgeBonds=True,
+                 fitImage=False, options=None, **kwargs):
+    """ Generates a drawing of a molecule on a Qt QPixmap
+    """
+    if not mol:
+        raise ValueError('Null molecule provided')
+    from rdkit.Chem.Draw.qtCanvas import Canvas
+    canvas = Canvas(size)
+    if options is None:
+        options = DrawingOptions()
+    options.bgColor = None
+    if fitImage:
+        options.dotsPerAngstrom = int(min(size) / 10)
+    options.wedgeDashedBonds=wedgeBonds
+    if kekulize:
+        from rdkit import Chem
+        mol = Chem.Mol(mol.ToBinary())
+        Chem.Kekulize(mol)
+    if not mol.GetNumConformers():
+        from rdkit.Chem import AllChem
+        AllChem.Compute2DCoords(mol)
+    drawer = MolDrawing(canvas=canvas, drawingOptions=options)
+    drawer.AddMol(mol, **kwargs)
+    canvas.flush()
+    return canvas.pixmap

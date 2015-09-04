@@ -2,9 +2,9 @@
 #define RDKIT_IMPORT_ARRAY_INCLUDED
 
 #if PY_MAJOR_VERSION >= 3
-  inline void * rdkit_import_array()
+  void * rdkit_import_array()
 #else
-  inline void rdkit_import_array()
+  void rdkit_import_array()
 #endif
   {
     // numpy's import_array is defined as a macro that expands into a block
@@ -13,6 +13,9 @@
     // directly from within the BOOST_PYTHON_MODULE init function (that
     // returns void)
     import_array();
+#if defined(_MSC_VER) && (PY_MAJOR_VERSION >= 3)
+    return NULL;
+#endif
   }
 
 #endif

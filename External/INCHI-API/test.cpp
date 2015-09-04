@@ -253,17 +253,221 @@ void testGithubIssue296(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue437(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 437: problems with InChI and ring stereochemistry" << std::endl;
+
+  // start with some general chirality checks
+  {
+    std::string smiles="C[C@@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    //std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C2H4ClF/c1-2(3)4/h2H,1H3/t2-/m1/s1");
+
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    // std::cerr<<" smi1: "<<smi1<<std::endl;
+    // std::cerr<<" smi2: "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="O=[S@](Cl)F";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/ClFOS/c1-4(2)3/t4-/m1/s1");
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    // std::cerr<<" smi1: "<<smi1<<std::endl;
+    // std::cerr<<" smi2: "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="C[C@@H](F)[C@H](C)[C@H](C)F";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C6H12F2/c1-4(5(2)7)6(3)8/h4-6H,1-3H3/t4-,5+,6-");
+
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="C[C@@H](F)[C@H](C)[C@@H](C)F";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C6H12F2/c1-4(5(2)7)6(3)8/h4-6H,1-3H3/t5-,6-/m1/s1");
+
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    // std::cerr<<" smi1: "<<smi1<<std::endl;
+    // std::cerr<<" smi2: "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="C[C@H](F)[C@H](C)[C@H](C)F";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C6H12F2/c1-4(5(2)7)6(3)8/h4-6H,1-3H3/t5-,6-/m0/s1");
+
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="C[C@H](F)[C@H](C)[C@@H](C)F";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C6H12F2/c1-4(5(2)7)6(3)8/h4-6H,1-3H3/t4-,5-,6+");
+
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+
+  // now the rings
+  {
+    std::string smiles="C[C@@H]1CC[C@@H](O)C[C@@H]1F";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C7H13FO/c1-5-2-3-6(9)4-7(5)8/h5-7,9H,2-4H2,1H3/t5-,6-,7+/m1/s1");
+
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+
+  {
+    std::string smiles="C[C@@]1(F)CC[C@@](O)(F)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C7H12F2O/c1-6(8)2-4-7(9,10)5-3-6/h10H,2-5H2,1H3/t6-,7+");
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="C[C@H]1CC[C@H](O)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C7H14O/c1-6-2-4-7(8)5-3-6/h6-8H,2-5H2,1H3/t6-,7-");
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    std::string smiles="C[C@H]1CC[C@](O)(F)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    // std::cerr<<" result: "<<inchi<<std::endl;
+    TEST_ASSERT(inchi=="InChI=1S/C7H13FO/c1-6-2-4-7(8,9)5-3-6/h6,9H,2-5H2,1H3/t6-,7+");
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+  {
+    // this was the original molecule in the bug report
+    std::string smiles="OC(=NCCc1ccccc1)[C@H]1CC[C@H](Cn2c(O)nc3ccccc3c2=O)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string smi1 = MolToSmiles(*m,true);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C24H27N3O3/c28-22(25-15-14-17-6-2-1-3-7-17)19-12-10-18(11-13-19)16-27-23(29)20-8-4-5-9-21(20)26-24(27)30/h1-9,18-19H,10-16H2,(H,25,28)(H,26,30)/t18-,19-");
+    delete m;
+    m = InchiToMol(inchi,tmp);
+    std::string smi2 = MolToSmiles(*m,true);
+    TEST_ASSERT(smi1==smi2);
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
+void testGithubIssue562(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 562: InChI radicals not properly converted" << std::endl;
+
+  {
+    std::string inchi="InChI=1S/HO/h1H";
+    ExtraInchiReturnValues tmp;
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit()==true);    
+
+    std::string oinchi=MolToInchi(*m,tmp);
+    
+    TEST_ASSERT(oinchi==inchi);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main(){
   RDLog::InitLogs();
-  testMultiThread();
+#if 1
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
   testGithubIssue67();
   testGithubIssue68();
   testGithubIssue296();
+  testMultiThread();
+#endif
+  testGithubIssue437();
+  testGithubIssue562();
 }

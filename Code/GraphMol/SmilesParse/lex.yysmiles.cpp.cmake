@@ -569,7 +569,7 @@ static yyconst flex_int16_t yy_chk[303] =
 #include <io.h> 	 
 #endif
 
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
@@ -1258,7 +1258,7 @@ case 120:
 YY_RULE_SETUP
 #line 205 "smiles.ll"
 {   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
+		            yylval->atom->setProp(RDKit::common_properties::dummyLabel,
                                                         std::string("*"));
                                 // must be ORGANIC_ATOM_TOKEN because
                                 // we aren't in square brackets:

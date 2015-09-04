@@ -10,7 +10,7 @@
 //  of the RDKit source tree.
 //
 #include "AlignPoints.h"
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/Invariant.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>

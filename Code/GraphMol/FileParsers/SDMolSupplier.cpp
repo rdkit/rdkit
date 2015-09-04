@@ -81,7 +81,7 @@ namespace RDKit {
     d_last = 0;
   }
 
-  void SDMolSupplier::setData(const std::string &text,
+  void SDMolSupplier::setDataCommon(const std::string &text,
                               bool sanitize, bool removeHs){
     if(dp_inStream && df_owner) delete dp_inStream;
     init();
@@ -98,6 +98,18 @@ namespace RDKit {
       d_len=0;
     }
     POSTCONDITION(dp_inStream,"bad instream");
+  }
+  
+  void SDMolSupplier::setData(const std::string &text,
+                              bool sanitize, bool removeHs){
+    df_strictParsing=true;
+    setDataCommon(text, sanitize, removeHs);
+  }
+                                
+  void SDMolSupplier::setData(const std::string &text,
+                              bool sanitize, bool removeHs, bool strictParsing){
+    df_strictParsing=strictParsing;
+    setDataCommon(text, sanitize, removeHs);
   }
 
   
@@ -161,7 +173,7 @@ namespace RDKit {
     res = _next();
 
     ++d_last;
-    unsigned int posHold=dp_inStream->tellg();
+    std::streampos posHold=dp_inStream->tellg();
     this->checkForEnd();
     if (!this->df_end && d_last >= static_cast<int>(d_molpos.size())) {
       d_molpos.push_back(posHold);
@@ -174,8 +186,8 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"no stream");
     unsigned int holder=d_last;
     moveTo(idx);
-    unsigned int begP=d_molpos[idx];
-    unsigned int endP;
+    std::streampos begP=d_molpos[idx];
+    std::streampos endP;
     try {
       moveTo(idx+1);
       endP=d_molpos[idx+1];
@@ -213,7 +225,7 @@ namespace RDKit {
         tempStr = getLine(dp_inStream);
         
         if (tempStr[0]=='$' && tempStr.substr(0,4)=="$$$$") {
-          unsigned int posHold=dp_inStream->tellg();
+          std::streampos posHold=dp_inStream->tellg();
           this->checkForEnd();
           if (!this->df_end){
             d_molpos.push_back(posHold);
@@ -251,7 +263,7 @@ namespace RDKit {
       while (!dp_inStream->eof()) {
         std::getline(*dp_inStream,tempStr);
         if (tempStr.length()>=4 && tempStr[0]=='$' && tempStr[1]=='$' && tempStr[2]=='$' && tempStr[3]=='$'){
-          unsigned int posHold=dp_inStream->tellg();
+          std::streampos posHold=dp_inStream->tellg();
           // don't worry about the last molecule:
           this->checkForEnd();
           if (!this->df_end){

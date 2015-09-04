@@ -52,10 +52,8 @@ Atom::Atom( const Atom & other){
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
   df_isAromatic = other.df_isAromatic;
-  d_dativeFlag = other.d_dativeFlag;
   d_numExplicitHs = other.d_numExplicitHs;
   d_numRadicalElectrons = other.d_numRadicalElectrons;
-  d_mass = other.d_mass;
   d_isotope = other.d_isotope;
   //d_pos = other.d_pos;
   d_chiralTag=other.d_chiralTag;
@@ -79,16 +77,10 @@ Atom::Atom( const Atom & other){
 void Atom::initAtom(){
   df_isAromatic = false;
   df_noImplicit = false;
-  d_dativeFlag=0;
   d_numExplicitHs = 0;
   d_numRadicalElectrons=0;
   d_formalCharge = 0;
   d_index = 0;
-  if(d_atomicNum){
-    d_mass = PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
-  } else{
-    d_mass = 0.0;
-  }
   d_isotope=0;
   d_chiralTag=CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
@@ -130,10 +122,8 @@ void Atom::setOwningMol(ROMol *other)
 std::string Atom::getSymbol() const {
   std::string res;
   // handle dummies differently:
-  if(d_atomicNum != 0 || !hasProp("dummyLabel") ){
+  if(d_atomicNum != 0 || !getPropIfPresent<std::string>(common_properties::dummyLabel, res)) {
     res = PeriodicTable::getTable()->getElementSymbol(d_atomicNum);
-  } else {
-    res=getProp<std::string>("dummyLabel");
   }
   return res;
 }
@@ -207,6 +197,8 @@ int Atom::calcExplicitValence(bool strict) {
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
   if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
+  // special case for carbon - see GitHub #539
+  if (d_atomicNum == 6 && chr > 0) chr=-chr;
   if (accum > (dv + chr) && this->getIsAromatic()){
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
@@ -365,7 +357,7 @@ int Atom::calcImplicitValence(bool strict) {
       // formal charge here vs the explicit valence function.
       bool satis = false;
       for (INT_VECT_CI vi = valens.begin();
-	   vi!=valens.end() && *vi>0; ++vi) {
+           vi!=valens.end() && *vi>0; ++vi) {
         if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
           break;
@@ -387,7 +379,7 @@ int Atom::calcImplicitValence(bool strict) {
     // and be able to add hydrogens
     res = -1;
     for (INT_VECT_CI vi = valens.begin();
-	 vi != valens.end() && *vi>=0; ++vi) {
+         vi != valens.end() && *vi>=0; ++vi) {
       int tot = (*vi) + chg;
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
@@ -417,10 +409,15 @@ int Atom::calcImplicitValence(bool strict) {
 
 void Atom::setIsotope(unsigned int what){
   d_isotope=what;
+}
+
+double Atom::getMass() const {
   if(d_isotope){
-    d_mass=PeriodicTable::getTable()->getMassForIsotope(d_atomicNum,d_isotope);
+    double res=PeriodicTable::getTable()->getMassForIsotope(d_atomicNum,d_isotope);
+    if(d_atomicNum!=0 && res==0.0) res = d_isotope;
+    return res;
   } else {
-    d_mass = PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
+    return PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
   }
 }
 
@@ -474,6 +471,13 @@ bool Atom::Match(Atom const *what) const {
 void Atom::updatePropertyCache(bool strict) {
   calcExplicitValence(strict);
   calcImplicitValence(strict);
+}
+
+bool Atom::needsUpdatePropertyCache() const{
+  if(this->d_explicitValence >= 0 && (this->df_noImplicit || this->d_implicitValence >= 0) ){
+          return false;
+  }
+  return true;
 }
 
 // returns the number of swaps required to convert the ordering

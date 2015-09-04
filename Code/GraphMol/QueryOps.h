@@ -17,6 +17,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <Query/QueryObjects.h>
+#include <Query/Query.h>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <boost/thread/mutex.hpp>
@@ -481,7 +482,195 @@ namespace RDKit{
   int nullDataFun(T arg) { return 1; }
   template <typename T>
   bool nullQueryFun(T arg) { return true; } 
+
+  typedef Bond const *ConstBondPtr;
+
+  // ! Query whether an atom has a property
+  template<class TargetPtr>
+  class HasPropQuery : public Queries::EqualityQuery<
+    int, TargetPtr, true> {
+
+    std::string propname;
+  public:
+    HasPropQuery():
+    Queries::EqualityQuery<int,TargetPtr,true>(),
+      propname() {
+      // default is to just do a number of rings query:
+      this->setDescription("AtomHasProp");
+      this->setDataFunc(0);
+    };
+  explicit HasPropQuery(const std::string & v) :
+    Queries::EqualityQuery<int,TargetPtr,true>(),
+      propname(v) {
+      // default is to just do a number of rings query:
+      this->setDescription("AtomHasProp");
+      this->setDataFunc(0);
+    };
+
+    virtual bool Match(const TargetPtr what) const {
+      bool res = what->hasProp(propname);
+      if(this->getNegation()){
+        res=!res;
+      }
+      return res;
+    }
+
+    //! returns a copy of this query
+    Queries::Query<int,TargetPtr,true> *
+    copy() const {
+      HasPropQuery *res = new HasPropQuery(this->propname);
+      res->setNegation(this->getNegation());
+      res->d_description = this->d_description;
+      return res;
+    }
+  };
+
+  typedef Queries::EqualityQuery<
+    int,Atom const *,true> ATOM_PROP_QUERY;
+  typedef Queries::EqualityQuery<
+    int,Bond const *,true> BOND_PROP_QUERY;
+
+  //! returns a Query for matching atoms that have a particular property
+  template<class Target>
+  Queries::EqualityQuery<int,const Target *,true> *makeHasPropQuery(
+        const std::string &property)
+  {
+      return new HasPropQuery<const Target *>(property);
+  }
+
+  // ! Query whether an atom has a property with a value
+  template<class TargetPtr, class T>
+  class HasPropWithValueQuery : public Queries::EqualityQuery<
+    int, TargetPtr, true> {
+    std::string propname;
+    T val;
+    T tolerance;
+  public:
+    HasPropWithValueQuery():
+    Queries::EqualityQuery<int,TargetPtr,true>(),
+      propname(), val() {
+      // default is to just do a number of rings query:
+      this->setDescription("HasPropWithValue");
+      this->setDataFunc(0);
+    };
+    explicit HasPropWithValueQuery(const std::string & prop, const T&v,
+                                       const T&tol=0.0) :
+    Queries::EqualityQuery<int,TargetPtr,true>(),
+      propname(prop),
+      val(v),
+      tolerance(tol) {
+      // default is to just do a number of rings query:
+      this->setDescription("HasPropWithValue");
+      this->setDataFunc(0);
+    };
+
+    virtual bool Match(const TargetPtr what) const {
+      bool res = what->hasProp(propname);
+      if (res)
+      {
+        try {
+          T atom_val = what->template getProp<T>(propname);
+          res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
+        }
+        catch (KeyErrorException e) {
+          res = false;
+        }
+        catch (boost::bad_any_cast)
+        {
+          res = false;
+        }
+
+      }
+      if(this->getNegation()){
+        res=!res;
+      }
+      return res;
+    }
+
+    //! returns a copy of this query
+    Queries::Query<int,TargetPtr,true> *
+    copy() const {
+      HasPropWithValueQuery *res = new HasPropWithValueQuery(
+         this->propname, this->val, this->tolerance);
+      res->setNegation(this->getNegation());
+      res->d_description = this->d_description;
+      return res;
+    }
+  };
+
+  template<class TargetPtr>
+    class HasPropWithValueQuery<TargetPtr, std::string> :
+        public Queries::EqualityQuery<int, TargetPtr, true> {
+    std::string propname;
+    std::string val;
+  public:
+    HasPropWithValueQuery():
+    Queries::EqualityQuery<int,TargetPtr,true>(),
+      propname(), val() {
+      // default is to just do a number of rings query:
+      this->setDescription("HasPropWithValue");
+      this->setDataFunc(0);
+    };
+    explicit HasPropWithValueQuery(const std::string & prop,
+                                       const std::string &v,
+                                       const std::string &tol="") :
+    Queries::EqualityQuery<int,TargetPtr,true>(),
+      propname(prop),
+      val(v) {
+      // default is to just do a number of rings query:
+      this->setDescription("HasPropWithValue");
+      this->setDataFunc(0);
+    };
+
+    virtual bool Match(const TargetPtr what) const {
+      bool res = what->hasProp(propname);
+      if (res)
+      {
+        try {
+          std::string atom_val = what->template getProp<std::string>(propname);
+          res = atom_val == this->val;
+        }
+        catch (KeyErrorException) {
+          res = false;
+        }
+        catch (boost::bad_any_cast)
+        {
+          res = false;
+        }
+      }
+      if(this->getNegation()){
+        res=!res;
+      }
+      return res;
+    }
+
+    //! returns a copy of this query
+    Queries::Query<int,TargetPtr,true> *
+    copy() const {
+      HasPropWithValueQuery<TargetPtr,std::string> *res =
+        new HasPropWithValueQuery<TargetPtr, std::string>(
+          this->propname, this->val);
+      res->setNegation(this->getNegation());
+      res->d_description = this->d_description;
+      return res;
+    }
+  };
   
+  
+  template<class Target, class T>
+    Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
+        const std::string &propname,
+        const T&val,
+        const T&tolerance=T())
+    {
+      return new HasPropWithValueQuery<const Target *, T>(
+         propname, val, tolerance);
+    }
+
+  bool isComplexQuery(const Bond *b);
+  bool isComplexQuery(const Atom *a);
+  bool isAtomAromatic(const Atom *a);
+
 };
 
 

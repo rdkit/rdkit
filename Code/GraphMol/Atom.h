@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,6 +23,7 @@
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Dict.h>
+#include <GraphMol/details.h>
 
 namespace RDKit{
   class ROMol;
@@ -208,45 +209,25 @@ namespace RDKit{
     //! returns our \c isAromatic flag
     bool getIsAromatic() const { return df_isAromatic; };
 
-    //! sets our mass (should no longer be used)
-    void setMass( double what) { d_mass = what; };
     //! returns our mass
-    double getMass() const {return d_mass; };
+    double getMass() const;
 
     //! sets our isotope number
     void setIsotope(unsigned int what);
     //! returns our isotope number
     unsigned int getIsotope() const {return d_isotope; };
 
-    //! sets our \c dativeFlag
-    // intended to be used only in construction.
-    // NOTE: the dative flag is not currently used anywhere
-    void setDativeFlag(int what) {
-      d_dativeFlag = what;
-    };
-    //! returns our \c dativeFlag
-    // NOTE: the dative flag is not currently used anywhere
-    int getDativeFlag() const {
-      return d_dativeFlag;
-    };
-    bool hasDativeFlag(int what) const {
-      return d_dativeFlag==what;
-    };
-    //! clears our \c dativeFlag
-    // NOTE: the dative flag is not currently used anywhere
-    void clearDativeFlag(){ d_dativeFlag = 0; };
-
     //! sets our \c chiralTag
     void setChiralTag(ChiralType what) { d_chiralTag = what; };
     //! inverts our \c chiralTag
     void invertChirality();
     //! returns our \c chiralTag
-    ChiralType getChiralTag() const { return d_chiralTag; };
+    ChiralType getChiralTag() const { return static_cast<ChiralType>(d_chiralTag); };
 
     //! sets our hybridization
     void setHybridization(HybridizationType what) { d_hybrid = what; };
     //! returns our hybridization
-    HybridizationType getHybridization() const { return d_hybrid; };
+    HybridizationType getHybridization() const { return static_cast<HybridizationType>(d_hybrid); };
 
     // ------------------------------------
     // Some words of explanation before getting down into
@@ -338,10 +319,10 @@ namespace RDKit{
 
     //! \overload
     template <typename T>
-    void setProp(const std::string key, T val, bool computed=false) const {
+    void setProp(const std::string &key, T val, bool computed=false) const {
       if (computed) {
 	STR_VECT compLst;
-	if(hasProp(detail::computedPropName)) getProp(detail::computedPropName, compLst);
+	getPropIfPresent(detail::computedPropName, compLst);
 	if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
 	  compLst.push_back(key);
 	  dp_props->setVal(detail::computedPropName, compLst);
@@ -371,9 +352,10 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    void getProp(const std::string key,T &res) const {
+    void getProp(const std::string &key,T &res) const {
       dp_props->getVal(key,res);
     }
+
     //! \overload
     template <typename T>
     T getProp(const char *key) const {
@@ -381,8 +363,20 @@ namespace RDKit{
     }
     //! \overload
     template <typename T>
-    T getProp(const std::string key) const {
+    T getProp(const std::string &key) const {
       return dp_props->getVal<T>(key);
+    }
+
+    //! returns whether or not we have a \c property with name \c key
+    //!  and assigns the value if we do
+    template <typename T>
+    bool getPropIfPresent(const char *key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
+    }
+    //! \overload
+    template <typename T>
+    bool getPropIfPresent(const std::string &key,T &res) const {
+        return dp_props->getValIfPresent(key,res);
     }
 
     //! returns whether or not we have a \c property with name \c key
@@ -391,7 +385,7 @@ namespace RDKit{
       return dp_props->hasVal(key);
     };
     //! \overload
-    bool hasProp(const std::string key) const {
+    bool hasProp(const std::string &key) const {
       if(!dp_props) return false;
       return dp_props->hasVal(key);
     };
@@ -410,10 +404,9 @@ namespace RDKit{
       clearProp(what);
     };
     //! \overload
-    void clearProp(const std::string key) const {
-      if(hasProp(detail::computedPropName)){
-	STR_VECT compLst;
-	getProp(detail::computedPropName, compLst);
+    void clearProp(const std::string &key) const {
+      STR_VECT compLst;
+      if(getPropIfPresent(detail::computedPropName, compLst)) {
 	STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
 	if (svi != compLst.end()) {
 	  compLst.erase(svi);
@@ -425,14 +418,15 @@ namespace RDKit{
 
     //! clears all of our \c computed \c properties
     void clearComputedProps() const {
-      if(!hasProp(detail::computedPropName)) return;
       STR_VECT compLst;
-      getProp(detail::computedPropName, compLst);
-      BOOST_FOREACH(const std::string &sv,compLst){
-	dp_props->clearVal(sv);
+      if (getPropIfPresent(detail::computedPropName, compLst))
+      {
+	BOOST_FOREACH(const std::string &sv,compLst){
+	  dp_props->clearVal(sv);
+	}
+	compLst.clear();
+	dp_props->setVal(detail::computedPropName, compLst);
       }
-      compLst.clear();
-      dp_props->setVal(detail::computedPropName, compLst);
     }
 
     //! returns the perturbation order for a list of integers
@@ -469,6 +463,8 @@ namespace RDKit{
     */
     void updatePropertyCache(bool strict=true);
 
+    bool needsUpdatePropertyCache() const;
+
     //! calculates and returns our explicit valence
     /*!
       <b>Notes:</b>
@@ -496,20 +492,20 @@ namespace RDKit{
 
     bool df_isAromatic; 
     bool df_noImplicit;
-    int d_dativeFlag;
-    unsigned int d_numExplicitHs;
-    int d_formalCharge;
-    unsigned int d_atomicNum;
-    unsigned int d_index;
-    // NOTE that these cannot be signed ints, they are calculated using
+    boost::uint8_t d_numExplicitHs;
+    boost::int8_t d_formalCharge;
+    boost::uint8_t d_atomicNum;
+    // NOTE that these cannot be signed, they are calculated using
     // a lazy scheme and are initialized to -1 to indicate that the
     // calculation has not yet been done.
-    int d_implicitValence, d_explicitValence;
-    unsigned int d_numRadicalElectrons;
-    ChiralType d_chiralTag;
-    HybridizationType d_hybrid;
-    double d_mass;
-    unsigned int d_isotope;
+    boost::int8_t d_implicitValence, d_explicitValence;
+    boost::uint8_t d_numRadicalElectrons;
+    boost::uint8_t d_chiralTag;
+    boost::uint8_t d_hybrid;
+
+    atomindex_t d_index;
+    boost::uint16_t d_isotope;
+
     ROMol *dp_mol;
     Dict *dp_props;
     AtomMonomerInfo *dp_monomerInfo;

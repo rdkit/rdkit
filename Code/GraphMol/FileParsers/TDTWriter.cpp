@@ -87,10 +87,9 @@ namespace RDKit {
 
     // write the molecule 
     (*dp_ostream) << "$SMI<" << MolToSmiles(mol) << ">\n";
-    
-    if(df_writeNames && mol.hasProp("_Name")){
-      std::string name;
-      mol.getProp("_Name",name);
+
+    std::string name;
+    if(df_writeNames && mol.getPropIfPresent(common_properties::_Name, name)){
       (*dp_ostream) << "NAME<" << name << ">\n";
     }
     
@@ -98,7 +97,7 @@ namespace RDKit {
     if(mol.getNumConformers()){
       // get the ordering of the atoms in the output SMILES:
       std::vector<unsigned int> atomOrdering;
-      mol.getProp("_smilesAtomOutputOrder",atomOrdering);
+      mol.getProp(common_properties::_smilesAtomOutputOrder,atomOrdering);
       
       const Conformer &conf = mol.getConformer(confId);
       if(df_write2D){
@@ -135,18 +134,17 @@ namespace RDKit {
       // out to the file
       STR_VECT properties = mol.getPropList();
       STR_VECT compLst;
-      if (mol.hasProp(detail::computedPropName)) {
-	mol.getProp(detail::computedPropName, compLst);
-      }
+      mol.getPropIfPresent(detail::computedPropName, compLst);
+
       STR_VECT_CI pi;
       for (pi = properties.begin(); pi != properties.end(); pi++) {
 
 	// ignore any of the following properties
 	if ( ((*pi) == detail::computedPropName) || 
-	     ((*pi) == "_Name") ||
+	     ((*pi) == common_properties::_Name) ||
 	     ((*pi) == "_MolFileInfo") ||
 	     ((*pi) == "_MolFileComments") ||
-             ((*pi) == "_MolFileChiralFlag")) {
+             ((*pi) == common_properties::_MolFileChiralFlag)) {
 	  continue;
 	}
 

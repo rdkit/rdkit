@@ -187,34 +187,15 @@ namespace RDKit {
     return ss.str();
   }
 
-  std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
-    ROMol mol(imol);
-    RWMol &trwmol=static_cast<RWMol &>(mol);
-    MolOps::Kekulize(trwmol);
-
+  std::string MolToPDBBody(const ROMol &mol, const Conformer *conf,
+                           unsigned int flavor,
+                           unsigned int &atm_count,
+                           unsigned int &ter_count,
+                           unsigned int &conect_count) {
     std::string res;
-    const Conformer *conf;
-    if(confId<0 && mol.getNumConformers()==0){
-      conf=0;
-    } else {
-      conf = &(mol.getConformer(confId));
-    }
-
-    if(mol.hasProp("_Name")){
-      std::string name;
-      mol.getProp("_Name",name);
-      if(!name.empty()) {
-        res += "COMPND    ";
-        res += name;
-        res += '\n';
-      }
-    }
-
     std::string last;
-    unsigned int atm_count = 0;
-    unsigned int ter_count = 0;
     std::map<unsigned int,unsigned int> elem;
-    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();++atomIt){
       last = GetPDBAtomLine(*atomIt,conf,elem);
       res += last;
@@ -235,15 +216,57 @@ namespace RDKit {
       ter_count = 1;
     }
 
-    unsigned int conect_count = 0;
     bool all = (flavor & 2) == 0;
     bool both = (flavor & 4) != 0;
     bool mult = (flavor & 8) == 0;
     if (all || mult) {
-      for(ROMol::AtomIterator atomIt=mol.beginAtoms();
+      for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
           atomIt!=mol.endAtoms();++atomIt){
         res += GetPDBBondLines(*atomIt,all,both,mult,conect_count);
       }
+    }
+    return res;
+  }
+
+  std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
+    ROMol mol(imol);
+    RWMol &trwmol=static_cast<RWMol &>(mol);
+    MolOps::Kekulize(trwmol);
+
+    std::string res;
+    std::string name;
+    if(mol.getPropIfPresent(common_properties::_Name, name)){
+      if(!name.empty()) {
+        res += "COMPND    ";
+        res += name;
+        res += '\n';
+      }
+    }
+
+    unsigned int atm_count = 0;
+    unsigned int ter_count = 0;
+    unsigned int conect_count = 0;
+
+    const Conformer *conf;
+    if (confId<0 && mol.getNumConformers() > 1) {
+      int count = mol.getNumConformers();
+      for (confId=0; confId<count; confId++) {
+        conf = &(mol.getConformer(confId));
+        std::stringstream ss;
+        ss<<"MODEL     ";
+        ss<<std::setw(4)<<(confId+1);
+        ss<<"\n";
+        res += ss.str();
+        res += MolToPDBBody(mol,conf,flavor,atm_count,ter_count,conect_count);
+        res += "ENDMDL\n";
+      }
+    } else {
+      if(confId<0 && mol.getNumConformers()==0){
+        conf=0;
+      } else {
+        conf = &(mol.getConformer(confId));
+      }
+      res += MolToPDBBody(mol,conf,flavor,atm_count,ter_count,conect_count);
     }
 
     if (flavor & 16) {

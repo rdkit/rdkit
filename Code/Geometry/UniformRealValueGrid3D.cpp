@@ -34,7 +34,7 @@
 #include "UniformRealValueGrid3D.h"
 #include <DataStructs/RealValueVect.h>
 #include <RDGeneral/StreamOps.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <Geometry/point.h>
 #include <fstream>
 #include <iomanip>

@@ -925,16 +925,16 @@ void testAtomMap(){
   sma = "[C:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,mapNum);
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
   sma = "[CH3:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,mapNum);
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
@@ -980,25 +980,25 @@ void testIssue1804420(){
   sma = "[N;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N,O;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N&R;X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[NH0&R;D3,X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
     
@@ -1543,7 +1543,267 @@ void testGithub314(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub378(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong thing for odd dot-disconnected construct" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="C1.C1CO1.N1";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(m->getBondBetweenAtoms(3,4));
+    TEST_ASSERT(!m->getBondBetweenAtoms(1,3));
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1(O.C1)CO1.N1";
+    m = SmartsToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,3));
+    TEST_ASSERT(m->getBondBetweenAtoms(5,4));
+    TEST_ASSERT(!m->getBondBetweenAtoms(2,3));
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
   
+
+void testGithub544(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 544: merging query Hs failing on recursive SMARTS" << std::endl;
+  {
+    RWMol *p;
+    std::string smiles="O[H]";
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[O;$(O[H])]";
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[O;$(O[H])]";
+    p = SmartsToMol(smiles,false,true);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="C[O;$([O;$(O[H])])]"; // test nesting
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="O=C=C=O";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+
+    delete m;
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="O=CC=O";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    smiles="[#6;$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    smiles="[$([#6]-[#1]);#6]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete m;
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="C(-[!#1])-[!#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==3);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==3);
+
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="[!#1]-[#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#1,#6]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#6,#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#6;H1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+
+  // along the way there were some problems with merging in recursive subqueries of ORs,
+  // these next few test those.
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#7]),$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6]-[#1])]");
+
+    //std::cerr<<"--------------------------"<<std::endl;
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6&!H0])]");
+
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#7]),$([#6]-[#1]),$([#6])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    //std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6]-[#1]),$([#6])]");
+
+    //std::cerr<<"--------------------------"<<std::endl;
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    //std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6&!H0]),$([#6])]");
+
+    delete p;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+  
+
 
 int
 main(int argc, char *argv[])
@@ -1578,9 +1838,11 @@ main(int argc, char *argv[])
   testIssue3000399();
   testRecursiveSerialNumbers();
   testReplacementPatterns();
-#endif
   testGithub313();
   testGithub314();
+  testGithub378();
+#endif
+  testGithub544();
   
   return 0;
 }

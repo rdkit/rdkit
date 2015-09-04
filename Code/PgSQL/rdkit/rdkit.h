@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -117,8 +117,8 @@ extern "C" {
 
   CROMol parseMolBlob(char *data,int len);
   char *makeMolBlob(CROMol data, int *len);
-  CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail);
-  CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail);
+  CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail,bool asQuery);
+  CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail,bool asQuery);
   char *makeMolText(CROMol data, int *len,bool asSmarts);
   char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
   bool isValidSmiles(char *data);
@@ -151,6 +151,7 @@ extern "C" {
   int MolNumAromaticCarbocycles(CROMol i);
   int MolNumAliphaticCarbocycles(CROMol i);
   int MolNumSaturatedCarbocycles(CROMol i);
+  int MolNumHeterocycles(CROMol i);
 
   double MolFractionCSP3(CROMol i);
   double MolTPSA(CROMol i);
@@ -300,8 +301,14 @@ extern "C" {
   /* Reaction difference fingerprint */
   MolSparseFingerPrint makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType);
 
+  char* computeMolHash(CROMol data, int* len);
+
+  char* findMCSsmiles(char* smiles, char* params);
+  void* addMol2list(void* lst, Mol* mol);
+  char* findMCS(void* lst, char* params);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+

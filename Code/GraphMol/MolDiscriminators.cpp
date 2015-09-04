@@ -60,8 +60,8 @@ namespace RDKit {
                            const std::vector<int> *bondPath,
                            bool cacheIt) {
       double res=0.0;
-      if (!force && mol.hasProp("BalanbanJ")) {
-        mol.getProp("BalabanJ", res);
+      if (!force && mol.hasProp(common_properties::BalanbanJ)) {
+        mol.getProp(common_properties::BalabanJ, res);
       }
       else {
         double *dMat;
@@ -111,7 +111,7 @@ namespace RDKit {
         }
 
 
-        if(cacheIt) mol.setProp("BalabanJ", res, true);
+        if(cacheIt) mol.setProp(common_properties::BalabanJ, res, true);
       }
       return res;
     }

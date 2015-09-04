@@ -40,6 +40,8 @@ namespace RDKit {
       dummies are labeled with atom indices.
       \param bondTypes - used to provide the bond type to use between the
       fragments and the dummy atoms. If not provided, defaults to single. 
+      \param nCutsPerAtom - used to return the number of bonds that were
+       cut at each atom. Should be nAtoms long.
       
       \return a new ROMol with the modifications
       The client is responsible for deleting this molecule.
@@ -48,16 +50,19 @@ namespace RDKit {
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                            bool addDummies=true,
                            const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0,
-                           const std::vector< Bond::BondType > *bondTypes=0);
+                           const std::vector< Bond::BondType > *bondTypes=0,
+                           std::vector<unsigned int> *nCutsPerAtom=0);
     //! \overload
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns,
-                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons=0);
+                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons=0,
+                           std::vector<unsigned int> *nCutsPerAtom=0);
     void fragmentOnSomeBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                              std::vector<ROMOL_SPTR> &resMols,
                              unsigned int maxToCut=1,
                              bool addDummies=true,
                              const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0,
-                             const std::vector< Bond::BondType > *bondTypes=0);
+                             const std::vector< Bond::BondType > *bondTypes=0,
+                             std::vector<std::vector<unsigned int> > *nCutsPerAtom=0);
 
 
     //! \brief Fragments a molecule by breaking all BRICS bonds

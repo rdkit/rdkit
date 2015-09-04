@@ -1,7 +1,7 @@
 Unless otherwise noted, all files in this directory and all
 subdirectories are distributed under the following license:
 
-Copyright (c) 2006-2013
+Copyright (c) 2006-2015
 Rational Discovery LLC, Greg Landrum, and Julie Penzotti 
 
 All rights reserved.

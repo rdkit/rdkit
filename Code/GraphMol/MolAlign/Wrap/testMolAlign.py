@@ -408,6 +408,107 @@ class TestCase(unittest.TestCase):
         Chem.MolToMolFile(m1, fname2)
         m1=None
 
+    def test14Github385(self):
+      """ test github issue 385:
+        O3A code generating incorrect results for multiconformer molecules
+      """
+      def _multiConfFromSmiles(smiles, nConfs=10, maxIters=500):
+          """Adds hydrogens to molecule and optimises a chosen number of conformers.  Returns the optimised RDKit mol."""
+          idea = Chem.MolFromSmiles(smiles)
+          idea = Chem.AddHs(idea)
+          confs = rdDistGeom.EmbedMultipleConfs(idea, nConfs)
+
+          for conf in confs:
+              opt = ChemicalForceFields.MMFFOptimizeMolecule(idea, confId=conf, maxIters=maxIters)
+          return idea
+      def _confsToAlignedMolsList(multiConfMol):
+          """Input is a multiconformer RDKit mol.  Output is an aligned set of conformers as a list of RDKit mols."""
+          rdMolAlign.AlignMolConformers(multiConfMol)
+          ms = []
+          cids = [x.GetId() for x in multiConfMol.GetConformers()]
+          for cid in cids:
+              newmol = Chem.Mol(multiConfMol)
+              for ocid in cids:
+                if ocid==cid:
+                  continue
+                newmol.RemoveConformer(ocid)
+              ms.append(newmol)
+          return ms      
+      reference = Chem.MolFromSmiles("c1ccccc1N2CCC(NS(=O)(=O)C(F)(F)F)CC2")
+      reference = Chem.AddHs(reference)
+      rdDistGeom.EmbedMolecule(reference)
+      idea1 = _multiConfFromSmiles("c1ccccc1C2CCCCC2", 10)      
+      
+      idea1_mols = _confsToAlignedMolsList(idea1)
+      cids = [x.GetId() for x in idea1.GetConformers()]
+
+      refParams = ChemicalForceFields.MMFFGetMoleculeProperties(reference)
+      prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(idea1)
+
+      for i in range(len(cids)):
+          o3a1 = rdMolAlign.GetO3A(idea1_mols[i],reference,prbParams,refParams)
+          score1 = o3a1.Score()
+
+          o3a2 = rdMolAlign.GetO3A(idea1,reference,prbParams,refParams,prbCid=cids[i])
+          score2 = o3a2.Score()
+          self.assertAlmostEqual(score1,score2,3)
+
+    def test15MultiConfs(self):
+      " test multi-conf alignment "
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      suppl = Chem.SDMolSupplier(sdf,removeHs=False)
+      refMol = suppl[13]
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'probe_mol.sdf')
+      prbSuppl = Chem.SDMolSupplier(sdf,removeHs=False)
+      tms = [x for x in prbSuppl]
+      prbMol=tms[0]
+      for tm in tms[1:]:
+        prbMol.AddConformer(tm.GetConformer(),True)
+      self.failUnlessEqual(prbMol.GetNumConformers(),50)
+
+      refParams = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+      prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+      cp = Chem.Mol(prbMol)
+      o3s = rdMolAlign.GetO3AForProbeConfs(cp,refMol,1,prbParams,refParams)
+      for i in range(prbMol.GetNumConformers()):
+        cp2 = Chem.Mol(prbMol)
+        o3 = rdMolAlign.GetO3A(cp2,refMol,prbParams,refParams,prbCid=i)
+        self.failUnlessAlmostEqual(o3s[i].Align(),o3.Align(),6)
+        self.failUnlessAlmostEqual(o3s[i].Score(),o3.Score(),6)
+
+      cp = Chem.Mol(prbMol)
+      o3s = rdMolAlign.GetCrippenO3AForProbeConfs(cp,refMol)
+      for i in range(prbMol.GetNumConformers()):
+        cp2 = Chem.Mol(prbMol)
+        o3 = rdMolAlign.GetCrippenO3A(cp2,refMol,prbCid=i)
+        self.failUnlessAlmostEqual(o3s[i].Align(),o3.Align(),6)
+        self.failUnlessAlmostEqual(o3s[i].Score(),o3.Score(),6)
+
+    def test16MultithreadBug(self):
+      " test multi-conf alignment "
+      nConfs=10
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'bzr_data.sdf')
+      bzr_ms_o = [x for x in Chem.SDMolSupplier(sdf,removeHs=False)]
+      bzr_ms = [Chem.Mol(x) for x in bzr_ms_o]
+      for m in bzr_ms:
+        c = m.GetConformer()
+        while m.GetNumConformers()<nConfs:
+          cc = Chem.Conformer(c)
+          m.AddConformer(cc,assignId=True)
+
+      #refParams = ChemicalForceFields.MMFFGetMoleculeProperties(bzr_ms_o[0])
+         
+      for i,m in enumerate(bzr_ms):
+        #prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+        algs = rdMolAlign.GetO3AForProbeConfs(m,bzr_ms_o[0],numThreads=4#,prbPyMMFFMolProperties=prbParams,
+                                              #refPyMMFFMolProperties=refParams
+                                              )
+        self.failUnlessEqual(len(algs),nConfs)
+                
+
 if __name__ == '__main__':
     print("Testing MolAlign Wrappers")
     unittest.main()

@@ -196,7 +196,7 @@ namespace RDKit{
         // Three other neighbors:
         // --------------------------------------------------------------------------
         boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(heavyAtom);
-        if(heavyAtom->hasProp("_CIPCode")){
+        if(heavyAtom->hasProp(common_properties::_CIPCode)){
           // if the central atom is chiral, we'll order the neighbors
           // by CIP rank:
           std::vector< std::pair<int,int> >  nbrs;
@@ -204,9 +204,7 @@ namespace RDKit{
             if(*nbrIdx != hydIdx){
               const Atom *tAtom=mol->getAtomWithIdx(*nbrIdx);
               int cip=0;
-              if(tAtom->hasProp("_CIPRank")){
-                cip=tAtom->getProp<int>("_CIPRank");
-              }
+              tAtom->getPropIfPresent<int>(common_properties::_CIPRank, cip);
               nbrs.push_back(std::make_pair(cip,*nbrIdx));
             }
             ++nbrIdx;
@@ -246,7 +244,8 @@ namespace RDKit{
           if(fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect)))<0.1){
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
-            if(heavyAtom->hasProp("_CIPCode")){
+            std::string cipCode;
+            if(heavyAtom->getPropIfPresent(common_properties::_CIPCode, cipCode)){
               // the heavy atom is a chiral center, make sure
               // that we went go the right direction to preserve
               // its chirality. We use the chiral volume for this:
@@ -254,7 +253,7 @@ namespace RDKit{
               RDGeom::Point3D v2=nbr1Vect-nbr3Vect;
               RDGeom::Point3D v3=nbr2Vect-nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              std::string cipCode=heavyAtom->getProp<std::string>("_CIPCode");
+              // FIX: this is almost certainly wrong and should use the chiral tag
               if( (cipCode=="S" && vol<0) || (cipCode=="R" && vol>0) ){
                 dirVect*=-1;
               }
@@ -333,12 +332,12 @@ namespace RDKit{
             mol.addBond(aidx,newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            mol.getAtomWithIdx(newIdx)->setProp("isImplicit",1);
+            mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit,1);
             mol.getAtomWithIdx(newIdx)->updatePropertyCache();
             if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",newAt->getNoImplicit(), true);
+          newAt->setProp(common_properties::origNoImplicit,newAt->getNoImplicit(), true);
           newAt->setNoImplicit(true);
         }
         // update the atom's derived properties (valence count, etc.)
@@ -379,7 +378,7 @@ namespace RDKit{
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
 
-          if(atom->hasProp("isImplicit")){
+          if(atom->hasProp(common_properties::isImplicit)){
             removeIt=true;
           } else if(!implicitOnly && !atom->getIsotope() && atom->getDegree()==1){
             ROMol::ADJ_ITER begin,end;
@@ -451,7 +450,7 @@ namespace RDKit{
             // stereochem
             if(bond->getBondDir()==Bond::UNKNOWN
                && bond->getBeginAtomIdx()==heavyAtom->getIdx()){
-              heavyAtom->setProp("_UnknownStereo",1);
+              heavyAtom->setProp(common_properties::_UnknownStereo,1);
             }
 
             mol.removeAtom(atom);
@@ -462,12 +461,13 @@ namespace RDKit{
         } else {
           // only increment the atom idx if we don't remove the atom
           currIdx++;
-          if(atom->hasProp("origNoImplicit")){
+          bool origNoImplicit;
+          if(atom->getPropIfPresent(common_properties::origNoImplicit, origNoImplicit)){
             // we'll get in here if we haven't already processed the atom's implicit
             //  hydrogens. (this is protection for the case that removeHs() is called
             //  multiple times on a single molecule without intervening addHs() calls)
-            atom->setNoImplicit(atom->getProp<bool>("origNoImplicit"));
-            atom->clearProp("origNoImplicit");
+            atom->setNoImplicit(origNoImplicit);
+            atom->clearProp(common_properties::origNoImplicit);
           }
         }
       }
@@ -496,6 +496,71 @@ namespace RDKit{
       return static_cast<ROMol *>(res);
     }
 
+
+    namespace {
+      bool isQueryH(const Atom *atom){
+        PRECONDITION(atom,"bogus atom");
+        if( atom->getAtomicNum()==1){
+          // the simple case: the atom is flagged as being an H and
+          // has no query
+          if( !atom->hasQuery() ||
+              ( !atom->getQuery()->getNegation() &&
+                atom->getQuery()->getDescription()=="AtomAtomicNum"
+                )
+              ){
+            return true;
+          }
+        }
+
+        if( atom->getDegree() != 1){
+          // only degree 1
+          return false;
+        }
+
+        if(atom->hasQuery() && atom->getQuery()->getNegation() ){
+          // we will not merge negated queries
+          return false;
+        }
+
+        bool hasHQuery=false,hasOr=false;
+        if(atom->hasQuery()){
+          if(atom->getQuery()->getDescription()=="AtomOr"){
+            hasOr=true;
+          }
+          std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
+                                                                       atom->getQuery()->endChildren());
+          // the logic gets too complicated if there's an OR in the children, so just punt on those (with a warning)
+          while( !(hasHQuery && hasOr) && childStack.size() ){
+            QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
+            childStack.pop_front();
+            //std::cerr<<"                        "<<query->getDescription()<<std::endl;
+            if(query->getDescription()=="AtomHCount"){
+              hasHQuery=true;
+            } else if(query->getDescription()=="AtomOr") {
+              hasOr=true;
+            } else if(query->getDescription()=="AtomAtomicNum") {
+              if(static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal()!=1){
+                return false;  // we are safe here because we don't do anything with OR queries
+              }
+            } else {
+              QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
+              for(child1=query->beginChildren();
+                  child1!=query->endChildren();
+                  ++child1){
+                childStack.push_back(*child1);
+              }
+            }
+          }
+          //std::cerr<<"   !!!1 "<<atom->getIdx()<<" "<<hasHQuery<<" "<<hasOr<<std::endl;
+          if(hasHQuery && hasOr){
+            BOOST_LOG(rdWarningLog)<<"WARNING: merging explicit H queries involved in ORs is not supported. This query will not be merged"<<std::endl;
+            return false;
+          }
+        }
+        return hasHQuery;
+      }
+    } 
+
     //
     //  This routine removes explicit hydrogens (and bonds to them) from
     //  the molecular graph and adds them as queries to the heavy atoms
@@ -507,21 +572,31 @@ namespace RDKit{
     //     removed.  This prevents molecules like "[H][H]" from having
     //     all atoms removed.
     //
-    void mergeQueryHs(RWMol &mol){
+    //   - By default all hydrogens are removed, however if
+    //     merge_unmapped_only is true, any hydrogen participating
+    //     in an atom map will be retained
+    void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly){
       std::vector<unsigned int> atomsToRemove;
-      
+
+      boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        hatoms[i] = isQueryH(mol.getAtomWithIdx(i));
+      }
       unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
       while(currIdx < stopIdx){
         Atom *atom = mol.getAtomWithIdx(currIdx);
-        if(atom->getAtomicNum()!=1){
+        if(!hatoms[currIdx]){
           unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
           boost::tie(begin,end) = mol.getAtomNeighbors(atom);
+
           while(begin!=end){
-            if(mol.getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
-               mol.getAtomWithIdx(*begin)->getDegree() == 1 ){
-              atomsToRemove.push_back(*begin);
-              ++numHsToRemove;
+            if(hatoms[*begin]){
+              Atom &bgn = *mol.getAtomWithIdx(*begin);
+              if(!mergeUnmappedOnly || !bgn.hasProp(common_properties::molAtomMapNumber)){
+                atomsToRemove.push_back(*begin);
+                ++numHsToRemove;
+              }
             }
             ++begin;
           }
@@ -544,25 +619,8 @@ namespace RDKit{
             //  otherwise.
             //
             //  First we'll search for an H query:
-            bool hasHQuery=false;
-            if(atom->hasQuery()){
-              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
-                                                                           atom->getQuery()->endChildren());
-              while( !hasHQuery && childStack.size() ){
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-                childStack.pop_front();
-                if(query->getDescription()=="AtomHCount"){
-                  hasHQuery=true;
-                } else {
-                  QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-                  for(child1=query->beginChildren();
-                      child1!=query->endChildren();
-                      ++child1){
-                    childStack.push_back(*child1);
-                  }
-                }
-              }
-            } else {
+            bool hasHQuery=false,hasOr=false;
+            if(!atom->hasQuery()){
               // it wasn't a query atom, we need to replace it so that we can add a query:
               ATOM_EQUALS_QUERY *tmp=makeAtomNumQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
@@ -578,7 +636,33 @@ namespace RDKit{
                 atom->expandQuery(tmp);
               }
             }
-          }
+          } // end of numHsToRemove test
+
+          // recurse if needed (was github isusue 544)
+          if(atom->hasQuery()){
+            //std::cerr<<"  q: "<<atom->getQuery()->getDescription()<<std::endl;
+            if(atom->getQuery()->getDescription()=="RecursiveStructure"){
+              RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(atom->getQuery())->getQueryMol()));
+              mergeQueryHs(*rqm,mergeUnmappedOnly);
+            }
+
+            // FIX: shouldn't be repeating this code here
+            std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
+                                                                         atom->getQuery()->endChildren());
+            while(childStack.size()){
+              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
+              childStack.pop_front();
+              //std::cerr<<"      child: "<<qry->getDescription()<<std::endl;
+              if(qry->getDescription()=="RecursiveStructure"){
+                //std::cerr<<"    recurse"<<std::endl;
+                RWMol *rqm=static_cast<RWMol *>(const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(qry.get())->getQueryMol()));
+                mergeQueryHs(*rqm,mergeUnmappedOnly);
+                //std::cerr<<"    back"<<std::endl;
+              } else if (qry->beginChildren()!=qry->endChildren()){
+                childStack.insert(childStack.end(),qry->beginChildren(),qry->endChildren());
+              }
+            }
+          } // end of recursion loop
         }
         ++currIdx;
       }
@@ -590,9 +674,9 @@ namespace RDKit{
       }
 
     };
-    ROMol *mergeQueryHs(const ROMol &mol){
+    ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly){
       RWMol *res = new RWMol(mol);
-      mergeQueryHs(*res);
+      mergeQueryHs(*res, mergeUnmappedOnly);
       return static_cast<ROMol *>(res);
     };
 

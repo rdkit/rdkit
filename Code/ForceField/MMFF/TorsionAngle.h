@@ -44,6 +44,7 @@ namespace ForceFields {
         unsigned int idx3, unsigned int idx4, const MMFFTor *mmffTorParams);
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
+      virtual TorsionAngleContrib *copy() const { return new TorsionAngleContrib(*this); };
     private:
       int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
       double d_V1, d_V2, d_V3;

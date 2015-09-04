@@ -1,6 +1,7 @@
 from __future__ import print_function
 import unittest
 import os
+import io
 
 from rdkit.six.moves import cPickle as pickle
 
@@ -51,7 +52,10 @@ class TestCase(unittest.TestCase):
         infil.close()
 
         infile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data', 'PP_combi_charges.pkl')
-        with open(infile, 'rb') as cchFile:
+        with open(infile, 'r') as cchtFile:
+            buf = cchtFile.read().replace('\r\n', '\n').encode('utf-8')
+            cchtFile.close()
+        with io.BytesIO(buf) as cchFile:
             combiCharges = pickle.load(cchFile)
 
         for lin in lines :
@@ -108,6 +112,24 @@ class TestCase(unittest.TestCase):
         for i in range(m1.GetNumAtoms()):
             c1 = float(m1.GetAtomWithIdx(i).GetProp('_GasteigerCharge'))
             self.assertAlmostEqual(c1,chgs[i],3)
+            
+    def testGithubIssue577(self):
+        """ tests handling of Github issue 577 """
+        m1 = Chem.MolFromSmiles('CCO')
+        from locale import setlocale, LC_NUMERIC
+        try:
+            setlocale(LC_NUMERIC, "de_DE")
+        except:
+            # can't set the required locale, might as well just return
+            return
+        rdPartialCharges.ComputeGasteigerCharges(m1)
+        for at in m1.GetAtoms():
+            float(at.GetProp('_GasteigerCharge'))
+        setlocale(LC_NUMERIC, "C")
+        rdPartialCharges.ComputeGasteigerCharges(m1)
+        for at in m1.GetAtoms():
+            float(at.GetProp('_GasteigerCharge'))
+        
             
 if __name__== '__main__':
     unittest.main()

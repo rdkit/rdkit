@@ -19,6 +19,25 @@
 
 namespace ForceFields {
   namespace MMFF {
+    void _pretreatAngles(double &minAngleDeg, double &maxAngleDeg)
+    {
+      minAngleDeg = fmod(minAngleDeg, 360.0);
+      maxAngleDeg = fmod(maxAngleDeg, 360.0);
+      if (minAngleDeg > 180.0) minAngleDeg -= 360.0;
+      if (maxAngleDeg > 180.0) maxAngleDeg -= 360.0;
+      if ((minAngleDeg < 0.0) && (!(maxAngleDeg < 0.0))) {
+        maxAngleDeg = std::max(fabs(maxAngleDeg), fabs(minAngleDeg));
+        minAngleDeg = 0.0;
+      }
+      minAngleDeg = fabs(minAngleDeg);
+      maxAngleDeg = fabs(maxAngleDeg);
+      if (minAngleDeg > maxAngleDeg) {
+        double t = minAngleDeg;
+        minAngleDeg = maxAngleDeg;
+        maxAngleDeg = t;
+      }
+    }
+    
     AngleConstraintContrib::AngleConstraintContrib(ForceField *owner,
       unsigned int idx1, unsigned int idx2, unsigned int idx3,
       double minAngleDeg, double maxAngleDeg, double forceConst)
@@ -27,6 +46,7 @@ namespace ForceFields {
       RANGE_CHECK(0, idx1, owner->positions().size() - 1);
       RANGE_CHECK(0, idx2, owner->positions().size() - 1);
       RANGE_CHECK(0, idx3, owner->positions().size() - 1);
+      PRECONDITION(maxAngleDeg >= minAngleDeg, "allowedDeltaDeg must be >= 0.0");
       _pretreatAngles(minAngleDeg, maxAngleDeg);
 
       dp_forceField = owner;
@@ -48,6 +68,7 @@ namespace ForceFields {
       RANGE_CHECK(0, idx1, pos.size() - 1);
       RANGE_CHECK(0, idx2, pos.size() - 1);
       RANGE_CHECK(0, idx3, pos.size() - 1);
+      PRECONDITION(maxAngleDeg >= minAngleDeg, "allowedDeltaDeg must be >= 0.0");
 
       double angle = 0.0;
       if (relative) {

@@ -37,63 +37,10 @@
 #include <boost/algorithm/string.hpp>
 #include <vector>
 #include <string>
+#include "ReactionUtils.h"
 
 namespace RDKit {
   namespace DaylightParserUtils {
-    void updateProductsStereochem(ChemicalReaction *rxn){
-      // EFF: this isn't the speediest code the world has ever seen,
-      //   but we hopefully aren't going to be calling this a lot.
-      for(MOL_SPTR_VECT::const_iterator prodIt=rxn->beginProductTemplates();
-          prodIt!=rxn->endProductTemplates();++prodIt){
-        for(ROMol::AtomIterator prodAtomIt=(*prodIt)->beginAtoms();
-            prodAtomIt!=(*prodIt)->endAtoms();++prodAtomIt){
-          if(!(*prodAtomIt)->hasProp("molAtomMapNumber")){
-            // if we have stereochemistry specified, it's automatically creating stereochem:
-            (*prodAtomIt)->setProp("molInversionFlag",4);
-            continue;
-          } 
-          int mapNum;
-          (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
-          for(MOL_SPTR_VECT::const_iterator reactIt=rxn->beginReactantTemplates();
-              reactIt!=rxn->endReactantTemplates();++reactIt){
-            for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
-                reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
-              if(!(*reactAtomIt)->hasProp("molAtomMapNumber")) continue;
-              int reactMapNum;
-              (*reactAtomIt)->getProp("molAtomMapNumber",reactMapNum);
-              if(reactMapNum==mapNum){
-                // finally, in the bowels of the nesting, we get to some actual
-                // work:
-                if((*prodAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                   (*prodAtomIt)->getChiralTag()!=Atom::CHI_OTHER) {
-                  if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                     (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER){
-                    // both have stereochem specified:
-                    if((*reactAtomIt)->getChiralTag()==(*prodAtomIt)->getChiralTag()){
-                      (*prodAtomIt)->setProp("molInversionFlag",2);
-                    } else {
-                      // FIX: this is technically fragile: it should be checking
-                      // if the atoms both have tetrahedral chirality. However,
-                      // at the moment that's the only chirality available, so there's
-                      // no need to go monkeying around.
-                      (*prodAtomIt)->setProp("molInversionFlag",1);
-                    }
-                  } else {
-                    // stereochem in the product, but not in the reactant
-                    (*prodAtomIt)->setProp("molInversionFlag",4);
-                  }
-                } else if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                          (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER){
-                  // stereochem in the reactant, but not the product:
-                  (*prodAtomIt)->setProp("molInversionFlag",3);                  
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    
     std::vector<std::string> splitSmartsIntoComponents(const std::string &reactText){
       std::vector<std::string> res;
       unsigned int pos=0;
@@ -197,7 +144,7 @@ namespace RDKit {
       }
       rxn->addProductTemplate(ROMOL_SPTR(mol));
     }
-    DaylightParserUtils::updateProductsStereochem(rxn);
+    updateProductsStereochem(rxn);
 
     ROMol *agentMol;
     //allow a reaction template to have no agent specified

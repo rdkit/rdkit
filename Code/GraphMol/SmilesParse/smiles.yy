@@ -77,15 +77,6 @@ yysmiles_error( const char *input,
 
 /* --------------------------------------------------------------- */
 cmpd: mol
-| cmpd SEPARATOR_TOKEN mol {
-  RWMol *m1_p = (*molList)[$1],*m2_p=(*molList)[$3];
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
-  delete m2_p;
-  int sz = molList->size();
-  if ( sz==$3+1) {
-    molList->resize( sz-1 );
-  }
-}
 | cmpd error EOS_TOKEN{
   yyclearin;
   yyerrok;
@@ -110,7 +101,7 @@ mol: atomd {
   molList->resize( sz + 1);
   (*molList)[ sz ] = new RWMol();
   RDKit::RWMol *curMol = (*molList)[ sz ];
-  $1->setProp("_SmilesStart",1);
+  $1->setProp(RDKit::common_properties::_SmilesStart,1);
   curMol->addAtom($1);
   delete $1;
   $$ = sz;
@@ -154,6 +145,12 @@ mol: atomd {
   //delete $3;
 }
 
+| mol SEPARATOR_TOKEN atomd {
+  RWMol *mp = (*molList)[$$];
+  $3->setProp(RDKit::common_properties::_SmilesStart,1,true);
+  mp->addAtom($3,true,true);
+}
+
 | mol ring_number {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
@@ -162,13 +159,12 @@ mol: atomd {
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::UNSPECIFIED);
   mp->setBondBookmark(newB,$2);
-  newB->setProp("_unspecifiedOrder",1);
+  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
-  }
+  atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
+
   tmp.push_back(-($2+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
 
 | mol BOND_TOKEN ring_number {
@@ -180,11 +176,10 @@ mol: atomd {
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
-  }
+  atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
+
   tmp.push_back(-($3+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(RDKit::common_properties::_RingClosures,tmp);
   delete $2;
 }
 
@@ -196,11 +191,10 @@ mol: atomd {
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
   INT_VECT tmp;
-  if(atom->hasProp("_RingClosures")){
-    atom->getProp("_RingClosures",tmp);
-  }
+  atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
+
   tmp.push_back(-($3+1));
-  atom->setProp("_RingClosures",tmp);
+  atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
 
 | mol GROUP_OPEN_TOKEN atomd {
@@ -256,7 +250,7 @@ atomd:	simple_atom
 {
   $$ = $2;
   $$->setNoImplicit(true);
-  $$->setProp("molAtomMapNumber",$4);
+  $$->setProp(RDKit::common_properties::molAtomMapNumber,$4);
 }
 
 | ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN

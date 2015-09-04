@@ -82,15 +82,21 @@ namespace RDKit{
       \param sanitizeFrags  toggles sanitization of the fragments after
                             they are built
       \param frags used to return the mapping of Atoms->fragments.
-         if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long 
-	 on return and will contain the fragment assignment for each Atom
-
+         if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long
+	     on return and will contain the fragment assignment for each Atom
+      \param fragsMolAtomMapping  used to return the Atoms in each fragment
+         On return \c mapping will be \c numFrags long, and each entry
+         will contain the indices of the Atoms in that fragment.
+       \param copyConformers  toggles copying conformers of the fragments after
+                            they are built
       \return a vector of the fragments as smart pointers to ROMols
       
     */
     std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
                                                        bool sanitizeFrags=true,
-                                                       std::vector<int> *frags=0);
+                                                       std::vector<int> *frags=0,
+                                                       std::vector<std::vector<int> > *fragsMolAtomMapping=0,
+                                                       bool copyConformers=true);
 
     //! splits a molecule into pieces based on labels assigned using a query
     /*!
@@ -215,12 +221,53 @@ namespace RDKit{
           removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
           all atoms removed.
         - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+        - By default all hydrogens are removed, however if
+          mergeUnmappedOnly is true, any hydrogen participating
+          in an atom map will be retained
 	
     */
-    ROMol *mergeQueryHs(const ROMol &mol);
+    ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly=false);
     //! \overload
     // modifies the molecule in place
-    void mergeQueryHs(RWMol &mol);
+    void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly=false);
+
+    typedef enum {
+      ADJUST_EMPTY = 0x0,
+      ADJUST_RINGSONLY = 0x1,
+      ADJUST_IGNOREDUMMIES = 0x2,
+      ADJUST_SETALL = 0xFFFFFFF
+    } AdjustQueryWhichFlags;
+    struct AdjustQueryParameters {
+      bool adjustDegree; /**< add degree queries */
+      AdjustQueryWhichFlags adjustDegreeFlags;
+      bool adjustRingCount; /**< add ring-count queries */
+      AdjustQueryWhichFlags adjustRingCountFlags;
+
+      bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to any-atom queries */
+
+      AdjustQueryParameters() :
+        adjustDegree(true),
+        adjustDegreeFlags(ADJUST_SETALL),
+        adjustRingCount(false),
+        adjustRingCountFlags(ADJUST_SETALL),
+        makeDummiesQueries(true)
+
+      {}
+      };
+    //! returns a copy of a molecule with query properties adjusted
+    /*!
+      \param mol the molecule to adjust
+      \param params controls the adjustments made
+     
+      \return the new molecule 
+    */
+    ROMol *adjustQueryProperties(const ROMol &mol,
+                                 const AdjustQueryParameters *params=NULL);
+    //! \overload
+    // modifies the molecule in place
+    void adjustQueryProperties(RWMol &mol,
+                               const AdjustQueryParameters *params=NULL
+                               );
 
     //! returns a copy of a molecule with the atoms renumbered
     /*!
@@ -563,6 +610,7 @@ namespace RDKit{
                6.0/(atomic number)
       \param force           forces calculation of the matrix, even if already computed
       \param propNamePrefix  used to set the cached property name
+                             (if set to an empty string, the matrix will not be cached)
 
       \return the distance matrix.
 
@@ -597,6 +645,7 @@ namespace RDKit{
 
     //@}
     
+#if 0
     //! \name Canonicalization
     //@{
 
@@ -658,7 +707,7 @@ namespace RDKit{
                              std::vector<std::vector<int> > *rankHistory=0);
 
     // @}
-
+#endif
     //! \name Stereochemistry
     //@{
 

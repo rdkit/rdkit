@@ -9,7 +9,7 @@
 //
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolOps.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <boost/foreach.hpp>
@@ -43,10 +43,9 @@ namespace RDKit {
         res->addAtom(nAtom,false,true);
 
         // take care of atom-numbering-dependent properties:
-        if(nAtom->hasProp("_ringStereoAtoms")){
+        INT_VECT nAtoms;
+        if(nAtom->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)){
           // FIX: ought to be able to avoid this copy.
-          INT_VECT nAtoms;
-          nAtom->getProp<INT_VECT>("_ringStereoAtoms",nAtoms);
           BOOST_FOREACH(int &val,nAtoms){
             if(val<0){
               val=-1*(revOrder[(-val-1)]+1);
@@ -54,7 +53,7 @@ namespace RDKit {
               val=revOrder[val-1]+1;
             }
           }
-          nAtom->setProp("_ringStereoAtoms",nAtoms,true);
+          nAtom->setProp(common_properties::_ringStereoAtoms,nAtoms,true);
         }
       }          
             
@@ -78,8 +77,10 @@ namespace RDKit {
           ++oConf){
         Conformer *nConf=new Conformer(nAts);
         for(unsigned int i=0;i<nAts;++i){
-          nConf->setAtomPos(i,(*oConf)->getAtomPos(revOrder[i]));
+          nConf->setAtomPos(i,(*oConf)->getAtomPos(newOrder[i]));
         }
+        nConf->setId((*oConf)->getId());
+        nConf->set3D((*oConf)->is3D());
         res->addConformer(nConf);
       }
 

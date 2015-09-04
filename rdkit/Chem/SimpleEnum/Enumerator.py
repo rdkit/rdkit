@@ -34,9 +34,12 @@ from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import FunctionalGroups
+from rdkit.Chem import rdChemReactions
+
+
 import os
 
-def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDBaseDir,'Data','Functional_Group_Hierarchy.txt'),propName='molFileValue'):
+def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt'),propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
@@ -126,7 +129,10 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDBaseDi
     File "Enumerator.py", line 105, in PreprocessReaction
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName='molFileValue', getLabels=True)
   RuntimeError: KeyErrorException
-
+  >>> rxn = rdChemReactions.ChemicalReaction()
+  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
+  >>> reactantLabels == []
+  True
   """
   reaction._setImplicitPropertiesFlag(True)
   reaction.Initialize()
@@ -141,10 +147,12 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDBaseDi
       raise IOError('cannot open', funcGroupFilename)
     else:
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName, getLabels=True)
+  else:
+    reactantLabels = []
 
   return nWarn,nError,nReactants,nProducts,reactantLabels
 
-def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilename=os.path.join(RDConfig.RDBaseDir,'Data','Functional_Group_Hierarchy.txt'),propName='molFileValue'):
+def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilename=os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt'),propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)

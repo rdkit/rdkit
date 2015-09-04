@@ -8,7 +8,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Exceptions.h>
 #include "BitVects.h"
 #include "BitOps.h"
 #include <math.h>
@@ -16,7 +15,7 @@
 #include <iostream>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <sstream>
 
 #include <boost/lexical_cast.hpp>

@@ -95,6 +95,7 @@ namespace RDKit {
       \param includeChirality: if set, chirality will be used in the atom invariants
                                (note: this is ignored if atomInvariants are provided)  
       \param use2D:       if set, the 2D (topological) distance matrix is used.
+      \param confId:      the conformation to use if 3D distances are being used
       
 
       \return a pointer to the fingerprint. The client is
@@ -108,7 +109,8 @@ namespace RDKit {
                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
                            const std::vector<boost::uint32_t> *atomInvariants=0,
                            bool includeChirality=false,
-                           bool use2D=true);
+                           bool use2D=true,
+                           int confId=-1);
     //! \overload
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,
@@ -116,7 +118,8 @@ namespace RDKit {
                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
                            const std::vector<boost::uint32_t> *atomInvariants=0,
                            bool includeChirality=false,
-                           bool use2D=true);
+                           bool use2D=true,
+                           int confId=-1);
 
 
     //! returns the hashed atom-pair fingerprint for a molecule
@@ -154,7 +157,8 @@ namespace RDKit {
                                  const std::vector<boost::uint32_t> *ignoreAtoms=0,
                                  const std::vector<boost::uint32_t> *atomInvariants=0,
                                  bool includeChirality=false,
-                                 bool use2D=true);
+                                 bool use2D=true,
+                                 int confId=-1);
     //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
     /*!
       \param mol:   the molecule to be fingerprinted
@@ -177,6 +181,7 @@ namespace RDKit {
       \param includeChirality: if set, chirality will be used in the atom invariants
                                (note: this is ignored if atomInvariants are provided)  
       \param use2D:       if set, the 2D (topological) distance matrix is used.
+      \param confId:      the conformation to use if 3D distances are being used
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -192,7 +197,8 @@ namespace RDKit {
                                           const std::vector<boost::uint32_t> *atomInvariants=0,
                                           unsigned int nBitsPerEntry=4,
                                           bool includeChirality=false,
-                                          bool use2D=true);
+                                          bool use2D=true,
+                                          int confId=-1);
                                           
 
 

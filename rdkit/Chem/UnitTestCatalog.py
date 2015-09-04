@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 import os
+import io
 import unittest
 from rdkit import RDConfig
 from rdkit import Chem
@@ -87,7 +88,10 @@ class TestCase(unittest.TestCase):
   def test3CatFilePickle(self):
     with open(os.path.join(RDConfig.RDCodeDir,'Chem',
                            'test_data','simple_catalog.pkl'),
-              'rb') as pklFile:
+              'r') as pklTFile:
+      buf = pklTFile.read().replace('\r\n', '\n').encode('utf-8')
+      pklTFile.close()
+    with io.BytesIO(buf) as pklFile:
       cat = cPickle.load(pklFile, encoding='bytes')
     assert cat.GetNumEntries()==21
     assert cat.GetFPLength()==21
@@ -104,22 +108,22 @@ class TestCase(unittest.TestCase):
     #  text representations (i.e. there is nothing to distinguish
     #  between 'CC<-O>CC' and 'CCC<-O>C').
     # This ought to eventually be cleaned up.
-    descrs = [(0,'CC<-O>',1,(34,)),
+    descrs = [(0,'C<-O>C',1,(34,)),
               (1,'CC',1,()),
-              (2,'CCC<-O>',2,(34,)),
+              (2,'C<-O>CC',2,(34,)),
               (3,'CCC',2,()),
               (4,'C=C',1,()),
               (5,'C=CC',2,()),
-              (6,'C=C<-O>',1,(34,)),
+              (6,'C<-O>=C',1,(34,)),
               (7,'C<-O>=CC',2,(34,)),
               (8,'CC<-O>C',2,(34,)),
               (9,'C=C<-O>C',2,(34,)),
-              (10,'CCCC<-O>',3,(34,)),
-              (11,'CCC<-O>C',3,(34,)),
+              (10,'C<-O>CCC',3,(34,)),
+              (11,'CC<-O>CC',3,(34,)),
               (12,'C=CCC',3,()),
               (13,'CC=CC',3,()),
               (14,'C<-O>=CCC',3,(34,)),
-              (15,'CC<-O>=CC',3,(34,)),
+              (15,'CC=C<-O>C',3,(34,)),
               (16,'C=CC<-O>',2,(34,)),
              ]
     for i in range(len(descrs)):
@@ -191,13 +195,13 @@ class TestCase(unittest.TestCase):
                                              reportFreq=20,biasList=(1,))
     entry = bitInfo[0]
     assert int(entry[0])==0
-    assert cat.GetBitDescription(int(entry[0]))=='CC<-O>'
+    assert cat.GetBitDescription(int(entry[0]))=='C<-O>C'
     assert feq(entry[1],0.4669)
 
     entry = bitInfo[1]
     assert int(entry[0]) in (2,6)
     txt = cat.GetBitDescription(int(entry[0]))
-    self.assertTrue( txt in ('CCC<-O>','C=C<-O>'), txt) 
+    self.assertTrue( txt in ('C<-O>CC','C<-O>=C'), txt) 
     assert feq(entry[1],0.1611)
 
     entry = bitInfo[6]
@@ -210,7 +214,7 @@ class TestCase(unittest.TestCase):
                                              reportFreq=20)
     entry = bitInfo[0]
     assert int(entry[0])==0
-    assert cat.GetBitDescription(int(entry[0]))=='CC<-O>'
+    assert cat.GetBitDescription(int(entry[0]))=='C<-O>C'
     assert feq(entry[1],0.4669)
 
     entry = bitInfo[1]

@@ -332,14 +332,14 @@ void testQueries(){
   smi="C";
   m1= SmilesToMol(smi);
   TEST_ASSERT(m1);
-  m1->getAtomWithIdx(0)->setProp("molAtomMapNumber",1);
+  m1->getAtomWithIdx(0)->setProp(common_properties::molAtomMapNumber,1);
   MolPickler::pickleMol(*m1,pickle);
   delete m1;
   m1 = new ROMol();
   MolPickler::molFromPickle(pickle,*m1);
   TEST_ASSERT(m1->getNumAtoms()==1);
-  TEST_ASSERT(m1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  m1->getAtomWithIdx(0)->getProp("molAtomMapNumber",tmpInt);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+  m1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,tmpInt);
   TEST_ASSERT(tmpInt==1);
   delete m1;
 
@@ -779,8 +779,8 @@ void testIssue3316407(){
       TEST_ASSERT(m->getAtomWithIdx(i)->getImplicitValence()==m2->getAtomWithIdx(i)->getImplicitValence());
     }
     // part of sf.net issue 285:
-    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("dummyLabel"));
-    TEST_ASSERT(m2->getAtomWithIdx(4)->hasProp("dummyLabel"));
+    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp(common_properties::dummyLabel));
+    TEST_ASSERT(m2->getAtomWithIdx(4)->hasProp(common_properties::dummyLabel));
     
     delete m;
     delete m2;
@@ -857,20 +857,20 @@ void testIssue280(){
     ROMol *m1 = SmilesToMol("CCC");
     TEST_ASSERT(m1);
     std::string v="1";
-    m1->getAtomWithIdx(0)->setProp("molAtomMapNumber",v);
+    m1->getAtomWithIdx(0)->setProp(common_properties::molAtomMapNumber,v);
     // ints still work
-    m1->getAtomWithIdx(1)->setProp("molAtomMapNumber",2);
+    m1->getAtomWithIdx(1)->setProp(common_properties::molAtomMapNumber,2);
     
     std::string pickle;
     MolPickler::pickleMol(*m1,pickle);
     RWMol *m2 = new RWMol(pickle);
     TEST_ASSERT(m2);
-    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molAtomMapNumber"));
+    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molAtomMapNumber));
     int iv;
-    m2->getAtomWithIdx(0)->getProp("molAtomMapNumber",iv);
+    m2->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,iv);
     TEST_ASSERT(iv==1);
-    m2->getAtomWithIdx(1)->getProp("molAtomMapNumber",iv);
+    m2->getAtomWithIdx(1)->getProp(common_properties::molAtomMapNumber,iv);
     TEST_ASSERT(iv==2);
     delete m1;
     delete m2;
@@ -880,13 +880,13 @@ void testIssue280(){
     ROMol *m1 = SmilesToMol("CC");
     TEST_ASSERT(m1);
     std::string v="foo";
-    m1->getAtomWithIdx(0)->setProp("molAtomMapNumber",v);
+    m1->getAtomWithIdx(0)->setProp(common_properties::molAtomMapNumber,v);
 
     std::string pickle;
     MolPickler::pickleMol(*m1,pickle);
     RWMol *m2 = new RWMol(pickle);
     TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
     delete m1;
     delete m2;
   }
@@ -902,14 +902,14 @@ void testIssue285(){
     ROMol *m1 = SmilesToMol("*C");
     TEST_ASSERT(m1);
     std::string v="R";
-    m1->getAtomWithIdx(0)->setProp("dummyLabel",v);
+    m1->getAtomWithIdx(0)->setProp(common_properties::dummyLabel,v);
     
     std::string pickle;
     MolPickler::pickleMol(*m1,pickle);
     RWMol *m2 = new RWMol(pickle);
     TEST_ASSERT(m2);
-    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("dummyLabel"));
-    m2->getAtomWithIdx(0)->getProp("dummyLabel",v);
+    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp(common_properties::dummyLabel));
+    m2->getAtomWithIdx(0)->getProp(common_properties::dummyLabel,v);
     TEST_ASSERT(v=="R");
     delete m1;
     delete m2;

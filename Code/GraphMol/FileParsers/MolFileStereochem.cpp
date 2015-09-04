@@ -16,7 +16,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include "MolFileStereochem.h"
-#include <GraphMol/RankAtoms.h>
+#include <RDGeneral/Ranking.h>
 
 namespace RDKit {
   typedef std::list<double> DOUBLE_LIST;
@@ -385,7 +385,7 @@ namespace RDKit {
     std::vector< unsigned int > indices(mol.getNumAtoms());
     for(unsigned int i=0;i<mol.getNumAtoms();++i) indices[i]=i; 
     if(chiNbrs){
-      std::sort(indices.begin(),indices.end(),RankAtoms::argless<INT_VECT>(nChiralNbrs));
+      std::sort(indices.begin(),indices.end(),Rankers::argless<INT_VECT>(nChiralNbrs));
     }
 #if 0
     std::cerr<<"  nbrs: ";
@@ -441,7 +441,7 @@ namespace RDKit {
       // as it seems like it is. (I'm going into this knowing that it's bound to 
       // happen; I'll kick myself and do the hard solution at that point.)
       CHECK_INVARIANT(nbrScores.size(),"no eligible neighbors for chiral center");
-      std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<int,int>());
+      std::sort(nbrScores.begin(),nbrScores.end(),Rankers::pairLess<int,int>());
       res[nbrScores[0].second] = idx;
     }
     return res;
@@ -907,7 +907,7 @@ namespace RDKit {
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::SINGLE) {
         if ((*bondIt)->getBondDir() == Bond::UNKNOWN)
-          (*bondIt)->setProp("_UnknownStereo", 1);
+          (*bondIt)->setProp(common_properties::_UnknownStereo, 1);
         (*bondIt)->setBondDir(Bond::NONE);
       }
     }
@@ -935,6 +935,12 @@ namespace RDKit {
     // stereochemistry
     // NOTE that we are explicitly excluding double bonds in rings
     // with this test.
+    bool resetRings=false;
+    if(!mol.getRingInfo()->isInitialized()){
+      resetRings=true;
+      MolOps::fastFindRings(mol);
+    }
+
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::DOUBLE &&
@@ -944,8 +950,6 @@ namespace RDKit {
           (*bondIt)->getEndAtom()->getDegree()>1 &&
           !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))
           ){
-        bondsInPlay.push_back(*bondIt);
-
         const Atom *a1=(*bondIt)->getBeginAtom();
         const Atom *a2=(*bondIt)->getEndAtom();
 
@@ -973,10 +977,12 @@ namespace RDKit {
           }
           ++beg;
         }
+        bondsInPlay.push_back(*bondIt);
       }
     }
 
     if(!bondsInPlay.size()){
+      if(resetRings) mol.getRingInfo()->reset();
       return;
     }
 
@@ -1002,5 +1008,6 @@ namespace RDKit {
          ++pairIter){
       updateDoubleBondNeighbors(mol,pairIter->second,conf,needsDir,singleBondCounts);
     }
+    if(resetRings) mol.getRingInfo()->reset();
   }
 }

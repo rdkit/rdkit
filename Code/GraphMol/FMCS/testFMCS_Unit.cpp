@@ -54,6 +54,8 @@
 #include "FMCS.h"
 #include "DebugTrace.h" //#ifdef VERBOSE_STATISTICS_ON
 
+#include "../Substruct/SubstructMatch.h"
+
 using namespace RDKit;
 
 MCSParameters p;
@@ -327,8 +329,7 @@ void testThreshold() {
     std::vector<ROMOL_SPTR> mols;
     const char* smi[] = {
         "CCC", "CCCO", "CCCN", "CC",
-        "CCC", "CCCO", "CCCN", "CC",
-        "CCC", "CC",
+//        "CCC", "CC", //th=0.5
     };
     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
@@ -338,7 +339,7 @@ void testThreshold() {
     MCSResult res = findMCS(mols, &p);
     std::cout << "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n";
     printTime();
-    p.Threshold = 1.0;
+    p.Threshold = 1.0; // restore default value
     TEST_ASSERT(res.NumAtoms==3 && res.NumBonds==2);
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -596,6 +597,210 @@ void testSimpleFast() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void compareChirality(const char* target, const char* query, bool useChirality) {
+
+   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+   std::cout << "test target = " << target << " query = " << query << " useChirality = " << useChirality << std::endl;
+   ROMOL_SPTR target_ptr(SmilesToMol(target));
+   ROMOL_SPTR query_ptr(SmartsToMol(query));
+
+   std::vector< std::pair<int, int> > vect;
+   bool sub_res = SubstructMatch(*target_ptr.get(), *query_ptr.get(), vect, true, useChirality);
+
+   std::cout << "res sub = " << sub_res << " size="<<vect.size() << std::endl;
+
+   std::vector<ROMOL_SPTR> mols;
+   mols.push_back(target_ptr);
+   mols.push_back(query_ptr);
+
+   p.AtomCompareParameters.MatchChiralTag = useChirality;
+   p.BondCompareParameters.MatchStereo = useChirality;
+
+   MCSResult mcs_res = findMCS(mols, &p);
+   std::cout << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
+
+   bool mcs_resb = query_ptr->getNumAtoms() == mcs_res.NumAtoms && query_ptr->getNumBonds() == mcs_res.NumBonds;
+   TEST_ASSERT(sub_res == mcs_resb);
+   if(sub_res != mcs_resb){// || vect.size() != mcs_res.NumAtoms) {
+       BOOST_LOG(rdInfoLog) << "mcs_resb="<<mcs_resb<<"\t*** TEST FAILED ***\n"; //exit(1);
+   }
+}
+
+void testSubMcsChirality(const char* target, const char* query) {
+   compareChirality(target, query, false);
+   compareChirality(target, query, true);
+}
+
+void testChirality() {
+   
+   BOOST_LOG(rdInfoLog) << "\n-------------------------------------" << std::endl;
+   BOOST_LOG(rdInfoLog) << "Testing FMCS testChirality" << std::endl;
+   
+   testSubMcsChirality ("O[C@H](F)CCl", "C(F)C");   // MCS = CCF
+   testSubMcsChirality ("CC[C@H](F)Cl", "CCC");     // MCS = CCC
+   testSubMcsChirality ("CCC(F)Cl"    , "CC");      // MCS = CC
+
+//GREG's tests:
+   testSubMcsChirality ("C[C@H](F)CCl", "C[C@H](F)C");
+   testSubMcsChirality ("C[C@H](F)CCl", "C[C@@H](F)C");
+   testSubMcsChirality ("O[C@H](F)CCl", "CC(F)C"); // DISMATCH. but actually it has non chiral MCS = CCF
+   testSubMcsChirality ("O[C@H](F)CCl", "OC(F)C");
+   testSubMcsChirality ("O[C@H](F)CCl", "O[C@H](F)C");
+   testSubMcsChirality ("O[C@H](F)CCl", "O[C@@H](F)C");
+   
+   testSubMcsChirality ("OC(F)CCl", "OC(F)C");
+   testSubMcsChirality ("OC(F)CCl", "O[C@H](F)C");
+   testSubMcsChirality ("OC(F)CCl", "O[C@@H](F)C");
+   
+   testSubMcsChirality ("O[C@H](F)CCl", "O[C@H]C");
+   testSubMcsChirality ("O[C@H](F)CCl", "O[C@@H]C");
+
+//ADD-IN TESTS:
+   std::cout << "\n0. <<<<<<<<< actual MCS: [#6]-[#6]-[#6] 3 atoms, 2 bonds >>>>>>>\n";
+   testSubMcsChirality ("CC[C@H](F)Cl", "CC[C@H]"); //  actual MCS is CCC always. We lost last [C@H]
+
+/* //TEMP (asymmetric implementation of match algorithm, that is incorrect for FMCS task):
+   std::cout << "\nTEMP query/targ==MCS[asymmetric implementation of match algorithm]\n";
+   std::cout << "1. <<<<<<<<< MCS: [#8]-[#6]-[#9] 3 atoms, 2 bonds >>>>>>>\n";
+   testSubMcsChirality ("O[C@H](F)", "OC(F)"    ); // PASSED
+/ /   testSubMcsChirality ("OC(F)"    , "O[C@H](F)"); // FAILED !!! 
+   std::cout << "\n2.1<<<<<<<<< MCS: [#8]-[#6]-[#6] 3 atoms, 2 bonds >>>>>>>\n";
+   testSubMcsChirality ("OC[C@H](F)C", "OC(F)C"    ); // PASSED but incorrect
+   std::cout << "\n2.2<<<<<<<<< MCS: [#8]-[#6](-[#9])-[#6] 4 atoms, 3 bonds >>>>>>>\n";
+   testSubMcsChirality ("OC(F)C"     , "O[C@H](F)C"); // FAILED !!! 
+*/
+   std::cout << "\tdone" << std::endl;
+   p = MCSParameters(); // restore
+}
+
+void testJSONParameters() {
+
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "Testing FMCS testJSONParameters"<< std::endl;
+    MCSParameters pj;
+
+    parseMCSParametersJSON (NULL, &pj);
+    parseMCSParametersJSON ("{}", NULL);
+
+    pj = MCSParameters();
+    parseMCSParametersJSON ("", &pj);
+    TEST_ASSERT(pj.MaximizeBonds == true && pj.Threshold == 1.0 && pj.Timeout == -1 &&
+                pj.AtomCompareParameters.MatchValences  == false &&
+                pj.AtomCompareParameters.MatchChiralTag == false &&
+                pj.BondCompareParameters.MatchStereo    == false &&
+                pj.BondCompareParameters.RingMatchesRingOnly == false &&
+                pj.BondCompareParameters.CompleteRingsOnly   == false);
+
+    pj = MCSParameters();
+    const char json[]="{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3,"
+                      " \"MatchValences\": true, \"MatchChiralTag\": true,"
+                      " \"MatchStereo\": true, \"RingMatchesRingOnly\": true, \"CompleteRingsOnly\": true}";
+    parseMCSParametersJSON (json, &pj);
+    TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 && pj.Timeout == 3 &&
+                pj.AtomCompareParameters.MatchValences  == true &&
+                pj.AtomCompareParameters.MatchChiralTag == true &&
+                pj.BondCompareParameters.MatchStereo    == true &&
+                pj.BondCompareParameters.RingMatchesRingOnly == true &&
+                pj.BondCompareParameters.CompleteRingsOnly   == true);
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGithubIssue481() {
+    BOOST_LOG(rdInfoLog) << "\n-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "Testing github #481 : order dependence in FMCS with chirality" << std::endl;
+
+    {
+      std::string s1="O[C@H](C)Cl";
+      std::string s2="O[C@@H](C)Cl";
+      ROMOL_SPTR ptr1(SmilesToMol(s1));
+      ROMOL_SPTR ptr2(SmilesToMol(s2));
+      std::vector<ROMOL_SPTR> mols;
+      mols.push_back(ptr1);
+      mols.push_back(ptr2);
+
+      {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = false;
+        p.BondCompareParameters.MatchStereo = false;
+        MCSResult mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==4);
+        TEST_ASSERT(mcs_res.NumBonds==3);
+
+        p.AtomCompareParameters.MatchChiralTag = true;
+        p.BondCompareParameters.MatchStereo = true;
+        mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==0);
+        TEST_ASSERT(mcs_res.NumBonds==0);
+      }
+
+      mols.clear();
+      mols.push_back(ptr2);
+      mols.push_back(ptr1);
+      {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = false;
+        p.BondCompareParameters.MatchStereo = false;
+        MCSResult mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==4);
+        TEST_ASSERT(mcs_res.NumBonds==3);
+
+        p.AtomCompareParameters.MatchChiralTag = true;
+        p.BondCompareParameters.MatchStereo = true;
+        mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==0);
+        TEST_ASSERT(mcs_res.NumBonds==0);
+      }
+
+    }
+
+    {
+      std::string s1="OC(C)Cl";
+      std::string s2="O[C@H](C)Cl";
+      ROMOL_SPTR ptr1(SmilesToMol(s1));
+      ROMOL_SPTR ptr2(SmilesToMol(s2));
+      std::vector<ROMOL_SPTR> mols;
+      mols.push_back(ptr1);
+      mols.push_back(ptr2);
+
+      {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = false;
+        p.BondCompareParameters.MatchStereo = false;
+        MCSResult mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==4);
+        TEST_ASSERT(mcs_res.NumBonds==3);
+
+        p.AtomCompareParameters.MatchChiralTag = true;
+        p.BondCompareParameters.MatchStereo = true;
+        mcs_res = findMCS(mols, &p);
+        std::vector< std::pair<int, int> > vect;
+        bool sub_res = SubstructMatch(*mols[1].get(), *mols[0].get(), vect, true, true);
+        if(sub_res==false) { // actually ==true & 4, 3 !!!
+         TEST_ASSERT(mcs_res.NumAtoms==0);
+         TEST_ASSERT(mcs_res.NumBonds==0);
+        }
+      }
+
+      mols.clear();
+      mols.push_back(ptr2);
+      mols.push_back(ptr1);
+      {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = false;
+        p.BondCompareParameters.MatchStereo = false;
+        MCSResult mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==4);
+        TEST_ASSERT(mcs_res.NumBonds==3);
+
+        p.AtomCompareParameters.MatchChiralTag = true;
+        p.BondCompareParameters.MatchStereo = true;
+        mcs_res = findMCS(mols, &p);
+        TEST_ASSERT(mcs_res.NumAtoms==0);
+        TEST_ASSERT(mcs_res.NumBonds==0);
+      }
+    }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 //====================================================================================================
 //====================================================================================================
 
@@ -605,8 +810,6 @@ int main(int argc, const char* argv[]) {
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     BOOST_LOG(rdInfoLog) << "FMCS Unit Test \n";
 
-
-
 // use maximum CPU resoures to increase time measuring accuracy and stability in multi process environment
 #ifdef WIN32
 //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
@@ -614,6 +817,12 @@ int main(int argc, const char* argv[]) {
 #else
     setpriority(PRIO_PROCESS, getpid(), -20);
 #endif
+
+    testGithubIssue481();
+
+    testChirality();
+
+    testJSONParameters();
 
     T0 = nanoClock();
     t0 = nanoClock();
@@ -636,10 +845,9 @@ int main(int argc, const char* argv[]) {
 
     test18();
     test504();
-#if 0 //disable these by default because they are very long.
-    test330();  // SLOW test
-    test45();   // SLOW
-#endif
+    //test330();  // SLOW test
+    //test45();   // SLOW
+
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
     printf("TOTAL Time elapsed %.2lf seconds\n", sec);

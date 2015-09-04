@@ -84,12 +84,16 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -153,12 +157,16 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -215,12 +223,16 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -270,12 +282,16 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      dp_ostream->flush();
+      try {
+        dp_ostream->flush();
+      } catch(...){
+      }
+      std::ostream *tmp_ostream = dp_ostream;
+      dp_ostream = NULL;
       if(df_owner) {
-        delete dp_ostream;
+        delete tmp_ostream;
         df_owner=false;
       }
-      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far

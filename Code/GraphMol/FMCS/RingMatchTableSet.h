@@ -150,7 +150,7 @@ namespace RDKit {
                             FMCS::SubstructMatchCustomTable(graph2, graph1, tag->AtomMatchTable, tag->BondMatchTable);
 #else //noticable slowly:
                             FMCS::SubstructMatchCustom( graph2, *targetMolecule , graph1, *query
-                                                        , parameters.AtomTyper, parameters.BondTyper, parameters.AtomCompareParameters, bp, NULL);
+                                                        , parameters.AtomTyper, parameters.BondTyper, NULL, parameters.AtomCompareParameters, bp, NULL);
 #endif
                         if(match)
                             m.setMatch(i, &*r2);

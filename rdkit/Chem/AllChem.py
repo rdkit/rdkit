@@ -238,7 +238,7 @@ def GetConformerRMS(mol,confId1,confId2,atomIds=None,prealigned=False):
   ssr /= mol.GetNumAtoms()
   return numpy.sqrt(ssr)
 
-def GetConformerRMSMatrix(mol,atomIds=None):
+def GetConformerRMSMatrix(mol,atomIds=None,prealigned=False):
   """ Returns the RMS matrix of the conformers of a molecule.
   As a side-effect, the conformers will be aligned to the first
   conformer (i.e. the reference) and will left in the aligned state.
@@ -247,6 +247,9 @@ def GetConformerRMSMatrix(mol,atomIds=None):
     - mol:     the molecule
     - atomIds: (optional) list of atom ids to use a points for
                alingment - defaults to all atoms
+    - prealigned: (optional) by default the conformers are assumed
+                  be unaligned and will therefore be aligned to the
+                  first conformer
     
   Note that the returned RMS matrix is symmetrically, i.e. it is the
   lower half of the matrix, e.g. for 5 conformers:
@@ -258,13 +261,17 @@ def GetConformerRMSMatrix(mol,atomIds=None):
   clustering.
       
   """
-  # align the conformers
+  # if necessary, align the conformers
   # Note: the reference conformer is always the first one
   rmsvals = []
-  if atomIds:
-    AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
-  else:
-    AlignMolConformers(mol, RMSlist=rmsvals)
+  if not prealigned:
+    if atomIds:
+      AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
+    else:
+      AlignMolConformers(mol, RMSlist=rmsvals)
+  else: # already prealigned
+    for i in range(1, mol.GetNumConformers()):
+      rmsvals.append(GetConformerRMS(mol, 0, i, atomIds=atomIds, prealigned=prealigned))
   # loop over the conformations (except the reference one)
   cmat = []
   for i in range(1, mol.GetNumConformers()):
@@ -446,7 +453,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     >>> template=AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
     >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4FTR_lig.mol'))
     >>> AllChem.MolToSmiles(mol)
-    'COC1CC(C2CCC3C(C2)NC2CCC(CC(O)N(C)C)CC2NC3O)CCC1N(O)O'
+    'COC1CC(C2CCC3C(O)NC4CC(CC(O)N(C)C)CCC4NC3C2)CCC1N(O)O'
     >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
     >>> AllChem.MolToSmiles(newMol)
     'COc1cc(-c2ccc3c(c2)Nc2ccc(CC(=O)N(C)C)cc2NC3=O)ccc1[N+](=O)[O-]'

@@ -70,7 +70,7 @@ void runSDFile(std::string fileName,int checkEvery=10){
   mol = (RWMol *)suppl.next();
   while(mol){
     std::string name;
-    mol->getProp("_Name",name);
+    mol->getProp(common_properties::_Name,name);
     std::cerr << "Mol: " << name << std::endl;
     try{
       MolOps::sanitizeMol(*mol);

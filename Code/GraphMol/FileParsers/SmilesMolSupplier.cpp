@@ -199,13 +199,13 @@ namespace RDKit {
         std::ostringstream tstr;
         tstr << d_line;
         std::string mname = tstr.str();
-        res->setProp("_Name", mname);
+        res->setProp(common_properties::_Name, mname);
       }
       else {
         if(d_name>=static_cast<int>(recs.size())){
           BOOST_LOG(rdWarningLog)<<"WARNING: no name column found on line "<<d_line<<std::endl;
         } else {
-          res->setProp("_Name", recs[d_name]);
+          res->setProp(common_properties::_Name, recs[d_name]);
         }
       }
 
@@ -298,11 +298,11 @@ namespace RDKit {
   //      flag will be set.
   //    - Our d_line counter is incremented for each line read
   //
-  int SmilesMolSupplier::skipComments(){
+  long int SmilesMolSupplier::skipComments(){
     PRECONDITION(dp_inStream,"bad stream");
     if(this->atEnd()) return -1;
 
-    int prev = dp_inStream->tellg();
+    std::streampos prev = dp_inStream->tellg();
     std::string tempStr = this->nextLine();
     if(!df_end){
       // if we didn't immediately hit EOF, loop until we get a valid line:
@@ -316,9 +316,9 @@ namespace RDKit {
     if( tempStr.empty() ||
         (tempStr[0] == '#') ||
         (strip(tempStr).size() == 0) ) {
-      prev = -1;
+      return -1;
     }
-    return prev;
+    return static_cast<long int>(prev);
   }
 
   // --------------------------------------------------
@@ -520,7 +520,7 @@ namespace RDKit {
       return d_len;
     }
     else {
-      int oPos = dp_inStream->tellg();
+      std::streampos oPos = dp_inStream->tellg();
       if(d_molpos.size()){
         // we've already read some molecules, go to the last
         // one and read it in to initialize our location:

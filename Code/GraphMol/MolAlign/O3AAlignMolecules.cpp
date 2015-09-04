@@ -21,6 +21,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/round.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread.hpp>  
+#endif
 
 #define square(x) ((x) * (x))
 
@@ -130,7 +133,7 @@ namespace RDKit {
     };
 
 
-    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat) :
+    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat) :
       d_h(boost::extents[mol.getNumHeavyAtoms()][O3_MAX_H_BINS]) {
       PRECONDITION(dmat,"empty distance matrix");
       unsigned int nAtoms = mol.getNumAtoms();
@@ -152,6 +155,7 @@ namespace RDKit {
         }
         ++y;
       }
+      if(cleanupDmat) delete [] dmat;
     }
 
 
@@ -794,8 +798,8 @@ namespace RDKit {
       d_maxIters(maxIters)
     {
       ROMol *workPrbMol = (extWorkPrbMol ? extWorkPrbMol : new ROMol(prbMol));
-      Conformer &prbConf = workPrbMol->getConformer();
-      const Conformer &refConf = refMol.getConformer();
+      Conformer &prbConf = workPrbMol->getConformer(prbCid);
+      const Conformer &refConf = refMol.getConformer(refCid);
       unsigned int accuracy = options & O3_ACCURACY_MASK;
       bool local = options & O3_LOCAL_ONLY;
       unsigned int refNAtoms = refMol.getNumAtoms();
@@ -832,9 +836,9 @@ namespace RDKit {
       }
       else {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, ""),true));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, ""),true));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
         lap->computeCostMatrix(prbMol, *prbHist,
           refMol, *refHist, o3aConstraintVect, costFunc, data);
@@ -970,8 +974,8 @@ namespace RDKit {
       }
       O3AFuncData data;
       ROMol extWorkPrbMol(prbMol);
-      data.prbConf = &(extWorkPrbMol.getConformer());
-      data.refConf = &(refMol.getConformer());
+      data.prbConf = &(extWorkPrbMol.getConformer(prbCid));
+      data.refConf = &(refMol.getConformer(refCid));
       data.prbProp = prbProp;
       data.refProp = refProp;
       unsigned int refNAtoms = refMol.getNumAtoms();
@@ -1022,9 +1026,9 @@ namespace RDKit {
       LAP *lap = NULL;
       if (!local) {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, ""),true));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, ""),true));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       }
       for (l = 0, score[0] = 0.0;
@@ -1204,5 +1208,82 @@ namespace RDKit {
       MolTransforms::transformConformer(conf,
         zRotAndTrans * yRot * xRot * transToOrigin);
     }
-  }
-}
+
+
+#ifdef RDK_THREADSAFE_SSS
+    namespace detail {
+      typedef struct {
+        O3A::AtomTypeScheme atomTypes;
+        int refCid;
+        bool reflect;
+        unsigned int maxIters;
+        unsigned int options;
+        MatchVectType const *constraintMap;
+        RDNumeric::DoubleVector const *constraintWeights;
+      } O3AHelperArgs_;
+      void O3AHelper_(ROMol *prbMol, const ROMol *refMol,
+                      void *prbProp, void *refProp,
+                      std::vector<boost::shared_ptr<O3A> > *res,
+                      unsigned int threadIdx,
+                      unsigned int numThreads,const O3AHelperArgs_ *args){
+        unsigned int i=0;
+        for(ROMol::ConstConformerIterator cit=prbMol->beginConformers();
+            cit!=prbMol->endConformers();++cit,++i){
+          if(i%numThreads != threadIdx) continue;
+
+          O3A *lres=new O3A(*prbMol,*refMol,prbProp,refProp,args->atomTypes,
+                            (*cit)->getId(),args->refCid,
+                            args->reflect,args->maxIters,args->options,
+                            args->constraintMap,args->constraintWeights);
+          (*res)[i].reset(lres);
+        }
+      }        
+    } //end of detail namespace
+#endif
+
+
+    void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol,
+                             void *prbProp, void *refProp,
+                             std::vector<boost::shared_ptr<O3A> > &res,
+                             unsigned int numThreads,
+                             O3A::AtomTypeScheme atomTypes,
+                             const int refCid,
+                             const bool reflect, const unsigned int maxIters,
+                             unsigned int options, const MatchVectType *constraintMap,
+                             const RDNumeric::DoubleVector *constraintWeights){
+#ifndef RDK_THREADSAFE_SSS
+      numThreads=1;
+#endif
+      res.resize(prbMol.getNumConformers());
+      if(numThreads<=1){
+        unsigned int i=0;
+        for(ROMol::ConstConformerIterator cit=prbMol.beginConformers();
+            cit!=prbMol.endConformers();++cit,++i){
+          O3A *lres=new O3A(prbMol,refMol,prbProp,refProp,atomTypes,
+                            (*cit)->getId(),refCid,
+                            reflect,maxIters,options,
+                            constraintMap,constraintWeights);
+          res[i].reset(lres);
+        }
+      }
+#ifdef RDK_THREADSAFE_SSS
+      else {
+        boost::thread_group tg;
+        detail::O3AHelperArgs_ args={atomTypes,
+                                     refCid,
+                                     reflect,maxIters,options,
+                                     constraintMap,constraintWeights};
+        for(unsigned int ti=0;ti<numThreads;++ti){
+          tg.add_thread(new boost::thread(detail::O3AHelper_,
+                                          &prbMol,&refMol,prbProp,refProp,
+                                          &res,
+                                          ti,numThreads,
+                                          &args));
+        }
+        tg.join_all();
+      }
+#endif      
+    }
+
+  } // end of namespace MolAlign
+} // end of namespace RDKit
