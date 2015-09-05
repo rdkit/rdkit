@@ -211,9 +211,9 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   If desired, a fingerprint can be computed and stored with the molecule objects to accelerate substructure matching
   '''
   if not includeFingerprints:
-    frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
+    frame[molCol]=frame[smilesCol].map(Chem.MolFromSmiles)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1)
+    frame[molCol]=frame[smilesCol].map(lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
   RenderImagesInAllDataFrames(images=True)
   #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
   #frame.head = types.MethodType(patchPandasHeadMethod,frame)
@@ -274,9 +274,19 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that correct data type is assigned to column.
   "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
   '''
+
+  close = None  
+  if isinstance(out, string_types):
+    if out.lower()[-3:] == ".gz":
+      import gzip
+      out = gzip.open(out, "wb")
+      close = out.close
+
   writer = SDWriter(out)
   if properties is None:
     properties=[]
+  else:
+    properties=list(properties)
   if allNumeric:
     properties.extend([dt for dt in df.dtypes.keys() if (np.issubdtype(df.dtypes[dt],float) or np.issubdtype(df.dtypes[dt],int))])
 
@@ -286,10 +296,8 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     properties.remove(idName)
   writer.SetProps(properties)
   for row in df.iterrows():
-    mol = copy.deepcopy(row[1][molColName])
-    # Remove embeded props
-    for prop in mol.GetPropNames():
-      mol.ClearProp(prop)
+    # make a local copy I can modify
+    mol = Chem.Mol(row[1][molColName])
 
     if idName is not None:
       if idName == 'RowID':
@@ -300,11 +308,15 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
       cell_value = row[1][p]
       # Make sure float does not get formatted in E notation
       if np.issubdtype(type(cell_value),float):
-        mol.SetProp(p,'{:f}'.format(cell_value).rstrip('0'))
+        s = '{:f}'.format(cell_value).rstrip("0") # "f" will show 7.0 as 7.00000
+        if s[-1] == ".":
+          s += "0"  # put the "0" back on if it's something like "7."
+        mol.SetProp(p, s)
       else:
         mol.SetProp(p,str(cell_value))
     writer.write(mol)
   writer.close()
+  if close is not None: close()
 
 _saltRemover = None
 def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):
