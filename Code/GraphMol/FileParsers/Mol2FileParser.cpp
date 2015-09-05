@@ -928,7 +928,7 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *Mol2FileToMol(std::string fName, bool sanitize, bool removeHs,
+  RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
                        Mol2Type variant){
     // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
     // the function "tellg" does not work correctly if we do not open it this way

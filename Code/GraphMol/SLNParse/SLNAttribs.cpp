@@ -67,7 +67,7 @@ namespace RDKit{
       } 
     } // end of anonymous namespace
 
-    QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(std::string op,int val,int (*func)(Atom const * at),
+    QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op,int val,int (*func)(Atom const * at),
                                                 std::string description){
       PRECONDITION(func,"bad query function");
       QueryAtom::QUERYATOM_QUERY *res=0;  

@@ -163,7 +163,7 @@ namespace RDKit{
    *                     is only done if the molecule is sanitized
    *   \param variant  - the atom type definitions to use
    */
-  RWMol *Mol2FileToMol(std::string fName,bool sanitize=true,bool removeHs=true,
+  RWMol *Mol2FileToMol(const std::string &fName,bool sanitize=true,bool removeHs=true,
                        Mol2Type variant=CORINA);
 
   // \brief construct a molecule from Tripos mol2 data in a stream

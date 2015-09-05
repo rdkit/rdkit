@@ -2262,7 +2262,7 @@ namespace RDKit {
     // in case atom types are missing, d_valid is set to false,
     // charges are set to 0.0 and the force-field is unusable
     MMFFMolProperties::MMFFMolProperties(ROMol &mol, 
-      std::string mmffVariant, boost::uint8_t verbosity,
+      const std::string &mmffVariant, boost::uint8_t verbosity,
       std::ostream &oStream) :
       d_valid(true),
       d_mmffs(mmffVariant == "MMFF94s" ? true : false),

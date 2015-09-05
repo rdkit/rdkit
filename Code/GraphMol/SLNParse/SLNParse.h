@@ -45,14 +45,14 @@ namespace RDKit{
     void finalizeQueryMol(ROMol *mol,bool mergeHs);
   }
 
-  RWMol *SLNToMol(std::string smi,bool sanitize=true,int debugParse=0);
+  RWMol *SLNToMol(const std::string &smi,bool sanitize=true,int debugParse=0);
 
-  RWMol *SLNQueryToMol(std::string smi,bool mergeHs=true,int debugParse=0);
+  RWMol *SLNQueryToMol(const std::string &smi,bool mergeHs=true,int debugParse=0);
 
   class SLNParseException : public std::exception {
   public:
     SLNParseException(const char *msg) : _msg(msg) {};
-    SLNParseException(const std::string msg) : _msg(msg) {};
+    SLNParseException(const std::string &msg) : _msg(msg) {};
     const char *message () const { return _msg.c_str(); };
     ~SLNParseException () throw () {};
   private:
