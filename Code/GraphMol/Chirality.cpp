@@ -118,16 +118,13 @@ namespace RDKit{
       }
     }
 
-    void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,bool seedWithInvars){
+    void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars,
+                         UINT_VECT &ranks,bool seedWithInvars){
       PRECONDITION(invars.size()==mol.getNumAtoms(),"bad invars size");
       PRECONDITION(ranks.size()>=mol.getNumAtoms(),"bad ranks size");
 
       unsigned int numAtoms = mol.getNumAtoms();
       CIP_ENTRY_VECT cipEntries(numAtoms);
-      INT_LIST allIndices;
-      for(unsigned int i=0;i<numAtoms;++i){
-        allIndices.push_back(i);
-      }
 #ifdef VERBOSE_CANON
       BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
       for(unsigned int i=0;i<numAtoms;i++){
@@ -176,19 +173,17 @@ namespace RDKit{
         //
         // for each atom, get a sorted list of its neighbors' ranks:
         //
-        for(INT_LIST_I it=allIndices.begin();
-            it!=allIndices.end();
-            ++it){
+        for(int it=0;it<numAtoms;++it) {
           CIP_ENTRY localEntry;
           localEntry.reserve(16);
 
           // start by pushing on our neighbors' ranks:
           ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(mol[*it].get());
+          boost::tie(beg,end) = mol.getAtomBonds(mol[it].get());
           while(beg!=end){
             const Bond *bond=mol[*beg].get();
             ++beg;
-            unsigned int nbrIdx=bond->getOtherAtomIdx(*it);
+            unsigned int nbrIdx=bond->getOtherAtomIdx(it);
             const Atom *nbr=mol[nbrIdx].get();
             
             int rank=ranks[nbrIdx]+1;
@@ -223,30 +218,29 @@ namespace RDKit{
           }
           // add a zero for each coordinated H:
           // (as long as we're not a query atom)
-          if(!mol[*it]->hasQuery()){
+          if(!mol[it]->hasQuery()){
             localEntry.insert(localEntry.begin(),
-                              mol[*it]->getTotalNumHs(),
+                              mol[it]->getTotalNumHs(),
                               0);
           }
 
           // we now have a sorted list of our neighbors' ranks,
           // copy it on in reversed order:
-          cipEntries[*it].insert(cipEntries[*it].end(),
+          cipEntries[it].insert(cipEntries[it].end(),
                                  localEntry.rbegin(),
                                  localEntry.rend());
-          if(cipEntries[*it].size() > longestEntry){
-            longestEntry = cipEntries[*it].size();
+          if(cipEntries[it].size() > longestEntry){
+            longestEntry = cipEntries[it].size();
           }
         }
         // ----------------------------------------------------
         //
         // pad the entries so that we compare rounds to themselves:
         // 
-        for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
-            ++it){
-          unsigned int sz=cipEntries[*it].size();
+        for(int it=0;it<numAtoms;++it) {
+          unsigned int sz=cipEntries[it].size();
           if(sz<longestEntry){
-            cipEntries[*it].insert(cipEntries[*it].end(),
+            cipEntries[it].insert(cipEntries[it].end(),
                                    longestEntry-sz,
                                    -1);
           }
