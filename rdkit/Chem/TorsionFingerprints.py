@@ -13,7 +13,7 @@ from rdkit import rdBase
 from rdkit import RDConfig
 from rdkit import Geometry
 from rdkit import Chem
-from rdkit.Chem import rdchem, Draw
+from rdkit.Chem import rdchem
 from rdkit.Chem import rdMolDescriptors
 import math, os
 
