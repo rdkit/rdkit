@@ -570,9 +570,7 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
   """
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
-  print mol2.GetNumConformers()
   mol2 = _getSameAtomOrder(mol1, mol2)
-  print mol2.GetNumConformers()
   tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   # first molecule
   torsion1 = CalculateTorsionAngles(mol1, tl, tlr, confId=confId1)
