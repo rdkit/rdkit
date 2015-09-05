@@ -16,15 +16,18 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed using these  packages requires one single command similar to the following::
 
-  $ conda create -c <channel-url> -n my-rdkit-env rdkit
+  $ conda create -c https://conda.anaconda.org/rdkit -n my-rdkit-env rdkit
 
-where '<channel-url>' is to be replaced with the URL of the package repository where the packages have been placed for distribution.
-
-Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell::
+Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell:
 
   $ source activate my-rdkit-env
 
-Windows users will use a slightly different command::
+If for some reason this does not work, try:
+
+  $ cd [anaconda folder]/bin
+  $ source activate my-rdkit-env
+
+Windows users will use a slightly different command:
 
   C:\> activate my-rdkit-env
 
@@ -32,30 +35,36 @@ Windows users will use a slightly different command::
 
 For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
 
-### Installing and using the RDKit Postgresql cartridge from a conda environment
+### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
-Due to the conda python distribution being a different version to the system python, it is easiest to install postgres and the postgres client via conda.
+Due to the conda python distribution being a different version to the system python, it is easiest to install PostgreSQL and the PostgreSQL python client via conda.
 
-This is done simply by:
+With your envirinment activated, this is done simply by:
 
     conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
     
-The conda packages postgresql version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
+The conda packages PostgreSQL version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
     [conda folder]/envs/my-rdkit-env/bin/initdb -D /folder/where/data/should/be/stored
 
-You will then need to run postgresql as a daemon, one way to do this is using supervisor. The required configuration file will look something like this:
+PostgreSQL can then be run from the terminal with the command:
+
+    [conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored
+
+For most use cases you will instead need to run PostgreSQL as a daemon, one way to do this is using supervisor. You can find out more and how to install supervisor [here](http://supervisord.org/). The required configuration file will look something like this:
 
     [program:postgresql]
     command=[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored 
     user=[your username]
     autorestart=true
 
-All of the normal postgresql commands can then be run when your conda environment is activated. Therefore to create a database you can run:
+Once PostgreSQL is up and running, all of the normal PostgreSQL commands can then be run when your conda environment is activated. Therefore to create a database you can run:
 
     createdb my_rdkit_db
     psql my_rdkit_db
-    #crreate extension rdkit;
+    # create extension rdkit;
+
+If you are trying to use multiple installations of PostgreSQL in different environments, you will need to setup different pid files, unix sockets and ports by [editing the PostgreSQL config files](https://opensourcedbms.com/dbms/running-multiple-postgresql-9-2-instances-on-one-server-in-centos-6rhel-6fedora/). With the above configurations these files can be found in /folder/where/data/should/be/stored.
 
 ## Linux and the Mac
 
