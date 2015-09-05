@@ -566,7 +566,7 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
                              if False, alternative not-covalently bound
                              atoms are used to define the torsion
 
-      Return: list of TFD values
+      Return: TFD value
   """
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
