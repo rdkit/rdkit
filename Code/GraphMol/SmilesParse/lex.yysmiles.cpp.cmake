@@ -582,10 +582,6 @@ static yyconst flex_int16_t yy_chk[303] =
 
 using namespace RDKit;
 
-void setup_smiles_string(const std::string &text,yyscan_t yyscanner){
-  YY_BUFFER_STATE buff=yysmiles__scan_string(text.c_str(),yyscanner);
-  POSTCONDITION(buff,"invalid buffer");
-}
 #define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
 
 void smiles_lexer_error(const char *msg) {
@@ -593,6 +589,49 @@ void smiles_lexer_error(const char *msg) {
      throw ValueErrorException(msg);
 }
 
+size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
+//  YY_BUFFER_STATE buff=yysmiles__scan_string(text.c_str()+pos,yyscanner);
+  // Faster implementation of yysmiles__scan_string that handles trimming
+  YY_BUFFER_STATE b;      
+  char *buf;
+  yyconst char * yybytes = text.c_str();  
+  yy_size_t _yybytes_len=text.size(), n, start, end; 
+  /* Get memory for full buffer, including space for trailing EOB's. */
+  n = _yybytes_len + 2;
+  buf = (char *) yysmiles_alloc(n ,yyscanner );
+  if ( ! buf )
+    smiles_lexer_error( "out of dynamic memory in yysmiles__scan_bytes()" );
+
+  // ltrim
+
+  for(start = 0 ; start < _yybytes_len; ++start) {
+    if (yybytes[start] > 32) break;
+  }
+  for(end = _yybytes_len ; end >= 0; --end) {
+    if (yybytes[end] > 32) break;
+  }
+
+  _yybytes_len = end-start+1;
+  n = _yybytes_len + 2;
+  memcpy(buf, yybytes+start, _yybytes_len);
+  
+  
+  buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
+  
+  b = yysmiles__scan_buffer(buf,n ,yyscanner);
+  if ( ! b )
+    smiles_lexer_error( "bad buffer in yysmiles__scan_bytes()" );
+  
+  /* It's okay to grow etc. this buffer, and we should throw it
+   * away when we're done.
+   */
+  b->yy_is_our_buffer = 1;
+  
+  
+  POSTCONDITION(b,"invalid buffer");
+  return start;
+  
+}
 
 #line 598 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
