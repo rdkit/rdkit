@@ -29,20 +29,20 @@ class TestCase(unittest.TestCase):
     try:
       with open(name1,'rb') as pklF:
         c1 = pickle.load(pklF)
-    except:
+    except Exception:
       c1 = None
     self.assertTrue(c1)
     name2 = os.path.join(self.baseDir,'humanoral.2.pkl')
     try:
       with open(name2, 'rb') as pklF:
         c2 = pickle.load(pklF)
-    except:
+    except Exception:
       c2 = None
     self.assertTrue(c2)
 
     try:
       res = AnalyzeComposite.ProcessIt([c1,c2],verbose=-1)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       ok=0

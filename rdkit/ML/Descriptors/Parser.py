@@ -321,7 +321,7 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
     formula = _SubForCompoundDescriptors(formula,compositionVarNames,'propDict')
     formula = _SubForAtomicVars(formula,atomVarNames,'atomDict')
     evalTarget = _SubMethodArgs(formula,knownMethods)
-  except:
+  except Exception:
     if __DEBUG:
       import sys,traceback
       print('Sub Failure!')
@@ -334,7 +334,7 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
 
   try:
     v = eval(evalTarget)
-  except:
+  except Exception:
     if __DEBUG:
       import sys,traceback
       outF = open(RDConfig.RDCodeDir+'/ml/descriptors/log.txt','a+')
@@ -342,10 +342,8 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
       outF.write('formula: %s\n'%repr(formula))
       outF.write('target: %s\n'%repr(evalTarget))
       outF.write('propDict: %s\n'%(repr(propDict)))
-      try:
-        outF.write('keys: %s\n'%(repr(atomDict.keys())))
-      except:
-        outF.write('no atomDict\n')
+      
+      outF.write('keys: %s\n'%(repr(sorted(atomDict))))
       outF.close()
       print('ick!')
       print('formula:',formula)
@@ -403,14 +401,14 @@ def CalcMultipleCompoundsDescriptor(composVect,argVect,atomDict,propDictList):
     formula = _SubForCompoundDescriptors(formula,compositionVarNames,'propDict')
     formula = _SubForAtomicVars(formula,atomVarNames,'atomDict')
     evalTarget = _SubMethodArgs(formula,knownMethods)
-  except:
+  except Exception:
     return res
   for i in range(len(composVect)):
     propDict = propDictList[i]
     compos = composVect[i]
     try:
       v = eval(evalTarget)
-    except:
+    except Exception:
       v = -666
     res[i] = v
   return res

@@ -21,7 +21,7 @@ from rdkit.ML.InfoTheory import entropy
 from rdkit.six.moves import zip, map, range
 try:
   from rdkit.ML.Data import cQuantize
-except:
+except ImportError:
   hascQuantize = 0
 else:
   hascQuantize = 1  

@@ -30,9 +30,8 @@ class TestCase(unittest.TestCase):
 
   def _verify(self,pkg,testD):
     for smi,pred,conf in testD:
-      try:
-        m = Chem.MolFromSmiles(smi)
-      except:
+      m = Chem.MolFromSmiles(smi)
+      if not m:
         sys.stderr.write('SMILES: %s failed\n'%(smi))
       else:
         p,c = pkg.Classify(m)
@@ -40,9 +39,8 @@ class TestCase(unittest.TestCase):
         assert feq(c,conf),'bad confidence (%f) for smiles %s'%(c,smi)
   def _verify2(self,pkg,testD):
     for smi,pred,conf in testD:
-      try:
-        m = Chem.MolFromSmiles(smi)
-      except:
+      m = Chem.MolFromSmiles(smi)
+      if not m:
         sys.stderr.write('SMILES: %s failed\n'%(smi))
       else:
         p,c = pkg.Classify(m)

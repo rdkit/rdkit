@@ -1163,7 +1163,7 @@ def MakePredPlot(details,indices,data,goodVotes,badVotes,nRes,idCol=0,verbose=0)
       p('cd "%s"'%(os.getcwd()))
       p('load "%s.gnu"'%(details.predPlot))
       raw_input('press return to continue...\n')
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
     
@@ -1212,7 +1212,7 @@ def ParseArgs(details):
                                  'predLogScale','predShow',
                                  'OOB','pickleCol=','enrich=',
                                  ])
-  except:
+  except Exception:
     import traceback
     traceback.print_exc()
     Usage()
@@ -1309,7 +1309,7 @@ if __name__ == '__main__':
       blob = blob[0]
       try:
         models.append(cPickle.loads(str(blob)))
-      except:
+      except Exception:
         import traceback
         traceback.print_exc()
         message('Model load failed')

@@ -148,7 +148,7 @@ class ClusterRenderer(object):
             if self.showIndices and not self.stopAtCentroids:
               try:
                 txt = str(child.GetName())
-              except:
+              except Exception:
                 txt = str(child.GetIndex())
               self.canvas.drawString(txt,
                                      cxp-self.canvas.stringWidth(txt)/2,

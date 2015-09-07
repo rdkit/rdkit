@@ -94,10 +94,7 @@ def DrawTreeNode(node,loc,canvas,nRes=2,scaleLeaves=False,showPurity=False):
   if not scaleLeaves or not node.GetTerminal():
     rad = visOpts.circRad
   else:
-    try:
-      scaleLoc = node._scaleLoc
-    except:
-      scaleLoc = 0.5
+    scaleLoc = getattr(node, "_scaleLoc", 0.5)
         
     rad = visOpts.minCircRad + node._scaleLoc*(visOpts.maxCircRad-visOpts.minCircRad)
 

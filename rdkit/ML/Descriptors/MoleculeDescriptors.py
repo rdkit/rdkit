@@ -61,7 +61,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     from rdkit.six.moves import cPickle
     try:
       f = open(fileName,'wb+')
-    except:
+    except Exception:
       logger.error('cannot open output file %s for writing'%(fileName))
       return
     cPickle.dump(self,f)
@@ -83,7 +83,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       fn = getattr(DescriptorsMod,nm,lambda x:777)
       try:
         res[i] = fn(mol)
-      except:
+      except Exception:
         import traceback
         traceback.print_exc()
     return tuple(res)

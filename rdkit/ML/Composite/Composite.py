@@ -441,10 +441,7 @@ class Composite(object):
         - new models are *added* to the existing ones
 
     """
-    try:
-      silent = buildArgs['silent']
-    except:
-      silent = 0
+    silent = buildArgs.get('silent',0)
     buildArgs['silent']=1
     buildArgs['calcTotalError']=1
 

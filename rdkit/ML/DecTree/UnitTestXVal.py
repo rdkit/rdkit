@@ -23,11 +23,8 @@ class XValTestCase(unittest.TestCase):
     " test that the CrossValidationDriver runs "
     from rdkit.ML.DecTree import randomtest
     examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nExamples = 200)
-    try:
-      tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
-                                                      nPossibleVals,silent=1)
-    except:
-      assert 0,'CrossValidation failed to run'
+    tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
+                                                    nPossibleVals,silent=1)
 
   def testResults(self):
     " test the results of CrossValidation "
