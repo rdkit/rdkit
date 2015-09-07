@@ -159,20 +159,24 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       logger.info('  done %d'%nDone)
       try:
         session.commit()
-      except:
+      except Exception:
         session.rollback()
         for cmpd in cache:
           try:
             session.add(cmpd)
             session.commit()
-          except:
+          except Exception:
             session.rollback()
+          except BaseException:
+            # Rollback even with KeyboardInterrupt
+            session.rollback()
+            raise
       cache=[]
 
 
   try:
     session.commit()
-  except:
+  except BaseException as exc:
     import traceback
     traceback.print_exc()
     session.rollback()
@@ -180,9 +184,14 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       try:
         session.add(cmpd)
         session.commit()
-      except:
+      except Exception:
         session.rollback()
-
+      except BaseException:
+        session.rollback()
+        raise
+    if not isinstance(exc, Exception):
+      # Re-raise on KeyboardInterrupt, SystemExit, etc.
+      raise exc
 if __name__=='__main__':
   import sys
   sdf =Chem.SDMolSupplier(sys.argv[1])
