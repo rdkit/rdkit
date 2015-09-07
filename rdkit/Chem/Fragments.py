@@ -37,14 +37,9 @@ def _LoadPatterns(fileName=None):
             descr = splitL[1]
             sma = splitL[2]
             descr=descr.replace('"','')
-            ok=1
-            try:
-              patt = Chem.MolFromSmarts(sma)
-            except:
-              ok=0
-            else:
-              if not patt or patt.GetNumAtoms()==0: ok=0
-            if not ok: raise ImportError('Smarts %s could not be parsed'%(repr(sma)))
+            patt = Chem.MolFromSmarts(sma)
+            if not patt or patt.GetNumAtoms()==0:
+              raise ImportError('Smarts %s could not be parsed'%(repr(sma)))
             fn = lambda mol,countUnique=True,pattern=patt:_CountMatches(mol,pattern,unique=countUnique)
             fn.__doc__ = descr
             name = name.replace('=','_')
