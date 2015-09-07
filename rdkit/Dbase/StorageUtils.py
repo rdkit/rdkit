@@ -37,7 +37,7 @@ def ValidateRDId(id):
     for char in entry:
       try:
         v = int(char)
-      except:
+      except ValueError:
         return 0
       accum += v
   crc = int(splitId[-1])

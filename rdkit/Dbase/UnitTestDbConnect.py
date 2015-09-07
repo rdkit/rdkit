@@ -31,7 +31,7 @@ class TestCase(unittest.TestCase):
     conn = DbConnect(self.dbName)
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
-    except:
+    except Exception:
       pass
     conn.Commit()
     conn.AddTable(newTblName,'id int')
@@ -48,11 +48,11 @@ class TestCase(unittest.TestCase):
     assert curs
     try:
       curs.execute('drop view %s'%(viewName))
-    except:
+    except Exception:
       pass
     try:
       curs.execute('create view %s as select val,id from ten_elements'%(viewName))
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       assert 0
@@ -64,7 +64,7 @@ class TestCase(unittest.TestCase):
     assert viewName in names,'improper view found in %s'%(str(names))
     try:
       curs.execute('drop view %s'%(viewName))
-    except:
+    except Exception:
       assert 0,'drop table failed'
 
   def testGetData1(self):
@@ -152,7 +152,7 @@ class TestCase(unittest.TestCase):
     conn = DbConnect(self.dbName)
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
-    except:
+    except Exception:
       pass
     conn.Commit()
     conn.AddTable(newTblName,'id int,val1 int, val2 int')
@@ -165,7 +165,7 @@ class TestCase(unittest.TestCase):
     d = None
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
-    except:
+    except Exception:
       assert 0,'drop table failed'
     
     

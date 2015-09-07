@@ -33,7 +33,7 @@ class DbResultBase(object):
         self.cursor.execute(self.cmd)
       else:
         self.cursor.execute(self.cmd,self.extras)
-    except:
+    except Exception:
       sys.stderr.write('the command "%s" generated errors:\n'%(self.cmd))
       import traceback
       traceback.print_exc()

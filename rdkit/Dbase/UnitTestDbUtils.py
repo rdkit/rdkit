@@ -59,14 +59,8 @@ class TestCase(unittest.TestCase):
     assert len(d)==10
     assert tuple(d[0])==(0,11)
     assert tuple(d[2])==(4,31)
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       d[11]
-    except IndexError:
-      pass
-    except:
-      assert 0,'bad exception type raised'
-    else:
-      assert 0,'failed to raise expected exception'
 
   def testGetData2(self):
     """ using a RandomAccessDbResultSet
@@ -75,27 +69,15 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0])==(0,11)
     assert tuple(d[2])==(4,31)
     assert len(d)==10
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       d[11]
-    except IndexError:
-      pass
-    except:
-      assert 0,'bad exception type raised'
-    else:
-      assert 0,'failed to raise expected exception'
 
   def testGetData3(self):
     """ using a DbResultSet
     """
     d = DbUtils.GetData(self.dbName,'ten_elements',forceList=0,randomAccess=0)
-    try:
+    with self.assertRaisesRegexp(TypeError, ""):
       len(d)
-    except TypeError:
-      pass
-    except:
-      assert 0,'bad exception type raised'
-    else:
-      assert 0,'failed to raise expected exception'
     rs = []
     for thing in d:
       rs.append(thing)
@@ -112,14 +94,8 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0])==(0,22)
     assert tuple(d[2])==(4,62)
     assert len(d)==10
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       d[11]
-    except IndexError:
-      pass
-    except:
-      assert 0,'bad exception type raised'
-    else:
-      assert 0,'failed to raise expected exception'
 
     
   def testGetData5(self):
@@ -128,14 +104,9 @@ class TestCase(unittest.TestCase):
     fn = lambda x:(x[0],x[1]*2)
     d = DbUtils.GetData(self.dbName,'ten_elements',forceList=0,randomAccess=0,
                         transform=fn)
-    try:
+    with self.assertRaisesRegexp(TypeError, ""):
       len(d)
-    except TypeError:
-      pass
-    except:
-      assert 0,'bad exception type raised'
-    else:
-      assert 0,'failed to raise expected exception'
+
     rs = []
     for thing in d:
       rs.append(thing)

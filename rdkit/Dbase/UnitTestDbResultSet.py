@@ -40,10 +40,7 @@ class TestCase(unittest.TestCase):
     set = RandomAccessDbResultSet(self.curs,self.conn,cmd)
     assert len(set)==10
     for i in range(len(set)):
-      try:
-        val = set[i]
-      except:
-        assert 0
+      val = set[i]
 
   def test3(self):
     """ 
@@ -72,10 +69,7 @@ class TestCase(unittest.TestCase):
     set = RandomAccessDbResultSet(self.curs,self.conn,cmd,removeDups=0)
     assert len(set)==10
     for i in range(len(set)):
-      try:
-        val = set[i]
-      except:
-        assert 0
+      val = set[i]
 
   def test6(self):
     """ 
