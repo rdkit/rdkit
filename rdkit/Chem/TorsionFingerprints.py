@@ -505,7 +505,7 @@ def _getSameAtomOrder(mol1, mol2):
       cid = mol3.AddConformer(conf)
     return mol3
   else:
-    return mol2
+    return Chem.Mol(mol2)
 
 # some wrapper functions
 def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
