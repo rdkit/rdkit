@@ -62,7 +62,7 @@ def ProcessMol(mol,typeConversions,globalProps,nDone,nameProp='_Name',nameCol='c
         while colTyp>0:
           try:
             tpi = typeConversions[colTyp][1](pv)
-          except:
+          except Exception:
             colTyp-=1
           else:
             break
@@ -154,7 +154,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   if startAnew:
     try:
       curs.execute('drop table %s'%regName)
-    except:
+    except Exception:
       pass
     curs.execute('create table %s (%s)'%(regName,','.join(typs)))
   else:

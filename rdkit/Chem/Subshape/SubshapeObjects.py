@@ -70,14 +70,17 @@ def DisplaySubshape(viewer,shape,name,showSkelPts=True,color=(1,0,1)):
   viewer.server.loadSurface(fName,name,'',2.5)
   if showSkelPts:
     DisplaySubshapeSkeleton(viewer,shape,name,color)
+  # On Windows, the file cannot be deleted if the viewer still has the file open.
+  # Pause for a moment, to give the viewer a chance, then try again.
   try:
     os.unlink(fName)
-  except:
+  except Exception:
     import time
     time.sleep(.5)
     try:
       os.unlink(fName)
-    except:
+    except Exception:
+      # Fall back to the default of letting the system clean up the temporary directory.
       pass
     
 

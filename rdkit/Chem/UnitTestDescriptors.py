@@ -34,10 +34,10 @@ class TestCase(unittest.TestCase):
       for nm,fn in Descriptors._descList:
         try:
           v = fn(m)
-        except:
+        except Exception:
           import traceback
           traceback.print_exc()
-          self.assertTrue(0,'SMILES: %s'%smi)
+          raise AssertionError('SMILES: %s'%smi)
 
   def testMolFormula(self):
     for (smiles, expected) in (  ("[NH4+]", "H4N+"),

@@ -105,7 +105,7 @@ def DepickleFP(pkl,similarityMethod):
     try:
         klass=similarityMethods[similarityMethod]
         fp = klass(pkl)
-    except:
+    except Exception:
         import traceback
         traceback.print_exc()
         fp = cPickle.loads(pkl)

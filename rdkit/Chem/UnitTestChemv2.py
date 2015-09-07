@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('CCOC')
     try:
       m.SetProp('foo','3')
-    except:
+    except Exception:
       ok=0
     else:
       ok=1
@@ -151,7 +151,7 @@ class TestCase(unittest.TestCase):
 
     try:
       v = m.GetProp('foo')
-    except:
+    except Exception:
       ok=0
     else:
       ok=1
@@ -162,7 +162,7 @@ class TestCase(unittest.TestCase):
       v = m.GetProp('monkey')
     except KeyError:
       ok=1
-    except:
+    except Exception:
       ok=0
     else:
       ok=0

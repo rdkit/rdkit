@@ -59,10 +59,7 @@ class TestCase(unittest.TestCase):
        if line[0] != '#':
          splitL = line.split(',')
          smi = splitL[0]
-         try:
-           m = Chem.MolFromSmiles(smi)
-         except:
-           m = None
+         m = Chem.MolFromSmiles(smi)
 
          assert m,'line %d, smiles: %s'%(lineNum,smi)
          useIt=1
@@ -74,7 +71,7 @@ class TestCase(unittest.TestCase):
            tgtVal = float(splitL[col])
            try:
              val = GraphDescriptors.BertzCT(m)
-           except:
+           except Exception:
              val = 666
            assert feq(val,tgtVal,1e-4),'line %d, mol %s (CT calc = %f) should have CT = %f'%(lineNum,smi,val,tgtVal)
 
@@ -86,10 +83,7 @@ class TestCase(unittest.TestCase):
        if line[0] != '#':
          splitL = line.split(',')
          smi = splitL[0]
-         try:
-           m = Chem.MolFromSmiles(smi)
-         except:
-           m = None
+         m = Chem.MolFromSmiles(smi)
          assert m,'line %d, smiles: %s'%(lineNum,smi)
          useIt=1
          if useIt:
@@ -97,7 +91,7 @@ class TestCase(unittest.TestCase):
            if not feq(tgtVal,666.0):
              try:
                val = func(m)
-             except:
+             except Exception:
                val = 666
              assert feq(val,tgtVal,1e-4),'line %d, mol %s (calc = %f) should have val = %f'%(lineNum,smi,val,tgtVal)
 
@@ -294,12 +288,7 @@ class TestCase(unittest.TestCase):
         smi,ans = line.split(',')
         ans = float(ans)
 
-        try:
-          mol = Chem.MolFromSmiles(smi)
-        except:
-          import traceback
-          traceback.print_exc()
-          mol = None
+        mol = Chem.MolFromSmiles(smi)
         assert mol,"line %d, failed for smiles: %s"%(lineNo,smi)
 
       

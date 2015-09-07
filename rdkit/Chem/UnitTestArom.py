@@ -44,11 +44,8 @@ class TestCase(unittest.TestCase):
     nFailed = 0
     for i in range(nMols):
       lineNo,smi,smi2,tgtCount,tgtAts = self.data[i]
-      try:
-        mol = Chem.MolFromSmiles(smi)
-        if not mol: raise ValueError
-      except:
-        mol = None
+      mol = Chem.MolFromSmiles(smi)
+      if mol is None:
         print('failure(%d): '%lineNo,smi)
         print('-----------------------------')
       else:
@@ -75,11 +72,8 @@ class TestCase(unittest.TestCase):
     nFailed = 0
     for i in range(nMols):
       lineNo,smi,smi2,tgtCount,tgtAts = self.data[i]
-      try:
-        mol = Chem.MolFromSmiles(smi)
-        if not mol: raise ValueError
-      except:
-        mol = None
+      mol = Chem.MolFromSmiles(smi)
+      if mol is None:
         print('failure(%d): '%lineNo,smi)
         print('-----------------------------')
       else:

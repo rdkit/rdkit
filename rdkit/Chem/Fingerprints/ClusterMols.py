@@ -86,7 +86,7 @@ def ClusterPoints(data,metric,algorithmId,haveLabels=False,haveActs=True,returnD
     if acts:
       try:
         pt.SetData(int(acts[idx]))
-      except:
+      except Exception:
         pass
   if not returnDistances:
     return clustTree

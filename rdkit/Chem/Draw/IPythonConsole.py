@@ -53,7 +53,7 @@ def _toJSON(mol):
     mol = Chem.Mol(mol)
     try:
         Chem.Kekulize(mol)
-    except:
+    except Exception:
         mol = Chem.Mol(mol)
     size = molSize_3d
 

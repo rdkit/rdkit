@@ -554,7 +554,7 @@ def _CreateBondDictEtc(mol, numAtoms):
     try:
       element.sort()
       vdList[i] = len(element)
-    except:
+    except Exception:
       vdList[i] = 0
   return bondDict, nList, vdList
 

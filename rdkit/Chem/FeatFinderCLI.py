@@ -71,7 +71,7 @@ if __name__ == '__main__':
     sys.exit(-1)
   try:
     factory = ChemicalFeatures.BuildFeatureFactory(fdefFilename)
-  except:
+  except Exception:
     logger.error("Could not parse Fdef file %s."%fdefFilename,exc_info=True)
     sys.exit(-1)
     
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
   try:
     inF = file(smilesFilename,'r')
-  except:
+  except Exception:
     logger.error("Could not open smiles file %s."%smilesFilename,exc_info=True)
     sys.exit(-1)
 
@@ -91,12 +91,9 @@ if __name__ == '__main__':
     lineNo+=1
     line = line.strip()
     smi = splitExpr.split(line)[0].strip()
-    try:
-      mol = Chem.MolFromSmiles(smi)
-    except:
-      mol = None
+    mol = Chem.MolFromSmiles(smi)
 
-    if mol:
+    if mol is not None:
       print('Mol-%d\t%s'%(lineNo,smi))
 
       if not reverseIt:

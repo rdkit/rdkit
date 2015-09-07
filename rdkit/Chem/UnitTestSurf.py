@@ -58,17 +58,14 @@ class TestCase(unittest.TestCase):
         line.strip()
         smi,ans = line.split(',')
         ans = float(ans)
-        try:
-          mol = Chem.MolFromSmiles(smi)
-        except:
-          mol = None
+        mol = Chem.MolFromSmiles(smi)
         if not mol:
-          print('molecule construction failed on line %d'%lineNo)
+          raise AssertionError('molecule construction failed on line %d'%lineNo)
         else:
           ok = 1
           try:
             calc = MolSurf.TPSA(mol)
-          except:
+          except Exception:
             ok=0
           assert ok,'Line %d: TPSA Calculation failed for SMILES %s'%(lineNo,smi)
           assert feq(calc,ans),'Line %d: bad TPSA for SMILES %s (%.2f != %.2f)'%(lineNo,smi,calc,ans)

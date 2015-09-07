@@ -45,7 +45,7 @@ class FastSDMolSupplier(object):
       try:
         p = data.index(recogTxt,p+1)
         p+=len(recogTxt)
-      except:
+      except ValueError:
         break
       else:
         self._pos.append(p)

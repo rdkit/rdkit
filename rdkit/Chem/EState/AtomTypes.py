@@ -124,9 +124,8 @@ def BuildPatts(rawV=None):
 
   esPatterns = [None]*len(rawV)
   for i,(name,sma) in enumerate(rawV):
-    try:
-      patt = Chem.MolFromSmarts(sma)
-    except:
+    patt = Chem.MolFromSmarts(sma)
+    if patt is None:
       sys.stderr.write('WARNING: problems with pattern %s (name: %s), skipped.\n'%(sma,name))
     else:
       esPatterns[i] = name,patt

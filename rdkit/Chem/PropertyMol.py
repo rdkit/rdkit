@@ -59,7 +59,7 @@ class PropertyMol(Chem.Mol):
    True
    >>> try:
    ...   os.unlink(fn)
-   ... except:
+   ... except Exception:
    ...   pass
 
    The next level of that bug: does writing a *depickled* propertymol
@@ -74,7 +74,7 @@ class PropertyMol(Chem.Mol):
    True
    >>> try:
    ...   os.unlink(fn)
-   ... except:
+   ... except Exception:
    ...   pass
 
 

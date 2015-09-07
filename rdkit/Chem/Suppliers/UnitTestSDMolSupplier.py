@@ -65,19 +65,23 @@ class TestCase(unittest.TestCase):
     for m in supp:
       writer.write(m)
     writer.flush()
+    # The writer does not have an explicit "close()" so need to
+    # let the garbage collector kick in to close the file.
     writer = None
     with open(outName,'r') as inf:
       outD = inf.read()
+    # The file should be closed, but if it isn't, and this
+    # is Windows, then the unlink() can fail. Wait and try again.
     try:
       os.unlink(outName)
-    except:
+    except Exception:
       import time
       time.sleep(1)
       try:
         os.unlink(outName)
-      except:
+      except Exception:
         pass
-    assert inD.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
+    self.assertEqual(inD.count('$$$$'),outD.count('$$$$'),'bad nMols in output')
 
   def _testStreamRoundtrip(self):
     inD = open(self.fName).read()
@@ -92,12 +96,12 @@ class TestCase(unittest.TestCase):
     outD = open(outName,'r').read()
     try:
       os.unlink(outName)
-    except:
+    except Exception:
       import time
       time.sleep(1)
       try:
         os.unlink(outName)
-      except:
+      except Exception:
         pass
     assert inD.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
     io = StringIO(outD)
@@ -120,12 +124,12 @@ class TestCase(unittest.TestCase):
     outD = open(outName,'r').read()
     try:
       os.unlink(outName)
-    except:
+    except Exception:
       import time
       time.sleep(1)
       try:
         os.unlink(outName)
-      except:
+      except Exception:
         pass
     assert inD.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
     supp = SDMolSupplier.LazySDMolSupplier(inD=outD)
