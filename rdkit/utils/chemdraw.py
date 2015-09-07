@@ -19,7 +19,7 @@ try:
   from win32com.client import gencache,Dispatch,constants
   import win32com.client.gencache
   cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7, 0)
-except:
+except Exception:
   cdxModule = None
   _cdxVersion=0
   raise ImportError("ChemDraw version (at least version 7) not found.")
@@ -145,7 +145,7 @@ def CDXDisplay(inData,inFormat='chemical/cdx',clear=1):
     StartChemDraw()
   try:
     theDoc.Activate()
-  except:
+  except Exception:
     ReactivateChemDraw()
     theObjs = theDoc.Objects
   if clear:
@@ -166,7 +166,7 @@ def CDXGrab(outFormat='chemical/x-mdl-molfile'):
       ReactivateChemDraw()
     try:
       res = cdApp.ActiveDocument.Objects.GetData(outFormat)
-    except:
+    except Exception:
       res = ""
   return res
 
@@ -177,7 +177,7 @@ def CloseChemdraw():
   global cdApp
   try:
     cdApp.Quit()
-  except:
+  except Exception:
     pass
   Exit()
 
@@ -330,7 +330,7 @@ def Add3DCoordsToMol(data,format,props={}):
   while not gone:
     try:
       os.unlink(outFName)
-    except:
+    except Exception:
       time.sleep(.5)
     else:
       gone = 1
@@ -369,7 +369,7 @@ def OptimizeSDFile(inFileName,outFileName,problemFileName='problems.sdf',
 
       try:
         newMolBlock = Add3DCoordsToMol(molBlock,'chemical/mdl-molfile',props=props)
-      except:
+      except Exception:
         badBlock = molBlock
         skip = 1
         lines = []

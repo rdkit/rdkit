@@ -45,7 +45,7 @@ if RDConfig.usePgSQL:
     def __iter__(self):
       try:
         self.cursor.execute(self.cmd)
-      except:
+      except Exception:
         import traceback
         traceback.print_exc()
         print('COMMAND:',self.cmd)
@@ -142,7 +142,7 @@ if RDConfig.usePgSQL:
       if self._depickle:
         try:
           fp = cPickle.loads(val)
-        except:
+        except Exception:
           import logging
           del t[self._pickleCol]
           logging.exception('Depickling failure in row: %s'%str(t))

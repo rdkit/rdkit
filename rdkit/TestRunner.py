@@ -82,7 +82,7 @@ def RunScript(script,doLongTests,verbose):
       sys.exit(-1)
     try:
       res = RunTest(exeName,args,extras)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       res = TEST_FAILED
