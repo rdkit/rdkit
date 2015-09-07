@@ -29,19 +29,12 @@ class TestCase(unittest.TestCase):
     """ test indexing into SparseBitVects
     """
     v = klass(10)
-    ok = 1
     v[0] = 1
     v[2] = 1
     v[9] = 1
     
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       v[10] = 1
-    except IndexError:
-      ok = 1
-    except:
-      assert 0, 'setting high bit should have failed with an IndexError'
-    else:
-      assert 0, 'setting high bit should have failed'
 
     assert v[0] == 1, 'bad bit'
     assert v[1] == 0, 'bad bit'
@@ -50,15 +43,8 @@ class TestCase(unittest.TestCase):
     assert v[-1] == 1, 'bad bit'
     assert v[-2] == 0, 'bad bit'
 
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       foo = v[10]
-    except IndexError:
-      ok = 1
-    except:
-      assert 0, 'getting high bit should have failed with an IndexError'
-    else:
-      assert 0, 'getting high bit should have failed'
-    
 
   def testSparseBitGet(self):
     """ test operations to get sparse bits
@@ -310,15 +296,9 @@ class TestCase(unittest.TestCase):
     v1[1] = 1
     v1[12] = 1
     v1[9] = 1
-    try:
-      v2 = cDataStructs.FoldFingerprint(v1)
-    except:
-      assert 0,'Fold with no args failed'
+    v2 = cDataStructs.FoldFingerprint(v1) # check fold with no args
     assert v1.GetNumBits()/2==v2.GetNumBits(),'bad num bits post folding'
-    try:
-      v2 = cDataStructs.FoldFingerprint(v1,2)
-    except:
-      assert 0,'Fold with arg failed'
+    v2 = cDataStructs.FoldFingerprint(v1,2) # check fold with arg
       
     assert v1.GetNumBits()/2==v2.GetNumBits(),'bad num bits post folding'
 
