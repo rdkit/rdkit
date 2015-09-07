@@ -252,7 +252,7 @@ def rpcShow(objs):
   for objName in objs:
     try:
       cmd.enable(objName)
-    except:
+    except Exception:
       res = 0
       break
     else:
@@ -267,7 +267,7 @@ def rpcHide(objs):
   for objName in objs:
     try:
       cmd.disable(objName)
-    except:
+    except Exception:
       res = 0
       break
     else:
@@ -278,7 +278,7 @@ def rpcDeleteObject(objName):
   """ deletes an object """
   try:
     cmd.delete(objName)
-  except:
+  except Exception:
     res = 0
   else:
     res = 1
@@ -558,7 +558,7 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
   for i in range(nToTry):
     try:
       serv = SimpleXMLRPCServer.SimpleXMLRPCServer((hostname,port+i),logRequests=0)
-    except:
+    except Exception:
       serv = None
     else:
       break
