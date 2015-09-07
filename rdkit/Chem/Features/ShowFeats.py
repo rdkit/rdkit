@@ -268,7 +268,7 @@ if __name__=='__main__':
 
   try:
     v = MolViewer()
-  except:
+  except Exception:
     logger.error('Unable to connect to PyMol server.\nPlease run ~landrgr1/extern/PyMol/launch.sh to start it.')
     sys.exit(1)
   if options.clearAll:
@@ -319,7 +319,7 @@ if __name__=='__main__':
     if molN != '-':
       try:
         ms = Chem.SDMolSupplier(molN)
-      except:
+      except Exception:
         logger.error('Problems reading input file: %s'%molN)
         ms = []
     else:
