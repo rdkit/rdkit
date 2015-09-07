@@ -24,7 +24,7 @@ from math import sin, cos, pi, ceil
 
 try:
     import zlib
-except:
+except ImportError:
     print("zlib not available, page compression not available")
 
 
@@ -192,7 +192,7 @@ class PDFDocument:
             import macfs  #@UnresolvedImport
             try: 
                 macfs.FSSpec(filename).SetCreatorType('CARO','PDF ')
-            except:
+            except Exception:
                 pass
 
 
@@ -237,7 +237,7 @@ class PDFDocument:
     def getInternalFontName(self, psfontname):
         try:
             return self.fontMapping[psfontname]
-        except:
+        except KeyError:
             raise PDFError("Font {0} not available in document".format(psfontname))
 
     def getAvailableFonts(self):

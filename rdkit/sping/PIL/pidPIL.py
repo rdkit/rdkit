@@ -51,7 +51,7 @@ try:
   _ascents = cPickle.load(f)
   _descents = cPickle.load(f)
   f.close()
-except:
+except Exception:
   print("Warning: unable to load font metrics from dir {0}".format(_fontprefix))
   _widthmaps = {}
   _ascents = {}
@@ -108,7 +108,7 @@ def _pilFont(font):
   if isinstance(face,six.string_types):
     try: 
       pilfont = ImageFont.load_path(_pilFontPath(face,size,font.bold))
-    except:
+    except Exception:
       return 0		# font not found!
   else:
     for item in font.face:
@@ -116,7 +116,7 @@ def _pilFont(font):
       try:
         pilfont = ImageFont.load_path(_pilFontPath(item,size,font.bold))
         break
-      except: pass
+      except Exception: pass
     if pilfont == None: return 0	# font not found!
   return pilfont
 
@@ -434,7 +434,7 @@ def test2():
 	global qdcanvas
 	try:
 		qdcanvas.close()
-	except: pass
+	except Exception: pass
 	qdcanvas = piddleQD.QDCanvas()
 	qdcanvas.drawImage( canvas.getImage(), 0, 0 );
 	

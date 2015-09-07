@@ -44,7 +44,7 @@ class Color:
         def __cmp__(self,other):
                 try:
                         dsum = 4*self.red-4*other.red + 2*self.green-2*other.green + self.blue-other.blue
-                except:
+                except Exception:
                         return -1
                 if dsum > 0: return 1
                 if dsum < 0: return -1

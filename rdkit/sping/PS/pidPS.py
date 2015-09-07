@@ -410,7 +410,7 @@ translate
 
         try:
             face = piddle_font_map[font.facereqFace.lower()]
-        except:
+        except Exception:
             return 'Helvetica'
 
         name = face + '-'
