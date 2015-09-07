@@ -19,259 +19,145 @@ def feq(v1,v2,tol=1e-4):
   return abs(v1-v2)<tol
 
 class TestCase(unittest.TestCase):
-  def testVectIdx(self):
-    """ test indexing into BitVects
-    """
-    v = BitVect.BitVect(10)
-    ok = 1
-    try:
-      v[0] = 1
-      v[2] = 1
-    except:
-      ok = 0
-    assert ok, 'setting bits failed'
+  def _test_set_valid_bits(self, v):
+    v[0] = 1
+    v[2] = 1
+    self.assertEquals(v[0], 1, "bad bit")
+    self.assertEquals(v[1], 0, "bad bit")
+    self.assertEquals(v[2], 1, "bad bit")
+    self.assertEquals(v[3], 0, "bad bit")
 
-    try:
+  def _test_out_of_range_bits(self, v):
+    with self.assertRaisesRegexp(Exception, "bad index"):
       v[10] = 1
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'setting high bit should have failed'
-    
-    try:
+    with self.assertRaisesRegexp(Exception, "bad index"):
       v[-1] = 1
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'setting negative bit should have failed'
 
-    assert v[0] == 1, 'bad bit'
-    assert v[1] == 0, 'bad bit'
-    assert v[2] == 1, 'bad bit'
-
-    try:
+    with self.assertRaisesRegexp(Exception, "bad index"):
       foo = v[10]
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'getting high bit should have failed'
-    
-    try:
+    with self.assertRaisesRegexp(Exception, "bad index"):
       foo = v[-1]
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'getting negative bit should have failed'
 
+  def testBitVect(self):
+    v = BitVect.BitVect(10)
+    self._test_set_valid_bits(v)
+    self._test_out_of_range_bits(v)
+    
   def testSparseIdx(self):
-    """ test indexing into SparseBitVects
-    """
     v = BitVect.SparseBitVect(10)
-    ok = 1
-    try:
-      v[0] = 1
-      v[2] = 1
-    except:
-      ok = 0
-    assert ok, 'setting bits failed'
+    self._test_set_valid_bits(v)
+    self._test_out_of_range_bits(v)
 
-    try:
-      v[10] = 1
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'setting high bit should have failed'
-    
-    try:
-      v[-1] = 1
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'setting negative bit should have failed'
-
-    assert v[0] == 1, 'bad bit'
-    assert v[1] == 0, 'bad bit'
-    assert v[2] == 1, 'bad bit'
-
-    try:
-      foo = v[10]
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'getting high bit should have failed'
-    
-    try:
-      foo = v[-1]
-    except:
-      ok = 1
-    else:
-      ok = 0
-    assert ok, 'getting negative bit should have failed'
-
-  def testVectBitGet(self):
-    """ test operations to get bits
-    """
-    v = BitVect.BitVect(10)
+  def _test_bit_get(self, v):
     v[0] = 1
     v[2] = 1
     v[6] = 1
-    assert len(v)==10,'len(BitVect) failed'
-    assert v.NumOnBits()==3,'NumOnBits failed'
-    assert v.GetOnBits()==[0,2,6], 'GetOnBits failed'
-    assert v.GetOnBits(reverse=1)==[6,2,0], 'GetOnBits(reverse) failed'
+    self.assertEqual(len(v), 10)
+    self.assertEqual(v.NumOnBits(), 3)
+    self.assertEqual(v.GetOnBits(), [0,2,6])
+    self.assertEqual(v.GetOnBits(reverse=1), [6,2,0])
+    
+  def testVectBitGet(self):
+    v = BitVect.BitVect(10)
+    self._test_bit_get(v)
     
   def testSparseBitGet(self):
-    """ test operations to get sparse bits
-    """
-    v = BitVect.BitVect(10)
-    v[0] = 1
-    v[2] = 1
-    v[6] = 1
-    assert len(v)==10,'len(SparseBitVect) failed'
-    assert v.NumOnBits()==3,'NumOnBits failed'
-    assert v.GetOnBits()==[0,2,6], 'GetOnBits failed'
-    assert v.GetOnBits(reverse=1)==[6,2,0], 'GetOnBits(reverse) failed'
+    v = BitVect.SparseBitVect(10)
+    self._test_bit_get(v)
+
+  def _test_bit_ops(self, v1, v2):
+    v1[0] = 1
+    v1[2] = 1
+    v1[6] = 1
+    v2[0] = 1
+    v2[3] = 1
+    v2[6] = 1
+    self.assertEqual(v1&v2, [0,6],'binary & failed')
+    self.assertEqual(v1|v2, [0,2,3,6],'binary | failed')
+    self.assertEqual(v1^v2 , [2,3],'binary ^ failed')
     
   def testVectBitOps(self):
-    """ test bit operations on BitVects
-    """
     v1 = BitVect.BitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.BitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
-    assert v1&v2 == [0,6],'binary & failed'
-    assert v1|v2 == [0,2,3,6],'binary | failed'
-    assert v1^v2 == [2,3],'binary ^ failed'
+    self._test_bit_ops(v1, v2)
 
   def testCrossBitOps(self):
-    """ test bit operations between BitVects and SparseBitVects
-    """
     v1 = BitVect.SparseBitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.BitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
-    assert v1&v2 == [0,6],'binary & failed'
-    assert v1|v2 == [0,2,3,6],'binary | failed'
-    assert v1^v2 == [2,3],'binary ^ failed'
+    self._test_bit_ops(v1, v2)
+    
+    v1 = BitVect.BitVect(10)
+    v2 = BitVect.SparseBitVect(10)
+    self._test_bit_ops(v1, v2)
     
   def testSparseBitOps(self):
-    """ test bit operations on SparseBitVects
-    """
     v1 = BitVect.SparseBitVect(10)
+    v2 = BitVect.SparseBitVect(10)
+    self._test_bit_ops(v1, v2)
+
+  def _test_tanimoto(self, v1, v2):
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = BitVect.SparseBitVect(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
-    assert v1&v2 == [0,6],'binary & failed'
-    assert v1|v2 == [0,2,3,6],'binary | failed'
-    assert v1^v2 == [2,3],'binary ^ failed'
-
+    self.assertEqual(v1.TanimotoSimilarity(v2), 0.5, 'TanimotoSimilarity failed')
+    self.assertEqual(v2.TanimotoSimilarity(v1), 0.5, 'TanimotoSimilarity failed')
+    self.assertEqual(v1.TanimotoSimilarity(v1), 1.0, 'TanimotoSimilarity failed')
+    self.assertEqual(v2.TanimotoSimilarity(v2), 1.0, 'TanimotoSimilarity failed')
+    
   def testVectTanimoto(self):
     v1 = BitVect.BitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.BitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
-    assert v1.TanimotoSimilarity(v2)==0.5,'TanimotoSimilarity failed'
-    assert v2.TanimotoSimilarity(v1)==0.5,'TanimotoSimilarity failed'
-    assert v1.TanimotoSimilarity(v1)==1.0,'TanimotoSimilarity failed'
-    assert v2.TanimotoSimilarity(v2)==1.0,'TanimotoSimilarity failed'
+    self._test_tanimoto(v1, v2)
     
   def testSparseTanimoto(self):
     v1 = BitVect.SparseBitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.SparseBitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
-    assert v1.TanimotoSimilarity(v2)==0.5,'TanimotoSimilarity failed'
-    assert v2.TanimotoSimilarity(v1)==0.5,'TanimotoSimilarity failed'
-    assert v1.TanimotoSimilarity(v1)==1.0,'TanimotoSimilarity failed'
-    assert v2.TanimotoSimilarity(v2)==1.0,'TanimotoSimilarity failed'
+    self._test_tanimoto(v1, v2)
     
   def testCrossTanimoto(self):
+    v1 = BitVect.BitVect(10)
+    v2 = BitVect.SparseBitVect(10)
+    self._test_tanimoto(v1, v2)
+    
     v1 = BitVect.SparseBitVect(10)
+    v2 = BitVect.BitVect(10)
+    self._test_tanimoto(v1, v2)
+
+
+  def _test_Euclid(self, v1, v2):
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = BitVect.BitVect(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
-    assert v1.TanimotoSimilarity(v2)==0.5,'TanimotoSimilarity failed'
-    assert v2.TanimotoSimilarity(v1)==0.5,'TanimotoSimilarity failed'
-    assert v1.TanimotoSimilarity(v1)==1.0,'TanimotoSimilarity failed'
-    assert v2.TanimotoSimilarity(v2)==1.0,'TanimotoSimilarity failed'
+    self.assertLess(abs(v1.EuclideanDistance(v2)-.14142), .0001, 'EuclideanDistance failed')
+    self.assertLess(abs(v2.EuclideanDistance(v1)-.14142), .0001, 'EuclideanDistance failed')
+    self.assertEqual(v1.EuclideanDistance(v1), 0.0, 'EuclideanDistance failed')
+    self.assertEqual(v2.EuclideanDistance(v2), 0.0, 'EuclideanDistance failed')
     
   def testVectEuclid(self):
     v1 = BitVect.BitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.BitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
-
-    assert abs(v1.EuclideanDistance(v2)-.14142)<.0001, 'EuclideanDistance failed'
-    assert abs(v2.EuclideanDistance(v1)-.14142)<.0001, 'EuclideanDistance failed'
-    assert v1.EuclideanDistance(v1)==0.0, 'EuclideanDistance failed'
-    assert v2.EuclideanDistance(v2)==0.0, 'EuclideanDistance failed'
+    self._test_Euclid(v1, v2)
 
   def testSparseEuclid(self):
     v1 = BitVect.SparseBitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.SparseBitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
-
-    assert abs(v1.EuclideanDistance(v2)-.14142)<.0001, 'EuclideanDistance failed'
-    assert abs(v2.EuclideanDistance(v1)-.14142)<.0001, 'EuclideanDistance failed'
-    assert v1.EuclideanDistance(v1)==0.0, 'EuclideanDistance failed'
-    assert v2.EuclideanDistance(v2)==0.0, 'EuclideanDistance failed'
+    self._test_Euclid(v1, v2)
 
   def testCrossEuclid(self):
     v1 = BitVect.BitVect(10)
-    v1[0] = 1
-    v1[2] = 1
-    v1[6] = 1
     v2 = BitVect.SparseBitVect(10)
-    v2[0] = 1
-    v2[3] = 1
-    v2[6] = 1
+    self._test_Euclid(v1, v2)
 
-    assert abs(v1.EuclideanDistance(v2)-.14142)<.0001, 'EuclideanDistance failed'
-    assert abs(v2.EuclideanDistance(v1)-.14142)<.0001, 'EuclideanDistance failed'
-    assert v1.EuclideanDistance(v1)==0.0, 'EuclideanDistance failed'
-    assert v2.EuclideanDistance(v2)==0.0, 'EuclideanDistance failed'
-
-
+    v1 = BitVect.SparseBitVect(10)
+    v2 = BitVect.BitVect(10)
+    self._test_Euclid(v1, v2)
+    
   def test90BulkDistances(self):
     """
       verify that the base similarity (tanimoto) works using an 18 fp regression
