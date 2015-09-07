@@ -227,85 +227,17 @@ class TestCase(unittest.TestCase):
     for atom in mol.GetAtoms():
       self.assertTrue(atom)
     ats = mol.GetAtoms()
-    try:
-      ats[1]
-    except:
-      ok = 0
-    else:
-      ok = 1
-    self.assertTrue(ok)
-    try:
+    ats[1]
+    with self.assertRaisesRegexp(IndexError, ""):
       ats[12]
-    except IndexError:
-      ok = 1
-    else:
-      ok = 0
-    self.assertTrue(ok)
-
-    if 0:
-      for atom in mol.GetHeteros():
-        self.assertTrue(atom)
-      ats = mol.GetHeteros()
-      try:
-        ats[0]
-      except:
-        ok = 0
-      else:
-        ok = 1
-      self.assertTrue(ok)
-      self.assertTrue(ats[0].GetIdx()==2)
-      try:
-        ats[12]
-      except IndexError:
-        ok = 1
-      else:
-        ok = 0
-      self.assertTrue(ok)
-
 
     for bond in mol.GetBonds():
       self.assertTrue(bond)
     bonds = mol.GetBonds()
-    try:
-      bonds[1]
-    except:
-      ok = 0
-    else:
-      ok = 1
-    self.assertTrue(ok)
-    try:
+    bonds[1]
+    with self.assertRaisesRegexp(IndexError, ""):
       bonds[12]
-    except IndexError:
-      ok = 1
-    else:
-      ok = 0
-    self.assertTrue(ok)
       
-    if 0:
-      mol = Chem.MolFromSmiles('c1ccccc1C')
-      for atom in mol.GetAromaticAtoms():
-        self.assertTrue(atom)
-      ats = mol.GetAromaticAtoms()
-      try:
-        ats[0]
-      except:
-        ok = 0
-      else:
-        ok = 1
-      self.assertTrue(ok)
-      self.assertTrue(ats[0].GetIdx()==0)
-      self.assertTrue(ats[1].GetIdx()==1)
-      self.assertTrue(ats[2].GetIdx()==2)
-      try:
-        ats[12]
-      except IndexError:
-        ok = 1
-      else:
-        ok = 0
-      self.assertTrue(ok)
-
-
-
 
   def test11MolOps(self) :
     mol = Chem.MolFromSmiles('C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3')
@@ -434,7 +366,7 @@ class TestCase(unittest.TestCase):
     for b in bs:
       try:
         a2 = b.GetOtherAtom(a)
-      except:
+      except Exception:
         a2=None
       self.assertTrue(a2)
     self.assertTrue(len(bs)==3)
@@ -657,7 +589,7 @@ class TestCase(unittest.TestCase):
       Chem.MolFromSmiles('C=O').HasSubstructMatch(Chem.MolFromSmarts('fiib'))
     #except ValueError:
     #  ok=True
-    except:
+    except Exception:
       ok=True
     self.assertTrue(ok  )
 
@@ -1114,26 +1046,17 @@ mol-4,CCOC
     m = smiSup[3]
     self.assertTrue(len(smiSup)==4)
 
-    try:
+    with self.assertRaisesRegexp(Exception, ""):
       smiSup[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    self.assertTrue(ok)
 
     smiSup.SetData(inD, delimiter=",",
                    smilesColumn=0, nameColumn=-1,
                    titleLine=0)
-    try:
+    with self.assertRaisesRegexp(Exception, ""):
       smiSup[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    self.assertTrue(ok)
+
     sys.stderr.write('>>> This may result in an infinite loop.  It should finish almost instantly\n')
-    self.assertTrue(len(smiSup)==4)
+    self.assertEqual(len(smiSup), 4)
     sys.stderr.write('<<< OK, it finished.\n')
 
 
@@ -2995,7 +2918,7 @@ CAS<~>
     e = False
     try:
       w.write(m)
-    except:
+    except Exception:
       sys.stderr.write('Opening gzip as binary fails on Python3 ' \
         'upon writing to SDWriter without crashing the RDKit\n')
       e = True
@@ -3003,7 +2926,7 @@ CAS<~>
       e = (sys.version_info < (3, 0))
     try:
       w.close()
-    except:
+    except Exception:
       sys.stderr.write('Opening gzip as binary fails on Python3 ' \
         'upon closing SDWriter without crashing the RDKit\n')
       e = True
@@ -3013,7 +2936,7 @@ CAS<~>
     w=None
     try:
       outf.close()
-    except:
+    except Exception:
       sys.stderr.write('Opening gzip as binary fails on Python3 ' \
         'upon closing the stream without crashing the RDKit\n')
       e = True
@@ -3058,7 +2981,7 @@ CAS<~>
     inf = gzip.open(fileN)
     suppl = Chem.ForwardSDMolSupplier(inf)
     m0 = next(suppl)
-    self.assertTrue(m0 is not None)
+    self.assertIsNot(m0, None)
     inf.close()
     del suppl
     
