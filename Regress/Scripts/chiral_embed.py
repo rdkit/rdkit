@@ -1,3 +1,4 @@
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem.PyMol import MolViewer
 from rdkit.Chem import AllChem
@@ -6,7 +7,7 @@ import gzip
 try:
     v = MolViewer()
     v.DeleteAll()
-except:
+except Exception:
     v = None
 
 outf = open('chembl_20_chiral.problems.smi','w+')
