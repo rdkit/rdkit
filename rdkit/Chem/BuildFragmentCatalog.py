@@ -473,7 +473,7 @@ def ParseArgs(details):
                                  'minPath=','maxPath=','smiCol=','actCol=','nameCol=','nActs=',
                                  'nBits=','biasList=','topN=',
                                  'build','sigs','gains','details','score','noTitle'])
-  except:
+  except Exception:
     sys.stderr.write('Error parsing command line:\n')
     import traceback
     traceback.print_exc()
@@ -580,7 +580,7 @@ if __name__=='__main__':
     if details.onBitsName:
       try:
         obls = cPickle.load(open(details.onBitsName,'rb'))
-      except:
+      except Exception:
         obls = None
       else:
         if len(obls)<(inD.count('\n')-1):

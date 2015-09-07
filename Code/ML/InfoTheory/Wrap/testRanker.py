@@ -127,13 +127,8 @@ class TestCase(unittest.TestCase):
         ids = [int(x[0]) for x in res]
         ids.sort()
         self.assertTrue(ids==[10,15,25,63,70])
-        try:
-            res = rn.GetTopN(10)
-        except:
-            ok = 1
-        else:
-            ok = 0
-        self.assertTrue(ok)
+        with self.assertRaisesRegexp(Exception, ""):
+          res = rn.GetTopN(10)
 
     def test3Issue140(self) :
         nbits = 2
@@ -147,7 +142,7 @@ class TestCase(unittest.TestCase):
             rn.AccumulateVotes(bv,act)
         try:
             res =  rn.GetTopN(1)
-        except:
+        except Exception:
             res = None
         self.assertTrue(res is not None)    
 

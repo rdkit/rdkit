@@ -67,7 +67,7 @@ class TestCase(unittest.TestCase):
     io = StringIO()
     try:
       Convert(suppl,io)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       self.fail('conversion failed')
@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
     io = StringIO()
     try:
       Convert(suppl,io,keyCol='AMW',stopAfter=5)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       self.fail('conversion failed')
@@ -128,7 +128,7 @@ if __name__=='__main__':
                                  'chiral',
                                  'smilesCol=',
                                  ])
-  except:
+  except Exception:
     import traceback
     traceback.print_exc()
     Usage()

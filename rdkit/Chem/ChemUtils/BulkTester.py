@@ -20,14 +20,14 @@ def TestMolecule(mol):
     mol = Chem.RemoveHs(mol)
   except ValueError as msg:
     return -1
-  except:
+  except Exception:
     import traceback
     traceback.print_exc()
     return -2
   if mol.GetNumAtoms():
     try:
       Randomize.CheckCanonicalization(mol,10)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       return -3
@@ -43,7 +43,7 @@ def TestSupplier(suppl,stopAfter=-1,reportInterval=100,reportTo=sys.stderr,
       mol = suppl.next()
     except StopIteration:
       break
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       nFailed += 1

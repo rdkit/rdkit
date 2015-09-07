@@ -27,7 +27,7 @@ from rdkit.Chem.rdShapeHelpers import *
 from rdkit.Chem.rdChemReactions import *
 try:
   from rdkit.Chem.rdSLNParse import *
-except:
+except ImportError:
   pass
 from rdkit.Chem.rdMolDescriptors import *
 from rdkit.Chem.rdqueries import *

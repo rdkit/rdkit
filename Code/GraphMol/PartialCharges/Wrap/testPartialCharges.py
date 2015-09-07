@@ -82,10 +82,7 @@ class TestCase(unittest.TestCase):
         rdPartialCharges.ComputeGasteigerCharges(m1)
 
         m2 = Chem.MolFromSmiles('C(=O)[O-].[Na+]')
-        try:
-            rdPartialCharges.ComputeGasteigerCharges(m2)
-        except:
-            self.fail('should not have hit an exception')
+        rdPartialCharges.ComputeGasteigerCharges(m2)
 
         for i in range(m1.GetNumAtoms()):
             c1 = float(m1.GetAtomWithIdx(i).GetProp('_GasteigerCharge'))
@@ -96,12 +93,8 @@ class TestCase(unittest.TestCase):
     def test3Params(self):
         """ tests handling of Issue187 """
         m2 = Chem.MolFromSmiles('C(=O)[O-].[Na+]')
-        try:
+        with self.assertRaisesRegexp(Exception, ""):
             rdPartialCharges.ComputeGasteigerCharges(m2,12,1)
-        except:
-            pass
-        else:
-            self.fail('should have hit an exception')
 
 
     def testGithubIssue20(self):
@@ -119,13 +112,15 @@ class TestCase(unittest.TestCase):
         from locale import setlocale, LC_NUMERIC
         try:
             setlocale(LC_NUMERIC, "de_DE")
-        except:
+        except Exception:
             # can't set the required locale, might as well just return
             return
-        rdPartialCharges.ComputeGasteigerCharges(m1)
-        for at in m1.GetAtoms():
-            float(at.GetProp('_GasteigerCharge'))
-        setlocale(LC_NUMERIC, "C")
+        try:
+            rdPartialCharges.ComputeGasteigerCharges(m1)
+            for at in m1.GetAtoms():
+                float(at.GetProp('_GasteigerCharge'))
+        finally:
+            setlocale(LC_NUMERIC, "C")
         rdPartialCharges.ComputeGasteigerCharges(m1)
         for at in m1.GetAtoms():
             float(at.GetProp('_GasteigerCharge'))

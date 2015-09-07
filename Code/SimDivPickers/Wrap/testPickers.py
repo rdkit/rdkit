@@ -117,24 +117,12 @@ class TestCase(unittest.TestCase):
       d = 1-DataStructs.FingerprintSimilarity(bvs[i],bvs[j])
       return d
     picker = rdSimDivPickers.MaxMinPicker()
-    try:
-      mm1 = picker.LazyPick(taniFunc,len(vs),N)
-    except:
-      ok=False
-    else:
-      ok=True
-    self.assertTrue(ok)
+    mm1 = picker.LazyPick(taniFunc,len(vs),N)
     self.assertEqual(len(mm1),N)
     picker = None
 
     picker = rdSimDivPickers.MaxMinPicker()
-    try:
-      mm2 = picker.LazyBitVectorPick(vs,len(vs),N)
-    except:
-      ok=False
-    else:
-      ok=True
-    self.assertTrue(ok)
+    mm2 = picker.LazyBitVectorPick(vs,len(vs),N)
     self.assertEqual(len(mm2),N)
     self.assertEqual(tuple(mm2),tuple(mm1))
     picker = None

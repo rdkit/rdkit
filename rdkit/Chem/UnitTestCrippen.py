@@ -93,12 +93,7 @@ class TestCase(unittest.TestCase):
       except EOFError:
         break
       else:
-        try:
-          mol = Chem.MolFromSmiles(smi)
-        except:
-          import traceback
-          traceback.print_exc()
-          mol = None
+        mol = Chem.MolFromSmiles(smi)
         if mol:
           mol=Chem.AddHs(mol,1)
           smi2 = Chem.MolToSmiles(mol)
@@ -119,12 +114,7 @@ class TestCase(unittest.TestCase):
       else:
         refContribs = [x[0] for x in refContribs]
         refOrder= numpy.argsort(refContribs)
-        try:
-          mol = Chem.MolFromSmiles(smi)
-        except:
-          import traceback
-          traceback.print_exc()
-          mol = None
+        mol = Chem.MolFromSmiles(smi)
         if mol:
           mol=Chem.AddHs(mol,1)
           smi2 = Chem.MolToSmiles(mol)
