@@ -485,7 +485,7 @@ class p_con:
             for bla in mol_list:
                 try:
                     IC50 +=  float(bla.GetProp("value"))
-                except:
+                except Exception:
                     print("no IC50 reported",bla.GetProp("_Name"))
             IC50_avg = IC50 / len(mol_list)
             return IC50_avg
@@ -495,7 +495,7 @@ class p_con:
             for mol in mol_list:
                 try:
                     IC50_list.append(round(float(mol.GetProp("value")),2))
-                except:
+                except Exception:
                     print("no IC50 reported",mol.GetProp("_Name"))
             IC50_stddev = np.std(IC50_list,ddof=1)
             return IC50_stddev,IC50_list
@@ -514,7 +514,7 @@ class p_con:
             cansmi = str(cpd.GetProp("cansmirdkit"))
             try:
                 IC50_dict[cansmi].append(cpd)
-            except:
+            except Exception:
                 IC50_dict[cansmi] = [cpd]
         for entry in IC50_dict:
             IC50_avg = str(get_mean_IC50(IC50_dict[entry]))
