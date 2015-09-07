@@ -68,7 +68,7 @@ def _ConstructSQL(details,extraFields=''):
 def ScreenInDb(details,mol):
   try:
     probeFp = apply(FingerprintMols.FingerprintMol,(mol,),details.__dict__)
-  except:
+  except Exception:
     import traceback
     FingerprintMols.error('Error: problems fingerprinting molecule.\n')
     traceback.print_exc()
@@ -80,7 +80,7 @@ def ScreenInDb(details,mol):
         conn.user = details.dbUser
       if hasattr(details,'dbPassword'):
         conn.password = details.dbPassword
-    except:
+    except Exception:
       import traceback
       FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n'%(details.dbName,
                                                                      details.tableName))
@@ -130,7 +130,7 @@ def GetFingerprints(details):
         conn.user = details.dbUser
       if hasattr(details,'dbPassword'):
         conn.password = details.dbPassword
-    except:
+    except Exception:
       import traceback
       FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n'%(details.dbName,
                                                                      details.tableName))
@@ -153,12 +153,12 @@ def GetFingerprints(details):
       FingerprintMols.error('Error: Problems reading from file %s\n'%(details.inFileName))
       traceback.print_exc()
 
-    supple = []
+    suppl = []
     done = 0
     while not done:
       try:
         id,fp = cPickle.load(inF)
-      except:
+      except Exception:
         done = 1
       else:
         fp._fieldsFromDb = [id]
@@ -175,7 +175,7 @@ def ScreenFingerprints(details,data,mol=None,probeFp=None):
   if probeFp is None:
     try:
       probeFp = apply(FingerprintMols.FingerprintMol,(mol,),details.__dict__)
-    except:
+    except Exception:
       import traceback
       FingerprintMols.error('Error: problems fingerprinting molecule.\n')
       traceback.print_exc()
@@ -224,7 +224,7 @@ def ScreenFromDetails(details,mol=None):
       smi = details.probeSmiles
       try:
         mol = Chem.MolFromSmiles(smi)
-      except:
+      except Exception:
         import traceback
         FingerprintMols.error('Error: problems generating molecule for smiles: %s\n'%(smi))
         traceback.print_exc()
