@@ -13,6 +13,7 @@ from rdkit import rdBase
 from rdkit import RDConfig
 from rdkit import Geometry
 from rdkit import Chem
+from rdkit.Chem import rdchem
 from rdkit.Chem import rdMolDescriptors
 import math, os
 
@@ -450,7 +451,7 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   """ Calculate the torsion deviation fingerprint (TFD) given two lists of
       torsion angles.
 
-      Arguments;
+      Arguments:
       - torsions1:  torsion angles of conformation 1
       - torsions2:  torsion angles of conformation 2
       - weights:    list of torsion weights (default: None)
@@ -478,6 +479,33 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   if sum_weights != 0: # avoid division by zero
     tfd /= sum_weights
   return tfd
+
+def _getSameAtomOrder(mol1, mol2):
+  """ Generate a new molecule with the atom order of mol1 and coordinates
+      from mol2.
+      
+      Arguments:
+      - mol1:     first instance of the molecule of interest
+      - mol2:     second instance the molecule of interest
+
+      Return: RDKit molecule
+  """
+  match = mol2.GetSubstructMatch(mol1)
+  atomNums = tuple(range(mol1.GetNumAtoms()))
+  if match != atomNums: # atom orders are not the same!
+    #print "Atoms of second molecule reordered."
+    mol3 = Chem.Mol(mol1)
+    mol3.RemoveAllConformers()
+    for conf2 in mol2.GetConformers():
+      confId = conf2.GetId()
+      conf = rdchem.Conformer(mol1.GetNumAtoms())
+      conf.SetId(confId)
+      for i in range(mol1.GetNumAtoms()):
+        conf.SetAtomPosition(i, mol2.GetConformer(confId).GetAtomPosition(match[i]))
+      cid = mol3.AddConformer(conf)
+    return mol3
+  else:
+    return Chem.Mol(mol2)
 
 # some wrapper functions
 def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
@@ -517,16 +545,15 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
         tfd.append(CalculateTFD(t1, t2))
   return tfd
 
-def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
-  """ Wrapper to calculate the TFD between two list of conformers 
-      of two molecules.
+def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
+  """ Wrapper to calculate the TFD between two molecules.
       Important: The two molecules must be instances of the same molecule
 
       Arguments:
       - mol1:     first instance of the molecule of interest
       - mol2:     second instance the molecule of interest
-      - confIds1:  list of conformer indices from mol1 (default: first conformer)
-      - confIds2:  list of conformer indices from mol2 (default: first conformer)
+      - confId1:  conformer index for mol1 (default: first conformer)
+      - confId2:  conformer index for mol2 (default: first conformer)
       - useWeights: flag for using torsion weights in the TFD calculation
       - maxDev:   maximal deviation used for normalization
                   'equal': all torsions are normalized using 180.0 (default)
@@ -539,31 +566,21 @@ def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True
                              if False, alternative not-covalently bound
                              atoms are used to define the torsion
 
-      Return: list of TFD values
+      Return: TFD value
   """
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
+  mol2 = _getSameAtomOrder(mol1, mol2)
   tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   # first molecule
-  if confIds1 < 0:
-    torsions1 = [CalculateTorsionAngles(mol1, tl, tlr)]
-  else:
-    torsions1 = [CalculateTorsionAngles(mol1, tl, tlr, confId=cid) for cid in confIds1]
+  torsion1 = CalculateTorsionAngles(mol1, tl, tlr, confId=confId1)
   # second molecule
-  if confIds2 < 0:
-    torsions2 = [CalculateTorsionAngles(mol2, tl, tlr)]
-  else:
-    torsions2 = [CalculateTorsionAngles(mol2, tl, tlr, confId=cid) for cid in confIds2]
-  tfd = []
+  torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=confId2)
   if useWeights:
     weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2, weights=weights))
+    tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   else:
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2))
+    tfd = CalculateTFD(torsion1, torsion2)
   return tfd
 
 def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
