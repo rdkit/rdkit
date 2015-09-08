@@ -16,6 +16,8 @@
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <iostream>
 using namespace std;
@@ -1173,7 +1175,56 @@ void testAtomListLineRoundTrip()
   TEST_ASSERT(dynamic_cast<QueryAtom*>(m2->getAtomWithIdx(3))->Match(o));
   delete m;
   delete m2;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+void testGithub608(){
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test github 608: stereo bonds wrong after insertMol" << std::endl;
+
+  {
+    RWMol *m = SmilesToMol("N1NN1");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    RWMol *f = SmilesToMol("C/C=C/C");
+    TEST_ASSERT(f);
+    TEST_ASSERT(f->getNumAtoms()==4);
+    TEST_ASSERT(f->getBondBetweenAtoms(1,2)->getStereoAtoms().size()==2);
+    TEST_ASSERT(f->getBondBetweenAtoms(1,2)->getStereoAtoms()[0]==0);
+    TEST_ASSERT(f->getBondBetweenAtoms(1,2)->getStereoAtoms()[1]==3);
+
+    m->insertMol(*f);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereoAtoms().size()==2);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereoAtoms()[0]==3);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereoAtoms()[1]==6);
+
+    delete m;
+    delete f;
+  }  
+  
+  {
+    INT_VECT nAtoms;
+    RWMol *m = SmilesToMol("N1NN1");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    RWMol *f = SmilesToMol("C[C@]1(F)CC[C@](Cl)(Br)CC1");
+    TEST_ASSERT(f);
+    TEST_ASSERT(f->getNumAtoms()==10);
+    TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(common_properties::_ringStereoAtoms,nAtoms));
+    TEST_ASSERT(std::find(nAtoms.begin(),nAtoms.end(),6)!=nAtoms.end());
+    m->insertMol(*f);
+    TEST_ASSERT(m->getNumAtoms()==13);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(common_properties::_ringStereoAtoms,nAtoms));
+    TEST_ASSERT(std::find(nAtoms.begin(),nAtoms.end(),9)!=nAtoms.end());
+
+    delete m;
+    delete f;
+  }  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
@@ -1200,6 +1251,7 @@ int main()
   testAtomResidues();
   testNeedsUpdatePropertyCache();
   testAtomListLineRoundTrip();
+  testGithub608();
 
   return 0;
 }

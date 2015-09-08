@@ -47,6 +47,21 @@ namespace RDKit{
       newAtomIds[other.d_graph[*firstA]->getIdx()]=idx;
       ++firstA;
     }
+    for(unsigned int ati=0;ati<other.getNumAtoms();++ati){
+      Atom *newAt=getAtomWithIdx(newAtomIds[ati]);
+      // take care of atom-numbering-dependent properties:
+      INT_VECT nAtoms;
+      if(newAt->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)){
+        BOOST_FOREACH(int &val,nAtoms){
+          if(val<0){
+            val=-1*(newAtomIds[(-val-1)]+1);
+          } else {
+            val=newAtomIds[val-1]+1;
+          }
+        }
+        newAt->setProp(common_properties::_ringStereoAtoms,nAtoms,true);
+      }
+    }
    
     EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = boost::edges(other.d_graph);
@@ -58,6 +73,9 @@ namespace RDKit{
       bond_p->setOwningMol(this);
       bond_p->setBeginAtomIdx(idx1);
       bond_p->setEndAtomIdx(idx2);
+      BOOST_FOREACH(int &v,bond_p->getStereoAtoms()){
+        v = newAtomIds[v];
+      }
       addBond(bond_p,true);
       ++firstB;
     }
