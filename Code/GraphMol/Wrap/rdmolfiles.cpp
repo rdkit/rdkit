@@ -21,6 +21,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
+#include <GraphMol/FileParsers/SequenceWriters.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 
@@ -920,6 +921,20 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("lowerD")=false),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the sequence string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToSequence",RDKit::MolToSequence,
+	      (python::arg("mol")),
+	      docString.c_str());
+
+
   docString="Construct a molecule from a FASTA string.\n\n\
   ARGUMENTS:\n\
 \n\
@@ -941,6 +956,18 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("lowerD")=false),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the FASTA string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToFASTA",RDKit::MolToFASTA,
+	      (python::arg("mol")),
+	      docString.c_str());
 
   docString="Construct a molecule from a HELM string.\n\n\
   ARGUMENTS:\n\
@@ -959,6 +986,18 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("sanitize")=true),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the HELM string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToHELM",RDKit::MolToHELM,
+	      (python::arg("mol")),
+	      docString.c_str());
 
 
   docString="Returns the canonical atom ranking for each atom of a molecule fragment.\n\
