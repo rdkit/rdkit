@@ -7,7 +7,7 @@ rdkit_library(FileParsers
               TplFileParser.cpp TplFileWriter.cpp
               PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
               ProximityBonds.cpp
-              SequenceParse.cpp SequenceWrite.cpp
+              SequenceParsers.cpp SequenceWriters.cpp
               LINK_LIBRARIES SmilesParse GraphMol)
               
 rdkit_headers(FileParsers.h
@@ -15,7 +15,7 @@ rdkit_headers(FileParsers.h
               MolFileStereochem.h
               MolSupplier.h
               MolWriters.h
-              SequenceParse.h SequenceWrite.h
+              SequenceParsers.h SequenceWriters.h
               DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp 
