@@ -7,8 +7,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
-#include "SequenceParse.h"
-#include "SequenceWrite.h"
+#include <GraphMol/FileParsers/SequenceParsers.h>
+#include <GraphMol/FileParsers/SequenceWriters.h>
 
 
 #define VERBOSE
