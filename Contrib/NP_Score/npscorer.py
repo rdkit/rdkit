@@ -23,7 +23,7 @@ def readNPModel(filename='publicnp.model.gz'):
   sys.stderr.write("model in\n")
   return fscore
 
-def scoreMol(mol):
+def scoreMol(mol,fscore):
   if mol is None:
       raise ValueError('invalid molecule')
   fp = rdMolDescriptors.GetMorganFingerprint(mol,2)
@@ -51,7 +51,7 @@ def processMols(fscore,suppl,outf):
       continue
     
     n += 1
-    score = "%.3f" % scoreMol(m)
+    score = "%.3f" % scoreMol(m,fscore)
 
     smiles = Chem.MolToSmiles(m,True)
     name = m.GetProp('_Name')

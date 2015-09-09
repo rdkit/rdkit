@@ -317,7 +317,7 @@ namespace RDKit {
 
 
     python::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol,
-                                     unsigned int numThreads,
+                                     int numThreads,
                                      python::object prbProps,
                                      python::object refProps,
                                      int refCid = -1, bool reflect = false,
@@ -476,7 +476,7 @@ namespace RDKit {
     }
 
     python::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol,
-                                        unsigned int numThreads,
+                                        int numThreads,
                                         python::list prbCrippenContribs,
                                         python::list refCrippenContribs,
                                         int refCid = -1, bool reflect = false,
@@ -782,6 +782,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - refMol                   molecule used as the reference for the alignment\n\
       - numThreads :             the number of threads to use, only has an effect if\n\
                                  the RDKit was built with thread support (defaults to 1)\n\
+                                 If set to zero, the max supported by the system will be used.\n\
       - prbPyMMFFMolProperties   PyMMFFMolProperties object for the probe molecule as returned\n\
                                  by SetupMMFFForceField()\n\
       - refPyMMFFMolProperties   PyMMFFMolProperties object for the reference molecule as returned\n\

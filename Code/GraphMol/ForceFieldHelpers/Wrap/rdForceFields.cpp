@@ -35,7 +35,7 @@ namespace RDKit {
     return UFF::UFFOptimizeMolecule(mol,maxIters,vdwThresh,confId,ignoreInterfragInteractions).first;
   }
   python::object UFFConfsHelper(ROMol &mol,
-                                unsigned int numThreads,
+                                int numThreads,
                                 int maxIters,
                                 double vdwThresh,
                                 int confId,
@@ -54,7 +54,7 @@ namespace RDKit {
   }
 
   python::object MMFFConfsHelper(ROMol &mol,
-                                 unsigned int numThreads,
+                                 int numThreads,
                                  int maxIters,
                                  std::string mmffVariant,
                                  double nonBondedThresh,
@@ -252,6 +252,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - mol : the molecule of interest\n\
     - numThreads : the number of threads to use, only has an effect if the RDKit\n\
                    was built with thread support (defaults to 1)\n\
+                   If set to zero, the max supported by the system will be used.\n\
     - maxIters : the maximum number of iterations (defaults to 200)\n\
     - vdwThresh : used to exclude long-range van der Waals interactions\n\
                   (defaults to 10.0)\n\
@@ -377,6 +378,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - mol : the molecule of interest\n\
     - numThreads : the number of threads to use, only has an effect if the RDKit\n\
                    was built with thread support (defaults to 1)\n\
+                   If set to zero, the max supported by the system will be used.\n\
     - maxIters : the maximum number of iterations (defaults to 200)\n\
     - mmffVariant : \"MMFF94\" or \"MMFF94s\"\n\
     - nonBondedThresh : used to exclude long-range non-bonded\n\

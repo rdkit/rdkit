@@ -94,6 +94,7 @@ namespace RDKit {
       \param numConfs       Number of conformations to be generated
       \param numThreads     Sets the number of threads to use (more than one thread will only
                             be used if the RDKit was build with multithread support)
+                            If set to zero, the max supported by the system will be used.
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
                             not obtained successfully. The default value is 10x the number of atoms.
       \param seed           provides a seed for the random number generator (so that the same

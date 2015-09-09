@@ -785,7 +785,7 @@ void testO3AMultiThreadBug() {
 
       ROMol prbMol2 = *(mols[j]);
       std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
-      MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 4);
+      MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 0);
       TEST_ASSERT(o3s.size()==prbMol2.getNumConformers());
       for(unsigned int i=0;i < prbMol2.getNumConformers(); ++i){
         TEST_ASSERT(feq(oscores[i%prbMol.getNumConformers()].first,o3s[i]->align()));

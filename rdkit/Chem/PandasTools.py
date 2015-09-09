@@ -81,7 +81,7 @@ from __future__ import print_function
 from base64 import b64encode
 import types,copy
 
-from rdkit.six import BytesIO
+from rdkit.six import BytesIO, string_types
 from rdkit import Chem
 from rdkit.Chem import Draw
 
@@ -105,6 +105,8 @@ except Exception as e:
   pd = None
 
 highlightSubstructures=True
+molRepresentation = 'png' # supports also SVG
+molSize = (200,200)
 
 
 def patchPandasHTMLrepr(self,**kwargs):
@@ -137,6 +139,22 @@ def _get_image(x):
   if len(s)+100 > pd.get_option("display.max_colwidth"):
     pd.set_option("display.max_colwidth",len(s)+1000)
   return s
+
+def _get_svg_image(mol, size=(200,200), highlightAtoms=[]):
+  """ mol rendered as SVG """
+  from IPython.display import SVG
+  from rdkit.Chem import rdDepictor
+  from rdkit.Chem.Draw import rdMolDraw2D
+  try:
+    # If no coordinates, calculate 2D
+    mol.GetConformer(-1)
+  except ValueError:
+    rdDepictor.Compute2DCoords(mol)
+  drawer = rdMolDraw2D.MolDraw2DSVG(*size)
+  drawer.DrawMolecule(mol,highlightAtoms=highlightAtoms)
+  drawer.FinishDrawing()
+  svg = drawer.GetDrawingText().replace('svg:','')
+  return SVG(svg).data # IPython's SVG clears the svg text 
 
 from rdkit import DataStructs
 
@@ -177,7 +195,10 @@ def PrintAsBase64PNGString(x,renderer = None):
       highlightAtoms=x.__sssAtoms
   else:
       highlightAtoms=[]
-  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms))
+  if molRepresentation.lower() == 'svg':
+    return _get_svg_image(x, highlightAtoms=highlightAtoms, size=molSize)
+  else:
+    return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms, size=molSize))
 
 
 def PrintDefaultMolRep(x):
@@ -210,9 +231,9 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   If desired, a fingerprint can be computed and stored with the molecule objects to accelerate substructure matching
   '''
   if not includeFingerprints:
-    frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
+    frame[molCol]=frame[smilesCol].map(Chem.MolFromSmiles)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprint(Chem.MolFromSmiles(x[smilesCol])), axis=1)
+    frame[molCol]=frame[smilesCol].map(lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
   RenderImagesInAllDataFrames(images=True)
   #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
   #frame.head = types.MethodType(patchPandasHeadMethod,frame)
@@ -234,10 +255,18 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
 def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None, embedProps=False):
   """ Read file in SDF format and return as Pandas data frame. If embedProps=True all properties also get embedded in Mol objects in the molecule column. """
   df = None
-  if type(filename) is str:
-    f = open(filename, 'rb') #'rU')
+  if isinstance(filename, string_types):
+    if filename.lower()[-3:] == ".gz":
+      import gzip
+      f = gzip.open(filename, "rb")
+    else:
+      f = open(filename, 'rb')
+    close = f.close
   else:
     f = filename
+    close = None # don't close an open file that was passed in
+  records = []
+  indices = []
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
@@ -251,14 +280,12 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
         row[molColName] = mol
     else:
         row[molColName] = _MolPlusFingerprint(mol)
-    row = pd.DataFrame(row, index=[i])
-    if df is None:
-      df = row
-    else:
-      df = df.append(row)
-  f.close()
+    records.append(row)
+    indices.append(i)
+
+  if close is not None: close()
   RenderImagesInAllDataFrames(images=True)
-  return df
+  return pd.DataFrame(records, index=indices)
 
 from rdkit.Chem import SDWriter
 
@@ -267,9 +294,19 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   The "allNumeric" flag allows to automatically include all numeric columns in the output. User has to make sure that correct data type is assigned to column.
   "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
   '''
+
+  close = None  
+  if isinstance(out, string_types):
+    if out.lower()[-3:] == ".gz":
+      import gzip
+      out = gzip.open(out, "wb")
+      close = out.close
+
   writer = SDWriter(out)
   if properties is None:
     properties=[]
+  else:
+    properties=list(properties)
   if allNumeric:
     properties.extend([dt for dt in df.dtypes.keys() if (np.issubdtype(df.dtypes[dt],float) or np.issubdtype(df.dtypes[dt],int))])
 
@@ -279,10 +316,8 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     properties.remove(idName)
   writer.SetProps(properties)
   for row in df.iterrows():
-    mol = copy.deepcopy(row[1][molColName])
-    # Remove embeded props
-    for prop in mol.GetPropNames():
-      mol.ClearProp(prop)
+    # make a local copy I can modify
+    mol = Chem.Mol(row[1][molColName])
 
     if idName is not None:
       if idName == 'RowID':
@@ -293,11 +328,15 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
       cell_value = row[1][p]
       # Make sure float does not get formatted in E notation
       if np.issubdtype(type(cell_value),float):
-        mol.SetProp(p,'{:f}'.format(cell_value).rstrip('0'))
+        s = '{:f}'.format(cell_value).rstrip("0") # "f" will show 7.0 as 7.00000
+        if s[-1] == ".":
+          s += "0"  # put the "0" back on if it's something like "7."
+        mol.SetProp(p, s)
       else:
         mol.SetProp(p,str(cell_value))
     writer.write(mol)
   writer.close()
+  if close is not None: close()
 
 _saltRemover = None
 def RemoveSaltsFromFrame(frame, molCol = 'ROMol'):

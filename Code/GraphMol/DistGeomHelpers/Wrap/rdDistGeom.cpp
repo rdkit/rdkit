@@ -206,7 +206,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
-                 was built with multi-thread support..\n\
+                 was built with multi-thread support.\n\
+                If set to zero, the max supported by the system will be used.\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";

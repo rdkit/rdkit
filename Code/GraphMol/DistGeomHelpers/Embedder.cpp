@@ -31,9 +31,8 @@
 #include <GraphMol/MolOps.h>
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
+#include <RDGeneral/RDThreads.h>
+
 
 #define ERROR_TOL 0.00001
 
@@ -519,9 +518,9 @@ namespace RDKit {
         }
 #ifdef RDK_THREADSAFE_SSS
         boost::thread_group tg;
-#else
-        numThreads=1;
 #endif
+        numThreads = getNumThreadsToUse(numThreads);
+        
         detail::EmbedArgs eargs={&confsOk,
                                  fourD,
                                  &fragMapping,&confs,
