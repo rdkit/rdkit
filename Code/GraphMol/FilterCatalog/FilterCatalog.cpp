@@ -199,19 +199,18 @@ namespace RDKit
     return getFirstMatch(mol) != 0;
   }
 
-  boost::shared_ptr<const FilterCatalog::entryType_t>
-    FilterCatalog::getFirstMatch(const ROMol &mol) const {
+  FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(const ROMol &mol) const {
     for( size_t i=0; i<d_entries.size(); ++i) {
         if (d_entries[i]->hasFilterMatch(mol))
           return d_entries[i];
     }
-    return boost::shared_ptr<const FilterCatalog::entryType_t>();
+    return CONST_SENTRY();
   }
 
-  const std::vector<boost::shared_ptr<const FilterCatalog::entryType_t> >
+  const std::vector<FilterCatalog::CONST_SENTRY>
     FilterCatalog::getMatches(const ROMol &mol) const {
     
-    std::vector<boost::shared_ptr<const FilterCatalog::entryType_t> > result;
+    std::vector<CONST_SENTRY> result;
     for( size_t i=0; i<d_entries.size(); ++i)
       {
         if (d_entries[i]->hasFilterMatch(mol))

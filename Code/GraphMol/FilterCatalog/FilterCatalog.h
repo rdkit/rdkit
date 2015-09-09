@@ -208,11 +208,11 @@ namespace RDKit {
     /*
       \param mol  ROMol to match against the catalog
     */
-    const std::vector<CONST_SENTRY > getMatches(const ROMol &mol) const;
+    const std::vector<CONST_SENTRY> getMatches(const ROMol &mol) const;
 
   private:
     void Clear();
-    std::vector<boost::shared_ptr<FilterCatalogEntry> > d_entries;
+    std::vector<SENTRY> d_entries;
   };
 
   bool FilterCatalogCanSerialize();
