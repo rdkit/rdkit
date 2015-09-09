@@ -105,6 +105,7 @@ except Exception as e:
   pd = None
 
 highlightSubstructures=True
+molRepresentation = 'png' # supports also SVG
 molSize = (200,200)
 
 
@@ -138,6 +139,22 @@ def _get_image(x):
   if len(s)+100 > pd.get_option("display.max_colwidth"):
     pd.set_option("display.max_colwidth",len(s)+1000)
   return s
+
+def _get_svg_image(mol, size=(200,200), highlightAtoms=[]):
+  """ mol rendered as SVG """
+  from IPython.display import SVG
+  from rdkit.Chem import rdDepictor
+  from rdkit.Chem.Draw import rdMolDraw2D
+  try:
+    # If no coordinates, calculate 2D
+    mol.GetConformer(-1)
+  except ValueError:
+    rdDepictor.Compute2DCoords(mol)
+  drawer = rdMolDraw2D.MolDraw2DSVG(*size)
+  drawer.DrawMolecule(mol,highlightAtoms=highlightAtoms)
+  drawer.FinishDrawing()
+  svg = drawer.GetDrawingText().replace('svg:','')
+  return SVG(svg).data # IPython's SVG clears the svg text 
 
 from rdkit import DataStructs
 
@@ -178,7 +195,10 @@ def PrintAsBase64PNGString(x,renderer = None):
       highlightAtoms=x.__sssAtoms
   else:
       highlightAtoms=[]
-  return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms, size=molSize))
+  if molRepresentation.lower() == 'svg':
+    return _get_svg_image(x, highlightAtoms=highlightAtoms, size=molSize)
+  else:
+    return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x,highlightAtoms=highlightAtoms, size=molSize))
 
 
 def PrintDefaultMolRep(x):
