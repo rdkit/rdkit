@@ -14,8 +14,26 @@
 namespace RDKit{
   class ROMol;
 
+  // \brief construct a sequence string from a molecule (currently only supports peptides)
+  /*!
+   *   \param mol - the molecule to work with
+   *
+   *   \note \c mol should contain monomer information in \c AtomMonomerInfo structures
+   */
   std::string MolToSequence(const ROMol &mol);
+  // \brief construct a FASTA string from a molecule (currently only supports peptides)
+  /*!
+   *   \param mol - the molecule to work with
+   *
+   *   \note \c mol should contain monomer information in \c AtomMonomerInfo structures
+   */
   std::string MolToFASTA(const ROMol &mol);
+  // \brief construct a HELM string from a molecule (currently only supports peptides)
+  /*!
+   *   \param mol - the molecule to work with
+   *
+   *   \note \c mol should contain monomer information in \c AtomMonomerInfo structures
+   */
   std::string MolToHELM(const ROMol &mol);
 }
 

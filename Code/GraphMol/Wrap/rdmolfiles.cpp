@@ -900,7 +900,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      docString.c_str());
 
 
-  docString="Construct a molecule from a sequence string.\n\n\
+  docString="Construct a molecule from a sequence string (currently only supports peptides).\n\n\
   ARGUMENTS:\n\
 \n\
     - text: string containing the sequence\n\
@@ -926,6 +926,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n\
     - mol: the molecule\n\
 \n\
+  NOTE: the molecule should contain monomer information in AtomMonomerInfo structures \n\
+\n\
   RETURNS:\n\
 \n\
     a string\n\
@@ -935,7 +937,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      docString.c_str());
 
 
-  docString="Construct a molecule from a FASTA string.\n\n\
+  docString="Construct a molecule from a FASTA string (currently only supports peptides).\n\n\
   ARGUMENTS:\n\
 \n\
     - text: string containing the FASTA\n\
@@ -961,6 +963,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n\
     - mol: the molecule\n\
 \n\
+  NOTE: the molecule should contain monomer information in AtomMonomerInfo structures \n\
+\n\
   RETURNS:\n\
 \n\
     a string\n\
@@ -969,7 +973,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      (python::arg("mol")),
 	      docString.c_str());
 
-  docString="Construct a molecule from a HELM string.\n\n\
+  docString="Construct a molecule from a HELM string (currently only supports peptides).\n\n\
   ARGUMENTS:\n\
 \n\
     - text: string containing the HELM\n\
@@ -990,6 +994,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   ARGUMENTS:\n\
 \n\
     - mol: the molecule\n\
+\n\
+  NOTE: the molecule should contain monomer information in AtomMonomerInfo structures \n\
 \n\
   RETURNS:\n\
 \n\
