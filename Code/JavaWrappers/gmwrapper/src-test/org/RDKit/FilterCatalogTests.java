@@ -73,7 +73,7 @@ public class FilterCatalogTests extends GraphMolTest {
             assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
 
             // check the getMatches api point
-            FilterCatalogEntryVect matches = catalog.getMatches(mol);
+            FilterCatalogEntry_Vect matches = catalog.getMatches(mol);
             assertEquals(1, matches.size());
             
             for (int entryIdx = 0; entryIdx < matches.size(); ++entryIdx) {

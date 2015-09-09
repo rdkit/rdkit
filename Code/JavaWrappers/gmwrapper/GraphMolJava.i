@@ -112,6 +112,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
+%shared_ptr(RDKit::FilterCatalogEntry);
 
 /* Some utility classes for passing arrays in and out */
 %array_class(double, Double_Array);

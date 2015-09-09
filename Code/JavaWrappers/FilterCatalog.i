@@ -47,16 +47,17 @@
 
 %}
 
+%template(FilterCatalogEntry_Vect) std::vector< boost::shared_ptr<RDKit::FilterCatalogEntry> >;
+
+%template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
+
 %include "enums.swg"
-%include <boost_shared_ptr.i>
 
 %include <../RDGeneral/Dict.h>
 %include <../Catalogs/Catalog.h>
 %include <../Catalogs/CatalogParams.h>
 %include <GraphMol/Substruct/SubstructMatch.h>
 
-%template(SENTRY) boost::shared_ptr<RDKit::FilterCatalogEntry>;
-%template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
 
 %newobject RDKit::FilterCatalogEntry::getProp;
 %extend RDKit::FilterCatalogEntry {
@@ -70,30 +71,29 @@
 
 
 %extend RDKit::FilterCatalog {
-  // not a new object, don't delete from the outside
-  const RDKit::FilterCatalogEntry * getFirstMatch(const ROMol &mol) const {
-    // dangerous, this can be delete from underneath you
-    return self->getFirstMatch(mol).get();
-  }
-
-  std::vector<const RDKit::FilterCatalogEntry *> getMatches(const ROMol &mol) const {
-    // dangerous, this can be delete from underneath you
-
-    std::vector<boost::shared_ptr<const RDKit::FilterCatalogEntry> > results = \
-      self->getMatches(mol);
-    
-    std::vector<const RDKit::FilterCatalogEntry*> ptrs;
-    ptrs.reserve(results.size());
-    for(size_t i=0;i<results.size();++i) {
-      ptrs.push_back(results[i].get());
-    }
-    return ptrs;
-  }
-  
   bool canSerialize() const {
     return RDKit::FilterCatalogCanSerialize();
   }
+
+  // boost does a bad job of wrapping shared_ptr<const T> so we will do the
+  //  unthinkable and cast away const.
+  //  Also we can't use FilterCatalog::SENTRY because swig thinks it is a new
+  //   type.  Bad swig!
+  boost::shared_ptr<RDKit::FilterCatalogEntry> getFirstMatch(const ROMol &mol) {
+    RDKit::FilterCatalog::CONST_SENTRY res = self->getFirstMatch(mol);
+    return boost::const_pointer_cast<RDKit::FilterCatalogEntry>(res);
+  }
+  
+  std::vector<boost::shared_ptr<RDKit::FilterCatalogEntry> > getMatches(const ROMol &mol) {
+    std::vector<RDKit::FilterCatalog::CONST_SENTRY> matches = self->getMatches(mol);
+    std::vector<RDKit::FilterCatalog::SENTRY> res;
+    res.reserve(matches.size());
+    for (size_t i=0; i< matches.size(); ++i) {
+      res.push_back( boost::const_pointer_cast<RDKit::FilterCatalogEntry>(matches[i]) );
+    }
+    return res;
  }
+}
 
 %ignore RDKit::FilterCatalog::getFirstMatch;
 %ignore RDKit::FilterCatalog::getMatches;
