@@ -81,18 +81,33 @@ namespace RDKit{
     }
 
     // add atom to any conformers as well, if we have any
-    if(other.getNumConformers()==1 && getNumConformers()==1){
-      Conformer &conf=getConformer();
-      const Conformer &oConf=other.getConformer();
-      conf.resize(getNumAtoms());
-      for(unsigned int i=0;i<newAtomIds.size();++i)
-        conf.setAtomPos(newAtomIds[i],oConf.getAtomPos(i));
-    } else {
-      for (ConformerIterator cfi = this->beginConformers();
-           cfi != this->endConformers(); ++cfi) {
-        (*cfi)->resize(getNumAtoms());
+    if(other.getNumConformers() && !getNumConformers()){
+      for (ConstConformerIterator cfi = other.beginConformers();
+           cfi != other.endConformers(); ++cfi) {
+        Conformer *nconf = new Conformer(getNumAtoms());
+        nconf->set3D((*cfi)->is3D());
+        nconf->setId((*cfi)->getId());
         for(unsigned int i=0;i<newAtomIds.size();++i)
-          (*cfi)->setAtomPos(newAtomIds[i], RDGeom::Point3D(0.0, 0.0, 0.0));
+          nconf->setAtomPos(newAtomIds[i],(*cfi)->getAtomPos(i));
+        addConformer(nconf,false);
+      }
+    } else if(getNumConformers()) {
+      if( other.getNumConformers()==getNumConformers() ){
+        ConformerIterator cfi;
+        ConstConformerIterator ocfi;
+        for(cfi = beginConformers(), ocfi = other.beginConformers();
+            cfi != endConformers(); ++cfi, ++ocfi){
+          (*cfi)->resize(getNumAtoms());
+          for(unsigned int i=0;i<newAtomIds.size();++i)
+            (*cfi)->setAtomPos(newAtomIds[i],(*ocfi)->getAtomPos(i));
+        }
+      } else{
+        for (ConformerIterator cfi = this->beginConformers();
+             cfi != this->endConformers(); ++cfi) {
+          (*cfi)->resize(getNumAtoms());
+          for(unsigned int i=0;i<newAtomIds.size();++i)
+            (*cfi)->setAtomPos(newAtomIds[i], RDGeom::Point3D(0.0, 0.0, 0.0));
+        }
       }
     }
   }
