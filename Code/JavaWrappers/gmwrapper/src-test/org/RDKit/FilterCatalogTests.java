@@ -60,7 +60,6 @@ public class FilterCatalogTests extends GraphMolTest {
             FilterCatalogEntry entry = catalog.getFirstMatch(mol);
             Str_Vect props = entry.getPropList();
             
-            //for (int i=0; i< props.size(); ++i) {
             String ref  = entry.getProp("Reference");
             String source = entry.getProp("Scope");
             assertEquals(ref,
@@ -73,6 +72,25 @@ public class FilterCatalogTests extends GraphMolTest {
             assertEquals(source, "PAINS filters (family A)");
             assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
 
+            // check the getMatches api point
+            FilterCatalogEntryVect matches = catalog.getMatches(mol);
+            assertEquals(1, matches.size());
+            
+            for (int entryIdx = 0; entryIdx < matches.size(); ++entryIdx) {
+                entry = matches.get(entryIdx);
+                String refa  = entry.getProp("Reference");
+                String sourcea = entry.getProp("Scope");
+                assertEquals(refa,
+                             "Baell JB, Holloway GA. New Substructure Filters for " +
+                             "Removal of Pan Assay Interference Compounds (PAINS) " +
+                             "from Screening Libraries and for Their Exclusion in " +
+                             "Bioassays. J Med Chem 53 (2010) 2719D40. " +
+                             "doi:10.1021/jm901137j.");
+                assertEquals(source, "PAINS filters (family A)");
+                assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+                
+            }
+            
             if (catalog.canSerialize()) {
                 String pickle = catalog.Serialize();
                 FilterCatalog catalog2 = new FilterCatalog(pickle);

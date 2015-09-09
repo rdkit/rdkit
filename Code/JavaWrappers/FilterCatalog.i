@@ -48,6 +48,7 @@
 %}
 
 %include "enums.swg"
+%include <boost_shared_ptr.i>
 
 %include <../RDGeneral/Dict.h>
 %include <../Catalogs/Catalog.h>
@@ -55,8 +56,7 @@
 %include <GraphMol/Substruct/SubstructMatch.h>
 
 %template(SENTRY) boost::shared_ptr<RDKit::FilterCatalogEntry>;
-//%template(CONST_SENTRY) const boost::shared_ptr<RDKit::FilterCatalogEntry>
-%template(CONST_SENTRY_VECT) std::vector< boost::shared_ptr<const RDKit::FilterCatalogEntry> >;
+%template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
 
 %newobject RDKit::FilterCatalogEntry::getProp;
 %extend RDKit::FilterCatalogEntry {
@@ -69,19 +69,34 @@
 
 
 
-  %extend RDKit::FilterCatalog {
+%extend RDKit::FilterCatalog {
   // not a new object, don't delete from the outside
-  const FilterCatalogEntry * getFirstMatch(const ROMol &mol) const {
+  const RDKit::FilterCatalogEntry * getFirstMatch(const ROMol &mol) const {
     // dangerous, this can be delete from underneath you
     return self->getFirstMatch(mol).get();
   }
 
+  std::vector<const RDKit::FilterCatalogEntry *> getMatches(const ROMol &mol) const {
+    // dangerous, this can be delete from underneath you
+
+    std::vector<boost::shared_ptr<const RDKit::FilterCatalogEntry> > results = \
+      self->getMatches(mol);
+    
+    std::vector<const RDKit::FilterCatalogEntry*> ptrs;
+    ptrs.reserve(results.size());
+    for(size_t i=0;i<results.size();++i) {
+      ptrs.push_back(results[i].get());
+    }
+    return ptrs;
+  }
+  
   bool canSerialize() const {
     return RDKit::FilterCatalogCanSerialize();
   }
  }
 
 %ignore RDKit::FilterCatalog::getFirstMatch;
+%ignore RDKit::FilterCatalog::getMatches;
 //%ignore RDKit::FilterCatalogEntry::getPropList;
 %ignore RDKit::Dict::getPropList;
 
@@ -90,7 +105,4 @@
 %include <GraphMol/FilterCatalog/FilterCatalog.h>
 
 
-
-%shared_ptr(RDKit::FilterCatalogEntry);
-%include <boost_shared_ptr.i>
 
