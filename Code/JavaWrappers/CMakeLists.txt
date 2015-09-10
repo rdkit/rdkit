@@ -1,7 +1,7 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-// we want to link java statically...
+# we want to link java statically...
 set(Boost_USE_STATIC_LIBS   ON)
 set(T_LIBS ${Boost_LIBRARIES})
 find_package(Boost 1.39.0 COMPONENTS serialization)
