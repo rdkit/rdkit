@@ -3088,16 +3088,8 @@ CAS<~>
       self.assertEqual(Chem.MolToSequence(m),seq)
       self.assertEqual(Chem.MolToHELM(m),helm)
       self.assertEqual(Chem.MolToFASTA(m),fasta)
-      # FIX: this currently fails. Check with Roger to make sure it should be.
-      #self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
       
-
-
-      
-
-    
-
-    
 if __name__ == '__main__':
   unittest.main()
 

@@ -640,6 +640,29 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD)
     Atom *r3 = (Atom*)0;
 
     switch (*seq) {
+    case '\n':
+    case '\r':
+    case '-':
+      seq++;
+      continue;
+
+    case ' ':
+    case '\t':
+      break;
+
+    case '.':
+      if (prev) {
+        Atom *oxt = CreateAAAtom(mol," OXT",info);
+        CreateAABond(mol,prev,oxt,1);
+        prev = (Atom*)0;
+      }
+      seq++;
+      continue;
+
+    default:
+      delete mol;
+      return (RWMol*)0;
+
     case 'A':
       CreateAminoAcid(mol,"ALA",r1,r2,r3,info);
       break;
