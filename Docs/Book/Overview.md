@@ -31,47 +31,61 @@
 -   to present: Open-source development continues, use within Novartis, contributions from Novartis back to open-source version
 
 # Functionality overview
+## Basics
 -   Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1](#footnote1), Corina mol2 [1](#footnote1), PDB
--   2D Cheminformatics:
-    - Substructure searching
-    - Canonical SMILES
-    - Chirality support (i.e. R/S or E/Z labeling)
-    - Chemical transformations (e.g. remove matching substructures)
-    - Chemical reactions
-    - Molecular serialization (e.g. mol \<-\> text)
--   2D depiction, including constrained depiction
--   2D-\>3D conversion/conformational analysis via distance geometry
--   UFF and MMFF94/MMFF94S implementations for cleaning up structures
--   Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, etc.
--   Similarity/diversity picking
+- Substructure searching
+- Canonical SMILES
+- Chirality support (i.e. R/S or E/Z labeling)
+- Chemical transformations (e.g. remove matching substructures)
+- Chemical reactions
+- Molecular serialization (e.g. mol \<-\> text)
+- 2D depiction, including constrained depiction
+- Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, etc.
+- Similarity/diversity picking
+- Gasteiger-Marsili charges
+- Bemis and Murcko scaffold determination
+- Salt stripping
+- Functional-group filters
+
+## 2D
 -   2D pharmacophores [1](#footnote1)
--   Gasteiger-Marsili charges
 -   Hierarchical subgraph/fragment analysis
--   Bemis and Murcko scaffold determination
 -   RECAP and BRICS implementations
 -   Multi-molecule maximum common substructure [2](#footnote2)
--   Feature maps
--   Shape-based similarity
--   RMSD-based molecule-molecule alignment
--   Shape-based alignment (subshape alignment [3](#footnote3)) [1](#footnote1)
--   Unsupervised molecule-molecule alignment using the Open3DAlign algorithm [4](#footnote4)
--   Integration with PyMOL for 3D visualization
 -   Functional group filtering
--   Salt stripping
 -   Molecular descriptor library:
     - Topological (κ3, Balaban J, etc.)
     - Compositional (Number of Rings, Number of Aromatic Heterocycles, etc.)
     - Electrotopological state (Estate)
     - clogP, MR (Wildman and Crippen approach)
     - “MOE like” VSA descriptors
-    - Feature-map vectors [5](#footnote5)
     - MQN [6](#footnote6)
 -   Similarity Maps [7](#footnote7)
--   Torsion Fingerprint Differences for comparing conformations [8](#footnote8)
 -   Machine Learning:
     - Clustering (hierarchical, Butina)
     - Information theory (Shannon entropy, information gain, etc.)
 -   Tight integration with the [IPython](http://ipython.org) notebook and [Pandas](http://pandas.pydata.org/).
+
+## 3D
+- 2D-\>3D conversion/conformational analysis via distance geometry
+- UFF and MMFF94/MMFF94S implementations for cleaning up structures
+- Pharmacophore embedding (generate a pose of a molecule that matches a 3D pharmacophore) [1](#footnote1)
+- Feature maps
+- Shape-based similarity
+- RMSD-based molecule-molecule alignment
+- Shape-based alignment (subshape alignment [3](#footnote3)) [1](#footnote1)
+- Unsupervised molecule-molecule alignment using the Open3DAlign algorithm [4](#footnote4)
+- Integration with PyMOL for 3D visualization
+- Molecular descriptor library:
+  - Feature-map vectors [5](#footnote5)
+- Torsion Fingerprint Differences for comparing conformations [8](#footnote8)
+
+## Integration with other open-source projects
+- [KNIME](https://tech.knime.org/community/rdkit): Workflow and analytics tool
+- [Django](http://django-rdkit.readthedocs.org/en/latest/): "The web framework for perfectionists with deadlines"
+- [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
+- [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
+
 
 # The Contrib Directory
 
@@ -133,6 +147,17 @@ Contribution from Paul Czodrowski
 ## ConformerParser: parser for Amber trajectory files
 
 Contribution from Sereina Riniker
+
+### NP_Score: Natural-product likeness score
+
+Python source for an implementation of the NP score algorithm described in the publication:
+
+"Natural Product Likeness Score and Its Application for Prioritization of Compound Libraries" 
+Peter Ertl, Silvio Roggo, and Ansgar Schuffenhauer
+*Journal of Chemical Information and Modeling* **48:68-74** (2008)
+http://pubs.acs.org/doi/abs/10.1021/ci700286x
+
+Contribution from Peter Ertl
 
 # Footnotes
 
