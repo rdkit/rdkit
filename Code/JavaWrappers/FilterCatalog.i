@@ -61,6 +61,17 @@
 %include <GraphMol/Substruct/SubstructMatch.h>
 
 
+%typemap(javacode) RDKit::FilterCatalog %{
+     public static FilterCatalog Deserialize(byte[] b) {
+     UChar_Vect vec = new UChar_Vect();
+     vec.reserve(b.length);
+     for (int size=0;size<b.length;++size) {
+       vec.add(b[size]);
+     }
+     return new FilterCatalog(vec);
+   }
+%}
+
 %newobject RDKit::FilterCatalogEntry::getProp;
 %extend RDKit::FilterCatalogEntry {
   std::string getProp(const std::string key){

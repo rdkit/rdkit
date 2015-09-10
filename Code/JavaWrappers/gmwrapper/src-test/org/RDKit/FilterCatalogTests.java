@@ -94,7 +94,7 @@ public class FilterCatalogTests extends GraphMolTest {
                 byte pickle[] = catalog.Serialize();
                 System.out.println(pickle);
                 assertTrue(pickle != null);
-                FilterCatalog catalog2 = RDKFuncs.FilterCatalogDeserialize(pickle);
+                FilterCatalog catalog2 = FilterCatalog.Deserialize(pickle);
                 assertFalse(catalog2 == null);
                 assertEquals(16, catalog2.getNumEntries());
                 entry = catalog2.getFirstMatch(mol);
