@@ -32,9 +32,8 @@
 package org.RDKit;
 
 import static org.junit.Assert.*;
-
 import org.junit.*;
-
+    
 public class FilterCatalogTests extends GraphMolTest {
 	private ROMol mol;
 
@@ -49,7 +48,8 @@ public class FilterCatalogTests extends GraphMolTest {
             //assertEquals(16, catalog.getNumEntries());
 
 	}
-    
+
+        @Test
 	public void test2Basics() {
 
             FilterCatalog catalog = new FilterCatalog(
@@ -88,15 +88,38 @@ public class FilterCatalogTests extends GraphMolTest {
                              "doi:10.1021/jm901137j.");
                 assertEquals(source, "PAINS filters (family A)");
                 assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
-                
             }
             
             if (catalog.canSerialize()) {
-                String pickle = catalog.Serialize();
-                FilterCatalog catalog2 = new FilterCatalog(pickle);
+                byte pickle[] = catalog.Serialize();
+                System.out.println(pickle);
+                assertTrue(pickle != null);
+                FilterCatalog catalog2 = RDKFuncs.FilterCatalogDeserialize(pickle);
+                assertFalse(catalog2 == null);
                 assertEquals(16, catalog2.getNumEntries());
+                entry = catalog2.getFirstMatch(mol);
+                assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
             }
 	}
+
+        @Test
+    	public void testRemoveEntry() {
+            FilterCatalog catalog = new FilterCatalog(
+                FilterCatalogParams.FilterCatalogs.PAINS_A);
+            assertEquals(16, catalog.getNumEntries());
+            
+            mol = RWMol.MolFromSmiles("O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2");
+            FilterCatalogEntry entry = catalog.getFirstMatch(mol);
+            assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+
+            assertTrue(catalog.removeEntry(entry));
+            FilterCatalogEntry entry_removed = catalog.getFirstMatch(mol);
+            assertEquals(entry_removed, null);
+
+            catalog.addEntry(entry);
+            entry = catalog.getFirstMatch(mol);
+            assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+        }
 
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FilterCatalogTests");

@@ -32,6 +32,8 @@
 //%import "ROMol.i"
 %include "std_string.i"
 %include "std_vector.i"
+
+
 %{
 #include <../RDGeneral/Dict.h>
 #include <../Catalogs/Catalog.h>
@@ -48,8 +50,8 @@
 %}
 
 %template(FilterCatalogEntry_Vect) std::vector< boost::shared_ptr<RDKit::FilterCatalogEntry> >;
-
 %template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
+%template(UChar_Vect) std::vector<unsigned char>;
 
 %include "enums.swg"
 
@@ -68,9 +70,12 @@
   }
  }
 
-
-
 %extend RDKit::FilterCatalog {
+  FilterCatalog(const std::vector<unsigned char> & data ) {
+    std::string str(data.begin(), data.end());
+    return new RDKit::FilterCatalog(str);
+  }
+  
   bool canSerialize() const {
     return RDKit::FilterCatalogCanSerialize();
   }
@@ -93,12 +98,51 @@
     }
     return res;
  }
+
+  // re-wrap swig is making duplicate entries for some strange reason
+  unsigned int addEntry(boost::shared_ptr<RDKit::FilterCatalogEntry> entry) {
+    return self->addEntry(entry);
+  }
+  
+  bool removeEntry(boost::shared_ptr<RDKit::FilterCatalogEntry> entry) {
+    return self->removeEntry(entry);
+  }
+
+  // swig const-ptr shenanigans again
+  boost::shared_ptr<RDKit::FilterCatalogEntry> getEntry(unsigned int idx) const {
+    return boost::const_pointer_cast<RDKit::FilterCatalogEntry>(
+      self->getEntry(idx));                                                                
+  }
+
+  unsigned int getIdxForEntry(const boost::shared_ptr<FilterCatalogEntry> &entry) const {
+    return self->getIdxForEntry(entry);
+  }
 }
 
+%ignore RDKit::FilterCatalog(const std::string &);
 %ignore RDKit::FilterCatalog::getFirstMatch;
 %ignore RDKit::FilterCatalog::getMatches;
+%ignore RDKit::FilterCatalog::addEntry;
+%ignore RDKit::FilterCatalog::removeEntry;
+%ignore RDKit::FilterCatalog::setCatalogParams;
+%ignore RDKit::FilterCatalog::getIdxForEntry;
+%ignore RDKit::FilterCatalog::getEntryWithIdx;
+
+
 //%ignore RDKit::FilterCatalogEntry::getPropList;
 %ignore RDKit::Dict::getPropList;
+
+
+%typemap(jni) std::string RDKit::FilterCatalog::Serialize "jbyteArray"
+%typemap(jtype) std::string RDKit::FilterCatalog::Serialize "byte[]"
+%typemap(jstype) std::string RDKit::FilterCatalog::Serialize "byte[]"
+%typemap(javaout) std::string RDKit::FilterCatalog::Serialize {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::FilterCatalog::Serialize {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
 
 %include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 %include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
@@ -106,3 +150,13 @@
 
 
 
+%pragma(java) modulecode=%{
+   public static FilterCatalog FilterCatalogDeserialize(byte[] b) {
+     UChar_Vect vec = new UChar_Vect();
+     vec.reserve(b.length);
+     for (int size=0;size<b.length;++size) {
+       vec.add(b[size]);
+     }
+     return new FilterCatalog(vec);
+   }
+%}
