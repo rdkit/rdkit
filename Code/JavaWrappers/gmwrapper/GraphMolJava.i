@@ -141,6 +141,9 @@ typedef unsigned long long int	uintmax_t;
 %include "../TDTWriter_doc.i"
 %include "../Transform2D_doc.i"
 %include "../Transform3D_doc.i"
+%include "../FilterCatalog_doc.i"
+%include "../FilterCatalogParams_doc.i"
+%include "../FilterCatalogs_doc.i"
 
 // DO THIS BEFORE ANY OF THE OTHER INCLUDES
 %include "../RDKitExceptions.i"
