@@ -900,6 +900,34 @@ void test1(){
     TEST_ASSERT(feq(m.getConformer().getAtomPos(3).y,1.0));
     TEST_ASSERT(feq(m.getConformer().getAtomPos(3).z,0.0));
   }
+  {
+    // start with a molecule with no conf
+    RWMol m;
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    m.addBond(0,1,Bond::SINGLE);
+    TEST_ASSERT(m.getNumConformers()==0);
+
+    RWMol m2;
+    // insert molecule without a conf:
+    m2.addAtom(new Atom(6));
+    m.insertMol(m2);
+    TEST_ASSERT(m.getNumConformers()==0);
+
+    // insert molecule with a conf:
+    Conformer *conf = new Conformer(m2.getNumAtoms());
+    m2.addConformer(conf);
+    m2.getConformer().setAtomPos(0,RDGeom::Point3D(1.0, 1.0, 0.0));
+    m.insertMol(m2);
+    TEST_ASSERT(m.getNumConformers()==1);
+    TEST_ASSERT(m.getConformer().getNumAtoms()==m.getNumAtoms());
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(0).x,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(0).y,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(0).z,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).x,1.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).y,1.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).z,0.0));
+  }
 }
 
 void testPeriodicTable()
@@ -1231,8 +1259,8 @@ int main()
 {
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.info");
-  // test1();  // <- this doesn't seem to actually do anything
 #if 1
+  test1(); 
   testPropLeak();
   testMolProps();
   testAtomProps();
