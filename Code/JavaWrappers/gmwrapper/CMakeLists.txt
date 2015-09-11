@@ -78,7 +78,7 @@ SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i )
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
-      ${RDKit_THREAD_LIBS})
+      ${Boost_SERIALIZATION_LIBRARY} ${RDKit_THREAD_LIBS})
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup

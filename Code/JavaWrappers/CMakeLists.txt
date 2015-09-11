@@ -1,8 +1,6 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-# we want to link java statically...
-set(Boost_USE_STATIC_LIBS   ON)
 set(T_LIBS ${Boost_LIBRARIES})
 find_package(Boost 1.39.0 COMPONENTS serialization)
 if (Boost_SERIALIZATION_LIBRARY)
@@ -18,6 +16,8 @@ SET(CMAKE_SWIG_FLAGS "")
 
 if(WIN32)
 	set(RDKit_Wrapper_Libs
+        FilterCatalog
+        Catalogs
         ${Boost_SERIALIZATION_LIBRARY} 
         FMCS MolDraw2D
         FileParsers SmilesParse
@@ -39,9 +39,9 @@ if(WIN32)
         endif(RDK_BUILD_AVALON_SUPPORT)
 else()
 	set(RDKit_Wrapper_Libs
-        ${Boost_SERIALIZATION_LIBRARY}
         Catalogs_static
         FilterCatalog_static
+        ${Boost_SERIALIZATION_LIBRARY}
         FMCS_static MolDraw2D_static
         FileParsers_static SmilesParse_static
 	Depictor_static SubstructMatch_static ChemReactions_static Fingerprints_static ChemTransforms_static
