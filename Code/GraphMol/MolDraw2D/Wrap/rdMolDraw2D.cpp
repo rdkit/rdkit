@@ -131,6 +131,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   docString="Drawer abstract base class";
   python::class_<RDKit::MolDraw2D,boost::noncopyable>("MolDraw2D",docString.c_str(),python::no_init)
     .def("SetFontSize",&RDKit::MolDraw2D::setFontSize,"change the default font size")
+    .def("FontSize",&RDKit::MolDraw2D::fontSize,"get the default font size")
     .def("DrawMolecule",RDKit::drawMoleculeHelper1,
          (python::arg("self"),python::arg("mol"),
           python::arg("highlightAtoms")=python::object(),
