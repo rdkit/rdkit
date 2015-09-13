@@ -14,6 +14,7 @@
 namespace python = boost::python;
 void wrap_point();
 void wrap_uniformGrid();
+void wrap_uniformrealvalueGrid();
 
 BOOST_PYTHON_MODULE(rdGeometry)
 {
@@ -24,4 +25,5 @@ BOOST_PYTHON_MODULE(rdGeometry)
 
   wrap_point();
   wrap_uniformGrid();
+  wrap_uniformrealvalueGrid();
 }

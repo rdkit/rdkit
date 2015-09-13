@@ -26,9 +26,11 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/Descriptors/PBFDescriptors.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -1611,6 +1613,73 @@ void testMQNs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testPMI() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test PMI" << std::endl;
+
+  Moments MoI;
+  //1 atom
+  RWMol mol = *SmilesToMol("C");
+  DGeomHelpers::EmbedMolecule(mol);
+  calcPMIDescriptors(mol, MoI);
+  TEST_ASSERT(mol.getNumAtoms() == 1);
+  TEST_ASSERT(feq(MoI[0],0.0));
+  TEST_ASSERT(feq(MoI[1],0.0));
+  TEST_ASSERT(feq(MoI[2],0.0));
+  //std::cout << MoI[3] << std::endl;
+  //std::cout << MoI[4] << std::endl;
+  //TEST_ASSERT(feq(MoI[3],0.0));
+  //TEST_ASSERT(feq(MoI[4],0.0));
+
+  //2 atom
+  mol = *SmilesToMol("Cl");
+  MolOps::addHs(mol);
+  DGeomHelpers::EmbedMolecule(mol);
+  calcPMIDescriptors(mol, MoI);
+  TEST_ASSERT(mol.getNumAtoms() == 2);
+  TEST_ASSERT(feq(MoI[0],0.0));
+  TEST_ASSERT(feq(MoI[1],MoI[2]));
+  TEST_ASSERT(feq(MoI[3],0.0));
+  TEST_ASSERT(feq(MoI[4],1.0));
+
+  //three atoms, planar
+  mol = *SmilesToMol("O");
+  MolOps::addHs(mol);
+  try {
+    calcPMIDescriptors(mol, MoI);
+  } catch (ConformerException &dexp) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+  }
+
+  DGeomHelpers::EmbedMolecule(mol);
+  calcPMIDescriptors(mol, MoI);
+  TEST_ASSERT(mol.getNumAtoms() == 3);
+  TEST_ASSERT(MoI[0] < MoI[1]);
+  TEST_ASSERT(MoI[1] < MoI[2]);
+  TEST_ASSERT(feq(MoI[0]/MoI[2], MoI[3]));
+  TEST_ASSERT(feq(MoI[1]/MoI[2], MoI[4]));
+  TEST_ASSERT(feq(MoI[0]+MoI[1], MoI[2])); //planar molecules
+  TEST_ASSERT(feq(MoI[3]+MoI[4], 1.0)); //planar molecules
+
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Code/GraphMol/Descriptors/test_data/cyclohexane.mol";
+
+  mol = *MolFileToMol(fName, true, false);
+
+  calcPMIDescriptors(mol, MoI);
+
+  TEST_ASSERT(MoI[0] < MoI[1]);
+  TEST_ASSERT(MoI[1] < MoI[2]);
+  TEST_ASSERT(feq(MoI[0]/MoI[2], MoI[3]));
+  TEST_ASSERT(feq(MoI[1]/MoI[2], MoI[4]));
+  TEST_ASSERT(int( MoI[0]*10 ) == int( MoI[1]*10 ));
+  TEST_ASSERT(std::floor( MoI[3]*10 + 0.5 ) == 5 );
+  TEST_ASSERT(std::floor( MoI[4]*10 + 0.5) == 5 );
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testGitHubIssue56(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 56." << std::endl;
@@ -1675,6 +1744,90 @@ void testGitHubIssue92(){
     TEST_ASSERT(feq(logp[5],0.2142,.001));
     delete mol;
   }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testPBF() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test PBF Descriptors." << std::endl;
+
+  //three atoms, planar
+  RWMol *m = SmilesToMol("O");
+  MolOps::addHs(*m);
+  //without coordinates
+  try {
+    double dpbf = calcPBF(*m);
+  }
+  catch (Invar::Invariant &mess) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: "  << mess.what() << "\n";
+  }
+
+  //with coordinates
+  DGeomHelpers::EmbedMolecule(*m);
+  double dpbf = calcPBF(*m);
+  TEST_ASSERT(feq(dpbf, 0.0));
+
+  delete m;
+
+  m = SmilesToMol("FS(F)(F)(F)(F)F");
+  //without conformer
+  try {
+    dpbf = calcPBF(*m);
+  }
+  catch (Invar::Invariant &mess) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: "  << mess.what() << "\n";
+  }
+
+  Conformer *conf = new Conformer(7);
+  //hypothetical conformer
+  conf->setAtomPos(1,RDGeom::Point3D(0.0,0.0,0.0));
+  conf->setAtomPos(0,RDGeom::Point3D(-1.0,0.0,0.0));
+  conf->setAtomPos(2,RDGeom::Point3D(0.0,-1.0,0.0));
+  conf->setAtomPos(3,RDGeom::Point3D(1.0,0.0,0.0));
+  conf->setAtomPos(4,RDGeom::Point3D(0.0,1.0,0.0));
+  conf->setAtomPos(5,RDGeom::Point3D(0.0,0.0,-1.0));
+  conf->setAtomPos(6,RDGeom::Point3D(0.0,0.0,1.0));
+  m->addConformer(conf);
+
+  //2D conformer
+  conf->set3D(false);
+  dpbf = calcPBF(*m);
+  TEST_ASSERT(feq(dpbf, 0.0));
+
+  //3D conformer, 5 atoms will be in plane, 2 outside with 1.0 distance to plane
+  //PBF=(2*1.0)/7
+  conf->set3D(true);
+  dpbf = calcPBF(*m);
+  TEST_ASSERT(feq(dpbf, 2.0/7.0));
+
+  delete m;
+
+  //testing with set of molecules with precalculated PBF descriptors
+  std::string fname = getenv("RDBASE");
+  fname += "/Code/GraphMol/Descriptors/test_data/egfr.sdf";
+  RDKit::SDMolSupplier reader(fname,true,false);
+
+  fname = getenv("RDBASE");
+  fname += "/Code/GraphMol/Descriptors/test_data/egfr.out";
+  std::ifstream instrm(fname.c_str());
+
+  int nDone=0;
+  while(!reader.atEnd()){
+    RDKit::ROMol *m=reader.next();
+    if(!m) continue;
+    std::string nm;
+    m->getProp("_Name",nm);
+    double dpbf=calcPBF(*m);
+
+    std::string inm;
+    double ref;
+    instrm>>inm;
+    instrm>>ref;
+    TEST_ASSERT(inm == nm);
+    TEST_ASSERT(feq(ref, dpbf));
+    delete m;
+    ++nDone;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -1796,6 +1949,8 @@ int main(){
   testRingDescriptors();
   testMiscCountDescriptors();
   testMQNs();
+  testPMI();
+  testPBF();
   testGitHubIssue56();
   testGitHubIssue92();
 #endif

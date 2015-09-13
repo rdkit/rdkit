@@ -1,6 +1,7 @@
 rdkit_library(DataStructs 
               BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp
               base64.cpp BitOps.cpp DiscreteDistMat.cpp DiscreteValueVect.cpp
+              RealValueVect.cpp
               LINK_LIBRARIES RDGeneral)
 
 rdkit_headers(base64.h
@@ -11,6 +12,7 @@ rdkit_headers(base64.h
               DatastructsException.h
               DiscreteDistMat.h
               DiscreteValueVect.h
+              RealValueVect.h
               ExplicitBitVect.h
               SparseBitVect.h
               SparseIntVect.h DEST DataStructs)

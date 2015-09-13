@@ -16,7 +16,7 @@
 #include <iostream>
 
 namespace RDGeom {
-  class UniformGrid3D : public Grid3D {
+  class UniformGrid3D : public Grid3D<RDKit::DiscreteValueVect, int, unsigned int> {
   
   public:
        

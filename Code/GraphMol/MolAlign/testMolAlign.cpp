@@ -108,6 +108,134 @@ void test3Weights() {
   delete m2;
 }
 
+void test4PrincipalAxes() {
+  std::vector<double> eigenVals(3,0.0), eigenVals2(3,0.0);
+  std::vector< std::vector<double> > eigenVecs(3, std::vector<double>(3,0.0)), eigenVecs2(3, std::vector<double>(3,0.0));
+  //1 atom
+  RWMol * mol = SmilesToMol("C");
+  DGeomHelpers::EmbedMolecule(*mol);
+  Conformer &conf = mol->getConformer(0);
+  conf.setAtomPos(0, RDGeom::Point3D(2.5, 2.5, 2.5));
+
+  RDGeom::Transform3D trans;
+  MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
+  TEST_ASSERT(feq(eigenVals[0],0.0));
+  TEST_ASSERT(feq(eigenVals[1],0.0));
+  TEST_ASSERT(feq(eigenVals[2],0.0));
+  for (unsigned int i=0; i < 3; ++i){
+    TEST_ASSERT(feq(eigenVals[i], eigenVals2[i]));
+    for (unsigned int j=0; j < 3; ++j){
+      if (i == j){
+        TEST_ASSERT(feq(trans.getVal(i, j), 1.0));
+      }
+      else {
+        TEST_ASSERT(feq(trans.getVal(i, j), 0.0));
+      }
+      TEST_ASSERT(feq(eigenVecs[i][j], eigenVecs2[i][j]));
+    }
+  }
+  TEST_ASSERT(feq(trans.getVal(0,3), -2.5));
+  TEST_ASSERT(feq(trans.getVal(1,3), -2.5));
+  TEST_ASSERT(feq(trans.getVal(2,3), -2.5));
+  TEST_ASSERT(feq(trans.getVal(3,3), 1.0));
+
+  MolTransforms::transformConformer(conf, trans);
+
+  TEST_ASSERT(mol->getNumAtoms() == 1);
+  TEST_ASSERT(feq(conf.getAtomPos(0).x, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(0).y, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(0).z, 0));
+
+  //2 atom
+  mol = SmilesToMol("Cl");
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedMolecule(*mol);
+  conf = mol->getConformer(0);
+
+  MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
+  MolTransforms::transformConformer(conf, trans);
+  TEST_ASSERT(mol->getNumAtoms() == 2);
+  TEST_ASSERT(feq(conf.getAtomPos(0).x/mol->getAtomWithIdx(1)->getMass(), - conf.getAtomPos(1).x/mol->getAtomWithIdx(0)->getMass()));
+  TEST_ASSERT(feq(conf.getAtomPos(0).y, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(0).z, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(1).y, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(1).z, 0));
+
+  TEST_ASSERT(feq(eigenVals[0],0.0));
+  TEST_ASSERT(feq(eigenVals[1],eigenVals[2]));
+  for (unsigned int i=0; i < 3; ++i){
+    TEST_ASSERT(feq(eigenVals[i], eigenVals2[i]));
+    for (unsigned int j=0; j < 3; ++j){
+      TEST_ASSERT(feq(trans.getVal(i, j), eigenVecs[i][j]));
+      TEST_ASSERT(feq(eigenVecs[i][j], eigenVecs2[i][j]));
+    }
+  }
+
+  //three atoms, planar
+  mol = SmilesToMol("O");
+  MolOps::addHs(*mol);
+  try {
+    MolTransforms::transformConformer(conf, trans);
+  } catch (ConformerException &dexp) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+  }
+
+  DGeomHelpers::EmbedMolecule(*mol);
+  conf = mol->getConformer(0);
+
+  MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
+  MolTransforms::transformConformer(conf, trans);
+
+  TEST_ASSERT(mol->getNumAtoms() == 3);
+  TEST_ASSERT(feq(conf.getAtomPos(1).x, -conf.getAtomPos(2).x, 0.1)); //Only compare until first decimal place
+  TEST_ASSERT(feq(conf.getAtomPos(1).y,  conf.getAtomPos(2).y, 0.1)); //Only compare until first decimal place
+  TEST_ASSERT(feq(conf.getAtomPos(0).z, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(1).z, 0));
+  TEST_ASSERT(feq(conf.getAtomPos(2).z, 0));
+
+  TEST_ASSERT(feq(eigenVals[0]+eigenVals[1],eigenVals[2]));
+  for (unsigned int i=0; i < 3; ++i){
+    TEST_ASSERT(feq(eigenVals[i], eigenVals2[i]));
+    for (unsigned int j=0; j < 3; ++j){
+      TEST_ASSERT(feq(trans.getVal(i, j), eigenVecs[i][j]));
+      TEST_ASSERT(feq(eigenVecs[i][j], eigenVecs2[i][j]));
+    }
+  }
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/acetonitrile.mol";
+  mol = MolFileToMol(fname1, true, false);
+  conf = mol->getConformer(0);
+
+  MolAlign::getMomentsOfInertia(*mol, eigenVals, eigenVecs);
+  MolAlign::getPrincAxesTransform(*mol, trans, &eigenVals2, &eigenVecs2);
+  MolTransforms::transformConformer(conf, trans);
+
+  std::string fname2 = rdbase + "/Code/GraphMol/MolAlign/test_data/acetonitrile_aligned.mol";
+  MolToMolFile(*mol, fname2);
+
+  RDGeom::Point3D cm(0.0,0.0,0.0);
+  for (unsigned int i =0; i< mol->getNumAtoms(); i++){
+    if ( mol->getAtomWithIdx(i)->getAtomicNum() > 1 ){
+      TEST_ASSERT(RDKit::feq(conf.getAtomPos(i).y, 0.0));
+      TEST_ASSERT(RDKit::feq(conf.getAtomPos(i).z, 0.0));
+    }
+    cm += conf.getAtomPos(i) * mol->getAtomWithIdx(i)->getMass();
+  }
+  TEST_ASSERT(RDKit::feq(cm.length(), 0));
+  for (unsigned int i=0; i < 3; ++i){
+    TEST_ASSERT(feq(eigenVals[i], eigenVals2[i]));
+    for (unsigned int j=0; j < 3; ++j){
+      TEST_ASSERT(feq(trans.getVal(i, j), eigenVecs[i][j]));
+      TEST_ASSERT(feq(eigenVecs[i][j], eigenVecs2[i][j]));
+    }
+  }
+  delete mol;
+}
+
 void testIssue241() {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/Issue241.mol";
@@ -819,7 +947,11 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test3Weights \n\n";
   test3Weights();
-    
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test4PrincipalAxes \n\n";
+  test4PrincipalAxes();
+      
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testIssue241 \n\n";
   testIssue241();

@@ -16,6 +16,7 @@
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <ForceField/Wrap/PyForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/Descriptors/Crippen.h>
@@ -109,8 +110,8 @@ namespace RDKit {
       delete RMSvector;
     }
   }
-    
-  PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
+
+  PyObject *generateTransPyArray(RDGeom::Transform3D &trans) {
     npy_intp dims[2];
     dims[0] = 4;
     dims[1] = 4;
@@ -124,13 +125,17 @@ namespace RDKit {
         resData[itab + j] = tdata[itab + j];
       }
     }
+    return PyArray_Return(res);
+  }
+      
+  PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
     PyObject *resTup = PyTuple_New(2);
     PyObject *rmsdItem = PyFloat_FromDouble(rmsd);
     PyTuple_SetItem(resTup, 0, rmsdItem);
-    PyTuple_SetItem(resTup, 1, PyArray_Return(res));
+    PyTuple_SetItem(resTup, 1, generateTransPyArray(trans));
     return resTup;
   }
-
+  
   PyObject* getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                       int prbCid=-1, int refCid=-1, 
                                       python::object atomMap=python::list(),
@@ -166,6 +171,72 @@ namespace RDKit {
     return generateRmsdTransPyTuple(rmsd, trans);
   }
 
+  PyObject* getPrincAxesTransform(ROMol &prbMol, int prbCid=-1, python::object eigenVals=python::object(), python::object eigenVecs=python::object(),
+                                 python::object weights=python::list(),
+                                 unsigned int maxIters=50) {
+    unsigned int nAtms;
+    nAtms = prbMol.getNumAtoms();
+
+    std::vector<double> *eVals;
+    std::vector< std::vector<double> > *eVecs;
+    if (PyArray_Check(eigenVals.ptr())) {
+      eVals = new std::vector<double>(3, 0.0);
+    }
+    else {
+      eVals = NULL;
+    }
+    if (PyArray_Check(eigenVecs.ptr())) {
+      eVecs = new std::vector< std::vector<double> >(3, std::vector<double>(3, 0.0));
+    }
+    else {
+      eVecs = NULL;
+    }
+    RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
+    if (wtsVec) {
+      if (wtsVec->size() != nAtms) {
+        throw_value_error("Incorrect number of weights specified");
+      }
+    }
+    RDGeom::Transform3D trans;
+    MolAlign::getPrincAxesTransform(prbMol, trans, eVals, eVecs, prbCid, wtsVec, maxIters);
+    if (eVals) {
+      npy_intp andims[1];
+      andims[0] = 3;
+      PyArray_Dims adims;
+      adims.ptr=andims;
+      adims.len=1;
+      PyArrayObject *aPtr = (PyArrayObject *)eigenVals.ptr();
+      PyArray_Resize(aPtr,&adims,0,NPY_ANYORDER);
+      for (unsigned i = 0; i < 3; ++i) {
+        PyObject *iItem = PyFloat_FromDouble((*eVals)[i]);
+        PyArray_SETITEM(aPtr,PyArray_GETPTR1(aPtr,i),iItem);
+        Py_DECREF(iItem);
+      }
+    }
+    if (eVecs) {
+      npy_intp endims[2];
+      endims[0] = 3;
+      endims[1] = 3;
+      PyArray_Dims edims;
+      edims.ptr=endims;
+      edims.len=2;
+      PyArrayObject *ePtr = (PyArrayObject *)eigenVecs.ptr();
+      PyArray_Resize(ePtr, &edims, 0, NPY_ANYORDER);
+      for(unsigned int i=0;i<3;++i){
+        for(unsigned int j=0; j<3; ++j){
+          PyObject *iItem = PyFloat_FromDouble((*eVecs)[i][j]);
+          PyArray_SETITEM(ePtr,PyArray_GETPTR2(ePtr, i, j),iItem);
+          Py_DECREF(iItem);
+        }
+      }
+    }
+    if (wtsVec) {
+      delete wtsVec;
+    }
+
+    return generateTransPyArray(trans);
+  }
+  
   double AlignMolecule(ROMol &prbMol, const ROMol &refMol,
                        int prbCid=-1, int refCid=-1, 
                        python::object atomMap=python::list(),
@@ -198,6 +269,26 @@ namespace RDKit {
       delete wtsVec;
     }
     return rmsd;
+  }
+
+  void AlignMolToPrincAxes(ROMol &prbMol, int prbCid=-1, python::object weights=python::list(),
+                          unsigned int maxIters=50) {
+    unsigned int nAtms;
+    nAtms = prbMol.getNumAtoms();
+
+    RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
+    if (wtsVec) {
+      if (wtsVec->size() != nAtms) {
+        throw_value_error("Incorrect number of weights specified");
+      }
+    }
+    RDGeom::Transform3D trans;
+    MolAlign::getPrincAxesTransform(prbMol, trans, NULL, NULL, prbCid, wtsVec, maxIters);
+    Conformer &conf = prbMol.getConformer(prbCid);
+    MolTransforms::transformConformer(conf, trans);
+    if (wtsVec) {
+      delete wtsVec;
+    }
   }
   
   namespace MolAlign {
@@ -631,6 +722,40 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                python::arg("reflect")=false, python::arg("maxIters")=50),
               docString.c_str());
 
+  docString = "Get Alignment Transform which transforms a molecule to its principal moments of inertia\n\n\
+    ARGUMENTS:\n\
+      - mol          molecule that is to be aligned\n\
+      - confId       ID of the conformation in the probe to be used\n\
+                    for the alignment (defaults to first conformation)\n\
+      - eigenVals   numpy array to store the eigenvalues in (= principal moments of inertia)\n\
+                    defaults to NULL (nothing is stored)\n\
+      - eigenVecs   numpy array to store the eigenvectors in\n\
+                    defaults to NULL (nothing is stored)\n\
+      - weights     list of weights of atom positions to be used.\n\
+                                if None, masses of atoms are used (defaults to None)\n\
+      - maxIters        maximum number of iterations used to align molecule\n\
+   \n\
+   RETURNS:\n\
+                Affine Transformation Matrix.";
+  python::def("GetPrincAxesTransform", RDKit::getPrincAxesTransform,
+              (python::arg("mol"), python::arg("confId")=-1, python::arg("eigenVals")=python::object(), python::arg("eigenVecs")=python::object(),
+                  python::arg("weights")=python::list(), python::arg("maxIters")=50),
+                  docString.c_str());
+
+  docString = "Align a molecule to its principal moments of inertia\n\n\
+   Transforms one molecule's conformer to be aligned to the molecules principal moments of inertia.\n\n\
+   ARGUMENTS:\n\
+      - mol		molecule that is to be aligned\n\
+      - confId		ID of the conformation in the probe to be used\n\
+                    for the alignment (defaults to first conformation)\n\
+      - weights	    list of weights of atom positions to be used.\n\
+      	  	  	  	if None, masses of atoms are used (defaults to None)\n\
+      - maxIters	maximum number of iterations used to align molecule";
+  python::def("AlignMolToPrincipalAxes", RDKit::AlignMolToPrincAxes,
+              (python::arg("mol"), python::arg("confId")=-1, python::arg("weights")=python::list(),
+                  python::arg("maxIters")=50),
+                  docString.c_str());
+                  
   docString = "Alignment conformations in a molecule to each other\n\
      \n\
       The first conformation in the molecule is used as the reference\n\

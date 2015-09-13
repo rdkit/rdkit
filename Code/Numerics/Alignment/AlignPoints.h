@@ -1,5 +1,6 @@
 //
 //  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -39,6 +40,34 @@ namespace RDNumeric {
                        RDGeom::Transform3D &trans,
                        const DoubleVector *weights=0, bool reflect=false, 
                        unsigned int maxIterations=50);
+                       
+    //! \brief Calculates eigenvalues and eigenvectors of a moments of inertia tensor of mass points.
+    /*!
+            \param points         points that are to be used
+            \param eigenVals      an array of doubles to store the eigenvalues in (= principal moments of inertia)
+            \param eigenVecs      a 3x3 array of doubles to store the eigenvectors in
+            \param maxIterations  Maximum number of iterations
+     */
+    void getMomentsOfInertia(const RDGeom::Point3DConstPtrVect &points,
+                             std::vector<double>& eigenVals, std::vector< std::vector<double> >& eigenVecs,
+                             const DoubleVector *weights=0, unsigned int maxIterations=50);
+
+
+    //! \brief Calculate alignment transform of a set of points with annotated weights to align
+    //!  points to their principal moments of inertia.
+    /*!
+      \param points         points that are to be aligned
+      \param trans          a RDGeom::Transform3D object to capture the necessary transformation
+      \param eigenVals      an array of doubles to store the eigenvalues in (= principal moments of inertia)
+                            defaults to NULL (nothing is stored)
+      \param eigenVecs      a 3x3 array of doubles to store the eigenvectors in
+                            defaults to NULL (nothing is stored)
+      \param weights        a vector of weights for each of the points
+      \param maxIterations  Maximum number of iterations
+     */
+    void getPrincAxesTransform(const RDGeom::Point3DConstPtrVect &points,
+    		RDGeom::Transform3D &trans, std::vector<double> *eigenVals=NULL, std::vector< std::vector<double> > *eigenVecs=NULL,
+    		const DoubleVector *weights=0, unsigned int maxIterations=50);
   }
 }
 

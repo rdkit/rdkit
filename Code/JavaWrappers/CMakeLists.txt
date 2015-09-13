@@ -32,10 +32,10 @@ else()
 	Depictor_static SubstructMatch_static ChemReactions_static Fingerprints_static ChemTransforms_static
 	Subgraphs_static GraphMol_static DataStructs_static Descriptors_static PartialCharges_static MolTransforms_static
 	DistGeomHelpers_static DistGeometry_static ForceFieldHelpers_static ForceField_static
-	EigenSolvers_static
 	Optimizer_static
 	MolAlign_static
 	Alignment_static
+	EigenSolvers_static
         SimDivPickers_static
 	RDGeometryLib_static RDGeneral_static )
         if(RDK_BUILD_INCHI_SUPPORT)

@@ -323,7 +323,14 @@ class TestCase(unittest.TestCase) :
     formula = rdMD.CalcMolFormula(m,separateIsotopes=True)
     self.assertEqual(formula,'C[13C]H5DO')
 
-
+  def testPBF(self):
+    #three atoms, planar
+    m = Chem.MolFromSmiles("O") 
+    m = Chem.AddHs(m)
+    
+    AllChem.EmbedMolecule(m)
+    dpbf = rdMD.CalcPBFDescriptor(m)
+    self.failUnless(feq(dpbf, 0.0))
 
 
 if __name__ == '__main__':

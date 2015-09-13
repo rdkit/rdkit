@@ -32,6 +32,7 @@ option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (d
 option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" ON )
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
+option(RDK_BUILD_EIGEN3 "use Eigen 3 library for solving eigenvalue problems in the Alignment Code" OFF )
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
@@ -198,6 +199,10 @@ else()
   set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
+if(RDK_BUILD_EIGEN3)
+  ADD_DEFINITIONS("-DRDK_USE_EIGEN3")
+  include_directories(${EIGEN3_DIR})
+endif()
 
 # setup our compiler flags:
 if (RDK_TEST_COVERAGE)

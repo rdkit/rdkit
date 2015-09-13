@@ -9,8 +9,10 @@ from rdkit import RDConfig
 import os,sys,copy
 import unittest
 import math
+import numpy as np
 from rdkit import Chem
 from rdkit.Chem import rdMolAlign,rdMolTransforms,rdMolDescriptors,rdDistGeom,ChemicalForceFields
+from rdkit.Geometry import rdGeometry
 
 def lstFeq(l1, l2, tol=1.e-4):
   if (len(list(l1)) != len(list(l2))):
@@ -360,6 +362,51 @@ class TestCase(unittest.TestCase):
           Distance(refMol.GetConformer().GetAtomPosition(refSIdx))
         self.assertAlmostEqual(d, distOS[i], 1)
       # molW.close()
+
+    def test14PrincipalAxes(self):
+        mol = Chem.MolFromSmiles("Cl")
+        molH = Chem.AddHs(mol)
+        rdDistGeom.EmbedMolecule(molH)
+        conf = molH.GetConformer(0)
+	    
+        eigenVals = np.empty(3)
+        eigenVecs = np.empty([3,3])
+        trans = rdMolAlign.GetPrincAxesTransform(molH, eigenVals=eigenVals, eigenVecs=eigenVecs)
+
+        rdMolTransforms.TransformConformer(conf, trans)
+        self.failUnless(molH.GetNumAtoms() == 2)
+        self.failUnless(feq(conf.GetAtomPosition(0).x/molH.GetAtomWithIdx(1).GetMass(), - conf.GetAtomPosition(1).x/molH.GetAtomWithIdx(0).GetMass()))
+        self.failUnless(feq(conf.GetAtomPosition(0).y, 0))
+        self.failUnless(feq(conf.GetAtomPosition(0).z, 0))
+        self.failUnless(feq(conf.GetAtomPosition(1).y, 0))
+        self.failUnless(feq(conf.GetAtomPosition(1).z, 0))
+        
+        self.failUnless(feq(eigenVals[0],0.0))
+        self.failUnless(feq(eigenVals[1],eigenVals[2]))
+        for i in range(3):
+            for j in range(3):
+                self.failUnless(feq(trans[i][j], eigenVecs[i][j]))
+
+        fname1 = os.path.join(RDConfig.RDBaseDir, 'Code','GraphMol',
+                         'MolAlign', 'test_data', 'acetonitrile.mol')
+        
+        m1 = Chem.MolFromMolFile(fname1, removeHs=False)
+        trans = rdMolAlign.GetPrincAxesTransform(m1, eigenVals=eigenVals, eigenVecs=eigenVecs)
+        rdMolAlign.AlignMolToPrincipalAxes(m1)
+
+        conf = m1.GetConformer()
+        cm = rdGeometry.Point3D(0.0, 0.0, 0.0)
+        
+        for i in range(m1.GetNumAtoms()):
+            if m1.GetAtomWithIdx(i).GetAtomicNum() > 1 :
+	            self.failUnless(feq(conf.GetAtomPosition(i).z, 0.0))
+            cm += conf.GetAtomPosition(i) * m1.GetAtomWithIdx(i).GetMass()
+        self.failUnless(feq(cm.Length(), 0))
+
+        fname2 = os.path.join(RDConfig.RDBaseDir, 'Code','GraphMol',
+                         'MolAlign', 'test_data', 'acetonitrile_aligned.mol')
+        Chem.MolToMolFile(m1, fname2)
+        m1=None
 
     def test14Github385(self):
       """ test github issue 385:

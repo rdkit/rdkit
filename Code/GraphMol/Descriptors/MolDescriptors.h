@@ -16,6 +16,8 @@
 #include <GraphMol/Descriptors/Lipinski.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 #include <GraphMol/Descriptors/MQN.h>
+#include <GraphMol/Descriptors/PMIDescriptors.h>
+#include <GraphMol/Descriptors/PBFDescriptors.h>
 
 namespace RDKit{
   class ROMol;

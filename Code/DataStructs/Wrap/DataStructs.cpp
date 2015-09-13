@@ -14,6 +14,7 @@
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/DiscreteValueVect.h>
+#include <DataStructs/RealValueVect.h>
 #include "DataStructs.h"
 #include <boost/python/numeric.hpp>
 #include <numpy/npy_common.h>
@@ -28,10 +29,11 @@ void wrap_EBV();
 void wrap_BitOps();
 void wrap_Utils();
 void wrap_discreteValVect();
+void wrap_realValVect();
 void wrap_sparseIntVect();
 
 template <typename T>
-void convertToNumpyArray(const T &v,python::object destArray){
+void convertToNumpyArray(const T &v,python::object destArray,int ignore=1){
   if (!PyArray_Check(destArray.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
@@ -44,6 +46,25 @@ void convertToNumpyArray(const T &v,python::object destArray){
   PyArray_Resize(destP,&dims,0,NPY_ANYORDER);
   for(unsigned int i=0;i<v.size();++i){
     PyObject *iItem = PyInt_FromLong(v[i]);
+    PyArray_SETITEM(destP,PyArray_GETPTR1(destP,i),iItem);
+    Py_DECREF(iItem);
+  }
+}
+
+template <typename T>
+void convertToNumpyArray(const T &v,python::object destArray,double ignore=1.0){
+  if (!PyArray_Check(destArray.ptr())) {
+    throw_value_error("Expecting a Numeric array object");
+  }
+  PyArrayObject *destP=(PyArrayObject *)destArray.ptr();
+  npy_intp ndims[1];
+  ndims[0]=v.size();
+  PyArray_Dims dims;
+  dims.ptr=ndims;
+  dims.len=1;
+  PyArray_Resize(destP,&dims,0,NPY_ANYORDER);
+  for(unsigned int i=0;i<v.size();++i){
+    PyObject *iItem = PyFloat_FromDouble(v[i]);
     PyArray_SETITEM(destP,PyArray_GETPTR1(destP,i),iItem);
     Py_DECREF(iItem);
   }
@@ -63,6 +84,7 @@ BOOST_PYTHON_MODULE(cDataStructs)
     "                       dense bit vectors.\n"
     "    - SparseBitVect:   class for large, sparse bit vectors\n"
     "  DiscreteValueVect:   class for storing vectors of integers\n"
+    "  RealValueVect:	    class for storing vectors of floating point values\n"
     "  SparseIntVect:       class for storing sparse vectors of integers\n"
     ;
   
@@ -74,11 +96,14 @@ BOOST_PYTHON_MODULE(cDataStructs)
   wrap_EBV();
   wrap_BitOps();
   wrap_discreteValVect();
+  wrap_realValVect();
   wrap_sparseIntVect();
 
-  python::def("ConvertToNumpyArray", (void (*)(const ExplicitBitVect &,python::object))convertToNumpyArray,
-              (python::arg("bv"),python::arg("destArray")));
-  python::def("ConvertToNumpyArray", (void (*)(const RDKit::DiscreteValueVect &,python::object))convertToNumpyArray,
-              (python::arg("bv"),python::arg("destArray")));
+  python::def("ConvertToNumpyArray", (void (*)(const ExplicitBitVect &,python::object, int))convertToNumpyArray,
+              (python::arg("bv"),python::arg("destArray"), python::arg("ign")=1));
+  python::def("ConvertToNumpyArray", (void (*)(const RDKit::DiscreteValueVect &,python::object, int))convertToNumpyArray,
+              (python::arg("bv"),python::arg("destArray"), python::arg("ign")=1));
+  python::def("ConvertToNumpyArray", (void (*)(const RDKit::RealValueVect &,python::object,double))convertToNumpyArray,
+              (python::arg("rvv"),python::arg("destArray"), python::arg("ign")=1.0));
 
 }

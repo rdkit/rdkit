@@ -65,6 +65,88 @@ namespace RDKit {
       return res;
     }
 
+    void getMomentsOfInertia(const ROMol &mol, std::vector<double> &eigenVals, std::vector< std::vector<double> > &eigenVecs,
+                             int confId, RDNumeric::DoubleVector *weights, unsigned int maxIterations) {
+      PRECONDITION(eigenVals.size()==3, "Size of vector eigenVals is not 3.");
+      PRECONDITION(eigenVecs.size()==3, "Size of vector eigenVecs is not 3.");
+      for ( unsigned int i =0; i < 3; ++i ){
+        PRECONDITION(eigenVecs[i].size()==3, "Size of vector eigenVecs[" + boost::lexical_cast<std::string>(i) + "] is not 3.");
+      }
+
+      unsigned int nPts = mol.getNumAtoms();
+      
+      RDNumeric::DoubleVector *wts;
+      if ( weights ){
+        wts = weights;
+      }
+      else {
+        wts = new RDNumeric::DoubleVector(nPts);
+        for (unsigned int i = 0; i < nPts; ++i){
+          wts->setVal(i, mol.getAtomWithIdx(i)->getMass());
+        }
+      }
+
+      const RDKit::Conformer &conf = mol.getConformer(confId);
+      RDGeom::Point3DConstPtrVect prbPoints;
+      prbPoints.reserve(nPts);
+      for ( unsigned int i = 0; i < nPts; ++i ){
+        prbPoints.push_back( &conf.getAtomPos(i) );
+      }
+
+      RDNumeric::Alignments::getMomentsOfInertia(prbPoints, eigenVals, eigenVecs, wts, maxIterations);
+      if (!weights){
+        delete wts;
+      }
+    }
+
+    void getPrincAxesTransform(ROMol &mol, RDGeom::Transform3D &trans, std::vector<double> *eigenVals, std::vector< std::vector<double> > *eigenVecs,
+                               int confId, RDNumeric::DoubleVector *weights, unsigned int maxIterations) {
+      
+      unsigned int nPts = mol.getNumAtoms();
+
+      RDNumeric::DoubleVector *wts;
+      if ( weights ){
+        wts = weights;
+      }
+      else {
+        wts = new RDNumeric::DoubleVector(nPts);
+        for (unsigned int i = 0; i < nPts; ++i){
+          wts->setVal(i, mol.getAtomWithIdx(i)->getMass());
+        }
+      }
+
+      RDKit::Conformer &conf = mol.getConformer(confId);
+      RDGeom::Point3DConstPtrVect prbPoints;
+      prbPoints.reserve(nPts);
+      for ( unsigned int i = 0; i < nPts; ++i ){
+        prbPoints.push_back( &conf.getAtomPos(i) );
+      }
+
+      std::vector<double> *eVals;
+      std::vector< std::vector<double> > *eVecs;
+      if (eigenVals) {
+        PRECONDITION(eigenVals->size()==3, "Size of vector eigenVals is not 3.");
+        eVals = eigenVals;
+      }
+      else {
+        eVals = new std::vector<double>(3, 0.0);
+      }
+      if (eigenVecs) {
+        PRECONDITION(eigenVecs->size()==3, "Size of vector eigenVecs is not 3.");
+        for ( unsigned int i =0; i < 3; ++i ){
+          PRECONDITION((*eigenVecs)[i].size()==3, "Size of vector eigenVecs[" + boost::lexical_cast<std::string>(i) + "] is not 3.");
+        }
+        eVecs = eigenVecs;
+      }
+      else {
+        eVecs = new std::vector< std::vector<double> >(3, std::vector<double>(3, 0.0));
+      }
+      RDNumeric::Alignments::getPrincAxesTransform(prbPoints, trans, eVals, eVecs, wts, maxIterations);
+      if (!weights){
+        delete wts;
+      }
+    }
+
     void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
                             const std::vector<unsigned int> *atomIds=0) {
       unsigned int na = conf.getNumAtoms();
