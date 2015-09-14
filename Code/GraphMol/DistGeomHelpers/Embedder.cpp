@@ -84,7 +84,7 @@ namespace RDKit {
           RDGeom::Point3D p1((*positions[a2])[0],(*positions[a2])[1],(*positions[a2])[2]);
           double d2 = (p0-p1).length(); // distance
           double lb = mmat.getLowerBound(a1,a2); double ub = mmat.getUpperBound(a1,a2); // bounds
-          if (((d2 < lb) && (fabs(d2-lb) > 0.15)) || ((d2 > ub) && (fabs(d2-ub) > 0.15))) {
+          if (((d2 < lb) && (fabs(d2-lb) > 0.17)) || ((d2 > ub) && (fabs(d2-ub) > 0.17))) {
             //std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub << " " << fabs(d2-lb) << " " << fabs(d2-ub) << std::endl;
             return false;
           }
