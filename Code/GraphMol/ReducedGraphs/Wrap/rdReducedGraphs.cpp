@@ -18,6 +18,7 @@
 #include <GraphMol/GraphMol.h>
 #include <numpy/arrayobject.h>
 #include <boost/foreach.hpp>
+#include <RDBoost/import_array.h>
 
 #include <GraphMol/ReducedGraphs/ReducedGraphs.h>
 #include <Numerics/Vector.h>
@@ -80,7 +81,7 @@ BOOST_PYTHON_MODULE(rdReducedGraphs) {
     "Module containing functions to generate and work with reduced graphs"
     ;
 
-  import_array();
+  rdkit_import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 
