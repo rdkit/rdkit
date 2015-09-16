@@ -1149,6 +1149,33 @@ void testUFFMultiThread2(){
 }
 #endif
 
+
+void testGitHubIssue613()
+{
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Github Issue 613: UFF Atom type not properly assigned to lanthanides." << std::endl;
+  {
+    ROMol *mol = SmilesToMol("[Eu+3]123456.[Cl]1.[Cl]2.[Cl]3.[Cl]4.[Cl]5.[Cl]6");
+    TEST_ASSERT(mol);
+    mol->getAtomWithIdx(0)->setHybridization(Atom::SP3D2);
+
+    UFF::AtomicParamVect types;
+    bool foundAll;
+    boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
+    TEST_ASSERT(foundAll);
+    TEST_ASSERT(types.size()==mol->getNumAtoms());
+
+    ForceFields::UFF::ParamCollection *params=ForceFields::UFF::ParamCollection::getParams();
+    const ForceFields::UFF::AtomicParams *ap=(*params)("Eu6+3");
+    TEST_ASSERT(ap);
+    TEST_ASSERT(ap->r1==types[0]->r1);
+    TEST_ASSERT(ap->theta0==types[0]->theta0);
+
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1172,6 +1199,7 @@ int main(){
   testUFFMultiThread();
   testUFFMultiThread2();
 #endif
-#endif
   testGitHubIssue62();
+#endif
+  testGitHubIssue613();
 }
