@@ -126,6 +126,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     .def_readwrite("flagCloseContactsDist",&RDKit::MolDrawOptions::flagCloseContactsDist)
     .def_readwrite("atomRegions",&RDKit::MolDrawOptions::atomRegions,"regions to outline")
     .def_readwrite("includeAtomTags",&RDKit::MolDrawOptions::includeAtomTags,"include atom tags in output")
+    .def_readwrite("clearBackground",&RDKit::MolDrawOptions::clearBackground,"clear the background before drawing a molecule")
 
     ;
   docString="Drawer abstract base class";

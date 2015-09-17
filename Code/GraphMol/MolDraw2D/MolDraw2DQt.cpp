@@ -105,9 +105,12 @@ namespace RDKit {
 
   // ****************************************************************************
   void MolDraw2DQt::clearDrawing() {
+    QColor this_col( int( 255.0 * drawOptions().backgroundColour.get<0>() ) , 
+                     int( 255.0 * drawOptions().backgroundColour.get<1>() ) ,
+                     int( 255.0 * drawOptions().backgroundColour.get<2>() ) );
 
-    qp_.setBackground( QBrush( "white" ) );
-    qp_.fillRect( 0 , 0 , width() , height() , QColor( "white") );
+    qp_.setBackground( QBrush( this_col ) );
+    qp_.fillRect( 0 , 0 , width() , height() , this_col );
 
   }
 
