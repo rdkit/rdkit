@@ -25,6 +25,7 @@ from rdkit.Chem.rdMolAlign import *
 from rdkit.Chem.rdMolTransforms import *
 from rdkit.Chem.rdShapeHelpers import *
 from rdkit.Chem.rdChemReactions import *
+from rdkit.Chem.rdReducedGraphs import *
 try:
   from rdkit.Chem.rdSLNParse import *
 except:

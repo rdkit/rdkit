@@ -300,7 +300,7 @@ namespace RDNumeric {
 
   typedef Vector<double> DoubleVector;
 
- //! returns the algebraic tanimoto similarity [defn' from JCIM 46:587-96 (2006)]
+  //! returns the algebraic tanimoto similarity [defn' from JCIM 46:587-96 (2006)]
   template <typename T>
   double
   TanimotoSimilarity(const Vector<T> &v1,const Vector<T> &v2){

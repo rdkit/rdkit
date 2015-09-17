@@ -30,7 +30,7 @@ namespace RDKit {
                               bool tolerateChargeMismatch){
         PRECONDITION(atom,"bad atom");
         int totalValence=atom->getTotalValence();
-          atom->getFormalCharge();
+        atom->getFormalCharge();
 
         // FIX: come up with some way of handling metals here
         switch(atom->getAtomicNum()){
@@ -205,7 +205,7 @@ namespace RDKit {
             BOOST_LOG(rdErrorLog) << "UFFTYPER: Unrecognized charge state for atom: "<< atom->getIdx() << std::endl;
           }
           break;
-        case 84: // Sb
+        case 84: // Po
           switch(totalValence){
           case 2:
             atomKey += "+2";
@@ -216,7 +216,19 @@ namespace RDKit {
           }
           break;
         }
+        // lanthanides
+        if(atom->getAtomicNum()>=57 && atom->getAtomicNum()<=71){
+          switch(totalValence){
+          case 6:
+            atomKey += "+3";
+            break;
+          default:
+            if(tolerateChargeMismatch) atomKey += "+3";
+            BOOST_LOG(rdErrorLog) << "UFFTYPER: Unrecognized charge state for atom: "<< atom->getIdx() << std::endl;
+          }
+        }
       }
+      
       
       // ---------------------------------------------------------------
       std::string getAtomLabel(const Atom *atom){
@@ -229,8 +241,9 @@ namespace RDKit {
         // FIX: handle main group/organometallic cases better:
         if(atNum){
           // do not do hybridization on alkali metals or halogens:
-          if( table->getNouterElecs(atNum)!=1 &&
-              table->getNouterElecs(atNum)!=7 ){
+          if( table->getDefaultValence(atNum) == -1 ||
+              (table->getNouterElecs(atNum)!=1 &&
+               table->getNouterElecs(atNum)!=7) ){
             switch(atom->getAtomicNum()){
             case 12:
             case 13:
