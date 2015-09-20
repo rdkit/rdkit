@@ -54,6 +54,7 @@ struct discreteValVec_wrapper {
       .value("FOURBITVALUE", DiscreteValueVect::FOURBITVALUE)
       .value("EIGHTBITVALUE", DiscreteValueVect::EIGHTBITVALUE)
       .value("SIXTEENBITVALUE", DiscreteValueVect::SIXTEENBITVALUE)
+      .export_values()
       ;
 
     python::class_<DiscreteValueVect>("DiscreteValueVect", 

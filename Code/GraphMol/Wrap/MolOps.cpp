@@ -663,6 +663,7 @@ namespace RDKit{
         .value("SANITIZE_CLEANUPCHIRALITY",MolOps::SANITIZE_CLEANUPCHIRALITY)
         .value("SANITIZE_ADJUSTHS",MolOps::SANITIZE_ADJUSTHS)
         .value("SANITIZE_ALL",MolOps::SANITIZE_ALL)
+        .export_values();
         ;
 
       // ------------------------------------------------------------------------
