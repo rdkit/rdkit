@@ -1336,6 +1336,23 @@ void testGithub488(){
   }
 }
 
+void testGithub611(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 611: If wedged bonds are already present, write them to mol blocks" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName = rdbase + "Github611.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    std::string mb=MolToMolBlock(*m);
+    TEST_ASSERT(mb.find("3  2  1  6")!=std::string::npos);
+
+    m->getBondWithIdx(2)->setBondDir(Bond::BEGINWEDGE);
+    mb = MolToMolBlock(*m);
+    TEST_ASSERT(mb.find("3  2  1  6")==std::string::npos);
+    TEST_ASSERT(mb.find("4  3  1  1")!=std::string::npos);
+  }
+}
 
 
 int main() {
@@ -1471,6 +1488,10 @@ int main() {
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   testGithub488();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testGithub611();
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
   
 

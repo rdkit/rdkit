@@ -44,6 +44,8 @@ namespace RDKit {
     bool continuousHighlight;   // highlight by drawing an outline *underneath* the molecule
     int flagCloseContactsDist; // if positive, this will be used as a cutoff (in pixels) for highlighting close contacts
     bool includeAtomTags;      // toggles inclusion of atom tags in the output. does not make sense for all renderers.
+    bool clearBackground;      // toggles clearing the background before drawing a molecule
+    DrawColour backgroundColour; // color to be used while clearing the background
     std::map<int,std::string> atomLabels; // replacement labels for atoms
     std::vector<std::vector<int> > atomRegions; // regions
     
@@ -53,7 +55,9 @@ namespace RDKit {
       highlightColour(1,.5,.5),
       continuousHighlight(true),
       flagCloseContactsDist(3),
-      includeAtomTags(false)
+      includeAtomTags(false),
+      clearBackground(true),
+      backgroundColour(1,1,1)
     {};
   };
 

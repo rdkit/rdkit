@@ -84,13 +84,9 @@ namespace RDKit {
 
     void clearDrawing()
     {
-      wxColour backgroundColour = m_dc.GetTextBackground();
-      if (!backgroundColour.Ok())
-        backgroundColour = wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE);    
       const wxBrush &brush = m_dc.GetBrush();
       const wxPen &pen = m_dc.GetPen(); 
-      m_dc.SetBrush(wxBrush(backgroundColour));
-      m_dc.SetPen(wxPen(backgroundColour, 1));
+      setColour(drawOptions.backgroundColour);
       m_dc.DrawRectangle(0,0, width(), height());
       m_dc.SetBrush(brush);
       m_dc.SetPen(pen);

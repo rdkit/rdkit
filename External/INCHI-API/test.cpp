@@ -453,6 +453,23 @@ void testGithubIssue562(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue614(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 614: segfault from MolToInchi when bad bond stereochem info is present" << std::endl;
+
+  {
+    std::string smiles="C/C=C/C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    m->removeAtom(3);
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C3H6/c1-3-2/h3H,1H2,2H3");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -467,7 +484,8 @@ int main(){
   testGithubIssue68();
   testGithubIssue296();
   testMultiThread();
-#endif
   testGithubIssue437();
   testGithubIssue562();
+#endif
+  testGithubIssue614();
 }

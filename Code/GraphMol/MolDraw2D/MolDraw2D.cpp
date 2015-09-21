@@ -130,7 +130,9 @@ namespace RDKit {
                                 const map<int,DrawColour> *highlight_bond_map,
                                 const std::map<int,double> *highlight_radii,
                                 int confId ) {
-    clearDrawing();
+    if(drawOptions().clearBackground){
+      clearDrawing();
+    }
     extractAtomCoords( mol, confId );
     extractAtomSymbols( mol );
     calculateScale();

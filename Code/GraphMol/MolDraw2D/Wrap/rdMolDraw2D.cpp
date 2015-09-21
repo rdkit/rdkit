@@ -126,10 +126,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     .def_readwrite("flagCloseContactsDist",&RDKit::MolDrawOptions::flagCloseContactsDist)
     .def_readwrite("atomRegions",&RDKit::MolDrawOptions::atomRegions,"regions to outline")
     .def_readwrite("includeAtomTags",&RDKit::MolDrawOptions::includeAtomTags,"include atom tags in output")
+    .def_readwrite("clearBackground",&RDKit::MolDrawOptions::clearBackground,"clear the background before drawing a molecule")
 
     ;
   docString="Drawer abstract base class";
   python::class_<RDKit::MolDraw2D,boost::noncopyable>("MolDraw2D",docString.c_str(),python::no_init)
+    .def("SetFontSize",&RDKit::MolDraw2D::setFontSize,"change the default font size")
+    .def("FontSize",&RDKit::MolDraw2D::fontSize,"get the default font size")
     .def("DrawMolecule",RDKit::drawMoleculeHelper1,
          (python::arg("self"),python::arg("mol"),
           python::arg("highlightAtoms")=python::object(),

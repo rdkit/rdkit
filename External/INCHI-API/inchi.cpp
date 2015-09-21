@@ -1911,7 +1911,8 @@ namespace RDKit {
       // will eventually remove it, I added it any way
       if (//bondType == Bond::DOUBLE and
           (bond->getStereo() == Bond::STEREOZ || 
-           bond->getStereo() == Bond::STEREOE)) {
+           bond->getStereo() == Bond::STEREOE) &&
+          bond->getStereoAtoms().size()>=2 ) {
         inchi_Stereo0D stereo0D;
         if (bond->getStereo() == Bond::STEREOZ)
           stereo0D.parity = INCHI_PARITY_ODD;

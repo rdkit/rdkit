@@ -98,7 +98,7 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2DCairo::clearDrawing() {
     PRECONDITION(dp_cr,"no draw context");
-    cairo_set_source_rgb (dp_cr, 1.0, 1.0, 1.0);
+    setColour(drawOptions().backgroundColour);
     cairo_rectangle(dp_cr,0,0,width(),height());
     cairo_fill(dp_cr);
   }
