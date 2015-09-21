@@ -398,7 +398,7 @@ namespace {
       }
 
       // check if the picked subsystem is fused
-      if (!RingUtils::checkFused(curRs, ringNeighs)) {
+      if (ringNeighs.size() && !RingUtils::checkFused(curRs, ringNeighs)) {
         continue;
       }
 
@@ -734,6 +734,88 @@ namespace RDKit {
 
       return narom;
     }
+
+    int setSimpleAromaticity(RWMol &mol) {
+      // FIX: we will assume for now that if the input molecule came
+      // with aromaticity information it is correct and we will not
+      // touch it. Loop through the atoms and check if any atom has
+      // arom stuff set.  We may want check this more carefully later
+      // and start from scratch if necessary
+      ROMol::AtomIterator ai; 
+      for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
+        if ((*ai)->getIsAromatic()) {
+          // found aromatic info 
+          return -1;
+        }
+      }
+    
+      // first find the all the simple rings in the molecule
+      VECT_INT_VECT srings;
+      if(mol.getRingInfo()->isInitialized()){
+        srings = mol.getRingInfo()->atomRings();
+      } else {
+        MolOps::symmetrizeSSSR(mol, srings);
+      }
+
+      int narom = 0;
+      // loop over all the atoms in the rings that can be candidates
+      // for aromaticity
+      // Atoms are candidates if 
+      //   - it is part of ring
+      //   - has one or more electron to donate or has empty p-orbitals
+      int natoms = mol.getNumAtoms();
+      boost::dynamic_bitset<> acands(natoms);
+      boost::dynamic_bitset<> aseen(natoms);
+      VECT_EDON_TYPE edon(natoms);
+
+      VECT_INT_VECT cRings; // holder for rings that are candidates for aromaticity
+      for (VECT_INT_VECT_I vivi = srings.begin();
+           vivi != srings.end(); ++vivi) {
+        unsigned int ringSz = (*vivi).size();
+        // test ring size:
+        if(ringSz<5 || ringSz>6) continue;
+
+        bool allAromatic=true;
+        for (INT_VECT_I ivi = (*vivi).begin();
+             ivi!=(*vivi).end(); ++ivi) {
+          if(aseen[*ivi]){
+            if(!acands[*ivi]) allAromatic=false;
+            continue;
+          }
+          aseen[*ivi]=1;
+          Atom *at = mol.getAtomWithIdx(*ivi);
+        
+          // now that the atom is part of ring check if it can donate
+          // electron or has empty orbitals. Record the donor type
+          // information in 'edon' - we will need it when we get to
+          // the Huckel rule later
+          edon[*ivi] = getAtomDonorTypeArom(at);
+          acands[*ivi]=isAtomCandForArom(at, edon[*ivi]);
+          if(!acands[*ivi]) allAromatic=false;
+        }
+        if(allAromatic){
+          cRings.push_back((*vivi));
+        }
+      }
+
+      // first convert all rings to bonds ids
+      VECT_INT_VECT brings;
+      RingUtils::convertToBonds(cRings, brings, mol);
+    
+      // now loop over all the candidate rings and check the
+      // huckel rule - skipping fused systems
+      INT_INT_VECT_MAP neighMap;
+      for(unsigned int ri=0;ri<cRings.size();++ri){
+        INT_VECT fused;
+        fused.push_back(ri);
+        applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,6);
+      }
+    
+      mol.setProp(common_properties::numArom, narom, true);
+
+      return narom;
+    }
+
     
 
   }; // end of namespace MolOps

@@ -375,6 +375,11 @@ namespace RDKit{
     MolOps::setAromaticity(wmol);
   }
 
+  void setSimpleAromaticityMol(ROMol &mol){
+    RWMol &wmol = static_cast<RWMol &>(mol);
+    MolOps::setSimpleAromaticity(wmol);
+  }
+
   void setConjugationMol(ROMol &mol) {
     RWMol &wmol = static_cast<RWMol &>(mol);
     MolOps::setConjugation(wmol);
@@ -1037,6 +1042,20 @@ namespace RDKit{
     - The molecule is modified in place.\n\
 \n";
       python::def("SetAromaticity", setAromaticityMol,
+                  (python::arg("mol")),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
+      docString="does aromaticity perception using a simplified model\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+      python::def("SetSimpleAromaticity", setSimpleAromaticityMol,
                   (python::arg("mol")),
                   docString.c_str());
       docString="finds conjugated bonds\n\
