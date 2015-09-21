@@ -2,7 +2,7 @@
 
 Below a number of installation recipies is presented, with varying degree of complexity.
 
-### Cross-platform under anaconda python (fastest install)
+## Cross-platform under anaconda python (fastest install)
 
 ### Introduction to anaconda
 
@@ -10,7 +10,7 @@ Conda is an open-source, cross-platform, software package manager. It supports t
 
 ### How to get conda
 
-The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](http://docs.continuum.io/anaconda/install.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](http://conda.pydata.org/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](http://conda.pydata.org/). 
+The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](http://docs.continuum.io/anaconda/install.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](http://conda.pydata.org/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](http://conda.pydata.org/).
 
 ### How to install RDKit with Conda
 
@@ -42,7 +42,7 @@ Due to the conda python distribution being a different version to the system pyt
 With your envirinment activated, this is done simply by:
 
     conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
-    
+
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
     [conda folder]/envs/my-rdkit-env/bin/initdb -D /folder/where/data/should/be/stored
@@ -54,7 +54,7 @@ PostgreSQL can then be run from the terminal with the command:
 For most use cases you will instead need to run PostgreSQL as a daemon, one way to do this is using supervisor. You can find out more and how to install supervisor [here](http://supervisord.org/). The required configuration file will look something like this:
 
     [program:postgresql]
-    command=[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored 
+    command=[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored
     user=[your username]
     autorestart=true
 
@@ -369,7 +369,7 @@ This section assumes that python is installed in `c:\Python27`, that the boost l
 -   Run cmake. Here's an example basic command line for 64bit windows that assumes the InChI and Avalon toolkit sources are available (see above): `cmake -DRDK_BUILD_PYTHON_WRAPPERS=0N -DAVALONTOOLS_DIR=c:/avalontoolkit_beta/sourcedistribution -DBOOST_ROOT=c:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -G"Visual Studio 10 Win64" ..`
 -   Build the code. Here's an example command line: `c:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
 
-Testing the Build (optional, but recommended) -------------------------------------------
+#### Testing the Build (optional, but recommended)
 
 -   cd to `c:\RDKit\build` and run ctest.
 -   you're done!
