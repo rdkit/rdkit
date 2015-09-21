@@ -1762,9 +1762,82 @@ void testGitHubIssue463(){
     delete mol;
   }  
 
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testSpiroAndBridgeheads(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of spiro and bridgehead counts." << std::endl;
+
+  { 
+    RWMol *mol;
+    mol = SmilesToMol("C1CC2CCC1CC2");
+    TEST_ASSERT(mol);
+
+    unsigned int nSpiro = Descriptors::calcNumSpiroAtoms(*mol);
+    TEST_ASSERT(nSpiro==0);
+    
+    unsigned int nBridgehead = Descriptors::calcNumBridgeheadAtoms(*mol);
+    TEST_ASSERT(nBridgehead==2);
+    
+    delete mol;
+  }  
+
+  { 
+    RWMol *mol;
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    TEST_ASSERT(mol);
+
+    unsigned int nSpiro = Descriptors::calcNumSpiroAtoms(*mol);
+    TEST_ASSERT(nSpiro==1);
+    
+    unsigned int nBridgehead = Descriptors::calcNumBridgeheadAtoms(*mol);
+    TEST_ASSERT(nBridgehead==2);
+    
+    delete mol;
+  }  
+
+  { 
+    RWMol *mol;
+    mol = SmilesToMol("CC1(C)CC2(C)CCC1(C)CC2");
+    TEST_ASSERT(mol);
+
+    unsigned int nSpiro = Descriptors::calcNumSpiroAtoms(*mol);
+    TEST_ASSERT(nSpiro==0);
+    
+    unsigned int nBridgehead = Descriptors::calcNumBridgeheadAtoms(*mol);
+    TEST_ASSERT(nBridgehead==2);
+    
+    delete mol;
+  }  
+
+  { // test the atoms parameter
+    RWMol *mol;
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    TEST_ASSERT(mol);
+
+    std::vector<unsigned int> atoms;
+
+    unsigned int nSpiro = Descriptors::calcNumSpiroAtoms(*mol,&atoms);
+    TEST_ASSERT(nSpiro==1);
+    TEST_ASSERT(atoms.size()==nSpiro);
+    TEST_ASSERT(std::find(atoms.begin(),atoms.end(),3) != atoms.end());
+
+    atoms.clear();
+    unsigned int nBridgehead = Descriptors::calcNumBridgeheadAtoms(*mol,&atoms);
+    TEST_ASSERT(nBridgehead==2);
+    TEST_ASSERT(atoms.size()==nBridgehead);
+    TEST_ASSERT(std::find(atoms.begin(),atoms.end(),9) != atoms.end());
+    TEST_ASSERT(std::find(atoms.begin(),atoms.end(),6) != atoms.end());
+    
+    delete mol;
+  }  
+
+
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -1800,5 +1873,6 @@ int main(){
   testGitHubIssue92();
 #endif
   testGitHubIssue463();
+  testSpiroAndBridgeheads();
 
 }

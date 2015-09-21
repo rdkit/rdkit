@@ -99,6 +99,16 @@ namespace RDKit{
     extern const std::string NumAliphaticCarbocyclesVersion;
     //! calculates the number of aliphatic (at least one non-aromatic bond) SSSR carbocycles
     unsigned int calcNumAliphaticCarbocycles(const ROMol &mol);
+
+    extern const std::string NumSpiroAtomsVersion;
+    //! calculates the number of spiro atoms (atoms shared between rings that share exactly one atom)
+    unsigned int calcNumSpiroAtoms(const ROMol &mol,
+                                   std::vector<unsigned int> *atoms=NULL);
+
+    extern const std::string NumBridgeheadAtomsVersion;
+    //! calculates the number of bridgehead atoms (atoms shared between rings that share at least two bonds)
+    unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
+                                        std::vector<unsigned int> *atoms=NULL);
   } // end of namespace Descriptors
 } //end of namespace RDKit
 
