@@ -42,37 +42,9 @@ def readFragmentScores(name='fpscores'):
     _fscores = outDict
 
 def numBridgeheadsAndSpiro(mol,ri=None):
-  if ri is None:
-    ri=mol.GetRingInfo()
-  arings = [set(x) for x in ri.AtomRings()]
-  spiros=set()
-  for i,ari in enumerate(arings):
-    for j in range(i+1,len(arings)):
-      shared=ari&arings[j]
-      if len(shared)==1:
-        spiros.update(shared)
-  nSpiro=len(spiros)
-
-  # find bonds that are shared between rings that share at least 2 bonds:
-  brings = [set(x) for x in ri.BondRings()]
-  bridges=set()
-  for i,bri in enumerate(brings):
-    for j in range(i+1,len(brings)):
-      shared=bri&brings[j]
-      if len(shared)>1:
-        atomCounts=defaultdict(int)
-        for bi in shared:
-          bond = mol.GetBondWithIdx(bi)
-          atomCounts[bond.GetBeginAtomIdx()]+=1
-          atomCounts[bond.GetEndAtomIdx()]+=1
-        tmp=0
-        for ai,cnt in atomCounts.items():
-          if cnt==1:
-            tmp+=1
-            bridges.add(ai)
-        #if tmp!=2: # no need to stress the users
-          #print 'huh:',tmp
-  return len(bridges),nSpiro
+  nSpiro = rdMolDescriptors.CalcNumSpiroAtoms(mol)
+  nBridgehead = rdMolDescriptors.CalcNumBridgeheadAtoms(mol)
+  return nBridgehead,nSpiro
 
 def calculateScore(m):
   if _fscores is None: readFragmentScores()
