@@ -8,4 +8,5 @@ Cheminformatics Libraries. Mol. Inform. 30, 847–850 (2011).
 
 # Modifications
 Many of the individual SMARTS definitions have been edited in order to
-get the working properly with the RDKit.
+get them working properly with the RDKit.
+
