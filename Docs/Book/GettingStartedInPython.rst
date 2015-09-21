@@ -629,8 +629,8 @@ molecules found in the :api:`rdkit.Chem.Draw` package:
 >>> ms = [x for x in suppl if x is not None]
 >>> for m in ms: tmp=AllChem.Compute2DCoords(m)
 >>> from rdkit.Chem import Draw
->>> Draw.MolToFile(ms[0],'images/cdk2_mol1.png')
->>> Draw.MolToFile(ms[1],'images/cdk2_mol2.png')
+>>> Draw.MolToFile(ms[0],'images/cdk2_mol1.o.png')
+>>> Draw.MolToFile(ms[1],'images/cdk2_mol2.o.png')
 
 Producing these images:
 
@@ -644,7 +644,7 @@ It's also possible to produce an image grid out of a set of molecules:
 
 This returns a PIL image, which can then be saved to a file:
 
->>> img.save('images/cdk2_molgrid.png')
+>>> img.save('images/cdk2_molgrid.o.png')
 
 The result looks like this:
 
@@ -661,7 +661,7 @@ aligned. This is easy enough to do:
 0
 >>> for m in subms: AllChem.GenerateDepictionMatching2DStructure(m,p)
 >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])
->>> img.save('images/cdk2_molgrid.aligned.png')
+>>> img.save('images/cdk2_molgrid.aligned.o.png')
 
 
 The result looks like this:
@@ -2246,11 +2246,11 @@ List of Available Descriptors
 +-----------------------------------------------------+-------------------------------------------+----------+
 |NumSpiroAtoms                                        |  Number of spiro atoms                    | C++      |
 |                                                     | (atoms shared between rings that share    |          |
-|                                                     |  exactly one atom)                        |          |
+|                                                     | exactly one atom)                         |          |
 +-----------------------------------------------------+-------------------------------------------+----------+
 |NumBridgeheadAtoms                                   | Number of bridgehead atoms                | C++      |
 |                                                     | (atoms shared between rings that share    |          |
-|                                                     |  at least two bonds)                      |          |
+|                                                     | at least two bonds)                       |          |
 +-----------------------------------------------------+-------------------------------------------+----------+
 |TPSA                                                 |*J. Med. Chem.*                            | C++      |
 |                                                     |**43**:3714\-7,                            |          |
