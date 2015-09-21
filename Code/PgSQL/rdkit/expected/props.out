@@ -130,6 +130,30 @@ SELECT mol_kappa3('CC(C)C1CCC(C)CCC1'::mol) v;
  2.84444
 (1 row)
 
+SELECT mol_numspiroatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
+ v 
+---
+ 1
+(1 row)
+
+SELECT mol_numbridgeheadatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
+ v 
+---
+ 2
+(1 row)
+
+SELECT mol_numspiroatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+ v 
+---
+ 0
+(1 row)
+
+SELECT mol_numbridgeheadatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+ v 
+---
+ 2
+(1 row)
+
 -- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
 select mol_formula('[2H]C([3H])O'::mol);
  mol_formula 

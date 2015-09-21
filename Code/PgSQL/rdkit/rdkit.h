@@ -169,6 +169,9 @@ extern "C" {
   double MolKappa2(CROMol i);
   double MolKappa3(CROMol i);
 
+  int MolNumSpiroAtoms(CROMol i);
+  int MolNumBridgeheadAtoms(CROMol i);
+
   char *makeMolFormulaText(CROMol data, int *len, bool separateIsotopes, bool abbreviateHIsotopes);
 
   const char *MolInchi(CROMol i);
