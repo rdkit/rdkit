@@ -2244,6 +2244,12 @@ List of Available Descriptors
 +-----------------------------------------------------+-------------------------------------------+
 |FractionCSP3                                         |                                           |
 +-----------------------------------------------------+-------------------------------------------+
+|NumSpiroAtoms                |  Number of spiro atoms                       |
+|                                          | (atoms shared between rings that share exactly one atom)  |
++-----------------------------------------------------+-------------------------------------------+
+|NumBridgeheadAtoms       | Number of bridgehead atoms                       |
+|                                          | (atoms shared between rings that share at least two bonds) |
++-----------------------------------------------------+-------------------------------------------+
 |TPSA                                                 |*J. Med. Chem.*                            |
 |                                                     |**43**:3714\-7,                            |
 |                                                     |(2000)                                     |
