@@ -832,6 +832,47 @@ void testInitialSeed() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testInitialSeed2() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "FMCS testInitialSeed2()" << std::endl;
+
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {
+        "Cc1c(F)c(N2CCNC(C)C2)cc2c1c(=O)c(C(=O)O)cn2C1CC1", 
+        "COc1c(N2CCNC(C)C2)c(F)cc2c(=O)c(C(=O)O)cn(C3CC3)c12",
+    };
+    const char* initial_smarts = "CCNCCNcccccccnC1CC1";
+    BOOST_LOG(rdInfoLog) << "initial_smarts: " << initial_smarts << std::endl;
+
+    for (int i = 0; i<sizeof(smi) / sizeof(smi[0]); i++) {
+        std::string id;
+        mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smi[i], &id))));
+        std::auto_ptr<ROMol> seed(SmartsToMol(initial_smarts));
+        MatchVectType match;
+        bool matched = SubstructMatch(*mols.back(), *seed, match);
+        BOOST_LOG(rdInfoLog) << (matched ? "RDKit MATCHED " : "RDKit DISmatched ") << smi[i] << std::endl;
+    }
+    MCSParameters p;
+    p.InitialSeed = initial_smarts;
+    t0 = nanoClock();
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, " << res.NumBonds << " bonds\n";
+    printTime();
+    TEST_ASSERT(res.NumAtoms != 0);
+
+    // Make Initial Seed from MCS
+    p.Verbose = true;
+    p.InitialSeed = "[#6]1-[#6]-[#7]-[#6](-[#6]-[#7]-1-[#6]1:[#6](:[#6]:[#6]2:[#6](:[#6](:[#6]:[#7](-[#6]3-[#6]-[#6]-3):[#6]:2:[#6]:1)-[#6](=[#8])-[#8])=[#8])-[#9])-[#6]"; // 25 atoms, 28 bonds
+    BOOST_LOG(rdInfoLog) << "\n\nFound MCS as the only initial seed (25 atoms, 28 bonds): \n" << p.InitialSeed << std::endl;
+    t0 = nanoClock();
+    res = findMCS(mols, &p);
+    BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, " << res.NumBonds << " bonds\n";
+    printTime();
+    TEST_ASSERT(res.NumAtoms != 0);
+
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -854,8 +895,6 @@ int main(int argc, const char* argv[]) {
     t0 = nanoClock();
 
     testJSONParameters();
-
-    testInitialSeed();
 
     test1Basics();
 
@@ -884,6 +923,9 @@ int main(int argc, const char* argv[]) {
 // very SLOW optional tests:
 //    test330();  // SLOW test
 //    test45();   // SLOW test
+
+    testInitialSeed ();
+    testInitialSeed2();
 
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
