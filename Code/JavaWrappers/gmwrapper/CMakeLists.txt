@@ -149,6 +149,12 @@ ADD_CUSTOM_TARGET(RunJavaWrapperTests
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/runUnitTests.sh
 )
 
+# need to add boost libs for testing
+SET (CTEST_ENVIRONMENT
+  "LD_LIBRARY_PATH=${Boost_LIBRARY_DIRS}"
+  "DYLD_LIBRARY_PATH=${Boost_LIBRARY_DIRS}"
+  )
+  
 ADD_TEST(JavaAromaticTests 
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
