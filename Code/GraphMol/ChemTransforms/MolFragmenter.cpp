@@ -43,8 +43,9 @@ namespace RDKit{
         (v1.atom2Label==v2.atom2Label)&&
         (v1.bondType==v2.bondType);
     }
-    void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
-                                      std::string comment,bool validate,
+    void constructFragmenterAtomTypes(std::istream *inStream,
+                                      std::map<unsigned int,std::string> &defs,
+                                      const std::string &comment,bool validate,
                                       std::map<unsigned int,ROMOL_SPTR> *environs){
       PRECONDITION(inStream,"no stream");
       defs.clear();
@@ -79,8 +80,9 @@ namespace RDKit{
         defs[idx]=tokens[1];
       }
     }
-    void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,std::string> &defs,
-                                      std::string comment,bool validate,
+    void constructFragmenterAtomTypes(const std::string &str,
+                                      std::map<unsigned int,std::string> &defs,
+                                      const std::string &comment,bool validate,
                                       std::map<unsigned int,ROMOL_SPTR> *environs){
       std::stringstream istr(str);
       constructFragmenterAtomTypes(&istr,defs,comment,validate,environs);
@@ -124,7 +126,8 @@ namespace RDKit{
     void constructFragmenterBondTypes(std::istream *inStream,
                                       const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment,bool validate,bool labelByConnector){
+                                      const std::string &comment,
+                                      bool validate,bool labelByConnector){
       PRECONDITION(inStream,"no stream");
       defs.clear();
       defs.resize(0);
@@ -197,7 +200,7 @@ namespace RDKit{
     void constructFragmenterBondTypes(const std::string &str,
                                       const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment,bool validate,
+                                      const std::string &comment,bool validate,
                                       bool labelByConnector){
       std::stringstream istr(str);
       constructFragmenterBondTypes(&istr,atomTypes,defs,comment,validate,labelByConnector);

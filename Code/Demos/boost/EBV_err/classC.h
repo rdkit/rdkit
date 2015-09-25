@@ -31,7 +31,7 @@ class classC {
     }
   }
 
-  bool hasProp(std::string key) const {
+  bool hasProp(const std::string &key) const {
     PAIR_VECT::const_iterator pvi;
     for (pvi = dp_props.begin(); pvi != dp_props.end(); pvi++) {
       if (pvi->first == key) {
@@ -41,7 +41,7 @@ class classC {
     return false; 
   }
 
-  void setProp(std::string key, int val) {
+  void setProp(const std::string &key, int val) {
     std::pair<std::string, int> newp(key, val);
     dp_props.push_back(newp);
   }

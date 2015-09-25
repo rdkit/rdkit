@@ -31,7 +31,7 @@ private:
 class ValueErrorException : public std::runtime_error
 {
 public:
-  ValueErrorException(const std::string i) : std::runtime_error("ValueErrorException"), _value(i) {};
+  ValueErrorException(const std::string &i) : std::runtime_error("ValueErrorException"), _value(i) {};
   ValueErrorException(const char *msg) : std::runtime_error("ValueErrorException"), _value(msg) {};
   std::string message () const { return _value; };
   ~ValueErrorException () throw () {};

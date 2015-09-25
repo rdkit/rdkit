@@ -52,7 +52,7 @@ namespace Invar {
 	line_d( line )
     {
     }
-    Invariant( const char * prefix, std::string mess, const char * expr, const char * const file, int line )
+    Invariant( const char * prefix, const std::string &mess, const char * expr, const char * const file, int line )
       : std::runtime_error( prefix ),
 	mess_d( mess.c_str() ),
         expr_d( expr ),

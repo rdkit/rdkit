@@ -48,7 +48,7 @@ namespace RDGeom {
     //! copy ctor
     UniformGrid3D(const UniformGrid3D &other);
     //! construct from a string pickle
-    UniformGrid3D(const std::string pkl);
+    UniformGrid3D(const std::string &pkl);
     //! construct from a text pickle
     UniformGrid3D(const char *pkl,unsigned int);
 
@@ -198,7 +198,8 @@ namespace RDGeom {
   /*
     The grid is written in GRD format
   */
-  void writeGridToFile(const UniformGrid3D &grid, std::string filename);
+  void writeGridToFile(const UniformGrid3D &grid,
+                       const std::string &filename);
 
 }
 
