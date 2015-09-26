@@ -135,6 +135,7 @@ namespace RDKit {
     
     RWMol *toMol(std::string inp,bool doQueries,int debugParse){
       RWMol *res;
+      boost::trim_if(inp, boost::is_any_of(" \t\r\n"));
       inp = replaceSLNMacroAtoms(inp,debugParse);
       if(debugParse){
         std::cerr<<"****** PARSING SLN: ->"<<inp<<"<-"<<std::endl;
