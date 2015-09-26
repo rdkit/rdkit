@@ -73,4 +73,6 @@ script:
 
  - make -j2
  - make install
- - ctest --output-on-failure
+ - ls "$PREFIX/lib"
+ - ls "$PY_PREFIX/lib"
+ - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" ctest --output-on-failure
