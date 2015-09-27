@@ -20,6 +20,12 @@ SELECT mol_chi4v('c1ccccc1O'::mol) v;
 SELECT mol_kappa1('C12CC2C3CC13'::mol) v;
 SELECT mol_kappa2('CC(C)C1CCC(C)CCC1'::mol) v;
 SELECT mol_kappa3('CC(C)C1CCC(C)CCC1'::mol) v;
+SELECT mol_numspiroatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
+SELECT mol_numbridgeheadatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
+SELECT mol_numspiroatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+SELECT mol_numbridgeheadatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+
+
 -- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
 select mol_formula('[2H]C([3H])O'::mol);
                                      -- separateIsotopes = true

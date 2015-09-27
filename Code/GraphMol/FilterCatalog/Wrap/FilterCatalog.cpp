@@ -419,6 +419,7 @@ namespace RDKit{
                                     python::init<>())
         .def(python::init<const std::string&>())        
         .def(python::init<const FilterCatalogParams&>())
+        .def(python::init<FilterCatalogParams::FilterCatalogs>())
         .def("Serialize", &FilterCatalog_Serialize)
         .def("AddEntry", &filter_catalog_add_entry,
              (python::args("entry"), python::args("updateFPLength")=false),

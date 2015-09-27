@@ -5,14 +5,18 @@ rdkit_library(FileParsers
               SmilesMolSupplier.cpp SmilesWriter.cpp
               TDTMolSupplier.cpp TDTWriter.cpp
               TplFileParser.cpp TplFileWriter.cpp
-              PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp ProximityBonds.cpp
+              PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
+              ProximityBonds.cpp
+              SequenceParsers.cpp SequenceWriters.cpp
               LINK_LIBRARIES SmilesParse GraphMol)
               
 rdkit_headers(FileParsers.h
               FileParserUtils.h
               MolFileStereochem.h
               MolSupplier.h
-              MolWriters.h DEST GraphMol/FileParsers)
+              MolWriters.h
+              SequenceParsers.h SequenceWriters.h
+              DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp 
            LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
@@ -25,3 +29,6 @@ rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers SmilesPars
 rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+
+rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+

@@ -113,14 +113,20 @@ namespace RDKit {
   {
   public:
     // syntactic sugar for getMatch(es) return values.
-    typedef boost::shared_ptr<entryType_t> SENTRY;
-    typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
+    typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
+    typedef boost::shared_ptr<const FilterCatalogEntry> CONST_SENTRY;
     
 
     FilterCatalog() : FCatalog(), d_entries() {
     }
 
-    FilterCatalog(const paramType_t &params) : FCatalog(), d_entries() {
+    FilterCatalog(FilterCatalogParams::FilterCatalogs catalogs) :
+     FCatalog(), d_entries() {
+      setCatalogParams(new paramType_t(catalogs));
+    }
+
+    
+    FilterCatalog(const FilterCatalogParams &params) : FCatalog(), d_entries() {
       setCatalogParams(new paramType_t(params));
     }
 
@@ -142,7 +148,18 @@ namespace RDKit {
       \param updateFPLength unused in the FilterCatalog object.
     */
 
-    virtual unsigned int addEntry(entryType_t *entry, bool updateFPLength = true);
+    virtual unsigned int addEntry(FilterCatalogEntry *entry, bool updateFPLength = true);
+
+    // Adds a new FilterCatalogEntry to the catalog
+    /*!
+      Adds a new FilterCatalogEntry to the catalog  The catalog
+      owns the entry
+      
+      \param entry          The shared_ptr of the FilterCatalogEntry to add.
+      \param updateFPLength unused in the FilterCatalog object.
+    */
+    
+    virtual unsigned int addEntry(SENTRY entry, bool updateFPLength = true);
 
     // Removes a FilterCatalogEntry to the catalog by description
     /*!
@@ -159,7 +176,7 @@ namespace RDKit {
     //------------------------------------
     //! returns a particular FilterCatalogEntry in the Catalog
     //!  required by Catalog.h API
-    virtual const entryType_t* getEntryWithIdx(unsigned int idx) const;
+    virtual const FilterCatalogEntry* getEntryWithIdx(unsigned int idx) const;
 
     //------------------------------------
     //! returns a particular FilterCatalogEntry in the Catalog
@@ -169,7 +186,7 @@ namespace RDKit {
     //------------------------------------
     //! returns the idx of the given entry, UINT_MAX if not found.
                      
-    unsigned int getIdxForEntry(const entryType_t*entry) const; 
+    unsigned int getIdxForEntry(const FilterCatalogEntry *entry) const; 
     unsigned int getIdxForEntry(const CONST_SENTRY &entry) const;
 
     //------------------------------------
@@ -181,7 +198,7 @@ namespace RDKit {
     /*
       \param params  The new FilterCatalogParams specifying the new state of the catalog
     */
-    virtual void setCatalogParams(paramType_t *params);
+    virtual void setCatalogParams(FilterCatalogParams *params);
 
     //------------------------------------
     //! Returns true if the molecule matches any entry in the catalog
@@ -202,11 +219,11 @@ namespace RDKit {
     /*
       \param mol  ROMol to match against the catalog
     */
-    const std::vector<CONST_SENTRY > getMatches(const ROMol &mol) const;
+    const std::vector<CONST_SENTRY> getMatches(const ROMol &mol) const;
 
   private:
     void Clear();
-    std::vector<boost::shared_ptr<FilterCatalogEntry> > d_entries;
+    std::vector<SENTRY> d_entries;
   };
 
   bool FilterCatalogCanSerialize();

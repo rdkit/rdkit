@@ -82,7 +82,7 @@ SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i )
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
-      ${RDKit_THREAD_LIBS})
+      ${Boost_SERIALIZATION_LIBRARY} ${RDKit_THREAD_LIBS})
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
@@ -153,6 +153,12 @@ ADD_CUSTOM_TARGET(RunJavaWrapperTests
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/runUnitTests.sh
 )
 
+# need to add boost libs for testing
+SET (CTEST_ENVIRONMENT
+  "LD_LIBRARY_PATH=${Boost_LIBRARY_DIRS}"
+  "DYLD_LIBRARY_PATH=${Boost_LIBRARY_DIRS}"
+  )
+  
 ADD_TEST(JavaAromaticTests 
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
@@ -291,5 +297,12 @@ ADD_TEST(JavaMolQueryTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
 	org.RDKit.MolQueryTests)
+
+ADD_TEST(JavaFilterCatalogTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+	org.RDKit.FilterCatalogTests)
+
+
 INSTALL(TARGETS GraphMolWrap 
               DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )

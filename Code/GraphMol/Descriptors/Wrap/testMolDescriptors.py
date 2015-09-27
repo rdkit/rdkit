@@ -324,6 +324,32 @@ class TestCase(unittest.TestCase) :
     self.assertEqual(formula,'C[13C]H5DO')
 
 
+  def testSpiroAndBridgeheads(self):
+    m = Chem.MolFromSmiles("C1CC2CCC1CC2")
+    self.assertEqual(rdMD.CalcNumSpiroAtoms(m),0)
+    sa = []
+    self.assertEqual(rdMD.CalcNumSpiroAtoms(m,atoms=sa),0)
+    self.assertEqual(len(sa),0)
+    
+    self.assertEqual(rdMD.CalcNumBridgeheadAtoms(m),2)
+    sa = []
+    self.assertEqual(rdMD.CalcNumBridgeheadAtoms(m,atoms=sa),2)
+    self.assertEqual(len(sa),2)
+    self.assertEqual(sorted(sa),[2,5])
+    
+    m = Chem.MolFromSmiles("C1CCC2(C1)CC1CCC2CC1")
+    self.assertEqual(rdMD.CalcNumSpiroAtoms(m),1)
+    sa = []
+    self.assertEqual(rdMD.CalcNumSpiroAtoms(m,atoms=sa),1)
+    self.assertEqual(len(sa),1)
+    self.assertEqual(sorted(sa),[3])
+    
+    self.assertEqual(rdMD.CalcNumBridgeheadAtoms(m),2)
+    sa = []
+    self.assertEqual(rdMD.CalcNumBridgeheadAtoms(m,atoms=sa),2)
+    self.assertEqual(len(sa),2)
+    self.assertEqual(sorted(sa),[6,9])
+    
 
 
 if __name__ == '__main__':

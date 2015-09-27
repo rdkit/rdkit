@@ -3062,11 +3062,34 @@ CAS<~>
     inf.close()
     del suppl
     
-
-
-    
-
-    
+  def testSequenceBasics(self):
+      " very basic round-tripping of the sequence reader/writer support "
+      helm = 'PEPTIDE1{C.Y.I.Q.N.C.P.L.G}$$$$'
+      seq = 'CYIQNCPLG'
+      fasta = '>\nCYIQNCPLG\n'
+      smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
+      
+      m = Chem.MolFromSequence(seq)
+      self.assertTrue(m is not None)
+      self.assertEqual(Chem.MolToSequence(m),seq)
+      self.assertEqual(Chem.MolToHELM(m),helm)
+      self.assertEqual(Chem.MolToFASTA(m),fasta)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      
+      m = Chem.MolFromHELM(helm)
+      self.assertTrue(m is not None)
+      self.assertEqual(Chem.MolToSequence(m),seq)
+      self.assertEqual(Chem.MolToHELM(m),helm)
+      self.assertEqual(Chem.MolToFASTA(m),fasta)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      
+      m = Chem.MolFromFASTA(fasta)
+      self.assertTrue(m is not None)
+      self.assertEqual(Chem.MolToSequence(m),seq)
+      self.assertEqual(Chem.MolToHELM(m),helm)
+      self.assertEqual(Chem.MolToFASTA(m),fasta)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      
 if __name__ == '__main__':
   unittest.main()
 

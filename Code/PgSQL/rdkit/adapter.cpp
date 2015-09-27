@@ -496,6 +496,8 @@ MOLDESCR(Chi4n,RDKit::Descriptors::calcChi4n,double)
 MOLDESCR(Kappa1,RDKit::Descriptors::calcKappa1,double)
 MOLDESCR(Kappa2,RDKit::Descriptors::calcKappa2,double)
 MOLDESCR(Kappa3,RDKit::Descriptors::calcKappa3,double)
+MOLDESCR(NumSpiroAtoms,RDKit::Descriptors::calcNumSpiroAtoms,int)
+MOLDESCR(NumBridgeheadAtoms,RDKit::Descriptors::calcNumBridgeheadAtoms,int)
 
 extern "C" double
 MolLogP(CROMol i){
