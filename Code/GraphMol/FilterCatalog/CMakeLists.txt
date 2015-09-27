@@ -26,7 +26,8 @@ rdkit_library(FilterCatalog
               FilterCatalog.cpp
               FilterCatalogEntry.cpp
               FilterMatchers.cpp
-              LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse GraphMol RDGeometryLib Catalogs RDGeneral )
+              LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse
+              GraphMol RDGeometryLib Catalogs RDGeneral ${Boost_SERIALIZATION_LIBRARY} )
 
 rdkit_headers(FilterCatalogEntry.h
               FilterCatalog.h
