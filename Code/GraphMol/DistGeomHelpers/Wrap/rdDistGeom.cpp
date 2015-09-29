@@ -25,10 +25,11 @@ namespace python = boost::python;
 namespace RDKit {
   int EmbedMolecule(ROMol &mol, unsigned int maxAttempts,
                     int seed, bool clearConfs,
-		    bool useRandomCoords,double boxSizeMult,
+                    bool useRandomCoords,double boxSizeMult,
                     bool randNegEig, unsigned int numZeroFail,
                     python::dict &coordMap,double forceTol,
-                    bool ignoreSmoothingFailures){
+                    bool ignoreSmoothingFailures,
+                    bool enforceChirality){
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
     unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
@@ -50,19 +51,21 @@ namespace RDKit {
                                         randNegEig,
                                         numZeroFail,
                                         pMapPtr,forceTol,
-                                        ignoreSmoothingFailures);
+                                        ignoreSmoothingFailures,
+                                        enforceChirality);
     }
     return res;
   }
 
   INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
-			      unsigned int maxAttempts,
+			                        unsigned int maxAttempts,
                               int seed, bool clearConfs,
-			      bool useRandomCoords,double boxSizeMult,
+			                        bool useRandomCoords,double boxSizeMult,
                               bool randNegEig, unsigned int numZeroFail,
-			      double pruneRmsThresh,python::dict &coordMap,
+			                        double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
                               bool ignoreSmoothingFailures,
+                              bool enforceChirality,
                               int numThreads) {
 
     std::map<int,RDGeom::Point3D> pMap;
@@ -87,7 +90,8 @@ namespace RDKit {
                                        useRandomCoords,boxSizeMult, 
                                        randNegEig, numZeroFail,
                                        pruneRmsThresh,pMapPtr,forceTol,
-                                       ignoreSmoothingFailures);
+                                       ignoreSmoothingFailures,
+                                       enforceChirality);
     }
     return res;
   } 
@@ -150,6 +154,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -158,11 +163,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               (python::arg("mol"), python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
-	       python::arg("boxSizeMult")=2.0,
+	             python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
-               python::arg("ignoreSmoothingFailures")=false),
+               python::arg("ignoreSmoothingFailures")=false,
+               python::arg("enforceChirality")=true),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -205,6 +211,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
                  was built with multi-thread support.\n\
                 If set to zero, the max supported by the system will be used.\n\
@@ -216,12 +223,13 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
-	       python::arg("boxSizeMult")=2.0,
+	             python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
-	       python::arg("pruneRmsThresh")=-1.0,
+	             python::arg("pruneRmsThresh")=-1.0,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
+               python::arg("enforceChirality")=true,
                python::arg("numThreads")=1),
               docString.c_str());
 
