@@ -316,12 +316,19 @@ This produces:
 
     0.451665312754
 
-The RDKit provides an implementation of the torsion fingerprint deviation (TFD) approach developed by Schulz-Gasch et al. (J. Chem. Inf. Model, 52, 1499, 2012). The RDKit implementation allows the user to customize the torsion fingerprints:
+The RDKit provides an implementation of the torsion fingerprint deviation (TFD) approach developed by Schulz-Gasch et al. (J. Chem. Inf. Model, 52, 1499, 2012). For a pair of conformations of a molecule, the torsional angles of the rotatable bonds and the ring systems are recorded in a torsion fingerprint (TF), and the deviations between the TFs calculated, normalized and summed up. For each torsion, a set of four atoms a-b-c-d are selected. 
+
+The RDKit implementation allows the user to customize the torsion fingerprints as described in the following. 
 
 -   In the original approach, the torsions are weighted based on their distance to the center of the molecule. By default, this weighting is performed, but can be turned off using the flag useWeights=False
--   The similarity between atoms is determined by comparing the hash codes from the Morgan algorithm at a given radius (default: radius = 2).
+-   If symmetric atoms a and/or d exist, all possible torsional angles are calculated. To determin if two atoms are symmetric, the hash codes from the Morgan algorithm at a given radius are used (default: radius = 2).
 -   In the original approach, the maximal deviation used for normalization is 180.0 degrees for all torsions (default). If maxDev='spec', a torsion-type dependent maximal deviation is used for the normalization.
 -   In the original approach, single bonds adjacent to triple bonds and allenes are ignored (default). If ignoreColinearBonds='False', a "combined" torsion is used
+
+In addition there are a few differences to the implementation by Schulz-Gasch et al.:
+-   Hydrogens are not considered in all cases.
+-   In the original approach, atoms a and/or d are chosen randomly if atom b and/or c have multiple non-symmetric neighbors. The RDKit implementation picks the atom with the smallest Morgan invariant. This way the choice is independent of the atom order in the molecule.
+-   In the case of symmetric atoms a and/or d, the RDKit implementation stores all possible torsional angles in the TF instead of only the smallest one as in the original approach. Subsequently, all possible deviations are determined and the smallest one used for the TFD calculation. This procedure guarantees that the smallest deviations enter the TFD.
 
 Examples of using it:
 
@@ -339,7 +346,7 @@ Examples of using it:
 
 This produces:
 
-    0.0645003532293 0.168030378905 0.067523011904
+    0.0691236990428 0.111475253992 0.0716255058804
 
 If the TFD between conformers of the same molecule is to be calculated, the function GetTFDBetweenConformers() should be used for performance reasons.
 
@@ -357,7 +364,7 @@ Examples of using it:
 
 This produces:
 
-    [0.0645...]
+    [0.0691...]
 
 For the conformer RMS and TFD values, the RDKit provides convenience functions that calculated directly the symmetric matrix which can be fed into a clustering algorithm such as Butina clustering. The flag reordering ensures that the number of neighbors of the unclustered molecules is updated every time a cluster is created.
 
