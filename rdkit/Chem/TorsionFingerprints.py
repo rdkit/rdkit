@@ -75,22 +75,6 @@ def _doMatchExcept1(inv, atoms):
     return atoms[0]
   return None
 
-def _sortNeighbors(inv, atoms):
-  """ Helper function to sort the atoms based on the invariants
-      
-      Arguments:
-      - inv:    atom invariants (used to define equivalence of atoms)
-      - atoms:  list of atoms to check
-
-      Return: sorted list of atoms
-  """
-  tmp = []
-  for a in atoms:
-    tmp.append((inv[a.GetIdx()], a))
-  tmp.sort()
-  tmp = [a for i,a in tmp]
-  return tmp
-
 def _getAtomInvariantsWithRadius(mol, radius):
   """ Helper function to calculate the atom invariants for each atom 
       with a given radius
@@ -140,7 +124,7 @@ def _getIndexforTorsion(neighbors, inv):
     return neighbors
   elif _doNotMatch(inv, neighbors): # atom has all different neighbors
     # sort by atom inv and simply use the first neighbor
-    neighbors = _sortNeighbors(inv, neighbors)
+    neighbors = sorted(neighbors, key = lambda x: inv[x.GetIdx()])
     return [neighbors[0]]
   at = _doMatchExcept1(inv, neighbors) # two neighbors the same, one different
   if at is None:

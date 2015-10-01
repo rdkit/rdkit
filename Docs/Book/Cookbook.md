@@ -321,14 +321,14 @@ The RDKit provides an implementation of the torsion fingerprint deviation (TFD) 
 The RDKit implementation allows the user to customize the torsion fingerprints as described in the following. 
 
 -   In the original approach, the torsions are weighted based on their distance to the center of the molecule. By default, this weighting is performed, but can be turned off using the flag useWeights=False
--   If symmetric atoms a and/or d exist, all possible torsional angles are calculated. To determin if two atoms are symmetric, the hash codes from the Morgan algorithm at a given radius are used (default: radius = 2).
+-   If symmetric atoms a and/or d exist, all possible torsional angles are calculated. To determine if two atoms are symmetric, the hash codes from the Morgan algorithm at a given radius are used (default: radius = 2).
 -   In the original approach, the maximal deviation used for normalization is 180.0 degrees for all torsions (default). If maxDev='spec', a torsion-type dependent maximal deviation is used for the normalization.
 -   In the original approach, single bonds adjacent to triple bonds and allenes are ignored (default). If ignoreColinearBonds='False', a "combined" torsion is used
 
 In addition there are a few differences to the implementation by Schulz-Gasch et al.:
--   Hydrogens are not considered in all cases.
+-   Hydrogens are never considered.
 -   In the original approach, atoms a and/or d are chosen randomly if atom b and/or c have multiple non-symmetric neighbors. The RDKit implementation picks the atom with the smallest Morgan invariant. This way the choice is independent of the atom order in the molecule.
--   In the case of symmetric atoms a and/or d, the RDKit implementation stores all possible torsional angles in the TF instead of only the smallest one as in the original approach. Subsequently, all possible deviations are determined and the smallest one used for the TFD calculation. This procedure guarantees that the smallest deviations enter the TFD.
+-   In the case of symmetric atoms a and/or d, the RDKit implementation stores all possible torsional angles in the TF instead of only storing the smallest one as in the original approach. Subsequently, all possible deviations are determined and the smallest one used for the TFD calculation. This procedure guarantees that the smallest deviations enter the TFD.
 
 Examples of using it:
 
