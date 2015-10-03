@@ -832,6 +832,46 @@ void testInitialSeed() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+
+void testGithub631() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "Testing github issue 631: FindMCS matchChiralTag=True does not match self"<< std::endl;
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = { // all examples derived from the bug report
+      "CN(C)[C@@H]1CCCNC1",
+      "C1C=CCN1[C@@H]1CCCNC1",
+      "Cc1cc2c(cc1C)C(=O)N([C@@H]1CCC(=O)NC1=O)C2=O",
+    };
+
+    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++){
+      RWMol* m = SmilesToMol( getSmilesOnly(smi[i]) );
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+      mols.push_back(ROMOL_SPTR(new ROMol(*m)));
+      {
+        MCSResult res = findMCS(mols);
+        BOOST_LOG(rdInfoLog)<< "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n"<<std::endl;;
+   
+        TEST_ASSERT(res.NumAtoms==m->getNumAtoms());
+        TEST_ASSERT(res.NumBonds==m->getNumBonds());
+      }
+      {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = true;
+        //p.BondCompareParameters.MatchStereo = useChirality;
+        MCSResult res = findMCS(mols,&p);
+        BOOST_LOG(rdInfoLog)<< "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n"<<std::endl;;
+   
+        TEST_ASSERT(res.NumAtoms==m->getNumAtoms());
+        TEST_ASSERT(res.NumBonds==m->getNumBonds());
+
+      }
+    }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 //====================================================================================================
 //====================================================================================================
 
@@ -849,7 +889,7 @@ int main(int argc, const char* argv[]) {
     setpriority(PRIO_PROCESS, getpid(), -20);
 #endif
 
-
+#if 0
     T0 = nanoClock();
     t0 = nanoClock();
 
@@ -881,6 +921,8 @@ int main(int argc, const char* argv[]) {
 
     test18();
     test504();
+#endif
+    testGithub631();
 // very SLOW optional tests:
 //    test330();  // SLOW test
 //    test45();   // SLOW test
