@@ -11,6 +11,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Resonance.h>
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 #include <boost/smart_ptr.hpp>
@@ -241,6 +242,24 @@ namespace RDKit{
     return res;
   }
 
+  // ----------------------------------------------
+  //
+  // find one match in ResonanceMolSupplier object
+  //
+  bool SubstructMatch(const ResonanceMolSupplier &resMolSupplier, const ROMol &query,
+                      MatchVectType &matchVect, bool recursionPossible,
+                      bool useChirality, bool useQueryQueryMatches)
+  {
+    bool match = false;
+    for (unsigned int i = 0; !match
+      && (i < resMolSupplier.length()); ++i) {
+      ROMol *mol = resMolSupplier[i];
+      match = SubstructMatch(*mol, query, matchVect,
+        recursionPossible, useChirality, useQueryQueryMatches);
+      delete mol;
+    }
+    return match;
+  }
 
   // ----------------------------------------------
   //
@@ -312,6 +331,39 @@ namespace RDKit{
     }
 #endif
     return res;
+  }
+
+  // ----------------------------------------------
+  //
+  // find all matches in a ResonanceMolSupplier object
+  //
+  //  NOTE: this blows out the contents of matches
+  //
+  unsigned int SubstructMatch(const ResonanceMolSupplier &resMolSupplier,
+            const ROMol &query,
+			      std::vector< MatchVectType > &matches,
+			      bool uniquify, bool recursionPossible,
+			      bool useChirality, bool useQueryQueryMatches,
+            unsigned int maxMatches)
+  {
+    unsigned int nMatches = 0;
+    for (unsigned int i = 0; (matches.size() < maxMatches)
+      && (i < resMolSupplier.length()); ++i) {
+      ROMol *mol = resMolSupplier[i];
+      std::vector<MatchVectType> matchesTmp;
+      unsigned int nMatchesTmp = SubstructMatch(*mol, query,
+        matchesTmp, uniquify, recursionPossible,
+        useChirality, useQueryQueryMatches, maxMatches);
+      for (std::vector<MatchVectType>::const_iterator
+        it = matchesTmp.begin(); (matches.size() < maxMatches)
+        && (it != matchesTmp.end()); ++it) {
+        if (std::find(matches.begin(),
+          matches.end(), *it) == matches.end())
+          matches.push_back(*it);
+      }
+      delete mol;
+    }
+    return matches.size();
   }
 
   namespace detail {

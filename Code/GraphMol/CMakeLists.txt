@@ -5,7 +5,7 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              Renumber.cpp AdjustQuery.cpp
+              Renumber.cpp AdjustQuery.cpp Resonance.cpp
               new_canon.cpp
               SHARED 
               LINK_LIBRARIES RDGeometryLib RDGeneral 
@@ -29,6 +29,7 @@ rdkit_headers(Atom.h
               QueryOps.h
               RDKitBase.h
               RDKitQueries.h
+              Resonance.h
               RingInfo.h
               Rings.h
               ROMol.h
@@ -104,5 +105,5 @@ rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse FileParsers GraphM
 
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-
-
+rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
+           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
