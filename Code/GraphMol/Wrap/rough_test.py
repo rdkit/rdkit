@@ -3136,10 +3136,10 @@ CAS<~>
       resMol = resMolSuppl[i]
       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
     while (not resMolSuppl.atEnd()):
-      resMol = resMolSuppl.next()
+      resMol = six.next(resMolSuppl)
       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
     resMolSuppl.reset()
-    cmpFormalChargeBondOrder(self, resMolSuppl[0], resMolSuppl.next())
+    cmpFormalChargeBondOrder(self, resMolSuppl[0], six.next(resMolSuppl))
     
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
       Chem.ResonanceFlags.ALLOW_INCOMPLETE_OCTETS \
