@@ -3167,7 +3167,7 @@ CAS<~>
 
   def testSubstructMatchDMAP(self):
     mol = Chem.MolFromSmiles('C(C)Nc1cc[nH+]cc1')
-    query = Chem.MolFromSmarts('[N+,n+]')
+    query = Chem.MolFromSmarts('[#7+]')
     
     resMolSuppl = Chem.ResonanceMolSupplier(mol)
     matches = mol.GetSubstructMatches(query,
