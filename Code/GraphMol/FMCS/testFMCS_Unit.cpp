@@ -657,8 +657,8 @@ void testChirality() {
    testSubMcsChirality ("OC(F)CCl", "O[C@H](F)C");
    testSubMcsChirality ("OC(F)CCl", "O[C@@H](F)C");
    
-   testSubMcsChirality ("O[C@H](F)CCl", "O[C@H]C");
-   testSubMcsChirality ("O[C@H](F)CCl", "O[C@@H]C");
+   testSubMcsChirality ("O[C@H](F)CCl", "O[C@H]C");  //Is OCC = MCS ? Degree of [C@H] is different
+   testSubMcsChirality ("O[C@H](F)CCl", "O[C@@H]C"); //Is OCC = MCS ? Degree of [C@H] is different
 
 //ADD-IN TESTS:
    std::cout << "\n0. <<<<<<<<< actual MCS: [#6]-[#6]-[#6] 3 atoms, 2 bonds >>>>>>>\n";
@@ -725,20 +725,26 @@ void testGithubIssue481() {
       mols.push_back(ptr1);
       mols.push_back(ptr2);
 
+      BOOST_LOG(rdInfoLog) << "**** mols:" << s1 << "   " << s2 << "\n";
+
       {
         MCSParameters p;
         p.AtomCompareParameters.MatchChiralTag = false;
         p.BondCompareParameters.MatchStereo = false;
         MCSResult mcs_res = findMCS(mols, &p);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
         TEST_ASSERT(mcs_res.NumAtoms==4);
         TEST_ASSERT(mcs_res.NumBonds==3);
 
         p.AtomCompareParameters.MatchChiralTag = true;
         p.BondCompareParameters.MatchStereo = true;
         mcs_res = findMCS(mols, &p);
-        TEST_ASSERT(mcs_res.NumAtoms==0);
-        TEST_ASSERT(mcs_res.NumBonds==0);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
+        TEST_ASSERT(mcs_res.NumAtoms == 2);
+        TEST_ASSERT(mcs_res.NumBonds == 1);
       }
+
+      BOOST_LOG(rdInfoLog) << "------ REVERSE mols -------- \n";
 
       mols.clear();
       mols.push_back(ptr2);
@@ -748,14 +754,16 @@ void testGithubIssue481() {
         p.AtomCompareParameters.MatchChiralTag = false;
         p.BondCompareParameters.MatchStereo = false;
         MCSResult mcs_res = findMCS(mols, &p);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
         TEST_ASSERT(mcs_res.NumAtoms==4);
         TEST_ASSERT(mcs_res.NumBonds==3);
 
         p.AtomCompareParameters.MatchChiralTag = true;
         p.BondCompareParameters.MatchStereo = true;
         mcs_res = findMCS(mols, &p);
-        TEST_ASSERT(mcs_res.NumAtoms==0);
-        TEST_ASSERT(mcs_res.NumBonds==0);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
+        TEST_ASSERT(mcs_res.NumAtoms == 2);
+        TEST_ASSERT(mcs_res.NumBonds == 1);
       }
 
     }
@@ -769,17 +777,21 @@ void testGithubIssue481() {
       mols.push_back(ptr1);
       mols.push_back(ptr2);
 
+      BOOST_LOG(rdInfoLog) << "**** mols:" <<s1<<"   "<<s2<<"\n";
+
       {
         MCSParameters p;
         p.AtomCompareParameters.MatchChiralTag = false;
         p.BondCompareParameters.MatchStereo = false;
         MCSResult mcs_res = findMCS(mols, &p);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
         TEST_ASSERT(mcs_res.NumAtoms==4);
         TEST_ASSERT(mcs_res.NumBonds==3);
 
         p.AtomCompareParameters.MatchChiralTag = true;
         p.BondCompareParameters.MatchStereo = true;
         mcs_res = findMCS(mols, &p);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
         std::vector< std::pair<int, int> > vect;
         bool sub_res = SubstructMatch(*mols[1].get(), *mols[0].get(), vect, true, true);
         if(sub_res==false) { // actualy == true & 4, 3 !!!
@@ -787,6 +799,8 @@ void testGithubIssue481() {
           TEST_ASSERT(mcs_res.NumBonds==0);
         }
       }
+
+      BOOST_LOG(rdInfoLog) << "------ REVERSE mols -------- \n";
 
       mols.clear();
       mols.push_back(ptr2);
@@ -796,14 +810,20 @@ void testGithubIssue481() {
         p.AtomCompareParameters.MatchChiralTag = false;
         p.BondCompareParameters.MatchStereo = false;
         MCSResult mcs_res = findMCS(mols, &p);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
         TEST_ASSERT(mcs_res.NumAtoms==4);
         TEST_ASSERT(mcs_res.NumBonds==3);
 
         p.AtomCompareParameters.MatchChiralTag = true;
         p.BondCompareParameters.MatchStereo = true;
         mcs_res = findMCS(mols, &p);
-        TEST_ASSERT(mcs_res.NumAtoms==0);
-        TEST_ASSERT(mcs_res.NumBonds==0);
+        BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " " << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds << " bonds\n";
+        std::vector< std::pair<int, int> > vect;
+        bool sub_res = SubstructMatch(*mols[1].get(), *mols[0].get(), vect, true, true);
+        if (sub_res == false) {
+            TEST_ASSERT(mcs_res.NumAtoms == 0);
+            TEST_ASSERT(mcs_res.NumBonds == 0);
+        }
       }
     }
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -832,6 +852,97 @@ void testInitialSeed() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testInitialSeed2() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "FMCS testInitialSeed2()" << std::endl;
+
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {
+        "Cc1c(F)c(N2CCNC(C)C2)cc2c1c(=O)c(C(=O)O)cn2C1CC1", 
+        "COc1c(N2CCNC(C)C2)c(F)cc2c(=O)c(C(=O)O)cn(C3CC3)c12",
+    };
+    const char* initial_smarts = "CCNCCNcccccccnC1CC1";
+    BOOST_LOG(rdInfoLog) << "initial_smarts: " << initial_smarts << std::endl;
+
+    for (int i = 0; i<sizeof(smi) / sizeof(smi[0]); i++) {
+        std::string id;
+        mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smi[i], &id))));
+        std::auto_ptr<ROMol> seed(SmartsToMol(initial_smarts));
+        MatchVectType match;
+        bool matched = SubstructMatch(*mols.back(), *seed, match);
+        BOOST_LOG(rdInfoLog) << (matched ? "RDKit MATCHED " : "RDKit DISmatched ") << smi[i] << std::endl;
+    }
+    MCSParameters p;
+    p.InitialSeed = initial_smarts;
+    t0 = nanoClock();
+    MCSResult res = findMCS(mols, &p);
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, " << res.NumBonds << " bonds\n";
+    printTime();
+    TEST_ASSERT(res.NumAtoms != 0);
+
+    // Make Initial Seed from MCS
+    p.Verbose = true;
+    p.InitialSeed = "[#6]1-[#6]-[#7]-[#6](-[#6]-[#7]-1-[#6]1:[#6](:[#6]:[#6]2:[#6](:[#6](:[#6]:[#7](-[#6]3-[#6]-[#6]-3):[#6]:2:[#6]:1)-[#6](=[#8])-[#8])=[#8])-[#9])-[#6]"; // 25 atoms, 28 bonds
+    BOOST_LOG(rdInfoLog) << "\n\nFound MCS as the only initial seed (25 atoms, 28 bonds): \n" << p.InitialSeed << std::endl;
+    t0 = nanoClock();
+    res = findMCS(mols, &p);
+    BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, " << res.NumBonds << " bonds\n";
+    printTime();
+    TEST_ASSERT(res.NumAtoms != 0);
+
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+void testGithub631() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog) << "Testing github issue 631: FindMCS matchChiralTag=True does not match self"<< std::endl;
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = { // all examples derived from the bug report
+      "CN(C)[C@@H]1CCCNC1", // == MCS
+      "C1C=CCN1[C@@H]1CCCNC1",
+      "Cc1cc2c(cc1C)C(=O)N([C@@H]1CCC(=O)NC1=O)C2=O",
+    };
+
+    for (int pass = 0; pass < 2; ++pass, mols.clear())
+     for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++) {
+      RWMol* m = SmilesToMol( getSmilesOnly(smi[i]) );
+      TEST_ASSERT(m);
+
+      if (0 == pass)
+          mols.clear(); // use a pair of the same molecules only. On the second pass use all.
+
+      mols.push_back(ROMOL_SPTR(m));
+      mols.push_back(ROMOL_SPTR(new ROMol(*m)));
+      {
+          MCSParameters p;
+          p.AtomCompareParameters.MatchChiralTag = false;
+//          p.Verbose = true;
+          MCSResult res = findMCS(mols, &p);
+          BOOST_LOG(rdInfoLog)<< "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n"<<std::endl;;
+   
+          TEST_ASSERT(res.NumAtoms == mols[0]->getNumAtoms());
+          TEST_ASSERT(res.NumBonds == mols[0]->getNumBonds());
+      }
+
+      {
+        MCSParameters p;
+        p.AtomCompareParameters.MatchChiralTag = true;
+        //p.BondCompareParameters.MatchStereo = useChirality;
+//        p.Verbose = true;
+        MCSResult res = findMCS(mols,&p);
+        BOOST_LOG(rdInfoLog)<< "MCS: "<<res.SmartsString<<" "<< res.NumAtoms<<" atoms, "<<res.NumBonds<<" bonds\n"<<std::endl;;
+   
+        TEST_ASSERT(res.NumAtoms == mols[0]->getNumAtoms());
+        TEST_ASSERT(res.NumBonds == mols[0]->getNumBonds());
+      }
+      BOOST_LOG(rdInfoLog) << "============================================" << std::endl;
+     }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 //====================================================================================================
 //====================================================================================================
 
@@ -853,16 +964,10 @@ int main(int argc, const char* argv[]) {
     T0 = nanoClock();
     t0 = nanoClock();
 
+
     testJSONParameters();
 
-    testInitialSeed();
-
     test1Basics();
-
-// chirality check:
-    testGithubIssue481();
-    testChirality();
-//---
 
     test32();
     test190();
@@ -884,6 +989,15 @@ int main(int argc, const char* argv[]) {
 // very SLOW optional tests:
 //    test330();  // SLOW test
 //    test45();   // SLOW test
+
+    testInitialSeed ();
+    testInitialSeed2();
+
+// chirality check:
+    testGithubIssue481();
+    testChirality();
+    testGithub631();
+//---
 
     unsigned long long t1 = nanoClock();
     double sec = double(t1-T0) / 1000000.;
