@@ -488,7 +488,13 @@ if __name__ == "__main__":
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)
   else:
-    v = pd.version.version.split('.')
+    # version check
+    try:
+      v = pd.__version__.split('.')
+    except AttributeError:
+      # support for older versions of pandas
+      v = pd.version.version.split('.')
+    
     if v[0]=='0' and int(v[1])<10:
       print("pandas installation >=0.10 not found, skipping tests",
             file=sys.stderr)
