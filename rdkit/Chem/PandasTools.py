@@ -101,7 +101,16 @@ try:
       pd.set_option('display.max_colwidth',1000000000)
     #saves the default pandas rendering to allow restauration
     defPandasRendering = pd.core.frame.DataFrame.to_html
+except ImportError:
+  import traceback
+  traceback.print_exc()
+  pd = None
+  
 except Exception as e:
+  import sys
+  print("Pandas version %s not compatible with tests"%v, file=sys.stderr)
+  import traceback
+  traceback.print_exc()
   pd = None
 
 highlightSubstructures=True
