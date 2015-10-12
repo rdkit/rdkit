@@ -89,6 +89,7 @@ try:
   import pandas as pd
   v = pd.version.version.split('.')
   if v[0]=='0' and int(v[1])<10:
+    print("Pandas version %s not compatible with tests"%v, file=sys.stderr)
     pd = None
   else:
     if 'display.width' in  pd.core.config._registered_options:
@@ -108,7 +109,6 @@ except ImportError:
   
 except Exception as e:
   import sys
-  print("Pandas version %s not compatible with tests"%v, file=sys.stderr)
   import traceback
   traceback.print_exc()
   pd = None
