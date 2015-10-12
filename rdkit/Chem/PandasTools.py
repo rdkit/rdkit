@@ -87,7 +87,13 @@ from rdkit.Chem import Draw
 
 try:
   import pandas as pd
-  v = pd.version.version.split('.')
+  try:
+    v = pd.__version__.split('.')
+  except AttributeError:
+    # support for older versions of pandas
+    v = pd.version.version.split('.')
+
+    
   if v[0]=='0' and int(v[1])<10:
     print("Pandas version %s not compatible with tests"%v, file=sys.stderr)
     pd = None
