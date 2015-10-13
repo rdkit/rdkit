@@ -268,7 +268,10 @@ namespace RDKit
 #endif
   };
 }
-BOOST_CLASS_VERSION(RDKit::FilterCatalogEntry, 1)
+
+#ifdef RDK_USE_BOOST_SERIALIZATION    
+BOOST_CLASS_VERSION(RDKit::FilterCatalogEntry, 1);
+#endif
 
 #endif //__RD_FILTER_CATALOG_H__
 

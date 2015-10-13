@@ -12,9 +12,10 @@ rdkit_python_extension(rdfiltercatalog
                        FilterCatalog.cpp
                        DEST Chem 
                        LINK_LIBRARIES
-                       ${Boost_SERIALIZATION_LIBRARY} 
                        FilterCatalog 
-Subgraphs SubstructMatch SmilesParse Catalogs FileParsers GraphMol DataStructs RDGeometryLib RDGeneral 
- RDBoost) 
+Subgraphs SubstructMatch SmilesParse Catalogs FileParsers GraphMol DataStructs
+RDGeometryLib RDGeneral RDBoost  
+${Boost_SERIALIZATION_LIBRARY} 
+) 
 
 add_pytest(pyFilterCatalog ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)

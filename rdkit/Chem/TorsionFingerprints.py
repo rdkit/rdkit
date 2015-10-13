@@ -123,7 +123,8 @@ def _getIndexforTorsion(neighbors, inv):
   elif _doMatch(inv, neighbors): # atom has all symmetric neighbors
     return neighbors
   elif _doNotMatch(inv, neighbors): # atom has all different neighbors
-    # simply use the first neighbor
+    # sort by atom inv and simply use the first neighbor
+    neighbors = sorted(neighbors, key = lambda x: inv[x.GetIdx()])
     return [neighbors[0]]
   at = _doMatchExcept1(inv, neighbors) # two neighbors the same, one different
   if at is None:
@@ -295,32 +296,26 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
   """
   torsions = []
   conf = mol.GetConformer(confId)
-  for t,maxdev in tors_list:
-    if len(t) == 1:
-      t = t[0]
-      p1, p2, p3, p4 = _getTorsionAtomPositions(t, conf)
-      tors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
-      if tors < 0: tors += 360.0 # angle between 0 and 360
-    else:
-      # loop over torsions and take minimum
-      tors = 360.0
-      for t2 in t:
-        p1, p2, p3, p4 = _getTorsionAtomPositions(t2, conf)
-        tmp = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
-        if tmp < 0: tmp += 360.0 # angle between 0 and 360
-        if tmp < tors: tors = tmp
+  for quartets,maxdev in tors_list:
+    tors = []
+    # loop over torsions and calculate angle
+    for atoms in quartets:
+      p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
+      tmpTors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
+      if tmpTors < 0: tmpTors += 360.0 # angle between 0 and 360
+      tors.append(tmpTors)
     torsions.append((tors, maxdev))
   # rings
-  for t,maxdev in tors_list_rings:
-    num = len(t)
+  for quartets,maxdev in tors_list_rings:
+    num = len(quartets)
     # loop over torsions and sum them up
     tors = 0
-    for t2 in t:
-      p1, p2, p3, p4 = _getTorsionAtomPositions(t2, conf)
-      tmp = abs((Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0)
-      tors += tmp
+    for atoms in quartets:
+      p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
+      tmpTors = abs((Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0)
+      tors += tmpTors
     tors /= num
-    torsions.append((tors, maxdev))
+    torsions.append(([tors], maxdev))
   return torsions
 
 def _findCentralBond(mol, distmat):
@@ -462,11 +457,17 @@ def CalculateTFD(torsions1, torsions2, weights=None):
     raise ValueError("List of torsions angles must have the same size.")
   # calculate deviations and normalize (divide by max. possible deviation)
   deviations = []
-  for t1, t2 in zip(torsions1, torsions2):
-    diff = abs(t1[0]-t2[0])
-    if (360.0-diff) < diff: # we do not care about direction
-      diff = 360.0 - diff
-    deviations.append(diff/t1[1])
+  for tors1, tors2 in zip(torsions1, torsions2):
+    mindiff = 180.0
+    for t1 in tors1[0]:
+      for t2 in tors2[0]:
+        diff = abs(t1-t2)
+        if (360.0-diff) < diff: # we do not care about direction
+          diff = 360.0 - diff
+        #print t1, t2, diff
+        if diff < mindiff:
+          mindiff = diff
+    deviations.append(mindiff/tors1[1])
   # do we use weights?
   if weights is not None:
     if len(weights) != len(torsions1):

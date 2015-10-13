@@ -80,7 +80,7 @@ class TestCase(unittest.TestCase):
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     torsions = TorsionFingerprints.CalculateTorsionAngles(mol, tors_list, tors_list_rings)
     self.assertEqual(len(weights), len(torsions))
-    self.assertAlmostEqual(torsions[2][0], 232.5346, 4)
+    self.assertAlmostEqual(torsions[2][0][0], 232.5346, 4)
 
     # the torsion fingerprint deviation
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions)
@@ -91,19 +91,19 @@ class TestCase(unittest.TestCase):
     torsions2 = TorsionFingerprints.CalculateTorsionAngles(mol2, tors_list, tors_list_rings)
     weights = TorsionFingerprints.CalculateTorsionWeights(mol)
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2, weights=weights)
-    self.assertAlmostEqual(tfd, 0.0645, 4)
+    self.assertAlmostEqual(tfd, 0.0691, 4)
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2)
-    self.assertAlmostEqual(tfd, 0.1680, 4)
+    self.assertAlmostEqual(tfd, 0.1115, 4)
 
     # the wrapper functions
     tfd = TorsionFingerprints.GetTFDBetweenMolecules(mol, mol2)
-    self.assertAlmostEqual(tfd, 0.0645, 4)
+    self.assertAlmostEqual(tfd, 0.0691, 4)
 
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     tfd = TorsionFingerprints.GetTFDBetweenConformers(mol, confIds1=[0], confIds2=[1, 2])
     self.assertEqual(len(tfd), 2)
-    self.assertAlmostEqual(tfd[0], 0.0645, 4)
+    self.assertAlmostEqual(tfd[0], 0.0691, 4)
 
     tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
     self.assertEqual(len(tfdmat), 3)

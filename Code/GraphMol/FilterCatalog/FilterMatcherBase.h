@@ -31,7 +31,7 @@
 #ifndef __RD_FILTER_MATCHER_BASE_H__
 #define __RD_FILTER_MATCHER_BASE_H__
 #include <GraphMol/RDKitBase.h>
-#include "FilterMatcherBase.h"
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/assume_abstract.hpp>

@@ -64,6 +64,7 @@ namespace RDKit {
                                (this shouldn't normally be altered in client code).
       \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                                       smoothing fails
+      \param enforceChirality  enforce the correct chirality if chiral centers are present
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
 
@@ -77,8 +78,8 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap=0,
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
-                      double basinThresh=5.0
-                      );
+                      bool enforceChirality=true,
+                      double basinThresh=5.0);
 
     //*! Embed multiple conformations for a molecule
     /*!
@@ -133,6 +134,8 @@ namespace RDKit {
       \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                                       smoothing fails
 
+      \param enforceChirality  enforce the correct chirality if chiral centers are present
+
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
 
@@ -151,6 +154,7 @@ namespace RDKit {
                             const std::map<int,RDGeom::Point3D> *coordMap=0,
                             double optimizerForceTol=1e-3,
                             bool ignoreSmoothingFailures=false,
+                            bool enforceChirality=true,
                             double basinThresh=5.0);
     //! \overload
     INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
@@ -162,6 +166,7 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
+                                bool enforceChirality=true,
                                 double basinThresh=5.0);
 
   }

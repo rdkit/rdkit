@@ -71,6 +71,7 @@ namespace RDKit {
         MCSProgressCallback         ProgressCallback;       // return false to interrupt execution
         void*                       ProgressCallbackUserData;
         MCSFinalMatchCheckFunction  FinalMatchChecker;      // FinalChiralityCheckFunction() to check chirality
+        std::string                 InitialSeed; // user defined or empty string (default)
     public:
         MCSParameters(): MaximizeBonds(true)
             , Threshold(1.0)    // match to all
@@ -82,6 +83,7 @@ namespace RDKit {
             , ProgressCallback(MCSProgressCallbackTimeout)
             , ProgressCallbackUserData(0)
             , FinalMatchChecker(0)
+            , InitialSeed("")
        {}
     };
 

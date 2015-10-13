@@ -72,13 +72,34 @@ namespace RDKit {
       return res;
     }
     
+    bool _boundsFulfilled(const std::vector<int> &atoms, const DistGeom::BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions) {
+      unsigned int N = mmat.numRows();
+      //std::cerr << N << " " << atoms.size() << std::endl;
+      // loop over all pair of atoms
+      for (unsigned int i = 0; i < atoms.size()-1; ++i) {
+        for (unsigned int j = i+1; j < atoms.size(); ++j) {
+          int a1 = atoms[i]; int a2 = atoms[j];
+          RDGeom::Point3D p0((*positions[a1])[0],(*positions[a1])[1],(*positions[a1])[2]);
+          RDGeom::Point3D p1((*positions[a2])[0],(*positions[a2])[1],(*positions[a2])[2]);
+          double d2 = (p0-p1).length(); // distance
+          double lb = mmat.getLowerBound(a1,a2); double ub = mmat.getUpperBound(a1,a2); // bounds
+          if (((d2 < lb) && (fabs(d2-lb) > 0.17)) || ((d2 > ub) && (fabs(d2-ub) > 0.17))) {
+            //std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub << " " << fabs(d2-lb) << " " << fabs(d2-ub) << std::endl;
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
     bool _embedPoints(RDGeom::PointPtrVect *positions, 
                       const DistGeom::BoundsMatPtr mmat,
                       bool useRandomCoords,double boxSizeMult,
                       bool randNegEig, 
                       unsigned int numZeroFail, double optimizerForceTol,
                       double basinThresh, int seed, unsigned int maxIterations,
-                      const DistGeom::VECT_CHIRALSET *chiralCenters){
+                      const DistGeom::VECT_CHIRALSET *chiralCenters,
+                      bool enforceChirality){
       unsigned int nat = positions->size();
       if(maxIterations==0){
         maxIterations=10*nat;
@@ -140,7 +161,7 @@ namespace RDKit {
           field=NULL;
           //std::cerr<<"   "<<field->calcEnergy()<<" after npasses: "<<nPasses<<std::endl;
           // Check if any of our chiral centers are badly out of whack. If so, try again
-          if (chiralCenters->size()>0){
+          if (enforceChirality && chiralCenters->size()>0){
             // check the chiral volume:
             BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
               double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(chiralSet->d_idx1,chiralSet->d_idx2,
@@ -178,17 +199,41 @@ namespace RDKit {
             }
             delete field2;
 
-            if (chiralCenters->size()>0){
-              BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
-                // it could happen that the centroid is outside the volume defined by the other
-                // four points. That is also a fail.
-                if(!_centerInVolume(chiralSet,*positions)){
-                  //std::cerr<<" fail2! ("<<chiralSet->d_idx0<<") iter: "<<iter<<std::endl;
-                  gotCoords=false;
-                  break;
+            // do another chirality test
+            if (enforceChirality && chiralCenters->size() > 0) {
+              // "distance matrix" chirality test
+              // it could happen that the resulting coordinates of the atoms around a chiral center
+              // do not fulfill the bounds
+              std::set<int> atoms;
+              BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
+                if(chiralSet->d_idx0 != chiralSet->d_idx4) {
+                  atoms.insert(chiralSet->d_idx0);
+                  atoms.insert(chiralSet->d_idx1);
+                  atoms.insert(chiralSet->d_idx2);
+                  atoms.insert(chiralSet->d_idx3);
+                  atoms.insert(chiralSet->d_idx4);
                 }
               }
-            }
+              std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
+              if (atomsToCheck.size() > 0) {
+                if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
+                  gotCoords=false;
+                }
+              }
+
+              // "center in volume" chirality test
+              if (gotCoords) {
+                BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
+                  // it could happen that the centroid is outside the volume defined by the other
+                  // four points. That is also a fail.
+                  if(!_centerInVolume(chiralSet,*positions)){
+                    //std::cerr<<" fail2! ("<<chiralSet->d_idx0<<") iter: "<<iter<<std::endl;
+                    gotCoords=false;
+                    break;
+                  }
+                }
+              }
+            } // chirality tests
           }
         } // if(gotCoords)
       } // while
@@ -302,13 +347,14 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap,
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
+                      bool enforceChirality,
                       double basinThresh){
 
       INT_VECT confIds;
       EmbedMultipleConfs(mol,confIds,1,1,maxIterations,seed,clearConfs,
                          useRandomCoords,boxSizeMult,randNegEig,
                          numZeroFail,-1.0,coordMap,optimizerForceTol,
-                         ignoreSmoothingFailures,basinThresh);
+                         ignoreSmoothingFailures,enforceChirality,basinThresh);
 
       int res;
       if(confIds.size()){
@@ -371,6 +417,7 @@ namespace RDKit {
         int seed;
         unsigned int maxIterations;
         DistGeom::VECT_CHIRALSET const *chiralCenters;
+        bool enforceChirality;
       } EmbedArgs;
       void embedHelper_(int threadId,
                         int numThreads,
@@ -398,7 +445,8 @@ namespace RDKit {
                                         eargs->randNegEig, eargs->numZeroFail,
                                         eargs->optimizerForceTol,
                                         eargs->basinThresh, (ci+1)*eargs->seed,
-                                        eargs->maxIterations, eargs->chiralCenters);
+                                        eargs->maxIterations, eargs->chiralCenters,
+                                        eargs->enforceChirality);
           if (gotCoords) {
             Conformer *conf = (*eargs->confs)[ci];
             unsigned int fragAtomIdx=0;
@@ -434,6 +482,7 @@ namespace RDKit {
                             const std::map<int,RDGeom::Point3D>  *coordMap,
                             double optimizerForceTol,
                             bool ignoreSmoothingFailures,
+                            bool enforceChirality,
                             double basinThresh){
       if(!mol.getNumAtoms()){
         throw ValueErrorException("molecule has no atoms");
@@ -530,7 +579,8 @@ namespace RDKit {
                                  randNegEig, numZeroFail,
                                  optimizerForceTol,
                                  basinThresh, seed,
-                                 maxIterations, &chiralCenters};
+                                 maxIterations, &chiralCenters,
+                                 enforceChirality};
         if(numThreads==1){
           detail::embedHelper_(0,1,&eargs);
         }
@@ -570,6 +620,7 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
+                                bool enforceChirality,
                                 double basinThresh){
       INT_VECT res;
       EmbedMultipleConfs(mol,res,numConfs,1,
@@ -580,6 +631,7 @@ namespace RDKit {
                          coordMap,
                          optimizerForceTol,
                          ignoreSmoothingFailures,
+                         enforceChirality,
                          basinThresh);
       return res;
     }

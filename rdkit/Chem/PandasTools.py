@@ -87,8 +87,15 @@ from rdkit.Chem import Draw
 
 try:
   import pandas as pd
-  v = pd.version.version.split('.')
+  try:
+    v = pd.__version__.split('.')
+  except AttributeError:
+    # support for older versions of pandas
+    v = pd.version.version.split('.')
+
+    
   if v[0]=='0' and int(v[1])<10:
+    print("Pandas version %s not compatible with tests"%v, file=sys.stderr)
     pd = None
   else:
     if 'display.width' in  pd.core.config._registered_options:
@@ -101,7 +108,15 @@ try:
       pd.set_option('display.max_colwidth',1000000000)
     #saves the default pandas rendering to allow restauration
     defPandasRendering = pd.core.frame.DataFrame.to_html
+except ImportError:
+  import traceback
+  traceback.print_exc()
+  pd = None
+  
 except Exception as e:
+  import sys
+  import traceback
+  traceback.print_exc()
   pd = None
 
 highlightSubstructures=True
@@ -473,7 +488,13 @@ if __name__ == "__main__":
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)
   else:
-    v = pd.version.version.split('.')
+    # version check
+    try:
+      v = pd.__version__.split('.')
+    except AttributeError:
+      # support for older versions of pandas
+      v = pd.version.version.split('.')
+    
     if v[0]=='0' and int(v[1])<10:
       print("pandas installation >=0.10 not found, skipping tests",
             file=sys.stderr)

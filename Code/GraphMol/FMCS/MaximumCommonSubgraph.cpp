@@ -18,7 +18,7 @@
 #include "../Substruct/SubstructMatch.h"
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
-
+ 
 namespace RDKit {
     namespace FMCS {
 
@@ -59,7 +59,6 @@ namespace RDKit {
 #ifdef DUP_SUBSTRUCT_CACHE
             DuplicateCache.clear();
 #endif
-
             void* userData = Parameters.CompareFunctionsUserData;
 
             if(Parameters.BondCompareParameters.CompleteRingsOnly || Parameters.BondCompareParameters.RingMatchesRingOnly) {
@@ -268,55 +267,102 @@ namespace RDKit {
 
             Seeds.clear();
             QueryMoleculeMatchedBonds = 0;
-            QueryMoleculeMatchedAtoms = 0;//QueryMolecule->getNumAtoms();
-            //R1 additional performance OPTIMISATION
-            //if(Parameters.BondCompareParameters.CompleteRingsOnly)
-            // disable all mismatched rings, and do not generate initial seeds from such disabled bonds
-            //  for(  rings .....) for(i......)
-            //   if(mismatched) excludedBonds[i.......] = true;
-            QueryRings r(QueryMolecule);
-            std::vector<WeightedBond> wb;
-            wb.reserve(QueryMolecule->getNumBonds());
-            for(RWMol::ConstBondIterator bi = QueryMolecule->beginBonds(); bi != QueryMolecule->endBonds(); bi++)
-                wb.push_back(WeightedBond(*bi, r));
-
-            for(std::vector<WeightedBond>::const_iterator bi = wb.begin(); bi != wb.end(); bi++) {
-                //R1 additional performance OPTIMISATION
-                //if(excludedBonds[(*bi)->getIdx()])
-                //    continue;
-                Seed seed;
-                seed.MatchResult.resize(Targets.size());
-
+            QueryMoleculeMatchedAtoms = 0;
+            if(! Parameters.InitialSeed.empty()) { // make user defined seed
+                std::auto_ptr<const ROMol> initialSeedMolecule((const ROMol*)SmartsToMol(Parameters.InitialSeed));
+                // make a set of of seed as indeces and pointers to current query molecule items based on matching results
+                std::vector<MatchVectType> matching_substructs;
+                unsigned smn = SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
+                // loop throw all fragments of Query matched to initial seed
+                for(std::vector<MatchVectType>::const_iterator ms=matching_substructs.begin(); ms!=matching_substructs.end(); ms++) {
+                    Seed seed;
+                    seed.ExcludedBonds = excludedBonds;
+                    seed.MatchResult.resize(Targets.size());
 #ifdef VERBOSE_STATISTICS_ON
-                {
-                    ++VerboseStatistics.Seed;
-                    ++VerboseStatistics.InitialSeed;
-                }
+                    {
+                        ++VerboseStatistics.Seed;
+                        ++VerboseStatistics.InitialSeed;
+                    }
 #endif
-                seed.addAtom(bi->BondPtr->getBeginAtom());
-                seed.addAtom(bi->BondPtr->getEndAtom());
-                seed.ExcludedBonds = excludedBonds; // all bonds from first to current
-                seed.addBond (bi->BondPtr);
-                excludedBonds[bi->BondPtr->getIdx()] = true;
+                    // add all matched atoms of the matched query fragment
+                    std::map<unsigned, unsigned> initialSeedToQueryAtom;
+                    for(MatchVectType::const_iterator msb = ms->begin(); msb != ms->end(); msb++) {
+                        unsigned qai = msb->second;
+                        unsigned sai = msb->first;
+                        seed.addAtom(QueryMolecule->getAtomWithIdx(qai));
+                        initialSeedToQueryAtom[sai] = qai;
+                    }
+                    // add all bonds (existed in initial seed !!!) between all matched atoms in query
+                    for(MatchVectType::const_iterator msb = ms->begin(); msb != ms->end(); msb++) {
+                        const Atom* atom = initialSeedMolecule->getAtomWithIdx(msb->first);
+                        ROMol::OEDGE_ITER beg,end;
+                        for(boost::tie(beg,end) = initialSeedMolecule->getAtomBonds(atom); beg!=end; beg++) {
+                            const Bond& initialBond = *((*initialSeedMolecule)[*beg]);
+                            unsigned qai1 = initialSeedToQueryAtom.find(initialBond.getBeginAtomIdx())->second;
+                            unsigned qai2 = initialSeedToQueryAtom.find(initialBond.getEndAtomIdx())->second;
 
-                seed.computeRemainingSize(*QueryMolecule);
+                            const Bond* b = QueryMolecule->getBondBetweenAtoms(qai1, qai2);
+                            if( ! seed.ExcludedBonds[b->getIdx()]) {
+                                seed.addBond(b);
+                                seed.ExcludedBonds[b->getIdx()] = true;
+                            }
+                        }
+                    }
+                    seed.computeRemainingSize(*QueryMolecule);
 
-                if(checkIfMatchAndAppend(seed)) {
-                    ++QueryMoleculeMatchedBonds;
-                } else {
-                    // optionally remove all such bonds from all targets TOPOLOGY where it exists.
-                    //..........
-
-                    // disable (mark as already processed) mismatched bond in all seeds
-                    for(SeedSet::iterator si = Seeds.begin(); si != Seeds.end(); si++)
-                        si->ExcludedBonds[bi->BondPtr->getIdx()] = true;
-
-#ifdef VERBOSE_STATISTICS_ON
-                    ++VerboseStatistics.MismatchedInitialSeed;
-#endif
+                    if(checkIfMatchAndAppend(seed))
+                        QueryMoleculeMatchedBonds = seed.getNumBonds();
                 }
             }
+            else { //create a set of seeds from each query bond
+                //R1 additional performance OPTIMISATION
+                //if(Parameters.BondCompareParameters.CompleteRingsOnly)
+                // disable all mismatched rings, and do not generate initial seeds from such disabled bonds
+                //  for(  rings .....) for(i......)
+                //   if(mismatched) excludedBonds[i.......] = true;
+                QueryRings r(QueryMolecule);
+                std::vector<WeightedBond> wb;
+                wb.reserve(QueryMolecule->getNumBonds());
+                for(RWMol::ConstBondIterator bi = QueryMolecule->beginBonds(); bi != QueryMolecule->endBonds(); bi++)
+                    wb.push_back(WeightedBond(*bi, r));
 
+                for(std::vector<WeightedBond>::const_iterator bi = wb.begin(); bi != wb.end(); bi++) {
+                    //R1 additional performance OPTIMISATION
+                    //if(excludedBonds[(*bi)->getIdx()])
+                    //    continue;
+                    Seed seed;
+                    seed.MatchResult.resize(Targets.size());
+
+    #ifdef VERBOSE_STATISTICS_ON
+                    {
+                        ++VerboseStatistics.Seed;
+                        ++VerboseStatistics.InitialSeed;
+                    }
+    #endif
+                    seed.addAtom(bi->BondPtr->getBeginAtom());
+                    seed.addAtom(bi->BondPtr->getEndAtom());
+                    seed.ExcludedBonds = excludedBonds; // all bonds from first to current
+                    seed.addBond (bi->BondPtr);
+                    excludedBonds[bi->BondPtr->getIdx()] = true;
+
+                    seed.computeRemainingSize(*QueryMolecule);
+
+                    if(checkIfMatchAndAppend(seed)) {
+                        ++QueryMoleculeMatchedBonds;
+                    } else {
+                        // optionally remove all such bonds from all targets TOPOLOGY where it exists.
+                        //..........
+
+                        // disable (mark as already processed) mismatched bond in all seeds
+                        for(SeedSet::iterator si = Seeds.begin(); si != Seeds.end(); si++)
+                            si->ExcludedBonds[bi->BondPtr->getIdx()] = true;
+
+    #ifdef VERBOSE_STATISTICS_ON
+                        ++VerboseStatistics.MismatchedInitialSeed;
+    #endif
+                    }
+                }
+            }
             size_t nq = QueryMolecule->getNumAtoms();
             for(size_t i = 0; i < nq; i++) { // all query's atoms
                 unsigned matched = 0;
@@ -571,13 +617,12 @@ namespace RDKit {
                 init();
                 if(Targets.empty())
                     break;
-                {
-                    MCSFinalMatchCheckFunction tff =  Parameters.FinalMatchChecker;
-                    if(FinalChiralityCheckFunction == Parameters.FinalMatchChecker)
-                        Parameters.FinalMatchChecker = 0; //skip final chirality check for initial seed to allow future growing of it
-                    makeInitialSeeds();
-                    Parameters.FinalMatchChecker = tff;   // restore final functor
-                }
+                MCSFinalMatchCheckFunction tff =  Parameters.FinalMatchChecker;
+                if(FinalChiralityCheckFunction == Parameters.FinalMatchChecker)
+                    Parameters.FinalMatchChecker = 0; //skip final chirality check for initial seed to allow future growing of it
+                makeInitialSeeds();
+                Parameters.FinalMatchChecker = tff;   // restore final functor
+
                 if(Parameters.Verbose)
                     std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<" "<<QueryMolecule->getNumAtoms()<<"("<<QueryMoleculeMatchedAtoms<<") atoms, "
                              <<QueryMolecule->getNumBonds()<<"("<<QueryMoleculeMatchedBonds<<") bonds\n";
@@ -585,7 +630,7 @@ namespace RDKit {
                 if(Seeds.empty())
                     break;
                 res.Canceled = growSeeds() ? false : true;
-                // verify MCS what is equal to one of initial seed for chirality match
+                // verify what MCS is equal to one of initial seed for chirality match
                 if(FinalChiralityCheckFunction == Parameters.FinalMatchChecker && 1==getMaxNumberBonds()) {
                     McsIdx = MCS(); // clear
                     makeInitialSeeds(); // check all possible initial seeds
@@ -601,7 +646,7 @@ namespace RDKit {
                 }
                 else if(i+1 < Molecules.size() - ThresholdCount) {
                     Seed seed;
-                    if(createSeedFromMCS(i, seed)) // MCS matched with new query
+                    if(createSeedFromMCS(i, seed)) // MCS is matched with new query
                         Seeds.push_back(seed);
                     std::swap(Molecules[0], Molecules[i+1]); // change query molecule for threshold < 1.
                 }
@@ -824,13 +869,13 @@ namespace RDKit {
             TargetMatch& match = seed.MatchResult[itarget];
             if(match.empty())
                 return false;
-// testGithubIssue481() workaround
+/*
 // CHIRALITY: FinalMatchCheck:
 if(Parameters.AtomCompareParameters.MatchChiralTag || Parameters.FinalMatchChecker) {   // TEMP
         match.clear();
         return false;
 }
-
+*/
             bool matched = false;
             for(unsigned newBondSeedIdx = match.MatchedBondSize; newBondSeedIdx < seed.getNumBonds(); newBondSeedIdx++) {
                 matched = false;
@@ -918,15 +963,16 @@ if(Parameters.AtomCompareParameters.MatchChiralTag || Parameters.FinalMatchCheck
             }
             // CHIRALITY: FinalMatchCheck
             if(matched && Parameters.FinalMatchChecker) {
-                short unsigned c1[4096]; //match.MatchedAtomSize];
-                short unsigned c2[4096]; //match.MatchedAtomSize];
-                int mi;
-                for(mi=0; mi < match.MatchedAtomSize; mi++) {
-                    c1[mi] = mi; // index in the seed topology
-                    c2[mi] = match.TargetAtomIdx[mi];
+                short unsigned c1[4096]; // seed.getNumAtoms()
+                short unsigned c2[4096]; // seed.getNumAtoms()
+                for(unsigned si=0; si < seed.getNumAtoms(); si++) { // index in the seed topology
+                    c1[si] = si;
+                    c2[si] = match.TargetAtomIdx[seed.Topology[si]];
                 }
-                matched = Parameters.FinalMatchChecker(c1, c2, *QueryMolecule, seed.Topology, *target.Molecule, target.Topology
-                        , &Parameters); // CHIRALITY
+                matched = Parameters.FinalMatchChecker(c1, c2, *QueryMolecule, seed.Topology,
+                          *target.Molecule, target.Topology, &Parameters); //check CHIRALITY
+                if(!matched)
+                    match.clear();
             }
 #ifdef VERBOSE_STATISTICS_ON
             if(matched) {
