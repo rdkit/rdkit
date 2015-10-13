@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <string.h>
-
+#include <stdio.h>
 #include <string>
 
 #include <GraphMol/RDKitBase.h>
