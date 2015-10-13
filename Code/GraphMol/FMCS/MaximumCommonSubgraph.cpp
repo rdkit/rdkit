@@ -272,7 +272,7 @@ namespace RDKit {
                 std::auto_ptr<const ROMol> initialSeedMolecule((const ROMol*)SmartsToMol(Parameters.InitialSeed));
                 // make a set of of seed as indeces and pointers to current query molecule items based on matching results
                 std::vector<MatchVectType> matching_substructs;
-                SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
+                unsigned smn = SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
                 // loop throw all fragments of Query matched to initial seed
                 for(std::vector<MatchVectType>::const_iterator ms=matching_substructs.begin(); ms!=matching_substructs.end(); ms++) {
                     Seed seed;
@@ -305,7 +305,6 @@ namespace RDKit {
                             if( ! seed.ExcludedBonds[b->getIdx()]) {
                                 seed.addBond(b);
                                 seed.ExcludedBonds[b->getIdx()] = true;
-                                excludedBonds[b->getIdx()] = true;
                             }
                         }
                     }
@@ -623,10 +622,6 @@ namespace RDKit {
                     Parameters.FinalMatchChecker = 0; //skip final chirality check for initial seed to allow future growing of it
                 makeInitialSeeds();
                 Parameters.FinalMatchChecker = tff;   // restore final functor
-
-                Seed   usds;
-                ROMol *mol = SmartsToMol(Parameters.InitialSeed);
-                Seeds.push_back(usds);
 
                 if(Parameters.Verbose)
                     std::cout<<"Query "<< MolToSmiles(*QueryMolecule)<<" "<<QueryMolecule->getNumAtoms()<<"("<<QueryMoleculeMatchedAtoms<<") atoms, "
