@@ -34,10 +34,25 @@
 
 """ unit testing code for molecule drawing
 """
+from __future__ import print_function
 from rdkit import RDConfig
 import unittest,os,tempfile
 from rdkit import Chem
 from rdkit.Chem import Draw
+
+import platform
+if platform.system() == "Linux":
+  import os, sys
+  if not os.environ.get("DISPLAY", None):
+    try:
+      # Force matplotlib to not use any Xwindows backend.
+      import matplotlib
+      print("Forcing use of Agg renderer", file=sys.stderr)
+      matplotlib.use('Agg')
+    except ImportError:
+      pass
+
+
 try:
   from rdkit.Chem.Draw import SimilarityMaps as sm
 except ImportError:
