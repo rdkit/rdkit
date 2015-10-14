@@ -1350,7 +1350,7 @@ void testGithub611(){
     m->getBondWithIdx(2)->setBondDir(Bond::BEGINWEDGE);
     mb = MolToMolBlock(*m);
     TEST_ASSERT(mb.find("3  2  1  6")==std::string::npos);
-    TEST_ASSERT(mb.find("4  3  1  1")!=std::string::npos);
+    TEST_ASSERT(mb.find("3  4  1  1")!=std::string::npos);
   }
 }
 
