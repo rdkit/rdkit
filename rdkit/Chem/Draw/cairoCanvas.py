@@ -50,10 +50,7 @@ else:
   pangocairo=None
 
 from rdkit.Chem.Draw.canvasbase import CanvasBase
-try:
-  import Image
-except ImportError:
-  from PIL import Image
+from PIL import Image
 
 scriptPattern=re.compile(r'\<.+?\>')
   
@@ -76,10 +73,10 @@ class Canvas(CanvasBase):
     self.imageType=imageType
     if image is not None:
       try:
-      	imgd = image.tostring("raw","BGRA")
+      	imgd = image.tobytes("raw","BGRA")
       except SystemError:
         r,g,b,a = image.split()
-        imgd = Image.merge("RGBA",(b,g,r,a)).tostring("raw","RGBA")
+        imgd = Image.merge("RGBA",(b,g,r,a)).tobytes("raw","RGBA")
    
       a = array.array('B',imgd)
       stride=image.size[0]*4
@@ -123,11 +120,11 @@ class Canvas(CanvasBase):
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
       if hasattr(self.surface,'get_data'):
-        self.image.fromstring(bytes(self.surface.get_data()),
-                              "raw","BGRA",0,1)
+        self.image.frombytes(bytes(self.surface.get_data()),
+                             "raw","BGRA",0,1)
       else:
-        self.image.fromstring(bytes(surface.get_data_as_rgba()),
-                              "raw","RGBA",0,1)
+        self.image.frombytes(bytes(surface.get_data_as_rgba()),
+                             "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
       if hasattr(self.surface,'get_data'):

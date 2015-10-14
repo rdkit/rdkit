@@ -274,7 +274,7 @@ class PiddleWxDc(sping_pid.Canvas):
             imgPil = image
         if (imgPil.mode!='RGB'):
             imgPil = imgPil.convert('RGB')
-        imgData = imgPil.tostring('raw','RGB')
+        imgData = imgPil.tobytes('raw','RGB')
         imgWx = wxEmptyImage(imgPil.size[0],imgPil.size[1])
         imgWx.SetData(imgData)
         self.dc.DrawBitmap(imgWx.ConvertToBitmap(), x1, y1)

@@ -28,7 +28,7 @@ def cacheImageFile(filename):
     code.append('/W %s /H %s /BPC 8 /CS /RGB /F [/A85 /Fl]' % (imgwidth, imgheight))
     code.append('ID')
     #use a flate filter and Ascii Base 85
-    raw = img.tostring()
+    raw = img.tobytes()
     assert(len(raw) == imgwidth * imgheight, "Wrong amount of data for image")
     compressed = zlib.compress(raw)   #this bit is very fast...
     encoded = _AsciiBase85Encode(compressed) #...sadly this isn't
