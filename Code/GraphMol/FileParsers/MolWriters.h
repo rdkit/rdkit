@@ -51,9 +51,9 @@ namespace RDKit {
       \param kekuleSmiles   : toggles the generation of kekule SMILES
 
      */
-    SmilesWriter(std::string fileName, 
-		 std::string delimiter=" ",
-		 std::string nameHeader="Name",
+    SmilesWriter(const std::string &fileName, 
+		 const std::string &delimiter=" ",
+		 const std::string &nameHeader="Name",
 		 bool includeHeader=true,
                  bool isomericSmiles=false,
                  bool kekuleSmiles=false);
@@ -101,7 +101,8 @@ namespace RDKit {
 
   private:
     // local initialization
-    void init(std::string delimiter,std::string nameHeader,
+    void init(const std::string &delimiter,
+              const std::string &nameHeader,
               bool includeHeader,
               bool isomericSmiles,
               bool kekuleSmiles);
@@ -136,7 +137,7 @@ namespace RDKit {
     /*!
       \param fileName       : filename to write to ("-" to write to stdout)
      */
-    SDWriter(std::string fileName);
+    SDWriter(const std::string &fileName);
     SDWriter(std::ostream *outStream,bool takeOwnership=false);
 
     ~SDWriter();
@@ -179,7 +180,7 @@ namespace RDKit {
     bool getKekulize() const { return df_kekulize; };    
     
   private:
-    void writeProperty(const ROMol &mol, std::string name);
+    void writeProperty(const ROMol &mol, const std::string &name);
 
     std::ostream *dp_ostream;
     bool df_owner;
@@ -202,7 +203,7 @@ namespace RDKit {
     /*!
       \param fileName       : filename to write to ("-" to write to stdout)
      */
-    TDTWriter(std::string fileName);
+    TDTWriter(const std::string &fileName);
     TDTWriter(std::ostream *outStream,bool takeOwnership=false);
 
     ~TDTWriter();
@@ -248,7 +249,7 @@ namespace RDKit {
     unsigned int getNumDigits() const { return d_numDigits;};
     
   private:
-    void writeProperty(const ROMol &mol, std::string name);
+    void writeProperty(const ROMol &mol, const std::string &name);
 
     std::ostream *dp_ostream;
     bool df_owner;
@@ -263,7 +264,7 @@ namespace RDKit {
   //! DataBank format files.
   class PDBWriter : public MolWriter {
   public:
-    PDBWriter(std::string fileName, unsigned int flavor = 0);
+    PDBWriter(const std::string &fileName, unsigned int flavor = 0);
     PDBWriter(std::ostream *outStream, bool takeOwnership=false,
               unsigned int flavor = 0);
     ~PDBWriter();

@@ -74,22 +74,22 @@ namespace RDKit {
     ROMol *fragmentOnBRICSBonds(const ROMol &mol);
 
     void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
-                                      std::string comment="//",bool validate=true,
+                                      const std::string &comment="//",bool validate=true,
                                       std::map<unsigned int,ROMOL_SPTR> *environs=0);
     void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,std::string> &defs,
-                                      std::string comment="//",bool validate=true,
+                                      const std::string &comment="//",bool validate=true,
                                       std::map<unsigned int,ROMOL_SPTR> *environs=0);
     void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs,
                                  std::map<unsigned int,ROMOL_SPTR> *environs=0);
     void constructFragmenterBondTypes(std::istream *inStream,
                                       const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment="//",bool validate=true,
+                                      const std::string &comment="//",bool validate=true,
                                       bool labelByConnector=true);
     void constructFragmenterBondTypes(const std::string &str,
                                       const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment="//",bool validate=true,
+                                      const std::string &comment="//",bool validate=true,
                                       bool labelByConnector=true);
     void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs);
   }

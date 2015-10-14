@@ -19,7 +19,7 @@ namespace RDKit{
   using boost::uint32_t;
 
   FragCatParams::FragCatParams(unsigned int lLen, unsigned int uLen,
-			       std::string fgroupFile, double tol) {
+			       const std::string &fgroupFile, double tol) {
     d_funcGroups.clear();
     d_typeStr = "Fragment Catalog Parameters";
     CHECK_INVARIANT(lLen<=uLen,"The upper length for fragments must be >= lower length");
