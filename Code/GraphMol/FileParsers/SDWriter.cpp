@@ -22,7 +22,7 @@
 #include <boost/any.hpp>
 
 namespace RDKit {
-  SDWriter::SDWriter(std::string fileName) {
+  SDWriter::SDWriter(const std::string &fileName) {
     if(fileName!= "-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
       df_owner=true;
@@ -114,7 +114,7 @@ namespace RDKit {
     ++d_molid;
   }
 
-  void SDWriter::writeProperty(const ROMol &mol, std::string name) {
+  void SDWriter::writeProperty(const ROMol &mol, const std::string &name) {
     PRECONDITION(dp_ostream,"no output stream");
 
     // write the property value

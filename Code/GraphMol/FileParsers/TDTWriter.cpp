@@ -24,7 +24,7 @@
 #include <boost/algorithm/string.hpp>
 
 namespace RDKit {
-  TDTWriter::TDTWriter(std::string fileName) {
+  TDTWriter::TDTWriter(const std::string &fileName) {
     if(fileName!="-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
       if (!tmpStream || !(*tmpStream) || (tmpStream->bad()) ) {
@@ -157,7 +157,7 @@ namespace RDKit {
     d_molid++;
   }
 
-  void TDTWriter::writeProperty(const ROMol &mol, std::string name) {
+  void TDTWriter::writeProperty(const ROMol &mol, const std::string &name) {
     PRECONDITION(dp_ostream,"no output stream");
     (*dp_ostream) << name << "<";
     

@@ -64,7 +64,7 @@ namespace RDKit{
       \param coords       list with coordinates
 
     */
-    void readAmberTrajectory(std::string fName, std::vector<std::vector<double> > &coords,
+    void readAmberTrajectory(const std::string &fName, std::vector<std::vector<double> > &coords,
                              unsigned int numAtoms);
 
   } // end namespace ConformerParser

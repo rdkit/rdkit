@@ -65,13 +65,13 @@ namespace RDKit{
                                                           d_secondaryStructure(other.d_secondaryStructure),
                                                           d_segmentNumber(other.d_segmentNumber){};
 
-    AtomPDBResidueInfo(std::string atomName,
+    AtomPDBResidueInfo(const std::string &atomName,
                        int serialNumber=0,
-                       std::string altLoc="",
-                       std::string residueName="",
+                       const std::string &altLoc="",
+                       const std::string &residueName="",
                        int residueNumber=0,
-                       std::string chainId="",
-                       std::string insertionCode="",
+                       const std::string &chainId="",
+                       const std::string &insertionCode="",
                        double occupancy=1.0,
                        double tempFactor=0.0,
                        bool isHeteroAtom=false,

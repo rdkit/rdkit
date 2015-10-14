@@ -71,7 +71,7 @@ namespace RDKit{
    *   \param strictParsing - if set, the parser is more lax about correctness
    *                          of the contents.
    */
-  RWMol *MolFileToMol(std::string fName, bool sanitize=true,
+  RWMol *MolFileToMol(const std::string &fName, bool sanitize=true,
                       bool removeHs=true,bool strictParsing=true);
 
   // \brief generates an MDL mol block for a molecule
@@ -95,7 +95,7 @@ namespace RDKit{
    *   \param forceV3000    - force generation a V3000 mol block (happens automatically with
    *                          more than 999 atoms or bonds)
    */
-  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true,
+  void MolToMolFile(const ROMol &mol,const std::string &fName,bool includeStereo=true,
                     int confId=-1,bool kekulize=true,bool forceV3000=false);
 
 
@@ -136,14 +136,14 @@ namespace RDKit{
 			  read CombiCode-style tpls, so we'll allow this mis-feature
 			  to be parsed when this flag is set.
   */
-  RWMol *TPLFileToMol(std::string fName,bool sanitize=true,
+  RWMol *TPLFileToMol(const std::string &fName,bool sanitize=true,
                       bool skipFirstConf=false);
 
   std::string MolToTPLText(const ROMol &mol,
-			   std::string partialChargeProp="_GasteigerCharge",
+			   const std::string &partialChargeProp="_GasteigerCharge",
 			   bool writeFirstConfTwice=false);
-  void MolToTPLFile(const ROMol &mol,std::string fName,
-		    std::string partialChargeProp="_GasteigerCharge",
+  void MolToTPLFile(const ROMol &mol,const std::string &fName,
+		    const std::string &partialChargeProp="_GasteigerCharge",
 		    bool writeFirstConfTwice=false);
 
   //-----
@@ -163,7 +163,7 @@ namespace RDKit{
    *                     is only done if the molecule is sanitized
    *   \param variant  - the atom type definitions to use
    */
-  RWMol *Mol2FileToMol(std::string fName,bool sanitize=true,bool removeHs=true,
+  RWMol *Mol2FileToMol(const std::string &fName,bool sanitize=true,bool removeHs=true,
                        Mol2Type variant=CORINA);
 
   // \brief construct a molecule from Tripos mol2 data in a stream

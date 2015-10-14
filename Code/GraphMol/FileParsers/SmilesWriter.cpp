@@ -22,9 +22,9 @@
 
 namespace RDKit {
   
-  SmilesWriter::SmilesWriter(std::string fileName, 
-			     std::string delimiter,
-			     std::string nameHeader,
+  SmilesWriter::SmilesWriter(const std::string &fileName, 
+			     const std::string &delimiter,
+			     const std::string &nameHeader,
 			     bool includeHeader,
                              bool isomericSmiles,
                              bool kekuleSmiles) {
@@ -60,8 +60,8 @@ namespace RDKit {
     df_owner = takeOwnership;
     this->init(delimiter,nameHeader,includeHeader,isomericSmiles,kekuleSmiles);
   }
-  void SmilesWriter::init(std::string delimiter,
-			  std::string nameHeader,
+  void SmilesWriter::init(const std::string &delimiter,
+			  const std::string &nameHeader,
 			  bool includeHeader,
                           bool isomericSmiles,
                           bool kekuleSmiles){
