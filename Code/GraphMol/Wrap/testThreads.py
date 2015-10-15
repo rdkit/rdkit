@@ -40,6 +40,6 @@ for i in range(0, nthreads):
         t.start()
     t = threading.Thread(target=runner, args=("ToBinary",None))        
     t.start()
-print "done"
+
 
 
