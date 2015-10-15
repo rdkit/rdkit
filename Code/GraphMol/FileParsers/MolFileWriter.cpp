@@ -633,7 +633,7 @@ namespace RDKit{
       // the mol file
       if ((dirCode == 1) || (dirCode == 6)) {
         INT_MAP_INT_CI wbi = wedgeBonds.find(bond->getIdx());
-        if (static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
+        if (wbi != wedgeBonds.end() && static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
           reverse = true;
         }
       }
