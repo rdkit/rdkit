@@ -33,7 +33,7 @@ for func in funcs:
     expected[func] = runner(func, core_mol)
     
 
-nthreads = multiprocessing.cpu_count() * 100 / 4 # 100 threads per cpu
+nthreads = int(multiprocessing.cpu_count() * 100 / 4) # 100 threads per cpu
 for i in range(0, nthreads):
     for func in funcs:
         t = threading.Thread(target=runner, args=(func,core_mol))
