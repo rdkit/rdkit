@@ -1,5 +1,6 @@
 from rdkit import Chem
 import threading
+import multiprocessing
 
 # this just tests some threading stuff to ensure it doesn't crash with python
 #  releasing the GIL smarts are recursive...
@@ -32,7 +33,7 @@ for func in funcs:
     expected[func] = runner(func, core_mol)
     
 
-nthreads = 200 # 800 total threads
+nthreads = multiprocessing.cpu_count() * 100 / 4 # 100 threads per cpu
 for i in range(0, nthreads):
     for func in funcs:
         t = threading.Thread(target=runner, args=(func,core_mol))
