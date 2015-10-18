@@ -35,6 +35,8 @@ doublereal *disnn;
 logical *flag__;
 doublereal *diss;
 {
+  (void)n;
+  (void)len;
     /* Initialized data */
 
     static doublereal inf = 1e20;
