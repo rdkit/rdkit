@@ -562,7 +562,7 @@ namespace RDKit {
         // for(unsigned int ii=0;ii<nAtoms;++ii){
         //    std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index: "<<atoms[order[ii]].index<<std::endl;
         //  }
-        for(unsigned k = 0; k < len; ++k){
+        for(int k = 0; k < len; ++k){
           changed[start[k]]=0;
         }
 

@@ -487,7 +487,7 @@ namespace RDKit {
                                    const std::map<int,DrawColour> *highlight_map ) {
 
     PRECONDITION(atom_idx>=0,"bad atom_idx");
-    PRECONDITION(atomic_nums_.size()>atom_idx,"bad atom_idx");
+    PRECONDITION(rdcast<int>(atomic_nums_.size())>atom_idx,"bad atom_idx");
     DrawColour retval = getColourByAtomicNum( atomic_nums_[atom_idx] );
 
     // set contents of highlight_atoms to red

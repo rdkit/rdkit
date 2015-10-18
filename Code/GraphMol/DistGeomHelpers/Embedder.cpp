@@ -434,7 +434,7 @@ namespace RDKit {
             positions.push_back(new RDGeom::Point3D());
           }
         }
-        for (unsigned int ci=0; ci<eargs->confs->size(); ci++) {
+        for (size_t ci=0; ci<eargs->confs->size(); ci++) {
           if(ci%numThreads != threadId) continue;
           if(!(*eargs->confsOk)[ci]){
             // if one of the fragments here has already failed, there's no
@@ -587,7 +587,7 @@ namespace RDKit {
         }
 #ifdef RDK_THREADSAFE_SSS
         else {
-          for(unsigned int tid=0;tid<numThreads;++tid){
+          for(int tid=0;tid<numThreads;++tid){
             tg.add_thread(new boost::thread(detail::embedHelper_,tid,numThreads,&eargs));
           }
           tg.join_all();

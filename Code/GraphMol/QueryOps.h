@@ -479,9 +479,9 @@ namespace RDKit{
   };
 
   template <typename T>
-  int nullDataFun(T arg) { return 1; }
+  int nullDataFun(T) { return 1; }
   template <typename T>
-  bool nullQueryFun(T arg) { return true; } 
+  bool nullQueryFun(T) { return true; } 
 
   typedef Bond const *ConstBondPtr;
 

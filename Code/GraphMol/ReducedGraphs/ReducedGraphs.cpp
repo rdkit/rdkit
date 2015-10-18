@@ -157,7 +157,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
         for(unsigned int j=i+1;j<mol.getNumAtoms();++j){
           if(tvs[j].empty()) continue;
           int dist = int(dm[i*mol.getNumAtoms()+j]);
-          if(dist<minPath || dist>maxPath) continue;
+          if(dist<rdcast<int>(minPath) || dist>rdcast<int>(maxPath)) continue;
           BOOST_FOREACH(int ti,tvs[i]){
             BOOST_FOREACH(int tj,tvs[j]){
               int ijMin=std::min(ti,tj);
@@ -171,8 +171,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
               block += ijMax;
               unsigned int bin=block*nBins + (dist-minPath);
               (*res)[bin] += 1;
-              if(dist>minPath && fuzzIncrement>0) (*res)[bin-1] += fuzzIncrement;
-              if(dist<maxPath && fuzzIncrement>0) (*res)[bin+1] += fuzzIncrement;
+              if(dist>rdcast<int>(minPath) && fuzzIncrement>0) (*res)[bin-1] += fuzzIncrement;
+              if(dist<rdcast<int>(maxPath) && fuzzIncrement>0) (*res)[bin+1] += fuzzIncrement;
             }
           }
         }
@@ -218,7 +218,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
             }
           }
           std::list<int> tv;
-          if(nAromatic>=2 || nSP2 >= ring.size()/2) tv.push_back(aromaticFlag);
+          if(nAromatic>=2 || nSP2 >= rdcast<int>(ring.size()/2)) tv.push_back(aromaticFlag);
           else tv.push_back(aliphaticFlag);
           res->getAtomWithIdx(nIdx)->setProp("_ErGAtomTypes",tv);
         }

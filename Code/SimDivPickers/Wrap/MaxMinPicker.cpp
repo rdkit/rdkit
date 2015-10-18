@@ -150,7 +150,7 @@ namespace RDPickers {
                                         bool useCache
                                         ) {
     std::vector<const ExplicitBitVect *> bvs(poolSize);
-    for(unsigned int i=0;i<poolSize;++i){
+    for(int i=0;i<poolSize;++i){
       bvs[i]=python::extract<const ExplicitBitVect *>(objs[i]);
     }
     pyBVFunctor<ExplicitBitVect> functor(bvs,TANIMOTO,useCache);

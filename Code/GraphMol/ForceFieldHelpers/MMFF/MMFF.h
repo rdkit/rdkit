@@ -123,7 +123,7 @@ namespace RDKit {
 #ifdef RDK_THREADSAFE_SSS
         else {
           boost::thread_group tg;
-          for(unsigned int ti=0;ti<numThreads;++ti){
+          for(int ti=0;ti<numThreads;++ti){
             tg.add_thread(new boost::thread(detail::MMFFOptimizeMoleculeConfsHelper_,
                                             *ff,
                                             &mol,&res,ti,numThreads,maxIters));

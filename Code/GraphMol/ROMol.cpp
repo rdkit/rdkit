@@ -81,7 +81,7 @@ namespace RDKit{
       // copy conformations
       for (ConstConformerIterator ci = other.beginConformers();
 	   ci != other.endConformers(); ++ci) {
-        if(confId<0 || (*ci)->getId()==confId){
+        if(confId<0 || rdcast<int>((*ci)->getId())==confId){
           Conformer *conf = new Conformer(*(*ci));
           this->addConformer(conf);
         }

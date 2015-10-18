@@ -629,7 +629,7 @@ namespace RDKit{
         nextAtomIdx=rootedAtAtom;
         rootedAtAtom=-1;
       } else {
-        int nextRank = tmol.getNumAtoms()+1;
+        unsigned int nextRank = rdcast<unsigned int>(tmol.getNumAtoms())+1;
         BOOST_FOREACH(int i,atomsToUse){
           if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
             nextRank = ranks[i];

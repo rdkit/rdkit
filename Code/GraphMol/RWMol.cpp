@@ -225,10 +225,10 @@ namespace RDKit{
       bond->setIdx(nBonds++);
       for(INT_VECT::iterator bsi=bond->getStereoAtoms().begin();
           bsi!=bond->getStereoAtoms().end();++bsi){
-        if((*bsi)==idx){
+        if((*bsi)==rdcast<int>(idx)){
           bond->getStereoAtoms().clear();
           break;
-        } else if((*bsi)>idx){
+        } else if((*bsi)>rdcast<int>(idx)){
           --(*bsi);
         }
       }
