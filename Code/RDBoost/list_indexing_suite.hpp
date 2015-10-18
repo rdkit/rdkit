@@ -138,7 +138,8 @@ namespace boost { namespace python {
         
         static index_type
         get_min_index(Container& container)
-        { 
+        {
+          (void)container;
             return 0;
         }
 
@@ -151,6 +152,7 @@ namespace boost { namespace python {
         static bool 
         compare_index(Container& container, index_type a, index_type b)
         {
+          (void)container;
             return a < b;
         }
         
