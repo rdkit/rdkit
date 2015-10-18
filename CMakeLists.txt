@@ -225,10 +225,10 @@ if (RDK_TEST_COVERAGE)
 
 else(RDK_TEST_COVERAGE)
  if(CMAKE_COMPILER_IS_GNUCXX)
-   ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+   ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra")
  endif()
- if(CMAKE_COMPILER_IS_CLANG)
-   ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
+ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   ADD_DEFINITIONS("-Wno-array-bounds -fPIC -Wall -Wextra")
  endif()
 endif(RDK_TEST_COVERAGE)
 
