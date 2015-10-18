@@ -161,7 +161,9 @@ namespace RDKit{
                        bool useQueryQueryMatches) :
         d_query(query), d_mol(mol),df_useChirality(useChirality)
         /*,df_useQueryQueryMatches(useQueryQueryMatches)*/
-      {};
+      {
+        RDUNUSED_PARAM(useQueryQueryMatches);
+      };
       bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j) const{
         if(df_useChirality){
           const BOND_SPTR qBnd=d_query[i];

@@ -617,6 +617,7 @@ namespace RDKit{
     Queries::EqualityQuery<int,TargetPtr,true>(),
       propname(prop),
       val(v) {
+        RDUNUSED_PARAM(tol);
       // default is to just do a number of rings query:
       this->setDescription("HasPropWithValue");
       this->setDataFunc(0);
