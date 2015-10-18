@@ -12,7 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include "Resonance.h"
-#include <boost/functional/hash.hpp>
+#include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
   namespace ResonanceUtils {
@@ -46,22 +46,6 @@ namespace RDKit {
       unsigned int opFailed;
       MolOps::sanitizeMol(mol, opFailed, MolOps::SANITIZE_FINDRADICALS
         | MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
-      if (opFailed != MolOps::SANITIZE_NONE) {
-        std::string s;
-        switch (opFailed) {
-          case MolOps::SANITIZE_FINDRADICALS:
-            s = "SANITIZE_FINDRADICALS";
-            break;
-          case MolOps::SANITIZE_SETAROMATICITY:
-            s = "SANITIZE_SETAROMATICITY";
-            break;
-          case MolOps::SANITIZE_ADJUSTHS:
-            s = "SANITIZE_ADJUSTHS";
-            break;
-        }
-        s += " failed";
-        throw std::runtime_error(s);
-      }
     }
     
     // fix the number of explicit and implicit Hs in the
@@ -89,6 +73,7 @@ namespace RDKit {
     d_atom(a),
     d_parent(parent)
   {
+    PRECONDITION(d_atom, "d_atom cannot be NULL");
   }
   
   // copy constructor
@@ -136,7 +121,7 @@ namespace RDKit {
   // returns true if any conjugated neighbor is charged (and
   // has atomic number == atomicNum, if the latter is non-zero)
   bool AtomElectrons::isNbrCharged(unsigned int bo,
-    unsigned int atomicNum)
+    unsigned int oeConstraint)
   {
     bool res = false;
     const ROMol &mol = d_parent->parent()->mol();
@@ -149,15 +134,14 @@ namespace RDKit {
         continue;
       BondElectrons *beNbr =
         d_parent->getBondElectronsWithIdx(biNbr);
-      const Atom *atomNbr = ((bondNbr->getBeginAtom() == d_atom)
-        ? bondNbr->getEndAtom() : bondNbr->getBeginAtom());
+      const Atom *atomNbr = bondNbr->getOtherAtom(d_atom);
       unsigned int aiNbr = atomNbr->getIdx();
       AtomElectrons *aeNbr =
         d_parent->getAtomElectronsWithIdx(aiNbr);
       res = (((beNbr->isDefinitive() && !aeNbr->hasOctet())
         || (!beNbr->isDefinitive() && aeNbr->isDefinitive()
         && (aeNbr->oe() < (5 - bo))))
-        && (!atomicNum || (atomNbr->getAtomicNum() == atomicNum)));
+        && (!oeConstraint || (aeNbr->oe() == oeConstraint)));
     }
     return res;
   }
@@ -177,10 +161,10 @@ namespace RDKit {
     if (canAdd && isLastBond()) {
       // we allow a formal charge up to 2 on atoms right of
       // carbon, not more than 1 on atoms left of N
-      unsigned int rightOfC = ((d_atom->getAtomicNum() > 6) ? 1 : 0);
+      unsigned int rightOfC = ((oe() > 4) ? 1 : 0);
       unsigned int fcInc = 0;
       if (rightOfC)
-       fcInc = (!isNbrCharged(bo, 6) ? 1 : 0);
+       fcInc = (!isNbrCharged(bo, 4) ? 1 : 0);
       else {
         // atoms left of N can be charged only if:
         // - the neighbor is uncharged and either the conjugate
@@ -192,7 +176,7 @@ namespace RDKit {
         bool isnc = isNbrCharged(bo);
         fcInc = (((!isnc && !(!d_parent->allowedChgLeftOfN()
           && d_parent->totalFormalCharge()))
-          || (isnc && (bo == 3) && (d_atom->getAtomicNum() < 7)))
+          || (isnc && (bo == 3) && (oe() < 5)))
           ? 1 : 0);
       }
       unsigned int e = oe() + d_tv - 1 + bo;
@@ -231,7 +215,7 @@ namespace RDKit {
     // going to be a cation or an anion; once the formal
     // charge is assigned to an atom left of N, the counter of allowed
     // charges on atoms left of N (signed) is decremented by one
-    if (d_atom->getAtomicNum() < 7) {
+    if (oe() < 5) {
       unsigned int nb = neededNbForOctet();
       if (nb) {
         int fc = nb / 2;
@@ -251,6 +235,7 @@ namespace RDKit {
     d_bond(b),
     d_parent(parent)
   {
+    PRECONDITION(d_bond, "d_bond cannot be NULL");
   }
   
   // copy constructor
@@ -308,10 +293,10 @@ namespace RDKit {
     d_numFormalCharges(0),
     d_totalFormalCharge(0),
     d_absFormalCharges(0),
-    d_wtdFormalCharges(0),
     d_fcSameSignDist(0),
     d_fcOppSignDist(0),
     d_nbMissing(0),
+    d_wtdFormalCharges(0.0),
     d_flags(0),
     d_parent(parent)
   {
@@ -354,10 +339,10 @@ namespace RDKit {
     d_totalFormalCharge(ce.d_totalFormalCharge),
     d_allowedChgLeftOfN(ce.d_allowedChgLeftOfN),
     d_absFormalCharges(ce.d_absFormalCharges),
-    d_wtdFormalCharges(ce.d_wtdFormalCharges),
     d_fcSameSignDist(ce.d_fcSameSignDist),
     d_fcOppSignDist(ce.d_fcOppSignDist),
     d_nbMissing(ce.d_nbMissing),
+    d_wtdFormalCharges(ce.d_wtdFormalCharges),
     d_flags(ce.d_flags),
     d_beginAIStack(ce.d_beginAIStack),
     d_parent(ce.d_parent)
@@ -374,15 +359,11 @@ namespace RDKit {
   ConjElectrons::~ConjElectrons()
   {
     for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
-      it != d_conjAtomMap.end(); ++it) {
-      if (it->second)
-        delete it->second;
-    }
+      it != d_conjAtomMap.end(); ++it)
+      delete it->second;
     for (ConjBondMap::const_iterator it = d_conjBondMap.begin();
-      it != d_conjBondMap.end(); ++it) {
-      if (it->second)
-        delete it->second;
-    }
+      it != d_conjBondMap.end(); ++it)
+      delete it->second;
   }
 
   // store fingerprints for this ConjElectrons object in ceMap
@@ -511,10 +492,10 @@ namespace RDKit {
       // formal charges should be between -2 and +1
       areAcceptable = ((ae->fc() < 2) && (ae->fc() > -3));
       if (areAcceptable) {
-        if (ae->atom()->getAtomicNum() > 6) {
+        if (ae->oe() > 4) {
           if (!ae->hasOctet())
             haveIncompleteOctetRightOfC = true;
-          if ((ae->fc() > 0) && (ae->atom()->getAtomicNum() > 7)) {
+          if ((ae->fc() > 0) && (ae->oe() > 5)) {
             d_flags |= HAVE_CATION_RIGHT_OF_N;
             if (!ae->hasOctet())
               havePosRightOfNNoOctet = true;
@@ -553,7 +534,7 @@ namespace RDKit {
         d_conjAtomMap[be->bond()->getEndAtomIdx()]
       };
       for (unsigned int i = 0; areAcceptable && (i < 2); ++i) {
-        if (ae[i]->atom()->getAtomicNum() < 7) {
+        if (ae[i]->oe() < 5) {
           // no carbocations allowed on carbons bearing double
           // or triple bonds, carbanions allowed on all carbons
           // no double charged allowed left of N
@@ -563,8 +544,8 @@ namespace RDKit {
       }
       if (areAcceptable)
         // charged neighboring atoms left of N are not acceptable
-        areAcceptable = !((ae[0]->atom()->getAtomicNum() < 7)
-          && ae[0]->fc() && (ae[1]->atom()->getAtomicNum() < 7)
+        areAcceptable = !((ae[0]->oe() < 5)
+          && ae[0]->fc() && (ae[1]->oe() < 5)
           && ae[1]->fc());
     }
     return areAcceptable;
@@ -670,10 +651,28 @@ namespace RDKit {
   
   void ConjElectrons::computeMetrics()
   {
+    // Electronegativity according to the Allen scale
+    // (Allen, L.C. J. Am. Chem. Soc. 1989, 111, 9003-9014)
+    static const double en[] = {
+      2.300, 4.160, 0.912, 1.576, 2.051, 2.544, 3.066, 3.610,
+      4.193, 4.789, 0.869, 1.293, 1.613, 1.916, 2.253, 2.589,
+      2.869, 3.242, 0.734, 1.034, 1.19,  1.38,  1.53,  1.65,
+      1.75,  1.80,  1.84,  1.88,  1.85,  1.59,  1.756, 1.994,
+      2.211, 2.434, 2.685, 2.966, 0.706, 0.963, 1.12,  1.32,
+      1.41,  1.47,  1.51,  1.54,  1.56,  1.59,  1.87,  1.52,
+      1.656, 1.824, 1.984, 2.158, 2.359, 2.582, 0.659, 0.881,
+      1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+      1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.09,  1.16,
+      1.34,  1.47,  1.60,  1.65,  1.68,  1.72,  1.92,  1.76,
+      1.789, 1.854, 2.01,  2.19,  2.39,  2.60,  0.67,  0.89
+    };
+    const unsigned int enSize = sizeof(en) / sizeof(double);
     for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
       it != d_conjAtomMap.end(); ++it) {
       d_absFormalCharges += abs(it->second->fc());
-      d_wtdFormalCharges += it->second->fc() * it->second->oe();
+      int anIdx = it->second->atom()->getAtomicNum() - 1;
+      d_wtdFormalCharges += static_cast<double>(it->second->fc())
+        * ((anIdx >= enSize) ? 1.0 : en[anIdx]);
       d_nbMissing += it->second->neededNbForOctet();
     }
     computeDistFormalCharges();
@@ -1199,10 +1198,8 @@ namespace RDKit {
           // of N and both need a charge to accept this bond type,
           // then this bond type is feasible
           if ((ce->currElectrons() >= (bo * 2))
-            && (allowedBonds & orderMask)
-            && !((allowedBonds & chgMask)
-            && ((ae[BEGIN_POS]->atom()->getAtomicNum() < 7)
-            || (ae[END_POS]->atom()->getAtomicNum() < 7)))) {
+            && (allowedBonds & orderMask)  && !((allowedBonds & chgMask)
+            && ((ae[BEGIN_POS]->oe() < 5) || (ae[END_POS]->oe() < 5)))) {
             isAnyBondAllowed = true;
             // if another bond type will be possible, then we'll
             // need to save that to ceStack and keep on with the current
