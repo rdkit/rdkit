@@ -114,6 +114,7 @@ namespace RDKit
     template <typename T>
     void setProp(const char *key, T val) {
       std::string what(key);
+        setProp(what, val);
     }
     //! \overload
     template <typename T>
