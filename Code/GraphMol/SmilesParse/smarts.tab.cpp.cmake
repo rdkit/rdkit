@@ -97,6 +97,9 @@ yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
 		void *scanner,const char * msg )
 {
+  (void)input;
+  (void)ms;
+  (void)scanner;
   throw RDKit::SmilesParseException(msg);
 }
 

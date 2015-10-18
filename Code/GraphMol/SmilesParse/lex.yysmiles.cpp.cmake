@@ -2233,6 +2233,7 @@ YY_BUFFER_STATE yysmiles__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybyt
 
 static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 {
+  (void)yyscanner;
     	(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
@@ -2546,6 +2547,7 @@ int yysmiles_lex_destroy  (yyscan_t yyscanner)
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yyscanner)
 {
+  (void)yyscanner;
 	int i;
 	for ( i = 0; i < n; ++i )
 		s1[i] = s2[i];
@@ -2555,6 +2557,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yysca
 #ifdef YY_NEED_STRLEN
 static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 {
+  (void)yyscanner;
 	int n;
 	for ( n = 0; s[n]; ++n )
 		;
@@ -2565,11 +2568,13 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 void *yysmiles_alloc (yy_size_t  size , yyscan_t yyscanner)
 {
+  (void)yyscanner;
 	return (void *) malloc( size );
 }
 
 void *yysmiles_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 {
+  (void)yyscanner;
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
 	 * that use void* generic pointers.  It works with the latter
@@ -2582,6 +2587,7 @@ void *yysmiles_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 
 void yysmiles_free (void * ptr , yyscan_t yyscanner)
 {
+  (void)yyscanner;
 	free( (char *) ptr );	/* see yysmiles_realloc() for (char *) cast */
 }
 
