@@ -335,6 +335,8 @@ void testGithub438(std::string rdbase) {
   //  still missing input std::string
 
 int main(int argc,char *argv[]){
+    (void)argc;
+    (void)argv;
   RDLog::InitLogs();
 
   std::string rdbase = getenv("RDBASE");

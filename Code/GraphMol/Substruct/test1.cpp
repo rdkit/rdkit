@@ -271,7 +271,7 @@ void test4(){
   TEST_ASSERT(matchV[1].second==0||matchV[1].second==3);
   n = SubstructMatch(*m,*q2,matches,true);
   TEST_ASSERT(n==2);
-  TEST_ASSERT(matches.size()==n);
+  TEST_ASSERT(matches.size()==(size_t)n);
   TEST_ASSERT(matches[0].size()==2);
   TEST_ASSERT(matches[1].size()==2);
   TEST_ASSERT(matches[0][0].second==matches[1][0].second);

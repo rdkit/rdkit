@@ -1808,6 +1808,8 @@ void testGithub544(){
 int
 main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
   RDLog::InitLogs();
 #if 1
   testPass();

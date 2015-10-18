@@ -4524,12 +4524,14 @@ void testGithubIssue190()
 }
 
 namespace {
-  int getAtNum(const ROMol &m,const Atom *at){
+  int getAtNum(const ROMol &,const Atom *at){
     return at->getAtomicNum();
   }
-  std::string getSymbol(const ROMol &m,const Atom *at){
+    /*
+  std::string getSymbol(const ROMol &,const Atom *at){
     return at->getSymbol();
   }
+     */
 }
 void testMolFragsWithQuery()
 {
@@ -4624,7 +4626,7 @@ void testGithubIssue418()
     std::string smiles="[H]N([H])([H])[H]";
     bool ok=false;
     try{
-      RWMol *m = SmilesToMol(smiles);
+      SmilesToMol(smiles);
     } catch(MolSanitizeException &e) {
       ok=true;
     }

@@ -3832,7 +3832,7 @@ void testGithub210(){
 
 
 namespace {
-  std::string getResidue(const ROMol &m,const Atom *at){
+  std::string getResidue(const ROMol &,const Atom *at){
     if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
     return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
   }
@@ -3944,6 +3944,8 @@ void testGithub360(){
 
 
 int main(int argc,char *argv[]){
+    (void)argc;
+    (void)argv;
   RDLog::InitLogs();
 #if 1
   test1();

@@ -52,6 +52,8 @@ void testGitHubIssue485(){
 
 int main(int argc,char *argv[])
 {
+    (void)argc;
+    (void)argv;
   testGitHubIssue485();
   return 0;
 }

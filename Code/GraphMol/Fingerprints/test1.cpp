@@ -1753,7 +1753,7 @@ void testMorganAtomInfo(){
     TEST_ASSERT(bitInfo.size()==2);
     for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=nze.begin();
         iter!=nze.end();++iter){
-      TEST_ASSERT(iter->second==bitInfo[iter->first].size());
+      TEST_ASSERT(iter->second==rdcast<int>(bitInfo[iter->first].size()));
     }
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
         iter!=bitInfo.end();++iter){
@@ -1767,7 +1767,7 @@ void testMorganAtomInfo(){
     TEST_ASSERT(fp->getNonzeroElements().size()==5);
     for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=nze.begin();
         iter!=nze.end();++iter){
-      TEST_ASSERT(iter->second==bitInfo[iter->first].size());
+      TEST_ASSERT(iter->second==rdcast<int>(bitInfo[iter->first].size()));
     }
     for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
         iter!=bitInfo.end();++iter){

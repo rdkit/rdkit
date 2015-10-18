@@ -394,7 +394,7 @@ void test504() {
     }
     std::cout<<"Query +MAP "<< MolToSmiles(*qm) <<"\n";
     mols.push_back(ROMOL_SPTR(qm));   // with RING INFO
-    for(int i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
+    for(size_t i=1; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));   // with RING INFO
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -1118,7 +1118,7 @@ void testChEMBL_TxtALL_chembl_II_sets(double th=1.0) {
     p.Timeout = 60;
     p.Verbose = false;
 
-    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++) {
+    for(size_t i=0; i<sizeof(test)/sizeof(test[0]); i++) {
         std::string smiName = std::string("chembl_II_sets/") + test[i];
         std::string testsmi = testChEMBL_Txt(smiName.c_str(), th, "chembl_II_sets.C.res.csv");
         fprintf(fcmd, "fmcs_bench.py --timeout %u %s >>%s\n", p.Timeout, testsmi.c_str(), "chembl_II_sets.P.res.csv");   // command for the same Python test
@@ -1192,7 +1192,7 @@ void testChEMBL_TxtSLOW_chembl_II_sets(double th=1.0) {
         "Target_no_10980_30994.txt",
         "Target_no_11140_37038.txt",
     };
-    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++)
+    for(size_t i=0; i<sizeof(test)/sizeof(test[0]); i++)
         testChEMBL_Txt((std::string("chembl_II_sets/") + test[i]).c_str(), th,"chembl_II_sets.SLOW.C++.res.csv");
 }
 
@@ -1309,7 +1309,7 @@ void testChEMBLdatALL(double th=1.0) {
         "cmp_list_ChEMBL_93_actives.dat",
         "cmp_list_ChEMBL_zinc_decoys.dat",
     };
-    for(int i=0; i<sizeof(test)/sizeof(test[0]); i++)
+    for(size_t i=0; i<sizeof(test)/sizeof(test[0]); i++)
         testChEMBLdat((std::string("benchmarking_platform-master/compounds/ChEMBL/") + test[i]).c_str(), th);
 }
 
@@ -1330,7 +1330,7 @@ void testTarget_no_10188_30149() {
         "COc1ccccc1Nc1ccc2c(c1)[nH]nc2-c1ccccc1 CHEMBL254443",
         "CN(C)CCNC(=O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL198821",
     };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+    for(size_t i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
     t0 = nanoClock();
 #ifdef _DEBUG   // check memory leaks
@@ -1372,7 +1372,7 @@ void testTarget_no_10188_49064() {
         "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(I)cc3)nc21",
         "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
     };
-    for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+    for(size_t i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         mols.push_back(ROMOL_SPTR(SmilesToMol( getSmilesOnly(smi[i]) )));
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -1556,7 +1556,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
         fprintf(fcmd, "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n, p.Timeout, p.Threshold, smiName, (std::string(path)+"_"+test+".P.csv").c_str());   // command for the same Python test
         //ROMol *m=0;
         unsigned iN = 3+rand()%32;
-        for(int i=0; i < iN; i++) {  // load random set
+        for(unsigned i=0; i < iN; i++) {  // load random set
             mols.push_back(all_mols[rand()%(all_mols.size()-1)]);
             fprintf(fsmi,"%s Mol%u\n", MolToSmiles(*mols.back()).c_str(), n+i);
         }
@@ -1642,8 +1642,8 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
         }
         if(res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
             FILE* fsmi = fopen(smiName, "wt");
-            for(int i=0; i < mols.size(); i++) {  // load random set
-                fprintf(fsmi,"%s Mol%u\n", MolToSmiles(*mols[i]).c_str(), n+i);
+            for(size_t i=0; i < mols.size(); i++) {  // load random set
+                fprintf(fsmi,"%s Mol%u\n", MolToSmiles(*mols[i]).c_str(), rdcast<unsigned int>(n+i));
             }
             fclose(fsmi);
         }
@@ -1729,7 +1729,7 @@ void testGregSDFFileSetFiltered() {
     };
 
     double totalT=0.;
-    for(int i=0; i<sizeof(sdf)/sizeof(sdf[0]); i++)
+    for(size_t i=0; i<sizeof(sdf)/sizeof(sdf[0]); i++)
         totalT += testFileSDF((sdf_dir+sdf[i]).c_str());
     printf("\nTOTAL Time elapsed %.2lf seconds\n================================================\n", totalT);
 }

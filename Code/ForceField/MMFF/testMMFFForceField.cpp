@@ -284,7 +284,7 @@ int mmffValidationSuite(int argc, char *argv[])
   std::streampos rdkCurrent;
   std::streampos refPos;
   std::streampos refCurrent;
-  unsigned int i = 1;
+  int i = 1;
   unsigned int n = 0;
   bool error = false;
   bool fullTest = false;
@@ -391,14 +391,14 @@ int mmffValidationSuite(int argc, char *argv[])
         molVec.clear();
         if (*molTypeIt == "sdf") {
           SDMolSupplier sdfSupplier(*molFileIt, false, false);
-          for (i = 0; i < sdfSupplier.length(); ++i) {
+          for (size_t i = 0; i < sdfSupplier.length(); ++i) {
             molVec.push_back(sdfSupplier[i]);
           }
           sdfSupplier.reset();
         }
         else {
           SmilesMolSupplier smiSupplier(*molFileIt);
-          for (i = 0; i < smiSupplier.length(); ++i) {
+          for (size_t i = 0; i < smiSupplier.length(); ++i) {
             molVec.push_back(smiSupplier[i]);
           }
           smiSupplier.reset();
@@ -415,15 +415,15 @@ int mmffValidationSuite(int argc, char *argv[])
           : (std::fstream::out | std::fstream::binary | std::fstream::app)));
         std::string computingKey = (*ffIt) + " energies for " + (*molFileIt);
         std::cerr << std::endl << "Computing " << computingKey << "..." << std::endl;
-        for (i = 0; i < computingKey.length(); ++i) {
+        for (size_t i = 0; i < computingKey.length(); ++i) {
           rdkFStream << "*";
         }
         rdkFStream << std::endl << computingKey << std::endl;
-        for (i = 0; i < computingKey.length(); ++i) {
+        for (size_t i = 0; i < computingKey.length(); ++i) {
           rdkFStream << "*";
         }
         rdkFStream << std::endl << std::endl;
-        for (i = 0; i < molVec.size(); i += inc) {
+        for (size_t i = 0; i < molVec.size(); i += inc) {
           if (*molTypeIt == "sdf") {
             mol = molVec[i];
           }
@@ -484,7 +484,7 @@ int mmffValidationSuite(int argc, char *argv[])
         bool failed;
         rdkFStream.seekg(0);
         fgrep(rdkFStream, computingKey);
-        for (i = 0; i < nameArray.size(); i += inc) {
+        for (size_t i = 0; i < nameArray.size(); i += inc) {
           error = false;
           failed = false;
           errorMsg = rdk + ": Molecule not found";
