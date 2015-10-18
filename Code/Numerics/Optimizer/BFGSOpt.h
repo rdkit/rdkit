@@ -173,7 +173,7 @@ namespace BFGSOpt {
                GradientFunctor gradFunc,
                double funcTol=TOLX,
                unsigned int maxIts=MAXITS){
-    (void) funcTol;
+    RDUNUSED_PARAM(funcTol);
     PRECONDITION(pos,"bad input array");
     PRECONDITION(gradTol>0,"bad tolerance");
 
