@@ -2770,8 +2770,9 @@ namespace {
     }
   };
 }
-
-#include <boost/thread.hpp>  
+#incude <RDGeneral/BoostStartInclude.h>
+#include <boost/thread.hpp>
+#incude <RDGeneral/BoostEndInclude.h>
 void testMultithreadedPatternFP(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading with the pattern FP" << std::endl;
@@ -2875,6 +2876,8 @@ void testGitHubIssue334(){
 
 
 int main(int argc,char *argv[]){
+  (void) argc;
+  (void) argv;
   RDLog::InitLogs();
 #if 1
   test1();

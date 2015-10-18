@@ -29,7 +29,8 @@ void testBasics()
   Atom *a1 = new Atom(6);
   Bond *b1 = new Bond();
   ROMol *m1 = new ROMol();
-    (void) b1, m1;
+  (void) b1;
+  (void) m1;
   a1 = NULL; // intentional leak
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
