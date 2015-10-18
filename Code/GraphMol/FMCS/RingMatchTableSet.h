@@ -166,8 +166,8 @@ namespace RDKit {
                     const Bond* bond = mol->getBondWithIdx(ring[i]);
                     const Atom* atom1= bond->getBeginAtom();
                     const Atom* atom2= bond->getEndAtom();
-                    unsigned j1 = -1;
-                    unsigned j2 = -1;
+                    unsigned j1 = NotSet;
+                    unsigned j2 = NotSet;
                     std::map<const Atom*, unsigned>::const_iterator ai;
                     ai = atomMap.find(atom1);
                     if(atomMap.end() != ai)
@@ -175,12 +175,12 @@ namespace RDKit {
                     ai = atomMap.find(atom2);
                     if(atomMap.end() != ai)
                         j2 = ai->second;
-                    if(-1==j1) {
+                    if(NotSet==j1) {
                         j1 = g.m_vertices.size();
                         atomMap[atom1] = j1;
                         g.addAtom(atom1->getIdx());
                     }
-                    if(-1==j2) {
+                    if(NotSet==j2) {
                         j2 = g.m_vertices.size();
                         atomMap[atom2] = j2;
                         g.addAtom(atom2->getIdx());

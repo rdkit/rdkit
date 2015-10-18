@@ -25,7 +25,7 @@ namespace RDKit {
         struct LabelDefinition {
             unsigned ItemIndex;   // item with this label value
             unsigned Value;
-            LabelDefinition() : ItemIndex(-1), Value(-1) {}
+            LabelDefinition() : ItemIndex(NotSet), Value(NotSet) {}
             LabelDefinition(unsigned i, unsigned value) : ItemIndex(i), Value(value) {}
         };
 
@@ -104,14 +104,14 @@ namespace RDKit {
                     else if(MCSAtomCompareIsotopes == Parameters.AtomTyper) // predefined functor without atom compare parameters
                         QueryAtomLabels[ai] = atom->getAtomicNum()|(atom->getIsotope()>>8)|(Parameters.AtomCompareParameters.MatchValences ? (atom->getTotalValence()>>16):0);
                     else { // custom user defined functor
-                        QueryAtomLabels[ai] = -1;
+                        QueryAtomLabels[ai] = NotSet;
                         for(size_t i = 0; i < labels.size(); i++)
                             if(Parameters.AtomTyper(Parameters.AtomCompareParameters,
                                                     *QueryMolecule, labels[i].ItemIndex, *QueryMolecule, ai, userData)) { // equal itoms
                                 QueryAtomLabels[ai] = labels[i].Value;
                                 break;
                             }
-                        if(-1 == QueryAtomLabels[ai]) { // not found -> create new label
+                        if(NotSet == QueryAtomLabels[ai]) { // not found -> create new label
                             QueryAtomLabels[ai] = ++currentLabelValue;
                             labels.push_back(LabelDefinition(ai, currentLabelValue));
                         }
@@ -146,14 +146,14 @@ namespace RDKit {
                         order = Bond::QUINTUPLE;
                     QueryBondLabels[aj] = (order + 1) | (ring>>8);
                 } else { // custom user defined functor
-                    QueryBondLabels[aj] = -1;
+                    QueryBondLabels[aj] = NotSet;
                     for(size_t i = 0; i < labels.size(); i++)
                         if(Parameters.BondTyper(Parameters.BondCompareParameters,
                                                 *QueryMolecule, labels[i].ItemIndex, *QueryMolecule, aj, userData)) { // equal bonds + ring ...
                             QueryBondLabels[aj] = labels[i].Value;
                             break;
                         }
-                    if(-1 == QueryAtomLabels[aj]) { // not found -> create new label
+                    if(NotSet == QueryAtomLabels[aj]) { // not found -> create new label
                         QueryBondLabels[aj] = ++currentLabelValue;
                         labels.push_back( LabelDefinition(aj, currentLabelValue));
                     }
@@ -420,7 +420,7 @@ namespace RDKit {
                             }
                         }
                 }
-                if(-1 == si->GrowingStage) //finished
+                if(NotSet == si->GrowingStage) //finished
                     Seeds.erase(si);
                 if(Parameters.ProgressCallback && (steps >= 377)) {
                     steps = 0;
@@ -443,7 +443,7 @@ namespace RDKit {
         struct AtomMatch { // for each seed atom (matched)
             unsigned QueryAtomIdx;
             unsigned TargetAtomIdx;
-            AtomMatch() : QueryAtomIdx(-1), TargetAtomIdx(-1) {}
+            AtomMatch() : QueryAtomIdx(NotSet), TargetAtomIdx(NotSet) {}
         };
         typedef std::vector<AtomMatch> AtomMatchSet;
 
@@ -899,7 +899,7 @@ if(Parameters.AtomCompareParameters.MatchChiralTag || Parameters.FinalMatchCheck
                 unsigned newBondSourceAtomTargetIdx = match.TargetAtomIdx[newBondSourceAtomQueryIdx]; // matched to newBondSourceAtomSeedIdx
 
                 const Bond* tb = NULL;
-                unsigned newBondAnotherAtomTargetIdx = -1;
+                unsigned newBondAnotherAtomTargetIdx = NotSet;
 
                 if(newBondAnotherAtomSeedIdx < match.MatchedAtomSize) { // new bond between old atoms - both are matched to exact atoms in the target
                     newBondAnotherAtomTargetIdx = match.TargetAtomIdx[newBondAnotherAtomQueryIdx];
