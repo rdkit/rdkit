@@ -519,6 +519,7 @@ namespace RDKit{
                            double a, double b,
                            bool returnDistance=false,
                            double bounds=0.0){
+    RDUNUSED_PARAM(bounds);
     if(v1.getLength()!=v2.getLength()){
       throw ValueErrorException("SparseIntVect size mismatch");
     }
