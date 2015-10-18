@@ -39,6 +39,7 @@ namespace RDKit{
     } //end of detail namespace
   } // end of Fingerprint namespace
   namespace {
+        /*
     boost::uint32_t hashBond(const Bond *bnd,const std::vector<boost::uint32_t> &atomInvariants,
                       const std::vector<boost::uint32_t> &atomDegrees,boost::uint32_t bondDegree,
                       bool useBondOrder){
@@ -71,6 +72,7 @@ namespace RDKit{
       //std::cerr<<"---->("<<bnd->getIdx()<<") "<<bnd->getBeginAtomIdx()<<"-"<<bnd->getEndAtomIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2<<":"<<deg1<<"-"<<deg2<<std::endl;
       return res;
     }
+
     boost::uint32_t canonicalPathHash(const PATH_TYPE &path,
                                const ROMol &mol,
                                const std::vector<const Bond *> &bondCache,
@@ -157,7 +159,7 @@ namespace RDKit{
       gboost::hash_combine(res,path.size());
       return res;
     }    
-
+    */
     
   } // end of anonymous namespace
 

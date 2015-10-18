@@ -629,7 +629,7 @@ namespace {
         ROMol *mol = mols[i];
 
         MatchVectType matchV;
-        bool found=SubstructMatch(*mols[i],*query,matchV);
+        bool found=SubstructMatch(*mol,*query,matchV);
         
         TEST_ASSERT(found==hits[i]);
       }

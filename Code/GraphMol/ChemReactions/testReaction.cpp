@@ -4075,7 +4075,7 @@ void test44Github290(){
 	  std::string fName = rdbase + "/Code/GraphMol/ChemReactions/testData/bogus_github290.rxn";
 	  bool failed=false;
       try{
-          ChemicalReaction *rxn = RxnFileToChemicalReaction(fName);
+          RxnFileToChemicalReaction(fName);
       } catch (ChemicalReactionParserException &) {
          failed=true;
       }
@@ -4226,7 +4226,7 @@ void test46Agents(){
   }
   {
     std::string smi;
-    ROMol *mol=0;
+    //ROMol *mol=0;
 
     smi=">[OH2].[Na].[Cl]>";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
@@ -4319,7 +4319,7 @@ void test46Agents(){
   }
   {
     std::string smi1, smi2;
-    unsigned int nWarn,nError,which;
+    //unsigned int nWarn,nError,which;
 
     smi1="[C:1]=[O:2].[N:3]>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi1, 0, true);
@@ -4351,7 +4351,7 @@ void test46Agents(){
   {
     std::string smi1;
 
-    unsigned int nWarn,nError,which;
+    //unsigned int nWarn,nError,which;
 
     smi1="[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi1, 0, true);

@@ -276,7 +276,7 @@ void testStructuralFingerprintsReaction(){
 	{
 		std::string reaction, reactionq, reactionq2;
 		ChemicalReaction* rxn, *rxnq, *rxnq2;
-	    unsigned int nWarn,nError,which;
+	        //unsigned int nWarn,nError,which;
 		reaction = "C1CCCCC1>>C1CCNCC1";
 		reactionq = "CCC>>CNC";
 		reactionq2 = "CCCCC>>CCCCN";

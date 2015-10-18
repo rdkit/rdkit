@@ -63,30 +63,30 @@ namespace RDKit{
   // -------------------------------------------------
   // common atom queries
 
-  static int queryAtomAromatic(Atom const * at) { return at->getIsAromatic(); };
-  static int queryAtomAliphatic(Atom const * at) { return !(at->getIsAromatic()); };
-  static int queryAtomExplicitDegree(Atom const * at) { return at->getDegree(); };
-  static int queryAtomTotalDegree(Atom const * at) { return at->getTotalDegree(); };
-  static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
-  static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
-  static int queryAtomImplicitHCount(Atom const * at) { return at->getTotalNumHs(false); };
-  static int queryAtomHasImplicitH(Atom const * at) { return int(at->getTotalNumHs(false)>0); };
-  static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
-  static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };
-  static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
-  static int queryAtomUnsaturated(Atom const * at) { return static_cast<int>(at->getDegree())<at->getExplicitValence(); };
-  static int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
-  static int massIntegerConversionFactor=1000;
-  static int queryAtomMass(Atom const * at) {
+  static inline int queryAtomAromatic(Atom const * at) { return at->getIsAromatic(); };
+  static inline int queryAtomAliphatic(Atom const * at) { return !(at->getIsAromatic()); };
+  static inline int queryAtomExplicitDegree(Atom const * at) { return at->getDegree(); };
+  static inline int queryAtomTotalDegree(Atom const * at) { return at->getTotalDegree(); };
+  static inline int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
+  static inline int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
+  static inline int queryAtomImplicitHCount(Atom const * at) { return at->getTotalNumHs(false); };
+  static inline int queryAtomHasImplicitH(Atom const * at) { return int(at->getTotalNumHs(false)>0); };
+  static inline int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
+  static inline int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };
+  static inline int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
+  static inline int queryAtomUnsaturated(Atom const * at) { return static_cast<int>(at->getDegree())<at->getExplicitValence(); };
+  static inline int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
+  const int massIntegerConversionFactor=1000;
+  static inline int queryAtomMass(Atom const * at) {
     return static_cast<int>(round(massIntegerConversionFactor*at->getMass()));
   };
-  static int queryAtomIsotope(Atom const * at) {
+  static inline int queryAtomIsotope(Atom const * at) {
     return static_cast<int>(at->getIsotope());
   };
-  static int queryAtomFormalCharge(Atom const * at) { 
+  static inline int queryAtomFormalCharge(Atom const * at) { 
       return static_cast<int>(at->getFormalCharge()); 
   };
-  static int queryAtomHybridization(Atom const * at) { return at->getHybridization(); };
+  static inline int queryAtomHybridization(Atom const * at) { return at->getHybridization(); };
   unsigned int queryAtomBondProduct(Atom const * at);
   unsigned int queryAtomAllBondProduct(Atom const * at);
     
@@ -94,22 +94,22 @@ namespace RDKit{
   // -------------------------------------------------
   // common bond queries
 
-  static int queryBondOrder(Bond const * bond) { return static_cast<int>(bond->getBondType()); };
-  static int queryBondDir(Bond const * bond) { return static_cast<int>(bond->getBondDir()); };
-  static int queryIsBondInNRings(Bond const * at) {
+  static inline int queryBondOrder(Bond const * bond) { return static_cast<int>(bond->getBondType()); };
+  static inline int queryBondDir(Bond const * bond) { return static_cast<int>(bond->getBondDir()); };
+  static inline int queryIsBondInNRings(Bond const * at) {
     return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx());
   };
 
   // -------------------------------------------------
   // ring queries 
 
-  static int queryIsAtomInNRings(Atom const * at) {
+  static inline int queryIsAtomInNRings(Atom const * at) {
     return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx());
   };
-  static int queryIsAtomInRing(Atom const * at) {
+  static inline int queryIsAtomInRing(Atom const * at) {
     return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx())!=0;
   };
-  static int queryAtomHasRingBond(Atom const * at) {
+  static inline int queryAtomHasRingBond(Atom const * at) {
     ROMol::OBOND_ITER_PAIR atomBonds=at->getOwningMol().getAtomBonds(at);
     while(atomBonds.first != atomBonds.second){
       unsigned int bondIdx=at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
@@ -120,17 +120,17 @@ namespace RDKit{
     }
     return 0;
   };
-  static int queryIsBondInRing(Bond const * bond) {
+  static inline int queryIsBondInRing(Bond const * bond) {
     return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())!=0;
   };
-  static int queryAtomMinRingSize(Atom const *at){
+  static inline int queryAtomMinRingSize(Atom const *at){
     return at->getOwningMol().getRingInfo()->minAtomRingSize(at->getIdx());
   };
-  static int queryBondMinRingSize(Bond const *bond){
+  static inline int queryBondMinRingSize(Bond const *bond){
     return bond->getOwningMol().getRingInfo()->minBondRingSize(bond->getIdx());
   };
 
-  static int queryAtomRingBondCount(Atom const *at) {
+  static inline int queryAtomRingBondCount(Atom const *at) {
     // EFF: cache this result
     int res=0;
     ROMol::OBOND_ITER_PAIR atomBonds=at->getOwningMol().getAtomBonds(at);
@@ -363,7 +363,7 @@ namespace RDKit{
   //! returns a Query for matching any atom
   ATOM_NULL_QUERY *makeAtomNullQuery();
 
-  static int queryAtomRingMembership(Atom const *at) {
+  static inline int queryAtomRingMembership(Atom const *at) {
     return static_cast<int>(at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx()));
   }
   // I'm pretty sure that this typedef shouldn't be necessary,
@@ -436,7 +436,7 @@ namespace RDKit{
       setDescription("RecursiveStructure");
     };
     //! returns the index of an atom
-    static int getAtIdx(Atom const *at) {
+    static inline int getAtIdx(Atom const *at) {
       PRECONDITION(at,"bad atom argument");
       return at->getIdx();
     };

@@ -1100,7 +1100,7 @@ namespace RDKit {
         RDGeom::Point3D refCtd;
         RDGeom::Point3D prbCtd;
         unsigned int i;
-        unsigned int j;
+        //unsigned int j;
         unsigned int nHeavy;
         for (i = 0, nHeavy = 0; i < refPos.size(); ++i) {
           if (d_refMol->getAtomWithIdx(i)->getAtomicNum() == 1) {

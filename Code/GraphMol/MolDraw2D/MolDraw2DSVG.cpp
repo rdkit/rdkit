@@ -167,7 +167,7 @@ namespace RDKit {
   // ****************************************************************************
   void MolDraw2DSVG::setFontSize( double new_size ) {
     MolDraw2D::setFontSize( new_size );
-    double font_size_in_points = fontSize() * scale();
+    //double font_size_in_points = fontSize() * scale();
   }
 
   // ****************************************************************************
@@ -191,7 +191,7 @@ namespace RDKit {
       }
 
       label_height = fontSize();
-      double char_width = fontSize() * static_cast<double>(MolDraw2D_detail::char_widths[label[i]]) / MolDraw2D_detail::char_widths['M'];
+      double char_width = fontSize() * static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) / MolDraw2D_detail::char_widths[(int)'M'];
       if( 2 == draw_mode ) {
         char_width *= 0.75;
       } else if( 1 == draw_mode ) {

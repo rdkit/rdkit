@@ -517,7 +517,7 @@ namespace Canon {
         possiblesIt++){
       int possibleIdx = possiblesIt->get<1>();
       Bond *bond = possiblesIt->get<2>();
-      Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
+      //Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
       switch(colors[possibleIdx]){
       case WHITE_NODE:
         // -----
@@ -686,7 +686,7 @@ namespace Canon {
       }
       Bond *bond = possiblesIt->get<2>();
       Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
-      unsigned int lowestRingIdx;
+      //unsigned int lowestRingIdx;
       INT_VECT::const_iterator cAIt;
       // ww might have some residual data from earlier calls, clean that up:
       if(otherAtom->hasProp(common_properties::_TraversalBondIndexOrder)){

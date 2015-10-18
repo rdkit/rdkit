@@ -73,7 +73,7 @@ namespace RDKit {
     }
     
     bool _boundsFulfilled(const std::vector<int> &atoms, const DistGeom::BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions) {
-      unsigned int N = mmat.numRows();
+      //unsigned int N = mmat.numRows();
       //std::cerr << N << " " << atoms.size() << std::endl;
       // loop over all pair of atoms
       for (unsigned int i = 0; i < atoms.size()-1; ++i) {
@@ -249,7 +249,7 @@ namespace RDKit {
       ROMol::ConstAtomIterator ati;
       INT_VECT nbrs;
       ROMol::OEDGE_ITER beg,end;
-      Atom *oatom;
+      //Atom *oatom;
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
           Atom::ChiralType chiralType=(*ati)->getChiralTag();

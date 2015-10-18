@@ -272,7 +272,7 @@ namespace RDKit {
                 std::auto_ptr<const ROMol> initialSeedMolecule((const ROMol*)SmartsToMol(Parameters.InitialSeed));
                 // make a set of of seed as indeces and pointers to current query molecule items based on matching results
                 std::vector<MatchVectType> matching_substructs;
-                unsigned smn = SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
+                SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
                 // loop throw all fragments of Query matched to initial seed
                 for(std::vector<MatchVectType>::const_iterator ms=matching_substructs.begin(); ms!=matching_substructs.end(); ms++) {
                     Seed seed;

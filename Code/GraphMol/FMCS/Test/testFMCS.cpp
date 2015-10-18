@@ -406,7 +406,7 @@ std::string testChEMBL_Txt(const char* test, double th=1.0, const char* csv="che
     std::cout << "\ntestChEMBL_Txt() "<<test<<"\n";
     std::vector<ROMOL_SPTR> mols;
     char smiles[4096];
-    unsigned n=0;
+    //unsigned n=0;
     FILE* f = fopen(test, "rt");
     if(!f) {
         perror("fopen testChEMBL_Txt()");
@@ -1412,7 +1412,7 @@ double testFileSDF(const char* test) {
 void testFileSDF_RandomSet_SMI(const char* path="benchmark", const char* test="chembl13-10000-random-pairs.sdf") {
     p.Timeout = 60;
     p.Verbose = false;
-    unsigned long long To = nanoClock();
+    //unsigned long long To = nanoClock();
 
     std::cout << "\ntestFileSDF_RandomSet(): " << path<<"/"<<test << "\n";
     std::vector<ROMOL_SPTR> mols;
@@ -1461,7 +1461,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
     p.Timeout = 60;
     p.Verbose = false;
 
-    unsigned long long To = nanoClock();
+    //unsigned long long To = nanoClock();
 
     std::cout << "\ntestFileSDF_RandomSet(): " << path<<"/"<<test << "\n";
     std::vector<ROMOL_SPTR> mols;
@@ -1549,12 +1549,12 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
     std::cout << "\n****** RANDOM SET test *********\n\n";
     const unsigned N_RandomTests = all_mols.size() * 7;
     srand(1);   // make stable pseudorandom sequence
-    for(unsigned jn; n <= N_RandomTests; jn++, n++) {
+    for(unsigned jn=0; n <= N_RandomTests; jn++, n++) {
         char smiName[256];
         sprintf(smiName,"%s/smilesRAND/%s.%u.smi", path, test, n);
         FILE* fsmi = fopen(smiName, "wt");
         fprintf(fcmd, "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n, p.Timeout, p.Threshold, smiName, (std::string(path)+"_"+test+".P.csv").c_str());   // command for the same Python test
-        ROMol *m=0;
+        //ROMol *m=0;
         unsigned iN = 3+rand()%32;
         for(int i=0; i < iN; i++) {  // load random set
             mols.push_back(all_mols[rand()%(all_mols.size()-1)]);
@@ -1614,7 +1614,7 @@ void testFileSDF_RandomSet(const char* test="chembl13-10000-random-pairs.sdf", c
     for(size_t jn=0; jn < N_BigRandomTestsAttempts && n-n1 <= N_BigRandomTests; jn++) {
         char smiName[512];
         sprintf(smiName,"%s/smilesBIG/%s.%u.smi", path, test, n);
-        ROMol *m=0;
+        //ROMol *m=0;
         unsigned iN = 2+rand()%24;
         mols.clear();
         for(size_t i=0; i < iN; i++)    // load random set

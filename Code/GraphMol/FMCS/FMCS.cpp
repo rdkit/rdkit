@@ -23,7 +23,7 @@ namespace RDKit {
         if(params && json && 0!=strlen(json)) {
             std::istringstream ss;
             ss.str(json);
-            std::istream& iss = ss;
+            //std::istream& iss = ss;
             boost::property_tree::ptree pt;
             boost::property_tree::read_json(ss, pt);
 
@@ -362,7 +362,7 @@ namespace RDKit {
         RDKit::FMCS::Graph::BOND_ITER_PAIR bpIter = boost::edges(query);
         RDKit::FMCS::Graph::EDGE_ITER bIter = bpIter.first;
         for(unsigned int i=0; i < qnb; i++, ++bIter) {
-            unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
+          //unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
             const Bond *qBnd=mol1.getBondWithIdx(query[*bIter]);
             if(qBnd->getBondType()!=Bond::DOUBLE
             ||(qBnd->getStereo()!=Bond::STEREOZ && qBnd->getStereo()!=Bond::STEREOE))
@@ -450,7 +450,7 @@ namespace RDKit {
         RDKit::FMCS::Graph::BOND_ITER_PAIR bpIter = boost::edges(query);
         RDKit::FMCS::Graph::EDGE_ITER bIter = bpIter.first;
         for(unsigned int i=0; i < qnb; i++, ++bIter) {
-            unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
+          //unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
             const Bond *qBnd=mol1.getBondWithIdx(query[*bIter]);
             if(qBnd->getBondType()!=Bond::DOUBLE
             ||(qBnd->getStereo()!=Bond::STEREOZ && qBnd->getStereo()!=Bond::STEREOE))

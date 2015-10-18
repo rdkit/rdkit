@@ -66,7 +66,7 @@ int testMolSup() {
     TEST_ASSERT(sdsup.atEnd());
     bool ok=false; 
     try{
-      ROMol *mol = sdsup.next();
+      sdsup.next();
     } catch (FileParseException &) {
       ok=true;
     }

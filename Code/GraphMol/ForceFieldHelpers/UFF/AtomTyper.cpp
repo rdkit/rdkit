@@ -471,7 +471,7 @@ namespace RDKit {
       bool res = (mol.getBondBetweenAtoms(idx1, idx2)
         && mol.getBondBetweenAtoms(idx2, idx3) && mol.getBondBetweenAtoms(idx2, idx4));
       unsigned int i;
-      bool isAtom2C = false;
+      //bool isAtom2C = false;
       bool isBoundToSP2O = false;
       unsigned int at2AtomicNum = 0;
       for (i = 0; res && (i < 4); ++i) {

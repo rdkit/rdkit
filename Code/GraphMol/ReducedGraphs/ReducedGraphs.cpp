@@ -90,7 +90,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
       for(unsigned int i=0;i<patterns->size();++i){
         types[i].resize(nAtoms);
         types[i].reset();
-        unsigned int mask=1<<i;
+        //unsigned int mask=1<<i;
         std::vector<MatchVectType> matchVect;
         // to maintain thread safety, we have to copy the pattern
         // molecules:

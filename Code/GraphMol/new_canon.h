@@ -33,17 +33,18 @@ namespace RDKit {
       unsigned int nbrIdx;
       bondholder() : bondType(Bond::UNSPECIFIED),
           bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
-          nbrIdx(0), nbrSymClass(0){};
+          nbrSymClass(0), nbrIdx(0) {};
       bondholder(Bond::BondType bt,Bond::BondStereo bs,unsigned int ni,unsigned int nsc) :
         bondType(bt),
         bondStereo(static_cast<unsigned int>(bs)),
-        nbrIdx(ni),
-        nbrSymClass(nsc){};
+        nbrSymClass(nsc),
+        nbrIdx(ni)
+        {};
       bondholder(Bond::BondType bt,unsigned int bs,unsigned int ni,unsigned int nsc) :
         bondType(bt),
         bondStereo(bs),
-        nbrIdx(ni),
-        nbrSymClass(nsc){};
+        nbrSymClass(nsc),
+        nbrIdx(ni){};
       bool operator<(const bondholder &o) const {
         if(bondType!=o.bondType)
           return bondType<o.bondType;
@@ -217,7 +218,7 @@ namespace RDKit {
       unsigned int getAtomRingNbrCode(unsigned int i) const {
         if(!dp_atoms[i].hasRingNbr) return 0;
 
-        const Atom *at=dp_atoms[i].atom;
+        //const Atom *at=dp_atoms[i].atom;
         int *nbrs = dp_atoms[i].nbrIds;
         unsigned int code=0;
         for(unsigned j=0; j<dp_atoms[i].degree; ++j){
@@ -518,13 +519,13 @@ namespace RDKit {
                           int *changed,
                           char *touchedPartitions){
       unsigned int nAtoms=mol.getNumAtoms();
-      register int partition;
-      register int symclass;
-      register int *start;
-      register int offset;
-      register int index;
-      register int len;
-      register int i;
+      int partition;
+      int symclass;
+      int *start;
+      int offset;
+      int index;
+      int len;
+      int i;
       //std::vector<char> touchedPartitions(mol.getNumAtoms(),0);
       
       // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
@@ -618,10 +619,10 @@ namespace RDKit {
                    int *changed,
                    char *touchedPartitions){
       unsigned int nAtoms=mol.getNumAtoms();
-      register int partition;
-      register int offset;
-      register int index;
-      register int len;
+      int partition;
+      int offset;
+      int index;
+      int len;
       int oldPart = 0;
 
       for(unsigned int i=0; i<nAtoms; i++ ) {

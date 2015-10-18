@@ -61,7 +61,6 @@ namespace RDKit{
     
     std::vector<boost::shared_ptr<FilterMatcherBase> >  temp;
 
-    int i=0;
     for (; begin!=end; ++begin) {
       temp.push_back( (*begin)->Clone() );
     }

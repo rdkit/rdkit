@@ -24,9 +24,9 @@
 #include <algorithm>
 
 const double DIST12_DELTA = 0.01;
-const double ANGLE_DELTA = 0.0837;
-const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
-const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
+//const double ANGLE_DELTA = 0.0837;
+//const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
+//const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
 const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06; //  a general distance tolerance
 const double DIST15_TOL = 0.08;

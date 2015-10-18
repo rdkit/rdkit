@@ -619,7 +619,7 @@ namespace RDKit{
             //  otherwise.
             //
             //  First we'll search for an H query:
-            bool hasHQuery=false,hasOr=false;
+            bool hasHQuery=false;//hasOr=false;
             if(!atom->hasQuery()){
               // it wasn't a query atom, we need to replace it so that we can add a query:
               ATOM_EQUALS_QUERY *tmp=makeAtomNumQuery(atom->getAtomicNum());
