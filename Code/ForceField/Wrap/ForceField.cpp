@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>

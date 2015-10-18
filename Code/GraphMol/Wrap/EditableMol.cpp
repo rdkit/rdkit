@@ -13,7 +13,7 @@
 //#define BOOST_PYTHON_NO_PY_SIGNATURES
 
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <string>
 
 #include "rdchem.h"

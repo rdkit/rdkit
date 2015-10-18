@@ -27,19 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-
+#include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
-
-#include <boost/python.hpp>
-#include <boost/python/scope.hpp>
 
 #include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 #include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 #include <GraphMol/FilterCatalog/FilterMatchers.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/python/stl_iterator.hpp>
-#include <boost/python/register_ptr_to_python.hpp>
 #include <GraphMol/RDKitBase.h>
 
 namespace python = boost::python;

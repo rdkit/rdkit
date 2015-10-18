@@ -32,10 +32,15 @@
 #define __RD_FILTER_MATCHER_BASE_H__
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif // RDK_USE_BOOST_SERIALIZATION
 
 namespace RDKit
 {

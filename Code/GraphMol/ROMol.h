@@ -21,8 +21,11 @@
 #include <map>
 
 // boost stuff
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/smart_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 
 // our stuff
 #include <RDGeneral/types.h>

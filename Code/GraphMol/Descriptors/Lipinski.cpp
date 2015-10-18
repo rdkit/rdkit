@@ -14,11 +14,15 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <vector>
 #include <string>
 

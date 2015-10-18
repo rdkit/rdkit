@@ -22,9 +22,12 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit{
   namespace Descriptors {

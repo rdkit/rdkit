@@ -14,7 +14,11 @@
 #include "TorsionConstraint.h"
 #include "Params.h"
 #include <cmath>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/math/special_functions/round.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 

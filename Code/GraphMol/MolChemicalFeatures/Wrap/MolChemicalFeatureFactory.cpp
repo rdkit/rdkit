@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>

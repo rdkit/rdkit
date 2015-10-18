@@ -32,7 +32,7 @@
 //
 // Created by Greg Landrum, September 2006
 //
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <GraphMol/SLNParse/SLNParse.h>
 
 #include <RDBoost/Wrap.h>

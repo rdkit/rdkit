@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolHash/MolHash.h>
 #include <RDBoost/Wrap.h>

@@ -12,6 +12,7 @@
 #define __RD_CATALOG_H__
 
 // Boost graph stuff
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/version.hpp>
@@ -20,6 +21,7 @@
 #else
 #include <boost/property_map.hpp>
 #endif
+#include <RDGeneral/BoostEndInclude.h>
 
 
 // for some typedefs

@@ -11,7 +11,7 @@
 //  of the RDKit source tree.
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <boost/python/numeric.hpp>
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>

@@ -9,8 +9,11 @@
 //  of the RDKit source tree.
 //
 #include "rdmolops.h"
-#include <boost/python.hpp>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <RDBoost/python.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostStartInclude.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>

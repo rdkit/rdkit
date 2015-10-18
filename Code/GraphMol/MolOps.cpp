@@ -18,6 +18,8 @@
 #include <vector>
 #include <algorithm> 
 
+#include <RDGeneral/BoostStartInclude.h>
+
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
@@ -27,6 +29,8 @@
 #else
 #include <boost/property_map.hpp>
 #endif
+
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>

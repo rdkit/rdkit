@@ -8,7 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
+
 #include <RDBoost/Wrap.h>
 #include <Geometry/point.h>
 namespace python = boost::python;

@@ -16,10 +16,13 @@
 
 #include "ReducedGraphs.h"
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 #include <boost/ref.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 
 //#define VERBOSE_FINGERPRINTING 1
 

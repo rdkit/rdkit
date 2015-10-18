@@ -37,10 +37,12 @@
 #include <Catalogs/CatalogEntry.h>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #endif
 
 #include "FilterMatchers.h"

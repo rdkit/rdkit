@@ -46,9 +46,11 @@
 #include <boost/foreach.hpp>
 #include <algorithm>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
   namespace {
     class ss_matcher {

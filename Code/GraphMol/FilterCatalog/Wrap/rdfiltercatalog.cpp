@@ -29,7 +29,7 @@
 //
 
 #include "rdfiltercatalog.h"
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 
 namespace python = boost::python;
 

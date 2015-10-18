@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "rdfragcatalog.h"
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 
 namespace python = boost::python;
 

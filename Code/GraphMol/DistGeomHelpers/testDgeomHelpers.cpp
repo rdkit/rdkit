@@ -1206,8 +1206,9 @@ namespace {
   };
 }
 
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread.hpp>  
+#include <RDGeneral/BoostEndInclude.h>
 void testMultiThread(){
   std::cerr<<"building molecules"<<std::endl;
   //std::string smi="C/12=C(\\CSC2)Nc3cc(n[n]3C1=O)c4ccccc4";

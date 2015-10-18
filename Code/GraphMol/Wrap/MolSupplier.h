@@ -11,7 +11,7 @@
 #define _RD_WRAP_MOLSUPPLIER_H_
 //! Template functions for wrapping suppliers as python iterators.
 
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
 

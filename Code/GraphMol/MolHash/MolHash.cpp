@@ -10,7 +10,9 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/format.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <boost/crc.hpp>
 #include <boost/cstdint.hpp>
 #include "../Descriptors/MolDescriptors.h"

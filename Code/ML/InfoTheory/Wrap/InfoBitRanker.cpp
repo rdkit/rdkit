@@ -9,7 +9,7 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include "numpy/arrayobject.h"
 

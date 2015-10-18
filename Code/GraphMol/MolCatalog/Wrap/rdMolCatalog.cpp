@@ -3,7 +3,7 @@
 //  Copyright (C) 2006 Greg Landrum
 //
 #include "rdMolCatalog.h"
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolCatalog/MolCatalog.h>
 #include <GraphMol/MolCatalog/MolCatalogEntry.h>
