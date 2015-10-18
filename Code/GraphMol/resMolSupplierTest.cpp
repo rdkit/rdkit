@@ -498,7 +498,7 @@ void testSubstructMatchDMAP() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
     << "testSubstructMatchDMAP" << std::endl;
   RWMol *mol = SmilesToMol("C(C)Nc1cc[nH+]cc1");
-  RWMol *query = SmartsToMol("[N+,n+]");
+  RWMol *query = SmartsToMol("[#7+]");
   ResonanceMolSupplier *resMolSuppl;
   unsigned int n;
   MatchVectType p;
