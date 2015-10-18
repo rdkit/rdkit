@@ -53,7 +53,7 @@ namespace python = boost::python;
 
   // used to support __getitem__
   template <typename T>
-  const int get_VectItem(const T& self,int which)
+  int get_VectItem(const T& self,int which)
   {
     if(which<0){
       if(which+static_cast<int>(self.getNumBits())<0){
@@ -67,7 +67,7 @@ namespace python = boost::python;
 
   // used to support __setitem__
   template <typename T>
-  const int set_VectItem(T& self, int which, const int val)
+  int set_VectItem(T& self, int which, const int val)
   {
     if(which<0){
       if(which+static_cast<int>(self.getNumBits())<0){
