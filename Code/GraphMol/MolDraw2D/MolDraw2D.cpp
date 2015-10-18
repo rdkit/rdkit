@@ -578,6 +578,8 @@ namespace RDKit {
                             const vector<int> *highlight_bonds ,
                             const map<int,DrawColour> *highlight_bond_map
                             ) {
+      RDUNUSED_PARAM(highlight_atoms);
+      RDUNUSED_PARAM(highlight_atom_map);
     static const DashPattern noDash;
     static const DashPattern dots=assign::list_of(2)(6);
     static const DashPattern dashes=assign::list_of(6)(6);

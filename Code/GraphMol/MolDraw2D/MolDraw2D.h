@@ -152,7 +152,7 @@ namespace RDKit {
                                      unsigned int nSegments=8 );
     
 
-    virtual void tagAtoms( const ROMol &mol ) {};
+    virtual void tagAtoms( const ROMol &mol ) {RDUNUSED_PARAM(mol);};
 
     virtual bool fillPolys() const { return fill_polys_; }
     virtual void setFillPolys(bool val) { fill_polys_ = val; }

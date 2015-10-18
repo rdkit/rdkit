@@ -878,6 +878,7 @@ namespace RDKit{
   //------------------------------------------------
   std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId, bool kekulize,
                             bool forceV3000 ){
+      RDUNUSED_PARAM(includeStereo);
     ROMol tromol(mol);
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     // NOTE: kekulize the molecule before writing it out

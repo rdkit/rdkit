@@ -723,6 +723,7 @@ namespace RDKit{
   //------------------------------------------------
   RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
                              Mol2Type variant){
+      RDUNUSED_PARAM(variant);
     PRECONDITION(inStream,"no stream");
     std::string tempStr,lineBeg;
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -909,6 +910,7 @@ namespace RDKit{
 
   RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
                              Mol2Type variant){
+      RDUNUSED_PARAM(variant);
     return Mol2DataStreamToMol(&inStream,sanitize,removeHs);
   };
   //------------------------------------------------
@@ -918,6 +920,7 @@ namespace RDKit{
   //------------------------------------------------
   RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
                         Mol2Type variant){
+      RDUNUSED_PARAM(variant);
     std::istringstream inStream(molBlock);
     return Mol2DataStreamToMol(inStream, sanitize, removeHs);
   }    
@@ -933,6 +936,7 @@ namespace RDKit{
     // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
     // the function "tellg" does not work correctly if we do not open it this way
     //   Jan 2009: Confirmed that this is still the case in visual studio 2008
+      RDUNUSED_PARAM(variant);
     std::ifstream inStream(fName.c_str(),std::ios_base::binary);
     if(!inStream || (inStream.bad())){
       std::ostringstream errout;

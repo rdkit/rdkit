@@ -109,6 +109,7 @@ namespace FilterMatchOps
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version) {
+        RDUNUSED_PARAM(version);
       ar & boost::serialization::base_object<FilterMatcherBase>(*this);
 
       ar & arg1;
@@ -172,6 +173,7 @@ namespace FilterMatchOps
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version) {
+        RDUNUSED_PARAM(version);
       ar & boost::serialization::base_object<FilterMatcherBase>(*this);
       ar & arg1;
       ar & arg2;
@@ -233,6 +235,7 @@ namespace FilterMatchOps
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version) {
+        RDUNUSED_PARAM(version);
       ar & boost::serialization::base_object<FilterMatcherBase>(*this);
       ar & arg1;
     }
@@ -342,6 +345,7 @@ namespace FilterMatchOps
     friend class boost::serialization::access;
     template<class Archive>
     void save(Archive &ar, const unsigned int version) const {
+        RDUNUSED_PARAM(version);
       ar & boost::serialization::base_object<FilterMatcherBase>(*this);
       std::string res;
       MolPickler::pickleMol(*d_pattern.get(),res);
@@ -353,6 +357,7 @@ namespace FilterMatchOps
     void load(Archive &ar, const unsigned int version)  {
       ar & boost::serialization::base_object<FilterMatcherBase>(*this);
       {
+          RDUNUSED_PARAM(version);
         std::string res;
         ar & res;
         d_pattern = boost::shared_ptr<ROMol>( new ROMol(res) );
@@ -457,6 +462,7 @@ namespace FilterMatchOps
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version) {
+        RDUNUSED_PARAM(version);
       ar & boost::serialization::base_object<FilterMatcherBase>(*this);
       ar & d_offPatterns;
     }

@@ -434,6 +434,7 @@ static
                       , const std::vector<boost::uint32_t> *atomCodes
                       , const std::vector<boost::uint32_t> *bondCodes)
     {
+        RDUNUSED_PARAM(mol);
         unsigned n;
         n = m.getNumAtoms();
         atomLabels.resize(n);

@@ -71,6 +71,7 @@ namespace RDInfoTheory {
   }
 
   void tester(InfoBitRanker *ranker, python::object bitVect) {
+      RDUNUSED_PARAM(ranker);
     python::extract<SparseBitVect> sbvWorks(bitVect);
     if (sbvWorks.check()){
       SparseBitVect sv = python::extract<SparseBitVect>(bitVect);

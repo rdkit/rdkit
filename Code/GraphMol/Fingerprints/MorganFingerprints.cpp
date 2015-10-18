@@ -167,6 +167,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       return bit;
     }
     uint32_t updateElement(ExplicitBitVect &v,unsigned int elem, bool counting=false){
+        RDUNUSED_PARAM(counting);
       uint32_t bit=elem%v.getNumBits();
       v.setBit(bit);
       return bit;

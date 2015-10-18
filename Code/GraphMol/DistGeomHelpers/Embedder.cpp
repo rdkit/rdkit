@@ -367,6 +367,7 @@ namespace RDKit {
 
     void adjustBoundsMatFromCoordMap(DistGeom::BoundsMatPtr mmat,unsigned int nAtoms,
                                      const std::map<int,RDGeom::Point3D> *coordMap){
+        RDUNUSED_PARAM(nAtoms);
       // std::cerr<<std::endl;
       // for(unsigned int i=0;i<nAtoms;++i){
       //   for(unsigned int j=0;j<nAtoms;++j){

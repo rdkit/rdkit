@@ -41,6 +41,7 @@ namespace RDKit{
 
     std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn,
                               bool allHsExplicit){
+        RDUNUSED_PARAM(bondIn);
       PRECONDITION(atom,"bad atom");
       INT_VECT atomicSmilesVect(atomicSmiles,
                                 atomicSmiles+(sizeof(atomicSmiles)-1)/sizeof(atomicSmiles[0]));

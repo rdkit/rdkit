@@ -46,10 +46,12 @@ namespace RDKit{
 
   template<class T>
   void streamRead(std::istream &ss,T &obj,int version){
+      RDUNUSED_PARAM(version);
     streamRead(ss,obj);
   }    
 
   void streamRead(std::istream &ss,std::string &what,int version){
+      RDUNUSED_PARAM(version);
     unsigned int l;
     ss.read((char *)&l,sizeof(l));
     char *buff=new char[l+1];
@@ -167,6 +169,7 @@ namespace RDKit{
 
     void finalizeQueryFromDescription(Query<int,Atom const *,true> *query,
                                       Atom const *owner){
+        RDUNUSED_PARAM(owner);
       std::string descr=query->getDescription();
       Query<int,Atom const *,true> *tmpQuery;
       if(descr=="AtomRingBondCount"){
@@ -231,6 +234,7 @@ namespace RDKit{
 
     void finalizeQueryFromDescription(Query<int,Bond const *,true> *query,
                                       Bond const *owner){
+        RDUNUSED_PARAM(owner);
       std::string descr=query->getDescription();
       Query<int,Bond const *,true> *tmpQuery;
       if(descr=="BondRingSize"){
@@ -1036,6 +1040,7 @@ namespace RDKit{
   Atom *MolPickler::_addAtomFromPickle(std::istream &ss,ROMol *mol,
                                        RDGeom::Point3D &pos,
 				       int version,bool directMap){
+      RDUNUSED_PARAM(directMap);
     PRECONDITION(mol,"empty molecule");
     float x,y,z;
     char tmpChar;

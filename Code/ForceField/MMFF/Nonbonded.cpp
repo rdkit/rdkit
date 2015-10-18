@@ -79,6 +79,8 @@ namespace ForceFields {
       double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
         double chargeTerm, boost::uint8_t dielModel, bool is1_4)
       {
+          RDUNUSED_PARAM(idx1);
+          RDUNUSED_PARAM(idx2);
         double corr_dist = dist + 0.05;
         double const diel = 332.0716;
         double const sc1_4 = 0.75;

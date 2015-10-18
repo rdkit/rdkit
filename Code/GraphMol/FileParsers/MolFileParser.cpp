@@ -2127,6 +2127,7 @@ namespace RDKit{
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
 			unsigned int &nBonds,bool strictParsing){
+        RDUNUSED_PARAM(strictParsing);
         conf = new Conformer(nAtoms);
         if(nAtoms==0){
           conf->set3D(false);

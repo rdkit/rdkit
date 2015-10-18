@@ -54,6 +54,7 @@ namespace RDKit{
     void writeBond(const ROMol &mol,unsigned int bondId,
                    ROMol::ConstConformerIterator confIt,
                    std::ostringstream &dest){
+      RDUNUSED_PARAM(confIt);
       const Bond *bond=mol.getBondWithIdx(bondId);
       dest << bondId+1;
       std::string bondLabel;

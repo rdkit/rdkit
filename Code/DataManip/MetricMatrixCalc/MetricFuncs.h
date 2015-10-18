@@ -11,6 +11,7 @@
 #define __RD_METRICFUNCS_H__
 #include <cmath>
 #include <DataStructs/BitOps.h>
+#include <RDGeneral/Invariant.h>
 
 namespace RDDataManip {
   //! return the Euclidean distance between two vectors
@@ -32,12 +33,14 @@ namespace RDDataManip {
   double TanimotoDistanceMetric(const T1 &bv1, const T2 &bv2, unsigned int dim) {
     // the dim parameter is actually irrelevant here but we have to include it to deal with 
     // template version of setMetricFunc in MetricMatricCalc
+      RDUNUSED_PARAM(dim);
     return (1.0 - SimilarityWrapper(bv1, bv2,(double (*)(const T1&,const T2&))TanimotoSimilarity));
   };
 
   //! return the Tanimoto similarity between two bit vectors
   template <typename T1, typename T2>
   double TanimotoSimilarityMetric(const T1 &bv1, const T2 &bv2, unsigned int dim) {
+      RDUNUSED_PARAM(dim);
     return SimilarityWrapper(bv1,bv2,(double (*)(const T1&,const T2&))TanimotoSimilarity);
   };
 }

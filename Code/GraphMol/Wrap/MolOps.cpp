@@ -40,6 +40,7 @@ namespace RDKit{
                        unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
                        int confId
                        ){
+      RDUNUSED_PARAM(kekulize);
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
     std::stringstream outs;
     MolDraw2DSVG drawer(width,height,outs);

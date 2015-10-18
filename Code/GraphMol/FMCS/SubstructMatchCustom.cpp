@@ -152,6 +152,7 @@ namespace RDKit {
                                   , void* ud
                                   , match_V_t* match
                                  ) {
+            RDUNUSED_PARAM(finalCompare);
             MolMatchFinalCheckFunctor matchChecker(query, target, querySrc, mol, 0);
             AtomLabelFunctor atomLabeler(query, target, querySrc, mol, atomCompare, acp, ud);
             BondLabelFunctor bondLabeler(query, target, querySrc, mol, bondCompare, bcp, ud);

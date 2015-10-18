@@ -230,6 +230,7 @@ namespace RDKit
     friend class boost::serialization::access;
     template<class Archive>
     void save(Archive &ar, const unsigned int version) const {
+        RDUNUSED_PARAM(version);
       registerFilterMatcherTypes(ar);
 
       ar & d_matcher;
@@ -253,6 +254,7 @@ namespace RDKit
 
     template<class Archive>
     void load(Archive &ar, const unsigned int version) {
+        RDUNUSED_PARAM(version);
       registerFilterMatcherTypes(ar);
       
       ar & d_matcher;

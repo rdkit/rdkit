@@ -127,6 +127,7 @@ namespace RDKit {
     }
 
     bool MCSProgressCallbackTimeout(const MCSProgressData& stat, const MCSParameters &params, void* userData) {
+        RDUNUSED_PARAM(stat);
         unsigned long long* t0 = (unsigned long long*)userData;
         unsigned long long  t  = nanoClock();
         return t - *t0 <= params.Timeout*1000000ULL;
@@ -137,6 +138,7 @@ namespace RDKit {
     //=== ATOM COMPARE ========================================================
     static
     bool checkAtomChirality    (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
+        RDUNUSED_PARAM(p);
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         Atom::ChiralType ac1 = a1.getChiralTag();
@@ -167,6 +169,7 @@ namespace RDKit {
     }
 
     bool MCSAtomCompareIsotopes (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ud) {
+        RDUNUSED_PARAM(ud);
         // ignore everything except isotope information:
         //if( ! MCSAtomCompareElements (p, mol1, atom1, mol2, atom2, ud))
         //    return false;
@@ -207,6 +210,7 @@ namespace RDKit {
 
     static
     bool checkBondStereo (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2) {
+        RDUNUSED_PARAM(p);
         const Bond* b1 = mol1.getBondWithIdx(bond1);
         const Bond* b2 = mol2.getBondWithIdx(bond2);
         Bond::BondStereo bs1 = b1->getStereo();
@@ -299,7 +303,7 @@ namespace RDKit {
 
     bool FinalChiralityCheckFunction (const short unsigned c1[], const short unsigned c2[],
                  const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p) {
-
+        RDUNUSED_PARAM(p);
         const unsigned int qna = boost::num_vertices(query);    // getNumAtoms()
         // check chiral atoms only:
         for(unsigned int i=0; i < qna; ++i) { 

@@ -311,6 +311,7 @@ namespace RDKit {
 
     // ---------------------------------------------------------------
     std::pair<AtomicParamVect,bool>  getAtomTypes(const ROMol &mol,const std::string &paramData){
+        RDUNUSED_PARAM(paramData);
       bool foundAll=true;
       ParamCollection *params=ParamCollection::getParams();
 

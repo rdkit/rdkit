@@ -208,7 +208,8 @@ void Bond::setQuery(QUERYBOND_QUERY *what) {
   //  yet figured out what a good base query should be.
   //  It would be nice to be able to do substructure searches
   //  using molecules alone, so it'd be nice if we got this
-  //  issue resolved ASAP. 
+  //  issue resolved ASAP.
+  RDUNUSED_PARAM(what);
   PRECONDITION(0,"plain bonds have no Query");
 }
 
@@ -235,6 +236,9 @@ bool Bond::Match(const Bond::BOND_SPTR what) const {
 void Bond::expandQuery(Bond::QUERYBOND_QUERY *what,
 		       Queries::CompositeQueryType how,
 		       bool maintainOrder) {
+  RDUNUSED_PARAM(what);
+  RDUNUSED_PARAM(how);
+  RDUNUSED_PARAM(maintainOrder);
   PRECONDITION(0,"plain bonds have no query");
 };
 

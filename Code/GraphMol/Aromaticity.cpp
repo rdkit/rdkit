@@ -302,6 +302,7 @@ namespace {
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring,
                    const VECT_EDON_TYPE &edon) {
+      RDUNUSED_PARAM(mol);
     int atlw, atup, rlw, rup, rie;
     bool aromatic = false;
     rlw = 0;

@@ -770,6 +770,7 @@ namespace Canon {
                      INT_VECT &bondDirCounts,
                      INT_VECT &atomDirCounts,
                      const INT_VECT &bondVisitOrders){
+    RDUNUSED_PARAM(bondVisitOrders);
     PRECONDITION(bondDirCounts.size()>=mol.getNumBonds(),"bad dirCount size");
     PRECONDITION(refBond,"bad bond");
     PRECONDITION(&refBond->getOwningMol()==&mol,"bad bond");
