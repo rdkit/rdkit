@@ -10,7 +10,7 @@
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
-
+#include <RDGeneral/BoostStartInclude.h>
 //
 // Generic Wrapper utility functionality
 //
@@ -41,7 +41,6 @@
 #define RDKIT_WRAP_DECL
 #endif
 
-#include <RDGeneral/BoostStartInclude.h>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/cstdint.hpp>
 #include "list_indexing_suite.hpp"
