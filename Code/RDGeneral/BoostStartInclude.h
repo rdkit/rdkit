@@ -37,6 +37,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wconversion"
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 	/* Intel ICC/ICPC. ------------------------------------------ */
 
@@ -45,6 +47,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wconversion"
 #elif defined(__HP_cc) || defined(__HP_aCC)
 	/* Hewlett-Packard C/aC++. ---------------------------------- */
 
