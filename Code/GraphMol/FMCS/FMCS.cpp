@@ -137,8 +137,9 @@ namespace RDKit {
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         Atom::ChiralType ac1 = a1.getChiralTag();
         Atom::ChiralType ac2 = a2.getChiralTag();
-        if(ac1==Atom::CHI_TETRAHEDRAL_CW || ac1==Atom::CHI_TETRAHEDRAL_CCW) 
-            return (ac2==Atom::CHI_TETRAHEDRAL_CW || ac2==Atom::CHI_TETRAHEDRAL_CCW);
+        if(ac1==Atom::CHI_TETRAHEDRAL_CW || ac1==Atom::CHI_TETRAHEDRAL_CCW) {
+            return (ac2 == Atom::CHI_TETRAHEDRAL_CW || ac2 == Atom::CHI_TETRAHEDRAL_CCW);
+        }
         return true;
     }
 
@@ -209,7 +210,7 @@ namespace RDKit {
         if(b1->getBondType()==Bond::DOUBLE && b2->getBondType()==Bond::DOUBLE) {
            if((bs1==Bond::STEREOZ || bs1==Bond::STEREOE)
            &&!(bs2==Bond::STEREOZ || bs2==Bond::STEREOE))
-               return false;
+                return false;
         }
         return true;
     }
@@ -295,20 +296,43 @@ namespace RDKit {
     bool FinalChiralityCheckFunction (const short unsigned c1[], const short unsigned c2[],
                  const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p) {
 
-        const unsigned int   qna = boost::num_vertices(query);    // getNumAtoms()
-        // check chiral atoms:
+        const unsigned int qna = boost::num_vertices(query);    // getNumAtoms()
+        // check chiral atoms only:
         for(unsigned int i=0; i < qna; ++i) { 
             const Atom& a1 = *mol1.getAtomWithIdx(query [c1[i]]);
             Atom::ChiralType ac1 = a1.getChiralTag();
-            if(!(ac1==Atom::CHI_TETRAHEDRAL_CW || ac1==Atom::CHI_TETRAHEDRAL_CCW))
-                continue; // skip non chiral center query atoms
+
             const Atom& a2 = *mol2.getAtomWithIdx(target[c2[i]]);
             Atom::ChiralType ac2 = a2.getChiralTag();
+
+///*------------------ OLD Code :
+// ???: non chiral query atoms ARE ALLOWED TO MATCH to Chiral target atoms
+// (see test for issue 481)
+            if(!(ac1==Atom::CHI_TETRAHEDRAL_CW || ac1==Atom::CHI_TETRAHEDRAL_CCW))
+                continue; // skip non chiral center QUERY atoms
             if(!(ac2==Atom::CHI_TETRAHEDRAL_CW || ac2==Atom::CHI_TETRAHEDRAL_CCW))
                 return false;
+//--------------------
+/* More accurate check:
+
+        if( !(ac1 == Atom::CHI_TETRAHEDRAL_CW || ac1 == Atom::CHI_TETRAHEDRAL_CCW)
+         && !(ac2 == Atom::CHI_TETRAHEDRAL_CW || ac2 == Atom::CHI_TETRAHEDRAL_CCW))
+            continue; // skip check if both atoms are non chiral center 
+
+        if(!(   (ac1 == Atom::CHI_TETRAHEDRAL_CW || ac1 == Atom::CHI_TETRAHEDRAL_CCW)
+             && (ac2 == Atom::CHI_TETRAHEDRAL_CW || ac2 == Atom::CHI_TETRAHEDRAL_CCW)))//ac2 != ac1)
+             return false; // both atoms must be chiral or not without a query priority
+*/
             const unsigned a1Degree = boost::out_degree(c1[i], query);// a1.getDegree();
-            if(a1Degree != a2.getDegree()) // number of all connected atoms in seed
-                return false;
+            if(a1Degree != a2.getDegree()) { // number of all connected atoms in seed
+//FIX issue 631
+// printf("atoms Degree (%u, %u) %u [%u], %u\n", query[c1[i]], target[c2[i]], a1Degree, a1.getDegree(), a2.getDegree());
+                if(1==a1Degree && a1.getDegree() == a2.getDegree())
+                    continue; // continue to grow the seed
+                else 
+                    return false;
+            }
+
             INT_LIST qOrder;
             for(unsigned int j=0; j < qna && qOrder.size() != a1Degree; ++j) {
                 const Bond *qB = mol1.getBondBetweenAtoms(query[c1[i]], query [c1[j]]);
@@ -325,8 +349,8 @@ namespace RDKit {
             }
             int mPermCount=a2.getPerturbationOrder(mOrder);
 
-            if( (qPermCount%2 == mPermCount%2 && a1.getChiralTag() != a2.getChiralTag())
-              ||(qPermCount%2 != mPermCount%2 && a1.getChiralTag() == a2.getChiralTag()) )
+            if ((qPermCount % 2 == mPermCount % 2 && a1.getChiralTag() != a2.getChiralTag())
+                || (qPermCount % 2 != mPermCount % 2 && a1.getChiralTag() == a2.getChiralTag()))
                 return false;
         }          
 

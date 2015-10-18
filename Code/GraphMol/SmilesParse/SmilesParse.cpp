@@ -35,13 +35,13 @@
 int yysmiles_parse (const char *,std::vector<RDKit::RWMol *>*,std::list<unsigned int> *,void *);
 int yysmiles_lex_init (void **);
 int yysmiles_lex_destroy (void *);
-void setup_smiles_string(const std::string &text,void *);
+size_t setup_smiles_string(const std::string &text,void *);
 extern int yysmiles_debug; 
 
 int yysmarts_parse (const char *,std::vector<RDKit::RWMol *>*,void *);
 int yysmarts_lex_init (void **);
 int yysmarts_lex_destroy (void *);
-void setup_smarts_string(const std::string &text,void *);
+size_t setup_smarts_string(const std::string &text,void *);
 extern int yysmarts_debug; 
 namespace RDKit{
   namespace {
@@ -53,8 +53,8 @@ namespace RDKit{
 
       TEST_ASSERT(!yysmiles_lex_init(&scanner));
       try {
-        setup_smiles_string(inp,scanner);
-        res = yysmiles_parse(inp.c_str(),&molVect,&branchPoints,scanner);
+        size_t ltrim=setup_smiles_string(inp,scanner);
+        res = yysmiles_parse(inp.c_str()+ltrim,&molVect,&branchPoints,scanner);
       } catch(...) {
         yysmiles_lex_destroy(scanner);
         throw;
@@ -71,8 +71,8 @@ namespace RDKit{
       int res;
       TEST_ASSERT(!yysmarts_lex_init(&scanner));
       try {
-        setup_smarts_string(inp,scanner);
-        res=yysmarts_parse(inp.c_str(),&molVect,scanner);
+        size_t ltrim = setup_smarts_string(inp,scanner);
+        res=yysmarts_parse(inp.c_str()+ltrim,&molVect,scanner);
       } catch(...) {
         yysmarts_lex_destroy(scanner);
         throw;
@@ -87,7 +87,7 @@ namespace RDKit{
       RECURSE
     } SmaState;
 
-    std::string labelRecursivePatterns(std::string sma){
+    std::string labelRecursivePatterns(const std::string &sma){
 #ifndef NO_AUTOMATIC_SMARTS_RELABELLING
       std::list<SmaState> state;
       std::list<unsigned int> startRecurse;
@@ -138,9 +138,9 @@ namespace RDKit{
     }
   } // end of local namespace
 
-  RWMol *toMol(std::string inp,int func(const std::string &,
-					std::vector<RDKit::RWMol *> &),
-               std::string origInp){
+  RWMol *toMol(const std::string &inp,int func(const std::string &,
+                                               std::vector<RDKit::RWMol *> &),
+               const std::string &origInp){
     // empty strings produce empty molecules:
     if(inp=="") return new RWMol();
     RWMol *res = 0;
@@ -164,7 +164,7 @@ namespace RDKit{
         nm="SMARTS";
         
       }
-      BOOST_LOG(rdErrorLog) << nm<<" Parse Error: "<< e.message() << " for input: "<< origInp << std::endl;
+      BOOST_LOG(rdErrorLog) << nm<<" Parse Error: "<< e.message() << " for input: '"<< origInp << "'" << std::endl;
       res = 0;
     }
     BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
@@ -178,13 +178,14 @@ namespace RDKit{
     return res;
   }
 
-  RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize,
+  RWMol *SmilesToMol(const std::string &smiles,int debugParse,bool sanitize,
                      std::map<std::string,std::string> *replacements){
     yysmiles_debug = debugParse;
     // strip any leading/trailing whitespace:
-    boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
-
+    //boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
+    RWMol *res;
     if(replacements){
+      std::string smi = smiles;
       bool loopAgain=true;
       while(loopAgain){
         loopAgain=false;
@@ -196,9 +197,11 @@ namespace RDKit{
           }
         }
       }
+      res = toMol(smi,smiles_parse,smi);
+    } else {
+      res = toMol(smiles,smiles_parse,smiles);
     }
 
-    RWMol *res = toMol(smi,smiles_parse,smi);
     if(sanitize && res){
       // we're going to remove explicit Hs from the graph,
       // this triggers a sanitization, so we do not need to
@@ -215,11 +218,16 @@ namespace RDKit{
 
     return res;
   };
-  RWMol *SmartsToMol(std::string sma,int debugParse,bool mergeHs,
+  RWMol *SmartsToMol(const std::string &smarts,int debugParse,bool mergeHs,
                      std::map<std::string, std::string> *replacements){
     yysmarts_debug = debugParse;
-    boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
+    //boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
+    std::string sma;
+    RWMol *res;
+    
     if(replacements){
+      sma = smarts;
+
       bool loopAgain=true;
       while(loopAgain){
         loopAgain=false;
@@ -231,11 +239,11 @@ namespace RDKit{
           }
         }
       }
+      std::string oInput=sma;
+      res = toMol(labelRecursivePatterns(sma),smarts_parse,oInput);
+    } else {
+      res = toMol(labelRecursivePatterns(smarts),smarts_parse,smarts);
     }
-    std::string oInput=sma;
-    sma=labelRecursivePatterns(sma);
-
-    RWMol *res = toMol(sma,smarts_parse,oInput);
     if(res && mergeHs){
       try {
         MolOps::mergeQueryHs(*res);

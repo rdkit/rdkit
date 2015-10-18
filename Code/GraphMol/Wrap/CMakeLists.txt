@@ -50,3 +50,7 @@ add_pytest(pyGraphMolWrap
 
 add_pytest(pyTestConformerWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)
+if (RDK_TEST_MULTITHREADED)
+  add_pytest(pyTestThreads
+           ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
+endif (RDK_TEST_MULTITHREADED)

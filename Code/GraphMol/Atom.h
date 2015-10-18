@@ -99,7 +99,7 @@ namespace RDKit{
     //! construct an Atom with a particular atomic number
     explicit Atom(unsigned int num);
     //! construct an Atom with a particular symbol (looked up in the PeriodicTable)
-    explicit Atom(std::string what);
+    explicit Atom(const std::string &what);
     Atom(const Atom & other);
     virtual ~Atom();
 

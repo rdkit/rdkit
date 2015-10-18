@@ -129,7 +129,7 @@ namespace ForceFields {
     {
       mmffMolProperties->setMMFFEleTerm(state);
     };
-    void setMMFFVariant(std::string mmffVariant)
+    void setMMFFVariant(const std::string &mmffVariant)
     {
       mmffMolProperties->setMMFFVariant(mmffVariant);
     };

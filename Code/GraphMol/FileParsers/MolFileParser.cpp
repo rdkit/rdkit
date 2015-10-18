@@ -2441,7 +2441,7 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *MolFileToMol(std::string fName, bool sanitize, bool removeHs,bool strictParsing){
+  RWMol *MolFileToMol(const std::string &fName, bool sanitize, bool removeHs,bool strictParsing){
     std::ifstream inStream(fName.c_str());
     if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;

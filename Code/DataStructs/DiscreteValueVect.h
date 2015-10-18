@@ -48,7 +48,7 @@ namespace RDKit{
     DiscreteValueVect(const DiscreteValueVect& other);
 
     //! constructor from a pickle
-    DiscreteValueVect(const std::string pkl){
+    DiscreteValueVect(const std::string &pkl){
       initFromText(pkl.c_str(),pkl.size());
     };
     //! constructor from a pickle
