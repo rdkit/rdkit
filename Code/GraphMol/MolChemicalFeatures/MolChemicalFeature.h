@@ -58,7 +58,7 @@ namespace RDKit {
     const MolChemicalFeatureDef *getFeatDef() const { return dp_def; };
 
     //! \brief returns the active conformer (in the associated molecule)
-    const int getId() const { return d_id;};
+    int getId() const { return d_id;};
     
     //! \brief returns the number of atoms defining the feature
     inline unsigned int getNumAtoms() const {

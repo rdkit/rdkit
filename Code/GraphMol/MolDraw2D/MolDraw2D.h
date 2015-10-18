@@ -113,7 +113,7 @@ namespace RDKit {
     virtual const DashPattern &dash() const { return curr_dash_; }
 
     virtual void setLineWidth( int width ) { curr_width_ = width; }
-    virtual const int lineWidth() const { return curr_width_; }
+    virtual int lineWidth() const { return curr_width_; }
     
     // establishes whether to put string draw mode into super- or sub-script
     // mode based on contents of instring from i onwards. Increments i appropriately
