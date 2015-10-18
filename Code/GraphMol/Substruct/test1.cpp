@@ -618,8 +618,10 @@ void testRecursiveSerialNumbers(){
 }
 
 #ifdef RDK_TEST_MULTITHREADED
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread.hpp>  
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 namespace {
   void runblock(const std::vector<ROMol *> &mols,const ROMol *query,
                 const boost::dynamic_bitset<> &hits,unsigned int count,unsigned int idx){
