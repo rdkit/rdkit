@@ -133,13 +133,20 @@ std::vector<T> *pythonObjectToVect(const python::object &obj){
   return res;
 }
 
+//Quiet warnings on GCC
+#if defined(__GNUC__) || defined(__GNUG__)
+#  define RDUNUSED __attribute__ ((__unused__))
+#else
+#  defined RDUNUSED
+#endif
+
 #ifdef RDK_THREADSAFE_SSS
 // Release the Global Interpreter lock at certain places
 //  on construction - release the lock
 //  on destruction - grab the lock
 //  no entry into the python interpreter can be performed
 //   between releasing and grabbing the lock
-class NOGIL
+class RDUNUSED NOGIL
 {
 public:
     inline NOGIL()
@@ -158,7 +165,7 @@ private:
 };
 #else
 // Never release the lock when not compiling thread-safe
-struct NOGIL {};
+struct RDUNUSED NOGIL {};
 #endif
 
 // -------------------
