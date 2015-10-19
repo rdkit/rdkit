@@ -282,6 +282,7 @@ L900:
 integer ioffset_(n, i__, j)
 integer *n, *i__, *j;
 {
+  (void)n;
     /* System generated locals */
     integer ret_val;
 
