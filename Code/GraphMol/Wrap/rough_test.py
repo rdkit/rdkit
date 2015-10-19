@@ -3118,7 +3118,7 @@ CAS<~>
       or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() \
       != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
     
-    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ResonanceFlags.KEKULE_ALL)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
     bondTypeDict = {}
     # check that we actually have two alternate Kekule structures
@@ -3128,9 +3128,9 @@ CAS<~>
     
     bondTypeDict = {}
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ResonanceFlags.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.ResonanceFlags.UNCONSTRAINED_CATIONS \
-      | Chem.ResonanceFlags.UNCONSTRAINED_ANIONS)
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS)
     self.assertEqual(len(resMolSuppl), 32)
     for i in range(len(resMolSuppl)):
       resMol = resMolSuppl[i]
@@ -3142,15 +3142,15 @@ CAS<~>
     cmpFormalChargeBondOrder(self, resMolSuppl[0], six.next(resMolSuppl))
     
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ResonanceFlags.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.ResonanceFlags.UNCONSTRAINED_CATIONS \
-      | Chem.ResonanceFlags.UNCONSTRAINED_ANIONS, 10)
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS, 10)
     self.assertEqual(len(resMolSuppl), 10)
     
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ResonanceFlags.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.ResonanceFlags.UNCONSTRAINED_CATIONS \
-      | Chem.ResonanceFlags.UNCONSTRAINED_ANIONS, 0);
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS, 0);
     self.assertEqual(len(resMolSuppl), 0)
 
   def testSubstructMatchAcetate(self):
