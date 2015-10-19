@@ -634,6 +634,7 @@ void testIssue239(){
 
   RWMol *mol;
   int needMore;
+  (void) needMore; // add test later
   ForceFields::ForceField *field;
   double e1,e2;
 

@@ -419,7 +419,8 @@ void testRemoveHsCrash() {
   ROMol *newM=MolOps::removeHs(*static_cast<ROMol *>(m));
   delete m;
   unsigned int confId = RDDepict::compute2DCoords(*newM);
-  TEST_ASSERT(confId>=0);
+  (void) confId;
+  //  TEST_ASSERT(confId>=0);
   delete newM;
 }
     
@@ -466,7 +467,8 @@ M  END\n";
   // in the original bug, this led to a crash, so just having it complete
   // means the test passed.
   unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
-  TEST_ASSERT(cid1>=0);
+  (void) cid1;
+  //TEST_ASSERT(cid1>=0);
   delete m1;
 }
 
@@ -534,7 +536,8 @@ void testIssue2948402() {
     std::string smi = "C1C2CC3=CC=CC(C2)CC(O3)C1";
     RWMol *m1 = SmilesToMol(smi);
     unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
-    TEST_ASSERT(cid1>=0);
+    (void) cid1;
+    //TEST_ASSERT(cid1>=0);
     delete m1;
   }
 }
@@ -613,7 +616,8 @@ void testIssue3122141() {
     RDGeom::INT_POINT2D_MAP crdMap;
     crdMap[1]=RDGeom::Point2D(1.0,2.0);
     unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
-    TEST_ASSERT(cid1>=0);
+    (void) cid1;
+    //TEST_ASSERT(cid1>=0);
     delete m1;
   }
 }
@@ -640,7 +644,8 @@ void testIssue3135833() {
     crdMap[31]=RDGeom::Point2D(-1.5795,1.8215);
 
     unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
-    TEST_ASSERT(cid1>=0);
+    (void) cid1;
+    //TEST_ASSERT(cid1>=0);
     delete m1;
   }
 }

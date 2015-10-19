@@ -58,6 +58,7 @@ void test2Compare() {
   std::string fname2 = rdbase + "/Code/GraphMol/ShapeHelpers/test_data/1oir_conf.mol";
   ROMol *m2 = MolFileToMol(fname2);
   double rmsd = MolAlign::alignMol(*m, *m2);
+  CHECK_INVARIANT(rmsd >= 0.0, "");
   dist = MolShapes::tanimotoDistance(*m, *m2);
   CHECK_INVARIANT(RDKit::feq(dist, 0.2813), "");
   delete m2;

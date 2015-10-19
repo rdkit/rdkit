@@ -403,6 +403,7 @@ void testIssue239()
 
   RWMol *mol;
   int needMore;
+  (void) needMore; // Add test later
   ForceFields::ForceField *field;
   double e1, e2;
 
@@ -439,6 +440,7 @@ void testIssue242()
 
   RWMol *mol, *mol2;
   int needMore;
+  (void) needMore; // add test later
   ForceFields::ForceField *field = 0, *field2 = 0;
   std::string mb1,mb2;
   double e1,e2;

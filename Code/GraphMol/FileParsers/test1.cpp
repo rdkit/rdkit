@@ -1606,7 +1606,7 @@ void testMissingFiles(){
   std::string fName;
   bool ok;
   RWMol *m;
-
+  (void) m;
   fName = "bogus_file.mol";
   ok=false;
   try{

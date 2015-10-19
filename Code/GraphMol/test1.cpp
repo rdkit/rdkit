@@ -506,7 +506,7 @@ void testMisc()
   TEST_ASSERT(atBegin!=atEnd);
   while(atBegin!=atEnd){
     const ATOM_SPTR at2=m2[*atBegin];
-    TEST_ASSERT(at2->getIdx()>=0);
+    TEST_ASSERT(at2->getIdx() == *atBegin);
     atBegin++;
   }
   

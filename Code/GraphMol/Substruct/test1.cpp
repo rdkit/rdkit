@@ -1029,6 +1029,7 @@ void testGitHubIssue409(){
     ROMol *mol = SmilesToMol(smi);
     std::vector< MatchVectType > matches;
     unsigned int matched=SubstructMatch(*mol,*mol,matches,false,true,false,false);
+    TEST_ASSERT(matched==matches.size());
     TEST_ASSERT(matches.size()==72);
     matched=SubstructMatch(*mol,*mol,matches,false,true,false,false,16);
     TEST_ASSERT(matches.size()==16);

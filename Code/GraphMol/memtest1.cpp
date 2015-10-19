@@ -29,6 +29,7 @@ void testBasics()
   Atom *a1 = new Atom(6);
   Bond *b1 = new Bond();
   ROMol *m1 = new ROMol();
+  (void) a1;
   (void) b1;
   (void) m1;
   a1 = NULL; // intentional leak
@@ -40,6 +41,7 @@ void testSMILES()
   BOOST_LOG(rdInfoLog)  << "-----------------------\n SMILES Read" << std::endl;
   string smi="CCOC";
   ROMol *m = SmilesToMol(smi);
+  (void) m; // leak al the things
   m = SmilesToMol(smi,0,false);
   smi="C1COC1";
   RWMol *m2 = SmilesToMol(smi);
