@@ -35,6 +35,7 @@ namespace RDKit{
 
 namespace RDKit{
   inline unsigned int getNumThreadsToUse(int target){
+    RDUNUSED_PARAM(target);
     return 1;
   }
 }

@@ -723,6 +723,7 @@ namespace RDKit {
             SubstructureCache::HashKey      cacheKey;
             SubstructureCache::TIndexEntry* cacheEntry = 0;
             bool cacheEntryIsValid = false;
+	    RDUNUSED_PARAM(cacheEntryIsValid); // unused var
 #endif
 
             bool foundInCache = false;

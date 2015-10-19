@@ -127,6 +127,7 @@ namespace RDKit {
       bool gotCoords = false;
       unsigned int iter = 0;
       double largestDistance=-1.0;
+      RDUNUSED_PARAM(largestDistance);
       while ((gotCoords == false) && (iter < maxIterations)) {
         ++iter;
         if(!useRandomCoords){
@@ -268,6 +269,7 @@ namespace RDKit {
             // we need to include the chiral center into the mix
             // we should at least have 3 though
             bool includeSelf = false;
+	    RDUNUSED_PARAM(includeSelf);
             CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
             if (nbrs.size() < 4) {
@@ -435,7 +437,7 @@ namespace RDKit {
           }
         }
         for (size_t ci=0; ci<eargs->confs->size(); ci++) {
-          if(ci%numThreads != threadId) continue;
+          if(rdcast<int>(ci%numThreads) != threadId) continue;
           if(!(*eargs->confsOk)[ci]){
             // if one of the fragments here has already failed, there's no
             // sense in embedding this one
