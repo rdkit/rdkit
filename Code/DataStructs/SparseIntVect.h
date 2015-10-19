@@ -54,6 +54,9 @@ namespace RDKit{
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-compare"
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
     //! return the value at an index
     int getVal(IndexType idx) const {
@@ -81,6 +84,8 @@ namespace RDKit{
     };
 #ifdef __clang__
 #pragma clang diagnostic pop
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic pop
 #endif
     //! support indexing using []
     int operator[] (IndexType idx) const { return getVal(idx); };
