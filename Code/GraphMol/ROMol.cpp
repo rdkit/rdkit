@@ -153,7 +153,7 @@ namespace RDKit{
   Atom *ROMol::getAtomWithIdx(unsigned int idx)
   {
     PRECONDITION(getNumAtoms()>0,"no atoms");
-    RANGE_CHECK(0,idx,getNumAtoms()-1);
+    URANGE_CHECK(idx,getNumAtoms()-1);
   
     MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
     Atom *res = d_graph[vd].get();
@@ -164,7 +164,7 @@ namespace RDKit{
   const Atom *ROMol::getAtomWithIdx(unsigned int idx) const 
   {
     PRECONDITION(getNumAtoms()>0,"no atoms");
-    RANGE_CHECK(0,idx,getNumAtoms()-1);
+    URANGE_CHECK(idx,getNumAtoms()-1);
   
     MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
     const Atom *res = d_graph[vd].get();
@@ -260,7 +260,7 @@ namespace RDKit{
 
   Bond *ROMol::getBondWithIdx(unsigned int idx){
     PRECONDITION(getNumBonds()>0,"no bonds");
-    RANGE_CHECK(0,idx,getNumBonds()-1);
+    URANGE_CHECK(idx,getNumBonds()-1);
 
     BOND_ITER_PAIR bIter = getEdges();
     for(unsigned int i=0;i<idx;i++) ++bIter.first;
@@ -273,7 +273,7 @@ namespace RDKit{
 
   const Bond * ROMol::getBondWithIdx(unsigned int idx) const {
     PRECONDITION(getNumBonds()>0,"no bonds");
-    RANGE_CHECK(0,idx,getNumBonds()-1);
+    URANGE_CHECK(idx,getNumBonds()-1);
 
     BOND_ITER_PAIR bIter = getEdges();
     for(unsigned int i=0;i<idx;i++) ++bIter.first;
@@ -285,8 +285,8 @@ namespace RDKit{
   
 
   Bond * ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int idx2){
-    RANGE_CHECK(0,idx1,getNumAtoms()-1);
-    RANGE_CHECK(0,idx2,getNumAtoms()-1);
+    URANGE_CHECK(idx1,getNumAtoms()-1);
+    URANGE_CHECK(idx2,getNumAtoms()-1);
     Bond *res=0;
 
     MolGraph::edge_descriptor edge;
@@ -301,8 +301,8 @@ namespace RDKit{
   }
 
   const Bond * ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int idx2) const{
-    RANGE_CHECK(0,idx1,getNumAtoms()-1);
-    RANGE_CHECK(0,idx2,getNumAtoms()-1);
+    URANGE_CHECK(idx1,getNumAtoms()-1);
+    URANGE_CHECK(idx2,getNumAtoms()-1);
     const Bond *res=0;
 
     MolGraph::edge_descriptor edge;
@@ -359,8 +359,8 @@ namespace RDKit{
   }
   unsigned int ROMol::addBond(Bond *bond_pin,bool takeOwnership){
     PRECONDITION(bond_pin,"null bond passed in");
-    RANGE_CHECK(0,bond_pin->getBeginAtomIdx(),getNumAtoms()-1);
-    RANGE_CHECK(0,bond_pin->getEndAtomIdx(),getNumAtoms()-1);
+    URANGE_CHECK(bond_pin->getBeginAtomIdx(),getNumAtoms()-1);
+    URANGE_CHECK(bond_pin->getEndAtomIdx(),getNumAtoms()-1);
     PRECONDITION(bond_pin->getBeginAtomIdx()!=bond_pin->getEndAtomIdx(),
                  "attempt to add self-bond");
     PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),

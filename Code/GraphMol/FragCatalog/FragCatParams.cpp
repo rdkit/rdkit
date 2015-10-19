@@ -63,7 +63,7 @@ namespace RDKit{
   }
 
   const ROMol *FragCatParams::getFuncGroup(unsigned int fid) const {
-    RANGE_CHECK(0, fid, d_funcGroups.size());
+    URANGE_CHECK(fid, d_funcGroups.size());
     //return d_funcGroups[fid];
     return d_funcGroups[fid].get(); 
   }

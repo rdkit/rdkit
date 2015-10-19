@@ -22,7 +22,7 @@ namespace ForceFields {
     {
       PRECONDITION(owner,"bad owner");
       const RDGeom::PointPtrVect &pos = owner->positions();
-      RANGE_CHECK(0, idx, pos.size() - 1);
+      URANGE_CHECK(idx, pos.size() - 1);
 
       dp_forceField = owner;
       d_atIdx = idx;

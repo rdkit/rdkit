@@ -92,10 +92,10 @@ namespace ForceFields {
       unsigned int idx3, unsigned int idx4,
       int at2AtomicNum, bool isCBoundToO) {
       PRECONDITION(owner, "bad owner");
-      RANGE_CHECK(0, idx1, owner->positions().size() - 1);
-      RANGE_CHECK(0, idx2, owner->positions().size() - 1);
-      RANGE_CHECK(0, idx3, owner->positions().size() - 1);
-      RANGE_CHECK(0, idx4, owner->positions().size() - 1);
+      URANGE_CHECK(idx1, owner->positions().size() - 1);
+      URANGE_CHECK(idx2, owner->positions().size() - 1);
+      URANGE_CHECK(idx3, owner->positions().size() - 1);
+      URANGE_CHECK(idx4, owner->positions().size() - 1);
 
       dp_forceField = owner;
       d_at1Idx = idx1;

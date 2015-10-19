@@ -39,10 +39,10 @@ namespace ForceFields {
       double forceConst)
     {
       PRECONDITION(owner,"bad owner");
-      RANGE_CHECK(0, idx1, owner->positions().size() - 1);
-      RANGE_CHECK(0, idx2, owner->positions().size() - 1);
-      RANGE_CHECK(0, idx3, owner->positions().size() - 1);
-      RANGE_CHECK(0, idx4, owner->positions().size() - 1);
+      URANGE_CHECK(idx1, owner->positions().size() - 1);
+      URANGE_CHECK(idx2, owner->positions().size() - 1);
+      URANGE_CHECK(idx3, owner->positions().size() - 1);
+      URANGE_CHECK(idx4, owner->positions().size() - 1);
       PRECONDITION((!(maxDihedralDeg < minDihedralDeg))
         && ((maxDihedralDeg - minDihedralDeg) < 360.0), "bad bounds");
       _pretreatDihedrals(minDihedralDeg, maxDihedralDeg);
@@ -64,10 +64,10 @@ namespace ForceFields {
     {
       PRECONDITION(owner,"bad owner");
       const RDGeom::PointPtrVect &pos = owner->positions();
-      RANGE_CHECK(0, idx1, pos.size() - 1);
-      RANGE_CHECK(0, idx2, pos.size() - 1);
-      RANGE_CHECK(0, idx3, pos.size() - 1);
-      RANGE_CHECK(0, idx4, pos.size() - 1);
+      URANGE_CHECK(idx1, pos.size() - 1);
+      URANGE_CHECK(idx2, pos.size() - 1);
+      URANGE_CHECK(idx3, pos.size() - 1);
+      URANGE_CHECK(idx4, pos.size() - 1);
       PRECONDITION((!(maxDihedralDeg < minDihedralDeg))
         && ((maxDihedralDeg - minDihedralDeg) < 360.0), "bad bounds");
 

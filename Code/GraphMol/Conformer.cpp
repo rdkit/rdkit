@@ -50,7 +50,7 @@ namespace RDKit {
     if (dp_mol) {
       PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
     }
-    RANGE_CHECK(0,atomId,d_positions.size()-1);
+    URANGE_CHECK(atomId,d_positions.size()-1);
     return d_positions[atomId];
   } 
   
@@ -58,7 +58,7 @@ namespace RDKit {
     if (dp_mol) {
       PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
     }
-    RANGE_CHECK(0,atomId,d_positions.size()-1);
+    URANGE_CHECK(atomId,d_positions.size()-1);
     return d_positions[atomId];
   }
   

@@ -342,7 +342,7 @@ namespace RDDepict {
                             RDKit::INT_VECT &aids, RDKit::INT_VECT &bids) {
     CHECK_INVARIANT(mol, "");
     unsigned int na = mol->getNumAtoms();
-    RANGE_CHECK(0, aid, na-1);
+    URANGE_CHECK(aid, na-1);
     
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
     boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));

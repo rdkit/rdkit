@@ -133,7 +133,7 @@ namespace RDKit{
   void RWMol::replaceAtom(unsigned int idx,Atom *atom_pin,bool updateLabel){
       RDUNUSED_PARAM(updateLabel);
     PRECONDITION(atom_pin,"bad atom passed to replaceAtom");
-    RANGE_CHECK(0,idx,getNumAtoms()-1);
+    URANGE_CHECK(idx,getNumAtoms()-1);
     Atom *atom_p = atom_pin->copy();
     atom_p->setOwningMol(this);
     atom_p->setIdx(idx);
@@ -250,8 +250,8 @@ namespace RDKit{
 
   unsigned int RWMol::addBond(unsigned int atomIdx1,unsigned int atomIdx2,
                               Bond::BondType bondType){
-    RANGE_CHECK(0,atomIdx1,getNumAtoms()-1);
-    RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
+    URANGE_CHECK(atomIdx1,getNumAtoms()-1);
+    URANGE_CHECK(atomIdx2,getNumAtoms()-1);
     PRECONDITION(atomIdx1!=atomIdx2,"attempt to add self-bond");
     PRECONDITION(!(boost::edge(atomIdx1,atomIdx2,d_graph).second),"bond already exists");
 
@@ -298,8 +298,8 @@ namespace RDKit{
   }
 
   void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
-    RANGE_CHECK(0,aid1,getNumAtoms()-1);
-    RANGE_CHECK(0,aid2,getNumAtoms()-1);
+    URANGE_CHECK(aid1,getNumAtoms()-1);
+    URANGE_CHECK(aid2,getNumAtoms()-1);
     Bond *bnd = getBondBetweenAtoms(aid1, aid2);
     if(!bnd) return;
     unsigned int idx=bnd->getIdx();
@@ -358,7 +358,7 @@ namespace RDKit{
   }
 
   Bond *RWMol::createPartialBond(unsigned int atomIdx1,Bond::BondType bondType){
-    RANGE_CHECK(0,atomIdx1,getNumAtoms()-1);
+    URANGE_CHECK(atomIdx1,getNumAtoms()-1);
 
     Bond *b = new Bond(bondType);
     b->setOwningMol(this);
@@ -369,7 +369,7 @@ namespace RDKit{
   unsigned int RWMol::finishPartialBond(unsigned int atomIdx2,int bondBookmark,
                                         Bond::BondType bondType){
     PRECONDITION(hasBondBookmark(bondBookmark),"no such partial bond");
-    RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
+    URANGE_CHECK(atomIdx2,getNumAtoms()-1);
 
     Bond *bsp = getBondWithBookmark(bondBookmark);
     if(bondType==Bond::UNSPECIFIED){

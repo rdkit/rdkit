@@ -92,8 +92,8 @@ namespace ForceFields {
 
   double ForceField::distance(unsigned int i,unsigned int j,double *pos) {
     PRECONDITION(df_init,"not initialized");
-    RANGE_CHECK(0,i,d_numPoints-1);
-    RANGE_CHECK(0,j,d_numPoints-1);
+    URANGE_CHECK(i,d_numPoints-1);
+    URANGE_CHECK(j,d_numPoints-1);
     if(j<i){
       int tmp=j;
       j = i;
@@ -125,8 +125,8 @@ namespace ForceFields {
 
   double ForceField::distance(unsigned int i,unsigned int j,double *pos) const {
     PRECONDITION(df_init,"not initialized");
-    RANGE_CHECK(0,i,d_numPoints-1);
-    RANGE_CHECK(0,j,d_numPoints-1);
+    URANGE_CHECK(i,d_numPoints-1);
+    URANGE_CHECK(j,d_numPoints-1);
     if(j<i){
       int tmp=j;
       j = i;

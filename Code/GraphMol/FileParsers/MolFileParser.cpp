@@ -162,7 +162,7 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
+      URANGE_CHECK(idx,mol->getNumAtoms()-1);
       QueryAtom a(*(mol->getAtomWithIdx(idx)));
 
       ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
@@ -742,7 +742,7 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(7,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
-      RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
+      URANGE_CHECK(idx, mol->getNumAtoms()-1);
       QueryAtom *a=0;
     
       int nQueries;
@@ -916,7 +916,7 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(3,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
-      RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
+      URANGE_CHECK(idx,mol->getNumAtoms()-1);
       Atom *at = mol->getAtomWithIdx(idx);
       at->setProp(common_properties::molFileAlias,nextLine);
     };
@@ -934,7 +934,7 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(3,3) << " to int on line"<<line;
         throw FileParseException(errout.str()) ;
       }
-      RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
+      URANGE_CHECK(idx,mol->getNumAtoms()-1);
       Atom *at = mol->getAtomWithIdx(idx);
       at->setProp(common_properties::molFileValue,text.substr(7,text.length()-7));
     };
@@ -2025,6 +2025,7 @@ namespace RDKit{
       conf = new Conformer(nAtoms);
       
       unsigned int nSgroups=0,n3DConstraints=0,chiralFlag=0;
+      (void) chiralFlag; // needs to be read
       if(splitLine.size()>2) nSgroups = FileParserUtils::toInt(splitLine[2]);
       if(splitLine.size()>3) n3DConstraints = FileParserUtils::toInt(splitLine[3]);
       if(splitLine.size()>4) chiralFlag = FileParserUtils::toInt(splitLine[4]);
@@ -2193,6 +2194,12 @@ namespace RDKit{
         
     unsigned int nAtoms=0,nBonds=0,nLists=0,chiralFlag=0,nsText=0,nRxnComponents=0;
     int nReactants=0,nProducts=0,nIntermediates=0;
+    (void) nLists; // read from the file but unused
+    (void) nsText;
+    (void) nRxnComponents;
+    (void) nReactants;
+    (void) nProducts;
+    (void) nIntermediates;
     // counts line, this is where we really get started
     line++;
     tempStr = getLine(inStream);

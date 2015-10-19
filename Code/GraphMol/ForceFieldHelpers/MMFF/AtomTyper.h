@@ -69,19 +69,19 @@ namespace RDKit {
         (const ROMol &mol, const Bond *bond);
       boost::uint8_t getMMFFAtomType(const unsigned int idx)
       {
-        RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+        URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
       };
       double getMMFFFormalCharge(const unsigned int idx)
       {
-        RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+        URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge;
       };
       double getMMFFPartialCharge(const unsigned int idx)
       {
-        RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+        URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge;
       };
@@ -214,13 +214,13 @@ namespace RDKit {
       void setMMFFHydrogenType(const Atom *atom);
       void setMMFFFormalCharge(const unsigned int idx, const double fChg)
       {
-        RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+        URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge = fChg;
       };
       void setMMFFPartialCharge(const unsigned int idx, const double pChg)
       {
-        RANGE_CHECK(0, idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+        URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
         
         this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge = pChg;
       };

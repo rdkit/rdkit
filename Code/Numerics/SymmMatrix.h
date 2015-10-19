@@ -86,8 +86,8 @@ namespace RDNumeric {
     }
 
     TYPE getVal(unsigned int i, unsigned int j) const {
-      RANGE_CHECK(0, i, d_size-1);
-      RANGE_CHECK(0, j, d_size-1);
+      URANGE_CHECK(i, d_size-1);
+      URANGE_CHECK(j, d_size-1);
       unsigned int id;
       if (i >= j) {
         id = i*(i+1)/2 + j;
@@ -98,8 +98,8 @@ namespace RDNumeric {
     }
 
     void setVal(unsigned int i, unsigned int j, TYPE val) {
-      RANGE_CHECK(0, i, d_size-1);
-      RANGE_CHECK(0, j, d_size-1);
+      URANGE_CHECK(i, d_size-1);
+      URANGE_CHECK(j, d_size-1);
       unsigned int id;
       if (i >= j) {
         id = i*(i+1)/2 + j;

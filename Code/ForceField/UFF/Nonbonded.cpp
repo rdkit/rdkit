@@ -37,8 +37,8 @@ namespace ForceFields {
       PRECONDITION(owner,"bad owner");
       PRECONDITION(at1Params,"bad params pointer");
       PRECONDITION(at2Params,"bad params pointer");
-      RANGE_CHECK(0,idx1,owner->positions().size()-1);
-      RANGE_CHECK(0,idx2,owner->positions().size()-1);
+      URANGE_CHECK(idx1,owner->positions().size()-1);
+      URANGE_CHECK(idx2,owner->positions().size()-1);
 
       dp_forceField = owner;
       d_at1Idx = idx1;
