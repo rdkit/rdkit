@@ -19,9 +19,11 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
-#include <limits.h>
 #include <boost/cstdint.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#include <limits.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
