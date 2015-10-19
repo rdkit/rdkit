@@ -89,6 +89,7 @@ namespace RDKit {
         .value("KEKULE_ALL", ResonanceMolSupplier::KEKULE_ALL)
         .value("UNCONSTRAINED_CATIONS", ResonanceMolSupplier::UNCONSTRAINED_CATIONS)
         .value("UNCONSTRAINED_ANIONS", ResonanceMolSupplier::UNCONSTRAINED_ANIONS)
+        .export_values()
         ;
       python::class_<ResonanceMolSupplier,boost::noncopyable>("ResonanceMolSupplier",
 						       resonanceMolSupplierClassDoc.c_str(),

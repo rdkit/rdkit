@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2015 Paolo Tosco
 //
@@ -11,7 +10,7 @@
 #include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
-#include "Resonance.h"
+#include <GraphMol/Resonance.h>
 #include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
