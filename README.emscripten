@@ -1,0 +1,30 @@
+Example compilation for emscripten
+
+export PATH=<path to /emsdk_portable/emscripten/master>:$PATH
+
+mkdir build
+cd build
+
+# get path to rdkit source
+export RDKIT_DIR=`pwd`/../rdkit
+# get path to boost root
+export BOOST_ROOT="<path to emscripten/boost/boost_1_56_0>"
+
+emconfigure cmake -Wno-dev \
+          --DRDK_INSTALL_INTREE=OFF \
+          -DRDK_BUILD_PYTHON_WRAPPERS=OFF \
+          -DRDK_BUILD_SWIG_JAVA_WRAPPER=OFF \
+          -DCMAKE_INSTALL_PREFIX=`pwd`/emscripten \
+          -DCMAKE_TOOLCHAIN_FILE=$RDKIT_DIR/Code/cmake/Modules/emscripten.toolchain.cmake \
+          -DBOOST_ROOT:PATHNAME=$BOOST_ROOT \
+          -DBoost_NO_BOOST_CMAKE=TRUE \
+          -DBoost_NO_SYSTEM_PATHS=on \
+          -DBoost_USE_MULTITHREADED=off \
+          -DBoost_USE_STATIC_LIBS=ON \
+          -DEMSCRIPTEN=ON \
+          -DEMSCRIPTEN_ENABLE_EXCEPTIONS=ON \
+          $RDKIT_DIR
+
+make install
+python $RDKIT_DIR/Scripts/run_emscripten_tests.py .
+

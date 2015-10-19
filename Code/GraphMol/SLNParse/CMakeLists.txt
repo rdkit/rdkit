@@ -7,7 +7,7 @@ else(RDK_USE_FLEXBISON)
 endif(RDK_USE_FLEXBISON)
 
 set(T_LIBS ${Boost_LIBRARIES})
-find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
+find_package(${BOOST_PACKAGE} 1.39.0 COMPONENTS regex REQUIRED)
 set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
 
 if(MSVC)

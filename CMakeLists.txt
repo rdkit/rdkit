@@ -39,8 +39,27 @@ if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
 endif()
 
-include(TestBigEndian)
-TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
+if (EMSCRIPTEN)
+  # Hard coded in the toolchain file
+  # hard code boost::
+  set(BOOSTROOT "$ENV{BOOST_ROOT}")
+  if (BOOSTROOT)
+    set (Boost_INCLUDE_DIR CACHE STRING "${BOOSTROOT}/include")
+    set (Boost_LIBRARY_DIR CACHE STRING "${BOOSTROOT}/lib")
+    # we are going to use FindEmscriptenBoost.cmake instead of
+    #  FindBoost.cmake - FindBoost.cmake can fail even if we
+    #   set the correct BOOSTROOT
+    set (BOOST_PACKAGE "EmscriptenBoost")
+  else()
+     message(FATAL_ERROR "Please set  BOOST_ROOT and point to an emscripten built boost when cross compiling to javascript")
+  endif(not BOOSTROOT)
+
+else()
+   include(TestBigEndian)
+   TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
+   set (BOOST_PACKAGE "Boost")
+endif(EMSCRIPTEN)
+
 
 # At build time put runtime binaries in the bin subdirectory
 set(RDK_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
@@ -55,6 +74,12 @@ set(RDKit_Year "2015")
 set(RDKit_Month "09")
 set(RDKit_Revision "1.dev1")
 set(RDKit_ABI "1")
+
+if (EMSCRIPTEN)
+  # emscripten NEEDS the .so extension at the end to know what to do
+  #  linux is happy with RDGeneral.so.1.pre
+  set(RDKit_Revision "${RDKit_Revision}.so")
+endif()
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
@@ -105,6 +130,10 @@ if(MSVC)
 endif(MSVC)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
+  if (EMSCRIPTEN)
+    message(FATAL_ERROR "Building EMSCRIPTEN and PYTHON together is not a good idea")
+  endif (EMSCRIPTEN)
+
   #-------
   # pull in python:
   find_package(PythonInterp)
@@ -166,7 +195,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif(RDK_INSTALL_INTREE)
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
-  find_package(Boost 1.39.0 REQUIRED)
+  find_package(${BOOST_PACKAGE} 1.39.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -179,26 +208,32 @@ include_directories(${RDKit_CodeDir})
 # detect it.
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
-if(RDK_TEST_MULTITHREADED)
-  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED -DBOOST_ALL_NO_LIB")
-endif()
-
-if(RDK_TEST_MULTITHREADED OR RDK_BUILD_THREADSAFE_SSS)
-  ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
-endif()
-
-
-find_package (Threads)
-if(RDK_BUILD_THREADSAFE_SSS)
-  set(T_LIBS ${Boost_LIBRARIES})
-  find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
-  set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-  ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
-  set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+if(EMSCRIPTEN)
+  # no threading, nothing to do here
+  # don't want to test for pthreads when cross
+  #  compiling since we can't really run the compiled
+  #  binary yet
 else()
-  set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
-endif()
+    if(RDK_TEST_MULTITHREADED)
+      ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED -DBOOST_ALL_NO_LIB")
+    endif()
 
+    if(RDK_TEST_MULTITHREADED OR RDK_BUILD_THREADSAFE_SSS)
+      ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
+    endif()
+
+
+    find_package (Threads)
+    if(RDK_BUILD_THREADSAFE_SSS)
+      set(T_LIBS ${Boost_LIBRARIES})
+      find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
+      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+      ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
+      set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    else()
+      set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
+    endif()
+endif()
 
 # setup our compiler flags:
 if (RDK_TEST_COVERAGE)
