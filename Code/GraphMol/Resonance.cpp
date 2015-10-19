@@ -10,7 +10,7 @@
 #include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
-#include "Resonance.h"
+#include <GraphMol/Resonance.h>
 #include <boost/functional/hash.hpp>
 
 namespace RDKit {
