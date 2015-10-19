@@ -39,6 +39,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 	/* Intel ICC/ICPC. ------------------------------------------ */
 
