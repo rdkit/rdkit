@@ -178,7 +178,7 @@ namespace RDKit {
       unsigned int absFormalCharges() const {
         return d_absFormalCharges;
       };
-      unsigned int wtdFormalCharges() const {
+      double wtdFormalCharges() const {
         return d_wtdFormalCharges;
       };
       unsigned int lowestFcIndex() const;
@@ -233,10 +233,10 @@ namespace RDKit {
       int d_totalFormalCharge;
       int d_allowedChgLeftOfN;
       unsigned int d_absFormalCharges;
-      unsigned int d_wtdFormalCharges;
       unsigned int d_fcSameSignDist;
       unsigned int d_fcOppSignDist;
       unsigned int d_nbMissing;
+      double d_wtdFormalCharges;
       boost::uint8_t d_flags;
       ConjBondMap d_conjBondMap;
       ConjAtomMap d_conjAtomMap;
@@ -330,7 +330,7 @@ namespace RDKit {
       void assignFormalCharge() {
         d_fc = oe() - (d_nb + d_tv);
       }
-      bool isNbrCharged(unsigned int bo, unsigned int atomicNum = 0);
+      bool isNbrCharged(unsigned int bo, unsigned int oeConstraint = 0);
     private:
       boost::uint8_t d_nb;
       boost::uint8_t d_tv;

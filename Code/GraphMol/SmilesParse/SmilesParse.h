@@ -40,7 +40,7 @@ namespace RDKit{
    \endcode
 
    */
-  RWMol *SmilesToMol(std::string smi,int debugParse=0,bool sanitize=1,
+  RWMol *SmilesToMol(const std::string &smi,int debugParse=0,bool sanitize=1,
                      std::map<std::string,std::string> *replacements=0);
   //! Construct a molecule from a SMARTS string
   /*!
@@ -52,7 +52,7 @@ namespace RDKit{
 
    \return a pointer to the new molecule; the caller is responsible for free'ing this.
    */
-  RWMol *SmartsToMol(std::string sma,int debugParse=0,bool mergeHs=false,
+  RWMol *SmartsToMol(const std::string &sma,int debugParse=0,bool mergeHs=false,
                      std::map<std::string,std::string> *replacements=0);
 
   class SmilesParseException : public std::exception {

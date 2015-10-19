@@ -51,7 +51,7 @@ namespace RDKit {
     };
     class MMFFMolProperties {
     public:
-      MMFFMolProperties(ROMol &mol, std::string mmffVariant = "MMFF94", 
+      MMFFMolProperties(ROMol &mol, const std::string &mmffVariant = "MMFF94", 
         boost::uint8_t verbosity = MMFF_VERBOSITY_NONE,
         std::ostream &oStream = std::cout);
       ~MMFFMolProperties() {};
@@ -141,7 +141,7 @@ namespace RDKit {
       {
         return this->d_eleTerm;
       };
-      void setMMFFVariant(const std::string mmffVariant)
+      void setMMFFVariant(const std::string &mmffVariant)
       {
         PRECONDITION((mmffVariant == "MMFF94")
           || (mmffVariant == "MMFF94s"), "bad MMFF variant");

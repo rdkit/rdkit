@@ -39,7 +39,7 @@ Atom::Atom(unsigned int num) {
   initAtom();
 };
 
-Atom::Atom(std::string what) {
+Atom::Atom(const std::string &what) {
   d_atomicNum = PeriodicTable::getTable()->getAtomicNumber(what);
   initAtom();
 };
