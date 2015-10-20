@@ -67,9 +67,6 @@ class OutputNode(BaseOutputNode):
     smi = Chem.MolToSmiles(mol)
     outp = [label,smi]+args
     return '%s\n'%(self._delim.join(outp))
-    
-if six.PY3:
-    OutputNode.__next__ = OutputNode.next
 
 #------------------------------------
 #

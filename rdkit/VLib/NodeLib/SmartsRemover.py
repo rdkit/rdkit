@@ -101,10 +101,6 @@ class SmartsRemover(TransformNode):
       
     return cmpd
 
-if six.PY3:
-    SmartsRemover.__next__ = SmartsRemover.next
-
-      
 biggerTest="""
 >>> smis = ['CCOC','CCO.Cl','CC(=O)[O-].[Na+]','OCC','C[N+](C)(C)C.[Cl-]']
 >>> mols = [Chem.MolFromSmiles(x) for x in smis]

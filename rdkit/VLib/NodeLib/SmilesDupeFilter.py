@@ -53,8 +53,6 @@ class DupeFilter(FilterNode):
     else:
       return 0
   
-if six.PY3:
-    DupeFilter.__next__ = DupeFilter.next
 #------------------------------------
 #
 #  doctest boilerplate

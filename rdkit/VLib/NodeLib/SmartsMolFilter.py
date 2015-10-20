@@ -90,8 +90,6 @@ class SmartsFilter(FilterNode):
         res = 1
         break
     return res
-if six.PY3:
-    SmartsFilter.__next__ = SmartsFilter.next
       
 #------------------------------------
 #
