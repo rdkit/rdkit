@@ -554,7 +554,7 @@ void testMultipleConfsExpTors() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true,
-               false,-1, true, 1, -1.0, 0, 1e-3, false, true, true, false);
+               false,-1, true, 1, -1.0, 0, 1e-3, false, true, true, true, false);
   INT_VECT_CI ci;
   SDWriter writer("junk.sdf");
   double energy;
@@ -1375,7 +1375,7 @@ void testMultiThreadMultiConf() {
   ROMol m2(*m);
   DGeomHelpers::EmbedMultipleConfs(*m, cids, 200, 1, 30, 100, true,
                                   false,-1);
-  DGeomHelpers::EmbedMultipleConfs(m2, cids, 200, 4, 30, 100, true,
+  DGeomHelpers::EmbedMultipleConfs(m2, cids, 200, 0, 30, 100, true,
                                   false,-1);
   INT_VECT_CI ci;
  

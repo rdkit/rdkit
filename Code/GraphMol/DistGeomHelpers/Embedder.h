@@ -64,6 +64,7 @@ namespace RDKit {
                                (this shouldn't normally be altered in client code).
       \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                                       smoothing fails
+      \param enforceChirality  enforce the correct chirality if chiral centers are present
 
       \param useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
       \param useBasicKnowledge        impose "basic knowledge" terms such as flat aromatic rings, ketones, etc.
@@ -82,6 +83,7 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap=0,
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
+                      bool enforceChirality=true,
                       bool useExpTorsionAnglePrefs=false,
                       bool useBasicKnowledge=false,
                       bool verbose=false,
@@ -101,6 +103,7 @@ namespace RDKit {
       \param numConfs       Number of conformations to be generated
       \param numThreads     Sets the number of threads to use (more than one thread will only
                             be used if the RDKit was build with multithread support)
+                            If set to zero, the max supported by the system will be used.
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
                             not obtained successfully. The default value is 10x the number of atoms.
       \param seed           provides a seed for the random number generator (so that the same
@@ -138,6 +141,7 @@ namespace RDKit {
 
       \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                                       smoothing fails
+      \param enforceChirality  enforce the correct chirality if chiral centers are present
 
       \param useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
       \param useBasicKnowledge        impose "basic knowledge" terms such as flat aromatic rings, ketones, etc.
@@ -159,6 +163,7 @@ namespace RDKit {
                             const std::map<int,RDGeom::Point3D> *coordMap=0,
                             double optimizerForceTol=1e-3,
                             bool ignoreSmoothingFailures=false,
+                            bool enforceChirality=true,
                             bool useExpTorsionAnglePrefs=false,
                             bool useBasicKnowledge=false,
                             bool verbose=false,
@@ -173,6 +178,7 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
+                                bool enforceChirality=true,
                                 bool useExpTorsionAnglePrefs=false,
                                 bool useBasicKnowledge=false,
                                 bool verbose=false,

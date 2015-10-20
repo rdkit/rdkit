@@ -29,6 +29,7 @@ namespace RDKit {
                     bool randNegEig, unsigned int numZeroFail,
                     python::dict &coordMap, double forceTol,
                     bool ignoreSmoothingFailures,
+                    bool enforceChirality,
                     bool useExpTorsionAnglePrefs,
                     bool useBasicKnowledge,
                     bool printExpTorsionAngles) {
@@ -55,6 +56,7 @@ namespace RDKit {
                                         numZeroFail,
                                         pMapPtr,forceTol,
                                         ignoreSmoothingFailures,
+                                        enforceChirality,
                                         useExpTorsionAnglePrefs,
                                         useBasicKnowledge,
                                         printExpTorsionAngles);
@@ -70,6 +72,7 @@ namespace RDKit {
                               double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
                               bool ignoreSmoothingFailures,
+                              bool enforceChirality,
                               int numThreads,
                               bool useExpTorsionAnglePrefs,
                               bool useBasicKnowledge,
@@ -98,6 +101,7 @@ namespace RDKit {
                                        randNegEig, numZeroFail,
                                        pruneRmsThresh,pMapPtr,forceTol,
                                        ignoreSmoothingFailures,
+                                       enforceChirality,
                                        useExpTorsionAnglePrefs,
                                        useBasicKnowledge,
                                        printExpTorsionAngles);
@@ -163,6 +167,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
@@ -179,6 +184,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
+               python::arg("enforceChirality")=true,
                python::arg("useExpTorsionAnglePrefs")=false,
                python::arg("useBasicKnowledge")=false,
                python::arg("printExpTorsionAngles")=false),
@@ -224,6 +230,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
+    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
                  was built with multi-thread support..\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
@@ -243,6 +250,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
+               python::arg("enforceChirality")=true,
                python::arg("numThreads")=1,
                python::arg("useExpTorsionAnglePrefs")=false,
                python::arg("useBasicKnowledge")=false,

@@ -32,6 +32,7 @@
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
+#include <RDGeneral/RDThreads.h>
 #ifdef RDK_THREADSAFE_SSS
 #include <boost/thread.hpp>  
 #endif
@@ -160,6 +161,7 @@ namespace RDKit {
                       unsigned int numZeroFail, double optimizerForceTol,
                       double basinThresh, int seed, unsigned int maxIterations,
                       const DistGeom::VECT_CHIRALSET *chiralCenters,
+                      bool enforceChirality,
                       bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
                       const std::vector<std::pair<int, int> > &bonds,
                       const std::vector<std::vector<int> > &angles,
@@ -228,7 +230,7 @@ namespace RDKit {
           field=NULL;
           //std::cerr<<"   "<<field->calcEnergy()<<" after npasses: "<<nPasses<<std::endl;
           // Check if any of our chiral centers are badly out of whack. If so, try again
-          if (chiralCenters->size()>0){
+          if (enforceChirality && chiralCenters->size()>0){
             // check the chiral volume:
             BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
               double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(chiralSet->d_idx1,chiralSet->d_idx2,
@@ -248,7 +250,7 @@ namespace RDKit {
           // or have started from random coords. This
           // time removing the chiral constraints and
           // increasing the weight on the fourth dimension
-          if (gotCoords && (chiralCenters->size()>0 || useRandomCoords) ) {
+          if (enforceChirality && gotCoords && (chiralCenters->size()>0 || useRandomCoords) ) {
             ForceFields::ForceField *field2 = DistGeom::constructForceField(*mmat, *positions,
                                                                             *chiralCenters,
                                                                             0.2, 1.0, 0,
@@ -420,6 +422,7 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap,
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
+                      bool enforceChirality,
                       bool useExpTorsionAnglePrefs,
                       bool useBasicKnowledge,
                       bool verbose,
@@ -429,7 +432,7 @@ namespace RDKit {
       EmbedMultipleConfs(mol,confIds,1,1,maxIterations,seed,clearConfs,
                          useRandomCoords,boxSizeMult,randNegEig,
                          numZeroFail,-1.0,coordMap,optimizerForceTol,
-                         ignoreSmoothingFailures,
+                         ignoreSmoothingFailures, enforceChirality,
                          useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
                          basinThresh);
 
@@ -494,6 +497,7 @@ namespace RDKit {
         int seed;
         unsigned int maxIterations;
         DistGeom::VECT_CHIRALSET const *chiralCenters;
+        bool enforceChirality;
         bool useExpTorsionAnglePrefs;
         bool useBasicKnowledge;
         std::vector<std::pair<int, int> > *bonds;
@@ -530,6 +534,7 @@ namespace RDKit {
                                         eargs->optimizerForceTol,
                                         eargs->basinThresh, (ci+1)*eargs->seed,
                                         eargs->maxIterations, eargs->chiralCenters,
+                                        eargs->enforceChirality,
                                         eargs->useExpTorsionAnglePrefs, eargs->useBasicKnowledge,
                                         *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
                                         *eargs->expTorsionAngles, *eargs->improperAtoms, *eargs->atomNums);
@@ -569,6 +574,7 @@ namespace RDKit {
                             const std::map<int,RDGeom::Point3D>  *coordMap,
                             double optimizerForceTol,
                             bool ignoreSmoothingFailures,
+                            bool enforceChirality,
                             bool useExpTorsionAnglePrefs,
                             bool useBasicKnowledge,
                             bool verbose,
@@ -576,11 +582,6 @@ namespace RDKit {
       if(!mol.getNumAtoms()){
         throw ValueErrorException("molecule has no atoms");
       }
-
-      // BasicKnowledge can only be used in conjunction with ExpTorsionAngle
-      /*if (useBasicKnowledge && !(useExpTorsionAnglePrefs)) {
-        throw ValueErrorException("basic knowledge can only be imposed in conjunction with exp. torsion preferences");
-      }*/
 
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
@@ -676,9 +677,9 @@ namespace RDKit {
         }
 #ifdef RDK_THREADSAFE_SSS
         boost::thread_group tg;
-#else
-        numThreads=1;
 #endif
+        numThreads = getNumThreadsToUse(numThreads);
+
         detail::EmbedArgs eargs={&confsOk,
                                  fourD,
                                  &fragMapping,&confs,
@@ -689,6 +690,7 @@ namespace RDKit {
                                  optimizerForceTol,
                                  basinThresh, seed,
                                  maxIterations, &chiralCenters,
+                                 enforceChirality,
                                  useExpTorsionAnglePrefs,
                                  useBasicKnowledge,
                                  &bonds, &angles, &expTorsionAtoms,
@@ -734,6 +736,7 @@ namespace RDKit {
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
+                                bool enforceChirality,
                                 bool useExpTorsionAnglePrefs,
                                 bool useBasicKnowledge,
                                 bool verbose,
@@ -747,6 +750,7 @@ namespace RDKit {
                          coordMap,
                          optimizerForceTol,
                          ignoreSmoothingFailures,
+                         enforceChirality,
                          useExpTorsionAnglePrefs,
                          useBasicKnowledge,
                          verbose,
