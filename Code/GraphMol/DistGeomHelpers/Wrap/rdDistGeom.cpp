@@ -232,7 +232,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  of the bounds matrix fails.\n\
     - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
-                 was built with multi-thread support..\n\
+                 was built with multi-thread support.\n\
+                If set to zero, the max supported by the system will be used.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\

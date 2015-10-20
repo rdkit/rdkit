@@ -33,9 +33,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
 
 #define ERROR_TOL 0.00001
 
@@ -229,6 +226,7 @@ namespace RDKit {
           delete field;
           field=NULL;
           //std::cerr<<"   "<<field->calcEnergy()<<" after npasses: "<<nPasses<<std::endl;
+
           // Check if any of our chiral centers are badly out of whack. If so, try again
           if (enforceChirality && chiralCenters->size()>0){
             // check the chiral volume:
@@ -250,7 +248,7 @@ namespace RDKit {
           // or have started from random coords. This
           // time removing the chiral constraints and
           // increasing the weight on the fourth dimension
-          if (enforceChirality && gotCoords && (chiralCenters->size()>0 || useRandomCoords) ) {
+          if (gotCoords && (chiralCenters->size()>0 || useRandomCoords) ) {
             ForceFields::ForceField *field2 = DistGeom::constructForceField(*mmat, *positions,
                                                                             *chiralCenters,
                                                                             0.2, 1.0, 0,
@@ -278,7 +276,7 @@ namespace RDKit {
           }
 
           // test if chirality is correct
-          if (gotCoords && (chiralCenters->size() > 0)) {
+          if (enforceChirality && gotCoords && (chiralCenters->size() > 0)) {
             // "distance matrix" chirality test
             std::set<int> atoms;
             BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
