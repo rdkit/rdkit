@@ -24,7 +24,7 @@ class OutputNode(VLibNode):
   Usage Example:
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> supplier = SupplyNode(contents=[1,2,3])
-    >>> from six import StringIO
+    >>> from rdkit.six import StringIO
     >>> sio = StringIO()
     >>> node = OutputNode(dest=sio,strFunc=lambda x:'%s '%(str(x)))
     >>> node.AddParent(supplier)

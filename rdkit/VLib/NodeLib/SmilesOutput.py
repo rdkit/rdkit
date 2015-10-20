@@ -25,7 +25,7 @@ class OutputNode(BaseOutputNode):
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> suppl = SupplyNode(contents=mols)
-    >>> from six import StringIO
+    >>> from rdkit.six import StringIO
     >>> sio = StringIO()
     >>> node = OutputNode(dest=sio,delim=', ')
     >>> node.AddParent(suppl)
