@@ -1706,8 +1706,8 @@ void testIssue3009911(){
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       unsigned int rank;
-      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
-      m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
+      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank))
+      m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,rank);
       ranks[i]=rank;
     }
     // basics:
@@ -1734,8 +1734,13 @@ void testIssue3009911(){
     MolOps::assignStereochemistry(*m,true);
     for(unsigned int i=0;i<m->getNumAtoms();++i){
       unsigned int rank;
+<<<<<<< HEAD
       TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
       m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
+=======
+      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank))
+      m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,rank);
+>>>>>>> 9dcb127e37026f5932702c64e803e87f3352957e
       ranks[i]=rank;
     }
     // basics:

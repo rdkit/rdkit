@@ -816,8 +816,8 @@ void test10()
   Chirality::assignAtomCIPRanks(*m,ranks);
 
   unsigned int cip1,cip2;
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPRank"));
-  m->getAtomWithIdx(0)->getProp("_CIPRank",cip1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPRank));
+  m->getAtomWithIdx(0)->getProp(common_properties::_CIPRank,cip1);
   TEST_ASSERT(cip1==ranks[0]);
   TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::_CIPRank));
   m->getAtomWithIdx(2)->getProp(common_properties::_CIPRank,cip2);
@@ -839,8 +839,8 @@ void test10()
   Chirality::assignAtomCIPRanks(*m,ranks);
   for(unsigned int i=0;i<m->getNumAtoms();i++){
     unsigned int cip;
-    TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"));
-    m->getAtomWithIdx(i)->getProp("_CIPRank",cip);
+    TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank));
+    m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank,cip);
   }
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -5062,6 +5062,7 @@ int main(){
   testAtomAtomMatch();
   testGithubIssue190();
   testMolFragsWithQuery();
+  test11();
   testGithubIssue418();
   testGithubIssue432();
   testGithubIssue443();

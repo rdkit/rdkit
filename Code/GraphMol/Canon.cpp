@@ -422,7 +422,7 @@ namespace Canon {
       }
     }
   }
-  
+
   // finds cycles
   void dfsFindCycles(ROMol &mol,int atomIdx,int inBondIdx,
                      std::vector<AtomColors> &colors,
@@ -646,7 +646,7 @@ namespace Canon {
           // ring closure or finished atom... skip it.
           continue;
         }
-        long rank=ranks[otherIdx];
+        unsigned long rank=ranks[otherIdx];
         if( theBond->getOwningMol().getRingInfo()->numBondRings(theBond->getIdx()) ){
           if(!bondSymbols){
             rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *

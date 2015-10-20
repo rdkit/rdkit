@@ -104,6 +104,12 @@ SELECT mol_from_smiles('');
  
 (1 row)
 
+SELECT mol_to_smiles(mol_from_smiles(''));
+ mol_to_smiles 
+---------------
+ 
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);

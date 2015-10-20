@@ -2020,10 +2020,7 @@ void testBug1844617(){
     BOOST_LOG(rdInfoLog) << smi2 << std::endl;
     TEST_ASSERT(smi==smi2);
 #endif  
-    delete mol;
-  }
-
-
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -3613,7 +3610,6 @@ main(int argc, char *argv[])
   testGithub45();
   testGithub206();
   testGithub210();
-//  testGithub298();
   testGithub378();
   testGithub389();
   testBug1719046();

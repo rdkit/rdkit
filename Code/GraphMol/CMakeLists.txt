@@ -104,3 +104,4 @@ rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse FileParsers GraphM
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 
+

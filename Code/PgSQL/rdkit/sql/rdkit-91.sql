@@ -24,9 +24,6 @@ SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
 SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
 SELECT is_valid_smiles('');
 SELECT mol_from_smiles('');
-
-SELECT is_valid_smiles('');
-SELECT mol_from_smiles('');
 SELECT mol_to_smiles(mol_from_smiles(''));
 
 
