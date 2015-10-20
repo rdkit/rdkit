@@ -147,6 +147,9 @@
 ## Deprecated code (to be removed in next release):
 
 ## Removed code:
+  - rdkit/DataStructs/BitVect.py : a C++ version is used, this was only present for historical reasons
+  - rdkit/DataStructs/SparseIntVect.py : a C++ version is used, this was only present for historical reasons
+
 
 ## Contrib updates:
 

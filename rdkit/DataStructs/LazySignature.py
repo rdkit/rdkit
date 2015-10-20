@@ -59,7 +59,7 @@ class LazySig:
     if which<=0 or which>=self.size:
       raise IndexError('bad index')
     
-    if self._cache.has_key(which):
+    if which in self._cache:
       v= self._cache[which]
     else:
       v = self.computeFunc(which)
