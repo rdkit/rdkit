@@ -7,7 +7,138 @@
 
 ## Bug Fixes:
 
-## New Features:
+  - Draw.MolToImage(mol) does not work for Python 3, because cairo for Python 3 has not yet implemented Surface.create_for_data
+ (github issue #460 from apahl)
+  - SDWriter.close() fails when the underlying stream has an error
+ (github issue #498 from greglandrum)
+  - Hexafluorophosphate cannot be handled
+ (github issue #510 from greglandrum)
+  - Labels of highlighted atoms are invisible
+ (github issue #519 from NadineSchneider)
+  - Bad ring finding in a complex fused ring
+ (github issue #526 from greglandrum)
+  - Regression: _smilesAtomOutputOrder incorrect for dot disconnected molecules
+ (github issue #532 from baoilleach)
+  - Bonds in allyl cation are not conjugated
+ (github issue #539 from greglandrum)
+  - SaltBuilder._initPatterns incorrectly handles SMARTS errors
+ (github issue #541 from adalke)
+  - merging query Hs failing on recursive SMARTS
+ (github issue #544 from greglandrum)
+  - Crash in O3A alignment when running multi-threaded
+ (github issue #546 from greglandrum)
+  - PyMol.py: changed xmlrpc import to have Python2/Python3 compatibility
+ (github issue #547 from apahl)
+  - TFD fix for single bonds adjacent to triple bonds
+ (github issue #550 from sriniker)
+  - Chirality not affected by atom-map index
+ (github issue #553 from adalke)
+  - Implicit Hs should not appear in depictions for query atoms.
+ (github issue #556 from greglandrum)
+  - Fix issue with invalid reactions throwing NameError
+ (github issue #559 from bp-kelley)
+  - InChI radicals not properly converted
+ (github issue #562 from pierrelb)
+  - MMPA code not python3 compatible
+ (github issue #564 from greglandrum)
+  - Incorrect stereochemistry after embedding
+ (github issue #568 from greglandrum)
+  - changed FrameToGridImage() so that the dataframe index can be used as legend
+ (github issue #570 from apahl)
+  - MolDraw2DCairo.GetDrawingText() doesn't work with Python3
+ (github issue #571 from greglandrum)
+  - addBond return value
+ (github issue #572 from JLVarjo)
+  - Process aborts during ForwardSDMolSupplier gc when the file object is closed
+ (github issue #579 from adalke)
+  - Importing PandasTools on Windows fails due to Salts.txt
+ (github issue #583 from baoilleach)
+  - renumberAtoms() not setting conformer dimensionality properly
+ (github issue #584 from greglandrum)
+  - stereo atoms property on double bonds not being updated properly with insertMol
+ (github issue #608 from greglandrum)
+  - UFF Atom type not properly assigned to lanthanides
+ (github issue #613 from greglandrum)
+  - segfault from MolToInchi when bad bond stereochem info is present
+ (github issue #614 from greglandrum)
+  - MQN12 (heavy atom count) seems to be always 0.
+ (github issue #623 from kienerj)
+
+## New Features and Enhancements:
+  - Fix mol drawing on Python3 (issue #460)
+ (github issue #504 from apahl)
+  - SDMolSupplier(), setData() and strictParsing
+ (github issue #507 from ptosco)
+  - Improvements to LoadSDF and WriteSDF
+ (github issue #513 from samoturk)
+  - Some enhancements for the new canonicalization
+ (github issue #520 from NadineSchneider)
+  - Support getting atoms involved in Pharm2D bits
+ (github issue #530 from greglandrum)
+  - Optimized MMFF::MMFFOptimizeMoleculeConfs()
+ (github issue #534 from ptosco)
+  - RDKit learns how to filter PAINS/BRENK/ZINC/NIH via FilterCatalog
+ (github issue #536 from bp-kelley)
+  - Expose Conformer's copy constructor to Python
+ (github issue #545 from greglandrum)
+  - PyMol.py: changed xmlrpc import to have Python2/Python3 compatibility
+ (github issue #547 from apahl)
+  - Add a curated set of PAINS filters to the RDKit
+ (github issue #555 from greglandrum)
+  - Change MMPA to use CanonicalRankAtoms instead of _CIPRank
+ (github issue #561 from adalke)
+  - Add adjustQuery() function to make substructure queries more specific.
+ (github issue #567 from greglandrum)
+  - changed sascorer.py to enable import from different location
+ (github issue #569 from apahl)
+  - add export_values() to enums in the python wrapper where it's sensible to do so
+ (github issue #573 from greglandrum)
+  - Support Sheridan's BT and BP fingerprints
+ (github issue #574 from greglandrum)
+  - Locale dependent float for _GasteigerCharge
+ (github issue #577 from adalke)
+  - fmcs: implement adding an initial seed structure
+ (github issue #580 from AlexanderSavelyev)
+  - Where possible convert docs from RST to MD
+ (github issue #585 from greglandrum)
+  - [UGM2015] Autodetection of numThreads
+ (github issue #586 from mwojcikowski)
+  - Generating SVG Images with Transparent Background
+ (github issue #587 from gungorbudak)
+  - updates to PandasTools.LoadSDF
+ (github issue #599 from adalke)
+  - Can control mol depiction size with PandasTools.molSize = (200,200).
+ (github issue #600 from samoturk)
+  - pandas performance and functionality improvements
+ (github issue #601 from adalke)
+  - Adding documentation for installation with conda.
+ (github issue #602 from strets123)
+  - Automatic atom reordering in TorsionFingerprints
+ (github issue #603 from sriniker)
+  - Added option to use SVG rendering in pandas data frames
+ (github issue #609 from samoturk)
+  - Handle inserting molecules with conformers into molecules without conformers
+ (github issue #610 from greglandrum)
+  - If wedged bonds are already present, write them to mol blocks
+ (github issue #611 from greglandrum)
+  - Dev/filter catalog java wrapper
+ (github issue #612 from bp-kelley)
+  - Support extended reduced graphs
+ (github issue #615 from greglandrum)
+  - port NumSpiroCenters and NumBridgeheadAtoms descriptors to C++
+ (github issue #617 from greglandrum)
+  - Add parser/writer for peptide sequences
+ (github issue #620 from greglandrum)
+  - Add parser/writer for FASTA
+ (github issue #621 from greglandrum)
+  - Add parser/writer for HELM
+ (github issue #622 from greglandrum)
+  - Migrate std::string APIs to const std::string &
+ (github issue #627 from bp-kelley)
+  - Improved chirality testing in the distance-geometry embedding
+ (github issue #628 from sriniker)
+  - Improvements of TFD
+ (github issue #630 from sriniker)
 
 ## New Database Cartridge Features:
 
