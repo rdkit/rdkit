@@ -1897,7 +1897,6 @@ void testBug1842174(){
 void testBug1844617(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1844617: oscillating chirality in canonical smiles" << std::endl;
-  {
     RWMol *mol;
     std::string smi,smi2;
     std::string label;
