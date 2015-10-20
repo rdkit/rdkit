@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 from rdkit import RDConfig
+from rdkit import six
 import sys,os,types
 from rdkit import Chem
 from rdkit.VLib.Transform import TransformNode
@@ -84,7 +85,7 @@ class SmartsRemover(TransformNode):
     targets = [None]*nPatts
     for i in range(nPatts):
       p = patterns[i]
-      if type(p) in types.StringTypes:
+      if type(p) in (str,bytes):
         m = Chem.MolFromSmarts(p)
         if not m:
           raise ValueError('bad smarts: %s'%(p))
@@ -99,6 +100,10 @@ class SmartsRemover(TransformNode):
       #sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
       
     return cmpd
+
+if six.PY3:
+    SmartsRemover.__next__ = SmartsRemover.next
+
       
 biggerTest="""
 >>> smis = ['CCOC','CCO.Cl','CC(=O)[O-].[Na+]','OCC','C[N+](C)(C)C.[Cl-]']

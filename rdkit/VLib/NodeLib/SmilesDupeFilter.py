@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 from rdkit import RDConfig
+from rdkit import six
 import sys,os
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
@@ -52,6 +53,8 @@ class DupeFilter(FilterNode):
     else:
       return 0
   
+if six.PY3:
+    DupeFilter.__next__ = DupeFilter.next
 #------------------------------------
 #
 #  doctest boilerplate
