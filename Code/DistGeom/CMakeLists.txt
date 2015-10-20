@@ -3,7 +3,7 @@
 rdkit_library(DistGeometry
               DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
               ChiralViolationContrib.cpp
-              LINK_LIBRARIES EigenSolvers ForceField)
+              LINK_LIBRARIES EigenSolvers ForceField ForceFieldHelpers)
 
 rdkit_headers(BoundsMatrix.h
               ChiralSet.h

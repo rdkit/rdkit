@@ -27,9 +27,11 @@ namespace RDKit {
                     int seed, bool clearConfs,
                     bool useRandomCoords,double boxSizeMult,
                     bool randNegEig, unsigned int numZeroFail,
-                    python::dict &coordMap,double forceTol,
+                    python::dict &coordMap, double forceTol,
                     bool ignoreSmoothingFailures,
-                    bool enforceChirality){
+                    bool useExpTorsionAnglePrefs,
+                    bool useBasicKnowledge,
+                    bool printExpTorsionAngles) {
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
     unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
@@ -42,6 +44,7 @@ namespace RDKit {
       pMapPtr=&pMap;
     }
 
+    
     int res;
     {
       NOGIL gil;
@@ -52,21 +55,25 @@ namespace RDKit {
                                         numZeroFail,
                                         pMapPtr,forceTol,
                                         ignoreSmoothingFailures,
-                                        enforceChirality);
+                                        useExpTorsionAnglePrefs,
+                                        useBasicKnowledge,
+                                        printExpTorsionAngles);
     }
     return res;
   }
 
   INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
-			                        unsigned int maxAttempts,
+                              unsigned int maxAttempts,
                               int seed, bool clearConfs,
-			                        bool useRandomCoords,double boxSizeMult,
+                              bool useRandomCoords,double boxSizeMult,
                               bool randNegEig, unsigned int numZeroFail,
-			                        double pruneRmsThresh,python::dict &coordMap,
+                              double pruneRmsThresh,python::dict &coordMap,
                               double forceTol,
                               bool ignoreSmoothingFailures,
-                              bool enforceChirality,
-                              int numThreads) {
+                              int numThreads,
+                              bool useExpTorsionAnglePrefs,
+                              bool useBasicKnowledge,
+                              bool printExpTorsionAngles) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -91,7 +98,9 @@ namespace RDKit {
                                        randNegEig, numZeroFail,
                                        pruneRmsThresh,pMapPtr,forceTol,
                                        ignoreSmoothingFailures,
-                                       enforceChirality);
+                                       useExpTorsionAnglePrefs,
+                                       useBasicKnowledge,
+                                       printExpTorsionAngles);
     }
     return res;
   } 
@@ -108,9 +117,9 @@ namespace RDKit {
     DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW);
     PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
-	   static_cast<void *>(mat->getData()),
-	   nats*nats*sizeof(double));
-	   
+           static_cast<void *>(mat->getData()),
+           nats*nats*sizeof(double));
+     
     return PyArray_Return(res);
   }
 }
@@ -154,7 +163,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
-    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
+    - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+    - useBasicKnowledge : impose basic knowledge such as flat rings\n\
+    - printExpTorsionAngles : print the output from the experimental torsion angles\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -163,12 +174,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               (python::arg("mol"), python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
-	             python::arg("boxSizeMult")=2.0,
+               python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
-               python::arg("enforceChirality")=true),
+               python::arg("useExpTorsionAnglePrefs")=false,
+               python::arg("useBasicKnowledge")=false,
+               python::arg("printExpTorsionAngles")=false),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -211,10 +224,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  the distance geometry force field.\n\
     - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
                  of the bounds matrix fails.\n\
-    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
-                 was built with multi-thread support.\n\
-                If set to zero, the max supported by the system will be used.\n\
+                 was built with multi-thread support..\n\
+    - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+    - useBasicKnowledge : impose basic knowledge such as flat rings\n\
+    - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -223,14 +237,16 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
-	             python::arg("boxSizeMult")=2.0,
+               python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
-	             python::arg("pruneRmsThresh")=-1.0,
+               python::arg("pruneRmsThresh")=-1.0,
                python::arg("coordMap")=python::dict(),
                python::arg("forceTol")=1e-3,
                python::arg("ignoreSmoothingFailures")=false,
-               python::arg("enforceChirality")=true,
-               python::arg("numThreads")=1),
+               python::arg("numThreads")=1,
+               python::arg("useExpTorsionAnglePrefs")=false,
+               python::arg("useBasicKnowledge")=false,
+               python::arg("printExpTorsionAngles")=false),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\

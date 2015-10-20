@@ -64,7 +64,11 @@ namespace RDKit {
                                (this shouldn't normally be altered in client code).
       \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                                       smoothing fails
-      \param enforceChirality  enforce the correct chirality if chiral centers are present
+
+      \param useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
+      \param useBasicKnowledge        impose "basic knowledge" terms such as flat aromatic rings, ketones, etc.
+      \param verbose        print output of experimental torsion-angle preferences
+
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
 
@@ -78,7 +82,9 @@ namespace RDKit {
                       const std::map<int,RDGeom::Point3D> *coordMap=0,
                       double optimizerForceTol=1e-3,
                       bool ignoreSmoothingFailures=false,
-                      bool enforceChirality=true,
+                      bool useExpTorsionAnglePrefs=false,
+                      bool useBasicKnowledge=false,
+                      bool verbose=false,
                       double basinThresh=5.0);
 
     //*! Embed multiple conformations for a molecule
@@ -95,7 +101,6 @@ namespace RDKit {
       \param numConfs       Number of conformations to be generated
       \param numThreads     Sets the number of threads to use (more than one thread will only
                             be used if the RDKit was build with multithread support)
-                            If set to zero, the max supported by the system will be used.
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
                             not obtained successfully. The default value is 10x the number of atoms.
       \param seed           provides a seed for the random number generator (so that the same
@@ -134,12 +139,12 @@ namespace RDKit {
       \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                                       smoothing fails
 
-      \param enforceChirality  enforce the correct chirality if chiral centers are present
+      \param useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
+      \param useBasicKnowledge        impose "basic knowledge" terms such as flat aromatic rings, ketones, etc.
+      \param verbose        print output of experimental torsion-angle preferences
 
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
-
-
 
     */
     void EmbedMultipleConfs(ROMol &mol,
@@ -154,19 +159,23 @@ namespace RDKit {
                             const std::map<int,RDGeom::Point3D> *coordMap=0,
                             double optimizerForceTol=1e-3,
                             bool ignoreSmoothingFailures=false,
-                            bool enforceChirality=true,
+                            bool useExpTorsionAnglePrefs=false,
+                            bool useBasicKnowledge=false,
+                            bool verbose=false,
                             double basinThresh=5.0);
     //! \overload
     INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
                                 unsigned int maxIterations=30, 
                                 int seed=-1, bool clearConfs=true, 
-				bool useRandomCoords=false,double boxSizeMult=2.0,
+                                bool useRandomCoords=false,double boxSizeMult=2.0,
                                 bool randNegEig=true, unsigned int numZeroFail=1,
                                 double pruneRmsThresh=-1.0,
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
                                 double optimizerForceTol=1e-3,
                                 bool ignoreSmoothingFailures=false,
-                                bool enforceChirality=true,
+                                bool useExpTorsionAnglePrefs=false,
+                                bool useBasicKnowledge=false,
+                                bool verbose=false,
                                 double basinThresh=5.0);
 
   }
