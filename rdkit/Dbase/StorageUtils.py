@@ -56,16 +56,16 @@ def RDIdToInt(id,validate=1):
   >>> try:
   ...   RDIdToInt('RDCmpd-009-000-109-8')
   ... except ValueError:
-  ...   print 'ok'
+  ...   print('ok')
   ... else:
-  ...   print 'failed'
+  ...   print('failed')
   ok
   >>> try:
   ...   RDIdToInt('bogus')
   ... except ValueError:
-  ...   print 'ok'
+  ...   print('ok')
   ... else:
-  ...   print 'failed'
+  ...   print('failed')
   ok
 
   """
@@ -106,9 +106,9 @@ def IndexToRDId(idx,leadText='RDCmpd'):
   >>> try:
   ...   IndexToRDId(-1)
   ... except ValueError:
-  ...   print 'ok'
+  ...   print('ok')
   ... else:
-  ...   print 'failed'
+  ...   print('failed')
   ok
 
   """
