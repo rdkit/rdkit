@@ -1767,9 +1767,9 @@ namespace RDKit {
         boost::tie(nbrIter, endNbrIter) = m->getAtomNeighbors(atom);
         std::vector<std::pair<unsigned int, unsigned int> > neighbors;
         while (nbrIter != endNbrIter) {
-          unsigned int cip = 0;
-          if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
-            m->getAtomWithIdx(*nbrIter)->getProp("_CIPRank", cip);
+          int cip = 0;
+          // if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
+          //   m->getAtomWithIdx(*nbrIter)->getProp("_CIPRank", cip);
           neighbors.push_back(std::make_pair(cip, *nbrIter));
           ++nbrIter;
         }
@@ -1911,7 +1911,8 @@ namespace RDKit {
       // will eventually remove it, I added it any way
       if (//bondType == Bond::DOUBLE and
           (bond->getStereo() == Bond::STEREOZ || 
-           bond->getStereo() == Bond::STEREOE)) {
+           bond->getStereo() == Bond::STEREOE) &&
+          bond->getStereoAtoms().size()>=2 ) {
         inchi_Stereo0D stereo0D;
         if (bond->getStereo() == Bond::STEREOZ)
           stereo0D.parity = INCHI_PARITY_ODD;

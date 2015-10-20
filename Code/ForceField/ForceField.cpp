@@ -112,10 +112,8 @@ namespace ForceFields {
         }
       } else {
         res = 0.0;
-        double *pi=&pos[d_dimension*i];
-        double *pj=&pos[d_dimension*j];
         for(unsigned int idx=0;idx<d_dimension;idx++){
-          double tmp=pi[idx]-pj[idx];
+          double tmp=pos[d_dimension*i+idx]-pos[d_dimension*j+idx];
           res += tmp*tmp;
         }
       }
@@ -143,10 +141,8 @@ namespace ForceFields {
       }
     } else {
       res = 0.0;
-      double *pi=&pos[d_dimension*i];
-      double *pj=&pos[d_dimension*j];
       for(unsigned int idx=0;idx<d_dimension;idx++){
-        double tmp=pi[idx]-pj[idx];
+        double tmp=pos[d_dimension*i+idx]-pos[d_dimension*j+idx];
         res += tmp*tmp;
       }
     }
@@ -200,7 +196,7 @@ namespace ForceFields {
     this->scatter(pos);
     // now loop over the contribs
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
-        contrib != d_contribs.end();++contrib){
+        contrib != d_contribs.end();contrib++){
       res += (*contrib)->getEnergy(pos);
     }
     delete [] pos;
@@ -217,7 +213,7 @@ namespace ForceFields {
 
     // now loop over the contribs
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
-        contrib != d_contribs.end();++contrib){
+        contrib != d_contribs.end();contrib++){
       double E=(*contrib)->getEnergy(pos);
       res += E;
     }
@@ -233,12 +229,12 @@ namespace ForceFields {
     double *pos = new double[d_dimension*N];
     this->scatter(pos);
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
-        contrib != d_contribs.end();++contrib){
+        contrib != d_contribs.end();contrib++){
       (*contrib)->getGrad(pos,grad);
     }
     // zero out gradient values for any fixed points:
     for(INT_VECT::const_iterator it=d_fixedPoints.begin();
-        it!=d_fixedPoints.end();++it){
+        it!=d_fixedPoints.end();it++){
       CHECK_INVARIANT(static_cast<unsigned int>(*it)<d_numPoints,"bad fixed point index");
       unsigned int idx=d_dimension*(*it);
       for (unsigned int di = 0; di < this->dimension(); ++di) {
@@ -254,12 +250,12 @@ namespace ForceFields {
     if(d_contribs.empty()) return;
 
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
-        contrib != d_contribs.end();++contrib){
+        contrib != d_contribs.end();contrib++){
       (*contrib)->getGrad(pos,grad);
     }
 
     for(INT_VECT::const_iterator it=d_fixedPoints.begin();
-        it!=d_fixedPoints.end();++it){
+        it!=d_fixedPoints.end();it++){
       CHECK_INVARIANT(static_cast<unsigned int>(*it)<d_numPoints,"bad fixed point index");
       unsigned int idx=d_dimension*(*it);
       for (unsigned int di = 0; di < this->dimension(); ++di) {
