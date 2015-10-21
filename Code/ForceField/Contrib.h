@@ -19,6 +19,7 @@ namespace ForceFields {
     friend class ForceField;
 
     ForceFieldContrib() : dp_forceField(0) {};
+    ForceFieldContrib(ForceFields::ForceField *owner) : dp_forceField(owner) {};
     virtual ~ForceFieldContrib() {};
 
     //! returns our contribution to the energy of a position
