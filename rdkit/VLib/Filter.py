@@ -6,6 +6,7 @@
 import sys
 
 from rdkit.VLib.Node import VLibNode
+from rdkit import six
 
 class FilterNode(VLibNode):
   """ base class for nodes which filter their input
@@ -76,12 +77,12 @@ class FilterNode(VLibNode):
       args = []
       try:
         for parent in parents:
-          args.append(parent.next())
+          args.append(next(parent))
       except StopIteration:
         raise StopIteration
       args = tuple(args)
       if self._func is not None:
-        r = apply(self._func,args)
+        r = self._func(*args)
         if self._negate:
           r = not r
           #sys.stderr.write('\t\tNEGATE -> %d\n'%(r))
@@ -95,6 +96,8 @@ class FilterNode(VLibNode):
       res = res[0]
     return res
   
+if six.PY3:
+    FilterNode.__next__ = FilterNode.next
 
   
 #------------------------------------
