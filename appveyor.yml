@@ -1,4 +1,4 @@
-version: 2015.03.1.{build}
+version: 2015.09.1.{build}
 
 environment:
   P: "c:/projects/libs"
