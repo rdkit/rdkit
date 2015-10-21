@@ -534,11 +534,11 @@ void testMultipleConfs() {
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true,
 						   false,-1);
   INT_VECT_CI ci;
-  SDWriter writer("junk.sdf");
+  //SDWriter writer("junk.sdf");
   double energy;
  
   for (ci = cids.begin(); ci != cids.end(); ci++) {
-    writer.write(*m, *ci);
+    //writer.write(*m, *ci);
     ForceFields::ForceField *ff=UFF::constructForceField(*m, 10, *ci);
     ff->initialize();
     energy = ff->calcEnergy();
@@ -556,11 +556,11 @@ void testMultipleConfsExpTors() {
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true,
                false,-1, true, 1, -1.0, 0, 1e-3, false, true, true, true, false);
   INT_VECT_CI ci;
-  SDWriter writer("junk.sdf");
+  //SDWriter writer("junk.sdf");
   double energy;
 
   for (ci = cids.begin(); ci != cids.end(); ci++) {
-    writer.write(*m, *ci);
+    //writer.write(*m, *ci);
     ForceFields::ForceField *ff=UFF::constructForceField(*m, 10, *ci);
     ff->initialize();
     energy = ff->calcEnergy();
