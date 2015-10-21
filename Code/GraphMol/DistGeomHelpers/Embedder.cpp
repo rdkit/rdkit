@@ -95,12 +95,12 @@ namespace RDKit {
     void _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
                                   DistGeom::BoundsMatPtr mmat,
                                   double optimizerForceTol, double basinThresh,
-                                  std::vector<std::pair<int, int> > bonds,
-                                  std::vector<std::vector<int> > angles,
-                                  std::vector<std::vector<int> > expTorsionAtoms,
-                                  std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles,
-                                  std::vector<std::vector<int> > improperAtoms,
-                                  std::vector<int> atomNums,
+                                  const std::vector<std::pair<int, int> > &bonds,
+                                  const std::vector<std::vector<int> > &angles,
+                                  const std::vector<std::vector<int> > &expTorsionAtoms,
+                                  const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                  const std::vector<std::vector<int> > &improperAtoms,
+                                  const std::vector<int> &atomNums,
                                   bool useBasicKnowledge) {
 
 

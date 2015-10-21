@@ -49,8 +49,8 @@ namespace ForceFields {
         TorsionAngleContribM6(ForceFields::ForceField *owner, 
                               unsigned int idx1, unsigned int idx2,
                               unsigned int idx3, unsigned int idx4, 
-                              const std::vector<double> V, 
-                              const std::vector<int> signs);
+                              const std::vector<double> &V,
+                              const std::vector<int> &signs);
         double getEnergy(double *pos) const;
         void getGrad(double *pos, double *grad) const;
         virtual TorsionAngleContribM6 *copy() const { return new TorsionAngleContribM6(*this); };
@@ -61,7 +61,7 @@ namespace ForceFields {
     };
 
     //! calculates and returns the torsional energy
-    double calcTorsionEnergyM6(const std::vector<double> V, const std::vector<int> signs, const double cosPhi);
+    double calcTorsionEnergyM6(const std::vector<double> &V, const std::vector<int> &signs, const double cosPhi);
   }
 }
 #endif

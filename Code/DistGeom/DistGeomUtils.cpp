@@ -18,13 +18,13 @@
 #include <Numerics/Vector.h>
 #include <RDGeneral/Invariant.h>
 #include <Numerics/EigenSolvers/PowerEigenSolver.h>
-#include <GraphMol/PeriodicTable.h>
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
 #include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/Inversion.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
+#include <boost/dynamic_bitset.hpp>
 
 namespace DistGeom {
   const double EIGVAL_TOL=0.001;
@@ -261,7 +261,7 @@ namespace DistGeom {
     }
 
     // keep track which atoms are 1,2- or 1,3-restrained
-    std::vector<std::vector<int> > atomPairs(N, std::vector<int>(N, 0));
+    boost::dynamic_bitset<> atomPairs(N*N);
 
     // torsion constraints
     for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
@@ -269,7 +269,10 @@ namespace DistGeom {
       int j = expTorsionAtoms[t][1];
       int k = expTorsionAtoms[t][2];
       int l = expTorsionAtoms[t][3];
-      atomPairs[i][l] = atomPairs[l][i] = 1;
+      if (i < j)
+        atomPairs[i*N+j] = 1;
+      else
+        atomPairs[j*N+i] = 1;
       // expTorsionAngles[t][0] = (signs, V's)
       ForceFields::CrystalFF::TorsionAngleContribM6 *contrib = 
         new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
@@ -305,20 +308,19 @@ namespace DistGeom {
             improperAtoms[t][n[2]], improperAtoms[t][n[3]], improperAtoms[t][4], improperAtoms[t][5]);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
       }
-      /*ForceFields::UFF::InversionContrib *contrib =
-          new ForceFields::UFF::InversionContrib(field, improperAtoms[t][0], improperAtoms[t][1],
-          improperAtoms[t][2], improperAtoms[t][3], improperAtoms[t][4], improperAtoms[t][5]);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));*/
     }
 
 
     double fdist = 100.0; // force constant
     // 1,2 distance constraints
     std::vector<std::pair<int, int> >::const_iterator bi;
-    for (bi = bonds.begin(); bi != bonds.end(); bi++) {
+    for (bi = bonds.begin(); bi != bonds.end(); ++bi) {
       unsigned int i = bi->first;
       unsigned int j = bi->second;
-      atomPairs[i][j] = atomPairs[j][i] = 1;
+      if (i < j)
+        atomPairs[i*N+j] = 1;
+      else
+        atomPairs[j*N+i] = 1;
       double d = ((*positions[i]) - (*positions[j])).length();
       double l = d-0.01;
       double u = d+0.01;
@@ -328,11 +330,14 @@ namespace DistGeom {
     }
 
     // 1,3 distance constraints
-    for (unsigned int a = 0; a < angles.size(); a++) {
+    for (unsigned int a = 0; a < angles.size(); ++a) {
       unsigned int i = angles[a][0];
       unsigned int j = angles[a][1];
       unsigned int k = angles[a][2];
-      atomPairs[i][k] = atomPairs[k][i] = 1;
+      if (i < j)
+        atomPairs[i*N+j] = 1;
+      else
+        atomPairs[j*N+i] = 1;
       // check for triple bonds
       if (angles[a][3]) {
         ForceFields::UFF::AngleConstraintContrib *contrib =
@@ -350,14 +355,11 @@ namespace DistGeom {
 
     // minimum distance for all other atom pairs
     fdist = 10.0;
-    for (unsigned int i = 1; i < N; i++) {
-      for (unsigned int j = 0; j < i; j++) {
-        if (!atomPairs[i][j]) {
-          //double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
-          //double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
-          double l = mmat.getLowerBound(i,j); //(vw1+vw2);
-          double u = mmat.getUpperBound(i,j); //1000.0;
-          //DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
+    for (unsigned int i = 1; i < N; ++i) {
+      for (unsigned int j = 0; j < i; ++j) {
+        if (!atomPairs[j*N+i]) {
+          double l = mmat.getLowerBound(i,j);
+          double u = mmat.getUpperBound(i,j);
           ForceFields::UFF::DistanceConstraintContrib *contrib =
                   new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -384,7 +386,7 @@ namespace DistGeom {
       }
 
       // keep track which atoms are 1,2- or 1,3-restrained
-      std::vector<std::vector<int> > atomPairs(N, std::vector<int>(N, 0));
+      boost::dynamic_bitset<> atomPairs(N*N);
 
       // torsion constraints
       for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
@@ -392,7 +394,10 @@ namespace DistGeom {
         int j = expTorsionAtoms[t][1];
         int k = expTorsionAtoms[t][2];
         int l = expTorsionAtoms[t][3];
-        atomPairs[i][l] = atomPairs[l][i] = 1;
+        if (i < j)
+          atomPairs[i*N+j] = 1;
+        else
+          atomPairs[j*N+i] = 1;
         // expTorsionAngles[t][0] = (signs, V's)
         ForceFields::CrystalFF::TorsionAngleContribM6 *contrib =
           new ForceFields::CrystalFF::TorsionAngleContribM6(field, i, j, k, l, expTorsionAngles[t].second, expTorsionAngles[t].first);
@@ -402,10 +407,13 @@ namespace DistGeom {
       double fdist = 100.0; // force constant
       // 1,2 distance constraints
       std::vector<std::pair<int, int> >::const_iterator bi;
-      for (bi = bonds.begin(); bi != bonds.end(); bi++) {
+      for (bi = bonds.begin(); bi != bonds.end(); ++bi) {
         unsigned int i = bi->first;
         unsigned int j = bi->second;
-        atomPairs[i][j] = atomPairs[j][i] = 1;
+        if (i < j)
+          atomPairs[i*N+j] = 1;
+        else
+          atomPairs[j*N+i] = 1;
         double d = ((*positions[i]) - (*positions[j])).length();
         double l = d-0.01;
         double u = d+0.01;
@@ -415,10 +423,13 @@ namespace DistGeom {
       }
 
       // 1,3 distance constraints
-      for (unsigned int a = 1; a < angles.size(); a++) {
+      for (unsigned int a = 1; a < angles.size(); ++a) {
         unsigned int i = angles[a][0];
         unsigned int j = angles[a][2];
-        atomPairs[i][j] = atomPairs[j][i] = 1;
+        if (i < j)
+          atomPairs[i*N+j] = 1;
+        else
+          atomPairs[j*N+i] = 1;
         double d = ((*positions[i]) - (*positions[j])).length();
         double l = d-0.01;
         double u = d+0.01;
@@ -429,14 +440,11 @@ namespace DistGeom {
 
       // minimum distance for all other atom pairs
       fdist = 10.0;
-      for (unsigned int i = 1; i < N; i++) {
-        for (unsigned int j = 0; j < i; j++) {
-          if (!atomPairs[i][j]) {
-            //double vw1 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[i]);
-            //double vw2 = RDKit::PeriodicTable::getTable()->getRvdw(atomNums[j]);
-            double l = mmat.getLowerBound(i,j); //(vw1+vw2);
-            double u = mmat.getUpperBound(i,j); //1000.0;
-            //DistViolationContrib *contrib = new DistViolationContrib(field, i, j, u, l, 1.0);
+      for (unsigned int i = 1; i < N; ++i) {
+        for (unsigned int j = 0; j < i; ++j) {
+          if (!atomPairs[j*N+i]) {
+            double l = mmat.getLowerBound(i,j);
+            double u = mmat.getUpperBound(i,j);
             ForceFields::UFF::DistanceConstraintContrib *contrib =
                     new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u, fdist);
             field->contribs().push_back(ForceFields::ContribPtr(contrib));

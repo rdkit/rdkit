@@ -1149,6 +1149,8 @@ namespace RDKit {
                         std::vector<std::vector<int> > &angles,
                         bool set15bounds, bool scaleVDW) {
       PRECONDITION(mmat.get(),"bad pointer");
+      bonds.clear();
+      angles.clear();
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
       if (!na) {
@@ -1162,7 +1164,7 @@ namespace RDKit {
 
       // store the 1,2-interactions
       ROMol::ConstBondIterator bi;
-      for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
+      for (bi = mol.beginBonds(); bi != mol.endBonds(); ++bi) {
         unsigned int begId = (*bi)->getBeginAtomIdx();
         unsigned int endId = (*bi)->getEndAtomIdx();
         bonds.push_back(std::make_pair(begId, endId));

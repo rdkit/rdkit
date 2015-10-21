@@ -31,8 +31,6 @@ namespace ForceFields {
   namespace CrystalFF {
     using namespace RDKit;
 
-    typedef boost::dynamic_bitset<> BIT_SET;
-
     /* SMARTS patterns for experimental torsion angle preferences
      * taken from J. Med. Chem. 56, 1026-2028 (2013)
      *
@@ -493,17 +491,11 @@ namespace ForceFields {
           // get the atom indices for atom 1, 2, 3, 4 in the pattern
           for(unsigned int i = 0; i < (angle.dp_pattern.get())->getNumAtoms(); ++i) {
             Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
-            if (atom->hasProp("molAtomMapNumber")) {
-              int num;
-              atom->getProp("molAtomMapNumber", num);
-              if (num == 1)
-                angle.idx[0] = i;
-              else if (num == 2)
-                angle.idx[1] = i;
-              else if (num == 3)
-                angle.idx[2] = i;
-              else if (num == 4)
-                angle.idx[3] = i;
+            int num;
+            if (atom->getPropIfPresent("molAtomMapNumber", num)) {
+              if(num>0 and num<5) {
+                angle.idx[num-1] = i;
+              }
             }
           }
           d_params.push_back(angle);
@@ -534,7 +526,7 @@ namespace ForceFields {
       unsigned int aid1, aid2, aid3, aid4;
       unsigned int bid2, bid1, bid3, id1, id2;
 
-      BIT_SET doneBonds(nb);
+      boost::dynamic_bitset<> doneBonds(nb);
 
       if (useExpTorsions) {
         // we set the torsion angles with experimental data
@@ -578,7 +570,7 @@ namespace ForceFields {
       // straight triple bonds, etc.
       if (useBasicKnowledge) {
 
-        BIT_SET doneAtoms(na);
+        boost::dynamic_bitset<> doneAtoms(na);
         ROMol::ADJ_ITER nbrIdx;
         ROMol::ADJ_ITER endNbrs;
 
@@ -597,7 +589,7 @@ namespace ForceFields {
               // get neighbors
               boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom2);
               // check if enough neighbours
-              if (std::distance(nbrIdx,endNbrs) != 3) {
+              if (mol.getAtomDegree(atom2) != 3) {
                 continue;
               }
               unsigned int i = 0;
@@ -645,7 +637,7 @@ namespace ForceFields {
             aid3 = (*rii)[(i+2)%rSize];
             aid4 = (*rii)[(i+3)%rSize];
             bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-            // if all 4 atoms are aromatic, add torsion
+            // if all 4 atoms are SP2, add torsion
             if (!(doneBonds[bid2])
                 && (mol.getAtomWithIdx(aid1)->getHybridization() == Atom::SP2) && (mol.getAtomWithIdx(aid2)->getHybridization() == Atom::SP2)
                 && (mol.getAtomWithIdx(aid3)->getHybridization() == Atom::SP2) && (mol.getAtomWithIdx(aid4)->getHybridization() == Atom::SP2)) {
@@ -659,7 +651,7 @@ namespace ForceFields {
               fconsts[1] = 7.0; // MMFF force constants for aromatic rings
               expTorsionAngles.push_back(std::make_pair(signs, fconsts));
               /*if (verbose) {
-                std::cout << "aromatic ring: " << aid1 << " " << aid2 << " " << aid3 << " " << aid4
+                std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 << " " << aid4
                     << ", (0, 7.0, 0, 0, 0, 0)" << std::endl;
               }*/
             }
