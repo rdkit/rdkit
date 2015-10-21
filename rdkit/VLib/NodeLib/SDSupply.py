@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 import sys,os.path
+from rdkit import six
 from rdkit import RDConfig
 from rdkit.VLib.Supply import SupplyNode
 from rdkit import Chem
@@ -42,7 +43,10 @@ class SDSupplyNode(SupplyNode):
     """
 
     """
-    return self._supplier.next()
+    return next(self._supplier)
+
+if six.PY3:
+    SDSupplyNode.__next__ = SDSupplyNode.next
 
   
 #------------------------------------

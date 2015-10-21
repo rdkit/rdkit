@@ -40,17 +40,17 @@ class TestCase(unittest.TestCase):
     
   def test1Txt(self):
     """ test reading from a text file """
-    inF = open(os.path.join(self.baseDir,'dbtest.csv'),'r')
-    tblName = 'fromtext'
-    DbUtils.TextFileToDatabase(self.dbName,tblName,inF)
-    self._confirm(tblName)
+    with open(os.path.join(self.baseDir,'dbtest.csv'),'r') as inF:
+      tblName = 'fromtext'
+      DbUtils.TextFileToDatabase(self.dbName,tblName,inF)
+      self._confirm(tblName)
 
   def test3Txt(self):
     """ test reading from a text file including null markers"""
-    inF = open(os.path.join(self.baseDir,'dbtest.nulls.csv'),'r')
-    tblName = 'fromtext2'
-    DbUtils.TextFileToDatabase(self.dbName,tblName,inF,nullMarker='NA')
-    self._confirm(tblName)
+    with open(os.path.join(self.baseDir,'dbtest.nulls.csv'),'r') as inF:
+      tblName = 'fromtext2'
+      DbUtils.TextFileToDatabase(self.dbName,tblName,inF,nullMarker='NA')
+      self._confirm(tblName)
 
   def testGetData1(self):
     """ basic functionality

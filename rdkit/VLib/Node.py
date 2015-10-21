@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 import sys
+from rdkit import six
 
 class VLibNode(object):
   """ base class for all virtual library nodes,
@@ -177,7 +178,8 @@ class VLibNode(object):
     self._children = []
     self._parents = []
     
-
+if six.PY3:
+    VLibNode.__next__ = VLibNode.next
 
 
 #------------------------------------

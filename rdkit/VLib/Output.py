@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 import sys
+from rdkit import six
 
 from rdkit.VLib.Node import VLibNode
 
@@ -23,17 +24,17 @@ class OutputNode(VLibNode):
   Usage Example:
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> supplier = SupplyNode(contents=[1,2,3])
-    >>> import StringIO
-    >>> io = StringIO.StringIO()
-    >>> node = OutputNode(dest=io,strFunc=lambda x:'%s '%(str(x)))
+    >>> from rdkit.six import StringIO
+    >>> sio = StringIO()
+    >>> node = OutputNode(dest=sio,strFunc=lambda x:'%s '%(str(x)))
     >>> node.AddParent(supplier)
     >>> node.next()
     1
-    >>> io.getvalue()
+    >>> sio.getvalue()
     '1 '
     >>> node.next()
     2
-    >>> io.getvalue()
+    >>> sio.getvalue()
     '1 2 '
 
   """
@@ -60,6 +61,9 @@ class OutputNode(VLibNode):
     if self._dest:
       self._dest.write(outp)
     return args
+
+if six.PY3:
+    OutputNode.__next__ = OutputNode.next
 
 #------------------------------------
 #
