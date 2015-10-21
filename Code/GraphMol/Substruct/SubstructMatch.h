@@ -86,10 +86,10 @@ namespace RDKit{
   */
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
-			      bool uniquify=true,bool recursionPossible=true,
+			      bool uniquify=true, bool recursionPossible=true,
 			      bool useChirality=false,
-                              bool useQueryQueryMatches=false,
-                              unsigned int maxMatches = 1000);
+            bool useQueryQueryMatches=false,
+            unsigned int maxMatches = 1000);
 
   //! Find all substructure matches for a query in a ResonanceMolSupplier object
   /*!
@@ -114,10 +114,10 @@ namespace RDKit{
   unsigned int SubstructMatch(const ResonanceMolSupplier &resMolSuppl,
             const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
-			      bool uniquify=true,bool recursionPossible=true,
+			      bool uniquify=false, bool recursionPossible=true,
 			      bool useChirality=false,
-                              bool useQueryQueryMatches=false,
-                              unsigned int maxMatches = 1000);
+            bool useQueryQueryMatches=false,
+            unsigned int maxMatches = 1000);
 }
 
 #endif

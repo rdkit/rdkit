@@ -24,7 +24,7 @@ namespace RDKit {
   class ConjElectrons;
   typedef std::map<unsigned int, BondElectrons *> ConjBondMap;
   typedef std::map<unsigned int, AtomElectrons *> ConjAtomMap;
-  typedef std::vector<std::vector<ConjElectrons *> *> CEVectVect;
+  typedef std::vector<std::vector<ConjElectrons *> *> CEVect2;
   typedef std::vector<boost::uint8_t> ConjFP;
   typedef boost::unordered_map<std::size_t, ConjElectrons *> CEMap;
   class ResonanceMolSupplier
@@ -106,11 +106,11 @@ namespace RDKit {
         std::vector<unsigned int> v;
       } CEPerm;
       unsigned int d_nConjGrp;
-      unsigned int d_length;
+      boost::uint64_t d_length;
       unsigned int d_flags;
-      unsigned int d_maxStructs;
+      boost::uint64_t d_maxStructs;
       unsigned int d_idx;
-      CEVectVect d_ceVectVect;
+      CEVect2 d_ceVect3;
       CEMap d_ceMapTmp;
       CEMap d_ceMap;
       void buildCEMap(unsigned int conjGrpIdx);

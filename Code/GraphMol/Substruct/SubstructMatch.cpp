@@ -29,6 +29,12 @@ namespace RDKit{
     
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
 			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches);
+    
+    bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b);
+    bool matchVectCompare(const MatchVectType &a, const MatchVectType &b);
+    bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
+      const MatchVectType &m);
+
 #ifdef RDK_THREADSAFE_SSS
     void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *q);
 #endif
@@ -354,15 +360,17 @@ namespace RDKit{
       unsigned int nMatchesTmp = SubstructMatch(*mol, query,
         matchesTmp, uniquify, recursionPossible,
         useChirality, useQueryQueryMatches, maxMatches);
-      for (std::vector<MatchVectType>::const_iterator
+      for (std::vector<MatchVectType>::iterator
         it = matchesTmp.begin(); (matches.size() < maxMatches)
         && (it != matchesTmp.end()); ++it) {
-        if (std::find(matches.begin(),
+        if ((std::find(matches.begin(),
           matches.end(), *it) == matches.end())
+          && (!uniquify || detail::isToBeAddedToVector(matches, *it)))
           matches.push_back(*it);
       }
       delete mol;
     }
+    std::sort(matches.begin(), matches.end(), detail::matchVectCompare);
     return matches.size();
   }
 
@@ -484,6 +492,47 @@ namespace RDKit{
       //std::cout << "<<- back " << (int)query << std::endl;
     }
 
+    bool matchCompare(const std::pair<int, int> &a,
+      const std::pair<int, int> &b)
+    {
+      return (a.second < b.second);
+    }
+    
+    bool matchVectCompare(const MatchVectType &a, const MatchVectType &b)
+    {
+      for (unsigned int i = 0; i < std::min(a.size(), b.size()); ++i) {
+        if (a[i].second != b[i].second)
+          return (a[i].second < b[i].second);
+      }
+      return (a.size() < b.size());
+    }
+    
+    bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
+      const MatchVectType &m)
+    {
+      bool isToBeAdded = true;
+      MatchVectType mCopy = m;
+      std::sort(mCopy.begin(), mCopy.end(), matchCompare);
+      for (std::vector<MatchVectType>::iterator it = matches.end();
+        isToBeAdded && it-- != matches.begin();) {
+        isToBeAdded = (it->size() != mCopy.size());
+        if (!isToBeAdded) {
+          MatchVectType matchCopy = *it;
+          std::sort(matchCopy.begin(), matchCopy.end(), matchCompare);
+          for (unsigned int i = 0; !isToBeAdded && (i < matchCopy.size()); ++i) 
+            isToBeAdded = (mCopy[i].second != matchCopy[i].second);
+          if (!isToBeAdded) {
+            for (unsigned int i = 0; !isToBeAdded && (i < m.size()); ++i)
+              isToBeAdded = (m[i].second < (*it)[i].second);
+            if (isToBeAdded) {
+              matches.erase(it);
+              break;
+            }
+          }
+        }
+      }
+      return isToBeAdded;
+    }
 #ifdef RDK_THREADSAFE_SSS
     void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *query){
       PRECONDITION(query,"bad query");

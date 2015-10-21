@@ -38,7 +38,7 @@ namespace RDKit {
   }
 
   PyObject *GetResonanceSubstructMatches(const ResonanceMolSupplier &suppl,
-                                const ROMol &query,bool uniquify=true,
+                                const ROMol &query,bool uniquify=false,
                                 bool useChirality=false,
                                 bool useQueryQueryMatches=false,
                                 unsigned int maxMatches = 1000){
@@ -55,7 +55,10 @@ namespace RDKit {
 \n \
   Usage examples:\n \
 \n \
-    1) Lazy evaluation: the resonance structures are not constructed until we ask for them:\n \
+    1) Lazy evaluation: the resonance structures for each independent\n \
+       conjugated group are enumerated upon object creation; however the\n \
+       resonance structures of the complete molecule are not constructed\n \
+       until we ask for them:\n \
        >>> suppl = ResonanceMolSupplier(mol)\n \
        >>> for resMol in suppl:\n \
        ...    resMol.GetNumAtoms()\n \
@@ -127,7 +130,7 @@ namespace RDKit {
       .def("GetSubstructMatches",
            GetResonanceSubstructMatches,
            (python::arg("self"),python::arg("query"),
-            python::arg("uniquify")=true,
+            python::arg("uniquify")=false,
             python::arg("useChirality")=false,
             python::arg("useQueryQueryMatches")=false,
             python::arg("maxMatches")=1000),

@@ -806,15 +806,14 @@ namespace RDKit {
   // fashion
   void ResonanceMolSupplier::trimCeVectVect()
   {
-    if (d_length > d_maxStructs) {
-      d_length = std::min(d_length, d_maxStructs);
+    if (d_length == d_maxStructs) {
       std::vector<unsigned int> s(d_nConjGrp, 0);
-      unsigned int currSize = 0;
+      boost::uint64_t currSize = 0;
       while (currSize < d_length) {
         currSize = 1;
-        for (unsigned int conjGrpIdx = 0;
-          conjGrpIdx < d_nConjGrp; ++conjGrpIdx) {
-          if (s[conjGrpIdx] < d_ceVectVect[conjGrpIdx]->size())
+        for (unsigned int conjGrpIdx = 0; (currSize < d_length)
+          && (conjGrpIdx < d_nConjGrp); ++conjGrpIdx) {
+          if (s[conjGrpIdx] < d_ceVect3[conjGrpIdx]->size())
             ++s[conjGrpIdx];
           currSize *= s[conjGrpIdx];
         }
@@ -822,12 +821,12 @@ namespace RDKit {
       for (unsigned int conjGrpIdx = 0;
         conjGrpIdx < d_nConjGrp; ++conjGrpIdx) {
         for (unsigned int i = s[conjGrpIdx];
-          i < d_ceVectVect[conjGrpIdx]->size(); ++i)
-          delete (*(d_ceVectVect[conjGrpIdx]))[i];
-        d_ceVectVect[conjGrpIdx]->resize(s[conjGrpIdx]);
+          i < d_ceVect3[conjGrpIdx]->size(); ++i)
+          delete (*(d_ceVect3[conjGrpIdx]))[i];
+        d_ceVect3[conjGrpIdx]->resize(s[conjGrpIdx]);
       }
     }
-    std::sort(d_ceVectVect.begin(), d_ceVectVect.end(), vectSizeCompare);
+    //std::sort(d_ceVect3.begin(), d_ceVect3.end(), vectSizeCompare);
   }
   
   // get the ConjElectrons indices to be combined given
@@ -840,7 +839,7 @@ namespace RDKit {
       --g;
       unsigned int d = 1;
       for (unsigned int j = 0; j < g; ++j) {
-        d *= d_ceVectVect[j]->size();
+        d *= d_ceVect3[j]->size();
       }
       c[g] = idx / d;
       idx %= d;
@@ -890,7 +889,17 @@ namespace RDKit {
       cePermVect[i]->v.resize(d_nConjGrp);
       idxToCEPerm(i, cePermVect[i]->v);
     }
+    std::cerr << "unsorted" << std::endl;
+    for (unsigned int i = 0; i < d_length; ++i) {
+      for (unsigned int j = 0; j < d_nConjGrp; ++j)
+        std::cerr << cePermVect[i]->v[j] << (j == d_nConjGrp - 1 ? "\n" : "\t");
+    }
     std::sort(cePermVect.begin(), cePermVect.end(), cePermCompare);
+    std::cerr << "\nsorted" << std::endl;
+    for (unsigned int i = 0; i < d_length; ++i) {
+      for (unsigned int j = 0; j < d_nConjGrp; ++j)
+        std::cerr << cePermVect[i]->v[j] << (j == d_nConjGrp - 1 ? "\n" : "\t");
+    }
     for (unsigned int i = 0; i < d_length; ++i) {
       d_enumIdx[i] = cePermVect[i]->idx;
       delete cePermVect[i];
@@ -903,9 +912,10 @@ namespace RDKit {
     d_nConjGrp(0),
     d_length(1),
     d_flags(flags),
-    d_maxStructs(maxStructs),
     d_idx(0)
   {
+    const unsigned int MAX_STRUCTS = 1000000;
+    d_maxStructs = std::min(maxStructs, MAX_STRUCTS);
     d_mol = new ROMol(mol);
     MolOps::Kekulize((RWMol &)*d_mol, false);
     // identify conjugate substructures
@@ -916,20 +926,27 @@ namespace RDKit {
       buildCEMap(conjGrpIdx);
       storeCEMap(conjGrpIdx);
     }
+    std::cerr << "1) d_length = " << d_length << std::endl;
+    std::cerr << "d_ceVect3.size() = " << d_ceVect3.size() << std::endl;
+    for (unsigned int i = 0; i < d_ceVect3.size(); ++i)
+      std::cerr << i << "\t" << d_ceVect3[i]->size() << std::endl;
     trimCeVectVect();
+    std::cerr << "after trimCeVectVect() d_ceVect3.size() = " << d_ceVect3.size() << std::endl;
+    for (unsigned int i = 0; i < d_ceVect3.size(); ++i)
+      std::cerr << i << "\t" << d_ceVect3[i]->size() << std::endl;
     prepEnumIdxVect();
   }
   
   // object destructor
   ResonanceMolSupplier::~ResonanceMolSupplier()
   {
-    for (CEVectVect::const_iterator ceVectIt = d_ceVectVect.begin();
-      ceVectIt != d_ceVectVect.end();
-      ++ceVectIt) {
+    for (CEVect2::const_iterator ceVect3It = d_ceVect3.begin();
+      ceVect3It != d_ceVect3.end();
+      ++ceVect3It) {
       for (std::vector<ConjElectrons *>::const_iterator
-        ceIt = (*ceVectIt)->begin(); ceIt != (*ceVectIt)->end(); ++ceIt)
+        ceIt = (*ceVect3It)->begin(); ceIt != (*ceVect3It)->end(); ++ceIt)
         delete(*ceIt);
-      delete(*ceVectIt);
+      delete(*ceVect3It);
     }
     if (d_mol)
       delete d_mol;
@@ -1263,24 +1280,25 @@ namespace RDKit {
     return d_atomConjGrpIdx[ai];
   }
 
-  // resizes d_ceVectVect vector
+  // resizes d_ceVect3 vector
   void ResonanceMolSupplier::resizeCeVect()
   {
-    d_ceVectVect.resize(d_nConjGrp, NULL);
+    d_ceVect3.resize(d_nConjGrp, NULL);
   }
 
   // stores the ConjElectrons pointers currently stored in d_ceMap
-  // in the d_ceVectVect vector, and clears d_ceMapTmp and d_ceMap
+  // in the d_ceVect3 vector, and clears d_ceMapTmp and d_ceMap
   void ResonanceMolSupplier::storeCEMap(unsigned int conjGrpIdx)
   {
-    d_ceVectVect[conjGrpIdx] = new std::vector<ConjElectrons *>();
-    d_ceVectVect[conjGrpIdx]->reserve(d_ceMap.size());
+    d_ceVect3[conjGrpIdx] = new std::vector<ConjElectrons *>();
+    d_ceVect3[conjGrpIdx]->reserve(d_ceMap.size());
     for (CEMap::const_iterator it = d_ceMap.begin();
       it != d_ceMap.end(); ++it)
-      d_ceVectVect[conjGrpIdx]->push_back(it->second);
-    std::sort(d_ceVectVect[conjGrpIdx]->begin(),
-      d_ceVectVect[conjGrpIdx]->end(), resonanceStructureCompare);
-    d_length *= d_ceMap.size();
+      d_ceVect3[conjGrpIdx]->push_back(it->second);
+    std::sort(d_ceVect3[conjGrpIdx]->begin(),
+      d_ceVect3[conjGrpIdx]->end(), resonanceStructureCompare);
+    if (d_length < d_maxStructs)
+      d_length = std::min(d_maxStructs, d_length * d_ceMap.size());
     d_ceMapTmp.clear();
     d_ceMap.clear();
   }
@@ -1331,7 +1349,7 @@ namespace RDKit {
   {
     for (unsigned int conjGrpIdx = 0;
       conjGrpIdx < d_nConjGrp; ++conjGrpIdx) {
-      ConjElectrons *ce = (*d_ceVectVect[conjGrpIdx])[c[conjGrpIdx]];
+      ConjElectrons *ce = (*d_ceVect3[conjGrpIdx])[c[conjGrpIdx]];
       ce->assignBondsFormalChargesToMol(mol);
     }
   }
