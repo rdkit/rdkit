@@ -910,12 +910,12 @@ namespace RDKit {
   ResonanceMolSupplier::ResonanceMolSupplier(ROMol &mol,
     unsigned int flags, unsigned int maxStructs) :
     d_nConjGrp(0),
-    d_length(1),
     d_flags(flags),
     d_idx(0)
   {
     const unsigned int MAX_STRUCTS = 1000000;
     d_maxStructs = std::min(maxStructs, MAX_STRUCTS);
+    d_length = std::min(static_cast<boost::uint64_t>(1), d_maxStructs);
     d_mol = new ROMol(mol);
     MolOps::Kekulize((RWMol &)*d_mol, false);
     // identify conjugate substructures

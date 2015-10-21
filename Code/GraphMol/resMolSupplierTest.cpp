@@ -106,6 +106,7 @@ void testBaseFunctionality() {
     ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS
     | ResonanceMolSupplier::UNCONSTRAINED_CATIONS
     | ResonanceMolSupplier::UNCONSTRAINED_ANIONS, 0);
+  std::cerr << "resMolSuppl->length() = " << resMolSuppl->length() << std::endl;
   TEST_ASSERT(resMolSuppl->length() == 0);
   delete resMolSuppl;
 }
