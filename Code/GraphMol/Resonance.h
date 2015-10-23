@@ -22,9 +22,11 @@ namespace RDKit {
   class BondElectrons;
   class AtomElectrons;
   class ConjElectrons;
+  class CEVect2;
   typedef std::map<unsigned int, BondElectrons *> ConjBondMap;
   typedef std::map<unsigned int, AtomElectrons *> ConjAtomMap;
-  typedef std::vector<std::vector<ConjElectrons *> *> CEVect2;
+  typedef std::vector<ConjElectrons *> CEVect;
+  typedef std::vector<CEVect2 *> CEVect3;
   typedef std::vector<boost::uint8_t> ConjFP;
   typedef boost::unordered_map<std::size_t, ConjElectrons *> CEMap;
   class ResonanceMolSupplier
@@ -34,18 +36,21 @@ namespace RDKit {
         /*! include resonance structures whose octets are less complete
          *  than the the most octet-complete structure */
         ALLOW_INCOMPLETE_OCTETS = (1 << 0),
+        /*! include resonance structures featuring charge separation also
+        *   when uncharged resonance structures exist */
+        ALLOW_CHARGE_SEPARATION = (1 << 1),
         /*! enumerate all possible degenerate Kekule resonance structures
          *  (the default is to include just one) */
-        KEKULE_ALL = (1 << 1),
+        KEKULE_ALL = (1 << 2),
         /*! if the UNCONSTRAINED_CATIONS flag is not set, positively
          *  charged atoms left and right of N with an incomplete octet are
          *  acceptable only if the conjugated group has a positive total
          *  formal charge */
-        UNCONSTRAINED_CATIONS = (1 << 2),
+        UNCONSTRAINED_CATIONS = (1 << 3),
         /*! if the UNCONSTRAINED_ANIONS flag is not set, negatively
          *  charged atoms left of N are acceptable only if the conjugated
          *  group has a negative total formal charge */
-        UNCONSTRAINED_ANIONS = (1 << 3),
+        UNCONSTRAINED_ANIONS = (1 << 4)
       } ResonanceFlags;
       /*! 
        *   \param mol        - the starter molecule
@@ -110,7 +115,7 @@ namespace RDKit {
       unsigned int d_flags;
       boost::uint64_t d_maxStructs;
       unsigned int d_idx;
-      CEVect2 d_ceVect3;
+      CEVect3 d_ceVect3;
       CEMap d_ceMapTmp;
       CEMap d_ceMap;
       void buildCEMap(unsigned int conjGrpIdx);
@@ -123,7 +128,7 @@ namespace RDKit {
       ResonanceMolSupplier &operator=(const ResonanceMolSupplier&);
       void assignConjGrpIdx();
       void resizeCeVect();
-      void trimCeVectVect();
+      void trimCeVect2();
       void prepEnumIdxVect();
       void idxToCEPerm(unsigned int idx,
         std::vector<unsigned int> &c) const;
@@ -133,254 +138,7 @@ namespace RDKit {
       void assignBondsFormalChargesHelper(ROMol &mol,
         std::vector<unsigned int> &c) const;
       ROMol *assignBondsFormalCharges(std::vector<unsigned int> &c) const;
-      static bool resonanceStructureCompare
-        (const ConjElectrons *a, const ConjElectrons *b);
       static bool cePermCompare(const CEPerm *a, const CEPerm *b);
-      static bool vectSizeCompare(const std::vector<ConjElectrons *> *a,
-        const std::vector<ConjElectrons *> *b);
-  };
-
-  class ConjElectrons {
-    public:
-      typedef enum {
-        HAVE_CATION_RIGHT_OF_N = (1 << 0)
-      } ConjElectronsFlags;
-      typedef enum {
-        FP_BONDS = (1 << 0),
-        FP_ATOMS = (1 << 1)
-      } FPFlags;
-      ConjElectrons(ResonanceMolSupplier *parent,
-        unsigned int groupIdx);
-      ConjElectrons(const ConjElectrons &ce);
-      ~ConjElectrons();
-      unsigned int groupIdx() const
-      {
-        return d_groupIdx;
-      };
-      unsigned int currElectrons() const
-      {
-        return d_currElectrons;
-      };
-      unsigned int totalElectrons() const
-      {
-        return d_totalElectrons;
-      };
-      void decrCurrElectrons(unsigned int d);
-      AtomElectrons *getAtomElectronsWithIdx(unsigned int ai);
-      BondElectrons *getBondElectronsWithIdx(unsigned int bi);
-      int getAtomConjGrpIdx(unsigned int ai) const;
-      int getBondConjGrpIdx(unsigned int bi) const;
-      void pushToBeginStack(unsigned int ai);
-      bool popFromBeginStack(unsigned int &ai);
-      bool isBeginStackEmpty() {
-        return d_beginAIStack.empty();
-      };
-      unsigned int absFormalCharges() const {
-        return d_absFormalCharges;
-      };
-      double wtdFormalCharges() const {
-        return d_wtdFormalCharges;
-      };
-      unsigned int lowestFcIndex() const;
-      unsigned int lowestMultipleBondIndex() const;
-      int allowedChgLeftOfN() const
-      {
-        return d_allowedChgLeftOfN;
-      };
-      void decrAllowedChgLeftOfN(int d)
-      {
-        d_allowedChgLeftOfN -= d;
-      };
-      int totalFormalCharge() const
-      {
-        return d_totalFormalCharge;
-      };
-      unsigned int fcSameSignDist() const
-      {
-        return d_fcSameSignDist;
-      };
-      unsigned int fcOppSignDist() const
-      {
-        return d_fcOppSignDist;
-      };
-      unsigned int nbMissing() const
-      {
-        return d_nbMissing;
-      }
-      bool hasCationRightOfN() const
-      {
-        return static_cast<bool>(d_flags & HAVE_CATION_RIGHT_OF_N);
-      };
-      void enumerateNonBonded(CEMap &ceMap);
-      void initCeFromMol();
-      void assignNonBonded();
-      void assignFormalCharge();
-      bool assignFormalChargesAndStore
-        (CEMap &ceMap, unsigned int fpFlags);
-      void assignBondsFormalChargesToMol(ROMol &mol);
-      bool checkCharges();
-      void computeMetrics();
-      bool storeFP(CEMap &ceMap, unsigned int flags);
-      ResonanceMolSupplier *parent() const
-      {
-        return d_parent;
-      };
-    private:
-      unsigned int d_groupIdx;
-      unsigned int d_totalElectrons;
-      unsigned int d_currElectrons;
-      unsigned int d_numFormalCharges;
-      int d_totalFormalCharge;
-      int d_allowedChgLeftOfN;
-      unsigned int d_absFormalCharges;
-      unsigned int d_fcSameSignDist;
-      unsigned int d_fcOppSignDist;
-      unsigned int d_nbMissing;
-      double d_wtdFormalCharges;
-      boost::uint8_t d_flags;
-      ConjBondMap d_conjBondMap;
-      ConjAtomMap d_conjAtomMap;
-      std::stack<unsigned int> d_beginAIStack;
-      ResonanceMolSupplier *d_parent;
-      ConjElectrons &operator=(const ConjElectrons&);
-      unsigned int countTotalElectrons();
-      void computeDistFormalCharges();
-      void checkOctets();
-  };
-  class AtomElectrons {
-    public:
-      typedef enum {
-        LAST_BOND = (1 << 0),
-        DEFINITIVE = (1 << 1),
-        STACKED = (1 << 2)
-      } AtomElectronsFlags;
-      typedef enum {
-        NEED_CHARGE_BIT = 1
-      } AllowedBondFlag;
-      AtomElectrons(ConjElectrons *parent, const Atom *a);
-      AtomElectrons(ConjElectrons *parent, const AtomElectrons &ae);
-      ~AtomElectrons() {};
-      boost::uint8_t findAllowedBonds(unsigned int bi);
-      bool hasOctet() const
-      {
-        return ((d_nb + d_tv * 2) == 8);
-      };
-      bool isLastBond() const
-      {
-        return (d_flags & LAST_BOND);
-      };
-      void setLastBond() {
-        d_flags |= LAST_BOND;
-      };
-      bool isDefinitive() const
-      {
-        return (d_flags & DEFINITIVE);
-      };
-      void setDefinitive()
-      {
-        d_flags |= DEFINITIVE;
-      };
-      bool isStacked() const
-      {
-        return (d_flags & STACKED);
-      };
-      void setStacked() {
-        d_flags |= STACKED;
-      };
-      void clearStacked() {
-        d_flags &= ~STACKED;
-      };
-      unsigned int conjGrpIdx() const
-      {
-        return d_parent->parent()->getAtomConjGrpIdx(d_atom->getIdx());
-      };
-      void finalizeAtom();
-      unsigned int nb() const
-      {
-        return d_nb;
-      };
-      unsigned int tv() const
-      {
-        return d_tv;
-      };
-      unsigned int oe() const
-      {
-        return PeriodicTable::getTable()->getNouterElecs
-          (d_atom->getAtomicNum());
-      };
-      int fc() const
-      {
-        return d_fc;
-      };
-      void tvIncr(unsigned int i) {
-        d_tv += i;
-      };
-      unsigned int neededNbForOctet() const
-      {
-        return (8 - (2 * d_tv + d_nb));
-      }
-      const Atom *atom()
-      {
-        return d_atom;
-      }
-      void initTvNbFcFromAtom();
-      void assignNonBonded(unsigned int nb) {
-        d_nb = nb;
-      }
-      void assignFormalCharge() {
-        d_fc = oe() - (d_nb + d_tv);
-      }
-      bool isNbrCharged(unsigned int bo, unsigned int oeConstraint = 0);
-    private:
-      boost::uint8_t d_nb;
-      boost::uint8_t d_tv;
-      boost::int8_t d_fc;
-      boost::uint8_t d_flags;
-      const Atom *d_atom;
-      ConjElectrons *d_parent;
-      AtomElectrons &operator=(const AtomElectrons&);
-      boost::uint8_t canAddBondWithOrder(unsigned int bi,
-        unsigned int bo);
-      void allConjBondsDefinitiveBut(unsigned int bi);
-  };
-  class BondElectrons {
-    public:
-      typedef enum {
-        DEFINITIVE = (1 << 0)
-      } BondElectronsFlags;
-      BondElectrons(ConjElectrons *parent, const Bond *b);
-      BondElectrons(ConjElectrons *parent, const BondElectrons &be);
-      ~BondElectrons() {};
-      bool isDefinitive() const
-      {
-        return (d_flags & DEFINITIVE);
-      };
-      void setDefinitive() {
-        d_flags |= DEFINITIVE;
-      };
-      int conjGrpIdx() const
-      {
-        return d_parent->getBondConjGrpIdx(d_bond->getIdx());
-      };
-      void setOrder(unsigned int bo);
-      unsigned int order() const
-      {
-        return d_bo;
-      };
-      unsigned int orderFromBond();
-      void initOrderFromBond()
-      {
-        d_bo = orderFromBond();
-      };
-      const Bond *bond() {
-        return d_bond;
-      };
-    private:
-      boost::uint8_t d_bo;
-      boost::uint8_t d_flags;
-      const Bond *d_bond;
-      ConjElectrons *d_parent;
-      BondElectrons &operator=(const BondElectrons&);
   };
 }
 #endif

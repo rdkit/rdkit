@@ -168,7 +168,8 @@ void testButadiene() {
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
     ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS
     | ResonanceMolSupplier::UNCONSTRAINED_CATIONS
-    | ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
+    | ResonanceMolSupplier::UNCONSTRAINED_ANIONS
+    | ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
   TEST_ASSERT(resMolSuppl->length() == 3);
   std::map<unsigned int, int> fcMap;
   while (!resMolSuppl->atEnd()) {
@@ -192,11 +193,16 @@ void testZwitterion() {
   ResonanceMolSupplier *resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
-  TEST_ASSERT(resMolSuppl->length() == 2);
+  TEST_ASSERT(resMolSuppl->length() == 1);
   ROMol *mol0 = (*resMolSuppl)[0];
   TEST_ASSERT(mol0->getAtomWithIdx(0)->getFormalCharge() == 0);
   TEST_ASSERT(mol0->getAtomWithIdx(6)->getFormalCharge() == 0);
   delete mol0;
+  delete resMolSuppl;
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+    ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+  TEST_ASSERT(resMolSuppl->length() == 2);
+  mol0 = (*resMolSuppl)[0];
   ROMol *mol1 = (*resMolSuppl)[1];
   TEST_ASSERT(mol1->getAtomWithIdx(0)->getFormalCharge() == 1);
   TEST_ASSERT(mol1->getAtomWithIdx(6)->getFormalCharge() == -1);
@@ -234,7 +240,7 @@ void testChargeSeparation1() {
   ResonanceMolSupplier *resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
-  TEST_ASSERT(resMolSuppl->length() == 4);
+  TEST_ASSERT(resMolSuppl->length() == 3);
   std::map<unsigned int, int> fcMap;
   for (unsigned int i = 0; i < 3; ++i) {
     ROMol *resMol = (*resMolSuppl)[i];
@@ -247,6 +253,10 @@ void testChargeSeparation1() {
     TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
     TEST_ASSERT(fcMap[indices[i]] == 1);
   }
+  delete resMolSuppl;
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+    ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+  TEST_ASSERT(resMolSuppl->length() == 4);
   resMolSuppl->moveTo(3);
   ROMol *resMol = resMolSuppl->next();
   TEST_ASSERT(resMol->getAtomWithIdx(0)->getFormalCharge() == 1);
@@ -263,6 +273,10 @@ void testChargeSeparation2() {
   ResonanceMolSupplier *resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  TEST_ASSERT(resMolSuppl->length() == 2);
+  delete resMolSuppl;
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+    ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
   TEST_ASSERT(resMolSuppl->length() == 8);
   // less charge separation in the first 2,
   // more charge separation in the last 6
@@ -306,6 +320,7 @@ void testChargeSeparation2() {
     TEST_ASSERT(haveCarbanion);
     delete resMol;
   }
+  delete resMolSuppl;
 }
   
 void testMultipleConjGroups1() {
@@ -314,7 +329,8 @@ void testMultipleConjGroups1() {
   RWMol *mol = SmilesToMol("NC(C(=O)[O-])=CC=C(CCC(=O)[O-])C=O");
   ResonanceMolSupplier *resMolSuppl;
 
-  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+    ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
   TEST_ASSERT(resMolSuppl->length() == 16);
   for (unsigned int i = 0; i < 8; ++i) {
     const ROMol *resMol = (*resMolSuppl)[i];
@@ -342,7 +358,8 @@ void testMultipleConjGroups1() {
   }
   delete resMolSuppl;
 
-  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol, 0, 8);
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+    ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION, 8);
   TEST_ASSERT(resMolSuppl->length() == 8);
   for (unsigned int i = 0; i < 8; ++i) {
     const ROMol *resMol = (*resMolSuppl)[i];
@@ -415,7 +432,7 @@ void testDimethylMalonate() {
 
 void testMethylAcetate() {
   // cation on oxygen should appear only when UNCONSTRAINED_CATIONS
-  // is set
+  // and ALLOW_CHARGE_SEPARATION are set
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
     << "testMethylAcetate" << std::endl;
   RWMol *mol = SmilesToMol("CC(=O)OC");
@@ -436,7 +453,8 @@ void testMethylAcetate() {
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
-    ResonanceMolSupplier::UNCONSTRAINED_CATIONS);
+    ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION
+    | ResonanceMolSupplier::UNCONSTRAINED_CATIONS);
   TEST_ASSERT(resMolSuppl->length() == 2);
   for (unsigned int i = 0; i < 2; ++i) {
     const ROMol *resMol = (*resMolSuppl)[i];

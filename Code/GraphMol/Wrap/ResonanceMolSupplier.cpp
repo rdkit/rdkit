@@ -89,6 +89,7 @@ namespace RDKit {
     static void wrap() {
       python::enum_<ResonanceMolSupplier::ResonanceFlags>("ResonanceFlags")
         .value("ALLOW_INCOMPLETE_OCTETS", ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS)
+        .value("ALLOW_CHARGE_SEPARATION", ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION)
         .value("KEKULE_ALL", ResonanceMolSupplier::KEKULE_ALL)
         .value("UNCONSTRAINED_CATIONS", ResonanceMolSupplier::UNCONSTRAINED_CATIONS)
         .value("UNCONSTRAINED_ANIONS", ResonanceMolSupplier::UNCONSTRAINED_ANIONS)
