@@ -576,7 +576,7 @@ namespace ForceFields {
 
         // inversion terms (improper torsions / out-of-plane bends / inversion)
         // loop over atoms
-        for (int aid2 = 0; aid2 < na; ++aid2) {
+        for (aid2 = 0; aid2 < na; ++aid2) {
           if (!(doneAtoms[aid2])) {
             std::vector<int> atoms(4, -1);
             atoms[1] = aid2;
