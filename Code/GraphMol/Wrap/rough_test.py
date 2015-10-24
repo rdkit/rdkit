@@ -3147,23 +3147,50 @@ CAS<~>
       | Chem.UNCONSTRAINED_ANIONS, 10)
     self.assertEqual(len(resMolSuppl), 10)
     
-    resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.UNCONSTRAINED_CATIONS \
-      | Chem.UNCONSTRAINED_ANIONS, 0);
-    self.assertEqual(len(resMolSuppl), 0)
+    crambinPdb = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    mol = Chem.MolFromPDBFile(crambinPdb)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 1)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
 
   def testSubstructMatchAcetate(self):
     mol = Chem.MolFromSmiles('CC(=O)[O-]')
     query = Chem.MolFromSmarts('C(=O)[O-]')
     
     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-    matches = mol.GetSubstructMatches(query,
-      False, False, False)
+    matches = mol.GetSubstructMatches(query)
     self.assertEqual(len(matches), 1)
-    matches = resMolSuppl.GetSubstructMatches(query,
-      False, False, False)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = mol.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = mol.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query)
     self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    query = Chem.MolFromSmarts('C(~O)~O')
+    matches = mol.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = mol.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
 
   def testSubstructMatchDMAP(self):
     mol = Chem.MolFromSmiles('C(C)Nc1cc[nH+]cc1')

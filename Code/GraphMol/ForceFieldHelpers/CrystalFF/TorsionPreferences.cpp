@@ -493,7 +493,7 @@ namespace ForceFields {
             Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
             int num;
             if (atom->getPropIfPresent("molAtomMapNumber", num)) {
-              if(num>0 and num<5) {
+              if(num>0 && num<5) {
                 angle.idx[num-1] = i;
               }
             }
