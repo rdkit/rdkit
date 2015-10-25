@@ -111,14 +111,12 @@ namespace RDKit {
         std::vector<unsigned int> v;
       } CEPerm;
       unsigned int d_nConjGrp;
-      boost::uint64_t d_length;
+      unsigned int d_length;
       unsigned int d_flags;
-      boost::uint64_t d_maxStructs;
+      unsigned int d_maxStructs;
       unsigned int d_idx;
       CEVect3 d_ceVect3;
-      CEMap d_ceMapTmp;
-      CEMap d_ceMap;
-      void buildCEMap(unsigned int conjGrpIdx);
+      void buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
       const ROMol *d_mol;
       std::vector<unsigned int> d_bondConjGrpIdx;
       std::vector<unsigned int> d_atomConjGrpIdx;
@@ -132,9 +130,9 @@ namespace RDKit {
       void prepEnumIdxVect();
       void idxToCEPerm(unsigned int idx,
         std::vector<unsigned int> &c) const;
-      void storeCEMap(unsigned int conjGrpIdx);
-      void enumerateNbArrangements();
-      void pruneStructures();
+      void storeCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
+      void enumerateNbArrangements(CEMap &ceMap, CEMap &ceMapTmp);
+      void pruneStructures(CEMap &ceMap);
       void assignBondsFormalChargesHelper(ROMol &mol,
         std::vector<unsigned int> &c) const;
       ROMol *assignBondsFormalCharges(std::vector<unsigned int> &c) const;
