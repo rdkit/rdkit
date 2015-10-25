@@ -157,7 +157,7 @@ void testFilterCatalog() {
 void testFilterCatalogEntry() {
   SmartsMatcher *sm = new SmartsMatcher("Aromatic carbon chain");
   boost::shared_ptr<FilterMatcherBase> matcher(sm);
-  TEST_ASSERT(not matcher->isValid());
+  TEST_ASSERT(!matcher->isValid());
   const int debugParse = 0;
   const bool mergeHs = true;
   ROMOL_SPTR pattern(SmartsToMol("c:c:c:c:c", debugParse, mergeHs));

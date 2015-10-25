@@ -493,7 +493,7 @@ namespace ForceFields {
             Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
             int num;
             if (atom->getPropIfPresent("molAtomMapNumber", num)) {
-              if(num>0 and num<5) {
+              if(num>0 && num<5) {
                 angle.idx[num-1] = i;
               }
             }
@@ -576,7 +576,7 @@ namespace ForceFields {
 
         // inversion terms (improper torsions / out-of-plane bends / inversion)
         // loop over atoms
-        for (int aid2 = 0; aid2 < na; ++aid2) {
+        for (aid2 = 0; aid2 < na; ++aid2) {
           if (!(doneAtoms[aid2])) {
             std::vector<int> atoms(4, -1);
             atoms[1] = aid2;
