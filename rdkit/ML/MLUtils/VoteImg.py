@@ -103,8 +103,9 @@ def BuildVoteImage(nModels,data,values,trueValues=[],
   data = [data[x] for x in order]
   maxVal = max(numpy.ravel(data))
   data = data * 255 / maxVal
-  img = Image.frombytes('L',(nModels,nData),data.astype('B').tobytes())
-
+  datab = data.astype('B')
+  img = getattr(Image,'frombytes',Image.fromstring)('L',(nModels,nData),getattr(datab,'tobytes',datab.tostring)())
+  
   if addLine:
     img = img.convert('RGB')
     canvas = ImageDraw.Draw(img)

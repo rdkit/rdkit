@@ -73,10 +73,11 @@ class Canvas(CanvasBase):
     self.imageType=imageType
     if image is not None:
       try:
-      	imgd = image.tobytes("raw","BGRA")
+        imgd = getattr(image,'tobytes',image.tostring)("raw","BGRA")
       except SystemError:
         r,g,b,a = image.split()
-        imgd = Image.merge("RGBA",(b,g,r,a)).tobytes("raw","RGBA")
+        mrg = Image.merge("RGBA",(b,g,r,a))
+        imgd = getattr(mrg,'tobytes',mrg.tostring)("raw","RGBA")
    
       a = array.array('B',imgd)
       stride=image.size[0]*4
@@ -120,11 +121,11 @@ class Canvas(CanvasBase):
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
       if hasattr(self.surface,'get_data'):
-        self.image.frombytes(bytes(self.surface.get_data()),
-                             "raw","BGRA",0,1)
+        getattr(self.image,'frombytes',self.image.fromstring)(bytes(self.surface.get_data()),
+                                                              "raw","BGRA",0,1)
       else:
-        self.image.frombytes(bytes(surface.get_data_as_rgba()),
-                             "raw","RGBA",0,1)
+        getattr(self.image,'frombytes',self.image.fromstring)(bytes(surface.get_data_as_rgba()),
+                                                              "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
       if hasattr(self.surface,'get_data'):
