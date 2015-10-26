@@ -50,7 +50,7 @@ namespace RDKit {
       unsigned int d_fcSameSignDist;
       unsigned int d_fcOppSignDist;
       unsigned int d_nbMissing;
-      boost::uint64_t d_wtdFormalCharges;
+      unsigned int d_wtdFormalCharges;
   };
   
   class ConjElectrons {
@@ -131,7 +131,7 @@ namespace RDKit {
       CEMetrics &metrics() {
         return d_ceMetrics;
       }
-      boost::uint64_t wtdFormalCharges() const {
+      unsigned int wtdFormalCharges() const {
         return d_ceMetrics.d_wtdFormalCharges;
       };
       void enumerateNonBonded(CEMap &ceMap);
@@ -1232,7 +1232,7 @@ namespace RDKit {
     if (d_length == d_maxStructs) {
       std::vector<unsigned int> s(d_nConjGrp, 0);
       std::vector<unsigned int> t(d_nConjGrp, 0);
-      boost::uint64_t currSize = 0;
+      unsigned int currSize = 0;
       while (currSize < d_length) {
         currSize = 1;
         for (unsigned int conjGrpIdx = 0; (currSize < d_length)
@@ -1314,6 +1314,8 @@ namespace RDKit {
       if (a->v[i] != b->v[i])
         return (a->v[i] < b->v[i]);
     }
+    // we'll never get here, this it is just to silence a warning
+    return false;
   }
 
   // enumerate upfront all the d_length indices for complete resonance
@@ -1344,7 +1346,7 @@ namespace RDKit {
   {
     const unsigned int MAX_STRUCTS = 1000000;
     d_maxStructs = std::min(maxStructs, MAX_STRUCTS);
-    d_length = std::min(static_cast<boost::uint64_t>(1), d_maxStructs);
+    d_length = std::min(1U, d_maxStructs);
     d_mol = new ROMol(mol);
     MolOps::Kekulize((RWMol &)*d_mol, false);
     // identify conjugate substructures
@@ -1352,8 +1354,9 @@ namespace RDKit {
     resizeCeVect();
     for (unsigned int conjGrpIdx = 0;
       conjGrpIdx < d_nConjGrp; ++conjGrpIdx) {
-      buildCEMap(conjGrpIdx);
-      storeCEMap(conjGrpIdx);
+      CEMap ceMap;
+      buildCEMap(ceMap, conjGrpIdx);
+      storeCEMap(ceMap, conjGrpIdx);
     }
     trimCeVect2();
     prepEnumIdxVect();
@@ -1418,30 +1421,30 @@ namespace RDKit {
   }
 
   // enumerateNonBonded() is called for each ConjElectrons object
-  // retrieved from d_ceMapTmp; the resulting ConjElectrons
-  // objects are collected in d_ceMap
-  void ResonanceMolSupplier::enumerateNbArrangements()
+  // retrieved from ceMapTmp; the resulting ConjElectrons
+  // objects are collected in ceMap
+  void ResonanceMolSupplier::enumerateNbArrangements(CEMap &ceMap, CEMap &ceMapTmp)
   {
-    for (CEMap::iterator it = d_ceMapTmp.begin();
-      it != d_ceMapTmp.end(); ++it)
-      it->second->enumerateNonBonded(d_ceMap);
+    for (CEMap::iterator it = ceMapTmp.begin();
+      it != ceMapTmp.end(); ++it)
+      it->second->enumerateNonBonded(ceMap);
   }
 
-  void ResonanceMolSupplier::pruneStructures()
+  void ResonanceMolSupplier::pruneStructures(CEMap &ceMap)
   {
     unsigned int minNbMissing = 0;
     bool first = true;
     bool haveNoCationsRightOfN = false;
     bool haveNoChargeSeparation = false;
-    for (CEMap::const_iterator it = d_ceMap.begin();
-      (it != d_ceMap.end()); ++it) {
+    for (CEMap::const_iterator it = ceMap.begin();
+      (it != ceMap.end()); ++it) {
       if (first || (it->second->nbMissing() < minNbMissing)) {
         first = false;
         minNbMissing = it->second->nbMissing();
       }
     }
-    for (CEMap::const_iterator it = d_ceMap.begin();
-      (it != d_ceMap.end()); ++it) {
+    for (CEMap::const_iterator it = ceMap.begin();
+      (it != ceMap.end()); ++it) {
       if (!(d_flags & ALLOW_INCOMPLETE_OCTETS)
         && (it->second->nbMissing() > minNbMissing))
         continue;
@@ -1450,7 +1453,7 @@ namespace RDKit {
       if (!it->second->hasChargeSeparation())
         haveNoChargeSeparation = true;
     }
-    for (CEMap::iterator it = d_ceMap.begin(); it != d_ceMap.end();) {
+    for (CEMap::iterator it = ceMap.begin(); it != ceMap.end();) {
       // if the flag ALLOW_INCOMPLETE_OCTETS is not set, ConjElectrons
       // objects having less electrons than the most electron-complete
       // structure (which most often will have all complete octets) are
@@ -1464,7 +1467,7 @@ namespace RDKit {
         CEMap::iterator toBeDeleted = it;
         ++it;
         delete(toBeDeleted->second);
-        d_ceMap.erase(toBeDeleted);
+        ceMap.erase(toBeDeleted);
       }
       else
         ++it;
@@ -1473,17 +1476,17 @@ namespace RDKit {
 
   // function which enumerates all possible multiple bond arrangements
   // for each conjugated group, stores each arrangement in a ConjElectrons
-  // object ans stores the latter in a map (d_ceMapTmp), keyed with its
+  // object ans stores the latter in a map (ceMapTmp), keyed with its
   // fingerprints. Depending on whether the KEKULE_ALL flag is set, the FP
   // computation will be based either on the bond arrangement or on atom
   // valences; this provides a convenient mechanism to remove degenerate
   // Kekule structures upfront. In a subsequent step, ConjElectrons objects
-  // stored in d_ceMapTmp are further enumerated for their non-bonded
+  // stored in ceMapTmp are further enumerated for their non-bonded
   // electron arrangements, and the final ConjElectrons objects are stored
-  // in d_ceMap. Depending on whether the KEKULE_ALL flag is set, the FP
+  // in ceMap. Depending on whether the KEKULE_ALL flag is set, the FP
   // computation will involve or not bond arrangement in addition to atom
   // valences
-  void ResonanceMolSupplier::buildCEMap(unsigned int conjGrpIdx)
+  void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx)
   {
     const unsigned int BEGIN_POS = 0;
     const unsigned int END_POS = 1;
@@ -1493,6 +1496,7 @@ namespace RDKit {
       ? ConjElectrons::FP_BONDS : ConjElectrons::FP_ATOMS);
     unsigned int nb = d_mol->getNumBonds();
     unsigned int na = d_mol->getNumAtoms();
+    CEMap ceMapTmp;
     // There are two stacks in this algorithm:
     // 1) ConjElectrons stack (ceStack, unique). It stores partial bond
     //    arrangements whenever multiple paths arise. Partial bond
@@ -1513,7 +1517,7 @@ namespace RDKit {
     // may eventually be set
     ce->checkCharges();
     ce->computeMetrics();
-    ce->storeFP(d_ceMap, fpFlags);
+    ce->storeFP(ceMap, fpFlags);
     ce = ceCopy;
     // initialize ceStack 
     ceStack.push(ce);
@@ -1654,15 +1658,15 @@ namespace RDKit {
       if (ce) {
         // if this bond arrangement was already stored previously,
         // discard it
-        if (!ce->storeFP(d_ceMapTmp, fpFlagsTmp))
+        if (!ce->storeFP(ceMapTmp, fpFlagsTmp))
           delete ce;
       }
     }
-    // for each bond arrangement in d_ceMapTmp, enumerate possible
-    // non-bonded electron arrangements, amd store them in d_ceMap
-    enumerateNbArrangements();
+    // for each bond arrangement in ceMapTmp, enumerate possible
+    // non-bonded electron arrangements, amd store them in ceMap
+    enumerateNbArrangements(ceMap, ceMapTmp);
     // prune structures depending on how flags were set
-    pruneStructures();
+    pruneStructures(ceMap);
   }
 
   // getter function which returns the bondConjGrpIdx for a given
@@ -1699,15 +1703,15 @@ namespace RDKit {
     d_ceVect3.resize(d_nConjGrp, NULL);
   }
 
-  // stores the ConjElectrons pointers currently stored in d_ceMap
-  // in the d_ceVect3 vector, and clears d_ceMapTmp and d_ceMap
-  void ResonanceMolSupplier::storeCEMap(unsigned int conjGrpIdx)
+  // stores the ConjElectrons pointers currently stored in ceMap
+  // in the d_ceVect3 vector
+  void ResonanceMolSupplier::storeCEMap(CEMap &ceMap,
+    unsigned int conjGrpIdx)
   {
-    d_ceVect3[conjGrpIdx] = new CEVect2(d_ceMap);
-    if (d_length < d_maxStructs)
-      d_length = std::min(d_maxStructs, d_length * d_ceMap.size());
-    d_ceMapTmp.clear();
-    d_ceMap.clear();
+    d_ceVect3[conjGrpIdx] = new CEVect2(ceMap);
+    boost::uint64_t p = d_length * ceMap.size();
+    d_length = ((p < d_maxStructs)
+      ? static_cast<unsigned int>(p) : d_maxStructs);
   }
   
   // resets the ResonanceMolSupplier index
