@@ -542,6 +542,8 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_chi0v(mol) - mol\_chi4v(mol) : returns the ChiXv value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_chi0n(mol) - mol\_chi4n(mol) : returns the ChiXn value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_kappa1(mol) - mol\_kappa3(mol) : returns the kappaX value for a molecule for X=1-3 (*available from 2012\_01 release*).
+-   mol\_numspiroatoms : returns the number of spiro atoms in a molecule (*available from 2015\_09 release*).
+-   mol\_numbridgeheadatoms : returns the number of bridgehead atoms in a molecule (*available from 2015\_09 release*).
 
 ##### MCS
 
