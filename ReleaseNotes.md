@@ -217,7 +217,7 @@ Maciek Wojcikowski
   - NumSpiroCenters and NumBridgeheadAtoms added
 
 ## New Java Wrapper Features:
-- Support for FilterCatalogs
+  - Support for FilterCatalogs
 
 ## Deprecated code (to be removed in next release):
 
@@ -228,7 +228,8 @@ Maciek Wojcikowski
 ## Contrib updates:
   - Addition of Peter Ertl's Natural Product Likeness score.
 
-## Other: 
+## Other:
+  - Much of the documentation has been translated from RST to MD
 
 # Release_2015.03.1
 (Changes relative to Release_2014.09.2)
