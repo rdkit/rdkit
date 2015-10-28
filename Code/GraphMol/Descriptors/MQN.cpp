@@ -81,7 +81,7 @@ namespace RDKit{
           }
           break;
         default:
-          res[11]++;break;
+          break;
         }
 
         if(at->getFormalCharge()>0) res[24]++; // positive charges
@@ -108,6 +108,7 @@ namespace RDKit{
           if(nRings>=2) res[40]++;
         }
       }
+      res[11] = mol.getNumHeavyAtoms();
       
       // ---------------------------------------------------
       // bond counts:

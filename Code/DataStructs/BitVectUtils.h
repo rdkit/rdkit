@@ -16,7 +16,7 @@
 //! \brief Construct a BitVect from the ASCII representation of a
 //! Daylight fingerprint string
 template <typename T>
-void FromDaylightString(T &sbv,std::string s);
+void FromDaylightString(T &sbv,const std::string &s);
 
 //! \brief Construct a BitVect from the ASCII representation of a
 //! bit string (i.e. a bunch of zeros and ones)

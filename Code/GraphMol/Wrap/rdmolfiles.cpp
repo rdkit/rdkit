@@ -20,6 +20,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
+#include <GraphMol/FileParsers/SequenceWriters.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 
@@ -184,6 +186,37 @@ namespace RDKit{
     RWMol *newM=0;
     try {
       newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor);
+    }  catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
+    } catch (...) {
+    }
+    return static_cast<ROMol *>(newM);
+  }
+
+  ROMol *MolFromSequence(python::object seq, bool sanitize, bool lowerD){
+    RWMol *newM=0;
+    try {
+      newM = SequenceToMol(pyObjectToString(seq), sanitize, lowerD);
+    }  catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
+    } catch (...) {
+    }
+    return static_cast<ROMol *>(newM);
+  }
+  ROMol *MolFromFASTA(python::object seq, bool sanitize, bool lowerD){
+    RWMol *newM=0;
+    try {
+      newM = FASTAToMol(pyObjectToString(seq), sanitize, lowerD);
+    }  catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
+    } catch (...) {
+    }
+    return static_cast<ROMol *>(newM);
+  }
+  ROMol *MolFromHELM(python::object seq, bool sanitize){
+    RWMol *newM=0;
+    try {
+      newM = HELMToMol(pyObjectToString(seq), sanitize);
     }  catch (RDKit::FileParseException &e) {
       BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
     } catch (...) {
@@ -402,7 +435,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - molBlock: string containing the Mol block\n\
 \n\
     - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
+      Defaults to True.\n\
 \n\
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
       This only make sense when sanitization is done.\n\
@@ -462,7 +495,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - mol2Block: string containing the Mol2 block\n\
 \n\
     - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
+      Defaults to True.\n\
 \n\
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
       This only make sense when sanitization is done.\n\
@@ -513,7 +546,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - molBlock: string containing the Mol block\n\
 \n\
     - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
+      Defaults to True.\n\
 \n\
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
       This only make sense when sanitization is done.\n\
@@ -589,7 +622,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - SMILES: the smiles string\n\
 \n\
     - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
+      Defaults to True.\n\
 \n\
     - replacements: (optional) a dictionary of replacement strings (see below)\n\
       Defaults to {}.\n\
@@ -801,7 +834,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - molBlock: string containing the PDB block\n\
 \n\
     - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
+      Defaults to True.\n\
 \n\
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
       This only make sense when sanitization is done.\n\
@@ -865,6 +898,113 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("filename"),
 	       python::arg("confId")=-1,python::arg("flavor")=0),
 	      docString.c_str());
+
+
+  docString="Construct a molecule from a sequence string (currently only supports peptides).\n\n\
+  ARGUMENTS:\n\
+\n\
+    - text: string containing the sequence\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to True.\n\
+\n\
+    - lowerD: (optional)\n\
+      Defaults to false.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromSequence", RDKit::MolFromSequence,
+	      (python::arg("text"),
+	       python::arg("sanitize")=true,
+               python::arg("lowerD")=false),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the sequence string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+\n\
+  NOTE: the molecule should contain monomer information in AtomMonomerInfo structures \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToSequence",RDKit::MolToSequence,
+	      (python::arg("mol")),
+	      docString.c_str());
+
+
+  docString="Construct a molecule from a FASTA string (currently only supports peptides).\n\n\
+  ARGUMENTS:\n\
+\n\
+    - text: string containing the FASTA\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to True.\n\
+\n\
+    - lowerD: (optional)\n\
+      Defaults to false.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromFASTA", RDKit::MolFromFASTA,
+	      (python::arg("text"),
+	       python::arg("sanitize")=true,
+               python::arg("lowerD")=false),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the FASTA string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+\n\
+  NOTE: the molecule should contain monomer information in AtomMonomerInfo structures \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToFASTA",RDKit::MolToFASTA,
+	      (python::arg("mol")),
+	      docString.c_str());
+
+  docString="Construct a molecule from a HELM string (currently only supports peptides).\n\n\
+  ARGUMENTS:\n\
+\n\
+    - text: string containing the HELM\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromHELM", RDKit::MolFromHELM,
+	      (python::arg("text"),
+	       python::arg("sanitize")=true),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the HELM string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+\n\
+  NOTE: the molecule should contain monomer information in AtomMonomerInfo structures \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToHELM",RDKit::MolToHELM,
+	      (python::arg("mol")),
+	      docString.c_str());
+
 
   docString="Returns the canonical atom ranking for each atom of a molecule fragment.\n\
   If breakTies is False, this returns the symmetry class for each atom.  The symmetry\n\

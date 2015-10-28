@@ -108,7 +108,15 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   globalProps = {}
   if startAnew:
     if os.path.exists(dbName):
-      os.unlink(dbName)
+      for i in range(5):
+        try:
+          os.unlink(dbName)
+          break
+        except:
+          import time
+          time.sleep(2)
+    if os.path.exists(dbName):
+      raise IOError('could not delete old database %s'%dbName)
   sIter=iter(suppl)
   setattr(Compound,nameCol.lower(),Column(nameCol.lower(),String,default=defaultVal,unique=uniqNames))
   if not skipSmiles:

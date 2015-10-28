@@ -23,7 +23,7 @@ namespace RDKit {
     //! construct with an error message
     ConformerException(const char *msg) : _msg(msg) {};
     //! construct with an error message
-    ConformerException(const std::string msg) : _msg(msg) {};
+    ConformerException(const std::string &msg) : _msg(msg) {};
     //! get the error message
     const char *message () const { return _msg.c_str(); };
     ~ConformerException () throw () {};

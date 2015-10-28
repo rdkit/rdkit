@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
@@ -487,8 +486,9 @@ namespace RDKit{
     }
 
     unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
-      mapping.resize(mol.getNumAtoms());
-      return boost::connected_components(mol.getTopology(),&mapping[0]);
+      unsigned int natms = mol.getNumAtoms();
+      mapping.resize(natms);
+      return natms ? boost::connected_components(mol.getTopology(),&mapping[0]) : 0;
     };
 
     unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {

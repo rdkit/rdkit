@@ -25,10 +25,15 @@ from rdkit.six import iteritems
 import math
 from collections import defaultdict
 
+import os.path as op
+
 _fscores = None
 def readFragmentScores(name='fpscores'):
     import gzip
     global _fscores
+    # generate the full path filename:
+    if name == "fpscores":
+        name = op.join(op.dirname(__file__), name)
     _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
     outDict = {}
     for i in _fscores:
@@ -37,38 +42,9 @@ def readFragmentScores(name='fpscores'):
     _fscores = outDict
 
 def numBridgeheadsAndSpiro(mol,ri=None):
-  if ri is None:
-    ri=mol.GetRingInfo()
-  arings = [set(x) for x in ri.AtomRings()]
-  spiros=set()
-  for i,ari in enumerate(arings):
-    for j in range(i+1,len(arings)):
-      shared=ari&arings[j]
-      if len(shared)==1:
-        spiros.update(shared)
-  nSpiro=len(spiros)
-
-  # find bonds that are shared between rings that share at least 2 bonds:
-  nBridge=0
-  brings = [set(x) for x in ri.BondRings()]
-  bridges=set()
-  for i,bri in enumerate(brings):
-    for j in range(i+1,len(brings)):
-      shared=bri&brings[j]
-      if len(shared)>1:
-        atomCounts=defaultdict(int)
-        for bi in shared:
-          bond = mol.GetBondWithIdx(bi)
-          atomCounts[bond.GetBeginAtomIdx()]+=1
-          atomCounts[bond.GetEndAtomIdx()]+=1
-        tmp=0
-        for ai,cnt in atomCounts.items():
-          if cnt==1:
-            tmp+=1
-            bridges.add(ai)
-        #if tmp!=2: # no need to stress the users
-          #print 'huh:',tmp
-  return len(bridges),nSpiro
+  nSpiro = rdMolDescriptors.CalcNumSpiroAtoms(mol)
+  nBridgehead = rdMolDescriptors.CalcNumBridgeheadAtoms(mol)
+  return nBridgehead,nSpiro
 
 def calculateScore(m):
   if _fscores is None: readFragmentScores()
@@ -127,10 +103,8 @@ def calculateScore(m):
   return sascore
     
 
-def processMols(mols,outf):
-  
+def processMols(mols):
   print('smiles\tName\tsa_score')
-  count = {}
   for i,m in enumerate(mols):
     if m is None:
       continue
@@ -142,9 +116,7 @@ def processMols(mols,outf):
 
 
 if __name__=='__main__':
-  import sys,gzip,time
-
-  outf = None
+  import sys,time
 
   t1=time.time()
   readFragmentScores("fpscores")
@@ -152,7 +124,7 @@ if __name__=='__main__':
 
   suppl = Chem.SmilesMolSupplier(sys.argv[1])
   t3=time.time()
-  processMols(suppl,outf)
+  processMols(suppl)
   t4=time.time()
 
   print('Reading took %.2f seconds. Calculating took %.2f seconds'%((t2-t1),(t4-t3)), file=sys.stderr)

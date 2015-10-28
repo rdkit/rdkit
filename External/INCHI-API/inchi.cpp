@@ -1285,7 +1285,9 @@ namespace RDKit {
           } else if (inchiAtom->num_iso_H[3]) {
             isotopes.push_back(boost::make_tuple(3, i, inchiAtom->num_iso_H[3]));
           }
-          //atom->setNoImplicit(true);
+          // at this point the molecule has all Hs it should have. Set the noImplicit flag so
+          // we don't end up with extras later (this was github #562):
+          atom->setNoImplicit(true);
           // add atom to molecule
           unsigned int aid = m->addAtom(atom, false, true);
           indexToAtomIndexMapping.push_back(aid);
@@ -1909,7 +1911,8 @@ namespace RDKit {
       // will eventually remove it, I added it any way
       if (//bondType == Bond::DOUBLE and
           (bond->getStereo() == Bond::STEREOZ || 
-           bond->getStereo() == Bond::STEREOE)) {
+           bond->getStereo() == Bond::STEREOE) &&
+          bond->getStereoAtoms().size()>=2 ) {
         inchi_Stereo0D stereo0D;
         if (bond->getStereo() == Bond::STEREOZ)
           stereo0D.parity = INCHI_PARITY_ODD;

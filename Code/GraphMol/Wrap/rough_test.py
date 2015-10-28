@@ -9,7 +9,7 @@ it's intended to be shallow, but broad
 
 """
 from __future__ import print_function
-import os,sys,tempfile
+import os,sys,tempfile,gzip
 import unittest
 from rdkit import RDConfig,rdBase
 from rdkit import DataStructs
@@ -18,6 +18,23 @@ from rdkit import six
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
+
+def getTotalFormalCharge(mol):
+  totalFormalCharge = 0
+  for atom in mol.GetAtoms():
+    totalFormalCharge += atom.GetFormalCharge()
+  return totalFormalCharge
+
+def cmpFormalChargeBondOrder(self, mol1, mol2):
+  self.assertEqual(mol1.GetNumAtoms(), mol2.GetNumAtoms())
+  self.assertEqual(mol1.GetNumBonds(), mol2.GetNumBonds())
+  for i in range(mol1.GetNumAtoms()):
+    self.assertEqual(mol1.GetAtomWithIdx(i).GetFormalCharge(),
+      mol2.GetAtomWithIdx(i).GetFormalCharge())
+  for i in range(mol1.GetNumBonds()):
+    self.assertEqual(mol1.GetBondWithIdx(i).GetBondType(),
+      mol2.GetBondWithIdx(i).GetBondType())
+
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -2242,7 +2259,6 @@ CAS<~>
                       m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.SINGLE )
 
   def test65StreamSupplier(self):
-    import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
@@ -2275,7 +2291,6 @@ CAS<~>
     self.assertEqual(i,16)
 
   def test66StreamSupplierIter(self):
-    import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     inf = gzip.open(fileN)
@@ -2295,7 +2310,6 @@ CAS<~>
     self.assertEqual(i,16)
 
   def test67StreamSupplierStringIO(self):
-    import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     if six.PY3:
@@ -2331,7 +2345,6 @@ CAS<~>
     self.assertRaises(IOError,lambda : Chem.ForwardSDMolSupplier('nosuchfile.sdf'))
 
   def test69StreamSupplierStreambuf(self):
-    import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     sb = rdBase.streambuf(gzip.open(fileN))
@@ -2347,7 +2360,6 @@ CAS<~>
     self.assertEqual(i,16)
     
   def test70StreamSDWriter(self):
-    import gzip
     if six.PY3:
       from io import BytesIO,StringIO
     else:
@@ -2993,15 +3005,215 @@ CAS<~>
     path = Chem.GetShortestPath(m, 1, 20)
     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
 
+  def testGithub497(self):
+    outf = gzip.open(tempfile.mktemp(),'wb+')
+    m = Chem.MolFromSmiles('C')
+    w = Chem.SDWriter(outf)
+    e = False
+    try:
+      w.write(m)
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon writing to SDWriter without crashing the RDKit\n')
+      e = True
+    else:
+      e = (sys.version_info < (3, 0))
+    try:
+      w.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing SDWriter without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
+    w=None
+    try:
+      outf.close()
+    except:
+      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
+        'upon closing the stream without crashing the RDKit\n')
+      e = True
+    else:
+      if (not e):
+        e = (sys.version_info < (3, 0))
+    self.assertTrue(e)
+    
   def testGithub498(self):
-    import gzip,tempfile
-    outf = gzip.open(tempfile.mktemp(),'w+')
+    if (sys.version_info < (3, 0)):
+      mode = 'w+'
+    else:
+      mode = 'wt+'
+    outf = gzip.open(tempfile.mktemp(), mode)
     m = Chem.MolFromSmiles('C')
     w = Chem.SDWriter(outf)
     w.write(m)
     w.close()
     w=None
+    outf.close()
+
+  def testAdjustQueryProperties(self):
+    m = Chem.MolFromSmarts('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    self.assertTrue(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(m))
+    self.assertFalse(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(am))
+
+    m = Chem.MolFromSmiles('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    qps = Chem.AdjustQueryParameters();
+    qps.makeDummiesQueries=False
+    am = Chem.AdjustQueryProperties(m,qps)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+
+  def testGithubIssue579(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    inf = gzip.open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    m0 = next(suppl)
+    self.assertTrue(m0 is not None)
+    inf.close()
+    del suppl
     
+  def testSequenceBasics(self):
+      " very basic round-tripping of the sequence reader/writer support "
+      helm = 'PEPTIDE1{C.Y.I.Q.N.C.P.L.G}$$$$'
+      seq = 'CYIQNCPLG'
+      fasta = '>\nCYIQNCPLG\n'
+      smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
+      
+      m = Chem.MolFromSequence(seq)
+      self.assertTrue(m is not None)
+      self.assertEqual(Chem.MolToSequence(m),seq)
+      self.assertEqual(Chem.MolToHELM(m),helm)
+      self.assertEqual(Chem.MolToFASTA(m),fasta)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      
+      m = Chem.MolFromHELM(helm)
+      self.assertTrue(m is not None)
+      self.assertEqual(Chem.MolToSequence(m),seq)
+      self.assertEqual(Chem.MolToHELM(m),helm)
+      self.assertEqual(Chem.MolToFASTA(m),fasta)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      
+      m = Chem.MolFromFASTA(fasta)
+      self.assertTrue(m is not None)
+      self.assertEqual(Chem.MolToSequence(m),seq)
+      self.assertEqual(Chem.MolToHELM(m),helm)
+      self.assertEqual(Chem.MolToFASTA(m),fasta)
+      self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
+      
+  def testResMolSupplier(self):
+    mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
+    totalFormalCharge = getTotalFormalCharge(mol)
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 4)
+    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() \
+      != resMolSuppl[1].GetBondBetweenAtoms(0, 1).GetBondType())
+      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() \
+      != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+    bondTypeDict = {}
+    # check that we actually have two alternate Kekule structures
+    bondTypeDict[resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType()] = True
+    bondTypeDict[resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType()] = True
+    self.assertEqual(len(bondTypeDict), 2)
+    
+    bondTypeDict = {}
+    resMolSuppl = Chem.ResonanceMolSupplier(mol,
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS)
+    self.assertEqual(len(resMolSuppl), 32)
+    for i in range(len(resMolSuppl)):
+      resMol = resMolSuppl[i]
+      self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
+    while (not resMolSuppl.atEnd()):
+      resMol = six.next(resMolSuppl)
+      self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
+    resMolSuppl.reset()
+    cmpFormalChargeBondOrder(self, resMolSuppl[0], six.next(resMolSuppl))
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol,
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS, 10)
+    self.assertEqual(len(resMolSuppl), 10)
+    
+    crambinPdb = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    mol = Chem.MolFromPDBFile(crambinPdb)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 1)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+
+  def testSubstructMatchAcetate(self):
+    mol = Chem.MolFromSmiles('CC(=O)[O-]')
+    query = Chem.MolFromSmarts('C(=O)[O-]')
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    matches = mol.GetSubstructMatches(query)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = mol.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = mol.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    query = Chem.MolFromSmarts('C(~O)~O')
+    matches = mol.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = mol.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+
+  def testSubstructMatchDMAP(self):
+    mol = Chem.MolFromSmiles('C(C)Nc1cc[nH+]cc1')
+    query = Chem.MolFromSmarts('[#7+]')
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    matches = mol.GetSubstructMatches(query,
+      False, False, False)
+    self.assertEqual(len(matches), 1)
+    p = matches[0]
+    self.assertEqual(p[0], 6)
+    matches = resMolSuppl.GetSubstructMatches(query,
+      False, False, False)
+    self.assertEqual(len(matches), 2)
+    v = []
+    p = matches[0]
+    v.append(p[0])
+    p = matches[1]
+    v.append(p[0]);
+    v.sort()
+    self.assertEqual(v[0], 2)
+    self.assertEqual(v[1], 6)
+
 if __name__ == '__main__':
   unittest.main()
 

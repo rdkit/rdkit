@@ -131,7 +131,7 @@ namespace RDKit {
     
     class MolHistogram {
     public:
-      MolHistogram(const ROMol &mol, const double *dmat);
+      MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat=false);
       ~MolHistogram() {};
     inline int get(const unsigned int y, const unsigned int x) const {
       PRECONDITION(y < d_h.shape()[0], "Invalid index on MolHistogram");
@@ -326,7 +326,7 @@ namespace RDKit {
     void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol,
                              void *prbProp, void *refProp,
                              std::vector<boost::shared_ptr<O3A> > &res,
-                             unsigned int numThreads=1,
+                             int numThreads=1,
                              O3A::AtomTypeScheme atomTypes = O3A::MMFF94,
                              const int refCid = -1,
                              const bool reflect = false, const unsigned int maxIters = 50,

@@ -80,7 +80,7 @@ class TestCase(unittest.TestCase):
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     torsions = TorsionFingerprints.CalculateTorsionAngles(mol, tors_list, tors_list_rings)
     self.assertEqual(len(weights), len(torsions))
-    self.assertAlmostEqual(torsions[2][0], 232.5346, 4)
+    self.assertAlmostEqual(torsions[2][0][0], 232.5346, 4)
 
     # the torsion fingerprint deviation
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions)
@@ -91,9 +91,58 @@ class TestCase(unittest.TestCase):
     torsions2 = TorsionFingerprints.CalculateTorsionAngles(mol2, tors_list, tors_list_rings)
     weights = TorsionFingerprints.CalculateTorsionWeights(mol)
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2, weights=weights)
-    self.assertAlmostEqual(tfd, 0.0645,4)
+    self.assertAlmostEqual(tfd, 0.0691, 4)
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions2)
-    self.assertAlmostEqual(tfd, 0.1680,4)
+    self.assertAlmostEqual(tfd, 0.1115, 4)
+
+    # the wrapper functions
+    tfd = TorsionFingerprints.GetTFDBetweenMolecules(mol, mol2)
+    self.assertAlmostEqual(tfd, 0.0691, 4)
+
+    mol.AddConformer(mol2.GetConformer(), assignId=True)
+    mol.AddConformer(mol2.GetConformer(), assignId=True)
+    tfd = TorsionFingerprints.GetTFDBetweenConformers(mol, confIds1=[0], confIds2=[1, 2])
+    self.assertEqual(len(tfd), 2)
+    self.assertAlmostEqual(tfd[0], 0.0691, 4)
+
+    tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
+    self.assertEqual(len(tfdmat), 3)
+    
+  def testTorsionFingerprintsAtomReordering(self):
+    # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
+    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1DWD_ligand.pdb')
+    ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+    mol1 = Chem.MolFromPDBFile(refFile)
+    mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
+
+    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1DWD_ligand_reordered.pdb')
+    mol2 = Chem.MolFromPDBFile(refFile)
+    mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
+
+    tfd = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2)
+    self.assertEqual(tfd, 0.0)
+
+  def testTorsionFingerprintsColinearBonds(self):
+    # test that single bonds adjacent to triple bonds are ignored
+    mol = Chem.MolFromSmiles('CCC#CCC')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
+    self.assertEqual(len(tors_list), 0)
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=True)
+    self.assertEqual(len(weights), 0)
+
+    # test that they are not ignored, but alternative atoms searched for
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
+    self.assertEqual(len(tors_list), 1)
+    self.assertEqual(tors_list[0][0][0], (0, 1, 4, 5))
+    weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=False)
+    self.assertEqual(len(weights), 1)
+
+    # test that single bonds adjacent to terminal triple bonds are always ignored
+    mol = Chem.MolFromSmiles('C#CCC')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
+    self.assertEqual(len(tors_list), 0)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
+    self.assertEqual(len(tors_list), 0)
 
 if __name__ == '__main__':
   unittest.main()

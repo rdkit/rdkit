@@ -191,7 +191,7 @@ namespace RDInfoTheory {
     /*! \brief Write the top bits to a file
      *
      */
-    void writeTopBitsToFile(std::string fileName) const;
+    void writeTopBitsToFile(const std::string &fileName) const;
 
   private:
     /*! \brief check if we want to compute the info content for a bit based on the bias list

@@ -93,6 +93,15 @@ namespace RDKit {
     delete har;
   }
 
+
+#ifdef RDK_CAIRO_BUILD
+  python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self){
+    std::string res=self.getDrawingText();
+    python::object retval = python::object(python::handle<>(PyBytes_FromStringAndSize(res.c_str(),res.length())));
+    return retval;
+  }
+#endif
+  
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -117,10 +126,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
     .def_readwrite("flagCloseContactsDist",&RDKit::MolDrawOptions::flagCloseContactsDist)
     .def_readwrite("atomRegions",&RDKit::MolDrawOptions::atomRegions,"regions to outline")
     .def_readwrite("includeAtomTags",&RDKit::MolDrawOptions::includeAtomTags,"include atom tags in output")
+    .def_readwrite("clearBackground",&RDKit::MolDrawOptions::clearBackground,"clear the background before drawing a molecule")
 
     ;
   docString="Drawer abstract base class";
   python::class_<RDKit::MolDraw2D,boost::noncopyable>("MolDraw2D",docString.c_str(),python::no_init)
+    .def("SetFontSize",&RDKit::MolDraw2D::setFontSize,"change the default font size")
+    .def("FontSize",&RDKit::MolDraw2D::fontSize,"get the default font size")
     .def("DrawMolecule",RDKit::drawMoleculeHelper1,
          (python::arg("self"),python::arg("mol"),
           python::arg("highlightAtoms")=python::object(),
@@ -161,7 +173,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                                                                                               python::init<int,int>())
     .def("FinishDrawing",&RDKit::MolDraw2DCairo::finishDrawing,
          "add the last bits to finish the drawing")
-    .def("GetDrawingText",&RDKit::MolDraw2DCairo::getDrawingText,
+    .def("GetDrawingText",&RDKit::getCairoDrawingText,
          "return the PNG data as a string")
     .def("WriteDrawingText",&RDKit::MolDraw2DCairo::writeDrawingText,
          "write the PNG data to the named file")

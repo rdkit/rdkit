@@ -56,16 +56,16 @@ def RDIdToInt(id,validate=1):
   >>> try:
   ...   RDIdToInt('RDCmpd-009-000-109-8')
   ... except ValueError:
-  ...   print 'ok'
+  ...   print('ok')
   ... else:
-  ...   print 'failed'
+  ...   print('failed')
   ok
   >>> try:
   ...   RDIdToInt('bogus')
   ... except ValueError:
-  ...   print 'ok'
+  ...   print('ok')
   ... else:
-  ...   print 'failed'
+  ...   print('failed')
   ok
 
   """
@@ -106,9 +106,9 @@ def IndexToRDId(idx,leadText='RDCmpd'):
   >>> try:
   ...   IndexToRDId(-1)
   ... except ValueError:
-  ...   print 'ok'
+  ...   print('ok')
   ... else:
-  ...   print 'failed'
+  ...   print('failed')
   ok
 
   """
@@ -167,8 +167,7 @@ def RegisterItem(conn,table,value,columnName,data=None,
                  id='',idColName='Id',leadText='RDCmpd'):
   """
 
-  >>> dbName =  RDConfig.RDTestDatabase
-  >>> conn = DbConnect(dbName)
+  >>> conn = DbConnect(tempDbName)
   >>> tblName = 'StorageTest'
   >>> conn.AddTable(tblName,'id varchar(32) not null primary key,label varchar(40),val int')
   >>> RegisterItem(conn,tblName,'label1','label',['label1',1])==(1, 'RDCmpd-000-001-1')
@@ -279,7 +278,19 @@ def _test():
   return doctest.testmod(sys.modules["__main__"])
 
 if __name__ == '__main__':
-  import sys
+  import sys,tempfile,shutil,os
+  if RDConfig.useSqlLite:
+    tmpf,tempName = tempfile.mkstemp(suffix='sqlt')
+    tempDbName = tempName
+    shutil.copyfile(RDConfig.RDTestDatabase,tempDbName)
+  else:
+    tempDbName='::RDTests'
   failed,tried = _test()
+  if RDConfig.useSqlLite and os.path.exists(tempDbName):
+    try:
+      os.unlink(tempDbName)
+    except:
+      import traceback
+      traceback.print_exc()
   sys.exit(failed)
 

@@ -45,7 +45,7 @@ namespace RDKit {
     
     std::string getDescription() const {return d_descrip;}
     
-    void setDescription(std::string val) {d_descrip = val;}
+    void setDescription(const std::string &val) {d_descrip = val;}
 
     void setDescription(const FragCatParams *params);
     
@@ -101,7 +101,7 @@ namespace RDKit {
       dp_props->getVal(key, res);
     }
     template <typename T>
-      void getProp(const std::string key, T &res) const {
+      void getProp(const std::string &key, T &res) const {
       getProp(key.c_str(), res);
     }
     

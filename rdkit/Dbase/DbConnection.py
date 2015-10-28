@@ -234,6 +234,7 @@ class DbConnect(object):
 
     """
     self.cursor = None
+    if self.cn is not None: self.cn.close()
     self.cn = None
 
   def AddTable(self,tableName,colString):
@@ -283,7 +284,7 @@ class DbConnect(object):
 
     """
     c = self.GetCursor()
-    if type(vals) != types.TupleType:
+    if type(vals) != tuple:
       vals = tuple(vals)
     insTxt = '('+','.join([DbModule.placeHolder]*len(vals))+')'
     #insTxt = '(%s'%('%s,'*len(vals))

@@ -102,6 +102,7 @@ namespace RDPickers {
         .value("MCQUITTY", HierarchicalClusterPicker::MCQUITTY)
         .value("GOWER", HierarchicalClusterPicker::GOWER)
         .value("CENTROID", HierarchicalClusterPicker::CENTROID)
+        .export_values()
         ; 
     };
   };

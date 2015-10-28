@@ -409,15 +409,16 @@ namespace RDKit{
       } else {
 	propName = "_";
       }
-      propName+="3DDistanceMatrix_Conf"+boost::lexical_cast<std::string>(conf.getId());
-      if(!force && mol.hasProp(propName)){
-	mol.getProp(propName,sptr);
-	return sptr.get();
-      }    
+      if(propName != ""){
+        propName+="3DDistanceMatrix_Conf"+boost::lexical_cast<std::string>(conf.getId());
+        if(!force && mol.hasProp(propName)){
+          mol.getProp(propName,sptr);
+          return sptr.get();
+        }
+      }
 
       unsigned int nAts=mol.getNumAtoms();
       double *dMat = new double[nAts*nAts];
-      sptr.reset(dMat);
 
       for(unsigned int i=0;i<nAts;++i){
         if(useAtomWts){
@@ -432,7 +433,10 @@ namespace RDKit{
         }
       }
       
-      mol.setProp(propName,sptr,true);
+      if(propName!=""){
+        sptr.reset(dMat);
+        mol.setProp(propName,sptr,true);
+      }
       return dMat;
     }
   } // end of namespace MolOps

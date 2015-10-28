@@ -218,6 +218,10 @@ MOLDESCR(kappa1,MolKappa1,FLOAT4)
 MOLDESCR(kappa2,MolKappa2,FLOAT4)
 MOLDESCR(kappa3,MolKappa3,FLOAT4)
 
+MOLDESCR(numspiroatoms,MolNumSpiroAtoms,INT32)
+MOLDESCR(numbridgeheadatoms,MolNumBridgeheadAtoms,INT32)
+
+
 PG_FUNCTION_INFO_V1(mol_formula);
 Datum           mol_formula(PG_FUNCTION_ARGS);
 Datum

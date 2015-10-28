@@ -393,6 +393,7 @@ struct atom_wrapper {
       .value("CHI_TETRAHEDRAL_CW",Atom::CHI_TETRAHEDRAL_CW)
       .value("CHI_TETRAHEDRAL_CCW",Atom::CHI_TETRAHEDRAL_CCW)
       .value("CHI_OTHER",Atom::CHI_OTHER)
+      .export_values();
       ;
 
 
@@ -400,6 +401,7 @@ struct atom_wrapper {
       .value("COMPOSITE_AND",Queries::COMPOSITE_AND)
       .value("COMPOSITE_OR",Queries::COMPOSITE_OR)
       .value("COMPOSITE_XOR",Queries::COMPOSITE_XOR)
+      .export_values();
       ;
       
 

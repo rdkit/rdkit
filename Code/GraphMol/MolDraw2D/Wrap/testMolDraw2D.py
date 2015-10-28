@@ -14,8 +14,8 @@ class TestCase(unittest.TestCase):
         d.DrawMolecule(m)
         d.FinishDrawing()
         txt = d.GetDrawingText()
-        self.failUnless(txt.find("<svg:svg")!=-1)
-        self.failUnless(txt.find("</svg:svg>")!=-1)
+        self.assertTrue(txt.find("<svg:svg")!=-1)
+        self.assertTrue(txt.find("</svg:svg>")!=-1)
             
     def test2(self) :
         m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
@@ -26,7 +26,17 @@ class TestCase(unittest.TestCase):
         d.DrawMolecule(m)
         d.FinishDrawing()
         txt = d.GetDrawingText()
-        self.failUnless(txt.find("foolabel")!=-1)
+        self.assertTrue(txt.find("foolabel")!=-1)
+
+    def testGithubIssue571(self) :
+        if not hasattr(Draw,'MolDraw2DCairo'):
+            return
+        m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
+        AllChem.Compute2DCoords(m)
+        d = Draw.MolDraw2DCairo(300,300)
+        d.DrawMolecule(m)
+        d.FinishDrawing()
+        txt = d.GetDrawingText()
 
             
 if __name__=="__main__":

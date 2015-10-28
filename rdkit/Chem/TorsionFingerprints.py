@@ -13,6 +13,7 @@ from rdkit import rdBase
 from rdkit import RDConfig
 from rdkit import Geometry
 from rdkit import Chem
+from rdkit.Chem import rdchem
 from rdkit.Chem import rdMolDescriptors
 import math, os
 
@@ -122,14 +123,76 @@ def _getIndexforTorsion(neighbors, inv):
   elif _doMatch(inv, neighbors): # atom has all symmetric neighbors
     return neighbors
   elif _doNotMatch(inv, neighbors): # atom has all different neighbors
-    # simply use the first neighbor
+    # sort by atom inv and simply use the first neighbor
+    neighbors = sorted(neighbors, key = lambda x: inv[x.GetIdx()])
     return [neighbors[0]]
   at = _doMatchExcept1(inv, neighbors) # two neighbors the same, one different
   if at is None:
     raise ValueError("Atom neighbors are either all the same or all different")
   return [at] 
 
-def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
+def _getBondsForTorsions(mol, ignoreColinearBonds):
+  """ Determine the bonds (or pair of atoms treated like a bond) for which
+      torsions should be calculated.
+
+      Arguments:
+      - refmol: the molecule of interest
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
+  """
+  # flag the atoms that cannot be part of the centre atoms of a torsion
+  # patterns: triple bonds and allenes
+  patts = [Chem.MolFromSmarts(x) for x in ['*#*', '[$([C](=*)=*)]']]
+  atomFlags = [0]*mol.GetNumAtoms()
+  for p in patts:
+    if mol.HasSubstructMatch(p):
+      matches = mol.GetSubstructMatches(p)
+      for match in matches:
+        for a in match:
+          atomFlags[a] = 1
+
+  bonds = []
+  doneBonds = [0]*mol.GetNumBonds()
+  for b in mol.GetBonds():
+    if b.IsInRing(): continue
+    a1 = b.GetBeginAtomIdx()
+    a2 = b.GetEndAtomIdx()
+    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
+    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
+    if not doneBonds[b.GetIdx()] and (nb1 and nb2): # no terminal bonds
+      doneBonds[b.GetIdx()] = 1;
+      # check if atoms cannot be middle atoms
+      if atomFlags[a1] or atomFlags[a2]:
+        if not ignoreColinearBonds: # search for alternative not-covalently bound atoms
+          while len(nb1)==1 and atomFlags[a1]:
+            a1old = a1
+            a1 = nb1[0].GetIdx()
+            b = mol.GetBondBetweenAtoms(a1old, a1)
+            if b.GetEndAtom().GetIdx() == a1old:
+              nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a1old)
+            else:
+              nb1 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1old)
+            doneBonds[b.GetIdx()] = 1;
+          while len(nb2)==1 and atomFlags[a2]:
+            doneBonds[b.GetIdx()] = 1;
+            a2old = a2
+            a2 = nb2[0].GetIdx()
+            b = mol.GetBondBetweenAtoms(a2old, a2)
+            if b.GetBeginAtom().GetIdx() == a2old:
+              nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a2old)
+            else:
+              nb2 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2old)
+            doneBonds[b.GetIdx()] = 1;
+          if nb1 and nb2:
+            bonds.append((a1, a2, nb1, nb2))
+
+      else: 
+        bonds.append((a1, a2, nb1, nb2))
+  return bonds
+
+def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Calculate a list of torsions for a given molecule. For each torsion
       the four atom indices are determined and stored in a set.
 
@@ -141,21 +204,17 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: two lists of torsions: non-ring and ring torsions
   """
   if maxDev not in ['equal', 'spec']:
     raise ValueError("maxDev must be either equal or spec")
   # get non-terminal, non-cyclic bonds
-  bonds = []
-  for b in mol.GetBonds():
-    if b.IsInRing(): continue
-    a1 = b.GetBeginAtomIdx()
-    a2 = b.GetEndAtomIdx()
-    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
-    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom(), a1)
-    if nb1 and nb2: # no terminal bonds
-      bonds.append((b, a1, a2, nb1, nb2))
+  bonds = _getBondsForTorsions(mol, ignoreColinearBonds)
   # get atom invariants
   if symmRadius > 0:
     inv = _getAtomInvariantsWithRadius(mol, symmRadius)
@@ -163,7 +222,7 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2):
     inv = rdMolDescriptors.GetConnectivityInvariants(mol)
   # get the torsions
   tors_list = [] # to store the atom indices of the torsions
-  for b, a1, a2, nb1, nb2 in bonds:
+  for a1, a2, nb1, nb2 in bonds:
     d1 = _getIndexforTorsion(nb1, inv)
     d2 = _getIndexforTorsion(nb2, inv)
     if len(d1) == 1 and len(d2) == 1: # case 1, 2, 4, 5, 7, 10, 16, 12, 17, 19
@@ -237,32 +296,26 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
   """
   torsions = []
   conf = mol.GetConformer(confId)
-  for t,maxdev in tors_list:
-    if len(t) == 1:
-      t = t[0]
-      p1, p2, p3, p4 = _getTorsionAtomPositions(t, conf)
-      tors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
-      if tors < 0: tors += 360.0 # angle between 0 and 360
-    else:
-      # loop over torsions and take minimum
-      tors = 360.0
-      for t2 in t:
-        p1, p2, p3, p4 = _getTorsionAtomPositions(t2, conf)
-        tmp = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
-        if tmp < 0: tmp += 360.0 # angle between 0 and 360
-        if tmp < tors: tors = tmp
+  for quartets,maxdev in tors_list:
+    tors = []
+    # loop over torsions and calculate angle
+    for atoms in quartets:
+      p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
+      tmpTors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0
+      if tmpTors < 0: tmpTors += 360.0 # angle between 0 and 360
+      tors.append(tmpTors)
     torsions.append((tors, maxdev))
   # rings
-  for t,maxdev in tors_list_rings:
-    num = len(t)
+  for quartets,maxdev in tors_list_rings:
+    num = len(quartets)
     # loop over torsions and sum them up
     tors = 0
-    for t2 in t:
-      p1, p2, p3, p4 = _getTorsionAtomPositions(t2, conf)
-      tmp = abs((Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0)
-      tors += tmp
+    for atoms in quartets:
+      p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
+      tmpTors = abs((Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4)/math.pi)*180.0)
+      tors += tmpTors
     tors /= num
-    torsions.append((tors, maxdev))
+    torsions.append(([tors], maxdev))
   return torsions
 
 def _findCentralBond(mol, distmat):
@@ -325,7 +378,7 @@ def _calculateBeta(mol, distmat, aid1):
   beta = -math.log(0.1)/(dmax2*dmax2)
   return beta
 
-def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
+def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
   """ Calculate the weights for the torsions in a molecule.
       By default, the highest weight is given to the bond 
       connecting the two most central atoms.
@@ -335,7 +388,11 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
       Arguments:
       - mol:   the molecule of interest
       - aid1:  index of the first atom (default: most central)
-      - aid2:  index of the second atom (default: second most cenral)
+      - aid2:  index of the second atom (default: second most central)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: list of torsion weights (both non-ring and ring)
   """
@@ -350,18 +407,10 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1):
   # calculate beta according to the formula in the paper
   beta = _calculateBeta(mol, distmat, aid1)
   # get non-terminal, non-cyclic bonds
-  bonds = []
-  for b in mol.GetBonds():
-    if b.IsInRing(): continue
-    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
-    nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
-    if len(nb1) > 1 and len(nb2) > 1:
-      bonds.append(b)
+  bonds = _getBondsForTorsions(mol, ignoreColinearBonds)
   # get shortest paths and calculate weights
   weights = []
-  for b in bonds:
-    bid1 = b.GetBeginAtom().GetIdx()
-    bid2 = b.GetEndAtom().GetIdx()
+  for bid1, bid2, nb1, nb2 in bonds:
     if ((bid1, bid2) == (aid1, aid2)
       or (bid2, bid1) == (aid1, aid2)): # if it's the most central bond itself
       d = 0
@@ -397,7 +446,7 @@ def CalculateTFD(torsions1, torsions2, weights=None):
   """ Calculate the torsion deviation fingerprint (TFD) given two lists of
       torsion angles.
 
-      Arguments;
+      Arguments:
       - torsions1:  torsion angles of conformation 1
       - torsions2:  torsion angles of conformation 2
       - weights:    list of torsion weights (default: None)
@@ -408,11 +457,17 @@ def CalculateTFD(torsions1, torsions2, weights=None):
     raise ValueError("List of torsions angles must have the same size.")
   # calculate deviations and normalize (divide by max. possible deviation)
   deviations = []
-  for t1, t2 in zip(torsions1, torsions2):
-    diff = abs(t1[0]-t2[0])
-    if (360.0-diff) < diff: # we do not care about direction
-      diff = 360.0 - diff
-    deviations.append(diff/t1[1])
+  for tors1, tors2 in zip(torsions1, torsions2):
+    mindiff = 180.0
+    for t1 in tors1[0]:
+      for t2 in tors2[0]:
+        diff = abs(t1-t2)
+        if (360.0-diff) < diff: # we do not care about direction
+          diff = 360.0 - diff
+        #print t1, t2, diff
+        if diff < mindiff:
+          mindiff = diff
+    deviations.append(mindiff/tors1[1])
   # do we use weights?
   if weights is not None:
     if len(weights) != len(torsions1):
@@ -426,8 +481,35 @@ def CalculateTFD(torsions1, torsions2, weights=None):
     tfd /= sum_weights
   return tfd
 
+def _getSameAtomOrder(mol1, mol2):
+  """ Generate a new molecule with the atom order of mol1 and coordinates
+      from mol2.
+      
+      Arguments:
+      - mol1:     first instance of the molecule of interest
+      - mol2:     second instance the molecule of interest
+
+      Return: RDKit molecule
+  """
+  match = mol2.GetSubstructMatch(mol1)
+  atomNums = tuple(range(mol1.GetNumAtoms()))
+  if match != atomNums: # atom orders are not the same!
+    #print "Atoms of second molecule reordered."
+    mol3 = Chem.Mol(mol1)
+    mol3.RemoveAllConformers()
+    for conf2 in mol2.GetConformers():
+      confId = conf2.GetId()
+      conf = rdchem.Conformer(mol1.GetNumAtoms())
+      conf.SetId(confId)
+      for i in range(mol1.GetNumAtoms()):
+        conf.SetAtomPosition(i, mol2.GetConformer(confId).GetAtomPosition(match[i]))
+      cid = mol3.AddConformer(conf)
+    return mol3
+  else:
+    return Chem.Mol(mol2)
+
 # some wrapper functions
-def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two list of conformers 
       of a molecule
 
@@ -442,15 +524,19 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: list of TFD values
   """
-  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   torsions1 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds1]
   torsions2 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds2]
   tfd = []
   if useWeights:
-    weights = CalculateTorsionWeights(mol)
+    weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
     for t1 in torsions1:
       for t2 in torsions2:
         tfd.append(CalculateTFD(t1, t2, weights=weights))
@@ -460,16 +546,15 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
         tfd.append(CalculateTFD(t1, t2))
   return tfd
 
-def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True, maxDev='equal', symmRadius=2):
-  """ Wrapper to calculate the TFD between two list of conformers 
-      of two molecules.
+def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
+  """ Wrapper to calculate the TFD between two molecules.
       Important: The two molecules must be instances of the same molecule
 
       Arguments:
       - mol1:     first instance of the molecule of interest
       - mol2:     second instance the molecule of interest
-      - confIds1:  list of conformer indices from mol1 (default: first conformer)
-      - confIds2:  list of conformer indices from mol2 (default: first conformer)
+      - confId1:  conformer index for mol1 (default: first conformer)
+      - confId2:  conformer index for mol2 (default: first conformer)
       - useWeights: flag for using torsion weights in the TFD calculation
       - maxDev:   maximal deviation used for normalization
                   'equal': all torsions are normalized using 180.0 (default)
@@ -477,35 +562,29 @@ def GetTFDBetweenMolecules(mol1, mol2, confIds1=-1, confIds2=-1, useWeights=True
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
-      Return: list of TFD values
+      Return: TFD value
   """
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
-  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius)
+  mol2 = _getSameAtomOrder(mol1, mol2)
+  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   # first molecule
-  if confIds1 < 0:
-    torsions1 = [CalculateTorsionAngles(mol1, tl, tlr)]
-  else:
-    torsions1 = [CalculateTorsionAngles(mol1, tl, tlr, confId=cid) for cid in confIds1]
+  torsion1 = CalculateTorsionAngles(mol1, tl, tlr, confId=confId1)
   # second molecule
-  if confIds2 < 0:
-    torsions2 = [CalculateTorsionAngles(mol2, tl, tlr)]
-  else:
-    torsions2 = [CalculateTorsionAngles(mol2, tl, tlr, confId=cid) for cid in confIds2]
-  tfd = []
+  torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=confId2)
   if useWeights:
-    weights = CalculateTorsionWeights(mol1)
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2, weights=weights))
+    weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
+    tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   else:
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2))
+    tfd = CalculateTFD(torsion1, torsion2)
   return tfd
 
-def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
+def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the matrix of TFD values for the
       conformers of a molecule.
 
@@ -518,6 +597,10 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
                            maximal deviation as given in the paper
       - symmRadius: radius used for calculating the atom invariants
                     (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
 
       Return: matrix of TFD values
       Note that the returned matrix is symmetrical, i.e. it is the
@@ -527,12 +610,12 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2):
                  d, e, f,
                  g, h, i, j]
   """
-  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius)
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
   numconf = mol.GetNumConformers()
   torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId()) for conf in mol.GetConformers()]
   tfdmat = []
   if useWeights:
-    weights = CalculateTorsionWeights(mol)
+    weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
     for i in range(0, numconf):
       for j in range(0, i):
         tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))

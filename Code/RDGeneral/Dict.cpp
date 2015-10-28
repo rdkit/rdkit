@@ -19,12 +19,14 @@
 #include <list>
 #include <iostream>
 #include <sstream>
+#include <RDGeneral/LocaleSwitcher.h>
 
 namespace RDKit{
   namespace {
     template <class T>
     std::string vectToString(const boost::any &val){
       const std::vector<T> &tv=boost::any_cast<std::vector<T> >(val);
+      Utils::LocaleSwitcher ls;
       std::ostringstream sstr;
       sstr<<"[";
       std::copy(tv.begin(),tv.end(),std::ostream_iterator<T>(sstr,","));
@@ -44,6 +46,7 @@ namespace RDKit{
     //
     if(!hasVal(what) ) throw KeyErrorException(what);
     const boost::any &val = _data.find(what)->second;
+    Utils::LocaleSwitcher ls;
     try{
       res = boost::any_cast<std::string>(val);
     } catch (const boost::bad_any_cast &) {
@@ -83,6 +86,7 @@ namespace RDKit{
     if (pos==_data.end())
       return false;
     const boost::any &val = pos->second;
+    Utils::LocaleSwitcher ls;
     try{
       res = boost::any_cast<std::string>(val);
     } catch (const boost::bad_any_cast &) {
@@ -117,6 +121,7 @@ namespace RDKit{
     _fromany(const boost::any &arg) {
       T res;
       if(arg.type()==typeid(std::string) || arg.type()==typeid(const char *)){
+        Utils::LocaleSwitcher ls;
         try {
           res = boost::any_cast<T>(arg);
         } catch (const boost::bad_any_cast &exc) {

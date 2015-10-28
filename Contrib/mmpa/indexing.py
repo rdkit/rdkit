@@ -56,22 +56,17 @@ def add_to_index(smi,attachments,cmpd_heavy):
     return result
 
 def get_symmetry_class(smi):
-
     symmetry = []
 
     m = Chem.MolFromSmiles(smi)
-
-    #determine the symmetry class
-    #see: http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01894.html
-    #A thanks to Greg (and Alan)
-    Chem.AssignStereochemistry(m,cleanIt=True,force=True,flagPossibleStereoCenters=True)
-
+    symmetry_classes = Chem.CanonicalRankAtoms(m, breakTies=False)
+    
     #get the symmetry class of the attachements points
     #Note: 1st star is the zero index,
     #2nd star is first index, etc
-    for atom in m.GetAtoms():
+    for atom, symmetry_class in zip(m.GetAtoms(), symmetry_classes):
         if(atom.GetMass() == 0):
-            symmetry.append(atom.GetProp('_CIPRank'))
+            symmetry.append(symmetry_class)
 
     return symmetry
 
@@ -490,9 +485,9 @@ if __name__=='__main__':
         if(total == 1):
             continue
 
-        for xa in xrange(total):
+        for xa in range(total):
 
-            for xb in xrange(xa, total):
+            for xb in range(xa, total):
 
                 if(xa != xb):
                     #now generate the pairs

@@ -283,7 +283,7 @@ namespace RDKit {
     return res;
   }
 
-  PDBWriter::PDBWriter(std::string fileName, unsigned int flavor) {
+  PDBWriter::PDBWriter(const std::string &fileName, unsigned int flavor) {
     if(fileName!= "-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
       df_owner=true;

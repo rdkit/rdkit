@@ -1,0 +1,179 @@
+FilterCatalogs give RDKit the ability to screen out or reject undesireable molecules
+based on various criteria.  Supplied with RDKIt are the following filter sets:
+
+  * PAINS - Pan assay interference patterns.  These are seperated into three
+    sets PAINS_A, PAINS_B and PAINS_C.
+    Reference: Baell JB, Holloway GA. New Substructure Filters for Removal of Pan Assay
+               Interference Compounds (PAINS) from Screening Libraries and for Their
+               Exclusion in Bioassays.
+               J Med Chem 53 (2010) 2719Ð40. doi:10.1021/jm901137j.
+
+  * BRENK - filters unwanted functionality due to potential tox reasons or unfavorable
+     pharmacokinetics.
+    Reference: Brenk R et al. Lessons Learnt from Assembling Screening Libraries for
+               Drug Discovery for Neglected Diseases.
+               ChemMedChem 3 (2008) 435-444. doi:10.1002/cmdc.200700139.
+
+  * NIH - annotated compounds with problematic functional groups
+     Reference: Doveston R, et al. A Unified Lead-oriented Synthesis of over Fifty
+                Molecular Scaffolds. Org Biomol Chem 13 (2014) 859Ð65.
+                doi:10.1039/C4OB02287D.
+     Reference: Jadhav A, et al. Quantitative Analyses of Aggregation, Autofluorescence,
+                and Reactivity Artifacts in a Screen for Inhibitors of a Thiol Protease.
+                J Med Chem 53 (2009) 37Ð51. doi:10.1021/jm901070c.
+
+  * ZINC - Filtering based on drug-likeness and unwanted functional groups
+    Reference: http://blaster.docking.org/filtering/
+
+The following is C++ and Python examples of how to filter molecules.
+
+[C++]
+
+#include <GraphMol/FilterCatalog.h>
+using namespace RDKit;
+
+    SmilesMolSupplier suppl(…);
+
+    // setup the desired catalogs
+    FilterCatalogParams params;
+    params.addCatalog(FilterCatalogParams::PAINS_A);
+    params.addCatalog(FilterCatalogParams::PAINS_B);
+    params.addCatalog(FilterCatalogParams::PAINS_C);
+    
+    // create the catalog
+    FilterCatalog catalog(params);
+
+    unique_ptr<ROMol> mol; // automatically cleans up after us    
+    int count = 0;
+    while(!suppl.atEnd()){
+      mol.reset(suppl.next());
+      TEST_ASSERT(mol.get());
+
+      // Does a PAINS filter hit?
+      if (catalog.hasMatch(*mol)) {
+        std::cerr << "Warning: molecule failed filter " << std::endl;
+      }
+      
+      // More detailed data by retrieving the catalog entry
+      const FilterCatalogEntry *entry = catalog.getFirstMatch(*mol);
+      if (entry) {
+        std::cerr << "Warning: molecule failed filter: reason " <<
+          entry->getDescription() << std::endl;
+        
+        // get the matched substructure atoms for visualization
+        std::vector<FilterMatch> matches;
+        if (entry->getFilterMatches(*mol, matches)) {
+          for(std::vector<FilterMatch>::const_iterator it = matches.begin();
+              it != matches.end(); ++it) {
+            // Get the SmartsMatcherBase that matched
+            const FilterMatch & fm = (*it);
+            boost::shared_ptr<SmartsMatcherBase> matchingFilter = \
+              fm.filterMatch;
+            
+            // Get the matching atom indices
+            const MatchVectType &vect = fm.atomPairs;
+            for (MatchVectType::const_iterator it=vect.begin();
+                 it != vect.end(); ++it) {
+                 int atomIdx = it->second;
+            }
+
+          }
+        }
+      }
+      count ++;
+    } // end while
+
+Python API
+
+  import sys
+  from rdkit.Chem import FilterCatalog
+
+  params = FilterCatalog.FilterCatalogParams()
+  params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
+  params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_B)
+  params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_C)
+  catalog = FilterCatalog.FilterCatalog(params)
+  
+  ...
+  for mol in mols:
+      if catalog.HasMatch(mol):
+         print("Warning: molecule failed filter", file=sys.stderr)
+      # more detailed
+      entry = catalog.GetFirstMatch(mol)
+      if entry:
+         print("Warning: molecule failed filter: reason %s"%(
+           entry.GetDescription()), file=sys.stderr)
+           
+         # get to the atoms involved in the substructure
+         #  there ma be many matching filters here...
+         for filterMatch in entry.getFilterMatches(mol):
+             filter = filterMatch.filterMatch
+             # get a description of the matching filter
+             print(filter)
+             for queryAtomIdx, atomIdx in filterMatch.atomPairs:
+                 # do something with the substructure matches
+
+Advanced
+
+ FilterCatalogs are fully serializable and can be stored for later use.
+
+  To serialize a catalog, use the catalog.Serialize() method.
+     std::string pickle = catalog.Serialize();
+     
+  To unserialize, send the resulting string into the constructor
+     FilterCatalog catalog(pickle);
+
+
+ The underlying matchers can be arbitrarily complicated and new
+  ones with more complicated semantics can be created.  The default
+  matching objects are:
+
+  SmartsMatcher - match a smarts pattern or query molecule with a minimum and maximum count
+  ExclusionList - returns false if any of the supplied matches exist
+
+  And - combine two matchers
+  Or  - true if any of two matchers are true
+  Not - invert the match (note that this can have confusing semantics
+          when dealing with substructure matches)
+
+  Entries can be added at any time to a catalog:
+  
+   ExclusionList excludedList;   
+
+    excludedList.addPattern(SmartsMatcher("Pattern 1", smarts)); 
+    excludedList.addPattern(SmartsMatcher("Pattern 2", smarts2)); 
+   
+
+  A FilterCatalog supports a few different types of matching.  One is
+  a traditional rejection filter where if a substructure exists in
+  the target molecule, the molecule is rejected.
+
+  These types of queries can indicate the substructure that triggered
+  the rejection through the FilterCatalogEntry::GetMatch(mol)
+  function.
+
+  The FilterCatalog also supports acceptance filters, that are
+  designed to indicate which molecules are ok.  These have
+  to be transformed into rejection filters or simply wrapped in a Not( acceptanceFilter )
+  when entered into the catalog.  For example, from Zinc:
+
+    carbons [#6] 40
+
+  means that we have a maximum of 40 carbon atoms.  We can write this by
+  converting the max count to a min count (i.e. the pattern is triggered
+  when the molecule has mincount atoms);
+
+    const unsigned int minCount = 40+1;
+    SmartsMatcher( "Too many carbons", "[#6"], minCount );
+
+  This can be properly substructure searched.
+
+  Or we can wrap this in a not:
+  
+    const unsigned int minCount = 0;
+    const unsigned int maxCount = 40;
+    Not( SmartsMatcher( "ok number of carbons", "[#6]", minCount, maxCount) );
+
+  Note: Wrapping in a Not loses the ability to highlight the rejecting
+    pattern when visualizing the molecule.
+  

@@ -39,7 +39,7 @@ Atom::Atom(unsigned int num) {
   initAtom();
 };
 
-Atom::Atom(std::string what) {
+Atom::Atom(const std::string &what) {
   d_atomicNum = PeriodicTable::getTable()->getAtomicNumber(what);
   initAtom();
 };
@@ -197,6 +197,8 @@ int Atom::calcExplicitValence(bool strict) {
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
   if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
+  // special case for carbon - see GitHub #539
+  if (d_atomicNum == 6 && chr > 0) chr=-chr;
   if (accum > (dv + chr) && this->getIsAromatic()){
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
@@ -337,6 +339,8 @@ int Atom::calcImplicitValence(bool strict) {
   if ( isEarlyAtom(d_atomicNum) ) {
     chg *= -1;
   }
+  // special case for carbon - see GitHub #539
+  if (d_atomicNum == 6 && chg > 0) chg=-chg;
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {

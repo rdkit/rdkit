@@ -18,7 +18,7 @@ class TestCase(unittest.TestCase):
     cont = TopNContainer(4)
     for foo in range(10):
       cont.Insert(foo,str(foo))
-    assert cont.GetPts()==range(6,10)
+    assert cont.GetPts()==list(range(6,10))
     assert cont.GetExtras()==[str(x) for x in range(6,10)]
   def test2(self):
     """ larger scale random test """

@@ -20,7 +20,7 @@ import numpy
 from rdkit.ML.InfoTheory import entropy
 from rdkit.six.moves import zip, map, range
 try:
-  import cQuantize
+  from rdkit.ML.Data import cQuantize
 except:
   hascQuantize = 0
 else:

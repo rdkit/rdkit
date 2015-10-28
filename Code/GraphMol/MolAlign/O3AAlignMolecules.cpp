@@ -21,9 +21,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/round.hpp>
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread.hpp>  
-#endif
+#include <RDGeneral/RDThreads.h>
 
 #define square(x) ((x) * (x))
 
@@ -133,7 +131,7 @@ namespace RDKit {
     };
 
 
-    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat) :
+    MolHistogram::MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat) :
       d_h(boost::extents[mol.getNumHeavyAtoms()][O3_MAX_H_BINS]) {
       PRECONDITION(dmat,"empty distance matrix");
       unsigned int nAtoms = mol.getNumAtoms();
@@ -155,6 +153,7 @@ namespace RDKit {
         }
         ++y;
       }
+      if(cleanupDmat) delete [] dmat;
     }
 
 
@@ -835,9 +834,9 @@ namespace RDKit {
       }
       else {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, ""),true));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, ""),true));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
         lap->computeCostMatrix(prbMol, *prbHist,
           refMol, *refHist, o3aConstraintVect, costFunc, data);
@@ -1025,9 +1024,9 @@ namespace RDKit {
       LAP *lap = NULL;
       if (!local) {
         refHist = (extRefHist ? extRefHist
-          : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid)));
+                   : new MolHistogram(refMol, MolOps::get3DDistanceMat(refMol, refCid, false, false, ""),true));
         prbHist = (extPrbHist ? extPrbHist
-          : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid)));
+                   : new MolHistogram(prbMol, MolOps::get3DDistanceMat(prbMol, prbCid, false, false, ""),true));
         lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
       }
       for (l = 0, score[0] = 0.0;
@@ -1224,7 +1223,7 @@ namespace RDKit {
                       void *prbProp, void *refProp,
                       std::vector<boost::shared_ptr<O3A> > *res,
                       unsigned int threadIdx,
-                      unsigned int numThreads,const O3AHelperArgs_ *args){
+                      int numThreads,const O3AHelperArgs_ *args){
         unsigned int i=0;
         for(ROMol::ConstConformerIterator cit=prbMol->beginConformers();
             cit!=prbMol->endConformers();++cit,++i){
@@ -1244,15 +1243,13 @@ namespace RDKit {
     void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol,
                              void *prbProp, void *refProp,
                              std::vector<boost::shared_ptr<O3A> > &res,
-                             unsigned int numThreads,
+                             int numThreads,
                              O3A::AtomTypeScheme atomTypes,
                              const int refCid,
                              const bool reflect, const unsigned int maxIters,
                              unsigned int options, const MatchVectType *constraintMap,
                              const RDNumeric::DoubleVector *constraintWeights){
-#ifndef RDK_THREADSAFE_SSS
-      numThreads=1;
-#endif
+      numThreads = getNumThreadsToUse(numThreads);
       res.resize(prbMol.getNumConformers());
       if(numThreads<=1){
         unsigned int i=0;
@@ -1266,6 +1263,9 @@ namespace RDKit {
         }
       }
 #ifdef RDK_THREADSAFE_SSS
+      else if(!numThreads){
+        numThreads = boost::thread::hardware_concurrency();
+      }
       else {
         boost::thread_group tg;
         detail::O3AHelperArgs_ args={atomTypes,

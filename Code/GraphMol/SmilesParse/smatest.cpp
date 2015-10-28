@@ -1572,6 +1572,239 @@ void testGithub378(){
 }
   
 
+void testGithub544(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 544: merging query Hs failing on recursive SMARTS" << std::endl;
+  {
+    RWMol *p;
+    std::string smiles="O[H]";
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[O;$(O[H])]";
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[O;$(O[H])]";
+    p = SmartsToMol(smiles,false,true);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="C[O;$([O;$(O[H])])]"; // test nesting
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="CO";
+    RWMol *m = SmilesToMol(smiles);
+
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    delete m;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="O=C=C=O";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+
+    delete m;
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    smiles ="O=CC=O";
+    RWMol *m = SmilesToMol(smiles);
+
+    MatchVectType mV;
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    smiles="[#6;$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete p;
+    smiles="[$([#6]-[#1]);#6]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(!SubstructMatch(*m,*p,mV));
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(SubstructMatch(*m,*p,mV));
+
+    delete m;
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="C(-[!#1])-[!#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==3);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==3);
+
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="[!#1]-[#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+
+    delete p;
+  }
+
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#1,#6]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#6,#1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[#6]-[#6;H1]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==2);
+    delete p;
+  }
+
+  // along the way there were some problems with merging in recursive subqueries of ORs,
+  // these next few test those.
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#7]),$([#6]-[#1])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6]-[#1])]");
+
+    //std::cerr<<"--------------------------"<<std::endl;
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6&!H0])]");
+
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string smiles="[$([#6]-[#7]),$([#6]-[#1]),$([#6])]"; 
+    p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    //std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6]-[#1]),$([#6])]");
+
+    //std::cerr<<"--------------------------"<<std::endl;
+    MolOps::mergeQueryHs(*p);
+    TEST_ASSERT(p->getNumAtoms()==1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->hasQuery());
+    smiles = SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    //std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[$([#6]-[#7]),$([#6&!H0]),$([#6])]");
+
+    delete p;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+  
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1605,10 +1838,11 @@ main(int argc, char *argv[])
   testIssue3000399();
   testRecursiveSerialNumbers();
   testReplacementPatterns();
-#endif
   testGithub313();
   testGithub314();
   testGithub378();
+#endif
+  testGithub544();
   
   return 0;
 }

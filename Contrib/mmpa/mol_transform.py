@@ -110,8 +110,8 @@ if __name__=='__main__':
             ps = rxn.RunReactants( [mol] )
 
             products = set()
-            for y in xrange(len(ps)):
-                for z in xrange(len(ps[y])):
+            for y in range(len(ps)):
+                for z in range(len(ps[y])):
                     p = ps[y][z]
                     Chem.SanitizeMol(p)
                     products.add(Chem.MolToSmiles(p,isomericSmiles=True))

@@ -264,7 +264,7 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *TPLFileToMol(std::string fName, bool sanitize,bool skipFirstConf){
+  RWMol *TPLFileToMol(const std::string &fName, bool sanitize,bool skipFirstConf){
     std::ifstream inStream(fName.c_str());
     if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;
