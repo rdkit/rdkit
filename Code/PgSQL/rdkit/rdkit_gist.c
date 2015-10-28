@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -201,7 +200,6 @@ gmol_decompress(PG_FUNCTION_ARGS)
 {
   GISTENTRY       *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
   bytea   *key =  (bytea*)DatumGetPointer(PG_DETOAST_DATUM(entry->key));
-  //elog(NOTICE, "gmol_decompress");
 
   if (key != (bytea *) DatumGetPointer(entry->key))
     {
@@ -229,7 +227,6 @@ gmol_union(PG_FUNCTION_ARGS)
   bytea      *result, *key;
   unsigned char *s, *k;
 
-  //elog(NOTICE, "gmol_union");
   key = GETENTRY(entryvec, 0);
   if (ISALLTRUE(key)) {
     *size = VARHDRSZ;
@@ -277,7 +274,6 @@ Datum gmol_same(PG_FUNCTION_ARGS);
 Datum
 gmol_same(PG_FUNCTION_ARGS)
 {
-  //elog(NOTICE, "gmol_same");
   bytea   *a = (bytea*)PG_GETARG_POINTER(0);
   bytea   *b = (bytea*)PG_GETARG_POINTER(1);
   bool    *result = (bool *) PG_GETARG_POINTER(2);
@@ -469,8 +465,6 @@ gmol_picksplit(PG_FUNCTION_ARGS)
   int         i, signlen = 0;
   SPLITCOST  *costvector;
 
-  //elog(NOTICE, "gmol_picksplit");
-  
   maxoff = entryvec->n - 1;
   nbytes = (maxoff + 2) * sizeof(OffsetNumber);
   v->spl_left = (OffsetNumber *) palloc(nbytes);
@@ -657,7 +651,6 @@ gmol_consistent(PG_FUNCTION_ARGS)
   bytea                   *key = (bytea*)DatumGetPointer(entry->key);
   bytea                   *query;
   bool                    res = true;
-  //elog(NOTICE, "gmol_consistent: %d",strategy);
 
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
@@ -739,7 +732,6 @@ gmol_consistent(PG_FUNCTION_ARGS)
 
           for(i=0; res && i<SIGLEN(key); i++){
             unsigned char temp = k[i] & q[i];
-            //elog(NOTICE, "     eq: %d %d %d %d",i,k[i],q[i],temp);
             if ( temp != q[i] )
               res = false;
           }
@@ -757,8 +749,6 @@ calcConsistency(bool isLeaf, uint16 strategy,
                 double nCommonUp, double nCommonDown, double nKey, double nQuery)
 {
   bool res = false;
-
-  //elog(NOTICE, "calcConsistency");
 
   /*
    * We don't wish to use RDKit's functions to compute similarity
@@ -821,7 +811,6 @@ static bool
 rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *query)
 {
   double nCommon, nQuery, nKey = 0.0;
-  //elog(NOTICE, "rdkit_consistent");
 
   if (ISALLTRUE(query))
     elog(ERROR, "Query malformed");
