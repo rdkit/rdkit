@@ -3,10 +3,20 @@
 
 ## Acknowledgements: 
 
+Pierre Bhoorasingh, Gungor Budak, Andrew Dalke, JP Ebejer, Peter Ertl,
+Jan Holst Jensen, Brian Kelley, Joos Kiener, Noel O'Boyle, Axel Pahl,
+Sereina Riniker, Alexander Savelyev, Roger Sayle, Nadine Schneider,
+Andrew Stretton, Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vanello,
+Maciek Wojcikowski
+
 ## Highlights:
 
-## Bug Fixes:
+  - Addition of parsers/writers for sequence notation, FASTA, and basic HELM
+  - Improved conformation generation based on experimental torsional parameters
+  - New method for enumerating molecular resonance structures
+  - Addition of a molecular FilterCatalog data structure
 
+## Bug Fixes:
   - Draw.MolToImage(mol) does not work for Python 3, because cairo for Python 3 has not yet implemented Surface.create_for_data
  (github issue #460 from apahl)
   - SDWriter.close() fails when the underlying stream has an error
@@ -15,12 +25,24 @@
  (github issue #510 from greglandrum)
   - Labels of highlighted atoms are invisible
  (github issue #519 from NadineSchneider)
+  - MolDraw2D: Fix in highlighting atoms
+ (github pull #521 from NadineSchneider)
   - Bad ring finding in a complex fused ring
  (github issue #526 from greglandrum)
+  - Fixed crash upon closing a gzip/bzip2 stream opened in binary mode for use with SDWriter under Python3
+ (github pull #531 from ptosco)
   - Regression: _smilesAtomOutputOrder incorrect for dot disconnected molecules
  (github issue #532 from baoilleach)
+  - Fix #532 - smilesAtomOutputOrder incorrect
+ (github pull #535 from baoilleach)
+  - Fix Python3 encoding for FilterCatalog/Entry serialization
+ (github pull #537 from bp-kelley)
+  - Catalog::setCatalogParams needs to be virtual now
+ (github pull #538 from bp-kelley)
   - Bonds in allyl cation are not conjugated
  (github issue #539 from greglandrum)
+  - Fixes GitHub issue 539
+ (github pull #540 from ptosco)
   - SaltBuilder._initPatterns incorrectly handles SMARTS errors
  (github issue #541 from adalke)
   - merging query Hs failing on recursive SMARTS
@@ -28,29 +50,37 @@
   - Crash in O3A alignment when running multi-threaded
  (github issue #546 from greglandrum)
   - PyMol.py: changed xmlrpc import to have Python2/Python3 compatibility
- (github issue #547 from apahl)
+ (github pull #547 from apahl)
+  - fix MMPA bugs for some tests
+ (github pull #548 from AlexanderSavelyev)
   - TFD fix for single bonds adjacent to triple bonds
- (github issue #550 from sriniker)
+ (github pull #550 from sriniker)
+  - Canonicalization paper Aug2015
+ (github pull #552 from NadineSchneider)
   - Chirality not affected by atom-map index
  (github issue #553 from adalke)
   - Implicit Hs should not appear in depictions for query atoms.
  (github issue #556 from greglandrum)
   - Fix issue with invalid reactions throwing NameError
- (github issue #559 from bp-kelley)
+ (github pull #559 from bp-kelley)
   - InChI radicals not properly converted
  (github issue #562 from pierrelb)
   - MMPA code not python3 compatible
  (github issue #564 from greglandrum)
+  - mmpa: fix bug with num_of_cuts > 2 case
+ (github pull #566 from AlexanderSavelyev)
   - Incorrect stereochemistry after embedding
  (github issue #568 from greglandrum)
   - changed FrameToGridImage() so that the dataframe index can be used as legend
- (github issue #570 from apahl)
+ (github pull #570 from apahl)
   - MolDraw2DCairo.GetDrawingText() doesn't work with Python3
  (github issue #571 from greglandrum)
   - addBond return value
  (github issue #572 from JLVarjo)
   - Process aborts during ForwardSDMolSupplier gc when the file object is closed
  (github issue #579 from adalke)
+  - Fix/update pains filter catalog
+ (github pull #581 from bp-kelley)
   - Importing PandasTools on Windows fails due to Salts.txt
  (github issue #583 from baoilleach)
   - renumberAtoms() not setting conformer dimensionality properly
@@ -63,34 +93,68 @@
  (github issue #614 from greglandrum)
   - MQN12 (heavy atom count) seems to be always 0.
  (github issue #623 from kienerj)
+  - fmcs: fix issue with initial seed for PR 580
+ (github pull #624 from AlexanderSavelyev)
+  - fmcs: fixes #631 with chiralirty
+ (github pull #634 from AlexanderSavelyev)
+  - Fixes sprintf not found on some gcc compiles
+ (github pull #635 from bp-kelley)
+  - Fix AppVeyor and Travis UnitTests
+ (github pull #636 from bp-kelley)
+  - Fixes #629 - python GetSubstructureMatch thread safety
+ (github pull #637 from bp-kelley)
+  - Fix regressions occurring when building with msvc9
+ (github pull #638 from rvianello)
+  - Fix/python gil release on rdkit threadsafe sss only
+ (github pull #639 from bp-kelley)
+  - ctest not running some of the python tests.
+ (github issue #643 from greglandrum)
+  - Issue643
+ (github pull #646 from greglandrum)
+  - Fix/various bug fixes filtercatalog and bad operator
+ (github pull #648 from bp-kelley)
 
 ## New Features and Enhancements:
+  - Added the RSMD calculation over N molecules in the cookbook.
+ (github pull #495 from malteseunderdog)
+  - Modified force field constraint tests to be more robust
+ (github pull #503 from ptosco)
   - Fix mol drawing on Python3 (issue #460)
- (github issue #504 from apahl)
+ (github pull #504 from apahl)
+  - Forcefield tests now use RDKit::feq() instead of RDKit::round()
+ (github pull #506 from ptosco)
   - SDMolSupplier(), setData() and strictParsing
- (github issue #507 from ptosco)
+ (github pull #507 from ptosco)
   - Improvements to LoadSDF and WriteSDF
- (github issue #513 from samoturk)
+ (github pull #513 from samoturk)
+  - updates to mmpa. reduce number of smiles parsing
+ (github pull #515 from AlexanderSavelyev)
   - Some enhancements for the new canonicalization
- (github issue #520 from NadineSchneider)
+ (github pull #520 from NadineSchneider)
+  - mmpa: remove boost_regex dependency at all. Add new test references
+ (github pull #527 from AlexanderSavelyev)
   - Support getting atoms involved in Pharm2D bits
  (github issue #530 from greglandrum)
   - Optimized MMFF::MMFFOptimizeMoleculeConfs()
- (github issue #534 from ptosco)
+ (github pull #534 from ptosco)
   - RDKit learns how to filter PAINS/BRENK/ZINC/NIH via FilterCatalog
- (github issue #536 from bp-kelley)
+ (github pull #536 from bp-kelley)
   - Expose Conformer's copy constructor to Python
  (github issue #545 from greglandrum)
   - PyMol.py: changed xmlrpc import to have Python2/Python3 compatibility
- (github issue #547 from apahl)
+ (github pull #547 from apahl)
+  - Update PAINS smarts to validated set.  Always use mergeQueryHs when reading Smarts
+ (github pull #549 from bp-kelley)
   - Add a curated set of PAINS filters to the RDKit
  (github issue #555 from greglandrum)
+  - Update pains from wehi_pains.csv
+ (github pull #560 from bp-kelley)
   - Change MMPA to use CanonicalRankAtoms instead of _CIPRank
  (github issue #561 from adalke)
   - Add adjustQuery() function to make substructure queries more specific.
  (github issue #567 from greglandrum)
   - changed sascorer.py to enable import from different location
- (github issue #569 from apahl)
+ (github pull #569 from apahl)
   - add export_values() to enums in the python wrapper where it's sensible to do so
  (github issue #573 from greglandrum)
   - Support Sheridan's BT and BP fingerprints
@@ -98,7 +162,7 @@
   - Locale dependent float for _GasteigerCharge
  (github issue #577 from adalke)
   - fmcs: implement adding an initial seed structure
- (github issue #580 from AlexanderSavelyev)
+ (github pull #580 from AlexanderSavelyev)
   - Where possible convert docs from RST to MD
  (github issue #585 from greglandrum)
   - [UGM2015] Autodetection of numThreads
@@ -106,23 +170,23 @@
   - Generating SVG Images with Transparent Background
  (github issue #587 from gungorbudak)
   - updates to PandasTools.LoadSDF
- (github issue #599 from adalke)
+ (github pull #599 from adalke)
   - Can control mol depiction size with PandasTools.molSize = (200,200).
- (github issue #600 from samoturk)
+ (github pull #600 from samoturk)
   - pandas performance and functionality improvements
- (github issue #601 from adalke)
+ (github pull #601 from adalke)
   - Adding documentation for installation with conda.
- (github issue #602 from strets123)
+ (github pull #602 from strets123)
   - Automatic atom reordering in TorsionFingerprints
- (github issue #603 from sriniker)
+ (github pull #603 from sriniker)
   - Added option to use SVG rendering in pandas data frames
- (github issue #609 from samoturk)
+ (github pull #609 from samoturk)
   - Handle inserting molecules with conformers into molecules without conformers
  (github issue #610 from greglandrum)
   - If wedged bonds are already present, write them to mol blocks
  (github issue #611 from greglandrum)
   - Dev/filter catalog java wrapper
- (github issue #612 from bp-kelley)
+ (github pull #612 from bp-kelley)
   - Support extended reduced graphs
  (github issue #615 from greglandrum)
   - port NumSpiroCenters and NumBridgeheadAtoms descriptors to C++
@@ -134,15 +198,26 @@
   - Add parser/writer for HELM
  (github issue #622 from greglandrum)
   - Migrate std::string APIs to const std::string &
- (github issue #627 from bp-kelley)
-  - Improved chirality testing in the distance-geometry embedding
- (github issue #628 from sriniker)
+ (github pull #627 from bp-kelley)
+  - Chirality tests
+ (github pull #628 from sriniker)
   - Improvements of TFD
- (github issue #630 from sriniker)
+ (github pull #630 from sriniker)
+  - Added ResonanceMolSupplier
+ (github pull #632 from ptosco)
+  - Image tostring/fromstring methods replaced by tobytes/frombytes
+ (github pull #644 from rvianello)
+  - ET(K)DG implementation
+ (github pull #647 from sriniker)
+  - Build multithreading support by default when boost::threads is present
+ (github issue #649 from greglandrum)
 
 ## New Database Cartridge Features:
+  - Support for PostgreSQL v8.x has been removed
+  - NumSpiroCenters and NumBridgeheadAtoms added
 
 ## New Java Wrapper Features:
+  - Support for FilterCatalogs
 
 ## Deprecated code (to be removed in next release):
 
@@ -150,10 +225,11 @@
   - rdkit/DataStructs/BitVect.py : a C++ version is used, this was only present for historical reasons
   - rdkit/DataStructs/SparseIntVect.py : a C++ version is used, this was only present for historical reasons
 
-
 ## Contrib updates:
+  - Addition of Peter Ertl's Natural Product Likeness score.
 
-## Other: 
+## Other:
+  - Much of the documentation has been translated from RST to MD
 
 # Release_2015.03.1
 (Changes relative to Release_2014.09.2)

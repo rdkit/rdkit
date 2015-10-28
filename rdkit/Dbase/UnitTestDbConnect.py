@@ -12,7 +12,7 @@
 
 """
 from rdkit import RDConfig
-import unittest,os,sys
+import unittest,os,sys,tempfile,shutil
 from rdkit.Dbase.DbConnection import DbConnect
 
 class TestCase(unittest.TestCase):
@@ -24,11 +24,24 @@ class TestCase(unittest.TestCase):
     self.dbName = RDConfig.RDTestDatabase
     self.colHeads=('int_col','floatCol','strCol')
     self.colTypes=('integer','float','string')
+    if RDConfig.useSqlLite:
+      tmpf,tempName = tempfile.mkstemp(suffix='sqlt')
+      self.tempDbName = tempName
+      shutil.copyfile(self.dbName,self.tempDbName)
+    else:
+      self.tempDbName='::RDTests'
+  def tearDown(self):
+    if RDConfig.useSqlLite and os.path.exists(self.tempDbName):
+      try:
+        os.unlink(self.tempDbName)
+      except:
+        import traceback
+        traceback.print_exc()
 
   def testAddTable(self):
     """ tests AddTable and GetTableNames functionalities """
     newTblName = 'NEW_TABLE'
-    conn = DbConnect(self.dbName)
+    conn = DbConnect(self.tempDbName)
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
     except:
@@ -43,7 +56,7 @@ class TestCase(unittest.TestCase):
     """ tests GetCursor and GetTableNames functionalities """
 
     viewName = 'TEST_VIEW'
-    conn = DbConnect(self.dbName)
+    conn = DbConnect(self.tempDbName)
     curs = conn.GetCursor()
     assert curs
     try:
@@ -149,7 +162,7 @@ class TestCase(unittest.TestCase):
   def testInsertData(self):
     """ tests InsertData and InsertColumnData functionalities """
     newTblName = 'NEW_TABLE'
-    conn = DbConnect(self.dbName)
+    conn = DbConnect(self.tempDbName)
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
     except:

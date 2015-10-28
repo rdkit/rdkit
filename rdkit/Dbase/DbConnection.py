@@ -234,6 +234,7 @@ class DbConnect(object):
 
     """
     self.cursor = None
+    if self.cn is not None: self.cn.close()
     self.cn = None
 
   def AddTable(self,tableName,colString):
