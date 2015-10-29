@@ -29,10 +29,8 @@ namespace RDKit{
     typedef std::map<unsigned int,QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
     
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
-			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS
-			 ,std::vector<RecursiveStructureQuery*> &locked
-#endif                         
+			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
+			 std::vector<RecursiveStructureQuery*> &locked
                          );
     
     bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b);
@@ -203,8 +201,8 @@ namespace RDKit{
   {
 
     //std::cerr<<"begin match"<<std::endl;
-#ifdef RDK_THREADSAFE_SSS    
     std::vector<RecursiveStructureQuery*> locked;
+#ifdef RDK_THREADSAFE_SSS        
     locked.reserve(query.getNumAtoms());
 #endif
     if(recursionPossible){
@@ -213,12 +211,7 @@ namespace RDKit{
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
 	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap,
-                                  useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS                                  
-                                  , locked
-#endif                                  
-                                  );
-          
+                                  useQueryQueryMatches, locked);
         }
       }
     }
@@ -247,8 +240,9 @@ namespace RDKit{
     }    
 
 #ifdef RDK_THREADSAFE_SSS
-    for(size_t i=0;i<locked.size(); i++) {
-      locked[i]->d_mutex.unlock();
+    if(recursionPossible) {
+      BOOST_FOREACH(RecursiveStructureQuery *v, locked)
+        v->d_mutex.unlock();
     }
 #endif
     return res;
@@ -285,8 +279,8 @@ namespace RDKit{
 			      bool useChirality,bool useQueryQueryMatches,
                               unsigned int maxMatches ){
 
-#ifdef RDK_THREADSAFE_SSS          
     std::vector<RecursiveStructureQuery*> locked;
+#ifdef RDK_THREADSAFE_SSS              
     locked.reserve(query.getNumAtoms());
 #endif
     if(recursionPossible){
@@ -296,11 +290,7 @@ namespace RDKit{
         if((*atIt)->getQuery()){
           //std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
 	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap,
-                                  useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS            
-                                  ,locked
-#endif            
-                                  );
+                                  useQueryQueryMatches, locked);
         }
       }
     }
@@ -341,8 +331,9 @@ namespace RDKit{
     } 
 
 #ifdef RDK_THREADSAFE_SSS
-    for(size_t i=0;i<locked.size(); i++) {
-      locked[i]->d_mutex.unlock();
+      if(recursionPossible) {
+      BOOST_FOREACH(RecursiveStructureQuery *v, locked)
+        v->d_mutex.unlock();
     }
 #endif
     return res;
@@ -386,21 +377,14 @@ namespace RDKit{
   namespace detail {
     unsigned int RecursiveMatcher(const ROMol &mol,const ROMol &query,
 				  std::vector< int > &matches,bool useChirality,
-				  SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS            
-				  ,std::vector<RecursiveStructureQuery*> &locked
-#endif            
-                                  )
+				  SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
+				  std::vector<RecursiveStructureQuery*> &locked)
     {
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
 	if((*atIt)->getQuery()){
 	  MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap,
-                          useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS            
-                          ,locked
-#endif            
-                          );
+                          useQueryQueryMatches, locked);
 	}
       }
  
@@ -449,11 +433,8 @@ namespace RDKit{
     }
 
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *query,bool useChirality,
-			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS                         
-			 ,std::vector<RecursiveStructureQuery*> &locked
-#endif                         
-                         ){
+			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
+			 std::vector<RecursiveStructureQuery*> &locked){
       PRECONDITION(query,"bad query");
       //std::cout << "*-*-* MS: " << (int)query << std::endl;
       //std::cout << "\t\t" << typeid(*query).name() << std::endl;
@@ -485,11 +466,7 @@ namespace RDKit{
 	  if(queryMol){
 	    std::vector< int > matchStarts;
 	    unsigned int res = RecursiveMatcher(mol,*queryMol,matchStarts,useChirality,
-						subqueryMap,useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS                                                
-                                                , locked
-#endif                                                
-                                                );
+						subqueryMap,useQueryQueryMatches, locked);
 	    if(res){
 	      for(std::vector<int>::iterator i=matchStarts.begin();
 		  i!=matchStarts.end();
@@ -512,11 +489,8 @@ namespace RDKit{
       Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
       //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
       for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
-	MatchSubqueries(mol,childIt->get(),useChirality,subqueryMap,useQueryQueryMatches
-#ifdef RDK_THREADSAFE_SSS                        
-                        , locked
-#endif                        
-                        );
+	MatchSubqueries(mol,childIt->get(),useChirality,subqueryMap,useQueryQueryMatches,
+                        locked);
       }
       //std::cout << "<<- back " << (int)query << std::endl;
     }
