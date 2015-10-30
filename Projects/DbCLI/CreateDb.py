@@ -221,7 +221,7 @@ def CreateDb(options,dataFilename='',supplier=None):
     pairCurs = pairConn.GetCursor()
     try:
       pairCurs.execute('drop table %s'%(options.pairTableName))
-    except:
+    except Exception:
       pass
     pairCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,atompairfp blob,torsionfp blob)'%(options.pairTableName,
                                                                                                          options.molIdName))
@@ -231,19 +231,19 @@ def CreateDb(options,dataFilename='',supplier=None):
     fpCurs=fpConn.GetCursor()
     try:
       fpCurs.execute('drop table %s'%(options.fpTableName))
-    except:
+    except Exception:
       pass
     try:
       fpCurs.execute('drop table %s'%(options.pharm2DTableName))
-    except:
+    except Exception:
       pass
     try:
       fpCurs.execute('drop table %s'%(options.gobbi2DTableName))
-    except:
+    except Exception:
       pass
     try:
       fpCurs.execute('drop table %s'%(options.layeredTableName))
-    except:
+    except Exception:
       pass
 
     if options.doFingerprints:
@@ -270,7 +270,7 @@ def CreateDb(options,dataFilename='',supplier=None):
     fpCurs=fpConn.GetCursor()
     try:
       fpCurs.execute('drop table %s'%(options.morganFpTableName))
-    except:
+    except Exception:
       pass
     fpCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,morganfp blob)'%(options.morganFpTableName,
                                                                                         options.molIdName))
@@ -287,7 +287,7 @@ def CreateDb(options,dataFilename='',supplier=None):
     descrs.extend(['%s float'%x for x in nms])
     try:
       descrCurs.execute('drop table %s'%(options.descrTableName))
-    except:
+    except Exception:
       pass
     descrCurs.execute('create table %s (%s)'%(options.descrTableName,','.join(descrs)))
     descrQuery=','.join([DbModule.placeHolder]*len(descrs))
@@ -314,7 +314,7 @@ def CreateDb(options,dataFilename='',supplier=None):
       molId = tpl[1]
       pkl = tpl[-1]
       i+=1
-    except:
+    except Exception:
       break
     if isinstance(pkl,(bytes,str)):
       mol = Chem.Mol(pkl)
@@ -460,7 +460,7 @@ if __name__=='__main__':
   if not os.path.exists(options.outDir):
     try:
       os.mkdir(options.outDir)
-    except: 
+    except Exception: 
       logger.error('could not create output directory %s'%options.outDir)
       sys.exit(1)
 

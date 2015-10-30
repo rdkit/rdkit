@@ -62,7 +62,7 @@ class DbFpSupplier(VLibNode):
         newFp = cPickle.loads(pkl,encoding='bytes')          
       else:
         newFp = DataStructs.ExplicitBitVect(pkl)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       newFp = None

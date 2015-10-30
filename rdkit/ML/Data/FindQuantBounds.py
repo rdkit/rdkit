@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
   try:
     args,extras = getopt.getopt(sys.argv[1:],'n:r:i')
-  except:
+  except Exception:
     Usage()
     
   if len(extras) != 2:

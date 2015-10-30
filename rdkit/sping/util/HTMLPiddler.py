@@ -369,7 +369,7 @@ def demo(html=DEMO_HTML):
         print('   0. EXIT')
         sel = raw_input('Enter Selection Number: ')
         try: sel = string.atoi(string.strip(sel))
-        except: sel = -1
+        except Exception: sel = -1
         if (sel==0): break
         elif (sel==1): demoPDF(html)
         elif (sel==2): demoPIL(html)

@@ -257,17 +257,17 @@ class DbConnect(object):
     c = self.GetCursor()
     try:
       c.execute('drop table %s cascade'%tableName)
-    except:
+    except Exception:
       try:
         c.execute('drop table %s'%tableName)
-      except:
+      except Exception:
         pass
     self.Commit()
 
     addStr = 'create table %s (%s)'%(tableName,colString)
     try:
       c.execute(addStr)
-    except:
+    except Exception:
       import traceback
       print('command failed:',addStr)
       traceback.print_exc()
@@ -292,7 +292,7 @@ class DbConnect(object):
     cmd = "insert into %s values %s"%(tableName,insTxt)
     try:
       c.execute(cmd,vals)
-    except:
+    except Exception:
       import traceback
       print('insert failed:')
       print(cmd)
@@ -334,7 +334,7 @@ class DbConnect(object):
     c = self.GetCursor()
     try:
       c.execute("alter table %s add %s %s"%(tableName,colName,colType))
-    except:
+    except Exception:
       print('AddColumn failed')
 
   def Commit(self):

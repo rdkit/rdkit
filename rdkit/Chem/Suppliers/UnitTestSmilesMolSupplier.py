@@ -46,14 +46,9 @@ class TestCase(unittest.TestCase):
     m = supp[i-1]
     assert m,'back index %d failed'%i
     assert m.GetNumAtoms(),'no atoms in mol %d'%i
-    
-    try:
-      m = supp[len(self.smis)]
-    except:
-      fail = 1
-    else:
-      fail = 0
-    assert fail,'out of bound read did not fail'
+
+    with self.assertRaisesRegexp(Exception, ""):
+      m = supp[len(self.smis)] # out of bound read must fail
 
   def test2LazyIter(self):
     " tests lazy reads using the iterator interface "
@@ -61,8 +56,8 @@ class TestCase(unittest.TestCase):
 
     nDone = 0
     for mol in supp:
-      assert mol,'read %d failed'%i
-      assert mol.GetNumAtoms(),'no atoms in mol %d'%i
+      assert mol,'read %d failed'%nDone
+      assert mol.GetNumAtoms(),'no atoms in mol %d'%nDone
       nDone += 1
     assert nDone==len(self.smis),'bad number of molecules'   
 
@@ -74,57 +69,36 @@ class TestCase(unittest.TestCase):
     assert m,'back index %d failed'%i
     assert m.GetNumAtoms(),'no atoms in mol %d'%i
 
-
-    try:
-      m = supp[len(self.smis)]
-    except:
-      fail = 1
-    else:
-      fail = 0
-    assert fail,'out of bound read did not fail'
+    with self.assertRaisesRegexp(Exception, ""):
+      m = supp[len(self.smis)] # out of bound read must not fail
 
 
   def test3BoundaryConditions(self):
     smis = ['CC','CCOC','fail','CCO']
     supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
-    assert len(supp)==4
-    assert supp[2] is None
-    assert supp[3]
+    self.assertEqual(len(supp), 4)
+    self.assertIs(supp[2], None)
+    self.assertTrue(supp[3])
 
     supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
-    assert supp[2] is None
-    assert supp[3]
-    assert len(supp)==4
-    try:
+    self.assertIs(supp[2], None)
+    self.assertTrue(supp[3])
+    self.assertEqual(len(supp), 4)
+    with self.assertRaisesRegexp(Exception, ""):
       supp[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    assert ok
 
     supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
-    assert len(supp)==4
-    assert supp[3]
-    try:
+    self.assertEqual(len(supp), 4)
+    self.assertTrue(supp[3])
+    with self.assertRaisesRegexp(Exception, ""):
       supp[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    assert ok
 
     supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
-    try:
+    with self.assertRaisesRegexp(Exception, ""):
       supp[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    assert ok
-    assert len(supp)==4
-    assert supp[3]
 
+    self.assertEqual(len(supp), 4)
+    self.assertTrue(supp[3])
 
 
 if __name__ == '__main__':

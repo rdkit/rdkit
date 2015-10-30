@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
     ok = 1
     try:
       b = self.m.GetBondBetweenAtoms(0,1)
-    except:
+    except Exception:
       ok = 0
     assert ok,'GetBond failed'
     

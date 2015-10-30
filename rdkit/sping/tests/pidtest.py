@@ -83,7 +83,7 @@ def drawAdvanced(canvas):
 		
 	try:
 		from PIL import Image
-	except:
+	except ImportError:
 		canvas.drawString("PIL not available!", 20,200)
 		Image = None
 	
@@ -235,7 +235,7 @@ def tkTest(testfunc):
 	try :
 		import sping.TK
 		import Tkinter
-	except:
+	except ImportError:
 		print("A module needed for sping.TK is not available, select another backend")
 		return
 
@@ -286,7 +286,7 @@ def wxTest(testfunc):
 	try :
 		import sping.WX
 		from wxPython.wx import wxApp
-	except:
+	except ImportError:
 		print("A module needed for sping.WX is not available, select another backend")
 		return
 
@@ -360,9 +360,9 @@ def mainLoop():
 		i = 0
 		while i < len(backends) or i < len(tests):
 			try: bstr = str(i+1) + '. ' + backends[i]
-			except: bstr = ''
+			except Exception: bstr = ''
 			try: tstr = chr(65+i) + '. ' + tests[i].__name__
-			except: tstr = ''
+			except Exception: tstr = ''
 			if i == backend: bflag = '==>'
 			else: bflag = ''
 			if i == test: tflag = '==>'

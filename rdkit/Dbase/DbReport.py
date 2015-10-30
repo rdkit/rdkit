@@ -78,7 +78,7 @@ else:
           img.drawWidth = self.width
           img.drawHeight = aspect*self.width
           res[self.smiCol] = img
-        except:
+        except Exception:
           import traceback
           traceback.print_exc()
           res[self.smiCol] = 'Failed'
@@ -107,7 +107,7 @@ else:
           img = platypus.Image(tmpName)
           img.drawWidth = self.width
           img.drawHeight = aspect*self.width
-        except:
+        except Exception:
           ok = 0
       if ok:
         res[self.smiCol] = img
@@ -144,7 +144,7 @@ else:
           rdDepictor.Compute2DCoords(mol)
         drawing.AddMol(mol,canvas=canv)
         ok = True
-      except:
+      except Exception:
         if self.verbose:
           import traceback
           traceback.print_exc()
@@ -181,7 +181,7 @@ else:
           img = platypus.Image(tmpName)
           img.drawWidth = self.width
           img.drawHeight = aspect*self.width
-        except:
+        except Exception:
           ok = 0
       if ok:
         res[self.smiCol] = img

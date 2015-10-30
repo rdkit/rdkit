@@ -18,7 +18,7 @@ class TestCase(unittest.TestCase):
     ok = 1
     try:
       c = Dispatch('RD.Composite')
-    except:
+    except Exception:
       ok = 0
     assert ok and c is not None, 'connection to COM server failed'
   def testLoad(self):
@@ -27,7 +27,7 @@ class TestCase(unittest.TestCase):
     ok = 1
     try:
       c.LoadComposite(RDConfig.RDCodeDir+'/ml/composite/test_data/composite_base.pkl')
-    except:
+    except Exception:
       ok = 0
     assert ok, 'LoadComposite failed'
   def testNames(self):
@@ -46,7 +46,7 @@ class TestCase(unittest.TestCase):
     ok = 1
     try:
       c.SetInputOrder(names)
-    except:
+    except Exception:
       ok = 0
     assert ok,'SetInputOrder failed'
 

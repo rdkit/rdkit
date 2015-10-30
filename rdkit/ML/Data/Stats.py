@@ -81,14 +81,9 @@ def PrincipalComponents(mat,reverseOrder=1):
   covMat = FormCorrelationMatrix(mat)
 
   eigenVals,eigenVects = numpy.linalg.eig(covMat)
-  try:
-    eigenVals = eigenVals.real
-  except:
-    pass
-  try:
-    eigenVects = eigenVects.real
-  except:
-    pass
+  # The the 'real' component, if it exists as its own attribute
+  eivenVals = getattr(eigenVals, "real", eivenVals)
+  eigenVects = getattr(eigenVects, "real", eigenVects)
 
   # and now sort:
   ptOrder = numpy.argsort(eigenVals).tolist()

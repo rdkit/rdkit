@@ -85,7 +85,7 @@ class TestCase(unittest.TestCase):
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
         #tpl=tpl[0],tpl[1],numpy.array(tpl[2])
         #cPickle.dump(tpl,outF)
-      except:
+      except Exception:
         break
       if self._matchMol(tpl,self.pcophore,self.featFactory,0):
         nHits+=1
@@ -104,7 +104,7 @@ class TestCase(unittest.TestCase):
         tpl = cPickle.load(inF, encoding='latin1')
         if PY3:
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
-      except:
+      except Exception:
         break
       if self._matchMol(tpl,self.pcophore, self.featFactory,1):
         nHits+=1
@@ -127,7 +127,7 @@ class TestCase(unittest.TestCase):
         name,molPkl,boundsMat = cPickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
-      except:
+      except Exception:
         break
 
       nDone += 1
@@ -193,7 +193,7 @@ class TestCase(unittest.TestCase):
         name,molPkl,boundsMat = cPickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
-      except:
+      except Exception:
         break
 
       nDone += 1

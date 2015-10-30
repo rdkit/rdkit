@@ -114,20 +114,10 @@ class TestCase(unittest.TestCase):
 
     m1 = Chem.MolFromSmiles('Cc1ccccc1')
     feats = feat_factory.GetFeaturesForMol(m1)
-    try:
-      pcophore = Pharmacophore.Pharmacophore(feats)
-      ok=False
-    except:
-      ok=True
-    self.assertTrue(ok)
+    pcophore = Pharmacophore.Pharmacophore(feats)
 
     AllChem.Compute2DCoords(m1)
-    try:
-      pcophore = Pharmacophore.Pharmacophore(feats)
-      ok=True
-    except:
-      ok=False
-    self.assertTrue(ok)
+    pcophore = Pharmacophore.Pharmacophore(feats)
 
     
     

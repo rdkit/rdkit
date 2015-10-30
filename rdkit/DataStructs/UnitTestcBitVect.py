@@ -21,27 +21,17 @@ def feq(n1,n2,tol=1e-4):
 def ieq(n1,n2):
   return abs(n1-n2)==0
 
-class TestCase(unittest.TestCase):
-  def setUp(self):
-    print('\n%s: '%self.shortDescription(),end='')
-    sys.stdout.flush()
+class VectTests(object):
   def testSparseIdx(self):
     """ test indexing into SparseBitVects
     """
-    v = klass(10)
-    ok = 1
+    v = self.klass(10)
     v[0] = 1
     v[2] = 1
     v[9] = 1
     
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       v[10] = 1
-    except IndexError:
-      ok = 1
-    except:
-      assert 0, 'setting high bit should have failed with an IndexError'
-    else:
-      assert 0, 'setting high bit should have failed'
 
     assert v[0] == 1, 'bad bit'
     assert v[1] == 0, 'bad bit'
@@ -50,20 +40,13 @@ class TestCase(unittest.TestCase):
     assert v[-1] == 1, 'bad bit'
     assert v[-2] == 0, 'bad bit'
 
-    try:
+    with self.assertRaisesRegexp(IndexError, ""):
       foo = v[10]
-    except IndexError:
-      ok = 1
-    except:
-      assert 0, 'getting high bit should have failed with an IndexError'
-    else:
-      assert 0, 'getting high bit should have failed'
-    
 
   def testSparseBitGet(self):
     """ test operations to get sparse bits
     """
-    v = klass(10)
+    v = self.klass(10)
     v[0] = 1
     v[2] = 1
     v[6] = 1
@@ -74,11 +57,11 @@ class TestCase(unittest.TestCase):
   def testSparseBitOps(self):
     """ test bit operations on SparseBitVects
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
@@ -90,15 +73,15 @@ class TestCase(unittest.TestCase):
   def testTanimotoSim(self):
     """ test Tanimoto Similarity measure
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
-    v3 = klass(10)
+    v3 = self.klass(10)
     v3[1] = 1
     v3[4] = 1
     v3[8] = 1
@@ -112,15 +95,15 @@ class TestCase(unittest.TestCase):
   def testOnBitSim(self):
     """ test On Bit Similarity measure
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
-    v3 = klass(10)
+    v3 = self.klass(10)
     v3[1] = 1
     v3[4] = 1
     v3[8] = 1
@@ -134,15 +117,15 @@ class TestCase(unittest.TestCase):
   def testNumBitsInCommon(self):
     """ test calculation of Number of Bits in Common
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
-    v3 = klass(10)
+    v3 = self.klass(10)
     v3[1] = 1
     v3[4] = 1
     v3[8] = 1
@@ -156,15 +139,15 @@ class TestCase(unittest.TestCase):
   def testAllBitSim(self):
     """ test All Bit Similarity measure
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
-    v3 = klass(10)
+    v3 = self.klass(10)
     v3[1] = 1
     v3[4] = 1
     v3[8] = 1
@@ -178,22 +161,22 @@ class TestCase(unittest.TestCase):
   def testStringOps(self):
     """ test serialization operations
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
     s = v1.ToBinary()
-    v2 = klass(s)
+    v2 = self.klass(s)
     assert tuple(v2.GetOnBits())==tuple(v1.GetOnBits()),'To/From string failed'
 
   def testOnBitsInCommon(self):
     """ test OnBitsInCommon
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
@@ -202,11 +185,11 @@ class TestCase(unittest.TestCase):
   def testOffBitsInCommon(self):
     """ test OffBitsInCommon
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
@@ -216,11 +199,11 @@ class TestCase(unittest.TestCase):
   def testOnBitProjSimilarity(self):
     """ test OnBitProjSimilarity
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[1] = 1
     v1[2] = 1
     v1[3] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[2] = 1
     v2[3] = 1
     res = cDataStructs.OnBitProjSimilarity(v1,v2)
@@ -233,11 +216,11 @@ class TestCase(unittest.TestCase):
   def testOffBitProjSimilarity(self):
     """ test OffBitProjSimilarity
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[1] = 1
     v1[2] = 1
     v1[3] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[2] = 1
     v2[3] = 1
     res = cDataStructs.OffBitProjSimilarity(v1,v2)
@@ -250,7 +233,7 @@ class TestCase(unittest.TestCase):
   def testPkl(self):
     """ test pickling 
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[1] = 1
     v1[2] = 1
     v1[3] = 1
@@ -288,7 +271,7 @@ class TestCase(unittest.TestCase):
     fps = []
     for line in rawD.split('\n'):
       if line:
-        sbv = klass(256)
+        sbv = self.klass(256)
         id,smi,fp=line.split(',')
         cDataStructs.InitFromDaylightString(sbv,fp)
         fps.append(sbv)
@@ -306,19 +289,13 @@ class TestCase(unittest.TestCase):
   def testFold(self):
     """ test folding fingerprints
     """
-    v1 = klass(16)
+    v1 = self.klass(16)
     v1[1] = 1
     v1[12] = 1
     v1[9] = 1
-    try:
-      v2 = cDataStructs.FoldFingerprint(v1)
-    except:
-      assert 0,'Fold with no args failed'
+    v2 = cDataStructs.FoldFingerprint(v1) # check fold with no args
     assert v1.GetNumBits()/2==v2.GetNumBits(),'bad num bits post folding'
-    try:
-      v2 = cDataStructs.FoldFingerprint(v1,2)
-    except:
-      assert 0,'Fold with arg failed'
+    v2 = cDataStructs.FoldFingerprint(v1,2) # check fold with arg
       
     assert v1.GetNumBits()/2==v2.GetNumBits(),'bad num bits post folding'
 
@@ -329,11 +306,11 @@ class TestCase(unittest.TestCase):
   def testOtherSims(self):
     """ test other similarity measures
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
@@ -351,11 +328,11 @@ class TestCase(unittest.TestCase):
   def testQuickSims(self):
     """ the asymmetric similarity stuff (bv,pkl)
     """
-    v1 = klass(10)
+    v1 = self.klass(10)
     v1[0] = 1
     v1[2] = 1
     v1[6] = 1
-    v2 = klass(10)
+    v2 = self.klass(10)
     v2[0] = 1
     v2[3] = 1
     v2[6] = 1
@@ -370,7 +347,12 @@ class TestCase(unittest.TestCase):
     assert feq(cDataStructs.BraunBlanquetSimilarity(v1,v2),.6667)
     assert feq(cDataStructs.RusselSimilarity(v1,v2),.2000)
     assert feq(cDataStructs.RogotGoldbergSimilarity(v1,v2),.7619)
-
+  
+class SparseBitVectTests(VectTests, unittest.TestCase):
+  klass = cDataStructs.SparseBitVect
+    
+class ExplicitTestCase(VectTests, unittest.TestCase):
+  klass = cDataStructs.ExplicitBitVect
 
 if __name__ == '__main__':
   unittest.main()
