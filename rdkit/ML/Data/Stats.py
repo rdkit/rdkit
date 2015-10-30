@@ -82,7 +82,7 @@ def PrincipalComponents(mat,reverseOrder=1):
 
   eigenVals,eigenVects = numpy.linalg.eig(covMat)
   # The the 'real' component, if it exists as its own attribute
-  eivenVals = getattr(eigenVals, "real", eivenVals)
+  eigenVals = getattr(eigenVals, "real", eigenVals)
   eigenVects = getattr(eigenVects, "real", eigenVects)
 
   # and now sort:
