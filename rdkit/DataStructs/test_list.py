@@ -1,6 +1,5 @@
 tests=[
   ("python","UnitTestcBitVect.py",{}),
-  ("python","UnitTestcBitVect2.py",{}),
   ("python","UnitTestBitEnsemble.py",{}),
   ("python","UnitTestTopNContainer.py",{}),
   ("python","BitUtils.py",{}),
