@@ -127,7 +127,7 @@ class TestCase(unittest.TestCase):
     inF.close()
     try:
       os.unlink(self.fName)
-    except:
+    except Exception:
       pass
     oldSmi = Chem.MolToSmiles(self.m)
     newSmi = Chem.MolToSmiles(m2)

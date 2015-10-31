@@ -5,9 +5,10 @@ python:
  - "2.7"
  - "3.4"
 
-before_install:
- - sudo apt-get update -qq
+# switch to new infrastructure
+sudo: false
 
+before_install:
  # download and install miniconda
  - wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh;
  - bash miniconda.sh -b -p $HOME/conda
@@ -22,14 +23,16 @@ before_install:
  - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION pip cmake
  - source activate tenv
 
+# additional .debs we need:
+addons:
+ apt:
+  packages:
+    - build-essential
+    - openjdk-7-jdk
+    - swig
+    - libjpeg-dev
+
 install:
- # install the build tools
- - sudo apt-get install -qq build-essential
-
- # and the base dependencies
- - sudo apt-get install -qq openjdk-7-jdk swig # for the java wrappers
-
- - sudo apt-get install libjpeg62 # for pillow
  - conda install -q numpy pillow pandas # matplotlib
  
  # install the conda boost packages from the RDKit binstar channel.
@@ -65,9 +68,11 @@ script:
  - cd $RDBASE
  - mkdir build
  - cd build
- - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D AVALONTOOLS_DIR=$RDBASE/External/AvalonTools/distrib/SourceDistribution -D RDK_BUILD_AVALON_SUPPORT=ON ..
+ - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D AVALONTOOLS_DIR=$RDBASE/External/AvalonTools/distrib/SourceDistribution -D RDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on ..
  - cat CMakeCache.txt # useful for debugging/troubleshooting
 
  - make -j2
  - make install
- - ctest --output-on-failure
+ - ls "$PREFIX/lib"
+ - ls "$PY_PREFIX/lib"
+ - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" ctest --output-on-failure

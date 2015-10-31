@@ -137,14 +137,6 @@ namespace RDKit{
                                          unsigned int fpSize=2048,
                                          std::vector<unsigned int> *atomCounts=0,
                                          ExplicitBitVect *setOnlyBits=0);
-
-  namespace Fingerprints {
-    namespace detail {
-      bool isComplexQuery(const Bond *b);
-      bool isComplexQuery(const Atom *a);
-      bool isAtomAromatic(const Atom *a);
-    }
-  }
 }
 
 #endif

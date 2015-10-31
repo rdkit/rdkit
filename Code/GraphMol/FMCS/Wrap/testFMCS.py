@@ -177,6 +177,17 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mcs.numBonds,3)
         self.assertEqual(mcs.numAtoms,3)
 
+    def test7Seed(self):
+        smis = ['C1CCC1CC1CC1','C1CCC1OC1CC1','C1CCC1NC1CC1','C1CCC1SC1CC1']
+        ms = [Chem.MolFromSmiles(x) for x in smis]
+        r = rdFMCS.FindMCS(ms)
+        self.assertEqual(r.smartsString,"[#6]1-[#6]-[#6]-[#6]-1")
+        r = rdFMCS.FindMCS(ms,seedSmarts='C1CC1')
+        self.assertEqual(r.smartsString,"[#6]1-[#6]-[#6]-1")
+        r = rdFMCS.FindMCS(ms,seedSmarts='C1OC1')
+        self.assertEqual(r.smartsString,"")
+
+
 
         
         

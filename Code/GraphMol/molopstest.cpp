@@ -4352,6 +4352,7 @@ namespace{
       TEST_ASSERT(nm->getNumAtoms()==m->getNumAtoms());
       TEST_ASSERT(nm->getNumBonds()==m->getNumBonds());
 
+
       // checking the SSS is a test for Github #317
       MatchVectType mv; 
       TEST_ASSERT(SubstructMatch(*m,*nm,mv));
@@ -4372,6 +4373,8 @@ namespace{
           TEST_ASSERT( po.y==pn.y );
           TEST_ASSERT( po.z==pn.z );
         }
+        // checking conformer dimensionality is a test for Github #584
+        TEST_ASSERT(m->getConformer().is3D()==nm->getConformer().is3D());
       }
 
       std::string nSmi=MolToSmiles(*nm,true);
@@ -4405,10 +4408,10 @@ void testRenumberAtoms()
     _renumberTest(m);
     delete m;
   }
-  { // github issue #441
+  { // github issue #441 and #584
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue266.mol");  // no significance to choice of files, we just need something with coords
+    RWMol *m = MolFileToMol(pathName+"Issue266.mol");  // no significance to choice of files, we just need something with 2D coords
     TEST_ASSERT(m);
     _renumberTest(m);
     delete m;
@@ -4850,7 +4853,347 @@ void testGetMolFrags()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue510()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: Hexafluorophosphate cannot be handled" << std::endl;
+  {
+    std::string smiles="F[P-](F)(F)(F)(F)F";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==-1);
+    delete m;
+  }
 
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+void testGithubIssue526()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 526: Bad ring finding in a complex fused ring" << std::endl;
+  {
+    std::string smiles="N1C2[C@@H]3N[C@H]4[C@@H]5N[C@@H]([C@@H]1C35)C24";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getRingInfo()->numRings()==6);
+    delete m;
+  }
+  {
+    std::string smiles="NN1C2C3[C@@H]4[C@@H]1C1[C@H]2N([C@H]3[C@@H]1N4N1C(=O)C2=C(C=CC=C2)C1=O)N1C(=O)C2=C(C=CC=C2)C1=O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getRingInfo()->numRings()==10);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithubIssue539()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 539: Lack of conjugation in allyl cations, "
+    "lack of aromaticity perception/ability to kekulize aromatic carbocations such as cyclopropenyl and tropylium" << std::endl;
+  {
+    std::string smiles="C=C-[CH2+]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    bool allConjugated = true;
+    for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i)
+      allConjugated = m->getBondWithIdx(i)->getIsConjugated();
+    TEST_ASSERT(allConjugated);
+    delete m;
+  }
+  {
+    std::vector<std::string> smilesVec;
+    smilesVec.push_back("C1=C[CH+]1");
+    smilesVec.push_back("C1=CC=C[CH+]C=C1");
+    smilesVec.push_back("c1c[cH+]1");
+    smilesVec.push_back("c1ccc[cH+]cc1");
+    for (std::vector<std::string>::const_iterator smiles = smilesVec.begin();
+      smiles != smilesVec.end(); ++smiles) {
+      RWMol *m = SmilesToMol(*smiles);
+      TEST_ASSERT(m);
+      bool allConjugated = true;
+      for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i)
+        allConjugated = m->getBondWithIdx(i)->getIsConjugated();
+      TEST_ASSERT(allConjugated);
+      bool allAromatic = true;
+      for (unsigned int i = 0; allAromatic && i < m->getNumBonds(); ++i)
+        allAromatic = m->getBondWithIdx(i)->getIsAromatic();
+      TEST_ASSERT(allAromatic);
+      delete m;
+    }
+  }
+
+
+  {
+    std::string smiles="C=C-C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+
+  {
+    std::string smiles="C=C-O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+
+  {
+    std::string smiles="C=C-N";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+  
+  {
+    std::string smiles="C=C-[NH3+]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(!m->getBondWithIdx(1)->getIsConjugated());
+    delete m;
+  }
+  {
+    std::string smiles="Cc1ccccc1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::SINGLE);
+    // the bond to the CH3 should not be conjugated, but the others are
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsConjugated());
+    for(unsigned int i=1;i<m->getNumBonds();++i){
+      TEST_ASSERT(m->getBondWithIdx(i)->getIsConjugated());
+    }
+    delete m;
+  }
+  {
+    std::string smiles="Fc1c[nH]c(=O)[nH]c1=O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::SINGLE);
+    // the bond to the F should not be conjugated, but the others are
+    TEST_ASSERT(!m->getBondWithIdx(0)->getIsConjugated());
+    for(unsigned int i=1;i<m->getNumBonds();++i){
+      TEST_ASSERT(m->getBondWithIdx(i)->getIsConjugated());
+    }
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+void testAdjustQueryProperties()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing adjustQueryProperties()" << std::endl;
+  { // basics from SMILES
+    std::string smiles="C1CCC1C";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    {
+      smiles = "C1C(C)CC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+
+    delete qm;
+    delete aqm;
+  }
+  { // basics from SMARTS
+    std::string smiles="C1CCC1*";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    {
+      smiles = "C1C(C)CC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+
+    delete qm;
+    delete aqm;
+  }
+
+  { 
+    std::string smiles="C1CC(*)C1*";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==6);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==6);
+    {
+      smiles = "C1CC2C1CC2";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+      MolOps::AdjustQueryParameters aqp;
+
+      delete aqm;
+      aqp.adjustDegree=false;
+      aqp.adjustRingCount=false;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustDegree=false;
+      aqp.adjustRingCount=true;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustDegree=true;
+      aqp.adjustRingCount=false;
+      aqp.adjustDegreeFlags=MolOps::ADJUST_EMPTY;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      
+      delete m;
+    }    
+
+    {
+      smiles = "C1CC(C2CC2)C1C2CC2";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      delete aqm;
+      aqm = MolOps::adjustQueryProperties(*qm);
+      TEST_ASSERT(SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+      MolOps::AdjustQueryParameters aqp;
+      
+      delete aqm;
+      aqp.adjustRingCount=true;
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustRingCountFlags=MolOps::ADJUST_EMPTY; // neither "not dummy" nor "in ring" restrictions
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      
+      delete aqm;
+      aqp.adjustRingCountFlags=MolOps::ADJUST_IGNOREDUMMIES; // no "in ring" restrictions
+      aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+      TEST_ASSERT(aqm);
+      TEST_ASSERT(aqm->getNumAtoms()==6);
+      TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+      
+      delete m;
+    }    
+
+    delete qm;
+    delete aqm;
+  }
+
+  { // dummies from SMILES
+    std::string smiles="C1CCC1*";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+
+    smiles = "C1CCC1CC";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MatchVectType match;
+    TEST_ASSERT(!SubstructMatch(*m,*qm,match));
+    TEST_ASSERT(SubstructMatch(*m,*aqm,match));
+
+    delete aqm;
+    MolOps::AdjustQueryParameters aqp;
+    aqp.makeDummiesQueries=false;
+    aqm = MolOps::adjustQueryProperties(*qm,&aqp);
+    TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+
+    delete m;
+    delete qm;
+    delete aqm;
+  }
+  { // dummies from SMILES 2
+    std::string smiles="C1CCC1[1*]";
+    ROMol *qm = SmilesToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms()==5);
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms()==5);
+    {
+      smiles = "C1CCC1CC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(!SubstructMatch(*m,*qm,match));
+      TEST_ASSERT(!SubstructMatch(*m,*aqm,match));
+      delete m;
+    }    
+    delete qm;
+    delete aqm;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -4922,13 +5265,17 @@ int main(){
   testAtomAtomMatch();
   testGithubIssue190();
   testMolFragsWithQuery();
-#endif
   test11();
   testGithubIssue418();
   testGithubIssue432();
   testGithubIssue443();
   testGithubIssue447();
   testGetMolFrags();
+  testGithubIssue510();
+  testGithubIssue526();
+  testGithubIssue539();
+#endif
+  testAdjustQueryProperties();
   return 0;
 }
 

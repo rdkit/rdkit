@@ -32,6 +32,7 @@ tests=[
   ("python","UnitTestCrippen.py",{}),
   ("python","__init__.py",{}),
   ("python","PandasTools.py",{}),
+  ("python","UnitTestPandasTools.py",{}),
   ("python","test_list.py",{'dir':'AtomPairs'}),
   ("python","test_list.py",{'dir':'ChemUtils'}),
   ("python","test_list.py",{'dir':'EState'}),
@@ -46,6 +47,13 @@ tests=[
   ("python","test_list.py",{'dir':'Fraggle'}),
   ("python","test_list.py",{'dir':'SimpleEnum'}),
   ]
+
+# only attempt the MolKey tests if we have the pre-reqs:
+try:
+  from rdkit.Chem.MolKey import MolKey
+  tests.append(("python","test_list.py",{'dir':'MolKey'}))
+except ImportError:
+  pass
 
 
 

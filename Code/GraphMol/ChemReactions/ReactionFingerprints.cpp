@@ -220,7 +220,7 @@ SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(const Chemical
 		const ReactionFingerprintParams &params)
 {
 	PRECONDITION(params.fpSize!=0,"fpSize==0");
-	PRECONDITION(params.fpType>0 & params.fpType<4 ,"Fingerprinttype not supported");
+	PRECONDITION(params.fpType>0 && params.fpType<4 ,"Fingerprinttype not supported");
 
 	SparseIntVect<boost::uint32_t> *reactantFP = generateFingerprintChemReactionAsCountVect(rxn, params.fpSize, params.fpType, Reactant);
 	SparseIntVect<boost::uint32_t> *productFP = generateFingerprintChemReactionAsCountVect(rxn, params.fpSize, params.fpType, Product);

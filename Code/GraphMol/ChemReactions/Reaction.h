@@ -376,7 +376,7 @@ namespace RDKit{
    */  
   void addRecursiveQueriesToReaction(ChemicalReaction &rxn,
                                      const std::map<std::string,ROMOL_SPTR> &queries,
-		  std::string propName,
+		  const std::string &propName,
 		  std::vector<std::vector<std::pair<unsigned int,std::string> > > *reactantLabels=NULL);
 
 } // end of RDKit namespace

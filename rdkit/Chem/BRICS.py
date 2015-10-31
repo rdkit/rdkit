@@ -206,7 +206,7 @@ for gp in smartsGps:
     try:
       t=Reactions.ReactionFromSmarts(defn)
       t.Initialize()
-    except:
+    except Exception:
       print(defn)
       raise
 
@@ -472,7 +472,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
               prod = prodSeq[idx]
               try:
                 Chem.SanitizeMol(prod)
-              except:
+              except Exception:
                 continue
               pSmi = Chem.MolToSmiles(prod,1)
               if minFragmentSize>0:

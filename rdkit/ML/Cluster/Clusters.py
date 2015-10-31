@@ -228,7 +228,7 @@ class Cluster(object):
       oP = other.GetPosition()
       try:
         r = cmp(len(sP),len(oP))
-      except:
+      except Exception:
         pass
       else:
         if r:
@@ -236,7 +236,7 @@ class Cluster(object):
 
       try:
         r = cmp(sP,oP) 
-      except:
+      except Exception:
         r = sum(sP-oP)
       if r:
         return r

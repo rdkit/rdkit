@@ -410,7 +410,7 @@ translate
 
         try:
             face = piddle_font_map[font.facereqFace.lower()]
-        except:
+        except Exception:
             return 'Helvetica'
 
         name = face + '-'
@@ -923,7 +923,7 @@ translate
        # series of lines of the right overall size can follow
        # piddlePDF again
 
-       rawimage = myimage.tostring()
+       rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
        assert len(rawimage) == imgwidth*imgheight, 'Wrong amount of data for image' 
        #compressed = zlib.compress(rawimage) # no zlib at moment
        hex_encoded = self._AsciiHexEncode(rawimage)
@@ -1014,7 +1014,7 @@ translate
                           '>> % End image dictionary',
                           'image'])
         # after image operator just need to dump image dat to file as hexstring
-        rawimage = myimage.tostring()
+        rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
         assert len(rawimage) == imwidth*imheight, 'Wrong amount of data for image' 
         #compressed = zlib.compress(rawimage) # no zlib at moment
         hex_encoded = self._AsciiHexEncode(rawimage)

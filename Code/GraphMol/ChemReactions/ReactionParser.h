@@ -44,7 +44,7 @@ namespace RDKit{
     //! construct with an error message
     explicit ChemicalReactionParserException(const char *msg) : _msg(msg) {};
     //! construct with an error message
-    explicit ChemicalReactionParserException(const std::string msg) : _msg(msg) {};
+    explicit ChemicalReactionParserException(const std::string &msg) : _msg(msg) {};
     //! get the error message
     const char *message () const { return _msg.c_str(); };
     ~ChemicalReactionParserException () throw () {};

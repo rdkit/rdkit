@@ -22,6 +22,7 @@ namespace DistGeom {
   class ChiralSet {
   public:
 
+    unsigned int d_idx0; // the centroid
     unsigned int d_idx1;
     unsigned int d_idx2;
     unsigned int d_idx3;
@@ -29,10 +30,11 @@ namespace DistGeom {
     double d_volumeLowerBound;
     double d_volumeUpperBound;
 
-    ChiralSet(unsigned int pid1, unsigned int pid2, 
+    ChiralSet(unsigned int pid0,
+              unsigned int pid1, unsigned int pid2, 
               unsigned int pid3, unsigned int pid4, 
               double lowerVolBound, double upperVolBound) :
-      d_idx1(pid1), d_idx2(pid2), d_idx3(pid3), d_idx4(pid4),
+      d_idx0(pid0), d_idx1(pid1), d_idx2(pid2), d_idx3(pid3), d_idx4(pid4),
       d_volumeLowerBound(lowerVolBound),d_volumeUpperBound(upperVolBound) {
       CHECK_INVARIANT(lowerVolBound <= upperVolBound, "Inconsistent bounds\n");
       d_volumeLowerBound = lowerVolBound;

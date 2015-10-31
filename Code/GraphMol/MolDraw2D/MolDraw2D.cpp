@@ -9,6 +9,7 @@
 // 27th May 2014
 //
 
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
@@ -129,7 +130,9 @@ namespace RDKit {
                                 const map<int,DrawColour> *highlight_bond_map,
                                 const std::map<int,double> *highlight_radii,
                                 int confId ) {
-    clearDrawing();
+    if(drawOptions().clearBackground){
+      clearDrawing();
+    }
     extractAtomCoords( mol, confId );
     extractAtomSymbols( mol );
     calculateScale();
@@ -488,15 +491,17 @@ namespace RDKit {
     DrawColour retval = getColourByAtomicNum( atomic_nums_[atom_idx] );
 
     // set contents of highlight_atoms to red
-    if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
-                                                           highlight_atoms->end() , atom_idx )  ) {
-      retval = drawOptions().highlightColour;
-    }
-    // over-ride with explicit colour from highlight_map if there is one
-    if(highlight_map){
-      map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
-      if( p != highlight_map->end() ) {
-        retval = p->second;
+    if(!drawOptions().circleAtoms && !drawOptions().continuousHighlight){
+      if( highlight_atoms && highlight_atoms->end() != find( highlight_atoms->begin() ,
+          highlight_atoms->end() , atom_idx )  ) {
+        retval = drawOptions().highlightColour;
+      }
+      // over-ride with explicit colour from highlight_map if there is one
+      if(highlight_map){
+        map<int,DrawColour>::const_iterator p = highlight_map->find( atom_idx );
+        if( p != highlight_map->end() ) {
+          retval = p->second;
+        }
       }
     }
     return retval;
@@ -611,66 +616,85 @@ namespace RDKit {
         setLineWidth(orig_lw*2);
       }
     }
-             
 
-    // it's a double bond and one end is 1-connected, do two lines parallel
-    // to the atom-atom line.
-    if( ( bond->getBondType() == Bond::DOUBLE ) &&
-        ( 1 == at1->getDegree() || 1 == at2->getDegree() ) ) {
-      Point2D perp = calcPerpendicular( at1_cds , at2_cds ) * double_bond_offset ;
-      drawLine(at1_cds + perp, at2_cds + perp, col1,col2);
-      drawLine(at1_cds - perp, at2_cds - perp, col1,col2);
-      if( bond->getBondType() == Bond::TRIPLE ) {
+
+    Bond::BondType bt=bond->getBondType();
+    bool isComplex=false;
+    if(bond->hasQuery()){
+      std::string descr=bond->getQuery()->getDescription();
+      if( bond->getQuery()->getNegation() || descr!="BondOrder"){
+        isComplex=true;
+      }
+      if(isComplex){
+        setDash(dots);
         drawLine( at1_cds , at2_cds , col1 , col2 );
-      }
-    } else if( Bond::SINGLE == bond->getBondType() &&
-               ( Bond::BEGINWEDGE == bond->getBondDir() || Bond::BEGINDASH == bond->getBondDir() ) ) {
-      if( at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW ) {
-        swap( at1_cds , at2_cds );
-        swap( col1 , col2 );
-      }
-      if( Bond::BEGINWEDGE == bond->getBondDir() ) {
-        drawWedgedBond( at1_cds , at2_cds , false , col1 , col2 );
+        setDash(noDash);
       } else {
-        drawWedgedBond( at1_cds , at2_cds , true , col1 , col2 );
+        bt = static_cast<Bond::BondType>(static_cast<BOND_EQUALS_QUERY *>(bond->getQuery())->getVal());
       }
-    } else {
-      // in all other cases, we will definitely want to draw a line between the
-      // two atoms
-      drawLine( at1_cds , at2_cds , col1 , col2 );
-      if( Bond::TRIPLE == bond->getBondType() ) {
-        // 2 further lines, a bit shorter and offset on the perpendicular
-        double dbo = 2.0 * double_bond_offset;
-        Point2D perp = calcPerpendicular( at1_cds , at2_cds );
-        double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
-        double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
-        Point2D bv=at1_cds - at2_cds;
-        Point2D p1=at1_cds - (bv*end1_trunc) + perp*dbo;
-        Point2D p2=at2_cds + (bv*end2_trunc) + perp*dbo;
-        drawLine( p1 , p2 , col1 , col2 );
-        p1=at1_cds - (bv*end1_trunc) - perp*dbo;
-        p2=at2_cds + (bv*end2_trunc) - perp*dbo;
-        drawLine( p1 , p2 , col1 , col2 );
-      }
-      // all we have left now are double bonds in a ring or not in a ring
-      // and multiply connected
-      else if( Bond::DOUBLE == bond->getBondType() || Bond::AROMATIC == bond->getBondType() ) {
-        Point2D perp;
-        if( mol.getRingInfo()->numBondRings( bond->getIdx() ) ) {
-          // in a ring, we need to draw the bond inside the ring
-          perp = bondInsideRing( mol , bond , at1_cds , at2_cds );
-        } else {
-          perp = bondInsideDoubleBond( mol , bond );
+    }
+      
+             
+    if(!isComplex){
+      // it's a double bond and one end is 1-connected, do two lines parallel
+      // to the atom-atom line.
+      if( ( bt == Bond::DOUBLE ) &&
+          ( 1 == at1->getDegree() || 1 == at2->getDegree() ) ) {
+        Point2D perp = calcPerpendicular( at1_cds , at2_cds ) * double_bond_offset ;
+        drawLine(at1_cds + perp, at2_cds + perp, col1,col2);
+        drawLine(at1_cds - perp, at2_cds - perp, col1,col2);
+        if( bt == Bond::TRIPLE ) {
+          drawLine( at1_cds , at2_cds , col1 , col2 );
         }
-        double dbo = 2.0 * double_bond_offset;
-        Point2D bv=at1_cds - at2_cds;
-        Point2D p1 = at1_cds - bv * 0.1 + perp * dbo;
-        Point2D p2 = at2_cds + bv * 0.1 + perp * dbo;
-        if(bond->getBondType()==Bond::AROMATIC) setDash(dashes);
-        drawLine( p1, p2, col1 , col2 );
-        if(bond->getBondType()==Bond::AROMATIC) setDash(noDash);
-      }
+      } else if( Bond::SINGLE == bt &&
+                 ( Bond::BEGINWEDGE == bond->getBondDir() || Bond::BEGINDASH == bond->getBondDir() ) ) {
+        if( at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+            at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW ) {
+          swap( at1_cds , at2_cds );
+          swap( col1 , col2 );
+        }
+        if( Bond::BEGINWEDGE == bond->getBondDir() ) {
+          drawWedgedBond( at1_cds , at2_cds , false , col1 , col2 );
+        } else {
+          drawWedgedBond( at1_cds , at2_cds , true , col1 , col2 );
+        }
+      } else {
+        // in all other cases, we will definitely want to draw a line between the
+        // two atoms
+        drawLine( at1_cds , at2_cds , col1 , col2 );
+        if( Bond::TRIPLE == bt ) {
+          // 2 further lines, a bit shorter and offset on the perpendicular
+          double dbo = 2.0 * double_bond_offset;
+          Point2D perp = calcPerpendicular( at1_cds , at2_cds );
+          double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
+          double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
+          Point2D bv=at1_cds - at2_cds;
+          Point2D p1=at1_cds - (bv*end1_trunc) + perp*dbo;
+          Point2D p2=at2_cds + (bv*end2_trunc) + perp*dbo;
+          drawLine( p1 , p2 , col1 , col2 );
+          p1=at1_cds - (bv*end1_trunc) - perp*dbo;
+          p2=at2_cds + (bv*end2_trunc) - perp*dbo;
+          drawLine( p1 , p2 , col1 , col2 );
+        }
+        // all we have left now are double bonds in a ring or not in a ring
+        // and multiply connected
+        else if( Bond::DOUBLE == bt || Bond::AROMATIC == bt) {
+          Point2D perp;
+          if( mol.getRingInfo()->numBondRings( bond->getIdx() ) ) {
+            // in a ring, we need to draw the bond inside the ring
+            perp = bondInsideRing( mol , bond , at1_cds , at2_cds );
+          } else {
+            perp = bondInsideDoubleBond( mol , bond );
+          }
+          double dbo = 2.0 * double_bond_offset;
+          Point2D bv=at1_cds - at2_cds;
+          Point2D p1 = at1_cds - bv * 0.1 + perp * dbo;
+          Point2D p2 = at2_cds + bv * 0.1 + perp * dbo;
+          if(bt==Bond::AROMATIC) setDash(dashes);
+          drawLine( p1, p2, col1 , col2 );
+          if(bt==Bond::AROMATIC) setDash(noDash);
+        }
+      } 
     }
     if(highlight_bond){
       setLineWidth(orig_lw);
@@ -892,41 +916,55 @@ namespace RDKit {
       symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
     } else if(drawOptions().dummiesAreAttachments && atom.getAtomicNum()==0 && atom.getDegree()==1) {
       symbol="";
+    } else if(isComplexQuery(&atom)) {
+      symbol="?";
     } else {
-      if( 6 != atom.getAtomicNum() ) {
-        symbol = atom.getSymbol();
-      }
-
+      std::vector<std::string> preText,postText;
       if( 0 != atom.getIsotope() ) {
-        symbol = lexical_cast<string>( atom.getIsotope() ) + symbol;
+        preText.push_back( std::string("<sup>") + 
+                           lexical_cast<string>( atom.getIsotope() ) + 
+                           std::string("</sup>") );
       }
 
       if( atom.hasProp( "molAtomMapNumber" ) ) {
-        string map_num;
+        string map_num="";
         atom.getProp( "molAtomMapNumber" , map_num );
-        symbol += string( ":" ) + map_num;
+        postText.push_back(std::string(":") + map_num);
       }
 
-      int num_h = 6 == atom.getAtomicNum() ? 0 : atom.getTotalNumHs();
-      if( num_h > 0 ) {
-        string h( "H" );
+      std::string h="";
+      int num_h=atom.getAtomicNum()==6 ? 0 : atom.getTotalNumHs(); // FIX: still not quite right
+      if( num_h > 0 && !atom.hasQuery() ) {
+        h = "H";
         if( num_h > 1 ) {
           // put the number as a subscript
           h += string( "<sub>" ) + lexical_cast<string>( num_h ) + string( "</sub>" );
         }
-        symbol += h;
+        postText.push_back(h);
       }
 
       if( 0 != atom.getFormalCharge() ) {
-        int chg = atom.getFormalCharge();
-        string sgn = chg > 0 ? string( "+" ) : string( "-" );
-        chg = abs( chg );
-        if( chg > 1 ) {
-          sgn += lexical_cast<string>( chg );
+        int ichg = atom.getFormalCharge();
+        string sgn = ichg > 0 ? string( "+" ) : string( "-" );
+        ichg = abs( ichg );
+        if( ichg > 1 ) {
+          sgn += lexical_cast<string>( ichg );
         }
         // put the charge as a superscript
-        symbol += string( "<sup>" ) + sgn + string( "</sup>" );
+        postText.push_back(string( "<sup>" ) + sgn + string( "</sup>" ));
       }
+
+      symbol="";
+      BOOST_FOREACH(const std::string &se,preText){
+        symbol += se;
+      }
+      if(atom.getAtomicNum()!=6 || preText.size() || postText.size() ){
+        symbol += atom.getSymbol();
+      }
+      BOOST_FOREACH(const std::string &se,postText){
+        symbol += se;
+      }
+
     }
 
     // -----------------------------------

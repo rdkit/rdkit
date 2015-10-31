@@ -540,6 +540,81 @@ void testMultiThreaded(){
 }
 #endif
 
+void test6() {
+  std::cout << " ----------------- Test 6 (atom labels)" << std::endl;
+  {
+    std::string smiles="CC[13CH2][CH2:7][CH-]C[15NH2+]C";
+    std::string nameBase="test5_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m,&(m->getConformer()));
+    MolDraw2DSVG drawer(300,300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt=drawer.getDrawingText();
+    std::ofstream outs("test6_1.svg");
+    outs<<txt;
+    //TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+  }
+  std::cerr<<" Done"<<std::endl;
+}
+
+void test7() {
+  std::cout << " ----------------- Test 7 (backgrounds)" << std::endl;
+    std::string smiles="CCC";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+  {
+    std::string nameBase="test7_1";
+    MolDraw2DSVG drawer(300,300);
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt=drawer.getDrawingText();
+    std::ofstream outs((nameBase+".svg").c_str());
+    outs<<txt;
+    TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+    TEST_ASSERT(txt.find("<svg:rect")==std::string::npos);
+  }
+#ifdef RDK_CAIRO_BUILD
+  {
+    std::string nameBase="test7_1";
+    MolDraw2DCairo drawer(300,300);
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase+".png");
+  }
+#endif    
+  {
+    std::string nameBase="test7_2";
+    MolDraw2DSVG drawer(300,300);
+    drawer.drawOptions().backgroundColour = DrawColour(.8,.8,.8);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt=drawer.getDrawingText();
+    std::ofstream outs((nameBase+".svg").c_str());
+    outs<<txt;
+    TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+    TEST_ASSERT(txt.find("<svg:rect")!=std::string::npos);
+    TEST_ASSERT(txt.find("fill:#CCCCCC")!=std::string::npos);
+  }
+#ifdef RDK_CAIRO_BUILD
+  {
+    std::string nameBase="test7_2";
+    MolDraw2DCairo drawer(300,300);
+    drawer.drawOptions().backgroundColour = DrawColour(.8,.8,.8);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase+".png");
+  }
+#endif    
+  std::cerr<<" Done"<<std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
   test1();
@@ -548,4 +623,6 @@ int main(){
   test4();
   test5();
   testMultiThreaded();
+  test6();
+  test7();
 }

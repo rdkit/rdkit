@@ -198,9 +198,9 @@ class VectCollection(object):
     for k,v in self.__vects.items():
       obls[k] = list(v.GetOnBits())
     
-    keys = self.__vects.keys()
+    keys = list(self.__vects.keys())
     nKeys = len(keys)
-    keep = self.__vects.keys()
+    keep = list(self.__vects.keys())
     for i in range(nKeys):
       k1 = keys[i]
       if k1 in keep:

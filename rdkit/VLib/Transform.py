@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 import sys
+from rdkit import six
 
 from rdkit.VLib.Node import VLibNode
 
@@ -60,11 +61,13 @@ class TransformNode(VLibNode):
       raise StopIteration
     args = tuple(args)
     if self._func is not None:
-      res = apply(self._func,args)
+      res = self._func(*args)
     else:
       res = args
     return res  
 
+if six.PY3:
+    TransformNode.__next__ = TransformNode.next
 
   
 #------------------------------------

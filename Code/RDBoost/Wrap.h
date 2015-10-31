@@ -130,6 +130,12 @@ std::vector<T> *pythonObjectToVect(const python::object &obj){
   return res;
 }
 
+#ifdef RDK_THREADSAFE_SSS
+// Release the Global Interpreter lock at certain places
+//  on construction - release the lock
+//  on destruction - grab the lock
+//  no entry into the python interpreter can be performed
+//   between releasing and grabbing the lock
 class NOGIL
 {
 public:
@@ -147,7 +153,10 @@ public:
 private:
     PyThreadState * m_thread_state;
 };
-
+#else
+// Never release the lock when not compiling thread-safe
+struct NOGIL {};
+#endif
 
 // -------------------
 // This block was adapted from this mailing list post by Matthew Scouten:

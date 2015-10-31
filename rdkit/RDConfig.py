@@ -76,7 +76,7 @@ if not usePgSQL:
       # earlier versions of python:
       from pysqlite2 import dbapi2
       useSqlLite=True
-    except:
+    except ImportError:
       pass
 
 if usePgSQL:

@@ -89,9 +89,11 @@ namespace RDKit {
   }
   PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false,
                             bool useQueryQueryMatches=false){
-    NOGIL gil;
     MatchVectType matches;
-    SubstructMatch(mol,query,matches,true,useChirality,useQueryQueryMatches);
+    {
+      NOGIL gil;
+      SubstructMatch(mol,query,matches,true,useChirality,useQueryQueryMatches);
+    }
     return convertMatches(matches);
   }
 
@@ -100,7 +102,11 @@ namespace RDKit {
                                 bool useQueryQueryMatches=false,
                                 unsigned int maxMatches = 1000){
     std::vector< MatchVectType >  matches;
-    int matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality,useQueryQueryMatches,maxMatches);
+    int matched;
+    {
+      NOGIL gil;
+      matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality,useQueryQueryMatches,maxMatches);
+    }
     PyObject *res = PyTuple_New(matched);
     for(int idx=0;idx<matched;idx++){
       PyTuple_SetItem(res,idx,convertMatches(matches[idx]));
@@ -501,7 +507,7 @@ struct mol_wrapper {
       .def("AddBond",&ReadWriteMol::AddBond,
                      (python::arg("mol"),python::arg("beginAtomIdx"),python::arg("endAtomIdx"),
                       python::arg("order")=Bond::UNSPECIFIED),
-      "add a bond, returns the index of the newly added bond")
+      "add a bond, returns the new number of bonds")
       
       .def("AddAtom",&ReadWriteMol::AddAtom,
                      (python::arg("mol"),python::arg("atom")),

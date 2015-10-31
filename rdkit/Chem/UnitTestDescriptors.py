@@ -34,10 +34,10 @@ class TestCase(unittest.TestCase):
       for nm,fn in Descriptors._descList:
         try:
           v = fn(m)
-        except:
+        except Exception:
           import traceback
           traceback.print_exc()
-          self.assertTrue(0,'SMILES: %s'%smi)
+          raise AssertionError('SMILES: %s'%smi)
 
   def testMolFormula(self):
     for (smiles, expected) in (  ("[NH4+]", "H4N+"),
@@ -76,7 +76,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(mqns,refData[i][1])
   def testMQN(self):
     tgt = np.array([42917,   274,   870,   621,   135,  1582,    29,  3147,  5463,
-        6999,   470,    81, 19055,  4424,   309, 24061, 17820,     1,
+        6999,   470,    62588, 19055,  4424,   309, 24061, 17820,     1,
         8314, 24146, 16076,  5560,  4262,   646,   746, 13725,  5430,
         2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
           31,     9,     1,     2,  3060,  1750])

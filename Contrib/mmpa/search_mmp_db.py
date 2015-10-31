@@ -96,7 +96,7 @@ def print_smallest_change_mmp(db_results,cmpd_id,query_size):
             elif(r[3] > uniq_list[r[0]][3]  ):
                 uniq_list[r[0]] = r
 
-    for key, value in uniq_list.iteritems():
+    for key, value in uniq_list.items():
         size_of_change = query_size-value[3]
         #print "q_size: %s, Size od change: %s, Ratio: %s" % (query_size,size_of_change,float(size_of_change)/query_size)
         if(use_ratio):
@@ -202,13 +202,13 @@ def run_trans_smarts_query(transform):
 
     cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre,lhs)
     p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    output = p1.communicate()[0].rstrip()
+    output = p1.communicate()[0].decode().rstrip()
     matching_lhs=output.split("\n")
     #sys.stderr.write("rhs: %s\n" % (len(matching_lhs)) )
 
     cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre,rhs)
     p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    output = p1.communicate()[0].rstrip()
+    output = p1.communicate()[0].decode().rstrip()
     matching_rhs=output.split("\n")
     #sys.stderr.write("rhs: %s\n" % (len(matching_rhs)) )
 

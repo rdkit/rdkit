@@ -21,13 +21,13 @@ namespace ChemicalFeatures {
   class FreeChemicalFeature : public ChemicalFeature {
     public:
     //! start with everything specified
-    FreeChemicalFeature(std::string family, std::string type,
+    FreeChemicalFeature(const std::string &family, std::string type,
                         const RDGeom::Point3D &loc,int id=-1) :
       d_id(id), d_family(family), d_type(type), d_position(loc) {
     }
 
     //! start with family and location specified, leave the type blank
-    FreeChemicalFeature(std::string family, const RDGeom::Point3D &loc) :
+    FreeChemicalFeature(const std::string &family, const RDGeom::Point3D &loc) :
       d_id(-1), d_family(family), d_type(""), d_position(loc) {
     }
 

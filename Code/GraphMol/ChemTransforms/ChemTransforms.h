@@ -162,7 +162,9 @@ namespace RDKit{
           in \c queries
       
   */
-  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName,
+  void addRecursiveQueries(ROMol &mol,
+                           const std::map<std::string,ROMOL_SPTR> &queries,
+                           const std::string &propName,
                            std::vector<std::pair<unsigned int, std::string> > *reactantLabels=NULL);
 
 
@@ -180,16 +182,22 @@ namespace RDKit{
       \param smartsColumn     - column with the SMARTS definitions of the queries
 
   */
-  void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         bool standardize=true,std::string delimiter="\t",std::string comment="//",
+  void parseQueryDefFile(const std::string &filename,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize=true,
+                         const std::string &delimiter="\t",const std::string &comment="//",
                          unsigned int nameColumn=0,unsigned int smartsColumn=1);
   //! \overload
-  void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         bool standardize=true,std::string delimiter="\t",std::string comment="//",
+  void parseQueryDefFile(std::istream *inStream,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize=true,
+                         const std::string &delimiter="\t",const std::string &comment="//",
                          unsigned int nameColumn=0,unsigned int smartsColumn=1);
   //! \brief equivalent to parseQueryDefFile() but the query definitions are explicitly passed in
-  void parseQueryDefText(const std::string &queryDefText,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         bool standardize=true,std::string delimiter="\t",std::string comment="//",
+  void parseQueryDefText(const std::string &queryDefText,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize=true,
+                         const std::string &delimiter="\t",const std::string &comment="//",
                          unsigned int nameColumn=0,unsigned int smartsColumn=1);
   
 }

@@ -55,7 +55,7 @@ def svg(req,smiles,width=100,height=100,highlight='[]',frame=0,
         patt = Chem.MolFromSmiles(template)
         Chem.Compute2DCoords(patt)
         TemplateAlign.AlignMolToTemplate2D(mol,patt,highlight)
-      except:
+      except Exception:
         Chem.Compute2DCoords(mol)
     else:
       Chem.Compute2DCoords(mol)

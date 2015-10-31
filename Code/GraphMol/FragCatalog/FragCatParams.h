@@ -39,7 +39,8 @@ namespace RDKit {
       \param tol        (optional) the eigenvalue tolerance to be used
                         when comparing fragments
     */
-    FragCatParams(unsigned int lLen, unsigned int uLen, std::string fgroupFile, double tol=1e-08);
+    FragCatParams(unsigned int lLen, unsigned int uLen,
+                  const std::string &fgroupFile, double tol=1e-08);
     //! copy constructor
     FragCatParams(const FragCatParams &other);
     //! construct from a pickle string (serialized representation)

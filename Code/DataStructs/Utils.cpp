@@ -29,7 +29,7 @@ void a2b(const char *,char *);
 //! \brief Construct a BitVect from the ASCII representation of a
 //! Daylight fingerprint string
 template <typename T>
-void FromDaylightString(T &sbv,std::string s)
+void FromDaylightString(T &sbv,const std::string &s)
 {
   sbv.clearBits();
   int length = s.length();
@@ -66,8 +66,8 @@ void FromDaylightString(T &sbv,std::string s)
   }
 }
 
-template void FromDaylightString(SparseBitVect &sbv,std::string s);
-template void FromDaylightString(ExplicitBitVect &sbv,std::string s);
+template void FromDaylightString(SparseBitVect &sbv,const std::string &s);
+template void FromDaylightString(ExplicitBitVect &sbv,const std::string &s);
 
 //! \brief Construct a BitVect from the ASCII representation of a
 //! BitString

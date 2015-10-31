@@ -61,9 +61,23 @@ class TestCase(unittest.TestCase):
   def _setupDb(self):
     from rdkit.Dbase.DbConnection import DbConnect
     fName = RDConfig.RDTestDatabase
-    self.conn  = DbConnect(fName)
+    if RDConfig.useSqlLite:
+      import tempfile,shutil
+      tmpf,tempName = tempfile.mkstemp(suffix='sqlt')
+      self.tempDbName=tempName
+      shutil.copyfile(fName,tempName)
+    else:
+      tempName='::RDTests'
+    self.conn  = DbConnect(tempName)
     self.dbTblName = 'bit_ensemble_test'
     return self.conn
+  def tearDown(self):
+    if hasattr(self,'tempDbName') and RDConfig.useSqlLite and os.path.exists(self.tempDbName):
+      try:
+        os.unlink(self.tempDbName)
+      except:
+        import traceback
+        traceback.print_exc()
     
   def testdb1(self):
     """ test the sig - db functionality """

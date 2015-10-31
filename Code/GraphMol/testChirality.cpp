@@ -2048,6 +2048,61 @@ void testGithub90(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub553(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 553: Chirality not affected by atom-map index" << std::endl;
+
+  {
+    std::string smi="[*:1][C@H]([*:2])[*:3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(cip=="R");
+    delete m;
+  }
+
+  {
+    std::string smi="[*][C@H]([*:2])[*:3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(cip=="R");
+    delete m;
+  }
+
+  {
+    std::string smi="[*:1][C@@H]([*:2])[*:3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode,cip);
+    TEST_ASSERT(cip=="S");
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(){
@@ -2073,6 +2128,7 @@ int main(){
   testGithub90();
 #endif
   testIssue2705543();
+  testGithub553();
   return 0;
 }
 

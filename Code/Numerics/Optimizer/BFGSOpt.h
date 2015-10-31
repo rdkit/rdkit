@@ -89,7 +89,7 @@ namespace BFGSOpt {
     lambda = 1.0;
     unsigned int it = 0;
     while(it < MAX_ITER_LINEAR_SEARCH){
-      //std::cout << "\t" << lambda << " " << lambdaMin << std::endl;
+      //std::cerr << "\t" << it<<" : "<<lambda << " " << lambdaMin << std::endl;
       if(lambda<lambdaMin){
         // the position change is too small
         resCode=1;
@@ -138,6 +138,7 @@ namespace BFGSOpt {
       ++it;
     }
     // nothing was done
+    //std::cerr<<"  RETURN AT END: "<<it<<" "<<resCode<<std::endl;
     for(unsigned int i=0;i<dim;i++){
       newPt[i]=oldPt[i];
     }
@@ -226,6 +227,7 @@ namespace BFGSOpt {
         if(temp>test) test=temp;
         dGrad[i] = grad[i];
       }
+      //std::cerr<<"      iter: "<<iter<<" "<<fp<<" "<<test<<" "<<TOLX<<std::endl;
       if(test<TOLX) {
         CLEANUP();
         return 0;
@@ -243,6 +245,7 @@ namespace BFGSOpt {
         dGrad[i] = grad[i]-dGrad[i];
       }
       test /= term;
+      //std::cerr<<"              "<<gradScale<<" "<<test<<" "<<gradTol<<std::endl;
       if(test<gradTol){
         CLEANUP();
         return 0;

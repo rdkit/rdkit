@@ -84,15 +84,8 @@ class TestCase(unittest.TestCase):
       nbits = 10
       bv1 = DataStructs.ExplicitBitVect(nbits)
       bv1[0]
-      try:
+      with self.assertRaisesRegexp(IndexError, ""):
          bv1[11]
-      except IndexError:
-         ok = 1
-      except:
-         ok = -1
-      else:
-         ok = 0
-      assert ok>0,ok  
       
    def test4OnBitsInCommon(self) :
       sz=100

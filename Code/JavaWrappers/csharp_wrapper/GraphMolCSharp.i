@@ -251,6 +251,8 @@ typedef unsigned long long int	uintmax_t;
 
 /* list */
 %template(Int_Vect_List) std::list<std::vector<int> >;
+%template(Int_List) std::list<int>;
+%template(UInt_List) std::list<unsigned int>;
 
 
 /* other */

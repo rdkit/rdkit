@@ -38,7 +38,7 @@ def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1
     if not cn:
       try:
         cn = DbModule.connect(dBase,user,password)
-      except:
+      except Exception:
         print('Problems opening database: %s'%(dBase))
         return []
     c = cn.cursor()
@@ -79,7 +79,7 @@ def GetTableNames(dBase,user='sysdba',password='masterkey',
   if not cn:
     try:
       cn = DbModule.connect(dBase,user,password)
-    except:
+    except Exception:
       print('Problems opening database: %s'%(dBase))
       return []
   c = cn.cursor()

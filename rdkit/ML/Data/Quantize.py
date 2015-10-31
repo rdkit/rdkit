@@ -20,8 +20,8 @@ import numpy
 from rdkit.ML.InfoTheory import entropy
 from rdkit.six.moves import zip, map, range
 try:
-  import cQuantize
-except:
+  from rdkit.ML.Data import cQuantize
+except ImportError:
   hascQuantize = 0
 else:
   hascQuantize = 1  

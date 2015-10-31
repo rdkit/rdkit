@@ -515,6 +515,30 @@ namespace {
     }
     return pyres;
   }
+  unsigned int numSpiroAtoms(const RDKit::ROMol &mol,
+                             python::object pyatoms){
+    std::vector<unsigned int> ats;
+    unsigned int res=RDKit::Descriptors::calcNumSpiroAtoms(mol,pyatoms!=python::object() ? &ats : NULL);
+    if(pyatoms!=python::object()){
+      python::list pyres=python::extract<python::list>(pyatoms);
+      BOOST_FOREACH(unsigned int iv,ats){
+        pyres.append(iv);
+      }
+    }
+    return res;
+  }
+  unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
+                                  python::object pyatoms){
+    std::vector<unsigned int> ats;
+    unsigned int res=RDKit::Descriptors::calcNumBridgeheadAtoms(mol,pyatoms!=python::object() ? &ats : NULL);
+    if(pyatoms!=python::object()){
+      python::list pyres=python::extract<python::list>(pyatoms);
+      BOOST_FOREACH(unsigned int iv,ats){
+        pyres.append(iv);
+      }
+    }
+    return res;
+  }
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1017,5 +1041,21 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  
+  python::scope().attr("_CalcNumSpiroAtoms_version")=RDKit::Descriptors::NumSpiroAtomsVersion;
+  docString="Returns the number of spiro atoms (atoms shared between rings that share exactly one atom)";
+  python::def("CalcNumSpiroAtoms",
+	      numSpiroAtoms,
+	      (python::arg("mol"),
+               python::arg("atoms")=python::object()),
+              docString.c_str());
+  
+  python::scope().attr("_CalcNumBridgeheadAtoms_version")=RDKit::Descriptors::NumBridgeheadAtomsVersion;
+  docString="Returns the number of bridgehead atoms (atoms shared between rings that share at least two bonds)";
+  python::def("CalcNumBridgeheadAtoms",
+	      numBridgeheadAtoms,
+	      (python::arg("mol"),
+               python::arg("atoms")=python::object()),
+              docString.c_str());
   
 }

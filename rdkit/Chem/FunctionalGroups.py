@@ -112,12 +112,7 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
     else:
       parent = None
     smarts = splitL[1]
-    try:
-      patt = Chem.MolFromSmarts(smarts)
-    except:
-      import traceback
-      traceback.print_exc()
-      patt = None
+    patt = Chem.MolFromSmarts(smarts)
     if not patt:
       raise FuncGroupFileParseError('Smarts "%s" (line %d) could not be parsed.'%(smarts,lineNo))
       

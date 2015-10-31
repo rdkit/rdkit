@@ -16,6 +16,8 @@
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <iostream>
 using namespace std;
@@ -898,6 +900,34 @@ void test1(){
     TEST_ASSERT(feq(m.getConformer().getAtomPos(3).y,1.0));
     TEST_ASSERT(feq(m.getConformer().getAtomPos(3).z,0.0));
   }
+  {
+    // start with a molecule with no conf
+    RWMol m;
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    m.addBond(0,1,Bond::SINGLE);
+    TEST_ASSERT(m.getNumConformers()==0);
+
+    RWMol m2;
+    // insert molecule without a conf:
+    m2.addAtom(new Atom(6));
+    m.insertMol(m2);
+    TEST_ASSERT(m.getNumConformers()==0);
+
+    // insert molecule with a conf:
+    Conformer *conf = new Conformer(m2.getNumAtoms());
+    m2.addConformer(conf);
+    m2.getConformer().setAtomPos(0,RDGeom::Point3D(1.0, 1.0, 0.0));
+    m.insertMol(m2);
+    TEST_ASSERT(m.getNumConformers()==1);
+    TEST_ASSERT(m.getConformer().getNumAtoms()==m.getNumAtoms());
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(0).x,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(0).y,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(0).z,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).x,1.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).y,1.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).z,0.0));
+  }
 }
 
 void testPeriodicTable()
@@ -1173,15 +1203,64 @@ void testAtomListLineRoundTrip()
   TEST_ASSERT(dynamic_cast<QueryAtom*>(m2->getAtomWithIdx(3))->Match(o));
   delete m;
   delete m2;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+void testGithub608(){
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test github 608: stereo bonds wrong after insertMol" << std::endl;
+
+  {
+    RWMol *m = SmilesToMol("N1NN1");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    RWMol *f = SmilesToMol("C/C=C/C");
+    TEST_ASSERT(f);
+    TEST_ASSERT(f->getNumAtoms()==4);
+    TEST_ASSERT(f->getBondBetweenAtoms(1,2)->getStereoAtoms().size()==2);
+    TEST_ASSERT(f->getBondBetweenAtoms(1,2)->getStereoAtoms()[0]==0);
+    TEST_ASSERT(f->getBondBetweenAtoms(1,2)->getStereoAtoms()[1]==3);
+
+    m->insertMol(*f);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereoAtoms().size()==2);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereoAtoms()[0]==3);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereoAtoms()[1]==6);
+
+    delete m;
+    delete f;
+  }  
+  
+  {
+    INT_VECT nAtoms;
+    RWMol *m = SmilesToMol("N1NN1");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    RWMol *f = SmilesToMol("C[C@]1(F)CC[C@](Cl)(Br)CC1");
+    TEST_ASSERT(f);
+    TEST_ASSERT(f->getNumAtoms()==10);
+    TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(common_properties::_ringStereoAtoms,nAtoms));
+    TEST_ASSERT(std::find(nAtoms.begin(),nAtoms.end(),6)!=nAtoms.end());
+    m->insertMol(*f);
+    TEST_ASSERT(m->getNumAtoms()==13);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(common_properties::_ringStereoAtoms,nAtoms));
+    TEST_ASSERT(std::find(nAtoms.begin(),nAtoms.end(),9)!=nAtoms.end());
+
+    delete m;
+    delete f;
+  }  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
 {
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.info");
-  // test1();  // <- this doesn't seem to actually do anything
 #if 1
+  test1(); 
   testPropLeak();
   testMolProps();
   testAtomProps();
@@ -1200,6 +1279,7 @@ int main()
   testAtomResidues();
   testNeedsUpdatePropertyCache();
   testAtomListLineRoundTrip();
+  testGithub608();
 
   return 0;
 }

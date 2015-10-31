@@ -169,7 +169,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
       bitInfo = ranker.GetTopN(1)[0]
       best = int(bitInfo[0])
       gain = bitInfo[1]
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       print('get top n failed')

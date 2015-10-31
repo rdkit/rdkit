@@ -169,6 +169,7 @@ namespace RDInfoTheory {
         .value("BIASENTROPY", InfoBitRanker::BIASENTROPY)
         .value("CHISQUARE", InfoBitRanker::CHISQUARE)
         .value("BIASCHISQUARE", InfoBitRanker::BIASCHISQUARE)
+        .export_values();
         ;
     };
   };

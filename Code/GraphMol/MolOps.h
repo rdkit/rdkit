@@ -231,6 +231,44 @@ namespace RDKit{
     // modifies the molecule in place
     void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly=false);
 
+    typedef enum {
+      ADJUST_EMPTY = 0x0,
+      ADJUST_RINGSONLY = 0x1,
+      ADJUST_IGNOREDUMMIES = 0x2,
+      ADJUST_SETALL = 0xFFFFFFF
+    } AdjustQueryWhichFlags;
+    struct AdjustQueryParameters {
+      bool adjustDegree; /**< add degree queries */
+      AdjustQueryWhichFlags adjustDegreeFlags;
+      bool adjustRingCount; /**< add ring-count queries */
+      AdjustQueryWhichFlags adjustRingCountFlags;
+
+      bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to any-atom queries */
+
+      AdjustQueryParameters() :
+        adjustDegree(true),
+        adjustDegreeFlags(ADJUST_SETALL),
+        adjustRingCount(false),
+        adjustRingCountFlags(ADJUST_SETALL),
+        makeDummiesQueries(true)
+
+      {}
+      };
+    //! returns a copy of a molecule with query properties adjusted
+    /*!
+      \param mol the molecule to adjust
+      \param params controls the adjustments made
+     
+      \return the new molecule 
+    */
+    ROMol *adjustQueryProperties(const ROMol &mol,
+                                 const AdjustQueryParameters *params=NULL);
+    //! \overload
+    // modifies the molecule in place
+    void adjustQueryProperties(RWMol &mol,
+                               const AdjustQueryParameters *params=NULL
+                               );
+
     //! returns a copy of a molecule with the atoms renumbered
     /*!
       
@@ -494,7 +532,7 @@ namespace RDKit{
 
       <b>Notes</b>
         - The result of this is cached in the molecule's local property dictionary,
-	  which will handle deallocation. Do the caller should <b>not</b> \c delete
+	  which will handle deallocation. The caller should <b>not</b> \c delete
 	  this pointer.
 	  
     */
@@ -522,16 +560,16 @@ namespace RDKit{
 
       <b>Notes</b>
         - The result of this is cached in the molecule's local property dictionary,
-	  which will handle deallocation. Do the caller should <b>not</b> \c delete
+	  which will handle deallocation. The caller should <b>not</b> \c delete
 	  this pointer.
 	  
      
     */
     double *getDistanceMat(const ROMol &mol,
-				  bool useBO=false,
-				  bool useAtomWts=false,
-				  bool force=false,
-				  const char *propNamePrefix=0);
+                           bool useBO=false,
+                           bool useAtomWts=false,
+                           bool force=false,
+                           const char *propNamePrefix=0);
 
 
     //! Computes the molecule's topological distance matrix
@@ -572,6 +610,7 @@ namespace RDKit{
                6.0/(atomic number)
       \param force           forces calculation of the matrix, even if already computed
       \param propNamePrefix  used to set the cached property name
+                             (if set to an empty string, the matrix will not be cached)
 
       \return the distance matrix.
 

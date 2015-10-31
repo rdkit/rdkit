@@ -439,7 +439,28 @@ class TestCase(unittest.TestCase):
         self.failUnlessAlmostEqual(o3s[i].Align(),o3.Align(),6)
         self.failUnlessAlmostEqual(o3s[i].Score(),o3.Score(),6)
 
-        
+    def test16MultithreadBug(self):
+      " test multi-conf alignment "
+      nConfs=10
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'bzr_data.sdf')
+      bzr_ms_o = [x for x in Chem.SDMolSupplier(sdf,removeHs=False)]
+      bzr_ms = [Chem.Mol(x) for x in bzr_ms_o]
+      for m in bzr_ms:
+        c = m.GetConformer()
+        while m.GetNumConformers()<nConfs:
+          cc = Chem.Conformer(c)
+          m.AddConformer(cc,assignId=True)
+
+      #refParams = ChemicalForceFields.MMFFGetMoleculeProperties(bzr_ms_o[0])
+         
+      for i,m in enumerate(bzr_ms):
+        #prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+        algs = rdMolAlign.GetO3AForProbeConfs(m,bzr_ms_o[0],numThreads=4#,prbPyMMFFMolProperties=prbParams,
+                                              #refPyMMFFMolProperties=refParams
+                                              )
+        self.failUnlessEqual(len(algs),nConfs)
+                
 
 if __name__ == '__main__':
     print("Testing MolAlign Wrappers")

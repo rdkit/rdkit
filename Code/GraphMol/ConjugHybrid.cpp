@@ -29,9 +29,9 @@ namespace RDKit {
       // the first row of the periodic table.  (Conjugation in aromatic rings
       // has already been attended to, so this is safe.)
       int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-      if (((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6)) &&
-          (MolOps::countAtomElec(at) > 0)
-          ) {
+      if (((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6)
+          || (nouter == 6 && at->getTotalDegree() < 2))
+          && (MolOps::countAtomElec(at) > 0)) {
         return true;
       }
       return false;
