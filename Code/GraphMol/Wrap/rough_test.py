@@ -35,6 +35,30 @@ def cmpFormalChargeBondOrder(self, mol1, mol2):
     self.assertEqual(mol1.GetBondWithIdx(i).GetBondType(),
       mol2.GetBondWithIdx(i).GetBondType())
 
+def setResidueFormalCharge(mol, res, fc):
+  for query in res:
+    matches = mol.GetSubstructMatches(query)
+    for match in matches:
+      mol.GetAtomWithIdx(match[-1]).SetFormalCharge(fc)
+
+def getBtList2(resMolSuppl):
+  btList2 = []
+  while (not resMolSuppl.atEnd()):
+    resMol = resMolSuppl.next()
+    bt = [];
+    for bond in resMol.GetBonds():
+      bt.append(int(bond.GetBondTypeAsDouble()))
+    btList2.append(bt)
+  for i in range(len(btList2)):
+    same = True
+    for j in range(len(btList2[i])):
+      if (not i):
+        continue
+      if (same):
+        same = (btList2[i][j] == btList2[i - 1][j])
+    if (i and same):
+      return None
+  return btList2
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -3136,6 +3160,90 @@ CAS<~>
     v.sort()
     self.assertEqual(v[0], 2)
     self.assertEqual(v[1], 6)
+
+  def testCrambin(self):
+    crambinPdb = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    crambin = Chem.MolFromPDBFile(crambinPdb)
+    res = [];
+    # protonate NH2
+    res.append(Chem.MolFromSmarts('[Nh2][Ch;Ch2]'))
+    # protonate Arg
+    res.append(Chem.MolFromSmarts('[Nh][C]([Nh2])=[Nh]'))
+    setResidueFormalCharge(crambin, res, 1)
+    res = [];
+    # deprotonate COOH
+    res.append(Chem.MolFromSmarts('C(=O)[Oh]'))
+    setResidueFormalCharge(crambin, res, -1);
+    res = [];
+    resMolSupplST = Chem.ResonanceMolSupplier(crambin)
+    # crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
+    # and 1 terminal COO- (2 resonance structures each)
+    # so possible resonance structures are 3^2 * 2^3 = 72
+    self.assertEqual(len(resMolSupplST), 72)
+    self.assertEqual(resMolSupplST.GetNumConjGrps(), 56)
+    carboxylateQuery = Chem.MolFromSmarts('C(=O)[O-]')
+    guanidiniumQuery = Chem.MolFromSmarts('NC(=[NH2+])N')
+    matches = crambin.GetSubstructMatches(carboxylateQuery)
+    self.assertEqual(len(matches), 3)
+    matches = crambin.GetSubstructMatches(carboxylateQuery,
+      uniquify = False)
+    self.assertEqual(len(matches), 3)
+    matches = crambin.GetSubstructMatches(guanidiniumQuery)
+    self.assertEqual(len(matches), 0)
+    matches = crambin.GetSubstructMatches(guanidiniumQuery,
+      uniquify = False)
+    self.assertEqual(len(matches), 0)
+    matches = resMolSupplST.GetSubstructMatches(carboxylateQuery)
+    self.assertEqual(len(matches), 6)
+    self.assertEqual(matches, ((166, 167, 168), (166, 168, 167),
+      (298, 299, 300), (298, 300, 299), (320, 321, 326), (320, 326, 321)))
+    matches = resMolSupplST.GetSubstructMatches(carboxylateQuery,
+      uniquify = True)
+    self.assertEqual(len(matches), 3)
+    self.assertEqual(matches, ((166, 167, 168),
+      (298, 299, 300), (320, 321, 326)))
+    matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery)
+    self.assertEqual(len(matches), 8)
+    self.assertEqual(matches, ((66, 67, 68, 69), (66, 67, 69, 68),
+      (68, 67, 69, 66), (69, 67, 68, 66), (123, 124, 125, 126),
+      (123, 124, 126, 125), (125, 124, 126, 123), (126, 124, 125, 123)))
+    matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery,
+      uniquify = True)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+    btList2ST = getBtList2(resMolSupplST)
+    self.assertTrue(btList2ST)
+    resMolSupplMT = Chem.ResonanceMolSupplier(crambin, numThreads = 0)
+    self.assertEqual(len(resMolSupplST), len(resMolSupplMT))
+    btList2MT = getBtList2(resMolSupplMT)
+    self.assertTrue(btList2MT)
+    self.assertEqual(len(btList2ST), len(btList2MT))
+    for i in range(len(btList2ST)):
+      for j in range(len(btList2ST)):
+        self.assertEqual(btList2ST[i][j], btList2MT[i][j])
+    for suppl in [resMolSupplST, resMolSupplMT]:
+      matches = suppl.GetSubstructMatches(carboxylateQuery,
+        numThreads = 0)
+      self.assertEqual(len(matches), 6)
+      self.assertEqual(matches, ((166, 167, 168), (166, 168, 167),
+        (298, 299, 300), (298, 300, 299), (320, 321, 326),
+        (320, 326, 321)))
+      matches = suppl.GetSubstructMatches(carboxylateQuery,
+        uniquify = True, numThreads = 0)
+      self.assertEqual(len(matches), 3)
+      self.assertEqual(matches,
+        ((166, 167, 168), (298, 299, 300), (320, 321, 326)))
+      matches = suppl.GetSubstructMatches(guanidiniumQuery,
+        numThreads = 0)
+      self.assertEqual(len(matches), 8)
+      self.assertEqual(matches, ((66, 67, 68, 69), (66, 67, 69, 68),
+        (68, 67, 69, 66), (69, 67, 68, 66), (123, 124, 125, 126),
+        (123, 124, 126, 125), (125, 124, 126, 123), (126, 124, 125, 123)))
+      matches = suppl.GetSubstructMatches(guanidiniumQuery,
+        uniquify = True, numThreads = 0)
+      self.assertEqual(len(matches), 2)
+      self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
 
 if __name__ == '__main__':
   unittest.main()

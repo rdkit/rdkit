@@ -4,6 +4,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Resonance.h>
@@ -547,6 +548,147 @@ void testSubstructMatchDMAP() {
   delete resMolSuppl;
 }
 
+void setResidueFormalCharge(RWMol *mol, std::vector<RWMol *> &res, int fc) {
+  for (std::vector<RWMol *>::const_iterator
+    it = res.begin(); it != res.end(); ++it) {
+    std::vector<MatchVectType> matchVect;
+    SubstructMatch(*mol, *(*it), matchVect);
+    for (std::vector<MatchVectType>::const_iterator
+      it = matchVect.begin(); it != matchVect.end(); ++it)
+      mol->getAtomWithIdx((*it).back().second)->setFormalCharge(fc);
+  }
+}
+
+void getBtVectVect(ResonanceMolSupplier *resMolSuppl,
+  std::vector<std::vector<unsigned int> > &btVect2) {
+  while (!resMolSuppl->atEnd()) {
+    ROMol *resMol = resMolSuppl->next();
+    std::vector<unsigned int> bt;
+    bt.reserve(resMol->getNumBonds());
+    for (ROMol::BondIterator bi = resMol->beginBonds();
+      bi != resMol->endBonds(); ++bi)
+      bt.push_back(static_cast<unsigned int>
+        ((*bi)->getBondTypeAsDouble()));
+    btVect2.push_back(bt);
+    delete resMol;
+  }
+  for (unsigned int i = 0; i < btVect2.size(); ++i) {
+    bool same = true;
+    for (unsigned int j = 0; same && (j < btVect2[i].size()); ++j) {
+      if (!i)
+        continue;
+      if (same)
+        same = (btVect2[i][j] == btVect2[i - 1][j]);
+    }
+    if (i)
+      TEST_ASSERT(!same);
+  }
+}
+
+void testCrambin() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+    << "testCrambin" << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/FileParsers/test_data/1CRN.pdb";
+  RWMol *crambin = PDBFileToMol(pathName);
+  TEST_ASSERT(crambin);
+  RWMol *query;
+  unsigned int n;
+  std::vector<RWMol *> res;
+  // protonate NH2
+  query = SmartsToMol("[Nh2][Ch;Ch2]");
+  TEST_ASSERT(query);
+  res.push_back(query);
+  // protonate Arg
+  query = SmartsToMol("[Nh][C]([Nh2])=[Nh]");
+  TEST_ASSERT(query);
+  res.push_back(query);
+  setResidueFormalCharge(crambin, res, 1);
+  for (std::vector<RWMol *>::const_iterator it = res.begin();
+    it != res.end(); ++it)
+    delete *it;
+  res.clear();
+  // deprotonate COOH
+  query = SmartsToMol("C(=O)[Oh]");
+  TEST_ASSERT(query);
+  res.push_back(query);
+  setResidueFormalCharge(crambin, res, -1);
+  for (std::vector<RWMol *>::const_iterator it = res.begin();
+    it != res.end(); ++it)
+    delete *it;
+  ResonanceMolSupplier *resMolSupplST = new
+    ResonanceMolSupplier((ROMol &)*crambin);
+  TEST_ASSERT(resMolSupplST);
+  // crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
+  // and 1 terminal COO- (2 resonance structures each)
+  // so possible resonance structures are 3^2 * 2^3 = 72
+  TEST_ASSERT(resMolSupplST->length() == 72);
+  TEST_ASSERT(resMolSupplST->getNumConjGrps() == 56);
+  RWMol *carboxylateQuery = SmartsToMol("C(=O)[O-]");
+  RWMol *guanidiniumQuery = SmartsToMol("NC(=[NH2+])N");
+  std::vector <MatchVectType> matchVect;
+  n = SubstructMatch(*crambin, *carboxylateQuery, matchVect,
+		false, true, false, false, 1000);
+  TEST_ASSERT(n == 3);
+  n = SubstructMatch(*crambin, *carboxylateQuery, matchVect,
+		true, true, false, false, 1000);
+  TEST_ASSERT(n == 3);
+  n = SubstructMatch(*crambin, *guanidiniumQuery, matchVect,
+		false, true, false, false, 1000);
+  TEST_ASSERT(n == 0);
+  n = SubstructMatch(*crambin, *guanidiniumQuery, matchVect,
+		true, true, false, false, 1000);
+  TEST_ASSERT(n == 0);
+  n = SubstructMatch(*resMolSupplST, *carboxylateQuery, matchVect,
+		false, true, false, false, 1000);
+  TEST_ASSERT(n == 6);
+  n = SubstructMatch(*resMolSupplST, *carboxylateQuery, matchVect,
+		true, true, false, false, 1000);
+  TEST_ASSERT(n == 3);
+  n = SubstructMatch(*resMolSupplST, *guanidiniumQuery, matchVect,
+		false, true, false, false, 1000);
+  TEST_ASSERT(n == 8);
+  n = SubstructMatch(*resMolSupplST, *guanidiniumQuery, matchVect,
+		true, true, false, false, 1000);
+  TEST_ASSERT(n == 2);
+  #ifdef RDK_TEST_MULTITHREADED
+  std::vector<std::vector<unsigned int> > btVect2ST;
+  getBtVectVect(resMolSupplST, btVect2ST);
+  ResonanceMolSupplier *resMolSupplMT =
+    new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000, 0);
+  TEST_ASSERT(resMolSupplMT);
+  TEST_ASSERT(resMolSupplST->length() == resMolSupplMT->length());
+  std::vector<std::vector<unsigned int> > btVect2MT;
+  getBtVectVect(resMolSupplMT, btVect2MT);
+  TEST_ASSERT(btVect2ST.size() == btVect2MT.size());
+  for (unsigned int i = 0; i < btVect2ST.size(); ++i) {
+    for (unsigned int j = 0; j < btVect2ST[i].size(); ++j)
+      TEST_ASSERT(btVect2ST[i][j] == btVect2MT[i][j]);
+  }
+  const ResonanceMolSupplier *ptr[2] = { resMolSupplST, resMolSupplMT };
+  for (unsigned int i = 0;
+    i < sizeof(ptr) / sizeof(ResonanceMolSupplier *); ++i) {
+    n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect,
+      false, true, false, false, 1000, 0);
+    TEST_ASSERT(n == 6);
+    n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect,
+      true, true, false, false, 1000, 0);
+    TEST_ASSERT(n == 3);
+    n = SubstructMatch(*(ptr[i]), *guanidiniumQuery, matchVect,
+      false, true, false, false, 1000, 0);
+    TEST_ASSERT(n == 8);
+    n = SubstructMatch(*(ptr[i]), *guanidiniumQuery, matchVect,
+      true, true, false, false, 1000, 0);
+    TEST_ASSERT(n == 2);
+  }
+  delete resMolSupplMT;
+  #endif
+  delete resMolSupplST;
+  delete carboxylateQuery;
+  delete guanidiniumQuery;
+  delete crambin;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -565,6 +707,7 @@ int main() {
   testPyranium2_6dicarboxylate();
   testSubstructMatchAcetate();
   testSubstructMatchDMAP();
+  testCrambin();
 #endif
   return 0;
 }
