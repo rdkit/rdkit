@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -732,8 +731,8 @@ gmol_consistent(PG_FUNCTION_ARGS)
             elog(ERROR, "All fingerprints should be the same length");
 
           for(i=0; res && i<SIGLEN(key); i++){
-        	unsigned char temp = k[i] & q[i];
-            if ( temp != q[i] || temp != k[i])
+            unsigned char temp = k[i] & q[i];
+            if ( temp != q[i] )
               res = false;
           }
         }
@@ -750,7 +749,6 @@ calcConsistency(bool isLeaf, uint16 strategy,
                 double nCommonUp, double nCommonDown, double nKey, double nQuery)
 {
   bool res = false;
-
 
   /*
    * We don't wish to use RDKit's functions to compute similarity

@@ -27,11 +27,11 @@ class classA {
     }
   }
 
-  bool hasProp(std::string key) const {
+  bool hasProp(const std::string &key) const {
     return (dp_props.find(key) != dp_props.end());
   }
 
-  void setProp(std::string key, int val) {
+  void setProp(const std::string &key, int val) {
     dp_props[key] = val;
   }
 

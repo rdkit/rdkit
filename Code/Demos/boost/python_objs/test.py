@@ -8,7 +8,7 @@ def lentest():
     python_objs.seq_len(1)
   except TypeError:
     pass
-  except:
+  except Exception:
     assert 0,'wrong exception type'
   else:
     assert 0,'no exception'
@@ -21,7 +21,7 @@ def sumtest():
     python_objs.sum_first2((1.,3.))
   except TypeError:
     pass
-  except:
+  except Exception:
     assert 0,'wrong exception type'
   else:
     assert 0,'no exception'
@@ -29,7 +29,7 @@ def sumtest():
     python_objs.sum_first2('foo')
   except TypeError:
     pass
-  except:
+  except Exception:
     assert 0,'wrong exception type'
   else:
     assert 0,'no exception'
@@ -37,7 +37,7 @@ def sumtest():
     python_objs.sum_first2(1)
   except TypeError:
     pass
-  except:
+  except Exception:
     assert 0,'wrong exception type'
   else:
     assert 0,'no exception'

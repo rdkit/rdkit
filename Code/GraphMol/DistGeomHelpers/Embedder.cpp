@@ -29,10 +29,10 @@
 #include <Numerics/Alignment/AlignPoints.h>
 #include <DistGeom/ChiralSet.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
-
 
 #define ERROR_TOL 0.00001
 
@@ -71,7 +71,6 @@ namespace RDKit {
       //std::cerr<<"civ:"<<chiralSet->d_idx0<<" "<<chiralSet->d_idx1<<" "<<chiralSet->d_idx2<<" "<<chiralSet->d_idx3<<" "<<chiralSet->d_idx4<<"->"<<res<<"|"<<std::endl;
       return res;
     }
-    
     bool _boundsFulfilled(const std::vector<int> &atoms, const DistGeom::BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions) {
       unsigned int N = mmat.numRows();
       //std::cerr << N << " " << atoms.size() << std::endl;
@@ -92,6 +91,66 @@ namespace RDKit {
       return true;
     }
 
+    // the minimization using experimental torsion angle preferences
+    void _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
+                                  DistGeom::BoundsMatPtr mmat,
+                                  double optimizerForceTol, double basinThresh,
+                                  const std::vector<std::pair<int, int> > &bonds,
+                                  const std::vector<std::vector<int> > &angles,
+                                  const std::vector<std::vector<int> > &expTorsionAtoms,
+                                  const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                                  const std::vector<std::vector<int> > &improperAtoms,
+                                  const std::vector<int> &atomNums,
+                                  bool useBasicKnowledge) {
+
+
+      // convert to 3D positions and create coordMap
+      RDGeom::Point3DPtrVect positions3D;
+      for (unsigned int p = 0; p < positions.size(); ++p) {
+        positions3D.push_back(new RDGeom::Point3D((*positions[p])[0], (*positions[p])[1], (*positions[p])[2]));
+      }
+
+      // create the force field
+      ForceFields::ForceField *field;
+      if (useBasicKnowledge) { // ETKDG or KDG
+        field = DistGeom::construct3DForceField(*mmat, positions3D,
+                                                                         bonds, angles,
+                                                                         expTorsionAtoms,
+                                                                         expTorsionAngles,
+                                                                         improperAtoms,
+                                                                         atomNums);
+      } else { // plain ETDG
+        field = DistGeom::constructPlain3DForceField(*mmat, positions3D,
+                                                                         bonds, angles,
+                                                                         expTorsionAtoms,
+                                                                         expTorsionAngles,
+                                                                         atomNums);
+      }
+
+      // minimize!
+      int nPasses = 0;
+      field->initialize();
+      //std::cout << "Field with torsion constraints: " << field->calcEnergy() << " " << ERROR_TOL << std::endl;
+      if (field->calcEnergy() > ERROR_TOL) {
+        int needMore = 1;
+        //while (needMore) {
+              needMore = field->minimize(300, optimizerForceTol);
+        //      ++nPasses;
+        //}
+      }
+      //std::cout << field->calcEnergy() << std::endl;
+
+      delete field;
+
+      // overwrite positions and delete the 3D ones
+      for (unsigned int i = 0; i < positions3D.size(); ++i) {
+        (*positions[i])[0] = (*positions3D[i])[0];
+        (*positions[i])[1] = (*positions3D[i])[1];
+        (*positions[i])[2] = (*positions3D[i])[2];
+        delete positions3D[i];
+      }
+    }
+
     bool _embedPoints(RDGeom::PointPtrVect *positions, 
                       const DistGeom::BoundsMatPtr mmat,
                       bool useRandomCoords,double boxSizeMult,
@@ -99,7 +158,14 @@ namespace RDKit {
                       unsigned int numZeroFail, double optimizerForceTol,
                       double basinThresh, int seed, unsigned int maxIterations,
                       const DistGeom::VECT_CHIRALSET *chiralCenters,
-                      bool enforceChirality){
+                      bool enforceChirality,
+                      bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
+                      const std::vector<std::pair<int, int> > &bonds,
+                      const std::vector<std::vector<int> > &angles,
+                      const std::vector<std::vector<int> > &expTorsionAtoms,
+                      const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
+                      const std::vector<std::vector<int> > &improperAtoms,
+                      const std::vector<int> &atomNums){
       unsigned int nat = positions->size();
       if(maxIterations==0){
         maxIterations=10*nat;
@@ -160,6 +226,7 @@ namespace RDKit {
           delete field;
           field=NULL;
           //std::cerr<<"   "<<field->calcEnergy()<<" after npasses: "<<nPasses<<std::endl;
+
           // Check if any of our chiral centers are badly out of whack. If so, try again
           if (enforceChirality && chiralCenters->size()>0){
             // check the chiral volume:
@@ -198,32 +265,39 @@ namespace RDKit {
               //std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2: "<<nPasses2<<std::endl;
             }
             delete field2;
+          }
 
-            // do another chirality test
-            if (enforceChirality && chiralCenters->size() > 0) {
-              // "distance matrix" chirality test
-              // it could happen that the resulting coordinates of the atoms around a chiral center
-              // do not fulfill the bounds
-              std::set<int> atoms;
-              BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
-                if(chiralSet->d_idx0 != chiralSet->d_idx4) {
-                  atoms.insert(chiralSet->d_idx0);
-                  atoms.insert(chiralSet->d_idx1);
-                  atoms.insert(chiralSet->d_idx2);
-                  atoms.insert(chiralSet->d_idx3);
-                  atoms.insert(chiralSet->d_idx4);
-                }
-              }
-              std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
-              if (atomsToCheck.size() > 0) {
-                if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
-                  gotCoords=false;
-                }
-              }
+          // (ET)(K)DG
+          if (gotCoords && (useExpTorsionAnglePrefs || useBasicKnowledge)) {
+            _minimizeWithExpTorsions(*positions, mmat, optimizerForceTol,
+                                     basinThresh, bonds, angles, expTorsionAtoms,
+                                     expTorsionAngles, improperAtoms, atomNums,
+                                     useBasicKnowledge);
+          }
 
-              // "center in volume" chirality test
-              if (gotCoords) {
-                BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
+          // test if chirality is correct
+          if (enforceChirality && gotCoords && (chiralCenters->size() > 0)) {
+            // "distance matrix" chirality test
+            std::set<int> atoms;
+            BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
+              if(chiralSet->d_idx0 != chiralSet->d_idx4) {
+                atoms.insert(chiralSet->d_idx0);
+                atoms.insert(chiralSet->d_idx1);
+                atoms.insert(chiralSet->d_idx2);
+                atoms.insert(chiralSet->d_idx3);
+                atoms.insert(chiralSet->d_idx4);
+              }
+            }
+            std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
+            if (atomsToCheck.size() > 0) {
+              if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
+                gotCoords=false;
+              }
+            }
+
+            // "center in volume" chirality test
+            if (gotCoords) {
+               BOOST_FOREACH(DistGeom::ChiralSetPtr chiralSet, *chiralCenters){
                   // it could happen that the centroid is outside the volume defined by the other
                   // four points. That is also a fail.
                   if(!_centerInVolume(chiralSet,*positions)){
@@ -231,9 +305,8 @@ namespace RDKit {
                     gotCoords=false;
                     break;
                   }
-                }
-              }
-            } // chirality tests
+               }
+            }
           }
         } // if(gotCoords)
       } // while
@@ -348,13 +421,18 @@ namespace RDKit {
                       double optimizerForceTol,
                       bool ignoreSmoothingFailures,
                       bool enforceChirality,
-                      double basinThresh){
+                      bool useExpTorsionAnglePrefs,
+                      bool useBasicKnowledge,
+                      bool verbose,
+                      double basinThresh) {
 
       INT_VECT confIds;
       EmbedMultipleConfs(mol,confIds,1,1,maxIterations,seed,clearConfs,
                          useRandomCoords,boxSizeMult,randNegEig,
                          numZeroFail,-1.0,coordMap,optimizerForceTol,
-                         ignoreSmoothingFailures,enforceChirality,basinThresh);
+                         ignoreSmoothingFailures, enforceChirality,
+                         useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+                         basinThresh);
 
       int res;
       if(confIds.size()){
@@ -418,6 +496,14 @@ namespace RDKit {
         unsigned int maxIterations;
         DistGeom::VECT_CHIRALSET const *chiralCenters;
         bool enforceChirality;
+        bool useExpTorsionAnglePrefs;
+        bool useBasicKnowledge;
+        std::vector<std::pair<int, int> > *bonds;
+        std::vector<std::vector<int> > *angles;
+        std::vector<std::vector<int> > *expTorsionAtoms;
+        std::vector<std::pair<std::vector<int>, std::vector<double> > > *expTorsionAngles;
+        std::vector<std::vector<int> > *improperAtoms;
+        std::vector<int> *atomNums;
       } EmbedArgs;
       void embedHelper_(int threadId,
                         int numThreads,
@@ -446,7 +532,11 @@ namespace RDKit {
                                         eargs->optimizerForceTol,
                                         eargs->basinThresh, (ci+1)*eargs->seed,
                                         eargs->maxIterations, eargs->chiralCenters,
-                                        eargs->enforceChirality);
+                                        eargs->enforceChirality,
+                                        eargs->useExpTorsionAnglePrefs, eargs->useBasicKnowledge,
+                                        *eargs->bonds, *eargs->angles, *eargs->expTorsionAtoms,
+                                        *eargs->expTorsionAngles, *eargs->improperAtoms, *eargs->atomNums);
+
           if (gotCoords) {
             Conformer *conf = (*eargs->confs)[ci];
             unsigned int fragAtomIdx=0;
@@ -483,6 +573,9 @@ namespace RDKit {
                             double optimizerForceTol,
                             bool ignoreSmoothingFailures,
                             bool enforceChirality,
+                            bool useExpTorsionAnglePrefs,
+                            bool useBasicKnowledge,
+                            bool verbose,
                             double basinThresh){
       if(!mol.getNumAtoms()){
         throw ValueErrorException("molecule has no atoms");
@@ -515,7 +608,22 @@ namespace RDKit {
         initBoundsMat(mmat);
       
         double tol=0.0;
-        setTopolBounds(*piece, mmat, true, false);
+        std::vector<std::vector<int> > expTorsionAtoms;
+        std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
+        std::vector<std::vector<int> > improperAtoms;
+        std::vector<std::pair<int, int> > bonds;
+        std::vector<std::vector<int> > angles;
+        std::vector<int> atomNums(nAtoms);
+        if (useExpTorsionAnglePrefs || useBasicKnowledge) {
+          ForceFields::CrystalFF::getExperimentalTorsions(*piece, expTorsionAtoms, expTorsionAngles,
+              improperAtoms, useExpTorsionAnglePrefs, useBasicKnowledge, verbose);
+          setTopolBounds(*piece, mmat, bonds, angles, true, false);
+          for (int i = 0; i < nAtoms; ++i) {
+            atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
+          }
+        } else {
+          setTopolBounds(*piece, mmat, true, false);
+        }
         if(coordMap){
           adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
           tol=0.05;
@@ -569,7 +677,7 @@ namespace RDKit {
         boost::thread_group tg;
 #endif
         numThreads = getNumThreadsToUse(numThreads);
-        
+
         detail::EmbedArgs eargs={&confsOk,
                                  fourD,
                                  &fragMapping,&confs,
@@ -580,7 +688,13 @@ namespace RDKit {
                                  optimizerForceTol,
                                  basinThresh, seed,
                                  maxIterations, &chiralCenters,
-                                 enforceChirality};
+                                 enforceChirality,
+                                 useExpTorsionAnglePrefs,
+                                 useBasicKnowledge,
+                                 &bonds, &angles, &expTorsionAtoms,
+                                 &expTorsionAngles,
+                                 &improperAtoms,
+                                 &atomNums};
         if(numThreads==1){
           detail::embedHelper_(0,1,&eargs);
         }
@@ -621,6 +735,9 @@ namespace RDKit {
                                 double optimizerForceTol,
                                 bool ignoreSmoothingFailures,
                                 bool enforceChirality,
+                                bool useExpTorsionAnglePrefs,
+                                bool useBasicKnowledge,
+                                bool verbose,
                                 double basinThresh){
       INT_VECT res;
       EmbedMultipleConfs(mol,res,numConfs,1,
@@ -632,6 +749,9 @@ namespace RDKit {
                          optimizerForceTol,
                          ignoreSmoothingFailures,
                          enforceChirality,
+                         useExpTorsionAnglePrefs,
+                         useBasicKnowledge,
+                         verbose,
                          basinThresh);
       return res;
     }

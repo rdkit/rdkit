@@ -32,7 +32,7 @@ def SmilesToGif(smiles,fileNames,size=(200,200),cmd=None,dblSize=0,frame=0):
     try:
       cmd = "%s < %s"%(baseCmd,fN)
       os.system(cmd)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       sys.stderr.write('CMD: %s\n'%cmd)
@@ -45,7 +45,7 @@ def SmilesToGif(smiles,fileNames,size=(200,200),cmd=None,dblSize=0,frame=0):
           break
     try:
       os.unlink(fN)
-    except:
+    except Exception:
       pass
   return res  
 

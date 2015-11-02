@@ -128,7 +128,7 @@ class SVGCanvas( Canvas ):
 
         try:
             face = piddle_font_map[string.lower(font.face)]
-        except:
+        except Exception:
             return piddle_font_map[string.lower('sansserif')]
 
         name = face + '-'

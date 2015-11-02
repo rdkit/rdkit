@@ -38,7 +38,7 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
-    except:
+    except Exception:
       pass
     
   def testAggFile(self):
@@ -58,7 +58,7 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
-    except:
+    except Exception:
       pass
 
   def testSpingFile(self):
@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(os.path.getsize(fn),0)
     try:
       os.unlink(fn)
-    except:
+    except Exception:
       pass
 
   def testCairoImage(self):

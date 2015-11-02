@@ -40,7 +40,7 @@ namespace RDKit{
     }
 
     //! constructor from a pickle
-    SparseIntVect(const std::string pkl){
+    SparseIntVect(const std::string &pkl){
       initFromText(pkl.c_str(),pkl.size());
     };
     //! constructor from a pickle

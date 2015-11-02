@@ -56,7 +56,7 @@ def GetAtomicData(atomDict,descriptorsDesired,dBase=_atomDbName,
   command = 'select %s from atomic_data %s'%(toPull,where)
   try:
     c.execute(command)
-  except:
+  except Exception:
     print('Problems executing command:',command)
     return
   res = c.fetchall()

@@ -1053,7 +1053,7 @@ namespace RDKit{
   //  Dump a molecule to a file
   //
   //------------------------------------------------
-  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId, bool kekulize,
+  void MolToMolFile(const ROMol &mol,const std::string &fName,bool includeStereo, int confId, bool kekulize,
                     bool forceV3000){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
     if (!outStream || !(*outStream) || outStream->bad() ) {

@@ -29,7 +29,6 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-
 namespace RDKit{
   namespace {
     void updateSubMolConfs(const ROMol &mol,RWMol &res,
@@ -557,8 +556,9 @@ namespace RDKit{
     return (ROMol *)res;
   }    
 
-  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName,
-                             std::vector<std::pair<unsigned int, std::string> > *reactantLabels){
+  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,
+                           const std::string &propName,
+                           std::vector<std::pair<unsigned int, std::string> > *reactantLabels){
     std::string delim=",";
     boost::char_separator<char> sep(delim.c_str());
     if (reactantLabels!=NULL) {
@@ -609,8 +609,10 @@ namespace RDKit{
     }
   }
 
-  void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         bool standardize,std::string delimiter,std::string comment,
+  void parseQueryDefFile(std::istream *inStream,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize,
+                         const std::string &delimiter, const std::string &comment,
                          unsigned int nameColumn,unsigned int smartsColumn){
     PRECONDITION(inStream,"no stream");
     queryDefs.clear();
@@ -656,8 +658,10 @@ namespace RDKit{
       queryDefs[qname]=msptr;
     }
   }
-  void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         bool standardize,std::string delimiter,std::string comment,
+  void parseQueryDefFile(const std::string &filename,
+                         std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         bool standardize,
+                         const std::string &delimiter, const std::string &comment,
                          unsigned int nameColumn,unsigned int smartsColumn){
     std::ifstream inStream(filename.c_str());
     if (!inStream || (inStream.bad()) ) {
@@ -669,7 +673,8 @@ namespace RDKit{
   }
   void parseQueryDefText(const std::string &queryDefText,
                          std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         bool standardize,std::string delimiter,std::string comment,
+                         bool standardize,
+                         const std::string &delimiter, const std::string &comment,
                          unsigned int nameColumn,unsigned int smartsColumn){
     std::stringstream inStream(queryDefText);
     parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);

@@ -1863,6 +1863,38 @@ void testIssue277(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test17() {
+  RDKit::RWMol *mol;
+  std::string sln;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test1 " << std::endl;
+
+  // test whitespace at end
+  sln = "CH4 \t";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==1);
+
+  sln = "CH4\t";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==1);
+  delete mol;
+
+  sln = "CH4\tfff";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(!mol);
+  delete mol;
+
+  sln = "C[charge=+1] \t";
+  mol=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(mol);
+
+  sln = "C[charge=+1] \tfoo";
+  mol=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(!mol);
+}
 
 int
 main(int argc, char *argv[])
@@ -1889,6 +1921,7 @@ main(int argc, char *argv[])
   test14();
   test15();
   test16();
+  test17();
 #endif
   testIssue277();
   testIssue278();

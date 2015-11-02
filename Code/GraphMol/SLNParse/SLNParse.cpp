@@ -135,6 +135,7 @@ namespace RDKit {
     
     RWMol *toMol(std::string inp,bool doQueries,int debugParse){
       RWMol *res;
+      boost::trim_if(inp, boost::is_any_of(" \t\r\n"));
       inp = replaceSLNMacroAtoms(inp,debugParse);
       if(debugParse){
         std::cerr<<"****** PARSING SLN: ->"<<inp<<"<-"<<std::endl;
@@ -178,11 +179,11 @@ namespace RDKit {
     };
   } // end of SLNParse namespace
   
-  RWMol *SLNToMol(std::string sln,bool sanitize,int debugParse){
+  RWMol *SLNToMol(const std::string &sln,bool sanitize,int debugParse){
     // FIX: figure out how to reset lexer state
     yysln_debug = debugParse;
     // strip any leading/trailing whitespace:
-    boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
+    //boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
 
     RWMol *res = SLNParse::toMol(sln,false,debugParse);
     if(res){
@@ -205,10 +206,10 @@ namespace RDKit {
     return res;
   };
 
-  RWMol *SLNQueryToMol(std::string sln,bool mergeHs,int debugParse){
+  RWMol *SLNQueryToMol(const std::string &sln,bool mergeHs,int debugParse){
     yysln_debug = debugParse;
     // strip any leading/trailing whitespace:
-    boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
+    //boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
     RWMol *res = SLNParse::toMol(sln,true,debugParse);
     if(res){
       SLNParse::finalizeQueryMol(res,mergeHs);

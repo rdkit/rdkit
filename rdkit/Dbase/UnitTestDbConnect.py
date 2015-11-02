@@ -12,7 +12,7 @@
 
 """
 from rdkit import RDConfig
-import unittest,os,sys
+import unittest,os,sys,tempfile,shutil
 from rdkit.Dbase.DbConnection import DbConnect
 
 class TestCase(unittest.TestCase):
@@ -24,14 +24,27 @@ class TestCase(unittest.TestCase):
     self.dbName = RDConfig.RDTestDatabase
     self.colHeads=('int_col','floatCol','strCol')
     self.colTypes=('integer','float','string')
+    if RDConfig.useSqlLite:
+      tmpf,tempName = tempfile.mkstemp(suffix='sqlt')
+      self.tempDbName = tempName
+      shutil.copyfile(self.dbName,self.tempDbName)
+    else:
+      self.tempDbName='::RDTests'
+  def tearDown(self):
+    if RDConfig.useSqlLite and os.path.exists(self.tempDbName):
+      try:
+        os.unlink(self.tempDbName)
+      except:
+        import traceback
+        traceback.print_exc()
 
   def testAddTable(self):
     """ tests AddTable and GetTableNames functionalities """
     newTblName = 'NEW_TABLE'
-    conn = DbConnect(self.dbName)
+    conn = DbConnect(self.tempDbName)
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
-    except:
+    except Exception:
       pass
     conn.Commit()
     conn.AddTable(newTblName,'id int')
@@ -43,16 +56,16 @@ class TestCase(unittest.TestCase):
     """ tests GetCursor and GetTableNames functionalities """
 
     viewName = 'TEST_VIEW'
-    conn = DbConnect(self.dbName)
+    conn = DbConnect(self.tempDbName)
     curs = conn.GetCursor()
     assert curs
     try:
       curs.execute('drop view %s'%(viewName))
-    except:
+    except Exception:
       pass
     try:
       curs.execute('create view %s as select val,id from ten_elements'%(viewName))
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
       assert 0
@@ -64,7 +77,7 @@ class TestCase(unittest.TestCase):
     assert viewName in names,'improper view found in %s'%(str(names))
     try:
       curs.execute('drop view %s'%(viewName))
-    except:
+    except Exception:
       assert 0,'drop table failed'
 
   def testGetData1(self):
@@ -75,7 +88,7 @@ class TestCase(unittest.TestCase):
     assert len(d)==10
     assert tuple(d[0])==(0,11)
     assert tuple(d[2])==(4,31)
-    self.failUnlessRaises(IndexError,lambda:d[11])
+    self.assertRaises(IndexError,lambda:d[11])
 
   def testGetData2(self):
     """ using removeDups
@@ -85,7 +98,7 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0])==(0,11)
     assert tuple(d[2])==(4,31)
     assert len(d)==10
-    self.failUnlessRaises(IndexError,lambda:d[11])
+    self.assertRaises(IndexError,lambda:d[11])
     
   def testGetData3(self):
     """ without removeDups
@@ -95,7 +108,7 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0])==(0,11)
     assert tuple(d[2])==(2,21)
     assert len(d)==20
-    self.failUnlessRaises(IndexError,lambda:d[21])
+    self.assertRaises(IndexError,lambda:d[21])
 
     # repeat that test to make sure the table argument works
     conn = DbConnect(self.dbName,'ten_elements')
@@ -103,14 +116,14 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0])==(0,11)
     assert tuple(d[2])==(2,21)
     assert len(d)==20
-    self.failUnlessRaises(IndexError,lambda:d[21])
+    self.assertRaises(IndexError,lambda:d[21])
 
   def testGetData4(self):
     """ non random access
     """
     conn = DbConnect(self.dbName,'ten_elements')
     d = conn.GetData(randomAccess=0)
-    self.failUnlessRaises(TypeError,lambda : len(d))
+    self.assertRaises(TypeError,lambda : len(d))
       
     rs = []
     for thing in d:
@@ -129,7 +142,7 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0])==(0,22),str(d[0])
     assert tuple(d[2])==(4,62)
     assert len(d)==10
-    self.failUnlessRaises(IndexError,lambda:d[11])
+    self.assertRaises(IndexError,lambda:d[11])
     
   def testGetData6(self):
     """ using a DbResultSet with a Transform
@@ -137,7 +150,7 @@ class TestCase(unittest.TestCase):
     fn = lambda x:(x[0],x[1]*2)
     conn = DbConnect(self.dbName,'ten_elements')
     d = conn.GetData(randomAccess=0,transform=fn)
-    self.failUnlessRaises(TypeError,lambda : len(d))
+    self.assertRaises(TypeError,lambda : len(d))
     rs = []
     for thing in d:
       rs.append(thing)
@@ -149,10 +162,10 @@ class TestCase(unittest.TestCase):
   def testInsertData(self):
     """ tests InsertData and InsertColumnData functionalities """
     newTblName = 'NEW_TABLE'
-    conn = DbConnect(self.dbName)
+    conn = DbConnect(self.tempDbName)
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
-    except:
+    except Exception:
       pass
     conn.Commit()
     conn.AddTable(newTblName,'id int,val1 int, val2 int')
@@ -165,7 +178,7 @@ class TestCase(unittest.TestCase):
     d = None
     try:
       conn.GetCursor().execute('drop table %s'%(newTblName))
-    except:
+    except Exception:
       assert 0,'drop table failed'
     
     

@@ -21,10 +21,7 @@ class TestCase(unittest.TestCase):
 
   def _runTest(self,data,fn):
     for smi,tgtVal in data:
-      try:
-        mol = Chem.MolFromSmiles(smi)
-      except:
-        mol = None
+      mol = Chem.MolFromSmiles(smi)
       assert mol,"Smiles parsing failed for %s"%(smi)
       count = fn(mol)
       assert count==tgtVal,"bad value (%d != %d) for smiles %s"%(count,tgtVal,smi)

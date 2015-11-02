@@ -111,7 +111,7 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
           if r.HasSubstructMatch(core):
             try:
               AlignDepict(r,core)
-            except:
+            except Exception:
               import traceback
               traceback.print_exc()
               print(Chem.MolToSmiles(r), file=sys.stderr)
@@ -188,9 +188,8 @@ def MoveDummyNeighborsToBeginning(mol,useAll=False):
 
 def ConstructSidechains(suppl,sma=None,replace=True,useAll=False):
   if sma:
-    try:
-      patt = Chem.MolFromSmarts(sma)
-    except:
+    patt = Chem.MolFromSmarts(sma)
+    if patt is None:
       logger.error('could not construct pattern from smarts: %s'%sma,
                    exc_info=True)
       return None
@@ -264,7 +263,7 @@ if __name__=='__main__':
       'tethers',
       'tether',
       ])
-  except:
+  except Exception:
     import traceback
     traceback.print_exc()
     Usage()
@@ -336,7 +335,7 @@ if __name__=='__main__':
     try:
       s = Chem.SDMolSupplier(extras[0],removeHs=removeHs)
       templates = [x for x in s]
-    except:
+    except Exception:
       logger.error('Could not construct templates from input file: %s'%extras[0],
                    exc_info=True)
       sys.exit(1)
@@ -347,7 +346,7 @@ if __name__=='__main__':
     if not smilesFileTemplate:
       try:
         templates = [Chem.MolFromSmiles(extras[0])]
-      except:
+      except Exception:
         logger.error('Could not construct template from smiles: %s'%extras[0],
                      exc_info=True)
         sys.exit(1)
@@ -355,7 +354,7 @@ if __name__=='__main__':
       try:
         s = Chem.SmilesMolSupplier(extras[0],titleLine=False)
         templates = [x for x in s]
-      except:
+      except Exception:
         logger.error('Could not construct templates from input file: %s'%extras[0],
                      exc_info=True)
         sys.exit(1)
@@ -397,7 +396,7 @@ if __name__=='__main__':
     if sdLigands:
       try:
         suppl = Chem.SDMolSupplier(dat)
-      except:
+      except Exception:
         logger.error('could not construct supplier from SD file: %s'%dat,
                      exc_info=True)
         suppl = []
@@ -410,7 +409,7 @@ if __name__=='__main__':
         nmCol=1
       try:
         suppl = Chem.SmilesMolSupplier(dat,nameColumn=nmCol)
-      except:
+      except Exception:
         logger.error('could not construct supplier from smiles file: %s'%dat,
                      exc_info=True)
         suppl = []

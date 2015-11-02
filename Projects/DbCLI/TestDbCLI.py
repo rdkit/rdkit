@@ -395,7 +395,10 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(d)==10)
     cns = [x.lower() for x in d.GetColumnNames()]
     self.assertFalse('smiles' in cns)
-
+    d = None
+    conn.KillCursor()
+    conn = None
+    
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--noProps','--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           'testData/bzr.smi'))
@@ -415,6 +418,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(d),10)
     cns = [x.lower() for x in d.GetColumnNames()]
     self.assertTrue('smiles' in cns)
+    d = None
+    conn.KillCursor()
+    conn = None
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
@@ -436,6 +442,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(d),10)
     cns = [x.lower() for x in d.GetColumnNames()]
     self.assertTrue('smiles' in cns)
+    d = None
+    conn.KillCursor()
+    conn = None
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
                           '--noFingerprints',
@@ -527,6 +536,8 @@ class TestCase(unittest.TestCase):
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
     d = conn.GetData('rdkitfps',fields='count(*)')
     self.assertEqual(d[0][0],10)
+    d = None
+    conn.KillCursor()
 
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',

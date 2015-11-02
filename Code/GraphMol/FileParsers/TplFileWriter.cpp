@@ -95,7 +95,9 @@ namespace RDKit{
   }
 
   
-  std::string MolToTPLText(const ROMol &mol,std::string partialChargeProp,bool writeFirstConfTwice){
+  std::string MolToTPLText(const ROMol &mol,
+                           const std::string &partialChargeProp,
+                           bool writeFirstConfTwice){
     if(!mol.getNumConformers()){
       BOOST_LOG(rdErrorLog)<<"Cannot write molecules with no conformers to TPL files\n";
       return "";
@@ -151,8 +153,8 @@ namespace RDKit{
   }
 
 
-  void MolToTPLFile(const ROMol &mol,std::string fName,
-                    std::string partialChargeProp,
+  void MolToTPLFile(const ROMol &mol,const std::string &fName,
+                    const std::string &partialChargeProp,
                     bool writeFirstConfTwice){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
     if(!outStream||!(*outStream)||outStream->bad()){

@@ -203,7 +203,7 @@ class MolViewer(object):
           # DSViewer has atom ids from 1, we do it from 0:
           idx = int(splitD[i])
           res.append((molIds[i],idx))
-      except:
+      except Exception:
         import traceback
         traceback.print_exc()
         res = []

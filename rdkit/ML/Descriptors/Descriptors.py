@@ -47,7 +47,7 @@ class DescriptorCalculator:
     from rdkit.six.moves import cPickle
     try:
       f = open(fileName,'wb+')
-    except:
+    except Exception:
       print('cannot open output file %s for writing'%(fileName))
       return
     cPickle.dump(self,f)

@@ -45,28 +45,24 @@ def _ReadPatts(fileName):
         sma = splitLine[1]
         if sma!='SMARTS':
           sma.replace('"','')
-          try:
-            p = Chem.MolFromSmarts(sma)
-          except:
-            pass
-          else:
-            if p:
-              if len(splitLine[0])>1 and splitLine[0][1] not in 'S0123456789':
-                cha = splitLine[0][:2]
-              else:
-                cha = splitLine[0][0]
-              logP = float(splitLine[2])
-              if splitLine[3] != '':
-                mr = float(splitLine[3])
-              else:
-                mr = 0.0
-              if cha not in order:
-                order.append(cha)
-              l = patts.get(cha,[])
-              l.append((sma,p,logP,mr))
-              patts[cha] = l
+          p = Chem.MolFromSmarts(sma)
+          if p:
+            if len(splitLine[0])>1 and splitLine[0][1] not in 'S0123456789':
+              cha = splitLine[0][:2]
             else:
-              print('Problems parsing smarts: %s'%(sma))
+              cha = splitLine[0][0]
+            logP = float(splitLine[2])
+            if splitLine[3] != '':
+              mr = float(splitLine[3])
+            else:
+              mr = 0.0
+            if cha not in order:
+              order.append(cha)
+            l = patts.get(cha,[])
+            l.append((sma,p,logP,mr))
+            patts[cha] = l
+        else:
+          print('Problems parsing smarts: %s'%(sma))
   return order,patts
 
 _GetAtomContribs=rdMolDescriptors._CalcCrippenContribs

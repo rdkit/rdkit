@@ -89,9 +89,11 @@ namespace RDKit {
   }
   PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false,
                             bool useQueryQueryMatches=false){
-    NOGIL gil;
     MatchVectType matches;
-    SubstructMatch(mol,query,matches,true,useChirality,useQueryQueryMatches);
+    {
+      NOGIL gil;
+      SubstructMatch(mol,query,matches,true,useChirality,useQueryQueryMatches);
+    }
     return convertMatches(matches);
   }
 
@@ -100,7 +102,11 @@ namespace RDKit {
                                 bool useQueryQueryMatches=false,
                                 unsigned int maxMatches = 1000){
     std::vector< MatchVectType >  matches;
-    int matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality,useQueryQueryMatches,maxMatches);
+    int matched;
+    {
+      NOGIL gil;
+      matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality,useQueryQueryMatches,maxMatches);
+    }
     PyObject *res = PyTuple_New(matched);
     for(int idx=0;idx<matched;idx++){
       PyTuple_SetItem(res,idx,convertMatches(matches[idx]));
@@ -378,6 +384,11 @@ struct mol_wrapper {
 	   "                Defaults to 1.\n\n"
 	   "    - useChirality: enables the use of stereochemistry in the matching\n\n"
 	   "    - useQueryQueryMatches: use query-query matching logic\n\n"
+	   "    - maxMatches: The maximum number of matches that will be returned.\n"
+     "                  In high-symmetry cases with medium-sized molecules, it is\n"
+     "                  very easy to end up with a combinatorial explosion in the\n"
+     "                  number of possible matches. This argument prevents that from\n"
+     "                  having unintended consequences\n\n"
 	   "  RETURNS: a tuple of tuples of integers\n\n"
 	   "  NOTE:\n"
 	   "     - the ordering of the indices corresponds to the atom ordering\n"

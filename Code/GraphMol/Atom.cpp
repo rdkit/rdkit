@@ -39,7 +39,7 @@ Atom::Atom(unsigned int num) {
   initAtom();
 };
 
-Atom::Atom(std::string what) {
+Atom::Atom(const std::string &what) {
   d_atomicNum = PeriodicTable::getTable()->getAtomicNumber(what);
   initAtom();
 };
@@ -339,6 +339,8 @@ int Atom::calcImplicitValence(bool strict) {
   if ( isEarlyAtom(d_atomicNum) ) {
     chg *= -1;
   }
+  // special case for carbon - see GitHub #539
+  if (d_atomicNum == 6 && chg > 0) chg=-chg;
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {

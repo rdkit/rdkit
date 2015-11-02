@@ -31,6 +31,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 #include <iostream>
 #include <map>
@@ -153,6 +154,33 @@ void testFilterCatalog() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
   
+void testFilterCatalogEntry() {
+  SmartsMatcher *sm = new SmartsMatcher("Aromatic carbon chain");
+  boost::shared_ptr<FilterMatcherBase> matcher(sm);
+  TEST_ASSERT(!matcher->isValid());
+  const int debugParse = 0;
+  const bool mergeHs = true;
+  ROMOL_SPTR pattern(SmartsToMol("c:c:c:c:c", debugParse, mergeHs));
+  TEST_ASSERT(pattern.get() != 0);
+  sm->setPattern(pattern);
+  sm->setMinCount(1);
+  FilterCatalogEntry entry("Bar", matcher);
+  TEST_ASSERT(entry.getDescription() == "Bar");
+  TEST_ASSERT(sm->getMinCount() == 1);
+  TEST_ASSERT(sm->getMaxCount() == (unsigned int)-1);
+
+  entry.setDescription("Foo");
+  TEST_ASSERT(entry.getDescription() == "Foo");
+
+  entry.setProp("foo", "foo");
+  TEST_ASSERT(entry.getProp<std::string>("foo") == "foo");
+  entry.setProp(std::string("bar"), "bar");
+  TEST_ASSERT(entry.getProp<std::string>("bar") == "bar");
+  
+  RWMol * newM = SmilesToMol("c1ccccc1",0,true);
+  TEST_ASSERT(entry.hasFilterMatch(*newM));
+  delete newM;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -160,7 +188,7 @@ int main(){
 
 
   testFilterCatalog();
-
+  testFilterCatalogEntry();
   return 0;
 }
 

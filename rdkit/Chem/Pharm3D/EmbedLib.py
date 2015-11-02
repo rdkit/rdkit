@@ -513,7 +513,7 @@ def OptimizeMol(mol,bm,atomMatches=None,excludedVolumes=None,
   """
   try:
     ff = ChemicalForceFields.UFFGetMoleculeForceField(mol)
-  except:
+  except Exception:
     logger.info('Problems building molecular forcefield',exc_info=True)
     return -1.0,-1.0
 
@@ -646,23 +646,23 @@ def EmbedOne(mol,name,match,pcophore,count=1,silent=0,**kwargs):
     count += 1
   try:
     e1,e1d = Stats.MeanAndDev(e1s)
-  except:
+  except Exception:
     e1 = -1.0
     e1d=-1.0
   try:
     e2,e2d = Stats.MeanAndDev(e2s)
-  except:
+  except Exception:
     e2 = -1.0
     e2d=-1.0
   try:
     e3,e3d = Stats.MeanAndDev(e3s)
-  except:
+  except Exception:
     e3 = -1.0
     e3d=-1.0
 
   try:
     e4,e4d = Stats.MeanAndDev(e4s)
-  except:
+  except Exception:
     e4 = -1.0
     e4d=-1.0
   if not silent:

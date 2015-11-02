@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2010-2013, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -430,10 +429,14 @@ molcmp(CROMol i, CROMol a) {
   if(res) return res;
 
   RDKit::MatchVectType matchVect;
-  if(RDKit::SubstructMatch(*im,*am,matchVect,true,getDoChiralSSS())){
-    return 0;
-  }
-  return -1;
+  bool ss1=RDKit::SubstructMatch(*im,*am,matchVect,false,false);
+  bool ss2=RDKit::SubstructMatch(*am,*im,matchVect,false,false);
+  if(ss1 != ss2) return ss1;
+  
+  // the above can still fail in some chirality cases
+  std::string smi1 = MolToSmiles(*im,true);
+  std::string smi2 = MolToSmiles(*am,true);
+  return smi1==smi2 ? 0 : (smi1<smi2 ? -1 : 1 );
 }
 
 extern "C" int

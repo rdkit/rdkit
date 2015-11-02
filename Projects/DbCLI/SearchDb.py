@@ -119,12 +119,9 @@ def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
   for idx,line in enumerate(dataFile):
     try:
       smi,nm = line.strip().split(' ')
-    except:
+    except ValueError:
       continue
-    try:
-      m = Chem.MolFromSmiles(smi)
-    except:
-      m=None
+    m = Chem.MolFromSmiles(smi)
     if not m:
       if errfile:
         print(idx,nm,smi,file=errfile)
@@ -314,7 +311,7 @@ def RunSearch(options,queryFilename):
         curs.execute("attach database '%s' as fpdb"%(fpDbName))
         try:
           curs.execute('select * from fpdb.%s limit 1'%options.layeredTableName)
-        except:
+        except Exception:
           pass
         else:
           doSubstructFPs=True

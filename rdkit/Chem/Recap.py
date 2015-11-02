@@ -187,7 +187,7 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0,onlyUseReactions=None):
           for nats,prod in prodSeq:
             try:
               Chem.SanitizeMol(prod)
-            except:
+            except Exception:
               continue
             pSmi = Chem.MolToSmiles(prod,1)
             if minFragmentSize>0:
