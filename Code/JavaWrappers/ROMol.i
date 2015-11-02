@@ -38,6 +38,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Resonance.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -175,6 +176,12 @@
   std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &query,bool uniquify=true, bool useChirality=false){
     std::vector<RDKit::MatchVectType> mv;
     SubstructMatch(*($self),query,mv,uniquify,true,useChirality);
+    return mv;
+  };
+
+  std::vector< std::vector<std::pair<int, int> > > getResonanceSubstructMatches(RDKit::ROMol &query,bool uniquify=false, bool useChirality=false, int numThreads=1){
+    std::vector<RDKit::MatchVectType> mv;
+    SubstructMatch(*($self),query,mv,uniquify,true,useChirality,false,1000,numThreads);
     return mv;
   };
 
