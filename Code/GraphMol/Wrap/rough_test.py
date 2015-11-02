@@ -44,7 +44,7 @@ def setResidueFormalCharge(mol, res, fc):
 def getBtList2(resMolSuppl):
   btList2 = []
   while (not resMolSuppl.atEnd()):
-    resMol = resMolSuppl.next()
+    resMol = next(resMolSuppl)
     bt = [];
     for bond in resMol.GetBonds():
       bt.append(int(bond.GetBondTypeAsDouble()))
