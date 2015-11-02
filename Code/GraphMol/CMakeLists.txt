@@ -11,6 +11,8 @@ rdkit_library(GraphMol
               LINK_LIBRARIES RDGeometryLib RDGeneral 
                  ${RDKit_THREAD_LIBS})
 
+target_link_libraries(GraphMol ${RDKit_THREAD_LIBS})
+
 rdkit_headers(Atom.h
               atomic_data.h
               AtomIterators.h

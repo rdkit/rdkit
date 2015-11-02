@@ -58,9 +58,16 @@ namespace RDKit {
        *                       resonance structures
        *   \param maxStructs - maximum number of complete resonance
        *                       structures generated
+       *   \param numThreads - the number of threads used to carry out the
+       *                       resonance structure enumeration (defaults
+       *                       to 1; 0 selects the number of concurrent
+       *                       threads supported by the hardware; negative
+       *                       values are added to the number of
+       *                       concurrent threads supported by the
+       *                       hardware)
        */
       ResonanceMolSupplier(ROMol &mol, unsigned int flags = 0,
-        unsigned int maxStructs = 1000);
+        unsigned int maxStructs = 1000, int numThreads = 1);
       ~ResonanceMolSupplier();
       /*! Returns a reference to the Kekulized form of the ROMol the
        * ResonanceMolSupplier was initialized with */
@@ -74,6 +81,11 @@ namespace RDKit {
       {
         return d_flags;
       }
+      /*! Returns the number of individual conjugated groups
+          in the molecule */
+      unsigned int getNumConjGrps() const {
+        return d_nConjGrp;
+      };
       /*! Given a bond index, it returns the index of the conjugated
        *  group the bond belongs to */
       unsigned int getBondConjGrpIdx(unsigned int bi) const;
@@ -87,14 +99,23 @@ namespace RDKit {
         return d_length;
       };
       /*! Resets the ResonanceMolSupplier index */
-      void reset();
+      void reset()
+      {
+        d_idx = 0;
+      };
+      /*! Returns true if there are no more resonance structures left */
+      bool atEnd() const
+      {
+        return (d_idx == d_length);
+      };
       /*! Returns a pointer to the next resonance structure as a ROMol,
        * or NULL if there are no more resonance structures left.
        * The caller is responsible for freeing memory associated to
        * the pointer */
-      ROMol *next();
-      /*! Returns true if there are no more resonance structures left */
-      bool atEnd() const;
+      ROMol *next()
+      {
+        return (atEnd() ? NULL : (*this)[d_idx++]);
+      };
       /*! Sets the ResonanceMolSupplier index to idx */
       void moveTo(unsigned int idx);
       /*! Returns a pointer to the resonance structure with index idx as
@@ -124,12 +145,14 @@ namespace RDKit {
       // disable copy constructor and assignment operator
       ResonanceMolSupplier(const ResonanceMolSupplier&);
       ResonanceMolSupplier &operator=(const ResonanceMolSupplier&);
+      void mainLoop(unsigned int ti, unsigned int nt);
       void assignConjGrpIdx();
       void resizeCeVect();
       void trimCeVect2();
       void prepEnumIdxVect();
       void idxToCEPerm(unsigned int idx,
         std::vector<unsigned int> &c) const;
+      void setResonanceMolSupplierLength();
       void storeCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
       void enumerateNbArrangements(CEMap &ceMap, CEMap &ceMapTmp);
       void pruneStructures(CEMap &ceMap);

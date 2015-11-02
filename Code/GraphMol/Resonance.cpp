@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Resonance.h>
 #include <RDGeneral/hash/hash.hpp>
+#include <RDGeneral/RDThreads.h>
 
 namespace RDKit {
   // class definitions that do not need being exposed in Resonance.h
@@ -1339,7 +1339,7 @@ namespace RDKit {
 
   // object constructor
   ResonanceMolSupplier::ResonanceMolSupplier(ROMol &mol,
-    unsigned int flags, unsigned int maxStructs) :
+    unsigned int flags, unsigned int maxStructs, int numThreads) :
     d_nConjGrp(0),
     d_flags(flags),
     d_idx(0)
@@ -1352,12 +1352,20 @@ namespace RDKit {
     // identify conjugate substructures
     assignConjGrpIdx();
     resizeCeVect();
-    for (unsigned int conjGrpIdx = 0;
-      conjGrpIdx < d_nConjGrp; ++conjGrpIdx) {
-      CEMap ceMap;
-      buildCEMap(ceMap, conjGrpIdx);
-      storeCEMap(ceMap, conjGrpIdx);
+    unsigned int nt = std::min(d_nConjGrp,
+      getNumThreadsToUse(numThreads));
+    if (nt == 1)
+      mainLoop(0, 1);
+    #ifdef RDK_THREADSAFE_SSS
+    else {
+      boost::thread_group tg;
+      for (unsigned int ti = 0; ti < nt; ++ti)
+        tg.add_thread(new boost::thread(boost::bind
+          (&ResonanceMolSupplier::mainLoop, this, ti, nt)));
+      tg.join_all();
     }
+    #endif
+    setResonanceMolSupplierLength();
     trimCeVect2();
     prepEnumIdxVect();
   }
@@ -1378,6 +1386,18 @@ namespace RDKit {
       delete d_mol;
   }
 
+  void ResonanceMolSupplier::mainLoop(unsigned int ti, unsigned int nt)
+  {
+    for (unsigned int conjGrpIdx = 0;
+      conjGrpIdx < d_nConjGrp; ++conjGrpIdx) {
+      if ((conjGrpIdx % nt) != ti)
+        continue;
+      CEMap ceMap;
+      buildCEMap(ceMap, conjGrpIdx);
+      storeCEMap(ceMap, conjGrpIdx);
+    }
+  }
+  
   // each bond an atom is assigned an index representing the conjugated
   // group it belongs to; such indices are stored in two vectors
   // (d_bondConjGrpIdx and d_atomConjGrpIdx, respectively)
@@ -1698,39 +1718,27 @@ namespace RDKit {
   }
 
   // resizes d_ceVect3 vector
-  void ResonanceMolSupplier::resizeCeVect()
+  inline void ResonanceMolSupplier::resizeCeVect()
   {
     d_ceVect3.resize(d_nConjGrp, NULL);
   }
 
   // stores the ConjElectrons pointers currently stored in ceMap
   // in the d_ceVect3 vector
-  void ResonanceMolSupplier::storeCEMap(CEMap &ceMap,
+  inline void ResonanceMolSupplier::storeCEMap(CEMap &ceMap,
     unsigned int conjGrpIdx)
   {
     d_ceVect3[conjGrpIdx] = new CEVect2(ceMap);
-    boost::uint64_t p = d_length * ceMap.size();
-    d_length = ((p < d_maxStructs)
-      ? static_cast<unsigned int>(p) : d_maxStructs);
   }
   
-  // resets the ResonanceMolSupplier index
-  void ResonanceMolSupplier::reset()
+  void ResonanceMolSupplier::setResonanceMolSupplierLength()
   {
-    d_idx = 0;
-  }
-
-  // returns the next resonance structure as a ROMol *, or NULL
-  // if there are no more resonance structures left
-  ROMol *ResonanceMolSupplier::next()
-  {
-    return (atEnd() ? NULL : (*this)[d_idx++]);
-  }
-
-  // returns true if there are no more resonance structures left
-  bool ResonanceMolSupplier::atEnd() const
-  {
-    return (d_idx == d_length);
+    for (unsigned int i = 0; (d_length < d_maxStructs)
+      && (i < d_ceVect3.size()); ++i) {
+      boost::uint64_t p = d_length * d_ceVect3[i]->ceCount();
+      d_length = ((p < d_maxStructs)
+        ? static_cast<unsigned int>(p) : d_maxStructs);
+    }
   }
 
   // sets the ResonanceMolSupplier index to idx

@@ -60,9 +60,9 @@ namespace RDKit{
   bool SubstructMatch(const ResonanceMolSupplier &resMolSuppl,
 		      const ROMol &query,
           MatchVectType &matchVect,
-		      bool recursionPossible=true,
-		      bool useChirality=false,
-          bool useQueryQueryMatches=false);
+		      bool recursionPossible = true,
+		      bool useChirality = false,
+          bool useQueryQueryMatches = false);
 
   //! Find all substructure matches for a query in a molecule
   /*!
@@ -107,6 +107,12 @@ namespace RDKit{
                          easy to end up with a combinatorial explosion in the number of
                          possible matches. This argument prevents that from having
                          unintended consequences
+      \param numThreads  The number of threads used during the search
+                         (defaults to 1; 0 selects the number of
+                         concurrent threads supported by the hardware;
+                         negative values are added to the number of
+                         concurrent threads supported by the
+                         hardware)
                                    
       \return the number of matches found
     
@@ -114,10 +120,11 @@ namespace RDKit{
   unsigned int SubstructMatch(const ResonanceMolSupplier &resMolSuppl,
             const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
-			      bool uniquify=false, bool recursionPossible=true,
-			      bool useChirality=false,
-            bool useQueryQueryMatches=false,
-            unsigned int maxMatches = 1000);
+			      bool uniquify = false, bool recursionPossible = true,
+			      bool useChirality = false,
+            bool useQueryQueryMatches = false,
+            unsigned int maxMatches = 1000,
+            int numThreads = 1);
 }
 
 #endif

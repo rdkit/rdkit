@@ -9,6 +9,7 @@
 //
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/RDThreads.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Resonance.h>
@@ -28,6 +29,16 @@ namespace RDKit{
   namespace detail {
     typedef std::map<unsigned int,QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
     
+    typedef struct {
+      const ResonanceMolSupplier &resMolSupplier;
+      const ROMol &query;
+      bool uniquify;
+      bool recursionPossible;
+      bool useChirality;
+      bool useQueryQueryMatches;
+      unsigned int maxMatches;
+    } ResSubstructMatchHelperArgs_;
+    
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
 			 SUBQUERY_MAP &subqueryMap,bool useQueryQueryMatches,
 			 std::vector<RecursiveStructureQuery*> &locked
@@ -37,6 +48,12 @@ namespace RDKit{
     bool matchVectCompare(const MatchVectType &a, const MatchVectType &b);
     bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
       const MatchVectType &m);
+    void mergeMatchVect(std::vector<MatchVectType> &matches,
+      const std::vector<MatchVectType> &matchesTmp,
+      const ResSubstructMatchHelperArgs_ &args);
+    void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
+      std::vector<MatchVectType> *matches, unsigned int bi,
+      unsigned int ei);
 
     typedef std::list<std::pair<MolGraph::vertex_descriptor,MolGraph::vertex_descriptor> > ssPairType;
 
@@ -189,6 +206,31 @@ namespace RDKit{
       const ROMol &d_mol;
       bool df_useChirality;
       bool df_useQueryQueryMatches;
+    };
+    void mergeMatchVect(std::vector<MatchVectType> &matches,
+      const std::vector<MatchVectType> &matchesTmp,
+      const ResSubstructMatchHelperArgs_ &args) {
+      for (std::vector<MatchVectType>::const_iterator
+        it = matchesTmp.begin(); (matches.size() < args.maxMatches)
+        && (it != matchesTmp.end()); ++it) {
+        if ((std::find(matches.begin(),
+          matches.end(), *it) == matches.end())
+          && (!args.uniquify || isToBeAddedToVector(matches, *it)))
+          matches.push_back(*it);
+      }
+    };
+    void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
+      std::vector<MatchVectType> *matches, unsigned int bi, unsigned int ei) {
+      for (unsigned int i = bi; (matches->size() < args.maxMatches)
+        && (i < ei); ++i) {
+        ROMol *mol = args.resMolSupplier[i];
+        std::vector<MatchVectType> matchesTmp;
+        unsigned int nMatchesTmp = SubstructMatch(*mol, args.query,
+          matchesTmp, args.uniquify, args.recursionPossible,
+          args.useChirality, args.useQueryQueryMatches, args.maxMatches);
+        mergeMatchVect(*matches, matchesTmp, args);
+        delete mol;
+      }
     };
   }    
   
@@ -347,29 +389,49 @@ namespace RDKit{
   //
   unsigned int SubstructMatch(const ResonanceMolSupplier &resMolSupplier,
             const ROMol &query,
-			      std::vector< MatchVectType > &matches,
+			      std::vector<MatchVectType> &matches,
 			      bool uniquify, bool recursionPossible,
 			      bool useChirality, bool useQueryQueryMatches,
-            unsigned int maxMatches)
+            unsigned int maxMatches, int numThreads)
   {
+    matches.clear();
     unsigned int nMatches = 0;
-    for (unsigned int i = 0; (matches.size() < maxMatches)
-      && (i < resMolSupplier.length()); ++i) {
-      ROMol *mol = resMolSupplier[i];
-      std::vector<MatchVectType> matchesTmp;
-      unsigned int nMatchesTmp = SubstructMatch(*mol, query,
-        matchesTmp, uniquify, recursionPossible,
-        useChirality, useQueryQueryMatches, maxMatches);
-      for (std::vector<MatchVectType>::iterator
-        it = matchesTmp.begin(); (matches.size() < maxMatches)
-        && (it != matchesTmp.end()); ++it) {
-        if ((std::find(matches.begin(),
-          matches.end(), *it) == matches.end())
-          && (!uniquify || detail::isToBeAddedToVector(matches, *it)))
-          matches.push_back(*it);
+    detail::ResSubstructMatchHelperArgs_ args = {
+      resMolSupplier, query, uniquify, recursionPossible,
+      useChirality, useQueryQueryMatches, maxMatches
+    };
+    unsigned int nt = std::min(resMolSupplier.length(),
+      getNumThreadsToUse(numThreads));
+    if (nt == 1)
+      detail::ResSubstructMatchHelper_(args, &matches,
+        0, resMolSupplier.length());
+    #ifdef RDK_THREADSAFE_SSS
+    else {
+      boost::thread_group tg;
+      std::vector<std::vector<MatchVectType> *> matchesThread(nt);
+      unsigned int ei = 0;
+      double dpt = static_cast<double>(resMolSupplier.length())
+        / static_cast<double>(nt);
+      double dc = 0.0;
+      for (unsigned int ti = 0; ti < nt; ++ti) {
+        matchesThread[ti] = new std::vector<MatchVectType>();
+        unsigned int bi = ei;
+        dc += dpt;
+        ei = static_cast<unsigned int>(floor(dc));
+        tg.add_thread(new boost::thread(detail::ResSubstructMatchHelper_,
+          args, matchesThread[ti], bi, ei));
       }
-      delete mol;
+      tg.join_all();
+      unsigned int matchSize = 0;
+      for (unsigned int ti = 0; ti < nt; ++ti)
+        matchSize += matchesThread[ti]->size();
+      matches.reserve(matchSize);
+      for (unsigned int ti = 0; ti < nt; ++ti) {
+        mergeMatchVect(matches, *(matchesThread[ti]), args);
+        delete matchesThread[ti];
+      }
     }
+    #endif
     std::sort(matches.begin(), matches.end(), detail::matchVectCompare);
     return matches.size();
   }

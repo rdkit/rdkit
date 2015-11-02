@@ -38,12 +38,14 @@ namespace RDKit {
   }
 
   PyObject *GetResonanceSubstructMatches(const ResonanceMolSupplier &suppl,
-                                const ROMol &query,bool uniquify=false,
-                                bool useChirality=false,
-                                bool useQueryQueryMatches=false,
-                                unsigned int maxMatches = 1000){
+                                const ROMol &query, bool uniquify = false,
+                                bool useChirality = false,
+                                bool useQueryQueryMatches = false,
+                                unsigned int maxMatches = 1000,
+                                int numThreads = 1) {
     std::vector< MatchVectType >  matches;
-    int matched = SubstructMatch(suppl,query,matches,uniquify,true,useChirality,useQueryQueryMatches,maxMatches);
+    int matched = SubstructMatch(suppl, query, matches, uniquify, true,
+      useChirality, useQueryQueryMatches, maxMatches, numThreads);
     PyObject *res = PyTuple_New(matched);
     for(int idx=0;idx<matched;idx++){
       PyTuple_SetItem(res,idx,convertMatches(matches[idx]));
@@ -96,10 +98,11 @@ namespace RDKit {
         .export_values()
         ;
       python::class_<ResonanceMolSupplier,boost::noncopyable>("ResonanceMolSupplier",
-						       resonanceMolSupplierClassDoc.c_str(),
-						       python::init<ROMol &, unsigned int, unsigned int>((python::arg("mol"),
-                                python::arg("flags") = 0,
-                                python::arg("maxStructs") = 1000)))
+                   resonanceMolSupplierClassDoc.c_str(),
+                   python::init<ROMol &, unsigned int, unsigned int, int>((python::arg("mol"),
+                   python::arg("flags") = 0,
+                   python::arg("maxStructs") = 1000,
+                   python::arg("numThreads") = 1)))
       .def("__iter__", (ResonanceMolSupplier *(*)(ResonanceMolSupplier *))&MolSupplIter,
            python::return_internal_reference<1>() )
       .def(NEXT_METHOD, (ROMol *(*)(ResonanceMolSupplier *))&MolSupplNextAcceptNullLastMolecule,
@@ -112,6 +115,8 @@ namespace RDKit {
       .def("__len__", &ResonanceMolSupplier::length)
       .def("atEnd", &ResonanceMolSupplier::atEnd,
            "Returns whether or not we have hit the end of the resonance structure supplier.\n")
+      .def("GetNumConjGrps", &ResonanceMolSupplier::getNumConjGrps,
+           "Returns the number of individual conjugated groups in the molecule\n")
       .def("GetSubstructMatch",GetResonanceSubstructMatch,
            (python::arg("self"),python::arg("query"),
             python::arg("useChirality")=false,
@@ -134,7 +139,8 @@ namespace RDKit {
             python::arg("uniquify")=false,
             python::arg("useChirality")=false,
             python::arg("useQueryQueryMatches")=false,
-            python::arg("maxMatches")=1000),
+            python::arg("maxMatches")=1000,
+            python::arg("numThreads")=1),
            "Returns tuples of the indices of the molecule's atoms that match a substructure query,\n"
            "taking into account all resonance structures in ResonanceMolSupplier.\n\n"
            "  ARGUMENTS:\n"
@@ -143,6 +149,15 @@ namespace RDKit {
            "                Defaults to 1.\n\n"
            "    - useChirality: enables the use of stereochemistry in the matching\n\n"
            "    - useQueryQueryMatches: use query-query matching logic\n\n"
+           "    - maxMatches: The maximum number of matches that will be returned.\n"
+           "                  In high-symmetry cases with medium-sized molecules, it is\n"
+           "                  very easy to end up with a combinatorial explosion in the\n"
+           "                  number of possible matches. This argument prevents that from\n"
+           "                  having unintended consequences\n\n"
+           "    - numThreads: The number of threads to be used (defaults to 1; 0 selects the\n"
+           "                  number of concurrent threads supported by the hardware; negative\n"
+           "                  values are added to the number of concurrent threads supported\n"
+           "                  by the hardware).\n\n"
            "  RETURNS: a tuple of tuples of integers\n\n"
            "  NOTE:\n"
            "     - the ordering of the indices corresponds to the atom ordering\n"

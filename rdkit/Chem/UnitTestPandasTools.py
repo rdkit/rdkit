@@ -183,6 +183,9 @@ class TestWriteSDF(unittest.TestCase):
             shutil.rmtree(dirname)
                     
 if __name__ == '__main__':
+    if PandasTools.pd is None:
+        import sys
+        sys.exit(0)
     from rdkit.six import PY3
     if not PY3: # FIX: The StringIO tests fail on python3
         unittest.main()

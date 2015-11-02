@@ -1,6 +1,6 @@
 rdkit_library(MMPA
               MMPA.cpp
-              LINK_LIBRARIES Depictor FileParsers ChemTransforms SubstructMatch)
+              LINK_LIBRARIES SubstructMatch Depictor FileParsers ChemTransforms GraphMol ${RDKit_THREAD_LIBS} )
 
 rdkit_headers(MMPA.h
               DEST GraphMol/MMPA)
