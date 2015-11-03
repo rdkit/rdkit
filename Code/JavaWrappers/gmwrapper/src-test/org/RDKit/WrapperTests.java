@@ -183,6 +183,13 @@ public class WrapperTests extends GraphMolTest {
     }
 
     @Test
+    public void testBasicInstantiation_ResonanceMolSupplier() {
+       	ROMol m = RWMol.MolFromSmiles("CC(=O)[O-]");
+        ResonanceMolSupplier sup = new ResonanceMolSupplier(m);
+        assertNotNull(sup);
+    }
+
+    @Test
     public void testBasicInstantiation_SDMWriter() {
         SDWriter mw = new SDWriter("tmp.sdf");
         mw.close();
