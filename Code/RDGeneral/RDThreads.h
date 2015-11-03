@@ -20,7 +20,7 @@ namespace RDKit{
       return static_cast<unsigned int>(target);
     }
     unsigned int res=boost::thread::hardware_concurrency();
-    if(res>-target){
+    if(static_cast<int>(res) > -target){
       return res+target;
     } else {
       return 1;

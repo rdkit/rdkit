@@ -67,7 +67,7 @@ namespace RDKit {
        *                       hardware)
        */
       ResonanceMolSupplier(ROMol &mol, unsigned int flags = 0,
-        unsigned int maxStructs = 1000, int numThreads = 1);
+        unsigned int maxStructs = 1000);
       ~ResonanceMolSupplier();
       /*! Returns a reference to the Kekulized form of the ROMol the
        * ResonanceMolSupplier was initialized with */
@@ -87,35 +87,38 @@ namespace RDKit {
         return d_nConjGrp;
       };
       /*! Given a bond index, it returns the index of the conjugated
-       *  group the bond belongs to */
-      unsigned int getBondConjGrpIdx(unsigned int bi) const;
+       *  group the bond belongs to, or -1 if it is not conjugated */
+      int getBondConjGrpIdx(unsigned int bi) const;
       /*! Given an atom index, it returns the index of the conjugated
-       *  group the atom belongs to */
-      unsigned int getAtomConjGrpIdx(unsigned int ai) const;
+       *  group the atom belongs to, or -1 if it is not conjugated */
+      int getAtomConjGrpIdx(unsigned int ai) const;
+      /*! Sets the number of threads to be used to enumerate resonance
+       *  structures (defaults to 1; 0 selects the number of concurrent
+       *  threads supported by the hardware; negative values are added
+       *  to the number of concurrent threads supported by the hardware)
+       */
+      void setNumThreads(int numThreads = 1);
+      /*! Ask ResonanceMolSupplier to enumerate resonance structures
+       *  (automatically done as soon as any attempt to access them is
+       *  made) */
+      void enumerate();
+      /*! Returns true if resonance structure enumeration has already
+       *  happened */
+      bool getIsEnumerated() {
+        return d_isEnumerated;
+      };
       /*! Returns the number of resonance structures in the
        *  ResonanceMolSupplier */
-      unsigned int length() const
-      {
-        return d_length;
-      };
+      unsigned int length();
       /*! Resets the ResonanceMolSupplier index */
-      void reset()
-      {
-        d_idx = 0;
-      };
+      void reset();
       /*! Returns true if there are no more resonance structures left */
-      bool atEnd() const
-      {
-        return (d_idx == d_length);
-      };
+      bool atEnd();
       /*! Returns a pointer to the next resonance structure as a ROMol,
        * or NULL if there are no more resonance structures left.
        * The caller is responsible for freeing memory associated to
        * the pointer */
-      ROMol *next()
-      {
-        return (atEnd() ? NULL : (*this)[d_idx++]);
-      };
+      ROMol *next();
       /*! Sets the ResonanceMolSupplier index to idx */
       void moveTo(unsigned int idx);
       /*! Returns a pointer to the resonance structure with index idx as
@@ -125,7 +128,7 @@ namespace RDKit {
        *  stable complete resonance structures first.
        * The caller is responsible for freeing memory associated to
        * the pointer */
-      ROMol *operator[](unsigned int idx) const;
+      ROMol *operator[](unsigned int idx);
     private:
       typedef struct CEPerm {
         unsigned int idx;
@@ -136,11 +139,13 @@ namespace RDKit {
       unsigned int d_flags;
       unsigned int d_maxStructs;
       unsigned int d_idx;
+      unsigned int d_numThreads;
+      bool d_isEnumerated;
       CEVect3 d_ceVect3;
       void buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
       const ROMol *d_mol;
-      std::vector<unsigned int> d_bondConjGrpIdx;
-      std::vector<unsigned int> d_atomConjGrpIdx;
+      std::vector<int> d_bondConjGrpIdx;
+      std::vector<int> d_atomConjGrpIdx;
       std::vector<unsigned int> d_enumIdx;
       // disable copy constructor and assignment operator
       ResonanceMolSupplier(const ResonanceMolSupplier&);

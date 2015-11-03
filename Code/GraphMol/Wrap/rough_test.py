@@ -3055,11 +3055,26 @@ CAS<~>
       self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
       
   def testResMolSupplier(self):
+    mol = Chem.MolFromSmiles('CC')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    del resMolSuppl
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
+    self.assertEqual(len(resMolSuppl), 1)
+    self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
+
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
     totalFormalCharge = getTotalFormalCharge(mol)
     
     resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertFalse(resMolSuppl.GetIsEnumerated())
     self.assertEqual(len(resMolSuppl), 4)
+    self.assertTrue(resMolSuppl.GetIsEnumerated())
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertFalse(resMolSuppl.GetIsEnumerated())
+    resMolSuppl.Enumerate()
+    self.assertTrue(resMolSuppl.GetIsEnumerated())
     self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() \
       != resMolSuppl[1].GetBondBetweenAtoms(0, 1).GetBondType())
       or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() \
@@ -3214,7 +3229,8 @@ CAS<~>
     self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
     btList2ST = getBtList2(resMolSupplST)
     self.assertTrue(btList2ST)
-    resMolSupplMT = Chem.ResonanceMolSupplier(crambin, numThreads = 0)
+    resMolSupplMT = Chem.ResonanceMolSupplier(crambin)
+    resMolSupplMT.SetNumThreads(0)
     self.assertEqual(len(resMolSupplST), len(resMolSupplMT))
     btList2MT = getBtList2(resMolSupplMT)
     self.assertTrue(btList2MT)

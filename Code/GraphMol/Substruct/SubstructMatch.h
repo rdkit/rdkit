@@ -57,7 +57,7 @@ namespace RDKit{
       \return whether or not a match was found
     
   */
-  bool SubstructMatch(const ResonanceMolSupplier &resMolSuppl,
+  bool SubstructMatch(ResonanceMolSupplier &resMolSuppl,
 		      const ROMol &query,
           MatchVectType &matchVect,
 		      bool recursionPossible = true,
@@ -117,7 +117,7 @@ namespace RDKit{
       \return the number of matches found
     
   */
-  unsigned int SubstructMatch(const ResonanceMolSupplier &resMolSuppl,
+  unsigned int SubstructMatch(ResonanceMolSupplier &resMolSuppl,
             const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify = false, bool recursionPossible = true,

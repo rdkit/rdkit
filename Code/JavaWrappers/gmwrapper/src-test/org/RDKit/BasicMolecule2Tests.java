@@ -166,11 +166,11 @@ public class BasicMolecule2Tests extends GraphMolTest {
 		mvv=m2.getSubstructMatches(p);
 		assertEquals(1,mvv.size());
 		assertEquals(3,mvv.get(0).size());
-		mvv=m2.getResonanceSubstructMatches(p);
+		mvv=rs.getSubstructMatches(p);
 		assertEquals(2,mvv.size());
 		assertEquals(3,mvv.get(0).size());
 		assertEquals(3,mvv.get(1).size());
-		mvv=m2.getResonanceSubstructMatches(p, true);
+		mvv=rs.getSubstructMatches(p, true);
 		assertEquals(1,mvv.size());
 		assertEquals(3,mvv.get(0).size());
 	}

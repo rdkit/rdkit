@@ -30,7 +30,7 @@ namespace RDKit{
     typedef std::map<unsigned int,QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
     
     typedef struct {
-      const ResonanceMolSupplier &resMolSupplier;
+      ResonanceMolSupplier &resMolSupplier;
       const ROMol &query;
       bool uniquify;
       bool recursionPossible;
@@ -225,7 +225,7 @@ namespace RDKit{
         && (i < ei); ++i) {
         ROMol *mol = args.resMolSupplier[i];
         std::vector<MatchVectType> matchesTmp;
-        unsigned int nMatchesTmp = SubstructMatch(*mol, args.query,
+        SubstructMatch(*mol, args.query,
           matchesTmp, args.uniquify, args.recursionPossible,
           args.useChirality, args.useQueryQueryMatches, args.maxMatches);
         mergeMatchVect(*matches, matchesTmp, args);
@@ -294,7 +294,7 @@ namespace RDKit{
   //
   // find one match in ResonanceMolSupplier object
   //
-  bool SubstructMatch(const ResonanceMolSupplier &resMolSupplier, const ROMol &query,
+  bool SubstructMatch(ResonanceMolSupplier &resMolSupplier, const ROMol &query,
                       MatchVectType &matchVect, bool recursionPossible,
                       bool useChirality, bool useQueryQueryMatches)
   {
@@ -387,7 +387,7 @@ namespace RDKit{
   //
   //  NOTE: this blows out the contents of matches
   //
-  unsigned int SubstructMatch(const ResonanceMolSupplier &resMolSupplier,
+  unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
             const ROMol &query,
 			      std::vector<MatchVectType> &matches,
 			      bool uniquify, bool recursionPossible,
@@ -395,7 +395,6 @@ namespace RDKit{
             unsigned int maxMatches, int numThreads)
   {
     matches.clear();
-    unsigned int nMatches = 0;
     detail::ResSubstructMatchHelperArgs_ args = {
       resMolSupplier, query, uniquify, recursionPossible,
       useChirality, useQueryQueryMatches, maxMatches
