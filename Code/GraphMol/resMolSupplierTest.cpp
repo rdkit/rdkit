@@ -50,12 +50,32 @@ void cmpFormalChargeBondOrder(const ROMol *mol1, const ROMol *mol2) {
 void testBaseFunctionality() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
     << "testBaseFunctionality" << std::endl;
-  RWMol *mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
-  int totalFormalCharge = getTotalFormalCharge(mol);
   ResonanceMolSupplier *resMolSuppl;
-
+  RWMol *mol;
+  mol = SmilesToMol("CC");
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  TEST_ASSERT((resMolSuppl->getAtomConjGrpIdx(0) == -1)
+    && (resMolSuppl->getAtomConjGrpIdx(1) == -1))
+  delete resMolSuppl;
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  TEST_ASSERT(resMolSuppl->getNumConjGrps() == 0);
+  TEST_ASSERT(resMolSuppl->length() == 1);
+  TEST_ASSERT(resMolSuppl->getNumConjGrps() == 0);
+  delete resMolSuppl;
+  delete mol;
+  
+  mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
+  int totalFormalCharge = getTotalFormalCharge(mol);
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  TEST_ASSERT(!resMolSuppl->getIsEnumerated());
   TEST_ASSERT(resMolSuppl->length() == 4);
+  TEST_ASSERT(resMolSuppl->getIsEnumerated());
+  delete resMolSuppl;
+  
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  TEST_ASSERT(!resMolSuppl->getIsEnumerated());
+  resMolSuppl->enumerate();
+  TEST_ASSERT(resMolSuppl->getIsEnumerated());
   TEST_ASSERT(((*resMolSuppl)[0]->getBondBetweenAtoms(0, 1)->getBondType()
     != (*resMolSuppl)[1]->getBondBetweenAtoms(0, 1)->getBondType())
    || ((*resMolSuppl)[0]->getBondBetweenAtoms(9, 10)->getBondType()
@@ -655,8 +675,9 @@ void testCrambin() {
   std::vector<std::vector<unsigned int> > btVect2ST;
   getBtVectVect(resMolSupplST, btVect2ST);
   ResonanceMolSupplier *resMolSupplMT =
-    new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000, 0);
+    new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000);
   TEST_ASSERT(resMolSupplMT);
+  resMolSupplMT->setNumThreads(0);
   TEST_ASSERT(resMolSupplST->length() == resMolSupplMT->length());
   std::vector<std::vector<unsigned int> > btVect2MT;
   getBtVectVect(resMolSupplMT, btVect2MT);
@@ -665,7 +686,7 @@ void testCrambin() {
     for (unsigned int j = 0; j < btVect2ST[i].size(); ++j)
       TEST_ASSERT(btVect2ST[i][j] == btVect2MT[i][j]);
   }
-  const ResonanceMolSupplier *ptr[2] = { resMolSupplST, resMolSupplMT };
+  ResonanceMolSupplier *ptr[2] = { resMolSupplST, resMolSupplMT };
   for (unsigned int i = 0;
     i < sizeof(ptr) / sizeof(ResonanceMolSupplier *); ++i) {
     n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect,

@@ -83,8 +83,6 @@ namespace RDKit {
       void decrCurrElectrons(unsigned int d);
       AtomElectrons *getAtomElectronsWithIdx(unsigned int ai);
       BondElectrons *getBondElectronsWithIdx(unsigned int bi);
-      int getAtomConjGrpIdx(unsigned int ai) const;
-      int getBondConjGrpIdx(unsigned int bi) const;
       void pushToBeginStack(unsigned int ai);
       bool popFromBeginStack(unsigned int &ai);
       bool isBeginStackEmpty() {
@@ -222,7 +220,7 @@ namespace RDKit {
       void clearStacked() {
         d_flags &= ~STACKED;
       };
-      unsigned int conjGrpIdx() const
+      int conjGrpIdx() const
       {
         return d_parent->parent()->getAtomConjGrpIdx(d_atom->getIdx());
       };
@@ -293,7 +291,7 @@ namespace RDKit {
       };
       int conjGrpIdx() const
       {
-        return d_parent->getBondConjGrpIdx(d_bond->getIdx());
+        return d_parent->parent()->getBondConjGrpIdx(d_bond->getIdx());
       };
       void setOrder(unsigned int bo);
       unsigned int order() const
@@ -617,13 +615,13 @@ namespace RDKit {
     unsigned int nb = mol.getNumBonds();
     unsigned int na = mol.getNumAtoms();
     for (unsigned int ai = 0; ai < na; ++ai) {
-      if (d_parent->getAtomConjGrpIdx(ai) != na)
+      if (d_parent->getAtomConjGrpIdx(ai) != -1)
         d_totalFormalCharge +=
           mol.getAtomWithIdx(ai)->getFormalCharge();
     }
     d_allowedChgLeftOfN = d_totalFormalCharge;
     for (unsigned int bi = 0; bi < nb; ++bi) {
-      if (d_parent->getBondConjGrpIdx(bi) != groupIdx)
+      if (d_parent->getBondConjGrpIdx(bi) != static_cast<int>(groupIdx))
         continue;
       const Bond *bond = mol.getBondWithIdx(bi);
       // store the pointers to BondElectrons objects in a map
@@ -651,8 +649,8 @@ namespace RDKit {
     d_numFormalCharges(ce.d_numFormalCharges),
     d_totalFormalCharge(ce.d_totalFormalCharge),
     d_allowedChgLeftOfN(ce.d_allowedChgLeftOfN),
-    d_ceMetrics(ce.d_ceMetrics),
     d_flags(ce.d_flags),
+    d_ceMetrics(ce.d_ceMetrics),
     d_beginAIStack(ce.d_beginAIStack),
     d_parent(ce.d_parent)
   {
@@ -979,7 +977,7 @@ namespace RDKit {
       1340, 1470, 1600, 1650, 1680, 1720, 1920, 1760,
       1789, 1854, 2010, 2190, 2390, 2600,  670,  890
     };
-    const unsigned int enSize = sizeof(en) / sizeof(double);
+    const int enSize = sizeof(en) / sizeof(double);
     for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
       it != d_conjAtomMap.end(); ++it) {
       d_ceMetrics.d_absFormalCharges += abs(it->second->fc());
@@ -1111,7 +1109,6 @@ namespace RDKit {
     std::sort(d_ceVect.begin(), d_ceVect.end(),
       resonanceStructureCompare);
     bool first = true;
-    unsigned int i = 0;
     CEMetrics metricsPrev;
     for (CEVect::const_iterator it = d_ceVect.begin();
       it != d_ceVect.end(); ++it) {
@@ -1208,7 +1205,6 @@ namespace RDKit {
   unsigned int ConjElectrons::countTotalElectrons()
   {
     // count total number of valence electrons in conjugated group
-    PeriodicTable *pt = PeriodicTable::getTable();
     for (ConjBondMap::const_iterator it =
       d_conjBondMap.begin(); it != d_conjBondMap.end(); ++it)
       d_totalElectrons += (2 * it->second->orderFromBond());
@@ -1339,10 +1335,12 @@ namespace RDKit {
 
   // object constructor
   ResonanceMolSupplier::ResonanceMolSupplier(ROMol &mol,
-    unsigned int flags, unsigned int maxStructs, int numThreads) :
+    unsigned int flags, unsigned int maxStructs) :
     d_nConjGrp(0),
     d_flags(flags),
-    d_idx(0)
+    d_idx(0),
+    d_numThreads(1),
+    d_isEnumerated(false)
   {
     const unsigned int MAX_STRUCTS = 1000000;
     d_maxStructs = std::min(maxStructs, MAX_STRUCTS);
@@ -1351,23 +1349,6 @@ namespace RDKit {
     MolOps::Kekulize((RWMol &)*d_mol, false);
     // identify conjugate substructures
     assignConjGrpIdx();
-    resizeCeVect();
-    unsigned int nt = std::min(d_nConjGrp,
-      getNumThreadsToUse(numThreads));
-    if (nt == 1)
-      mainLoop(0, 1);
-    #ifdef RDK_THREADSAFE_SSS
-    else {
-      boost::thread_group tg;
-      for (unsigned int ti = 0; ti < nt; ++ti)
-        tg.add_thread(new boost::thread(boost::bind
-          (&ResonanceMolSupplier::mainLoop, this, ti, nt)));
-      tg.join_all();
-    }
-    #endif
-    setResonanceMolSupplierLength();
-    trimCeVect2();
-    prepEnumIdxVect();
   }
   
   // object destructor
@@ -1376,6 +1357,8 @@ namespace RDKit {
     for (CEVect3::const_iterator ceVect3It = d_ceVect3.begin();
       ceVect3It != d_ceVect3.end();
       ++ceVect3It) {
+      if (!(*ceVect3It))
+        continue;
       for (unsigned int d = 0; d < (*ceVect3It)->depth(); ++d) {
         for (unsigned int w = 0; w < (*ceVect3It)->ceCountAtDepth(d); ++w)
           delete((*ceVect3It)->getCE(d, w));
@@ -1384,6 +1367,34 @@ namespace RDKit {
     }
     if (d_mol)
       delete d_mol;
+  }
+
+  void ResonanceMolSupplier::setNumThreads(int numThreads)
+  {
+    d_numThreads = std::min(d_nConjGrp,
+      getNumThreadsToUse(numThreads));
+  }
+
+  void ResonanceMolSupplier::enumerate()
+  {
+    if (d_isEnumerated)
+      return;
+    resizeCeVect();
+    if (d_numThreads == 1)
+      mainLoop(0, 1);
+    #ifdef RDK_THREADSAFE_SSS
+    else {
+      boost::thread_group tg;
+      for (unsigned int ti = 0; ti < d_numThreads; ++ti)
+        tg.add_thread(new boost::thread(boost::bind
+          (&ResonanceMolSupplier::mainLoop, this, ti, d_numThreads)));
+      tg.join_all();
+    }
+    #endif
+    setResonanceMolSupplierLength();
+    trimCeVect2();
+    prepEnumIdxVect();
+    d_isEnumerated = true;
   }
 
   void ResonanceMolSupplier::mainLoop(unsigned int ti, unsigned int nt)
@@ -1401,21 +1412,23 @@ namespace RDKit {
   // each bond an atom is assigned an index representing the conjugated
   // group it belongs to; such indices are stored in two vectors
   // (d_bondConjGrpIdx and d_atomConjGrpIdx, respectively)
+  // atoms and bonds which do not belong to a conjugated group are given
+  // index -1
   void ResonanceMolSupplier::assignConjGrpIdx()
   {
     unsigned int nb = d_mol->getNumBonds();
-    d_bondConjGrpIdx.resize(nb, nb);
+    d_bondConjGrpIdx.resize(nb, -1);
     unsigned int na = d_mol->getNumAtoms();
-    d_atomConjGrpIdx.resize(na, na);
+    d_atomConjGrpIdx.resize(na, -1);
     for (unsigned int i = 0; i < nb; ++i) {
       const Bond *bi = d_mol->getBondWithIdx(i);
       unsigned int biBeginIdx = bi->getBeginAtomIdx();
       unsigned int biEndIdx = bi->getEndAtomIdx();
-      if (bi->getIsConjugated() && (d_bondConjGrpIdx[i] == nb)) {
+      if (bi->getIsConjugated() && (d_bondConjGrpIdx[i] == -1)) {
         // assign this conjugate bond to the matching group, if any
         for (unsigned int j = 0;
-          (d_bondConjGrpIdx[i] == nb) && (j < nb); ++j) {
-          if ((i == j) || (d_bondConjGrpIdx[j] == nb))
+          (d_bondConjGrpIdx[i] == -1) && (j < nb); ++j) {
+          if ((i == j) || (d_bondConjGrpIdx[j] == -1))
             continue;
           const Bond *bj = d_mol->getBondWithIdx(j);
           if ((bj->getBeginAtomIdx() == biBeginIdx)
@@ -1425,12 +1438,12 @@ namespace RDKit {
             d_bondConjGrpIdx[i] = d_bondConjGrpIdx[j];
         }
         // no existing group matches: create a new group
-        if (d_bondConjGrpIdx[i] == nb)
+        if (d_bondConjGrpIdx[i] == -1)
           d_bondConjGrpIdx[i] = d_nConjGrp++;
       }
     }
     for (unsigned int i = 0; i < nb; ++i) {
-      if (d_bondConjGrpIdx[i] != nb) {
+      if (d_bondConjGrpIdx[i] != -1) {
         const Bond *bi = d_mol->getBondWithIdx(i);
         unsigned int biBeginIdx = bi->getBeginAtomIdx();
         unsigned int biEndIdx = bi->getEndAtomIdx();
@@ -1506,7 +1519,8 @@ namespace RDKit {
   // in ceMap. Depending on whether the KEKULE_ALL flag is set, the FP
   // computation will involve or not bond arrangement in addition to atom
   // valences
-  void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx)
+  void ResonanceMolSupplier::buildCEMap(CEMap &ceMap,
+    unsigned int conjGrpIdx)
   {
     const unsigned int BEGIN_POS = 0;
     const unsigned int END_POS = 1;
@@ -1551,7 +1565,8 @@ namespace RDKit {
       if (ce->isBeginStackEmpty()) {
         bool aiFound = false;
         while (aiBegin < na) {
-          aiFound = (d_atomConjGrpIdx[aiBegin] == conjGrpIdx);
+          aiFound = (d_atomConjGrpIdx[aiBegin]
+            == static_cast<int>(conjGrpIdx));
           if (aiFound)
             break;
           ++aiBegin;
@@ -1580,7 +1595,8 @@ namespace RDKit {
           unsigned int aiNbr = (*d_mol)[*nbrIdx].get()->getIdx();
           // if this neighbor is not part of the conjugated group,
           // ignore it
-          if ((ce->parent()->getAtomConjGrpIdx(aiNbr) != conjGrpIdx))
+          if (ce->parent()->getAtomConjGrpIdx(aiNbr)
+            != static_cast<int>(conjGrpIdx))
             continue;
           AtomElectrons *aeNbr = ce->getAtomElectronsWithIdx(aiNbr);
           // if we've already dealt with this neighbor before, ignore it
@@ -1690,9 +1706,8 @@ namespace RDKit {
   }
 
   // getter function which returns the bondConjGrpIdx for a given
-  // bond index
-  unsigned int ResonanceMolSupplier::getBondConjGrpIdx
-    (unsigned int bi) const
+  // bond index, or -1 if the bond is not conjugated
+  int ResonanceMolSupplier::getBondConjGrpIdx(unsigned int bi) const
   {
     if (bi >= d_bondConjGrpIdx.size()) {
       std::stringstream ss;
@@ -1704,9 +1719,8 @@ namespace RDKit {
   }
 
   // getter function which returns the atomConjGrpIdx for a given
-  // atom index
-  unsigned int ResonanceMolSupplier::getAtomConjGrpIdx
-    (unsigned int ai) const
+  // atom index, or -1 if the atom is not conjugated
+  int ResonanceMolSupplier::getAtomConjGrpIdx(unsigned int ai) const
   {
     if (ai >= d_atomConjGrpIdx.size()) {
       std::stringstream ss;
@@ -1741,9 +1755,42 @@ namespace RDKit {
     }
   }
 
+  // Returns the number of resonance structures in the
+  // ResonanceMolSupplier
+  unsigned int ResonanceMolSupplier::length()
+  {
+    enumerate();
+    return d_length;
+  }
+
+  // Resets the ResonanceMolSupplier index
+  void ResonanceMolSupplier::reset()
+  {
+    enumerate();
+    d_idx = 0;
+  }
+  
+  // Returns true if there are no more resonance structures left
+  bool ResonanceMolSupplier::atEnd()
+  {
+    enumerate();
+    return (d_idx == d_length);
+  }
+  
+  // Returns a pointer to the next resonance structure as a ROMol,
+  // or NULL if there are no more resonance structures left.
+  // The caller is responsible for freeing memory associated to
+  // the pointer
+  ROMol *ResonanceMolSupplier::next()
+  {
+    enumerate();
+    return (atEnd() ? NULL : (*this)[d_idx++]);
+  }
+
   // sets the ResonanceMolSupplier index to idx
   void ResonanceMolSupplier::moveTo(unsigned int idx)
   {
+    enumerate();
     if (idx >= d_length) {
       std::stringstream ss;
       ss << "d_length = " << d_length << ", idx = " << idx;
@@ -1756,8 +1803,9 @@ namespace RDKit {
   // the index returns resonance structures combining ConjElectrons
   // objects in a breadth-first fashion, in order to return the most
   // likely complete resonance structures first
-  ROMol *ResonanceMolSupplier::operator[](unsigned int idx) const
+  ROMol *ResonanceMolSupplier::operator[](unsigned int idx)
   {
+    enumerate();
     if (idx >= d_length) {
       std::stringstream ss;
       ss << "d_length = " << d_length << ", idx = " << idx;

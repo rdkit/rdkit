@@ -28,7 +28,7 @@ namespace python = boost::python;
 
 namespace RDKit {
   PyObject *convertMatches(MatchVectType &matches);
-  PyObject *GetResonanceSubstructMatch(const ResonanceMolSupplier &suppl,
+  PyObject *GetResonanceSubstructMatch(ResonanceMolSupplier &suppl,
                             const ROMol &query,bool useChirality=false,
                             bool useQueryQueryMatches=false){
     NOGIL gil;
@@ -37,7 +37,7 @@ namespace RDKit {
     return convertMatches(matches);
   }
 
-  PyObject *GetResonanceSubstructMatches(const ResonanceMolSupplier &suppl,
+  PyObject *GetResonanceSubstructMatches(ResonanceMolSupplier &suppl,
                                 const ROMol &query, bool uniquify = false,
                                 bool useChirality = false,
                                 bool useQueryQueryMatches = false,
@@ -57,9 +57,7 @@ namespace RDKit {
 \n \
   Usage examples:\n \
 \n \
-    1) Lazy evaluation: the resonance structures for each independent\n \
-       conjugated group are enumerated upon object creation; however the\n \
-       resonance structures of the complete molecule are not constructed\n \
+    1) Lazy evaluation: the resonance structures are not constructed\n \
        until we ask for them:\n \
        >>> suppl = ResonanceMolSupplier(mol)\n \
        >>> for resMol in suppl:\n \
@@ -99,10 +97,9 @@ namespace RDKit {
         ;
       python::class_<ResonanceMolSupplier,boost::noncopyable>("ResonanceMolSupplier",
                    resonanceMolSupplierClassDoc.c_str(),
-                   python::init<ROMol &, unsigned int, unsigned int, int>((python::arg("mol"),
+                   python::init<ROMol &, unsigned int, unsigned int>((python::arg("mol"),
                    python::arg("flags") = 0,
-                   python::arg("maxStructs") = 1000,
-                   python::arg("numThreads") = 1)))
+                   python::arg("maxStructs") = 1000)))
       .def("__iter__", (ResonanceMolSupplier *(*)(ResonanceMolSupplier *))&MolSupplIter,
            python::return_internal_reference<1>() )
       .def(NEXT_METHOD, (ROMol *(*)(ResonanceMolSupplier *))&MolSupplNextAcceptNullLastMolecule,
@@ -117,6 +114,25 @@ namespace RDKit {
            "Returns whether or not we have hit the end of the resonance structure supplier.\n")
       .def("GetNumConjGrps", &ResonanceMolSupplier::getNumConjGrps,
            "Returns the number of individual conjugated groups in the molecule\n")
+      .def("GetBondConjGrpIdx", (unsigned int (ResonanceMolSupplier::*)(unsigned int))
+           &ResonanceMolSupplier::getBondConjGrpIdx,
+           "Given a bond index, it returns the index of the conjugated group"
+           "the bond belongs to, or -1 if it is not conjugated\n")
+      .def("GetAtomConjGrpIdx", (unsigned int (ResonanceMolSupplier::*)(unsigned int))
+           &ResonanceMolSupplier::getAtomConjGrpIdx,
+           "Given an atom index, it returns the index of the conjugated group"
+           "the atom belongs to, or -1 if it is not conjugated\n")
+      .def("SetNumThreads", (void (ResonanceMolSupplier::*)(unsigned int))
+           &ResonanceMolSupplier::setNumThreads,
+           "Sets the number of threads to be used to enumerate resonance\n"
+           "structures (defaults to 1; 0 selects the number of concurrent\n"
+           "threads supported by the hardware; negative values are added\n"
+           "to the number of concurrent threads supported by the hardware)\n")
+      .def("Enumerate",&ResonanceMolSupplier::enumerate,
+           "Ask ResonanceMolSupplier to enumerate resonance structures"
+           "(automatically done as soon as any attempt to access them is made)\n")
+      .def("GetIsEnumerated",&ResonanceMolSupplier::getIsEnumerated,
+           "Returns true if resonance structure enumeration has already happened\n")
       .def("GetSubstructMatch",GetResonanceSubstructMatch,
            (python::arg("self"),python::arg("query"),
             python::arg("useChirality")=false,
