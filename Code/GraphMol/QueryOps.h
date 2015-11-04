@@ -575,8 +575,17 @@ namespace RDKit{
         catch (KeyErrorException e) {
           res = false;
         }
-        catch (boost::bad_any_cast)
-        {
+        catch (boost::bad_any_cast) {
+          res = false;
+        }
+        catch (...) {
+          // catch all -- this is currently necessary to
+          //  trap some bugs in boost+gcc configurations
+          //  Normally, this is not the correct thing to
+          //  do, but the only exception above is due
+          //  to the boost any_cast which is trapped
+          //  by the Boost python wrapper when it shouldn't
+          //  be.
           res = false;
         }
 
@@ -633,10 +642,20 @@ namespace RDKit{
         catch (KeyErrorException) {
           res = false;
         }
-        catch (boost::bad_any_cast)
-        {
+        catch (boost::bad_any_cast) {
           res = false;
         }
+        catch (...) {
+          // catch all -- this is currently necessary to
+          //  trap some bugs in boost+gcc configurations
+          //  Normally, this is not the correct thing to
+          //  do, but the only exception above is due
+          //  to the boost any_cast which is trapped
+          //  by the Boost python wrapper when it shouldn't
+          //  be.
+          res = false;
+        }
+
       }
       if(this->getNegation()){
         res=!res;
