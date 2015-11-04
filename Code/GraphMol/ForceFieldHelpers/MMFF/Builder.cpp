@@ -344,10 +344,8 @@ namespace RDKit {
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx[3];
-        unsigned int bondType[2];
         MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
         std::pair<bool, const MMFFStbn *> mmffStbnParams;
-        const MMFFAngle *mmffAngleParams = NULL;
         StretchBendContrib *contrib;
         ROMol::ADJ_ITER nbr1Idx;
         ROMol::ADJ_ITER end1Nbrs;
