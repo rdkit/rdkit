@@ -23,13 +23,14 @@ Reading single molecules
 
 The majority of the basic molecular functionality is found in module :api:`rdkit.Chem`:
 
+>>> from __future__ import print_function
 >>> from rdkit import Chem
 
 Individual molecules can be constructed using a variety of approaches:
 
 >>> m = Chem.MolFromSmiles('Cc1ccccc1')
 >>> m = Chem.MolFromMolFile('data/input.mol')
->>> stringWithMolData=file('data/input.mol','r').read()
+>>> stringWithMolData=open('data/input.mol','r').read()
 >>> m = Chem.MolFromMolBlock(stringWithMolData)
 
 All of these functions return a :api:`rdkit.Chem.rdchem.Mol` object on success:
@@ -66,7 +67,7 @@ Groups of molecules are read using a Supplier (for example, an :api:`rdkit.Chem.
 
 >>> suppl = Chem.SDMolSupplier('data/5ht3ligs.sdf')
 >>> for mol in suppl:
-...   print mol.GetNumAtoms()
+...   print(mol.GetNumAtoms())
 ...
 20
 24
@@ -89,7 +90,7 @@ A good practice is to test each molecule to see if it was correctly read before 
 >>> suppl = Chem.SDMolSupplier('data/5ht3ligs.sdf')
 >>> for mol in suppl:
 ...   if mol is None: continue
-...   print mol.GetNumAtoms()
+...   print(mol.GetNumAtoms())
 ...
 20
 24
@@ -98,11 +99,11 @@ A good practice is to test each molecule to see if it was correctly read before 
 
 An alternate type of Supplier, the :api:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` can be used to read from file-like objects:
 
->>> inf = file('data/5ht3ligs.sdf')
+>>> inf = open('data/5ht3ligs.sdf','rb')
 >>> fsuppl = Chem.ForwardSDMolSupplier(inf)
 >>> for mol in fsuppl:
 ...   if mol is None: continue
-...   print mol.GetNumAtoms()
+...   print(mol.GetNumAtoms())
 ...
 20
 24
@@ -160,7 +161,7 @@ The limitation is not in the SMILES generation, but in the kekulization itself.
 MDL Mol blocks are also available:
 
 >>> m2 = Chem.MolFromSmiles('C1CCC1')
->>> print Chem.MolToMolBlock(m2)    # doctest: +NORMALIZE_WHITESPACE
+>>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
 <BLANKLINE>
      RDKit
 <BLANKLINE>
@@ -179,7 +180,7 @@ M  END
 To include names in the mol blocks, set the molecule's “_Name” property:
 
 >>> m2.SetProp("_Name","cyclobutane")
->>> print Chem.MolToMolBlock(m2)     # doctest: +NORMALIZE_WHITESPACE
+>>> print(Chem.MolToMolBlock(m2))     # doctest: +NORMALIZE_WHITESPACE
 cyclobutane
      RDKit          
 <BLANKLINE>
@@ -204,7 +205,7 @@ You can either include 2D coordinates (i.e. a depiction):
 >>> from rdkit.Chem import AllChem
 >>> AllChem.Compute2DCoords(m2)
 0
->>> print Chem.MolToMolBlock(m2)     # doctest: +NORMALIZE_WHITESPACE
+>>> print(Chem.MolToMolBlock(m2))     # doctest: +NORMALIZE_WHITESPACE
 cyclobutane 
      RDKit          2D 
 <BLANKLINE>
@@ -226,7 +227,7 @@ Or you can add 3D coordinates by embedding the molecule:
 0
 >>> AllChem.UFFOptimizeMolecule(m2)
 0
->>> print Chem.MolToMolBlock(m2)    # doctest: +NORMALIZE_WHITESPACE
+>>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
 cyclobutane
      RDKit          3D
 <BLANKLINE>
@@ -255,7 +256,7 @@ To get good conformations, it's almost always a good idea to add hydrogens to th
 These can then be removed:
 
 >>> m3 = Chem.RemoveHs(m3)
->>> print Chem.MolToMolBlock(m3)    # doctest: +NORMALIZE_WHITESPACE
+>>> print(Chem.MolToMolBlock(m3))    # doctest: +NORMALIZE_WHITESPACE
 cyclobutane
      RDKit          3D
 <BLANKLINE>
@@ -273,7 +274,7 @@ M  END
 
 If you'd like to write the molecules to a file, use Python file objects:
 
->>> print >>file('data/foo.mol','w+'),Chem.MolToMolBlock(m2)
+>>> print(Chem.MolToMolBlock(m2),file=open('data/foo.mol','w+'))
 >>>
 
 
@@ -289,13 +290,13 @@ Multiple molecules can be written to a file using an :api:`rdkit.Chem.rdmolfiles
 
 An SDWriter can also be initialized using a file-like object:
 
->>> from StringIO import StringIO
+>>> from rdkit.six import StringIO
 >>> sio = StringIO()
 >>> w = Chem.SDWriter(sio)
 >>> for m in mols: w.write(m)
 ...
 >>> w.flush()
->>> print sio.getvalue()
+>>> print(sio.getvalue())
 mol-295
      RDKit          3D
 <BLANKLINE>
@@ -326,12 +327,12 @@ Once you have a molecule, it's easy to loop over its atoms and bonds:
 
 >>> m = Chem.MolFromSmiles('C1OC1')
 >>> for atom in m.GetAtoms():
-...   print atom.GetAtomicNum()
+...   print(atom.GetAtomicNum())
 ...
 6
 8
 6
->>> print m.GetBonds()[0].GetBondType()
+>>> print(m.GetBonds()[0].GetBondType())
 SINGLE
 
 You can also request individual bonds or atoms:
@@ -352,7 +353,7 @@ Atoms keep track of their neighbors:
 >>> atom = m.GetAtomWithIdx(0)
 >>> [x.GetAtomicNum() for x in atom.GetNeighbors()]
 [8, 6]
->>> len(x.GetBonds())
+>>> len(atom.GetNeighbors()[-1].GetBonds())
 2
 
 
@@ -556,13 +557,13 @@ These conformers can be aligned to each other and the RMS values calculated.
 >>> m = Chem.MolFromSmiles('C1CCC1OC')
 >>> m2=Chem.AddHs(m)
 >>> cids = AllChem.EmbedMultipleConfs(m2, numConfs=10)
->>> print len(cids)
+>>> print(len(cids))
 10
 >>> for cid in cids:
 ...    _ = AllChem.MMFFOptimizeMolecule(m2, confId=cid)
 >>> rmslist = []
 >>> AllChem.AlignMolConformers(m2, RMSlist=rmslist)
->>> print len(rmslist)
+>>> print(len(rmslist))
 9
 
 rmslist contains the RMS values between the first conformer and all others.
@@ -583,11 +584,9 @@ Preserving Molecules
 Molecules can be converted to and from text using Python's pickling machinery:
 
 >>> m = Chem.MolFromSmiles('c1ccncc1')
->>> import cPickle
->>> pkl = cPickle.dumps(m)
->>> type(pkl)
-<type 'str'>
->>> m2=cPickle.loads(pkl)
+>>> import pickle
+>>> pkl = pickle.dumps(m)
+>>> m2=pickle.loads(pkl)
 >>> Chem.MolToSmiles(m2)
 'c1ccncc1'
 
@@ -604,14 +603,11 @@ This can be used to reconstruct molecules using the Chem.Mol constructor:
 'c1ccncc1'
 >>> len(binStr)
 123
->>> len(pkl)
-475
 
-Note that this huge difference in text length is because we didn't tell python to use its most efficient representation of the pickle:
+Note that this is smaller than the pickle:
 
->>> pkl = cPickle.dumps(m,2)
->>> len(pkl)
-157
+>>> len(binStr) < len(pkl)
+True
 
 The small overhead associated with python's pickling machinery normally doesn't end up making much of a difference for collections of larger molecules (the extra data associated with the pickle is independent of the size of the molecule, while the binary string increases in length as the molecule gets larger).
 
@@ -956,7 +952,7 @@ after the given number of seconds (wall-clock seconds, not CPU seconds) and
 return the best match found in that time. If timeout is reached then the
 ``canceled`` property of the MCSResult will be True instead of False.
 
->>> mols = [Chem.MolFromSmiles("Nc1ccccc1"*100), Chem.MolFromSmiles("Nc1ccccccccc1"*100)]
+>>> mols = [Chem.MolFromSmiles("Nc1ccccc1"*10), Chem.MolFromSmiles("Nc1ccccccccc1"*10)]
 >>> rdFMCS.FindMCS(mols, timeout=1).canceled
 True
 
@@ -1328,13 +1324,13 @@ The convenience function GetSimilarityMapForFingerprint involves the normalisati
 of the atomic weights such that the maximum absolute weight is 1. Therefore, the 
 function outputs the maximum weight that was found when creating the map.
 
->>> print maxweight
-0.0574712643678
+>>> print(maxweight)
+0.05747...
 
 If one does not want the normalisation step, the map can be created like:
 
 >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
->>> print ["%.2f " % w for w in weights]
+>>> print(["%.2f " % w for w in weights])
 ['0.05 ', ...
 >>> fig = SimilarityMaps.GetSimilarityMapFromWeights(mol, weights)
 
@@ -1457,7 +1453,7 @@ You can use canonical smiles and a python dictionary to get the unique products:
 ...   smi = Chem.MolToSmiles(p[0])
 ...   uniqps[smi] = p[0]
 ...
->>> uniqps.keys()
+>>> sorted(uniqps.keys())
 ['NC1=CCC(O)CC1', 'NC1=CCCC(O)C1']
 
 Note that the molecules that are produced by the chemical reaction
@@ -1549,15 +1545,14 @@ The hierarchy is rooted at the original molecule:
 and each node tracks its children using a dictionary keyed by SMILES:
 
 >>> ks=hierarch.children.keys()
->>> ks.sort()
->>> ks
+>>> sorted(ks)
 ['[*]C(=O)CC', '[*]CCOC(=O)CC', '[*]CCOc1ccccc1', '[*]OCCOc1ccccc1', '[*]c1ccccc1']
 
 The nodes at the bottom of the hierarchy (the leaf nodes) are easily
 accessible, also as a dictionary keyed by SMILES:
 
 >>> ks=hierarch.GetLeaves().keys()
->>> ks.sort()
+>>> ks=sorted(ks)
 >>> ks
 ['[*]C(=O)CC', '[*]CCO[*]', '[*]CCOc1ccccc1', '[*]c1ccccc1']
 
@@ -1580,11 +1575,11 @@ method for fragmenting molecules along synthetically accessible bonds:
 >>> from rdkit.Chem import BRICS
 >>> cdk2mols = Chem.SDMolSupplier('data/cdk2.sdf')
 >>> m1 = cdk2mols[0]
->>> list(BRICS.BRICSDecompose(m1))
-['[4*]CC(=O)C(C)C', '[14*]c1nc(N)nc2[nH]cnc12', '[3*]O[3*]']
+>>> sorted(BRICS.BRICSDecompose(m1))
+['[14*]c1nc(N)nc2[nH]cnc12', '[3*]O[3*]', '[4*]CC(=O)C(C)C']
 >>> m2 = cdk2mols[20]
->>> list(BRICS.BRICSDecompose(m2))
-['[3*]OC', '[1*]C(=O)NN(C)C', '[14*]c1[nH]nc2c1C(=O)c1c([16*])cccc1-2', '[5*]N[5*]', '[16*]c1ccc([16*])cc1']
+>>> sorted(BRICS.BRICSDecompose(m2))
+['[1*]C(=O)NN(C)C', '[14*]c1[nH]nc2c1C(=O)c1c([16*])cccc1-2', '[16*]c1ccc([16*])cc1', '[3*]OC', '[5*]N[5*]']
 
 Notice that RDKit BRICS implementation returns the unique fragments
 generated from a molecule and that the dummy atoms are tagged to
@@ -1599,15 +1594,16 @@ group of molecules:
 ...    allfrags.update(pieces)
 >>> len(allfrags)
 90
->>> list(allfrags)[:5]
-['[4*]CC[NH3+]', '[14*]c1cnc[nH]1', '[16*]c1ccc([16*])c(Cl)c1', '[15*]C1CCCC1', '[7*]C1C(=O)Nc2ccc(S([12*])(=O)=O)cc21']
+>>> sorted(allfrags)[:5]
+['NS(=O)(=O)c1ccc(N/N=C2\\C(=O)Nc3ccc(Br)cc32)cc1', '[1*]C(=O)C(C)C', '[1*]C(=O)NN(C)C', '[1*]C(=O)NN1CC[NH+](C)CC1', '[1*]C(C)=O']
+
 
 The BRICS module also provides an option to apply the BRICS rules to a
 set of fragments to create new molecules:
 
 >>> import random
 >>> random.seed(127)
->>> fragms = [Chem.MolFromSmiles(x) for x in allfrags]
+>>> fragms = [Chem.MolFromSmiles(x) for x in sorted(allfrags)]
 >>> ms = BRICS.BRICSBuild(fragms)
 
 The result is a generator object:
@@ -1617,7 +1613,7 @@ The result is a generator object:
 
 That returns molecules on request:
 
->>> prods = [ms.next() for x in range(10)]
+>>> prods = [next(ms) for x in range(10)]
 >>> prods[0]
 <rdkit.Chem.rdchem.Mol object at 0x...>
 
@@ -1627,11 +1623,11 @@ The molecules have not been sanitized, so it's a good idea to at least update th
 ...     prod.UpdatePropertyCache(strict=False)
 ...     
 >>> Chem.MolToSmiles(prods[0],True)
-'O=[N+]([O-])c1ccc(C2CCCO2)cc1'
+'COCCO'
 >>> Chem.MolToSmiles(prods[1],True)
-'c1ccc(C2CCCO2)cc1'
+'O=C1Nc2ccc3ncsc3c2/C1=C/NCCO'
 >>> Chem.MolToSmiles(prods[2],True)
-'NS(=O)(=O)c1ccc(C2CCCO2)cc1'
+'O=C1Nc2ccccc2/C1=C/NCCO'
 
 Other fragmentation approaches
 ==============================
@@ -1973,7 +1969,7 @@ that distinguish actives from inactives:
 ...
 >>> top5 = ranker.GetTopN(5)
 >>> for id,gain,n0,n1 in top5:
-...   print int(id),'%.3f'%gain,int(n0),int(n1)
+...   print(int(id),'%.3f'%gain,int(n0),int(n1))
 ...
 702 0.081 20 17 
 328 0.073 23 25 

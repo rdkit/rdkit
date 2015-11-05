@@ -15,7 +15,7 @@ if len(sys.argv)>1:
         tests[x] = 1
 ts = []
 
-sdData = gzip.open('../Data/mols.1000.sdf.gz','rb').read()
+sdData = gzip.open('../Data/mols.1000.sdf.gz','rt').read()
 logger.info('mols from sdf')
 suppl = Chem.SDMolSupplier()
 suppl.SetData(sdData)
@@ -34,7 +34,7 @@ logger.info('Results1: %.2f seconds, %d passed, %d failed'%(t2-t1,nMols,nBad))
 ts.append(t2-t1)
 
 if tests[2]:
-    lines = gzip.open('../Data/mols.1000.txt.gz','rb').readlines()
+    lines = gzip.open('../Data/mols.1000.txt.gz','rt').readlines()
     logger.info('mols from smiles')
     nMols=0
     nBad=0
@@ -51,7 +51,7 @@ if tests[2]:
     ts.append(t2-t1)
 
 if tests[3] or tests[4] or tests[5]:
-    pattData = gzip.open('../Data/queries.txt.gz','rb').readlines()
+    pattData = gzip.open('../Data/queries.txt.gz','rt').readlines()
     pattData = [x.strip().replace('[H]','').replace('()','') for x in pattData]
     logger.info('patterns from smiles')
     patts = []
@@ -94,7 +94,7 @@ if tests[6] or tests[7] or tests[8]:
     logger.info('reading SMARTS')
     patts=[]
     t1=time.time()
-    for line in file('../Data/RLewis_smarts.txt'):
+    for line in open('../Data/RLewis_smarts.txt'):
         line = line.strip()
         if line=='' or line[0]=='#':
             continue
