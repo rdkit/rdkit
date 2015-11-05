@@ -23,6 +23,7 @@ Reading single molecules
 
 The majority of the basic molecular functionality is found in module :api:`rdkit.Chem`:
 
+>>> from __future__ import print_function
 >>> from rdkit import Chem
 
 Individual molecules can be constructed using a variety of approaches:
@@ -289,7 +290,7 @@ Multiple molecules can be written to a file using an :api:`rdkit.Chem.rdmolfiles
 
 An SDWriter can also be initialized using a file-like object:
 
->>> from io import StringIO
+>>> from rdkit.six import StringIO
 >>> sio = StringIO()
 >>> w = Chem.SDWriter(sio)
 >>> for m in mols: w.write(m)
