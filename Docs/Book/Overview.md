@@ -1,8 +1,8 @@
 # An overview of the RDKit
 
-# What is it?
+## What is it?
 
-## Open source toolkit for cheminformatics
+### Open source toolkit for cheminformatics
 -   BSD licensed
 -   Core data structures and algorithms in C++
 -   Python (2.x and 3.x) wrapper generated using Boost.Python
@@ -12,7 +12,7 @@
 -   Molecular database cartridge for PostgreSQL
 -   Cheminformatics nodes for KNIME (distributed from the KNIME community site: http://tech.knime.org/community/rdkit)
 
-## Operational:
+### Operational:
 -   http://www.rdkit.org
 -   Supports Mac/Windows/Linux
 -   Releases every 6 months
@@ -25,12 +25,12 @@
         Mailing lists
 -   Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
 
-## History:
+### History:
 -   2000-2006: Developed and used at Rational Discovery for building predictive models for ADME, Tox, biological activity
 -   June 2006: Open-source (BSD license) release of software, Rational Discovery shuts down
 -   to present: Open-source development continues, use within Novartis, contributions from Novartis back to open-source version
 
-# Functionality overview
+## Functionality overview
 ## Basics
 - Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1](#footnote1), Corina mol2 [1](#footnote1), PDB, sequence notation, FASTA (peptides only), HELM (peptides only)
 - Substructure searching
@@ -47,7 +47,7 @@
 - Salt stripping
 - Functional-group filters
 
-## 2D
+### 2D
 - 2D pharmacophores [1](#footnote1)
 - Hierarchical subgraph/fragment analysis
 - RECAP and BRICS implementations
@@ -67,7 +67,7 @@
   - Information theory (Shannon entropy, information gain, etc.)
 - Tight integration with the [IPython](http://ipython.org) notebook and [Pandas](http://pandas.pydata.org/).
 
-## 3D
+### 3D
 - 2D-\>3D conversion/conformational analysis via distance geometry, including optional use of experimental torsion angle potentials.
 - UFF and MMFF94/MMFF94S implementations for cleaning up structures
 - Pharmacophore embedding (generate a pose of a molecule that matches a 3D pharmacophore) [1](#footnote1)
@@ -81,18 +81,18 @@
   - Feature-map vectors [5](#footnote5)
 - Torsion Fingerprint Differences for comparing conformations [8](#footnote8)
 
-## Integration with other open-source projects
+### Integration with other open-source projects
 - [KNIME](https://tech.knime.org/community/rdkit): Workflow and analytics tool
 - [Django](http://django-rdkit.readthedocs.org/en/latest/): "The web framework for perfectionists with deadlines"
 - [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
 - [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
 
 
-# The Contrib Directory
+## The Contrib Directory
 
 The Contrib directory, part of the standard RDKit distribution, includes code that has been contributed by members of the community.
 
-## LEF: Local Environment Fingerprints
+### LEF: Local Environment Fingerprints
 
 Contains python source code from the publications:
 
@@ -101,13 +101,13 @@ Contains python source code from the publications:
 
 Contribution from Anna Vulpetti
 
-## M\_Kossner
+### M\_Kossner
 
 Contains a set of pharmacophoric feature definitions as well as code for finding molecular frameworks.
 
 Contribution from Markus Kossner
 
-## PBF: Plane of best fit
+### PBF: Plane of best fit
 
 Contains C++ source code and sample data from the publication:
 
@@ -115,7 +115,7 @@ Firth, N. Brown, and J. Blagg, "Plane of Best Fit: A Novel Method to Characteriz
 
 Contribution from Nicholas Firth
 
-## mmpa: Matched molecular pairs
+### mmpa: Matched molecular pairs
 
 Python source and sample data for an implementation of the matched-molecular pair algorithm described in the publication:
 
@@ -127,7 +127,7 @@ Wagener, M., & Lommerse, J. P. "The quest for bioisosteric replacements." *Journ
 
 Contribution from Jameed Hussain.
 
-## SA\_Score: Synthetic assessibility score
+### SA\_Score: Synthetic assessibility score
 
 Python source for an implementation of the SA score algorithm described in the publication:
 
@@ -135,21 +135,21 @@ Ertl, P. and Schuffenhauer A. "Estimation of Synthetic Accessibility Score of Dr
 
 Contribution from Peter Ertl
 
-## fraggle: A fragment-based molecular similarity algorithm
+### fraggle: A fragment-based molecular similarity algorithm
 
 Python source for an implementation of the fraggle similarity algorithm developed at GSK and described in this RDKit UGM presentation: https://github.com/rdkit/UGM_2013/blob/master/Presentations/Hussain.Fraggle.pdf
 
 Contribution from Jameed Hussain
 
-## pzc: Tools for building and validating classifiers
+### pzc: Tools for building and validating classifiers
 
 Contribution from Paul Czodrowski
 
-## ConformerParser: parser for Amber trajectory files
+### ConformerParser: parser for Amber trajectory files
 
 Contribution from Sereina Riniker
 
-### NP_Score: Natural-product likeness score
+#### NP_Score: Natural-product likeness score
 
 Python source for an implementation of the NP score algorithm described in the publication:
 
@@ -160,7 +160,7 @@ http://pubs.acs.org/doi/abs/10.1021/ci700286x
 
 Contribution from Peter Ertl
 
-# Footnotes
+## Footnotes
 
 <a name="footnote1">1</a>: These implementations are functional but are not necessarily the best, fastest, or most complete.
 
@@ -180,7 +180,7 @@ Contribution from Peter Ertl
 
 
 
-# License
+## License
 
 This document is copyright (C) 2013-2015 by Greg Landrum
 
