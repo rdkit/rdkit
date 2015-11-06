@@ -13,7 +13,7 @@
 #include <vector>
 #include <stack>
 #include <map>
-#include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace RDKit {
   class ROMol;
