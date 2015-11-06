@@ -27,6 +27,8 @@ Maciek Wojcikowski
  (github issue #519 from NadineSchneider)
   - MolDraw2D: Fix in highlighting atoms
  (github pull #521 from NadineSchneider)
+  - Cartridge: index failing for molecular equality in some circumstances
+ (github issue #525 from greglandrum)
   - Bad ring finding in a complex fused ring
  (github issue #526 from greglandrum)
   - Fixed crash upon closing a gzip/bzip2 stream opened in binary mode for use with SDWriter under Python3
@@ -113,14 +115,22 @@ Maciek Wojcikowski
  (github pull #646 from greglandrum)
   - Fix/various bug fixes filtercatalog and bad operator
  (github pull #648 from bp-kelley)
+  - unlocking or destroying a locked mutex in the substructure matcher
+ (github issue #653 from greglandrum)
+  - MMPA compile error with Microsoft Visual C++ Compiler for Python 2.7
+ (github issue #655 from rvianello)
 
 ## New Features and Enhancements:
+  - enable popcount by default for cartridge
+ (github issue #428 from greglandrum)
   - Added the RSMD calculation over N molecules in the cookbook.
  (github pull #495 from malteseunderdog)
   - Modified force field constraint tests to be more robust
  (github pull #503 from ptosco)
   - Fix mol drawing on Python3 (issue #460)
  (github pull #504 from apahl)
+  - mmpa first version was added
+ (github pull #505 from AlexanderSavelyev)
   - Forcefield tests now use RDKit::feq() instead of RDKit::round()
  (github pull #506 from ptosco)
   - SDMolSupplier(), setData() and strictParsing
@@ -179,6 +189,8 @@ Maciek Wojcikowski
  (github pull #602 from strets123)
   - Automatic atom reordering in TorsionFingerprints
  (github pull #603 from sriniker)
+  - remove bare excepts
+ (github pull #606 from adalke)
   - Added option to use SVG rendering in pandas data frames
  (github pull #609 from samoturk)
   - Handle inserting molecules with conformers into molecules without conformers
@@ -211,6 +223,8 @@ Maciek Wojcikowski
  (github pull #647 from sriniker)
   - Build multithreading support by default when boost::threads is present
  (github issue #649 from greglandrum)
+  - Minimal SWIG Java wrappers for ResonanceMolSupplier
+ (github pull #657 from ptosco)
 
 ## New Database Cartridge Features:
   - Support for PostgreSQL v8.x has been removed
@@ -218,7 +232,8 @@ Maciek Wojcikowski
 
 ## New Java Wrapper Features:
   - Support for FilterCatalogs
-
+  - Support for ResonanceMolSuppliers
+  
 ## Deprecated code (to be removed in next release):
 
 ## Removed code:
