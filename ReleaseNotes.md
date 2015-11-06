@@ -13,6 +13,8 @@ Maciek Wojcikowski
 
   - Addition of parsers/writers for sequence notation, FASTA, and basic HELM
   - Improved conformation generation based on experimental torsional parameters
+  - Much better filtering of generated conformations to ensure they
+    match the chirality of the input structure
   - New method for enumerating molecular resonance structures
   - Addition of a molecular FilterCatalog data structure
 

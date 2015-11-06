@@ -32,7 +32,7 @@
 
 # Functionality overview
 ## Basics
--   Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1](#footnote1), Corina mol2 [1](#footnote1), PDB
+- Input/Output: SMILES/SMARTS, SDF, TDT, SLN [1](#footnote1), Corina mol2 [1](#footnote1), PDB, sequence notation, FASTA (peptides only), HELM (peptides only)
 - Substructure searching
 - Canonical SMILES
 - Chirality support (i.e. R/S or E/Z labeling)
@@ -40,7 +40,7 @@
 - Chemical reactions
 - Molecular serialization (e.g. mol \<-\> text)
 - 2D depiction, including constrained depiction
-- Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, etc.
+- Fingerprinting: Daylight-like, atom pairs, topological torsions, Morgan algorithm, “MACCS keys”, extended reduced graphs, etc.
 - Similarity/diversity picking
 - Gasteiger-Marsili charges
 - Bemis and Murcko scaffold determination
@@ -48,26 +48,27 @@
 - Functional-group filters
 
 ## 2D
--   2D pharmacophores [1](#footnote1)
--   Hierarchical subgraph/fragment analysis
--   RECAP and BRICS implementations
--   Multi-molecule maximum common substructure [2](#footnote2)
--   Functional group filtering
--   Molecular descriptor library:
-    - Topological (κ3, Balaban J, etc.)
-    - Compositional (Number of Rings, Number of Aromatic Heterocycles, etc.)
-    - Electrotopological state (Estate)
-    - clogP, MR (Wildman and Crippen approach)
-    - “MOE like” VSA descriptors
-    - MQN [6](#footnote6)
--   Similarity Maps [7](#footnote7)
--   Machine Learning:
-    - Clustering (hierarchical, Butina)
-    - Information theory (Shannon entropy, information gain, etc.)
--   Tight integration with the [IPython](http://ipython.org) notebook and [Pandas](http://pandas.pydata.org/).
+- 2D pharmacophores [1](#footnote1)
+- Hierarchical subgraph/fragment analysis
+- RECAP and BRICS implementations
+- Multi-molecule maximum common substructure [2](#footnote2)
+- Functional group filtering
+- Enumeration of molecular resonance structures
+- Molecular descriptor library:
+  - Topological (κ3, Balaban J, etc.)
+  - Compositional (Number of Rings, Number of Aromatic Heterocycles, etc.)
+  - Electrotopological state (Estate)
+  - clogP, MR (Wildman and Crippen approach)
+  - “MOE like” VSA descriptors
+  - MQN [6](#footnote6)
+- Similarity Maps [7](#footnote7)
+- Machine Learning:
+  - Clustering (hierarchical, Butina)
+  - Information theory (Shannon entropy, information gain, etc.)
+- Tight integration with the [IPython](http://ipython.org) notebook and [Pandas](http://pandas.pydata.org/).
 
 ## 3D
-- 2D-\>3D conversion/conformational analysis via distance geometry
+- 2D-\>3D conversion/conformational analysis via distance geometry, including optional use of experimental torsion angle potentials.
 - UFF and MMFF94/MMFF94S implementations for cleaning up structures
 - Pharmacophore embedding (generate a pose of a molecule that matches a 3D pharmacophore) [1](#footnote1)
 - Feature maps
