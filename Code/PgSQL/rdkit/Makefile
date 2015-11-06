@@ -33,7 +33,7 @@ ifeq ($(USE_POPCOUNT),1)
 endif
 
 ifeq ($(USE_THREADS),1)
-  THREADLIBS=-L${BOOSTHOME}/lib -lboost_system
+  THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system
 endif
 
 RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lMolHash -lFMCS -lChemReactions -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral
