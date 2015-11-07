@@ -121,7 +121,9 @@ Maciek Wojcikowski
  (github issue #653 from greglandrum)
   - MMPA compile error with Microsoft Visual C++ Compiler for Python 2.7
  (github issue #655 from rvianello)
-
+  - new canon: fix in special symmetry invariant
+ (github pull #663 from NadineSchneider)
+  
 ## New Features and Enhancements:
   - enable popcount by default for cartridge
  (github issue #428 from greglandrum)
