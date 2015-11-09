@@ -1,3 +1,27 @@
+# Release_2016.03.1
+(Changes relative to Release_2015.09.1)
+
+## Acknowledgements: 
+
+## Highlights:
+
+## Bug Fixes:
+  
+## New Features and Enhancements:
+
+## New Database Cartridge Features:
+
+## New Java Wrapper Features:
+  
+## Deprecated code (to be removed in next release):
+
+## Removed code:
+
+## Contrib updates:
+
+## Other:
+
+
 # Release_2015.09.1
 (Changes relative to Release_2015.03.1)
 
@@ -121,7 +145,9 @@ Maciek Wojcikowski
  (github issue #653 from greglandrum)
   - MMPA compile error with Microsoft Visual C++ Compiler for Python 2.7
  (github issue #655 from rvianello)
-
+  - new canon: fix in special symmetry invariant
+ (github pull #663 from NadineSchneider)
+  
 ## New Features and Enhancements:
   - enable popcount by default for cartridge
  (github issue #428 from greglandrum)
