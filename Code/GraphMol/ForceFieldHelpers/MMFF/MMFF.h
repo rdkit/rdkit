@@ -11,6 +11,7 @@
 #define RD_MMFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
 #include <RDGeneral/RDThreads.h>
+#include "AtomTyper.h"
 #include "Builder.h"
 
 
