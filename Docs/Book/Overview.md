@@ -149,7 +149,7 @@ Contribution from Paul Czodrowski
 
 Contribution from Sereina Riniker
 
-#### NP_Score: Natural-product likeness score
+### NP_Score: Natural-product likeness score
 
 Python source for an implementation of the NP score algorithm described in the publication:
 
