@@ -136,10 +136,10 @@ std::cout<<res.size()+1<<": ";
 #ifdef _DEBUG
 std::cout<<"\n";            
 #endif
-        RWMol *core=NULL, *side_chains=NULL;   // core & side_chains output molecules
+        RWMOL_SPTR core, side_chains;   // core & side_chains output molecules
 
         if(isotope == 1){
-            side_chains = new RWMol(em); // output = '%s,%s,,%s.%s'
+	  side_chains = RWMOL_SPTR(new RWMol(em)); // output = '%s,%s,,%s.%s'
 // DEBUG PRINT
 #ifdef _DEBUG
 //OK: std::cout<<res.size()+1<<" isotope="<< isotope <<","<< MolToSmiles(*side_chains, true) <<"\n";
@@ -175,7 +175,7 @@ std::cout<<"isotope>=3: invalid fragments. fragment with maxCut connection point
             }
 
             size_t iCore = -1;
-            side_chains = new RWMol;
+            side_chains = RWMOL_SPTR(new RWMol);
             std::map<unsigned, unsigned> visitedBonds;// key is bond index in source molecule
             unsigned maxAttachments = 0;
             for(size_t i=0; i < frags.size(); i++) {
@@ -203,8 +203,8 @@ std::cout<<"isotope>=3: invalid fragments. fragment with maxCut connection point
                             || newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx())
                             || visitedBonds.end() != visitedBonds.find(bond->getIdx()) )
                                 continue;
-                            unsigned ai1 = newAtomMap[bond->getBeginAtomIdx()];
-                            unsigned ai2 = newAtomMap[bond->getEndAtomIdx()];
+                            unsigned ai1 = newAtomMap.at(bond->getBeginAtomIdx());
+                            unsigned ai2 = newAtomMap.at(bond->getEndAtomIdx());
                             unsigned bi  = side_chains->addBond(ai1, ai2, bond->getBondType());
                             visitedBonds[bond->getIdx()] = bi;
                         }
@@ -222,7 +222,7 @@ if(iCore != -1)
             }
             // build core molecule from selected fragment
             if(iCore != -1) {
-                core = new RWMol;
+         	core = RWMOL_SPTR(new RWMol);
                 visitedBonds.clear();
                 std::map<unsigned, unsigned> newAtomMap;  // key is atom index in source molecule
                 for(size_t i=0; i < frags[iCore].size(); i++) {
@@ -240,8 +240,8 @@ if(iCore != -1)
                         || newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx())
                         || visitedBonds.end() != visitedBonds.find(bond->getIdx()) )
                             continue;
-                        unsigned ai1 = newAtomMap[bond->getBeginAtomIdx()];
-                        unsigned ai2 = newAtomMap[bond->getEndAtomIdx()];
+                        unsigned ai1 = newAtomMap.at(bond->getBeginAtomIdx());
+                        unsigned ai2 = newAtomMap.at(bond->getEndAtomIdx());
                         unsigned bi  = core->addBond(ai1, ai2, bond->getBondType());
                         visitedBonds[bond->getIdx()] = bi;
                     }
@@ -259,10 +259,10 @@ if(iCore != -1)
             const std::pair<ROMOL_SPTR,ROMOL_SPTR>& r = res[ri];
             if(  side_chains->getNumAtoms() == r.second->getNumAtoms()
               && side_chains->getNumBonds() == r.second->getNumBonds()
-              &&((NULL==core && NULL==r.first.get()) 
-               ||(NULL!=core && NULL!=r.first.get()
-                && core->getNumAtoms() == r.first->getNumAtoms() 
-                && core->getNumBonds() == r.first->getNumBonds()) )   ) {
+		 &&((NULL==core.get() && NULL==r.first.get()) 
+		    ||(NULL!=core.get() && NULL!=r.first.get()
+		       && core->getNumAtoms() == r.first->getNumAtoms() 
+		       && core->getNumBonds() == r.first->getNumBonds()) )   ) {
                 // ToDo accurate check:
                 // 1. compare hash code
                 if(computeMorganCodeHash(*side_chains) == computeMorganCodeHash(*r.second)
@@ -276,7 +276,7 @@ if(iCore != -1)
             }
         }
         if(!resFound)
-            res.push_back(std::pair<ROMOL_SPTR,ROMOL_SPTR>(ROMOL_SPTR(core), ROMOL_SPTR(side_chains)));
+	  res.push_back(std::pair<ROMOL_SPTR,ROMOL_SPTR>(core, side_chains));//
 #ifdef _DEBUG
         else
 std::cout<<res.size()+1<<" --- DUPLICATE Result FOUND --- ri="<<ri<<"\n";
