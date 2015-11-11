@@ -20,10 +20,11 @@ namespace python = boost::python;
 namespace {
   python::tuple fragmentMolHelper(const RDKit::ROMol &mol,
                                   unsigned int maxCuts,
+                                  unsigned int maxCutBonds,
                                   const std::string& pattern,
                                   bool resultsAsMols){
     std::vector< std::pair<RDKit::ROMOL_SPTR,RDKit::ROMOL_SPTR> > tres;
-    bool ok=RDKit::MMPA::fragmentMol(mol,tres,maxCuts,pattern);
+    bool ok=RDKit::MMPA::fragmentMol(mol,tres,maxCuts,maxCutBonds,pattern);
     python::list pyres;
     if(ok){
       for(std::vector< std::pair<RDKit::ROMOL_SPTR,RDKit::ROMOL_SPTR> >::const_iterator pr=tres.begin();
@@ -56,6 +57,7 @@ BOOST_PYTHON_MODULE(rdMMPA) {
   python::def("FragmentMol", fragmentMolHelper,
               (python::arg("mol"),
                python::arg("maxCuts")=3,
+               python::arg("maxCutBonds")=20,
                python::arg("pattern")="[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
                python::arg("resultsAsMols")=true),
               docString.c_str());

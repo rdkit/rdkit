@@ -311,6 +311,7 @@ std::cout<<res.size()+1<<" --- DUPLICATE Result FOUND --- ri="<<ri<<"\n";
     bool fragmentMol(const ROMol& mol,
                      std::vector< std::pair<ROMOL_SPTR,ROMOL_SPTR> >& res,
                      unsigned int maxCuts,
+                     unsigned int maxCutBonds,
                      const std::string& pattern) {
 #ifdef _DEBUG
 for(size_t i=0; i < mol.getNumAtoms(); i++)
@@ -360,6 +361,8 @@ for(size_t i=0; i < matching_atoms.size(); i++)
 
         std::vector<BondVector_t> matching_bonds; // List of matched query's bonds
         convertMatchingToBondVect(matching_bonds, matching_atoms, mol);
+        if (matching_bonds.size() > maxCutBonds)
+          return false;
 #ifdef _DEBUG
 std::cout<<"total matching_bonds = "<<matching_bonds.size()<<"\n";
 #endif
