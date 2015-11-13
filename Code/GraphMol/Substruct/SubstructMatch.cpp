@@ -578,7 +578,8 @@ namespace RDKit{
       MatchVectType mCopy = m;
       std::sort(mCopy.begin(), mCopy.end(), matchCompare);
       for (std::vector<MatchVectType>::iterator it = matches.end();
-        isToBeAdded && it-- != matches.begin();) {
+        isToBeAdded && it != matches.begin();) {
+        --it;
         isToBeAdded = (it->size() != mCopy.size());
         if (!isToBeAdded) {
           MatchVectType matchCopy = *it;

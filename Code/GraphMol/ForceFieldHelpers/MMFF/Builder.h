@@ -26,6 +26,7 @@ namespace ForceFields {
 namespace RDKit {
   class ROMol;
   namespace MMFF {
+    class MMFFMolProperties;
 
     //! Builds and returns a MMFF force field for a molecule
     /*!
