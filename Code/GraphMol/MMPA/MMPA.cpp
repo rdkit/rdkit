@@ -203,8 +203,8 @@ std::cout<<"isotope>=3: invalid fragments. fragment with maxCut connection point
                             || newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx())
                             || visitedBonds.end() != visitedBonds.find(bond->getIdx()) )
                                 continue;
-                            unsigned ai1 = newAtomMap.at(bond->getBeginAtomIdx());
-                            unsigned ai2 = newAtomMap.at(bond->getEndAtomIdx());
+                            unsigned ai1 = newAtomMap[bond->getBeginAtomIdx()];
+                            unsigned ai2 = newAtomMap[bond->getEndAtomIdx()];
                             unsigned bi  = side_chains->addBond(ai1, ai2, bond->getBondType());
                             visitedBonds[bond->getIdx()] = bi;
                         }
@@ -240,8 +240,8 @@ if(iCore != -1)
                         || newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx())
                         || visitedBonds.end() != visitedBonds.find(bond->getIdx()) )
                             continue;
-                        unsigned ai1 = newAtomMap.at(bond->getBeginAtomIdx());
-                        unsigned ai2 = newAtomMap.at(bond->getEndAtomIdx());
+                        unsigned ai1 = newAtomMap[bond->getBeginAtomIdx()];
+                        unsigned ai2 = newAtomMap[bond->getEndAtomIdx()];
                         unsigned bi  = core->addBond(ai1, ai2, bond->getBondType());
                         visitedBonds[bond->getIdx()] = bi;
                     }
