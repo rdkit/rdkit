@@ -1,3 +1,16 @@
+# Release_2015.09.2
+(Changes relative to Release_2015.09.1)
+
+## Acknowledgements: 
+Brian Kelley, Paolo Tosco, Riccardo Vianello
+
+## Bug Fixes:
+  - Fixed a post-decrement which causes a crash when compiling under Windows with MSVC 9
+  (from ptosco)
+  - Fixes a memory leak in fragmentMol
+  (github #669 from bp-kelley)
+
+
 # Release_2015.09.1
 (Changes relative to Release_2015.03.1)
 
