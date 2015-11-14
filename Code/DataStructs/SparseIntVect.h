@@ -54,7 +54,9 @@ namespace RDKit{
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-compare"
-#elif defined(__GNUC__) || defined(__GNUG__)
+#elif ( defined(__GNUC__) || defined(__GNUG__) ) && \
+  ( __GNUC__ > 4 ||                                    \
+    (__GNUC__ == 4 && __GNUC_MINOR__ > 1 ) )
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
@@ -84,7 +86,9 @@ namespace RDKit{
     };
 #ifdef __clang__
 #pragma clang diagnostic pop
-#elif defined(__GNUC__) || defined(__GNUG__)
+#elif defined(__GNUC__) || defined(__GNUG__) && \
+  ( __GNUC__ > 4 ||                                    \
+    (__GNUC__ == 4 && __GNUC_MINOR__ > 1 ) )
 #pragma GCC diagnostic pop
 #endif
     //! support indexing using []
