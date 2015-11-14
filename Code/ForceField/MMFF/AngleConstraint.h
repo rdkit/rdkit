@@ -15,42 +15,46 @@
 #include <ForceField/Contrib.h>
 
 namespace ForceFields {
-  namespace MMFF {
+namespace MMFF {
 
-    //! An angle range constraint modelled after a AngleBendContrib
-    class AngleConstraintContrib : public ForceFieldContrib {
-    public:
-      AngleConstraintContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1) {};
-      //! Constructor
-      /*!
-      \param owner       pointer to the owning ForceField
-      \param idx1        index of atom1 in the ForceField's positions
-      \param idx2        index of atom2 in the ForceField's positions
-      \param idx3        index of atom3 in the ForceField's positions
-      \param minAngle    minimum angle
-      \param maxAngle    maximum angle
-      \param forceConst  force Constant
-	
-      */
-      AngleConstraintContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-				unsigned int idx3, double minAngleDeg, double maxAngleDeg, double forceConst);
-      AngleConstraintContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-				unsigned int idx3, bool relative, double minAngleDeg, double maxAngleDeg,
-        double forceConst);
+//! An angle range constraint modelled after a AngleBendContrib
+class AngleConstraintContrib : public ForceFieldContrib {
+ public:
+  AngleConstraintContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1){};
+  //! Constructor
+  /*!
+  \param owner       pointer to the owning ForceField
+  \param idx1        index of atom1 in the ForceField's positions
+  \param idx2        index of atom2 in the ForceField's positions
+  \param idx3        index of atom3 in the ForceField's positions
+  \param minAngle    minimum angle
+  \param maxAngle    maximum angle
+  \param forceConst  force Constant
 
-      ~AngleConstraintContrib() {
-      }
-      double getEnergy(double *pos) const;
+  */
+  AngleConstraintContrib(ForceField *owner, unsigned int idx1,
+                         unsigned int idx2, unsigned int idx3,
+                         double minAngleDeg, double maxAngleDeg,
+                         double forceConst);
+  AngleConstraintContrib(ForceField *owner, unsigned int idx1,
+                         unsigned int idx2, unsigned int idx3, bool relative,
+                         double minAngleDeg, double maxAngleDeg,
+                         double forceConst);
 
-      void getGrad(double *pos, double *grad) const;
+  ~AngleConstraintContrib() {}
+  double getEnergy(double *pos) const;
 
-      virtual AngleConstraintContrib *copy() const { return new AngleConstraintContrib(*this); };
-    private:
-      int d_at1Idx, d_at2Idx, d_at3Idx; //!< indices of atoms forming the angle
-      double d_minAngleDeg, d_maxAngleDeg;        //!< rest amplitudes of the angle
-      double d_forceConstant;  //!< force constant of the angle constraint
+  void getGrad(double *pos, double *grad) const;
 
-    };
-  }
+  virtual AngleConstraintContrib *copy() const {
+    return new AngleConstraintContrib(*this);
+  };
+
+ private:
+  int d_at1Idx, d_at2Idx, d_at3Idx;     //!< indices of atoms forming the angle
+  double d_minAngleDeg, d_maxAngleDeg;  //!< rest amplitudes of the angle
+  double d_forceConstant;  //!< force constant of the angle constraint
+};
+}
 }
 #endif

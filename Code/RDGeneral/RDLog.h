@@ -14,33 +14,36 @@
 #if 1
 #include <iostream>
 namespace boost {
-  namespace logging {
-    class rdLogger{
-    public:
-    rdLogger(std::ostream *dest,bool owner=false) : dp_dest(dest), df_owner(owner),
-        df_enabled(true) {};
-      std::ostream *dp_dest;
-      bool df_owner,df_enabled;
-      ~rdLogger(){
-        if(dp_dest){
-          dp_dest->flush();
-          if(df_owner){
-            delete dp_dest;
-          }
-        }
+namespace logging {
+class rdLogger {
+ public:
+  rdLogger(std::ostream *dest, bool owner = false)
+      : dp_dest(dest), df_owner(owner), df_enabled(true){};
+  std::ostream *dp_dest;
+  bool df_owner, df_enabled;
+  ~rdLogger() {
+    if (dp_dest) {
+      dp_dest->flush();
+      if (df_owner) {
+        delete dp_dest;
       }
-    };
-    void enable_logs(const char *arg);
-    void enable_logs(const std::string &arg);
-    void disable_logs(const char *arg);
-    void disable_logs(const std::string &arg);
+    }
   }
+};
+void enable_logs(const char *arg);
+void enable_logs(const std::string &arg);
+void disable_logs(const char *arg);
+void disable_logs(const std::string &arg);
+}
 }
 namespace RDLog {
-  std::ostream &toStream(std::ostream &);
+std::ostream &toStream(std::ostream &);
 }
-#define BOOST_LOG(__arg__) if((!__arg__)||(!__arg__->dp_dest)||!(__arg__->df_enabled)) ; else RDLog::toStream(*(__arg__->dp_dest))
-
+#define BOOST_LOG(__arg__)                                         \
+  if ((!__arg__) || (!__arg__->dp_dest) || !(__arg__->df_enabled)) \
+    ;                                                              \
+  else                                                             \
+  RDLog::toStream(*(__arg__->dp_dest))
 
 extern boost::logging::rdLogger *rdAppLog;
 extern boost::logging::rdLogger *rdDebugLog;
@@ -48,7 +51,6 @@ extern boost::logging::rdLogger *rdInfoLog;
 extern boost::logging::rdLogger *rdErrorLog;
 extern boost::logging::rdLogger *rdWarningLog;
 extern boost::logging::rdLogger *rdStatusLog;
-
 
 #else
 #define BOOST_LOG_NO_LIB
@@ -61,7 +63,6 @@ BOOST_DECLARE_LOG(rdWarningLog)
 BOOST_DECLARE_LOG(rdStatusLog)
 #endif
 namespace RDLog {
-  void InitLogs();
+void InitLogs();
 }
 #endif
-

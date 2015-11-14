@@ -12,9 +12,8 @@
 #include <GraphMol/RWMol.h>
 
 namespace RDKit {
-  void ConnectTheDots(RWMol *mol);
-  void StandardPDBResidueBondOrders(RWMol *mol);
+void ConnectTheDots(RWMol *mol);
+void StandardPDBResidueBondOrders(RWMol *mol);
 }
 
 #endif  // _RD_PROXIMITYBONDS_H_
-

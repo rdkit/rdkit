@@ -13,7 +13,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -32,9 +33,7 @@
 #include "FilterCatalogEntry.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
-
-namespace RDKit
-{
+namespace RDKit {
 
 const std::string DESCRIPTION = "description";
 std::string FilterCatalogEntry::getDescription() const {
@@ -47,72 +46,65 @@ void FilterCatalogEntry::setDescription(const std::string &desc) {
   d_props.setVal(DESCRIPTION, desc);
 }
 
-
-  void FilterCatalogEntry::toStream(std::ostream &ss) const {
+void FilterCatalogEntry::toStream(std::ostream &ss) const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
-    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+  PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
-    boost::archive::text_oarchive ar(ss);
-    ar << *this;
+  boost::archive::text_oarchive ar(ss);
+  ar << *this;
 #endif
-  }
+}
 
-  std::string FilterCatalogEntry::Serialize() const {
-    std::stringstream ss;
-    toStream(ss);
-    return ss.str();
-  }
+std::string FilterCatalogEntry::Serialize() const {
+  std::stringstream ss;
+  toStream(ss);
+  return ss.str();
+}
 
-  void FilterCatalogEntry::initFromStream(std::istream &ss) {
+void FilterCatalogEntry::initFromStream(std::istream &ss) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
-    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+  PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
-    boost::archive::text_iarchive ar(ss);
-    ar >> *this;
+  boost::archive::text_iarchive ar(ss);
+  ar >> *this;
 #endif
-  }
+}
 
-  void FilterCatalogEntry::initFromString(const std::string &text) {
-    std::stringstream ss(text);
-    initFromStream(ss);
-  }
-    
+void FilterCatalogEntry::initFromString(const std::string &text) {
+  std::stringstream ss(text);
+  initFromStream(ss);
+}
 
-  FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
-                                             unsigned int num_props,
-                                             const FilterProperty_t *props) {
+FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
+                                           unsigned int num_props,
+                                           const FilterProperty_t *props) {
   const int debugParse = 0;
   const bool mergeHs = true;
   ROMOL_SPTR pattern(SmartsToMol(data.smarts, debugParse, mergeHs));
-  if (!pattern.get())
-    return 0;
+  if (!pattern.get()) return 0;
 
-  // The filter has the concept of the maximum number of times the pattern is allowed
+  // The filter has the concept of the maximum number of times the pattern is
+  // allowed
   //   without triggering
   // The matcher has the concept of the minimum pattern count before the pattern
   //  is triggered.
   // Hence pattern.minCount == filter.maxCount + 1
   const unsigned int minCount = data.max ? data.max + 1 : 1;
-  FilterCatalogEntry *entry =  new FilterCatalogEntry(
-              data.name,
-              boost::shared_ptr<FilterMatcherBase>(
-                new SmartsMatcher(data.name, pattern, minCount)));
+  FilterCatalogEntry *entry = new FilterCatalogEntry(
+      data.name, boost::shared_ptr<FilterMatcherBase>(
+                     new SmartsMatcher(data.name, pattern, minCount)));
 
   if (!entry->isValid()) {
     delete entry;
-      return 0;
+    return 0;
   }
 
   // add the props
-  for(unsigned int i=0; i<num_props; i++) {
+  for (unsigned int i = 0; i < num_props; i++) {
     std::string val(props[i].value);
-    entry->getProps().setVal<std::string>(std::string(props[i].key),
-                                          val);
+    entry->getProps().setVal<std::string>(std::string(props[i].key), val);
   }
-      
+
   return entry;
 }
-} // end namespace RDKit
-  
-
-
+}  // end namespace RDKit

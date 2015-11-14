@@ -14,18 +14,14 @@
 #include <GraphMol/FragCatalog/FragFPGenerator.h>
 
 namespace python = boost::python;
-namespace RDKit{
-  struct fragFPgen_wrapper {
-    static void wrap() {
-      python::class_<FragFPGenerator>("FragFPGenerator", python::init<>())
+namespace RDKit {
+struct fragFPgen_wrapper {
+  static void wrap() {
+    python::class_<FragFPGenerator>("FragFPGenerator", python::init<>())
         .def("GetFPForMol", &FragFPGenerator::getFPForMol,
-             python::return_value_policy<python::manage_new_object>())
-        ;
-    };
+             python::return_value_policy<python::manage_new_object>());
   };
+};
 }
 
-void wrap_fragFPgen() {
-  RDKit::fragFPgen_wrapper::wrap();
-}
-
+void wrap_fragFPgen() { RDKit::fragFPgen_wrapper::wrap(); }

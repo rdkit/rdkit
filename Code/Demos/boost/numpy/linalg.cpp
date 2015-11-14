@@ -7,16 +7,14 @@
 #define PY_ARRAY_UNIQUE_SYMBOL RD_array_API
 #include "numpy/oldnumeric.h"
 
-
 namespace python = boost::python;
 
-double GetFirstElement(python::numeric::array &x){
+double GetFirstElement(python::numeric::array &x) {
   PyArrayObject *ptr = (PyArrayObject *)x.ptr();
-  void* data = ptr->data;
-  double res=0.0;
+  void *data = ptr->data;
+  double res = 0.0;
 
-  switch(ptr->descr->type_num)
-    {
+  switch (ptr->descr->type_num) {
     case PyArray_DOUBLE:
       res = ((double *)data)[0];
       break;
@@ -29,14 +27,8 @@ double GetFirstElement(python::numeric::array &x){
     case PyArray_INT:
       res = (double)((int *)data)[0];
       break;
-    }
+  }
   return res;
-  
 }
 
-
-BOOST_PYTHON_MODULE(linalg)
-{
-  python::def("GetFirstElement",GetFirstElement);
-
-}
+BOOST_PYTHON_MODULE(linalg) { python::def("GetFirstElement", GetFirstElement); }

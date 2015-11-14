@@ -12,55 +12,47 @@
 
 #include "Query.h"
 
-namespace Queries{
+namespace Queries {
 
-  //! a Query implementing XOR: requires exactly one child to be \c true
-  template <class MatchFuncArgType, class DataFuncArgType=MatchFuncArgType,
-    bool needsConversion=false>
-  class XOrQuery : public Query<MatchFuncArgType, DataFuncArgType,needsConversion> {
+//! a Query implementing XOR: requires exactly one child to be \c true
+template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
+          bool needsConversion = false>
+class XOrQuery
+    : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
+ public:
+  typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
+  XOrQuery() { this->df_negate = false; };
 
-  public:
-    typedef Query<MatchFuncArgType, DataFuncArgType,needsConversion> BASE;
-    XOrQuery() {
-      this->df_negate = false;
-    };
-
-    bool Match(const DataFuncArgType what) const {
-      bool res = false;
-      typename BASE::CHILD_VECT_CI it1;
-      for(it1=this->beginChildren();
-	  it1!=this->endChildren();
-	  ++it1){
-	bool tmp = (*it1)->Match(what);
-	if( tmp ){
-	  if( res ){
-	    res = false;
-	    break;
-	  } else{
-	    res = true;
-	  }
-	}
+  bool Match(const DataFuncArgType what) const {
+    bool res = false;
+    typename BASE::CHILD_VECT_CI it1;
+    for (it1 = this->beginChildren(); it1 != this->endChildren(); ++it1) {
+      bool tmp = (*it1)->Match(what);
+      if (tmp) {
+        if (res) {
+          res = false;
+          break;
+        } else {
+          res = true;
+        }
       }
-      if( this->getNegation() ) res = !res;
-      return res;
-    };
-
-    Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
-    copy( ) const {
-      XOrQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new XOrQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
-
-      typename BASE::CHILD_VECT_CI i;
-      for(i=this->beginChildren();
-	  i!=this->endChildren();
-	  ++i){
-        res->addChild(typename BASE::CHILD_TYPE(i->get()->copy()));
-      }
-      res->setNegation(this->getNegation());
-      res->d_description = this->d_description;
-      return res;
-    };
+    }
+    if (this->getNegation()) res = !res;
+    return res;
   };
 
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+    XOrQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+        new XOrQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
+
+    typename BASE::CHILD_VECT_CI i;
+    for (i = this->beginChildren(); i != this->endChildren(); ++i) {
+      res->addChild(typename BASE::CHILD_TYPE(i->get()->copy()));
+    }
+    res->setNegation(this->getNegation());
+    res->d_description = this->d_description;
+    return res;
+  };
+};
 }
 #endif

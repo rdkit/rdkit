@@ -11,8 +11,9 @@
 
 namespace RDKit {
 
-  //! a hierarchical catalog for holding molecules
-  typedef RDCatalog::HierarchCatalog<MolCatalogEntry, MolCatalogParams, int> MolCatalog;
+//! a hierarchical catalog for holding molecules
+typedef RDCatalog::HierarchCatalog<MolCatalogEntry, MolCatalogParams, int>
+    MolCatalog;
 }
 
-#endif    
+#endif

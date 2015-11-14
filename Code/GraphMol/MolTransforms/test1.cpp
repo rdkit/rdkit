@@ -1,5 +1,5 @@
 //  $Id$
-// 
+//
 //   Copyright (C) 2003-2006 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
@@ -20,7 +20,8 @@
 
 using namespace RDKit;
 using namespace MolTransforms;
-bool comparePts(const RDGeom::Point3D &pt1, const RDGeom::Point3D &pt2, double tol=1.0e-4) {
+bool comparePts(const RDGeom::Point3D &pt1, const RDGeom::Point3D &pt2,
+                double tol = 1.0e-4) {
   RDGeom::Point3D tpt = pt1;
   tpt -= pt2;
   return (tpt.length() < tol);
@@ -31,20 +32,22 @@ void test1Canonicalization() {
   Conformer *conf = new Conformer(1);
   conf->setAtomPos(0, RDGeom::Point3D(4.0, 5.0, 6.0));
   int cid = mol->addConformer(conf, true);
-  CHECK_INVARIANT(cid>=0,"")
+  CHECK_INVARIANT(cid >= 0, "")
   RDGeom::Point3D pt = computeCentroid(*conf);
   CHECK_INVARIANT(comparePts(pt, RDGeom::Point3D(4.0, 5.0, 6.0)), "");
-  
+
   RDGeom::Transform3D *trans = computeCanonicalTransform(*conf);
   transformConformer(*conf, *trans);
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(0.0, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(0), RDGeom::Point3D(0.0, 0.0, 0.0)), "");
 
   conf->setAtomPos(0, RDGeom::Point3D(4.0, 5.0, 6.0));
   canonicalizeConformer(*conf);
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(0.0, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(0), RDGeom::Point3D(0.0, 0.0, 0.0)), "");
 
   delete mol;
-  //delete conf;
+  // delete conf;
   delete trans;
   // lets try two points now
   mol = SmilesToMol("CC", 0, 1);
@@ -54,19 +57,23 @@ void test1Canonicalization() {
   cid = mol->addConformer(conf, true);
   trans = computeCanonicalTransform(*conf);
   canonicalizeConformer(*conf);
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
 
   conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
   conf->setAtomPos(1, RDGeom::Point3D(0.0, 1.5, 0.0));
   trans = computeCanonicalTransform(*conf);
   canonicalizeConformer(*conf);
-  
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
+
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
   delete mol;
   delete trans;
-  
+
   mol = SmilesToMol("CC", 0, 1);
   conf = new Conformer(2);
   conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
@@ -75,8 +82,10 @@ void test1Canonicalization() {
   trans = computeCanonicalTransform(*conf);
   transformConformer(*conf, *trans);
   canonicalizeConformer(*conf);
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
   delete mol;
   delete trans;
 
@@ -86,24 +95,34 @@ void test1Canonicalization() {
   conf->setAtomPos(1, RDGeom::Point3D(-0.88, -0.18, -0.04));
   conf->setAtomPos(2, RDGeom::Point3D(.26, 0.82, 0.14));
   cid = mol->addConformer(conf, true);
-  //trans = computeCanonicalTransform(*conf);
-  //transformConformer(*conf, *trans);
+  // trans = computeCanonicalTransform(*conf);
+  // transformConformer(*conf, *trans);
   canonicalizeConformer(*conf);
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.6418, 0.6158, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(-0.2029, -0.8602, 0.0)), "");
-  CHECK_INVARIANT(comparePts(conf->getAtomPos(2), RDGeom::Point3D(0.8447, 0.2445, 0.0)), "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.6418, 0.6158, 0.0)),
+      "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(1), RDGeom::Point3D(-0.2029, -0.8602, 0.0)),
+      "");
+  CHECK_INVARIANT(
+      comparePts(conf->getAtomPos(2), RDGeom::Point3D(0.8447, 0.2445, 0.0)),
+      "");
   MolToMolFile(*mol, "junk.mol", 0);
-  //CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0, 0.0)), "");
-  //CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0, 0.0)), "");
+  // CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0,
+  // 0.0)), "");
+  // CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0,
+  // 0.0)), "");
   delete mol;
-  
+
   std::string rdbase = getenv("RDBASE");
-  std::string fname1 = rdbase + "/Code/GraphMol/MolTransforms/test_data/1oir.mol";
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/1oir.mol";
   mol = MolFileToMol(fname1);
-  std::string fname2 = rdbase + "/Code/GraphMol/MolTransforms/test_data/1oir_canon.mol";
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/1oir_canon.mol";
   ROMol *mol2 = MolFileToMol(fname2);
-  
-  Conformer &conf1 = mol->getConformer(0); 
+
+  Conformer &conf1 = mol->getConformer(0);
   canonicalizeConformer(conf1);
 
   Conformer &conf2 = mol2->getConformer();
@@ -112,21 +131,21 @@ void test1Canonicalization() {
     CHECK_INVARIANT(comparePts(conf1.getAtomPos(i), conf2.getAtomPos(i)), "");
   }
 
-
   delete mol;
   delete mol2;
 }
 
-void test1(){
-  std::cout << " ----------> Test1 "<< std::endl;
+void test1() {
+  std::cout << " ----------> Test1 " << std::endl;
 
-  std::cout << " Finished <---------- "<< std::endl;
+  std::cout << " Finished <---------- " << std::endl;
 }
-
 
 void testGetSetBondLength() {
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
   RWMol *m = MolFileToMol(fName, true, false);
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
@@ -140,10 +159,11 @@ void testGetSetBondLength() {
   TEST_ASSERT(RDKit::feq(dist, 3.0));
 }
 
-
 void testGetSetAngle() {
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
   RWMol *m = MolFileToMol(fName, true, false);
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
@@ -159,10 +179,11 @@ void testGetSetAngle() {
   TEST_ASSERT(RDKit::feq(angle, 90.0));
 }
 
-
 void testGetSetDihedral() {
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/MolTransforms/test_data/3-cyclohexylpyridine.mol";
   RWMol *m = MolFileToMol(fName, true, false);
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
@@ -181,10 +202,8 @@ void testGetSetDihedral() {
   TEST_ASSERT(RDKit::feq(dihedral, -120.0));
 }
 
-
-
 int main() {
-  //test1();
+  // test1();
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolTransforms\n";
 
@@ -201,5 +220,5 @@ int main() {
   std::cout << "\t testGetSetDihedral \n\n";
   testGetSetDihedral();
   std::cout << "***********************************************************\n";
-  return(0);
+  return (0);
 }

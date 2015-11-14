@@ -10,7 +10,7 @@
 #ifndef _RD_PRIMES_H
 #define _RD_PRIMES_H
 
-namespace RDKit{
+namespace RDKit {
 const int NUM_PRIMES_AVAIL = 1000;
 extern int firstThousandPrimes[NUM_PRIMES_AVAIL];
 }

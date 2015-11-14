@@ -1,19 +1,19 @@
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior
 //       written permission.
 //
@@ -38,52 +38,56 @@
 #include <vector>
 #include <boost/smart_ptr.hpp>
 
-namespace RDKit{
-  class Atom;
-  class Bond;
+namespace RDKit {
+class Atom;
+class Bond;
 
-  namespace SLNParse {
-    typedef enum {
-      AttribLowPriAnd=0,
-      AttribOr,
-      AttribAnd,
-      AttribNot
-    } AttribCombineOp;
+namespace SLNParse {
+typedef enum {
+  AttribLowPriAnd = 0,
+  AttribOr,
+  AttribAnd,
+  AttribNot
+} AttribCombineOp;
 
-    class AttribType {
-    public:
-      AttribType() :first(""),second(""),op(""),negated(false),structQuery(0) {};
-      std::string first;
-      std::string second;
-      std::string op;
-      bool negated;
-      void *structQuery;
-    };
+class AttribType {
+ public:
+  AttribType()
+      : first(""), second(""), op(""), negated(false), structQuery(0){};
+  std::string first;
+  std::string second;
+  std::string op;
+  bool negated;
+  void *structQuery;
+};
 
-    typedef std::vector< std::pair<AttribCombineOp,boost::shared_ptr<AttribType> > > AttribListType;
+typedef std::vector<std::pair<AttribCombineOp, boost::shared_ptr<AttribType> > >
+    AttribListType;
 
-    //! parses the attributes provided for an atom and sets
-    // the appropriate RD properties/queries.
-    // NOTES: 
-    //    1) Some SLN query values cannot be properly set until the molecule is fully/
-    //       initialized. These are handled by parseFinalAtomAttribs()
-    // 
-    void parseAtomAttribs(Atom *atom,AttribListType attribs,bool doingQuery);
-    void parseFinalAtomAttribs(Atom *atom,bool doingQuery);
+//! parses the attributes provided for an atom and sets
+// the appropriate RD properties/queries.
+// NOTES:
+//    1) Some SLN query values cannot be properly set until the molecule is
+//    fully/
+//       initialized. These are handled by parseFinalAtomAttribs()
+//
+void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery);
+void parseFinalAtomAttribs(Atom *atom, bool doingQuery);
 
-    //! parses the attributes provided for a bond and sets
-    // the appropriate RD properties/queries.
-    // NOTES: 
-    //    1) Some SLN query values cannot be properly set until the molecule is fully/
-    //       initialized. These are handled by parseFinalBondAttribs()
-    void parseBondAttribs(Bond *bond,AttribListType attribs,bool doingQuery);
-    void parseFinalBondAttribs(Bond *bond,bool doingQuery);
+//! parses the attributes provided for a bond and sets
+// the appropriate RD properties/queries.
+// NOTES:
+//    1) Some SLN query values cannot be properly set until the molecule is
+//    fully/
+//       initialized. These are handled by parseFinalBondAttribs()
+void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery);
+void parseFinalBondAttribs(Bond *bond, bool doingQuery);
 
-    //! parses the attributes provided for a ctab and sets
-    // the appropriate RD properties/queries.
-    void parseMolAttribs(ROMol *mol,AttribListType attribs);
-    
-    void adjustAtomChiralities(RWMol *mol);
-  }
+//! parses the attributes provided for a ctab and sets
+// the appropriate RD properties/queries.
+void parseMolAttribs(ROMol *mol, AttribListType attribs);
+
+void adjustAtomChiralities(RWMol *mol);
+}
 }
 #endif

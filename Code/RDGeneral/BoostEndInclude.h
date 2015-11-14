@@ -13,7 +13,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -33,31 +34,31 @@
 //  #include <RDGeneral/BoostEndInclude.h>
 
 #if defined(__clang__)
-	/* Clang/LLVM. ---------------------------------------------- */
+/* Clang/LLVM. ---------------------------------------------- */
 #pragma GCC diagnostic pop
 
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
-	/* Intel ICC/ICPC. ------------------------------------------ */
+/* Intel ICC/ICPC. ------------------------------------------ */
 
-#elif ( defined(__GNUC__) || defined(__GNUG__) ) && \
-  ( __GNUC__ > 4 ||                                    \
-    (__GNUC__ == 4 && __GNUC_MINOR__ > 1 ) )
-	/* GNU GCC/G++. these pragmas only work with >v4.1 --------------------------------------------- */
+#elif(defined(__GNUC__) || defined(__GNUG__)) && \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 1))
+/* GNU GCC/G++. these pragmas only work with >v4.1
+ * --------------------------------------------- */
 #pragma GCC diagnostic pop
 
 #elif defined(__HP_cc) || defined(__HP_aCC)
-	/* Hewlett-Packard C/aC++. ---------------------------------- */
+/* Hewlett-Packard C/aC++. ---------------------------------- */
 
 #elif defined(__IBMC__) || defined(__IBMCPP__)
-	/* IBM XL C/C++. -------------------------------------------- */
+/* IBM XL C/C++. -------------------------------------------- */
 
 #elif defined(_MSC_VER)
-	/* Microsoft Visual Studio. --------------------------------- */
-#pragma warning( pop ) 
+/* Microsoft Visual Studio. --------------------------------- */
+#pragma warning(pop)
 #elif defined(__PGI)
-	/* Portland Group PGCC/PGCPP. ------------------------------- */
+/* Portland Group PGCC/PGCPP. ------------------------------- */
 
 #elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
-	/* Oracle Solaris Studio. ----------------------------------- */
+/* Oracle Solaris Studio. ----------------------------------- */
 
 #endif

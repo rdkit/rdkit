@@ -13,7 +13,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -36,7 +37,9 @@ namespace python = boost::python;
 void wrap_filtercat();
 
 BOOST_PYTHON_MODULE(rdfiltercatalog) {
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
+  python::register_exception_translator<IndexErrorException>(
+      &translate_index_error);
+  python::register_exception_translator<ValueErrorException>(
+      &translate_value_error);
   wrap_filtercat();
 }

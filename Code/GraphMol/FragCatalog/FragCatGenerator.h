@@ -16,18 +16,17 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 
 namespace RDKit {
-  class ROMol;
-  
-  typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int> FragCatalog;
+class ROMol;
 
+typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
+    FragCatalog;
 
-  class FragCatGenerator {
-  public:
-    
-    FragCatGenerator() {}
-   
-    unsigned int addFragsFromMol(const ROMol &mol, FragCatalog *fcat);
- };
+class FragCatGenerator {
+ public:
+  FragCatGenerator() {}
+
+  unsigned int addFragsFromMol(const ROMol &mol, FragCatalog *fcat);
+};
 }
 
-#endif    
+#endif

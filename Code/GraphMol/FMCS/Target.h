@@ -13,16 +13,15 @@
 #include "../RDKitBase.h"
 #include "Graph.h"
 #include "MatchTable.h"
-#include "DebugTrace.h" // algorithm filter definitions
+#include "DebugTrace.h"  // algorithm filter definitions
 
 namespace RDKit {
-    namespace FMCS {
-        struct Target {
-            const ROMol*    Molecule;
-            Graph           Topology;
-            MatchTable      AtomMatchTable;
-            MatchTable      BondMatchTable;
-        };
-
-    }
+namespace FMCS {
+struct Target {
+  const ROMol* Molecule;
+  Graph Topology;
+  MatchTable AtomMatchTable;
+  MatchTable BondMatchTable;
+};
+}
 }

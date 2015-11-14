@@ -21,16 +21,13 @@ using namespace RDKit;
 
 void wrap_queries();
 
-
-BOOST_PYTHON_MODULE(rdqueries)
-{
+BOOST_PYTHON_MODULE(rdqueries) {
   python::scope().attr("__doc__") =
-    "Module containing RDKit functionality for querying molecules."
-    ;
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
+      "Module containing RDKit functionality for querying molecules.";
+  python::register_exception_translator<IndexErrorException>(
+      &translate_index_error);
+  python::register_exception_translator<ValueErrorException>(
+      &translate_value_error);
 
   wrap_queries();
 }
-
-
