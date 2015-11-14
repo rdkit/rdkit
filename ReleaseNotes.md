@@ -9,6 +9,8 @@ Brian Kelley, Paolo Tosco, Riccardo Vianello
   (from ptosco)
   - Fixes a memory leak in fragmentMol
   (github #669 from bp-kelley)
+  - MMPA compile error with Microsoft Visual C++ Compiler for Python 2.7
+  (github #655 from rvianello)
 
 
 # Release_2015.09.1
