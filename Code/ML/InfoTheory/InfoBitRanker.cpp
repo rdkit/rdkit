@@ -34,7 +34,7 @@ namespace RDInfoTheory {
 
   
   void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
-    RANGE_CHECK(0, classList.size(), d_classes);
+    URANGE_CHECK(classList.size(), d_classes);
     d_biasList = classList;
     //make sure we don't have any duplicates
     std::sort(d_biasList.begin(), d_biasList.end());
@@ -43,7 +43,7 @@ namespace RDInfoTheory {
 
     // finally make sure all the class ID in d_biasList are within range
     for (bi = d_biasList.begin(); bi != d_biasList.end(); bi++) {
-      RANGE_CHECK(0, static_cast<unsigned int>(*bi), d_classes-1);
+      URANGE_CHECK(static_cast<unsigned int>(*bi), d_classes-1);
     }
   }
 
@@ -116,7 +116,7 @@ namespace RDInfoTheory {
   }
 
   void InfoBitRanker::accumulateVotes(const ExplicitBitVect &bv, unsigned int label) {
-    RANGE_CHECK(0, label, d_classes-1);
+    URANGE_CHECK(label, d_classes-1);
     CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
     d_nInst += 1;
@@ -129,7 +129,7 @@ namespace RDInfoTheory {
   }
   
   void InfoBitRanker::accumulateVotes(const SparseBitVect &bv, unsigned int label) {
-    RANGE_CHECK(0, label, d_classes-1);
+    URANGE_CHECK(label, d_classes-1);
     CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
     d_nInst += 1;

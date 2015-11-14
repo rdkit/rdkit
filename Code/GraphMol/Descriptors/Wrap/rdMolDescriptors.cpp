@@ -11,8 +11,11 @@
 #include <RDBoost/Wrap.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <numpy/arrayobject.h>
 #include <boost/foreach.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>

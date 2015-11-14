@@ -29,6 +29,7 @@ namespace RingUtils {
   using namespace RDKit;
 
   boost::uint32_t computeRingInvariant(INT_VECT ring,unsigned int nAtoms){
+      RDUNUSED_PARAM(nAtoms);
     std::sort(ring.begin(),ring.end());
     boost::uint32_t res=gboost::hash_range(ring.begin(),ring.end());
     return res;
@@ -192,6 +193,7 @@ namespace FindRings {
   };
 
   void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt, const ROMol &mol) {
+      RDUNUSED_PARAM(nexpt);
     // sort on size
     std::sort(res.begin(), res.end(), compRingSize());
 
@@ -366,6 +368,7 @@ namespace FindRings {
 
   void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res, RINGINVAR_SET &invars, int cand,
                        INT_VECT &atomDegrees, boost::dynamic_bitset<> activeBonds ) {
+      RDUNUSED_PARAM(atomDegrees);
     // this is brutal - we have no degree 2 nodes - find the first possible degree 3 node
     int nsmall;
 

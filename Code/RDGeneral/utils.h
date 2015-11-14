@@ -13,8 +13,9 @@
 
 #include "types.h"
 #include <RDGeneral/Invariant.h>
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit{
   const int NUM_PRIMES_AVAIL = 1000; //!< the number of primes available and stored

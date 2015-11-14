@@ -111,6 +111,9 @@ yysmiles_error( const char *input,
                 std::list<unsigned int> *branchPoints,
 		void *scanner,const char * msg )
 {
+  (void)input;
+  (void)branchPoints;
+  (void)scanner;
   yyErrorCleanup(ms);      
   throw RDKit::SmilesParseException(msg);
 }

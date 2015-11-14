@@ -37,10 +37,12 @@
 #include <Catalogs/CatalogEntry.h>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #endif
 
 #include "FilterMatchers.h"
@@ -229,6 +231,7 @@ namespace RDKit
     friend class boost::serialization::access;
     template<class Archive>
     void save(Archive &ar, const unsigned int version) const {
+        RDUNUSED_PARAM(version);
       registerFilterMatcherTypes(ar);
 
       ar & d_matcher;
@@ -252,6 +255,7 @@ namespace RDKit
 
     template<class Archive>
     void load(Archive &ar, const unsigned int version) {
+        RDUNUSED_PARAM(version);
       registerFilterMatcherTypes(ar);
       
       ar & d_matcher;

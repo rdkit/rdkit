@@ -3,6 +3,7 @@ rdkit_library(RDBoost Wrap.cpp
 
 rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
+              python.h
               python_streambuf.h
               DEST RDBoost)
 

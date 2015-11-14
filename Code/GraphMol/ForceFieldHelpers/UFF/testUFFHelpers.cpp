@@ -634,6 +634,7 @@ void testIssue239(){
 
   RWMol *mol;
   int needMore;
+  (void) needMore; // add test later
   ForceFields::ForceField *field;
   double e1,e2;
 
@@ -1060,7 +1061,7 @@ void testUFFMultiThread(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test UFF multithreading" << std::endl;
 
-  ForceFields::ForceField *field;
+  //ForceFields::ForceField *field;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";

@@ -45,7 +45,7 @@ namespace RDKit
             "CC(C)CC(NC(C(C(C)C)NC(C(N)CCC(O)=O)=O)=O)C(NC(C(O)C(=O)NC(CC(O)=O)C(NCC(=O)NC(CCC(O)=O)C(NC(C(O)=O)Cc1ccccc1)=O)=O)Cc1ccccc1)=O",  // CHEMBL384606
             "CCC(C)C1C(=O)N2CCCC2C(=O)NC2CSSCC3NC(=O)C(C(C)C)NC(=O)C(CCCCN)NC(=O)C(CC(N)=O)NC(=O)C(CCCCN)NC(=O)C4CSSCC(C(=O)NC(C(C)C)C(=O)NC(Cc5ccccc5)C(=O)N1)NC(=O)C(CO)NC(=O)C(CCC(O)=O)NC(=O)CNC(=O)C(NC(=O)C1CCCN1C(=O)C(C(C)CC)NC(=O)CNC(=O)C(CC(N)=O)NC(=O)C(CCCNC(=N)N)NC(=O)C(Cc1ccc(O)cc1)NC3=O)CSSCC(NC(=O)CNC(=O)C(C)NC(=O)C(C(C)C)NC(=O)C(C(C)O)NC(=O)C(C(C)O)NC(=O)C(CC(C)C)NC2=O)C(=O)NC(CO)C(=O)N4",  // CHEMBL526869
         };
-        for(int i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
+        for(size_t i=0; i<sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
             std::vector<unsigned> atomsToUse;
@@ -82,7 +82,7 @@ namespace RDKit
             std::cout << res2 <<" = "<< encode(&res2, sizeof(res2)) << std::endl;
             std::cout << res3 <<" = "<< encode(&res3, sizeof(res3)) << std::endl << std::endl;
 
-            bool passed = 0 != res0 && res0 == res1 && res0 == res2 && res0 == res3;
+//            bool passed = 0 != res0 && res0 == res1 && res0 == res2 && res0 == res3;
 //            TEST_ASSERT(passed);
         }
         BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -106,7 +106,7 @@ namespace RDKit
 
         std::vector<HashCodeType> HashNonChiral;
 
-        for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
+        for(size_t i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
             std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
@@ -122,8 +122,8 @@ namespace RDKit
             std::cout << res <<" = "<< encode(&res, sizeof(res)) <<" | "<< smi[i]<<std::endl;
         }
         bool passed = true;
-        for(int i=0; i < HashNonChiral.size(); i++)
-            for(int j=0; j < HashNonChiral.size(); j++)
+        for(size_t i=0; i < HashNonChiral.size(); i++)
+            for(size_t j=0; j < HashNonChiral.size(); j++)
                 if(i != j && HashNonChiral[i] != HashNonChiral[j])
                     passed = false;
         TEST_ASSERT(passed);
@@ -145,7 +145,7 @@ namespace RDKit
 
         std::vector<HashCodeType> HashNonChiral;
 
-        for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
+        for(size_t i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
             std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
@@ -157,8 +157,8 @@ namespace RDKit
             std::cout << res <<" = "<< encode(&res, sizeof(res)) <<" | "<< smi[i]<<std::endl;
         }
         bool passed = true;
-        for(int i=0; i < HashNonChiral.size(); i++)
-            for(int j=0; j < HashNonChiral.size(); j++)
+        for(size_t i=0; i < HashNonChiral.size(); i++)
+            for(size_t j=0; j < HashNonChiral.size(); j++)
                 if(i != j && HashNonChiral[i] != HashNonChiral[j])
                     passed = false;
         TEST_ASSERT(passed);
@@ -184,7 +184,7 @@ namespace RDKit
 
         std::vector<HashCodeType> HashChiral;
 
-        for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
+        for(size_t i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
             std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
@@ -198,8 +198,8 @@ namespace RDKit
         }
 
         bool passed = true;
-        for(int i=0; i < HashChiral.size(); i++)
-            for(int j=0; j < HashChiral.size(); j++)
+        for(size_t i=0; i < HashChiral.size(); i++)
+            for(size_t j=0; j < HashChiral.size(); j++)
                 if(i != j && HashChiral[i] == HashChiral[j])
                     passed = false;
         TEST_ASSERT(passed);
@@ -309,7 +309,7 @@ namespace RDKit
             "CC1CCC(C)CC1",
         };
 
-        for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
+        for(size_t i=0; i < sizeof(smi)/sizeof(smi[0]); i++)
         {
             ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(smi[i]));
             std::cout << generateMoleculeHashSet(*mol, 0, 0) <<"  "<< smi[i] << std::endl;
@@ -335,7 +335,7 @@ namespace RDKit
           "c1cc(C[C@@H](F)Cl)cnc1"
         };
 
-        for(int i=0; i < sizeof(smi)/sizeof(smi[0]); i+=3)
+        for(size_t i=0; i < sizeof(smi)/sizeof(smi[0]); i+=3)
         {
             ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[i]));
             TEST_ASSERT(mol1);

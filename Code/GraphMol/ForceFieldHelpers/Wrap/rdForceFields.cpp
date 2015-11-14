@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
 
@@ -40,6 +40,7 @@ namespace RDKit {
                                 double vdwThresh,
                                 int confId,
                                 bool ignoreInterfragInteractions ){
+      RDUNUSED_PARAM(confId);// XXX FIX ME?
     std::vector< std::pair<int, double> >  res;
     {
       NOGIL gil;
@@ -60,6 +61,7 @@ namespace RDKit {
                                  double nonBondedThresh,
                                  int confId,
                                  bool ignoreInterfragInteractions ){
+      RDUNUSED_PARAM(confId); //Fix me?
     std::vector< std::pair<int, double> >  res;
     {
       NOGIL gil;

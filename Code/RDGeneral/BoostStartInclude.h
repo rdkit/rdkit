@@ -27,16 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+//  -- silences warnings when compiling with boost
+//  usage
+//  #include <RDGeneral/BoostStartInclude.h>
+//  # include boost stuff
+//  #include <RDGeneral/BoostEndInclude.h>
+#if defined(__clang__)
+	/* Clang/LLVM. ---------------------------------------------- */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#pragma GCC diagnostic ignored "-Wreorder"
+#elif defined(__ICC) || defined(__INTEL_COMPILER)
+	/* Intel ICC/ICPC. ------------------------------------------ */
 
-#include "rdfiltercatalog.h"
-#include <RDBoost/python.h>
+#elif defined(__GNUC__) || defined(__GNUG__)
+	/* GNU GCC/G++. --------------------------------------------- */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wconversion"
+#elif defined(__HP_cc) || defined(__HP_aCC)
+	/* Hewlett-Packard C/aC++. ---------------------------------- */
 
-namespace python = boost::python;
+#elif defined(__IBMC__) || defined(__IBMCPP__)
+	/* IBM XL C/C++. -------------------------------------------- */
 
-void wrap_filtercat();
+#elif defined(_MSC_VER)
+	/* Microsoft Visual Studio. --------------------------------- */
+#pragma warning(push, 0) 
+#elif defined(__PGI)
+	/* Portland Group PGCC/PGCPP. ------------------------------- */
 
-BOOST_PYTHON_MODULE(rdfiltercatalog) {
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
-  wrap_filtercat();
-}
+#elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+	/* Oracle Solaris Studio. ----------------------------------- */
+
+#endif

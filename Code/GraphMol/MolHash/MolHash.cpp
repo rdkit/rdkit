@@ -10,7 +10,9 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/format.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <boost/crc.hpp>
 #include <boost/cstdint.hpp>
 #include "../Descriptors/MolDescriptors.h"
@@ -432,6 +434,7 @@ static
                       , const std::vector<boost::uint32_t> *atomCodes
                       , const std::vector<boost::uint32_t> *bondCodes)
     {
+        RDUNUSED_PARAM(mol);
         unsigned n;
         n = m.getNumAtoms();
         atomLabels.resize(n);

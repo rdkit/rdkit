@@ -41,6 +41,7 @@ namespace RDKit{
 
     std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn,
                               bool allHsExplicit){
+        RDUNUSED_PARAM(bondIn);
       PRECONDITION(atom,"bad atom");
       INT_VECT atomicSmilesVect(atomicSmiles,
                                 atomicSmiles+(sizeof(atomicSmiles)-1)/sizeof(atomicSmiles[0]));
@@ -628,7 +629,7 @@ namespace RDKit{
         nextAtomIdx=rootedAtAtom;
         rootedAtAtom=-1;
       } else {
-        int nextRank = tmol.getNumAtoms()+1;
+        unsigned int nextRank = rdcast<unsigned int>(tmol.getNumAtoms())+1;
         BOOST_FOREACH(int i,atomsToUse){
           if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
             nextRank = ranks[i];

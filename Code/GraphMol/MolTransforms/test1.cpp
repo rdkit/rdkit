@@ -31,6 +31,7 @@ void test1Canonicalization() {
   Conformer *conf = new Conformer(1);
   conf->setAtomPos(0, RDGeom::Point3D(4.0, 5.0, 6.0));
   int cid = mol->addConformer(conf, true);
+  CHECK_INVARIANT(cid>=0,"")
   RDGeom::Point3D pt = computeCentroid(*conf);
   CHECK_INVARIANT(comparePts(pt, RDGeom::Point3D(4.0, 5.0, 6.0)), "");
   

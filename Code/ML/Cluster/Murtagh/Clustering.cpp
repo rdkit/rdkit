@@ -72,6 +72,7 @@ Clustering_MurtaghCluster(python::object data, int nPts, int sz, int option)
   }
   else {
     throw_value_error("PyArray_Type expected as input");
+    return NULL;
   }
 
   ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
@@ -126,6 +127,7 @@ Clustering_MurtaghDistCluster(python::object data, int nPts, int option)
   }
   else {
     throw_value_error("PyArray_Type expected as input");
+    return NULL;
   }
 
   ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));

@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/Wrap.h>
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 
 namespace python = boost::python;
 void wrap_point();

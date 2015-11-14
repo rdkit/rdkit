@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
 #include "numpy/arrayobject.h"

@@ -5,6 +5,7 @@
 //
 #include "MolCatalogParams.h"
 #include <sstream>
+#include <RDGeneral/Invariant.h>
 
 namespace RDKit{
 
@@ -17,6 +18,7 @@ namespace RDKit{
   }
 
   void MolCatalogParams::toStream(std::ostream &ss) const {
+      RDUNUSED_PARAM(ss);
     // at the moment this is a no-op
   }
   std::string MolCatalogParams::Serialize() const {
@@ -31,6 +33,7 @@ namespace RDKit{
   }
   
   void MolCatalogParams::initFromStream(std::istream &ss){
+      RDUNUSED_PARAM(ss);
     // at the moment this is a no-op
   }
 }

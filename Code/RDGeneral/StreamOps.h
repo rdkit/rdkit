@@ -103,7 +103,7 @@ namespace RDKit{
     unsigned int val, res;
     char tc;
     
-    CHECK_INVARIANT(num >= 0, "");
+    //CHECK_INVARIANT(num >= 0, "");
     res=num;
     while (1) {
       if (res < (1<<7)) {

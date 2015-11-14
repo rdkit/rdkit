@@ -106,7 +106,7 @@ namespace RDKit {
         ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, -1,
                                                              ignoreInterfragInteractions);
         boost::thread_group tg;
-        for(unsigned int ti=0;ti<numThreads;++ti){
+        for(int ti=0;ti<numThreads;++ti){
           tg.add_thread(new boost::thread(detail::UFFOptimizeMoleculeConfsHelper_,
                                           *ff,
                                           &mol,&res,ti,numThreads,maxIters));

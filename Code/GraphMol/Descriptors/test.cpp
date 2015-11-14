@@ -783,24 +783,26 @@ namespace {
         int nHBD=calcNumHBD(*mol);
         int nHBA=calcNumHBA(*mol);
 
-        unsigned int oVal;
+        int oVal;
         std::string foo;
         mol->getProp("NUM_HACCEPTORS",foo);
-        oVal=boost::lexical_cast<unsigned int>(foo);
+        oVal=boost::lexical_cast<int>(foo);
         TEST_ASSERT(oVal==nHBA);
         mol->getProp("NUM_HDONORS",foo);
         oVal=boost::lexical_cast<unsigned int>(foo);
         TEST_ASSERT(oVal==nHBD);
 
-        int nAmide=calcNumAmideBonds(*mol);
+        unsigned int nAmide=calcNumAmideBonds(*mol);
+          (void) nAmide;
         double logp,mr;
         calcCrippenDescriptors(*mol,logp,mr);
       }
     }
   };
 }
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread.hpp>  
+#include <RDGeneral/BoostEndInclude.h>
 void testMultiThread(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;

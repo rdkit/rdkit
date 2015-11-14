@@ -32,10 +32,11 @@ template< typename T >
 inline void TXTMSG(const char *__a__,T __b__){  BOOST_LOG(rdInfoLog) << (__a__) << " " << (__b__) << std::endl; }
 
 bool feq(double v1,double v2,double tol=1e-4){
-  return fabs(v1-v2)<1e-4;
+  return fabs(v1-v2)<tol;
 }
 
 template<typename T> void Test(T arg){
+  (void) arg;
   T t1(20);
   TXTMSG("Set 10:",t1.setBit(10));
   TXTMSG("Set 11:",t1.setBit(11));
@@ -134,6 +135,7 @@ template<typename T> void Test(T arg){
 
 
 template<typename T> void TaniTest(T &arg){
+  (void) arg; // unused var;
   std::string fps[4] = {
     ".b+HHa.EgU6+ibEIr89.CpX0g8FZiXH+R0+Ps.mr6tg.2",
     ".b7HEa..ccc+gWEIr89.8lV8gOF3aXFFR.+Ps.mZ6lg.2",
@@ -172,6 +174,7 @@ template<typename T> void TaniTest(T &arg){
 
 
 template<typename T> void ProbeTest(T &arg){
+  (void)arg; // unused var
   int sz=1000;
   T t1(sz),t2(sz);
   for(int i=0;i<sz;i+=2){

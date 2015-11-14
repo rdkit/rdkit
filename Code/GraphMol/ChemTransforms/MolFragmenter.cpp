@@ -25,9 +25,13 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/StreamOps.h>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 #include <boost/functional/hash.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <sstream>
 
 namespace RDKit{

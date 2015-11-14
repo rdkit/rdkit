@@ -10,7 +10,7 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <RDBoost/iterator_next.h>
 #include <string>
 

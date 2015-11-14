@@ -1899,6 +1899,8 @@ void test17() {
 int
 main(int argc, char *argv[])
 {
+  (void)argc;
+  (void)argv;
   RDLog::InitLogs();
 
   // FIX: need a test for handling Hs in the SLN itself. This should be done for

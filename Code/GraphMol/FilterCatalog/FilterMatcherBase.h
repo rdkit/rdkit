@@ -32,10 +32,15 @@
 #define __RD_FILTER_MATCHER_BASE_H__
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif // RDK_USE_BOOST_SERIALIZATION
 
 namespace RDKit
 {
@@ -121,6 +126,7 @@ namespace RDKit
     friend class boost::serialization::access;
     template<class Archive> 
       void serialize(Archive & ar, const unsigned int version) {
+          RDUNUSED_PARAM(version);
       ar & d_filterName;
     }
 #endif    

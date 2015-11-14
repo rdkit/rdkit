@@ -27,16 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+//  -- silences warnings when compiling with boost
+//  #include <RDGeneral/BoostStartInclude.h>
+//  # include boost stuff
+//  #include <RDGeneral/BoostEndInclude.h>
 
-#include "rdfiltercatalog.h"
-#include <RDBoost/python.h>
+#if defined(__clang__)
+	/* Clang/LLVM. ---------------------------------------------- */
+#pragma GCC diagnostic pop
 
-namespace python = boost::python;
+#elif defined(__ICC) || defined(__INTEL_COMPILER)
+	/* Intel ICC/ICPC. ------------------------------------------ */
 
-void wrap_filtercat();
+#elif defined(__GNUC__) || defined(__GNUG__)
+	/* GNU GCC/G++. --------------------------------------------- */
+#pragma GCC diagnostic pop
 
-BOOST_PYTHON_MODULE(rdfiltercatalog) {
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
-  wrap_filtercat();
-}
+#elif defined(__HP_cc) || defined(__HP_aCC)
+	/* Hewlett-Packard C/aC++. ---------------------------------- */
+
+#elif defined(__IBMC__) || defined(__IBMCPP__)
+	/* IBM XL C/C++. -------------------------------------------- */
+
+#elif defined(_MSC_VER)
+	/* Microsoft Visual Studio. --------------------------------- */
+#pragma warning( pop ) 
+#elif defined(__PGI)
+	/* Portland Group PGCC/PGCPP. ------------------------------- */
+
+#elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+	/* Oracle Solaris Studio. ----------------------------------- */
+
+#endif

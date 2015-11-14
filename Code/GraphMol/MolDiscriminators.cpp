@@ -59,6 +59,7 @@ namespace RDKit {
                            bool force,
                            const std::vector<int> *bondPath,
                            bool cacheIt) {
+        RDUNUSED_PARAM(useBO);
       double res=0.0;
       if (!force && mol.hasProp(common_properties::BalanbanJ)) {
         mol.getProp(common_properties::BalabanJ, res);

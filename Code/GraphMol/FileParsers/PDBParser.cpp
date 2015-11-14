@@ -399,7 +399,7 @@ namespace RDKit {
       } else if (pos.z != 0.0)
         conf->set3D(true);
 
-      if (conformer_atmidx < mol->getNumAtoms()) {
+      if (conformer_atmidx < rdcast<int>(mol->getNumAtoms())) {
         conf->setAtomPos(conformer_atmidx,pos);
         conformer_atmidx++;
       }

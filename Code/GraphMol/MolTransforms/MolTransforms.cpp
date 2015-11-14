@@ -243,8 +243,8 @@ namespace MolTransforms {
   double getBondLength(Conformer &conf,
     unsigned int iAtomId, unsigned int jAtomId) {
     RDGeom::POINT3D_VECT &pos = conf.getPositions();
-    RANGE_CHECK(0, iAtomId, pos.size() - 1);
-    RANGE_CHECK(0, jAtomId, pos.size() - 1);
+    URANGE_CHECK(iAtomId, pos.size() - 1);
+    URANGE_CHECK(jAtomId, pos.size() - 1);
     
     return (pos[iAtomId] - pos[jAtomId]).length();
   }
@@ -252,8 +252,8 @@ namespace MolTransforms {
   void setBondLength(Conformer &conf,
     unsigned int iAtomId, unsigned int jAtomId, double value) {
     RDGeom::POINT3D_VECT &pos = conf.getPositions();
-    RANGE_CHECK(0, iAtomId, pos.size() - 1);
-    RANGE_CHECK(0, jAtomId, pos.size() - 1);
+    URANGE_CHECK(iAtomId, pos.size() - 1);
+    URANGE_CHECK(jAtomId, pos.size() - 1);
     ROMol &mol = conf.getOwningMol();
     Bond *bond = mol.getBondBetweenAtoms(iAtomId, jAtomId);
     if(!bond) throw ValueErrorException("atoms i and j must be bonded");
@@ -274,9 +274,9 @@ namespace MolTransforms {
   double getAngleRad(Conformer &conf,
     unsigned int iAtomId, unsigned int jAtomId, unsigned int kAtomId) {
     RDGeom::POINT3D_VECT &pos = conf.getPositions();
-    RANGE_CHECK(0, iAtomId, pos.size() - 1);
-    RANGE_CHECK(0, jAtomId, pos.size() - 1);
-    RANGE_CHECK(0, kAtomId, pos.size() - 1);
+    URANGE_CHECK(iAtomId, pos.size() - 1);
+    URANGE_CHECK(jAtomId, pos.size() - 1);
+    URANGE_CHECK(kAtomId, pos.size() - 1);
     RDGeom::Point3D rJI = pos[iAtomId] - pos[jAtomId];
     double rJISqLength = rJI.lengthSq();
     if(rJISqLength <= 1.e-16) throw ValueErrorException("atoms i and j have identical 3D coordinates");
@@ -289,9 +289,9 @@ namespace MolTransforms {
   void setAngleRad(Conformer &conf, unsigned int iAtomId,
     unsigned int jAtomId, unsigned int kAtomId, double value) {
     RDGeom::POINT3D_VECT &pos = conf.getPositions();
-    RANGE_CHECK(0, iAtomId, pos.size() - 1);
-    RANGE_CHECK(0, jAtomId, pos.size() - 1);
-    RANGE_CHECK(0, kAtomId, pos.size() - 1);
+    URANGE_CHECK(iAtomId, pos.size() - 1);
+    URANGE_CHECK(jAtomId, pos.size() - 1);
+    URANGE_CHECK(kAtomId, pos.size() - 1);
     ROMol &mol = conf.getOwningMol();
     Bond *bondJI = mol.getBondBetweenAtoms(jAtomId, iAtomId);
     if(!bondJI) throw ValueErrorException("atoms i and j must be bonded");
@@ -332,10 +332,10 @@ namespace MolTransforms {
   double getDihedralRad(Conformer &conf, unsigned int iAtomId,
     unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId) {
     RDGeom::POINT3D_VECT &pos = conf.getPositions();
-    RANGE_CHECK(0, iAtomId, pos.size() - 1);
-    RANGE_CHECK(0, jAtomId, pos.size() - 1);
-    RANGE_CHECK(0, kAtomId, pos.size() - 1);
-    RANGE_CHECK(0, lAtomId, pos.size() - 1);
+    URANGE_CHECK( iAtomId, pos.size() - 1);
+    URANGE_CHECK( jAtomId, pos.size() - 1);
+    URANGE_CHECK( kAtomId, pos.size() - 1);
+    URANGE_CHECK( lAtomId, pos.size() - 1);
     RDGeom::Point3D rIJ = pos[jAtomId] - pos[iAtomId];
     double rIJSqLength = rIJ.lengthSq();
     if(rIJSqLength <= 1.e-16) throw ValueErrorException("atoms i and j have identical 3D coordinates");
@@ -360,10 +360,10 @@ namespace MolTransforms {
     unsigned int jAtomId, unsigned int kAtomId, unsigned int lAtomId,
     double value) {
     RDGeom::POINT3D_VECT &pos = conf.getPositions();
-    RANGE_CHECK(0, iAtomId, pos.size() - 1);
-    RANGE_CHECK(0, jAtomId, pos.size() - 1);
-    RANGE_CHECK(0, kAtomId, pos.size() - 1);
-    RANGE_CHECK(0, lAtomId, pos.size() - 1);
+    URANGE_CHECK( iAtomId, pos.size() - 1);
+    URANGE_CHECK( jAtomId, pos.size() - 1);
+    URANGE_CHECK( kAtomId, pos.size() - 1);
+    URANGE_CHECK( lAtomId, pos.size() - 1);
     ROMol &mol = conf.getOwningMol();
     Bond *bondIJ = mol.getBondBetweenAtoms(iAtomId, jAtomId);
     if(!bondIJ) throw ValueErrorException("atoms i and j must be bonded");

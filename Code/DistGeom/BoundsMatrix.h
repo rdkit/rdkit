@@ -33,8 +33,8 @@ namespace DistGeom {
 
     //! Get the upper bound between points i and j
     inline double getUpperBound(unsigned int i, unsigned int j) const {
-      RANGE_CHECK(0, i, d_nRows-1);
-      RANGE_CHECK(0, j, d_nCols-1);
+      URANGE_CHECK(i, d_nRows-1);
+      URANGE_CHECK(j, d_nCols-1);
 
       if (i < j) {
         return getVal(i,j);
@@ -45,8 +45,8 @@ namespace DistGeom {
     
     //! Set the lower bound between points i and j
     inline void setUpperBound(unsigned int i, unsigned int j, double val) {
-      RANGE_CHECK(0, i, d_nRows-1);
-      RANGE_CHECK(0, j, d_nCols-1);
+      URANGE_CHECK(i, d_nRows-1);
+      URANGE_CHECK(j, d_nCols-1);
       CHECK_INVARIANT(val >= 0.0, "Negative upper bound");
       if (i < j) {
         setVal(i,j,val);
@@ -65,8 +65,8 @@ namespace DistGeom {
 
     //! Set the lower bound between points i and j 
     inline void setLowerBound(unsigned int i, unsigned int j, double val) {
-      RANGE_CHECK(0, i, d_nRows-1);
-      RANGE_CHECK(0, j, d_nCols-1);
+      URANGE_CHECK(i, d_nRows-1);
+      URANGE_CHECK(j, d_nCols-1);
       CHECK_INVARIANT(val >= 0.0, "Negative lower bound");
       if (i < j) {
         setVal(j,i,val);
@@ -85,8 +85,8 @@ namespace DistGeom {
     
     //! Get the lower bound between points i and j
     inline double getLowerBound(unsigned int i, unsigned int j) const {
-      RANGE_CHECK(0, i, d_nRows-1);
-      RANGE_CHECK(0, j, d_nCols-1);
+      URANGE_CHECK(i, d_nRows-1);
+      URANGE_CHECK(j, d_nCols-1);
 
       if (i < j) {
         return getVal(j,i);

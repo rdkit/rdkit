@@ -6,6 +6,8 @@ from rdkit.six.moves import cStringIO as StringIO
 from rdkit import RDConfig
 
 from rdkit.Chem import PandasTools
+gotPandas = PandasTools.pd != None
+
 import numpy
 import tempfile, shutil
 import gzip
@@ -44,8 +46,12 @@ yxcv
 $$$$
 """
 
-
 class TestLoadSDF(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if not gotPandas:
+            raise unittest.SkipTest("Pandas not installed, skipping...")
+    
     def setUp(self):
         self.gz_filename = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'pandas_load.sdf.gz')
         
@@ -101,6 +107,11 @@ class TestLoadSDF(unittest.TestCase):
         self.assertTrue(numpy.isnan(prop3[1]), prop3[1])
 
 class TestWriteSDF(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if not gotPandas:
+            raise unittest.SkipTest("Pandas not installed, skipping...")
+        
     def setUp(self):
         sio = StringIO(methane + peroxide)
         self.df = PandasTools.LoadSDF(sio)

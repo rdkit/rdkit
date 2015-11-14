@@ -10,7 +10,7 @@
 #define NO_IMPORT_ARRAY
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <boost/python/numeric.hpp>
 #include "numpy/oldnumeric.h"
@@ -150,7 +150,7 @@ namespace RDPickers {
                                         bool useCache
                                         ) {
     std::vector<const ExplicitBitVect *> bvs(poolSize);
-    for(unsigned int i=0;i<poolSize;++i){
+    for(int i=0;i<poolSize;++i){
       bvs[i]=python::extract<const ExplicitBitVect *>(objs[i]);
     }
     pyBVFunctor<ExplicitBitVect> functor(bvs,TANIMOTO,useCache);

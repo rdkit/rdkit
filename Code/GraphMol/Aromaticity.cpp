@@ -302,6 +302,7 @@ namespace {
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring,
                    const VECT_EDON_TYPE &edon) {
+      RDUNUSED_PARAM(mol);
     int atlw, atup, rlw, rup, rie;
     bool aromatic = false;
     rlw = 0;
@@ -454,7 +455,7 @@ namespace {
     // atoms that aren't in their default valence state also get shut out
     int defVal=PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
     if(defVal>0 &&
-       at->getTotalValence()>(PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()-
+       rdcast<int>(at->getTotalValence()) > (PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()-
                                                                            at->getFormalCharge()))){
       return false;
     }

@@ -10,8 +10,12 @@
 #include <list>
 #include <algorithm>
 #include <math.h>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <iostream>
 #include <sstream>
 #include "SubstructMatchCustom.h"
@@ -23,7 +27,7 @@ namespace RDKit {
         if(params && json && 0!=strlen(json)) {
             std::istringstream ss;
             ss.str(json);
-            std::istream& iss = ss;
+            //std::istream& iss = ss;
             boost::property_tree::ptree pt;
             boost::property_tree::read_json(ss, pt);
 
@@ -123,6 +127,7 @@ namespace RDKit {
     }
 
     bool MCSProgressCallbackTimeout(const MCSProgressData& stat, const MCSParameters &params, void* userData) {
+        RDUNUSED_PARAM(stat);
         unsigned long long* t0 = (unsigned long long*)userData;
         unsigned long long  t  = nanoClock();
         return t - *t0 <= params.Timeout*1000000ULL;
@@ -133,6 +138,7 @@ namespace RDKit {
     //=== ATOM COMPARE ========================================================
     static
     bool checkAtomChirality    (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2) {
+        RDUNUSED_PARAM(p);
         const Atom& a1 = *mol1.getAtomWithIdx(atom1);
         const Atom& a2 = *mol2.getAtomWithIdx(atom2);
         Atom::ChiralType ac1 = a1.getChiralTag();
@@ -163,6 +169,7 @@ namespace RDKit {
     }
 
     bool MCSAtomCompareIsotopes (const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1, const ROMol& mol2, unsigned int atom2, void* ud) {
+        RDUNUSED_PARAM(ud);
         // ignore everything except isotope information:
         //if( ! MCSAtomCompareElements (p, mol1, atom1, mol2, atom2, ud))
         //    return false;
@@ -203,6 +210,7 @@ namespace RDKit {
 
     static
     bool checkBondStereo (const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1, const ROMol& mol2, unsigned int bond2) {
+        RDUNUSED_PARAM(p);
         const Bond* b1 = mol1.getBondWithIdx(bond1);
         const Bond* b2 = mol2.getBondWithIdx(bond2);
         Bond::BondStereo bs1 = b1->getStereo();
@@ -295,7 +303,7 @@ namespace RDKit {
 
     bool FinalChiralityCheckFunction (const short unsigned c1[], const short unsigned c2[],
                  const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p) {
-
+        RDUNUSED_PARAM(p);
         const unsigned int qna = boost::num_vertices(query);    // getNumAtoms()
         // check chiral atoms only:
         for(unsigned int i=0; i < qna; ++i) { 
@@ -362,7 +370,7 @@ namespace RDKit {
         RDKit::FMCS::Graph::BOND_ITER_PAIR bpIter = boost::edges(query);
         RDKit::FMCS::Graph::EDGE_ITER bIter = bpIter.first;
         for(unsigned int i=0; i < qnb; i++, ++bIter) {
-            unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
+          //unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
             const Bond *qBnd=mol1.getBondWithIdx(query[*bIter]);
             if(qBnd->getBondType()!=Bond::DOUBLE
             ||(qBnd->getStereo()!=Bond::STEREOZ && qBnd->getStereo()!=Bond::STEREOE))
@@ -382,15 +390,15 @@ namespace RDKit {
 
             unsigned int end1Matches=0;
             unsigned int end2Matches=0;
-            if(target[c2[qMap[qBnd->getBeginAtomIdx()]]]==mBnd->getBeginAtomIdx()){
+            if(target[c2[qMap[qBnd->getBeginAtomIdx()]]]==rdcast<unsigned int>(mBnd->getBeginAtomIdx())){
                 // query Begin == mol Begin
-                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
-                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[0])) end1Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[1])) end2Matches=1;
             } else {
                 // query End == mol Begin
-                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[1])
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[1]))
                     end1Matches=1;
-                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[0])
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[0]))
                     end2Matches=1;
             }
             //std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" - "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<" "<<end2Matches<<std::endl;
@@ -404,7 +412,7 @@ namespace RDKit {
 
     bool FinalChiralityCheckFunction_1 (const short unsigned c1[], const short unsigned c2[],
                  const ROMol& mol1, const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target, const MCSParameters* p) {
-
+        RDUNUSED_PARAM(p);
         const unsigned int   qna = boost::num_vertices(query);    // getNumAtoms()
         // check chiral atoms:
         for(unsigned int i=0; i < qna; ++i) { 
@@ -450,7 +458,7 @@ namespace RDKit {
         RDKit::FMCS::Graph::BOND_ITER_PAIR bpIter = boost::edges(query);
         RDKit::FMCS::Graph::EDGE_ITER bIter = bpIter.first;
         for(unsigned int i=0; i < qnb; i++, ++bIter) {
-            unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
+          //unsigned qtbi = query[*bIter]; // bond index in seed topology defenition
             const Bond *qBnd=mol1.getBondWithIdx(query[*bIter]);
             if(qBnd->getBondType()!=Bond::DOUBLE
             ||(qBnd->getStereo()!=Bond::STEREOZ && qBnd->getStereo()!=Bond::STEREOE))
@@ -472,13 +480,13 @@ namespace RDKit {
             unsigned int end2Matches=0;
             if(target[c2[qMap[qBnd->getBeginAtomIdx()]]]==mBnd->getBeginAtomIdx()){
                 // query Begin == mol Begin
-                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
-                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[0])) end1Matches=1;
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[1])) end2Matches=1;
             } else {
                 // query End == mol Begin
-                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==mBnd->getStereoAtoms()[1])
+                if(target[c2[qMap[qBnd->getStereoAtoms()[0]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[1]))
                     end1Matches=1;
-                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==mBnd->getStereoAtoms()[0])
+                if(target[c2[qMap[qBnd->getStereoAtoms()[1]]]]==rdcast<unsigned int>(mBnd->getStereoAtoms()[0]))
                     end2Matches=1;
             }
             //std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" - "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<" "<<end2Matches<<std::endl;

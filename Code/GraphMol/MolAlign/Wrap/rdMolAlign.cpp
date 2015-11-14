@@ -11,7 +11,7 @@
 //  of the RDKit source tree.
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <boost/python/numeric.hpp>
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -261,8 +261,8 @@ namespace RDKit {
           }
         }
         for (unsigned int i = 0; i < (*cMap).size(); ++i) {
-          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
-            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= rdcast<int>(prbMol.getNumAtoms()))
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= rdcast<int>(refMol.getNumAtoms()))) {
             throw_value_error("Constrained atom idx out of range");
           }
           if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
@@ -336,8 +336,8 @@ namespace RDKit {
           }
         }
         for (unsigned int i = 0; i < (*cMap).size(); ++i) {
-          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
-            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= rdcast<int>(prbMol.getNumAtoms()))
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= rdcast<int>(refMol.getNumAtoms()))) {
             throw_value_error("Constrained atom idx out of range");
           }
           if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
@@ -414,8 +414,8 @@ namespace RDKit {
           }
         }
         for (unsigned int i = 0; i < (*cMap).size(); ++i) {
-          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
-            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= rdcast<int>(prbMol.getNumAtoms()))
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= rdcast<int>(refMol.getNumAtoms()))) {
             throw_value_error("Constrained atom idx out of range");
           }
           if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)
@@ -495,8 +495,8 @@ namespace RDKit {
           }
         }
         for (unsigned int i = 0; i < (*cMap).size(); ++i) {
-          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= prbMol.getNumAtoms())
-            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= refMol.getNumAtoms())) {
+          if (((*cMap)[i].first < 0) || ((*cMap)[i].first >= rdcast<int>(prbMol.getNumAtoms()))
+            || ((*cMap)[i].second < 0) || ((*cMap)[i].second >= rdcast<int>(refMol.getNumAtoms()))) {
             throw_value_error("Constrained atom idx out of range");
           }
           if ((prbMol[(*cMap)[i].first]->getAtomicNum() == 1)

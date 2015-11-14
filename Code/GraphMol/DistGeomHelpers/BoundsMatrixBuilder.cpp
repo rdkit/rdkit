@@ -24,9 +24,9 @@
 #include <algorithm>
 
 const double DIST12_DELTA = 0.01;
-const double ANGLE_DELTA = 0.0837;
-const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
-const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
+//const double ANGLE_DELTA = 0.0837;
+//const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
+//const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
 const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06; //  a general distance tolerance
 const double DIST15_TOL = 0.08;
@@ -239,6 +239,7 @@ namespace RDKit {
     
     void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool useTopolScaling,
                           double *dmat) {
+        RDUNUSED_PARAM(useTopolScaling);
       unsigned int npt = mmat->numRows();
       PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       unsigned int i, j;
@@ -734,7 +735,8 @@ namespace RDKit {
 
     bool _checkAmideEster15(const ROMol &mol,
 			    const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
-			    const Atom *atm2, const Atom *atm3, const Atom *atm4) { 
+			    const Atom *atm2, const Atom *atm3, const Atom *atm4) {
+        RDUNUSED_PARAM(atm4);
       unsigned int a2Num = atm2->getAtomicNum();
       if ( (a2Num == 8) || 
            ((a2Num == 7) && (atm2->getTotalNumHs() == 1)) ) {
@@ -754,7 +756,7 @@ namespace RDKit {
     void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3, 
                            ComputedData &accumData,
                            DistGeom::BoundsMatPtr mmat,double *dmat){
-
+        RDUNUSED_PARAM(dmat);
       PRECONDITION(bnd1, "");
       PRECONDITION(bnd2, "");
       PRECONDITION(bnd3, "");

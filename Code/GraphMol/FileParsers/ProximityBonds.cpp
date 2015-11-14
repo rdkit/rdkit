@@ -18,8 +18,8 @@ namespace RDKit {
 
 
 static const double EXTDIST  = 0.45;
-static const double MAXRAD   = 2.50;
-static const double MINDIST  = 0.40;
+  //static const double MAXRAD   = 2.50;
+  //static const double MINDIST  = 0.40;
 static const double MAXDIST  = 5.45;     // 2*MAXRAD + EXTDIST
 static const double MINDIST2 = 0.16;     // MINDIST*MINDIST
 static const double MAXDIST2 = 29.7025;  // MAXDIST*MAXDIST
@@ -55,7 +55,7 @@ static bool IsBonded(ProximityEntry *p, ProximityEntry *q)
   return dist2 <= radius*radius;
 }
 
-
+  /*
 static void ConnectTheDots_Small(RWMol *mol)
 {
   unsigned int count = mol->getNumAtoms();
@@ -114,7 +114,7 @@ static void ConnectTheDots_Medium(RWMol *mol)
     }
   }
 }
-
+  */
 
 #define HASHSIZE 1024
 #define HASHMASK 1023

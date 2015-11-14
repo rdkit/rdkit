@@ -511,7 +511,7 @@ namespace RDKit{
         boost::tie(beg,end) = mol.getAtomBonds(atom);
         while(beg!=end){
           unsigned int otherIdx=mol[*beg]->getOtherAtom(atom)->getIdx();
-          CHECK_INVARIANT(ranks[otherIdx]<static_cast<int>(mol.getNumAtoms()),
+          CHECK_INVARIANT(ranks[otherIdx]<mol.getNumAtoms(),
                           "CIP rank higher than the number of atoms.");
           // watch for neighbors with duplicate ranks, which would mean
           // that we cannot be chiral:

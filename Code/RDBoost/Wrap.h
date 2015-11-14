@@ -10,7 +10,7 @@
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
-
+#include <RDGeneral/BoostStartInclude.h>
 //
 // Generic Wrapper utility functionality
 //
@@ -40,9 +40,12 @@
 #ifndef RDKIT_WRAP_DECL
 #define RDKIT_WRAP_DECL
 #endif
+
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/cstdint.hpp>
 #include "list_indexing_suite.hpp"
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <vector>
 #include <list>
 #include <iostream>
@@ -130,13 +133,20 @@ std::vector<T> *pythonObjectToVect(const python::object &obj){
   return res;
 }
 
+//Quiet warnings on GCC
+#if defined(__GNUC__) || defined(__GNUG__)
+#  define RDUNUSED __attribute__ ((__unused__))
+#else
+#  defined RDUNUSED
+#endif
+
 #ifdef RDK_THREADSAFE_SSS
 // Release the Global Interpreter lock at certain places
 //  on construction - release the lock
 //  on destruction - grab the lock
 //  no entry into the python interpreter can be performed
 //   between releasing and grabbing the lock
-class NOGIL
+class RDUNUSED NOGIL
 {
 public:
     inline NOGIL()
@@ -155,7 +165,7 @@ private:
 };
 #else
 // Never release the lock when not compiling thread-safe
-struct NOGIL {};
+struct RDUNUSED NOGIL {};
 #endif
 
 // -------------------

@@ -46,9 +46,11 @@
 #include <boost/foreach.hpp>
 #include <algorithm>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
   namespace {
     class ss_matcher {
@@ -165,6 +167,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       return bit;
     }
     uint32_t updateElement(ExplicitBitVect &v,unsigned int elem, bool counting=false){
+        RDUNUSED_PARAM(counting);
       uint32_t bit=elem%v.getNumBits();
       v.setBit(bit);
       return bit;

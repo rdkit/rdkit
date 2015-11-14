@@ -17,7 +17,13 @@
 #include <stdexcept>
 
 #include <RDGeneral/RDLog.h>
-// 
+
+#ifdef RDDEBUG
+// Enable RDDEBUG for testing whether rdcast
+//  conversions are within numerical limits
+#include <boost/numeric/conversion/cast.hpp>
+#endif
+//
 // What if no invariant method is defined?
 //
 #if !defined INVARIANT_EXCEPTION_METHOD && \
@@ -136,6 +142,12 @@ namespace Invar {
      Invar::Invariant inv( "Range Error", #x, errstr.str().c_str(), __FILE__, __LINE__ );\
      BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n"; throw inv; }
 
+#define URANGE_CHECK(x, hi)  if ( (x)>(hi) ) {\
+     std::stringstream errstr;\
+     errstr << x <<" <= "<<hi;\
+     Invar::Invariant inv( "Range Error", #x, errstr.str().c_str(), __FILE__, __LINE__ );\
+     BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n"; throw inv; }
+
 #define TEST_ASSERT( expr ) if ( !(expr) ) {\
      Invar::Invariant inv( "Test Assert", "Expression Failed: ", \
      #expr, __FILE__, __LINE__ ); \
@@ -149,6 +161,7 @@ namespace Invar {
 #define POSTCONDITION( expr, mess ) assert( expr );
 #define UNDER_CONSTRUCTION(fn ) assert(0);
 #define RANGE_CHECK( lo, x, hi ) assert( (lo)<=(hi) && (x)>=(lo) && (x)<=(hi) );
+#define URANGE_CHECK( lo, x, hi ) assert( (x)<=(hi) );
 #define TEST_ASSERT( expr ) assert(expr);
 
 #elif INVARIANT_SILENT_METHOD
@@ -158,9 +171,25 @@ namespace Invar {
 #define POSTCONDITION( expr, mess )
 #define UNDER_CONSTRUCTION( fn )
 #define RANGE_CHECK( lo, x, hi )
+#define URANGE_CHECK( x, hi )
 #define TEST_ASSERT( expr )
 
 #endif
+
+#ifdef RDDEBUG
+// use rdcast to convert between types
+//  when RDDEBUG is defined, this checks for
+//  validity (overflow, etc)
+//  when RDDEBUG is off, the cast is a no-cost
+//   static_cast
+#define rdcast boost::numeric_cast
+#else
+#define rdcast static_cast
+#endif
+
+// Silence warnings for unused params while
+//   still indicating that they are unused
+#define RDUNUSED_PARAM(x) (void)x;
 
 #endif
 

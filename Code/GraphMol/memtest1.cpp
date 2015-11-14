@@ -29,7 +29,9 @@ void testBasics()
   Atom *a1 = new Atom(6);
   Bond *b1 = new Bond();
   ROMol *m1 = new ROMol();
-
+  (void) a1;
+  (void) b1;
+  (void) m1;
   a1 = NULL; // intentional leak
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
@@ -39,6 +41,7 @@ void testSMILES()
   BOOST_LOG(rdInfoLog)  << "-----------------------\n SMILES Read" << std::endl;
   string smi="CCOC";
   ROMol *m = SmilesToMol(smi);
+  (void) m; // leak al the things
   m = SmilesToMol(smi,0,false);
   smi="C1COC1";
   RWMol *m2 = SmilesToMol(smi);
@@ -92,7 +95,7 @@ void testMols()
     "EOS"
   };
   for(int i=0;smis[i]!="EOS";++i){
-    RWMol *m=SmilesToMol(smis[i],0,false);
+    SmilesToMol(smis[i],0,false);
   }
   for(int i=0;smis[i]!="EOS";++i){
     RWMol *m=SmilesToMol(smis[i],0,false);
@@ -110,43 +113,43 @@ void testProps()
   m = SmilesToMol(smi,0,false);
   for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,true);
+    (*ai)->setProp("foo",v,true);
   }
   m = SmilesToMol(smi,0,false);
   for(ROMol::BondIterator ai=m->beginBonds();ai!=m->endBonds();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,true);
+    (*ai)->setProp("foo",v,true);
   }
   m = SmilesToMol(smi,0,false);
   for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,true);
-    (*ai)->setProp("bar",1,true);
+    (*ai)->setProp("foo",v,true);
+    (*ai)->setProp("bar",v,true);
   }
   m = SmilesToMol(smi,0,false);
   for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,true);
-    (*ai)->setProp("bar",1,true);
-    (*ai)->setProp("baz",1,true);
+    (*ai)->setProp("foo",v,true);
+    (*ai)->setProp("bar",v,true);
+    (*ai)->setProp("baz",v,true);
   }
   m = SmilesToMol(smi,0,false);
   for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,false);
+    (*ai)->setProp("foo",v,false);
   }
   m = SmilesToMol(smi,0,false);
   for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,false);
-    (*ai)->setProp("bar",1,false);
+    (*ai)->setProp("foo",v,false);
+    (*ai)->setProp("bar",v,false);
   }
   m = SmilesToMol(smi,0,false);
   for(ROMol::AtomIterator ai=m->beginAtoms();ai!=m->endAtoms();++ai){
     unsigned int v=1;
-    (*ai)->setProp("foo",1,false);
-    (*ai)->setProp("bar",1,false);
-    (*ai)->setProp("baz",1,false);
+    (*ai)->setProp("foo",v,false);
+    (*ai)->setProp("bar",v,false);
+    (*ai)->setProp("baz",v,false);
   }
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }

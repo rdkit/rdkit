@@ -55,7 +55,7 @@ namespace RDNumeric {
                           DoubleMatrix *eigenVectors=0, 
                           int seed=-1);
     //! \overload
-    static bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
+    static inline bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                           DoubleVector &eigenValues,
                           DoubleMatrix &eigenVectors, 
                           int seed=-1) {

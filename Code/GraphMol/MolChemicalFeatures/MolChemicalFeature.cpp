@@ -48,6 +48,7 @@ namespace RDKit {
     // Nope, we have to figure it out on our own:
     RDGeom::Point3D res(0,0,0);
     bool setNeg1=false;
+    RDUNUSED_PARAM(setNeg1);
     if(confId==-1){
       setNeg1=true;
     }

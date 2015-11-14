@@ -690,6 +690,7 @@ namespace RDKit {
   } // end of namespace SmartsWrite
   
   std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
+    RDUNUSED_PARAM(doIsomericSmiles); // does this parameter even make sense?
     std::string res;
     unsigned int nAtoms = inmol.getNumAtoms();
     if(!nAtoms) return "";

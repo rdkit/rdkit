@@ -230,10 +230,14 @@ if (RDK_TEST_COVERAGE)
 
 else(RDK_TEST_COVERAGE)
  if(CMAKE_COMPILER_IS_GNUCXX)
-   ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+   # We don't on C_FLAGS warnings to keep Avalon compiling quiet
+   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra")
  endif()
- if(CMAKE_COMPILER_IS_CLANG)
-   ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
+ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   # We don't on C_FLAGS warnings to keep Avalon compiling quiet
+   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra")
  endif()
 endif(RDK_TEST_COVERAGE)
 

@@ -21,12 +21,12 @@ namespace RDKit {
   template <typename CompareFunc>
   bool hanoi( int* base, int nel, int *temp, int *count, int *changed, CompareFunc compar ) {
     //std::cerr<<"  hanoi: "<<nel<< " start " << (*base)+1 << std::endl;
-    register int *b1,*b2;
-    register int *t1,*t2;
-    register int *s1,*s2;
-    register int n1,n2;
-    register int result;
-    register int *ptr;
+    int *b1,*b2;
+    int *t1,*t2;
+    int *s1,*s2;
+    int n1,n2;
+    int result;
+    int *ptr;
 
     if( nel == 1 ) {
       count[base[0]] = 1;
@@ -125,7 +125,7 @@ namespace RDKit {
   template <typename CompareFunc>
   void hanoisort( int* base, int nel, int *count, int *changed, CompareFunc compar )
   {
-    register int *temp;
+    int *temp;
 
     temp = (int*)malloc(nel*sizeof(int));
     if( hanoi(base,nel,temp,count,changed,compar) )

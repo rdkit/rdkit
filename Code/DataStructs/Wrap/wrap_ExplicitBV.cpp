@@ -71,9 +71,9 @@ struct EBV_wrapper {
     .def("GetNumOffBits",&EBV::getNumOffBits,
          "Returns the number of off bits.\n")
     .def("__getitem__",
-         (const int (*)(const EBV&,int))get_VectItem)
+         (int (*)(const EBV&,int))get_VectItem)
     .def("__setitem__",
-         (const int (*)(EBV&,int,int))set_VectItem)
+         (int (*)(EBV&,int,int))set_VectItem)
     .def("GetOnBits",
          (IntVect (*)(const EBV&))GetOnBits,
          "Returns a tuple containing IDs of the on bits.\n")

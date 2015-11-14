@@ -10,7 +10,7 @@
 //
 #define NO_IMPORT_ARRAY
 #include "rdmolops.h"
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <numpy/arrayobject.h>
 #include <string>
 #include <math.h>
@@ -40,6 +40,7 @@ namespace RDKit{
                        unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
                        int confId
                        ){
+      RDUNUSED_PARAM(kekulize);
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
     std::stringstream outs;
     MolDraw2DSVG drawer(width,height,outs);
@@ -116,8 +117,8 @@ namespace RDKit{
   }
 
     python::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
-      if(aid1<0 || aid1>=mol.getNumAtoms() ||
-         aid2<0 || aid2>=mol.getNumAtoms() ){
+      if(aid1<0 || aid1>=rdcast<int>(mol.getNumAtoms())||
+         aid2<0 || aid2>=rdcast<int>(mol.getNumAtoms()) ){
         throw_value_error("bad atom index");
       }
       return static_cast<python::tuple>(MolOps::getShortestPath(mol, aid1, aid2));
@@ -188,10 +189,12 @@ namespace RDKit{
 
   namespace {
     std::string getResidue(const ROMol &m,const Atom *at){
+        RDUNUSED_PARAM(m);
       if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
       return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
     }
     std::string getChainId(const ROMol &m,const Atom *at){
+        RDUNUSED_PARAM(m);
       if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
       return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getChainId();
     }

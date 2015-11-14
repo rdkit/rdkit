@@ -685,6 +685,7 @@ void testRadicals(){
 
 
 void testIssue2788233(bool doLong=0){
+    (void) doLong;
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing sf.net issue 2788233." << std::endl;
 

@@ -14,13 +14,14 @@
 //
 #ifndef BOOST_ADAPTBX_PYTHON_STREAMBUF_H
 #define BOOST_ADAPTBX_PYTHON_STREAMBUF_H
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/python/object.hpp>
 #include <boost/python/str.hpp>
 #include <boost/python/extract.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/utility/typed_in_place_factory.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 //#include <tbxx/error_utils.hpp>
 #include <RDGeneral/Invariant.h>

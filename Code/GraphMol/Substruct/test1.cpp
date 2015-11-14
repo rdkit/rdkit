@@ -271,7 +271,7 @@ void test4(){
   TEST_ASSERT(matchV[1].second==0||matchV[1].second==3);
   n = SubstructMatch(*m,*q2,matches,true);
   TEST_ASSERT(n==2);
-  TEST_ASSERT(matches.size()==n);
+  TEST_ASSERT(matches.size()==(size_t)n);
   TEST_ASSERT(matches[0].size()==2);
   TEST_ASSERT(matches[1].size()==2);
   TEST_ASSERT(matches[0][0].second==matches[1][0].second);
@@ -618,8 +618,10 @@ void testRecursiveSerialNumbers(){
 }
 
 #ifdef RDK_TEST_MULTITHREADED
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread.hpp>  
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 namespace {
   void runblock(const std::vector<ROMol *> &mols,const ROMol *query,
                 const boost::dynamic_bitset<> &hits,unsigned int count,unsigned int idx){
@@ -629,7 +631,7 @@ namespace {
         ROMol *mol = mols[i];
 
         MatchVectType matchV;
-        bool found=SubstructMatch(*mols[i],*query,matchV);
+        bool found=SubstructMatch(*mol,*query,matchV);
         
         TEST_ASSERT(found==hits[i]);
       }
@@ -1027,6 +1029,7 @@ void testGitHubIssue409(){
     ROMol *mol = SmilesToMol(smi);
     std::vector< MatchVectType > matches;
     unsigned int matched=SubstructMatch(*mol,*mol,matches,false,true,false,false);
+    TEST_ASSERT(matched==matches.size());
     TEST_ASSERT(matches.size()==72);
     matched=SubstructMatch(*mol,*mol,matches,false,true,false,false,16);
     TEST_ASSERT(matches.size()==16);

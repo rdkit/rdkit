@@ -116,6 +116,7 @@ namespace RDKit {
   }
 
   void SmilesWriter::write(const ROMol &mol,int confId) {
+      RDUNUSED_PARAM(confId);
     CHECK_INVARIANT(dp_ostream,"no output stream");
     if(d_molid<=0 && df_includeHeader){
       dumpHeader();

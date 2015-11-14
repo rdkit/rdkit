@@ -2501,6 +2501,7 @@ namespace RDKit {
       MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams
       (const ROMol &mol, const Bond *bond)
     {
+        RDUNUSED_PARAM(mol);
       PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
       const MMFFBond *mmffBndkParams;

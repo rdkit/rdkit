@@ -72,7 +72,7 @@ namespace RDKit {
       return res;
     }
     bool _boundsFulfilled(const std::vector<int> &atoms, const DistGeom::BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions) {
-      unsigned int N = mmat.numRows();
+      //unsigned int N = mmat.numRows();
       //std::cerr << N << " " << atoms.size() << std::endl;
       // loop over all pair of atoms
       for (unsigned int i = 0; i < atoms.size()-1; ++i) {
@@ -193,6 +193,7 @@ namespace RDKit {
       bool gotCoords = false;
       unsigned int iter = 0;
       double largestDistance=-1.0;
+      RDUNUSED_PARAM(largestDistance);
       while ((gotCoords == false) && (iter < maxIterations)) {
         ++iter;
         if(!useRandomCoords){
@@ -322,7 +323,7 @@ namespace RDKit {
       ROMol::ConstAtomIterator ati;
       INT_VECT nbrs;
       ROMol::OEDGE_ITER beg,end;
-      Atom *oatom;
+      //Atom *oatom;
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
           Atom::ChiralType chiralType=(*ati)->getChiralTag();
@@ -341,6 +342,7 @@ namespace RDKit {
             // we need to include the chiral center into the mix
             // we should at least have 3 though
             bool includeSelf = false;
+	    RDUNUSED_PARAM(includeSelf);
             CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
             if (nbrs.size() < 4) {
@@ -445,6 +447,7 @@ namespace RDKit {
 
     void adjustBoundsMatFromCoordMap(DistGeom::BoundsMatPtr mmat,unsigned int nAtoms,
                                      const std::map<int,RDGeom::Point3D> *coordMap){
+        RDUNUSED_PARAM(nAtoms);
       // std::cerr<<std::endl;
       // for(unsigned int i=0;i<nAtoms;++i){
       //   for(unsigned int j=0;j<nAtoms;++j){
@@ -519,8 +522,8 @@ namespace RDKit {
             positions.push_back(new RDGeom::Point3D());
           }
         }
-        for (unsigned int ci=0; ci<eargs->confs->size(); ci++) {
-          if(ci%numThreads != threadId) continue;
+        for (size_t ci=0; ci<eargs->confs->size(); ci++) {
+          if(rdcast<int>(ci%numThreads) != threadId) continue;
           if(!(*eargs->confsOk)[ci]){
             // if one of the fragments here has already failed, there's no
             // sense in embedding this one
@@ -700,7 +703,7 @@ namespace RDKit {
         }
 #ifdef RDK_THREADSAFE_SSS
         else {
-          for(unsigned int tid=0;tid<numThreads;++tid){
+          for(int tid=0;tid<numThreads;++tid){
             tg.add_thread(new boost::thread(detail::embedHelper_,tid,numThreads,&eargs));
           }
           tg.join_all();

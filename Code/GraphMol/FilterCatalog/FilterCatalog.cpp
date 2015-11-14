@@ -138,10 +138,12 @@ namespace RDKit
   }
   
   unsigned int FilterCatalog::addEntry(entryType_t *entry, bool updateFPLength) {
+      RDUNUSED_PARAM(updateFPLength);
     return addEntry(boost::shared_ptr<entryType_t>(entry));
   }
 
   unsigned int FilterCatalog::addEntry(SENTRY entry, bool updateFPLength) {
+      RDUNUSED_PARAM(updateFPLength);
     d_entries.push_back(entry);
     return static_cast<unsigned int>(d_entries.size() - 1);
   }

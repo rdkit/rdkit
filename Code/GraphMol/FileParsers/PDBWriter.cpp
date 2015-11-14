@@ -13,7 +13,10 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/format.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/RDKitBase.h>

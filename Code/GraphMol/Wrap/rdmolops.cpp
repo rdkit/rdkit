@@ -10,7 +10,7 @@
 //
 
 #include "rdmolops.h"
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 
 #include "numpy/oldnumeric.h"
 

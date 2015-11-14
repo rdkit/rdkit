@@ -108,7 +108,7 @@ namespace RDKit {
                                          VectVectMatchVectType &matchesPerProduct,
                                          unsigned int level,VectMatchVectType combination){
       unsigned int nReactants=matchesByReactant.size();
-      RANGE_CHECK(0,level,nReactants-1);
+      URANGE_CHECK(level,nReactants-1);
       PRECONDITION(combination.size()==nReactants,"bad combination size");
       for(VectMatchVectType::const_iterator reactIt=matchesByReactant[level].begin();
           reactIt != matchesByReactant[level].end(); ++reactIt){
@@ -418,7 +418,7 @@ namespace RDKit {
       // add the bonds
       const Bond *origB = reactant.getBondBetweenAtoms(reactNeighborIdx,reactAtomIdx);
       unsigned int begIdx=origB->getBeginAtomIdx();
-      unsigned int endIdx=origB->getEndAtomIdx();
+      //unsigned int endIdx=origB->getEndAtomIdx();
       if(begIdx == reactNeighborIdx){
         setNewProductBond(*origB, product, prodNeighborIdx, productIdx);
       }

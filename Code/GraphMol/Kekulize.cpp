@@ -34,6 +34,7 @@ namespace RDKit {
                    INT_DEQUE &aqueue, 
                    boost::dynamic_bitset<> &dBndCands, 
                    boost::dynamic_bitset<> &dBndAdds) {
+        RDUNUSED_PARAM(options);
       // so we made a wrong turn at the lastOpt
       //remove on done list that comes after the lastOpt including itself
 

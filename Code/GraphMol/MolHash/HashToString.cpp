@@ -8,9 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <string>
 #include <sstream>
 #include <algorithm>

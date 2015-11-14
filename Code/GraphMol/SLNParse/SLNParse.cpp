@@ -103,6 +103,7 @@ namespace RDKit {
     }
 
     std::string replaceSLNMacroAtoms(std::string inp,int debugParse){
+      RDUNUSED_PARAM(debugParse);
       const boost::regex defn("\\{(.+?):(.+?)\\}");
       const char *empty="";
 

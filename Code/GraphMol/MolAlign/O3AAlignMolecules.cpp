@@ -976,17 +976,17 @@ namespace RDKit {
       data.refConf = &(refMol.getConformer(refCid));
       data.prbProp = prbProp;
       data.refProp = refProp;
-      unsigned int refNAtoms = refMol.getNumAtoms();
-      unsigned int prbNAtoms = prbMol.getNumAtoms();
+               int refNAtoms = rdcast<int>(refMol.getNumAtoms());
+               int prbNAtoms = rdcast<int>(prbMol.getNumAtoms());
       boost::dynamic_bitset<> refHvyAtoms(refNAtoms);
       boost::dynamic_bitset<> prbHvyAtoms(prbNAtoms);
-      unsigned int i;
-      for (i = 0; i < refNAtoms; ++i) {
+
+      for (int i = 0; i < refNAtoms; ++i) {
         if (refMol[i]->getAtomicNum() != 1) {
           refHvyAtoms.set(i);
         }
       }
-      for (i = 0; i < prbNAtoms; ++i) {
+      for (int i = 0; i < prbNAtoms; ++i) {
         if (prbMol[i]->getAtomicNum() != 1) {
           prbHvyAtoms.set(i);
         }
@@ -1003,7 +1003,7 @@ namespace RDKit {
             throw MolAlignException("The number of weights should match the number of constraints");
           }
         }
-        for (i = 0; i < (*constraintMap).size(); ++i) {
+        for (unsigned int i = 0; i < (*constraintMap).size(); ++i) {
           if (((*constraintMap)[i].first < 0) || ((*constraintMap)[i].first >= prbNAtoms)
             || ((*constraintMap)[i].second < 0) || ((*constraintMap)[i].second >= refNAtoms)) {
             throw MolAlignException("Constrained atom idx out of range");
@@ -1054,13 +1054,13 @@ namespace RDKit {
           }
         }
       }
-      unsigned int pairs = bestO3A->matches()->size();
+      unsigned int pairs = rdcast<unsigned int>(bestO3A->matches()->size());
       RDKit::MatchVectType *bestO3AMatchVect = new RDKit::MatchVectType(pairs);
       RDNumeric::DoubleVector *bestO3AWeights = new RDNumeric::DoubleVector(pairs);
       d_o3aMatchVect = bestO3AMatchVect;
       d_o3aWeights = bestO3AWeights;
       if (pairs >= 3) {
-        for (i = 0; i < pairs; ++i) {
+        for (unsigned int i = 0; i < pairs; ++i) {
           (*bestO3AMatchVect)[i].first = (*(bestO3A->matches()))[i].first;
           (*bestO3AMatchVect)[i].second = (*(bestO3A->matches()))[i].second;
           (*bestO3AWeights)[i] = (*(bestO3A->weights()))[i];
@@ -1100,7 +1100,7 @@ namespace RDKit {
         RDGeom::Point3D refCtd;
         RDGeom::Point3D prbCtd;
         unsigned int i;
-        unsigned int j;
+        //unsigned int j;
         unsigned int nHeavy;
         for (i = 0, nHeavy = 0; i < refPos.size(); ++i) {
           if (d_refMol->getAtomWithIdx(i)->getAtomicNum() == 1) {
@@ -1152,14 +1152,14 @@ namespace RDKit {
 
     double O3A::trans(RDGeom::Transform3D &trans) {
       double rmsd = 0.0;
-      const RDKit::MatchVectType *matchVectPtr = NULL;
+      //const RDKit::MatchVectType *matchVectPtr = NULL;
       Conformer transConf(d_prbMol->getConformer(d_prbCid));
       if (d_o3aMatchVect && (d_o3aMatchVect->size() >= 3)) {
         getAlignmentTransform(*d_prbMol, *d_refMol,
           trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
           d_reflect, d_maxIters);
         MolTransforms::transformConformer(transConf, trans);
-        matchVectPtr = d_o3aMatchVect;
+        //matchVectPtr = d_o3aMatchVect;
       }
       rmsd = _rmsdMatchVect(d_prbMol, d_refMol, transConf.getPositions(),
         d_refMol->getConformer(d_refCid).getPositions(), d_o3aMatchVect);
@@ -1269,7 +1269,7 @@ namespace RDKit {
                                      refCid,
                                      reflect,maxIters,options,
                                      constraintMap,constraintWeights};
-        for(unsigned int ti=0;ti<numThreads;++ti){
+        for(int ti=0;ti<numThreads;++ti){
           tg.add_thread(new boost::thread(detail::O3AHelper_,
                                           &prbMol,&refMol,prbProp,refProp,
                                           &res,

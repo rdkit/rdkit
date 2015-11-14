@@ -10,7 +10,7 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rddatastructs_array_API
 
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/DiscreteValueVect.h>

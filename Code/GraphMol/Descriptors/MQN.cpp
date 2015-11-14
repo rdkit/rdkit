@@ -20,6 +20,7 @@ namespace RDKit{
   namespace Descriptors {
     std::vector<unsigned int> calcMQNs(const ROMol &mol,
                                       bool force){
+        RDUNUSED_PARAM(force);
       // FIX: use force value to enable caching
       std::vector<unsigned int> res(42,0);
 

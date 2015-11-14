@@ -478,7 +478,9 @@ void test5(){
 
 
 #ifdef RDK_TEST_MULTITHREADED
-#include <boost/thread.hpp>  
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/thread.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 namespace {
   void runblock(const std::vector<ROMol *> &mols,const std::vector<std::string> &refData,
                 unsigned int count,unsigned int idx){

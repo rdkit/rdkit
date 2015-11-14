@@ -47,7 +47,7 @@ namespace ChemicalFeatures {
     ~FreeChemicalFeature() {}
 
     //! return our id
-    const int getId() const {
+    int getId() const {
       return d_id;
     }
 

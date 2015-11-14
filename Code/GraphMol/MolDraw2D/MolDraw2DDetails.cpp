@@ -34,7 +34,7 @@ namespace RDKit {
       int steps = std::max(static_cast<int>(extent*2),5);
       float step = M_PI*extent/(180*steps);
       float angle = M_PI*startAng/180;
-      for(unsigned int i=0;i<=steps;++i){
+      for(int i=0;i<=steps;++i){
         Point2D point(x+xScale*cos(angle),
                       y-yScale*sin(angle));
         res.push_back(point);

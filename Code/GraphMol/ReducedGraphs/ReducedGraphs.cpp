@@ -16,10 +16,13 @@
 
 #include "ReducedGraphs.h"
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 #include <boost/ref.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 
 //#define VERBOSE_FINGERPRINTING 1
 
@@ -90,7 +93,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
       for(unsigned int i=0;i<patterns->size();++i){
         types[i].resize(nAtoms);
         types[i].reset();
-        unsigned int mask=1<<i;
+        //unsigned int mask=1<<i;
         std::vector<MatchVectType> matchVect;
         // to maintain thread safety, we have to copy the pattern
         // molecules:
@@ -154,7 +157,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
         for(unsigned int j=i+1;j<mol.getNumAtoms();++j){
           if(tvs[j].empty()) continue;
           int dist = int(dm[i*mol.getNumAtoms()+j]);
-          if(dist<minPath || dist>maxPath) continue;
+          if(dist<rdcast<int>(minPath) || dist>rdcast<int>(maxPath)) continue;
           BOOST_FOREACH(int ti,tvs[i]){
             BOOST_FOREACH(int tj,tvs[j]){
               int ijMin=std::min(ti,tj);
@@ -168,8 +171,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
               block += ijMax;
               unsigned int bin=block*nBins + (dist-minPath);
               (*res)[bin] += 1;
-              if(dist>minPath && fuzzIncrement>0) (*res)[bin-1] += fuzzIncrement;
-              if(dist<maxPath && fuzzIncrement>0) (*res)[bin+1] += fuzzIncrement;
+              if(dist>rdcast<int>(minPath) && fuzzIncrement>0) (*res)[bin-1] += fuzzIncrement;
+              if(dist<rdcast<int>(maxPath) && fuzzIncrement>0) (*res)[bin+1] += fuzzIncrement;
             }
           }
         }
@@ -215,7 +218,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
             }
           }
           std::list<int> tv;
-          if(nAromatic>=2 || nSP2 >= ring.size()/2) tv.push_back(aromaticFlag);
+          if(nAromatic>=2 || nSP2 >= rdcast<int>(ring.size()/2)) tv.push_back(aromaticFlag);
           else tv.push_back(aliphaticFlag);
           res->getAtomWithIdx(nIdx)->setProp("_ErGAtomTypes",tv);
         }

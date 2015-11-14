@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmoltransforms_array_API
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include "numpy/arrayobject.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>

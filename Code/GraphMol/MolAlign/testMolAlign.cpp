@@ -557,7 +557,10 @@ namespace {
     }
   }
 }
-#include <boost/thread.hpp>  
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/thread.hpp> 
+#include <RDGeneral/BoostEndInclude.h>
+
 void testMMFFO3AMultiThread() {
   std::string rdbase = getenv("RDBASE");
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";

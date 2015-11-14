@@ -58,13 +58,13 @@ namespace RDKit {
                         excludedBonds[bond->getIdx()] = true;
                         unsigned ai = (atom == bond->getBeginAtom()) ? bond->getEndAtomIdx() : bond->getBeginAtomIdx();
                         const Atom* end_atom = qmol.getAtomWithIdx(ai);
-                        unsigned end_atom_idx = -1;
+                        unsigned end_atom_idx = NotSet;
                         for(unsigned i=0; i < getNumAtoms(); i++)
                             if(end_atom == MoleculeFragment.Atoms[i]) {  // already exists in this seed
                                 end_atom_idx = i;
                                 break;
                             }
-                        NewBonds.push_back(NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx, -1==end_atom_idx ? end_atom:0));
+                        NewBonds.push_back(NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx, NotSet==end_atom_idx ? end_atom:0));
                     }
                 }
             }
@@ -76,7 +76,7 @@ namespace RDKit {
             std::map<unsigned, unsigned> newAtomsMap; // map new added atoms to their seed's indeces
 
             if(!canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) ) { // prune() parent
-                GrowingStage = -1; //finished
+                GrowingStage = NotSet; //finished
 #ifdef VERBOSE_STATISTICS_ON
                 ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
@@ -88,7 +88,7 @@ namespace RDKit {
                 ((Seed*)this)->fillNewBonds(qmol); // non const method, multistage growing optimisation
 
                 if(NewBonds.empty()) {
-                    GrowingStage = -1;  // finished
+                    GrowingStage = NotSet;  // finished
                     return;
                 }
 
@@ -99,7 +99,7 @@ namespace RDKit {
 
                 for(std::vector<NewBond>::const_iterator nbi = NewBonds.begin(); nbi != NewBonds.end(); nbi++) {
                     unsigned aIdx = nbi->EndAtomIdx;
-                    if(-1 == aIdx) { // new atom
+                    if(NotSet == aIdx) { // new atom
                         std::map<unsigned, unsigned>::const_iterator nai = newAtomsMap.find(nbi->NewAtomIdx);         // check RING
                         if(newAtomsMap.end() == nai) {
                             const Atom* end_atom = nbi->NewAtom;
@@ -121,7 +121,7 @@ namespace RDKit {
 
                 // prune() Best Sizes
                 if( ! seed.canGrowBiggerThan(mcs.getMaxNumberBonds(), mcs.getMaxNumberAtoms()) ) {
-                    GrowingStage = -1;
+                    GrowingStage = NotSet;
 #ifdef VERBOSE_STATISTICS_ON
                     ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
@@ -137,7 +137,7 @@ namespace RDKit {
             }
 // 2. Check and add all 2^N-1-1 other possible seeds:
             if(1 == NewBonds.size()) {
-                GrowingStage = -1;
+                GrowingStage = NotSet;
                 return; // everything has been done
             }
             // OPTIMISATION:
@@ -154,7 +154,7 @@ namespace RDKit {
                 newAtomsMap.clear();
 
                 unsigned aIdx = nbi->EndAtomIdx;    // existed in this parent seed (ring) or -1
-                if(-1 == aIdx) { // new atom
+                if(NotSet == aIdx) { // new atom
                     const Atom* end_atom = nbi->NewAtom;
                     aIdx = seed.addAtom(end_atom);
                 }
@@ -166,7 +166,7 @@ namespace RDKit {
                     if(!MatchResult.empty())
                         seed.MatchResult = MatchResult;
                     if( ! mcs.checkIfMatchAndAppend(seed)) {
-                        nbi->BondIdx = -1; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
+                        nbi->BondIdx = NotSet; // exclude this new bond from growing this seed - decrease 2^^N-1 to 2^^k-1, k<N.
                         ++numErasedNewBonds;
 #ifdef VERBOSE_STATISTICS_ON
                         ++mcs.VerboseStatistics.SingleBondExcluded;
@@ -184,7 +184,7 @@ namespace RDKit {
                 dirtyNewBonds.reserve(NewBonds.size());
                 dirtyNewBonds.swap(NewBonds);
                 for(std::vector<NewBond>::const_iterator nbi = dirtyNewBonds.begin(); nbi != dirtyNewBonds.end(); nbi++)
-                    if(-1 != nbi->BondIdx)
+                    if(NotSet != nbi->BondIdx)
                         NewBonds.push_back(*nbi);
             }
 
@@ -238,7 +238,7 @@ namespace RDKit {
                         if(composition.isSet(i)) {
                             const NewBond* nbi = & NewBonds[i];
                             unsigned aIdx = nbi->EndAtomIdx;    // existed in this parent seed (ring) or -1
-                            if(-1 == aIdx) { // new atom
+                            if(NotSet == aIdx) { // new atom
                                 std::map<unsigned, unsigned>::const_iterator nai = newAtomsMap.find(nbi->NewAtomIdx);         // check RING
                                 if(newAtomsMap.end() == nai) {
                                     const Atom* end_atom = nbi->NewAtom;//qmol.getAtomWithIdx(nbi->NewAtomIdx);
@@ -272,7 +272,7 @@ namespace RDKit {
                     }
                 }
             }
-            GrowingStage = -1; //finished
+            GrowingStage = NotSet; //finished
         }
 
         void Seed::computeRemainingSize(const ROMol& qmol) {

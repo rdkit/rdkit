@@ -71,9 +71,9 @@ struct SBV_wrapper {
       .def("GetNumOffBits",&SBV::getNumOffBits,
          "Returns the number of off bits.\n")
       .def("__getitem__",
-           (const int (*)(const SBV&,int))get_VectItem)
+           (int (*)(const SBV&,int))get_VectItem)
       .def("__setitem__",
-           (const int (*)(SBV&,int,int))set_VectItem)
+           (int (*)(SBV&,int,int))set_VectItem)
       .def("GetOnBits",
            (IntVect (*)(const SBV&))GetOnBits,
            "Returns a tuple containing IDs of the on bits.\n")

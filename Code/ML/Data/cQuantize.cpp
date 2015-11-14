@@ -58,6 +58,7 @@ long int *
 GenVarTable(double *vals,int nVals,long int *cuts,int nCuts,long int *starts,
 	    long int *results,int nPossibleRes,long int *varTable)
 {
+    RDUNUSED_PARAM(vals);
   int nBins = nCuts + 1;
   int idx,i,iTab;
 

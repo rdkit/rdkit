@@ -359,7 +359,6 @@ namespace RDKit {
 
   void TDTMolSupplier::moveTo(unsigned int idx) {
     PRECONDITION(dp_inStream,"no stream");
-    CHECK_INVARIANT(idx >= 0, "");
 
     // dp_inStream->seekg() is called for all idx values
     // and earlier calls to next() may have put the stream into a bad state

@@ -183,8 +183,11 @@ namespace RDKit{
     public:
       BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality,
                        bool useQueryQueryMatches) :
-        d_query(query), d_mol(mol),df_useChirality(useChirality),
-        df_useQueryQueryMatches(useQueryQueryMatches) {};
+        d_query(query), d_mol(mol),df_useChirality(useChirality)
+        /*,df_useQueryQueryMatches(useQueryQueryMatches)*/
+      {
+        RDUNUSED_PARAM(useQueryQueryMatches);
+      };
       bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j) const{
         if(df_useChirality){
           const BOND_SPTR qBnd=d_query[i];
@@ -205,7 +208,7 @@ namespace RDKit{
       const ROMol &d_query;
       const ROMol &d_mol;
       bool df_useChirality;
-      bool df_useQueryQueryMatches;
+      //bool df_useQueryQueryMatches;
     };
     void mergeMatchVect(std::vector<MatchVectType> &matches,
       const std::vector<MatchVectType> &matchesTmp,
