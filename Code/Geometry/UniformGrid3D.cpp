@@ -23,7 +23,7 @@ using namespace RDKit;
 namespace RDGeom {
   unsigned int ci_GRIDPICKLE_VERSION=0x1;
 
-  UniformGrid3D::UniformGrid3D(const UniformGrid3D &other){
+  UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
     PRECONDITION(other.dp_storage,"cannot copy an unintialized grid");
     RDKit::DiscreteValueVect *data=new RDKit::DiscreteValueVect(*other.dp_storage);
     initGrid(other.d_numX*other.d_spacing,

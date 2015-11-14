@@ -75,7 +75,7 @@ namespace RDKit{
 
     //! set the value at an index
     void setVal(IndexType idx, int val){
-      if(idx<0||idx>=d_length){
+      if(idx>=d_length){
         throw IndexErrorException(static_cast<int>(idx));
       }
       if(val!=0){
@@ -86,7 +86,7 @@ namespace RDKit{
     };
 #ifdef __clang__
 #pragma clang diagnostic pop
-#elif defined(__GNUC__) || defined(__GNUG__) && \
+#elif ( defined(__GNUC__) || defined(__GNUG__) ) &&     \
   ( __GNUC__ > 4 ||                                    \
     (__GNUC__ == 4 && __GNUC_MINOR__ > 1 ) )
 #pragma GCC diagnostic pop

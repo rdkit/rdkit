@@ -41,7 +41,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
   initFromText(data,dataLen);
 }
 
-  ExplicitBitVect::ExplicitBitVect(const ExplicitBitVect& other){
+  ExplicitBitVect::ExplicitBitVect(const ExplicitBitVect& other) : BitVect(other) {
     d_size = other.d_size;
     dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
     d_numOnBits=other.d_numOnBits;

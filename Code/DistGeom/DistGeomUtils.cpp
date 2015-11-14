@@ -252,6 +252,7 @@ namespace DistGeom {
                                                  const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
                                                  const std::vector<std::vector<int> > &improperAtoms,
                                                  const std::vector<int> &atomNums) {
+    (void)atomNums;
     unsigned int N = mmat.numRows();
     CHECK_INVARIANT(N == positions.size(), "");
     CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
@@ -377,6 +378,7 @@ namespace DistGeom {
                                                    const std::vector<std::vector<int> > &expTorsionAtoms,
                                                    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &expTorsionAngles,
                                                    const std::vector<int> &atomNums) {
+      (void)atomNums;
       unsigned int N = mmat.numRows();
       CHECK_INVARIANT(N == positions.size(), "");
       CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");

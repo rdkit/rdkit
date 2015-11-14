@@ -39,7 +39,7 @@ public:
   explicit SparseBitVect(unsigned int size): dp_bits(0), d_size(0) {_initForSize(size); };
 
   //! copy constructor
-  SparseBitVect(const SparseBitVect& other){
+  SparseBitVect(const SparseBitVect& other) : BitVect(other) {
     d_size=0;dp_bits = 0;
     _initForSize(other.getNumBits());
     IntSet *bv=other.dp_bits;
