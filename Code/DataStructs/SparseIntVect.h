@@ -75,7 +75,7 @@ namespace RDKit{
 
     //! set the value at an index
     void setVal(IndexType idx, int val){
-      if(idx>=d_length){
+      if(idx<0 || idx>=d_length){
         throw IndexErrorException(static_cast<int>(idx));
       }
       if(val!=0){
