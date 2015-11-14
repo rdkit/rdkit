@@ -976,8 +976,8 @@ namespace RDKit {
       data.refConf = &(refMol.getConformer(refCid));
       data.prbProp = prbProp;
       data.refProp = refProp;
-               int refNAtoms = rdcast<int>(refMol.getNumAtoms());
-               int prbNAtoms = rdcast<int>(prbMol.getNumAtoms());
+      int refNAtoms = rdcast<int>(refMol.getNumAtoms());
+      int prbNAtoms = rdcast<int>(prbMol.getNumAtoms());
       boost::dynamic_bitset<> refHvyAtoms(refNAtoms);
       boost::dynamic_bitset<> prbHvyAtoms(prbNAtoms);
 
@@ -1100,7 +1100,6 @@ namespace RDKit {
         RDGeom::Point3D refCtd;
         RDGeom::Point3D prbCtd;
         unsigned int i;
-        //unsigned int j;
         unsigned int nHeavy;
         for (i = 0, nHeavy = 0; i < refPos.size(); ++i) {
           if (d_refMol->getAtomWithIdx(i)->getAtomicNum() == 1) {
@@ -1152,14 +1151,12 @@ namespace RDKit {
 
     double O3A::trans(RDGeom::Transform3D &trans) {
       double rmsd = 0.0;
-      //const RDKit::MatchVectType *matchVectPtr = NULL;
       Conformer transConf(d_prbMol->getConformer(d_prbCid));
       if (d_o3aMatchVect && (d_o3aMatchVect->size() >= 3)) {
         getAlignmentTransform(*d_prbMol, *d_refMol,
           trans, d_prbCid, d_refCid, d_o3aMatchVect, d_o3aWeights,
           d_reflect, d_maxIters);
         MolTransforms::transformConformer(transConf, trans);
-        //matchVectPtr = d_o3aMatchVect;
       }
       rmsd = _rmsdMatchVect(d_prbMol, d_refMol, transConf.getPositions(),
         d_refMol->getConformer(d_refCid).getPositions(), d_o3aMatchVect);

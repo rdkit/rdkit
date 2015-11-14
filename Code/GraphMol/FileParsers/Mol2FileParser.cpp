@@ -723,7 +723,7 @@ namespace RDKit{
   //------------------------------------------------
   RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
                              Mol2Type variant){
-      RDUNUSED_PARAM(variant);
+    RDUNUSED_PARAM(variant);
     PRECONDITION(inStream,"no stream");
     std::string tempStr,lineBeg;
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;

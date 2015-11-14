@@ -6,7 +6,7 @@ from rdkit.six.moves import cStringIO as StringIO
 from rdkit import RDConfig
 
 from rdkit.Chem import PandasTools
-gotPandas = PandasTools.pd != None
+gotPandas = PandasTools.pd is not None
 
 import numpy
 import tempfile, shutil

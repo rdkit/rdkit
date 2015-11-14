@@ -29,7 +29,7 @@ namespace RingUtils {
   using namespace RDKit;
 
   boost::uint32_t computeRingInvariant(INT_VECT ring,unsigned int nAtoms){
-      RDUNUSED_PARAM(nAtoms);
+    RDUNUSED_PARAM(nAtoms);
     std::sort(ring.begin(),ring.end());
     boost::uint32_t res=gboost::hash_range(ring.begin(),ring.end());
     return res;

@@ -517,7 +517,6 @@ namespace Canon {
         possiblesIt++){
       int possibleIdx = possiblesIt->get<1>();
       Bond *bond = possiblesIt->get<2>();
-      //Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
       switch(colors[possibleIdx]){
       case WHITE_NODE:
         // -----

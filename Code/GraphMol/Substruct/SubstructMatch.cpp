@@ -184,7 +184,6 @@ namespace RDKit{
       BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality,
                        bool useQueryQueryMatches) :
         d_query(query), d_mol(mol),df_useChirality(useChirality)
-        /*,df_useQueryQueryMatches(useQueryQueryMatches)*/
       {
         RDUNUSED_PARAM(useQueryQueryMatches);
       };

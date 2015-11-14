@@ -218,7 +218,6 @@ namespace RDKit {
       unsigned int getAtomRingNbrCode(unsigned int i) const {
         if(!dp_atoms[i].hasRingNbr) return 0;
 
-        //const Atom *at=dp_atoms[i].atom;
         int *nbrs = dp_atoms[i].nbrIds;
         unsigned int code=0;
         for(unsigned j=0; j<dp_atoms[i].degree; ++j){

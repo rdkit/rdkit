@@ -40,7 +40,7 @@ namespace RDKit{
                        unsigned int lineWidthMult,unsigned int fontSize,bool includeAtomCircles,
                        int confId
                        ){
-      RDUNUSED_PARAM(kekulize);
+    RDUNUSED_PARAM(kekulize);
     std::vector<int> *highlightAtoms=pythonObjectToVect(pyHighlightAtoms,static_cast<int>(mol.getNumAtoms()));
     std::stringstream outs;
     MolDraw2DSVG drawer(width,height,outs);
@@ -189,12 +189,12 @@ namespace RDKit{
 
   namespace {
     std::string getResidue(const ROMol &m,const Atom *at){
-        RDUNUSED_PARAM(m);
+      RDUNUSED_PARAM(m);
       if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
       return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getResidueName();
     }
     std::string getChainId(const ROMol &m,const Atom *at){
-        RDUNUSED_PARAM(m);
+      RDUNUSED_PARAM(m);
       if(at->getMonomerInfo()->getMonomerType()!=AtomMonomerInfo::PDBRESIDUE) return "";
       return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())->getChainId();
     }

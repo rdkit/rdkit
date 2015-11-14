@@ -418,7 +418,6 @@ namespace RDKit {
       // add the bonds
       const Bond *origB = reactant.getBondBetweenAtoms(reactNeighborIdx,reactAtomIdx);
       unsigned int begIdx=origB->getBeginAtomIdx();
-      //unsigned int endIdx=origB->getEndAtomIdx();
       if(begIdx == reactNeighborIdx){
         setNewProductBond(*origB, product, prodNeighborIdx, productIdx);
       }

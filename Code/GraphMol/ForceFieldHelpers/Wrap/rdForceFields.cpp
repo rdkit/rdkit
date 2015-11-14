@@ -40,7 +40,7 @@ namespace RDKit {
                                 double vdwThresh,
                                 int confId,
                                 bool ignoreInterfragInteractions ){
-      RDUNUSED_PARAM(confId);// XXX FIX ME?
+    RDUNUSED_PARAM(confId);// XXX FIX ME?
     std::vector< std::pair<int, double> >  res;
     {
       NOGIL gil;
@@ -61,7 +61,7 @@ namespace RDKit {
                                  double nonBondedThresh,
                                  int confId,
                                  bool ignoreInterfragInteractions ){
-      RDUNUSED_PARAM(confId); //Fix me?
+    RDUNUSED_PARAM(confId); //Fix me?
     std::vector< std::pair<int, double> >  res;
     {
       NOGIL gil;

@@ -8,15 +8,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/python.h>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/python.hpp>
+#include <boost/cstdint.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <DataStructs/SparseIntVect.h>
-#include <boost/cstdint.hpp>
 
 using namespace RDKit;
 

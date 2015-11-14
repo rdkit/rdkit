@@ -38,9 +38,9 @@ void DisableLog(std::string spec){
   logging::disable_logs(spec);
 }
 void AttachFileToLog(std::string spec,std::string filename,int delay=100){
-    (void) spec;
-    (void) filename;
-    (void) delay;
+  (void) spec;
+  (void) filename;
+  (void) delay;
 #if 0
 #if defined(BOOST_HAS_THREADS)
   logging::manipulate_logs(spec)

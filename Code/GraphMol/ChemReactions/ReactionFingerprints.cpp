@@ -43,24 +43,7 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
 namespace{
-  /*
-ExplicitBitVect *concatenateBitsets(const ExplicitBitVect& first, const ExplicitBitVect& second)
-{
-	ExplicitBitVect *res = new ExplicitBitVect(first.size() + second.size());
 
-	for(unsigned i = 0; i < first.size(); i++){
-		if(first[i]){
-			res->setBit(i);
-		}
-	}
-	for(unsigned j = 0; j < second.size(); j++){
-		if(second[j]){
-			res->setBit(first.size()+j);
-		}
-	}
-    return res;
-}
-  */
 RDKit::SparseIntVect<boost::uint32_t> *generateFingerprint(RDKit::ROMol &mol,
 		unsigned int fpSize,
 		RDKit::FingerprintType t)

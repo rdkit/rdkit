@@ -131,7 +131,7 @@ namespace RDKit{
   }
   
   void RWMol::replaceAtom(unsigned int idx,Atom *atom_pin,bool updateLabel){
-      RDUNUSED_PARAM(updateLabel);
+    RDUNUSED_PARAM(updateLabel);
     PRECONDITION(atom_pin,"bad atom passed to replaceAtom");
     URANGE_CHECK(idx,getNumAtoms()-1);
     Atom *atom_p = atom_pin->copy();

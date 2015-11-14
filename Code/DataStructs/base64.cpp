@@ -32,8 +32,6 @@
 //        15 P            32 g            49 x
 //        16 Q            33 h            50 y
 
-//const int MaxLineLength=72;
-
 char *Base64Encode(const char *inText,const unsigned int inLen){
   return Base64Encode((const unsigned char *)inText,inLen);
 }

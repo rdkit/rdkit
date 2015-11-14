@@ -9,10 +9,7 @@
 //  of the RDKit source tree.
 //
 #define NO_IMPORT_ARRAY
-
-#include <RDGeneral/BoostStartInclude.h>
 #include <RDBoost/python.h>
-#include <RDGeneral/BoostEndInclude.h>
 #include <string>
 
 //ours

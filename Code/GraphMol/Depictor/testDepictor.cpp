@@ -418,9 +418,7 @@ void testRemoveHsCrash() {
   TEST_ASSERT(m);
   ROMol *newM=MolOps::removeHs(*static_cast<ROMol *>(m));
   delete m;
-  unsigned int confId = RDDepict::compute2DCoords(*newM);
-  (void) confId;
-  //  TEST_ASSERT(confId>=0);
+  RDDepict::compute2DCoords(*newM);
   delete newM;
 }
     

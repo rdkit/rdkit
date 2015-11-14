@@ -4527,11 +4527,6 @@ namespace {
   int getAtNum(const ROMol &,const Atom *at){
     return at->getAtomicNum();
   }
-    /*
-  std::string getSymbol(const ROMol &,const Atom *at){
-    return at->getSymbol();
-  }
-     */
 }
 void testMolFragsWithQuery()
 {
