@@ -11,8 +11,8 @@
   \file QueryObjects.h
 
   \brief Pulls in all the query types.
-*/  
-  
+*/
+
 #ifndef __RD_QUERYOBJECTS_H__
 #define __RD_QUERYOBJECTS_H__
 
@@ -32,10 +32,6 @@
 #include "XOrQuery.h"
 
 namespace Queries {
-  typedef enum {
-    COMPOSITE_AND,
-    COMPOSITE_OR,
-    COMPOSITE_XOR
-  } CompositeQueryType;
+typedef enum { COMPOSITE_AND, COMPOSITE_OR, COMPOSITE_XOR } CompositeQueryType;
 }
 #endif

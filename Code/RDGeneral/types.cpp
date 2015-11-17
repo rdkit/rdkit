@@ -1,7 +1,7 @@
 // $Id$
 //
 //                 Copyright 2001-2006
-//                   Rational Discovery LLC 
+//                   Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,161 +11,157 @@
 //
 //
 
-
 #include "types.h"
 
-namespace RDKit{
-    namespace common_properties {
-        const std::string TWOD = "2D";
-        const std::string BalabanJ = "BalabanJ";
-        const std::string BalanbanJ = "BalanbanJ";
-        const std::string Discrims = "Discrims";
-        const std::string DistanceMatrix_Paths = "DistanceMatrix_Paths";
-        const std::string MolFileComments = "MolFileComments";
-        const std::string MolFileInfo = "MolFileInfo";
-        const std::string NullBond = "NullBond";
-        const std::string _2DConf = "_2DConf";
-        const std::string _3DConf = "_3DConf";
-        const std::string _AtomID = "_AtomID";
-        const std::string _BondsPotentialStereo = "_BondsPotentialStereo";
-        const std::string _CIPCode = "_CIPCode";
-        const std::string _CIPRank = "_CIPRank";
-        const std::string _ChiralityPossible = "_ChiralityPossible";
-        const std::string _CrippenLogP = "_CrippenLogP";
-        const std::string _CrippenMR = "_CrippenMR";
-        const std::string _MMFFSanitized = "_MMFFSanitized";
-        const std::string _MolFileChiralFlag = "_MolFileChiralFlag";
-        const std::string _MolFileRLabel = "_MolFileRLabel";
-        const std::string _Name = "_Name";
-        const std::string _NeedsQueryScan = "_NeedsQueryScan";
-        const std::string _QueryFormalCharge = "_QueryFormalCharge";
-        const std::string _QueryHCount = "_QueryHCount";
-        const std::string _QueryIsotope = "_QueryIsotope";
-        const std::string _QueryMass = "_QueryMass";
-        const std::string _ReactionDegreeChanged = "_ReactionDegreeChanged";
-        const std::string _RingClosures = "_RingClosures";
-        const std::string _SLN_s = "_SLN_s";
-        const std::string _SmilesStart = "_SmilesStart";
-        const std::string _StereochemDone = "_StereochemDone";
-        const std::string _TraversalBondIndexOrder = "_TraversalBondIndexOrder";
-        const std::string _TraversalRingClosureBond = "_TraversalRingClosureBond";
-        const std::string _TriposAtomType = "_TriposAtomType";
-        const std::string _Unfinished_SLN_ = "_Unfinished_SLN_";
-        const std::string _UnknownStereo = "_UnknownStereo";
-        const std::string _connectivityHKDeltas = "_connectivityHKDeltas";
-        const std::string _connectivityNVals = "_connectivityNVals";
-        const std::string _crippenLogP = "_crippenLogP";
-        const std::string _crippenLogPContribs = "_crippenLogPContribs";
-        const std::string _crippenMR = "_crippenMR";
-        const std::string _crippenMRContribs = "_crippenMRContribs";
-        const std::string _doIsoSmiles = "_doIsoSmiles";
-        const std::string _fragSMARTS = "_fragSMARTS";
-        const std::string _hasMassQuery = "_hasMassQuery";
-        const std::string _labuteASA = "_labuteASA";
-        const std::string _labuteAtomContribs = "_labuteAtomContribs";
-        const std::string _labuteAtomHContrib = "_labuteAtomHContrib";
-        const std::string _protected = "_protected";
-        const std::string _queryRootAtom = "_queryRootAtom";
-        const std::string _ringStereoAtoms = "_ringStereoAtoms";
-        const std::string _ringStereoWarning = "_ringStereoWarning";
-        const std::string _ringStereochemCand = "_ringStereochemCand";
-        const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
-        const std::string _starred = "_starred";
-        const std::string _supplementalSmilesLabel = "_supplementalSmilesLabel";
-        const std::string _tpsa = "_tpsa";
-        const std::string _tpsaAtomContribs = "_tpsaAtomContribs";
-        const std::string _unspecifiedOrder = "_unspecifiedOrder";
-        const std::string _brokenChirality = "_brokenChirality";
-        const std::string dummyLabel = "dummyLabel";
-        const std::string extraRings = "extraRings";
-        const std::string isImplicit = "isImplicit";
-        const std::string maxAttachIdx = "maxAttachIdx";
-        const std::string molAtomMapNumber = "molAtomMapNumber";
-        const std::string molFileAlias = "molFileAlias";
-        const std::string molFileValue = "molFileValue";
-        const std::string molInversionFlag = "molInversionFlag";
-        const std::string molParity = "molParity";
-        const std::string molRxnComponent = "molRxnComponent";
-        const std::string molRxnRole = "molRxnRole";
-        const std::string molTotValence = "molTotValence";
-        const std::string numArom = "numArom";
-        const std::string origNoImplicit = "origNoImplicit";
-        const std::string ringMembership = "ringMembership";
-        const std::string smilesSymbol = "smilesSymbol";
-    } // end common_properties
-    
+namespace RDKit {
+namespace common_properties {
+const std::string TWOD = "2D";
+const std::string BalabanJ = "BalabanJ";
+const std::string BalanbanJ = "BalanbanJ";
+const std::string Discrims = "Discrims";
+const std::string DistanceMatrix_Paths = "DistanceMatrix_Paths";
+const std::string MolFileComments = "MolFileComments";
+const std::string MolFileInfo = "MolFileInfo";
+const std::string NullBond = "NullBond";
+const std::string _2DConf = "_2DConf";
+const std::string _3DConf = "_3DConf";
+const std::string _AtomID = "_AtomID";
+const std::string _BondsPotentialStereo = "_BondsPotentialStereo";
+const std::string _CIPCode = "_CIPCode";
+const std::string _CIPRank = "_CIPRank";
+const std::string _ChiralityPossible = "_ChiralityPossible";
+const std::string _CrippenLogP = "_CrippenLogP";
+const std::string _CrippenMR = "_CrippenMR";
+const std::string _MMFFSanitized = "_MMFFSanitized";
+const std::string _MolFileChiralFlag = "_MolFileChiralFlag";
+const std::string _MolFileRLabel = "_MolFileRLabel";
+const std::string _Name = "_Name";
+const std::string _NeedsQueryScan = "_NeedsQueryScan";
+const std::string _QueryFormalCharge = "_QueryFormalCharge";
+const std::string _QueryHCount = "_QueryHCount";
+const std::string _QueryIsotope = "_QueryIsotope";
+const std::string _QueryMass = "_QueryMass";
+const std::string _ReactionDegreeChanged = "_ReactionDegreeChanged";
+const std::string _RingClosures = "_RingClosures";
+const std::string _SLN_s = "_SLN_s";
+const std::string _SmilesStart = "_SmilesStart";
+const std::string _StereochemDone = "_StereochemDone";
+const std::string _TraversalBondIndexOrder = "_TraversalBondIndexOrder";
+const std::string _TraversalRingClosureBond = "_TraversalRingClosureBond";
+const std::string _TriposAtomType = "_TriposAtomType";
+const std::string _Unfinished_SLN_ = "_Unfinished_SLN_";
+const std::string _UnknownStereo = "_UnknownStereo";
+const std::string _connectivityHKDeltas = "_connectivityHKDeltas";
+const std::string _connectivityNVals = "_connectivityNVals";
+const std::string _crippenLogP = "_crippenLogP";
+const std::string _crippenLogPContribs = "_crippenLogPContribs";
+const std::string _crippenMR = "_crippenMR";
+const std::string _crippenMRContribs = "_crippenMRContribs";
+const std::string _doIsoSmiles = "_doIsoSmiles";
+const std::string _fragSMARTS = "_fragSMARTS";
+const std::string _hasMassQuery = "_hasMassQuery";
+const std::string _labuteASA = "_labuteASA";
+const std::string _labuteAtomContribs = "_labuteAtomContribs";
+const std::string _labuteAtomHContrib = "_labuteAtomHContrib";
+const std::string _protected = "_protected";
+const std::string _queryRootAtom = "_queryRootAtom";
+const std::string _ringStereoAtoms = "_ringStereoAtoms";
+const std::string _ringStereoWarning = "_ringStereoWarning";
+const std::string _ringStereochemCand = "_ringStereochemCand";
+const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
+const std::string _starred = "_starred";
+const std::string _supplementalSmilesLabel = "_supplementalSmilesLabel";
+const std::string _tpsa = "_tpsa";
+const std::string _tpsaAtomContribs = "_tpsaAtomContribs";
+const std::string _unspecifiedOrder = "_unspecifiedOrder";
+const std::string _brokenChirality = "_brokenChirality";
+const std::string dummyLabel = "dummyLabel";
+const std::string extraRings = "extraRings";
+const std::string isImplicit = "isImplicit";
+const std::string maxAttachIdx = "maxAttachIdx";
+const std::string molAtomMapNumber = "molAtomMapNumber";
+const std::string molFileAlias = "molFileAlias";
+const std::string molFileValue = "molFileValue";
+const std::string molInversionFlag = "molInversionFlag";
+const std::string molParity = "molParity";
+const std::string molRxnComponent = "molRxnComponent";
+const std::string molRxnRole = "molRxnRole";
+const std::string molTotValence = "molTotValence";
+const std::string numArom = "numArom";
+const std::string origNoImplicit = "origNoImplicit";
+const std::string ringMembership = "ringMembership";
+const std::string smilesSymbol = "smilesSymbol";
+}  // end common_properties
+
 //  template <typename T>
 //  T larger_of(T arg1,T arg2) { return arg1>arg2 ? arg1 : arg2; };
 
-double round(double num){
+double round(double num) {
   double floorVal = floor(num);
   double ceilVal = ceil(num);
-  return num-floorVal > ceilVal-num ? ceilVal : floorVal;
+  return num - floorVal > ceilVal - num ? ceilVal : floorVal;
 };
 
+void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
+  res.resize(0);
+  res = r1;
+  INT_VECT_CI ri;
+  for (ri = r2.begin(); ri != r2.end(); ri++) {
+    if (std::find(res.begin(), res.end(), (*ri)) == res.end()) {
+      res.push_back(*ri);
+    }
+  }
+}
 
-  void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
-    res.resize(0);
-    res = r1;
-    INT_VECT_CI ri;
-    for (ri = r2.begin(); ri != r2.end(); ri++) {
-      if (std::find(res.begin(), res.end(), (*ri)) == res.end()){
-	res.push_back(*ri);
+void Intersect(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
+  res.resize(0);
+  INT_VECT_CI ri;
+  for (ri = r1.begin(); ri != r1.end(); ri++) {
+    if (std::find(r2.begin(), r2.end(), (*ri)) != r2.end()) {
+      res.push_back(*ri);
+    }
+  }
+}
+
+void Union(const VECT_INT_VECT &rings, INT_VECT &res, const INT_VECT *exclude) {
+  res.resize(0);
+  INT_VECT ring;
+  unsigned int id;
+  unsigned int nrings = static_cast<unsigned int>(rings.size());
+  INT_VECT_CI ri;
+
+  for (id = 0; id < nrings; id++) {
+    if (exclude) {
+      if (std::find(exclude->begin(), exclude->end(), static_cast<int>(id)) !=
+          exclude->end()) {
+        continue;
+      }
+    }
+    ring = rings[id];
+    for (ri = ring.begin(); ri != ring.end(); ri++) {
+      if (std::find(res.begin(), res.end(), (*ri)) == res.end()) {
+        res.push_back(*ri);
       }
     }
   }
+}
 
-  void Intersect(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
-    res.resize(0);
-    INT_VECT_CI ri;
-    for (ri = r1.begin(); ri != r1.end(); ri++) {
-      if (std::find(r2.begin(), r2.end(), (*ri)) != r2.end()){
-	res.push_back(*ri);
-      }
+int nextCombination(INT_VECT &comb, int tot) {
+  int nelem = static_cast<int>(comb.size());
+  int celem = nelem - 1;
+
+  while (comb[celem] == (tot - nelem + celem)) {
+    celem--;
+    if (celem < 0) {
+      return -1;
     }
   }
 
-  void Union(const VECT_INT_VECT &rings, INT_VECT &res, const INT_VECT *exclude) {
-    res.resize(0);
-    INT_VECT ring;
-    unsigned int id;
-    unsigned int nrings = static_cast<unsigned int>(rings.size());
-    INT_VECT_CI ri;
-    
-    for (id = 0; id < nrings; id++) {
-      if (exclude) {
-	if (std::find(exclude->begin(), exclude->end(), static_cast<int>(id)) != exclude->end()) {
-	  continue;
-	}
-      }
-      ring = rings[id];
-      for (ri = ring.begin(); ri != ring.end(); ri++) {
-	if (std::find(res.begin(), res.end(), (*ri)) == res.end()) {
-	  res.push_back(*ri);
-	}
-      }
-    }
+  unsigned int i;
+  comb[celem] += 1;
+  for (i = celem + 1; i < comb.size(); i++) {
+    comb[i] = comb[i - 1] + 1;
   }
-
-  int nextCombination(INT_VECT &comb, int tot) {
-    int nelem = static_cast<int>(comb.size());
-    int celem = nelem - 1;
-    
-    while (comb[celem] == (tot - nelem + celem)) {
-      celem--;
-      if (celem < 0) {
-	return -1;
-      }
-    }
-
-    unsigned int i;
-    comb[celem] += 1;
-    for (i = celem+1; i < comb.size(); i++) {
-      comb[i] = comb[i-1] + 1;
-    }
-    return celem;
-  }
-
-  
-
+  return celem;
+}
 }

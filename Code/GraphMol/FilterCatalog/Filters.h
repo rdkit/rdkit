@@ -13,7 +13,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -34,31 +35,28 @@
 #include "FilterCatalogEntry.h"
 #include "FilterCatalog.h"
 
-namespace RDKit
-{
-  struct FilterData_t
-  {
-    const char * name;
-    const char * smarts;
-    unsigned int  max;
-    const char * comment;
-  };
+namespace RDKit {
+struct FilterData_t {
+  const char *name;
+  const char *smarts;
+  unsigned int max;
+  const char *comment;
+};
 
-  struct FilterProperty_t
-  {
-    const char * key;
-    const char * value;
-  };
+struct FilterProperty_t {
+  const char *key;
+  const char *value;
+};
 
-  unsigned int            GetNumEntries( FilterCatalogParams::FilterCatalogs catalog );
-  const FilterData_t     *GetFilterData( FilterCatalogParams::FilterCatalogs catalog);
-  unsigned int            GetNumPropertyEntries( FilterCatalogParams::FilterCatalogs catalog);
-  const FilterProperty_t *GetFilterProperties(FilterCatalogParams::FilterCatalogs catalog);
+unsigned int GetNumEntries(FilterCatalogParams::FilterCatalogs catalog);
+const FilterData_t *GetFilterData(FilterCatalogParams::FilterCatalogs catalog);
+unsigned int GetNumPropertyEntries(FilterCatalogParams::FilterCatalogs catalog);
+const FilterProperty_t *GetFilterProperties(
+    FilterCatalogParams::FilterCatalogs catalog);
 
-  FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &,
-                                             unsigned int num_props=0,
-                                             const FilterProperty_t *props=0);
-   
+FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &,
+                                           unsigned int num_props = 0,
+                                           const FilterProperty_t *props = 0);
 }
 
 #endif

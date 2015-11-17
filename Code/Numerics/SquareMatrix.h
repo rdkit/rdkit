@@ -13,76 +13,76 @@
 #include "Matrix.h"
 
 namespace RDNumeric {
-  template <typename TYPE> class SquareMatrix : public Matrix<TYPE> {
-  public:
-    //! brief Square matrix of size N
-    SquareMatrix() {};
+template <typename TYPE>
+class SquareMatrix : public Matrix<TYPE> {
+ public:
+  //! brief Square matrix of size N
+  SquareMatrix(){};
 
-    explicit SquareMatrix(unsigned int N) : Matrix<TYPE>(N, N) {};
-          
-    SquareMatrix(unsigned int N, TYPE val) : Matrix<TYPE>(N, N, val) {};
+  explicit SquareMatrix(unsigned int N) : Matrix<TYPE>(N, N){};
 
-    SquareMatrix(unsigned int N, typename Matrix<TYPE>::DATA_SPTR data) : Matrix<TYPE>(N, N, data) {};
+  SquareMatrix(unsigned int N, TYPE val) : Matrix<TYPE>(N, N, val){};
 
-    //inline unsigned int size() const {
-    //  return d_nRows;
-    //};
+  SquareMatrix(unsigned int N, typename Matrix<TYPE>::DATA_SPTR data)
+      : Matrix<TYPE>(N, N, data){};
 
-    virtual SquareMatrix<TYPE>& operator*=(TYPE scale) {
-      Matrix<TYPE>::operator*=(scale);
-      return *this;
-    }
+  // inline unsigned int size() const {
+  //  return d_nRows;
+  //};
 
-    //! In place matrix multiplication
-    virtual SquareMatrix<TYPE> & operator*=(const SquareMatrix<TYPE> & B) {
-      CHECK_INVARIANT(this->d_nCols == B.numRows(), "Size mismatch during multiplication");
+  virtual SquareMatrix<TYPE> &operator*=(TYPE scale) {
+    Matrix<TYPE>::operator*=(scale);
+    return *this;
+  }
 
-      const TYPE *bData = B.getData();
-      TYPE *newData = new TYPE[this->d_dataSize];
-      unsigned int i, j, k;
-      unsigned int idA, idAt, idC, idCt, idB;
-      TYPE* data = this->d_data.get();
-      for (i = 0; i < this->d_nRows; i++) {
-        idA = i*this->d_nRows;
-        idC = idA;
-        for (j = 0; j < this->d_nCols; j++) {
-          idCt = idC + j;
-          newData[idCt] = (TYPE)(0.0);
-          for (k = 0; k < this->d_nCols; k++) {
-            idAt = idA + k;
-            idB = k*this->d_nRows + j;
-            newData[idCt] += (data[idAt]*bData[idB]);
-          }
+  //! In place matrix multiplication
+  virtual SquareMatrix<TYPE> &operator*=(const SquareMatrix<TYPE> &B) {
+    CHECK_INVARIANT(this->d_nCols == B.numRows(),
+                    "Size mismatch during multiplication");
+
+    const TYPE *bData = B.getData();
+    TYPE *newData = new TYPE[this->d_dataSize];
+    unsigned int i, j, k;
+    unsigned int idA, idAt, idC, idCt, idB;
+    TYPE *data = this->d_data.get();
+    for (i = 0; i < this->d_nRows; i++) {
+      idA = i * this->d_nRows;
+      idC = idA;
+      for (j = 0; j < this->d_nCols; j++) {
+        idCt = idC + j;
+        newData[idCt] = (TYPE)(0.0);
+        for (k = 0; k < this->d_nCols; k++) {
+          idAt = idA + k;
+          idB = k * this->d_nRows + j;
+          newData[idCt] += (data[idAt] * bData[idB]);
         }
       }
-      boost::shared_array<TYPE>  tsptr(newData);
-      this->d_data.swap(tsptr);
-      return (*this);
     }
+    boost::shared_array<TYPE> tsptr(newData);
+    this->d_data.swap(tsptr);
+    return (*this);
+  }
 
-    //! In place matrix transpose
-    virtual SquareMatrix<TYPE> &transposeInplace() {
-      unsigned int i,j;
-      unsigned int id1, id1t, id2;
-      TYPE temp;
-      TYPE *data = this->d_data.get();
-      for (i = 1; i < this->d_nRows; i++) {
-        id1 = i*this->d_nCols;
-        for (j = 0; j < i; j++) {
-          
-          id1t = id1 + j;
-          id2 = j*this->d_nCols + i;
-          temp = data[id1t];
-          data[id1t] = data[id2];
-          data[id2] = temp;
-        }
+  //! In place matrix transpose
+  virtual SquareMatrix<TYPE> &transposeInplace() {
+    unsigned int i, j;
+    unsigned int id1, id1t, id2;
+    TYPE temp;
+    TYPE *data = this->d_data.get();
+    for (i = 1; i < this->d_nRows; i++) {
+      id1 = i * this->d_nCols;
+      for (j = 0; j < i; j++) {
+        id1t = id1 + j;
+        id2 = j * this->d_nCols + i;
+        temp = data[id1t];
+        data[id1t] = data[id2];
+        data[id2] = temp;
       }
-      return (*this);
     }
-
-  };
-  typedef SquareMatrix<double> DoubleSquareMatrix;
+    return (*this);
+  }
+};
+typedef SquareMatrix<double> DoubleSquareMatrix;
 }
 
 #endif
-    

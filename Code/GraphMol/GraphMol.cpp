@@ -9,8 +9,4 @@
 //
 #include "GraphMol.h"
 
-namespace RDKit{
-
-
-
-} // end o' namespace
+namespace RDKit {}  // end o' namespace

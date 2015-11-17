@@ -2,20 +2,21 @@
 //
 //  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
-//       products derived from this software without specific prior written permission.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -35,57 +36,55 @@
 #include <boost/foreach.hpp>
 
 namespace RDDepict {
-  void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
-                                  double spacing,
-                                  bool updateProps,
-                                  bool canonOrient,
-                                  unsigned int nFlipsPerSample,
-                                  unsigned int nSamples,
-                                  int sampleSeed,
-                                  bool permuteDeg4Nodes){
-    double xOffset=0.0;
-    for(RDKit::MOL_SPTR_VECT::iterator templIt=rxn.beginReactantTemplates();
-        templIt!=rxn.endReactantTemplates();++templIt){
-      if(updateProps){
-        (*templIt)->updatePropertyCache(false);
-        RDKit::MolOps::setConjugation(**templIt);
-        RDKit::MolOps::setHybridization(**templIt);
-      }
-      compute2DCoords(**templIt,0,canonOrient,true,nFlipsPerSample,
-                      nSamples,sampleSeed,permuteDeg4Nodes);
-      double minX=100.,maxX=-100.;
-      BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
-        minX=std::min(pt.x,minX);
-      }
-      xOffset += minX;
-      BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
-        pt.x += xOffset;
-        maxX=std::max(pt.x,maxX);
-      }
-      xOffset=maxX+spacing;
+void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn, double spacing,
+                                bool updateProps, bool canonOrient,
+                                unsigned int nFlipsPerSample,
+                                unsigned int nSamples, int sampleSeed,
+                                bool permuteDeg4Nodes) {
+  double xOffset = 0.0;
+  for (RDKit::MOL_SPTR_VECT::iterator templIt = rxn.beginReactantTemplates();
+       templIt != rxn.endReactantTemplates(); ++templIt) {
+    if (updateProps) {
+      (*templIt)->updatePropertyCache(false);
+      RDKit::MolOps::setConjugation(**templIt);
+      RDKit::MolOps::setHybridization(**templIt);
     }
-    for(RDKit::MOL_SPTR_VECT::iterator templIt=rxn.beginProductTemplates();
-        templIt!=rxn.endProductTemplates();++templIt){
-      if(updateProps){
-        (*templIt)->updatePropertyCache(false);
-        RDKit::MolOps::setConjugation(**templIt);
-        RDKit::MolOps::setHybridization(**templIt);
-      }
-      compute2DCoords(**templIt,0,canonOrient,true,nFlipsPerSample,
-                      nSamples,sampleSeed,permuteDeg4Nodes);
-      double minX=100.,maxX=-100.;
-      BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
-        minX=std::min(pt.x,minX);
-      }
-      xOffset += minX;
-      BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
-        pt.x += xOffset;
-        maxX=std::max(pt.x,maxX);
-      }
-      xOffset=maxX+spacing;
+    compute2DCoords(**templIt, 0, canonOrient, true, nFlipsPerSample, nSamples,
+                    sampleSeed, permuteDeg4Nodes);
+    double minX = 100., maxX = -100.;
+    BOOST_FOREACH (RDGeom::Point3D &pt,
+                   (*templIt)->getConformer().getPositions()) {
+      minX = std::min(pt.x, minX);
     }
-
+    xOffset += minX;
+    BOOST_FOREACH (RDGeom::Point3D &pt,
+                   (*templIt)->getConformer().getPositions()) {
+      pt.x += xOffset;
+      maxX = std::max(pt.x, maxX);
+    }
+    xOffset = maxX + spacing;
   }
-} // end of namespace RDKit
-    
-    
+  for (RDKit::MOL_SPTR_VECT::iterator templIt = rxn.beginProductTemplates();
+       templIt != rxn.endProductTemplates(); ++templIt) {
+    if (updateProps) {
+      (*templIt)->updatePropertyCache(false);
+      RDKit::MolOps::setConjugation(**templIt);
+      RDKit::MolOps::setHybridization(**templIt);
+    }
+    compute2DCoords(**templIt, 0, canonOrient, true, nFlipsPerSample, nSamples,
+                    sampleSeed, permuteDeg4Nodes);
+    double minX = 100., maxX = -100.;
+    BOOST_FOREACH (RDGeom::Point3D &pt,
+                   (*templIt)->getConformer().getPositions()) {
+      minX = std::min(pt.x, minX);
+    }
+    xOffset += minX;
+    BOOST_FOREACH (RDGeom::Point3D &pt,
+                   (*templIt)->getConformer().getPositions()) {
+      pt.x += xOffset;
+      maxX = std::max(pt.x, maxX);
+    }
+    xOffset = maxX + spacing;
+  }
+}
+}  // end of namespace RDKit

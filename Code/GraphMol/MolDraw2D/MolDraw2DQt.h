@@ -22,34 +22,28 @@ class QString;
 
 namespace RDKit {
 
-  class MolDraw2DQt : public MolDraw2D {
+class MolDraw2DQt : public MolDraw2D {
+ public:
+  MolDraw2DQt(int width, int height, QPainter &qp);
 
-  public :
+  // set font size in molecule coordinate units. That's probably Angstrom for
+  // RDKit. It will turned into drawing units using scale_, which might be
+  // changed as a result, to make sure things still appear in the window.
+  void setFontSize(double new_size);
+  void setColour(const DrawColour &col);
 
-    MolDraw2DQt( int width , int height , QPainter &qp );
+  void drawLine(const Point2D &cds1, const Point2D &cds2);
+  void drawChar(char c, const Point2D &cds);
+  void drawPolygon(const std::vector<Point2D> &cds);
+  void clearDrawing();
 
-    // set font size in molecule coordinate units. That's probably Angstrom for
-    // RDKit. It will turned into drawing units using scale_, which might be
-    // changed as a result, to make sure things still appear in the window.
-    void setFontSize( double new_size );
-    void setColour( const DrawColour &col );
+  // using the current scale, work out the size of the label in molecule
+  // coordinates
+  void getStringSize(const std::string &label, double &label_width,
+                     double &label_height) const;
 
-    void drawLine( const Point2D &cds1 ,
-                   const Point2D &cds2 );
-    void drawChar( char c , const Point2D &cds );
-    void drawPolygon( const std::vector<Point2D > &cds );
-    void clearDrawing();
-
-    // using the current scale, work out the size of the label in molecule coordinates
-    void getStringSize( const std::string &label , double &label_width ,
-                        double &label_height ) const;
-
-
-  private :
-
-    QPainter &qp_;
-
-  };
-
+ private:
+  QPainter &qp_;
+};
 }
-#endif // MOLDRAW2DQT_H
+#endif  // MOLDRAW2DQT_H

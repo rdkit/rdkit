@@ -11,5 +11,4 @@
 
 #include "MaxMinPicker.h"
 
-namespace RDPickers {
-}
+namespace RDPickers {}

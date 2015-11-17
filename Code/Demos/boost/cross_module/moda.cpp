@@ -6,10 +6,6 @@
 
 namespace python = boost::python;
 
-BOOST_PYTHON_MODULE(moda)
-{
-    python::class_<ClassA>("ClassA")
-      .def("Get4",&ClassA::get4)
-      ;
-
+BOOST_PYTHON_MODULE(moda) {
+  python::class_<ClassA>("ClassA").def("Get4", &ClassA::get4);
 }

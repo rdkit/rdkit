@@ -12,5 +12,5 @@
 #include "BFGSOpt.h"
 
 namespace BFGSOpt {
-  int HEAD_ONLY_LIBRARY = 0;
+int HEAD_ONLY_LIBRARY = 0;
 }

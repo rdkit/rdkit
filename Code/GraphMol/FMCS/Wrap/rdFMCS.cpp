@@ -15,109 +15,105 @@
 namespace python = boost::python;
 
 namespace RDKit {
-   
 
-    MCSResult *FindMCSWrapper(python::object mols,bool maximizeBonds,double threshold,
-                              unsigned timeout,bool verbose,
-                              bool matchValences,
-                              bool ringMatchesRingOnly,bool completeRingsOnly,
-                              bool matchChiralTag,
-                              AtomComparator atomComp, BondComparator bondComp,
-                              std::string seedSmarts) {
-        std::vector<ROMOL_SPTR> ms;
-        unsigned int nElems=python::extract<unsigned int>(mols.attr("__len__")());
-        ms.resize(nElems);
-        for(unsigned int i=0; i<nElems; ++i) {
-            if(!mols[i]) throw_value_error("molecule is None");
-            ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
-        }
-        MCSParameters p;
-        p.Threshold = threshold;
-        p.MaximizeBonds=maximizeBonds;
-        p.Timeout = timeout;
-        p.Verbose = verbose;
-        p.InitialSeed = seedSmarts;
-        p.AtomCompareParameters.MatchValences = matchValences;
-        p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
-        switch(atomComp) {
-        case AtomCompareAny:
-            p.AtomTyper=MCSAtomCompareAny;
-            break;
-        case AtomCompareElements:
-            p.AtomTyper=MCSAtomCompareElements;
-            break;
-        case AtomCompareIsotopes:
-            p.AtomTyper=MCSAtomCompareIsotopes;
-            break;
-        }
-        switch(bondComp) {
-        case BondCompareAny:
-            p.BondTyper=MCSBondCompareAny;
-            break;
-        case BondCompareOrder:
-            p.BondTyper=MCSBondCompareOrder;
-            break;
-        case BondCompareOrderExact:
-            p.BondTyper=MCSBondCompareOrderExact;
-            break;
-        }
-        p.BondCompareParameters.RingMatchesRingOnly=ringMatchesRingOnly;
-        p.BondCompareParameters.CompleteRingsOnly=completeRingsOnly;
+MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
+                          double threshold, unsigned timeout, bool verbose,
+                          bool matchValences, bool ringMatchesRingOnly,
+                          bool completeRingsOnly, bool matchChiralTag,
+                          AtomComparator atomComp, BondComparator bondComp,
+                          std::string seedSmarts) {
+  std::vector<ROMOL_SPTR> ms;
+  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  ms.resize(nElems);
+  for (unsigned int i = 0; i < nElems; ++i) {
+    if (!mols[i]) throw_value_error("molecule is None");
+    ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
+  }
+  MCSParameters p;
+  p.Threshold = threshold;
+  p.MaximizeBonds = maximizeBonds;
+  p.Timeout = timeout;
+  p.Verbose = verbose;
+  p.InitialSeed = seedSmarts;
+  p.AtomCompareParameters.MatchValences = matchValences;
+  p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
+  switch (atomComp) {
+    case AtomCompareAny:
+      p.AtomTyper = MCSAtomCompareAny;
+      break;
+    case AtomCompareElements:
+      p.AtomTyper = MCSAtomCompareElements;
+      break;
+    case AtomCompareIsotopes:
+      p.AtomTyper = MCSAtomCompareIsotopes;
+      break;
+  }
+  switch (bondComp) {
+    case BondCompareAny:
+      p.BondTyper = MCSBondCompareAny;
+      break;
+    case BondCompareOrder:
+      p.BondTyper = MCSBondCompareOrder;
+      break;
+    case BondCompareOrderExact:
+      p.BondTyper = MCSBondCompareOrderExact;
+      break;
+  }
+  p.BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
+  p.BondCompareParameters.CompleteRingsOnly = completeRingsOnly;
 
-        MCSResult *res=0;
-        {
-          NOGIL gil;
-          res = new MCSResult(findMCS(ms,&p));
-        }
-        return res;
-    }
+  MCSResult *res = 0;
+  {
+    NOGIL gil;
+    res = new MCSResult(findMCS(ms, &p));
+  }
+  return res;
+}
 }
 
 namespace {
-    struct mcsresult_wrapper {
-        static void wrap() {
-            python::class_<RDKit::MCSResult>("MCSResult","used to return MCS results",python::no_init)
-              .def_readonly("numAtoms",&RDKit::MCSResult::NumAtoms,"number of atoms in MCS")
-              .def_readonly("numBonds",&RDKit::MCSResult::NumBonds,"number of bonds in MCS")
-              .def_readonly("smartsString",&RDKit::MCSResult::SmartsString,"SMARTS string for the MCS")
-              .def_readonly("canceled",&RDKit::MCSResult::Canceled,"if True, the MCS calculation did not finish")
-            ;
-        }
-    };
+struct mcsresult_wrapper {
+  static void wrap() {
+    python::class_<RDKit::MCSResult>("MCSResult", "used to return MCS results",
+                                     python::no_init)
+        .def_readonly("numAtoms", &RDKit::MCSResult::NumAtoms,
+                      "number of atoms in MCS")
+        .def_readonly("numBonds", &RDKit::MCSResult::NumBonds,
+                      "number of bonds in MCS")
+        .def_readonly("smartsString", &RDKit::MCSResult::SmartsString,
+                      "SMARTS string for the MCS")
+        .def_readonly("canceled", &RDKit::MCSResult::Canceled,
+                      "if True, the MCS calculation did not finish");
+  }
+};
 }
 
 BOOST_PYTHON_MODULE(rdFMCS) {
-    python::scope().attr("__doc__") =
-        "Module containing a C++ implementation of the FMCS algorithm";
-    mcsresult_wrapper::wrap();
+  python::scope().attr("__doc__") =
+      "Module containing a C++ implementation of the FMCS algorithm";
+  mcsresult_wrapper::wrap();
 
-    python::enum_<RDKit::AtomComparator>("AtomCompare")
-    .value("CompareAny",RDKit::AtomCompareAny)
-    .value("CompareElements",RDKit::AtomCompareElements)
-    .value("CompareIsotopes",RDKit::AtomCompareIsotopes)
-    ;
-    python::enum_<RDKit::BondComparator>("BondCompare")
-    .value("CompareAny",RDKit::BondCompareAny)
-    .value("CompareOrder",RDKit::BondCompareOrder)
-    .value("CompareOrderExact",RDKit::BondCompareOrderExact)
-    ;
+  python::enum_<RDKit::AtomComparator>("AtomCompare")
+      .value("CompareAny", RDKit::AtomCompareAny)
+      .value("CompareElements", RDKit::AtomCompareElements)
+      .value("CompareIsotopes", RDKit::AtomCompareIsotopes);
+  python::enum_<RDKit::BondComparator>("BondCompare")
+      .value("CompareAny", RDKit::BondCompareAny)
+      .value("CompareOrder", RDKit::BondCompareOrder)
+      .value("CompareOrderExact", RDKit::BondCompareOrderExact);
 
-    std::string docString = "Find the MCS for a set of molecules";
-    python::def("FindMCS", RDKit::FindMCSWrapper,
-                (python::arg("mols"),
-                 python::arg("maximizeBonds")=true,
-                 python::arg("threshold")=1.0,
-                 python::arg("timeout")=3600,
-                 python::arg("verbose")=false,
-                 python::arg("matchValences")=false,
-                 python::arg("ringMatchesRingOnly")=false,
-                 python::arg("completeRingsOnly")=false,
-                 python::arg("matchChiralTag")=false,
-                 python::arg("atomCompare")=RDKit::AtomCompareElements,
-                 python::arg("bondCompare")=RDKit::BondCompareOrder,
-                 python::arg("seedSmarts")=""
-                ),
-                python::return_value_policy<python::manage_new_object>(),
-                docString.c_str());
-
+  std::string docString = "Find the MCS for a set of molecules";
+  python::def(
+      "FindMCS", RDKit::FindMCSWrapper,
+      (python::arg("mols"), python::arg("maximizeBonds") = true,
+       python::arg("threshold") = 1.0, python::arg("timeout") = 3600,
+       python::arg("verbose") = false, python::arg("matchValences") = false,
+       python::arg("ringMatchesRingOnly") = false,
+       python::arg("completeRingsOnly") = false,
+       python::arg("matchChiralTag") = false,
+       python::arg("atomCompare") = RDKit::AtomCompareElements,
+       python::arg("bondCompare") = RDKit::BondCompareOrder,
+       python::arg("seedSmarts") = ""),
+      python::return_value_policy<python::manage_new_object>(),
+      docString.c_str());
 }

@@ -9,6 +9,4 @@
 //  of the RDKit source tree.
 //
 #include <Features/Feature.h>
-namespace RDFeatures {
-
-}
+namespace RDFeatures {}

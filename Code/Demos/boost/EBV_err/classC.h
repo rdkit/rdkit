@@ -7,24 +7,22 @@
 #define CLASSC_H
 
 #ifdef WIN32
-#pragma warning (disable: 4786) // warning: long & complicated stl warning
-#pragma warning (disable: 4788) // warning: long & complicated stl warning
-#pragma warning (disable: 4660)
-#pragma warning (disable: 4275) // warning: non dll-interface class used as...
-#pragma warning (disable: 4305) // warning: truncation from 'const double' to 'const float' 
+#pragma warning(disable : 4786)  // warning: long & complicated stl warning
+#pragma warning(disable : 4788)  // warning: long & complicated stl warning
+#pragma warning(disable : 4660)
+#pragma warning(disable : 4275)  // warning: non dll-interface class used as...
+#pragma warning(disable : 4305)  // warning: truncation from 'const double' to
+                                 // 'const float'
 #endif
 
 typedef std::pair<std::string, int> STR_INT;
 typedef std::vector<STR_INT> PAIR_VECT;
 
 class classC {
-  
  public:
-  classC() {
-    setProp("useless", 10);
-  };
+  classC() { setProp("useless", 10); };
   ~classC() {}
-  
+
   void printC() const {
     if (hasProp("useless")) {
       std::cout << "has useless\n";
@@ -38,7 +36,7 @@ class classC {
         return true;
       }
     }
-    return false; 
+    return false;
   }
 
   void setProp(const std::string &key, int val) {
@@ -48,7 +46,6 @@ class classC {
 
  private:
   PAIR_VECT dp_props;
-  
 };
 
 #endif

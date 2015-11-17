@@ -11,23 +11,23 @@
 #define _RD_SMILESPARSEOPS_H
 #include <GraphMol/Bond.h>
 
-namespace RDKit{
-  class RWMol;
-  class Atom;
+namespace RDKit {
+class RWMol;
+class Atom;
 }
 namespace SmilesParseOps {
-  void ReportParseError(const char *message,bool throwIt=true);
-  void CleanupAfterParseError(RDKit::RWMol *mol);
-  void AddFragToMol(RDKit::RWMol *mol,RDKit::RWMol *frag,
-		    RDKit::Bond::BondType bondOrder=RDKit::Bond::UNSPECIFIED,
-		    RDKit::Bond::BondDir bondDir=RDKit::Bond::NONE,
-		    bool closeRings=false,bool doingQuery=false);
-  RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
-					       const RDKit::Atom *atom1,
-					       const RDKit::Atom *atom2);
-  void CloseMolRings(RDKit::RWMol *mol,bool toleratePartials);
-  void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
-  void CleanupAfterParsing(RDKit::RWMol *mol);
+void ReportParseError(const char *message, bool throwIt = true);
+void CleanupAfterParseError(RDKit::RWMol *mol);
+void AddFragToMol(RDKit::RWMol *mol, RDKit::RWMol *frag,
+                  RDKit::Bond::BondType bondOrder = RDKit::Bond::UNSPECIFIED,
+                  RDKit::Bond::BondDir bondDir = RDKit::Bond::NONE,
+                  bool closeRings = false, bool doingQuery = false);
+RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
+                                             const RDKit::Atom *atom1,
+                                             const RDKit::Atom *atom2);
+void CloseMolRings(RDKit::RWMol *mol, bool toleratePartials);
+void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
+void CleanupAfterParsing(RDKit::RWMol *mol);
 };
 
 #endif
