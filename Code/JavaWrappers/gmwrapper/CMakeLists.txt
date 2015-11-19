@@ -26,7 +26,9 @@ endif (NOT JAVADOC_EXE)
 INCLUDE_DIRECTORIES(${JNI_INCLUDE_DIRS})
 
 # java8 raises errors while creating the documentation
-SET(DOCLINT_FLAGS "-Xdoclint:none")
+if(Java_VERSION_MAJOR GREATER 1 OR Java_VERSION_MINOR GREATER 7)
+  SET(DOCLINT_FLAGS "-Xdoclint:none")
+endif()
 
 SET_SOURCE_FILES_PROPERTIES(GraphMolJava.i PROPERTIES CPLUSPLUS ON )
 
