@@ -14,6 +14,8 @@
 #include "DebugTrace.h"
 #include "../SmilesParse/SmilesWrite.h"
 
+#include <set>
+
 namespace RDKit {
 namespace FMCS {
 
@@ -55,9 +57,8 @@ void Seed::fillNewBonds(const ROMol& qmol) {
     for (boost::tie(beg, end) = qmol.getAtomBonds(atom); beg != end;
          beg++) {  // all bonds from MoleculeFragment.Atoms[srcAtomIdx]
       const Bond* bond = &*(qmol[*beg]);
-      if (!excludedBonds[bond->getIdx()]) {  // already in the seed or in the
-                                             // NewBonds list from another atom
-                                             // in a RING
+      if (!excludedBonds[bond->getIdx()]) {
+        // already in the seed or NewBonds list from another atom in a RING
         excludedBonds[bond->getIdx()] = true;
         unsigned ai = (atom == bond->getBeginAtom()) ? bond->getEndAtomIdx()
                                                      : bond->getBeginAtomIdx();
@@ -78,8 +79,7 @@ void Seed::fillNewBonds(const ROMol& qmol) {
 
 void Seed::grow(MaximumCommonSubgraph& mcs) const {
   const ROMol& qmol = mcs.getQueryMolecule();
-  std::map<unsigned, unsigned>
-      newAtomsMap;  // map new added atoms to their seed's indeces
+  std::set<unsigned> newAtomsSet;  // keep track of newly added atoms
 
   if (!canGrowBiggerThan(mcs.getMaxNumberBonds(),
                          mcs.getMaxNumberAtoms())) {  // prune() parent
@@ -111,15 +111,12 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
          nbi != NewBonds.end(); nbi++) {
       unsigned aIdx = nbi->EndAtomIdx;
       if (NotSet == aIdx) {  // new atom
-        std::map<unsigned, unsigned>::const_iterator nai =
-            newAtomsMap.find(nbi->NewAtomIdx);  // check RING
-        if (newAtomsMap.end() == nai) {
+        // check if new bonds simultaneously close a ring
+        if (newAtomsSet.find(nbi->NewAtomIdx) == newAtomsSet.end()) {
           const Atom* end_atom = nbi->NewAtom;
           aIdx = seed.addAtom(end_atom);
-          newAtomsMap[nbi->NewAtomIdx] =
-              aIdx;  // store new possible ring end point
-        } else
-          aIdx = nai->second;
+          newAtomsSet.insert(nbi->NewAtomIdx);
+        }
       }
       const Bond* src_bond = qmol.getBondWithIdx(nbi->BondIdx);
       seed.addBond(src_bond);
@@ -129,7 +126,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
 #endif
     seed.RemainingBonds = RemainingBonds - NewBonds.size();  // Added ALL !!!
     seed.RemainingAtoms =
-        RemainingAtoms - newAtomsMap.size();  // new atoms added to seed
+        RemainingAtoms - newAtomsSet.size();  // new atoms added to seed
 
     // prune() Best Sizes
     if (!seed.canGrowBiggerThan(mcs.getMaxNumberBonds(),
@@ -165,10 +162,9 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
 #endif
     Seed seed;
     seed.createFromParent(this);
-    newAtomsMap.clear();
 
-    unsigned aIdx =
-        nbi->EndAtomIdx;   // existed in this parent seed (ring) or -1
+    // existed in this parent seed (ring) or -1
+    unsigned aIdx = nbi->EndAtomIdx;
     if (NotSet == aIdx) {  // new atom
       const Atom* end_atom = nbi->NewAtom;
       aIdx = seed.addAtom(end_atom);
@@ -204,9 +200,9 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
       if (NotSet != nbi->BondIdx) NewBonds.push_back(*nbi);
   }
 
-  // add all other from 2^k-1 possible seeds, where k=newBonds.size():
-  if (NewBonds.size() >
-      1) {  // if just one new bond, such seed has been already created
+  // add all other from 2^k-1 possible seeds, where k=newBonds.size()
+  // if just one new bond, then seed has already been created
+  if (NewBonds.size() > 1) {
     if (sizeof(unsigned long long) * 8 < NewBonds.size())
       throw std::runtime_error(
           "Max number of new external bonds of a seed more than 64");
@@ -220,8 +216,8 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
     BitSet failedCombinationsMask = 0uLL;
 #endif
     while (composition.generateNext()) {
-      if (composition.is2Power())  // exclude already processed single external
-                                   // bond combinations
+      // exclude already processed single external bond combinations
+      if (composition.is2Power()) 
         continue;
       if (0 == numErasedNewBonds &&
           composition.getBitSet() == maxCompositionValue)
@@ -231,16 +227,14 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
       // OPTIMISATION. reduce amount of generated seeds and match calls
       // 2120 instead of 2208 match calls on small test. 43 wrongComp-s, 83
       // rejected
-      if (failedCombinationsMask &
-          composition.getBitSet()) {  // possibly exists in the list
+      if (failedCombinationsMask & composition.getBitSet()) {
+        // possibly exists in the list
         bool compositionWrong = false;
         for (std::vector<BitSet>::const_iterator failed =
                  failedCombinations.begin();
              failed != failedCombinations.end(); failed++)
-          if (*failed ==
-              (*failed &
-               composition
-                   .getBitSet())) {  // combination includes failed combination
+          if (*failed == (*failed & composition.getBitSet())) {
+            // combination includes failed combination
             compositionWrong = true;
             break;
           }
@@ -257,7 +251,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
 #endif
       Seed seed;
       seed.createFromParent(this);
-      newAtomsMap.clear();
+      newAtomsSet.clear();
 
       for (unsigned i = 0; i < NewBonds.size(); i++)
         if (composition.isSet(i)) {
@@ -265,18 +259,12 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
           unsigned aIdx =
               nbi->EndAtomIdx;   // existed in this parent seed (ring) or -1
           if (NotSet == aIdx) {  // new atom
-            std::map<unsigned, unsigned>::const_iterator nai =
-                newAtomsMap.find(nbi->NewAtomIdx);  // check RING
-            if (newAtomsMap.end() == nai) {
-              const Atom* end_atom =
-                  nbi->NewAtom;  // qmol.getAtomWithIdx(nbi->NewAtomIdx);
+            if (newAtomsSet.find(nbi->NewAtomIdx) == newAtomsSet.end()) {
+              const Atom* end_atom = nbi->NewAtom;
               aIdx = seed.addAtom(end_atom);
-              newAtomsMap[nbi->NewAtomIdx] =
-                  aIdx;  // store new possible ring end point
-            } else
-              aIdx = nai->second;
+              newAtomsSet.insert(nbi->NewAtomIdx);
+            }
           }
-
           const Bond* src_bond = qmol.getBondWithIdx(nbi->BondIdx);
           seed.addBond(src_bond);
         }
