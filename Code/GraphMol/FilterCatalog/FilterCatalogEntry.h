@@ -31,6 +31,7 @@
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
 
+#include <RDGeneral/rdkit.h>
 #include <RDGeneral/types.h> // For Dict
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>

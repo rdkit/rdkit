@@ -28,38 +28,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef __RDKIT_FILTERDATA__
-#define __RDKIT_FILTERDATA__
 
-#include <RDGeneral/rdkit.h>
-#include "FilterCatalogEntry.h"
-#include "FilterCatalog.h"
+// CMAKE generated defines used for compiling.
+//  This file must always be included first ( or RDGeneneral.h )
+//  when compiling.
 
-namespace RDKit
-{
-  struct FilterData_t
-  {
-    const char * name;
-    const char * smarts;
-    unsigned int  max;
-    const char * comment;
-  };
+// required in header files
+#cmakedefine RDK_USE_BOOST_SERIALIZATION
+#cmakedefine BOOST_PYTHON_SUPPORT_SHARED_CONST
 
-  struct FilterProperty_t
-  {
-    const char * key;
-    const char * value;
-  };
-
-  unsigned int            GetNumEntries( FilterCatalogParams::FilterCatalogs catalog );
-  const FilterData_t     *GetFilterData( FilterCatalogParams::FilterCatalogs catalog);
-  unsigned int            GetNumPropertyEntries( FilterCatalogParams::FilterCatalogs catalog);
-  const FilterProperty_t *GetFilterProperties(FilterCatalogParams::FilterCatalogs catalog);
-
-  FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &,
-                                             unsigned int num_props=0,
-                                             const FilterProperty_t *props=0);
-   
-}
-
-#endif

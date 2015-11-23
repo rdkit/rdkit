@@ -385,6 +385,7 @@ namespace RDKit{
         ;
       
       python::register_ptr_to_python< boost::shared_ptr<FilterCatalogEntry> >();
+#ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
       python::register_ptr_to_python< boost::shared_ptr<const FilterCatalogEntry> >();
       
       python::class_<std::vector<boost::shared_ptr<const FilterCatalogEntry> > >(
@@ -392,6 +393,13 @@ namespace RDKit{
         .def(python::vector_indexing_suite<
              std::vector<boost::shared_ptr<const FilterCatalogEntry> >,
              true>() );
+#else
+      python::class_<std::vector<boost::shared_ptr<FilterCatalogEntry> > >(
+        "FilterCatalogEntryList")
+        .def(python::vector_indexing_suite<
+             std::vector<boost::shared_ptr<FilterCatalogEntry> >,
+             true>() );
+#endif
       
       {
         python::scope in_FilterCatalogParams =                          \

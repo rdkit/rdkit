@@ -1,13 +1,3 @@
-set(T_LIBS ${Boost_LIBRARIES})
-find_package(Boost 1.39.0 COMPONENTS serialization)
-if (Boost_SERIALIZATION_LIBRARY)
-  set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-  message("== Using boost serialization library ${Boost_SERIALIZATION_LIBRARY}")
-  ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
-else()
-  message("== Making FilterCatalog without boost Serialization support")
-endif()
-
 find_package(PythonInterp)
 if (PYTHONINTERP_FOUND)
       message("== Updating Filters.cpp from pains file")
