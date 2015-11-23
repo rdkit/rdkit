@@ -172,6 +172,59 @@ endif(RDK_BUILD_PYTHON_WRAPPERS)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+###############################################################################
+# Check for boost serialization
+set(T_LIBS ${Boost_LIBRARIES})
+find_package(Boost 1.39.0 COMPONENTS serialization)
+if (Boost_SERIALIZATION_LIBRARY)
+  set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+  message("== Using boost serialization library ${Boost_SERIALIZATION_LIBRARY}")
+  set(RDK_USE_BOOST_SERIALIZATION 1)
+endif()
+#
+###############################################################################
+# check to see if shared<const T> is supported by boost
+IF(WIN32)
+   set (BOOST_PYTHON_SUPPORT_SHARED_CONST 1)
+else()
+  INCLUDE (CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_INCLUDES "${PYTHON_INCLUDE_DIR}")
+  set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES};${Boost_INCLUDE_DIR}")
+  set(CMAKE_REQUIRED_LIBRARIES "${Boost_LIBRARIES};${PYTHON_LIBRARY}")
+  CHECK_CXX_SOURCE_COMPILES("#include <boost/python.hpp>
+#include <boost/python/scope.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/python/stl_iterator.hpp>
+#include <boost/python/register_ptr_to_python.hpp>
+namespace python = boost::python;
+namespace {
+class Foo {
+public:
+  int a;
+};
+struct wrapper {
+  static void wrap() {
+      python::register_ptr_to_python< boost::shared_ptr<const Foo> >();
+      python::class_<std::vector<boost::shared_ptr<const Foo> > >(
+        \"FooList\")
+        .def(python::vector_indexing_suite<
+             std::vector<boost::shared_ptr<const Foo> >,
+             true>() );
+  }
+};
+}
+int main ()
+{ return 0;
+}
+" DOES_BOOST_PYTHON_SUPPORT_SHARED_CONST)
+
+  if (DOES_BOOST_PYTHON_SUPPORT_SHARED_CONST)
+   set (BOOST_PYTHON_SUPPORT_SHARED_CONST 1)
+  endif()
+
+endif()
+#
+###############################################################################
 include_directories(${RDKit_CodeDir})
 
 
