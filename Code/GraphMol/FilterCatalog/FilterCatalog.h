@@ -114,7 +114,14 @@ namespace RDKit {
   public:
     // syntactic sugar for getMatch(es) return values.
     typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
-    typedef boost::shared_ptr<const FilterCatalogEntry> CONST_SENTRY;
+
+#if BOOST_PYTHON_SUPPORT_SHARED_CONST
+    //If boost::python can support shared_ptr of const objects
+    //  we can enable support for this feature
+    typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
+#else
+    typedef boost::shared_ptr<entryType_t> CONST_SENTRY;
+#endif
     
 
     FilterCatalog() : FCatalog(), d_entries() {
