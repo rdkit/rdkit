@@ -11,10 +11,13 @@ else()
 endif()
 
 # check to see if shared<const T> is supported by boost
-set(CMAKE_REQUIRED_INCLUDES "${PYTHON_INCLUDE_DIR}")
-set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES};${Boost_INCLUDE_DIR}")
-set(CMAKE_REQUIRED_LIBRARIES "${Boost_LIBRARIES};${PYTHON_LIBRARY}")
-CHECK_CXX_SOURCE_COMPILES("#include <boost/python.hpp>
+IF(WIN32)
+   add_definitions("-DBOOST_PYTHON_SUPPORT_SHARED_CONST")
+else()
+  set(CMAKE_REQUIRED_INCLUDES "${PYTHON_INCLUDE_DIR}")
+  set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES};${Boost_INCLUDE_DIR}")
+  set(CMAKE_REQUIRED_LIBRARIES "${Boost_LIBRARIES};${PYTHON_LIBRARY}")
+  CHECK_CXX_SOURCE_COMPILES("#include <boost/python.hpp>
 #include <boost/python/scope.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/stl_iterator.hpp>
@@ -41,8 +44,9 @@ int main ()
 }
 " DOES_BOOST_PYTHON_SUPPORT_SHARED_CONST)
 
-if (DOES_BOOST_PYTHON_SUPPORT_SHARED_CONST)
-   add_definitions("-DBOOST_PYTHON_SUPPORT_SHARED_CONST")
+  if (DOES_BOOST_PYTHON_SUPPORT_SHARED_CONST)
+     add_definitions("-DBOOST_PYTHON_SUPPORT_SHARED_CONST")
+  endif()
 endif()
 
 find_package(PythonInterp)
