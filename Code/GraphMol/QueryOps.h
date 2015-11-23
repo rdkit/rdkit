@@ -578,6 +578,9 @@ namespace RDKit{
         catch (boost::bad_any_cast) {
           res = false;
         }
+#ifdef __GNUC__
+#if (__GNUC__ < 4 ||                            \
+     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
         catch (...) {
           // catch all -- this is currently necessary to
           //  trap some bugs in boost+gcc configurations
@@ -588,7 +591,8 @@ namespace RDKit{
           //  be.
           res = false;
         }
-
+#endif
+#endif
       }
       if(this->getNegation()){
         res=!res;
@@ -645,6 +649,9 @@ namespace RDKit{
         catch (boost::bad_any_cast) {
           res = false;
         }
+#ifdef __GNUC__
+#if (__GNUC__ < 4 ||                             \
+     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
         catch (...) {
           // catch all -- this is currently necessary to
           //  trap some bugs in boost+gcc configurations
@@ -655,7 +662,8 @@ namespace RDKit{
           //  be.
           res = false;
         }
-
+#endif
+#endif
       }
       if(this->getNegation()){
         res=!res;
