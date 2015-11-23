@@ -1,10 +1,14 @@
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.h )
 
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/rdkit.h.cmake
+               ${CMAKE_CURRENT_SOURCE_DIR}/rdkit.h )
+
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp SHARED)
 
-rdkit_headers(Exceptions.h
+rdkit_headers(rdkit.h
+              Exceptions.h
               BadFileException.h
               Dict.h
               FileParseException.h
