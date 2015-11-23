@@ -31,6 +31,7 @@
 #ifndef __RDKIT_FILTERDATA__
 #define __RDKIT_FILTERDATA__
 
+#include <RDGeneral/rdkit.h>
 #include "FilterCatalogEntry.h"
 #include "FilterCatalog.h"
 

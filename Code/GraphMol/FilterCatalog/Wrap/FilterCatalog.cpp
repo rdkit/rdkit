@@ -385,7 +385,7 @@ namespace RDKit{
         ;
       
       python::register_ptr_to_python< boost::shared_ptr<FilterCatalogEntry> >();
-#if BOOST_PYTHON_SUPPORT_SHARED_CONST
+#ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
       python::register_ptr_to_python< boost::shared_ptr<const FilterCatalogEntry> >();
       
       python::class_<std::vector<boost::shared_ptr<const FilterCatalogEntry> > >(

@@ -31,6 +31,7 @@
 #ifndef _RD_FILTER_CATALOG_PARAMS_
 #define _RD_FILTER_CATALOG_PARAMS_
 
+#include <RDGeneral/rdkit.h>
 #include <Catalogs/Catalog.h>
 #include <Catalogs/CatalogParams.h>
 #include "FilterCatalogEntry.h"
@@ -115,7 +116,7 @@ namespace RDKit {
     // syntactic sugar for getMatch(es) return values.
     typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
 
-#if BOOST_PYTHON_SUPPORT_SHARED_CONST
+#ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
     //If boost::python can support shared_ptr of const objects
     //  we can enable support for this feature
     typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
