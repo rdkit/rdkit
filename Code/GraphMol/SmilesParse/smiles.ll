@@ -74,7 +74,7 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
    */
   b->yy_is_our_buffer = 1;
   
-  
+
   POSTCONDITION(b,"invalid buffer");
   return start;
   
@@ -229,6 +229,10 @@ s		    {	yylval->atom = new Atom( 16 );
 			}
 
 <IN_ATOM_STATE>si   {	yylval->atom = new Atom( 14 );
+			yylval->atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
+<IN_ATOM_STATE>as   {	yylval->atom = new Atom( 33 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
