@@ -4,7 +4,7 @@
 
 This document is a tutorial and reference guide for the RDKit PostgreSQL cartridge.
 
-If you find mistakes, or have suggestions for improvements, please either fix them yourselves in the source document (the .rst file) or send them to the mailing list: <rdkit-discuss@lists.sourceforge.net> (you will need to subscribe first)
+If you find mistakes, or have suggestions for improvements, please either fix them yourselves in the source document (the .md file) or send them to the mailing list: <rdkit-discuss@lists.sourceforge.net> (you will need to subscribe first)
 
 ## Tutorial
 
