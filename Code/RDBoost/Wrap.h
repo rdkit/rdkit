@@ -133,7 +133,7 @@ std::vector<T> *pythonObjectToVect(const python::object &obj) {
 #if defined(__GNUC__) || defined(__GNUG__)
 #define RDUNUSED __attribute__((__unused__))
 #else
-#defined RDUNUSED
+#define RDUNUSED
 #endif
 
 #ifdef RDK_THREADSAFE_SSS
