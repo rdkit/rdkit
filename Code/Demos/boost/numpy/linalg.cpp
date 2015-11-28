@@ -5,7 +5,7 @@
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL RD_array_API
-#include "numpy/oldnumeric.h"
+#include <numpy/arrayobject.h>
 
 namespace python = boost::python;
 

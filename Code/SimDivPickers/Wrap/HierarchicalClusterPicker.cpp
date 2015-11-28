@@ -13,7 +13,7 @@
 #include <RDBoost/python.h>
 
 #include <boost/python/numeric.hpp>
-#include "numpy/oldnumeric.h"
+#include <numpy/arrayobject.h>
 #include <RDBoost/Wrap.h>
 
 #include <SimDivPickers/DistPicker.h>

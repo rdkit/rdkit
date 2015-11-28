@@ -13,7 +13,7 @@
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <boost/python/numeric.hpp>
-#include "numpy/oldnumeric.h"
+#include <numpy/arrayobject.h>
 #include <map>
 
 #include <DataStructs/BitVects.h>

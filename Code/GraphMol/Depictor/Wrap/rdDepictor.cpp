@@ -11,7 +11,7 @@
 #include <RDBoost/python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL Depictor_array_API
-#include "numpy/oldnumeric.h"
+#include <numpy/arrayobject.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/import_array.h>
 

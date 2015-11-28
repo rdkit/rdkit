@@ -12,7 +12,7 @@
 #include "rdmolops.h"
 #include <RDBoost/python.h>
 
-#include "numpy/oldnumeric.h"
+#include <numpy/arrayobject.h>
 
 #include <RDGeneral/types.h>
 
