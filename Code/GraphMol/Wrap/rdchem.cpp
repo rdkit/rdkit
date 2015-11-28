@@ -12,7 +12,6 @@
 #include <RDBoost/Wrap.h>
 #include "rdchem.h"
 #include <GraphMol/RDKitBase.h>
-#include <numpy/oldnumeric.h>
 #include <GraphMol/SanitException.h>
 #include <RDBoost/import_array.h>
 #include <RDBoost/iterator_next.h>

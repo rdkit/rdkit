@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#include "numpy/arrayobject.h"
+#define NPY_NO_DEPRECATED_API NPY_1_8_API_VERSION
+#include <numpy/arrayobject.h>
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/PySequenceHolder.h>
@@ -27,7 +27,7 @@ PyObject *getCorrMatrix(BitCorrMatGenerator *cmGen) {
   unsigned int nb = cmGen->getCorrBitList().size();
   npy_intp dim = nb * (nb - 1) / 2;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(dres),
+  memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
          dim * sizeof(double));
   return PyArray_Return(res);
 }

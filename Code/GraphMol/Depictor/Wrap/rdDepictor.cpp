@@ -11,7 +11,6 @@
 #include <RDBoost/python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL Depictor_array_API
-#include <numpy/arrayobject.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/import_array.h>
 
@@ -67,14 +66,14 @@ unsigned int Compute2DCoordsMimicDistmat(
   }
 
   PyArrayObject *dmatrix = reinterpret_cast<PyArrayObject *>(distMatPtr);
-  unsigned int nitems = dmatrix->dimensions[0];
+  unsigned int nitems = PyArray_DIM(dmatrix, 0);
   unsigned int na = mol.getNumAtoms();
 
   if (nitems != na * (na - 1) / 2) {
     throw_value_error(
         "The array size does not match the number of atoms in the molecule");
   }
-  double *inData = reinterpret_cast<double *>(dmatrix->data);
+  double *inData = reinterpret_cast<double *>(PyArray_DATA(dmatrix));
   double *cData = new double[nitems];
 
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),

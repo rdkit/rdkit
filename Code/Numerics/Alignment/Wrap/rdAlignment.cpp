@@ -11,7 +11,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdalignment_array_API
 #include <RDBoost/python.h>
 #include <boost/python/numeric.hpp>
-#include "numpy/arrayobject.h"
 #include <RDBoost/import_array.h>
 
 #include <RDBoost/PySequenceHolder.h>
@@ -32,12 +31,12 @@ void GetPointsFromPythonSequence(python::object &points,
   if (PyArray_Check(pyObj)) {
     // get the dimensions of the array
     PyArrayObject *ptsMat = reinterpret_cast<PyArrayObject *>(pyObj);
-    nrows = ptsMat->dimensions[0];
-    ncols = ptsMat->dimensions[1];
+    nrows = PyArray_DIM(ptsMat, 0);
+    ncols = PyArray_DIM(ptsMat, 1);
 
     if (ncols != 3) throw_value_error("Wrong dimension for the points array");
 
-    data = reinterpret_cast<double *>(ptsMat->data);
+    data = reinterpret_cast<double *>(PyArray_DATA(ptsMat));
 
     for (unsigned int i = 0; i < nrows; i++) {
       RDGeom::Point3D *rpt =
@@ -100,12 +99,12 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   double *data;
   if (PyArray_Check(weightsObj)) {
     PyArrayObject *wtsMat = reinterpret_cast<PyArrayObject *>(weightsObj);
-    unsigned int nwts = wtsMat->dimensions[0];
+    unsigned int nwts = PyArray_DIM(wtsMat, 0);
     if (nwts != npt)
       throw_value_error(
           "Number of weights supplied do not match the number of points");
     wtsVec = new RDNumeric::DoubleVector(nwts);
-    data = reinterpret_cast<double *>(wtsMat->data);
+    data = reinterpret_cast<double *>(PyArray_DATA(wtsMat));
     for (unsigned int i = 0; i < nwts; i++) {
       wtsVec->setVal(i, data[i]);
     }
@@ -132,7 +131,7 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   dims[0] = 4;
   dims[1] = 4;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(res->data);
+  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   const double *tdata = trans.getData();
   for (unsigned int i = 0; i < trans.numRows(); ++i) {
     unsigned int itab = i * 4;

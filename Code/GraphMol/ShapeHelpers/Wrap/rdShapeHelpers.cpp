@@ -10,7 +10,6 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdshapehelpers_array_API
 #include <RDBoost/python.h>
-#include <numpy/arrayobject.h>
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/import_array.h>
@@ -27,16 +26,18 @@ namespace python = boost::python;
 
 namespace RDKit {
 void _copyTransform(const PyArrayObject *transMat, RDGeom::Transform3D &trans) {
-  unsigned int nrows = transMat->dimensions[0];
-  unsigned int ncols = transMat->dimensions[1];
+  unsigned int nrows = PyArray_DIM(transMat, 0);
+  unsigned int ncols = PyArray_DIM(transMat, 1);
   if ((nrows != 4) || (ncols != 4)) {
     throw_value_error("The transform has to be square matrix, of size 4x4");
   }
-  if (transMat->descr->type_num != PyArray_DOUBLE)
+  if (PyArray_DESCR(const_cast<PyArrayObject *>(transMat))->type_num !=
+      NPY_DOUBLE)
     throw_value_error("Only double arrays allowed for transform object ");
 
   unsigned int dSize = nrows * nrows;
-  const double *inData = reinterpret_cast<const double *>(transMat->data);
+  const double *inData = reinterpret_cast<const double *>(
+      PyArray_DATA(const_cast<PyArrayObject *>(transMat)));
   double *tData = trans.getData();
   memcpy(static_cast<void *>(tData), static_cast<const void *>(inData),
          dSize * sizeof(double));

@@ -112,7 +112,7 @@ PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
   dims[0] = 4;
   dims[1] = 4;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(res->data);
+  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   unsigned int i, j, itab;
   const double *tdata = trans.getData();
   for (i = 0; i < trans.numRows(); ++i) {

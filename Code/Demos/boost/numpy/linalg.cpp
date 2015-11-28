@@ -11,7 +11,7 @@ namespace python = boost::python;
 
 double GetFirstElement(python::numeric::array &x) {
   PyArrayObject *ptr = (PyArrayObject *)x.ptr();
-  void *data = ptr->data;
+  void *data = PyArray_DATA(ptr);
   double res = 0.0;
 
   switch (ptr->descr->type_num) {

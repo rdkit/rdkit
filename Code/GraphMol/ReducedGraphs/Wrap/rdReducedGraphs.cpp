@@ -12,11 +12,9 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdreducedgraphs_array_API
 #include <RDBoost/python.h>
 #include <boost/python/numeric.hpp>
-#include <numpy/arrayobject.h>
 
 #include <RDBoost/Wrap.h>
 #include <GraphMol/GraphMol.h>
-#include <numpy/arrayobject.h>
 #include <boost/foreach.hpp>
 #include <RDBoost/import_array.h>
 
@@ -50,8 +48,8 @@ PyObject *GenerateErGFingerprintForReducedGraphHelper(const RDKit::ROMol &mol,
           mol, 0, fuzzIncrement, minPath, maxPath);
   npy_intp dim = dv->size();
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(dv->getData()),
-         dv->size() * sizeof(double));
+  memcpy(static_cast<void *>(PyArray_DATA(res)),
+         static_cast<void *>(dv->getData()), dv->size() * sizeof(double));
   delete dv;
   return PyArray_Return(res);
 }
@@ -66,8 +64,8 @@ PyObject *GetErGFingerprintHelper(const RDKit::ROMol &mol,
       mol, 0, fuzzIncrement, minPath, maxPath);
   npy_intp dim = dv->size();
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(dv->getData()),
-         dv->size() * sizeof(double));
+  memcpy(static_cast<void *>(PyArray_DATA(res)),
+         static_cast<void *>(dv->getData()), dv->size() * sizeof(double));
   delete dv;
   return PyArray_Return(res);
 }

@@ -32,7 +32,7 @@ PyObject *computeCanonTrans(const Conformer &conf,
   dims[0] = 4;
   dims[1] = 4;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(res->data);
+  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   const double *tdata = trans->getData();
   memcpy(static_cast<void *>(resData), static_cast<const void *>(tdata),
          4 * 4 * sizeof(double));
@@ -48,7 +48,7 @@ void transConformer(Conformer &conf, python::object trans) {
   PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
   unsigned int nrows = transMat->dimensions[0];
   unsigned int dSize = nrows * nrows;
-  double *inData = reinterpret_cast<double *>(transMat->data);
+  double *inData = reinterpret_cast<double *>(PyArray_DATA(transMat));
   RDGeom::Transform3D transform;
   double *tData = transform.getData();
   memcpy(static_cast<void *>(tData), static_cast<void *>(inData),

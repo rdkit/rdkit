@@ -96,8 +96,8 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
   DGeomHelpers::initBoundsMat(mat);
   DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW);
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(mat->getData()),
-         nats * nats * sizeof(double));
+  memcpy(static_cast<void *>(PyArray_DATA(res)),
+         static_cast<void *>(mat->getData()), nats * nats * sizeof(double));
 
   return PyArray_Return(res);
 }
