@@ -61,7 +61,7 @@ class SetQuery
   typename CONTAINER_TYPE::const_iterator endSet() const {
     return d_set.end();
   };
-  unsigned int size() const { return d_set.size(); };
+  unsigned int size() const { return rdcast<unsigned int>(d_set.size()); };
 
   std::string getFullDescription() const {
     std::ostringstream res;

@@ -62,7 +62,7 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
 
 bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
   INT_INT_VECT_MAP_CI nci;
-  int nrings = ringNeighs.size();
+  int nrings = rdcast<int>(ringNeighs.size());
   boost::dynamic_bitset<> done(nrings);
   int rid;
   INT_VECT fused;
@@ -87,7 +87,7 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
 
 void makeRingNeighborMap(const VECT_INT_VECT &brings,
                          INT_INT_VECT_MAP &neighMap, unsigned int maxSize) {
-  int nrings = brings.size();
+  int nrings = rdcast<int>(brings.size());
   int i, j;
   INT_VECT ring1;
   for (i = 0; i < nrings; i++) {
@@ -340,7 +340,7 @@ void applyHuckelToFused(
 
   INT_VECT aromRings;
   aromRings.resize(0);
-  unsigned int nrings = fused.size();
+  unsigned int nrings = rdcast<unsigned int>(fused.size());
   INT_VECT curRs;
   INT_VECT_CI mri;
   curRs.push_back(fused.front());
@@ -350,7 +350,7 @@ void applyHuckelToFused(
   pos = -1;
   INT_VECT unionAtms;
   Union(srings, unionAtms);
-  unsigned int nAtms = unionAtms.size();
+  unsigned int nAtms = rdcast<unsigned int>(unionAtms.size());
   std::set<unsigned int> doneAtoms;
   while (1) {
     if (pos == -1) {
@@ -414,7 +414,7 @@ void applyHuckelToFused(
       }
     }  // end check huckel rule
   }    // end while(1)
-  narom += aromRings.size();
+  narom += rdcast<int>(aromRings.size());
 }
 
 bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon) {
@@ -691,7 +691,7 @@ int setAromaticity(RWMol &mol) {
   // huckel rule - of course paying attention to fused systems.
   INT_VECT doneRs;
   int curr = 0;
-  int cnrs = cRings.size();
+  int cnrs = rdcast<int>(cRings.size());
   boost::dynamic_bitset<> fusDone(cnrs);
   INT_VECT fused;
   while (curr < cnrs) {

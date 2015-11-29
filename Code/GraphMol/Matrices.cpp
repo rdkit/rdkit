@@ -234,7 +234,7 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
 double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
                        const std::vector<const Bond *> &bonds, bool useBO,
                        bool useAtomWts) {
-  const int nAts = activeAtoms.size();
+  const int nAts = rdcast<int>(activeAtoms.size());
 
   double *dMat = new double[nAts * nAts];
   int i, j;
@@ -245,12 +245,12 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
   for (std::vector<const Bond *>::const_iterator bi = bonds.begin();
        bi != bonds.end(); bi++) {
     const Bond *bond = *bi;
-    i = std::find(activeAtoms.begin(), activeAtoms.end(),
+    i = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),
                   static_cast<int>(bond->getBeginAtomIdx())) -
-        activeAtoms.begin();
-    j = std::find(activeAtoms.begin(), activeAtoms.end(),
+                                   activeAtoms.begin());
+    j = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),
                   static_cast<int>(bond->getEndAtomIdx())) -
-        activeAtoms.begin();
+                                   activeAtoms.begin());
     double contrib;
     if (useBO) {
       if (!bond->getIsAromatic()) {
@@ -358,7 +358,7 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
           done = true;
           break;
         }
-        bfsQ.push_back(*nbrIdx);
+        bfsQ.push_back(rdcast<int>(*nbrIdx));
       }
       nbrIdx++;
     }

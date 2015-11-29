@@ -210,7 +210,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             const Atom *tAtom = mol->getAtomWithIdx(*nbrIdx);
             int cip = 0;
             tAtom->getPropIfPresent<int>(common_properties::_CIPRank, cip);
-            nbrs.push_back(std::make_pair(cip, *nbrIdx));
+            nbrs.push_back(std::make_pair(cip, rdcast<int>(*nbrIdx)));
           }
           ++nbrIdx;
         }
@@ -611,7 +611,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           Atom &bgn = *mol.getAtomWithIdx(*begin);
           if (!mergeUnmappedOnly ||
               !bgn.hasProp(common_properties::molAtomMapNumber)) {
-            atomsToRemove.push_back(*begin);
+            atomsToRemove.push_back(rdcast<unsigned int>(*begin));
             ++numHsToRemove;
           }
         }

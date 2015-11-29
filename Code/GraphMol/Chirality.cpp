@@ -238,7 +238,7 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
       cipEntries[*it].insert(cipEntries[*it].end(), localEntry.rbegin(),
                              localEntry.rend());
       if (cipEntries[*it].size() > longestEntry) {
-        longestEntry = cipEntries[*it].size();
+        longestEntry = rdcast<unsigned int>(cipEntries[*it].size());
       }
     }
     // ----------------------------------------------------
@@ -246,7 +246,7 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     // pad the entries so that we compare rounds to themselves:
     //
     for (INT_LIST_I it = allIndices.begin(); it != allIndices.end(); ++it) {
-      unsigned int sz = cipEntries[*it].size();
+      unsigned int sz = rdcast<unsigned int>(cipEntries[*it].size());
       if (sz < longestEntry) {
         cipEntries[*it].insert(cipEntries[*it].end(), longestEntry - sz, -1);
       }
