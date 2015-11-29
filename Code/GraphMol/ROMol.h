@@ -207,6 +207,16 @@ class ROMol {
   Atom *getAtomWithIdx(unsigned int idx);
   //! \overload
   const Atom *getAtomWithIdx(unsigned int idx) const;
+  //! \overload
+  template<class U>
+  Atom *getAtomWithIdx(const U idx) {
+      return getAtomWithIdx(rdcast<unsigned int>(idx));
+  }
+  //! \overload
+  template<class U>
+  const Atom *getAtomWithIdx(const U idx) const {
+      return getAtomWithIdx(rdcast<unsigned int>(idx));
+  }
   //! returns the degree (number of neighbors) of an Atom in the graph
   unsigned int getAtomDegree(const Atom *at) const;
   //! \overload
@@ -222,10 +232,33 @@ class ROMol {
   Bond *getBondWithIdx(unsigned int idx);
   //! \overload
   const Bond *getBondWithIdx(unsigned int idx) const;
+  //! \overload
+  template <class U>
+  Bond *getBondWithIdx(const U idx) {
+      return getBondWithIdx(rdcast<unsigned int>(idx));
+  }
+  //! \overload
+  template <class U>
+  const Bond *getBondWithIdx(const U idx) const {
+      return getBondWithIdx(rdcast<unsigned int>(idx));
+  }
   //! returns a pointer to the bond between two atoms, Null on failure
   Bond *getBondBetweenAtoms(unsigned int idx1, unsigned int idx2);
   //! \overload
   const Bond *getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) const;
+  //! \overload
+  template <class U, class V>
+  Bond *getBondBetweenAtoms(const U idx1, const V idx2) {
+      return getBondBetweenAtoms(rdcast<unsigned int>(idx1),
+                                 rdcast<unsigned int>(idx2));
+  }
+  //! \overload
+  template <class U, class V>
+  const Bond *getBondBetweenAtoms(const U idx1, const V idx2) const {
+      return getBondBetweenAtoms(rdcast<unsigned int>(idx1),
+          rdcast<unsigned int>(idx2));
+  }
+
   //@}
 
   //! \name Bookmarks
@@ -326,7 +359,7 @@ class ROMol {
   */
   unsigned int addConformer(Conformer *conf, bool assignId = false);
 
-  inline unsigned int getNumConformers() const { return d_confs.size(); }
+  inline unsigned int getNumConformers() const { return rdcast<unsigned int>(d_confs.size()); }
 
   //@}
 
