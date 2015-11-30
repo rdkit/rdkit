@@ -90,7 +90,7 @@ class Conformer {
   //! overload
   template<class U>
   RDGeom::Point3D &getAtomPos(U atomId) {
-      return getAtomPos(atomId);
+      return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Set the position of the specified atom
