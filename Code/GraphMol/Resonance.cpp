@@ -19,8 +19,8 @@ class CEVect2 {
  public:
   CEVect2(CEMap &ceMap);
   ConjElectrons *getCE(unsigned int depth, unsigned int width);
-  unsigned int ceCount() { return d_ceVect.size(); }
-  unsigned int depth() { return d_degVect.size(); }
+  unsigned int ceCount() { return rdcast<unsigned int>(d_ceVect.size()); }
+  unsigned int depth() { return rdcast<unsigned int>(d_degVect.size()); }
   void resize(unsigned int size);
   void idxToDepthWidth(unsigned int idx, unsigned int &d, unsigned int &w);
   unsigned int ceCountAtDepth(unsigned int depth);
@@ -527,8 +527,8 @@ bool ConjElectrons::storeFP(CEMap &ceMap, unsigned int flags) {
   boost::uint8_t byte;
   ConjFP fp;
   unsigned int fpSize = 0;
-  if (flags & FP_ATOMS) fpSize += d_conjAtomMap.size();
-  if (flags & FP_BONDS) fpSize += ((d_conjBondMap.size() - 1) / 4 + 1);
+  if (flags & FP_ATOMS) fpSize += rdcast<unsigned int>(d_conjAtomMap.size());
+  if (flags & FP_BONDS) fpSize += rdcast<unsigned int>((d_conjBondMap.size() - 1) / 4 + 1);
   fp.reserve(fpSize);
   if (flags & FP_ATOMS) {
     // for each atom, we push a byte to the FP vector whose
@@ -737,7 +737,7 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
     // we compute the number of permutations (numComb) and a
     // binary code (v) which indicates which of the atom indices in
     // aiVec will be octet-unsatisfied for each permutation
-    ResonanceUtils::getNumCombStartV(numCand, aiVec.size(), numComb, v);
+    ResonanceUtils::getNumCombStartV(numCand, rdcast<unsigned int>(aiVec.size()), numComb, v);
     // if there are multiple permutations, make a copy of the original
     // ConjElectrons object, since the latter will be modified
     ConjElectrons *ceCopy = ((numComb > 1) ? new ConjElectrons(*ce) : NULL);
@@ -809,8 +809,9 @@ void ConjElectrons::computeDistFormalCharges() {
     for (ConjAtomMap::const_iterator it2 = it1; it2 != d_conjAtomMap.end();
          ++it2) {
       if ((it1 == it2) || !it2->second->fc()) continue;
-      unsigned int dist = MolOps::getShortestPath(d_parent->mol(), it1->first,
-                                                  it2->first).size();
+      unsigned int dist = rdcast<unsigned int>(
+          MolOps::getShortestPath(d_parent->mol(), it1->first,
+                                                   it2->first).size());
       if ((it1->second->fc() * it2->second->fc()) > 0)
         d_ceMetrics.d_fcSameSignDist += dist;
       else

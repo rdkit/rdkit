@@ -126,13 +126,13 @@ void ROMol::initMol() {
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {
-  return (boost::out_degree(at->getIdx(), d_graph));
+  return rdcast<unsigned int>(boost::out_degree(at->getIdx(), d_graph));
 };
 unsigned int ROMol::getAtomDegree(Atom::ATOM_SPTR at) const {
   return getAtomDegree(at.get());
 };
 unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
-  int res = boost::num_vertices(d_graph);
+  int res = rdcast<int>(boost::num_vertices(d_graph));
   if (!onlyExplicit) {
     // if we are interested in hydrogens as well add them up from
     // each
@@ -238,7 +238,7 @@ void ROMol::clearBondBookmark(const int mark, const Bond *bond) {
 unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
   // By default resturn the bonds that connect only the heavy atoms
   // hydrogen connecting bonds are ignores
-  int res = boost::num_edges(d_graph);
+  int res = rdcast<int>(boost::num_edges(d_graph));
   if (!onlyHeavy) {
     // If we need hydrogen connecting bonds add them up
     for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
@@ -340,7 +340,7 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
        cfi != this->endConformers(); ++cfi) {
     (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
   }
-  return which;
+  return rdcast<unsigned int>(which);
 };
 unsigned int ROMol::addAtom(Atom::ATOM_SPTR atom_sp, bool updateLabel) {
   return addAtom(atom_sp.get(), updateLabel, false);
@@ -368,7 +368,7 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
                                           bond_p->getEndAtomIdx(), d_graph);
   CHECK_INVARIANT(ok, "bond could not be added");
   d_graph[which].reset(bond_p);
-  int res = boost::num_edges(d_graph);
+  int res = rdcast<int>(boost::num_edges(d_graph));
   bond_p->setIdx(res - 1);
   return res;
 }

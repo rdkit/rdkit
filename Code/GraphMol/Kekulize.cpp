@@ -271,7 +271,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         // if the neighbor is not on the stack add it
         if (std::find(astack.begin(), astack.end(),
                       static_cast<int>(*nbrIdx)) == astack.end()) {
-          astack.push_back(*nbrIdx);
+          astack.push_back(rdcast<int>(*nbrIdx));
         }
 
         // check if the neighbor is also a candidate for a double bond
@@ -287,7 +287,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
             (mol.getBondBetweenAtoms(curr, *nbrIdx)->getIsAromatic() ||
              mol.getAtomWithIdx(curr)->getAtomicNum() == 0 ||
              mol.getAtomWithIdx(*nbrIdx)->getAtomicNum() == 0)) {
-          opts.push_back(*nbrIdx);
+          opts.push_back(rdcast<int>(*nbrIdx));
         }  // end of curr atoms can have a double bond
         ++nbrIdx;
       }  // end of looping over neighbors
@@ -519,7 +519,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   RingUtils::makeRingNeighborMap(brings, neighMap);
 
   int curr = 0;
-  int cnrs = arings.size();
+  int cnrs = rdcast<int>(arings.size());
   boost::dynamic_bitset<> fusDone(cnrs);
   while (curr < cnrs) {
     INT_VECT fused;

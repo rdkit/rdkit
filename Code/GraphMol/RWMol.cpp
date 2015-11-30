@@ -124,7 +124,7 @@ unsigned int RWMol::addAtom(bool updateLabel) {
        cfi != this->endConformers(); ++cfi) {
     (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
   }
-  return which;
+  return rdcast<unsigned int>(which);
 }
 
 void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
@@ -182,7 +182,7 @@ void RWMol::removeAtom(Atom *atom) {
   ADJ_ITER b1, b2;
   boost::tie(b1, b2) = getAtomNeighbors(atom);
   while (b1 != b2) {
-    nbrs.push_back(std::make_pair(atom->getIdx(), *b1));
+    nbrs.push_back(std::make_pair(atom->getIdx(), rdcast<unsigned int>(*b1)));
     ++b1;
   }
   for (unsigned int i = 0; i < nbrs.size(); ++i) {
@@ -269,7 +269,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   MolGraph::edge_descriptor which;
   boost::tie(which, ok) = boost::add_edge(atomIdx1, atomIdx2, d_graph);
   d_graph[which].reset(b);
-  unsigned int res = boost::num_edges(d_graph);
+  unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
   b->setIdx(res - 1);
   b->setBeginAtomIdx(atomIdx1);
   b->setEndAtomIdx(atomIdx2);
@@ -322,7 +322,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   ADJ_ITER a1, a2;
   boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
   while (a1 != a2) {
-    unsigned int oIdx = *a1;
+    unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
     if (oIdx == aid2) continue;
     Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
@@ -331,7 +331,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   }
   boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
   while (a1 != a2) {
-    unsigned int oIdx = *a1;
+    unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
     if (oIdx == aid1) continue;
     Bond *obnd = getBondBetweenAtoms(aid2, oIdx);

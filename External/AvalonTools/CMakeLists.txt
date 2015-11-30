@@ -3,6 +3,9 @@ string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
 set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
 
 add_definitions(-DBUILD_AVALON_SUPPORT)
+if (MSVC)
+  add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
+endif(MSVC)
 
 set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c 
 	${AVALON_SRC_PATH}/symboltable.c 

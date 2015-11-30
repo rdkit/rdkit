@@ -93,8 +93,8 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
         }
         beg++;
       }
-      nb = bondPath->size();
-      nAts = atomsInPath.size();
+      nb = rdcast<int>(bondPath->size());
+      nAts = rdcast<int>(atomsInPath.size());
       dMat = MolOps::getDistanceMat(mol, atomsInPath, bonds, true, true);
       res = computeBalabanJ(dMat, nb, nAts);
       delete[] dMat;
