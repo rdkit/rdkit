@@ -35,8 +35,6 @@ doublereal *disnn;
 logical *flag__;
 doublereal *diss;
 {
-  (void)n;
-  (void)len;
     /* Initialized data */
 
     static doublereal inf = 1e20;
@@ -282,7 +280,6 @@ L900:
 integer ioffset_(n, i__, j)
 integer *n, *i__, *j;
 {
-  (void)n;
     /* System generated locals */
     integer ret_val;
 

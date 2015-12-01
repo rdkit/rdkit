@@ -578,7 +578,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
 
   seenFromHere.set(atomIdx);
   molStack.push_back(MolStackElem(atom));
-  atomOrders[atom->getIdx()] = molStack.size();
+  atomOrders[atom->getIdx()] = rdcast<int>(molStack.size());
   colors[atomIdx] = GREY_NODE;
 
   INT_LIST travList;
@@ -601,7 +601,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         // this is end of the ring closure
         // we can just pull the ring index from the bond itself:
         molStack.push_back(MolStackElem(bond, atomIdx));
-        bondVisitOrders[bIdx] = molStack.size();
+        bondVisitOrders[bIdx] = rdcast<int>(molStack.size());
         molStack.push_back(MolStackElem(ringIdx));
         // don't make the ring digit immediately available again: we don't want
         // to have the same
@@ -616,7 +616,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
           throw ValueErrorException(
               "Too many rings open at once. SMILES cannot be generated.");
         }
-        unsigned int lowestRingIdx = cAIt - cyclesAvailable.begin();
+        unsigned int lowestRingIdx = rdcast<unsigned int>(cAIt - cyclesAvailable.begin());
         cyclesAvailable[lowestRingIdx] = 0;
         ++lowestRingIdx;
         bond->setProp(common_properties::_TraversalRingClosureBond,
@@ -710,16 +710,16 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
     travList.push_back(bond->getIdx());
     if (possiblesIt + 1 != possibles.end()) {
       // we're branching
-      molStack.push_back(MolStackElem("(", possiblesIt - possibles.begin()));
+      molStack.push_back(MolStackElem("(", rdcast<int>(possiblesIt - possibles.begin())));
     }
     molStack.push_back(MolStackElem(bond, atomIdx));
-    bondVisitOrders[bond->getIdx()] = molStack.size();
+    bondVisitOrders[bond->getIdx()] = rdcast<int>(molStack.size());
     dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, cycles, ranks,
                   cyclesAvailable, molStack, atomOrders, bondVisitOrders,
                   atomRingClosures, atomTraversalBondOrder, bondsInPlay,
                   bondSymbols);
     if (possiblesIt + 1 != possibles.end()) {
-      molStack.push_back(MolStackElem(")", possiblesIt - possibles.begin()));
+      molStack.push_back(MolStackElem(")", rdcast<int>(possiblesIt - possibles.begin())));
     }
   }
 

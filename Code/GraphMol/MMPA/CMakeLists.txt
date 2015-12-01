@@ -1,3 +1,7 @@
+if (MSVC)
+  add_definitions( "/D_CRT_SECURE_NO_WARNINGS")
+endif(MSVC)
+
 rdkit_library(MMPA
               MMPA.cpp
               LINK_LIBRARIES SubstructMatch Depictor FileParsers ChemTransforms GraphMol ${RDKit_THREAD_LIBS} )

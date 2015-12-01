@@ -273,6 +273,12 @@ if(NOT RDK_INSTALL_INTREE)
           )
 endif(NOT RDK_INSTALL_INTREE)
 
+if (RDK_SQUASH_MVC_SECURE_WARNINGS)
+  MESSAGE("== Squashing MSVC Security warnings (do not use during development)")
+  ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
+  ADD_DEFINITIONS("/wd4996")
+endif(RDK_SQUASH_MVC_SECURE_WARNINGS)
+
 add_subdirectory(External)
 add_subdirectory(Code)
 

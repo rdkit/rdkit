@@ -38,7 +38,7 @@ boost::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
 void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
                     const ROMol &mol) {
   for (VECT_INT_VECT_CI ri = res.begin(); ri != res.end(); ++ri) {
-    unsigned int rsiz = ri->size();
+    unsigned int rsiz = rdcast<unsigned int>(ri->size());
     INT_VECT bring(rsiz);
     for (unsigned int i = 0; i < (rsiz - 1); i++) {
       const Bond *bnd = mol.getBondBetweenAtoms((*ri)[i], (*ri)[i + 1]);
@@ -171,7 +171,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
         for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end();
              ++sri) {
           if (sri->size() < minSiz) {
-            minSiz = sri->size();
+            minSiz = rdcast<unsigned int>(sri->size());
           }
           nrings.push_back((*sri));
         }
@@ -261,7 +261,7 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
            j < res.size() && bitBrings[j].count() == bitBrings[i].count();
            ++j) {
         if (!consider[j] || !availRings[j]) continue;
-        int overlap = (bitBrings[j] & munion).count();
+        int overlap = rdcast<int>((bitBrings[j] & munion).count());
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
           bestJ = j;
@@ -710,18 +710,18 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
             ring.insert(ring.end(), npath.begin(), npath.end());
 #endif
             if (ring.size() <= curSize) {
-              curSize = ring.size();
+              curSize = rdcast<unsigned int>(ring.size());
               rings.push_back(ring);
             } else {
               // we are done with the smallest rings
-              return rings.size();
+              return rdcast<unsigned int>(rings.size());
             }
           }  // end of found a ring
         }    // end of we have seen this neighbor before
       }      // end of nbrIdx not part of current path and not a done atom
     }        // end of loop over neighbors of current atom
   }          // moving to the next node
-  return rings.size();  // if we are here we should have found everything around
+  return rdcast<unsigned int>(rings.size());  // if we are here we should have found everything around
                         // the node
 }
 
@@ -745,7 +745,7 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
     while (nbrIdx != endNbrs) {
       if (*nbrIdx == endAtomIdx) {
         if (currAtomIdx != startAtomIdx) {
-          tv.push_back(*nbrIdx);
+          tv.push_back(rdcast<unsigned int>(*nbrIdx));
           // make sure the ring we just found isn't already in our set
           // of rings (this was an extension of sf.net issue 249)
           boost::uint32_t invr =
@@ -763,7 +763,7 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
                  std::find(tv.begin(), tv.end(), *nbrIdx) == tv.end()) {
         //} else if(ringAtoms[*nbrIdx]){
         INT_VECT nv(tv);
-        nv.push_back(*nbrIdx);
+        nv.push_back(rdcast<unsigned int>(*nbrIdx));
         bfsq.push_back(nv);
       }
       ++nbrIdx;
@@ -828,7 +828,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
     res = mol.getRingInfo()->atomRings();
-    return res.size();
+    return rdcast<int>(res.size());
   } else {
     mol.getRingInfo()->initialize();
   }
@@ -985,8 +985,8 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
           std::cerr<<std::endl;          
         }
 #endif
-    int nexpt = (nbnds - curFrag.size() + 1);
-    int ssiz = fragRes.size();
+    int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
+    int ssiz = rdcast<int>(fragRes.size());
 
     // first check that we got at least the number of expected rings
     // std::cerr<<"EXPT: "<<ssiz<<" "<<nexpt<<std::endl;
@@ -1025,7 +1025,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
           }
         }
       }
-      ssiz = fragRes.size();
+      ssiz = rdcast<int>(fragRes.size());
       if (ssiz < nexpt) {
         throw ValueErrorException("could not find number of expected rings.");
       }
@@ -1058,7 +1058,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   // update the ring memberships of atoms and bonds in the molecule:
   // store the SSSR rings on the the molecule as a property
   // we will ignore any existing SSSRs ont eh molecule - simply overwrite
-  return res.size();
+  return rdcast<int>(res.size());
 }
 
 int symmetrizeSSSR(ROMol &mol) {
@@ -1079,7 +1079,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
     nsssr = findSSSR(mol, sssrs);
   } else {
     sssrs = mol.getRingInfo()->atomRings();
-    nsssr = sssrs.size();
+    nsssr = rdcast<unsigned int>(sssrs.size());
   }
 
   VECT_INT_VECT_CI srci;
@@ -1092,7 +1092,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   // now check if there are any extra rings on the molecule
   if (!mol.hasProp(common_properties::extraRings)) {
     // no extra rings nothign to be done
-    return res.size();
+    return rdcast<int>(res.size());
   }
   const VECT_INT_VECT &extras =
       mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
@@ -1107,7 +1107,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   INT_VECT sr, exr;
   INT_VECT_CI eri;
   unsigned int eid, srid, ssiz;
-  unsigned int next = bextra.size();
+  unsigned int next = rdcast<unsigned int>(bextra.size());
   // now the trick is the following
   // we will replace each ring of size ssiz from the SSSR with
   // one of the same size rings in the extras. Compute the union of of the new
@@ -1124,7 +1124,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
         std::cerr<<std::endl;
         std::cerr<<"------"<<std::endl;
 #endif
-    ssiz = sr.size();
+    ssiz = rdcast<unsigned int>(sr.size());
     INT_VECT exrid;
     exrid.push_back(srid);
     Union(bsrs, nunion, &exrid);
@@ -1175,7 +1175,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   if (mol.hasProp(common_properties::extraRings)) {
     mol.clearProp(common_properties::extraRings);
   }
-  return res.size();
+  return rdcast<int>(res.size());
 }
 
 namespace {

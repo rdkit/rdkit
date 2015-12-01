@@ -131,7 +131,9 @@ class Atom {
       - the index should be <tt>< this->getOwningMol()->getNumAtoms()</tt>
   */
   void setIdx(unsigned int index) { d_index = index; };
-
+  //! overload
+  template<class U>
+  void setIdx(const U index) { setIdx(rdcast<unsigned int>(index)); }
   //! returns the explicit degree of the Atom (number of bonded
   //!   neighbors in the graph)
   /*!

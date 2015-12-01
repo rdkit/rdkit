@@ -29,7 +29,7 @@ const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
 void streamWrite(std::ostream &ss, const std::string &what) {
-  unsigned int l = what.length();
+  unsigned int l = rdcast<unsigned int>(what.length());
   ss.write((const char *)&l, sizeof(l));
   ss.write(what.c_str(), sizeof(char) * l);
 };
@@ -145,7 +145,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
     boost::tie(lowerOpen, upperOpen) =
         static_cast<const RangeQuery<int, T const *, true> *>(query)
             ->getEndsOpen();
-    ends = 0 | (lowerOpen << 1) | upperOpen;
+    ends = 0 | (rdcast<int>(lowerOpen) << 1) | rdcast<int>(upperOpen);
     streamWrite(ss, ends);
   } else if (typeid(*query) == typeid(SetQuery<int, T const *, true>)) {
     streamWrite(ss, MolPickler::QUERY_SET);
@@ -934,12 +934,12 @@ bool getAtomMapNumber(const Atom *atom, int &mapNum) {
   int tmpInt;
   try {
     atom->getProp(common_properties::molAtomMapNumber, tmpInt);
-  } catch (boost::bad_any_cast &exc) {
+  } catch (boost::bad_any_cast &) {
     const std::string &tmpSVal =
         atom->getProp<std::string>(common_properties::molAtomMapNumber);
     try {
       tmpInt = boost::lexical_cast<int>(tmpSVal);
-    } catch (boost::bad_lexical_cast &lexc) {
+    } catch (boost::bad_lexical_cast &) {
       res = false;
     }
   }
@@ -1264,7 +1264,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
 
   if (version > 5000) {
     if (version < 6020) {
-      unsigned int sPos = ss.tellg();
+      unsigned int sPos = rdcast<unsigned int>(ss.tellg());
       Tags tag;
       streamRead(ss, tag, version);
       if (tag == ATOM_MAPNUMBER) {
@@ -1356,7 +1356,7 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
     tmpChar = static_cast<char>(bond->getStereo());
     streamWrite(ss, tmpChar);
     const INT_VECT &stereoAts = bond->getStereoAtoms();
-    tmpChar = stereoAts.size();
+    tmpChar = rdcast<unsigned int>(stereoAts.size());
     streamWrite(ss, tmpChar);
     for (INT_VECT_CI idxIt = stereoAts.begin(); idxIt != stereoAts.end();
          ++idxIt) {

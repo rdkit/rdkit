@@ -17,6 +17,10 @@
 #include <cassert>
 #include <cstdlib>
 
+#if defined(_MSC_VER)
+#pragma warning(push, 1)
+#pragma warning(disable: 4800)
+#endif
 namespace RDKit {
 template <typename CompareFunc>
 bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
@@ -143,5 +147,9 @@ void hanoisort(int *base, int nel, int *count, int *changed,
   free(temp);
 }
 }
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #endif /* HANOISORT_H_ */
