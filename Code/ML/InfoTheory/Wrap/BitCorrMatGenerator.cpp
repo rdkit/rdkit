@@ -10,7 +10,7 @@
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#define NPY_NO_DEPRECATED_API NPY_1_8_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
 #include <RDBoost/Wrap.h>
