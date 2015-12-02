@@ -20,7 +20,7 @@ else:
     FILTER_IN = os.path.join(os.path.dirname(sys.argv[0]), "Filters.cpp.in")
     FILTER_OUT = os.path.join(os.path.dirname(sys.argv[0]), "Filters.cpp")
 
-for fn in (PAINS_CSV, FILTER_IN, FILTER_OUT):
+for fn in (PAINS_CSV, FILTER_IN):
     if not os.path.exists(fn):
         raise IOError("Could not find necessary file: %s",fn)
 

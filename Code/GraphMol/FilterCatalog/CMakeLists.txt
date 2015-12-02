@@ -19,6 +19,9 @@ if (PYTHONINTERP_FOUND)
       if(NOT rc EQUAL 0)
         message(FATAL_ERROR "Failed updating Filters.cpp from wehi_pains.csv")
       endif(NOT rc EQUAL 0)
+else(PYTHONINTERP_FOUND)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/Filters.cpp.cmake 
+                 ${CMAKE_CURRENT_SOURCE_DIR}/Filters.cpp COPYONLY)
 endif(PYTHONINTERP_FOUND)
 
 rdkit_library(FilterCatalog
