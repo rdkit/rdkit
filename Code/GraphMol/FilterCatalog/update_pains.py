@@ -63,12 +63,14 @@ t = (t.
      replace("{{ PAINS_B }}", PAINS_B).
      replace("{{ PAINS_C }}", PAINS_C))
 
-if py3:
-    import io
-    f = io.open(FILTER_OUT, 'w', newline='') # newline = don't convert to windows style
-    f.write(t)
-else:
-  # wb = means don't convert newline to windows style
-  open(FILTER_OUT,'wb').write(t)
-print("== Done updating pains file")
+t2 = open(FILTER_OUT).read()
+if t != t2:
+    if py3:
+        import io
+        f = io.open(FILTER_OUT, 'w', newline='') # newline = don't convert to windows style
+        f.write(t)
+    else:
+        # wb = means don't convert newline to windows style
+        open(FILTER_OUT,'wb').write(t)
+    print("== Done updating pains file")
 
