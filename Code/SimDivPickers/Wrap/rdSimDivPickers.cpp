@@ -10,7 +10,6 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
 #include <RDBoost/Wrap.h>
-#include "numpy/oldnumeric.h"
 #include <RDBoost/import_array.h>
 
 namespace python = boost::python;

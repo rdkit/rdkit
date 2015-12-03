@@ -10,12 +10,12 @@
 //
 #include <RDBoost/python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL rdDistGeom_array_API
+#include <RDBoost/import_array.h>
 #include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
-#include <RDBoost/import_array.h>
 
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -96,8 +96,8 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
   DGeomHelpers::initBoundsMat(mat);
   DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW);
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(mat->getData()),
-         nats * nats * sizeof(double));
+  memcpy(static_cast<void *>(PyArray_DATA(res)),
+         static_cast<void *>(mat->getData()), nats * nats * sizeof(double));
 
   return PyArray_Return(res);
 }

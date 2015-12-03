@@ -12,6 +12,7 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
 #include <RDBoost/python.h>
+#include <RDBoost/import_array.h>
 #include <boost/python/numeric.hpp>
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -21,7 +22,6 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
-#include <RDBoost/import_array.h>
 #include <GraphMol/ROMol.h>
 
 namespace python = boost::python;
@@ -112,7 +112,7 @@ PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
   dims[0] = 4;
   dims[1] = 4;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(res->data);
+  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   unsigned int i, j, itab;
   const double *tdata = trans.getData();
   for (i = 0; i < trans.numRows(); ++i) {

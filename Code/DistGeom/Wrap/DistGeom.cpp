@@ -12,7 +12,6 @@
 #include <RDBoost/python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
-#include "numpy/arrayobject.h"
 #include <RDBoost/Wrap.h>
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/import_array.h>
@@ -41,16 +40,16 @@ bool doTriangleSmoothing(python::object boundsMatArg, double tol) {
 
   PyArrayObject *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
   // get the dimensions of the array
-  int nrows = boundsMat->dimensions[0];
-  int ncols = boundsMat->dimensions[1];
+  int nrows = PyArray_DIM(boundsMat, 0);
+  int ncols = PyArray_DIM(boundsMat, 1);
   if (nrows != ncols) throw_value_error("The array has to be square");
   if (nrows <= 0) throw_value_error("The array has to have a nonzero size");
-  if (boundsMat->descr->type_num != PyArray_DOUBLE)
+  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE)
     throw_value_error("Only double arrays are currently supported");
 
   unsigned int dSize = nrows * nrows;
   double *cData = new double[dSize];
-  double *inData = reinterpret_cast<double *>(boundsMat->data);
+  double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
   DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
@@ -73,16 +72,16 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
 
   PyArrayObject *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
   // get the dimensions of the array
-  unsigned int nrows = boundsMat->dimensions[0];
-  unsigned int ncols = boundsMat->dimensions[1];
+  unsigned int nrows = PyArray_DIM(boundsMat, 0);
+  unsigned int ncols = PyArray_DIM(boundsMat, 1);
   if (nrows != ncols) throw_value_error("The array has to be square");
   if (nrows <= 0) throw_value_error("The array has to have a nonzero size");
-  if (boundsMat->descr->type_num != PyArray_DOUBLE)
+  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE)
     throw_value_error("Only double arrays are currently supported");
 
   unsigned int dSize = nrows * nrows;
   double *cData = new double[dSize];
-  double *inData = reinterpret_cast<double *>(boundsMat->data);
+  double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
 
@@ -147,7 +146,7 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
   dims[0] = nrows;
   dims[1] = 3;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(res->data);
+  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   for (unsigned int i = 0; i < nrows; i++) {
     unsigned int iTab = i * 3;
     for (unsigned int j = 0; j < 3; ++j) {

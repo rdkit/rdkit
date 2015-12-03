@@ -9,7 +9,6 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include <RDBoost/Wrap.h>
-#include "numpy/oldnumeric.h"
 #include <RDBoost/import_array.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
@@ -25,22 +24,22 @@ double infoEntropy(python::object resArr) {
   }
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, ((PyArrayObject *)matObj)->descr->type_num, 1, 1);
+      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 1, 1);
   double res = 0.0;
   // we are expecting a 1 dimensional array
-  long int ncols = (long int)((PyArrayObject *)matObj)->dimensions[0];
+  long int ncols = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
   CHECK_INVARIANT(ncols > 0, "");
-  if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
-    double *data = (double *)copy->data;
+  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
+    double *data = (double *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_FLOAT) {
-    float *data = (float *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
+    float *data = (float *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_INT) {
-    int *data = (int *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
+    int *data = (int *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_LONG) {
-    long int *data = (long int *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
+    long int *data = (long int *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
   }
   Py_DECREF(copy);
@@ -54,21 +53,21 @@ double infoGain(python::object resArr) {
   }
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, ((PyArrayObject *)matObj)->descr->type_num, 2, 2);
-  long int rows = (long int)((PyArrayObject *)matObj)->dimensions[0];
-  long int cols = (long int)((PyArrayObject *)matObj)->dimensions[1];
+      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
+  long int rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  long int cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
   double res = 0.0;
-  if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
-    double *data = (double *)copy->data;
+  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
+    double *data = (double *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_FLOAT) {
-    float *data = (float *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
+    float *data = (float *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_INT) {
-    int *data = (int *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
+    int *data = (int *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_LONG) {
-    long int *data = (long int *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
+    long int *data = (long int *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
   } else {
     throw_value_error(
@@ -85,21 +84,21 @@ double chiSquare(python::object resArr) {
   }
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, ((PyArrayObject *)matObj)->descr->type_num, 2, 2);
-  long int rows = (long int)((PyArrayObject *)matObj)->dimensions[0];
-  long int cols = (long int)((PyArrayObject *)matObj)->dimensions[1];
+      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
+  long int rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  long int cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
   double res = 0.0;
-  if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
-    double *data = (double *)copy->data;
+  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
+    double *data = (double *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_FLOAT) {
-    float *data = (float *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
+    float *data = (float *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_INT) {
-    int *data = (int *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
+    int *data = (int *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
-  } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_LONG) {
-    long int *data = (long int *)copy->data;
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
+    long int *data = (long int *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
   } else {
     throw_value_error(

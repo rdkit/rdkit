@@ -39,7 +39,7 @@ For more details on building from source with Conda, see the [conda-rdkit reposi
 
 Due to the conda python distribution being a different version to the system python, it is easiest to install PostgreSQL and the PostgreSQL python client via conda.
 
-With your envirinment activated, this is done simply by:
+With your environment activated, this is done simply by:
 
     conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
 
