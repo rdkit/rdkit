@@ -12,8 +12,6 @@
 #include "rdmolops.h"
 #include <RDBoost/python.h>
 
-#include "numpy/oldnumeric.h"
-
 #include <RDGeneral/types.h>
 
 #include <RDBoost/Wrap.h>

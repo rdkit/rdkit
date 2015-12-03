@@ -13,7 +13,8 @@
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <boost/python/numeric.hpp>
-#include "numpy/oldnumeric.h"
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
 #include <map>
 
 #include <DataStructs/BitVects.h>
@@ -40,8 +41,8 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
 
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(distMat.ptr(),
-                                                       PyArray_DOUBLE, 1, 1);
-  double *dMat = (double *)copy->data;
+                                                       NPY_DOUBLE, 1, 1);
+  double *dMat = (double *)PyArray_DATA(copy);
 
   RDKit::INT_VECT firstPickVect;
   for (unsigned int i = 0;

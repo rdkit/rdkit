@@ -10,7 +10,6 @@
 #include <cstring>
 
 #include <RDBoost/Wrap.h>
-#include <numpy/oldnumeric.h>
 #include <RDBoost/import_array.h>
 
 namespace python = boost::python;
@@ -232,13 +231,13 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
     -------
   */
   contigVals = reinterpret_cast<PyArrayObject *>(
-      PyArray_ContiguousFromObject(vals.ptr(), PyArray_DOUBLE, 1, 1));
+      PyArray_ContiguousFromObject(vals.ptr(), NPY_DOUBLE, 1, 1));
   if (!contigVals) {
     throw_value_error("could not convert value argument");
   }
 
   contigResults = reinterpret_cast<PyArrayObject *>(
-      PyArray_ContiguousFromObject(results.ptr(), PyArray_LONG, 1, 1));
+      PyArray_ContiguousFromObject(results.ptr(), NPY_LONG, 1, 1));
   if (!contigResults) {
     throw_value_error("could not convert results argument");
   }
@@ -259,8 +258,9 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
 
   // do the real work
   double gain = RecurseHelper(
-      (double *)contigVals->data, contigVals->dimensions[0], cuts, nCuts, which,
-      starts, nStarts, (long int *)contigResults->data, nPossibleRes);
+      (double *)PyArray_DATA(contigVals), PyArray_DIM(contigVals, 0), cuts,
+      nCuts, which, starts, nStarts, (long int *)PyArray_DATA(contigResults),
+      nPossibleRes);
 
   /*
     -------
@@ -288,20 +288,20 @@ static python::list cQuantize_FindStartPoints(python::object values,
   }
 
   PyArrayObject *contigVals = reinterpret_cast<PyArrayObject *>(
-      PyArray_ContiguousFromObject(values.ptr(), PyArray_DOUBLE, 1, 1));
+      PyArray_ContiguousFromObject(values.ptr(), NPY_DOUBLE, 1, 1));
   if (!contigVals) {
     throw_value_error("could not convert value argument");
   }
 
-  double *vals = (double *)contigVals->data;
+  double *vals = (double *)PyArray_DATA(contigVals);
 
   PyArrayObject *contigResults = reinterpret_cast<PyArrayObject *>(
-      PyArray_ContiguousFromObject(results.ptr(), PyArray_LONG, 1, 1));
+      PyArray_ContiguousFromObject(results.ptr(), NPY_LONG, 1, 1));
   if (!contigResults) {
     throw_value_error("could not convert results argument");
   }
 
-  long *res = (long *)contigResults->data;
+  long *res = (long *)PyArray_DATA(contigResults);
 
   bool firstBlock = true;
   long lastBlockAct = -2, blockAct = res[0];

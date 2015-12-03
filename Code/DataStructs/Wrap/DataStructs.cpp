@@ -17,7 +17,6 @@
 #include "DataStructs.h"
 #include <boost/python/numeric.hpp>
 #include <numpy/npy_common.h>
-#include <numpy/arrayobject.h>
 #include <RDBoost/import_array.h>
 #include <RDBoost/pyint_api.h>
 
@@ -44,7 +43,8 @@ void convertToNumpyArray(const T &v, python::object destArray) {
   PyArray_Resize(destP, &dims, 0, NPY_ANYORDER);
   for (unsigned int i = 0; i < v.size(); ++i) {
     PyObject *iItem = PyInt_FromLong(v[i]);
-    PyArray_SETITEM(destP, PyArray_GETPTR1(destP, i), iItem);
+    PyArray_SETITEM(destP, static_cast<char *>(PyArray_GETPTR1(destP, i)),
+                    iItem);
     Py_DECREF(iItem);
   }
 }

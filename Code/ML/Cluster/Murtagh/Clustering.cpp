@@ -14,8 +14,6 @@
 
 namespace python = boost::python;
 
-#include <numpy/arrayobject.h>
-
 #include <RDBoost/import_array.h>
 
 typedef double real;
@@ -66,7 +64,7 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
 
   if (PyArray_Check(data.ptr())) {
     dataContig = reinterpret_cast<PyArrayObject *>(
-        PyArray_ContiguousFromObject(data.ptr(), PyArray_DOUBLE, 2, 2));
+        PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 2, 2));
   } else {
     throw_value_error("PyArray_Type expected as input");
     return NULL;
@@ -76,7 +74,7 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
   ib = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
   crit = (real *)calloc(nPts, sizeof(real));
 
-  clusterit((real *)dataContig->data, nPts, sz, option, ia, ib, crit);
+  clusterit((real *)PyArray_DATA(dataContig), nPts, sz, option, ia, ib, crit);
 
   dims[0] = nPts;
   res = PyTuple_New(3);
@@ -116,7 +114,7 @@ static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
 
   if (PyArray_Check(data.ptr())) {
     dataContig = reinterpret_cast<PyArrayObject *>(
-        PyArray_ContiguousFromObject(data.ptr(), PyArray_DOUBLE, 1, 1));
+        PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 1, 1));
   } else {
     throw_value_error("PyArray_Type expected as input");
     return NULL;
@@ -125,7 +123,7 @@ static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
   ib = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
   crit = (real *)calloc(nPts, sizeof(real));
-  distclusterit((real *)dataContig->data, nPts, option, ia, ib, crit);
+  distclusterit((real *)PyArray_DATA(dataContig), nPts, option, ia, ib, crit);
 
   dims[0] = nPts;
 

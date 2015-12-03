@@ -11,7 +11,9 @@
 #define NO_IMPORT_ARRAY
 #include "rdmolops.h"
 #include <RDBoost/python.h>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
+
 #include <string>
 #include <math.h>
 
@@ -425,7 +427,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(distMat),
+  memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
 
   return PyArray_Return(res);
@@ -443,7 +445,7 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
 
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
-  memcpy(static_cast<void *>(res->data), static_cast<void *>(distMat),
+  memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
 
   return PyArray_Return(res);
@@ -463,11 +465,11 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
   if (useBO) {
     // if we're using valence, the results matrix is made up of doubles
     res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-    memcpy(static_cast<void *>(res->data), static_cast<void *>(tmpMat),
+    memcpy(PyArray_DATA(res), static_cast<void *>(tmpMat),
            nats * nats * sizeof(double));
   } else {
     res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_INT);
-    int *data = (int *)res->data;
+    int *data = static_cast<int *>(PyArray_DATA(res));
     for (int i = 0; i < nats; i++) {
       for (int j = 0; j < nats; j++) {
         data[i * nats + j] = (int)round(tmpMat[i * nats + j]);

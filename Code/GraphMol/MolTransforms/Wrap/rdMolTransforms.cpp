@@ -10,10 +10,10 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmoltransforms_array_API
 #include <RDBoost/python.h>
+#include <RDBoost/import_array.h>
 #include "numpy/arrayobject.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
-#include <RDBoost/import_array.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/Transform3D.h>
@@ -32,7 +32,7 @@ PyObject *computeCanonTrans(const Conformer &conf,
   dims[0] = 4;
   dims[1] = 4;
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(res->data);
+  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   const double *tdata = trans->getData();
   memcpy(static_cast<void *>(resData), static_cast<const void *>(tdata),
          4 * 4 * sizeof(double));
@@ -46,9 +46,9 @@ void transConformer(Conformer &conf, python::object trans) {
     throw_value_error("Expecting a numeric array for transformation");
   }
   PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
-  unsigned int nrows = transMat->dimensions[0];
+  unsigned int nrows = PyArray_DIM(transMat, 0);
   unsigned int dSize = nrows * nrows;
-  double *inData = reinterpret_cast<double *>(transMat->data);
+  double *inData = reinterpret_cast<double *>(PyArray_DATA(transMat));
   RDGeom::Transform3D transform;
   double *tData = transform.getData();
   memcpy(static_cast<void *>(tData), static_cast<void *>(inData),

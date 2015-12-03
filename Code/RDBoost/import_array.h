@@ -1,6 +1,9 @@
 #ifndef RDKIT_IMPORT_ARRAY_INCLUDED
 #define RDKIT_IMPORT_ARRAY_INCLUDED
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+
 #if PY_MAJOR_VERSION >= 3
 void* rdkit_import_array()
 #else
@@ -13,7 +16,7 @@ void rdkit_import_array()
   // directly from within the BOOST_PYTHON_MODULE init function (that
   // returns void)
   import_array();
-#if defined(_MSC_VER) && (PY_MAJOR_VERSION >= 3)
+#if PY_MAJOR_VERSION >= 3
   return NULL;
 #endif
 }

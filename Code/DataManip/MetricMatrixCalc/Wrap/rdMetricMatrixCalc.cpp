@@ -11,7 +11,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdmetric_array_API
 #include <RDBoost/python.h>
 #include <boost/python/numeric.hpp>
-#include "numpy/arrayobject.h"
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
@@ -65,8 +64,8 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
   PyArrayObject *distRes;
   if (PyArray_Check(descMatObj)) {
     // get the dimensions of the array
-    int nrows = ((PyArrayObject *)descMatObj)->dimensions[0];
-    int ncols = ((PyArrayObject *)descMatObj)->dimensions[1];
+    int nrows = PyArray_DIM((PyArrayObject *)descMatObj, 0);
+    int ncols = PyArray_DIM((PyArrayObject *)descMatObj, 1);
     int i;
     CHECK_INVARIANT((nrows > 0) && (ncols > 0), "");
 
@@ -80,14 +79,14 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     // grab a pointer to the data in the array so that we can directly put
     // values in there
     // and avoid copying :
-    double *dMat = (double *)distRes->data;
+    double *dMat = (double *)PyArray_DATA(distRes);
 
     PyArrayObject *copy;
     copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-        descMatObj, ((PyArrayObject *)descMatObj)->descr->type_num, 2, 2);
+        descMatObj, PyArray_DESCR((PyArrayObject *)descMatObj)->type_num, 2, 2);
     // if we have double array
-    if (((PyArrayObject *)descMatObj)->descr->type_num == NPY_DOUBLE) {
-      double *desc = (double *)copy->data;
+    if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_DOUBLE) {
+      double *desc = (double *)PyArray_DATA((PyArrayObject *)descMatObj);
 
       // REVIEW: create an adaptor object to hold a double * and support
       //  operator[]() so that we don't have to do this stuff:
@@ -109,8 +108,9 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     }
 
     // if we have a float array
-    else if (((PyArrayObject *)descMatObj)->descr->type_num == NPY_FLOAT) {
-      float *desc = (float *)copy->data;
+    else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num ==
+             NPY_FLOAT) {
+      float *desc = (float *)PyArray_DATA(copy);
       float **desc2D = new float *[nrows];
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
@@ -124,8 +124,8 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     }
 
     // if we have an interger array
-    else if (((PyArrayObject *)descMatObj)->descr->type_num == NPY_INT) {
-      int *desc = (int *)copy->data;
+    else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_INT) {
+      int *desc = (int *)PyArray_DATA(copy);
       int **desc2D = new int *[nrows];
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
@@ -155,7 +155,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
     npy_intp dMatLen = nrows * (nrows - 1) / 2;
     distRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-    double *dMat = (double *)distRes->data;
+    double *dMat = (double *)PyArray_DATA(distRes);
 
     // assume that we a have a list of list of values (that can be extracted to
     // double)
@@ -200,7 +200,7 @@ PyObject *getTanimotoDistMat(python::object bitVectList) {
   npy_intp dMatLen = nrows * (nrows - 1) / 2;
   PyArrayObject *simRes =
       (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-  double *sMat = (double *)simRes->data;
+  double *sMat = (double *)PyArray_DATA(simRes);
 
   if (ebvWorks.check()) {
     PySequenceHolder<ExplicitBitVect> dData(bitVectList);
@@ -236,7 +236,7 @@ PyObject *getTanimotoSimMat(python::object bitVectList) {
   npy_intp dMatLen = nrows * (nrows - 1) / 2;
   PyArrayObject *simRes =
       (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-  double *sMat = (double *)simRes->data;
+  double *sMat = (double *)PyArray_DATA(simRes);
 
   if (ebvWorks.check()) {
     PySequenceHolder<ExplicitBitVect> dData(bitVectList);
