@@ -102,7 +102,8 @@ void testPass() {
     "C[Rf]C",  // issue 3535668
     "[C:1]",
     "[C:0]",           // issue 3525776
-    "[si]1cccc[si]1",  // aromatic Si (github issue 5)
+    "[si]1cccc[si]1",  // aromatic Si (github issue #5)
+    "[asH]1cccc1",  // aromatic As (github issue #682)
     "EOS"
   };
   while (smis[i] != "EOS") {
