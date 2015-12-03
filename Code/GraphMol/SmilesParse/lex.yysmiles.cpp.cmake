@@ -34,7 +34,7 @@
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types. 
+ * if you want the limit (max/min) macros for int types.
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -52,7 +52,7 @@ typedef uint64_t flex_uint64_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t; 
+typedef unsigned char flex_uint8_t;
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 #endif /* ! C99 */
@@ -181,7 +181,7 @@ typedef size_t yy_size_t;
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
-    
+
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
@@ -238,7 +238,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -564,7 +564,7 @@ static yyconst flex_int16_t yy_chk[300] =
 
 #include <cstdio>
 #ifdef WIN32
-#include <io.h> 	 
+#include <io.h>
 #endif
 
 #include <RDGeneral/Exceptions.h>
@@ -590,10 +590,10 @@ void smiles_lexer_error(const char *msg) {
 size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 //  YY_BUFFER_STATE buff=yysmiles__scan_string(text.c_str()+pos,yyscanner);
   // Faster implementation of yysmiles__scan_string that handles trimming
-  YY_BUFFER_STATE b;      
+  YY_BUFFER_STATE b;
   char *buf;
-  yyconst char * yybytes = text.c_str();  
-  yy_size_t _yybytes_len=text.size(), n, start, end; 
+  yyconst char * yybytes = text.c_str();
+  yy_size_t _yybytes_len=text.size(), n, start, end;
   /* Get memory for full buffer, including space for trailing EOB's. */
   n = _yybytes_len + 2;
   buf = (char *) yysmiles_alloc(n ,yyscanner );
@@ -612,23 +612,23 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
   _yybytes_len = end-start+1;
   n = _yybytes_len + 2;
   memcpy(buf, yybytes+start, _yybytes_len);
-  
-  
+
+
   buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
-  
+
   b = yysmiles__scan_buffer(buf,n ,yyscanner);
   if ( ! b )
     smiles_lexer_error( "bad buffer in yysmiles__scan_bytes()" );
-  
+
   /* It's okay to grow etc. this buffer, and we should throw it
    * away when we're done.
    */
   b->yy_is_our_buffer = 1;
-  
+
 
   POSTCONDITION(b,"invalid buffer");
   return start;
-  
+
 }
 
 #line 635 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
@@ -689,7 +689,7 @@ static int yy_init_globals (yyscan_t yyscanner );
     /* This must go here because YYSTYPE and YYLTYPE are included
      * from bison output in section 1.*/
     #    define yylval yyg->yylval_r
-    
+
 int yysmiles_lex_init (yyscan_t* scanner);
 
 int yysmiles_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
@@ -740,7 +740,7 @@ extern int yysmiles_wrap (yyscan_t yyscanner );
 #endif
 
     static void yyunput (int c,char *buf_ptr  ,yyscan_t yyscanner);
-    
+
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
 #endif
@@ -1159,7 +1159,7 @@ case 99:
 YY_RULE_SETUP
 #line 188 "smiles.ll"
 {   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ATOM_TOKEN; 
+				return ATOM_TOKEN;
 			}
 	YY_BREAK
 case 100:
@@ -1216,7 +1216,7 @@ case 110:
 YY_RULE_SETUP
 #line 202 "smiles.ll"
 {
-				return H_TOKEN; 
+				return H_TOKEN;
 			}
 	YY_BREAK
 case 111:
@@ -1224,7 +1224,7 @@ YY_RULE_SETUP
 #line 206 "smiles.ll"
 {	yylval->atom = new Atom ( 5 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 112:
@@ -1232,7 +1232,7 @@ YY_RULE_SETUP
 #line 210 "smiles.ll"
 {	yylval->atom = new Atom ( 6 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 113:
@@ -1240,7 +1240,7 @@ YY_RULE_SETUP
 #line 214 "smiles.ll"
 {	yylval->atom = new Atom( 7 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 114:
@@ -1248,7 +1248,7 @@ YY_RULE_SETUP
 #line 218 "smiles.ll"
 {	yylval->atom = new Atom( 8 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 115:
@@ -1256,7 +1256,7 @@ YY_RULE_SETUP
 #line 222 "smiles.ll"
 {	yylval->atom = new Atom( 15 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 116:
@@ -1264,7 +1264,7 @@ YY_RULE_SETUP
 #line 226 "smiles.ll"
 {	yylval->atom = new Atom( 16 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 117:
@@ -1272,7 +1272,7 @@ YY_RULE_SETUP
 #line 231 "smiles.ll"
 {	yylval->atom = new Atom( 14 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 118:
@@ -1280,7 +1280,7 @@ YY_RULE_SETUP
 #line 235 "smiles.ll"
 {	yylval->atom = new Atom( 33 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 119:
@@ -1288,7 +1288,7 @@ YY_RULE_SETUP
 #line 239 "smiles.ll"
 {	yylval->atom = new Atom( 34 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 120:
@@ -1296,18 +1296,18 @@ YY_RULE_SETUP
 #line 243 "smiles.ll"
 {	yylval->atom = new Atom( 52 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
 #line 248 "smiles.ll"
 {   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
+		            yylval->atom->setProp(common_properties::dummyLabel,
                                                         std::string("*"));
                                 // must be ORGANIC_ATOM_TOKEN because
                                 // we aren't in square brackets:
-				return ORGANIC_ATOM_TOKEN; 
+				return ORGANIC_ATOM_TOKEN;
 			}
 	YY_BREAK
 case 122:
@@ -1345,7 +1345,7 @@ YY_RULE_SETUP
                 CHECK_INVARIANT(0,"cannot get here");
 	      }
 	      yylval->bond->setBondType(bt);
-	return BOND_TOKEN; }	
+	return BOND_TOKEN; }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
@@ -1945,7 +1945,7 @@ static void yysmiles__load_buffer_state  (yyscan_t yyscanner)
     YY_BUFFER_STATE yysmiles__create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
-    
+
 	b = (YY_BUFFER_STATE) yysmiles_alloc(sizeof( struct yy_buffer_state ) ,yyscanner );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yysmiles__create_buffer()" );
@@ -1989,7 +1989,7 @@ static void yysmiles__load_buffer_state  (yyscan_t yyscanner)
 #ifndef __cplusplus
 extern int isatty (int );
 #endif /* __cplusplus */
-    
+
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a yysmiles_restart() or at EOF.
@@ -2015,7 +2015,7 @@ extern int isatty (int );
     }
 
         b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
-    
+
 	errno = oerrno;
 }
 
@@ -2121,9 +2121,9 @@ static void yysmiles_ensure_buffer_stack (yyscan_t yyscanner)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
 			YY_FATAL_ERROR( "out of dynamic memory in yysmiles_ensure_buffer_stack()" );
-								  
+
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		yyg->yy_buffer_stack_max = num_to_alloc;
 		yyg->yy_buffer_stack_top = 0;
 		return;
@@ -2152,12 +2152,12 @@ static void yysmiles_ensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE yysmiles__scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
-    
+
 	if ( size < 2 ||
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -2193,7 +2193,7 @@ YY_BUFFER_STATE yysmiles__scan_buffer  (char * base, yy_size_t  size , yyscan_t 
  */
 YY_BUFFER_STATE yysmiles__scan_string (yyconst char * yystr , yyscan_t yyscanner)
 {
-    
+
 	return yysmiles__scan_bytes(yystr,strlen(yystr) ,yyscanner);
 }
 
@@ -2209,7 +2209,7 @@ YY_BUFFER_STATE yysmiles__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybyt
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n, i;
-    
+
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
 	buf = (char *) yysmiles_alloc(n ,yyscanner );
@@ -2277,10 +2277,10 @@ YY_EXTRA_TYPE yysmiles_get_extra  (yyscan_t yyscanner)
 int yysmiles_get_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yylineno;
 }
 
@@ -2290,10 +2290,10 @@ int yysmiles_get_lineno  (yyscan_t yyscanner)
 int yysmiles_get_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yycolumn;
 }
 
@@ -2354,8 +2354,8 @@ void yysmiles_set_lineno (int  line_number , yyscan_t yyscanner)
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "yysmiles_set_lineno called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "yysmiles_set_lineno called with no buffer" , yyscanner);
+
     yylineno = line_number;
 }
 
@@ -2369,8 +2369,8 @@ void yysmiles_set_column (int  column_no , yyscan_t yyscanner)
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "yysmiles_set_column called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "yysmiles_set_column called with no buffer" , yyscanner);
+
     yycolumn = column_no;
 }
 
@@ -2465,20 +2465,20 @@ int yysmiles_lex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globa
         errno = EINVAL;
         return 1;
     }
-	
+
     *ptr_yy_globals = (yyscan_t) yysmiles_alloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-	
+
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-    
+
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-    
+
     yysmiles_set_extra (yy_user_defined, *ptr_yy_globals);
-    
+
     return yy_init_globals ( *ptr_yy_globals );
 }
 
@@ -2599,8 +2599,3 @@ void yysmiles_free (void * ptr , yyscan_t yyscanner)
 
 #undef yysmiles_wrap
 int yysmiles_wrap( void ) { return 1; }
-
-
-
-
-

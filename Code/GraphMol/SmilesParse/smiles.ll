@@ -1,4 +1,4 @@
-%option reentrant
+%setpropoption reentrant
 %option bison-bridge
 %option noyywrap
 
@@ -13,10 +13,11 @@
 
 #include <cstdio>
 #ifdef WIN32
-#include <io.h> 	 
+#include <io.h>
 #endif
 
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/types.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
@@ -39,10 +40,10 @@ void smiles_lexer_error(const char *msg) {
 size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 //  YY_BUFFER_STATE buff=yysmiles__scan_string(text.c_str()+pos,yyscanner);
   // Faster implementation of yysmiles__scan_string that handles trimming
-  YY_BUFFER_STATE b;      
+  YY_BUFFER_STATE b;
   char *buf;
-  yyconst char * yybytes = text.c_str();  
-  yy_size_t _yybytes_len=text.size(), n, start, end; 
+  yyconst char * yybytes = text.c_str();
+  yy_size_t _yybytes_len=text.size(), n, start, end;
   /* Get memory for full buffer, including space for trailing EOB's. */
   n = _yybytes_len + 2;
   buf = (char *) yysmiles_alloc(n ,yyscanner );
@@ -61,23 +62,23 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
   _yybytes_len = end-start+1;
   n = _yybytes_len + 2;
   memcpy(buf, yybytes+start, _yybytes_len);
-  
-  
+
+
   buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
-  
+
   b = yysmiles__scan_buffer(buf,n ,yyscanner);
   if ( ! b )
     smiles_lexer_error( "bad buffer in yysmiles__scan_bytes()" );
-  
+
   /* It's okay to grow etc. this buffer, and we should throw it
    * away when we're done.
    */
   b->yy_is_our_buffer = 1;
-  
+
 
   POSTCONDITION(b,"invalid buffer");
   return start;
-  
+
 }
 %}
 
@@ -186,7 +187,7 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 <IN_ATOM_STATE>No |
 <IN_ATOM_STATE>Lr |
 <IN_ATOM_STATE>Rf {   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ATOM_TOKEN; 
+				return ATOM_TOKEN;
 			}
 B  { yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
 C  { yylval->atom = new Atom(6);return ORGANIC_ATOM_TOKEN; }
@@ -200,57 +201,57 @@ Br { yylval->atom = new Atom(35);return ORGANIC_ATOM_TOKEN; }
 I  { yylval->atom = new Atom(53);return ORGANIC_ATOM_TOKEN; }
 
 H			{
-				return H_TOKEN; 
+				return H_TOKEN;
 			}
 
 b		    {	yylval->atom = new Atom ( 5 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 c		    {	yylval->atom = new Atom ( 6 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 n		    {	yylval->atom = new Atom( 7 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 o		    {	yylval->atom = new Atom( 8 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 p		    {	yylval->atom = new Atom( 15 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 s		    {	yylval->atom = new Atom( 16 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 
 <IN_ATOM_STATE>si   {	yylval->atom = new Atom( 14 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 <IN_ATOM_STATE>as   {	yylval->atom = new Atom( 33 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 <IN_ATOM_STATE>se   {	yylval->atom = new Atom( 34 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 <IN_ATOM_STATE>te   {	yylval->atom = new Atom( 52 );
 			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
+				return AROMATIC_ATOM_TOKEN;
 			}
 
 \* 	            {   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
+		            yylval->atom->setProp(common_properties::dummyLabel,
                                                         std::string("*"));
                                 // must be ORGANIC_ATOM_TOKEN because
                                 // we aren't in square brackets:
-				return ORGANIC_ATOM_TOKEN; 
+				return ORGANIC_ATOM_TOKEN;
 			}
 
 <IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
@@ -276,7 +277,7 @@ s		    {	yylval->atom = new Atom( 16 );
                 CHECK_INVARIANT(0,"cannot get here");
 	      }
 	      yylval->bond->setBondType(bt);
-	return BOND_TOKEN; }	
+	return BOND_TOKEN; }
 
 \~	{ yylval->bond = new QueryBond();
 	yylval->bond->setQuery(makeBondNullQuery());
@@ -285,7 +286,7 @@ s		    {	yylval->atom = new Atom( 16 );
 [\\]{1,2}    { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }
-	
+
 [\/]    { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
@@ -315,7 +316,3 @@ s		    {	yylval->atom = new Atom( 16 );
 
 #undef yysmiles_wrap
 int yysmiles_wrap( void ) { return 1; }
-
-
-
-
