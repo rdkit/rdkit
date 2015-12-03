@@ -33,7 +33,7 @@ def GetBestFitPlane(pts,weights=None):
     normal = vects[:,order[0]]
     plane = np.zeros((4,),np.double)
     plane[:3] = normal
-    plane[3] = -1 * normal.dot(origin)
+    plane[3] = -1 * np.dot(normal, origin)
     return plane
     
 def PBFRD(mol,confId=-1):
@@ -48,7 +48,7 @@ def PBFRD(mol,confId=-1):
     # add up the distance from the plane for each point:
     res = 0.0
     for pt in pts:
-        res += np.abs(pt.dot(plane[:3])+plane[3])
+        res += np.abs(np.dot(pt, plane[:3])+plane[3])
     res /= denom
     res /= len(pts)
     return res
