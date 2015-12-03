@@ -10,12 +10,12 @@
 //
 #include <RDBoost/python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL rdDistGeom_array_API
+#include <RDBoost/import_array.h>
 #include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
-#include <RDBoost/import_array.h>
 
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
