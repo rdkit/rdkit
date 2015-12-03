@@ -1,13 +1,14 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-set(T_LIBS ${Boost_LIBRARIES})
-find_package(Boost 1.39.0 COMPONENTS serialization)
-if (Boost_SERIALIZATION_LIBRARY)
-   # don't add the boost serialization definitions, swig can't compile the
-   # headers.  Hopefully it will stil link and run...
-  set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-else()
+if(RDK_USE_BOOST_SERIALIZATION)
+  set(T_LIBS ${Boost_LIBRARIES})
+  find_package(Boost 1.39.0 COMPONENTS serialization)
+  if (Boost_SERIALIZATION_LIBRARY)
+     # don't add the boost serialization definitions, swig can't compile the
+     # headers.  Hopefully it will stil link and run...
+    set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+  endif()
 endif()
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
