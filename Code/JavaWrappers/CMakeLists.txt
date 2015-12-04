@@ -1,16 +1,6 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-if(RDK_USE_BOOST_SERIALIZATION)
-  set(T_LIBS ${Boost_LIBRARIES})
-  find_package(Boost 1.39.0 COMPONENTS serialization)
-  if (Boost_SERIALIZATION_LIBRARY)
-     # don't add the boost serialization definitions, swig can't compile the
-     # headers.  Hopefully it will stil link and run...
-    set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-  endif()
-endif()
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(CMAKE_SWIG_FLAGS "")
@@ -19,11 +9,11 @@ if(WIN32)
 	set(RDKit_Wrapper_Libs
         FilterCatalog
         Catalogs
-        ${Boost_SERIALIZATION_LIBRARY} 
+        ${Boost_SERIALIZATION_LIBRARY}
         FMCS MolDraw2D
         FileParsers SmilesParse
 	Depictor SubstructMatch ChemReactions Fingerprints ChemTransforms
-        Descriptors MolTransforms  PartialCharges 
+        Descriptors MolTransforms  PartialCharges
 	Subgraphs GraphMol DataStructs
 	DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
 	EigenSolvers
