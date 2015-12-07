@@ -1033,6 +1033,30 @@ void testGitHubIssue409() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue688() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 688: partially specified chiral substructure queries don't work properly" << std::endl;
+  {
+    std::string smi = "N[C@]1(Cl)CCCO1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    std::string sma = "[N][C@]1CCCO1";
+    ROMol *qmol = SmartsToMol(sma);
+    TEST_ASSERT(qmol);
+
+    MatchVectType match;
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
+    TEST_ASSERT(match.size()==qmol->getNumAtoms());
+
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, true));
+    TEST_ASSERT(match.size()==qmol->getNumAtoms());
+
+    delete mol;
+    delete qmol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 #if 1
   test1();
@@ -1051,5 +1075,6 @@ int main(int argc, char *argv[]) {
 #endif
   testGitHubIssue15();
   testGitHubIssue409();
+  testGitHubIssue688();
   return 0;
 }
