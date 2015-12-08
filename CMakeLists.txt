@@ -194,7 +194,7 @@ if(RDK_BUILD_THREADSAFE_SSS)
   else()
     message("Boost thread or system not found. Disabling RDK_BUILD_THREADSAFE_SSS.")
     set(RDK_BUILD_THREADSAFE_SSS OFF)
-    set(RDK_TEST_MULTITHREADED OFF)    
+    set(RDK_TEST_MULTITHREADED OFF)
     set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
   endif()
 else()
@@ -204,6 +204,15 @@ else()
     set(RDK_TEST_MULTITHREADED OFF)
   endif()
 endif()
+
+if(RDK_USE_BOOST_SERIALIZATION)
+    set(T_LIBS ${Boost_LIBRARIES})
+    find_package(Boost 1.39.0 COMPONENTS serialization)
+    if (Boost_SERIALIZATION_LIBRARY)
+      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    endif()
+endif()
+
 
 
 # setup our compiler flags:
@@ -222,7 +231,7 @@ if (RDK_TEST_COVERAGE)
  message(" If any of the RDKit tests fail, coverage will probably not be generated.")
  message("====== Installing test coverage support ======")
  message("")
- 
+
  INCLUDE(CodeCoverage)
  SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
  SET(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
