@@ -113,13 +113,20 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
       }
     } else {
       res = 0.0;
+#if 0
       for (unsigned int idx = 0; idx < d_dimension; idx++) {
         double tmp = pos[d_dimension * i + idx] - pos[d_dimension * j + idx];
         res += tmp * tmp;
       }
+#else
+      double *pi = &(pos[d_dimension * i]), *pj = &(pos[d_dimension * j]);
+      for (unsigned int idx = 0; idx < d_dimension; ++idx, ++pi, ++pj) {
+        double tmp = *pi - *pj;
+        res += tmp * tmp;
+      }
+#endif
     }
     res = sqrt(res);
-    dp_distMat[idx] = res;
   }
   return res;
 }
@@ -143,10 +150,18 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
     }
   } else {
     res = 0.0;
+#if 0
     for (unsigned int idx = 0; idx < d_dimension; idx++) {
       double tmp = pos[d_dimension * i + idx] - pos[d_dimension * j + idx];
       res += tmp * tmp;
     }
+#else
+    double *pi = &(pos[d_dimension * i]), *pj = &(pos[d_dimension * j]);
+    for (unsigned int idx = 0; idx < d_dimension; ++idx, ++pi, ++pj) {
+      double tmp = *pi - *pj;
+      res += tmp * tmp;
+    }
+#endif
   }
   res = sqrt(res);
   return res;
