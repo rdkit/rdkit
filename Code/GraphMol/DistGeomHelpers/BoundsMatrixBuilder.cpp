@@ -304,7 +304,8 @@ void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize,
   // heteroatoms
   // like s1cncc1. This led to GitHub55, which was fixed elsewhere.
 
-  if ((aHyb == Atom::SP2) || (ringSize == 3) || (ringSize == 4)) {
+  if ((aHyb == Atom::SP2 && ringSize <= 8) || (ringSize == 3) ||
+      (ringSize == 4)) {
     angle = M_PI * (1 - 2.0 / ringSize);
   } else if (aHyb == Atom::SP3) {
     if (ringSize == 5) {
@@ -602,7 +603,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     path14.type = Path14Configuration::OTHER;
   }
 
-  // std::cerr<<"7: "<<aid1<<"-"<<aid4<<std::endl;
+  // std::cerr << "7: " << aid1 << "-" << aid4 << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
 }
@@ -688,7 +689,8 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     }
     path14.type = Path14Configuration::OTHER;
   }
-  // std::cerr<<"1: "<<aid1<<"-"<<aid4<<": "<<dl<<" -> "<<du<<std::endl;
+  // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
+  //           << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
 }
@@ -889,12 +891,12 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
 #if 0
         if ( (_checkNhChChNh(atm1, atm2, atm3, atm4)) ||
              ((bnd1->getBondType() == Bond::DOUBLE) && (bnd3->getBondType() == Bond::DOUBLE) ) ) {
-          // this is either 
+          // this is either
           //  1. [!#1]~$ch!@$ch~[!#1] situation where ch = [CH2,NX3H1,OX2] or
           //  2. *=*-*=* situation
           // Both case cases we use 180 deg for torsion
           du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          dl = du; 
+          dl = du;
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
           path14.type = Path14Configuration::TRANS;
