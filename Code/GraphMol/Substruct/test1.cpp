@@ -876,7 +876,7 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
-    TEST_ASSERT(!matched);
+    TEST_ASSERT(matched);
   }
   {
     std::string qSmi = "[C@@](C)(F)Br";
@@ -1058,7 +1058,7 @@ void testGitHubIssue688() {
 }
 
 int main(int argc, char *argv[]) {
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -1070,11 +1070,11 @@ int main(int argc, char *argv[]) {
   // test9();
   testRecursiveSerialNumbers();
   testMultiThread();
-  testChiralMatch();
   testCisTransMatch();
-#endif
   testGitHubIssue15();
   testGitHubIssue409();
+#endif
+  testChiralMatch();
   testGitHubIssue688();
   return 0;
 }
