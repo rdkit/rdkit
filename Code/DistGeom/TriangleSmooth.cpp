@@ -46,23 +46,31 @@ bool triangleSmoothBounds(BoundsMatrix *boundsMat, double tol) {
         }
         double lBound = boundsMat->getLowerBound(i, j);
         double uBound = boundsMat->getUpperBound(i, j);
+        // std::cerr << "     smooth: " << i << "-" << j << "(" << k
+        //           << "): " << boundsMat->getLowerBound(i, j) << " "
+        //           << boundsMat->getUpperBound(i, j) << " lik: " << Lik
+        //           << " uik: " << Uik
+        //           << " lkj: " << boundsMat->getLowerBound(j, k)
+        //           << " ukj: " << Ukj << "\n";
+
         if (tol > 0. && (lBound - uBound) / lBound > 0. &&
             (lBound - uBound) / lBound < tol) {
           boundsMat->setUpperBound(i, j, lBound);
           uBound = lBound;
         }
         if (lBound - uBound > 0.) {
-          // std::cerr<<std::endl;
-          // for(unsigned int ii=0;ii<npt;++ii){
-          //   for(unsigned int jj=0;jj<npt;++jj){
-          //     std::cerr<<" "<<std::setprecision(3)<<boundsMat->getVal(ii,jj);
+          // std::cerr << std::endl;
+          // for (unsigned int ii = 0; ii < npt; ++ii) {
+          //   for (unsigned int jj = 0; jj < npt; ++jj) {
+          //     std::cerr << " " << std::setprecision(3)
+          //               << boundsMat->getVal(ii, jj);
           //   }
-          //   std::cerr<<std::endl;
+          //   std::cerr << std::endl;
           // }
-          // std::cerr<<std::endl;
-          // std::cerr<<" Fail: "<<i<<"-"<<j<<": " <<
-          // boundsMat->getLowerBound(i,j) << " " <<
-          // boundsMat->getUpperBound(i,j) << "\n";
+          // std::cerr << std::endl;
+          // std::cerr << " Fail: " << i << "-" << j << ": "
+          //           << boundsMat->getLowerBound(i, j) << " "
+          //           << boundsMat->getUpperBound(i, j) << "\n";
           return false;
         }
       }

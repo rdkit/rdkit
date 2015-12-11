@@ -306,7 +306,7 @@ void test2() {
   z = dmat->getVal(0,3);
   //TEST_ASSERT( (bm->getUpperBound(0,3) - dmat->getVal(0,3) > -0.1)
   //             && (bm->getLowerBound(0,3) - dmat->getVal(0,3) < 0.10 ));
-  
+
   delete mol;
   delete dmat;
 
@@ -323,7 +323,7 @@ void test2() {
   TEST_ASSERT( (bm->getUpperBound(0,3) - bm->getLowerBound(0,3)) < .13);
   //TEST_ASSERT( (bm->getUpperBound(0,3) - dmat->getVal(0,3) > -0.1)
   //             && (bm->getLowerBound(0,3) - dmat->getVal(0,3) < 0.10));
-  
+
   delete mol;
   delete dmat;
 #endif
@@ -1503,6 +1503,28 @@ void testGithub568() {
   }
 }
 
+void testGithub696() {
+  {
+    std::string smi = "COc1ccc2CCCCCCCCCCc3ccc(OC)c(c3)-c1c2";
+    ROMol *m = SmilesToMol(smi);
+    // m->debugMol(std::cerr);
+    DistGeom::BoundsMatPtr bm;
+
+    bm.reset(new DistGeom::BoundsMatrix(m->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*m, bm, false, false);
+
+    TEST_ASSERT(bm->getUpperBound(2, 19) > bm->getLowerBound(2, 19));
+    TEST_ASSERT(bm->getLowerBound(2, 19) > 2.0);
+    TEST_ASSERT(bm->getUpperBound(2, 19) > 2.5);
+
+    bool ok = DistGeom::triangleSmoothBounds(bm);
+    TEST_ASSERT(ok);
+
+    delete m;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1639,7 +1661,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test multi-threaded multi-conf embedding \n\n";
   testMultiThreadMultiConf();
 #endif
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test github issue 563: Incorrect ring "
@@ -1650,6 +1671,12 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test github issue 568: Incorrect stereochemistry "
                           "after embedding\n\n";
   testGithub568();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 696: Bad 1-4 bounds matrix "
+                          "elements in highly constrained system\n";
+  testGithub696();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
