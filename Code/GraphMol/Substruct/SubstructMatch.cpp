@@ -65,11 +65,11 @@ class MolMatchFinalCheckFunctor {
       : d_query(query), d_mol(mol), df_useChirality(useChirality){};
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
-    std::cerr << "  check! " << df_useChirality << std::endl;
+    // std::cerr << "  check! " << df_useChirality << std::endl;
     if (!df_useChirality) return true;
-    for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      std::cerr << "    " << c1[i] << " " << c2[i] << std::endl;
-    }
+    // for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
+    //   std::cerr << "    " << c1[i] << " " << c2[i] << std::endl;
+    // }
 
     // check chiral atoms:
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
@@ -118,15 +118,21 @@ class MolMatchFinalCheckFunctor {
       }
       int mPermCount =
           static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
-      std::copy(moOrder.begin(), moOrder.end(),
-                std::ostream_iterator<int>(std::cerr, ", "));
-      std::cerr << std::endl;
-      std::copy(mOrder.begin(), mOrder.end(),
-                std::ostream_iterator<int>(std::cerr, ", "));
-      std::cerr << std::endl;
-      std::cerr << "qPerm: " << qPermCount << " mPerm: " << mPermCount
-                << " qtag: " << qAt->getChiralTag()
-                << " mtag: " << mAt->getChiralTag() << std::endl;
+      // std::cerr << "qorder: ";
+      // std::copy(qOrder.begin(), qOrder.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
+      // std::cerr << "moOrder: ";
+      // std::copy(moOrder.begin(), moOrder.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
+      // std::cerr << "morder: ";
+      // std::copy(mOrder.begin(), mOrder.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
+      // std::cerr << "qPerm: " << qPermCount << " mPerm: " << mPermCount
+      //           << " qtag: " << qAt->getChiralTag()
+      //           << " mtag: " << mAt->getChiralTag() << std::endl;
       if ((qPermCount % 2 == mPermCount % 2 &&
            qAt->getChiralTag() != mAt->getChiralTag()) ||
           (qPermCount % 2 != mPermCount % 2 &&

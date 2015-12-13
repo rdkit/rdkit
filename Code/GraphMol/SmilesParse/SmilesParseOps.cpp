@@ -291,9 +291,29 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //
       int nSwaps = (*atomIt)->getPerturbationOrder(bondOrdering);
       // FIX: explain this one:
-      if ((*atomIt)->getDegree() == 3 && (*atomIt)->getNumExplicitHs() &&
-          (*atomIt)->hasProp(common_properties::_SmilesStart))
+      // At least part of what's going on here for degree 3 atoms:
+      //   - The first part: if we're at the beginning of the SMILES and have
+      //      an explicit H, we need to add a swap.
+      //      This is to reflect that [C@](Cl)(F)C is equivalent to Cl[C@@](F)C
+      //      but [C@H](Cl)(F)C is fine as-is (The H-C bond is the one you look
+      //      down).
+      //   - The second part is more complicated and deals with situations like
+      //      F[C@]1CCO1. In this case we otherwise end up looking like we need
+      //      to invert the chirality, which is bogus. The chirality here needs
+      //      to remain @ just as it does in F[C@](Cl)CCO1
+      //
+      if ((*atomIt)->getDegree() == 3 &&
+          (((*atomIt)->getNumExplicitHs() &&
+            (*atomIt)->hasProp(common_properties::_SmilesStart)) ||
+           (!(*atomIt)->getNumExplicitHs() && ringClosures.size() == 1))) {
+        // std::cerr << "swap! " << (*atomIt)->getIdx() << std::endl;
         ++nSwaps;
+      }
+      // std::cerr << "nswaps " << (*atomIt)->getIdx() << " " << nSwaps
+      //           << std::endl;
+      // std::copy(bondOrdering.begin(), bondOrdering.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
       if (nSwaps % 2) {
         (*atomIt)->invertChirality();
       }

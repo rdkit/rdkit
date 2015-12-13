@@ -20,6 +20,8 @@
 #include "SubstructUtils.h"
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
@@ -1075,15 +1077,15 @@ void testGitHubIssue688() {
                            "chiral substructure queries don't work properly"
                         << std::endl;
   {
-    std::string smi = "N[C@]1(Cl)CCCO1";
+    std::string smi = "C1CC[C@](Cl)(N)O1";
     ROMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
-    mol->debugMol(std::cerr);
-    std::string sma = "[N][C@]1CCCO1";
+    // mol->debugMol(std::cerr);
+    std::string sma = "C1CC[C@](N)O1";
     ROMol *qmol = SmartsToMol(sma);
-    qmol->updatePropertyCache();
-    qmol->debugMol(std::cerr);
     TEST_ASSERT(qmol);
+    // qmol->updatePropertyCache();
+    // qmol->debugMol(std::cerr);
 
     MatchVectType match;
     TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
@@ -1095,11 +1097,74 @@ void testGitHubIssue688() {
     delete mol;
     delete qmol;
   }
+  {
+    std::string smi = "C1CC[C@](Cl)(N)O1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    // mol->debugMol(std::cerr);
+    std::string sma = "C1CC[C@@](N)O1";
+    ROMol *qmol = SmartsToMol(sma);
+    TEST_ASSERT(qmol);
+    // qmol->updatePropertyCache();
+    // qmol->debugMol(std::cerr);
+
+    MatchVectType match;
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
+
+    TEST_ASSERT(!SubstructMatch(*mol, *qmol, match, true, true));
+
+    delete mol;
+    delete qmol;
+  }
+  {
+    std::string smi = "N[C@]1(Cl)CCCO1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    // mol->debugMol(std::cerr);
+    std::string sma = "N[C@]1CCCO1";
+    ROMol *qmol = SmartsToMol(sma);
+    TEST_ASSERT(qmol);
+    // qmol->updatePropertyCache();
+    // qmol->debugMol(std::cerr);
+    // std::cerr << MolToSmiles(*qmol, true) << std::endl;
+
+    MatchVectType match;
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
+
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, true));
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
+
+    delete mol;
+    delete qmol;
+  }
+  {
+    std::string smi = "N[C@]1(Cl)CCCO1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    // mol->debugMol(std::cerr);
+    std::string sma = "N[C@@]1CCCO1";
+    ROMol *qmol = SmartsToMol(sma);
+    TEST_ASSERT(qmol);
+    // qmol->updatePropertyCache();
+    // qmol->debugMol(std::cerr);
+    // std::cerr << MolToSmiles(*qmol, true) << std::endl;
+
+    MatchVectType match;
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
+
+    TEST_ASSERT(!SubstructMatch(*mol, *qmol, match, true, true));
+
+    delete mol;
+    delete qmol;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
-#if 0
+#if 1
   test1();
   test2();
   test3();
