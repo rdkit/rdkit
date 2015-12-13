@@ -876,7 +876,7 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
-    TEST_ASSERT(matched);
+    TEST_ASSERT(!matched);
   }
   {
     std::string qSmi = "[C@@](C)(F)Br";
@@ -885,7 +885,43 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "C[C@](F)Br";
+    std::string mSmi = "Cl[C@](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "C[C@@](F)Br";
+    std::string mSmi = "Cl[C@](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "Cl[C@](F)Br";
+    std::string mSmi = "Cl[C@](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "Cl[C@](C)F";
+    std::string mSmi = "Cl[C@](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    TEST_ASSERT(matched);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1035,21 +1071,26 @@ void testGitHubIssue409() {
 
 void testGitHubIssue688() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 688: partially specified chiral substructure queries don't work properly" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 688: partially specified "
+                           "chiral substructure queries don't work properly"
+                        << std::endl;
   {
     std::string smi = "N[C@]1(Cl)CCCO1";
     ROMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
+    mol->debugMol(std::cerr);
     std::string sma = "[N][C@]1CCCO1";
     ROMol *qmol = SmartsToMol(sma);
+    qmol->updatePropertyCache();
+    qmol->debugMol(std::cerr);
     TEST_ASSERT(qmol);
 
     MatchVectType match;
     TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
-    TEST_ASSERT(match.size()==qmol->getNumAtoms());
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
 
     TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, true));
-    TEST_ASSERT(match.size()==qmol->getNumAtoms());
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
 
     delete mol;
     delete qmol;

@@ -291,7 +291,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //
       int nSwaps = (*atomIt)->getPerturbationOrder(bondOrdering);
       // FIX: explain this one:
-      if ((*atomIt)->getDegree() == 3 &&
+      if ((*atomIt)->getDegree() == 3 && (*atomIt)->getNumExplicitHs() &&
           (*atomIt)->hasProp(common_properties::_SmilesStart))
         ++nSwaps;
       if (nSwaps % 2) {
