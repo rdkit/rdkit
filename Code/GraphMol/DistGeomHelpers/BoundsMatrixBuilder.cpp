@@ -292,8 +292,26 @@ void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
   unsigned int bid2 = mol.getBondBetweenAtoms(aid, aid3)->getIdx();
   double dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
                                     accumData.bondLengths[bid2], angle);
-  double du = dl + DIST13_TOL;
-  dl -= DIST13_TOL;
+  double distTol = DIST13_TOL;
+  // Now increase the tolerance if we're outside of the first row of the
+  // periodic table.
+  if (mol.getAtomWithIdx(aid1)->getAtomicNum() > 13 &&
+      mol.getAtomWithIdx(aid1)->getHybridization() == Atom::SP2 &&
+      mol.getRingInfo()->numAtomRings(aid1)) {
+    distTol *= 2;
+  }
+  if (mol.getAtomWithIdx(aid)->getAtomicNum() > 13 &&
+      mol.getAtomWithIdx(aid)->getHybridization() == Atom::SP2 &&
+      mol.getRingInfo()->numAtomRings(aid)) {
+    distTol *= 2;
+  }
+  if (mol.getAtomWithIdx(aid3)->getAtomicNum() > 13 &&
+      mol.getAtomWithIdx(aid3)->getHybridization() == Atom::SP2 &&
+      mol.getRingInfo()->numAtomRings(aid3)) {
+    distTol *= 2;
+  }
+  double du = dl + distTol;
+  dl -= distTol;
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
@@ -584,8 +602,27 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   path14.bid2 = bid2;
   path14.bid3 = bid3;
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
+  bool preferCis = false;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
       (stype != Bond::STEREOE)) {
+    // the ring check here was a big part of github #697
+    if (mol.getRingInfo()->numBondRings(bid2) > 1) {
+      if (mol.getRingInfo()->numBondRings(bid1) == 1 &&
+          mol.getRingInfo()->numBondRings(bid3) == 1) {
+        BOOST_FOREACH (const INT_VECT &br, mol.getRingInfo()->bondRings()) {
+          if (std::find(br.begin(), br.end(), bid1) != br.end()) {
+            if (std::find(br.begin(), br.end(), bid3) != br.end()) {
+              preferCis = true;
+            }
+            break;
+          }
+        }
+      }
+    } else {
+      preferCis = true;
+    }
+  }
+  if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
     path14.type = Path14Configuration::CIS;
