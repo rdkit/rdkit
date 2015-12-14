@@ -901,7 +901,7 @@ void testRandomCoords() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 1
+#if 0
       BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
       BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
       BOOST_LOG(rdInfoLog) << "---" << std::endl;
