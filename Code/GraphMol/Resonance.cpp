@@ -177,7 +177,7 @@ class AtomElectrons {
   const Atom *d_atom;
   ConjElectrons *d_parent;
   AtomElectrons &operator=(const AtomElectrons &);
-  boost::uint8_t canAddBondWithOrder(unsigned int bi, unsigned int bo);
+  boost::uint8_t canAddBondWithOrder(unsigned int bo);
   void allConjBondsDefinitiveBut(unsigned int bi);
 };
 
@@ -294,7 +294,7 @@ boost::uint8_t AtomElectrons::findAllowedBonds(unsigned int bi) {
   allConjBondsDefinitiveBut(bi);
   boost::uint8_t res = 0;
   for (unsigned int i = 0; i < 3; ++i) {
-    res |= (canAddBondWithOrder(bi, i + 1) << (i * 2));
+    res |= (canAddBondWithOrder(i + 1) << (i * 2));
   }
   return res;
 }
@@ -325,8 +325,7 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
 // returns a 2-bit value, where the least significant bit is true
 // if the atom can add a bond with order bo, and the most significant
 // bit is true if the atom needs be charged
-boost::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bi,
-                                                  unsigned int bo) {
+boost::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bo) {
   boost::uint8_t canAdd = !isDefinitive();
   if (canAdd) canAdd = (d_tv <= (5 - bo));
   // if canAdd is true, loop over neighboring conjugated bonds
