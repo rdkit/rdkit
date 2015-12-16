@@ -285,6 +285,12 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
+namespace {
+bool isLargerSP2Atom(const Atom *atom) {
+  return atom->getAtomicNum() > 13 && atom->getHybridization() == Atom::SP2 &&
+         atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx());
+}
+}
 void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
                         double angle, const ComputedData &accumData,
                         DistGeom::BoundsMatPtr mmat, const ROMol &mol) {
@@ -295,19 +301,13 @@ void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
   double distTol = DIST13_TOL;
   // Now increase the tolerance if we're outside of the first row of the
   // periodic table.
-  if (mol.getAtomWithIdx(aid1)->getAtomicNum() > 13 &&
-      mol.getAtomWithIdx(aid1)->getHybridization() == Atom::SP2 &&
-      mol.getRingInfo()->numAtomRings(aid1)) {
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid1))) {
     distTol *= 2;
   }
-  if (mol.getAtomWithIdx(aid)->getAtomicNum() > 13 &&
-      mol.getAtomWithIdx(aid)->getHybridization() == Atom::SP2 &&
-      mol.getRingInfo()->numAtomRings(aid)) {
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid))) {
     distTol *= 2;
   }
-  if (mol.getAtomWithIdx(aid3)->getAtomicNum() > 13 &&
-      mol.getAtomWithIdx(aid3)->getHybridization() == Atom::SP2 &&
-      mol.getRingInfo()->numAtomRings(aid3)) {
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid3))) {
     distTol *= 2;
   }
   double du = dl + distTol;
