@@ -48,11 +48,25 @@ namespace RDKit {
 typedef std::vector<MatchVectType> VectMatchVectType;
 typedef std::vector<VectMatchVectType> VectVectMatchVectType;
 
+namespace {
+const std::string REACT_ATOM_IDX =
+    "react_atom_idx";  // reactant atom idx ( in output )
+const std::string WAS_DUMMY =
+    "was_dummy";  // was the atom originally a dummy in product
+const std::string OLD_MAPNO =
+    "old_mapno";  // the original mapno (mapno gets cleared)
+}
+
 namespace ReactionRunnerUtils {
 //! returns whether or not all reactants matched
+namespace {
+const unsigned int MatchAll = UINT_MAX;
+}
+
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         const ChemicalReaction &rxn,
-                        VectVectMatchVectType &matchesByReactant) {
+                        VectVectMatchVectType &matchesByReactant,
+                        unsigned int matchSingleReactant = MatchAll) {
   PRECONDITION(reactants.size() == rxn.getNumReactantTemplates(),
                "reactant size mismatch");
 
@@ -63,49 +77,51 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   unsigned int i = 0;
   for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
-    std::vector<MatchVectType> matchesHere;
-    // NOTE that we are *not* uniquifying the results.
-    //   This is because we need multiple matches in reactions. For example,
-    //   The ring-closure coded as:
-    //     [C:1]=[C:2] + [C:3]=[C:4][C:5]=[C:6] ->
-    //     [C:1]1[C:2][C:3][C:4]=[C:5][C:6]1
-    //   should give 4 products here:
-    //     [Cl]C=C + [Br]C=CC=C ->
-    //       [Cl]C1C([Br])C=CCC1
-    //       [Cl]C1CC(Br)C=CC1
-    //       C1C([Br])C=CCC1[Cl]
-    //       C1CC([Br])C=CC1[Cl]
-    //   Yes, in this case there are only 2 unique products, but that's
-    //   a factor of the reactants' symmetry.
-    //
-    //   There's no particularly straightforward way of solving this problem of
-    //   recognizing cases
-    //   where we should give all matches and cases where we shouldn't; it's
-    //   safer to just
-    //   produce everything and let the client deal with uniquifying their
-    //   results.
-    int matchCount = SubstructMatch(*(reactants[i]), *iter->get(), matchesHere,
-                                    false, true, false);
-    BOOST_FOREACH (const MatchVectType &match, matchesHere) {
-      bool keep = true;
-      int pIdx, mIdx;
-      BOOST_FOREACH (boost::tie(pIdx, mIdx), match) {
-        if (reactants[i]->getAtomWithIdx(mIdx)->hasProp(
-                common_properties::_protected)) {
-          keep = false;
-          break;
+    if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
+      std::vector<MatchVectType> matchesHere;
+      // NOTE that we are *not* uniquifying the results.
+      //   This is because we need multiple matches in reactions. For example,
+      //   The ring-closure coded as:
+      //     [C:1]=[C:2] + [C:3]=[C:4][C:5]=[C:6] ->
+      //     [C:1]1[C:2][C:3][C:4]=[C:5][C:6]1
+      //   should give 4 products here:
+      //     [Cl]C=C + [Br]C=CC=C ->
+      //       [Cl]C1C([Br])C=CCC1
+      //       [Cl]C1CC(Br)C=CC1
+      //       C1C([Br])C=CCC1[Cl]
+      //       C1CC([Br])C=CC1[Cl]
+      //   Yes, in this case there are only 2 unique products, but that's
+      //   a factor of the reactants' symmetry.
+      //
+      //   There's no particularly straightforward way of solving this problem
+      //   of recognizing cases
+      //   where we should give all matches and cases where we shouldn't; it's
+      //   safer to just
+      //   produce everything and let the client deal with uniquifying their
+      //   results.
+      int matchCount = SubstructMatch(*(reactants[i]), *iter->get(),
+                                      matchesHere, false, true, false);
+      BOOST_FOREACH (const MatchVectType &match, matchesHere) {
+        bool keep = true;
+        int pIdx, mIdx;
+        BOOST_FOREACH (boost::tie(pIdx, mIdx), match) {
+          if (reactants[i]->getAtomWithIdx(mIdx)->hasProp(
+                  common_properties::_protected)) {
+            keep = false;
+            break;
+          }
+        }
+        if (keep) {
+          matchesByReactant[i].push_back(match);
+        } else {
+          --matchCount;
         }
       }
-      if (keep) {
-        matchesByReactant[i].push_back(match);
-      } else {
-        --matchCount;
+      if (!matchCount) {
+        // no point continuing if we don't match one of the reactants:
+        res = false;
+        break;
       }
-    }
-    if (!matchCount) {
-      // no point continuing if we don't match one of the reactants:
-      res = false;
-      break;
     }
   }
   return res;
@@ -116,7 +132,7 @@ void recurseOverReactantCombinations(
     VectVectMatchVectType &matchesPerProduct, unsigned int level,
     VectMatchVectType combination) {
   unsigned int nReactants = matchesByReactant.size();
-  URANGE_CHECK(level, nReactants - 1);
+  RANGE_CHECK(0, level, nReactants - 1);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
   for (VectMatchVectType::const_iterator reactIt =
            matchesByReactant[level].begin();
@@ -188,6 +204,7 @@ RWMOL_SPTR initProduct(const ROMOL_SPTR prodTemplateSptr) {
       // now clear the molAtomMapNumber property so that it doesn't
       // end up in the products (this was bug 3140490):
       newAtom->clearProp(common_properties::molAtomMapNumber);
+      newAtom->setProp<int>(OLD_MAPNO, mapNum);
     }
 
     newAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -379,11 +396,21 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     productAtom->setIsotope(reactantAtom.getIsotope());
 
     // remove dummy labels (if present)
-    if (productAtom->hasProp(common_properties::dummyLabel))
+    if (productAtom->hasProp(common_properties::dummyLabel)) {
       productAtom->clearProp(common_properties::dummyLabel);
-    if (productAtom->hasProp(common_properties::_MolFileRLabel))
+    }
+    if (productAtom->hasProp(common_properties::_MolFileRLabel)) {
       productAtom->clearProp(common_properties::_MolFileRLabel);
   }
+    productAtom->setProp<unsigned int>(REACT_ATOM_IDX, reactantAtom.getIdx());
+    productAtom->setProp(WAS_DUMMY, true);
+  } else {
+    // remove bookkeeping labels (if present)
+    if (productAtom->hasProp(WAS_DUMMY)) productAtom->clearProp(WAS_DUMMY);
+    if (productAtom->hasProp(REACT_ATOM_IDX))
+      productAtom->clearProp(REACT_ATOM_IDX);
+  }
+
   if (setImplicitProperties) {
     updateImplicitAtomProperties(productAtom, &reactantAtom);
   }
@@ -431,6 +458,7 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            ReactantProductAtomMapping *mapping) {
   Atom *newAtom = new Atom(reactAtom);
   unsigned reactAtomIdx = reactAtom.getIdx();
+  newAtom->setProp<unsigned int>(REACT_ATOM_IDX, reactAtomIdx);
   unsigned productIdx = product->addAtom(newAtom, false, true);
   mapping->reactProdAtomMap[reactAtomIdx].push_back(productIdx);
   mapping->prodReactAtomMap[productIdx] = reactAtomIdx;
@@ -853,5 +881,193 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
 
   return productMols;
 }  // end of ChemicalReaction::runReactants()
+
+// Generate a product based on a SINGLE reactant
+std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
+                                        const ROMOL_SPTR &reactant,
+                                        unsigned int reactantIdx) {
+  if (!rxn.isInitialized()) {
+    throw ChemicalReactionException(
+        "initMatchers() must be called before runReactants()");
+  }
+
+  CHECK_INVARIANT(reactant, "bad molecule in reactants");
+  reactant->clearAllAtomBookmarks();  // we use this as scratch space
+  std::vector<MOL_SPTR_VECT> productMols;
+
+  // if we have no products, return now:
+  if (!rxn.getNumProductTemplates()) {
+    return productMols;
+  }
+
+  CHECK_INVARIANT(static_cast<size_t>(reactantIdx) < rxn.getReactants().size(),
+                  "reactantIdx out of bounds");
+  // find the matches for each reactant:
+  VectVectMatchVectType matchesByReactant;
+
+  // assemble the reactants (use an empty mol for missing reactants)
+  MOL_SPTR_VECT reactants(rxn.getNumReactantTemplates());
+  for (size_t i = 0; i < rxn.getNumReactantTemplates(); ++i) {
+    if (i == reactantIdx)
+      reactants[i] = reactant;
+    else
+      reactants[i] = ROMOL_SPTR(new ROMol);
+  }
+
+  if (!ReactionRunnerUtils::getReactantMatches(
+          reactants, rxn, matchesByReactant, reactantIdx)) {
+    return productMols;
+  }
+
+  VectMatchVectType &matches = matchesByReactant[reactantIdx];
+  // each match on a reactant is a seperate product
+  VectVectMatchVectType matchesAtReactants(matches.size());
+  for (size_t i = 0; i < matches.size(); ++i) {
+    matchesAtReactants[i].resize(rxn.getReactants().size());
+    matchesAtReactants[i][reactantIdx] = matches[i];
+  }
+  productMols.resize(matches.size());
+
+  for (unsigned int productId = 0; productId != productMols.size();
+       ++productId) {
+    MOL_SPTR_VECT lProds = ReactionRunnerUtils::generateOneProductSet(
+        rxn, reactants, matchesAtReactants[productId]);
+    productMols[productId] = lProds;
+  }
+
+  return productMols;
+}  // end of ChemicalReaction::runReactants()
+
+namespace {
+int getAtomMapNo(ROMol::ATOM_BOOKMARK_MAP *map, Atom *atom) {
+  if (map) {
+    for (ROMol::ATOM_BOOKMARK_MAP::const_iterator it = map->begin();
+         it != map->end(); ++it) {
+      for (ROMol::ATOM_PTR_LIST::const_iterator ait = it->second.begin();
+           ait != it->second.end(); ++ait) {
+        if (*ait == atom) return it->first;
+      }
+    }
+  }
+  return -1;
+}
+}
+
+namespace {
+struct RGroup {
+  Atom *rAtom;
+  Bond::BondType bond_type;
+  int mapno;
+  RGroup(Atom *atom, Bond::BondType type, int curmapno = -1)
+      : rAtom(atom), bond_type(type), mapno(curmapno) {}
+  RGroup(const RGroup &rhs)
+      : rAtom(rhs.rAtom), bond_type(rhs.bond_type), mapno(rhs.mapno) {}
+};
+}
+ROMol *reduceProductToSideChains(ROMOL_SPTR &product, bool addDummyAtoms) {
+  CHECK_INVARIANT(product, "bad molecule");
+  RWMol *mol = new RWMol(*product.get());
+
+  // CHECK_INVARIANT(productID < rxn.getProducts().size());
+
+  // Remove all atoms belonging to the product UNLESS
+  //  they are attached to the reactant (inverse r-group)
+  const unsigned int numAtoms = mol->getNumAtoms();
+
+  // Go backwards through the atoms so that removing atoms doesn't
+  //  muck up the next atom in the loops index.
+  std::vector<unsigned> atomsToRemove;
+  for (int i = numAtoms - 1; i >= 0; --i) {
+    Atom *scaffold_atom = mol->getAtomWithIdx((unsigned int)i);
+    // add map no's here from dummy atoms
+    if (!scaffold_atom->hasProp(REACT_ATOM_IDX)) {
+      // are we attached to a reactant atom?
+      ROMol::ADJ_ITER nbrIdx, endNbrs;
+      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(scaffold_atom);
+      std::vector<RGroup> bonds_to_product;
+
+      while (nbrIdx != endNbrs) {
+        Atom *nbr = mol->getAtomWithIdx(*nbrIdx);
+        if (nbr->hasProp(REACT_ATOM_IDX)) {
+          if (nbr->hasProp(WAS_DUMMY)) {
+            bonds_to_product.push_back(RGroup(
+                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                         ->getBondType(),
+                nbr->getProp<int>(OLD_MAPNO)));
+          } else {
+            bonds_to_product.push_back(RGroup(
+                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                         ->getBondType()));
+          }
+        }
+
+        ++nbrIdx;
+      }
+
+      // Search the atom bookmark to see if we can find the original
+      //  reaction mapping number to the scaffold_atom
+      //  sometimes this is a proper rgroup, so use that mapno
+      // C-C:12 >> C:12 # will probably work
+      //  C-C:12-C >>  C:12  # probably won't
+      int mapno = -1;
+      if (bonds_to_product.size()) {
+        mapno = getAtomMapNo(mol->getAtomBookmarks(), scaffold_atom);
+      }
+
+      atomsToRemove.push_back(
+          scaffold_atom->getIdx());  // mol->removeAtom(scaffold_atom);
+
+      if (bonds_to_product.size()) {
+        if (addDummyAtoms) {
+          // add dummy atom where the reaction scaffold would have been
+          unsigned int idx = mol->addAtom();
+          for (size_t i = 0; i < bonds_to_product.size(); ++i) {
+            mol->addBond(idx, bonds_to_product[i].rAtom->getIdx(),
+                         bonds_to_product[i].bond_type);
+            int atommapno = bonds_to_product[i].mapno == -1
+                                ? mapno
+                                : bonds_to_product[i].mapno;
+
+            if (atommapno) {
+              Atom *at = mol->getAtomWithIdx(idx);
+              PRECONDITION(at,
+                           "Internal error in reduceProductToSideChains, bad "
+                           "atom retrieval");
+              at->setIsotope(atommapno);
+              at->setProp(common_properties::molAtomMapNumber, atommapno);
+            }
+          }
+        } else {
+          for (size_t i = 0; i < bonds_to_product.size(); ++i) {
+            int atommapno = bonds_to_product[i].mapno == -1
+                                ? mapno
+                                : bonds_to_product[i].mapno;
+            if (mapno != -1) {
+              std::vector<int> rgroups;
+              std::vector<int> bonds;
+              bonds_to_product[i].rAtom->getPropIfPresent(
+                  common_properties::_rgroupAtomMaps, rgroups);
+              bonds_to_product[i].rAtom->getPropIfPresent(
+                  common_properties::_rgroupBonds, bonds);
+
+              rgroups.push_back(atommapno);
+              // XXX THIS MAY NOT BE SAFE
+              bonds.push_back(static_cast<int>(bonds_to_product[i].bond_type));
+              bonds_to_product[i].rAtom->setProp(
+                  common_properties::_rgroupAtomMaps, rgroups);
+              bonds_to_product[i].rAtom->setProp(
+                  common_properties::_rgroupBonds, bonds);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for (size_t i = 0; i < atomsToRemove.size(); ++i) {
+    mol->removeAtom(atomsToRemove[i]);
+  }
+  return mol;
+}
 
 }  // end of RDKit namespace

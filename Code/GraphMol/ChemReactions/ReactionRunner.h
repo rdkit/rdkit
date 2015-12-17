@@ -56,6 +56,30 @@ namespace RDKit {
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction& rxn,
                                          const MOL_SPTR_VECT& reactants);
 
+//! Runs a single reactant against a single reactant template
+/*!
+  \param reactant The single reactant to use
+
+  \param reactantTemplateIdx the reactant template to target in the reaction
+*/
+
+std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction& rxn,
+                                        const ROMOL_SPTR& reactant,
+                                        unsigned int reactantIdx);
+
+//! Reduce the product of a reaction to the sidechains that come from the
+//reagents
+/*!
+  \param addDummyAtoms If true, add dummy atoms to the sidechains for the
+  non-reagent
+      parts of the sidechain.  Dummy atoms are annotated with the atom maps
+      from the reaction.  If False, the sidechain atoms are annotated with
+      the _rgroupAttachment property with the atom maps to the non-reagent
+      parts of the sidechain
+*/
+
+ROMol* reduceProductToSideChains(ROMOL_SPTR& product,
+                                 bool addDummyAtoms = true);
 }  // end of RDKit namespace
 
 #endif
