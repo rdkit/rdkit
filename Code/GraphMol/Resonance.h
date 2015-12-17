@@ -73,7 +73,7 @@ class ResonanceMolSupplier {
   const ROMol &mol() const { return *d_mol; }
   /*! Returns the flags the ResonanceMolSupplier was initialized with
    */
-  const unsigned int flags() const { return d_flags; }
+  unsigned int flags() const { return d_flags; }
   /*! Returns the number of individual conjugated groups
       in the molecule */
   unsigned int getNumConjGrps() const { return d_nConjGrp; };
