@@ -71,10 +71,10 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction& rxn,
 //reagents
 /*!
   \param addDummyAtoms If true, add dummy atoms to the sidechains for the
-  non-reagent
-      parts of the sidechain.  Dummy atoms are annotated with the atom maps
-      from the reaction.  If False, the sidechain atoms are annotated with
-      the _rgroupAttachment property with the atom maps to the non-reagent
+      non-reagent parts of the sidechain.  Dummy atoms are annotated with
+      the atom maps from the reaction.
+      If False, the sidechain atoms are annotated with the
+      _rgroupAttachment property with the atom maps to the non-reagent
       parts of the sidechain
 */
 
