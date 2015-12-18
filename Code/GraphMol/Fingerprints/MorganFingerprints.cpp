@@ -269,7 +269,10 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
                 bond->getStereo() == Bond::STEREONONE) {
               bt = static_cast<int32_t>(bond->getBondType());
             } else {
-              bt = 100 + 10 * static_cast<int32_t>(bond->getBondType()) +
+              const int32_t stereoOffset = 100;
+              const int32_t bondTypeOffset = 10;
+              bt = stereoOffset +
+                   bondTypeOffset * static_cast<int32_t>(bond->getBondType()) +
                    static_cast<int32_t>(bond->getStereo());
             }
           }
