@@ -57,8 +57,8 @@ set(RDKit_Month "03")
 set(RDKit_Revision "1.dev1")
 set(RDKit_ABI "1")
 
-set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
-set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
+set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
+set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
