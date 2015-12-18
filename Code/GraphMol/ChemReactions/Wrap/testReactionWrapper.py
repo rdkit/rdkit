@@ -531,7 +531,7 @@ M  END
     #  Zurich, Switzerland
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
-    reagents = map(Chem.MolFromSmiles, ['C=CCN=C=S', 'NCc1ncc(Cl)cc1Br'])
+    reagents = [Chem.MolFromSmiles(x) for x in  ['C=CCN=C=S', 'NCc1ncc(Cl)cc1Br']]
     res = rxn.RunReactants(reagents)
     self.assertTrue(res)
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("C=CCNC(N)=S"))]
