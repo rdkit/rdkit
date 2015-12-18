@@ -2748,7 +2748,8 @@ void test3DAtomPairs() {
 void testGitHubIssue195() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 195: GenMACCSKeys() raises "
-                           "an exception with an empty molecule" << std::endl;
+                           "an exception with an empty molecule"
+                        << std::endl;
 
   {
     ROMol *m1 = new ROMol();
@@ -3000,6 +3001,135 @@ void testGitHubIssue334() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue695() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 695: Include cis/trans "
+                           "stereochemistry when useChirality=true with the "
+                           "morgan fingerprints"
+                        << std::endl;
+
+  {
+    ROMol *m1 = SmilesToMol("CC=CC");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::uint32_t> *fp;
+    SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter;
+
+    fp = MorganFingerprints::getFingerprint(*m1, 1, NULL, NULL, false);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    iter = fp->getNonzeroElements().find(736731344);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246703798);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246728737);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(3545353036);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    delete fp;
+
+    fp = MorganFingerprints::getFingerprint(*m1, 1, NULL, NULL, true);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    iter = fp->getNonzeroElements().find(736731344);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246703798);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246728737);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(3545353036);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+
+    delete fp;
+
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("C/C=C/C");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::uint32_t> *fp;
+    SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter;
+
+    fp = MorganFingerprints::getFingerprint(*m1, 1, NULL, NULL, false);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    iter = fp->getNonzeroElements().find(736731344);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246703798);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246728737);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(3545353036);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    delete fp;
+
+    fp = MorganFingerprints::getFingerprint(*m1, 1, NULL, NULL, true);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+
+#if 0
+    for (iter = fp->getNonzeroElements().begin();
+         iter != fp->getNonzeroElements().end(); ++iter) {
+      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
+    }
+    std::cerr << "  ------------ " << std::endl;
+#endif
+
+    iter = fp->getNonzeroElements().find(736735794);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246703798);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246728737);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(3545353036);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    delete fp;
+
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("C/C=C\\C");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::uint32_t> *fp;
+    SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter;
+
+    fp = MorganFingerprints::getFingerprint(*m1, 1, NULL, NULL, false);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    iter = fp->getNonzeroElements().find(736731344);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246703798);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246728737);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(3545353036);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    delete fp;
+
+    fp = MorganFingerprints::getFingerprint(*m1, 1, NULL, NULL, true);
+#if 0
+    for (iter = fp->getNonzeroElements().begin();
+         iter != fp->getNonzeroElements().end(); ++iter) {
+      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
+    }
+    std::cerr << "  ------------ " << std::endl;
+#endif
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    iter = fp->getNonzeroElements().find(736735858);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246703798);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(2246728737);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    iter = fp->getNonzeroElements().find(3545353036);
+    TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
+    delete fp;
+
+    delete m1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3048,6 +3178,7 @@ int main(int argc, char *argv[]) {
 #endif
   testGitHubIssue258();
   testGitHubIssue334();
+  testGitHubIssue695();
 
   return 0;
 }
