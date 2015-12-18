@@ -327,8 +327,7 @@ bool FinalChiralityCheckFunction(const short unsigned c1[],
                                  const short unsigned c2[], const ROMol& mol1,
                                  const FMCS::Graph& query, const ROMol& mol2,
                                  const FMCS::Graph& target,
-                                 const MCSParameters* p) {
-  RDUNUSED_PARAM(p);
+                                 const MCSParameters* /*unused*/) {
   const unsigned int qna = boost::num_vertices(query);  // getNumAtoms()
   // check chiral atoms only:
   for (unsigned int i = 0; i < qna; ++i) {
@@ -341,7 +340,8 @@ bool FinalChiralityCheckFunction(const short unsigned c1[],
     ///*------------------ OLD Code :
     // ???: non chiral query atoms ARE ALLOWED TO MATCH to Chiral target atoms
     // (see test for issue 481)
-    if (!(ac1 == Atom::CHI_TETRAHEDRAL_CW || ac1 == Atom::CHI_TETRAHEDRAL_CCW))
+    if (a1.getDegree() < 3 ||//#688: doesn't deal with "explicit" Hs properly
+        !(ac1 == Atom::CHI_TETRAHEDRAL_CW || ac1 == Atom::CHI_TETRAHEDRAL_CCW))
       continue;  // skip non chiral center QUERY atoms
     if (!(ac2 == Atom::CHI_TETRAHEDRAL_CW || ac2 == Atom::CHI_TETRAHEDRAL_CCW))
       return false;
@@ -363,8 +363,8 @@ bool FinalChiralityCheckFunction(const short unsigned c1[],
     */
     const unsigned a1Degree =
         boost::out_degree(c1[i], query);  // a1.getDegree();
-    if (a1Degree != a2.getDegree()) {  // number of all connected atoms in seed
-      // FIX issue 631
+        //number of all connected atoms in a seed
+    if (a1Degree > a2.getDegree()) {  //#688 was != . // FIX issue 631
       // printf("atoms Degree (%u, %u) %u [%u], %u\n", query[c1[i]],
       // target[c2[i]], a1Degree, a1.getDegree(), a2.getDegree());
       if (1 == a1Degree && a1.getDegree() == a2.getDegree())
@@ -379,13 +379,46 @@ bool FinalChiralityCheckFunction(const short unsigned c1[],
       if (qB) qOrder.push_back(qB->getIdx());
     }
 
-    int qPermCount = a1.getPerturbationOrder(qOrder);
+    //#688
+    INT_LIST qmoOrder;
+    {
+        ROMol::OEDGE_ITER dbeg, dend;
+        boost::tie(dbeg, dend) = mol1.getAtomBonds(&a1);
+        for (; dbeg != dend; dbeg++) {
+            int dbidx = mol1[*dbeg]->getIdx();
+            if (std::find(qOrder.begin(), qOrder.end(), dbidx) != qOrder.end())
+                qmoOrder.push_back(dbidx);
+//            else
+//                qmoOrder.push_back(-1);
+        }
+    }
+    int qPermCount = //was: a1.getPerturbationOrder(qOrder);
+        static_cast<int>(countSwapsToInterconvert(qmoOrder, qOrder));
+
     INT_LIST mOrder;
     for (unsigned int j = 0; j < qna && mOrder.size() != a2.getDegree(); ++j) {
       const Bond* mB = mol2.getBondBetweenAtoms(target[c2[i]], target[c2[j]]);
       if (mB) mOrder.push_back(mB->getIdx());
     }
-    int mPermCount = a2.getPerturbationOrder(mOrder);
+    
+    //#688
+    while (mOrder.size() < a2.getDegree()) {
+        mOrder.push_back(-1);
+    }
+    INT_LIST moOrder;
+    ROMol::OEDGE_ITER dbeg, dend;
+    boost::tie(dbeg, dend) = mol2.getAtomBonds(&a2);
+    for (; dbeg != dend; dbeg++) {
+        int dbidx = mol2[*dbeg]->getIdx();
+        if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end())
+            moOrder.push_back(dbidx);
+        else
+            moOrder.push_back(-1);
+    }
+
+    int mPermCount = //was: a2.getPerturbationOrder(mOrder);
+            static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
+    //----
 
     if ((qPermCount % 2 == mPermCount % 2 &&
          a1.getChiralTag() != a2.getChiralTag()) ||

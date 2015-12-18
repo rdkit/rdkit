@@ -824,6 +824,15 @@ void testGithubIssue481() {
     mols.push_back(ptr2);
 
     BOOST_LOG(rdInfoLog) << "**** mols:" << s1 << "   " << s2 << "\n";
+    //#688:
+    std::vector<std::pair<int, int> > vect;
+    ROMOL_SPTR mcs_mol(SmilesToMol("OCCl"));
+    bool sub_res = SubstructMatch(*ptr2, *mcs_mol, vect, true, false);
+    std::cout << "query=OCCl " <<"SubstructMatch(useChirality=false) res =" << sub_res
+        << " size=" << vect.size() << std::endl;
+    sub_res = SubstructMatch(*ptr2, *mcs_mol, vect, true, true);
+    std::cout << "query=OCCl " <<"SubstructMatch(useChirality=true ) res =" << sub_res
+        << " size=" << vect.size() << std::endl;
 
     {
       MCSParameters p;
@@ -842,8 +851,8 @@ void testGithubIssue481() {
       BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
-      TEST_ASSERT(mcs_res.NumAtoms == 2);
-      TEST_ASSERT(mcs_res.NumBonds == 1);
+      TEST_ASSERT(mcs_res.NumAtoms == 3);//#688 was 2);
+      TEST_ASSERT(mcs_res.NumBonds == 2);//#688 was 1);
     }
 
     BOOST_LOG(rdInfoLog) << "------ REVERSE mols -------- \n";
@@ -868,8 +877,8 @@ void testGithubIssue481() {
       BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
-      TEST_ASSERT(mcs_res.NumAtoms == 2);
-      TEST_ASSERT(mcs_res.NumBonds == 1);
+      TEST_ASSERT(mcs_res.NumAtoms == 3);//#688 was 2);
+      TEST_ASSERT(mcs_res.NumBonds == 2);//#688 was 1);
     }
   }
 
