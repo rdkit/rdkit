@@ -263,14 +263,20 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
           roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
+          int32_t bt = 1;
           if (useBondTypes) {
-            nbrs.push_back(
-                std::make_pair(static_cast<int32_t>(bond->getBondType()),
-                               (*invariants)[oIdx]));
-          } else {
-            nbrs.push_back(
-                std::make_pair(static_cast<int32_t>(1), (*invariants)[oIdx]));
+            if (!useChirality || bond->getBondType() != Bond::DOUBLE ||
+                bond->getStereo() == Bond::STEREONONE) {
+              bt = static_cast<int32_t>(bond->getBondType());
+            } else {
+              const int32_t stereoOffset = 100;
+              const int32_t bondTypeOffset = 10;
+              bt = stereoOffset +
+                   bondTypeOffset * static_cast<int32_t>(bond->getBondType()) +
+                   static_cast<int32_t>(bond->getStereo());
+            }
           }
+          nbrs.push_back(std::make_pair(bt, (*invariants)[oIdx]));
 
           ++beg;
         }
