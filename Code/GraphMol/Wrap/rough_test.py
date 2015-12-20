@@ -447,6 +447,37 @@ class TestCase(unittest.TestCase):
     self.assertTrue(not m.HasProp('cprop1'))
     self.assertTrue(not m.HasProp('cprop2'))
 
+    m.SetDoubleProp("a", 2.0)
+    self.assertTrue(m.GetDoubleProp("a") == 2.0)
+    
+    try:
+      self.assertTrue(m.GetIntProp("a") == 2.0)
+      raise Exception("Expected runtime exception")
+    except RuntimeError:
+      pass
+    
+    try:
+      self.assertTrue(m.GetUIntProp("a") == 2.0)
+      raise Exception("Expected runtime exception")
+    except RuntimeError:
+      pass
+
+    
+    m.SetDoubleProp("a", -2)
+    self.assertTrue(m.GetDoubleProp("a") == -2.0)
+    m.SetIntProp("a", -2)
+    self.assertTrue(m.GetIntProp("a") == -2)
+
+    try:
+      m.SetUIntProp("a", -2)
+      raise Exception("Expected failure with negative unsigned number")
+    except OverflowError:
+      pass
+
+
+    m.SetBoolProp("a", False)
+    self.assertTrue(m.GetBoolProp("a") == False)    
+    
   def test17Kekulize(self):
     m = Chem.MolFromSmiles('c1ccccc1')
     smi = Chem.MolToSmiles(m)

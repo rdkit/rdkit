@@ -138,13 +138,13 @@ PyObject *GetMolConformers(ROMol &mol) {
   return res;
 }
 
-std::string MolGetProp(const ROMol &mol, const char *key) {
-  if (!mol.hasProp(key)) {
+template <class T>
+T MolGetProp(const ROMol &mol, const char *key) {
+  T res;
+  if (!mol.getPropIfPresent(key, res)) {
     PyErr_SetString(PyExc_KeyError, key);
     throw python::error_already_set();
   }
-  std::string res;
-  mol.getProp(key, res);
   return res;
 }
 
@@ -153,9 +153,11 @@ int MolHasProp(const ROMol &mol, const char *key) {
   // std::cout << "key: "  << key << ": " << res << std::endl;
   return res;
 }
-void MolSetProp(const ROMol &mol, const char *key, std::string val,
+
+template<class T>
+void MolSetProp(const ROMol &mol, const char *key, const T &val,
                 bool computed = false) {
-  mol.setProp(key, val, computed);
+  mol.setProp<T>(key, val, computed);
 }
 
 void MolClearProp(const ROMol &mol, const char *key) {
@@ -416,7 +418,7 @@ struct mol_wrapper {
              "query.\n")
 
         // properties
-        .def("SetProp", MolSetProp,
+        .def("SetProp", MolSetProp<std::string>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets a molecular property\n\n"
@@ -426,13 +428,52 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to 0.\n\n")
+        .def("SetDoubleProp", MolSetProp<double>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a double valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as a double.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")
+        .def("SetIntProp", MolSetProp<int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets an integer valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (an unsigned number).\n"
+             "    - value: the property value as an integer.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")
+        .def("SetUIntProp", MolSetProp<unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets an unsigned integer valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as an unsigned integer.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")                
+        .def("SetBoolProp", MolSetProp<bool>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a boolean valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as a bool.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")                
         .def("HasProp", MolHasProp,
              "Queries a molecule to see if a particular property has been "
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
-
-        .def("GetProp", MolGetProp,
+        .def("GetProp", MolGetProp<std::string>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -440,7 +481,38 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-
+        .def("GetDoubleProp", MolGetProp<double>,
+             "Returns the double value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a double\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetIntProp", MolGetProp<int>,
+             "Returns the integer value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: an integer\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetUIntProp", MolGetProp<unsigned int>,
+             "Returns the unsigned int value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: an unsigned integer\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetBoolProp", MolGetProp<bool>,
+             "Returns the double value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a bool\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
         .def("ClearProp", MolClearProp,
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
