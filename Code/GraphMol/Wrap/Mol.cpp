@@ -14,6 +14,7 @@
 
 #include "rdchem.h"
 #include "seqs.hpp"
+#include "props.hpp"
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
@@ -165,6 +166,29 @@ void MolClearProp(const ROMol &mol, const char *key) {
     return;
   }
   mol.clearProp(key);
+}
+
+// specialized for include private/computed...
+boost::python::dict MolGetPropsAsDict(const ROMol &mol,
+                                      bool includePrivate=false,
+                                      bool includeComputed=false) {
+  boost::python::dict dict;
+  // precedence double, int, unsigned, std::vector<double>,
+  // std::vector<int>, std::vector<unsigned>, string
+  STR_VECT keys = mol.getPropList(includePrivate, includeComputed);
+  for(size_t i=0;i<keys.size();++i) {
+    if (AddToDict<double>(mol, dict, keys[i])) continue;
+    if (AddToDict<int>(mol, dict, keys[i])) continue;
+    if (AddToDict<unsigned int>(mol, dict, keys[i])) continue;
+    if (AddToDict<bool>(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<double> >(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<int> >(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<unsigned int> >(mol, dict, keys[i])) continue;
+    //    if (AddToDict<std::vector<bool> >(mol, dict, keys[i])) continue;
+    if (AddToDict<std::string>(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<std::string> >(mol, dict, keys[i])) continue;
+  }
+  return dict;
 }
 
 void MolClearComputedProps(const ROMol &mol) { mol.clearComputedProps(); }
@@ -543,6 +567,21 @@ struct mol_wrapper {
              "properties in the result set.\n"
              "                      Defaults to 0.\n\n"
              "  RETURNS: a tuple of strings\n")
+
+        .def("GetPropsAsDict", MolGetPropsAsDict,
+             (python::arg("self"), python::arg("includePrivate") = false,
+              python::arg("includeComputed") = false),
+             "Returns a dictionary populated with the molecules properties.\n"
+             " n.b. Some properties are not able to be converted to python types.\n\n"
+             "  ARGUMENTS:\n"
+             "    - includePrivate: (optional) toggles inclusion of private "
+             "properties in the result set.\n"
+             "                      Defaults to False.\n"
+             "    - includeComputed: (optional) toggles inclusion of computed "
+             "properties in the result set.\n"
+             "                      Defaults to False.\n\n"
+             "  RETURNS: a dictionary\n")
+             
 
         .def("GetAtoms", MolGetAtoms,
              python::return_value_policy<

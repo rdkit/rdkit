@@ -12,6 +12,7 @@
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 #include <string>
+#include "props.hpp"
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryBond.h>
@@ -303,6 +304,10 @@ struct bond_wrapper {
         .def("GetPropNames", &Bond::getPropList, (python::arg("self")),
              "Returns a list of the properties set on the Bond.\n\n")
 
+        .def("GetPropsAsDict", GetPropsAsDict<Bond>, (python::arg("self")),
+             "Returns a dictionary of the properties set on the Bond.\n"
+             " n.b. some properties cannot be converted to python types.\n")
+        
         ;
 
     python::enum_<Bond::BondType>("BondType")
