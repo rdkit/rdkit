@@ -22,6 +22,17 @@ if 'RDBASE' in os.environ:
   RDBinDir=os.path.join(RDBaseDir,'bin')
   RDProjDir=os.path.join(RDBaseDir,'Projects')
 elif 'CONDA_DEFAULT_ENV' in os.environ:
+  class MissingCondaDirectoryException(Exception):
+    pass
+
+  class MissingCondaDir:
+    def __init__(self, directory):
+      self.directory = directory
+      
+    def __getattr__(self, a):
+      raise MissingCondaDirectoryException(
+        "RDKit Anaconda builds do not ship with the RDBASE/%s directory"%self.directory)
+
   # we are running in a conda environ.
   RDCodeDir=os.path.dirname(__file__)
   splitdir = RDCodeDir.split(os.path.sep)
@@ -29,10 +40,13 @@ elif 'CONDA_DEFAULT_ENV' in os.environ:
   if condaDir[0]=='':
     condaDir[0] = os.path.sep
   condaDir += ['share','RDKit']
-  _share = os.path.join(*condaDir)
-  RDDataDir=os.path.join(_share,'Data')
-  RDDocsDir=os.path.join(_share,'Docs')
-  RDProjDir=os.path.join(_share,'Projects')
+  RDBaseDir = os.path.join(*condaDir)
+  RDDataDir=os.path.join(RDBaseDir,'Data')
+  RDDocsDir=os.path.join(RDBaseDir,'Docs')
+  RDProjDir=os.path.join(RDBaseDir,'Projects')
+  RDBinDir=MissingCondaDir('bin')
+  RDDemoDir=MissingCondaDir('Demo')
+  RDCodeDir=MissingCondaDir('rdkit')
 else:
   from rdkit.RDPaths import *
 
