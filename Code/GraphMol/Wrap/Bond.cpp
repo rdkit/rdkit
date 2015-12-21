@@ -231,6 +231,13 @@ struct bond_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (an int).\n\n")
 
+        .def("SetUnsignedProp", BondSetProp<unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val")),
+             "Sets a bond property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value (an int >= 0).\n\n")
+        
         .def("GetIntProp", BondGetProp<int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
@@ -240,6 +247,15 @@ struct bond_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
 
+        .def("GetUnsignedProp", BondGetProp<unsigned int>,
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (an unsigned integer).\n\n"
+             "  RETURNS: an int (Python has no unsigned type)\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        
         .def("SetDoubleProp", BondSetProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets a bond property\n\n"

@@ -298,11 +298,27 @@ struct atom_wrapper {
              "    - key: the name of the property to be set (a int).\n"
              "    - value: the property value (a int).\n\n")
 
+        .def("SetUnsignedProp", AtomSetProp<unsigned>,
+             (python::arg("self"), python::arg("key"), python::arg("val")),
+             "Sets an atomic property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (an unsigned integer).\n"
+             "    - value: the property value (a int >= 0).\n\n")
+        
         .def("GetIntProp", AtomGetProp<int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an int).\n\n"
              "  RETURNS: an int\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+
+        .def("GetUnsignedProp", AtomGetProp<unsigned>,
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (an unsigned integer).\n\n"
+             "  RETURNS: an integer (Python has no unsigned type)\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")

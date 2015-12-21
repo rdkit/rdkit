@@ -448,7 +448,7 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to 0.\n\n")
-        .def("SetUIntProp", MolSetProp<unsigned int>,
+        .def("SetUnsignedProp", MolSetProp<unsigned int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets an unsigned integer valued molecular property\n\n"
@@ -497,7 +497,7 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetUIntProp", MolGetProp<unsigned int>,
+        .def("GetUnsignedProp", MolGetProp<unsigned int>,
              "Returns the unsigned int value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
