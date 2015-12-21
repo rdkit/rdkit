@@ -21,6 +21,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <cstdio>
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
@@ -417,8 +418,8 @@ const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces) {
                  (*atom->getQuery()->beginChildren())->getDescription() ==
                      "AtomAtomicNum" &&
                  static_cast<ATOM_EQUALS_QUERY *>(
-                     (*atom->getQuery()->beginChildren()).get())->getVal() ==
-                     6 &&
+                     (*atom->getQuery()->beginChildren()).get())
+                         ->getVal() == 6 &&
                  (*++(atom->getQuery()->beginChildren()))->getDescription() ==
                      "AtomAtomicNum" &&
                  static_cast<ATOM_EQUALS_QUERY *>(
@@ -597,13 +598,39 @@ const std::string GetMolFileAtomLine(const Atom *atom,
                          rxnComponentNumber);
 
   std::string symbol = AtomGetMolFileSymbol(atom, true);
+#if 0
+  const boost::format fmter(
+      "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d");
   std::stringstream ss;
-  ss << boost::format(
-            "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d") %
-            x % y % z % symbol.c_str() % massDiff % chg % parityFlag % hCount %
-            stereoCare % totValence % rxnComponentType % rxnComponentNumber %
-            atomMapNumber % inversionFlag % exactChangeFlag;
+  ss << boost::format(fmter) % x % y % z % symbol.c_str() % massDiff % chg %
+            parityFlag % hCount % stereoCare % totValence % rxnComponentType %
+            rxnComponentNumber % atomMapNumber % inversionFlag %
+            exactChangeFlag;
   res += ss.str();
+#else
+  // it feels ugly to use snprintf instead of boost::format, but at least of the
+  // time of this writing (with boost 1.55), the snprintf version runs in 20% of
+  // the time.
+  char dest[128];
+#ifndef WIN32
+  snprintf(dest, 128,
+           "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
+           z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
+           totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
+           inversionFlag, exactChangeFlag);
+#else
+  // ok, technically we should be being more careful about this, but tiven that
+  // the format string makes it impossible for this to overflow, I think we're
+  // safe. I just used the snprintf above to prevent linters from complaining
+  // about use of sprintf
+  sprintf(dest, "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x,
+          y, z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
+          totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
+          inversionFlag, exactChangeFlag);
+
+#endif
+  res += dest;
+#endif
   return res;
 };
 
