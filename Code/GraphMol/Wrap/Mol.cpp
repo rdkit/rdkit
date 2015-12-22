@@ -14,6 +14,7 @@
 
 #include "rdchem.h"
 #include "seqs.hpp"
+#include "props.hpp"
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
@@ -138,13 +139,13 @@ PyObject *GetMolConformers(ROMol &mol) {
   return res;
 }
 
-std::string MolGetProp(const ROMol &mol, const char *key) {
-  if (!mol.hasProp(key)) {
+template <class T>
+T MolGetProp(const ROMol &mol, const char *key) {
+  T res;
+  if (!mol.getPropIfPresent(key, res)) {
     PyErr_SetString(PyExc_KeyError, key);
     throw python::error_already_set();
   }
-  std::string res;
-  mol.getProp(key, res);
   return res;
 }
 
@@ -153,9 +154,11 @@ int MolHasProp(const ROMol &mol, const char *key) {
   // std::cout << "key: "  << key << ": " << res << std::endl;
   return res;
 }
-void MolSetProp(const ROMol &mol, const char *key, std::string val,
+
+template<class T>
+void MolSetProp(const ROMol &mol, const char *key, const T &val,
                 bool computed = false) {
-  mol.setProp(key, val, computed);
+  mol.setProp<T>(key, val, computed);
 }
 
 void MolClearProp(const ROMol &mol, const char *key) {
@@ -163,6 +166,29 @@ void MolClearProp(const ROMol &mol, const char *key) {
     return;
   }
   mol.clearProp(key);
+}
+
+// specialized for include private/computed...
+boost::python::dict MolGetPropsAsDict(const ROMol &mol,
+                                      bool includePrivate=false,
+                                      bool includeComputed=false) {
+  boost::python::dict dict;
+  // precedence double, int, unsigned, std::vector<double>,
+  // std::vector<int>, std::vector<unsigned>, string
+  STR_VECT keys = mol.getPropList(includePrivate, includeComputed);
+  for(size_t i=0;i<keys.size();++i) {
+    if (AddToDict<double>(mol, dict, keys[i])) continue;
+    if (AddToDict<int>(mol, dict, keys[i])) continue;
+    if (AddToDict<unsigned int>(mol, dict, keys[i])) continue;
+    if (AddToDict<bool>(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<double> >(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<int> >(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<unsigned int> >(mol, dict, keys[i])) continue;
+    //    if (AddToDict<std::vector<bool> >(mol, dict, keys[i])) continue;
+    if (AddToDict<std::string>(mol, dict, keys[i])) continue;
+    if (AddToDict<std::vector<std::string> >(mol, dict, keys[i])) continue;
+  }
+  return dict;
 }
 
 void MolClearComputedProps(const ROMol &mol) { mol.clearComputedProps(); }
@@ -416,7 +442,7 @@ struct mol_wrapper {
              "query.\n")
 
         // properties
-        .def("SetProp", MolSetProp,
+        .def("SetProp", MolSetProp<std::string>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets a molecular property\n\n"
@@ -426,13 +452,52 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to 0.\n\n")
+        .def("SetDoubleProp", MolSetProp<double>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a double valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as a double.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")
+        .def("SetIntProp", MolSetProp<int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets an integer valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (an unsigned number).\n"
+             "    - value: the property value as an integer.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")
+        .def("SetUnsignedProp", MolSetProp<unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets an unsigned integer valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as an unsigned integer.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")                
+        .def("SetBoolProp", MolSetProp<bool>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a boolean valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as a bool.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")                
         .def("HasProp", MolHasProp,
              "Queries a molecule to see if a particular property has been "
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
-
-        .def("GetProp", MolGetProp,
+        .def("GetProp", MolGetProp<std::string>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -440,7 +505,38 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-
+        .def("GetDoubleProp", MolGetProp<double>,
+             "Returns the double value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a double\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetIntProp", MolGetProp<int>,
+             "Returns the integer value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: an integer\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetUnsignedProp", MolGetProp<unsigned int>,
+             "Returns the unsigned int value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: an unsigned integer\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetBoolProp", MolGetProp<bool>,
+             "Returns the double value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a bool\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
         .def("ClearProp", MolClearProp,
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
@@ -471,6 +567,21 @@ struct mol_wrapper {
              "properties in the result set.\n"
              "                      Defaults to 0.\n\n"
              "  RETURNS: a tuple of strings\n")
+
+        .def("GetPropsAsDict", MolGetPropsAsDict,
+             (python::arg("self"), python::arg("includePrivate") = false,
+              python::arg("includeComputed") = false),
+             "Returns a dictionary populated with the molecules properties.\n"
+             " n.b. Some properties are not able to be converted to python types.\n\n"
+             "  ARGUMENTS:\n"
+             "    - includePrivate: (optional) toggles inclusion of private "
+             "properties in the result set.\n"
+             "                      Defaults to False.\n"
+             "    - includeComputed: (optional) toggles inclusion of computed "
+             "properties in the result set.\n"
+             "                      Defaults to False.\n\n"
+             "  RETURNS: a dictionary\n")
+             
 
         .def("GetAtoms", MolGetAtoms,
              python::return_value_policy<
