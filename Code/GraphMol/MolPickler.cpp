@@ -107,11 +107,13 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   } else if (typeid(*query) ==
              typeid(GreaterEqualQuery<int, T const *, true>)) {
     streamWrite(ss, MolPickler::QUERY_GREATEREQUAL);
-    queryVal = static_cast<const GreaterEqualQuery<int, T const *, true> *>(
-                   query)->getVal();
+    queryVal =
+        static_cast<const GreaterEqualQuery<int, T const *, true> *>(query)
+            ->getVal();
     streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal = static_cast<const GreaterEqualQuery<int, T const *, true> *>(
-                   query)->getTol();
+    queryVal =
+        static_cast<const GreaterEqualQuery<int, T const *, true> *>(query)
+            ->getTol();
     streamWrite(ss, queryVal);
   } else if (typeid(*query) == typeid(LessQuery<int, T const *, true>)) {
     streamWrite(ss, MolPickler::QUERY_LESS);
@@ -156,8 +158,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
     for (cit = static_cast<const SetQuery<int, T const *, true> *>(query)
                    ->beginSet();
          cit !=
-             static_cast<const SetQuery<int, T const *, true> *>(query)
-                 ->endSet();
+         static_cast<const SetQuery<int, T const *, true> *>(query)->endSet();
          ++cit) {
       queryVal = *cit;
       streamWrite(ss, queryVal);
@@ -953,12 +954,13 @@ template <typename T>
 void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   PRECONDITION(atom, "empty atom");
   char tmpChar;
+  unsigned char tmpUchar;
   signed char tmpSchar;
   int tmpInt;
   char flags;
 
-  tmpChar = atom->getAtomicNum() % 128;
-  streamWrite(ss, tmpChar);
+  tmpUchar = atom->getAtomicNum() % 256;
+  streamWrite(ss, tmpUchar);
 
   flags = 0;
   if (atom->getIsAromatic()) flags |= 0x1 << 6;
@@ -1102,14 +1104,15 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
   PRECONDITION(mol, "empty molecule");
   float x, y, z;
   char tmpChar;
+  unsigned char tmpUchar;
   signed char tmpSchar;
   char flags;
   Tags tag;
   Atom *atom = 0;
   int atomicNum = 0;
 
-  streamRead(ss, tmpChar, version);
-  atomicNum = tmpChar;
+  streamRead(ss, tmpUchar, version);
+  atomicNum = tmpUchar;
 
   bool hasQuery = false;
   streamRead(ss, flags, version);
