@@ -31,6 +31,11 @@ void test1FPBReaderBasics() {
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 17);
+      unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
+                              811, 831, 888, 1335, 1411, 1664, 1820, 1917};
+      for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
+        TEST_ASSERT(fp->getBit(obs[i]));
+      }
       delete fp;
       TEST_ASSERT(tpl.second == "ZINC00902219");
     }
@@ -39,6 +44,11 @@ void test1FPBReaderBasics() {
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 17);
+      unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
+                              811, 831, 888, 1335, 1411, 1664, 1820, 1917};
+      for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
+        TEST_ASSERT(fp->getBit(obs[i]));
+      }
       delete fp;
       std::string nm = fps.getId(0);
       TEST_ASSERT(nm == "ZINC00902219");

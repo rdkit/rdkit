@@ -12,7 +12,7 @@
 // Many thanks to Andrew Dalke for creating such great software and for
 // helping explain the FPB implementation
 
-#include <Datastructs/ExplicitBitVect.h>
+#include <DataStructs/ExplicitBitVect.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/StreamOps.h>
 #include "FPBReader.h"
@@ -101,6 +101,22 @@ To get the number of fingerprints in the arena:
   dp_impl->dp_fpData = chunk;
   dp_impl->len = (sz - 9 - spacer) / dp_impl->numBytesStoredPerFingerprint;
 };
+
+// the caller is responsible for delete'ing this
+ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
+
+  if (which > dp_impl->len) {
+    throw ValueErrorException("bad index");
+  }
+  const boost::uint8_t *fpData =
+      dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
+  boost::dynamic_bitset<boost::uint8_t> *fpbs =
+      new boost::dynamic_bitset<boost::uint8_t>(fpData,
+                                                fpData + dp_impl->nBits / 8);
+  return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
+};
 }  // end of detail namespace
 
 void FPBReader::init() {
@@ -143,9 +159,7 @@ ExplicitBitVect *FPBReader::getFP(unsigned int idx) const {
   PRECONDITION(dp_impl, "no impl");
   URANGE_CHECK(idx, dp_impl->len);
 
-  // STUB
-  ExplicitBitVect *res = new ExplicitBitVect(dp_impl->nBits);
-  for (unsigned int i = 0; i < 17; ++i) res->setBit(i);
+  ExplicitBitVect *res = detail::extractFP(dp_impl, idx);
   return res;
 };
 
