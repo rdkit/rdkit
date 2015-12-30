@@ -73,9 +73,9 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction& rxn,
   \param addDummyAtoms If true, add dummy atoms to the sidechains for the
       non-reagent parts of the sidechain.  Dummy atoms are annotated with
       the atom maps from the reaction.
-      If False, the sidechain atoms are annotated with the
-      _rgroupAttachment property with the atom maps to the non-reagent
-      parts of the sidechain
+      If False, then any sidechain atom where a bond was cleaved is annotated with:
+         _rgroupAtomMaps property which indicates the scaffold atommaps that where bonded
+         _rgroupBonds property which indicates the bondtype for each atommap bonded
 */
 
 ROMol* reduceProductToSideChains(const ROMOL_SPTR& product,

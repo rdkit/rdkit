@@ -521,7 +521,7 @@ M  END
       mb2 = Chem.MolToMolBlock(reactants[i])
       self.assertEquals(mb1, mb2)
 
-  def atest22RunSingleReactant(self):
+  def test22RunSingleReactant(self):
     # from
     # A Collection of Robust Organic Synthesis Reactions for In Silico Molecule Design
     # Markus Hartenfeller,*, Martin Eberle, Peter Meier, Cristina Nieto-Oberhuber,
@@ -537,32 +537,38 @@ M  END
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("C=CCNC(N)=S"))]
     expected_result.sort()
     sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[1*:1]=S.[3*:3]CC=C"), isomericSmiles=True)]
+    sidechains_nodummy_expected_result = [ [0,[3,],[1,]], [3,[1,],[2,]] ]
+    sidechains_nodummy = []
+    
     sidechains_expected_result.sort()
 
     for addDummy in [True, False]:
       res = rxn.RunReactant(reagents[0], 0)
       assert res
-      print (res)
       result = []
       sidechains = []
       for match in res:
         for mol in match:
           result.append(Chem.MolToSmiles(mol,isomericSmiles=True))
-          print ("*****", result[-1])
           sidechain = rdChemReactions.ReduceProductToSideChains(mol, addDummy)
           sidechains.append(
             Chem.MolToSmiles(sidechain, isomericSmiles=True))
           if not addDummy:
             for atom in sidechain.GetAtoms():
               if atom.HasProp("_rgroupAtomMaps"):
-                print ("==",atom.GetProp("_rgroupAtomMaps"))
+                sidechains_nodummy.append( [atom.GetIdx(),
+                                            eval(atom.GetProp("_rgroupAtomMaps")),
+                                            eval(atom.GetProp("_rgroupBonds")),
+                                          ] )
           result.sort()
           sidechains.sort()
 
       if addDummy:
         self.assertEquals(result, expected_result)
         self.assertEquals(sidechains, sidechains_expected_result)
-
+      else:
+        self.assertEquals(sidechains_nodummy, sidechains_nodummy_expected_result)
+        
 
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("NCNCc1ncc(Cl)cc1Br"))]
     expected_result.sort()
@@ -598,6 +604,7 @@ M  END
         sidechains.append(Chem.MolToSmiles(
           rdChemReactions.ReduceProductToSideChains(mol),
           isomericSmiles=True))
+        sidechain = rdChemReactions.ReduceProductToSideChains(mol, addDummyAtoms=False)
 
     self.assertEquals(sidechains, sidechains_expected_result)
 
