@@ -78,7 +78,7 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction& rxn,
       parts of the sidechain
 */
 
-ROMol* reduceProductToSideChains(ROMOL_SPTR& product,
+ROMol* reduceProductToSideChains(const ROMOL_SPTR& product,
                                  bool addDummyAtoms = true);
 }  // end of RDKit namespace
 

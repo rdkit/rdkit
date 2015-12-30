@@ -964,7 +964,7 @@ struct RGroup {
       : rAtom(rhs.rAtom), bond_type(rhs.bond_type), mapno(rhs.mapno) {}
 };
 }
-ROMol *reduceProductToSideChains(ROMOL_SPTR &product, bool addDummyAtoms) {
+ROMol *reduceProductToSideChains(const ROMOL_SPTR &product, bool addDummyAtoms) {
   CHECK_INVARIANT(product, "bad molecule");
   RWMol *mol = new RWMol(*product.get());
 
