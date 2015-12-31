@@ -43,6 +43,11 @@ class FPBReader {
   std::pair<ExplicitBitVect *, std::string> operator[](unsigned int idx) const {
     return std::make_pair(getFP(idx), getId(idx));
   };
+  // returns the beginning and end index of fingerprints having on bit counts
+  // within the range (including end points)
+  std::pair<unsigned int, unsigned int> getFPIdsInCountRange(
+      unsigned int minCount, unsigned int maxCount);
+
   unsigned int length() const;
 
  private:

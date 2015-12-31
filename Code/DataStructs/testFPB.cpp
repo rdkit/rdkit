@@ -25,6 +25,18 @@ void test1FPBReaderBasics() {
     FPBReader fps(filename);
     fps.init();
     TEST_ASSERT(fps.length() == 100);
+    {  // pop counts
+      std::pair<unsigned int, unsigned int> offsets;
+      offsets = fps.getFPIdsInCountRange(17, 17);
+      TEST_ASSERT(offsets.first == 0);
+      TEST_ASSERT(offsets.second == 1);
+      offsets = fps.getFPIdsInCountRange(60, 65);
+      TEST_ASSERT(offsets.first == 96);
+      TEST_ASSERT(offsets.second == 100);
+      offsets = fps.getFPIdsInCountRange(160, 165);
+      TEST_ASSERT(offsets.first == 100);
+      TEST_ASSERT(offsets.second == 100);
+    }
     {  // get* version
       std::string nm = fps.getId(0);
       TEST_ASSERT(nm == "ZINC00902219");
@@ -76,6 +88,7 @@ int main() {
   RDLog::InitLogs();
 
   test1FPBReaderBasics();
+  // FIX: need testing of edge cases
 
   return 0;
 }

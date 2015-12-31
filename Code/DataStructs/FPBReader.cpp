@@ -46,8 +46,7 @@ struct FPBReader_impl {
   unsigned int len;
   unsigned int nBits;
   boost::uint32_t numBytesStoredPerFingerprint;
-  // we're assuming that nothing practical has more than 65K bits set
-  std::vector<boost::uint16_t> popCounts;
+  std::vector<boost::uint32_t> popCountOffsets;
   const boost::uint8_t *dp_fpData;      // do not free this
   const boost::uint8_t *dp_arenaChunk;  // this is what should be freed
   boost::uint32_t num4ByteElements, num8ByteElements;  // for finding ids
@@ -58,12 +57,20 @@ struct FPBReader_impl {
 void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
                       const boost::uint8_t *chunk) {
   PRECONDITION(dp_impl, "bad pointer");
+  /* this section of the FPB format is under-documented in Andrew's code,
+   * fortunately it looks pretty simple
+  */
   if (sz % 4)
     throw ValueErrorException("POPC chunk size must be a multiple of 4 bytes");
   unsigned int nEntries = sz / 4;
   if (nEntries < 9)
     throw ValueErrorException("POPC must contain at least 9 offsets");
 
+  dp_impl->popCountOffsets.reserve(nEntries);
+  for (unsigned int i = 0; i < nEntries; ++i) {
+    dp_impl->popCountOffsets.push_back(*(boost::uint32_t *)chunk);
+    chunk += 4;
+  }
   // FIX: Finish this;
 };
 void extractArena(FPBReader_impl *dp_impl, boost::uint64_t sz,
@@ -235,6 +242,9 @@ void FPBReader::init() {
     }
     delete[] chunk;
   }
+  if (!dp_impl->dp_arenaChunk) throw BadFileException("No AREN record found");
+  if (!dp_impl->dp_idChunk) throw BadFileException("No FPID record found");
+
   df_init = true;
 };
 
@@ -273,5 +283,20 @@ unsigned int FPBReader::length() const {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(dp_impl, "no impl");
   return dp_impl->len;
+};
+std::pair<unsigned int, unsigned int> FPBReader::getFPIdsInCountRange(
+    unsigned int minCount, unsigned int maxCount) {
+  PRECONDITION(df_init, "not initialized");
+  PRECONDITION(dp_impl, "no impl");
+  URANGE_CHECK(maxCount, dp_impl->nBits + 1);
+  PRECONDITION(maxCount >= minCount, "max < min");
+  if (dp_impl->popCountOffsets.size() == dp_impl->nBits + 2) {
+    return std::make_pair(dp_impl->popCountOffsets[minCount],
+                          dp_impl->popCountOffsets[maxCount + 1]);
+  } else {
+    // we don't have popcounts, so we have to work for it.
+    // FIX: complete this
+    return std::make_pair(0, 0);
+  }
 };
 }  // end of RDKit namespace
