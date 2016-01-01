@@ -39,6 +39,8 @@ class FPBReader {
   void init();
   // the caller is responsible for deleting the result
   ExplicitBitVect *getFP(unsigned int idx) const;
+  // the caller is responsible for delete[]ing the result
+  boost::uint8_t *getBytes(unsigned int idx) const;
 
   std::string getId(unsigned int idx) const;
   // the caller is responsible for deleting the first element of the pair

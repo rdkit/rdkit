@@ -10,6 +10,8 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/utils.h>
+
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
 
@@ -84,10 +86,44 @@ void test1FPBReaderBasics() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test2FPBReaderTanimoto() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing FPBReader tanimoto " << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {
+      boost::uint8_t *bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 1.0));
+      TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 0.3703));
+
+      delete[] bytes;
+    }
+    {
+      boost::uint8_t *bytes = fps.getBytes(1);
+      TEST_ASSERT(bytes);
+      TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 1.0));
+      TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 0.3703));
+      TEST_ASSERT(feq(fps.getTanimoto(2, bytes), 1.0));
+      TEST_ASSERT(feq(fps.getTanimoto(5, bytes), 0.2903));
+
+      delete[] bytes;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
   test1FPBReaderBasics();
+  test2FPBReaderTanimoto();
+  // FIX: test extractBytes()
   // FIX: need testing of edge cases
 
   return 0;

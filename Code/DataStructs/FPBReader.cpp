@@ -128,6 +128,22 @@ ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
                                                 fpData + dp_impl->nBits / 8);
   return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
 };
+// the caller is responsible for delete[]'ing this
+boost::uint8_t *extractBytes(const FPBReader_impl *dp_impl,
+                             unsigned int which) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
+
+  if (which >= dp_impl->len) {
+    throw ValueErrorException("bad index");
+  }
+  const boost::uint8_t *fpData =
+      dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
+  boost::uint8_t *res =
+      new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+  memcpy((void *)res, (void *)fpData, dp_impl->numBytesStoredPerFingerprint);
+  return res;
+};
 
 double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
                 const ::boost::uint8_t *bv) {
@@ -277,17 +293,19 @@ void FPBReader::destroy() {
 
 ExplicitBitVect *FPBReader::getFP(unsigned int idx) const {
   PRECONDITION(df_init, "not initialized");
-  PRECONDITION(dp_impl, "no impl");
-  URANGE_CHECK(idx, dp_impl->len);
 
   ExplicitBitVect *res = detail::extractFP(dp_impl, idx);
+  return res;
+};
+boost::uint8_t *FPBReader::getBytes(unsigned int idx) const {
+  PRECONDITION(df_init, "not initialized");
+
+  boost::uint8_t *res = detail::extractBytes(dp_impl, idx);
   return res;
 };
 
 std::string FPBReader::getId(unsigned int idx) const {
   PRECONDITION(df_init, "not initialized");
-  PRECONDITION(dp_impl, "no impl");
-  URANGE_CHECK(idx, dp_impl->len);
 
   std::string res = detail::extractId(dp_impl, idx);
   return res;
@@ -314,6 +332,7 @@ std::pair<unsigned int, unsigned int> FPBReader::getFPIdsInCountRange(
 };
 double FPBReader::getTanimoto(unsigned int idx,
                               const boost::uint8_t *bv) const {
+  PRECONDITION(df_init, "not initialized");
   return detail::tanimoto(dp_impl, idx, bv);
 }
 }  // end of RDKit namespace
