@@ -13,10 +13,11 @@
 // helping explain the FPB implementation
 
 #include <DataStructs/ExplicitBitVect.h>
+#include <DataStructs/BitOps.h>
+
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/StreamOps.h>
 #include "FPBReader.h"
-#include <boost/cstdint.hpp>
 
 namespace RDKit {
 
@@ -126,6 +127,18 @@ ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
       new boost::dynamic_bitset<boost::uint8_t>(fpData,
                                                 fpData + dp_impl->nBits / 8);
   return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
+};
+
+double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
+                const ::boost::uint8_t *bv) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(bv, "bad bv pointer");
+  if (which >= dp_impl->len) {
+    throw ValueErrorException("bad index");
+  }
+  const boost::uint8_t *fpData =
+      dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
+  return CalcBitmapTanimoto(fpData, bv, dp_impl->numBytesStoredPerFingerprint);
 };
 
 void extractIds(FPBReader_impl *dp_impl, boost::uint64_t sz,
@@ -299,4 +312,8 @@ std::pair<unsigned int, unsigned int> FPBReader::getFPIdsInCountRange(
     return std::make_pair(0, 0);
   }
 };
+double FPBReader::getTanimoto(unsigned int idx,
+                              const boost::uint8_t *bv) const {
+  return detail::tanimoto(dp_impl, idx, bv);
+}
 }  // end of RDKit namespace

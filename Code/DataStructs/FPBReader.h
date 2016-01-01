@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <RDGeneral/BadFileException.h>
+#include <boost/cstdint.hpp>
 
 namespace RDKit {
 namespace detail {
@@ -38,6 +39,7 @@ class FPBReader {
   void init();
   // the caller is responsible for deleting the result
   ExplicitBitVect *getFP(unsigned int idx) const;
+
   std::string getId(unsigned int idx) const;
   // the caller is responsible for deleting the first element of the pair
   std::pair<ExplicitBitVect *, std::string> operator[](unsigned int idx) const {
@@ -49,6 +51,8 @@ class FPBReader {
       unsigned int minCount, unsigned int maxCount);
 
   unsigned int length() const;
+
+  double getTanimoto(unsigned int idx, const boost::uint8_t *bv) const;
 
  private:
   std::istream *dp_istrm;

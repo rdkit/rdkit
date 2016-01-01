@@ -71,7 +71,7 @@ class PySequenceHolder {
     }
 
     POSTCONDITION(0, "cannot reach this point");
-    return static_cast<T>(0);
+    return static_cast<T>((unsigned int)0);
   };
 
  private:

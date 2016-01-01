@@ -200,12 +200,12 @@ template <typename T1, typename T2>
 double AllBitSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns an IntVect with indices of all on bits in common between two bit
-//vects
+// vects
 template <typename T1, typename T2>
 IntVect OnBitsInCommon(const T1& bv1, const T2& bv2);
 
 //! returns an IntVect with indices of all off bits in common between two bit
-//vects
+// vects
 template <typename T1, typename T2>
 IntVect OffBitsInCommon(const T1& bv1, const T2& bv2);
 
@@ -254,7 +254,7 @@ template <typename T1>
 std::string BitVectToText(const T1& bv1);
 
 //! returns a hex representation of a bit vector compatible with Andrew Dalke's
-//FPS format
+// FPS format
 /*!
   \param bv1    the vector to use
 
@@ -285,7 +285,7 @@ template <typename T1>
 void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps);
 
 //! updates a bit vector from a binary string representation of a bit vector (an
-//array of bytes)
+// array of bytes)
 /*!
   \param bv1    the vector to use
   \param fps    the binary string
@@ -294,5 +294,12 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps);
  */
 template <typename T1>
 void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps);
+
+double CalcBitmapTanimoto(const unsigned char* bv1, const unsigned char* bv2,
+                          unsigned int nBytes);
+double CalcBitmapDice(const unsigned char* bv1, const unsigned char* bv2,
+                      unsigned int nBytes);
+double CalcBitmapTversky(const unsigned char* bv1, const unsigned char* bv2,
+                         unsigned int nBytes, double ca, double cb);
 
 #endif
