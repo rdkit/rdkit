@@ -775,6 +775,14 @@ template std::string BitVectToBinaryText(const ExplicitBitVect&);
 template void UpdateBitVectFromBinaryText(SparseBitVect&, const std::string&);
 template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 
+// from here:
+// http://stackoverflow.com/questions/3849337/msvc-equivalent-to-builtin-popcount
+#ifdef __MSC_VER
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+#endif
+#define USE_BUILTIN_POPCOUNT 1
+
 // the Bitmap Tanimoto and Dice similarity code is adapted
 // from Andrew Dalke's chem-fingerprints code
 // http://code.google.com/p/chem-fingerprints/
