@@ -15,6 +15,8 @@
 #include <sstream>
 #include <string>
 #include <RDGeneral/BadFileException.h>
+#include <DataStructs/ExplicitBitVect.h>
+
 #include <boost/cstdint.hpp>
 
 namespace RDKit {
