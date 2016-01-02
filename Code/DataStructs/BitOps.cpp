@@ -800,6 +800,24 @@ static int byte_popcounts[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
 }
+unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
+  PRECONDITION(afp, "no afp");
+  unsigned int popcount = 0;
+#ifndef USE_BUILTIN_POPCOUNT
+  for (unsigned int i = 0; i < nBytes; i++) {
+    popcount += byte_popcounts[afp[i]]
+  }
+#else
+  unsigned int eidx = nBytes / sizeof(unsigned int);
+  for (unsigned int i = 0; i < eidx; ++i) {
+    popcount += __builtin_popcount(((unsigned int*)afp)[i]);
+  }
+  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+    popcount += byte_popcounts[afp[i]];
+  }
+#endif
+  return popcount;
+}
 double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
                           unsigned int nBytes) {
   PRECONDITION(afp, "no afp");

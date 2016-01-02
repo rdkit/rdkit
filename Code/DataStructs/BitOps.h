@@ -295,6 +295,10 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps);
 template <typename T1>
 void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps);
 
+// FIX: docs and tests please
+
+unsigned int CalcBitmapPopcount(const unsigned char* bv1, unsigned int nBytes);
+
 double CalcBitmapTanimoto(const unsigned char* bv1, const unsigned char* bv2,
                           unsigned int nBytes);
 double CalcBitmapDice(const unsigned char* bv1, const unsigned char* bv2,
