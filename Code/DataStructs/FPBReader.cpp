@@ -19,6 +19,8 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/Ranking.h>
 #include "FPBReader.h"
+#include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
 
 namespace RDKit {
 
@@ -49,11 +51,11 @@ struct FPBReader_impl {
   unsigned int nBits;
   boost::uint32_t numBytesStoredPerFingerprint;
   std::vector<boost::uint32_t> popCountOffsets;
-  const boost::uint8_t *dp_fpData;      // do not free this
-  const boost::uint8_t *dp_arenaChunk;  // this is what should be freed
+  const boost::uint8_t *dp_fpData;  // do not free this
+  boost::scoped_array<boost::uint8_t> dp_arenaChunk;
   boost::uint32_t num4ByteElements, num8ByteElements;  // for finding ids
   const boost::uint8_t *dp_idOffsets;                  // do not free this
-  const boost::uint8_t *dp_idChunk;                    // free this
+  boost::scoped_array<boost::uint8_t> dp_idChunk;
 };
 
 void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
@@ -211,12 +213,11 @@ void extractIds(FPBReader_impl *dp_impl, boost::uint64_t sz,
   uint64)
     id = bytes[start:end-1]
    */
-  dp_impl->dp_idChunk = chunk;
   dp_impl->num4ByteElements = *((boost::uint32_t *)chunk);
   chunk += sizeof(boost::uint32_t);
   dp_impl->num8ByteElements = *((boost::uint32_t *)chunk);
   chunk += sizeof(boost::uint32_t);
-  dp_impl->dp_idOffsets = dp_impl->dp_idChunk + sz -
+  dp_impl->dp_idOffsets = dp_impl->dp_idChunk.get() + sz -
                           (dp_impl->num4ByteElements + 1) * 4 -
                           dp_impl->num8ByteElements * 8;
 };
@@ -246,7 +247,7 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
                                dp_impl->num4ByteElements * 4 + (which + 1) * 8);
   }
   len -= offset;
-  res = std::string((const char *)(dp_impl->dp_idChunk + offset), len);
+  res = std::string((const char *)(dp_impl->dp_idChunk.get() + offset), len);
   return res;
 };
 
@@ -313,10 +314,11 @@ void FPBReader::init() {
     } else if (chunkNm == "POPC") {
       detail::extractPopCounts(dp_impl, chunkSz, chunk);
     } else if (chunkNm == "AREN") {
-      dp_impl->dp_arenaChunk = chunk;
+      dp_impl->dp_arenaChunk.reset(chunk);
       detail::extractArena(dp_impl, chunkSz, chunk);
       chunk = NULL;
     } else if (chunkNm == "FPID") {
+      dp_impl->dp_idChunk.reset(chunk);
       detail::extractIds(dp_impl, chunkSz, chunk);
       chunk = NULL;
     }
@@ -330,11 +332,8 @@ void FPBReader::init() {
 
 void FPBReader::destroy() {
   if (dp_impl) {
-    delete[] dp_impl->dp_arenaChunk;
-    dp_impl->dp_arenaChunk = NULL;
-
-    delete[] dp_impl->dp_idChunk;
-    dp_impl->dp_idChunk = NULL;
+    dp_impl->dp_arenaChunk.reset();
+    dp_impl->dp_idChunk.reset();
 
     dp_impl->dp_fpData = NULL;
     dp_impl->dp_idOffsets = NULL;
