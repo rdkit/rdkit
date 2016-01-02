@@ -17,6 +17,7 @@
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/StreamOps.h>
+#include <RDGeneral/Ranking.h>
 #include "FPBReader.h"
 
 namespace RDKit {
@@ -128,9 +129,8 @@ ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
                                                 fpData + dp_impl->nBits / 8);
   return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
 };
-// the caller is responsible for delete[]'ing this
-boost::uint8_t *extractBytes(const FPBReader_impl *dp_impl,
-                             unsigned int which) {
+const boost::uint8_t *extractBytes(const FPBReader_impl *dp_impl,
+                                   unsigned int which) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
 
@@ -139,9 +139,18 @@ boost::uint8_t *extractBytes(const FPBReader_impl *dp_impl,
   }
   const boost::uint8_t *fpData =
       dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
+  return fpData;
+};
+
+// the caller is responsible for delete[]'ing this
+boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
+
+  const boost::uint8_t *fpData = extractBytes(dp_impl, which);
   boost::uint8_t *res =
       new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
-  memcpy((void *)res, (void *)fpData, dp_impl->numBytesStoredPerFingerprint);
+  memcpy((void *)res, fpData, dp_impl->numBytesStoredPerFingerprint);
   return res;
 };
 
@@ -240,6 +249,48 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
   res = std::string((const char *)(dp_impl->dp_idChunk + offset), len);
   return res;
 };
+
+void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
+                       double threshold, unsigned int topN,
+                       std::vector<std::pair<double, unsigned int> > &res) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(bv, "bad bv");
+  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
+  RANGE_CHECK(-1e-6, threshold, 1.0 + 1e-6);
+  if (topN > 0) throw ValueErrorException("topN not yet supported");
+  res.clear();
+  boost::uint64_t probeCount =
+      CalcBitmapPopcount(bv, dp_impl->numBytesStoredPerFingerprint);
+
+  boost::uint64_t startScan = 0, endScan = dp_impl->len;
+  if (dp_impl->popCountOffsets.size() == dp_impl->nBits + 2) {
+    // figure out the bounds based on equation 24 from:
+    // 1. Swamidass, S. J. & Baldi, P. Bounds and Algorithms for Fast Exact
+    // Searches of Chemical Fingerprints in Linear and Sublinear Time. J. Chem.
+    // Inf. Model. 47, 302–317 (2007).
+    // http://pubs.acs.org/doi/abs/10.1021/ci600358f
+    boost::uint32_t minDbCount = (boost::uint32_t)floor(threshold * probeCount);
+    boost::uint32_t maxDbCount =
+        (threshold > 1e-6) ? (boost::uint32_t)ceil(probeCount / threshold)
+                           : dp_impl->numBytesStoredPerFingerprint;
+    // std::cerr << " bounds: " << minDbCount << "-" << maxDbCount << std::endl;
+    startScan = dp_impl->popCountOffsets[minDbCount];
+    endScan = dp_impl->popCountOffsets[maxDbCount + 1];
+    // std::cerr << " scan: " << startScan << "-" << endScan << std::endl;
+  }
+  for (boost::uint64_t i = startScan; i < endScan; ++i) {
+    const boost::uint8_t *dbv = extractBytes(dp_impl, i);
+    double tani =
+        CalcBitmapTanimoto(dbv, bv, dp_impl->numBytesStoredPerFingerprint);
+    // std::cerr << "  i:" << i << " " << tani << " ? " << threshold <<
+    // std::endl;
+    if (tani >= threshold) {
+      // FIX: we aren't supporting topN yet
+      res.push_back(std::make_pair(tani, i));
+    }
+  }
+}
+
 }  // end of detail namespace
 
 void FPBReader::init() {
@@ -300,7 +351,7 @@ ExplicitBitVect *FPBReader::getFP(unsigned int idx) const {
 boost::uint8_t *FPBReader::getBytes(unsigned int idx) const {
   PRECONDITION(df_init, "not initialized");
 
-  boost::uint8_t *res = detail::extractBytes(dp_impl, idx);
+  boost::uint8_t *res = detail::copyBytes(dp_impl, idx);
   return res;
 };
 
@@ -314,6 +365,11 @@ unsigned int FPBReader::length() const {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(dp_impl, "no impl");
   return dp_impl->len;
+};
+unsigned int FPBReader::nBits() const {
+  PRECONDITION(df_init, "not initialized");
+  PRECONDITION(dp_impl, "no impl");
+  return dp_impl->nBits;
 };
 std::pair<unsigned int, unsigned int> FPBReader::getFPIdsInCountRange(
     unsigned int minCount, unsigned int maxCount) {
@@ -335,4 +391,15 @@ double FPBReader::getTanimoto(unsigned int idx,
   PRECONDITION(df_init, "not initialized");
   return detail::tanimoto(dp_impl, idx, bv);
 }
+
+std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
+    const boost::uint8_t *bv, double threshold, unsigned int topN) const {
+  PRECONDITION(df_init, "not initialized");
+  std::vector<std::pair<double, unsigned int> > res;
+  detail::tanimotoNeighbors(dp_impl, bv, threshold, topN, res);
+  std::sort(res.begin(), res.end(),
+            Rankers::pairGreater<double, unsigned int>());
+  return res;
+}
+
 }  // end of RDKit namespace

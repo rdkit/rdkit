@@ -55,8 +55,12 @@ class FPBReader {
       unsigned int minCount, unsigned int maxCount);
 
   unsigned int length() const;
+  unsigned int nBits() const;
 
   double getTanimoto(unsigned int idx, const boost::uint8_t *bv) const;
+  std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
+      const boost::uint8_t *bv, double threshold = 0.7,
+      unsigned int topN = 0) const;
 
  private:
   std::istream *dp_istrm;

@@ -27,6 +27,8 @@ void test1FPBReaderBasics() {
     FPBReader fps(filename);
     fps.init();
     TEST_ASSERT(fps.length() == 100);
+    TEST_ASSERT(fps.nBits() == 2048);
+
     {  // pop counts
       std::pair<unsigned int, unsigned int> offsets;
       offsets = fps.getFPIdsInCountRange(17, 17);
@@ -118,11 +120,65 @@ void test2FPBReaderTanimoto() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test3FPBReaderTanimotoNeighbors() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing FPBReader tanimoto neighbors"
+      << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {
+      boost::uint8_t *bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTanimotoNeighbors(bytes);
+      TEST_ASSERT(nbrs.size() == 1);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+
+      delete[] bytes;
+    }
+    {  // with a threshold
+      boost::uint8_t *bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTanimotoNeighbors(bytes, 0.30);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.3703));
+      TEST_ASSERT(nbrs[1].second == 1);
+
+      delete[] bytes;
+    }
+    {  // with a threshold
+      boost::uint8_t *bytes = fps.getBytes(95);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTanimotoNeighbors(bytes, 0.30);
+      TEST_ASSERT(nbrs.size() == 2);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 95);
+      TEST_ASSERT(feq(nbrs[1].first, 0.4125));
+      TEST_ASSERT(nbrs[1].second == 89);
+
+      delete[] bytes;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
   test1FPBReaderBasics();
   test2FPBReaderTanimoto();
+  test3FPBReaderTanimotoNeighbors();
+
   // FIX: test extractBytes()
   // FIX: need testing of edge cases
 

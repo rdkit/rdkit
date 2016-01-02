@@ -12,6 +12,7 @@ class TestCase(unittest.TestCase):
       self.fpbr.Init()
    def test1Basics(self) :
       self.assertEqual(len(self.fpbr),100)
+      self.assertEqual(self.fpbr.GetNumBits(),2048)
       self.assertEqual(self.fpbr.GetId(0),"ZINC00902219")
       self.assertEqual(self.fpbr.GetId(3),"ZINC04803506")
 
@@ -22,6 +23,20 @@ class TestCase(unittest.TestCase):
                         811, 831, 888, 1335, 1411, 1664, 1820, 1917)
       obl = tuple(fp.GetOnBits())
       self.assertEqual(obs,obl)
+   def test2Tanimoto(self) :
+      bv = self.fpbr.GetBytes(0)
+      self.assertAlmostEqual(self.fpbr.GetTanimoto(0,bv),1.0,4)
+      self.assertAlmostEqual(self.fpbr.GetTanimoto(1,bv),0.3704,4)
+      tpl = self.fpbr.GetTanimotoNeighbors(bv)
+      self.assertEqual(len(tpl),1)
+      self.assertEqual(tpl[0][1],0)
+      self.assertAlmostEqual(tpl[0][0],1.,4)
+      tpl = self.fpbr.GetTanimotoNeighbors(bv,threshold=0.3)
+      self.assertEqual(len(tpl),5)
+      self.assertEqual(tpl[0][1],0)
+      self.assertAlmostEqual(tpl[0][0],1.,4)
+      self.assertEqual(tpl[1][1],1)
+      self.assertAlmostEqual(tpl[1][0],0.3704,4)
 
 
 if __name__ == '__main__':
