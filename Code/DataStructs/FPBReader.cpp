@@ -341,17 +341,16 @@ void FPBReader::destroy() {
   delete dp_impl;
 };
 
-ExplicitBitVect *FPBReader::getFP(unsigned int idx) const {
+boost::shared_ptr<ExplicitBitVect> FPBReader::getFP(unsigned int idx) const {
   PRECONDITION(df_init, "not initialized");
 
-  ExplicitBitVect *res = detail::extractFP(dp_impl, idx);
-  return res;
+  return boost::shared_ptr<ExplicitBitVect>(detail::extractFP(dp_impl, idx));
 };
-boost::uint8_t *FPBReader::getBytes(unsigned int idx) const {
+boost::shared_array<boost::uint8_t> FPBReader::getBytes(
+    unsigned int idx) const {
   PRECONDITION(df_init, "not initialized");
 
-  boost::uint8_t *res = detail::copyBytes(dp_impl, idx);
-  return res;
+  return boost::shared_array<boost::uint8_t>(detail::copyBytes(dp_impl, idx));
 };
 
 std::string FPBReader::getId(unsigned int idx) const {

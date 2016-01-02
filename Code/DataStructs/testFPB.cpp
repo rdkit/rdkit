@@ -44,7 +44,7 @@ void test1FPBReaderBasics() {
     {  // get* version
       std::string nm = fps.getId(0);
       TEST_ASSERT(nm == "ZINC00902219");
-      ExplicitBitVect *fp = fps.getFP(0);
+      boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 17);
@@ -53,11 +53,10 @@ void test1FPBReaderBasics() {
       for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
         TEST_ASSERT(fp->getBit(obs[i]));
       }
-      delete fp;
     }
     {  // operator[] version
-      std::pair<ExplicitBitVect *, std::string> tpl = fps[0];
-      ExplicitBitVect *fp = tpl.first;
+      std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
+      boost::shared_ptr<ExplicitBitVect> fp = tpl.first;
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 17);
@@ -66,11 +65,10 @@ void test1FPBReaderBasics() {
       for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
         TEST_ASSERT(fp->getBit(obs[i]));
       }
-      delete fp;
       TEST_ASSERT(tpl.second == "ZINC00902219");
     }
     {  // test another fp
-      ExplicitBitVect *fp = fps.getFP(3);
+      boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 20);
@@ -80,7 +78,6 @@ void test1FPBReaderBasics() {
       for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
         TEST_ASSERT(fp->getBit(obs[i]));
       }
-      delete fp;
       std::string nm = fps.getId(3);
       TEST_ASSERT(nm == "ZINC04803506");
     }
@@ -99,22 +96,18 @@ void test2FPBReaderTanimoto() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::uint8_t *bytes = fps.getBytes(0);
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 0.3703));
-
-      delete[] bytes;
     }
     {
-      boost::uint8_t *bytes = fps.getBytes(1);
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 0.3703));
       TEST_ASSERT(feq(fps.getTanimoto(2, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(5, bytes), 0.2903));
-
-      delete[] bytes;
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -132,18 +125,16 @@ void test3FPBReaderTanimotoNeighbors() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::uint8_t *bytes = fps.getBytes(0);
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 1);
       TEST_ASSERT(feq(nbrs[0].first, 1.));
       TEST_ASSERT(nbrs[0].second == 0);
-
-      delete[] bytes;
     }
     {  // with a threshold
-      boost::uint8_t *bytes = fps.getBytes(0);
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30);
@@ -152,11 +143,9 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[0].second == 0);
       TEST_ASSERT(feq(nbrs[1].first, 0.3703));
       TEST_ASSERT(nbrs[1].second == 1);
-
-      delete[] bytes;
     }
     {  // with a threshold
-      boost::uint8_t *bytes = fps.getBytes(95);
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(95);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30);
@@ -165,8 +154,6 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[0].second == 95);
       TEST_ASSERT(feq(nbrs[1].first, 0.4125));
       TEST_ASSERT(nbrs[1].second == 89);
-
-      delete[] bytes;
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

@@ -29,9 +29,9 @@ python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
 }
 
 python::object getBytesHelper(const FPBReader *self, unsigned int which) {
-  boost::uint8_t *bv = self->getBytes(which);
+  boost::shared_array<boost::uint8_t> bv = self->getBytes(which);
   python::object retval = python::object(python::handle<>(
-      PyBytes_FromStringAndSize((const char *)bv, self->nBits() / 8)));
+      PyBytes_FromStringAndSize((const char *)(bv.get()), self->nBits() / 8)));
   return retval;
 }
 
@@ -39,6 +39,10 @@ double getTaniHelper(const FPBReader *self, unsigned int which,
                      const std::string &bytes) {
   const boost::uint8_t *bv = (const boost::uint8_t *)bytes.c_str();
   return self->getTanimoto(which, bv);
+}
+python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
+  std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> v = (*self)[which];
+  return python::make_tuple(v.first, v.second);
 }
 }
 
@@ -55,10 +59,8 @@ struct FPB_wrapper {
         .def("__len__", &FPBReader::length)
         .def("GetNumBits", &FPBReader::nBits)
 
-        //.def("__getitem__", &FPBReader::operator[]) careful about this
-        // leaking
-        .def("GetFP", &FPBReader::getFP,
-             python::return_value_policy<python::manage_new_object>())
+        .def("__getitem__", &getItemHelper)
+        .def("GetFP", &FPBReader::getFP)
         .def("GetBytes", &getBytesHelper)
         .def("GetId", &FPBReader::getId)
         .def("GetTanimoto", &getTaniHelper)

@@ -23,6 +23,13 @@ class TestCase(unittest.TestCase):
                         811, 831, 888, 1335, 1411, 1664, 1820, 1917)
       obl = tuple(fp.GetOnBits())
       self.assertEqual(obs,obl)
+
+      # test operator[]
+      fp,nm = self.fpbr[0]
+      self.assertEqual(nm,"ZINC00902219")
+      self.assertEqual(fp.GetNumOnBits(),17)
+
+
    def test2Tanimoto(self) :
       bv = self.fpbr.GetBytes(0)
       self.assertAlmostEqual(self.fpbr.GetTanimoto(0,bv),1.0,4)

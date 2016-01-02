@@ -18,6 +18,8 @@
 #include <DataStructs/ExplicitBitVect.h>
 
 #include <boost/cstdint.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 
 namespace RDKit {
 namespace detail {
@@ -39,14 +41,12 @@ class FPBReader {
   };
 
   void init();
-  // the caller is responsible for deleting the result
-  ExplicitBitVect *getFP(unsigned int idx) const;
-  // the caller is responsible for delete[]ing the result
-  boost::uint8_t *getBytes(unsigned int idx) const;
+  boost::shared_ptr<ExplicitBitVect> getFP(unsigned int idx) const;
+  boost::shared_array<boost::uint8_t> getBytes(unsigned int idx) const;
 
   std::string getId(unsigned int idx) const;
-  // the caller is responsible for deleting the first element of the pair
-  std::pair<ExplicitBitVect *, std::string> operator[](unsigned int idx) const {
+  std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> operator[](
+      unsigned int idx) const {
     return std::make_pair(getFP(idx), getId(idx));
   };
   // returns the beginning and end index of fingerprints having on bit counts
@@ -58,9 +58,19 @@ class FPBReader {
   unsigned int nBits() const;
 
   double getTanimoto(unsigned int idx, const boost::uint8_t *bv) const;
+  double getTanimoto(unsigned int idx,
+                     boost::shared_array<boost::uint8_t> bv) const {
+    return getTanimoto(idx, bv.get());
+  };
+
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
       const boost::uint8_t *bv, double threshold = 0.7,
       unsigned int topN = 0) const;
+  std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
+      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7,
+      unsigned int topN = 0) const {
+    return getTanimotoNeighbors(bv.get(), threshold, topN);
+  };
 
  private:
   std::istream *dp_istrm;
