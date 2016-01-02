@@ -1309,7 +1309,7 @@ void test13BitVectAllOnes() {
   }
 }
 
-void test18BitVectConcatenation() {
+void test14BitVectConcatenation() {
   {
     ExplicitBitVect bv(32, false);
     ExplicitBitVect bv2(32, true);
@@ -1317,6 +1317,51 @@ void test18BitVectConcatenation() {
     TEST_ASSERT(bv3.getNumBits() == 64);
     TEST_ASSERT(bv3.getNumOnBits() == 32);
     TEST_ASSERT(bv3.getNumOffBits() == 32);
+  }
+}
+
+void test15BitmapOps() {
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    TEST_ASSERT(CalcBitmapPopcount(bv1, 5) == 5);
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x3, 0x1, 0x1};
+    TEST_ASSERT(CalcBitmapPopcount(bv1, 5) == 6);
+  }
+  {
+    const unsigned char bv1[5] = {0x0, 0x0, 0x0, 0x0, 0x0};
+    TEST_ASSERT(CalcBitmapPopcount(bv1, 5) == 0);
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTanimoto(bv1, bv2, 5), 1.0));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTanimoto(bv1, bv2, 5), 0.8));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTversky(bv1, bv2, 5, 1., 1.), 1.0));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTversky(bv1, bv2, 5, 1., 1.), 0.8));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    TEST_ASSERT(feq(CalcBitmapDice(bv1, bv2, 5), 1.0));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
+    TEST_ASSERT(feq(CalcBitmapDice(bv1, bv2, 5), 8. / 9));
   }
 }
 
@@ -1410,7 +1455,11 @@ int main() {
 
   BOOST_LOG(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  "
                           "-------------------------------" << std::endl;
-  test18BitVectConcatenation();
+  test14BitVectConcatenation();
+
+  BOOST_LOG(rdInfoLog) << " Test bitmap operations  "
+                          "-------------------------------" << std::endl;
+  test15BitmapOps();
 
   return 0;
 }
