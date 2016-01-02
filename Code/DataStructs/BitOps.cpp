@@ -777,7 +777,8 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 
 // from here:
 // http://stackoverflow.com/questions/3849337/msvc-equivalent-to-builtin-popcount
-#ifdef __MSC_VER
+// but corrected to get the ifdef right
+#ifdef _MSC_VER
 #include <intrin.h>
 #define __builtin_popcount __popcnt
 #endif
