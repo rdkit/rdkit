@@ -252,13 +252,12 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
 };
 
 void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
-                       double threshold, unsigned int topN,
+                       double threshold,
                        std::vector<std::pair<double, unsigned int> > &res) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION(bv, "bad bv");
   PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
   RANGE_CHECK(-1e-6, threshold, 1.0 + 1e-6);
-  if (topN > 0) throw ValueErrorException("topN not yet supported");
   res.clear();
   boost::uint64_t probeCount =
       CalcBitmapPopcount(bv, dp_impl->numBytesStoredPerFingerprint);
@@ -286,7 +285,6 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // std::cerr << "  i:" << i << " " << tani << " ? " << threshold <<
     // std::endl;
     if (tani >= threshold) {
-      // FIX: we aren't supporting topN yet
       res.push_back(std::make_pair(tani, i));
     }
   }
@@ -391,10 +389,10 @@ double FPBReader::getTanimoto(unsigned int idx,
 }
 
 std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
-    const boost::uint8_t *bv, double threshold, unsigned int topN) const {
+    const boost::uint8_t *bv, double threshold) const {
   PRECONDITION(df_init, "not initialized");
   std::vector<std::pair<double, unsigned int> > res;
-  detail::tanimotoNeighbors(dp_impl, bv, threshold, topN, res);
+  detail::tanimotoNeighbors(dp_impl, bv, threshold, res);
   std::sort(res.begin(), res.end(),
             Rankers::pairGreater<double, unsigned int>());
   return res;

@@ -64,13 +64,14 @@ class FPBReader {
   };
 
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      const boost::uint8_t *bv, double threshold = 0.7,
-      unsigned int topN = 0) const;
+      const boost::uint8_t *bv, double threshold = 0.7) const;
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7,
-      unsigned int topN = 0) const {
-    return getTanimotoNeighbors(bv.get(), threshold, topN);
+      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7) const {
+    return getTanimotoNeighbors(bv.get(), threshold);
   };
+
+  // FIX: add containment operator and searches (to enable substructure
+  // screening)
 
  private:
   std::istream *dp_istrm;

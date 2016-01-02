@@ -166,8 +166,5 @@ int main() {
   test2FPBReaderTanimoto();
   test3FPBReaderTanimotoNeighbors();
 
-  // FIX: test extractBytes()
-  // FIX: need testing of edge cases
-
   return 0;
 }

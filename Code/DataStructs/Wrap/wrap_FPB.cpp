@@ -17,10 +17,10 @@ using namespace RDKit;
 
 namespace {
 python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
-                            double threshold, unsigned int topN) {
+                            double threshold) {
   const boost::uint8_t *bv = (const boost::uint8_t *)bytes.c_str();
   std::vector<std::pair<double, unsigned int> > nbrs =
-      self->getTanimotoNeighbors(bv, threshold, topN);
+      self->getTanimotoNeighbors(bv, threshold);
   python::list result;
   for (unsigned int i = 0; i < nbrs.size(); ++i) {
     result.append(python::make_tuple(nbrs[i].first, nbrs[i].second));
@@ -57,19 +57,14 @@ struct FPB_wrapper {
         "FPBReader", FPBReaderClassDoc.c_str(), python::init<std::string>())
         .def("Init", &FPBReader::init, "init.\n")
         .def("__len__", &FPBReader::length)
-        .def("GetNumBits", &FPBReader::nBits)
-
         .def("__getitem__", &getItemHelper)
+        .def("GetNumBits", &FPBReader::nBits)
         .def("GetFP", &FPBReader::getFP)
         .def("GetBytes", &getBytesHelper)
         .def("GetId", &FPBReader::getId)
         .def("GetTanimoto", &getTaniHelper)
-
         .def("GetTanimotoNeighbors", &taniNbrHelper,
-             (python::arg("bv"), python::arg("threshold") = 0.7,
-              python::arg("topN") = 0))
-
-        ;
+             (python::arg("bv"), python::arg("threshold") = 0.7));
   }
 };
 
