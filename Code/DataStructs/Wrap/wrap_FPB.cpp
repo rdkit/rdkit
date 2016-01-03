@@ -54,7 +54,10 @@ std::string FPBReaderClassDoc =
 struct FPB_wrapper {
   static void wrap() {
     python::class_<FPBReader, boost::noncopyable>(
-        "FPBReader", FPBReaderClassDoc.c_str(), python::init<std::string>())
+        "FPBReader", FPBReaderClassDoc.c_str(),
+        python::init<std::string, python::optional<bool> >(
+            (python::arg("filename"), python::arg("lazy") = false),
+            "docstring"))
         .def("Init", &FPBReader::init, "init.\n")
         .def("__len__", &FPBReader::length)
         .def("__getitem__", &getItemHelper)

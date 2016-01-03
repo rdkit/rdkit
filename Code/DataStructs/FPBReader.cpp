@@ -29,23 +29,6 @@ const unsigned int magicSize = 8;
 const std::string FPB_MAGIC("FPB1\r\n\0\0", 8);
 const unsigned int tagNameSize = 4;
 
-// the caller is responsible for calling delete[] on `data`
-void readChunk(std::istream &istrm, std::string &nm, boost::uint64_t &sz,
-               boost::uint8_t *&data) {
-  streamRead(istrm, sz);
-  char tag[tagNameSize + 1];
-  tag[tagNameSize] = 0;
-  istrm.read(tag, tagNameSize);
-  nm = tag;
-  if (sz) {
-    data = new boost::uint8_t[sz];
-    istrm.read((char *)data, sz);
-  } else {
-    data = NULL;
-  }
-  // std::cerr << "  CHUNKSZ: " << sz << " name: " << nm << std::endl;
-}
-
 struct FPBReader_impl {
   unsigned int len;
   unsigned int nBits;
@@ -56,7 +39,31 @@ struct FPBReader_impl {
   boost::uint32_t num4ByteElements, num8ByteElements;  // for finding ids
   const boost::uint8_t *dp_idOffsets;                  // do not free this
   boost::scoped_array<boost::uint8_t> dp_idChunk;
+  bool df_lazy;  // read the fp data lazily. In this case we use fpDataOffset
+                 // and seek instead of using dp_fpData
+  std::streampos fpDataOffset;  // file offset from tellg
+  std::istream *istrm;  // we don't own this, it's just used for the lazy reader
 };
+
+// the caller is responsible for calling delete[] on `data`
+void readChunkDetails(std::istream &istrm, std::string &nm,
+                      boost::uint64_t &sz) {
+  streamRead(istrm, sz);
+  char tag[tagNameSize + 1];
+  tag[tagNameSize] = 0;
+  istrm.read(tag, tagNameSize);
+  nm = tag;
+}
+void readChunkData(std::istream &istrm, boost::uint64_t &sz,
+                   boost::uint8_t *&data) {
+  if (sz) {
+    data = new boost::uint8_t[sz];
+    istrm.read((char *)data, sz);
+  } else {
+    data = NULL;
+  }
+  // std::cerr << "  CHUNKSZ: " << sz << " name: " << nm << std::endl;
+}
 
 void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
                       const boost::uint8_t *chunk) {
@@ -77,6 +84,33 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
   }
   // FIX: Finish this;
 };
+
+void extractArenaDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
+  PRECONDITION(dp_impl, "bad pointer");
+  PRECONDITION(dp_impl->df_lazy, "should only be used in lazy mode");
+
+  boost::uint32_t numBytesPerFingerprint;
+  streamRead(*dp_impl->istrm, numBytesPerFingerprint);
+  dp_impl->nBits = numBytesPerFingerprint * 8;
+
+  boost::uint32_t numBytesStoredPerFingerprint;
+  streamRead(*dp_impl->istrm, numBytesStoredPerFingerprint);
+  dp_impl->numBytesStoredPerFingerprint = numBytesStoredPerFingerprint;
+  boost::uint8_t spacer;
+  streamRead(*dp_impl->istrm, spacer);
+  dp_impl->len = (sz - 9 - spacer) / numBytesStoredPerFingerprint;
+
+  // streamRead(*dp_impl->istrm, spacer);
+  // now move forward the length of the spacer
+  if (spacer) dp_impl->istrm->seekg((std::streamoff)spacer, std::ios_base::cur);
+  dp_impl->fpDataOffset = dp_impl->istrm->tellg();
+  dp_impl->istrm->seekg(
+      static_cast<std::streamoff>(numBytesStoredPerFingerprint * dp_impl->len),
+      std::ios_base::cur);
+  std::cerr << "arena details nBits: " << dp_impl->nBits
+            << " len: " << dp_impl->len << " offset: " << dp_impl->fpDataOffset
+            << std::endl;
+}
 void extractArena(FPBReader_impl *dp_impl, boost::uint64_t sz,
                   const boost::uint8_t *chunk) {
   PRECONDITION(dp_impl, "bad pointer");
@@ -116,44 +150,51 @@ To get the number of fingerprints in the arena:
   dp_impl->len = (sz - 9 - spacer) / dp_impl->numBytesStoredPerFingerprint;
 };
 
-// the caller is responsible for delete'ing this
-ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
-  PRECONDITION(dp_impl, "bad reader pointer");
-  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
-
-  if (which >= dp_impl->len) {
-    throw ValueErrorException("bad index");
-  }
-  const boost::uint8_t *fpData =
-      dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
-  boost::dynamic_bitset<boost::uint8_t> *fpbs =
-      new boost::dynamic_bitset<boost::uint8_t>(fpData,
-                                                fpData + dp_impl->nBits / 8);
-  return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
-};
 const boost::uint8_t *extractBytes(const FPBReader_impl *dp_impl,
                                    unsigned int which) {
   PRECONDITION(dp_impl, "bad reader pointer");
-  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
+  PRECONDITION((dp_impl->df_lazy || dp_impl->dp_fpData), "bad fpdata pointer");
+  PRECONDITION(!dp_impl->df_lazy || dp_impl->istrm, "no stream in lazy mode");
 
   if (which >= dp_impl->len) {
     throw ValueErrorException("bad index");
   }
-  const boost::uint8_t *fpData =
-      dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
+  const boost::uint8_t *fpData;
+  boost::uint64_t offset = which * dp_impl->numBytesStoredPerFingerprint;
+  if (!dp_impl->df_lazy) {
+    fpData = dp_impl->dp_fpData + offset;
+  } else {
+    dp_impl->istrm->seekg(dp_impl->fpDataOffset + (std::streampos)offset);
+    fpData = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+    dp_impl->istrm->read((char *)fpData, dp_impl->numBytesStoredPerFingerprint);
+  }
   return fpData;
 };
 
 // the caller is responsible for delete[]'ing this
 boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
   PRECONDITION(dp_impl, "bad reader pointer");
-  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
+  boost::uint8_t *res;
+  if (!dp_impl->df_lazy) {
+    const boost::uint8_t *fpData = extractBytes(dp_impl, which);
+    res = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+    memcpy((void *)res, fpData, dp_impl->numBytesStoredPerFingerprint);
+  } else {
+    res = const_cast<boost::uint8_t *>(extractBytes(dp_impl, which));
+  }
+  return res;
+};
+
+// the caller is responsible for delete'ing this
+ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
+  PRECONDITION(dp_impl, "bad reader pointer");
 
   const boost::uint8_t *fpData = extractBytes(dp_impl, which);
-  boost::uint8_t *res =
-      new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
-  memcpy((void *)res, fpData, dp_impl->numBytesStoredPerFingerprint);
-  return res;
+  boost::dynamic_bitset<boost::uint8_t> *fpbs =
+      new boost::dynamic_bitset<boost::uint8_t>(fpData,
+                                                fpData + dp_impl->nBits / 8);
+  if (dp_impl->df_lazy) delete[] fpData;
+  return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
 };
 
 double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
@@ -163,9 +204,11 @@ double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
   if (which >= dp_impl->len) {
     throw ValueErrorException("bad index");
   }
-  const boost::uint8_t *fpData =
-      dp_impl->dp_fpData + which * dp_impl->numBytesStoredPerFingerprint;
-  return CalcBitmapTanimoto(fpData, bv, dp_impl->numBytesStoredPerFingerprint);
+  const boost::uint8_t *fpData = extractBytes(dp_impl, which);
+  double res =
+      CalcBitmapTanimoto(fpData, bv, dp_impl->numBytesStoredPerFingerprint);
+  if (dp_impl->df_lazy) delete[] fpData;
+  return res;
 };
 
 void extractIds(FPBReader_impl *dp_impl, boost::uint64_t sz,
@@ -256,7 +299,6 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
                        std::vector<std::pair<double, unsigned int> > &res) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION(bv, "bad bv");
-  PRECONDITION(dp_impl->dp_fpData, "bad fpdata pointer");
   RANGE_CHECK(-1e-6, threshold, 1.0 + 1e-6);
   res.clear();
   boost::uint64_t probeCount =
@@ -282,6 +324,7 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     const boost::uint8_t *dbv = extractBytes(dp_impl, i);
     double tani =
         CalcBitmapTanimoto(dbv, bv, dp_impl->numBytesStoredPerFingerprint);
+    if (dp_impl->df_lazy) delete[] dbv;
     // std::cerr << "  i:" << i << " " << tani << " ? " << threshold <<
     // std::endl;
     if (tani >= threshold) {
@@ -295,6 +338,8 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
   dp_impl = new detail::FPBReader_impl;
+  dp_impl->istrm = dp_istrm;
+  dp_impl->df_lazy = df_lazyRead;
 
   char magic[detail::magicSize];
   dp_istrm->read(magic, detail::magicSize);
@@ -306,23 +351,32 @@ void FPBReader::init() {
     std::string chunkNm;
     boost::uint64_t chunkSz;
     boost::uint8_t *chunk = NULL;
-    detail::readChunk(*dp_istrm, chunkNm, chunkSz, chunk);
-    if (chunkNm == "FEND") {
-      break;
-    } else if (chunkNm == "POPC") {
-      detail::extractPopCounts(dp_impl, chunkSz, chunk);
-    } else if (chunkNm == "AREN") {
-      dp_impl->dp_arenaChunk.reset(chunk);
-      detail::extractArena(dp_impl, chunkSz, chunk);
-      chunk = NULL;
-    } else if (chunkNm == "FPID") {
-      dp_impl->dp_idChunk.reset(chunk);
-      detail::extractIds(dp_impl, chunkSz, chunk);
-      chunk = NULL;
+    detail::readChunkDetails(*dp_istrm, chunkNm, chunkSz);
+    if (!df_lazyRead || chunkNm != "AREN") {
+      detail::readChunkData(*dp_istrm, chunkSz, chunk);
+      if (chunkNm == "FEND") {
+        break;
+      } else if (chunkNm == "POPC") {
+        detail::extractPopCounts(dp_impl, chunkSz, chunk);
+      } else if (chunkNm == "AREN") {
+        dp_impl->dp_arenaChunk.reset(chunk);
+        detail::extractArena(dp_impl, chunkSz, chunk);
+        chunk = NULL;
+      } else if (chunkNm == "FPID") {
+        dp_impl->dp_idChunk.reset(chunk);
+        detail::extractIds(dp_impl, chunkSz, chunk);
+        chunk = NULL;
+      }
+      delete[] chunk;
+    } else {
+      // we are reading the AREN chunk in lazy mode, just get our position in
+      // the file.
+      detail::extractArenaDetails(dp_impl, chunkSz);
     }
-    delete[] chunk;
   }
-  if (!dp_impl->dp_arenaChunk) throw BadFileException("No AREN record found");
+  if ((!df_lazyRead && !dp_impl->dp_arenaChunk) ||
+      (df_lazyRead && !dp_impl->fpDataOffset))
+    throw BadFileException("No AREN record found");
   if (!dp_impl->dp_idChunk) throw BadFileException("No FPID record found");
 
   df_init = true;

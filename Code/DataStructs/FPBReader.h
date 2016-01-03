@@ -28,11 +28,23 @@ struct FPBReader_impl;
 class FPBReader {
  public:
   FPBReader()
-      : dp_istrm(NULL), dp_impl(NULL), df_owner(false), df_init(false){};
-  FPBReader(const char *fname) { _initFromFilename(fname); };
-  FPBReader(const std::string &fname) { _initFromFilename(fname.c_str()); };
-  FPBReader(std::istream *inStream, bool takeOwnership = true)
-      : dp_istrm(inStream), df_owner(takeOwnership), df_init(false){};
+      : dp_istrm(NULL),
+        dp_impl(NULL),
+        df_owner(false),
+        df_init(false),
+        df_lazyRead(false){};
+  FPBReader(const char *fname, bool lazyRead = false) {
+    _initFromFilename(fname, lazyRead);
+  };
+  FPBReader(const std::string &fname, bool lazyRead = false) {
+    _initFromFilename(fname.c_str(), lazyRead);
+  };
+  FPBReader(std::istream *inStream, bool takeOwnership = true,
+            bool lazyRead = false)
+      : dp_istrm(inStream),
+        df_owner(takeOwnership),
+        df_init(false),
+        df_lazyRead(lazyRead){};
   ~FPBReader() {
     destroy();
     if (df_owner) delete dp_istrm;
@@ -78,6 +90,7 @@ class FPBReader {
   detail::FPBReader_impl *dp_impl;  // implementation details
   bool df_owner;
   bool df_init;
+  bool df_lazyRead;
 
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be
@@ -86,7 +99,7 @@ class FPBReader {
   FPBReader(const FPBReader &);
   FPBReader &operator=(const FPBReader &);
   void destroy();
-  void _initFromFilename(const char *fname) {
+  void _initFromFilename(const char *fname, bool lazyRead) {
     std::istream *tmpStream = static_cast<std::istream *>(
         new std::ifstream(fname, std::ios_base::binary));
     if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
@@ -97,6 +110,7 @@ class FPBReader {
     dp_istrm = tmpStream;
     df_owner = true;
     df_init = false;
+    df_lazyRead = lazyRead;
   }
 };
 }
