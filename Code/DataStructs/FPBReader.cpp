@@ -107,9 +107,6 @@ void extractArenaDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
   dp_impl->istrm->seekg(
       static_cast<std::streamoff>(numBytesStoredPerFingerprint * dp_impl->len),
       std::ios_base::cur);
-  std::cerr << "arena details nBits: " << dp_impl->nBits
-            << " len: " << dp_impl->len << " offset: " << dp_impl->fpDataOffset
-            << std::endl;
 }
 void extractArena(FPBReader_impl *dp_impl, boost::uint64_t sz,
                   const boost::uint8_t *chunk) {
