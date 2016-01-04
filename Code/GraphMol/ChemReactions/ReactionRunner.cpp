@@ -976,9 +976,11 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product, bool addDummyAtoms) 
 
   // Go backwards through the atoms so that removing atoms doesn't
   //  muck up the next atom in the loops index.
-  std::vector<unsigned> atomsToRemove;
-  for (int i = numAtoms - 1; i >= 0; --i) {
-    Atom *scaffold_atom = mol->getAtomWithIdx((unsigned int)i);
+  std::vector<unsigned int> atomsToRemove;
+  for (int scaffold_atom_idx = numAtoms - 1;
+       scaffold_atom_idx >= 0; --scaffold_atom_idx) {
+    Atom *scaffold_atom = mol->getAtomWithIdx(rdcast<unsigned int>(
+        scaffold_atom_idx));
     // add map no's here from dummy atoms
     if (!scaffold_atom->hasProp(REACT_ATOM_IDX)) {
       // are we attached to a reactant atom?
@@ -1014,8 +1016,7 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product, bool addDummyAtoms) 
         mapno = getAtomMapNo(mol->getAtomBookmarks(), scaffold_atom);
       }
 
-      atomsToRemove.push_back(
-          scaffold_atom->getIdx());  // mol->removeAtom(scaffold_atom);
+      atomsToRemove.push_back(rdcast<unsigned int>(scaffold_atom_idx));
 
       if (bonds_to_product.size()) {
         if (addDummyAtoms) {
