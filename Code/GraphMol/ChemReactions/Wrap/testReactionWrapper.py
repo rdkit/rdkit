@@ -521,5 +521,103 @@ M  END
       mb2 = Chem.MolToMolBlock(reactants[i])
       self.assertEquals(mb1, mb2)
 
+  def test22RunSingleReactant(self):
+    # from
+    # A Collection of Robust Organic Synthesis Reactions for In Silico Molecule Design
+    # Markus Hartenfeller,*, Martin Eberle, Peter Meier, Cristina Nieto-Oberhuber,
+    # Karl-Heinz Altmann, Gisbert Schneider, Edgar Jacoby, and Steffen Renner
+    # Novartis Institutes for BioMedical Research, Novartis Pharma AG, Forum 1,
+    # Novartis Campus, CH-4056 Basel, Switzerland Swiss Federal Institute of Technology (ETH)
+    #  Zurich, Switzerland
+    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
+    rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
+    reagents = [Chem.MolFromSmiles(x) for x in  ['C=CCN=C=S', 'NCc1ncc(Cl)cc1Br']]
+    res = rxn.RunReactants(reagents)
+    self.assertTrue(res)
+    expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("C=CCNC(N)=S"))]
+    expected_result.sort()
+    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[1*:1]=S.[3*:3]CC=C"), isomericSmiles=True)]
+    sidechains_nodummy_expected_result = [ [0,[3,],[1,]], [3,[1,],[2,]] ]
+    sidechains_nodummy = []
+    
+    sidechains_expected_result.sort()
+
+    for addDummy in [True, False]:
+      res = rxn.RunReactant(reagents[0], 0)
+      assert res
+      result = []
+      sidechains = []
+      for match in res:
+        for mol in match:
+          result.append(Chem.MolToSmiles(mol,isomericSmiles=True))
+          sidechain = rdChemReactions.ReduceProductToSideChains(mol, addDummy)
+          sidechains.append(
+            Chem.MolToSmiles(sidechain, isomericSmiles=True))
+          if not addDummy:
+            for atom in sidechain.GetAtoms():
+              if atom.HasProp("_rgroupAtomMaps"):
+                sidechains_nodummy.append( [atom.GetIdx(),
+                                            eval(atom.GetProp("_rgroupAtomMaps")),
+                                            eval(atom.GetProp("_rgroupBonds")),
+                                          ] )
+          result.sort()
+          sidechains.sort()
+
+      if addDummy:
+        self.assertEquals(result, expected_result)
+        self.assertEquals(sidechains, sidechains_expected_result)
+      else:
+        self.assertEquals(sidechains_nodummy, sidechains_nodummy_expected_result)
+        
+
+    expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("NCNCc1ncc(Cl)cc1Br"))]
+    expected_result.sort()
+    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[2*:2]Cc1ncc(Cl)cc1Br"), isomericSmiles=True)]
+    sidechains_expected_result.sort()
+
+    res = rxn.RunReactant(reagents[1], 1)
+    result = []
+    sidechains = []
+    for match in res:
+      for mol in match:
+        result.append(Chem.MolToSmiles(mol,isomericSmiles=True))
+        sidechains.append(Chem.MolToSmiles(
+          rdChemReactions.ReduceProductToSideChains(mol),
+          isomericSmiles=True))
+
+    result.sort()
+    self.assertEquals(result, expected_result)
+    self.assertEquals(sidechains, sidechains_expected_result)
+
+    self.assertFalse(rxn.RunReactant(reagents[0], 1))
+    self.assertFalse(rxn.RunReactant(reagents[1], 0))
+
+    # try a broken ring based side-chain
+    sidechains_expected_result = ['c1ccc2c(c1)nc1n2CC[2*:2]1']
+    reactant = Chem.MolFromSmiles('c1ccc2c(c1)nc1n2CCN1')
+    res = rxn.RunReactant(reactant, 1)
+    result = []
+    sidechains = []
+    for match in res:
+      for mol in match:
+        result.append(Chem.MolToSmiles(mol,isomericSmiles=True))
+        sidechains.append(Chem.MolToSmiles(
+          rdChemReactions.ReduceProductToSideChains(mol),
+          isomericSmiles=True))
+        sidechain = rdChemReactions.ReduceProductToSideChains(mol, addDummyAtoms=False)
+
+    self.assertEquals(sidechains, sidechains_expected_result)
+
+  def test23CheckNonProduct(self):
+    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
+    rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
+    mol = Chem.MolFromSmiles("CCCCCCCC")
+    m = rdChemReactions.ReduceProductToSideChains(mol)
+    self.assertTrue(m.GetNumAtoms() == 0)
+    mol = Chem.AddHs(mol)
+    m = rdChemReactions.ReduceProductToSideChains(mol)
+    self.assertTrue(m.GetNumAtoms() == 0)
+    
+      
 if __name__ == '__main__':
   unittest.main()

@@ -1487,7 +1487,8 @@ void testIssue188() {
 
 void testIssue189() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 189: "
-                          "BondDirs not getting properly cleared." << std::endl;
+                          "BondDirs not getting properly cleared."
+                       << std::endl;
   ROMol *m;
   std::string smi, refSmi;
   int count;
@@ -1542,7 +1543,8 @@ void testIssue189() {
 
 void testIssue190() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 190: "
-                          "BondDirs incorrectly cleared." << std::endl;
+                          "BondDirs incorrectly cleared."
+                       << std::endl;
   ROMol *m;
   std::string smi, refSmi;
   int count;
@@ -1664,7 +1666,8 @@ void testIssue190() {
 
 void testShortestPath() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing shortest path "
-                          "code. This should finish very quickly." << std::endl;
+                          "code. This should finish very quickly."
+                       << std::endl;
   {
     std::string smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O";
     ROMol *m = SmilesToMol(smi);
@@ -2246,7 +2249,8 @@ void testSFIssue1719053() {
 
 void testSFIssue1811276() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "1811276 (kekulization failing) " << std::endl;
+                          "1811276 (kekulization failing) "
+                       << std::endl;
   ROMol *m;
 
   std::string smi;
@@ -2288,7 +2292,8 @@ void testSFIssue1811276() {
 
 void testSFIssue1836576() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "1836576 (sanitization crash) " << std::endl;
+                          "1836576 (sanitization crash) "
+                       << std::endl;
   RWMol *m;
 
   std::string smi;
@@ -2918,7 +2923,8 @@ void testHybridization() {
 
 void testSFNetIssue2196817() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "2196817: handling of aromatic dummies" << std::endl;
+                          "2196817: handling of aromatic dummies"
+                       << std::endl;
 
   {
     std::string pathName = getenv("RDBASE");
@@ -3037,7 +3043,8 @@ void testSFNetIssue2196817() {
 
 void testSFNetIssue2208994() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "2208994 : kekulization error" << std::endl;
+                          "2208994 : kekulization error"
+                       << std::endl;
 
   {
     std::string smi = "Cn1ccc(=O)n1C";
@@ -3074,7 +3081,8 @@ void testSFNetIssue2208994() {
 
 void testSFNetIssue2313979() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "2313979: aromaticity assignment hangs " << std::endl;
+                          "2313979: aromaticity assignment hangs "
+                       << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -3100,7 +3108,8 @@ void testSFNetIssue2313979() {
 
 void testSFNetIssue2316677() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "2316677 : canonicalization error" << std::endl;
+                          "2316677 : canonicalization error"
+                       << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -3118,7 +3127,8 @@ void testSFNetIssue2316677() {
 void testSanitizeNonringAromatics() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2830244: make sure that non-ring aromatic atoms "
-                          "generate errors:" << std::endl;
+                          "generate errors:"
+                       << std::endl;
   {
     std::string smi = "c-C";
 
@@ -3214,7 +3224,8 @@ void testSFNetIssue2951221() {
 void testSFNetIssue2952255() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2952255 : bad assignment of radicals to early "
-                          "elements" << std::endl;
+                          "elements"
+                       << std::endl;
   {
     std::string smi = "[C](C)(C)C";
     RWMol *m = SmilesToMol(smi);
@@ -3353,7 +3364,8 @@ void testSFNetIssue2952255() {
 
 void testSFNetIssue3185548() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "3185548 : problems with SSSR code" << std::endl;
+                          "3185548 : problems with SSSR code"
+                       << std::endl;
 
   {
     std::string pathName = getenv("RDBASE");
@@ -4066,7 +4078,8 @@ void testBasicCanon() {
 
 void testSFNetIssue3549146() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "3549146: problems after mergeQueryHs" << std::endl;
+                          "3549146: problems after mergeQueryHs"
+                       << std::endl;
 
   {
     std::string pathName = getenv("RDBASE");
@@ -4120,7 +4133,8 @@ void testSFNetIssue3549146() {
 
 void testSFNetIssue249() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 249: "
-                          "finding rings consumes all memory" << std::endl;
+                          "finding rings consumes all memory"
+                       << std::endl;
 
   {
     std::string smi =
@@ -4244,7 +4258,8 @@ void testSFNetIssue256() {
 
 void testSFNetIssue266() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 266: "
-                          "ring finding error" << std::endl;
+                          "ring finding error"
+                       << std::endl;
 
   {
     std::string pathName = getenv("RDBASE");
@@ -4266,7 +4281,8 @@ void testSFNetIssue266() {
 
 void testSFNetIssue272() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 272: "
-                          "removing two-coordinate Hs" << std::endl;
+                          "removing two-coordinate Hs"
+                       << std::endl;
 
   {
     std::string smi = "C[H-]C";
@@ -4503,7 +4519,8 @@ void testRenumberAtoms() {
 void testGithubIssue141() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 141: "
                           "Kekulization of molecule with aromatic N leaves the "
-                          "explicit H there." << std::endl;
+                          "explicit H there."
+                       << std::endl;
   {
     std::string smiles = "N1C=CC=C1";
     RWMol *m = SmilesToMol(smiles);
@@ -4596,7 +4613,8 @@ void testMolAssignment() {
 
 void testGithubIssue190() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 190: "
-                          "Don't merge Hs onto dummy atoms." << std::endl;
+                          "Don't merge Hs onto dummy atoms."
+                       << std::endl;
   {
     std::string smiles = "*[H]";
     RWMol *m = SmilesToMol(smiles);
@@ -4678,7 +4696,8 @@ void testMolFragsWithQuery() {
 
 void testGithubIssue418() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 418: "
-                          "removeHs not updating H count." << std::endl;
+                          "removeHs not updating H count."
+                       << std::endl;
   {
     RWMol *m2 = new RWMol();
     m2->addAtom(new Atom(7), true, true);
@@ -4718,7 +4737,8 @@ void testGithubIssue418() {
 void testGithubIssue432() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 432: "
                           "problems caused by aromatic Ns with radical "
-                          "electrons." << std::endl;
+                          "electrons."
+                       << std::endl;
   {
     std::string smiles = "C1=NN=N[N]1";
     RWMol *m = SmilesToMol(smiles);
@@ -4808,7 +4828,8 @@ void testGithubIssue443() {
 void testGithubIssue447() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 447: "
                           "Radicals are not correctly assigned when reading "
-                          "from SMILES." << std::endl;
+                          "from SMILES."
+                       << std::endl;
   {
     std::string smiles = "C[S]";
     RWMol *m = SmilesToMol(smiles);
@@ -4872,7 +4893,8 @@ void testGithubIssue447() {
 
 void testGetMolFrags() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing generation of new "
-                          "molecules from molecule fragments" << std::endl;
+                          "molecules from molecule fragments"
+                       << std::endl;
   {
     std::string smiles = "c1ccccc1.O.CCC(=O)O";
     RWMol *m = SmilesToMol(smiles);
@@ -4953,7 +4975,8 @@ void testGetMolFrags() {
 
 void testGithubIssue510() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: "
-                          "Hexafluorophosphate cannot be handled" << std::endl;
+                          "Hexafluorophosphate cannot be handled"
+                       << std::endl;
   {
     std::string smiles = "F[P-](F)(F)(F)(F)F";
     RWMol *m = SmilesToMol(smiles);
@@ -4995,7 +5018,8 @@ void testGithubIssue539() {
                           "Lack of conjugation in allyl cations, "
                           "lack of aromaticity perception/ability to kekulize "
                           "aromatic carbocations such as cyclopropenyl and "
-                          "tropylium" << std::endl;
+                          "tropylium"
+                       << std::endl;
   {
     std::string smiles = "C=C-[CH2+]";
     RWMol *m = SmilesToMol(smiles);
@@ -5299,6 +5323,132 @@ void testAdjustQueryProperties() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue678() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 678: "
+         "failure in AddHs when addCoords is true and coords are all zero"
+      << std::endl;
+  {
+    std::string smiles = "CC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    Conformer *conf = new Conformer(2);
+    m->addConformer(conf);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+    delete m;
+  }
+
+  {  // single connected atom with degenerate coords
+    std::string mb =
+        "example\n"
+        "  Mrv0541 12171503572D          \n"
+        "\n"
+        "  7  8  0  0  0  0            999 V2000\n"
+        "   -3.5063    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -3.5063    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -2.6813    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -2.6813    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "  1  2  1  0  0  0  0\n"
+        "  1  3  1  0  0  0  0\n"
+        "  3  4  1  0  0  0  0\n"
+        "  2  4  1  0  0  0  0\n"
+        "  3  5  1  0  0  0  0\n"
+        "  5  6  1  0  0  0  0\n"
+        "  4  6  1  0  0  0  0\n"
+        "  5  7  1  0  0  0  0\n"
+        "M  END\n";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 19);
+    delete m;
+  }
+  {  // doubly connected atom(s) with degenerate coords
+    std::string mb =
+        "example\n"
+        "  Mrv0541 12171503572D          \n"
+        "\n"
+        "  7  8  0  0  0  0            999 V2000\n"
+        "   -3.5063    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -3.5063    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -2.6813    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -2.6813    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.2729    3.1173    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "  1  2  1  0  0  0  0\n"
+        "  1  3  1  0  0  0  0\n"
+        "  3  4  1  0  0  0  0\n"
+        "  2  4  1  0  0  0  0\n"
+        "  3  5  1  0  0  0  0\n"
+        "  5  6  1  0  0  0  0\n"
+        "  4  6  1  0  0  0  0\n"
+        "  5  7  1  0  0  0  0\n"
+        "M  END\n";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 19);
+    delete m;
+  }
+
+  {  // triply connected atom(s) with degenerate coords
+    std::string mb =
+        "example\n"
+        "  Mrv0541 12171503572D          \n"
+        "\n"
+        "  7  8  0  0  0  0            999 V2000\n"
+        "   -3.5063    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -3.5063    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -3.5063    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -3.5063    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    2.5339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.8563    1.7089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.2729    3.1173    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "  1  2  1  0  0  0  0\n"
+        "  1  3  1  0  0  0  0\n"
+        "  3  4  1  0  0  0  0\n"
+        "  2  4  1  0  0  0  0\n"
+        "  3  5  1  0  0  0  0\n"
+        "  5  6  1  0  0  0  0\n"
+        "  4  6  1  0  0  0  0\n"
+        "  5  7  1  0  0  0  0\n"
+        "M  END\n";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 19);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -5378,7 +5528,8 @@ int main() {
   testGithubIssue510();
   testGithubIssue526();
   testGithubIssue539();
-#endif
   testAdjustQueryProperties();
+#endif
+  testGithubIssue678();
   return 0;
 }

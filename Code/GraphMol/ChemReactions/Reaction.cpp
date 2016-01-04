@@ -52,6 +52,11 @@ std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactants(
   return run_Reactants(*this, reactants);
 }
 
+std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactant(
+    const ROMOL_SPTR reactant, unsigned int reactionTemplateIdx) const {
+  return run_Reactant(*this, reactant, reactionTemplateIdx);
+}
+
 ChemicalReaction::ChemicalReaction(const std::string &pickle) {
   ReactionPickler::reactionFromPickle(pickle, this);
 }

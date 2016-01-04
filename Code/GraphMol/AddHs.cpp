@@ -91,7 +91,14 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
-        nbr1Vect = heavyPos.directionVector(nbr1Pos);
+        nbr1Vect = nbr1Pos - heavyPos;
+        if (fabs(nbr1Vect.lengthSq()) < 1e-4) {
+          // no difference, which likely indicates that we have redundant atoms.
+          // just put it on top of the heavy atom. This was #678
+          (*cfi)->setAtomPos(hydIdx, heavyPos);
+          continue;
+        }
+        nbr1Vect.normalize();
         nbr1Vect *= -1;
 
         // ok, nbr1Vect points away from the other atom, figure out where
@@ -163,9 +170,19 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
            cfi != mol->endConformers(); ++cfi) {
         // start along the average of the two vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
-        nbr1Vect = (*cfi)->getAtomPos(nbr1->getIdx()).directionVector(heavyPos);
-        nbr2Vect = (*cfi)->getAtomPos(nbr2->getIdx()).directionVector(heavyPos);
+        nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
+        nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
+        if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
+            fabs(nbr2Vect.lengthSq()) < 1e-4) {
+          // no difference, which likely indicates that we have redundant atoms.
+          // just put it on top of the heavy atom. This was #678
+          (*cfi)->setAtomPos(hydIdx, heavyPos);
+          continue;
+        }
+        nbr1Vect.normalize();
+        nbr2Vect.normalize();
         dirVect = nbr1Vect + nbr2Vect;
+
         dirVect.normalize();
 
         switch (heavyAtom->getHybridization()) {
@@ -240,9 +257,21 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
            cfi != mol->endConformers(); ++cfi) {
         // use the average of the three vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
-        nbr1Vect = (*cfi)->getAtomPos(nbr1->getIdx()).directionVector(heavyPos);
-        nbr2Vect = (*cfi)->getAtomPos(nbr2->getIdx()).directionVector(heavyPos);
-        nbr3Vect = (*cfi)->getAtomPos(nbr3->getIdx()).directionVector(heavyPos);
+        nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
+        nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
+        nbr3Vect = heavyPos - (*cfi)->getAtomPos(nbr3->getIdx());
+        if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
+            fabs(nbr2Vect.lengthSq()) < 1e-4 ||
+            fabs(nbr3Vect.lengthSq()) < 1e-4) {
+          // no difference, which likely indicates that we have redundant atoms.
+          // just put it on top of the heavy atom. This was #678
+          (*cfi)->setAtomPos(hydIdx, heavyPos);
+          continue;
+        }
+        nbr1Vect.normalize();
+        nbr2Vect.normalize();
+        nbr3Vect.normalize();
+
         // if three neighboring atoms are more or less planar, this
         // is going to be in a quasi-random (but almost definitely bad)
         // direction...
@@ -569,7 +598,8 @@ bool isQueryH(const Atom *atom) {
     if (hasHQuery && hasOr) {
       BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
                                  "in ORs is not supported. This query will not "
-                                 "be merged" << std::endl;
+                                 "be merged"
+                              << std::endl;
       return false;
     }
   }
@@ -660,9 +690,9 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
       if (atom->hasQuery()) {
         // std::cerr<<"  q: "<<atom->getQuery()->getDescription()<<std::endl;
         if (atom->getQuery()->getDescription() == "RecursiveStructure") {
-          RWMol *rqm = static_cast<RWMol *>(
-              const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(
-                                      atom->getQuery())->getQueryMol()));
+          RWMol *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
+              static_cast<RecursiveStructureQuery *>(atom->getQuery())
+                  ->getQueryMol()));
           mergeQueryHs(*rqm, mergeUnmappedOnly);
         }
 
@@ -675,9 +705,9 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           // std::cerr<<"      child: "<<qry->getDescription()<<std::endl;
           if (qry->getDescription() == "RecursiveStructure") {
             // std::cerr<<"    recurse"<<std::endl;
-            RWMol *rqm = static_cast<RWMol *>(
-                const_cast<ROMol *>(static_cast<RecursiveStructureQuery *>(
-                                        qry.get())->getQueryMol()));
+            RWMol *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
+                static_cast<RecursiveStructureQuery *>(qry.get())
+                    ->getQueryMol()));
             mergeQueryHs(*rqm, mergeUnmappedOnly);
             // std::cerr<<"    back"<<std::endl;
           } else if (qry->beginChildren() != qry->endChildren()) {

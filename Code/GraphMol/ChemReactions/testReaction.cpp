@@ -41,6 +41,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
+#include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Atom.h>
@@ -5694,6 +5695,64 @@ void test59ReactionCanonicalization() {
 
     delete rxn;
   }
+}
+
+void test60RunSingleReactant() {
+  const std::string smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]";
+  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smirks_thiourea);
+  const std::string smi1 = "C=CCN=C=S";
+  const std::string smi2 = "NCc1ncc(Cl)cc1Br";
+
+  ROMOL_SPTR reag1(SmilesToMol(smi1));
+  ROMOL_SPTR reag2(SmilesToMol(smi2));
+
+  std::vector<MOL_SPTR_VECT> prods;
+  TEST_ASSERT(prods.size() > 0);
+
+  {
+    ROMOL_SPTR expected_result(SmilesToMol("C=CCNC(N)=S"));
+    ROMOL_SPTR expected_sidechain_result(SmilesToMol("[1*:1]=S.[3*:3]CC=C"));
+    const bool isomericSmiles = true;
+    std::string expected = MolToSmiles(*expected_result, isomericSmiles);
+    std::string expected_sidechain = MolToSmiles(*expected_sidechain_result, isomericSmiles);
+    
+    prods = rxn->runReactant(reag1, 0);
+    for (size_t i=0;i<prods.size();i++) {
+      for (size_t prodidx = 0; prodidx<prods[i].size(); prodidx++) {
+        TEST_ASSERT(prodidx < 1);
+        TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
+        ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
+        TEST_ASSERT(MolToSmiles(*sidechain) == expected_sidechain);
+      }
+    }
+
+    prods = rxn->runReactant(reag2,0);
+    TEST_ASSERT(prods.size() == 0)
+  }
+
+  {
+    ROMOL_SPTR expected_result(SmilesToMol("NCNCc1ncc(Cl)cc1Br"));
+    ROMOL_SPTR expected_sidechain_result(SmilesToMol("[2*:2]Cc1ncc(Cl)cc1Br"));
+    const bool isomericSmiles = true;
+    std::string expected = MolToSmiles(*expected_result, isomericSmiles);
+    std::string expected_sidechain = MolToSmiles(*expected_sidechain_result, isomericSmiles);
+    
+    prods = rxn->runReactant(reag2, 1);
+    for (size_t i=0;i<prods.size();i++) {
+      for (size_t prodidx = 0; prodidx<prods[i].size(); prodidx++) {
+        TEST_ASSERT(prodidx < 1);
+        TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
+        ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
+        TEST_ASSERT(MolToSmiles(*sidechain) == expected_sidechain);
+      }
+    }
+    
+    prods = rxn->runReactant(reag1,1);
+    TEST_ASSERT(prods.size() == 0)
+  }
+
+  delete rxn;
+
 }
 
 int main() {

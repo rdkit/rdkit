@@ -198,6 +198,15 @@ class ChemicalReaction {
   */
   std::vector<MOL_SPTR_VECT> runReactants(const MOL_SPTR_VECT reactants) const;
 
+  //! Runs a single reactant against a single reactant template
+  /*!
+     \param reactant The single reactant to use
+
+     \param reactantTemplateIdx the reactant template to target in the reaction
+  */
+  std::vector<MOL_SPTR_VECT> runReactant(
+      ROMOL_SPTR reactant, unsigned int reactantTemplateIdx) const;
+
   const MOL_SPTR_VECT &getReactants() const {
     return this->m_reactantTemplates;
   }

@@ -25,12 +25,24 @@ namespace {
 template <class T>
 std::string vectToString(const boost::any &val) {
   const std::vector<T> &tv = boost::any_cast<std::vector<T> >(val);
-  Utils::LocaleSwitcher ls;
   std::ostringstream sstr;
   sstr << "[";
   std::copy(tv.begin(), tv.end(), std::ostream_iterator<T>(sstr, ","));
   sstr << "]";
   return sstr.str();
+}
+std::string intVectToString(const boost::any &val) {
+  return vectToString<int>(val);
+}
+std::string uintVectToString(const boost::any &val) {
+  return vectToString<unsigned int>(val);
+}
+std::string doubleVectToString(const boost::any &val) {
+  // there is a performance cost associated with the
+  // LocaleSwitcher, so make sure we only instantiate it when
+  // it's really necessary (this was github #703)
+  Utils::LocaleSwitcher ls;
+  return vectToString<double>(val);
 }
 }
 
@@ -47,7 +59,6 @@ void Dict::getVal(const std::string &what, std::string &res) const {
   //
   if (!hasVal(what)) throw KeyErrorException(what);
   const boost::any &val = _data.find(what)->second;
-  Utils::LocaleSwitcher ls;
   try {
     res = boost::any_cast<std::string>(val);
   } catch (const boost::bad_any_cast &) {
@@ -62,15 +73,17 @@ void Dict::getVal(const std::string &what, std::string &res) const {
       res =
           boost::lexical_cast<std::string>(boost::any_cast<unsigned long>(val));
     } else if (val.type() == typeid(float)) {
+      Utils::LocaleSwitcher ls;  // late instantiation of LocaleSwitcher
       res = boost::lexical_cast<std::string>(boost::any_cast<float>(val));
     } else if (val.type() == typeid(double)) {
+      Utils::LocaleSwitcher ls;  // late instantiation of LocaleSwitcher
       res = boost::lexical_cast<std::string>(boost::any_cast<double>(val));
     } else if (val.type() == typeid(const char *)) {
       res = std::string(boost::any_cast<const char *>(val));
     } else if (val.type() == typeid(std::vector<unsigned int>)) {
-      res = vectToString<unsigned int>(val);
+      res = uintVectToString(val);
     } else if (val.type() == typeid(std::vector<int>)) {
-      res = vectToString<int>(val);
+      res = intVectToString(val);
     } else {
       throw;
     }
@@ -91,7 +104,6 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
   DataType::const_iterator pos = _data.find(what);
   if (pos == _data.end()) return false;
   const boost::any &val = pos->second;
-  Utils::LocaleSwitcher ls;
   try {
     res = boost::any_cast<std::string>(val);
   } catch (const boost::bad_any_cast &) {
@@ -106,15 +118,17 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
       res =
           boost::lexical_cast<std::string>(boost::any_cast<unsigned long>(val));
     } else if (val.type() == typeid(float)) {
+      Utils::LocaleSwitcher ls;  // late instantiation of LocaleSwitcher
       res = boost::lexical_cast<std::string>(boost::any_cast<float>(val));
     } else if (val.type() == typeid(double)) {
+      Utils::LocaleSwitcher ls;  // late instantiation of LocaleSwitcher
       res = boost::lexical_cast<std::string>(boost::any_cast<double>(val));
     } else if (val.type() == typeid(const char *)) {
       res = std::string(boost::any_cast<const char *>(val));
     } else if (val.type() == typeid(std::vector<unsigned int>)) {
-      res = vectToString<unsigned int>(val);
+      res = uintVectToString(val);
     } else if (val.type() == typeid(std::vector<int>)) {
-      res = vectToString<int>(val);
+      res = intVectToString(val);
     } else {
       return false;
     }
@@ -124,11 +138,30 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
 
 namespace {
 template <class T>
-typename boost::enable_if<boost::is_arithmetic<T>, T>::type _fromany(
+typename boost::enable_if<boost::is_floating_point<T>, T>::type _fromany(
     const boost::any &arg) {
   T res;
   if (arg.type() == typeid(std::string) || arg.type() == typeid(const char *)) {
-    Utils::LocaleSwitcher ls;
+    Utils::LocaleSwitcher ls;  // late instantiation of LocaleSwitcher
+    try {
+      res = boost::any_cast<T>(arg);
+    } catch (const boost::bad_any_cast &exc) {
+      try {
+        res = boost::lexical_cast<T>(boost::any_cast<std::string>(arg));
+      } catch (...) {
+        throw exc;
+      }
+    }
+  } else {
+    res = boost::any_cast<T>(arg);
+  }
+  return res;
+}
+template <class T>
+typename boost::enable_if<boost::is_integral<T>, T>::type _fromany(
+    const boost::any &arg) {
+  T res;
+  if (arg.type() == typeid(std::string) || arg.type() == typeid(const char *)) {
     try {
       res = boost::any_cast<T>(arg);
     } catch (const boost::bad_any_cast &exc) {

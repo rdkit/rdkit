@@ -34,6 +34,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/Depictor/DepictUtils.h>
 
 #include <RDBoost/Wrap.h>
@@ -94,6 +95,33 @@ PyObject *RunReactants(ChemicalReaction *self, T reactants) {
   {
     NOGIL gil;
     mols = self->runReactants(reacts);
+  }
+  PyObject *res = PyTuple_New(mols.size());
+
+  for (unsigned int i = 0; i < mols.size(); ++i) {
+    PyObject *lTpl = PyTuple_New(mols[i].size());
+    for (unsigned int j = 0; j < mols[i].size(); ++j) {
+      PyTuple_SetItem(lTpl, j,
+                      python::converter::shared_ptr_to_python(mols[i][j]));
+    }
+    PyTuple_SetItem(res, i, lTpl);
+  }
+  return res;
+}
+
+template <typename T>
+PyObject *RunReactant(ChemicalReaction *self, T reactant,
+                      unsigned int reactionIdx) {
+  ROMOL_SPTR react = python::extract<ROMOL_SPTR>(reactant);
+
+  std::vector<MOL_SPTR_VECT> mols;
+
+  {
+    NOGIL gil;
+    if (!self->isInitialized()) {
+      self->initReactantMatchers();
+    }
+    mols = self->runReactant(react, reactionIdx);
   }
   PyObject *res = PyTuple_New(mols.size());
 
@@ -380,6 +408,10 @@ Sample Usage:\n\
                                            python::list))RDKit::RunReactants,
            "apply the reaction to a sequence of reactant molecules and return "
            "the products as a tuple of tuples")
+      .def("RunReactant",
+           (PyObject * (*)(RDKit::ChemicalReaction *, python::object,
+                           unsigned))RDKit::RunReactant,
+           "apply the reaction to a single reactant")
       .def("Initialize", &RDKit::ChemicalReaction::initReactantMatchers,
            "initializes the reaction so that it can be used")
       .def("IsInitialized", &RDKit::ChemicalReaction::isInitialized,
@@ -557,4 +589,13 @@ of the replacements argument.",
       "Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.\
           This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.\
           The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction");
+
+  python::def(
+      "ReduceProductToSideChains", RDKit::reduceProductToSideChains,
+      (python::arg("product"), python::arg("addDummyAtoms") = true),
+      "reduce the product of a reaction to the side chains added by the reaction.\
+              The output is a molecule with attached wildcards indicating where the product was attached.  The isotope of the dummy atom\
+              is the reaction map number of the product's atom (if avialable).",
+      python::return_value_policy<python::manage_new_object>());
+
 }
