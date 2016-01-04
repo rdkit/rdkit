@@ -303,6 +303,9 @@ void test6LazyFPBReaderTanimotoNeighbors() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+// need forward declarations of some of the detail functions (doesn't make sense
+// to include these in a public interface and there aren't enough of them to
+// make it worth adding a detail header)
 namespace RDKit {
 namespace detail {
 boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
@@ -310,10 +313,10 @@ boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
 boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
 }
 }
-
 void test7BitsetDetails() {
   BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing some bitset details" << std::endl;
+      << "-----------------------\n Testing some internal bitset details"
+      << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {  // test round-tripping bytes -> dynamic_bitest -> bytes
