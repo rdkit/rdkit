@@ -806,7 +806,7 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
   unsigned int popcount = 0;
 #ifndef USE_BUILTIN_POPCOUNT
   for (unsigned int i = 0; i < nBytes; i++) {
-    popcount += byte_popcounts[afp[i]]
+    popcount += byte_popcounts[afp[i]];
   }
 #else
   unsigned int eidx = nBytes / sizeof(unsigned int);
