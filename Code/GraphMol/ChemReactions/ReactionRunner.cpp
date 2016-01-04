@@ -882,7 +882,7 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   return productMols;
 }  // end of ChemicalReaction::runReactants()
 
-// Generate a product based on a SINGLE reactant
+// Generate the product set based on a SINGLE reactant
 std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
                                         const ROMOL_SPTR &reactant,
                                         unsigned int reactantIdx) {
