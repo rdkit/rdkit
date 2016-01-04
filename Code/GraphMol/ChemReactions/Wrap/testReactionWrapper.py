@@ -53,7 +53,7 @@ class TestCase(unittest.TestCase) :
     self.dataDir = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','ChemReactions','testData')
 
 
-  def atest1Basics(self):
+  def test1Basics(self):
     rxna = rdChemReactions.ChemicalReaction()
     # also tests empty copy constructor
     for rxn in [rxna, rdChemReactions.ChemicalReaction(rxna)]:
@@ -83,7 +83,7 @@ class TestCase(unittest.TestCase) :
       self.assertTrue(len(ps[0])==1)
       self.assertTrue(ps[0][0].GetNumAtoms()==3)    
 
-  def atest2DaylightParser(self):
+  def test2DaylightParser(self):
     rxna = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
     for rxn in [rxna, rdChemReactions.ChemicalReaction(rxna)]:
       self.assertTrue(rxn)
@@ -103,7 +103,7 @@ class TestCase(unittest.TestCase) :
       self.assertTrue(len(ps[0])==1)
       self.assertTrue(ps[0][0].GetNumAtoms()==5)  
 
-  def atest3MDLParsers(self):
+  def test3MDLParsers(self):
     fileN = os.path.join(self.dataDir,'AmideBond.rxn')
     rxna = rdChemReactions.ReactionFromRxnFile(fileN)
     for rxn in [rxna, rdChemReactions.ChemicalReaction(rxna)]:
@@ -133,7 +133,7 @@ class TestCase(unittest.TestCase) :
       self.assertTrue(len(ps[0])==1)
       self.assertTrue(ps[0][0].GetNumAtoms()==3)  
 
-  def atest4ErrorHandling(self):
+  def test4ErrorHandling(self):
     self.assertRaises(ValueError,lambda x='[C:1](=[O:2])Q.[N:3]>>[C:1](=[O:2])[N:3]':rdChemReactions.ReactionFromSmarts(x))
     self.assertRaises(ValueError,lambda x='[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]Q':rdChemReactions.ReactionFromSmarts(x))
     self.assertRaises(ValueError,lambda x='[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]>>CC':rdChemReactions.ReactionFromSmarts(x))
@@ -249,7 +249,7 @@ M  END
     """
     #self.assertRaises(ValueError,lambda x=block:rdChemReactions.ReactionFromRxnBlock(x))
 
-  def atest5Validation(self):
+  def test5Validation(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
     self.assertTrue(rxn)
     self.assertTrue(rxn.Validate()==(0,0))
@@ -266,7 +266,7 @@ M  END
     self.assertTrue(rxn)
     self.assertTrue(rxn.Validate()==(1,0))
 
-  def atest6Exceptions(self):
+  def test6Exceptions(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]Cl>>[C:1]')
     self.assertTrue(rxn)
     self.assertRaises(ValueError,lambda x=rxn:x.RunReactants(()))
@@ -285,7 +285,7 @@ M  END
       self.assertTrue(len(ps[0])==1)
       if not i%1000: print(i)
 
-  def atest8Properties(self):
+  def test8Properties(self):
     rxn = rdChemReactions.ReactionFromSmarts('[O:1]>>[O:1][3#0]')
     self.assertTrue(rxn)
     ps=rxn.RunReactants((Chem.MolFromSmiles('CO'),))
@@ -294,7 +294,7 @@ M  END
     Chem.SanitizeMol(ps[0][0])
     self.assertEqual(ps[0][0].GetAtomWithIdx(1).GetIsotope(),3);
 
-  def atest9AromaticityTransfer(self):
+  def test9AromaticityTransfer(self):
     # this was issue 2664121
     mol = Chem.MolFromSmiles('c1ccc(C2C3(Cc4c(cccc4)C2)CCCC3)cc1')
     rxn = rdChemReactions.ReactionFromSmarts('[A:1]1~[*:2]~[*:3]~[*:4]~[*:5]~[A:6]-;@1>>[*:1]~[*:2]~[*:3]~[*:4]~[*:5]~[*:6]')
@@ -304,7 +304,7 @@ M  END
       self.assertEqual(len(p),1)
       Chem.SanitizeMol(p[0])
 
-  def atest10DotSeparation(self):
+  def test10DotSeparation(self):
     # 08/05/14
     # This test is changed due to a new behavior of the smarts
     # reaction parser which now allows using parenthesis in products
@@ -318,7 +318,7 @@ M  END
       self.assertEqual(p[0].GetNumAtoms(),3)
       self.assertEqual(p[0].GetNumBonds(),2)
 
-  def atest11ImplicitProperties(self):
+  def test11ImplicitProperties(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]O>>[C:1]')
     mol = Chem.MolFromSmiles('CCO')
     products = rxn.RunReactants([mol])
@@ -346,7 +346,7 @@ M  END
       self.assertEqual(Chem.MolToSmiles(p[0]),'CC')
 
 
-  def atest12Pickles(self):
+  def test12Pickles(self):
     # 08/05/14
     # This test is changed due to a new behavior of the smarts
     # reaction parser which now allows using parenthesis in products
@@ -370,7 +370,7 @@ M  END
       self.assertEqual(p[0].GetNumAtoms(),3)
       self.assertEqual(p[0].GetNumBonds(),2)
 
-  def atest13GetTemplates(self):
+  def test13GetTemplates(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1][O:2].[N:3]')
     r1 = rxn.GetReactantTemplate(0)
     sma=Chem.MolToSmarts(r1)
@@ -386,7 +386,7 @@ M  END
     self.assertRaises(ValueError,lambda :rxn.GetProductTemplate(2))
     self.assertRaises(ValueError,lambda :rxn.GetReactantTemplate(1))
 
-  def atest14Matchers(self):
+  def test14Matchers(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C;!$(C(-O)-O):1](=[O:2])[O;H,-1].[N;!H0:3]>>[C:1](=[O:2])[N:3]')
     self.assertTrue(rxn)
     rxn.Initialize()
@@ -398,7 +398,7 @@ M  END
     self.assertTrue(rxn.IsMoleculeProduct(Chem.MolFromSmiles('CNC(=O)C')))
     self.assertFalse(rxn.IsMoleculeProduct(Chem.MolFromSmiles('COC(=O)C')))
     
-  def atest15Replacements(self):
+  def test15Replacements(self):
     rxn = rdChemReactions.ReactionFromSmarts('[{amine}:1]>>[*:1]-C',
                                              replacements={'{amine}':'$([N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])'})
     self.assertTrue(rxn)
@@ -409,7 +409,7 @@ M  END
     self.assertEqual(len(ps[0]),1)
     self.assertEqual(ps[0][0].GetNumAtoms(),4)
     
-  def atest16GetReactingAtoms(self):
+  def test16GetReactingAtoms(self):
     rxn = rdChemReactions.ReactionFromSmarts("[O:1][C:2].[N:3]>>[N:1][C:2].[N:3]")
     self.assertTrue(rxn)
     rxn.Initialize()
@@ -428,7 +428,7 @@ M  END
     self.assertEqual(len(rAs),1)
     self.assertEqual(len(rAs[0]),1)   
 
-  def atest17AddRecursiveQueriesToReaction(self):
+  def test17AddRecursiveQueriesToReaction(self):
     rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
     self.assertTrue(rxn)
     rxn.Initialize()
@@ -447,13 +447,13 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs,'query', getLabels=True)
     self.assertTrue(len(labels), 1)
 
-  def atest18GithubIssue16(self):
+  def test18GithubIssue16(self):
     rxn = rdChemReactions.ReactionFromSmarts("[F:1]>>[Cl:1]")
     self.assertTrue(rxn)
     rxn.Initialize()
     self.assertRaises(ValueError,lambda : rxn.RunReactants((None,)))
 
-  def atest19RemoveUnmappedMoleculesToAgents(self):
+  def test19RemoveUnmappedMoleculesToAgents(self):
     rxn = rdChemReactions.ReactionFromSmarts("[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]")
     self.failUnless(rxn)
     rxn.Initialize()
@@ -484,7 +484,7 @@ M  END
     self.failUnless(rxn.GetNumAgentTemplates()==1)
     self.failUnless(len(agentList)==2)
 
-  def atest20CheckCopyConstructedReactionAtomProps(self):
+  def test20CheckCopyConstructedReactionAtomProps(self):
     RLABEL     = "_MolFileRLabel"
     amine_rxn =  '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'
     rxn = rdChemReactions.ReactionFromRxnBlock(amine_rxn)
@@ -504,7 +504,7 @@ M  END
     # currently ToBinary does not save atom props
     # rxn2 = rdChemReactions.ChemicalReaction(rxn.ToBinary())
 
-  def atest21CheckRawIters(self):
+  def test21CheckRawIters(self):
     RLABEL     = "_MolFileRLabel"
     amine_rxn =  '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'
     rxn = rdChemReactions.ReactionFromRxnBlock(amine_rxn)
