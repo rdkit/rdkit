@@ -303,6 +303,57 @@ void test6LazyFPBReaderTanimotoNeighbors() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace RDKit {
+namespace detail {
+boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
+                                       boost::uint32_t nBits);
+boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
+}
+}
+
+void test7BitsetDetails() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing some bitset details" << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {  // test round-tripping bytes -> dynamic_bitest -> bytes
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename, true);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+
+      // -------------------
+      // start with bytes -> a bitset
+      boost::dynamic_bitset<> *dbs =
+          RDKit::detail::bytesToBitset(bytes.get(), fps.nBits());
+      TEST_ASSERT(dbs);
+      TEST_ASSERT(dbs->size() == fps.nBits());
+      TEST_ASSERT(dbs->count() == 17);
+
+      unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
+                              811, 831, 888, 1335, 1411, 1664, 1820, 1917};
+      for (unsigned int i = 0; i < dbs->count(); ++i) {
+        TEST_ASSERT((*dbs)[obs[i]]);
+      }
+
+      // -------------------
+      // and now go the other way
+      boost::uint8_t *newBytes = RDKit::detail::bitsetToBytes(*dbs);
+      TEST_ASSERT(newBytes);
+      for (unsigned int i = 0; i < fps.nBits() / 8; ++i) {
+        TEST_ASSERT(newBytes[i] == bytes[i]);
+      }
+
+      delete dbs;
+      delete[] newBytes;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -312,6 +363,7 @@ int main() {
   test4LazyFPBReaderBasics();
   test5LazyFPBReaderTanimoto();
   test6LazyFPBReaderTanimotoNeighbors();
+  test7BitsetDetails();
 
   return 0;
 }

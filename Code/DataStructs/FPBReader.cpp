@@ -182,16 +182,42 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
   return res;
 };
 
+// caller is responsible for delete'ing the result
+boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
+                                       boost::uint32_t nBits) {
+  unsigned int nBytes = nBits / 8;
+  if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
+    // I believe this could be faster (needs to be verified of course)
+    unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
+    boost::dynamic_bitset<>::block_type *fpBlocks =
+        (boost::dynamic_bitset<>::block_type *)fpData;
+    return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
+  } else {
+    return (
+        boost::dynamic_bitset<> *)(new boost::dynamic_bitset<boost::uint8_t>(
+        fpData, fpData + nBytes));
+  }
+}
+
+// caller is responsible for delete []'ing the result
+boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
+  unsigned int nBits = bitset.size();
+  unsigned int nBytes = nBits / 8;
+  unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
+
+  boost::uint8_t *res = new boost::uint8_t[nBytes];
+  boost::to_block_range(bitset, (boost::dynamic_bitset<>::block_type *)res);
+  return res;
+}
+
 // the caller is responsible for delete'ing this
 ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
   PRECONDITION(dp_impl, "bad reader pointer");
 
   const boost::uint8_t *fpData = extractBytes(dp_impl, which);
-  boost::dynamic_bitset<boost::uint8_t> *fpbs =
-      new boost::dynamic_bitset<boost::uint8_t>(fpData,
-                                                fpData + dp_impl->nBits / 8);
+  boost::dynamic_bitset<> *resDBS = bytesToBitset(fpData, dp_impl->nBits);
   if (dp_impl->df_lazy) delete[] fpData;
-  return new ExplicitBitVect((boost::dynamic_bitset<> *)fpbs);
+  return new ExplicitBitVect(resDBS);
 };
 
 double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
