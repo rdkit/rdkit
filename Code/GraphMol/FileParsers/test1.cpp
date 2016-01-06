@@ -21,6 +21,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <clocale>
 
 #include <string>
 #include <fstream>
@@ -4123,11 +4124,8 @@ void testGithub360() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-  RDLog::InitLogs();
-#if 1
+void RunTests() {
+  #if 1
   test1();
   test2();
   test4();
@@ -4202,5 +4200,20 @@ int main(int argc, char *argv[]) {
   testPDBResidues();
   testGithub337();
   testGithub360();
+}
+
+int main(int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  //  std::locale::global(std::locale("de_DE.UTF-8"));
+
+  RDLog::InitLogs();
+  BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
+  
+  RunTests(); // run with C locale
+  BOOST_LOG(rdInfoLog) << " ---- Running with German locale ----- " << std::endl;
+  setlocale(LC_ALL, "de_DE.UTF-8");
+
+  RunTests(); // run with German locale
   return 0;
 }
