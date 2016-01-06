@@ -466,7 +466,7 @@ void test7() {
   CHECK_INVARIANT(std::find(tree.begin(),tree.end(),1)==tree.end(),"bogus idx in mst");
   delete m;
 #endif
-  
+
   smi = "C1C=CC=CC=1";
   m = SmilesToMol(smi);
   MolOps::findSpanningTree(*m,tree);
@@ -5449,6 +5449,41 @@ void testGithubIssue678() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue717() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 717: "
+         "AddHs cip rank is declared <int> should be unsigned int"
+      << std::endl;
+
+  {  // single connected atom with degenerate coords
+    std::string mb =
+        "mol\n"
+        "  Mrv1561 01051606293D\n"
+        "\n"
+        "  4  3  0  0  0  0            999 V2000\n"
+        "   -0.0080   -0.0000   -0.0004 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    1.5343   -0.0050    0.0032 C   0  0  1  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    2.1517   -0.8276    1.4332 Cl  0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    2.0123   -0.6447   -1.1142 F   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "  2  3  1  0  0  0  0\n"
+        "  2  4  1  0  0  0  0\n"
+        "  2  1  1  0  0  0  0\n"
+        "M  END\n";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    MolOps::assignStereochemistry(*m, true, true);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -5531,5 +5566,7 @@ int main() {
   testAdjustQueryProperties();
 #endif
   testGithubIssue678();
+  testGithubIssue717();
+
   return 0;
 }
