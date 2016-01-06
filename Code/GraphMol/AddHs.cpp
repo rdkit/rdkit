@@ -218,15 +218,17 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // Three other neighbors:
       // --------------------------------------------------------------------------
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
+
       if (heavyAtom->hasProp(common_properties::_CIPCode)) {
         // if the central atom is chiral, we'll order the neighbors
         // by CIP rank:
-        std::vector<std::pair<int, int> > nbrs;
+        std::vector<std::pair<unsigned int, int> > nbrs;
         while (nbrIdx != endNbrs) {
           if (*nbrIdx != hydIdx) {
             const Atom *tAtom = mol->getAtomWithIdx(*nbrIdx);
-            int cip = 0;
-            tAtom->getPropIfPresent<int>(common_properties::_CIPRank, cip);
+            unsigned int cip = 0;
+            tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
+                                                  cip);
             nbrs.push_back(std::make_pair(cip, rdcast<int>(*nbrIdx)));
           }
           ++nbrIdx;

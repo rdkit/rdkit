@@ -92,10 +92,10 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
 #if 0
         // NOTE: the inclusion of hybridization in the invariant (as
         // suggested in the original paper), leads to the situation
-        // that 
-        //   C[C@@](O)(C=C)C(C)CC 
+        // that
+        //   C[C@@](O)(C=C)C(C)CC
         // and
-        //   C[C@@](O)(C=C)C(C)CO 
+        //   C[C@@](O)(C=C)C(C)CO
         // are assigned S chirality even though the rest of the world
         // seems to agree that they ought to be R (atom 3, sp2, is ranked
         // higher than atom 5, sp3, no matter what their environments)
@@ -651,7 +651,7 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
           cipCode = "S";
         else
           cipCode = "R";
-        atom->setProp(common_properties::_CIPCode, cipCode, true);
+        atom->setProp(common_properties::_CIPCode, cipCode, false);
       }
     }
   }
@@ -808,7 +808,8 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   iterateCIPRanks(mol, invars, ranks, true);
   // copy the ranks onto the atoms:
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
-    mol.getAtomWithIdx(i)->setProp(common_properties::_CIPRank, ranks[i], 1);
+    mol.getAtomWithIdx(i)
+        ->setProp(common_properties::_CIPRank, ranks[i], false);
   }
 
 #ifdef VERBOSE_CANON
