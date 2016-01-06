@@ -651,7 +651,7 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
           cipCode = "S";
         else
           cipCode = "R";
-        atom->setProp(common_properties::_CIPCode, cipCode, false);
+        atom->setProp(common_properties::_CIPCode, cipCode);
       }
     }
   }
@@ -808,8 +808,7 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   iterateCIPRanks(mol, invars, ranks, true);
   // copy the ranks onto the atoms:
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
-    mol.getAtomWithIdx(i)
-        ->setProp(common_properties::_CIPRank, ranks[i], false);
+    mol.getAtomWithIdx(i)->setProp(common_properties::_CIPRank, ranks[i]);
   }
 
 #ifdef VERBOSE_CANON
