@@ -961,9 +961,9 @@ void testAtomResidues() {
     TEST_ASSERT(m2->getAtomWithIdx(0)->getMonomerInfo()->getName() == "m1");
     TEST_ASSERT((m2->getAtomWithIdx(1)->getMonomerInfo()));
     TEST_ASSERT(m2->getAtomWithIdx(1)->getMonomerInfo()->getName() == "Ca");
-    TEST_ASSERT(
-        static_cast<const AtomPDBResidueInfo *>(
-            m2->getAtomWithIdx(1)->getMonomerInfo())->getSerialNumber() == 3);
+    TEST_ASSERT(static_cast<const AtomPDBResidueInfo *>(
+                    m2->getAtomWithIdx(1)->getMonomerInfo())
+                    ->getSerialNumber() == 3);
     TEST_ASSERT(!(m2->getAtomWithIdx(2)->getMonomerInfo()));
     TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
   }
@@ -986,6 +986,30 @@ void testGithub149() {
     m = new RWMol(pkl);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
+    delete m;
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testGithub713() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing Github issue 713: Molecule serialization "
+                          "doesn't read/write atomic numbers above 128"
+                       << std::endl;
+  {
+    ROMol *m = SmilesToMol("CC");
+    TEST_ASSERT(m);
+    m->getAtomWithIdx(0)->setAtomicNum(128);
+    m->getAtomWithIdx(1)->setAtomicNum(177);
+
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl);
+    delete m;
+    m = new RWMol(pkl);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum() == 128);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomicNum() == 177);
+
     delete m;
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
@@ -1021,4 +1045,5 @@ int main(int argc, char *argv[]) {
   testIssue285();
   testAtomResidues();
   testGithub149();
+  testGithub713();
 }
