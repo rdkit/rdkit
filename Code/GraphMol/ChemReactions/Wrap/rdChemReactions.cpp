@@ -309,6 +309,8 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 }
 }
 
+void wrap_enumeration();
+
 BOOST_PYTHON_MODULE(rdChemReactions) {
   python::scope().attr("__doc__") =
       "Module containing classes and functions for working with chemical "
@@ -598,4 +600,5 @@ of the replacements argument.",
               is the reaction map number of the product's atom (if avialable).",
       python::return_value_policy<python::manage_new_object>());
 
+  wrap_enumeration();
 }
