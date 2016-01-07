@@ -375,6 +375,8 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
 
 }
 
+void wrap_enumeration();
+
 BOOST_PYTHON_MODULE(rdChemReactions) {
   python::scope().attr("__doc__") =
       "Module containing classes and functions for working with chemical "
@@ -779,5 +781,8 @@ Sample Usage:\n\
                python::arg("queries")=python::dict(),
                python::arg("propName")=common_properties::molFileValue),
               docString.c_str());
+
+  wrap_enumeration();
 }
+
 }
