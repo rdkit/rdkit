@@ -22,9 +22,10 @@ namespace RDKit {
 namespace Utils {
 // allows an RAII-like approach to ensuring the locale is temporarily "C"
 // instead of whatever we started in.
+
+#ifdef _MSC_VER  
 class LocaleSwitcher {
  public:
-#ifdef _MSC_VER  
 
   LocaleSwitcher() {
 #ifdef RDK_THREADSAFE_SSS
@@ -50,7 +51,7 @@ LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
       Recurse(1);
       locale_t loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
       uselocale(loc);
-      freelocale(loc);
+      // n.b. Don't free "C" or GLOBAL LOCALE
     } else
       old_locale = "C";
   }
@@ -58,7 +59,7 @@ LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
     if (old_locale != "C") {
       locale_t loc = newlocale(LC_ALL_MASK, old_locale.c_str(), (locale_t)0);
       uselocale(loc);
-      freelocale(loc);
+      // n.b.  Don't free "C" or GLOBAL LOCALE
       Recurse(-1);
     }
   }
