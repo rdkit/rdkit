@@ -357,12 +357,63 @@ void test7BitsetDetails() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test8FPBReaderContains() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing FPBReader contains search"
+      << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename, true);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
+      TEST_ASSERT(nbrs.size() == 1);
+      TEST_ASSERT(nbrs[0] == 0);
+    }
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
+      TEST_ASSERT(bytes);
+      std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
+      TEST_ASSERT(nbrs.size() == 4);
+      TEST_ASSERT(nbrs[0] == 1);
+      TEST_ASSERT(nbrs[1] == 2);
+      TEST_ASSERT(nbrs[2] == 3);
+      TEST_ASSERT(nbrs[3] == 4);
+    }
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(16);
+      TEST_ASSERT(bytes);
+      std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
+      TEST_ASSERT(nbrs.size() == 2);
+      TEST_ASSERT(nbrs[0] == 16);
+      TEST_ASSERT(nbrs[1] == 17);
+    }
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(87);
+      TEST_ASSERT(bytes);
+      std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
+      TEST_ASSERT(nbrs.size() == 4);
+      TEST_ASSERT(nbrs[0] == 85);
+      TEST_ASSERT(nbrs[1] == 86);
+      TEST_ASSERT(nbrs[2] == 87);
+      TEST_ASSERT(nbrs[3] == 88);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
   test1FPBReaderBasics();
   test2FPBReaderTanimoto();
   test3FPBReaderTanimotoNeighbors();
+  test8FPBReaderContains();
   test4LazyFPBReaderBasics();
   test5LazyFPBReaderTanimoto();
   test6LazyFPBReaderTanimotoNeighbors();

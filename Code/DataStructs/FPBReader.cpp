@@ -367,6 +367,34 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
   if (dp_impl->df_lazy) delete[] dbv;
 }
 
+void containingNeighbors(const FPBReader_impl *dp_impl,
+                         const boost::uint8_t *bv,
+                         std::vector<unsigned int> &res) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(bv, "bad bv");
+  res.clear();
+  boost::uint64_t probeCount =
+      CalcBitmapPopcount(bv, dp_impl->numBytesStoredPerFingerprint);
+
+  boost::uint64_t startScan = 0, endScan = dp_impl->len;
+  if (dp_impl->popCountOffsets.size() == dp_impl->nBits + 2) {
+    startScan = dp_impl->popCountOffsets[probeCount];
+    // std::cerr << " scan: " << startScan << "-" << endScan << std::endl;
+  }
+  boost::uint8_t *dbv;
+  if (dp_impl->df_lazy) {
+    dbv = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+  }
+  for (boost::uint64_t i = startScan; i < endScan; ++i) {
+    extractBytes(dp_impl, i, dbv);
+    if (CalcBitmapAllProbeBitsMatch(bv, dbv,
+                                    dp_impl->numBytesStoredPerFingerprint)) {
+      res.push_back(i);
+    }
+  }
+  if (dp_impl->df_lazy) delete[] dbv;
+}
+
 }  // end of detail namespace
 
 void FPBReader::init() {
@@ -483,6 +511,16 @@ std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
   detail::tanimotoNeighbors(dp_impl, bv, threshold, res);
   std::sort(res.begin(), res.end(),
             Rankers::pairGreater<double, unsigned int>());
+  return res;
+}
+
+std::vector<unsigned int> FPBReader::getContainingNeighbors(
+    const boost::uint8_t *bv) const {
+  PRECONDITION(df_init, "not initialized");
+  std::vector<unsigned int> res;
+  detail::containingNeighbors(dp_impl, bv, res);
+  std::sort(res.begin(), res.end());
+
   return res;
 }
 

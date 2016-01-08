@@ -81,6 +81,15 @@ class FPBReader {
       boost::shared_array<boost::uint8_t> bv, double threshold = 0.7) const {
     return getTanimotoNeighbors(bv.get(), threshold);
   };
+  // returns indices of all fingerprints that completely contain this one
+  // (i.e. where all the bits set in the query are also set in the db
+  // molecule)
+  std::vector<unsigned int> getContainingNeighbors(
+      const boost::uint8_t *bv) const;
+  std::vector<unsigned int> getContainingNeighbors(
+      boost::shared_array<boost::uint8_t> bv) const {
+    return getContainingNeighbors(bv.get());
+  };
 
   // FIX: add containment operator and searches (to enable substructure
   // screening)
