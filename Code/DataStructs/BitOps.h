@@ -305,5 +305,6 @@ double CalcBitmapDice(const unsigned char* bv1, const unsigned char* bv2,
                       unsigned int nBytes);
 double CalcBitmapTversky(const unsigned char* bv1, const unsigned char* bv2,
                          unsigned int nBytes, double ca, double cb);
-
+bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
+                                 const unsigned char* ref, unsigned int nBytes);
 #endif

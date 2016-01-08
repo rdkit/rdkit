@@ -914,3 +914,33 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
   }
   return intersect_popcount / denom;
 }
+
+bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
+                                 const unsigned char* ref,
+                                 unsigned int nBytes) {
+  PRECONDITION(probe, "no probe");
+  PRECONDITION(ref, "no ref");
+
+#ifndef USE_BUILTIN_POPCOUNT
+  for (unsigned int i = 0; i < nBytes; i++) {
+    if (byte_popcounts[probe[i] & ref[i]] != byte_popcounts[probe[i]]) {
+      return false;
+    }
+  }
+#else
+  unsigned int eidx = nBytes / sizeof(unsigned int);
+  for (unsigned int i = 0; i < eidx; ++i) {
+    if (__builtin_popcount(((unsigned int*)probe)[i] &
+                           ((unsigned int*)ref)[i]) !=
+        __builtin_popcount(((unsigned int*)probe)[i])) {
+      return false;
+    }
+  }
+  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+    if (byte_popcounts[probe[i] & ref[i]] != byte_popcounts[probe[i]]) {
+      return false;
+    }
+  }
+#endif
+  return true;
+}

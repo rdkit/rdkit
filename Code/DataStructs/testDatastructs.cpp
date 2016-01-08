@@ -1363,6 +1363,17 @@ void test15BitmapOps() {
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
     TEST_ASSERT(feq(CalcBitmapDice(bv1, bv2, 5), 8. / 9));
   }
+
+  {
+    const unsigned char bv1[5] = {0x1, 0x0, 0x1, 0x0, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x5, 0x1, 0x1};
+    TEST_ASSERT(CalcBitmapAllProbeBitsMatch(bv1, bv2, 5));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x0, 0x1, 0x0, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x2, 0x1, 0x1};
+    TEST_ASSERT(!CalcBitmapAllProbeBitsMatch(bv1, bv2, 5));
+  }
 }
 
 int main() {
@@ -1445,7 +1456,8 @@ int main() {
   test11SimilaritiesBV();
 
   BOOST_LOG(rdInfoLog) << " Test Similarity Measures SparseBitVect "
-                          "-------------------------------" << std::endl;
+                          "-------------------------------"
+                       << std::endl;
   test12SimilaritiesSparseBV();
 
   BOOST_LOG(rdInfoLog)
@@ -1454,11 +1466,13 @@ int main() {
   test13BitVectAllOnes();
 
   BOOST_LOG(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  "
-                          "-------------------------------" << std::endl;
+                          "-------------------------------"
+                       << std::endl;
   test14BitVectConcatenation();
 
   BOOST_LOG(rdInfoLog) << " Test bitmap operations  "
-                          "-------------------------------" << std::endl;
+                          "-------------------------------"
+                       << std::endl;
   test15BitmapOps();
 
   return 0;
