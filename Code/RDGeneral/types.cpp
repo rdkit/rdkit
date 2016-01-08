@@ -12,6 +12,10 @@
 //
 
 #include "types.h"
+#include "LocaleSwitcher.h"
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread/tss.hpp>
+#endif
 
 namespace RDKit {
 namespace common_properties {
@@ -165,5 +169,27 @@ int nextCombination(INT_VECT &comb, int tot) {
     comb[i] = comb[i - 1] + 1;
   }
   return celem;
+}
+
+namespace Utils {
+int LocaleSwitcher::Recurse(int state) {
+#ifndef RDK_THREADSAFE_SSS
+  static int recursion = 0;  
+  if      (state>0) recursion++;
+  else if(state<0) recursion--;
+  return recursion;
+#else
+  static boost::thread_specific_ptr<int> recursion;
+  if( ! recursion.get() ) {
+    // first time called by this thread
+    // construct test element to be used in all subsequent calls from this thread
+    recursion.reset( new int(0));
+  }
+  if      (state>0) (*recursion)++;
+  else if(state<0) (*recursion)--;
+  return (*recursion);
+#endif
+}
+
 }
 }
