@@ -27,20 +27,29 @@ class LocaleSwitcher {
 #ifdef _MSC_VER  
 
   LocaleSwitcher() {
+    if (!Recurse()) {
 #ifdef RDK_THREADSAFE_SSS
     _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
     ::setlocale(LC_ALL, "C");
 #else    
     std::setlocale(LC_ALL, "C");
 #endif
+    Recurse(1);
+    switched = true;
+    }
   }
   ~LocaleSwitcher() {
+    if (switched) {
 #ifdef RDK_THREADSAFE_SSS
     ::setlocale(LC_ALL, "C");
 #else    
     std::setlocale(LC_ALL, "");
 #endif
+    Recurse(-1);
+    }
   }
+public:
+  bool switched;
 #else
 
 LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
@@ -62,16 +71,17 @@ LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
       Recurse(-1);
     }
   }
-  // Recurse(1) recurse into switcher
-  // Recurse(-1) end recursion
-  //  Always turns current state (note: thread safe
-  //   when RDK_THREAFSAFE_SSS defined)
-  static int Recurse(int state=0);
   
 public:
   std::string old_locale;
 
 #endif
+
+  // Recurse(1) recurse into switcher
+  // Recurse(-1) end recursion
+  //  Always turns current state (note: thread safe
+  //   when RDK_THREAFSAFE_SSS defined)
+  static int Recurse(int state=0);
   
 };
 }
