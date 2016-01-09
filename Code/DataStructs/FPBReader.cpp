@@ -41,7 +41,9 @@ struct FPBReader_impl {
   boost::scoped_array<boost::uint8_t> dp_idChunk;
   bool df_lazy;  // read the fp data lazily. In this case we use fpDataOffset
                  // and seek instead of using dp_fpData
-  std::streampos fpDataOffset;  // file offset from tellg
+  std::streampos fpDataOffset;   // file offset from tellg
+  std::streampos idDataOffset;   // file offset from tellg
+  std::streampos idChunkOffset;  // file offset from tellg
   std::istream *istrm;  // we don't own this, it's just used for the lazy reader
 };
 
@@ -84,6 +86,30 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
   }
 };
 
+//-----------------------------------------------------
+//  Arena procesing
+
+/* Documentation from Andrew's code on the structure of the arena:
+The 'AREN'a starts with a header:
+<num_bytes: 4 bytes>  -- the number of bytes in a fingerprint
+<storage_size: 4 bytes>  -- number of bytes in fingerprint + extra bytes
+<spacer_size: 1 byte>   -- the number of spacer bytes used so the fingerprint
+       chunk starts on an aligned file position.
+<spacer : $spacer_size> NUL bytes> -- up to 255 NUL bytes, used for alignment.
+The fingerprints are N fingerprint fields, ordered sequentially.
+<fp0: $storage_size bytes> -- the first fingerprint
+<fp1: $storage_size bytes> -- the second fingerprint
+   ...
+The last fingerprint ends at the last byte of the arena chunk.
+
+Each fingerprint contains:
+<fingerprint: $num_bytes bytes> -- the actual fingerprint data
+<extra: $storage_size-$num_bytes bytes> -- the 'extra' NULL padding bytes
+    used so storage_size is a multiple of the alignment.
+
+To get the number of fingerprints in the arena:
+ (len(arena content) - 4 - 4 - 1 - $spacer_size) // $storage_size
+ */
 void extractArenaDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
   PRECONDITION(dp_impl, "bad pointer");
   PRECONDITION(dp_impl->df_lazy, "should only be used in lazy mode");
@@ -110,27 +136,7 @@ void extractArenaDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
 void extractArena(FPBReader_impl *dp_impl, boost::uint64_t sz,
                   const boost::uint8_t *chunk) {
   PRECONDITION(dp_impl, "bad pointer");
-  /* Documentation from Andrew's code on the structure of the arena:
-The 'AREN'a starts with a header:
-  <num_bytes: 4 bytes>  -- the number of bytes in a fingerprint
-  <storage_size: 4 bytes>  -- number of bytes in fingerprint + extra bytes
-  <spacer_size: 1 byte>   -- the number of spacer bytes used so the fingerprint
-         chunk starts on an aligned file position.
-  <spacer : $spacer_size> NUL bytes> -- up to 255 NUL bytes, used for alignment.
-The fingerprints are N fingerprint fields, ordered sequentially.
-  <fp0: $storage_size bytes> -- the first fingerprint
-  <fp1: $storage_size bytes> -- the second fingerprint
-     ...
-The last fingerprint ends at the last byte of the arena chunk.
 
-Each fingerprint contains:
-  <fingerprint: $num_bytes bytes> -- the actual fingerprint data
-  <extra: $storage_size-$num_bytes bytes> -- the 'extra' NULL padding bytes
-      used so storage_size is a multiple of the alignment.
-
-To get the number of fingerprints in the arena:
-   (len(arena content) - 4 - 4 - 1 - $spacer_size) // $storage_size
-   */
   boost::uint32_t numBytesPerFingerprint = *((boost::uint32_t *)chunk);
   dp_impl->nBits = numBytesPerFingerprint * 8;
 
@@ -241,51 +247,66 @@ double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
   return res;
 };
 
+//-----------------------------------------------------
+//  Id procesing
+/* Documentation from Andrew's code on the structure of the arena:
+
+The actual layout inside of the chunk is:
+ <num_4byte_elements: 4 bytes> -- the number of 4 byte offsets.
+ <num_8byte_elements: 4 bytes> -- the number of 8 byte offsets
+ Note: the number of indicies is num_4byte_elements + num_8byte_elements + 1
+ because even with no elements there will be the initial '\0\0\0\0'.
+
+ <id 0> + NUL   -- the first string, with an added NUL terminator
+ <id 1> + NUL   -- the second string, with an added NUL terminator
+     ....
+ <id N> + NUL   -- the last string, with an added NUL terminator
+
+ <offset 0: 4 bytes>    -- the offset relative to the start of <text 0>.
+                  (This always contains the 4 bytes "\0\0\0\0")
+    ...
+ <offset num_4byte_elements: 4 bytes>   -- the last offset stored in 4 bytes
+
+      (Note: This next section exists only when <num 8 byte offsets> > 0)
+ <offset num_4byte_elements+1: 8 bytes>    -- the first offset stored in 8
+bytes
+    ...
+ <offset num_4byte_elements+num_8byte_elements: 8 bytes>   -- the last offset
+stored in 8 bytes
+
+To get the identifier for record at position P >= 0:
+  chunk_size = size of the chunk
+  num_4byte_elements = decode bytes[0:4] as uint32
+  num_8byte_elements = decode bytes[4:8] as uint32
+  if P >= num_4byte_elements + num_8byte_elements:
+      record does not exist
+  offset_start = chunk_size - num_4byte_elements*4 - num_8byte_elements*8
+  if P < num_4byte_elements:
+    start, end = decode bytes[offset_start:offset_start+8] as (uint32, uint32)
+  elif P == N4:
+    start, end = decode bytes[offset_start:offset_start+12] as (uint32,
+uint64)
+  else:
+    start, end = decode bytes[offset_start:offset_start+16] as (uint64,
+uint64)
+  id = bytes[start:end-1]
+ */
+void extractIdsDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
+  PRECONDITION(dp_impl, "bad pointer");
+  std::streampos start = dp_impl->istrm->tellg();
+  dp_impl->idChunkOffset = start;
+  streamRead(*dp_impl->istrm, dp_impl->num4ByteElements);
+  streamRead(*dp_impl->istrm, dp_impl->num8ByteElements);
+
+  dp_impl->idDataOffset = (boost::uint64_t)start + sz -
+                          (dp_impl->num4ByteElements + 1) * 4 -
+                          dp_impl->num8ByteElements * 8;
+  dp_impl->istrm->seekg(start + (std::streampos)sz, std::ios_base::beg);
+};
+
 void extractIds(FPBReader_impl *dp_impl, boost::uint64_t sz,
                 const boost::uint8_t *chunk) {
   PRECONDITION(dp_impl, "bad pointer");
-  /* Documentation from Andrew's code on the structure of the arena:
-
-  The actual layout inside of the chunk is:
-   <num_4byte_elements: 4 bytes> -- the number of 4 byte offsets.
-   <num_8byte_elements: 4 bytes> -- the number of 8 byte offsets
-   Note: the number of indicies is num_4byte_elements + num_8byte_elements + 1
-   because even with no elements there will be the initial '\0\0\0\0'.
-
-   <id 0> + NUL   -- the first string, with an added NUL terminator
-   <id 1> + NUL   -- the second string, with an added NUL terminator
-       ....
-   <id N> + NUL   -- the last string, with an added NUL terminator
-
-   <offset 0: 4 bytes>    -- the offset relative to the start of <text 0>.
-                    (This always contains the 4 bytes "\0\0\0\0")
-      ...
-   <offset num_4byte_elements: 4 bytes>   -- the last offset stored in 4 bytes
-
-        (Note: This next section exists only when <num 8 byte offsets> > 0)
-   <offset num_4byte_elements+1: 8 bytes>    -- the first offset stored in 8
-  bytes
-      ...
-   <offset num_4byte_elements+num_8byte_elements: 8 bytes>   -- the last offset
-  stored in 8 bytes
-
-  To get the identifier for record at position P >= 0:
-    chunk_size = size of the chunk
-    num_4byte_elements = decode bytes[0:4] as uint32
-    num_8byte_elements = decode bytes[4:8] as uint32
-    if P >= num_4byte_elements + num_8byte_elements:
-        record does not exist
-    offset_start = chunk_size - num_4byte_elements*4 - num_8byte_elements*8
-    if P < num_4byte_elements:
-      start, end = decode bytes[offset_start:offset_start+8] as (uint32, uint32)
-    elif P == N4:
-      start, end = decode bytes[offset_start:offset_start+12] as (uint32,
-  uint64)
-    else:
-      start, end = decode bytes[offset_start:offset_start+16] as (uint64,
-  uint64)
-    id = bytes[start:end-1]
-   */
   dp_impl->num4ByteElements = *((boost::uint32_t *)chunk);
   chunk += sizeof(boost::uint32_t);
   dp_impl->num8ByteElements = *((boost::uint32_t *)chunk);
@@ -297,7 +318,9 @@ void extractIds(FPBReader_impl *dp_impl, boost::uint64_t sz,
 
 std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
   PRECONDITION(dp_impl, "bad reader pointer");
-  PRECONDITION(dp_impl->dp_idOffsets, "bad idOffsets pointer");
+  PRECONDITION((dp_impl->df_lazy || dp_impl->dp_idOffsets),
+               "bad idOffsets pointer");
+  PRECONDITION(!dp_impl->df_lazy || dp_impl->istrm, "no stream in lazy mode");
 
   if (which >= dp_impl->num4ByteElements + dp_impl->num8ByteElements) {
     throw ValueErrorException("bad index");
@@ -306,8 +329,15 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
 
   boost::uint64_t offset = 0, len = 0;
   if (which < dp_impl->num4ByteElements) {
-    offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
-    len = *(boost::uint32_t *)(dp_impl->dp_idOffsets + (which + 1) * 4);
+    if (!dp_impl->df_lazy) {
+      offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
+      len = *(boost::uint32_t *)(dp_impl->dp_idOffsets + (which + 1) * 4);
+    } else {
+      dp_impl->istrm->seekg(dp_impl->idDataOffset +
+                            (std::streampos)(which * 4));
+      dp_impl->istrm->read((char *)&offset, 4);
+      dp_impl->istrm->read((char *)&len, 4);
+    }
   } else if (which == dp_impl->num4ByteElements) {
     // FIX: this code path is not yet tested
     offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
@@ -320,7 +350,16 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
                                dp_impl->num4ByteElements * 4 + (which + 1) * 8);
   }
   len -= offset;
-  res = std::string((const char *)(dp_impl->dp_idChunk.get() + offset), len);
+
+  if (!dp_impl->df_lazy) {
+    res = std::string((const char *)(dp_impl->dp_idChunk.get() + offset), len);
+  } else {
+    char buff[len + 1];
+    buff[len] = 0;
+    dp_impl->istrm->seekg(dp_impl->idChunkOffset + (std::streampos)offset);
+    dp_impl->istrm->read((char *)buff, len);
+    res = std::string((const char *)buff);
+  }
   return res;
 };
 
@@ -414,7 +453,8 @@ void FPBReader::init() {
     boost::uint64_t chunkSz;
     boost::uint8_t *chunk = NULL;
     detail::readChunkDetails(*dp_istrm, chunkNm, chunkSz);
-    if (!df_lazyRead || chunkNm != "AREN") {
+    // std::cerr << " Chunk: " << chunkNm << " " << chunkSz << std::endl;
+    if (!df_lazyRead || (chunkNm != "AREN" && chunkNm != "FPID")) {
       detail::readChunkData(*dp_istrm, chunkSz, chunk);
       if (chunkNm == "FEND") {
         break;
@@ -431,15 +471,22 @@ void FPBReader::init() {
       }
       delete[] chunk;
     } else {
-      // we are reading the AREN chunk in lazy mode, just get our position in
+      // we are reading the AREN or FPID chunk in lazy mode, just get our
+      // position in
       // the file.
-      detail::extractArenaDetails(dp_impl, chunkSz);
+      if (chunkNm == "AREN") {
+        detail::extractArenaDetails(dp_impl, chunkSz);
+      } else if (chunkNm == "FPID") {
+        detail::extractIdsDetails(dp_impl, chunkSz);
+      }
     }
   }
   if ((!df_lazyRead && !dp_impl->dp_arenaChunk) ||
       (df_lazyRead && !dp_impl->fpDataOffset))
     throw BadFileException("No AREN record found");
-  if (!dp_impl->dp_idChunk) throw BadFileException("No FPID record found");
+  if ((!df_lazyRead && !dp_impl->dp_idChunk) ||
+      (df_lazyRead && !dp_impl->idDataOffset))
+    throw BadFileException("No FPID record found");
 
   df_init = true;
 };

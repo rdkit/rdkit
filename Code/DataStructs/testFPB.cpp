@@ -17,6 +17,66 @@
 
 using namespace RDKit;
 
+void _basicsTest(FPBReader &fps) {
+  fps.init();
+  TEST_ASSERT(fps.length() == 100);
+  TEST_ASSERT(fps.nBits() == 2048);
+
+  {  // pop counts
+    std::pair<unsigned int, unsigned int> offsets;
+    offsets = fps.getFPIdsInCountRange(17, 17);
+    TEST_ASSERT(offsets.first == 0);
+    TEST_ASSERT(offsets.second == 1);
+    offsets = fps.getFPIdsInCountRange(60, 65);
+    TEST_ASSERT(offsets.first == 96);
+    TEST_ASSERT(offsets.second == 100);
+    offsets = fps.getFPIdsInCountRange(160, 165);
+    TEST_ASSERT(offsets.first == 100);
+    TEST_ASSERT(offsets.second == 100);
+  }
+  {  // get* version
+    std::string nm = fps.getId(0);
+    // std::cerr << " nm: >" << nm << "<" << std::endl;
+    TEST_ASSERT(nm == "ZINC00902219");
+    boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNumBits() == 2048);
+    TEST_ASSERT(fp->getNumOnBits() == 17);
+    unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
+                            811, 831, 888, 1335, 1411, 1664, 1820, 1917};
+    for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
+      TEST_ASSERT(fp->getBit(obs[i]));
+    }
+  }
+  {  // operator[] version
+    std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
+    boost::shared_ptr<ExplicitBitVect> fp = tpl.first;
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNumBits() == 2048);
+    TEST_ASSERT(fp->getNumOnBits() == 17);
+    unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
+                            811, 831, 888, 1335, 1411, 1664, 1820, 1917};
+    for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
+      TEST_ASSERT(fp->getBit(obs[i]));
+    }
+    TEST_ASSERT(tpl.second == "ZINC00902219");
+  }
+  {  // test another fp
+    boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
+    TEST_ASSERT(fp);
+    TEST_ASSERT(fp->getNumBits() == 2048);
+    TEST_ASSERT(fp->getNumOnBits() == 20);
+    unsigned int obs[20] = {1,   8,    80,   95,   222,  227, 457,
+                            482, 650,  680,  715,  807,  831, 845,
+                            888, 1226, 1556, 1711, 1917, 1982};
+    for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
+      TEST_ASSERT(fp->getBit(obs[i]));
+    }
+    std::string nm = fps.getId(3);
+    TEST_ASSERT(nm == "ZINC04803506");
+  }
+}
+
 void test1FPBReaderBasics() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing FPBReader basics "
                        << std::endl;
@@ -25,62 +85,21 @@ void test1FPBReaderBasics() {
   {
     std::string filename = pathName + "zim.head100.fpb";
     FPBReader fps(filename);
-    fps.init();
-    TEST_ASSERT(fps.length() == 100);
-    TEST_ASSERT(fps.nBits() == 2048);
+    _basicsTest(fps);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
-    {  // pop counts
-      std::pair<unsigned int, unsigned int> offsets;
-      offsets = fps.getFPIdsInCountRange(17, 17);
-      TEST_ASSERT(offsets.first == 0);
-      TEST_ASSERT(offsets.second == 1);
-      offsets = fps.getFPIdsInCountRange(60, 65);
-      TEST_ASSERT(offsets.first == 96);
-      TEST_ASSERT(offsets.second == 100);
-      offsets = fps.getFPIdsInCountRange(160, 165);
-      TEST_ASSERT(offsets.first == 100);
-      TEST_ASSERT(offsets.second == 100);
-    }
-    {  // get* version
-      std::string nm = fps.getId(0);
-      TEST_ASSERT(nm == "ZINC00902219");
-      boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
-      TEST_ASSERT(fp);
-      TEST_ASSERT(fp->getNumBits() == 2048);
-      TEST_ASSERT(fp->getNumOnBits() == 17);
-      unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
-                              811, 831, 888, 1335, 1411, 1664, 1820, 1917};
-      for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
-        TEST_ASSERT(fp->getBit(obs[i]));
-      }
-    }
-    {  // operator[] version
-      std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
-      boost::shared_ptr<ExplicitBitVect> fp = tpl.first;
-      TEST_ASSERT(fp);
-      TEST_ASSERT(fp->getNumBits() == 2048);
-      TEST_ASSERT(fp->getNumOnBits() == 17);
-      unsigned int obs[17] = {1,   80,  183, 222,  227,  231,  482,  650, 807,
-                              811, 831, 888, 1335, 1411, 1664, 1820, 1917};
-      for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
-        TEST_ASSERT(fp->getBit(obs[i]));
-      }
-      TEST_ASSERT(tpl.second == "ZINC00902219");
-    }
-    {  // test another fp
-      boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
-      TEST_ASSERT(fp);
-      TEST_ASSERT(fp->getNumBits() == 2048);
-      TEST_ASSERT(fp->getNumOnBits() == 20);
-      unsigned int obs[20] = {1,   8,    80,   95,   222,  227, 457,
-                              482, 650,  680,  715,  807,  831, 845,
-                              888, 1226, 1556, 1711, 1917, 1982};
-      for (unsigned int i = 0; i < fp->getNumOnBits(); ++i) {
-        TEST_ASSERT(fp->getBit(obs[i]));
-      }
-      std::string nm = fps.getId(3);
-      TEST_ASSERT(nm == "ZINC04803506");
-    }
+void test9LazyFPBReaderBasics() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Lazy FPBReader basics "
+      << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename, true);
+    _basicsTest(fps);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -365,7 +384,7 @@ void test8FPBReaderContains() {
   pathName += "/Code/DataStructs/testData/";
   {
     std::string filename = pathName + "zim.head100.fpb";
-    FPBReader fps(filename, true);
+    FPBReader fps(filename);
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
@@ -411,6 +430,8 @@ int main() {
   RDLog::InitLogs();
 
   test1FPBReaderBasics();
+  test9LazyFPBReaderBasics();
+
   test2FPBReaderTanimoto();
   test3FPBReaderTanimotoNeighbors();
   test8FPBReaderContains();

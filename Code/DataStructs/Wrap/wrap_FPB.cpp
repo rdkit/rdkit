@@ -47,8 +47,7 @@ python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
 }
 
 std::string FPBReaderClassDoc =
-    "A class for read-only interactions with FPB files from Andrew Dalke's chemfp.\n\
-\n\
+    "A class for reading and searching FPB files from Andrew Dalke's chemfp.\n\
 \n";
 
 struct FPB_wrapper {
@@ -58,16 +57,25 @@ struct FPB_wrapper {
         python::init<std::string, python::optional<bool> >(
             (python::arg("filename"), python::arg("lazy") = false),
             "docstring"))
-        .def("Init", &FPBReader::init, "init.\n")
+        .def("Init", &FPBReader::init,
+             "Read the fingerprints from the file. This can take a while.\n")
         .def("__len__", &FPBReader::length)
         .def("__getitem__", &getItemHelper)
-        .def("GetNumBits", &FPBReader::nBits)
-        .def("GetFP", &FPBReader::getFP)
-        .def("GetBytes", &getBytesHelper)
-        .def("GetId", &FPBReader::getId)
-        .def("GetTanimoto", &getTaniHelper)
+        .def("GetNumBits", &FPBReader::nBits,
+             "returns the number of bits in a fingerprint")
+        .def("GetFP", &FPBReader::getFP,
+             "returns a particular fingerprint as an ExplicitBitVect")
+        .def("GetBytes", &getBytesHelper,
+             "returns a particular fingerprint as bytes")
+        .def("GetId", &FPBReader::getId,
+             "returns the id of a particular fingerprint")
+        .def("GetTanimoto", &getTaniHelper,
+             "return the tanimoto similarity of a particular fingerprint to "
+             "the bytes provided")
         .def("GetTanimotoNeighbors", &taniNbrHelper,
-             (python::arg("bv"), python::arg("threshold") = 0.7));
+             (python::arg("bv"), python::arg("threshold") = 0.7),
+             "returns tanimoto similarities to and indices of all neighbors "
+             "above the specified threshold");
   }
 };
 
