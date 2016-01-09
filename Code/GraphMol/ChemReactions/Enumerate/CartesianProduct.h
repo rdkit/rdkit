@@ -36,20 +36,14 @@
 #include "EnumerationStrategyBase.h"
 
 namespace RDKit {
-//! CartesianProductStrategy
-//!  Standard walk through all possible rgroup combinations
-//!  (0,0,0), (1,0,0), (2,0,0) ...
-
-class CartesianProductStrategy : public EnumerationStrategyBase {
-  size_t m_numPermutationsProcessed;
-
- public:
-  CartesianProductStrategy()
-      : EnumerationStrategyBase(), m_numPermutationsProcessed() {}
-
-  //! This is a class for enumerating RGGroups using Cartesian Products of
+  //! This is a class for enumerating reagents using Cartesian Products of
   //reagents.
   /*!
+    CartesianProductStrategy produces a  standard walk through all possible
+    reagent combinations:
+    
+     (0,0,0), (1,0,0), (2,0,0) ...
+
     basic usage:
 
     \verbatim
@@ -68,13 +62,17 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
       ...
     }
     \endverbatim
-  */
-  /*
-CartesianProductStrategy(const RGROUPS &rgroupLengths) :
-  EnumerationStrategyBase(rgroupLengths) {
-    initialize(rgroupLengths);
-  }
-  */
+
+  See EnumerationStrategyBase for more details and usage.
+*/
+
+class CartesianProductStrategy : public EnumerationStrategyBase {
+  size_t m_numPermutationsProcessed;
+
+ public:
+  CartesianProductStrategy()
+      : EnumerationStrategyBase(), m_numPermutationsProcessed() {}
+
   using EnumerationStrategyBase::initialize;
 
   virtual void initializeStrategy(const ChemicalReaction &,

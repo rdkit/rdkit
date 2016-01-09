@@ -38,7 +38,15 @@
 namespace RDKit
 {
 //! EvenSamplePairsStrategy
-//!  Randomly sample Pairs evenly from a collection of building blocks
+  /*!  Randomly sample Pairs evenly from a collection of building blocks
+        This is a good strategy for choosing a relatively small selection
+        of building blocks from a larger set.  As the amount of work needed
+        to retrieve the next evenly sample building block grows with the
+        number of samples, this method performs progressively worse as the
+        number of samples gets larger.
+
+        See EnumeartionStrategyBase for more details.
+  */
 
 class EvenSamplePairsStrategy : public EnumerationStrategyBase
 {
