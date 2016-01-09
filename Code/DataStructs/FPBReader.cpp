@@ -385,12 +385,13 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
         reinterpret_cast<const char *>(dp_impl->dp_idChunk.get() + offset),
         len);
   } else {
-    char buff[len + 1];
+    char *buff = new char[len + 1];
     buff[len] = 0;
     dp_impl->istrm->seekg(dp_impl->idChunkOffset +
                           static_cast<std::streampos>(offset));
     dp_impl->istrm->read(reinterpret_cast<char *>(buff), len);
     res = std::string(reinterpret_cast<const char *>(buff));
+    delete[] buff;
   }
   return res;
 };
