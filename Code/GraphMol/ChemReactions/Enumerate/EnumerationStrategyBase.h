@@ -47,6 +47,18 @@
 
 namespace RDKit {
 
+//! class for flagging enumeration strategy errors
+class EnumerationStrategyException : public std::exception {
+ public:
+  EnumerationStrategyException(const char *msg) : _msg(msg){};
+  EnumerationStrategyException(const std::string &msg) : _msg(msg){};
+  const char *message() const { return _msg.c_str(); };
+  ~EnumerationStrategyException() throw(){};
+
+ private:
+  std::string _msg;
+};
+
 //! Return the number of elements per input vector
 /*!  \param bbs vector<vector<T> >
 

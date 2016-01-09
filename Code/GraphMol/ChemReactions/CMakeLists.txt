@@ -5,6 +5,7 @@ rdkit_library(ChemReactions
 	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp SanitizeRxn.cpp
                     Enumerate/Enumerate.cpp
                     Enumerate/EnumerationPickler.cpp
+                    Enumerate/EvenSamplePairs.cpp
                     Enumerate/Template/EnumerateTemplate.cpp
                     Enumerate/Template/RGroupTemplate.cpp        
               LINK_LIBRARIES
@@ -23,6 +24,7 @@ rdkit_headers(Reaction.h
               Enumerate/EnumerationPickler.h
               Enumerate/EnumerationStrategyBase.h
               Enumerate/CartesianProduct.h
+              Enumerate/EvenSamplePairs.h
               Enumerate/RandomSample.h
               Enumerate/RandomSampleAllBBs.h
               Enumerate/Template/EnumerateTemplate.h

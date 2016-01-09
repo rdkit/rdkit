@@ -34,6 +34,7 @@
 #include "CartesianProduct.h"
 #include "RandomSample.h"
 #include "RandomSampleAllBBs.h"
+#include "EvenSamplePairs.h"
 #include "../ReactionPickler.h"
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -54,6 +55,7 @@ BOOST_CLASS_EXPORT(RDKit::EnumerationStrategyBase);
 BOOST_CLASS_EXPORT(RDKit::CartesianProductStrategy);
 BOOST_CLASS_EXPORT(RDKit::RandomSampleStrategy);
 BOOST_CLASS_EXPORT(RDKit::RandomSampleAllBBsStrategy);
+BOOST_CLASS_EXPORT(RDKit::EvenSamplePairsStrategy);
 BOOST_CLASS_EXPORT(RDKit::EnumerateLibrary);
 
 namespace RDKit {

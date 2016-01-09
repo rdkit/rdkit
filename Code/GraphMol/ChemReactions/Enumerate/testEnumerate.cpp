@@ -36,6 +36,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 
 #include <GraphMol/ChemReactions/Enumerate/CartesianProduct.h>
+#include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/RandomSample.h>
 #include <GraphMol/ChemReactions/Enumerate/RandomSampleAllBBs.h>
 #include <GraphMol/Chemreactions/Enumerate/Enumerate.h>
@@ -54,6 +55,7 @@ void pickleTest(EnumerationStrategyBase &en, size_t len,
                 bool allRGroups) {
   
   boost::shared_ptr<EnumerationStrategyBase> base(en.Clone());
+  TEST_ASSERT(std::string(base->type()) == std::string(en.type()));
       
   for (size_t i=0; i<len; ++i) {
     std::stringstream ss;
@@ -66,6 +68,7 @@ void pickleTest(EnumerationStrategyBase &en, size_t len,
       boost::archive::binary_iarchive ar(ss);
       ar & copy;
     }
+    TEST_ASSERT(std::string(base->type()) == std::string(copy->type()));
     TEST_ASSERT(base->next() == copy->next());
     TEST_ASSERT(base->currentPosition() == en.next());
 
@@ -88,10 +91,12 @@ void testSamplers() {
   CartesianProductStrategy    cart; cart.initialize(rxn, bbs);
   RandomSampleStrategy        rand; rand.initialize(rxn, bbs);
   RandomSampleAllBBsStrategy  randBBs; randBBs.initialize(rxn, bbs);
+  EvenSamplePairsStrategy     even; even.initialize(rxn, bbs);
   std::vector< boost::shared_ptr<EnumerationStrategyBase> > enumerators;
   enumerators.push_back(boost::shared_ptr<EnumerationStrategyBase>(cart.Clone()));
   enumerators.push_back(boost::shared_ptr<EnumerationStrategyBase>(rand.Clone()));
   enumerators.push_back(boost::shared_ptr<EnumerationStrategyBase>(randBBs.Clone()));
+  enumerators.push_back(boost::shared_ptr<EnumerationStrategyBase>(even.Clone()));
 
   for(size_t i=0;i<enumerators.size();++i) {
     TEST_ASSERT(enumerators[i]->getNumPermutations() == 10*5*6);
@@ -101,6 +106,32 @@ void testSamplers() {
   //for(auto&& i: enumerators) {
   //  TEST_ASSERT(i->getNumPermutations() == 10*5*6);
   //}
+}
+
+void testEvenSamplers() {
+  BBS bbs;
+  bbs.resize(3);
+  long R1 = 6000;
+  long R2 = 500;
+  long R3 = 10000;
+  for(int i=0;i<R1;++i)
+    bbs[0].push_back( boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")) );
+  
+  for(int i=0;i<R2;++i)
+    bbs[1].push_back( boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")) );
+
+  for(int i=0;i<R3;++i)
+    bbs[2].push_back( boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")) );
+
+  ChemicalReaction rxn;
+  EvenSamplePairsStrategy     even; even.initialize(rxn, bbs);
+  std::cout << even.getNumPermutations() << " " << R1*R2*R3 << std::endl;
+  TEST_ASSERT(even.getNumPermutations() == R1*R2*R3);
+
+  for (size_t i=0; i<5000; ++i) {
+    even.next();
+  }
+  even.stats();
 }
 
 
@@ -175,5 +206,6 @@ int main(int argc, char *argv[]) {
   }
 
   testSamplers();
+  testEvenSamplers();
   testEnumerations();
 }
