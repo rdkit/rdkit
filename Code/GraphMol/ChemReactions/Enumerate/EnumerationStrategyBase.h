@@ -93,11 +93,11 @@ ssize_t computeNumProducts(const RGROUPS &sizes);
 
 //! Base Class for enumeration strageties
 //!  Usage:
-//!  EnumerationStrategyBase must be initialized with building block
-//!   vector to be used.
-//!
+//!  EnumerationStrategyBase must be initialized with both a reaction
+//!   and the building block (molecule) vector to be sampled.
+//!  
 //!  \verbatim
-//!  RGroupEnumberatorBase &eb = ...
+//!  EnumerationStrategyBase &eb = ...
 //!   if(eb) { // can we get another entry
 //!    const std::vector<int> &v = eb.next();
 //!    v[0] // RGroup 0 position

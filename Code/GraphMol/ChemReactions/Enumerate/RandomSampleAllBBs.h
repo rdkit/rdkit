@@ -42,30 +42,8 @@ namespace RDKit
 //! RandomSampleAllBBsStrategy
 //!  Randomly sample rgroup indices
 
-class RandomSampleAllBBsStrategy : public EnumerationStrategyBase
-{
-  size_t m_numPermutationsProcessed;
-  size_t m_offset;
-  size_t m_maxoffset;
-
-  boost::minstd_rand m_rng;
-  std::vector<boost::random::uniform_int_distribution<> > m_distributions;
-  
- public:
- RandomSampleAllBBsStrategy() :
-    EnumerationStrategyBase(),
-      m_numPermutationsProcessed(0),
-      m_offset(0),
-      m_maxoffset(0),
-      m_rng(),
-      m_distributions() {
-      for(size_t i=0;i<m_permutation.size();++i) {
-        m_distributions.push_back(
-            boost::random::uniform_int_distribution<>(0, m_permutation[i]-1) );
-      }
-    }
-
- //! This is a class for enumerating RGGroups using Cartesian Products of reagents.
+//! This is a class for randomly enumerating reagents that ensures all reagents
+//  are sampled.
  /*!
    basic usage:
    
@@ -98,6 +76,29 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase
       reset(rgroupLengths);
     }
     */
+
+class RandomSampleAllBBsStrategy : public EnumerationStrategyBase
+{
+  size_t m_numPermutationsProcessed;
+  size_t m_offset;
+  size_t m_maxoffset;
+
+  boost::minstd_rand m_rng;
+  std::vector<boost::random::uniform_int_distribution<> > m_distributions;
+  
+ public:
+ RandomSampleAllBBsStrategy() :
+    EnumerationStrategyBase(),
+      m_numPermutationsProcessed(0),
+      m_offset(0),
+      m_maxoffset(0),
+      m_rng(),
+      m_distributions() {
+      for(size_t i=0;i<m_permutation.size();++i) {
+        m_distributions.push_back(
+            boost::random::uniform_int_distribution<>(0, m_permutation[i]-1) );
+      }
+    }
     using EnumerationStrategyBase::initialize;
 
     void initializeStrategy(const ChemicalReaction &, const BBS &) {
