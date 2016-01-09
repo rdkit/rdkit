@@ -31,6 +31,17 @@ struct FPBReader_impl;
 }
 
 //! class for reading and searching FPB files
+/*!
+  basic usage:
+  \code
+  FPBReader reader("foo.fpb");
+  reader.init();
+  boost::shared_ptr<ExplicitBitVect> ebv = reader.getFP(95);
+  std::vector<std::pair<double, unsigned int> > nbrs =
+      reader.getTanimotoNeighbors(*ebv.get(), 0.70);
+  \endcode
+
+*/
 class FPBReader {
  public:
   FPBReader()
@@ -123,8 +134,11 @@ class FPBReader {
   //! \overload
   double getTanimoto(unsigned int idx, const ExplicitBitVect &ebv) const;
 
-  //! returns tanimoto similarities and indicies of fingerprints that are at
-  //! least \c threshold similar to the byte array provided
+  //! returns tanimoto neighbors that are within a similarity threshold
+  /*!
+  The result vector of (similarity,index) pairs is sorted in order
+  of decreasing similarity
+  */
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
       const boost::uint8_t *bv, double threshold = 0.7) const;
   //! \overload
