@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2016 Greg Landrum
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015 Greg Landrum
+// Copyright (c) 2016 Greg Landrum
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -503,6 +503,13 @@ double FPBReader::getTanimoto(unsigned int idx,
   PRECONDITION(df_init, "not initialized");
   return detail::tanimoto(dp_impl, idx, bv);
 }
+double FPBReader::getTanimoto(unsigned int idx,
+                              const ExplicitBitVect &ebv) const {
+  const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  double res = getTanimoto(idx, bv);
+  delete[] bv;
+  return res;
+}
 
 std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
     const boost::uint8_t *bv, double threshold) const {
@@ -514,6 +521,15 @@ std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
   return res;
 }
 
+std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
+    const ExplicitBitVect &ebv, double threshold) const {
+  const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  std::vector<std::pair<double, unsigned int> > res =
+      getTanimotoNeighbors(bv, threshold);
+  delete[] bv;
+  return res;
+}
+
 std::vector<unsigned int> FPBReader::getContainingNeighbors(
     const boost::uint8_t *bv) const {
   PRECONDITION(df_init, "not initialized");
@@ -521,6 +537,14 @@ std::vector<unsigned int> FPBReader::getContainingNeighbors(
   detail::containingNeighbors(dp_impl, bv, res);
   std::sort(res.begin(), res.end());
 
+  return res;
+}
+
+std::vector<unsigned int> FPBReader::getContainingNeighbors(
+    const ExplicitBitVect &ebv) const {
+  const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  std::vector<unsigned int> res = getContainingNeighbors(bv);
+  delete[] bv;
   return res;
 }
 
