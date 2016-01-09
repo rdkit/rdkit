@@ -340,14 +340,30 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
     }
   } else if (which == dp_impl->num4ByteElements) {
     // FIX: this code path is not yet tested
-    offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
-    len = *(boost::uint64_t *)(dp_impl->dp_idOffsets + (which + 1) * 4);
+    if (!dp_impl->df_lazy) {
+      offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
+      len = *(boost::uint64_t *)(dp_impl->dp_idOffsets + (which + 1) * 4);
+    } else {
+      dp_impl->istrm->seekg(dp_impl->idDataOffset +
+                            (std::streampos)(which * 4));
+      dp_impl->istrm->read((char *)&offset, 4);
+      dp_impl->istrm->read((char *)&len, 8);
+    }
   } else {
     // FIX: this code path is not yet tested
-    offset = *(boost::uint64_t *)(dp_impl->dp_idOffsets +
-                                  dp_impl->num4ByteElements * 4 + which * 8);
-    len = *(boost::uint64_t *)(dp_impl->dp_idOffsets +
+    if (!dp_impl->df_lazy) {
+      offset = *(boost::uint64_t *)(dp_impl->dp_idOffsets +
+                                    dp_impl->num4ByteElements * 4 + which * 8);
+      len =
+          *(boost::uint64_t *)(dp_impl->dp_idOffsets +
                                dp_impl->num4ByteElements * 4 + (which + 1) * 8);
+    } else {
+      dp_impl->istrm->seekg(
+          dp_impl->idDataOffset +
+          (std::streampos)(dp_impl->num4ByteElements * 4 + which * 8));
+      dp_impl->istrm->read((char *)&offset, 8);
+      dp_impl->istrm->read((char *)&len, 8);
+    }
   }
   len -= offset;
 
