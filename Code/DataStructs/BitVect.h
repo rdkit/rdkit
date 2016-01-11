@@ -17,11 +17,11 @@ typedef std::vector<int> IntVect;
 typedef IntVect::iterator IntVectIter;
 typedef std::vector<double> DoubleVect;
 typedef DoubleVect::iterator DoubleVectIter;
-const int ci_BITVECT_VERSION=0x0020; //!< version number to use in pickles
+const int ci_BITVECT_VERSION = 0x0020;  //!< version number to use in pickles
 
 //! Abstract base class for storing BitVectors
-class BitVect{
-public:
+class BitVect {
+ public:
   virtual ~BitVect() = 0;
   //! sets a particular bit and returns its original value
   virtual bool setBit(const unsigned int which) = 0;
@@ -34,16 +34,16 @@ public:
   //! returns the number of on bits
   virtual unsigned int getNumOnBits() const = 0;
   //! returns the number of off bits
-  virtual unsigned int getNumOffBits() const =0;
+  virtual unsigned int getNumOffBits() const = 0;
   //! replaces the contents of \c v with indices of our on bits
-  virtual void getOnBits (IntVect& v) const = 0;
+  virtual void getOnBits(IntVect& v) const = 0;
   //! clears (sets to off) all of our bits
   virtual void clearBits() = 0;
 
   //! initializes this BitVect from a pickle
   /*!
     \param data     the raw pickle data
-    \param dataLen  the length of \c data 
+    \param dataLen  the length of \c data
     \param isBase64 (optional) if this is set, \c data is assumed to
          be base64 encoded.
     \param allowOldFormat (optional) allows a very old form of the BitVect
@@ -51,18 +51,17 @@ public:
          amount of error checking and it is strongly suggested that it not
          be used in client code.
    */
-  void initFromText(const char *data,const unsigned int dataLen,
-                    bool isBase64=false,bool allowOldFormat=false);
-                    
+  void initFromText(const char* data, const unsigned int dataLen,
+                    bool isBase64 = false, bool allowOldFormat = false);
+
   //! returns a serialized (pickled) version of this BitVect
   virtual std::string toString() const = 0;
 
-  virtual bool operator[] (const unsigned int which) const = 0;
+  virtual bool operator[](const unsigned int which) const = 0;
   unsigned int size() const { return getNumBits(); }
 
-private:
+ private:
   virtual void _initForSize(const unsigned int size) = 0;
 };
-
 
 #endif

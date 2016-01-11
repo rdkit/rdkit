@@ -12,32 +12,33 @@
 #define RDTHREADS_H_2015
 
 #ifdef RDK_THREADSAFE_SSS
-
+#include "RDGeneral/Invariant.h"
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread.hpp>
-namespace RDKit{
-  inline unsigned int getNumThreadsToUse(int target){
-    if(target>=1){
-      return static_cast<unsigned int>(target);
-    }
-    unsigned int res=boost::thread::hardware_concurrency();
-    if(static_cast<int>(res) > -target){
-      return res+target;
-    } else {
-      return 1;
-    }
+#include <RDGeneral/BoostEndInclude.h>
+
+namespace RDKit {
+inline unsigned int getNumThreadsToUse(int target) {
+  if (target >= 1) {
+    return static_cast<unsigned int>(target);
   }
+  unsigned int res = boost::thread::hardware_concurrency();
+  if (res > rdcast<unsigned int>(-target)) {
+    return res + target;
+  } else {
+    return 1;
+  }
+}
 }
 
 #else
 
-namespace RDKit{
-  inline unsigned int getNumThreadsToUse(int target){
-    return 1;
-  }
+namespace RDKit {
+inline unsigned int getNumThreadsToUse(int target) {
+  RDUNUSED_PARAM(target);
+  return 1;
+}
 }
 #endif
 
-
-
 #endif
-

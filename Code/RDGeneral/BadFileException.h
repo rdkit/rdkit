@@ -15,21 +15,23 @@
 #include <stdexcept>
 
 namespace RDKit {
-  
-  //! used by various file parsing classes to indicate a bad file
-  class BadFileException : public std::runtime_error {
-  public :
-    //! construct with an error message
-    explicit BadFileException(const char *msg) : std::runtime_error("BadFileException"), _msg(msg) {};
-    //! construct with an error message
-    explicit BadFileException(const std::string &msg) : std::runtime_error("BadFileException"), _msg(msg) {};
-    //! get the error message
-    const char *message () const { return _msg.c_str(); };
-    ~BadFileException () throw () {};
-    
-    private :
-      std::string _msg;
-  };
+
+//! used by various file parsing classes to indicate a bad file
+class BadFileException : public std::runtime_error {
+ public:
+  //! construct with an error message
+  explicit BadFileException(const char *msg)
+      : std::runtime_error("BadFileException"), _msg(msg){};
+  //! construct with an error message
+  explicit BadFileException(const std::string &msg)
+      : std::runtime_error("BadFileException"), _msg(msg){};
+  //! get the error message
+  const char *message() const { return _msg.c_str(); };
+  ~BadFileException() throw(){};
+
+ private:
+  std::string _msg;
+};
 }
 
 #endif

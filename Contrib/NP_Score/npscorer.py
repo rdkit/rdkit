@@ -55,7 +55,7 @@ def processMols(fscore,suppl,outf):
 
     smiles = Chem.MolToSmiles(m,True)
     name = m.GetProp('_Name')
-    print smiles + "\t" + name + "\t" + score 
+    print(smiles + "\t" + name + "\t" + score)
 
   sys.stderr.write("finished, " + str(n) + " molecules processed\n")
 

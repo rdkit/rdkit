@@ -4,13 +4,9 @@
 #include <DataStructs/ExplicitBitVect.h>
 namespace python = boost::python;
 
-void testCrossA(classA *A) {
-  A->printA();
-};
+void testCrossA(classA *A) { A->printA(); };
 
-void testCrossC(classC *C) {
-  C->printC();
-};
+void testCrossC(classC *C) { C->printC(); };
 
 classC *getClassC() {
   classC *nc = new classC();
@@ -18,12 +14,11 @@ classC *getClassC() {
 }
 
 ExplicitBitVect *getEBV() {
-  ExplicitBitVect *ebv = new  ExplicitBitVect(20);
+  ExplicitBitVect *ebv = new ExplicitBitVect(20);
   return ebv;
 }
 
-BOOST_PYTHON_MODULE(moduleB) 
-{
+BOOST_PYTHON_MODULE(moduleB) {
   python::def("testCrossA", testCrossA);
   python::def("testCrossC", testCrossC);
   python::def("GetClassC", getClassC,

@@ -13,4 +13,3 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolops_array_API
 
 #endif
-

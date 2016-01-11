@@ -16,30 +16,30 @@
 #ifndef __RD_MQN_H__
 #define __RD_MQN_H__
 
-#include<vector>
+#include <vector>
 
-namespace RDKit{
-  class ROMol;
-  namespace Descriptors {
-    const std::string MQNVersion="1.0.0";
+namespace RDKit {
+class ROMol;
+namespace Descriptors {
+const std::string MQNVersion = "1.0.0";
 
-    //! calculates MQN descriptors
-    /*!  
-      Definition from 
-      Nguyen, K. T., Blum, L. C., Van Deursen, R. & Reymond, J.-L. "Classification of Organic Molecules by Molecular Quantum Numbers." 
-      ChemMedChem 4, 1803–1805 (2009).
+//! calculates MQN descriptors
+/*!
+  Definition from
+  Nguyen, K. T., Blum, L. C., Van Deursen, R. & Reymond, J.-L. "Classification
+  of Organic Molecules by Molecular Quantum Numbers."
+  ChemMedChem 4, 1803–1805 (2009).
 
 
-      \param mol        the molecule of interest
-      \param force      (optional) calculate the values even if they are cached.
+  \param mol        the molecule of interest
+  \param force      (optional) calculate the values even if they are cached.
 
-      \return a vector with the MQNs
+  \return a vector with the MQNs
 
-    */
-    std::vector<unsigned int>  calcMQNs(const ROMol &mol,
-                                       bool force=false);
-    
-  } // end of namespace Descriptors
-} //end of namespace RDKit
+*/
+std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force = false);
+
+}  // end of namespace Descriptors
+}  // end of namespace RDKit
 
 #endif

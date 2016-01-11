@@ -18,8 +18,8 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace RDKit {
 
-const std::string periodicTableAtomData = 
-"0	*	0	0	0	0	0	0	0	-1 \n \
+const std::string periodicTableAtomData =
+    "0	*	0	0	0	0	0	0	0	-1 \n \
 1	H 	0.23	0.33	1.2	1.008	1	1	1.007825032	1 \n \
 2	He	0.93	0.7	1.4	4.003	2	4	4.002603254	0  \n \
 3	Li	0.68	1.23	1.82	6.941	1	7	7.01600455	1  \n \
@@ -40,7 +40,7 @@ const std::string periodicTableAtomData =
 18	Ar	1.57	1.74	1.88	39.948	8	40	39.96238312	0 \n \
 19	K	1.33	2.03	2.75	39.098	1	39	38.96370668	1 \n \
 20	Ca	0.99	1.74	1.973	40.078	2	40	39.96259098	2 \n"
-"21	Sc	1.44	1.44	1.7	44.956	3	45	44.9559119	-1 \n \
+    "21	Sc	1.44	1.44	1.7	44.956	3	45	44.9559119	-1 \n \
 22	Ti	1.47	1.32	1.7	47.867	4	48	47.9479463	-1 \n \
 23	V	1.33	1.22	1.7	50.942	5	50	49.9471585	-1 \n \
 24	Cr	1.35	1.18	1.7	51.996	6	52	51.9405075	-1 \n \
@@ -60,7 +60,7 @@ const std::string periodicTableAtomData =
 38	Sr	1.12	1.91	1.7	87.62	2	88	87.9056121	2 \n \
 39	Y	1.78	1.62	1.7	88.906	3	89	88.9058483	-1 \n \
 40	Zr	1.56	1.45	1.7	91.224	4	90	89.9047044	-1 \n"
-"41	Nb	1.48	1.34	1.7	92.906	5	93	92.9063781	-1 \n \
+    "41	Nb	1.48	1.34	1.7	92.906	5	93	92.9063781	-1 \n \
 42	Mo	1.47	1.3	1.7	95.94	6	98	97.9054082	-1 \n \
 43	Tc	1.35	1.27	1.7	98	7	97	96.906365	-1 \n \
 44	Ru	1.4	1.25	1.7	101.07	8	102	101.9043493	-1 \n \
@@ -80,7 +80,7 @@ const std::string periodicTableAtomData =
 58	Ce	1.83	1.83	1.7	140.116	4	140	139.9054387	-1 \n \
 59	Pr	1.82	1.82	1.7	140.908	3	141	140.9076528	-1 \n \
 60	Nd	1.81	1.81	1.7	144.24	4	142	141.9077233	-1 \n"
-"61	Pm	1.8	1.8	1.7	145	5	145	144.912749	-1 \n \
+    "61	Pm	1.8	1.8	1.7	145	5	145	144.912749	-1 \n \
 62	Sm	1.8	1.8	1.7	150.36	6	152	151.9197324	-1 \n \
 63	Eu	1.99	1.99	1.7	151.964	7	153	152.9212303	-1 \n \
 64	Gd	1.79	1.79	1.7	157.25	8	158	157.9241039	-1 \n \
@@ -100,7 +100,7 @@ const std::string periodicTableAtomData =
 78	Pt	1.5	1.3	1.72	195.078	10	195	194.9647911	-1 \n \
 79	Au	1.5	1.34	1.66	196.967	11	197	196.9665687	-1 \n \
 80	Hg	1.7	1.49	1.55	200.59	2	202	201.970643	-1 \n"
-"81	Tl	1.55	1.48	1.96	204.383	3	205	204.9744275	3 \n \
+    "81	Tl	1.55	1.48	1.96	204.383	3	205	204.9744275	3 \n \
 82	Pb	1.54	1.48	2.02	207.2	4	208	207.9766521	4 \n \
 83	Bi	1.54	1.45	1.7	208.98	5	209	208.9803987	3 \n \
 84	Po	1.68	1.46	1.7	209	6	209	208.9824304	2 \n \
@@ -120,7 +120,7 @@ const std::string periodicTableAtomData =
 98	Cf	1.5	0	1.7	251	10	249	249.0748535	-1 \n \
 99	Es	1.5	0	1.7	252	11	252	252.08298	-1 \n \
 100	Fm	1.5	0	1.7	257	12	257	257.095105	-1 \n"
-"101	Md	1.5	0	1.7	258	13	258	258.098431	-1 \n \
+    "101	Md	1.5	0	1.7	258	13	258	258.098431	-1 \n \
 102	No	1.5	0	1.7	259	14	259	259.10103	-1 \n \
 103	Lr	1.5	0	1.7	262	15	262	262.10963	-1 \n \
 104	Rf	1.57	0	1.7	267	2	267	267.12153	-1 \n \
@@ -133,83 +133,85 @@ const std::string periodicTableAtomData =
 111	Rg	1.21	0	1.7	281	2	281	281.16537	-1 \n \
 112	Cn	1.22	0	1.7	285	2	285	285.17411	-1";
 
-  atomicData::atomicData(const std::string &dataLine) {
-    boost::char_separator<char> spaceSep(" \t");
-    tokenizer tokens(dataLine,spaceSep);
-    tokenizer::iterator token=tokens.begin();
-    std::istringstream istr;
-    istr.imbue(std::locale("C"));
-    
-    // atomic number first
-    istr.clear();
-    istr.str(*token);
-    istr>>anum;
-    ++token;
-    
-    // element symbol
-    symb = *token;
-    ++token;
+atomicData::atomicData(const std::string &dataLine) {
+  boost::char_separator<char> spaceSep(" \t");
+  tokenizer tokens(dataLine, spaceSep);
+  tokenizer::iterator token = tokens.begin();
+  std::istringstream istr;
+  istr.imbue(std::locale("C"));
 
-    // covalent radius
-    istr.clear();
-    istr.str(*token);
-    istr>>rCov;
-    ++token;
-    
-    // rB0
-    istr.clear();
-    istr.str(*token);
-    istr>>rB0;
-    ++token;
-    
-    //  Van derWaal radius
-    istr.clear();
-    istr.str(*token);
-    istr>>rVdw;
-    ++token;
-    
-    // atomic mass
-    istr.clear();
-    istr.str(*token);
-    istr>>mass;
-    ++token;
+  // atomic number first
+  istr.clear();
+  istr.str(*token);
+  istr >> anum;
+  ++token;
 
-    // number of outshell electrons
-    istr.clear();
-    istr.str(*token);
-    istr>>nVal;
-    ++token;
+  // element symbol
+  symb = *token;
+  ++token;
 
-    // most common isotope
-    istr.clear();
-    istr.str(*token);
-    istr>>commonIsotope;
-    ++token;
+  // covalent radius
+  istr.clear();
+  istr.str(*token);
+  istr >> rCov;
+  ++token;
 
-    // most common isotopic mass
+  // rB0
+  istr.clear();
+  istr.str(*token);
+  istr >> rB0;
+  ++token;
+
+  //  Van derWaal radius
+  istr.clear();
+  istr.str(*token);
+  istr >> rVdw;
+  ++token;
+
+  // atomic mass
+  istr.clear();
+  istr.str(*token);
+  istr >> mass;
+  ++token;
+
+  // number of outshell electrons
+  istr.clear();
+  istr.str(*token);
+  istr >> nVal;
+  ++token;
+
+  // most common isotope
+  istr.clear();
+  istr.str(*token);
+  istr >> commonIsotope;
+  ++token;
+
+  // most common isotopic mass
+  istr.clear();
+  istr.str(*token);
+  istr >> commonIsotopeMass;
+  ++token;
+
+  // now the valences
+  valence.clear();
+  while (token != tokens.end()) {
     istr.clear();
     istr.str(*token);
-    istr>>commonIsotopeMass;
+    int tval;
+    istr >> tval;
+    valence.push_back(tval);
     ++token;
-    
-    // now the valences
-    valence.clear();
-    while (token != tokens.end()) {
-      istr.clear();
-      istr.str(*token);
-      int tval;
-      istr>>tval;
-      valence.push_back(tval);
-      ++token;
-    }
   }
+}
 
-  // data taken from the BODR
-  // http://bodr.svn.sourceforge.net/viewvc/bodr/trunk/bodr/isotopes/isotopes.xml?revision=30
+// data taken from the BODR
+// http://bodr.svn.sourceforge.net/viewvc/bodr/trunk/bodr/isotopes/isotopes.xml?revision=30
 
-  // another joy of VC++ "compiler limit: string exceeds 65535 bytes in length" compels us to
-  // break this into pieces
-  const std::string isotopesAtomData[] = {"1	H	1	1.007825032	99.9885 \n \
+// another joy of VC++ "compiler limit: string exceeds 65535 bytes in length"
+// compels us to
+// break this into pieces
+const std::string isotopesAtomData[] = {
+    "1	H	1	1.007825032	99.9885 \n \
 1	H	2	2.014101778	0.0115 \n \
 1	H	3	3.016049278	0 \n \
 1	H	4	4.02781	0 \n \
@@ -260,7 +262,7 @@ const std::string periodicTableAtomData =
 5	B	17	17.04699	0 \n \
 5	B	18	18.05617	0 \n \
 5	B	19	19.06373	0 \n",
-"6	C	8	8.037675	0 \n \
+    "6	C	8	8.037675	0 \n \
 6	C	9	9.0310367	0 \n \
 6	C	10	10.0168532	0 \n \
 6	C	11	11.0114336	0 \n \
@@ -309,7 +311,7 @@ const std::string periodicTableAtomData =
 8	O	27	27.04826	0 \n \
 8	O	28	28.05781	0 \n \
 9	F	14	14.03506	0 \n",
-"9	F	15	15.01801	0 \n \
+    "9	F	15	15.01801	0 \n \
 9	F	16	16.011466	0 \n \
 9	F	17	17.00209524	0 \n \
 9	F	18	18.000938	0 \n \
@@ -360,7 +362,7 @@ const std::string periodicTableAtomData =
 11	Na	30	30.008976	0 \n \
 11	Na	31	31.01359	0 \n \
 11	Na	32	32.02047	0 \n",
-"11	Na	33	33.02672	0 \n \
+    "11	Na	33	33.02672	0 \n \
 11	Na	34	34.03517	0 \n \
 11	Na	35	35.04249	0 \n \
 11	Na	36	36.05148	0 \n \
@@ -411,7 +413,7 @@ const std::string periodicTableAtomData =
 13	Al	42	42.04689	0 \n \
 14	Si	22	22.03453	0 \n \
 14	Si	23	23.02552	0 \n",
-"14	Si	24	24.011546	0 \n \
+    "14	Si	24	24.011546	0 \n \
 14	Si	25	25.004106	0 \n \
 14	Si	26	25.99233	0 \n \
 14	Si	27	26.98670491	0 \n \
@@ -462,7 +464,7 @@ const std::string periodicTableAtomData =
 16	S	30	29.984903	0 \n \
 16	S	31	30.9795547	0 \n \
 16	S	32	31.972071	94.93 \n",
-"16	S	33	32.97145876	0.76 \n \
+    "16	S	33	32.97145876	0.76 \n \
 16	S	34	33.9678669	4.29 \n \
 16	S	35	34.96903216	0 \n \
 16	S	36	35.96708076	0.02 \n \
@@ -513,7 +515,7 @@ const std::string periodicTableAtomData =
 18	Ar	37	36.96677632	0 \n \
 18	Ar	38	37.9627324	0.0632 \n \
 18	Ar	39	38.964313	0 \n",
-"18	Ar	40	39.96238312	99.6003 \n \
+    "18	Ar	40	39.96238312	99.6003 \n \
 18	Ar	41	40.9645006	0 \n \
 18	Ar	42	41.963046	0 \n \
 18	Ar	43	42.965636	0 \n \
@@ -564,7 +566,7 @@ const std::string periodicTableAtomData =
 20	Ca	44	43.9554818	2.086 \n \
 20	Ca	45	44.9561866	0 \n \
 20	Ca	46	45.9536926	0.004 \n",
-"20	Ca	47	46.954546	0 \n \
+    "20	Ca	47	46.954546	0 \n \
 20	Ca	48	47.952534	0.187 \n \
 20	Ca	49	48.955674	0 \n \
 20	Ca	50	49.957519	0 \n \
@@ -615,7 +617,7 @@ const std::string periodicTableAtomData =
 22	Ti	50	49.9447912	5.18 \n \
 22	Ti	51	50.946615	0 \n \
 22	Ti	52	51.946897	0 \n",
-"22	Ti	53	52.94973	0 \n \
+    "22	Ti	53	52.94973	0 \n \
 22	Ti	54	53.95105	0 \n \
 22	Ti	55	54.95527	0 \n \
 22	Ti	56	55.9582	0 \n \
@@ -666,7 +668,7 @@ const std::string periodicTableAtomData =
 24	Cr	53	52.9406494	9.501 \n \
 24	Cr	54	53.9388804	2.365 \n \
 24	Cr	55	54.9408397	0 \n",
-"24	Cr	56	55.9406531	0 \n \
+    "24	Cr	56	55.9406531	0 \n \
 24	Cr	57	56.943613	0 \n \
 24	Cr	58	57.94435	0 \n \
 24	Cr	59	58.94859	0 \n \
@@ -717,7 +719,7 @@ const std::string periodicTableAtomData =
 26	Fe	55	54.9382934	0 \n \
 26	Fe	56	55.9349375	91.754 \n \
 26	Fe	57	56.935394	2.119 \n",
-"26	Fe	58	57.9332756	0.282 \n \
+    "26	Fe	58	57.9332756	0.282 \n \
 26	Fe	59	58.9348755	0 \n \
 26	Fe	60	59.934072	0 \n \
 26	Fe	61	60.936745	0 \n \
@@ -768,7 +770,7 @@ const std::string periodicTableAtomData =
 28	Ni	52	51.97568	0 \n \
 28	Ni	53	52.96847	0 \n \
 28	Ni	54	53.95791	0 \n",
-"28	Ni	55	54.95133	0 \n \
+    "28	Ni	55	54.95133	0 \n \
 28	Ni	56	55.942132	0 \n \
 28	Ni	57	56.9397935	0 \n \
 28	Ni	58	57.9353429	68.0769 \n \
@@ -819,7 +821,7 @@ const std::string periodicTableAtomData =
 29	Cu	76	75.945275	0 \n \
 29	Cu	77	76.94785	0 \n \
 29	Cu	78	77.95196	0 \n",
-"29	Cu	79	78.95456	0 \n \
+    "29	Cu	79	78.95456	0 \n \
 29	Cu	80	79.96087	0 \n \
 30	Zn	54	53.99295	0 \n \
 30	Zn	55	54.98398	0 \n \
@@ -870,7 +872,7 @@ const std::string periodicTableAtomData =
 31	Ga	72	71.9263663	0 \n \
 31	Ga	73	72.9251747	0 \n \
 31	Ga	74	73.926946	0 \n",
-"31	Ga	75	74.9265002	0 \n \
+    "31	Ga	75	74.9265002	0 \n \
 31	Ga	76	75.9288276	0 \n \
 31	Ga	77	76.9291543	0 \n \
 31	Ga	78	77.9316082	0 \n \
@@ -921,7 +923,7 @@ const std::string periodicTableAtomData =
 33	As	64	63.95757	0 \n \
 33	As	65	64.94956	0 \n \
 33	As	66	65.94471	0 \n",
-"33	As	67	66.93919	0 \n \
+    "33	As	67	66.93919	0 \n \
 33	As	68	67.93677	0 \n \
 33	As	69	68.93227	0 \n \
 33	As	70	69.93092	0 \n \
@@ -972,7 +974,7 @@ const std::string periodicTableAtomData =
 34	Se	87	86.92852	0 \n \
 34	Se	88	87.93142	0 \n \
 34	Se	89	88.93645	0 \n",
-"34	Se	90	89.93996	0 \n \
+    "34	Se	90	89.93996	0 \n \
 34	Se	91	90.94596	0 \n \
 34	Se	92	91.94992	0 \n \
 34	Se	93	92.95629	0 \n \
@@ -1023,7 +1025,7 @@ const std::string periodicTableAtomData =
 36	Kr	81	80.916592	0 \n \
 36	Kr	82	81.9134836	11.58 \n \
 36	Kr	83	82.914136	11.49 \n",
-"36	Kr	84	83.911507	57.00 \n \
+    "36	Kr	84	83.911507	57.00 \n \
 36	Kr	85	84.9125273	0 \n \
 36	Kr	86	85.91061073	17.30 \n \
 36	Kr	87	86.91335486	0 \n \
@@ -1074,7 +1076,7 @@ const std::string periodicTableAtomData =
 37	Rb	102	101.95887	0 \n \
 38	Sr	73	72.96597	0 \n \
 38	Sr	74	73.95631	0 \n",
-"38	Sr	75	74.94995	0 \n \
+    "38	Sr	75	74.94995	0 \n \
 38	Sr	76	75.94177	0 \n \
 38	Sr	77	76.937945	0 \n \
 38	Sr	78	77.93218	0 \n \
@@ -1125,7 +1127,7 @@ const std::string periodicTableAtomData =
 39	Y	93	92.909583	0 \n \
 39	Y	94	93.911595	0 \n \
 39	Y	95	94.912821	0 \n",
-"39	Y	96	95.915891	0 \n \
+    "39	Y	96	95.915891	0 \n \
 39	Y	97	96.918134	0 \n \
 39	Y	98	97.922203	0 \n \
 39	Y	99	98.924636	0 \n \
@@ -1176,7 +1178,7 @@ const std::string periodicTableAtomData =
 41	Nb	83	82.93671	0 \n \
 41	Nb	84	83.93357	0 \n \
 41	Nb	85	84.92791	0 \n",
-"41	Nb	86	85.92504	0 \n \
+    "41	Nb	86	85.92504	0 \n \
 41	Nb	87	86.92036	0 \n \
 41	Nb	88	87.91833	0 \n \
 41	Nb	89	88.913418	0 \n \
@@ -1227,7 +1229,7 @@ const std::string periodicTableAtomData =
 42	Mo	103	102.91321	0 \n \
 42	Mo	104	103.91376	0 \n \
 42	Mo	105	104.91697	0 \n",
-"42	Mo	106	105.918137	0 \n \
+    "42	Mo	106	105.918137	0 \n \
 42	Mo	107	106.92169	0 \n \
 42	Mo	108	107.92345	0 \n \
 42	Mo	109	108.92781	0 \n \
@@ -1278,7 +1280,7 @@ const std::string periodicTableAtomData =
 44	Ru	91	90.92629	0 \n \
 44	Ru	92	91.92012	0 \n \
 44	Ru	93	92.91705	0 \n",
-"44	Ru	94	93.91136	0 \n \
+    "44	Ru	94	93.91136	0 \n \
 44	Ru	95	94.910413	0 \n \
 44	Ru	96	95.907598	5.54 \n \
 44	Ru	97	96.907555	0 \n \
@@ -1329,7 +1331,7 @@ const std::string periodicTableAtomData =
 45	Rh	110	109.91114	0 \n \
 45	Rh	111	110.91159	0 \n \
 45	Rh	112	111.91439	0 \n",
-"45	Rh	113	112.91553	0 \n \
+    "45	Rh	113	112.91553	0 \n \
 45	Rh	114	113.91881	0 \n \
 45	Rh	115	114.92033	0 \n \
 45	Rh	116	115.92406	0 \n \
@@ -1380,7 +1382,7 @@ const std::string periodicTableAtomData =
 47	Ag	97	96.92397	0 \n \
 47	Ag	98	97.92157	0 \n \
 47	Ag	99	98.9176	0 \n",
-"47	Ag	100	99.9161	0 \n \
+    "47	Ag	100	99.9161	0 \n \
 47	Ag	101	100.9128	0 \n \
 47	Ag	102	101.91169	0 \n \
 47	Ag	103	102.908973	0 \n \
@@ -1431,7 +1433,7 @@ const std::string periodicTableAtomData =
 48	Cd	112	111.9027578	24.13 \n \
 48	Cd	113	112.9044017	12.22 \n \
 48	Cd	114	113.9033585	28.73 \n",
-"48	Cd	115	114.905431	0 \n \
+    "48	Cd	115	114.905431	0 \n \
 48	Cd	116	115.904756	7.49 \n \
 48	Cd	117	116.907219	0 \n \
 48	Cd	118	117.906915	0 \n \
@@ -1482,7 +1484,7 @@ const std::string periodicTableAtomData =
 49	In	127	126.91735	0 \n \
 49	In	128	127.92017	0 \n \
 49	In	129	128.9217	0 \n",
-"49	In	130	129.92497	0 \n \
+    "49	In	130	129.92497	0 \n \
 49	In	131	130.92685	0 \n \
 49	In	132	131.93299	0 \n \
 49	In	133	132.93781	0 \n \
@@ -1533,7 +1535,7 @@ const std::string periodicTableAtomData =
 51	Sb	106	105.92879	0 \n \
 51	Sb	107	106.92415	0 \n \
 51	Sb	108	107.92216	0 \n",
-"51	Sb	109	108.918132	0 \n \
+    "51	Sb	109	108.918132	0 \n \
 51	Sb	110	109.91675	0 \n \
 51	Sb	111	110.91316	0 \n \
 51	Sb	112	111.912398	0 \n \
@@ -1584,7 +1586,7 @@ const std::string periodicTableAtomData =
 52	Te	122	121.9030439	2.55 \n \
 52	Te	123	122.90427	0.89 \n \
 52	Te	124	123.9028179	4.74 \n",
-"52	Te	125	124.9044307	7.07 \n \
+    "52	Te	125	124.9044307	7.07 \n \
 52	Te	126	125.9033117	18.84 \n \
 52	Te	127	126.9052263	0 \n \
 52	Te	128	127.9044631	31.74 \n \
@@ -1635,7 +1637,7 @@ const std::string periodicTableAtomData =
 53	I	138	137.92235	0 \n \
 53	I	139	138.9261	0 \n \
 53	I	140	139.931	0 \n",
-"53	I	141	140.93503	0 \n \
+    "53	I	141	140.93503	0 \n \
 53	I	142	141.94018	0 \n \
 53	I	143	142.94456	0 \n \
 53	I	144	143.94999	0 \n \
@@ -1686,7 +1688,7 @@ const std::string periodicTableAtomData =
 55	Cs	118	117.926559	0 \n \
 55	Cs	119	118.922377	0 \n \
 55	Cs	120	119.920677	0 \n",
-"55	Cs	121	120.917229	0 \n \
+    "55	Cs	121	120.917229	0 \n \
 55	Cs	122	121.91611	0 \n \
 55	Cs	123	122.912996	0 \n \
 55	Cs	124	123.912258	0 \n \
@@ -1737,7 +1739,7 @@ const std::string periodicTableAtomData =
 56	Ba	131	130.906941	0 \n \
 56	Ba	132	131.9050613	0.101 \n \
 56	Ba	133	132.9060075	0 \n",
-"56	Ba	134	133.9045084	2.417 \n \
+    "56	Ba	134	133.9045084	2.417 \n \
 56	Ba	135	134.9056886	6.592 \n \
 56	Ba	136	135.9045759	7.854 \n \
 56	Ba	137	136.9058274	11.232 \n \
@@ -1788,7 +1790,7 @@ const std::string periodicTableAtomData =
 57	La	145	144.92165	0 \n \
 57	La	146	145.92579	0 \n \
 57	La	147	146.92824	0 \n",
-"57	La	148	147.93223	0 \n \
+    "57	La	148	147.93223	0 \n \
 57	La	149	148.93473	0 \n \
 57	La	150	149.93877	0 \n \
 57	La	151	150.94172	0 \n \
@@ -1839,7 +1841,7 @@ const std::string periodicTableAtomData =
 59	Pr	122	121.95181	0 \n \
 59	Pr	123	122.94596	0 \n \
 59	Pr	124	123.94296	0 \n",
-"59	Pr	125	124.93783	0 \n \
+    "59	Pr	125	124.93783	0 \n \
 59	Pr	126	125.93531	0 \n \
 59	Pr	127	126.93083	0 \n \
 59	Pr	128	127.92879	0 \n \
@@ -1890,7 +1892,7 @@ const std::string periodicTableAtomData =
 60	Nd	137	136.914567	0 \n \
 60	Nd	138	137.91195	0 \n \
 60	Nd	139	138.911978	0 \n",
-"60	Nd	140	139.90955	0 \n \
+    "60	Nd	140	139.90955	0 \n \
 60	Nd	141	140.90961	0 \n \
 60	Nd	142	141.9077233	27.2 \n \
 60	Nd	143	142.9098143	12.2 \n \
@@ -1941,7 +1943,7 @@ const std::string periodicTableAtomData =
 61	Pm	152	151.923497	0 \n \
 61	Pm	153	152.924117	0 \n \
 61	Pm	154	153.92646	0 \n",
-"61	Pm	155	154.9281	0 \n \
+    "61	Pm	155	154.9281	0 \n \
 61	Pm	156	155.93106	0 \n \
 61	Pm	157	156.93304	0 \n \
 61	Pm	158	157.93656	0 \n \
@@ -1992,7 +1994,7 @@ const std::string periodicTableAtomData =
 63	Eu	131	130.95775	0 \n \
 63	Eu	132	131.95437	0 \n \
 63	Eu	133	132.94924	0 \n",
-"63	Eu	134	133.94651	0 \n \
+    "63	Eu	134	133.94651	0 \n \
 63	Eu	135	134.94182	0 \n \
 63	Eu	136	135.9396	0 \n \
 63	Eu	137	136.93557	0 \n \
@@ -2043,7 +2045,7 @@ const std::string periodicTableAtomData =
 64	Gd	148	147.918115	0 \n \
 64	Gd	149	148.919341	0 \n \
 64	Gd	150	149.918659	0 \n",
-"64	Gd	151	150.920348	0 \n \
+    "64	Gd	151	150.920348	0 \n \
 64	Gd	152	151.919791	0.20 \n \
 64	Gd	153	152.9217495	0 \n \
 64	Gd	154	153.9208656	2.18 \n \
@@ -2094,7 +2096,7 @@ const std::string periodicTableAtomData =
 65	Tb	165	164.93488	0 \n \
 65	Tb	166	165.93799	0 \n \
 65	Tb	167	166.94005	0 \n",
-"65	Tb	168	167.94364	0 \n \
+    "65	Tb	168	167.94364	0 \n \
 65	Tb	169	168.94622	0 \n \
 65	Tb	170	169.95025	0 \n \
 65	Tb	171	170.9533	0 \n \
@@ -2145,7 +2147,7 @@ const std::string periodicTableAtomData =
 67	Ho	148	147.93772	0 \n \
 67	Ho	149	148.933775	0 \n \
 67	Ho	150	149.933496	0 \n",
-"67	Ho	151	150.931688	0 \n \
+    "67	Ho	151	150.931688	0 \n \
 67	Ho	152	151.931714	0 \n \
 67	Ho	153	152.930199	0 \n \
 67	Ho	154	153.930602	0 \n \
@@ -2196,7 +2198,7 @@ const std::string periodicTableAtomData =
 68	Er	166	165.9302931	33.61 \n \
 68	Er	167	166.9320482	22.93 \n \
 68	Er	168	167.9323702	26.78 \n",
-"68	Er	169	168.9345904	0 \n \
+    "68	Er	169	168.9345904	0 \n \
 68	Er	170	169.9354643	14.93 \n \
 68	Er	171	170.9380298	0 \n \
 68	Er	172	171.939356	0 \n \
@@ -2247,7 +2249,7 @@ const std::string periodicTableAtomData =
 70	Yb	152	151.95029	0 \n \
 70	Yb	153	152.94948	0 \n \
 70	Yb	154	153.946394	0 \n",
-"70	Yb	155	154.945782	0 \n \
+    "70	Yb	155	154.945782	0 \n \
 70	Yb	156	155.942818	0 \n \
 70	Yb	157	156.942628	0 \n \
 70	Yb	158	157.939866	0 \n \
@@ -2298,7 +2300,7 @@ const std::string periodicTableAtomData =
 71	Lu	171	170.9379131	0 \n \
 71	Lu	172	171.939086	0 \n \
 71	Lu	173	172.9389306	0 \n",
-"71	Lu	174	173.9403375	0 \n \
+    "71	Lu	174	173.9403375	0 \n \
 71	Lu	175	174.9407718	97.41 \n \
 71	Lu	176	175.9426863	2.59 \n \
 71	Lu	177	176.9437581	0 \n \
@@ -2349,7 +2351,7 @@ const std::string periodicTableAtomData =
 73	Ta	156	155.9723	0 \n \
 73	Ta	157	156.96819	0 \n \
 73	Ta	158	157.9667	0 \n",
-"73	Ta	159	158.963018	0 \n \
+    "73	Ta	159	158.963018	0 \n \
 73	Ta	160	159.96149	0 \n \
 73	Ta	161	160.95842	0 \n \
 73	Ta	162	161.95729	0 \n \
@@ -2400,7 +2402,7 @@ const std::string periodicTableAtomData =
 74	W	174	173.94608	0 \n \
 74	W	175	174.94672	0 \n \
 74	W	176	175.94563	0 \n",
-"74	W	177	176.94664	0 \n \
+    "74	W	177	176.94664	0 \n \
 74	W	178	177.945876	0 \n \
 74	W	179	178.94707	0 \n \
 74	W	180	179.946704	0.12 \n \
@@ -2451,7 +2453,7 @@ const std::string periodicTableAtomData =
 75	Re	192	191.96596	0 \n \
 75	Re	193	192.96747	0 \n \
 75	Re	194	193.97042	0 \n",
-"76	Os	162	161.98443	0 \n \
+    "76	Os	162	161.98443	0 \n \
 76	Os	163	162.98269	0 \n \
 76	Os	164	163.97804	0 \n \
 76	Os	165	164.97676	0 \n \
@@ -2502,7 +2504,7 @@ const std::string periodicTableAtomData =
 77	Ir	177	176.961302	0 \n \
 77	Ir	178	177.961082	0 \n \
 77	Ir	179	178.959122	0 \n",
-"77	Ir	180	179.959229	0 \n \
+    "77	Ir	180	179.959229	0 \n \
 77	Ir	181	180.957625	0 \n \
 77	Ir	182	181.958076	0 \n \
 77	Ir	183	182.956846	0 \n \
@@ -2555,7 +2557,7 @@ const std::string periodicTableAtomData =
 78	Pt	196	195.9649515	25.242 \n \
 78	Pt	197	196.9673402	0 \n \
 78	Pt	198	197.967893	7.163 \n",
-"78	Pt	199	198.970593	0 \n \
+    "78	Pt	199	198.970593	0 \n \
 78	Pt	200	199.971441	0 \n \
 78	Pt	201	200.97451	0 \n \
 78	Pt	202	201.97574	0 \n \
@@ -2606,7 +2608,7 @@ const std::string periodicTableAtomData =
 80	Hg	178	177.982483	0 \n \
 80	Hg	179	178.981834	0 \n \
 80	Hg	180	179.978266	0 \n",
-"80	Hg	181	180.977819	0 \n \
+    "80	Hg	181	180.977819	0 \n \
 80	Hg	182	181.97469	0 \n \
 80	Hg	183	182.97445	0 \n \
 80	Hg	184	183.971713	0 \n \
@@ -2657,7 +2659,7 @@ const std::string periodicTableAtomData =
 81	Tl	194	193.9712	0 \n \
 81	Tl	195	194.969774	0 \n \
 81	Tl	196	195.970481	0 \n",
-"81	Tl	197	196.969575	0 \n \
+    "81	Tl	197	196.969575	0 \n \
 81	Tl	198	197.97048	0 \n \
 81	Tl	199	198.96988	0 \n \
 81	Tl	200	199.970963	0 \n \
@@ -2708,7 +2710,7 @@ const std::string periodicTableAtomData =
 82	Pb	210	209.9841885	0 \n \
 82	Pb	211	210.988737	0 \n \
 82	Pb	212	211.9918975	0 \n",
-"82	Pb	213	212.996581	0 \n \
+    "82	Pb	213	212.996581	0 \n \
 82	Pb	214	213.9998054	0 \n \
 82	Pb	215	215.00481	0 \n \
 83	Bi	184	184.00112	0 \n \
@@ -2759,7 +2761,7 @@ const std::string periodicTableAtomData =
 84	Po	198	197.983389	0 \n \
 84	Po	199	198.983666	0 \n \
 84	Po	200	199.981799	0 \n",
-"84	Po	201	200.98226	0 \n \
+    "84	Po	201	200.98226	0 \n \
 84	Po	202	201.980758	0 \n \
 84	Po	203	202.98142	0 \n \
 84	Po	204	203.980318	0 \n \
@@ -2810,7 +2812,7 @@ const std::string periodicTableAtomData =
 85	At	221	221.01805	0 \n \
 85	At	222	222.02233	0 \n \
 85	At	223	223.02519	0 \n",
-"86	Rn	195	195.00544	0 \n \
+    "86	Rn	195	195.00544	0 \n \
 86	Rn	196	196.002115	0 \n \
 86	Rn	197	197.00158	0 \n \
 86	Rn	198	197.998679	0 \n \
@@ -2861,7 +2863,7 @@ const std::string periodicTableAtomData =
 87	Fr	213	212.996189	0 \n \
 87	Fr	214	213.998971	0 \n \
 87	Fr	215	215.000341	0 \n",
-"87	Fr	216	216.003198	0 \n \
+    "87	Fr	216	216.003198	0 \n \
 87	Fr	217	217.004632	0 \n \
 87	Fr	218	218.007578	0 \n \
 87	Fr	219	219.009252	0 \n \
@@ -2912,7 +2914,7 @@ const std::string periodicTableAtomData =
 88	Ra	233	233.04806	0 \n \
 88	Ra	234	234.0507	0 \n \
 89	Ac	206	206.0145	0 \n",
-"89	Ac	207	207.01195	0 \n \
+    "89	Ac	207	207.01195	0 \n \
 89	Ac	208	208.01155	0 \n \
 89	Ac	209	209.00949	0 \n \
 89	Ac	210	210.00944	0 \n \
@@ -2963,7 +2965,7 @@ const std::string periodicTableAtomData =
 90	Th	227	227.0277041	0 \n \
 90	Th	228	228.0287411	0 \n \
 90	Th	229	229.031762	0 \n",
-"90	Th	230	230.0331338	0 \n \
+    "90	Th	230	230.0331338	0 \n \
 90	Th	231	231.0363043	0 \n \
 90	Th	232	232.0380553	100 \n \
 90	Th	233	233.0415818	0 \n \
@@ -3014,7 +3016,7 @@ const std::string periodicTableAtomData =
 92	U	227	227.031156	0 \n \
 92	U	228	228.031374	0 \n \
 92	U	229	229.033506	0 \n",
-"92	U	230	230.03394	0 \n \
+    "92	U	230	230.03394	0 \n \
 92	U	231	231.036294	0 \n \
 92	U	232	232.0371562	0 \n \
 92	U	233	233.0396352	0 \n \
@@ -3065,7 +3067,7 @@ const std::string periodicTableAtomData =
 94	Pu	243	243.062003	0 \n \
 94	Pu	244	244.064204	0 \n \
 94	Pu	245	245.067747	0 \n",
-"94	Pu	246	246.070205	0 \n \
+    "94	Pu	246	246.070205	0 \n \
 94	Pu	247	247.07407	0 \n \
 95	Am	231	231.04556	0 \n \
 95	Am	232	232.04659	0 \n \
@@ -3116,7 +3118,7 @@ const std::string periodicTableAtomData =
 97	Bk	242	242.06198	0 \n \
 97	Bk	243	243.063008	0 \n \
 97	Bk	244	244.065181	0 \n",
-"97	Bk	245	245.0663616	0 \n \
+    "97	Bk	245	245.0663616	0 \n \
 97	Bk	246	246.06867	0 \n \
 97	Bk	247	247.070307	0 \n \
 97	Bk	248	248.07309	0 \n \
@@ -3167,7 +3169,7 @@ const std::string periodicTableAtomData =
 99	Es	258	258.09952	0 \n \
 100	Fm	242	242.07343	0 \n \
 100	Fm	243	243.07435	0 \n",
-"100	Fm	244	244.07408	0 \n \
+    "100	Fm	244	244.07408	0 \n \
 100	Fm	245	245.07539	0 \n \
 100	Fm	246	246.0753	0 \n \
 100	Fm	247	247.07685	0 \n \
@@ -3218,7 +3220,7 @@ const std::string periodicTableAtomData =
 102	No	261	261.10575	0 \n \
 102	No	262	262.1073	0 \n \
 102	No	263	263.11055	0 \n",
-"102	No	264	264.11235	0 \n \
+    "102	No	264	264.11235	0 \n \
 103	Lr	251	251.09436	0 \n \
 103	Lr	252	252.09537	0 \n \
 103	Lr	253	253.09521	0 \n \
@@ -3250,8 +3252,8 @@ const std::string periodicTableAtomData =
 104	Rf	265	265.1167	0 \n \
 104	Rf	266	266.11796	0 \n \
 104	Rf	267	267.12153	0 \n \
-104	Rf	268	268.12364	0 \n", \
-"110	Ds	267	267.14434	0 \n \
+104	Rf	268	268.12364	0 \n",
+    "110	Ds	267	267.14434	0 \n \
 110	Ds	268	268.1438	0 \n \
 110	Ds	269	269.14512	0 \n \
 110	Ds	270	270.14472	0 \n \
@@ -3266,6 +3268,5 @@ const std::string periodicTableAtomData =
 110	Ds	279	279.15886	0 \n \
 110	Ds	280	280.1598	0 \n \
 110	Ds	281	281.16206	0 \n",
-  "EOS"};
+    "EOS"};
 }
-      

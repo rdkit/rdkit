@@ -13,7 +13,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -38,7 +39,6 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 
-
 using namespace RDKit;
 using namespace std;
 
@@ -47,11 +47,12 @@ struct IntPair {
   int second;
 };
 
-template<class T>
+template <class T>
 void dump(std::string name, const T &v) {
   std::cerr << name << " = { " << std::endl;
-  for (size_t i=0; i<v.size(); ++i) {
-    std::cerr << "\t" << v[i].first << "," << v[i].second << "}," << std::endl;;
+  for (size_t i = 0; i < v.size(); ++i) {
+    std::cerr << "\t" << v[i].first << "," << v[i].second << "}," << std::endl;
+    ;
   }
   std::cerr << "}" << std::endl;
 }
@@ -59,7 +60,7 @@ void dump(std::string name, const T &v) {
 bool check(MatchVectType v, MatchVectType match) {
   dump("v", v);
   dump("match", match);
-  for (size_t i=0; i<v.size(); ++i) {
+  for (size_t i = 0; i < v.size(); ++i) {
     if (v[i].first != match[i].first) {
       return false;
     }
@@ -69,44 +70,70 @@ bool check(MatchVectType v, MatchVectType match) {
   }
   return true;
 }
-  
 
 void testFilterCatalog() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2313979: aromaticity assignment hangs " << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+                          "2313979: aromaticity assignment hangs " << std::endl;
   {
-    std::string pathName=getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    SmilesMolSupplier suppl(pathName+"pains.smi");
+    SmilesMolSupplier suppl(pathName + "pains.smi");
 
     FilterCatalogParams params;
     params.addCatalog(FilterCatalogParams::PAINS_A);
     params.addCatalog(FilterCatalogParams::PAINS_B);
     params.addCatalog(FilterCatalogParams::PAINS_C);
-    
+
     FilterCatalog catalog(params);
     boost::scoped_ptr<ROMol> mol;
-    const IntPair match1[10] = {{0,23},{1,22},{2,20},{3,19},{4,25},{5,24},
-                              {6,18},{7,17},{8,16},{9,21}};
+    const IntPair match1[10] = {{0, 23},
+                                {1, 22},
+                                {2, 20},
+                                {3, 19},
+                                {4, 25},
+                                {5, 24},
+                                {6, 18},
+                                {7, 17},
+                                {8, 16},
+                                {9, 21}};
     MatchVectType matchvec1;
-    for (int i=0; i<10; ++i)
-      matchvec1.push_back(std::make_pair(match1[i].first,
-                                         match1[i].second));
+    for (int i = 0; i < 10; ++i)
+      matchvec1.push_back(std::make_pair(match1[i].first, match1[i].second));
 
-    const IntPair match2[13] = {{0,11},{1,12},{2,13},{3,14},{4,15},{5,10},
-                                {6,9},{7,8},{8,7},{9,6},{10,5},{11,17},{12,16}};
+    const IntPair match2[13] = {{0, 11},
+                                {1, 12},
+                                {2, 13},
+                                {3, 14},
+                                {4, 15},
+                                {5, 10},
+                                {6, 9},
+                                {7, 8},
+                                {8, 7},
+                                {9, 6},
+                                {10, 5},
+                                {11, 17},
+                                {12, 16}};
     MatchVectType matchvec2;
-    for (int i=0; i<13; ++i)
-      matchvec2.push_back(std::make_pair(match2[i].first,
-                                         match2[i].second));
+    for (int i = 0; i < 13; ++i)
+      matchvec2.push_back(std::make_pair(match2[i].first, match2[i].second));
 
-    const IntPair match3[12] = {{0,0},{1,1},{2,2},{3,4},{4,5},{5,6},{6,7},
-                                {7,8},{8,9},{9,14},{10,15},{11,16}};
+    const IntPair match3[12] = {{0, 0},
+                                {1, 1},
+                                {2, 2},
+                                {3, 4},
+                                {4, 5},
+                                {5, 6},
+                                {6, 7},
+                                {7, 8},
+                                {8, 9},
+                                {9, 14},
+                                {10, 15},
+                                {11, 16}};
     MatchVectType matchvec3;
-    for (int i=0; i<12; ++i)
-      matchvec3.push_back(std::make_pair(match3[i].first,
-                                         match3[i].second));
+    for (int i = 0; i < 12; ++i)
+      matchvec3.push_back(std::make_pair(match3[i].first, match3[i].second));
     int count = 0;
-    while(!suppl.atEnd()){
+    while (!suppl.atEnd()) {
       mol.reset(suppl.next());
       std::string name = mol->getProp<std::string>(common_properties::_Name);
 
@@ -117,43 +144,55 @@ void testFilterCatalog() {
       // More detailed
       FilterCatalog::CONST_SENTRY entry = catalog.getFirstMatch(*mol);
       if (entry) {
-        std::cerr << "Warning: molecule failed filter: reason " <<
-          entry->getDescription() << std::endl;
-        switch(count) {
-        case 0: TEST_ASSERT(entry->getDescription() == "hzone_phenol_A(479)"); break;
-        case 1: TEST_ASSERT(entry->getDescription() == "cyano_imine_B(17)"); break;
-        case 2: TEST_ASSERT(entry->getDescription() == "keto_keto_gamma(5)"); break;
+        std::cerr << "Warning: molecule failed filter: reason "
+                  << entry->getDescription() << std::endl;
+        switch (count) {
+          case 0:
+            TEST_ASSERT(entry->getDescription() == "hzone_phenol_A(479)");
+            break;
+          case 1:
+            TEST_ASSERT(entry->getDescription() == "cyano_imine_B(17)");
+            break;
+          case 2:
+            TEST_ASSERT(entry->getDescription() == "keto_keto_gamma(5)");
+            break;
         }
         TEST_ASSERT(entry->getDescription() == name);
-        
+
         // get the substructure atoms for visualization
         std::vector<FilterMatch> matches;
         if (entry->getFilterMatches(*mol, matches)) {
-          for(std::vector<FilterMatch>::const_iterator it = matches.begin();
-              it != matches.end(); ++it) {
+          for (std::vector<FilterMatch>::const_iterator it = matches.begin();
+               it != matches.end(); ++it) {
             // Get the FilterMatcherBase that matched
-            const FilterMatch & fm = (*it);
-            boost::shared_ptr<FilterMatcherBase> matchingFilter =       \
-              fm.filterMatch;
-            
+            const FilterMatch &fm = (*it);
+            boost::shared_ptr<FilterMatcherBase> matchingFilter =
+                fm.filterMatch;
+
             // Get the matching atom indices
             const MatchVectType &vect = fm.atomPairs;
-            switch(count) {
-            case 0: TEST_ASSERT(check(vect, matchvec1)); break;
-            case 1: TEST_ASSERT(check(vect, matchvec2)); break;
-            case 2: TEST_ASSERT(check(vect, matchvec3)); break;
+            switch (count) {
+              case 0:
+                TEST_ASSERT(check(vect, matchvec1));
+                break;
+              case 1:
+                TEST_ASSERT(check(vect, matchvec2));
+                break;
+              case 2:
+                TEST_ASSERT(check(vect, matchvec3));
+                break;
             }
-              
+
             // do something with these...
           }
         }
       }
-      count ++;
-    } // end while
+      count++;
+    }  // end while
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-  
+
 void testFilterCatalogEntry() {
   SmartsMatcher *sm = new SmartsMatcher("Aromatic carbon chain");
   boost::shared_ptr<FilterMatcherBase> matcher(sm);
@@ -176,20 +215,17 @@ void testFilterCatalogEntry() {
   TEST_ASSERT(entry.getProp<std::string>("foo") == "foo");
   entry.setProp(std::string("bar"), "bar");
   TEST_ASSERT(entry.getProp<std::string>("bar") == "bar");
-  
-  RWMol * newM = SmilesToMol("c1ccccc1",0,true);
+
+  RWMol *newM = SmilesToMol("c1ccccc1", 0, true);
   TEST_ASSERT(entry.hasFilterMatch(*newM));
   delete newM;
 }
 
-int main(){
+int main() {
   RDLog::InitLogs();
-  //boost::logging::enable_logs("rdApp.debug");
-
+  // boost::logging::enable_logs("rdApp.debug");
 
   testFilterCatalog();
   testFilterCatalogEntry();
   return 0;
 }
-
-

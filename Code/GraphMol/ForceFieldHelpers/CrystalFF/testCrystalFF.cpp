@@ -32,8 +32,8 @@ void testTorsionAngleM6() {
   std::cerr << " Test CrystalFF torsional term." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1,p2,p3,p4;
-  RDGeom::PointPtrVect &ps=ff.positions();
+  Point3D p1, p2, p3, p4;
+  RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -49,68 +49,72 @@ void testTorsionAngleM6() {
   std::vector<double> v(6, 0.0);
   v[2] = 4.0;
 
-  contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3, v, signs);
+  contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3,
+                                                              v, signs);
   ff.contribs().push_back(ForceFields::ContribPtr(contrib));
 
-  p1.x=0;
-  p1.y=1.5;
-  p1.z=0;
+  p1.x = 0;
+  p1.y = 1.5;
+  p1.z = 0;
 
-  p2.x=0.0;
-  p2.y=0.0;
-  p2.z=0.0;
+  p2.x = 0.0;
+  p2.y = 0.0;
+  p2.z = 0.0;
 
-  p3.x=1.5;
-  p3.y=0.0;
-  p3.z=0.0;
+  p3.x = 1.5;
+  p3.y = 0.0;
+  p3.z = 0.0;
 
-  p4.x=1.5;
-  p4.y=0.0;
-  p4.z=1.5;
+  p4.x = 1.5;
+  p4.y = 0.0;
+  p4.z = 1.5;
 
   ff.initialize();
-  ff.minimize(10,1e-8,1e-8);
-  double cosPhi = ForceFields::MMFF::Utils::calcTorsionCosPhi(*(RDGeom::Point3D*)ff.positions()[0],
-              *(RDGeom::Point3D*)ff.positions()[1],
-              *(RDGeom::Point3D*)ff.positions()[2],
-              *(RDGeom::Point3D*)ff.positions()[3]);
-  TEST_ASSERT(RDKit::feq(cosPhi,0.5,1e-4));
+  ff.minimize(10, 1e-8, 1e-8);
+  double cosPhi = ForceFields::MMFF::Utils::calcTorsionCosPhi(
+      *(RDGeom::Point3D *)ff.positions()[0],
+      *(RDGeom::Point3D *)ff.positions()[1],
+      *(RDGeom::Point3D *)ff.positions()[2],
+      *(RDGeom::Point3D *)ff.positions()[3]);
+  TEST_ASSERT(RDKit::feq(cosPhi, 0.5, 1e-4));
 
   // ------- ------- ------- ------- ------- ------- -------
   // Basic SP2 - SP2
   // ------- ------- ------- ------- ------- ------- -------
 
   signs[1] = -1;
-  v[2] = 0.0; v[1] = 7.0;
+  v[2] = 0.0;
+  v[1] = 7.0;
 
   ff.contribs().pop_back();
-  contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3, v, signs);
+  contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3,
+                                                              v, signs);
   ff.contribs().push_back(ForceFields::ContribPtr(contrib));
 
-  p1.x=0;
-  p1.y=1.5;
-  p1.z=0.1;
+  p1.x = 0;
+  p1.y = 1.5;
+  p1.z = 0.1;
 
-  p2.x=0.0;
-  p2.y=0.0;
-  p2.z=0.0;
+  p2.x = 0.0;
+  p2.y = 0.0;
+  p2.z = 0.0;
 
-  p3.x=1.5;
-  p3.y=0.0;
-  p3.z=0.0;
+  p3.x = 1.5;
+  p3.y = 0.0;
+  p3.z = 0.0;
 
-  p4.x=1.5;
-  p4.y=0.2;
-  p4.z=1.5;
+  p4.x = 1.5;
+  p4.y = 0.2;
+  p4.z = 1.5;
 
   ff.initialize();
-  ff.minimize(10,1e-8,1e-8);
-  cosPhi = ForceFields::MMFF::Utils::calcTorsionCosPhi(*(RDGeom::Point3D*)ff.positions()[0],
-              *(RDGeom::Point3D*)ff.positions()[1],
-              *(RDGeom::Point3D*)ff.positions()[2],
-              *(RDGeom::Point3D*)ff.positions()[3]);
-  TEST_ASSERT(RDKit::feq(cosPhi,1.0,1e-4));
-
+  ff.minimize(10, 1e-8, 1e-8);
+  cosPhi = ForceFields::MMFF::Utils::calcTorsionCosPhi(
+      *(RDGeom::Point3D *)ff.positions()[0],
+      *(RDGeom::Point3D *)ff.positions()[1],
+      *(RDGeom::Point3D *)ff.positions()[2],
+      *(RDGeom::Point3D *)ff.positions()[3]);
+  TEST_ASSERT(RDKit::feq(cosPhi, 1.0, 1e-4));
 }
 
 void testTorsionPrefs() {
@@ -119,29 +123,32 @@ void testTorsionPrefs() {
   TEST_ASSERT(mol);
 
   std::vector<std::vector<int> > expTorsionAtoms;
-  std::vector<std::pair<std::vector<int>, std::vector<double> > > expTorsionAngles;
+  std::vector<std::pair<std::vector<int>, std::vector<double> > >
+      expTorsionAngles;
   std::vector<std::vector<int> > improperAtoms;
 
-  ForceFields::CrystalFF::getExperimentalTorsions(*mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false, false);
-  TEST_ASSERT(expTorsionAtoms.size()==1);
-  TEST_ASSERT(expTorsionAngles.size()==1);
-  TEST_ASSERT(expTorsionAtoms[0][0]==0);
-  TEST_ASSERT(expTorsionAtoms[0][3]==3);
-  TEST_ASSERT(expTorsionAngles[0].first.size()==6);
-  TEST_ASSERT(expTorsionAngles[0].second.size()==6);
+  ForceFields::CrystalFF::getExperimentalTorsions(
+      *mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false,
+      false);
+  TEST_ASSERT(expTorsionAtoms.size() == 1);
+  TEST_ASSERT(expTorsionAngles.size() == 1);
+  TEST_ASSERT(expTorsionAtoms[0][0] == 0);
+  TEST_ASSERT(expTorsionAtoms[0][3] == 3);
+  TEST_ASSERT(expTorsionAngles[0].first.size() == 6);
+  TEST_ASSERT(expTorsionAngles[0].second.size() == 6);
 
   delete mol;
   mol = SmilesToMol("CCCCC");
   TEST_ASSERT(mol);
 
-  ForceFields::CrystalFF::getExperimentalTorsions(*mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false, false);
-  TEST_ASSERT(expTorsionAtoms.size()==2);
-  TEST_ASSERT(expTorsionAngles.size()==2);
-
+  ForceFields::CrystalFF::getExperimentalTorsions(
+      *mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false,
+      false);
+  TEST_ASSERT(expTorsionAtoms.size() == 2);
+  TEST_ASSERT(expTorsionAngles.size() == 2);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   testTorsionAngleM6();
   testTorsionPrefs();
 

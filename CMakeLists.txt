@@ -33,6 +33,7 @@ option(RDK_TEST_MMFF_COMPLIANCE "run MMFF compliance tests (requires tar/gzip)" 
 option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" ON)
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
+option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
@@ -51,13 +52,13 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2015")
-set(RDKit_Month "09")
+set(RDKit_Year "2016")
+set(RDKit_Month "03")
 set(RDKit_Revision "1.dev1")
 set(RDKit_ABI "1")
 
-set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
-set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
+set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
+set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
@@ -193,7 +194,7 @@ if(RDK_BUILD_THREADSAFE_SSS)
   else()
     message("Boost thread or system not found. Disabling RDK_BUILD_THREADSAFE_SSS.")
     set(RDK_BUILD_THREADSAFE_SSS OFF)
-    set(RDK_TEST_MULTITHREADED OFF)    
+    set(RDK_TEST_MULTITHREADED OFF)
     set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
   endif()
 else()
@@ -203,6 +204,15 @@ else()
     set(RDK_TEST_MULTITHREADED OFF)
   endif()
 endif()
+
+if(RDK_USE_BOOST_SERIALIZATION)
+    set(T_LIBS ${Boost_LIBRARIES})
+    find_package(Boost 1.39.0 COMPONENTS serialization)
+    if (Boost_SERIALIZATION_LIBRARY)
+      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    endif()
+endif()
+
 
 
 # setup our compiler flags:
@@ -221,7 +231,7 @@ if (RDK_TEST_COVERAGE)
  message(" If any of the RDKit tests fail, coverage will probably not be generated.")
  message("====== Installing test coverage support ======")
  message("")
- 
+
  INCLUDE(CodeCoverage)
  SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
  SET(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
@@ -230,10 +240,14 @@ if (RDK_TEST_COVERAGE)
 
 else(RDK_TEST_COVERAGE)
  if(CMAKE_COMPILER_IS_GNUCXX)
-   ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+   # We don't on C_FLAGS warnings to keep Avalon compiling quiet
+   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra")
  endif()
- if(CMAKE_COMPILER_IS_CLANG)
-   ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
+ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   # We don't on C_FLAGS warnings to keep Avalon compiling quiet
+   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra")
  endif()
 endif(RDK_TEST_COVERAGE)
 
@@ -268,6 +282,12 @@ if(NOT RDK_INSTALL_INTREE)
           COMPONENT base
           )
 endif(NOT RDK_INSTALL_INTREE)
+
+if (RDK_SQUASH_MVC_SECURE_WARNINGS)
+  MESSAGE("== Squashing MSVC Security warnings (do not use during development)")
+  ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
+  ADD_DEFINITIONS("/wd4996")
+endif(RDK_SQUASH_MVC_SECURE_WARNINGS)
 
 add_subdirectory(External)
 add_subdirectory(Code)

@@ -9,7 +9,6 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include <RDBoost/Wrap.h>
-#include "numpy/oldnumeric.h"
 #include <RDBoost/import_array.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
@@ -18,126 +17,127 @@ namespace python = boost::python;
 using namespace RDInfoTheory;
 
 namespace RDInfoTheory {
-  double infoEntropy(python::object resArr) {
-    PyObject *matObj = resArr.ptr();
-    if (!PyArray_Check(matObj)) {
-      throw_value_error("Expecting a Numeric array object");
-    }
-    PyArrayObject *copy;
-    copy = (PyArrayObject *)PyArray_ContiguousFromObject(matObj, 
-                                                         ((PyArrayObject *)matObj)->descr->type_num,
-                                                         1,1);
-    double res=0.0;
-    // we are expecting a 1 dimensional array
-    long int ncols = (long int)((PyArrayObject *)matObj)->dimensions[0];
-    CHECK_INVARIANT(ncols > 0, "");
-    if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
-      double *data = (double *)copy->data;
-      res = InfoEntropy(data, ncols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_FLOAT) {
-      float *data = (float *)copy->data;
-      res = InfoEntropy(data, ncols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_INT) {
-      int *data = (int *)copy->data;
-      res = InfoEntropy(data, ncols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_LONG) {
-      long int *data = (long int *)copy->data;
-      res = InfoEntropy(data, ncols);
-    }
-    Py_DECREF(copy);
-    return res;
+double infoEntropy(python::object resArr) {
+  PyObject *matObj = resArr.ptr();
+  if (!PyArray_Check(matObj)) {
+    throw_value_error("Expecting a Numeric array object");
   }
-   
-  double infoGain(python::object resArr) {
-    PyObject *matObj = resArr.ptr();
-    if (!PyArray_Check(matObj)) {
-      throw_value_error("Expecting a Numeric array object");
-    }
-    PyArrayObject *copy;
-    copy = (PyArrayObject *)PyArray_ContiguousFromObject(matObj, 
-                                                         ((PyArrayObject *)matObj)->descr->type_num,
-                                                         2,2);
-    long int rows = (long int)((PyArrayObject *)matObj)->dimensions[0];
-    long int cols = (long int)((PyArrayObject *)matObj)->dimensions[1];
-    double res=0.0;
-    if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
-      double *data = (double *)copy->data;
-      res = InfoEntropyGain(data, rows, cols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_FLOAT) {
-      float *data = (float *)copy->data;
-      res = InfoEntropyGain(data, rows, cols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_INT) {
-      int *data = (int *)copy->data;
-      res = InfoEntropyGain(data, rows, cols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_LONG) {
-      long int *data = (long int *)copy->data;
-      res = InfoEntropyGain(data, rows, cols);
-    } else {
-      throw_value_error("Numeric array object of type int or long or float or double");
-    }
-    Py_DECREF(copy);
-    return res;
+  PyArrayObject *copy;
+  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
+      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 1, 1);
+  double res = 0.0;
+  // we are expecting a 1 dimensional array
+  long int ncols = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  CHECK_INVARIANT(ncols > 0, "");
+  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
+    double *data = (double *)PyArray_DATA(copy);
+    res = InfoEntropy(data, ncols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
+    float *data = (float *)PyArray_DATA(copy);
+    res = InfoEntropy(data, ncols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
+    int *data = (int *)PyArray_DATA(copy);
+    res = InfoEntropy(data, ncols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
+    long int *data = (long int *)PyArray_DATA(copy);
+    res = InfoEntropy(data, ncols);
   }
+  Py_DECREF(copy);
+  return res;
+}
 
-  double chiSquare(python::object resArr) {
-    PyObject *matObj = resArr.ptr();
-    if (!PyArray_Check(matObj)) {
-      throw_value_error("Expecting a Numeric array object");
-    }
-    PyArrayObject *copy;
-    copy = (PyArrayObject *)PyArray_ContiguousFromObject(matObj, 
-                                                         ((PyArrayObject *)matObj)->descr->type_num,
-                                                         2,2);
-    long int rows = (long int)((PyArrayObject *)matObj)->dimensions[0];
-    long int cols = (long int)((PyArrayObject *)matObj)->dimensions[1];
-    double res=0.0;
-    if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
-      double *data = (double *)copy->data;
-      res = ChiSquare(data, rows, cols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_FLOAT) {
-      float *data = (float *)copy->data;
-      res = ChiSquare(data, rows, cols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_INT) {
-      int *data = (int *)copy->data;
-      res = ChiSquare(data, rows, cols);
-    } else if (((PyArrayObject *)matObj)->descr->type_num == PyArray_LONG) {
-      long int *data = (long int *)copy->data;
-      res = ChiSquare(data, rows, cols);
-    } else {
-      throw_value_error("Numeric array object of type int or long or float or double");
-    }
-    Py_DECREF(copy);
-    return res;
+double infoGain(python::object resArr) {
+  PyObject *matObj = resArr.ptr();
+  if (!PyArray_Check(matObj)) {
+    throw_value_error("Expecting a Numeric array object");
   }
+  PyArrayObject *copy;
+  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
+      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
+  long int rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  long int cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
+  double res = 0.0;
+  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
+    double *data = (double *)PyArray_DATA(copy);
+    res = InfoEntropyGain(data, rows, cols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
+    float *data = (float *)PyArray_DATA(copy);
+    res = InfoEntropyGain(data, rows, cols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
+    int *data = (int *)PyArray_DATA(copy);
+    res = InfoEntropyGain(data, rows, cols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
+    long int *data = (long int *)PyArray_DATA(copy);
+    res = InfoEntropyGain(data, rows, cols);
+  } else {
+    throw_value_error(
+        "Numeric array object of type int or long or float or double");
+  }
+  Py_DECREF(copy);
+  return res;
+}
+
+double chiSquare(python::object resArr) {
+  PyObject *matObj = resArr.ptr();
+  if (!PyArray_Check(matObj)) {
+    throw_value_error("Expecting a Numeric array object");
+  }
+  PyArrayObject *copy;
+  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
+      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
+  long int rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  long int cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
+  double res = 0.0;
+  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
+    double *data = (double *)PyArray_DATA(copy);
+    res = ChiSquare(data, rows, cols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
+    float *data = (float *)PyArray_DATA(copy);
+    res = ChiSquare(data, rows, cols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
+    int *data = (int *)PyArray_DATA(copy);
+    res = ChiSquare(data, rows, cols);
+  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
+    long int *data = (long int *)PyArray_DATA(copy);
+    res = ChiSquare(data, rows, cols);
+  } else {
+    throw_value_error(
+        "Numeric array object of type int or long or float or double");
+  }
+  Py_DECREF(copy);
+  return res;
+}
 }
 
 void wrap_ranker();
 void wrap_corrmatgen();
 
-BOOST_PYTHON_MODULE(rdInfoTheory)
-{
+BOOST_PYTHON_MODULE(rdInfoTheory) {
   python::scope().attr("__doc__") =
-    "Module containing bunch of functions for information metrics and a ranker to rank bits"
-    ;
-  
+      "Module containing bunch of functions for information metrics and a "
+      "ranker to rank bits";
+
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
+  python::register_exception_translator<IndexErrorException>(
+      &translate_index_error);
+  python::register_exception_translator<ValueErrorException>(
+      &translate_value_error);
 
   wrap_ranker();
   wrap_corrmatgen();
 
-  std::string docString="calculates the informational entropy of the values in an array\n\n\
+  std::string docString =
+      "calculates the informational entropy of the values in an array\n\n\
   ARGUMENTS:\n\
     \n\
     - resMat: pointer to a long int array containing the data\n\
     - dim: long int containing the length of the _tPtr_ array.\n\n\
   RETURNS:\n\n\
     a double\n";
-  python::def("InfoEntropy", RDInfoTheory::infoEntropy,
-              docString.c_str());
+  python::def("InfoEntropy", RDInfoTheory::infoEntropy, docString.c_str());
 
-  docString="Calculates the information gain for a variable\n\n\
+  docString =
+      "Calculates the information gain for a variable\n\n\
    ARGUMENTS:\n\n\
      - varMat: a Numeric Array object\n\
        varMat is a Numeric array with the number of possible occurances\n\
@@ -148,11 +148,10 @@ BOOST_PYTHON_MODULE(rdInfoTheory)
      - a Python float object\n\n\
    NOTES\n\n\
      - this is a dropin replacement for _PyInfoGain()_ in entropy.py\n";
-  python::def("InfoGain", RDInfoTheory::infoGain,
-              docString.c_str());
+  python::def("InfoGain", RDInfoTheory::infoGain, docString.c_str());
 
-
-  docString="Calculates the chi squared value for a variable\n\n\
+  docString =
+      "Calculates the chi squared value for a variable\n\n\
    ARGUMENTS:\n\n\
      - varMat: a Numeric Array object\n\
        varMat is a Numeric array with the number of possible occurances\n\
@@ -161,8 +160,5 @@ BOOST_PYTHON_MODULE(rdInfoTheory)
          has 3 possible values, varMat would be 4x3\n\n\
    RETURNS:\n\n\
      - a Python float object\n";
-  python::def("ChiSquare", RDInfoTheory::chiSquare,
-              docString.c_str());
-
+  python::def("ChiSquare", RDInfoTheory::chiSquare, docString.c_str());
 }
-

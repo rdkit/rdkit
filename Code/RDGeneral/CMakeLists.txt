@@ -6,6 +6,8 @@ rdkit_library(RDGeneral
 
 rdkit_headers(Exceptions.h
               BadFileException.h
+              BoostStartInclude.h
+              BoostEndInclude.h
               Dict.h
               FileParseException.h
               Invariant.h

@@ -13,7 +13,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -31,114 +32,95 @@
 #include "FilterMatchers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
-namespace RDKit
-{
-  const char * DEFAULT_FILTERMATCHERBASE_NAME = "Unnamed FilterMatcherBase";
-  const char * SMARTS_MATCH_NAME_DEFAULT = "Unnamed SmartsMatcher";
-  namespace {
-    const int debugParse = 0;
-    const bool mergeHs = true;
-  }
-  SmartsMatcher::SmartsMatcher(const ROMol &pattern,
-                               unsigned int minCount,
-                               unsigned int maxCount) :
-    FilterMatcherBase(SMARTS_MATCH_NAME_DEFAULT),
-    d_pattern(new ROMol(pattern)),
-    d_min_count(minCount),
-    d_max_count(maxCount) {
-  }
-  
-  SmartsMatcher::SmartsMatcher(const std::string &name,
-                               const ROMol &pattern,
-                               unsigned int minCount,
-                               unsigned int maxCount) :
-    FilterMatcherBase(name),
-    d_pattern(new ROMol(pattern)),
-    d_min_count(minCount),
-    d_max_count(maxCount) {
-  }
+namespace RDKit {
+const char *DEFAULT_FILTERMATCHERBASE_NAME = "Unnamed FilterMatcherBase";
+const char *SMARTS_MATCH_NAME_DEFAULT = "Unnamed SmartsMatcher";
+namespace {
+const int debugParse = 0;
+const bool mergeHs = true;
+}
+SmartsMatcher::SmartsMatcher(const ROMol &pattern, unsigned int minCount,
+                             unsigned int maxCount)
+    : FilterMatcherBase(SMARTS_MATCH_NAME_DEFAULT),
+      d_pattern(new ROMol(pattern)),
+      d_min_count(minCount),
+      d_max_count(maxCount) {}
 
-  SmartsMatcher::SmartsMatcher(const std::string &name,
-                               const std::string &smarts,
-                               unsigned int minCount,
-                               unsigned int maxCount) :
-    FilterMatcherBase(name),
-    d_pattern(SmartsToMol(smarts, debugParse, mergeHs)),
-    d_min_count(minCount),
-    d_max_count(maxCount) {
-  }
-  
-  SmartsMatcher::SmartsMatcher(const std::string &name,
-                               ROMOL_SPTR pattern,
-                               unsigned int minCount,
-                               unsigned int maxCount) :
-    FilterMatcherBase(name), d_pattern(pattern),
-    d_min_count(minCount), d_max_count(maxCount) {
-  }
+SmartsMatcher::SmartsMatcher(const std::string &name, const ROMol &pattern,
+                             unsigned int minCount, unsigned int maxCount)
+    : FilterMatcherBase(name),
+      d_pattern(new ROMol(pattern)),
+      d_min_count(minCount),
+      d_max_count(maxCount) {}
 
+SmartsMatcher::SmartsMatcher(const std::string &name, const std::string &smarts,
+                             unsigned int minCount, unsigned int maxCount)
+    : FilterMatcherBase(name),
+      d_pattern(SmartsToMol(smarts, debugParse, mergeHs)),
+      d_min_count(minCount),
+      d_max_count(maxCount) {}
 
-  void SmartsMatcher::setPattern(const std::string &smarts) {
-    d_pattern.reset( SmartsToMol(smarts, debugParse, mergeHs) );
-  }
-  
-  void SmartsMatcher::setPattern(const ROMol&mol) {
-    d_pattern.reset( new ROMol(mol) );
-  }
+SmartsMatcher::SmartsMatcher(const std::string &name, ROMOL_SPTR pattern,
+                             unsigned int minCount, unsigned int maxCount)
+    : FilterMatcherBase(name),
+      d_pattern(pattern),
+      d_min_count(minCount),
+      d_max_count(maxCount) {}
 
-  SmartsMatcher::SmartsMatcher(const SmartsMatcher &rhs) :
-    FilterMatcherBase(rhs),
-    d_pattern(rhs.d_pattern),
-    d_min_count(rhs.d_min_count),
-    d_max_count(rhs.d_max_count) {
-  }
-    
-  bool SmartsMatcher::getMatches(const ROMol &mol,
+void SmartsMatcher::setPattern(const std::string &smarts) {
+  d_pattern.reset(SmartsToMol(smarts, debugParse, mergeHs));
+}
+
+void SmartsMatcher::setPattern(const ROMol &mol) {
+  d_pattern.reset(new ROMol(mol));
+}
+
+SmartsMatcher::SmartsMatcher(const SmartsMatcher &rhs)
+    : FilterMatcherBase(rhs),
+      d_pattern(rhs.d_pattern),
+      d_min_count(rhs.d_min_count),
+      d_max_count(rhs.d_max_count) {}
+
+bool SmartsMatcher::getMatches(const ROMol &mol,
                                std::vector<FilterMatch> &matchVect) const {
-    PRECONDITION(d_pattern.get(),"bad on pattern");
-    
-    bool onPatExists = false;
-    std::vector<RDKit::MatchVectType> matches;
+  PRECONDITION(d_pattern.get(), "bad on pattern");
 
-    if (d_min_count == 1 && d_max_count == UINT_MAX) {
-      RDKit::MatchVectType match;
-      onPatExists = RDKit::SubstructMatch(mol, *d_pattern.get(),
-                                          match);
-      if(onPatExists)
-        matchVect.push_back(FilterMatch(Clone(), match));
-    }
-    else { // need to count
-      const bool uniquify = true;
-      unsigned int count = RDKit::SubstructMatch(mol,
-                                                 *d_pattern.get(),
-                                                 matches, uniquify);
-      onPatExists = ( count >= d_min_count &&
-                      (d_max_count == UINT_MAX || count <= d_max_count) );
-      if (onPatExists) {
-        boost::shared_ptr<FilterMatcherBase> clone = Clone();
-        for(size_t i=0;i<matches.size();++i) {
-          matchVect.push_back(FilterMatch(clone, matches[i]));
-        }
+  bool onPatExists = false;
+  std::vector<RDKit::MatchVectType> matches;
+
+  if (d_min_count == 1 && d_max_count == UINT_MAX) {
+    RDKit::MatchVectType match;
+    onPatExists = RDKit::SubstructMatch(mol, *d_pattern.get(), match);
+    if (onPatExists) matchVect.push_back(FilterMatch(Clone(), match));
+  } else {  // need to count
+    const bool uniquify = true;
+    unsigned int count =
+        RDKit::SubstructMatch(mol, *d_pattern.get(), matches, uniquify);
+    onPatExists = (count >= d_min_count &&
+                   (d_max_count == UINT_MAX || count <= d_max_count));
+    if (onPatExists) {
+      boost::shared_ptr<FilterMatcherBase> clone = Clone();
+      for (size_t i = 0; i < matches.size(); ++i) {
+        matchVect.push_back(FilterMatch(clone, matches[i]));
       }
     }
-    return onPatExists;
   }
-  
-  bool SmartsMatcher::hasMatch(const ROMol &mol) const
-  {
-    PRECONDITION(d_pattern.get(),"bad on pattern");
+  return onPatExists;
+}
 
-    if (d_min_count == 1 && d_max_count == UINT_MAX) {
-      RDKit::MatchVectType matches;
-      return SubstructMatch(mol, *d_pattern.get(), matches);
-    }
-    else { // need to count
-      const bool uniquify = true;
-      std::vector<RDKit::MatchVectType> matches;
-      unsigned int count = RDKit::SubstructMatch(mol,
-                                                 *d_pattern.get(),
-                                                 matches, uniquify);
-      return ( count >= d_min_count &&
-               (d_max_count == UINT_MAX || count <= d_max_count) );
-    }
+bool SmartsMatcher::hasMatch(const ROMol &mol) const {
+  PRECONDITION(d_pattern.get(), "bad on pattern");
+
+  if (d_min_count == 1 && d_max_count == UINT_MAX) {
+    RDKit::MatchVectType matches;
+    return SubstructMatch(mol, *d_pattern.get(), matches);
+  } else {  // need to count
+    const bool uniquify = true;
+    std::vector<RDKit::MatchVectType> matches;
+    unsigned int count =
+        RDKit::SubstructMatch(mol, *d_pattern.get(), matches, uniquify);
+    return (count >= d_min_count &&
+            (d_max_count == UINT_MAX || count <= d_max_count));
   }
+}
 }

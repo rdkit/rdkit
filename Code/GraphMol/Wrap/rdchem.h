@@ -11,9 +11,8 @@
 #define _RDCHEM_INCL_
 
 namespace RDKit {
-  class ConformerException;
+class ConformerException;
 }
 void rdExceptionTranslator(RDKit::ConformerException const& x);
 
 #endif
-

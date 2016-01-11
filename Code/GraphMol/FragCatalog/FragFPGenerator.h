@@ -17,21 +17,21 @@
 
 class ExplicitBitVect;
 namespace RDKit {
-  class ROMol;
-  typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int> FragCatalog;
-  typedef std::vector< std::pair<int,int> > MatchVectType; 
+class ROMol;
+typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
+    FragCatalog;
+typedef std::vector<std::pair<int, int> > MatchVectType;
 
+class FragFPGenerator {
+ public:
+  FragFPGenerator() {}
 
-  class FragFPGenerator {
-  public:
-    FragFPGenerator() {}
+  ExplicitBitVect *getFPForMol(const ROMol &mol, const FragCatalog &fcat);
 
-    ExplicitBitVect *getFPForMol(const ROMol &mol, const FragCatalog &fcat);
-
-  private:
-    void computeFP(const ROMol &mol, const FragCatalog &fcat,
-		   const MatchVectType &aidToFid, ExplicitBitVect *fp);
-  };
+ private:
+  void computeFP(const ROMol &mol, const FragCatalog &fcat,
+                 const MatchVectType &aidToFid, ExplicitBitVect *fp);
+};
 }
 
 #endif

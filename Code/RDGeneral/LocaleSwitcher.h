@@ -13,20 +13,16 @@
 
 #include <clocale>
 
-namespace RDKit{
-  namespace Utils {
-    // allows an RAII-like approach to ensuring the locale is temporarily "C"
-    // instead of whatever we started in.
-    class LocaleSwitcher {
-    public:
-      LocaleSwitcher() {
-        std::setlocale(LC_ALL,"C");
-      }
-      ~LocaleSwitcher() {
-        std::setlocale(LC_ALL,"");
-      }
-    };
-  }
+namespace RDKit {
+namespace Utils {
+// allows an RAII-like approach to ensuring the locale is temporarily "C"
+// instead of whatever we started in.
+class LocaleSwitcher {
+ public:
+  LocaleSwitcher() { std::setlocale(LC_ALL, "C"); }
+  ~LocaleSwitcher() { std::setlocale(LC_ALL, ""); }
+};
+}
 }
 
 #endif

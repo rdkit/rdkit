@@ -1,4 +1,4 @@
-// 
+//
 //   Copyright (C) 2006 Greg Landrum
 //
 //   @@ All Rights Reserved @@
@@ -12,7 +12,5 @@
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolcat_array_API
 #include <RDBoost/Wrap.h>
-
-
 
 #endif
