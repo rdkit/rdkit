@@ -60,7 +60,7 @@ void readChunkData(std::istream &istrm, boost::uint64_t &sz,
                    boost::uint8_t *&data) {
   if (sz) {
     data = new boost::uint8_t[sz];
-    istrm.read((char *)data, sz);
+    istrm.read(reinterpret_cast<char *>(data), sz);
   } else {
     data = NULL;
   }
@@ -81,7 +81,8 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
 
   dp_impl->popCountOffsets.reserve(nEntries);
   for (unsigned int i = 0; i < nEntries; ++i) {
-    dp_impl->popCountOffsets.push_back(*(boost::uint32_t *)chunk);
+    dp_impl->popCountOffsets.push_back(
+        *reinterpret_cast<const boost::uint32_t *>(chunk));
     chunk += 4;
   }
 };
@@ -127,7 +128,9 @@ void extractArenaDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
 
   // streamRead(*dp_impl->istrm, spacer);
   // now move forward the length of the spacer
-  if (spacer) dp_impl->istrm->seekg((std::streamoff)spacer, std::ios_base::cur);
+  if (spacer)
+    dp_impl->istrm->seekg(static_cast<std::streamoff>(spacer),
+                          std::ios_base::cur);
   dp_impl->fpDataOffset = dp_impl->istrm->tellg();
   dp_impl->istrm->seekg(
       static_cast<std::streamoff>(numBytesStoredPerFingerprint * dp_impl->len),
@@ -137,13 +140,15 @@ void extractArena(FPBReader_impl *dp_impl, boost::uint64_t sz,
                   const boost::uint8_t *chunk) {
   PRECONDITION(dp_impl, "bad pointer");
 
-  boost::uint32_t numBytesPerFingerprint = *((boost::uint32_t *)chunk);
+  boost::uint32_t numBytesPerFingerprint =
+      *reinterpret_cast<const boost::uint32_t *>(chunk);
   dp_impl->nBits = numBytesPerFingerprint * 8;
 
   chunk += sizeof(boost::uint32_t);
-  dp_impl->numBytesStoredPerFingerprint = *((boost::uint32_t *)chunk);
+  dp_impl->numBytesStoredPerFingerprint =
+      *reinterpret_cast<const boost::uint32_t *>(chunk);
   chunk += sizeof(boost::uint32_t);
-  boost::uint8_t spacer = *((boost::uint8_t *)chunk);
+  boost::uint8_t spacer = *reinterpret_cast<const boost::uint8_t *>(chunk);
   chunk += 1;
   // now move forward the length of the spacer
   chunk += spacer;
@@ -169,8 +174,10 @@ void extractBytes(const FPBReader_impl *dp_impl, unsigned int which,
   if (!dp_impl->df_lazy) {
     fpData = const_cast<boost::uint8_t *>(dp_impl->dp_fpData) + offset;
   } else {
-    dp_impl->istrm->seekg(dp_impl->fpDataOffset + (std::streampos)offset);
-    dp_impl->istrm->read((char *)fpData, dp_impl->numBytesStoredPerFingerprint);
+    dp_impl->istrm->seekg(dp_impl->fpDataOffset +
+                          static_cast<std::streampos>(offset));
+    dp_impl->istrm->read(reinterpret_cast<char *>(fpData),
+                         dp_impl->numBytesStoredPerFingerprint);
   }
 };
 
@@ -182,7 +189,8 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
   if (!dp_impl->df_lazy) {
     boost::uint8_t *fpData = NULL;
     extractBytes(dp_impl, which, fpData);
-    memcpy((void *)res, fpData, dp_impl->numBytesStoredPerFingerprint);
+    memcpy(static_cast<void *>(res), fpData,
+           dp_impl->numBytesStoredPerFingerprint);
   } else {
     extractBytes(dp_impl, which, res);
   }
@@ -196,13 +204,12 @@ boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
   if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
     // I believe this could be faster (needs to be verified of course)
     unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
-    boost::dynamic_bitset<>::block_type *fpBlocks =
-        (boost::dynamic_bitset<>::block_type *)fpData;
+    const boost::dynamic_bitset<>::block_type *fpBlocks =
+        reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
     return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
   } else {
-    return (
-        boost::dynamic_bitset<> *)(new boost::dynamic_bitset<boost::uint8_t>(
-        fpData, fpData + nBytes));
+    return reinterpret_cast<boost::dynamic_bitset<> *>(
+        new boost::dynamic_bitset<boost::uint8_t>(fpData, fpData + nBytes));
   }
 }
 
@@ -212,7 +219,8 @@ boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
   unsigned int nBytes = nBits / 8;
 
   boost::uint8_t *res = new boost::uint8_t[nBytes];
-  boost::to_block_range(bitset, (boost::dynamic_bitset<>::block_type *)res);
+  boost::to_block_range(
+      bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
   return res;
 }
 
@@ -298,18 +306,19 @@ void extractIdsDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
   streamRead(*dp_impl->istrm, dp_impl->num4ByteElements);
   streamRead(*dp_impl->istrm, dp_impl->num8ByteElements);
 
-  dp_impl->idDataOffset = (boost::uint64_t)start + sz -
+  dp_impl->idDataOffset = static_cast<boost::uint64_t>(start) + sz -
                           (dp_impl->num4ByteElements + 1) * 4 -
                           dp_impl->num8ByteElements * 8;
-  dp_impl->istrm->seekg(start + (std::streampos)sz, std::ios_base::beg);
+  dp_impl->istrm->seekg(start + static_cast<std::streampos>(sz),
+                        std::ios_base::beg);
 };
 
 void extractIds(FPBReader_impl *dp_impl, boost::uint64_t sz,
                 const boost::uint8_t *chunk) {
   PRECONDITION(dp_impl, "bad pointer");
-  dp_impl->num4ByteElements = *((boost::uint32_t *)chunk);
+  dp_impl->num4ByteElements = *reinterpret_cast<const boost::uint32_t *>(chunk);
   chunk += sizeof(boost::uint32_t);
-  dp_impl->num8ByteElements = *((boost::uint32_t *)chunk);
+  dp_impl->num8ByteElements = *reinterpret_cast<const boost::uint32_t *>(chunk);
   chunk += sizeof(boost::uint32_t);
   dp_impl->dp_idOffsets = dp_impl->dp_idChunk.get() + sz -
                           (dp_impl->num4ByteElements + 1) * 4 -
@@ -330,51 +339,58 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
   boost::uint64_t offset = 0, len = 0;
   if (which < dp_impl->num4ByteElements) {
     if (!dp_impl->df_lazy) {
-      offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
-      len = *(boost::uint32_t *)(dp_impl->dp_idOffsets + (which + 1) * 4);
+      offset = *reinterpret_cast<const boost::uint32_t *>(
+          dp_impl->dp_idOffsets + which * 4);
+      len = *reinterpret_cast<const boost::uint32_t *>(dp_impl->dp_idOffsets +
+                                                       (which + 1) * 4);
     } else {
       dp_impl->istrm->seekg(dp_impl->idDataOffset +
-                            (std::streampos)(which * 4));
-      dp_impl->istrm->read((char *)&offset, 4);
-      dp_impl->istrm->read((char *)&len, 4);
+                            static_cast<std::streampos>(which * 4));
+      dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 4);
+      dp_impl->istrm->read(reinterpret_cast<char *>(&len), 4);
     }
   } else if (which == dp_impl->num4ByteElements) {
     // FIX: this code path is not yet tested
     if (!dp_impl->df_lazy) {
-      offset = *(boost::uint32_t *)(dp_impl->dp_idOffsets + which * 4);
-      len = *(boost::uint64_t *)(dp_impl->dp_idOffsets + (which + 1) * 4);
+      offset = *reinterpret_cast<const boost::uint32_t *>(
+          dp_impl->dp_idOffsets + which * 4);
+      len = *reinterpret_cast<const boost::uint64_t *>(dp_impl->dp_idOffsets +
+                                                       (which + 1) * 4);
     } else {
       dp_impl->istrm->seekg(dp_impl->idDataOffset +
-                            (std::streampos)(which * 4));
-      dp_impl->istrm->read((char *)&offset, 4);
-      dp_impl->istrm->read((char *)&len, 8);
+                            static_cast<std::streampos>(which * 4));
+      dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 4);
+      dp_impl->istrm->read(reinterpret_cast<char *>(&len), 8);
     }
   } else {
     // FIX: this code path is not yet tested
     if (!dp_impl->df_lazy) {
-      offset = *(boost::uint64_t *)(dp_impl->dp_idOffsets +
-                                    dp_impl->num4ByteElements * 4 + which * 8);
-      len =
-          *(boost::uint64_t *)(dp_impl->dp_idOffsets +
-                               dp_impl->num4ByteElements * 4 + (which + 1) * 8);
+      offset = *reinterpret_cast<const boost::uint64_t *>(
+          dp_impl->dp_idOffsets + dp_impl->num4ByteElements * 4 + which * 8);
+      len = *reinterpret_cast<const boost::uint64_t *>(
+          dp_impl->dp_idOffsets + dp_impl->num4ByteElements * 4 +
+          (which + 1) * 8);
     } else {
-      dp_impl->istrm->seekg(
-          dp_impl->idDataOffset +
-          (std::streampos)(dp_impl->num4ByteElements * 4 + which * 8));
-      dp_impl->istrm->read((char *)&offset, 8);
-      dp_impl->istrm->read((char *)&len, 8);
+      dp_impl->istrm->seekg(dp_impl->idDataOffset +
+                            static_cast<std::streampos>(
+                                dp_impl->num4ByteElements * 4 + which * 8));
+      dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 8);
+      dp_impl->istrm->read(reinterpret_cast<char *>(&len), 8);
     }
   }
   len -= offset;
 
   if (!dp_impl->df_lazy) {
-    res = std::string((const char *)(dp_impl->dp_idChunk.get() + offset), len);
+    res = std::string(
+        reinterpret_cast<const char *>(dp_impl->dp_idChunk.get() + offset),
+        len);
   } else {
     char buff[len + 1];
     buff[len] = 0;
-    dp_impl->istrm->seekg(dp_impl->idChunkOffset + (std::streampos)offset);
-    dp_impl->istrm->read((char *)buff, len);
-    res = std::string((const char *)buff);
+    dp_impl->istrm->seekg(dp_impl->idChunkOffset +
+                          static_cast<std::streampos>(offset));
+    dp_impl->istrm->read(reinterpret_cast<char *>(buff), len);
+    res = std::string(reinterpret_cast<const char *>(buff));
   }
   return res;
 };
@@ -396,10 +412,12 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // Searches of Chemical Fingerprints in Linear and Sublinear Time. J. Chem.
     // Inf. Model. 47, 302–317 (2007).
     // http://pubs.acs.org/doi/abs/10.1021/ci600358f
-    boost::uint32_t minDbCount = (boost::uint32_t)floor(threshold * probeCount);
+    boost::uint32_t minDbCount =
+        static_cast<boost::uint32_t>(floor(threshold * probeCount));
     boost::uint32_t maxDbCount =
-        (threshold > 1e-6) ? (boost::uint32_t)ceil(probeCount / threshold)
-                           : dp_impl->numBytesStoredPerFingerprint;
+        (threshold > 1e-6)
+            ? static_cast<boost::uint32_t>(ceil(probeCount / threshold))
+            : dp_impl->numBytesStoredPerFingerprint;
     // std::cerr << " bounds: " << minDbCount << "-" << maxDbCount << std::endl;
     startScan = dp_impl->popCountOffsets[minDbCount];
     endScan = dp_impl->popCountOffsets[maxDbCount + 1];

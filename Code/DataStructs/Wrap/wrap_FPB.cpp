@@ -18,7 +18,8 @@ using namespace RDKit;
 namespace {
 python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
                             double threshold) {
-  const boost::uint8_t *bv = (const boost::uint8_t *)bytes.c_str();
+  const boost::uint8_t *bv =
+      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
   std::vector<std::pair<double, unsigned int> > nbrs =
       self->getTanimotoNeighbors(bv, threshold);
   python::list result;
@@ -30,14 +31,16 @@ python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
 
 python::object getBytesHelper(const FPBReader *self, unsigned int which) {
   boost::shared_array<boost::uint8_t> bv = self->getBytes(which);
-  python::object retval = python::object(python::handle<>(
-      PyBytes_FromStringAndSize((const char *)(bv.get()), self->nBits() / 8)));
+  python::object retval =
+      python::object(python::handle<>(PyBytes_FromStringAndSize(
+          reinterpret_cast<const char *>(bv.get()), self->nBits() / 8)));
   return retval;
 }
 
 double getTaniHelper(const FPBReader *self, unsigned int which,
                      const std::string &bytes) {
-  const boost::uint8_t *bv = (const boost::uint8_t *)bytes.c_str();
+  const boost::uint8_t *bv =
+      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
   return self->getTanimoto(which, bv);
 }
 python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
