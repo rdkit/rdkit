@@ -502,6 +502,13 @@ void FPBReader::init() {
         dp_impl->dp_idChunk.reset(chunk);
         detail::extractIds(dp_impl, chunkSz, chunk);
         chunk = NULL;
+      } else if (chunkNm == "META") {
+        // currently ignored
+      } else if (chunkNm == "HASH") {
+        // currently ignored
+      } else {
+        BOOST_LOG(rdWarningLog) << "Unknown chunk: " << chunkNm << " ignored."
+                                << std::endl;
       }
       delete[] chunk;
     } else {
