@@ -28,6 +28,7 @@ void wrap_BitOps();
 void wrap_Utils();
 void wrap_discreteValVect();
 void wrap_sparseIntVect();
+void wrap_FPB();
 
 template <typename T>
 void convertToNumpyArray(const T &v, python::object destArray) {
@@ -76,6 +77,7 @@ BOOST_PYTHON_MODULE(cDataStructs) {
   wrap_BitOps();
   wrap_discreteValVect();
   wrap_sparseIntVect();
+  wrap_FPB();
 
   python::def(
       "ConvertToNumpyArray",

@@ -38,6 +38,10 @@ class ExplicitBitVect : public BitVect {
   ExplicitBitVect(const std::string &);
   //! construct from a text pickle
   ExplicitBitVect(const char *, const unsigned int);
+  //! construct directly from a dynamic_bitset pointer
+  //  takes ownership of the pointer
+  ExplicitBitVect(boost::dynamic_bitset<> *bits)
+      : dp_bits(bits), d_size(bits->size()), d_numOnBits(bits->count()){};
 
   ~ExplicitBitVect();
 
