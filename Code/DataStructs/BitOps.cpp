@@ -17,6 +17,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/Exceptions.h>
 #include <sstream>
+#include <cstdlib>
 
 #include <boost/lexical_cast.hpp>
 
@@ -650,12 +651,15 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps) {
   PRECONDITION(fps.length() * 4 >= bv1.getNumBits(), "bad FPS length");
   PRECONDITION(fps.length() % 2 == 0, "bad FPS length");
   unsigned int bitIdx = 0;
+  char tptr[3];
+  tptr[2] = (char)0;
   for (unsigned int i = 0; i < fps.size() && bitIdx < bv1.getNumBits();
        i += 2) {
     unsigned short c = 0;
     try {
-      std::istringstream in(fps.substr(i, 2));
-      in >> std::hex >> c;
+      tptr[0] = fps[i];
+      tptr[1] = fps[i + 1];
+      c = strtol(tptr, NULL, 16);
     } catch (...) {
       std::ostringstream errout;
       errout << "Cannot convert FPS word: " << fps.substr(i, 2) << " to int";
