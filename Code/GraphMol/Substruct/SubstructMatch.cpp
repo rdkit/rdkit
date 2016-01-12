@@ -65,23 +65,25 @@ class MolMatchFinalCheckFunctor {
       : d_query(query), d_mol(mol), df_useChirality(useChirality){};
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
-    // std::cerr<<"  check! "<<df_useChirality<<std::endl;
+    // std::cerr << "  check! " << df_useChirality << std::endl;
     if (!df_useChirality) return true;
-    // for(unsigned int i=0;i<d_query.getNumAtoms();++i){
-    //  std::cerr<<"    "<<c1[i]<<" "<<c2[i]<<std::endl;
-    //}
+    // for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
+    //   std::cerr << "    " << c1[i] << " " << c2[i] << std::endl;
+    // }
 
     // check chiral atoms:
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
       const Atom *qAt = d_query.getAtomWithIdx(c1[i]);
-      if (qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW)
+      if (qAt->getDegree() <
+              3 ||  // FIX: doesn't deal with "explicit" Hs properly
+          (qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+           qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW))
         continue;
       const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
       if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
           mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW)
         return false;
-      if (qAt->getDegree() != mAt->getDegree()) return false;
+      if (qAt->getDegree() > mAt->getDegree()) return false;
       INT_LIST qOrder;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
         const Bond *qB = d_query.getBondBetweenAtoms(c1[i], c1[j]);
@@ -100,8 +102,37 @@ class MolMatchFinalCheckFunctor {
           if (mOrder.size() == mAt->getDegree()) break;
         }
       }
-      int mPermCount = mAt->getPerturbationOrder(mOrder);
-
+      while (mOrder.size() < mAt->getDegree()) {
+        mOrder.push_back(-1);
+      }
+      INT_LIST moOrder;
+      ROMol::OEDGE_ITER dbeg, dend;
+      boost::tie(dbeg, dend) = d_mol.getAtomBonds(mAt);
+      while (dbeg != dend) {
+        int dbidx = d_mol[*dbeg]->getIdx();
+        if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end())
+          moOrder.push_back(dbidx);
+        else
+          moOrder.push_back(-1);
+        ++dbeg;
+      }
+      int mPermCount =
+          static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
+      // std::cerr << "qorder: ";
+      // std::copy(qOrder.begin(), qOrder.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
+      // std::cerr << "moOrder: ";
+      // std::copy(moOrder.begin(), moOrder.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
+      // std::cerr << "morder: ";
+      // std::copy(mOrder.begin(), mOrder.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
+      // std::cerr << "qPerm: " << qPermCount << " mPerm: " << mPermCount
+      //           << " qtag: " << qAt->getChiralTag()
+      //           << " mtag: " << mAt->getChiralTag() << std::endl;
       if ((qPermCount % 2 == mPermCount % 2 &&
            qAt->getChiralTag() != mAt->getChiralTag()) ||
           (qPermCount % 2 != mPermCount % 2 &&
