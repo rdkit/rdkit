@@ -147,14 +147,6 @@ class EnumerationStrategyBase {
   virtual void initializeStrategy(const ChemicalReaction &reaction,
                                   const BBS &building_blocks) = 0;
 
-  //! The current position in the enumeration
-  const RGROUPS &currentPosition() const { return m_permutation; }
-
-  //! a result of EnumerationOverflow indicates that the number of
-  //!  permutations is not computable with the current
-  //!  rdlonglong size.
-  ssize_t getNumPermutations() const { return m_numPermutations; }
-
   //! returns true if there are more permutations left
   //!  random enumerators may always return true...
   virtual operator bool() const = 0;
@@ -162,14 +154,23 @@ class EnumerationStrategyBase {
   //! The current permutation {r1, r2, ...}
   virtual const RGROUPS &next() = 0;
 
+  //! Clone the enumeration strategy complete with current state
+  virtual EnumerationStrategyBase *Clone() const = 0;
+  
+  //! The current position in the enumeration
+  const RGROUPS &currentPosition() const { return m_permutation; }
+
+  //! a result of EnumerationOverflow indicates that the number of
+  //!  permutations is not computable with the current
+  //!  rdlonglong size.
+  ssize_t getNumPermutations() const { return m_numPermutations; }
+  
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)
   bool skip(size_t skipCount) {
     for (size_t i = 0; i < skipCount; ++i) next();
     return true;
   }
-
-  virtual EnumerationStrategyBase *Clone() const = 0;
 
  protected:
   //! Initialize the internal data structures
