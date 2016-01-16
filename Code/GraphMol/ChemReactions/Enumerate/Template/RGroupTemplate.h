@@ -50,7 +50,8 @@ namespace PropTypes {
 
 // Helper template to hold implementation details
 struct RGroupTemplate {
-  ROMOL_SPTR               sideChainMol;
+  ROMOL_SPTR               coreAndSideChainMol; // core + side chain
+  ROMOL_SPTR               sideChainMol;        // side chain only
   std::string              smiles;         // A smiles-like template
   std::vector<int>         mappings;
   std::vector<int>         counts;

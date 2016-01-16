@@ -208,6 +208,7 @@ bool RGroupTemplate::initialize(ROMOL_SPTR &product,
     mappings.clear();
     return false;
   } else {
+    coreAndSideChainMol = product;
     sideChainMol = sidechain;
     
     std::vector<int> temp;
