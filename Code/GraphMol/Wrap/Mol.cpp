@@ -451,7 +451,7 @@ struct mol_wrapper {
              "    - value: the property value (a string).\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")
+             "                Defaults to False.\n\n")
         .def("SetDoubleProp", MolSetProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -471,7 +471,7 @@ struct mol_wrapper {
              "    - value: the property value as an integer.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")
+             "                Defaults to False.\n\n")
         .def("SetUnsignedProp", MolSetProp<unsigned int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -481,7 +481,7 @@ struct mol_wrapper {
              "    - value: the property value as an unsigned integer.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")                
+             "                Defaults to False.\n\n")                
         .def("SetBoolProp", MolSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -491,7 +491,7 @@ struct mol_wrapper {
              "    - value: the property value as a bool.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")                
+             "                Defaults to False.\n\n")                
         .def("HasProp", MolHasProp,
              "Queries a molecule to see if a particular property has been "
              "assigned.\n\n"

@@ -49,7 +49,7 @@ bool AddToDict(const U& ob, boost::python::dict &dict, const std::string &key) {
   } catch (boost::bad_any_cast &) {
     return false;
   }
-  return false;
+  return true;
 }
 
 template<class T>
