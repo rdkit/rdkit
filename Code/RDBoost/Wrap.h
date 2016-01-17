@@ -10,6 +10,8 @@
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
+#include <RDGeneral/Invariant.h>
+
 #include <RDGeneral/BoostStartInclude.h>
 //
 // Generic Wrapper utility functionality
@@ -60,6 +62,11 @@ RDKIT_WRAP_DECL void throw_value_error(
 RDKIT_WRAP_DECL void translate_index_error(IndexErrorException const &e);
 RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const &e);
 
+#ifdef INVARIANT_EXCEPTION_METHOD
+RDKIT_WRAP_DECL void throw_runtime_error(
+    const std::string err);  //!< construct and throw a \c ValueError
+RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e);
+#endif                                               
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
 //! This should be used instead of calling \c vector_to_python<T>()
