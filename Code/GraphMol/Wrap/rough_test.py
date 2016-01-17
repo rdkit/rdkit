@@ -453,13 +453,13 @@ class TestCase(unittest.TestCase):
     try:
       self.assertTrue(m.GetIntProp("a") == 2.0)
       raise Exception("Expected runtime exception")
-    except RuntimeError:
+    except ValueError:
       pass
     
     try:
       self.assertTrue(m.GetUnsignedProp("a") == 2.0)
       raise Exception("Expected runtime exception")
-    except RuntimeError:
+    except ValueError:
       pass
 
     
@@ -3415,6 +3415,36 @@ CAS<~>
     sdSup = Chem.SDMolSupplier(fileN)
     for i,mol in enumerate(sdSup):
       self.assertEquals(mol.GetPropsAsDict(includePrivate=True), sddata[i])
+
+  def testGetSetProps(self):
+    m = Chem.MolFromSmiles("CC")
+    errors = {"int": "key `foo` exists but does not result in a 32 bit integer value",
+              "double": "key `foo` exists but does not result in a 64 bit floating point value",
+              "bool": "key `foo` exists but does not result in a True or False value"}
+
+    for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
+      ob.SetDoubleProp("foo", 2.0)
+      try:
+        ob.GetBoolProp("foo")
+      except ValueError as e:
+        self.assertEquals(str(e), errors["bool"])
+
+      try:
+        ob.GetIntProp("foo")
+      except ValueError as e:
+        self.assertEquals(str(e), errors["int"])
+
+      ob.SetBoolProp("foo", True)
+      try:
+        ob.GetDoubleProp("foo")
+      except ValueError as e:
+        self.assertEquals(str(e), errors["double"])
+
+      try:
+        ob.GetIntProp("foo")
+      except ValueError as e:
+        self.assertEquals(str(e), errors["int"])
+      
       
 if __name__ == '__main__':
   unittest.main()

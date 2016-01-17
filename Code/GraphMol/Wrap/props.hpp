@@ -39,6 +39,22 @@
 namespace RDKit
 {
 
+template<class T>
+inline const char * GetTypeName() {
+  //PRECONDITION(0, "Unregistered c++ type");
+  return "unregistered C++ type";
+}
+
+template<>
+inline const char * GetTypeName<double>() { return "64 bit floating point value"; }
+template<>
+inline const char * GetTypeName<int>() { return "32 bit integer value";}
+template<>
+inline const char * GetTypeName<unsigned int>() { return "32 bit unsigned integer value";}
+template<>
+inline const char * GetTypeName<bool>() { return "True or False value";}
+
+
 template<class T, class U>
 bool AddToDict(const U& ob, boost::python::dict &dict, const std::string &key) {
   T res;
@@ -70,6 +86,23 @@ boost::python::dict GetPropsAsDict(const T &obj) {
   }
   return dict;
 }
+
+template <class RDOb, class T>
+T GetProp(RDOb *ob, const char *key) {
+  T res;
+  try {
+    if (!ob->getPropIfPresent(key, res)) {
+      PyErr_SetString(PyExc_KeyError, key);
+      throw python::error_already_set();
+    }
+    return res;
+  } catch ( const boost::bad_any_cast &e ) {
+    throw ValueErrorException(std::string("key `") + key + "` exists but does not result in a " +
+                              GetTypeName<T>());
+  }
+  return res;
+}
+
 
 }
 

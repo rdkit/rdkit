@@ -142,9 +142,15 @@ PyObject *GetMolConformers(ROMol &mol) {
 template <class T>
 T MolGetProp(const ROMol &mol, const char *key) {
   T res;
-  if (!mol.getPropIfPresent(key, res)) {
-    PyErr_SetString(PyExc_KeyError, key);
-    throw python::error_already_set();
+  try {
+    if (!mol.getPropIfPresent(key, res)) {
+      PyErr_SetString(PyExc_KeyError, key);
+      throw python::error_already_set();
+    }
+    return res;
+  } catch ( const boost::bad_any_cast &e ) {
+    throw ValueErrorException(std::string("key `") + key + "` exists but does not result in a " +
+                              GetTypeName<T>());
   }
   return res;
 }
