@@ -686,9 +686,10 @@ std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
   return res;
 }
 
-double FPBReader::getTversky(unsigned int idx, const boost::uint8_t *bv) const {
+double FPBReader::getTversky(unsigned int idx, const boost::uint8_t *bv,
+                             double ca, double cb) const {
   PRECONDITION(df_init, "not initialized");
-  return detail::Tversky(dp_impl, idx, bv);
+  return detail::tversky(dp_impl, idx, bv, ca, cb);
 }
 double FPBReader::getTversky(unsigned int idx, const ExplicitBitVect &ebv,
                              double ca, double cb) const {
@@ -702,7 +703,7 @@ std::vector<std::pair<double, unsigned int> > FPBReader::getTverskyNeighbors(
     const boost::uint8_t *bv, double ca, double cb, double threshold) const {
   PRECONDITION(df_init, "not initialized");
   std::vector<std::pair<double, unsigned int> > res;
-  detail::TverskyNeighbors(dp_impl, bv, ca, cb, threshold, res);
+  detail::tverskyNeighbors(dp_impl, bv, ca, cb, threshold, res);
   std::sort(res.begin(), res.end(),
             Rankers::pairGreater<double, unsigned int>());
   return res;

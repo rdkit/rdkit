@@ -1363,6 +1363,16 @@ void test15BitmapOps() {
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
     TEST_ASSERT(feq(CalcBitmapDice(bv1, bv2, 5), 8. / 9));
   }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTversky(bv1, bv2, 5, 0.5, 0.5), 1.0));
+  }
+  {
+    const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTversky(bv1, bv2, 5, 0.5, 0.5), 8. / 9));
+  }
 
   {
     const unsigned char bv1[5] = {0x1, 0x0, 0x1, 0x0, 0x1};
@@ -1373,6 +1383,12 @@ void test15BitmapOps() {
     const unsigned char bv1[5] = {0x1, 0x0, 0x1, 0x0, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x2, 0x1, 0x1};
     TEST_ASSERT(!CalcBitmapAllProbeBitsMatch(bv1, bv2, 5));
+  }
+
+  {
+    const unsigned char bv1[5] = {0x1, 0x0, 0x1, 0x0, 0x1};
+    const unsigned char bv2[5] = {0x1, 0x1, 0x5, 0x1, 0x1};
+    TEST_ASSERT(feq(CalcBitmapTversky(bv1, bv2, 5, 1.0, 0.), 1.0));
   }
 }
 

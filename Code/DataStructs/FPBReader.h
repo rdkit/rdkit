@@ -152,11 +152,12 @@ class FPBReader {
 
   //! returns the Tversky similarity between the specified fingerprint and the
   //! provided fingerprint
-  double getTversky(unsigned int idx, const boost::uint8_t *bv) const;
+  double getTversky(unsigned int idx, const boost::uint8_t *bv, double ca,
+                    double cb) const;
   //! \overload
-  double getTversky(unsigned int idx,
-                    boost::shared_array<boost::uint8_t> bv) const {
-    return getTversky(idx, bv.get());
+  double getTversky(unsigned int idx, boost::shared_array<boost::uint8_t> bv,
+                    double ca, double cb) const {
+    return getTversky(idx, bv.get(), ca, cb);
   };
   //! \overload
   double getTversky(unsigned int idx, const ExplicitBitVect &ebv, double ca,
