@@ -140,15 +140,18 @@ class FPBReader {
   of decreasing similarity
   */
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      const boost::uint8_t *bv, double threshold = 0.7) const;
+      const boost::uint8_t *bv, double threshold = 0.7,
+      bool usePopcountScreen = true) const;
   //! \overload
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7) const {
-    return getTanimotoNeighbors(bv.get(), threshold);
+      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7,
+      bool usePopcountScreen = true) const {
+    return getTanimotoNeighbors(bv.get(), threshold, usePopcountScreen);
   };
   //! \overload
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      const ExplicitBitVect &ebv, double threshold = 0.7) const;
+      const ExplicitBitVect &ebv, double threshold = 0.7,
+      bool usePopcountScreen = true) const;
 
   //! returns the Tversky similarity between the specified fingerprint and the
   //! provided fingerprint
@@ -169,18 +172,18 @@ class FPBReader {
   of decreasing similarity
   */
   std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
-      const boost::uint8_t *bv, double ca, double cb,
-      double threshold = 0.7) const;
+      const boost::uint8_t *bv, double ca, double cb, double threshold = 0.7,
+      bool usePopcountScreen = true) const;
   //! \overload
   std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
       boost::shared_array<boost::uint8_t> bv, double ca, double cb,
-      double threshold = 0.7) const {
-    return getTverskyNeighbors(bv.get(), ca, cb, threshold);
+      double threshold = 0.7, bool usePopcountScreen = true) const {
+    return getTverskyNeighbors(bv.get(), ca, cb, threshold, usePopcountScreen);
   };
   //! \overload
   std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
-      const ExplicitBitVect &ebv, double ca, double cb,
-      double threshold = 0.7) const;
+      const ExplicitBitVect &ebv, double ca, double cb, double threshold = 0.7,
+      bool usePopcountScreen = true) const;
 
   //! returns indices of all fingerprints that completely contain this one
   /*! (i.e. where all the bits set in the query are also set in the db

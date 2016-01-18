@@ -163,6 +163,17 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(feq(nbrs[1].first, 0.3703));
       TEST_ASSERT(nbrs[1].second == 1);
     }
+    {  // with a threshold, no screen
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTanimotoNeighbors(bytes, 0.30, false);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.3703));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
     {  // with a threshold
       boost::shared_array<boost::uint8_t> bytes = fps.getBytes(95);
       TEST_ASSERT(bytes);
@@ -512,16 +523,38 @@ void test10FPBReaderTverskyNeighbors() {
       TEST_ASSERT(feq(nbrs[1].first, 0.3703));
       TEST_ASSERT(nbrs[1].second == 1);
     }
-    {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(95);
+    {  // with a threshold, asymmetric
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
-          fps.getTverskyNeighbors(bytes, 1., 1., 0.30);
-      TEST_ASSERT(nbrs.size() == 2);
+          fps.getTverskyNeighbors(bytes, 1., 0.5, 0.3);
+      TEST_ASSERT(nbrs.size() == 5);
       TEST_ASSERT(feq(nbrs[0].first, 1.));
-      TEST_ASSERT(nbrs[0].second == 95);
-      TEST_ASSERT(feq(nbrs[1].first, 0.4125));
-      TEST_ASSERT(nbrs[1].second == 89);
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.4255));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
+    {  // with a threshold,  no screen
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 1., 0.3, false);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.3703));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
+    {  // with a threshold, asymmetric, no screen
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 0.5, 0.3, false);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.4255));
+      TEST_ASSERT(nbrs[1].second == 1);
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
