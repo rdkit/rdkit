@@ -138,6 +138,13 @@ class FPBReader {
   /*!
   The result vector of (similarity,index) pairs is sorted in order
   of decreasing similarity
+
+    \param bv the query fingerprint
+    \param threshold the minimum similarity to return
+    \param usePopcountScreen if this is true (the default) the popcount of the
+           neighbors will be used to reduce the number of calculations that need
+           to be done
+
   */
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
       const boost::uint8_t *bv, double threshold = 0.7,
@@ -155,6 +162,14 @@ class FPBReader {
 
   //! returns the Tversky similarity between the specified fingerprint and the
   //! provided fingerprint
+  /*!
+
+    \param idx the fingerprint to compare to
+    \param bv the query fingerprint
+    \param ca the Tversky a coefficient
+    \param cb the Tversky a coefficient
+
+   */
   double getTversky(unsigned int idx, const boost::uint8_t *bv, double ca,
                     double cb) const;
   //! \overload
@@ -170,6 +185,15 @@ class FPBReader {
   /*!
   The result vector of (similarity,index) pairs is sorted in order
   of decreasing similarity
+
+    \param bv the query fingerprint
+    \param ca the Tversky a coefficient
+    \param cb the Tversky a coefficient
+    \param threshold the minimum similarity to return
+    \param usePopcountScreen if this is true (the default) the popcount of the
+           neighbors will be used to reduce the number of calculations that need
+           to be done
+
   */
   std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
       const boost::uint8_t *bv, double ca, double cb, double threshold = 0.7,
