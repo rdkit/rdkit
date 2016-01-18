@@ -150,6 +150,37 @@ class FPBReader {
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
       const ExplicitBitVect &ebv, double threshold = 0.7) const;
 
+  //! returns the Tversky similarity between the specified fingerprint and the
+  //! provided fingerprint
+  double getTversky(unsigned int idx, const boost::uint8_t *bv) const;
+  //! \overload
+  double getTversky(unsigned int idx,
+                    boost::shared_array<boost::uint8_t> bv) const {
+    return getTversky(idx, bv.get());
+  };
+  //! \overload
+  double getTversky(unsigned int idx, const ExplicitBitVect &ebv, double ca,
+                    double cb) const;
+
+  //! returns Tversky neighbors that are within a similarity threshold
+  /*!
+  The result vector of (similarity,index) pairs is sorted in order
+  of decreasing similarity
+  */
+  std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
+      const boost::uint8_t *bv, double ca, double cb,
+      double threshold = 0.7) const;
+  //! \overload
+  std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
+      boost::shared_array<boost::uint8_t> bv, double ca, double cb,
+      double threshold = 0.7) const {
+    return getTverskyNeighbors(bv.get(), ca, cb, threshold);
+  };
+  //! \overload
+  std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
+      const ExplicitBitVect &ebv, double ca, double cb,
+      double threshold = 0.7) const;
+
   //! returns indices of all fingerprints that completely contain this one
   /*! (i.e. where all the bits set in the query are also set in the db
    molecule)

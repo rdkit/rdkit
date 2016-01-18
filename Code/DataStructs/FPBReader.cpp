@@ -255,6 +255,24 @@ double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
   return res;
 };
 
+double tversky(const FPBReader_impl *dp_impl, unsigned int which,
+               const ::boost::uint8_t *bv, double ca, double cb) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(bv, "bad bv pointer");
+  if (which >= dp_impl->len) {
+    throw ValueErrorException("bad index");
+  }
+  boost::uint8_t *fpData;
+  if (dp_impl->df_lazy) {
+    fpData = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+  }
+  extractBytes(dp_impl, which, fpData);
+  double res = CalcBitmapTversky(fpData, bv,
+                                 dp_impl->numBytesStoredPerFingerprint, ca, cb);
+  if (dp_impl->df_lazy) delete[] fpData;
+  return res;
+};
+
 //-----------------------------------------------------
 //  Id procesing
 /* Documentation from Andrew's code on the structure of the arena:
@@ -418,10 +436,11 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
         (threshold > 1e-6)
             ? static_cast<boost::uint32_t>(ceil(probeCount / threshold))
             : dp_impl->numBytesStoredPerFingerprint;
-    // std::cerr << " bounds: " << minDbCount << "-" << maxDbCount << std::endl;
+    std::cerr << "probeCount: " << probeCount << " bounds: " << minDbCount
+              << "-" << maxDbCount << std::endl;
     startScan = dp_impl->popCountOffsets[minDbCount];
     endScan = dp_impl->popCountOffsets[maxDbCount + 1];
-    // std::cerr << " scan: " << startScan << "-" << endScan << std::endl;
+    std::cerr << " scan: " << startScan << "-" << endScan << std::endl;
   }
   boost::uint8_t *dbv;
   if (dp_impl->df_lazy) {
@@ -435,6 +454,55 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // std::endl;
     if (tani >= threshold) {
       res.push_back(std::make_pair(tani, i));
+    }
+  }
+  if (dp_impl->df_lazy) delete[] dbv;
+}
+
+void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
+                      double ca, double cb, double threshold,
+                      std::vector<std::pair<double, unsigned int> > &res) {
+  PRECONDITION(dp_impl, "bad reader pointer");
+  PRECONDITION(bv, "bad bv");
+  RANGE_CHECK(-1e-6, threshold, 1.0 + 1e-6);
+  res.clear();
+  boost::uint64_t probeCount =
+      CalcBitmapPopcount(bv, dp_impl->numBytesStoredPerFingerprint);
+
+  boost::uint64_t startScan = 0, endScan = dp_impl->len;
+  if (dp_impl->popCountOffsets.size() == dp_impl->nBits + 2) {
+    // figure out the bounds based on equation 25 from:
+    // 1. Swamidass, S. J. & Baldi, P. Bounds and Algorithms for Fast Exact
+    // Searches of Chemical Fingerprints in Linear and Sublinear Time. J. Chem.
+    // Inf. Model. 47, 302–317 (2007).
+    // http://pubs.acs.org/doi/abs/10.1021/ci600358f
+    boost::uint32_t minDbCount = static_cast<boost::uint32_t>(floor(
+        (threshold * probeCount * ca) / (1. - threshold + threshold * ca)));
+    boost::uint32_t maxDbCount =
+        ((threshold * cb) > 1e-6)
+            ? static_cast<boost::uint32_t>(
+                  ceil(probeCount * (1 - threshold + threshold * cb) /
+                       (threshold * cb)))
+            : dp_impl->numBytesStoredPerFingerprint;
+    std::cerr << "probeCount: " << probeCount << " bounds: " << minDbCount
+              << "-" << maxDbCount << std::endl;
+    startScan = dp_impl->popCountOffsets[minDbCount];
+    endScan = dp_impl->popCountOffsets[maxDbCount + 1];
+    std::cerr << " scan: " << startScan << "-" << endScan << std::endl;
+  }
+
+  boost::uint8_t *dbv;
+  if (dp_impl->df_lazy) {
+    dbv = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+  }
+  for (boost::uint64_t i = startScan; i < endScan; ++i) {
+    extractBytes(dp_impl, i, dbv);
+    double sim = CalcBitmapTversky(
+        dbv, bv, dp_impl->numBytesStoredPerFingerprint, ca, cb);
+    // std::cerr << "  i:" << i << " " << tani << " ? " << threshold <<
+    // std::endl;
+    if (sim >= threshold) {
+      res.push_back(std::make_pair(sim, i));
     }
   }
   if (dp_impl->df_lazy) delete[] dbv;
@@ -614,6 +682,37 @@ std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
   const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
   std::vector<std::pair<double, unsigned int> > res =
       getTanimotoNeighbors(bv, threshold);
+  delete[] bv;
+  return res;
+}
+
+double FPBReader::getTversky(unsigned int idx, const boost::uint8_t *bv) const {
+  PRECONDITION(df_init, "not initialized");
+  return detail::Tversky(dp_impl, idx, bv);
+}
+double FPBReader::getTversky(unsigned int idx, const ExplicitBitVect &ebv,
+                             double ca, double cb) const {
+  const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  double res = getTversky(idx, bv, ca, cb);
+  delete[] bv;
+  return res;
+}
+
+std::vector<std::pair<double, unsigned int> > FPBReader::getTverskyNeighbors(
+    const boost::uint8_t *bv, double ca, double cb, double threshold) const {
+  PRECONDITION(df_init, "not initialized");
+  std::vector<std::pair<double, unsigned int> > res;
+  detail::TverskyNeighbors(dp_impl, bv, ca, cb, threshold, res);
+  std::sort(res.begin(), res.end(),
+            Rankers::pairGreater<double, unsigned int>());
+  return res;
+}
+
+std::vector<std::pair<double, unsigned int> > FPBReader::getTverskyNeighbors(
+    const ExplicitBitVect &ebv, double ca, double cb, double threshold) const {
+  const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  std::vector<std::pair<double, unsigned int> > res =
+      getTverskyNeighbors(bv, ca, cb, threshold);
   delete[] bv;
   return res;
 }
