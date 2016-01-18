@@ -22,6 +22,9 @@ try:
 except ImportError:
     from PIL import Image
 
+# Expose the C++ Error streams to the IPythonConsole
+Chem.WrapRDKitStreams()
+
 molSize = (450, 150)
 highlightSubstructs = True
 kekulizeStructures = True

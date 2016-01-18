@@ -47,6 +47,43 @@ void wrap_EditableMol();
 void wrap_monomerinfo();
 void wrap_resmolsupplier();
 
+struct PySysErrWrite : std::ostream, std::streambuf
+{
+  std::string prefix;
+   std::string buffer; // unlimited! flushes in endl
+  
+  PySysErrWrite(const std::string &prefix) :
+      std::ostream(this), prefix(prefix) {}
+
+    int overflow(int c)
+    {
+        foo(c);
+        return 0;
+    }
+
+
+    void foo(char c)
+    {
+      buffer += c;
+      if (c == '\n') {
+        PySys_WriteStderr("%s", (prefix + buffer).c_str());
+        buffer.clear();
+      }
+    }
+};
+
+void WrapErrorStreams() {
+  static PySysErrWrite debug  ("C++ DEBUG: ");
+  static PySysErrWrite error  ("C++ ERROR: ");
+  static PySysErrWrite info   ("C++ INFO: ");
+  static PySysErrWrite warning("C++ WARNING: ");
+  
+  rdDebugLog->AddTee(debug);
+  rdInfoLog->AddTee(info);
+  rdErrorLog->AddTee(error);
+  rdWarningLog->AddTee(error);
+}
+
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
@@ -59,7 +96,15 @@ BOOST_PYTHON_MODULE(rdchem) {
       &translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(
       &rdSanitExceptionTranslator);
+#if INVARIANT_EXCEPTION_METHOD  
+  python::register_exception_translator<Invar::Invariant>(
+      &translate_invariant_error);
+#endif
+  python::def("WrapRDKitStreams", WrapErrorStreams,
+              "Wrap the internal RDKit streams so they go to python's "
+              "SysStdErr");
 
+  
   //*********************************************
   //
   //  Utility Classes
