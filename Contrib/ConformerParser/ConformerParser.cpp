@@ -69,7 +69,7 @@ namespace RDKit{
       return confIds;
     }
 
-    void readAmberTrajectory(std::string fName, std::vector<std::vector<double> > &coords,
+    void readAmberTrajectory(const std::string &fName, std::vector<std::vector<double> > &coords,
                              unsigned int numAtoms) {
       std::ifstream inStream(fName.c_str());
       if (!inStream || (inStream.bad()) ) {
