@@ -47,7 +47,7 @@ RDKIT_WRAP_DECL void throw_runtime_error(const std::string err) {
 
 
 RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e) {
-  throw_runtime_error(e.toString());
+  throw_runtime_error(e.toUserString());
 }
 #endif                                               
 
