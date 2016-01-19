@@ -3418,8 +3418,8 @@ CAS<~>
 
   def testGetSetProps(self):
     m = Chem.MolFromSmiles("CC")
-    errors = {"int": "key `foo` exists but does not result in a 32 bit integer value",
-              "double": "key `foo` exists but does not result in a 64 bit floating point value",
+    errors = {"int": "key `foo` exists but does not result in an integer value",
+              "double": "key `foo` exists but does not result in a double value",
               "bool": "key `foo` exists but does not result in a True or False value"}
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:

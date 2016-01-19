@@ -46,13 +46,13 @@ inline const char * GetTypeName() {
 }
 
 template<>
-inline const char * GetTypeName<double>() { return "64 bit floating point value"; }
+inline const char * GetTypeName<double>() { return "a double value"; }
 template<>
-inline const char * GetTypeName<int>() { return "32 bit integer value";}
+inline const char * GetTypeName<int>() { return "an integer value";}
 template<>
-inline const char * GetTypeName<unsigned int>() { return "32 bit unsigned integer value";}
+inline const char * GetTypeName<unsigned int>() { return "an unsigned integer value";}
 template<>
-inline const char * GetTypeName<bool>() { return "True or False value";}
+inline const char * GetTypeName<bool>() { return "a True or False value";}
 
 
 template<class T, class U>
@@ -97,7 +97,7 @@ T GetProp(RDOb *ob, const char *key) {
     }
     return res;
   } catch ( const boost::bad_any_cast &e ) {
-    throw ValueErrorException(std::string("key `") + key + "` exists but does not result in a " +
+    throw ValueErrorException(std::string("key `") + key + "` exists but does not result in " +
                               GetTypeName<T>());
   }
   return res;
