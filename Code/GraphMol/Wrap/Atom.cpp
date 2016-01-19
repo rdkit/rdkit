@@ -69,17 +69,6 @@ int AtomHasProp(const Atom *atom, const char *key) {
   return res;
 }
 
-template <class T>
-T AtomGetProp(const Atom *atom, const char *key) {
-  if (!atom->hasProp(key)) {
-    PyErr_SetString(PyExc_KeyError, key);
-    throw python::error_already_set();
-  }
-  T res;
-  atom->getProp<T>(key, res);
-  return res;
-}
-
 void AtomClearProp(const Atom *atom, const char *key) {
   if (!atom->hasProp(key)) {
     return;
@@ -283,7 +272,7 @@ struct atom_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a string).\n\n")
 
-        .def("GetProp", AtomGetProp<std::string>,
+        .def("GetProp", GetProp<Atom, std::string>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -306,7 +295,7 @@ struct atom_wrapper {
              "    - key: the name of the property to be set (an unsigned integer).\n"
              "    - value: the property value (a int >= 0).\n\n")
         
-        .def("GetIntProp", AtomGetProp<int>,
+        .def("GetIntProp", GetProp<Atom, int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an int).\n\n"
@@ -315,7 +304,7 @@ struct atom_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
 
-        .def("GetUnsignedProp", AtomGetProp<unsigned>,
+        .def("GetUnsignedProp", GetProp<Atom, unsigned>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an unsigned integer).\n\n"
@@ -331,7 +320,7 @@ struct atom_wrapper {
              "    - key: the name of the property to be set (a double).\n"
              "    - value: the property value (a double).\n\n")
 
-        .def("GetDoubleProp", AtomGetProp<double>,
+        .def("GetDoubleProp", GetProp<Atom, double>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a double).\n\n"
@@ -347,7 +336,7 @@ struct atom_wrapper {
              "    - key: the name of the property to be set (a bool).\n"
              "    - value: the property value (a bool).\n\n")
 
-        .def("GetBoolProp", AtomGetProp<bool>,
+        .def("GetBoolProp", GetProp<Atom, bool>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a bool).\n\n"

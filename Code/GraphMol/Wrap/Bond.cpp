@@ -73,17 +73,6 @@ void BondClearProp(const Bond *bond, const char *key) {
   bond->clearProp(key);
 }
 
-template <class T>
-T BondGetProp(const Bond *bond, const char *key) {
-  if (!bond->hasProp(key)) {
-    PyErr_SetString(PyExc_KeyError, key);
-    throw python::error_already_set();
-  }
-  T res;
-  bond->getProp<T>(key, res);
-  return res;
-}
-
 bool BondIsInRing(const Bond *bond) {
   if (!bond->getOwningMol().getRingInfo()->isInitialized()) {
     MolOps::findSSSR(bond->getOwningMol());
@@ -216,7 +205,7 @@ struct bond_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a string).\n\n")
 
-        .def("GetProp", BondGetProp<std::string>,
+        .def("GetProp", GetProp<Bond, std::string>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -239,7 +228,7 @@ struct bond_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (an int >= 0).\n\n")
         
-        .def("GetIntProp", BondGetProp<int>,
+        .def("GetIntProp", GetProp<Bond, int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an int).\n\n"
@@ -248,7 +237,7 @@ struct bond_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
 
-        .def("GetUnsignedProp", BondGetProp<unsigned int>,
+        .def("GetUnsignedProp", GetProp<Bond, unsigned int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an unsigned integer).\n\n"
@@ -264,7 +253,7 @@ struct bond_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a double).\n\n")
 
-        .def("GetDoubleProp", BondGetProp<double>,
+        .def("GetDoubleProp", GetProp<Bond, double>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a double).\n\n"
@@ -280,7 +269,7 @@ struct bond_wrapper {
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a boolean).\n\n")
 
-        .def("GetBoolProp", BondGetProp<bool>,
+        .def("GetBoolProp", GetProp<Bond, bool>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a boolean).\n\n"
