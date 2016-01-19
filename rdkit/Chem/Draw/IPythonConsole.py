@@ -33,6 +33,9 @@ drawing_type_3d = "ball and stick"
 camera_type_3d = "perspective"
 shader_3d = "lambert"
 
+# expose RDLogs to Python StdErr so they are shown
+#  in the IPythonConsole not the server logs.
+Chem.WrapLogs()
 
 def _toJSON(mol):
     """For IPython notebook, renders 3D webGL objects."""
