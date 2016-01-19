@@ -3424,27 +3424,22 @@ CAS<~>
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
       ob.SetDoubleProp("foo", 2.0)
-      try:
+      with self.assertRaises(ValueError) as e:
         ob.GetBoolProp("foo")
-      except ValueError as e:
-        self.assertEquals(str(e), errors["bool"])
-
-      try:
+      self.assertEquals(str(e.exception), errors["bool"])
+             
+      with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
-      except ValueError as e:
-        self.assertEquals(str(e), errors["int"])
-
-      ob.SetBoolProp("foo", True)
-      try:
-        ob.GetDoubleProp("foo")
-      except ValueError as e:
-        self.assertEquals(str(e), errors["double"])
-
-      try:
-        ob.GetIntProp("foo")
-      except ValueError as e:
-        self.assertEquals(str(e), errors["int"])
+      self.assertEquals(str(e.exception), errors["int"])
       
+      ob.SetBoolProp("foo", True)
+      with self.assertRaises(ValueError) as e:      
+        ob.GetDoubleProp("foo")
+      self.assertEquals(str(e.exception), errors["double"])
+      
+      with self.assertRaises(ValueError) as e:              
+        ob.GetIntProp("foo")
+      self.assertEquals(str(e.exception), errors["int"])
       
 if __name__ == '__main__':
   unittest.main()
