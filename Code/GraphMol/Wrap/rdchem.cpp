@@ -16,6 +16,11 @@
 #include <RDBoost/import_array.h>
 #include <RDBoost/iterator_next.h>
 
+#ifdef RDK_THREADSAFE_SSS
+// Thread local storage for output buffer for RDKit Logging
+#include <boost/thread/tss.hpp>
+#endif
+
 #include <sstream>
 
 #include "seqs.hpp"
@@ -47,6 +52,86 @@ void wrap_EditableMol();
 void wrap_monomerinfo();
 void wrap_resmolsupplier();
 
+struct PySysErrWrite : std::ostream, std::streambuf
+{
+  std::string prefix;
+  
+  PySysErrWrite(const std::string &prefix) :
+      std::ostream(this), prefix(prefix) {}
+
+  int overflow(int c) { write(c); return 0;}
+  
+#ifdef RDK_THREADSAFE_SSS
+  void write(char c) { // enable thread safe logging
+    static boost::thread_specific_ptr< std::string > buffer;
+    if( !buffer.get() ) {
+      buffer.reset( new std::string );
+    }
+    (*buffer.get()) += c;
+    if (c == '\n') {
+      // Python IO is not thread safe, so grab the GIL
+      PyGILState_STATE gstate;
+      gstate = PyGILState_Ensure();
+      PySys_WriteStderr("%s", (prefix + (*buffer.get())).c_str());
+      PyGILState_Release(gstate);
+      buffer->clear();
+    }
+  }
+  
+#else
+  std::string buffer; // unlimited! flushes in endl
+  void write(char c) {
+    buffer += c;
+    if (c == '\n') {
+      PySys_WriteStderr("%s", (prefix + buffer).c_str());
+      buffer.clear();
+    }
+  }
+#endif
+
+  
+};
+
+void RDLogError(const std::string &msg) {
+  BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
+}
+
+void RDLogInfo(const std::string &msg) {
+  BOOST_LOG(rdInfoLog) << msg.c_str() << std::endl;
+}
+
+void RDLogDebug(const std::string &msg) {
+  BOOST_LOG(rdDebugLog) << msg.c_str() << std::endl;
+}
+
+void RDLogWarning(const std::string &msg) {
+  BOOST_LOG(rdWarningLog) << msg.c_str() << std::endl;
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+// As much as I hate adding test code to the python module
+//  we need to expose this to python somehow with the GIL
+//   turned off.
+void LogThreadTest() {
+  NOGIL gil;
+  for(int i=0;i<5;++i)
+    BOOST_LOG(rdWarningLog) <<
+        "Test [" << i << "]: the quick brown fox jumps over the lazy dog\n";
+}
+#endif
+
+void WrapLogs() {
+  static PySysErrWrite debug  ("RDKit DEBUG: ");
+  static PySysErrWrite error  ("RDKit ERROR: ");
+  static PySysErrWrite info   ("RDKit INFO: ");
+  static PySysErrWrite warning("RDKit WARNING: ");
+  
+  rdDebugLog->AddTee(debug);
+  rdInfoLog->AddTee(info);
+  rdErrorLog->AddTee(error);
+  rdWarningLog->AddTee(warning);
+}
+
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
@@ -60,6 +145,21 @@ BOOST_PYTHON_MODULE(rdchem) {
   python::register_exception_translator<RDKit::MolSanitizeException>(
       &rdSanitExceptionTranslator);
 
+  python::def("WrapLogs", WrapLogs,
+              "Wrap the internal RDKit streams so they go to python's "
+              "SysStdErr");
+  python::def("LogWarningMsg", RDLogWarning,
+              "Log a warning message to the RDKit warning logs");
+  python::def("LogInfoMsg", RDLogInfo,
+              "Log a warning message to the RDKit info logs");
+  python::def("LogErrorMsg", RDLogError,
+              "Log a warning message to the RDKit error logs");
+  python::def("LogDebugMsg", RDLogDebug,
+              "Log a warning message to the RDKit debug logs");
+
+#ifdef RDK_TEST_MULTITHREADED
+  python::def("LogThreadTest", LogThreadTest);
+#endif  
   //*********************************************
   //
   //  Utility Classes
