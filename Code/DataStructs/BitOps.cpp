@@ -785,6 +785,7 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 #ifdef _MSC_VER
 #include <intrin.h>
 #define __builtin_popcount __popcnt
+#define __builtin_popcountl __popcnt64
 #endif
 #define USE_BUILTIN_POPCOUNT 1
 
@@ -834,14 +835,14 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #else
-  unsigned int eidx = nBytes / sizeof(unsigned int);
-  for (unsigned int i = 0; i < eidx; ++i) {
-    union_popcount +=
-        __builtin_popcount(((unsigned int*)afp)[i] | ((unsigned int*)bfp)[i]);
-    intersect_popcount +=
-        __builtin_popcount(((unsigned int*)afp)[i] & ((unsigned int*)bfp)[i]);
+  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
+  for (boost::uint64_t i = 0; i < eidx; ++i) {
+    union_popcount += __builtin_popcountl(((boost::uint64_t*)afp)[i] |
+                                          ((boost::uint64_t*)bfp)[i]);
+    intersect_popcount += __builtin_popcountl(((boost::uint64_t*)afp)[i] &
+                                              ((boost::uint64_t*)bfp)[i]);
   }
-  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
