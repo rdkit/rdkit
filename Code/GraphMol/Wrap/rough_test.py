@@ -3393,7 +3393,30 @@ CAS<~>
     sdSup = Chem.SDMolSupplier(fileN)
     for i,mol in enumerate(sdSup):
       self.assertEquals(mol.GetPropsAsDict(includePrivate=True), sddata[i])
-      
+
+  # this test should probably always be last since it wraps
+  #  the logging stream
+  def testLogging(self):
+    err = sys.stderr
+    try:
+      loggers = [("RDKit ERROR",   "1", Chem.LogErrorMsg),
+                 ("RDKit INFO",    "2", Chem.LogInfoMsg),
+                 ("RDKit DEBUG",   "3", Chem.LogDebugMsg),
+                 ("RDKit WARNING", "4", Chem.LogWarningMsg)]
+      for msg, v, log in loggers:
+        sys.stderr = six.StringIO()
+        log(v)
+        self.assertEquals(sys.stderr.getvalue(), "")
+
+      Chem.WrapLogs()
+      for msg, v, log in loggers:
+        sys.stderr = six.StringIO()
+        log(v)
+        s = sys.stderr.getvalue()
+        self.assertTrue(msg in s)
+    finally:
+      sys.stderr = err
+    
 if __name__ == '__main__':
   unittest.main()
 

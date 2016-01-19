@@ -34,12 +34,48 @@ for func in funcs:
     
 
 nthreads = int(multiprocessing.cpu_count() * 100 / 4) # 100 threads per cpu
+threads = []
 for i in range(0, nthreads):
     for func in funcs:
         t = threading.Thread(target=runner, args=(func,core_mol))
         t.start()
+        threads.append(t)
     t = threading.Thread(target=runner, args=("ToBinary",None))        
     t.start()
+    threads.append(t)
+for t in threads:
+    t.join()
 
+# this spews a ton of logging info...
+#  that is all intermingled...
+nthreads = int(multiprocessing.cpu_count())
+threads = []
+for i in range(0, nthreads):
+    for func in funcs:
+        t = threading.Thread(target=Chem.LogThreadTest)
+        t.start()
+        threads.append(t)
+    t = threading.Thread(target=Chem.LogThreadTest)
+    t.start()
+    threads.append(t)
+    
+for t in threads:
+    t.join()
 
+Chem.WrapLogs()
+# now the errors should be synchronized...
+nthreads = int(multiprocessing.cpu_count())
+threads = []
+for i in range(0, nthreads):
+    for func in funcs:
+        t = threading.Thread(target=Chem.LogThreadTest)
+        t.start()
+        threads.append(t)
+    t = threading.Thread(target=Chem.LogThreadTest)
+    t.start()
+    threads.append(t)
+    
+for t in threads:
+    t.join()
 
+    
