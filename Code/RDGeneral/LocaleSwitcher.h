@@ -51,13 +51,14 @@ class LocaleSwitcher {
 public:
   bool switched;
 #else
+  locale_t loc;
 
 LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
     // set locale for this thread
 
     if (!Recurse() && old_locale != "C") {
       Recurse(1);
-      locale_t loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+      loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
     } else
@@ -65,9 +66,7 @@ LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
   }
   ~LocaleSwitcher() {
     if (old_locale != "C") {
-      locale_t loc = newlocale(LC_ALL_MASK, old_locale.c_str(), (locale_t)0);
-      uselocale(loc);
-      // Don't free "C" or "GLOBAL" Locales
+      freelocale(loc);
       Recurse(-1);
     }
   }
