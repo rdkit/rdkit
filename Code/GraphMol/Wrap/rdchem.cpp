@@ -59,10 +59,6 @@ BOOST_PYTHON_MODULE(rdchem) {
       &translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(
       &rdSanitExceptionTranslator);
-#if INVARIANT_EXCEPTION_METHOD  
-  python::register_exception_translator<Invar::Invariant>(
-      &translate_invariant_error);
-#endif
   //*********************************************
   //
   //  Utility Classes

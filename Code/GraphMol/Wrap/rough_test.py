@@ -15,6 +15,7 @@ from rdkit import RDConfig,rdBase
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit import six
+from rdkit import __version__
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -3440,7 +3441,18 @@ CAS<~>
       with self.assertRaises(ValueError) as e:              
         ob.GetIntProp("foo")
       self.assertEquals(str(e.exception), errors["int"])
-      
+
+  def testInvariantException(self):
+    m = Chem.MolFromSmiles("C")
+    try:
+      m.GetAtomWithIdx(3)
+    except RuntimeError as e:
+      details = str(e)
+      self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
+      self.assertTrue("Failed Expression: 3 <= 0" in details)
+      self.assertTrue("RDKIT:" in details)
+      self.assertTrue(__version__ in details)
+    
 if __name__ == '__main__':
   unittest.main()
 

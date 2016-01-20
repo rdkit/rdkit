@@ -14,6 +14,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 #include <RDGeneral/versions.h>
+#include <RDGeneral/Invariant.h>
 
 #include <RDGeneral/RDLog.h>
 #if 0
@@ -119,6 +120,11 @@ BOOST_PYTHON_MODULE(rdBase) {
       &translate_index_error);
   python::register_exception_translator<ValueErrorException>(
       &translate_value_error);
+
+#if INVARIANT_EXCEPTION_METHOD  
+  python::register_exception_translator<Invar::Invariant>(
+      &translate_invariant_error);
+#endif
 
   python::def("_version", _version,
               "Deprecated, use the constant rdkitVersion instead");
