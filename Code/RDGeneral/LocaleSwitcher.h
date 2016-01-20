@@ -52,15 +52,14 @@ public:
   bool switched;
 #else
   locale_t loc;
-#ifdef __APPLE__
   locale_t old_loc;
-#endif      
+
 LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
     // set locale for this thread
 
     if (!Recurse() && old_locale != "C") {
       Recurse(1);
-      old_loc = uselocale(NULL);
+      old_loc = uselocale(0);
       loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
@@ -69,9 +68,7 @@ LocaleSwitcher() : old_locale(setlocale(LC_ALL, NULL)) {
   }
   ~LocaleSwitcher() {
     if (old_locale != "C") {
-#ifdef __APPLE__
       uselocale(old_loc);
-#endif
       freelocale(loc);
       Recurse(-1);
     }
