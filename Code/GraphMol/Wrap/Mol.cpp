@@ -139,16 +139,6 @@ PyObject *GetMolConformers(ROMol &mol) {
   return res;
 }
 
-template <class T>
-T MolGetProp(const ROMol &mol, const char *key) {
-  T res;
-  if (!mol.getPropIfPresent(key, res)) {
-    PyErr_SetString(PyExc_KeyError, key);
-    throw python::error_already_set();
-  }
-  return res;
-}
-
 int MolHasProp(const ROMol &mol, const char *key) {
   int res = mol.hasProp(key);
   // std::cout << "key: "  << key << ": " << res << std::endl;
@@ -451,7 +441,7 @@ struct mol_wrapper {
              "    - value: the property value (a string).\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")
+             "                Defaults to False.\n\n")
         .def("SetDoubleProp", MolSetProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -471,7 +461,7 @@ struct mol_wrapper {
              "    - value: the property value as an integer.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")
+             "                Defaults to False.\n\n")
         .def("SetUnsignedProp", MolSetProp<unsigned int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -481,7 +471,7 @@ struct mol_wrapper {
              "    - value: the property value as an unsigned integer.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")                
+             "                Defaults to False.\n\n")                
         .def("SetBoolProp", MolSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -491,13 +481,13 @@ struct mol_wrapper {
              "    - value: the property value as a bool.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to 0.\n\n")                
+             "                Defaults to False.\n\n")                
         .def("HasProp", MolHasProp,
              "Queries a molecule to see if a particular property has been "
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
-        .def("GetProp", MolGetProp<std::string>,
+        .def("GetProp", GetProp<ROMol, std::string>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -505,7 +495,7 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetDoubleProp", MolGetProp<double>,
+        .def("GetDoubleProp", GetProp<ROMol, double>,
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -513,7 +503,7 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetIntProp", MolGetProp<int>,
+        .def("GetIntProp", GetProp<ROMol, int>,
              "Returns the integer value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -521,7 +511,7 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetUnsignedProp", MolGetProp<unsigned int>,
+        .def("GetUnsignedProp", GetProp<ROMol, unsigned int>,
              "Returns the unsigned int value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -529,7 +519,7 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetBoolProp", MolGetProp<bool>,
+        .def("GetBoolProp", GetProp<ROMol, bool>,
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
