@@ -1,5 +1,5 @@
 rdkit_library(RDBoost Wrap.cpp
-              LINK_LIBRARIES ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+              LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 
 rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
