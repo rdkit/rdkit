@@ -21,6 +21,8 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <RDGeneral/LocaleSwitcher.h>
+#include <clocale>
 
 #include <string>
 #include <fstream>
@@ -593,7 +595,9 @@ void test7() {
   TEST_ASSERT(smi == smi2);
   delete m2;
   BOOST_LOG(rdInfoLog) << "SMI: " << smi << std::endl;
+  std::cout << "***************************************" << std::endl;
   molBlock = MolToMolBlock(*m);
+  std::cout << "***************************************" << std::endl;  
   BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2 = MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
@@ -4123,11 +4127,9 @@ void testGithub360() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-  RDLog::InitLogs();
-#if 1
+
+void RunTests() {
+  #if 1
   test1();
   test2();
   test4();
@@ -4202,5 +4204,91 @@ int main(int argc, char *argv[]) {
   testPDBResidues();
   testGithub337();
   testGithub360();
+}
+
+// must be in German Locale for test...
+void testLocaleSwitcher() {
+  float d = -1.0;
+  char buffer[1024];
+  sprintf(buffer, "%0.2f", d);
+  if (std::string(buffer) != "-1,00") {
+    BOOST_LOG(rdInfoLog) << " ---- no German locale support (skipping) ---- " << std::endl;
+    return;
+  }
+  
+  {
+    RDKit::Utils::LocaleSwitcher ls;
+    sprintf(buffer, "%0.2f", d);
+    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
+    // test locale switcher recursion
+    {
+      RDKit::Utils::LocaleSwitcher ls;
+      sprintf(buffer, "%0.2f", d);
+      CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
+    }
+    // should still be in the "C" variant
+    sprintf(buffer, "%0.2f", d);
+    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
+  }
+
+  // Should be back in German Locale
+  sprintf(buffer, "%0.2f", d);
+  CHECK_INVARIANT(std::string(buffer) == "-1,00", "Locale Switcher Fail");
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/thread.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
+namespace {
+void runblock() {
+  testLocaleSwitcher();
+}
+
+}
+void testMultiThreadedSwitcher() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching" << std::endl;
+
+  boost::thread_group tg;
+  unsigned int count = 100;
+  for (unsigned int i = 0; i < count; ++i) {
+    tg.add_thread(new boost::thread(runblock));
+  }
+  tg.join_all();
+  BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+}
+
+#else
+
+void testMultiThreadedSwitcher() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << " ---- Multithreaded tests disabled ---- " << std::endl;
+}
+#endif
+
+
+
+
+int main(int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  //  std::locale::global(std::locale("de_DE.UTF-8"));
+
+  RDLog::InitLogs();
+  BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
+  RunTests(); // run with C locale
+
+  
+  BOOST_LOG(rdInfoLog) << " ---- Running with German locale ----- " << std::endl;
+  setlocale(LC_ALL, "de_DE.UTF-8");
+  std::cout << setlocale (LC_ALL, NULL) << std::endl;
+  testLocaleSwitcher(); // must be the last test
+  testMultiThreadedSwitcher();
+  RunTests();
+
   return 0;
 }
