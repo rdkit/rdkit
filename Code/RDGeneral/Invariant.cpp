@@ -15,6 +15,7 @@
 #include <string>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include "versions.h"
 
 #ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS  // note: works only with
                                               // gcc-derived compilers
@@ -46,4 +47,35 @@ std::string Invariant::toString() const {
 
   return stringRep;
 }
+
+std::string Invariant::toUserString() const {
+  std::string line = boost::lexical_cast<std::string>(this->getLine());
+
+  std::string filename = this->getFile();
+  
+  std::size_t pos = filename.find("Code"); // strip out build directory info
+  if (pos != std::string::npos) {
+    filename = filename.substr(pos);
+  }
+  
+  std::string stringRep = this->prefix_d + "\n\t" + this->getMessage() +
+      "\n\tViolation occurred on line " + line + " in file " +
+      filename + "\n\tFailed Expression: " +
+      this->getExpression() + "\n\t" +
+      "RDKIT: " + RDKit::rdkitVersion + "\n\t" +
+      "BOOST: " + RDKit::boostVersion + "\n";
+
+
+#ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS
+  void *arr[10];
+  size_t sz;
+  sz = backtrace(arr, 10);
+  std::cerr << " STACK TRACE\n--------------\n" << std::endl;
+  backtrace_symbols_fd(arr, sz, 2);
+  std::cerr << "\n--------------\n" << std::endl;
+#endif
+
+  return stringRep;
+}
+
 };

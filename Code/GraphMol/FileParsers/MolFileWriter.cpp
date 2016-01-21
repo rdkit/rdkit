@@ -16,6 +16,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Ranking.h>
+#include <RDGeneral/LocaleSwitcher.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -985,6 +986,7 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
 std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
                           bool kekulize, bool forceV3000) {
   RDUNUSED_PARAM(includeStereo);
+  RDKit::Utils::LocaleSwitcher switcher;
   ROMol tromol(mol);
   RWMol &trwmol = static_cast<RWMol &>(tromol);
   // NOTE: kekulize the molecule before writing it out
