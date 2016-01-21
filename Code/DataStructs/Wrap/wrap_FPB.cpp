@@ -28,6 +28,18 @@ python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
   }
   return python::tuple(result);
 }
+python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
+                               double ca, double cb, double threshold) {
+  const boost::uint8_t *bv =
+      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  std::vector<std::pair<double, unsigned int> > nbrs =
+      self->getTverskyNeighbors(bv, ca, cb, threshold);
+  python::list result;
+  for (unsigned int i = 0; i < nbrs.size(); ++i) {
+    result.append(python::make_tuple(nbrs[i].first, nbrs[i].second));
+  }
+  return python::tuple(result);
+}
 
 python::object getBytesHelper(const FPBReader *self, unsigned int which) {
   boost::shared_array<boost::uint8_t> bv = self->getBytes(which);
@@ -46,6 +58,12 @@ double getTaniHelper(const FPBReader *self, unsigned int which,
 python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
   std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> v = (*self)[which];
   return python::make_tuple(v.first, v.second);
+}
+double getTverskyHelper(const FPBReader *self, unsigned int which,
+                        const std::string &bytes, double ca, double cb) {
+  const boost::uint8_t *bv =
+      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  return self->getTversky(which, bv, ca, cb);
 }
 }
 
@@ -78,6 +96,14 @@ struct FPB_wrapper {
         .def("GetTanimotoNeighbors", &taniNbrHelper,
              (python::arg("bv"), python::arg("threshold") = 0.7),
              "returns tanimoto similarities to and indices of all neighbors "
+             "above the specified threshold")
+        .def("GetTversky", &getTverskyHelper,
+             "return the Tverksy similarity of a particular fingerprint to "
+             "the bytes provided")
+        .def("GetTverskyNeighbors", &tverskyNbrHelper,
+             (python::arg("bv"), python::arg("ca"), python::arg("cb"),
+              python::arg("threshold") = 0.7),
+             "returns Tversky similarities to and indices of all neighbors "
              "above the specified threshold");
   }
 };

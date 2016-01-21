@@ -163,6 +163,17 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(feq(nbrs[1].first, 0.3703));
       TEST_ASSERT(nbrs[1].second == 1);
     }
+    {  // with a threshold, no screen
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTanimotoNeighbors(bytes, 0.30, false);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.3703));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
     {  // with a threshold
       boost::shared_array<boost::uint8_t> bytes = fps.getBytes(95);
       TEST_ASSERT(bytes);
@@ -453,6 +464,102 @@ void test8FPBReaderContains() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test9FPBReaderTversky() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing FPBReader Tversky "
+                       << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      TEST_ASSERT(feq(fps.getTversky(0, bytes, 1., 1.), 1.0));
+      TEST_ASSERT(feq(fps.getTversky(1, bytes, 1., 1.), 0.3703));
+    }
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
+      TEST_ASSERT(bytes);
+      TEST_ASSERT(feq(fps.getTversky(1, bytes, 1., 1.), 1.0));
+      TEST_ASSERT(feq(fps.getTversky(0, bytes, 1., 1.), 0.3703));
+      TEST_ASSERT(feq(fps.getTversky(2, bytes, 1, 1.), 1.0));
+      TEST_ASSERT(feq(fps.getTversky(5, bytes, 1., 1.), 0.2903));
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void test10FPBReaderTverskyNeighbors() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing FPBReader Tversky neighbors"
+      << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 1.);
+      TEST_ASSERT(nbrs.size() == 1);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+    }
+    {  // with a threshold
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 1., 0.3);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.3703));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
+    {  // with a threshold, asymmetric
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 0.5, 0.3);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.4255));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
+    {  // with a threshold,  no screen
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 1., 0.3, false);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.3703));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
+    {  // with a threshold, asymmetric, no screen
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps.getTverskyNeighbors(bytes, 1., 0.5, 0.3, false);
+      TEST_ASSERT(nbrs.size() == 5);
+      TEST_ASSERT(feq(nbrs[0].first, 1.));
+      TEST_ASSERT(nbrs[0].second == 0);
+      TEST_ASSERT(feq(nbrs[1].first, 0.4255));
+      TEST_ASSERT(nbrs[1].second == 1);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -467,5 +574,7 @@ int main() {
   test6LazyFPBReaderTanimotoNeighbors();
   test7BitsetDetails();
 
+  test9FPBReaderTversky();
+  test10FPBReaderTverskyNeighbors();
   return 0;
 }
