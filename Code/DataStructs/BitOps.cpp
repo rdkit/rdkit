@@ -787,7 +787,6 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 #define __builtin_popcount __popcnt
 #define __builtin_popcountl __popcnt64
 #endif
-#define USE_BUILTIN_POPCOUNT 1
 
 // the Bitmap Tanimoto and Dice similarity code is adapted
 // from Andrew Dalke's chem-fingerprints code
