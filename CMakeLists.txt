@@ -35,8 +35,8 @@ option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMAR
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
 
+option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
 if(NOT MSVC)
-  option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
   endif()

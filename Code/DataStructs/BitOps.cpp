@@ -785,8 +785,8 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 #ifdef _MSC_VER
 #include <intrin.h>
 #define __builtin_popcount __popcnt
+#define __builtin_popcountll __popcnt64
 #endif
-#define USE_BUILTIN_POPCOUNT 1
 
 // the Bitmap Tanimoto and Dice similarity code is adapted
 // from Andrew Dalke's chem-fingerprints code
@@ -834,14 +834,14 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #else
-  unsigned int eidx = nBytes / sizeof(unsigned int);
-  for (unsigned int i = 0; i < eidx; ++i) {
-    union_popcount +=
-        __builtin_popcount(((unsigned int*)afp)[i] | ((unsigned int*)bfp)[i]);
-    intersect_popcount +=
-        __builtin_popcount(((unsigned int*)afp)[i] & ((unsigned int*)bfp)[i]);
+  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
+  for (boost::uint64_t i = 0; i < eidx; ++i) {
+    union_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] |
+                                           ((boost::uint64_t*)bfp)[i]);
+    intersect_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] &
+                                               ((boost::uint64_t*)bfp)[i]);
   }
-  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
@@ -866,14 +866,14 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #else
-  unsigned int eidx = nBytes / sizeof(unsigned int);
-  for (unsigned int i = 0; i < eidx; ++i) {
-    a_popcount += __builtin_popcount(((unsigned int*)afp)[i]);
-    b_popcount += __builtin_popcount(((unsigned int*)bfp)[i]);
-    intersect_popcount +=
-        __builtin_popcount(((unsigned int*)afp)[i] & ((unsigned int*)bfp)[i]);
+  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
+  for (boost::uint64_t i = 0; i < eidx; ++i) {
+    a_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i]);
+    b_popcount += __builtin_popcountll(((boost::uint64_t*)bfp)[i]);
+    intersect_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] &
+                                               ((boost::uint64_t*)bfp)[i]);
   }
-  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
     a_popcount += byte_popcounts[afp[i]];
     b_popcount += byte_popcounts[bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
@@ -899,14 +899,14 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
     bcount += byte_popcounts[bfp[i]];
   }
 #else
-  unsigned int eidx = nBytes / sizeof(unsigned int);
-  for (unsigned int i = 0; i < eidx; ++i) {
-    intersect_popcount +=
-        __builtin_popcount(((unsigned int*)afp)[i] & ((unsigned int*)bfp)[i]);
-    acount += __builtin_popcount(((unsigned int*)afp)[i]);
-    bcount += __builtin_popcount(((unsigned int*)bfp)[i]);
+  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
+  for (boost::uint64_t i = 0; i < eidx; ++i) {
+    intersect_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] &
+                                               ((boost::uint64_t*)bfp)[i]);
+    acount += __builtin_popcountll(((boost::uint64_t*)afp)[i]);
+    bcount += __builtin_popcountll(((boost::uint64_t*)bfp)[i]);
   }
-  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
     acount += byte_popcounts[afp[i]];
     bcount += byte_popcounts[bfp[i]];
