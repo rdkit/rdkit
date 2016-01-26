@@ -14,6 +14,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/utility.hpp>
+#include <boost/type_traits.hpp>
 #include <vector>
 #include <list>
 #include <iostream>
