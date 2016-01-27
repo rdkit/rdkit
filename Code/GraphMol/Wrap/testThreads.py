@@ -1,4 +1,6 @@
+import sys
 from rdkit import Chem
+from rdkit import six
 import threading
 import multiprocessing
 
@@ -46,36 +48,61 @@ for i in range(0, nthreads):
 for t in threads:
     t.join()
 
+def LogError():
+    i=0
+    while 1:
+        if i==10: break
+        i+=1
+        Chem.LogErrorMsg("My dog has fleas")
+
+def LogWarning():
+    i=0
+    while 1:
+        if i==10: break
+        i+=1
+        Chem.LogWarningMsg("All good boys to fine")
+    
 # this spews a ton of logging info...
 #  that is all intermingled...
-nthreads = int(multiprocessing.cpu_count())
-threads = []
-for i in range(0, nthreads):
-    for func in funcs:
-        t = threading.Thread(target=Chem.LogThreadTest)
+if 0:
+    nthreads = int(multiprocessing.cpu_count())
+    threads = []
+    for i in range(0, nthreads):
+        for func in funcs:
+            if i%2 == 0:
+                t = threading.Thread(target=LogError)
+            else:
+                t = threading.Thread(target=LogWarning)
+            t.start()
+            threads.append(t)
+        t = threading.Thread(target=LogWarning)
         t.start()
         threads.append(t)
-    t = threading.Thread(target=Chem.LogThreadTest)
-    t.start()
-    threads.append(t)
-    
-for t in threads:
-    t.join()
+
+    for t in threads:
+        t.join()
 
 Chem.WrapLogs()
+
+err = sys.stderr
+sys.stderr = six.StringIO()
+
 # now the errors should be synchronized...
 nthreads = int(multiprocessing.cpu_count())
 threads = []
 for i in range(0, nthreads):
     for func in funcs:
-        t = threading.Thread(target=Chem.LogThreadTest)
+        if i%2 == 0:
+            t = threading.Thread(target=LogError)
+        else:
+            t = threading.Thread(target=LogWarning)
         t.start()
         threads.append(t)
-    t = threading.Thread(target=Chem.LogThreadTest)
+    t = threading.Thread(target=LogWarning)
     t.start()
     threads.append(t)
     
 for t in threads:
     t.join()
-
+print (sys.stderr.getvalue())
     

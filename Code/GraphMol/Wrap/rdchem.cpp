@@ -93,24 +93,14 @@ struct PySysErrWrite : std::ostream, std::streambuf
 };
 
 void RDLogError(const std::string &msg) {
+  NOGIL gil;
   BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
 }
 
 void RDLogWarning(const std::string &msg) {
+  NOGIL gil;
   BOOST_LOG(rdWarningLog) << msg.c_str() << std::endl;
 }
-
-#ifdef RDK_TEST_MULTITHREADED
-// As much as I hate adding test code to the python module
-//  we need to expose this to python somehow with the GIL
-//   turned off.
-void LogThreadTest() {
-  NOGIL gil;
-  for(int i=0;i<5;++i)
-    BOOST_LOG(rdWarningLog) <<
-        "Test [" << i << "]: the quick brown fox jumps over the lazy dog\n";
-}
-#endif
 
 void WrapLogs() {
   static PySysErrWrite debug  ("RDKit DEBUG: ");
@@ -145,10 +135,6 @@ BOOST_PYTHON_MODULE(rdchem) {
   python::def("LogErrorMsg", RDLogError,
               "Log a warning message to the RDKit error logs");
 
-
-#ifdef RDK_TEST_MULTITHREADED
-  python::def("LogThreadTest", LogThreadTest);
-#endif  
 
   //*********************************************
   //
