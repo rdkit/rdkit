@@ -96,14 +96,6 @@ void RDLogError(const std::string &msg) {
   BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
 }
 
-void RDLogInfo(const std::string &msg) {
-  BOOST_LOG(rdInfoLog) << msg.c_str() << std::endl;
-}
-
-void RDLogDebug(const std::string &msg) {
-  BOOST_LOG(rdDebugLog) << msg.c_str() << std::endl;
-}
-
 void RDLogWarning(const std::string &msg) {
   BOOST_LOG(rdWarningLog) << msg.c_str() << std::endl;
 }
@@ -150,12 +142,9 @@ BOOST_PYTHON_MODULE(rdchem) {
               "SysStdErr");
   python::def("LogWarningMsg", RDLogWarning,
               "Log a warning message to the RDKit warning logs");
-  python::def("LogInfoMsg", RDLogInfo,
-              "Log a warning message to the RDKit info logs");
   python::def("LogErrorMsg", RDLogError,
               "Log a warning message to the RDKit error logs");
-  python::def("LogDebugMsg", RDLogDebug,
-              "Log a warning message to the RDKit debug logs");
+
 
 #ifdef RDK_TEST_MULTITHREADED
   python::def("LogThreadTest", LogThreadTest);

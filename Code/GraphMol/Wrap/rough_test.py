@@ -3459,9 +3459,7 @@ CAS<~>
     err = sys.stderr
     try:
       loggers = [("RDKit ERROR",   "1", Chem.LogErrorMsg),
-                 ("RDKit INFO",    "2", Chem.LogInfoMsg),
-                 ("RDKit DEBUG",   "3", Chem.LogDebugMsg),
-                 ("RDKit WARNING", "4", Chem.LogWarningMsg)]
+                 ("RDKit WARNING", "2", Chem.LogWarningMsg)]
       for msg, v, log in loggers:
         sys.stderr = six.StringIO()
         log(v)
