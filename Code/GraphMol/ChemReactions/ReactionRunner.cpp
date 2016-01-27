@@ -181,7 +181,7 @@ void generateReactantCombinations(
   recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0, tmp);
 }  // end of generateReactantCombinations()
 
-RWMOL_SPTR initProduct(const ROMOL_SPTR prodTemplateSptr) {
+RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   const ROMol *prodTemplate = prodTemplateSptr.get();
   RWMol *res = new RWMol();
 
@@ -269,7 +269,7 @@ RWMOL_SPTR initProduct(const ROMOL_SPTR prodTemplateSptr) {
     }
   }
   return RWMOL_SPTR(res);
-}  // end of initProduct()
+}  // end of convertTemplateToMol()
 
 struct ReactantProductAtomMapping {
   ReactantProductAtomMapping(unsigned lenghtBitSet) {
@@ -809,7 +809,7 @@ MOL_SPTR_VECT generateOneProductSet(
   for (MOL_SPTR_VECT::const_iterator pTemplIt = rxn.beginProductTemplates();
        pTemplIt != rxn.endProductTemplates(); ++pTemplIt) {
     // copy product template and its properties to a new product RWMol
-    RWMOL_SPTR product = initProduct(*pTemplIt);
+    RWMOL_SPTR product = convertTemplateToMol(*pTemplIt);
     Conformer *conf = 0;
     if (doConfs) {
       conf = new Conformer();
