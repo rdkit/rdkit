@@ -53,14 +53,14 @@ def LogError():
     while 1:
         if i==10: break
         i+=1
-        Chem.LogErrorMsg("My dog has fleas")
+        Chem.LogErrorMsg(str(i) + ":: My dog has fleas")
 
 def LogWarning():
     i=0
     while 1:
         if i==10: break
         i+=1
-        Chem.LogWarningMsg("All good boys to fine")
+        Chem.LogWarningMsg(str(i) + ":: All good boys to fine")
     
 # this spews a ton of logging info...
 #  that is all intermingled...
@@ -85,7 +85,7 @@ if 0:
 Chem.WrapLogs()
 
 err = sys.stderr
-sys.stderr = six.StringIO()
+stringio = sys.stderr = six.StringIO()
 
 # now the errors should be synchronized...
 nthreads = int(multiprocessing.cpu_count())
@@ -104,5 +104,13 @@ for i in range(0, nthreads):
     
 for t in threads:
     t.join()
-print (sys.stderr.getvalue())
-    
+sys.stderr = err
+
+stringio = sys.stderr = six.StringIO()
+LogWarning()
+LogError()
+sys.stderr = err
+assert "WARNING" in stringio.getvalue()
+assert "ERROR" in stringio.getvalue()
+assert stringio.getvalue().count("WARNING") == 10
+assert stringio.getvalue().count("ERROR") == 10
