@@ -17,9 +17,6 @@
 #include <iostream>
 namespace boost {
 namespace logging {
-struct rdLoggerFunctor {
-  virtual void Write(std::ostream &);
-};
 
 typedef boost::iostreams::tee_device<std::ostream, std::ostream> RDTee;
 typedef boost::iostreams::stream<RDTee> RDTeeStream;
