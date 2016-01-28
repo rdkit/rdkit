@@ -1,4 +1,6 @@
+import sys
 from rdkit import Chem
+from rdkit import six
 import threading
 import multiprocessing
 
@@ -34,12 +36,81 @@ for func in funcs:
     
 
 nthreads = int(multiprocessing.cpu_count() * 100 / 4) # 100 threads per cpu
+threads = []
 for i in range(0, nthreads):
     for func in funcs:
         t = threading.Thread(target=runner, args=(func,core_mol))
         t.start()
+        threads.append(t)
     t = threading.Thread(target=runner, args=("ToBinary",None))        
     t.start()
+    threads.append(t)
+for t in threads:
+    t.join()
 
+def LogError():
+    i=0
+    while 1:
+        if i==10: break
+        i+=1
+        Chem.LogErrorMsg(str(i) + ":: My dog has fleas")
 
+def LogWarning():
+    i=0
+    while 1:
+        if i==10: break
+        i+=1
+        Chem.LogWarningMsg(str(i) + ":: All good boys to fine")
+    
+# this spews a ton of logging info...
+#  that is all intermingled...
+if 0:
+    nthreads = int(multiprocessing.cpu_count())
+    threads = []
+    for i in range(0, nthreads):
+        for func in funcs:
+            if i%2 == 0:
+                t = threading.Thread(target=LogError)
+            else:
+                t = threading.Thread(target=LogWarning)
+            t.start()
+            threads.append(t)
+        t = threading.Thread(target=LogWarning)
+        t.start()
+        threads.append(t)
 
+    for t in threads:
+        t.join()
+
+Chem.WrapLogs()
+
+err = sys.stderr
+stringio = sys.stderr = six.StringIO()
+
+# now the errors should be synchronized...
+nthreads = int(multiprocessing.cpu_count())
+threads = []
+for i in range(0, nthreads):
+    for func in funcs:
+        if i%2 == 0:
+            t = threading.Thread(target=LogError)
+        else:
+            t = threading.Thread(target=LogWarning)
+        t.start()
+        threads.append(t)
+    t = threading.Thread(target=LogWarning)
+    t.start()
+    threads.append(t)
+    
+for t in threads:
+    t.join()
+sys.stderr = err
+
+stringio = sys.stderr = six.StringIO()
+LogWarning()
+LogError()
+sys.stderr = err
+assert "WARNING" in stringio.getvalue()
+assert "ERROR" in stringio.getvalue()
+assert stringio.getvalue().count("WARNING") == 10
+assert stringio.getvalue().count("ERROR") == 10

@@ -3452,6 +3452,27 @@ CAS<~>
       self.assertTrue("Failed Expression: 3 <= 0" in details)
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
+
+  # this test should probably always be last since it wraps
+  #  the logging stream
+  def testLogging(self):
+    err = sys.stderr
+    try:
+      loggers = [("RDKit ERROR",   "1", Chem.LogErrorMsg),
+                 ("RDKit WARNING", "2", Chem.LogWarningMsg)]
+      for msg, v, log in loggers:
+        sys.stderr = six.StringIO()
+        log(v)
+        self.assertEquals(sys.stderr.getvalue(), "")
+
+      Chem.WrapLogs()
+      for msg, v, log in loggers:
+        sys.stderr = six.StringIO()
+        log(v)
+        s = sys.stderr.getvalue()
+        self.assertTrue(msg in s)
+    finally:
+      sys.stderr = err
     
 if __name__ == '__main__':
   unittest.main()

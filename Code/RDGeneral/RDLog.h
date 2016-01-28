@@ -12,15 +12,33 @@
 #define _RDLOG_H_29JUNE2005_
 
 #if 1
+#include <boost/iostreams/tee.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <iostream>
 namespace boost {
 namespace logging {
+
+typedef boost::iostreams::tee_device<std::ostream, std::ostream> RDTee;
+typedef boost::iostreams::stream<RDTee> RDTeeStream;
+ 
 class rdLogger {
  public:
-  rdLogger(std::ostream *dest, bool owner = false)
-      : dp_dest(dest), df_owner(owner), df_enabled(true){};
   std::ostream *dp_dest;
   bool df_owner, df_enabled;
+
+  RDTee *tee;
+  RDTeeStream *teestream;
+  
+  rdLogger(std::ostream *dest, bool owner = false)
+      : dp_dest(dest), df_owner(owner), df_enabled(true),
+      tee(0), teestream(0){};
+
+  void AddTee(std::ostream &stream) {
+    if (dp_dest) {
+      tee = new RDTee(*dp_dest, stream);
+      teestream = new RDTeeStream(*tee);
+    }
+  }
   ~rdLogger() {
     if (dp_dest) {
       dp_dest->flush();
@@ -28,6 +46,8 @@ class rdLogger {
         delete dp_dest;
       }
     }
+    delete teestream;
+    delete tee;
   }
 };
 void enable_logs(const char *arg);
@@ -43,7 +63,7 @@ std::ostream &toStream(std::ostream &);
   if ((!__arg__) || (!__arg__->dp_dest) || !(__arg__->df_enabled)) \
     ;                                                              \
   else                                                             \
-  RDLog::toStream(*(__arg__->dp_dest))
+    RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream) : *(__arg__->dp_dest))
 
 extern boost::logging::rdLogger *rdAppLog;
 extern boost::logging::rdLogger *rdDebugLog;
