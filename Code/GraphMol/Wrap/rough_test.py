@@ -3447,7 +3447,10 @@ CAS<~>
     try:
       m.GetAtomWithIdx(3)
     except RuntimeError as e:
+      import platform
       details = str(e)
+      if platform.system()=='Windows':
+        details = details.replace('\\','/')
       self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
       self.assertTrue("Failed Expression: 3 <= 0" in details)
       self.assertTrue("RDKIT:" in details)
