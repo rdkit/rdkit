@@ -107,11 +107,13 @@ void WrapLogs() {
   static PySysErrWrite error  ("RDKit ERROR: ");
   static PySysErrWrite info   ("RDKit INFO: ");
   static PySysErrWrite warning("RDKit WARNING: ");
-  
-  rdDebugLog->AddTee(debug);
-  rdInfoLog->AddTee(info);
-  rdErrorLog->AddTee(error);
-  rdWarningLog->AddTee(warning);
+  if( rdDebugLog == NULL || rdInfoLog == NULL || rdErrorLog == NULL || rdWarningLog == NULL ){
+    RDLog::InitLogs();
+  }
+  if( rdDebugLog != NULL ) rdDebugLog->AddTee(debug);
+  if( rdInfoLog != NULL ) rdInfoLog->AddTee(info);
+  if( rdErrorLog != NULL ) rdErrorLog->AddTee(error);
+  if( rdWarningLog != NULL ) rdWarningLog->AddTee(warning);
 }
 
 BOOST_PYTHON_MODULE(rdchem) {
