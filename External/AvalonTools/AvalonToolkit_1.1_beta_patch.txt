@@ -1,0 +1,165 @@
+*** ./SourceDistribution/common/reaccsio.c.orig	2016-01-31 19:46:03.709178428 +0000
+--- ./SourceDistribution/common/reaccsio.c	2016-01-31 19:46:32.292137410 +0000
+***************
+*** 1397,1403 ****
+     char *tempfile;
+     int idir;
+     char * MolStr;
+- 
+     tempfile = NULL;
+     if ((fp = tmpfile()) == NULL)
+     {
+--- 1397,1402 ----
+***************
+*** 1411,1417 ****
+              {
+                 tempfile = tempnam(tempdir, (const char *)NULL);
+                 fp = fopen(tempfile, "wb+");
+!                MyFree((char *)tempdir);
+                 if (IsNULL(fp))
+                 {
+                     MyFree((char *)tempfile);
+--- 1410,1416 ----
+              {
+                 tempfile = tempnam(tempdir, (const char *)NULL);
+                 fp = fopen(tempfile, "wb+");
+!                //MyFree((char *)tempdir);
+                 if (IsNULL(fp))
+                 {
+                     MyFree((char *)tempfile);
+***************
+*** 1430,1436 ****
+     }
+  
+     PrintREACCSMolecule(fp, mp,"");
+- 
+     rewind(fp);
+  
+     MolStr = ReadFile(fp);
+--- 1429,1434 ----
+***************
+*** 1440,1446 ****
+        remove(tempfile);
+        MyFree((char *)tempfile);
+     }
+! 
+     if (MolStr == NULL)
+        AddMsgToList("PrintREACCSMolecule did return NULL");
+  
+--- 1438,1444 ----
+        remove(tempfile);
+        MyFree((char *)tempfile);
+     }
+!    fprintf(stderr,"  returning\n");
+     if (MolStr == NULL)
+        AddMsgToList("PrintREACCSMolecule did return NULL");
+  
+*** SourceDistribution/common/smi2mol.c.orig	2016-01-31 19:46:16.801159640 +0000
+--- SourceDistribution/common/smi2mol.c	2016-01-31 19:46:27.409144417 +0000
+***************
+*** 933,939 ****
+                                  mp->bond_array[nbp[istart].bonds[j]].color,
+                                  expect_smarts);
+                    closures = StrAppend(closures, NULL, tmp); /* output loop indicator */
+! fprintf(stderr, "2: opening branch '%s'\n", tmp);
+                    open_branches[i] = nbp[istart].atoms[j];   /* save label */
+                    open_neighbours[i] = istart;               /* save from atom */
+                    break;
+--- 933,939 ----
+                                  mp->bond_array[nbp[istart].bonds[j]].color,
+                                  expect_smarts);
+                    closures = StrAppend(closures, NULL, tmp); /* output loop indicator */
+!                /* fprintf(stderr, "2: opening branch '%s'\n", tmp); */
+                    open_branches[i] = nbp[istart].atoms[j];   /* save label */
+                    open_neighbours[i] = istart;               /* save from atom */
+                    break;
+***************
+*** 1009,1015 ****
+              else
+                 sprintf(tmp, "%d", i+1);
+              closures = StrAppend(closures, NULL, tmp);
+! fprintf(stderr, "closing branch '%s'\n", tmp);
+              open_branches[i] = -2;
+              open_neighbours[i] = -1;
+           }
+--- 1009,1015 ----
+              else
+                 sprintf(tmp, "%d", i+1);
+              closures = StrAppend(closures, NULL, tmp);
+!          /* fprintf(stderr, "closing branch '%s'\n", tmp); */
+              open_branches[i] = -2;
+              open_neighbours[i] = -1;
+           }
+***************
+*** 1540,1553 ****
+              result = StrAppend(result, NULL, ".{");
+              result = StrAppend(result, NULL, mp->atom_array[ibranch].atext);
+              result = StrAppend(result, NULL, "}");
+! fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
+           }
+           else
+           {
+              result = StrAppend(result, NULL, "{");
+              result = StrAppend(result, NULL, mp->atom_array[ibranch].atext);
+              result = StrAppend(result, NULL, "}");
+! fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
+           }
+           mp->atom_array[ibranch].color = ++nsmi_atoms;
+           // now we trace the shortcut string
+--- 1540,1553 ----
+              result = StrAppend(result, NULL, ".{");
+              result = StrAppend(result, NULL, mp->atom_array[ibranch].atext);
+              result = StrAppend(result, NULL, "}");
+!          /* fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1); */
+           }
+           else
+           {
+              result = StrAppend(result, NULL, "{");
+              result = StrAppend(result, NULL, mp->atom_array[ibranch].atext);
+              result = StrAppend(result, NULL, "}");
+!          /* fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1); */
+           }
+           mp->atom_array[ibranch].color = ++nsmi_atoms;
+           // now we trace the shortcut string
+***************
+*** 1571,1577 ****
+                          sprintf(num_buf, "%%%d", i+1);
+                       else
+                          sprintf(num_buf, "%d", i+1);
+! fprintf(stderr, "1: opening branch '%s'\n", num_buf);
+                       closures = BndAppend(closures, NULL,
+                                  mp->bond_array[nbp[ibranch].bonds[j]].bond_type,
+                                  mp->bond_array[nbp[ibranch].bonds[j]].atoms[0] == ibranch+1,
+--- 1571,1577 ----
+                          sprintf(num_buf, "%%%d", i+1);
+                       else
+                          sprintf(num_buf, "%d", i+1);
+!                   /* fprintf(stderr, "1: opening branch '%s'\n", num_buf); */
+                       closures = BndAppend(closures, NULL,
+                                  mp->bond_array[nbp[ibranch].bonds[j]].bond_type,
+                                  mp->bond_array[nbp[ibranch].bonds[j]].atoms[0] == ibranch+1,
+***************
+*** 1589,1599 ****
+               result = StrAppend(result, NULL, "{");
+               result = StrAppend(result, NULL, mp->atom_array[ibranch].atext);
+               result = StrAppend(result, NULL, "}");
+! fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
+               mp->atom_array[ibranch].color = ++nsmi_atoms;
+           }
+        }
+! fprintf(stderr, "\n");
+     }
+     // now, do regular atom processing
+     for (;;)
+--- 1589,1599 ----
+               result = StrAppend(result, NULL, "{");
+               result = StrAppend(result, NULL, mp->atom_array[ibranch].atext);
+               result = StrAppend(result, NULL, "}");
+!           /* fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1); */
+               mp->atom_array[ibranch].color = ++nsmi_atoms;
+           }
+        }
+!    /* fprintf(stderr, "\n"); */
+     }
+     // now, do regular atom processing
+     for (;;)
