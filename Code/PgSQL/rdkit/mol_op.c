@@ -35,8 +35,8 @@
 /***************** Mol operations ***********************/
 
 #define MOLCMPFUNC( type, action, ret )                                 \
+  PGDLLEXPORT Datum           mol_##type(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(mol_##type);                                      \
-  Datum           mol_##type(PG_FUNCTION_ARGS);                         \
   Datum                                                                 \
   mol_##type(PG_FUNCTION_ARGS)                                          \
   {                                                                     \
@@ -67,32 +67,32 @@ MOLCMPFUNC(gt, >, BOOL);
 MOLCMPFUNC(ne, !=, BOOL);
 MOLCMPFUNC(cmp, +, INT32);
 
+PGDLLEXPORT Datum           is_valid_smiles(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(is_valid_smiles);
-Datum           is_valid_smiles(PG_FUNCTION_ARGS);
 Datum
 is_valid_smiles(PG_FUNCTION_ARGS) {
   char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmiles(data));
 }
 
+PGDLLEXPORT Datum           is_valid_smarts(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(is_valid_smarts);
-Datum           is_valid_smarts(PG_FUNCTION_ARGS);
 Datum
 is_valid_smarts(PG_FUNCTION_ARGS) {
   char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmarts(data));
 }
 
+PGDLLEXPORT Datum           is_valid_ctab(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(is_valid_ctab);
-Datum           is_valid_ctab(PG_FUNCTION_ARGS);
 Datum
 is_valid_ctab(PG_FUNCTION_ARGS) {
   char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidCTAB(data));
 }
 
+PGDLLEXPORT Datum           is_valid_mol_pkl(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(is_valid_mol_pkl);
-Datum           is_valid_mol_pkl(PG_FUNCTION_ARGS);
 Datum
 is_valid_mol_pkl(PG_FUNCTION_ARGS) {
   bytea    *data = PG_GETARG_BYTEA_P(0);
@@ -103,8 +103,8 @@ is_valid_mol_pkl(PG_FUNCTION_ARGS) {
 }
 
 
+PGDLLEXPORT Datum           mol_substruct(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_substruct);
-Datum           mol_substruct(PG_FUNCTION_ARGS);
 Datum
 mol_substruct(PG_FUNCTION_ARGS) {
   CROMol  i,
@@ -124,8 +124,8 @@ mol_substruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 
+PGDLLEXPORT Datum           mol_rsubstruct(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_rsubstruct);
-Datum           mol_rsubstruct(PG_FUNCTION_ARGS);
 Datum
 mol_rsubstruct(PG_FUNCTION_ARGS) {
   CROMol  i,
@@ -145,8 +145,8 @@ mol_rsubstruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(MolSubstruct(a, i));
 }
 
+PGDLLEXPORT Datum           mol_substruct_count(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_substruct_count);
-Datum           mol_substruct_count(PG_FUNCTION_ARGS);
 Datum
 mol_substruct_count(PG_FUNCTION_ARGS) {
   CROMol  i,
@@ -169,8 +169,8 @@ mol_substruct_count(PG_FUNCTION_ARGS) {
 
 
 #define MOLDESCR( name, func, ret )                                 \
+  PGDLLEXPORT Datum           mol_##name(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(mol_##name);                                      \
-  Datum           mol_##name(PG_FUNCTION_ARGS);                         \
   Datum                                                                 \
   mol_##name(PG_FUNCTION_ARGS){                                         \
   CROMol        i;                                                      \
@@ -182,9 +182,9 @@ mol_substruct_count(PG_FUNCTION_ARGS) {
   PG_RETURN_##ret( func(i) );                                           \
 }
   
-MOLDESCR(amw,MolAMW,FLOAT4)
-MOLDESCR(logp,MolLogP,FLOAT4)
-MOLDESCR(tpsa,MolTPSA,FLOAT4)
+MOLDESCR(amw,(float)MolAMW,FLOAT4)
+MOLDESCR(logp,(float)MolLogP,FLOAT4)
+MOLDESCR(tpsa,(float)MolTPSA,FLOAT4)
 MOLDESCR(hba,MolHBA,INT32)
 MOLDESCR(hbd,MolHBD,INT32)
 MOLDESCR(numatoms,MolNumAtoms,INT32)
@@ -203,27 +203,27 @@ MOLDESCR(numaliphaticcarbocycles,MolNumAliphaticCarbocycles,INT32)
 MOLDESCR(numsaturatedcarbocycles,MolNumSaturatedCarbocycles,INT32)
 MOLDESCR(numheterocycles,MolNumHeterocycles,INT32)
 
-MOLDESCR(fractioncsp3,MolFractionCSP3,FLOAT4)
-MOLDESCR(chi0n,MolChi0n,FLOAT4)
-MOLDESCR(chi1n,MolChi1n,FLOAT4)
-MOLDESCR(chi2n,MolChi2n,FLOAT4)
-MOLDESCR(chi3n,MolChi3n,FLOAT4)
-MOLDESCR(chi4n,MolChi4n,FLOAT4)
-MOLDESCR(chi0v,MolChi0v,FLOAT4)
-MOLDESCR(chi1v,MolChi1v,FLOAT4)
-MOLDESCR(chi2v,MolChi2v,FLOAT4)
-MOLDESCR(chi3v,MolChi3v,FLOAT4)
-MOLDESCR(chi4v,MolChi4v,FLOAT4)
-MOLDESCR(kappa1,MolKappa1,FLOAT4)
-MOLDESCR(kappa2,MolKappa2,FLOAT4)
-MOLDESCR(kappa3,MolKappa3,FLOAT4)
+MOLDESCR(fractioncsp3,(float)MolFractionCSP3,FLOAT4)
+MOLDESCR(chi0n,(float)MolChi0n,FLOAT4)
+MOLDESCR(chi1n,(float)MolChi1n,FLOAT4)
+MOLDESCR(chi2n,(float)MolChi2n,FLOAT4)
+MOLDESCR(chi3n,(float)MolChi3n,FLOAT4)
+MOLDESCR(chi4n,(float)MolChi4n,FLOAT4)
+MOLDESCR(chi0v,(float)MolChi0v,FLOAT4)
+MOLDESCR(chi1v,(float)MolChi1v,FLOAT4)
+MOLDESCR(chi2v,(float)MolChi2v,FLOAT4)
+MOLDESCR(chi3v,(float)MolChi3v,FLOAT4)
+MOLDESCR(chi4v,(float)MolChi4v,FLOAT4)
+MOLDESCR(kappa1,(float)MolKappa1,FLOAT4)
+MOLDESCR(kappa2,(float)MolKappa2,FLOAT4)
+MOLDESCR(kappa3,(float)MolKappa3,FLOAT4)
 
 MOLDESCR(numspiroatoms,MolNumSpiroAtoms,INT32)
 MOLDESCR(numbridgeheadatoms,MolNumBridgeheadAtoms,INT32)
 
 
+PGDLLEXPORT Datum           mol_formula(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_formula);
-Datum           mol_formula(PG_FUNCTION_ARGS);
 Datum
 mol_formula(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -244,8 +244,8 @@ mol_formula(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
 
+PGDLLEXPORT Datum           mol_inchi(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_inchi);
-Datum           mol_inchi(PG_FUNCTION_ARGS);
 Datum
 mol_inchi(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -262,8 +262,8 @@ mol_inchi(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING( res );
 }
 
+PGDLLEXPORT Datum           mol_inchikey(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_inchikey);
-Datum           mol_inchikey(PG_FUNCTION_ARGS);
 Datum
 mol_inchikey(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -279,8 +279,8 @@ mol_inchikey(PG_FUNCTION_ARGS) {
   free((void *)str);
   PG_RETURN_CSTRING( res );
 }
+PGDLLEXPORT Datum           mol_murckoscaffold(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_murckoscaffold);
-Datum           mol_murckoscaffold(PG_FUNCTION_ARGS);
 Datum
 mol_murckoscaffold(PG_FUNCTION_ARGS) {
   CROMol        mol;
@@ -297,8 +297,8 @@ mol_murckoscaffold(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);           
 }
 
+PGDLLEXPORT Datum           mol_hash(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_hash);
-Datum           mol_hash(PG_FUNCTION_ARGS);
 Datum
 mol_hash(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -317,8 +317,8 @@ mol_hash(PG_FUNCTION_ARGS) {
 
 /*** fmcs ***/
 
+PGDLLEXPORT Datum           fmcs_smiles(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_smiles);
-Datum           fmcs_smiles(PG_FUNCTION_ARGS);
 Datum
 fmcs_smiles(PG_FUNCTION_ARGS) {
   char    *str = PG_GETARG_CSTRING(0);
@@ -332,8 +332,8 @@ fmcs_smiles(PG_FUNCTION_ARGS) {
 }
 
 
+PGDLLEXPORT Datum           fmcs_smiles_transition(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_smiles_transition);
-Datum           fmcs_smiles_transition(PG_FUNCTION_ARGS);
 Datum
 fmcs_smiles_transition(PG_FUNCTION_ARGS) {
 
@@ -358,13 +358,15 @@ fmcs_smiles_transition(PG_FUNCTION_ARGS) {
 //elog(WARNING, VARDATA(ts));
         PG_RETURN_TEXT_P(ts);
     }
+    // we'll never get here; this is just to silence warnings
+    PG_RETURN_NULL();
 }
 //------------------------
 
 char* Mol2Smiles(CROMol data);
 
+PGDLLEXPORT Datum           fmcs_mol2s_transition(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_mol2s_transition);
-Datum           fmcs_mol2s_transition(PG_FUNCTION_ARGS);
 Datum
 fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
 //elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
@@ -376,7 +378,7 @@ fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     }
     if(PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // first call
 ///elog(WARNING, "fmcs_mol2s_transition() called first time");
-        CROMol mol = PG_GETARG_DATUM(1);
+        CROMol mol = (CROMol)PG_GETARG_DATUM(1);
         int    len;
 char t[256];
 sprintf(t,"mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
@@ -406,7 +408,7 @@ elog(WARNING, t);
 //elog(WARNING, VARDATA(t0));
 
         //mol_to_smiles():
-        CROMol mol = PG_GETARG_DATUM(1);
+        CROMol mol = (CROMol)PG_GETARG_DATUM(1);
         int    len;
 char t[256];
 sprintf(t,"mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
@@ -444,8 +446,8 @@ elog(WARNING, t);
 
 
 // fmcs_mol:
+PGDLLEXPORT Datum           fmcs_mols(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_mols);
-Datum           fmcs_mols(PG_FUNCTION_ARGS);
 Datum
 fmcs_mols(PG_FUNCTION_ARGS) {
 //elog(WARNING, "fmcs_mols() called. FINALFUNC");
@@ -463,8 +465,8 @@ fmcs_mols(PG_FUNCTION_ARGS) {
   PG_RETURN_TEXT_P(ts);
 }
 
+PGDLLEXPORT Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_mol_transition);
-Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
 Datum
 fmcs_mol_transition(PG_FUNCTION_ARGS) {
 //elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
@@ -476,7 +478,7 @@ fmcs_mol_transition(PG_FUNCTION_ARGS) {
     if(PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // first call
 //elog(WARNING, "fmcs_mol_transition() called first time");
         void* lst = NULL;
-        CROMol mol = PG_GETARG_DATUM(1);
+        CROMol mol = (CROMol)PG_GETARG_DATUM(1);
         lst = addMol2list(NULL, mol);
 //char t[256];
 //sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
@@ -487,13 +489,15 @@ fmcs_mol_transition(PG_FUNCTION_ARGS) {
     else 
     if (!PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // Called in aggregate context...
 //elog(WARNING, "fmcs_mol_transition(): next iteration in the same run");
-        CROMol mol = PG_GETARG_DATUM(1);
+        CROMol mol = (CROMol)PG_GETARG_DATUM(1);
         void* lst = addMol2list(PG_GETARG_POINTER(0), mol);
 //char t[256];
 //sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
 //elog(WARNING, t);
         PG_RETURN_POINTER(lst);
     }
+    // we'll never get here; this is just to silence warnings
+    PG_RETURN_NULL();
 }
 //------------------------
 
@@ -502,8 +506,8 @@ fmcs_mol_transition(PG_FUNCTION_ARGS) {
 //==================================
 /*
 #include <utils/array.h>
+PGDLLEXPORT Datum           fmcs_mol(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_mol);
-Datum           fmcs_mol(PG_FUNCTION_ARGS);
 Datum
 fmcs_mol(PG_FUNCTION_ARGS) {
 elog(WARNING, "fmcs_mol(): FINAL function in the same run.");
@@ -547,8 +551,8 @@ elog(WARNING, "fmcs_mol(): call findMCS(...).");
   PG_RETURN_TEXT_P(tmcs);
 }
 
+PGDLLEXPORT Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_mol_transition);
-Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
 Datum
 fmcs_mol_transition(PG_FUNCTION_ARGS) {
     if ( ! AggCheckCallContext(fcinfo, NULL)){
@@ -581,8 +585,8 @@ elog(WARNING, "fmcs_mol_transition(): next iteration in the same run. Append CRO
 
 
 /*
+PGDLLEXPORT Datum           fmcs_transition(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(fmcs_transition);
-Datum           fmcs_transition(PG_FUNCTION_ARGS);
 Datum
 fmcs_transition(PG_FUNCTION_ARGS) {
   text    *tsmiles = PG_GETARG_TEXT(1);

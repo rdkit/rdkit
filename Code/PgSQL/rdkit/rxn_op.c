@@ -32,6 +32,8 @@
 #include "rdkit.h"
 #include "fmgr.h"
 
+extern int ReactionSubstructFP();
+
 static int
 bfpcmp(BitmapFingerPrint *a, BitmapFingerPrint *b) {
   int res;
@@ -48,8 +50,8 @@ bfpcmp(BitmapFingerPrint *a, BitmapFingerPrint *b) {
 
 
 #define CHEMREACTDESCR( name, func, ret )                               \
+  PGDLLEXPORT Datum           reaction_##name(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(reaction_##name);                                      \
-  Datum           reaction_##name(PG_FUNCTION_ARGS);                         \
   Datum                                                                 \
   reaction_##name(PG_FUNCTION_ARGS){                                         \
   CChemicalReaction        rxn;                                         \
@@ -66,8 +68,8 @@ CHEMREACTDESCR(numreactants,ChemReactNumReactants,INT32)
 CHEMREACTDESCR(numproducts,ChemReactNumProducts,INT32)
 CHEMREACTDESCR(numagents,ChemReactNumAgents,INT32)
 
+PGDLLEXPORT Datum           reaction_substruct(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_substruct);
-Datum           reaction_substruct(PG_FUNCTION_ARGS);
 Datum
 reaction_substruct(PG_FUNCTION_ARGS) {
   CChemicalReaction  rxn, rxn2;
@@ -86,8 +88,8 @@ reaction_substruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(ReactionSubstruct(rxn, rxn2));
 }
 
+PGDLLEXPORT Datum           reaction_rsubstruct(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_rsubstruct);
-Datum           reaction_rsubstruct(PG_FUNCTION_ARGS);
 Datum
 reaction_rsubstruct(PG_FUNCTION_ARGS) {
   CChemicalReaction rxn, rxn2;
@@ -106,8 +108,8 @@ reaction_rsubstruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(ReactionSubstruct(rxn2, rxn));
 }
 
+PGDLLEXPORT Datum           reaction_substructFP(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_substructFP);
-Datum           reaction_substructFP(PG_FUNCTION_ARGS);
 Datum
 reaction_substructFP(PG_FUNCTION_ARGS) {
   CChemicalReaction rxn, rxn2;
@@ -126,8 +128,8 @@ reaction_substructFP(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(ReactionSubstructFP(rxn, rxn2));
 }
 
+PGDLLEXPORT Datum           reaction_rsubstructFP(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_rsubstructFP);
-Datum           reaction_rsubstructFP(PG_FUNCTION_ARGS);
 Datum
 reaction_rsubstructFP(PG_FUNCTION_ARGS) {
   CChemicalReaction rxn, rxn2;
@@ -147,8 +149,8 @@ reaction_rsubstructFP(PG_FUNCTION_ARGS) {
 }
 
 #define REACTIONCMPFUNC( type, action, ret )                            \
+  PGDLLEXPORT Datum           reaction_##type(PG_FUNCTION_ARGS);                    \
   PG_FUNCTION_INFO_V1(reaction_##type);                                 \
-  Datum           reaction_##type(PG_FUNCTION_ARGS);                    \
   Datum                                                                 \
   reaction_##type(PG_FUNCTION_ARGS)                                     \
   {                                                                     \

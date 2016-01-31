@@ -1,4 +1,4 @@
-contrib/rdkit is a PostgreSQL contribution module, which implements 
+PgSQL/rdkit is a PostgreSQL contribution module, which implements 
 *mol* datatype to describe molecules and *fp* datatype for fingerprints,  
 basic comparison operations, similarity operation (tanimoto, dice) and  index 
 support (using GiST indexing framework).
@@ -8,6 +8,10 @@ Compatibility: PostgreSQL 8.4+
  that you have the -devel package installed.
 
 Installation:
+if PostgreSQL is installed in a location where CMake is unable to find it,
+either set the environment variable PostgreSQL_ROOT or add a
+"-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
+PostgreSQL root directory, e.g. C:\Program Files (x86)\PostgreSQL\9.5
 
  Module assumes that the RDKit is installed in $RDBASE and that $BOOSTHOME
  points to the directory where boost is installed.

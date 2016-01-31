@@ -783,9 +783,13 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 // http://stackoverflow.com/questions/3849337/msvc-equivalent-to-builtin-popcount
 // but corrected to get the ifdef right
 #ifdef _MSC_VER
+#ifdef _WIN64
 #include <intrin.h>
 #define __builtin_popcount __popcnt
 #define __builtin_popcountll __popcnt64
+#else
+#undef USE_BUILTIN_POPCOUNT
+#endif
 #endif
 
 // the Bitmap Tanimoto and Dice similarity code is adapted
