@@ -13,13 +13,6 @@ either set the environment variable PostgreSQL_ROOT or add a
 "-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
 PostgreSQL root directory, e.g. C:\Program Files (x86)\PostgreSQL\9.5
 
- Module assumes that the RDKit is installed in $RDBASE and that $BOOSTHOME
- points to the directory where boost is installed.
- (check Makefile).
-
- cd $RDBASE/Code/PgSQL/rdkit
- make && make install && make installcheck 
- 
 For versions of PostgreSQL < 9.1:
  To install rdkit cartridge into the database DB: 
    psql DB < rdkit.sql

@@ -386,6 +386,7 @@ void testCountFps() {
 void testInitStruChk() {
   BOOST_LOG(rdInfoLog) << "testing init struchk " << std::endl;
   {
+    
     std::string pathName = getenv("RDBASE");
     pathName += "/Data/struchk/";
     std::string struchk_init =
@@ -401,6 +402,9 @@ void testInitStruChk() {
         "-cs\n"
         "-cn 999\n"
         "-l " +
+        #ifdef _WIN32
+        std::getenv("TEMP") +
+        #endif
         std::string(std::tmpnam(NULL)) + std::string("\n");
     int errs = AvalonTools::initCheckMol(struchk_init);
     TEST_ASSERT(!errs);
