@@ -17,11 +17,14 @@ add_definitions(-DRDKITVER="007300")
 if(MSVC)
   add_definitions(-DWIN32 -DBUILDING_MODULE -DNOMINMAX)
 endif(MSVC)
-link_directories(${PostgreSQL_LIBRARY_DIR})
+link_directories(${PostgreSQL_LIBRARY_DIRS})
 add_library(rdkit SHARED
             adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
             rdkit_gist.c rdkit_io.c rxn_op.c sfp_op.c)
 target_link_libraries(rdkit ${PostgreSQL_LIBRARIES})
+if(WIN32)
+  target_link_libraries(rdkit postgres)
+endif(WIN32)
 set(avalonRegress "")
 set(inchiRegress "")
 if(RDK_BUILD_AVALON_SUPPORT)
@@ -40,58 +43,77 @@ if(RDK_BUILD_THREADSAFE_SSS)
   target_link_libraries(rdkit ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_THREADSAFE_SSS)
 
-# The test is a bit involved, but it works on all platforms
-# as of PostgreSQL 9.5
+if(NOT DEFINED ${PostgreSQL_ROOT})
+  if(DEFINED ENV{PostgreSQL_ROOT})
+    set(PostgreSQL_ROOT "$ENV{PostgreSQL_ROOT}")
+  endif(DEFINED ENV{PostgreSQL_ROOT})
+endif(NOT DEFINED ${PostgreSQL_ROOT})
+if(NOT DEFINED ${PostgreSQL_ROOT})
+  set(PostgreSQL_ROOT "${PostgreSQL_LIBRARY_DIRS}/..")
+endif(NOT DEFINED ${PostgreSQL_ROOT})
+if(NOT DEFINED ${PostgreSQL_CONFIG_DIR})
+  set(PostgreSQL_CONFIG_DIR "${PostgreSQL_ROOT}/bin")
+endif(NOT DEFINED ${PostgreSQL_CONFIG_DIR})
 macro (run_pg_config arg var)
   execute_process(COMMAND ${PostgreSQL_CONFIG_DIR}/pg_config ${arg}
                   RESULT_VARIABLE pgsql_config_result
                   OUTPUT_VARIABLE ${var}
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
-  fail_if (NOT ${pgsql_config_result} EQUAL 0 OR NOT ${var})
+  if(NOT ${pgsql_config_result} EQUAL 0 OR NOT ${var})
+    message(FATAL_ERROR "${PostgreSQL_CONFIG_DIR}/pg_config ${arg} failed")
+  endif()
 endmacro ()
 run_pg_config (--bindir PG_BINDIR)
 run_pg_config (--sharedir PG_SHAREDIR)
 run_pg_config (--pkglibdir PG_PKGLIBDIR)
 set(PG_EXTENSIONDIR "${PG_SHAREDIR}/extension")
 if(WIN32 AND NOT UNIX)
-  string(REGEX REPLACE "/" "\\\\" PG_EXTENSIONDIR ${PG_EXTENSIONDIR})
   set(PGREGRESS_BINARY "${PG_BINDIR}\\pg_regress.exe")
+  string(REGEX REPLACE "/" "\\\\" PG_EXTENSIONDIR ${PG_EXTENSIONDIR})
+  string(REGEX REPLACE "/" "\\\\" PGREGRESS_BINARY ${PGREGRESS_BINARY})
 else(WIN32 AND NOT UNIX)
   run_pg_config (--pgxs PG_MAKEFILE)
   get_filename_component(PG_MAKEFILESDIR ${PG_MAKEFILE} PATH)
   set(PGREGRESS_BINARY "${PG_MAKEFILESDIR}/../test/regress/pg_regress")
 endif(WIN32 AND NOT UNIX)
-fail_if(NOT EXISTS ${PGREGRESS_BINARY})
-set(testPgSQLName "${CMAKE_CURRENT_SOURCE_DIR}/pgsql_regress")
-set(installPgSQLName "${CMAKE_CURRENT_SOURCE_DIR}/pgsql_install")
+if(NOT EXISTS ${PGREGRESS_BINARY})
+  message(FATAL_ERROR "${PGREGRESS_BINARY} does not exist")
+endif()
+set(testPgSQLName "${CMAKE_CURRENT_BINARY_DIR}/pgsql_regress")
+set(installPgSQLName "${CMAKE_CURRENT_BINARY_DIR}/pgsql_install")
+set(PG_CURRENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
+set(PG_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/")
 if(WIN32 AND NOT UNIX)
   set(testPgSQLCommand "")
   set(testPgSQLName "${testPgSQLName}.bat")
   set(installPgSQLName "${installPgSQLName}.bat")
-  set(testPgSQLHead "cd %~dp0\n")
   set(installCopyCommand "copy /Y")
   set(PG_RDKIT_LIB_SRC "rdkit.dll")
   set(PG_RDKIT_LIB_DEST "rdkit.dll")
+  set(PGREGRESS_BINDIR_SWITCH "bindir")
+  string(REGEX REPLACE "/" "\\\\" PG_CURRENT_SOURCE_DIR ${PG_CURRENT_SOURCE_DIR})
+  string(REGEX REPLACE "/" "\\\\" PG_CURRENT_BINARY_DIR ${PG_CURRENT_BINARY_DIR})
 else(WIN32 AND NOT UNIX)
   set(testPgSQLCommand "sh")
   set(testPgSQLName "${testPgSQLName}.sh")
   set(installPgSQLName "${installPgSQLName}.sh")
-  set(testPgSQLHead "cd \"$(dirname \"$0\")\"\n")
   set(installCopyCommand "cp")
   set(PG_RDKIT_LIB_SRC "librdkit.so")
   set(PG_RDKIT_LIB_DEST "rdkit.so")
+  set(PGREGRESS_BINDIR_SWITCH "psqldir")
 endif(WIN32 AND NOT UNIX)
-set(testPgSQLBody "\"${PGREGRESS_BINARY}\" --inputdir=sql "
-    "--psqldir=\"${PG_BINDIR}\" rdkit-91 "
+set(testPgSQLBody "cd \"${PG_CURRENT_SOURCE_DIR}\"\n"
+    "\"${PGREGRESS_BINARY}\" --inputdir=sql "
+    "--${PGREGRESS_BINDIR_SWITCH}=\"${PG_BINDIR}\" rdkit-91 "
     "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction "
     "${avalonRegress} ${inchiRegress}\n")
 set(installPgSQLBody
-    "${installCopyCommand} \"${CMAKE_CURRENT_SOURCE_DIR}/rdkit.sql91.in\" "
-    "\"${CMAKE_CURRENT_SOURCE_DIR}/rdkit--${PG_EXTVERSION}.sql\"\n"
-    "${installCopyCommand} \"${CMAKE_CURRENT_SOURCE_DIR}/rdkit--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installCopyCommand} \"${CMAKE_CURRENT_SOURCE_DIR}/rdkit.control\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installCopyCommand} \"${CMAKE_CURRENT_BINARY_DIR}/${PG_RDKIT_LIB_SRC}\" "
+    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}rdkit.sql91.in\" "
+    "\"${PG_CURRENT_SOURCE_DIR}rdkit--${PG_EXTVERSION}.sql\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}rdkit--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}rdkit.control\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}/${PG_RDKIT_LIB_DEST}\"\n")
-file(WRITE ${testPgSQLName} ${testPgSQLHead} ${testPgSQLBody})
+file(WRITE ${testPgSQLName} ${testPgSQLBody})
 file(WRITE ${installPgSQLName} ${installPgSQLBody})
 add_test(testPgSQL ${testPgSQLCommand} ${testPgSQLName})
