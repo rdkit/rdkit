@@ -22,6 +22,7 @@ option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppli
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
 option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
+option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
