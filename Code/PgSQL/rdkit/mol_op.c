@@ -2,20 +2,21 @@
 //
 //  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
-//       products derived from this software without specific prior written permission.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -34,29 +35,23 @@
 
 /***************** Mol operations ***********************/
 
-#define MOLCMPFUNC( type, action, ret )                                 \
-  PG_FUNCTION_INFO_V1(mol_##type);                                      \
-  Datum           mol_##type(PG_FUNCTION_ARGS);                         \
-  Datum                                                                 \
-  mol_##type(PG_FUNCTION_ARGS)                                          \
-  {                                                                     \
-    CROMol    a, b;                                                     \
-    int             res;                                                \
-                                                                        \
-    fcinfo->flinfo->fn_extra = SearchMolCache(                          \
-                                              fcinfo->flinfo->fn_extra, \
-                                              fcinfo->flinfo->fn_mcxt,  \
-                                              PG_GETARG_DATUM(0),       \
-                                              NULL, &a, NULL);          \
-    fcinfo->flinfo->fn_extra = SearchMolCache(                          \
-                                              fcinfo->flinfo->fn_extra, \
-                                              fcinfo->flinfo->fn_mcxt,  \
-                                              PG_GETARG_DATUM(1),       \
-                                              NULL, &b, NULL);          \
-    res = molcmp(a, b);                                                 \
-    PG_RETURN_##ret( res action 0 );                                    \
-  }                                                                     \
-  /* keep compiler quiet - no extra ; */                                \
+#define MOLCMPFUNC(type, action, ret)                                     \
+  PG_FUNCTION_INFO_V1(mol_##type);                                        \
+  Datum mol_##type(PG_FUNCTION_ARGS);                                     \
+  Datum mol_##type(PG_FUNCTION_ARGS) {                                    \
+    CROMol a, b;                                                          \
+    int res;                                                              \
+                                                                          \
+    fcinfo->flinfo->fn_extra =                                            \
+        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
+                       PG_GETARG_DATUM(0), NULL, &a, NULL);               \
+    fcinfo->flinfo->fn_extra =                                            \
+        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
+                       PG_GETARG_DATUM(1), NULL, &b, NULL);               \
+    res = molcmp(a, b);                                                   \
+    PG_RETURN_##ret(res action 0);                                        \
+  }                                                                       \
+  /* keep compiler quiet - no extra ; */                                  \
   extern int no_such_variable
 
 MOLCMPFUNC(lt, <, BOOL);
@@ -68,247 +63,206 @@ MOLCMPFUNC(ne, !=, BOOL);
 MOLCMPFUNC(cmp, +, INT32);
 
 PG_FUNCTION_INFO_V1(is_valid_smiles);
-Datum           is_valid_smiles(PG_FUNCTION_ARGS);
-Datum
-is_valid_smiles(PG_FUNCTION_ARGS) {
-  char  *data = PG_GETARG_CSTRING(0);
+Datum is_valid_smiles(PG_FUNCTION_ARGS);
+Datum is_valid_smiles(PG_FUNCTION_ARGS) {
+  char *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmiles(data));
 }
 
 PG_FUNCTION_INFO_V1(is_valid_smarts);
-Datum           is_valid_smarts(PG_FUNCTION_ARGS);
-Datum
-is_valid_smarts(PG_FUNCTION_ARGS) {
-  char  *data = PG_GETARG_CSTRING(0);
+Datum is_valid_smarts(PG_FUNCTION_ARGS);
+Datum is_valid_smarts(PG_FUNCTION_ARGS) {
+  char *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmarts(data));
 }
 
 PG_FUNCTION_INFO_V1(is_valid_ctab);
-Datum           is_valid_ctab(PG_FUNCTION_ARGS);
-Datum
-is_valid_ctab(PG_FUNCTION_ARGS) {
-  char  *data = PG_GETARG_CSTRING(0);
+Datum is_valid_ctab(PG_FUNCTION_ARGS);
+Datum is_valid_ctab(PG_FUNCTION_ARGS) {
+  char *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidCTAB(data));
 }
 
 PG_FUNCTION_INFO_V1(is_valid_mol_pkl);
-Datum           is_valid_mol_pkl(PG_FUNCTION_ARGS);
-Datum
-is_valid_mol_pkl(PG_FUNCTION_ARGS) {
-  bytea    *data = PG_GETARG_BYTEA_P(0);
-  int len=VARSIZE(data)-VARHDRSZ;
-  bool res=isValidMolBlob(VARDATA(data),len);
+Datum is_valid_mol_pkl(PG_FUNCTION_ARGS);
+Datum is_valid_mol_pkl(PG_FUNCTION_ARGS) {
+  bytea *data = PG_GETARG_BYTEA_P(0);
+  int len = VARSIZE(data) - VARHDRSZ;
+  bool res = isValidMolBlob(VARDATA(data), len);
   PG_FREE_IF_COPY(data, 0);
-  PG_RETURN_BOOL(res);           
+  PG_RETURN_BOOL(res);
 }
 
-
 PG_FUNCTION_INFO_V1(mol_substruct);
-Datum           mol_substruct(PG_FUNCTION_ARGS);
-Datum
-mol_substruct(PG_FUNCTION_ARGS) {
-  CROMol  i,
-    a;
+Datum mol_substruct(PG_FUNCTION_ARGS);
+Datum mol_substruct(PG_FUNCTION_ARGS) {
+  CROMol i, a;
 
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(1), 
-                                            NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(i, a));             
+  PG_RETURN_BOOL(MolSubstruct(i, a));
 }
 
 PG_FUNCTION_INFO_V1(mol_rsubstruct);
-Datum           mol_rsubstruct(PG_FUNCTION_ARGS);
-Datum
-mol_rsubstruct(PG_FUNCTION_ARGS) {
-  CROMol  i,
-    a;
+Datum mol_rsubstruct(PG_FUNCTION_ARGS);
+Datum mol_rsubstruct(PG_FUNCTION_ARGS) {
+  CROMol i, a;
 
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(1), 
-                                            NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
 
   PG_RETURN_BOOL(MolSubstruct(a, i));
 }
 
 PG_FUNCTION_INFO_V1(mol_substruct_count);
-Datum           mol_substruct_count(PG_FUNCTION_ARGS);
-Datum
-mol_substruct_count(PG_FUNCTION_ARGS) {
-  CROMol  i,
-    a;
+Datum mol_substruct_count(PG_FUNCTION_ARGS);
+Datum mol_substruct_count(PG_FUNCTION_ARGS) {
+  CROMol i, a;
 
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(1), 
-                                            NULL, &a, NULL);
-  bool uniquify=PG_GETARG_BOOL(2);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+  bool uniquify = PG_GETARG_BOOL(2);
 
-  PG_RETURN_INT32(MolSubstructCount(i, a,uniquify));             
+  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify));
 }
 
+#define MOLDESCR(name, func, ret)                                         \
+  PG_FUNCTION_INFO_V1(mol_##name);                                        \
+  Datum mol_##name(PG_FUNCTION_ARGS);                                     \
+  Datum mol_##name(PG_FUNCTION_ARGS) {                                    \
+    CROMol i;                                                             \
+    fcinfo->flinfo->fn_extra =                                            \
+        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
+                       PG_GETARG_DATUM(0), NULL, &i, NULL);               \
+    PG_RETURN_##ret(func(i));                                             \
+  }
 
-#define MOLDESCR( name, func, ret )                                 \
-  PG_FUNCTION_INFO_V1(mol_##name);                                      \
-  Datum           mol_##name(PG_FUNCTION_ARGS);                         \
-  Datum                                                                 \
-  mol_##name(PG_FUNCTION_ARGS){                                         \
-  CROMol        i;                                                      \
-  fcinfo->flinfo->fn_extra = SearchMolCache(                            \
-                                            fcinfo->flinfo->fn_extra,   \
-                                            fcinfo->flinfo->fn_mcxt,    \
-                                            PG_GETARG_DATUM(0),         \
-                                            NULL, &i, NULL);            \
-  PG_RETURN_##ret( func(i) );                                           \
-}
-  
-MOLDESCR(amw,MolAMW,FLOAT4)
-MOLDESCR(logp,MolLogP,FLOAT4)
-MOLDESCR(tpsa,MolTPSA,FLOAT4)
-MOLDESCR(hba,MolHBA,INT32)
-MOLDESCR(hbd,MolHBD,INT32)
-MOLDESCR(numatoms,MolNumAtoms,INT32)
-MOLDESCR(numheavyatoms,MolNumHeavyAtoms,INT32)
-MOLDESCR(numrotatablebonds,MolNumRotatableBonds,INT32)
-MOLDESCR(numheteroatoms,MolNumHeteroatoms,INT32)
-MOLDESCR(numrings,MolNumRings,INT32)
-MOLDESCR(numaromaticrings,MolNumAromaticRings,INT32)
-MOLDESCR(numaliphaticrings,MolNumAliphaticRings,INT32)
-MOLDESCR(numsaturatedrings,MolNumSaturatedRings,INT32)
-MOLDESCR(numaromaticheterocycles,MolNumAromaticHeterocycles,INT32)
-MOLDESCR(numaliphaticheterocycles,MolNumAliphaticHeterocycles,INT32)
-MOLDESCR(numsaturatedheterocycles,MolNumSaturatedHeterocycles,INT32)
-MOLDESCR(numaromaticcarbocycles,MolNumAromaticCarbocycles,INT32)
-MOLDESCR(numaliphaticcarbocycles,MolNumAliphaticCarbocycles,INT32)
-MOLDESCR(numsaturatedcarbocycles,MolNumSaturatedCarbocycles,INT32)
-MOLDESCR(numheterocycles,MolNumHeterocycles,INT32)
+MOLDESCR(amw, MolAMW, FLOAT4)
+MOLDESCR(logp, MolLogP, FLOAT4)
+MOLDESCR(tpsa, MolTPSA, FLOAT4)
+MOLDESCR(hba, MolHBA, INT32)
+MOLDESCR(hbd, MolHBD, INT32)
+MOLDESCR(numatoms, MolNumAtoms, INT32)
+MOLDESCR(numheavyatoms, MolNumHeavyAtoms, INT32)
+MOLDESCR(numrotatablebonds, MolNumRotatableBonds, INT32)
+MOLDESCR(numheteroatoms, MolNumHeteroatoms, INT32)
+MOLDESCR(numrings, MolNumRings, INT32)
+MOLDESCR(numaromaticrings, MolNumAromaticRings, INT32)
+MOLDESCR(numaliphaticrings, MolNumAliphaticRings, INT32)
+MOLDESCR(numsaturatedrings, MolNumSaturatedRings, INT32)
+MOLDESCR(numaromaticheterocycles, MolNumAromaticHeterocycles, INT32)
+MOLDESCR(numaliphaticheterocycles, MolNumAliphaticHeterocycles, INT32)
+MOLDESCR(numsaturatedheterocycles, MolNumSaturatedHeterocycles, INT32)
+MOLDESCR(numaromaticcarbocycles, MolNumAromaticCarbocycles, INT32)
+MOLDESCR(numaliphaticcarbocycles, MolNumAliphaticCarbocycles, INT32)
+MOLDESCR(numsaturatedcarbocycles, MolNumSaturatedCarbocycles, INT32)
+MOLDESCR(numheterocycles, MolNumHeterocycles, INT32)
 
-MOLDESCR(fractioncsp3,MolFractionCSP3,FLOAT4)
-MOLDESCR(chi0n,MolChi0n,FLOAT4)
-MOLDESCR(chi1n,MolChi1n,FLOAT4)
-MOLDESCR(chi2n,MolChi2n,FLOAT4)
-MOLDESCR(chi3n,MolChi3n,FLOAT4)
-MOLDESCR(chi4n,MolChi4n,FLOAT4)
-MOLDESCR(chi0v,MolChi0v,FLOAT4)
-MOLDESCR(chi1v,MolChi1v,FLOAT4)
-MOLDESCR(chi2v,MolChi2v,FLOAT4)
-MOLDESCR(chi3v,MolChi3v,FLOAT4)
-MOLDESCR(chi4v,MolChi4v,FLOAT4)
-MOLDESCR(kappa1,MolKappa1,FLOAT4)
-MOLDESCR(kappa2,MolKappa2,FLOAT4)
-MOLDESCR(kappa3,MolKappa3,FLOAT4)
+MOLDESCR(fractioncsp3, MolFractionCSP3, FLOAT4)
+MOLDESCR(chi0n, MolChi0n, FLOAT4)
+MOLDESCR(chi1n, MolChi1n, FLOAT4)
+MOLDESCR(chi2n, MolChi2n, FLOAT4)
+MOLDESCR(chi3n, MolChi3n, FLOAT4)
+MOLDESCR(chi4n, MolChi4n, FLOAT4)
+MOLDESCR(chi0v, MolChi0v, FLOAT4)
+MOLDESCR(chi1v, MolChi1v, FLOAT4)
+MOLDESCR(chi2v, MolChi2v, FLOAT4)
+MOLDESCR(chi3v, MolChi3v, FLOAT4)
+MOLDESCR(chi4v, MolChi4v, FLOAT4)
+MOLDESCR(kappa1, MolKappa1, FLOAT4)
+MOLDESCR(kappa2, MolKappa2, FLOAT4)
+MOLDESCR(kappa3, MolKappa3, FLOAT4)
 
-MOLDESCR(numspiroatoms,MolNumSpiroAtoms,INT32)
-MOLDESCR(numbridgeheadatoms,MolNumBridgeheadAtoms,INT32)
-
+MOLDESCR(numspiroatoms, MolNumSpiroAtoms, INT32)
+MOLDESCR(numbridgeheadatoms, MolNumBridgeheadAtoms, INT32)
 
 PG_FUNCTION_INFO_V1(mol_formula);
-Datum           mol_formula(PG_FUNCTION_ARGS);
-Datum
-mol_formula(PG_FUNCTION_ARGS) {
-  CROMol  mol;
-  char    *str;
-  int     len;
+Datum mol_formula(PG_FUNCTION_ARGS);
+Datum mol_formula(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  char *str;
+  int len;
 
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0),
-                                            NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
 
-  bool separateIsotopes    = PG_GETARG_BOOL(1);
+  bool separateIsotopes = PG_GETARG_BOOL(1);
   bool abbreviateHIsotopes = PG_GETARG_BOOL(2);
 
   str = makeMolFormulaText(mol, &len, separateIsotopes, abbreviateHIsotopes);
 
-  PG_RETURN_CSTRING( pnstrdup(str, len) );
+  PG_RETURN_CSTRING(pnstrdup(str, len));
 }
 
 PG_FUNCTION_INFO_V1(mol_inchi);
-Datum           mol_inchi(PG_FUNCTION_ARGS);
-Datum
-mol_inchi(PG_FUNCTION_ARGS) {
-  CROMol  mol;
-  const char    *str;
+Datum mol_inchi(PG_FUNCTION_ARGS);
+Datum mol_inchi(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  const char *str;
+  char *opts = PG_GETARG_CSTRING(1);
 
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0),
-                                            NULL, &mol, NULL);
-  str = MolInchi(mol);
-  char *res=pnstrdup(str, strlen(str));
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  str = MolInchi(mol, opts);
+  char *res = pnstrdup(str, strlen(str));
   free((void *)str);
-  PG_RETURN_CSTRING( res );
+  PG_RETURN_CSTRING(res);
 }
 
 PG_FUNCTION_INFO_V1(mol_inchikey);
-Datum           mol_inchikey(PG_FUNCTION_ARGS);
-Datum
-mol_inchikey(PG_FUNCTION_ARGS) {
-  CROMol  mol;
-  const char    *str;
+Datum mol_inchikey(PG_FUNCTION_ARGS);
+Datum mol_inchikey(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  const char *str;
+  char *opts = PG_GETARG_CSTRING(1);
 
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0),
-                                            NULL, &mol, NULL);
-  str = MolInchiKey(mol);
-  char *res=pnstrdup(str, strlen(str));
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  str = MolInchiKey(mol, opts);
+  char *res = pnstrdup(str, strlen(str));
   free((void *)str);
-  PG_RETURN_CSTRING( res );
+  PG_RETURN_CSTRING(res);
 }
 PG_FUNCTION_INFO_V1(mol_murckoscaffold);
-Datum           mol_murckoscaffold(PG_FUNCTION_ARGS);
-Datum
-mol_murckoscaffold(PG_FUNCTION_ARGS) {
-  CROMol        mol;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &mol, NULL);
-  CROMol scaffold=MolMurckoScaffold(mol);
-  if(!scaffold) PG_RETURN_NULL();
+Datum mol_murckoscaffold(PG_FUNCTION_ARGS);
+Datum mol_murckoscaffold(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  CROMol scaffold = MolMurckoScaffold(mol);
+  if (!scaffold) PG_RETURN_NULL();
   Mol *res = deconstructROMol(scaffold);
   freeCROMol(scaffold);
 
-  PG_RETURN_MOL_P(res);           
+  PG_RETURN_MOL_P(res);
 }
 
 PG_FUNCTION_INFO_V1(mol_hash);
-Datum           mol_hash(PG_FUNCTION_ARGS);
-Datum
-mol_hash(PG_FUNCTION_ARGS) {
-  CROMol  mol;
-  char    *str;
-  int     len;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0),
-                                            NULL, &mol, NULL);
+Datum mol_hash(PG_FUNCTION_ARGS);
+Datum mol_hash(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  char *str;
+  int len;
+  fcinfo->flinfo->fn_extra =
+      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
   Assert(mol != 0);
   str = computeMolHash(mol, &len);
   Assert(str != 0 && strlen(str) != 0);
@@ -318,186 +272,184 @@ mol_hash(PG_FUNCTION_ARGS) {
 /*** fmcs ***/
 
 PG_FUNCTION_INFO_V1(fmcs_smiles);
-Datum           fmcs_smiles(PG_FUNCTION_ARGS);
-Datum
-fmcs_smiles(PG_FUNCTION_ARGS) {
-  char    *str = PG_GETARG_CSTRING(0);
-  char    *params = PG_GETARG_CSTRING(1);
-//elog(WARNING, str);
+Datum fmcs_smiles(PG_FUNCTION_ARGS);
+Datum fmcs_smiles(PG_FUNCTION_ARGS) {
+  char *str = PG_GETARG_CSTRING(0);
+  char *params = PG_GETARG_CSTRING(1);
+  // elog(WARNING, str);
 
   str = findMCSsmiles(str, params);
-//elog(WARNING, str);
+  // elog(WARNING, str);
   Assert(str != 0);
   PG_RETURN_CSTRING(pnstrdup(str, strlen(str)));
 }
 
-
 PG_FUNCTION_INFO_V1(fmcs_smiles_transition);
-Datum           fmcs_smiles_transition(PG_FUNCTION_ARGS);
-Datum
-fmcs_smiles_transition(PG_FUNCTION_ARGS) {
+Datum fmcs_smiles_transition(PG_FUNCTION_ARGS);
+Datum fmcs_smiles_transition(PG_FUNCTION_ARGS) {
+  if (!AggCheckCallContext(fcinfo, NULL) || PG_ARGISNULL(0)) {
+    ereport(
+        ERROR,
+        (errmsg(
+            "fmcs_smiles_transition() called in out of aggregate context")));
+  } else if (!PG_ARGISNULL(0)) {  // Called in aggregate context...
+    text *t0 = PG_GETARG_TEXT_P(0);
+    text *tsmiles = PG_GETARG_TEXT_P(1);
+    // char    *s0 = VARDATA(t0);
+    // char    *smiles = VARDATA(tsmiles);
+    // elog(WARNING, "fmcs_trans: next iteration in the same run");
+    // elog(WARNING, s0);
+    // elog(WARNING, smiles);
 
-    if ( ! AggCheckCallContext(fcinfo, NULL) || PG_ARGISNULL(0)){
-        ereport(ERROR, (errmsg("fmcs_smiles_transition() called in out of aggregate context")));
-    }
-    else if (!PG_ARGISNULL(0)) { // Called in aggregate context...
-        text *t0 = PG_GETARG_TEXT_P(0);
-        text *tsmiles = PG_GETARG_TEXT_P(1);
-// char    *s0 = VARDATA(t0);
-// char    *smiles = VARDATA(tsmiles);
-//elog(WARNING, "fmcs_trans: next iteration in the same run");
-//elog(WARNING, s0);
-//elog(WARNING, smiles);
-
-        int32 ts_size = VARSIZE(t0) + 1 + VARSIZE(tsmiles)-VARHDRSZ;
-        text* ts = (text*) palloc(ts_size); //new return value
-        SET_VARSIZE(ts, ts_size);
-        memcpy(VARDATA(ts), VARDATA(t0), VARSIZE(t0)-VARHDRSZ);
-        *(char*)(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ) = ' ';
-        memcpy(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ+1, VARDATA(tsmiles), VARSIZE(tsmiles)-VARHDRSZ);
-//elog(WARNING, VARDATA(ts));
-        PG_RETURN_TEXT_P(ts);
-    }
+    int32 ts_size = VARSIZE(t0) + 1 + VARSIZE(tsmiles) - VARHDRSZ;
+    text *ts = (text *)palloc(ts_size);  // new return value
+    SET_VARSIZE(ts, ts_size);
+    memcpy(VARDATA(ts), VARDATA(t0), VARSIZE(t0) - VARHDRSZ);
+    *(char *)(VARDATA(ts) + VARSIZE(t0) - VARHDRSZ) = ' ';
+    memcpy(VARDATA(ts) + VARSIZE(t0) - VARHDRSZ + 1, VARDATA(tsmiles),
+           VARSIZE(tsmiles) - VARHDRSZ);
+    // elog(WARNING, VARDATA(ts));
+    PG_RETURN_TEXT_P(ts);
+  }
 }
 //------------------------
 
-char* Mol2Smiles(CROMol data);
+char *Mol2Smiles(CROMol data);
 
 PG_FUNCTION_INFO_V1(fmcs_mol2s_transition);
-Datum           fmcs_mol2s_transition(PG_FUNCTION_ARGS);
-Datum
-fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
-//elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
-//elog(WARNING, (PG_ARGISNULL(1)) ? "arg 1 is NULL" : "arg 1 is NOT NULL");
+Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS);
+Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
+  // elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
+  // elog(WARNING, (PG_ARGISNULL(1)) ? "arg 1 is NULL" : "arg 1 is NOT NULL");
 
-    if ( ! AggCheckCallContext(fcinfo, NULL)){
-//elog(WARNING, "fmcs_mol2s_transition() called in out of aggregate context");
-        ereport(ERROR, (errmsg("fmcs_mol2s_transition() called in out of aggregate context")));
-    }
-    if(PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // first call
-///elog(WARNING, "fmcs_mol2s_transition() called first time");
-        CROMol mol = PG_GETARG_DATUM(1);
-        int    len;
-char t[256];
-sprintf(t,"mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
-elog(WARNING, t);
-        fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(1),
-                                            NULL, &mol, NULL);
+  if (!AggCheckCallContext(fcinfo, NULL)) {
+    // elog(WARNING, "fmcs_mol2s_transition() called in out of aggregate
+    // context");
+    ereport(
+        ERROR,
+        (errmsg("fmcs_mol2s_transition() called in out of aggregate context")));
+  }
+  if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
+    /// elog(WARNING, "fmcs_mol2s_transition() called first time");
+    CROMol mol = PG_GETARG_DATUM(1);
+    int len;
+    char t[256];
+    sprintf(t, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+            fcinfo->flinfo->fn_mcxt);
+    elog(WARNING, t);
+    fcinfo->flinfo->fn_extra =
+        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                       PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-        char *smiles = makeMolText(mol, &len,false);
+    char *smiles = makeMolText(mol, &len, false);
 
-//        char *smiles= Mol2Smiles(mol);
-//        int   len   = strlen(smiles);
-///elog(WARNING, smiles);
+    //        char *smiles= Mol2Smiles(mol);
+    //        int   len   = strlen(smiles);
+    /// elog(WARNING, smiles);
 
-        int32 ts_size = len + VARHDRSZ;
-        text* ts = (text*) palloc(ts_size); //new return value
-        SET_VARSIZE(ts, ts_size);
-        memcpy(VARDATA(ts), smiles, len);
-        PG_RETURN_TEXT_P(ts);
-    }
-    else 
-    if (!PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // Called in aggregate context...
-        text *t0 = PG_GETARG_TEXT_P(0);
-///elog(WARNING, "fmcs_mol2s_transition(): next iteration in the same run");
-//elog(WARNING, VARDATA(t0));
+    int32 ts_size = len + VARHDRSZ;
+    text *ts = (text *)palloc(ts_size);  // new return value
+    SET_VARSIZE(ts, ts_size);
+    memcpy(VARDATA(ts), smiles, len);
+    PG_RETURN_TEXT_P(ts);
+  } else if (!PG_ARGISNULL(0) &&
+             !PG_ARGISNULL(1)) {  // Called in aggregate context...
+    text *t0 = PG_GETARG_TEXT_P(0);
+    /// elog(WARNING, "fmcs_mol2s_transition(): next iteration in the same
+    /// run");
+    // elog(WARNING, VARDATA(t0));
 
-        //mol_to_smiles():
-        CROMol mol = PG_GETARG_DATUM(1);
-        int    len;
-char t[256];
-sprintf(t,"mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
-elog(WARNING, t);
-        fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(1),
-                                            NULL, &mol, NULL);
+    // mol_to_smiles():
+    CROMol mol = PG_GETARG_DATUM(1);
+    int len;
+    char t[256];
+    sprintf(t, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+            fcinfo->flinfo->fn_mcxt);
+    elog(WARNING, t);
+    fcinfo->flinfo->fn_extra =
+        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                       PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-        char *smiles = makeMolText(mol, &len,false);
-//        char *smiles= Mol2Smiles(mol);
-//        int   len   = strlen(smiles);
-///elog(WARNING, smiles);
+    char *smiles = makeMolText(mol, &len, false);
+    //        char *smiles= Mol2Smiles(mol);
+    //        int   len   = strlen(smiles);
+    /// elog(WARNING, smiles);
 
-        int32 ts_size = VARSIZE(t0) + 1 + len;
-        text* ts = (text*) palloc(ts_size); //new return value
-        SET_VARSIZE(ts, ts_size);
-        memcpy(VARDATA(ts), VARDATA(t0), VARSIZE(t0)-VARHDRSZ);
-        *(char*)(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ) = ' ';
-        memcpy(VARDATA(ts)+VARSIZE(t0)-VARHDRSZ+1, smiles, len);
-//elog(WARNING, VARDATA(ts));
-        PG_RETURN_TEXT_P(ts);
-    }
-//------
-///elog(WARNING, "fmcs_mol2s_transition(): return empty text block");
-    {
-        int32 ts_size = VARHDRSZ;
-        text* ts = (text*) palloc(ts_size); // return empty text block
-        SET_VARSIZE(ts, ts_size);
-        PG_RETURN_TEXT_P(ts);
-    }
+    int32 ts_size = VARSIZE(t0) + 1 + len;
+    text *ts = (text *)palloc(ts_size);  // new return value
+    SET_VARSIZE(ts, ts_size);
+    memcpy(VARDATA(ts), VARDATA(t0), VARSIZE(t0) - VARHDRSZ);
+    *(char *)(VARDATA(ts) + VARSIZE(t0) - VARHDRSZ) = ' ';
+    memcpy(VARDATA(ts) + VARSIZE(t0) - VARHDRSZ + 1, smiles, len);
+    // elog(WARNING, VARDATA(ts));
+    PG_RETURN_TEXT_P(ts);
+  }
+  //------
+  /// elog(WARNING, "fmcs_mol2s_transition(): return empty text block");
+  {
+    int32 ts_size = VARHDRSZ;
+    text *ts = (text *)palloc(ts_size);  // return empty text block
+    SET_VARSIZE(ts, ts_size);
+    PG_RETURN_TEXT_P(ts);
+  }
 }
 //------------------------
-
 
 // fmcs_mol:
 PG_FUNCTION_INFO_V1(fmcs_mols);
-Datum           fmcs_mols(PG_FUNCTION_ARGS);
-Datum
-fmcs_mols(PG_FUNCTION_ARGS) {
-//elog(WARNING, "fmcs_mols() called. FINALFUNC");
-   void *lst = PG_GETARG_POINTER(0);
-//char t[256];
-//sprintf(t,"lst=%p, fcinfo: %p, %p", lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
-//elog(WARNING, t);
-//  char *params = PG_GETARG_CSTRING(1);
-  char *str = findMCS(lst, NULL);//params);
+Datum fmcs_mols(PG_FUNCTION_ARGS);
+Datum fmcs_mols(PG_FUNCTION_ARGS) {
+  // elog(WARNING, "fmcs_mols() called. FINALFUNC");
+  void *lst = PG_GETARG_POINTER(0);
+  // char t[256];
+  // sprintf(t,"lst=%p, fcinfo: %p, %p", lst, fcinfo->flinfo->fn_extra,
+  // fcinfo->flinfo->fn_mcxt);
+  // elog(WARNING, t);
+  //  char *params = PG_GETARG_CSTRING(1);
+  char *str = findMCS(lst, NULL);  // params);
   Assert(str != 0);
   int32 ts_size = VARHDRSZ + strlen(str);
-  text* ts = (text*) palloc(ts_size);
+  text *ts = (text *)palloc(ts_size);
   SET_VARSIZE(ts, ts_size);
   memcpy(VARDATA(ts), str, strlen(str));
   PG_RETURN_TEXT_P(ts);
 }
 
 PG_FUNCTION_INFO_V1(fmcs_mol_transition);
-Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
-Datum
-fmcs_mol_transition(PG_FUNCTION_ARGS) {
-//elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
-//elog(WARNING, (PG_ARGISNULL(1)) ? "arg 1 is NULL" : "arg 1 is NOT NULL");
+Datum fmcs_mol_transition(PG_FUNCTION_ARGS);
+Datum fmcs_mol_transition(PG_FUNCTION_ARGS) {
+  // elog(WARNING, (PG_ARGISNULL(0)) ? "arg 0 is NULL" : "arg 0 is NOT NULL");
+  // elog(WARNING, (PG_ARGISNULL(1)) ? "arg 1 is NULL" : "arg 1 is NOT NULL");
 
-    if ( ! AggCheckCallContext(fcinfo, NULL)){
-        ereport(ERROR, (errmsg("fmcs_mol_transition() called in out of aggregate context")));
-    }
-    if(PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // first call
-//elog(WARNING, "fmcs_mol_transition() called first time");
-        void* lst = NULL;
-        CROMol mol = PG_GETARG_DATUM(1);
-        lst = addMol2list(NULL, mol);
-//char t[256];
-//sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
-//elog(WARNING, t);
-	//fcinfo->flinfo->fn_extra = lst;
-        PG_RETURN_INT32((int32)lst);
-    }
-    else 
-    if (!PG_ARGISNULL(0) && !PG_ARGISNULL(1)) { // Called in aggregate context...
-//elog(WARNING, "fmcs_mol_transition(): next iteration in the same run");
-        CROMol mol = PG_GETARG_DATUM(1);
-        void* lst = addMol2list(PG_GETARG_POINTER(0), mol);
-//char t[256];
-//sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst, fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
-//elog(WARNING, t);
-        PG_RETURN_POINTER(lst);
-    }
+  if (!AggCheckCallContext(fcinfo, NULL)) {
+    ereport(
+        ERROR,
+        (errmsg("fmcs_mol_transition() called in out of aggregate context")));
+  }
+  if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
+    // elog(WARNING, "fmcs_mol_transition() called first time");
+    void *lst = NULL;
+    CROMol mol = PG_GETARG_DATUM(1);
+    lst = addMol2list(NULL, mol);
+    // char t[256];
+    // sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst,
+    // fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+    // elog(WARNING, t);
+    // fcinfo->flinfo->fn_extra = lst;
+    PG_RETURN_INT32((int32)lst);
+  } else if (!PG_ARGISNULL(0) &&
+             !PG_ARGISNULL(1)) {  // Called in aggregate context...
+    // elog(WARNING, "fmcs_mol_transition(): next iteration in the same run");
+    CROMol mol = PG_GETARG_DATUM(1);
+    void *lst = addMol2list(PG_GETARG_POINTER(0), mol);
+    // char t[256];
+    // sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst,
+    // fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
+    // elog(WARNING, t);
+    PG_RETURN_POINTER(lst);
+  }
 }
 //------------------------
-
-
 
 //==================================
 /*
@@ -552,13 +504,15 @@ Datum           fmcs_mol_transition(PG_FUNCTION_ARGS);
 Datum
 fmcs_mol_transition(PG_FUNCTION_ARGS) {
     if ( ! AggCheckCallContext(fcinfo, NULL)){
-      ereport(ERROR, (errmsg("fmcs_mol_transition() called in out of aggregate context")));
+      ereport(ERROR, (errmsg("fmcs_mol_transition() called in out of aggregate
+context")));
       PG_RETURN_NULL();
     }
     else{ // Called in aggregate context...
       ArrayType *mols = NULL;
       if(PG_ARGISNULL(0)){
-elog(WARNING, "fmcs_mol_transition(): first call. Allocate state type array of CROMol pointers");
+elog(WARNING, "fmcs_mol_transition(): first call. Allocate state type array of
+CROMol pointers");
 if(PG_ARGISNULL(1))
   elog(WARNING, "fmcs_mol_transition(): first call. Argument [1] is null.");
 
@@ -567,7 +521,8 @@ if(PG_ARGISNULL(1))
          Assert(mols != 0);
        }
        else{
-elog(WARNING, "fmcs_mol_transition(): next iteration in the same run. Append CROMol pointer");
+elog(WARNING, "fmcs_mol_transition(): next iteration in the same run. Append
+CROMol pointer");
 
          mols = PG_GETARG_ARRAYTYPE_P(0);
          CROMol mol = PG_GETARG_DATUM(1);
@@ -577,8 +532,6 @@ elog(WARNING, "fmcs_mol_transition(): next iteration in the same run. Append CRO
     }
 }
 */
-
-
 
 /*
 PG_FUNCTION_INFO_V1(fmcs_transition);
@@ -605,12 +558,13 @@ elog(WARNING, "fmcs_trans: the first time in a run");
 //            PG_RETURN_POINTER(copy_intArrayType(b));
         }
         else {
-            // ... for a later invocation in the same run, so we'll modify the state array directly.
+            // ... for a later invocation in the same run, so we'll modify the
+state array directly.
 elog(WARNING, "fmcs_trans: next iteration in the same run");
   PG_RETURN_TEXT(tsmiles);
         }
     }
-    else 
+    else
     {
 elog(WARNING, "fmcs_trans: Not in aggregate context");
         // Not in aggregate context
@@ -623,4 +577,3 @@ elog(WARNING, "fmcs_trans: Not in aggregate context");
 }
 
 */
-

@@ -517,10 +517,10 @@ extern "C" char *makeMolFormulaText(CROMol data, int *len,
     StringData = RDKit::Descriptors::calcMolFormula(*mol, separateIsotopes,
                                                     abbreviateHIsotopes);
   } catch (...) {
-    ereport(WARNING, (errcode(ERRCODE_WARNING),
-                      errmsg(
-                          "makeMolFormulaText: problems converting molecule to "
-                          "sum formula")));
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeMolFormulaText: problems converting molecule to "
+                    "sum formula")));
     StringData = "";
   }
 
@@ -528,13 +528,17 @@ extern "C" char *makeMolFormulaText(CROMol data, int *len,
   return (char *)StringData.c_str();
 }
 
-extern "C" const char *MolInchi(CROMol i) {
+extern "C" const char *MolInchi(CROMol i, const char *opts) {
   std::string inchi = "InChI not available";
 #ifdef BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
   ExtraInchiReturnValues rv;
   try {
-    inchi = MolToInchi(*im, rv, "/AuxNone /WarnOnEmptyStructure");
+    std::string sopts = "/AuxNone /WarnOnEmptyStructure";
+    if (strlen(opts)) {
+      sopts += std::string(" ") + std::string(opts);
+    }
+    inchi = MolToInchi(*im, rv, sopts.c_str());
   } catch (MolSanitizeException &e) {
     inchi = "";
     elog(ERROR, "MolInchi: cannot kekulize molecule");
@@ -545,13 +549,17 @@ extern "C" const char *MolInchi(CROMol i) {
 #endif
   return strdup(inchi.c_str());
 }
-extern "C" const char *MolInchiKey(CROMol i) {
+extern "C" const char *MolInchiKey(CROMol i, const char *opts) {
   std::string key = "InChI not available";
 #ifdef BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
   ExtraInchiReturnValues rv;
   try {
-    std::string inchi = MolToInchi(*im, rv, "/AuxNone /WarnOnEmptyStructure");
+    std::string sopts = "/AuxNone /WarnOnEmptyStructure";
+    if (strlen(opts)) {
+      sopts += std::string(" ") + std::string(opts);
+    }
+    std::string inchi = MolToInchi(*im, rv, sopts.c_str());
     key = InchiToInchiKey(inchi);
   } catch (MolSanitizeException &e) {
     key = "";
@@ -1460,9 +1468,8 @@ extern "C" char *makeChemReactText(CChemicalReaction data, int *len,
     }
   } catch (...) {
     ereport(WARNING, (errcode(ERRCODE_WARNING),
-                      errmsg(
-                          "makeChemReactText: problems converting chemical "
-                          "reaction  to SMILES/SMARTS")));
+                      errmsg("makeChemReactText: problems converting chemical "
+                             "reaction  to SMILES/SMARTS")));
     StringData = "";
   }
 
