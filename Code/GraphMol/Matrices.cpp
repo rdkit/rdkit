@@ -349,6 +349,7 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
       switch (pred[*nbrIdx]) {
         case -1:
           pred[*nbrIdx]=curAid;
+          bfsQ.push_back(rdcast<int>(*nbrIdx));
           break;
         case -3: // end found
           pred[*nbrIdx] = curAid;
