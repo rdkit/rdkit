@@ -1711,6 +1711,23 @@ void testShortestPath() {
     CHECK_INVARIANT(path.size() == 0, "");
     delete m;
   }
+  // fused ring test
+  {
+	  std::string smi="[H]c1nc2c(C(=O)N([H])C2([H])Cl)c([H])c1Cl";
+	  ROMol *m=SmilesToMol(smi);
+
+	  INT_LIST path=MolOps::getShortestPath(*m, 8, 11);
+	  CHECK_INVARIANT(path.size()==7, "");
+	  INT_LIST_CI pi=path.begin();
+	  CHECK_INVARIANT((*pi)==8, ""); pi++;
+	  CHECK_INVARIANT((*pi)==7, ""); pi++;
+	  CHECK_INVARIANT((*pi)==2, ""); pi++;
+	  pi++; // two equally long routes here
+	  pi++; // two equally long routes here
+	  CHECK_INVARIANT((*pi)==10, ""); pi++;
+	  CHECK_INVARIANT((*pi)==11, ""); pi++;
+	  delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

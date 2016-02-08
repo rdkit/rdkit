@@ -331,16 +331,10 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
   RANGE_CHECK(0, aid2, nats - 1);
   CHECK_INVARIANT(aid1 != aid2, "");
 
-  INT_VECT pred, doneAtms;
-
-  // pred.reserve(nats);
-  // doneAtms.reserve(nats);
-  pred.resize(nats);
-  doneAtms.resize(nats);
-  int ai;
-  for (ai = 0; ai < nats; ++ai) {
-    doneAtms[ai] = 0;
-  }
+  INT_VECT pred;
+  pred.resize(nats, -1); // set all atoms to unprocessed state
+  pred[aid1] = -2; // marks begin
+  pred[aid2] = -3; // marks end
 
   std::deque<int> bfsQ;
 
@@ -352,20 +346,24 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
     boost::tie(nbrIdx, endNbrs) =
         mol.getAtomNeighbors(mol.getAtomWithIdx(curAid));
     while (nbrIdx != endNbrs) {
-      if (doneAtms[*nbrIdx] == 0) {
-        pred[*nbrIdx] = curAid;
-        if (static_cast<int>(*nbrIdx) == aid2) {
+      switch (pred[*nbrIdx]) {
+        case -1:
+          pred[*nbrIdx]=curAid;
+          break;
+        case -3: // end found
+          pred[*nbrIdx] = curAid;
           done = true;
+          goto EXIT_LOOP;
+          break;
+        default: // already processed (or begin)
           break;
         }
-        bfsQ.push_back(rdcast<int>(*nbrIdx));
-      }
       nbrIdx++;
     }
-    doneAtms[curAid] = 1;
     bfsQ.pop_front();
   }
 
+  EXIT_LOOP:
   INT_LIST res;
   if (done) {
     done = false;
