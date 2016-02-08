@@ -1,6 +1,7 @@
 rdkit_python_extension(rdchem 
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
                        Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
+                       ResonanceMolSupplier.cpp
                        DEST Chem 
                        LINK_LIBRARIES 
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
@@ -49,3 +50,7 @@ add_pytest(pyGraphMolWrap
 
 add_pytest(pyTestConformerWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)
+if (RDK_TEST_MULTITHREADED)
+  add_pytest(pyTestThreads
+           ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
+endif (RDK_TEST_MULTITHREADED)

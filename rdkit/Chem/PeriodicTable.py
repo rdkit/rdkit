@@ -14,8 +14,6 @@
   this data is mostly obsolete
 
 """
-import re
-blankExpr = re.compile(r'\ *\t*\ *')
 # Num	Symb	RCov	RBO	RVdW	Max Bnd	Mass   nval
 periodicData=\
 """
@@ -128,7 +126,7 @@ periodicData=\
 nameTable = {}
 numTable = {}
 for line in periodicData.split('\n'):
-  splitLine = blankExpr.split(line)
+  splitLine = line.split()
   if len(splitLine)>1:
     nameTable[splitLine[1]] = (int(splitLine[0]),float(splitLine[6]),int(splitLine[7]),\
                                int(splitLine[5]),float(splitLine[2]),float(splitLine[3]),

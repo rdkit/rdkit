@@ -43,7 +43,7 @@ and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on Git
 
 ## Installation
 
-Installation instructions are available in [Docs/Book/Install.rst](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.rst).
+Installation instructions are available in [Docs/Book/Install.md](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.md).
 
 #### Binary distributions, anaconda, homebrew
 

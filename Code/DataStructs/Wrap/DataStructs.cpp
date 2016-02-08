@@ -10,14 +10,13 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rddatastructs_array_API
 
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/DiscreteValueVect.h>
 #include "DataStructs.h"
 #include <boost/python/numeric.hpp>
 #include <numpy/npy_common.h>
-#include <numpy/arrayobject.h>
 #include <RDBoost/import_array.h>
 #include <RDBoost/pyint_api.h>
 
@@ -29,45 +28,48 @@ void wrap_BitOps();
 void wrap_Utils();
 void wrap_discreteValVect();
 void wrap_sparseIntVect();
+void wrap_FPB();
 
 template <typename T>
-void convertToNumpyArray(const T &v,python::object destArray){
+void convertToNumpyArray(const T &v, python::object destArray) {
   if (!PyArray_Check(destArray.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
-  PyArrayObject *destP=(PyArrayObject *)destArray.ptr();
+  PyArrayObject *destP = (PyArrayObject *)destArray.ptr();
   npy_intp ndims[1];
-  ndims[0]=v.size();
+  ndims[0] = v.size();
   PyArray_Dims dims;
-  dims.ptr=ndims;
-  dims.len=1;
-  PyArray_Resize(destP,&dims,0,NPY_ANYORDER);
-  for(unsigned int i=0;i<v.size();++i){
+  dims.ptr = ndims;
+  dims.len = 1;
+  PyArray_Resize(destP, &dims, 0, NPY_ANYORDER);
+  for (unsigned int i = 0; i < v.size(); ++i) {
     PyObject *iItem = PyInt_FromLong(v[i]);
-    PyArray_SETITEM(destP,PyArray_GETPTR1(destP,i),iItem);
+    PyArray_SETITEM(destP, static_cast<char *>(PyArray_GETPTR1(destP, i)),
+                    iItem);
     Py_DECREF(iItem);
   }
 }
 
-
-
-BOOST_PYTHON_MODULE(cDataStructs)
-{
+BOOST_PYTHON_MODULE(cDataStructs) {
   rdkit_import_array();
   python::scope().attr("__doc__") =
-    "Module containing an assortment of functionality for basic data structures.\n"
-    "\n"
-    "At the moment the data structures defined are:\n"
-    "  Bit Vector classes (for storing signatures, fingerprints and the like:\n"
-    "    - ExplicitBitVect: class for relatively small (10s of thousands of bits) or\n"
-    "                       dense bit vectors.\n"
-    "    - SparseBitVect:   class for large, sparse bit vectors\n"
-    "  DiscreteValueVect:   class for storing vectors of integers\n"
-    "  SparseIntVect:       class for storing sparse vectors of integers\n"
-    ;
-  
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
+      "Module containing an assortment of functionality for basic data "
+      "structures.\n"
+      "\n"
+      "At the moment the data structures defined are:\n"
+      "  Bit Vector classes (for storing signatures, fingerprints and the "
+      "like:\n"
+      "    - ExplicitBitVect: class for relatively small (10s of thousands of "
+      "bits) or\n"
+      "                       dense bit vectors.\n"
+      "    - SparseBitVect:   class for large, sparse bit vectors\n"
+      "  DiscreteValueVect:   class for storing vectors of integers\n"
+      "  SparseIntVect:       class for storing sparse vectors of integers\n";
+
+  python::register_exception_translator<IndexErrorException>(
+      &translate_index_error);
+  python::register_exception_translator<ValueErrorException>(
+      &translate_value_error);
 
   wrap_Utils();
   wrap_SBV();
@@ -75,10 +77,14 @@ BOOST_PYTHON_MODULE(cDataStructs)
   wrap_BitOps();
   wrap_discreteValVect();
   wrap_sparseIntVect();
+  wrap_FPB();
 
-  python::def("ConvertToNumpyArray", (void (*)(const ExplicitBitVect &,python::object))convertToNumpyArray,
-              (python::arg("bv"),python::arg("destArray")));
-  python::def("ConvertToNumpyArray", (void (*)(const RDKit::DiscreteValueVect &,python::object))convertToNumpyArray,
-              (python::arg("bv"),python::arg("destArray")));
-
+  python::def(
+      "ConvertToNumpyArray",
+      (void (*)(const ExplicitBitVect &, python::object))convertToNumpyArray,
+      (python::arg("bv"), python::arg("destArray")));
+  python::def("ConvertToNumpyArray",
+              (void (*)(const RDKit::DiscreteValueVect &,
+                        python::object))convertToNumpyArray,
+              (python::arg("bv"), python::arg("destArray")));
 }

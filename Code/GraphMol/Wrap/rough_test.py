@@ -15,9 +15,51 @@ from rdkit import RDConfig,rdBase
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit import six
+from rdkit import __version__
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
+
+def getTotalFormalCharge(mol):
+  totalFormalCharge = 0
+  for atom in mol.GetAtoms():
+    totalFormalCharge += atom.GetFormalCharge()
+  return totalFormalCharge
+
+def cmpFormalChargeBondOrder(self, mol1, mol2):
+  self.assertEqual(mol1.GetNumAtoms(), mol2.GetNumAtoms())
+  self.assertEqual(mol1.GetNumBonds(), mol2.GetNumBonds())
+  for i in range(mol1.GetNumAtoms()):
+    self.assertEqual(mol1.GetAtomWithIdx(i).GetFormalCharge(),
+      mol2.GetAtomWithIdx(i).GetFormalCharge())
+  for i in range(mol1.GetNumBonds()):
+    self.assertEqual(mol1.GetBondWithIdx(i).GetBondType(),
+      mol2.GetBondWithIdx(i).GetBondType())
+
+def setResidueFormalCharge(mol, res, fc):
+  for query in res:
+    matches = mol.GetSubstructMatches(query)
+    for match in matches:
+      mol.GetAtomWithIdx(match[-1]).SetFormalCharge(fc)
+
+def getBtList2(resMolSuppl):
+  btList2 = []
+  while (not resMolSuppl.atEnd()):
+    resMol = next(resMolSuppl)
+    bt = [];
+    for bond in resMol.GetBonds():
+      bt.append(int(bond.GetBondTypeAsDouble()))
+    btList2.append(bt)
+  for i in range(len(btList2)):
+    same = True
+    for j in range(len(btList2[i])):
+      if (not i):
+        continue
+      if (same):
+        same = (btList2[i][j] == btList2[i - 1][j])
+    if (i and same):
+      return None
+  return btList2
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -227,85 +269,17 @@ class TestCase(unittest.TestCase):
     for atom in mol.GetAtoms():
       self.assertTrue(atom)
     ats = mol.GetAtoms()
-    try:
-      ats[1]
-    except:
-      ok = 0
-    else:
-      ok = 1
-    self.assertTrue(ok)
-    try:
+    ats[1]
+    with self.assertRaisesRegexp(IndexError, ""):
       ats[12]
-    except IndexError:
-      ok = 1
-    else:
-      ok = 0
-    self.assertTrue(ok)
-
-    if 0:
-      for atom in mol.GetHeteros():
-        self.assertTrue(atom)
-      ats = mol.GetHeteros()
-      try:
-        ats[0]
-      except:
-        ok = 0
-      else:
-        ok = 1
-      self.assertTrue(ok)
-      self.assertTrue(ats[0].GetIdx()==2)
-      try:
-        ats[12]
-      except IndexError:
-        ok = 1
-      else:
-        ok = 0
-      self.assertTrue(ok)
-
 
     for bond in mol.GetBonds():
       self.assertTrue(bond)
     bonds = mol.GetBonds()
-    try:
-      bonds[1]
-    except:
-      ok = 0
-    else:
-      ok = 1
-    self.assertTrue(ok)
-    try:
+    bonds[1]
+    with self.assertRaisesRegexp(IndexError, ""):
       bonds[12]
-    except IndexError:
-      ok = 1
-    else:
-      ok = 0
-    self.assertTrue(ok)
       
-    if 0:
-      mol = Chem.MolFromSmiles('c1ccccc1C')
-      for atom in mol.GetAromaticAtoms():
-        self.assertTrue(atom)
-      ats = mol.GetAromaticAtoms()
-      try:
-        ats[0]
-      except:
-        ok = 0
-      else:
-        ok = 1
-      self.assertTrue(ok)
-      self.assertTrue(ats[0].GetIdx()==0)
-      self.assertTrue(ats[1].GetIdx()==1)
-      self.assertTrue(ats[2].GetIdx()==2)
-      try:
-        ats[12]
-      except IndexError:
-        ok = 1
-      else:
-        ok = 0
-      self.assertTrue(ok)
-
-
-
 
   def test11MolOps(self) :
     mol = Chem.MolFromSmiles('C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3')
@@ -434,7 +408,7 @@ class TestCase(unittest.TestCase):
     for b in bs:
       try:
         a2 = b.GetOtherAtom(a)
-      except:
+      except Exception:
         a2=None
       self.assertTrue(a2)
     self.assertTrue(len(bs)==3)
@@ -473,6 +447,49 @@ class TestCase(unittest.TestCase):
     m.ClearComputedProps()
     self.assertTrue(not m.HasProp('cprop1'))
     self.assertTrue(not m.HasProp('cprop2'))
+
+    m.SetDoubleProp("a", 2.0)
+    self.assertTrue(m.GetDoubleProp("a") == 2.0)
+    
+    try:
+      self.assertTrue(m.GetIntProp("a") == 2.0)
+      raise Exception("Expected runtime exception")
+    except ValueError:
+      pass
+    
+    try:
+      self.assertTrue(m.GetUnsignedProp("a") == 2.0)
+      raise Exception("Expected runtime exception")
+    except ValueError:
+      pass
+
+    
+    m.SetDoubleProp("a", -2)
+    self.assertTrue(m.GetDoubleProp("a") == -2.0)
+    m.SetIntProp("a", -2)
+    self.assertTrue(m.GetIntProp("a") == -2)
+
+    try:
+      m.SetUnsignedProp("a", -2)
+      raise Exception("Expected failure with negative unsigned number")
+    except OverflowError:
+      pass
+
+
+    m.SetBoolProp("a", False)
+    self.assertTrue(m.GetBoolProp("a") == False)    
+
+    self.assertEquals(m.GetPropsAsDict(), {'a': False, 'prop1': 'foob'})
+    m.SetDoubleProp("b", 1000.0)
+    m.SetUnsignedProp("c", 2000)
+    m.SetIntProp("d", -2)
+    m.SetUnsignedProp("e", 2, True)
+    self.assertEquals(m.GetPropsAsDict(),
+                      {'a': False, 'c': 2000, 'b': 1000.0,
+                       'd': -2, 'prop1': 'foob'})
+    self.assertEquals(m.GetPropsAsDict(False, True),
+                      {'a': False, 'c': 2000, 'b': 1000.0, 'e': 2,
+                       'd': -2, 'prop1': 'foob'})
 
   def test17Kekulize(self):
     m = Chem.MolFromSmiles('c1ccccc1')
@@ -657,7 +674,7 @@ class TestCase(unittest.TestCase):
       Chem.MolFromSmiles('C=O').HasSubstructMatch(Chem.MolFromSmarts('fiib'))
     #except ValueError:
     #  ok=True
-    except:
+    except Exception:
       ok=True
     self.assertTrue(ok  )
 
@@ -1114,26 +1131,17 @@ mol-4,CCOC
     m = smiSup[3]
     self.assertTrue(len(smiSup)==4)
 
-    try:
+    with self.assertRaisesRegexp(Exception, ""):
       smiSup[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    self.assertTrue(ok)
 
     smiSup.SetData(inD, delimiter=",",
                    smilesColumn=0, nameColumn=-1,
                    titleLine=0)
-    try:
+    with self.assertRaisesRegexp(Exception, ""):
       smiSup[4]
-    except:
-      ok=1
-    else:
-      ok=0
-    self.assertTrue(ok)
+
     sys.stderr.write('>>> This may result in an infinite loop.  It should finish almost instantly\n')
-    self.assertTrue(len(smiSup)==4)
+    self.assertEqual(len(smiSup), 4)
     sys.stderr.write('<<< OK, it finished.\n')
 
 
@@ -2995,7 +3003,7 @@ CAS<~>
     e = False
     try:
       w.write(m)
-    except:
+    except Exception:
       sys.stderr.write('Opening gzip as binary fails on Python3 ' \
         'upon writing to SDWriter without crashing the RDKit\n')
       e = True
@@ -3003,7 +3011,7 @@ CAS<~>
       e = (sys.version_info < (3, 0))
     try:
       w.close()
-    except:
+    except Exception:
       sys.stderr.write('Opening gzip as binary fails on Python3 ' \
         'upon closing SDWriter without crashing the RDKit\n')
       e = True
@@ -3013,7 +3021,7 @@ CAS<~>
     w=None
     try:
       outf.close()
-    except:
+    except Exception:
       sys.stderr.write('Opening gzip as binary fails on Python3 ' \
         'upon closing the stream without crashing the RDKit\n')
       e = True
@@ -3058,7 +3066,7 @@ CAS<~>
     inf = gzip.open(fileN)
     suppl = Chem.ForwardSDMolSupplier(inf)
     m0 = next(suppl)
-    self.assertTrue(m0 is not None)
+    self.assertIsNot(m0, None)
     inf.close()
     del suppl
     
@@ -3090,6 +3098,385 @@ CAS<~>
       self.assertEqual(Chem.MolToFASTA(m),fasta)
       self.assertEqual(Chem.MolToSmiles(m,isomericSmiles=True),smi)
       
+  def testResMolSupplier(self):
+    mol = Chem.MolFromSmiles('CC')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    del resMolSuppl
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
+    self.assertEqual(len(resMolSuppl), 1)
+    self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
+
+    mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
+    totalFormalCharge = getTotalFormalCharge(mol)
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertFalse(resMolSuppl.GetIsEnumerated())
+    self.assertEqual(len(resMolSuppl), 4)
+    self.assertTrue(resMolSuppl.GetIsEnumerated())
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertFalse(resMolSuppl.GetIsEnumerated())
+    resMolSuppl.Enumerate()
+    self.assertTrue(resMolSuppl.GetIsEnumerated())
+    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() \
+      != resMolSuppl[1].GetBondBetweenAtoms(0, 1).GetBondType())
+      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() \
+      != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+    bondTypeDict = {}
+    # check that we actually have two alternate Kekule structures
+    bondTypeDict[resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType()] = True
+    bondTypeDict[resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType()] = True
+    self.assertEqual(len(bondTypeDict), 2)
+    
+    bondTypeDict = {}
+    resMolSuppl = Chem.ResonanceMolSupplier(mol,
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS)
+    self.assertEqual(len(resMolSuppl), 32)
+    for i in range(len(resMolSuppl)):
+      resMol = resMolSuppl[i]
+      self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
+    while (not resMolSuppl.atEnd()):
+      resMol = six.next(resMolSuppl)
+      self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
+    resMolSuppl.reset()
+    cmpFormalChargeBondOrder(self, resMolSuppl[0], six.next(resMolSuppl))
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol,
+      Chem.ALLOW_INCOMPLETE_OCTETS \
+      | Chem.UNCONSTRAINED_CATIONS \
+      | Chem.UNCONSTRAINED_ANIONS, 10)
+    self.assertEqual(len(resMolSuppl), 10)
+    
+    crambinPdb = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    mol = Chem.MolFromPDBFile(crambinPdb)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 1)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+
+  def testSubstructMatchAcetate(self):
+    mol = Chem.MolFromSmiles('CC(=O)[O-]')
+    query = Chem.MolFromSmarts('C(=O)[O-]')
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    matches = mol.GetSubstructMatches(query)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = mol.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = mol.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    query = Chem.MolFromSmarts('C(~O)~O')
+    matches = mol.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = mol.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify = True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, ((1, 2, 3),))
+
+  def testSubstructMatchDMAP(self):
+    mol = Chem.MolFromSmiles('C(C)Nc1cc[nH+]cc1')
+    query = Chem.MolFromSmarts('[#7+]')
+    
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    matches = mol.GetSubstructMatches(query,
+      False, False, False)
+    self.assertEqual(len(matches), 1)
+    p = matches[0]
+    self.assertEqual(p[0], 6)
+    matches = resMolSuppl.GetSubstructMatches(query,
+      False, False, False)
+    self.assertEqual(len(matches), 2)
+    v = []
+    p = matches[0]
+    v.append(p[0])
+    p = matches[1]
+    v.append(p[0]);
+    v.sort()
+    self.assertEqual(v[0], 2)
+    self.assertEqual(v[1], 6)
+
+  def testCrambin(self):
+    crambinPdb = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','1CRN.pdb')
+    crambin = Chem.MolFromPDBFile(crambinPdb)
+    res = [];
+    # protonate NH2
+    res.append(Chem.MolFromSmarts('[Nh2][Ch;Ch2]'))
+    # protonate Arg
+    res.append(Chem.MolFromSmarts('[Nh][C]([Nh2])=[Nh]'))
+    setResidueFormalCharge(crambin, res, 1)
+    res = [];
+    # deprotonate COOH
+    res.append(Chem.MolFromSmarts('C(=O)[Oh]'))
+    setResidueFormalCharge(crambin, res, -1);
+    res = [];
+    resMolSupplST = Chem.ResonanceMolSupplier(crambin)
+    # crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
+    # and 1 terminal COO- (2 resonance structures each)
+    # so possible resonance structures are 3^2 * 2^3 = 72
+    self.assertEqual(len(resMolSupplST), 72)
+    self.assertEqual(resMolSupplST.GetNumConjGrps(), 56)
+    carboxylateQuery = Chem.MolFromSmarts('C(=O)[O-]')
+    guanidiniumQuery = Chem.MolFromSmarts('NC(=[NH2+])N')
+    matches = crambin.GetSubstructMatches(carboxylateQuery)
+    self.assertEqual(len(matches), 3)
+    matches = crambin.GetSubstructMatches(carboxylateQuery,
+      uniquify = False)
+    self.assertEqual(len(matches), 3)
+    matches = crambin.GetSubstructMatches(guanidiniumQuery)
+    self.assertEqual(len(matches), 0)
+    matches = crambin.GetSubstructMatches(guanidiniumQuery,
+      uniquify = False)
+    self.assertEqual(len(matches), 0)
+    matches = resMolSupplST.GetSubstructMatches(carboxylateQuery)
+    self.assertEqual(len(matches), 6)
+    self.assertEqual(matches, ((166, 167, 168), (166, 168, 167),
+      (298, 299, 300), (298, 300, 299), (320, 321, 326), (320, 326, 321)))
+    matches = resMolSupplST.GetSubstructMatches(carboxylateQuery,
+      uniquify = True)
+    self.assertEqual(len(matches), 3)
+    self.assertEqual(matches, ((166, 167, 168),
+      (298, 299, 300), (320, 321, 326)))
+    matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery)
+    self.assertEqual(len(matches), 8)
+    self.assertEqual(matches, ((66, 67, 68, 69), (66, 67, 69, 68),
+      (68, 67, 69, 66), (69, 67, 68, 66), (123, 124, 125, 126),
+      (123, 124, 126, 125), (125, 124, 126, 123), (126, 124, 125, 123)))
+    matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery,
+      uniquify = True)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+    btList2ST = getBtList2(resMolSupplST)
+    self.assertTrue(btList2ST)
+    resMolSupplMT = Chem.ResonanceMolSupplier(crambin)
+    resMolSupplMT.SetNumThreads(0)
+    self.assertEqual(len(resMolSupplST), len(resMolSupplMT))
+    btList2MT = getBtList2(resMolSupplMT)
+    self.assertTrue(btList2MT)
+    self.assertEqual(len(btList2ST), len(btList2MT))
+    for i in range(len(btList2ST)):
+      for j in range(len(btList2ST)):
+        self.assertEqual(btList2ST[i][j], btList2MT[i][j])
+    for suppl in [resMolSupplST, resMolSupplMT]:
+      matches = suppl.GetSubstructMatches(carboxylateQuery,
+        numThreads = 0)
+      self.assertEqual(len(matches), 6)
+      self.assertEqual(matches, ((166, 167, 168), (166, 168, 167),
+        (298, 299, 300), (298, 300, 299), (320, 321, 326),
+        (320, 326, 321)))
+      matches = suppl.GetSubstructMatches(carboxylateQuery,
+        uniquify = True, numThreads = 0)
+      self.assertEqual(len(matches), 3)
+      self.assertEqual(matches,
+        ((166, 167, 168), (298, 299, 300), (320, 321, 326)))
+      matches = suppl.GetSubstructMatches(guanidiniumQuery,
+        numThreads = 0)
+      self.assertEqual(len(matches), 8)
+      self.assertEqual(matches, ((66, 67, 68, 69), (66, 67, 69, 68),
+        (68, 67, 69, 66), (69, 67, 68, 66), (123, 124, 125, 126),
+        (123, 124, 126, 125), (125, 124, 126, 123), (126, 124, 125, 123)))
+      matches = suppl.GetSubstructMatches(guanidiniumQuery,
+        uniquify = True, numThreads = 0)
+      self.assertEqual(len(matches), 2)
+      self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+
+  def testAtomBondProps(self):
+    m = Chem.MolFromSmiles('c1ccccc1')
+    for atom in m.GetAtoms():
+      self.assertEquals(atom.GetPropsAsDict(), {'_CIPRank': 0})
+    for bond in m.GetBonds():
+      self.assertEquals(bond.GetPropsAsDict(), {})
+
+  def testSDProps(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                         'test_data','NCI_aids_few.sdf')
+    #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    sddata = [{'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000    48',
+               'NSC': 48, 'NCI_AIDS_Antiviral_Screen_IC50':
+               '2.00E-04\tM\t=\t2.46E-05\t3',
+               '_Name': 48, 'CAS_RN': '15716-70-8', '_MolFileComments': '15716-70-8',
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000    78',
+               'NSC': 78,
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t9.80E-05\t3', 
+               '_Name': 78, 'CAS_RN': '6290-84-2', '_MolFileComments': '6290-84-2', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   128',
+               'NSC': 128, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t4.60E-05\t4', 
+               '_Name': 128, 'CAS_RN': '5395-10-8', '_MolFileComments': '5395-10-8', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   163',
+               'NSC': 163, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '6.75E-04\tM\t>\t6.75E-04\t2', 
+               '_Name': 163, 'CAS_RN': '81-11-8', '_MolFileComments': '81-11-8', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '6.75E-04\tM\t>\t6.75E-04\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   164',
+               'NSC': 164, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2', 
+               '_Name': 164, 'CAS_RN': '5325-43-9', '_MolFileComments': '5325-43-9', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   170',
+               'NSC': 170, 
+               '_Name': 170, 'CAS_RN': '999-99-9', '_MolFileComments': '999-99-9', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '9.47E-04\tM\t>\t9.47E-04\t1', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   180',
+               'NSC': 180, 
+               'NCI_AIDS_Antiviral_Screen_IC50':
+               '6.46E-04\tM\t=\t5.80E-04\t2\n1.81E-03\tM\t=\t6.90E-04\t2', 
+               '_Name': 180, 'CAS_RN': '69-72-7', '_MolFileComments': '69-72-7', 
+               'NCI_AIDS_Antiviral_Screen_EC50':
+               '6.46E-04\tM\t>\t6.46E-04\t2\n1.81E-03\tM\t>\t1.81E-03\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   186',
+               'NSC': 186, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '1.44E-04\tM\t=\t2.49E-05\t2', 
+               '_Name': 186, 'CAS_RN': '518-75-2', '_MolFileComments': '518-75-2', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '1.44E-04\tM\t>\t1.44E-04\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   192',
+               'NSC': 192, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t3.38E-06\t2', 
+               '_Name': 192, 'CAS_RN': '2217-55-2', '_MolFileComments': '2217-55-2', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   203',
+               'NSC': 203, 
+               '_Name': 203, 'CAS_RN': '1155-00-6', '_MolFileComments': '1155-00-6', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   210',
+               'NSC': 210, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '1.33E-03\tM\t>\t1.33E-03\t2', 
+               '_Name': 210, 'CAS_RN': '5325-75-7', '_MolFileComments': '5325-75-7', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '1.33E-03\tM\t>\t1.33E-03\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   211',
+               'NSC': 211, 
+               'NCI_AIDS_Antiviral_Screen_IC50':
+               '2.00E-04\tM\t>\t2.00E-04\t8\n2.00E-03\tM\t=\t1.12E-03\t2', 
+               '_Name': 211, 'CAS_RN': '5325-76-8', '_MolFileComments': '5325-76-8', 
+               'NCI_AIDS_Antiviral_Screen_EC50':
+               '2.00E-04\tM\t>\t7.42E-05\t8\n2.00E-03\tM\t=\t6.35E-05\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CM'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   213',
+               'NSC': 213, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               '_Name': 213, 'CAS_RN': '119-80-2', '_MolFileComments': '119-80-2', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   220',
+               'NSC': 220, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               '_Name': 220, 'CAS_RN': '5325-83-7', '_MolFileComments': '5325-83-7', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   229',
+               'NSC': 229, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2', 
+               '_Name': 229, 'CAS_RN': '5325-88-2', '_MolFileComments': '5325-88-2', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},
+              {'_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   256',
+               'NSC': 256, 
+               'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               '_Name': 256, 'CAS_RN': '5326-06-7', '_MolFileComments': '5326-06-7', 
+               'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4', 
+               'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'},]
+    sdSup = Chem.SDMolSupplier(fileN)
+    for i,mol in enumerate(sdSup):
+      self.assertEquals(mol.GetPropsAsDict(includePrivate=True), sddata[i])
+
+  def testGetSetProps(self):
+    m = Chem.MolFromSmiles("CC")
+    errors = {"int": "key `foo` exists but does not result in an integer value",
+              "double": "key `foo` exists but does not result in a double value",
+              "bool": "key `foo` exists but does not result in a True or False value"}
+
+    for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
+      ob.SetDoubleProp("foo", 2.0)
+      with self.assertRaises(ValueError) as e:
+        ob.GetBoolProp("foo")
+      self.assertEquals(str(e.exception), errors["bool"])
+             
+      with self.assertRaises(ValueError) as e:
+        ob.GetIntProp("foo")
+      self.assertEquals(str(e.exception), errors["int"])
+      
+      ob.SetBoolProp("foo", True)
+      with self.assertRaises(ValueError) as e:      
+        ob.GetDoubleProp("foo")
+      self.assertEquals(str(e.exception), errors["double"])
+      
+      with self.assertRaises(ValueError) as e:              
+        ob.GetIntProp("foo")
+      self.assertEquals(str(e.exception), errors["int"])
+
+  def testInvariantException(self):
+    m = Chem.MolFromSmiles("C")
+    try:
+      m.GetAtomWithIdx(3)
+    except RuntimeError as e:
+      import platform
+      details = str(e)
+      if platform.system()=='Windows':
+        details = details.replace('\\','/')
+      self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
+      self.assertTrue("Failed Expression: 3 <= 0" in details)
+      self.assertTrue("RDKIT:" in details)
+      self.assertTrue(__version__ in details)
+
+  # this test should probably always be last since it wraps
+  #  the logging stream
+  def testLogging(self):
+    err = sys.stderr
+    try:
+      loggers = [("RDKit ERROR",   "1", Chem.LogErrorMsg),
+                 ("RDKit WARNING", "2", Chem.LogWarningMsg)]
+      for msg, v, log in loggers:
+        sys.stderr = six.StringIO()
+        log(v)
+        self.assertEquals(sys.stderr.getvalue(), "")
+
+      Chem.WrapLogs()
+      for msg, v, log in loggers:
+        sys.stderr = six.StringIO()
+        log(v)
+        s = sys.stderr.getvalue()
+        self.assertTrue(msg in s)
+    finally:
+      sys.stderr = err
+    
 if __name__ == '__main__':
   unittest.main()
 

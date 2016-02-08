@@ -226,7 +226,7 @@ class TestCase(unittest.TestCase):
                                     )
                                 )
                             )
-                except:
+                except Exception:
                     y = ''
                 if y == '':
                     # metal involved?

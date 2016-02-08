@@ -14,7 +14,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -34,106 +35,117 @@
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
 
-namespace RDKit{
+namespace RDKit {
 
-  class ChemicalReaction;
+class ChemicalReaction;
 
-  enum FingerprintType{
-	  AtomPairFP = 1,
-	  TopologicalTorsion,
-	  MorganFP,
-	  RDKitFP,
-	  PatternFP
-  };
+enum FingerprintType {
+  AtomPairFP = 1,
+  TopologicalTorsion,
+  MorganFP,
+  RDKitFP,
+  PatternFP
+};
 
-  //! A struct for storing parameters to manipulate
-  //! the calculation of fingerprints of chemical reactions
-  /*!
-     Different parameters can be chosen to influence the generation
-     of chemical reaction fingerprints. Generally different setting
-     should be used for structural or difference fingerprints.
+//! A struct for storing parameters to manipulate
+//! the calculation of fingerprints of chemical reactions
+/*!
+   Different parameters can be chosen to influence the generation
+   of chemical reaction fingerprints. Generally different setting
+   should be used for structural or difference fingerprints.
 
-     \param includeAgents        include the agents of a reaction for fingerprint generation
-     \param bitRatioAgents       in structural fingerprints it determines the ratio of bits of
-                                 the agents in the fingerprint
-     \param nonAgentWeight       in difference fingerprints weight factor for reactants and products
-                                 compared to agents
-     \param agentWeight          if agents are included, agents could be weighted compared to reactants
-                                 and products in difference fingerprints
-     \param fpSize               number of bits of the fingerprint
-     \param fpType               kind of fingerprint used, e.g AtompairFP. Be aware that only AtompairFP,
-                                 TopologicalTorsion and MorganFP were supported in the difference fingerprint.
-   */
-  struct ReactionFingerprintParams{
+   \param includeAgents        include the agents of a reaction for fingerprint
+   generation
+   \param bitRatioAgents       in structural fingerprints it determines the
+   ratio of bits of
+                               the agents in the fingerprint
+   \param nonAgentWeight       in difference fingerprints weight factor for
+   reactants and products
+                               compared to agents
+   \param agentWeight          if agents are included, agents could be weighted
+   compared to reactants
+                               and products in difference fingerprints
+   \param fpSize               number of bits of the fingerprint
+   \param fpType               kind of fingerprint used, e.g AtompairFP. Be
+   aware that only AtompairFP,
+                               TopologicalTorsion and MorganFP were supported in
+   the difference fingerprint.
+ */
+struct ReactionFingerprintParams {
+  ReactionFingerprintParams()
+      : includeAgents(false),
+        bitRatioAgents(0.2),
+        nonAgentWeight(10),
+        agentWeight(1),
+        fpSize(2048),
+        fpType(AtomPairFP) {}
 
-	  ReactionFingerprintParams():
-		includeAgents(false),
-		bitRatioAgents(0.2),
-		nonAgentWeight(10),
-		agentWeight(1),
-		fpSize(2048),
-		fpType(AtomPairFP){}
+  ReactionFingerprintParams(bool includeAgents, double bitRatioAgents,
+                            unsigned int nonAgentWeight, int agentWeight,
+                            unsigned int fpSize, FingerprintType fpType)
+      : includeAgents(includeAgents),
+        bitRatioAgents(bitRatioAgents),
+        nonAgentWeight(nonAgentWeight),
+        agentWeight(agentWeight),
+        fpSize(fpSize),
+        fpType(fpType) {}
 
-	  ReactionFingerprintParams(bool includeAgents, double bitRatioAgents,
-		  unsigned int nonAgentWeight, int agentWeight,
-	      unsigned int fpSize,FingerprintType fpType):
-    	    includeAgents(includeAgents),
-    	    bitRatioAgents(bitRatioAgents),
-    		nonAgentWeight(nonAgentWeight),
-    		agentWeight(agentWeight),
-			fpSize(fpSize),
-			fpType(fpType){}
+  bool includeAgents;
+  double bitRatioAgents;
+  unsigned int nonAgentWeight;
+  int agentWeight;
+  unsigned int fpSize;
+  FingerprintType fpType;
+};
 
-    bool includeAgents;
-    double bitRatioAgents;
-    unsigned int nonAgentWeight;
-    int agentWeight;
-    unsigned int fpSize;
-    FingerprintType fpType;
-  };
+const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096,
+                                                          PatternFP);
+const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1,
+                                                          2048, AtomPairFP);
 
-  const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096, PatternFP);
-  const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1, 2048, AtomPairFP);
+//! Generates a structural fingerprint for a reaction
+//! to use in screening
+/*!
+   A structural fingerprint is generated as an ExplicitBitVect to use for
+  searching
+   e.g. substructure in reactions. By default the fingerprint is generated as
+  4096 BitVect
+   using a PatternFP for reactants and products and tentatively agents which
+   were finally  concatenated
 
-  //! Generates a structural fingerprint for a reaction
-  //! to use in screening
-  /*!
-     A structural fingerprint is generated as an ExplicitBitVect to use for searching
-     e.g. substructure in reactions. By default the fingerprint is generated as 4096 BitVect
-     using a PatternFP for reactants and products and tentatively agents which
-     were finally  concatenated
+  \param rxn:          the reaction to be fingerprinted
+  \param params:       specific settings to manipulate fingerprint generation
 
-    \param rxn:          the reaction to be fingerprinted
-    \param params:       specific settings to manipulate fingerprint generation
+  \return the reaction fingerprint, as an ExplicitBitVect
 
-    \return the reaction fingerprint, as an ExplicitBitVect
+  <b>Notes:</b>
+    - the caller is responsible for <tt>delete</tt>ing the result
+*/
+ExplicitBitVect *StructuralFingerprintChemReaction(
+    const ChemicalReaction &rxn,
+    const ReactionFingerprintParams &params = DefaultStructuralFPParams);
 
-    <b>Notes:</b>
-      - the caller is responsible for <tt>delete</tt>ing the result
-  */
-  ExplicitBitVect *StructuralFingerprintChemReaction(const ChemicalReaction &rxn,
-		  const ReactionFingerprintParams &params = DefaultStructuralFPParams);
+//! Generates a difference fingerprint for a reaction
+//! to use in similarity search of reactions
+/*!
+   A difference fingerprint is generated as a SparseIntVect to use for
+   similarity search of reactions. By default the fingerprint is generated as
+  2048 bit
+   hashed fingerprint subtracting AtompairFP of the reactants from the products'
+  AtompairFP
+   and tentatively the agent AtompairFP is added
 
+  \param rxn:          the reaction to be fingerprinted
+  \param params:       specific settings to manipulate fingerprint generation
 
-  //! Generates a difference fingerprint for a reaction
-  //! to use in similarity search of reactions
-  /*!
-     A difference fingerprint is generated as a SparseIntVect to use for
-     similarity search of reactions. By default the fingerprint is generated as 2048 bit
-     hashed fingerprint subtracting AtompairFP of the reactants from the products' AtompairFP
-     and tentatively the agent AtompairFP is added
+  \return the reaction fingerprint, as an SparseIntVec
 
-    \param rxn:          the reaction to be fingerprinted
-    \param params:       specific settings to manipulate fingerprint generation
-
-    \return the reaction fingerprint, as an SparseIntVec
-
-    <b>Notes:</b>
-      - the caller is responsible for <tt>delete</tt>ing the result
-  */
-  SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(const ChemicalReaction &rxn,
-		  const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
-
+  <b>Notes:</b>
+    - the caller is responsible for <tt>delete</tt>ing the result
+*/
+SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
+    const ChemicalReaction &rxn,
+    const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
 }
 
 #endif

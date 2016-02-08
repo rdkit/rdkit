@@ -5,6 +5,8 @@
 #
 import sys,types
 from rdkit import Chem
+from rdkit import six
+
 
 from rdkit.VLib.Output import OutputNode as BaseOutputNode
 
@@ -23,14 +25,14 @@ class OutputNode(BaseOutputNode):
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> suppl = SupplyNode(contents=mols)
-    >>> import StringIO
-    >>> io = StringIO.StringIO()
-    >>> node = OutputNode(dest=io,delim=', ')
+    >>> from rdkit.six import StringIO
+    >>> sio = StringIO()
+    >>> node = OutputNode(dest=sio,delim=', ')
     >>> node.AddParent(suppl)
     >>> ms = [x for x in node]
     >>> len(ms)
     4
-    >>> txt = io.getvalue() 
+    >>> txt = sio.getvalue() 
     >>> repr(txt)
     "'1, C1CCC1\\\\n2, C1CC1\\\\n3, C=O\\\\n4, CCN\\\\n'"
 
@@ -48,7 +50,7 @@ class OutputNode(BaseOutputNode):
 
   def smilesOut(self,mol):
     self._nDumped += 1
-    if type(mol) in [types.TupleType,types.ListType]:
+    if type(mol) in (tuple,list):
       args = mol
       mol = args[0]
       if len(args)>1:
@@ -65,7 +67,6 @@ class OutputNode(BaseOutputNode):
     smi = Chem.MolToSmiles(mol)
     outp = [label,smi]+args
     return '%s\n'%(self._delim.join(outp))
-    
 
 #------------------------------------
 #

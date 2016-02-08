@@ -108,7 +108,15 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   globalProps = {}
   if startAnew:
     if os.path.exists(dbName):
-      os.unlink(dbName)
+      for i in range(5):
+        try:
+          os.unlink(dbName)
+          break
+        except:
+          import time
+          time.sleep(2)
+    if os.path.exists(dbName):
+      raise IOError('could not delete old database %s'%dbName)
   sIter=iter(suppl)
   setattr(Compound,nameCol.lower(),Column(nameCol.lower(),String,default=defaultVal,unique=uniqNames))
   if not skipSmiles:
@@ -159,20 +167,24 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       logger.info('  done %d'%nDone)
       try:
         session.commit()
-      except:
+      except Exception:
         session.rollback()
         for cmpd in cache:
           try:
             session.add(cmpd)
             session.commit()
-          except:
+          except Exception:
             session.rollback()
+          except BaseException:
+            # Rollback even with KeyboardInterrupt
+            session.rollback()
+            raise
       cache=[]
 
 
   try:
     session.commit()
-  except:
+  except BaseException as exc:
     import traceback
     traceback.print_exc()
     session.rollback()
@@ -180,9 +192,14 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       try:
         session.add(cmpd)
         session.commit()
-      except:
+      except Exception:
         session.rollback()
-
+      except BaseException:
+        session.rollback()
+        raise
+    if not isinstance(exc, Exception):
+      # Re-raise on KeyboardInterrupt, SystemExit, etc.
+      raise exc
 if __name__=='__main__':
   import sys
   sdf =Chem.SDMolSupplier(sys.argv[1])

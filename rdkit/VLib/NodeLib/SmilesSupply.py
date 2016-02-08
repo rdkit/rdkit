@@ -7,6 +7,8 @@ import sys,os.path
 from rdkit import RDConfig
 from rdkit.VLib.Supply import SupplyNode
 from rdkit import Chem
+from rdkit import six
+
 
 class SmilesSupplyNode(SupplyNode):
   """ Smiles supplier
@@ -52,9 +54,11 @@ class SmilesSupplyNode(SupplyNode):
     """
     r = None
     while not r:
-      r = self._supplier.next()
+      r = next(self._supplier)
     return r
 
+if six.PY3:
+    SmilesSupplyNode.__next__ = SmilesSupplyNode.next
   
 #------------------------------------
 #

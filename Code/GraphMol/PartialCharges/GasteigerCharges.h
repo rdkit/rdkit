@@ -13,15 +13,13 @@
 #include <vector>
 
 namespace RDKit {
-  class ROMol;
-  void computeGasteigerCharges(const ROMol *mol, int nIter=12,
-			       bool throwOnParamFailure=false);
-  void computeGasteigerCharges(const ROMol &mol, int nIter=12,
-			       bool throwOnParamFailure=false);
-  void computeGasteigerCharges(const ROMol &mol,std::vector<double> &charges,
-                               int nIter=12,bool throwOnParamFailure=false);
+class ROMol;
+void computeGasteigerCharges(const ROMol *mol, int nIter = 12,
+                             bool throwOnParamFailure = false);
+void computeGasteigerCharges(const ROMol &mol, int nIter = 12,
+                             bool throwOnParamFailure = false);
+void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
+                             int nIter = 12, bool throwOnParamFailure = false);
 }
 
 #endif
-
-    

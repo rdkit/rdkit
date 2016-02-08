@@ -99,7 +99,7 @@ def ErrorStats(conn,where,enrich=1):
   fields = 'overall_error,holdout_error,overall_result_matrix,holdout_result_matrix,overall_correct_conf,overall_incorrect_conf,holdout_correct_conf,holdout_incorrect_conf'
   try:
     data = conn.GetData(fields=fields,where=where)
-  except:
+  except Exception:
     import traceback
     traceback.print_exc()
     return None
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     args,extras = getopt.getopt(sys.argv[1:],'n:d:N:vX',('skip',
                                                         'enrich=',
                                                         ))
-  except:
+  except Exception:
     Usage()
 
   count = 3

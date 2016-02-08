@@ -29,10 +29,8 @@ namespace python = boost::python;
 //!
 template <typename T>
 class PySequenceHolder {
-public:
-  PySequenceHolder(python::object seq) {
-    d_seq = seq;
-  };
+ public:
+  PySequenceHolder(python::object seq) { d_seq = seq; };
 
   // --------------------------------------------------
   //! \brief Returns the size of the contained sequence.
@@ -40,7 +38,7 @@ public:
   //! NOTE: the sequence must have a \c __len__ attribute, otherwise
   //!       a \c ValueError will be raised.
   unsigned int size() const {
-    unsigned int res=0;
+    unsigned int res = 0;
     try {
       res = python::extract<int>(d_seq.attr("__len__")());
     } catch (...) {
@@ -53,31 +51,31 @@ public:
   //! \brief Returns an element of the sequence
   //!
   //! ARGUMENTS:
-  //!   - which: an integer specifying which element should be returned. 
-  //!  
+  //!   - which: an integer specifying which element should be returned.
+  //!
   //! NOTES:
   //!   - if the sequence is not \a which elements long, we raise an
   //!     \c IndexError
   //!   - if the element cannot be converted to type \c T, we raise a
   //!     \c ValueError
   T operator[](unsigned int which) const {
-    if(which > size()){
+    if (which > size()) {
       throw_index_error(which);
     }
 
-    try{
+    try {
       T res = python::extract<T>(d_seq[which]);
       return res;
     } catch (...) {
       throw_value_error("cannot extract desired type from sequence");
     }
 
-    POSTCONDITION(0,"cannot reach this point");
-    return static_cast<T>(0);
+    POSTCONDITION(0, "cannot reach this point");
+    return static_cast<T>(T());
   };
-private:
+
+ private:
   python::object d_seq;
 };
-
 
 #endif

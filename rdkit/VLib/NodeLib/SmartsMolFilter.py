@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 from rdkit import RDConfig
+from rdkit import six
 import sys,os,types
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
@@ -69,7 +70,7 @@ class SmartsFilter(FilterNode):
     for i in range(nPatts):
       p = patterns[i]
       c = counts[i]
-      if type(p) in types.StringTypes:
+      if type(p) in (str,bytes):
         m = Chem.MolFromSmarts(p)
         if not m:
           raise ValueError('bad smarts: %s'%(p))

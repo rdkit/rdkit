@@ -17,109 +17,103 @@
 #include "EmbeddedFrag.h"
 
 namespace RDKit {
-  class ROMol;
+class ROMol;
 }
 
 namespace RDDepict {
 
-  //! \brief Generate 2D coordinates (a depiction) for a molecule
-  /*! 
+//! \brief Generate 2D coordinates (a depiction) for a molecule
+/*!
 
-    \param mol the molecule were are interested in
+  \param mol the molecule were are interested in
 
-    \param coordMap a map of int to Point2D, between atom IDs and
-    their locations.  This is the container the user needs to fill if
-    he/she wants to specify coordinates for a portion of the molecule,
-    defaults to 0
+  \param coordMap a map of int to Point2D, between atom IDs and
+  their locations.  This is the container the user needs to fill if
+  he/she wants to specify coordinates for a portion of the molecule,
+  defaults to 0
 
-    \param canonOrient canonicalize the orientation so that the long
-    axes align with the x-axis etc.
+  \param canonOrient canonicalize the orientation so that the long
+  axes align with the x-axis etc.
 
-    \param clearConfs clear all existing conformations on the molecule
-    before adding the 2D coordinates instead of simply adding to the
-    list
-                          
-    \param nFlipsPerSample - the number of rotatable bonds that are
-    flipped at random for each sample
+  \param clearConfs clear all existing conformations on the molecule
+  before adding the 2D coordinates instead of simply adding to the
+  list
 
-    \param nSamples - the number of samples
+  \param nFlipsPerSample - the number of rotatable bonds that are
+  flipped at random for each sample
 
-    \param sampleSeed - seed for the random sampling process
+  \param nSamples - the number of samples
 
-    \param permuteDeg4Nodes - try permuting the drawing order of bonds around
-          atoms with four neighbors in order to improve the depiction
+  \param sampleSeed - seed for the random sampling process
 
-    \return ID of the conformation added to the molecule cotaining the
-    2D coordinates
+  \param permuteDeg4Nodes - try permuting the drawing order of bonds around
+        atoms with four neighbors in order to improve the depiction
 
-  */
-  unsigned int compute2DCoords(RDKit::ROMol &mol,
-                               const RDGeom::INT_POINT2D_MAP *coordMap=0,
-                               bool canonOrient=false,
-                               bool clearConfs=true,
-                               unsigned int nFlipsPerSample=0,
-                               unsigned int nSamples=0,
-                               int sampleSeed=0,
-                               bool permuteDeg4Nodes=false);
+  \return ID of the conformation added to the molecule cotaining the
+  2D coordinates
 
-  //! \brief Compute the 2D coordinates such the interatom distances
-  //   mimic those in a distance matrix
-  /*!
+*/
+unsigned int compute2DCoords(RDKit::ROMol &mol,
+                             const RDGeom::INT_POINT2D_MAP *coordMap = 0,
+                             bool canonOrient = false, bool clearConfs = true,
+                             unsigned int nFlipsPerSample = 0,
+                             unsigned int nSamples = 0, int sampleSeed = 0,
+                             bool permuteDeg4Nodes = false);
 
-    This function generates 2D coordinates such that the inter-atom
-    distances mimic those specified via dmat. This is done by randomly
-    sampling(flipping) the rotatable bonds in the molecule and
-    evaluating a cost function which contains two components. The
-    first component is the sum of inverse of the squared inter-atom
-    distances, this helps in spreading the atoms far from each
-    other. The second component is the sum of squares of the
-    difference in distance between those in dmat and the generated
-    structure.  The user can adjust the relative importance of the two
-    components via a adjustable paramter (see below)
+//! \brief Compute the 2D coordinates such the interatom distances
+//   mimic those in a distance matrix
+/*!
 
-    ARGUMENTS:
+  This function generates 2D coordinates such that the inter-atom
+  distances mimic those specified via dmat. This is done by randomly
+  sampling(flipping) the rotatable bonds in the molecule and
+  evaluating a cost function which contains two components. The
+  first component is the sum of inverse of the squared inter-atom
+  distances, this helps in spreading the atoms far from each
+  other. The second component is the sum of squares of the
+  difference in distance between those in dmat and the generated
+  structure.  The user can adjust the relative importance of the two
+  components via a adjustable paramter (see below)
 
-    \param mol - molecule to generate coordinates for
+  ARGUMENTS:
 
-    \param dmat - the distance matrix we want to mimic, this is a
-    symmetric N by N matrix where N is the number of atoms in mol. All
-    negative entries in dmat are ignored.
+  \param mol - molecule to generate coordinates for
 
-    \param canonOrient - canonicalize the orientation after the 2D
-    embedding is done
+  \param dmat - the distance matrix we want to mimic, this is a
+  symmetric N by N matrix where N is the number of atoms in mol. All
+  negative entries in dmat are ignored.
 
-    \param clearConfs - clear any previously existing conformations on
-    mol before adding a conformation
+  \param canonOrient - canonicalize the orientation after the 2D
+  embedding is done
 
-    \param weightDistMat - A value between 0.0 and 1.0, this
-    determines the importance of mimicing the the inter atoms
-    distances in dmat. (1.0 - weightDistMat) is the weight associated
-    to spreading out the structure (density) in the cost function
+  \param clearConfs - clear any previously existing conformations on
+  mol before adding a conformation
 
-    \param nFlipsPerSample - the number of rotatable bonds that are
-    flipped at random for each sample
+  \param weightDistMat - A value between 0.0 and 1.0, this
+  determines the importance of mimicing the the inter atoms
+  distances in dmat. (1.0 - weightDistMat) is the weight associated
+  to spreading out the structure (density) in the cost function
 
-    \param nSamples - the number of samples
+  \param nFlipsPerSample - the number of rotatable bonds that are
+  flipped at random for each sample
 
-    \param sampleSeed - seed for the random sampling process
+  \param nSamples - the number of samples
 
-    \param permuteDeg4Nodes - try permuting the drawing order of bonds around
-          atoms with four neighbors in order to improve the depiction
+  \param sampleSeed - seed for the random sampling process
 
-    \return ID of the conformation added to the molecule cotaining the
-    2D coordinates
+  \param permuteDeg4Nodes - try permuting the drawing order of bonds around
+        atoms with four neighbors in order to improve the depiction
+
+  \return ID of the conformation added to the molecule cotaining the
+  2D coordinates
 
 
-  */
-  unsigned int compute2DCoordsMimicDistMat(RDKit::ROMol &mol,
-                                           const DOUBLE_SMART_PTR *dmat=0,
-                                           bool canonOrient=true,
-                                           bool clearConfs=true,
-                                           double weightDistMat=0.5,
-                                           unsigned int nFlipsPerSample=3,
-                                           unsigned int nSamples=100,
-                                           int sampleSeed=25,
-                                           bool permuteDeg4Nodes=true);
+*/
+unsigned int compute2DCoordsMimicDistMat(
+    RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = 0,
+    bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
+    unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
+    int sampleSeed = 25, bool permuteDeg4Nodes = true);
 };
 
 #endif

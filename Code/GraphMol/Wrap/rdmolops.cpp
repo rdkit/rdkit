@@ -10,9 +10,7 @@
 //
 
 #include "rdmolops.h"
-#include <boost/python.hpp>
-
-#include "numpy/oldnumeric.h"
+#include <RDBoost/python.h>
 
 #include <RDGeneral/types.h>
 
@@ -24,31 +22,27 @@
 namespace python = boost::python;
 using namespace RDKit;
 
-void rdSanitExceptionTranslator(RDKit::MolSanitizeException const& x){
+void rdSanitExceptionTranslator(RDKit::MolSanitizeException const& x) {
   std::ostringstream ss;
   ss << "Sanitization error: " << x.message();
-  PyErr_SetString(PyExc_ValueError,ss.str().c_str());
+  PyErr_SetString(PyExc_ValueError, ss.str().c_str());
 }
-
 
 void wrap_molops();
 
-
-BOOST_PYTHON_MODULE(rdmolops)
-{
+BOOST_PYTHON_MODULE(rdmolops) {
   python::scope().attr("__doc__") =
-    "Module containing RDKit functionality for manipulating molecules."
-    ;
+      "Module containing RDKit functionality for manipulating molecules.";
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
-  python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
+  python::register_exception_translator<IndexErrorException>(
+      &translate_index_error);
+  python::register_exception_translator<ValueErrorException>(
+      &translate_value_error);
+  python::register_exception_translator<RDKit::MolSanitizeException>(
+      &rdSanitExceptionTranslator);
 
   // ******************************
   // Functions from MolOps
   //****************************
   wrap_molops();
-
 }
-
-

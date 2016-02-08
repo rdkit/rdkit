@@ -16,13 +16,12 @@
 
 using namespace RDDataManip;
 int main() {
-  
   int n = 10;
   int m = 3;
-  int dlen = n*(n-1)/2;
+  int dlen = n * (n - 1) / 2;
   int i, j;
-  double *desc = new double[n*m];
-  double **desc2D = new double*[n];
+  double *desc = new double[n * m];
+  double **desc2D = new double *[n];
 
   for (i = 0; i < n; i++) {
     desc2D[i] = desc;
@@ -31,14 +30,14 @@ int main() {
   desc = desc2D[0];
 
   for (i = 0; i < n; i++) {
-    for (j = 0; j < m ; j++) {
-      desc[i*m + j] = ((double)rand())/10;
+    for (j = 0; j < m; j++) {
+      desc[i * m + j] = ((double)rand()) / 10;
     }
   }
 
-  //double x = EuclideanDistanceMetric(desc2D[0], desc2D[1], m);
+  // double x = EuclideanDistanceMetric(desc2D[0], desc2D[1], m);
   double *dmat = new double[dlen];
-  MetricMatrixCalc<double**, double*> mmCalc;
+  MetricMatrixCalc<double **, double *> mmCalc;
   mmCalc.setMetricFunc(&EuclideanDistanceMetric<double *, double *>);
   mmCalc.calcMetricMatrix(desc2D, n, m, dmat);
 
@@ -46,9 +45,9 @@ int main() {
     std::cout << dmat[i] << "\n";
   }
 
-  delete [] desc2D;
-  delete [] desc;
-  delete [] dmat;
-  
+  delete[] desc2D;
+  delete[] desc;
+  delete[] dmat;
+
   exit(0);
 }

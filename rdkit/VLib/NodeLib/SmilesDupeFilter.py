@@ -4,6 +4,7 @@
 #     All Rights Reserved
 #
 from rdkit import RDConfig
+from rdkit import six
 import sys,os
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode

@@ -397,7 +397,7 @@ def DBToData(dbName,tableName,user='sysdba',password='masterkey',dupCol=-1,
       else:
         try:
           tmp[pickleCol] = pickleClass(str(tmp[pickleCol]))
-        except:
+        except Exception:
           tmp[pickleCol] = cPickle.loads(str(tmp[pickleCol]))
           classWorks=False
       if ensembleIds:
@@ -450,10 +450,10 @@ def TextToData(reader,ignoreCols=[],onlyCols=None):
       for j in range(nVars-1):
         try:
           val = int(tmp[j+1])
-        except:
+        except ValueError:
           try:
             val = float(tmp[j+1])
-          except:
+          except ValueError:
             val = str(tmp[j+1])
         pt[j] = val    
       vals.append(pt)

@@ -39,7 +39,6 @@
 #include <GraphMol/Conformer.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -194,10 +193,6 @@
 
   RDKit::ROMol *replaceCore(const RDKit::ROMol &coreQuery, bool replaceDummies=true,bool labelByIndex=false) {
     return RDKit::replaceCore(*($self), coreQuery, replaceDummies, labelByIndex);
-  };
-
-  void AssignAtomCIPRanks(RDKit::UINT_VECT &ranks) {
-    RDKit::Chirality::assignAtomCIPRanks(*($self), ranks);
   };
 
   /* Methods from MolFileStereoChem.h */

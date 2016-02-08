@@ -10,20 +10,19 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <string>
 
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 
 namespace python = boost::python;
-namespace RDKit{
+namespace RDKit {
 
-  PeriodicTable *GetTable(){
-    return PeriodicTable::getTable();
-  }
+PeriodicTable *GetTable() { return PeriodicTable::getTable(); }
 
-  std::string periodicTableClassDoc="A class which stores information from the Periodic Table.\n\
+std::string periodicTableClassDoc =
+    "A class which stores information from the Periodic Table.\n\
 \n\
   It is not possible to create a PeriodicTable object directly from Python,\n\
   use GetPeriodicTable() to get the global table.\n\
@@ -50,37 +49,53 @@ namespace RDKit{
   or an atomic symbol (string)\n\
 \n";
 
-
 struct table_wrapper {
-  static void wrap(){
-    python::class_<PeriodicTable>("PeriodicTable",periodicTableClassDoc.c_str(),
-				  python::no_init)
-      .def("GetAtomicWeight",(double (PeriodicTable::*)(UINT) const)&PeriodicTable::getAtomicWeight)
-      .def("GetAtomicWeight",(double (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getAtomicWeight)
-      .def("GetAtomicNumber",(int (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getAtomicNumber)
-      .def("GetElementSymbol",(std::string (PeriodicTable::*)(UINT) const)&PeriodicTable::getElementSymbol)
-      .def("GetRvdw",(double (PeriodicTable::*)(UINT) const)&PeriodicTable::getRvdw)
-      .def("GetRvdw",(double (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getRvdw)
-      .def("GetRcovalent",(double (PeriodicTable::*)(UINT) const)&PeriodicTable::getRcovalent)
-      .def("GetRcovalent",(double (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getRcovalent)
-      .def("GetDefaultValence",(int (PeriodicTable::*)(UINT) const)&PeriodicTable::getDefaultValence)
-      .def("GetDefaultValence",(int (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getDefaultValence)
-      .def("GetValenceList",(const INT_VECT &(PeriodicTable::*)(UINT) const)&PeriodicTable::getValenceList,
-	   python::return_value_policy<python::copy_const_reference>())
-      .def("GetValenceList",(const INT_VECT &(PeriodicTable::*)(const std::string &) const)&PeriodicTable::getValenceList,
-	   python::return_value_policy<python::copy_const_reference>())
-      .def("GetNOuterElecs",(int (PeriodicTable::*)(UINT) const)&PeriodicTable::getNouterElecs)
-      .def("GetNOuterElecs",(int (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getNouterElecs)
-      ;
+  static void wrap() {
+    python::class_<PeriodicTable>(
+        "PeriodicTable", periodicTableClassDoc.c_str(), python::no_init)
+        .def("GetAtomicWeight", (double (PeriodicTable::*)(UINT) const) &
+                                    PeriodicTable::getAtomicWeight)
+        .def("GetAtomicWeight",
+             (double (PeriodicTable::*)(const std::string &) const) &
+                 PeriodicTable::getAtomicWeight)
+        .def("GetAtomicNumber",
+             (int (PeriodicTable::*)(const std::string &) const) &
+                 PeriodicTable::getAtomicNumber)
+        .def("GetElementSymbol", (std::string (PeriodicTable::*)(UINT) const) &
+                                     PeriodicTable::getElementSymbol)
+        .def("GetRvdw",
+             (double (PeriodicTable::*)(UINT) const) & PeriodicTable::getRvdw)
+        .def("GetRvdw", (double (PeriodicTable::*)(const std::string &) const) &
+                            PeriodicTable::getRvdw)
+        .def("GetRcovalent", (double (PeriodicTable::*)(UINT) const) &
+                                 PeriodicTable::getRcovalent)
+        .def("GetRcovalent",
+             (double (PeriodicTable::*)(const std::string &) const) &
+                 PeriodicTable::getRcovalent)
+        .def("GetDefaultValence", (int (PeriodicTable::*)(UINT) const) &
+                                      PeriodicTable::getDefaultValence)
+        .def("GetDefaultValence",
+             (int (PeriodicTable::*)(const std::string &) const) &
+                 PeriodicTable::getDefaultValence)
+        .def("GetValenceList",
+             (const INT_VECT &(PeriodicTable::*)(UINT) const) &
+                 PeriodicTable::getValenceList,
+             python::return_value_policy<python::copy_const_reference>())
+        .def("GetValenceList",
+             (const INT_VECT &(PeriodicTable::*)(const std::string &) const) &
+                 PeriodicTable::getValenceList,
+             python::return_value_policy<python::copy_const_reference>())
+        .def("GetNOuterElecs", (int (PeriodicTable::*)(UINT) const) &
+                                   PeriodicTable::getNouterElecs)
+        .def("GetNOuterElecs",
+             (int (PeriodicTable::*)(const std::string &) const) &
+                 PeriodicTable::getNouterElecs);
 
-    python::def("GetPeriodicTable",GetTable,
-		"Returns the application's PeriodicTable instance.\n\n",
-		python::return_value_policy<python::reference_existing_object>());
-
-
+    python::def(
+        "GetPeriodicTable", GetTable,
+        "Returns the application's PeriodicTable instance.\n\n",
+        python::return_value_policy<python::reference_existing_object>());
   };
 };
-} // end of namespace
-void wrap_table() {
-  RDKit::table_wrapper::wrap();
-}
+}  // end of namespace
+void wrap_table() { RDKit::table_wrapper::wrap(); }

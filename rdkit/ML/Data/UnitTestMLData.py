@@ -23,12 +23,7 @@ class TestCase(unittest.TestCase):
 
   def testQuantLoad(self):
     " testing QuantDataSet load"
-    ok = 1
-    try:
-      self.d = DataUtils.BuildQuantDataSet(RDConfig.RDCodeDir+'/ML/Data/test_data/test.qdat')
-    except:
-      ok = 0
-    assert ok,'BuildQuantDataSet failed'
+    self.d = DataUtils.BuildQuantDataSet(RDConfig.RDCodeDir+'/ML/Data/test_data/test.qdat')
 
   def testQuantProps(self):
     " testing QuantDataSet Properties"
@@ -69,12 +64,8 @@ class TestCase(unittest.TestCase):
 
   def testGeneralLoad(self):
     " testing DataSet load"
-    ok = 1
-    try:
-      self.d = DataUtils.BuildDataSet(RDConfig.RDCodeDir+'/ML/Data/test_data/test.dat')
-    except:
-      ok = 0
-    assert ok,'BuildDataSet failed'
+    self.d = DataUtils.BuildDataSet(RDConfig.RDCodeDir+'/ML/Data/test_data/test.dat')
+
   def testGeneralProps(self):
     " testing DataSet properties"
     self.setUpGeneralLoad()

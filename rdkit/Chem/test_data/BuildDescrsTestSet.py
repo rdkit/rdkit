@@ -31,7 +31,7 @@ def runIt(inFileName,outFileName,smiCol=0,maxMols=-1,delim=','):
           fn = getattr(Descriptors,descr)
           try:
             v = fn(mol)
-          except:
+          except Exception:
             v = 666
           vals.append(v)  
         outF.write(','.join([smi]+['%.4f'%x for x in vals]))

@@ -22,16 +22,17 @@
 #include <vector>
 
 namespace RDKit {
-  typedef std::vector<int> INT_VECT;
-  class ROMol;
-  namespace FeatTrees {
-    void addRingsAndConnectors(const ROMol &mol,FeatTreeGraph &featGraph);
-    void addRingRingBonds(const ROMol &mol,FeatTreeGraph &featGraph);
-    std::vector<unsigned int> addNonringAtoms(const ROMol &mol,FeatTreeGraph &featGraph);
-    void addBondsFromNonringAtoms(const ROMol &mol,FeatTreeGraph &featGraph,
-				  std::vector<unsigned int> &atomIndices);
-    void addZeroNodes(FeatTreeGraph &featGraph);
-    void replaceCycles(FeatTreeGraph &featGraph);
-  }
+typedef std::vector<int> INT_VECT;
+class ROMol;
+namespace FeatTrees {
+void addRingsAndConnectors(const ROMol &mol, FeatTreeGraph &featGraph);
+void addRingRingBonds(const ROMol &mol, FeatTreeGraph &featGraph);
+std::vector<unsigned int> addNonringAtoms(const ROMol &mol,
+                                          FeatTreeGraph &featGraph);
+void addBondsFromNonringAtoms(const ROMol &mol, FeatTreeGraph &featGraph,
+                              std::vector<unsigned int> &atomIndices);
+void addZeroNodes(FeatTreeGraph &featGraph);
+void replaceCycles(FeatTreeGraph &featGraph);
+}
 }
 #endif

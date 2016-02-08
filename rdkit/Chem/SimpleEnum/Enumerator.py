@@ -143,7 +143,7 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
   if not nError:
     try:
       queryDict = Chem.ParseMolQueryDefFile(funcGroupFilename)
-    except:
+    except Exception:
       raise IOError('cannot open', funcGroupFilename)
     else:
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName, getLabels=True)

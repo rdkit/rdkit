@@ -217,10 +217,7 @@ def _InitKeys(keyList,keyDict):
   for key in keyDict.keys():
     patt,count = keyDict[key]
     if patt != '?':
-      try:
-        sma = Chem.MolFromSmarts(patt)
-      except:
-        sma = None
+      sma = Chem.MolFromSmarts(patt)
       if not sma:
         print('SMARTS parser error for key #%d: %s'%(key,patt))
       else:

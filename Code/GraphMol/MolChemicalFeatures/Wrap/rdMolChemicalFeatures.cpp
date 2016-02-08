@@ -24,47 +24,50 @@ void wrap_factory();
 void wrap_ChemicalFeatureUtils();
 
 namespace RDKit {
-  MolChemicalFeatureFactory *buildFeatFactory(std::string fileName) {
-    std::ifstream inStream(fileName.c_str());
-    if(!inStream.is_open()){
-      std::string errorstring="File: " + fileName + " could not be opened.";
-      PyErr_SetString(PyExc_IOError, errorstring.c_str());
-      python::throw_error_already_set();
-    }
-    std::istream &instrm = static_cast<std::istream &>(inStream);
-    return buildFeatureFactory(instrm);
+MolChemicalFeatureFactory *buildFeatFactory(std::string fileName) {
+  std::ifstream inStream(fileName.c_str());
+  if (!inStream.is_open()) {
+    std::string errorstring = "File: " + fileName + " could not be opened.";
+    PyErr_SetString(PyExc_IOError, errorstring.c_str());
+    python::throw_error_already_set();
   }
-
-  MolChemicalFeatureFactory *buildFeatFactoryFromString(std::string fdefString) {
-    std::istringstream inStream(fdefString);
-    std::istream &instrm = static_cast<std::istream &>(inStream);
-    return buildFeatureFactory(instrm);
-  }
+  std::istream &instrm = static_cast<std::istream &>(inStream);
+  return buildFeatureFactory(instrm);
 }
 
-void translate_FeatureFileParse_error(RDKit::FeatureFileParseException const&e){
+MolChemicalFeatureFactory *buildFeatFactoryFromString(std::string fdefString) {
+  std::istringstream inStream(fdefString);
+  std::istream &instrm = static_cast<std::istream &>(inStream);
+  return buildFeatureFactory(instrm);
+}
+}
+
+void translate_FeatureFileParse_error(
+    RDKit::FeatureFileParseException const &e) {
   std::stringstream err;
-  err << "Error parsing feature file at line " << e.lineNo() << ":" << std::endl;
+  err << "Error parsing feature file at line " << e.lineNo() << ":"
+      << std::endl;
   err << e.message() << std::endl;
   PyErr_SetString(PyExc_ValueError, err.str().c_str());
   python::throw_error_already_set();
 }
 
+BOOST_PYTHON_MODULE(rdMolChemicalFeatures) {
+  python::scope().attr("__doc__") =
+      "Module containing from chemical feature and functions to generate the";
+  python::register_exception_translator<RDKit::FeatureFileParseException>(
+      &translate_FeatureFileParse_error);
+  python::register_exception_translator<IndexErrorException>(
+      &translate_index_error);
+  python::register_exception_translator<ValueErrorException>(
+      &translate_value_error);
 
-BOOST_PYTHON_MODULE(rdMolChemicalFeatures)
-{
-
-  python::scope().attr("__doc__")=
-    "Module containing from chemical feature and functions to generate the"
-    ;
-  python::register_exception_translator<RDKit::FeatureFileParseException>(&translate_FeatureFileParse_error);
-  python::register_exception_translator<IndexErrorException>(&translate_index_error);
-  python::register_exception_translator<ValueErrorException>(&translate_value_error);
-    
-  python::def("BuildFeatureFactory", RDKit::buildFeatFactory,
-              "Construct a feature factory given a feature definition in a file",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("BuildFeatureFactoryFromString", RDKit::buildFeatFactoryFromString,
+  python::def(
+      "BuildFeatureFactory", RDKit::buildFeatFactory,
+      "Construct a feature factory given a feature definition in a file",
+      python::return_value_policy<python::manage_new_object>());
+  python::def("BuildFeatureFactoryFromString",
+              RDKit::buildFeatFactoryFromString,
               "Construct a feature factory given a feature definition block",
               python::return_value_policy<python::manage_new_object>());
 

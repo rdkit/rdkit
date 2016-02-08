@@ -103,7 +103,7 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
         c.execute(cmd)
       else:
         c.execute(cmd,extras)
-    except:
+    except Exception:
       sys.stderr.write('the command "%s" generated errors:\n'%(cmd))
       import traceback
       traceback.print_exc()
@@ -274,14 +274,14 @@ def GetTypeStrings(colHeadings,colTypes,keyCol=None):
 def _insertBlock(conn,sqlStr,block,silent=False):
   try:
     conn.cursor().executemany(sqlStr,block)
-  except:
+  except Exception:
     res = 0
     conn.commit()
     for row in block:
       try:
         conn.cursor().execute(sqlStr,tuple(row))
         res += 1
-      except:
+      except Exception:
         if not silent:
           import traceback
           traceback.print_exc()
@@ -305,12 +305,12 @@ def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
   c = cn.cursor()
   try:
     c.execute('drop table %s'%(table))
-  except:
+  except Exception:
     print('cannot drop table %s'%(table))
   try:
     sqlStr = 'create table %s (%s)'%(table,colDefs)
     c.execute(sqlStr)
-  except:
+  except Exception:
     print('create table failed: ', sqlStr)
     print('here is the exception:')
     import traceback
@@ -400,10 +400,10 @@ def TextFileToDatabase(dBase,table,inF,delim=',',
     for entry in splitL:
       try:
         val = int(entry)
-      except:
+      except ValueError:
         try:
           val = float(entry)
-        except:
+        except ValueError:
           val = entry
       tmpVect.append(val)
     data.append(tmpVect)   

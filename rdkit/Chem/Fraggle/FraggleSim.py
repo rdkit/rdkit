@@ -374,7 +374,7 @@ def atomContrib(subs,mol,tverskyThresh=0.8):
 
         try:
             Chem.SanitizeMol(pMol)
-        except:
+        except Exception:
             sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
             pMol = Chem.Mol(mol.ToBinary())
 
@@ -406,7 +406,7 @@ def compute_fraggle_similarity_for_subs(inMol,qMol,qSmi,qSubs,tverskyThresh=0.8)
                         rdkit_sim)
         #print '\t',qSubs,fraggle_sim,rdkit_sim
 
-    except:
+    except Exception:
         sys.stderr.write("Can't generate fp for: %s\n" % (Chem.MolToSmiles(rmMol,True)))
         fraggle_sim = 0.0
 

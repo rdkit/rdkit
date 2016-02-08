@@ -8,24 +8,20 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <DataStructs/BitVects.h>
 
 #include <GraphMol/FragCatalog/FragFPGenerator.h>
 
 namespace python = boost::python;
-namespace RDKit{
-  struct fragFPgen_wrapper {
-    static void wrap() {
-      python::class_<FragFPGenerator>("FragFPGenerator", python::init<>())
+namespace RDKit {
+struct fragFPgen_wrapper {
+  static void wrap() {
+    python::class_<FragFPGenerator>("FragFPGenerator", python::init<>())
         .def("GetFPForMol", &FragFPGenerator::getFPForMol,
-             python::return_value_policy<python::manage_new_object>())
-        ;
-    };
+             python::return_value_policy<python::manage_new_object>());
   };
+};
 }
 
-void wrap_fragFPgen() {
-  RDKit::fragFPgen_wrapper::wrap();
-}
-
+void wrap_fragFPgen() { RDKit::fragFPgen_wrapper::wrap(); }

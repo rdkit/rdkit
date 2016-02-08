@@ -1,19 +1,19 @@
 #
 #  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -77,7 +77,7 @@ INCHI_READWRITE_ERROR = ERROR_DICT['INCHI_READWRITE_ERROR']
 NULL_MOL = ERROR_DICT['NULL_MOL']
 
 BAD_SET = pyAvalonTools.StruChkResult.bad_set | INCHI_COMPUTATION_ERROR | RDKIT_CONVERSION_ERROR | INCHI_READWRITE_ERROR | NULL_MOL
- 
+
 GET_STEREO_RE = re.compile(r'^InChI=1S(.*?)/(t.*?)/m\d/s1(.*$)')
 NULL_SMILES_RE = re.compile(r'^\s*$|^\s*NO_STRUCTURE\s*$', re.IGNORECASE)
 PATTERN_NULL_MOL = r'^([\s0]+[1-9]+[\s]+V[\w]*)'
@@ -113,22 +113,22 @@ def _fix_all(pat, sbt, my_string) :
         return new_string
     except :
         return None
-    
+
 def _fix_line_ends(my_string) :
     pat = '\r\n{0,1}'
     sbt = '\n'
     return _fix_all(pat, sbt, my_string)
-    
+
 def _fix_chemdraw_header(my_string) :
     pat = '0V2000'
     sbt = 'V2000'
     return _fix_all(pat, sbt, my_string)
 
 def _ctab_has_atoms(ctab_lines):
-    ''' look at atom count position (line 4, characters 0:3) 
-    Return True if the count is >0, False if 0. 
-    Throw BadMoleculeException if there are no characters 
-    at the required position or if they cannot be converted 
+    ''' look at atom count position (line 4, characters 0:3)
+    Return True if the count is >0, False if 0.
+    Throw BadMoleculeException if there are no characters
+    at the required position or if they cannot be converted
     to a positive integer
     '''
     try:
@@ -143,14 +143,14 @@ def _ctab_has_atoms(ctab_lines):
     except IndexError:
         raise BadMoleculeException('Invalid molfile format')
     except ValueError:
-        raise BadMoleculeException('Expected integer')    
+        raise BadMoleculeException('Expected integer')
 
     return rval
-    
+
 def _ctab_remove_chiral_flag(ctab_lines):
-    ''' read the chiral flag (line 4, characters 12:15) 
+    ''' read the chiral flag (line 4, characters 12:15)
     and set it to 0. Return True if it was 1, False if 0.
-    Throw BadMoleculeException if there are no characters 
+    Throw BadMoleculeException if there are no characters
     at the required position or if they where not 0 or 1
     '''
     try:
@@ -161,13 +161,13 @@ def _ctab_remove_chiral_flag(ctab_lines):
         elif a_count == 1:
             rval = True
             orig_line = ctab_lines[3]
-            ctab_lines[3] = orig_line[:CHIRAL_POS] + '  0' + orig_line[CHIRAL_POS + 3:] 
+            ctab_lines[3] = orig_line[:CHIRAL_POS] + '  0' + orig_line[CHIRAL_POS + 3:]
         else:
             raise BadMoleculeException('Expected chiral flag 0 or 1')
     except IndexError:
         raise BadMoleculeException('Invalid molfile format')
     except ValueError:
-        raise BadMoleculeException('Expected integer, got {0}'.format(str_a_count))    
+        raise BadMoleculeException('Expected integer, got {0}'.format(str_a_count))
 
     return rval
 
@@ -183,7 +183,7 @@ def initStruchk(configDir=None,logFile=None):
     fd.close()
     logFile= fd.name
   struchk_init = '''-tm
-  -ta {0}checkfgs.trn
+-ta {0}checkfgs.trn
 -tm
 -or
 -ca {0}checkfgs.chk
@@ -191,7 +191,7 @@ def initStruchk(configDir=None,logFile=None):
 -cl 3
 -cs
 -cn 999
--l {1}'''.format(configDir, logFile)
+-l {1}\n'''.format(configDir, logFile)
   initRes=pyAvalonTools.InitializeCheckMol(struchk_init)
   if initRes:
     raise ValueError('bad result from InitializeCheckMol: '+str(initRes))
@@ -203,7 +203,7 @@ def CheckCTAB(ctab, isSmiles=True):
     mol_str = ctab
     if not mol_str:
         raise BadMoleculeException('Unexpected blank or NULL molecule')
-    else:    
+    else:
         mol_str = _fix_line_ends(mol_str)
         mol_str = _fix_chemdraw_header(mol_str)
 
@@ -211,22 +211,22 @@ def CheckCTAB(ctab, isSmiles=True):
             if mol_str and NULL_SMILES_RE.match(mol_str):
                 rval = T_NULL_MOL
             else:
-                rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)    
+                rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
         else:
             # decompose the ctab into lines
-            # the line terminator may be \n or \r\n, or even r'\n' 
+            # the line terminator may be \n or \r\n, or even r'\n'
             ctab_lines = mol_str.split('\n')
             if len(ctab_lines) <= 3:
                 raise BadMoleculeException('Not enough lines in CTAB')
             _ctab_remove_chiral_flag(ctab_lines)
             if not _ctab_has_atoms(ctab_lines):
                 rval = T_NULL_MOL
-            else: # reassemble the ctab lines into one string.                             
+            else: # reassemble the ctab lines into one string.
                 mol_str = '\n'.join(ctab_lines)
                 rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
     return rval
 
-InchiResult = namedtuple('InchiResult',['error','inchi','fixed_ctab'])      
+InchiResult = namedtuple('InchiResult',['error','inchi','fixed_ctab'])
 def GetInchiForCTAB(ctab):
     """
     >>> from rdkit.Chem.MolKey import MolKey
@@ -237,7 +237,7 @@ def GetInchiForCTAB(ctab):
     >>> res = MolKey.GetInchiForCTAB(pyAvalonTools.Generate2DCoords('c1c[nH]nc1C(Cl)Br',True))
     >>> res.inchi
     'InChI=1/C4H4BrClN2/c5-4(6)3-1-2-7-8-3/h1-2,4H,(H,7,8)/t4?/f/h7H'
-    >>> 
+    >>>
     """
     inchi = None
     ctab_str = ctab
@@ -260,13 +260,13 @@ def GetInchiForCTAB(ctab):
     return InchiResult(strucheck_err | conversion_err, inchi, fixed_mol)
 
 def _make_racemate_inchi(inchi):
-    """ Normalize the stereo information (t-layer) to one selected isomer. """ 
+    """ Normalize the stereo information (t-layer) to one selected isomer. """
     # set stereo type = 3 (racemate) for consistency
     # reset inverted flag to m0 - not inverted
     new_stereo = '/m0/s3/'
     stereo_match = GET_STEREO_RE.match(inchi)
     if stereo_match:
-        inchi = stereo_match.group(1) + new_stereo + stereo_match.group(2)        
+        inchi = stereo_match.group(1) + new_stereo + stereo_match.group(2)
     return inchi
 
 def _get_identification_string(err, ctab, inchi, stereo_category=None, extra_stereo=None):
@@ -284,13 +284,13 @@ def _get_identification_string(err, ctab, inchi, stereo_category=None, extra_ste
     else:
         pieces.append('ST=' + stereo_category)
     if extra_stereo:
-        pieces.append('XTR=' + extra_stereo)    
+        pieces.append('XTR=' + extra_stereo)
     key_string = '/'.join(pieces)
     return key_string
 
 def _get_null_mol_identification_string(extra_stereo) :
     key_string = str(uuid.uuid1 ())
-    return key_string 
+    return key_string
 
 def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
     pieces = []
@@ -298,7 +298,7 @@ def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
     if ctab_str:       # make the ctab part of the key if available
         ctab_str = _fix_line_ends(ctab_str)
         ctab_str = _fix_chemdraw_header(ctab_str)
-        ctab_str = '\n'.join(ctab_str.split('\n')[3:])    
+        ctab_str = '\n'.join(ctab_str.split('\n')[3:])
         pieces.append(ctab_str.replace('\n', r'\n')) # make a handy one-line string
     else:
         pass
@@ -312,12 +312,12 @@ def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
     return key_string
 
 def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
-    """ Compute the molecule key based on the inchi string,  
-    stereo category as well as extra structure 
+    """ Compute the molecule key based on the inchi string,
+    stereo category as well as extra structure
     information """
     key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
     if key_string:
-        return "{0}|{1}".format(MOL_KEY_VERSION, 
+        return "{0}|{1}".format(MOL_KEY_VERSION,
                                 base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode()) #pylint: disable=E1101
     else:
         return None
@@ -382,7 +382,7 @@ def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
     >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
     >>> res.mol_key
     '1|5H9R3LvclagMXHp3Clrc/g=='
-    >>> res.stereo_code 
+    >>> res.stereo_code
     'S_UNKN'
     >>> res=MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
     >>> res.mol_key
@@ -415,7 +415,7 @@ def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
                 extra_structure_desc = info_flds[1].strip()
         else:
             logger.warn('stereo code {0} not recognized. Using default value for ctab.'.format(code_fld))
-                
+
     if not (err & BAD_SET):
         (n_stereo, n_undef_stereo, is_meso, dummy) = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
         if stereo_category == None or stereo_category == 'DEFAULT' :  # compute if not set
@@ -426,7 +426,7 @@ def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
     key = _identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
     return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 
-    
+
 
 #------------------------------------
 #

@@ -74,7 +74,7 @@ namespace AvalonTools {
     void reaccsToFingerprint(struct reaccs_molecule_t *molPtr,std::vector<boost::uint32_t> &res,
                              unsigned int bitFlags=32767U,bool isQuery=false,bool resetVect=true,
                              unsigned int nBytes=64){
-      res.clear();
+      if(resetVect) res.clear();
       char *fingerprint=getFp(molPtr,bitFlags,isQuery,nBytes);
       for(unsigned int i=0;i<nBytes;i+=4){
         boost::uint32_t word;
@@ -180,6 +180,7 @@ namespace AvalonTools {
                         bool isQuery,
                         bool resetVect,
                         unsigned int bitFlags){
+    (void)resetVect;
     struct reaccs_molecule_t *mp=molToReaccs(mol);
     reaccsToCounts(mp,res,bitFlags,isQuery,nBits);
     FreeMolecule(mp);

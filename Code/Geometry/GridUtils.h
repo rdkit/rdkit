@@ -13,41 +13,35 @@
 #include <vector>
 
 namespace RDGeom {
-  class UniformGrid3D;
-  class Point3D;
-  
-  //! calculate the tanimoto distance between the shapes encoded on two grids
-  /*!
+class UniformGrid3D;
+class Point3D;
 
-     tanimoto(S1,S2) =  1 - ( | S1&S2 | / | S1|S2 | )
+//! calculate the tanimoto distance between the shapes encoded on two grids
+/*!
 
-  */
-  template<class GRIDTYPE> double tanimotoDistance(const GRIDTYPE &grid1, 
-                                                   const GRIDTYPE &grid2);
-  //! calculate the protrude distance between the shapes encoded on two grids
-  /*!
+   tanimoto(S1,S2) =  1 - ( | S1&S2 | / | S1|S2 | )
 
-     protrude(S1,S2) = ( | S1|S2 | - | S1&S2 | ) / | S1 |
+*/
+template <class GRIDTYPE>
+double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
+//! calculate the protrude distance between the shapes encoded on two grids
+/*!
 
-  */
-  template<class GRIDTYPE> double protrudeDistance(const GRIDTYPE &grid1, 
-                                                   const GRIDTYPE &grid2);
+   protrude(S1,S2) = ( | S1|S2 | - | S1&S2 | ) / | S1 |
 
+*/
+template <class GRIDTYPE>
+double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
 
-  //! calculate the grid centroid within a window of a point
-  Point3D computeGridCentroid(const UniformGrid3D &grid,
-                              const Point3D &pt,
-                              double windowRadius,
-                              double &weightSum);
-  
-  //! find terminal points of a shape encoded on a grid
-  //!  this is part of the subshape implementation
-  std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
-                                          double windowRadius,
-                                          double inclusionFraction);
+//! calculate the grid centroid within a window of a point
+Point3D computeGridCentroid(const UniformGrid3D &grid, const Point3D &pt,
+                            double windowRadius, double &weightSum);
 
-  
+//! find terminal points of a shape encoded on a grid
+//!  this is part of the subshape implementation
+std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
+                                            double windowRadius,
+                                            double inclusionFraction);
 }
 
 #endif
-

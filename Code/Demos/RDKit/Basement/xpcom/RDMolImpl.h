@@ -3,22 +3,22 @@
 #include "IRDKit.h"
 
 namespace RDKit {
-  class ROMol;
+class ROMol;
 }
 
-class RDMolecule : public IRDMolecule
-{
-public:
+class RDMolecule : public IRDMolecule {
+ public:
   NS_DECL_ISUPPORTS
   NS_DECL_IRDMOLECULE
 
-  RDMolecule() : dp_mol(0) {};
-  RDMolecule(RDKit::ROMol *mol) : dp_mol(mol) {};
+  RDMolecule() : dp_mol(0){};
+  RDMolecule(RDKit::ROMol *mol) : dp_mol(mol){};
   RDKit::ROMol *dp_mol;
-private:
+
+ private:
   ~RDMolecule();
 
-protected:
+ protected:
   /* additional members */
 };
 

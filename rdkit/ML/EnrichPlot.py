@@ -261,7 +261,7 @@ def MakePlot(details,final,counts,pickVects,nModels,nTrueActs=-1):
       #p('cd "%s"'%(os.getcwd()))
       p('load "%s"'%(plotFileName))
       raw_input('press return to continue...\n')
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
 
@@ -280,7 +280,7 @@ if __name__=='__main__':
                                 ('thresh=','plotFile=','showPlot',
                                  'pickleCol=','OOB','noSort','pickBase=',
                                  'doROC','rocThresh=','enrich='))
-  except:
+  except Exception:
     import traceback
     traceback.print_exc()
     Usage()
@@ -373,14 +373,14 @@ if __name__=='__main__':
     message('-> Reconstructing models')
     try:
       blob = curs.fetchone()
-    except:
+    except Exception:
       blob = None
     while blob:
       message(' Building model %d'%len(models))
       blob = blob[0]
       try:
         models.append(cPickle.loads(str(blob)))
-      except:
+      except Exception:
         import traceback
         traceback.print_exc()
         print('Model failed')
@@ -388,14 +388,14 @@ if __name__=='__main__':
         message('  <-Done')
       try:
         blob = curs.fetchone()
-      except:
+      except Exception:
         blob = None
     curs = None    
   else:
     for modelName in extras:
       try:
         model = cPickle.load(open(modelName,'rb'))
-      except:
+      except Exception:
         import traceback
         print('problems with model %s:'%modelName)
         traceback.print_exc()

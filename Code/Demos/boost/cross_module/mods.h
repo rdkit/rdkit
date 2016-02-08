@@ -4,15 +4,14 @@
 
 #include <boost/python.hpp>
 
-
-class ClassA{
-public:
+class ClassA {
+ public:
   int get4() { return 4; };
 };
 
-class ClassB{
-public:
+class ClassB {
+ public:
   ClassA *returnOther() { return new ClassA; };
   int get3() { return 3; };
-  int acceptOther(ClassA *other) { return other->get4();};
+  int acceptOther(ClassA *other) { return other->get4(); };
 };

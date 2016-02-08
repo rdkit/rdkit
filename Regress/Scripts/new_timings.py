@@ -14,7 +14,7 @@ if len(sys.argv)>1:
         tests[x] = 1
 ts = []
 mols = []
-lines = gzip.open('../Data/znp.50k.smi.gz','rb').readlines()
+lines = gzip.open('../Data/znp.50k.smi.gz','rt').readlines()
 logger.info('mols from smiles')
 nMols=0
 nBad=0
@@ -61,7 +61,7 @@ if tests[2]:
     ts.append(t2-t1)
 
 if tests[3] or tests[4] or tests[5]:
-    pattData = gzip.open('../Data/queries.txt.gz','rb').readlines()
+    pattData = gzip.open('../Data/queries.txt.gz','rt').readlines()
     pattData = [x.strip().replace('[H]','').replace('()','') for x in pattData]
     logger.info('patterns from smiles')
     patts = []
@@ -104,7 +104,7 @@ if tests[6] or tests[7] or tests[8]:
     logger.info('reading SMARTS')
     patts=[]
     t1=time.time()
-    for line in file('../Data/RLewis_smarts.txt'):
+    for line in open('../Data/RLewis_smarts.txt'):
         line = line.strip()
         if line=='' or line[0]=='#':
             continue
