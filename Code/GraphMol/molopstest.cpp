@@ -728,6 +728,26 @@ void test8() {
   delete m;
   delete m2;
 
+  {
+    // test the onlyOnAtoms option (github #758)
+    std::string smi = "CCC";
+    m = SmilesToMol(smi);
+    CHECK_INVARIANT(m, "");
+    CHECK_INVARIANT(m->getNumAtoms() == 3, "");
+
+    // BOOST_LOG(rdInfoLog) << "1" << std::endl;
+    UINT_VECT onlyOn;
+    onlyOn.push_back(0);
+    onlyOn.push_back(2);
+    m2 = MolOps::addHs(*m, false, false, &onlyOn);
+    CHECK_INVARIANT(m2->getNumAtoms() == 9, "");
+    CHECK_INVARIANT(m2->getAtomWithIdx(0)->getDegree() == 4, "");
+    CHECK_INVARIANT(m2->getAtomWithIdx(1)->getDegree() == 2, "");
+    CHECK_INVARIANT(m2->getAtomWithIdx(2)->getDegree() == 4, "");
+    delete m;
+    delete m2;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
