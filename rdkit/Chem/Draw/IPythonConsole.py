@@ -6,8 +6,28 @@ elif IPython.release.version < '2.0':
     install_nbextension=None
     _canUse3D=False
 else:
-    from IPython.html.nbextensions import install_nbextension
-    _canUse3D=True
+    try:
+        try:
+            from notebook.nbextensions import install_nbextension
+            _canUse3D=True
+        except ImportError:
+            #  Older IPythonVersion location
+            from IPython.html.nbextensions import install_nbextension
+            _canUse3D=True
+    except ImportError:
+        # can't find notebook extensions for integrating javascript
+        #  with Jupyter/IPython, disable widgets.
+        _canUse3D=False
+        sys.stderr.write("*"*44)
+        sys.stderr.write("\nCannot import nbextensions\n")
+        sys.stderr.write("Current IPython/Jupyter version is %s\n"%
+                         IPython.release.version)
+        sys.stderr.write("Disabling 3D rendering\n")
+        sys.stderr.write("*"*44)
+        sys.stderr.write("\n")
+        import traceback
+        traceback.print_exc()
+
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
