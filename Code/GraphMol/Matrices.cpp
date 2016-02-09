@@ -331,8 +331,7 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
   RANGE_CHECK(0, aid2, nats - 1);
   CHECK_INVARIANT(aid1 != aid2, "");
 
-  INT_VECT pred;
-  pred.resize(nats, -1); // set all atoms to unprocessed state
+  INT_VECT pred(nats, -1); // set all atoms to unprocessed state
   pred[aid1] = -2; // marks begin
   pred[aid2] = -3; // marks end
 
@@ -345,26 +344,24 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
     int curAid = bfsQ.front();
     boost::tie(nbrIdx, endNbrs) =
         mol.getAtomNeighbors(mol.getAtomWithIdx(curAid));
-    while (nbrIdx != endNbrs) {
+    while (!done && nbrIdx != endNbrs) {
       switch (pred[*nbrIdx]) {
         case -1:
-          pred[*nbrIdx]=curAid;
+          pred[*nbrIdx] = curAid;
           bfsQ.push_back(rdcast<int>(*nbrIdx));
           break;
         case -3: // end found
           pred[*nbrIdx] = curAid;
           done = true;
-          goto EXIT_LOOP;
           break;
         default: // already processed (or begin)
           break;
         }
-      nbrIdx++;
+      ++nbrIdx;
     }
     bfsQ.pop_front();
   }
 
-  EXIT_LOOP:
   INT_LIST res;
   if (done) {
     done = false;
