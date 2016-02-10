@@ -1,9 +1,9 @@
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
-               ${CMAKE_CURRENT_SOURCE_DIR}/versions.h )
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp.cmake
+               ${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp )
 
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp
-              LocaleSwitcher.cpp SHARED
+              LocaleSwitcher.cpp versions.cpp SHARED
               LINK_LIBRARIES ${RDKit_THREAD_LIBS})
 
 target_link_libraries(RDGeneral ${RDKit_THREAD_LIBS})
