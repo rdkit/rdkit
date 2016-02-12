@@ -187,8 +187,8 @@ int MolNumBridgeheadAtoms(CROMol i);
 char *makeMolFormulaText(CROMol data, int *len, bool separateIsotopes,
                          bool abbreviateHIsotopes);
 
-const char *MolInchi(CROMol i);
-const char *MolInchiKey(CROMol i);
+const char *MolInchi(CROMol i, const char *opts);
+const char *MolInchiKey(CROMol i, const char *opts);
 CROMol MolMurckoScaffold(CROMol i);
 
 /* ExplicitBitVect */

@@ -8,4 +8,7 @@ Chr(10) ||
 'M  END')::cstring));
 select mol_inchi('');
 select mol_inchikey('');
-
+select mol_inchi('CC1=NC=CN1'::mol);
+select mol_inchikey('CC1=NC=CN1'::mol);
+select mol_inchi('CC1=NC=CN1'::mol,'/FixedH');
+select mol_inchikey('CC1=NC=CN1'::mol,'/FixedH');
