@@ -159,7 +159,7 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
     \param addCoords    (optional) If this is true, estimates for the atomic
    coordinates
                 of the added Hs will be used.
-    \param onlyOnAtoms   (optional) if provided, this should return a vector of
+    \param onlyOnAtoms   (optional) if provided, this should be a vector of
                 IDs of the atoms that will be considered for H addition.
 
     \return the new molecule
