@@ -1704,6 +1704,25 @@ void testGithub544() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub766() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 766: AnyBond specification treated "
+                          "as single when joining rings in SMARTS"
+                       << std::endl;
+  {
+    RWMol *p;
+    std::string sma = "C~1~C~C~1";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    for (RWMol::BondIterator cbi = p->beginBonds(); cbi != p->endBonds();
+         ++cbi) {
+      TEST_ASSERT((*cbi)->getBondType() == Bond::UNSPECIFIED);
+    }
+    delete p;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -1742,6 +1761,7 @@ int main(int argc, char *argv[]) {
   testGithub378();
 #endif
   testGithub544();
+  testGithub766();
 
   return 0;
 }
