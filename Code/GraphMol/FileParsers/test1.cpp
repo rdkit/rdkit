@@ -4127,6 +4127,31 @@ void testGithub360() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub741() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 741: Support CTABs where the second "
+                          "letter in atom symbols is capitalized"
+                       << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *mol = MolFileToMol(pathName + "github741.mol");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getSymbol() == "Br");
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getSymbol() == "Br");
+    delete mol;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *mol = MolFileToMol(pathName + "github741.v3k.mol");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getSymbol() == "Br");
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getSymbol() == "Br");
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 void RunTests() {
   #if 1
@@ -4189,7 +4214,6 @@ void RunTests() {
   testMolFileWithHs();
   testMolFileWithRxn();
   testGithub166();
-#endif
   testZBO();
 
   testGithub164();
@@ -4204,6 +4228,8 @@ void RunTests() {
   testPDBResidues();
   testGithub337();
   testGithub360();
+#endif
+  testGithub741();
 }
 
 // must be in German Locale for test...
