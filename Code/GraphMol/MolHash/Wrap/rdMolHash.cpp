@@ -18,12 +18,12 @@ using namespace RDKit;
 namespace {
 std::string GenMolHashString(const ROMol &mol, python::object atomsToUse,
                              python::object bondsToUse) {
-  rdk_unique_ptr<std::vector<unsigned> > avect;
+  rdk_auto_ptr<std::vector<unsigned> > avect;
   if (atomsToUse) {
     avect = pythonObjectToVect(atomsToUse,
                                static_cast<unsigned>(mol.getNumAtoms()));
   }
-  rdk_unique_ptr<std::vector<unsigned> > bvect;
+  rdk_auto_ptr<std::vector<unsigned> > bvect;
   if (bondsToUse) {
     bvect = pythonObjectToVect(bondsToUse,
                                static_cast<unsigned>(mol.getNumBonds()));

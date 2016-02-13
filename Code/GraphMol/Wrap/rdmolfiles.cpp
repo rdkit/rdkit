@@ -240,16 +240,16 @@ std::string MolFragmentToSmilesHelper(
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
-  rdk_unique_ptr<std::vector<int> > avect =
+  rdk_auto_ptr<std::vector<int> > avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  rdk_unique_ptr<std::vector<int> > bvect =
+  rdk_auto_ptr<std::vector<int> > bvect =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  rdk_unique_ptr<std::vector<std::string> > asymbols =
+  rdk_auto_ptr<std::vector<std::string> > asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  rdk_unique_ptr<std::vector<std::string> > bsymbols =
+  rdk_auto_ptr<std::vector<std::string> > bsymbols =
       pythonObjectToVect<std::string>(bondSymbols);
   if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
@@ -282,16 +282,16 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
                                               bool breakTies = true)
 
 {
-  rdk_unique_ptr<std::vector<int> > avect =
+  rdk_auto_ptr<std::vector<int> > avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  rdk_unique_ptr<std::vector<int> > bvect =
+  rdk_auto_ptr<std::vector<int> > bvect =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  rdk_unique_ptr<std::vector<std::string> > asymbols =
+  rdk_auto_ptr<std::vector<std::string> > asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  rdk_unique_ptr<std::vector<std::string> > bsymbols =
+  rdk_auto_ptr<std::vector<std::string> > bsymbols =
       pythonObjectToVect<std::string>(bondSymbols);
   if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
