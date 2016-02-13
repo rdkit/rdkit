@@ -116,7 +116,7 @@ ADD_CUSTOM_COMMAND(
   COMMAND ${JAVADOC_EXE}  ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   ## Put the doc files into their own separate archive.
-  COMMAND ${JAVA_ARCHIVE} cf ${DOCLINT_FLAGS}
+  COMMAND ${JAVA_ARCHIVE} cf
     ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
     doc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
