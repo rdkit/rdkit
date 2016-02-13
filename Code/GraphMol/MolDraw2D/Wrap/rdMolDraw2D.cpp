@@ -61,14 +61,13 @@ void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atoms,
                          python::object highlight_atom_map,
                          python::object highlight_atom_radii, int confId = -1) {
-  std::vector<int> *highlightAtoms =
+  rdk_unique_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
-  self.drawMolecule(mol, highlightAtoms, ham, har, confId);
+  self.drawMolecule(mol, highlightAtoms.get(), ham, har, confId);
 
-  delete highlightAtoms;
   delete ham;
   delete har;
 }
@@ -78,19 +77,18 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atom_map,
                          python::object highlight_bond_map,
                          python::object highlight_atom_radii, int confId = -1) {
-  std::vector<int> *highlightAtoms =
+  rdk_unique_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
-  std::vector<int> *highlightBonds =
+  rdk_unique_ptr<std::vector<int> > highlightBonds =
       pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
   // FIX: support these
   std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
-  self.drawMolecule(mol, highlightAtoms, highlightBonds, ham, hbm, har, confId);
+  self.drawMolecule(mol, highlightAtoms.get(), highlightBonds.get(), ham, hbm,
+                    har, confId);
 
-  delete highlightAtoms;
-  delete highlightBonds;
   delete ham;
   delete hbm;
   delete har;
