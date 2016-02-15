@@ -462,7 +462,8 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       if (res.find(bid) == res.end()) {
         // very strong preference for Hs:
         if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
-          nbrScores.push_back(std::make_pair(-1000, bid));
+          nbrScores.push_back(
+              std::make_pair(-1000, bid));  // lower than anything else can be
           continue;
         }
         int nbrScore = 0;
