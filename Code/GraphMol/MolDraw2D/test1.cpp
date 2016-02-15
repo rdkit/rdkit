@@ -616,12 +616,14 @@ void test7() {
 
 int main() {
   RDLog::InitLogs();
+#if 0
   test1();
-  test2();
-  test3();
   test4();
   test5();
   testMultiThreaded();
-  test6();
+  test2();
   test7();
+  test6();
+#endif
+  test3();
 }

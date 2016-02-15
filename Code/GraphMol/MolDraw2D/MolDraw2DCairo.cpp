@@ -71,7 +71,7 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
   unsigned int fontSz = scale() * fontSize();
   Point2D c1 = cds;  // getDrawCoords( cds );
 
-  cairo_move_to(dp_cr, c1.x, c1.y + theight);
+  cairo_move_to(dp_cr, c1.x, c1.y);  //- theight);
   cairo_show_text(dp_cr, txt);
   cairo_stroke(dp_cr);
 }

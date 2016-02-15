@@ -309,7 +309,9 @@ void MolDraw2D::highlightCloseContacts() {
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
   double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
-
+  // y is now the distance from the top of the image, we need to
+  // invert that:
+  y = height() - y;
   return Point2D(x, y);
 }
 
@@ -478,13 +480,13 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-               getDrawCoords(Point2D(draw_x, draw_y + 0.5 * char_height)));
+               getDrawCoords(Point2D(draw_x, draw_y - 0.25 * char_height)));
       setFontSize(full_font_size);
     } else if (1 == draw_mode) {
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-               getDrawCoords(Point2D(draw_x, draw_y - 0.25 * char_height)));
+               getDrawCoords(Point2D(draw_x, draw_y + 0.5 * char_height)));
       setFontSize(full_font_size);
     } else {
       drawChar(next_c, getDrawCoords(Point2D(draw_x, draw_y)));
