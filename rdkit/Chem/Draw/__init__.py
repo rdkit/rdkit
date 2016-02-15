@@ -33,7 +33,7 @@ def _getCanvas():
       from rdkit.Chem.Draw.aggCanvas import Canvas
       useAGG=True
     else:
-      from rdkit.Chem.Draw.spingCanvas import Canvas      
+      from rdkit.Chem.Draw.spingCanvas import Canvas
       useSping=True
   if useSping:
     DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
@@ -57,44 +57,44 @@ def _createCanvas(size):
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
                fitImage=False, options=None, canvas=None, **kwargs):
   """Returns a PIL image containing a drawing of the molecule
-    
+
       ARGUMENTS:
 
         - kekulize: run kekulization routine on input `mol` (default True)
-        
+
         - size: final image size, in pixel (default (300,300))
-        
+
         - wedgeBonds: draw wedge (stereo) bonds (default True)
-        
+
         - highlightAtoms: list of atoms to highlight (default [])
-        
+
         - highlightMap: dictionary of (atom, color) pairs (default None)
-        
+
         - highlightBonds: list of bonds to highlight (default [])
 
         - highlightColor: RGB color as tuple (default [1, 0, 0])
-          
+
       NOTE:
-          
-            use 'matplotlib.colors.to_rgb()' to convert string and 
+
+            use 'matplotlib.colors.to_rgb()' to convert string and
             HTML color codes into the RGB tuple representation, eg.
-            
+
               from matplotlib.colors import ColorConverter
               img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
               img.save("molecule.png")
-              
+
       RETURNS:
-    
+
         a PIL Image object
   """
-  
+
   if not mol:
     raise ValueError('Null molecule provided')
   if canvas is None:
     img,canvas=_createCanvas(size)
   else:
     img=None
-    
+
   if options is None:
     options = DrawingOptions()
   if fitImage:
@@ -103,18 +103,18 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   if 'highlightColor' in kwargs:
       color = kwargs.pop('highlightColor', (1, 0, 0))
       options.selectColor = color
-      
+
   drawer = MolDrawing(canvas=canvas,drawingOptions=options)
 
   if kekulize:
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
-    
+
   if not mol.GetNumConformers():
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
-  
+
   if 'legend' in kwargs:
     legend = kwargs['legend']
     del kwargs['legend']
@@ -170,7 +170,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
-    
+
   if not mol.GetNumConformers():
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
@@ -188,7 +188,7 @@ def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True,
   """
   img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,**kwargs)
   img.save(filename)
-    
+
 tkRoot=None
 tkLabel=None
 tkPI=None
@@ -218,7 +218,7 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
     tkPI.paste(img)
   tkRoot.geometry('%dx%d'%(img.size))
 
-    
+
 def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
              imageType=None, fitImage=False, options=None, **kwargs):
   """ Generates a drawing of a molecule on a matplotlib canvas
@@ -239,11 +239,11 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
-    
+
   if not mol.GetNumConformers():
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
-  
+
   drawer.AddMol(mol,**kwargs)
   omol._atomPs=drawer.atomPs[mol]
   for k,v in iteritems(omol._atomPs):
@@ -279,10 +279,10 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
     Zp = mlab.bivariate_normal(X,Y,a,a,mol._atomPs[i][0], mol._atomPs[i][1])
     Z += Zp*weights[i]
   return X,Y,Z
-  
+
 
 def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
-  """ 
+  """
   """
   try:
     import Image
@@ -297,17 +297,18 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
 
 def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
                     highlightAtomLists=None,**kwargs):
-  """ 
+  """
   """
   try:
     import Image
   except ImportError:
     from PIL import Image
+  from rdkit.Chem.Draw import rdMolDraw2D
   if legends is None: legends = [None]*len(mols)
 
   nRows = len(mols)//molsPerRow
   if len(mols)%molsPerRow : nRows+=1
-    
+
   res = Image.new("RGBA",(molsPerRow*subImgSize[0],nRows*subImgSize[1]),(255,255,255,0))
   for i,mol in enumerate(mols):
     row = i//molsPerRow
@@ -316,13 +317,23 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     if highlightAtomLists and highlightAtomLists[i]:
       highlights=highlightAtomLists[i]
     if mol is not None:
-      img = MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
-                           **kwargs)
-      res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
+        if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
+            img = MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
+                                 **kwargs)
+        else:
+            nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
+            d2d = rdMolDraw2D.MolDraw2DCairo(subImgSize[0],subImgSize[1])
+            d2d.DrawMolecule(nmol,highlightAtoms=highlights)
+            from io import BytesIO
+            d2d.FinishDrawing()
+            sio = BytesIO(d2d.GetDrawingText())
+            img = Image.open(sio)
+
+        res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
-  """ 
+  """
   """
   try:
     import Image
@@ -356,7 +367,7 @@ def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
       if hasattr(canvas,'flush'):
         canvas.flush()
       else:
-        canvas.save()        
+        canvas.save()
     res.paste(nimg,(i*subImgSize[0],0))
   return res
 
