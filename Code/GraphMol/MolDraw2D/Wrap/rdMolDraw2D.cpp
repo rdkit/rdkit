@@ -12,6 +12,8 @@
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <Geometry/point.h>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
@@ -102,6 +104,14 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
   return retval;
 }
 #endif
+ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
+                         bool addChiralHs = true, bool wedgeBonds = true,
+                         bool forceCoords = false) {
+  RWMol *res = new RWMol(*m);
+  MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
+                                       forceCoords);
+  return static_cast<ROMol *>(res);
+}
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -181,4 +191,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
            "write the PNG data to the named file");
 #endif
+  python::def(
+      "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
+      (python::arg("mol"), python::arg("kekulize") = true,
+       python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
+       python::arg("forceCoords") = true),
+      "get ready to draw",
+      python::return_value_policy<python::manage_new_object>());
 }
