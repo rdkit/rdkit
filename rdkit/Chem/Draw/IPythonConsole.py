@@ -31,6 +31,7 @@ else:
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.six import BytesIO,StringIO
 import copy
 import os
@@ -135,25 +136,15 @@ def _toSVG(mol):
     except RuntimeError:
         mol.UpdatePropertyCache(False)
 
-    mc = copy.deepcopy(mol)
-    sio = StringIO()
     try:
-        Draw.MolToFile(mc, sio, size=molSize, imageType="svg",
-                       kekulize=kekulizeStructures,
-                       highlightAtoms=highlightAtoms)
-    except ValueError:  # <- can happen on a kekulization failure
-        mc = copy.deepcopy(mol)
-        Draw.MolToFile(mc, sio, size=molSize, kekulize=False,
-                       highlightAtoms=highlightAtoms, imageType="svg")
-
-    # It seems that the svg renderer used doesn't quite hit the spec.
-    # Here are some fixes to make it work in the notebook, although I think
-    # the underlying issue needs to be resolved at the generation step
-    svg_split = sio.getvalue().replace("svg:", "").splitlines()
-    header = ('<svg version="1.1" xmlns="http://www.w3.org/2000/svg"'
-              'width="%dpx" height="%dpx">') % molSize
-    svg = "\n".join(svg_split[:1] + [header] + svg_split[5:])
-    return svg
+        mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulizeStructures)
+    except ValueError: # <- can happen on a kekulization failure
+        mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=False)
+    d2d = rdMolDraw2D.MolDraw2DSVG(molSize[0],molSize[1])
+    d2d.DrawMolecule(mc,highlightAtoms=highlightAtoms)
+    d2d.FinishDrawing()
+    svg = d2d.GetDrawingText()
+    return svg.replace("svg:","")
 
 
 def _toReactionPNG(rxn):
