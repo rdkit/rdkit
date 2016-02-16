@@ -5559,11 +5559,40 @@ void testPotentialStereoBonds() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue754() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #754 : "
+                          "loss of double bond geometry with removeHs"
+                       << std::endl;
+  {  // starting point: full sanitization
+    std::string smiles =
+        "[H]C([H])([H])/C([H])=C(/[H])C([H])([H])[H]";  // possible problem
+                                                        // reported by
+                                                        // Steve Roughley
+    RWMol *m = SmilesToMol(smiles, false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getNumAtoms() == 12);
+    TEST_ASSERT(m->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+    delete m;
+
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    m->debugMol(std::cerr);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -5641,8 +5670,9 @@ int main() {
   testAdjustQueryProperties();
   testGithubIssue678();
   testGithubIssue717();
-#endif
   testPotentialStereoBonds();
+#endif
+  testGithubIssue754();
 
   return 0;
 }
