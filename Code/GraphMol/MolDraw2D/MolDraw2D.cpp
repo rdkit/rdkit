@@ -748,7 +748,7 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                                bool draw_dashed, const DrawColour &col1,
                                const DrawColour &col2) {
   Point2D perp = calcPerpendicular(cds1, cds2);
-  Point2D disp = perp * 0.1;
+  Point2D disp = perp * 0.15;
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 
