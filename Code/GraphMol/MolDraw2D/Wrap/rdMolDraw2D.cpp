@@ -144,7 +144,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("clearBackground", &RDKit::MolDrawOptions::clearBackground,
                      "clear the background before drawing a molecule")
       .def_readwrite("legendFontSize", &RDKit::MolDrawOptions::legendFontSize,
-                     "font size in pixels of the legend (if drawn)");
+                     "font size in pixels of the legend (if drawn)")
+      .def_readwrite(
+          "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
+          "offset (in Angstroms) for the extra lines in a multiple bond");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)

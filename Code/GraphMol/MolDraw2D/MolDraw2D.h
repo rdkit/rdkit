@@ -53,7 +53,9 @@ struct MolDrawOptions {
       backgroundColour;  // color to be used while clearing the background
   int legendFontSize;    // font size (in pixels) to be used for the legend (if
                          // present)
-  DrawColour legendColour;  // color to be used for the legend (if present)
+  DrawColour legendColour;    // color to be used for the legend (if present)
+  double multipleBondOffset;  // offset (in Angstroms) for the extra lines in a
+                              // multiple bond
   std::map<int, std::string> atomLabels;       // replacement labels for atoms
   std::vector<std::vector<int> > atomRegions;  // regions
 
@@ -67,7 +69,8 @@ struct MolDrawOptions {
         clearBackground(true),
         backgroundColour(1, 1, 1),
         legendFontSize(12),
-        legendColour(0, 0, 0){};
+        legendColour(0, 0, 0),
+        multipleBondOffset(0.15){};
 };
 
 class MolDraw2D {

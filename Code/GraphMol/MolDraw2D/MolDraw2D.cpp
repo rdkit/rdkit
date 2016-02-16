@@ -668,7 +668,7 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
 
   const Atom *at1 = mol.getAtomWithIdx(at1_idx);
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
-  const double double_bond_offset = 0.1;
+  double double_bond_offset = options_.multipleBondOffset;
 
   Point2D at1_cds = at_cds_[at1_idx];
   Point2D at2_cds = at_cds_[at2_idx];
