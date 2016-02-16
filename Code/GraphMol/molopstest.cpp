@@ -1733,20 +1733,25 @@ void testShortestPath() {
   }
   // fused ring test
   {
-	  std::string smi="[H]c1nc2c(C(=O)N([H])C2([H])Cl)c([H])c1Cl";
-	  ROMol *m=SmilesToMol(smi);
+    std::string smi = "[H]c1nc2c(C(=O)N([H])C2([H])Cl)c([H])c1Cl";
+    ROMol *m = SmilesToMol(smi);
 
-	  INT_LIST path=MolOps::getShortestPath(*m, 8, 11);
-	  CHECK_INVARIANT(path.size()==7, "");
-	  INT_LIST_CI pi=path.begin();
-	  CHECK_INVARIANT((*pi)==8, ""); pi++;
-	  CHECK_INVARIANT((*pi)==7, ""); pi++;
-	  CHECK_INVARIANT((*pi)==2, ""); pi++;
-	  pi++; // two equally long routes here
-	  pi++; // two equally long routes here
-	  CHECK_INVARIANT((*pi)==10, ""); pi++;
-	  CHECK_INVARIANT((*pi)==11, ""); pi++;
-	  delete m;
+    INT_LIST path = MolOps::getShortestPath(*m, 8, 11);
+    CHECK_INVARIANT(path.size() == 7, "");
+    INT_LIST_CI pi = path.begin();
+    CHECK_INVARIANT((*pi) == 8, "");
+    pi++;
+    CHECK_INVARIANT((*pi) == 7, "");
+    pi++;
+    CHECK_INVARIANT((*pi) == 2, "");
+    pi++;
+    pi++;  // two equally long routes here
+    pi++;  // two equally long routes here
+    CHECK_INVARIANT((*pi) == 10, "");
+    pi++;
+    CHECK_INVARIANT((*pi) == 11, "");
+    pi++;
+    delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -2552,7 +2557,7 @@ void testChiralityAndRemoveHs() {
 
 void testSFIssue1894348() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing SFIssue1894348 "
-                          "(impact of removeHs on bond stereo atoms"
+                          "(impact of removeHs on bond stereo atoms)"
                        << std::endl;
   RWMol *m, *m2;
 
@@ -5521,6 +5526,39 @@ void testGithubIssue717() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testPotentialStereoBonds() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing findPotentialStereoBonds"
+      << std::endl;
+  {  // starting point: full sanitization
+    std::string smiles =
+        "Br/C(=N\\N=c1/nn[nH][nH]1)c1ccncc1";  // possible problem reported by
+                                               // Steve Roughley
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 15);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+    TEST_ASSERT(m->getBondWithIdx(3)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(3)->getStereoAtoms().size() == 2);
+    delete m;
+
+    // partial sanitization:
+    m = SmilesToMol(smiles, false, false);
+    TEST_ASSERT(m);
+    m->updatePropertyCache(true);
+    MolOps::findSSSR(*m);
+    MolOps::findPotentialStereoBonds(*m, false);
+    TEST_ASSERT(m->getNumAtoms() == 15);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+    TEST_ASSERT(m->getBondWithIdx(3)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(3)->getStereoAtoms().size() == 2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -5601,9 +5639,10 @@ int main() {
   testGithubIssue526();
   testGithubIssue539();
   testAdjustQueryProperties();
-#endif
   testGithubIssue678();
   testGithubIssue717();
+#endif
+  testPotentialStereoBonds();
 
   return 0;
 }
