@@ -51,6 +51,9 @@ struct MolDrawOptions {
                          // molecule
   DrawColour
       backgroundColour;  // color to be used while clearing the background
+  int legendFontSize;    // font size (in pixels) to be used for the legend (if
+                         // present)
+  DrawColour legendColour;  // color to be used for the legend (if present)
   std::map<int, std::string> atomLabels;       // replacement labels for atoms
   std::vector<std::vector<int> > atomRegions;  // regions
 
@@ -62,7 +65,9 @@ struct MolDrawOptions {
         flagCloseContactsDist(3),
         includeAtomTags(false),
         clearBackground(true),
-        backgroundColour(1, 1, 1){};
+        backgroundColour(1, 1, 1),
+        legendFontSize(12),
+        legendColour(0, 0, 0){};
 };
 
 class MolDraw2D {
@@ -85,6 +90,14 @@ class MolDraw2D {
       const std::map<int, DrawColour> *highlight_bond_map = NULL,
       const std::map<int, double> *highlight_radii = NULL, int confId = -1);
 
+  virtual void drawMolecule(
+      const ROMol &mol, const std::string &legend,
+      const std::vector<int> *highlight_atoms,
+      const std::vector<int> *highlight_bonds,
+      const std::map<int, DrawColour> *highlight_atom_map = NULL,
+      const std::map<int, DrawColour> *highlight_bond_map = NULL,
+      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates
   // have
@@ -95,6 +108,8 @@ class MolDraw2D {
   virtual Point2D getDrawCoords(const Point2D &mol_cds) const;
   virtual Point2D getDrawCoords(int at_num) const;
   virtual Point2D getAtomCoords(const std::pair<int, int> &screen_cds) const;
+  virtual Point2D getAtomCoords(
+      const std::pair<double, double> &screen_cds) const;
   virtual Point2D getAtomCoords(int at_num) const;
 
   virtual int width() const { return width_; }
@@ -179,6 +194,7 @@ class MolDraw2D {
   std::vector<Point2D> at_cds_;  // from mol
   std::vector<int> atomic_nums_;
   std::vector<std::pair<std::string, OrientType> > atom_syms_;
+  Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;

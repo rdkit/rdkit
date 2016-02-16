@@ -78,7 +78,8 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_bonds,
                          python::object highlight_atom_map,
                          python::object highlight_bond_map,
-                         python::object highlight_atom_radii, int confId = -1) {
+                         python::object highlight_atom_radii, int confId,
+                         std::string legend) {
   rdk_auto_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   rdk_auto_ptr<std::vector<int> > highlightBonds =
@@ -88,8 +89,8 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
-  self.drawMolecule(mol, highlightAtoms.get(), highlightBonds.get(), ham, hbm,
-                    har, confId);
+  self.drawMolecule(mol, legend, highlightAtoms.get(), highlightBonds.get(),
+                    ham, hbm, har, confId);
 
   delete ham;
   delete hbm;
@@ -142,8 +143,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "include atom tags in output")
       .def_readwrite("clearBackground", &RDKit::MolDrawOptions::clearBackground,
                      "clear the background before drawing a molecule")
-
-      ;
+      .def_readwrite("legendFontSize", &RDKit::MolDrawOptions::legendFontSize,
+                     "font size in pixels of the legend (if drawn)");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
@@ -157,14 +158,22 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("highlightAtomRadii") = python::object(),
             python::arg("confId") = -1),
            "renders a molecule\n")
-      .def("DrawMolecule", RDKit::drawMoleculeHelper2,
-           (python::arg("self"), python::arg("mol"),
-            python::arg("highlightAtoms"), python::arg("highlightBonds"),
-            python::arg("highlightAtomColors") = python::object(),
-            python::arg("highlightBondColors") = python::object(),
-            python::arg("highlightAtomRadii") = python::object(),
-            python::arg("confId") = -1),
-           "renders a molecule\n")
+      .def(
+          "DrawMolecule", RDKit::drawMoleculeHelper2,
+          (python::arg("self"), python::arg("mol"),
+           python::arg("highlightAtoms"), python::arg("highlightBonds"),
+           python::arg("highlightAtomColors") = python::object(),
+           python::arg("highlightBondColors") = python::object(),
+           python::arg("highlightAtomRadii") = python::object(),
+           python::arg("confId") = -1, python::arg("legend") = std::string("")),
+          "renders a molecule\n")
+      .def("Width", &RDKit::MolDraw2D::width,
+           "get the width of the drawing canvas")
+      .def("Height", &RDKit::MolDraw2D::height,
+           "get the height of the drawing canvas")
+      .def("DrawString", &RDKit::MolDraw2D::drawString,
+           (python::arg("self"), python::arg("string"), python::arg("pos")),
+           "add text to the canvas")
       .def("drawOptions", (RDKit::MolDrawOptions & (RDKit::MolDraw2D::*)()) &
                               RDKit::MolDraw2D::drawOptions,
            python::return_internal_reference<

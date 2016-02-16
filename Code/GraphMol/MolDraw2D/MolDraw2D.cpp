@@ -268,6 +268,31 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   }
 }
 
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const vector<int> *highlight_bonds,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const map<int, DrawColour> *highlight_bond_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
+               highlight_bond_map, highlight_radii, confId);
+  if (legend != "") {
+    // the 0.94 here is quite empirical, it's brought over from Python
+    Point2D loc = getAtomCoords(std::make_pair(width_ / 2., 0.94 * height_));
+
+    double o_font_size = fontSize();
+    setFontSize(options_.legendFontSize /
+                scale_);  // set the font size to about 12 pixels high
+
+    DrawColour odc = colour();
+    setColour(options_.legendColour);
+    drawString(legend, loc);
+    setColour(odc);
+    setFontSize(o_font_size);
+  }
+}
+
 void MolDraw2D::highlightCloseContacts() {
   if (drawOptions().flagCloseContactsDist < 0) return;
   int tol =
@@ -324,6 +349,13 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
   int x = int(double(screen_cds.first) / scale_ + x_min_ - x_trans_);
   int y = int(double(screen_cds.second) / scale_ + y_min_ - y_trans_);
+
+  return Point2D(x, y);
+}
+
+Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
+  double x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
+  double y = double(screen_cds.second / scale_ + y_min_ - y_trans_);
 
   return Point2D(x, y);
 }
@@ -580,12 +612,22 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
 void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId) {
   at_cds_.clear();
   atomic_nums_.clear();
+
+  bbox_[0].x = bbox_[0].y = numeric_limits<double>::max();
+  bbox_[1].x = bbox_[1].y = -1 * numeric_limits<double>::max();
+
   const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
   ROMol::VERTEX_ITER this_at, end_at;
   boost::tie(this_at, end_at) = mol.getVertices();
   while (this_at != end_at) {
     int this_idx = mol[*this_at]->getIdx();
     at_cds_.push_back(Point2D(locs[this_idx].x, locs[this_idx].y));
+
+    bbox_[0].x = std::min(bbox_[0].x, locs[this_idx].x);
+    bbox_[0].y = std::min(bbox_[0].y, locs[this_idx].y);
+    bbox_[1].x = std::max(bbox_[1].x, locs[this_idx].x);
+    bbox_[1].y = std::max(bbox_[1].y, locs[this_idx].y);
+
     ++this_at;
   }
 }

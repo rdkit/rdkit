@@ -7,6 +7,7 @@ import os
 from rdkit.six import iteritems
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
+from rdkit.Geometry import Point2D
 
 def _getCanvas():
   useAGG=False
@@ -306,7 +307,8 @@ def _moltoimg(mol,sz,highlights=None,legend=None,**kwargs):
     else:
         nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
         d2d = rdMolDraw2D.MolDraw2DCairo(sz[0],sz[1])
-        d2d.DrawMolecule(nmol,highlightAtoms=highlights)
+        if legend is None: legend=""
+        d2d.DrawMolecule(nmol,highlights,[],legend=legend)
         from io import BytesIO
         d2d.FinishDrawing()
         sio = BytesIO(d2d.GetDrawingText())
