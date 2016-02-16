@@ -294,6 +294,24 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
     res.paste(MolToImage(mol,subImgSize,legend=legends[i],**kwargs),(i*subImgSize[0],0))
   return res
 
+def _moltoimg(mol,sz,highlights=None,legend=None,**kwargs):
+    try:
+        import Image
+    except ImportError:
+        from PIL import Image
+    from rdkit.Chem.Draw import rdMolDraw2D
+    if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
+        img = MolToImage(mol,sz,legend=legend,highlightAtoms=highlights,
+                             **kwargs)
+    else:
+        nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
+        d2d = rdMolDraw2D.MolDraw2DCairo(sz[0],sz[1])
+        d2d.DrawMolecule(nmol,highlightAtoms=highlights)
+        from io import BytesIO
+        d2d.FinishDrawing()
+        sio = BytesIO(d2d.GetDrawingText())
+        img = Image.open(sio)
+    return img
 
 def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
                     highlightAtomLists=None,**kwargs):
@@ -303,7 +321,6 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     import Image
   except ImportError:
     from PIL import Image
-  from rdkit.Chem.Draw import rdMolDraw2D
   if legends is None: legends = [None]*len(mols)
 
   nRows = len(mols)//molsPerRow
@@ -316,6 +333,7 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     highlights=None
     if highlightAtomLists and highlightAtomLists[i]:
       highlights=highlightAtomLists[i]
+<<<<<<< HEAD
     if mol is not None:
         if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
             img = MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
@@ -330,6 +348,10 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
             img = Image.open(sio)
 
         res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
+=======
+    img = _moltoimg(mol,subImgSize,highlights,legends[i],**kwargs)
+    res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
+>>>>>>> 6e5f377... further progress
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
