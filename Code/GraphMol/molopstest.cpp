@@ -5581,12 +5581,51 @@ void testGithubIssue754() {
 
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    m->debugMol(std::cerr);
     TEST_ASSERT(m->getNumAtoms() == 4);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
     delete m;
   }
+  {  // another basic test
+    std::string smiles = "[H]/C(C)=C/C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getStereo() == Bond::STEREOZ);
+    delete m;
+  }
+  {  // H following the C:
+    std::string smiles = "CC(\\[H])=C/C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOZ);
+    delete m;
+  }
+  {  // bond dir already set :
+    std::string smiles = "[H]/C(/C)=C\\C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getStereo() == Bond::STEREOE);
+    delete m;
+  }
+
+  {  // chained bonds :
+    std::string smiles = "[H]/C(C=C/C)=C\\C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 6);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 4)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
