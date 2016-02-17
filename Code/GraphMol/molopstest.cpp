@@ -5526,8 +5526,6 @@ void testGithubIssue717() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-<<<<<<< HEAD
-=======
 void testPotentialStereoBonds() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing findPotentialStereoBonds"
