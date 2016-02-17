@@ -191,11 +191,19 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
            "write the PNG data to the named file");
 #endif
-  python::def(
-      "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
-      (python::arg("mol"), python::arg("kekulize") = true,
-       python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
-       python::arg("forceCoords") = true),
-      "get ready to draw",
-      python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Does some cleanup operations on the molecule to prepare it to draw "
+      "nicely.\n"
+      "The operations include: kekulization, addition of chiral Hs (so that we "
+      "can draw\n"
+      "wedges to them), wedging of bonds at chiral centers, and generation of "
+      "a 2D\n"
+      "conformation if the molecule does not already have a conformation\n"
+      "\nReturns a modified copy of the molecule.\n" python::def(
+          "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
+          (python::arg("mol"), python::arg("kekulize") = true,
+           python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
+           python::arg("forceCoords") = true),
+          docString.c_str(),
+          python::return_value_policy<python::manage_new_object>());
 }

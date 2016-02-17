@@ -18,9 +18,9 @@ namespace RDKit {
 namespace MolDraw2DUtils {
 //! Does some cleanup operations on the molecule to prepare it to draw nicely
 /*
-The operations include: kekulization, addition of chiral Hs, wedging of bonds at
-chiral centers, and generation of a 2D conformation if the molecule does not
-already have a conformation
+The operations include: kekulization, addition of chiral Hs (so that we can draw
+wedges to them), wedging of bonds at chiral centers, and generation of a 2D
+conformation if the molecule does not already have a conformation
 
 \param mol: the molecule to be modified
 \param kekulize: toggles kekulization (this can fail, see below)
