@@ -510,8 +510,8 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 
         // if the direction is set on this bond and the atom it's connected to
         // has no other single bonds with directions set, then we need to set
-        // something in order to avoid double bond stereochemistry possibly
-        // being lost. This was github #754
+        // direction on one of the other neighbors in order to avoid double bond
+        // stereochemistry possibly being lost. This was github #754
         if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
             bond->getBondDir() == Bond::ENDUPRIGHT) {
           bool foundADir = false;
