@@ -199,11 +199,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       "wedges to them), wedging of bonds at chiral centers, and generation of "
       "a 2D\n"
       "conformation if the molecule does not already have a conformation\n"
-      "\nReturns a modified copy of the molecule.\n" python::def(
-          "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
-          (python::arg("mol"), python::arg("kekulize") = true,
-           python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
-           python::arg("forceCoords") = true),
-          docString.c_str(),
-          python::return_value_policy<python::manage_new_object>());
+      "\nReturns a modified copy of the molecule.\n";
+  python::def(
+      "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
+      (python::arg("mol"), python::arg("kekulize") = true,
+       python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
+       python::arg("forceCoords") = true),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
 }
