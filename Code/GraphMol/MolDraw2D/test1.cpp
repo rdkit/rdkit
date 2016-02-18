@@ -614,8 +614,69 @@ void test7() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub781() {
+  std::cout
+      << " ----------------- Test Github #781: Rendering single-atom molecules"
+      << std::endl;
+
+  {
+    std::string smiles = "C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {
+    std::string smiles = "[C]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>C</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {
+    std::string smiles = "C.CC.[Cl-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>Cl</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {  // empty molecule
+    ROMol *m = new ROMol();
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>") == std::string::npos);
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
+#if 1
   test1();
   test2();
   test3();
@@ -624,4 +685,6 @@ int main() {
   testMultiThreaded();
   test6();
   test7();
+#endif
+  testGithub781();
 }
