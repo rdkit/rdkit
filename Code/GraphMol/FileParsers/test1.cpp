@@ -856,6 +856,19 @@ void testIssue399() {
 
   delete m1;
 
+  // make sure we prefer wedging bonds to Hs:
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+  MolOps::addHs(*m1, false, true);
+  TEST_ASSERT(m1->getAtomWithIdx(7)->getAtomicNum() == 1);
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7));
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondType() == Bond::SINGLE);
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::NONE);
+
+  WedgeMolBonds(*m1, &m1->getConformer());
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::BEGINWEDGE);
+
+  delete m1;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

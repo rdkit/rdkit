@@ -2,6 +2,7 @@ from rdkit import RDConfig
 import unittest
 from rdkit import Chem
 from rdkit.Chem import Draw,AllChem
+from rdkit.Chem.Draw import rdMolDraw2D
 
 class TestCase(unittest.TestCase):
     def setUp(self) :
@@ -16,7 +17,7 @@ class TestCase(unittest.TestCase):
         txt = d.GetDrawingText()
         self.assertTrue(txt.find("<svg:svg")!=-1)
         self.assertTrue(txt.find("</svg:svg>")!=-1)
-            
+
     def test2(self) :
         m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
         AllChem.Compute2DCoords(m)
@@ -38,6 +39,11 @@ class TestCase(unittest.TestCase):
         d.FinishDrawing()
         txt = d.GetDrawingText()
 
-            
+    def testPrepareForDrawing(self):
+        m = Chem.MolFromSmiles('c1ccccc1[C@H](F)Cl')
+        nm = rdMolDraw2D.PrepareMolForDrawing(m)
+        self.assertEqual(nm.GetNumAtoms(),10)
+        self.assertEqual(nm.GetNumConformers(),1)
+
 if __name__=="__main__":
     unittest.main()
