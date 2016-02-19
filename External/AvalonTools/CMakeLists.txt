@@ -1,19 +1,20 @@
+
 if(RDK_BUILD_AVALON_SUPPORT)
+  if (AVALONTOOLS_DIR)
+    string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
+    set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
+  else (AVALONTOOLS_DIR)
+    set(AVALON_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/distrib/common )
+  endif(AVALONTOOLS_DIR)
 
   # check whether we have the Avalon source in a standard place
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/distrib/common/layout.c)
-    message(STATUS  "Found Avalon software")
-    set(AVALON_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/distrib/common )
+  if(EXISTS ${AVALON_SRC_PATH}/layout.c)
+    message(STATUS  "Found Avalon software in ${AVALON_SRC_PATH}")
   else()
-    if (AVALONTOOLS_DIR)
-      string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
-      set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
-    else (AVALONTOOLS_DIR)
       # Avalon source is missing
       message(WARNING  "** NO AVALON SOFTWARE FOUND\n"
               "Avalon support will be turned off. If you want to add Avalon support, please follow the instructions inside $RDBASE/External/AvalonTools/README to download a copy of the source code and then rerun cmake.")
       set(RDK_BUILD_AVALON_SUPPORT OFF)
-    endif(AVALONTOOLS_DIR)
   endif()
 endif(RDK_BUILD_AVALON_SUPPORT)
 
