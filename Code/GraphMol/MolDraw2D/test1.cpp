@@ -154,7 +154,7 @@ void test2() {
   }
   std::cout << " Done" << std::endl;
 }
-#else  // RDK_CAIRO_BUILD
+#else // RDK_CAIRO_BUILD
 void test2() {}
 #endif
 
@@ -486,7 +486,8 @@ void runblock(const std::vector<ROMol *> &mols,
               unsigned int idx) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx)
+        continue;
       ROMol *mol = mols[i];
       MolDraw2DSVG drawer(300, 300);
       drawer.drawMolecule(*mol);
@@ -512,7 +513,8 @@ void testMultiThreaded() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol)
+      continue;
     mols.push_back(mol);
   }
 
@@ -686,11 +688,11 @@ void test8PrepareMolForDrawing() {
     // by default we don't force conformer generation
     RWMol nm(*m);
     RDDepict::compute2DCoords(nm);
-    nm.getConformer().set3D(true);  // it's not really, we're cheating
+    nm.getConformer().set3D(true); // it's not really, we're cheating
     TEST_ASSERT(nm.getNumAtoms() == 9)
     MolDraw2DUtils::prepareMolForDrawing(nm);
     TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);  // we have a conformer anyway
+    TEST_ASSERT(nm.getNumConformers() == 1); // we have a conformer anyway
     TEST_ASSERT(nm.getConformer().is3D());
 
     // but if we do force, it blows out that conformer:
@@ -699,6 +701,66 @@ void test8PrepareMolForDrawing() {
   }
 
   delete m;
+  std::cerr << " Done" << std::endl;
+}
+
+void testGithub781() {
+  std::cout
+      << " ----------------- Test Github #781: Rendering single-atom molecules"
+      << std::endl;
+
+  {
+    std::string smiles = "C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {
+    std::string smiles = "[C]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>C</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {
+    std::string smiles = "C.CC.[Cl-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>Cl</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  { // empty molecule
+    ROMol *m = new ROMol();
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>") == std::string::npos);
+    delete m;
+  }
   std::cerr << " Done" << std::endl;
 }
 
@@ -715,4 +777,5 @@ int main() {
   test7();
 #endif
   test8PrepareMolForDrawing();
+  testGithub781();
 }

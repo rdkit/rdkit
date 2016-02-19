@@ -45,6 +45,7 @@
 // SWIG don't work with newer versions of boost.
 #define BOOST_NOEXCEPT
 #define BOOST_NO_CXX11_RVALUE_REFERENCES
+#define BOOST_NO_CXX11_NULLPTR
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* Include the base types before anything that will utilize them */
