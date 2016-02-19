@@ -508,6 +508,39 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
           heavyAtom->setProp(common_properties::_UnknownStereo, 1);
         }
 
+        // if the direction is set on this bond and the atom it's connected to
+        // has no other single bonds with directions set, then we need to set
+        // direction on one of the other neighbors in order to avoid double bond
+        // stereochemistry possibly being lost. This was github #754
+        if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
+            bond->getBondDir() == Bond::ENDUPRIGHT) {
+          bool foundADir = false;
+          Bond *oBond = NULL;
+          boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
+          while (beg != end) {
+            if (mol[*beg]->getIdx() != bond->getIdx() &&
+                mol[*beg]->getBondType() == Bond::SINGLE) {
+              if (mol[*beg]->getBondDir() == Bond::NONE) {
+                oBond = mol[*beg].get();
+              } else {
+                foundADir = true;
+              }
+            }
+            ++beg;
+          }
+          if (!foundADir && oBond != NULL) {
+            bool flipIt = (oBond->getBeginAtom() == heavyAtom) &&
+                          (bond->getBeginAtom() == heavyAtom);
+            if (flipIt) {
+              oBond->setBondDir(bond->getBondDir() == Bond::ENDDOWNRIGHT
+                                    ? Bond::ENDUPRIGHT
+                                    : Bond::ENDDOWNRIGHT);
+            } else {
+              oBond->setBondDir(bond->getBondDir());
+            }
+          }
+        }
+
         mol.removeAtom(atom);
       } else {
         // only increment the atom idx if we don't remove the atom
