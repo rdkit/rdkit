@@ -1,61 +1,20 @@
-To use the Avalon Toolkit support in the RDKit, first download a copy of the
-source from:
-http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.1_beta/AvalonToolkit_1.1_beta.source.tar/download
+To use the Avalon Toolkit support in the RDKit, you need to download the source code separately.
 
-Note that the version number is important.
+If you already have a copy of the most recent version downloaded, run `cmake` with the 'AVALONTOOLS_DIR' set to the location of the `SourceDistribution` directory of the Avalon toolkit download.
 
-Extract the tar file somewhere; the source requred by the RDKit is in
-the SourceDistribution directory.
+If you are on a UNIX variant system (Linux, Mac OS X, Cygwin, etc), you may download a copy by invoking the included script `download-avalon.sh`:
 
-Apply the following diff to the files
-SourceDistribution/common/reaccsio.c and
-SourceDistribution/common/smi2mol.c:
+	$ bash download-avalon.sh
 
-$ diff SourceDistribution/common ~/avalontoolkit_beta/SourceDistribution/common
-diff SourceDistribution/common/reaccsio.c /cygdrive/c/Users/glandrum/avalontoolkit_beta/SourceDistribution/common/reaccsio.c
-1400d1399
-<
-1414c1413
-<                MyFree((char *)tempdir);
----
->                //MyFree((char *)tempdir);
-1433d1431
-<
-1443c1441
-<
----
->    fprintf(stderr,"  returning\n");
+This will grab everything you need and copy it to the right place.
 
-diff SourceDistribution/common/smi2mol.c /cygdrive/c/Users/glandrum/avalontoolkit_beta/SourceDistribution/common/smi2mol.c
-936c936
-< fprintf(stderr, "2: opening branch '%s'\n", tmp);
----
->                 /* fprintf(stderr, "2: opening branch '%s'\n", tmp); */
-1012c1012
-< fprintf(stderr, "closing branch '%s'\n", tmp);
----
->           /* fprintf(stderr, "closing branch '%s'\n", tmp); */
-1543c1543
-< fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
----
->           /*fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
-1550c1550
-< fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
----
->           /*fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
-1574c1574
-< fprintf(stderr, "1: opening branch '%s'\n", num_buf);
----
->                    /*fprintf(stderr, "1: opening branch '%s'\n", num_buf);*/
-1592c1592
-< fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
----
->            /*fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
-1596c1596
-< fprintf(stderr, "\n");
----
->       /*fprintf(stderr, "\n");*/
+Otherwise, first download a copy of the most recent version of the source code .tar file from:
+https://sourceforge.net/projects/avalontoolkit/files/
 
+Note that it's important to grab the most recent version.
 
+Extract the tar file somewhere.
+Create the directory $RDBASE/External/AvalonTools/distrib and copy the contents of the SourceDistribution directory there.
+Confirm that the directory $RDBASE/External/AvalonTools/distrib/common exists.
 
-
+Now rerun`cmake` with `-DRDK_BUILD_AVALON_SUPPORT=ON` as an additional argument
