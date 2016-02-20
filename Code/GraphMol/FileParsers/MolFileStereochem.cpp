@@ -384,7 +384,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     }
   }
 
-  // now rank atoms by the number of chiral neighbors they have:
+  // now rank atoms by the number of chiral neighbors or Hs they have:
   bool chiNbrs = false;
   for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
        ++cai) {
@@ -403,6 +403,11 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     while (nbrIdx != endNbrs) {
       const ATOM_SPTR nat = mol[*nbrIdx];
       ++nbrIdx;
+      if (nat->getAtomicNum() == 1) {
+        // special case: it's an H... we weight these especially high:
+        nChiralNbrs[at->getIdx()] -= 10;
+        continue;
+      }
       type = nat->getChiralTag();
       if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW)
         continue;
@@ -426,7 +431,8 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   // picks a bond for each atom that we will wedge when we write the mol file
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
-  //   is not yet picked to be wedged for a different chiral center
+  //   is not yet picked to be wedged for a different chiral center, preferring
+  //   bonds to Hs
   // - if we do not find a bond that begins at the chiral center - we will take
   //   the first bond that is not yet picked by any other chiral centers
   // we use the orders calculated above to determine which order to do the
@@ -447,13 +453,19 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     std::vector<std::pair<int, int> > nbrScores;
     while (atomBonds.first != atomBonds.second) {
       const Bond *bond = mol[*atomBonds.first].get();
-      atomBonds.first++;
+      ++atomBonds.first;
 
       // can only wedge single bonds:
       if (bond->getBondType() != Bond::SINGLE) continue;
 
       int bid = bond->getIdx();
       if (res.find(bid) == res.end()) {
+        // very strong preference for Hs:
+        if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
+          nbrScores.push_back(
+              std::make_pair(-1000, bid));  // lower than anything else can be
+          continue;
+        }
         int nbrScore = 0;
         // prefer neighbors that are nonchiral or have as few chiral neighbors
         // as possible:
