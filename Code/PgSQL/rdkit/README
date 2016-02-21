@@ -13,25 +13,24 @@ either set the environment variable PostgreSQL_ROOT or add a
 "-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
 PostgreSQL root directory, e.g. C:\Program Files (x86)\PostgreSQL\9.5
 
-==========================================================================
-Win32-specific installation info
---------------------------------
-
 After building the RDKit, carry out the following steps:
-1) Open a CMD shell with administrator privileges
-2) Stop the PostgreSQL service, e.g.:
+1) Open a shell (CMD under Windows) with administrator privileges
+2) Stop the PostgreSQL service:
    "C:\Program Files (x86)\PostgreSQL\9.5\bin\pg_ctl.exe" ^
    -N "postgresql-9.5"  -D "C:\Program Files (x86)\PostgreSQL\9.5\data" ^
-   -w stop
-3) run the BAT script
+   -w stop (Windows)
+   service postgresql stop (Linux)
    
+3) run the "pgsql_install" script:
    
+   ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.bat (Windows)
+   sh ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.sh (Linux)
    
-   which will copy rdkit.sql91.in, rdkit--3.4.sql,
-   rdkit.control and rdkit.dll into you PostgreSQL installation
-4) Make sure that the Boost DLLs the RDKit is built against are in the
-   SYSTEM path, or PostgreSQL will fail to create the rdkit extension with
-   a deceptive error message, e.g.:
+   which will install rdkit.sql91.in, rdkit--3.4.sql,
+   rdkit.control and rdkit.dll into PostgreSQL 
+4) Under Windows, ,make sure that the Boost DLLs against which the RDKit
+   is built are in the SYSTEM path, or PostgreSQL will fail to create the
+   rdkit extension with a deceptive error message such as:
 
    ERROR:  could not load library
    "C:/Program Files (x86)/PostgreSQL/9.5/lib/rdkit.dll":
@@ -40,10 +39,10 @@ After building the RDKit, carry out the following steps:
 5) Start the PostgreSQL service, e.g.:
    "C:\Program Files (x86)\PostgreSQL\9.5\bin\pg_ctl.exe" ^
    -N "postgresql-9.5"  -D "C:\Program Files (x86)\PostgreSQL\9.5\data" ^
-   -w start
-==========================================================================
+   -w start (Windows)
+   service postgresql start (Linux)
 
-To install rdkit cartridge into the database DB: 
+To install the rdkit cartridge into the database DB: 
  psql -c 'CREATE EXTENSION rdkit' DB
 
 Uninstall cartridge from database DB:
