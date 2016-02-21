@@ -240,31 +240,28 @@ std::string MolFragmentToSmilesHelper(
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
-  std::vector<int> *avect =
+  rdk_auto_ptr<std::vector<int> > avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
-  if (!avect || !(avect->size())) {
+  if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  std::vector<int> *bvect =
+  rdk_auto_ptr<std::vector<int> > bvect =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  std::vector<std::string> *asymbols =
+  rdk_auto_ptr<std::vector<std::string> > asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  std::vector<std::string> *bsymbols =
+  rdk_auto_ptr<std::vector<std::string> > bsymbols =
       pythonObjectToVect<std::string>(bondSymbols);
-  if (asymbols && asymbols->size() != mol.getNumAtoms()) {
+  if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
   }
-  if (bsymbols && bsymbols->size() != mol.getNumBonds()) {
+  if (bsymbols.get() && bsymbols->size() != mol.getNumBonds()) {
     throw_value_error("length of bond symbol list != number of bonds");
   }
 
   std::string res = MolFragmentToSmiles(
-      mol, *avect, bvect, asymbols, bsymbols, doIsomericSmiles, doKekule,
-      rootedAtAtom, canonical, allBondsExplicit, allHsExplicit);
-  delete avect;
-  delete bvect;
-  delete asymbols;
-  delete bsymbols;
+      mol, *avect.get(), bvect.get(), asymbols.get(), bsymbols.get(),
+      doIsomericSmiles, doKekule, rootedAtAtom, canonical, allBondsExplicit,
+      allHsExplicit);
   return res;
 }
 
@@ -285,21 +282,21 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
                                               bool breakTies = true)
 
 {
-  std::vector<int> *avect =
+  rdk_auto_ptr<std::vector<int> > avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
-  if (!avect || !(avect->size())) {
+  if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  std::vector<int> *bvect =
+  rdk_auto_ptr<std::vector<int> > bvect =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  std::vector<std::string> *asymbols =
+  rdk_auto_ptr<std::vector<std::string> > asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  std::vector<std::string> *bsymbols =
+  rdk_auto_ptr<std::vector<std::string> > bsymbols =
       pythonObjectToVect<std::string>(bondSymbols);
-  if (asymbols && asymbols->size() != mol.getNumAtoms()) {
+  if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
   }
-  if (bsymbols && bsymbols->size() != mol.getNumBonds()) {
+  if (bsymbols.get() && bsymbols->size() != mol.getNumBonds()) {
     throw_value_error("length of bond symbol list != number of bonds");
   }
 
@@ -307,11 +304,12 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
   for (size_t i = 0; i < avect->size(); ++i) atoms[(*avect)[i]] = true;
 
   boost::dynamic_bitset<> bonds(mol.getNumBonds());
-  for (size_t i = 0; bvect && i < bvect->size(); ++i) bonds[(*bvect)[i]] = true;
+  for (size_t i = 0; bvect.get() && i < bvect->size(); ++i)
+    bonds[(*bvect)[i]] = true;
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
-  Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols, bsymbols,
-                           breakTies);
+  Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(),
+                           bsymbols.get(), breakTies);
 
   std::vector<int> resRanks(mol.getNumAtoms());
   // set unused ranks to -1 for the Python interface

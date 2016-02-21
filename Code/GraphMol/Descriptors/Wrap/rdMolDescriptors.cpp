@@ -110,20 +110,17 @@ RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality, bool use2D,
     int confId) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int32_t> *res;
   res = RDKit::AtomPairs::getAtomPairFingerprint(
-      mol, minLength, maxLength, fvect, ivect, invvect, includeChirality, use2D,
-      confId);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality, use2D, confId);
   return res;
 }
 RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(
@@ -131,20 +128,17 @@ RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality, bool use2D, int confId) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int32_t> *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprint(
-      mol, nBits, minLength, maxLength, fvect, ivect, invvect, includeChirality,
-      use2D, confId);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality, use2D, confId);
   return res;
 }
 
@@ -152,11 +146,11 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int targetSize, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   if (targetSize * RDKit::AtomPairs::codeSize > 64) {
@@ -168,10 +162,8 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
 
   RDKit::SparseIntVect<boost::int64_t> *res;
   res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(
-      mol, targetSize, fvect, ivect, invvect, includeChirality);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, targetSize, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality);
   return res;
 }
 
@@ -179,19 +171,17 @@ RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int targetSize,
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int64_t> *res;
   res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(
-      mol, nBits, targetSize, fvect, ivect, invvect, includeChirality);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, targetSize, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality);
   return res;
 }
 
@@ -200,20 +190,17 @@ ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, unsigned int nBitsPerEntry,
     bool includeChirality) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
   res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(
-      mol, nBits, targetSize, fvect, ivect, invvect, nBitsPerEntry,
-      includeChirality);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, targetSize, fvect.get(), ivect.get(), invvect.get(),
+      nBitsPerEntry, includeChirality);
   return res;
 }
 
@@ -222,20 +209,17 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     unsigned int nBitsPerEntry, bool includeChirality, bool use2D, int confId) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(
-      mol, nBits, minLength, maxLength, fvect, ivect, invvect, nBitsPerEntry,
-      includeChirality, use2D, confId);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
+      nBitsPerEntry, includeChirality, use2D, confId);
   return res;
 }
 

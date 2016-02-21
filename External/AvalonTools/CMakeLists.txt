@@ -1,11 +1,34 @@
 if(RDK_BUILD_AVALON_SUPPORT)
 if(NOT DEFINED ${AVALONTOOLS_DIR})
-  set(AVALONTOOLS_DIR "${CMAKE_SOURCE_DIR}/External/AvalonTools/SourceDistribution")
+  set(AVALONTOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution")
 endif(NOT DEFINED ${AVALONTOOLS_DIR})
 string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
 set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
+set(fileToPatch "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution/common/reaccsio.c")
+set(needDownload "TRUE")
+if(EXISTS "${fileToPatch}")
+  file(READ "${fileToPatch}" buffer)
+  if("${buffer}" MATCHES "//MyFree\\(\\(char \\*\\)tempdir\\);")
+    set(needDownload "FALSE")
+  endif()
+endif()
+if(needDownload)
+  set(AVALONTOOLS_URL "http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
+  message("Downloading ${AVALONTOOLS_URL}...")
+  file(DOWNLOAD "${AVALONTOOLS_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/AvalonToolkit_1.2.0.source.tar"
+    EXPECTED_MD5 092a94f421873f038aa67d4a6cc8cb54)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
+    ${CMAKE_CURRENT_SOURCE_DIR}/AvalonToolkit_1.2.0.source.tar
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  # apply patch to AvalonTools
+  configure_file("${fileToPatch}" "${fileToPatch}.orig" COPYONLY)
+  file(READ "${fileToPatch}" buffer)
+  string(REGEX REPLACE "MyFree\\(\\(char \\*\\)tempdir\\);"
+    "//MyFree((char *)tempdir);" buffer "${buffer}")
+  file(WRITE "${fileToPatch}" "${buffer}")
+endif()
 
-add_definitions(-DBUILD_AVALON_SUPPORT)
+add_definitions(-DBUILD_AVALON_SUPPORT) 
 if (MSVC)
   add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
 endif(MSVC)

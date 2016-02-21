@@ -315,8 +315,10 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     highlights=None
     if highlightAtomLists and highlightAtomLists[i]:
       highlights=highlightAtomLists[i]
-    res.paste(MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
-                         **kwargs),(col*subImgSize[0],row*subImgSize[1]))
+    if mol is not None:
+      img = MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
+                           **kwargs)
+      res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):

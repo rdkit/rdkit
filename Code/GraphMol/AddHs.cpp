@@ -319,7 +319,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
 }  // end of unnamed namespace
 
 namespace MolOps {
-void addHs(RWMol &mol, bool explicitOnly, bool addCoords) {
+void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
+           const UINT_VECT *onlyOnAtoms) {
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -331,9 +332,13 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords) {
   // for their coordinates
   unsigned int numAddHyds = 0;
   for (ROMol::AtomIterator at = mol.beginAtoms(); at != mol.endAtoms(); ++at) {
-    numAddHyds += (*at)->getNumExplicitHs();
-    if (!explicitOnly) {
-      numAddHyds += (*at)->getNumImplicitHs();
+    if (!onlyOnAtoms ||
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), (*at)->getIdx()) !=
+            onlyOnAtoms->end()) {
+      numAddHyds += (*at)->getNumExplicitHs();
+      if (!explicitOnly) {
+        numAddHyds += (*at)->getNumImplicitHs();
+      }
     }
   }
   unsigned int nSize = mol.getNumAtoms() + numAddHyds;
@@ -348,6 +353,12 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords) {
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    if (onlyOnAtoms &&
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
+            onlyOnAtoms->end()) {
+      continue;
+    }
+
     Atom *newAt = mol.getAtomWithIdx(aidx);
     unsigned int newIdx;
     newAt->clearComputedProps();
@@ -383,9 +394,10 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords) {
     newAt->updatePropertyCache();
   }
 }
-ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords) {
+ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
+             const UINT_VECT *onlyOnAtoms) {
   RWMol *res = new RWMol(mol);
-  addHs(*res, explicitOnly, addCoords);
+  addHs(*res, explicitOnly, addCoords, onlyOnAtoms);
   return static_cast<ROMol *>(res);
 };
 
@@ -494,6 +506,39 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         if (bond->getBondDir() == Bond::UNKNOWN &&
             bond->getBeginAtomIdx() == heavyAtom->getIdx()) {
           heavyAtom->setProp(common_properties::_UnknownStereo, 1);
+        }
+
+        // if the direction is set on this bond and the atom it's connected to
+        // has no other single bonds with directions set, then we need to set
+        // direction on one of the other neighbors in order to avoid double bond
+        // stereochemistry possibly being lost. This was github #754
+        if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
+            bond->getBondDir() == Bond::ENDUPRIGHT) {
+          bool foundADir = false;
+          Bond *oBond = NULL;
+          boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
+          while (beg != end) {
+            if (mol[*beg]->getIdx() != bond->getIdx() &&
+                mol[*beg]->getBondType() == Bond::SINGLE) {
+              if (mol[*beg]->getBondDir() == Bond::NONE) {
+                oBond = mol[*beg].get();
+              } else {
+                foundADir = true;
+              }
+            }
+            ++beg;
+          }
+          if (!foundADir && oBond != NULL) {
+            bool flipIt = (oBond->getBeginAtom() == heavyAtom) &&
+                          (bond->getBeginAtom() == heavyAtom);
+            if (flipIt) {
+              oBond->setBondDir(bond->getBondDir() == Bond::ENDDOWNRIGHT
+                                    ? Bond::ENDUPRIGHT
+                                    : Bond::ENDDOWNRIGHT);
+            } else {
+              oBond->setBondDir(bond->getBondDir());
+            }
+          }
         }
 
         mol.removeAtom(atom);

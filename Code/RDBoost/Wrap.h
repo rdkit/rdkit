@@ -18,6 +18,15 @@
 //
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
+#include <memory>
+// ha ha... we don't actually want to use this, but we need to keep support old
+// C++ versions:
+#if __cplusplus < 201103L
+#define rdk_auto_ptr std::auto_ptr
+#else
+template <typename T>
+using rdk_auto_ptr = std::unique_ptr<T>;
+#endif
 
 // code for windows DLL handling taken from
 // http://www.boost.org/more/separate_compilation.html
@@ -106,10 +115,11 @@ void RegisterListConverter(bool noproxy = false) {
 }
 
 template <typename T>
-std::vector<T> *pythonObjectToVect(const python::object &obj, T maxV) {
-  std::vector<T> *res = 0;
+rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj,
+                                                 T maxV) {
+  rdk_auto_ptr<std::vector<T> > res;
   if (obj) {
-    res = new std::vector<T>;
+    res.reset(new std::vector<T>);
     python::stl_input_iterator<T> beg(obj), end;
     while (beg != end) {
       T v = *beg;
@@ -123,10 +133,10 @@ std::vector<T> *pythonObjectToVect(const python::object &obj, T maxV) {
   return res;
 }
 template <typename T>
-std::vector<T> *pythonObjectToVect(const python::object &obj) {
-  std::vector<T> *res = 0;
+rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj) {
+  rdk_auto_ptr<std::vector<T> > res;
   if (obj) {
-    res = new std::vector<T>;
+    res.reset(new std::vector<T>);
     unsigned int nFrom = python::extract<unsigned int>(obj.attr("__len__")());
     for (unsigned int i = 0; i < nFrom; ++i) {
       T v = python::extract<T>(obj[i]);

@@ -12,6 +12,8 @@
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <Geometry/point.h>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
@@ -61,14 +63,13 @@ void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atoms,
                          python::object highlight_atom_map,
                          python::object highlight_atom_radii, int confId = -1) {
-  std::vector<int> *highlightAtoms =
+  rdk_auto_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
-  self.drawMolecule(mol, highlightAtoms, ham, har, confId);
+  self.drawMolecule(mol, highlightAtoms.get(), ham, har, confId);
 
-  delete highlightAtoms;
   delete ham;
   delete har;
 }
@@ -78,19 +79,18 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atom_map,
                          python::object highlight_bond_map,
                          python::object highlight_atom_radii, int confId = -1) {
-  std::vector<int> *highlightAtoms =
+  rdk_auto_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
-  std::vector<int> *highlightBonds =
+  rdk_auto_ptr<std::vector<int> > highlightBonds =
       pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
   // FIX: support these
   std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
-  self.drawMolecule(mol, highlightAtoms, highlightBonds, ham, hbm, har, confId);
+  self.drawMolecule(mol, highlightAtoms.get(), highlightBonds.get(), ham, hbm,
+                    har, confId);
 
-  delete highlightAtoms;
-  delete highlightBonds;
   delete ham;
   delete hbm;
   delete har;
@@ -104,6 +104,14 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
   return retval;
 }
 #endif
+ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
+                         bool addChiralHs = true, bool wedgeBonds = true,
+                         bool forceCoords = false) {
+  RWMol *res = new RWMol(*m);
+  MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
+                                       forceCoords);
+  return static_cast<ROMol *>(res);
+}
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -183,4 +191,20 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
            "write the PNG data to the named file");
 #endif
+  docString =
+      "Does some cleanup operations on the molecule to prepare it to draw "
+      "nicely.\n"
+      "The operations include: kekulization, addition of chiral Hs (so that we "
+      "can draw\n"
+      "wedges to them), wedging of bonds at chiral centers, and generation of "
+      "a 2D\n"
+      "conformation if the molecule does not already have a conformation\n"
+      "\nReturns a modified copy of the molecule.\n";
+  python::def(
+      "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
+      (python::arg("mol"), python::arg("kekulize") = true,
+       python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
+       python::arg("forceCoords") = true),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
 }

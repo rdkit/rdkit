@@ -3,7 +3,7 @@ PgSQL/rdkit is a PostgreSQL contribution module, which implements
 basic comparison operations, similarity operation (tanimoto, dice) and  index 
 support (using GiST indexing framework).
 
-Compatibility: PostgreSQL 8.4+
+Compatibility: PostgreSQL 9.1+
  If using PostgreSQL packages from your linux distribution, be sure
  that you have the -devel package installed.
 
@@ -13,19 +13,41 @@ either set the environment variable PostgreSQL_ROOT or add a
 "-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
 PostgreSQL root directory, e.g. C:\Program Files (x86)\PostgreSQL\9.5
 
-For versions of PostgreSQL < 9.1:
- To install rdkit cartridge into the database DB: 
-   psql DB < rdkit.sql
+==========================================================================
+Win32-specific installation info
+--------------------------------
 
- Uninstall cartridge from database DB:
-   psql DB < uninstall_rdkit.sql
+After building the RDKit, carry out the following steps:
+1) Open a CMD shell with administrator privileges
+2) Stop the PostgreSQL service, e.g.:
+   "C:\Program Files (x86)\PostgreSQL\9.5\bin\pg_ctl.exe" ^
+   -N "postgresql-9.5"  -D "C:\Program Files (x86)\PostgreSQL\9.5\data" ^
+   -w stop
+3) run the BAT script
+   
+   
+   
+   which will copy rdkit.sql91.in, rdkit--3.4.sql,
+   rdkit.control and rdkit.dll into you PostgreSQL installation
+4) Make sure that the Boost DLLs the RDKit is built against are in the
+   SYSTEM path, or PostgreSQL will fail to create the rdkit extension with
+   a deceptive error message, e.g.:
 
-For versions of PostgreSQL >= 9.1:
- To install rdkit cartridge into the database DB: 
-   psql -c 'CREATE EXTENSION rdkit' DB
+   ERROR:  could not load library
+   "C:/Program Files (x86)/PostgreSQL/9.5/lib/rdkit.dll":
+   The specified module could not be found.
 
- Uninstall cartridge from database DB:
-   psql -c 'DROP EXTENSION rdkit CASCADE' DB
+5) Start the PostgreSQL service, e.g.:
+   "C:\Program Files (x86)\PostgreSQL\9.5\bin\pg_ctl.exe" ^
+   -N "postgresql-9.5"  -D "C:\Program Files (x86)\PostgreSQL\9.5\data" ^
+   -w start
+==========================================================================
+
+To install rdkit cartridge into the database DB: 
+ psql -c 'CREATE EXTENSION rdkit' DB
+
+Uninstall cartridge from database DB:
+ psql -c 'DROP EXTENSION rdkit CASCADE' DB
 
 Data types:
 

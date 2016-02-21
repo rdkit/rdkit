@@ -419,7 +419,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
             matchedBond->setEndAtomIdx(atom1->getIdx());
             delete bond1;
           }
-          if (matchedBond->getBondType() == Bond::UNSPECIFIED) {
+          if (matchedBond->getBondType() == Bond::UNSPECIFIED &&
+              !matchedBond->hasQuery()) {
             Bond::BondType bondT = GetUnspecifiedBondType(mol, atom1, atom2);
             matchedBond->setBondType(bondT);
           }

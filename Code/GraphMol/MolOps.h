@@ -16,6 +16,7 @@
 #include <list>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/types.h>
 
 extern const int ci_LOCAL_INF;
 namespace RDKit {
@@ -158,6 +159,8 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
     \param addCoords    (optional) If this is true, estimates for the atomic
    coordinates
                 of the added Hs will be used.
+    \param onlyOnAtoms   (optional) if provided, this should be a vector of
+                IDs of the atoms that will be considered for H addition.
 
     \return the new molecule
 
@@ -169,10 +172,11 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
    returns.
  */
 ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
-             bool addCoords = false);
+             bool addCoords = false, const UINT_VECT *onlyOnAtoms = NULL);
 //! \overload
 // modifies the molecule in place
-void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false);
+void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
+           const UINT_VECT *onlyOnAtoms = NULL);
 
 //! returns a copy of a molecule with hydrogens removed
 /*!
@@ -675,7 +679,7 @@ std::list<int> getShortestPath(const ROMol &mol, int aid1, int aid2);
     /*!
       The algorithm used here is a modification of the published Daylight canonical
       smiles algorithm (i.e. it uses atom invariants and products of primes).
-      
+
       \param mol               the molecule of interest
       \param ranks             used to return the ranks
       \param breakTies         toggles breaking of ties (see below)
@@ -701,7 +705,7 @@ std::list<int> getShortestPath(const ROMol &mol, int aid1, int aid2);
     /*!
       The algorithm used here is a modification of the published Daylight canonical
       smiles algorithm (i.e. it uses atom invariants and products of primes).
-      
+
       \param mol               the molecule of interest
       \param atomsToUse        atoms to be included
       \param bondsToUse        bonds to be included

@@ -960,7 +960,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     }
 
     std::string h = "";
-    int num_h = atom.getAtomicNum() == 6
+    int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
                     ? 0
                     : atom.getTotalNumHs();  // FIX: still not quite right
     if (num_h > 0 && !atom.hasQuery()) {
@@ -985,7 +985,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
     symbol = "";
     BOOST_FOREACH (const std::string &se, preText) { symbol += se; }
-    if (atom.getAtomicNum() != 6 || preText.size() || postText.size()) {
+    if (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
+        postText.size()) {
       symbol += atom.getSymbol();
     }
     BOOST_FOREACH (const std::string &se, postText) { symbol += se; }

@@ -116,7 +116,7 @@ else(WIN32 AND NOT UNIX)
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.so")
   set(PGREGRESS_BINDIR_SWITCH "psqldir")
 endif(WIN32 AND NOT UNIX)
-set(testPgSQLBody "cd \"${PG_CURRENT_SOURCE_DIR}\"\n"
+set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
     "--${PGREGRESS_BINDIR_SWITCH}=\"${PG_BINDIR}\" rdkit-91 "
     "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction "
@@ -138,14 +138,19 @@ set(installPgSQLBody
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
 file(WRITE ${installPgSQLName} ${installPgSQLBody})
+foreach(testDir sql data expected)
+  add_custom_command(TARGET ${EXTENSION} PRE_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E copy_directory
+      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}")
+endforeach()
 message("\n"
-        "=====================================================================\n"
-        "After building, check\n"
-        "${installPgSQLName}\n"
-        "for correctness of installation paths. If everything is OK, gain \n"
-        "administrator privileges, stop the PostgreSQL service, run\n"
-        "${installPgSQLName}\n"
-        "to install the PostgreSQL RDKit cartridge, then start again\n"
-        "the PostgreSQL service\n"
-        "=====================================================================\n")
+    "=====================================================================\n"
+    "After building, check\n"
+    "${installPgSQLName}\n"
+    "for correctness of installation paths. If everything is OK, gain \n"
+    "administrator privileges, stop the PostgreSQL service, run\n"
+    "${installPgSQLName}\n"
+    "to install the PostgreSQL RDKit cartridge, then start again\n"
+    "the PostgreSQL service\n"
+    "=====================================================================\n")
 add_test(testPgSQL ${testPgSQLCommand} ${testPgSQLName})

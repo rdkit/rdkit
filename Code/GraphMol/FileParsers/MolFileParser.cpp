@@ -1102,6 +1102,8 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     res->setAtomicNum(1);
     res->setIsotope(3);
   } else {
+    if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z')
+      symb[1] = static_cast<char>(tolower(symb[1]));
     res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
   }
 
@@ -1554,6 +1556,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
          stIt != splitToken.end(); ++stIt) {
       std::string atSymb = boost::trim_copy(*stIt);
       if (atSymb == "") continue;
+      if (atSymb.size() == 2 && atSymb[1] >= 'A' && atSymb[1] <= 'Z')
+        atSymb[1] = static_cast<char>(tolower(atSymb[1]));
+
       int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
       if (!res) {
         res = new QueryAtom(atNum);
@@ -1617,6 +1622,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
       res = new Atom(1);
       res->setIsotope(3);
     } else {
+      if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z')
+        token[1] = static_cast<char>(tolower(token[1]));
+
       res = new Atom(PeriodicTable::getTable()->getAtomicNumber(token));
     }
   }

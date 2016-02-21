@@ -20,6 +20,8 @@
 
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -152,7 +154,7 @@ void test2() {
   }
   std::cout << " Done" << std::endl;
 }
-#else  // RDK_CAIRO_BUILD
+#else // RDK_CAIRO_BUILD
 void test2() {}
 #endif
 
@@ -484,7 +486,8 @@ void runblock(const std::vector<ROMol *> &mols,
               unsigned int idx) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx)
+        continue;
       ROMol *mol = mols[i];
       MolDraw2DSVG drawer(300, 300);
       drawer.drawMolecule(*mol);
@@ -510,7 +513,8 @@ void testMultiThreaded() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol)
+      continue;
     mols.push_back(mol);
   }
 
@@ -614,8 +618,155 @@ void test7() {
   std::cerr << " Done" << std::endl;
 }
 
+void test8PrepareMolForDrawing() {
+  std::cout << " ----------------- Test8: PrepareMolDrawing" << std::endl;
+  std::string smiles = "c1ccccc1[C@H](F)Cl";
+  ROMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  {
+    RWMol nm(*m);
+    TEST_ASSERT(nm.getNumAtoms() == 9)
+    MolDraw2DUtils::prepareMolForDrawing(nm);
+    TEST_ASSERT(nm.getNumAtoms() == 10);
+    TEST_ASSERT(nm.getNumConformers() == 1);
+    TEST_ASSERT(!nm.getConformer().is3D());
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() != Bond::AROMATIC);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(nm.getAtomWithIdx(9)->getAtomicNum() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondDir() == Bond::BEGINWEDGE);
+
+    // make sure we can do it again:
+    MolDraw2DUtils::prepareMolForDrawing(nm);
+    TEST_ASSERT(nm.getNumAtoms() == 10);
+    TEST_ASSERT(nm.getNumConformers() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() != Bond::AROMATIC);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+  }
+  {
+    RWMol nm(*m);
+    TEST_ASSERT(nm.getNumAtoms() == 9)
+    MolDraw2DUtils::prepareMolForDrawing(nm, false);
+    TEST_ASSERT(nm.getNumAtoms() == 10);
+    TEST_ASSERT(nm.getNumConformers() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+  }
+  {
+    RWMol nm(*m);
+    TEST_ASSERT(nm.getNumAtoms() == 9)
+    MolDraw2DUtils::prepareMolForDrawing(nm, false, false);
+    TEST_ASSERT(nm.getNumAtoms() == 9);
+    TEST_ASSERT(nm.getNumConformers() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+  }
+  {
+    RWMol nm(*m);
+    TEST_ASSERT(nm.getNumAtoms() == 9)
+    MolDraw2DUtils::prepareMolForDrawing(nm, false, true);
+    TEST_ASSERT(nm.getNumAtoms() == 10);
+    TEST_ASSERT(nm.getNumConformers() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+  }
+
+  {
+    RWMol nm(*m);
+    TEST_ASSERT(nm.getNumAtoms() == 9)
+    MolDraw2DUtils::prepareMolForDrawing(nm, true, true, false);
+    TEST_ASSERT(nm.getNumAtoms() == 10);
+    TEST_ASSERT(nm.getNumConformers() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() != Bond::AROMATIC);
+    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(nm.getAtomWithIdx(9)->getAtomicNum() == 1);
+    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondDir() == Bond::NONE);
+  }
+
+  {
+    // by default we don't force conformer generation
+    RWMol nm(*m);
+    RDDepict::compute2DCoords(nm);
+    nm.getConformer().set3D(true); // it's not really, we're cheating
+    TEST_ASSERT(nm.getNumAtoms() == 9)
+    MolDraw2DUtils::prepareMolForDrawing(nm);
+    TEST_ASSERT(nm.getNumAtoms() == 10);
+    TEST_ASSERT(nm.getNumConformers() == 1); // we have a conformer anyway
+    TEST_ASSERT(nm.getConformer().is3D());
+
+    // but if we do force, it blows out that conformer:
+    MolDraw2DUtils::prepareMolForDrawing(nm, true, true, true, true);
+    TEST_ASSERT(!nm.getConformer().is3D());
+  }
+
+  delete m;
+  std::cerr << " Done" << std::endl;
+}
+
+void testGithub781() {
+  std::cout
+      << " ----------------- Test Github #781: Rendering single-atom molecules"
+      << std::endl;
+
+  {
+    std::string smiles = "C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {
+    std::string smiles = "[C]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>C</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  {
+    std::string smiles = "C.CC.[Cl-]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>Cl</svg:tspan>") != std::string::npos);
+    delete m;
+  }
+  { // empty molecule
+    ROMol *m = new ROMol();
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>") == std::string::npos);
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
+#if 1
   test1();
   test2();
   test3();
@@ -624,4 +775,7 @@ int main() {
   testMultiThreaded();
   test6();
   test7();
+#endif
+  test8PrepareMolForDrawing();
+  testGithub781();
 }

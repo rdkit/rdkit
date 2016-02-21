@@ -856,6 +856,19 @@ void testIssue399() {
 
   delete m1;
 
+  // make sure we prefer wedging bonds to Hs:
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+  MolOps::addHs(*m1, false, true);
+  TEST_ASSERT(m1->getAtomWithIdx(7)->getAtomicNum() == 1);
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7));
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondType() == Bond::SINGLE);
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::NONE);
+
+  WedgeMolBonds(*m1, &m1->getConformer());
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::BEGINWEDGE);
+
+  delete m1;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -4127,6 +4140,31 @@ void testGithub360() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub741() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 741: Support CTABs where the second "
+                          "letter in atom symbols is capitalized"
+                       << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *mol = MolFileToMol(pathName + "github741.mol");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getSymbol() == "Br");
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getSymbol() == "Br");
+    delete mol;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *mol = MolFileToMol(pathName + "github741.v3k.mol");
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getSymbol() == "Br");
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getSymbol() == "Br");
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 void RunTests() {
   #if 1
@@ -4189,7 +4227,6 @@ void RunTests() {
   testMolFileWithHs();
   testMolFileWithRxn();
   testGithub166();
-#endif
   testZBO();
 
   testGithub164();
@@ -4204,6 +4241,8 @@ void RunTests() {
   testPDBResidues();
   testGithub337();
   testGithub360();
+#endif
+  testGithub741();
 }
 
 // must be in German Locale for test...
