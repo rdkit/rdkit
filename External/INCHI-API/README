@@ -5,13 +5,13 @@ directory. Please follow these instructions.
 1. Download the zip file from
    http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip
 
-2. Unzip the package. 
+2. Unzip the package, which creates a INCHI-1-API folder.
 
 3. In the unzipped folder, find INCHI-1-API/INCHI_API/inchi_dll, under which
-   there are 73 files including things like ichi.h and ikey_dll.c. Copy all
-   these 73 files to the empty directory 'src' residing inside the same
-   directory that contains this README file you are reading. The actual path is
-   '$RDKIT_SOURCE_TREE_ROOT/External/INCHI-API/src'.
+   there are 73 files including things like ichi.h and ikey_dll.c. Create a
+   'src' directory inside the same directory that contains this README file
+   you are readingCopy, and copy all those 73 files 'src' you have just
+   created. The actual path is '$RDBASE/External/INCHI-API/src'.
 
 4. Rerun `cmake` with `-DRDK_BUILD_INCHI_SUPPORT=ON` as an additional argument
 
