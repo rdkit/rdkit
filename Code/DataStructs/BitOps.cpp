@@ -786,7 +786,7 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 #include <intrin.h>
 #ifdef _WIN64
 #define BUILTIN_POPCOUNT_INSTR __popcnt64
-#define BUILTIN_POPCOUNT_TYPE BUILTIN_POPCOUNT_TYPE
+#define BUILTIN_POPCOUNT_TYPE boost::uint64_t
 #else
 #define BUILTIN_POPCOUNT_INSTR __popcnt
 #define BUILTIN_POPCOUNT_TYPE boost::uint32_t
