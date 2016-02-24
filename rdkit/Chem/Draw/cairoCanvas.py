@@ -124,7 +124,7 @@ class Canvas(CanvasBase):
         getattr(self.image,'frombytes',self.image.fromstring)(bytes(self.surface.get_data()),
                                                               "raw","BGRA",0,1)
       else:
-        getattr(self.image,'frombytes',self.image.fromstring)(bytes(surface.get_data_as_rgba()),
+        getattr(self.image,'frombytes',self.image.fromstring)(bytes(self.surface.get_data_as_rgba()),
                                                               "raw","RGBA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
