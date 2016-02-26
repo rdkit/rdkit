@@ -94,8 +94,7 @@ Eddie Cao has produced a homebrew formula that can be used to easily build the R
 
 Install the following packages using apt-get:
 
-    flex bison build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev
-    libboost-dev libboost-python-dev libboost-regex-dev
+    flex bison build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev libboost-dev libboost-system-dev libboost-thread-dev libboost-serialization-dev libboost-python-dev libboost-regex-dev
 
 ###### Fedora, CentOS (5.7+), and RHEL
 
