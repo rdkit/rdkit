@@ -47,8 +47,8 @@ sfpcmp(SparseFingerPrint *a, SparseFingerPrint *b) {
 
 
 #define sfpCMPFUNC( type, action, ret )                                 \
+  PGDLLEXPORT Datum           sfp_##type(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(sfp_##type);                                      \
-  Datum           sfp_##type(PG_FUNCTION_ARGS);                         \
   Datum                                                                 \
   sfp_##type(PG_FUNCTION_ARGS)                                          \
   {                                                                     \
@@ -79,8 +79,8 @@ sfpCMPFUNC(gt, >, BOOL);
 sfpCMPFUNC(ne, !=, BOOL);
 sfpCMPFUNC(cmp, +, INT32);
 
+PGDLLEXPORT Datum           sfp_tanimoto_sml(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_tanimoto_sml);
-Datum           sfp_tanimoto_sml(PG_FUNCTION_ARGS);
 Datum
 sfp_tanimoto_sml(PG_FUNCTION_ARGS) {
   MolSparseFingerPrint    asfp,
@@ -103,8 +103,8 @@ sfp_tanimoto_sml(PG_FUNCTION_ARGS) {
   PG_RETURN_FLOAT8(res);          
 }
 
+PGDLLEXPORT Datum           sfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_tanimoto_sml_op);
-Datum           sfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
 Datum
 sfp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
   MolSparseFingerPrint    asfp,
@@ -128,8 +128,8 @@ sfp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
 
 
 #ifdef USE_SFP_OBJECTS
+PGDLLEXPORT Datum           sfp_dice_sml(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_dice_sml);
-Datum           sfp_dice_sml(PG_FUNCTION_ARGS);
 Datum
 sfp_dice_sml(PG_FUNCTION_ARGS) {
   MolSparseFingerPrint    asfp,
@@ -152,8 +152,8 @@ sfp_dice_sml(PG_FUNCTION_ARGS) {
   PG_RETURN_FLOAT8(res);          
 }
 
+PGDLLEXPORT Datum           sfp_dice_sml_op(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_dice_sml_op);
-Datum           sfp_dice_sml_op(PG_FUNCTION_ARGS);
 Datum
 sfp_dice_sml_op(PG_FUNCTION_ARGS) {
   MolSparseFingerPrint    asfp,
@@ -175,8 +175,8 @@ sfp_dice_sml_op(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL( res >= getDiceLimit() );
 }
 #else
+PGDLLEXPORT Datum           sfp_dice_sml(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_dice_sml);
-Datum           sfp_dice_sml(PG_FUNCTION_ARGS);
 Datum
 sfp_dice_sml(PG_FUNCTION_ARGS) {
   const char *a,*b;
@@ -195,8 +195,8 @@ sfp_dice_sml(PG_FUNCTION_ARGS) {
   PG_RETURN_FLOAT8(res);                
 }
 
+PGDLLEXPORT Datum           sfp_dice_sml_op(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_dice_sml_op);
-Datum           sfp_dice_sml_op(PG_FUNCTION_ARGS);
 Datum
 sfp_dice_sml_op(PG_FUNCTION_ARGS) {
   const char *a,*b;
@@ -215,8 +215,8 @@ sfp_dice_sml_op(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(res >= getDiceLimit() );               
 }
 
+PGDLLEXPORT Datum           sfp_allvals_gt(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_allvals_gt);
-Datum           sfp_allvals_gt(PG_FUNCTION_ARGS);
 Datum
 sfp_allvals_gt(PG_FUNCTION_ARGS) {
   const char *a;
@@ -232,8 +232,8 @@ sfp_allvals_gt(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BOOL(res);
 }
+PGDLLEXPORT Datum           sfp_allvals_lt(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_allvals_lt);
-Datum           sfp_allvals_lt(PG_FUNCTION_ARGS);
 Datum
 sfp_allvals_lt(PG_FUNCTION_ARGS) {
   const char *a;
@@ -253,8 +253,8 @@ sfp_allvals_lt(PG_FUNCTION_ARGS) {
 
 
 
+PGDLLEXPORT Datum           sfp_add(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_add);
-Datum           sfp_add(PG_FUNCTION_ARGS);
 Datum
 sfp_add(PG_FUNCTION_ARGS) {
   MolSparseFingerPrint    asfp,
@@ -280,8 +280,8 @@ sfp_add(PG_FUNCTION_ARGS) {
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
 
+PGDLLEXPORT Datum           sfp_subtract(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(sfp_subtract);
-Datum           sfp_subtract(PG_FUNCTION_ARGS);
 Datum
 sfp_subtract(PG_FUNCTION_ARGS) {
   MolSparseFingerPrint    asfp,
@@ -308,8 +308,8 @@ sfp_subtract(PG_FUNCTION_ARGS) {
 }
 
 
+PGDLLEXPORT Datum       morgan_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(morgan_fp);
-Datum       morgan_fp(PG_FUNCTION_ARGS);
 Datum
 morgan_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -328,8 +328,8 @@ morgan_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       featmorgan_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(featmorgan_fp);
-Datum       featmorgan_fp(PG_FUNCTION_ARGS);
 Datum
 featmorgan_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -348,8 +348,8 @@ featmorgan_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       atompair_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(atompair_fp);
-Datum       atompair_fp(PG_FUNCTION_ARGS);
 Datum
 atompair_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -368,8 +368,8 @@ atompair_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       torsion_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(torsion_fp);
-Datum       torsion_fp(PG_FUNCTION_ARGS);
 Datum
 torsion_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -389,8 +389,8 @@ torsion_fp(PG_FUNCTION_ARGS) {
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
 
+PGDLLEXPORT Datum       reaction_difference_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_difference_fp);
-Datum       reaction_difference_fp(PG_FUNCTION_ARGS);
 Datum
 reaction_difference_fp(PG_FUNCTION_ARGS) {
   CChemicalReaction  rxn;

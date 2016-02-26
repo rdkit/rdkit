@@ -244,9 +244,9 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
   }
 }
 }
-double getBondLength(Conformer &conf, unsigned int iAtomId,
+double getBondLength(const Conformer &conf, unsigned int iAtomId,
                      unsigned int jAtomId) {
-  RDGeom::POINT3D_VECT &pos = conf.getPositions();
+  const RDGeom::POINT3D_VECT &pos = conf.getPositions();
   URANGE_CHECK(iAtomId, pos.size() - 1);
   URANGE_CHECK(jAtomId, pos.size() - 1);
 
@@ -278,9 +278,9 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   }
 }
 
-double getAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
+double getAngleRad(const Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
                    unsigned int kAtomId) {
-  RDGeom::POINT3D_VECT &pos = conf.getPositions();
+  const RDGeom::POINT3D_VECT &pos = conf.getPositions();
   URANGE_CHECK(iAtomId, pos.size() - 1);
   URANGE_CHECK(jAtomId, pos.size() - 1);
   URANGE_CHECK(kAtomId, pos.size() - 1);
@@ -342,10 +342,10 @@ void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   }
 }
 
-double getDihedralRad(Conformer &conf, unsigned int iAtomId,
+double getDihedralRad(const Conformer &conf, unsigned int iAtomId,
                       unsigned int jAtomId, unsigned int kAtomId,
                       unsigned int lAtomId) {
-  RDGeom::POINT3D_VECT &pos = conf.getPositions();
+  const RDGeom::POINT3D_VECT &pos = conf.getPositions();
   URANGE_CHECK(iAtomId, pos.size() - 1);
   URANGE_CHECK(jAtomId, pos.size() - 1);
   URANGE_CHECK(kAtomId, pos.size() - 1);

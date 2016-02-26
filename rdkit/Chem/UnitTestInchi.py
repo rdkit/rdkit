@@ -40,8 +40,10 @@ import os
 import gzip
 from subprocess import Popen, PIPE
 import re
+import io
+import sys
 from rdkit.rdBase import DisableLog, EnableLog
-from rdkit.six.moves.cPickle import load
+from rdkit.six.moves.cPickle import loads
 
 curdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -154,8 +156,12 @@ class TestCase(unittest.TestCase):
                                      'pubchem-hard-set.sdf.gz'),'r')
         self.dataset['problematic'] = ForwardSDMolSupplier(inf,sanitize=False,removeHs=False)
         with open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
-                               'pubchem-hard-set.inchi'),'rb') as inF:
-            self.dataset_inchi['problematic'] = load(inF)
+                               'pubchem-hard-set.inchi'),'r') as intF:
+          buf = intF.read().replace('\r\n', '\n').encode('latin1')
+          intF.close()
+        with io.BytesIO(buf) as inF:
+          pkl = inF.read()
+        self.dataset_inchi['problematic'] = loads(pkl,encoding='latin1')
         # disable logging
         DisableLog('rdApp.warning')
 
