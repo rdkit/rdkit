@@ -150,10 +150,10 @@ ADD_CUSTOM_COMMAND(
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar ${JAVA_TEST_FILES}
 )
 ADD_CUSTOM_TARGET(BuildJavaWrapperTests ALL
-  DEPENDS ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class GraphMolWrap 
+  DEPENDS ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class GraphMolWrap
   COMMENT "building test classes"
 )
-ADD_CUSTOM_TARGET(RunJavaWrapperTests 
+ADD_CUSTOM_TARGET(RunJavaWrapperTests
   DEPENDS BuildJavaWrapperTests
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/runUnitTests.sh
 )
@@ -163,151 +163,156 @@ SET (CTEST_ENVIRONMENT
   "LD_LIBRARY_PATH=${Boost_LIBRARY_DIRS}"
   "DYLD_LIBRARY_PATH=${Boost_LIBRARY_DIRS}"
   )
-  
-ADD_TEST(JavaAromaticTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+
+ADD_TEST(JavaAromaticTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.AromaticTests)
-ADD_TEST(JavaAtomPairsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaAtomPairsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.AtomPairsTests)
-ADD_TEST(JavaBasicMoleculeTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaBasicMoleculeTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.BasicMoleculeTests)
-ADD_TEST(JavaBasicMolecule2Tests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaBasicMolecule2Tests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.BasicMolecule2Tests)
 ADD_TEST(JavaChemAtomTests
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ChemAtomTests)
-ADD_TEST(JavaChemBondTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaChemBondTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ChemBondTests)
-ADD_TEST(JavaChemReactionTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+ADD_TEST(JavaChemReactionTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ChemReactionTests)
-ADD_TEST(JavaChemSmartsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaChemSmartsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ChemSmartsTests)
-ADD_TEST(JavaChemTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaChemTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ChemTests)
-ADD_TEST(JavaChemv2Tests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaChemv2Tests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.Chemv2Tests)
-ADD_TEST(JavaConformerTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaConformerTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ConformerTests)
-ADD_TEST(JavaDescriptorTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaDescriptorTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.DescriptorTests)
-ADD_TEST(JavaDistanceGeometryTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaDistanceGeometryTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.DistanceGeometryTests)
-ADD_TEST(JavaErrorHandlingTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaErrorHandlingTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ErrorHandlingTests)
-ADD_TEST(JavaFingerprintsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaFingerprintsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.FingerprintsTests)
-ADD_TEST(JavaForceFieldsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaForceFieldsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ForceFieldsTests)
-ADD_TEST(JavaHManipulationsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaHManipulationsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.HManipulationsTests)
-ADD_TEST(JavaLipinskiTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaLipinskiTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.LipinskiTests)
-ADD_TEST(JavaPicklingTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaPicklingTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.PicklingTests)
-ADD_TEST(JavaSmilesCreationTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaSmilesCreationTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.SmilesCreationTests)
-ADD_TEST(JavaSmilesDetailsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaSmilesDetailsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.SmilesDetailsTests)
-ADD_TEST(JavaSmilesTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaSmilesTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.SmilesTests)
-ADD_TEST(JavaSuppliersTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaSuppliersTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.SuppliersTests)
-ADD_TEST(JavaWrapperTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaWrapperTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.WrapperTests)
 
 if(RDK_BUILD_AVALON_SUPPORT)
-   ADD_TEST(JavaAvalonTests 
-      java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-  	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+   ADD_TEST(JavaAvalonTests
+      java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+  	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.AvalonLibTests)
-endif(RDK_BUILD_AVALON_SUPPORT)       
+endif(RDK_BUILD_AVALON_SUPPORT)
 
 if (RDK_BUILD_INCHI_SUPPORT)
-   ADD_TEST(JavaInchiTests 
+   ADD_TEST(JavaInchiTests
        java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
-       	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+       	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 		org.RDKit.InchiTests)
 endif (RDK_BUILD_INCHI_SUPPORT)
 
-#ADD_TEST(JavaMemoryTests 
-#    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-#	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+#ADD_TEST(JavaMemoryTests
+#    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+#	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 #	org.RDKit.MemoryTests)
 
-ADD_TEST(JavaChemTransformsTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+ADD_TEST(JavaChemTransformsTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.ChemTransformsTests)
-ADD_TEST(JavaFMCSTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+ADD_TEST(JavaFMCSTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.FMCSTests)
-ADD_TEST(JavaPDBTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+ADD_TEST(JavaPDBTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.PDBTests)
 
-ADD_TEST(JavaAlignTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+ADD_TEST(JavaAlignTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.AlignTests)
 
-ADD_TEST(JavaMolQueryTests 
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+ADD_TEST(JavaMolQueryTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.MolQueryTests)
 
 ADD_TEST(JavaFilterCatalogTests
-    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
-	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.FilterCatalogTests)
 
+ADD_TEST(JavaDiversityPickerTests
+	    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+		-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+		org.RDKit.DiversityPickerTests)
 
-INSTALL(TARGETS GraphMolWrap 
+
+INSTALL(TARGETS GraphMolWrap
               DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
