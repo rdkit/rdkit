@@ -200,8 +200,8 @@ void test3() {
   count = MolOps::findSSSR(*m, sssr);
   TEST_ASSERT(count == 1);
   TEST_ASSERT(sssr[0].size() == 4);
-  TEST_ASSERT(!m->getBondBetweenAtoms(0, 1)
-                   ->hasProp(common_properties::ringMembership));
+  TEST_ASSERT(!m->getBondBetweenAtoms(0, 1)->hasProp(
+      common_properties::ringMembership));
   TEST_ASSERT(
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(0, 1)->getIdx()));
   TEST_ASSERT(
@@ -2557,7 +2557,7 @@ void testChiralityAndRemoveHs() {
 
 void testSFIssue1894348() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing SFIssue1894348 "
-                          "(impact of removeHs on bond stereo atoms"
+                          "(impact of removeHs on bond stereo atoms)"
                        << std::endl;
   RWMol *m, *m2;
 
@@ -3221,9 +3221,10 @@ void testSFNetIssue2951221() {
     coords[1] = m2->getConformer().getAtomPos(0);
     coords[2] = m2->getConformer().getAtomPos(1);
     coords[3] = m2->getConformer().getAtomPos(9);
-    double dot = (coords[3] - coords[0])
-                     .dotProduct((coords[1] - coords[0])
-                                     .crossProduct(coords[2] - coords[0]));
+    double dot =
+        (coords[3] - coords[0])
+            .dotProduct(
+                (coords[1] - coords[0]).crossProduct(coords[2] - coords[0]));
     TEST_ASSERT(dot > 1.0);
   }
 
@@ -5707,9 +5708,10 @@ int main() {
   testGithubIssue526();
   testGithubIssue539();
   testAdjustQueryProperties();
-#endif
   testGithubIssue678();
   testGithubIssue717();
+#endif
+  testPotentialStereoBonds();
   testGithubIssue754();
 
   return 0;
