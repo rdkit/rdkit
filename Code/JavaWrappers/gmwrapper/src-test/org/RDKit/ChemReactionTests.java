@@ -469,6 +469,7 @@ public class ChemReactionTests extends GraphMolTest {
           ROMol_Vect_Vect prods1 = rxn.runReactant(reag2, 1);
           ROMol expected_result1 = RWMol.MolFromSmiles("NCNCc1ncc(Cl)cc1Br");
           ROMol expected_sidechain1 = RWMol.MolFromSmiles("[2*:2]Cc1ncc(Cl)cc1Br");
+          ROMol expected_sidechain1_nodummies = RWMol.MolFromSmiles("Cc1ncc(Cl)cc1Br");
           
           assertEquals( 1, prods1.size() );
           assertEquals( 1, prods1.get(0).size() );
@@ -478,6 +479,10 @@ public class ChemReactionTests extends GraphMolTest {
           assertEquals( expected_result1.MolToSmiles(), prods1.get(0).get(0).MolToSmiles() );
           assertEquals( expected_sidechain1.MolToSmiles(),
                         ChemicalReaction.ReduceProductToSideChains(prods1.get(0).get(0)).MolToSmiles());
+          assertEquals( expected_sidechain1_nodummies.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(
+                            prods1.get(0).get(0),false).MolToSmiles());
+          
           
         }
   
