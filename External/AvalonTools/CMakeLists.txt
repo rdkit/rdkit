@@ -14,15 +14,8 @@ if(EXISTS "${fileToPatch}")
 endif()
 if(needDownload)
   set(AVALONTOOLS_URL "http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
-  message("Downloading ${AVALONTOOLS_URL}...")
-  file(DOWNLOAD "${AVALONTOOLS_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/AvalonToolkit_1.2.0.source.tar"
-    STATUS status)
-  # CMake < 2.8.10 does not seem to support HTTPS out of the box
-  # and since SourceForge redirects to HTTPS, the CMake download fails
-  # so we try to use system curl if available, using -L to follow redirects
-  if (NOT status EQUAL 0)
-    execute_process(COMMAND curl -L -O "${AVALONTOOLS_URL}" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-  endif()
+  set(AVALONTOOLS_BASE "AvalonToolkit_1.2.0.source.tar")
+  downloadAndCheckMD5(${AVALONTOOLS_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${AVALONTOOLS_BASE}" "092a94f421873f038aa67d4a6cc8cb54")
   execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
     ${CMAKE_CURRENT_SOURCE_DIR}/AvalonToolkit_1.2.0.source.tar
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

@@ -16,9 +16,8 @@ if(RDK_BUILD_INCHI_SUPPORT)
     else (INCHI_FOUND)
       # system InChI is missing, download it
       set(INCHI_URL "http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip")
-      message("Downloading ${INCHI_URL}...")
-      file(DOWNLOAD "${INCHI_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API.zip"
-        EXPECTED_MD5 8447bf108af12fe66eecba41bbc89918)
+      set(INCHI_BASE "INCHI-1-API.zip")
+      downloadAndCheckMD5(${INCHI_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${INCHI_BASE}" "8447bf108af12fe66eecba41bbc89918")
       execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
         ${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API.zip
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
