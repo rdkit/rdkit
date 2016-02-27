@@ -37,6 +37,7 @@
 #include <vector>
 
 #include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 %}
@@ -71,6 +72,17 @@ static std::string ReactionToSmarts(ChemicalReaction &rxn) {
 }
 static std::string ReactionToRxnBlock (const ChemicalReaction &rxn) {
   return RDKit::ChemicalReactionToRxnBlock(rxn);
+};
+/*
+static RDKit::ROMol *ReduceProductToSideChains(RDKit::ROMOL_SPTR product,
+                                               bool addDummyAtoms=true) {
+  return RDKit::reduceProductToSideChains(product, addDummyAtoms);
+};
+*/
+static RDKit::ROMol *ReduceProductToSideChains(RDKit::ROMol *product,
+                                               bool addDummyAtoms=true) {
+  RDKit::ROMOL_SPTR mol(new RDKit::ROMol(*product));
+  return RDKit::reduceProductToSideChains(mol, addDummyAtoms);
 };
 void compute2DCoordsForReaction(double spacing,
                                   bool updateProps,
