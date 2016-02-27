@@ -749,7 +749,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule\n\
-    - isomericSmarts: (optional) include information about stereochemistry in\n\
+    - isomericSmiles: (optional) include information about stereochemistry in\n\
       the SMARTS.  Defaults to false.\n\
 \n\
   RETURNS:\n\
