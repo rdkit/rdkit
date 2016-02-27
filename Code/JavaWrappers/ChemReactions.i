@@ -51,6 +51,11 @@
 %ignore RDKit::isMoleculeProductOfReaction(const ChemicalReaction &r,const ROMol &,
                                             unsigned int &);
 
+%newobject ReactionFromSmarts;
+%newobject ReactionFromRxnBlock;
+%newobject ReactionFromRxnFile;
+%newobject ReduceProductToSideChains;
+
 %extend RDKit::ChemicalReaction {
 static RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma,bool useSmiles=false){
   RDKit::ChemicalReaction *res=RDKit::RxnSmartsToChemicalReaction(sma,0,useSmiles);
