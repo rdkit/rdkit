@@ -15,9 +15,14 @@ if(RDK_BUILD_INCHI_SUPPORT)
       include_directories(${INCHI_INCLUDE_DIR})
     else (INCHI_FOUND)
       # system InChI is missing, download it
-      set(INCHI_URL "http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip")
-      set(INCHI_BASE "INCHI-1-API.zip")
-      downloadAndCheckMD5(${INCHI_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${INCHI_BASE}" "8447bf108af12fe66eecba41bbc89918")
+      if(NOT DEFINED INCHI_URL)
+        set(INCHI_URL "http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip")
+      endif()
+      if(NOT DEFINED INCHI_MD5SUM)
+        set(INCHI_MD5SUM "8447bf108af12fe66eecba41bbc89918")
+      endif()
+      string(REGEX REPLACE "^.*/" "" INCHI_BASE "${INCHI_URL}")
+      downloadAndCheckMD5(${INCHI_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${INCHI_BASE}" ${INCHI_MD5SUM})
       execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
         ${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API.zip
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
