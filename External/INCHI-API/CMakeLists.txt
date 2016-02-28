@@ -21,7 +21,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
       if(NOT DEFINED INCHI_MD5SUM)
         set(INCHI_MD5SUM "8447bf108af12fe66eecba41bbc89918")
       endif()
-      string(REGEX REPLACE "^.*/" "" INCHI_BASE "${INCHI_URL}")
+      if(NOT DEFINED INCHI_BASE)
+        string(REGEX REPLACE "^.*/" "" INCHI_BASE "${INCHI_URL}")
+      endif()
       downloadAndCheckMD5(${INCHI_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${INCHI_BASE}" ${INCHI_MD5SUM})
       execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
         ${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API.zip
