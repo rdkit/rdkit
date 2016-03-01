@@ -66,11 +66,6 @@ BOOST_PYTHON_MODULE(cDataStructs) {
       "  DiscreteValueVect:   class for storing vectors of integers\n"
       "  SparseIntVect:       class for storing sparse vectors of integers\n";
 
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
-
   wrap_Utils();
   wrap_SBV();
   wrap_EBV();

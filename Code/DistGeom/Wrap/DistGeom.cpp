@@ -164,8 +164,6 @@ BOOST_PYTHON_MODULE(DistGeom) {
       "Module containing functions for basic distance geometry operations";
 
   rdkit_import_array();
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
 
   std::string docString;
 

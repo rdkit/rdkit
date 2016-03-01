@@ -122,10 +122,6 @@ BOOST_PYTHON_MODULE(rdchem) {
   RegisterListConverter<RDKit::Atom*>();
   RegisterListConverter<RDKit::Bond*>();
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(
       &rdSanitExceptionTranslator);
 
@@ -136,7 +132,6 @@ BOOST_PYTHON_MODULE(rdchem) {
               "Log a warning message to the RDKit warning logs");
   python::def("LogErrorMsg", RDLogError,
               "Log a warning message to the RDKit error logs");
-
 
   //*********************************************
   //

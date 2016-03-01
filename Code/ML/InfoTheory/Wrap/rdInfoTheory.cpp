@@ -118,10 +118,6 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
       "ranker to rank bits";
 
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
 
   wrap_ranker();
   wrap_corrmatgen();
