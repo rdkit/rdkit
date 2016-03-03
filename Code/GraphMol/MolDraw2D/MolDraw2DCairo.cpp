@@ -123,7 +123,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_width = 0.0;
   label_height = 0.0;
 
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode = TextDrawNormal;
 
   bool had_a_super = false;
 
@@ -144,9 +144,9 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     label_height = std::max(label_height, theight / scale());
     double char_width = twidth / scale();
 
-    if (2 == draw_mode) {
+    if (TextDrawSubscript == draw_mode) {
       char_width *= 0.75;
-    } else if (1 == draw_mode) {
+    } else if (TextDrawSuperscript == draw_mode) {
       char_width *= 0.75;
       had_a_super = true;
     }

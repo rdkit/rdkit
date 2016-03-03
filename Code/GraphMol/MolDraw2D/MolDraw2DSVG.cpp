@@ -187,7 +187,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   label_width = 0.0;
   label_height = 0.0;
 
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode = TextDrawNormal;
 
   bool had_a_super = false;
 
@@ -203,9 +203,9 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
         fontSize() *
         static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
         MolDraw2D_detail::char_widths[(int)'M'];
-    if (2 == draw_mode) {
+    if (TextDrawSubscript == draw_mode) {
       char_width *= 0.75;
-    } else if (1 == draw_mode) {
+    } else if (TextDrawSuperscript == draw_mode) {
       char_width *= 0.75;
       had_a_super = true;
     }
@@ -246,7 +246,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
        << "fill:" << col << "'";
   d_os << " >";
 
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode = TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
   std::string span;
   bool first_span = true;
   for (int i = 0, is = str.length(); i < is; ++i) {
@@ -260,12 +260,12 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
       first_span = false;
       d_os << "<svg:tspan";
       switch (draw_mode) {
-        case 1:
+        case TextDrawSuperscript:
           d_os << " style='baseline-shift:super;font-size:" << fontSz * 0.75
                << "px;"
                << "'";
           break;
-        case 2:
+        case TextDrawSubscript:
           d_os << " style='baseline-shift:sub;font-size:" << fontSz * 0.75
                << "px;"
                << "'";

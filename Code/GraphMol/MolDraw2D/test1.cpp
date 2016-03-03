@@ -765,7 +765,7 @@ void testGithub781() {
 void testGithub774() {
   std::cout << " ----------------- Test Github774" << std::endl;
   {
-    std::string smiles = "Cc1c(C(=O)NCCO)[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
+    std::string smiles = "Cc1c(C(=O)NCC[NH3+])[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
     std::string nameBase = "test774_1";
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
