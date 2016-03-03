@@ -404,8 +404,8 @@ void MolDraw2D::calculateScale() {
 // establishes whether to put string draw mode into super- or sub-script
 // mode based on contents of instring from i onwards. Increments i appropriately
 // and returns true or false depending on whether it did something or not.
-bool MolDraw2D::setStringDrawMode(const string &instring, TextDrawType &draw_mode,
-                                  int &i) const {
+bool MolDraw2D::setStringDrawMode(const string &instring,
+                                  TextDrawType &draw_mode, int &i) const {
   string bit1 = instring.substr(i, 5);
   string bit2 = instring.substr(i, 6);
 
@@ -455,8 +455,8 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
   getStringSize(str, string_width, string_height);
 
   // FIX: this shouldn't stay
-  double M_width,M_height;
-  getStringSize(std::string("M"),M_width,M_height);
+  double M_width, M_height;
+  getStringSize(std::string("M"), M_width, M_height);
 
   double draw_x = cds.x - string_width / 2.0;
   double draw_y = cds.y - string_height / 2.0;
@@ -484,14 +484,16 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-//               getDrawCoords(Point2D(draw_x, draw_y + 0.5 * char_height)));
+               //               getDrawCoords(Point2D(draw_x, draw_y + 0.5 *
+               //               char_height)));
                getDrawCoords(Point2D(draw_x, draw_y - 0.5 * char_height)));
       setFontSize(full_font_size);
     } else if (TextDrawSuperscript == draw_mode) {
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-//               getDrawCoords(Point2D(draw_x, draw_y - 0.25 * char_height)));
+               //               getDrawCoords(Point2D(draw_x, draw_y - 0.25 *
+               //               char_height)));
                getDrawCoords(Point2D(draw_x, draw_y + .5 * M_height)));
       setFontSize(full_font_size);
     } else {
