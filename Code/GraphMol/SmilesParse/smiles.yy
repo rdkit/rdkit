@@ -13,8 +13,8 @@
 #include <list>
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>  
-#include <GraphMol/SmilesParse/SmilesParseOps.h>  
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <RDGeneral/RDLog.h>
 
 #define YYDEBUG 1
@@ -40,7 +40,7 @@ yysmiles_error( const char *input,
                 std::list<unsigned int> *branchPoints,
 		void *scanner,const char * msg )
 {
-  yyErrorCleanup(ms);      
+  yyErrorCleanup(ms);
   throw RDKit::SmilesParseException(msg);
 }
 
@@ -53,7 +53,7 @@ yysmiles_error( const char *input,
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
- 
+
 %union {
   int                      moli;
   RDKit::Atom * atom;
@@ -67,7 +67,7 @@ yysmiles_error( const char *input,
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN
 %token <bond> BOND_TOKEN
-%type <moli> cmpd mol 
+%type <moli> cmpd mol branch
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <ival>  nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
@@ -166,7 +166,14 @@ mol: atomd {
   tmp.push_back(-($2+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
-
+/*
+| mol GROUP_CLOSE_TOKEN ring_number
+| mol GROUP_CLOSE_TOKEN BOND_TOKEN ring_number
+| mol GROUP_CLOSE_TOKEN MINUS_TOKEN ring_number
+{
+  yyerror(input,molList,branchPoints,scanner,"ring number directly following a branch");
+}
+*/
 | mol BOND_TOKEN ring_number {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
@@ -243,6 +250,13 @@ mol: atomd {
 }
 ;
 
+branch: GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN {
+if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,"extra close parentheses");
+RWMol *mp = (*molList)[$$];
+mp->setActiveAtom(branchPoints->back());
+branchPoints->pop_back();
+}
+
 
 /* --------------------------------------------------------------- */
 atomd:	simple_atom
@@ -307,7 +321,7 @@ ring_number:  digit
 
 /* --------------------------------------------------------------- */
 number:  ZERO_TOKEN
-| nonzero_number 
+| nonzero_number
 ;
 
 /* --------------------------------------------------------------- */
@@ -327,5 +341,3 @@ digit: NONZERO_DIGIT_TOKEN
 
 
 %%
-
-

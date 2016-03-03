@@ -150,7 +150,15 @@ void testFail() {
       "C-0",  // part of sf.net issue 2525792
       "C1CC1",
       "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1", "EOS"};
+      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1",
+      "C(C)1CC1", // github #786
+      "C1CC1",
+      "F[C@H](C)1NCC1", // github #786
+      "C1CC1",
+      "C(C)-1CC1", // github #786
+      "C1CC1",
+      "C(C)=1CC1", // github #786
+      "EOS"};
 
   // turn off the error log temporarily:
   while (smis[i] != "EOS") {
@@ -1924,7 +1932,7 @@ void testBug1844617() {
   TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode,label);
   TEST_ASSERT(label=="S");
-  
+
   smi = MolToSmiles(*mol,true);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
   delete mol;
@@ -1933,7 +1941,7 @@ void testBug1844617() {
   smi2 = MolToSmiles(*mol,true);
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi==smi2);
-  
+
   delete mol;
 #endif
   smi = "O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
