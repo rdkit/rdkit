@@ -94,7 +94,7 @@ void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
   // doesn't seem like the inclusion of the fontSz should be necessary, but
   // vertical text alignment seems impossible
   // The 0.9 is an empirical factor to account for the descender on the font.
-  d_os << "' y='" << cds.y + 0.9 * fontSz << "'";
+  d_os << "' y='" << cds.y + 0.0 * fontSz << "'";
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
           "font-family:sans-serif;text-anchor:start;"
@@ -237,8 +237,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
 
   // doesn't seem like the inclusion of the fontSz should be necessary, but
   // vertical text alignment seems impossible
-  // The 0.9 is an empirical factor to account for the descender on the font.
-  d_os << "' y='" << draw_coords.y + 0.9 * fontSz << "'";
+  d_os << "' y='" << draw_coords.y << "'";
 
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
@@ -246,7 +245,8 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
        << "fill:" << col << "'";
   d_os << " >";
 
-  TextDrawType draw_mode = TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode =
+      TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
   std::string span;
   bool first_span = true;
   for (int i = 0, is = str.length(); i < is; ++i) {
