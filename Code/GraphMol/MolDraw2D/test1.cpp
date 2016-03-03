@@ -762,6 +762,40 @@ void testGithub781() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub774() {
+  std::cout << " ----------------- Test Github774" << std::endl;
+  {
+    std::string smiles = "Cc1c(C(=O)NCCO)[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
+    std::string nameBase = "test774_1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolOps::Kekulize(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    //m->setProp("_Name","mol");
+      //std::cerr<<MolToMolBlock(*m)<<std::endl;
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+
 int main() {
   RDLog::InitLogs();
 #if 0
@@ -774,6 +808,7 @@ int main() {
   test8PrepareMolForDrawing();
   testMultiThreaded();
   testGithub781();
-#endif
   test3();
+#endif
+  testGithub774();
 }
