@@ -397,7 +397,7 @@ void MolDraw2D::calculateScale() {
   double y_mid = y_min_ + 0.5 * y_range_;
   Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
   x_trans_ = (width_ / 2 - mid.x) / scale_;
-  y_trans_ = (height_ / 2 - mid.y) / scale_;
+  y_trans_ = (mid.y - height_ / 2) / scale_;
 }
 
 // ****************************************************************************

@@ -765,7 +765,8 @@ void testGithub781() {
 void testGithub774() {
   std::cout << " ----------------- Test Github774" << std::endl;
   {
-    std::string smiles = "Cc1c(C(=O)NCC[NH3+])[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
+    std::string smiles =
+        "Cc1c(C(=O)NCC[NH3+])[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
     std::string nameBase = "test774_1";
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -788,13 +789,41 @@ void testGithub774() {
       drawer.finishDrawing();
       outs.flush();
     }
-    //m->setProp("_Name","mol");
-      //std::cerr<<MolToMolBlock(*m)<<std::endl;
+    // m->setProp("_Name","mol");
+    // std::cerr<<MolToMolBlock(*m)<<std::endl;
+    delete m;
+  }
+  {
+    std::string smiles =
+        "CC(=O)\\C=C\\CC1[C@H]2N([C@@H](C(=O)O)C(C)(C)S2(=O)=O)C1=O";
+    std::string nameBase = "test774_2";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolOps::Kekulize(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    // m->setProp("_Name","mol");
+    // std::cerr<<MolToMolBlock(*m)<<std::endl;
     delete m;
   }
   std::cerr << " Done" << std::endl;
 }
-
 
 int main() {
   RDLog::InitLogs();
