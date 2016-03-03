@@ -91,10 +91,7 @@ void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
 
   d_os << "<svg:text";
   d_os << " x='" << cds.x;
-  // doesn't seem like the inclusion of the fontSz should be necessary, but
-  // vertical text alignment seems impossible
-  // The 0.9 is an empirical factor to account for the descender on the font.
-  d_os << "' y='" << cds.y + 0.0 * fontSz << "'";
+  d_os << "' y='" << cds.y << "'";
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
           "font-family:sans-serif;text-anchor:start;"
@@ -235,8 +232,6 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << "<svg:text";
   d_os << " x='" << draw_coords.x;
 
-  // doesn't seem like the inclusion of the fontSz should be necessary, but
-  // vertical text alignment seems impossible
   d_os << "' y='" << draw_coords.y << "'";
 
   d_os << " style='font-size:" << fontSz
