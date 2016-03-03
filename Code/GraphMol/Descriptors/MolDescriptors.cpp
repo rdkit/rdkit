@@ -52,6 +52,7 @@ double calcExactMW(const ROMol &mol, bool onlyHeavy) {
       } else {
         res += (*atomIt)->getMass();
       }
+      res -= constants::electronMass * (*atomIt)->getFormalCharge();
     }
 
     // add our implicit Hs if we need to:

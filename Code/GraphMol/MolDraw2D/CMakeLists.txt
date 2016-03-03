@@ -7,6 +7,7 @@ option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h
   MolDraw2Dwx.h
+  MolDraw2DUtils.h
 )
 
 if(RDK_BUILD_QT_SUPPORT)
@@ -23,7 +24,7 @@ if(RDK_BUILD_QT_SUPPORT)
   set(EXTRA_LOCAL_LIBS ${EXTRA_LOCAL_LIBS} ${Qt5Widgets_LIBRARIES}  ${Qt5OpenGL_LIBRARIES} )
   rdkit_headers(MolDraw2DQt.h)
 endif(RDK_BUILD_QT_SUPPORT)
-  
+
 if(RDK_BUILD_CAIRO_SUPPORT)
   find_package(Cairo REQUIRED)
   include_directories( ${CAIRO_INCLUDE_DIRS} )
@@ -35,13 +36,13 @@ endif(RDK_BUILD_CAIRO_SUPPORT)
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}
-  MolDraw2DDetails.cpp
+  MolDraw2DDetails.cpp MolDraw2DUtils.cpp
   LINK_LIBRARIES
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
   ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
-rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES 
+rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
   MolDraw2D ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
