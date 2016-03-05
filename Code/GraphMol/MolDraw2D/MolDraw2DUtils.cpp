@@ -37,7 +37,8 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   }
   if (forceCoords || !mol.getNumConformers()) {
     // compute 2D coordinates in a standard orientation:
-    RDDepict::compute2DCoords(mol, NULL, true);
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(mol, NULL, canonOrient);
   }
   if (wedgeBonds) {
     WedgeMolBonds(mol, &mol.getConformer());
