@@ -62,13 +62,14 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
 void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atoms,
                          python::object highlight_atom_map,
-                         python::object highlight_atom_radii, int confId = -1) {
+                         python::object highlight_atom_radii, int confId,
+                         std::string legend) {
   rdk_auto_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
-  self.drawMolecule(mol, highlightAtoms.get(), ham, har, confId);
+  self.drawMolecule(mol, legend, highlightAtoms.get(), ham, har, confId);
 
   delete ham;
   delete har;
@@ -154,13 +155,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("SetFontSize", &RDKit::MolDraw2D::setFontSize,
            "change the default font size")
       .def("FontSize", &RDKit::MolDraw2D::fontSize, "get the default font size")
-      .def("DrawMolecule", RDKit::drawMoleculeHelper1,
-           (python::arg("self"), python::arg("mol"),
-            python::arg("highlightAtoms") = python::object(),
-            python::arg("highlightAtomColors") = python::object(),
-            python::arg("highlightAtomRadii") = python::object(),
-            python::arg("confId") = -1),
-           "renders a molecule\n")
+      .def(
+          "DrawMolecule", RDKit::drawMoleculeHelper1,
+          (python::arg("self"), python::arg("mol"),
+           python::arg("highlightAtoms") = python::object(),
+           python::arg("highlightAtomColors") = python::object(),
+           python::arg("highlightAtomRadii") = python::object(),
+           python::arg("confId") = -1, python::arg("legend") = std::string("")),
+          "renders a molecule\n")
       .def(
           "DrawMolecule", RDKit::drawMoleculeHelper2,
           (python::arg("self"), python::arg("mol"),

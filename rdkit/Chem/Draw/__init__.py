@@ -306,7 +306,7 @@ def _moltoimg(mol,sz,highlights=None,legend=None,**kwargs):
     else:
         nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
         d2d = rdMolDraw2D.MolDraw2DCairo(sz[0],sz[1])
-        d2d.DrawMolecule(nmol,highlightAtoms=highlights)
+        d2d.DrawMolecule(nmol,legend=legend,highlightAtoms=highlights)
         from io import BytesIO
         d2d.FinishDrawing()
         sio = BytesIO(d2d.GetDrawingText())

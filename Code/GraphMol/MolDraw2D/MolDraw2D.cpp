@@ -58,6 +58,27 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                highlight_radii, confId);
 }
 
+// ****************************************************************************
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  vector<int> highlight_bonds;
+  if (highlight_atoms) {
+    for (vector<int>::const_iterator ai = highlight_atoms->begin();
+         ai != highlight_atoms->end(); ++ai) {
+      for (vector<int>::const_iterator aj = ai + 1;
+           aj != highlight_atoms->end(); ++aj) {
+        const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
+        if (bnd) highlight_bonds.push_back(bnd->getIdx());
+      }
+    }
+  }
+  drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
+               highlight_atom_map, NULL, highlight_radii, confId);
+}
+
 void MolDraw2D::doContinuousHighlighting(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const vector<int> *highlight_bonds,

@@ -76,13 +76,23 @@ struct MolDrawOptions {
 class MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
-  typedef enum { TextDrawNormal=0, TextDrawSuperscript, TextDrawSubscript } TextDrawType;
+  typedef enum {
+    TextDrawNormal = 0,
+    TextDrawSuperscript,
+    TextDrawSubscript
+  } TextDrawType;
 
   MolDraw2D(int width, int height);
   virtual ~MolDraw2D() {}
 
   virtual void drawMolecule(
       const ROMol &mol, const std::vector<int> *highlight_atoms = NULL,
+      const std::map<int, DrawColour> *highlight_map = NULL,
+      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+
+  virtual void drawMolecule(
+      const ROMol &mol, const std::string &legend,
+      const std::vector<int> *highlight_atoms = NULL,
       const std::map<int, DrawColour> *highlight_map = NULL,
       const std::map<int, double> *highlight_radii = NULL, int confId = -1);
 

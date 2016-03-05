@@ -841,7 +841,7 @@ void test9MolLegends() {
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDraw2DSVG drawer(300, 300);
-    drawer.drawMolecule(*m, "mol legend", NULL, NULL);
+    drawer.drawMolecule(*m, "mol legend");
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     std::ofstream outs("test9_1.svg");
