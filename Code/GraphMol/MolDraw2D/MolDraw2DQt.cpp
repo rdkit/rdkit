@@ -63,7 +63,7 @@ void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2) {
 void MolDraw2DQt::drawChar(char c, const Point2D &cds) {
   QRectF br = qp_.boundingRect(0, 0, 100, 100, Qt::AlignLeft | Qt::AlignBottom,
                                QString(c));
-  qp_.drawText(QRectF(cds.x, cds.y, br.width(), br.height()),
+  qp_.drawText(QRectF(cds.x, cds.y - br.height(), br.width(), br.height()),
                Qt::AlignLeft | Qt::AlignBottom, QString(c), &br);
 }
 
@@ -138,7 +138,8 @@ void MolDraw2DQt::getStringSize(const string &label, double &label_width,
   label_width = 0.0;
   label_height = 0.0;
 
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode =
+      TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
   QString next_char(" ");
   bool had_a_super = false;
 
@@ -154,9 +155,9 @@ void MolDraw2DQt::getStringSize(const string &label, double &label_width,
                                  Qt::AlignBottom | Qt::AlignLeft, next_char);
     label_height = br.height() / scale();
     double char_width = br.width() / scale();
-    if (2 == draw_mode) {
+    if (TextDrawSubscript == draw_mode) {
       char_width *= 0.5;
-    } else if (1 == draw_mode) {
+    } else if (TextDrawSuperscript == draw_mode) {
       char_width *= 0.5;
       had_a_super = true;
     }

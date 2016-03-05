@@ -69,9 +69,8 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
   double twidth = extents.width, theight = extents.height;
 
   unsigned int fontSz = scale() * fontSize();
-  Point2D c1 = cds;  // getDrawCoords( cds );
-
-  cairo_move_to(dp_cr, c1.x, c1.y + theight);
+  Point2D c1 = cds;
+  cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_show_text(dp_cr, txt);
   cairo_stroke(dp_cr);
 }
@@ -123,7 +122,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_width = 0.0;
   label_height = 0.0;
 
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode = TextDrawNormal;
 
   bool had_a_super = false;
 
@@ -144,9 +143,9 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     label_height = std::max(label_height, theight / scale());
     double char_width = twidth / scale();
 
-    if (2 == draw_mode) {
+    if (TextDrawSubscript == draw_mode) {
       char_width *= 0.75;
-    } else if (1 == draw_mode) {
+    } else if (TextDrawSuperscript == draw_mode) {
       char_width *= 0.75;
       had_a_super = true;
     }

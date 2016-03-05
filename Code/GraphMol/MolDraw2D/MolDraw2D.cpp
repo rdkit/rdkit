@@ -309,7 +309,9 @@ void MolDraw2D::highlightCloseContacts() {
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
   double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
-
+  // y is now the distance from the top of the image, we need to
+  // invert that:
+  y = height() - y;
   return Point2D(x, y);
 }
 
@@ -395,33 +397,33 @@ void MolDraw2D::calculateScale() {
   double y_mid = y_min_ + 0.5 * y_range_;
   Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
   x_trans_ = (width_ / 2 - mid.x) / scale_;
-  y_trans_ = (height_ / 2 - mid.y) / scale_;
+  y_trans_ = (mid.y - height_ / 2) / scale_;
 }
 
 // ****************************************************************************
 // establishes whether to put string draw mode into super- or sub-script
 // mode based on contents of instring from i onwards. Increments i appropriately
 // and returns true or false depending on whether it did something or not.
-bool MolDraw2D::setStringDrawMode(const string &instring, int &draw_mode,
-                                  int &i) const {
+bool MolDraw2D::setStringDrawMode(const string &instring,
+                                  TextDrawType &draw_mode, int &i) const {
   string bit1 = instring.substr(i, 5);
   string bit2 = instring.substr(i, 6);
 
   // could be markup for super- or sub-script
   if (string("<sub>") == bit1) {
-    draw_mode = 2;
+    draw_mode = TextDrawSubscript;
     i += 4;
     return true;
   } else if (string("<sup>") == bit1) {
-    draw_mode = 1;
+    draw_mode = TextDrawSuperscript;
     i += 4;
     return true;
   } else if (string("</sub>") == bit2) {
-    draw_mode = 0;
+    draw_mode = TextDrawNormal;
     i += 5;
     return true;
   } else if (string("</sup>") == bit2) {
-    draw_mode = 0;
+    draw_mode = TextDrawNormal;
     i += 5;
     return true;
   }
@@ -452,11 +454,15 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
+  // FIX: this shouldn't stay
+  double M_width, M_height;
+  getStringSize(std::string("M"), M_width, M_height);
+
   double draw_x = cds.x - string_width / 2.0;
   double draw_y = cds.y - string_height / 2.0;
 
   double full_font_size = fontSize();
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode = TextDrawNormal;
   string next_char(" ");
 
   for (int i = 0, is = str.length(); i < is; ++i) {
@@ -473,18 +479,22 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
     // these font sizes and positions work best for Qt, IMO. They may want
     // tweaking for a more general solution.
-    if (2 == draw_mode) {
+    if (TextDrawSubscript == draw_mode) {
       // y goes from top to bottom, so add for a subscript!
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-               getDrawCoords(Point2D(draw_x, draw_y + 0.5 * char_height)));
+               //               getDrawCoords(Point2D(draw_x, draw_y + 0.5 *
+               //               char_height)));
+               getDrawCoords(Point2D(draw_x, draw_y - 0.5 * char_height)));
       setFontSize(full_font_size);
-    } else if (1 == draw_mode) {
+    } else if (TextDrawSuperscript == draw_mode) {
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-               getDrawCoords(Point2D(draw_x, draw_y - 0.25 * char_height)));
+               //               getDrawCoords(Point2D(draw_x, draw_y - 0.25 *
+               //               char_height)));
+               getDrawCoords(Point2D(draw_x, draw_y + .5 * M_height)));
       setFontSize(full_font_size);
     } else {
       drawChar(next_c, getDrawCoords(Point2D(draw_x, draw_y)));

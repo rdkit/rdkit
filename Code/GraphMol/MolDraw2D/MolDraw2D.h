@@ -68,6 +68,7 @@ struct MolDrawOptions {
 class MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
+  typedef enum { TextDrawNormal=0, TextDrawSuperscript, TextDrawSubscript } TextDrawType;
 
   MolDraw2D(int width, int height);
   virtual ~MolDraw2D() {}
@@ -120,7 +121,7 @@ class MolDraw2D {
   // mode based on contents of instring from i onwards. Increments i
   // appropriately
   // and returns true or false depending on whether it did something or not
-  bool setStringDrawMode(const std::string &instring, int &draw_mode,
+  bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
                          int &i) const;
 
   virtual void clearDrawing() = 0;
