@@ -278,8 +278,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
                highlight_bond_map, highlight_radii, confId);
   if (legend != "") {
-    // the 0.94 here is quite empirical, it's brought over from Python
-    Point2D loc = getAtomCoords(std::make_pair(width_ / 2., 0.94 * height_));
+    // the 0.06 is completely empirical
+    Point2D loc = getAtomCoords(std::make_pair(width_ / 2., .06 * height_));
 
     double o_font_size = fontSize();
     setFontSize(options_.legendFontSize /
