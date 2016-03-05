@@ -7,7 +7,6 @@ import os
 from rdkit.six import iteritems
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
-from rdkit.Geometry import Point2D
 
 def _getCanvas():
   useAGG=False
@@ -307,8 +306,7 @@ def _moltoimg(mol,sz,highlights=None,legend=None,**kwargs):
     else:
         nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
         d2d = rdMolDraw2D.MolDraw2DCairo(sz[0],sz[1])
-        if legend is None: legend=""
-        d2d.DrawMolecule(nmol,highlights,[],legend=legend)
+        d2d.DrawMolecule(nmol,highlightAtoms=highlights)
         from io import BytesIO
         d2d.FinishDrawing()
         sio = BytesIO(d2d.GetDrawingText())
@@ -335,25 +333,9 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     highlights=None
     if highlightAtomLists and highlightAtomLists[i]:
       highlights=highlightAtomLists[i]
-<<<<<<< HEAD
     if mol is not None:
-        if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
-            img = MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
-                                 **kwargs)
-        else:
-            nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
-            d2d = rdMolDraw2D.MolDraw2DCairo(subImgSize[0],subImgSize[1])
-            d2d.DrawMolecule(nmol,highlightAtoms=highlights)
-            from io import BytesIO
-            d2d.FinishDrawing()
-            sio = BytesIO(d2d.GetDrawingText())
-            img = Image.open(sio)
-
-        res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
-=======
-    img = _moltoimg(mol,subImgSize,highlights,legends[i],**kwargs)
-    res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
->>>>>>> 6e5f377... further progress
+      img = _moltoimg(mol,subImgSize,highlights,legends[i],**kwargs)
+      res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
