@@ -17,9 +17,9 @@ from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 import sys,math,gzip,pickle
-import os.path as op
+import os.path
 
-def readNPModel(filename=op.join(op.dirname(__file__), 'publicnp.model.gz')):
+def readNPModel(filename=os.path.join(os.path.dirname(__file__), 'publicnp.model.gz')):
   sys.stderr.write("reading NP model ...\n")
   fscore = pickle.load(gzip.open(filename))
   sys.stderr.write("model in\n")
