@@ -788,6 +788,12 @@ void testGithub774() {
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       outs.flush();
+      Point2D ocoords(1.0, 2.0);
+      Point2D dcoords =
+          drawer.getAtomCoords(std::make_pair(ocoords.x, ocoords.y));
+      Point2D acoords = drawer.getDrawCoords(dcoords);
+      TEST_ASSERT(feq(acoords.x, 1.0));
+      TEST_ASSERT(feq(acoords.y, 2.0));
     }
     // m->setProp("_Name","mol");
     // std::cerr<<MolToMolBlock(*m)<<std::endl;
