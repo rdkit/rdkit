@@ -294,7 +294,7 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
     res.paste(MolToImage(mol,subImgSize,legend=legends[i],**kwargs),(i*subImgSize[0],0))
   return res
 
-def _moltoimg(mol,sz,highlights=None,legend=None,**kwargs):
+def _moltoimg(mol,sz,highlights,legend,**kwargs):
     try:
         import Image
     except ImportError:
@@ -321,7 +321,7 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     import Image
   except ImportError:
     from PIL import Image
-  if legends is None: legends = [None]*len(mols)
+  if legends is None: legends = ['']*len(mols)
 
   nRows = len(mols)//molsPerRow
   if len(mols)%molsPerRow : nRows+=1
