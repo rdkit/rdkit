@@ -675,13 +675,19 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
   static const DashPattern noDash;
   static const DashPattern dots = assign::list_of(2)(6);
   static const DashPattern dashes = assign::list_of(6)(6);
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
 
   const Atom *at1 = mol.getAtomWithIdx(at1_idx);
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
-  double double_bond_offset = options_.multipleBondOffset;
-
   Point2D at1_cds = at_cds_[at1_idx];
   Point2D at2_cds = at_cds_[at2_idx];
+
+  double double_bond_offset = options_.multipleBondOffset;
+  // mol files from, for example, Marvin use a bond length of 1 for just about
+  // everything. When this is the case, the default multipleBondOffset is just
+  // too much, so scale it back.
+  if ((at1_cds - at2_cds).lengthSq() < 1.4) double_bond_offset *= 0.6;
 
   adjustBondEndForLabel(at1_idx, at2_cds, at1_cds);
   adjustBondEndForLabel(at2_idx, at1_cds, at2_cds);
@@ -760,8 +766,10 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         // 2 further lines, a bit shorter and offset on the perpendicular
         double dbo = 2.0 * double_bond_offset;
         Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-        double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
-        double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
+        double end1_trunc =
+            1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
+        double end2_trunc =
+            1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
         Point2D bv = at1_cds - at2_cds;
         Point2D p1 = at1_cds - (bv * end1_trunc) + perp * dbo;
         Point2D p2 = at2_cds + (bv * end2_trunc) + perp * dbo;
@@ -782,8 +790,8 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         }
         double dbo = 2.0 * double_bond_offset;
         Point2D bv = at1_cds - at2_cds;
-        Point2D p1 = at1_cds - bv * 0.1 + perp * dbo;
-        Point2D p2 = at2_cds + bv * 0.1 + perp * dbo;
+        Point2D p1 = at1_cds - bv * multipleBondTruncation + perp * dbo;
+        Point2D p2 = at2_cds + bv * multipleBondTruncation + perp * dbo;
         if (bt == Bond::AROMATIC) setDash(dashes);
         drawLine(p1, p2, col1, col2);
         if (bt == Bond::AROMATIC) setDash(noDash);
