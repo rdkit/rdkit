@@ -45,8 +45,7 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   const DashPattern &dashes = dash();
   if (dashes.size()) {
     double dd[dashes.size()];
-    for (unsigned int di = 0; di < dashes.size(); ++di)
-      dd[di] = dashes[di] * 1.5;
+    for (unsigned int di = 0; di < dashes.size(); ++di) dd[di] = dashes[di];
     cairo_set_dash(dp_cr, dd, dashes.size(), 0);
   } else {
     cairo_set_dash(dp_cr, 0, 0, 0);
