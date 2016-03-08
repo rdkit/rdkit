@@ -358,7 +358,7 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
   int x = int(double(screen_cds.first) / scale_ + x_min_ - x_trans_);
-  double y =
+  int y =
       int(double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_));
   return Point2D(x, y);
 }
