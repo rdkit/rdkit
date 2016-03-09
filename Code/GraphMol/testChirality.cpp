@@ -1913,8 +1913,8 @@ void testFindChiralAtoms() {
         !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
     TEST_ASSERT(
         !m->getAtomWithIdx(3)->hasProp(common_properties::_ChiralityPossible));
-    TEST_ASSERT(!(m->getAtomWithIdx(6)
-                      ->hasProp(common_properties::_ChiralityPossible)));
+    TEST_ASSERT(!(
+        m->getAtomWithIdx(6)->hasProp(common_properties::_ChiralityPossible)));
 
     // but we can force it:
     MolOps::assignStereochemistry(*m, true, true, true);
@@ -1925,8 +1925,8 @@ void testFindChiralAtoms() {
         m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
     TEST_ASSERT(
         m->getAtomWithIdx(3)->hasProp(common_properties::_ChiralityPossible));
-    TEST_ASSERT(!(m->getAtomWithIdx(6)
-                      ->hasProp(common_properties::_ChiralityPossible)));
+    TEST_ASSERT(!(
+        m->getAtomWithIdx(6)->hasProp(common_properties::_ChiralityPossible)));
 
     delete m;
   }
@@ -2179,6 +2179,73 @@ void testGithub553() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub803() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 803: Support larger isotope "
+                          "deltas in the chirality assignment"
+                       << std::endl;
+
+  {
+    std::string smi = "[*][C@H]([9*])[8*]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "S");
+
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "[*][C@@H]([8*])[9*]");
+
+    delete m;
+  }
+  {
+    std::string smi = "[*][C@H]([15*])[9*]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "S");
+
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "[*][C@@H]([9*])[15*]");
+
+    delete m;
+  }
+  {
+    std::string smi = "[100U][C@H]([101U])[102U]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "R");
+
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "[100U][C@H]([101U])[102U]");
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2203,5 +2270,6 @@ int main() {
 #endif
   testIssue2705543();
   testGithub553();
+  testGithub803();
   return 0;
 }
