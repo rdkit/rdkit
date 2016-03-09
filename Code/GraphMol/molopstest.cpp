@@ -5643,7 +5643,18 @@ void testGithubIssue805() {
     TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getStereo() == Bond::STEREONONE);
     std::string smi = MolToSmiles(*m, true);
-    std::cerr << "smi: " << smi << std::endl;
+    TEST_ASSERT(smi=="CCOP(=O)=C1CSC(c2cccs2)C1=P(=O)OCC");
+    delete m;
+  }
+  {
+    std::string smi="O=P(/O)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+    TEST_ASSERT(m->getBondBetweenAtoms(1,3)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1,3)->getStereo() == Bond::STEREONONE);
+    smi = MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="CC=P(=O)O");
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
