@@ -5627,6 +5627,27 @@ void testGithubIssue754() {
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+void testGithubIssue805() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #805 : "
+                          "Pre-condition Violation: bad bond type"
+                       << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    ROMol *m = MolFileToMol(pathName + "pubchem_87396055.sdf");
+
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 20);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 9)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 9)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getStereo() == Bond::STEREONONE);
+    std::string smi = MolToSmiles(*m, true);
+    std::cerr << "smi: " << smi << std::endl;
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -5713,6 +5734,7 @@ int main() {
 #endif
   testPotentialStereoBonds();
   testGithubIssue754();
+  testGithubIssue805();
 
   return 0;
 }
