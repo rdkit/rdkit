@@ -43,6 +43,16 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_atom_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
+  drawMolecule(mol, "", highlight_atoms, highlight_atom_map, highlight_radii,
+               confId);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
     for (vector<int>::const_iterator ai = highlight_atoms->begin();
@@ -54,8 +64,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
       }
     }
   }
-  drawMolecule(mol, highlight_atoms, &highlight_bonds, highlight_atom_map, NULL,
-               highlight_radii, confId);
+  drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
+               highlight_atom_map, NULL, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -268,6 +278,31 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   }
 }
 
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const vector<int> *highlight_bonds,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const map<int, DrawColour> *highlight_bond_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
+               highlight_bond_map, highlight_radii, confId);
+  if (legend != "") {
+    // the 0.94 is completely empirical and was brought over from Python
+    Point2D loc = getAtomCoords(std::make_pair(width_ / 2., 0.94 * height_));
+
+    double o_font_size = fontSize();
+    setFontSize(options_.legendFontSize /
+                scale_);  // set the font size to about 12 pixels high
+
+    DrawColour odc = colour();
+    setColour(options_.legendColour);
+    drawString(legend, loc);
+    setColour(odc);
+    setFontSize(o_font_size);
+  }
+}
+
 void MolDraw2D::highlightCloseContacts() {
   if (drawOptions().flagCloseContactsDist < 0) return;
   int tol =
@@ -323,8 +358,15 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
   int x = int(double(screen_cds.first) / scale_ + x_min_ - x_trans_);
-  int y = int(double(screen_cds.second) / scale_ + y_min_ - y_trans_);
+  int y =
+      int(double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_));
+  return Point2D(x, y);
+}
 
+Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
+  double x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
+  double y =
+      double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
   return Point2D(x, y);
 }
 
@@ -580,12 +622,22 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
 void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId) {
   at_cds_.clear();
   atomic_nums_.clear();
+
+  bbox_[0].x = bbox_[0].y = numeric_limits<double>::max();
+  bbox_[1].x = bbox_[1].y = -1 * numeric_limits<double>::max();
+
   const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
   ROMol::VERTEX_ITER this_at, end_at;
   boost::tie(this_at, end_at) = mol.getVertices();
   while (this_at != end_at) {
     int this_idx = mol[*this_at]->getIdx();
     at_cds_.push_back(Point2D(locs[this_idx].x, locs[this_idx].y));
+
+    bbox_[0].x = std::min(bbox_[0].x, locs[this_idx].x);
+    bbox_[0].y = std::min(bbox_[0].y, locs[this_idx].y);
+    bbox_[1].x = std::max(bbox_[1].x, locs[this_idx].x);
+    bbox_[1].y = std::max(bbox_[1].y, locs[this_idx].y);
+
     ++this_at;
   }
 }
@@ -623,13 +675,19 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
   static const DashPattern noDash;
   static const DashPattern dots = assign::list_of(2)(6);
   static const DashPattern dashes = assign::list_of(6)(6);
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
 
   const Atom *at1 = mol.getAtomWithIdx(at1_idx);
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
-  const double double_bond_offset = 0.1;
-
   Point2D at1_cds = at_cds_[at1_idx];
   Point2D at2_cds = at_cds_[at2_idx];
+
+  double double_bond_offset = options_.multipleBondOffset;
+  // mol files from, for example, Marvin use a bond length of 1 for just about
+  // everything. When this is the case, the default multipleBondOffset is just
+  // too much, so scale it back.
+  if ((at1_cds - at2_cds).lengthSq() < 1.4) double_bond_offset *= 0.6;
 
   adjustBondEndForLabel(at1_idx, at2_cds, at1_cds);
   adjustBondEndForLabel(at2_idx, at1_cds, at2_cds);
@@ -708,8 +766,10 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         // 2 further lines, a bit shorter and offset on the perpendicular
         double dbo = 2.0 * double_bond_offset;
         Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-        double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
-        double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
+        double end1_trunc =
+            1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
+        double end2_trunc =
+            1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
         Point2D bv = at1_cds - at2_cds;
         Point2D p1 = at1_cds - (bv * end1_trunc) + perp * dbo;
         Point2D p2 = at2_cds + (bv * end2_trunc) + perp * dbo;
@@ -730,8 +790,8 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         }
         double dbo = 2.0 * double_bond_offset;
         Point2D bv = at1_cds - at2_cds;
-        Point2D p1 = at1_cds - bv * 0.1 + perp * dbo;
-        Point2D p2 = at2_cds + bv * 0.1 + perp * dbo;
+        Point2D p1 = at1_cds - bv * multipleBondTruncation + perp * dbo;
+        Point2D p2 = at2_cds + bv * multipleBondTruncation + perp * dbo;
         if (bt == Bond::AROMATIC) setDash(dashes);
         drawLine(p1, p2, col1, col2);
         if (bt == Bond::AROMATIC) setDash(noDash);
@@ -748,7 +808,7 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                                bool draw_dashed, const DrawColour &col1,
                                const DrawColour &col2) {
   Point2D perp = calcPerpendicular(cds1, cds2);
-  Point2D disp = perp * 0.1;
+  Point2D disp = perp * 0.15;
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 

@@ -18,6 +18,7 @@ void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
+  cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
 }
 
 // ****************************************************************************
@@ -44,8 +45,7 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   const DashPattern &dashes = dash();
   if (dashes.size()) {
     double dd[dashes.size()];
-    for (unsigned int di = 0; di < dashes.size(); ++di)
-      dd[di] = dashes[di] * 1.5;
+    std::copy(dashes.begin(), dashes.end(), dd);
     cairo_set_dash(dp_cr, dd, dashes.size(), 0);
   } else {
     cairo_set_dash(dp_cr, 0, 0, 0);
@@ -80,6 +80,11 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
+  cairo_line_cap_t olinecap = cairo_get_line_cap(dp_cr);
+  cairo_line_join_t olinejoin = cairo_get_line_join(dp_cr);
+
+  cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
+  cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_set_line_width(dp_cr, lineWidth());
   cairo_set_dash(dp_cr, 0, 0, 0);
 
@@ -94,6 +99,8 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_close_path(dp_cr);
   if (fillPolys()) cairo_fill_preserve(dp_cr);
   cairo_stroke(dp_cr);
+  cairo_set_line_cap(dp_cr, olinecap);
+  cairo_set_line_join(dp_cr, olinejoin);
 }
 
 // ****************************************************************************
