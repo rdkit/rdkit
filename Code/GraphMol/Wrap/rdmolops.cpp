@@ -34,12 +34,6 @@ BOOST_PYTHON_MODULE(rdmolops) {
   python::scope().attr("__doc__") =
       "Module containing RDKit functionality for manipulating molecules.";
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
-  python::register_exception_translator<RDKit::MolSanitizeException>(
-      &rdSanitExceptionTranslator);
 
   // ******************************
   // Functions from MolOps
