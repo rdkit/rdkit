@@ -689,6 +689,31 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
         // we're only going to handle 2 or three coordinate atoms:
         if ((begAtom->getDegree() == 2 || begAtom->getDegree() == 3) &&
             (endAtom->getDegree() == 2 || endAtom->getDegree() == 3)) {
+          // check to see if we have another double bond at either end,
+          // that disqualifies this as a stereobond (was github #805)
+          bool foundDoubleAtEnd=false;
+          ROMol::OEDGE_ITER begN,endN;
+          boost::tie(begN,endN) = mol.getAtomBonds(begAtom);
+          while(!foundDoubleAtEnd && begN!=endN){
+            BOND_SPTR bond=mol[*begN];
+            ++begN;
+            if(bond.get()!=dblBond && bond->getBondType()==Bond::DOUBLE){
+              foundDoubleAtEnd=true;
+              continue;
+            }
+          }
+          if(foundDoubleAtEnd) continue;
+          boost::tie(begN,endN) = mol.getAtomBonds(endAtom);
+          while(!foundDoubleAtEnd && begN!=endN){
+            BOND_SPTR bond=mol[*begN];
+            ++begN;
+            if(bond.get()!=dblBond && bond->getBondType()==Bond::DOUBLE){
+              foundDoubleAtEnd=true;
+              continue;
+            }
+          }
+          if(foundDoubleAtEnd) continue;
+
           ++unassignedBonds;
 
           // look around each atom and see if it has at least one bond with
