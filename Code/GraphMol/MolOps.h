@@ -391,9 +391,9 @@ int setAromaticity(RWMol &mol);
 /*!
 
     Currently this:
-     - modifies nitro groups, so that the nitrogen does not have a unreasonable
+     - modifies nitro groups, so that the nitrogen does not have an unreasonable
        valence of 5, as follows:
-         - the nitrogen gets a positve charge
+         - the nitrogen gets a positive charge
          - one of the oxygens gets a negative chage and the double bond to this
            oxygen is changed to a single bond
        The net result is that nitro groups can be counted on to be:
