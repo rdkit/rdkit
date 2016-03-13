@@ -5638,12 +5638,15 @@ void testGithubIssue805() {
 
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 20);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 6)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge()==1);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getFormalCharge()==-1);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 9)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(2, 9)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 9)->getStereo() != Bond::STEREONONE);
     TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 10)->getStereo() != Bond::STEREONONE);
     std::string smi = MolToSmiles(*m, true);
-    TEST_ASSERT(smi=="CCOP(=O)=C1CSC(c2cccs2)C1=P(=O)OCC");
+    TEST_ASSERT(smi=="CCO/[P+]([O-])=C1\\CSC(c2cccs2)\\C1=[P+](\\[O-])OCC");
     delete m;
   }
   {
@@ -5651,10 +5654,13 @@ void testGithubIssue805() {
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
-    TEST_ASSERT(m->getBondBetweenAtoms(1,3)->getBondType()==Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(1,3)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 3)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 3)->getStereo() != Bond::STEREONONE);
     smi = MolToSmiles(*m,true);
-    TEST_ASSERT(smi=="CC=P(=O)O");
+    TEST_ASSERT(smi=="C/C=[P+](/[O-])O");
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
