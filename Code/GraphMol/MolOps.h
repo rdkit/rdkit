@@ -398,6 +398,9 @@ int setAromaticity(RWMol &mol);
            oxygen is changed to a single bond
        The net result is that nitro groups can be counted on to be:
          \c "[N+](=O)[O-]"
+     - modifies perchlorates from Cl(=O)(=O)(=O)[O-] to
+       [Cl+3]([O-])([O-])([O-])[O-]
+     - converts the substructure [N,C]=P(=O)-* to [N,C]=[P+](-[O-])-*
 
    \param mol    the molecule of interest
 
