@@ -26,6 +26,13 @@ class TestCase(unittest.TestCase):
     self.inFileName = '%s/NCI/first_200.props.sdf'%(RDConfig.RDDataDir)
   def test1(self):
     " testing first 200 mols from NCI "
+    # figure out which rotor version we are using
+    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
+    if Lipinski.NumRotatableBonds(m) == 2:
+      rot_prop = "NUM_ROTATABLEBONDS_O"
+    else:
+      rot_prop = "NUM_ROTATABLEBONDS"
+    
     suppl = Chem.SDMolSupplier(self.inFileName)
     idx = 1
     oldDonorSmarts = Chem.MolFromSmarts('[NH1,NH2,OH1]')
@@ -55,7 +62,7 @@ class TestCase(unittest.TestCase):
         assert calc==orig,'bad num heteroatoms for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
 
         calc = Lipinski.NumRotatableBonds(m)
-        orig = int(m.GetProp('NUM_ROTATABLEBONDS'))
+        orig = int(m.GetProp(rot_prop))
         assert calc==orig,'bad num rotors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
       idx += 1
 

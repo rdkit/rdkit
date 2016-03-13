@@ -36,8 +36,13 @@ extern const std::string NumRotatableBondsVersion;
   \param strict        if set, a stricter definition of rotable bonds is used
                        this excludes amides, esters, etc.
 */
+#ifdef RDK_USE_COMPLEX_ROTOR_DEFINITION
+    const bool DefaultUseStrictDefinition = false;
+#else
+    const bool DefaultUseStrictDefinition = true;
+#endif
 unsigned int calcNumRotatableBonds(const ROMol &mol,
-                                   bool useStrictDefinition = true);
+                                   bool useStrictDefinition=DefaultUseStrictDefinition);
 
 extern const std::string NumHBDVersion;
 //! calculates the number of H-bond donors

@@ -350,6 +350,15 @@ void testLipinski1() {
   fName += "/Data/NCI/first_200.props.sdf";
   SDMolSupplier suppl(fName);
   int idx = -1;
+  // Figure out which rotatable bond version we are using
+  std::string rot_prop = "NUM_ROTATABLEBONDS";
+  {
+    const bool sanitize=true;
+    ROMol *test_mol = SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
+    if (calcNumRotatableBonds(*test_mol) == 2)
+      rot_prop = "NUM_ROTATABLEBONDS_O";
+    delete test_mol;
+  }
   while (!suppl.atEnd()) {
     ROMol *mol = 0;
     ++idx;
@@ -417,7 +426,7 @@ void testLipinski1() {
     }
     TEST_ASSERT(oVal == nVal);
 
-    mol->getProp("NUM_ROTATABLEBONDS", foo);
+    mol->getProp(rot_prop, foo);
     oVal = boost::lexical_cast<unsigned int>(foo);
     nVal = calcNumRotatableBonds(*mol);
     if (oVal != nVal) {
@@ -1458,6 +1467,15 @@ void testMQNs() {
     unsigned int tgt[42] = {98, 0,  4,  0, 0,  1,  0,  3,  9, 5, 4, 124, 29, 3,
                             0,  66, 35, 0, 25, 30, 21, 2,  2, 0, 0, 6,   12, 6,
                             0,  70, 26, 0, 0,  0,  2,  16, 0, 0, 0, 0,   10, 5};
+
+    // Figure out which rotatable bond version we are using
+    //  and update the test accordingly
+    {
+      const bool sanitize=true;
+      ROMol *test_mol = SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
+      if (calcNumRotatableBonds(*test_mol) == 2)
+        tgt[18] = 26;
+    }
 
     std::vector<unsigned int> accum(42, 0);
 

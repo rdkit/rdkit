@@ -92,6 +92,7 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
   return res;
 }
 
+#ifndef RDK_USE_COMPLEX_ROTOR_DEFINITION
 const std::string NumRotatableBondsVersion = "2.0.0";
 unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
   if (strict) {
@@ -109,6 +110,70 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
     return m.get().countMatches(mol);
   }
 }
+#else
+const std::string NumRotatableBondsVersion = "1.0.3";
+unsigned int calcNumRotatableBonds(const ROMol &mol, bool useCactvsDefn) {
+  static ROMOL_SPTR origDefn_matcher;
+  if (!origDefn_matcher) {
+    origDefn_matcher.reset(SmartsToMol("[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]"));
+  }
+  if (!useCactvsDefn) {
+    std::vector<MatchVectType> matches;
+    SubstructMatch(mol, *(origDefn_matcher.get()), matches);
+    return matches.size();
+  }
+
+  // Major changes in definition relative to the original GPS calculator:
+  //   Bonds linking ring systems:
+  //     - Single bonds between aliphatic ring Cs are always rotatable. This
+  //     means that the
+  //       central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now considered
+  //       rotatable; it was not
+  //       before.
+  //     - Heteroatoms in the linked rings no longer affect whether or not the
+  //     linking bond
+  //       is rotatable
+  //     - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now
+  //     considered
+  //       non-rotatable
+  pattern_flyweight rotBonds_matcher("[!$([D1&!#1])]-!@[!$([D1&!#1])]");
+  pattern_flyweight nonRingAmides_matcher("[C&!R](=O)NC");
+  pattern_flyweight symRings_matcher(
+      "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)]");
+  pattern_flyweight terminalTripleBonds_matcher("C#[#6,#7]");
+
+  std::vector<MatchVectType> matches;
+
+  // initialize to the number of bonds matching the base pattern:
+  int res = rotBonds_matcher.get().countMatches(mol);
+
+  // remove symmetrical rings:
+  res -= symRings_matcher.get().countMatches(mol);
+  if (res < 0) res = 0;
+
+  // remove triple bonds
+  res -= terminalTripleBonds_matcher.get().countMatches(mol);
+  if (res < 0) res = 0;
+
+  // removing amides is more complex
+  boost::dynamic_bitset<> atomsSeen(mol.getNumAtoms());
+  SubstructMatch(mol, *(nonRingAmides_matcher.get().getMatcher()), matches);
+  BOOST_FOREACH (const MatchVectType &iv, matches) {
+    bool distinct = true;
+    for (MatchVectType::const_iterator mIt = iv.begin(); mIt != iv.end();
+         ++mIt) {
+      if (atomsSeen[mIt->second]) {
+        distinct = false;
+      }
+      atomsSeen.set(mIt->second);
+    }
+    if (distinct && res > 0) --res;
+  }
+
+  if (res < 0) res = 0;
+  return static_cast<unsigned int>(res);
+}
+#endif
 
 // SMARTSCOUNTFUNC(NumHBD,
 // "[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]","2.0.1" ) ;
