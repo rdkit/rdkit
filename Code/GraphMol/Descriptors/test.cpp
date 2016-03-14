@@ -431,7 +431,7 @@ void testLipinski1() {
     nVal = calcNumRotatableBonds(*mol);
     if (oVal != nVal) {
       std::cerr << "  failed: " << idx << " " << oVal << " " << nVal
-                << std::endl;
+                << " using stored sd prop " << rot_prop << std::endl;
     }
     TEST_ASSERT(oVal == nVal);
 

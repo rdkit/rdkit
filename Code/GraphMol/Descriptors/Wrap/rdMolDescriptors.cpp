@@ -740,20 +740,38 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcNumHBA_version") =
       RDKit::Descriptors::NumHBAVersion;
 
-  if (RDKit::Descriptors::DefaultUseStrictDefinition)
-    docString="returns the number of rotatable bonds for a molecule. The strict option (default) does not count things like amide or ester bonds";
-  else
-    docString="returns the number of rotatable bonds for a molecule. The strict option (not default) does not count things like amide or ester bonds";
+#ifdef RDK_USE_MOST_STRICT_ROTOR_DEFINITION
+    docString=
+        "returns the number of rotatable bonds for a molecule.\n\
+   strict = 0 - Simple rotatable bond definition.\n\
+   strict = 1 - (default) does not count things like amide or ester bonds\n\
+   strict = 2 - handles linkages between ring systems.\n\
+      - Single bonds between aliphatic ring Cs are always rotatable. This\n\
+        means that the central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now \n\
+        considered rotatable; it was not before\n\
+      - Heteroatoms in the linked rings no longer affect whether or not\n\
+        the linking bond is rotatable\n\
+      - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
+         considered non-rotatable";
+#else  
+    docString=
+        "returns the number of rotatable bonds for a molecule.\n\
+   strict = 0 - Simple rotatable bond definition.\n\
+   strict = 1 - does not count things like amide or ester bonds\n\
+   strict = 2 - (default) handles linkages between ring systems.\n\
+      - Single bonds between aliphatic ring Cs are always rotatable. This\n\
+        means that the central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now \n\
+        considered rotatable; it was not before\n\
+      - Heteroatoms in the linked rings no longer affect whether or not\n\
+        the linking bond is rotatable\n\
+      - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
+         considered non-rotatable";
+#endif
   
-  python::def("CalcNumRotatableBonds",
-	      RDKit::Descriptors::calcNumRotatableBonds,
-	      (python::arg("mol"),
-               python::arg("strict")=RDKit::Descriptors::DefaultUseStrictDefinition),
-              docString.c_str());
   python::def(
       "CalcNumRotatableBonds", RDKit::Descriptors::calcNumRotatableBonds,
       (python::arg("mol"),
-       python::arg("strict") = RDKit::Descriptors::DefaultUseStrictDefinition),
+       python::arg("strict") = RDKit::Descriptors::NumRotatableBondsOptions::Default),
       docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
