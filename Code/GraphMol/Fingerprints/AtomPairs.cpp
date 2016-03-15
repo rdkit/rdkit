@@ -438,17 +438,17 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
       }
     }
     if (keepIt) {
+      boost::dynamic_bitset<> pAtoms(path.size());
       for (PATH_TYPE::const_iterator pIt = path.begin(); pIt < path.end();
            ++pIt) {
         // look for a cycle that doesn't start at the first atom
         // we can't effectively canonicalize these at the moment
         // (was github #811)
-        if (pIt != path.begin()) {
-          if (std::find(pIt + 1, path.end(), *pIt) != path.end()) {
-            pathCodes.clear();
-            break;
-          }
+        if (pIt != path.begin() && pAtoms[*pIt]) {
+          pathCodes.clear();
+          break;
         }
+        pAtoms.set(*pIt);
         unsigned int code = atomCodes[*pIt] - 1;
         // subtract off the branching number:
         if (pIt != path.begin() && pIt + 1 != path.end()) {
