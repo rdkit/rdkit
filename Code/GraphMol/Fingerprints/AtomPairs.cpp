@@ -325,6 +325,7 @@ boost::uint64_t getTopologicalTorsionCode(
     ++i;
     --j;
   }
+
   int shiftSize = codeSize + (includeChirality ? numChiralBits : 0);
   boost::uint64_t res = 0;
   if (reverseIt) {
@@ -437,17 +438,29 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
       }
     }
     if (keepIt) {
-      for (unsigned int i = 0; i < targetSize; ++i) {
-        unsigned int code = atomCodes[path[i]] - 1;
+      for (PATH_TYPE::const_iterator pIt = path.begin(); pIt < path.end();
+           ++pIt) {
+        // look for a cycle that doesn't start at the first atom
+        // we can't effectively canonicalize these at the moment
+        // (was github #811)
+        if (pIt != path.begin()) {
+          if (std::find(pIt + 1, path.end(), *pIt) != path.end()) {
+            pathCodes.clear();
+            break;
+          }
+        }
+        unsigned int code = atomCodes[*pIt] - 1;
         // subtract off the branching number:
-        if (i > 0 && i < targetSize - 1) {
+        if (pIt != path.begin() && pIt + 1 != path.end()) {
           --code;
         }
         pathCodes.push_back(code);
       }
-      boost::int64_t code =
-          getTopologicalTorsionCode(pathCodes, includeChirality);
-      updateElement(*res, code);
+      if (pathCodes.size()) {
+        boost::int64_t code =
+            getTopologicalTorsionCode(pathCodes, includeChirality);
+        updateElement(*res, code);
+      }
     }
   }
   delete fromAtomsBV;
