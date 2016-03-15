@@ -444,7 +444,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
         // look for a cycle that doesn't start at the first atom
         // we can't effectively canonicalize these at the moment
         // (was github #811)
-        if (pIt != path.begin() && pAtoms[*pIt]) {
+        if (pIt != path.begin() && *pIt != *(path.begin()) && pAtoms[*pIt]) {
           pathCodes.clear();
           break;
         }

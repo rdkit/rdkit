@@ -3163,6 +3163,18 @@ void testGitHubIssue811() {
     delete m1;
     delete m2;
   }
+  {
+    ROMol *m1 = SmilesToMol("C1CC1");
+    TEST_ASSERT(m1);
+
+    SparseIntVect<boost::int64_t> *fp1;
+
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    SparseIntVect<boost::int64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 1);
+    delete fp1;
+    delete m1;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
