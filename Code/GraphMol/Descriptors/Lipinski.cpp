@@ -172,6 +172,12 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, int strict) {
   }
 }
 
+unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
+  return calcNumRotatableBonds(mol,
+                               (strict) ? NumRotatableBondsOptions::Strict
+                                        : NumRotatableBondsOptions::NonStrict );
+}
+
 // SMARTSCOUNTFUNC(NumHBD,
 // "[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]","2.0.1" ) ;
 SMARTSCOUNTFUNC(NumHBD, "[N&!H0&v3,N&!H0&+1&v4,O&H1&+0,S&H1&+0,n&H1&+0]",

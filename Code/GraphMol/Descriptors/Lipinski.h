@@ -48,6 +48,14 @@ extern const std::string NumRotatableBondsVersion;
 unsigned int calcNumRotatableBonds(const ROMol &mol,
                                    int useStrictDefinition=NumRotatableBondsOptions::Default);
 
+//! calculates the number of rotatable bonds ( backwards compatibility function,
+//!  deprecated, please use calcNumRotatableBonds(const ROMol&, int)
+/*!
+  \param mol           the molecule of interest
+  \param strict        if Strict == true, uses NumRotatableBondsOptions::Strict
+*/
+unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict);
+
 extern const std::string NumHBDVersion;
 //! calculates the number of H-bond donors
 unsigned int calcNumHBD(const ROMol &mol);
