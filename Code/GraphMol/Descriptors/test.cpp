@@ -342,6 +342,9 @@ void testTPSA() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+const std::string NonStrictRotProp = "NUM_ROTATABLEBONDS_O";
+const std::string StrictRotProp = "NUM_ROTATABLEBONDS";
+
 void testLipinski1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test Lipinski parameters." << std::endl;
@@ -351,12 +354,12 @@ void testLipinski1() {
   SDMolSupplier suppl(fName);
   int idx = -1;
   // Figure out which rotatable bond version we are using
-  std::string rot_prop = "NUM_ROTATABLEBONDS";
+  std::string rot_prop = StrictRotProp;
   {
     const bool sanitize=true;
     ROMol *test_mol = SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
     if (calcNumRotatableBonds(*test_mol) == 2)
-      rot_prop = "NUM_ROTATABLEBONDS_O";
+      rot_prop = NonStrictRotProp;
     delete test_mol;
   }
   while (!suppl.atEnd()) {
@@ -435,6 +438,24 @@ void testLipinski1() {
     }
     TEST_ASSERT(oVal == nVal);
 
+    mol->getProp(NonStrictRotProp, foo);
+    oVal = boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumRotatableBonds(*mol, NumRotatableBondsOptions::NonStrict);
+    if (oVal != nVal) {
+      std::cerr << "  failed: " << idx << " " << oVal << " " << nVal
+                << " using stored sd prop " << rot_prop << std::endl;
+    }
+    TEST_ASSERT(oVal == nVal);
+
+    mol->getProp(StrictRotProp, foo);
+    oVal = boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumRotatableBonds(*mol, NumRotatableBondsOptions::Strict);
+    if (oVal != nVal) {
+      std::cerr << "  failed: " << idx << " " << oVal << " " << nVal
+                << " using stored sd prop " << rot_prop << std::endl;
+    }
+    TEST_ASSERT(oVal == nVal);
+    
     delete mol;
   }
 
