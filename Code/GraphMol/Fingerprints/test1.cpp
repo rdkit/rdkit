@@ -3130,6 +3130,54 @@ void testGitHubIssue695() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue811() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 811: rooted atom fingerprint "
+                           "non identical for the same molecules #811"
+                        << std::endl;
+  {
+    std::string dirName = getenv("RDBASE");
+    dirName += "/Code/GraphMol/Fingerprints/testData/";
+
+    ROMol *m1 = MolFileToMol(dirName + "github811a.mol");
+    TEST_ASSERT(m1);
+    ROMol *m2 = MolFileToMol(dirName + "github811b.mol");
+    TEST_ASSERT(m2);
+
+    SparseIntVect<boost::int64_t> *fp1, *fp2;
+
+    std::vector<boost::uint32_t> roots;
+    roots.push_back(1);
+
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1, 7, &roots);
+    SparseIntVect<boost::int64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 4);
+    fp2 = AtomPairs::getTopologicalTorsionFingerprint(*m2, 7, &roots);
+    SparseIntVect<boost::int64_t>::StorageType nz2 = fp2->getNonzeroElements();
+    TEST_ASSERT(nz2.size() == 4);
+
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete fp1;
+    delete fp2;
+    delete m1;
+    delete m2;
+  }
+  {
+    ROMol *m1 = SmilesToMol("C1CC1");
+    TEST_ASSERT(m1);
+
+    SparseIntVect<boost::int64_t> *fp1;
+
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    SparseIntVect<boost::int64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 1);
+    delete fp1;
+    delete m1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3175,10 +3223,11 @@ int main(int argc, char *argv[]) {
   test3DAtomPairs();
   testGitHubIssue195();
   testMultithreadedPatternFP();
-#endif
   testGitHubIssue258();
   testGitHubIssue334();
   testGitHubIssue695();
+#endif
+  testGitHubIssue811();
 
   return 0;
 }
