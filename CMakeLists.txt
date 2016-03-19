@@ -42,7 +42,6 @@ if(NOT MSVC)
   endif()
 endif()
 
-
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
   set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
@@ -178,6 +177,29 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.39.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
+if(APPLE)
+  # always required
+  set(T_LIBS ${Boost_LIBRARIES})
+  find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
+  
+  # reset boost libraries so python is still there
+  #  if it had been found before
+  set(Boost_LIBRARIES ${T_LIBS})
+
+  MESSAGE("== OSX: CHECKING for libc++")
+  execute_process( COMMAND /usr/bin/otool "-L" "${Boost_REGEX_LIBRARY_RELEASE}"
+                   OUTPUT_VARIABLE LIBCPP
+                   ERROR_VARIABLE ERR)
+
+  if(LIBCPP MATCHES ".*libc[+][+].*")
+     MESSAGE("== BOOST USES LIBC++")
+     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+   else()
+     MESSAGE("== BOOST USES STDLIBC++")
+     # FOR CXX11 support SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  endif()
+endif(APPLE)
+
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
@@ -255,7 +277,7 @@ else(RDK_TEST_COVERAGE)
  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC -Wall -Wextra -Wno-unknown-pragmas -Wno-#pragma-messages")
  endif()
 endif(RDK_TEST_COVERAGE)
 
