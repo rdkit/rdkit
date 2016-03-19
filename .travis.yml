@@ -14,8 +14,10 @@ before_install:
  - echo "*************************************************"
  - echo "Building for $TRAVIS_OS_NAME"
  - echo "         for Python $CONDA_PYTHON_VERSION"
- - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-MacOSX-x86_64.sh -O miniconda.sh; fi 
+ - export PYMAJOR="";
+ - if [[ "$CONDA_PYTHON_VERSION" == "3.4" ]] ; then export PYMAJOR="3"; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-3.5.5-MacOSX-x86_64.sh -O miniconda.sh; fi 
  - bash miniconda.sh -b -p $HOME/conda
  - export PATH="$HOME/conda/bin:$PATH"
  - hash -r
@@ -39,8 +41,12 @@ install:
  
  # install the conda boost packages from the RDKit binstar channel.
  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.55.0 ; fi
- # on osx use 1.57 cause 1.60 is very broken
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q -c rdkit boost=1.57.0 ; fi
+
+ # get working boost libs
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "2.7" ]]; then wget https://www.dropbox.com/s/nei7rp1txrnd4lw/boost-1.56.0-py27_3.tar.bz2?dl=0 -o boost.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "3.4" ]]; then wget https://www.dropbox.com/s/vpt112m15kuibgh/boost-1.56.0-py34_3.tar.bz2?dl=0 -o boost.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q boost.bz2 ; fi
+ # get swig 3?
  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q -c https://conda.anaconda.org/anaconda swig=3.0.8 ; fi
  
 before_script:
@@ -115,8 +121,6 @@ script:
  - export SRC_DIR=`pwd`/..
  - export PREFIX=`pwd`
 
- - if [ ! -e $PREFIX/lib ] ; then echo "== WARNING: Could not find installed library location $PREFIX/lib"; fi
- - if [ ! -e $PY_PREFIX/lib ] ; then echo "== WARNING: Could not find installed library location $PY_REFIX/lib"; fi
  - if [ ! -e $SRC_DIR ] ; then echo "Could not find source location $SRC_DIR"; fi
  
  - echo "***********************************"
