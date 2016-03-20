@@ -43,8 +43,8 @@ install:
  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.55.0 ; fi
 
  # get working boost libs
- - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "2.7" ]]; then wget https://www.dropbox.com/s/nei7rp1txrnd4lw/boost-1.56.0-py27_3.tar.bz2?dl=0 -O boost-1.56.0-py27_3.tar.bz2 ; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "3.4" ]]; then wget https://www.dropbox.com/s/vpt112m15kuibgh/boost-1.56.0-py34_3.tar.bz2?dl=0 -O boost-1.56.0-py34_3.tar.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "2.7" ]]; then wget https://www.dropbox.com/s/m36rxjzu5e004aj/boost-1.58.0-py27_3.tar.bz2?dl=0 -O boost-1.56.0-py27_3.tar.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "3.4" ]]; then wget https://www.dropbox.com/s/ctkbldogu2r5zcp/boost-1.58.0-py34_3.tar.bz2?dl=0 -O boost-1.56.0-py34_3.tar.bz2 ; fi
  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "2.7" ]]; then conda install boost-1.56.0-py27_3.tar.bz2 ; fi
  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "3.4" ]]; then conda install boost-1.56.0-py34_3.tar.bz2 ; fi
  # get swig 3?
