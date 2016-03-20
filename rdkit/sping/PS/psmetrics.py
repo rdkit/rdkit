@@ -4,8 +4,8 @@
 
 
 import string
-import fontinfo
-import latin1MetricsCache
+from . import fontinfo
+from . import latin1MetricsCache
 
 
 ##############################################################
@@ -39,7 +39,7 @@ ascent_descent = {'Courier': (629, -157), 'Courier-Bold': (626, -142), 'Courier-
 _Widths = { 'StandardEncoding' : _stdenc_widths,
             'Latin1Encoding' :  latin1MetricsCache.FontWidths}
 
-    
+
 
 
 
@@ -55,7 +55,3 @@ def stringwidth(text, font, encoding):
     for char in text:
         w = w + widths[ord(char)]
     return w
-
-
-
-

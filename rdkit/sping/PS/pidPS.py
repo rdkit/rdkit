@@ -2,7 +2,7 @@
 piddlePS - a PostScript backend for the PIDDLE drawing module
 
    Magnus Lie Hetland
-   
+
    1999
 """
 # some fixups by Chris Lee (cwlee@artsci.wustl.edu)
@@ -22,16 +22,16 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 #     X ** fix \n breaking in drawString
 #     ? Bezier curve thing (Robert Kern's fix is in piddlePDF)
 #          Hmm..drawCurve(..) already uses postscript's bezier curveto-- is there anything else
-#          to be done? 
+#          to be done?
 #     X drawArc stuff from Eric
 
 # In the Future:
 #    _ Base85 ecooding just use hex encoding involves 1:2 expansion of image data vs 4:5
 #    _ Don't see a flate/deflate filter for Postscript, jpeg DCTEncode could be added.
-#         PIL may have a LZW encoder 
+#         PIL may have a LZW encoder
 #    _ check Adobe Document struturing conventions (half done)
 #    _ look at symbol's font metrics--they appear to be a little off
-#    X postscript native implementation of drawRoundRect 
+#    X postscript native implementation of drawRoundRect
 #    _ improve underlining placement...doesn't look good for courier and symbol
 
 #  DSC: plan uses flags for keeping track of BeginX/EndX pairs.
@@ -40,12 +40,11 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 from __future__ import print_function
 from rdkit.sping.pid import *
 from io import StringIO
-from .import psmetrics # for font info
-import exceptions
+from . import psmetrics # for font info
 import math
 from rdkit.six import string_types
 
-class PostScriptLevelException(exceptions.ValueError):
+class PostScriptLevelException(ValueError):
     pass
 
 linesep = '\n'
@@ -53,7 +52,7 @@ linesep = '\n'
 
 # This is actually a mapping between legal font names and PSFontMapXXX keys
 # note: all piddle font names are lower-cased before running against this mapping)
-PiddleLegalFonts = {"helvetica": "helvetica",  # note: keys are lowercased 
+PiddleLegalFonts = {"helvetica": "helvetica",  # note: keys are lowercased
                     "times": "times",
                     "courier": "courier",
                     "serif": "times",
@@ -105,7 +104,7 @@ def latin1FontEncoding(fontname):
 
     """use this to generating PS code for re-encoding a font as ISOLatin1
     from font with name 'fontname' defines reencoded font, 'fontname-ISOLatin1'"""
-    
+
     latin1FontTemplate =  """/%s findfont
 dup length dict begin
   {1 index /FID ne
@@ -123,7 +122,7 @@ end
 
 def dashLineDefinition():
     res = r"""
-%% This is hacked straight out of the Blue book (from Adobe) 
+%% This is hacked straight out of the Blue book (from Adobe)
 /centerdash
   { /pattern exch def
     /pathlen pathlength def
@@ -145,7 +144,7 @@ def dashLineDefinition():
 /pathlength
     { flattenpath
       /dist 0 def
-      
+
       { /yfirst exch def /xfirst exch def
         /ymoveto yfirst def /xmoveto xfirst def }
       { /ynext exch def /xnext exch def
@@ -153,7 +152,7 @@ def dashLineDefinition():
           xnext xfirst sub dup mul add sqrt add def
         /yfirst ynext def /xfirst xnext def }
       {}
-      
+
       { /ynext ymoveto def /xnext xmoveto def
         /dist dist ynext yfirst sub dup mul
           xnext xfirst sub dup mul add sqrt add def
@@ -168,10 +167,10 @@ class PsDSC:
 
     # remeber %% will be reduced to % when using string substitution
     # returned strings do not end with \n
-    
+
     def __init__(self):
-        pass 
-        
+        pass
+
     ## Genral DSC conventions
     def documentHeader(self):
         return  "%!PS-Adobe-3.0"
@@ -188,12 +187,12 @@ class PsDSC:
         page.  By default it will be 0."""
 
         self.inPageFlag = 1  # keep track
-        
+
         if not pageName:
             pageDeclaration = r"%%Page: %d %d"%(1,1)  # default 1
         else:
             pageDeclaration = "%%Page: " + pageName
-            
+
         ret = pageDeclaration + "\n" + \
 """%%BeginPageSetup
 /pgsave save def
@@ -208,7 +207,7 @@ class PsDSC:
 class EpsDSC(PsDSC):
     def __init__(self):
         PsDSC.__init__(self)
-        
+
     ## Genral DSC conventions
     def documentHeader(self):
         return  "%!PS-Adobe-3.0 EPSF-3.0"
@@ -235,7 +234,7 @@ class PSCanvas(Canvas):
     def __init__(self,size=(300,300),name='piddlePS',
                  PostScriptLevel=2,
                  fontMapEncoding=PSFontMapLatin1Enc):
-        
+
        Canvas.__init__(self,size,name)
        width, height = self.size = size
        self.filename = name
@@ -253,15 +252,15 @@ class PSCanvas(Canvas):
 
        self.code = []
        self.dsc = PsDSC()  # handle document structing conventions
-       
+
        c = self._currentColor = self.defaultLineColor
        r,g,b = c.red, c.green, c.blue
-       
+
        w = self._currentWidth = self.defaultLineWidth
 
-       self.defaultFont = Font(face='serif') 
+       self.defaultFont = Font(face='serif')
        self.fontMapEncoding = fontMapEncoding
-       
+
        self._currentFont = self.defaultFont
        f = self._findFont(self._currentFont)
        s = self._currentFont.size
@@ -289,13 +288,13 @@ class PSCanvas(Canvas):
 
         ######  Defaults Procedures Prolog Setup  ??? ######
         # are these procedures??? check this chris
-       
+
         # Now create Latin1ISO font encodings for non-symbol fonts (need to add pdf fonts too)
         shapes = {"Helvetica": ["Roman", "Bold", "Oblique"],
                   "Times": ["Roman", "Bold", "Italic"],
                   "Courier": ["Roman", "Bold", "Oblique"] }
         fntnames = []
-        
+
         for basename in ['Helvetica', 'Times', 'Courier']:
             for mys in shapes[basename]:
                 fntnames.append(basename + '-' + mys)
@@ -308,7 +307,7 @@ class PSCanvas(Canvas):
         self.code.append(dashLineDefinition())
 
     def psEndDocument(self):
-        
+
         if self._inDocumentFlag:
             # Take care of Trailer
             self.code.append("%%Trailer")
@@ -317,7 +316,7 @@ class PSCanvas(Canvas):
             # signal end of file
             # check on need for %%EOF
             self.code.append("%%EOF") # remove \n at end of EOF
-            
+
 
 
     def psBeginPage(self, pageName=None):
@@ -331,7 +330,7 @@ class PSCanvas(Canvas):
                                        self.defaultLineWidth)
         self.code.append(self.dsc.BeginPageStr(pageSetupStr= pagesetup, pageName=pageName ))
         self._inPageFlag = 1
-        
+
 
     def _psPageSetupStr(self,pageheight, initialColor, font_family, font_size, line_width):
         "ps code for settin up coordinate system for page in accords w/ piddle standards"
@@ -355,8 +354,8 @@ translate
         self.code.append("showpage")
         self._inPageFlag = 0
 
-       
-       
+
+
 
     def _findFont(self,font):
 
@@ -365,7 +364,7 @@ translate
             requested = [requested]
 
         # once again, fall back to default, redundant, no?
-        face = PiddleLegalFonts["serif"].lower()  
+        face = PiddleLegalFonts["serif"].lower()
         for reqFace in requested:
             if reqFace.lower() in PiddleLegalFonts:
                 face = PiddleLegalFonts[reqFace.lower()].lower()
@@ -460,7 +459,7 @@ translate
         self._currentWidth = self.defaultLineWidth
         self._currentFont  = self.defaultFont
 
-        
+
     def flush(self):
         pass
 
@@ -472,7 +471,7 @@ translate
         # file.close()
 
 
-    
+
     def save(self, file=None, format=None):
         """Write the current document to a file or stream and close the file
         Computes any final trailers, etc. that need to be done in order to
@@ -481,20 +480,20 @@ translate
         inserting the finalization code into self.code
 
         the format argument is not used"""
-        
+
         # save() will now become part of the spec.
         file = file or self.filename
         fileobj = getFileObject(file)
         fileobj.write(self.code.join(linesep))
         # here's a hack. we might want to be able to add more after saving so
         # preserve the current code ???
-        preserveCode = self.code        
+        preserveCode = self.code
         self.code = finalizationCode = [""]
 
         # might be able to move these things into DSC class & use a save state call
         preserve_inPageFlag = self._inPageFlag
         preserve_inDocumentFlag = self._inDocumentFlag
-        
+
         # now do finalization code in via self.code
         # first question: are we in the middle of a page?
 
@@ -508,10 +507,10 @@ translate
         ## clean up my mess: This is not a good way to do things FIXME!!! ???
         self.code = preserveCode
         self._inPageFlag = preserve_inPageFlag
-        self._inDocumentFlag = preserve_inDocumentFlag 
+        self._inDocumentFlag = preserve_inDocumentFlag
 
 
-       
+
     def stringWidth(self, s, font=None):
         "Return the logical width of the string if it were drawn \
         in the current font (defaults to self.font)."
@@ -521,7 +520,7 @@ translate
         return psmetrics.stringwidth(s, fontname,
                                      self.fontMapEncoding["EncodingName"]) * font.size * 0.001
 
-    
+
     ### def fontHeight(self, font=None) ### use default piddle method
     # distance between baseline of two lines of text 1.2 * font.size for piddle.py
     # Thus is 1.2 times larger than postscript minimum baseline to baseline separation
@@ -563,7 +562,7 @@ translate
        if width != self._currentWidth:
           self._currentWidth = width
           self.code.append('%s setlinewidth' % width)
-          
+
 
     def _updateFont(self, font):
        font = font or self.defaultFont
@@ -603,14 +602,14 @@ translate
         # return a copy of string s with special characters in postscript strings
         # escaped" with backslashes."""
         # Have not handled characters that are converted normally in python strings
-        # i.e. \n -> newline 
+        # i.e. \n -> newline
         str = s.replace(chr(0x5C), r'\\' )
         str = str.replace('(', '\(' )
         str = str.replace(')', '\)')
-        return str 
+        return str
 
     # ??? check to see if \n response is handled correctly (should move cursor down)
-       
+
     def _drawStringOneLineNoRot(self, s, x, y, font=None,**kwargs) :
        # PRE: x and y and position at which to place text
        # PRE: helper function, only called from drawString(..)
@@ -623,7 +622,7 @@ translate
            self.code.extend(['%s setlinewidth' % thickness,
                              '0 %s neg rmoveto' % (ypos),
                              '%s 0 rlineto stroke' % -swidth])
-       
+
 
 
     def _drawStringOneLine(self, s, x, y, font=None, color=None, angle=0,
@@ -649,7 +648,7 @@ translate
         self._updateFont(font)
         if self._currentColor != transparent:
 
-            lines = s.split('\n')   
+            lines = s.split('\n')
             lineHeight = self.fontHeight(font)
 
             if angle == 0 :   # do special case of angle = 0 first. Avoids a bunch of gsave/grestore ops
@@ -691,7 +690,7 @@ translate
         with corners inset as ellipses with x radius rx and y radius ry. \
         These should have x1<x2, y1<y2, rx>0, and ry>0."
         # Path is drawn in counter-clockwise direction"
-        
+
         x1, x2 = min(x1,x2), max(x1, x2) # from piddle.py
         y1, y2 = min(y1,y2), max(y1, y2)
 
@@ -699,7 +698,7 @@ translate
         # save current matrix, translate to center of ellipse, scale by rx ry, and draw
         # a circle of unit radius in counterclockwise dir, return to original matrix
         # arguments are (cx, cy, rx, ry, startAngle, endAngle)
-        ellipsePath = 'matrix currentmatrix %s %s neg translate %s %s scale 0 0 1 %s %s arc setmatrix' 
+        ellipsePath = 'matrix currentmatrix %s %s neg translate %s %s scale 0 0 1 %s %s arc setmatrix'
 
         # choice between newpath and moveto beginning of arc
         # go with newpath for precision, does this violate any assumptions in code???
@@ -711,7 +710,7 @@ translate
         rrcode.append(ellipsePath % (x2-rx, y2-ry, rx, ry, 270, 360))
         rrcode.append(ellipsePath % (x2-rx, y1+ry, rx, ry, 0,  90) )
         rrcode.append('closepath')
-        
+
         # This is what you are required to do to take care of all color cases
         # should fix this so it doesn't define path twice, just use gsave if need
         # to fill and stroke path-need to figure out this system
@@ -727,8 +726,8 @@ translate
 
 
 
-        
-    def drawEllipse(self, x1,y1, x2,y2, edgeColor=None, edgeWidth=None, 
+
+    def drawEllipse(self, x1,y1, x2,y2, edgeColor=None, edgeWidth=None,
                     fillColor=None,dash=None,**kwargs):
         "Draw an orthogonal ellipse inscribed within the rectangle x1,y1,x2,y2. \
         These should have x1<x2 and y1<y2."
@@ -745,8 +744,8 @@ translate
         #calculate centre of ellipse
         cx, cy = (x1+x2)/2.0, (y1+y2)/2.0
         rx, ry = (x2-x1)/2.0, (y2-y1)/2.0
-        
-        codeline = self._genArcCode(x1, y1, x2, y2, startAng, extent) 
+
+        codeline = self._genArcCode(x1, y1, x2, y2, startAng, extent)
 
         # fill portion
         self._updateFillColor(fillColor)
@@ -762,7 +761,7 @@ translate
         if self._currentColor != transparent:
             # move current point to start of arc, note negative angle because y increases down
             self.code.append('%s %s neg moveto' % (cx+rx*math.cos(-startAng),
-                                                   cy+ry*math.sin(-startAng))) 
+                                                   cy+ry*math.sin(-startAng)))
             self.code.append(codeline + ' stroke')
 
     def _genArcCode(self, x1, y1, x2, y2, startAng, extent):
@@ -785,14 +784,14 @@ translate
 
         return codeline % data
 
-    
-    def drawPolygon(self, pointlist, 
+
+    def drawPolygon(self, pointlist,
                     edgeColor=None, edgeWidth=None, fillColor=None, closed=0,
                     dash=None, **kwargs):
 
        start = pointlist[0]
        pointlist = pointlist[1:]
-       
+
        polyCode = []
        polyCode.append("%s %s neg moveto" % start)
        for point in pointlist:
@@ -814,10 +813,10 @@ translate
     def drawFigure(self, partList,
                    edgeColor=None, edgeWidth=None, fillColor=None, closed=0,
                    dash=None,**kwargs):
-       
+
        figureCode = []
        first = 1
-       
+
        for part in partList:
            op = part[0]
            args = list(part[1:])
@@ -860,7 +859,7 @@ translate
 
     ############################################################################################
     # drawImage(self. image, x1, y1, x2=None, y2=None) is now defined by either _drawImageLevel1
-    #    ._drawImageLevel2, the choice is made in .__init__ depending on option 
+    #    ._drawImageLevel2, the choice is made in .__init__ depending on option
 
 
     def _drawImageLevel1(self, image, x1, y1, x2=None,y2=None,**kwargs):
@@ -899,7 +898,7 @@ translate
        # user space to the rect...on the page that is to receive the
        # image. A common ImageMatrix is [width 0 0 -height 0 height]
        # (for a left to right, top to bottom image )
-       
+
        # first let's map the user coordinates start at offset x1,y1 on page
 
        self.code.extend([
@@ -924,10 +923,10 @@ translate
        # piddlePDF again
 
        rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
-       assert len(rawimage) == imgwidth*imgheight, 'Wrong amount of data for image' 
+       assert len(rawimage) == imgwidth*imgheight, 'Wrong amount of data for image'
        #compressed = zlib.compress(rawimage) # no zlib at moment
        hex_encoded = self._AsciiHexEncode(rawimage)
-       
+
        # write in blocks of 78 chars per line
        outstream = StringIO(hex_encoded)
 
@@ -940,7 +939,7 @@ translate
 
     # end of drawImage
 
-       
+
     def _AsciiHexEncode(self, input):  # also based on piddlePDF
         "Helper function used by images"
         output = StringIO()
@@ -961,19 +960,19 @@ translate
 #         except ImportError:
 #             print 'zlib not available'
 #             return
-       
+
 
         ### what sort of image are we to draw
         if image.mode=='L' :
             print('found image.mode= L')
             imBitsPerComponent = 8
             imNumComponents = 1
-            myimage = image 
+            myimage = image
         elif image.mode == '1':
             print('found image.mode= 1')
             myimage = image.convert('L')
             imNumComponents = 1
-            myimage = image 
+            myimage = image
         else :
             myimage = image.convert('RGB')
             imNumComponents = 3
@@ -1015,10 +1014,10 @@ translate
                           'image'])
         # after image operator just need to dump image dat to file as hexstring
         rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
-        assert len(rawimage) == imwidth*imheight, 'Wrong amount of data for image' 
+        assert len(rawimage) == imwidth*imheight, 'Wrong amount of data for image'
         #compressed = zlib.compress(rawimage) # no zlib at moment
         hex_encoded = self._AsciiHexEncode(rawimage)
-       
+
         # write in blocks of 78 chars per line
         outstream = StringIO(hex_encoded)
 
@@ -1028,9 +1027,3 @@ translate
             dataline= outstream.read(78)
         self.code.append('> % end of image data') # > is EOD for hex encoded filterfor clarity
         self.code.append('grestore') # return coordinates to normal
-
-        
-        
-                         
-                       
-            
