@@ -1222,7 +1222,7 @@ mol-4,CCOC
     """
     m1 = Chem.MolFromSmiles('N12[CH](SC(C)(C)[CH]1C(O)=O)[CH](C2=O)NC(=O)[CH](N)c3ccccc3')
     self.assertTrue(m1.GetNumAtoms()==24)
-    m2 = Chem.MolFromSmiles('C1C=C([CH](N)C(=O)N[C]2([H])[C]3([H])SC(C)(C)[CH](C(=O)O)N3C(=O)2)C=CC=1')
+    m2 = Chem.MolFromSmiles('C1C=C([CH](N)C(=O)N[C]2([H])[C]3([H])SC(C)(C)[CH](C(=O)O)N3C2(=O))C=CC=1')
     self.assertTrue(m2.GetNumAtoms()==24)
 
     smi1 = Chem.MolToSmiles(m1)
