@@ -338,7 +338,7 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
   return res
 
 def MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
-                    highlightAtomLists=None,**kwargs):
+                    highlightAtomLists=None,stripSVGNamespace=True,**kwargs):
   """
   """
   matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>',re.DOTALL)
@@ -375,6 +375,8 @@ def MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     elem = rect+elem
     blocks[i] = '<g transform="translate(%d,%d)" >%s</g>'%(col*subImgSize[0],row*subImgSize[1],elem)
   res = hdr + '\n'.join(blocks)+ftr
+  if stripSVGNamespace:
+    res = res.replace('svg:','')
   return res
 
 
