@@ -1,9 +1,8 @@
-# $Id$
 #
-# Copyright (C) 2006-2011 Greg Landrum
+# Copyright (C) 2006-2016 Greg Landrum
 #  All Rights Reserved
 #
-import os
+import os,re
 from rdkit.six import iteritems
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
@@ -337,6 +336,47 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
       img = _moltoimg(mol,subImgSize,highlights,legends[i],**kwargs)
       res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
   return res
+
+def MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
+                    highlightAtomLists=None,**kwargs):
+  """
+  """
+  matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>',re.DOTALL)
+  if legends is None: legends = ['']*len(mols)
+  hdr=''
+  ftr='</svg:svg>'
+  rect=''
+
+  nRows = len(mols)//molsPerRow
+  if len(mols)%molsPerRow : nRows+=1
+
+  blocks = ['']*(nRows*molsPerRow)
+
+  fullSize=(molsPerRow*subImgSize[0],nRows*subImgSize[1])
+  for i,mol in enumerate(mols):
+    highlights=None
+    if highlightAtomLists and highlightAtomLists[i]:
+      highlights=highlightAtomLists[i]
+    if mol is not None:
+        nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
+        d2d = rdMolDraw2D.MolDraw2DSVG(subImgSize[0],subImgSize[1])
+        d2d.DrawMolecule(nmol,legend=legends[i],highlightAtoms=highlights)
+        d2d.FinishDrawing()
+        txt = d2d.GetDrawingText()
+        h,r,b = matcher.match(txt).groups()
+        if not hdr:
+            hdr = h.replace("width='200px' height='200px' >","width='%dpx' height='%dpx' >"%fullSize)
+        if not rect:
+            rect = r
+        blocks[i] = b
+  for i,elem in enumerate(blocks):
+    row = i//molsPerRow
+    col = i%molsPerRow
+    elem = rect+elem
+    blocks[i] = '<g transform="translate(%d,%d)" >%s</g>'%(col*subImgSize[0],row*subImgSize[1],elem)
+  res = hdr + '\n'.join(blocks)+ftr
+  return res
+
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
   """
