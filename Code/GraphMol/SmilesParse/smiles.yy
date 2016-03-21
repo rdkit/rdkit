@@ -67,7 +67,7 @@ yysmiles_error( const char *input,
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN
 %token <bond> BOND_TOKEN
-%type <moli> cmpd mol branch
+%type <moli> cmpd mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <ival>  nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
@@ -166,14 +166,6 @@ mol: atomd {
   tmp.push_back(-($2+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
-/*
-| mol GROUP_CLOSE_TOKEN ring_number
-| mol GROUP_CLOSE_TOKEN BOND_TOKEN ring_number
-| mol GROUP_CLOSE_TOKEN MINUS_TOKEN ring_number
-{
-  yyerror(input,molList,branchPoints,scanner,"ring number directly following a branch");
-}
-*/
 | mol BOND_TOKEN ring_number {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
@@ -248,15 +240,21 @@ mol: atomd {
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
-;
-
-branch: GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN {
-if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,"extra close parentheses");
-RWMol *mp = (*molList)[$$];
-mp->setActiveAtom(branchPoints->back());
-branchPoints->pop_back();
+| mol GROUP_CLOSE_TOKEN ring_number
+{
+  yyerror(input,molList,branchPoints,scanner,"ring number directly following a branch");
 }
-
+/*
+| mol GROUP_CLOSE_TOKEN BOND_TOKEN ring_number
+{
+  yyerror(input,molList,branchPoints,scanner,"ring number directly following a branch");
+}
+| mol GROUP_CLOSE_TOKEN MINUS_TOKEN ring_number
+{
+  yyerror(input,molList,branchPoints,scanner,"ring number directly following a branch");
+}
+*/
+;
 
 /* --------------------------------------------------------------- */
 atomd:	simple_atom

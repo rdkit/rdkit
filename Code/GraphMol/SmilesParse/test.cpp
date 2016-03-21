@@ -103,7 +103,7 @@ void testPass() {
     "[C:1]",
     "[C:0]",           // issue 3525776
     "[si]1cccc[si]1",  // aromatic Si (github issue #5)
-    "[asH]1cccc1",  // aromatic As (github issue #682)
+    "[asH]1cccc1",     // aromatic As (github issue #682)
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -138,7 +138,7 @@ void testFail() {
   // parsing
   // on good input:
   string smis[] = {
-      "CC=(CO)C",    "CC(=CO)C", "C1CC",  "C1CC1", "Ccc",   "CCC",
+      "CC=(CO)C", "CC(=CO)C", "C1CC", "C1CC1", "Ccc", "CCC",
       "fff",  // tests the situation where the parser cannot do anything at all
       "CCC",
       "N(=O)(=O)=O",  // bad sanitization failure
@@ -150,14 +150,16 @@ void testFail() {
       "C-0",  // part of sf.net issue 2525792
       "C1CC1",
       "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1",
-      "C(C)1CC1", // github #786
+      "C1CC1", "[H2H]", "C1CC1", "[HH2]", "C1CC1",
+      "C(C)1CC1",  // github #786
       "C1CC1",
-      "F[C@H](C)1NCC1", // github #786
+      "F[C@H](C)1NCC1",  // github #786
       "C1CC1",
-      "C(C)-1CC1", // github #786
-      "C1CC1",
-      "C(C)=1CC1", // github #786
+      /*
+            "C(C)-1CC1",  // github #786
+            "C1CC1",
+            "C(C)=1CC1",  // github #786
+      */
       "EOS"};
 
   // turn off the error log temporarily:
@@ -1102,7 +1104,7 @@ void testIssue157() {
   delete mol;
   delete mol2;
 
-  smi = "Cl[C@@](C)1CC[C@@](C)(C1)Cl";
+  smi = "Cl[C@@]1(C)CC[C@@](C)(C1)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   refSmi = MolToSmiles(*mol, true);
@@ -2299,7 +2301,8 @@ void testRingStereochemReporting() {
 
 void testBug3127883() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "3127883 (kekulization failing) " << std::endl;
+                          "3127883 (kekulization failing) "
+                       << std::endl;
   {
     ROMol *m;
     std::string smi;
@@ -3382,7 +3385,8 @@ void testRingStereochem() {
 void testGithub45() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Github 45: stereochemistry information "
-                          "influencing non-stereo SMILES" << std::endl;
+                          "influencing non-stereo SMILES"
+                       << std::endl;
   {
     RWMol *m;
     std::string smiles = "CC1CCC[13C]2(C)C1CC[14CH]2C(C)=O";
@@ -3459,7 +3463,8 @@ void testGithub206() {
 void testGithub210() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters "
-                          "when calling assignStereochemistry()" << std::endl;
+                          "when calling assignStereochemistry()"
+                       << std::endl;
   {
     RWMol *m;
     std::string smiles = "O[C@H](F)CC(F)(Cl)I";
