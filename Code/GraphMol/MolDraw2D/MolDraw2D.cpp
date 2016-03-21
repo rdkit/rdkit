@@ -581,9 +581,7 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
     case 0:
       res = DrawColour(0.5, 0.5, 0.5);
       break;
-    case 1:
-      res = DrawColour(0.55, 0.55, 0.55);
-      break;
+    case 1:  // Hs and Carbons are the same colour
     case 6:
       res = DrawColour(0.0, 0.0, 0.0);
       break;
