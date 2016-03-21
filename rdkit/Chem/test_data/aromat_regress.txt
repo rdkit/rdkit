@@ -1,4 +1,4 @@
-smi1	smi2	count	list
+#smi1	smi2	count	list
 C1CCC(NC2=NCCS2)CC1	C1CCC(NC2=NCCS2)CC1	0	[]
 CCOC(=O)C1=C(Cl)C2=C(CN=[N+]=[N-])C=CC=C2S1	CCOC(=O)c1sc2cccc(CN=[N+]=[N-])c2c1Cl	9	[0, 1, 2, 3, 8, 9, 10, 11, 12]
 CN(C)/C=C(/C=O)C1=CC=C(O)C=C1	CN(C)/C=C(/C=O)c1ccc(O)cc1	6	[5, 6, 7, 8, 10, 11]
