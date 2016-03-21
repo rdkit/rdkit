@@ -33,6 +33,8 @@ tests=[
   ("python","__init__.py",{}),
   ("python","PandasTools.py",{}),
   ("python","UnitTestPandasTools.py",{}),
+  ("python","UnitTestArom.py",{}),
+  ("python","UnitTestSurf.py -l",{}),
   ("python","test_list.py",{'dir':'AtomPairs'}),
   ("python","test_list.py",{'dir':'ChemUtils'}),
   ("python","test_list.py",{'dir':'EState'}),
@@ -58,9 +60,7 @@ except ImportError:
 
 
 longTests=[
-  ("python","UnitTestArom.py",{}),
   ("python","UnitTestGraphDescriptors.2.py -l",{}),
-  ("python","UnitTestSurf.py -l",{}),
   ]
 
 if __name__=='__main__':

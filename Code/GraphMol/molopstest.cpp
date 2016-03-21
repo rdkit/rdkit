@@ -296,7 +296,7 @@ void test3() {
 
   // this molecule is from issue 134
   // it should come up with three rings
-  smi = "SC(C3C1CC(C3)CC(C2S)(O)C1)2S";
+  smi = "SC2(C3C1CC(C3)CC(C2S)(O)C1)S";
   m = SmilesToMol(smi, 0, 0);
   TEST_ASSERT(m);
   count = MolOps::findSSSR(*m, sssr);
@@ -583,7 +583,7 @@ void test8() {
 
   // related to RDTrack Issues 109 and 110:
   smi =
-      "C1C=C([C@H](N)C(=O)N[C@@]2([H])[C@]3([H])SC(C)(C)[C@@H](C(=O)O)N3C(=O)2)"
+      "C1C=C([C@H](N)C(=O)N[C@@]2([H])[C@]3([H])SC(C)(C)[C@@H](C(=O)O)N3C2(=O))"
       "C=CC=1";
   delete m;
   m = SmilesToMol(smi);

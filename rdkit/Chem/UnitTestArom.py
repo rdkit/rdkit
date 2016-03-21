@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
   def _readData(self,fName):
     d = []
     lineNo=0
-    for line in open(fName,'r').xreadlines():
+    for line in open(fName,'r'):
       lineNo+=1
       if len(line) and line[0] != '#':
         splitL = line.split('\t')
@@ -37,7 +37,7 @@ class TestCase(unittest.TestCase):
           smi1,smi2,count,ats = splitL
           d.append((lineNo,smi1,smi2,int(count),eval(ats)))
     self.data = d
-          
+
   def test1(self,maxFailures=50):
     self._readData(self.fName)
     nMols = len(self.data)
@@ -65,7 +65,7 @@ class TestCase(unittest.TestCase):
           if nFailed >= maxFailures:
             assert 0
 
-        
+
   def test2(self,maxFailures=50):
     self._readData(self.fName2)
     nMols = len(self.data)
@@ -93,15 +93,14 @@ class TestCase(unittest.TestCase):
           if nFailed >= maxFailures:
             assert 0
 
-        
-      
 
 
-          
-          
-      
-  
-    
+
+
+
+
+
+
+
 if __name__ == '__main__':
   unittest.main()
-
