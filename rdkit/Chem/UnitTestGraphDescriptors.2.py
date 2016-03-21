@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     if doLong:
       print('\n%s: '%self.shortDescription(),end='')
 
-    
+
   def testBertzCTShort(self):
    """ test calculation of Bertz 'C(T)' index
 
@@ -34,8 +34,8 @@ class TestCase(unittest.TestCase):
            ('O=CC=O',25.01955),
            ('FCC(=O)CF',46.7548875),
            ('O=C1C=CC(=O)C=C1',148.705216),
-           ('C12C(F)=C(O)C(F)C1C(F)=C(O)C(F)2',315.250442),
-           ('C12CC=CCC1C(=O)C3CC=CCC3C(=O)2',321.539522)]
+           ('C12C(F)=C(O)C(F)C1C(F)=C(O)C2(F)',315.250442),
+           ('C12CC=CCC1C(=O)C3CC=CCC3C2(=O)',321.539522)]
 
    for smi,CT in data:
      m = Chem.MolFromSmiles(smi)
@@ -49,7 +49,7 @@ class TestCase(unittest.TestCase):
       w.r.t. the treatment of aromatic atoms in the new version, we need
       to ignore molecules with aromatic rings...
 
-     
+
    """
    col = 1
    with open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data','PP_descrs_regress.2.csv'),'r') as inF:
@@ -97,28 +97,28 @@ class TestCase(unittest.TestCase):
 
   def testChi0Long(self):
    """ test calculation of Chi0
-     
+
    """
    col = 2
    self.__testDesc('PP_descrs_regress.csv',col,GraphDescriptors.Chi0)
 
   def _testChi0Long2(self):
    """ test calculation of Chi0
-     
+
    """
    col = 2
    self.__testDesc('PP_descrs_regress.2.csv',col,GraphDescriptors.Chi0)
 
   def testHallKierAlphaLong(self):
    """ test calculation of the Hall-Kier Alpha value
-     
+
    """
    col = 3
    self.__testDesc('PP_descrs_regress.csv',col,GraphDescriptors.HallKierAlpha)
 
   def _testHallKierAlphaLong2(self):
    """ test calculation of the Hall-Kier Alpha value
-     
+
    """
    col = 3
    self.__testDesc('PP_descrs_regress.2.csv',col,GraphDescriptors.HallKierAlpha)
@@ -141,14 +141,14 @@ class TestCase(unittest.TestCase):
 
   def _testIpcLong(self):
    """ test calculation of Ipc
-     
+
    """
    col = 4
    self.__testDesc('PP_descrs_regress.csv',col,GraphDescriptors.Ipc)
 
   def _testIpcLong2(self):
    """ test calculation of Ipc
-     
+
    """
    col = 4
    self.__testDesc('PP_descrs_regress.2.csv',col,GraphDescriptors.Ipc)
@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa1(m)
       assert feq(kappa,res,1e-3),'mol %s (kappa1=%f) should have kappa1=%f'%(smi,kappa,res)
-      
+
 
   def testKappa2(self):
     """ test calculation of the Hall-Kier kappa2 value
@@ -209,7 +209,7 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa2(m)
       assert feq(kappa,res,1e-3),'mol %s (kappa2=%f) should have kappa2=%f'%(smi,kappa,res)
-      
+
   def testKappa3(self):
     """ test calculation of the Hall-Kier kappa3 value
 
@@ -230,31 +230,31 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa3(m)
       assert feq(kappa,res,1e-3),'mol %s (kappa3=%f) should have kappa3=%f'%(smi,kappa,res)
-      
+
   def testKappa3Long(self):
    """ test calculation of kappa3
-     
+
    """
    col = 5
    self.__testDesc('PP_descrs_regress.csv',col,GraphDescriptors.Kappa3)
 
   def _testKappa3Long2(self):
    """ test calculation of kappa3
-     
+
    """
    col = 5
    self.__testDesc('PP_descrs_regress.2.csv',col,GraphDescriptors.Kappa3)
 
   def _testLabuteASALong(self):
    """ test calculation of Labute's ASA value
-     
+
    """
    col = 6
    self.__testDesc('PP_descrs_regress.csv',col,lambda x:MolSurf.LabuteASA(x,includeHs=1))
 
   def _testLabuteASALong2(self):
    """ test calculation of Labute's ASA value
-     
+
    """
    col = 6
    self.__testDesc('PP_descrs_regress.2.csv',col,lambda x:MolSurf.LabuteASA(x,includeHs=1))
@@ -291,28 +291,28 @@ class TestCase(unittest.TestCase):
         mol = Chem.MolFromSmiles(smi)
         assert mol,"line %d, failed for smiles: %s"%(lineNo,smi)
 
-      
+
         calc = MolSurf.TPSA(mol)
         assert feq(calc,ans),'line %d: bad TPSA for SMILES %s (%.2f != %.2f)'%(lineNo,smi,calc,ans)
 
   def testTPSALong(self):
    """ test calculation of TPSA
-     
+
    """
    col = 28
    self.__testDesc('PP_descrs_regress.csv',col,MolSurf.TPSA)
 
-            
+
   def _testTPSALong2(self):
    """ test calculation of TPSA
-     
+
    """
    col = 28
    self.__testDesc('PP_descrs_regress.2.csv',col,MolSurf.TPSA)
 
   def _testLipinskiLong(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'PP_descrs_regress.csv'
    # we can't do H Acceptors for these pyridine-containing molecules
@@ -331,7 +331,7 @@ class TestCase(unittest.TestCase):
 
   def _testHAcceptorsLong(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'Block_regress.Lip.csv'
    col = 1
@@ -339,7 +339,7 @@ class TestCase(unittest.TestCase):
 
   def _testHDonorsLong(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'Block_regress.Lip.csv'
    col = 2
@@ -347,7 +347,7 @@ class TestCase(unittest.TestCase):
 
   def _testHeterosLong(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'Block_regress.Lip.csv'
    col = 3
@@ -355,7 +355,7 @@ class TestCase(unittest.TestCase):
 
   def _testRotBondsLong(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'Block_regress.Lip.csv'
    col = 4
@@ -363,15 +363,15 @@ class TestCase(unittest.TestCase):
 
   def _testLogPLong(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'PP_descrs_regress.csv'
    col = 33
    self.__testDesc(fName,col,lambda x:Crippen.MolLogP(x,includeHs=1))
-            
+
   def _testLogPLong2(self):
    """ test calculation of Lipinski params
-     
+
    """
    fName = 'PP_descrs_regress.2.csv'
    col = 33
@@ -379,7 +379,7 @@ class TestCase(unittest.TestCase):
 
   def _testMOELong(self):
    """ test calculation of MOE-type descriptors
-     
+
    """
    fName = 'PP_descrs_regress.VSA.csv'
    col = 1
@@ -415,7 +415,7 @@ class TestCase(unittest.TestCase):
 
   def _testMOELong2(self):
    """ test calculation of MOE-type descriptors
-     
+
    """
    fName = 'PP_descrs_regress.VSA.2.csv'
    col = 1
@@ -432,7 +432,7 @@ class TestCase(unittest.TestCase):
    self.__testDesc(fName,col,MolSurf.SlogP_VSA12)
 
   def testBalabanJ(self):
-    """ test calculation of the Balaban J value 
+    """ test calculation of the Balaban J value
 
       J values are from Balaban's paper and have had roundoff
       errors and typos corrected.
@@ -481,31 +481,31 @@ class TestCase(unittest.TestCase):
       assert feq(j,res),'mol %s (J=%f) should have J=%f'%(smi,j,res)
       j = GraphDescriptors.BalabanJ(m)
       assert feq(j,res),'second pass: mol %s (J=%f) should have J=%f'%(smi,j,res)
-    
+
   def _testBalabanJLong(self):
    """ test calculation of the balaban j value
-     
+
    """
    fName = 'PP_descrs_regress.rest.2.csv'
    col = 1
    self.__testDesc(fName,col,GraphDescriptors.BalabanJ)
-    
+
   def _testKappa1Long(self):
    """ test calculation of kappa1
-     
+
    """
    fName = 'PP_descrs_regress.rest.2.csv'
    col = 31
    self.__testDesc(fName,col,GraphDescriptors.Kappa1)
-    
+
   def _testKappa2Long(self):
    """ test calculation of kappa2
-     
+
    """
    fName = 'PP_descrs_regress.rest.2.csv'
    col = 32
    self.__testDesc(fName,col,GraphDescriptors.Kappa2)
-    
+
 
   def _testChi0Long(self):
    fName = 'PP_descrs_regress.rest.2.csv'
@@ -619,7 +619,7 @@ class TestCase(unittest.TestCase):
       chi = GraphDescriptors.Chi4v(m)
       assert feq(chi,res,1e-3),'mol %s (Chi4v=%f) should have Chi4V=%f'%(smi,chi,res)
 
-            
+
   def testChi5v(self):
     """ test calculation of Chi5v
 
@@ -728,8 +728,8 @@ class TestCase(unittest.TestCase):
             ('O=CC=O',25.01955,2.73205),
             ('FCC(=O)CF',46.7548875,2.98816),
             ('O=C1C=CC(=O)C=C1',148.705216,2.8265),
-            ('C12C(F)=C(O)C(F)C1C(F)=C(O)C(F)2',315.250442,2.4509),
-            ('C12CC=CCC1C(=O)C3CC=CCC3C(=O)2',321.539522,1.95986)]
+            ('C12C(F)=C(O)C(F)C1C(F)=C(O)C2(F)',315.250442,2.4509),
+            ('C12CC=CCC1C(=O)C3CC=CCC3C2(=O)',321.539522,1.95986)]
 
     for smi,CT,bal in data:
       m = Chem.MolFromSmiles(smi)
@@ -764,6 +764,5 @@ if __name__ == '__main__':
       if re.match('_test',methName):
         newName = re.sub('_test','test',methName)
         exec('TestCase.%s = TestCase.%s'%(newName,methName))
-        
-  unittest.main()
 
+  unittest.main()

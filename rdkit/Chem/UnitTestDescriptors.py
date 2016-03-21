@@ -68,8 +68,10 @@ class TestCase(unittest.TestCase):
     refData  = cPickle.loads(pkl,encoding='bytes')
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
+    w = Chem.SmilesWriter('test_data/aromat_regress.new.txt')
     for i,m in enumerate(ms):
-      mqns = rdMolDescriptors.MQNs_(m) 
+      mqns = rdMolDescriptors.MQNs_(m)
+      w.write(m)
       if mqns!=refData[i][1]:
         indices=[(j,x,y) for j,x,y in zip(range(len(mqns)),mqns,refData[i][1]) if x!=y]
         print(Chem.MolToSmiles(m),indices)
@@ -86,10 +88,10 @@ class TestCase(unittest.TestCase):
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
     self.assertFalse(False in (vs==tgt))
-    
-          
-      
-# - - - - - 
+
+
+
+# - - - - -
 if __name__ == '__main__':
   import sys,getopt,re
   doLong=0
@@ -104,5 +106,5 @@ if __name__ == '__main__':
       if re.match('_test',methName):
         newName = re.sub('_test','test',methName)
         exec('TestCase.%s = TestCase.%s'%(newName,methName))
-        
+
   unittest.main()
