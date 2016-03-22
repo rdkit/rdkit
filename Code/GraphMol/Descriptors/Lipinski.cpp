@@ -93,10 +93,10 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
 }
 
 namespace {
-#ifndef RDK_USE_STRICT_ROTOR_DEFINITION
-const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
-#else
+#ifdef RDK_USE_STRICT_ROTOR_DEFINITION
 const NumRotatableBondsOptions DefaultStrictDefinition = Strict;
+#else
+const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 #endif
 }
 

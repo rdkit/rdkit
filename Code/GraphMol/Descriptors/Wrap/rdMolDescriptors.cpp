@@ -755,7 +755,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .value("Default", RDKit::Descriptors::NumRotatableBondsOptions::Default)
        ;
   
-#ifndef RDK_USE_STRICT_ROTOR_DEFINITION
+#ifdef RDK_USE_STRICT_ROTOR_DEFINITION
     docString= 
         "returns the number of rotatable bonds for a molecule.\n\
    strict = NumRotatableBondsOptions.NonStrict - Simple rotatable bond definition.\n\

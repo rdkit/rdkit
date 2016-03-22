@@ -36,7 +36,7 @@ option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
 
 option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
-option(RDK_USE_MOST_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" OFF)
+option(RDK_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
@@ -299,9 +299,9 @@ if (RDK_SQUASH_MVC_SECURE_WARNINGS)
   ADD_DEFINITIONS("/wd4996")
 endif(RDK_SQUASH_MVC_SECURE_WARNINGS)
 
-if(RDK_USE_MOST_STRICT_ROTOR_DEFINITION)
-    MESSAGE("== Using the most strict rotor definition")
-    ADD_DEFINITIONS("-DRDK_USE_MOST_STRICT_ROTOR_DEFINITION")
+if(RDK_USE_STRICT_ROTOR_DEFINITION)
+    MESSAGE("== Using strict rotor definition")
+    ADD_DEFINITIONS("-DRDK_USE_STRICT_ROTOR_DEFINITION")
 endif()
 
 add_subdirectory(External)
