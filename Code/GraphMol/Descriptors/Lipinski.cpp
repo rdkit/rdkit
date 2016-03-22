@@ -94,9 +94,9 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
 
 namespace {
 #ifndef RDK_USE_STRICT_ROTOR_DEFINITION
-const NumRotatableBondsOptions DefaultStrictDefinition = NumRotatableBondsOptions::NonStrict;
+const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 #else
-const NumRotatableBondsOptions DefaultStrictDefinition = NumRotatableBondsOptions::Strict;
+const NumRotatableBondsOptions DefaultStrictDefinition = Strict;
 #endif
 }
 
@@ -105,12 +105,12 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
   if (strict == NumRotatableBondsOptions::Default)
     strict = DefaultStrictDefinition;
   
-  if (strict == NumRotatableBondsOptions::NonStrict) {
+  if (strict == NonStrict) {
     std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
     pattern_flyweight m(pattern);
     return m.get().countMatches(mol);
   }
-  else if (strict==NumRotatableBondsOptions::Strict) {
+  else if (strict==Strict) {
     std::string strict_pattern =
         "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
         "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
