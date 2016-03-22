@@ -47,7 +47,7 @@ extern const std::string NumRotatableBondsVersion;
                        if Default - uses the default choice (normally Strict)
 */
 unsigned int calcNumRotatableBonds(const ROMol &mol,
-                                   NumRotatableBondsOptions useStrictDefinition=NumRotatableBondsOptions::Default);
+                                   NumRotatableBondsOptions useStrictDefinition=Default);
 
 //! calculates the number of rotatable bonds ( backwards compatibility function,
 //!  deprecated, please use calcNumRotatableBonds(const ROMol&, int)
