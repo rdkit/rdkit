@@ -440,7 +440,7 @@ void testLipinski1() {
 
     mol->getProp(NonStrictRotProp, foo);
     oVal = boost::lexical_cast<unsigned int>(foo);
-    nVal = calcNumRotatableBonds(*mol, NumRotatableBondsOptions::NonStrict);
+    nVal = calcNumRotatableBonds(*mol, NonStrict);
     if (oVal != nVal) {
       std::cerr << "  failed: " << idx << " " << oVal << " " << nVal
                 << " using stored sd prop " << rot_prop << std::endl;
@@ -449,7 +449,7 @@ void testLipinski1() {
 
     mol->getProp(StrictRotProp, foo);
     oVal = boost::lexical_cast<unsigned int>(foo);
-    nVal = calcNumRotatableBonds(*mol, NumRotatableBondsOptions::Strict);
+    nVal = calcNumRotatableBonds(*mol, Strict);
     if (oVal != nVal) {
       std::cerr << "  failed: " << idx << " " << oVal << " " << nVal
                 << " using stored sd prop " << rot_prop << std::endl;
