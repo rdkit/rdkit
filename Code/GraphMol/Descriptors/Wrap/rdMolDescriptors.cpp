@@ -749,10 +749,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
  Default - Current RDKit default\n";
 
   python::enum_<RDKit::Descriptors::NumRotatableBondsOptions>("NumRotatableBondsOptions", docString.c_str())
-      .value("NonStrict", RDKit::Descriptors::NumRotatableBondsOptions::NonStrict)
-      .value("Strict", RDKit::Descriptors::NumRotatableBondsOptions::Strict)
-      .value("StrictLinkages", RDKit::Descriptors::NumRotatableBondsOptions::StrictLinkages)
-      .value("Default", RDKit::Descriptors::NumRotatableBondsOptions::Default)
+      .value("NonStrict", RDKit::Descriptors::NonStrict)
+      .value("Strict", RDKit::Descriptors::Strict)
+      .value("StrictLinkages", RDKit::Descriptors::StrictLinkages)
+      .value("Default", RDKit::Descriptors::Default)
        ;
   
 #ifdef RDK_USE_STRICT_ROTOR_DEFINITION
@@ -770,7 +770,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         the linking bond is rotatable\n\
       - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
          considered non-rotatable";
-#else  
+#else
+    docString=
         "returns the number of rotatable bonds for a molecule.\n\
    strict = NumRotatableBondsOptions.NonStrict - (default) Simple rotatable bond definition.\n\
    strict = NumRotatableBondsOptions.Strict - does not count things like\n\
@@ -791,7 +792,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                                                  RDKit::Descriptors::NumRotatableBondsOptions))
                                 RDKit::Descriptors::calcNumRotatableBonds,
       (python::arg("mol"),
-       python::arg("strict") = RDKit::Descriptors::NumRotatableBondsOptions::Default),
+       python::arg("strict") = RDKit::Descriptors::Default),
       docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
