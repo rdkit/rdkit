@@ -36,7 +36,7 @@ option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
 
 option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
-option(RDK_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
+option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
