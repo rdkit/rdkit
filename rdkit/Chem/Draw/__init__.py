@@ -312,9 +312,9 @@ def _moltoimg(mol,sz,highlights,legend,**kwargs):
         img = Image.open(sio)
     return img
 
-def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
+def _MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
                     highlightAtomLists=None,**kwargs):
-  """
+  """ returns a PIL Image of the grid
   """
   try:
     import Image
@@ -337,9 +337,9 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
       res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
   return res
 
-def MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
+def _MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
                     highlightAtomLists=None,stripSVGNamespace=True,**kwargs):
-  """
+  """ returns an SVG of the grid
   """
   matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>',re.DOTALL)
   if legends is None: legends = ['']*len(mols)
@@ -379,6 +379,14 @@ def MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     res = res.replace('svg:','')
   return res
 
+def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
+                    highlightAtomLists=None,useSVG=False,**kwargs):
+  if useSVG:
+      return _MolsToGridSVG(mols,molsPerRow=molsPerRow,subImgSize=subImgSize,
+                legends=legends, highlightAtomLists=highlightAtomLists, **kwargs)
+  else:
+      return _MolsToGridImage(mols,molsPerRow=molsPerRow,subImgSize=subImgSize,
+                legends=legends, highlightAtomLists=highlightAtomLists, **kwargs)
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
   """

@@ -43,6 +43,8 @@ try:
 except ImportError:
     from PIL import Image
 
+from IPython.display import SVG
+
 molSize = (450, 150)
 highlightSubstructs = True
 kekulizeStructures = True
@@ -186,7 +188,24 @@ def display_pil_image(img):
     img.save(bio,format='PNG')
     return bio.getvalue()
 
+_MolsToGridImageSaved = None
+def ShowMols(mols,**kwargs):
+    global _MolsToGridImageSaved
+    if 'useSVG' not in kwargs:
+        # use SVG by default
+        kwargs['useSVG'] = True
+    if _MolsToGridImageSaved is not None:
+        fn = _MolsToGridImageSaved
+    else:
+        fm = Draw.MolsToGridImage
+    res = fn(mols,**kwargs)
+    if kwargs['useSVG']:
+        return SVG(res)
+    else:
+        return res
+
 def InstallIPythonRenderer():
+    global _MolsToGridImageSaved
     rdchem.Mol._repr_png_ = _toPNG
     rdchem.Mol._repr_svg_ = _toSVG
     if _canUse3D:
@@ -199,10 +218,14 @@ def InstallIPythonRenderer():
         rdchem.Mol.__GetSubstructMatches = rdchem.Mol.GetSubstructMatches
     rdchem.Mol.GetSubstructMatches = _GetSubstructMatches
     Image.Image._repr_png_ = display_pil_image
+    _MolsToGridImageSaved = Draw.MolsToGridImage
+    Draw.MolsToGridImage = ShowMols
+
 InstallIPythonRenderer()
 
 
 def UninstallIPythonRenderer():
+    global _MolsToGridImageSaved
     del rdchem.Mol._repr_svg_
     del rdchem.Mol._repr_png_
     if _canUse3D:
@@ -215,3 +238,5 @@ def UninstallIPythonRenderer():
         rdchem.Mol.GetSubstructMatches = rdchem.Mol.__GetSubstructMatches
         del rdchem.Mol.__GetSubstructMatches
     del Image.Image._repr_png_
+    if _MolsToGridImageSaved is not None:
+        Draw.MolsToGridImage = _MolsToGridImageSaved
