@@ -98,7 +98,7 @@ ADD_CUSTOM_COMMAND(
   COMMAND ${CMAKE_COMMAND} -E make_directory build-test
 
   ## Add in our own Java sources
-  COMMAND ${COPY_CMD}
+  # COMMAND ${COPY_CMD}
   ## 1. run this custom command only after swig has been run.
   COMMAND ${JAVA_COMPILE} -d build "src/org/RDKit/*.java"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

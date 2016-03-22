@@ -93,15 +93,15 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
 }
 
 namespace {
-#ifdef RDK_USE_MOST_STRICT_ROTOR_DEFINITION
-const int DefaultStrictDefinition = NumRotatableBondsOptions::NonStrict;
+#ifndef RDK_USE_STRICT_ROTOR_DEFINITION
+const NumRotatableBondsOptions DefaultStrictDefinition = NumRotatableBondsOptions::NonStrict;
 #else
-const int DefaultStrictDefinition = NumRotatableBondsOptions::Strict;
+const NumRotatableBondsOptions DefaultStrictDefinition = NumRotatableBondsOptions::Strict;
 #endif
 }
 
 const std::string NumRotatableBondsVersion = "3.0.0";
-unsigned int calcNumRotatableBonds(const ROMol &mol, int strict) {
+unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
   if (strict == NumRotatableBondsOptions::Default)
     strict = DefaultStrictDefinition;
   

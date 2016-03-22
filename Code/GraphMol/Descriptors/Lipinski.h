@@ -29,12 +29,13 @@ const std::string lipinskiHBDVersion = "2.0.0";
 // bonds)
 unsigned int calcLipinskiHBD(const ROMol &mol);
 
-namespace NumRotatableBondsOptions {
-  const int NonStrict      = 0;
-  const int Strict         = 1;
-  const int StrictLinkages = 2;
-  const int Default        = -1;
-}
+enum NumRotatableBondsOptions {
+  Default        = -1,
+  NonStrict      = 0,
+  Strict         = 1,
+  StrictLinkages = 2,
+};
+
 extern const std::string NumRotatableBondsVersion;
 //! calculates the number of rotatable bonds
 /*!
@@ -46,7 +47,7 @@ extern const std::string NumRotatableBondsVersion;
                        if Default - uses the default choice (normally Strict)
 */
 unsigned int calcNumRotatableBonds(const ROMol &mol,
-                                   int useStrictDefinition=NumRotatableBondsOptions::Default);
+                                   NumRotatableBondsOptions useStrictDefinition=NumRotatableBondsOptions::Default);
 
 //! calculates the number of rotatable bonds ( backwards compatibility function,
 //!  deprecated, please use calcNumRotatableBonds(const ROMol&, int)
