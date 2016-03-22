@@ -102,7 +102,7 @@ const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 
 const std::string NumRotatableBondsVersion = "3.0.0";
 unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
-  if (strict == NumRotatableBondsOptions::Default)
+  if (strict == Default)
     strict = DefaultStrictDefinition;
   
   if (strict == NonStrict) {
@@ -174,8 +174,8 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
 
 unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
   return calcNumRotatableBonds(mol,
-                               (strict) ? NumRotatableBondsOptions::Strict
-                                        : NumRotatableBondsOptions::NonStrict );
+                               (strict) ? Strict
+                                        : NonStrict );
 }
 
 // SMARTSCOUNTFUNC(NumHBD,
