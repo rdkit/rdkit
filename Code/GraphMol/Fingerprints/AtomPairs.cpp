@@ -413,7 +413,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
       ignoreAtomsBV->set(fAt);
     }
   }
-
+  boost::dynamic_bitset<> pAtoms(mol.getNumAtoms());
   PATH_LIST paths = findAllPathsOfLengthN(mol, targetSize, false);
   for (PATH_LIST::const_iterator pathIt = paths.begin(); pathIt != paths.end();
        ++pathIt) {
@@ -438,7 +438,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
       }
     }
     if (keepIt) {
-      boost::dynamic_bitset<> pAtoms(path.size());
+      pAtoms.reset();
       for (PATH_TYPE::const_iterator pIt = path.begin(); pIt < path.end();
            ++pIt) {
         // look for a cycle that doesn't start at the first atom
