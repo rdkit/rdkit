@@ -70,6 +70,7 @@ extern const std::string _QueryIsotope;
 extern const std::string _QueryMass;
 extern const std::string _ReactionDegreeChanged;
 extern const std::string _RingClosures;
+extern const std::string _RingChiralityReversed;
 extern const std::string _SLN_s;
 extern const std::string _SmilesStart;
 extern const std::string _StereochemDone;
@@ -250,7 +251,7 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res,
            const INT_VECT *exclude = NULL);
 
 //! given a current combination of numbers change it to the next possible
-//combination
+// combination
 /*!
   \param comb the <b>sorted</b> vector to consider
   \param tot the maximum number possible in the vector
