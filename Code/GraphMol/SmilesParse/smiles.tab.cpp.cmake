@@ -503,11 +503,11 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint16 yyrline[] =
 {
        0,    79,    79,    80,    86,    89,    99,   110,   120,   140,
-     148,   154,   186,   202,   216,   226,   246,   254,   264,   265,
-     272,   280,   281,   282,   283,   284,   285,   286,   290,   291,
-     292,   293,   294,   295,   296,   297,   298,   302,   303,   304,
-     308,   309,   310,   311,   315,   316,   320,   321,   325,   326,
-     330,   331,   334,   335
+     148,   154,   173,   191,   207,   217,   237,   245,   255,   256,
+     263,   271,   272,   273,   274,   275,   276,   277,   281,   282,
+     283,   284,   285,   286,   287,   288,   289,   293,   294,   295,
+     299,   300,   301,   302,   306,   307,   311,   312,   316,   317,
+     321,   322,   325,   326
 };
 #endif
 
@@ -1457,32 +1457,19 @@ yyreduce:
   mp->setBondBookmark(newB,(yyvsp[0].ival));
   newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
 
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
-  // github #786: if the ring closure comes after a branch,
-  // the stereochem is wrong.
-  // detect the branch (= atom isn't the last one)
-  // and reverse the stereochem if the atom has chiral stereochemistry,
-  // has not already had the stereochemistry reversed (protects against two ring closures)
-  // and is currently degree two (protects against C1CN[C@](O)(N)1)
-  if (atom->getIdx() != mp->getNumAtoms(true)-1 &&
-      atom->getDegree()==2 &&
-      (atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-      atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-      !atom->hasProp(RDKit::common_properties::_RingChiralityReversed)){
-    atom->invertChirality();
-    atom->setProp(RDKit::common_properties::_RingChiralityReversed,1);
-  }
-
   tmp.push_back(-((yyvsp[0].ival)+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
+
 }
-#line 1482 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1469 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 186 "smiles.yy" /* yacc.c:1646  */
+#line 173 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1491,18 +1478,20 @@ yyreduce:
   newB->setBondDir((yyvsp[-1].bond)->getBondDir());
   mp->setAtomBookmark(atom,(yyvsp[0].ival));
   mp->setBondBookmark(newB,(yyvsp[0].ival));
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-((yyvsp[0].ival)+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
   delete (yyvsp[-1].bond);
 }
-#line 1502 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1491 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 202 "smiles.yy" /* yacc.c:1646  */
+#line 191 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1510,17 +1499,19 @@ yyreduce:
 				     Bond::SINGLE);
   mp->setAtomBookmark(atom,(yyvsp[0].ival));
   mp->setBondBookmark(newB,(yyvsp[0].ival));
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-((yyvsp[0].ival)+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
-#line 1520 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1511 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 216 "smiles.yy" /* yacc.c:1646  */
+#line 207 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
@@ -1531,11 +1522,11 @@ yyreduce:
   //delete $3;
   branchPoints->push_back(atomIdx1);
 }
-#line 1535 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1526 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 226 "smiles.yy" /* yacc.c:1646  */
+#line 217 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1556,11 +1547,11 @@ yyreduce:
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
-#line 1560 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1551 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 246 "smiles.yy" /* yacc.c:1646  */
+#line 237 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1569,161 +1560,161 @@ yyreduce:
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
-#line 1573 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1564 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 254 "smiles.yy" /* yacc.c:1646  */
+#line 245 "smiles.yy" /* yacc.c:1646  */
     {
   if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,"extra close parentheses");
   RWMol *mp = (*molList)[(yyval.moli)];
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
-#line 1584 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1575 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 266 "smiles.yy" /* yacc.c:1646  */
+#line 257 "smiles.yy" /* yacc.c:1646  */
     {
   (yyval.atom) = (yyvsp[-3].atom);
   (yyval.atom)->setNoImplicit(true);
   (yyval.atom)->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
-#line 1594 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1585 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 273 "smiles.yy" /* yacc.c:1646  */
+#line 264 "smiles.yy" /* yacc.c:1646  */
     {
   (yyval.atom) = (yyvsp[-1].atom);
   (yyvsp[-1].atom)->setNoImplicit(true);
 }
-#line 1603 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1594 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 281 "smiles.yy" /* yacc.c:1646  */
+#line 272 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-1].atom)->setFormalCharge(1); }
-#line 1609 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1600 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 282 "smiles.yy" /* yacc.c:1646  */
+#line 273 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-2].atom)->setFormalCharge(2); }
-#line 1615 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1606 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 283 "smiles.yy" /* yacc.c:1646  */
+#line 274 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-2].atom)->setFormalCharge((yyvsp[0].ival)); }
-#line 1621 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1612 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 284 "smiles.yy" /* yacc.c:1646  */
+#line 275 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-1].atom)->setFormalCharge(-1); }
-#line 1627 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1618 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 285 "smiles.yy" /* yacc.c:1646  */
+#line 276 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-2].atom)->setFormalCharge(-2); }
-#line 1633 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1624 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 286 "smiles.yy" /* yacc.c:1646  */
+#line 277 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-2].atom)->setFormalCharge(-(yyvsp[0].ival)); }
-#line 1639 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1630 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 290 "smiles.yy" /* yacc.c:1646  */
+#line 281 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = new Atom(1); }
-#line 1645 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1636 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 291 "smiles.yy" /* yacc.c:1646  */
+#line 282 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-1].ival)); }
-#line 1651 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1642 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 292 "smiles.yy" /* yacc.c:1646  */
+#line 283 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs(1); }
-#line 1657 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1648 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 293 "smiles.yy" /* yacc.c:1646  */
+#line 284 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumExplicitHs(1);}
-#line 1663 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1654 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 294 "smiles.yy" /* yacc.c:1646  */
+#line 285 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival)); }
-#line 1669 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1660 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 295 "smiles.yy" /* yacc.c:1646  */
+#line 286 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival));}
-#line 1675 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1666 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 297 "smiles.yy" /* yacc.c:1646  */
+#line 288 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumExplicitHs(1);}
-#line 1681 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1672 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 298 "smiles.yy" /* yacc.c:1646  */
+#line 289 "smiles.yy" /* yacc.c:1646  */
     { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].ival));}
-#line 1687 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1678 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 303 "smiles.yy" /* yacc.c:1646  */
+#line 294 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-1].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); }
-#line 1693 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1684 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 304 "smiles.yy" /* yacc.c:1646  */
+#line 295 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[-2].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); }
-#line 1699 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1690 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 309 "smiles.yy" /* yacc.c:1646  */
+#line 300 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
-#line 1705 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1696 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 311 "smiles.yy" /* yacc.c:1646  */
+#line 302 "smiles.yy" /* yacc.c:1646  */
     { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
-#line 1711 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1702 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 321 "smiles.yy" /* yacc.c:1646  */
+#line 312 "smiles.yy" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
-#line 1717 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1708 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 331 "smiles.yy" /* yacc.c:1646  */
+#line 322 "smiles.yy" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival)*10 + (yyvsp[0].ival); }
-#line 1723 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1714 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1727 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1718 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1951,5 +1942,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 345 "smiles.yy" /* yacc.c:1906  */
+#line 336 "smiles.yy" /* yacc.c:1906  */
 
