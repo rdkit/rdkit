@@ -161,26 +161,13 @@ mol: atomd {
   mp->setBondBookmark(newB,$2);
   newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
 
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
-  // github #786: if the ring closure comes after a branch,
-  // the stereochem is wrong.
-  // detect the branch (= atom isn't the last one)
-  // and reverse the stereochem if the atom has chiral stereochemistry,
-  // has not already had the stereochemistry reversed (protects against two ring closures)
-  // and is currently degree two (protects against C1CN[C@](O)(N)1)
-  if (atom->getIdx() != mp->getNumAtoms(true)-1 &&
-      atom->getDegree()==2 &&
-      (atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-      atom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) &&
-      !atom->hasProp(RDKit::common_properties::_RingChiralityReversed)){
-    atom->invertChirality();
-    atom->setProp(RDKit::common_properties::_RingChiralityReversed,1);
-  }
-
   tmp.push_back(-($2+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
+
 }
 
 | mol BOND_TOKEN ring_number {
@@ -191,9 +178,11 @@ mol: atomd {
   newB->setBondDir($2->getBondDir());
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-($3+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
   delete $2;
@@ -206,9 +195,11 @@ mol: atomd {
 				     Bond::SINGLE);
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-($3+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }

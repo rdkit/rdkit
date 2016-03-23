@@ -21,6 +21,23 @@
 namespace SmilesParseOps {
 using namespace RDKit;
 
+void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
+  // github #786: if the ring closure comes after a branch,
+  // the stereochem is wrong.
+  // detect the branch (= atom isn't the last one)
+  // and reverse the stereochem if the atom has chiral stereochemistry,
+  // has not already had the stereochemistry reversed (protects against two ring
+  // closures)
+  // and is currently degree two (protects against C1CN[C@](O)(N)1)
+  if (atom->getIdx() != mp->getNumAtoms(true) - 1 && atom->getDegree() == 2 &&
+      (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) &&
+      !atom->hasProp(RDKit::common_properties::_RingChiralityReversed)) {
+    atom->invertChirality();
+    atom->setProp(RDKit::common_properties::_RingChiralityReversed, 1);
+  }
+}
+
 void ReportParseError(const char *message, bool throwIt) {
   if (!throwIt)
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
@@ -74,8 +91,8 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   for (RWMol::AtomIterator atomIt = frag->beginAtoms();
        atomIt != frag->endAtoms(); atomIt++) {
     INT_VECT tmpVect;
-    if ((*atomIt)
-            ->getPropIfPresent(common_properties::_RingClosures, tmpVect)) {
+    if ((*atomIt)->getPropIfPresent(common_properties::_RingClosures,
+                                    tmpVect)) {
       BOOST_FOREACH (int &v, tmpVect) {
         // if the ring closure is not already a bond, don't touch it:
         if (v >= 0) v += nOrigBonds;
@@ -224,8 +241,8 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // need to insert into the list in a particular order
       //
       INT_VECT ringClosures;
-      (*atomIt)
-          ->getPropIfPresent(common_properties::_RingClosures, ringClosures);
+      (*atomIt)->getPropIfPresent(common_properties::_RingClosures,
+                                  ringClosures);
 
 #if 0
         std::cout << "CLOSURES: ";
