@@ -5700,6 +5700,7 @@ void test59ReactionCanonicalization() {
 void test60RunSingleReactant() {
   const std::string smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]";
   ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smirks_thiourea);
+  rxn->initReactantMatchers();
   const std::string smi1 = "C=CCN=C=S";
   const std::string smi2 = "NCc1ncc(Cl)cc1Br";
 
@@ -5707,7 +5708,6 @@ void test60RunSingleReactant() {
   ROMOL_SPTR reag2(SmilesToMol(smi2));
 
   std::vector<MOL_SPTR_VECT> prods;
-  TEST_ASSERT(prods.size() > 0);
 
   {
     ROMOL_SPTR expected_result(SmilesToMol("C=CCNC(N)=S"));
@@ -5717,12 +5717,15 @@ void test60RunSingleReactant() {
     std::string expected_sidechain = MolToSmiles(*expected_sidechain_result, isomericSmiles);
     
     prods = rxn->runReactant(reag1, 0);
+    TEST_ASSERT(prods.size() > 0);
+
     for (size_t i=0;i<prods.size();i++) {
       for (size_t prodidx = 0; prodidx<prods[i].size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
         TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
         ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
-        TEST_ASSERT(MolToSmiles(*sidechain) == expected_sidechain);
+        std::string smi = MolToSmiles(*sidechain, isomericSmiles);
+        TEST_ASSERT(smi == expected_sidechain);
       }
     }
 
@@ -5738,12 +5741,15 @@ void test60RunSingleReactant() {
     std::string expected_sidechain = MolToSmiles(*expected_sidechain_result, isomericSmiles);
     
     prods = rxn->runReactant(reag2, 1);
+    TEST_ASSERT(prods.size() > 0);
+    
     for (size_t i=0;i<prods.size();i++) {
       for (size_t prodidx = 0; prodidx<prods[i].size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
         TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
         ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
-        TEST_ASSERT(MolToSmiles(*sidechain) == expected_sidechain);
+        std::string smi = MolToSmiles(*sidechain, isomericSmiles);
+        TEST_ASSERT(smi == expected_sidechain);
       }
     }
     
@@ -5828,7 +5834,8 @@ int main() {
   test58MolFileValueRoundTrip();
 
   test59ReactionCanonicalization();
-
+  test60RunSingleReactant();
+  
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
