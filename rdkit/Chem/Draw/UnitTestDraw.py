@@ -192,11 +192,11 @@ class TestCase(unittest.TestCase):
   def testGridSVG(self):
     mols = [Chem.MolFromSmiles('NC(C)C(=O)'*x) for x in range(10)]
     legends = ['mol-%d'%x for x in range(len(mols))]
-    svg = Draw.MolsToGridSVG(mols,legends=legends,molsPerLine=3,subImgSize=(200,200))
+    svg = Draw.MolsToGridImage(mols,legends=legends,molsPerLine=3,subImgSize=(200,200),useSVG=True)
     self.assertTrue(svg.find("width='600px' height='800px'"))
-    svg = Draw.MolsToGridSVG(mols,legends=legends,molsPerLine=4,subImgSize=(200,200))
+    svg = Draw.MolsToGridImage(mols,legends=legends,molsPerLine=4,subImgSize=(200,200),useSVG=True)
     self.assertTrue(svg.find("width='800px' height='600px'"))
-    svg = Draw.MolsToGridSVG(mols,legends=legends,molsPerLine=3,subImgSize=(300,300))
+    svg = Draw.MolsToGridImage(mols,legends=legends,molsPerLine=3,subImgSize=(300,300),useSVG=True)
     self.assertTrue(svg.find("width='900px' height='1200px'"))
 
 
