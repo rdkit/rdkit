@@ -115,10 +115,6 @@ struct MolCatalogEntry_wrapper {
 }
 
 BOOST_PYTHON_MODULE(rdMolCatalog) {
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
   MolCatalog_wrapper::wrap();
   MolCatalogEntry_wrapper::wrap();
 }

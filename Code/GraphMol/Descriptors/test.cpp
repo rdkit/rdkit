@@ -29,6 +29,8 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/PeriodicTable.h>
+#include <GraphMol/atomic_data.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -1729,6 +1731,44 @@ void testSpiroAndBridgeheads() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue694() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github694: ExactMolWt ignoring the mass of the electron"
+      << std::endl;
+
+  {
+    ROMol *mol = SmilesToMol("[35Cl]");
+    TEST_ASSERT(mol);
+    double mw = calcExactMW(*mol);
+    TEST_ASSERT(
+        feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35), .000001));
+    delete mol;
+    mol = SmilesToMol("[35Cl-]");
+    TEST_ASSERT(mol);
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35) +
+                            constants::electronMass,
+                    .000001));
+    delete mol;
+    mol = SmilesToMol("[35Cl+]");
+    TEST_ASSERT(mol);
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35) -
+                            constants::electronMass,
+                    .000001));
+    delete mol;
+    mol = SmilesToMol("[35Cl+2]");
+    TEST_ASSERT(mol);
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35) -
+                            2 * constants::electronMass,
+                    .000001));
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1764,4 +1804,5 @@ int main() {
 #endif
   testGitHubIssue463();
   testSpiroAndBridgeheads();
+  testGitHubIssue694();
 }

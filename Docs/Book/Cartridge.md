@@ -534,8 +534,7 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_numsaturatedcarbocycles(mol) : returns the number of saturated carbocycles in a molecule (*available from 2013\_03 release*).
 -   mol\_inchi(mol) : returns an InChI for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
 -   mol\_inchikey(mol) : returns an InChI key for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
-
-\* mol\_formula(mol,bool default false, bool default true) : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H]. (*available from the 2014\_03 release*)
+-   mol\_formula(mol,bool default false, bool default true) : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H]. (*available from the 2014\_03 release*)
 
 ##### Connectivity Descriptors
 

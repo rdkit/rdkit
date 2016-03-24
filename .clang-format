@@ -43,7 +43,7 @@ PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Left
 SpacesBeforeTrailingComments: 2
 Cpp11BracedListStyle: true
-Standard:        Auto
+Standard:        Cpp03
 IndentWidth:     2
 TabWidth:        8
 UseTab:          Never

@@ -18,6 +18,11 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace RDKit {
 
+namespace constants {
+const double electronMass =
+    0.00054857991;  // value from http://physics.nist.gov/cgi-bin/cuu/Value?me
+}
+
 const std::string periodicTableAtomData =
     "0	*	0	0	0	0	0	0	0	-1 \n \
 1	H 	0.23	0.33	1.2	1.008	1	1	1.007825032	1 \n \

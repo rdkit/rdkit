@@ -1,2 +1,2 @@
 # package
-from pidPS import *
+from .pidPS import *

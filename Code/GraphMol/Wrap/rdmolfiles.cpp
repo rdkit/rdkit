@@ -346,12 +346,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::scope().attr("__doc__") =
       "Module containing RDKit functionality for working with molecular file "
       "formats.";
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
-  python::register_exception_translator<RDKit::MolSanitizeException>(
-      &rdSanitExceptionTranslator);
   python::register_exception_translator<RDKit::BadFileException>(
       &rdBadFileExceptionTranslator);
 
@@ -749,7 +743,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule\n\
-    - isomericSmarts: (optional) include information about stereochemistry in\n\
+    - isomericSmiles: (optional) include information about stereochemistry in\n\
       the SMARTS.  Defaults to false.\n\
 \n\
   RETURNS:\n\

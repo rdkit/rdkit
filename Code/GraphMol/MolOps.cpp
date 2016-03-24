@@ -103,6 +103,57 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
   atom->setIsAromatic(aromHolder);
   atom->calcExplicitValence(false);
 }
+
+void phosphorusCleanup(RWMol &mol, Atom *atom) {
+  // conversions here:
+  // - neutral 5 coordinate Ps with one double bonds to an Os
+  //   and one to a C or N to the zwitterionic form.  e.g.:
+  //   C=P(=O)X -> C=[P+]([O-])X
+  PRECONDITION(atom, "bad atom");
+  bool aromHolder;
+
+  // we only want to do neutrals
+  if (atom->getFormalCharge()) return;
+
+  // NOTE that we are calling calcExplicitValence() here, we do
+  // this because we cannot be sure that it has already been
+  // called on the atom (cleanUp() gets called pretty early in
+  // the sanitization process):
+  if (atom->calcExplicitValence(false) == 5 && atom->getDegree()==3) {
+    unsigned int aid = atom->getIdx();
+    Bond *dbl_to_O=NULL;
+    Atom *O_atom=NULL;
+    bool hasDoubleToCorN=false;
+    RWMol::ADJ_ITER nid1, end1;
+    boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
+    while (nid1 != end1) {
+      if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 8) &&
+          (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
+          (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
+           Bond::DOUBLE)) {
+        // here's the double bonded oxygen
+        dbl_to_O = mol.getBondBetweenAtoms(aid, *nid1);
+        O_atom = mol.getAtomWithIdx(*nid1);
+      } else if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 6 ||
+                  mol.getAtomWithIdx(*nid1)->getAtomicNum() == 7) &&
+                 (mol.getAtomWithIdx(*nid1)->getDegree()>=2) &&
+                 (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
+                  Bond::DOUBLE)) {
+        hasDoubleToCorN = true;
+      }
+      ++nid1;
+    }  // end of loop over the first neigh
+    if(hasDoubleToCorN && dbl_to_O != NULL) {
+      TEST_ASSERT(O_atom!=NULL);
+      O_atom->setFormalCharge(-1);
+      dbl_to_O->setBondType(Bond::SINGLE);
+      atom->setFormalCharge(1);
+    }
+  }
+  // force a recalculation of the explicit valence here
+  atom->calcExplicitValence(false);
+}
+
 }
 
 void cleanUp(RWMol &mol) {
@@ -112,6 +163,9 @@ void cleanUp(RWMol &mol) {
       case 7:
         nitrogenCleanup(mol, *ai);
         break;
+        case 15:
+          phosphorusCleanup(mol, *ai);
+          break;
       case 17:
         // recognize perchlorate and convert it from:
         //    Cl(=O)(=O)(=O)[O-]
@@ -615,24 +669,24 @@ template std::map<unsigned int, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
       //
       const MolGraph *mgraph = &mol.getTopology();
       MolGraph *molGraph = const_cast<MolGraph *> (mgraph);
-    
+
       std::vector<MolGraph::edge_descriptor> treeEdges;
       treeEdges.reserve(boost::num_vertices(*molGraph));
-    
+
       boost::property_map < MolGraph, edge_wght_t >::type w = boost::get(edge_wght_t(), *molGraph);
       boost::property_map < MolGraph, edge_bond_t>::type bps = boost::get(edge_bond_t(), *molGraph);
       boost::graph_traits < MolGraph >::edge_iterator e, e_end;
       Bond* bnd;
       for (boost::tie(e, e_end) = boost::edges(*molGraph); e != e_end; ++e) {
         bnd = bps[*e];
-      
+
         if(!bnd->getIsAromatic()){
           w[*e] = (bnd->getBondTypeAsDouble());
         } else {
           w[*e] = 3.0/2.0;
         }
       }
-    
+
       // FIX: this is a hack due to problems with MSVC++
 #if 1
       typedef boost::graph_traits<MolGraph>::vertices_size_type size_type;
@@ -653,7 +707,7 @@ template std::map<unsigned int, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
                                            pred_map[0]),
          w);
 
-#else  
+#else
       boost::kruskal_minimum_spanning_tree(*molGraph,std::back_inserter(treeEdges),
                                            w, *molGraph);
       //boost::weight_map(static_cast<boost::property_map<MolGraph,edge_wght_t>::const_type>(boost::get(edge_wght_t(),*molGraph))));

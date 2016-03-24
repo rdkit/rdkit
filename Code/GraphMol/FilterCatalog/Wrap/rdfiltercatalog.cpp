@@ -36,10 +36,4 @@ namespace python = boost::python;
 
 void wrap_filtercat();
 
-BOOST_PYTHON_MODULE(rdfiltercatalog) {
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
-  wrap_filtercat();
-}
+BOOST_PYTHON_MODULE(rdfiltercatalog) { wrap_filtercat(); }

@@ -154,7 +154,7 @@ void test2() {
   }
   std::cout << " Done" << std::endl;
 }
-#else // RDK_CAIRO_BUILD
+#else  // RDK_CAIRO_BUILD
 void test2() {}
 #endif
 
@@ -486,8 +486,7 @@ void runblock(const std::vector<ROMol *> &mols,
               unsigned int idx) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx)
-        continue;
+      if (i % count != idx) continue;
       ROMol *mol = mols[i];
       MolDraw2DSVG drawer(300, 300);
       drawer.drawMolecule(*mol);
@@ -513,8 +512,7 @@ void testMultiThreaded() {
     } catch (...) {
       continue;
     }
-    if (!mol)
-      continue;
+    if (!mol) continue;
     mols.push_back(mol);
   }
 
@@ -688,11 +686,11 @@ void test8PrepareMolForDrawing() {
     // by default we don't force conformer generation
     RWMol nm(*m);
     RDDepict::compute2DCoords(nm);
-    nm.getConformer().set3D(true); // it's not really, we're cheating
+    nm.getConformer().set3D(true);  // it's not really, we're cheating
     TEST_ASSERT(nm.getNumAtoms() == 9)
     MolDraw2DUtils::prepareMolForDrawing(nm);
     TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1); // we have a conformer anyway
+    TEST_ASSERT(nm.getNumConformers() == 1);  // we have a conformer anyway
     TEST_ASSERT(nm.getConformer().is3D());
 
     // but if we do force, it blows out that conformer:
@@ -749,7 +747,7 @@ void testGithub781() {
     TEST_ASSERT(txt.find("<svg:tspan>Cl</svg:tspan>") != std::string::npos);
     delete m;
   }
-  { // empty molecule
+  {  // empty molecule
     ROMol *m = new ROMol();
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
@@ -764,18 +762,109 @@ void testGithub781() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub774() {
+  std::cout << " ----------------- Test Github774" << std::endl;
+  {
+    std::string smiles =
+        "Cc1c(C(=O)NCC[NH3+])[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
+    std::string nameBase = "test774_1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolOps::Kekulize(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+      Point2D ocoords(1.0, 2.0);
+      Point2D dcoords =
+          drawer.getAtomCoords(std::make_pair(ocoords.x, ocoords.y));
+      Point2D acoords = drawer.getDrawCoords(dcoords);
+      TEST_ASSERT(feq(acoords.x, 1.0));
+      TEST_ASSERT(feq(acoords.y, 2.0));
+    }
+    // m->setProp("_Name","mol");
+    // std::cerr<<MolToMolBlock(*m)<<std::endl;
+    delete m;
+  }
+  {
+    std::string smiles =
+        "CC(=O)\\C=C\\CC1[C@H]2N([C@@H](C(=O)O)C(C)(C)S2(=O)=O)C1=O";
+    std::string nameBase = "test774_2";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolOps::Kekulize(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    // m->setProp("_Name","mol");
+    // std::cerr<<MolToMolBlock(*m)<<std::endl;
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void test9MolLegends() {
+  std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
+  {
+    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
+    std::string nameBase = "test5_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m, "mol legend");
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    std::ofstream outs("test9_1.svg");
+    outs << txt;
+    // TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
   test1();
   test2();
-  test3();
   test4();
   test5();
-  testMultiThreaded();
   test6();
   test7();
-#endif
   test8PrepareMolForDrawing();
+  testMultiThreaded();
   testGithub781();
+  test3();
+#endif
+  testGithub774();
+  test9MolLegends();
 }

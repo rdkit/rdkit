@@ -76,10 +76,6 @@ BOOST_PYTHON_MODULE(rdReducedGraphs) {
       "Module containing functions to generate and work with reduced graphs";
 
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
 
   std::string docString = "";
 
