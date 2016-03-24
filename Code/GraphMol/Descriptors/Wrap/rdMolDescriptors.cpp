@@ -739,15 +739,65 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")), docString.c_str());
   python::scope().attr("_CalcNumHBA_version") =
       RDKit::Descriptors::NumHBAVersion;
-  docString =
-      "returns the number of rotatable bonds for a molecule. The strict option "
-      "(default) does not count things like amide or ester bonds";
+
+  // exposes calcNumRotatableBondOptions (must be a better way!)
+
+  docString = "Options for generating rotatble bonds\n\
+ NonStrict - standard loose definitions\n\
+ Strict - stricter definition excluding amides, esters, etc\n\
+ StrictLinkages - adds rotors between rotatable bonds\n\
+ Default - Current RDKit default\n";
+
+  python::enum_<RDKit::Descriptors::NumRotatableBondsOptions>("NumRotatableBondsOptions", docString.c_str())
+      .value("NonStrict", RDKit::Descriptors::NonStrict)
+      .value("Strict", RDKit::Descriptors::Strict)
+      .value("StrictLinkages", RDKit::Descriptors::StrictLinkages)
+      .value("Default", RDKit::Descriptors::Default)
+       ;
+  
+#ifdef RDK_USE_STRICT_ROTOR_DEFINITION
+    docString= 
+        "returns the number of rotatable bonds for a molecule.\n\
+   strict = NumRotatableBondsOptions.NonStrict - Simple rotatable bond definition.\n\
+   strict = NumRotatableBondsOptions.Strict - (default) does not count things like\n\
+            amide or ester bonds\n\
+   strict = NumRotatableBondsOptions.StrictLinkages - handles linkages between ring\n\
+      systems.\n\
+      - Single bonds between aliphatic ring Cs are always rotatable. This\n\
+        means that the central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now \n\
+        considered rotatable; it was not before\n\
+      - Heteroatoms in the linked rings no longer affect whether or not\n\
+        the linking bond is rotatable\n\
+      - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
+         considered non-rotatable";
+#else
+    docString=
+        "returns the number of rotatable bonds for a molecule.\n\
+   strict = NumRotatableBondsOptions.NonStrict - (default) Simple rotatable bond definition.\n\
+   strict = NumRotatableBondsOptions.Strict - does not count things like\n\
+            amide or ester bonds\n\
+   strict = NumRotatableBondsOptions.StrictLinkages - handles linkages between ring\n\
+      systems.\n\
+      - Single bonds between aliphatic ring Cs are always rotatable. This\n\
+        means that the central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now \n\
+        considered rotatable; it was not before\n\
+      - Heteroatoms in the linked rings no longer affect whether or not\n\
+        the linking bond is rotatable\n\
+      - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
+         considered non-rotatable";
+#endif
+  
   python::def(
-      "CalcNumRotatableBonds", RDKit::Descriptors::calcNumRotatableBonds,
-      (python::arg("mol"), python::arg("strict") = true), docString.c_str());
+      "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&,
+                                                 RDKit::Descriptors::NumRotatableBondsOptions))
+                                RDKit::Descriptors::calcNumRotatableBonds,
+      (python::arg("mol"),
+       python::arg("strict") = RDKit::Descriptors::Default),
+      docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
 
+  
   docString = "returns the number of rings for a molecule";
   python::def("CalcNumRings", RDKit::Descriptors::calcNumRings,
               (python::arg("mol")), docString.c_str());

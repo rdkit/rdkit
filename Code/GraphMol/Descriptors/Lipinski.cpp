@@ -92,9 +92,25 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
   return res;
 }
 
-const std::string NumRotatableBondsVersion = "2.0.0";
-unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
-  if (strict) {
+namespace {
+#ifdef RDK_USE_STRICT_ROTOR_DEFINITION
+const NumRotatableBondsOptions DefaultStrictDefinition = Strict;
+#else
+const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
+#endif
+}
+
+const std::string NumRotatableBondsVersion = "3.0.0";
+unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
+  if (strict == Default)
+    strict = DefaultStrictDefinition;
+  
+  if (strict == NonStrict) {
+    std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
+    pattern_flyweight m(pattern);
+    return m.get().countMatches(mol);
+  }
+  else if (strict==Strict) {
     std::string strict_pattern =
         "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
         "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
@@ -104,10 +120,62 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
     pattern_flyweight m(strict_pattern);
     return m.get().countMatches(mol);
   } else {
-    std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
-    pattern_flyweight m(pattern);
-    return m.get().countMatches(mol);
+    // Major changes in definition relative to the original GPS calculator:
+    //   Bonds linking ring systems:
+    //     - Single bonds between aliphatic ring Cs are always rotatable. This
+    //     means that the
+    //       central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now considered
+    //       rotatable; it was not
+    //       before.
+    //     - Heteroatoms in the linked rings no longer affect whether or not the
+    //     linking bond
+    //       is rotatable
+    //     - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now
+    //     considered
+    //       non-rotatable
+    pattern_flyweight rotBonds_matcher("[!$([D1&!#1])]-!@[!$([D1&!#1])]");
+    pattern_flyweight nonRingAmides_matcher("[C&!R](=O)NC");
+    pattern_flyweight symRings_matcher(
+        "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)]");
+    pattern_flyweight terminalTripleBonds_matcher("C#[#6,#7]");
+
+    std::vector<MatchVectType> matches;
+
+    // initialize to the number of bonds matching the base pattern:
+    int res = rotBonds_matcher.get().countMatches(mol);
+
+    // remove symmetrical rings:
+    res -= symRings_matcher.get().countMatches(mol);
+    if (res < 0) res = 0;
+
+    // remove triple bonds
+    res -= terminalTripleBonds_matcher.get().countMatches(mol);
+    if (res < 0) res = 0;
+
+    // removing amides is more complex
+    boost::dynamic_bitset<> atomsSeen(mol.getNumAtoms());
+    SubstructMatch(mol, *(nonRingAmides_matcher.get().getMatcher()), matches);
+    BOOST_FOREACH (const MatchVectType &iv, matches) {
+      bool distinct = true;
+      for (MatchVectType::const_iterator mIt = iv.begin(); mIt != iv.end();
+           ++mIt) {
+        if (atomsSeen[mIt->second]) {
+          distinct = false;
+        }
+        atomsSeen.set(mIt->second);
+      }
+      if (distinct && res > 0) --res;
+    }
+
+    if (res < 0) res = 0;
+    return static_cast<unsigned int>(res);
   }
+}
+
+unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
+  return calcNumRotatableBonds(mol,
+                               (strict) ? Strict
+                                        : NonStrict );
 }
 
 // SMARTSCOUNTFUNC(NumHBD,
