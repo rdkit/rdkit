@@ -107,6 +107,26 @@ endif(WIN32 AND NOT UNIX)
 if(NOT EXISTS ${PGREGRESS_BINARY})
   message(FATAL_ERROR "${PGREGRESS_BINARY} does not exist")
 endif()
+
+macro (run_pgregress arg var)
+  execute_process(COMMAND ${PGREGRESS_BINARY} ${arg}
+                  OUTPUT_VARIABLE ${var}
+                  ERROR_VARIABLE ${var}
+                  OUTPUT_STRIP_TRAILING_WHITESPACE
+                  ERROR_STRIP_TRAILING_WHITESPACE)
+endmacro ()
+set(PGREGRESS_BINDIR_SWITCH "")
+foreach(opt "bindir" "psqldir")
+  run_pgregress("--${opt}" err)
+  if (${err} MATCHES "option requires an argument")
+    set(PGREGRESS_BINDIR_SWITCH ${opt})
+    break()
+  endif()
+endforeach()
+if (NOT ${PGREGRESS_BINDIR_SWITCH} STREQUAL "")
+  set(PGREGRESS_BINDIR_SWITCH "--${PGREGRESS_BINDIR_SWITCH}=\"${PG_BINDIR}\"")
+endif()
+
 set(testPgSQLName "${CMAKE_CURRENT_BINARY_DIR}/pgsql_regress")
 set(installPgSQLName "${CMAKE_CURRENT_BINARY_DIR}/pgsql_install")
 set(PG_CURRENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
@@ -118,7 +138,6 @@ if(WIN32 AND NOT UNIX)
   set(installCopyCommand "copy /Y")
   set(PG_RDKIT_LIB_SRC "${EXTENSION}.dll")
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.dll")
-  set(PGREGRESS_BINDIR_SWITCH "bindir")
   string(REGEX REPLACE "/" "\\\\" PG_CURRENT_SOURCE_DIR ${PG_CURRENT_SOURCE_DIR})
   string(REGEX REPLACE "/" "\\\\" PG_CURRENT_BINARY_DIR ${PG_CURRENT_BINARY_DIR})
   string(REGEX REPLACE "/" "\\\\" PG_PKGLIBDIR ${PG_PKGLIBDIR})
@@ -129,11 +148,10 @@ else(WIN32 AND NOT UNIX)
   set(installCopyCommand "cp")
   set(PG_RDKIT_LIB_SRC "${EXTENSION_PREFIX}${EXTENSION}.so")
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.so")
-  set(PGREGRESS_BINDIR_SWITCH "psqldir")
 endif(WIN32 AND NOT UNIX)
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
-    "--${PGREGRESS_BINDIR_SWITCH}=\"${PG_BINDIR}\" rdkit-91 "
+    "${PGREGRESS_BINDIR_SWITCH} rdkit-91 "
     "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction "
     "${avalonRegress} ${inchiRegress}\n")
 file(STRINGS ${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control
