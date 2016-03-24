@@ -1,16 +1,23 @@
-# adapted from http://conda.pydata.org/docs/travis.html
-language: python
-python:
- # We don't actually use the Travis Python, but this keeps it organized.
- - "2.7"
- - "3.4"
-
-# switch to new infrastructure
 sudo: false
 
+# build matrices
+os:
+   - linux
+   - osx
+   
+env:
+   - CONDA_PYTHON_VERSION=2.7
+   - CONDA_PYTHON_VERSION=3.4
+      
 before_install:
  # download and install miniconda
- - wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh;
+ - echo "*************************************************"
+ - echo "Building for $TRAVIS_OS_NAME"
+ - echo "         for Python $CONDA_PYTHON_VERSION"
+ - export PYMAJOR="";
+ - if [[ "$CONDA_PYTHON_VERSION" == "3.4" ]] ; then export PYMAJOR="3"; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-3.5.5-MacOSX-x86_64.sh -O miniconda.sh; fi 
  - bash miniconda.sh -b -p $HOME/conda
  - export PATH="$HOME/conda/bin:$PATH"
  - hash -r
@@ -18,10 +25,6 @@ before_install:
  - conda update -q conda
  # Useful for debugging any issues with conda
  - conda info -a
-
- # create and activate the build/test environment
- - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION pip cmake
- - source activate tenv
 
 # additional .debs we need:
 addons:
@@ -33,21 +36,34 @@ addons:
     - libjpeg-dev
 
 install:
- - conda install -q numpy pillow pandas # matplotlib
+ - export PATH="$HOME/conda/bin:$PATH"
+ - conda install -q cmake numpy pillow pandas # matplotlib
  
  # install the conda boost packages from the RDKit binstar channel.
- - conda install -q -c rdkit boost=1.55.0
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.55.0 ; fi
 
-
+ # get working boost libs
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "2.7" ]]; then wget https://www.dropbox.com/s/m36rxjzu5e004aj/boost-1.58.0-py27_3.tar.bz2?dl=0 -O boost-1.56.0-py27_3.tar.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "3.4" ]]; then wget https://www.dropbox.com/s/ctkbldogu2r5zcp/boost-1.58.0-py34_3.tar.bz2?dl=0 -O boost-1.56.0-py34_3.tar.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "2.7" ]]; then conda install boost-1.56.0-py27_3.tar.bz2 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CONDA_PYTHON_VERSION" == "3.4" ]]; then conda install boost-1.56.0-py34_3.tar.bz2 ; fi
+ # get swig 3?
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q -c https://conda.anaconda.org/anaconda swig=3.0.8 ; fi
+ 
 before_script:
  # RDKit
+ - export PATH="$HOME/conda/bin:$PATH"
  - export RDBASE=`pwd`
  - echo $RDBASE
  - export PYTHONPATH=${RDBASE}
  - export LD_LIBRARY_PATH=${RDBASE}/lib
+ - export DYLD_LIBRARY_PATH=${RDBASE}/lib
 
+ # get junit for java testing
  - mkdir $RDBASE/External/java_lib
  - wget http://search.maven.org/remotecontent?filepath=junit/junit/4.10/junit-4.10.jar -O $RDBASE/External/java_lib/junit.jar
+ - echo "*********************************************************" 
+ - echo "RDBASE"
  - ls -l $RDBASE/External/java_lib
 
  - mkdir $RDBASE/External/AvalonTools/distrib
@@ -55,24 +71,76 @@ before_script:
  - cd $RDBASE/External/AvalonTools/distrib
  - tar xf AvalonToolkit_1.2.0.source.tar
  - ls -l $RDBASE/External/AvalonTools/distrib
- 
- - export PYTHON=`which python`
- - echo $PYTHON
- - export PY_PREFIX=`$PYTHON -c "import sys; print(sys.prefix)"`
- - echo $PY_PREFIX
- - export PY_SP_DIR=$PY_PREFIX/lib/python$TRAVIS_PYTHON_VERSION/site-packages
- - echo $PY_SP_DIR
 
 
 script:
+ # setup env
+ - export PATH="$HOME/conda/bin:$PATH"
+ #- source activate tenv
+ - export PYTHON=`which python`
+ - echo $PYTHON
+ - export PY_PREFIX=`$PYTHON -c "import sys; print(sys.prefix)"`
+ - echo "*********************************************************"
+ - echo "PY_PREFIX" 
+ - echo $PY_PREFIX
+ - export PY_SP_DIR=$PY_PREFIX/lib/python$CONDA_PYTHON_VERSION/site-packages
+ - echo "*********************************************************"
+ - echo "PY SP DIR"
+ - echo "$PY_SP_DIR"
+ - echo "*********************************************************"
+ - echo "RDBASE"
+ - echo "$RDBASE"
  - cd $RDBASE
+ - env
  - mkdir build
  - cd build
- - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D AVALONTOOLS_DIR=$RDBASE/External/AvalonTools/distrib/SourceDistribution -D RDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on ..
+ - ls $PYTHON
+ - if [ ! -e $PYTHON ]; then echo "=== FATAL CAN'T FIND libpython"; fi
+
+ # find dependent libraries
+ - export NUMPY="$PY_SP_DIR/numpy/core/include"
+ - export PYINC="$PY_PREFIX/include/python$CONDA_PYTHON_VERSION"
+ - export AVALON="$RDBASE/External/AvalonTools/distrib/SourceDistribution"
+
+ # silly fix for python3 header files
+ - if [[ ! -e $PYINC ]] ; then export export PYINC="$PY_PREFIX/include/python$CONDA_PYTHON_VERSION"m ; fi
+ 
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PYTHON_LIBRARY=`find $PY_PREFIX/lib -name "libpython$CONDA_PYTHON_VERSION*.so"` ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHON_LIBRARY=`find $PY_PREFIX/lib -name "libpython$CONDA_PYTHON_VERSION*.dylib"` ; fi
+
+ # check to see if they exist
+ - if [ ! -e "$NUMPY" ]; then echo "=== FATAL CAN'T FIND NUMPY $NUMPY"; fi
+ - if [ ! -e "$AVALON" ] ; then echo "=== FATAL Can't find Avalon tools $AVALON"; fi
+ - if [ ! -e "$PYTHON_LIBRARY" ] ; then echo "=== FATAL Can't find python library $PYTHON_LIBRARY"; fi
+ - if [ ! -e "$PYINC" ] ; then echo "=== FATAL Can't find python library $PYINC"; fi
+
+ # run cmake 
+ - echo "cmake -D Python_ADDITIONAL_VERSIONS=$CONDA_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=$PYTHON_LIBRARY -D PYTHON_INCLUDE_DIR=$PYINC -D PYTHON_NUMPY_INCLUDE_PATH=$NUMPY -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D AVALONTOOLS_DIR=$AVALON -D RDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on .."
+ - cmake -D Python_ADDITIONAL_VERSIONS=$CONDA_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=$PYTHON_LIBRARY -D PYTHON_INCLUDE_DIR=$PYINC -D PYTHON_NUMPY_INCLUDE_PATH=$NUMPY -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D AVALONTOOLS_DIR=$AVALON -D RDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on ..
  - cat CMakeCache.txt # useful for debugging/troubleshooting
 
- - make -j2
- - make install
- - ls "$PREFIX/lib"
+ # building/install/test
+ - echo "SRC DIR"
+ - echo $SRC_DIR
+ - export SRC_DIR=`pwd`/..
+ - export PREFIX=`pwd`
+
+ - if [ ! -e $SRC_DIR ] ; then echo "Could not find source location $SRC_DIR"; fi
+ 
+ - echo "***********************************"
+ - echo "SRC_DIR"
+ - echo "$SRC_DIR/lib"
+ - echo "***********************************"
+ - echo "PREFIX"
+ - echo "$PREFIX/lib"
  - ls "$PY_PREFIX/lib"
- - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" ctest -j2 --output-on-failure
+ - echo "***********************************"
+ - echo "PY_PREFIX"
+ - echo "$PREFIX/lib"
+
+ - make -j2 && make install && touch rdkit.built
+ 
+ # have to set these after the fact to due conflict on osx with libJPEG
+ - export LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib:$SRC_DIR/lib:$LD_LIBRARY_PATH" 
+ - export DYLD_FALLBACK_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib:$SRC_DIR/lib:$DYLD_LIBRARY_PATH"
+ - if [ -e rdkit.built ] ; then ctest -j2 --output-on-failure ; fi
