@@ -18,7 +18,10 @@ from rdkit import RDConfig
 import unittest,os
 from rdkit.six.moves import cPickle
 from rdkit import Chem
-from rdkit.Chem import Lipinski
+from rdkit.Chem import Lipinski, rdMolDescriptors
+
+NonStrict = "NUM_ROTATABLEBONDS_O"
+Strict    = "NUM_ROTATABLEBONDS"
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -26,6 +29,13 @@ class TestCase(unittest.TestCase):
     self.inFileName = '%s/NCI/first_200.props.sdf'%(RDConfig.RDDataDir)
   def test1(self):
     " testing first 200 mols from NCI "
+    # figure out which rotor version we are using
+    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
+    if Lipinski.NumRotatableBonds(m) == 2:
+      rot_prop = NonStrict
+    else:
+      rot_prop = Strict
+    
     suppl = Chem.SDMolSupplier(self.inFileName)
     idx = 1
     oldDonorSmarts = Chem.MolFromSmarts('[NH1,NH2,OH1]')
@@ -55,8 +65,18 @@ class TestCase(unittest.TestCase):
         assert calc==orig,'bad num heteroatoms for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
 
         calc = Lipinski.NumRotatableBonds(m)
-        orig = int(m.GetProp('NUM_ROTATABLEBONDS'))
+        orig = int(m.GetProp(rot_prop))
         assert calc==orig,'bad num rotors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
+
+        # test the underlying numrotatable bonds
+        calc = rdMolDescriptors.CalcNumRotatableBonds(m, rdMolDescriptors.NumRotatableBondsOptions.NonStrict)
+        orig = int(m.GetProp(NonStrict))
+        assert calc==orig,'bad num rotors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
+        
+        calc = rdMolDescriptors.CalcNumRotatableBonds(m, rdMolDescriptors.NumRotatableBondsOptions.Strict)
+        orig = int(m.GetProp(Strict))
+        assert calc==orig,'bad num rotors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
+        
       idx += 1
 
   def testIssue2183420(self):

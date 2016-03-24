@@ -20,6 +20,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import Lipinski
 import numpy as np
 
 def feq(n1,n2,tol=1e-4):
@@ -60,6 +61,12 @@ class TestCase(unittest.TestCase):
       self.assertEqual(actual,expected)
   def testMQNDetails(self):
     refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','MQNs_regress.pkl')
+    refFile2 = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','MQNs_non_strict_regress.pkl')
+    # figure out which definition we are currently using
+    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
+    if Lipinski.NumRotatableBonds(m) == 2:
+      refFile = refFile2
+
     with open(refFile,'r') as intf:
       buf = intf.read().replace('\r\n', '\n').encode('utf-8')
       intf.close()
@@ -68,18 +75,30 @@ class TestCase(unittest.TestCase):
     refData  = cPickle.loads(pkl,encoding='bytes')
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
+    refData2 = []
     for i,m in enumerate(ms):
-      mqns = rdMolDescriptors.MQNs_(m) 
+      mqns = rdMolDescriptors.MQNs_(m)
+      refData2.append((m, mqns))
       if mqns!=refData[i][1]:
         indices=[(j,x,y) for j,x,y in zip(range(len(mqns)),mqns,refData[i][1]) if x!=y]
-        print(Chem.MolToSmiles(m),indices)
+        print(i, Chem.MolToSmiles(m),indices)
       self.assertEqual(mqns,refData[i][1])
+      
   def testMQN(self):
-    tgt = np.array([42917,   274,   870,   621,   135,  1582,    29,  3147,  5463,
-        6999,   470,    62588, 19055,  4424,   309, 24061, 17820,     1,
-        8314, 24146, 16076,  5560,  4262,   646,   746, 13725,  5430,
-        2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
-          31,     9,     1,     2,  3060,  1750])
+    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
+    if Lipinski.NumRotatableBonds(m) == 2:
+      tgt = np.array([42917, 274, 870, 621, 135, 1582,  29, 3147, 5463,
+                      6999, 470, 62588, 19055, 4424, 309, 24061, 17820,   1,
+                      9303, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430,
+                      2629, 362, 24211, 15939, 292,  41,  20, 1852, 5642,
+                      31,   9,   1,   2, 3060, 1750])
+    else:
+      tgt = np.array([42917,   274,   870,   621,   135,  1582,    29,  3147,  5463,
+                      6999,   470,    62588, 19055,  4424,   309, 24061, 17820,     1,
+                      8314, 24146, 16076,  5560,  4262,   646,   746, 13725,  5430,
+                      2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
+                      31,     9,     1,     2,  3060,  1750])
+      
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
     vs = np.zeros((42,),np.int32)

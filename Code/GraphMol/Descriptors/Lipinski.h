@@ -29,15 +29,33 @@ const std::string lipinskiHBDVersion = "2.0.0";
 // bonds)
 unsigned int calcLipinskiHBD(const ROMol &mol);
 
+enum NumRotatableBondsOptions {
+  Default        = -1,
+  NonStrict      = 0,
+  Strict         = 1,
+  StrictLinkages = 2,
+};
+
 extern const std::string NumRotatableBondsVersion;
 //! calculates the number of rotatable bonds
 /*!
   \param mol           the molecule of interest
-  \param strict        if set, a stricter definition of rotable bonds is used
-                       this excludes amides, esters, etc.
+  \param strict        if Strict, a stricter definition of rotable bonds is used
+                           this excludes amides, esters, etc.
+                       if StrictLinkages, a much stricter definition that
+                           handles rotatable bonds between rings as well.
+                       if Default - uses the default choice (normally Strict)
 */
 unsigned int calcNumRotatableBonds(const ROMol &mol,
-                                   bool useStrictDefinition = true);
+                                   NumRotatableBondsOptions useStrictDefinition=Default);
+
+//! calculates the number of rotatable bonds ( backwards compatibility function,
+//!  deprecated, please use calcNumRotatableBonds(const ROMol&, int)
+/*!
+  \param mol           the molecule of interest
+  \param strict        if Strict == true, uses NumRotatableBondsOptions::Strict
+*/
+unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict);
 
 extern const std::string NumHBDVersion;
 //! calculates the number of H-bond donors
