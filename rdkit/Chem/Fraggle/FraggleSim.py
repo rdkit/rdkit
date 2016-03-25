@@ -104,7 +104,7 @@ def is_ring_cut_valid(smi):
             valid = True
 
     return valid,atom_count
-    
+
 
 def select_fragments(f_smi,ftype,hac):
 
@@ -305,7 +305,7 @@ def generate_fraggle_fragmentation(mol):
 #	If marked atom in ring - turn all atoms in that ring to * (aromatic) or Sc (aliphatic)
 #	For each marked atom
 #		If aromatic turn to a *
-#		If aliphatic turn to a Sc 
+#		If aliphatic turn to a Sc
 #
 # Return modified smiles
 def atomContrib(subs,mol,tverskyThresh=0.8):
@@ -319,7 +319,7 @@ def atomContrib(subs,mol,tverskyThresh=0.8):
         modifiedFP.SetBitsFromList(aBits[atomID])
 
         tverskySim = DataStructs.TverskySimilarity(subsFp,modifiedFP,0,1)
- 
+
         if(tverskySim < tverskyThresh):
             #print "%i %s: %f" % (atomID+1, pMol.GetAtomWithIdx(atomID).GetSymbol(), tverskySim)
             marked[atomID] = 1
@@ -335,7 +335,7 @@ def atomContrib(subs,mol,tverskyThresh=0.8):
     subsFp = Chem.RDKFingerprint(qsMol, **rdkitFpParams)
 
     #loop through atoms of smiles and mark
-    for atom in pMol.GetAtoms():           
+    for atom in pMol.GetAtoms():
         #store atoms to change
         partialFP(atom.GetIdx(),tverskyThresh)
 
@@ -373,7 +373,7 @@ def atomContrib(subs,mol,tverskyThresh=0.8):
                 #pMol.GetAtomWithIdx(key).SetAtomicNum(6)
 
         try:
-            Chem.SanitizeMol(pMol)
+            Chem.SanitizeMol(pMol,sanitizeOps=Chem.SANITIZE_ALL^Chem.SANITIZE_KEKULIZE^Chem.SANITIZE_SETAROMATICITY)
         except Exception:
             sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
             pMol = Chem.Mol(mol.ToBinary())
@@ -421,22 +421,22 @@ def GetFraggleSimilarity(queryMol,refMol,tverskyThresh=0.8):
     >>> sim
     0.980...
     >>> match
-    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'    
+    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'
 
     >>> m = Chem.MolFromSmiles('COc1cc(CN2CCC(Nc3nc4ccccc4s3)CC2)c(OC)c2ccccc12')
     >>> sim,match = GetFraggleSimilarity(q,m)
     >>> sim
     0.794...
     >>> match
-    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'    
+    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'
 
     >>> q = Chem.MolFromSmiles('COc1ccccc1')
     >>> sim,match = GetFraggleSimilarity(q,m)
     >>> sim
     0.347...
     >>> match
-    '[*]c1ccccc1'    
- 
+    '[*]c1ccccc1'
+
     """
     if hasattr(queryMol,'_fraggleDecomp'):
         frags = queryMol._fraggleDecomp
@@ -452,8 +452,8 @@ def GetFraggleSimilarity(queryMol,refMol,tverskyThresh=0.8):
             result=fragsim
             bestMatch=frag
     return result,bestMatch
-        
-    
+
+
 
 #------------------------------------
 #
@@ -468,4 +468,3 @@ if __name__ == '__main__':
   import sys
   failed,tried = _test()
   sys.exit(failed)
-
