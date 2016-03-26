@@ -72,11 +72,11 @@ void test1MolWithQueryAlign() {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/1oir.mol";
   RWMol *m1 = new RWMol(*MolFileToMol(fname1));
-  auto a1 = new QueryAtom(6);
+  QueryAtom *a1 = new QueryAtom(6);
   std::string fname2 =
       rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_conf.mol";
   RWMol *m2 = new RWMol(*MolFileToMol(fname2));
-  auto a2 = new QueryAtom(6);
+  QueryAtom *a2 = new QueryAtom(6);
 
   // we replace the same nitrogen instead with a null
   // query  28 and 19 are the "same" atoms
