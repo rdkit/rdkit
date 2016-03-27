@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2011  greg Landrum 
+#  Copyright (C) 2011  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
       os.unlink(fn)
     except Exception:
       pass
-    
+
   def testAggFile(self):
     try:
       from rdkit.Chem.Draw.aggCanvas import Canvas
@@ -92,7 +92,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(img)
     self.assertEqual(img.size[0],300)
     self.assertEqual(img.size[1],300)
-    
+
   def testAggImage(self):
     try:
       from rdkit.Chem.Draw.aggCanvas import Canvas
@@ -139,7 +139,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(img)
     self.assertEqual(img.size[0],300)
     self.assertEqual(img.size[1],300)
-    
+
   def testAggImageDash(self):
     try:
       from rdkit.Chem.Draw.aggCanvas import Canvas
@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
     img = Draw.MolToImage(mol)
     self.assertTrue(img)
-    
+
   def testGithubIssue86(self):
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
     for b in mol.GetBonds():
@@ -189,10 +189,20 @@ class TestCase(unittest.TestCase):
     nbds = [x.GetBondDir() for x in mol.GetBonds()]
     self.assertEqual(obds,nbds)
 
-    
+  def testGridSVG(self):
+    mols = [Chem.MolFromSmiles('NC(C)C(=O)'*x) for x in range(10)]
+    legends = ['mol-%d'%x for x in range(len(mols))]
+    svg = Draw.MolsToGridImage(mols,legends=legends,molsPerLine=3,subImgSize=(200,200),useSVG=True)
+    self.assertTrue(svg.find("width='600px' height='800px'"))
+    svg = Draw.MolsToGridImage(mols,legends=legends,molsPerLine=4,subImgSize=(200,200),useSVG=True)
+    self.assertTrue(svg.find("width='800px' height='600px'"))
+    svg = Draw.MolsToGridImage(mols,legends=legends,molsPerLine=3,subImgSize=(300,300),useSVG=True)
+    self.assertTrue(svg.find("width='900px' height='1200px'"))
 
 
-    
+
+
+
+
 if __name__ == '__main__':
   unittest.main()
-
