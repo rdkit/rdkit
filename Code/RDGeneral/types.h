@@ -70,7 +70,6 @@ extern const std::string _QueryIsotope;
 extern const std::string _QueryMass;
 extern const std::string _ReactionDegreeChanged;
 extern const std::string _RingClosures;
-extern const std::string _RingChiralityReversed;
 extern const std::string _SLN_s;
 extern const std::string _SmilesStart;
 extern const std::string _StereochemDone;

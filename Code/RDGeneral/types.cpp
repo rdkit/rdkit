@@ -43,7 +43,6 @@ const std::string _QueryIsotope = "_QueryIsotope";
 const std::string _QueryMass = "_QueryMass";
 const std::string _ReactionDegreeChanged = "_ReactionDegreeChanged";
 const std::string _RingClosures = "_RingClosures";
-const std::string _RingChiralityReversed = "_RingChiralityReversed";
 const std::string _SLN_s = "_SLN_s";
 const std::string _SmilesStart = "_SmilesStart";
 const std::string _StereochemDone = "_StereochemDone";
