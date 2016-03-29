@@ -16,6 +16,7 @@ class RWMol;
 class Atom;
 }
 namespace SmilesParseOps {
+void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp);
 void ReportParseError(const char *message, bool throwIt = true);
 void CleanupAfterParseError(RDKit::RWMol *mol);
 void AddFragToMol(RDKit::RWMol *mol, RDKit::RWMol *frag,

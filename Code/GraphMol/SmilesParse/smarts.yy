@@ -12,8 +12,8 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>  
-#include <GraphMol/SmilesParse/SmilesParseOps.h>  
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <RDGeneral/RDLog.h>
 
 #define YYDEBUG 1
@@ -41,13 +41,13 @@ namespace {
  }
 }
 %}
- 
+
 %define api.pure
 %lex-param   {yyscan_t *scanner}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {void *scanner}
- 
+
 %union {
   int                      moli;
   RDKit::QueryAtom * atom;
@@ -61,10 +61,10 @@ namespace {
 %token <atom> RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN HYB_TOKEN
 %token <ival> ZERO_TOKEN NONZERO_DIGIT_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
-%token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN 
+%token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN
 %token CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
-%token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN 
+%token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
 %token COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
@@ -96,7 +96,7 @@ cmpd: mol
 | error EOS_TOKEN{
   yyclearin;
   yyerrok;
-  
+
   yyErrorCleanup(molList);
   YYABORT;
 }
@@ -120,7 +120,7 @@ mol: atomd {
   int atomIdx2=mp->addAtom($2,true,true);
 
   QueryBond *newB;
-  // this is a bit of a hack to try and get nicer "SMILES" from 
+  // this is a bit of a hack to try and get nicer "SMILES" from
   // a SMARTS molecule:
   if(!(a1->getIsAromatic() && $2->getIsAromatic())){
     newB = new QueryBond(Bond::SINGLE);
@@ -172,7 +172,7 @@ mol: atomd {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
 
-  // this is a bit of a hack to try and get nicer "SMILES" from 
+  // this is a bit of a hack to try and get nicer "SMILES" from
   // a SMARTS molecule:
   QueryBond * newB;
   if(!atom->getIsAromatic()){
@@ -190,8 +190,10 @@ mol: atomd {
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
-
   mp->setAtomBookmark(atom,$2);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   if(atom->hasProp(RDKit::common_properties::_RingClosures)){
     atom->getProp(RDKit::common_properties::_RingClosures,tmp);
@@ -208,8 +210,10 @@ mol: atomd {
   mp->setBondBookmark($2,$3);
   $2->setOwningMol(mp);
   $2->setBeginAtomIdx(atom->getIdx());
-
   mp->setAtomBookmark(atom,$3);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   if(atom->hasProp(RDKit::common_properties::_RingClosures)){
     atom->getProp(RDKit::common_properties::_RingClosures,tmp);
@@ -231,7 +235,7 @@ mol: atomd {
   }
 }
 
-; 
+;
 
 /* --------------------------------------------------------------- */
 branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
@@ -402,7 +406,7 @@ atom_query:	simple_atom
   newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
   $$=newQ;
 }
-| HYB_TOKEN 
+| HYB_TOKEN
 | number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery($1));
@@ -503,7 +507,7 @@ ring_number:  digit
 
 /* --------------------------------------------------------------- */
 number:  ZERO_TOKEN
-| nonzero_number 
+| nonzero_number
 ;
 
 /* --------------------------------------------------------------- */
@@ -516,5 +520,3 @@ digit: NONZERO_DIGIT_TOKEN
 ;
 
 %%
-
-

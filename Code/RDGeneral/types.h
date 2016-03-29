@@ -250,7 +250,7 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res,
            const INT_VECT *exclude = NULL);
 
 //! given a current combination of numbers change it to the next possible
-//combination
+// combination
 /*!
   \param comb the <b>sorted</b> vector to consider
   \param tot the maximum number possible in the vector
