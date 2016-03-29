@@ -1494,7 +1494,8 @@ void testGithubIssue429() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing github issue 429: fragmentOnSomeBonds() "
                           "should update implicit H count on aromatic "
-                          "heteroatoms when addDummies is False" << std::endl;
+                          "heteroatoms when addDummies is False"
+                       << std::endl;
 
   {
     std::string smi = "c1cccn1CC1CC1";
@@ -1528,7 +1529,8 @@ void testGithubIssue429() {
 void testGithubIssue430() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing github issue 430: fragmentOnSomeBonds() "
-                          "crashes if bond list is empty" << std::endl;
+                          "crashes if bond list is empty"
+                       << std::endl;
 
   {
     std::string smi = "c1cccn1CC1CC1";
@@ -1554,6 +1556,79 @@ void testGithubIssue430() {
     MolFragmenter::fragmentOnSomeBonds(*mol, bindices, frags, 0, false);
     TEST_ASSERT(frags.size() == 0);
     delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGithubIssue511() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 511: FragmentOnBonds() "
+                          "producing incorrect chirality"
+                       << std::endl;
+
+  {  // start with an example with no ring bonds... just to dodge that
+     // complication
+    std::string smi = "CO[C@](CC)(C)N";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 7)
+    std::vector<unsigned int> bindices;
+    bindices.push_back(1);
+    ROMol *frags = MolFragmenter::fragmentOnBonds(*mol, bindices, true);
+    TEST_ASSERT(frags->getNumAtoms() == 9);
+
+    std::string csmi1 = MolToSmiles(*mol, true);
+    std::cerr << csmi1 << std::endl;
+
+    TEST_ASSERT(csmi1 == "CC[C@@](C)(N)OC");
+    std::string csmi2 = MolToSmiles(*frags, true);
+    // std::cerr << csmi2 << std::endl;
+    TEST_ASSERT(csmi2 == "[1*][C@](C)(N)CC.[2*]OC");
+
+    delete mol;
+    delete frags;
+  }
+
+  {  // Steve's original bug report
+    std::string smi = "CO[C@]1(C)NCC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 7)
+    std::vector<unsigned int> bindices;
+    bindices.push_back(1);
+    ROMol *frags = MolFragmenter::fragmentOnBonds(*mol, bindices, true);
+    TEST_ASSERT(frags->getNumAtoms() == 9);
+
+    std::string csmi1 = MolToSmiles(*mol, true);
+    TEST_ASSERT(csmi1 == "CO[C@@]1(C)CCN1");
+    std::string csmi2 = MolToSmiles(*frags, true);
+    // std::cerr << csmi2 << std::endl;
+    TEST_ASSERT(csmi2 == "[1*][C@@]1(C)CCN1.[2*]OC");
+
+    delete mol;
+    delete frags;
+  }
+
+  {  // further complicated by adding stereochem on both sides
+    std::string smi = "C[C@](O)(F)[C@@]1(C)CCN1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 9)
+    std::vector<unsigned int> bindices;
+    bindices.push_back(3);
+    ROMol *frags = MolFragmenter::fragmentOnBonds(*mol, bindices, true);
+    TEST_ASSERT(frags->getNumAtoms() == 11);
+
+    std::string csmi1 = MolToSmiles(*mol, true);
+    // std::cerr << csmi1 << std::endl;
+    TEST_ASSERT(csmi1 == "C[C@](O)(F)[C@@]1(C)CCN1");
+    std::string csmi2 = MolToSmiles(*frags, true);
+    // std::cerr << csmi2 << std::endl;
+    TEST_ASSERT(csmi2 == "[1*][C@@]1(C)CCN1.[4*][C@@](C)(O)F");
+
+    delete mol;
+    delete frags;
   }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1589,11 +1664,12 @@ int main() {
 
   testFragmentOnBonds();
   testFragmentOnBRICSBonds();
-#endif
   testFragmentOnSomeBonds();
   // benchFragmentOnBRICSBonds();
   testGithubIssue429();
   testGithubIssue430();
+#endif
+  testGithubIssue511();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

@@ -353,6 +353,26 @@ void fragmentOnSomeBonds(
   delete bondTypesHere;
 }
 
+namespace {
+void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
+                            const Bond *bond) {
+  INT_LIST newOrder;
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(oAt);
+  while (beg != end) {
+    const BOND_SPTR obond = mol[*beg];
+    ++beg;
+    if (obond.get() == bond) {
+      continue;
+    }
+    newOrder.push_back(obond->getIdx());
+  }
+  newOrder.push_back(bond->getIdx());
+  unsigned int nSwaps = oAt->getPerturbationOrder(newOrder);
+  if (nSwaps % 2) nAt->invertChirality();
+}
+}
+
 ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     bool addDummies,
@@ -402,6 +422,24 @@ ROMol *fragmentOnBonds(
       res->addBond(eidx, at1->getIdx(), bT);
       unsigned int idx2 = res->addAtom(at2, false, true);
       res->addBond(bidx, at2->getIdx(), bT);
+
+      // figure out if we need to change the stereo tags on the atoms:
+      if (mol.getAtomWithIdx(bidx)->getChiralTag() ==
+              Atom::CHI_TETRAHEDRAL_CCW ||
+          mol.getAtomWithIdx(bidx)->getChiralTag() ==
+              Atom::CHI_TETRAHEDRAL_CW) {
+        checkChiralityPostMove(mol, mol.getAtomWithIdx(bidx),
+                               res->getAtomWithIdx(bidx),
+                               mol.getBondBetweenAtoms(bidx, eidx));
+      }
+      if (mol.getAtomWithIdx(eidx)->getChiralTag() ==
+              Atom::CHI_TETRAHEDRAL_CCW ||
+          mol.getAtomWithIdx(eidx)->getChiralTag() ==
+              Atom::CHI_TETRAHEDRAL_CW) {
+        checkChiralityPostMove(mol, mol.getAtomWithIdx(eidx),
+                               res->getAtomWithIdx(eidx),
+                               mol.getBondBetweenAtoms(bidx, eidx));
+      }
 
       for (ROMol::ConformerIterator confIt = res->beginConformers();
            confIt != res->endConformers(); ++confIt) {
@@ -485,9 +523,11 @@ ROMol *fragmentOnBonds(const ROMol &mol,
 }
 
 boost::flyweight<std::vector<FragmenterBondType>,
-                 boost::flyweights::no_tracking> bondPatterns;
+                 boost::flyweights::no_tracking>
+    bondPatterns;
 boost::flyweight<std::map<unsigned int, ROMOL_SPTR>,
-                 boost::flyweights::no_tracking> atomEnvs;
+                 boost::flyweights::no_tracking>
+    atomEnvs;
 ROMol *fragmentOnBRICSBonds(const ROMol &mol) {
   if (bondPatterns.get().size() == 0) {
     std::map<unsigned int, std::string> adefs;
