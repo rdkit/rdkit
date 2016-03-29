@@ -1,60 +1,77 @@
+
 if(RDK_BUILD_AVALON_SUPPORT)
-string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
-set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
+  if (AVALONTOOLS_DIR)
+    string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
+    set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
+  else (AVALONTOOLS_DIR)
+    set(AVALON_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/distrib/common )
+  endif(AVALONTOOLS_DIR)
 
-add_definitions(-DBUILD_AVALON_SUPPORT)
-if (MSVC)
-  add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
-endif(MSVC)
+  # check whether we have the Avalon source in a standard place
+  if(EXISTS ${AVALON_SRC_PATH}/layout.c)
+    message(STATUS  "Found Avalon software in ${AVALON_SRC_PATH}")
+  else()
+      # Avalon source is missing
+      message(WARNING  "** NO AVALON SOFTWARE FOUND\n"
+              "Avalon support will be turned off. If you want to add Avalon support, please follow the instructions inside $RDBASE/External/AvalonTools/README to download a copy of the source code and then rerun cmake.")
+      set(RDK_BUILD_AVALON_SUPPORT OFF)
+  endif()
+endif(RDK_BUILD_AVALON_SUPPORT)
 
-set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c 
-	${AVALON_SRC_PATH}/symboltable.c 
-	${AVALON_SRC_PATH}/patclean.c 
-	${AVALON_SRC_PATH}/utilities.c
-	${AVALON_SRC_PATH}/symbol_lists.c
-	${AVALON_SRC_PATH}/stereo.c
-	${AVALON_SRC_PATH}/set.c
-	${AVALON_SRC_PATH}/perceive.c 
-	${AVALON_SRC_PATH}/local.c
-	${AVALON_SRC_PATH}/graph.c
-	${AVALON_SRC_PATH}/geometry.c
-	${AVALON_SRC_PATH}/forio.c
-	${AVALON_SRC_PATH}/depictutil.c
-	${AVALON_SRC_PATH}/denormal.c
-	${AVALON_SRC_PATH}/casutils.c
-	${AVALON_SRC_PATH}/ssmatch.c 
-	${AVALON_SRC_PATH}/rtutils.c
-	${AVALON_SRC_PATH}/smi2mol.c
-	${AVALON_SRC_PATH}/didepict.c
-	${AVALON_SRC_PATH}/pattern.c
-	${AVALON_SRC_PATH}/canonizer.c
-	${AVALON_SRC_PATH}/aacheck.c
-	${AVALON_SRC_PATH}/fixcharges.c
-	${AVALON_SRC_PATH}/struchk.c
-	${AVALON_SRC_PATH}/reaccsio.c 
-	${AVALON_SRC_PATH}/hashcode.c
-  )
+if(RDK_BUILD_AVALON_SUPPORT)
+  add_definitions(-DBUILD_AVALON_SUPPORT)
+  if (MSVC)
+    add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
+  endif(MSVC)
 
-# we need this to ensure that builds continue
-# to work on linux systems with older versions
-# of glibc when we're building with gcc-4.1.
-# Without this flag, we'll endup requiring
-# glibc 2.7.
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_definitions(-D_GNU_SOURCE=1)
-endif()  
+  set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
+  	${AVALON_SRC_PATH}/symboltable.c
+  	${AVALON_SRC_PATH}/patclean.c
+  	${AVALON_SRC_PATH}/utilities.c
+  	${AVALON_SRC_PATH}/symbol_lists.c
+  	${AVALON_SRC_PATH}/stereo.c
+  	${AVALON_SRC_PATH}/set.c
+  	${AVALON_SRC_PATH}/perceive.c
+  	${AVALON_SRC_PATH}/local.c
+  	${AVALON_SRC_PATH}/graph.c
+  	${AVALON_SRC_PATH}/geometry.c
+  	${AVALON_SRC_PATH}/forio.c
+  	${AVALON_SRC_PATH}/depictutil.c
+  	${AVALON_SRC_PATH}/denormal.c
+  	${AVALON_SRC_PATH}/casutils.c
+  	${AVALON_SRC_PATH}/ssmatch.c
+  	${AVALON_SRC_PATH}/rtutils.c
+  	${AVALON_SRC_PATH}/smi2mol.c
+  	${AVALON_SRC_PATH}/didepict.c
+  	${AVALON_SRC_PATH}/pattern.c
+  	${AVALON_SRC_PATH}/canonizer.c
+  	${AVALON_SRC_PATH}/aacheck.c
+  	${AVALON_SRC_PATH}/fixcharges.c
+  	${AVALON_SRC_PATH}/struchk.c
+  	${AVALON_SRC_PATH}/reaccsio.c
+  	${AVALON_SRC_PATH}/hashcode.c
+    )
 
-rdkit_library(avalon_clib ${avalon_clib_srcs})
+  # we need this to ensure that builds continue
+  # to work on linux systems with older versions
+  # of glibc when we're building with gcc-4.1.
+  # Without this flag, we'll endup requiring
+  # glibc 2.7.
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      add_definitions(-D_GNU_SOURCE=1)
+  endif()
+
+  rdkit_library(avalon_clib ${avalon_clib_srcs})
 
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${AVALON_SRC_PATH})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+  include_directories(${AVALON_SRC_PATH})
 
-rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
-rdkit_headers(AvalonTools.h DEST GraphMol)
-rdkit_test(testAvalonLib1 test1.cpp
-           LINK_LIBRARIES AvalonLib avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
+  rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
+  rdkit_headers(AvalonTools.h DEST GraphMol)
+  rdkit_test(testAvalonLib1 test1.cpp
+             LINK_LIBRARIES AvalonLib avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
 
-add_subdirectory(Wrap)
+  add_subdirectory(Wrap)
 
 endif(RDK_BUILD_AVALON_SUPPORT)
