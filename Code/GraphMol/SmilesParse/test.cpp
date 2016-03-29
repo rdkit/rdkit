@@ -3688,6 +3688,20 @@ void testGithub786() {
     std::string csmi2 = MolToSmiles(*m, true);
     TEST_ASSERT(csmi == csmi2);
     delete m;
+
+    smiles = "C1CN[C@@]1(O)2.N2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+
+    smiles = "C1CN[C@]2(O)1.N2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
   }
   {
     std::string smiles = "C[C@]1(O)NCC1";
