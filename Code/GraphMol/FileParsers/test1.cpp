@@ -4200,6 +4200,22 @@ void testGithub188() {
 
     delete mol;
   }
+  {
+    std::cerr << "----------------------------------" << std::endl;
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/FileParsers/test_data/";
+    RWMol *mol = MolFileToMol(pathName + "github192.mol");
+    TEST_ASSERT(mol);
+    for (unsigned int i = 0; i < mol->getNumBonds(); ++i) {
+      const Bond *bnd = mol->getBondWithIdx(i);
+      if (bnd->getBondType() == Bond::DOUBLE &&
+          i != mol->getBondBetweenAtoms(26, 27)->getIdx() &&
+          i != mol->getBondBetweenAtoms(6, 8)->getIdx()) {
+        TEST_ASSERT(bnd->getStereo() == Bond::STEREOE);
+      }
+    }
+    delete mol;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
