@@ -102,7 +102,7 @@ void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar = false,
                      bool ignoreHs = true);
 
 //! Get the bond length between the specified atoms i, j
-double getBondLength(RDKit::Conformer &conf, unsigned int iAtomId,
+double getBondLength(const RDKit::Conformer &conf, unsigned int iAtomId,
                      unsigned int jAtomId);
 
 //! Set the bond length between the specified atoms i, j
@@ -111,11 +111,11 @@ void setBondLength(RDKit::Conformer &conf, unsigned int iAtomId,
                    unsigned int jAtomId, double value);
 
 //! Get the angle in radians among the specified atoms i, j, k
-double getAngleRad(RDKit::Conformer &conf, unsigned int iAtomId,
+double getAngleRad(const RDKit::Conformer &conf, unsigned int iAtomId,
                    unsigned int jAtomId, unsigned int kAtomId);
 
 //! Get the angle in degrees among the specified atoms i, j, k
-inline double getAngleDeg(RDKit::Conformer &conf, unsigned int iAtomId,
+inline double getAngleDeg(const RDKit::Conformer &conf, unsigned int iAtomId,
                           unsigned int jAtomId, unsigned int kAtomId) {
   return (180. / M_PI * getAngleRad(conf, iAtomId, jAtomId, kAtomId));
 }
@@ -134,12 +134,12 @@ inline void setAngleDeg(RDKit::Conformer &conf, unsigned int iAtomId,
 }
 
 //! Get the dihedral angle in radians among the specified atoms i, j, k, l
-double getDihedralRad(RDKit::Conformer &conf, unsigned int iAtomId,
+double getDihedralRad(const RDKit::Conformer &conf, unsigned int iAtomId,
                       unsigned int jAtomId, unsigned int kAtomId,
                       unsigned int lAtomId);
 
 //! Get the dihedral angle in degrees among the specified atoms i, j, k, l
-inline double getDihedralDeg(RDKit::Conformer &conf, unsigned int iAtomId,
+inline double getDihedralDeg(const RDKit::Conformer &conf, unsigned int iAtomId,
                              unsigned int jAtomId, unsigned int kAtomId,
                              unsigned int lAtomId) {
   return (180. / M_PI *

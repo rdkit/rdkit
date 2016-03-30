@@ -21,6 +21,8 @@ option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
+option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
+option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
@@ -223,7 +225,9 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
-
+if(RDK_BUILD_PGSQL)
+  find_package(PostgreSQL REQUIRED)
+endif(RDK_BUILD_PGSQL)
 
 # setup our compiler flags:
 if (RDK_TEST_COVERAGE)

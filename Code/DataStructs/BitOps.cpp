@@ -784,8 +784,16 @@ template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 // but corrected to get the ifdef right
 #ifdef _MSC_VER
 #include <intrin.h>
-#define __builtin_popcount __popcnt
-#define __builtin_popcountll __popcnt64
+#ifdef _WIN64
+#define BUILTIN_POPCOUNT_INSTR __popcnt64
+#define BUILTIN_POPCOUNT_TYPE boost::uint64_t
+#else
+#define BUILTIN_POPCOUNT_INSTR __popcnt
+#define BUILTIN_POPCOUNT_TYPE boost::uint32_t
+#endif
+#else
+#define BUILTIN_POPCOUNT_INSTR __builtin_popcountll
+#define BUILTIN_POPCOUNT_TYPE boost::uint64_t
 #endif
 
 // the Bitmap Tanimoto and Dice similarity code is adapted
@@ -813,11 +821,11 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
     popcount += byte_popcounts[afp[i]];
   }
 #else
-  unsigned int eidx = nBytes / sizeof(unsigned int);
+  unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
-    popcount += __builtin_popcount(((unsigned int*)afp)[i]);
+    popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
   }
-  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+  for (unsigned int i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     popcount += byte_popcounts[afp[i]];
   }
 #endif
@@ -834,14 +842,14 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #else
-  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
-  for (boost::uint64_t i = 0; i < eidx; ++i) {
-    union_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] |
-                                           ((boost::uint64_t*)bfp)[i]);
-    intersect_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] &
-                                               ((boost::uint64_t*)bfp)[i]);
+  BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
+  for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
+    union_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] |
+                                           ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
+                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
   }
-  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
@@ -866,14 +874,14 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
 #else
-  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
-  for (boost::uint64_t i = 0; i < eidx; ++i) {
-    a_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i]);
-    b_popcount += __builtin_popcountll(((boost::uint64_t*)bfp)[i]);
-    intersect_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] &
-                                               ((boost::uint64_t*)bfp)[i]);
+  BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
+  for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
+    a_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
+    b_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
+                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
   }
-  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     a_popcount += byte_popcounts[afp[i]];
     b_popcount += byte_popcounts[bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
@@ -899,14 +907,14 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
     bcount += byte_popcounts[bfp[i]];
   }
 #else
-  boost::uint64_t eidx = nBytes / sizeof(boost::uint64_t);
-  for (boost::uint64_t i = 0; i < eidx; ++i) {
-    intersect_popcount += __builtin_popcountll(((boost::uint64_t*)afp)[i] &
-                                               ((boost::uint64_t*)bfp)[i]);
-    acount += __builtin_popcountll(((boost::uint64_t*)afp)[i]);
-    bcount += __builtin_popcountll(((boost::uint64_t*)bfp)[i]);
+  BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
+  for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
+                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    acount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
+    bcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
   }
-  for (boost::uint64_t i = eidx * sizeof(boost::uint64_t); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
     acount += byte_popcounts[afp[i]];
     bcount += byte_popcounts[bfp[i]];
@@ -932,15 +940,15 @@ bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
     }
   }
 #else
-  unsigned int eidx = nBytes / sizeof(unsigned int);
+  unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
-    if (__builtin_popcount(((unsigned int*)probe)[i] &
-                           ((unsigned int*)ref)[i]) !=
-        __builtin_popcount(((unsigned int*)probe)[i])) {
+    if (BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i] &
+                           ((BUILTIN_POPCOUNT_TYPE*)ref)[i]) !=
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i])) {
       return false;
     }
   }
-  for (unsigned int i = eidx * sizeof(unsigned int); i < nBytes; ++i) {
+  for (unsigned int i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     if (byte_popcounts[probe[i] & ref[i]] != byte_popcounts[probe[i]]) {
       return false;
     }
