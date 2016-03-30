@@ -106,7 +106,12 @@ struct sdwriter_wrap {
         .def("SetKekulize", &SDWriter::setKekulize,
              "Sets whether or not molecules are kekulized on writing.\n\n")
         .def("GetKekulize", &SDWriter::getKekulize,
-             "Returns whether or not molecules are kekulized on writing.\n\n");
+             "Returns whether or not molecules are kekulized on writing.\n\n")
+        .def("GetSDText", &SDWriter::getSDText,
+             (python::arg("mol"), python::arg("confId") = -1,
+              python::arg("kekulize") = true,
+              python::arg("force_v3000") = false, python::arg("molid") = -1),
+             "returns the SD text for a molecule");
   };
 };
 }
