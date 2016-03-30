@@ -200,10 +200,9 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
  * be the same.
  */
 Atom* findAlternatingBonds(
-    ROMol& mol, Atom* current, unsigned int desiredAtomicNumber,
-    int desiredAtomCharge, Bond::BondType desiredNextBondType,
-    Bond::BondType desiredEndingBondType, unsigned int currentPathLength,
-    unsigned int maxPathLength, Bond* lastBond,
+    ROMol& mol, Atom* current, int desiredAtomicNumber, int desiredAtomCharge,
+    Bond::BondType desiredNextBondType, Bond::BondType desiredEndingBondType,
+    unsigned int currentPathLength, unsigned int maxPathLength, Bond* lastBond,
     /*OUT*/ std::stack<Bond*>& path, std::set<int>& _visited) {
   // memory for what has been visited
   if (lastBond == NULL) {
@@ -814,7 +813,8 @@ bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
   std::stack<Bond*> bestPath;
   BOOST_FOREACH (match, fgpMatches) {
     // does the match contains the current atom?
-    if (match[0].second == atom->getIdx() || match[1].second == atom->getIdx())
+    if (match[0].second == static_cast<int>(atom->getIdx()) ||
+        match[1].second == static_cast<int>(atom->getIdx()))
       continue;
     // set both matched N to Sn
     mol.getAtomWithIdx(match[0].second)->setAtomicNum(50);
@@ -1329,7 +1329,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
         // calculate CIPCode as they might be used
         UINT_VECT ranks;
         Chirality::assignAtomCIPRanks(*m, ranks);
-        for (int i = 0; i < numStereo0D; i++) {
+        for (unsigned int i = 0; i < numStereo0D; i++) {
           inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;
           if (stereo0DPtr->parity == INCHI_PARITY_NONE ||
               stereo0DPtr->parity == INCHI_PARITY_UNDEFINED)
@@ -1339,8 +1339,9 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
               break;
             case INCHI_StereoType_DoubleBond: {
               // find the bond
-              int left, right, leftNbr, originalLeftNbr, rightNbr,
-                  originalRightNbr, extraLeftNbr, extraRightNbr;
+              unsigned int left, right;
+              int leftNbr, originalLeftNbr, rightNbr, originalRightNbr,
+                  extraLeftNbr, extraRightNbr;
               left = indexToAtomIndexMapping[stereo0DPtr->neighbor[1]];
               right = indexToAtomIndexMapping[stereo0DPtr->neighbor[2]];
               originalLeftNbr =
@@ -1556,7 +1557,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
 }
 
 void fixOptionSymbol(const char* in, char* out) {
-  int i;
+  unsigned int i;
   for (i = 0; i < strlen(in); i++) {
 #ifdef _WIN32
     if (in[i] == '-') out[i] = '/';
@@ -1576,7 +1577,7 @@ void rCleanUp(RWMol& mol) {
   SubstructMatch(mol, *q, fgpMatches);
   delete q;
   // replace all matches
-  for (int match_id = 0; match_id < fgpMatches.size(); match_id++) {
+  for (unsigned int match_id = 0; match_id < fgpMatches.size(); match_id++) {
     // collect matching atoms
     int map[5];
     MatchVectType match = fgpMatches[match_id];
@@ -1891,7 +1892,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   inchi_Stereo0D* stereo0Ds;
   if (stereo0DEntries.size()) {
     stereo0Ds = new inchi_Stereo0D[stereo0DEntries.size()];
-    for (int i = 0; i < stereo0DEntries.size(); i++) {
+    for (unsigned int i = 0; i < stereo0DEntries.size(); i++) {
       stereo0Ds[i] = stereo0DEntries[i];
     }
   } else {
