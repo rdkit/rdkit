@@ -1424,7 +1424,8 @@ void test14Issue1804420() {
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 1804420: bad handling of query "
-                          "atoms in products." << std::endl;
+                          "atoms in products."
+                       << std::endl;
 
   // NOTE that this bug was actually in the smarts parser, so this is really
   // just another reaction test... still, more tests are better
@@ -4418,7 +4419,8 @@ void test46Agents() {
 void test47TestReactionMoleculeConversion() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing the conversion of a molecule with Rxn role "
-                          "to a reaction and vice versa." << std::endl;
+                          "to a reaction and vice versa."
+                       << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/ChemReactions/testData/";
 
@@ -4439,12 +4441,12 @@ void test47TestReactionMoleculeConversion() {
     ROMol *mol = ChemicalReactionToRxnMol(*rxn);
 
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnRole) == 1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnRole) == 1);
     TEST_ASSERT(
         mol->getAtomWithIdx(10)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(10)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(mol->getAtomWithIdx(10)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
 
     std::string smi1 = MolToSmiles(*m);
     std::string smi2 = MolToSmiles(*mol);
@@ -4512,14 +4514,14 @@ void test47TestReactionMoleculeConversion() {
     ROMol *mol = ChemicalReactionToRxnMol(*rxn);
 
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnRole) == 1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnRole) == 1);
     TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(2)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
     TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(3)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(mol->getAtomWithIdx(3)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
     delete rxn;
     delete mol;
 
@@ -4533,14 +4535,14 @@ void test47TestReactionMoleculeConversion() {
     mol = ChemicalReactionToRxnMol(*rxn);
 
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnRole) == 1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnRole) == 1);
     TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(2)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
     TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(4)
-                    ->getProp<int>(common_properties::molRxnRole) == 3);
+    TEST_ASSERT(mol->getAtomWithIdx(4)->getProp<int>(
+                    common_properties::molRxnRole) == 3);
     delete rxn;
     delete mol;
 
@@ -4554,8 +4556,8 @@ void test47TestReactionMoleculeConversion() {
     mol = ChemicalReactionToRxnMol(*rxn);
 
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnRole) == 1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnRole) == 1);
     delete rxn;
     delete mol;
 
@@ -4569,11 +4571,11 @@ void test47TestReactionMoleculeConversion() {
     mol = ChemicalReactionToRxnMol(*rxn);
 
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
     TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(mol->getAtomWithIdx(1)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
 
     delete rxn;
     delete mol;
@@ -5698,7 +5700,9 @@ void test59ReactionCanonicalization() {
 }
 
 void test60RunSingleReactant() {
-  const std::string smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]";
+  const std::string smirks_thiourea =
+      "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$(["
+      "ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]";
   ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smirks_thiourea);
   rxn->initReactantMatchers();
   const std::string smi1 = "C=CCN=C=S";
@@ -5714,13 +5718,14 @@ void test60RunSingleReactant() {
     ROMOL_SPTR expected_sidechain_result(SmilesToMol("[1*:1]=S.[3*:3]CC=C"));
     const bool isomericSmiles = true;
     std::string expected = MolToSmiles(*expected_result, isomericSmiles);
-    std::string expected_sidechain = MolToSmiles(*expected_sidechain_result, isomericSmiles);
-    
+    std::string expected_sidechain =
+        MolToSmiles(*expected_sidechain_result, isomericSmiles);
+
     prods = rxn->runReactant(reag1, 0);
     TEST_ASSERT(prods.size() > 0);
 
-    for (size_t i=0;i<prods.size();i++) {
-      for (size_t prodidx = 0; prodidx<prods[i].size(); prodidx++) {
+    for (size_t i = 0; i < prods.size(); i++) {
+      for (size_t prodidx = 0; prodidx < prods[i].size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
         TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
         ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
@@ -5729,7 +5734,7 @@ void test60RunSingleReactant() {
       }
     }
 
-    prods = rxn->runReactant(reag2,0);
+    prods = rxn->runReactant(reag2, 0);
     TEST_ASSERT(prods.size() == 0)
   }
 
@@ -5738,13 +5743,14 @@ void test60RunSingleReactant() {
     ROMOL_SPTR expected_sidechain_result(SmilesToMol("[2*:2]Cc1ncc(Cl)cc1Br"));
     const bool isomericSmiles = true;
     std::string expected = MolToSmiles(*expected_result, isomericSmiles);
-    std::string expected_sidechain = MolToSmiles(*expected_sidechain_result, isomericSmiles);
-    
+    std::string expected_sidechain =
+        MolToSmiles(*expected_sidechain_result, isomericSmiles);
+
     prods = rxn->runReactant(reag2, 1);
     TEST_ASSERT(prods.size() > 0);
-    
-    for (size_t i=0;i<prods.size();i++) {
-      for (size_t prodidx = 0; prodidx<prods[i].size(); prodidx++) {
+
+    for (size_t i = 0; i < prods.size(); i++) {
+      for (size_t prodidx = 0; prodidx < prods[i].size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
         TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
         ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
@@ -5752,13 +5758,109 @@ void test60RunSingleReactant() {
         TEST_ASSERT(smi == expected_sidechain);
       }
     }
-    
-    prods = rxn->runReactant(reag1,1);
+
+    prods = rxn->runReactant(reag1, 1);
     TEST_ASSERT(prods.size() == 0)
   }
 
   delete rxn;
+}
 
+void test61Github685() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github685: SMARTS reaction triggers "
+                          "invariant violation on chiral compounds"
+                       << std::endl;
+
+  {
+    std::string smi =
+        "[C:1][C:2][C:3]([O:4])([N:5])[Cl:6]>>[Cl:6].[C:2][C:3]([O:4])([N:5])["
+        "C:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+    TEST_ASSERT(rxn->getNumAgentTemplates() == 0);
+    rxn->initReactantMatchers();
+
+    {
+      MOL_SPTR_VECT reacts;
+      reacts.clear();
+      smi = "CCC(O)(N)Cl";
+      RWMol *mol = SmilesToMol(smi);
+      TEST_ASSERT(mol);
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 2);
+      TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "Cl");
+      TEST_ASSERT(MolToSmiles(*prods[0][1], true) == "CC(C)(N)O");
+    }
+    {
+      MOL_SPTR_VECT reacts;
+      reacts.clear();
+      smi = "CC[C@](O)(N)Cl";
+      RWMol *mol = SmilesToMol(smi);
+      TEST_ASSERT(mol);
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 2);
+      TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "Cl");
+      TEST_ASSERT(MolToSmiles(*prods[0][1], true) ==
+                  "CC(C)(N)O");  // we lose the chirality because there's an
+                                 // unspecified bond in the products
+    }
+    delete rxn;
+  }
+  {  // the original example
+    std::string smi =
+        "[#1;D1R0:4][#8;H1D2R0:3][#6;H0D3R0:2](=[#8;H0D1R0:5])[#6;D4;H1,H0,H2:"
+        "1]([#6:7])[#6,#1D1AR0,ClH0D1AR0,FH0D1AR0,BrH0D1AR0:6]>>[*:3]=[*:2]=[*:"
+        "5].[*:4]-[*:1](-[*:6])-[*:7]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+    TEST_ASSERT(rxn->getNumAgentTemplates() == 0);
+    rxn->initReactantMatchers();
+
+    {
+      MOL_SPTR_VECT reacts;
+      reacts.clear();
+      smi = "CC(N)C(=O)O";
+      RWMol *mol = SmilesToMol(smi);
+      TEST_ASSERT(mol);
+      MolOps::addHs(*mol);
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 2);
+      TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "O=C=O");
+      TEST_ASSERT(MolToSmiles(*prods[0][1], true) ==
+                  "[H]N([H])C([H])([H])C([H])([H])[H]");
+    }
+    {
+      MOL_SPTR_VECT reacts;
+      reacts.clear();
+      smi = "C[C@@H](N)C(=O)O";
+      RWMol *mol = SmilesToMol(smi);
+      TEST_ASSERT(mol);
+      MolOps::addHs(*mol);
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 2);
+      TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "O=C=O");
+      TEST_ASSERT(MolToSmiles(*prods[0][1], true) ==
+                  "[H]N([H])C([H])([H])C([H])([H])[H]");
+    }
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
 int main() {
@@ -5809,7 +5911,7 @@ int main() {
   test37ProtectOption();
 
   test38AddRecursiveQueriesToReaction();
-#endif
+
   test39InnocentChiralityLoss();
   test40AgentsInSmarts();
   test41Github233();
@@ -5827,15 +5929,14 @@ int main() {
   test53ReactionSubstructureMatching();
   test54RedundantProductMappingNumbersAndRSChirality();
   test55RedundantProductMappingNumbersAndEZStereochemistry();
-  ;
   test56TestOldPickleVersion();
   test57IntroductionOfNewChiralCenters();
-
   test58MolFileValueRoundTrip();
-
   test59ReactionCanonicalization();
+#endif
+
   test60RunSingleReactant();
-  
+  test61Github685();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
