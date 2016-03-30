@@ -240,14 +240,14 @@ int mmffValidationSuite(int argc, char *argv[]) {
   std::streampos rdkCurrent;
   std::streampos refPos;
   std::streampos refCurrent;
-  int i = 1;
+  int iarg = 1;
   unsigned int n = 0;
   bool error = false;
   bool fullTest = false;
   int inc = 4;
   bool testFailure = false;
-  while (i < argc) {
-    arg = argv[i];
+  while (iarg < argc) {
+    arg = argv[iarg];
     error = (arg.at(0) != '-');
     if (error) {
       break;
@@ -256,34 +256,34 @@ int mmffValidationSuite(int argc, char *argv[]) {
     if (error) {
       break;
     } else if (arg == "-f") {
-      error = ((i + 1) >= argc);
+      error = ((iarg + 1) >= argc);
       if (error) {
         break;
       }
-      ffVariant = argv[i + 1];
+      ffVariant = argv[iarg + 1];
       error = ((ffVariant != "MMFF94") && (ffVariant != "MMFF94s"));
       if (error) {
         break;
       }
-      ++i;
+      ++iarg;
     } else if ((arg == "-sdf") || (arg == "-smi")) {
       molType = arg.substr(1);
-      if ((i + 1) < argc) {
-        molFile = argv[i + 1];
-        ++i;
+      if ((iarg + 1) < argc) {
+        molFile = argv[iarg + 1];
+        ++iarg;
       }
     } else if (arg == "-L") {
       fullTest = true;
       inc = 1;
     } else if (arg == "-l") {
-      error = ((i + 1) >= argc);
+      error = ((iarg + 1) >= argc);
       if (error) {
         break;
       }
-      rdk = argv[i + 1];
-      ++i;
+      rdk = argv[iarg + 1];
+      ++iarg;
     }
-    ++i;
+    ++iarg;
   }
   if (error) {
     std::cerr << "Usage: testMMFFForceField [-L] [-f {MMFF94|MMFF94s}] "
@@ -340,14 +340,14 @@ int mmffValidationSuite(int argc, char *argv[]) {
         molVec.clear();
         if (*molTypeIt == "sdf") {
           SDMolSupplier sdfSupplier(*molFileIt, false, false);
-          for (size_t i = 0; i < sdfSupplier.length(); ++i) {
-            molVec.push_back(sdfSupplier[i]);
+          for (size_t ii = 0; ii < sdfSupplier.length(); ++ii) {
+            molVec.push_back(sdfSupplier[ii]);
           }
           sdfSupplier.reset();
         } else {
           SmilesMolSupplier smiSupplier(*molFileIt);
-          for (size_t i = 0; i < smiSupplier.length(); ++i) {
-            molVec.push_back(smiSupplier[i]);
+          for (size_t ii = 0; ii < smiSupplier.length(); ++ii) {
+            molVec.push_back(smiSupplier[ii]);
           }
           smiSupplier.reset();
         }
@@ -365,21 +365,19 @@ int mmffValidationSuite(int argc, char *argv[]) {
         std::string computingKey = (*ffIt) + " energies for " + (*molFileIt);
         std::cerr << std::endl
                   << "Computing " << computingKey << "..." << std::endl;
-        for (size_t i = 0; i < computingKey.length(); ++i) {
+        for (size_t ii = 0; ii < computingKey.length(); ++ii) {
           rdkFStream << "*";
         }
-        rdkFStream << std::endl
-                   << computingKey << std::endl;
-        for (size_t i = 0; i < computingKey.length(); ++i) {
+        rdkFStream << std::endl << computingKey << std::endl;
+        for (size_t ii = 0; ii < computingKey.length(); ++ii) {
           rdkFStream << "*";
         }
-        rdkFStream << std::endl
-                   << std::endl;
-        for (size_t i = 0; i < molVec.size(); i += inc) {
+        rdkFStream << std::endl << std::endl;
+        for (size_t ii = 0; ii < molVec.size(); ii += inc) {
           if (*molTypeIt == "sdf") {
-            mol = molVec[i];
+            mol = molVec[ii];
           } else {
-            mol = MolOps::addHs(*(molVec[i]));
+            mol = MolOps::addHs(*(molVec[ii]));
             DGeomHelpers::EmbedMolecule(*mol);
           }
           MMFF::sanitizeMMFFMol((RWMol &)(*mol));
@@ -433,19 +431,20 @@ int mmffValidationSuite(int argc, char *argv[]) {
         double refVdWEnergy;
         double refEleEnergy;
         unsigned int n_failed = 0;
-        bool failed;
+        bool failed = false;
         rdkFStream.seekg(0);
         fgrep(rdkFStream, computingKey);
-        for (size_t i = 0; i < nameArray.size(); i += inc) {
+        size_t ii;
+        for (ii = 0; ii < nameArray.size(); ii += inc) {
           error = false;
           failed = false;
           errorMsg = rdk + ": Molecule not found";
-          found = fgrep(rdkFStream, nameArray[i]);
+          found = fgrep(rdkFStream, nameArray[ii]);
           if (!found) {
             break;
           }
           errorMsg = ref + ": Molecule not found";
-          found = fgrep(refFStream, nameArray[i]);
+          found = fgrep(refFStream, nameArray[ii]);
           if (!found) {
             break;
           }
@@ -657,9 +656,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
               failed = true;
               std::stringstream diff;
               diff << "Bond stretching: energies differ\n"
-                      "Expected " << std::fixed << std::setprecision(4)
-                   << refEnergy << ", found " << std::fixed
-                   << std::setprecision(4) << rdkEnergy << "\n";
+                      "Expected "
+                   << std::fixed << std::setprecision(4) << refEnergy
+                   << ", found " << std::fixed << std::setprecision(4)
+                   << rdkEnergy << "\n";
               errorMsg += diff.str();
             }
           }
@@ -811,9 +811,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
               failed = true;
               std::stringstream diff;
               diff << "Angle bending: energies differ\n"
-                      "Expected " << std::fixed << std::setprecision(4)
-                   << refEnergy << ", found " << std::fixed
-                   << std::setprecision(4) << rdkEnergy << "\n";
+                      "Expected "
+                   << std::fixed << std::setprecision(4) << refEnergy
+                   << ", found " << std::fixed << std::setprecision(4)
+                   << rdkEnergy << "\n";
               errorMsg += diff.str();
             }
           }
@@ -972,9 +973,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
               failed = true;
               std::stringstream diff;
               diff << "Stretch-bending: energies differ\n"
-                      "Expected " << std::fixed << std::setprecision(4)
-                   << refEnergy << ", found " << std::fixed
-                   << std::setprecision(4) << rdkEnergy << "\n";
+                      "Expected "
+                   << std::fixed << std::setprecision(4) << refEnergy
+                   << ", found " << std::fixed << std::setprecision(4)
+                   << rdkEnergy << "\n";
               errorMsg += diff.str();
             }
           }
@@ -1127,9 +1129,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
               failed = true;
               std::stringstream diff;
               diff << "Out-of-plane bending: energies differ\n"
-                      "Expected " << std::fixed << std::setprecision(4)
-                   << refEnergy << ", found " << std::fixed
-                   << std::setprecision(4) << rdkEnergy << "\n";
+                      "Expected "
+                   << std::fixed << std::setprecision(4) << refEnergy
+                   << ", found " << std::fixed << std::setprecision(4)
+                   << rdkEnergy << "\n";
               errorMsg += diff.str();
             }
           }
@@ -1293,9 +1296,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
               failed = true;
               std::stringstream diff;
               diff << "Torsional: energies differ\n"
-                      "Expected " << std::fixed << std::setprecision(4)
-                   << refEnergy << ", found " << std::fixed
-                   << std::setprecision(4) << rdkEnergy << "\n";
+                      "Expected "
+                   << std::fixed << std::setprecision(4) << refEnergy
+                   << ", found " << std::fixed << std::setprecision(4)
+                   << rdkEnergy << "\n";
               errorMsg += diff.str();
             }
           }
@@ -1354,9 +1358,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
             failed = true;
             std::stringstream diff;
             diff << "Van der Waals: energies differ\n"
-                    "Expected " << std::fixed << std::setprecision(4)
-                 << refVdWEnergy << ", found " << std::fixed
-                 << std::setprecision(4) << rdkEnergy << "\n";
+                    "Expected "
+                 << std::fixed << std::setprecision(4) << refVdWEnergy
+                 << ", found " << std::fixed << std::setprecision(4)
+                 << rdkEnergy << "\n";
             errorMsg += diff.str();
           }
           error = (fabs(rdkEleEnergy - refEleEnergy) > ENERGY_TOLERANCE);
@@ -1364,19 +1369,20 @@ int mmffValidationSuite(int argc, char *argv[]) {
             failed = true;
             std::stringstream diff;
             diff << "Electrostatic: energies differ\n"
-                    "Expected " << std::fixed << std::setprecision(4)
-                 << refEleEnergy << ", found " << std::fixed
-                 << std::setprecision(4) << rdkEnergy << "\n";
+                    "Expected "
+                 << std::fixed << std::setprecision(4) << refEleEnergy
+                 << ", found " << std::fixed << std::setprecision(4)
+                 << rdkEnergy << "\n";
             errorMsg += diff.str();
           }
           if (failed) {
-            std::cerr << nameArray[i] << "\n\n" << errorMsg << std::endl;
+            std::cerr << nameArray[ii] << "\n\n" << errorMsg << std::endl;
             ++n_failed;
           }
         }
         if (!found) {
           if (!failed) {
-            std::cerr << nameArray[i] << "\n\n";
+            std::cerr << nameArray[ii] << "\n\n";
           }
           std::cerr << errorMsg << std::endl;
         } else {

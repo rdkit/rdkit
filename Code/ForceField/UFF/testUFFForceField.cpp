@@ -714,7 +714,7 @@ void testUFF7() {
   ps.push_back(&p3);
   ps.push_back(&p4);
 
-  ForceFields::UFF::AtomicParams param1, param2;
+  ForceFields::UFF::AtomicParams param1;
   // sp3 carbon:
   param1.r1 = .757;
   param1.Z1 = 1.912;
@@ -723,11 +723,6 @@ void testUFF7() {
   param1.D1 = 0.105;
   param1.V1 = 2.119;
   param1.U1 = 2.0;
-
-  // H_1:
-  param2.r1 = 0.354;
-  param2.Z1 = 0.712;
-  param2.GMP_Xi = 4.528;
 
   RDGeom::Point3D d, v1, v2;
   double cosPhi;

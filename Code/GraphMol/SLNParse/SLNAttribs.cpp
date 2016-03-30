@@ -217,7 +217,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
       // a block of properties that can have "f" values, and so need special
       // handling:
       std::string fTag = "";
-      int val;
+      int val = 0;
       if (attribVal == "f" || attribName == "f") {
         fTag = "_SLN_";
         atom->setProp(common_properties::_Unfinished_SLN_, 1);
@@ -352,8 +352,8 @@ void parseFinalAtomAttribs(Atom *atom, bool doingQuery) {
     if (description.size() > 5 && description.substr(0, 5) == "_SLN_") {
       boost::erase_head(description, 5);
       query->setDescription(description);
-      static_cast<ATOM_EQUALS_QUERY *>(query)
-          ->setVal((int)(query->getDataFunc()(atom)));
+      static_cast<ATOM_EQUALS_QUERY *>(query)->setVal(
+          (int)(query->getDataFunc()(atom)));
     }
     // now add the query's children to the queue and continue:
     for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI cIt = query->beginChildren();
@@ -505,10 +505,10 @@ void adjustAtomChiralities(RWMol *mol) {
       int nSwaps = (*atomIt)->getPerturbationOrder(bondOrdering);
 
       if (nSwaps % 2) {
-        (*atomIt)
-            ->setChiralTag((*atomIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW
-                               ? Atom::CHI_TETRAHEDRAL_CCW
-                               : Atom::CHI_TETRAHEDRAL_CW);
+        (*atomIt)->setChiralTag((*atomIt)->getChiralTag() ==
+                                        Atom::CHI_TETRAHEDRAL_CW
+                                    ? Atom::CHI_TETRAHEDRAL_CCW
+                                    : Atom::CHI_TETRAHEDRAL_CW);
       }
     }
   }

@@ -271,7 +271,7 @@ void test1() {
   strcpy(fs[8], fs1[8]);
   //-----------------------------------
 
-  for (int i = 0; i < sizeof(smi) / sizeof(smi[0]); i++) {
+  for (unsigned int i = 0; i < sizeof(smi) / sizeof(smi[0]); i++) {
     static const std::string es("NULL");
     std::string id;
     std::string smiles = getSmilesOnly(smi[i], &id);
@@ -376,7 +376,7 @@ void test2() {
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])[*:1],"
       "Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]"};
 
-  for (int i = 0; i < sizeof(smi) / sizeof(smi[0]); i++) {
+  for (unsigned int i = 0; i < sizeof(smi) / sizeof(smi[0]); i++) {
     static const std::string es("NULL");
     std::string id;
     std::string smiles = getSmilesOnly(smi[i], &id);
@@ -664,7 +664,7 @@ std::endl;
 //====================================================================================================
 //====================================================================================================
 
-int main(int argc, const char* argv[]) {
+int main() {
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "MMPA Unit Test \n";
