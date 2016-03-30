@@ -3643,6 +3643,27 @@ void testGithub532() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub760() {
+  BOOST_LOG(rdInfoLog) << "testing github issue 760: reversed stereochemistry "
+                          "with sulfoxides and ring closures"
+                       << std::endl;
+  {
+    std::string smiles = "C[S@](Cl)=O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "C[S@]2=O.Cl2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testGithub786() {
   BOOST_LOG(rdInfoLog) << "testing github issue 786: chiral order for "
                           "ring closure after branch"
@@ -3748,7 +3769,6 @@ void testGithub786() {
     TEST_ASSERT(csmi == csmi2);
     delete m;
   }
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -3816,4 +3836,5 @@ int main(int argc, char *argv[]) {
   testSmilesWriteForModifiedMolecules();
   testGithub532();
   testGithub786();
+  testGithub760();
 }
