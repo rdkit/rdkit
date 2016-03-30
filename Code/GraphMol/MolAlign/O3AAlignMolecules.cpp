@@ -956,10 +956,11 @@ void SDM::fillFromLAP(LAP &lap) {
       // - the absolute value of the difference between the two distances is
       // computed
       //   and placed in diff[i][j]
-      diff[i][j] = fabs((refPos[d_SDMPtrVect[i]->idx[0]] -
-                         refPos[d_SDMPtrVect[j]->idx[0]]).length() -
-                        (prbPos[d_SDMPtrVect[i]->idx[1]] -
-                         prbPos[d_SDMPtrVect[j]->idx[1]]).length());
+      diff[i][j] = fabs(
+          (refPos[d_SDMPtrVect[i]->idx[0]] - refPos[d_SDMPtrVect[j]->idx[0]])
+              .length() -
+          (prbPos[d_SDMPtrVect[i]->idx[1]] - prbPos[d_SDMPtrVect[j]->idx[1]])
+              .length());
     }
   }
   for (i = 0; i < n_equiv; ++i) {
@@ -1031,7 +1032,7 @@ void SDM::fillFromDist(double threshold,
   // by rmsAlgorithm until an atom which has been
   // included in a previous pair is found
   for (unsigned int i = 0; (i < n) && (!(refUsed[d_SDMPtrVect[i]->idx[0]])) &&
-                               (!(prbUsed[d_SDMPtrVect[i]->idx[1]]));
+                           (!(prbUsed[d_SDMPtrVect[i]->idx[1]]));
        ++i) {
     ++pairs;
     refUsed[d_SDMPtrVect[i]->idx[0]] = 1;
@@ -1092,7 +1093,7 @@ void SDM::prepareMatchWeightsVect(
     void *data) {
   PRECONDITION(matchVect.size() == weights.size(),
                "matchVect/weights size mismatch");
-  double min;
+  double min = MAX_DOUBLE;
   for (unsigned int i = 0; i < matchVect.size(); ++i) {
     // first pair element is prb, second is ref
     matchVect[i].first = d_SDMPtrVect[i]->idx[1];

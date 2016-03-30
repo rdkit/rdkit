@@ -1,18 +1,169 @@
 # Release_2016.03.1
-(Changes relative to Release_2015.09.1)
+(Changes relative to Release_2015.09.2)
 
-## Acknowledgements: 
+## Acknowledgements:
+'AlexanderSavelyev', 'DoliathGavid', 'EricTing', 'JLVarjo', 'adalke', 'apahl', 'bp-kelley', 'elcaceres', 'kozo2', 'maddogcz', 'mcs07', 'mnowotka', 'nbateshaus', 'nisti74', 'ptosco', 'richlewis42', 'rvianello', 'samoturk', 'sroughley', 'teaguesterling', 'undeadpixel'
 
 ## Highlights:
 
+
 ## Bug Fixes:
-  
+  - Documentation is still python2 specific.
+ (github issue #374 from greglandrum)
+  - SVG export - Python 3 support
+ (github issue #398 from maddogcz)
+  - FragmentOnBonds() producing incorrect chirality
+ (github issue #511 from greglandrum)
+  - Rings containing all dummy atoms with single bonds are flagged as aromatic
+ (github issue #518 from greglandrum)
+  - IPython integration broken with latest Jupyter
+ (github issue #666 from samoturk)
+  - Added missing include/forward declarations
+ (github pull #668 from ptosco)
+  - Fixes a memory leak in fragmentMol
+ (github pull #669 from bp-kelley)
+  - resetVect option being ignored by reaccsToFingerprint()
+ (github issue #671 from greglandrum)
+  - failure in AddHs when addCoords is true and coords are all zero
+ (github issue #678 from greglandrum)
+  - 404 error for the link to Installation instructions
+ (github issue #679 from EricTing)
+  - Fix java8 build
+ (github pull #681 from greglandrum)
+  - Smiles containing "[as]" do not parse.
+ (github issue #682 from greglandrum)
+  - partially specified chiral substructure queries don't work properly
+ (github issue #688 from bp-kelley)
+  - ExactMolWt ignoring the mass of the electron
+ (github issue #694 from greglandrum)
+  - Bad 1-4 bounds matrix elements in highly constrained system
+ (github issue #696 from greglandrum)
+  - More ChEMBL molecules that fail bounds smoothing
+ (github issue #697 from greglandrum)
+  - Molecule serialization doesn't read/write atomic numbers above 128
+ (github issue #713 from greglandrum)
+  - AddHs cip rank is declared <int> should be unsigned int?
+ (github issue #717 from bp-kelley)
+  - ensure line endings are handled consistently for all users
+ (github pull #729 from rvianello)
+  - Fixes return type of operator[] (fails on later clangs)
+ (github pull #733 from bp-kelley)
+  - Fix/thread safe localeswitcher line endings
+ (github pull #743 from bp-kelley)
+  - Fixes Boost 1.46 issues with type traits
+ (github pull #748 from bp-kelley)
+  - PR #749 causes seg faults on windows
+ (github issue #750 from greglandrum)
+  - Fixes notebook problems with newer jupyter installs
+ (github pull #753 from bp-kelley)
+  - Double bond geometry loss on calling removeHs
+ (github issue #754 from sroughley)
+  - Bug fix to getShortestPath
+ (github pull #757 from JLVarjo)
+  - reversed stereochemistry with sulfoxides and ring closures
+ (github issue #760 from greglandrum)
+  - libRDBoost.so.1: undefined symbol
+ (github issue #762 from kozo2)
+  - Removed -Xdoclint:none flag when packing org.RDKitDoc.jar
+ (github pull #763 from undeadpixel)
+  - AnyBond specification treated as single when joining rings in SMARTS
+ (github issue #766 from teaguesterling)
+  - CanonicalRankAtomsInFragment() leaks when called from Python
+ (github issue #769 from greglandrum)
+  - MolCanvas2D drawing upside down
+ (github issue #774 from greglandrum)
+  - Drawing single-atom molecules hangs.
+ (github issue #781 from greglandrum)
+  - chiral lexical order for ring closure after branch
+ (github issue #786 from adalke)
+  - surface -> self.surface
+ (github pull #787 from mnowotka)
+  - Chem.MolToSmarts param misnomer
+ (github issue #792 from elcaceres)
+  - Fixes MolToSmarts python docs
+ (github pull #793 from bp-kelley)
+  - Pre-condition Violation: bad bond type
+ (github issue #805 from nbateshaus)
+  - rooted atom fingerprint non identical for the same molecules
+ (github issue #811 from nisti74)
+  - test60RunSingleReactant() not being run
+ (github issue #825 from greglandrum)
+
 ## New Features and Enhancements:
+  - switch to using new version of avalon toolkit
+ (github issue #382 from greglandrum)
+  - MolDraw2D: Expand basic drawing api
+ (github issue #417 from greglandrum)
+  - MolDraw2D: add options
+ (github issue #424 from greglandrum)
+  - fixed FutureWarning in PeriodicTable.py
+ (github pull #665 from richlewis42)
+  - first pass, using google style
+ (github pull #672 from greglandrum)
+  - Use sets instead of and map. Minor comments cleanup.
+ (github pull #675 from DoliathGavid)
+  - Fix/stop unnecessary filtercatalog updates
+ (github pull #690 from bp-kelley)
+  - Add RDK_USE_BOOST_SERIALIZATION configure option (On by default)
+ (github pull #691 from bp-kelley)
+  - Minor optimizations of the force field minimization code, fix for issue 696
+ (github pull #693 from greglandrum)
+  - Include cis/trans stereochemistry when useChirality=true with the morgan fingerprints
+ (github issue #695 from greglandrum)
+  - Fixed a couple of compilation warnings in Resonance.cpp/Resonance.h
+ (github pull #701 from ptosco)
+  - Add run single reactant to ChemicalReaction
+ (github pull #705 from bp-kelley)
+  - Updates CMAKE_SOURCE_DIR to CMAKE_CURRENT_SOURCE_DIR
+ (github pull #707 from bp-kelley)
+  - Make LocaleSwitcher threadsafe
+ (github issue #710 from greglandrum)
+  - Expose generateOneProductSet
+ (github pull #722 from DoliathGavid)
+  - Add a reader for FPB files
+ (github pull #724 from greglandrum)
+  - Fix/get double prop get props asdict
+ (github pull #734 from bp-kelley)
+  - Add support for Tversky similarity to the FPB reader
+ (github pull #735 from greglandrum)
+  - Fix/expose invariant exception
+ (github pull #740 from bp-kelley)
+  - Support CTABs where the second letter in atom symbols is capitalized
+ (github issue #741 from greglandrum)
+  - Adds support for capturing RDLogs in Python StdErr streams
+ (github pull #749 from bp-kelley)
+  - Allow adding Hs only to atoms matching a query operator
+ (github issue #758 from greglandrum)
+  - cleanup possible pythonObjectToVect leaks in python wrappers
+ (github issue #764 from greglandrum)
+  - Add C++ function to prepare mol for rendering
+ (github issue #771 from greglandrum)
+  - Prefer wedging bonds to Hs
+ (github issue #772 from greglandrum)
+  - Support blanks in MolsToGridImage()
+ (github issue #776 from greglandrum)
+  - The InChI and Avalon source code can now be automatically downloaded as part of the cmake process.
+ (github pull #785 from ptosco)
+  - Support larger isotope deltas in the chirality assignment
+ (github issue #803 from greglandrum)
+  - Adds option RDK_USE_COMPLEX_ROTOR_DEFINITION
+ (github pull #810 from bp-kelley)
+  - add Draw.MolsToSVGGrid()
+ (github pull #817 from greglandrum)
+
 
 ## New Database Cartridge Features:
+  - support providing InChI (or InChI key) generation options in cartridge
+ (github pull #755 from greglandrum)
+  - building the cartridge is now integrated with the cmake build system
+ (github pull #785 from ptosco)
 
 ## New Java Wrapper Features:
-  
+  - Add a bit more control over the lazy MaxMin picker to the java layer
+ (github pull #791 from greglandrum)
+  - Ensure reduceProductToSideChains exposed in Java/Swig
+ (github issue #744 from bp-kelley)
+
 ## Deprecated code (to be removed in next release):
 
 ## Removed code:
@@ -21,11 +172,24 @@
 
 ## Other:
 
+# Release_2015.09.2
+(Changes relative to Release_2015.09.1)
+
+## Acknowledgements:
+Brian Kelley, Paolo Tosco, Riccardo Vianello
+
+## Bug Fixes:
+  - Fixed a post-decrement which causes a crash when compiling under Windows with MSVC 9
+  (from ptosco)
+  - Fixes a memory leak in fragmentMol
+  (github #669 from bp-kelley)
+  - MMPA compile error with Microsoft Visual C++ Compiler for Python 2.7
+  (github #655 from rvianello)
 
 # Release_2015.09.1
 (Changes relative to Release_2015.03.1)
 
-## Acknowledgements: 
+## Acknowledgements:
 
 Pierre Bhoorasingh, Gungor Budak, Andrew Dalke, JP Ebejer, Peter Ertl,
 Jan Holst Jensen, Brian Kelley, Joos Kiener, Noel O'Boyle, Axel Pahl,
@@ -147,7 +311,7 @@ Maciek Wojcikowski
  (github issue #655 from rvianello)
   - new canon: fix in special symmetry invariant
  (github pull #663 from NadineSchneider)
-  
+
 ## New Features and Enhancements:
   - enable popcount by default for cartridge
  (github issue #428 from greglandrum)
@@ -261,7 +425,7 @@ Maciek Wojcikowski
 ## New Java Wrapper Features:
   - Support for FilterCatalogs
   - Support for ResonanceMolSuppliers
-  
+
 ## Deprecated code (to be removed in next release):
 
 ## Removed code:
@@ -283,7 +447,7 @@ Maciek Wojcikowski
    means that canonical SMILES generated with the new version will be
    different from those generated with previous versions.
 
-## Acknowledgements: 
+## Acknowledgements:
 
 David Cosgrove, Andrew Dalke, JP Ebejer, Niko Fechner, Igor Filippov,
 Patrick Fuller, David Hall, J Bach Hardie, Jan Holst Jensen, Brian
@@ -441,7 +605,7 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
     (github issue #467)
   - Cartridge: add qmol_from_smiles() and qmol_from_ctab()
     (github issue #469)
-  - restore java and python wrappers. New parameter (matchChiralTag) 
+  - restore java and python wrappers. New parameter (matchChiralTag)
     (github issue #477 from AlexanderSavelyev)
   - Added a Python wrapper for getShortestPath()
     (github issue #487 from ptosco)
@@ -455,14 +619,14 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
 
 ## New Java Wrapper Features:
 
-  - The new molecule rendering code is accessible from the SWIG wrappers. 
+  - The new molecule rendering code is accessible from the SWIG wrappers.
 
 ## Deprecated code (to be removed in next release):
 
   - C++: The functionality in $RDBASE/Code/GraphMol/MolDrawing has been
     superseded by the new drawing code in $RDBASE/Code/GraphMol and will
     be removed in the next release.
-  - Python: 
+  - Python:
      - rdkit/Dbase/Pubmed
      - rdkit/Chem/fmcs (this has been superseded by the C++ implementation)
   - Cartridge: support for v8.x of PostgreSQL (v8.4 is no longer
@@ -476,7 +640,7 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
 
 ## Contrib updates:
 
-## Other: 
+## Other:
   - Python 2.6 support is deprecated. Starting with the next RDKit
 release, we will only support python 2.7 and python 3.4 and
 higher. Python 2.6 has not been supported since October 2013. If you
@@ -539,7 +703,7 @@ Richard West
  (github issue #296)
 - Cannot generate smiles for ChEBI 50252
  (github issue #298)
-- Either molecule-molecule substruct matching is wrong *OR* the docs for Atom::Match incorrect 
+- Either molecule-molecule substruct matching is wrong *OR* the docs for Atom::Match incorrect
  (github issue #304)
 - fluorine F-F  gives segmentation fault with MMFF forcefield
  (github issue #308)
@@ -555,7 +719,7 @@ Richard West
  (github issue #326)
 - Linking error with ICC 15.0 on Linux
  (github issue #327)
-- Using explicit hydrogens in the SMILES lead to the same AP FP for two different molecules 
+- Using explicit hydrogens in the SMILES lead to the same AP FP for two different molecules
  (github issue #334)
 - memory leaks when smiles/smarts parsers fail
  (github issue #335)
@@ -595,7 +759,7 @@ Richard West
  (github issue #267)
 - support avalon fingerprint in cartridge
  (github issue #286)
-- support partial fragmentation with fragmentOnSomeBonds 
+- support partial fragmentation with fragmentOnSomeBonds
  (github issue #288)
 - Add calcNumHeterocycles() descriptor
  (github issue #351)
@@ -612,8 +776,8 @@ Richard West
 - add Chem.Draw.MolToQPixmap
  (github pull #355 from mojaie)
 
- 
-## New Database Cartridge Features: 
+
+## New Database Cartridge Features:
 - *NOTE:* the configuration variable rdkit.ss_fp_size has been renamed to rdkit.sss_fp_size
 - Chemical reactions and several operations on them are now supported
 - Avalon fingerprints now supported (when support has been compiled in)
@@ -655,7 +819,7 @@ Removed modules:
    This also affects MQN descriptor #18.
 
 ## Acknowledgements:
-Paul Czodrowski, James Davidson, Markus Elfring, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright 
+Paul Czodrowski, James Davidson, Markus Elfring, Nikolas Fechner, Jan Holst Jensen, Christos Kannas, Sereina Riniker, Roger Sayle, Paolo Tosco, Samo Turk, Riccardo Vianello, Maciej Wójcikowski, Toby Wright
 
 ## Bug Fixes:
 - Dict::DataType declaration causing problems with C++11 std::lib
@@ -760,7 +924,7 @@ Paul Czodrowski, James Davidson, Markus Elfring, Nikolas Fechner, Jan Holst Jens
  (github issue 184)
 - Allow disabling the building of tests
  (github issue 185)
-- Expand DbCLI to allow updating databases 
+- Expand DbCLI to allow updating databases
  (github issue 197)
 - Code refactoring and enhancement to allow for O3A alignment according to atom-based Crippen logP contribs
  (github pull 201)
@@ -786,8 +950,8 @@ Paul Czodrowski, James Davidson, Markus Elfring, Nikolas Fechner, Jan Holst Jens
  (github issue 251)
 - added MolOps::get3DDistanceMat() (Chem.Get3DDistanceMatrix() from python)
 
- 
-## New Database Cartridge Features: 
+
+## New Database Cartridge Features:
 - Support configuration of fingerprint sizes in cartridge.
  (github issue 216)
 - Add mol_to_ctab(mol, bool default true) to Postgres cartridge.
@@ -818,7 +982,7 @@ Removed modules:
  (github pull 227)
 - port of rdkit.ML  bindings from Python/C API to boost::python
  (github pull 237)
-- The code now builds more easily using the Anaconda python distribution's 
+- The code now builds more easily using the Anaconda python distribution's
   conda package manager
  (github pull 247)
 
@@ -835,7 +999,7 @@ Andrew Dalke, JP Ebejer, Daniel Moser, Sereina Riniker, Roger Sayle, Manuel Schw
   (github issue 170)
 - calling RWMol::clear() leaves property dict empty
   (github issue 176)
-- zero atom molecule generates exception in MolToSmiles when 
+- zero atom molecule generates exception in MolToSmiles when
   rootedAtAtom is provided
   (github issue 182)
 - bond orders not being set when PDB files are read
@@ -851,7 +1015,7 @@ Andrew Dalke, JP Ebejer, Daniel Moser, Sereina Riniker, Roger Sayle, Manuel Schw
 
 ## Acknowledgements:
 James Davidson, JP Ebejer, Nikolas Fechner, Grégori Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
-Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
+Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner,
 
 ## IMPORTANT
  - Due to a bug fix in the parameter set, the MolLogP and MolMR
@@ -896,7 +1060,7 @@ Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner,
    (github issue 72)
  - Chem.MolFromInch hangs on CID 23691477 and CID 23691480
    (github issue 68)
- - Chem.MolFromInchi on CHEMBL104337 leads to segmentation fault 
+ - Chem.MolFromInchi on CHEMBL104337 leads to segmentation fault
    (github issue 67)
  - "Could not embed molecule." (The Anthony Conundrum)
    (github issue 55)
@@ -941,8 +1105,8 @@ Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner,
    (github issue 116)
  - Dihedral rotation exposed in python
    (github issue 113)
- - Support for cairocffi (cairo drop-in replacement that plays nicely with virtualenv) 
-   (github issue 80) 
+ - Support for cairocffi (cairo drop-in replacement that plays nicely with virtualenv)
+   (github issue 80)
  - Grey color for Hydrogens
    (github issue 97)
  - Improvements to the Dict interface in C++
@@ -955,7 +1119,7 @@ Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner,
    MaxPartialCharge(),MinPartialCharge(),MaxAbsPartialCharge(),MinAbsPartialCharge(),
    MaxEStateIndex(),MinEStateIndex(),MaxAbsEStateIndex(),MinAbsEStateIndex()
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
 
 ## New Java Wrapper Features:
  - MMFF support
@@ -983,7 +1147,7 @@ Removed modules:
 ## Other:
  - Some of the changes to UFF deviate from the published force
    field. Specifics of the changes, and the reasoning behind them, are
-   in Paolo Tosco's 2013 RDKit UGM presentation: 
+   in Paolo Tosco's 2013 RDKit UGM presentation:
    https://github.com/rdkit/UGM_2013/blob/master/Presentations/Tosco.RDKit_UGM2013.pdf?raw=true
  - Reaction drawing has been improved. Support for reaction drawing
    has been added to the IPython notebook.
@@ -999,7 +1163,7 @@ an up-to-date version of the code.
 
 ## Acknowledgements:
 Andrew Dalke, JP Ebejer, Nikolas Fechner, Roger Sayle, Riccardo Vianello,
-Yingfeng Wang, Dan Warner 
+Yingfeng Wang, Dan Warner
 
 ## Bug Fixes:
  - The docs for Descriptors.MolWt are now correct (GitHub #38)
@@ -1016,7 +1180,7 @@ Yingfeng Wang, Dan Warner
    non-stereo SMILES is being generated. (GitHub #45)
  - The ExactMolWt of [H+] is no longer zero. (GitHub #56)
  - The MPL canvas now has an addCanvasDashedWedge() method. (GitHub
-   #57) 
+   #57)
  - RWMol::insertMol() now copies atom coordinates (if
    present). (GitHub #59)
  - The "h" primitive in SMARTS strings now uses the method
@@ -1041,7 +1205,7 @@ Yingfeng Wang, Dan Warner
    The property "_MolFileChiralFlag" is used.
 
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
 
 ## New Java Wrapper Features:
  - {Get,Set}Prop() methods are now available for both Atoms and
@@ -1059,7 +1223,7 @@ Removed modules:
  - the molecule drawing code should now also work with pillow (a fork of
    PIL)
  - the PANDAS integration has been improved.  
- 
+
 
 # Release_2013.03.2
 (Changes relative to Release_2013.03.1)
@@ -1086,17 +1250,17 @@ Manuel Schwarze
 ## Acknowledgements:
 Paul Czodrowski, Andrew Dalke, Jan Domanski, Jean-Paul Ebejer, Nikolas
 Fechner, Jameed Hussain, Stephan Reiling, Sereina Riniker, Roger
-Sayle, Riccardo Vianello 
+Sayle, Riccardo Vianello
 
-## Bug Fixes: 
+## Bug Fixes:
  - removeBond now updates bond indices (sf.net issue 284)
  - dummy labels are no longer lost when atoms are copied (sf.net issue
-   285) 
+   285)
  - more specific BRICS queries now match before less specific ones
-   (sf.net issue 287, github issue 1) 
+   (sf.net issue 287, github issue 1)
  - molAtomMapNumber can now be set from Python (sf.net issue 288)
  - the legend centering for molecular image grids has been improved
-   (sf.net issue 289) 
+   (sf.net issue 289)
  - make install now includes all headers (github issue 2)
  - InChIs generaged after clearing computed properties are now correct
    (github issue 3)
@@ -1150,7 +1314,7 @@ Sayle, Riccardo Vianello
  - A new module integrating the RDKit with Pandas (rdkit.Chem.PandasTools)
    has been added.
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
  - The new compositional descriptors are available:
    calcFractionCSP3, calcNum{Aromatic,Aliphatic,Saturated}Rings,
    calcNum{Aromatic,Aliphatic,Saturated}Heterocycles,
@@ -1181,7 +1345,7 @@ Removed modules:
  - The MACCS fingerprint implementation has been moved into
    C++. (contribution from Roger Sayle)
  - New documentation has been added: Cartridge.rst, Overview.rst,
-   Install.rst 
+   Install.rst
 
 # Release_2012.12.1
 (Changes relative to Release_2012.09.1)
@@ -1192,9 +1356,9 @@ Removed modules:
 Andrew Dalke, James Davidson, Robert Feinstein, Nikolas Fechner,
 Nicholas Firth, Markus Hartenfeller, Jameed Hussain, Thorsten Meinl,
 Sereina Riniker, Roger Sayle, Gianluca Sforna, Pat Walters, Bernd
-Wiswedel 
+Wiswedel
 
-## Bug Fixes: 
+## Bug Fixes:
  - Using parentheses for zero-level grouping now works in reaction
    SMARTS. This allows intramolecular reactions to be expressed.
  - SMILES generated for molecules with ring stereochemistry
@@ -1238,8 +1402,8 @@ Wiswedel
  - The SMILES and SLN parsers no longer leak memory when sanitization
    of the result molecule fails. (issue 282)
  - The cairo canvas drawing code now works with PIL v1.1.6 as well as
-   more recent versions. 
-   
+   more recent versions.
+
 ## New Features:
  - RDKit ExplicitBitVects and DiscreteValueVects can now be directly
    converted into numpy arrays.
@@ -1262,7 +1426,7 @@ Wiswedel
    can now optionally return atom-type information as ints or text.
 
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
 - The Chi and Kappa descriptors are now available
 
 ## New Java Wrapper Features:
@@ -1282,7 +1446,7 @@ Removed modules:
   C++.
 - To make builds easier, the thread-safety of the recursive-smarts
   matcher has been made optional. The build option is
-  RDK_BUILD_THREADSAFE_SSS. 
+  RDK_BUILD_THREADSAFE_SSS.
 - There are two new entries in the Contrib directory:
   * Contrib/PBF : An implementation of the Plane of Best Fit
     contributed by Nicholas Firth.
@@ -1291,7 +1455,7 @@ Removed modules:
 - A new "Cookbook" has been added to the documentation to provide
   a collection of recipes for how to do useful tasks.
 
-  
+
 # Release_2012.09.1
 (Changes relative to Release_2012.06.1)
 
@@ -1312,9 +1476,9 @@ Removed modules:
 ## Acknowledgements:
 Gianpaolo Bravi, David Cosgrove, Andrew Dalke, Fabian Dey, James
 Davidson, JP Ebejer, Gabriele Menna, Stephan Reiling, Roger Sayle,
-James Swetnam 
+James Swetnam
 
-## Bug Fixes: 
+## Bug Fixes:
 - The molecules that come from mergeQueryHs() now reset the RingInfo
   structure. (issue 245)
 - The output from MurckoScaffold.MakeScaffoldGeneric no longer
@@ -1332,7 +1496,7 @@ James Swetnam
   SMILES generated by the RDKit. (issue 253)
 - Non-ring sulfur atoms adjacent to aromatic atoms are no longer set
   to be SP2 hybridized. This allows them to be stereogenic. (issue
-  254) 
+  254)
 - The combineMols() function now clears computed properties on the
   result molecule.
 - A couple of problems with the pickling functions on big endian
@@ -1351,7 +1515,7 @@ James Swetnam
 - Lines containing only white space in SDF property blocks are no
   longer treated as field separators.
 - Transition metals and lanthanides no longer have default valences
-  assigned. 
+  assigned.
 
 ## New Features:
 - The RDKit now has a maximum common substructure (MCS) implementation
@@ -1365,7 +1529,7 @@ James Swetnam
   information.
 - The RDKit and Layered fingerprinters both now accept "fromAtoms"
   arguments that can be used to limit which atoms contribute to the
-  fingerprint. 
+  fingerprint.
 - Version information is now available in the Java wrapper.
 - The descriptor NumRadicalElectrons is now available.
 - The PyMol interface now supports a GetPNG() method which returns the
@@ -1375,7 +1539,7 @@ James Swetnam
 - Component-level grouping (parens) can be used in reaction SMARTS.
 
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
 - support for molecule <-> pickle conversion via the functions
   mol_to_pkl, mol_from_pkl, and is_valid_mol_pkl.
 - support for bit vector <-> binary text conversion via the functions
@@ -1390,7 +1554,7 @@ Removed modules:
 ## Other:
 - During this release cycle, the sourceforge project was updated to
   their new hosting system. This explains the change in bug/issue
-  ids. 
+  ids.
 - the SMILES parser is now substantially faster.
 - The molecular drawings generated by Code/Demo/RDKit/Draw/MolDrawing.h
   have been improved.
@@ -1417,7 +1581,7 @@ Andrew Dalke, JP Ebejer, Igor Filippov, Peter Gedeck, Jan Holst
 Jensen, Adrian Jasiński, George Papadatos, Andrey Paramonov, Adrian
 Schreyer, James Swetnam
 
-## Bug Fixes: 
+## Bug Fixes:
  - Radicals are now indicated in molecular depictions. (Issue 3516995)
  - Calling .next() on an SDMolSupplier at eof no longer results in an
    infinite loop. (Issue 3524949)
@@ -1466,7 +1630,7 @@ Schreyer, James Swetnam
    clustering.
  - Some bugs in the depictor were fixed.
  - AvalonTools bug with coordinate generation for mols with no
-   conformers fixed. 
+   conformers fixed.
 
 ## New Features:
  - ChemicalFeatures now support an optional id
@@ -1478,7 +1642,7 @@ Schreyer, James Swetnam
  - The function getHashedMorganFingerprint (GetHashedMorganFingerprint
    in Python) has been added.
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
  - The functions mol_from_smiles(), mol_from_smarts(), and
    mol_from_ctab() now return a null value instead of generating an
    error when the molecule processing fails. This allows molecule
@@ -1520,9 +1684,9 @@ Removed modules:
 
 ## Acknowledgements:
 JP Ebejer, Paul Emsley, Roger Sayle, Adrian Schreyer, Gianluca Sforna,
-Riccardo Vianello 
+Riccardo Vianello
 
-## Bug Fixes: 
+## Bug Fixes:
 - the older form of group evaluations in Mol blocks is now correctly
   parsed. (Issue 3477283)
 - some problems with handling aromatic boron were fixed. (Issue 3480481)
@@ -1534,7 +1698,7 @@ Riccardo Vianello
   bounds checking (Issue 3483968)
 - Isotope information in Mol blocks is now written to M ISO lines
   instead of going in the atom block. (Issue 3494552)
-- Better 2D coordinates are now generated for neighbors of atoms with 
+- Better 2D coordinates are now generated for neighbors of atoms with
   unspecified hybridization. (Issue 3487469)
 - Dummy atoms and query atoms are now assigned UNSPECIFIED hybridization
   instead of SP. (Issue 3487473)
@@ -1565,12 +1729,12 @@ hasn't been built.
 - the Mol file and Mol block parsers, as well as the SD suppliers,
   now support an optional "strictParsing" argument.
   When this is set to False, problems in the structure of the
-  input file are ignored when possible 
+  input file are ignored when possible
 - EditableMols return the index of the atom/bond added by AddAtom/AddBond
 - rdkit.Chem.Draw.MolToImage() now supports an optional "legend" argument
-- The MolToSmiles function now supports an optional "allBondsExplicit" argument. 
+- The MolToSmiles function now supports an optional "allBondsExplicit" argument.
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
 - the functions mol_from_smiles() and mol_from_smarts() were added
 
 ## New Java Wrapper Features:
@@ -1580,7 +1744,7 @@ Deprecated modules (to be removed in next release):
 - rdkit.Excel
 
 Removed modules:
-- rdkit.ML.Descriptors.DescriptorsCOM 
+- rdkit.ML.Descriptors.DescriptorsCOM
 - rdkit.ML.Composite.CompositeCOM
 
 ## Other:
@@ -1597,7 +1761,7 @@ faster. This makes standard molecule construction faster.
    behavior will return different fingerprints than previous RDKit
    versions. This affects usage from c++, python, and within the
    postgresql cartridge. See the "## Other" section below for more
-   details. 
+   details.
  - Due to a bug fix in the parameter set, the MolLogP and MolMR
    descriptor calculators now return different values for some
    molecules. See the "## Bug Fixes" section below for more details.
@@ -1611,7 +1775,7 @@ faster. This makes standard molecule construction faster.
 Andrew Dalke, JP Ebejer, Roger Sayle, Adrian Schreyer, Gianluca
 Sforna, Riccardo Vianello, Toby Wright
 
-## Bug Fixes: 
+## Bug Fixes:
 - molecules with polymeric S group information are now rejected by the
   Mol file parser. (Issue 3432136)
 - A bad atom type definition and a bad smarts definition were fixed in
@@ -1624,21 +1788,21 @@ Sforna, Riccardo Vianello, Toby Wright
 - ReplaceSubstructs() now copies input molecule conformations to the
   output molecule. (Issue 3453144)
 - three-coordinate S and Se are now stereogenic (i.e. the
-  stereochemistry of O=[S@](C)F is no longer ignored). (Issue 3453172) 
+  stereochemistry of O=[S@](C)F is no longer ignored). (Issue 3453172)
 
 ## New Features:
 - Integration with the new IPython graphical canvas has been
-  added. For details see this wiki page: 
+  added. For details see this wiki page:
 http://code.google.com/p/rdkit/wiki/IPythonIntegration
 - Input and output from Andrew Dalke's FPS format
   (http://code.google.com/p/chem-fingerprints/wiki/FPS) for
-  fingerprints. 
+  fingerprints.
 - The descriptor CalcNumAmideBonds() was added.
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
 - Support for PostgreSQL v9.1
 - Integration with PostgreSQL's KNN-GIST functionality. (Thanks to
-  Adrian Schreyer) 
+  Adrian Schreyer)
 - the functions all_values_gt(sfp,N) and all_values_lt(sfp,N) were
   added.
 
@@ -1648,7 +1812,7 @@ http://code.google.com/p/rdkit/wiki/IPythonIntegration
 
 Deprecated modules (to be removed in next release):
 - rdkit.Excel
-- rdkit.ML.Descriptors.DescriptorsCOM 
+- rdkit.ML.Descriptors.DescriptorsCOM
 - rdkit.ML.Composite.CompositeCOM
 
 Removed modules:
@@ -1689,7 +1853,7 @@ wrappers in 64bit mode on windows.
 Eddie Cao, Richard Cooper, Paul Czodrowski, James Davidson, George
 Papadatos, Riccardo Vianello  
 
-## Bug Fixes: 
+## Bug Fixes:
  - A problem with interpretation of stereochemistry from mol files was
    fixed (Issue 3374639)
  - Sterochemistry information for exocyclic double bonds in mol blocks
@@ -1701,9 +1865,9 @@ Papadatos, Riccardo Vianello
  - A bug with the reading of query information from mol files was
    fixed. (Issue 3392107)
  - Sterochemistry is now cleaned up after processing mol2
-   files. (Issue 3399798) 
+   files. (Issue 3399798)
  - mergeQueryHs now correctly handles atoms with multiple Hs (Issue
-   3415204) 
+   3415204)
  - mergeQueryHs now correctly handles atoms without initial query
    information (Issue 3415206)
  - the calcLipinskiHBD() (equivalent to Lipinski.NHOHCount) descriptor
@@ -1717,7 +1881,7 @@ Papadatos, Riccardo Vianello
 
 ## New Features:
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
  - molecules can now be built from mol blocks using the function
    mol_from_ctab(). The corresponding is_valid_ctab() function was
    also added.
@@ -1735,7 +1899,7 @@ Removed modules:
  - The optional InChI support can now be built using a system
    installation of the InChI library.
 
- 
+
 
 # Release_2011.06.1
 (Changes relative to Release_2011.03.2)
@@ -1744,7 +1908,7 @@ Removed modules:
  - Eddie Cao, Andrew Dalke, James Davidson, JP Ebejer, Gianluca
    Sforna, Riccardo Vianello, Bernd Wiswedel
 
-## Bug Fixes: 
+## Bug Fixes:
  - A problem with similarity values between SparseIntVects that
    contain negative values was fixed. (Issue 3295215)
  - An edge case in SmilesMolSupplier.GetItemText() was fixed. (Issue
@@ -1775,9 +1939,9 @@ Removed modules:
  - the methods getMostCommonIsotope() and getMostCommonIsotopeMass()
    have been added to the PeriodicTable class.
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
  - Support for generating InChIs and InChI keys
-   (if the RDKit InChI support is enabled). 
+   (if the RDKit InChI support is enabled).
 
 Deprecated modules (to be removed in next release):
  - The original SWIG wrappers in $RDBASE/Code/Demos/SWIG are deprecated
@@ -1789,14 +1953,14 @@ Removed modules:
    code and $RDBASE/Code/Demos/RDKit/Draw is better.
  - the python molecule drawing code will now use superscripts and
    subscripts appropriately when using the aggdraw or cairo canvases
-   (cairo canvas requires pango for this to work). 
+   (cairo canvas requires pango for this to work).
  - $RDBASE/Code/Demos/RDKit/Draw now includes an example using cairo
  - A lot of compiler warnings were cleaned up.
  - The error reporting in the SMILES, SMARTS, and SLN parsers was improved.
  - the code for calculating molecular formula is now in C++
-   (Descriptors::calcMolFormula()) 
+   (Descriptors::calcMolFormula())
 
- 
+
 # Release_2011.03.2
 (Changes relative to Release_2011.03.1)
 
@@ -1812,7 +1976,7 @@ Removed modules:
  - Eddie Cao, James Davidson, Kirk DeLisle, Peter Gedeck, George
    Magoon, TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Bernd Wiswedel
 
-## Bug Fixes: 
+## Bug Fixes:
  - The performance of SSSR finding for molecules with multiple highly-fused
    ring systems has been improved. (Issue 3185548)
  - Isotope information is now correctly saved when molecules are
@@ -1853,11 +2017,11 @@ Removed modules:
  - MolOps::assignStereochemistry now can also flag potential
    stereocenters that are not specified.
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
  - the descriptor-calculation functions mol_numrotatablebonds(),
    mol_numheteroatoms(), mol_numrings(), and mol_tpsa() have been
    added.
- 
+
 Deprecated modules (to be removed in next release):
 
 Removed modules:
@@ -1868,7 +2032,7 @@ Removed modules:
    with the other descriptor calculators.
  - The molecule serialization (pickling) format has been changed. The
    new format is more compact.
- 
+
 
 
 # Release_2010.12.1
@@ -1883,17 +2047,17 @@ Removed modules:
 
 ## Acknowledgements:
  - Eddie Cao, Andrew Dalke, James Davidson, Kirk DeLisle, Peter Gedeck,
-   TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
-   
-## Bug Fixes: 
+   TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Riccardo Vianello
+
+## Bug Fixes:
  - The depiction code no longer crashes with single-atom templates
-   (issue 3122141) 
+   (issue 3122141)
  - Aromatic bonds in the beginning of a SMILES branch are now
    correctly parsed (issue 3127883)
  - A crash when generating 2d constrained coordinates was fixed (issue
-   3135833) 
+   3135833)
  - Stereochemistry no longer removed from double bonds in large
-   rings. (issue 3139534) 
+   rings. (issue 3139534)
  - Atom mapping information no longer in reaction products (issue
    3140490)  
  - Smiles parse failure with repeated ring labels and dot disconnects
@@ -1930,9 +2094,9 @@ Removed modules:
  - Functionality for recognizing common functional groups has been
    added in rdkit.Chem.FunctionalGroups. The functional groups
    themselves are defined in
-   $RDBASE/Data/Functional_Group_Hierarchy.txt 
+   $RDBASE/Data/Functional_Group_Hierarchy.txt
 
-## New Database Cartridge Features: 
+## New Database Cartridge Features:
  - The cartridge now supports SMARTS queries.
  - The functions is_valid_{smiles,smarts}() are now available
    (issue 3097359).
@@ -1953,7 +2117,7 @@ Removed modules:
    site: http://tech.knime.org/community/rdkit
    Thanks to Thorsten, Bernd, Michael, and the rest of the crew at
    knime.com for making this possible.
- - RPMs to allow easy installation of the RDKit on Fedora/CentOS/RHEL 
+ - RPMs to allow easy installation of the RDKit on Fedora/CentOS/RHEL
    and similar systems are now available. Thanks to Gianluca Sforna
    for doing this work.
  - The database cartridge now statically links the RDKit libraries.
@@ -1975,9 +2139,9 @@ Removed modules:
 ## Acknowledgements:
  - Andrew Dalke, James Davidson, Paul Emsley, Peter Gedeck,
    Uwe Hoffmann, Christian Kramer, Markus Kossner, TJ O'Donnell,
-   Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
-   
-## Bug Fixes: 
+   Gianluca Sforna, Nik Stiefl, Riccardo Vianello
+
+## Bug Fixes:
  - A typo in the parameters for the Crippen clogp calculator was
    fixed. (issue 3057201)
  - some problems in the layered fingerprinting code were fixed. (issue
@@ -1999,12 +2163,12 @@ Removed modules:
    control whether or not bond order and chirality are taken into
    account. By default chirality is ignored and the bond order is
    used. Another change with the MorganFPs is that ring information is
-   now included by default. 
+   now included by default.
  - 2D coordinates can now be generated for chemical reactions.
  - The functions IsMoleculeReactantOfReaction and
    IsMoleculeProductOfReaction have been added to the C++
    interface. From python these are methods of the ChemicalReaction
-   class: 
+   class:
    rxn.IsMoleculeReactant and rxn.IsMoleculeProduct
  - The default bond length for depiction can now be changed.
  - FCFP-like fingerprints can now be generated with the Morgan
@@ -2017,7 +2181,7 @@ Removed modules:
  - the function findAllPathsOfLengthMtoN() was added
 
 Deprecated modules (to be removed in next release):
- 
+
 Removed modules:
  - rdkit/qtGui
  - rdkit/RDToDo
@@ -2061,8 +2225,8 @@ Removed modules:
 ## Acknowledgements:
  - Andrew Dalke, James Davidson, Kirk DeLisle, Thomas Heller, Peter Gedeck,
    Greg Magoon, Noel O'Boyle, Nik Stiefl,  
-   
-## Bug Fixes: 
+
+## Bug Fixes:
  - The depictor no longer generates NaNs for some molecules on
    windows (issue 2995724)
  - [X] query features work correctly with chiral atoms. (issue
@@ -2082,7 +2246,7 @@ Removed modules:
    rings was fixed. (issue 3018558)
  - a problem with embedding fused small ring systems was fixed.
    (issue 3019283)
-    
+
 ## New Features:
  - RXN files can now be written. (issue 3011399)
  - reaction smarts can now be written.
@@ -2097,12 +2261,12 @@ Removed modules:
  - repeated recursive SMARTS queries in a single SMARTS will now be
    recognized and matched much faster.
  - the SMILES and SMARTS parsers can now be run safely in
-   multi-threaded code. 
+   multi-threaded code.
 
 Deprecated modules (to be removed in next release):
  - rdkit/qtGui
  - Projects/SDView
- 
+
 Removed modules:
  - SVD code: External/svdlibc External/svdpackc rdkit/PySVD
  - rdkit/Chem/CDXMLWriter.py
@@ -2127,16 +2291,16 @@ Removed modules:
      the rest of the RDKit.
    - the bjam-based build system should be considered
      deprecated. This is the last release it will be actively
-     maintained. 
+     maintained.
 
 
 # Release_Q12010_1
 (Changes relative to Release_Q42009_1)
 
 ## Acknowledgements:
- - Andrew Dalke, Jean-Marc Nuzillard, Noel O'Boyle, Gianluca Sforna, 
+ - Andrew Dalke, Jean-Marc Nuzillard, Noel O'Boyle, Gianluca Sforna,
    Nik Stiefl, Anna Vulpetti
-   
+
 ## Bug Fixes
  - Substantial improvements were made to the SLN parser
  - A bad depiction case was fixed. (issue 2948402)
@@ -2150,10 +2314,10 @@ Removed modules:
    flagged when output to mol files. (issue 2963522)
  - A segmentation fault that occured when kekulizing modified
    molecules has been fixed. (issue 2983794)
-    
+
 ## New Features
  - The MaxMin diversity picker can now be given a seed for the random
-   number generator to ensure reproducible results. 
+   number generator to ensure reproducible results.
 
 ## Other
  - the vflib source, which is no longer used, was removed from the
@@ -2187,14 +2351,14 @@ Removed modules:
 ## Acknowledgements
   - Andrew Dalke, Kirk DeLisle, David Hall, Markus Kossner, Adrian
     Schreyer, Nikolaus Stiefl, Jeremy Yang
-   
+
 ## Bug Fixes
   - the SMARTS parser now correctly requires tha atom-map numbers be
     at the end of a complex atom query.
     (issue 1804420)
   - a bug in the way SMARTS matches are uniquified has been fixed
     (issue 2884178)
-    
+
 ## New Features
   - The new SMARTS atomic query feature "x" (number of ring bonds) is
     now supported.
@@ -2202,7 +2366,7 @@ Removed modules:
     been expanded a bit in functionality. Samples are now included for
     Java, C#, and Python.
   - Information about the current RDKit and boost versions is now
-    available from C++ (file RDGeneral/versions.h) and Python 
+    available from C++ (file RDGeneral/versions.h) and Python
     (rdBase.rdkitVersion and rdBase.boostVersion)
   - The KNN code now supports weighted nearest-neighbors calculations
     with a radius cutoff.
@@ -2229,7 +2393,7 @@ Removed modules:
     Akihiro Yokota, Kei Taneishi, Riccardo Vianello, Markus Kossner
 
 ## Bug Fixes
-  - the canonOrient argument to the depiction code now works 
+  - the canonOrient argument to the depiction code now works
     (issue 2821647)
   - typo in the depictor 2D embedding code fixed  
     (issue 2822883)
@@ -2266,12 +2430,12 @@ Removed modules:
   - Uwe Hoffmann, Marshall Levesque, Armin Widmer
 
 ## Bug Fixes
-  - handling of crossed bonds in mol files fixed (issue 2804599) 
-  - serialization bug fixed (issue 2788233) 
-  - pi systems with 2 electrons now flagged as aromatic (issue 2787221) 
-  - Chirality swap on AddHs (issue 2762917) 
-  - core leak in UFFOptimizeMolecule fixed (issue 2757824) 
-   
+  - handling of crossed bonds in mol files fixed (issue 2804599)
+  - serialization bug fixed (issue 2788233)
+  - pi systems with 2 electrons now flagged as aromatic (issue 2787221)
+  - Chirality swap on AddHs (issue 2762917)
+  - core leak in UFFOptimizeMolecule fixed (issue 2757824)
+
 ## New Features
   - cairo support in the mol drawing code (from Uwe Hoffmann) (issue 2720611)
   - Tversky and Tanimoto similarities now supported for SparseIntVects
@@ -2288,7 +2452,7 @@ Removed modules:
   - Atom.GetPropNames() and Bond.GetPropNames() now available from
     python
   - BRICS code now supports FindBRICSBonds() and BreakBRICSBonds()
-  - atom labels Q, A, and * in CTABs are more correctly supported 
+  - atom labels Q, A, and * in CTABs are more correctly supported
     (issue 2797708)
   - rdkit.Chem.PropertyMol added (issue 2742959)
   - support has been added for enabling and disabling logs
@@ -2299,7 +2463,7 @@ Removed modules:
     ($RDBASE/Code/Demos/RDKit/MPI).
   - Embedding code is now better at handling chiral structures and
     should produce results for molecules with atoms that don't have
-    UFF parameters. 
+    UFF parameters.
   - the UFF code is more robust w.r.t. missing parameters
   - GetHashedAtomPairFingerprint() returns SparseIntVect instead of
     ExplicitBitVect
@@ -2332,10 +2496,10 @@ Removed modules:
  - For C++ programmers: There is a non-backwards compatible change in
    the way atoms and bonds are stored on molecules. See the *## Other*
    section for details.
-   
+
 ## Acknowledgements
  - Kirk DeLisle, Noel O'Boyle, Andrew Dalke, Peter Gedeck, Armin Widmer
- 
+
 ## Bug Fixes
  - Incorrect coordinates from mol2 files (issue 2727976)
  - Incorrect handling of 0s as ring closure digits (issues 2525792,
@@ -2348,11 +2512,11 @@ Removed modules:
  - Order dependence in the 2D pharmacophore code
  - the LayeredFingerprints now handle non-aromatic single ring bonds
    between aromatic atoms correctly.
-   
+
 
 ## New Features
  - BRICS implementation
- - Morgan/circular fingerprints implementation 
+ - Morgan/circular fingerprints implementation
  - The 2D pharmacophore code now uses standard RDKit fdef files.
  - Atom parity information in CTABs now written and read. If present
    on reading, atom parity flags are stored in the atomic property
@@ -2412,7 +2576,7 @@ Removed modules:
    centers should be fine.
 
 ## Acknowledgements:
- - Kirk DeLisle, Markus Kossner, Greg Magoon, Nik Stiefl 
+ - Kirk DeLisle, Markus Kossner, Greg Magoon, Nik Stiefl
 
 ## Bug Fixes
  - core leaks in learning code (issue 2152622)
@@ -2435,7 +2599,7 @@ Removed modules:
  - incorrect parsing of atom-list queries with high-numbered atoms
    (issue 2413431)
  - MolOps::mergeQueryHs() crashing with non-query molecules. (issue
-   2414779) 
+   2414779)
 
 ## New Features
  - SLN parser (request 2136703).
@@ -2458,7 +2622,7 @@ Removed modules:
 
 ## Bug Fixes
  - A memory leak in the ToBase64 and FromBase64 wrapper functions was
-   fixed. 
+   fixed.
  - The UFF atom typer has been made more permissive: it now will pick
    "close" atom types for things it does not recognize. (issue
    2094445)
@@ -2487,7 +2651,7 @@ Removed modules:
    dependent. This should help with the embedding of large, and
    crowded molecules. (issue 2091974)
  - The codebase can now be built with boost 1.36. (issue 2071168)
- - A problem with serialization of bond directions was fixed. 
+ - A problem with serialization of bond directions was fixed.
    (issue 2113433)
 
 ## New Features
@@ -2497,7 +2661,7 @@ Removed modules:
    (operator==). (request 1997439)
  - Chirality information can now be assigned based on the 3D
    coordinates of a molecule using
-   MolOps::assignChiralTypesFrom3D(). (request 1973062) 
+   MolOps::assignChiralTypesFrom3D(). (request 1973062)
  - MolOps::getMolFrags() can now return a list of split molecules
    instead of just a list of atom ids. (request 1992648)
  - ROMol::getPropNames() now supports the includePrivate and
@@ -2507,13 +2671,13 @@ Removed modules:
 ## Other
  - the pointers returned from Base64Encode/Decode are now allocated
    using new instead of malloc or calloc. the memory should be
-   released with delete[]. 
+   released with delete[].
  - the generation of invariants for chirality testing is now quite a
-   bit faster; this results in faster parsing of molecules. 
+   bit faster; this results in faster parsing of molecules.
  - The use of C include files instead of their C++ replacements has
-   been dramatically reduced. 
+   been dramatically reduced.
  - The new (as of May2008) hashing algorithm for fingerprints is now
-   the default in the python fingerprinting code 
+   the default in the python fingerprinting code
    (Chem.Fingerprints.FingerprintMols).
  - The functions MolOps::assignAtomChiralCodes() and
    MolOps::assignBondStereoCodes() are deprecated. Use
@@ -2522,11 +2686,11 @@ Removed modules:
    uses numpy, which is actively supported.
  - By default Lapack++ is no longer used. The replacement is the boost
    numeric bindings: http://mathema.tician.de/software/boost-bindings.
-   
+
 
 # Release_May2008_1
 (Changes relative to Release_Jan2008_1)
- 
+
 ## IMPORTANT
  - A fix to the values of the parameters for the Crippen LogP
    calculator means that the values calculated with this version are
@@ -2537,7 +2701,7 @@ Removed modules:
  - Please read the point about dummy atoms in the "## New Features"
    section. It explains a change that affects backwards compatibility
    when dealing with dummy atoms.
-  
+
 
 ## Acknowledgements:
  - Some of the bugs fixed in this release were found and reported by
@@ -2545,17 +2709,17 @@ Removed modules:
 
 ## Bug Fixes
  - A core leak in MolAlign::getAlignmentTransform was fixed (issue
-   1899787) 
+   1899787)
  - Mol suppliers now reset the EOF flag on their stream after they run
-   off the end (issue 1904170) 
+   off the end (issue 1904170)
  - A problem causing the string "Sc" to not parse correctly in
-   recursive SMARTS was fixed (issue 1912895) 
+   recursive SMARTS was fixed (issue 1912895)
  - Combined recursive smarts queries are now output correctly.
    (issue 1914154)
  - A bug in the handling of chirality in reactions was fixed (issue
-   1920627) 
+   1920627)
  - Looping directly over a supplier no longer causes a crash (issue
-   1928819) 
+   1928819)
  - a core leak in the smiles parser was fixed (issue 1929199)
  - Se and Te are now potential aromatic atoms (per the proposed
    OpenSmiles standard). (issue 1932365)
@@ -2573,7 +2737,7 @@ Removed modules:
    to not be backwards compatible with older versions (issue 1950302)
  - Isotope queries are now added correctly (if perhaps not optimally)
    to SMARTS.
- - some drawing-related bugs have been cleared up. 
+ - some drawing-related bugs have been cleared up.
  - A bug in Chem.WedgeMolBonds (used in the drawing code) that was
    causing incorrect stereochemistry in drawn structures was
    fixed. (issue 1965035)
@@ -2595,7 +2759,7 @@ Removed modules:
    molecules can now be pickled and not lose the query
    information. (feature request 1756596)
  - Query features from mol files are now fully supported. (feature
-   request 1756962) 
+   request 1756962)
  - Conformations now support a dimensionality flag. Dimensionality
    information is now read from mol blocks and TDT files. (feature request
    1906758)
@@ -2646,10 +2810,10 @@ Removed modules:
  - The directory $RDBASE/Data/SmartsLib contains a library of sample
    SMARTS contributed by Richard Lewis.
 
-   
+
 # Release_Jan2008_1
 (Changes relative to Release_Aug2007_1)
- 
+
 ## IMPORTANT
  - Bug fixes in the canonicalization algorithm have made it so that
    the canonical SMILES from this version are not compatible with
@@ -2660,7 +2824,7 @@ Removed modules:
  - The build system has been completely changed. Makefiles and Visual
    Studio project files have been removed. See the "## Other" section for
    more info.
-   
+
 ## Acknowledgements:
  - Adrian Schreyer uncovered and reported a number of the bugs fixed
    in this release.
@@ -2688,10 +2852,10 @@ Removed modules:
    interpreted as "atom is in a ring of size N". (issue 1811276)
    This change required that the default feature definitions for
    aromaticity and lumped hydrophobes be updated.
- - The MolSuppliers (SDMolSupplier, TDTMolSupplier, SmilesMolSupplier) 
+ - The MolSuppliers (SDMolSupplier, TDTMolSupplier, SmilesMolSupplier)
    no longer fail when reading the last element. (issue 1874882)
  - A memory leak in the constructor of RWMols was fixed.
- - A problem causing rapid memory growth with Recap analysis was fixed. 
+ - A problem causing rapid memory growth with Recap analysis was fixed.
    (issue 1880161)
  - The Recap reactions are no longer applied to charged Ns or Os
    (issue 1881803)
@@ -2701,7 +2865,7 @@ Removed modules:
    are now corrected when MolOps::removeHs is called. (issue 1894348)
  - Various small code cleanups and edge case fixes were done as a
    result of things discovered while getting the VC8 build working.
-   
+
 ## New Features
  - The SparseIntVect class (used by the atom pairs and topological
    torsions) is now implemented in C++.
@@ -2754,7 +2918,7 @@ Removed modules:
 
 ## Other
  - The full set of tests is now easier to setup and run on new
-   machines. (issue 1757265) 
+   machines. (issue 1757265)
  - A new build system, using Boost.Build, has been put into place on
    both the windows and linux sides. The new system does much better
    dependency checking and handles machine-specific stuff a lot
@@ -2789,13 +2953,13 @@ Removed modules:
    details.
  - The PointND class has been exposed to Python
  - The "Butina" clustering algorithm [JCICS 39:747-50 (1999)] is now
-   available in $RDBase/Python/Ml/Cluster/Butina.py 
+   available in $RDBase/Python/Ml/Cluster/Butina.py
  - A preliminary implementation of the subshape alignment algorithm is
-   available. 
+   available.
  - The free version of MS Visual C++ is now supported.   
  - There is better support for queries in MDL mol files. (issue 1756962)
    Specifically: ring and chain bond queries; the not modifier for
-   atom lists; R group labels. 
+   atom lists; R group labels.
  - An EditableMol class is now exposed to Python to allow molecules to
    be easily edited. (issue 1764162)
  - The RingInfo class is now exposed to Python.
@@ -2805,7 +2969,7 @@ Removed modules:
  - pickle support added to classes: PointND
  - atoms and bonds now support the HasQuery() and GetSmarts() methods
    from Python.   
-   
+
 ## Other
  - Similarity scores can now be calculated from Python in bulk
    (i.e. calculating the similarity between one vector and a list of
@@ -2821,7 +2985,7 @@ Removed modules:
    the source trees a bit.
  - Boost version 1.34 is now supported (testing has been done on 1.34 and 1.34.1).
  - Updates to the "Getting Started" documentation.
- 
+
 # Release_April2007_1
 (Changes relative to Release_Jan2007_1)
 
@@ -2830,8 +2994,8 @@ Removed modules:
  - "implicit" hydrogens are now added to charged atoms explicitly when
    writing SMILES. (issue 1670149)
  - the 2D->3D code no longer generates non-planar conjugated 4-rings
-   (e.g. C1=CC=C1). (issue 1653802) 
- - removing explicit hydrogens no longer produces incorrect smiles 
+   (e.g. C1=CC=C1). (issue 1653802)
+ - removing explicit hydrogens no longer produces incorrect smiles
    (issue 1694023)
  - bit indices and signature lengths in the AtomPairs code no longer
    being calculated incorrectly. *NOTE* this changes the bits that are
@@ -2851,14 +3015,14 @@ Removed modules:
    distance matrix. There's also a shorthand approach for calling this
    to mimic a 3D structure available as:
    AllChem.GenerateDepictionMatching3DStructure()
- - DiscreteValueVect and UniformGrid3D now support the binary 
+ - DiscreteValueVect and UniformGrid3D now support the binary
    operators |, &, +, and -.
  - a reader/writer for TPL files has been added.
  - support has been added for MolCatalogs: hierarchical catalogs that
    can store complete molecules.
  - the protrude distance metric for shapes has been added
  - pickle support added to classes: UniformGrid, DiscreteValueVect,
-   Point 
+   Point
  - added the class DataStructs/SparseIntVect to improve performance
    and clarity of the AtomPairs code
 

@@ -422,9 +422,9 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     if (canonical) {
       if (tmol->hasProp("_canonicalRankingNumbers")) {
         for (unsigned int i = 0; i < tmol->getNumAtoms(); ++i) {
-          unsigned int rankNum;
-          tmol->getAtomWithIdx(i)
-              ->getPropIfPresent("_canonicalRankingNumber", rankNum);
+          unsigned int rankNum = 0;
+          tmol->getAtomWithIdx(i)->getPropIfPresent("_canonicalRankingNumber",
+                                                    rankNum);
           ranks[i] = rankNum;
         }
       } else {
@@ -618,8 +618,8 @@ std::string MolFragmentToSmiles(const ROMol &mol,
         const Atom *oAt = mol.getAtomWithIdx(aidx);
         std::string cipCode;
         if (oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-          tmol.getAtomWithIdx(aidx)
-              ->setProp(common_properties::_CIPCode, cipCode);
+          tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,
+                                             cipCode);
         }
       }
     }
