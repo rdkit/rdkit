@@ -30,7 +30,10 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
   if (atomMap == 0) {
     // we have to figure out the mapping between the two molecule
     MatchVectType match;
-    if (SubstructMatch(refMol, prbMol, match)) {
+    const bool recursionPossible = true;
+    const bool useChirality = false;
+    const bool useQueryQueryMatches = true;
+    if (SubstructMatch(refMol, prbMol, match, recursionPossible, useChirality, useQueryQueryMatches)) {
       MatchVectType::const_iterator mi;
       for (mi = match.begin(); mi != match.end(); mi++) {
         prbPoints.push_back(&prbCnf.getAtomPos(mi->first));
