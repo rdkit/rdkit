@@ -276,7 +276,8 @@ void testSmilesSegFault() {
 
 void testGithub336() {
   BOOST_LOG(rdInfoLog) << "testing github issue 336: bad canonical smiles for "
-                          "conjugated double bonds" << std::endl;
+                          "conjugated double bonds"
+                       << std::endl;
   // some tests around dealing with bad mol blocks
   {
     std::string pathName = getenv("RDBASE");
@@ -386,7 +387,6 @@ void testCountFps() {
 void testInitStruChk() {
   BOOST_LOG(rdInfoLog) << "testing init struchk " << std::endl;
   {
-    
     std::string pathName = getenv("RDBASE");
     pathName += "/Data/struchk/";
     std::string struchk_init =
@@ -402,9 +402,9 @@ void testInitStruChk() {
         "-cs\n"
         "-cn 999\n"
         "-l " +
-        #ifdef _WIN32
+#ifdef _WIN32
         std::getenv("TEMP") +
-        #endif
+#endif
         std::string(std::tmpnam(NULL)) + std::string("\n");
     int errs = AvalonTools::initCheckMol(struchk_init);
     TEST_ASSERT(!errs);
@@ -414,7 +414,7 @@ void testInitStruChk() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
 #if 1
   test1();

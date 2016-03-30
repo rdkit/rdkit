@@ -117,10 +117,12 @@ void _minimizeWithExpTorsions(
     const std::vector<std::pair<int, int> > &bonds,
     const std::vector<std::vector<int> > &angles,
     const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
+    const std::vector<std::pair<std::vector<int>, std::vector<double> > >
+        &expTorsionAngles,
     const std::vector<std::vector<int> > &improperAtoms,
     const std::vector<int> &atomNums, bool useBasicKnowledge) {
+  RDUNUSED_PARAM(basinThresh);
+
   // convert to 3D positions and create coordMap
   RDGeom::Point3DPtrVect positions3D;
   for (unsigned int p = 0; p < positions.size(); ++p) {
@@ -141,14 +143,12 @@ void _minimizeWithExpTorsions(
   }
 
   // minimize!
-  int nPasses = 0;
   field->initialize();
   // std::cout << "Field with torsion constraints: " << field->calcEnergy() << "
   // " << ERROR_TOL << std::endl;
   if (field->calcEnergy() > ERROR_TOL) {
-    int needMore = 1;
     // while (needMore) {
-    needMore = field->minimize(300, optimizerForceTol);
+    field->minimize(300, optimizerForceTol);
     //      ++nPasses;
     //}
   }
@@ -175,8 +175,8 @@ bool _embedPoints(
     const std::vector<std::pair<int, int> > &bonds,
     const std::vector<std::vector<int> > &angles,
     const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
+    const std::vector<std::pair<std::vector<int>, std::vector<double> > >
+        &expTorsionAngles,
     const std::vector<std::vector<int> > &improperAtoms,
     const std::vector<int> &atomNums) {
   unsigned int nat = positions->size();
@@ -509,8 +509,8 @@ typedef struct {
   std::vector<std::pair<int, int> > *bonds;
   std::vector<std::vector<int> > *angles;
   std::vector<std::vector<int> > *expTorsionAtoms;
-  std::vector<std::pair<std::vector<int>, std::vector<double> > > *
-      expTorsionAngles;
+  std::vector<std::pair<std::vector<int>, std::vector<double> > >
+      *expTorsionAngles;
   std::vector<std::vector<int> > *improperAtoms;
   std::vector<int> *atomNums;
 } EmbedArgs;
@@ -581,7 +581,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   if (molFrags.size() > 1 && coordMap) {
     BOOST_LOG(rdWarningLog)
         << "Constrained conformer generation (via the coordMap argument) does "
-           "not work with molecules that have multiple fragments." << std::endl;
+           "not work with molecules that have multiple fragments."
+        << std::endl;
     coordMap = 0;
   }
   std::vector<Conformer *> confs;
@@ -617,7 +618,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
           *piece, expTorsionAtoms, expTorsionAngles, improperAtoms,
           useExpTorsionAnglePrefs, useBasicKnowledge, verbose);
       setTopolBounds(*piece, mmat, bonds, angles, true, false);
-      for (int i = 0; i < nAtoms; ++i) {
+      for (unsigned int i = 0; i < nAtoms; ++i) {
         atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
       }
     } else {
@@ -679,12 +680,30 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 #endif
     numThreads = getNumThreadsToUse(numThreads);
 
-    detail::EmbedArgs eargs = {
-        &confsOk, fourD, &fragMapping, &confs, fragIdx, mmat, useRandomCoords,
-        boxSizeMult, randNegEig, numZeroFail, optimizerForceTol, basinThresh,
-        seed, maxIterations, &chiralCenters, enforceChirality,
-        useExpTorsionAnglePrefs, useBasicKnowledge, &bonds, &angles,
-        &expTorsionAtoms, &expTorsionAngles, &improperAtoms, &atomNums};
+    detail::EmbedArgs eargs = {&confsOk,
+                               fourD,
+                               &fragMapping,
+                               &confs,
+                               fragIdx,
+                               mmat,
+                               useRandomCoords,
+                               boxSizeMult,
+                               randNegEig,
+                               numZeroFail,
+                               optimizerForceTol,
+                               basinThresh,
+                               seed,
+                               maxIterations,
+                               &chiralCenters,
+                               enforceChirality,
+                               useExpTorsionAnglePrefs,
+                               useBasicKnowledge,
+                               &bonds,
+                               &angles,
+                               &expTorsionAtoms,
+                               &expTorsionAngles,
+                               &improperAtoms,
+                               &atomNums};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs);
     }

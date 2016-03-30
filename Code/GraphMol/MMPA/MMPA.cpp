@@ -71,6 +71,7 @@ static inline unsigned long long computeMorganCodeHash(const ROMol& mol) {
 static inline void convertMatchingToBondVect(
     std::vector<BondVector_t>& matching_bonds,
     const std::vector<MatchVectType>& matching_atoms, const ROMol& mol) {
+  RDUNUSED_PARAM(mol);
   for (std::vector<MatchVectType>::const_iterator m = matching_atoms.begin();
        m != matching_atoms.end(); ++m) {
     matching_bonds.push_back(BondVector_t());
@@ -159,10 +160,9 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
     // check if exists a fragment with maxCut connection points (*.. *.. *)
     if (isotope >= 3) {
       bool valid = false;
-      for (size_t i = 0; i < frags.size(); i++) {
+      for (size_t i = 0; i < nFrags; i++) {
         unsigned nLabels = 0;
         for (size_t ai = 0; ai < frags[i].size(); ai++) {
-          Atom* a = em.getAtomWithIdx(frags[i][ai]);
           if (isotope_track.end() !=
               isotope_track.find(frags[i][ai]))  // new added atom
             ++nLabels;                           // found connection point
@@ -183,7 +183,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       }
     }
 
-    size_t iCore = -1;
+    size_t iCore = std::numeric_limits<size_t>::max();
     side_chains = RWMOL_SPTR(new RWMol);
     std::map<unsigned, unsigned>
         visitedBonds;  // key is bond index in source molecule
@@ -191,7 +191,6 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
     for (size_t i = 0; i < frags.size(); i++) {
       unsigned nAttachments = 0;
       for (size_t ai = 0; ai < frags[i].size(); ai++) {
-        Atom* a = em.getAtomWithIdx(frags[i][ai]);
         if (isotope_track.end() !=
             isotope_track.find(
                 frags[i][ai]))  // == if(a->hasProp("molAtomMapNumber"))
@@ -237,7 +236,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       }
     }
     // build core molecule from selected fragment
-    if (iCore != -1) {
+    if (iCore != std::numeric_limits<size_t>::max()) {
       core = RWMOL_SPTR(new RWMol);
       visitedBonds.clear();
       std::map<unsigned, unsigned>
@@ -336,8 +335,8 @@ bool fragmentMol(const ROMol& mol,
   for (size_t i = 0; i < mol.getNumAtoms(); i++) {
     std::string symbol = mol.getAtomWithIdx(i)->getSymbol();
     int label = 0;
-    mol.getAtomWithIdx(i)
-        ->getPropIfPresent(common_properties::molAtomMapNumber, label);
+    mol.getAtomWithIdx(i)->getPropIfPresent(common_properties::molAtomMapNumber,
+                                            label);
     char a1[32];
     if (0 == label)
       sprintf(a1, "\'%s\'", symbol.c_str(), label);
