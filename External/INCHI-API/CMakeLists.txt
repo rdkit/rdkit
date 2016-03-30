@@ -10,6 +10,29 @@ if(RDK_BUILD_INCHI_SUPPORT)
     if(INCHI_FOUND)
       message(WARNING "** Local InChI software takes precedence when both system InChI and local InChI are found")
     endif(INCHI_FOUND)
+  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+    if (INCHI_FOUND)
+      include_directories(${INCHI_INCLUDE_DIR})
+    else (INCHI_FOUND)
+      # system InChI is missing, download it
+      if(NOT DEFINED INCHI_URL)
+        set(INCHI_URL "http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip")
+      endif()
+      if(NOT DEFINED INCHI_MD5SUM)
+        set(INCHI_MD5SUM "8447bf108af12fe66eecba41bbc89918")
+      endif()
+      if(NOT DEFINED INCHI_BASE)
+        string(REGEX REPLACE "^.*/" "" INCHI_BASE "${INCHI_URL}")
+      endif()
+      downloadAndCheckMD5(${INCHI_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${INCHI_BASE}" ${INCHI_MD5SUM})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
+        ${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API.zip
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      execute_process(COMMAND "${CMAKE_COMMAND}" -E copy_directory
+          "${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API/INCHI_API/inchi_dll" "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    endif(INCHI_FOUND)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
     rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
                        src/ichicans.c       src/ichiisot.c 
                        src/ichilnct.c       src/ichimak2.c
@@ -31,20 +54,16 @@ if(RDK_BUILD_INCHI_SUPPORT)
                        src/ichi_io.c  
                        src/sha2.c           src/strutil.c  
                        src/util.c SHARED)
+    else()
+      if(NOT INCHI_FOUND)
+        message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
+                "InChI support will be turned off. If you want to add InChI support, please follow the instructions inside $RDBASE/External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
+        set(RDK_BUILD_INCHI_SUPPORT OFF)
+      endif()
+    endif()
     install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
     set(INCHI_LIBRARIES Inchi)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-    if (INCHI_FOUND)
-      include_directories(${INCHI_INCLUDE_DIR})
-    else (INCHI_FOUND)
-      # system InChI is missing
-      message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
-              "InChI support will be turned off. If you want to add InChI support, please follow the instructions inside $RDBASE/External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
-      set(RDK_BUILD_INCHI_SUPPORT OFF)
-    endif(INCHI_FOUND)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
 endif(RDK_BUILD_INCHI_SUPPORT)
 

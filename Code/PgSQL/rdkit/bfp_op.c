@@ -47,8 +47,8 @@ bfpcmp(BitmapFingerPrint *a, BitmapFingerPrint *b) {
 
 
 #define bfpCMPFUNC( type, action, ret )                                 \
+  PGDLLEXPORT Datum           bfp_##type(PG_FUNCTION_ARGS);                         \
   PG_FUNCTION_INFO_V1(bfp_##type);                                      \
-  Datum           bfp_##type(PG_FUNCTION_ARGS);                         \
   Datum                                                                 \
   bfp_##type(PG_FUNCTION_ARGS)                                          \
   {                                                                     \
@@ -79,8 +79,8 @@ bfpCMPFUNC(gt, >, BOOL);
 bfpCMPFUNC(ne, !=, BOOL);
 bfpCMPFUNC(cmp, +, INT32);
 
+PGDLLEXPORT Datum           bfp_tanimoto_sml(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_tanimoto_sml);
-Datum           bfp_tanimoto_sml(PG_FUNCTION_ARGS);
 Datum
 bfp_tanimoto_sml(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -102,8 +102,8 @@ bfp_tanimoto_sml(PG_FUNCTION_ARGS) {
 
   PG_RETURN_FLOAT8(res);          
 }
+PGDLLEXPORT Datum           bfp_tversky_sml(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_tversky_sml);
-Datum           bfp_tversky_sml(PG_FUNCTION_ARGS);
 Datum
 bfp_tversky_sml(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -126,8 +126,8 @@ bfp_tversky_sml(PG_FUNCTION_ARGS) {
   PG_RETURN_FLOAT8(res);          
 }
 #if PG_VERSION_NUM >= 90100
+PGDLLEXPORT Datum           bfp_tanimoto_dist(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_tanimoto_dist);
-Datum           bfp_tanimoto_dist(PG_FUNCTION_ARGS);
 Datum
 bfp_tanimoto_dist(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -151,8 +151,8 @@ bfp_tanimoto_dist(PG_FUNCTION_ARGS) {
 }
 #endif
 
+PGDLLEXPORT Datum           bfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_tanimoto_sml_op);
-Datum           bfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
 Datum
 bfp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -174,8 +174,8 @@ bfp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL( res >= getTanimotoLimit() );
 }
 
+PGDLLEXPORT Datum           bfp_dice_sml(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_dice_sml);
-Datum           bfp_dice_sml(PG_FUNCTION_ARGS);
 Datum
 bfp_dice_sml(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -199,8 +199,8 @@ bfp_dice_sml(PG_FUNCTION_ARGS) {
 }
 
 #if PG_VERSION_NUM >= 90100
+PGDLLEXPORT Datum           bfp_dice_dist(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_dice_dist);
-Datum           bfp_dice_dist(PG_FUNCTION_ARGS);
 Datum
 bfp_dice_dist(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -224,8 +224,8 @@ bfp_dice_dist(PG_FUNCTION_ARGS) {
 }
 #endif
 
+PGDLLEXPORT Datum           bfp_dice_sml_op(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_dice_sml_op);
-Datum           bfp_dice_sml_op(PG_FUNCTION_ARGS);
 Datum
 bfp_dice_sml_op(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    abfp,
@@ -247,8 +247,8 @@ bfp_dice_sml_op(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL( res >= getDiceLimit() );
 }
 
+PGDLLEXPORT Datum           bfp_size(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(bfp_size);
-Datum           bfp_size(PG_FUNCTION_ARGS);
 Datum
 bfp_size(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    bfp;
@@ -262,8 +262,8 @@ bfp_size(PG_FUNCTION_ARGS) {
   PG_RETURN_INT32(MolBitmapFingerPrintSize(bfp));
 }
 
+PGDLLEXPORT Datum       layered_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(layered_fp);
-Datum       layered_fp(PG_FUNCTION_ARGS);
 Datum
 layered_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -283,8 +283,8 @@ layered_fp(PG_FUNCTION_ARGS) {
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 
+PGDLLEXPORT Datum       rdkit_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(rdkit_fp);
-Datum       rdkit_fp(PG_FUNCTION_ARGS);
 Datum
 rdkit_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -305,8 +305,8 @@ rdkit_fp(PG_FUNCTION_ARGS) {
 }
 
 
+PGDLLEXPORT Datum       morganbv_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(morganbv_fp);
-Datum       morganbv_fp(PG_FUNCTION_ARGS);
 Datum
 morganbv_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -325,8 +325,8 @@ morganbv_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       featmorganbv_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(featmorganbv_fp);
-Datum       featmorganbv_fp(PG_FUNCTION_ARGS);
 Datum
 featmorganbv_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -345,8 +345,8 @@ featmorganbv_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       atompairbv_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(atompairbv_fp);
-Datum       atompairbv_fp(PG_FUNCTION_ARGS);
 Datum
 atompairbv_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -365,8 +365,8 @@ atompairbv_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       torsionbv_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(torsionbv_fp);
-Datum       torsionbv_fp(PG_FUNCTION_ARGS);
 Datum
 torsionbv_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -385,8 +385,8 @@ torsionbv_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+PGDLLEXPORT Datum       maccs_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(maccs_fp);
-Datum       maccs_fp(PG_FUNCTION_ARGS);
 Datum
 maccs_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -406,8 +406,8 @@ maccs_fp(PG_FUNCTION_ARGS) {
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 
+PGDLLEXPORT Datum       avalon_fp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(avalon_fp);
-Datum       avalon_fp(PG_FUNCTION_ARGS);
 Datum
 avalon_fp(PG_FUNCTION_ARGS) {
   CROMol  mol;
@@ -430,8 +430,8 @@ avalon_fp(PG_FUNCTION_ARGS) {
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 
+PGDLLEXPORT Datum       reaction_structural_bfp(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_structural_bfp);
-Datum       reaction_structural_bfp(PG_FUNCTION_ARGS);
 Datum
 reaction_structural_bfp(PG_FUNCTION_ARGS) {
   CChemicalReaction rxn;

@@ -40,8 +40,8 @@
 
 #define GETENTRY(vec,pos) ((bytea *) DatumGetPointer((vec)->vector[(pos)].key))
 
+PGDLLEXPORT Datum gslfp_compress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_compress);
-Datum gslfp_compress(PG_FUNCTION_ARGS);
 Datum
 gslfp_compress(PG_FUNCTION_ARGS)
 {
@@ -62,8 +62,8 @@ gslfp_compress(PG_FUNCTION_ARGS)
   PG_RETURN_POINTER(retval);
 }
 
+PGDLLEXPORT Datum gslfp_decompress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_decompress);
-Datum gslfp_decompress(PG_FUNCTION_ARGS);
 Datum
 gslfp_decompress(PG_FUNCTION_ARGS)
 {
@@ -100,8 +100,8 @@ adjustKey(IntRange *s, IntRange *k)
     }
 }
 
+PGDLLEXPORT Datum gslfp_union(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_union);
-Datum gslfp_union(PG_FUNCTION_ARGS);
 Datum
 gslfp_union(PG_FUNCTION_ARGS)
 {
@@ -133,8 +133,8 @@ gslfp_union(PG_FUNCTION_ARGS)
  * Same method
  */
 
+PGDLLEXPORT Datum gslfp_same(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_same);
-Datum gslfp_same(PG_FUNCTION_ARGS);
 Datum
 gslfp_same(PG_FUNCTION_ARGS)
 {
@@ -200,8 +200,8 @@ penalty(bytea *origval, bytea *newval)
   return dist;
 }
 
+PGDLLEXPORT Datum gslfp_penalty(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_penalty);
-Datum gslfp_penalty(PG_FUNCTION_ARGS);
 Datum
 gslfp_penalty(PG_FUNCTION_ARGS)
 {
@@ -240,8 +240,8 @@ comparecost(const void *va, const void *vb)
     return (a->cost > b->cost) ? 1 : -1;
 }
 
+PGDLLEXPORT Datum gslfp_picksplit(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_picksplit);
-Datum gslfp_picksplit(PG_FUNCTION_ARGS);
 Datum
 gslfp_picksplit(PG_FUNCTION_ARGS)
 {
@@ -392,8 +392,8 @@ gslfp_picksplit(PG_FUNCTION_ARGS)
  */
 
 
+PGDLLEXPORT Datum gslfp_consistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gslfp_consistent);
-Datum gslfp_consistent(PG_FUNCTION_ARGS);
 Datum
 gslfp_consistent(PG_FUNCTION_ARGS)
 {
