@@ -110,7 +110,6 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
   //   and one to a C or N to the zwitterionic form.  e.g.:
   //   C=P(=O)X -> C=[P+]([O-])X
   PRECONDITION(atom, "bad atom");
-  bool aromHolder;
 
   // we only want to do neutrals
   if (atom->getFormalCharge()) return;
@@ -119,11 +118,11 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
   // this because we cannot be sure that it has already been
   // called on the atom (cleanUp() gets called pretty early in
   // the sanitization process):
-  if (atom->calcExplicitValence(false) == 5 && atom->getDegree()==3) {
+  if (atom->calcExplicitValence(false) == 5 && atom->getDegree() == 3) {
     unsigned int aid = atom->getIdx();
-    Bond *dbl_to_O=NULL;
-    Atom *O_atom=NULL;
-    bool hasDoubleToCorN=false;
+    Bond *dbl_to_O = NULL;
+    Atom *O_atom = NULL;
+    bool hasDoubleToCorN = false;
     RWMol::ADJ_ITER nid1, end1;
     boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
     while (nid1 != end1) {
@@ -136,15 +135,15 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
         O_atom = mol.getAtomWithIdx(*nid1);
       } else if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 6 ||
                   mol.getAtomWithIdx(*nid1)->getAtomicNum() == 7) &&
-                 (mol.getAtomWithIdx(*nid1)->getDegree()>=2) &&
+                 (mol.getAtomWithIdx(*nid1)->getDegree() >= 2) &&
                  (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
                   Bond::DOUBLE)) {
         hasDoubleToCorN = true;
       }
       ++nid1;
     }  // end of loop over the first neigh
-    if(hasDoubleToCorN && dbl_to_O != NULL) {
-      TEST_ASSERT(O_atom!=NULL);
+    if (hasDoubleToCorN && dbl_to_O != NULL) {
+      TEST_ASSERT(O_atom != NULL);
       O_atom->setFormalCharge(-1);
       dbl_to_O->setBondType(Bond::SINGLE);
       atom->setFormalCharge(1);
@@ -153,7 +152,6 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
   // force a recalculation of the explicit valence here
   atom->calcExplicitValence(false);
 }
-
 }
 
 void cleanUp(RWMol &mol) {
@@ -163,9 +161,9 @@ void cleanUp(RWMol &mol) {
       case 7:
         nitrogenCleanup(mol, *ai);
         break;
-        case 15:
-          phosphorusCleanup(mol, *ai);
-          break;
+      case 15:
+        phosphorusCleanup(mol, *ai);
+        break;
       case 17:
         // recognize perchlorate and convert it from:
         //    Cl(=O)(=O)(=O)[O-]

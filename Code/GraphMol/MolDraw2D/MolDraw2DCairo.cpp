@@ -66,9 +66,6 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
 
   cairo_text_extents_t extents;
   cairo_text_extents(dp_cr, txt, &extents);
-  double twidth = extents.width, theight = extents.height;
-
-  unsigned int fontSz = scale() * fontSize();
   Point2D c1 = cds;
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_show_text(dp_cr, txt);
@@ -179,8 +176,7 @@ std::string MolDraw2DCairo::getDrawingText() const {
   PRECONDITION(dp_cr, "no draw context");
   std::string res = "";
   cairo_surface_t *surf = cairo_get_target(dp_cr);
-  cairo_status_t status =
-      cairo_surface_write_to_png_stream(surf, &grab_str, (void *)&res);
+  cairo_surface_write_to_png_stream(surf, &grab_str, (void *)&res);
   return res;
 };
 

@@ -95,6 +95,13 @@ const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 }  // end common_properties
 
+const double MAX_DOUBLE = std::numeric_limits<double>::max();
+const double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
+const double SMALL_DOUBLE = 1.0e-8;
+const double MAX_INT = static_cast<double>(std::numeric_limits<int>::max());
+const double MAX_LONGINT =
+    static_cast<double>(std::numeric_limits<LONGINT>::max());
+
 //  template <typename T>
 //  T larger_of(T arg1,T arg2) { return arg1>arg2 ? arg1 : arg2; };
 
