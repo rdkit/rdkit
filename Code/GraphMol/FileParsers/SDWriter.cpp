@@ -67,7 +67,34 @@ void SDWriter::setProps(const STR_VECT &propNames) {
   d_props = propNames;
 }
 
-void SDWriter::write(const ROMol &mol, int confId) {
+namespace {
+void _writePropToStream(std::ostream *dp_ostream, const ROMol &mol,
+                        const std::string &name, int d_molid) {
+  PRECONDITION(dp_ostream, "no output stream");
+
+  // write the property value
+  // FIX: we will assume for now that the desired property value is
+  // catable to a string
+  std::string pval;
+  try {
+    mol.getProp(name, pval);
+  } catch (boost::bad_any_cast &) {
+    return;
+  }
+
+  // write the property header line
+  (*dp_ostream) << ">  <" << name << ">  ";
+  if (d_molid >= 0) (*dp_ostream) << "(" << d_molid + 1 << ") ";
+  (*dp_ostream) << "\n";
+
+  (*dp_ostream) << pval << "\n";
+
+  // empty line after the property
+  (*dp_ostream) << "\n";
+}
+void _MolToSDStream(std::ostream *dp_ostream, const ROMol &mol, int confId,
+                    bool df_kekulize, bool df_forceV3000, int d_molid,
+                    STR_VECT *props) {
   PRECONDITION(dp_ostream, "no output stream");
 
   // write the molecule
@@ -75,12 +102,12 @@ void SDWriter::write(const ROMol &mol, int confId) {
 
   // now write the properties
   STR_VECT_CI pi;
-  if (d_props.size() > 0) {
+  if (props && props->size() > 0) {
     // check if we have any properties the user specified to write out
     // in which loop over them and write them out
-    for (pi = d_props.begin(); pi != d_props.end(); pi++) {
+    for (pi = props->begin(); pi != props->end(); pi++) {
       if (mol.hasProp(*pi)) {
-        writeProperty(mol, (*pi));
+        _writePropToStream(dp_ostream, mol, (*pi), d_molid);
       }
     }
   } else {
@@ -102,37 +129,32 @@ void SDWriter::write(const ROMol &mol, int confId) {
 
       // check if this property is not computed
       if (std::find(compLst.begin(), compLst.end(), (*pi)) == compLst.end()) {
-        writeProperty(mol, (*pi));
+        _writePropToStream(dp_ostream, mol, (*pi), d_molid);
       }
     }
   }
   // add the $$$$ that marks the end of a molecule
   (*dp_ostream) << "$$$$\n";
+}
+}
 
+std::string SDWriter::getText(const ROMol &mol, int confId, bool kekulize,
+                              bool forceV3000, int molid, STR_VECT *propNames) {
+  std::stringstream sstr;
+  _MolToSDStream(&sstr, mol, confId, kekulize, forceV3000, molid, propNames);
+  return sstr.str();
+};
+
+void SDWriter::write(const ROMol &mol, int confId) {
+  PRECONDITION(dp_ostream, "no output stream");
+  _MolToSDStream(dp_ostream, mol, confId, df_kekulize, df_forceV3000, d_molid,
+                 &d_props);
   ++d_molid;
 }
 
 void SDWriter::writeProperty(const ROMol &mol, const std::string &name) {
   PRECONDITION(dp_ostream, "no output stream");
 
-  // write the property value
-  // FIX: we will assume for now that the desired property value is
-  // catable to a string
-  std::string pval;
-  try {
-    mol.getProp(name, pval);
-  } catch (boost::bad_any_cast &) {
-    return;
-  }
-
-  // write the property header line
-  (*dp_ostream) << ">  <" << name << ">  "
-                << "(" << d_molid + 1 << ") "
-                << "\n";
-
-  (*dp_ostream) << pval << "\n";
-
-  // empty line after the property
-  (*dp_ostream) << "\n";
+  _writePropToStream(dp_ostream, mol, name, d_molid);
 }
 }
