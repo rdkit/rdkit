@@ -3500,7 +3500,77 @@ CAS<~>
         for pn in m.GetPropNames():
             self.assertTrue(nm.HasProp(pn))
             self.assertEqual(m.GetProp(pn),nm.GetProp(pn))
+            
+  
+  def testUnfoldedRDKFingerprint(self):
+    from rdkit.Chem import AllChem
+    
+    m = Chem.MolFromSmiles('c1ccccc1N')
+    fp = AllChem.UnfoldedRDKFingerprintCountBased(m)
+    fpDict = fp.GetNonzeroElements()
+    self.assertEquals(len(fpDict.items()),19)
+    self.assertTrue(fpDict.has_key(374073638))
+    self.assertEquals(fpDict[374073638],6)
+    self.assertTrue(fpDict.has_key(464351883))
+    self.assertEquals(fpDict[464351883],2)
+    self.assertTrue(fpDict.has_key(1949583554))
+    self.assertEquals(fpDict[1949583554],6)    
+    self.assertTrue(fpDict.has_key(4105342207))
+    self.assertEquals(fpDict[4105342207],1)
+    self.assertTrue(fpDict.has_key(794080973))
+    self.assertEquals(fpDict[794080973],1)
+    self.assertTrue(fpDict.has_key(3826517238))
+    self.assertEquals(fpDict[3826517238],2)
+    
+    m = Chem.MolFromSmiles('Cl')
+    fp = AllChem.UnfoldedRDKFingerprintCountBased(m)
+    fpDict = fp.GetNonzeroElements()
+    self.assertEquals(len(fpDict.items()),0)
+    
+    m = Chem.MolFromSmiles('CCCO')
+    aBits = {} 
+    fp = AllChem.UnfoldedRDKFingerprintCountBased(m, bitInfo=aBits)
+    fpDict = fp.GetNonzeroElements()
+    self.assertEquals(len(fpDict.items()),5)
+    self.assertTrue(fpDict.has_key(1524090560))
+    self.assertEquals(fpDict[1524090560],1)
+    self.assertTrue(fpDict.has_key(1940446997))
+    self.assertEquals(fpDict[1940446997],1)
+    self.assertTrue(fpDict.has_key(3977409745))
+    self.assertEquals(fpDict[3977409745],1)    
+    self.assertTrue(fpDict.has_key(4274652475))
+    self.assertEquals(fpDict[4274652475],1)
+    self.assertTrue(fpDict.has_key(4275705116))
+    self.assertEquals(fpDict[4275705116],2)
+    
+    self.assertTrue(aBits.has_key(1524090560))
+    self.assertEquals(aBits[1524090560],[[1,2]])
+    self.assertTrue(aBits.has_key(1940446997))
+    self.assertEquals(aBits[1940446997],[[0,1]])
+    self.assertTrue(aBits.has_key(3977409745))
+    self.assertEquals(aBits[3977409745],[[0,1,2]])    
+    self.assertTrue(aBits.has_key(4274652475))
+    self.assertEquals(aBits[4274652475],[[2]])
+    self.assertTrue(aBits.has_key(4275705116))
+    self.assertEquals(aBits[4275705116],[[0],[1]])
 
+
+  def testRDKFingerprintBitInfo(self):
+
+    m = Chem.MolFromSmiles('CCCO')
+    aBits = {}
+    fp1 = Chem.RDKFingerprint(m, bitInfo=aBits)
+    self.assertTrue(aBits.has_key(1183))
+    self.assertEquals(aBits[1183],[[1,2]])
+    self.assertTrue(aBits.has_key(709))
+    self.assertEquals(aBits[709],[[0,1]])
+    self.assertTrue(aBits.has_key(1118))
+    self.assertEquals(aBits[1118],[[0,1,2]])    
+    self.assertTrue(aBits.has_key(562))
+    self.assertEquals(aBits[562],[[2]])
+    self.assertTrue(aBits.has_key(1772))
+    self.assertEquals(aBits[1772],[[0],[1]])
+    
 
 
 if __name__ == '__main__':
