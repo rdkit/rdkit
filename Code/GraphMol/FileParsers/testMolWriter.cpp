@@ -764,16 +764,16 @@ void testMolFileWithRxn() {
         m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnRole) == 1);
     TEST_ASSERT(
         m->getAtomWithIdx(0)->hasProp(common_properties::molRxnComponent));
-    TEST_ASSERT(m->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnComponent) == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnComponent) == 1);
 
     TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(m->getAtomWithIdx(17)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
     TEST_ASSERT(
         m->getAtomWithIdx(17)->hasProp(common_properties::molRxnComponent));
-    TEST_ASSERT(m->getAtomWithIdx(17)
-                    ->getProp<int>(common_properties::molRxnComponent) == 3);
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(
+                    common_properties::molRxnComponent) == 3);
 
     std::string mb = MolToMolBlock(*m);
     delete m;
@@ -787,16 +787,16 @@ void testMolFileWithRxn() {
         m->getAtomWithIdx(0)->getProp<int>(common_properties::molRxnRole) == 1);
     TEST_ASSERT(
         m->getAtomWithIdx(0)->hasProp(common_properties::molRxnComponent));
-    TEST_ASSERT(m->getAtomWithIdx(0)
-                    ->getProp<int>(common_properties::molRxnComponent) == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molRxnComponent) == 1);
 
     TEST_ASSERT(m->getAtomWithIdx(17)->hasProp(common_properties::molRxnRole));
-    TEST_ASSERT(m->getAtomWithIdx(17)
-                    ->getProp<int>(common_properties::molRxnRole) == 2);
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(
+                    common_properties::molRxnRole) == 2);
     TEST_ASSERT(
         m->getAtomWithIdx(17)->hasProp(common_properties::molRxnComponent));
-    TEST_ASSERT(m->getAtomWithIdx(17)
-                    ->getProp<int>(common_properties::molRxnComponent) == 3);
+    TEST_ASSERT(m->getAtomWithIdx(17)->getProp<int>(
+                    common_properties::molRxnComponent) == 3);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -1327,7 +1327,8 @@ void testGithub268() {
 
 void testGithub357() {
   BOOST_LOG(rdInfoLog) << "testing github issue 357: Hydrogens in mol blocks "
-                          "have a valence value set" << std::endl;
+                          "have a valence value set"
+                       << std::endl;
   {
     ROMol *m1 = SmilesToMol("O");
     TEST_ASSERT(m1);
@@ -1400,6 +1401,37 @@ void testGithub611() {
     mb = MolToMolBlock(*m);
     TEST_ASSERT(mb.find("3  2  1  6") == std::string::npos);
     TEST_ASSERT(mb.find("3  4  1  1") != std::string::npos);
+  }
+}
+
+void testGetSDText() {
+  BOOST_LOG(rdInfoLog) << "testing SDWriter::getText()" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fname = rdbase + "NCI_aids_few.sdf";
+    SDMolSupplier sdsup(fname);
+
+    while (!sdsup.atEnd()) {
+      ROMol *mol = sdsup.next();
+      TEST_ASSERT(mol);
+      std::string sdf = SDWriter::getText(*mol);
+      SDMolSupplier tsupp;
+      tsupp.setData(sdf);
+      ROMol *mol2 = tsupp[0];
+      TEST_ASSERT(mol2);
+      std::string csmi1 = MolToSmiles(*mol, true);
+      std::string csmi2 = MolToSmiles(*mol2, true);
+      TEST_ASSERT(csmi1 == csmi2);
+      STR_VECT pns = mol->getPropList(false, false);
+      BOOST_FOREACH (const std::string &pn, pns) {
+        TEST_ASSERT(mol2->hasProp(pn));
+        TEST_ASSERT(mol->getProp<std::string>(pn) ==
+                    mol2->getProp<std::string>(pn));
+      }
+      delete mol;
+      delete mol2;
+    }
   }
 }
 
@@ -1540,5 +1572,9 @@ int main() {
 
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   testGithub611();
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  testGetSDText();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
 }

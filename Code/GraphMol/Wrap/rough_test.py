@@ -3486,5 +3486,22 @@ CAS<~>
     finally:
       sys.stderr = err
 
+  def testGetSDText(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf')
+    #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    sdSup = Chem.SDMolSupplier(fileN)
+    for m in sdSup:
+        sdt = Chem.SDWriter.GetText(m)
+        ts = Chem.SDMolSupplier()
+        ts.SetData(sdt)
+        nm = next(ts)
+        self.assertEqual(Chem.MolToSmiles(m,True),Chem.MolToSmiles(nm,True))
+        for pn in m.GetPropNames():
+            self.assertTrue(nm.HasProp(pn))
+            self.assertEqual(m.GetProp(pn),nm.GetProp(pn))
+
+
+
 if __name__ == '__main__':
   unittest.main()

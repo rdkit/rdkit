@@ -139,6 +139,11 @@ class SDWriter : public MolWriter {
   //! written out for each molecule
   void setProps(const STR_VECT &propNames);
 
+  //! \brief return the text that would be written to the file
+  static std::string getText(const ROMol &mol, int confId = defaultConfId,
+                             bool kekulize = true, bool force_V3000 = false,
+                             int molid = -1, STR_VECT *propNames = NULL);
+
   //! \brief write a new molecule to the file
   void write(const ROMol &mol, int confId = defaultConfId);
 
