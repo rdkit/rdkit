@@ -46,7 +46,7 @@ void WriteMolToSD(SDWriter &writer, ROMol &mol, int confId) {
 
 std::string getSDTextHelper(const ROMol &mol, int confId, bool kekulize,
                             bool force_V3000, int molid) {
-  return SDWriter::getSDText(mol, confId, kekulize, force_V3000, molid);
+  return SDWriter::getText(mol, confId, kekulize, force_V3000, molid);
 }
 
 struct sdwriter_wrap {
@@ -112,14 +112,14 @@ struct sdwriter_wrap {
              "Sets whether or not molecules are kekulized on writing.\n\n")
         .def("GetKekulize", &SDWriter::getKekulize,
              "Returns whether or not molecules are kekulized on writing.\n\n")
-        .def("GetSDText",
+        .def("GetText",
              //(std::string(*)(const ROMol &, int, bool, bool, int))
              getSDTextHelper,
              (python::arg("mol"), python::arg("confId") = -1,
               python::arg("kekulize") = true,
               python::arg("force_v3000") = false, python::arg("molid") = -1),
              "returns the SD text for a molecule")
-        .staticmethod("GetSDText");
+        .staticmethod("GetText");
   };
 };
 }

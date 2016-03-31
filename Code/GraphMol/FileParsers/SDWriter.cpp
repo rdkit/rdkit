@@ -138,9 +138,8 @@ void _MolToSDStream(std::ostream *dp_ostream, const ROMol &mol, int confId,
 }
 }
 
-std::string SDWriter::getSDText(const ROMol &mol, int confId, bool kekulize,
-                                bool forceV3000, int molid,
-                                STR_VECT *propNames) {
+std::string SDWriter::getText(const ROMol &mol, int confId, bool kekulize,
+                              bool forceV3000, int molid, STR_VECT *propNames) {
   std::stringstream sstr;
   _MolToSDStream(&sstr, mol, confId, kekulize, forceV3000, molid, propNames);
   return sstr.str();

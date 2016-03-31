@@ -3492,7 +3492,7 @@ CAS<~>
     #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
     sdSup = Chem.SDMolSupplier(fileN)
     for m in sdSup:
-        sdt = Chem.SDWriter.GetSDText(m)
+        sdt = Chem.SDWriter.GetText(m)
         ts = Chem.SDMolSupplier()
         ts.SetData(sdt)
         nm = next(ts)
@@ -3500,7 +3500,7 @@ CAS<~>
         for pn in m.GetPropNames():
             self.assertTrue(nm.HasProp(pn))
             self.assertEqual(m.GetProp(pn),nm.GetProp(pn))
-            
+
 
 
 if __name__ == '__main__':

@@ -1405,7 +1405,7 @@ void testGithub611() {
 }
 
 void testGetSDText() {
-  BOOST_LOG(rdInfoLog) << "testing SDWriter::getSDText()" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing SDWriter::getText()" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -1415,7 +1415,7 @@ void testGetSDText() {
     while (!sdsup.atEnd()) {
       ROMol *mol = sdsup.next();
       TEST_ASSERT(mol);
-      std::string sdf = SDWriter::getSDText(*mol);
+      std::string sdf = SDWriter::getText(*mol);
       SDMolSupplier tsupp;
       tsupp.setData(sdf);
       ROMol *mol2 = tsupp[0];
