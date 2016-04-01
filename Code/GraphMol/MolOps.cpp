@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
@@ -152,6 +152,43 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
   // force a recalculation of the explicit valence here
   atom->calcExplicitValence(false);
 }
+
+void halogenCleanup(RWMol &mol, Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  // Conversions done:
+  //    X(=O)(=O)(=O)O -> [X+3]([O-])([O-])([O-])O
+  //    X(=O)(=O)O -> [X+2]([O-])([O-])O
+  //    X(=O)O -> [X+]([O-])O
+  int ev = atom->calcExplicitValence(false);
+  if (atom->getFormalCharge() == 0 && (ev == 7 || ev == 5 || ev == 3)) {
+    unsigned int aid = atom->getIdx();
+    bool neighborsAllO = true;
+    RWMol::ADJ_ITER nid1, end1;
+    boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
+    while (nid1 != end1) {
+      if (mol.getAtomWithIdx(*nid1)->getAtomicNum() != 8) {
+        neighborsAllO = false;
+        break;
+      }
+      ++nid1;
+    }
+    if (neighborsAllO) {
+      atom->setFormalCharge(ev / 2);
+      boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
+      while (nid1 != end1) {
+        Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
+        if (b->getBondType() == Bond::DOUBLE) {
+          b->setBondType(Bond::SINGLE);
+          Atom *otherAtom = mol.getAtomWithIdx(*nid1);
+          otherAtom->setFormalCharge(-1);
+          otherAtom->calcExplicitValence(false);
+        }
+        ++nid1;
+      }
+      atom->calcExplicitValence(false);
+    }
+  }
+}
 }
 
 void cleanUp(RWMol &mol) {
@@ -165,39 +202,9 @@ void cleanUp(RWMol &mol) {
         phosphorusCleanup(mol, *ai);
         break;
       case 17:
-        // recognize perchlorate and convert it from:
-        //    Cl(=O)(=O)(=O)[O-]
-        // to:
-        //    [Cl+3]([O-])([O-])([O-])[O-]
-        if ((*ai)->calcExplicitValence(false) == 7 &&
-            (*ai)->getFormalCharge() == 0) {
-          unsigned int aid = (*ai)->getIdx();
-          bool neighborsAllO = true;
-          RWMol::ADJ_ITER nid1, end1;
-          boost::tie(nid1, end1) = mol.getAtomNeighbors(*ai);
-          while (nid1 != end1) {
-            if (mol.getAtomWithIdx(*nid1)->getAtomicNum() != 8) {
-              neighborsAllO = false;
-              break;
-            }
-            ++nid1;
-          }
-          if (neighborsAllO) {
-            (*ai)->setFormalCharge(3);
-            boost::tie(nid1, end1) = mol.getAtomNeighbors(*ai);
-            while (nid1 != end1) {
-              Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
-              if (b->getBondType() == Bond::DOUBLE) {
-                b->setBondType(Bond::SINGLE);
-                Atom *otherAtom = mol.getAtomWithIdx(*nid1);
-                otherAtom->setFormalCharge(-1);
-                otherAtom->calcExplicitValence(false);
-              }
-              ++nid1;
-            }
-            (*ai)->calcExplicitValence(false);
-          }
-        }
+      case 35:
+      case 53:
+        halogenCleanup(mol, *ai);
         break;
     }
   }
