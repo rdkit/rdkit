@@ -9,7 +9,7 @@
 //
 #pragma once
 #ifndef _RD_CHEMTRANSFORMS_RGROUPDECOMP_H__
-#define _RD_CHEMTRANSFORMS__RGROUPDECOMPH__
+#define _RD_CHEMTRANSFORMS_RGROUPDECOMP_H__
 
 #include <vector>
 #include <boost/smart_ptr.hpp>
@@ -43,7 +43,8 @@ namespace RDKit{
             {}
     };
 
-/* Some problems with the current python code that should be fixed in the rewrite:
+/* TODO:
+*  Some problems with the current python code that should be fixed in the rewrite:
 •	it should support two R groups on a single center
 •	it should properly support substituents at chiral centers
 •	it should support multiple cores (the first one that matches a molecule is used)

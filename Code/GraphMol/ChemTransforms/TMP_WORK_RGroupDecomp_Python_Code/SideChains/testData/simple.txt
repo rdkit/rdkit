@@ -1,0 +1,5 @@
+Structure	Sample ID
+CCOF	S1
+ClCOF	S2
+ClCOBr	S3
+CCOBr	S4
