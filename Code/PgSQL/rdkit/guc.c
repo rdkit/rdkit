@@ -573,7 +573,7 @@ getReactionDifferenceFPWeightNonagents(void) {
   return rdkit_difference_FP_weight_nonagents;
 }
 
-void _PG_init(void);
+PGDLLEXPORT void _PG_init(void);
 void
 _PG_init(void) {
   initRDKitGUC();

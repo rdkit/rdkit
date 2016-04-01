@@ -33,15 +33,6 @@
 #ifndef _RDKIT_H_
 #define _RDKIT_H_
 
-//older version of PostgreSQL do not define PGDLLEXPORT
-#ifndef PGDLLEXPORT
-#ifdef _MSC_VER
-#define PGDLLEXPORT __declspec (dllexport)
-#else
-#define PGDLLEXPORT
-#endif
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

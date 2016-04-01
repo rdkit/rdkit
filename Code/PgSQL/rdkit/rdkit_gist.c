@@ -854,8 +854,8 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
 }
 
 #if PG_VERSION_NUM >= 90100
-PGDLLEXPORT PG_FUNCTION_INFO_V1(gbfp_distance);
-Datum  gbfp_distance(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum  gbfp_distance(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(gbfp_distance);
 Datum
 gbfp_distance(PG_FUNCTION_ARGS)
 {
