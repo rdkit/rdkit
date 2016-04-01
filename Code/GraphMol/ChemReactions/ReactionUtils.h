@@ -63,6 +63,8 @@ bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold);
 
 void updateProductsStereochem(ChemicalReaction *rxn);
 
+void removeMappingNumbersFromReactions(const ChemicalReaction &rxn);
+
 }  // end of RDKit namespace
 
 #endif

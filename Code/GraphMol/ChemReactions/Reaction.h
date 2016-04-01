@@ -181,6 +181,10 @@ class ChemicalReaction {
                                       bool moveToAgentTemplates = true,
                                       MOL_SPTR_VECT *targetVector = NULL);
 
+  /*! Removes the agent templates from a reaction if a pointer to a
+      molecule vector is provided the agents are stored therein.*/
+  void removeAgentTemplates(MOL_SPTR_VECT *targetVector = NULL);
+
   //! Runs the reaction on a set of reactants
   /*!
 

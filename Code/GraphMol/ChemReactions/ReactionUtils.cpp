@@ -172,19 +172,16 @@ bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold) {
 
 namespace {
 
-void getMappingNumAtomIdxMapReactants(
-    ChemicalReaction *rxn, std::map<int, Atom::ChiralType> &reactantMapping) {
-  for (MOL_SPTR_VECT::const_iterator reactIt = rxn->beginReactantTemplates();
-       reactIt != rxn->endReactantTemplates(); ++reactIt) {
-    for (ROMol::AtomIterator reactAtomIt = (*reactIt)->beginAtoms();
-         reactAtomIt != (*reactIt)->endAtoms(); ++reactAtomIt) {
-      if (!(*reactAtomIt)->hasProp("molAtomMapNumber")) {
-        continue;
+void getMappingNumAtomIdxMapReactants(const ChemicalReaction& rxn, std::map<int,Atom::ChiralType>& reactantMapping){
+  for(MOL_SPTR_VECT::const_iterator reactIt=rxn.beginReactantTemplates();
+      reactIt!=rxn.endReactantTemplates();++reactIt){
+    for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
+        reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
+      int reactMapNum = -1;
+      (*reactAtomIt)->getPropIfPresent(common_properties::molAtomMapNumber,reactMapNum);
+      if(reactMapNum > -1){
+        reactantMapping.insert(std::make_pair(reactMapNum,(*reactAtomIt)->getChiralTag()));
       }
-      int reactMapNum;
-      (*reactAtomIt)->getProp("molAtomMapNumber", reactMapNum);
-      reactantMapping.insert(
-          std::make_pair(reactMapNum, (*reactAtomIt)->getChiralTag()));
     }
   }
 }
@@ -192,7 +189,7 @@ void getMappingNumAtomIdxMapReactants(
 
 void updateProductsStereochem(ChemicalReaction *rxn) {
   std::map<int, Atom::ChiralType> reactantMapping;
-  getMappingNumAtomIdxMapReactants(rxn, reactantMapping);
+  getMappingNumAtomIdxMapReactants(*rxn, reactantMapping);
   for (MOL_SPTR_VECT::const_iterator prodIt = rxn->beginProductTemplates();
        prodIt != rxn->endProductTemplates(); ++prodIt) {
     for (ROMol::AtomIterator prodAtomIt = (*prodIt)->beginAtoms();
@@ -240,4 +237,28 @@ void updateProductsStereochem(ChemicalReaction *rxn) {
   }
 }
 
-}  // end of RDKit namespace
+namespace {
+
+void removeMappingNumbersFromReactionMoleculeTemplate(const MOL_SPTR_VECT &molVec){
+  for(MOL_SPTR_VECT::const_iterator begin=molVec.begin(); begin != molVec.end() ; ++begin){
+    ROMol &mol = *begin->get();
+    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
+        atomIt!=mol.endAtoms();++atomIt){
+      if((*atomIt)->hasProp(common_properties::molAtomMapNumber)){
+        (*atomIt)->clearProp(common_properties::molAtomMapNumber);
+      }
+    }
+  }
+}
+
+}
+
+void removeMappingNumbersFromReactions(const ChemicalReaction &rxn){
+
+  removeMappingNumbersFromReactionMoleculeTemplate(rxn.getAgents());
+  removeMappingNumbersFromReactionMoleculeTemplate(rxn.getProducts());
+  removeMappingNumbersFromReactionMoleculeTemplate(rxn.getReactants());
+}
+
+} // end of RDKit namespace
+
