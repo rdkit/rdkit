@@ -595,9 +595,25 @@ class HasPropWithValueQuery
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
       } catch (KeyErrorException e) {
         res = false;
-      } catch (boost::bad_any_cast) {
+        }
+        catch (boost::bad_any_cast) {
+          res = false;
+        }
+#ifdef __GNUC__
+#if (__GNUC__ < 4 ||                            \
+     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+        catch (...) {
+          // catch all -- this is currently necessary to
+          //  trap some bugs in boost+gcc configurations
+          //  Normally, this is not the correct thing to
+          //  do, but the only exception above is due
+          //  to the boost any_cast which is trapped
+          //  by the Boost python wrapper when it shouldn't
+          //  be.
         res = false;
       }
+#endif
+#endif        
     }
     if (this->getNegation()) {
       res = !res;
@@ -648,6 +664,21 @@ class HasPropWithValueQuery<TargetPtr, std::string>
       } catch (boost::bad_any_cast) {
         res = false;
       }
+#ifdef __GNUC__
+#if (__GNUC__ < 4 ||                             \
+     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+        catch (...) {
+          // catch all -- this is currently necessary to
+          //  trap some bugs in boost+gcc configurations
+          //  Normally, this is not the correct thing to
+          //  do, but the only exception above is due
+          //  to the boost any_cast which is trapped
+          //  by the Boost python wrapper when it shouldn't
+          //  be.
+          res = false;
+        }
+#endif
+#endif
     }
     if (this->getNegation()) {
       res = !res;
