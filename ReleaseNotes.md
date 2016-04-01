@@ -2,12 +2,30 @@
 (Changes relative to Release_2015.09.2)
 
 ## Acknowledgements:
-'AlexanderSavelyev', 'DoliathGavid', 'EricTing', 'JLVarjo', 'adalke', 'apahl', 'bp-kelley', 'elcaceres', 'kozo2', 'maddogcz', 'mcs07', 'mnowotka', 'nbateshaus', 'nisti74', 'ptosco', 'richlewis42', 'rvianello', 'samoturk', 'sroughley', 'teaguesterling', 'undeadpixel'
+Note: The RDKit has the wonderful "problem" that there are a lot of
+contributors and it's tough for me to capture them all to put together release
+notes. I don't even know many of the contributors (which is *awesome!*)
+The names here come largely from what I pull in an automated way from github.
+In cases where there's no real name listed in github, I either guessed
+or used just the github alias in quotes. If I got it wrong, please let me know!
+
+Josep Arus, Nik Bates-Haus, Andrew Dalke, 'DoliathGavid', 'elcaceres',
+James Jeffryes, Brian Kelley, Rich Lewis, Daniel Lowe, 'maddogcz',
+Kozo Nishida, Michal Nowotka, Axel Pahl, Steven Roughley, Alexander Savelyev,
+Nadine Schneider, Teague Sterling, Nik Stiefl, Matt Swain, Eric Ting,
+Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
+
 
 ## Highlights:
 
 
 ## Bug Fixes:
+  - Sanitizer rejects higher valency halides
+ (github issue #115 from dan2097)
+  - Bad E/Z assignment from ctab
+ (github issue #188 from greglandrum)
+  - bad E/Z assignment from ctab
+ (github issue #192 from greglandrum)
   - Documentation is still python2 specific.
  (github issue #374 from greglandrum)
   - SVG export - Python 3 support
@@ -32,6 +50,8 @@
  (github pull #681 from greglandrum)
   - Smiles containing "[as]" do not parse.
  (github issue #682 from greglandrum)
+  - SMARTS reaction triggers invariant violation on chiral compounds
+ (github issue #685 from JamesJeffryes)
   - partially specified chiral substructure queries don't work properly
  (github issue #688 from bp-kelley)
   - ExactMolWt ignoring the mass of the electron
@@ -112,12 +132,14 @@
  (github issue #695 from greglandrum)
   - Fixed a couple of compilation warnings in Resonance.cpp/Resonance.h
  (github pull #701 from ptosco)
-  - Add run single reactant to ChemicalReaction
+  - Dev/run single reactant
  (github pull #705 from bp-kelley)
   - Updates CMAKE_SOURCE_DIR to CMAKE_CURRENT_SOURCE_DIR
  (github pull #707 from bp-kelley)
   - Make LocaleSwitcher threadsafe
  (github issue #710 from greglandrum)
+  - Expose generateOneProductSet?
+ (github issue #721 from DoliathGavid)
   - Expose generateOneProductSet
  (github pull #722 from DoliathGavid)
   - Add a reader for FPB files
@@ -142,15 +164,18 @@
  (github issue #772 from greglandrum)
   - Support blanks in MolsToGridImage()
  (github issue #776 from greglandrum)
-  - The InChI and Avalon source code can now be automatically downloaded as part of the cmake process.
- (github pull #785 from ptosco)
   - Support larger isotope deltas in the chirality assignment
  (github issue #803 from greglandrum)
   - Adds option RDK_USE_COMPLEX_ROTOR_DEFINITION
  (github pull #810 from bp-kelley)
   - add Draw.MolsToSVGGrid()
  (github pull #817 from greglandrum)
-
+  - Fix alignMols so that it takes into account of QueryAtoms and QueryBonds
+ (github pull #821 from DoliathGavid)
+  - Add an unfolded count-based version of the RDKFingerprint
+ (github pull #838 from NadineSchneider)
+  - Add some utils functions to ChemReactions
+ (github pull #840 from NadineSchneider)
 
 ## New Database Cartridge Features:
   - support providing InChI (or InChI key) generation options in cartridge
