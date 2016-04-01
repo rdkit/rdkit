@@ -1988,6 +1988,41 @@ void testSanitOps() {
   TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 3);
   delete m;
 
+  smi = "Cl(=O)(=O)(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 3);
+  delete m;
+
+  smi = "Br(=O)(=O)(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 3);
+  delete m;
+
+  smi = "Br(=O)(=O)(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 3);
+  delete m;
+
+  smi = "I(=O)(=O)(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 3);
+  delete m;
+
+  smi = "I(=O)(=O)(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 3);
+  delete m;
+
   pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
   m = MolFileToMol(pathName + "perchlorate1.mol");
@@ -2023,6 +2058,90 @@ void testSanitOps() {
   TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 0);
   TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
   TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::TRIPLE);
+  delete m;
+
+  smi = "Cl(=O)(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 2);
+  delete m;
+
+  smi = "Cl(=O)(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 2);
+  delete m;
+
+  smi = "Br(=O)(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 2);
+  delete m;
+
+  smi = "Br(=O)(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 2);
+  delete m;
+
+  smi = "I(=O)(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 2);
+  delete m;
+
+  smi = "I(=O)(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 2);
+  delete m;
+
+  smi = "Cl(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
+  delete m;
+
+  smi = "Cl(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
+  delete m;
+
+  smi = "Br(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
+  delete m;
+
+  smi = "Br(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
+  delete m;
+
+  smi = "I(=O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
+  delete m;
+
+  smi = "I(=O)[O-]";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
   delete m;
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
