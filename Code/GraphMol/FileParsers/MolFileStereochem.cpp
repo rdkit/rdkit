@@ -672,8 +672,9 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
   PRECONDITION(dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT, "bad dir");
   PRECONDITION(atom == bond->getBeginAtom() || atom == bond->getEndAtom(),
                "atom doesn't belong to bond");
-  // std::cerr<<"\t\t>sbdra :  bond "<<bond->getIdx()<<" atom
-  // "<<atom->getIdx()<<" dir: " << dir << " reverse: "<<reverse<<std::endl;
+  // std::cerr << "\t\t>sbdra :  bond " << bond->getIdx() << " atom "
+  //           << atom->getIdx() << " dir : " << dir << " reverse: " << reverse
+  //           << std::endl;
   Atom *oAtom;
   if (bond->getBeginAtom() != atom) {
     reverse = !reverse;
@@ -693,14 +694,15 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
   // used with the direction info.
   bond->setBondDir(dir);
   // std::cerr<<"\t\t\t\t -> dir "<<dir<<std::endl;
-
   // check for other single bonds around the other atom who need their
   // direction set and set it as demanded by the direction of this one:
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = oAtom->getOwningMol().getAtomBonds(oAtom);
   while (beg != end) {
     Bond *nbrBond = oAtom->getOwningMol()[*beg].get();
-    if (nbrBond != bond && needsDir[nbrBond->getIdx()]) {
+    ++beg;
+    if (nbrBond != bond && nbrBond->getBondType() != Bond::DOUBLE &&
+        needsDir[nbrBond->getIdx()]) {
       Bond::BondDir nbrDir = Bond::NONE;
       if ((nbrBond->getBeginAtom() == oAtom && bond->getBeginAtom() == oAtom) ||
           (nbrBond->getEndAtom() == oAtom && bond->getEndAtom() == oAtom)) {
@@ -715,10 +717,9 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
       }
       nbrBond->setBondDir(nbrDir);
       needsDir[nbrBond->getIdx()] = 0;
-      // std::cerr<<"\t\t\t\t update bond "<<nbrBond->getIdx()<<" to dir "<<
-      // nbrDir<<std::endl;
+      // std::cerr << "\t\t\t\t update bond " << nbrBond->getIdx() << " to dir "
+      //           << nbrDir << std::endl;
     }
-    ++beg;
   }
 }
 
@@ -729,20 +730,25 @@ bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
 
 void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
                                boost::dynamic_bitset<> &needsDir,
-                               std::vector<unsigned int> &singleBondCounts) {
+                               std::vector<unsigned int> &singleBondCounts,
+                               const VECT_INT_VECT &singleBondNbrs) {
   // we want to deal only with double bonds:
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
   PRECONDITION(conf, "no conformer");
-
+  if (!needsDir[dblBond->getIdx()]) return;
+  needsDir.set(dblBond->getIdx(), 0);
 #if 0
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "UDBN: "<<dblBond->getIdx()<<"\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "UDBN: " << dblBond->getIdx() << " "
+            << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
+            << "\n";
 #endif
 
   ROMol::OEDGE_ITER beg, end;
+  std::vector<Bond *> followupBonds;
 
   Bond *bond1 = 0, *obond1 = 0;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
@@ -866,7 +872,8 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   } else {
     sameTorsionDir = true;
   }
-  // std::cerr << "   angle: "<<ang<<" sameTorsionDir: " <<sameTorsionDir<<"\n";
+  // std::cerr << "   angle: " << ang << " sameTorsionDir: " << sameTorsionDir
+  // << "\n";
 
   /*
      Time for some clarificatory text, because this gets really
@@ -898,6 +905,20 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   bool reverseBondDir = sameTorsionDir;
 
   Atom *atom1 = dblBond->getBeginAtom(), *atom2 = dblBond->getEndAtom();
+  if (needsDir[bond1->getIdx()]) {
+    BOOST_FOREACH (int bidx, singleBondNbrs[bond1->getIdx()]) {
+      // std::cerr << "       neighbor from: " << bond1->getIdx() << " " << bidx
+      //           << ": " << needsDir[bidx] << std::endl;
+      if (needsDir[bidx]) followupBonds.push_back(mol.getBondWithIdx(bidx));
+    }
+  }
+  if (needsDir[bond2->getIdx()]) {
+    BOOST_FOREACH (int bidx, singleBondNbrs[bond2->getIdx()]) {
+      // std::cerr << "       neighbor from: " << bond2->getIdx() << " " << bidx
+      //           << ": " << needsDir[bidx] << std::endl;
+      if (needsDir[bidx]) followupBonds.push_back(mol.getBondWithIdx(bidx));
+    }
+  }
   if (!needsDir[bond1->getIdx()]) {
     if (!needsDir[bond2->getIdx()]) {
       // check that we agree
@@ -932,16 +953,26 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     needsDir[obond2->getIdx()] = 0;
   }
 #if 0
-    std::cerr << "  1:"<<bond1->getIdx()<<" ";
-    if(obond1) std::cerr<<obond1->getIdx()<<std::endl;
-    else  std::cerr<<"N/A"<<std::endl;
-    std::cerr << "  2:"<<bond2->getIdx()<<" ";
-    if(obond2) std::cerr<<obond2->getIdx()<<std::endl;
-    else  std::cerr<<"N/A"<<std::endl;
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
+  std::cerr << "  1:" << bond1->getIdx() << " ";
+  if (obond1)
+    std::cerr << obond1->getIdx() << std::endl;
+  else
+    std::cerr << "N/A" << std::endl;
+  std::cerr << "  2:" << bond2->getIdx() << " ";
+  if (obond2)
+    std::cerr << obond2->getIdx() << std::endl;
+  else
+    std::cerr << "N/A" << std::endl;
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
 #endif
+  BOOST_FOREACH (Bond *oDblBond, followupBonds) {
+    // std::cerr << "FOLLOWUP: " << oDblBond->getIdx() << " "
+    //           << needsDir[oDblBond->getIdx()] << std::endl;
+    updateDoubleBondNeighbors(mol, oDblBond, conf, needsDir, singleBondCounts,
+                              singleBondNbrs);
+  }
 }
 
 void ClearSingleBondDirFlags(ROMol &mol) {
@@ -970,7 +1001,12 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
   // single bond is adjacent to
   std::vector<unsigned int> singleBondCounts(mol.getNumBonds(), 0);
   std::vector<Bond *> bondsInPlay;
+  // keeps track of which single bonds are adjacent to each double bond:
   VECT_INT_VECT dblBondNbrs(mol.getNumBonds());
+  // keeps track of which double bonds are adjacent to each single bond:
+  VECT_INT_VECT singleBondNbrs(mol.getNumBonds());
+  // keeps track of which single bonds need a dir set and which double bonds
+  // need to have their neighbors' dirs set
   boost::dynamic_bitset<> needsDir(mol.getNumBonds());
 
   // find double bonds that should be considered for
@@ -1002,7 +1038,17 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
             nbrBond->getBondType() == Bond::AROMATIC) {
           singleBondCounts[nbrBond->getIdx()] += 1;
           needsDir[nbrBond->getIdx()] = 1;
+          needsDir[(*bondIt)->getIdx()] = 1;
           dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
+          // the search may seem inefficient, but these vectors are going to be
+          // at most 2 long (with very few exceptions). It's just not worth
+          // using a different data structure
+          if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
+                        singleBondNbrs[nbrBond->getIdx()].end(),
+                        (*bondIt)->getIdx()) ==
+              singleBondNbrs[nbrBond->getIdx()].end()) {
+            singleBondNbrs[nbrBond->getIdx()].push_back((*bondIt)->getIdx());
+          }
         }
         ++beg;
       }
@@ -1013,7 +1059,19 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
             nbrBond->getBondType() == Bond::AROMATIC) {
           singleBondCounts[nbrBond->getIdx()] += 1;
           needsDir[nbrBond->getIdx()] = 1;
+          needsDir[(*bondIt)->getIdx()] = 1;
           dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
+
+          // the search may seem inefficient, but these vectors are going to be
+          // at most 2 long (with very few exceptions). It's just not worth
+          // using a different data structure
+          if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
+                        singleBondNbrs[nbrBond->getIdx()].end(),
+                        (*bondIt)->getIdx()) ==
+              singleBondNbrs[nbrBond->getIdx()].end()) {
+
+            singleBondNbrs[nbrBond->getIdx()].push_back((*bondIt)->getIdx());
+          }
         }
         ++beg;
       }
@@ -1048,7 +1106,7 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
   for (pairIter = orderedBondsInPlay.rbegin();
        pairIter != orderedBondsInPlay.rend(); ++pairIter) {
     updateDoubleBondNeighbors(mol, pairIter->second, conf, needsDir,
-                              singleBondCounts);
+                              singleBondCounts, singleBondNbrs);
   }
   if (resetRings) mol.getRingInfo()->reset();
 }
