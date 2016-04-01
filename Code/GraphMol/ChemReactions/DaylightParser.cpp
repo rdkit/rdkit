@@ -87,6 +87,20 @@ std::vector<std::string> splitSmartsIntoComponents(
   }
   return res;
 }
+
+ROMol* constructMolFromString(const std::string &txt,
+    std::map<std::string,std::string> *replacements, bool useSmiles) {
+  ROMol *mol;
+  if(!useSmiles){
+    mol=SmartsToMol(txt,0,false,replacements);
+  }
+  else{
+    mol=SmilesToMol(txt,0,false,replacements);
+  }
+  return mol;
+}
+
+
 }  // end of namespace DaylightParserUtils
 
 ChemicalReaction *RxnSmartsToChemicalReaction(
@@ -123,11 +137,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   for (std::vector<std::string>::const_iterator txtIt = reactSmarts.begin();
        txtIt != reactSmarts.end(); ++txtIt) {
     ROMol *mol;
-    if (!useSmiles) {
-      mol = SmartsToMol(*txtIt, 0, false, replacements);
-    } else {
-      mol = SmilesToMol(*txtIt, 0, false, replacements);
-    }
+    mol = DaylightParserUtils::constructMolFromString(*txtIt,replacements,useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing reactant from SMARTS: ";
       errMsg += *txtIt;
@@ -139,11 +149,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   for (std::vector<std::string>::const_iterator txtIt = productSmarts.begin();
        txtIt != productSmarts.end(); ++txtIt) {
     ROMol *mol;
-    if (!useSmiles) {
-      mol = SmartsToMol(*txtIt, 0, false, replacements);
-    } else {
-      mol = SmilesToMol(*txtIt, 0, false, replacements);
-    }
+    mol = DaylightParserUtils::constructMolFromString(*txtIt,replacements,useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing product from SMARTS: ";
       errMsg += *txtIt;
@@ -156,11 +162,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   ROMol *agentMol;
   // allow a reaction template to have no agent specified
   if (agentText.size() != 0) {
-    if (!useSmiles)
-      agentMol = SmartsToMol(agentText, 0, false, replacements);
-    else
-      agentMol = SmilesToMol(agentText, 0, false, replacements);
-
+    agentMol = DaylightParserUtils::constructMolFromString(agentText,replacements,useSmiles);
     if (!agentMol) {
       std::string errMsg = "Problems constructing agent from SMARTS: ";
       errMsg += agentText;

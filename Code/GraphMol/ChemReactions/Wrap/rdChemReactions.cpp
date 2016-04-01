@@ -211,6 +211,22 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
   }
 }
 
+void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList){
+  if(targetList==python::object()){
+      self.removeAgentTemplates();
+  }
+  else{
+    MOL_SPTR_VECT tmp;
+    self.removeAgentTemplates(&tmp);
+    python::list molList = python::extract<python::list>(targetList);
+    if(tmp.size() > 0){
+      for(unsigned int i = 0; i < tmp.size(); i++){
+        molList.append(tmp[i]);
+      }
+    }
+  }
+}
+
 void Compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
                                 double spacing = 2.0, bool updateProps = true,
                                 bool canonOrient = false,
@@ -400,6 +416,9 @@ Sample Usage:\n\
            "Removes molecules with an atom mapping ratio below "
            "thresholdUnmappedAtoms from product templates to the agent "
            "templates or to a given targetList")
+      .def("RemoveAgentTemplates",RDKit::RemoveAgentTemplates,
+           (python::arg("self"), python::arg("targetList")=python::object()),
+           "Removes agents from reaction. If targetList is provide the agents will be transfered to that list.")
       .def("RunReactants", (PyObject * (*)(RDKit::ChemicalReaction *,
                                            python::tuple))RDKit::RunReactants,
            "apply the reaction to a sequence of reactant molecules and return "
@@ -589,7 +608,6 @@ of the replacements argument.",
       "Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.\
           This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.\
           The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction");
-
   python::def(
       "ReduceProductToSideChains", RDKit::reduceProductToSideChains,
       (python::arg("product"), python::arg("addDummyAtoms") = true),
@@ -597,5 +615,7 @@ of the replacements argument.",
               The output is a molecule with attached wildcards indicating where the product was attached.  The isotope of the dummy atom\
               is the reaction map number of the product's atom (if avialable).",
       python::return_value_policy<python::manage_new_object>());
-
+  python::def("RemoveMappingNumbersFromReactions",RDKit::removeMappingNumbersFromReactions,
+          (python::arg("reaction")),
+          "Removes the mapping numbers from the molecules of a reaction");
 }
