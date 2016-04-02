@@ -79,6 +79,10 @@ class SmilesWriter : public MolWriter {
     try {
       dp_ostream->flush();
     } catch (...) {
+      try {
+        dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error& e) {
+      }
     }
   };
 
@@ -89,10 +93,7 @@ class SmilesWriter : public MolWriter {
     dp_ostream = NULL;
     if (df_owner) {
       df_owner = false;
-      try {
-        delete tmp_ostream;
-      } catch (...) {
-      }
+      delete tmp_ostream;
     }
   };
 
@@ -155,6 +156,10 @@ class SDWriter : public MolWriter {
     try {
       dp_ostream->flush();
     } catch (...) {
+      try {
+        dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error& e) {
+      }
     }
   };
 
@@ -165,10 +170,7 @@ class SDWriter : public MolWriter {
     dp_ostream = NULL;
     if (df_owner) {
       df_owner = false;
-      try {
-        delete tmp_ostream;
-      } catch (...) {
-      }
+      delete tmp_ostream;
     }
   };
 
