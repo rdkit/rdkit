@@ -76,21 +76,23 @@ class SmilesWriter : public MolWriter {
   //! \brief flush the ostream
   void flush() {
     PRECONDITION(dp_ostream, "no output stream");
-    dp_ostream->flush();
-  };
-
-  //! \brief close our stream (the writer cannot be used again)
-  void close() {
-    PRECONDITION(dp_ostream, "no output stream");
     try {
       dp_ostream->flush();
     } catch (...) {
     }
+  };
+
+  //! \brief close our stream (the writer cannot be used again)
+  void close() {
+    flush();
     std::ostream *tmp_ostream = dp_ostream;
     dp_ostream = NULL;
     if (df_owner) {
-      delete tmp_ostream;
       df_owner = false;
+      try {
+        delete tmp_ostream;
+      } catch (...) {
+      }
     }
   };
 
@@ -150,21 +152,23 @@ class SDWriter : public MolWriter {
   //! \brief flush the ostream
   void flush() {
     PRECONDITION(dp_ostream, "no output stream");
-    dp_ostream->flush();
-  };
-
-  //! \brief close our stream (the writer cannot be used again)
-  void close() {
-    PRECONDITION(dp_ostream, "no output stream");
     try {
       dp_ostream->flush();
     } catch (...) {
     }
+  };
+
+  //! \brief close our stream (the writer cannot be used again)
+  void close() {
+    flush();
     std::ostream *tmp_ostream = dp_ostream;
     dp_ostream = NULL;
     if (df_owner) {
-      delete tmp_ostream;
       df_owner = false;
+      try {
+        delete tmp_ostream;
+      } catch (...) {
+      }
     }
   };
 
