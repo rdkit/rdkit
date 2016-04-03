@@ -17,7 +17,9 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
 
 
 ## Highlights:
-
+- Building the PostgreSQL cartridge  is now much easier since the cartridge build is  now integrated with the RDKit's standard build process.
+- Some improvements to molecule rendering and Jupyter notebook integration: The new `Draw.PrepareMolForDrawing()` function takes care of standard tasks like wedging bonds, kekulization, and adding chiral Hs. `Draw.MolsToGridImage()` can generate SVGs and uses the new molecular drawing code for PNGs when possible. The Jupyter notebook integration uses the new drawing code when possible.
+- C++ error and warning messages can now be displayed in the Jupyter notebook 
 
 ## Bug Fixes:
   - Sanitizer rejects higher valency halides
@@ -140,9 +142,7 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github issue #710 from greglandrum)
   - Expose generateOneProductSet?
  (github issue #721 from DoliathGavid)
-  - Expose generateOneProductSet
- (github pull #722 from DoliathGavid)
-  - Add a reader for FPB files
+  - Add a reader for FPB files (still experimental)
  (github pull #724 from greglandrum)
   - Fix/get double prop get props asdict
  (github pull #734 from bp-kelley)
