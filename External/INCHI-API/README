@@ -1,6 +1,7 @@
-To build the optional InChI support, InChi sources are needed.
-If InChI could not be found, the CMake build system will attempt to
-download the InChI distribution from the following URL:
+To build the optional InChI support, run cmake with the
+-DRDK_BUILD_INCHI_SUPPORT=ON argument. If InChI sources could not be
+found, the CMake build system will attempt to download the InChI
+distribution from the following URL:
 
 http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip
 

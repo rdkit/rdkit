@@ -11,13 +11,13 @@ Installation:
 if PostgreSQL is installed in a location where CMake is unable to find it,
 either set the environment variable PostgreSQL_ROOT or add a
 "-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
-PostgreSQL root directory, e.g. C:\Program Files (x86)\PostgreSQL\9.5
+PostgreSQL root directory, e.g. C:\Program Files\PostgreSQL\9.5
 
 After building the RDKit, carry out the following steps:
 1) Open a shell (CMD under Windows) with administrator privileges
 2) Stop the PostgreSQL service:
-   "C:\Program Files (x86)\PostgreSQL\9.5\bin\pg_ctl.exe" ^
-   -N "postgresql-9.5"  -D "C:\Program Files (x86)\PostgreSQL\9.5\data" ^
+   "C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" ^
+   -N "postgresql-9.5"  -D "C:\Program Files\PostgreSQL\9.5\data" ^
    -w stop (Windows)
    service postgresql stop (Linux)
    
@@ -28,20 +28,25 @@ After building the RDKit, carry out the following steps:
    
    which will install rdkit.sql91.in, rdkit--3.4.sql,
    rdkit.control and rdkit.dll into PostgreSQL 
-4) Under Windows, ,make sure that the Boost DLLs against which the RDKit
+4) Under Windows, make sure that the Boost DLLs against which the RDKit
    is built are in the SYSTEM path, or PostgreSQL will fail to create the
    rdkit extension with a deceptive error message such as:
 
    ERROR:  could not load library
-   "C:/Program Files (x86)/PostgreSQL/9.5/lib/rdkit.dll":
+   "C:/Program Files/PostgreSQL/9.5/lib/rdkit.dll":
    The specified module could not be found.
+   Under Linux, make sure to add to the .bashrc of the postgres user
+   an "export LD_LIBRARY_PATH" directive pointing to any dynamic
+   libraries that the postgresql service may need (e.g., Boost or
+   PostgreSQL libraries) which are not in the system ldconfig path
 
 5) Start the PostgreSQL service, e.g.:
-   "C:\Program Files (x86)\PostgreSQL\9.5\bin\pg_ctl.exe" ^
-   -N "postgresql-9.5"  -D "C:\Program Files (x86)\PostgreSQL\9.5\data" ^
+   "C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" ^
+   -N "postgresql-9.5"  -D "C:\Program Files\PostgreSQL\9.5\data" ^
    -w start (Windows)
    service postgresql start (Linux)
 
+Before running ctest, 
 To install the rdkit cartridge into the database DB: 
  psql -c 'CREATE EXTENSION rdkit' DB
 
