@@ -1,9 +1,12 @@
-To build the optional Avalon Toolkit support, Avalon Toolkit sources are
-needed. If Avalon Toolkit could not be found, the CMake build system will attempt to
-download it from the following URL:
+To build the optional Avalon Toolkit support, run cmake with the
+-DRDK_BUILD_AVALON_SUPPORT=ON argument. If the Avalon Toolkit sources
+could not be found, the CMake build system will attempt to download the
+Avalon Toolkit distribution from the following URL:
 
 http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar
 
+The downloaded Avalon Toolkit sources will be automatically patched to
+avoid a potential memory corruption issue.
 The default download URL and MD5 checksum can be overridden with the
 following CMake definitions:
 

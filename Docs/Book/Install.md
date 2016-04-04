@@ -66,7 +66,7 @@ Once PostgreSQL is up and running, all of the normal PostgreSQL commands can the
 
 If you are trying to use multiple installations of PostgreSQL in different environments, you will need to setup different pid files, unix sockets and ports by [editing the PostgreSQL config files](https://opensourcedbms.com/dbms/running-multiple-postgresql-9-2-instances-on-one-server-in-centos-6rhel-6fedora/). With the above configurations these files can be found in /folder/where/data/should/be/stored.
 
-## Linux and the Mac
+## Linux and OS X
 
 ### Installation from repositories
 
@@ -80,7 +80,7 @@ Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu re
 
 Gianluca Sforna creates binary RPMs that can be found here: [http://giallu.fedorapeople.org/rdkit-20XX.XX/](http://giallu.fedorapeople.org/rdkit-20XX.XX/)
 
-#### MacOS
+#### OS X
 
 Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit [https://github.com/rdkit/homebrew-rdkit](https://github.com/rdkit/homebrew-rdkit)
 
@@ -127,7 +127,7 @@ Here things are more difficult. Check this wiki page for information: https://co
       -   You need to have numpy (http://www.scipy.org/NumPy) installed.
           > **note**
           >
-          > for building with XCode4 on the MacOS – there seems to be a problem with the version of numpy that comes with XCode4. Please see below in the (see faq) section for a workaround.
+          > for building with XCode4 on OS X there seems to be a problem with the version of numpy that comes with XCode4. Please see below in the (see faq) section for a workaround.
  -   Optional packages
      -   If you would like to install the RDKit InChI support (first available in the Q2 2011 release), follow the instructions in $RDBASE/External/INCHI-API to get a copy of the InChI source and put it in the appropriate place.
 
@@ -160,7 +160,7 @@ Fetch the source, here as tar.gz but you could use git as well:
 -   environment variables:
      -   RDBASE: the root directory of the RDKit distribution (e.g. ~/RDKit)
      -   *Linux:* LD_LIBRARY_PATH: make sure it includes $RDBASE/lib and wherever the boost shared libraries were installed
-     -   *Mac:* DYLD_LIBRARY_PATH: make sure it includes $RDBASE/lib and wherever the boost shared libraries were installed
+     -   *OS X:* DYLD_LIBRARY_PATH: make sure it includes $RDBASE/lib and wherever the boost shared libraries were installed
      - The following are required if you are planning on using the Python wrappers:  
        -   PYTHONPATH: make sure it includes $RDBASE
 -   Building:
@@ -218,7 +218,7 @@ You can completely disable building of the python wrappers by setting the config
 *Building*
 
 -   When you invoke cmake add `-D RDK_BUILD_SWIG_WRAPPERS=ON` to the arguments. For example: `cmake -D RDK_BUILD_SWIG_WRAPPERS=ON ..`
--   Build and install normally using make. The directory `$RDBASE/Code/JavaWrappers/gmwrapper` will contain the three required files: libGraphMolWrap.so (libGraphMolWrap.jnilib on the Mac), org.RDKit.jar, and org.RDKitDoc.jar.
+-   Build and install normally using make. The directory `$RDBASE/Code/JavaWrappers/gmwrapper` will contain the three required files: libGraphMolWrap.so (libGraphMolWrap.jnilib on OS X), org.RDKit.jar, and org.RDKitDoc.jar.
 
 *Using the wrappers*
 
@@ -233,6 +233,11 @@ To use the wrappers, the three files need to be in the same directory, and that 
     >>> m = RWMol.MolFromSmiles('c1ccccc1')
     >>> m.getNumAtoms()
     6L
+
+##### Optional packages
+-   If you would like to install the RDKit InChI support, follow the instructions in `$RDBASE/External/INCHI-API/README`.
+-   If you would like to install the RDKit Avalon toolkit support, follow the instructions in `$RDBASE/External/AvalonTool/README`.
+-   If you would like to build and install the PostgreSQL cartridge, follow the instructions in `$RDBASE/Code/PgSQL/rdkit/README`.
 
 #### Frequently Encountered Problems
 
@@ -285,7 +290,7 @@ This can be solved by using cmake version 2.8.3 (or more recent) and providing t
 
 *Problem:*
 
-Building on the Mac with XCode 4
+Building on OS X with XCode 4
 
 The problem seems to be caused by the version of numpy that is distributed with XCode 4, so you need to build a fresh copy.
 
@@ -313,7 +318,7 @@ Now it's safe to build boost and the RDKit.
 
 ### Prerequisites
 
--   Python 2.7 (from http://www.python.org/)
+-   Python 2.7 or 3.4+ (from http://www.python.org/)
 -   numpy (from http://numpy.scipy.org/ or use `pip install numpy`). Binaries for win64 are available here: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
 -   Pillow: (from https://python-pillow.github.io/> or use `pip install Pillow`)
 
@@ -326,13 +331,13 @@ Now it's safe to build boost and the RDKit.
 
 ### Installation of RDKit binaries
 
--   Get the appropriate windows binary build from: https://sourceforge.net/projects/rdkit/files/rdkit
--   Extract the zip file somewhere without a space in the name, i.e. `c:/`
--   The rest of this will assume that the installation is in `c:/RDKit_2012_12_1`
+-   Get the appropriate windows binary build from: https://github.com/rdkit/rdkit/releases
+-   Extract the zip file somewhere without a space in the name, i.e. `C:\`
+-   The rest of this will assume that the installation is in `C:\RDKit_2015_09_2`
 -   Set the following environment variables:
-   -   RDBASE: `c:/RDKit_2012_12_1`
+   -   RDBASE: `C:\RDKit_2015_09_2`
    -   PYTHONPATH: `%RDBASE%` if there is already a PYTHONPATH, put `;%RDBASE%` at the end.
-   -   PATH: add `;%RDBASE%/lib` to the end
+   -   PATH: add `;%RDBASE%\lib` to the end
 
 In Win7 systems, you may run into trouble due to missing DLLs, see one thread from the mailing list: http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01632.html You can download the missing DLLs from here: http://www.microsoft.com/en-us/download/details.aspx?id=5555
 
@@ -340,38 +345,42 @@ In Win7 systems, you may run into trouble due to missing DLLs, see one thread fr
 
 #### Extra software to install
 
--   Microsoft Visual C++ : The Express version has everything necessary and can be downloaded for free (<http://www.microsoft.com/express/download/>). This is a big installation and will take a while. The RDKit has been successfully built with all version of visual c++ since 6.0, so the current version of VC++ (2010 as of this writing) should be fine.
+-   Microsoft Visual C++ : The Community version has everything necessary and can be downloaded for free (<https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx>). This is a big installation and will take a while. The RDKit has been successfully built with all version of Visual C++ since 6.0, so the current version of VC++ (2015 as of this writing) should be fine.
 -   cmake : (<http://www.cmake.org/cmake/resources/software.html>) should be installed.
--   boost : It is strongly recommended to download and use a precompiled version of the boost libraries from <http://sourceforge.net/projects/boost/files/boost-binaries/> . When you run the installer, the only binary libraries you need are python, regex, and system. If you want to install boost from source, download a copy from <http://www.boost.org> and follow the instructions in the "Getting Started" section of the documentation. Make sure the libraries and headers are installed to c:boost
--   a git client : *This is only necessary if you are planning on building development versions of the RDKit.* This can be downloaded from <http://git-scm.com/downloads> .
--   Optional packages
-   -   If you would like to install the RDKit InChI support, follow the instructions in $RDBASE/External/INCHI-API/README to get a copy of the InChI source and put it in the appropriate place.
-   -   If you would like to install the RDKit Avalon toolkit support, follow the instructions in $RDBASE/External/AvalonTool/README to get a copy of the Avalon toolkit source and put it in the appropriate place.
+-   boost : It is strongly recommended to download and use a precompiled version of the boost libraries from <http://sourceforge.net/projects/boost/files/boost-binaries/> . When you run the installer, the only binary libraries you need are python, regex, and system. If you want to install boost from source, download a copy from <http://www.boost.org> and follow the instructions in the "Getting Started" section of the documentation. Make sure the libraries and headers are installed to C:\boost
+-   a git client : *This is only necessary if you are planning on building development versions of the RDKit.* This can be downloaded from <http://git-scm.com/downloads>; git is also included as an optional add-on of Microsoft Visual Studio 2015.
 
 #### Setup and Preparation
 
-This section assumes that python is installed in `c:\Python27`, that the boost libraries have been installed to `c:\boost`, and that you will build the RDKit from a directory named `c:\RDKit`. If any of these conditions is not true, just change the corresponding paths.
+This section assumes that python is installed in `C:\Python27`, that the boost libraries have been installed to `C:\boost`, and that you will build the RDKit from a directory named `C:\RDKit`. If any of these conditions is not true, just change the corresponding paths.
 
 -   If you install things in paths that have spaces in their names, be sure to use quotes properly in your environment variable definitions.
--   If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using git. If you're using the command-line client the command is: `git clone  https://github.com/rdkit/rdkit.git c:\RDKit`
--   If you are planning on using a released version of the RDKit : get a copy of the most recent release and extract it into the directory `c:\RDKit`
--   Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window)
-   -   `RDBASE = c:\RDKit`
-   -   Make sure `c:\Python27` is in your PATH
-   -   Make sure `c:\RDKit\lib` is in your PATH
-   -   Make sure `c:\boost\lib` is in your PATH.
-   -   Make sure `c:\RDKit is` in your PYTHONPATH
+-   If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using git. If you're using the command-line client the command is: `git clone  https://github.com/rdkit/rdkit.git C:\RDKit`
+-   If you are planning on using a released version of the RDKit: get a copy of the most recent release and extract it into the directory `C:\RDKit`
+-   Set the required environment variables:
+   -   `RDBASE = C:\RDKit`
+   -   Make sure `C:\Python27` is in your PATH
+   -   Make sure `C:\RDKit\lib` is in your PATH
+   -   Make sure `C:\boost\lib` is in your PATH.
+   -   Make sure `C:\RDKit is` in your PYTHONPATH
 
 #### Building from the command line (recommended)
 
--   Create a directory `c:\RDKit\build` and cd into it
--   Run cmake. Here's an example basic command line for 64bit windows that assumes the InChI and Avalon toolkit sources are available (see above): `cmake -DRDK_BUILD_PYTHON_WRAPPERS=0N -DAVALONTOOLS_DIR=c:/avalontoolkit_beta/sourcedistribution -DBOOST_ROOT=c:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -G"Visual Studio 10 Win64" ..`
--   Build the code. Here's an example command line: `c:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
+-   Create a directory `C:\RDKit\build` and cd into it
+-   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:
+`cmake -DRDK_BUILD_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
+-   Build the code. Here's an example command line: `C:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
+-   If you have built in PostgreSQL support, you will need to open a shell with administrator privileges, stop the PostgreSQL service, run the `pgsql_install.bat` installation script, then restart the PostgreSQL service (please refer to `%RDBASE%\Code\PgSQL\rdkit\README` for further details):
+    -   `"C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" -N "postgresql-9.5" -D "C:\Program Files\PostgreSQL\9.5\data" -w stop`
+    -   `C:\RDKit\build\Code\PgSQL\rdkit\pgsql_install.bat`
+    -   `"C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" -N "postgresql-9.5" -D "C:\Program Files\PostgreSQL\9.5\data" -w start`
+    -   Before restarting the PostgreSQL service, make sure that the Boost libraries the RDKit was built against are in the system PATH, or PostgreSQL will fail to create the `rdkit` extension with a deceptive error message such as: `ERROR: could not load library "C:/Program Files/PostgreSQL/9.5/lib/rdkit.dll": The specified module could not be found.`
+
 
 #### Testing the Build (optional, but recommended)
 
--   cd to `c:\RDKit\build` and run ctest.
--   you're done!
+-   cd to `C:\RDKit\build` and run ctest. Please note that if you have built in PostgreSQL support, the current logged in user needs to be a PostgreSQL user with database creation and superuser privileges, or the PostgreSQL test will fail. A convenient option to authenticate will be to set the `PGPASSWORD` environment variable to the PostgreSQL password of the current logged in user in the shell from which you are running ctest.
+-   You're done!
 
 ## License
 
@@ -379,4 +388,4 @@ This document is copyright (C) 2012-2015 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
-The intent of this license is similar to that of the RDKit itself. In simple words: “Do whatever you want with it, but please give us some credit.”
+The intent of this license is similar to that of the RDKit itself. In simple words: "Do whatever you want with it, but please give us some credit."�
