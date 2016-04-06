@@ -14,7 +14,7 @@ import collections
 
 def _isCallable(thing):
   return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
-              hasattr(thing,'__call__')   
+              hasattr(thing,'__call__')
 
 _descList=[]
 def _setupDescriptors(namespace):
@@ -28,7 +28,7 @@ def _setupDescriptors(namespace):
   for nm,thing in namespace.items():
     if nm[0]!='_' and _isCallable(thing):
       _descList.append((nm,thing))
-  
+
   others = []
   for mod in otherMods:
     tmp = dir(mod)
@@ -86,53 +86,42 @@ ExactMolWt.__doc__="""The exact molecular weight of the molecule
 
 """
 
-
 def NumValenceElectrons(mol):
   """ The number of valence electrons the molecule has
 
   >>> NumValenceElectrons(Chem.MolFromSmiles('CC'))
-  14.0
+  14
   >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)O'))
-  18.0
+  18
   >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)[O-]'))
-  18.0
+  18
   >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)'))
-  12.0
-  
+  12
 
   """
   tbl = Chem.GetPeriodicTable()
-  accum = 0.0
-  for atom in mol.GetAtoms():
-    accum += tbl.GetNOuterElecs(atom.GetAtomicNum())
-    accum -= atom.GetFormalCharge()
-    accum += atom.GetTotalNumHs()
-
-  return accum
-NumValenceElectrons.version="1.0.0"
+  return sum(tbl.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetFormalCharge() +
+             atom.GetTotalNumHs() for atom in mol.GetAtoms())
+NumValenceElectrons.version="1.1.0"
 
 def NumRadicalElectrons(mol):
   """ The number of radical electrons the molecule has
     (says nothing about spin state)
 
   >>> NumRadicalElectrons(Chem.MolFromSmiles('CC'))
-  0.0
+  0
   >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH3]'))
-  0.0
+  0
   >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH2]'))
-  1.0
+  1
   >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH]'))
-  2.0
+  2
   >>> NumRadicalElectrons(Chem.MolFromSmiles('C[C]'))
-  3.0
-  
+  3
 
   """
-  accum = 0.0
-  for atom in mol.GetAtoms():
-    accum += atom.GetNumRadicalElectrons()
-  return accum
-NumRadicalElectrons.version="1.0.0"
+  return sum(atom.GetNumRadicalElectrons() for atom in mol.GetAtoms())
+NumRadicalElectrons.version="1.1.0"
 
 def _ChargeDescriptors(mol,force=False):
   if not force and hasattr(mol,'_chargeDescriptors'):
@@ -147,7 +136,7 @@ def _ChargeDescriptors(mol,force=False):
   res = (minChg,maxChg)
   mol._chargeDescriptors=res
   return res
-  
+
 
 def MaxPartialCharge(mol,force=False):
   _,res = _ChargeDescriptors(mol,force)

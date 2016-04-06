@@ -17,9 +17,9 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
 
 
 ## Highlights:
-- Building the PostgreSQL cartridge  is now much easier since the cartridge build is  now integrated with the RDKit's standard build process.
+- Improvements to the build system: it's now much easier to build with InChI and/or Avalon support since cmake now knows how to fetch the appropriate source code for you. Building the PostgreSQL cartridge is now integrated into normal build process.
 - Some improvements to molecule rendering and Jupyter notebook integration: The new `Draw.PrepareMolForDrawing()` function takes care of standard tasks like wedging bonds, kekulization, and adding chiral Hs. `Draw.MolsToGridImage()` can generate SVGs and uses the new molecular drawing code for PNGs when possible. The Jupyter notebook integration uses the new drawing code when possible.
-- C++ error and warning messages can now be displayed in the Jupyter notebook
+- Error and warning messages from the C++ core can now be displayed in the Jupyter notebook
 
 ## Bug Fixes:
   - Sanitizer rejects higher valency halides
@@ -104,12 +104,16 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github issue #792 from elcaceres)
   - Fixes MolToSmarts python docs
  (github pull #793 from bp-kelley)
+  - npscorer.py: Py3 compat and importable from other locations
+ (github #801 from apahl)
   - Pre-condition Violation: bad bond type
  (github issue #805 from nbateshaus)
   - rooted atom fingerprint non identical for the same molecules
  (github issue #811 from nisti74)
   - test60RunSingleReactant() not being run
  (github issue #825 from greglandrum)
+  - PostgreSQL bug fixes
+ (github pull #835 from ptosco)
 
 ## New Features and Enhancements:
   - switch to using new version of avalon toolkit
@@ -142,14 +146,22 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github pull #707 from bp-kelley)
   - Make LocaleSwitcher threadsafe
  (github issue #710 from greglandrum)
+  - Exposes Get/Set Double, Int, Uint and bool props to molecules
+ (github pull #711 from bp-kelley)
+  - Speed up molblock generation
+ (github pull #712 from greglandrum)
   - Expose generateOneProductSet?
  (github issue #721 from DoliathGavid)
   - Add a reader for FPB files (still experimental)
  (github pull #724 from greglandrum)
+  - replace std::map::at with std::map::operator[]
+ (github pull #730 from rvianello)
   - Fix/get double prop get props asdict
  (github pull #734 from bp-kelley)
   - Add support for Tversky similarity to the FPB reader
  (github pull #735 from greglandrum)
+  - Fix ConformerParser to use const std::string &
+ (github pull #737 from mcs07)
   - Fix/expose invariant exception
  (github pull #740 from bp-kelley)
   - Support CTABs where the second letter in atom symbols is capitalized
@@ -158,16 +170,24 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github pull #749 from bp-kelley)
   - Allow adding Hs only to atoms matching a query operator
  (github issue #758 from greglandrum)
+  - Add argument to addHs allowing only certain Hs to be considered
+ (github pull #759 from greglandrum)
+  - avoid the multiple definition of rdkitVersion/boostVersion
+ (github pull #761 from rvianello)
   - cleanup possible pythonObjectToVect leaks in python wrappers
  (github issue #764 from greglandrum)
+  - Stop possible core leaks in pythonObjectToVect()
+ (github pull #770 from greglandrum)
   - Add C++ function to prepare mol for rendering
  (github issue #771 from greglandrum)
   - Prefer wedging bonds to Hs
  (github issue #772 from greglandrum)
+  - Add prepareMolForDrawing() function to C++
+ (github pull #775 from greglandrum)
   - Support blanks in MolsToGridImage()
  (github issue #776 from greglandrum)
-  - npscorer.py: Py3 compat and importable from other locations
- (github #801 from apahl)
+  - A number of small additions and features to the drawing code
+ (github pull #802 from greglandrum)
   - Support larger isotope deltas in the chirality assignment
  (github issue #803 from greglandrum)
   - Adds option RDK_USE_COMPLEX_ROTOR_DEFINITION
@@ -178,10 +198,14 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github pull #819 from greglandrum)
   - Fix alignMols so that it takes into account of QueryAtoms and QueryBonds
  (github pull #821 from DoliathGavid)
+  - feat/github831: Add getSDText() static method.
+ (github pull #832 from greglandrum)
   - Add an unfolded count-based version of the RDKFingerprint
  (github pull #838 from NadineSchneider)
   - Add some utils functions to ChemReactions
  (github pull #840 from NadineSchneider)
+  - Autodetect boost c++ library and compile with matching one
+ (github pull #845 from bp-kelley)
 
 ## New Database Cartridge Features:
   - support providing InChI (or InChI key) generation options in cartridge
