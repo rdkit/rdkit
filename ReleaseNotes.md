@@ -19,7 +19,7 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
 ## Highlights:
 - Building the PostgreSQL cartridge  is now much easier since the cartridge build is  now integrated with the RDKit's standard build process.
 - Some improvements to molecule rendering and Jupyter notebook integration: The new `Draw.PrepareMolForDrawing()` function takes care of standard tasks like wedging bonds, kekulization, and adding chiral Hs. `Draw.MolsToGridImage()` can generate SVGs and uses the new molecular drawing code for PNGs when possible. The Jupyter notebook integration uses the new drawing code when possible.
-- C++ error and warning messages can now be displayed in the Jupyter notebook 
+- C++ error and warning messages can now be displayed in the Jupyter notebook
 
 ## Bug Fixes:
   - Sanitizer rejects higher valency halides
@@ -124,6 +124,8 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github pull #672 from greglandrum)
   - Use sets instead of and map. Minor comments cleanup.
  (github pull #675 from DoliathGavid)
+  - Dev/squash msvc14 warnings
+ (github pull #684 from bp-kelley)
   - Fix/stop unnecessary filtercatalog updates
  (github pull #690 from bp-kelley)
   - Add RDK_USE_BOOST_SERIALIZATION configure option (On by default)
@@ -164,12 +166,16 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github issue #772 from greglandrum)
   - Support blanks in MolsToGridImage()
  (github issue #776 from greglandrum)
+  - npscorer.py: Py3 compat and importable from other locations
+ (github #801 from apahl)
   - Support larger isotope deltas in the chirality assignment
  (github issue #803 from greglandrum)
   - Adds option RDK_USE_COMPLEX_ROTOR_DEFINITION
  (github pull #810 from bp-kelley)
   - add Draw.MolsToSVGGrid()
  (github pull #817 from greglandrum)
+  - make Hs black instead of gray
+ (github pull #819 from greglandrum)
   - Fix alignMols so that it takes into account of QueryAtoms and QueryBonds
  (github pull #821 from DoliathGavid)
   - Add an unfolded count-based version of the RDKFingerprint
