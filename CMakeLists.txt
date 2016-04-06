@@ -186,7 +186,7 @@ if(APPLE)
   # always required
   set(T_LIBS ${Boost_LIBRARIES})
   find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
-  
+
   # reset boost libraries so python is still there
   #  if it had been found before
   set(Boost_LIBRARIES ${T_LIBS})
@@ -201,6 +201,7 @@ if(APPLE)
      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
    else()
      MESSAGE("== BOOST USES STDLIBC++")
+     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
      # FOR CXX11 support SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   endif()
 endif(APPLE)
