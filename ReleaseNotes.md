@@ -13,10 +13,10 @@ In cases where there's no real name listed in github, I either guessed
 or used just the github alias in quotes. If I got it wrong, please let me know!
 
 Josep Arus, Nik Bates-Haus, Andrew Dalke, 'DoliathGavid', 'elcaceres', Peter
-Gedeck, James Jeffryes, Brian Kelley, Rich Lewis, Daniel Lowe, 'maddogcz', Kozo
-Nishida, Michal Nowotka, Axel Pahl, Steven Roughley, Alexander Savelyev, Nadine
-Schneider, Teague Sterling, Nik Stiefl, Matt Swain, Eric Ting, Paolo Tosco, Samo
-Turk, JL Varjo, Riccardo Vianello
+Gedeck, James Jeffryes, Brian Kelley, Juuso Lehtivarjo, Rich Lewis, Daniel Lowe,
+'maddogcz', Kozo Nishida, Michal Nowotka, Axel Pahl, Steven Roughley, Alexander
+Savelyev, Nadine Schneider, Teague Sterling, Nik Stiefl, Matt Swain, Eric Ting,
+Paolo Tosco, Samo Turk, Riccardo Vianello
 
 ## Highlights:
 - Improvements to the build system: it's now much easier to build with InChI and/or Avalon support since cmake now knows how to fetch the appropriate source code for you. Building the PostgreSQL cartridge is now integrated into normal build process.
