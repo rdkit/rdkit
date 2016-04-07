@@ -1,6 +1,9 @@
 # Release_2016.03.1
 (Changes relative to Release_2015.09.2)
 
+## Important
+In order to build the RDKit, it is now necessary to have at least v1.7 of numpy installed.
+
 ## Acknowledgements:
 Note: The RDKit has the wonderful "problem" that there are a lot of
 contributors and it's tough for me to capture them all to put together release
@@ -9,12 +12,11 @@ The names here come largely from what I pull in an automated way from github.
 In cases where there's no real name listed in github, I either guessed
 or used just the github alias in quotes. If I got it wrong, please let me know!
 
-Josep Arus, Nik Bates-Haus, Andrew Dalke, 'DoliathGavid', 'elcaceres',
-James Jeffryes, Brian Kelley, Rich Lewis, Daniel Lowe, 'maddogcz',
-Kozo Nishida, Michal Nowotka, Axel Pahl, Steven Roughley, Alexander Savelyev,
-Nadine Schneider, Teague Sterling, Nik Stiefl, Matt Swain, Eric Ting,
-Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
-
+Josep Arus, Nik Bates-Haus, Andrew Dalke, 'DoliathGavid', 'elcaceres', Peter
+Gedeck, James Jeffryes, Brian Kelley, Rich Lewis, Daniel Lowe, 'maddogcz', Kozo
+Nishida, Michal Nowotka, Axel Pahl, Steven Roughley, Alexander Savelyev, Nadine
+Schneider, Teague Sterling, Nik Stiefl, Matt Swain, Eric Ting, Paolo Tosco, Samo
+Turk, JL Varjo, Riccardo Vianello
 
 ## Highlights:
 - Improvements to the build system: it's now much easier to build with InChI and/or Avalon support since cmake now knows how to fetch the appropriate source code for you. Building the PostgreSQL cartridge is now integrated into normal build process.
@@ -114,6 +116,8 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github issue #825 from greglandrum)
   - PostgreSQL bug fixes
  (github pull #835 from ptosco)
+  - Return value of NumRadicalElectrons and NumValenceElectrons should be integer
+ (github issue #846 from gedeck)
 
 ## New Features and Enhancements:
   - switch to using new version of avalon toolkit
@@ -198,7 +202,7 @@ Paolo Tosco, Samo Turk, JL Varjo, Riccardo Vianello
  (github pull #819 from greglandrum)
   - Fix alignMols so that it takes into account of QueryAtoms and QueryBonds
  (github pull #821 from DoliathGavid)
-  - feat/github831: Add getSDText() static method.
+  - feat/github831: Add getText() static method.
  (github pull #832 from greglandrum)
   - Add an unfolded count-based version of the RDKFingerprint
  (github pull #838 from NadineSchneider)
