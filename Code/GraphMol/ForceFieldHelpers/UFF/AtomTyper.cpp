@@ -433,7 +433,7 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
     double bondOrder23 = bond[1]->getBondTypeAsDouble();
     uffAngleBendParams.theta0 = RAD2DEG * paramVect[1]->theta0;
     uffAngleBendParams.ka = Utils::calcAngleForceConstant(
-        uffAngleBendParams.theta0, bondOrder12, bondOrder23, paramVect[0],
+        paramVect[1]->theta0, bondOrder12, bondOrder23, paramVect[0],
         paramVect[1], paramVect[2]);
   }
   return res;
