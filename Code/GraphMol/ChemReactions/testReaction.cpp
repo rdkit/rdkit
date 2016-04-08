@@ -5715,7 +5715,7 @@ void test60RunSingleReactant() {
 
   {
     ROMOL_SPTR expected_result(SmilesToMol("C=CCNC(N)=S"));
-    ROMOL_SPTR expected_sidechain_result(SmilesToMol("[1*:1]=S.[3*:3]CC=C"));
+    ROMOL_SPTR expected_sidechain_result(SmilesToMol("[*:1]=S.[*:3]CC=C"));
     const bool isomericSmiles = true;
     std::string expected = MolToSmiles(*expected_result, isomericSmiles);
     std::string expected_sidechain =
@@ -5740,7 +5740,7 @@ void test60RunSingleReactant() {
 
   {
     ROMOL_SPTR expected_result(SmilesToMol("NCNCc1ncc(Cl)cc1Br"));
-    ROMOL_SPTR expected_sidechain_result(SmilesToMol("[2*:2]Cc1ncc(Cl)cc1Br"));
+    ROMOL_SPTR expected_sidechain_result(SmilesToMol("[*:2]Cc1ncc(Cl)cc1Br"));
     const bool isomericSmiles = true;
     std::string expected = MolToSmiles(*expected_result, isomericSmiles);
     std::string expected_sidechain =
