@@ -211,16 +211,15 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
   }
 }
 
-void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList){
-  if(targetList==python::object()){
-      self.removeAgentTemplates();
-  }
-  else{
+void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList) {
+  if (targetList == python::object()) {
+    self.removeAgentTemplates();
+  } else {
     MOL_SPTR_VECT tmp;
     self.removeAgentTemplates(&tmp);
     python::list molList = python::extract<python::list>(targetList);
-    if(tmp.size() > 0){
-      for(unsigned int i = 0; i < tmp.size(); i++){
+    if (tmp.size() > 0) {
+      for (unsigned int i = 0; i < tmp.size(); i++) {
         molList.append(tmp[i]);
       }
     }
@@ -416,9 +415,10 @@ Sample Usage:\n\
            "Removes molecules with an atom mapping ratio below "
            "thresholdUnmappedAtoms from product templates to the agent "
            "templates or to a given targetList")
-      .def("RemoveAgentTemplates",RDKit::RemoveAgentTemplates,
-           (python::arg("self"), python::arg("targetList")=python::object()),
-           "Removes agents from reaction. If targetList is provide the agents will be transfered to that list.")
+      .def("RemoveAgentTemplates", RDKit::RemoveAgentTemplates,
+           (python::arg("self"), python::arg("targetList") = python::object()),
+           "Removes agents from reaction. If targetList is provide the agents "
+           "will be transfered to that list.")
       .def("RunReactants", (PyObject * (*)(RDKit::ChemicalReaction *,
                                            python::tuple))RDKit::RunReactants,
            "apply the reaction to a sequence of reactant molecules and return "
@@ -612,10 +612,11 @@ of the replacements argument.",
       "ReduceProductToSideChains", RDKit::reduceProductToSideChains,
       (python::arg("product"), python::arg("addDummyAtoms") = true),
       "reduce the product of a reaction to the side chains added by the reaction.\
-              The output is a molecule with attached wildcards indicating where the product was attached.  The isotope of the dummy atom\
-              is the reaction map number of the product's atom (if avialable).",
+              The output is a molecule with attached wildcards indicating where the product was attached.\
+              The dummy atom has the same reaction-map number as the product atom (if available).",
       python::return_value_policy<python::manage_new_object>());
-  python::def("RemoveMappingNumbersFromReactions",RDKit::removeMappingNumbersFromReactions,
-          (python::arg("reaction")),
-          "Removes the mapping numbers from the molecules of a reaction");
+  python::def("RemoveMappingNumbersFromReactions",
+              RDKit::removeMappingNumbersFromReactions,
+              (python::arg("reaction")),
+              "Removes the mapping numbers from the molecules of a reaction");
 }

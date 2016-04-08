@@ -1037,7 +1037,6 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
               PRECONDITION(at,
                            "Internal error in reduceProductToSideChains, bad "
                            "atom retrieval");
-              at->setIsotope(atommapno);
               at->setProp(common_properties::molAtomMapNumber, atommapno);
             }
           }
