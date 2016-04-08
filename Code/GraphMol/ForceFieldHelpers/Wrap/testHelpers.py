@@ -211,7 +211,7 @@ M  END"""
     self.failIf(uffBondStretchParams)
     uffAngleBendParams = ChemicalForceFields.GetUFFAngleBendParams(m, 6, 7, 8)
     self.failUnless(uffAngleBendParams)
-    self.failUnless((int(round(uffAngleBendParams[0] * 1000) == 143325))
+    self.failUnless((int(round(uffAngleBendParams[0] * 1000) == 303297))
       and (int(round(uffAngleBendParams[1] * 1000) == 109470)));
     uffAngleBendParams = ChemicalForceFields.GetUFFAngleBendParams(m, 0, 7, 8)
     self.failIf(uffAngleBendParams)

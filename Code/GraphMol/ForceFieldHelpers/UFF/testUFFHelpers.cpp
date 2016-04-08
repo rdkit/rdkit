@@ -996,7 +996,7 @@ void testUFFParamGetters() {
     ForceFields::UFF::UFFAngle uffAngleBendParams;
     TEST_ASSERT(UFF::getUFFAngleBendParams(*molH, 6, 7, 8, uffAngleBendParams));
     TEST_ASSERT(
-        ((int)boost::math::round(uffAngleBendParams.ka * 1000) == 143325) &&
+        ((int)boost::math::round(uffAngleBendParams.ka * 1000) == 303297) &&
         ((int)boost::math::round(uffAngleBendParams.theta0 * 1000) == 109470));
     TEST_ASSERT(
         !UFF::getUFFAngleBendParams(*molH, 0, 7, 8, uffAngleBendParams));
