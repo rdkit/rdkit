@@ -812,6 +812,10 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col1);
   if (draw_dashed) {
+    int orig_lw = lineWidth();
+    int tgt_lw = 1;  // use the minimum line width
+    setLineWidth(tgt_lw);
+
     Point2D e1 = end1 - cds1;
     Point2D e2 = end2 - cds1;
     for (int i = 1; i < 11; ++i) {
@@ -822,6 +826,8 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       Point2D e22 = cds1 + e2 * 0.1 * i;
       drawLine(e11, e22);
     }
+    setLineWidth(orig_lw);
+
   } else {
     if (col1 == col2) {
       drawTriangle(cds1, end1, end2);

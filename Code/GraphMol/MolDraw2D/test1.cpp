@@ -851,6 +851,40 @@ void test9MolLegends() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub852() {
+  std::cout << " ----------------- Test Github852: Lines used to wedge bonds "
+               "are too thick"
+            << std::endl;
+  {
+    std::string smiles =
+        "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
+    std::string nameBase = "test852_1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolOps::Kekulize(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -867,4 +901,5 @@ int main() {
 #endif
   testGithub774();
   test9MolLegends();
+  testGithub852();
 }
