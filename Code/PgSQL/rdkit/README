@@ -19,10 +19,10 @@ PostgreSQL lives under /usr/pgsql-9.x, and the
 include files are located under a path that the current FindPostgreSQL.cmake
 module is unable to find without a little help. Therefore, you will need to
 add a "-DPostgreSQL_TYPE_INCLUDE_DIR" switch pointing to the location of the
-catalog/pg_type.h include file. E.g., for PostgreSQL 9.5 the CMake PostgreSQL-
+"server" include directory. E.g., for PostgreSQL 9.5 the CMake PostgreSQL-
 related switches would be:
 -DPostgreSQL_ROOT=/usr/pgsql-9.5
--DPostgreSQL_TYPE_INCLUDE_DIR=/usr/pgsql-9.5/include/server/catalog/pg_type.h
+-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/pgsql-9.5/include/server
 
 After building the RDKit, carry out the following steps:
 1) Open a shell (CMD under Windows) with administrator privileges
