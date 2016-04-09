@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(tpl[1][1],1)
       self.assertAlmostEqual(tpl[1][0],0.3704,4)
 
-   def test2Tversky(self) :
+   def test3Tversky(self) :
       bv = self.fpbr.GetBytes(0)
       self.assertAlmostEqual(self.fpbr.GetTversky(0,bv,1,1),1.0,4)
       self.assertAlmostEqual(self.fpbr.GetTversky(1,bv,1,1),0.3704,4)
@@ -59,6 +59,18 @@ class TestCase(unittest.TestCase):
       self.assertAlmostEqual(tpl[0][0],1.,4)
       self.assertEqual(tpl[1][1],1)
       self.assertAlmostEqual(tpl[1][0],0.3704,4)
+
+   def test4Contains(self):
+       bv = self.fpbr.GetBytes(0)
+       nbrs = self.fpbr.GetContainingNeighbors(bv)
+       self.assertEqual(len(nbrs),1)
+       self.assertEqual(nbrs[0],0)
+
+       bv = self.fpbr.GetBytes(1)
+       nbrs = self.fpbr.GetContainingNeighbors(bv)
+       self.assertEqual(len(nbrs),4)
+       self.assertEqual(nbrs,(1,2,3,4))
+
 
 
 if __name__ == '__main__':
