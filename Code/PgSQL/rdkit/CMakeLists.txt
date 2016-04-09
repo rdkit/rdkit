@@ -139,6 +139,7 @@ if(WIN32 AND NOT UNIX)
   set(testPgSQLName "${testPgSQLName}.bat")
   set(installPgSQLName "${installPgSQLName}.bat")
   set(installCopyCommand "copy /Y")
+  set(installPgSQLBody "")
   set(PG_RDKIT_LIB_SRC "${EXTENSION}.dll")
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.dll")
   string(REGEX REPLACE "/" "\\\\" PG_CURRENT_SOURCE_DIR ${PG_CURRENT_SOURCE_DIR})
@@ -149,6 +150,7 @@ else(WIN32 AND NOT UNIX)
   set(testPgSQLName "${testPgSQLName}.sh")
   set(installPgSQLName "${installPgSQLName}.sh")
   set(installCopyCommand "cp")
+  set(installPgSQLBody "set -x\n")
   set(PG_RDKIT_LIB_SRC "${EXTENSION_PREFIX}${EXTENSION}.so")
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.so")
 endif(WIN32 AND NOT UNIX)
@@ -165,7 +167,7 @@ string(REGEX REPLACE "'" "" PG_EXTVERSION ${PG_EXTVERSION})
 if(MSVC)
   set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
 endif(MSVC)
-set(installPgSQLBody
+set(installPgSQLBody "${installPgSQLBody}"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql91.in\" "
     "\"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\"\n"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
