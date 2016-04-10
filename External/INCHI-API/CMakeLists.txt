@@ -54,6 +54,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
                        src/ichi_io.c  
                        src/sha2.c           src/strutil.c  
                        src/util.c SHARED)
+      install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
+      set(INCHI_LIBRARIES Inchi)
+      include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
     else()
       if(NOT INCHI_FOUND)
         message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
@@ -61,9 +64,6 @@ if(RDK_BUILD_INCHI_SUPPORT)
         set(RDK_BUILD_INCHI_SUPPORT OFF)
       endif()
     endif()
-    install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
-    set(INCHI_LIBRARIES Inchi)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 endif(RDK_BUILD_INCHI_SUPPORT)
 
