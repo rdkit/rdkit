@@ -12,6 +12,17 @@ if PostgreSQL is installed in a location where CMake is unable to find it,
 either set the environment variable PostgreSQL_ROOT or add a
 "-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
 PostgreSQL root directory, e.g. C:\Program Files\PostgreSQL\9.5
+Under Linux, if you install PostgreSQL using the RHEL/CentOS RPMs provided by
+the PostgreSQL RPM Building Project
+(http://yum.postgresql.org/repopackages.php),
+PostgreSQL lives under /usr/pgsql-9.x, and the
+include files are located under a path that the current FindPostgreSQL.cmake
+module is unable to find without a little help. Therefore, you will need to
+add a "-DPostgreSQL_TYPE_INCLUDE_DIR" switch pointing to the location of the
+"server" include directory. E.g., for PostgreSQL 9.5 the CMake PostgreSQL-
+related switches would be:
+-DPostgreSQL_ROOT=/usr/pgsql-9.5
+-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/pgsql-9.5/include/server
 
 After building the RDKit, carry out the following steps:
 1) Open a shell (CMD under Windows) with administrator privileges
