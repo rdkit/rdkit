@@ -812,16 +812,26 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col1);
   if (draw_dashed) {
+    unsigned int nDashes = 10;
+    // empirical cutoff to make sure we don't have too many dashes in the wedge:
+    if ((cds1 - cds2).lengthSq() < 1.0) nDashes /= 2;
+
+    int orig_lw = lineWidth();
+    int tgt_lw = 1;  // use the minimum line width
+    setLineWidth(tgt_lw);
+
     Point2D e1 = end1 - cds1;
     Point2D e2 = end2 - cds1;
-    for (int i = 1; i < 11; ++i) {
-      if (6 == i) {
+    for (unsigned int i = 1; i < nDashes + 1; ++i) {
+      if ((nDashes / 2 + 1) == i) {
         setColour(col2);
       }
-      Point2D e11 = cds1 + e1 * 0.1 * i;
-      Point2D e22 = cds1 + e2 * 0.1 * i;
+      Point2D e11 = cds1 + e1 * i / nDashes;
+      Point2D e22 = cds1 + e2 * i / nDashes;
       drawLine(e11, e22);
     }
+    setLineWidth(orig_lw);
+
   } else {
     if (col1 == col2) {
       drawTriangle(cds1, end1, end2);
