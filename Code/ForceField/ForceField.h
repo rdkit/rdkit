@@ -129,8 +129,8 @@ class ForceField {
       - 1: the minimization did not converge in \c maxIts iterations.
   */
   int minimize(unsigned int maxIts = 200, double forceTol = 1e-4,
-               double energyTol = 1e-6, unsigned int trajEverySteps,
-               ROMol &trajMol);
+               double energyTol = 1e-6, unsigned int trajEverySteps = 0,
+               std::vector<double *> *posVect = NULL);
 
   //! minimizes the energy of the system by following gradients
   /*!

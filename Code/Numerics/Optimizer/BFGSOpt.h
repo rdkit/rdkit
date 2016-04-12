@@ -10,6 +10,7 @@
 #include <math.h>
 #include <RDGeneral/Invariant.h>
 #include <cstring>
+#include <vector>
 #include <algorithm>
 
 namespace BFGSOpt {
@@ -155,31 +156,6 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   }
 //! Do a BFGS minimization of a function.
 /*!
-   \param dim     the dimensionality of the space.
-   \param pos   the starting position, as an array.
-   \param gradTol tolerance for gradient convergence
-   \param numIters used to return the number of iterations required
-   \param funcVal  used to return the final function value
-   \param func    the function to minimize
-   \param gradFunc  calculates the gradient of func
-   \param funcTol tolerance for changes in the function value for convergence.
-   \param maxIts   maximum number of iterations allowed
-
-   \return a flag indicating success (or type of failure). Possible values are:
-    -  0: success
-    -  1: too many iterations were required
-*/
-template <typename EnergyFunctor, typename GradientFunctor>
-int minimize(unsigned int dim, double *pos, double gradTol,
-             unsigned int &numIters, double &funcVal, EnergyFunctor func,
-             GradientFunctor gradFunc, double funcTol = TOLX,
-             unsigned int maxIts = MAXITS) {
-  return minimize(dim, pos, gradTol, numIters, funcVal, func,
-             gradFunc, funcTol, maxIts, 0, NULL);
-}
-
-//! Do a BFGS minimization of a function.
-/*!
    See Numerical Recipes in C, Section 10.7 for a description of the algorithm.
 
    \param dim     the dimensionality of the space.
@@ -207,8 +183,8 @@ template <typename EnergyFunctor, typename GradientFunctor>
 int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
              GradientFunctor gradFunc, double funcTol = TOLX,
-             unsigned int maxIts = MAXITS, unsigned int trajEverySteps,
-             std::vector<double *> *posVect) {
+             unsigned int maxIts = MAXITS, unsigned int trajEverySteps = 0,
+             std::vector<double *> *posVect = NULL) {
   RDUNUSED_PARAM(funcTol);
   PRECONDITION(pos, "bad input array");
   PRECONDITION(gradTol > 0, "bad tolerance");
@@ -267,6 +243,10 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // std::cerr<<"      iter: "<<iter<<" "<<fp<<" "<<test<<"
     // "<<TOLX<<std::endl;
     if (test < TOLX) {
+      if (posVect && trajEverySteps) {
+        posVect->push_back(newPos);
+        newPos = NULL;
+      }
       CLEANUP();
       return 0;
     }
@@ -286,6 +266,10 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // std::cerr<<"              "<<gradScale<<" "<<test<<"
     // "<<gradTol<<std::endl;
     if (test < gradTol) {
+      if (posVect && trajEverySteps) {
+        posVect->push_back(newPos);
+        newPos = NULL;
+      }
       CLEANUP();
       return 0;
     }
@@ -368,4 +352,30 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   CLEANUP();
   return 1;
 }
+
+//! Do a BFGS minimization of a function.
+/*!
+   \param dim     the dimensionality of the space.
+   \param pos   the starting position, as an array.
+   \param gradTol tolerance for gradient convergence
+   \param numIters used to return the number of iterations required
+   \param funcVal  used to return the final function value
+   \param func    the function to minimize
+   \param gradFunc  calculates the gradient of func
+   \param funcTol tolerance for changes in the function value for convergence.
+   \param maxIts   maximum number of iterations allowed
+
+   \return a flag indicating success (or type of failure). Possible values are:
+    -  0: success
+    -  1: too many iterations were required
+*/
+template <typename EnergyFunctor, typename GradientFunctor>
+int minimize(unsigned int dim, double *pos, double gradTol,
+             unsigned int &numIters, double &funcVal, EnergyFunctor func,
+             GradientFunctor gradFunc, double funcTol = TOLX,
+             unsigned int maxIts = MAXITS) {
+  return minimize(dim, pos, gradTol, numIters, funcVal, func,
+             gradFunc, funcTol, maxIts, 0, NULL);
+}
+
 }
