@@ -155,8 +155,6 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   }
 //! Do a BFGS minimization of a function.
 /*!
-   See Numerical Recipes in C, Section 10.7 for a description of the algorithm.
-
    \param dim     the dimensionality of the space.
    \param pos   the starting position, as an array.
    \param gradTol tolerance for gradient convergence
@@ -176,6 +174,41 @@ int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
              GradientFunctor gradFunc, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
+  return minimize(dim, pos, gradTol, numIters, funcVal, func,
+             gradFunc, funcTol, maxIts, 0, NULL);
+}
+
+//! Do a BFGS minimization of a function.
+/*!
+   See Numerical Recipes in C, Section 10.7 for a description of the algorithm.
+
+   \param dim     the dimensionality of the space.
+   \param pos   the starting position, as an array.
+   \param gradTol tolerance for gradient convergence
+   \param numIters used to return the number of iterations required
+   \param funcVal  used to return the final function value
+   \param func    the function to minimize
+   \param gradFunc  calculates the gradient of func
+   \param funcTol tolerance for changes in the function value for convergence.
+   \param maxIts   maximum number of iterations allowed
+   \param trajEverySteps   a snapshot of the minimization trajectory
+                           will be stored after as many steps as indicated
+                           through this parameter; defaults to 0 (no
+                           trajectory stored)
+   \param posVect  pointer to std::vector<double *> that will receive the trajectory
+                   every trajEverySteps steps; defaults to NULL (no
+                           trajectory stored)
+
+   \return a flag indicating success (or type of failure). Possible values are:
+    -  0: success
+    -  1: too many iterations were required
+*/
+template <typename EnergyFunctor, typename GradientFunctor>
+int minimize(unsigned int dim, double *pos, double gradTol,
+             unsigned int &numIters, double &funcVal, EnergyFunctor func,
+             GradientFunctor gradFunc, double funcTol = TOLX,
+             unsigned int maxIts = MAXITS, unsigned int trajEverySteps,
+             std::vector<double *> *posVect) {
   RDUNUSED_PARAM(funcTol);
   PRECONDITION(pos, "bad input array");
   PRECONDITION(gradTol > 0, "bad tolerance");
@@ -326,6 +359,10 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         pxi -= *ivh * *gj;
       }
 #endif
+    }
+    if (posVect && trajEverySteps && !(iter % trajEverySteps)) {
+      posVect->push_back(newPos);
+      newPos = new double[dim];
     }
   }
   CLEANUP();

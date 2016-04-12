@@ -129,6 +129,27 @@ class ForceField {
       - 1: the minimization did not converge in \c maxIts iterations.
   */
   int minimize(unsigned int maxIts = 200, double forceTol = 1e-4,
+               double energyTol = 1e-6, unsigned int trajEverySteps,
+               ROMol &trajMol);
+
+  //! minimizes the energy of the system by following gradients
+  /*!
+    \param maxIts            the maximum number of iterations to try
+    \param forceTol          the convergence criterion for forces
+    \param energyTol         the convergence criterion for energies
+    \param trajEverySteps    a snapshot of the minimization trajectory
+                             will be stored after as many steps as indicated
+                             through this parameter; defaults to 0 (no
+                             trajectory stored)
+    \param trajMol           the ROMol the trajectory is going to be stored in
+                             as a collection of Conformers
+
+    \return an integer value indicating whether or not the convergence
+            criteria were achieved:
+      - 0: indicates success
+      - 1: the minimization did not converge in \c maxIts iterations.
+  */
+  int minimize(unsigned int maxIts = 200, double forceTol = 1e-4,
                double energyTol = 1e-6);
 
   // ---------------------------
