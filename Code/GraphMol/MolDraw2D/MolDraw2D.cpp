@@ -826,8 +826,8 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       if ((nDashes / 2 + 1) == i) {
         setColour(col2);
       }
-      Point2D e11 = cds1 + e1 * i / nDashes;
-      Point2D e22 = cds1 + e2 * i / nDashes;
+      Point2D e11 = cds1 + e1 * (rdcast<double>(i) / nDashes);
+      Point2D e22 = cds1 + e2 * (rdcast<double>(i) / nDashes);
       drawLine(e11, e22);
     }
     setLineWidth(orig_lw);
