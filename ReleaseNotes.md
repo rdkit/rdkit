@@ -118,6 +118,10 @@ Paolo Tosco, Samo Turk, Riccardo Vianello
  (github pull #835 from ptosco)
   - Return value of NumRadicalElectrons and NumValenceElectrons should be integer
  (github issue #846 from gedeck)
+  - Fixed a bug in getUFFAngleBendParams()
+ (github pull #850 from ptosco)
+  - Lines used to wedge bonds are too thick
+ (github issue #852 from greglandrum)
 
 ## New Features and Enhancements:
   - switch to using new version of avalon toolkit
