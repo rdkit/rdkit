@@ -80,6 +80,8 @@ double getTverskyHelper(const FPBReader *self, unsigned int which,
 
 std::string FPBReaderClassDoc =
     "A class for reading and searching FPB files from Andrew Dalke's chemfp.\n\
+    Note that this functionality is still experimental and the API may\n\
+    change in future releases.\n\
 \n";
 
 struct FPB_wrapper {
