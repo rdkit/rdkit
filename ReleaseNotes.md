@@ -116,6 +116,8 @@ Paolo Tosco, Samo Turk, Riccardo Vianello
  (github issue #825 from greglandrum)
   - PostgreSQL bug fixes
  (github pull #835 from ptosco)
+  - Crash while running testGithub497() on Windows
+ (github pull #842 from ptosco)
   - Return value of NumRadicalElectrons and NumValenceElectrons should be integer
  (github issue #846 from gedeck)
   - Fixed a bug in getUFFAngleBendParams()
