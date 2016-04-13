@@ -1,17 +1,21 @@
 if(RDK_BUILD_AVALON_SUPPORT)
 if(NOT DEFINED AVALONTOOLS_DIR)
   set(AVALONTOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution")
-endif()
-string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
-set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
-set(fileToPatch "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution/common/reaccsio.c")
-set(needDownload "TRUE")
-if(EXISTS "${fileToPatch}")
-  file(READ "${fileToPatch}" buffer)
-  if("${buffer}" MATCHES "//MyFree\\(\\(char \\*\\)tempdir\\);")
-    set(needDownload "FALSE")
+  set(fileToPatch "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution/common/reaccsio.c")
+  set(needDownload "TRUE")
+  if(EXISTS "${fileToPatch}")
+    file(READ "${fileToPatch}" buffer)
+    if("${buffer}" MATCHES "//MyFree\\(\\(char \\*\\)tempdir\\);")
+      set(needDownload "FALSE")
+    endif()
   endif()
+else()
+  string(REGEX REPLACE "\\\\" "/" AVALONTOOLS_DIR ${AVALONTOOLS_DIR})
+  set(needDownload "FALSE")
 endif()
+
+set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
+
 if(needDownload)
   if(NOT DEFINED AVALONTOOLS_URL)
     set(AVALONTOOLS_URL "http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
@@ -34,19 +38,19 @@ if(needDownload)
   file(WRITE "${fileToPatch}" "${buffer}")
 endif()
 
-add_definitions(-DBUILD_AVALON_SUPPORT) 
+add_definitions(-DBUILD_AVALON_SUPPORT)
 if (MSVC)
   add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
 endif(MSVC)
 
-set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c 
-	${AVALON_SRC_PATH}/symboltable.c 
-	${AVALON_SRC_PATH}/patclean.c 
+set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
+	${AVALON_SRC_PATH}/symboltable.c
+	${AVALON_SRC_PATH}/patclean.c
 	${AVALON_SRC_PATH}/utilities.c
 	${AVALON_SRC_PATH}/symbol_lists.c
 	${AVALON_SRC_PATH}/stereo.c
 	${AVALON_SRC_PATH}/set.c
-	${AVALON_SRC_PATH}/perceive.c 
+	${AVALON_SRC_PATH}/perceive.c
 	${AVALON_SRC_PATH}/local.c
 	${AVALON_SRC_PATH}/graph.c
 	${AVALON_SRC_PATH}/geometry.c
@@ -54,7 +58,7 @@ set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
 	${AVALON_SRC_PATH}/depictutil.c
 	${AVALON_SRC_PATH}/denormal.c
 	${AVALON_SRC_PATH}/casutils.c
-	${AVALON_SRC_PATH}/ssmatch.c 
+	${AVALON_SRC_PATH}/ssmatch.c
 	${AVALON_SRC_PATH}/rtutils.c
 	${AVALON_SRC_PATH}/smi2mol.c
 	${AVALON_SRC_PATH}/didepict.c
@@ -63,7 +67,7 @@ set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
 	${AVALON_SRC_PATH}/aacheck.c
 	${AVALON_SRC_PATH}/fixcharges.c
 	${AVALON_SRC_PATH}/struchk.c
-	${AVALON_SRC_PATH}/reaccsio.c 
+	${AVALON_SRC_PATH}/reaccsio.c
 	${AVALON_SRC_PATH}/hashcode.c
   )
 
@@ -74,7 +78,7 @@ set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
 # glibc 2.7.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_definitions(-D_GNU_SOURCE=1)
-endif()  
+endif()
 
 rdkit_library(avalon_clib ${avalon_clib_srcs})
 
