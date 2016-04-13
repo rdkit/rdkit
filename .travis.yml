@@ -34,7 +34,7 @@ addons:
 
 install:
  - conda install -q numpy pillow pandas # matplotlib
- 
+
  # install the conda boost packages from the RDKit binstar channel.
  - conda install -q -c rdkit boost=1.55.0
 
@@ -45,10 +45,6 @@ before_script:
  - echo $RDBASE
  - export PYTHONPATH=${RDBASE}
  - export LD_LIBRARY_PATH=${RDBASE}/lib
-
- - mkdir $RDBASE/External/java_lib
- - wget http://search.maven.org/remotecontent?filepath=junit/junit/4.10/junit-4.10.jar -O $RDBASE/External/java_lib/junit.jar
- - ls -l $RDBASE/External/java_lib
 
  - export PYTHON=`which python`
  - echo $PYTHON
