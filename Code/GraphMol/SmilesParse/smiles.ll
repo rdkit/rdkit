@@ -1,4 +1,4 @@
-%setpropoption reentrant
+%option reentrant
 %option bison-bridge
 %option noyywrap
 
