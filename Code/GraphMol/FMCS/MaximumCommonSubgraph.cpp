@@ -1057,8 +1057,7 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
                                          // Another atoms
       if (tb) {  // bond exists, check match with query molecule
         unsigned tbi = tb->getIdx();
-        unsigned qbi =
-            seed.MoleculeFragment.BondsIdx[newBondAnotherAtomSeedIdx];
+        unsigned qbi = seed.MoleculeFragment.BondsIdx[newBondSeedIdx];
         if (!match.VisitedTargetBonds[tbi])  // false if target bond is already
                                              // matched
           matched = target.BondMatchTable.at(qbi, tbi);

@@ -124,6 +124,8 @@ Paolo Tosco, Samo Turk, Riccardo Vianello
  (github pull #850 from ptosco)
   - Lines used to wedge bonds are too thick
  (github issue #852 from greglandrum)
+  - Fix out of range dereference in MCS code.
+ (github pull #857 from DoliathGavid)
 
 ## New Features and Enhancements:
   - switch to using new version of avalon toolkit
