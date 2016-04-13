@@ -227,6 +227,8 @@ Swain, Eric Ting, Paolo Tosco, Samo Turk, Riccardo Vianello
  (github pull #840 from NadineSchneider)
   - Autodetect boost c++ library and compile with matching one
  (github pull #845 from bp-kelley)
+  - Add automatic downloads of junit.jar
+ (github pull #859 from greglandrum)
 
 ## New Database Cartridge Features:
   - support providing InChI (or InChI key) generation options in cartridge
