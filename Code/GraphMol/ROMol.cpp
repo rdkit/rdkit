@@ -587,6 +587,7 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
 }
 
 unsigned int ROMol::addConformersFromTrajectory(const RDGeom::Trajectory *traj) {
+  PRECONDITION(traj, "traj must not be NULL");
   PRECONDITION(traj->numPoints() == this->getNumAtoms(),
                "Number of atom mismatch between ROMol and Trajectory");
   for (unsigned int nConf = 0; nConf < traj->size(); ++nConf) {
