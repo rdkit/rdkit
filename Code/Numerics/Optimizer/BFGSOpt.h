@@ -173,9 +173,8 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
                            will be stored after as many steps as indicated
                            through this parameter; defaults to 0 (no
                            trajectory stored)
-   \param posVect  pointer to std::vector<double *> that will receive the trajectory
-                   every trajEverySteps steps; defaults to NULL (no
-                           trajectory stored)
+   \param traj     pointer to the Trajectory object that will receive the trajectory
+                   every trajEverySteps steps; defaults to NULL (no trajectory stored)
 
    \return a flag indicating success (or type of failure). Possible values are:
     -  0: success
