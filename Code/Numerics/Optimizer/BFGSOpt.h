@@ -9,9 +9,11 @@
 //
 #include <math.h>
 #include <RDGeneral/Invariant.h>
+#include <Geometry/Trajectory.h>
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <boost/smart_ptr.hpp>
 
 namespace BFGSOpt {
 const double FUNCTOL =
@@ -182,9 +184,9 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
 template <typename EnergyFunctor, typename GradientFunctor>
 int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
-             GradientFunctor gradFunc, double funcTol = TOLX,
-             unsigned int maxIts = MAXITS, unsigned int trajEverySteps = 0,
-             std::vector<double *> *posVect = NULL) {
+             GradientFunctor gradFunc, unsigned int trajEverySteps,
+             RDGeom::Trajectory *traj, double funcTol = TOLX,
+             unsigned int maxIts = MAXITS) {
   RDUNUSED_PARAM(funcTol);
   PRECONDITION(pos, "bad input array");
   PRECONDITION(gradTol > 0, "bad tolerance");
@@ -201,6 +203,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   newPos = new double[dim];
   xi = new double[dim];
   invHessian = new double[dim * dim];
+  trajEverySteps = std::min(trajEverySteps, maxIts);
 
   // evaluate the function and gradient in our current position:
   fp = func(pos);
@@ -243,8 +246,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // std::cerr<<"      iter: "<<iter<<" "<<fp<<" "<<test<<"
     // "<<TOLX<<std::endl;
     if (test < TOLX) {
-      if (posVect && trajEverySteps) {
-        posVect->push_back(newPos);
+      if (traj && trajEverySteps) {
+        RDGeom::Snapshot s(newPos, fp);
+        traj->addSnapshot(s);
         newPos = NULL;
       }
       CLEANUP();
@@ -266,8 +270,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // std::cerr<<"              "<<gradScale<<" "<<test<<"
     // "<<gradTol<<std::endl;
     if (test < gradTol) {
-      if (posVect && trajEverySteps) {
-        posVect->push_back(newPos);
+      if (traj && trajEverySteps) {
+        RDGeom::Snapshot s(newPos, fp);
+        traj->addSnapshot(s);
         newPos = NULL;
       }
       CLEANUP();
@@ -344,8 +349,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       }
 #endif
     }
-    if (posVect && trajEverySteps && !(iter % trajEverySteps)) {
-      posVect->push_back(newPos);
+    if (traj && trajEverySteps && !(iter % trajEverySteps)) {
+      RDGeom::Snapshot s(newPos, fp);
+      traj->addSnapshot(s);
       newPos = new double[dim];
     }
   }
@@ -375,7 +381,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
              GradientFunctor gradFunc, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
   return minimize(dim, pos, gradTol, numIters, funcVal, func,
-             gradFunc, funcTol, maxIts, 0, NULL);
+             gradFunc, 0, NULL, funcTol, maxIts);
 }
 
 }

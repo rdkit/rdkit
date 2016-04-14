@@ -15,6 +15,9 @@
 #include <boost/foreach.hpp>
 #include <Geometry/point.h>
 
+namespace RDGeom {
+class Trajectory;
+}
 namespace ForceFields {
 class ForceFieldContrib;
 typedef std::vector<int> INT_VECT;
@@ -128,9 +131,9 @@ class ForceField {
       - 0: indicates success
       - 1: the minimization did not converge in \c maxIts iterations.
   */
-  int minimize(unsigned int maxIts = 200, double forceTol = 1e-4,
-               double energyTol = 1e-6, unsigned int trajEverySteps = 0,
-               std::vector<double *> *posVect = NULL);
+  int minimize(unsigned int trajEverySteps, RDGeom::Trajectory *traj,
+               unsigned int maxIts = 200, double forceTol = 1e-4,
+               double energyTol = 1e-6);
 
   //! minimizes the energy of the system by following gradients
   /*!
@@ -141,8 +144,8 @@ class ForceField {
                              will be stored after as many steps as indicated
                              through this parameter; defaults to 0 (no
                              trajectory stored)
-    \param trajMol           the ROMol the trajectory is going to be stored in
-                             as a collection of Conformers
+    \param traj              the pointer to the Trajectory object where
+                             coordinates will be stored
 
     \return an integer value indicating whether or not the convergence
             criteria were achieved:

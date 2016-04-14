@@ -34,6 +34,10 @@
 
 #include "Conformer.h"
 
+namespace RDGeom {
+class Trajectory;
+}
+
 namespace RDKit {
 class Atom;
 class Bond;
@@ -359,6 +363,7 @@ class ROMol {
     an (unique) ID set
   */
   unsigned int addConformer(Conformer *conf, bool assignId = false);
+  unsigned int addConformersFromTrajectory(const RDGeom::Trajectory *traj);
 
   inline unsigned int getNumConformers() const {
     return rdcast<unsigned int>(d_confs.size());
