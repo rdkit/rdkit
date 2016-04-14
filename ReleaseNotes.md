@@ -15,13 +15,22 @@ or used just the github alias in quotes. If I got it wrong, please let me know!
 Josep Arus, Nik Bates-Haus, Andrew Dalke, 'DoliathGavid', 'elcaceres', Peter
 Gedeck, James Jeffryes, Brian Kelley, Juuso Lehtivarjo, Rich Lewis, Daniel Lowe,
 'maddogcz', Kozo Nishida, Michal Nowotka, Axel Pahl, Steven Roughley, Alexander
-Savelyev, Nadine Schneider, Teague Sterling, Nik Stiefl, Matt Swain, Eric Ting,
-Paolo Tosco, Samo Turk, Riccardo Vianello
+Savelyev, Nadine Schneider, Gianluca Sforna, Teague Sterling, Nik Stiefl, Matt
+Swain, Eric Ting, Paolo Tosco, Samo Turk, Riccardo Vianello
 
 ## Highlights:
-- Improvements to the build system: it's now much easier to build with InChI and/or Avalon support since cmake now knows how to fetch the appropriate source code for you. Building the PostgreSQL cartridge is now integrated into normal build process.
-- Some improvements to molecule rendering and Jupyter notebook integration: The new `Draw.PrepareMolForDrawing()` function takes care of standard tasks like wedging bonds, kekulization, and adding chiral Hs. `Draw.MolsToGridImage()` can generate SVGs and uses the new molecular drawing code for PNGs when possible. The Jupyter notebook integration uses the new drawing code when possible.
-- Error and warning messages from the C++ core can now be displayed in the Jupyter notebook
+- Improvements to the build system: it's now much easier to build with InChI
+  and/or Avalon support since cmake now knows how to fetch the appropriate
+  source code for you. Building the PostgreSQL cartridge is now integrated into
+  normal build process.
+- Some improvements to molecule rendering and Jupyter notebook integration: The
+  new `Draw.PrepareMolForDrawing()` function takes care of standard tasks like
+  wedging bonds, kekulization, and adding chiral Hs. `Draw.MolsToGridImage()`
+  can generate SVGs and uses the new molecular drawing code for PNGs when
+  possible. The Jupyter notebook integration uses the new drawing code when
+  possible.
+- Error and warning messages from the C++ core can now be displayed in the
+  Jupyter notebook
 
 ## Bug Fixes:
   - Sanitizer rejects higher valency halides
@@ -218,6 +227,8 @@ Paolo Tosco, Samo Turk, Riccardo Vianello
  (github pull #840 from NadineSchneider)
   - Autodetect boost c++ library and compile with matching one
  (github pull #845 from bp-kelley)
+  - Add automatic downloads of junit.jar
+ (github pull #859 from greglandrum)
 
 ## New Database Cartridge Features:
   - support providing InChI (or InChI key) generation options in cartridge
