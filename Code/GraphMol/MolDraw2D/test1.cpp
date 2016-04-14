@@ -959,6 +959,29 @@ void testGithub860() {
       outs.flush();
     }
   }
+  {
+    std::string smiles = "[15NH3+:1]-CCCCCCCC-[15NH3+:4]";
+    std::string nameBase = "test860_3";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+  }
   std::cerr << " Done" << std::endl;
 }
 int main() {
