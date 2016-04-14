@@ -1012,66 +1012,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   string symbol("");
 
   // -----------------------------------
-  // start with the symbol
-  if (drawOptions().atomLabels.find(atom.getIdx()) !=
-      drawOptions().atomLabels.end()) {
-    // specified labels are trump: no matter what else happens we will show
-    // them.
-    symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
-  } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
-             atom.getDegree() == 1) {
-    symbol = "";
-  } else if (isComplexQuery(&atom)) {
-    symbol = "?";
-  } else {
-    std::vector<std::string> preText, postText;
-    if (0 != atom.getIsotope()) {
-      preText.push_back(std::string("<sup>") +
-                        lexical_cast<string>(atom.getIsotope()) +
-                        std::string("</sup>"));
-    }
-
-    if (atom.hasProp("molAtomMapNumber")) {
-      string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
-    }
-
-    std::string h = "";
-    int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
-                    ? 0
-                    : atom.getTotalNumHs();  // FIX: still not quite right
-    if (num_h > 0 && !atom.hasQuery()) {
-      h = "H";
-      if (num_h > 1) {
-        // put the number as a subscript
-        h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
-      }
-      postText.push_back(h);
-    }
-
-    if (0 != atom.getFormalCharge()) {
-      int ichg = atom.getFormalCharge();
-      string sgn = ichg > 0 ? string("+") : string("-");
-      ichg = abs(ichg);
-      if (ichg > 1) {
-        sgn += lexical_cast<string>(ichg);
-      }
-      // put the charge as a superscript
-      postText.push_back(string("<sup>") + sgn + string("</sup>"));
-    }
-
-    symbol = "";
-    BOOST_FOREACH (const std::string &se, preText) { symbol += se; }
-    if (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
-        postText.size()) {
-      symbol += atom.getSymbol();
-    }
-    BOOST_FOREACH (const std::string &se, postText) { symbol += se; }
-  }
-
-  // -----------------------------------
-  // now consider the orientation
+  // consider the orientation
   OrientType orient = C;
   if (1 == atom.getDegree()) {
     double islope = 0.0;
@@ -1094,6 +1035,76 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       }
     }
   }
+
+  // -----------------------------------
+  // the symbol
+  if (drawOptions().atomLabels.find(atom.getIdx()) !=
+      drawOptions().atomLabels.end()) {
+    // specified labels are trump: no matter what else happens we will show
+    // them.
+    symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+  } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
+             atom.getDegree() == 1) {
+    symbol = "";
+  } else if (isComplexQuery(&atom)) {
+    symbol = "?";
+  } else {
+    std::vector<std::string> preText, postText;
+    int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
+                    ? 0
+                    : atom.getTotalNumHs();  // FIX: still not quite right
+    if (num_h > 0 && !atom.hasQuery()) {
+      // the H text can come before or after the atomic symbol, depending on the
+      // orientation
+      std::string h = "H";
+      if (num_h > 1) {
+        // put the number as a subscript
+        h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
+      }
+      if (orient == MolDraw2D::W) {
+        preText.push_back(h);
+      } else {
+        postText.push_back(h);
+      }
+    }
+
+    if (0 != atom.getIsotope()) {
+      // isotope always comes before the symbol
+      preText.push_back(std::string("<sup>") +
+                        lexical_cast<string>(atom.getIsotope()) +
+                        std::string("</sup>"));
+    }
+
+    if (0 != atom.getFormalCharge()) {
+      // charge always comes post the symbol
+      int ichg = atom.getFormalCharge();
+      string sgn = ichg > 0 ? string("+") : string("-");
+      ichg = abs(ichg);
+      if (ichg > 1) {
+        sgn += lexical_cast<string>(ichg);
+      }
+      // put the charge as a superscript
+      postText.push_back(string("<sup>") + sgn + string("</sup>"));
+    }
+
+    if (atom.hasProp("molAtomMapNumber")) {
+      // atom map always comes at the end
+      string map_num = "";
+      atom.getProp("molAtomMapNumber", map_num);
+      postText.push_back(std::string(":") + map_num);
+    }
+
+    symbol = "";
+    BOOST_FOREACH (const std::string &se, preText) { symbol += se; }
+    if (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
+        postText.size()) {
+      symbol += atom.getSymbol();
+    }
+    BOOST_FOREACH (const std::string &se, postText) { symbol += se; }
+  }
+
+  // std::cerr << "   res: " << symbol << " orient: " << orient
+  //           << " nbr_sum:" << nbr_sum << std::endl;
   return std::make_pair(symbol, orient);
 }
 
