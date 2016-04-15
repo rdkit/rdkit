@@ -232,6 +232,8 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   double draw_x = cds.x - string_width / 2.0;
   double draw_y = cds.y - string_height / 2.0;
 
+#if 0
+  // for debugging text output
   DrawColour tcolour =colour();
   setColour(DrawColour(.8,.8,.8));
   std::vector<Point2D> poly;
@@ -241,7 +243,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   poly.push_back(Point2D(draw_x,draw_y+string_height));
   drawPolygon(poly);
   setColour(tcolour);
-
+#endif
   std::string col = DrawColourToSVG(colour());
 
   Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
