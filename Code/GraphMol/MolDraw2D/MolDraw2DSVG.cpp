@@ -187,6 +187,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   TextDrawType draw_mode = TextDrawNormal;
 
   bool had_a_super = false;
+  bool had_a_sub = false;
 
   for (int i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
@@ -201,9 +202,10 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
         static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
         MolDraw2D_detail::char_widths[(int)'M'];
     if (TextDrawSubscript == draw_mode) {
-      char_width *= 0.75;
+      char_width *= 0.5;
+      had_a_sub =true;
     } else if (TextDrawSuperscript == draw_mode) {
-      char_width *= 0.75;
+      char_width *= 0.5;
       had_a_super = true;
     }
     label_width += char_width;
@@ -214,19 +216,34 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   if (had_a_super) {
     label_height *= 1.1;
   }
+  if (had_a_sub) {
+    label_height *= 1.1;
+  }
 }
 
 // ****************************************************************************
 // draws the string centred on cds
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   unsigned int fontSz = scale() * fontSize();
-  std::string col = DrawColourToSVG(colour());
 
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
   double draw_x = cds.x - string_width / 2.0;
   double draw_y = cds.y - string_height / 2.0;
+
+  DrawColour tcolour =colour();
+  setColour(DrawColour(.8,.8,.8));
+  std::vector<Point2D> poly;
+  poly.push_back(Point2D(draw_x,draw_y));
+  poly.push_back(Point2D(draw_x+string_width,draw_y));
+  poly.push_back(Point2D(draw_x+string_width,draw_y+string_height));
+  poly.push_back(Point2D(draw_x,draw_y+string_height));
+  drawPolygon(poly);
+  setColour(tcolour);
+
+  std::string col = DrawColourToSVG(colour());
+
   Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
 
   d_os << "<svg:text";
