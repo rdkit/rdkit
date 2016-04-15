@@ -378,21 +378,21 @@ struct filtercat_wrapper {
                               FilterCatalogEntry::clearProp);
 
     python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry> >();
-    python::register_ptr_to_python<
-        boost::shared_ptr<const FilterCatalogEntry> >();
 
 #ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
-     python::class_<std::vector<boost::shared_ptr<const FilterCatalogEntry> > >(
+    python::register_ptr_to_python<
+        boost::shared_ptr<const FilterCatalogEntry> >();
+    python::class_<std::vector<boost::shared_ptr<const FilterCatalogEntry> > >(
         "FilterCatalogEntryList")
         .def(python::vector_indexing_suite<
-            std::vector<boost::shared_ptr<const FilterCatalogEntry> >, true>());
+             std::vector<boost::shared_ptr<const FilterCatalogEntry> >,
+             true>());
 
 #else
-       python::class_<std::vector<boost::shared_ptr<FilterCatalogEntry> > >(
-         "FilterCatalogEntryList")
-         .def(python::vector_indexing_suite<
-              std::vector<boost::shared_ptr<FilterCatalogEntry> >,
-              true>() );
+    python::class_<std::vector<boost::shared_ptr<FilterCatalogEntry> > >(
+        "FilterCatalogEntryList")
+        .def(python::vector_indexing_suite<
+             std::vector<boost::shared_ptr<FilterCatalogEntry> >, true>());
 #endif
 
     {

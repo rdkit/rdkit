@@ -111,19 +111,18 @@ class FilterCatalog : public FCatalog {
  public:
   // syntactic sugar for getMatch(es) return values.
   typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
-  
+
 #if BOOST_VERSION / 100000 >= 1 && (BOOST_VERSION / 100 % 1000) > 44
-# define BOOST_PYTHON_SUPPORT_SHARED_CONST
+#define BOOST_PYTHON_SUPPORT_SHARED_CONST
 #endif
 
 #ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
-     //If boost::python can support shared_ptr of const objects
-     //  we can enable support for this feature
-     typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
+  // If boost::python can support shared_ptr of const objects
+  //  we can enable support for this feature
+  typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
 #else
-     typedef boost::shared_ptr<entryType_t> CONST_SENTRY;
-#endif  
-
+  typedef boost::shared_ptr<entryType_t> CONST_SENTRY;
+#endif
 
   FilterCatalog() : FCatalog(), d_entries() {}
 
@@ -178,7 +177,7 @@ class FilterCatalog : public FCatalog {
            first.
   */
   bool removeEntry(unsigned int idx);
-  bool removeEntry(const CONST_SENTRY &entry);
+  bool removeEntry(CONST_SENTRY entry);
 
   //------------------------------------
   //! returns a particular FilterCatalogEntry in the Catalog
@@ -194,7 +193,7 @@ class FilterCatalog : public FCatalog {
   //! returns the idx of the given entry, UINT_MAX if not found.
 
   unsigned int getIdxForEntry(const FilterCatalogEntry *entry) const;
-  unsigned int getIdxForEntry(const CONST_SENTRY &entry) const;
+  unsigned int getIdxForEntry(CONST_SENTRY entry) const;
 
   //------------------------------------
   //! returns the number of entries in the catalog
