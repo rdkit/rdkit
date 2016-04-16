@@ -12,6 +12,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
 #include <sstream>
+#include <set>
 #include "Trajectory.h"
 
 namespace RDGeom {
@@ -101,7 +102,7 @@ unsigned int Trajectory::readAmber(const std::string &fName) {
   // read coordinates
   unsigned int nCoords = d_numPoints * 3;
   unsigned int nSnapshots = 0;
-  while (!inStream.eof()) {
+  while (inStream.good() && !inStream.eof()) {
     double *c = new double[nCoords]();
     unsigned int i = 0;
     while (i < nCoords) {
@@ -124,6 +125,83 @@ unsigned int Trajectory::readAmber(const std::string &fName) {
       addSnapshot(Snapshot(c));
       ++nSnapshots;
     }
+  }
+  return nSnapshots;
+}
+
+unsigned int Trajectory::readGromos(const std::string &fName) {
+  PRECONDITION(d_dimension == 3, "The trajectory must have dimension == 3");
+  std::ifstream inStream(fName.c_str());
+  if (!inStream || inStream.bad()) {
+    std::stringstream ss;
+    ss << "Bad input file: " << fName;
+    throw RDKit::BadFileException(ss.str());
+  }
+  std::string tempStr;
+  unsigned int nCoords = d_numPoints * 3;
+  unsigned int nSnapshots = 0;
+  const static char *ignoredKeywordArray[] = {
+    "TITLE",
+    "TIMESTEP",
+    "VELOCITYRED",
+    "VELOCITY",
+    "GENBOX",
+    "BOX"
+  };
+  std::set<std::string> ignoredKeywordSet;
+  for (unsigned int i = 0; i < (sizeof(ignoredKeywordArray) / sizeof(char *)); ++i)
+    ignoredKeywordSet.insert(std::string(ignoredKeywordArray[i]));
+  while (inStream.good() && !inStream.eof()) {
+    std::getline(inStream, tempStr);
+    if (inStream.bad() || inStream.eof())
+      continue;
+    if (ignoredKeywordSet.find(tempStr) != ignoredKeywordSet.end()) {
+      // ignored block
+      while (inStream.good() && !inStream.eof() && (tempStr != "END"))
+        std::getline(inStream, tempStr);
+    }
+    else if ((tempStr == "POSITIONRED") || (tempStr == "POSITION")) {
+      // these are the positions
+      double *c = new double[nCoords]();
+      unsigned int j = 0;
+      for (unsigned int i = 0; i < d_numPoints;) {
+        std::getline(inStream, tempStr);
+        if (inStream.bad() || inStream.eof() || (tempStr == "END"))
+          throw ValueErrorException("Wrong number of coordinates");
+        // ignore comments
+        if (tempStr.find("#") != std::string::npos)
+          continue;
+        std::stringstream ls(tempStr);
+        double x, y, z;
+        if (!(ls >> x >> y >> z)) {
+          throw ValueErrorException("Error while reading file");
+        }
+        // store the coordinates (convert to Angstrom!)
+        c[j++] = x * 10.0;
+        c[j++] = y * 10.0;
+        c[j++] = z * 10.0;
+        ++i;
+      }
+      std::getline(inStream, tempStr); // the END line
+      if (inStream.bad() || inStream.eof() || (tempStr != "END")) {
+        throw ValueErrorException("Wrong number of coordinates");
+      }
+      addSnapshot(Snapshot(c));
+      ++nSnapshots;
+    }
+    else {
+      std::string supportedBlocks("POSITIONRED, POSITION");
+      for (std::set<std::string>::const_iterator it = ignoredKeywordSet.begin();
+        it != ignoredKeywordSet.end(); ++it)
+        supportedBlocks += ", " + *it;
+      throw ValueErrorException("Unsupported block: "
+        + tempStr + ". Supported blocks are " + supportedBlocks);
+    }
+  } // read file
+  if (inStream.bad()) {
+    std::stringstream ss;
+		ss << "Bad input file: " << fName;
+		throw RDKit::BadFileException(ss.str());
   }
   return nSnapshots;
 }

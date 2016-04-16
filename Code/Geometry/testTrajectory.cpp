@@ -98,9 +98,9 @@ void testTrajectory3D() {
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
-void testreadAmber() {
+void testReadAmber() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "testreadAmber" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testReadAmber" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trx";
@@ -152,13 +152,68 @@ void testreadAmber() {
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
+void testReadGromos() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testReadGromos" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trc";
+  {
+    Trajectory traj(2, 0, Trajectory::FREE_POS_ON_DESTROY);
+    bool ok = false;
+    try {
+      traj.readGromos(fName);
+    } catch (...) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    bool ok = false;
+    try {
+      traj.readGromos(fName);
+    } catch (ValueErrorException &e) {
+      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords_bad2.trc";
+  {
+    bool ok = false;
+    try {
+      Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+      traj.readGromos(fName);
+    } catch (ValueErrorException &e) {
+      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords.trc";
+  {
+    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    traj.readGromos(fName);
+    TEST_ASSERT(traj.size() == 1);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords2.trc";
+  {
+    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    traj.readGromos(fName);
+    TEST_ASSERT(traj.size() == 2);
+  }
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
+}
+
 int main() {
   BOOST_LOG(rdErrorLog) << "***********************************************************\n";
   BOOST_LOG(rdErrorLog) << "Testing Trajectory\n";
 
   testTrajectory2D();
   testTrajectory3D();
-  testreadAmber();
+  testReadAmber();
+  testReadGromos();
 
   return 0;
 }

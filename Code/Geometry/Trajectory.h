@@ -168,10 +168,15 @@ class Trajectory {
         d_flags &= ~FREE_POS_ON_DESTROY;
     }
     /*! \brief Reads coordinates from an AMBER trajectory file
-               into the Trajectory
+               into the Trajectory object
         \return the number of Snapshot objects read in
      */
     unsigned int readAmber(const std::string &fName);
+    /*! \brief Reads coordinates from a GROMOS trajectory file
+               into the Trajectory object
+        \return the number of Snapshot objects read in
+     */
+    unsigned int readGromos(const std::string &fName);
   private:
     // dimensionality of this Trajectory's coordinates;
     // this is normally 2 (2D coordinates) or 3 (3D coordinates)
