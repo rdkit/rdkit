@@ -1123,9 +1123,7 @@ void testAddConformersFromAmberTrajectory() {
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
   {
     RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
-    std::cerr << "1a) traj.size()" << traj.size() << std::endl;
     traj.readAmber(fName);
-    std::cerr << "1) traj.size()" << traj.size() << std::endl;
     TEST_ASSERT(traj.size() == 1);
     for (unsigned int i = 0; i < 2; ++i) {
       mol->addConformersFromTrajectory(&traj);
@@ -1141,7 +1139,6 @@ void testAddConformersFromAmberTrajectory() {
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
   {
     RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
-    std::cerr << "2) traj.size()" << traj.size() << std::endl;
     traj.readAmber(fName);
     TEST_ASSERT(traj.size() == 2);
     mol->addConformersFromTrajectory(&traj);
