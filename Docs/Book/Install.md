@@ -94,7 +94,7 @@ Eddie Cao has produced a homebrew formula that can be used to easily build the R
 
 Install the following packages using apt-get:
 
-    flex bison build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev libboost-dev libboost-system-dev libboost-thread-dev libboost-serialization-dev libboost-python-dev libboost-regex-dev
+    build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev libboost-dev libboost-system-dev libboost-thread-dev libboost-serialization-dev libboost-python-dev libboost-regex-dev
 
 ###### Fedora, CentOS (5.7+), and RHEL
 
@@ -125,28 +125,27 @@ Here things are more difficult. Check this wiki page for information: https://co
       -   The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
       -   sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
       -   You need to have numpy (http://www.scipy.org/NumPy) installed.
+
           > **note**
           >
           > for building with XCode4 on OS X there seems to be a problem with the version of numpy that comes with XCode4. Please see below in the (see faq) section for a workaround.
- -   Optional packages
-     -   If you would like to install the RDKit InChI support (first available in the Q2 2011 release), follow the instructions in $RDBASE/External/INCHI-API to get a copy of the InChI source and put it in the appropriate place.
+
 
 ###### Installing Boost
 
-If your linux distribution has a boost-devel package including the python and regex libraries, you can use that and save yourself the steps below.
+If your linux distribution has a boost-devel package including the python, regex, threading, and serialization libraries, you can use that and save yourself the steps below.
 
 > **note**
 >
 > if you *do* have a version of the boost libraries pre-installed and you want to use your own version, be careful when you build the code. We've seen at least one example on a Fedora system where cmake compiled using a user-installed version of boost and then linked against the system version. This led to segmentation faults. There is a workaround for this below in the (see FAQ) section.
 
 -   download the boost source distribution from [the boost web site](http://www.boost.org)
--   extract the source somewhere on your machine (e.g. `/usr/local/src/boost_1_45_0`)
--   build the required boost libraries:
+-   extract the source somewhere on your machine (e.g. `/usr/local/src/boost_1_58_0`)
+-   build the required boost libraries. The boost site has [detailed instructions](http://www.boost.org/doc/libs/1_58_0/more/getting_started/index.html) for this, but here's an overview:
    -   `cd $BOOST`
-   -   If you want to use the python wrappers: `./bootstrap.sh --with-libraries=python,regex`
-   -   If not using the python wrappers: `./bootstrap.sh --with-libraries=regex`
-   -   Building on 32 bit systems: `./b2 install`
-   -   Building on 64 bit systems: `./b2 address-model=64 cflags=-fPIC cxxflags=-fPIC install`
+   -   If you want to use the python wrappers: `./bootstrap.sh --with-libraries=python,regex,thread,serialization`
+   -   If not using the python wrappers: `./bootstrap.sh --with-libraries=regex,thread,serialization`
+   -   `./b2 install`
 
      If you have any problems with this step, check the boost [installation instructions](http://www.boost.org/more/getting_started/unix-variants.html).
 
@@ -154,7 +153,7 @@ If your linux distribution has a boost-devel package including the python and re
 
 Fetch the source, here as tar.gz but you could use git as well:
 
-    wget http://downloads.sourceforge.net/project/rdkit/rdkit/QX_20XX/RDKit_20XX_XX_X.tgz
+    wget https://github.com/rdkit/rdkit/archive/Release_XXXX_XX_X.tar.gz
 
 -   Ensure that the prerequisites are installed
 -   environment variables:
@@ -188,25 +187,29 @@ If you have put boost in /opt/local, the cmake invocation would look like:
 
     cmake -DBOOST_ROOT=/opt/local ..
 
+*Note* that if you are using your own boost install on a system with a system install, it's normally a good idea to also include the argument `-D Boost_NO_SYSTEM_PATHS=ON` in your cmake command.
+
 ##### Specifying an alternate Python installation
 
-You need to tell cmake where to find the python library it should link against and the python header files.
+If you aren't using the default python installation for your computer, You need to tell cmake where to find the python library it should link against and the python header files.
 
 Here's a sample command line:
 
-    cmake -D PYTHON_LIBRARY=/usr/lib/python2.5/config/libpython2.5.a -D PYTHON_INCLUDE_DIR=/usr/include/python2.5/ -D PYTHON_EXECUTABLE=/usr/bin/python ..
+    cmake -D PYTHON_LIBRARY=/usr/lib/python2.7/config/libpython2.7.a -D PYTHON_INCLUDE_DIR=/usr/include/python2.7/ -D PYTHON_EXECUTABLE=/usr/bin/python ..
 
 The `PYTHON_EXECUTABLE` part is optional if the correct python is the first version in your PATH.
 
 ##### Disabling the Python wrappers
 
-You can completely disable building of the python wrappers by setting the configuration variable RDK_BUILD_PYTHON_WRAPPERS to nil:
+You can completely disable building of the python wrappers:
 
-    cmake -D RDK_BUILD_PYTHON_WRAPPERS= ..
+    cmake -DRDK_BUILD_PYTHON_WRAPPERS=OFF ..
 
-#### Recommended extras
+##### Recommended extras
 
--   for structure depiction cairo (for use with Python2) or cairocffi (for use with Python3) and their respective Python bindings are recommended.
+- You can enable support for generating InChI strings and InChI keys by adding the argument `-DRDK_BUILD_INCHI_SUPPORT=ON` to your cmake command line.
+- You can enable support for the Avalon toolkit by adding the argument `-DRDK_BUILD_AVALON_SUPPORT=ON` to your cmake command line.
+- If you'd like to be able to generate high-quality PNGs for structure depiction cairo (for use with Python2) or cairocffi (for use with Python3) and their respective Python bindings are recommended.
 
 ##### Building the Java wrappers
 
