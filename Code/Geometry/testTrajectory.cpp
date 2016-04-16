@@ -16,6 +16,8 @@ using namespace RDGeom;
 using namespace RDKit;
 
 void testTrajectory2D() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testTrajectory2D" << std::endl;
   const unsigned int dim = 2;
   const unsigned int np = 10;
   const unsigned int ns = 5;
@@ -50,9 +52,12 @@ void testTrajectory2D() {
   TEST_ASSERT(traj.size() == ns);
   TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getEnergy()), 999.0));
   TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1).getEnergy()), 1.0));
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void testTrajectory3D() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testTrajectory3D" << std::endl;
   const unsigned int dim = 3;
   const unsigned int np = 10;
   const unsigned int ns = 5;
@@ -90,19 +95,70 @@ void testTrajectory3D() {
   TEST_ASSERT(traj.size() == ns);
   TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getEnergy()), 999.0));
   TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1).getEnergy()), 1.0));
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
+}
+
+void testreadAmber() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testreadAmber" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trx";
+  {
+    Trajectory traj(2, 0, Trajectory::FREE_POS_ON_DESTROY);
+    bool ok = false;
+    try {
+      traj.readAmber(fName);
+    } catch (...) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    bool ok = false;
+    try {
+      traj.readAmber(fName);
+    } catch (ValueErrorException &e) {
+      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords_bad2.trx";
+  {
+    bool ok = false;
+    try {
+      Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+      traj.readAmber(fName);
+    } catch (ValueErrorException &e) {
+      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
+  {
+    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    traj.readAmber(fName);
+    TEST_ASSERT(traj.size() == 1);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
+  {
+    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    traj.readAmber(fName);
+    TEST_ASSERT(traj.size() == 2);
+  }
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 int main() {
-  std::cout << "***********************************************************\n";
-  std::cout << "Testing Trajectory\n";
+  BOOST_LOG(rdErrorLog) << "***********************************************************\n";
+  BOOST_LOG(rdErrorLog) << "Testing Trajectory\n";
 
-  std::cout << "\t---------------------------------\n";
-  std::cout << "\t testTrajectory2D \n\n";
   testTrajectory2D();
-
-  std::cout << "\t---------------------------------\n";
-  std::cout << "\t testTrajectory3D \n\n";
   testTrajectory3D();
+  testreadAmber();
 
   return 0;
 }

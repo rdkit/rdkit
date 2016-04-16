@@ -32,7 +32,7 @@ class Snapshot {
         \param data is a pointer to user data
      */
     Snapshot(double *pos = NULL, double energy = 0.0, void *data = NULL);
-    /*! \brief Returns a pointer to the parent Trajectory
+    /*! \return a const pointer to the parent Trajectory
      */
     const Trajectory *trajectory() const {
       return d_trajectory;
@@ -41,17 +41,17 @@ class Snapshot {
         \param traj is the parent Trajectory
      */
     void setTrajectory(const Trajectory *traj);
-    /*! \brief Gets the coordinates at pointNum as a Point2D object;
+    /*! \param pointNum is the atom number whose coordinates will be retrieved
+        \return the coordinates at pointNum as a Point2D object;
         requires the Trajectory dimension to be == 2
-        \param pointNum is the atom number whose coordinates will be retrieved
      */
     Point2D getPoint2D(unsigned int pointNum) const;
-    /*! \brief Gets the coordinates at pointNum as a Point3D object;
+    /*! \param pointNum is the atom number whose coordinates will be retrieved
+        \return the coordinates at pointNum as a Point3D object;
         requires the Trajectory dimension to be >= 2
-        \param pointNum is the atom number whose coordinates will be retrieved
      */
     Point3D getPoint3D(unsigned int pointNum) const;
-    /*! \brief Gets the energy for this snapshot
+    /*! \return the energy for this snapshot
      */
     double getEnergy() const {
       return d_energy;
@@ -62,7 +62,7 @@ class Snapshot {
     void setEnergy(double energy) {
       d_energy = energy;
     }
-    /*! \brief Returns the pointer to user data
+    /*! \return the pointer to user data
      */
     void *getData() const {
       return d_data;
@@ -114,40 +114,45 @@ class Trajectory {
         arrays in this Trajectory's Snapshot objects are freed
      */
     ~Trajectory();
-    /*! \brief Returns the dimensionality of this Trajectory's coordinate tuples
+    /*! \return the dimensionality of this Trajectory's coordinate tuples
      */
     unsigned int dimension() const {
       return d_dimension;
     }
-    /*! \brief Returns the number of coordinate tuples associated to each Snapshot
+    /*! \return the number of coordinate tuples associated to each Snapshot
      */
     unsigned int numPoints() const {
       return d_numPoints;
     }
-    /*! \brief Returns the number of Snapshots asociated to this Trajectory
+    /*! \return the number of Snapshots asociated to this Trajectory
      */
-    unsigned int size() const {
+    size_t size() const {
       return d_snapshotVect.size();
     }
     /*! \brief Appends a Snapshot to this Trajectory
         \param s is the Snapshot to be added
+        \return the zero-based index position of the added snapshot
      */
     unsigned int addSnapshot(Snapshot s);
-    /*! \brief Retrieves a const reference to a Snapshot in the Trajectory
-        \param snapshotNum is the zero-based index of the retrieved Snapshot
+    /*! \param snapshotNum is the zero-based index of the retrieved Snapshot
+        \return a const reference to the relevant Snapshot in the Trajectory
      */
     const Snapshot &getSnapshot(unsigned int snapshotNum) const;
     /*! \brief Inserts a Snapshot into this Trajectory
         \param snapshotNum is the zero-based index of the Trajectory's Snapshot
                before which the Snapshot s will be inserted
         \param s is the Snapshot to be inserted
+        \return the zero-based index position of the inserted snapshot
      */
     unsigned int insertSnapshot(unsigned int snapshotNum, Snapshot s);
     /*! \brief Removes a Snapshot from this Trajectory
         \param snapshotNum is the zero-based index of Snapshot to be removed
+        \return the zero-based index position of the snapshot after the
+                removed one; if the last snapsot was removed, it returns the
+                size of the trajectory
      */
     unsigned int removeSnapshot(unsigned int snapshotNum);
-    /*! \brief Retrieves the status of the FREE_POS_ON_DESTROY flag
+    /*! \return the status of the FREE_POS_ON_DESTROY flag
         true: set, false: not set
      */
     bool getFreePosOnDestroy() const {
@@ -162,6 +167,11 @@ class Trajectory {
       else
         d_flags &= ~FREE_POS_ON_DESTROY;
     }
+    /*! \brief Reads coordinates from an AMBER trajectory file
+               into the Trajectory
+        \return the number of Snapshot objects read in
+     */
+    unsigned int readAmber(const std::string &fName);
   private:
     // dimensionality of this Trajectory's coordinates;
     // this is normally 2 (2D coordinates) or 3 (3D coordinates)

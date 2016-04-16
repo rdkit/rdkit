@@ -1114,6 +1114,46 @@ void testAddConformersFromTrajectory() {
   delete mol;
 }
 
+void testAddConformersFromAmberTrajectory() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testAddConformersFromAmberTrajectory" << std::endl;
+
+  ROMol *mol = SmilesToMol("CCC");
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
+  {
+    RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
+    std::cerr << "1a) traj.size()" << traj.size() << std::endl;
+    traj.readAmber(fName);
+    std::cerr << "1) traj.size()" << traj.size() << std::endl;
+    TEST_ASSERT(traj.size() == 1);
+    for (unsigned int i = 0; i < 2; ++i) {
+      mol->addConformersFromTrajectory(&traj);
+      TEST_ASSERT(mol->getNumConformers() == i + 1);
+      TEST_ASSERT(mol->getConformer(i).getNumAtoms() == 3);
+      TEST_ASSERT(RDKit::feq(mol->getConformer(i).getAtomPos(0).x, 0.1941767));
+      TEST_ASSERT(RDKit::feq(mol->getConformer(i).getAtomPos(2).z, -0.4088006));
+    }
+    mol->clearConformers();
+    mol->addConformersFromTrajectory(&traj, 0);
+    TEST_ASSERT(mol->getNumConformers() == 0);
+  }
+  fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
+  {
+    RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
+    std::cerr << "2) traj.size()" << traj.size() << std::endl;
+    traj.readAmber(fName);
+    TEST_ASSERT(traj.size() == 2);
+    mol->addConformersFromTrajectory(&traj);
+    TEST_ASSERT(mol->getNumConformers() == 2);
+    mol->clearConformers();
+    mol->addConformersFromTrajectory(&traj, 1);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+  }
+  delete mol;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
+}
+
 void testPeriodicTable() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
   BOOST_LOG(rdInfoLog) << "Testing properties from periodic table" << std::endl;
@@ -1450,6 +1490,7 @@ int main() {
 #if 1
   test1();
   testAddConformersFromTrajectory();
+  testAddConformersFromAmberTrajectory();
   testPropLeak();
   testMolProps();
   testAtomProps();

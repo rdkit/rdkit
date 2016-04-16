@@ -9,6 +9,9 @@
 //
 
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/BadFileException.h>
+#include <fstream>
+#include <sstream>
 #include "Trajectory.h"
 
 namespace RDGeom {
@@ -82,6 +85,47 @@ unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   if (d_flags & FREE_POS_ON_DESTROY)
     d_snapshotVect[snapshotNum].freePos();
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
+}
+
+unsigned int Trajectory::readAmber(const std::string &fName) {
+  PRECONDITION(d_dimension == 3, "The trajectory must have dimension == 3");
+  std::ifstream inStream(fName.c_str());
+  if (!inStream || inStream.bad()) {
+    std::stringstream ss;
+    ss << "Bad input file: " << fName;
+    throw RDKit::BadFileException(ss.str());
+  }
+  std::string tempStr;
+  // title
+  std::getline(inStream, tempStr);
+  // read coordinates
+  unsigned int nCoords = d_numPoints * 3;
+  unsigned int nSnapshots = 0;
+  while (!inStream.eof()) {
+    double *c = new double[nCoords]();
+    unsigned int i = 0;
+    while (i < nCoords) {
+      if (!(inStream >> c[i])) {
+        if (!inStream.eof()) {
+          std::stringstream ss;
+          ss << "Error while reading file: " << fName;
+          throw ValueErrorException(ss.str());
+        }
+        else if (i && (i < (nCoords - 1))) {
+          std::stringstream ss;
+          ss << "Premature end of file: " << fName;
+          throw ValueErrorException(ss.str());
+        }
+        break;
+      }
+      ++i;
+    }
+    if (!inStream.eof()) {
+      addSnapshot(Snapshot(c));
+      ++nSnapshots;
+    }
+  }
+  return nSnapshots;
 }
 
 }
