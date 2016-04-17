@@ -135,6 +135,8 @@ Swain, Eric Ting, Paolo Tosco, Samo Turk, Riccardo Vianello
  (github issue #852 from greglandrum)
   - Fix out of range dereference in MCS code.
  (github pull #857 from DoliathGavid)
+  - Atom symbols in wrong order if bond comes from right
+ (github issue #860 from greglandrum)
 
 ## New Features and Enhancements:
   - switch to using new version of avalon toolkit
