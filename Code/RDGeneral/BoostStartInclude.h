@@ -46,10 +46,12 @@
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 /* Intel ICC/ICPC. ------------------------------------------ */
 
-#elif(defined(__GNUC__) || defined(__GNUG__)) && \
+#elif (defined(__GNUC__) || defined(__GNUG__)) && \
     (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 1))
 /* GNU GCC/G++. --------------------------------------------- */
+#if (__GNUC__ > 4 || __GNUC_MINOR__ > 5)
 #pragma GCC diagnostic push
+#endif
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wsign-compare"
