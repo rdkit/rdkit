@@ -3,7 +3,7 @@
 ## What is it?
 
 ### Open source toolkit for cheminformatics
--   BSD licensed
+-   Business-friendly BSD license
 -   Core data structures and algorithms in C++
 -   Python (2.x and 3.x) wrapper generated using Boost.Python
 -   Java and C\# wrappers generated with SWIG
