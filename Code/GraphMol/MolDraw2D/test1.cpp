@@ -908,6 +908,82 @@ void testGithub852() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub860() {
+  std::cout << " ----------------- Test Github860: Atom symbols in wrong order "
+               "if bond comes from right"
+            << std::endl;
+  {
+    std::string smiles = "[15NH3+:1]-C#C-[15NH3+:2]";
+    std::string nameBase = "test860_1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+  }
+  {
+    std::string smiles =
+        "[15NH3+:1]-C#C-C([15NH3+:2])([15NH3+:3])-C#C-[15NH3+:4]";
+    std::string nameBase = "test860_2";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+  }
+  {
+    std::string smiles = "[15NH3+:1]-CCCCCCCC-[15NH3+:4]";
+    std::string nameBase = "test860_3";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -921,8 +997,9 @@ int main() {
   testMultiThreaded();
   testGithub781();
   test3();
-#endif
   testGithub774();
   test9MolLegends();
   testGithub852();
+#endif
+  testGithub860();
 }

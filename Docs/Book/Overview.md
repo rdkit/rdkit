@@ -3,7 +3,7 @@
 ## What is it?
 
 ### Open source toolkit for cheminformatics
--   BSD licensed
+-   Business-friendly BSD license
 -   Core data structures and algorithms in C++
 -   Python (2.x and 3.x) wrapper generated using Boost.Python
 -   Java and C\# wrappers generated with SWIG
@@ -20,7 +20,7 @@
     -   Homepage: http://www.rdkit.org
         Documentation, links
     -   Github (https://github.com/rdkit)
-        Bug tracker, git repository
+        Downloads, bug tracker, git repository
     -   Sourceforge (http://sourceforge.net/projects/rdkit)
         Mailing lists
 -   Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
@@ -52,7 +52,6 @@
 - Hierarchical subgraph/fragment analysis
 - RECAP and BRICS implementations
 - Multi-molecule maximum common substructure [2](#footnote2)
-- Functional group filtering
 - Enumeration of molecular resonance structures
 - Molecular descriptor library:
   - Topological (κ3, Balaban J, etc.)
@@ -65,7 +64,7 @@
 - Machine Learning:
   - Clustering (hierarchical, Butina)
   - Information theory (Shannon entropy, information gain, etc.)
-- Tight integration with the [IPython](http://ipython.org) notebook and [Pandas](http://pandas.pydata.org/).
+- Tight integration with the [Jupyter](http://jupyter.org) notebook (formerly the IPython notebook) and [Pandas](http://pandas.pydata.org/).
 
 ### 3D
 - 2D-\>3D conversion/conformational analysis via distance geometry, including optional use of experimental torsion angle potentials.
@@ -86,7 +85,6 @@
 - [Django](http://django-rdkit.readthedocs.org/en/latest/): "The web framework for perfectionists with deadlines"
 - [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
 - [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
-
 
 ## The Contrib Directory
 
@@ -153,7 +151,7 @@ Contribution from Sereina Riniker
 
 Python source for an implementation of the NP score algorithm described in the publication:
 
-"Natural Product Likeness Score and Its Application for Prioritization of Compound Libraries" 
+"Natural Product Likeness Score and Its Application for Prioritization of Compound Libraries"
 Peter Ertl, Silvio Roggo, and Ansgar Schuffenhauer
 *Journal of Chemical Information and Modeling* **48:68-74** (2008)
 http://pubs.acs.org/doi/abs/10.1021/ci700286x
