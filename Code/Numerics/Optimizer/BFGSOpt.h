@@ -246,7 +246,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // "<<TOLX<<std::endl;
     if (test < TOLX) {
       if (traj && trajEverySteps) {
-        RDGeom::Snapshot s(newPos, fp);
+        RDGeom::Snapshot s(newPos, fp, true);
         traj->addSnapshot(s);
         newPos = NULL;
       }
@@ -270,7 +270,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // "<<gradTol<<std::endl;
     if (test < gradTol) {
       if (traj && trajEverySteps) {
-        RDGeom::Snapshot s(newPos, fp);
+        RDGeom::Snapshot s(newPos, fp, true);
         traj->addSnapshot(s);
         newPos = NULL;
       }
@@ -349,7 +349,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
 #endif
     }
     if (traj && trajEverySteps && !(iter % trajEverySteps)) {
-      RDGeom::Snapshot s(newPos, fp);
+      RDGeom::Snapshot s(newPos, fp, true);
       traj->addSnapshot(s);
       newPos = new double[dim];
     }

@@ -17,11 +17,11 @@
 
 namespace RDGeom {
 
-Snapshot::Snapshot(double *pos, double energy, void *data) :
+Snapshot::Snapshot(double *pos, double energy, bool owner) :
   d_trajectory(NULL),
+  d_owner(owner),
   d_energy(energy),
-  d_pos(pos),
-  d_data(data)
+  d_pos(pos)
 {
 }
 
@@ -49,17 +49,18 @@ void Snapshot::freePos() {
   d_pos = NULL;
 }
 
-Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints, unsigned int flags) :
+Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
   d_dimension(dimension),
-  d_numPoints(numPoints),
-  d_flags(flags)
+  d_numPoints(numPoints)
 {
 }
 
 Trajectory::~Trajectory() {
   for (std::vector<Snapshot>::iterator it = d_snapshotVect.begin();
-    (d_flags & FREE_POS_ON_DESTROY) && (it != d_snapshotVect.end()); ++it)
-    it->freePos();
+    it != d_snapshotVect.end(); ++it) {
+    if (it->getOwner())
+      it->freePos();
+  }
 }
 
 unsigned int Trajectory::addSnapshot(Snapshot s) {
@@ -83,7 +84,7 @@ unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
-  if (d_flags & FREE_POS_ON_DESTROY)
+  if (d_snapshotVect[snapshotNum].getOwner())
     d_snapshotVect[snapshotNum].freePos();
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
 }
