@@ -1,6 +1,5 @@
 # $Id$
 # 
-from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD
 from rdkit.Chem import AllChem
@@ -352,22 +351,13 @@ class TestCase(unittest.TestCase) :
     self.assertEqual(sorted(sa),[6,9])
     
   def testNumRotatableBonds(self):
-    self.assertEquals(-1,
-           int(rdMD.NumRotatableBondsOptions.Default))
-    self.assertEquals(0,
-           int(rdMD.NumRotatableBondsOptions.NonStrict))
-    self.assertEquals(1,
-           int(rdMD.NumRotatableBondsOptions.Strict))
-    self.assertEquals(2,
-           int(rdMD.NumRotatableBondsOptions.StrictLinkages))
-    
-    for s in [#"C1CC1CC",
+    for s in ["C1CC1CC",
               "CCNC(=O)NCC",
-              #'Cc1cccc(C)c1c1c(C)cccc1C',
-              #'CCc1cccc(C)c1c1c(C)cccc1CC',
-              #'Cc1cccc(C)c1c1c(C)nccc1C',
+              'Cc1cccc(C)c1c1c(C)cccc1C',
+              'CCc1cccc(C)c1c1c(C)cccc1CC',
+              'Cc1cccc(C)c1c1c(C)nccc1C',
               'Cc1cccc(C)c1c1c(C)cccc1',
-              #'CCO',
+              'CCO',
     ]:
               
       m = Chem.MolFromSmiles(s)
@@ -385,7 +375,6 @@ class TestCase(unittest.TestCase) :
       self.assertEquals(v1, v4)
       self.assertEquals(v2, v5)
       self.assertEquals(v3, v6)
-      print (v1, v2, v3, v4, v5, v6, v7)
         
 if __name__ == '__main__':
   unittest.main()
