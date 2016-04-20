@@ -144,6 +144,7 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
           else:
             bbNm = str(bb[1])
           r.SetProp('building_block_%d'%(bbI+1),bbNm)
+          r.SetProp('_idx_building_block_%d'%(bbI+1),str(bb[1]))
           for propN in bbMol.GetPropNames():
             r.SetProp('building_block_%d_%s'%(bbI+1,propN),bbMol.GetProp(propN))
         nDumped += 1
