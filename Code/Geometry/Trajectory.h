@@ -23,15 +23,14 @@ class Snapshot {
         \param pos is a pointer to an array of (numPoints * dimension) doubles;
         numPoints and dimension must match the Trajectory which is going to
         contain this Snapshot
-        If the FREE_POS_ON_DESTROY flag is set on the Trajectory object which
-        contains this Snapshot, this pointer will be freed upon:
+        If the ownership flag is set on this Snapshot, the pos pointer
+        will be freed upon:
         1) destruction of the Trajectory object which contains the Snapshot
         2) call of the removeSnapshot() method on the Trajectory object
            which contains the Snapshot
         \param energy is the energy associated with this set of coordinates
-        \param data is a pointer to user data
      */
-    Snapshot(double *pos = NULL, double energy = 0.0, void *data = NULL);
+    Snapshot(double *pos = NULL, double energy = 0.0, bool owner = true);
     /*! \return a const pointer to the parent Trajectory
      */
     const Trajectory *trajectory() const {
@@ -51,67 +50,57 @@ class Snapshot {
         requires the Trajectory dimension to be >= 2
      */
     Point3D getPoint3D(unsigned int pointNum) const;
-    /*! \return the energy for this snapshot
+    /*! \return the energy for this Snapshot
      */
     double getEnergy() const {
       return d_energy;
     };
-    /*! \brief Sets the energy for this snapshot
-        \param energy the energy value assigned to this snapshot
+    /*! \brief Sets the energy for this Snapshot
+        \param energy the energy value assigned to this Snapshot
      */
     void setEnergy(double energy) {
       d_energy = energy;
     }
-    /*! \return the pointer to user data
-     */
-    void *getData() const {
-      return d_data;
-    }
-    /*! \brief Sets the pointer to user data
-        \param data is a (void *), needs to be cast to the appropriate data type
-     */
-    void setData(void *data) {
-      d_data = data;
-    }
     /*! \brief Frees the pointer to the array of doubles where the
-        coordinates for this snapshot are stored
+        coordinates for this Snapshot are stored
      */
     void freePos();
+    /*! \return the status of the FREE_POS_ON_DESTROY flag
+        true: set, false: not set
+     */
+    bool getOwner() const {
+      return d_owner;
+    }
+    /*! \brief Sets the status of the owner flag
+     */
+    void setOwner(bool owner) {
+      d_owner = owner;
+    }
   private:
+    // flag which states if the Snapshot is the owner of the d_pos pointer
+    bool d_owner;
     // Pointer to the parent Trajectory object
     const Trajectory *d_trajectory;
     // Energy for this set of coordinates
     double d_energy;
-    // Pointer to snapshot coordinates. If the FREE_POS_ON_DESTROY flag is set
-    // on the Trajectory object which contains this Snapshot, this pointer
+    // Pointer to Snapshot coordinates. If the owner flag is set, this pointer
     // will be freed upon:
     // 1) destruction of the Trajectory object which contains the Snapshot
     // 2) call of the removeSnapshot() method on the Trajectory object
     //    which contains the Snapshot
     double *d_pos;
-    // Pointer to user data. Please note that this pointer
-    // will not be freed upon object destruction
-    void *d_data;
 };
 
 class Trajectory {
   public:
-    enum Flags {
-      /*! if this flag is set, upon destruction of the Trajectory object
-          or call of the removeSnapshot() method, the d_pos array
-          of the relevant Snapshot object(s) will be freed
-       */
-      FREE_POS_ON_DESTROY = (1 << 0)
-    };
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
         this is normally 2 (2D coordinates) or 3 (3D coordinates)
         \param numPoints is the number of coordinate tuples associated to each Snapshot
-        \param flags see the Flags enum
      */
-    Trajectory(unsigned int dimension, unsigned int numPoints, unsigned int flags = 0);
-    /*! \brief Destructor. If the FREE_POS_ON_DESTROY flag is set , upon destruction all d_pos
-        arrays in this Trajectory's Snapshot objects are freed
+    Trajectory(unsigned int dimension, unsigned int numPoints);
+    /*! \brief Destructor. Upon destruction of the Trajectory object, the d_pos arrays
+         of the Snapshot whose owner flags is set will also be destroyed
      */
     ~Trajectory();
     /*! \return the dimensionality of this Trajectory's coordinate tuples
@@ -124,14 +113,14 @@ class Trajectory {
     unsigned int numPoints() const {
       return d_numPoints;
     }
-    /*! \return the number of Snapshots asociated to this Trajectory
+    /*! \return the number of Snapshots associated to this Trajectory
      */
     size_t size() const {
       return d_snapshotVect.size();
     }
     /*! \brief Appends a Snapshot to this Trajectory
         \param s is the Snapshot to be added
-        \return the zero-based index position of the added snapshot
+        \return the zero-based index position of the added Snapshot
      */
     unsigned int addSnapshot(Snapshot s);
     /*! \param snapshotNum is the zero-based index of the retrieved Snapshot
@@ -142,31 +131,16 @@ class Trajectory {
         \param snapshotNum is the zero-based index of the Trajectory's Snapshot
                before which the Snapshot s will be inserted
         \param s is the Snapshot to be inserted
-        \return the zero-based index position of the inserted snapshot
+        \return the zero-based index position of the inserted Snapshot
      */
     unsigned int insertSnapshot(unsigned int snapshotNum, Snapshot s);
     /*! \brief Removes a Snapshot from this Trajectory
         \param snapshotNum is the zero-based index of Snapshot to be removed
-        \return the zero-based index position of the snapshot after the
+        \return the zero-based index position of the Snapshot after the
                 removed one; if the last snapsot was removed, it returns the
                 size of the trajectory
      */
     unsigned int removeSnapshot(unsigned int snapshotNum);
-    /*! \return the status of the FREE_POS_ON_DESTROY flag
-        true: set, false: not set
-     */
-    bool getFreePosOnDestroy() const {
-      return ((d_flags & FREE_POS_ON_DESTROY) ? true : false);
-    }
-    /*! \brief Sets the status of the FREE_POS_ON_DESTROY flag
-        true: set, false: not set
-     */
-    void setFreePosOnDestroy(bool free) {
-      if (free)
-        d_flags |= FREE_POS_ON_DESTROY;
-      else
-        d_flags &= ~FREE_POS_ON_DESTROY;
-    }
     /*! \brief Reads coordinates from an AMBER trajectory file
                into the Trajectory object
         \return the number of Snapshot objects read in
@@ -183,8 +157,6 @@ class Trajectory {
     const unsigned int d_dimension;
     // number of coordinate tuples associated to each Snapshot
     const unsigned int d_numPoints;
-    // flags
-    unsigned int d_flags;
     // vector holding the Snapshots for this Trajectory
     std::vector<Snapshot> d_snapshotVect;
 };

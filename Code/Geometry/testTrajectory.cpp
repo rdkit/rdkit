@@ -105,7 +105,7 @@ void testReadAmber() {
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trx";
   {
-    Trajectory traj(2, 0, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(2, 0);
     bool ok = false;
     try {
       traj.readAmber(fName);
@@ -115,7 +115,7 @@ void testReadAmber() {
     TEST_ASSERT(ok);
   }
   {
-    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(3, 3);
     bool ok = false;
     try {
       traj.readAmber(fName);
@@ -129,7 +129,7 @@ void testReadAmber() {
   {
     bool ok = false;
     try {
-      Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+      Trajectory traj(3, 3);
       traj.readAmber(fName);
     } catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
@@ -139,13 +139,13 @@ void testReadAmber() {
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
   {
-    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(3, 3);
     traj.readAmber(fName);
     TEST_ASSERT(traj.size() == 1);
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
   {
-    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(3, 3);
     traj.readAmber(fName);
     TEST_ASSERT(traj.size() == 2);
   }
@@ -159,7 +159,7 @@ void testReadGromos() {
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trc";
   {
-    Trajectory traj(2, 0, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(2, 0);
     bool ok = false;
     try {
       traj.readGromos(fName);
@@ -169,7 +169,7 @@ void testReadGromos() {
     TEST_ASSERT(ok);
   }
   {
-    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(3, 3);
     bool ok = false;
     try {
       traj.readGromos(fName);
@@ -183,7 +183,7 @@ void testReadGromos() {
   {
     bool ok = false;
     try {
-      Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+      Trajectory traj(3, 3);
       traj.readGromos(fName);
     } catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
@@ -193,13 +193,13 @@ void testReadGromos() {
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords.trc";
   {
-    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(3, 3);
     traj.readGromos(fName);
     TEST_ASSERT(traj.size() == 1);
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trc";
   {
-    Trajectory traj(3, 3, Trajectory::FREE_POS_ON_DESTROY);
+    Trajectory traj(3, 3);
     traj.readGromos(fName);
     TEST_ASSERT(traj.size() == 2);
   }

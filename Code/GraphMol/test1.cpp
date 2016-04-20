@@ -1097,7 +1097,6 @@ void testAddConformersFromTrajectory() {
   ForceFields::ForceField *field = MMFF::constructForceField(*mol);
   field->initialize();
   RDGeom::Trajectory traj(3, mol->getNumAtoms());
-  traj.setFreePosOnDestroy(true);
   field->minimize(everySteps, &traj, maxIts, gradTol);
   mol->removeConformer(0);
   mol->addConformersFromTrajectory(&traj);
@@ -1122,7 +1121,7 @@ void testAddConformersFromAmberTrajectory() {
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
   {
-    RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
+    RDGeom::Trajectory traj(3, mol->getNumAtoms());
     traj.readAmber(fName);
     TEST_ASSERT(traj.size() == 1);
     for (unsigned int i = 0; i < 2; ++i) {
@@ -1138,7 +1137,7 @@ void testAddConformersFromAmberTrajectory() {
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
   {
-    RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
+    RDGeom::Trajectory traj(3, mol->getNumAtoms());
     traj.readAmber(fName);
     TEST_ASSERT(traj.size() == 2);
     mol->addConformersFromTrajectory(&traj);
@@ -1159,7 +1158,7 @@ void testAddConformersFromGromosTrajectory() {
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords.trc";
   {
-    RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
+    RDGeom::Trajectory traj(3, mol->getNumAtoms());
     traj.readGromos(fName);
     TEST_ASSERT(traj.size() == 1);
     for (unsigned int i = 0; i < 2; ++i) {
@@ -1176,7 +1175,7 @@ void testAddConformersFromGromosTrajectory() {
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trc";
   {
-    RDGeom::Trajectory traj(3, mol->getNumAtoms(), RDGeom::Trajectory::FREE_POS_ON_DESTROY);
+    RDGeom::Trajectory traj(3, mol->getNumAtoms());
     traj.readGromos(fName);
     TEST_ASSERT(traj.size() == 2);
     mol->addConformersFromTrajectory(&traj);

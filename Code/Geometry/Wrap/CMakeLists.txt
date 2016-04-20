@@ -1,5 +1,5 @@
 rdkit_python_extension(rdGeometry
-                       Point.cpp UniformGrid3D.cpp rdGeometry.cpp
+                       Point.cpp Trajectory.cpp UniformGrid3D.cpp rdGeometry.cpp
                        DEST Geometry
                        LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral RDBoost)
 
