@@ -37,7 +37,14 @@ INCLUDE_DIRECTORIES(${JNI_INCLUDE_DIRS})
 
 # java8 raises errors while creating the documentation
 if(Java_VERSION_MAJOR GREATER 1 OR Java_VERSION_MINOR GREATER 7)
-  SET(DOCLINT_FLAGS "-Xdoclint:none")
+  set(X_DOCLINT_NONE "-Xdoclint:none")
+  execute_process(COMMAND ${JAVADOC_EXE} ${X_DOCLINT_NONE}
+                  OUTPUT_VARIABLE null
+                  ERROR_VARIABLE err
+                  ERROR_STRIP_TRAILING_WHITESPACE)
+  if (NOT ${err} MATCHES "invalid flag")
+    SET(DOCLINT_FLAGS ${X_DOCLINT_NONE})
+  endif()
 endif()
 
 SET_SOURCE_FILES_PROPERTIES(GraphMolJava.i PROPERTIES CPLUSPLUS ON )
