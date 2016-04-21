@@ -253,6 +253,11 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
     BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
       if (!deadAtoms[atomIdx]) {
+        const Atom *tAtom = mol.getAtomWithIdx(atomIdx);
+        if (!tAtom->getDegree()) {
+          deadAtoms.set(atomIdx, 1);
+          continue;
+        }
         std::vector<std::pair<int32_t, uint32_t> > nbrs;
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(atomIdx));
