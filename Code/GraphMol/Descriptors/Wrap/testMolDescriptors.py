@@ -350,7 +350,31 @@ class TestCase(unittest.TestCase) :
     self.assertEqual(len(sa),2)
     self.assertEqual(sorted(sa),[6,9])
     
+  def testNumRotatableBonds(self):
+    for s in ["C1CC1CC",
+              "CCNC(=O)NCC",
+              'Cc1cccc(C)c1c1c(C)cccc1C',
+              'CCc1cccc(C)c1c1c(C)cccc1CC',
+              'Cc1cccc(C)c1c1c(C)nccc1C',
+              'Cc1cccc(C)c1c1c(C)cccc1',
+              'CCO',
+    ]:
+              
+      m = Chem.MolFromSmiles(s)
 
+      v1 = rdMD.CalcNumRotatableBonds(m)
+      
+      v2 = rdMD.CalcNumRotatableBonds(m, False)
+      v3 = rdMD.CalcNumRotatableBonds(m, True)
 
+      v4 = rdMD.CalcNumRotatableBonds(m, rdMD.NumRotatableBondsOptions.Default)
+      v5 = rdMD.CalcNumRotatableBonds(m, rdMD.NumRotatableBondsOptions.NonStrict)
+      v6 = rdMD.CalcNumRotatableBonds(m, rdMD.NumRotatableBondsOptions.Strict)
+      v7 = rdMD.CalcNumRotatableBonds(m, rdMD.NumRotatableBondsOptions.StrictLinkages)
+      
+      self.assertEquals(v1, v4)
+      self.assertEquals(v2, v5)
+      self.assertEquals(v3, v6)
+        
 if __name__ == '__main__':
   unittest.main()

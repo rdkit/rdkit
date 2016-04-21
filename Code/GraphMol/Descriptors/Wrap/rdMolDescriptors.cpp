@@ -786,7 +786,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
          considered non-rotatable";
 #endif
-  
+
+  python::def(
+      "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&, bool))
+                                RDKit::Descriptors::calcNumRotatableBonds,
+      (python::arg("mol"),
+       python::arg("strict")),
+      docString.c_str());
+    
   python::def(
       "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&,
                                                  RDKit::Descriptors::NumRotatableBondsOptions))
