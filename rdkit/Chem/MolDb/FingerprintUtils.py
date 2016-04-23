@@ -14,7 +14,8 @@ similarityMethods={'RDK':DataStructs.ExplicitBitVect,
                    'TopologicalTorsions':DataStructs.LongSparseIntVect,
                    'Pharm2D':DataStructs.SparseBitVect,
                    'Gobbi2D':DataStructs.SparseBitVect,
-                   'Morgan':DataStructs.UIntSparseIntVect
+                   'Morgan':DataStructs.UIntSparseIntVect,
+                   'Avalon':DataStructs.ExplicitBitVect,
                    }
 supportedSimilarityMethods=list(iterkeys(similarityMethods))
 
@@ -98,6 +99,13 @@ def BuildMorganFP(mol):
   fp = rdMolDescriptors.GetMorganFingerprint(mol,2)
   fp._sumCache = fp.GetTotalVal()
   return fp
+def BuildAvalonFP(mol,smiles=None):
+  from rdkit.Avalon import pyAvalonTools
+  if smiles is None:
+    fp=pyAvalonTools.GetAvalonFP(mol)
+  else:
+    fp=pyAvalonTools.GetAvalonFP(smiles,True)
+  return fp                   
 
 def DepickleFP(pkl,similarityMethod):
     if not isinstance(pkl,(bytes,str)):
