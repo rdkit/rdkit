@@ -1104,7 +1104,7 @@ void testAddConformersFromTrajectory() {
     nConf < mol->getNumConformers(); ++nConf) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(4)
-      << traj.getSnapshot(nConf).getEnergy();
+      << traj.getSnapshot(nConf)->getEnergy();
     mol->setProp("ENERGY", ss.str(), false);
     w.write(*mol, nConf);
   }

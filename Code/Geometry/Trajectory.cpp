@@ -17,13 +17,10 @@
 
 namespace RDGeom {
 
-Snapshot::Snapshot(double *pos, double energy, bool owner) :
+Snapshot::Snapshot(double *pos, double energy) :
   d_trajectory(NULL),
-  d_owner(owner),
   d_energy(energy),
-  d_pos(pos)
-{
-}
+  d_pos(pos) {}
 
 Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
   PRECONDITION(d_pos, "pos must not be NULL");
@@ -33,59 +30,77 @@ Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
 }
 
 Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
+  PRECONDITION(d_pos, "pos must not be NULL");
   PRECONDITION(trajectory()->dimension() >= 2, "d_dimension must be >= 2");
   unsigned int i = pointNum * trajectory()->dimension();
-  return (d_pos ? Point3D(d_pos[i], d_pos[i + 1],
-          ((trajectory()->dimension() == 3) ? d_pos[i + 2] : 0.0)) : Point3D());
-}
-
-void Snapshot::setTrajectory(const Trajectory *traj) {
-  PRECONDITION(traj, "traj must not be NULL");
-  d_trajectory = traj;
-}
-
-void Snapshot::freePos() {
-  delete d_pos;
-  d_pos = NULL;
+  return (Point3D(d_pos[i], d_pos[i + 1],
+          (trajectory()->dimension() == 3) ? d_pos[i + 2] : 0.0));
 }
 
 Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
   d_dimension(dimension),
-  d_numPoints(numPoints)
-{
-}
+  d_numPoints(numPoints) {}
 
-Trajectory::~Trajectory() {
-  for (std::vector<Snapshot>::iterator it = d_snapshotVect.begin();
-    it != d_snapshotVect.end(); ++it) {
-    if (it->getOwner())
-      it->freePos();
+Trajectory::Trajectory(const Trajectory &other) :
+  d_dimension(other.d_dimension),
+  d_numPoints(other.d_numPoints) {
+  std::map<double *, double *> tempMap;
+  for (SnapshotPtrVect::const_iterator vectIt = other.d_snapshotVect.begin();
+    vectIt != other.d_snapshotVect.end(); ++vectIt) {
+    std::map<double *, double *>::const_iterator mapIt = tempMap.find((*vectIt)->d_pos);
+    double *c = NULL;
+    if (mapIt == tempMap.end()) {
+      c = new double[d_dimension * d_numPoints];
+      tempMap[(*vectIt)->d_pos] = c;
+    }
+    else
+      c = mapIt->second;
+    Snapshot *s = new Snapshot(c, (*vectIt)->d_energy);
+    addSnapshot(s);
   }
 }
 
-unsigned int Trajectory::addSnapshot(Snapshot s) {
-  unsigned int size = d_snapshotVect.size();
-  s.setTrajectory(this);
-  d_snapshotVect.push_back(s);
-  return size;
+Trajectory::~Trajectory()
+{
+  for (SnapshotPtrVect::const_iterator vectIt = d_snapshotVect.begin();
+    vectIt != d_snapshotVect.end(); ++ vectIt) {
+    CoordMap::iterator mapIt = d_coordMap.find((*vectIt)->d_pos);
+    if (mapIt != d_coordMap.end() && mapIt->second) {
+      --(mapIt->second);
+      if (!mapIt->second)
+        delete [] mapIt->first;
+    }
+    delete *vectIt;
+  }
 }
 
-const Snapshot &Trajectory::getSnapshot(unsigned int snapshotNum) const {
+unsigned int Trajectory::addSnapshot(Snapshot *s) {
+  return insertSnapshot(d_snapshotVect.size(), s);
+}
+
+Snapshot *Trajectory::getSnapshot(unsigned int snapshotNum) const {
   PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
   return d_snapshotVect[snapshotNum];
 }
 
-unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
-  PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
-  s.setTrajectory(this);
+unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot *s) {
+  PRECONDITION(snapshotNum <= d_snapshotVect.size(), "snapshotNum out of bounds");
+  s->d_trajectory = this;
+  CoordMap::iterator it = d_coordMap.find(s->d_pos);
+  if (it != d_coordMap.end())
+    ++(it->second);
+  else
+    d_coordMap[s->d_pos] = 1;
   return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum, s)
           - d_snapshotVect.begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
-  if (d_snapshotVect[snapshotNum].getOwner())
-    d_snapshotVect[snapshotNum].freePos();
+  CoordMap::iterator it = d_coordMap.find(d_snapshotVect[snapshotNum]->d_pos);
+  if (it != d_coordMap.end() && it->second)
+    --(it->second);
+  delete d_snapshotVect[snapshotNum];
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
 }
 
@@ -104,26 +119,34 @@ unsigned int Trajectory::readAmber(const std::string &fName) {
   unsigned int nCoords = d_numPoints * 3;
   unsigned int nSnapshots = 0;
   while (inStream.good() && !inStream.eof()) {
-    double *c = new double[nCoords]();
+    double *c = NULL;
     unsigned int i = 0;
     while (i < nCoords) {
-      if (!(inStream >> c[i])) {
+      double v;
+      if (!(inStream >> v)) {
         if (!inStream.eof()) {
           std::stringstream ss;
           ss << "Error while reading file: " << fName;
+          delete [] c;
           throw ValueErrorException(ss.str());
         }
         else if (i && (i < (nCoords - 1))) {
           std::stringstream ss;
           ss << "Premature end of file: " << fName;
+          delete [] c;
           throw ValueErrorException(ss.str());
         }
         break;
       }
+      else {
+        if (!i)
+          c = new double[nCoords]();
+        c[i] = v;
+      }
       ++i;
     }
     if (!inStream.eof()) {
-      addSnapshot(Snapshot(c));
+      addSnapshot(new Snapshot(c));
       ++nSnapshots;
     }
   }
@@ -167,14 +190,17 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
       unsigned int j = 0;
       for (unsigned int i = 0; i < d_numPoints;) {
         std::getline(inStream, tempStr);
-        if (inStream.bad() || inStream.eof() || (tempStr == "END"))
+        if (inStream.bad() || inStream.eof() || (tempStr == "END")) {
+          delete [] c;
           throw ValueErrorException("Wrong number of coordinates");
+        }
         // ignore comments
         if (tempStr.find("#") != std::string::npos)
           continue;
         std::stringstream ls(tempStr);
         double x, y, z;
         if (!(ls >> x >> y >> z)) {
+          delete [] c;
           throw ValueErrorException("Error while reading file");
         }
         // store the coordinates (convert to Angstrom!)
@@ -185,9 +211,10 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
       }
       std::getline(inStream, tempStr); // the END line
       if (inStream.bad() || inStream.eof() || (tempStr != "END")) {
+        delete [] c;
         throw ValueErrorException("Wrong number of coordinates");
       }
-      addSnapshot(Snapshot(c));
+      addSnapshot(new Snapshot(c));
       ++nSnapshots;
     }
     else {

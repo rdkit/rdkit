@@ -243,6 +243,13 @@ BOOST_PYTHON_MODULE(rdForceField) {
             python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations.\n\n  Returns 0 if the "
            "minimization succeeded.")
+      .def("MinimizeTrajectory", &PyForceField::minimizeTrajectory,
+           (python::arg("trajEverySteps"), python::arg("traj"),
+            python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
+            python::arg("energyTol") = 1e-6),
+           "Runs some minimization iterations, recording the minimization "
+           "trajectory every trajEverySteps in the Trajectory object traj.\n\n"
+           "Returns 0 if the minimization succeeded.")
       .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
            (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
             python::arg("minLen"), python::arg("maxLen"),

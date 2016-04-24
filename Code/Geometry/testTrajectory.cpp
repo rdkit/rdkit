@@ -28,14 +28,14 @@ void testTrajectory2D() {
   for (unsigned int i = 0; i < np * dim; ++i)
     c[i] = static_cast<double>(i);
   for (unsigned int i = 0; i < ns; ++i)
-    traj.addSnapshot(Snapshot(c, static_cast<double>(i)));
+    traj.addSnapshot(new Snapshot(c, static_cast<double>(i)));
   TEST_ASSERT(traj.size() == ns);
   for (unsigned int i = 0; i < np; ++i) {
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint2D(i).x), static_cast<double>(i * dim)));
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint2D(i).y), static_cast<double>(i * dim + 1)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint2D(i).x), static_cast<double>(i * dim)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint2D(i).y), static_cast<double>(i * dim + 1)));
     bool e = false;
     try {
-      TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).z), 0.0));
+      TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).z), 0.0));
     }
     catch (...) {
       e = true;
@@ -43,15 +43,20 @@ void testTrajectory2D() {
     TEST_ASSERT(!e);
   }
   for (unsigned int i = 0; i < ns; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i)));
   traj.removeSnapshot(0);
   TEST_ASSERT(traj.size() == ns - 1);
   for (unsigned int i = 0; i < ns - 1; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i + 1)));
-  traj.insertSnapshot(0, Snapshot(c, 999.0));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i + 1)));
+  traj.insertSnapshot(0, new Snapshot(c, 999.0));
   TEST_ASSERT(traj.size() == ns);
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getEnergy()), 999.0));
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1).getEnergy()), 1.0));
+  Snapshot *copySnapshot = new Snapshot(*(traj.getSnapshot(0)));
+  traj.addSnapshot(copySnapshot);
+  TEST_ASSERT(traj.size() == ns + 1);
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getEnergy()), 999.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1)->getEnergy()), 1.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(traj.size() - 1)->getEnergy()), 999.0));
+  Trajectory traj2(traj);
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
@@ -68,16 +73,16 @@ void testTrajectory3D() {
   for (unsigned int i = 0; i < np * dim; ++i)
     c[i] = static_cast<double>(i);
   for (unsigned int i = 0; i < ns; ++i)
-    traj.addSnapshot(Snapshot(c, static_cast<double>(i)));
+    traj.addSnapshot(new Snapshot(c, static_cast<double>(i)));
   TEST_ASSERT(traj.size() == ns);
   for (unsigned int i = 0; i < np; ++i) {
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).x), static_cast<double>(i * dim)));
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).y), static_cast<double>(i * dim + 1)));
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).z), static_cast<double>(i * dim + 2)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).x), static_cast<double>(i * dim)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).y), static_cast<double>(i * dim + 1)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).z), static_cast<double>(i * dim + 2)));
     if (!i) {
       bool e = false;
       try {
-        traj.getSnapshot(0).getPoint2D(i);
+        traj.getSnapshot(0)->getPoint2D(i);
       }
       catch (...) {
         e = true;
@@ -86,15 +91,20 @@ void testTrajectory3D() {
     }
   }
   for (unsigned int i = 0; i < ns; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i)));
   traj.removeSnapshot(0);
   TEST_ASSERT(traj.size() == ns - 1);
   for (unsigned int i = 0; i < ns - 1; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i + 1)));
-  traj.insertSnapshot(0, Snapshot(c, 999.0));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i + 1)));
+  traj.insertSnapshot(0, new Snapshot(c, 999.0));
   TEST_ASSERT(traj.size() == ns);
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getEnergy()), 999.0));
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1).getEnergy()), 1.0));
+  Snapshot *copySnapshot = new Snapshot(*(traj.getSnapshot(0)));
+  traj.addSnapshot(copySnapshot);
+  TEST_ASSERT(traj.size() == ns + 1);
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getEnergy()), 999.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1)->getEnergy()), 1.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(traj.size() - 1)->getEnergy()), 999.0));
+  Trajectory traj2(traj);
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
@@ -148,6 +158,7 @@ void testReadAmber() {
     Trajectory traj(3, 3);
     traj.readAmber(fName);
     TEST_ASSERT(traj.size() == 2);
+    Trajectory trajCopy(traj);
   }
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
@@ -202,6 +213,7 @@ void testReadGromos() {
     Trajectory traj(3, 3);
     traj.readGromos(fName);
     TEST_ASSERT(traj.size() == 2);
+    Trajectory trajCopy(traj);
   }
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }

@@ -405,7 +405,155 @@ class TestCase(unittest.TestCase):
         self.assertEqual(xi,3)
         self.assertEqual(yi,2)
         self.assertEqual(zi,1)
-        
+
+    def testTrajectory2D(self):
+      dim = 2
+      np = 10
+      ns = 5
+      traj = geom.Trajectory(dim, np)
+      self.assertEqual(traj.Dimension(), dim)
+      self.assertEqual(traj.NumPoints(), np)
+      c = []
+      for i in range(np * dim):
+        c.append(float(i))
+      for i in range(ns):
+        traj.AddSnapshot(geom.Snapshot(c, float(i)))
+      self.assertEqual(len(traj), ns)
+      for i in range(np):
+        self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint2D(i).x, float(i * dim))
+        self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint2D(i).y, float(i * dim + 1))
+        e = False
+        try:
+          self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).z, 0.0)
+        except:
+          e = True;
+        self.assertFalse(e)
+      for i in range(ns):
+        self.assertAlmostEqual(traj.GetSnapshot(i).GetEnergy(), float(i))
+      traj.RemoveSnapshot(0)
+      self.assertEqual(len(traj), ns - 1)
+      for i in range(ns - 1):
+        self.assertAlmostEqual(traj.GetSnapshot(i).GetEnergy(), float(i + 1))
+      traj.InsertSnapshot(0, geom.Snapshot(c, 999.0))
+      self.assertEqual(len(traj), ns)
+      copySnapshot = geom.Snapshot(traj.GetSnapshot(0))
+      traj.AddSnapshot(copySnapshot)
+      self.assertEqual(len(traj), ns + 1)
+      self.assertAlmostEqual(traj.GetSnapshot(0).GetEnergy(), 999.0)
+      self.assertAlmostEqual(traj.GetSnapshot(1).GetEnergy(), 1.0)
+      self.assertAlmostEqual(traj.GetSnapshot(len(traj) - 1).GetEnergy(), 999.0)
+      traj2 = geom.Trajectory(traj);
+      self.assertEqual(len(traj), len(traj2))
+
+    def testTrajectory3D(self):
+      dim = 3
+      np = 10
+      ns = 5
+      traj = geom.Trajectory(dim, np)
+      self.assertEqual(traj.Dimension(), dim)
+      self.assertEqual(traj.NumPoints(), np)
+      c = []
+      for i in range(np * dim):
+        c.append(float(i))
+      for i in range(ns):
+        traj.AddSnapshot(geom.Snapshot(c, float(i)))
+      self.assertEqual(len(traj), ns)
+      for i in range(np):
+        self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).x, float(i * dim))
+        self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).y, float(i * dim + 1))
+        self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).z, float(i * dim + 2))
+        if (not i):
+          e = False
+          try:
+            traj.GetSnapshot(0).GetPoint2D(i)
+          except:
+            e = True
+          self.assertTrue(e)
+      for i in range(ns):
+        self.assertAlmostEqual(traj.GetSnapshot(i).GetEnergy(), float(i))
+      traj.RemoveSnapshot(0)
+      self.assertEqual(len(traj), ns - 1)
+      for i in range(ns - 1):
+        self.assertAlmostEqual(traj.GetSnapshot(i).GetEnergy(), float(i + 1))
+      traj.InsertSnapshot(0, geom.Snapshot(c, 999.0))
+      self.assertEqual(len(traj), ns)
+      copySnapshot = geom.Snapshot(traj.GetSnapshot(0))
+      traj.AddSnapshot(copySnapshot)
+      self.assertEqual(len(traj), ns + 1)
+      self.assertAlmostEqual(traj.GetSnapshot(0).GetEnergy(), 999.0)
+      self.assertAlmostEqual(traj.GetSnapshot(1).GetEnergy(), 1.0)
+      self.assertAlmostEqual(traj.GetSnapshot(len(traj) - 1).GetEnergy(), 999.0)
+      traj2 = geom.Trajectory(traj);
+      self.assertEqual(len(traj), len(traj2))
+
+    def testReadAmber(self):
+      rdbase = os.environ['RDBASE']
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords_bad.trx')
+      traj = geom.Trajectory(2, 0)
+      ok = False
+      try:
+        traj.ReadAmber(fName)
+      except:
+        ok = True
+      self.assertTrue(ok)
+      traj = geom.Trajectory(3, 3)
+      ok = False
+      try:
+        traj.ReadAmber(fName)
+      except:
+        ok = True
+      self.assertTrue(ok)
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords_bad2.trx')
+      ok = False
+      try:
+        traj = geom.Trajectory(3, 3)
+        traj.ReadAmber(fName)
+      except:
+        ok = True
+      self.assertTrue(ok)
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords.trx')
+      traj = geom.Trajectory(3, 3)
+      traj.ReadAmber(fName)
+      self.assertEqual(len(traj), 1)
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trx')
+      traj = geom.Trajectory(3, 3)
+      traj.ReadAmber(fName)
+      self.assertEqual(len(traj), 2)
+
+    def testReadGromos(self):
+      rdbase = os.environ['RDBASE']
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords_bad.trc')
+      traj = geom.Trajectory(2, 0)
+      ok = False
+      try:
+        traj.ReadGromos(fName)
+      except:
+        ok = True
+      self.assertTrue(ok)
+      traj = geom.Trajectory(3, 3)
+      ok = False
+      try:
+        traj.ReadGromos(fName)
+      except:
+        ok = True
+      self.assertTrue(ok)
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords_bad2.trc')
+      ok = False
+      try:
+        traj = geom.Trajectory(3, 3)
+        traj.ReadGromos(fName)
+      except:
+        ok = True
+      self.assertTrue(ok)
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords.trc')
+      traj = geom.Trajectory(3, 3)
+      traj.ReadGromos(fName)
+      self.assertEqual(len(traj), 1)
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trc')
+      traj = geom.Trajectory(3, 3)
+      traj.ReadGromos(fName)
+      self.assertEqual(len(traj), 2)
+
 if __name__=='__main__':
     print("Testing Geometry wrapper")
     unittest.main()

@@ -18,6 +18,7 @@
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
+#include <Geometry/Trajectory.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -332,6 +333,12 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("conf"),
               python::arg("assignId") = false),
              "Add a conformer to the molecule and return the conformer ID")
+
+        .def("AddConformersFromTrajectory", &ROMol::addConformersFromTrajectory,
+             (python::arg("self"), python::arg("traj"),
+              python::arg("nConf") = -1),
+             "Add conformers from a Trajectory to the molecule and return\n"
+             "the number of conformations that were added")
 
         .def("GetConformer", GetMolConformer,
              (python::arg("self"), python::arg("id") = -1),

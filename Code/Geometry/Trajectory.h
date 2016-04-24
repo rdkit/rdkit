@@ -11,6 +11,7 @@
 #ifndef __RD_TRAJECTORY_H__
 #define __RD_TRAJECTORY_H__
 #include <vector>
+#include <map>
 #include "point.h"
 
 namespace RDGeom {
@@ -18,28 +19,20 @@ namespace RDGeom {
 class Trajectory;
 
 class Snapshot {
+  friend Trajectory;
   public:
     /*! \brief Constructor
         \param pos is a pointer to an array of (numPoints * dimension) doubles;
         numPoints and dimension must match the Trajectory which is going to
         contain this Snapshot
-        If the ownership flag is set on this Snapshot, the pos pointer
-        will be freed upon:
-        1) destruction of the Trajectory object which contains the Snapshot
-        2) call of the removeSnapshot() method on the Trajectory object
-           which contains the Snapshot
         \param energy is the energy associated with this set of coordinates
      */
-    Snapshot(double *pos = NULL, double energy = 0.0, bool owner = true);
+    Snapshot(double *pos = NULL, double energy = 0.0);
     /*! \return a const pointer to the parent Trajectory
      */
     const Trajectory *trajectory() const {
       return d_trajectory;
     }
-    /*! \brief Sets the pointer to the parent Trajectory
-        \param traj is the parent Trajectory
-     */
-    void setTrajectory(const Trajectory *traj);
     /*! \param pointNum is the atom number whose coordinates will be retrieved
         \return the coordinates at pointNum as a Point2D object;
         requires the Trajectory dimension to be == 2
@@ -64,43 +57,31 @@ class Snapshot {
     /*! \brief Frees the pointer to the array of doubles where the
         coordinates for this Snapshot are stored
      */
-    void freePos();
-    /*! \return the status of the FREE_POS_ON_DESTROY flag
-        true: set, false: not set
-     */
-    bool getOwner() const {
-      return d_owner;
-    }
-    /*! \brief Sets the status of the owner flag
-     */
-    void setOwner(bool owner) {
-      d_owner = owner;
-    }
   private:
-    // flag which states if the Snapshot is the owner of the d_pos pointer
-    bool d_owner;
     // Pointer to the parent Trajectory object
     const Trajectory *d_trajectory;
     // Energy for this set of coordinates
     double d_energy;
-    // Pointer to Snapshot coordinates. If the owner flag is set, this pointer
-    // will be freed upon:
-    // 1) destruction of the Trajectory object which contains the Snapshot
-    // 2) call of the removeSnapshot() method on the Trajectory object
-    //    which contains the Snapshot
+    // pointer to Snapshot coordinates
     double *d_pos;
 };
 
 class Trajectory {
   public:
+    typedef std::map<double *, unsigned int> CoordMap;
+    typedef std::vector<Snapshot *> SnapshotPtrVect;
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
         this is normally 2 (2D coordinates) or 3 (3D coordinates)
         \param numPoints is the number of coordinate tuples associated to each Snapshot
      */
     Trajectory(unsigned int dimension, unsigned int numPoints);
-    /*! \brief Destructor. Upon destruction of the Trajectory object, the d_pos arrays
-         of the Snapshot whose owner flags is set will also be destroyed
+    /*! \brief Copy constructor
+     */
+    Trajectory(const Trajectory &other);
+    /*! \brief Destructor
+        as the Trajectory is the owner of the Snapshot, all Snapshots are destroyed
+        upon destruction of the Trajectory
      */
     ~Trajectory();
     /*! \return the dimensionality of this Trajectory's coordinate tuples
@@ -119,21 +100,22 @@ class Trajectory {
       return d_snapshotVect.size();
     }
     /*! \brief Appends a Snapshot to this Trajectory
-        \param s is the Snapshot to be added
+        \param s is the Snapshot to be added; the Trajectory
+               takes ownership of the snapshot coordinates
         \return the zero-based index position of the added Snapshot
      */
-    unsigned int addSnapshot(Snapshot s);
+    unsigned int addSnapshot(Snapshot *s);
     /*! \param snapshotNum is the zero-based index of the retrieved Snapshot
         \return a const reference to the relevant Snapshot in the Trajectory
      */
-    const Snapshot &getSnapshot(unsigned int snapshotNum) const;
+    Snapshot *getSnapshot(unsigned int snapshotNum) const;
     /*! \brief Inserts a Snapshot into this Trajectory
         \param snapshotNum is the zero-based index of the Trajectory's Snapshot
                before which the Snapshot s will be inserted
-        \param s is the Snapshot to be inserted
+        \param s is the Snapshot to be inserted; the Trajectory takes ownership of the Snapshot
         \return the zero-based index position of the inserted Snapshot
      */
-    unsigned int insertSnapshot(unsigned int snapshotNum, Snapshot s);
+    unsigned int insertSnapshot(unsigned int snapshotNum, Snapshot *s);
     /*! \brief Removes a Snapshot from this Trajectory
         \param snapshotNum is the zero-based index of Snapshot to be removed
         \return the zero-based index position of the Snapshot after the
@@ -158,7 +140,10 @@ class Trajectory {
     // number of coordinate tuples associated to each Snapshot
     const unsigned int d_numPoints;
     // vector holding the Snapshots for this Trajectory
-    std::vector<Snapshot> d_snapshotVect;
+    SnapshotPtrVect d_snapshotVect;
+    // map holding the pointer to coordinates for this Trajectory
+    // associated to the number of their occurrences within the Trajectory
+    CoordMap d_coordMap;
 };
 
 }
