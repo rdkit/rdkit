@@ -13,7 +13,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
-#include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 
 namespace BFGSOpt {
 const double FUNCTOL =
@@ -246,7 +246,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // "<<TOLX<<std::endl;
     if (test < TOLX) {
       if (traj && trajEverySteps) {
-        RDGeom::Snapshot *s = new RDGeom::Snapshot(newPos, fp);
+        RDGeom::Snapshot *s = new RDGeom::Snapshot(boost::shared_array<double>(newPos), fp);
         traj->addSnapshot(s);
         newPos = NULL;
       }
@@ -270,7 +270,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // "<<gradTol<<std::endl;
     if (test < gradTol) {
       if (traj && trajEverySteps) {
-        RDGeom::Snapshot *s = new RDGeom::Snapshot(newPos, fp);
+        RDGeom::Snapshot *s = new RDGeom::Snapshot(boost::shared_array<double>(newPos), fp);
         traj->addSnapshot(s);
         newPos = NULL;
       }
@@ -349,7 +349,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
 #endif
     }
     if (traj && trajEverySteps && !(iter % trajEverySteps)) {
-      RDGeom::Snapshot *s = new RDGeom::Snapshot(newPos, fp);
+      RDGeom::Snapshot *s = new RDGeom::Snapshot(boost::shared_array<double>(newPos), fp);
       traj->addSnapshot(s);
       newPos = new double[dim];
     }

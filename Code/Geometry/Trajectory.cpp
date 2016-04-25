@@ -17,7 +17,7 @@
 
 namespace RDGeom {
 
-Snapshot::Snapshot(double *pos, double energy) :
+Snapshot::Snapshot(boost::shared_array<double> pos, double energy) :
   d_trajectory(NULL),
   d_energy(energy),
   d_pos(pos) {}
@@ -44,18 +44,9 @@ Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
 Trajectory::Trajectory(const Trajectory &other) :
   d_dimension(other.d_dimension),
   d_numPoints(other.d_numPoints) {
-  std::map<double *, double *> tempMap;
   for (SnapshotPtrVect::const_iterator vectIt = other.d_snapshotVect.begin();
     vectIt != other.d_snapshotVect.end(); ++vectIt) {
-    std::map<double *, double *>::const_iterator mapIt = tempMap.find((*vectIt)->d_pos);
-    double *c = NULL;
-    if (mapIt == tempMap.end()) {
-      c = new double[d_dimension * d_numPoints];
-      tempMap[(*vectIt)->d_pos] = c;
-    }
-    else
-      c = mapIt->second;
-    Snapshot *s = new Snapshot(c, (*vectIt)->d_energy);
+    Snapshot *s = new Snapshot(*(*vectIt));
     addSnapshot(s);
   }
 }
@@ -63,15 +54,8 @@ Trajectory::Trajectory(const Trajectory &other) :
 Trajectory::~Trajectory()
 {
   for (SnapshotPtrVect::const_iterator vectIt = d_snapshotVect.begin();
-    vectIt != d_snapshotVect.end(); ++ vectIt) {
-    CoordMap::iterator mapIt = d_coordMap.find((*vectIt)->d_pos);
-    if (mapIt != d_coordMap.end() && mapIt->second) {
-      --(mapIt->second);
-      if (!mapIt->second)
-        delete [] mapIt->first;
-    }
+    vectIt != d_snapshotVect.end(); ++ vectIt)
     delete *vectIt;
-  }
 }
 
 unsigned int Trajectory::addSnapshot(Snapshot *s) {
@@ -86,20 +70,12 @@ Snapshot *Trajectory::getSnapshot(unsigned int snapshotNum) const {
 unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot *s) {
   PRECONDITION(snapshotNum <= d_snapshotVect.size(), "snapshotNum out of bounds");
   s->d_trajectory = this;
-  CoordMap::iterator it = d_coordMap.find(s->d_pos);
-  if (it != d_coordMap.end())
-    ++(it->second);
-  else
-    d_coordMap[s->d_pos] = 1;
   return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum, s)
           - d_snapshotVect.begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
-  CoordMap::iterator it = d_coordMap.find(d_snapshotVect[snapshotNum]->d_pos);
-  if (it != d_coordMap.end() && it->second)
-    --(it->second);
   delete d_snapshotVect[snapshotNum];
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
 }
@@ -119,29 +95,21 @@ unsigned int Trajectory::readAmber(const std::string &fName) {
   unsigned int nCoords = d_numPoints * 3;
   unsigned int nSnapshots = 0;
   while (inStream.good() && !inStream.eof()) {
-    double *c = NULL;
+    boost::shared_array<double> c(new double[nCoords]());
     unsigned int i = 0;
     while (i < nCoords) {
-      double v;
-      if (!(inStream >> v)) {
+      if (!(inStream >> c[i])) {
         if (!inStream.eof()) {
           std::stringstream ss;
           ss << "Error while reading file: " << fName;
-          delete [] c;
           throw ValueErrorException(ss.str());
         }
         else if (i && (i < (nCoords - 1))) {
           std::stringstream ss;
           ss << "Premature end of file: " << fName;
-          delete [] c;
           throw ValueErrorException(ss.str());
         }
         break;
-      }
-      else {
-        if (!i)
-          c = new double[nCoords]();
-        c[i] = v;
       }
       ++i;
     }
@@ -186,23 +154,19 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
     }
     else if ((tempStr == "POSITIONRED") || (tempStr == "POSITION")) {
       // these are the positions
-      double *c = new double[nCoords]();
+      boost::shared_array<double> c(new double[nCoords]());
       unsigned int j = 0;
       for (unsigned int i = 0; i < d_numPoints;) {
         std::getline(inStream, tempStr);
-        if (inStream.bad() || inStream.eof() || (tempStr == "END")) {
-          delete [] c;
+        if (inStream.bad() || inStream.eof() || (tempStr == "END"))
           throw ValueErrorException("Wrong number of coordinates");
-        }
         // ignore comments
         if (tempStr.find("#") != std::string::npos)
           continue;
         std::stringstream ls(tempStr);
         double x, y, z;
-        if (!(ls >> x >> y >> z)) {
-          delete [] c;
+        if (!(ls >> x >> y >> z))
           throw ValueErrorException("Error while reading file");
-        }
         // store the coordinates (convert to Angstrom!)
         c[j++] = x * 10.0;
         c[j++] = y * 10.0;
@@ -210,10 +174,8 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
         ++i;
       }
       std::getline(inStream, tempStr); // the END line
-      if (inStream.bad() || inStream.eof() || (tempStr != "END")) {
-        delete [] c;
+      if (inStream.bad() || inStream.eof() || (tempStr != "END"))
         throw ValueErrorException("Wrong number of coordinates");
-      }
       addSnapshot(new Snapshot(c));
       ++nSnapshots;
     }

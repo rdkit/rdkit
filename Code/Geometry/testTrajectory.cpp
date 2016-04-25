@@ -24,7 +24,7 @@ void testTrajectory2D() {
   Trajectory traj(dim, np);
   CHECK_INVARIANT(traj.dimension() == dim, "");
   CHECK_INVARIANT(traj.numPoints() == np, "");
-  double *c = new double [np * dim];
+  boost::shared_array<double> c(new double [np * dim]);
   for (unsigned int i = 0; i < np * dim; ++i)
     c[i] = static_cast<double>(i);
   for (unsigned int i = 0; i < ns; ++i)
@@ -69,7 +69,7 @@ void testTrajectory3D() {
   Trajectory traj(dim, np);
   CHECK_INVARIANT(traj.dimension() == dim, "");
   CHECK_INVARIANT(traj.numPoints() == np, "");
-  double *c = new double [np * dim];
+  boost::shared_array<double> c(new double [np * dim]);
   for (unsigned int i = 0; i < np * dim; ++i)
     c[i] = static_cast<double>(i);
   for (unsigned int i = 0; i < ns; ++i)

@@ -27,12 +27,12 @@ class PySnapshot {
   PySnapshot(python::list &coordList, double energy) {
     Snapshot *s = NULL;
     unsigned int l = python::len(coordList);
-    double *coords = new double[l];
+    boost::shared_array<double> c(new double[l]);
     for (unsigned int i = 0; i < l; ++i)
-      coords[i] = python::extract<double>(coordList[i]);
+      c[i] = python::extract<double>(coordList[i]);
     {
       NOGIL gil;
-      s = new Snapshot(coords, energy);
+      s = new Snapshot(c, energy);
     }
     snapshot.reset(s);
   }

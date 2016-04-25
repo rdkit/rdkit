@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include "point.h"
+#include "boost/shared_array.hpp"
 
 namespace RDGeom {
 
@@ -27,7 +28,7 @@ class Snapshot {
         contain this Snapshot
         \param energy is the energy associated with this set of coordinates
      */
-    Snapshot(double *pos = NULL, double energy = 0.0);
+    Snapshot(boost::shared_array<double> pos = boost::shared_array<double>(), double energy = 0.0);
     /*! \return a const pointer to the parent Trajectory
      */
     const Trajectory *trajectory() const {
@@ -62,13 +63,12 @@ class Snapshot {
     const Trajectory *d_trajectory;
     // Energy for this set of coordinates
     double d_energy;
-    // pointer to Snapshot coordinates
-    double *d_pos;
+    // shared array to Snapshot coordinates
+    boost::shared_array<double> d_pos;
 };
 
 class Trajectory {
   public:
-    typedef std::map<double *, unsigned int> CoordMap;
     typedef std::vector<Snapshot *> SnapshotPtrVect;
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
@@ -141,9 +141,6 @@ class Trajectory {
     const unsigned int d_numPoints;
     // vector holding the Snapshots for this Trajectory
     SnapshotPtrVect d_snapshotVect;
-    // map holding the pointer to coordinates for this Trajectory
-    // associated to the number of their occurrences within the Trajectory
-    CoordMap d_coordMap;
 };
 
 }
