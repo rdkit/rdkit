@@ -365,7 +365,7 @@ def _MolsToGridSVG(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
         txt = d2d.GetDrawingText()
         h,r,b = matcher.match(txt).groups()
         if not hdr:
-            hdr = h.replace("width='200px' height='200px' >","width='%dpx' height='%dpx' >"%fullSize)
+            hdr = h.replace("width='%dpx' height='%dpx' >"%subImgSize,"width='%dpx' height='%dpx' >"%fullSize)
         if not rect:
             rect = r
         blocks[i] = b
