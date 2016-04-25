@@ -14,7 +14,7 @@ import gzip
 
 methane = """\
 Methane
-     RDKit          
+     RDKit
 
   1  0  0  0  0  0  0  0  0  0999 V2000
     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -30,7 +30,7 @@ $$$$
 
 peroxide = """\
 Peroxide
-     RDKit          
+     RDKit
 
   2  1  0  0  0  0  0  0  0  0999 V2000
     0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
@@ -51,12 +51,12 @@ class TestLoadSDF(unittest.TestCase):
     def setUpClass(cls):
         if not gotPandas:
             raise unittest.SkipTest("Pandas not installed, skipping...")
-    
+
     def setUp(self):
         self.gz_filename = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'pandas_load.sdf.gz')
-        
+
     # the doctest tests loading from a ".sdf" file so there's no need for that test here
-    
+
     def test_load_gzip_file(self):
         df = PandasTools.LoadSDF(self.gz_filename)
         self.assertEqual(len(df), 13)
@@ -70,7 +70,7 @@ class TestLoadSDF(unittest.TestCase):
         self.assertEqual(list(df["ID"]), ["Methane", "Peroxide"])
         atom_counts = [mol.GetNumAtoms() for mol in df["ROMol"]]
         self.assertEqual(atom_counts, [1, 2])
-    
+
     def test_load_specify_column_names(self):
         sio = StringIO(methane + peroxide)
         df = PandasTools.LoadSDF(sio, idName="CorpID", molColName="_rdmol")
@@ -101,27 +101,32 @@ class TestLoadSDF(unittest.TestCase):
         self.assertEqual(prop1[1], "12.34")
 
         self.assertEqual(list(df["prop2"]), ["rtz", "qwe"])
-        
+
         prop3 = list(df["prop3"])
         self.assertEqual(prop3[0], "yxcv")
         self.assertTrue(numpy.isnan(prop3[1]), prop3[1])
+
+    def test_ignore_mol_column(self):
+        sio = StringIO(peroxide + methane)
+        df = PandasTools.LoadSDF(sio, molColName=None)
+        self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
 class TestWriteSDF(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if not gotPandas:
             raise unittest.SkipTest("Pandas not installed, skipping...")
-        
+
     def setUp(self):
         sio = StringIO(methane + peroxide)
         self.df = PandasTools.LoadSDF(sio)
-        
+
     def test_default_write_does_not_include_tags(self):
         sio = StringIO()
         PandasTools.WriteSDF(self.df, sio)
         s = sio.getvalue()
         self.assertNotIn(s, "prop2")
-        
+
     def test_identifier_from_a_column(self):
         sio = StringIO()
         PandasTools.WriteSDF(self.df, sio, idName="prop2")
@@ -170,7 +175,7 @@ class TestWriteSDF(unittest.TestCase):
         self.assertIn("7.0\n\n", s)
         self.assertIn("8\n\n", s)
         self.assertIn("8.0\n\n", s)
-        
+
     def test_write_to_sdf(self):
         dirname = tempfile.mkdtemp()
         try:
@@ -192,7 +197,7 @@ class TestWriteSDF(unittest.TestCase):
             self.assertEqual(s.split("\n", 1)[0], "Methane")
         finally:
             shutil.rmtree(dirname)
-                    
+
 if __name__ == '__main__':
     if PandasTools.pd is None:
         import sys
