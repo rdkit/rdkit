@@ -268,7 +268,10 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
     frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
 
 def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False, isomericSmiles=False, smilesName=None, embedProps=False):
-  """ Read file in SDF format and return as Pandas data frame. If embedProps=True all properties also get embedded in Mol objects in the molecule column. """
+  '''Read file in SDF format and return as Pandas data frame.
+  If embedProps=True all properties also get embedded in Mol objects in the molecule column.
+  If molColName=None molecules would not be present in resulting DataFrame (only properties would be read).
+  '''
   df = None
   if isinstance(filename, string_types):
     if filename.lower()[-3:] == ".gz":
@@ -282,18 +285,18 @@ def LoadSDF(filename, idName='ID',molColName = 'ROMol',includeFingerprints=False
     close = None # don't close an open file that was passed in
   records = []
   indices = []
-  for i, mol in enumerate(Chem.ForwardSDMolSupplier(f)):
+  for i, mol in enumerate(Chem.ForwardSDMolSupplier(f,sanitize=(molColName is not None))):
     if mol is None: continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
-    if not embedProps:
+    if molColName is not None and not embedProps:
       for prop in mol.GetPropNames():
         mol.ClearProp(prop)
     if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
       row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
-    if not includeFingerprints:
+    if molColName is not None and not includeFingerprints:
         row[molColName] = mol
-    else:
+    elif molColName is not None:
         row[molColName] = _MolPlusFingerprint(mol)
     records.append(row)
     indices.append(i)
