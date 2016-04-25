@@ -527,7 +527,7 @@ void registerFilterMatcherTypes(Archive &ar) {
   ar.register_type(static_cast<FilterMatchOps::Not *>(NULL));
   ar.register_type(static_cast<SmartsMatcher *>(NULL));
   ar.register_type(static_cast<ExclusionList *>(NULL));
-  ar.register_type(static_cast<FilterMatcherHierarchy *>(NULL));
+  ar.register_type(static_cast<FilterHierarchyMatcher *>(NULL));
 }
 #endif
 }
@@ -535,7 +535,7 @@ void registerFilterMatcherTypes(Archive &ar) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::SmartsMatcher, 1)
 BOOST_CLASS_VERSION(RDKit::ExclusionList, 1)
-BOOST_CLASS_VERSION(RDKit::FilterMatcherHierarchy, 1)
+BOOST_CLASS_VERSION(RDKit::FilterHierarchyMatcher, 1)
 #endif
 
 #endif

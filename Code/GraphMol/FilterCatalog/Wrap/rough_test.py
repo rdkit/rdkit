@@ -456,17 +456,24 @@ class TestCase(unittest.TestCase):
                      ['Halogen.Aliphatic', 'Halogen.NotFluorine.Aliphatic',
                       'Halogen.Bromine.Aliphatic']) ]
 
-        # test GetMatches API
-        for mol, res in matches:
-            entries = list(fc.GetMatches(mol))
-            for entry in entries:
-                hits = [match.filterMatch.GetName() for match in entry.GetFilterMatches(mol)]
-                self.assertEquals(res, hits)
+        catalogs = [fc]
+        if FilterCatalog.FilterCatalogCanSerialize():
+            pickle = fc.Serialize()
+            fc2 = FilterCatalog.FilterCatalog(pickle)
+            catalogs.append(fc2)
 
-        # test GetFilterMatches API
-        for mol, res in matches:
-            self.assertEquals(res, [match.filterMatch.GetName()
-                                    for match in fc.GetFilterMatches(mol)])
+        for fc in catalogs:
+            # test GetMatches API
+            for mol, res in matches:
+                entries = list(fc.GetMatches(mol))
+                for entry in entries:
+                    hits = [match.filterMatch.GetName() for match in entry.GetFilterMatches(mol)]
+                    self.assertEquals(res, hits)
+
+            # test GetFilterMatches API
+            for mol, res in matches:
+                self.assertEquals(res, [match.filterMatch.GetName()
+                                        for match in fc.GetFilterMatches(mol)])
                     
 
     def testFlattenedFunctionalGroupHierarchy(self):
