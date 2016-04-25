@@ -19,7 +19,7 @@ namespace RDGeom {
 class Trajectory;
 
 class Snapshot {
-  friend Trajectory;
+  friend class Trajectory;
   public:
     /*! \brief Constructor
         \param pos is a pointer to an array of (numPoints * dimension) doubles;
