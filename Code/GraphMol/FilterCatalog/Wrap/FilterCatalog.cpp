@@ -35,6 +35,7 @@
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 #include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 #include <GraphMol/FilterCatalog/FilterMatchers.h>
+#include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 #include <GraphMol/RDKitBase.h>
 
 namespace python = boost::python;
@@ -254,6 +255,18 @@ const char *FilterCatalogEntryDoc =
     "hzone_phenol_A(479)\n"
     "\n\n";
 
+
+python::dict GetFlattenedFunctionalGroupHierarchyHelper() {
+  const std::map<std::string, ROMOL_SPTR> &flattened = \
+      GetFlattenedFunctionalGroupHierarchy();
+  python::dict dict;
+  for(std::map<std::string, ROMOL_SPTR>::const_iterator it=flattened.begin();
+      it!=flattened.end();
+      ++it) {
+    dict[it->first] = it->second;
+  }
+  return dict;
+}
 struct filtercat_wrapper {
   static void wrap() {
     python::class_<std::pair<int, int> >("IntPair")
@@ -344,6 +357,18 @@ struct filtercat_wrapper {
         .def("AddPattern", &ExclusionList::addPattern,
              "Add a FilterMatcherBase that should not appear in a molecule");
 
+    python::class_<FilterHierarchyMatcher, FilterHierarchyMatcher *,
+                   python::bases<FilterMatcherBase> >("FilterHierarchyMatcher",
+                                                      python::init<>())
+        .def(python::init<const FilterMatcherBase &>("Construct from a filtermatcher"))
+        .def("SetPattern", &FilterHierarchyMatcher::setPattern,
+             "Set the filtermatcher pattern for this node.  An empty node is considered "
+             "a root node and passes along the matches to the children.")
+        .def("AddChild", &FilterHierarchyMatcher::addChild,
+             "Add a child node to this hierarchy.");
+
+    python::register_ptr_to_python<boost::shared_ptr<FilterHierarchyMatcher> >();
+    
     python::class_<std::vector<RDKit::ROMol *> >("MolList")
         .def(python::vector_indexing_suite<std::vector<ROMol *>, true>());
 
@@ -378,6 +403,13 @@ struct filtercat_wrapper {
                               FilterCatalogEntry::clearProp);
 
     python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry> >();
+    python::def("GetFunctionalGroupHierarchy", GetFunctionalGroupHierarchy,
+                "Returns the functional group hierarchy filter catalog",
+                python::return_value_policy<python::reference_existing_object>());
+    python::def("GetFlattenedFunctionalGroupHierarchy",
+                GetFlattenedFunctionalGroupHierarchyHelper,
+                "Returns the flattened functional group hierarchy as a dictionary "
+                " of name:ROMOL_SPTR substructure items");
 
 #ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
     python::register_ptr_to_python<
@@ -437,7 +469,9 @@ struct filtercat_wrapper {
              (python::arg("mol")),
              "Return the first catalog entry that matches mol")
         .def("GetMatches", &FilterCatalog::getMatches, (python::arg("mol")),
-             "Return all catalog entries that match mol");
+             "Return all catalog entries that match mol")
+        .def("GetFilterMatches", &FilterCatalog::getFilterMatches, (python::arg("mol")),
+             "Return every matching filter from all catalog entries that match mol");
 
     python::class_<PythonFilterMatch, python::bases<FilterMatcherBase> >(
         "PythonFilterMatcher", python::init<PyObject *>());
@@ -464,6 +498,8 @@ struct filtercat_wrapper {
     python::class_<FilterMatchOps::Not, FilterMatchOps::Not *,
                    python::bases<FilterMatcherBase> >(
         "Not", python::init<FilterMatcherBase &>());
+
+
   };
 };
 
