@@ -23,18 +23,20 @@ Snapshot::Snapshot(boost::shared_array<double> pos, double energy) :
   d_pos(pos) {}
 
 Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
-  PRECONDITION(d_pos, "pos must not be NULL");
-  PRECONDITION(trajectory()->dimension() == 2, "d_dimension must be == 2");
-  unsigned int i = pointNum * trajectory()->dimension();
+  PRECONDITION(d_pos, "d_pos must not be NULL");
+  PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
+  PRECONDITION(d_trajectory->dimension() == 2, "d_dimension must be == 2");
+  unsigned int i = pointNum * d_trajectory->dimension();
   return Point2D(d_pos[i], d_pos[i + 1]);
 }
 
 Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
-  PRECONDITION(d_pos, "pos must not be NULL");
-  PRECONDITION(trajectory()->dimension() >= 2, "d_dimension must be >= 2");
-  unsigned int i = pointNum * trajectory()->dimension();
+  PRECONDITION(d_pos, "d_pos must not be NULL");
+  PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
+  PRECONDITION(d_trajectory->dimension() >= 2, "d_dimension must be >= 2");
+  unsigned int i = pointNum * d_trajectory->dimension();
   return (Point3D(d_pos[i], d_pos[i + 1],
-          (trajectory()->dimension() == 3) ? d_pos[i + 2] : 0.0));
+          (d_trajectory->dimension() == 3) ? d_pos[i + 2] : 0.0));
 }
 
 Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
@@ -44,18 +46,9 @@ Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
 Trajectory::Trajectory(const Trajectory &other) :
   d_dimension(other.d_dimension),
   d_numPoints(other.d_numPoints) {
-  for (SnapshotPtrVect::const_iterator vectIt = other.d_snapshotVect.begin();
-    vectIt != other.d_snapshotVect.end(); ++vectIt) {
-    Snapshot *s = new Snapshot(*(*vectIt));
-    addSnapshot(s);
-  }
-}
-
-Trajectory::~Trajectory()
-{
-  for (SnapshotPtrVect::const_iterator vectIt = d_snapshotVect.begin();
-    vectIt != d_snapshotVect.end(); ++ vectIt)
-    delete *vectIt;
+  for (SnapshotSPtrVect::const_iterator vectIt = other.d_snapshotVect.begin();
+    vectIt != other.d_snapshotVect.end(); ++vectIt)
+    addSnapshot(new Snapshot(*(*vectIt)));
 }
 
 unsigned int Trajectory::addSnapshot(Snapshot *s) {
@@ -64,19 +57,18 @@ unsigned int Trajectory::addSnapshot(Snapshot *s) {
 
 Snapshot *Trajectory::getSnapshot(unsigned int snapshotNum) const {
   PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
-  return d_snapshotVect[snapshotNum];
+  return d_snapshotVect[snapshotNum].get();
 }
 
 unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot *s) {
   PRECONDITION(snapshotNum <= d_snapshotVect.size(), "snapshotNum out of bounds");
   s->d_trajectory = this;
-  return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum, s)
-          - d_snapshotVect.begin());
+  return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum,
+          boost::shared_ptr<Snapshot>(s)) - d_snapshotVect.begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
-  delete d_snapshotVect[snapshotNum];
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
 }
 

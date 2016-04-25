@@ -15,6 +15,33 @@
 using namespace RDGeom;
 using namespace RDKit;
 
+void testSnapshot() {
+  {
+    boost::shared_array<double> pos;
+    Snapshot s(pos);
+    bool e = false;
+    try {
+      s.getPoint2D(12);
+    }
+    catch (...) {
+      e = true;
+    }
+    TEST_ASSERT(e);
+  }
+  {
+    boost::shared_array<double> pos(new double[3]());
+    Snapshot s(pos);
+    bool e = false;
+    try {
+      s.getPoint2D(0);
+    }
+    catch (...) {
+      e = true;
+    }
+    TEST_ASSERT(e);
+  }
+}
+
 void testTrajectory2D() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "testTrajectory2D" << std::endl;
@@ -119,7 +146,8 @@ void testReadAmber() {
     bool ok = false;
     try {
       traj.readAmber(fName);
-    } catch (...) {
+    }
+    catch (...) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -129,7 +157,8 @@ void testReadAmber() {
     bool ok = false;
     try {
       traj.readAmber(fName);
-    } catch (ValueErrorException &e) {
+    }
+    catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
       ok = true;
     }
@@ -141,7 +170,8 @@ void testReadAmber() {
     try {
       Trajectory traj(3, 3);
       traj.readAmber(fName);
-    } catch (ValueErrorException &e) {
+    }
+    catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
       ok = true;
     }
@@ -174,7 +204,8 @@ void testReadGromos() {
     bool ok = false;
     try {
       traj.readGromos(fName);
-    } catch (...) {
+    }
+    catch (...) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -184,7 +215,8 @@ void testReadGromos() {
     bool ok = false;
     try {
       traj.readGromos(fName);
-    } catch (ValueErrorException &e) {
+    }
+    catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
       ok = true;
     }
@@ -196,7 +228,8 @@ void testReadGromos() {
     try {
       Trajectory traj(3, 3);
       traj.readGromos(fName);
-    } catch (ValueErrorException &e) {
+    }
+    catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
       ok = true;
     }
@@ -222,6 +255,7 @@ int main() {
   BOOST_LOG(rdErrorLog) << "***********************************************************\n";
   BOOST_LOG(rdErrorLog) << "Testing Trajectory\n";
 
+  testSnapshot();
   testTrajectory2D();
   testTrajectory3D();
   testReadAmber();

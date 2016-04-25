@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include "point.h"
+#include "boost/shared_ptr.hpp"
 #include "boost/shared_array.hpp"
 
 namespace RDGeom {
@@ -28,7 +29,7 @@ class Snapshot {
         contain this Snapshot
         \param energy is the energy associated with this set of coordinates
      */
-    Snapshot(boost::shared_array<double> pos = boost::shared_array<double>(), double energy = 0.0);
+    Snapshot(boost::shared_array<double> pos, double energy = 0.0);
     /*! \return a const pointer to the parent Trajectory
      */
     const Trajectory *trajectory() const {
@@ -69,7 +70,7 @@ class Snapshot {
 
 class Trajectory {
   public:
-    typedef std::vector<Snapshot *> SnapshotPtrVect;
+    typedef std::vector<boost::shared_ptr<Snapshot> > SnapshotSPtrVect;
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
         this is normally 2 (2D coordinates) or 3 (3D coordinates)
@@ -79,11 +80,6 @@ class Trajectory {
     /*! \brief Copy constructor
      */
     Trajectory(const Trajectory &other);
-    /*! \brief Destructor
-        as the Trajectory is the owner of the Snapshot, all Snapshots are destroyed
-        upon destruction of the Trajectory
-     */
-    ~Trajectory();
     /*! \return the dimensionality of this Trajectory's coordinate tuples
      */
     unsigned int dimension() const {
@@ -140,7 +136,7 @@ class Trajectory {
     // number of coordinate tuples associated to each Snapshot
     const unsigned int d_numPoints;
     // vector holding the Snapshots for this Trajectory
-    SnapshotPtrVect d_snapshotVect;
+    SnapshotSPtrVect d_snapshotVect;
 };
 
 }

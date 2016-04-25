@@ -406,6 +406,22 @@ class TestCase(unittest.TestCase):
         self.assertEqual(yi,2)
         self.assertEqual(zi,1)
 
+    def testSnapshot(self):
+      s = geom.Snapshot([])
+      e = False
+      try:
+        s.GetPoint2D(12)
+      except:
+        e = True
+      self.assertTrue(e)
+      s = geom.Snapshot([0.0, 0.0, 0.0])
+      e = False
+      try:
+        s.GetPoint2D(0)
+      except:
+        e = True
+      self.assertTrue(e)
+
     def testTrajectory2D(self):
       dim = 2
       np = 10
