@@ -200,14 +200,14 @@ SELECT count(*) FROM pgsfp WHERE
 	f < morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-    54
+    55
 (1 row)
 
 SELECT count(*) FROM pgsfp WHERE 
 	f <= morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-    54
+    55
 (1 row)
 
 SELECT count(*) FROM pgsfp WHERE 
@@ -221,14 +221,14 @@ SELECT count(*) FROM pgsfp WHERE
 	f >= morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-   946
+   945
 (1 row)
 
 SELECT count(*) FROM pgsfp WHERE 
 	f > morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-   946
+   945
 (1 row)
 
 SET enable_indexscan=on;
@@ -244,14 +244,14 @@ SELECT count(*) FROM pgsfp WHERE
 	f < morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-    54
+    55
 (1 row)
 
 SELECT count(*) FROM pgsfp WHERE 
 	f <= morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-    54
+    55
 (1 row)
 
 SELECT count(*) FROM pgsfp WHERE 
@@ -265,14 +265,14 @@ SELECT count(*) FROM pgsfp WHERE
 	f >= morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-   946
+   945
 (1 row)
 
 SELECT count(*) FROM pgsfp WHERE 
 	f > morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol, 1);
  count 
 -------
-   946
+   945
 (1 row)
 
 SET enable_indexscan=on;
