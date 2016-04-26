@@ -15,5 +15,8 @@ rdkit_test(testChemTransforms testChemTransforms.cpp
            LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch
            GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})
 
+rdkit_test(testRGroupDecomp testRGroupDecomp.cpp 
+           LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch
+           GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})
 
 

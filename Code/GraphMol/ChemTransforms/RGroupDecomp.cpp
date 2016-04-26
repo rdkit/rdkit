@@ -82,7 +82,7 @@ inline bool operator < (const std::vector<ChainState>& left, const std::vector<C
 
 static
 bool SymmetrizeSidechains (const std::vector<ROMOL_SPTR> &mols, const ROMol* core, 
-                           const RGoupDecompositionOptions &options,  
+                           const RGroupDecompositionOptions &options,  
                            const std::vector<std::vector<sidechain_t> > &sidechains,
                            std::vector<MolSidechains> &res) {
     if(mols.size() != sidechains.size()) {
@@ -207,7 +207,7 @@ bool SymmetrizeSidechains (const std::vector<ROMOL_SPTR> &mols, const ROMol* cor
 
 static
 void GetSidechains(const std::vector<ROMOL_SPTR> &mols, const std::vector<ROMOL_SPTR> &cores, 
-                   const RGoupDecompositionOptions &options,  
+                   const RGroupDecompositionOptions &options,  
                    std::vector< std::vector< sidechain_t > > &res) {
 
     std::vector<sidechain_t> localRes;
@@ -264,7 +264,7 @@ void GetSidechains(const std::vector<ROMOL_SPTR> &mols, const std::vector<ROMOL_
                         unsigned matches = 0;    // number of attachment points
                         unsigned idx = 0;
                         RWMol* sideChain = new RWMol(); // == cSmi / elem
-                        for(size_t ai=0; ai < frags[i].size(); ai++) {
+                        for(size_t ai=0; ai < frags[fi].size(); ai++) {
                             const Atom* a = tMol->getAtomWithIdx(frags[fi][ai]);
                             int label =0;
                             a->getPropIfPresent(common_properties::molAtomMapNumber, label);
@@ -282,7 +282,7 @@ void GetSidechains(const std::vector<ROMOL_SPTR> &mols, const std::vector<ROMOL_
                         }
                         //add bonds between added atoms
                         std::map<unsigned, unsigned> visitedBonds;
-                        for(size_t ai=0; ai < frags[i].size(); ai++) {
+                        for(size_t ai=0; ai < frags[fi].size(); ai++) {
                             Atom* a = tMol->getAtomWithIdx(frags[fi][ai]);
                             ROMol::OEDGE_ITER beg,end;
                             for(boost::tie(beg,end) = tMol->getAtomBonds(a); beg!=end; ++beg){
@@ -337,7 +337,7 @@ void GetSidechains(const std::vector<ROMOL_SPTR> &mols, const std::vector<ROMOL_
 }
 
 static
-void ProcessCoreLabels(const std::vector<ROMOL_SPTR> &cores, const RGoupDecompositionOptions &options, 
+void ProcessCoreLabels(const std::vector<ROMOL_SPTR> &cores, const RGroupDecompositionOptions &options, 
                              std::vector<ROMOL_SPTR> &resultCores) {
 
     for(size_t coreIdx=0; coreIdx < cores.size(); coreIdx++) {
@@ -407,27 +407,27 @@ void ProcessCoreLabels(const std::vector<ROMOL_SPTR> &cores, const RGoupDecompos
 // Public API implementation:
 //=====================================================================
 
-void RGroupDecomposite(const std::vector<ROMOL_SPTR> &mols, const std::vector<ROMOL_SPTR> &srcCores, const RGoupDecompositionOptions &options, 
+void RGroupDecomposite(const std::vector<ROMOL_SPTR> &mols, const std::vector<ROMOL_SPTR> &srcCores, const RGroupDecompositionOptions &options, 
                              std::vector<ROMOL_SPTR> &results)
 {
 
     std::vector<ROMOL_SPTR>  processedCores;
     const std::vector<ROMOL_SPTR>* cores = NULL;
 
-    std::vector<MatchVectType> coreCoreMatches(cores->size());  /// ??? 
+    std::vector<MatchVectType> coreCoreMatches(srcCores.size());  /// ??? 
     if(options.LabelledCores) {
-    ProcessCoreLabels(*cores, options, processedCores);
-    cores = &processedCores;
-    std::vector<MatchVectType> matches;
-    for(size_t i=0; i < cores->size(); i++) {
-        SubstructMatch(*(*cores)[i], *(*cores)[i], matches, false);
-        if(matches.empty()) // # pathology happens at times with query features in the core
-            for(int ai=0; ai < (int)(*cores)[i]->getNumAtoms(); ai++)
-                coreCoreMatches[i].push_back(std::pair<int,int>(ai,0)); // ??? matches=(tuple(range(core.GetNumAtoms())),)
-        else
-            for(unsigned j=0; j < matches.size(); j++)
-                for(unsigned k=0; k < matches[j].size(); k++)
-                    coreCoreMatches[i].push_back(matches[j][k]); // append
+        ProcessCoreLabels(srcCores, options, processedCores);
+        cores = &processedCores;
+        std::vector<MatchVectType> matches;
+        for(size_t i=0; i < cores->size(); i++) {
+            SubstructMatch(*(*cores)[i], *(*cores)[i], matches, false);
+            if(matches.empty()) // # pathology happens at times with query features in the core
+                for(int ai=0; ai < (int)(*cores)[i]->getNumAtoms(); ai++)
+                    coreCoreMatches[i].push_back(std::pair<int,int>(ai,0)); // ??? matches=(tuple(range(core.GetNumAtoms())),)
+            else
+                for(unsigned j=0; j < matches.size(); j++)
+                    for(unsigned k=0; k < matches[j].size(); k++)
+                        coreCoreMatches[i].push_back(matches[j][k]); // append
         }
     }
     else
