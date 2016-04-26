@@ -26,6 +26,8 @@ Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
   PRECONDITION(d_pos, "d_pos must not be NULL");
   PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
   PRECONDITION(d_trajectory->dimension() == 2, "d_dimension must be == 2");
+  PRECONDITION(d_trajectory->numPoints(), "d_numPoints must be > 0");
+  URANGE_CHECK(pointNum, d_trajectory->numPoints() - 1);
   unsigned int i = pointNum * d_trajectory->dimension();
   return Point2D(d_pos[i], d_pos[i + 1]);
 }
@@ -34,6 +36,8 @@ Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
   PRECONDITION(d_pos, "d_pos must not be NULL");
   PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
   PRECONDITION(d_trajectory->dimension() >= 2, "d_dimension must be >= 2");
+  PRECONDITION(d_trajectory->numPoints(), "d_numPoints must be > 0");
+  URANGE_CHECK(pointNum, d_trajectory->numPoints() - 1);
   unsigned int i = pointNum * d_trajectory->dimension();
   return (Point3D(d_pos[i], d_pos[i + 1],
           (d_trajectory->dimension() == 3) ? d_pos[i + 2] : 0.0));
@@ -56,19 +60,19 @@ unsigned int Trajectory::addSnapshot(Snapshot *s) {
 }
 
 Snapshot *Trajectory::getSnapshot(unsigned int snapshotNum) const {
-  PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
+  URANGE_CHECK(snapshotNum, d_snapshotVect.size() - 1);
   return d_snapshotVect[snapshotNum].get();
 }
 
 unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot *s) {
-  PRECONDITION(snapshotNum <= d_snapshotVect.size(), "snapshotNum out of bounds");
+  URANGE_CHECK(snapshotNum, d_snapshotVect.size());
   s->d_trajectory = this;
   return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum,
           boost::shared_ptr<Snapshot>(s)) - d_snapshotVect.begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
-  PRECONDITION(snapshotNum < d_snapshotVect.size(), "snapshotNum out of bounds");
+  URANGE_CHECK(snapshotNum, d_snapshotVect.size() - 1);
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
 }
 

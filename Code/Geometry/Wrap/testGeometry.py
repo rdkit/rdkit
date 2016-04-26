@@ -435,6 +435,18 @@ class TestCase(unittest.TestCase):
       for i in range(ns):
         traj.AddSnapshot(geom.Snapshot(c, float(i)))
       self.assertEqual(len(traj), ns)
+      e = False
+      try:
+        traj.GetSnapshot(ns)
+      except:
+        e = True
+      self.assertTrue(e)
+      e = False
+      try:
+        traj.GetSnapshot(0).GetPoint2D(np)
+      except:
+        e = True
+      self.assertTrue(e)
       for i in range(np):
         self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint2D(i).x, float(i * dim))
         self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint2D(i).y, float(i * dim + 1))
@@ -474,6 +486,18 @@ class TestCase(unittest.TestCase):
       for i in range(ns):
         traj.AddSnapshot(geom.Snapshot(c, float(i)))
       self.assertEqual(len(traj), ns)
+      e = False
+      try:
+        traj.GetSnapshot(ns)
+      except:
+        e = True
+      self.assertTrue(e)
+      e = False
+      try:
+        traj.GetSnapshot(0).GetPoint2D(np)
+      except:
+        e = True
+      self.assertTrue(e)
       for i in range(np):
         self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).x, float(i * dim))
         self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).y, float(i * dim + 1))
