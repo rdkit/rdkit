@@ -560,6 +560,53 @@ class TestCase(unittest.TestCase):
       traj.ReadAmber(fName)
       self.assertEqual(len(traj), 2)
 
+    def testReadAmberPython(self):
+      # reimplemented the Amber trajectory reader in Python
+      # let's check we get the same data as the C++ reader
+      # (test for building a trajectory out of Snapshots from Python)
+      rdbase = os.environ['RDBASE']
+      fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trx')
+      traj = geom.Trajectory(3, 3)
+      nCoords = traj.NumPoints() * 3
+      nSnapshots = 0
+      hnd = open(fName, 'r')
+      line = hnd.readline()
+      lineNum = 0
+      c = []
+      i = 0
+      while (line):
+        lineNum += 1
+        if (lineNum > 1):
+          tok = line.strip().split()
+          j = 0
+          while ((i < nCoords) and (j < len(tok))):
+            c.append(float(tok[j]))
+            j += 1
+            i += 1
+          if (i == nCoords):
+            nSnapshots += 1
+            traj.AddSnapshot(geom.Snapshot(c))
+            c = []
+            i = 0
+            line = ' '.join(tok[j:]) + ' '
+          else:
+            line = ''
+        else:
+          line = ''
+        line += hnd.readline()
+      hnd.close()
+      self.assertEqual(i, 0)
+      self.assertEqual(nSnapshots, 2)
+      traj2 = geom.Trajectory(3, 3)
+      traj2.ReadAmber(fName)
+      self.assertEqual(len(traj), len(traj2))
+      self.assertEqual(traj.NumPoints(), traj2.NumPoints())
+      for snapshotNum in range(len(traj)):
+        for pointNum in range(traj.NumPoints()):
+          for i in range(3):
+            self.assertEqual(traj.GetSnapshot(snapshotNum).GetPoint3D(pointNum)[i],
+              traj2.GetSnapshot(snapshotNum).GetPoint3D(pointNum)[i])
+
     def testReadGromos(self):
       rdbase = os.environ['RDBASE']
       fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords_bad.trc')

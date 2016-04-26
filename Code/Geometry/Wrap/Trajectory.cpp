@@ -25,18 +25,13 @@ class PySnapshot {
     snapshot.reset(new Snapshot(*(other.snapshot.get())));
   }
   PySnapshot(python::list &coordList, double energy) {
-    Snapshot *s = NULL;
     unsigned int l = python::len(coordList);
     boost::shared_array<double> c;
     if (l)
       c.reset(new double[l]);
     for (unsigned int i = 0; i < l; ++i)
       c[i] = python::extract<double>(coordList[i]);
-    {
-      NOGIL gil;
-      s = new Snapshot(c, energy);
-    }
-    snapshot.reset(s);
+    snapshot.reset(new Snapshot(c, energy));
   }
   Point2D getPoint2D(unsigned int pointNum) const {
     return snapshot.get()->getPoint2D(pointNum);
