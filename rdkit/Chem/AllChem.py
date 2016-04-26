@@ -322,13 +322,16 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
   return mol
 
 
-def AssignBondOrdersFromTemplate(refmol, mol):
+def AssignBondOrdersFromTemplate(refmol, mol, copyStereo=False, useMCS=False):
   """ assigns bond orders to a molecule based on the
       bond orders in a template molecule
 
   Arguments
     - refmol: the template molecule
     - mol: the molecule to assign bond orders to
+    - copyStereo: should the stereo be copied from template to the molecule (default=False)
+    - useMCS: should MCS be use as last resort matching, which resolves missing bonds.
+        Recurrent call will be made by setting this to True (default=False).
 
     An example, start by generating a template from a SMILES
     and read in the PDB structure of the molecule
@@ -363,12 +366,11 @@ def AssignBondOrdersFromTemplate(refmol, mol):
   mol2 = rdchem.Mol(mol)
   # do the molecules match already?
   matching = mol2.GetSubstructMatch(refmol2)
-  if not matching:  # no, they don't match
+  if not matching or mol2.GetNumBonds() != refmol2.GetNumBonds(): # no, they don't match, or some bonds are bad
     # check if bonds of mol are SINGLE
     for b in mol2.GetBonds():
-      if b.GetBondType() != BondType.SINGLE:
-        b.SetBondType(BondType.SINGLE)
-        b.SetIsAromatic(False)
+      b.SetBondType(BondType.SINGLE)
+      b.SetIsAromatic(False)
     # set the bonds of mol to SINGLE
     for b in refmol2.GetBonds():
       b.SetBondType(BondType.SINGLE)
@@ -376,34 +378,151 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     # set atom charges to zero;
     for a in refmol2.GetAtoms():
       a.SetFormalCharge(0)
+      a.SetIsAromatic(False)
     for a in mol2.GetAtoms():
       a.SetFormalCharge(0)
+      a.SetIsAromatic(False)
 
-    matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
+    matching = mol2.GetSubstructMatch(refmol2)
+    # an inveerse match
+    if not matching:
+      inverse_matching = refmol2.GetSubstructMatch(mol2)
+      if inverse_matching and mol2.GetNumAtoms() == refmol2.GetNumAtoms():
+        matching = tuple(i[0] for i in sorted(enumerate(inverse_matching), key=lambda x: x[1]))
+
+    # add missing and remove excesive bonds
+    if len(GetMolFrags(mol2, asMols=False, sanitizeFrags=False)) > 1 or mol2.GetNumAtoms() != refmol2.GetNumAtoms():
+      fragments = zip(GetMolFrags(mol2, asMols=False, sanitizeFrags=False), GetMolFrags(mol2, asMols=True, sanitizeFrags=False))
+      fragments = sorted(fragments, key=lambda x: len(x[0]), reverse=True) # sort by decreasing size
+
+      available_atoms = set(range(refmol2.GetNumAtoms()))
+      frag_based_matching = []
+      for f, f_mol in fragments:
+        frag_matches = refmol2.GetSubstructMatches(f_mol)
+        for m in frag_matches:
+          if set(m).issubset(available_atoms):
+            available_atoms -= set(m)
+            frag_based_matching.extend(zip(f, m))
+            break
+        else:
+          pass
+      if frag_based_matching and len(frag_based_matching) == refmol2.GetNumAtoms():
+        mol_matching = tuple(i[0] for i in sorted(frag_based_matching,key=lambda x: x[1]))
+        ref_matching = tuple(i[1] for i in sorted(frag_based_matching,key=lambda x: x[0]))
+
+        mol2 = RWMol(mol2)
+
+        missing_bonds=[]
+        for b in refmol2.GetBonds():
+          atom1 = mol_matching[b.GetBeginAtomIdx()]
+          atom2 = mol_matching[b.GetEndAtomIdx()]
+          b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
+          if not b2:
+            missing_bonds.append((atom1, atom2))
+        for a1, a2 in missing_bonds:
+          mol2.AddBond(a1, a2)
+
+        extra_bonds=[]
+        for b in mol2.GetBonds():
+          atom1 = ref_matching[b.GetBeginAtomIdx()]
+          atom2 = ref_matching[b.GetEndAtomIdx()]
+          b2 = refmol2.GetBondBetweenAtoms(atom1, atom2)
+          if not b2:
+            extra_bonds.append((b.GetBeginAtomIdx(), b.GetEndAtomIdx()))
+
+        for a1, a2 in extra_bonds:
+          mol2.RemoveBond(a1, a2)
+
+        mol2 = mol2.GetMol()
+
+        # use current mapping if it's complete or check again
+        if len(mol_matching) != refmol2.GetNumAtoms():
+          matching = mol2.GetSubstructMatch(refmol2)
+
+    if useMCS and not matching: # MCS - last resort
+      mcs = FindMCS([refmol, mol], timeout=1, minNumAtoms=int(refmol.GetNumAtoms()*.5))
+      if mcs.numAtoms > 0:
+        mcs_mol = MolFromSmarts(mcs.smarts)
+        matching = mol.GetSubstructMatch(mcs_mol)
+        mcs_matching = {i[1]:i[0] for i in sorted(enumerate(matching),key=lambda x: x[1])}
+
+        # excesive bonds on mcs
+        excesive_bonds = []
+        for b in mol.GetBonds():
+          mol_a1 = b.GetBeginAtomIdx()
+          mol_a2 = b.GetEndAtomIdx()
+          if mol_a1 in mcs_matching.keys() and mol_a2 in mcs_matching.keys():
+            mcs_a1 = mcs_matching[mol_a1]
+            mcs_a2 = mcs_matching[mol_a2]
+            b2 = mcs_mol.GetBondBetweenAtoms(mcs_a1,mcs_a2)
+          else:
+            b2 = None
+          if b2 is None:
+            excesive_bonds.append((mol_a1, mol_a2))
+
+        if excesive_bonds:
+          mol2 = RWMol(mol)
+          for a1,a2 in excesive_bonds:
+            mol2.RemoveBond(a1,a2)
+          mol2 = mol2.GetMol()
+
+          # recurent call not to double the code
+          return AssignBondOrdersFromTemplate(refmol, mol2)
+
     # do the molecules match now?
     if matching:
-      if len(matching) > 1:
-        logger.warning("More than one matching pattern found - picking one")
-      matching = matching[0]
+      mol2 = RWMol(mol2)
       # apply matching: set bond properties
       for b in refmol.GetBonds():
         atom1 = matching[b.GetBeginAtomIdx()]
         atom2 = matching[b.GetEndAtomIdx()]
         b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
+        if b2 is None: # add missing bond
+          mol2.AddBond(atom1, atom2)
+          b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
         b2.SetBondType(b.GetBondType())
         b2.SetIsAromatic(b.GetIsAromatic())
       # apply matching: set atom properties
+      fix_chirality = False
       for a in refmol.GetAtoms():
         a2 = mol2.GetAtomWithIdx(matching[a.GetIdx()])
         a2.SetHybridization(a.GetHybridization())
         a2.SetIsAromatic(a.GetIsAromatic())
         a2.SetNumExplicitHs(a.GetNumExplicitHs())
         a2.SetFormalCharge(a.GetFormalCharge())
+        if copyStereo and a.GetChiralTag() != ChiralType.CHI_UNSPECIFIED:
+          a2.SetChiralTag(a.GetChiralTag())
+          fix_chirality = True
+      # invert some badly assigned chiral centers, since ChiralTag is not absolute
+      if copyStereo and fix_chirality:
+        for refmol_a, mol2_a in zip(FindMolChiralCenters(refmol), FindMolChiralCenters(mol2)):
+          if refmol_a[1] != mol2_a[1]:
+            a = mol2.GetAtomWithIdx(mol2_a[0])
+            if a.GetChiralTag() == CHI_TETRAHEDRAL_CW:
+              a.SetChiralTag(ChiralType.CHI_TETRAHEDRAL_CCW)
+            else: #ChiralType.CHI_TETRAHEDRAL_CCW
+              a.SetChiralTag(ChiralType.CHI_TETRAHEDRAL_CW)
+
+      # remove unwanted bonds (autodetected?)
+      # create an inverse matching for mol -> ref relation
+      inverse_matching = tuple(i[0] for i in sorted(enumerate(matching), key=lambda x: x[1]))
+      bonds=[]
+      for b in mol2.GetBonds():
+        atom1 = inverse_matching[b.GetBeginAtomIdx()]
+        atom2 = inverse_matching[b.GetEndAtomIdx()]
+        b2 = refmol.GetBondBetweenAtoms(atom1, atom2)
+        if not b2:
+          bonds.append((b.GetBeginAtomIdx(), b.GetEndAtomIdx()))
+
+      for a1, a2 in bonds:
+        mol2.RemoveBond(a1, a2)
+
+      mol2 = mol2.GetMol()
       SanitizeMol(mol2)
-      if hasattr(mol2, '__sssAtoms'):
-        mol2.__sssAtoms = None  # we don't want all bonds highlighted
     else:
       raise ValueError("No matching found")
+  if hasattr(mol2, '__sssAtoms'):
+    mol2.__sssAtoms = None # we don't want all bonds highlighted
   return mol2
 
 # ------------------------------------
