@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 
-
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BadFileException.h>
 #include <fstream>
