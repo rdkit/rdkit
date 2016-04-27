@@ -159,6 +159,9 @@ void hierarchy_create() {
       stack[0] = toplevel.back();
       
     } else {
+      PRECONDITION(FuncDataArray[i].level < MAX_DEPTH,
+                   std::string("Invalid Depth in Built in Functional Group Hierarchy: ") +
+                   FuncDataArray[i].name);
       boost::shared_ptr<FilterHierarchyMatcher> real_node = \
           stack[FuncDataArray[i].level-1]->addChild(node);
 
