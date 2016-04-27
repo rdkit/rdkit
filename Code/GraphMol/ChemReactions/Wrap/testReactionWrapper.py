@@ -447,6 +447,24 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs,'query', getLabels=True)
     self.assertTrue(len(labels), 1)
 
+  def test17bAddRecursiveQueriesToReaction(self):
+    from rdkit.Chem import FilterCatalog
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
+    self.assertTrue(rxn)
+    rxn.Initialize()
+    rxn.GetReactantTemplate(0).GetAtomWithIdx(0).SetProp('query', 'carboxylicacid')
+    querydefs = {k.lower():v
+                 for k,v in FilterCatalog.GetFlattenedFunctionalGroupHierarchy().items()}
+    
+    self.assertTrue('CarboxylicAcid' in FilterCatalog.GetFlattenedFunctionalGroupHierarchy())
+    rxn.AddRecursiveQueriesToReaction(querydefs,
+                                      'query')
+    q = rxn.GetReactantTemplate(0)
+    m = Chem.MolFromSmiles('C(=O)[O-].N')
+    self.assertTrue(m.HasSubstructMatch(q))
+    m = Chem.MolFromSmiles('C.N')
+    self.assertFalse(m.HasSubstructMatch(q))
+    
   def test18GithubIssue16(self):
     rxn = rdChemReactions.ReactionFromSmarts("[F:1]>>[Cl:1]")
     self.assertTrue(rxn)

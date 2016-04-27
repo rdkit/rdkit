@@ -215,6 +215,15 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
   return result;
 }
 
+const std::vector<FilterMatch> FilterCatalog::getFilterMatches(
+    const ROMol &mol) const {
+  std::vector<FilterMatch> result;
+  for (size_t i = 0; i < d_entries.size(); ++i) {
+    d_entries[i]->getFilterMatches(mol, result);
+  }
+  return result;
+}
+
 bool FilterCatalogCanSerialize() {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   return true;
