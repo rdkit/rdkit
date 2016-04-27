@@ -36,16 +36,23 @@ it is intended to be shallow but broad.
 """
 
 from __future__ import print_function
-import unittest,os
+import doctest,unittest,os
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger=logger()
 from rdkit import Chem
+from rdkit.Chem import rdfiltercatalog
 from rdkit.Chem import FilterCatalog, rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams
 from rdkit.Chem.FilterCatalog import FilterMatchOps
 from rdkit import DataStructs
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(rdfiltercatalog))
+    print("*"*44)
+    print (dir(tests))
+    return tests
 
 class TestCase(unittest.TestCase):
     def setUp(self):
@@ -272,7 +279,6 @@ class TestCase(unittest.TestCase):
         print ("Count", count)
         sz = catalog.GetNumEntries()
         print ("*"*44)
-        print (dir(catalog))
         self.assertTrue(catalog.RemoveEntry(entry))
         del entry
         self.assertTrue(catalog.GetNumEntries() == sz-1)
@@ -355,7 +361,150 @@ class TestCase(unittest.TestCase):
         mol = Chem.MolFromSmiles("c1ccccc1")
         catalogEntry = fc.GetFirstMatch(mol)
 
+    def testFilterHierarchyMatcher(self):
+        # test 
+        root = FilterCatalog.FilterHierarchyMatcher()
+        sm = h = FilterCatalog.SmartsMatcher("Halogen",
+                                         "[$([F,Cl,Br,I]-!@[#6]);!$([F,Cl,Br,I]"
+                                         "-!@C-!@[F,Cl,Br,I]);!$([F,Cl,Br,I]-[C,S]"
+                                         "(=[O,S,N]))]", 1)
+        root.SetPattern(sm)
+        def hierarchy(matcher):
+            node = FilterCatalog.FilterHierarchyMatcher(matcher)
+            self.assertEquals(matcher.GetName(), node.GetName())
+            return node
+        
+        sm = FilterCatalog.SmartsMatcher("Halogen.Aromatic",
+                                         "[F,Cl,Br,I;$(*-!@c)]")
+        root.AddChild(hierarchy(sm))
+        
+        sm = FilterCatalog.SmartsMatcher("Halogen.NotFluorine",
+                                         "[$([Cl,Br,I]-!@[#6]);!$([Cl,Br,I]"
+                                         "-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S]"
+                                         "(=[O,S,N]))]")
+        node = hierarchy(sm)
+        halogen_notf_children = [ hierarchy(x) for x in [
+            FilterCatalog.SmartsMatcher("Halogen.NotFluorine.Aliphatic",
+                                        "[$([Cl,Br,I]-!@C);!$([Cl,Br,I]"
+                                        "-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S](=[O,S,N]))]"),
+            
+            FilterCatalog.SmartsMatcher("Halogen.NotFluorine.Aromatic",
+                                        "[$([Cl,Br,I]-!@c)]")
+            ]]
+        for child in halogen_notf_children:
+            node.AddChild(child)
+        root.AddChild(node)
+        
+        sm = FilterCatalog.SmartsMatcher("Halogen.Bromine",
+                                         "[Br;$([Br]-!@[#6]);!$([Br]-!@C-!@[F,Cl,Br,I])"
+                                         ";!$([Br]-[C,S](=[O,S,N]))]", 1)
+        node = hierarchy(sm)
+        halogen_bromine_children = [ hierarchy(x) for x in [
+            FilterCatalog.SmartsMatcher("Halogen.Bromine.Aliphatic",
+                                        "[Br;$(Br-!@C);!$(Br-!@C-!@[F,Cl,Br,I]);"
+                                        "!$(Br-[C,S](=[O,S,N]))]"),
+            FilterCatalog.SmartsMatcher("Halogen.Bromine.Aromatic",
+                                        "[Br;$(Br-!@c)]"),
+            FilterCatalog.SmartsMatcher("Halogen.Bromine.BromoKetone",
+                                        "[Br;$(Br-[CH2]-C(=O)-[#6])]")
+            ]]
+        for child in halogen_bromine_children:
+            node.AddChild(child)
+        
+        root.AddChild(node)
+        
 
+        m = Chem.MolFromSmiles("CCl")
+        assert h.HasMatch(m)
+        res = root.GetMatches(m)
+        self.assertEquals(len(res), 1)
+        self.assertEquals([ match.filterMatch.GetName() for match in res ],
+                          ['Halogen.NotFluorine.Aliphatic'])
+        
+        m = Chem.MolFromSmiles("c1ccccc1Cl")
+        assert h.HasMatch(m)
+        res = root.GetMatches(m)
+        self.assertEquals(len(res), 2)
+
+        m = Chem.MolFromSmiles("c1ccccc1Br")
+        assert h.HasMatch(m)
+        res = root.GetMatches(m)
+        self.assertEquals(len(res), 3)
+        
+        self.assertEquals([ match.filterMatch.GetName() for match in res ],
+                          ['Halogen.Aromatic', 'Halogen.NotFluorine.Aromatic',
+                           'Halogen.Bromine.Aromatic'])
+
+        m = Chem.MolFromSmiles("c1ccccc1F")
+        assert h.HasMatch(m)
+        res = root.GetMatches(m)
+        self.assertEquals(len(res), 1)
+        
+        self.assertEquals([ match.filterMatch.GetName() for match in res ],
+                          ['Halogen.Aromatic'])
+
+        m = Chem.MolFromSmiles("CBr")
+        assert h.HasMatch(m)
+        res = root.GetMatches(m)
+
+        self.assertEquals([ match.filterMatch.GetName() for match in res ],
+                          ['Halogen.NotFluorine.Aliphatic', 'Halogen.Bromine.Aliphatic'])
+        
+    def testFunctionalGroupHierarchy(self):
+        fc = FilterCatalog.GetFunctionalGroupHierarchy()
+        
+        matches = [ (Chem.MolFromSmiles("CCl"),
+                     ['Halogen.Aliphatic', 'Halogen.NotFluorine.Aliphatic']),
+                    (Chem.MolFromSmiles("c1ccccc1Cl"),
+                     ['Halogen.Aromatic', 'Halogen.NotFluorine.Aromatic']),
+                    (Chem.MolFromSmiles("c1ccccc1F"),
+                     ['Halogen.Aromatic']),
+                    (Chem.MolFromSmiles("CBr"),
+                     ['Halogen.Aliphatic', 'Halogen.NotFluorine.Aliphatic',
+                      'Halogen.Bromine.Aliphatic']) ]
+
+        catalogs = [fc]
+        if FilterCatalog.FilterCatalogCanSerialize():
+            pickle = fc.Serialize()
+            fc2 = FilterCatalog.FilterCatalog(pickle)
+            catalogs.append(fc2)
+
+        for fc in catalogs:
+            # test GetMatches API
+            for mol, res in matches:
+                entries = list(fc.GetMatches(mol))
+                for entry in entries:
+                    hits = [match.filterMatch.GetName() for match in entry.GetFilterMatches(mol)]
+                    self.assertEquals(res, hits)
+
+            # test GetFilterMatches API
+            for mol, res in matches:
+                self.assertEquals(res, [match.filterMatch.GetName()
+                                        for match in fc.GetFilterMatches(mol)])
+                    
+
+    def testFlattenedFunctionalGroupHierarchy(self):
+        queryDefs = FilterCatalog.GetFlattenedFunctionalGroupHierarchy()
+        items = sorted(queryDefs.items())
+        
+        matches = [ (Chem.MolFromSmiles("CCl"),
+                     ['Halogen', 'Halogen.Aliphatic', 'Halogen.NotFluorine',
+                      'Halogen.NotFluorine.Aliphatic']),
+                    (Chem.MolFromSmiles("c1ccccc1Cl"),
+                     ['Halogen', 'Halogen.Aromatic', 'Halogen.NotFluorine',
+                      'Halogen.NotFluorine.Aromatic']),
+                    (Chem.MolFromSmiles("c1ccccc1F"),
+                     ['Halogen', 'Halogen.Aromatic']),
+                    (Chem.MolFromSmiles("CBr"),
+                     ['Halogen', 'Halogen.Aliphatic',
+                      'Halogen.Bromine', 'Halogen.Bromine.Aliphatic',
+                      'Halogen.NotFluorine', 'Halogen.NotFluorine.Aliphatic',
+                  ]) ]
+
+        for mol, res in matches:
+            hits = [name for  name, pat in items if mol.HasSubstructMatch(pat)]
+            self.assertEquals(hits, res)
+            
 
         
 if __name__ == '__main__':
