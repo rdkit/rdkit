@@ -51,9 +51,12 @@ struct FuncData_t {
   const char * removalReaction;
 };
 
-// Exploit the fact that the current hierarchy is a two level tree
+// Exploit the fact that the current hierarchy is a three level tree
 //  0 -> gets added to root node
 //  1 -> gets added to last 0 node
+//  2 -> gets added to last 1 node
+const int MAX_DEPTH = 3;
+
 const FuncData_t FuncDataArray[] = {
   {0,"AcidChloride","C(=O)Cl","Acid Chloride",0},
   {1,"AcidChloride.Aromatic","[$(C-!@[a])](=O)(Cl)","Aromatic",0},
@@ -70,14 +73,14 @@ const FuncData_t FuncDataArray[] = {
   
   {0,"Amine","[N;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]","Amine",0},
   {1,"Amine.Primary","[N;H2;D1;$(N-!@[#6]);!$(N-C=[O,N,S])]","Primary",0},
-  {1,"Amine.Primary.Aromatic","[N;H2;D1;$(N-!@c);!$(N-C=[O,N,S])]","Primary aromatic",0},
-  {1,"Amine.Primary.Aliphatic","[N;H2;D1;$(N-!@C);!$(N-C=[O,N,S])]","Primary aliphatic",0},
+  {2,"Amine.Primary.Aromatic","[N;H2;D1;$(N-!@c);!$(N-C=[O,N,S])]","Primary aromatic",0},
+  {2,"Amine.Primary.Aliphatic","[N;H2;D1;$(N-!@C);!$(N-C=[O,N,S])]","Primary aliphatic",0},
   {1,"Amine.Secondary","[N;H1;D2;$(N(-[#6])-[#6]);!$(N-C=[O,N,S])]","Secondary",0},
-  {1,"Amine.Secondary.Aromatic","[N;H1;D2;$(N(-[c])-[#6]);!$(N-C=[O,N,S])]","Secondary aromatic",0},
-  {1,"Amine.Secondary.Aliphatic","[N;H1;D2;$(N(-C)-C);!$(N-C=[O,N,S])]","Secondary aliphatic",0},
+  {2,"Amine.Secondary.Aromatic","[N;H1;D2;$(N(-[c])-[#6]);!$(N-C=[O,N,S])]","Secondary aromatic",0},
+  {2,"Amine.Secondary.Aliphatic","[N;H1;D2;$(N(-C)-C);!$(N-C=[O,N,S])]","Secondary aliphatic",0},
   {1,"Amine.Tertiary","[N;H0;D3;$(N(-[#6])(-[#6])-[#6]);!$(N-C=[O,N,S])]","Tertiary",0},
-  {1,"Amine.Tertiary.Aromatic","[N;H0;D3;$(N(-[c])(-[#6])-[#6]);$(N-C=[O,N,S])]","Tertiary aromatic",0},
-  {1,"Amine.Tertiary.Aliphatic","[N;H0;D3;$(N(-C)(-C)-C);!$(N-C=[O,N,S])]","Tertiary aliphatic",0},
+  {2,"Amine.Tertiary.Aromatic","[N;H0;D3;$(N(-[c])(-[#6])-[#6]);$(N-C=[O,N,S])]","Tertiary aromatic",0},
+  {2,"Amine.Tertiary.Aliphatic","[N;H0;D3;$(N(-C)(-C)-C);!$(N-C=[O,N,S])]","Tertiary aliphatic",0},
   {1,"Amine.Aromatic","[N;$(N-c);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]","Aromatic",0},
   {1,"Amine.Aliphatic","[N;!$(N-c);$(N-C);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]","Aliphatic",0},
   {1,"Amine.Cyclic","[N;R;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]","Cyclic",0},
@@ -138,7 +141,7 @@ void hierarchy_create() {
   std::map<std::string, ROMOL_SPTR> &flattenedHierarchy = flatten_get();
   
   std::vector<FilterHierarchyMatcher*>  toplevel;
-  std::vector<FilterHierarchyMatcher*>  stack(4); // max tree depth currently 4
+  FilterHierarchyMatcher* stack[MAX_DEPTH];
   
   for (size_t i=0; i<NUM_FUNCS; ++i) {
     // Make a new node

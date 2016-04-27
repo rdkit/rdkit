@@ -233,6 +233,25 @@ const char *SmartsMatcherDoc =
     "True\n"
     "\n";
 
+const char *FilterHierarchyMatcherDoc =
+    "Hierarchical Filter\n"
+    " basic constructors: \n"
+    "   FilterHierarchyMatcher( matcher )\n"
+    "   where can be any FilterMatcherBase (SmartsMatcher, etc)\n"
+    " FilterHierarchyMatcher's have children and can form matching\n"
+    "  trees.  then GetFilterMatches is called, the most specific (\n"
+    "  i.e. lowest node in a branch) is returned.\n\n"
+    " n.b. A FilterHierarchicalMatcher of functional groups is returned\n"
+    "  by calling GetFunctionalGroupHierarchy()\n\n"
+    ">>> from rdkit.Chem import MolFromSmiles\n"
+    ">>> from rdkit.Chem.FilterCatalog import *\n"
+    ">>> functionalGroups = GetFunctionalGroupHierarchy()\n"
+    ">>> [match.filterMatch.GetName() \n"
+    "...     for match in functionalGroups.GetFilterMatches(\n"
+    "...         MolFromSmiles('c1ccccc1Cl'))]\n"
+    "['Halogen.Aromatic', 'Halogen.NotFluorine.Aromatic']\n"
+    "\n";
+
 const char *FilterCatalogEntryDoc =
     "FilterCatalogEntry\n"
     "A filter catalog entry is an entry in a filter catalog.\n"
@@ -304,7 +323,8 @@ struct filtercat_wrapper {
 
     python::class_<SmartsMatcher, SmartsMatcher *,
                    python::bases<FilterMatcherBase> >(
-        "SmartsMatcher", python::init<const std::string &>())
+                       "SmartsMatcher", SmartsMatcherDoc,
+                       python::init<const std::string &>())
         .def(python::init<const ROMol &>("Construct from a molecule"))
         .def(python::init<const std::string &, const ROMol &>(
             "Construct from a name and a molecule"))
@@ -359,6 +379,7 @@ struct filtercat_wrapper {
 
     python::class_<FilterHierarchyMatcher, FilterHierarchyMatcher *,
                    python::bases<FilterMatcherBase> >("FilterHierarchyMatcher",
+                                                      FilterHierarchyMatcherDoc,
                                                       python::init<>())
         .def(python::init<const FilterMatcherBase &>("Construct from a filtermatcher"))
         .def("SetPattern", &FilterHierarchyMatcher::setPattern,
@@ -374,6 +395,7 @@ struct filtercat_wrapper {
 
     python::class_<FilterCatalogEntry, FilterCatalogEntry *,
                    const FilterCatalogEntry *>("FilterCatalogEntry",
+                                               FilterCatalogEntryDoc,
                                                python::init<>())
         .def(python::init<const std::string &, FilterMatcherBase &>())
         .def("IsValid", &FilterCatalogEntry::isValid)

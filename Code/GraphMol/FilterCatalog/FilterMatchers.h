@@ -454,16 +454,25 @@ class FilterHierarchyMatcher : public FilterMatcherBase {
   boost::shared_ptr<FilterMatcherBase> d_matcher;
   
 public:
+  // !Default Constructor for serialization
   FilterHierarchyMatcher() : 
     FilterMatcherBase(), 
     d_matcher() {
   }
-    
+  //! Constructs a FilterHierarchyMatcher from a FilterMatchBase
+  //!  A FilterHierarchyMatcher is a tree hierarchy where to
+  //!  match a child node, one needs to match the parent first.
+  //!  For each branch, the lowest nodes are returned when
+  //!   getting the filter matches.
+  /*
+      \param matcher FilterMatcherBase to match this node against
+  */
   FilterHierarchyMatcher(const FilterMatcherBase &matcher) :
     FilterMatcherBase(), 
     d_matcher(matcher.Clone()) {
   }
   
+  //! Return the name for this node (from the underlying FilterMatcherBase)
   virtual std::string getName() const {
     if (d_matcher.get()) {
       return d_matcher->getName();
@@ -471,10 +480,15 @@ public:
     return "FilterMatcherHierarchy root";
   }
 
+  //! returns true if this node has a valid matcher
   bool isValid() const {
-    return true;
+    return d_matcher->isValid();
   }
 
+  //! Set a new FilterMatcherBase for this node
+  /*
+    \param matcher The new FilterMatcherBase
+  */
   void setPattern(const FilterMatcherBase & matcher) {
     PRECONDITION(matcher.isValid(), "Adding invalid patterns is not allowed.");
     d_matcher = matcher.Clone();
@@ -484,6 +498,9 @@ public:
   //! add a FilterHierarchy as a child.
   //!  returns the FilterHierarchy pointer used in the tree (this is a
   //!   shallow copy of the original)
+  /*
+    \param hierarchy The new FilterHierarchyMatcher child for this node
+  */
   boost::shared_ptr<FilterHierarchyMatcher> addChild(
       const FilterHierarchyMatcher &hierarchy) {
     PRECONDITION(hierarchy.d_matcher.get() && hierarchy.d_matcher->isValid(),
@@ -494,13 +511,23 @@ public:
     return d_children.back();
   }
 
-  virtual bool getMatches(const ROMol &mol, std::vector<FilterMatch> &m) const;
+  //! returns the FilterMatches against the given molecule
+  /*
+    \param mol The molecule to match against
+    \param matches The vector of FilterMatch objects that match
+  */
+  virtual bool getMatches(const ROMol &mol, std::vector<FilterMatch> &matches) const;
 
+  //! Does this node match the molecule
+  /*
+    \param mol The molecule to match against
+  */
   virtual bool hasMatch(const ROMol &mol) const {
     std::vector<FilterMatch> temp;
     return getMatches(mol, temp);
   }
 
+  //! Clones the FilterHierarchyMatcher into a FilterMatcherBase
   virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
     return boost::shared_ptr<FilterMatcherBase>(new FilterHierarchyMatcher(*this));
   }

@@ -36,16 +36,23 @@ it is intended to be shallow but broad.
 """
 
 from __future__ import print_function
-import unittest,os
+import doctest,unittest,os
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger=logger()
 from rdkit import Chem
+from rdkit.Chem import rdfiltercatalog
 from rdkit.Chem import FilterCatalog, rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams
 from rdkit.Chem.FilterCatalog import FilterMatchOps
 from rdkit import DataStructs
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(rdfiltercatalog))
+    print("*"*44)
+    print (dir(tests))
+    return tests
 
 class TestCase(unittest.TestCase):
     def setUp(self):
