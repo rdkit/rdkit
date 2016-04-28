@@ -33,7 +33,7 @@ from __future__ import print_function
 
 import unittest, doctest
 import os,sys
-
+from rdkit.six import exec_
 from rdkit.six.moves import cPickle
 
 from rdkit import rdBase
@@ -60,7 +60,7 @@ def PreprocessReaction(*a, **kw):
     return rdChemReactions.PreprocessReaction(*a, **kw)
 """%"\n".join(
   [x.lstrip() for x in rdChemReactions.PreprocessReaction.__doc__.split("\n")])
-exec code in TestPreprocess.__dict__
+exec_(code,TestPreprocess.__dict__)
 
 def load_tests(loader, tests, ignore):
   finder=doctest.DocTestFinder(True)
