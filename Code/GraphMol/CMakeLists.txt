@@ -45,14 +45,13 @@ add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)
 add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
+add_subdirectory(ChemReactions)
 add_subdirectory(ChemTransforms)
 
 add_subdirectory(Subgraphs)
 add_subdirectory(FilterCatalog)
 add_subdirectory(FragCatalog)
 add_subdirectory(Descriptors)
-
-add_subdirectory(ChemReactions)
 
 add_subdirectory(Fingerprints)
 add_subdirectory(PartialCharges)
