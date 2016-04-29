@@ -62,8 +62,24 @@ struct sim_args {
   std::vector<std::vector<MultiFPBReader::ResultTuple> > *res;
 };
 
+void tversky_helper(unsigned int threadId, unsigned int numThreads,
+                    const sim_args *args) {
+  for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
+    std::vector<std::pair<double, unsigned int> > r_res =
+        args->readers[i]->getTverskyNeighbors(args->bv, args->ca, args->cb,
+                                              args->threshold);
+    (*args->res)[i].clear();
+    (*args->res)[i].reserve(r_res.size());
+    for (std::vector<std::pair<double, unsigned int> >::const_iterator rit =
+             r_res.begin();
+         rit != r_res.end(); ++rit) {
+      (*args->res)[i].push_back(
+          MultiFPBReader::ResultTuple(rit->first, rit->second, i));
+    }
+  }
+}
 void tani_helper(unsigned int threadId, unsigned int numThreads,
-                 sim_args *args) {
+                 const sim_args *args) {
   for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
     std::vector<std::pair<double, unsigned int> > r_res =
         args->readers[i]->getTanimotoNeighbors(args->bv, args->threshold);
@@ -78,37 +94,42 @@ void tani_helper(unsigned int threadId, unsigned int numThreads,
   }
 }
 
-void get_tani_nbrs(const std::vector<FPBReader *> &d_readers,
-                   const boost::uint8_t *bv, double threshold,
-                   std::vector<MultiFPBReader::ResultTuple> &res,
-                   int numThreads) {
+template <typename T>
+void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
+                        const sim_args &args, unsigned int numThreads) {
   res.clear();
   res.resize(0);
   numThreads = getNumThreadsToUse(numThreads);
 #ifdef RDK_THREADSAFE_SSS
   boost::thread_group tg;
 #endif
-  std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
-      d_readers.size());
-  sim_args args = {bv, 0., 0., threshold, d_readers, &accum};
   if (numThreads == 1) {
-    tani_helper(0, 1, &args);
+    func(0, 1, &args);
   }
 #ifdef RDK_THREADSAFE_SSS
   else {
-    for (unsigned int tid = 0; tid < numThreads && tid < d_readers.size();
+    for (unsigned int tid = 0; tid < numThreads && tid < args.readers.size();
          ++tid) {
-      tg.add_thread(new boost::thread(tani_helper, tid, numThreads, &args));
+      tg.add_thread(new boost::thread(func, tid, numThreads, &args));
     }
     tg.join_all();
   }
 #endif
 
-  for (unsigned int i = 0; i < d_readers.size(); ++i) {
-    res.reserve(res.size() + accum[i].size());
-    res.insert(res.end(), accum[i].begin(), accum[i].end());
+  for (unsigned int i = 0; i < args.readers.size(); ++i) {
+    res.reserve(res.size() + (*args.res).size());
+    res.insert(res.end(), (*args.res)[i].begin(), (*args.res)[i].end());
   }
   std::sort(res.begin(), res.end(), tplSorter());
+}
+void get_tani_nbrs(const std::vector<FPBReader *> &d_readers,
+                   const boost::uint8_t *bv, double threshold,
+                   std::vector<MultiFPBReader::ResultTuple> &res,
+                   int numThreads) {
+  std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
+      d_readers.size());
+  sim_args args = {bv, 0., 0., threshold, d_readers, &accum};
+  generic_nbr_helper(res, tani_helper, args, numThreads);
 }
 
 void get_tversky_nbrs(const std::vector<FPBReader *> &d_readers,
@@ -116,18 +137,10 @@ void get_tversky_nbrs(const std::vector<FPBReader *> &d_readers,
                       double threshold,
                       std::vector<MultiFPBReader::ResultTuple> &res,
                       int numThreads) {
-  numThreads = getNumThreadsToUse(numThreads);
-  res.clear();
-  for (unsigned int i = 0; i < d_readers.size(); ++i) {
-    std::vector<std::pair<double, unsigned int> > r_res =
-        d_readers[i]->getTverskyNeighbors(bv, a, b, threshold);
-    for (std::vector<std::pair<double, unsigned int> >::const_iterator rit =
-             r_res.begin();
-         rit != r_res.end(); ++rit) {
-      res.push_back(MultiFPBReader::ResultTuple(rit->first, rit->second, i));
-    }
-  }
-  std::sort(res.begin(), res.end(), tplSorter());
+  std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
+      d_readers.size());
+  sim_args args = {bv, a, b, threshold, d_readers, &accum};
+  generic_nbr_helper(res, tversky_helper, args, numThreads);
 }
 
 void get_containing_nbrs(
