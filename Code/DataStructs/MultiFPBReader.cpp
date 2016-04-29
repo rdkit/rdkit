@@ -143,18 +143,47 @@ void get_tversky_nbrs(const std::vector<FPBReader *> &d_readers,
   generic_nbr_helper(res, tversky_helper, args, numThreads);
 }
 
+void contain_helper(unsigned int threadId, unsigned int numThreads,
+                    const boost::uint8_t *bv,
+                    const std::vector<FPBReader *> *readers,
+                    std::vector<std::vector<unsigned int> > *accum) {
+  for (unsigned int i = threadId; i < readers->size(); i += numThreads) {
+    (*accum)[i] = (*readers)[i]->getContainingNeighbors(bv);
+  }
+}
+
 void get_containing_nbrs(
     const std::vector<FPBReader *> &d_readers, const boost::uint8_t *bv,
-    std::vector<std::pair<unsigned int, unsigned int> > &res, int numThreads) {
+    std::vector<std::pair<unsigned int, unsigned int> > &res,
+    unsigned int numThreads) {
   numThreads = getNumThreadsToUse(numThreads);
+#ifdef RDK_THREADSAFE_SSS
+  boost::thread_group tg;
+#endif
+
+  std::vector<std::vector<unsigned int> > accum(d_readers.size());
+  if (numThreads == 1) {
+    contain_helper(0, 1, bv, &d_readers, &accum);
+  }
+#ifdef RDK_THREADSAFE_SSS
+  else {
+    for (unsigned int tid = 0; tid < numThreads && tid < d_readers.size();
+         ++tid) {
+      tg.add_thread(new boost::thread(contain_helper, tid, numThreads, bv,
+                                      &d_readers, &accum));
+    }
+    tg.join_all();
+  }
+#endif
+
   res.clear();
   for (unsigned int i = 0; i < d_readers.size(); ++i) {
-    std::vector<unsigned int> r_res = d_readers[i]->getContainingNeighbors(bv);
-    for (std::vector<unsigned int>::const_iterator rit = r_res.begin();
-         rit != r_res.end(); ++rit) {
-      res.push_back(std::make_pair(*rit, i));
+    std::vector<unsigned int> &r_res = accum[i];
+    BOOST_FOREACH (unsigned int ri, r_res) {
+      res.push_back(std::make_pair(ri, i));
     }
   }
+
   std::sort(res.begin(), res.end(), pairSorter());
 }
 
