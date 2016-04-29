@@ -60,7 +60,7 @@ def PreprocessReaction(*a, **kw):
     return rdChemReactions.PreprocessReaction(*a, **kw)
 """%"\n".join(
   [x.lstrip() for x in rdChemReactions.PreprocessReaction.__doc__.split("\n")])
-exec_c(code,TestPreprocess.__dict__)
+exec_(code,TestPreprocess.__dict__)
 
 def load_tests(loader, tests, ignore):
   finder=doctest.DocTestFinder(True)
