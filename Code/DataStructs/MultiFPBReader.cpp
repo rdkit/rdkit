@@ -62,7 +62,8 @@ struct sim_args {
   std::vector<std::vector<MultiFPBReader::ResultTuple> > *res;
 };
 
-void tani_helper(int threadId, int numThreads, sim_args *args) {
+void tani_helper(unsigned int threadId, unsigned int numThreads,
+                 sim_args *args) {
   for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
     std::vector<std::pair<double, unsigned int> > r_res =
         args->readers[i]->getTanimotoNeighbors(args->bv, args->threshold);
@@ -95,7 +96,8 @@ void get_tani_nbrs(const std::vector<FPBReader *> &d_readers,
   }
 #ifdef RDK_THREADSAFE_SSS
   else {
-    for (int tid = 0; tid < numThreads; ++tid) {
+    for (unsigned int tid = 0; tid < numThreads && tid < d_readers.size();
+         ++tid) {
       tg.add_thread(new boost::thread(tani_helper, tid, numThreads, &args));
     }
     tg.join_all();
