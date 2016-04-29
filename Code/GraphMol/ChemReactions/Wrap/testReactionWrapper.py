@@ -63,10 +63,7 @@ def PreprocessReaction(*a, **kw):
 exec_(code,TestPreprocess.__dict__)
 
 def load_tests(loader, tests, ignore):
-  finder=doctest.DocTestFinder(True)
-  finder.find(Enumerator)
   tests.addTests(doctest.DocTestSuite(Enumerator))
-  finder.find(TestPreprocess)
   tests.addTests(doctest.DocTestSuite(TestPreprocess))
   return tests
 
