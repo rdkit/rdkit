@@ -86,18 +86,24 @@ class MultiFPBReader {
 
     \param bv the query fingerprint
     \param threshold the minimum similarity to return
+    \param numThreads  Sets the number of threads to use (more than one thread
+    will only be used if the RDKit was build with multithread support) If set to
+    zero, the max supported by the system will be used.
 
   */
   std::vector<ResultTuple> getTanimotoNeighbors(const boost::uint8_t *bv,
-                                                double threshold = 0.7) const;
+                                                double threshold = 0.7,
+                                                int numThreads = 1) const;
   //! \overload
   std::vector<ResultTuple> getTanimotoNeighbors(
-      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7) const {
-    return getTanimotoNeighbors(bv.get(), threshold);
+      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7,
+      int numThreads = 1) const {
+    return getTanimotoNeighbors(bv.get(), threshold, numThreads);
   };
   //! \overload
   std::vector<ResultTuple> getTanimotoNeighbors(const ExplicitBitVect &ebv,
-                                                double threshold = 0.7) const;
+                                                double threshold = 0.7,
+                                                int numThreads = 1) const;
 
   //! returns Tversky neighbors that are within a similarity threshold
   /*!
@@ -108,36 +114,41 @@ class MultiFPBReader {
     \param ca the Tversky a coefficient
     \param cb the Tversky a coefficient
     \param threshold the minimum similarity to return
+    \param numThreads  Sets the number of threads to use (more than one thread
+    will only be used if the RDKit was build with multithread support) If set to
+    zero, the max supported by the system will be used.
 
   */
   std::vector<ResultTuple> getTverskyNeighbors(const boost::uint8_t *bv,
                                                double ca, double cb,
-                                               double threshold = 0.7) const;
+                                               double threshold = 0.7,
+                                               int numThreads = 1) const;
   //! \overload
   std::vector<ResultTuple> getTverskyNeighbors(
       boost::shared_array<boost::uint8_t> bv, double ca, double cb,
-      double threshold = 0.7) const {
-    return getTverskyNeighbors(bv.get(), ca, cb, threshold);
+      double threshold = 0.7, int numThreads = 1) const {
+    return getTverskyNeighbors(bv.get(), ca, cb, threshold, numThreads);
   };
   //! \overload
   std::vector<ResultTuple> getTverskyNeighbors(const ExplicitBitVect &ebv,
                                                double ca, double cb,
-                                               double threshold = 0.7) const;
+                                               double threshold = 0.7,
+                                               int numThreads = 1) const;
 
   //! returns indices of all fingerprints that completely contain this one
   /*! (i.e. where all the bits set in the query are also set in the db
    molecule)
    */
   std::vector<std::pair<unsigned int, unsigned int> > getContainingNeighbors(
-      const boost::uint8_t *bv) const;
+      const boost::uint8_t *bv, int numThreads = 1) const;
   //! \overload
   std::vector<std::pair<unsigned int, unsigned int> > getContainingNeighbors(
-      boost::shared_array<boost::uint8_t> bv) const {
-    return getContainingNeighbors(bv.get());
+      boost::shared_array<boost::uint8_t> bv, int numThreads = 1) const {
+    return getContainingNeighbors(bv.get(), numThreads);
   };
   //! \overload
   std::vector<std::pair<unsigned int, unsigned int> > getContainingNeighbors(
-      const ExplicitBitVect &ebv) const;
+      const ExplicitBitVect &ebv, int numThreads = 1) const;
 
  private:
   std::vector<FPBReader *> d_readers;
