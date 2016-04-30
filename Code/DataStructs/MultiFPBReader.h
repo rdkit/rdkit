@@ -52,8 +52,22 @@ namespace RDKit {
 class MultiFPBReader {
  public:
   typedef boost::tuple<double, unsigned int, unsigned int> ResultTuple;
-  MultiFPBReader() : df_init(false){};
-  MultiFPBReader(std::vector<FPBReader *> &readers);
+  MultiFPBReader() : df_init(false), df_initOnSearch(false){};
+
+  /*!
+    \param initOnSearch: if this is true, the \c init() method on child readers
+    will not be called until the first search is done. This is useful with large
+    FPB readers.
+  */
+  MultiFPBReader(bool initOnSearch)
+      : df_init(false), df_initOnSearch(initOnSearch){};
+  /*!
+    \param readers: the set of FPBReader objects to use. We don't own these.
+    \param initOnSearch: if this is true, the \c init() method on child readers
+    will not be called until the first search is done. This is useful with large
+    FPB readers.
+  */
+  MultiFPBReader(std::vector<FPBReader *> &readers, bool initOnSearch = false);
 
   ~MultiFPBReader() { df_init = false; };
 
@@ -152,7 +166,7 @@ class MultiFPBReader {
 
  private:
   std::vector<FPBReader *> d_readers;
-  bool df_init;
+  bool df_init, df_initOnSearch;
 
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be
