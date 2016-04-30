@@ -622,6 +622,7 @@ void FPBReader::destroy() {
     dp_impl->dp_idOffsets = NULL;
   }
   delete dp_impl;
+  dp_impl = NULL;
 };
 
 boost::shared_ptr<ExplicitBitVect> FPBReader::getFP(unsigned int idx) const {
