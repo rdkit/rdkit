@@ -551,6 +551,8 @@ void containingNeighbors(const FPBReader_impl *dp_impl,
 
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
+  if (df_init) return;
+
   dp_impl = new detail::FPBReader_impl;
   dp_impl->istrm = dp_istrm;
   dp_impl->df_lazy = df_lazyRead;
