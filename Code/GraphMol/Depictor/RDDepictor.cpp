@@ -131,8 +131,8 @@ std::list<EmbeddedFrag>::iterator _findLargestFrag(
 
 void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
   // shift the coordinates if there are multiple fragments
-  // so that the fargments do not overlap each other
-
+  // so that the fragments do not overlap each other
+  if (efrags.empty()) { return; }
   for (std::list<EmbeddedFrag>::iterator efi = efrags.begin();
        efi != efrags.end(); efi++) {
     efi->computeBox();
