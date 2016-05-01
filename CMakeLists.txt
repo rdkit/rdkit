@@ -21,6 +21,8 @@ option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
+option(RDK_BUILD_PGSQL "build the PostgreSQL cartridge" OFF )
+option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL cartridge" ON )
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
@@ -35,8 +37,10 @@ option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMAR
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
 
+option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
+option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
+
 if(NOT MSVC)
-  option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
   endif()
@@ -61,8 +65,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2016")
-set(RDKit_Month "03")
-set(RDKit_Revision "1.dev1")
+set(RDKit_Month "09")
+set(RDKit_Revision "1dev1")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
@@ -178,6 +182,30 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.39.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
+if(APPLE)
+  # always required
+  set(T_LIBS ${Boost_LIBRARIES})
+  find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
+
+  # reset boost libraries so python is still there
+  #  if it had been found before
+  set(Boost_LIBRARIES ${T_LIBS})
+
+  MESSAGE("== OSX: CHECKING for libc++")
+  execute_process( COMMAND /usr/bin/otool "-L" "${Boost_REGEX_LIBRARY_RELEASE}"
+                   OUTPUT_VARIABLE LIBCPP
+                   ERROR_VARIABLE ERR)
+
+  if(LIBCPP MATCHES ".*libc[+][+].*")
+     MESSAGE("== BOOST USES LIBC++")
+     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+   else()
+     MESSAGE("== BOOST USES STDLIBC++")
+     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+     # FOR CXX11 support SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  endif()
+endif(APPLE)
+
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
@@ -221,7 +249,9 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
-
+if(RDK_BUILD_PGSQL)
+  find_package(PostgreSQL REQUIRED)
+endif(RDK_BUILD_PGSQL)
 
 # setup our compiler flags:
 if (RDK_TEST_COVERAGE)
@@ -296,6 +326,11 @@ if (RDK_SQUASH_MVC_SECURE_WARNINGS)
   ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
   ADD_DEFINITIONS("/wd4996")
 endif(RDK_SQUASH_MVC_SECURE_WARNINGS)
+
+if(RDK_USE_STRICT_ROTOR_DEFINITION)
+    MESSAGE("== Using strict rotor definition")
+    ADD_DEFINITIONS("-DRDK_USE_STRICT_ROTOR_DEFINITION")
+endif()
 
 add_subdirectory(External)
 add_subdirectory(Code)

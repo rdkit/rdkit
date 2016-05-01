@@ -1,61 +1,30 @@
-To use the Avalon Toolkit support in the RDKit, first download a copy of the
-source from:
-http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.1_beta/AvalonToolkit_1.1_beta.source.tar/download
+To build the optional Avalon Toolkit support, run cmake with the
+-DRDK_BUILD_AVALON_SUPPORT=ON argument. If the Avalon Toolkit sources
+could not be found, the CMake build system will attempt to download the
+Avalon Toolkit distribution from the following URL:
+
+http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar
+
+The downloaded Avalon Toolkit sources will be automatically patched to
+avoid a potential memory corruption issue.
+The default download URL and MD5 checksum can be overridden with the
+following CMake definitions:
+
+AVALONTOOLS_URL
+AVALONTOOLS_MD5SUM
+
+If AVALONTOOLS_URL is set to "", no download will be attempted.
+If AVALONTOOLS_MD5SUM is set to "", no MD5 checksum will be performed.
+
+If you prefer to install Avalon Toolkit sources manually, please download
+a copy of the source from:
+http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar
 
 Note that the version number is important.
 
-Extract the tar file somewhere; the source requred by the RDKit is in
+Extract the tar file in $RDBASE/External/AvalonTools; the source required by the RDKit is in
 the SourceDistribution directory.
 
-Apply the following diff to the files
-SourceDistribution/common/reaccsio.c and
-SourceDistribution/common/smi2mol.c:
+cd to $RDBASE/External/AvalonTools and apply AvalonToolkit_1.2_patch.txt:
 
-$ diff SourceDistribution/common ~/avalontoolkit_beta/SourceDistribution/common
-diff SourceDistribution/common/reaccsio.c /cygdrive/c/Users/glandrum/avalontoolkit_beta/SourceDistribution/common/reaccsio.c
-1400d1399
-<
-1414c1413
-<                MyFree((char *)tempdir);
----
->                //MyFree((char *)tempdir);
-1433d1431
-<
-1443c1441
-<
----
->    fprintf(stderr,"  returning\n");
-
-diff SourceDistribution/common/smi2mol.c /cygdrive/c/Users/glandrum/avalontoolkit_beta/SourceDistribution/common/smi2mol.c
-936c936
-< fprintf(stderr, "2: opening branch '%s'\n", tmp);
----
->                 /* fprintf(stderr, "2: opening branch '%s'\n", tmp); */
-1012c1012
-< fprintf(stderr, "closing branch '%s'\n", tmp);
----
->           /* fprintf(stderr, "closing branch '%s'\n", tmp); */
-1543c1543
-< fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
----
->           /*fprintf(stderr, ".{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
-1550c1550
-< fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
----
->           /*fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
-1574c1574
-< fprintf(stderr, "1: opening branch '%s'\n", num_buf);
----
->                    /*fprintf(stderr, "1: opening branch '%s'\n", num_buf);*/
-1592c1592
-< fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);
----
->            /*fprintf(stderr, "{%s:%d}", mp->atom_array[ibranch].atext, ibranch+1);*/
-1596c1596
-< fprintf(stderr, "\n");
----
->       /*fprintf(stderr, "\n");*/
-
-
-
-
+$ patch -p0 < AvalonToolkit_1.2_patch.txt

@@ -1,3 +1,4 @@
+PREPARE dummy AS SELECT rdkit_version();
 SET rdkit.ignore_reaction_agents=false;
 SET rdkit.agent_FP_bit_ratio=0.2;
 SET rdkit.difference_FP_weight_agents=1;
@@ -551,7 +552,7 @@ SELECT tanimoto_sml(reaction_difference_fp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3),
 SELECT tanimoto_sml(reaction_difference_fp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3), reaction_difference_fp('c1ncccc1>[Na+]>c1ncncc1',3));
    tanimoto_sml    
 -------------------
- 0.447368421052632
+ 0.444933920704846
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',1), reaction_structural_bfp('c1ccccc1>>c1ccncc1',1));
@@ -621,9 +622,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3)
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',3));
- tanimoto_sml 
---------------
-      0.34375
+   tanimoto_sml   
+------------------
+ 0.32258064516129
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',4), reaction_structural_bfp('c1ccccc1>>c1ccncc1',4));
@@ -744,9 +745,9 @@ SELECT tanimoto_sml(reaction_difference_fp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3),
 (1 row)
 
 SELECT tanimoto_sml(reaction_difference_fp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3), reaction_difference_fp('c1ncccc1>[Na+]>c1ncncc1',3));
-   tanimoto_sml   
-------------------
- 0.41304347826087
+   tanimoto_sml    
+-------------------
+ 0.403314917127072
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',1), reaction_structural_bfp('c1ccccc1>>c1ccncc1',1));
@@ -818,7 +819,7 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3)
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',3), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',3));
    tanimoto_sml    
 -------------------
- 0.366666666666667
+ 0.344827586206897
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',4), reaction_structural_bfp('c1ccccc1>>c1ccncc1',4));

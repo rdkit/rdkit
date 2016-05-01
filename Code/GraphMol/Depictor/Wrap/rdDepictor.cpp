@@ -96,10 +96,6 @@ unsigned int Compute2DCoordsMimicDistmat(
 }
 
 BOOST_PYTHON_MODULE(rdDepictor) {
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
   python::scope().attr("__doc__") =
       "Module containing the functionality to compute 2D coordinates for a "
       "molecule";

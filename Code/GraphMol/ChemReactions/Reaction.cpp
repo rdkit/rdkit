@@ -646,4 +646,18 @@ void ChemicalReaction::removeUnmappedProductTemplates(
   res_productTemplates.clear();
 }
 
+void ChemicalReaction::removeAgentTemplates(
+    MOL_SPTR_VECT *targetVector)
+{
+  if(targetVector){
+    for(MOL_SPTR_VECT::iterator iter = beginAgentTemplates();
+          iter != endAgentTemplates(); ++iter){
+      targetVector->push_back(*iter);
+    }
+  }
+  m_agentTemplates.clear();
+}
+
+
+
 }  // end of RDKit namespace

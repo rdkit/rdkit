@@ -379,7 +379,6 @@ public class ChemReactionTests extends GraphMolTest {
 			assertEquals( 2,products.get(prodSet).get(0).getNumBonds() );
 		}
 	}
-
 	@Test
 	public void test11ImplicitProperties() {
 		ROMol mol = RWMol.MolFromSmiles("CCO");
@@ -446,8 +445,49 @@ public class ChemReactionTests extends GraphMolTest {
 
 	}
 
-	public static void main(String args[]) {
-		org.junit.runner.JUnitCore.main("org.RDKit.ChemReactionTests");
-	}
-
+        @Test
+        public void test100RunSingleReactant() {
+          ChemicalReaction rxn = 
+              ChemicalReaction.ReactionFromSmarts("[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]");
+          
+          ROMol reag1 = RWMol.MolFromSmiles("C=CCN=C=S");
+          ROMol reag2 = RWMol.MolFromSmiles("NCc1ncc(Cl)cc1Br");
+          
+          ROMol_Vect_Vect prods0 = rxn.runReactant(reag1, 0);
+          ROMol expected_result0 = RWMol.MolFromSmiles("C=CCNC(N)=S");
+          ROMol expected_sidechain0 = RWMol.MolFromSmiles("[1*:1]=S.[3*:3]CC=C");
+          
+          assertEquals( 1, prods0.size() );
+          assertEquals( 1, prods0.get(0).size() );
+          
+          assertEquals( 1, prods0.size() );
+          assertEquals( 1, prods0.get(0).size() );    
+          assertEquals( expected_result0.MolToSmiles(), prods0.get(0).get(0).MolToSmiles() );
+          assertEquals( expected_sidechain0.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(prods0.get(0).get(0)).MolToSmiles());
+              
+          ROMol_Vect_Vect prods1 = rxn.runReactant(reag2, 1);
+          ROMol expected_result1 = RWMol.MolFromSmiles("NCNCc1ncc(Cl)cc1Br");
+          ROMol expected_sidechain1 = RWMol.MolFromSmiles("[2*:2]Cc1ncc(Cl)cc1Br");
+          ROMol expected_sidechain1_nodummies = RWMol.MolFromSmiles("Cc1ncc(Cl)cc1Br");
+          
+          assertEquals( 1, prods1.size() );
+          assertEquals( 1, prods1.get(0).size() );
+          
+          assertEquals( 1, prods1.size() );
+          assertEquals( 1, prods1.get(0).size() );    
+          assertEquals( expected_result1.MolToSmiles(), prods1.get(0).get(0).MolToSmiles() );
+          assertEquals( expected_sidechain1.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(prods1.get(0).get(0)).MolToSmiles());
+          assertEquals( expected_sidechain1_nodummies.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(
+                            prods1.get(0).get(0),false).MolToSmiles());
+          
+          
+        }
+  
+        public static void main(String args[]) {
+          org.junit.runner.JUnitCore.main("org.RDKit.ChemReactionTests");
+        }
+  
 }

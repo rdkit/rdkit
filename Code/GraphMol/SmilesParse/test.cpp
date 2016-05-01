@@ -103,7 +103,7 @@ void testPass() {
     "[C:1]",
     "[C:0]",           // issue 3525776
     "[si]1cccc[si]1",  // aromatic Si (github issue #5)
-    "[asH]1cccc1",  // aromatic As (github issue #682)
+    "[asH]1cccc1",     // aromatic As (github issue #682)
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -1924,7 +1924,7 @@ void testBug1844617() {
   TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode,label);
   TEST_ASSERT(label=="S");
-  
+
   smi = MolToSmiles(*mol,true);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
   delete mol;
@@ -1933,7 +1933,7 @@ void testBug1844617() {
   smi2 = MolToSmiles(*mol,true);
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi==smi2);
-  
+
   delete mol;
 #endif
   smi = "O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
@@ -2291,7 +2291,8 @@ void testRingStereochemReporting() {
 
 void testBug3127883() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "3127883 (kekulization failing) " << std::endl;
+                          "3127883 (kekulization failing) "
+                       << std::endl;
   {
     ROMol *m;
     std::string smi;
@@ -3374,7 +3375,8 @@ void testRingStereochem() {
 void testGithub45() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Github 45: stereochemistry information "
-                          "influencing non-stereo SMILES" << std::endl;
+                          "influencing non-stereo SMILES"
+                       << std::endl;
   {
     RWMol *m;
     std::string smiles = "CC1CCC[13C]2(C)C1CC[14CH]2C(C)=O";
@@ -3451,7 +3453,8 @@ void testGithub206() {
 void testGithub210() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters "
-                          "when calling assignStereochemistry()" << std::endl;
+                          "when calling assignStereochemistry()"
+                       << std::endl;
   {
     RWMol *m;
     std::string smiles = "O[C@H](F)CC(F)(Cl)I";
@@ -3640,6 +3643,135 @@ void testGithub532() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub760() {
+  BOOST_LOG(rdInfoLog) << "testing github issue 760: reversed stereochemistry "
+                          "with sulfoxides and ring closures"
+                       << std::endl;
+  {
+    std::string smiles = "C[S@](Cl)=O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "C[S@]2=O.Cl2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub786() {
+  BOOST_LOG(rdInfoLog) << "testing github issue 786: chiral order for "
+                          "ring closure after branch"
+                       << std::endl;
+  {
+    std::string smiles = "C1CN[C@H]1O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "C1CN[C@@H](O)1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "C1CN[C@]1(O)N";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "C1CN[C@](O)(N)1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "C1CN[C@]12(O).N2";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "C1CN[C@](O)12.N2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+
+    smiles = "C1CN[C@@]1(O)2.N2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+
+    smiles = "C1CN[C@]2(O)1.N2";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "C[C@]1(O)NCC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "C[C@@](O)1NCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "C[C@]1(NCC1)O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+    // so many pathologically ugly SMILES:
+    smiles = "C[C@](NCC1)(O)1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+
+  {  // Andrew's original real example:
+    std::string smiles =
+        "CC(C)[C@]1(N)CC[C@]2([C@@H](O2)CCC(=C)[C@H](CC[C@@](/C=C1)(C)O)O)C";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+    smiles =
+        "CC(C)[C@@](N)1CC[C@]2([C@@H](O2)CCC(=C)[C@H](CC[C@@](/C=C1)(C)O)O)C";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    std::cerr << csmi << " " << csmi2 << std::endl;
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3703,4 +3835,6 @@ int main(int argc, char *argv[]) {
 #endif
   testSmilesWriteForModifiedMolecules();
   testGithub532();
+  testGithub786();
+  testGithub760();
 }

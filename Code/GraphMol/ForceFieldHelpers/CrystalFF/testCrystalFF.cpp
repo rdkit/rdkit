@@ -148,7 +148,7 @@ void testTorsionPrefs() {
   TEST_ASSERT(expTorsionAngles.size() == 2);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   testTorsionAngleM6();
   testTorsionPrefs();
 

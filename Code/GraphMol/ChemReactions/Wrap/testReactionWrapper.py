@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase) :
       ps = rxn.RunReactants(list(reacts))
       self.assertTrue(len(ps)==1)
       self.assertTrue(len(ps[0])==1)
-      self.assertTrue(ps[0][0].GetNumAtoms()==3)    
+      self.assertTrue(ps[0][0].GetNumAtoms()==3)
 
   def test2DaylightParser(self):
     rxna = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
@@ -95,13 +95,13 @@ class TestCase(unittest.TestCase) :
       ps = rxn.RunReactants(reacts)
       self.assertTrue(len(ps)==1)
       self.assertTrue(len(ps[0])==1)
-      self.assertTrue(ps[0][0].GetNumAtoms()==3)  
+      self.assertTrue(ps[0][0].GetNumAtoms()==3)
 
       reacts = (Chem.MolFromSmiles('CC(=O)OC'),Chem.MolFromSmiles('CN'))
       ps = rxn.RunReactants(reacts)
       self.assertTrue(len(ps)==1)
       self.assertTrue(len(ps[0])==1)
-      self.assertTrue(ps[0][0].GetNumAtoms()==5)  
+      self.assertTrue(ps[0][0].GetNumAtoms()==5)
 
   def test3MDLParsers(self):
     fileN = os.path.join(self.dataDir,'AmideBond.rxn')
@@ -117,11 +117,11 @@ class TestCase(unittest.TestCase) :
       ps = rxn.RunReactants(reacts)
       self.assertTrue(len(ps)==1)
       self.assertTrue(len(ps[0])==1)
-      self.assertTrue(ps[0][0].GetNumAtoms()==3)  
+      self.assertTrue(ps[0][0].GetNumAtoms()==3)
 
       with open(fileN, 'r') as rxnF:
         rxnBlock = rxnF.read()
-      rxn = rdChemReactions.ReactionFromRxnBlock(rxnBlock) 
+      rxn = rdChemReactions.ReactionFromRxnBlock(rxnBlock)
       self.assertTrue(rxn)
 
       self.assertTrue(rxn.GetNumReactantTemplates()==2)
@@ -131,7 +131,7 @@ class TestCase(unittest.TestCase) :
       ps = rxn.RunReactants(reacts)
       self.assertTrue(len(ps)==1)
       self.assertTrue(len(ps[0])==1)
-      self.assertTrue(ps[0][0].GetNumAtoms()==3)  
+      self.assertTrue(ps[0][0].GetNumAtoms()==3)
 
   def test4ErrorHandling(self):
     self.assertRaises(ValueError,lambda x='[C:1](=[O:2])Q.[N:3]>>[C:1](=[O:2])[N:3]':rdChemReactions.ReactionFromSmarts(x))
@@ -174,7 +174,7 @@ $MOL
 M  END
     """
     self.assertRaises(ValueError,lambda x=block:rdChemReactions.ReactionFromRxnBlock(x))
-        
+
     block="""$RXN
 
       ISIS     082120061354
@@ -378,7 +378,7 @@ M  END
     p1 = rxn.GetProductTemplate(0)
     sma=Chem.MolToSmarts(p1)
     self.assertEqual(sma,'[C:1]-,:[O:2]')
-    
+
     p2 = rxn.GetProductTemplate(1)
     sma=Chem.MolToSmarts(p2)
     self.assertEqual(sma,'[N:3]')
@@ -397,7 +397,7 @@ M  END
     self.assertTrue(rxn.IsMoleculeProduct(Chem.MolFromSmiles('NC(=O)C')))
     self.assertTrue(rxn.IsMoleculeProduct(Chem.MolFromSmiles('CNC(=O)C')))
     self.assertFalse(rxn.IsMoleculeProduct(Chem.MolFromSmiles('COC(=O)C')))
-    
+
   def test15Replacements(self):
     rxn = rdChemReactions.ReactionFromSmarts('[{amine}:1]>>[*:1]-C',
                                              replacements={'{amine}':'$([N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])'})
@@ -408,25 +408,25 @@ M  END
     self.assertEqual(len(ps),1)
     self.assertEqual(len(ps[0]),1)
     self.assertEqual(ps[0][0].GetNumAtoms(),4)
-    
+
   def test16GetReactingAtoms(self):
     rxn = rdChemReactions.ReactionFromSmarts("[O:1][C:2].[N:3]>>[N:1][C:2].[N:3]")
     self.assertTrue(rxn)
     rxn.Initialize()
     rAs = rxn.GetReactingAtoms()
     self.assertEqual(len(rAs),2)
-    self.assertEqual(len(rAs[0]),1)    
-    self.assertEqual(len(rAs[1]),0)    
+    self.assertEqual(len(rAs[0]),1)
+    self.assertEqual(len(rAs[1]),0)
 
     rxn = rdChemReactions.ReactionFromSmarts("[O:1]C>>[O:1]C")
     self.assertTrue(rxn)
     rxn.Initialize()
     rAs = rxn.GetReactingAtoms()
     self.assertEqual(len(rAs),1)
-    self.assertEqual(len(rAs[0]),2)    
+    self.assertEqual(len(rAs[0]),2)
     rAs = rxn.GetReactingAtoms(True)
     self.assertEqual(len(rAs),1)
-    self.assertEqual(len(rAs[0]),1)   
+    self.assertEqual(len(rAs[0]),1)
 
   def test17AddRecursiveQueriesToReaction(self):
     rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
@@ -447,6 +447,24 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs,'query', getLabels=True)
     self.assertTrue(len(labels), 1)
 
+  def test17bAddRecursiveQueriesToReaction(self):
+    from rdkit.Chem import FilterCatalog
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
+    self.assertTrue(rxn)
+    rxn.Initialize()
+    rxn.GetReactantTemplate(0).GetAtomWithIdx(0).SetProp('query', 'carboxylicacid')
+    querydefs = {k.lower():v
+                 for k,v in FilterCatalog.GetFlattenedFunctionalGroupHierarchy().items()}
+    
+    self.assertTrue('CarboxylicAcid' in FilterCatalog.GetFlattenedFunctionalGroupHierarchy())
+    rxn.AddRecursiveQueriesToReaction(querydefs,
+                                      'query')
+    q = rxn.GetReactantTemplate(0)
+    m = Chem.MolFromSmiles('C(=O)[O-].N')
+    self.assertTrue(m.HasSubstructMatch(q))
+    m = Chem.MolFromSmiles('C.N')
+    self.assertFalse(m.HasSubstructMatch(q))
+    
   def test18GithubIssue16(self):
     rxn = rdChemReactions.ReactionFromSmarts("[F:1]>>[Cl:1]")
     self.assertTrue(rxn)
@@ -474,7 +492,7 @@ M  END
     self.failUnless(rxn.GetNumReactantTemplates()==3)
     self.failUnless(rxn.GetNumProductTemplates()==2)
     self.failUnless(rxn.GetNumAgentTemplates()==0)
-    
+
     agentList=[]
     rxn.RemoveUnmappedReactantTemplates(moveToAgentTemplates=False, targetList=agentList)
     rxn.RemoveUnmappedProductTemplates(targetList=agentList)
@@ -536,10 +554,10 @@ M  END
     self.assertTrue(res)
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("C=CCNC(N)=S"))]
     expected_result.sort()
-    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[1*:1]=S.[3*:3]CC=C"), isomericSmiles=True)]
+    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[*:1]=S.[*:3]CC=C"), isomericSmiles=True)]
     sidechains_nodummy_expected_result = [ [0,[3,],[1,]], [3,[1,],[2,]] ]
     sidechains_nodummy = []
-    
+
     sidechains_expected_result.sort()
 
     for addDummy in [True, False]:
@@ -568,11 +586,11 @@ M  END
         self.assertEquals(sidechains, sidechains_expected_result)
       else:
         self.assertEquals(sidechains_nodummy, sidechains_nodummy_expected_result)
-        
+
 
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("NCNCc1ncc(Cl)cc1Br"))]
     expected_result.sort()
-    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[2*:2]Cc1ncc(Cl)cc1Br"), isomericSmiles=True)]
+    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[*:2]Cc1ncc(Cl)cc1Br"), isomericSmiles=True)]
     sidechains_expected_result.sort()
 
     res = rxn.RunReactant(reagents[1], 1)
@@ -593,7 +611,7 @@ M  END
     self.assertFalse(rxn.RunReactant(reagents[1], 0))
 
     # try a broken ring based side-chain
-    sidechains_expected_result = ['c1ccc2c(c1)nc1n2CC[2*:2]1']
+    sidechains_expected_result = ['c1ccc2c(c1)nc1n2CC[*:2]1']
     reactant = Chem.MolFromSmiles('c1ccc2c(c1)nc1n2CCN1')
     res = rxn.RunReactant(reactant, 1)
     result = []
@@ -617,7 +635,7 @@ M  END
     mol = Chem.AddHs(mol)
     m = rdChemReactions.ReduceProductToSideChains(mol)
     self.assertTrue(m.GetNumAtoms() == 0)
-    
-      
+
+
 if __name__ == '__main__':
   unittest.main()

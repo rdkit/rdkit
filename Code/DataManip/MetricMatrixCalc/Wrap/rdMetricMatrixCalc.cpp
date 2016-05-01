@@ -261,10 +261,6 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc) {
       "e.g. similarity and distance matrices";
 
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
 
   std::string docString;
   docString =

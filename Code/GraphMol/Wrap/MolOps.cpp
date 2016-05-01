@@ -41,15 +41,14 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      unsigned int lineWidthMult, unsigned int fontSize,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
-  std::vector<int> *highlightAtoms =
+  rdk_auto_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
   drawer.setFontSize(fontSize / 24.);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
-  drawer.drawMolecule(mol, highlightAtoms, NULL, NULL, confId);
-  delete highlightAtoms;
+  drawer.drawMolecule(mol, highlightAtoms.get(), NULL, NULL, confId);
   drawer.finishDrawing();
   return outs.str();
 }
@@ -59,9 +58,9 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyDummyLabels,
                                         python::object pyBondTypes,
                                         bool returnCutsPerAtom) {
-  std::vector<unsigned int> *bondIndices =
+  rdk_auto_ptr<std::vector<unsigned int> > bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices) throw_value_error("empty bond indices");
+  if (!bondIndices.get()) throw_value_error("empty bond indices");
 
   std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0;
   if (pyDummyLabels) {
@@ -99,7 +98,6 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   for (unsigned int i = 0; i < frags.size(); ++i) {
     res.append(frags[i]);
   }
-  delete bondIndices;
   delete dummyLabels;
   delete bondTypes;
   if (cutsPerAtom) {
@@ -133,9 +131,9 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              bool addDummies, python::object pyDummyLabels,
                              python::object pyBondTypes,
                              python::list pyCutsPerAtom) {
-  std::vector<unsigned int> *bondIndices =
+  rdk_auto_ptr<std::vector<unsigned int> > bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices) throw_value_error("empty bond indices");
+  if (!bondIndices.get()) throw_value_error("empty bond indices");
   std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0;
   if (pyDummyLabels) {
     unsigned int nVs =
@@ -179,7 +177,6 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
     delete cutsPerAtom;
   }
 
-  delete bondIndices;
   delete dummyLabels;
   delete bondTypes;
   return res;
@@ -190,10 +187,9 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
       mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
-  std::vector<unsigned int> *newOrder =
+  rdk_auto_ptr<std::vector<unsigned int> > newOrder =
       pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
-  delete newOrder;
   return res;
 }
 
@@ -305,9 +301,14 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
   addRecursiveQueries(mol, replacements, propName);
 }
 
-ROMol *addHs(const ROMol &orig, bool explicitOnly = false,
-             bool addCoords = false) {
-  return MolOps::addHs(orig, explicitOnly, addCoords);
+ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
+             python::object onlyOnAtoms) {
+  rdk_auto_ptr<std::vector<unsigned int> > onlyOn;
+  if (onlyOnAtoms) {
+    onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
+  }
+  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get());
+  return res;
 }
 int getSSSR(ROMol &mol) {
   VECT_INT_VECT rings;
@@ -508,7 +509,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
     unsigned int maxPath, unsigned int fpSize, python::list atomCounts,
     ExplicitBitVect *includeOnlyBits, bool branchedPaths,
     python::object fromAtoms) {
-  std::vector<unsigned int> *lFromAtoms =
+  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<unsigned int> *atomCountsV = 0;
   if (atomCounts) {
@@ -527,7 +528,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
   ExplicitBitVect *res;
   res = RDKit::LayeredFingerprintMol(mol, layerFlags, minPath, maxPath, fpSize,
                                      atomCountsV, includeOnlyBits,
-                                     branchedPaths, lFromAtoms);
+                                     branchedPaths, lFromAtoms.get());
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -535,7 +536,6 @@ ExplicitBitVect *wrapLayeredFingerprint(
     }
     delete atomCountsV;
   }
-  delete lFromAtoms;
 
   return res;
 }
@@ -574,24 +574,26 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     unsigned int fpSize, unsigned int nBitsPerHash, bool useHs,
     double tgtDensity, unsigned int minSize, bool branchedPaths,
     bool useBondOrder, python::object atomInvariants, python::object fromAtoms,
-    python::object atomBits) {
-  std::vector<unsigned int> *lAtomInvariants =
+    python::object atomBits, python::object bitInfo) {
+  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  std::vector<unsigned int> *lFromAtoms =
+  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint32_t> > *lAtomBits = 0;
+  std::map<boost::uint32_t,std::vector<std::vector<int> > > *lBitInfo=0;
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
     lAtomBits =
         new std::vector<std::vector<boost::uint32_t> >(mol.getNumAtoms());
   }
+  if(bitInfo!=python::object()){
+    lBitInfo = new std::map<boost::uint32_t,std::vector<std::vector<int> > >;
+  }
   ExplicitBitVect *res;
-  res = RDKit::RDKFingerprintMol(
-      mol, minPath, maxPath, fpSize, nBitsPerHash, useHs, tgtDensity, minSize,
-      branchedPaths, useBondOrder, lAtomInvariants, lFromAtoms, lAtomBits);
-
-  delete lAtomInvariants;
-  delete lFromAtoms;
+  res = RDKit::RDKFingerprintMol(mol, minPath, maxPath, fpSize, nBitsPerHash,
+                                 useHs, tgtDensity, minSize, branchedPaths,
+                                 useBondOrder, lAtomInvariants.get(),
+                                 lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
     python::list &pyl = static_cast<python::list &>(atomBits);
@@ -602,9 +604,92 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     }
     delete lAtomBits;
   }
+  if(lBitInfo){
+    python::dict &pyd=static_cast<python::dict &>(bitInfo);
+    typedef std::map<boost::uint32_t,std::vector<std::vector<int> > >::iterator it_type;
+    for(it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
+      python::list temp;
+      std::vector<std::vector<int> >::iterator itset;
+      for (itset = it->second.begin(); itset != it->second.end(); ++itset){
+        python::list temp2;
+        for(unsigned int i=0; i<itset->size(); ++i){
+          temp2.append(itset->at(i));
+        }
+        temp.append(temp2);
+      }
+      if(!pyd.has_key(it->first)){
+        pyd[it->first]=temp;
+      }
+    }
+    delete lBitInfo;
+  }
 
   return res;
 }
+
+
+SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(const ROMol &mol,
+                                       unsigned int minPath,
+                                       unsigned int maxPath,
+                                       bool useHs,
+                                       bool branchedPaths,
+                                       bool useBondOrder,
+                                       python::object atomInvariants,
+                                       python::object fromAtoms,
+                                       python::object atomBits,
+                                       python::object bitInfo
+                                       ){
+  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants=pythonObjectToVect<unsigned int>(atomInvariants);
+  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
+  std::vector<std::vector<boost::uint64_t> > *lAtomBits=0;
+  std::map<boost::uint64_t,std::vector<std::vector<int> > > *lBitInfo=0;
+
+  //if(!(atomBits.is_none())){
+  if(atomBits!=python::object()){
+    lAtomBits = new std::vector<std::vector<boost::uint64_t> >(mol.getNumAtoms());
+  }
+  if(bitInfo!=python::object()){
+    lBitInfo = new std::map<boost::uint64_t,std::vector<std::vector<int> > >;
+  }
+
+  SparseIntVect<boost::uint64_t> *res;
+  res = getUnfoldedRDKFingerprintMol(mol,minPath,maxPath,useHs,branchedPaths,
+      useBondOrder,lAtomInvariants.get(),lFromAtoms.get(),lAtomBits,lBitInfo);
+
+  if(lAtomBits){
+    python::list &pyl=static_cast<python::list &>(atomBits);
+    for(unsigned int i=0;i<mol.getNumAtoms();++i){
+      python::list tmp;
+      BOOST_FOREACH(boost::uint64_t v,(*lAtomBits)[i]){
+        tmp.append(v);
+      }
+      pyl.append(tmp);
+    }
+    delete lAtomBits;
+  }
+  if(lBitInfo){
+    python::dict &pyd=static_cast<python::dict &>(bitInfo);
+    typedef std::map<boost::uint64_t,std::vector<std::vector<int> > >::iterator it_type;
+    for(it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
+      python::list temp;
+      std::vector<std::vector<int> >::iterator itset;
+      for (itset = it->second.begin(); itset != it->second.end(); ++itset){
+        python::list temp2;
+        for(unsigned int i=0; i<itset->size(); ++i){
+          temp2.append(itset->at(i));
+        }
+        temp.append(temp2);
+      }
+      if(!pyd.has_key(it->first)){
+        pyd[it->first]=temp;
+      }
+    }
+    delete lBitInfo;
+  }
+
+  return res;
+}
+
 
 python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
                                                    unsigned int lowerLen,
@@ -758,6 +843,9 @@ struct molops_wrapper {
     - addCoords: (optional) if this toggle is set, The Hs will have 3D coordinates\n\
       set.  Default value is 0 (no 3D coords).\n\
 \n\
+    - onlyOnHs: (optional) if this sequence is provided, only these atoms will be\n\
+      considered to have Hs added to them\n\
+\n\
   RETURNS: a new molecule with added Hs\n\
 \n\
   NOTES:\n\
@@ -770,7 +858,8 @@ struct molops_wrapper {
 \n";
     python::def("AddHs", addHs,
                 (python::arg("mol"), python::arg("explicitOnly") = false,
-                 python::arg("addCoords") = false),
+                 python::arg("addCoords") = false,
+                 python::arg("onlyOnAtoms") = python::object()),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
@@ -1427,6 +1516,10 @@ struct molops_wrapper {
       containing the bits each atom sets.\n\
       Defaults to empty.\n\
 \n\
+   - bitInfo: (optional) an empty dict. If provided, the result will contain a dict \n\
+     with bits as keys and corresponding bond paths as values.\n\
+     Defaults to empty.\n\
+\n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
   ALGORITHM:\n\
@@ -1451,11 +1544,67 @@ struct molops_wrapper {
          python::arg("branchedPaths") = true,
          python::arg("useBondOrder") = true, python::arg("atomInvariants") = 0,
          python::arg("fromAtoms") = 0,
-         python::arg("atomBits") = python::object()),
+         python::arg("atomBits") = python::object(),
+         python::arg("bitInfo")=python::object()),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
     python::scope().attr("_RDKFingerprint_version") =
         RDKit::RDKFingerprintMolVersion;
+
+docString =
+    "Returns an unfolded count-based version of the RDKit fingerprint for a molecule\n\
+\n\
+ARGUMENTS:\n\
+    \n\
+        - mol: the molecule to use\n\
+    \n\
+        - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
+          Defaults to 1.\n\
+    \n\
+        - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
+          Defaults to 7.\n\
+    \n\
+        - useHs: (optional) include paths involving Hs in the fingerprint if the molecule\n\
+          has explicit Hs.\n\
+          Defaults to True.\n\
+    \n\
+        - branchedPaths: (optional) if set both branched and unbranched paths will be\n\
+          used in the fingerprint.\n\
+          Defaults to True.\n\
+    \n\
+        - useBondOrder: (optional) if set both bond orders will be used in the path hashes\n\
+          Defaults to True.\n\
+    \n\
+        - atomInvariants: (optional) a sequence of atom invariants to use in the path hashes\n\
+          Defaults to empty.\n\
+    \n\
+        - fromAtoms: (optional) a sequence of atom indices. If provided, only paths/subgraphs \n\
+          starting from these atoms will be used.\n\
+          Defaults to empty.\n\
+    \n\
+        - atomBits: (optional) an empty list. If provided, the result will contain a list \n\
+          containing the bits each atom sets.\n\
+          Defaults to empty.\n\
+    \n\
+       - bitInfo: (optional) an empty dict. If provided, the result will contain a dict \n\
+         with bits as keys and corresponding bond paths as values.\n\
+         Defaults to empty.\n\
+     \n\
+     \n";
+
+    python::def(
+        "UnfoldedRDKFingerprintCountBased", wrapUnfoldedRDKFingerprintMol,
+        (python::arg("mol"),python::arg("minPath")=1,
+         python::arg("maxPath")=7,python::arg("useHs")=true,
+         python::arg("branchedPaths")=true,
+         python::arg("useBondOrder")=true,
+         python::arg("atomInvariants")=0,
+         python::arg("fromAtoms")=0,
+         python::arg("atomBits")=python::object(),
+         python::arg("bitInfo")=python::object()),
+         docString.c_str(),
+         python::return_value_policy<python::manage_new_object>());
+
 
     // ------------------------------------------------------------------------
     docString =

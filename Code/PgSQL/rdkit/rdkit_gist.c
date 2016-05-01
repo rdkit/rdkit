@@ -81,7 +81,7 @@ sizebitvec(bytea *b)
     i;
   unsigned char *sign = (unsigned char*)VARDATA(b);
 
-  for(i=0; i<SIGLEN(b); i++)
+  for(i=0; i<(int32)SIGLEN(b); i++)
     size += number_of_ones[sign[i]];
 
   return size;
@@ -100,7 +100,7 @@ compressAllTrue(GISTENTRY *entry)
   int i;
                 
 
-  for(i=0; i<SIGLEN(b); i++)
+  for(i=0; i<(int32)SIGLEN(b); i++)
     if ( sign[i] != 0xff )
       return retval;
 
@@ -115,8 +115,8 @@ compressAllTrue(GISTENTRY *entry)
   return retval;
 }
 
+PGDLLEXPORT Datum gmol_compress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_compress);
-Datum gmol_compress(PG_FUNCTION_ARGS);
 Datum
 gmol_compress(PG_FUNCTION_ARGS)
 {
@@ -141,8 +141,8 @@ gmol_compress(PG_FUNCTION_ARGS)
   PG_RETURN_POINTER(retval);
 }
 
+PGDLLEXPORT Datum gbfp_compress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gbfp_compress);
-Datum gbfp_compress(PG_FUNCTION_ARGS);
 Datum
 gbfp_compress(PG_FUNCTION_ARGS)
 {
@@ -167,8 +167,8 @@ gbfp_compress(PG_FUNCTION_ARGS)
   PG_RETURN_POINTER(retval);
 }
 
+PGDLLEXPORT Datum gsfp_compress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gsfp_compress);
-Datum gsfp_compress(PG_FUNCTION_ARGS);
 Datum
 gsfp_compress(PG_FUNCTION_ARGS)
 {
@@ -193,8 +193,8 @@ gsfp_compress(PG_FUNCTION_ARGS)
   PG_RETURN_POINTER(retval);
 }
 
+PGDLLEXPORT Datum gmol_decompress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_decompress);
-Datum gmol_decompress(PG_FUNCTION_ARGS);
 Datum
 gmol_decompress(PG_FUNCTION_ARGS)
 {
@@ -215,8 +215,8 @@ gmol_decompress(PG_FUNCTION_ARGS)
   PG_RETURN_POINTER(entry);
 }
 
+PGDLLEXPORT Datum gmol_union(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_union);
-Datum gmol_union(PG_FUNCTION_ARGS);
 Datum
 gmol_union(PG_FUNCTION_ARGS)
 {
@@ -269,8 +269,8 @@ gmol_union(PG_FUNCTION_ARGS)
  * Same method
  */
 
+PGDLLEXPORT Datum gmol_same(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_same);
-Datum gmol_same(PG_FUNCTION_ARGS);
 Datum
 gmol_same(PG_FUNCTION_ARGS)
 {
@@ -385,8 +385,8 @@ soergeldist(bytea *a, bytea *b) {
   return soergeldistsign(a, b);
 }
 
+PGDLLEXPORT Datum gmol_penalty(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_penalty);
-Datum gmol_penalty(PG_FUNCTION_ARGS);
 Datum
 gmol_penalty(PG_FUNCTION_ARGS)
 {
@@ -396,13 +396,13 @@ gmol_penalty(PG_FUNCTION_ARGS)
   bytea *origval = (bytea *) DatumGetPointer(origentry->key);
   bytea *newval = (bytea *) DatumGetPointer(newentry->key);
 
-  *penalty = hemdist(origval, newval);
+  *penalty = (float)hemdist(origval, newval);
 
   PG_RETURN_POINTER(penalty);
 }
 
+PGDLLEXPORT Datum gbfp_penalty(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gbfp_penalty);
-Datum gbfp_penalty(PG_FUNCTION_ARGS);
 Datum
 gbfp_penalty(PG_FUNCTION_ARGS)
 {
@@ -412,7 +412,7 @@ gbfp_penalty(PG_FUNCTION_ARGS)
   bytea *origval = (bytea *) DatumGetPointer(origentry->key);
   bytea *newval = (bytea *) DatumGetPointer(newentry->key);
 
-  *penalty = soergeldist(origval, newval);
+  *penalty = (float)soergeldist(origval, newval);
 
   PG_RETURN_POINTER(penalty);
 }
@@ -441,8 +441,8 @@ comparecost(const void *va, const void *vb)
     return (a->cost > b->cost) ? 1 : -1;
 }
 
+PGDLLEXPORT Datum gmol_picksplit(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_picksplit);
-Datum gmol_picksplit(PG_FUNCTION_ARGS);
 Datum
 gmol_picksplit(PG_FUNCTION_ARGS)
 {
@@ -640,8 +640,8 @@ gmol_picksplit(PG_FUNCTION_ARGS)
  * Consistent function
  */
 
+PGDLLEXPORT Datum gmol_consistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_consistent);
-Datum gmol_consistent(PG_FUNCTION_ARGS);
 Datum
 gmol_consistent(PG_FUNCTION_ARGS)
 {
@@ -672,7 +672,7 @@ gmol_consistent(PG_FUNCTION_ARGS)
           if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
-          for(i=0; res && i<SIGLEN(key); i++)
+          for(i=0; res && i<(int)SIGLEN(key); i++)
             if ( (k[i] & q[i]) != q[i])
               res = false;
         }
@@ -691,7 +691,7 @@ gmol_consistent(PG_FUNCTION_ARGS)
 
           if ( GIST_LEAF(entry) )
             {
-              for(i=0; res && i<SIGLEN(key); i++)
+              for(i=0; res && i<(int)SIGLEN(key); i++)
                 if ( (k[i] & q[i]) != k[i])
                   res = false;
             }
@@ -702,7 +702,7 @@ gmol_consistent(PG_FUNCTION_ARGS)
                * overlapping
                */
               res = false;
-              for(i=0; res == false && i<SIGLEN(key); i++)
+              for(i=0; res == false && i<(int)SIGLEN(key); i++)
                 if ( k[i] & q[i] )
                   res = true;
             }
@@ -713,7 +713,7 @@ gmol_consistent(PG_FUNCTION_ARGS)
           unsigned char *q = (unsigned char*)VARDATA(query);
 
           res = true;
-          for(i=0; res && i<SIGLEN(query); i++)
+          for(i=0; res && i<(int)SIGLEN(query); i++)
             if ( q[i] != 0xff )
               res = false;
         }
@@ -730,7 +730,7 @@ gmol_consistent(PG_FUNCTION_ARGS)
           if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
-          for(i=0; res && i<SIGLEN(key); i++){
+          for(i=0; res && i<(int)SIGLEN(key); i++){
             unsigned char temp = k[i] & q[i];
             if ( temp != q[i] )
               res = false;
@@ -833,7 +833,7 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
       elog(ERROR, "All fingerprints should be the same length");
 
 #ifndef USE_BUILTIN_POPCOUNT
-    for(i=0;i<SIGLEN(key);i++)
+    for(i=0;i<(int)SIGLEN(key);i++)
       cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
     unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
@@ -854,9 +854,8 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
 }
 
 #if PG_VERSION_NUM >= 90100
-Datum  gbfp_distance(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum  gbfp_distance(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gbfp_distance);
-
 Datum
 gbfp_distance(PG_FUNCTION_ARGS)
 {
@@ -900,7 +899,7 @@ gbfp_distance(PG_FUNCTION_ARGS)
             elog(ERROR, "All fingerprints should be the same length");
 
 #ifndef USE_BUILTIN_POPCOUNT
-        for(i=0;i<SIGLEN(key);i++)
+        for(i=0;i<(int)SIGLEN(key);i++)
             cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
         unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
@@ -962,8 +961,8 @@ gbfp_distance(PG_FUNCTION_ARGS)
 }
 #endif
 
+PGDLLEXPORT Datum gbfp_consistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gbfp_consistent);
-Datum gbfp_consistent(PG_FUNCTION_ARGS);
 Datum
 gbfp_consistent(PG_FUNCTION_ARGS)
 {
@@ -984,8 +983,8 @@ gbfp_consistent(PG_FUNCTION_ARGS)
   PG_RETURN_BOOL(rdkit_consistent(entry, strategy, key, query));
 }
 
+PGDLLEXPORT Datum gsfp_consistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gsfp_consistent);
-Datum gsfp_consistent(PG_FUNCTION_ARGS);
 Datum
 gsfp_consistent(PG_FUNCTION_ARGS)
 {
@@ -1030,8 +1029,8 @@ gsfp_consistent(PG_FUNCTION_ARGS)
     }
 }
 
+PGDLLEXPORT Datum greaction_compress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(greaction_compress);
-Datum greaction_compress(PG_FUNCTION_ARGS);
 Datum
 greaction_compress(PG_FUNCTION_ARGS)
 {
@@ -1056,8 +1055,8 @@ greaction_compress(PG_FUNCTION_ARGS)
   PG_RETURN_POINTER(retval);
 }
 
+PGDLLEXPORT Datum greaction_consistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(greaction_consistent);
-Datum greaction_consistent(PG_FUNCTION_ARGS);
 Datum
 greaction_consistent(PG_FUNCTION_ARGS)
 {
@@ -1088,7 +1087,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
           if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
-          for(i=0; res && i<SIGLEN(key); i++)
+          for(i=0; res && i<(int)SIGLEN(key); i++)
             if ( (k[i] & q[i]) != q[i])
               res = false;
         }
@@ -1107,7 +1106,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
 
           if ( GIST_LEAF(entry) )
             {
-              for(i=0; res && i<SIGLEN(key); i++)
+              for(i=0; res && i<(int)SIGLEN(key); i++)
                 if ( (k[i] & q[i]) != k[i])
                   res = false;
             }
@@ -1118,7 +1117,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
                * overlapping
                */
               res = false;
-              for(i=0; res == false && i<SIGLEN(key); i++)
+              for(i=0; res == false && i<(int)SIGLEN(key); i++)
                 if ( k[i] & q[i] )
                   res = true;
             }
@@ -1129,7 +1128,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
           unsigned char *q = (unsigned char*)VARDATA(query);
 
           res = true;
-          for(i=0; res && i<SIGLEN(query); i++)
+          for(i=0; res && i<(int)SIGLEN(query); i++)
             if ( q[i] != 0xff )
               res = false;
         }
@@ -1146,7 +1145,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
           if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
-          for(i=0; res && i<SIGLEN(key); i++){
+          for(i=0; res && i<(int)SIGLEN(key); i++){
           	unsigned char temp = k[i] & q[i];
               if ( temp != q[i] || temp != k[i])
                 res = false;
@@ -1165,7 +1164,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
           if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
-          for(i=0; res && i<SIGLEN(key); i++)
+          for(i=0; res && i<(int)SIGLEN(key); i++)
             if ( (k[i] & q[i]) != q[i])
               res = false;
         }
@@ -1184,7 +1183,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
 
           if ( GIST_LEAF(entry) )
             {
-              for(i=0; res && i<SIGLEN(key); i++)
+              for(i=0; res && i<(int)SIGLEN(key); i++)
                 if ( (k[i] & q[i]) != k[i])
                   res = false;
             }
@@ -1195,7 +1194,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
                * overlapping
                */
               res = false;
-              for(i=0; res == false && i<SIGLEN(key); i++)
+              for(i=0; res == false && i<(int)SIGLEN(key); i++)
                 if ( k[i] & q[i] )
                   res = true;
             }
@@ -1206,7 +1205,7 @@ greaction_consistent(PG_FUNCTION_ARGS)
           unsigned char *q = (unsigned char*)VARDATA(query);
 
           res = true;
-          for(i=0; res && i<SIGLEN(query); i++)
+          for(i=0; res && i<(int)SIGLEN(query); i++)
             if ( q[i] != 0xff )
               res = false;
         }

@@ -40,6 +40,17 @@ python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
   }
   return python::tuple(result);
 }
+python::tuple containingNbrHelper(const FPBReader *self,
+                                  const std::string &bytes) {
+  const boost::uint8_t *bv =
+      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
+  python::list result;
+  for (unsigned int i = 0; i < nbrs.size(); ++i) {
+    result.append(nbrs[i]);
+  }
+  return python::tuple(result);
+}
 
 python::object getBytesHelper(const FPBReader *self, unsigned int which) {
   boost::shared_array<boost::uint8_t> bv = self->getBytes(which);
@@ -69,6 +80,8 @@ double getTverskyHelper(const FPBReader *self, unsigned int which,
 
 std::string FPBReaderClassDoc =
     "A class for reading and searching FPB files from Andrew Dalke's chemfp.\n\
+    Note that this functionality is still experimental and the API may\n\
+    change in future releases.\n\
 \n";
 
 struct FPB_wrapper {
@@ -104,7 +117,11 @@ struct FPB_wrapper {
              (python::arg("bv"), python::arg("ca"), python::arg("cb"),
               python::arg("threshold") = 0.7),
              "returns Tversky similarities to and indices of all neighbors "
-             "above the specified threshold");
+             "above the specified threshold")
+        .def(
+            "GetContainingNeighbors", &containingNbrHelper, (python::arg("bv")),
+            "returns indices of neighbors that contain this fingerprint (where "
+            "all bits from this fingerprint are also set)");
   }
 };
 

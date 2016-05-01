@@ -33,14 +33,14 @@ def cacheImageFile(filename):
 
     compressed = zlib.compress(raw)   #this bit is very fast...
     encoded = _AsciiBase85Encode(compressed) #...sadly this isn't
-    
+
     #write in blocks of 60 characters per line
     outstream = StringIO(encoded)
     dataline = outstream.read(60)
     while dataline != "":
         code.append(dataline)
         dataline = outstream.read(60)
-    
+
     code.append('EI')
 
     #save it to a file
@@ -66,7 +66,7 @@ def preProcessImages(spec):
             print('cached version of %s already exists' % filename)
         else:
             cacheImageFile(filename)
-        
+
 
 def cachedImageExists(filename):
     """Determines if a cached image exists which has
@@ -83,7 +83,7 @@ def cachedImageExists(filename):
             return 1
     else:
         return 0
-    
+
 
 ##############################################################
 #
@@ -147,31 +147,31 @@ def _AsciiHexTest(text='What is the average velocity of a sparrow?'):
         print('Passed')
     else:
         print('Failed!')
-    
+
 def _AsciiBase85Encode(input):
     """This is a compact encoding used for binary data within
     a PDF file.  Four bytes of binary data become five bytes of
     ASCII.  This is the default method used for encoding images."""
     outstream = StringIO()
-    # special rules apply if not a multiple of four bytes.  
+    # special rules apply if not a multiple of four bytes.
     whole_word_count, remainder_size = divmod(len(input), 4)
     cut = 4 * whole_word_count
     body, lastbit = input[0:cut], input[cut:]
-    
+
     for i in range(whole_word_count):
         offset = i*4
         b1 = ord(body[offset])
         b2 = ord(body[offset+1])
         b3 = ord(body[offset+2])
         b4 = ord(body[offset+3])
-    
-        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
+
+        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
 
         if num == 0:
             #special case
             outstream.write('z')
         else:
-            #solve for five base-85 numbers                            
+            #solve for five base-85 numbers
             temp, c5 = divmod(num, 85)
             temp, c4 = divmod(temp, 85)
             temp, c3 = divmod(temp, 85)
@@ -196,7 +196,7 @@ def _AsciiBase85Encode(input):
         b3 = ord(lastbit[2])
         b4 = ord(lastbit[3])
 
-        num = 16777216L * b1 + 65536 * b2 + 256 * b3 + b4
+        num = 16777216 * b1 + 65536 * b2 + 256 * b3 + b4
 
         #solve for c1..c5
         temp, c5 = divmod(num, 85)
@@ -210,11 +210,11 @@ def _AsciiBase85Encode(input):
         #write out most of the bytes.
         outstream.write(lastword[0:remainder_size + 1])
 
-    #terminator code for ascii 85    
+    #terminator code for ascii 85
     outstream.write('~>')
     outstream.reset()
     return outstream.read()
-        
+
 
 def _AsciiBase85Decode(input):
     """This is not used - Acrobat Reader decodes for you - but a round
@@ -228,13 +228,13 @@ def _AsciiBase85Decode(input):
 
     #may have 'z' in it which complicates matters - expand them
     stripped = string.replace(stripped,'z','!!!!!')
-    # special rules apply if not a multiple of five bytes.  
+    # special rules apply if not a multiple of five bytes.
     whole_word_count, remainder_size = divmod(len(stripped), 5)
     #print '%d words, %d leftover' % (whole_word_count, remainder_size)
     assert remainder_size != 1, 'invalid Ascii 85 stream!'
     cut = 5 * whole_word_count
     body, lastbit = stripped[0:cut], stripped[cut:]
-    
+
     for i in range(whole_word_count):
         offset = i*5
         c1 = ord(body[offset]) - 33
@@ -243,7 +243,7 @@ def _AsciiBase85Decode(input):
         c4 = ord(body[offset+3]) - 33
         c5 = ord(body[offset+4]) - 33
 
-        num = ((85**4) * c1) + ((85**3) * c2) + ((85**2) * c3) + (85*c4) + c5    
+        num = ((85**4) * c1) + ((85**3) * c2) + ((85**2) * c3) + (85*c4) + c5
 
         temp, b4 = divmod(num,256)
         temp, b3 = divmod(temp,256)
@@ -254,7 +254,7 @@ def _AsciiBase85Decode(input):
         outstream.write(chr(b2))
         outstream.write(chr(b3))
         outstream.write(chr(b4))
-        
+
     #decode however many bytes we have as usual
     if remainder_size > 0:
         while len(lastbit) < 5:
@@ -264,7 +264,7 @@ def _AsciiBase85Decode(input):
         c3 = ord(lastbit[2]) - 33
         c4 = ord(lastbit[3]) - 33
         c5 = ord(lastbit[4]) - 33
-        num = ((85**4) * c1) + ((85**3) * c2) + ((85**2) * c3) + (85*c4) + c5    
+        num = ((85**4) * c1) + ((85**3) * c2) + ((85**2) * c3) + (85*c4) + c5
         temp, b4 = divmod(num,256)
         temp, b3 = divmod(temp,256)
         b1, b2 = divmod(temp, 256)
@@ -283,7 +283,7 @@ def _AsciiBase85Decode(input):
             lastword = chr(b1) + chr(b2) + chr(b3+1)
         outstream.write(lastword)
 
-    #terminator code for ascii 85    
+    #terminator code for ascii 85
     outstream.reset()
     return outstream.read()
 
@@ -299,7 +299,7 @@ def _wrap(input, columns=60):
 
     return string.join(output, LINEEND)
 
-    
+
 
 def _AsciiBase85Test(text='What is the average velocity of a sparrow?'):
     "Do the obvious test for whether Base 85 encoding works"
@@ -312,5 +312,3 @@ def _AsciiBase85Test(text='What is the average velocity of a sparrow?'):
         print('Passed')
     else:
         print('Failed!')
-
-

@@ -1,15 +1,15 @@
 # Copyright (C) 2000  Greg Landrum
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -22,7 +22,7 @@ SVG file.
 
 Bits have been shamelessly cobbled from piddlePDF.py and/or
 piddlePS.py
-		
+
 Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 """
 
@@ -49,7 +49,7 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 from rdkit.sping.pid import *
 from rdkit.sping.PDF import pdfmetrics # for font info
 import string
-from types import StringType
+from rdkit import six
 from math import *
 
 #SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
@@ -101,7 +101,7 @@ class SVGCanvas( Canvas ):
         xmlns:svg="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink"
         xml:space="preserve" width="%dpx" height="%dpx" %s>\n"""%(self.size[0],self.size[1],extraHeaderText)
-    
+
   def _findExternalFontName(self, font):       #copied from piddlePDF by cwl- hack away!
         """Attempts to return proper font name.
         PDF uses a standard 14 fonts referred to
@@ -156,7 +156,7 @@ class SVGCanvas( Canvas ):
     fontStr = ''
     if font.face is None:
       font.__dict__['face'] = 'sansserif'  # quick hack -cwl
-    if type(font.face) == StringType:
+    if isinstance(font.face,siz.string_types):
       if len(string.split(font.face)) > 1:
         familyStr = '\'%s\''%font.face
       else:
@@ -191,14 +191,14 @@ class SVGCanvas( Canvas ):
 
   def _FormArcStr(self,x1,y1,x2,y2,theta1,extent):
     """ Forms an arc specification for SVG
-    
+
     """
     if abs(extent) > 360:
       if extent < 0:
         extent = -abs(extent)%360
       else:
         extent = extent%360
-    
+
     # deal with figuring out the various arc flags
     #  required by SVG.
     if extent > 180:   # this one is easy
@@ -206,7 +206,7 @@ class SVGCanvas( Canvas ):
     else:
       arcFlag = 0
 
-    if extent >=0: 
+    if extent >=0:
       sweepFlag = 0
     else:
       sweepFlag = 1
@@ -220,7 +220,7 @@ class SVGCanvas( Canvas ):
     cy = (y1+y2)/2.
     # its radius
     rx = abs(x2 - x1)/2.
-    ry = abs(y2 - y1)/2.    
+    ry = abs(y2 - y1)/2.
 
     # final angle
     theta2 = theta1 + extent
@@ -246,16 +246,16 @@ class SVGCanvas( Canvas ):
   def flush(self):
     # self.save('svg')
     pass  # to fit new definition of flush() -cwl
-    
+
   def save(self, file=None, format=None):
     """Hand hand this either a file= <filename> or
     file = <an open file object>.  By default, I've made the fomrat extension be
     .svg.  By default it saves the file to "self.name" + '.svg' """
 
     if file==None:
-      file = self.name 
-      
-    if isinstance(file, StringType):
+      file = self.name
+
+    if isinstance(file, six.string_types):
       isFileName = 1
     else:
       isFileName = 0
@@ -267,14 +267,14 @@ class SVGCanvas( Canvas ):
       else:
         file = file + '.' + type
 
-    fileobj = getFileObject(file, openFlags="w+")    
+    fileobj = getFileObject(file, openFlags="w+")
     fileobj.write(self._txt+'</svg:svg>')
     if isFileName:
       fileobj.close()   # do not close if handed a file handle instead of a file name
 
   def text(self):
     return self._txt+'</svg:svg>'
-    
+
 
   #------------- drawing methods --------------
   def drawLine(self, x1,y1, x2,y2, color=None, width=None,
@@ -287,7 +287,7 @@ class SVGCanvas( Canvas ):
       return
     else:
       color = self.defaultLineColor
-      
+
     svgColor = _ColorToSVG(color)
 
     if width:
@@ -305,9 +305,9 @@ class SVGCanvas( Canvas ):
       outStr+=kwargs['bodyText']
     outStr += '</svg:line>\n'
     self._txt = self._txt + outStr
-    
 
-  def drawPolygon(self, pointlist, 
+
+  def drawPolygon(self, pointlist,
                   edgeColor=None, edgeWidth=None, fillColor=transparent, closed=0,
                   dash=None,**kwargs):
     """drawPolygon(pointlist) -- draws a polygon
@@ -322,7 +322,7 @@ class SVGCanvas( Canvas ):
     if fillColor:
       if fillColor != transparent:
         filling = 1
-          
+
     # do the fill
     if filling:
       fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
@@ -358,7 +358,7 @@ class SVGCanvas( Canvas ):
     cx = (x1+x2)/2.
     cy = (y1+y2)/2.
     rx = abs(x2 - x1)/2.
-    ry = abs(y2 - y1)/2.    
+    ry = abs(y2 - y1)/2.
     ellipseStr = 'cx="%.2f" cy="%.2f" rx="%.2f" ry="%.2f"'%(cx,cy,rx,ry)
 
     # set color for fill...
@@ -366,7 +366,7 @@ class SVGCanvas( Canvas ):
     if fillColor:
       if fillColor != transparent:
         filling = 1
-          
+
     # do the fill
     if filling:
       fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
@@ -409,7 +409,7 @@ class SVGCanvas( Canvas ):
     if fillColor != transparent:
       filling = 1
 
-          
+
     # do the fill
     if filling:
       fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
@@ -451,7 +451,7 @@ class SVGCanvas( Canvas ):
     else:
       outStr = '<svg:path %s d="%s">'%(fillStr,fillPathStr)
       outStr += '</svg:path>\n'
-      outStr = outStr+'<svg:path fill="none" %s d="%s">'%(edgeStr,strokePathStr)      
+      outStr = outStr+'<svg:path fill="none" %s d="%s">'%(edgeStr,strokePathStr)
       if kwargs.has_key('bodyText'):
         outStr+=kwargs['bodyText']
       outStr += '</svg:path>\n'
@@ -471,7 +471,7 @@ class SVGCanvas( Canvas ):
     if fillColor:
       if fillColor != transparent:
         filling = 1
-          
+
     # do the fill
     if filling:
       fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
@@ -499,7 +499,7 @@ class SVGCanvas( Canvas ):
     outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
 
-  
+
   def drawString(self, s, x,y, font=None, color=None, angle=0, **kwargs):
     # set color...
     if color:
@@ -514,7 +514,7 @@ class SVGCanvas( Canvas ):
       fontStr = self._FormFontStr(font)
     else:
       fontStr = ''
-      
+
     svgColor = _ColorToSVG(color)
 
     outStr = ''
@@ -543,7 +543,7 @@ class SVGCanvas( Canvas ):
     outStr += '</svg:g>'
 
     self._txt = self._txt + outStr
-		
+
   def _drawStringOneLine(self,line,x,y,fontStr,svgColor,**kwargs):
     styleStr = '%s fill="%s"'%(fontStr,svgColor)
     return '  <svg:text %s x="%.2f" y="%.2f">%s</svg:text>\n'%(styleStr,x,y,line)
@@ -560,7 +560,7 @@ class SVGCanvas( Canvas ):
     if fillColor:
       if fillColor != transparent:
         filling = 1
-          
+
     # do the fill
     if filling:
       fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
@@ -588,7 +588,7 @@ class SVGCanvas( Canvas ):
       if pathStr == '':
         pathStr = pathStr + 'M'
       else:
-        pathStr = pathStr + 'L'          
+        pathStr = pathStr + 'L'
       if op == figureLine:
         pathStr = pathStr + '%.2f %.2f L%.2f %.2f'%(tuple(args))
       elif op == figureCurve:
@@ -659,7 +659,7 @@ def test():
   canvas.defaultLineColor = Color(0.7,0.7,1.0)	# light blue
   canvas.drawLines( map(lambda i:(i*10,0,i*10,300), range(30)) )
   canvas.drawLines( map(lambda i:(0,i*10,300,i*10), range(30)) )
-  canvas.defaultLineColor = black		
+  canvas.defaultLineColor = black
 
   canvas.drawLine(10,200, 20,190, color=red)
 
@@ -671,7 +671,7 @@ def test():
   canvas.drawRoundRect( 30,30, 100,100, fillColor=blue, edgeColor=maroon )
   canvas.drawCurve( 20,20, 100,50, 50,100, 160,160 )
 
-  canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1), 
+  canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1),
                   color=green, angle=-45)
 
   canvas.drawString("This is a test!", 30,130, color=red, angle=-45)
@@ -694,7 +694,7 @@ def dashtest():
   canvas.defaultLineColor = Color(0.7,0.7,1.0)	# light blue
   canvas.drawLines( map(lambda i:(i*10,0,i*10,300), range(30)),dash=(3,3) )
   canvas.drawLines( map(lambda i:(0,i*10,300,i*10), range(30)),dash=(3,3) )
-  canvas.defaultLineColor = black		
+  canvas.defaultLineColor = black
 
   canvas.drawLine(10,200, 20,190, color=red,dash=(3,3))
 
@@ -706,7 +706,7 @@ def dashtest():
   canvas.drawRoundRect( 30,30, 100,100, fillColor=blue, edgeColor=maroon,dash=(3,3) )
   canvas.drawCurve( 20,20, 100,50, 50,100, 160,160,dash=(3,3) )
 
-  canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1), 
+  canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1),
                   color=green, angle=-45)
 
   canvas.drawString("This is a test!", 30,130, color=red, angle=-45)
@@ -730,7 +730,7 @@ def testit(canvas, s, x,y, font=None):
   w = canvas.stringWidth(s, font=font)
   canvas.drawLine(x,y, x+w,y)
   canvas.drawLine(x,y-canvas.fontAscent(font=font), x+w,y-canvas.fontAscent(font=font))
-  canvas.drawLine(x,y+canvas.fontDescent(font=font), x+w,y+canvas.fontDescent(font=font))	
+  canvas.drawLine(x,y+canvas.fontDescent(font=font), x+w,y+canvas.fontDescent(font=font))
 
 def test2():
 

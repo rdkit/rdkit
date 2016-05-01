@@ -37,3 +37,17 @@ RDKIT_WRAP_DECL void translate_index_error(IndexErrorException const& e) {
 RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const& e) {
   throw_value_error(e.message());
 }
+
+#ifdef INVARIANT_EXCEPTION_METHOD
+// A helper function for dealing with errors. Throw a Python RuntimeError
+RDKIT_WRAP_DECL void throw_runtime_error(const std::string err) {
+  PyErr_SetString(PyExc_RuntimeError, err.c_str());
+  python::throw_error_already_set();
+}
+
+
+RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e) {
+  throw_runtime_error(e.toUserString());
+}
+#endif                                               
+

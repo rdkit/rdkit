@@ -16,7 +16,7 @@ Function and method names start with a lower-case letter, e.g. `ROMol::getNumAto
 
 ### Formatting
 
-We are following the formatting suggestions from [Google's C++ style guidelines](https://google.github.io/styleguide/cppguide.html). We strongly suggest using an auto-formatter like [clang-format](http://clang.llvm.org/docs/ClangFormat.html) to do the formatting. Clang-format can be integrated with editors like emacs, vim, or atom to automatically format code as you write/save it. It's an amazing time saver!
+We are following the formatting suggestions from [Google's C++ style guidelines](https://google.github.io/styleguide/cppguide.html). We strongly suggest using an auto-formatter like [clang-format](http://clang.llvm.org/docs/ClangFormat.html) to do the formatting. Clang-format can be integrated with editors like emacs, vim, or atom to automatically format code as you write/save it. It's an amazing time saver! *Note* that at least version 3.8 of clang-format is required, unfortunately the configuration files are not backwards compatible.
 
 ### Testing
 

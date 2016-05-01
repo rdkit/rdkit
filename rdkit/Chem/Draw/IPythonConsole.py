@@ -6,11 +6,32 @@ elif IPython.release.version < '2.0':
     install_nbextension=None
     _canUse3D=False
 else:
-    from IPython.html.nbextensions import install_nbextension
-    _canUse3D=True
+    try:
+        try:
+            from notebook.nbextensions import install_nbextension
+            _canUse3D=True
+        except ImportError:
+            #  Older IPythonVersion location
+            from IPython.html.nbextensions import install_nbextension
+            _canUse3D=True
+    except ImportError:
+        # can't find notebook extensions for integrating javascript
+        #  with Jupyter/IPython, disable widgets.
+        _canUse3D=False
+        sys.stderr.write("*"*44)
+        sys.stderr.write("\nCannot import nbextensions\n")
+        sys.stderr.write("Current IPython/Jupyter version is %s\n"%
+                         IPython.release.version)
+        sys.stderr.write("Disabling 3D rendering\n")
+        sys.stderr.write("*"*44)
+        sys.stderr.write("\n")
+        import traceback
+        traceback.print_exc()
+
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.six import BytesIO,StringIO
 import copy
 import os
@@ -21,6 +42,8 @@ try:
     import Image
 except ImportError:
     from PIL import Image
+
+from IPython.display import SVG
 
 molSize = (450, 150)
 highlightSubstructs = True
@@ -33,6 +56,9 @@ drawing_type_3d = "ball and stick"
 camera_type_3d = "perspective"
 shader_3d = "lambert"
 
+# expose RDLogs to Python StdErr so they are shown
+#  in the IPythonConsole not the server logs.
+Chem.WrapLogs()
 
 def _toJSON(mol):
     """For IPython notebook, renders 3D webGL objects."""
@@ -88,17 +114,24 @@ def _toPNG(mol):
     except RuntimeError:
         mol.UpdatePropertyCache(False)
 
-    mc = copy.deepcopy(mol)
-    try:
-        img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
-                            highlightAtoms=highlightAtoms)
-    except ValueError:  # <- can happen on a kekulization failure
+    if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
         mc = copy.deepcopy(mol)
-        img = Draw.MolToImage(mc,size=molSize,kekulize=False,
-                            highlightAtoms=highlightAtoms)
-    bio = BytesIO()
-    img.save(bio,format='PNG')
-    return bio.getvalue()
+        try:
+            img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
+                                highlightAtoms=highlightAtoms)
+        except ValueError:  # <- can happen on a kekulization failure
+            mc = copy.deepcopy(mol)
+            img = Draw.MolToImage(mc,size=molSize,kekulize=False,
+                                highlightAtoms=highlightAtoms)
+        bio = BytesIO()
+        img.save(bio,format='PNG')
+        return bio.getvalue()
+    else:
+        nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulizeStructures)
+        d2d = rdMolDraw2D.MolDraw2DCairo(molSize[0],molSize[1])
+        d2d.DrawMolecule(nmol,highlightAtoms=highlightAtoms)
+        d2d.FinishDrawing()
+        return d2d.GetDrawingText()
 
 def _toSVG(mol):
     if not ipython_useSVG:
@@ -112,25 +145,15 @@ def _toSVG(mol):
     except RuntimeError:
         mol.UpdatePropertyCache(False)
 
-    mc = copy.deepcopy(mol)
-    sio = StringIO()
     try:
-        Draw.MolToFile(mc, sio, size=molSize, imageType="svg",
-                       kekulize=kekulizeStructures,
-                       highlightAtoms=highlightAtoms)
-    except ValueError:  # <- can happen on a kekulization failure
-        mc = copy.deepcopy(mol)
-        Draw.MolToFile(mc, sio, size=molSize, kekulize=False,
-                       highlightAtoms=highlightAtoms, imageType="svg")
-
-    # It seems that the svg renderer used doesn't quite hit the spec.
-    # Here are some fixes to make it work in the notebook, although I think
-    # the underlying issue needs to be resolved at the generation step
-    svg_split = sio.getvalue().replace("svg:", "").splitlines()
-    header = ('<svg version="1.1" xmlns="http://www.w3.org/2000/svg"'
-              'width="%dpx" height="%dpx">') % molSize
-    svg = "\n".join(svg_split[:1] + [header] + svg_split[5:])
-    return svg
+        mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulizeStructures)
+    except ValueError: # <- can happen on a kekulization failure
+        mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=False)
+    d2d = rdMolDraw2D.MolDraw2DSVG(molSize[0],molSize[1])
+    d2d.DrawMolecule(mc,highlightAtoms=highlightAtoms)
+    d2d.FinishDrawing()
+    svg = d2d.GetDrawingText()
+    return svg.replace("svg:","")
 
 
 def _toReactionPNG(rxn):
@@ -165,7 +188,24 @@ def display_pil_image(img):
     img.save(bio,format='PNG')
     return bio.getvalue()
 
+_MolsToGridImageSaved = None
+def ShowMols(mols,**kwargs):
+    global _MolsToGridImageSaved
+    if 'useSVG' not in kwargs:
+        # use SVG by default
+        kwargs['useSVG'] = True
+    if _MolsToGridImageSaved is not None:
+        fn = _MolsToGridImageSaved
+    else:
+        fm = Draw.MolsToGridImage
+    res = fn(mols,**kwargs)
+    if kwargs['useSVG']:
+        return SVG(res)
+    else:
+        return res
+
 def InstallIPythonRenderer():
+    global _MolsToGridImageSaved
     rdchem.Mol._repr_png_ = _toPNG
     rdchem.Mol._repr_svg_ = _toSVG
     if _canUse3D:
@@ -178,10 +218,14 @@ def InstallIPythonRenderer():
         rdchem.Mol.__GetSubstructMatches = rdchem.Mol.GetSubstructMatches
     rdchem.Mol.GetSubstructMatches = _GetSubstructMatches
     Image.Image._repr_png_ = display_pil_image
+    _MolsToGridImageSaved = Draw.MolsToGridImage
+    Draw.MolsToGridImage = ShowMols
+
 InstallIPythonRenderer()
 
 
 def UninstallIPythonRenderer():
+    global _MolsToGridImageSaved
     del rdchem.Mol._repr_svg_
     del rdchem.Mol._repr_png_
     if _canUse3D:
@@ -194,3 +238,5 @@ def UninstallIPythonRenderer():
         rdchem.Mol.GetSubstructMatches = rdchem.Mol.__GetSubstructMatches
         del rdchem.Mol.__GetSubstructMatches
     del Image.Image._repr_png_
+    if _MolsToGridImageSaved is not None:
+        Draw.MolsToGridImage = _MolsToGridImageSaved

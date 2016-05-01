@@ -43,6 +43,16 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_atom_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
+  drawMolecule(mol, "", highlight_atoms, highlight_atom_map, highlight_radii,
+               confId);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
     for (vector<int>::const_iterator ai = highlight_atoms->begin();
@@ -54,8 +64,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
       }
     }
   }
-  drawMolecule(mol, highlight_atoms, &highlight_bonds, highlight_atom_map, NULL,
-               highlight_radii, confId);
+  drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
+               highlight_atom_map, NULL, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -268,6 +278,31 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   }
 }
 
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const vector<int> *highlight_bonds,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const map<int, DrawColour> *highlight_bond_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
+               highlight_bond_map, highlight_radii, confId);
+  if (legend != "") {
+    // the 0.94 is completely empirical and was brought over from Python
+    Point2D loc = getAtomCoords(std::make_pair(width_ / 2., 0.94 * height_));
+
+    double o_font_size = fontSize();
+    setFontSize(options_.legendFontSize /
+                scale_);  // set the font size to about 12 pixels high
+
+    DrawColour odc = colour();
+    setColour(options_.legendColour);
+    drawString(legend, loc);
+    setColour(odc);
+    setFontSize(o_font_size);
+  }
+}
+
 void MolDraw2D::highlightCloseContacts() {
   if (drawOptions().flagCloseContactsDist < 0) return;
   int tol =
@@ -309,7 +344,9 @@ void MolDraw2D::highlightCloseContacts() {
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
   double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
-
+  // y is now the distance from the top of the image, we need to
+  // invert that:
+  y = height() - y;
   return Point2D(x, y);
 }
 
@@ -321,8 +358,15 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
   int x = int(double(screen_cds.first) / scale_ + x_min_ - x_trans_);
-  int y = int(double(screen_cds.second) / scale_ + y_min_ - y_trans_);
+  int y =
+      int(double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_));
+  return Point2D(x, y);
+}
 
+Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
+  double x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
+  double y =
+      double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
   return Point2D(x, y);
 }
 
@@ -395,33 +439,33 @@ void MolDraw2D::calculateScale() {
   double y_mid = y_min_ + 0.5 * y_range_;
   Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
   x_trans_ = (width_ / 2 - mid.x) / scale_;
-  y_trans_ = (height_ / 2 - mid.y) / scale_;
+  y_trans_ = (mid.y - height_ / 2) / scale_;
 }
 
 // ****************************************************************************
 // establishes whether to put string draw mode into super- or sub-script
 // mode based on contents of instring from i onwards. Increments i appropriately
 // and returns true or false depending on whether it did something or not.
-bool MolDraw2D::setStringDrawMode(const string &instring, int &draw_mode,
-                                  int &i) const {
+bool MolDraw2D::setStringDrawMode(const string &instring,
+                                  TextDrawType &draw_mode, int &i) const {
   string bit1 = instring.substr(i, 5);
   string bit2 = instring.substr(i, 6);
 
   // could be markup for super- or sub-script
   if (string("<sub>") == bit1) {
-    draw_mode = 2;
+    draw_mode = TextDrawSubscript;
     i += 4;
     return true;
   } else if (string("<sup>") == bit1) {
-    draw_mode = 1;
+    draw_mode = TextDrawSuperscript;
     i += 4;
     return true;
   } else if (string("</sub>") == bit2) {
-    draw_mode = 0;
+    draw_mode = TextDrawNormal;
     i += 5;
     return true;
   } else if (string("</sup>") == bit2) {
-    draw_mode = 0;
+    draw_mode = TextDrawNormal;
     i += 5;
     return true;
   }
@@ -452,11 +496,15 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
+  // FIX: this shouldn't stay
+  double M_width, M_height;
+  getStringSize(std::string("M"), M_width, M_height);
+
   double draw_x = cds.x - string_width / 2.0;
   double draw_y = cds.y - string_height / 2.0;
 
   double full_font_size = fontSize();
-  int draw_mode = 0;  // 0 for normal, 1 for superscript, 2 for subscript
+  TextDrawType draw_mode = TextDrawNormal;
   string next_char(" ");
 
   for (int i = 0, is = str.length(); i < is; ++i) {
@@ -473,18 +521,22 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
     // these font sizes and positions work best for Qt, IMO. They may want
     // tweaking for a more general solution.
-    if (2 == draw_mode) {
+    if (TextDrawSubscript == draw_mode) {
       // y goes from top to bottom, so add for a subscript!
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-               getDrawCoords(Point2D(draw_x, draw_y + 0.5 * char_height)));
+               //               getDrawCoords(Point2D(draw_x, draw_y + 0.5 *
+               //               char_height)));
+               getDrawCoords(Point2D(draw_x, draw_y - 0.5 * char_height)));
       setFontSize(full_font_size);
-    } else if (1 == draw_mode) {
+    } else if (TextDrawSuperscript == draw_mode) {
       setFontSize(0.75 * full_font_size);
       char_width *= 0.5;
       drawChar(next_c,
-               getDrawCoords(Point2D(draw_x, draw_y - 0.25 * char_height)));
+               //               getDrawCoords(Point2D(draw_x, draw_y - 0.25 *
+               //               char_height)));
+               getDrawCoords(Point2D(draw_x, draw_y + .5 * M_height)));
       setFontSize(full_font_size);
     } else {
       drawChar(next_c, getDrawCoords(Point2D(draw_x, draw_y)));
@@ -529,9 +581,7 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
     case 0:
       res = DrawColour(0.5, 0.5, 0.5);
       break;
-    case 1:
-      res = DrawColour(0.55, 0.55, 0.55);
-      break;
+    case 1:  // Hs and Carbons are the same colour
     case 6:
       res = DrawColour(0.0, 0.0, 0.0);
       break;
@@ -570,12 +620,22 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
 void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId) {
   at_cds_.clear();
   atomic_nums_.clear();
+
+  bbox_[0].x = bbox_[0].y = numeric_limits<double>::max();
+  bbox_[1].x = bbox_[1].y = -1 * numeric_limits<double>::max();
+
   const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
   ROMol::VERTEX_ITER this_at, end_at;
   boost::tie(this_at, end_at) = mol.getVertices();
   while (this_at != end_at) {
     int this_idx = mol[*this_at]->getIdx();
     at_cds_.push_back(Point2D(locs[this_idx].x, locs[this_idx].y));
+
+    bbox_[0].x = std::min(bbox_[0].x, locs[this_idx].x);
+    bbox_[0].y = std::min(bbox_[0].y, locs[this_idx].y);
+    bbox_[1].x = std::max(bbox_[1].x, locs[this_idx].x);
+    bbox_[1].y = std::max(bbox_[1].y, locs[this_idx].y);
+
     ++this_at;
   }
 }
@@ -613,13 +673,19 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
   static const DashPattern noDash;
   static const DashPattern dots = assign::list_of(2)(6);
   static const DashPattern dashes = assign::list_of(6)(6);
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
 
   const Atom *at1 = mol.getAtomWithIdx(at1_idx);
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
-  const double double_bond_offset = 0.1;
-
   Point2D at1_cds = at_cds_[at1_idx];
   Point2D at2_cds = at_cds_[at2_idx];
+
+  double double_bond_offset = options_.multipleBondOffset;
+  // mol files from, for example, Marvin use a bond length of 1 for just about
+  // everything. When this is the case, the default multipleBondOffset is just
+  // too much, so scale it back.
+  if ((at1_cds - at2_cds).lengthSq() < 1.4) double_bond_offset *= 0.6;
 
   adjustBondEndForLabel(at1_idx, at2_cds, at1_cds);
   adjustBondEndForLabel(at2_idx, at1_cds, at2_cds);
@@ -698,8 +764,10 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         // 2 further lines, a bit shorter and offset on the perpendicular
         double dbo = 2.0 * double_bond_offset;
         Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-        double end1_trunc = 1 == at1->getDegree() ? 0.0 : 0.1;
-        double end2_trunc = 1 == at2->getDegree() ? 0.0 : 0.1;
+        double end1_trunc =
+            1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
+        double end2_trunc =
+            1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
         Point2D bv = at1_cds - at2_cds;
         Point2D p1 = at1_cds - (bv * end1_trunc) + perp * dbo;
         Point2D p2 = at2_cds + (bv * end2_trunc) + perp * dbo;
@@ -720,8 +788,8 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         }
         double dbo = 2.0 * double_bond_offset;
         Point2D bv = at1_cds - at2_cds;
-        Point2D p1 = at1_cds - bv * 0.1 + perp * dbo;
-        Point2D p2 = at2_cds + bv * 0.1 + perp * dbo;
+        Point2D p1 = at1_cds - bv * multipleBondTruncation + perp * dbo;
+        Point2D p2 = at2_cds + bv * multipleBondTruncation + perp * dbo;
         if (bt == Bond::AROMATIC) setDash(dashes);
         drawLine(p1, p2, col1, col2);
         if (bt == Bond::AROMATIC) setDash(noDash);
@@ -738,22 +806,32 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                                bool draw_dashed, const DrawColour &col1,
                                const DrawColour &col2) {
   Point2D perp = calcPerpendicular(cds1, cds2);
-  Point2D disp = perp * 0.1;
+  Point2D disp = perp * 0.15;
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 
   setColour(col1);
   if (draw_dashed) {
+    unsigned int nDashes = 10;
+    // empirical cutoff to make sure we don't have too many dashes in the wedge:
+    if ((cds1 - cds2).lengthSq() < 1.0) nDashes /= 2;
+
+    int orig_lw = lineWidth();
+    int tgt_lw = 1;  // use the minimum line width
+    setLineWidth(tgt_lw);
+
     Point2D e1 = end1 - cds1;
     Point2D e2 = end2 - cds1;
-    for (int i = 1; i < 11; ++i) {
-      if (6 == i) {
+    for (unsigned int i = 1; i < nDashes + 1; ++i) {
+      if ((nDashes / 2 + 1) == i) {
         setColour(col2);
       }
-      Point2D e11 = cds1 + e1 * 0.1 * i;
-      Point2D e22 = cds1 + e2 * 0.1 * i;
+      Point2D e11 = cds1 + e1 * (rdcast<double>(i) / nDashes);
+      Point2D e22 = cds1 + e2 * (rdcast<double>(i) / nDashes);
       drawLine(e11, e22);
     }
+    setLineWidth(orig_lw);
+
   } else {
     if (col1 == col2) {
       drawTriangle(cds1, end1, end2);
@@ -934,65 +1012,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   string symbol("");
 
   // -----------------------------------
-  // start with the symbol
-  if (drawOptions().atomLabels.find(atom.getIdx()) !=
-      drawOptions().atomLabels.end()) {
-    // specified labels are trump: no matter what else happens we will show
-    // them.
-    symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
-  } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
-             atom.getDegree() == 1) {
-    symbol = "";
-  } else if (isComplexQuery(&atom)) {
-    symbol = "?";
-  } else {
-    std::vector<std::string> preText, postText;
-    if (0 != atom.getIsotope()) {
-      preText.push_back(std::string("<sup>") +
-                        lexical_cast<string>(atom.getIsotope()) +
-                        std::string("</sup>"));
-    }
-
-    if (atom.hasProp("molAtomMapNumber")) {
-      string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
-    }
-
-    std::string h = "";
-    int num_h = atom.getAtomicNum() == 6
-                    ? 0
-                    : atom.getTotalNumHs();  // FIX: still not quite right
-    if (num_h > 0 && !atom.hasQuery()) {
-      h = "H";
-      if (num_h > 1) {
-        // put the number as a subscript
-        h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
-      }
-      postText.push_back(h);
-    }
-
-    if (0 != atom.getFormalCharge()) {
-      int ichg = atom.getFormalCharge();
-      string sgn = ichg > 0 ? string("+") : string("-");
-      ichg = abs(ichg);
-      if (ichg > 1) {
-        sgn += lexical_cast<string>(ichg);
-      }
-      // put the charge as a superscript
-      postText.push_back(string("<sup>") + sgn + string("</sup>"));
-    }
-
-    symbol = "";
-    BOOST_FOREACH (const std::string &se, preText) { symbol += se; }
-    if (atom.getAtomicNum() != 6 || preText.size() || postText.size()) {
-      symbol += atom.getSymbol();
-    }
-    BOOST_FOREACH (const std::string &se, postText) { symbol += se; }
-  }
-
-  // -----------------------------------
-  // now consider the orientation
+  // consider the orientation
   OrientType orient = C;
   if (1 == atom.getDegree()) {
     double islope = 0.0;
@@ -1015,6 +1035,76 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       }
     }
   }
+
+  // -----------------------------------
+  // the symbol
+  if (drawOptions().atomLabels.find(atom.getIdx()) !=
+      drawOptions().atomLabels.end()) {
+    // specified labels are trump: no matter what else happens we will show
+    // them.
+    symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+  } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
+             atom.getDegree() == 1) {
+    symbol = "";
+  } else if (isComplexQuery(&atom)) {
+    symbol = "?";
+  } else {
+    std::vector<std::string> preText, postText;
+    int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
+                    ? 0
+                    : atom.getTotalNumHs();  // FIX: still not quite right
+    if (num_h > 0 && !atom.hasQuery()) {
+      // the H text can come before or after the atomic symbol, depending on the
+      // orientation
+      std::string h = "H";
+      if (num_h > 1) {
+        // put the number as a subscript
+        h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
+      }
+      if (orient == MolDraw2D::W) {
+        preText.push_back(h);
+      } else {
+        postText.push_back(h);
+      }
+    }
+
+    if (0 != atom.getIsotope()) {
+      // isotope always comes before the symbol
+      preText.push_back(std::string("<sup>") +
+                        lexical_cast<string>(atom.getIsotope()) +
+                        std::string("</sup>"));
+    }
+
+    if (0 != atom.getFormalCharge()) {
+      // charge always comes post the symbol
+      int ichg = atom.getFormalCharge();
+      string sgn = ichg > 0 ? string("+") : string("-");
+      ichg = abs(ichg);
+      if (ichg > 1) {
+        sgn += lexical_cast<string>(ichg);
+      }
+      // put the charge as a superscript
+      postText.push_back(string("<sup>") + sgn + string("</sup>"));
+    }
+
+    if (atom.hasProp("molAtomMapNumber")) {
+      // atom map always comes at the end
+      string map_num = "";
+      atom.getProp("molAtomMapNumber", map_num);
+      postText.push_back(std::string(":") + map_num);
+    }
+
+    symbol = "";
+    BOOST_FOREACH (const std::string &se, preText) { symbol += se; }
+    if (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
+        postText.size()) {
+      symbol += atom.getSymbol();
+    }
+    BOOST_FOREACH (const std::string &se, postText) { symbol += se; }
+  }
+
+  // std::cerr << "   res: " << symbol << " orient: " << orient
+  //           << " nbr_sum:" << nbr_sum << std::endl;
   return std::make_pair(symbol, orient);
 }
 

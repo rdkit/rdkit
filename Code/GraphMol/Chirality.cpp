@@ -72,6 +72,8 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
   //
   for (ROMol::ConstAtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
        ++atIt) {
+    const unsigned short nMassBits = 10;
+    const unsigned short maxMass = 1 << nMassBits;
     Atom const *atom = *atIt;
     unsigned long invariant = 0;
     int num = atom->getAtomicNum() % 128;
@@ -83,11 +85,11 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
           PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum());
       if (mass >= 0) mass += 1;
     }
-    mass += 8;
+    mass += maxMass / 2;
     if (mass < 0)
       mass = 0;
     else
-      mass = mass % 16;
+      mass = mass % maxMass;
 
 #if 0
         // NOTE: the inclusion of hybridization in the invariant (as
@@ -111,7 +113,7 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
 #endif
 
     invariant = num;  // 7 bits here
-    invariant = (invariant << 4) | mass;
+    invariant = (invariant << nMassBits) | mass;
 
     int mapnum = -1;
     atom->getPropIfPresent(common_properties::molAtomMapNumber, mapnum);
@@ -481,8 +483,8 @@ bool checkChiralAtomSpecialCases(ROMol &mol, const Atom *atom) {
           if (*idxIt != static_cast<int>(atom->getIdx()) &&
               mol.getAtomWithIdx(*idxIt)->getChiralTag() !=
                   Atom::CHI_UNSPECIFIED &&
-              !mol.getAtomWithIdx(*idxIt)
-                   ->hasProp(common_properties::_CIPCode) &&
+              !mol.getAtomWithIdx(*idxIt)->hasProp(
+                  common_properties::_CIPCode) &&
               atomIsCandidateForRingStereochem(mol,
                                                mol.getAtomWithIdx(*idxIt))) {
             // we get to keep the stereochem specification on this atom:
@@ -492,12 +494,12 @@ bool checkChiralAtomSpecialCases(ROMol &mol, const Atom *atom) {
             }
             ringStereoAtoms.push_back(same * (*idxIt + 1));
             INT_VECT oAtoms(0);
-            mol.getAtomWithIdx(*idxIt)
-                ->getPropIfPresent(common_properties::_ringStereoAtoms, oAtoms);
+            mol.getAtomWithIdx(*idxIt)->getPropIfPresent(
+                common_properties::_ringStereoAtoms, oAtoms);
 
             oAtoms.push_back(same * (atom->getIdx() + 1));
-            mol.getAtomWithIdx(*idxIt)
-                ->setProp(common_properties::_ringStereoAtoms, oAtoms, true);
+            mol.getAtomWithIdx(*idxIt)->setProp(
+                common_properties::_ringStereoAtoms, oAtoms, true);
           }
         }
       }

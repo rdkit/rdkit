@@ -164,7 +164,7 @@ bool FilterCatalog::removeEntry(unsigned int idx) {
   return false;
 }
 
-bool FilterCatalog::removeEntry(const FilterCatalog::CONST_SENTRY &entry) {
+bool FilterCatalog::removeEntry(FilterCatalog::CONST_SENTRY entry) {
   std::vector<SENTRY>::iterator it =
       std::find(d_entries.begin(), d_entries.end(), entry);
   if (it != d_entries.end()) {
@@ -181,7 +181,7 @@ unsigned int FilterCatalog::getIdxForEntry(const entryType_t *entry) const {
   return UINT_MAX;
 }
 
-unsigned int FilterCatalog::getIdxForEntry(const CONST_SENTRY &entry) const {
+unsigned int FilterCatalog::getIdxForEntry(CONST_SENTRY entry) const {
   for (size_t i = 0; i < d_entries.size(); ++i) {
     if (d_entries[i] == entry) return i;
   }
@@ -211,6 +211,15 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
   std::vector<CONST_SENTRY> result;
   for (size_t i = 0; i < d_entries.size(); ++i) {
     if (d_entries[i]->hasFilterMatch(mol)) result.push_back(d_entries[i]);
+  }
+  return result;
+}
+
+const std::vector<FilterMatch> FilterCatalog::getFilterMatches(
+    const ROMol &mol) const {
+  std::vector<FilterMatch> result;
+  for (size_t i = 0; i < d_entries.size(); ++i) {
+    d_entries[i]->getFilterMatches(mol, result);
   }
   return result;
 }

@@ -24,7 +24,9 @@
 namespace RDKit {
 extern const std::string periodicTableAtomData;
 extern const std::string isotopesAtomData[];
-
+namespace constants {
+extern const double electronMass;
+}
 class atomicData {
  public:
   atomicData(const std::string &dataLine);

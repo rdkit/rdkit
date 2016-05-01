@@ -449,6 +449,102 @@ class ExclusionList : public FilterMatcherBase {
 #endif
 };
 
+class FilterHierarchyMatcher : public FilterMatcherBase {
+  std::vector<boost::shared_ptr<FilterHierarchyMatcher> > d_children;
+  boost::shared_ptr<FilterMatcherBase> d_matcher;
+  
+public:
+  // !Default Constructor for serialization
+  FilterHierarchyMatcher() : 
+    FilterMatcherBase(), 
+    d_matcher() {
+  }
+  //! Constructs a FilterHierarchyMatcher from a FilterMatchBase
+  //!  A FilterHierarchyMatcher is a tree hierarchy where to
+  //!  match a child node, one needs to match the parent first.
+  //!  For each branch, the lowest nodes are returned when
+  //!   getting the filter matches.
+  /*
+      \param matcher FilterMatcherBase to match this node against
+  */
+  FilterHierarchyMatcher(const FilterMatcherBase &matcher) :
+    FilterMatcherBase(), 
+    d_matcher(matcher.Clone()) {
+  }
+  
+  //! Return the name for this node (from the underlying FilterMatcherBase)
+  virtual std::string getName() const {
+    if (d_matcher.get()) {
+      return d_matcher->getName();
+    }
+    return "FilterMatcherHierarchy root";
+  }
+
+  //! returns true if this node has a valid matcher
+  bool isValid() const {
+    return d_matcher->isValid();
+  }
+
+  //! Set a new FilterMatcherBase for this node
+  /*
+    \param matcher The new FilterMatcherBase
+  */
+  void setPattern(const FilterMatcherBase & matcher) {
+    PRECONDITION(matcher.isValid(), "Adding invalid patterns is not allowed.");
+    d_matcher = matcher.Clone();
+    PRECONDITION(getName() == d_matcher->getName(), "Opps");
+  }
+
+  //! add a FilterHierarchy as a child.
+  //!  returns the FilterHierarchy pointer used in the tree (this is a
+  //!   shallow copy of the original)
+  /*
+    \param hierarchy The new FilterHierarchyMatcher child for this node
+  */
+  boost::shared_ptr<FilterHierarchyMatcher> addChild(
+      const FilterHierarchyMatcher &hierarchy) {
+    PRECONDITION(hierarchy.d_matcher.get() && hierarchy.d_matcher->isValid(),
+                 "Only one root node is allowed in a FilterHierarchyMatcher");
+    
+    d_children.push_back( boost::shared_ptr<FilterHierarchyMatcher>(
+        new FilterHierarchyMatcher(hierarchy) ));
+    return d_children.back();
+  }
+
+  //! returns the FilterMatches against the given molecule
+  /*
+    \param mol The molecule to match against
+    \param matches The vector of FilterMatch objects that match
+  */
+  virtual bool getMatches(const ROMol &mol, std::vector<FilterMatch> &matches) const;
+
+  //! Does this node match the molecule
+  /*
+    \param mol The molecule to match against
+  */
+  virtual bool hasMatch(const ROMol &mol) const {
+    std::vector<FilterMatch> temp;
+    return getMatches(mol, temp);
+  }
+
+  //! Clones the FilterHierarchyMatcher into a FilterMatcherBase
+  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+    return boost::shared_ptr<FilterMatcherBase>(new FilterHierarchyMatcher(*this));
+  }
+ private:
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &boost::serialization::base_object<FilterMatcherBase>(*this);
+    ar &d_children;
+    ar &d_matcher;
+  }
+#endif
+  
+};
+
 #ifdef RDK_USE_BOOST_SERIALIZATION
 // Register all known filter matcher types for serialization
 template <class Archive>
@@ -458,6 +554,7 @@ void registerFilterMatcherTypes(Archive &ar) {
   ar.register_type(static_cast<FilterMatchOps::Not *>(NULL));
   ar.register_type(static_cast<SmartsMatcher *>(NULL));
   ar.register_type(static_cast<ExclusionList *>(NULL));
+  ar.register_type(static_cast<FilterHierarchyMatcher *>(NULL));
 }
 #endif
 }
@@ -465,6 +562,7 @@ void registerFilterMatcherTypes(Archive &ar) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::SmartsMatcher, 1)
 BOOST_CLASS_VERSION(RDKit::ExclusionList, 1)
+BOOST_CLASS_VERSION(RDKit::FilterHierarchyMatcher, 1)
 #endif
 
 #endif

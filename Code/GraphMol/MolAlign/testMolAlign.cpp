@@ -66,6 +66,58 @@ void test1MolAlign() {
   delete m3;
 }
 
+void test1MolWithQueryAlign() {
+  // identical to test1MolAlign except we replace one atom with a QueryAtom instead
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/1oir.mol";
+  RWMol *m1 = new RWMol(*MolFileToMol(fname1));
+  QueryAtom *a1 = new QueryAtom(6);
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_conf.mol";
+  RWMol *m2 = new RWMol(*MolFileToMol(fname2));
+  QueryAtom *a2 = new QueryAtom(6);
+
+  // we replace the same nitrogen instead with a null
+  // query  28 and 19 are the "same" atoms
+  m1->replaceAtom(28, a1);
+  m2->replaceAtom(19, a2);
+
+  double rmsd = MolAlign::alignMol(*m2, *m1);
+  TEST_ASSERT(RDKit::feq(rmsd, 0.6578));
+
+  std::string fname3 =
+      rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_trans.mol";
+  
+  RWMol *m3 = new RWMol(*MolFileToMol(fname3));
+  m3->replaceAtom(0, new QueryAtom(5));
+
+  const Conformer &conf1 = m2->getConformer(0);
+  const Conformer &conf2 = m3->getConformer(0);
+  unsigned int i, nat = m3->getNumAtoms();
+  for (i = 0; i < nat; i++) {
+    RDGeom::Point3D pt1 = conf1.getAtomPos(i);
+    RDGeom::Point3D pt2 = conf2.getAtomPos(i);
+    TEST_ASSERT(RDKit::feq(pt1.x, pt2.x, 0.001));
+    TEST_ASSERT(RDKit::feq(pt1.y, pt2.y, 0.001));
+    TEST_ASSERT(RDKit::feq(pt1.z, pt2.z, 0.001));
+  }
+
+  RDGeom::Transform3D trans;
+  rmsd = MolAlign::getAlignmentTransform(*m1, *m2, trans);
+  TEST_ASSERT(RDKit::feq(rmsd, 0.6578));
+
+  // specify conformations
+  rmsd = MolAlign::alignMol(*m1, *m2, 0, 0);
+  TEST_ASSERT(RDKit::feq(rmsd, 0.6578));
+
+  // provide an atom mapping
+  delete m1;
+  delete m2;
+  delete m3;  
+
+}
+
 void test2AtomMap() {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/1oir.mol";
@@ -831,6 +883,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1MolWithQueryAlign \n\n";
+  test1MolWithQueryAlign();
 
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test2AtomMap \n\n";

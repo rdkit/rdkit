@@ -181,7 +181,7 @@ void generateReactantCombinations(
   recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0, tmp);
 }  // end of generateReactantCombinations()
 
-RWMOL_SPTR initProduct(const ROMOL_SPTR prodTemplateSptr) {
+RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   const ROMol *prodTemplate = prodTemplateSptr.get();
   RWMol *res = new RWMol();
 
@@ -269,7 +269,7 @@ RWMOL_SPTR initProduct(const ROMOL_SPTR prodTemplateSptr) {
     }
   }
   return RWMOL_SPTR(res);
-}  // end of initProduct()
+}  // end of convertTemplateToMol()
 
 struct ReactantProductAtomMapping {
   ReactantProductAtomMapping(unsigned lenghtBitSet) {
@@ -401,7 +401,7 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     }
     if (productAtom->hasProp(common_properties::_MolFileRLabel)) {
       productAtom->clearProp(common_properties::_MolFileRLabel);
-  }
+    }
     productAtom->setProp<unsigned int>(REACT_ATOM_IDX, reactantAtom.getIdx());
     productAtom->setProp(WAS_DUMMY, true);
   } else {
@@ -573,11 +573,12 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
     boost::tie(nbrIdx, endNbrs) = product->getAtomNeighbors(productAtom);
     while (nbrIdx != endNbrs) {
       if (mapping->prodReactAtomMap.find(*nbrIdx) ==
-          mapping->prodReactAtomMap.end()) {
+              mapping->prodReactAtomMap.end() ||
+          !reactant.getBondBetweenAtoms(reactantAtom.getIdx(),
+                                        mapping->prodReactAtomMap[*nbrIdx])) {
         ++nUnknown;
         // if there's more than one bond in the product that doesn't correspond
-        // to
-        // anything in the reactant, we're also doomed
+        // to anything in the reactant, we're also doomed
         if (nUnknown > 1) break;
         // otherwise, add a -1 to the bond order that we'll fill in later
         pOrder.push_back(-1);
@@ -751,6 +752,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                       "mapped reactant atom not present in product.");
 
       const Atom *reactantAtom = reactant->getAtomWithIdx(reactantAtomIdx);
+
       for (unsigned i = 0;
            i < mapping->reactProdAtomMap[reactantAtomIdx].size(); i++) {
         // here's a pointer to the atom in the product:
@@ -809,7 +811,7 @@ MOL_SPTR_VECT generateOneProductSet(
   for (MOL_SPTR_VECT::const_iterator pTemplIt = rxn.beginProductTemplates();
        pTemplIt != rxn.endProductTemplates(); ++pTemplIt) {
     // copy product template and its properties to a new product RWMol
-    RWMOL_SPTR product = initProduct(*pTemplIt);
+    RWMOL_SPTR product = convertTemplateToMol(*pTemplIt);
     Conformer *conf = 0;
     if (doConfs) {
       conf = new Conformer();
@@ -964,7 +966,8 @@ struct RGroup {
       : rAtom(rhs.rAtom), bond_type(rhs.bond_type), mapno(rhs.mapno) {}
 };
 }
-ROMol *reduceProductToSideChains(const ROMOL_SPTR &product, bool addDummyAtoms) {
+ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
+                                 bool addDummyAtoms) {
   CHECK_INVARIANT(product, "bad molecule");
   RWMol *mol = new RWMol(*product.get());
 
@@ -977,10 +980,10 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product, bool addDummyAtoms) 
   // Go backwards through the atoms so that removing atoms doesn't
   //  muck up the next atom in the loops index.
   std::vector<unsigned int> atomsToRemove;
-  for (int scaffold_atom_idx = numAtoms - 1;
-       scaffold_atom_idx >= 0; --scaffold_atom_idx) {
-    Atom *scaffold_atom = mol->getAtomWithIdx(rdcast<unsigned int>(
-        scaffold_atom_idx));
+  for (int scaffold_atom_idx = numAtoms - 1; scaffold_atom_idx >= 0;
+       --scaffold_atom_idx) {
+    Atom *scaffold_atom =
+        mol->getAtomWithIdx(rdcast<unsigned int>(scaffold_atom_idx));
     // add map no's here from dummy atoms
     if (!scaffold_atom->hasProp(REACT_ATOM_IDX)) {
       // are we attached to a reactant atom?
@@ -1034,7 +1037,6 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product, bool addDummyAtoms) 
               PRECONDITION(at,
                            "Internal error in reduceProductToSideChains, bad "
                            "atom retrieval");
-              at->setIsotope(atommapno);
               at->setProp(common_properties::molAtomMapNumber, atommapno);
             }
           }

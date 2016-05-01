@@ -57,10 +57,6 @@ BOOST_PYTHON_MODULE(rdMolChemicalFeatures) {
       "Module containing from chemical feature and functions to generate the";
   python::register_exception_translator<RDKit::FeatureFileParseException>(
       &translate_FeatureFileParse_error);
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
 
   python::def(
       "BuildFeatureFactory", RDKit::buildFeatFactory,

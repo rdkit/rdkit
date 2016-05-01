@@ -3130,6 +3130,251 @@ void testGitHubIssue695() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue811() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 811: rooted atom fingerprint "
+                           "non identical for the same molecules #811"
+                        << std::endl;
+  {
+    std::string dirName = getenv("RDBASE");
+    dirName += "/Code/GraphMol/Fingerprints/testData/";
+
+    ROMol *m1 = MolFileToMol(dirName + "github811a.mol");
+    TEST_ASSERT(m1);
+    ROMol *m2 = MolFileToMol(dirName + "github811b.mol");
+    TEST_ASSERT(m2);
+
+    SparseIntVect<boost::int64_t> *fp1, *fp2;
+
+    std::vector<boost::uint32_t> roots;
+    roots.push_back(1);
+
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1, 7, &roots);
+    SparseIntVect<boost::int64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 4);
+    fp2 = AtomPairs::getTopologicalTorsionFingerprint(*m2, 7, &roots);
+    SparseIntVect<boost::int64_t>::StorageType nz2 = fp2->getNonzeroElements();
+    TEST_ASSERT(nz2.size() == 4);
+
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete fp1;
+    delete fp2;
+    delete m1;
+    delete m2;
+  }
+  {
+    ROMol *m1 = SmilesToMol("C1CC1");
+    TEST_ASSERT(m1);
+
+    SparseIntVect<boost::int64_t> *fp1;
+
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    SparseIntVect<boost::int64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 1);
+    delete fp1;
+    delete m1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testRDKFPUnfolded() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test unfolded version of RDKFP   " << std::endl;
+  {
+    ROMol *m1 = SmilesToMol("c1ccccc1N");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::uint64_t> *fp1;
+    SparseIntVect<boost::uint64_t>::StorageType::const_iterator iter;
+
+    fp1 = getUnfoldedRDKFingerprintMol(*m1);
+    TEST_ASSERT(fp1);
+
+#if 0
+    for (iter = fp1->getNonzeroElements().begin();
+         iter != fp1->getNonzeroElements().end(); ++iter) {
+      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
+    }
+    std::cerr << "  ------------ " << std::endl;
+#endif
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 19);
+    iter = fp1->getNonzeroElements().find(374073638);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 6);
+    iter = fp1->getNonzeroElements().find(464351883);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
+    iter = fp1->getNonzeroElements().find(1949583554);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 6);
+    iter = fp1->getNonzeroElements().find(4105342207);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(794080973);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(3826517238);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
+
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("Cl");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::uint64_t> *fp1;
+    SparseIntVect<boost::uint64_t>::StorageType::const_iterator iter;
+
+    fp1 = getUnfoldedRDKFingerprintMol(*m1);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 0);
+
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("CCCO");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::uint64_t> *fp1;
+    SparseIntVect<boost::uint64_t>::StorageType::const_iterator iter;
+    std::map<boost::uint64_t, std::vector<std::vector<int> > > bitInfo;
+    std::map<boost::uint64_t, std::vector<std::vector<int> > >::const_iterator
+        iter2;
+
+    fp1 = getUnfoldedRDKFingerprintMol(*m1, 1, 7, true, true, true, NULL, NULL,
+                                       NULL, &bitInfo);
+    TEST_ASSERT(fp1);
+
+#if 0
+    for (iter = fp1->getNonzeroElements().begin();
+         iter != fp1->getNonzeroElements().end(); ++iter) {
+      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
+    }
+    std::cerr << "  ------------ " << std::endl;
+#endif
+#if 0
+    for (iter2 = bitInfo.begin();
+         iter2 != bitInfo.end(); ++iter2) {
+      std::cerr << "   " << iter2->first << ": ";
+      for (unsigned i=0; i<iter2->second.size(); i++){
+        std::cerr << " [ ";
+        for (unsigned j=0; j<iter2->second.at(i).size(); j++){
+          std::cerr << iter2->second.at(i).at(j) << " ";
+        }
+        std::cerr << "], ";
+      }
+      std::cerr << std::endl;
+    }
+    std::cerr << "  ------------ " << std::endl;
+#endif
+
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 5);
+    iter = fp1->getNonzeroElements().find(1524090560);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(1940446997);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(3977409745);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(4274652475);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(4275705116);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
+
+    iter2 = bitInfo.find(4275705116);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 0);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second.size() == 2 &&
+                iter2->second[1][0] == 1);
+    iter2 = bitInfo.find(4274652475);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 2);
+    iter2 = bitInfo.find(3977409745);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][0] == 0);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][1] == 1);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][2] == 2);
+    iter2 = bitInfo.find(1524090560);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
+                iter2->second[0][0] == 1);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
+                iter2->second[0][1] == 2);
+
+    delete m1;
+  }
+}
+
+void testRDKFPBitInfo() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test bitinfo of RDKFP   " << std::endl;
+
+  {
+    ROMol *m1 = SmilesToMol("CCCO");
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1;
+    std::map<boost::uint32_t, std::vector<std::vector<int> > > bitInfo;
+    std::map<boost::uint32_t, std::vector<std::vector<int> > >::const_iterator
+        iter2;
+
+    fp1 = RDKFingerprintMol(*m1, 1, 7, 2048, 2, true, 0.0, 128, true, true,
+                            NULL, NULL, NULL, &bitInfo);
+    TEST_ASSERT(fp1);
+
+#if 0
+    for (iter2 = bitInfo.begin();
+         iter2 != bitInfo.end(); ++iter2) {
+      std::cerr << "   " << iter2->first << ": ";
+      for (unsigned i=0; i<iter2->second.size(); i++){
+        std::cerr << " [ ";
+        for (unsigned j=0; j<iter2->second.at(i).size(); j++){
+          std::cerr << iter2->second.at(i).at(j) << " ";
+        }
+        std::cerr << "], ";
+      }
+      std::cerr << std::endl;
+    }
+    std::cerr << "  ------------ " << std::endl;
+#endif
+
+    iter2 = bitInfo.find(1772);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 0);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second.size() == 2 &&
+                iter2->second[1][0] == 1);
+    iter2 = bitInfo.find(562);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 2);
+    iter2 = bitInfo.find(1118);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][0] == 0);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][1] == 1);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][2] == 2);
+    iter2 = bitInfo.find(1183);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
+                iter2->second[0][0] == 1);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
+                iter2->second[0][1] == 2);
+
+    delete m1;
+  }
+}
+
+void testGitHubIssue874() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Single atoms setting radius 1 bits in Morgan fingerprints  "
+      << std::endl;
+  {
+    std::string smiles = "Cl";
+    ROMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms() == 1);
+
+    SparseIntVect<boost::uint32_t> *fp;
+    fp = MorganFingerprints::getFingerprint(*m1, 0);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*m1, 1);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+    delete fp;
+
+    delete m1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3175,10 +3420,14 @@ int main(int argc, char *argv[]) {
   test3DAtomPairs();
   testGitHubIssue195();
   testMultithreadedPatternFP();
-#endif
   testGitHubIssue258();
   testGitHubIssue334();
   testGitHubIssue695();
+  testGitHubIssue811();
+  testRDKFPUnfolded();
+  testRDKFPBitInfo();
+#endif
+  testGitHubIssue874();
 
   return 0;
 }

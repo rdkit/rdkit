@@ -581,8 +581,7 @@ int countAtomElec(const Atom *at) {
     if (bond->getBondType() == Bond::UNSPECIFIED  // query bonds should not
                                                   // contribute; this was github
                                                   // issue #443
-        ||
-        bond->getBondType() == Bond::ZERO)
+        || bond->getBondType() == Bond::ZERO)
       --degree;
     ++beg;
   }
@@ -655,23 +654,30 @@ int setAromaticity(RWMol &mol) {
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
   for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); ++vivi) {
     bool allAromatic = true;
+    bool allDummy = true;
     for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
-      if (aseen[*ivi]) {
-        if (!acands[*ivi]) allAromatic = false;
+      unsigned int firstIdx = (*ivi);
+      Atom *at = mol.getAtomWithIdx(firstIdx);
+
+      if (allDummy && at->getAtomicNum() != 0) {
+        allDummy = false;
+      }
+
+      if (aseen[firstIdx]) {
+        if (!acands[firstIdx]) allAromatic = false;
         continue;
       }
       aseen[*ivi] = 1;
-      Atom *at = mol.getAtomWithIdx(*ivi);
 
       // now that the atom is part of ring check if it can donate
       // electron or has empty orbitals. Record the donor type
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
-      edon[*ivi] = getAtomDonorTypeArom(at);
-      acands[*ivi] = isAtomCandForArom(at, edon[*ivi]);
-      if (!acands[*ivi]) allAromatic = false;
+      edon[firstIdx] = getAtomDonorTypeArom(at);
+      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
+      if (!acands[firstIdx]) allAromatic = false;
     }
-    if (allAromatic) {
+    if (allAromatic && !allDummy) {
       cRings.push_back((*vivi));
     }
   }

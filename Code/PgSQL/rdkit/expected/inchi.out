@@ -43,3 +43,27 @@ select mol_inchikey('');
  MOSFIJXAXDLOML-UHFFFAOYSA-N
 (1 row)
 
+select mol_inchi('CC1=NC=CN1'::mol);
+                    mol_inchi                     
+--------------------------------------------------
+ InChI=1S/C4H6N2/c1-4-5-2-3-6-4/h2-3H,1H3,(H,5,6)
+(1 row)
+
+select mol_inchikey('CC1=NC=CN1'::mol);
+        mol_inchikey         
+-----------------------------
+ LXBGSDVWAMZHDD-UHFFFAOYSA-N
+(1 row)
+
+select mol_inchi('CC1=NC=CN1'::mol,'/FixedH');
+                       mol_inchi                       
+-------------------------------------------------------
+ InChI=1/C4H6N2/c1-4-5-2-3-6-4/h2-3H,1H3,(H,5,6)/f/h5H
+(1 row)
+
+select mol_inchikey('CC1=NC=CN1'::mol,'/FixedH');
+        mol_inchikey         
+-----------------------------
+ LXBGSDVWAMZHDD-JSWHHWTPNA-N
+(1 row)
+

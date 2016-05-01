@@ -2,7 +2,7 @@
 
   // $Id$
   //
-  //  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2001-2016 Randal Henne, Greg Landrum and Rational Discovery LLC
   //
   //   @@ All Rights Reserved  @@
   //
@@ -13,8 +13,8 @@
 #include <list>
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>  
-#include <GraphMol/SmilesParse/SmilesParseOps.h>  
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <RDGeneral/RDLog.h>
 
 #define YYDEBUG 1
@@ -40,7 +40,7 @@ yysmiles_error( const char *input,
                 std::list<unsigned int> *branchPoints,
 		void *scanner,const char * msg )
 {
-  yyErrorCleanup(ms);      
+  yyErrorCleanup(ms);
   throw RDKit::SmilesParseException(msg);
 }
 
@@ -53,7 +53,7 @@ yysmiles_error( const char *input,
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
- 
+
 %union {
   int                      moli;
   RDKit::Atom * atom;
@@ -67,7 +67,7 @@ yysmiles_error( const char *input,
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN
 %token <bond> BOND_TOKEN
-%type <moli> cmpd mol 
+%type <moli> cmpd mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <ival>  nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
@@ -160,11 +160,14 @@ mol: atomd {
 				     Bond::UNSPECIFIED);
   mp->setBondBookmark(newB,$2);
   newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-($2+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
+
 }
 
 | mol BOND_TOKEN ring_number {
@@ -175,9 +178,11 @@ mol: atomd {
   newB->setBondDir($2->getBondDir());
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-($3+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
   delete $2;
@@ -190,9 +195,11 @@ mol: atomd {
 				     Bond::SINGLE);
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
+
+  SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
+
   INT_VECT tmp;
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
-
   tmp.push_back(-($3+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
@@ -307,7 +314,7 @@ ring_number:  digit
 
 /* --------------------------------------------------------------- */
 number:  ZERO_TOKEN
-| nonzero_number 
+| nonzero_number
 ;
 
 /* --------------------------------------------------------------- */
@@ -327,5 +334,3 @@ digit: NONZERO_DIGIT_TOKEN
 
 
 %%
-
-

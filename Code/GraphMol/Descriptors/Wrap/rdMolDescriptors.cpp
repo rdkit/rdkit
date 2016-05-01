@@ -110,20 +110,17 @@ RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality, bool use2D,
     int confId) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int32_t> *res;
   res = RDKit::AtomPairs::getAtomPairFingerprint(
-      mol, minLength, maxLength, fvect, ivect, invvect, includeChirality, use2D,
-      confId);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality, use2D, confId);
   return res;
 }
 RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(
@@ -131,20 +128,17 @@ RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality, bool use2D, int confId) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int32_t> *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprint(
-      mol, nBits, minLength, maxLength, fvect, ivect, invvect, includeChirality,
-      use2D, confId);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality, use2D, confId);
   return res;
 }
 
@@ -152,11 +146,11 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int targetSize, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   if (targetSize * RDKit::AtomPairs::codeSize > 64) {
@@ -168,10 +162,8 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
 
   RDKit::SparseIntVect<boost::int64_t> *res;
   res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(
-      mol, targetSize, fvect, ivect, invvect, includeChirality);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, targetSize, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality);
   return res;
 }
 
@@ -179,19 +171,17 @@ RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int targetSize,
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int64_t> *res;
   res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(
-      mol, nBits, targetSize, fvect, ivect, invvect, includeChirality);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, targetSize, fvect.get(), ivect.get(), invvect.get(),
+      includeChirality);
   return res;
 }
 
@@ -200,20 +190,17 @@ ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, unsigned int nBitsPerEntry,
     bool includeChirality) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
   res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(
-      mol, nBits, targetSize, fvect, ivect, invvect, nBitsPerEntry,
-      includeChirality);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, targetSize, fvect.get(), ivect.get(), invvect.get(),
+      nBitsPerEntry, includeChirality);
   return res;
 }
 
@@ -222,20 +209,17 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     unsigned int nBitsPerEntry, bool includeChirality, bool use2D, int confId) {
-  std::vector<boost::uint32_t> *fvect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *ivect =
+  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::vector<boost::uint32_t> *invvect = pythonObjectToVect(
+  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(
-      mol, nBits, minLength, maxLength, fvect, ivect, invvect, nBitsPerEntry,
-      includeChirality, use2D, confId);
-  if (fvect) delete fvect;
-  if (ivect) delete ivect;
-  if (invvect) delete invvect;
+      mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
+      nBitsPerEntry, includeChirality, use2D, confId);
   return res;
 }
 
@@ -532,11 +516,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("__doc__") =
       "Module containing functions to compute molecular descriptors";
 
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
-
   std::string docString = "";
 
   python::class_<python::object>("AtomPairsParameters")
@@ -760,15 +739,72 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")), docString.c_str());
   python::scope().attr("_CalcNumHBA_version") =
       RDKit::Descriptors::NumHBAVersion;
-  docString =
-      "returns the number of rotatable bonds for a molecule. The strict option "
-      "(default) does not count things like amide or ester bonds";
+
+  // exposes calcNumRotatableBondOptions (must be a better way!)
+
+  docString = "Options for generating rotatble bonds\n\
+ NonStrict - standard loose definitions\n\
+ Strict - stricter definition excluding amides, esters, etc\n\
+ StrictLinkages - adds rotors between rotatable bonds\n\
+ Default - Current RDKit default\n";
+
+  python::enum_<RDKit::Descriptors::NumRotatableBondsOptions>("NumRotatableBondsOptions", docString.c_str())
+      .value("NonStrict", RDKit::Descriptors::NonStrict)
+      .value("Strict", RDKit::Descriptors::Strict)
+      .value("StrictLinkages", RDKit::Descriptors::StrictLinkages)
+      .value("Default", RDKit::Descriptors::Default)
+       ;
+  
+#ifdef RDK_USE_STRICT_ROTOR_DEFINITION
+    docString= 
+        "returns the number of rotatable bonds for a molecule.\n\
+   strict = NumRotatableBondsOptions.NonStrict - Simple rotatable bond definition.\n\
+   strict = NumRotatableBondsOptions.Strict - (default) does not count things like\n\
+            amide or ester bonds\n\
+   strict = NumRotatableBondsOptions.StrictLinkages - handles linkages between ring\n\
+      systems.\n\
+      - Single bonds between aliphatic ring Cs are always rotatable. This\n\
+        means that the central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now \n\
+        considered rotatable; it was not before\n\
+      - Heteroatoms in the linked rings no longer affect whether or not\n\
+        the linking bond is rotatable\n\
+      - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
+         considered non-rotatable";
+#else
+    docString=
+        "returns the number of rotatable bonds for a molecule.\n\
+   strict = NumRotatableBondsOptions.NonStrict - (default) Simple rotatable bond definition.\n\
+   strict = NumRotatableBondsOptions.Strict - does not count things like\n\
+            amide or ester bonds\n\
+   strict = NumRotatableBondsOptions.StrictLinkages - handles linkages between ring\n\
+      systems.\n\
+      - Single bonds between aliphatic ring Cs are always rotatable. This\n\
+        means that the central bond in CC1CCCC(C)C1-C1C(C)CCCC1C is now \n\
+        considered rotatable; it was not before\n\
+      - Heteroatoms in the linked rings no longer affect whether or not\n\
+        the linking bond is rotatable\n\
+      - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
+         considered non-rotatable";
+#endif
+
   python::def(
-      "CalcNumRotatableBonds", RDKit::Descriptors::calcNumRotatableBonds,
-      (python::arg("mol"), python::arg("strict") = true), docString.c_str());
+      "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&, bool))
+                                RDKit::Descriptors::calcNumRotatableBonds,
+      (python::arg("mol"),
+       python::arg("strict")),
+      docString.c_str());
+    
+  python::def(
+      "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&,
+                                                 RDKit::Descriptors::NumRotatableBondsOptions))
+                                RDKit::Descriptors::calcNumRotatableBonds,
+      (python::arg("mol"),
+       python::arg("strict") = RDKit::Descriptors::Default),
+      docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
 
+  
   docString = "returns the number of rings for a molecule";
   python::def("CalcNumRings", RDKit::Descriptors::calcNumRings,
               (python::arg("mol")), docString.c_str());

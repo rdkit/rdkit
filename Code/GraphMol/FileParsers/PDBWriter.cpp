@@ -19,6 +19,7 @@
 
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/LocaleSwitcher.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 
@@ -229,6 +230,7 @@ std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
   ROMol mol(imol);
   RWMol &trwmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(trwmol);
+  Utils::LocaleSwitcher ls;
 
   std::string res;
   std::string name;

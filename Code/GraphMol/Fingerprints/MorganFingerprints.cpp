@@ -253,9 +253,14 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
     BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
       if (!deadAtoms[atomIdx]) {
+        const Atom *tAtom = mol.getAtomWithIdx(atomIdx);
+        if (!tAtom->getDegree()) {
+          deadAtoms.set(atomIdx, 1);
+          continue;
+        }
         std::vector<std::pair<int32_t, uint32_t> > nbrs;
         ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(atomIdx));
+        boost::tie(beg, end) = mol.getAtomBonds(tAtom);
         while (beg != end) {
           const BOND_SPTR bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
@@ -287,8 +292,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         // "chiral"
         boost::uint32_t invar = layer;
         gboost::hash_combine(invar, (*invariants)[atomIdx]);
-        bool looksChiral = (mol.getAtomWithIdx(atomIdx)->getChiralTag() !=
-                            Atom::CHI_UNSPECIFIED);
+        bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
         for (std::vector<std::pair<int32_t, uint32_t> >::const_iterator it =
                  nbrs.begin();
              it != nbrs.end(); ++it) {
@@ -310,11 +314,8 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         if (useChirality && looksChiral) {
           chiralAtoms[atomIdx] = 1;
           // add an extra value to the invariant to reflect chirality:
-          Atom const *tAt = mol.getAtomWithIdx(atomIdx);
           std::string cip = "";
-          if (tAt->hasProp(common_properties::_CIPCode)) {
-            tAt->getProp(common_properties::_CIPCode, cip);
-          }
+          tAtom->getPropIfPresent(common_properties::_CIPCode, cip);
           if (cip == "R") {
             gboost::hash_combine(invar, 3);
           } else if (cip == "S") {

@@ -22,10 +22,6 @@ BOOST_PYTHON_MODULE(rdSimDivPickers) {
       "Module containing the diversity and similarity pickers";
 
   rdkit_import_array();
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
 
   wrap_maxminpick();
   wrap_HierarchCP();

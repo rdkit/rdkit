@@ -647,7 +647,8 @@ class ExpTorsionAngleCollection {
 
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, ExpTorsionAngleCollection>,
-    boost::flyweights::no_tracking> param_flyweight;
+    boost::flyweights::no_tracking>
+    param_flyweight;
 
 const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
     const std::string &paramData) {
@@ -667,7 +668,6 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   std::istringstream inStream(params);
 
   std::string inLine = RDKit::getLine(inStream);
-  unsigned int idx = 0;
   while (!inStream.eof()) {
     if (inLine[0] != '#') {
       ExpTorsionAngle angle;
@@ -704,8 +704,8 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
 
 void getExperimentalTorsions(
     const RDKit::ROMol &mol, std::vector<std::vector<int> > &expTorsionAtoms,
-    std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
+    std::vector<std::pair<std::vector<int>, std::vector<double> > >
+        &expTorsionAngles,
     std::vector<std::vector<int> > &improperAtoms, bool useExpTorsions,
     bool useBasicKnowledge, bool verbose) {
   unsigned int nb = mol.getNumBonds();
@@ -720,7 +720,7 @@ void getExperimentalTorsions(
   improperAtoms.clear();
 
   unsigned int aid1, aid2, aid3, aid4;
-  unsigned int bid2, bid1, bid3, id1, id2;
+  unsigned int bid2;
 
   boost::dynamic_bitset<> doneBonds(nb);
 

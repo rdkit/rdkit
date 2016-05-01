@@ -29,3 +29,6 @@ if(RDK_BUILD_SWIG_WRAPPERS)
   add_subdirectory(JavaWrappers)
 endif()
 
+if(RDK_BUILD_PGSQL)
+  add_subdirectory(PgSQL/rdkit)
+endif(RDK_BUILD_PGSQL)

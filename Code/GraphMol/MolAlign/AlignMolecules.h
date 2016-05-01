@@ -100,9 +100,11 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
                 const RDNumeric::DoubleVector *weights = 0,
                 bool reflect = false, unsigned int maxIters = 50);
 
-//! Align the conformations of a molecule using a common set of atoms
+//! Align the conformations of a molecule using a common set of atoms. If
+// the molecules contains queries, then the queries must also match exactly.
+
 /*!
-  \param mol       The molecule of interest
+  \param mol       The molecule of interest.
   \param atomIds   vector of atoms to be used to generate the alignment.
                    All atoms will be used is not specified
   \param confIds   vector of conformations to align - defaults to all

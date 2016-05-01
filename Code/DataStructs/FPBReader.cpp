@@ -161,13 +161,14 @@ void extractArena(FPBReader_impl *dp_impl, boost::uint64_t sz,
 // enough to hold the result!), otherwise
 // we update it to a pointer to the memory dp_impl owns.
 void extractBytes(const FPBReader_impl *dp_impl, unsigned int which,
-                  boost::uint8_t *&fpData) {
+                  boost::uint8_t *&fpData, unsigned int nToRead = 1) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION((dp_impl->df_lazy || dp_impl->dp_fpData), "bad fpdata pointer");
   PRECONDITION(!dp_impl->df_lazy || dp_impl->istrm, "no stream in lazy mode");
   PRECONDITION(!dp_impl->df_lazy || fpData, "no fpData in lazy mode");
+  PRECONDITION(nToRead > 0, "bad nToRead");
 
-  if (which >= dp_impl->len) {
+  if (which + nToRead > dp_impl->len) {
     throw ValueErrorException("bad index");
   }
   boost::uint64_t offset = which * dp_impl->numBytesStoredPerFingerprint;
@@ -177,7 +178,7 @@ void extractBytes(const FPBReader_impl *dp_impl, unsigned int which,
     dp_impl->istrm->seekg(dp_impl->fpDataOffset +
                           static_cast<std::streampos>(offset));
     dp_impl->istrm->read(reinterpret_cast<char *>(fpData),
-                         dp_impl->numBytesStoredPerFingerprint);
+                         nToRead * dp_impl->numBytesStoredPerFingerprint);
   }
 };
 
@@ -416,10 +417,11 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
 void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
                        double threshold,
                        std::vector<std::pair<double, unsigned int> > &res,
-                       bool usePopcountScreen) {
+                       bool usePopcountScreen, unsigned int readCache = 1000) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION(bv, "bad bv");
   RANGE_CHECK(-1e-6, threshold, 1.0 + 1e-6);
+  PRECONDITION(readCache > 0, "bad cache size");
   res.clear();
   boost::uint64_t probeCount =
       CalcBitmapPopcount(bv, dp_impl->numBytesStoredPerFingerprint);
@@ -446,16 +448,21 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
   }
   boost::uint8_t *dbv;
   if (dp_impl->df_lazy) {
-    dbv = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
+    dbv = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint * readCache];
   }
-  for (boost::uint64_t i = startScan; i < endScan; ++i) {
-    extractBytes(dp_impl, i, dbv);
-    double tani =
-        CalcBitmapTanimoto(dbv, bv, dp_impl->numBytesStoredPerFingerprint);
-    // std::cerr << "  i:" << i << " " << tani << " ? " << threshold <<
-    // std::endl;
-    if (tani >= threshold) {
-      res.push_back(std::make_pair(tani, i));
+  for (boost::uint64_t i = startScan; i < endScan; i += readCache) {
+    unsigned int toRead = readCache;
+    if (i + toRead >= endScan) {
+      toRead = endScan - i;
+    }
+    extractBytes(dp_impl, i, dbv, toRead);
+    for (unsigned int j = 0; j < toRead; ++j) {
+      double tani =
+          CalcBitmapTanimoto(dbv + j * dp_impl->numBytesStoredPerFingerprint,
+                             bv, dp_impl->numBytesStoredPerFingerprint);
+      if (tani >= threshold) {
+        res.push_back(std::make_pair(tani, i + j));
+      }
     }
   }
   if (dp_impl->df_lazy) delete[] dbv;

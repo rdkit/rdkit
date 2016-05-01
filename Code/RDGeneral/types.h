@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2001-2006 Rational Discovery LLC
+// Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#ifndef __RD_TYPES_H__
-#define __RD_TYPES_H__
+#ifndef RD_TYPES_H
+#define RD_TYPES_H
 
 #ifdef WIN32
 #define _USE_MATH_DEFINES
@@ -133,12 +133,11 @@ typedef __int64 LONGINT;
 #undef min  // FUCK I hate this nonsense
 #endif
 
-const double MAX_DOUBLE = std::numeric_limits<double>::max();
-const double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
-const double SMALL_DOUBLE = 1.0e-8;
-const double MAX_INT = static_cast<double>(std::numeric_limits<int>::max());
-const double MAX_LONGINT =
-    static_cast<double>(std::numeric_limits<LONGINT>::max());
+extern const double MAX_DOUBLE;
+extern const double EPS_DOUBLE;
+extern const double SMALL_DOUBLE;
+extern const double MAX_INT;
+extern const double MAX_LONGINT;
 
 typedef unsigned int UINT;
 typedef unsigned short USHORT;
@@ -250,7 +249,7 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res,
            const INT_VECT *exclude = NULL);
 
 //! given a current combination of numbers change it to the next possible
-//combination
+// combination
 /*!
   \param comb the <b>sorted</b> vector to consider
   \param tot the maximum number possible in the vector

@@ -21,6 +21,19 @@
 namespace SmilesParseOps {
 using namespace RDKit;
 
+void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
+  // github #786: if the ring closure comes after a branch,
+  // the stereochem is wrong.
+  // detect the branch (= atom isn't the last one)
+  // and reverse the stereochem if the atom has chiral stereochemistry
+  // and is currently degree two (protects against C1CN[C@](O)(N)1)
+  if (atom->getIdx() != mp->getNumAtoms(true) - 1 && atom->getDegree() == 2 &&
+      (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) ) {
+    atom->invertChirality();
+  }
+}
+
 void ReportParseError(const char *message, bool throwIt) {
   if (!throwIt)
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
@@ -74,8 +87,8 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   for (RWMol::AtomIterator atomIt = frag->beginAtoms();
        atomIt != frag->endAtoms(); atomIt++) {
     INT_VECT tmpVect;
-    if ((*atomIt)
-            ->getPropIfPresent(common_properties::_RingClosures, tmpVect)) {
+    if ((*atomIt)->getPropIfPresent(common_properties::_RingClosures,
+                                    tmpVect)) {
       BOOST_FOREACH (int &v, tmpVect) {
         // if the ring closure is not already a bond, don't touch it:
         if (v >= 0) v += nOrigBonds;
@@ -208,7 +221,18 @@ typedef std::pair<int, int> INT_PAIR;
 bool operator<(const INT_PAIR &p1, const INT_PAIR &p2) {
   return p1.first < p2.first;
 }
-
+namespace {
+bool isUnsaturated(const Atom *atom, const RWMol *mol) {
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol->getAtomBonds(atom);
+  while (beg != end) {
+    const BOND_SPTR bond = (*mol)[*beg];
+    ++beg;
+    if (bond->getBondType() != Bond::SINGLE) return true;
+  }
+  return false;
+}
+}
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (RWMol::AtomIterator atomIt = mol->beginAtoms();
@@ -224,8 +248,8 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // need to insert into the list in a particular order
       //
       INT_VECT ringClosures;
-      (*atomIt)
-          ->getPropIfPresent(common_properties::_RingClosures, ringClosures);
+      (*atomIt)->getPropIfPresent(common_properties::_RingClosures,
+                                  ringClosures);
 
 #if 0
         std::cout << "CLOSURES: ";
@@ -301,12 +325,15 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //      F[C@]1CCO1. In this case we otherwise end up looking like we need
       //      to invert the chirality, which is bogus. The chirality here needs
       //      to remain @ just as it does in F[C@](Cl)CCO1
+      //   - We have to be careful with the second part to not sweep things like
+      //      C[S@]2(=O).Cl2 into the same bin (was github #760). We detect
+      //      those cases by looking for unsaturated atoms
       //
       if ((*atomIt)->getDegree() == 3 &&
           (((*atomIt)->getNumExplicitHs() &&
             (*atomIt)->hasProp(common_properties::_SmilesStart)) ||
-           (!(*atomIt)->getNumExplicitHs() && ringClosures.size() == 1))) {
-        // std::cerr << "swap! " << (*atomIt)->getIdx() << std::endl;
+           (!(*atomIt)->getNumExplicitHs() && ringClosures.size() == 1 &&
+            !isUnsaturated(*atomIt, mol)))) {
         ++nSwaps;
       }
       // std::cerr << "nswaps " << (*atomIt)->getIdx() << " " << nSwaps
@@ -419,7 +446,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
             matchedBond->setEndAtomIdx(atom1->getIdx());
             delete bond1;
           }
-          if (matchedBond->getBondType() == Bond::UNSPECIFIED) {
+          if (matchedBond->getBondType() == Bond::UNSPECIFIED &&
+              !matchedBond->hasQuery()) {
             Bond::BondType bondT = GetUnspecifiedBondType(mol, atom1, atom2);
             matchedBond->setBondType(bondT);
           }

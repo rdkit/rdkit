@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION rdkit_version()
-RETURNS text 
+RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
@@ -251,17 +251,17 @@ LANGUAGE C STRICT IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION tanimoto_sml(bfp, bfp)
-RETURNS float8 
+RETURNS float8
 AS 'MODULE_PATHNAME', 'bfp_tanimoto_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
 CREATE OR REPLACE FUNCTION dice_sml(bfp, bfp)
-RETURNS float8 
+RETURNS float8
 AS 'MODULE_PATHNAME', 'bfp_dice_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
 CREATE OR REPLACE FUNCTION tversky_sml(bfp, bfp, float4, float4)
-RETURNS float8 
+RETURNS float8
 AS 'MODULE_PATHNAME', 'bfp_tversky_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
@@ -276,7 +276,7 @@ AS 'MODULE_PATHNAME', 'bfp_dice_dist'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
 CREATE OR REPLACE FUNCTION tanimoto_sml_op(bfp, bfp)
-RETURNS bool 
+RETURNS bool
 AS 'MODULE_PATHNAME', 'bfp_tanimoto_sml_op'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
@@ -290,7 +290,7 @@ CREATE OPERATOR % (
 );
 
 CREATE OR REPLACE FUNCTION dice_sml_op(bfp, bfp)
-RETURNS bool 
+RETURNS bool
 AS 'MODULE_PATHNAME', 'bfp_dice_sml_op'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
@@ -309,17 +309,17 @@ AS 'MODULE_PATHNAME', 'bfp_size'
 LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tanimoto_sml(sfp, sfp)
-RETURNS float8 
+RETURNS float8
 AS 'MODULE_PATHNAME', 'sfp_tanimoto_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
 CREATE OR REPLACE FUNCTION dice_sml(sfp, sfp)
-RETURNS float8 
+RETURNS float8
 AS 'MODULE_PATHNAME', 'sfp_dice_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
 CREATE OR REPLACE FUNCTION tanimoto_sml_op(sfp, sfp)
-RETURNS bool 
+RETURNS bool
 AS 'MODULE_PATHNAME', 'sfp_tanimoto_sml_op'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
@@ -333,7 +333,7 @@ CREATE OPERATOR % (
 );
 
 CREATE OR REPLACE FUNCTION dice_sml_op(sfp, sfp)
-RETURNS bool 
+RETURNS bool
 AS 'MODULE_PATHNAME', 'sfp_dice_sml_op'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
@@ -356,7 +356,7 @@ RETURNS sfp
 AS 'MODULE_PATHNAME', 'sfp_subtract'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
-CREATE OR REPLACE FUNCTION all_values_gt(sfp, int) 
+CREATE OR REPLACE FUNCTION all_values_gt(sfp, int)
 RETURNS bool
 AS 'MODULE_PATHNAME', 'sfp_allvals_gt'
 LANGUAGE C STRICT IMMUTABLE COST 10;
@@ -554,12 +554,12 @@ LANGUAGE C STRICT IMMUTABLE;
 
 
 
-CREATE OR REPLACE FUNCTION mol_inchi(mol)
+CREATE OR REPLACE FUNCTION mol_inchi(mol, cstring default '')
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION mol_inchikey(mol)
+CREATE OR REPLACE FUNCTION mol_inchikey(mol, cstring default '')
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -1331,7 +1331,7 @@ AS
 	OPERATOR	4	<@ (reaction, reaction),
 	OPERATOR	6	@= (reaction, reaction),
 	OPERATOR	7	?> (reaction, reaction),
-	OPERATOR	8	?< (reaction, reaction),	
+	OPERATOR	8	?< (reaction, reaction),
     FUNCTION    1   greaction_consistent (bytea, internal, int4),
     FUNCTION    2   gmol_union (bytea, internal),
     FUNCTION    3   greaction_compress (internal),
@@ -1341,7 +1341,7 @@ AS
     FUNCTION    7   gmol_same (bytea, bytea, internal),
 STORAGE         bytea;
 
-CREATE OR REPLACE FUNCTION has_reaction_substructmatch(queryreaction char, tablename regclass, columnname text) 
+CREATE OR REPLACE FUNCTION has_reaction_substructmatch(queryreaction char, tablename regclass, columnname text)
   RETURNS SETOF reaction AS
 $BODY$
 DECLARE
@@ -1412,7 +1412,7 @@ CREATE OR REPLACE FUNCTION fmcs_smiles(text)  -- find MCS in 'space' separated S
 
 --// fmcs_smiles aggregate function
 CREATE OR REPLACE FUNCTION fmcs_smiles_transition(text, text)
-    RETURNS text              -- state_data_type 
+    RETURNS text              -- state_data_type
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 CREATE AGGREGATE fmcs (
@@ -1425,11 +1425,11 @@ CREATE AGGREGATE fmcs (
 --// ==========================================
 --// fmcs_mols aggregate function
 CREATE OR REPLACE FUNCTION fmcs_mols(internal)
-    RETURNS text              -- state_data_type 
+    RETURNS text              -- state_data_type
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 CREATE OR REPLACE FUNCTION fmcs_mol_transition(internal, mol)
-    RETURNS internal              -- state_data_type 
+    RETURNS internal              -- state_data_type
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 CREATE AGGREGATE fmcs (
@@ -1463,9 +1463,8 @@ INSERT INTO testsmiles (gid,str) VALUES (2,'CNCCC');
 SELECT * FROM testsmiles;
 
 result is:
-  fmcs_smiles   
+  fmcs_smiles
 ----------------
  [#6]-[#6]-[#6]
 (1 row)
 */
- 

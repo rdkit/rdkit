@@ -24,10 +24,6 @@ void ComputeGasteigerCharges(const ROMol *mol, int nIter = 12,
 }
 
 BOOST_PYTHON_MODULE(rdPartialCharges) {
-  python::register_exception_translator<IndexErrorException>(
-      &translate_index_error);
-  python::register_exception_translator<ValueErrorException>(
-      &translate_value_error);
   python::scope().attr("__doc__") =
       "Module containing functions to set partial charges - currently "
       "Gasteiger Charges";

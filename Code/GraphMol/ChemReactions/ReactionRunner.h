@@ -92,6 +92,15 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction& rxn,
 
 ROMol* reduceProductToSideChains(const ROMOL_SPTR& product,
                                  bool addDummyAtoms = true);
+
+namespace ReactionRunnerUtils {
+MOL_SPTR_VECT generateOneProductSet(
+    const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
+    const std::vector<MatchVectType> &reactantsMatch);
+
+RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr);
+}
+
 }  // end of RDKit namespace
 
 #endif

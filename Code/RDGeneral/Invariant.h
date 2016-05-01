@@ -72,6 +72,7 @@ class Invariant : public std::runtime_error {
   int getLine() const { return line_d; }
 
   std::string toString() const;
+  std::string toUserString() const; // strips build info, adds version
 
  private:
   std::string mess_d, expr_d, prefix_d;

@@ -123,4 +123,29 @@ bool SmartsMatcher::hasMatch(const ROMol &mol) const {
             (d_max_count == UINT_MAX || count <= d_max_count));
   }
 }
+
+bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
+                                        std::vector<FilterMatch> &m) const {
+  // a null matcher is root, just goes to the children
+
+  std::vector<FilterMatch> temp;
+  bool result = d_matcher->getMatches(mol, temp);
+
+  if (result) {
+    std::vector<FilterMatch> children;
+
+    BOOST_FOREACH(boost::shared_ptr<FilterHierarchyMatcher> matcher, d_children) {
+      matcher->getMatches(mol, children);
+    }
+
+    if (children.size()) {
+        m.insert(m.end(), children.begin(), children.end());      
+    } else {
+      m.insert(m.end(), temp.begin(), temp.end());
+    }
+  }
+
+  return result;
+}
+
 }

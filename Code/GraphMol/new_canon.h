@@ -557,7 +557,7 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                       int *next, int *changed, char *touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
-  int symclass;
+  int symclass = 0;
   int *start;
   int offset;
   int index;
