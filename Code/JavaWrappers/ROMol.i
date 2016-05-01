@@ -109,9 +109,6 @@
 %}
 %include <GraphMol/ROMol.h>
 
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::ROMol::setProp<std::string>;
-
 
 %newobject removeHs;
 %newobject addHs;

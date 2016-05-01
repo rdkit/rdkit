@@ -48,6 +48,7 @@ const std::string _SmilesStart = "_SmilesStart";
 const std::string _StereochemDone = "_StereochemDone";
 const std::string _TraversalBondIndexOrder = "_TraversalBondIndexOrder";
 const std::string _TraversalRingClosureBond = "_TraversalRingClosureBond";
+const std::string _TraversalStartPoint = "_TraversalStartPoint";
 const std::string _TriposAtomType = "_TriposAtomType";
 const std::string _Unfinished_SLN_ = "_Unfinished_SLN_";
 const std::string _UnknownStereo = "_UnknownStereo";

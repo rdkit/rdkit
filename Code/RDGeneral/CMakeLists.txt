@@ -15,7 +15,12 @@ rdkit_headers(Exceptions.h
               Dict.h
               FileParseException.h
               Invariant.h
+              RDAny.h
+              RDValue.h
+              RDValue-doublemagic.h
+              RDValue-taggedunion.h
               RDLog.h
+              RDProps.h
               StreamOps.h
               types.h
               utils.h
@@ -29,4 +34,5 @@ if (NOT RDK_INSTALL_INTREE)
         PATTERN ".svn" EXCLUDE)
 endif (NOT RDK_INSTALL_INTREE)
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
+rdkit_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
 

@@ -17,7 +17,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <RDGeneral/RDLog.h>
+#include "RDLog.h"
 
 #ifdef RDDEBUG
 // Enable RDDEBUG for testing whether rdcast

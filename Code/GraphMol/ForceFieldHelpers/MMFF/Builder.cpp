@@ -73,7 +73,7 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         const Atom *iAtom = (*bi)->getBeginAtom();
         const Atom *jAtom = (*bi)->getEndAtom();
         const double dist = field->distance(idx1, idx2);
-        const double bondStretchEnergy = Utils::calcBondStretchEnergy(
+        const double bondStretchEnergy = MMFF::Utils::calcBondStretchEnergy(
             mmffBondParams.r0, mmffBondParams.kb, dist);
         if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
           oStream << std::left << std::setw(2) << iAtom->getSymbol() << " #"
@@ -303,10 +303,10 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                                      (*(points[idx[2]]))[1],
                                      (*(points[idx[2]]))[2]);
             const double cosTheta =
-                Utils::calcCosTheta(p1, p2, p3, field->distance(idx[0], idx[1]),
-                                    field->distance(idx[1], idx[2]));
+                MMFF::Utils::calcCosTheta(p1, p2, p3, field->distance(idx[0], idx[1]),
+                                          field->distance(idx[1], idx[2]));
             const double theta = RAD2DEG * acos(cosTheta);
-            const double angleBendEnergy = Utils::calcAngleBendEnergy(
+            const double angleBendEnergy = MMFF::Utils::calcAngleBendEnergy(
                 mmffAngleParams.theta0, mmffAngleParams.ka,
                 mmffPropParamsCentralAtom->linh, cosTheta);
             if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
@@ -431,12 +431,12 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                                      (*(points[idx[2]]))[1],
                                      (*(points[idx[2]]))[2]);
             const double cosTheta =
-                Utils::calcCosTheta(p1, p2, p3, dist1, dist2);
+                MMFF::Utils::calcCosTheta(p1, p2, p3, dist1, dist2);
             const double theta = RAD2DEG * acos(cosTheta);
             const std::pair<double, double> forceConstants =
-                Utils::calcStbnForceConstants(&mmffStbnParams);
+                MMFF::Utils::calcStbnForceConstants(&mmffStbnParams);
             const std::pair<double, double> stretchBendEnergies =
-                Utils::calcStretchBendEnergy(
+                MMFF::Utils::calcStretchBendEnergy(
                     dist1 - mmffBondParams[0].r0, dist2 - mmffBondParams[1].r0,
                     theta - mmffAngleParams.theta0, forceConstants);
             if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
@@ -584,9 +584,9 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         const RDGeom::Point3D p4((*(points[idx[n[3]]]))[0],
                                  (*(points[idx[n[3]]]))[1],
                                  (*(points[idx[n[3]]]))[2]);
-        const double chi = Utils::calcOopChi(p1, p2, p3, p4);
+        const double chi = MMFF::Utils::calcOopChi(p1, p2, p3, p4);
         const double oopBendEnergy =
-            Utils::calcOopBendEnergy(chi, mmffOopParams.koop);
+            MMFF::Utils::calcOopBendEnergy(chi, mmffOopParams.koop);
         if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
           oStream << std::left << std::setw(2) << atom[0]->getSymbol() << " #"
                   << std::setw(5) << idx[n[0]] + 1 << std::setw(2)
@@ -716,8 +716,8 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                                              (*(points[idx4]))[1],
                                              (*(points[idx4]))[2]);
                     const double cosPhi =
-                        Utils::calcTorsionCosPhi(p1, p2, p3, p4);
-                    const double torsionEnergy = Utils::calcTorsionEnergy(
+                        MMFF::Utils::calcTorsionCosPhi(p1, p2, p3, p4);
+                    const double torsionEnergy = MMFF::Utils::calcTorsionEnergy(
                         mmffTorParams.V1, mmffTorParams.V2, mmffTorParams.V3,
                         cosPhi);
                     if (mmffMolProperties->getMMFFVerbosity() ==
@@ -814,7 +814,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
           if (mmffMolProperties->getMMFFVerbosity()) {
             const Atom *iAtom = mol.getAtomWithIdx(i);
             const Atom *jAtom = mol.getAtomWithIdx(j);
-            const double vdWEnergy = Utils::calcVdWEnergy(
+            const double vdWEnergy = MMFF::Utils::calcVdWEnergy(
                 dist, mmffVdWParams.R_ij_star, mmffVdWParams.epsilon);
             if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
               unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);
@@ -904,7 +904,7 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
           const unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(j);
           const Atom *iAtom = mol.getAtomWithIdx(i);
           const Atom *jAtom = mol.getAtomWithIdx(j);
-          const double eleEnergy = Utils::calcEleEnergy(
+          const double eleEnergy = MMFF::Utils::calcEleEnergy(
               i, j, dist, chargeTerm, dielModel,
               getTwoBitCell(neighborMatrix, i * nAtoms + j) == RELATION_1_4);
           if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {

@@ -30,8 +30,7 @@ QueryBond &QueryBond::operator=(const QueryBond &other) {
   dp_mol = 0;
   d_bondType = other.d_bondType;
   dp_query = other.dp_query->copy();
-  delete dp_props;
-  if (other.dp_props) dp_props = new Dict(*other.dp_props);
+  dp_props = other.dp_props;
   return *this;
 }
 

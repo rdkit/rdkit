@@ -158,29 +158,6 @@ void MolClearProp(const ROMol &mol, const char *key) {
   mol.clearProp(key);
 }
 
-// specialized for include private/computed...
-boost::python::dict MolGetPropsAsDict(const ROMol &mol,
-                                      bool includePrivate=false,
-                                      bool includeComputed=false) {
-  boost::python::dict dict;
-  // precedence double, int, unsigned, std::vector<double>,
-  // std::vector<int>, std::vector<unsigned>, string
-  STR_VECT keys = mol.getPropList(includePrivate, includeComputed);
-  for(size_t i=0;i<keys.size();++i) {
-    if (AddToDict<double>(mol, dict, keys[i])) continue;
-    if (AddToDict<int>(mol, dict, keys[i])) continue;
-    if (AddToDict<unsigned int>(mol, dict, keys[i])) continue;
-    if (AddToDict<bool>(mol, dict, keys[i])) continue;
-    if (AddToDict<std::vector<double> >(mol, dict, keys[i])) continue;
-    if (AddToDict<std::vector<int> >(mol, dict, keys[i])) continue;
-    if (AddToDict<std::vector<unsigned int> >(mol, dict, keys[i])) continue;
-    //    if (AddToDict<std::vector<bool> >(mol, dict, keys[i])) continue;
-    if (AddToDict<std::string>(mol, dict, keys[i])) continue;
-    if (AddToDict<std::vector<std::string> >(mol, dict, keys[i])) continue;
-  }
-  return dict;
-}
-
 void MolClearComputedProps(const ROMol &mol) { mol.clearComputedProps(); }
 
 void MolDebug(const ROMol &mol) { mol.debugMol(std::cout); }
@@ -558,7 +535,7 @@ struct mol_wrapper {
              "                      Defaults to 0.\n\n"
              "  RETURNS: a tuple of strings\n")
 
-        .def("GetPropsAsDict", MolGetPropsAsDict,
+        .def("GetPropsAsDict", GetPropsAsDict<ROMol>,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false),
              "Returns a dictionary populated with the molecules properties.\n"

@@ -400,8 +400,8 @@ bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
   if (res) {
     double bondOrder = bond->getBondTypeAsDouble();
     uffBondStretchParams.r0 =
-        Utils::calcBondRestLength(bondOrder, paramVect[0], paramVect[1]);
-    uffBondStretchParams.kb = Utils::calcBondForceConstant(
+        UFF::Utils::calcBondRestLength(bondOrder, paramVect[0], paramVect[1]);
+    uffBondStretchParams.kb = UFF::Utils::calcBondForceConstant(
         uffBondStretchParams.r0, paramVect[0], paramVect[1]);
   }
   return res;
@@ -432,7 +432,7 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
     double bondOrder12 = bond[0]->getBondTypeAsDouble();
     double bondOrder23 = bond[1]->getBondTypeAsDouble();
     uffAngleBendParams.theta0 = RAD2DEG * paramVect[1]->theta0;
-    uffAngleBendParams.ka = Utils::calcAngleForceConstant(
+    uffAngleBendParams.ka = UFF::Utils::calcAngleForceConstant(
         paramVect[1]->theta0, bondOrder12, bondOrder23, paramVect[0],
         paramVect[1], paramVect[2]);
   }
@@ -477,8 +477,8 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
       // general case:
       uffTorsionParams.V = sqrt(paramVect[0]->V1 * paramVect[1]->V1);
       // special case for single bonds between group 6 elements:
-      if (((int)(bondOrder * 10) == 10) && Utils::isInGroup6(atNum[0]) &&
-          Utils::isInGroup6(atNum[1])) {
+      if (((int)(bondOrder * 10) == 10) && UFF::Utils::isInGroup6(atNum[0]) &&
+          UFF::Utils::isInGroup6(atNum[1])) {
         double V2 = 6.8;
         double V3 = 6.8;
         if (atNum[0] == 8) V2 = 2.0;
@@ -487,18 +487,18 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
       }
     } else if ((hyb[0] == RDKit::Atom::SP2) && (hyb[1] == RDKit::Atom::SP2)) {
       uffTorsionParams.V =
-          Utils::equation17(bondOrder, paramVect[0], paramVect[1]);
+          UFF::Utils::equation17(bondOrder, paramVect[0], paramVect[1]);
     } else {
       // SP2 - SP3,  this is, by default, independent of atom type in UFF:
       uffTorsionParams.V = 1.0;
       if ((int)(bondOrder * 10) == 10) {
         // special case between group 6 sp3 and non-group 6 sp2:
-        if (((hyb[0] == RDKit::Atom::SP3) && Utils::isInGroup6(atNum[0]) &&
-             (!Utils::isInGroup6(atNum[1]))) ||
-            ((hyb[1] == RDKit::Atom::SP3) && Utils::isInGroup6(atNum[1]) &&
-             (!Utils::isInGroup6(atNum[0])))) {
+        if (((hyb[0] == RDKit::Atom::SP3) && UFF::Utils::isInGroup6(atNum[0]) &&
+             (!UFF::Utils::isInGroup6(atNum[1]))) ||
+            ((hyb[1] == RDKit::Atom::SP3) && UFF::Utils::isInGroup6(atNum[1]) &&
+             (!UFF::Utils::isInGroup6(atNum[0])))) {
           uffTorsionParams.V =
-              Utils::equation17(bondOrder, paramVect[0], paramVect[1]);
+              UFF::Utils::equation17(bondOrder, paramVect[0], paramVect[1]);
         }
         // special case for sp3 - sp2 - sp2
         // (i.e. the sp2 has another sp2 neighbor, like propene)
@@ -550,7 +550,7 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
   if (res) {
     isBoundToSP2O = (isBoundToSP2O && (at2AtomicNum == 6));
     boost::tuple<double, double, double, double> invCoeffForceCon =
-        Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
+        UFF::Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
                                                          isBoundToSP2O);
     uffInversionParams.K = boost::tuples::get<0>(invCoeffForceCon);
   }
@@ -571,8 +571,8 @@ bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
     res = (paramVect[i] ? true : false);
   }
   if (res) {
-    uffVdWParams.x_ij = Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
-    uffVdWParams.D_ij = Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
+    uffVdWParams.x_ij = UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
+    uffVdWParams.D_ij = UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
   }
   return res;
 }

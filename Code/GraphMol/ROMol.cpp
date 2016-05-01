@@ -34,17 +34,14 @@ void ROMol::destroy() {
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
   d_graph.clear();
-  if (dp_props) {
-    delete dp_props;
-    dp_props = 0;
-  }
+
   if (dp_ringInfo) {
     delete dp_ringInfo;
     dp_ringInfo = 0;
   }
 };
 
-ROMol::ROMol(const std::string &pickle) {
+ROMol::ROMol(const std::string &pickle) : RDProps() {
   initMol();
   MolPickler::molFromPickle(pickle, *this);
 }
@@ -75,8 +72,6 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     dp_ringInfo = new RingInfo();
   }
 
-  if (dp_props) delete dp_props;
-  dp_props = 0;
   if (!quickCopy) {
     // copy conformations
     for (ConstConformerIterator ci = other.beginConformers();
@@ -86,10 +81,8 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
         this->addConformer(conf);
       }
     }
-
-    if (other.dp_props) {
-      dp_props = new Dict(*other.dp_props);
-    }
+    
+    dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
     BOOST_FOREACH (ATOM_BOOKMARK_MAP::value_type abmI, other.d_atomBookmarks) {
@@ -102,18 +95,17 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
         setBondBookmark(getBondWithIdx(bptr->getIdx()), bbmI.first);
       }
     }
-  }
-  if (!dp_props) {
-    dp_props = new Dict();
+  } else {
+    dp_props.reset();
     STR_VECT computed;
-    dp_props->setVal(detail::computedPropName, computed);
+    dp_props.setVal(detail::computedPropName, computed);
   }
   // std::cerr<<"---------    done init from other: "<<this<<"
   // "<<&other<<std::endl;
 }
 
 void ROMol::initMol() {
-  dp_props = new Dict();
+  dp_props.reset();
   dp_ringInfo = new RingInfo();
   // ok every molecule contains a property entry called detail::computedPropName
   // which provides
@@ -122,7 +114,7 @@ void ROMol::initMol() {
   // along
   // initialize this list to an empty vector of strings
   STR_VECT computed;
-  dp_props->setVal(detail::computedPropName, computed);
+  dp_props.setVal(detail::computedPropName, computed);
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {
@@ -477,12 +469,8 @@ void ROMol::clearComputedProps(bool includeRings) const {
   // the SSSR information:
   if (includeRings) this->dp_ringInfo->reset();
 
-  STR_VECT compLst;
-  if (getPropIfPresent(detail::computedPropName, compLst)) {
-    BOOST_FOREACH (std::string &sv, compLst) { dp_props->clearVal(sv); }
-    compLst.clear();
-  }
-  dp_props->setVal(detail::computedPropName, compLst);
+  RDProps::clearComputedProps();
+  
   for (ConstAtomIterator atomIt = this->beginAtoms();
        atomIt != this->endAtoms(); ++atomIt) {
     (*atomIt)->clearComputedProps();

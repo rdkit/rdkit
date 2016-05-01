@@ -360,7 +360,10 @@ struct atom_wrapper {
         .def("GetPropNames", &Atom::getPropList, (python::arg("self")),
              "Returns a list of the properties set on the Atom.\n\n")
 
-        .def("GetPropsAsDict", GetPropsAsDict<Atom>, (python::arg("self")),
+        .def("GetPropsAsDict", GetPropsAsDict<Atom>, (python::arg("self"),
+                                                      python::arg("includePrivate") = true,
+                                                      python::arg("includeComputed") = true
+                                                      ),
              "Returns a dictionary of the properties set on the Atom.\n"
              " n.b. some properties cannot be converted to python types.\n")
         
