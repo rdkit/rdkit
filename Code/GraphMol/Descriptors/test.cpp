@@ -29,6 +29,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/Descriptors/KitchenSink.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -1729,6 +1730,28 @@ void testSpiroAndBridgeheads() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testKitchenSink() {
+  KitchenSink sink;
+  std::vector<std::string> names = sink.getPropertyNames();
+  for (size_t i=0;i<names.size();++i) {
+    std::cout << names[i];
+    if (i!=names.size()-1)
+      std::cout << ",";
+  }
+  std::cout << std::endl;
+  RWMol *mol;
+  mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+
+  std::vector<double> props = sink.getProperties(*mol);
+  for (size_t i=0;i<props.size();++i) {
+    std::cout << props[i];
+    if (i!=names.size()-1)
+      std::cout << ",";
+  }
+  std::cout << std::endl;
+  delete mol;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1764,4 +1787,5 @@ int main() {
 #endif
   testGitHubIssue463();
   testSpiroAndBridgeheads();
+  testKitchenSink();
 }
