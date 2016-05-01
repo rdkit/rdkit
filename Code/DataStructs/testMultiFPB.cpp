@@ -37,6 +37,19 @@ void test1MultiFPBReaderBasics() {
     TEST_ASSERT(mfps.getReader(0));
     TEST_ASSERT(mfps.getReader(0)->nBits() == mfps.nBits());
   }
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps1(filename), fps2(filename);
+    MultiFPBReader mfps;
+    TEST_ASSERT(mfps.addReader(&fps1) == 1);
+    TEST_ASSERT(mfps.addReader(&fps2) == 2);
+    mfps.init();
+    TEST_ASSERT(mfps.length() == 2);
+    TEST_ASSERT(mfps.getReader(0));
+    TEST_ASSERT(mfps.getReader(0)->nBits() == mfps.nBits());
+    TEST_ASSERT(mfps.getReader(0));
+    TEST_ASSERT(mfps.getReader(0)->nBits() == mfps.nBits());
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 void test2MultiFPBReaderTanimoto() {
@@ -457,7 +470,7 @@ void test6MultiFPBReaderContainsThreaded() {
     rdrs.push_back(&fps2);
     rdrs.push_back(&fps3);
     rdrs.push_back(&fps4);
-    MultiFPBReader mfps(rdrs, true);
+    MultiFPBReader mfps(rdrs, false, true);
     std::string fps =
         "40081010824820021000500010110410003000402b20285000a4040240010030050000"
         "080001420040009000003d04086007080c03b31d920004220400074008098010206080"

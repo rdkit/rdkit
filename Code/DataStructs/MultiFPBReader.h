@@ -21,6 +21,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
 #include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
 
 namespace RDKit {
 
@@ -52,7 +53,8 @@ namespace RDKit {
 class MultiFPBReader {
  public:
   typedef boost::tuple<double, unsigned int, unsigned int> ResultTuple;
-  MultiFPBReader() : df_init(false), df_initOnSearch(false){};
+  MultiFPBReader()
+      : df_init(false), df_initOnSearch(false), df_takeOwnership(false){};
 
   /*!
     \param initOnSearch: if this is true, the \c init() method on child readers
@@ -60,16 +62,26 @@ class MultiFPBReader {
     FPB readers.
   */
   MultiFPBReader(bool initOnSearch)
-      : df_init(false), df_initOnSearch(initOnSearch){};
+      : df_init(false),
+        df_initOnSearch(initOnSearch),
+        df_takeOwnership(false){};
   /*!
-    \param readers: the set of FPBReader objects to use. We don't own these.
+    \param readers: the set of FPBReader objects to use.
+    \param takeOwnership: if true, we own the memory for the FPBReaders
     \param initOnSearch: if this is true, the \c init() method on child readers
     will not be called until the first search is done. This is useful with large
     FPB readers.
   */
-  MultiFPBReader(std::vector<FPBReader *> &readers, bool initOnSearch = false);
+  MultiFPBReader(std::vector<FPBReader *> &readers, bool takeOwnership = false,
+                 bool initOnSearch = false);
 
-  ~MultiFPBReader() { df_init = false; };
+  ~MultiFPBReader() {
+    df_init = false;
+    if (df_takeOwnership) {
+      BOOST_FOREACH (FPBReader *rdr, d_readers) { delete rdr; };
+      d_readers.clear();
+    }
+  };
 
   //! Read the data from the file and initialize internal data structures
   /*!
@@ -92,6 +104,25 @@ class MultiFPBReader {
 
   */
   FPBReader *getReader(unsigned int which);
+
+  //! adds a new FPBReader to our list
+  /*!
+
+    This does no error checking on the reader, so be careful.
+
+    If \c takeOwnership is \c true then we will take ownership of the memory.
+
+    \param rdr: the reader to add. If we have already been initialized, the
+    reader's \c init() method will be called
+
+    \returns a count of the current number of readers
+  */
+  unsigned int addReader(FPBReader *rdr) {
+    PRECONDITION(rdr, "no reader provided");
+    d_readers.push_back(rdr);
+    if (df_init) rdr->init();
+    return d_readers.size();
+  };
 
   //! returns tanimoto neighbors that are within a similarity threshold
   /*!
@@ -166,7 +197,7 @@ class MultiFPBReader {
 
  private:
   std::vector<FPBReader *> d_readers;
-  bool df_init, df_initOnSearch;
+  bool df_init, df_initOnSearch, df_takeOwnership;
 
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be
