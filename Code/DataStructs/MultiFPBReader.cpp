@@ -60,11 +60,13 @@ struct sim_args {
   double threshold;
   const std::vector<FPBReader *> &readers;
   std::vector<std::vector<MultiFPBReader::ResultTuple> > *res;
+  bool initOnSearch;
 };
 
 void tversky_helper(unsigned int threadId, unsigned int numThreads,
                     const sim_args *args) {
   for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
+    if (args->initOnSearch) args->readers[i]->init();
     std::vector<std::pair<double, unsigned int> > r_res =
         args->readers[i]->getTverskyNeighbors(args->bv, args->ca, args->cb,
                                               args->threshold);
@@ -81,6 +83,7 @@ void tversky_helper(unsigned int threadId, unsigned int numThreads,
 void tani_helper(unsigned int threadId, unsigned int numThreads,
                  const sim_args *args) {
   for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
+    if (args->initOnSearch) args->readers[i]->init();
     std::vector<std::pair<double, unsigned int> > r_res =
         args->readers[i]->getTanimotoNeighbors(args->bv, args->threshold);
     (*args->res)[i].clear();
@@ -125,10 +128,10 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
 void get_tani_nbrs(const std::vector<FPBReader *> &d_readers,
                    const boost::uint8_t *bv, double threshold,
                    std::vector<MultiFPBReader::ResultTuple> &res,
-                   int numThreads) {
+                   int numThreads, bool initOnSearch) {
   std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
       d_readers.size());
-  sim_args args = {bv, 0., 0., threshold, d_readers, &accum};
+  sim_args args = {bv, 0., 0., threshold, d_readers, &accum, initOnSearch};
   generic_nbr_helper(res, tani_helper, args, numThreads);
 }
 
@@ -136,10 +139,10 @@ void get_tversky_nbrs(const std::vector<FPBReader *> &d_readers,
                       const boost::uint8_t *bv, double a, double b,
                       double threshold,
                       std::vector<MultiFPBReader::ResultTuple> &res,
-                      int numThreads) {
+                      int numThreads, bool initOnSearch) {
   std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
       d_readers.size());
-  sim_args args = {bv, a, b, threshold, d_readers, &accum};
+  sim_args args = {bv, a, b, threshold, d_readers, &accum, initOnSearch};
   generic_nbr_helper(res, tversky_helper, args, numThreads);
 }
 
@@ -231,7 +234,7 @@ std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTanimotoNeighbors(
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
 
   std::vector<MultiFPBReader::ResultTuple> res;
-  get_tani_nbrs(d_readers, bv, threshold, res, numThreads);
+  get_tani_nbrs(d_readers, bv, threshold, res, numThreads, df_initOnSearch);
   return res;
 }
 
@@ -240,7 +243,7 @@ std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTanimotoNeighbors(
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
   std::vector<MultiFPBReader::ResultTuple> res;
   boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
-  get_tani_nbrs(d_readers, bv, threshold, res, numThreads);
+  get_tani_nbrs(d_readers, bv, threshold, res, numThreads, df_initOnSearch);
   delete[] bv;
   return res;
 }
@@ -250,7 +253,8 @@ std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTverskyNeighbors(
     int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
   std::vector<MultiFPBReader::ResultTuple> res;
-  get_tversky_nbrs(d_readers, bv, ca, cb, threshold, res, numThreads);
+  get_tversky_nbrs(d_readers, bv, ca, cb, threshold, res, numThreads,
+                   df_initOnSearch);
   return res;
 }
 
@@ -260,7 +264,8 @@ std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTverskyNeighbors(
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
   std::vector<MultiFPBReader::ResultTuple> res;
   boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
-  get_tversky_nbrs(d_readers, bv, ca, cb, threshold, res, numThreads);
+  get_tversky_nbrs(d_readers, bv, ca, cb, threshold, res, numThreads,
+                   df_initOnSearch);
   delete[] bv;
   return res;
 }

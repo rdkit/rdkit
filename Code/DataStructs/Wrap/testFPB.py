@@ -210,6 +210,42 @@ class TestCase(unittest.TestCase):
        self.assertEqual(nbrs[8][0],193)
        self.assertEqual(nbrs[8][1],0)
 
+   def test8MultiFPBReaderContainsInitOnSearch(self):
+       basen = os.path.join(RDConfig.RDBaseDir,'Code','DataStructs','testData')
+       mfpbr = DataStructs.MultiFPBReader(initOnSearch=True)
+       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen,"zinc_random200.1.patt.fpb"))),1)
+       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen,"zinc_random200.2.patt.fpb"))),2)
+       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen,"zinc_random200.3.patt.fpb"))),3)
+       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen,"zinc_random200.4.patt.fpb"))),4)
+
+       fps = "40081010824820021000500010110410003000402b20285000a4040240010030050000"+\
+               "080001420040009000003d04086007080c03b31d920004220400074008098010206080"+\
+               "00488001080000c64002a00080000200024c2000602410049200340820200002400010"+\
+               "02200106090401056801080182006088101000088a0048";
+       ebv = DataStructs.CreateFromFPSText(fps)
+       bytes = DataStructs.BitVectToBinaryText(ebv)
+       nbrs = mfpbr.GetContainingNeighbors(bytes,numThreads=4)
+       self.assertEqual(len(nbrs),9)
+       self.assertEqual(nbrs[0][0],160)
+       self.assertEqual(nbrs[0][1],0)
+       self.assertEqual(nbrs[1][0],163)
+       self.assertEqual(nbrs[1][1],0)
+       self.assertEqual(nbrs[2][0],170)
+       self.assertEqual(nbrs[2][1],0)
+       self.assertEqual(nbrs[3][0],180)
+       self.assertEqual(nbrs[3][1],2)
+       self.assertEqual(nbrs[4][0],182)
+       self.assertEqual(nbrs[4][1],3)
+       self.assertEqual(nbrs[5][0],185)
+       self.assertEqual(nbrs[5][1],0)
+       self.assertEqual(nbrs[6][0],189)
+       self.assertEqual(nbrs[6][1],0)
+       self.assertEqual(nbrs[7][0],192)
+       self.assertEqual(nbrs[7][1],3)
+       self.assertEqual(nbrs[8][0],193)
+       self.assertEqual(nbrs[8][1],0)
+
+
 
 if __name__ == '__main__':
    unittest.main()
