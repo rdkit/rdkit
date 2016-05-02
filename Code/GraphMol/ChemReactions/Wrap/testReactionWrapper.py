@@ -31,9 +31,9 @@
 #
 from __future__ import print_function
 
-import unittest
+import unittest, doctest
 import os,sys
-
+from rdkit.six import exec_
 from rdkit.six.moves import cPickle
 
 from rdkit import rdBase
@@ -41,12 +41,31 @@ from rdkit import Chem
 from rdkit.Chem import rdChemReactions
 from rdkit import Geometry
 from rdkit import RDConfig
-
+from rdkit.Chem.SimpleEnum import Enumerator
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
 
 def ptEq(pt1, pt2, tol=1e-4):
   return feq(pt1.x,pt2.x,tol) and feq(pt1.y,pt2.y,tol) and feq(pt1.z,pt2.z,tol)
+
+# Boost functions are NOT found by doctest, this "fixes" them
+#  by adding the doctests to a fake module
+import imp
+TestPreprocess = imp.new_module("TestPreprocess")
+code = """
+from rdkit.Chem import rdChemReactions
+def PreprocessReaction(*a, **kw):
+    '''%s
+    '''
+    return rdChemReactions.PreprocessReaction(*a, **kw)
+"""%"\n".join(
+  [x.lstrip() for x in rdChemReactions.PreprocessReaction.__doc__.split("\n")])
+exec_(code,TestPreprocess.__dict__)
+
+def load_tests(loader, tests, ignore):
+  tests.addTests(doctest.DocTestSuite(Enumerator))
+  tests.addTests(doctest.DocTestSuite(TestPreprocess))
+  return tests
 
 class TestCase(unittest.TestCase) :
   def setUp(self):
@@ -106,6 +125,9 @@ class TestCase(unittest.TestCase) :
   def test3MDLParsers(self):
     fileN = os.path.join(self.dataDir,'AmideBond.rxn')
     rxna = rdChemReactions.ReactionFromRxnFile(fileN)
+    print ("*"*44)
+    print (fileN)
+    print (rxna)
     for rxn in [rxna, rdChemReactions.ChemicalReaction(rxna)]:
       self.assertTrue(rxn)
       self.assertFalse(rxn._getImplicitPropertiesFlag())
@@ -636,6 +658,13 @@ M  END
     m = rdChemReactions.ReduceProductToSideChains(mol)
     self.assertTrue(m.GetNumAtoms() == 0)
 
+  def testPreprocess(self):
+        testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
+        rxn = rdChemReactions.ReactionFromRxnFile(testFile)
+        rxn.Initialize()
+        res = rdChemReactions.PreprocessReaction(rxn)
+        self.assertEquals(res,(0,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),))))
+
 
 if __name__ == '__main__':
-  unittest.main()
+  unittest.main(verbosity=True)

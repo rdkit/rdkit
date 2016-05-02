@@ -39,10 +39,12 @@ from rdkit.Chem import rdChemReactions
 
 import os
 
-def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt'),propName='molFileValue'):
+def PreprocessReaction(reaction,funcGroupFilename=None,propName='molFileValue'):
   """
+  >>> from rdkit.Chem import AllChem
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   >>> nWarn
   0
@@ -59,6 +61,7 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
   the corresponding atoms will have queries added to them so that they only match such things. We can
   see this here:
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> r1 = rxn.GetReactantTemplate(0)
   >>> m1 = Chem.MolFromSmiles('CCBr')
   >>> m2 = Chem.MolFromSmiles('c1ccccc1Br')
@@ -79,6 +82,7 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
   We also support or queries in the values field (separated by commas):
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','azide_reaction.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> reactantLabels = PreprocessReaction(rxn)[-1]
   >>> reactantLabels
   (((1, 'azide'),), ((1, 'carboxylicacid,acidchloride'),))
@@ -96,6 +100,7 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
   unrecognized final group types are returned as None:
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   Traceback (most recent call last):
     File "/usr/prog/python/2.6.6_gnu/lib/python2.6/doctest.py", line 1253, in __run
@@ -109,6 +114,7 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
   One unrecognized group type in a comma-separated list makes the whole thing fail:
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value2.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   Traceback (most recent call last):
     File "/usr/prog/python/2.6.6_gnu/lib/python2.6/doctest.py", line 1253, in __run
@@ -120,6 +126,7 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
   RuntimeError: KeyErrorException
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value3.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   Traceback (most recent call last):
     File "/usr/prog/python/2.6.6_gnu/lib/python2.6/doctest.py", line 1253, in __run
@@ -130,32 +137,30 @@ def PreprocessReaction(reaction,funcGroupFilename=os.path.join(RDConfig.RDDataDi
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName='molFileValue', getLabels=True)
   RuntimeError: KeyErrorException
   >>> rxn = rdChemReactions.ChemicalReaction()
+  >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
-  >>> reactantLabels == []
+  >>> reactantLabels
+  ()
+  >>> reactantLabels == ()
   True
   """
-  reaction._setImplicitPropertiesFlag(True)
-  reaction.Initialize()
-  nReactants = reaction.GetNumReactantTemplates()
-  nProducts = reaction.GetNumProductTemplates()
-  nWarn,nError = reaction.Validate()
 
-  if not nError:
+  if funcGroupFilename:
     try:
       queryDict = Chem.ParseMolQueryDefFile(funcGroupFilename)
     except Exception:
       raise IOError('cannot open', funcGroupFilename)
-    else:
-      reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName, getLabels=True)
-  else:
-    reactantLabels = []
 
-  return nWarn,nError,nReactants,nProducts,reactantLabels
+    return rdChemReactions.PreprocessReaction(reaction,
+                                              queryDict,
+                                              propName)
+  return rdChemReactions.PreprocessReaction(reaction, propName=propName)  
 
 def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilename=os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt'),propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
+  >>> rxn.Initialize()
   >>> reacts1=['Brc1ccccc1','Brc1ncccc1','Brc1cnccc1']
   >>> reacts1=[Chem.MolFromSmiles(x) for x in reacts1]
   >>> reacts2=['CCB(O)O','CCCB(O)O']

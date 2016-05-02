@@ -38,6 +38,7 @@
 #ifdef RDK_THREADSAFE_SSS
 #include <boost/thread/once.hpp>
 #endif
+#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
@@ -136,9 +137,15 @@ std::map<std::string, ROMOL_SPTR> &flatten_get() {
   return flattenedHierarchy;
 }
 
+std::map<std::string, ROMOL_SPTR> &flatten_normalized_get() {
+  static std::map<std::string, ROMOL_SPTR> flattenedHierarchy;
+  return flattenedHierarchy;
+}
+
 void hierarchy_create() {
   FilterCatalog & fgroupHierarchy = hierarchy_get();
   std::map<std::string, ROMOL_SPTR> &flattenedHierarchy = flatten_get();
+  std::map<std::string, ROMOL_SPTR> &flattenedHierarchyNorm = flatten_normalized_get();
   
   std::vector<FilterHierarchyMatcher*>  toplevel;
   FilterHierarchyMatcher* stack[MAX_DEPTH];
@@ -150,7 +157,11 @@ void hierarchy_create() {
     if (FuncDataArray[i].removalReaction) {
       pattern->setProp("RemovalReaction", FuncDataArray[i].removalReaction);
     }
-    flattenedHierarchy[FuncDataArray[i].name] = pattern;
+    std::string key(FuncDataArray[i].name);
+    flattenedHierarchy[key] = pattern;
+    boost::to_lower(key);
+    flattenedHierarchyNorm[key] = pattern;
+    
     FilterHierarchyMatcher node(SmartsMatcher(FuncDataArray[i].name,
                                               pattern));
 
@@ -189,12 +200,15 @@ const FilterCatalog &GetFunctionalGroupHierarchy() {
     hierarchy_create();
     loaded=true;
   }
-#endif  
+#endif
   return hierarchy_get();
 }
 
-const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy() {
+const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
+    bool normalize) {
   GetFunctionalGroupHierarchy();
+  if (normalize)
+    return flatten_normalized_get();
   return flatten_get();
 }
 

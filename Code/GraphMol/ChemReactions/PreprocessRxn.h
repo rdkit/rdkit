@@ -29,24 +29,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#ifndef RDKIT_PREPROCESS_RXN_H
+#define RDKIT_PREPROCESS_RXN_H
 
-#ifndef RDKIT_FUNCTIONAL_GROUP_HIERARCHY_H
-#define RDKIT_FUNCTIONAL_GROUP_HIERARCHY_H
-#include "FilterCatalog.h"
-
+#include "Reaction.h"
+#include <string>
+#include <exception>
 
 namespace RDKit {
-//! Return the functional group hierarchy as a FilterCatalog
-const FilterCatalog &GetFunctionalGroupHierarchy();
-//! Return the flattened functional group hierarchy as a string->ROMOL_SPTR map
-//!  The label is the name of the functional group in the hiearchy
-//!   e.g. Halogen.Bromine.Aliphatic
-/*
-    /param normalized If set to true, return the flattened hierarchy
-                      with lower case labels.  [default false]
-*/                      
-const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
-    bool normalized=false);
+
+bool preprocessReaction(ChemicalReaction &rxn,
+                        const std::string &propName=common_properties::molFileValue);
+
+bool preprocessReaction(ChemicalReaction &rxn,
+                        unsigned int &numWarnings,
+                        unsigned int &numErrors,
+                        std::vector<
+                          std::vector<std::pair<unsigned int,std::string> > >&reactantLabels,
+                        const std::string &propName=common_properties::molFileValue);
+
+bool preprocessReaction(ChemicalReaction &rxn,
+                        const std::map<std::string, ROMOL_SPTR> &queries,
+                        const std::string &propName=common_properties::molFileValue);
+  
+bool preprocessReaction(ChemicalReaction &rxn,
+                        unsigned int &numWarnings,
+                        unsigned int &numErrors,
+                        std::vector<
+                          std::vector<std::pair<unsigned int,std::string> > >&reactantLabels,
+                        const std::map<std::string, ROMOL_SPTR> &queries,
+                        const std::string &propName=common_properties::molFileValue);
 }
 
 #endif
