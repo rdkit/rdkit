@@ -540,6 +540,36 @@ void test6MultiFPBReaderContainsThreaded() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test7MultiFPBReaderEdges() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing MultiFPBReader edge cases "
+      << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    MultiFPBReader mfps;
+    mfps.init();
+    std::string fps =
+        "40081010824820021000500010110410003000402b20285000a4040240010030050000"
+        "080001420040009000003d04086007080c03b31d920004220400074008098010206080"
+        "00488001080000c64002a00080000200024c2000602410049200340820200002400010"
+        "02200106090401056801080182006088101000088a0048";
+    ExplicitBitVect qbv(1024);
+    UpdateBitVectFromFPSText(qbv, fps);
+    {
+      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+          mfps.getContainingNeighbors(qbv);
+      TEST_ASSERT(nbrs.size() == 0);
+    }
+    {
+      std::vector<MultiFPBReader::ResultTuple> nbrs =
+          mfps.getTanimotoNeighbors(qbv, 0.01);
+      TEST_ASSERT(nbrs.size() == 0);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -549,6 +579,7 @@ int main() {
   test4MultiFPBReaderContains();
   test5MultiFPBReaderThreaded();
   test6MultiFPBReaderContainsThreaded();
+  test7MultiFPBReaderEdges();
 
   return 0;
 }

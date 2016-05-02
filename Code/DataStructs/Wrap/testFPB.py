@@ -245,6 +245,20 @@ class TestCase(unittest.TestCase):
        self.assertEqual(nbrs[8][0],193)
        self.assertEqual(nbrs[8][1],0)
 
+   def test9MultiFPBReaderEdges(self):
+       basen = os.path.join(RDConfig.RDBaseDir,'Code','DataStructs','testData')
+       mfpbr = DataStructs.MultiFPBReader()
+       mfpbr.Init();
+
+       fps = "0000000000404000100000001000040000300040222000002004000240000020000000"+\
+"8200010200000090000024040860070044003214820000220401054008018000226000"+\
+"4800800140000042000080008008020482400000200410800000300430200800400000"+\
+"0000080a0000800400010c800200648818100010880040"
+       ebv = DataStructs.CreateFromFPSText(fps)
+       bytes = DataStructs.BitVectToBinaryText(ebv)
+       nbrs = mfpbr.GetTanimotoNeighbors(bytes,threshold=0.6)
+       self.assertEqual(len(nbrs),0)
+
 
 
 if __name__ == '__main__':

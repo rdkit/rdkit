@@ -204,8 +204,8 @@ void MultiFPBReader::init() {
       if (rdr->nBits() != nBits)
         throw ValueErrorException("bit lengths of child readers don't match");
     }
-    df_init = true;
   }
+  df_init = true;
 };
 
 MultiFPBReader::MultiFPBReader(std::vector<FPBReader *> &readers,
