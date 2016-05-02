@@ -33,6 +33,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Atom.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/MolSurf.h>
