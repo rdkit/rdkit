@@ -130,7 +130,7 @@ double numUnspecifiedStereoAtoms(const ROMol &mol) {
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
        ++atom) {
     if ((*atom)->hasProp(common_properties::_ChiralityPossible) &&
-        (*atom)->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED)
+        (*atom)->getChiralTag() == Atom::CHI_UNSPECIFIED)
       res++;
   }
   return res;
