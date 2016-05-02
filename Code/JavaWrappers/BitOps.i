@@ -68,3 +68,5 @@
 %template(BitVectToText) BitVectToText<ExplicitBitVect>;
 %template(FromBitString) FromBitString<ExplicitBitVect>;
 %template(FromDaylightString) FromDaylightString<ExplicitBitVect>;
+%template(BitVectToFPSText) BitVectToFPSText<ExplicitBitVect>;
+%template(UpdateBitVectFromFPSText) UpdateBitVectFromFPSText<ExplicitBitVect>;
