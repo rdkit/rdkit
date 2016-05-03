@@ -221,19 +221,7 @@ class MolViewer(object):
     # from. Remedy that.
     if not filename:
         raise ValueError('empty filename')
-    import platform
-    if platform.system() != 'Windows':
-        if filename[0] != '/':
-            needPath = True
-        else:
-            needPath = False
-    else:
-        if filename[0] =='\\' or (len(filename)>2 and filename[1]==':'):
-            needPath = False
-        else:
-            needPath = True
-    if needPath:
-        filename = os.path.join(os.getcwd(),filename)
+    filename = os.path.abspath(filename)
     self.server.save(filename)
 
   def GetPNG(self,h=None,w=None,preDelay=0):
