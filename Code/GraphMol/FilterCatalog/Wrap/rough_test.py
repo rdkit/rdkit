@@ -50,8 +50,6 @@ from rdkit import DataStructs
 
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(rdfiltercatalog))
-    print("*"*44)
-    print (dir(tests))
     return tests
 
 class TestCase(unittest.TestCase):

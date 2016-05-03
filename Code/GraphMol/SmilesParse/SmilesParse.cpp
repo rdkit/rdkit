@@ -29,9 +29,11 @@
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <list>
 
 int yysmiles_parse(const char *, std::vector<RDKit::RWMol *> *,

@@ -35,7 +35,9 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
+#include <GraphMol/ChemReactions/PreprocessRxn.h>
 #include <GraphMol/Depictor/DepictUtils.h>
+#include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Exceptions.h>
@@ -322,6 +324,55 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
     return python::object();  // this is None
   }
 }
+
+python::object PreprocessReaction(ChemicalReaction &reaction,
+                                  python::dict queryDict,
+                                  std::string propName) {
+  
+  // transform dictionary into map
+  std::map<std::string, ROMOL_SPTR> queries;
+  unsigned int size = python::extract<unsigned int>(queryDict.keys().attr("__len__")());
+  if (!size) {
+    const bool normalized = true;
+    queries = GetFlattenedFunctionalGroupHierarchy(normalized);
+  }
+  else {
+    for (unsigned int i = 0;
+         i < size;
+         ++i) {
+      ROMol *m = python::extract<ROMol *>(queryDict.values()[i]);
+      ROMOL_SPTR nm(new ROMol(*m));
+      std::string k = python::extract<std::string>(queryDict.keys()[i]);
+      queries[k] = nm;
+    }
+  }
+
+  unsigned int nReactants = reaction.getNumReactantTemplates();
+  unsigned int nProducts = reaction.getNumProductTemplates();
+  unsigned int nWarn,nError;
+  reaction.validate(nWarn, nError);
+  std::vector<
+    std::vector<std::pair<unsigned int,std::string> > > labels;
+  
+  if (!nError) {
+      preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
+  }
+  
+  // transform labels into python::tuple(python::tuple(python::tuple))
+  python::list reactantLabels;
+  for (unsigned int i = 0; i < labels.size(); ++i) {
+    python::list tmpLabels;
+    for (unsigned int j = 0; j < labels[i].size(); ++j) {
+      python::list tmpPair;
+      tmpPair.append(labels[i][j].first);
+      tmpPair.append(labels[i][j].second);
+      tmpLabels.append(python::tuple(tmpPair));
+    }
+    reactantLabels.append(python::tuple(tmpLabels));
+  }
+  return python::make_tuple(nWarn, nError, nReactants, nProducts,
+                            python::tuple(reactantLabels));
+
 }
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
@@ -364,6 +415,8 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
       "A class for storing and applying chemical reactions.\n\
 \n\
 Sample Usage:\n\
+>>> from rdkit import Chem\n\
+>>> from rdkit.Chem import rdChemReactions\n\
 >>> rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')\n\
 >>> reacts = (Chem.MolFromSmiles('C(=O)O'),Chem.MolFromSmiles('CNC'))\n\
 >>> products = rxn.RunReactants(reacts)\n\
@@ -371,7 +424,7 @@ Sample Usage:\n\
 1\n\
 >>> len(products[0])\n\
 1\n\
->>> Chem.MolToSmiles(products[0])\n\
+>>> Chem.MolToSmiles(products[0][0])\n\
 'CN(C)C=O'\n\
 \n\
 ";
@@ -608,6 +661,7 @@ of the replacements argument.",
       "Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.\
           This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.\
           The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction");
+  
   python::def(
       "ReduceProductToSideChains", RDKit::reduceProductToSideChains,
       (python::arg("product"), python::arg("addDummyAtoms") = true),
@@ -615,8 +669,115 @@ of the replacements argument.",
               The output is a molecule with attached wildcards indicating where the product was attached.\
               The dummy atom has the same reaction-map number as the product atom (if available).",
       python::return_value_policy<python::manage_new_object>());
+  
   python::def("RemoveMappingNumbersFromReactions",
               RDKit::removeMappingNumbersFromReactions,
               (python::arg("reaction")),
               "Removes the mapping numbers from the molecules of a reaction");
+
+  docString =
+      "A function for preprocessing reactions with more specific queries.\n\
+Queries are indicated by labels on atoms (molFileAlias property by default)\n\
+When these labels are found, more specific queries are placed on the atoms.\n\
+By default, the available quieries come from \n\
+  FilterCatalog.GetFlattenedFunctionalGroupHierarchy(True)\n\n\n\
+Sample Usage:\n\
+  >>> from rdkit import Chem, RDConfig\n\
+  >>> from rdkit.Chem import MolFromSmiles, AllChem\n\
+  >>> from rdkit.Chem.rdChemReactions import PreprocessReaction\n\
+  >>> import os\n\
+  >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')\n\
+  >>> rxn = AllChem.ReactionFromRxnFile(testFile)\n\
+  >>> rxn.Initialize()\n\
+  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)\n\
+  >>> nWarn\n\
+  0\n\
+  >>> nError\n\
+  0\n\
+  >>> nReacts\n\
+  2\n\
+  >>> nProds\n\
+  1\n\
+  >>> reactantLabels\n\
+  (((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),))\n\
+\n\
+  If there are functional group labels in the input reaction (via atoms with molFileValue properties),\n\
+  the corresponding atoms will have queries added to them so that they only match such things. We can\n\
+  see this here:\n\
+  >>> rxn = AllChem.ReactionFromRxnFile(testFile)\n\
+  >>> rxn.Initialize()\n\
+  >>> r1 = rxn.GetReactantTemplate(0)\n\
+  >>> m1 = Chem.MolFromSmiles('CCBr')\n\
+  >>> m2 = Chem.MolFromSmiles('c1ccccc1Br')\n\
+  \n\
+  These both match because the reaction file itself just has R1-Br:\n\
+  >>> m1.HasSubstructMatch(r1)\n\
+  True\n\
+  >>> m2.HasSubstructMatch(r1)\n\
+  True\n\
+\n\
+  After preprocessing, we only match the aromatic Br:\n\
+  >>> d = PreprocessReaction(rxn)\n\
+  >>> m1.HasSubstructMatch(r1)\n\
+  False\n\
+  >>> m2.HasSubstructMatch(r1)\n\
+  True\n\
+\n\
+  We also support or queries in the values field (separated by commas):\n\
+  >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','azide_reaction.rxn')\n\
+  >>> rxn = AllChem.ReactionFromRxnFile(testFile)\n\
+  >>> rxn.Initialize()\n\
+  >>> reactantLabels = PreprocessReaction(rxn)[-1]\n\
+  >>> reactantLabels\n\
+  (((1, 'azide'),), ((1, 'carboxylicacid,acidchloride'),))\n\
+  >>> m1 = Chem.MolFromSmiles('CC(=O)O')\n\
+  >>> m2 = Chem.MolFromSmiles('CC(=O)Cl')\n\
+  >>> m3 = Chem.MolFromSmiles('CC(=O)N')\n\
+  >>> r2 = rxn.GetReactantTemplate(1)\n\
+  >>> m1.HasSubstructMatch(r2)\n\
+  True\n\
+  >>> m2.HasSubstructMatch(r2)\n\
+  True\n\
+  >>> m3.HasSubstructMatch(r2)\n\
+  False\n\
+\n\
+  unrecognized final group types are returned as None:\n\
+  >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value1.rxn')\n\
+  >>> rxn = AllChem.ReactionFromRxnFile(testFile)\n\
+  >>> rxn.Initialize()\n\
+  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)\n\
+  Traceback (most recent call last):\n\
+    ...\n\
+  RuntimeError: KeyErrorException\n\
+\n\
+  One unrecognized group type in a comma-separated list makes the whole thing fail:\n\
+  >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value2.rxn')\n\
+  >>> rxn = AllChem.ReactionFromRxnFile(testFile)\n\
+  >>> rxn.Initialize()\n\
+  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)\n\
+  Traceback (most recent call last):\n\
+    ...\n\
+  RuntimeError: KeyErrorException\n\
+  >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value3.rxn')\n\
+  >>> rxn = AllChem.ReactionFromRxnFile(testFile)\n\
+  >>> rxn.Initialize()\n\
+  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)\n\
+  Traceback (most recent call last):\n\
+    ...\n\
+  RuntimeError: KeyErrorException\n\
+  >>> rxn = rdChemReactions.ChemicalReaction()\n\
+  >>> rxn.Initialize()\n\
+  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)\n\
+  >>> reactantLabels\n\
+  ()\n\
+  >>> reactantLabels == ()\n\
+  True\n\
+";
+
+  python::def("PreprocessReaction", PreprocessReaction,
+              (python::arg("reaction"),
+               python::arg("queries")=python::dict(),
+               python::arg("propName")=common_properties::molFileValue),
+              docString.c_str());
+}
 }

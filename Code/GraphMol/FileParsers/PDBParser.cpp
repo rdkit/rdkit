@@ -12,7 +12,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/FileParsers.h>
