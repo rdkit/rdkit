@@ -12,7 +12,7 @@
 
 """
 from rdkit import Chem
-import os, tempfile
+import os, tempfile, sys
 
 # Python3 compatibility
 try:
@@ -215,6 +215,14 @@ class MolViewer(object):
     color %(color)s, %(objName)s"""
     cmd = cmd%locals()
     self.server.do(cmd)
+
+  def SaveFile(self,filename):
+    # PyMol will interpret the path to be relative to where it was started
+    # from. Remedy that.
+    if not filename:
+        raise ValueError('empty filename')
+    filename = os.path.abspath(filename)
+    self.server.save(filename)
 
   def GetPNG(self,h=None,w=None,preDelay=0):
     try:
