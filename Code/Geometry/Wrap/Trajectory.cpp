@@ -17,47 +17,22 @@ namespace python = boost::python;
 
 namespace RDGeom {
 
-class PySnapshot {
- public:
-  PySnapshot(Snapshot *s) : snapshot(s) {}
-  PySnapshot(boost::shared_ptr<Snapshot> s) : snapshot(s) {}
-  PySnapshot(const PySnapshot &other) {
-    snapshot.reset(new Snapshot(*(other.snapshot.get())));
-  }
-  PySnapshot(python::list &coordList, double energy) {
-    unsigned int l = python::len(coordList);
-    boost::shared_array<double> c;
-    if (l)
-      c.reset(new double[l]);
-    for (unsigned int i = 0; i < l; ++i)
-      c[i] = python::extract<double>(coordList[i]);
-    snapshot.reset(new Snapshot(c, energy));
-  }
-  Point2D getPoint2D(unsigned int pointNum) const {
-    return snapshot.get()->getPoint2D(pointNum);
-  }
-  Point3D getPoint3D(unsigned int pointNum) const {
-    return snapshot.get()->getPoint3D(pointNum);
-  }
-  double getEnergy() const {
-    return snapshot.get()->getEnergy();
-  }
-  void setEnergy(double energy) {
-    snapshot.get()->setEnergy(energy);
-  }
-  boost::shared_ptr<Snapshot> snapshot;
-};
-
-unsigned int insertSnapshot_wrap(Trajectory *traj, unsigned int snapshotNum, PySnapshot *s) {
-  return traj->insertSnapshot(snapshotNum, new Snapshot(*(s->snapshot.get())));
+Snapshot *getSnapshot_wrap(Trajectory *traj, unsigned int snapshotNum) {
+  return new Snapshot(traj->getSnapshot(snapshotNum));
 }
 
-unsigned int addSnapshot_wrap(Trajectory *traj, PySnapshot *s) {
-  return insertSnapshot_wrap(traj, traj->size(), s);
+Snapshot *constructSnapshot_wrap(python::list &coordList, double energy) {
+  unsigned int l = python::len(coordList);
+  boost::shared_array<double> c;
+  if (l)
+    c.reset(new double[l]);
+  for (unsigned int i = 0; i < l; ++i)
+    c[i] = python::extract<double>(coordList[i]);
+  return new Snapshot(c, energy);
 }
 
-PySnapshot *getSnapshot_wrap(Trajectory *traj, unsigned int snapshotNum) {
-  return new PySnapshot(new Snapshot(*(traj->getSnapshot(snapshotNum))));
+Snapshot *copyConstructSnapshot_wrap(Snapshot *other) {
+  return new Snapshot(*other);
 }
 
 struct Trajectory_wrapper {
@@ -83,7 +58,7 @@ struct Trajectory_wrapper {
         .def("NumPoints", &Trajectory::numPoints, (python::arg("self")),
              "returns the number of coordinate tuples associated to each Snapshot")
         .def("__len__", &Trajectory::size)
-        .def("AddSnapshot", addSnapshot_wrap,
+        .def("AddSnapshot", &Trajectory::addSnapshot,
              (python::arg("self"), python::arg("s")),
              "appends Snapshot s to this Trajectory; returns the zero-based index "
              "position of the added snapshot\n")
@@ -92,7 +67,7 @@ struct Trajectory_wrapper {
              "returns the Snapshot snapshotNum, where the latter is the zero-based "
              "index of the retrieved Snapshot\n",
              python::return_value_policy<python::manage_new_object>())
-        .def("InsertSnapshot", insertSnapshot_wrap,
+        .def("InsertSnapshot", &Trajectory::insertSnapshot,
              (python::arg("self"), python::arg("snapshotNum"), python::arg("s")),
              "inserts Snapshot s into the Trajectory at the position snapshotNum, "
              "where the latter is the zero-based index of the Trajectory's Snapshot "
@@ -101,15 +76,7 @@ struct Trajectory_wrapper {
         .def("RemoveSnapshot", &Trajectory::removeSnapshot,
              (python::arg("self"), python::arg("snapshotNum")),
              "removes Snapshot snapshotNum from the Trajectory, where "
-             "snapshotNum is the zero-based index of Snapshot to be removed\n")
-        .def("ReadAmber", &Trajectory::readAmber,
-             (python::arg("self"), python::arg("fName")),
-             "reads coordinates from an AMBER trajectory file into the Trajectory object; "
-             "returns the number of Snapshot objects read in\n")
-        .def("ReadGromos", &Trajectory::readGromos,
-             (python::arg("self"), python::arg("fName")),
-             "reads coordinates from a GROMOS trajectory file into the Trajectory object; "
-             "returns the number of Snapshot objects read in\n");
+             "snapshotNum is the zero-based index of Snapshot to be removed\n");
 
     docString =
         "A class which allows storing coordinates from a trajectory.\n\n\
@@ -123,20 +90,31 @@ struct Trajectory_wrapper {
         RETURNS\n\
         the Snapshot object\n\
       \n";
-    python::class_<PySnapshot>(
-        "Snapshot", docString.c_str(), python::init<python::list&, double>(
-        (python::arg("pos"), python::arg("energy") = 0.0)))
-        .def(python::init<const PySnapshot&>(python::arg("other")))
-        .def("GetPoint2D", &PySnapshot::getPoint2D, (python::arg("self"), python::arg("pointNum")),
+    python::class_<Snapshot>(
+        "Snapshot", docString.c_str(), python::no_init)
+        .def("GetPoint2D", &Snapshot::getPoint2D, (python::arg("self"), python::arg("pointNum")),
              "return the coordinates at pointNum as a Point2D object; "
              "requires the Trajectory dimension to be == 2")
-        .def("GetPoint3D", &PySnapshot::getPoint3D, (python::arg("self"), python::arg("pointNum")),
+        .def("GetPoint3D", &Snapshot::getPoint3D, (python::arg("self"), python::arg("pointNum")),
              "return the coordinates at pointNum as a Point3D object; "
              "requires the Trajectory dimension to be >= 2")
-        .def("GetEnergy", &PySnapshot::getEnergy, (python::arg("self")),
+        .def("GetEnergy", &Snapshot::getEnergy, (python::arg("self")),
              "returns the energy for this Snapshot")
-        .def("SetEnergy", &PySnapshot::setEnergy, (python::arg("self"), python::arg("energy")),
+        .def("SetEnergy", &Snapshot::setEnergy, (python::arg("self"), python::arg("energy")),
              "sets the energy for this Snapshot");
+    python::def("Snapshot", constructSnapshot_wrap,
+        (python::arg("coordList"), python::arg("energy") = 0.0),
+        docString.c_str(), python::return_value_policy<python::manage_new_object>());
+    python::def("Snapshot", copyConstructSnapshot_wrap, (python::arg("other")),
+        docString.c_str(), python::return_value_policy<python::manage_new_object>());
+    python::def("ReadAmberTrajectory", &readAmberTrajectory,
+        (python::arg("fName"), python::arg("traj")),
+        "reads coordinates from an AMBER trajectory file into the Trajectory object; "
+        "returns the number of Snapshot objects read in\n");
+    python::def("ReadGromosTrajectory", &readGromosTrajectory,
+        (python::arg("fName"), python::arg("traj")),
+        "reads coordinates from a GROMOS trajectory file into the Trajectory object; "
+        "returns the number of Snapshot objects read in\n");
   };
   
 };

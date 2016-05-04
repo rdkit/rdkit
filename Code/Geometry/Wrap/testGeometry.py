@@ -532,14 +532,14 @@ class TestCase(unittest.TestCase):
       traj = geom.Trajectory(2, 0)
       ok = False
       try:
-        traj.ReadAmber(fName)
+        geom.ReadAmberTrajectory(fName, traj)
       except:
         ok = True
       self.assertTrue(ok)
       traj = geom.Trajectory(3, 3)
       ok = False
       try:
-        traj.ReadAmber(fName)
+        geom.ReadAmberTrajectory(fName, traj)
       except:
         ok = True
       self.assertTrue(ok)
@@ -547,17 +547,17 @@ class TestCase(unittest.TestCase):
       ok = False
       try:
         traj = geom.Trajectory(3, 3)
-        traj.ReadAmber(fName)
+        geom.ReadAmberTrajectory(fName, traj)
       except:
         ok = True
       self.assertTrue(ok)
       fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords.trx')
       traj = geom.Trajectory(3, 3)
-      traj.ReadAmber(fName)
+      geom.ReadAmberTrajectory(fName, traj)
       self.assertEqual(len(traj), 1)
       fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trx')
       traj = geom.Trajectory(3, 3)
-      traj.ReadAmber(fName)
+      geom.ReadAmberTrajectory(fName, traj)
       self.assertEqual(len(traj), 2)
 
     def testReadAmberPython(self):
@@ -598,7 +598,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(i, 0)
       self.assertEqual(nSnapshots, 2)
       traj2 = geom.Trajectory(3, 3)
-      traj2.ReadAmber(fName)
+      geom.ReadAmberTrajectory(fName, traj2)
       self.assertEqual(len(traj), len(traj2))
       self.assertEqual(traj.NumPoints(), traj2.NumPoints())
       for snapshotNum in range(len(traj)):
@@ -613,14 +613,14 @@ class TestCase(unittest.TestCase):
       traj = geom.Trajectory(2, 0)
       ok = False
       try:
-        traj.ReadGromos(fName)
+        geom.ReadGromosTrajectory(fName, traj)
       except:
         ok = True
       self.assertTrue(ok)
       traj = geom.Trajectory(3, 3)
       ok = False
       try:
-        traj.ReadGromos(fName)
+        geom.ReadGromosTrajectory(fName, traj)
       except:
         ok = True
       self.assertTrue(ok)
@@ -628,17 +628,17 @@ class TestCase(unittest.TestCase):
       ok = False
       try:
         traj = geom.Trajectory(3, 3)
-        traj.ReadGromos(fName)
+        geom.ReadGromosTrajectory(fName, traj)
       except:
         ok = True
       self.assertTrue(ok)
       fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords.trc')
       traj = geom.Trajectory(3, 3)
-      traj.ReadGromos(fName)
+      geom.ReadGromosTrajectory(fName, traj)
       self.assertEqual(len(traj), 1)
       fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trc')
       traj = geom.Trajectory(3, 3)
-      traj.ReadGromos(fName)
+      geom.ReadGromosTrajectory(fName, traj)
       self.assertEqual(len(traj), 2)
 
 if __name__=='__main__':

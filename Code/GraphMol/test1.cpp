@@ -1104,7 +1104,7 @@ void testAddConformersFromTrajectory() {
     nConf < mol->getNumConformers(); ++nConf) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(4)
-      << traj.getSnapshot(nConf)->getEnergy();
+      << traj.getSnapshot(nConf).getEnergy();
     mol->setProp("ENERGY", ss.str(), false);
     w.write(*mol, nConf);
   }
@@ -1122,7 +1122,7 @@ void testAddConformersFromAmberTrajectory() {
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
   {
     RDGeom::Trajectory traj(3, mol->getNumAtoms());
-    traj.readAmber(fName);
+    readAmberTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 1);
     for (unsigned int i = 0; i < 2; ++i) {
       mol->addConformersFromTrajectory(&traj);
@@ -1138,7 +1138,7 @@ void testAddConformersFromAmberTrajectory() {
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
   {
     RDGeom::Trajectory traj(3, mol->getNumAtoms());
-    traj.readAmber(fName);
+    readAmberTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 2);
     mol->addConformersFromTrajectory(&traj);
     TEST_ASSERT(mol->getNumConformers() == 2);
@@ -1159,7 +1159,7 @@ void testAddConformersFromGromosTrajectory() {
   std::string fName = rdbase + "/Code/Geometry/testData/water_coords.trc";
   {
     RDGeom::Trajectory traj(3, mol->getNumAtoms());
-    traj.readGromos(fName);
+    readGromosTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 1);
     for (unsigned int i = 0; i < 2; ++i) {
       mol->addConformersFromTrajectory(&traj);
@@ -1176,7 +1176,7 @@ void testAddConformersFromGromosTrajectory() {
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trc";
   {
     RDGeom::Trajectory traj(3, mol->getNumAtoms());
-    traj.readGromos(fName);
+    readGromosTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 2);
     mol->addConformersFromTrajectory(&traj);
     TEST_ASSERT(mol->getNumConformers() == 2);

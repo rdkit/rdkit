@@ -55,7 +55,7 @@ void testTrajectory2D() {
   for (unsigned int i = 0; i < np * dim; ++i)
     c[i] = static_cast<double>(i);
   for (unsigned int i = 0; i < ns; ++i)
-    traj.addSnapshot(new Snapshot(c, static_cast<double>(i)));
+    traj.addSnapshot(Snapshot(c, static_cast<double>(i)));
   TEST_ASSERT(traj.size() == ns);
   {
     bool e = false;
@@ -70,7 +70,7 @@ void testTrajectory2D() {
   {
     bool e = false;
     try {
-      traj.getSnapshot(0)->getPoint2D(np);
+      traj.getSnapshot(0).getPoint2D(np);
     }
     catch (...) {
       e = true;
@@ -78,11 +78,11 @@ void testTrajectory2D() {
     TEST_ASSERT(e);
   }
   for (unsigned int i = 0; i < np; ++i) {
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint2D(i).x), static_cast<double>(i * dim)));
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint2D(i).y), static_cast<double>(i * dim + 1)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint2D(i).x), static_cast<double>(i * dim)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint2D(i).y), static_cast<double>(i * dim + 1)));
     bool e = false;
     try {
-      TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).z), 0.0));
+      TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).z), 0.0));
     }
     catch (...) {
       e = true;
@@ -90,19 +90,19 @@ void testTrajectory2D() {
     TEST_ASSERT(!e);
   }
   for (unsigned int i = 0; i < ns; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i)));
   traj.removeSnapshot(0);
   TEST_ASSERT(traj.size() == ns - 1);
   for (unsigned int i = 0; i < ns - 1; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i + 1)));
-  traj.insertSnapshot(0, new Snapshot(c, 999.0));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i + 1)));
+  traj.insertSnapshot(0, Snapshot(c, 999.0));
   TEST_ASSERT(traj.size() == ns);
-  Snapshot *copySnapshot = new Snapshot(*(traj.getSnapshot(0)));
+  Snapshot copySnapshot(traj.getSnapshot(0));
   traj.addSnapshot(copySnapshot);
   TEST_ASSERT(traj.size() == ns + 1);
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getEnergy()), 999.0));
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1)->getEnergy()), 1.0));
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(traj.size() - 1)->getEnergy()), 999.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getEnergy()), 999.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1).getEnergy()), 1.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(traj.size() - 1).getEnergy()), 999.0));
   Trajectory traj2(traj);
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
@@ -120,7 +120,7 @@ void testTrajectory3D() {
   for (unsigned int i = 0; i < np * dim; ++i)
     c[i] = static_cast<double>(i);
   for (unsigned int i = 0; i < ns; ++i)
-    traj.addSnapshot(new Snapshot(c, static_cast<double>(i)));
+    traj.addSnapshot(Snapshot(c, static_cast<double>(i)));
   TEST_ASSERT(traj.size() == ns);
   {
     bool e = false;
@@ -135,7 +135,7 @@ void testTrajectory3D() {
   {
     bool e = false;
     try {
-      traj.getSnapshot(0)->getPoint2D(np);
+      traj.getSnapshot(0).getPoint2D(np);
     }
     catch (...) {
       e = true;
@@ -143,13 +143,13 @@ void testTrajectory3D() {
     TEST_ASSERT(e);
   }
   for (unsigned int i = 0; i < np; ++i) {
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).x), static_cast<double>(i * dim)));
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).y), static_cast<double>(i * dim + 1)));
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getPoint3D(i).z), static_cast<double>(i * dim + 2)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).x), static_cast<double>(i * dim)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).y), static_cast<double>(i * dim + 1)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getPoint3D(i).z), static_cast<double>(i * dim + 2)));
     if (!i) {
       bool e = false;
       try {
-        traj.getSnapshot(0)->getPoint2D(i);
+        traj.getSnapshot(0).getPoint2D(i);
       }
       catch (...) {
         e = true;
@@ -158,19 +158,19 @@ void testTrajectory3D() {
     }
   }
   for (unsigned int i = 0; i < ns; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i)));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i)));
   traj.removeSnapshot(0);
   TEST_ASSERT(traj.size() == ns - 1);
   for (unsigned int i = 0; i < ns - 1; ++i)
-    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i)->getEnergy()), static_cast<double>(i + 1)));
-  traj.insertSnapshot(0, new Snapshot(c, 999.0));
+    TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i + 1)));
+  traj.insertSnapshot(0, Snapshot(c, 999.0));
   TEST_ASSERT(traj.size() == ns);
-  Snapshot *copySnapshot = new Snapshot(*(traj.getSnapshot(0)));
+  Snapshot copySnapshot(traj.getSnapshot(0));
   traj.addSnapshot(copySnapshot);
   TEST_ASSERT(traj.size() == ns + 1);
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0)->getEnergy()), 999.0));
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1)->getEnergy()), 1.0));
-  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(traj.size() - 1)->getEnergy()), 999.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(0).getEnergy()), 999.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(1).getEnergy()), 1.0));
+  TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(traj.size() - 1).getEnergy()), 999.0));
   Trajectory traj2(traj);
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
@@ -185,7 +185,7 @@ void testReadAmber() {
     Trajectory traj(2, 0);
     bool ok = false;
     try {
-      traj.readAmber(fName);
+      readAmberTrajectory(fName, traj);
     }
     catch (...) {
       ok = true;
@@ -196,7 +196,7 @@ void testReadAmber() {
     Trajectory traj(3, 3);
     bool ok = false;
     try {
-      traj.readAmber(fName);
+      readAmberTrajectory(fName, traj);
     }
     catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
@@ -209,7 +209,7 @@ void testReadAmber() {
     bool ok = false;
     try {
       Trajectory traj(3, 3);
-      traj.readAmber(fName);
+      readAmberTrajectory(fName, traj);
     }
     catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
@@ -220,13 +220,13 @@ void testReadAmber() {
   fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
   {
     Trajectory traj(3, 3);
-    traj.readAmber(fName);
+    readAmberTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 1);
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
   {
     Trajectory traj(3, 3);
-    traj.readAmber(fName);
+    readAmberTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 2);
     Trajectory trajCopy(traj);
   }
@@ -243,7 +243,7 @@ void testReadGromos() {
     Trajectory traj(2, 0);
     bool ok = false;
     try {
-      traj.readGromos(fName);
+      readGromosTrajectory(fName, traj);
     }
     catch (...) {
       ok = true;
@@ -254,7 +254,7 @@ void testReadGromos() {
     Trajectory traj(3, 3);
     bool ok = false;
     try {
-      traj.readGromos(fName);
+      readGromosTrajectory(fName, traj);
     }
     catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
@@ -267,7 +267,7 @@ void testReadGromos() {
     bool ok = false;
     try {
       Trajectory traj(3, 3);
-      traj.readGromos(fName);
+      readGromosTrajectory(fName, traj);
     }
     catch (ValueErrorException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
@@ -278,13 +278,13 @@ void testReadGromos() {
   fName = rdbase + "/Code/Geometry/testData/water_coords.trc";
   {
     Trajectory traj(3, 3);
-    traj.readGromos(fName);
+    readGromosTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 1);
   }
   fName = rdbase + "/Code/Geometry/testData/water_coords2.trc";
   {
     Trajectory traj(3, 3);
-    traj.readGromos(fName);
+    readGromosTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 2);
     Trajectory trajCopy(traj);
   }

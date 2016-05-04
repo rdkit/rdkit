@@ -70,7 +70,7 @@ class Snapshot {
 
 class Trajectory {
   public:
-    typedef std::vector<boost::shared_ptr<Snapshot> > SnapshotSPtrVect;
+    typedef std::vector<Snapshot> SnapshotVect;
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
         this is normally 2 (2D coordinates) or 3 (3D coordinates)
@@ -100,18 +100,19 @@ class Trajectory {
                takes ownership of the snapshot coordinates
         \return the zero-based index position of the added Snapshot
      */
-    unsigned int addSnapshot(Snapshot *s);
+    unsigned int addSnapshot(Snapshot s);
     /*! \param snapshotNum is the zero-based index of the retrieved Snapshot
         \return a const reference to the relevant Snapshot in the Trajectory
      */
-    Snapshot *getSnapshot(unsigned int snapshotNum) const;
+    const Snapshot &getSnapshot(unsigned int snapshotNum) const;
     /*! \brief Inserts a Snapshot into this Trajectory
         \param snapshotNum is the zero-based index of the Trajectory's Snapshot
                before which the Snapshot s will be inserted
-        \param s is the Snapshot to be inserted; the Trajectory takes ownership of the Snapshot
+        \param s is the Snapshot to be inserted; the Trajectory
+               takes ownership of the snapshot coordinates
         \return the zero-based index position of the inserted Snapshot
      */
-    unsigned int insertSnapshot(unsigned int snapshotNum, Snapshot *s);
+    unsigned int insertSnapshot(unsigned int snapshotNum, Snapshot s);
     /*! \brief Removes a Snapshot from this Trajectory
         \param snapshotNum is the zero-based index of Snapshot to be removed
         \return the zero-based index position of the Snapshot after the
@@ -119,16 +120,6 @@ class Trajectory {
                 size of the trajectory
      */
     unsigned int removeSnapshot(unsigned int snapshotNum);
-    /*! \brief Reads coordinates from an AMBER trajectory file
-               into the Trajectory object
-        \return the number of Snapshot objects read in
-     */
-    unsigned int readAmber(const std::string &fName);
-    /*! \brief Reads coordinates from a GROMOS trajectory file
-               into the Trajectory object
-        \return the number of Snapshot objects read in
-     */
-    unsigned int readGromos(const std::string &fName);
   private:
     // dimensionality of this Trajectory's coordinates;
     // this is normally 2 (2D coordinates) or 3 (3D coordinates)
@@ -136,8 +127,18 @@ class Trajectory {
     // number of coordinate tuples associated to each Snapshot
     const unsigned int d_numPoints;
     // vector holding the Snapshots for this Trajectory
-    SnapshotSPtrVect d_snapshotVect;
+    SnapshotVect d_snapshotVect;
 };
+/*! \brief Reads coordinates from an AMBER trajectory file
+           into the traj Trajectory object
+    \return the number of Snapshot objects read in
+ */
+unsigned int readAmberTrajectory(const std::string &fName, Trajectory &traj);
+/*! \brief Reads coordinates from a GROMOS trajectory file
+           into the traj Trajectory object
+    \return the number of Snapshot objects read in
+ */
+unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj);
 
 }
 #endif

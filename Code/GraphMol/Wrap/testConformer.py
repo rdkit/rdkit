@@ -299,7 +299,7 @@ class TestCase(unittest.TestCase):
     rdbase = os.environ['RDBASE']
     fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords.trx')
     traj = Geometry.Trajectory(3, mol.GetNumAtoms())
-    traj.ReadAmber(fName)
+    Geometry.ReadAmberTrajectory(fName, traj)
     self.assertEqual(len(traj), 1)
     for i in range(2):
       mol.AddConformersFromTrajectory(traj)
@@ -312,7 +312,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(mol.GetNumConformers(), 0)
     fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trx')
     traj = Geometry.Trajectory(3, mol.GetNumAtoms())
-    traj.ReadAmber(fName)
+    Geometry.ReadAmberTrajectory(fName, traj)
     self.assertEqual(len(traj), 2)
     mol.AddConformersFromTrajectory(traj)
     self.assertEqual(len(traj), 2)
@@ -325,7 +325,7 @@ class TestCase(unittest.TestCase):
     rdbase = os.environ['RDBASE']
     fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords.trc')
     traj = Geometry.Trajectory(3, mol.GetNumAtoms())
-    traj.ReadGromos(fName)
+    Geometry.ReadGromosTrajectory(fName, traj)
     self.assertEqual(len(traj), 1)
     for i in range(2):
       mol.AddConformersFromTrajectory(traj)
@@ -338,7 +338,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(mol.GetNumConformers(), 0)
     fName = os.path.join(rdbase, 'Code', 'Geometry', 'testData', 'water_coords2.trc')
     traj = Geometry.Trajectory(3, mol.GetNumAtoms())
-    traj.ReadGromos(fName)
+    Geometry.ReadGromosTrajectory(fName, traj)
     self.assertEqual(len(traj), 2)
     mol.AddConformersFromTrajectory(traj)
     self.assertEqual(len(traj), 2)

@@ -50,25 +50,25 @@ Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
 Trajectory::Trajectory(const Trajectory &other) :
   d_dimension(other.d_dimension),
   d_numPoints(other.d_numPoints) {
-  for (SnapshotSPtrVect::const_iterator vectIt = other.d_snapshotVect.begin();
+  for (SnapshotVect::const_iterator vectIt = other.d_snapshotVect.begin();
     vectIt != other.d_snapshotVect.end(); ++vectIt)
-    addSnapshot(new Snapshot(*(*vectIt)));
+    addSnapshot(*vectIt);
 }
 
-unsigned int Trajectory::addSnapshot(Snapshot *s) {
+unsigned int Trajectory::addSnapshot(Snapshot s) {
   return insertSnapshot(d_snapshotVect.size(), s);
 }
 
-Snapshot *Trajectory::getSnapshot(unsigned int snapshotNum) const {
+const Snapshot &Trajectory::getSnapshot(unsigned int snapshotNum) const {
   URANGE_CHECK(snapshotNum, d_snapshotVect.size() - 1);
-  return d_snapshotVect[snapshotNum].get();
+  return d_snapshotVect[snapshotNum];
 }
 
-unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot *s) {
+unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
   URANGE_CHECK(snapshotNum, d_snapshotVect.size());
-  s->d_trajectory = this;
+  s.d_trajectory = this;
   return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum,
-          boost::shared_ptr<Snapshot>(s)) - d_snapshotVect.begin());
+          s) - d_snapshotVect.begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
@@ -76,8 +76,8 @@ unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
 }
 
-unsigned int Trajectory::readAmber(const std::string &fName) {
-  PRECONDITION(d_dimension == 3, "The trajectory must have dimension == 3");
+unsigned int readAmberTrajectory(const std::string &fName, Trajectory &traj) {
+  PRECONDITION(traj.dimension() == 3, "The trajectory must have dimension == 3");
   std::ifstream inStream(fName.c_str());
   if (!inStream || inStream.bad()) {
     std::stringstream ss;
@@ -88,7 +88,7 @@ unsigned int Trajectory::readAmber(const std::string &fName) {
   // title
   std::getline(inStream, tempStr);
   // read coordinates
-  unsigned int nCoords = d_numPoints * 3;
+  unsigned int nCoords = traj.numPoints() * 3;
   unsigned int nSnapshots = 0;
   while (inStream.good() && !inStream.eof()) {
     boost::shared_array<double> c(new double[nCoords]());
@@ -110,15 +110,15 @@ unsigned int Trajectory::readAmber(const std::string &fName) {
       ++i;
     }
     if (!inStream.eof()) {
-      addSnapshot(new Snapshot(c));
+      traj.addSnapshot(Snapshot(c));
       ++nSnapshots;
     }
   }
   return nSnapshots;
 }
 
-unsigned int Trajectory::readGromos(const std::string &fName) {
-  PRECONDITION(d_dimension == 3, "The trajectory must have dimension == 3");
+unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
+  PRECONDITION(traj.dimension() == 3, "The trajectory must have dimension == 3");
   std::ifstream inStream(fName.c_str());
   if (!inStream || inStream.bad()) {
     std::stringstream ss;
@@ -126,7 +126,7 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
     throw RDKit::BadFileException(ss.str());
   }
   std::string tempStr;
-  unsigned int nCoords = d_numPoints * 3;
+  unsigned int nCoords = traj.numPoints() * 3;
   unsigned int nSnapshots = 0;
   const static char *ignoredKeywordArray[] = {
     "TITLE",
@@ -152,7 +152,7 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
       // these are the positions
       boost::shared_array<double> c(new double[nCoords]());
       unsigned int j = 0;
-      for (unsigned int i = 0; i < d_numPoints;) {
+      for (unsigned int i = 0; i < traj.numPoints();) {
         std::getline(inStream, tempStr);
         if (inStream.bad() || inStream.eof() || (tempStr == "END"))
           throw ValueErrorException("Wrong number of coordinates");
@@ -172,7 +172,7 @@ unsigned int Trajectory::readGromos(const std::string &fName) {
       std::getline(inStream, tempStr); // the END line
       if (inStream.bad() || inStream.eof() || (tempStr != "END"))
         throw ValueErrorException("Wrong number of coordinates");
-      addSnapshot(new Snapshot(c));
+      traj.addSnapshot(Snapshot(c));
       ++nSnapshots;
     }
     else {

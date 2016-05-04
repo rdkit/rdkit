@@ -598,7 +598,7 @@ unsigned int ROMol::addConformersFromTrajectory(const RDGeom::Trajectory *traj,
   for (int n = 0; n < nConf; ++n) {
     Conformer *conf = new Conformer(this->getNumAtoms());
     for (unsigned int i = 0; i < this->getNumAtoms(); ++i)
-      conf->setAtomPos(i, traj->getSnapshot(n)->getPoint3D(i));
+      conf->setAtomPos(i, traj->getSnapshot(n).getPoint3D(i));
     this->addConformer(conf, true);
   }
   return static_cast<unsigned int>(nConf);
