@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2016 Paolo Tosco
+//  Copyright (C) 2016 Sereina Riniker, Paolo Tosco
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -104,9 +104,9 @@ struct Trajectory_wrapper {
              "sets the energy for this Snapshot");
     python::def("Snapshot", constructSnapshot_wrap,
         (python::arg("coordList"), python::arg("energy") = 0.0),
-        docString.c_str(), python::return_value_policy<python::manage_new_object>());
+        "Constructor", python::return_value_policy<python::manage_new_object>());
     python::def("Snapshot", copyConstructSnapshot_wrap, (python::arg("other")),
-        docString.c_str(), python::return_value_policy<python::manage_new_object>());
+        "Copy constructor", python::return_value_policy<python::manage_new_object>());
     python::def("ReadAmberTrajectory", &readAmberTrajectory,
         (python::arg("fName"), python::arg("traj")),
         "reads coordinates from an AMBER trajectory file into the Trajectory object; "

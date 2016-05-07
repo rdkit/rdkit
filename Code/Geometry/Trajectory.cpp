@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2016 Paolo Tosco
+// Copyright (C) 2003-2016 Sereina Riniker, Paolo Tosco
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
