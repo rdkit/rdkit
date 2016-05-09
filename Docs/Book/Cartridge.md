@@ -18,7 +18,6 @@ The timing information below was collected on a commodity desktop PC (Dell Studi
 
 To improve performance while loading the database and building the index, I changed a couple of postgres configuration settings in postgresql.conf :
 
-    fsync = off               # turns forced synchronization on or off
     synchronous_commit = off      # immediate fsync at commit
     full_page_writes = off            # recover from partial page writes
 
