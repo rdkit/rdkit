@@ -1,6 +1,6 @@
 //  $Id$
 //
-//   Copyright (C) 2005-2013 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2016 Sereina Riniker, Paolo Tosco
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,11 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
 #include "Trajectory.h"
-#include "point.h"
+#include "Geometry/point.h"
 #include <RDGeneral/Invariant.h>
 
-using namespace RDGeom;
 using namespace RDKit;
 
 void testSnapshot() {
@@ -180,7 +180,7 @@ void testReadAmber() {
   BOOST_LOG(rdErrorLog) << "testReadAmber" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trx";
+  std::string fName = rdbase + "/Code/GraphMol/testData/water_coords_bad.trx";
   {
     Trajectory traj(2, 0);
     bool ok = false;
@@ -204,7 +204,7 @@ void testReadAmber() {
     }
     TEST_ASSERT(ok);
   }
-  fName = rdbase + "/Code/Geometry/testData/water_coords_bad2.trx";
+  fName = rdbase + "/Code/GraphMol/testData/water_coords_bad2.trx";
   {
     bool ok = false;
     try {
@@ -217,13 +217,13 @@ void testReadAmber() {
     }
     TEST_ASSERT(ok);
   }
-  fName = rdbase + "/Code/Geometry/testData/water_coords.trx";
+  fName = rdbase + "/Code/GraphMol/testData/water_coords.trx";
   {
     Trajectory traj(3, 3);
     readAmberTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 1);
   }
-  fName = rdbase + "/Code/Geometry/testData/water_coords2.trx";
+  fName = rdbase + "/Code/GraphMol/testData/water_coords2.trx";
   {
     Trajectory traj(3, 3);
     readAmberTrajectory(fName, traj);
@@ -238,7 +238,7 @@ void testReadGromos() {
   BOOST_LOG(rdErrorLog) << "testReadGromos" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Code/Geometry/testData/water_coords_bad.trc";
+  std::string fName = rdbase + "/Code/GraphMol/testData/water_coords_bad.trc";
   {
     Trajectory traj(2, 0);
     bool ok = false;
@@ -262,7 +262,7 @@ void testReadGromos() {
     }
     TEST_ASSERT(ok);
   }
-  fName = rdbase + "/Code/Geometry/testData/water_coords_bad2.trc";
+  fName = rdbase + "/Code/GraphMol/testData/water_coords_bad2.trc";
   {
     bool ok = false;
     try {
@@ -275,13 +275,13 @@ void testReadGromos() {
     }
     TEST_ASSERT(ok);
   }
-  fName = rdbase + "/Code/Geometry/testData/water_coords.trc";
+  fName = rdbase + "/Code/GraphMol/testData/water_coords.trc";
   {
     Trajectory traj(3, 3);
     readGromosTrajectory(fName, traj);
     TEST_ASSERT(traj.size() == 1);
   }
-  fName = rdbase + "/Code/Geometry/testData/water_coords2.trc";
+  fName = rdbase + "/Code/GraphMol/testData/water_coords2.trc";
   {
     Trajectory traj(3, 3);
     readGromosTrajectory(fName, traj);

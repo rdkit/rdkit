@@ -74,6 +74,7 @@ add_subdirectory(MMPA)
 
 
 add_subdirectory(ReducedGraphs)
+add_subdirectory(Trajectory)
 
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 add_subdirectory(SLNParse)
@@ -109,4 +110,7 @@ rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse FileParsers GraphM
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
+           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
+
+rdkit_test(trajectoryTest resMolSupplierTest.cpp
            LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)

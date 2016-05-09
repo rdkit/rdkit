@@ -15,7 +15,7 @@
 #include <set>
 #include "Trajectory.h"
 
-namespace RDGeom {
+namespace RDKit {
 
 Snapshot::Snapshot(boost::shared_array<double> pos, double energy) :
   d_trajectory(NULL),

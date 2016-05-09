@@ -22,7 +22,6 @@
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <ForceField/ForceField.h>
-#include <Geometry/Trajectory.h>
 #include <sstream>
 #include <iostream>
 
@@ -932,6 +931,7 @@ void test1() {
   }
 }
 
+#if 0
 void testAddConformersFromTrajectory() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
   BOOST_LOG(rdInfoLog) << "Testing adding conformers from a trajectory" << std::endl;
@@ -1187,6 +1187,7 @@ void testAddConformersFromGromosTrajectory() {
   delete mol;
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
+#endif
 
 void testPeriodicTable() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
@@ -1523,9 +1524,6 @@ int main() {
 // boost::logging::enable_logs("rdApp.info");
 #if 1
   test1();
-  testAddConformersFromTrajectory();
-  testAddConformersFromAmberTrajectory();
-  testAddConformersFromGromosTrajectory();
   testPropLeak();
   testMolProps();
   testAtomProps();
@@ -1535,6 +1533,10 @@ int main() {
   testIssue1993296();
   testIssue2381580();
   testIssue2840217();
+#else
+  testAddConformersFromTrajectory();
+  testAddConformersFromAmberTrajectory();
+  testAddConformersFromGromosTrajectory();
 #endif
   testPeriodicTable();
   testAddAtomWithConf();

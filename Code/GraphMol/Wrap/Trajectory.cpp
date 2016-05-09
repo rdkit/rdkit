@@ -15,7 +15,7 @@
 
 namespace python = boost::python;
 
-namespace RDGeom {
+namespace RDKit {
 
 Snapshot *getSnapshot_wrap(Trajectory *traj, unsigned int snapshotNum) {
   return new Snapshot(traj->getSnapshot(snapshotNum));

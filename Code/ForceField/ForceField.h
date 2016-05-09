@@ -131,7 +131,7 @@ class ForceField {
       - 0: indicates success
       - 1: the minimization did not converge in \c maxIts iterations.
   */
-  int minimize(unsigned int trajEverySteps, RDGeom::Trajectory *traj,
+  int minimize(unsigned int trajEverySteps, std::vector<double *> *traj,
                unsigned int maxIts = 200, double forceTol = 1e-4,
                double energyTol = 1e-6);
 
@@ -144,7 +144,7 @@ class ForceField {
                              will be stored after as many steps as indicated
                              through this parameter; defaults to 0 (no
                              trajectory stored)
-    \param traj              the pointer to the Trajectory object where
+    \param traj              a pointer to a std::vector<double *> where
                              coordinates will be stored
 
     \return an integer value indicating whether or not the convergence

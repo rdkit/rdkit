@@ -12,11 +12,11 @@
 #define __RD_TRAJECTORY_H__
 #include <vector>
 #include <map>
-#include "point.h"
+#include "Geometry/point.h"
 #include "boost/shared_ptr.hpp"
 #include "boost/shared_array.hpp"
 
-namespace RDGeom {
+namespace RDKit {
 
 class Trajectory;
 

@@ -13,7 +13,6 @@
 
 #include <RDGeneral/Invariant.h>
 #include <Numerics/Optimizer/BFGSOpt.h>
-#include <Geometry/Trajectory.h>
 
 namespace ForceFieldsHelper {
 class calcEnergy {
@@ -186,7 +185,7 @@ int ForceField::minimize(unsigned int maxIts, double forceTol,
   return minimize(0, NULL, maxIts, forceTol, energyTol);
 }
 
-int ForceField::minimize(unsigned int trajEverySteps, RDGeom::Trajectory *traj,
+int ForceField::minimize(unsigned int trajEverySteps, std::vector<double *> *traj,
                          unsigned int maxIts, double forceTol, double energyTol) {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(static_cast<unsigned int>(d_numPoints) == d_positions.size(),
