@@ -45,7 +45,7 @@ rdkit_python_extension(rdmolfiles
 rdkit_python_extension(rdtrajectory
                        Trajectory.cpp rdTrajectory.cpp
                        DEST Chem 
-                       LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral)
+                       LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral GraphMol)
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
   set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS )

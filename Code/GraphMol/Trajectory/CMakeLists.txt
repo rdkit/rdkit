@@ -5,4 +5,4 @@ rdkit_headers(Snapshot.h Trajectory.h DEST GraphMol/Trajectory)
 
 rdkit_test(trajectoryTest trajectoryTest.cpp
            LINK_LIBRARIES Trajectory RDGeneral RDGeometryLib GraphMol FileParsers
-           SmilesParse ForceFieldHelpers ForceField)
+           SmilesParse SubstructMatch ForceFieldHelpers ForceField)
