@@ -92,6 +92,27 @@ Create some fingerprints and build the similarity search index:
     NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "fps_pkey" for table "fps"
     ALTER TABLE
 
+Here is a group of the commands used here (and below) in one block so that you can just paste it in at the psql prompt:
+
+    create extension if not exists rdkit;
+    create schema rdk;
+    select * into rdk.mols from (select molregno,mol_from_ctab(molfile::cstring) m  from compound_structures) tmp where m is not null;
+    create index molidx on rdk.mols using gist(m);
+    alter table rdk.mols add primary key (molregno);
+    select molregno,torsionbv_fp(m) as torsionbv,morganbv_fp(m) as mfp2,featmorganbv_fp(m) as ffp2 into rdk.fps from rdk.mols;
+    create index fps_ttbv_idx on rdk.fps using gist(torsionbv);
+    create index fps_mfp2_idx on rdk.fps using gist(mfp2);
+    create index fps_ffp2_idx on rdk.fps using gist(ffp2);
+    alter table rdk.fps add primary key (molregno);
+    create or replace function get_mfp2_neighbors(smiles text)
+    returns table(molregno integer, m mol, similarity double precision) as
+  $$
+  select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
+  from rdk.fps join rdk.mols using (molregno)
+  where morganbv_fp(mol_from_smiles($1::cstring))%mfp2
+  order by morganbv_fp(mol_from_smiles($1::cstring))<%>mfp2;
+  $$ language sql stable ;
+
 ### Substructure searches
 
 Example query molecules taken from the [eMolecules home page](http://www.emolecules.com/):
