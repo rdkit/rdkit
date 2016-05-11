@@ -185,7 +185,7 @@ int ForceField::minimize(unsigned int maxIts, double forceTol,
   return minimize(0, NULL, maxIts, forceTol, energyTol);
 }
 
-int ForceField::minimize(unsigned int snapshotFreq, SnapshotVect *snapshotVect,
+int ForceField::minimize(unsigned int snapshotFreq, RDKit::SnapshotVect *snapshotVect,
                          unsigned int maxIts, double forceTol, double energyTol) {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(static_cast<unsigned int>(d_numPoints) == d_positions.size(),

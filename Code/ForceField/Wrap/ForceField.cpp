@@ -132,11 +132,11 @@ PyObject *ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
 
 python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol) {
   PRECONDITION(this->field, "no force field");
-  SnapshotVect snapshotVect;
+  RDKit::SnapshotVect snapshotVect;
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect,
                                maxIts, forceTol, energyTol);
   python::list l;
-  for (SnapshotVect::const_iterator it = snapshotVect.begin(); it != snapshotVect.end(); ++it)
+  for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin(); it != snapshotVect.end(); ++it)
     l.append(new RDKit::Snapshot(*it));
   return python::make_tuple(resInt, l);
   

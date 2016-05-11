@@ -129,7 +129,7 @@ class ForceField {
       - 0: indicates success
       - 1: the minimization did not converge in \c maxIts iterations.
   */
-  int minimize(unsigned int snapshotFreq, SnapshotVect *snapshotVect,
+  int minimize(unsigned int snapshotFreq, RDKit::SnapshotVect *snapshotVect,
                unsigned int maxIts = 200, double forceTol = 1e-4,
                double energyTol = 1e-6);
 

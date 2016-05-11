@@ -184,7 +184,7 @@ template <typename EnergyFunctor, typename GradientFunctor>
 int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
              GradientFunctor gradFunc, unsigned int snapshotFreq,
-             SnapshotVect *snapshotVect, double funcTol = TOLX,
+             RDKit::SnapshotVect *snapshotVect, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
   RDUNUSED_PARAM(funcTol);
   PRECONDITION(pos, "bad input array");

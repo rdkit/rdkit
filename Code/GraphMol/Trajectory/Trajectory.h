@@ -23,9 +23,9 @@ class Trajectory {
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
         this is normally 2 (2D coordinates) or 3 (3D coordinates)
         \param numPoints is the number of coordinate tuples associated to each Snapshot
-        \param snapshotVect (optional, defaults to NULL) is a pointer to a snapshotVect
+        \param snapshotVect (optional, defaults to NULL) is a pointer to a SnapshotVect
                used to initialize the Trajectory; if not NULL, the Trajectory takes ownership
-               of the snapshotVect
+               of the SnapshotVect
      */
     Trajectory(unsigned int dimension, unsigned int numPoints, SnapshotVect *snapshotVect = NULL);
     /*! \brief Copy constructor
