@@ -185,7 +185,7 @@ int ForceField::minimize(unsigned int maxIts, double forceTol,
   return minimize(0, NULL, maxIts, forceTol, energyTol);
 }
 
-int ForceField::minimize(unsigned int trajEverySteps, std::vector<double *> *traj,
+int ForceField::minimize(unsigned int snapshotFreq, SnapshotVect *snapshotVect,
                          unsigned int maxIts, double forceTol, double energyTol) {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(static_cast<unsigned int>(d_numPoints) == d_positions.size(),
@@ -202,7 +202,7 @@ int ForceField::minimize(unsigned int trajEverySteps, std::vector<double *> *tra
   ForceFieldsHelper::calcGradient gCalc(this);
 
   int res = BFGSOpt::minimize(dim, points, forceTol, numIters, finalForce,
-                              eCalc, gCalc, trajEverySteps, traj,
+                              eCalc, gCalc, snapshotFreq, snapshotVect,
                               energyTol, maxIts);
   this->gather(points);
 

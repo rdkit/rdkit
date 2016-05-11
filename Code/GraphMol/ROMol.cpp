@@ -21,7 +21,6 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 #include "Conformer.h"
-#include <Geometry/Trajectory.h>
 
 namespace RDKit {
 class QueryAtom;
@@ -584,24 +583,6 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   CONFORMER_SPTR nConf(conf);
   d_confs.push_back(nConf);
   return conf->getId();
-}
-
-unsigned int ROMol::addConformersFromTrajectory(const RDGeom::Trajectory *traj,
-                                                int nConf) {
-  PRECONDITION(traj, "traj must not be NULL");
-  PRECONDITION(traj->numPoints() == this->getNumAtoms(),
-               "Number of atom mismatch between ROMol and Trajectory");
-  PRECONDITION(nConf <= static_cast<int>(traj->size()),
-               "nConf must be <= traj->size()");
-  if (nConf == -1)
-    nConf = traj->size();
-  for (int n = 0; n < nConf; ++n) {
-    Conformer *conf = new Conformer(this->getNumAtoms());
-    for (unsigned int i = 0; i < this->getNumAtoms(); ++i)
-      conf->setAtomPos(i, traj->getSnapshot(n).getPoint3D(i));
-    this->addConformer(conf, true);
-  }
-  return static_cast<unsigned int>(nConf);
 }
 
 }  // end o' namespace

@@ -11,7 +11,8 @@
 #include <RDBoost/python.h>
 
 #include <RDBoost/Wrap.h>
-#include <Geometry/Trajectory.h>
+#include "GraphMol/Trajectory/Trajectory.h"
+#include "GraphMol/ROMol.h"
 
 namespace python = boost::python;
 
@@ -35,6 +36,20 @@ Snapshot *copyConstructSnapshot_wrap(Snapshot *other) {
   return new Snapshot(*other);
 }
 
+Trajectory *constructTrajectory_wrap(unsigned int dimension, unsigned int numPoints, python::list snapshotList) {
+  unsigned int l = python::len(snapshotList);
+  Trajectory *traj = new Trajectory(dimension, numPoints);
+  for (unsigned int i = 0; i < l; ++i) {
+    Snapshot *s = python::extract<Snapshot *>(snapshotList[i]);
+    traj->addSnapshot(*s);
+  }
+  return traj;
+}
+
+Trajectory *copyConstructTrajectory_wrap(Trajectory *other) {
+  return new Trajectory(*other);
+}
+
 struct Trajectory_wrapper {
   static void wrap() {
     std::string docString =
@@ -43,16 +58,15 @@ struct Trajectory_wrapper {
         traj = Trajectory(dimension, numPoints)\n\
        \n\
        ARGUMENTS\n\
-        - dimension   dimensionality of this Trajectory's coordinate tuples\n\
-        - numPoints   number of coordinate tuples associated to each Snapshot\n\
+        - dimension     dimensionality of this Trajectory's coordinate tuples\n\
+        - numPoints     number of coordinate tuples associated to each Snapshot\n\
+        - snapshotList  list of Snapshot objects (optional; defaults to [])\n\
          \n\
         RETURNS\n\
         the Trajectory object\n\
       \n";
     python::class_<Trajectory>(
-        "Trajectory", docString.c_str(), python::init<unsigned int, unsigned int>(
-        (python::arg("dimension"), python::arg("numPoints"))))
-        .def(python::init<const Trajectory&>(python::arg("other")))
+        "Trajectory", docString.c_str(), python::no_init)
         .def("Dimension", &Trajectory::dimension, (python::arg("self")),
              "return the dimensionality of this Trajectory's coordinate tuples")
         .def("NumPoints", &Trajectory::numPoints, (python::arg("self")),
@@ -76,7 +90,24 @@ struct Trajectory_wrapper {
         .def("RemoveSnapshot", &Trajectory::removeSnapshot,
              (python::arg("self"), python::arg("snapshotNum")),
              "removes Snapshot snapshotNum from the Trajectory, where "
-             "snapshotNum is the zero-based index of Snapshot to be removed\n");
+             "snapshotNum is the zero-based index of Snapshot to be removed\n")
+        .def("Clear", &Trajectory::clear,
+             (python::arg("self")),
+             "removes all Snapshots from the Trajectory\n")
+        .def("AddConformersToMol", &Trajectory::addConformersToMol,
+             (python::arg("self"), python::arg("mol"),
+             python::arg("from") = -1, python::arg("to") = -1),
+             "adds conformations from the Trajectory to mol\n"
+             "from is the first Snapshot that will be added as a Conformer; "
+             "defaults to 0 (first available)\n"
+             "to is the last Snapshot that will be added as a Conformer; "
+             "defaults to -1 (all)\n");
+    python::def("Trajectory", constructTrajectory_wrap,
+        (python::arg("dimension"), python::arg("numPoints"),
+        python::arg("snapshotList") = python::list()),
+        "Constructor", python::return_value_policy<python::manage_new_object>());
+    python::def("Trajectory", copyConstructTrajectory_wrap, (python::arg("other")),
+        "Copy constructor", python::return_value_policy<python::manage_new_object>());
 
     docString =
         "A class which allows storing coordinates from a trajectory.\n\n\
@@ -120,4 +151,4 @@ struct Trajectory_wrapper {
 };
 }
 
-void wrap_trajectory() { RDGeom::Trajectory_wrapper::wrap(); }
+void wrap_trajectory() { RDKit::Trajectory_wrapper::wrap(); }

@@ -11,7 +11,8 @@
 #include <ForceField/ForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <ForceField/MMFF/Params.h>
-#include <Geometry/Trajectory.h>
+#include <GraphMol/Trajectory/Snapshot.h>
+#include <boost/python/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <algorithm>
@@ -54,12 +55,7 @@ class PyForceField {
     return this->field->minimize(maxIts, forceTol, energyTol);
   }
 
-  int minimizeTrajectory(unsigned int trajEverySteps, RDGeom::Trajectory *traj,
-               int maxIts, double forceTol, double energyTol) {
-    PRECONDITION(this->field, "no force field");
-    return this->field->minimize(trajEverySteps, traj,
-                                 maxIts, forceTol, energyTol);
-  }
+  boost::python::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol);
 
   void initialize() {
     PRECONDITION(this->field, "no force field");

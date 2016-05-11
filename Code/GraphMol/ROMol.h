@@ -34,10 +34,6 @@
 
 #include "Conformer.h"
 
-namespace RDGeom {
-class Trajectory;
-}
-
 namespace RDKit {
 class Atom;
 class Bond;
@@ -363,14 +359,6 @@ class ROMol {
     an (unique) ID set
   */
   unsigned int addConformer(Conformer *conf, bool assignId = false);
-  //! Add conformations from a Trajectory to the molecule
-  /*!
-    \param traj - Trajectory from which coordinates will be taken; the Trajectory
-           must have numPoints() == conf->getNumAtoms()
-    \param nConf - the number of conformations that will be added; defaults to -1 (all)
-    \return the number of conformations added
-  */
-  unsigned int addConformersFromTrajectory(const RDGeom::Trajectory *traj, int nConf = -1);
 
   inline unsigned int getNumConformers() const {
     return rdcast<unsigned int>(d_confs.size());

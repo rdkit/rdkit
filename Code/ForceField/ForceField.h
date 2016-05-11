@@ -14,10 +14,8 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <Geometry/point.h>
+#include <GraphMol/Trajectory/Snapshot.h>
 
-namespace RDGeom {
-class Trajectory;
-}
 namespace ForceFields {
 class ForceFieldContrib;
 typedef std::vector<int> INT_VECT;
@@ -131,7 +129,7 @@ class ForceField {
       - 0: indicates success
       - 1: the minimization did not converge in \c maxIts iterations.
   */
-  int minimize(unsigned int trajEverySteps, std::vector<double *> *traj,
+  int minimize(unsigned int snapshotFreq, SnapshotVect *snapshotVect,
                unsigned int maxIts = 200, double forceTol = 1e-4,
                double energyTol = 1e-6);
 
@@ -140,12 +138,12 @@ class ForceField {
     \param maxIts            the maximum number of iterations to try
     \param forceTol          the convergence criterion for forces
     \param energyTol         the convergence criterion for energies
-    \param trajEverySteps    a snapshot of the minimization trajectory
+    \param snapshotFreq      a snapshot of the minimization trajectory
                              will be stored after as many steps as indicated
                              through this parameter; defaults to 0 (no
                              trajectory stored)
-    \param traj              a pointer to a std::vector<double *> where
-                             coordinates will be stored
+    \param snapshotVect      a pointer to a std::vector<Snapshot> where
+                             coordinates and energies will be stored
 
     \return an integer value indicating whether or not the convergence
             criteria were achieved:

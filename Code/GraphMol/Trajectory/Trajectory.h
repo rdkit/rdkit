@@ -11,72 +11,23 @@
 #ifndef __RD_TRAJECTORY_H__
 #define __RD_TRAJECTORY_H__
 #include <vector>
-#include <map>
-#include "Geometry/point.h"
-#include "boost/shared_ptr.hpp"
-#include "boost/shared_array.hpp"
+#include "Snapshot.h"
 
 namespace RDKit {
 
-class Trajectory;
-
-class Snapshot {
-  friend class Trajectory;
-  public:
-    /*! \brief Constructor
-        \param pos is a pointer to an array of (numPoints * dimension) doubles;
-        numPoints and dimension must match the Trajectory which is going to
-        contain this Snapshot
-        \param energy is the energy associated with this set of coordinates
-     */
-    Snapshot(boost::shared_array<double> pos, double energy = 0.0);
-    /*! \return a const pointer to the parent Trajectory
-     */
-    const Trajectory *trajectory() const {
-      return d_trajectory;
-    }
-    /*! \param pointNum is the atom number whose coordinates will be retrieved
-        \return the coordinates at pointNum as a Point2D object;
-        requires the Trajectory dimension to be == 2
-     */
-    Point2D getPoint2D(unsigned int pointNum) const;
-    /*! \param pointNum is the atom number whose coordinates will be retrieved
-        \return the coordinates at pointNum as a Point3D object;
-        requires the Trajectory dimension to be >= 2
-     */
-    Point3D getPoint3D(unsigned int pointNum) const;
-    /*! \return the energy for this Snapshot
-     */
-    double getEnergy() const {
-      return d_energy;
-    };
-    /*! \brief Sets the energy for this Snapshot
-        \param energy the energy value assigned to this Snapshot
-     */
-    void setEnergy(double energy) {
-      d_energy = energy;
-    }
-    /*! \brief Frees the pointer to the array of doubles where the
-        coordinates for this Snapshot are stored
-     */
-  private:
-    // Pointer to the parent Trajectory object
-    const Trajectory *d_trajectory;
-    // Energy for this set of coordinates
-    double d_energy;
-    // shared array to Snapshot coordinates
-    boost::shared_array<double> d_pos;
-};
+class ROMol;
 
 class Trajectory {
   public:
-    typedef std::vector<Snapshot> SnapshotVect;
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
         this is normally 2 (2D coordinates) or 3 (3D coordinates)
         \param numPoints is the number of coordinate tuples associated to each Snapshot
+        \param snapshotVect (optional, defaults to NULL) is a pointer to a snapshotVect
+               used to initialize the Trajectory; if not NULL, the Trajectory takes ownership
+               of the snapshotVect
      */
-    Trajectory(unsigned int dimension, unsigned int numPoints);
+    Trajectory(unsigned int dimension, unsigned int numPoints, SnapshotVect *snapshotVect = NULL);
     /*! \brief Copy constructor
      */
     Trajectory(const Trajectory &other);
@@ -93,7 +44,7 @@ class Trajectory {
     /*! \return the number of Snapshots associated to this Trajectory
      */
     size_t size() const {
-      return d_snapshotVect.size();
+      return d_snapshotVect->size();
     }
     /*! \brief Appends a Snapshot to this Trajectory
         \param s is the Snapshot to be added; the Trajectory
@@ -116,18 +67,31 @@ class Trajectory {
     /*! \brief Removes a Snapshot from this Trajectory
         \param snapshotNum is the zero-based index of Snapshot to be removed
         \return the zero-based index position of the Snapshot after the
-                removed one; if the last snapsot was removed, it returns the
+                removed one; if the last Snapshot was removed, it returns the
                 size of the trajectory
      */
     unsigned int removeSnapshot(unsigned int snapshotNum);
+    //! Clear all Snapshots from a Trajectory
+    void clear() {
+      d_snapshotVect->clear();
+    };
+    //! Add conformations from the Trajectory to a molecule
+    /*!
+      \param mol - ROMol to which Conformers with coordinates from the Trajectory will be added;
+             the Trajectory must have numPoints() == mol.getNumAtoms()
+      \param from - the first Snapshot that will be added as a Conformer; defaults to -1 (first available)
+      \param to - the last Snapshot that will be added as a Conformer; defaults to -1 (all)
+      \return the number of conformations added
+    */
+    unsigned int addConformersToMol(ROMol &mol, int from = -1, int to = -1);
   private:
     // dimensionality of this Trajectory's coordinates;
     // this is normally 2 (2D coordinates) or 3 (3D coordinates)
     const unsigned int d_dimension;
     // number of coordinate tuples associated to each Snapshot
     const unsigned int d_numPoints;
-    // vector holding the Snapshots for this Trajectory
-    SnapshotVect d_snapshotVect;
+    // smart_ptr to vector holding the Snapshots for this Trajectory
+    boost::shared_ptr<SnapshotVect> d_snapshotVect;
 };
 /*! \brief Reads coordinates from an AMBER trajectory file
            into the traj Trajectory object

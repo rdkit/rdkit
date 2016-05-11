@@ -10,6 +10,8 @@
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/ROMol.h>
+#include <GraphMol/Conformer.h>
 #include <fstream>
 #include <sstream>
 #include <set>
@@ -17,63 +19,87 @@
 
 namespace RDKit {
 
-Snapshot::Snapshot(boost::shared_array<double> pos, double energy) :
-  d_trajectory(NULL),
-  d_energy(energy),
-  d_pos(pos) {}
-
-Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
+RDGeom::Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
   PRECONDITION(d_pos, "d_pos must not be NULL");
   PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
   PRECONDITION(d_trajectory->dimension() == 2, "d_dimension must be == 2");
   PRECONDITION(d_trajectory->numPoints(), "d_numPoints must be > 0");
   URANGE_CHECK(pointNum, d_trajectory->numPoints() - 1);
   unsigned int i = pointNum * d_trajectory->dimension();
-  return Point2D(d_pos[i], d_pos[i + 1]);
+  return RDGeom::Point2D(d_pos[i], d_pos[i + 1]);
 }
 
-Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
+RDGeom::Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
   PRECONDITION(d_pos, "d_pos must not be NULL");
   PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
   PRECONDITION(d_trajectory->dimension() >= 2, "d_dimension must be >= 2");
   PRECONDITION(d_trajectory->numPoints(), "d_numPoints must be > 0");
   URANGE_CHECK(pointNum, d_trajectory->numPoints() - 1);
   unsigned int i = pointNum * d_trajectory->dimension();
-  return (Point3D(d_pos[i], d_pos[i + 1],
+  return (RDGeom::Point3D(d_pos[i], d_pos[i + 1],
           (d_trajectory->dimension() == 3) ? d_pos[i + 2] : 0.0));
 }
 
-Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints) :
+Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints, SnapshotVect *snapshotVect) :
   d_dimension(dimension),
-  d_numPoints(numPoints) {}
+  d_numPoints(numPoints) {
+  if (!snapshotVect)
+    snapshotVect = new SnapshotVect;
+  d_snapshotVect.reset(snapshotVect);
+  for (SnapshotVect::iterator vectIt = d_snapshotVect->begin();
+    vectIt != d_snapshotVect->end(); ++vectIt)
+    vectIt->d_trajectory = this;
+}
 
 Trajectory::Trajectory(const Trajectory &other) :
   d_dimension(other.d_dimension),
-  d_numPoints(other.d_numPoints) {
-  for (SnapshotVect::const_iterator vectIt = other.d_snapshotVect.begin();
-    vectIt != other.d_snapshotVect.end(); ++vectIt)
+  d_numPoints(other.d_numPoints),
+  d_snapshotVect(new SnapshotVect) {
+  for (SnapshotVect::const_iterator vectIt = other.d_snapshotVect->begin();
+    vectIt != other.d_snapshotVect->end(); ++vectIt)
     addSnapshot(*vectIt);
 }
 
 unsigned int Trajectory::addSnapshot(Snapshot s) {
-  return insertSnapshot(d_snapshotVect.size(), s);
+  return insertSnapshot(d_snapshotVect->size(), s);
 }
 
 const Snapshot &Trajectory::getSnapshot(unsigned int snapshotNum) const {
-  URANGE_CHECK(snapshotNum, d_snapshotVect.size() - 1);
-  return d_snapshotVect[snapshotNum];
+  URANGE_CHECK(snapshotNum, d_snapshotVect->size() - 1);
+  return (*d_snapshotVect)[snapshotNum];
 }
 
 unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
-  URANGE_CHECK(snapshotNum, d_snapshotVect.size());
+  URANGE_CHECK(snapshotNum, d_snapshotVect->size());
   s.d_trajectory = this;
-  return (d_snapshotVect.insert(d_snapshotVect.begin() + snapshotNum,
-          s) - d_snapshotVect.begin());
+  return (d_snapshotVect->insert(d_snapshotVect->begin() + snapshotNum,
+          s) - d_snapshotVect->begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
-  URANGE_CHECK(snapshotNum, d_snapshotVect.size() - 1);
-  return (d_snapshotVect.erase(d_snapshotVect.begin() + snapshotNum) - d_snapshotVect.begin());
+  URANGE_CHECK(snapshotNum, d_snapshotVect->size() - 1);
+  return (d_snapshotVect->erase(d_snapshotVect->begin() + snapshotNum) - d_snapshotVect->begin());
+}
+
+unsigned int Trajectory::addConformersToMol(ROMol &mol, int from, int to) {
+  PRECONDITION(d_numPoints == mol.getNumAtoms(),
+               "Number of atom mismatch between ROMol and Trajectory");
+  PRECONDITION(from < static_cast<int>(size()), "from must be < size()");
+  PRECONDITION(to < static_cast<int>(size()), "to must be < size()");
+  if (from < 0)
+    from = 0;
+  if (to < 0)
+    to = size() - 1;
+  PRECONDITION(!size() || (from <= to), "from must be <= to");
+  int n;
+  unsigned int nConf;
+  for (n = from, nConf = 0; size() && (n <= to); ++n, ++nConf) {
+    Conformer *conf = new Conformer(mol.getNumAtoms());
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i)
+      conf->setAtomPos(i, getSnapshot(n).getPoint3D(i));
+    mol.addConformer(conf, true);
+  }
+  return nConf;
 }
 
 unsigned int readAmberTrajectory(const std::string &fName, Trajectory &traj) {

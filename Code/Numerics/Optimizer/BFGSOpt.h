@@ -9,11 +9,10 @@
 //
 #include <math.h>
 #include <RDGeneral/Invariant.h>
-#include <Geometry/Trajectory.h>
+#include <GraphMol/Trajectory/Snapshot.h>
 #include <cstring>
 #include <vector>
 #include <algorithm>
-#include <boost/shared_array.hpp>
 
 namespace BFGSOpt {
 const double FUNCTOL =
@@ -169,12 +168,13 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
    \param gradFunc  calculates the gradient of func
    \param funcTol tolerance for changes in the function value for convergence.
    \param maxIts   maximum number of iterations allowed
-   \param trajEverySteps   a snapshot of the minimization trajectory
+   \param snapshotFreq     a snapshot of the minimization trajectory
                            will be stored after as many steps as indicated
                            through this parameter; defaults to 0 (no
-                           trajectory stored)
-   \param traj     pointer to the Trajectory object that will receive the trajectory
-                   every trajEverySteps steps; defaults to NULL (no trajectory stored)
+                           snapshots stored)
+   \param snapshotVect     pointer to a std::vector<Snapshot> object that will receive
+                           the coordinates and energies every snapshotFreq steps;
+                           defaults to NULL (no snapshots stored)
 
    \return a flag indicating success (or type of failure). Possible values are:
     -  0: success
@@ -183,8 +183,8 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
 template <typename EnergyFunctor, typename GradientFunctor>
 int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
-             GradientFunctor gradFunc, unsigned int trajEverySteps,
-             RDGeom::Trajectory *traj, double funcTol = TOLX,
+             GradientFunctor gradFunc, unsigned int snapshotFreq,
+             SnapshotVect *snapshotVect, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
   RDUNUSED_PARAM(funcTol);
   PRECONDITION(pos, "bad input array");
@@ -202,7 +202,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   newPos = new double[dim];
   xi = new double[dim];
   invHessian = new double[dim * dim];
-  trajEverySteps = std::min(trajEverySteps, maxIts);
+  snapshotFreq = std::min(snapshotFreq, maxIts);
 
   // evaluate the function and gradient in our current position:
   fp = func(pos);
@@ -245,9 +245,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // std::cerr<<"      iter: "<<iter<<" "<<fp<<" "<<test<<"
     // "<<TOLX<<std::endl;
     if (test < TOLX) {
-      if (traj && trajEverySteps) {
-        RDGeom::Snapshot s(boost::shared_array<double>(newPos), fp);
-        traj->addSnapshot(s);
+      if (snapshotVect && snapshotFreq) {
+        RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
+        snapshotVect->push_back(s);
         newPos = NULL;
       }
       CLEANUP();
@@ -269,9 +269,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // std::cerr<<"              "<<gradScale<<" "<<test<<"
     // "<<gradTol<<std::endl;
     if (test < gradTol) {
-      if (traj && trajEverySteps) {
-        RDGeom::Snapshot s(boost::shared_array<double>(newPos), fp);
-        traj->addSnapshot(s);
+      if (snapshotVect && snapshotFreq) {
+        RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
+        snapshotVect->push_back(s);
         newPos = NULL;
       }
       CLEANUP();
@@ -348,9 +348,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       }
 #endif
     }
-    if (traj && trajEverySteps && !(iter % trajEverySteps)) {
-      RDGeom::Snapshot s(boost::shared_array<double>(newPos), fp);
-      traj->addSnapshot(s);
+    if (snapshotVect && snapshotFreq && !(iter % snapshotFreq)) {
+      RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
+      snapshotVect->push_back(s);
       newPos = new double[dim];
     }
   }

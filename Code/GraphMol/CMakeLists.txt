@@ -111,6 +111,3 @@ rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDG
 
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
            LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
-
-rdkit_test(trajectoryTest resMolSupplierTest.cpp
-           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
