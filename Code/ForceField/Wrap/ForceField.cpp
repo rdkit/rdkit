@@ -260,7 +260,7 @@ BOOST_PYTHON_MODULE(rdForceField) {
             python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations, recording the minimization "
            "trajectory every snapshotFreq steps.\n\n"
-           "Returns a (int, []) tuple; the int is 0 if the minimization succeeded,"
+           "Returns a (int, []) tuple; the int is 0 if the minimization succeeded, "
            "while the list contains Snapshot objects.")
       .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
            (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
