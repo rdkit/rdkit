@@ -179,7 +179,12 @@ void computeInitialCoords(RDKit::ROMol &mol,
   // set atom ranks to the atomic number, decreasing (i.e. favor high atomic
   // numbers)
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    atomRanks[i] = 1000 - mol.getAtomWithIdx(i)->getAtomicNum();
+    int anum = mol.getAtomWithIdx(i)->getAtomicNum();
+    anum = anum == 1 ? 1000 : anum;  // favor heavy atoms
+    int deg = mol.getAtomWithIdx(i)->getDegree();
+    // favor low degrees:
+    deg = 100 - deg;
+    atomRanks[i] = 100 * anum + deg;
   }
   RDKit::MolOps::assignStereochemistry(mol, false);
 
