@@ -315,14 +315,21 @@ void EmbeddedFrag::updateNewNeighs(
 
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   d_eatoms[aid].neighs.clear();
+  RDKit::INT_VECT hIndices;
   boost::tie(nbrIdx, endNbrs) =
       dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
   while (nbrIdx != endNbrs) {
     if (d_eatoms.find(*nbrIdx) == d_eatoms.end()) {
-      d_eatoms[aid].neighs.push_back(*nbrIdx);
+      if ((*dp_mol)[*nbrIdx]->getAtomicNum() != 1) {
+        d_eatoms[aid].neighs.push_back(*nbrIdx);
+      } else {
+        hIndices.push_back(*nbrIdx);
+      }
     }
-    nbrIdx++;
+    ++nbrIdx;
   }
+  d_eatoms[aid].neighs.insert(d_eatoms[aid].neighs.end(), hIndices.begin(),
+                              hIndices.end());
 
   int deg = getHeavyDegree(dp_mol->getAtomWithIdx(aid));
   // order the neigbors by their CIPranks, if the number is between > 0 but less
@@ -1689,7 +1696,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
 
 unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   PRECONDITION(mol, "");
-  unsigned int deg = getHeavyDegree(mol->getAtomWithIdx(aid)) ;
+  unsigned int deg = getHeavyDegree(mol->getAtomWithIdx(aid));
   CHECK_INVARIANT(deg == 1, "");
   unsigned int res = 0;
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;

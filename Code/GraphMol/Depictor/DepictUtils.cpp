@@ -479,7 +479,15 @@ T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
     if (at->hasProp(RDKit::common_properties::_CIPRank)) {
       at->getProp(RDKit::common_properties::_CIPRank, rank);
     } else {
-      rank = 2 * mol.getNumAtoms() + (*ci);
+      // rank = 2 * mol.getNumAtoms() + (*ci);
+      const int maxAtNum = 1000;
+      int anum = at->getAtomicNum();
+      anum = anum == 1 ? maxAtNum : anum;  // favor heavy atoms
+      int deg = at->getDegree();
+      // favor low degrees:
+      const int maxDeg = 100;
+      deg = maxDeg - deg;
+      rank = mol.getNumAtoms() * (maxDeg * anum + deg) + (*ci);
     }
     rankAid.push_back(std::make_pair(rank, (*ci)));
   }

@@ -179,12 +179,14 @@ void computeInitialCoords(RDKit::ROMol &mol,
   // set atom ranks to the atomic number, decreasing (i.e. favor high atomic
   // numbers)
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    const int maxAtNum = 1000;
     int anum = mol.getAtomWithIdx(i)->getAtomicNum();
-    anum = anum == 1 ? 1000 : anum;  // favor heavy atoms
-    int deg = mol.getAtomWithIdx(i)->getDegree();
+    anum = anum == 1 ? maxAtNum : anum;  // favor heavy atoms
     // favor low degrees:
-    deg = 100 - deg;
-    atomRanks[i] = 100 * anum + deg;
+    int deg = mol.getAtomWithIdx(i)->getDegree();
+    const int maxDeg = 100;
+    // deg = maxDeg - deg;
+    atomRanks[i] = maxDeg * anum + deg;
   }
   RDKit::MolOps::assignStereochemistry(mol, false);
 
@@ -232,7 +234,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
       RDKit::INT_LIST_I nri, mnri;
       for (nri = nratms.begin(); nri != nratms.end(); nri++) {
         rank = atomRanks[*nri];
-        rank *= 1000;
+        rank *= mol.getNumAtoms();
         // use the atom index as well so that we at least
         // get reproduceable depictions in cases where things
         // have identical ranks.
