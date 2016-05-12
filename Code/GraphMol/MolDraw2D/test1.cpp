@@ -632,7 +632,7 @@ void test8PrepareMolForDrawing() {
     TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
     TEST_ASSERT(nm.getAtomWithIdx(9)->getAtomicNum() == 1);
     TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondDir() == Bond::BEGINWEDGE);
+    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondDir() == Bond::BEGINDASH);
 
     // make sure we can do it again:
     MolDraw2DUtils::prepareMolForDrawing(nm);
@@ -984,6 +984,47 @@ void testGithub860() {
   }
   std::cerr << " Done" << std::endl;
 }
+
+void testGithub910() {
+  std::cout << " ----------------- Test Github #910: ugly coordinates "
+               "generated for peptide chains"
+            << std::endl;
+  // this really isn't much of a test, but it does help visually confirm that
+  // things are actually ok
+  {
+    // this is a ChEMBL molecule
+    std::string smiles =
+        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(=O)"
+        "NCC(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N[C@@H](CO)C(=O)O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    std::ofstream outs("test910_1.svg");
+    MolDraw2DSVG drawer(600, 300, outs);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+    delete m;
+  }
+  {  // now with Hs
+    // this is a ChEMBL molecule
+    std::string smiles =
+        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(=O)"
+        "NCC(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N[C@@H](CO)C(=O)O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    std::ofstream outs("test910_2.svg");
+    MolDraw2DSVG drawer(600, 300, outs);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1000,6 +1041,7 @@ int main() {
   testGithub774();
   test9MolLegends();
   testGithub852();
-#endif
   testGithub860();
+#endif
+  testGithub910();
 }
