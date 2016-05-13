@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#ifndef __RD_TRAJECTORY_H__
-#define __RD_TRAJECTORY_H__
+#ifndef RD_TRAJECTORY_H
+#define RD_TRAJECTORY_H
 #include <vector>
 #include "Snapshot.h"
 

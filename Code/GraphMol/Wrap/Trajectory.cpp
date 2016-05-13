@@ -99,7 +99,7 @@ struct Trajectory_wrapper {
              python::arg("from") = -1, python::arg("to") = -1),
              "adds conformations from the Trajectory to mol\n"
              "from is the first Snapshot that will be added as a Conformer; "
-             "defaults to 0 (first available)\n"
+             "defaults to -1 (first available)\n"
              "to is the last Snapshot that will be added as a Conformer; "
              "defaults to -1 (all)\n");
     python::def("Trajectory", constructTrajectory_wrap,
