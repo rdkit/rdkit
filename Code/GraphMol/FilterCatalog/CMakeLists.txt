@@ -5,7 +5,7 @@ else()
 endif()
 
 find_package(PythonInterp)
-if (PYTHONINTERP_FOUND)
+if (PYTHONINTERP_FOUND AND ${PYTHON_VERSION_STRING} VERSION_GREATER "2.6" )
       message("== Updating Filters.cpp from pains file")
       execute_process(
         COMMAND
@@ -15,7 +15,7 @@ if (PYTHONINTERP_FOUND)
       if(NOT rc EQUAL 0)
         message(FATAL_ERROR "Failed updating Filters.cpp from wehi_pains.csv")
       endif(NOT rc EQUAL 0)
-endif(PYTHONINTERP_FOUND)
+endif()
 
 rdkit_library(FilterCatalog
               Filters.cpp

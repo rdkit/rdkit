@@ -405,7 +405,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(xi,3)
         self.assertEqual(yi,2)
         self.assertEqual(zi,1)
-        
+
 if __name__=='__main__':
     print("Testing Geometry wrapper")
     unittest.main()

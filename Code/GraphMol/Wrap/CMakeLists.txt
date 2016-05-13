@@ -41,6 +41,12 @@ rdkit_python_extension(rdmolfiles
                        DEST Chem 
                        LINK_LIBRARIES SmilesParse FileParsers GraphMol
                                       RDGeometryLib RDGeneral RDBoost)
+
+rdkit_python_extension(rdtrajectory
+                       Trajectory.cpp rdTrajectory.cpp
+                       DEST Chem 
+                       LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral GraphMol)
+
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
   set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS )
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
@@ -50,6 +56,10 @@ add_pytest(pyGraphMolWrap
 
 add_pytest(pyTestConformerWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)
+
+add_pytest(pyTestTrajectory
+         ${CMAKE_CURRENT_SOURCE_DIR}/testTrajectory.py)
+
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
