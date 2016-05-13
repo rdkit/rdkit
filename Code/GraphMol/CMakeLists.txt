@@ -74,6 +74,7 @@ add_subdirectory(MMPA)
 
 
 add_subdirectory(ReducedGraphs)
+add_subdirectory(Trajectory)
 
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 add_subdirectory(SLNParse)
@@ -81,7 +82,7 @@ endif()
 
 add_subdirectory(Wrap)
 
-rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch ForceFieldHelpers ForceField)
 
 rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeometryLib RDGeneral)
 

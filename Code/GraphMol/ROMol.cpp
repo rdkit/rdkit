@@ -584,4 +584,5 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   d_confs.push_back(nConf);
   return conf->getId();
 }
+
 }  // end o' namespace

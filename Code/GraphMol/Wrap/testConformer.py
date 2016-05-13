@@ -7,6 +7,7 @@ from rdkit import RDConfig
 import os,sys
 import unittest
 from rdkit import Chem
+from rdkit import Geometry
 from rdkit.Geometry import Point3D
 
 def feq(v1,v2,tol2=1e-4):
@@ -120,7 +121,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m.GetNumConformers() == 0)
     confs = m.GetConformers()
     self.assertTrue(confs == ())
-    
+
 if __name__ == '__main__':
   unittest.main()
 
