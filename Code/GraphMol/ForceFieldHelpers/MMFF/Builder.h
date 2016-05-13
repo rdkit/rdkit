@@ -54,9 +54,7 @@ ForceFields::ForceField *constructForceField(
 /*!
 
   \param mol        the molecule to use
-  \param mmffMolProperties        pointer to a MMFFMolProperties (as obtained by
-  a
-                    call to setupMMFFForceField())
+  \param mmffMolProperties        pointer to a MMFFMolProperties object
   \param nonBondedThresh  the threshold to be used in adding non-bonded terms
                     to the force field. Any non-bonded contact whose current
                     distance is greater than \c nonBondedThresh * the minimum

@@ -130,6 +130,18 @@ PyObject *ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
   return res;
 }
 
+python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol) {
+  PRECONDITION(this->field, "no force field");
+  RDKit::SnapshotVect snapshotVect;
+  int resInt = this->field->minimize(snapshotFreq, &snapshotVect,
+                               maxIts, forceTol, energyTol);
+  python::list l;
+  for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin(); it != snapshotVect.end(); ++it)
+    l.append(new RDKit::Snapshot(*it));
+  return python::make_tuple(resInt, l);
+  
+}
+
 PyObject *PyMMFFMolProperties::getMMFFBondStretchParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2) {
   PyObject *res = NULL;
@@ -243,6 +255,13 @@ BOOST_PYTHON_MODULE(rdForceField) {
             python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations.\n\n  Returns 0 if the "
            "minimization succeeded.")
+      .def("MinimizeTrajectory", &PyForceField::minimizeTrajectory,
+           (python::arg("snapshotFreq"), python::arg("maxIts") = 200,
+            python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
+           "Runs some minimization iterations, recording the minimization "
+           "trajectory every snapshotFreq steps.\n\n"
+           "Returns a (int, []) tuple; the int is 0 if the minimization succeeded, "
+           "while the list contains Snapshot objects.")
       .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
            (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
             python::arg("minLen"), python::arg("maxLen"),

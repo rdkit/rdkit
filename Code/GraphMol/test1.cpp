@@ -16,10 +16,12 @@
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-
+#include <sstream>
 #include <iostream>
+
 using namespace std;
 using namespace RDKit;
 
