@@ -21,8 +21,13 @@ rdkit_headers(FileParsers.h
 rdkit_test(fileParsersTest1 test1.cpp 
            LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
 
+if (Boost_IOSTREAMS_LIBRARY)
+  set (link_Boost_IOSTREAMS ${Boost_IOSTREAMS_LIBRARY})
+else (Boost_IOSTREAMS_LIBRARY)
+  set (link_Boost_IOSTREAMS "")
+endif (Boost_IOSTREAMS_LIBRARY)
 rdkit_test(testMolSupplier testMolSupplier.cpp 
-           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
+           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib ${link_Boost_IOSTREAMS})
 
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
