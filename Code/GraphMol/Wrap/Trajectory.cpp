@@ -52,19 +52,6 @@ Trajectory *copyConstructTrajectory_wrap(Trajectory *other) {
 
 struct Trajectory_wrapper {
   static void wrap() {
-    std::string docString =
-        "A class which allows storing Snapshots from a trajectory.\n\n\
-        Usage example:\n\
-        traj = Trajectory(dimension, numPoints)\n\
-       \n\
-       ARGUMENTS\n\
-        - dimension     dimensionality of this Trajectory's coordinate tuples\n\
-        - numPoints     number of coordinate tuples associated to each Snapshot\n\
-        - snapshotList  list of Snapshot objects (optional; defaults to [])\n\
-         \n\
-        RETURNS\n\
-        the Trajectory object\n\
-      \n";
     python::class_<Trajectory>(
         "Trajectory", "A class which allows storing Snapshots from a trajectory", python::no_init)
         .def("Dimension", &Trajectory::dimension, (python::arg("self")),
