@@ -176,17 +176,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
                           std::list<EmbeddedFrag> &efrags) {
   RDKit::INT_VECT atomRanks;
   atomRanks.resize(mol.getNumAtoms());
-  // set atom ranks to the atomic number, decreasing (i.e. favor high atomic
-  // numbers)
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    const int maxAtNum = 1000;
-    int anum = mol.getAtomWithIdx(i)->getAtomicNum();
-    anum = anum == 1 ? maxAtNum : anum;  // favor heavy atoms
-    // favor low degrees:
-    int deg = mol.getAtomWithIdx(i)->getDegree();
-    const int maxDeg = 100;
-    // deg = maxDeg - deg;
-    atomRanks[i] = maxDeg * anum + deg;
+    atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
   }
   RDKit::MolOps::assignStereochemistry(mol, false);
 
