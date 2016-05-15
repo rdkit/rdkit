@@ -2017,7 +2017,7 @@ int testForwardSDSupplier() {
   {
     io::filtering_istream strm;
     // the stream must be opened in binary mode otherwise it won't work on Windows
-    std::ifstream is(fname2, std::ios::in | std::ios::binary);
+    std::ifstream is(fname2.c_str(), std::ios_base::binary);
     strm.push(io::gzip_decompressor());
     strm.push(is);
 
@@ -2034,7 +2034,7 @@ int testForwardSDSupplier() {
   {
     io::filtering_istream strm;
     // the stream must be opened in binary mode otherwise it won't work on Windows
-    std::ifstream is(fname2, std::ios::in | std::ios::binary);
+    std::ifstream is(fname2.c_str(), std::ios_base::binary);
     strm.push(io::gzip_decompressor());
     strm.push(is);
 
