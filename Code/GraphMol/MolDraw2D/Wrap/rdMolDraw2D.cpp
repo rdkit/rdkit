@@ -218,7 +218,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
       (python::arg("mol"), python::arg("kekulize") = true,
        python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
-       python::arg("forceCoords") = true),
+       python::arg("forceCoords") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 }
