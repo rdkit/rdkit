@@ -2009,30 +2009,34 @@ int testForwardSDSupplier() {
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      ++i;
+      if (!strm.eof()) ++i;
       if (i > 1000) break;
     }
     TEST_ASSERT(i == 998);
   }
   {
     io::filtering_istream strm;
+    // the stream must be opened in binary mode otherwise it won't work on Windows
+    std::ifstream is(fname2.c_str(), std::ios_base::binary);
     strm.push(io::gzip_decompressor());
-    strm.push(io::file_source(fname2));
+    strm.push(is);
 
     unsigned int i = 0;
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      ++i;
+      if (!strm.eof()) ++i;
       if (i > 1000) break;
     }
-    TEST_ASSERT(i == 998);
+    TEST_ASSERT(i == 997);
   }
   // looks good, now do a supplier:
   {
     io::filtering_istream strm;
+    // the stream must be opened in binary mode otherwise it won't work on Windows
+    std::ifstream is(fname2.c_str(), std::ios_base::binary);
     strm.push(io::gzip_decompressor());
-    strm.push(io::file_source(fname2));
+    strm.push(is);
 
     ForwardSDMolSupplier sdsup(&strm, false);
     unsigned int i = 0;
