@@ -52,23 +52,10 @@ Trajectory *copyConstructTrajectory_wrap(Trajectory *other) {
 
 struct Trajectory_wrapper {
   static void wrap() {
-    std::string docString =
-        "A class which allows storing Snapshots from a trajectory.\n\n\
-        Usage example:\n\
-        traj = Trajectory(dimension, numPoints)\n\
-       \n\
-       ARGUMENTS\n\
-        - dimension     dimensionality of this Trajectory's coordinate tuples\n\
-        - numPoints     number of coordinate tuples associated to each Snapshot\n\
-        - snapshotList  list of Snapshot objects (optional; defaults to [])\n\
-         \n\
-        RETURNS\n\
-        the Trajectory object\n\
-      \n";
     python::class_<Trajectory>(
-        "Trajectory", docString.c_str(), python::no_init)
+        "Trajectory", "A class which allows storing Snapshots from a trajectory", python::no_init)
         .def("Dimension", &Trajectory::dimension, (python::arg("self")),
-             "return the dimensionality of this Trajectory's coordinate tuples")
+             "returns the dimensionality of this Trajectory's coordinate tuples")
         .def("NumPoints", &Trajectory::numPoints, (python::arg("self")),
              "returns the number of coordinate tuples associated to each Snapshot")
         .def("__len__", &Trajectory::size)
@@ -105,24 +92,16 @@ struct Trajectory_wrapper {
     python::def("Trajectory", constructTrajectory_wrap,
         (python::arg("dimension"), python::arg("numPoints"),
         python::arg("snapshotList") = python::list()),
-        "Constructor", python::return_value_policy<python::manage_new_object>());
+        "Constructor;\n"
+        "dimension:    dimensionality of this Trajectory's coordinate tuples;\n"
+        "numPoints:    number of coordinate tuples associated to each Snapshot;\n"
+        "snapshotList: list of Snapshot objects used to initialize the Trajectory (optional; defaults to []).\n",
+        python::return_value_policy<python::manage_new_object>());
     python::def("Trajectory", copyConstructTrajectory_wrap, (python::arg("other")),
         "Copy constructor", python::return_value_policy<python::manage_new_object>());
 
-    docString =
-        "A class which allows storing coordinates from a trajectory.\n\n\
-        Usage example:\n\
-        snapshot = Snapshot(pos, energy)\n\n\
-       \n\
-       ARGUMENTS\n\
-        - pos      list of floats containing the coordinates for this Snapshot\n\
-        - energy   energy for this Snapshot\n\
-         \n\
-        RETURNS\n\
-        the Snapshot object\n\
-      \n";
     python::class_<Snapshot>(
-        "Snapshot", docString.c_str(), python::no_init)
+        "Snapshot", "A class which allows storing coordinates from a trajectory", python::no_init)
         .def("GetPoint2D", &Snapshot::getPoint2D, (python::arg("self"), python::arg("pointNum")),
              "return the coordinates at pointNum as a Point2D object; "
              "requires the Trajectory dimension to be == 2")
@@ -135,7 +114,10 @@ struct Trajectory_wrapper {
              "sets the energy for this Snapshot");
     python::def("Snapshot", constructSnapshot_wrap,
         (python::arg("coordList"), python::arg("energy") = 0.0),
-        "Constructor", python::return_value_policy<python::manage_new_object>());
+        "Constructor;\n"
+        "coordList: list of floats containing the coordinates for this Snapshot;\n"
+        "energy:    the energy for this Snapshot.\n",
+        python::return_value_policy<python::manage_new_object>());
     python::def("Snapshot", copyConstructSnapshot_wrap, (python::arg("other")),
         "Copy constructor", python::return_value_policy<python::manage_new_object>());
     python::def("ReadAmberTrajectory", &readAmberTrajectory,
