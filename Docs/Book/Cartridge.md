@@ -448,21 +448,21 @@ Available parameters and their default values are:
 
 -   % : operator used for similarity searches using Tanimoto similarity. Returns whether or not the Tanimoto similarity between two fingerprints (either two sfp or two bfp values) exceeds rdkit.tanimoto\_threshold.
 -   \# : operator used for similarity searches using Dice similarity. Returns whether or not the Dice similarity between two fingerprints (either two sfp or two bfp values) exceeds rdkit.dice\_threshold.
--   \<%\> : used for Tanimoto KNN searches (to return ordered lists of neighbors).
--   \<\#\> : used for Dice KNN searches (to return ordered lists of neighbors).
+-   <%\> : used for Tanimoto KNN searches (to return ordered lists of neighbors).
+-   <\#\> : used for Dice KNN searches (to return ordered lists of neighbors).
 
 #### Substructure and exact structure search
 
 -   @\> : substructure search operator. Returns whether or not the mol or qmol on the right is a substructure of the mol on the left.
--   \<@ : substructure search operator. Returns whether or not the mol or qmol on the left is a substructure of the mol on the right.
+-   <@ : substructure search operator. Returns whether or not the mol or qmol on the left is a substructure of the mol on the right.
 -   @= : returns whether or not two molecules are the same.
 
 #### Molecule comparison
 
--   \< : returns whether or not the left mol is less than the right mol
+-   < : returns whether or not the left mol is less than the right mol
 -   \> : returns whether or not the left mol is greater than the right mol
 -   = : returns whether or not the left mol is equal to the right mol
--   \<= : returns whether or not the left mol is less than or equal to the right mol
+-   <= : returns whether or not the left mol is less than or equal to the right mol
 -   \>= : returns whether or not the left mol is greater than or equal to the right mol
 
 *Note* Two molecules are compared by making the following comparisons in order. Later comparisons are only made if the preceding values are equal:
