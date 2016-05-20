@@ -345,6 +345,16 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
 INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
                                           const RDKit::INT_VECT &nbrBids,
                                           const VECT_C_POINT &nbrLocs);
+
+//! returns the rank of the atom for determining draw order
+inline int getAtomDepictRank(const RDKit::Atom *at) {
+  const int maxAtNum = 1000;
+  const int maxDeg = 100;
+  int anum = at->getAtomicNum();
+  anum = anum == 1 ? maxAtNum : anum;  // favor non-hydrogen atoms
+  int deg = at->getDegree();
+  return maxDeg * anum + deg;
+}
 }
 
 #endif

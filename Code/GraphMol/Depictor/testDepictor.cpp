@@ -769,6 +769,39 @@ void testGitHubIssue78() {
   }
 }
 
+void testGitHubIssue910() {
+  {
+    // this is a ChEMBL molecule
+    std::string smiles =
+        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(=O)"
+        "NCC(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N[C@@H](CO)C(=O)O";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    // add chiral Hs, they were part of the problem
+    std::vector<unsigned int> chiralAts;
+    for (RWMol::AtomIterator atIt = m->beginAtoms(); atIt != m->endAtoms();
+         ++atIt) {
+      if ((*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+          (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+        chiralAts.push_back((*atIt)->getIdx());
+      }
+    }
+    MolOps::addHs(*m, false, false, &chiralAts);
+    RDDepict::compute2DCoords(*m, NULL, true);
+
+    // now look for close contacts.
+    const Conformer &conf = m->getConformer();
+    for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
+      for (unsigned int j = i + 1; j < conf.getNumAtoms(); ++j) {
+        double l = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
+        TEST_ASSERT(l > 0.75);
+      }
+    }
+
+    delete m;
+  }
+}
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -926,5 +959,11 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
 
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 910\n";
+  testGitHubIssue910();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
   return (0);
 }

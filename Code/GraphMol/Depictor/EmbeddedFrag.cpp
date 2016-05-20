@@ -27,6 +27,19 @@
 const double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
+namespace {
+unsigned int getHeavyDegree(const RDKit::Atom *atom) {
+  PRECONDITION(atom, "no atom");
+  unsigned int res = 0;
+  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = atom->getOwningMol().getAtomNeighbors(atom);
+  while (nbrIdx != endNbrs) {
+    if (atom->getOwningMol()[*nbrIdx]->getAtomicNum() != 1) ++res;
+    ++nbrIdx;
+  }
+  return res;
+}
+}  // end of anonymous namespace
 
 EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
   PRECONDITION(mol, "");
@@ -302,16 +315,23 @@ void EmbeddedFrag::updateNewNeighs(
 
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   d_eatoms[aid].neighs.clear();
+  RDKit::INT_VECT hIndices;
   boost::tie(nbrIdx, endNbrs) =
       dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
   while (nbrIdx != endNbrs) {
     if (d_eatoms.find(*nbrIdx) == d_eatoms.end()) {
-      d_eatoms[aid].neighs.push_back(*nbrIdx);
+      if ((*dp_mol)[*nbrIdx]->getAtomicNum() != 1) {
+        d_eatoms[aid].neighs.push_back(*nbrIdx);
+      } else {
+        hIndices.push_back(*nbrIdx);
+      }
     }
-    nbrIdx++;
+    ++nbrIdx;
   }
+  d_eatoms[aid].neighs.insert(d_eatoms[aid].neighs.end(), hIndices.begin(),
+                              hIndices.end());
 
-  int deg = dp_mol->getAtomWithIdx(aid)->getDegree();
+  int deg = getHeavyDegree(dp_mol->getAtomWithIdx(aid));
   // order the neigbors by their CIPranks, if the number is between > 0 but less
   // than 3
   if ((d_eatoms[aid].neighs.size() > 0) &&
@@ -529,7 +549,8 @@ void EmbeddedFrag::reflectIfNecessaryCisTrans(EmbeddedFrag &embFrag,
     } else {
       // FIX: this is a work-around arising from issue 3135833
       BOOST_LOG(rdWarningLog) << "Warning: stereochemistry around double bond "
-                                 "may be incorrect in depiction." << std::endl;
+                                 "may be incorrect in depiction."
+                              << std::endl;
       return;
     }
   } else {
@@ -787,7 +808,7 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
 
   // find out what angle we want to add bond at
   const RDKit::Atom *atm = dp_mol->getAtomWithIdx(toAid);
-  int deg = atm->getDegree();
+  int deg = getHeavyDegree(atm);
 
   double angle = computeSubAngle(deg, atm->getHybridization());
 
@@ -1379,7 +1400,7 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     for (RDKit::ROMol::ConstAtomIterator ai = dp_mol->beginAtoms();
          ai != dp_mol->endAtoms(); ai++) {
       unsigned int caid = (*ai)->getIdx();
-      if (((*ai)->getDegree() == 4) &&
+      if ((getHeavyDegree(*ai) == 4) &&
           (!(dp_mol->getRingInfo()->numAtomRings(caid)))) {
         RDKit::INT_VECT aids, bids;
         getNbrAtomAndBondIds(caid, dp_mol, aids, bids);
@@ -1675,13 +1696,13 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
 
 unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   PRECONDITION(mol, "");
-  unsigned int deg = mol->getAtomWithIdx(aid)->getDegree();
+  unsigned int deg = getHeavyDegree(mol->getAtomWithIdx(aid));
   CHECK_INVARIANT(deg == 1, "");
   unsigned int res = 0;
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
   res = (*nbrIdx);
-#if 0      
+#if 0
     while (nbrIdx != endNbrs) {
       if(mol->getAtomWithIdx(*nbrIdx)->getDegree()==1){
         res = (*nbrIdx);
@@ -1734,8 +1755,8 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
 
   PRECONDITION(dp_mol, "");
   PRECONDITION(dmat, "");
-  unsigned int deg1 = dp_mol->getAtomWithIdx(aid1)->getDegree();
-  unsigned int deg2 = dp_mol->getAtomWithIdx(aid2)->getDegree();
+  unsigned int deg1 = getHeavyDegree(dp_mol->getAtomWithIdx(aid1));
+  unsigned int deg2 = getHeavyDegree(dp_mol->getAtomWithIdx(aid2));
   if ((deg1 > 1) && (deg2 > 1)) {
     return;
   }
