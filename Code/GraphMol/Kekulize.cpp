@@ -461,7 +461,7 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
     // can't kekulize this thing
     std::ostringstream errout;
     errout << "Can't kekulize mol.";
-    errout << "  Atoms remaining:";
+    errout << "  Unkekulized atoms:";
     for (unsigned int i = 0; i < nats; ++i) {
       if (dBndCands[i]) errout << " " << i;
     }
