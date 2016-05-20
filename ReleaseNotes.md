@@ -17,12 +17,15 @@ Brian Kelley, John May, Roger Sayle, Paolo Tosco
  (github pull #884 from greglandrum)
   - Fixes depictor problem with empty fragments
  (github pull #894 from greglandrum)
-  - Fix building with G++ on Mac OS X
+  - Fix building with g++ on Mac OS X
  (github pull #900 from johnmay)
   - PAINS filters update fails when old Python is installed
  (github issue #904 from greglandrum)
   - rdMolDraw2D.PrepareMolForDrawing() should not default to forceCoords=True
  (github issue #906 from greglandrum)
+  - ugly coordinates generated for peptide chains
+ (github issue #910 from greglandrum)
+
 
 
 # Release_2016.03.1
