@@ -1,0 +1,26 @@
+<html>
+<head>
+<title>RGroup decomposition</title>
+
+
+</head>
+  
+<body>
+<form action="run.py/Decompose" method="post" enctype="multipart/form-data" id="mainForm">
+<input type="submit" id="submit" />
+<br />core: <input type="text" name="core" id="core" />
+<br />symmetrize?: <input type="checkbox" name="symmetrize" id="symmetrize" checked=1/>
+<br />labelled cores?: <input type="checkbox" name="labelledCores" id="labelledCores" checked=1 />
+      require labels?: <input type="checkbox" name="requireLabels" id="requireLabels" checked=1 />
+<p/>provide either a:
+<br />Filename: <input type="file" name="filename" id="filename" />
+<br />or some data: <br /><textarea name="molData" id="molData" cols="80" rows="20"></textarea>
+
+
+<input type="hidden" name="coreFormat" id="coreFormat" value="smarts" />
+<input type="hidden" name="dataFormat" id="dataFormat" value="other" />
+<input type="hidden" name="outputFormat" id="outputFormat" value="csv" />
+</form>
+</body>
+
+</html>  
