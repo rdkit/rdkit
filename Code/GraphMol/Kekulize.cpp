@@ -460,7 +460,12 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
     // number of backTracks) and we still need to backtrack
     // can't kekulize this thing
     std::ostringstream errout;
-    errout << "Can't kekulize mol " << std::endl;
+    errout << "Can't kekulize mol.";
+    errout << "  Atoms remaining:";
+    for (unsigned int i = 0; i < nats; ++i) {
+      if (dBndCands[i]) errout << " " << i;
+    }
+    errout << std::endl;
     std::string msg = errout.str();
     BOOST_LOG(rdErrorLog) << msg << std::endl;
     throw MolSanitizeException(msg);
