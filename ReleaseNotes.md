@@ -1,3 +1,32 @@
+# Release_2016.03.2
+(Changes relative to Release_2016.03.1)
+
+## Acknowledgements:
+Brian Kelley, John May, Roger Sayle, Paolo Tosco
+
+## Bug Fixes:
+  - Fixed a few typos in Code/PgSQL/rdkit/CMakeLists.txt
+ (github pull #867 from ptosco)
+  - Fixes regression in python api CalcNumRotatableBonds
+ (github pull #870 from bp-kelley)
+  - Single atoms setting radius 1 bits in Morgan fingerprints
+ (github issue #874 from greglandrum)
+  - Providing subImgSize argument to MolsToGridImage() causes drawing failure
+ (github issue #876 from greglandrum)
+  - adjust cartridge tests after the fix for #874
+ (github pull #884 from greglandrum)
+  - Fixes depictor problem with empty fragments
+ (github pull #894 from greglandrum)
+  - Fix building with g++ on Mac OS X
+ (github pull #900 from johnmay)
+  - PAINS filters update fails when old Python is installed
+ (github issue #904 from greglandrum)
+  - rdMolDraw2D.PrepareMolForDrawing() should not default to forceCoords=True
+ (github issue #906 from greglandrum)
+  - ugly coordinates generated for peptide chains
+ (github issue #910 from greglandrum)
+
+
 # Release_2016.03.1
 (Changes relative to Release_2015.09.2)
 
