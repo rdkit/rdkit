@@ -85,7 +85,7 @@ OCC := $(CC)
 CC = $(CXX)
 # we build .c files using this original defn:
 %.o : %.c
-	$(OCC) $(CPPFLAGS) -fPIC -c -o $@ $<
+	$(OCC) $(CFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
 
 %.o : %.cpp
 	$(CXX) $(CPLUSPLUSFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
