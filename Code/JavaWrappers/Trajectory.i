@@ -10,17 +10,7 @@
 
 %include <boost_shared_ptr.i>
 %include <carrays.i>
-%array_functions(double, double_array)
-%shared_ptr(DoubleArray)
-
-%inline %{
-#include <boost/shared_array.hpp>
-
-struct DoubleArray {
-  double *value;
-  DoubleArray(double *v) : value(v) {}
-};
-%}
+%array_functions(double, SWIGArrayUtility)
 
 %{
 #include <GraphMol/Trajectory/Snapshot.h>
@@ -28,7 +18,10 @@ struct DoubleArray {
 %}
 %include <GraphMol/Trajectory/Snapshot.h>
 %include <GraphMol/Trajectory/Trajectory.h>
-/*
-http://www.swig.org/Doc3.0/Library.html#Library_std_shared_ptr
-http://www.swig.org/Doc1.3/Library.html#Library_carrays
-*/
+
+%extend RDKit::Snapshot {
+  Snapshot(double *pos, double energy = 0.0) :
+    d_trajectory(NULL),
+      d_energy(energy),
+      d_pos(boost::shared_array<double>(pos)) {}
+}

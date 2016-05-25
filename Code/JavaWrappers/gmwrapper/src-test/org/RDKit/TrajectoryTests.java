@@ -19,8 +19,8 @@ import org.junit.Test;
 public class TrajectoryTests extends GraphMolTest {
     @Test
     public void testBasicInstantiation_Snapshot() {
-        double[] pos = new double[0];
-       	Snapshot s = new Snapshot(new DoubleArray(pos));
+        SWIGTYPE_p_double pos = RDKFuncs.new_SWIGArrayUtility(0);
+        Snapshot s = new Snapshot(pos);
         assertNotNull(s);
     }
 
