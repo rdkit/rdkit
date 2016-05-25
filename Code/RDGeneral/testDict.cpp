@@ -41,7 +41,7 @@ void testRDAny() {
     for (int i=0; i<100; ++i) {
         vi += i;
         v = rdvalue_cast<int>(v) + i;
-        CHECK_INVARIANT(vi == rdvalue_cast<int>(v), "Opps, bad variant");
+        TEST_ASSERT(vi == rdvalue_cast<int>(v));
       }
                
   }
@@ -49,30 +49,30 @@ void testRDAny() {
   {
     RDAny a(1);
     RDAny b = a;
-    CHECK_INVARIANT(rdany_cast<int>(a) == 1, "Should be 1");
-    CHECK_INVARIANT(rdany_cast<int>(b) == 1, "Should be 1");
+    TEST_ASSERT(rdany_cast<int>(a) == 1);
+    TEST_ASSERT(rdany_cast<int>(b) == 1);
   }
   
   
   {
     RDAny a(1);
     RDAny b = a;
-    CHECK_INVARIANT(rdany_cast<int>(a) == 1, "should be one");
-    CHECK_INVARIANT(rdany_cast<int>(b) == rdany_cast<int>(a), "Bad Any");
+    TEST_ASSERT(rdany_cast<int>(a) == 1);
+    TEST_ASSERT(rdany_cast<int>(b) == rdany_cast<int>(a));
     std::map<std::string, RDAny> foo;
     foo["foo"] = a;
     foo["bar"] = std::string("This is a test");
-    CHECK_INVARIANT(rdany_cast<int>(foo["foo"]) == 1, "should be one");
-    CHECK_INVARIANT(rdany_cast<int>(foo["foo"]) == rdany_cast<int>(a), "Bad Any");
-    CHECK_INVARIANT(rdany_cast<std::string>(foo["bar"]) == "This is a test", "Bad Any");
+    TEST_ASSERT(rdany_cast<int>(foo["foo"]) == 1);
+    TEST_ASSERT(rdany_cast<int>(foo["foo"]) == rdany_cast<int>(a));
+    TEST_ASSERT(rdany_cast<std::string>(foo["bar"]) == "This is a test");
   }
 
   {
     bool a = true;
     RDValue v(a);
-    CHECK_INVARIANT(rdvalue_cast<bool>(v) == true, "bad value cast");
+    TEST_ASSERT(rdvalue_cast<bool>(v) == true);
     v = (int) 10;
-    CHECK_INVARIANT(rdvalue_cast<int>(v) == 10, "bad value cast");
+    TEST_ASSERT(rdvalue_cast<int>(v) == 10);
   }
   
   {
@@ -89,17 +89,17 @@ void testRDAny() {
     computed.push_back("foo");
     d.setVal(detail::computedPropName, computed);
     STR_VECT computed2 = d.getVal<STR_VECT>(detail::computedPropName);
-    CHECK_INVARIANT(computed2[0] == "foo", "bad STR_VECT");
+    TEST_ASSERT(computed2[0] == "foo");
     Dict d2(d);
     computed2 = d2.getVal<STR_VECT>(detail::computedPropName);
-    CHECK_INVARIANT(computed2[0] == "foo", "bad STR_VECT");
+    TEST_ASSERT(computed2[0] == "foo");
   }
   
   {
     Dict d;
     //int v=1;
     //d.setVal("foo", v);
-    //CHECK_INVARIANT(d.getVal<int>("foo") == 1, "bad getval");
+    //TEST_ASSERT(d.getVal<int>("foo") == 1, "bad getval");
     
     std::vector<int> fooV;
     fooV.resize(3);
@@ -112,7 +112,7 @@ void testRDAny() {
       RDAny a(fooV);
       std::cerr << "retrieve int vect" << std::endl;
       fooV2 = rdany_cast<std::vector<int> >(a);
-      CHECK_INVARIANT(fooV == fooV2, "bad getVal");
+      TEST_ASSERT(fooV == fooV2);
     }
     
     {
@@ -121,7 +121,7 @@ void testRDAny() {
       d.setVal("bar", fooV);
       std::cerr << "dict get int vect" << std::endl;
       d.getVal("bar", fooV2);
-      CHECK_INVARIANT(fooV == fooV2, "bad getVal");
+      TEST_ASSERT(fooV == fooV2);
     }
   }
   
@@ -135,9 +135,9 @@ void testRDAny() {
     RDAny baz(foo);
     
     for(int i=0;i<4;++i) { 
-      CHECK_INVARIANT(rdany_cast<std::vector<int> >(foo)[i] == i, "Failed check");
-      CHECK_INVARIANT(rdany_cast<std::vector<int> >(bar)[i] == i, "Failed check");
-      CHECK_INVARIANT(rdany_cast<std::vector<int> >(baz)[i] == i, "Failed check");
+      TEST_ASSERT(rdany_cast<std::vector<int> >(foo)[i] == i);
+      TEST_ASSERT(rdany_cast<std::vector<int> >(bar)[i] == i);
+      TEST_ASSERT(rdany_cast<std::vector<int> >(baz)[i] == i);
     }
     
   }
@@ -150,13 +150,13 @@ void testRDAny() {
     RDAny foo(v);
 
     for(int i=0;i<4;++i) { 
-      CHECK_INVARIANT(rdany_cast<std::vector<double> >(foo)[i] == i, "Failed check");
+      TEST_ASSERT(rdany_cast<std::vector<double> >(foo)[i] == i);
     }
     
     RDAny b = foo;
 
     for(int i=0;i<4;++i) { 
-      CHECK_INVARIANT(rdany_cast<std::vector<double> >(b)[i] == i, "Failed check");
+      TEST_ASSERT(rdany_cast<std::vector<double> >(b)[i] == i);
     }
   }
   const int loops = 10000000;
@@ -234,18 +234,18 @@ void testRDAny() {
   
   { // checks replacement with vector
     RDAny vv(2.0);
-    CHECK_INVARIANT(rdany_cast<double>(vv) == 2.0, "Bad double");
+    TEST_ASSERT(rdany_cast<double>(vv) == 2.0);
     
     
     std::vector<int> vect;
     vect.push_back(1);
     vv = vect;
-    CHECK_INVARIANT(rdany_cast<std::vector<int> >(vv)[0] == 1, "Bad cast");
+    TEST_ASSERT(rdany_cast<std::vector<int> >(vv)[0] == 1);
     
     // tests copy
     RDAny vvv(vv);
     
-    CHECK_INVARIANT(rdany_cast<std::vector<int> >(vvv)[0] == 1, "Bad cast");    
+    TEST_ASSERT(rdany_cast<std::vector<int> >(vvv)[0] == 1);    
   }
 
   {
@@ -264,11 +264,10 @@ void testRDAny() {
     boost::any_cast<const std::vector<std::pair<int,int> > &>(any);
     
     const std::vector<std::pair<int,int> > &pv = rdany_cast<std::vector<std::pair<int, int> > >(vv);
-    CHECK_INVARIANT(pv[0].first == 2,
-                    "Bad cast");
+    TEST_ASSERT(pv[0].first == 2);
     RDAny vvv(vv);
-    CHECK_INVARIANT((rdany_cast<std::vector<std::pair<int, int> > >(vvv)[0].first == 2),
-                    "Bad cast");
+    TEST_ASSERT((rdany_cast<std::vector<std::pair<int, int> > >(vvv)[0].first ==
+                 2));
     
   }
 
@@ -286,8 +285,8 @@ void testRDAny() {
     } catch (boost::bad_any_cast &e) {
     }
     
-    CHECK_INVARIANT((*rdany_cast<std::vector<int> *>(vv))[0] == 100, "Bad cast");
-    CHECK_INVARIANT((*rdany_cast<std::vector<int> *>((const RDAny&)vv))[0] == 100, "Bad cast");
+    TEST_ASSERT((*rdany_cast<std::vector<int> *>(vv))[0] == 100);
+    TEST_ASSERT((*rdany_cast<std::vector<int> *>((const RDAny&)vv))[0] == 100);
     delete p;
 
     std::map<int,int> *m = new std::map<int,int>();
@@ -295,8 +294,7 @@ void testRDAny() {
     RDAny mv(m);
     // leaks
     std::map<int,int> *anym = rdany_cast<std::map<int,int> *>(mv);
-    CHECK_INVARIANT(anym->find(0) != anym->end(),
-                    "Bad cast");    
+    TEST_ASSERT(anym->find(0) != anym->end());
     delete anym;
   }
 
@@ -307,9 +305,9 @@ void testRDAny() {
     p->push_back(100);
     RDAny v(p);
     RDAny vv(v);
-    CHECK_INVARIANT((*rdany_cast<vptr>(v))[0] == 100, "Bad cast");    
-    CHECK_INVARIANT((*rdany_cast<vptr>(vv))[0] == 100, "Bad cast");
-    CHECK_INVARIANT((*rdany_cast<vptr>((const RDAny&)vv))[0] == 100, "Bad cast");
+    TEST_ASSERT((*rdany_cast<vptr>(v))[0] == 100);    
+    TEST_ASSERT((*rdany_cast<vptr>(vv))[0] == 100);
+    TEST_ASSERT((*rdany_cast<vptr>((const RDAny&)vv))[0] == 100);
 
     typedef boost::shared_ptr<std::map<int,int> > mptr;
     mptr m(new std::map<int,int>());
@@ -317,11 +315,10 @@ void testRDAny() {
     RDAny mv(m);
     // leaks
     mptr anym = rdany_cast<mptr>(mv);
-    CHECK_INVARIANT(anym->find(0) != anym->end(),
-                    "Bad cast");
+    TEST_ASSERT(anym->find(0) != anym->end());
 
     RDAny any3(boost::shared_ptr<Foo>( new Foo ));
-    CHECK_INVARIANT(any3.m_value.getTag() == RDTypeTag::AnyTag, "Wrong type");
+    TEST_ASSERT(any3.m_value.getTag() == RDTypeTag::AnyTag);
   }
 }
 
@@ -556,83 +553,83 @@ int main() {
   INT_VECT fooV;
   fooV.resize(3);
   BOOST_LOG(rdInfoLog) << "dict test" << std::endl;
-  CHECK_INVARIANT(!d.hasVal("foo"), "bad init");
+  TEST_ASSERT(!d.hasVal("foo"));
   int x = 1;
   d.setVal("foo", x);
-  CHECK_INVARIANT(d.hasVal("foo"), "should be there");
-  CHECK_INVARIANT(!d.hasVal("bar"), "bad other key");
+  TEST_ASSERT(d.hasVal("foo"));
+  TEST_ASSERT(!d.hasVal("bar"));
   int v, v2;
   d.getVal("foo", v);
-  CHECK_INVARIANT(v == 1, "bad val");
+  TEST_ASSERT(v == 1);
   v2 = d.getVal<int>("foo");
-  CHECK_INVARIANT(v2 == v, "bad val");
+  TEST_ASSERT(v2 == v);
   d.setVal("bar", fooV);
   d.getVal("foo", v);
-  CHECK_INVARIANT(v == 1, "bad val");
+  TEST_ASSERT(v == 1);
   v2 = d.getVal<int>("foo");
-  CHECK_INVARIANT(v2 == v, "bad val");
+  TEST_ASSERT(v2 == v);
   INT_VECT fooV2, fooV3;
   d.getVal("bar", fooV2);
   fooV3 = d.getVal<INT_VECT>("bar");
-  CHECK_INVARIANT(fooV == fooV2, "bad getVal");
-  CHECK_INVARIANT(fooV2 == fooV3, "bad getVal");
+  TEST_ASSERT(fooV == fooV2);
+  TEST_ASSERT(fooV2 == fooV3);
 
   VECT_INT_VECT fooV4;
   fooV4.resize(3);
-  CHECK_INVARIANT(!d.hasVal("baz"), "bad get");
+  TEST_ASSERT(!d.hasVal("baz"));
   d.setVal("baz", fooV4);
-  CHECK_INVARIANT(d.hasVal("baz"), "bad get");
+  TEST_ASSERT(d.hasVal("baz"));
 
   DictCon dc1;
-  CHECK_INVARIANT(!dc1.getDict()->hasVal("foo"), "bad init");
+  TEST_ASSERT(!dc1.getDict()->hasVal("foo"));
   int y = 1;
   dc1.getDict()->setVal("foo", y);
-  CHECK_INVARIANT(dc1.getDict()->hasVal("foo"), "should be there");
-  CHECK_INVARIANT(!dc1.getDict()->hasVal("bar"), "bad other key");
+  TEST_ASSERT(dc1.getDict()->hasVal("foo"));
+  TEST_ASSERT(!dc1.getDict()->hasVal("bar"));
   dc1.getDict()->setVal("bar", fooV);
   dc1.getDict()->getVal("foo", v);
-  CHECK_INVARIANT(v == 1, "bad val");
+  TEST_ASSERT(v == 1);
   dc1.getDict()->getVal("bar", fooV2);
-  CHECK_INVARIANT(fooV == fooV2, "bad getVal");
+  TEST_ASSERT(fooV == fooV2);
   fooV4.resize(3);
-  CHECK_INVARIANT(!dc1.getDict()->hasVal("baz"), "bad get");
+  TEST_ASSERT(!dc1.getDict()->hasVal("baz"));
   dc1.getDict()->setVal("baz", fooV4);
-  CHECK_INVARIANT(dc1.getDict()->hasVal("baz"), "bad get");
+  TEST_ASSERT(dc1.getDict()->hasVal("baz"));
 
   dc1.getDict()->reset();
 
   DictCon dc2 = dc1;
-  CHECK_INVARIANT(!dc2.getDict()->hasVal("foo"), "bad init");
+  TEST_ASSERT(!dc2.getDict()->hasVal("foo"));
   int z = 1;
   dc2.getDict()->setVal("foo", z);
-  CHECK_INVARIANT(dc2.getDict()->hasVal("foo"), "should be there");
-  CHECK_INVARIANT(!dc2.getDict()->hasVal("bar"), "bad other key");
+  TEST_ASSERT(dc2.getDict()->hasVal("foo"));
+  TEST_ASSERT(!dc2.getDict()->hasVal("bar"));
   dc2.getDict()->setVal("bar", fooV);
   dc2.getDict()->getVal("foo", v);
-  CHECK_INVARIANT(v == 1, "bad val");
+  TEST_ASSERT(v == 1);
   dc2.getDict()->getVal("bar", fooV2);
-  CHECK_INVARIANT(fooV == fooV2, "bad getVal");
+  TEST_ASSERT(fooV == fooV2);
   fooV4.resize(3);
-  CHECK_INVARIANT(!dc2.getDict()->hasVal("baz"), "bad get");
+  TEST_ASSERT(!dc2.getDict()->hasVal("baz"));
   dc2.getDict()->setVal("baz", fooV4);
-  CHECK_INVARIANT(dc2.getDict()->hasVal("baz"), "bad get");
+  TEST_ASSERT(dc2.getDict()->hasVal("baz"));
 
   DictCon dc3(dc2);
-  CHECK_INVARIANT(dc3.getDict()->hasVal("foo"), "should be there");
+  TEST_ASSERT(dc3.getDict()->hasVal("foo"));
   dc3.getDict()->getVal("foo", v);
-  CHECK_INVARIANT(v == 1, "bad val");
+  TEST_ASSERT(v == 1);
   dc3.getDict()->getVal("bar", fooV2);
-  CHECK_INVARIANT(fooV == fooV2, "bad getVal");
+  TEST_ASSERT(fooV == fooV2);
   fooV4.resize(3);
-  CHECK_INVARIANT(dc3.getDict()->hasVal("baz"), "bad get");
+  TEST_ASSERT(dc3.getDict()->hasVal("baz"));
 
-  CHECK_INVARIANT(dc3.getDict()->hasVal("foo"), "should be there");
+  TEST_ASSERT(dc3.getDict()->hasVal("foo"));
   dc3.getDict()->getVal("foo", v);
-  CHECK_INVARIANT(v == 1, "bad val");
+  TEST_ASSERT(v == 1);
   dc3.getDict()->getVal("bar", fooV2);
-  CHECK_INVARIANT(fooV == fooV2, "bad getVal");
+  TEST_ASSERT(fooV == fooV2);
   fooV4.resize(3);
-  CHECK_INVARIANT(dc3.getDict()->hasVal("baz"), "bad get");
+  TEST_ASSERT(dc3.getDict()->hasVal("baz"));
 
   testStringVals();
   testVectToString();
