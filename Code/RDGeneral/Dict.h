@@ -28,7 +28,7 @@ typedef std::vector<std::string> STR_VECT;
 //! \brief The \c Dict class can be used to store objects of arbitrary
 //!        type keyed by \c strings.
 //!
-//!  The actual storage is done using \c RDAny objects.
+//!  The actual storage is done using \c RDValue objects.
 //!
 class Dict {
   struct Pair {
@@ -185,7 +185,9 @@ public:
     _data.push_back(Pair(what, val));
   };
 
-  void setVal(const std::string &what, bool val) {
+  template <typename T>
+  void setPODVal(const std::string &what, T val) {
+    _hasNonPodData = true;
     for(size_t i=0; i< _data.size(); ++i) {
       if (_data[i].key == what) {
         _data[i].val = val;
@@ -193,46 +195,26 @@ public:
       }
     }
     _data.push_back(Pair(what, val));
+  };
+  
+  void setVal(const std::string &what, bool val) {
+    setPODVal(what, val);
   }
 
   void setVal(const std::string &what, double val) {
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        _data[i].val = val;
-        return;
-      }
-    }
-    _data.push_back(Pair(what, val));
+    setPODVal(what, val);
   }
   
   void setVal(const std::string &what, float val) {
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        _data[i].val = val;
-        return;
-      }
-    }
-    _data.push_back(Pair(what, val));
+    setPODVal(what, val);
   }
   
   void setVal(const std::string &what, int val) {
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        _data[i].val = val;
-        return;
-      }
-    }
-    _data.push_back(Pair(what, val));    
+    setPODVal(what, val);
   }
   
   void setVal(const std::string &what, unsigned int val) {
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        _data[i].val = val;
-        return;
-      }
-    }
-    _data.push_back(Pair(what, val));
+    setPODVal(what, val);
   }
   
   //! \overload
