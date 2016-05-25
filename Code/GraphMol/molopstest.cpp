@@ -5839,6 +5839,63 @@ void testGithubIssue518() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testKekulizeErrorReporting() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing error reporting for kekulization"
+      << std::endl;
+  std::stringstream sstrm;
+  rdErrorLog->AddTee(sstrm);
+  {
+    sstrm.str("");
+    std::string smi = "c1ccccc1";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(sstrm.str() == "");
+    delete m;
+  }
+  {
+    sstrm.str("");
+    std::string smi = "c1cccc1";
+    ROMol *m;
+    try {
+      m = SmilesToMol(smi);
+    } catch (MolSanitizeException &e) {
+      m = NULL;
+    }
+    TEST_ASSERT(m == NULL);
+    TEST_ASSERT(sstrm.str().find("0 1 2 3 4") != std::string::npos);
+    delete m;
+  }
+  {
+    sstrm.str("");
+    std::string smi = "c1ccccc1.c1cccc1";
+    ROMol *m;
+    try {
+      m = SmilesToMol(smi);
+    } catch (MolSanitizeException &e) {
+      m = NULL;
+    }
+    TEST_ASSERT(m == NULL);
+    TEST_ASSERT(sstrm.str().find("6 7 8 9 10") != std::string::npos);
+    delete m;
+  }
+  {
+    sstrm.str("");
+    std::string smi = "c1cccc1.c1cccc1";
+    ROMol *m;
+    try {
+      m = SmilesToMol(smi);
+    } catch (MolSanitizeException &e) {
+      m = NULL;
+    }
+    TEST_ASSERT(m == NULL);
+    TEST_ASSERT(sstrm.str().find("0 1 2 3 4") != std::string::npos);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -5926,6 +5983,8 @@ int main() {
   testGithubIssue805();
 #endif
   testGithubIssue518();
+  testGithubIssue518();
+  testKekulizeErrorReporting();
 
   return 0;
 }
