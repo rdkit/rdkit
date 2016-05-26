@@ -224,6 +224,11 @@ struct RDValue {
   }
   
   uint64_t getTag() const {
+    if (otherBits < RDTypeTag::MaxDouble ||
+        (otherBits & RDTypeTag::NaN) == RDTypeTag::NaN) {
+      return RDTypeTag::DoubleTag;
+    }
+    
     uint64_t tag = otherBits & TagMask;
     if (tag == RDTypeTag::PtrTag)
       return otherBits & PointerTagMask;
