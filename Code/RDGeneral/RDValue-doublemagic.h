@@ -46,11 +46,8 @@
 #include <boost/type_traits.hpp>
 #include <boost/static_assert.hpp>
 #include "LocaleSwitcher.h"
-#include <boost/detail/endian.hpp>
 
-#if defined(BOOST_BIG_ENDIAN) 
-BOOST_STATIC_ASSERT(false && "RDValue only has been tested under little endian cpus");
-#endif
+#define RDVALUE_HASBOOL
 
 namespace RDKit {
 
@@ -96,7 +93,8 @@ namespace RDTypeTag {
   static const uint64_t DoubleTag = 0xfff8000000000000; // 
   static const uint64_t FloatTag  = 0xfff9000000000000; // 
   static const uint64_t IntTag  = 0xfffa000000000000; // 
-  static const uint64_t UnsignedIntTag = 0xfffb000000000000;
+  static const uint64_t UnsignedIntTag = 0xfffb000000000000; //
+  static const uint64_t BoolTag        = 0xfffc000000000000; //  
   
   // PTR Tags use the last 3 bits for typing info
   static const uint64_t PtrTag            = 0xffff000000000000;
@@ -114,6 +112,7 @@ namespace RDTypeTag {
   template<> inline uint64_t GetTag<float>() { return FloatTag; }
   template<> inline uint64_t GetTag<int>() { return IntTag; }
   template<> inline uint64_t GetTag<unsigned int>() { return UnsignedIntTag; }
+  template<> inline uint64_t GetTag<bool>() { return BoolTag; }
   template<> inline uint64_t GetTag<std::string>() { return StringTag; }
   template<> inline uint64_t GetTag<std::vector<double> >() { return VecDoubleTag; }
   template<> inline uint64_t GetTag<std::vector<float> >() { return VecFloatTag; }
@@ -163,7 +162,7 @@ struct RDValue {
   }
   
   inline RDValue(bool number) {
-    otherBits = (static_cast<uint64_t>(number) & ApplyMask) | RDTypeTag::IntTag;
+    otherBits = (static_cast<uint64_t>(number) & ApplyMask) | RDTypeTag::BoolTag;
   }
 
   inline RDValue(boost::any *pointer) {
@@ -332,6 +331,7 @@ inline bool rdvalue_is<const double &>(RDValue v) {
   return rdvalue_is<double>(v);
 }
 
+/*
 template<>
 inline bool rdvalue_is<bool>(RDValue v) {
   return (v.getTag() == RDTypeTag::IntTag &&
@@ -343,6 +343,7 @@ template<>
 inline bool rdvalue_is<const bool&>(RDValue v) {
   return rdvalue_is<bool>(v);
 }
+*/
 
 /////////////////////////////////////////////////////////////////////////////////////
 // rdvalue_cast<T>
@@ -405,8 +406,8 @@ inline unsigned int rdvalue_cast<unsigned int>(RDValue v) {
 
 template<>
 inline bool rdvalue_cast<bool>(RDValue v) {
-  if (rdvalue_is<bool>(v)) return static_cast<int32_t>(
-          v.otherBits & ~RDTypeTag::IntTag);
+  if (rdvalue_is<bool>(v)) return static_cast<bool>(
+          v.otherBits & ~RDTypeTag::BoolTag);
   throw boost::bad_any_cast();
 }
 

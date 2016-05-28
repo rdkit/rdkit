@@ -1,10 +1,14 @@
 #include "RDValue.h"
+#include "RDProps.h"
 #include "Invariant.h"
+#include "PropertyPickler.h"
 #include <limits>
 #include <vector>
 #include <list>
 #include <map>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 using namespace RDKit;
 
@@ -115,9 +119,77 @@ void testNaN() {
   // make a NaN
   double nan=sqrt(-1.0);
   RDValue v(nan);
+  TEST_ASSERT(v.getTag() == RDTypeTag::DoubleTag);
 
   CHECK_INVARIANT(boost::math::isnan(rdvalue_cast<double>(v)), "Oops, can't store NaNs!");
+
+  RDValue vv(2.0);
+  TEST_ASSERT(rdvalue_is<double>(vv));
+  TEST_ASSERT(vv.getTag() == RDTypeTag::DoubleTag);
 }
+
+template<class T>
+std::vector<T> makeVec() {
+  std::vector<T> vec;
+  vec.push_back((T)0);
+  vec.push_back((T)1);
+  vec.push_back((T)2);
+  vec.push_back((T)3);
+  vec.push_back((T)4);
+  vec.push_back((T)5);
+  return vec;
+}
+
+template<class T>
+void testProp(T val) {
+  std::string pklName = getenv("RDBASE");
+  pklName += "/Code/GraphMol/test_data/prop.pkl";
+  
+  {
+    std::ofstream ss(pklName.c_str(), std::ios_base::binary);
+    RDProps p;
+    p.setProp<T>("foo", val);
+    TEST_ASSERT(pickleProps(ss, p));
+  }
+  
+  {
+    std::ifstream ss(pklName.c_str(), std::ios_base::binary);
+    RDProps p2;
+    addPropsFromPickle(ss, p2);
+    TEST_ASSERT(p2.getProp<T>("foo") == val);
+  }
+};
+
+void testPropertyPickler() {
+  testProp<int>(1234);
+  testProp<double>(1234.);
+  testProp<float>(1234.0f);
+  testProp<unsigned int>(1234u);
+  testProp<bool>(true);
+  testProp<std::string>(std::string("the quick brown fox jumps over the lazy dog"));
+  
+  testProp(0);
+  testProp(0.);
+  testProp(0.0f);
+  testProp(0u);
+  testProp(false);
+
+  testProp(makeVec<int>());
+  testProp(makeVec<int>());
+  testProp(makeVec<int>());
+  testProp(makeVec<unsigned int>());
+
+  {
+    std::vector<std::string> v;
+    v.push_back("a");
+    v.push_back("b");
+    v.push_back("c");
+    v.push_back("d");
+    v.push_back("e");
+    testProp(v);
+  }
+}
+
 
 int main() {
   std::cerr << "-- running tests -- " << std::endl;
@@ -125,4 +197,5 @@ int main() {
   testPODVectors();
   testStringVect();
   testNaN();
+  testPropertyPickler();
 }
