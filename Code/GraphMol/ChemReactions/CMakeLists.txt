@@ -25,7 +25,6 @@ rdkit_headers(Reaction.h
               Enumerate/EnumerationPickler.h
               Enumerate/EnumerationStrategyBase.h
               Enumerate/CartesianProduct.h
-              Enumerate/EvenSamplePairs.h
               Enumerate/RandomSample.h
               Enumerate/RandomSampleAllBBs.h
               Enumerate/Template/EnumerateTemplate.h

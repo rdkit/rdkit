@@ -374,6 +374,7 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
                             python::tuple(reactantLabels));
 
 }
+}
 
 void wrap_enumeration();
 
@@ -776,13 +777,12 @@ Sample Usage:\n\
   True\n\
 ";
 
-  python::def("PreprocessReaction", PreprocessReaction,
+  python::def("PreprocessReaction", RDKit::PreprocessReaction,
               (python::arg("reaction"),
                python::arg("queries")=python::dict(),
-               python::arg("propName")=common_properties::molFileValue),
+               python::arg("propName")=RDKit::common_properties::molFileValue),
               docString.c_str());
 
   wrap_enumeration();
 }
 
-}
