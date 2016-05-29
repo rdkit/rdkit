@@ -1,7 +1,6 @@
 /* 
-* $Id: Bond.i 2519 2013-05-17 03:01:18Z glandrum $
 *
-*  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
 * 
 * Redistribution and use in source and binary forms, with or without
@@ -31,35 +30,13 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-%include "std_string.i"
-%include "std_vector.i"
-%include "std_map.i"
-%include "std_pair.i"
-
 %{
 #include <RDGeneral/types.h>
-#include <GraphMol/Bond.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <RDGeneral/RDProps.h>
 %}
 
-%ignore RDKit::Bond::getValenceContrib(const Atom *) const;
-%ignore RDKit::Bond::Match(const Bond *) const;
-%ignore RDKit::Bond::setBeginAtom(Atom *at);
-%ignore RDKit::Bond::setEndAtom(Atom *at);
 
-%include <GraphMol/Bond.h>
+%include <RDGeneral/RDProps.h>
 
-%extend RDKit::Bond {
-  std::string getProp(const std::string key){
-    std::string res;
-    ($self)->getProp(key, res);
-    return res;
-  }
-
-  /* Methods from MolFileStereoChem.h */
-  Bond::BondDir DetermineBondWedgeState(const RDKit::INT_MAP_INT &wedgeBonds,
-                                        const RDKit::Conformer *conf) {
-    RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
-  }
-}
-
+/* For the time being, assume all properties will be strings */
+%template(setProp)  RDKit::RDProps::setProp<std::string>;

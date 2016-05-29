@@ -3651,14 +3651,14 @@ bool MMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
     const MMFFVdW *mmffVdWParamsIAtom = (*mmffVdW)(iAtomType);
     const MMFFVdW *mmffVdWParamsJAtom = (*mmffVdW)(jAtomType);
     if (mmffVdWParamsIAtom && mmffVdWParamsJAtom) {
-      mmffVdWParams.R_ij_starUnscaled = Utils::calcUnscaledVdWMinimum(
+      mmffVdWParams.R_ij_starUnscaled = MMFF::Utils::calcUnscaledVdWMinimum(
           mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
-      mmffVdWParams.epsilonUnscaled = Utils::calcUnscaledVdWWellDepth(
+      mmffVdWParams.epsilonUnscaled = MMFF::Utils::calcUnscaledVdWWellDepth(
           mmffVdWParams.R_ij_starUnscaled, mmffVdWParamsIAtom,
           mmffVdWParamsJAtom);
       mmffVdWParams.R_ij_star = mmffVdWParams.R_ij_starUnscaled;
       mmffVdWParams.epsilon = mmffVdWParams.epsilonUnscaled;
-      Utils::scaleVdWParams(mmffVdWParams.R_ij_star, mmffVdWParams.epsilon,
+      MMFF::Utils::scaleVdWParams(mmffVdWParams.R_ij_star, mmffVdWParams.epsilon,
                             mmffVdW, mmffVdWParamsIAtom, mmffVdWParamsJAtom);
       res = true;
     }

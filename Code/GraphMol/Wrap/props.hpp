@@ -69,11 +69,13 @@ bool AddToDict(const U& ob, boost::python::dict &dict, const std::string &key) {
 }
 
 template<class T>
-boost::python::dict GetPropsAsDict(const T &obj) {
+boost::python::dict GetPropsAsDict(const T &obj,
+                                   bool includePrivate,
+                                   bool includeComputed) {
   boost::python::dict dict;
   // precedence double, int, unsigned, std::vector<double>,
   // std::vector<int>, std::vector<unsigned>, string
-  STR_VECT keys = obj.getPropList();
+  STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
   for(size_t i=0;i<keys.size();++i) {
     if (AddToDict<double>(obj, dict, keys[i])) continue;
     if (AddToDict<int>(obj, dict, keys[i])) continue;
@@ -82,6 +84,7 @@ boost::python::dict GetPropsAsDict(const T &obj) {
     if (AddToDict<std::vector<double> >(obj, dict, keys[i])) continue;
     if (AddToDict<std::vector<int> >(obj, dict, keys[i])) continue;
     if (AddToDict<std::vector<unsigned int> >(obj, dict, keys[i])) continue;
+    if (AddToDict<std::vector<std::string> >(obj, dict, keys[i])) continue;    
     if (AddToDict<std::string>(obj, dict, keys[i])) continue;
   }
   return dict;

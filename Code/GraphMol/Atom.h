@@ -22,7 +22,7 @@
 // ours
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
-#include <RDGeneral/Dict.h>
+#include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
 
 namespace RDKit {
@@ -64,7 +64,7 @@ class AtomMonomerInfo;
   at the *end* of the list of other bonds.
 
 */
-class Atom {
+class Atom : public RDProps {
   friend class MolPickler;  //!< the pickler needs access to our privates
   friend class ROMol;
   friend class RWMol;
@@ -304,139 +304,6 @@ class Atom {
     return Match(what.get());
   };
 
-  // ------------------------------------
-  //  Local Property Dict functionality
-  //  all setProp functions are const because they
-  //     are not meant to change the atom chemically
-  // ------------------------------------
-  //! returns a list with the names of our \c properties
-  STR_VECT getPropList() const { return dp_props->keys(); }
-
-  //! sets a \c property value
-  /*!
-     \param key the name under which the \c property should be stored.
-         If a \c property is already stored under this name, it will be
-         replaced.
-     \param val the value to be stored
-     \param computed (optional) allows the \c property to be flagged
-         \c computed.
-   */
-  template <typename T>
-  void setProp(const char *key, T val, bool computed = false) const {
-    // if(!dp_props) dp_props = new Dict();
-    std::string what(key);
-    setProp(what, val, computed);
-  }
-
-  //! \overload
-  template <typename T>
-  void setProp(const std::string &key, T val, bool computed = false) const {
-    if (computed) {
-      STR_VECT compLst;
-      getPropIfPresent(detail::computedPropName, compLst);
-      if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
-        compLst.push_back(key);
-        dp_props->setVal(detail::computedPropName, compLst);
-      }
-    }
-    // setProp(key.c_str(),val);
-    dp_props->setVal(key, val);
-  }
-
-  //! allows retrieval of a particular property value
-  /*!
-
-     \param key the name under which the \c property should be stored.
-         If a \c property is already stored under this name, it will be
-         replaced.
-     \param res a reference to the storage location for the value.
-
-     <b>Notes:</b>
-       - if no \c property with name \c key exists, a KeyErrorException will be
-     thrown.
-       - the \c boost::lexical_cast machinery is used to attempt type
-     conversions.
-         If this fails, a \c boost::bad_lexical_cast exception will be thrown.
-
-  */
-  template <typename T>
-  void getProp(const char *key, T &res) const {
-    dp_props->getVal(key, res);
-  }
-  //! \overload
-  template <typename T>
-  void getProp(const std::string &key, T &res) const {
-    dp_props->getVal(key, res);
-  }
-
-  //! \overload
-  template <typename T>
-  T getProp(const char *key) const {
-    return dp_props->getVal<T>(key);
-  }
-  //! \overload
-  template <typename T>
-  T getProp(const std::string &key) const {
-    return dp_props->getVal<T>(key);
-  }
-
-  //! returns whether or not we have a \c property with name \c key
-  //!  and assigns the value if we do
-  template <typename T>
-  bool getPropIfPresent(const char *key, T &res) const {
-    return dp_props->getValIfPresent(key, res);
-  }
-  //! \overload
-  template <typename T>
-  bool getPropIfPresent(const std::string &key, T &res) const {
-    return dp_props->getValIfPresent(key, res);
-  }
-
-  //! returns whether or not we have a \c property with name \c key
-  bool hasProp(const char *key) const {
-    if (!dp_props) return false;
-    return dp_props->hasVal(key);
-  };
-  //! \overload
-  bool hasProp(const std::string &key) const {
-    if (!dp_props) return false;
-    return dp_props->hasVal(key);
-  };
-
-  //! clears the value of a \c property
-  /*!
-     <b>Notes:</b>
-       - if no \c property with name \c key exists, a KeyErrorException
-         will be thrown.
-       - if the \c property is marked as \c computed, it will also be removed
-         from our list of \c computedProperties
-  */
-  void clearProp(const char *key) const {
-    std::string what(key);
-    clearProp(what);
-  };
-  //! \overload
-  void clearProp(const std::string &key) const {
-    STR_VECT compLst;
-    if (getPropIfPresent(detail::computedPropName, compLst)) {
-      STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
-      if (svi != compLst.end()) {
-        compLst.erase(svi);
-        dp_props->setVal(detail::computedPropName, compLst);
-      }
-    }
-    dp_props->clearVal(key);
-  };
-
-  //! clears all of our \c computed \c properties
-  void clearComputedProps() const {
-    STR_VECT compLst;
-    if (getPropIfPresent(detail::computedPropName, compLst)) {
-      BOOST_FOREACH (const std::string &sv, compLst) { dp_props->clearVal(sv); }
-      compLst.clear();
-      dp_props->setVal(detail::computedPropName, compLst);
-    }
-  }
 
   //! returns the perturbation order for a list of integers
   /*!
@@ -516,7 +383,6 @@ class Atom {
   boost::uint16_t d_isotope;
 
   ROMol *dp_mol;
-  Dict *dp_props;
   AtomMonomerInfo *dp_monomerInfo;
   void initAtom();
 };
