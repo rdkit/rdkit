@@ -187,7 +187,7 @@ public:
 
   template <typename T>
   void setPODVal(const std::string &what, T val) {
-    _hasNonPodData = true;
+    // don't change the hasNonPodData status
     for(size_t i=0; i< _data.size(); ++i) {
       if (_data[i].key == what) {
         _data[i].val = val;
