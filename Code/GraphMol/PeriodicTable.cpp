@@ -15,6 +15,10 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 #include <sstream>
 #include <locale>
 
+#if RDK_BUILD_THREADSAFE_SSS
+#include <boost/thread.hpp>
+#endif
+
 namespace RDKit {
 
 class PeriodicTable *PeriodicTable::ds_instance = 0;
@@ -79,9 +83,18 @@ PeriodicTable::PeriodicTable() {
   }
 }
 
+#if RDK_BUILD_THREADSAFE_SSS
+boost::mutex ptMutex;
+#endif
+
 PeriodicTable *PeriodicTable::getTable() {
   if (ds_instance == 0) {
-    ds_instance = new PeriodicTable();
+#if RDK_BUILD_THREADSAFE_SSS
+    boost::lock_guard<boost::mutex> lock(ptMutex);
+#endif
+    if (ds_instance == 0) {
+      ds_instance = new PeriodicTable();
+    }
   }
   return ds_instance;
 }
