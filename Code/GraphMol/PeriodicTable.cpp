@@ -87,7 +87,11 @@ void PeriodicTable::initInstance() { ds_instance = new PeriodicTable(); }
 
 PeriodicTable *PeriodicTable::getTable() {
 #if RDK_BUILD_THREADSAFE_SSS
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
   boost::once_flag pt_init_once;
+#else
+  boost::once_flag pt_init_once = BOOST_ONCE_INIT;
+#endif
   boost::call_once(initInstance, pt_init_once);
 #else
   if (ds_instance == NULL) initInstance();
