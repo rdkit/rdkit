@@ -5844,7 +5844,7 @@ void testKekulizeErrorReporting() {
       << "-----------------------\n Testing error reporting for kekulization"
       << std::endl;
   std::stringstream sstrm;
-  rdErrorLog->AddTee(sstrm);
+  rdErrorLog->SetTee(sstrm);
   {
     sstrm.str("");
     std::string smi = "c1ccccc1";
@@ -5892,6 +5892,7 @@ void testKekulizeErrorReporting() {
     TEST_ASSERT(sstrm.str().find("0 1 2 3 4") != std::string::npos);
     delete m;
   }
+  rdErrorLog->ClearTee();
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
