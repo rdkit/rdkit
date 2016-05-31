@@ -37,6 +37,8 @@ typedef std::vector<std::string> STR_VECT;
 class Dict {
 public:
 #ifdef RDVALUE_HAS_KEY
+  // The RDValue has a .getKey implementation
+  //  so use it to save some space.
   struct Pair {
     RDValue val;
 
@@ -52,6 +54,8 @@ public:
     inline int  getKey() const { return val.getKey(); }
   };  
 #else
+  // The RDValue has no getKey implementation
+  //  so implement our own
   struct Pair {
     int key;
     RDValue val;

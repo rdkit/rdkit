@@ -981,7 +981,8 @@ void testPeriodicTable() {
 void testAddAtomWithConf() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
   BOOST_LOG(rdInfoLog) << "Testing issue 264: adding atoms to molecules that "
-                          "already have conformers" << std::endl;
+                          "already have conformers"
+                       << std::endl;
   {
     RWMol m;
 
@@ -1085,17 +1086,17 @@ void testAtomResidues() {
     TEST_ASSERT(!(m->getAtomWithIdx(2)->getMonomerInfo()));
     TEST_ASSERT(!(m->getAtomWithIdx(3)->getMonomerInfo()));
 
-    m->getAtomWithIdx(0)
-        ->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER, "m1"));
+    m->getAtomWithIdx(0)->setMonomerInfo(
+        new AtomMonomerInfo(AtomMonomerInfo::OTHER, "m1"));
     TEST_ASSERT((m->getAtomWithIdx(0)->getMonomerInfo()));
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getName() == "m1");
 
     m->getAtomWithIdx(1)->setMonomerInfo(new AtomPDBResidueInfo("Ca", 3));
     TEST_ASSERT((m->getAtomWithIdx(1)->getMonomerInfo()));
     TEST_ASSERT(m->getAtomWithIdx(1)->getMonomerInfo()->getName() == "Ca");
-    TEST_ASSERT(
-        static_cast<const AtomPDBResidueInfo *>(
-            m->getAtomWithIdx(1)->getMonomerInfo())->getSerialNumber() == 3);
+    TEST_ASSERT(static_cast<const AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(1)->getMonomerInfo())
+                    ->getSerialNumber() == 3);
 
     RWMol *m2 = new RWMol(*m);
     delete m;
@@ -1104,9 +1105,9 @@ void testAtomResidues() {
     TEST_ASSERT(m2->getAtomWithIdx(0)->getMonomerInfo()->getName() == "m1");
     TEST_ASSERT((m2->getAtomWithIdx(1)->getMonomerInfo()));
     TEST_ASSERT(m2->getAtomWithIdx(1)->getMonomerInfo()->getName() == "Ca");
-    TEST_ASSERT(
-        static_cast<const AtomPDBResidueInfo *>(
-            m2->getAtomWithIdx(1)->getMonomerInfo())->getSerialNumber() == 3);
+    TEST_ASSERT(static_cast<const AtomPDBResidueInfo *>(
+                    m2->getAtomWithIdx(1)->getMonomerInfo())
+                    ->getSerialNumber() == 3);
     TEST_ASSERT(!(m2->getAtomWithIdx(2)->getMonomerInfo()));
     TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
   }
@@ -1277,6 +1278,47 @@ void testGithub608() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/thread.hpp>
+#include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+namespace {
+void runblock(std::vector<const PeriodicTable *> *pts, int idx) {
+  const PeriodicTable *pt = PeriodicTable::getTable();
+  (*pts)[idx] = pt;
+  TEST_ASSERT(pt->getAtomicNumber("C") == 6);
+  TEST_ASSERT(pt->getAtomicNumber("N") == 7);
+  TEST_ASSERT(pt->getAtomicNumber("O") == 8);
+};
+}
+void testGithub381() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test github381: thread-safe initialization of the periodic table"
+      << std::endl;
+
+  boost::thread_group tg;
+  unsigned int count = 32;
+  std::vector<const PeriodicTable *> pts(count);
+#if 1
+  for (unsigned int i = 0; i < count; ++i) {
+    std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock, &pts, i));
+  }
+  tg.join_all();
+  TEST_ASSERT(pts[0] != NULL);
+  for (unsigned int i = 1; i < count; ++i) {
+    TEST_ASSERT(pts[i] == pts[0]);
+  }
+#endif
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#else
+void testGithub381() {}
+#endif
+
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
@@ -1302,6 +1344,7 @@ int main() {
   testNeedsUpdatePropertyCache();
   testAtomListLineRoundTrip();
   testGithub608();
+  testGithub381();
 
   return 0;
 }
