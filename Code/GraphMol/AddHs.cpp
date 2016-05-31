@@ -622,15 +622,12 @@ bool isQueryH(const Atom *atom) {
     while (!(hasHQuery && hasOr) && childStack.size()) {
       QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
       childStack.pop_front();
-      // std::cerr<<" "<<query->getDescription()<<std::endl;
-      if (query->getDescription() == "AtomHCount") {
-        hasHQuery = true;
-      } else if (query->getDescription() == "AtomOr") {
+      if (query->getDescription() == "AtomOr") {
         hasOr = true;
       } else if (query->getDescription() == "AtomAtomicNum") {
-        if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() != 1) {
-          return false;  // we are safe here because we don't do anything with
-                         // OR queries
+        if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
+            !query->getNegation()) {
+          hasHQuery = true;
         }
       } else {
         QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
