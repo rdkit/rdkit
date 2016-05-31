@@ -22,7 +22,7 @@ namespace logging {
 
 typedef boost::iostreams::tee_device<std::ostream, std::ostream> RDTee;
 typedef boost::iostreams::stream<RDTee> RDTeeStream;
- 
+
 class rdLogger {
  public:
   std::ostream *dp_dest;
@@ -30,15 +30,30 @@ class rdLogger {
 
   RDTee *tee;
   RDTeeStream *teestream;
-  
-  rdLogger(std::ostream *dest, bool owner = false)
-      : dp_dest(dest), df_owner(owner), df_enabled(true),
-      tee(0), teestream(0){};
 
-  void AddTee(std::ostream &stream) {
+  rdLogger(std::ostream *dest, bool owner = false)
+      : dp_dest(dest),
+        df_owner(owner),
+        df_enabled(true),
+        tee(NULL),
+        teestream(NULL){};
+
+  //! Sets a stream to tee the output to.
+  void SetTee(std::ostream &stream) {
     if (dp_dest) {
+      delete teestream;
+      delete tee;
       tee = new RDTee(*dp_dest, stream);
       teestream = new RDTeeStream(*tee);
+    }
+  }
+  //! Remove our tee if it's set.
+  void ClearTee() {
+    if (dp_dest) {
+      delete teestream;
+      delete tee;
+      tee = NULL;
+      teestream = NULL;
     }
   }
   ~rdLogger() {
@@ -47,10 +62,18 @@ class rdLogger {
       if (df_owner) {
         delete dp_dest;
       }
+      dp_dest = NULL;
     }
     delete teestream;
+    teestream = NULL;
     delete tee;
+    tee = NULL;
   }
+
+ private:
+  // disable copy ctor and assignment
+  rdLogger(const rdLogger &);
+  rdLogger &operator=(const rdLogger &);
 };
 void enable_logs(const char *arg);
 void enable_logs(const std::string &arg);
@@ -65,7 +88,8 @@ std::ostream &toStream(std::ostream &);
   if ((!__arg__) || (!__arg__->dp_dest) || !(__arg__->df_enabled)) \
     ;                                                              \
   else                                                             \
-    RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream) : *(__arg__->dp_dest))
+  RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)     \
+                                       : *(__arg__->dp_dest))
 
 extern boost::logging::rdLogger *rdAppLog;
 extern boost::logging::rdLogger *rdDebugLog;

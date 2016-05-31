@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2013  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
@@ -493,9 +492,6 @@ class TestCase(unittest.TestCase):
     m.SetUnsignedProp("c", 2000)
     m.SetIntProp("d", -2)
     m.SetUnsignedProp("e", 2, True)
-    self.assertEquals(m.GetPropsAsDict(),
-                      {'a': False, 'c': 2000, 'b': 1000.0,
-                       'd': -2, 'prop1': 'foob'})
     self.assertEquals(m.GetPropsAsDict(False, True),
                       {'a': False, 'c': 2000, 'b': 1000.0, 'e': 2,
                        'd': -2, 'prop1': 'foob'})
@@ -3317,7 +3313,12 @@ CAS<~>
   def testAtomBondProps(self):
     m = Chem.MolFromSmiles('c1ccccc1')
     for atom in m.GetAtoms():
-      self.assertEquals(atom.GetPropsAsDict(), {'_CIPRank': 0})
+      d = atom.GetPropsAsDict()
+      self.assertEquals(set(d.keys()), set(['_CIPRank', '__computedProps']))
+      self.assertEquals(d['_CIPRank'], 0)
+      self.assertEquals(list(d['__computedProps']), ['_CIPRank'])
+
+
     for bond in m.GetBonds():
       self.assertEquals(bond.GetPropsAsDict(), {})
 

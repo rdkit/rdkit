@@ -415,7 +415,7 @@ void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
   atom.isRingStereoAtom =
       (atom.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
        atom.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) &&
-      atom.atom->hasProp("_ringStereoAtoms");
+      atom.atom->hasProp(common_properties::_ringStereoAtoms);
   atom.hasRingNbr = hasRingNbr(mol, atom.atom);
 }
 }  // end anonymous namespace

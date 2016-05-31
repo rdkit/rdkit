@@ -112,6 +112,15 @@ class FPBReader {
   and delete inStream after calling \c init()
   */
   void init();
+  //! cleanup
+  /*!
+  Cleans up whatever memory was allocated during init()
+  */
+  void cleanup() {
+    if (!df_init) return;
+    destroy();
+    df_init = false;
+  };
   //! returns the requested fingerprint as an \c ExplicitBitVect
   boost::shared_ptr<ExplicitBitVect> getFP(unsigned int idx) const;
   //! returns the requested fingerprint as an array of bytes
