@@ -127,7 +127,8 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
     throw FileParseException(errout.str());
   }
   std::ostringstream propName;
-  propName << "Conf_" << mol->getNumConformers() << common_properties::_Name;
+  propName << "Conf_" << mol->getNumConformers() << common_properties::getPropName(
+      common_properties::_Name);
   mol->setProp(propName.str(),
                boost::trim_copy(tempStr.substr(4, tempStr.size() - 4)));
 

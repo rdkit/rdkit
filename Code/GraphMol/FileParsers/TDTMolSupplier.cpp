@@ -209,7 +209,8 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
   std::size_t endP = inLine.find_last_of(">");
   std::string smiles = inLine.substr(startP + 1, endP - startP - 1);
   ROMol *res = SmilesToMol(smiles, 0, df_sanitize);
-
+  
+  const std::string TWOD = common_properties::getPropName(common_properties::TWOD);
   if (res && res->getNumAtoms() > 0) {
     // -----------
     //   Process the properties:
@@ -221,7 +222,7 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
       boost::trim_if(propName, boost::is_any_of(" \t"));
       startP = endP + 1;
 
-      if (propName == common_properties::TWOD && d_confId2D >= 0) {
+      if (propName == TWOD && d_confId2D >= 0) {
         std::string rest = inLine.substr(startP, inLine.size() - startP);
         std::vector<double> coords;
         TDTParseUtils::ParseNumberList(rest, coords, dp_inStream);

@@ -54,14 +54,11 @@ FragCatalogEntry::FragCatalogEntry(const ROMol *omol, const PATH_TYPE &path,
       }
     }
   }
-  dp_props = new Dict();
-
   d_descrip = "";
 }
 
 FragCatalogEntry::FragCatalogEntry(const std::string &pickle) {
   d_aToFmap.clear();
-  dp_props = new Dict();
   this->initFromString(pickle);
 }
 

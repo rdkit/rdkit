@@ -43,7 +43,7 @@
 #include <boost/lexical_cast.hpp>
 #include "LocaleSwitcher.h"
 
-#define RDVALUE_HASBOOL
+#define RDVALUE_HAS_KEY
 
 namespace RDKit {
 
@@ -75,32 +75,32 @@ namespace RDKit {
 // Tagged union
 
 namespace RDTypeTag {
-  const short EmptyTag           = 0;
-  const short IntTag             = 1;
-  const short DoubleTag          = 2;
-  const short StringTag          = 3;
-  const short FloatTag           = 4;
-  const short BoolTag            = 5;
-  const short UnsignedIntTag     = 6;
-  const short AnyTag             = 7;
-  const short VecDoubleTag       = 8;
-  const short VecFloatTag        = 9;
-  const short VecIntTag          = 10;
-  const short VecUnsignedIntTag  = 11;
-  const short VecStringTag       = 12;
-  template<class T> inline short GetTag() { return AnyTag; }
-  template<> inline short GetTag<double>() { return DoubleTag; }
-  template<> inline short GetTag<float>() { return FloatTag; }
-  template<> inline short GetTag<int>() { return IntTag; }
-  template<> inline short GetTag<unsigned int>() { return UnsignedIntTag; }
-  template<> inline short GetTag<bool>() { return BoolTag; }
-  template<> inline short GetTag<std::string>() { return StringTag; }
-  template<> inline short GetTag<std::vector<double> >() { return VecDoubleTag; }
-  template<> inline short GetTag<std::vector<float> >() { return VecFloatTag; }
-  template<> inline short GetTag<std::vector<int> >() { return VecIntTag; }
-  template<> inline short GetTag<std::vector<unsigned int> >() { return VecUnsignedIntTag; }
-  template<> inline short GetTag<std::vector<std::string> >() { return VecStringTag; }
-  template<> inline short GetTag<boost::any>() { return AnyTag; }
+  const unsigned char EmptyTag           = 0;
+  const unsigned char IntTag             = 1;
+  const unsigned char DoubleTag          = 2;
+  const unsigned char StringTag          = 3;
+  const unsigned char FloatTag           = 4;
+  const unsigned char BoolTag            = 5;
+  const unsigned char UnsignedIntTag     = 6;
+  const unsigned char AnyTag             = 7;
+  const unsigned char VecDoubleTag       = 8;
+  const unsigned char VecFloatTag        = 9;
+  const unsigned char VecIntTag          = 10;
+  const unsigned char VecUnsignedIntTag  = 11;
+  const unsigned char VecStringTag       = 12;
+  template<class T> inline unsigned char GetTag() { return AnyTag; }
+  template<> inline unsigned char GetTag<double>() { return DoubleTag; }
+  template<> inline unsigned char GetTag<float>() { return FloatTag; }
+  template<> inline unsigned char GetTag<int>() { return IntTag; }
+  template<> inline unsigned char GetTag<unsigned int>() { return UnsignedIntTag; }
+  template<> inline unsigned char GetTag<bool>() { return BoolTag; }
+  template<> inline unsigned char GetTag<std::string>() { return StringTag; }
+  template<> inline unsigned char GetTag<std::vector<double> >() { return VecDoubleTag; }
+  template<> inline unsigned char GetTag<std::vector<float> >() { return VecFloatTag; }
+  template<> inline unsigned char GetTag<std::vector<int> >() { return VecIntTag; }
+  template<> inline unsigned char GetTag<std::vector<unsigned int> >() { return VecUnsignedIntTag; }
+  template<> inline unsigned char GetTag<std::vector<std::string> >() { return VecStringTag; }
+  template<> inline unsigned char GetTag<boost::any>() { return AnyTag; }
 
   namespace detail {
     union Value {
@@ -161,42 +161,52 @@ namespace RDTypeTag {
   }
 }
 
+const unsigned int KEYMAX = 0x00FFFFFF;
+
 struct RDValue {
   RDTypeTag::detail::Value value;
-  short type;
-  short reserved_tag; // 16 bit alignment
+  unsigned int type:8;
+  unsigned int key:24;
 
- inline RDValue(): value(0.0), type(RDTypeTag::EmptyTag) {}
+  inline RDValue(): value(0.0), type(RDTypeTag::EmptyTag), key(KEYMAX) {}
   // Pod Style (Direct storage)
- inline RDValue(double v)   : value(v), type(RDTypeTag::DoubleTag) {}
- inline RDValue(float v)    : value(v), type(RDTypeTag::FloatTag) {}
- inline RDValue(int v)      : value(v), type(RDTypeTag::IntTag) {}
- inline RDValue(unsigned v) : value(v), type(RDTypeTag::UnsignedIntTag) {}
- inline RDValue(bool v)     : value(v), type(RDTypeTag::BoolTag) {}
+ inline RDValue(double v)   : value(v), type(RDTypeTag::DoubleTag), key(KEYMAX) {}
+ inline RDValue(float v)    : value(v), type(RDTypeTag::FloatTag), key(KEYMAX) {}
+ inline RDValue(int v)      : value(v), type(RDTypeTag::IntTag), key(KEYMAX) {}
+ inline RDValue(unsigned v) : value(v), type(RDTypeTag::UnsignedIntTag), key(KEYMAX) {}
+ inline RDValue(bool v)     : value(v), type(RDTypeTag::BoolTag), key(KEYMAX) {}
 
- inline RDValue(boost::any *v)  : value(v),type(RDTypeTag::AnyTag) {}
+ inline RDValue(boost::any *v)  : value(v),type(RDTypeTag::AnyTag), key(KEYMAX) {}
 
   // Copies passed in pointers
- inline RDValue(const boost::any &v)  : value(new boost::any(v)),type(RDTypeTag::AnyTag) {}
- inline RDValue(const std::string &v) : value(new std::string(v)),type(RDTypeTag::StringTag){};
+ inline RDValue(const boost::any &v)  : value(new boost::any(v)),type(RDTypeTag::AnyTag), key(KEYMAX) {}
+ inline RDValue(const std::string &v) : value(new std::string(v)),type(RDTypeTag::StringTag), key(KEYMAX){};
  template <class T>
- inline RDValue(const T &v) : value(new boost::any(v)),type(RDTypeTag::AnyTag) {}
+ inline RDValue(const T &v) : value(new boost::any(v)),type(RDTypeTag::AnyTag), key(KEYMAX) {}
 
  inline RDValue(const std::vector<double> &v) : value(new std::vector<double>(v)),
-    type(RDTypeTag::VecDoubleTag) {}
+    type(RDTypeTag::VecDoubleTag), key(KEYMAX) {}
  inline RDValue(const std::vector<float> &v)  : value(new std::vector<float>(v)),
-    type(RDTypeTag::VecFloatTag) {}
+    type(RDTypeTag::VecFloatTag), key(KEYMAX) {}
  inline RDValue(const std::vector<int> &v)    : value(new std::vector<int>(v)),
-    type(RDTypeTag::VecIntTag) {}
+    type(RDTypeTag::VecIntTag), key(KEYMAX) {}
  inline RDValue(const std::vector<unsigned int> &v) :
   value(new std::vector<unsigned int>(v)),
-    type(RDTypeTag::VecUnsignedIntTag) {}
+    type(RDTypeTag::VecUnsignedIntTag), key(KEYMAX) {}
  inline RDValue(const std::vector<std::string> &v) :
   value(new std::vector<std::string>(v)),
-    type(RDTypeTag::VecStringTag) {}
+    type(RDTypeTag::VecStringTag), key(KEYMAX) {}
 
-  short getTag() const { return type; }
+  inline unsigned char getTag() const { return type; }
   
+  // we have enough space left over for a 24 bit key, might as well use it
+  inline int           getKey() const { return static_cast<int>(key); }
+  inline void          setKey(int k) {
+    CHECK_INVARIANT(k>=0 && k < static_cast<int>((1u<<24)-1),
+                    "Key index negative or too large to save");
+    key=k;
+  }
+
   // ptrCast - unsafe, use rdvalue_cast instead.
   template<class T>
   inline T* ptrCast() const {
@@ -251,6 +261,7 @@ inline void copy_rdvalue(RDValue &dest,
                          const RDValue &src) {
   dest.destroy();
   dest.type = src.type;
+  dest.key = src.key;
   switch (src.type) {
     case RDTypeTag::StringTag:
       dest.value.s = new std::string(*src.value.s);

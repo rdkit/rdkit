@@ -82,7 +82,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
     
-    dp_props = other.dp_props;
+    RDProps::operator=((const RDProps&)other);
 
     // Bookmarks should be copied as well:
     BOOST_FOREACH (ATOM_BOOKMARK_MAP::value_type abmI, other.d_atomBookmarks) {
@@ -96,25 +96,15 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
   } else {
-    dp_props.reset();
-    STR_VECT computed;
-    dp_props.setVal(detail::computedPropName, computed);
+    RDProps::clear();
   }
   // std::cerr<<"---------    done init from other: "<<this<<"
   // "<<&other<<std::endl;
 }
 
 void ROMol::initMol() {
-  dp_props.reset();
+  RDProps::clear();
   dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called detail::computedPropName
-  // which provides
-  //  list of property keys that correspond to value that have been computed
-  // this can used to blow out all computed properties while leaving the rest
-  // along
-  // initialize this list to an empty vector of strings
-  STR_VECT computed;
-  dp_props.setVal(detail::computedPropName, computed);
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {
@@ -572,5 +562,4 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   d_confs.push_back(nConf);
   return conf->getId();
 }
-
 }  // end o' namespace

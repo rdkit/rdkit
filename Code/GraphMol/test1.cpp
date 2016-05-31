@@ -119,6 +119,11 @@ void testBookmarks(ROMol m) {
   m.clearBondBookmark(777);
 }
 
+void dump(STR_VECT &p) {
+  std::cerr << "----------------------------------" << std::endl;
+  for(size_t i=0;i<p.size();++i)
+    std::cerr << p[i] << std::endl;
+}
 void testMolProps() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing Mol Property Caches" << std::endl;
@@ -151,40 +156,57 @@ void testMolProps() {
 
   tmpS = "name";
   m2.setProp(common_properties::_Name, tmpS);
-
+  // _computedProps is no longer stored in the property dictionary
+  //  this is the (-1) below
   propNames = m2.getPropList(false, false);
+  dump(propNames);
   TEST_ASSERT(propNames.size() == 1);
   propNames = m2.getPropList(true, false);
+  dump(propNames);
   TEST_ASSERT(propNames.size() == 2);
 
   // check for computed properties
   m2.setProp("cprop1", 1, true);
   m2.setProp("cprop2", 2, true);
-  STR_VECT cplst;
-  m2.getProp(detail::computedPropName, cplst);
+  STR_VECT cplst = m2.getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 2, "");
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
+  
+  TEST_ASSERT(m2.isComputedProp("cprop1"));
+  TEST_ASSERT(m2.isComputedProp("cprop2"));
 
+  // 2 computed props
+  // one private prop "_Name"
+  // one normal prop
+  const int props = 1;
+  const int privateProps = 1;
+  const int computedProps = 2;
+  
   propNames = m2.getPropList(false, false);
-  TEST_ASSERT(propNames.size() == 1);
+  dump(propNames);
+  TEST_ASSERT(propNames.size() == props);
   propNames = m2.getPropList(true, false);
-  TEST_ASSERT(propNames.size() == 2);
+  dump(propNames);
+  TEST_ASSERT(propNames.size() == props + privateProps);
   propNames = m2.getPropList(false, true);
-  TEST_ASSERT(propNames.size() == 3);
+  dump(propNames);
+  TEST_ASSERT(propNames.size() == props + computedProps);
   propNames = m2.getPropList(true, true);
-  TEST_ASSERT(propNames.size() == 5);
+  dump(propNames);
+  TEST_ASSERT(propNames.size() == props + privateProps + computedProps);
   propNames = m2.getPropList();
-  TEST_ASSERT(propNames.size() == 5);
+  dump(propNames);
+  TEST_ASSERT(propNames.size() == props + privateProps + computedProps);
 
   m2.clearProp("cprop1");
   CHECK_INVARIANT(!m2.hasProp("cprop1"), "");
-  m2.getProp(detail::computedPropName, cplst);
+  cplst = m2.getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 1, "");
 
   m2.clearComputedProps();
   CHECK_INVARIANT(!m2.hasProp("cprop2"), "");
-  m2.getProp(detail::computedPropName, cplst);
+  cplst = m2.getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 0, "");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -206,8 +228,6 @@ void testClearMol() {
   m2.getProp("prop1", tmpI);
   TEST_ASSERT(tmpI == 2);
 
-  TEST_ASSERT(m2.hasProp(detail::computedPropName));
-
   m2.clear();
   TEST_ASSERT(!m2.hasProp("prop1"));
   TEST_ASSERT(m2.getNumAtoms() == 0);
@@ -215,8 +235,8 @@ void testClearMol() {
   TEST_ASSERT(m2.getAtomBookmarks()->empty());
   TEST_ASSERT(m2.getBondBookmarks()->empty());
 
-  TEST_ASSERT(m2.hasProp(detail::computedPropName));  // <- github issue 176
-  TEST_ASSERT(m2.getPropList().size() == 1);
+  TEST_ASSERT(m2.getPropList().size() == 0);
+  TEST_ASSERT(m2.getComputedPropList().size() == 0);
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -286,20 +306,20 @@ void testAtomProps() {
   // check for computed properties
   a1->setProp("cprop1", 1, true);
   a1->setProp("cprop2", 2, true);
-  STR_VECT cplst;
-  a1->getProp(detail::computedPropName, cplst);
+  STR_VECT cplst = a1->getComputedPropList();
+
   CHECK_INVARIANT(cplst.size() == 2, "");
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
 
   a1->clearProp("cprop1");
   CHECK_INVARIANT(!a1->hasProp("cprop1"), "");
-  a1->getProp(detail::computedPropName, cplst);
+  cplst = a1->getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 1, "");
 
   a1->clearComputedProps();
   CHECK_INVARIANT(!a1->hasProp("cprop2"), "");
-  a1->getProp(detail::computedPropName, cplst);
+  cplst = a1->getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 0, "");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -342,19 +362,19 @@ void testBondProps() {
   b1->setProp("cprop1", 1, true);
   b1->setProp("cprop2", 2, true);
   STR_VECT cplst;
-  b1->getProp(detail::computedPropName, cplst);
+  cplst = b1->getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 2, "");
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
 
   b1->clearProp("cprop1");
   CHECK_INVARIANT(!b1->hasProp("cprop1"), "");
-  b1->getProp(detail::computedPropName, cplst);
+  cplst = b1->getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 1, "");
 
   b1->clearComputedProps();
   CHECK_INVARIANT(!b1->hasProp("cprop2"), "");
-  b1->getProp(detail::computedPropName, cplst);
+  cplst = b1->getComputedPropList();
   CHECK_INVARIANT(cplst.size() == 0, "");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

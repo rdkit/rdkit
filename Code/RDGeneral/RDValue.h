@@ -178,11 +178,9 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
     case RDTypeTag::UnsignedIntTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<unsigned int>(val));
       break;
-#ifdef RDVALUE_HASBOOL      
     case RDTypeTag::BoolTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<bool>(val));
       break;
-#endif
     case RDTypeTag::FloatTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<float>(val));
       break;

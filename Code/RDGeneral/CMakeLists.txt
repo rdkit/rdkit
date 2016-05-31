@@ -22,6 +22,7 @@ rdkit_headers(Exceptions.h
               RDLog.h
               RDProps.h
               StreamOps.h
+              tags.h
               types.h
               utils.h
               versions.h
@@ -35,4 +36,5 @@ if (NOT RDK_INSTALL_INTREE)
 endif (NOT RDK_INSTALL_INTREE)
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 rdkit_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
+rdkit_test(testRDTags testRDTags.cpp LINK_LIBRARIES RDGeneral)
 

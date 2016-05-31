@@ -293,6 +293,9 @@ struct bond_wrapper {
         .def("GetPropNames", &Bond::getPropList, (python::arg("self")),
              "Returns a list of the properties set on the Bond.\n\n")
 
+        .def("GetPropNames", &Bond::getComputedPropList, (python::arg("self")),
+             "Returns a list of the computed properties set on the Bond.\n\n")
+        
         .def("GetPropsAsDict", GetPropsAsDict<Bond>, (python::arg("self"),
                                                       python::arg("includePrivate") = true,
                                                       python::arg("includeComputed") = true

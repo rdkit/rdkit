@@ -47,8 +47,6 @@
 #include <boost/static_assert.hpp>
 #include "LocaleSwitcher.h"
 
-#define RDVALUE_HASBOOL
-
 namespace RDKit {
 
   // Inspired by

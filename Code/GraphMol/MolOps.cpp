@@ -734,6 +734,10 @@ int getFormalCharge(const ROMol &mol) {
 };
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
+  return getNumAtomsWithDistinctProperty(mol, Dict::tagmap.get(prop));
+}
+
+unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, int prop) {
   unsigned numPropAtoms = 0;
   for (ROMol::ConstAtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms();
        ++ai) {
@@ -743,5 +747,7 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   }
   return numPropAtoms;
 }
+
+
 };  // end of namespace MolOps
 };  // end of namespace RDKit

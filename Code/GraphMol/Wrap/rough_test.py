@@ -3314,9 +3314,9 @@ CAS<~>
     m = Chem.MolFromSmiles('c1ccccc1')
     for atom in m.GetAtoms():
       d = atom.GetPropsAsDict()
-      self.assertEquals(set(d.keys()), set(['_CIPRank', '__computedProps']))
+      self.assertEquals(set(d.keys()), set(['_CIPRank']))
       self.assertEquals(d['_CIPRank'], 0)
-      self.assertEquals(list(d['__computedProps']), ['_CIPRank'])
+      self.assertEquals(list(atom.GetComputedPropNames()), ['_CIPRank'])
 
 
     for bond in m.GetBonds():
