@@ -42,22 +42,48 @@ namespace RDKit {
 
     // Flags for the return values of the StructureChecker
     // TypeDefs for translating augmented atom pairs
+    static const int ANY_CHARGE = 8;
+    enum RadicalType {
+        RT_NONE = 0,
+        SINGLET = 1,
+        DOUBLET = 2,
+        TRIPLET = 3,
+    };
+    enum BondType {
+        BT_NONE    = 0,
+        SINGLE  = 1,
+        DOUBLE  = 2,
+        TRIPLE  = 3,
+        AROMATIC        = 4,
+        SINGLE_DOUBLE   = 5,
+        SINGLE_AROMATIC = 6,
+        DOUBLE_AROMATIC = 7,
+        ANY_BOND = 8,
+        ALL_BOND_TYPES = 0xF,
+    };
 
     struct Ligand {
         std::string AtomSymbol;
         int         Charge;
         int         Radical;
         int         SubstitutionCount; // substitution count 0 = don't care
-        Bond::BondType BondType; // was: short 
+        BondType    BondType; // was: short 
+        Ligand() : Charge(0), Radical(0), SubstitutionCount(0), BondType(BondType::BT_NONE) {}
     };
 
     struct AugmentedAtom {
+        enum Topography {
+            TP_NONE = 0,
+            RING = 1,
+            CHAIN= 2
+        };
         std::string AtomSymbol;
         std::string ShortName;
         int         Charge;
         int         Radical;
-        int         Topography; // 1=ring 2=chain 0 don't care
+        Topography  Topography; // 1=ring 2=chain 0 don't care
         std::vector<Ligand> Ligands;
+        AugmentedAtom() : Charge(0), Radical(0), Topography(Topography::TP_NONE) {}
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -105,13 +131,42 @@ namespace RDKit {
         {}
 
         void clear() { *this = StructCheckerOptions(); }
+
+        // ~ the same as loadOptionsFromFiles :
+        bool loadAugmentedAtomTranslations(const std::string &path);
+        void setAugmentedAtomTranslations (const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aaPairs);
+
+        bool loadAcidicAugmentedAtoms (const std::string &path);
+        void setAcidicAugmentedAtoms  (const std::vector<AugmentedAtom> &acidicAtoms);
+
+        bool loadGoodAugmentedAtoms (const std::string &path);
+        void setGoodAugmentedAtoms  (const std::vector<AugmentedAtom> &acidicAtoms);
+
+        bool loadPatterns (const std::string &path);        // file with clean patterns
+        void parsePatterns(const std::vector<std::string> &smarts);      // can throw RDKit exeptions
+        void setPatterns (const std::vector<ROMOL_SPTR> &p);
+
+        bool loadRotatePatterns(const std::string &path);   // file with rotate patterns
+        void parseRotatePatterns(const std::vector<std::string> &smarts);      // can throw RDKit exeptions
+        void setRotatePatterns(const std::vector<ROMOL_SPTR> &p);
+
+        bool loadStereoPatterns(const std::string &path);   // file with stereo patterns
+        void parseStereoPatterns(const std::vector<std::string> &smarts);      // can throw RDKit exeptions
+        void setStereoPatterns(const std::vector<ROMOL_SPTR> &p);
+
+        bool loadTautomerData(const std::string &path);     // file path
+        void parseTautomerData(const std::vector<std::string> &smartsFrom, 
+                               const std::vector<std::string> &smartsTo);
+        void setTautomerData(const std::vector<ROMOL_SPTR> &from, const std::vector<ROMOL_SPTR> &to);
     };
 
     bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op);
 
     bool loadOptionsFromFiles(StructCheckerOptions &op,
         const std::string &augmentedAtomTranslationsFile = "",
-        const std::string &patternFile       = "",       // file with clean patterns
+// ?? AcidicAtoms;
+// ?? GoodAtoms;
+        const std::string &patternFile       = "", // file with clean patterns
         const std::string &rotatePatternFile = "", // file with rotate patterns
         const std::string &stereoPatternFile = "", // file with stereo patterns
         const std::string &tautomerFile      = "");
