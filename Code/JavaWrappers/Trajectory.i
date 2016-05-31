@@ -8,20 +8,20 @@
 *   of the RDKit source tree.
 */
 
-%include <boost_shared_ptr.i>
-%include <carrays.i>
-%array_functions(double, SWIGArrayUtility)
-
 %{
 #include <GraphMol/Trajectory/Snapshot.h>
 #include <GraphMol/Trajectory/Trajectory.h>
+#include <boost/shared_array.hpp>
 %}
 %include <GraphMol/Trajectory/Snapshot.h>
 %include <GraphMol/Trajectory/Trajectory.h>
+%include <boost/shared_array.hpp>
 
 %extend RDKit::Snapshot {
-  Snapshot(double *pos, double energy = 0.0) :
-    d_trajectory(NULL),
-      d_energy(energy),
-      d_pos(boost::shared_array<double>(pos)) {}
+  Snapshot(double *posArray, double energy = 0.0) {
+    std::cerr << "ok1, posArray = " << posArray << std::endl;
+    boost::shared_array<double> pos(posArray);
+    std::cerr << "ok2, posArray = " << pos.get() << std::endl;
+    return new RDKit::Snapshot(pos, energy);
+  }
 }
