@@ -5839,6 +5839,60 @@ void testGithubIssue518() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue868() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue "
+                          "#868: inappropriate warning from MergeQueryHs"
+                       << std::endl;
+  std::stringstream sstrm;
+  rdWarningLog->AddTee(sstrm);
+  {
+    sstrm.str("");
+
+    std::string sma = "[SX3](=O)[O-,#1]";
+    RWMol *m = SmartsToMol(sma);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    MolOps::mergeQueryHs(*m);
+    TEST_ASSERT(
+        sstrm.str().find(
+            "merging explicit H queries involved in ORs is not supported") !=
+        std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+                std::string::npos);
+    delete m;
+  }
+  {
+    sstrm.str("");
+
+    std::string sma = "[SX3](=O)[O-,H1]";
+    RWMol *m = SmartsToMol(sma);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    MolOps::mergeQueryHs(*m);
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+                                 "ORs is not supported") == std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") ==
+                std::string::npos);
+    delete m;
+  }
+  {
+    sstrm.str("");
+
+    std::string sma = "[SX3](=O)[O-,H]";
+    RWMol *m = SmartsToMol(sma);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    MolOps::mergeQueryHs(*m);
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+                                 "ORs is not supported") == std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") ==
+                std::string::npos);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -5926,6 +5980,7 @@ int main() {
   testGithubIssue805();
 #endif
   testGithubIssue518();
+  testGithubIssue868();
 
   return 0;
 }
