@@ -5902,7 +5902,7 @@ void testGithubIssue868() {
                           "#868: inappropriate warning from MergeQueryHs"
                        << std::endl;
   std::stringstream sstrm;
-  rdWarningLog->AddTee(sstrm);
+  rdWarningLog->SetTee(sstrm);
   {
     sstrm.str("");
 
