@@ -11,17 +11,20 @@
 %{
 #include <GraphMol/Trajectory/Snapshot.h>
 #include <GraphMol/Trajectory/Trajectory.h>
-#include <boost/shared_array.hpp>
 %}
 %include <GraphMol/Trajectory/Snapshot.h>
 %include <GraphMol/Trajectory/Trajectory.h>
-%include <boost/shared_array.hpp>
 
 %extend RDKit::Snapshot {
-  Snapshot(double *posArray, double energy = 0.0) {
-    std::cerr << "ok1, posArray = " << posArray << std::endl;
+  Snapshot(std::vector<double> &posVect, double energy = 0.0) {
+    double *posArray = new double[posVect.size()];
+    for (unsigned int i = 0; i < posVect.size(); ++i)
+      posArray[i] = posVect[i];
     boost::shared_array<double> pos(posArray);
-    std::cerr << "ok2, posArray = " << pos.get() << std::endl;
-    return new RDKit::Snapshot(pos, energy);
+    RDKit::Snapshot *s = new RDKit::Snapshot(pos, energy);
+    return s;
+  }
+  Snapshot(const RDKit::Snapshot &other) {
+    return new RDKit::Snapshot(other);
   }
 }
