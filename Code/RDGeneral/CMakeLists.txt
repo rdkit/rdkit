@@ -23,6 +23,8 @@ rdkit_headers(Exceptions.h
               RDProps.h
               StreamOps.h
               tags.h
+              tags-nonthreadsafe.h
+              tags-threadsafe.h
               types.h
               utils.h
               versions.h
