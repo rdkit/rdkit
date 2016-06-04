@@ -165,8 +165,8 @@ const unsigned int KEYMAX = 0x00FFFFFF;
 
 struct RDValue {
   RDTypeTag::detail::Value value;
-  unsigned int type:8;
-  unsigned int key:24;
+  short type;
+  int key;
 
   inline RDValue(): value(0.0), type(RDTypeTag::EmptyTag), key(KEYMAX) {}
   // Pod Style (Direct storage)
