@@ -34,16 +34,19 @@
 namespace RDKit {
 namespace RxnOps {
 
+// molAtomMapNumber ==> int
+// molFileRLabel ==> unsigned int
 namespace {
-unsigned int getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
-  unsigned int max_atom;
+template<class T>
+T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
+  T max_atom = (T)0;
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
       ++it) {
     for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
       Atom *atom = (*it)->getAtomWithIdx(idx);
-      unsigned int map;
-      if (atom->getPropIfPresent(prop, map)) {
+      T map;
+      if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom)
           max_atom = map;
       }
@@ -55,8 +58,8 @@ unsigned int getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
       ++it) {
     for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
       Atom *atom = (*it)->getAtomWithIdx(idx);
-      unsigned int map;
-      if (atom->getPropIfPresent(prop, map)) {
+      T map;
+      if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom)
           max_atom = map;
       }
@@ -68,8 +71,8 @@ unsigned int getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
       ++it) {
     for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
       Atom *atom = (*it)->getAtomWithIdx(idx);
-      unsigned int map;
-      if (atom->getPropIfPresent(prop, map)) {
+      T map;
+      if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom)
           max_atom = map;
       }
@@ -78,103 +81,205 @@ unsigned int getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
   
   return max_atom;
 }
+
+struct AtomInfo {
+  Atom *       atom;
+  unsigned int templateIdx;
+  unsigned int rlabel;
+  int          atomMap;
+  int          isotope;
+  std::string  dummyLabel;
+  AtomInfo(Atom *at, unsigned int templateIdx) :
+      atom(at), templateIdx(templateIdx), rlabel(0), atomMap(0),
+      isotope(at->getIsotope()), dummyLabel() {
+    atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
+    atom->getPropIfPresent(common_properties::molAtomMapNumber, atomMap);
+    atom->getPropIfPresent(common_properties::dummyLabel, dummyLabel);
+    //std::cerr << atom->getIdx() << " : " << atom->getAtomicNum() << " " <<
+    //    " rgroup: " << rlabel << " atomMap " << atomMap << " isotope " << isotope <<
+    //    " label " << dummyLabel <<
+    //    std::endl;
+  }
+
+  bool NeedsRLabel() {
+    return atom->getAtomicNum() == 0 && rlabel == 0;
+  }
+
+  unsigned int bestGuessRLabel() {
+    if (rlabel)  return rlabel;
+    if (isotope) return isotope;
+    if (atomMap) return atomMap;
+    if (dummyLabel.size()) {
+      try {
+        return boost::lexical_cast<unsigned int>(
+            dummyLabel.substr(1,dummyLabel.size()-1));
+      } catch (...) {
+        return 0;
+      }
+    }
+    return 0;
+  }
+
+  void setRLabel(unsigned int rlabel) {
+    atom->setProp(common_properties::_MolFileRLabel, rlabel);    
+  }
+
+  void setAtomMap(int map) {
+    atom->setProp(common_properties::molAtomMapNumber, map);
+  }
+};
+
+std::string makeReactantErrorMessage(const std::string &error,
+                             const AtomInfo &at) {
+  std::ostringstream str;
+  str << error <<  " for reactant idx: " << at.templateIdx <<
+      " atom: " << at.atom->getIdx();
+  return str.str();
 }
 
-void fixAtomMaps(ChemicalReaction &rxn) {
-  unsigned int max_atom_map = getMaxProp(rxn,common_properties::molAtomMapNumber);
-  std::map<unsigned int, unsigned int> potential_mappings;
+std::string makeProductErrorMessage(const std::string &error,
+                             const AtomInfo &at) {
+  std::ostringstream str;
+  str << error <<  " for product idx: " << at.templateIdx <<
+      " atom: " << at.atom->getIdx();
+  return str.str();
+}
+}
+
+// if we have query atoms without rlabels, make proper rlabels if possible
+//  ensure that every rlabel in the reactant has one in the product
+void fixRGroups(ChemicalReaction &rxn) {
+  std::map<unsigned int, unsigned int> remapped;
+  std::vector<AtomInfo> reactantAtomsToFix;
+  std::vector<AtomInfo> productAtomsToFix;
   
+  unsigned int templateIdx = 0;
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
-      ++it) {
+      ++it, ++templateIdx) {
     for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
       Atom *atom = (*it)->getAtomWithIdx(idx);
-      unsigned int rlabel;
-      // find any rlabels with no atom maps, and try to set atom maps
-      //  Do I need to worry about the Agents?  I hope not!
-      if (atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel)) {
-        if(!atom->hasProp(common_properties::molAtomMapNumber)) {
-          if(potential_mappings.find(rlabel) != potential_mappings.end()) {
-            throw RxnSanitizeException(std::string("Duplicated RLabels"));
+      AtomInfo at(atom, templateIdx);
+      if (at.NeedsRLabel())
+        reactantAtomsToFix.push_back(at);
+    }
+  }
+  
+  templateIdx = 0;
+  for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
+      it != rxn.endProductTemplates();
+      ++it, ++templateIdx) {
+    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
+      Atom *atom = (*it)->getAtomWithIdx(idx);
+      AtomInfo at(atom, templateIdx);
+      if (at.NeedsRLabel())
+        productAtomsToFix.push_back(at);
+    }
+  }
+
+  if (!reactantAtomsToFix.size() && !productAtomsToFix.size())
+    return;
+
+  ssize_t diff = reactantAtomsToFix.size() - productAtomsToFix.size();
+  if(diff) {
+    std::ostringstream str;
+    str << "Mismatched rlabels: " <<
+        reactantAtomsToFix.size() << " unmapped reactant rlabels," << 
+        productAtomsToFix.size() << " unmappped product rlabels" ;
+    throw RxnSanitizeException(str.str());
+  }
+
+
+  unsigned int max_rlabel = getMaxProp<unsigned int>(rxn,
+                                                     common_properties::_MolFileRLabel);
+  int max_atom_map = getMaxProp<int>(rxn,
+                                     common_properties::molAtomMapNumber);
+
+  BOOST_FOREACH(AtomInfo &rat, reactantAtomsToFix) {
+    bool found = false;
+    unsigned int bestGuess = rat.bestGuessRLabel();
+    if (!bestGuess) {
+      throw RxnSanitizeException(makeReactantErrorMessage(
+          "Could not deduce RLabel", rat));
+    }
+    
+    BOOST_FOREACH(AtomInfo &pat, productAtomsToFix) {
+      if (!pat.atom) continue;
+                         
+      if(rat.bestGuessRLabel() == pat.bestGuessRLabel()) {
+        // if the atomMaps don't match, this is bad, no atomMap is ok(==0)
+        if (rat.atomMap == pat.atomMap) {
+          found = true;
+          rat.setRLabel( max_rlabel + rat.bestGuessRLabel() );
+          pat.setRLabel( max_rlabel + pat.bestGuessRLabel() );
+          if (!rat.atomMap) { // set atom mapping as well
+            rat.setAtomMap(max_atom_map + rat.bestGuessRLabel());
+            pat.setAtomMap(max_atom_map + rat.bestGuessRLabel());
           }
-          potential_mappings[rlabel] = rlabel+max_atom_map;
-          atom->setProp(common_properties::molAtomMapNumber, rlabel+max_atom_map);
+          pat.atom = NULL;
+          break;
         }
       }
     }
+    
+    if(!found) {
+      throw RxnSanitizeException(makeReactantErrorMessage(
+          "Could not find RLabel mapping", rat));
+    }
   }
+  return;
+}
+
+// if we have query atoms without rlabels, make proper rlabels if possible
+//  ensure that every rlabel in the reactant has one in the product
+
+void fixAtomMaps(ChemicalReaction &rxn) {
+  int max_atom_map = getMaxProp<int>(
+      rxn,
+      common_properties::molAtomMapNumber);
+  std::map<unsigned int, int> potential_mappings;
+
+  unsigned int templateIdx = 0;
+
+  for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
+      it != rxn.endReactantTemplates();
+      ++it, ++templateIdx) {
+    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
+      Atom *atom = (*it)->getAtomWithIdx(idx);
+      AtomInfo at(atom, templateIdx);
+      if(at.rlabel && !at.atomMap) {
+        if(potential_mappings.find(at.rlabel) != potential_mappings.end()) {
+            throw RxnSanitizeException(std::string("Duplicated RLabels"));
+          }
+          int map = potential_mappings[at.rlabel] = rdcast<int>(at.rlabel)+max_atom_map;
+          at.setAtomMap(map);
+      }
+    }
+  }
+
   
   if (!potential_mappings.size())
     return; // everything is ok!
 
+  templateIdx = 0;
   for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
       it != rxn.endProductTemplates();
-      ++it) {
+      ++it, ++templateIdx) {
     for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
       Atom *atom = (*it)->getAtomWithIdx(idx);
-      unsigned int rlabel;
-      if (atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel)) {
-        if(!atom->hasProp(common_properties::molAtomMapNumber)) {
-          atom->setProp(common_properties::molAtomMapNumber,
-                        potential_mappings[rlabel]);
+      AtomInfo at(atom, templateIdx);
+      if(at.rlabel) {
+        if(!at.atomMap) {
+          at.setAtomMap(potential_mappings[at.rlabel]);
         } else {
-          if (atom->getProp<unsigned int>(common_properties::molAtomMapNumber) !=
-              potential_mappings[rlabel]) {
-            throw RxnSanitizeException("Unmapped Rlabel on product template, "
-                                       "could not resolve atom map");
+          if (at.atomMap != potential_mappings[at.rlabel]) {
+            throw RxnSanitizeException(makeProductErrorMessage(
+                "RLabel is mapped in product but not in reactant", at));
           }
         }
       }
     }
   }
-}
-
-// if we have query atoms without rlabels, make proper rlabels
-void fixRGroups(ChemicalReaction &rxn) {
-  unsigned int maxrlabel = getMaxProp(rxn, common_properties::_MolFileRLabel);
-  std::map<unsigned int, unsigned int> remapped;
-  for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
-      it != rxn.endReactantTemplates();
-      ++it) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-          Atom *atom = (*it)->getAtomWithIdx(idx);
-          unsigned int map;
-          if(atom->getPropIfPresent(common_properties::molAtomMapNumber, map)) {
-            if(atom->getAtomicNum() == 0) {
-              if(!atom->hasProp(common_properties::_MolFileRLabel)) {
-                atom->setProp(common_properties::_MolFileRLabel, maxrlabel+map);
-                remapped[map] = maxrlabel+map;
-              }
-            }
-          }
-    }
-  }
-  
-  if (!remapped.size())
-    return;
-
-  for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
-      it != rxn.endProductTemplates();
-      ++it) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
-      unsigned int map;
-      if(atom->getPropIfPresent(common_properties::molAtomMapNumber, map)) {
-        if(atom->getAtomicNum() == 0) {
-          if(!atom->hasProp(common_properties::_MolFileRLabel)) {
-            atom->setProp(common_properties::_MolFileRLabel, maxrlabel+map);
-          } else {
-            if (atom->getProp<unsigned int>(common_properties::_MolFileRLabel) !=
-                remapped[map]) {
-              // this might or might not actually be illegal :)
-              throw RxnSanitizeException("Mismatched mappings for rgroups");
-            }
-          }
-        }
-      }
-    }
-  }
-  return;
 }
 
 // might throw mol sanitization exception??? wrap in RxnSanitize?
@@ -211,15 +316,16 @@ void sanitizeRxn(ChemicalReaction &rxn,
 {
   operationsThatFailed = SANITIZE_NONE;
 
+  if (ops & SANITIZE_RGROUP_NAMES) {
+    operationsThatFailed = SANITIZE_RGROUP_NAMES;
+    fixRGroups(rxn);
+  }
+
   if (ops & SANITIZE_ATOM_MAPS) {
     operationsThatFailed = SANITIZE_ATOM_MAPS;
     fixAtomMaps(rxn);
   }
 
-  if (ops & SANITIZE_RGROUP_NAMES) {
-    operationsThatFailed = SANITIZE_RGROUP_NAMES;
-    fixRGroups(rxn);
-  }
 
   if (ops & SANITIZE_REAGENT_AROMATICITY) {
     operationsThatFailed = SANITIZE_REAGENT_AROMATICITY;

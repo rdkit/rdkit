@@ -52,15 +52,18 @@ class RxnSanitizeException : public std::exception {
 
 
 namespace RxnOps {
-//! If atom maps are not defined, attempt to deduce them from the RGroup
-//!  labels.
-void fixAtomMaps(ChemicalReaction &rxn);
-
 //! Any dummy atom with a map but no RGroup label, should be an RGroup
 //!  in RDKit's view of a reaction.
+//!  See if these atoms can be salvaged into RGroups.
 void fixRGroups(ChemicalReaction &rxn);
 
+//! If atom maps are not defined on rgroups, attempt to deduce them from the RGroup
+//!  labels, or add new ones if possible.
+void fixAtomMaps(ChemicalReaction &rxn);
+
+
 //! Set aromaticity on templates if possible
+//!  This affects RXN files mostly.
 void fixTemplateAromaticity(ChemicalReaction &rxn);
 
 //! merge query Hs if appropriate
@@ -68,11 +71,11 @@ void fixHs(ChemicalReaction &rxn);
 
 typedef enum {
   SANITIZE_NONE = 0x0,
-  SANITIZE_ATOM_MAPS = 0x1,
-  SANITIZE_RGROUP_NAMES = 0x2,
+  SANITIZE_RGROUP_NAMES = 0x1,
+  SANITIZE_ATOM_MAPS = 0x2,
   SANITIZE_REAGENT_AROMATICITY = 0x4,
   SANITIZE_MERGEHS = 0x8,
-  SANITIZE_ALL = 0xFFFFFFF
+  SANITIZE_ALL = 0xFFFFFFFF
 } SanitizeRxnFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a reaction and
@@ -80,9 +83,10 @@ typedef enum {
 //! that it makes "chemical sense" in the context of RDKit reacitons
 /*!
    This functions calls the following in sequence
-     -# RxnOps::fixupAtomMaps()
      -# RxnOps::fixRGroups()
-     -# MolOps::fixupTemplateAromaticity()
+     -# RxnOps::fixupAtomMaps()
+     -# RxnOps::fixupTemplateAromaticity()
+     -# RxnOps::mergeHs()
 
    \param rxn : the ChemicalReaction to be cleaned
 
@@ -100,13 +104,12 @@ typedef enum {
 
    <b>Notes:</b>
     - This attempts to fix known issues with certain reaction drawers.
-       HOWEVER, if any flag is returned in operationsPerformed, take the
+       HOWEVER, if any flag is returned in operationsPerformed, 
        the reaction may still be suspect to its validity.
     - Aromaticity can be tricky when starting with Kekule structures that
       have query features, aromaticity works well for non-query rings, however
       certain structures (substitutions on Kekule rings that should really be
-   aromatic)
-      may not have enough information.
+      aromatic) may not have enough information.
 */
 
 void sanitizeRxn(ChemicalReaction &rxn,
@@ -114,6 +117,7 @@ void sanitizeRxn(ChemicalReaction &rxn,
                  unsigned int sanitizeOps = SANITIZE_ALL);
 //! \overload
 void sanitizeRxn(ChemicalReaction &rxn);
+
 }
 }
 

@@ -2,7 +2,7 @@ find_package(Boost 1.39.0 COMPONENTS serialization REQUIRED)
 message("==> ${Boost_SERIALIZATION_LIBRARY}")
 rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
-	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp
+	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp
                     Enumerate/Enumerate.cpp
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
