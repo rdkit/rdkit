@@ -66,7 +66,7 @@ dtypes: object(20)>
 
 Conversion to html is quite easy:
 >>> htm = frame.to_html()
->>> htm[:36]
+>>> str(htm[:36])
 '<table border="1" class="dataframe">'
 
 In order to support rendering the molecules as images in the HTML export of the dataframe, the __str__ method is monkey-patched to return a base64 encoded PNG:
