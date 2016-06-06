@@ -543,6 +543,9 @@ struct mol_wrapper {
              "                      Defaults to 0.\n\n"
              "  RETURNS: a tuple of strings\n")
 
+        .def("GetComputedPropNames", &ROMol::getComputedPropList,
+             "Returns a tuple with all comptued property names for this molecule.\n")
+        
         .def("GetPropsAsDict", GetPropsAsDict<ROMol>,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false),

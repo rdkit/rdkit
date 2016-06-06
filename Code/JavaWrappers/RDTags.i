@@ -1,6 +1,6 @@
 /* 
 *
-*  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2016, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
 * 
 * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,9 @@
 
 %{
 #include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
-#include <RDGeneral/Dict.h>
+#include <RDGeneral/tags.h>
 %}
 
-%ignore RDKit::KeyIntPair;
-%ignore RDKit::Dict::begin;
-%ignore RDKit::Dict::end;
-%ignore RDKit::Dict::DataType;
+%ignore RDKit::RDTags::operator=(const RDKit::RDTags &);
+%include <RDGeneral/tags.h>
 
-%include <RDGeneral/Dict.h>
-%include <RDGeneral/RDProps.h>
-
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::RDProps::setProp<std::string>;

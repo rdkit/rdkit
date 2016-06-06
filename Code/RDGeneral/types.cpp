@@ -15,85 +15,90 @@
 
 namespace RDKit {
 namespace common_properties {
-const std::string TWOD = "2D";
-const std::string BalabanJ = "BalabanJ";
-const std::string BalanbanJ = "BalanbanJ";
-const std::string Discrims = "Discrims";
-const std::string DistanceMatrix_Paths = "DistanceMatrix_Paths";
-const std::string MolFileComments = "MolFileComments";
-const std::string MolFileInfo = "MolFileInfo";
-const std::string NullBond = "NullBond";
-const std::string _2DConf = "_2DConf";
-const std::string _3DConf = "_3DConf";
-const std::string _AtomID = "_AtomID";
-const std::string _BondsPotentialStereo = "_BondsPotentialStereo";
-const std::string _CIPCode = "_CIPCode";
-const std::string _CIPRank = "_CIPRank";
-const std::string _ChiralityPossible = "_ChiralityPossible";
-const std::string _CrippenLogP = "_CrippenLogP";
-const std::string _CrippenMR = "_CrippenMR";
-const std::string _MMFFSanitized = "_MMFFSanitized";
-const std::string _MolFileChiralFlag = "_MolFileChiralFlag";
-const std::string _MolFileRLabel = "_MolFileRLabel";
-const std::string _Name = "_Name";
-const std::string _NeedsQueryScan = "_NeedsQueryScan";
-const std::string _QueryFormalCharge = "_QueryFormalCharge";
-const std::string _QueryHCount = "_QueryHCount";
-const std::string _QueryIsotope = "_QueryIsotope";
-const std::string _QueryMass = "_QueryMass";
-const std::string _ReactionDegreeChanged = "_ReactionDegreeChanged";
-const std::string _RingClosures = "_RingClosures";
-const std::string _SLN_s = "_SLN_s";
-const std::string _SmilesStart = "_SmilesStart";
-const std::string _StereochemDone = "_StereochemDone";
-const std::string _TraversalBondIndexOrder = "_TraversalBondIndexOrder";
-const std::string _TraversalRingClosureBond = "_TraversalRingClosureBond";
-const std::string _TraversalStartPoint = "_TraversalStartPoint";
-const std::string _TriposAtomType = "_TriposAtomType";
-const std::string _Unfinished_SLN_ = "_Unfinished_SLN_";
-const std::string _UnknownStereo = "_UnknownStereo";
-const std::string _connectivityHKDeltas = "_connectivityHKDeltas";
-const std::string _connectivityNVals = "_connectivityNVals";
-const std::string _crippenLogP = "_crippenLogP";
-const std::string _crippenLogPContribs = "_crippenLogPContribs";
-const std::string _crippenMR = "_crippenMR";
-const std::string _crippenMRContribs = "_crippenMRContribs";
-const std::string _doIsoSmiles = "_doIsoSmiles";
-const std::string _fragSMARTS = "_fragSMARTS";
-const std::string _hasMassQuery = "_hasMassQuery";
-const std::string _labuteASA = "_labuteASA";
-const std::string _labuteAtomContribs = "_labuteAtomContribs";
-const std::string _labuteAtomHContrib = "_labuteAtomHContrib";
-const std::string _protected = "_protected";
-const std::string _queryRootAtom = "_queryRootAtom";
-const std::string _ringStereoAtoms = "_ringStereoAtoms";
-const std::string _ringStereoWarning = "_ringStereoWarning";
-const std::string _ringStereochemCand = "_ringStereochemCand";
-const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
-const std::string _starred = "_starred";
-const std::string _supplementalSmilesLabel = "_supplementalSmilesLabel";
-const std::string _tpsa = "_tpsa";
-const std::string _tpsaAtomContribs = "_tpsaAtomContribs";
-const std::string _unspecifiedOrder = "_unspecifiedOrder";
-const std::string _brokenChirality = "_brokenChirality";
-const std::string _rgroupAtomMaps = "_rgroupAtomMaps";
-const std::string _rgroupBonds = "_rgroupBonds";
-const std::string dummyLabel = "dummyLabel";
-const std::string extraRings = "extraRings";
-const std::string isImplicit = "isImplicit";
-const std::string maxAttachIdx = "maxAttachIdx";
-const std::string molAtomMapNumber = "molAtomMapNumber";
-const std::string molFileAlias = "molFileAlias";
-const std::string molFileValue = "molFileValue";
-const std::string molInversionFlag = "molInversionFlag";
-const std::string molParity = "molParity";
-const std::string molRxnComponent = "molRxnComponent";
-const std::string molRxnRole = "molRxnRole";
-const std::string molTotValence = "molTotValence";
-const std::string numArom = "numArom";
-const std::string origNoImplicit = "origNoImplicit";
-const std::string ringMembership = "ringMembership";
-const std::string smilesSymbol = "smilesSymbol";
+const char * propnames[] = {
+  "_Name",
+  "_MolFileInfo",
+  "_MolFileComments",
+  "_2DConf",
+  "_3DConf",
+  "_doIsoSmiles",
+  "extraRings",
+  "_smilesAtomOutputOrder",
+  "_StereochemDone",
+  "_NeedsQueryScan",
+  "_fragSMARTS",
+  "maxAttachIdx",
+  "origNoImplicit",
+  "ringMembership",
+  "_connectivityHKDeltas",
+  "_connectivityNVals",
+  "_crippenLogP",
+  "_crippenLogPContribs",
+  "_crippenMR",
+  "_crippenMRContribs",
+  "_labuteASA",
+  "_labuteAtomContribs",
+  "_labuteAtomHContrib",
+  "_tpsa",
+  "_tpsaAtomContribs",
+  "numArom",
+  "_MMFFSanitized",
+  "_CrippenLogP",
+  "_CrippenMR",
+  "_BondsPotentialStereo",
+  "_CIPCode",
+  "_CIPRank",
+  "_ChiralityPossible",
+  "_UnknownStereo",
+  "_ringStereoAtoms",
+  "_ringStereochemCand",
+  "_ringStereoWarning",
+  "_SmilesStart",
+  "_TraversalBondIndexOrder",
+  "_TraversalRingClosureBond",
+  "_TraversalStartPoint",
+  "_queryRootAtom",
+  "_hasMassQuery",
+  "_protected",
+  "_supplementalSmilesLabel",
+  "_unspecifiedOrder",
+  "_RingClosures",
+  "molAtomMapNumber",
+  "molFileAlias",
+  "molFileValue",
+  "molInversionFlag",
+  "molParity",
+  "molRxnComponent",
+  "molRxnRole",
+  "molTotValence",
+  "_MolFileRLabel",
+  "_MolFileChiralFlag",
+  "dummyLabel",
+  "_QueryFormalCharge",
+  "_QueryHCount",
+  "_QueryIsotope",
+  "_QueryMass",
+  "_ReactionDegreeChanged",
+  "NullBond",
+  "_rgroupAtomMaps",
+  "_rgroupBonds",
+  "_AtomID",
+  "_starred",
+  "_SLN_s",
+  "_Unfinished_SLN_",
+  "_brokenChirality",
+  "isImplicit",
+  "smilesSymbol",
+  "_TriposAtomType",
+  "2D",
+  "BalabanJ",
+  "BalanbanJ",
+  "Discrims",
+  "DistanceMatrix_Paths",
+  //"__computedProps"
+};
+
+
 }  // end common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();

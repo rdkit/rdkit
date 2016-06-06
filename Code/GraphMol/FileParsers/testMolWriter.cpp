@@ -662,6 +662,7 @@ void testIssue265() {
     writer.write(*m1);
     writer.flush();
     std::string otext = sstream.str();
+    std::cerr << "otext: " << otext << std::endl;
     TEST_ASSERT(otext == "$SMI<C1NO1>\n3D<0,0,0,0,1,0,1,0,0;>\n");
   }
 }

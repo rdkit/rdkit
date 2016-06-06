@@ -777,7 +777,8 @@ Sample Usage:\n\
   python::def("PreprocessReaction", PreprocessReaction,
               (python::arg("reaction"),
                python::arg("queries")=python::dict(),
-               python::arg("propName")=common_properties::molFileValue),
+               python::arg("propName")=common_properties::getPropName(
+                   common_properties::molFileValue)),
               docString.c_str());
 }
 }

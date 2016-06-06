@@ -46,8 +46,7 @@
 #include <boost/type_traits.hpp>
 #include <boost/static_assert.hpp>
 #include "LocaleSwitcher.h"
-
-#define RDVALUE_HASBOOL
+#include "tags.h"
 
 namespace RDKit {
 
@@ -410,6 +409,22 @@ inline bool rdvalue_cast<bool>(RDValue v) {
           v.otherBits & ~RDTypeTag::BoolTag);
   throw boost::bad_any_cast();
 }
+
+// The RDValue has no getKey implementation
+//  so implement our own
+struct KeyIntPair {
+  int key;
+  RDValue val;
+  KeyIntPair() : key(), val() {}
+  KeyIntPair(int k, const RDValue &v) : key(k), val(v) {}
+  KeyIntPair(const std::string &s, RDValue_cast_t v) :
+  key(tagmap.get(s)), val(v) {}
+  
+  inline void setKey(int k) { key = k; }
+  inline int  getKey() const { return key; }
+
+  static RDTags tagmap;
+};
 
 } // namespace rdkit
 #endif

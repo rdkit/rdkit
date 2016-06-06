@@ -29,20 +29,18 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#ifndef RDKIT_TAGS_H
+#define RDKIT_TAGS_H
 
-%{
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
-#include <RDGeneral/Dict.h>
-%}
 
-%ignore RDKit::KeyIntPair;
-%ignore RDKit::Dict::begin;
-%ignore RDKit::Dict::end;
-%ignore RDKit::Dict::DataType;
+#include "rdkit.h"
 
-%include <RDGeneral/Dict.h>
-%include <RDGeneral/RDProps.h>
+#ifdef  RDK_THREADSAFE_SSS
+#include "tags-threadsafe.h"
+#else
+#include "tags-nonthreadsafe.h"
+#endif
 
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::RDProps::setProp<std::string>;
+#endif
+
+

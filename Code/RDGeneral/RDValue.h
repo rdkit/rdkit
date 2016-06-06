@@ -31,12 +31,7 @@
 #ifndef RDKIT_RDVALUE_H
 #define RDKIT_RDVALUE_H
 
-//#define UNSAFE_RDVALUE
-#ifdef UNSAFE_RDVALUE
-#include "RDValue-doublemagic.h"
-#else
-#include "RDValue-taggedunion.h"
-#endif
+#include "RDValue-implementation.h"
 
 namespace RDKit {
 //  Common Casts (POD Casts are implementation dependent)
@@ -178,11 +173,9 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
     case RDTypeTag::UnsignedIntTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<unsigned int>(val));
       break;
-#ifdef RDVALUE_HASBOOL      
     case RDTypeTag::BoolTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<bool>(val));
       break;
-#endif
     case RDTypeTag::FloatTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<float>(val));
       break;

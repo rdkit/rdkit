@@ -1,6 +1,6 @@
 /* 
 *
-*  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2016, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
 * 
 * Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,12 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-%{
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
-#include <RDGeneral/Dict.h>
-%}
+// Build Time Definitions
 
-%ignore RDKit::KeyIntPair;
-%ignore RDKit::Dict::begin;
-%ignore RDKit::Dict::end;
-%ignore RDKit::Dict::DataType;
+#ifndef RDK_THREADSAFE_SSS
+#cmakedefine RDK_THREADSAFE_SSS
+#endif
 
-%include <RDGeneral/Dict.h>
-%include <RDGeneral/RDProps.h>
-
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::RDProps::setProp<std::string>;
+#ifndef RDK_TEST_MULTITHREADED
+#cmakedefine RDK_TEST_MULTITHREADED
+#endif

@@ -1,5 +1,6 @@
 // $Id$
 //
+// Copyright (C) 2015 Novartis Institute of BioMedical Research
 // Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
@@ -9,10 +10,15 @@
 //  of the RDKit source tree.
 //
 #include "Dict.h"
+#include "Exceptions.h"
+#include "tags.h"
 
 namespace RDKit {
 
-void Dict::getVal(const std::string &what, std::string &res) const {
+RDTags RDKit::KeyIntPair::tagmap;
+
+
+void Dict::getVal(int tag, std::string &res) const {
   //
   //  We're going to try and be somewhat crafty about this getVal stuff to make
   //  these
@@ -24,16 +30,16 @@ void Dict::getVal(const std::string &what, std::string &res) const {
   //  other casts, which will then be lexically cast to type T.
   //
   for(size_t i=0; i< _data.size(); ++i) {
-    if (_data[i].key == what) {
+    if (_data[i].getKey() == tag) {
       rdvalue_tostring(_data[i].val, res);
       return;
     }
 
   }
-  throw KeyErrorException(what);    
+  throw KeyErrorException(common_properties::getPropName(tag));    
 }
 
-bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
+bool Dict::getValIfPresent(int tag, std::string &res) const {
   //
   //  We're going to try and be somewhat crafty about this getVal stuff to make
   //  these
@@ -45,12 +51,27 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
   //  other casts, which will then be lexically cast to type T.
   //
   for(size_t i=0; i< _data.size(); ++i) {
-    if (_data[i].key == what) {
+    if (_data[i].getKey() == tag) {
       rdvalue_tostring(_data[i].val, res);
       return true;
     }
   }
   return false;
+}
+
+
+namespace common_properties {
+
+const char *getPropName(int v) {
+  if (v>=0 && v<=MAX) {
+    return common_properties::propnames[v];
+  }
+  if ((size_t)v < RDKit::KeyIntPair::tagmap.keys.size())
+    return RDKit::KeyIntPair::tagmap.keys[v].c_str();
+
+  throw KeyErrorException("Unknown tag");
+}
+
 }
 
 }

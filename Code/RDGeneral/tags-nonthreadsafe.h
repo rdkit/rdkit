@@ -1,6 +1,6 @@
 /* 
 *
-*  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2016, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
 * 
 * Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,63 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#ifndef RDKIT_TAGS_NONTHREADSAFE_H
+#define RDKIT_TAGS_NONTHREADSAFE_H
 
-%{
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
-#include <RDGeneral/Dict.h>
-%}
+#include "types.h"
 
-%ignore RDKit::KeyIntPair;
-%ignore RDKit::Dict::begin;
-%ignore RDKit::Dict::end;
-%ignore RDKit::Dict::DataType;
+#include "BoostStartInclude.h"
+#include <boost/unordered_map.hpp>
+#include "BoostEndInclude.h"
 
-%include <RDGeneral/Dict.h>
-%include <RDGeneral/RDProps.h>
 
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::RDProps::setProp<std::string>;
+namespace RDKit
+{
+
+// RDTags is designed to be used as a static singleton
+class RDTags
+{
+  RDTags(const RDTags&);
+  RDTags& operator=(const RDTags&);
+public:
+  // Load the known keys
+  RDTags() {
+    for(int i=0;i<=common_properties::MAX;++i) {
+      keyIntMap[common_properties::getPropName(i)] = i;
+      keys.push_back(common_properties::getPropName(i));
+    }
+  };
+
+  //! \brief Get the current string key for the integer key.
+  //!  throws std::out_of_range when key is out
+  //!  of range.  
+  const std::string &get(int tag) const {
+    return keys[tag]; // raises exception
+  }
+
+  //! \brief Return the int key for the specified string key
+  //! If the string key has never been used before, it is
+  //!  added to the global map and a new integer key is created.
+  int get(const std::string &key) const
+  {
+    boost::unordered_map<std::string, int>::const_iterator it=keyIntMap.find(key);
+    
+    if (it != keyIntMap.end()) {
+      return it->second;
+    }
+
+    int res = static_cast<int>(keyIntMap.size());
+    std::pair<std::string, int> p(key,res);
+    keyIntMap.insert(p);
+    keys.push_back(key);
+    return res;
+  }
+  
+public:
+  mutable boost::unordered_map<std::string, int> keyIntMap;
+  mutable std::vector<std::string > keys;
+};
+
+}
+
+#endif

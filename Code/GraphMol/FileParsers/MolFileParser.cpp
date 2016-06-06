@@ -2330,7 +2330,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   res->setProp("_MolFileInfo", tempStr);
   if (tempStr.length() >= 22) {
     std::string dimLabel = tempStr.substr(20, 2);
-    if (dimLabel == "2d" || dimLabel == common_properties::TWOD) {
+    if (dimLabel == "2d" || dimLabel == "2D") {
       res->setProp(common_properties::_2DConf, 1);
     } else if (dimLabel == "3d" || dimLabel == "3D") {
       res->setProp(common_properties::_3DConf, 1);
