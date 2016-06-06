@@ -733,8 +733,9 @@ int getFormalCharge(const ROMol &mol) {
   return accum;
 };
 
-unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
-  return getNumAtomsWithDistinctProperty(mol, Dict::tagmap.get(prop));
+unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,
+                                         const std::string &prop) {
+  return getNumAtomsWithDistinctProperty(mol, GetKey(prop));
 }
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, int prop) {

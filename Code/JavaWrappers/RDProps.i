@@ -33,9 +33,15 @@
 %{
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
+#include <RDGeneral/Dict.h>
 %}
 
+%ignore RDKit::KeyIntPair;
+%ignore RDKit::Dict::begin;
+%ignore RDKit::Dict::end;
+%ignore RDKit::Dict::DataType;
 
+%include <RDGeneral/Dict.h>
 %include <RDGeneral/RDProps.h>
 
 /* For the time being, assume all properties will be strings */

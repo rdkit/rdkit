@@ -1,5 +1,16 @@
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp )
+               
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/rdkit.h.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/rdkit.h @ONLY)
+
+if(UNSAFE_RDVALUE)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDValue-doublemagic.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/RDValue-implementation.h COPYONLY)
+else(UNSAFE_RDVALUE)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDValue-taggedunion.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/RDValue-implementation.h COPYONLY)
+endif(UNSAFE_RDVALUE)
 
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp
@@ -8,7 +19,8 @@ rdkit_library(RDGeneral
 
 target_link_libraries(RDGeneral ${RDKit_THREAD_LIBS})
 
-rdkit_headers(Exceptions.h
+rdkit_headers(rdkit.h
+              Exceptions.h
               BadFileException.h
               BoostStartInclude.h
               BoostEndInclude.h
@@ -17,8 +29,7 @@ rdkit_headers(Exceptions.h
               Invariant.h
               RDAny.h
               RDValue.h
-              RDValue-doublemagic.h
-              RDValue-taggedunion.h
+              RDValue-implementation.h
               RDLog.h
               RDProps.h
               StreamOps.h

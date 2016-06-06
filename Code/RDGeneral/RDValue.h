@@ -31,12 +31,7 @@
 #ifndef RDKIT_RDVALUE_H
 #define RDKIT_RDVALUE_H
 
-//#define UNSAFE_RDVALUE
-#ifdef UNSAFE_RDVALUE
-#include "RDValue-doublemagic.h"
-#else
-#include "RDValue-taggedunion.h"
-#endif
+#include "RDValue-implementation.h"
 
 namespace RDKit {
 //  Common Casts (POD Casts are implementation dependent)

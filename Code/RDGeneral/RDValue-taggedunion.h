@@ -42,6 +42,7 @@
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
 #include "LocaleSwitcher.h"
+#include "tags.h"
 
 #define RDVALUE_HAS_KEY
 
@@ -360,6 +361,21 @@ inline bool rdvalue_cast<bool>(RDValue_cast_t v) {
   throw boost::bad_any_cast();
 }
 
+struct KeyIntPair {
+   RDValue val;
+  
+  KeyIntPair() : val() {}
+  KeyIntPair(int k, const RDValue &v) : val(v) {
+   val.setKey(k);
+   TEST_ASSERT(val.getKey() == k);
+  }
+  KeyIntPair(const std::string &s, RDValue_cast_t v) :
+   val(v) { val.setKey(tagmap.get(s));}
+  
+  inline void setKey(int k) { val.setKey(k); }
+  inline int  getKey() const { return val.getKey(); }
+  static RDTags tagmap;
+};  
 
 } // namespace rdkit
 #endif

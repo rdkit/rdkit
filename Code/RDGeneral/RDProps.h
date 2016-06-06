@@ -70,7 +70,7 @@ protected:
   }
   
   bool isComputedProp(const std::string &prop) const {
-    return isComputedProp(Dict::tagmap.get(prop));
+    return isComputedProp(GetKey(prop));
   }
   //! sets a \c property value
   /*!
@@ -94,7 +94,7 @@ protected:
 
   template <typename T>
   void setProp(const std::string &key, T val, bool computed = false) const {
-    setProp(Dict::tagmap.get(key), val, computed);
+    setProp(GetKey(key), val, computed);
   }
   //! allows retrieval of a particular property value
   /*!
@@ -119,7 +119,7 @@ protected:
   }
   template <typename T>
   void getProp(const std::string &key, T &res) const {
-    return getProp(Dict::tagmap.get(key), res);
+    return getProp(GetKey(key), res);
   }
 
   //! \overload
@@ -129,7 +129,7 @@ protected:
   }
   template <typename T>
   T getProp(const std::string &key) const {
-    return getProp<T>(Dict::tagmap.get(key));
+    return getProp<T>(GetKey(key));
   }
   //! returns whether or not we have a \c property with name \c key
   //!  and assigns the value if we do
@@ -141,7 +141,7 @@ protected:
 
   template <typename T>
   bool getPropIfPresent(const std::string &key, T &res) const {
-    return getPropIfPresent(Dict::tagmap.get(key), res);
+    return getPropIfPresent(GetKey(key), res);
   }
   //! \overload
   bool hasProp(int tag) const {
@@ -171,7 +171,7 @@ protected:
   };
 
   void clearProp(const std::string &key) const {
-    clearProp(Dict::tagmap.get(key));
+    clearProp(GetKey(key));
   };
 
   //! clears all of our \c computed \c properties

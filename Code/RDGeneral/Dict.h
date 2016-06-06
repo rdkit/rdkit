@@ -29,6 +29,22 @@
 namespace RDKit {
 typedef std::vector<std::string> STR_VECT;
 
+//! Convert string keys to internted (tagged) int keys
+inline int GetKey(const std::string &key) {
+  return KeyIntPair::tagmap.get(key);
+}
+
+//! Convert string keys to interned (tagged) int keys
+inline int GetKey(const char * key) {
+  return KeyIntPair::tagmap.get(key);
+}
+
+//! Convert int keys to interned (tagged) strings
+inline const std::string &GetKey(int key) {
+  return KeyIntPair::tagmap.get(key);
+}
+
+
 //! \brief The \c Dict class can be used to store objects of arbitrary
 //!        type keyed by \c strings.
 //!
@@ -36,48 +52,14 @@ typedef std::vector<std::string> STR_VECT;
 //!
 class Dict {
 public:
-#ifdef RDVALUE_HAS_KEY
-  // The RDValue has a .getKey implementation
-  //  so use it to save some space.
-  struct Pair {
-    RDValue val;
-
-   Pair() : val() {}
-   Pair(int k, const RDValue &v) : val(v) {
-     val.setKey(k);
-     TEST_ASSERT(val.getKey() == k);
-   }
-   Pair(const std::string &s, RDValue_cast_t v) :
-    val(v) { val.setKey(tagmap.get(s));}
-
-    inline void setKey(int k) { val.setKey(k); }
-    inline int  getKey() const { return val.getKey(); }
-  };  
-#else
-  // The RDValue has no getKey implementation
-  //  so implement our own
-  struct Pair {
-    int key;
-    RDValue val;
-
-   Pair() : key(), val() {}
-   Pair(int k, const RDValue &v) : key(k), val(v) {}
-   Pair(const std::string &s, RDValue_cast_t v) :
-    key(tagmap.get(s)), val(v) {}
-
-    inline void setKey(int k) { key = k; }
-    inline int  getKey() const { return key; }
-  };
-#endif  
-  typedef std::vector<Pair> DataType;
-  static RDTags tagmap;
+  typedef std::vector<KeyIntPair> DataType;
 
   Dict() : _data(), _hasNonPodData(false) {  };
 
   Dict(const Dict &other) : _data(other._data) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
-      std::vector<Pair> data(other._data.size());
+      std::vector<KeyIntPair> data(other._data.size());
       _data.swap(data);
       for (size_t i=0; i< _data.size(); ++i) {
         _data[i].setKey(other._data[i].getKey());
@@ -93,7 +75,7 @@ public:
   Dict &operator=(const Dict &other) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
-      std::vector<Pair> data(other._data.size());
+      std::vector<KeyIntPair> data(other._data.size());
       _data.swap(data);
       for (size_t i=0; i< _data.size(); ++i) {
         _data[i].setKey(other._data[i].getKey());
@@ -116,7 +98,7 @@ public:
   };
 
   bool hasVal(const std::string & what) const {
-    return hasVal(tagmap.get(what));
+    return hasVal(GetKey(what));
   }
 
   //----------------------------------------------------------
@@ -128,7 +110,7 @@ public:
     STR_VECT res;
     DataType::const_iterator item;
     for (item = _data.begin(); item != _data.end(); item++) {
-      res.push_back(tagmap.get(item->getKey()));
+      res.push_back(GetKey(item->getKey()));
     }
     return res;
   }
@@ -169,12 +151,12 @@ public:
 
   template <typename T>
   T getVal(const std::string &what) const {
-    return getVal<T>(tagmap.get(what));
+    return getVal<T>(GetKey(what));
   }
 
   //! \overload
   void getVal(const std::string &what, std::string &res) const {
-    return getVal(tagmap.get(what), res);
+    return getVal(GetKey(what), res);
   }
 
   void getVal(int tag, std::string &res) const;
@@ -196,7 +178,7 @@ public:
 
   template <typename T>
   bool getValIfPresent(const std::string &what, T &res) const {
-    return getValIfPresent(tagmap.get(what), res);
+    return getValIfPresent(GetKey(what), res);
   }
   
   template <typename T>
@@ -215,7 +197,7 @@ public:
   bool getValIfPresent(int tag, std::string &res) const;
   
   bool getValIfPresent(const std::string &what, std::string &res) const {
-    return getValIfPresent(tagmap.get(what), res);
+    return getValIfPresent(GetKey(what), res);
   }
 
   //----------------------------------------------------------
@@ -243,12 +225,12 @@ public:
         return;
       }
     }
-    _data.push_back(Pair(what, val));
+    _data.push_back(KeyIntPair(what, val));
   };
 
   template <typename T>
   void setVal(const std::string &what, T &val) {
-    setVal(tagmap.get(what), val);
+    setVal(GetKey(what), val);
   }
 
   template <typename T>
@@ -263,12 +245,12 @@ public:
         return;
       }
     }
-    _data.push_back(Pair(what, val));
+    _data.push_back(KeyIntPair(what, val));
   };
 
   template <typename T>
   void setPODVal(const std::string &what, T &val) {
-    setPODVal(tagmap.get(what), val);
+    setPODVal(GetKey(what), val);
   }
   
   void setVal(const std::string &what, bool val) {
@@ -335,7 +317,7 @@ public:
         a KeyErrorException will be thrown.
   */
   void clearVal(const std::string &what) {
-    clearVal(tagmap.get(what));
+    clearVal(GetKey(what));
   }
   
   void clearVal(int tag) {
@@ -367,7 +349,7 @@ public:
                            //  (copy_rdvalue)
 
  public:
-  // Iteration API (over Pair)
+  // Iteration API (over KeyIntPair)
   typedef DataType::iterator iterator;
   typedef DataType::const_iterator const_iterator;
 

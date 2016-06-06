@@ -1,6 +1,6 @@
 /* 
 *
-*  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2016, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
 * 
 * Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,13 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef RDKIT_TAGS_H
-#define RDKIT_TAGS_H
 
+// Build Time Definitions
 
-#include "rdkit.h"
-
-#ifdef  RDK_THREADSAFE_SSS
-#include "tags-threadsafe.h"
-#else
-#include "tags-nonthreadsafe.h"
+#ifndef RDK_THREADSAFE_SSS
+#cmakedefine RDK_THREADSAFE_SSS
 #endif
 
+#ifndef RDK_TEST_MULTITHREADED
+#cmakedefine RDK_TEST_MULTITHREADED
 #endif
-
-

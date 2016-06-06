@@ -11,10 +11,12 @@
 //
 #include "Dict.h"
 #include "Exceptions.h"
+#include "tags.h"
 
 namespace RDKit {
 
-RDTags RDKit::Dict::tagmap;
+RDTags RDKit::KeyIntPair::tagmap;
+
 
 void Dict::getVal(int tag, std::string &res) const {
   //
@@ -64,8 +66,8 @@ const char *getPropName(int v) {
   if (v>=0 && v<=MAX) {
     return common_properties::propnames[v];
   }
-  if ((size_t)v < RDKit::Dict::tagmap.keys.size())
-    return RDKit::Dict::tagmap.keys[v].c_str();
+  if ((size_t)v < RDKit::KeyIntPair::tagmap.keys.size())
+    return RDKit::KeyIntPair::tagmap.keys[v].c_str();
 
   throw KeyErrorException("Unknown tag");
 }

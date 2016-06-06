@@ -802,7 +802,8 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false);
 //@}
 
 //! returns the number of atoms which have a particular property set
-unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, const std::string &prop);
+unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,
+                                         const std::string &prop);
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, int prop);
 
 };  // end of namespace MolOps
