@@ -36,7 +36,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
-#include <GraphMol/Chemreactions/Enumerate/Template/EnumerateTemplate.h>
+#include <GraphMol/ChemReactions/Enumerate/Template/EnumerateTemplate.h>
 
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
