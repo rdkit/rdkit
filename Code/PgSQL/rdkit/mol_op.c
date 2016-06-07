@@ -30,23 +30,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <postgres.h>
+#include <fmgr.h>
+
 #include "rdkit.h"
-#include "fmgr.h"
+#include "cache.h"
 
 /***************** Mol operations ***********************/
 
-#define MOLCMPFUNC(type, action, ret)                                     \
-  PGDLLEXPORT Datum mol_##type(PG_FUNCTION_ARGS);                                     \
+#define MOLCMPFUNC(type, action, ret)					\
+  PGDLLEXPORT Datum mol_##type(PG_FUNCTION_ARGS);			\
   PG_FUNCTION_INFO_V1(mol_##type);                                        \
   Datum mol_##type(PG_FUNCTION_ARGS) {                                    \
     CROMol a, b;                                                          \
     int res;                                                              \
                                                                           \
     fcinfo->flinfo->fn_extra =                                            \
-        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
+        searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
                        PG_GETARG_DATUM(0), NULL, &a, NULL);               \
     fcinfo->flinfo->fn_extra =                                            \
-        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
+        searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
                        PG_GETARG_DATUM(1), NULL, &b, NULL);               \
     res = molcmp(a, b);                                                   \
     PG_RETURN_##ret(res action 0);                                        \
@@ -99,10 +102,10 @@ Datum mol_substruct(PG_FUNCTION_ARGS) {
   CROMol i, a;
 
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &i, NULL);
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
   PG_RETURN_BOOL(MolSubstruct(i, a));
@@ -114,10 +117,10 @@ Datum mol_rsubstruct(PG_FUNCTION_ARGS) {
   CROMol i, a;
 
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &i, NULL);
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
   PG_RETURN_BOOL(MolSubstruct(a, i));
@@ -127,25 +130,25 @@ PGDLLEXPORT Datum mol_substruct_count(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_substruct_count);
 Datum mol_substruct_count(PG_FUNCTION_ARGS) {
   CROMol i, a;
+  bool uniquify = PG_GETARG_BOOL(2);
 
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &i, NULL);
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
-  bool uniquify = PG_GETARG_BOOL(2);
 
   PG_RETURN_INT32(MolSubstructCount(i, a, uniquify));
 }
 
-#define MOLDESCR(name, func, ret)                                         \
-  PGDLLEXPORT Datum mol_##name(PG_FUNCTION_ARGS);                                     \
+#define MOLDESCR(name, func, ret)					\
+  PGDLLEXPORT Datum mol_##name(PG_FUNCTION_ARGS);			\
   PG_FUNCTION_INFO_V1(mol_##name);                                        \
   Datum mol_##name(PG_FUNCTION_ARGS) {                                    \
     CROMol i;                                                             \
     fcinfo->flinfo->fn_extra =                                            \
-        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
+        searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt, \
                        PG_GETARG_DATUM(0), NULL, &i, NULL);               \
     PG_RETURN_##ret(func(i));                                             \
   }
@@ -196,12 +199,12 @@ Datum mol_formula(PG_FUNCTION_ARGS) {
   char *str;
   int len;
 
-  fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
-                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
-
   bool separateIsotopes = PG_GETARG_BOOL(1);
   bool abbreviateHIsotopes = PG_GETARG_BOOL(2);
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
 
   str = makeMolFormulaText(mol, &len, separateIsotopes, abbreviateHIsotopes);
 
@@ -213,13 +216,13 @@ PG_FUNCTION_INFO_V1(mol_inchi);
 Datum mol_inchi(PG_FUNCTION_ARGS) {
   CROMol mol;
   const char *str;
-  char *opts = PG_GETARG_CSTRING(1);
+  char *res, *opts = PG_GETARG_CSTRING(1);
 
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   str = MolInchi(mol, opts);
-  char *res = pnstrdup(str, strlen(str));
+  res = pnstrdup(str, strlen(str));
   free((void *)str);
   PG_RETURN_CSTRING(res);
 }
@@ -229,13 +232,13 @@ PG_FUNCTION_INFO_V1(mol_inchikey);
 Datum mol_inchikey(PG_FUNCTION_ARGS) {
   CROMol mol;
   const char *str;
-  char *opts = PG_GETARG_CSTRING(1);
+  char *res, *opts = PG_GETARG_CSTRING(1);
 
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   str = MolInchiKey(mol, opts);
-  char *res = pnstrdup(str, strlen(str));
+  res = pnstrdup(str, strlen(str));
   free((void *)str);
   PG_RETURN_CSTRING(res);
 }
@@ -243,12 +246,13 @@ PGDLLEXPORT Datum mol_murckoscaffold(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_murckoscaffold);
 Datum mol_murckoscaffold(PG_FUNCTION_ARGS) {
   CROMol mol;
+  Mol *res;
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   CROMol scaffold = MolMurckoScaffold(mol);
   if (!scaffold) PG_RETURN_NULL();
-  Mol *res = deconstructROMol(scaffold);
+  res = deconstructROMol(scaffold);
   freeCROMol(scaffold);
 
   PG_RETURN_MOL_P(res);
@@ -261,7 +265,7 @@ Datum mol_hash(PG_FUNCTION_ARGS) {
   char *str;
   int len;
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   Assert(mol != 0);
   str = computeMolHash(mol, &len);
@@ -332,22 +336,22 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
   if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
     /// elog(WARNING, "fmcs_mol2s_transition() called first time");
     CROMol mol = PG_GETARG_DATUM(1);
-    int len;
-    char t[256];
+    int len, ts_size;
+    char *smiles, t[256];
     sprintf(t, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
             fcinfo->flinfo->fn_mcxt);
     elog(WARNING, t);
     fcinfo->flinfo->fn_extra =
-        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+        searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-    char *smiles = makeMolText(mol, &len, false);
+    smiles = makeMolText(mol, &len, false);
 
     //        char *smiles= Mol2Smiles(mol);
     //        int   len   = strlen(smiles);
     /// elog(WARNING, smiles);
 
-    int32 ts_size = len + VARHDRSZ;
+    ts_size = len + VARHDRSZ;
     text *ts = (text *)palloc(ts_size);  // new return value
     SET_VARSIZE(ts, ts_size);
     memcpy(VARDATA(ts), smiles, len);
@@ -367,7 +371,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
             fcinfo->flinfo->fn_mcxt);
     elog(WARNING, t);
     fcinfo->flinfo->fn_extra =
-        SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+        searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
     char *smiles = makeMolText(mol, &len, false);
@@ -468,14 +472,14 @@ elog(WARNING, "fmcs_mol(): FINAL function in the same run.");
     int i;
     for(i=0; i < len; i++){
         mols[i] = ((CROMol*)ARR_DATA_PTR(ma))[i];
-elog(WARNING, "fmcs_mol(): call SearchMolCache(...).");
-//--*
-      fcinfo->flinfo->fn_extra = SearchMolCache(
+elog(WARNING, "fmcs_mol(): call searchMolCache(...).");
+//--
+      fcinfo->flinfo->fn_extra = searchMolCache(
                                                 fcinfo->flinfo->fn_extra,
                                                 fcinfo->flinfo->fn_mcxt,
                                                 ((CROMol*)ARR_DATA_PTR(ma))[i],
                                                 NULL, mols[i], NULL);
-//*--/
+//--
       if(mols[i]==0){
         pfree(mols);
         mols = NULL;

@@ -57,9 +57,12 @@
 #ifdef BUILD_AVALON_SUPPORT
 #include <AvalonTools/AvalonTools.h>
 #endif
-#include "rdkit.h"
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+
+#include "rdkit.h"
+#include "guc.h"
+#include "bitstring.h"
 
 using namespace std;
 using namespace RDKit;
@@ -146,17 +149,16 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
   RWMol *mol = NULL;
 
   try {
-    StringData.assign(data);
     if (!asSmarts) {
       if (!asQuery) {
-        mol = SmilesToMol(StringData);
+        mol = SmilesToMol(data);
       } else {
-        mol = SmilesToMol(StringData, 0, false);
+        mol = SmilesToMol(data, 0, false);
         MolOps::sanitizeMol(*mol);
         MolOps::mergeQueryHs(*mol);
       }
     } else {
-      mol = SmartsToMol(StringData, 0, false);
+      mol = SmartsToMol(data, 0, false);
     }
   } catch (...) {
     mol = NULL;
@@ -175,12 +177,13 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
 
   return (CROMol)mol;
 }
+
 extern "C" CROMol parseMolBlob(char *data, int len) {
   ROMol *mol = NULL;
 
   try {
-    StringData.assign(data, len);
-    mol = new ROMol(StringData);
+    string binStr(data, len);
+    mol = new ROMol(binStr);
   } catch (...) {
     ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
                     errmsg("problem generating molecule from blob data")));
@@ -192,16 +195,16 @@ extern "C" CROMol parseMolBlob(char *data, int len) {
 
   return (CROMol)mol;
 }
+
 extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                                bool asQuery) {
   RWMol *mol = NULL;
 
   try {
-    StringData.assign(data);
     if (!asQuery) {
-      mol = MolBlockToMol(StringData);
+      mol = MolBlockToMol(data);
     } else {
-      mol = MolBlockToMol(StringData, true, false);
+      mol = MolBlockToMol(data, true, false);
       MolOps::mergeQueryHs(*mol);
     }
   } catch (...) {
@@ -229,12 +232,12 @@ extern "C" bool isValidSmiles(char *data) {
   RWMol *mol = NULL;
   bool res;
   try {
-    StringData.assign(data);
-    if (StringData.empty()) {
+    string str(data);
+    if (str.empty()) {
       // Pass the test - No-Structure input is allowed. No cleanup necessary.
       return true;
     }
-    mol = SmilesToMol(StringData, 0, 0);
+    mol = SmilesToMol(str, 0, 0);
     if (mol) {
       MolOps::cleanUp(*mol);
       mol->updatePropertyCache();
@@ -259,8 +262,7 @@ extern "C" bool isValidSmarts(char *data) {
   ROMol *mol = NULL;
   bool res;
   try {
-    StringData.assign(data);
-    mol = SmartsToMol(StringData);
+    mol = SmartsToMol(data);
   } catch (...) {
     mol = NULL;
   }
@@ -277,7 +279,7 @@ extern "C" bool isValidCTAB(char *data) {
   RWMol *mol = NULL;
   bool res;
   try {
-    mol = MolBlockToMol(std::string(data), false, false);
+    mol = MolBlockToMol(data, false, false);
     if (mol) {
       MolOps::cleanUp(*mol);
       mol->updatePropertyCache();
@@ -302,8 +304,8 @@ extern "C" bool isValidMolBlob(char *data, int len) {
   ROMol *mol = NULL;
   bool res = false;
   try {
-    StringData.assign(data, len);
-    mol = new ROMol(StringData);
+    string binStr(data, len);
+    mol = new ROMol(binStr);
   } catch (...) {
     mol = NULL;
   }
@@ -370,7 +372,7 @@ extern "C" char *makeMolBlob(CROMol data, int *len) {
   return (char *)StringData.data();
 }
 
-extern "C" bytea *makeMolSign(CROMol data) {
+extern "C" bytea *makeMolSignature(CROMol data) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   bytea *ret = NULL;
@@ -382,12 +384,17 @@ extern "C" bytea *makeMolSign(CROMol data) {
 
     if (res) {
       std::string sres = BitVectToBinaryText(*res);
-      ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)&sres);
+      
+      unsigned int varsize = VARHDRSZ + sres.size();
+      ret = (bytea *) palloc0(varsize);
+      memcpy(VARDATA(ret), sres.data(), sres.size());
+      SET_VARSIZE(ret, varsize);
+      
       delete res;
       res = 0;
     }
   } catch (...) {
-    elog(ERROR, "makeMolSign: Unknown exception");
+    elog(ERROR, "makeMolSignature: Unknown exception");
     if (res) delete res;
   }
 
@@ -590,16 +597,15 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
 }
 
 /*******************************************
- *     MolBitmapFingerPrint transformation *
+ *     CBfp transformation                 *
  *******************************************/
 
-extern "C" void freeMolBitmapFingerPrint(MolBitmapFingerPrint data) {
+extern "C" void freeCBfp(CBfp data) {
   std::string *fp = (std::string *)data;
   delete fp;
 }
 
-extern "C" MolBitmapFingerPrint constructMolBitmapFingerPrint(
-    BitmapFingerPrint *data) {
+extern "C" CBfp constructCBfp(Bfp *data) {
   std::string *ebv = NULL;
 
   try {
@@ -608,11 +614,10 @@ extern "C" MolBitmapFingerPrint constructMolBitmapFingerPrint(
     elog(ERROR, "constructMolFingerPrint: Unknown exception");
   }
 
-  return (MolBitmapFingerPrint)ebv;
+  return (CBfp)ebv;
 }
 
-extern "C" BitmapFingerPrint *deconstructMolBitmapFingerPrint(
-    MolBitmapFingerPrint data) {
+extern "C" Bfp *deconstructCBfp(CBfp data) {
   std::string *ebv = (std::string *)data;
   ByteA b;
 
@@ -625,40 +630,36 @@ extern "C" BitmapFingerPrint *deconstructMolBitmapFingerPrint(
   return b.toByteA();
 }
 
-extern "C" bytea *makeSignatureBitmapFingerPrint(MolBitmapFingerPrint data) {
+extern "C" BfpSignature *makeBfpSignature(CBfp data) {
   std::string *ebv = (std::string *)data;
-  unsigned int numBytes;
-  bytea *res;
-  unsigned char *s;
+  int siglen = ebv->size();
+  
+  unsigned int varsize = sizeof(BfpSignature) + siglen;
+  BfpSignature * res = (BfpSignature *)palloc0(varsize);
+  SET_VARSIZE(res, varsize);
 
-  numBytes = VARHDRSZ + ebv->size();
-
-  res = (bytea *)palloc0(numBytes);
-  SET_VARSIZE(res, numBytes);
-  s = (unsigned char *)VARDATA(res);
-  for (unsigned int i = 0; i < ebv->size(); i++) {
-    s[i] = ebv->c_str()[i];
-  }
+  res->weight = bitstringWeight(siglen, (uint8 *)ebv->data());
+  memcpy(res->fp, ebv->data(), siglen);
+  
   return res;
 }
 
-extern "C" int MolBitmapFingerPrintSize(MolBitmapFingerPrint a) {
+extern "C" int CBfpSize(CBfp a) {
   std::string *ebv = (std::string *)a;
   int numBits = ebv->size() * 8;
   return numBits;
 }
 
-extern "C" double calcBitmapTanimotoSml(MolBitmapFingerPrint a,
-                                        MolBitmapFingerPrint b) {
+extern "C" double calcBitmapTanimotoSml(CBfp a, CBfp b) {
   std::string *abv = (std::string *)a;
   std::string *bbv = (std::string *)b;
   const unsigned char *afp = (const unsigned char *)abv->c_str();
   const unsigned char *bfp = (const unsigned char *)bbv->c_str();
-  return CalcBitmapTanimoto(afp, bfp, abv->size());
+  /* return CalcBitmapTanimoto(afp, bfp, abv->size()); */
+  return bitstringTanimotoSimilarity(abv->size(), (uint8 *)afp, (uint8 *)bfp);
 }
 
-extern "C" double calcBitmapDiceSml(MolBitmapFingerPrint a,
-                                    MolBitmapFingerPrint b) {
+extern "C" double calcBitmapDiceSml(CBfp a, CBfp b) {
   std::string *abv = (std::string *)a;
   std::string *bbv = (std::string *)b;
   const unsigned char *afp = (const unsigned char *)abv->c_str();
@@ -666,8 +667,7 @@ extern "C" double calcBitmapDiceSml(MolBitmapFingerPrint a,
   return CalcBitmapDice(afp, bfp, abv->size());
 }
 
-double calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b,
-                            float ca, float cb) {
+double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb) {
   std::string *abv = (std::string *)a;
   std::string *bbv = (std::string *)b;
   const unsigned char *afp = (const unsigned char *)abv->c_str();
@@ -676,16 +676,15 @@ double calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b,
 }
 
 /*******************************************
- *     MolSparseFingerPrint transformation *
+ *     CSfp transformation                 *
  *******************************************/
 
-extern "C" void freeMolSparseFingerPrint(MolSparseFingerPrint data) {
+extern "C" void freeCSfp(CSfp data) {
   SparseFP *fp = (SparseFP *)data;
   delete fp;
 }
 
-extern "C" MolSparseFingerPrint constructMolSparseFingerPrint(
-    SparseFingerPrint *data) {
+extern "C" CSfp constructCSfp(Sfp *data) {
   SparseFP *ebv = NULL;
 
   try {
@@ -694,11 +693,10 @@ extern "C" MolSparseFingerPrint constructMolSparseFingerPrint(
     elog(ERROR, "constructMolFingerPrint: Unknown exception");
   }
 
-  return (MolSparseFingerPrint)ebv;
+  return (CSfp)ebv;
 }
 
-extern "C" SparseFingerPrint *deconstructMolSparseFingerPrint(
-    MolSparseFingerPrint data) {
+extern "C" Sfp *deconstructCSfp(CSfp data) {
   SparseFP *ebv = (SparseFP *)data;
   ByteA b;
 
@@ -711,8 +709,7 @@ extern "C" SparseFingerPrint *deconstructMolSparseFingerPrint(
   return b.toByteA();
 }
 
-extern "C" bytea *makeSignatureSparseFingerPrint(MolSparseFingerPrint data,
-                                                 int numBits) {
+extern "C" bytea *makeSfpSignature(CSfp data, int numBits) {
   SparseFP *v = (SparseFP *)data;
   int n, numBytes;
   bytea *res;
@@ -735,8 +732,7 @@ extern "C" bytea *makeSignatureSparseFingerPrint(MolSparseFingerPrint data,
   return res;
 }
 
-extern "C" bytea *makeLowSparseFingerPrint(MolSparseFingerPrint data,
-                                           int numInts) {
+extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
   SparseFP *v = (SparseFP *)data;
   int numBytes;
   bytea *res;
@@ -770,7 +766,7 @@ extern "C" bytea *makeLowSparseFingerPrint(MolSparseFingerPrint data,
   return res;
 }
 
-extern "C" void countOverlapValues(bytea *sign, MolSparseFingerPrint data,
+extern "C" void countOverlapValues(bytea *sign, CSfp data,
                                    int numBits, int *sum, int *overlapSum,
                                    int *overlapN) {
   SparseFP *v = (SparseFP *)data;
@@ -802,7 +798,7 @@ extern "C" void countOverlapValues(bytea *sign, MolSparseFingerPrint data,
   }
 }
 
-extern "C" void countLowOverlapValues(bytea *sign, MolSparseFingerPrint data,
+extern "C" void countLowOverlapValues(bytea *sign, CSfp data,
                                       int numInts, int *querySum, int *keySum,
                                       int *overlapUp, int *overlapDown) {
   SparseFP *v = (SparseFP *)data;
@@ -837,8 +833,7 @@ extern "C" void countLowOverlapValues(bytea *sign, MolSparseFingerPrint data,
   Assert(*overlapUp <= *keySum);
 }
 
-extern "C" double calcSparseTanimotoSml(MolSparseFingerPrint a,
-                                        MolSparseFingerPrint b) {
+extern "C" double calcSparseTanimotoSml(CSfp a, CSfp b) {
   double res = -1.0;
 
   /*
@@ -856,8 +851,7 @@ extern "C" double calcSparseTanimotoSml(MolSparseFingerPrint a,
   return res;
 }
 
-extern "C" double calcSparseDiceSml(MolSparseFingerPrint a,
-                                    MolSparseFingerPrint b) {
+extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   double res = -1.0;
 
   /*
@@ -1063,8 +1057,7 @@ extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int sza,
   return true;
 }
 
-extern "C" MolSparseFingerPrint addSFP(MolSparseFingerPrint a,
-                                       MolSparseFingerPrint b) {
+extern "C" CSfp addSFP(CSfp a, CSfp b) {
   SparseFP *res = NULL;
   try {
     SparseFP tmp = (*(SparseFP *)a + *(SparseFP *)b);
@@ -1072,11 +1065,10 @@ extern "C" MolSparseFingerPrint addSFP(MolSparseFingerPrint a,
   } catch (...) {
     elog(ERROR, "addSFP: Unknown exception");
   }
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
-extern "C" MolSparseFingerPrint subtractSFP(MolSparseFingerPrint a,
-                                            MolSparseFingerPrint b) {
+extern "C" CSfp subtractSFP(CSfp a, CSfp b) {
   SparseFP *res = NULL;
   try {
     SparseFP tmp = (*(SparseFP *)a - *(SparseFP *)b);
@@ -1084,13 +1076,13 @@ extern "C" MolSparseFingerPrint subtractSFP(MolSparseFingerPrint a,
   } catch (...) {
     elog(ERROR, "addSFP: Unknown exception");
   }
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
 /*
  * Mol -> fp
  */
-extern "C" MolBitmapFingerPrint makeLayeredBFP(CROMol data) {
+extern "C" CBfp makeLayeredBFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
 
@@ -1105,13 +1097,13 @@ extern "C" MolBitmapFingerPrint makeLayeredBFP(CROMol data) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolBitmapFingerPrint makeRDKitBFP(CROMol data) {
+extern "C" CBfp makeRDKitBFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
 
@@ -1126,13 +1118,13 @@ extern "C" MolBitmapFingerPrint makeRDKitBFP(CROMol data) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolSparseFingerPrint makeMorganSFP(CROMol data, int radius) {
+extern "C" CSfp makeMorganSFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   SparseFP *res = NULL;
   std::vector<boost::uint32_t> invars(mol->getNumAtoms());
@@ -1144,10 +1136,10 @@ extern "C" MolSparseFingerPrint makeMorganSFP(CROMol data, int radius) {
     elog(ERROR, "makeMorganSFP: Unknown exception");
   }
 
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
-extern "C" MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius) {
+extern "C" CBfp makeMorganBFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   std::vector<boost::uint32_t> invars(mol->getNumAtoms());
@@ -1162,13 +1154,13 @@ extern "C" MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius) {
+extern "C" CSfp makeFeatMorganSFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   SparseFP *res = NULL;
   std::vector<boost::uint32_t> invars(mol->getNumAtoms());
@@ -1180,10 +1172,10 @@ extern "C" MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius) {
     elog(ERROR, "makeMorganSFP: Unknown exception");
   }
 
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
-extern "C" MolBitmapFingerPrint makeFeatMorganBFP(CROMol data, int radius) {
+extern "C" CBfp makeFeatMorganBFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   std::vector<boost::uint32_t> invars(mol->getNumAtoms());
@@ -1198,13 +1190,13 @@ extern "C" MolBitmapFingerPrint makeFeatMorganBFP(CROMol data, int radius) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolSparseFingerPrint makeAtomPairSFP(CROMol data) {
+extern "C" CSfp makeAtomPairSFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   SparseFP *res = NULL;
 #ifdef UNHASHED_PAIR_FPS
@@ -1237,10 +1229,10 @@ extern "C" MolSparseFingerPrint makeAtomPairSFP(CROMol data) {
     elog(ERROR, "makeAtomPairSFP: Unknown exception");
   }
 #endif
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
-extern "C" MolSparseFingerPrint makeTopologicalTorsionSFP(CROMol data) {
+extern "C" CSfp makeTopologicalTorsionSFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   SparseFP *res = NULL;
 
@@ -1275,10 +1267,10 @@ extern "C" MolSparseFingerPrint makeTopologicalTorsionSFP(CROMol data) {
     elog(ERROR, "makeTopologicalTorsionSFP: Unknown exception");
   }
 #endif
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
-extern "C" MolBitmapFingerPrint makeAtomPairBFP(CROMol data) {
+extern "C" CBfp makeAtomPairBFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   try {
@@ -1290,13 +1282,13 @@ extern "C" MolBitmapFingerPrint makeAtomPairBFP(CROMol data) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data) {
+extern "C" CBfp makeTopologicalTorsionBFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   try {
@@ -1308,13 +1300,13 @@ extern "C" MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolBitmapFingerPrint makeMACCSBFP(CROMol data) {
+extern "C" CBfp makeMACCSBFP(CROMol data) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   try {
@@ -1325,14 +1317,14 @@ extern "C" MolBitmapFingerPrint makeMACCSBFP(CROMol data) {
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
 }
 
-extern "C" MolBitmapFingerPrint makeAvalonBFP(CROMol data, bool isQuery,
-                                              unsigned int bitFlags) {
+extern "C" CBfp makeAvalonBFP(CROMol data, bool isQuery,
+			      unsigned int bitFlags) {
 #ifdef BUILD_AVALON_SUPPORT
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
@@ -1347,7 +1339,7 @@ extern "C" MolBitmapFingerPrint makeAvalonBFP(CROMol data, bool isQuery,
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }
@@ -1364,7 +1356,7 @@ extern "C" void freeChemReaction(CChemicalReaction data) {
   delete rxn;
 }
 
-extern "C" CChemicalReaction constructChemReact(ChemReactionBA *data) {
+extern "C" CChemicalReaction constructChemReact(Reaction *data) {
   ChemicalReaction *rxn = new ChemicalReaction();
 
   try {
@@ -1379,7 +1371,7 @@ extern "C" CChemicalReaction constructChemReact(ChemReactionBA *data) {
   return (CChemicalReaction)rxn;
 }
 
-extern "C" ChemReactionBA *deconstructChemReact(CChemicalReaction data) {
+extern "C" Reaction *deconstructChemReact(CChemicalReaction data) {
   ChemicalReaction *rxn = (ChemicalReaction *)data;
   ByteA b;
 
@@ -1391,7 +1383,7 @@ extern "C" ChemReactionBA *deconstructChemReact(CChemicalReaction data) {
     elog(ERROR, "deconstructChemReact: Unknown exception");
   }
 
-  return (ChemReactionBA *)b.toByteA();
+  return (Reaction *)b.toByteA();
 }
 
 extern "C" CChemicalReaction parseChemReactText(char *data, bool asSmarts,
@@ -1399,11 +1391,10 @@ extern "C" CChemicalReaction parseChemReactText(char *data, bool asSmarts,
   ChemicalReaction *rxn = NULL;
 
   try {
-    StringData.assign(data);
     if (asSmarts) {
-      rxn = RxnSmartsToChemicalReaction(StringData);
+      rxn = RxnSmartsToChemicalReaction(data);
     } else {
-      rxn = RxnSmartsToChemicalReaction(StringData, 0, true);
+      rxn = RxnSmartsToChemicalReaction(data, 0, true);
     }
     if (getInitReaction()) {
       rxn->initReactantMatchers();
@@ -1435,8 +1426,8 @@ extern "C" CChemicalReaction parseChemReactBlob(char *data, int len) {
   ChemicalReaction *rxn = NULL;
 
   try {
-    StringData.assign(data, len);
-    rxn = new ChemicalReaction(StringData);
+    string binStr(data, len);
+    rxn = new ChemicalReaction(binStr);
     if (getInitReaction()) {
       rxn->initReactantMatchers();
     }
@@ -1457,7 +1448,7 @@ extern "C" CChemicalReaction parseChemReactBlob(char *data, int len) {
 }
 
 extern "C" char *makeChemReactText(CChemicalReaction data, int *len,
-                                   bool asSmarts) {
+				   bool asSmarts) {
   ChemicalReaction *rxn = (ChemicalReaction *)data;
 
   try {
@@ -1494,8 +1485,7 @@ extern "C" CChemicalReaction parseChemReactCTAB(char *data, bool warnOnFail) {
   ChemicalReaction *rxn = NULL;
 
   try {
-    StringData.assign(data);
-    rxn = RxnBlockToChemicalReaction(StringData);
+    rxn = RxnBlockToChemicalReaction(data);
     if (getInitReaction()) {
       rxn->initReactantMatchers();
     }
@@ -1568,7 +1558,12 @@ extern "C" bytea *makeReactionSign(CChemicalReaction data) {
 
     if (res) {
       std::string sres = BitVectToBinaryText(*res);
-      ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)&sres);
+      
+      unsigned int varsize = VARHDRSZ + sres.size();
+      ret = (bytea *) palloc0(varsize);
+      memcpy(VARDATA(ret), sres.data(), sres.size());
+      SET_VARSIZE(ret, varsize);
+      
       delete res;
       res = 0;
     }
@@ -1759,7 +1754,7 @@ extern "C" int reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2) {
   return -1;
 }
 
-extern "C" MolSparseFingerPrint makeReactionDifferenceSFP(
+extern "C" CSfp makeReactionDifferenceSFP(
     CChemicalReaction data, int size, int fpType) {
   ChemicalReaction *rxn = (ChemicalReaction *)data;
   SparseFP *res = NULL;
@@ -1779,11 +1774,10 @@ extern "C" MolSparseFingerPrint makeReactionDifferenceSFP(
   } catch (...) {
     elog(ERROR, "makeReactionDifferenceSFP: Unknown exception");
   }
-  return (MolSparseFingerPrint)res;
+  return (CSfp)res;
 }
 
-extern "C" MolBitmapFingerPrint makeReactionBFP(CChemicalReaction data,
-                                                int size, int fpType) {
+extern "C" CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType) {
   ChemicalReaction *rxn = (ChemicalReaction *)data;
   ExplicitBitVect *res = NULL;
 
@@ -1806,7 +1800,7 @@ extern "C" MolBitmapFingerPrint makeReactionBFP(CChemicalReaction data,
   if (res) {
     std::string *sres = new std::string(BitVectToBinaryText(*res));
     delete res;
-    return (MolBitmapFingerPrint)sres;
+    return (CBfp)sres;
   } else {
     return NULL;
   }

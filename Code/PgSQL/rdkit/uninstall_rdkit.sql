@@ -3,16 +3,17 @@
 SET search_path = public;
 
 
-DROP OPERATOR CLASS IF EXISTS mol_ops USING hash CASCADE;
-DROP OPERATOR CLASS IF EXISTS mol_ops USING gist CASCADE;
-DROP OPERATOR CLASS IF EXISTS mol_ops USING btree CASCADE;
-DROP OPERATOR CLASS IF EXISTS bfp_ops USING hash CASCADE;
-DROP OPERATOR CLASS IF EXISTS bfp_ops USING gist CASCADE;
-DROP OPERATOR CLASS IF EXISTS bfp_ops USING btree CASCADE;
-DROP OPERATOR CLASS IF EXISTS sfp_ops USING hash CASCADE;
-DROP OPERATOR CLASS IF EXISTS sfp_ops USING gist CASCADE;
-DROP OPERATOR CLASS IF EXISTS sfp_ops USING btree CASCADE;
-DROP OPERATOR CLASS IF EXISTS sfp_low_ops USING gist CASCADE;
+DROP OPERATOR CLASS IF EXISTS hash_mol_ops USING hash CASCADE;
+DROP OPERATOR CLASS IF EXISTS gist_mol_ops USING gist CASCADE;
+DROP OPERATOR CLASS IF EXISTS btree_mol_ops USING btree CASCADE;
+DROP OPERATOR CLASS IF EXISTS hash_bfp_ops USING hash CASCADE;
+DROP OPERATOR CLASS IF EXISTS gist_bfp_ops USING gist CASCADE;
+DROP OPERATOR CLASS IF EXISTS gin_bfp_ops USING gist CASCADE;
+DROP OPERATOR CLASS IF EXISTS btree_bfp_ops USING btree CASCADE;
+DROP OPERATOR CLASS IF EXISTS hash_sfp_ops USING hash CASCADE;
+DROP OPERATOR CLASS IF EXISTS gist_sfp_ops USING gist CASCADE;
+DROP OPERATOR CLASS IF EXISTS btree_sfp_ops USING btree CASCADE;
+DROP OPERATOR CLASS IF EXISTS gist_sfp_low_ops USING gist CASCADE;
 
 DROP OPERATOR IF EXISTS <@ (mol, mol) CASCADE;
 DROP OPERATOR IF EXISTS @> (mol, mol) CASCADE;
@@ -80,7 +81,17 @@ DROP FUNCTION IF EXISTS sfp_gt(sfp,sfp) CASCADE;
 DROP FUNCTION IF EXISTS sfp_ne(sfp,sfp) CASCADE;
 
 DROP FUNCTION IF EXISTS gbfp_consistent(bytea,internal,int4) CASCADE;
+DROP FUNCTION IF EXISTS gbfp_union(internal, internal) CASCADE;
 DROP FUNCTION IF EXISTS gbfp_compress(internal) CASCADE;
+DROP FUNCTION IF EXISTS gbfp_decompress(internal) CASCADE;
+DROP FUNCTION IF EXISTS gbfp_penalty(internal, internal, internal) CASCADE;
+DROP FUNCTION IF EXISTS gbfp_picksplit (internal, internal) CASCADE;
+DROP FUNCTION IF EXISTS gbfp_same (internal, internal, internal) CASCADE;
+DROP FUNCTION IF EXISTS gbfp_distance(internal, bytea, smallint, oid) CASCADE;
+DROP FUNCTION IF EXISTS gin_bfp_extract_value(bfp, internal) CASCADE;
+DROP FUNCTION IF EXISTS gin_bfp_extract_query(bfp, internal, int2, internal, internal, internal, internal) CASCADE;
+DROP FUNCTION IF EXISTS gin_bfp_consistent(internal, int2, bfp, int4, internal, internal, internal, internal) CASCADE;
+DROP FUNCTION IF EXISTS gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal) CASCADE;
 DROP FUNCTION IF EXISTS gsfp_consistent(bytea,internal,int4) CASCADE;
 DROP FUNCTION IF EXISTS gsfp_compress(internal) CASCADE;
 DROP FUNCTION IF EXISTS gmol_consistent(bytea,internal,int4) CASCADE;

@@ -47,7 +47,7 @@ SHLIB_LINK += -pthread
 
 SHLIB_LINK += ${THREADLIBS}
 
-PG_CPPFLAGS = -I${BOOSTHOME}/include -I${RDKIT}/Code -DRDKITVER='"007300"' ${AVALONFLAGS} ${INCHIFLAGS} ${POPCOUNTFLAGS}
+PG_CPPFLAGS = -I${BOOSTHOME}/include -I${RDKIT}/Code -DRDKITVER='"007300"' ${AVALONFLAGS} ${INCHIFLAGS} -DUSE_BUILTIN_POPCOUNT ${POPCOUNTFLAGS}
 
 CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-unused-function
@@ -59,7 +59,7 @@ EXTENSION  = rdkit
 EXTVERSION = $(shell grep default_version $(EXTENSION).control | sed -e "s/default_version[[:space:]]*=[[:space:]]*'\([^']*\)'/\1/")
 PG_CONFIG  = pg_config
 MODULE_big = rdkit
-OBJS       = rdkit_io.o mol_op.o bfp_op.o sfp_op.o rxn_op.o rdkit_gist.o low_gist.o guc.o cache.o adapter.o
+OBJS       = rdkit_io.o mol_op.o bfp_op.o sfp_op.o rxn_op.o rdkit_gist.o bfp_gist.o bfp_gin.o low_gist.o guc.o cache.o adapter.o bitstring.o
 PGXS       := $(shell $(PG_CONFIG) --pgxs)
 PG91 = $(shell $(PG_CONFIG) --version | grep -qE " 8\.| 9\.0" && echo no || echo yes)
 
@@ -69,7 +69,7 @@ all: $(EXTENSION)--$(EXTVERSION).sql
 $(EXTENSION)--$(EXTVERSION).sql: $(EXTENSION).sql91.in
 	cp $< $@
 
-REGRESS    = rdkit-91 props btree molgist bfpgist-91 sfpgist slfpgist fps reaction ${INCHIREGRESS} ${AVALONREGRESS}
+REGRESS    = rdkit-91 props btree molgist bfpgist-91 bfpgin sfpgist slfpgist fps reaction ${INCHIREGRESS} ${AVALONREGRESS}
 DATA = $(EXTENSION)--$(EXTVERSION).sql
 EXTRA_CLEAN = $(EXTENSION)--$(EXTVERSION).sql
 else
