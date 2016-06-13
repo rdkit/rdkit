@@ -234,7 +234,12 @@ class MolViewer(object):
         break
       except IOError:
         time.sleep(0.1)
-    os.unlink(fd.name)
+    try:
+        os.unlink(fd.name)
+    except (OSError,PermissionError):
+        # happens sometimes on Windows. Not going to worry about this too deeply since
+        # the files are in a temp dir anyway. This was github #936
+        pass
     fd=None
     if h is not None or w is not None:
       sz = img.size
