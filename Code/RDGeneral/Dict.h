@@ -191,6 +191,7 @@ public:
     // don't change the hasNonPodData status
     for(size_t i=0; i< _data.size(); ++i) {
       if (_data[i].key == what) {
+        RDValue::cleanup_rdvalue(_data[i].val);
         _data[i].val = val;
         return;
       }
