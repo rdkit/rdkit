@@ -395,6 +395,11 @@ void setAromaticityMol(ROMol &mol) {
   MolOps::setAromaticity(wmol);
 }
 
+void setSimpleAromaticityMol(ROMol &mol) {
+  RWMol &wmol = static_cast<RWMol &>(mol);
+  MolOps::setSimpleAromaticity(wmol);
+}
+
 void setConjugationMol(ROMol &mol) {
   RWMol &wmol = static_cast<RWMol &>(mol);
   MolOps::setConjugation(wmol);
@@ -580,14 +585,14 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint32_t> > *lAtomBits = 0;
-  std::map<boost::uint32_t,std::vector<std::vector<int> > > *lBitInfo=0;
+  std::map<boost::uint32_t, std::vector<std::vector<int> > > *lBitInfo = 0;
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
     lAtomBits =
         new std::vector<std::vector<boost::uint32_t> >(mol.getNumAtoms());
   }
-  if(bitInfo!=python::object()){
-    lBitInfo = new std::map<boost::uint32_t,std::vector<std::vector<int> > >;
+  if (bitInfo != python::object()) {
+    lBitInfo = new std::map<boost::uint32_t, std::vector<std::vector<int> > >;
   }
   ExplicitBitVect *res;
   res = RDKit::RDKFingerprintMol(mol, minPath, maxPath, fpSize, nBitsPerHash,
@@ -604,21 +609,22 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     }
     delete lAtomBits;
   }
-  if(lBitInfo){
-    python::dict &pyd=static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint32_t,std::vector<std::vector<int> > >::iterator it_type;
-    for(it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
+  if (lBitInfo) {
+    python::dict &pyd = static_cast<python::dict &>(bitInfo);
+    typedef std::map<boost::uint32_t, std::vector<std::vector<int> > >::iterator
+        it_type;
+    for (it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
       python::list temp;
       std::vector<std::vector<int> >::iterator itset;
-      for (itset = it->second.begin(); itset != it->second.end(); ++itset){
+      for (itset = it->second.begin(); itset != it->second.end(); ++itset) {
         python::list temp2;
-        for(unsigned int i=0; i<itset->size(); ++i){
+        for (unsigned int i = 0; i < itset->size(); ++i) {
           temp2.append(itset->at(i));
         }
         temp.append(temp2);
       }
-      if(!pyd.has_key(it->first)){
-        pyd[it->first]=temp;
+      if (!pyd.has_key(it->first)) {
+        pyd[it->first] = temp;
       }
     }
     delete lBitInfo;
@@ -627,61 +633,56 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   return res;
 }
 
+SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
+    const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
+    bool branchedPaths, bool useBondOrder, python::object atomInvariants,
+    python::object fromAtoms, python::object atomBits, python::object bitInfo) {
+  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants =
+      pythonObjectToVect<unsigned int>(atomInvariants);
+  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+  std::vector<std::vector<boost::uint64_t> > *lAtomBits = 0;
+  std::map<boost::uint64_t, std::vector<std::vector<int> > > *lBitInfo = 0;
 
-SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(const ROMol &mol,
-                                       unsigned int minPath,
-                                       unsigned int maxPath,
-                                       bool useHs,
-                                       bool branchedPaths,
-                                       bool useBondOrder,
-                                       python::object atomInvariants,
-                                       python::object fromAtoms,
-                                       python::object atomBits,
-                                       python::object bitInfo
-                                       ){
-  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants=pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
-  std::vector<std::vector<boost::uint64_t> > *lAtomBits=0;
-  std::map<boost::uint64_t,std::vector<std::vector<int> > > *lBitInfo=0;
-
-  //if(!(atomBits.is_none())){
-  if(atomBits!=python::object()){
-    lAtomBits = new std::vector<std::vector<boost::uint64_t> >(mol.getNumAtoms());
+  // if(!(atomBits.is_none())){
+  if (atomBits != python::object()) {
+    lAtomBits =
+        new std::vector<std::vector<boost::uint64_t> >(mol.getNumAtoms());
   }
-  if(bitInfo!=python::object()){
-    lBitInfo = new std::map<boost::uint64_t,std::vector<std::vector<int> > >;
+  if (bitInfo != python::object()) {
+    lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int> > >;
   }
 
   SparseIntVect<boost::uint64_t> *res;
-  res = getUnfoldedRDKFingerprintMol(mol,minPath,maxPath,useHs,branchedPaths,
-      useBondOrder,lAtomInvariants.get(),lFromAtoms.get(),lAtomBits,lBitInfo);
+  res = getUnfoldedRDKFingerprintMol(
+      mol, minPath, maxPath, useHs, branchedPaths, useBondOrder,
+      lAtomInvariants.get(), lFromAtoms.get(), lAtomBits, lBitInfo);
 
-  if(lAtomBits){
-    python::list &pyl=static_cast<python::list &>(atomBits);
-    for(unsigned int i=0;i<mol.getNumAtoms();++i){
+  if (lAtomBits) {
+    python::list &pyl = static_cast<python::list &>(atomBits);
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
-      BOOST_FOREACH(boost::uint64_t v,(*lAtomBits)[i]){
-        tmp.append(v);
-      }
+      BOOST_FOREACH (boost::uint64_t v, (*lAtomBits)[i]) { tmp.append(v); }
       pyl.append(tmp);
     }
     delete lAtomBits;
   }
-  if(lBitInfo){
-    python::dict &pyd=static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint64_t,std::vector<std::vector<int> > >::iterator it_type;
-    for(it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
+  if (lBitInfo) {
+    python::dict &pyd = static_cast<python::dict &>(bitInfo);
+    typedef std::map<boost::uint64_t, std::vector<std::vector<int> > >::iterator
+        it_type;
+    for (it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
       python::list temp;
       std::vector<std::vector<int> >::iterator itset;
-      for (itset = it->second.begin(); itset != it->second.end(); ++itset){
+      for (itset = it->second.begin(); itset != it->second.end(); ++itset) {
         python::list temp2;
-        for(unsigned int i=0; i<itset->size(); ++i){
+        for (unsigned int i = 0; i < itset->size(); ++i) {
           temp2.append(itset->at(i));
         }
         temp.append(temp2);
       }
-      if(!pyd.has_key(it->first)){
-        pyd[it->first]=temp;
+      if (!pyd.has_key(it->first)) {
+        pyd[it->first] = temp;
       }
     }
     delete lBitInfo;
@@ -689,7 +690,6 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(const ROMol &mol,
 
   return res;
 }
-
 
 python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
                                                    unsigned int lowerLen,
@@ -1144,6 +1144,20 @@ struct molops_wrapper {
 \n";
     python::def("SetAromaticity", setAromaticityMol, (python::arg("mol")),
                 docString.c_str());
+    // ------------------------------------------------------------------------
+    docString =
+        "does aromaticity perception using a simplified model\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+    python::def("SetSimpleAromaticity", setSimpleAromaticityMol,
+                (python::arg("mol")), docString.c_str());
     docString =
         "finds conjugated bonds\n\
 \n\
@@ -1545,14 +1559,14 @@ struct molops_wrapper {
          python::arg("useBondOrder") = true, python::arg("atomInvariants") = 0,
          python::arg("fromAtoms") = 0,
          python::arg("atomBits") = python::object(),
-         python::arg("bitInfo")=python::object()),
+         python::arg("bitInfo") = python::object()),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
     python::scope().attr("_RDKFingerprint_version") =
         RDKit::RDKFingerprintMolVersion;
 
-docString =
-    "Returns an unfolded count-based version of the RDKit fingerprint for a molecule\n\
+    docString =
+        "Returns an unfolded count-based version of the RDKit fingerprint for a molecule\n\
 \n\
 ARGUMENTS:\n\
     \n\
@@ -1594,17 +1608,15 @@ ARGUMENTS:\n\
 
     python::def(
         "UnfoldedRDKFingerprintCountBased", wrapUnfoldedRDKFingerprintMol,
-        (python::arg("mol"),python::arg("minPath")=1,
-         python::arg("maxPath")=7,python::arg("useHs")=true,
-         python::arg("branchedPaths")=true,
-         python::arg("useBondOrder")=true,
-         python::arg("atomInvariants")=0,
-         python::arg("fromAtoms")=0,
-         python::arg("atomBits")=python::object(),
-         python::arg("bitInfo")=python::object()),
-         docString.c_str(),
-         python::return_value_policy<python::manage_new_object>());
-
+        (python::arg("mol"), python::arg("minPath") = 1,
+         python::arg("maxPath") = 7, python::arg("useHs") = true,
+         python::arg("branchedPaths") = true,
+         python::arg("useBondOrder") = true, python::arg("atomInvariants") = 0,
+         python::arg("fromAtoms") = 0,
+         python::arg("atomBits") = python::object(),
+         python::arg("bitInfo") = python::object()),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
 
     // ------------------------------------------------------------------------
     docString =

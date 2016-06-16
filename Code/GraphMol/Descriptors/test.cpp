@@ -356,10 +356,10 @@ void testLipinski1() {
   // Figure out which rotatable bond version we are using
   std::string rot_prop = StrictRotProp;
   {
-    const bool sanitize=true;
-    ROMol *test_mol = SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
-    if (calcNumRotatableBonds(*test_mol) == 2)
-      rot_prop = NonStrictRotProp;
+    const bool sanitize = true;
+    ROMol *test_mol =
+        SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
+    if (calcNumRotatableBonds(*test_mol) == 2) rot_prop = NonStrictRotProp;
     delete test_mol;
   }
   while (!suppl.atEnd()) {
@@ -455,7 +455,7 @@ void testLipinski1() {
                 << " using stored sd prop " << rot_prop << std::endl;
     }
     TEST_ASSERT(oVal == nVal);
-    
+
     delete mol;
   }
 
@@ -1309,10 +1309,17 @@ void testHallKierAlpha() {
                         << std::endl;
 
   {
-    std::string sdata[] = {
-        "C=O", "CCC1(CC)C(=O)NC(=O)N(C)C1=O", "OCC(O)C(O)C(O)C(O)CO",
-        "OCC1OC(O)C(O)C(O)C1O", "Fc1c[nH]c(=O)[nH]c1=O", "OC1CNC(C(=O)O)C1",
-        "CCCc1[nH]c(=S)[nH]c(=O)c1", "CN(CCCl)CCCl", "CBr", "CI", "EOS"};
+    std::string sdata[] = {"C=O",
+                           "CCC1(CC)C(=O)NC(=O)N(C)C1=O",
+                           "OCC(O)C(O)C(O)C(O)CO",
+                           "OCC1OC(O)C(O)C(O)C1O",
+                           "Fc1c[nH]c(=O)[nH]c1=O",
+                           "OC1CNC(C(=O)O)C1",
+                           "CCCc1[nH]c(=S)[nH]c(=O)c1",
+                           "CN(CCCl)CCCl",
+                           "CBr",
+                           "CI",
+                           "EOS"};
     double ddata[] = {
         -0.3300, -1.3900, -0.2400, -0.2400, -1.3900,
         -0.6100, -0.9000, 0.5400,  0.480,   0.730,
@@ -1336,9 +1343,9 @@ void testKappa1() {
   BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa1." << std::endl;
 
   {
-    std::string sdata[] = {"C12CC2C3CC13", "C1CCC12CC2", "C1CCCCC1", "CCCCCC",
-                           "CCC(C)C1CCC(C)CC1", "CC(C)CC1CCC(C)CC1",
-                           "CC(C)C1CCC(C)CCC1", "EOS"};
+    std::string sdata[] = {
+        "C12CC2C3CC13",      "C1CCC12CC2",        "C1CCCCC1",          "CCCCCC",
+        "CCC(C)C1CCC(C)CC1", "CC(C)CC1CCC(C)CC1", "CC(C)C1CCC(C)CCC1", "EOS"};
     double ddata[] = {2.344, 3.061, 4.167, 6.000, 9.091, 9.091, 9.091};
     unsigned int idx = 0;
     while (sdata[idx] != "EOS") {
@@ -1359,12 +1366,30 @@ void testKappa2() {
   BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa2." << std::endl;
 
   {
-    std::string sdata[] = {
-        "[C+2](C)(C)(C)(C)(C)C", "[C+](C)(C)(C)(C)(CC)", "C(C)(C)(C)(CCC)",
-        "CC(C)CCCC", "CCCCCCC", "CCCCCC", "CCCCCCC", "C1CCCC1", "C1CCCC1C",
-        "C1CCCCC1", "C1CCCCCC1", "CCCCC", "CC=CCCC", "C1=CN=CN1", "c1ccccc1",
-        "c1cnccc1", "n1ccncc1", "CCCCF", "CCCCCl", "CCCCBr",
-        "CCC(C)C1CCC(C)CC1", "CC(C)CC1CCC(C)CC1", "CC(C)C1CCC(C)CCC1", "EOS"};
+    std::string sdata[] = {"[C+2](C)(C)(C)(C)(C)C",
+                           "[C+](C)(C)(C)(C)(CC)",
+                           "C(C)(C)(C)(CCC)",
+                           "CC(C)CCCC",
+                           "CCCCCCC",
+                           "CCCCCC",
+                           "CCCCCCC",
+                           "C1CCCC1",
+                           "C1CCCC1C",
+                           "C1CCCCC1",
+                           "C1CCCCCC1",
+                           "CCCCC",
+                           "CC=CCCC",
+                           "C1=CN=CN1",
+                           "c1ccccc1",
+                           "c1cnccc1",
+                           "n1ccncc1",
+                           "CCCCF",
+                           "CCCCCl",
+                           "CCCCBr",
+                           "CCC(C)C1CCC(C)CC1",
+                           "CC(C)CC1CCC(C)CC1",
+                           "CC(C)C1CCC(C)CCC1",
+                           "EOS"};
     double ddata[] = {0.667000, 1.240000, 2.344400, 4.167000, 6.000000,
                       5.000000, 6.000000, 1.440000, 1.633000, 2.222000,
                       3.061000, 4.000000, 4.740000, 0.884000, 1.606000,
@@ -1488,15 +1513,6 @@ void testMQNs() {
     unsigned int tgt[42] = {98, 0,  4,  0, 0,  1,  0,  3,  9, 5, 4, 124, 29, 3,
                             0,  66, 35, 0, 25, 30, 21, 2,  2, 0, 0, 6,   12, 6,
                             0,  70, 26, 0, 0,  0,  2,  16, 0, 0, 0, 0,   10, 5};
-
-    // Figure out which rotatable bond version we are using
-    //  and update the test accordingly
-    {
-      const bool sanitize=true;
-      ROMol *test_mol = SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
-      if (calcNumRotatableBonds(*test_mol) == 2)
-        tgt[18] = 26;
-    }
 
     std::vector<unsigned int> accum(42, 0);
 

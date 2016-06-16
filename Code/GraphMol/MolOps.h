@@ -261,9 +261,7 @@ struct AdjustQueryParameters {
         adjustDegreeFlags(ADJUST_SETALL),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_SETALL),
-        makeDummiesQueries(true)
-
-  {}
+        makeDummiesQueries(true) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
@@ -368,7 +366,7 @@ void sanitizeMol(RWMol &mol);
   candidates
         for aromaticity. A ring atom is a candidate if it can spare electrons
         to the ring and if it's from the first two rows of the periodic table.
-     -# ased on the candidate atoms, mark the rings to be either candidates
+     -# based on the candidate atoms, mark the rings to be either candidates
         or non-candidates. A ring is a candidate only if all its atoms are
   candidates
      -# apply Hueckel rule to each of the candidate rings to check if the ring
@@ -377,7 +375,7 @@ void sanitizeMol(RWMol &mol);
 
   \param mol the RWMol of interest
 
-  \return 1 on succes, 0 otherwise
+  \return >0 on success, <= 0 otherwise
 
   <b>Assumptions:</b>
     - Kekulization has been done (i.e. \c MolOps::Kekulize() has already
@@ -385,6 +383,24 @@ void sanitizeMol(RWMol &mol);
 
 */
 int setAromaticity(RWMol &mol);
+
+//! Sets up the aromaticity for a molecule using a simple aromaticity model
+/*!
+
+  Differences to the standard RDKit aromaticity model:
+     -# Only five- and six-membered simple rings are considered (no fused ring
+  envelopes)
+
+  \param mol the RWMol of interest
+
+  \return >0 on success, <= 0 otherwise
+
+  <b>Assumptions:</b>
+    - Kekulization has been done (i.e. \c MolOps::Kekulize() has already
+      been called)
+
+*/
+int setSimpleAromaticity(RWMol &mol);
 
 //! Designed to be called by the sanitizer to handle special cases before
 // anything is done.
