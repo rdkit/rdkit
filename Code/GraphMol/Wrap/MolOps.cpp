@@ -1148,6 +1148,10 @@ struct molops_wrapper {
     docString =
         "does aromaticity perception using a simplified model\n\
 \n\
+  Differences to the standard RDKit aromaticity model:\n\
+     - Only five- and six-membered simple rings are considered (no fused ring\n\
+  envelopes)\n\
+\n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
