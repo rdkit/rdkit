@@ -1513,7 +1513,14 @@ void testMQNs() {
     unsigned int tgt[42] = {98, 0,  4,  0, 0,  1,  0,  3,  9, 5, 4, 124, 29, 3,
                             0,  66, 35, 0, 25, 30, 21, 2,  2, 0, 0, 6,   12, 6,
                             0,  70, 26, 0, 0,  0,  2,  16, 0, 0, 0, 0,   10, 5};
-
+    // Figure out which rotatable bond version we are using
+    //  and update the test accordingly
+    {
+      const bool sanitize = true;
+      ROMol *test_mol =
+          SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
+      if (calcNumRotatableBonds(*test_mol) == 2) tgt[18] = 26;
+    }
     std::vector<unsigned int> accum(42, 0);
 
     std::string fName = getenv("RDBASE");
