@@ -618,111 +618,10 @@ int countAtomElec(const Atom *at) {
   return res;
 }
 
-int setAromaticity(RWMol &mol) {
-  // FIX: we will assume for now that if the input molecule came
-  // with aromaticity information it is correct and we will not
-  // touch it. Loop through the atoms and check if any atom has
-  // arom stuff set.  We may want check this more carefully later
-  // and start from scratch if necessary
-  ROMol::AtomIterator ai;
-  for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
-    if ((*ai)->getIsAromatic()) {
-      // found aromatic info
-      return -1;
-    }
-  }
-
-  // first find the all the simple rings in the molecule
-  VECT_INT_VECT srings;
-  if (mol.getRingInfo()->isInitialized()) {
-    srings = mol.getRingInfo()->atomRings();
-  } else {
-    MolOps::symmetrizeSSSR(mol, srings);
-  }
-
-  int narom = 0;
-  // loop over all the atoms in the rings that can be candidates
-  // for aromaticity
-  // Atoms are candidates if
-  //   - it is part of ring
-  //   - has one or more electron to donate or has empty p-orbitals
-  int natoms = mol.getNumAtoms();
-  boost::dynamic_bitset<> acands(natoms);
-  boost::dynamic_bitset<> aseen(natoms);
-  VECT_EDON_TYPE edon(natoms);
-
-  VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); ++vivi) {
-    bool allAromatic = true;
-    bool allDummy = true;
-    for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
-      unsigned int firstIdx = (*ivi);
-      Atom *at = mol.getAtomWithIdx(firstIdx);
-
-      if (allDummy && at->getAtomicNum() != 0) {
-        allDummy = false;
-      }
-
-      if (aseen[firstIdx]) {
-        if (!acands[firstIdx]) allAromatic = false;
-        continue;
-      }
-      aseen[*ivi] = 1;
-
-      // now that the atom is part of ring check if it can donate
-      // electron or has empty orbitals. Record the donor type
-      // information in 'edon' - we will need it when we get to
-      // the Huckel rule later
-      edon[firstIdx] = getAtomDonorTypeArom(at);
-      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
-      if (!acands[firstIdx]) allAromatic = false;
-    }
-    if (allAromatic && !allDummy) {
-      cRings.push_back((*vivi));
-    }
-  }
-
-  // first convert all rings to bonds ids
-  VECT_INT_VECT brings;
-  RingUtils::convertToBonds(cRings, brings, mol);
-
-  // make the neighbor map for the rings
-  // i.e. a ring is a neighbor a another candidate ring if
-  // shares at least one bond
-  // useful to figure out fused systems
-  INT_INT_VECT_MAP neighMap;
-  RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
-
-  // now loop over all the candidate rings and check the
-  // huckel rule - of course paying attention to fused systems.
-  INT_VECT doneRs;
-  int curr = 0;
-  int cnrs = rdcast<int>(cRings.size());
-  boost::dynamic_bitset<> fusDone(cnrs);
-  INT_VECT fused;
-  while (curr < cnrs) {
-    fused.resize(0);
-    RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
-
-    int rix;
-    for (rix = 0; rix < cnrs; rix++) {
-      if (!fusDone[rix]) {
-        curr = rix;
-        break;
-      }
-    }
-    if (rix == cnrs) {
-      break;
-    }
-  }
-
-  mol.setProp(common_properties::numArom, narom, true);
-
-  return narom;
-}
-
-int setSimpleAromaticity(RWMol &mol) {
+namespace {
+// use minRingSize=0 or maxRingSize=0 to ignore these constraints
+int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
+                      unsigned int maxRingSize, bool includeFused) {
   // FIX: we will assume for now that if the input molecule came
   // with aromaticity information it is correct and we will not
   // touch it. Loop through the atoms and check if any atom has
@@ -759,26 +658,35 @@ int setSimpleAromaticity(RWMol &mol) {
   for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); ++vivi) {
     unsigned int ringSz = (*vivi).size();
     // test ring size:
-    if (ringSz < 5 || ringSz > 6) continue;
+    if ((minRingSize && ringSz < minRingSize) ||
+        (maxRingSize && ringSz > maxRingSize))
+      continue;
 
     bool allAromatic = true;
+    bool allDummy = true;
     for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
-      if (aseen[*ivi]) {
-        if (!acands[*ivi]) allAromatic = false;
+      unsigned int firstIdx = (*ivi);
+      Atom *at = mol.getAtomWithIdx(firstIdx);
+
+      if (allDummy && at->getAtomicNum() != 0) {
+        allDummy = false;
+      }
+
+      if (aseen[firstIdx]) {
+        if (!acands[firstIdx]) allAromatic = false;
         continue;
       }
       aseen[*ivi] = 1;
-      Atom *at = mol.getAtomWithIdx(*ivi);
 
       // now that the atom is part of ring check if it can donate
       // electron or has empty orbitals. Record the donor type
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
-      edon[*ivi] = getAtomDonorTypeArom(at);
-      acands[*ivi] = isAtomCandForArom(at, edon[*ivi]);
-      if (!acands[*ivi]) allAromatic = false;
+      edon[firstIdx] = getAtomDonorTypeArom(at);
+      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
+      if (!acands[firstIdx]) allAromatic = false;
     }
-    if (allAromatic) {
+    if (allAromatic && !allDummy) {
       cRings.push_back((*vivi));
     }
   }
@@ -787,18 +695,59 @@ int setSimpleAromaticity(RWMol &mol) {
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
 
-  // now loop over all the candidate rings and check the
-  // huckel rule - skipping fused systems
-  INT_INT_VECT_MAP neighMap;
-  for (unsigned int ri = 0; ri < cRings.size(); ++ri) {
+  if (!includeFused) {
+    // now loop over all the candidate rings and check the
+    // huckel rule - skipping fused systems
+    INT_INT_VECT_MAP neighMap;
+    for (unsigned int ri = 0; ri < cRings.size(); ++ri) {
+      INT_VECT fused;
+      fused.push_back(ri);
+      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+    }
+  } else {
+    // make the neighbor map for the rings
+    // i.e. a ring is a neighbor a another candidate ring if
+    // shares at least one bond
+    // useful to figure out fused systems
+    INT_INT_VECT_MAP neighMap;
+    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
+
+    // now loop over all the candidate rings and check the
+    // huckel rule - of course paying attention to fused systems.
+    INT_VECT doneRs;
+    int curr = 0;
+    int cnrs = rdcast<int>(cRings.size());
+    boost::dynamic_bitset<> fusDone(cnrs);
     INT_VECT fused;
-    fused.push_back(ri);
-    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+    while (curr < cnrs) {
+      fused.resize(0);
+      RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+
+      int rix;
+      for (rix = 0; rix < cnrs; rix++) {
+        if (!fusDone[rix]) {
+          curr = rix;
+          break;
+        }
+      }
+      if (rix == cnrs) {
+        break;
+      }
+    }
   }
 
   mol.setProp(common_properties::numArom, narom, true);
 
   return narom;
+}
+
+}  // end of anonymous namespace
+
+int setAromaticity(RWMol &mol) { return aromaticityHelper(mol, 0, 0, true); }
+
+int setSimpleAromaticity(RWMol &mol) {
+  return aromaticityHelper(mol, 5, 6, false);
 }
 
 };  // end of namespace MolOps
