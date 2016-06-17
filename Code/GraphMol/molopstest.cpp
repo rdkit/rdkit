@@ -5915,6 +5915,54 @@ void testSimpleAromaticity() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+//! really dumb aromaticity: any conjugated ring bond is aromatic
+int customAromaticity(RWMol &m) {
+  m.updatePropertyCache();
+  MolOps::setConjugation(m);
+  MolOps::fastFindRings(m);
+  int res = 0;
+  for (ROMol::BondIterator bIt = m.beginBonds(); bIt != m.endBonds(); ++bIt) {
+    if ((*bIt)->getIsConjugated() && queryIsBondInRing(*bIt)) {
+      (*bIt)->setIsAromatic(true);
+      (*bIt)->getBeginAtom()->setIsAromatic(true);
+      (*bIt)->getEndAtom()->setIsAromatic(true);
+      ++res;
+    }
+  }
+  return res;
+}
+
+void testCustomAromaticity() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing custom aromaticity"
+                       << std::endl;
+
+  {
+    std::string smiles = "C1=CC=CC=C1";
+    RWMol *m = SmilesToMol(smiles, 0, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_CUSTOM, customAromaticity);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    delete m;
+  }
+  {
+    std::string smiles = "C1CC=CC=C1";
+    RWMol *m = SmilesToMol(smiles, 0, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_CUSTOM, customAromaticity);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getBondWithIdx(2)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsAromatic() == true);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 void testKekulizeErrorReporting() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing error reporting for kekulization"
@@ -6117,5 +6165,6 @@ int main() {
   testKekulizeErrorReporting();
   testGithubIssue868();
   testSimpleAromaticity();
+  testCustomAromaticity();
   return 0;
 }
