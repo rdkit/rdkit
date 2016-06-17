@@ -357,6 +357,22 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
 //! \overload
 void sanitizeMol(RWMol &mol);
 
+//! Possible aromaticity models
+/*!
+- \c AROMATICITY_DEFAULT at the moment always uses \c AROMATICITY_RDKIT
+- \c AROMATICITY_RDKIT is the standard RDKit model (as documented in the RDKit
+Book)
+- \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
+does not consider the outer envelope of fused rings)
+- \c AROMATICITY_CUSTOM uses a caller-provided function
+*/
+typedef enum {
+  AROMATICITY_DEFAULT = 0x0,  ///< future proofing
+  AROMATICITY_RDKIT = 0x1,
+  AROMATICITY_SIMPLE = 0x2,
+  AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
+} AromaticityModel;
+
 //! Sets up the aromaticity for a molecule
 /*!
 
@@ -374,6 +390,9 @@ void sanitizeMol(RWMol &mol);
         aromatic
 
   \param mol the RWMol of interest
+  \param model the aromaticity model to use
+  \param func a custom function for assigning aromaticity (only used when
+  model=\c AROMATICITY_CUSTOM)
 
   \return >0 on success, <= 0 otherwise
 
@@ -382,25 +401,8 @@ void sanitizeMol(RWMol &mol);
       been called)
 
 */
-int setAromaticity(RWMol &mol);
-
-//! Sets up the aromaticity for a molecule using a simple aromaticity model
-/*!
-
-  Differences to the standard RDKit aromaticity model:
-     -# Only five- and six-membered simple rings are considered (no fused ring
-  envelopes)
-
-  \param mol the RWMol of interest
-
-  \return >0 on success, <= 0 otherwise
-
-  <b>Assumptions:</b>
-    - Kekulization has been done (i.e. \c MolOps::Kekulize() has already
-      been called)
-
-*/
-int setSimpleAromaticity(RWMol &mol);
+int setAromaticity(RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
+                   int (*func)(RWMol &) = NULL);
 
 //! Designed to be called by the sanitizer to handle special cases before
 // anything is done.

@@ -744,10 +744,26 @@ int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
 
 }  // end of anonymous namespace
 
-int setAromaticity(RWMol &mol) { return aromaticityHelper(mol, 0, 0, true); }
-
-int setSimpleAromaticity(RWMol &mol) {
-  return aromaticityHelper(mol, 5, 6, false);
+int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
+  int res;
+  switch (model) {
+    case AROMATICITY_DEFAULT:
+    case AROMATICITY_RDKIT:
+      res = aromaticityHelper(mol, 0, 0, true);
+      break;
+    case AROMATICITY_SIMPLE:
+      res = aromaticityHelper(mol, 5, 6, false);
+      break;
+    case AROMATICITY_CUSTOM:
+      PRECONDITION(
+          func,
+          "function must be set when aromaticity model is AROMATICITY_CUSTOM");
+      res = func(mol);
+      break;
+    default:
+      throw ValueErrorException("Bad AromaticityModel");
+  }
+  return res;
 }
 
 };  // end of namespace MolOps

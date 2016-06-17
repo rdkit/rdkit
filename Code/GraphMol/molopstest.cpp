@@ -5851,7 +5851,7 @@ void testSimpleAromaticity() {
     MolOps::Kekulize(*m, true);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
-    MolOps::setSimpleAromaticity(*m);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
     delete m;
@@ -5865,7 +5865,7 @@ void testSimpleAromaticity() {
     MolOps::Kekulize(*m, true);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
-    MolOps::setSimpleAromaticity(*m);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
     delete m;
@@ -5879,7 +5879,7 @@ void testSimpleAromaticity() {
     MolOps::Kekulize(*m, true);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
-    MolOps::setSimpleAromaticity(*m);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
     delete m;
@@ -5893,7 +5893,7 @@ void testSimpleAromaticity() {
     MolOps::Kekulize(*m, true);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
-    MolOps::setSimpleAromaticity(*m);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
     delete m;
@@ -5907,7 +5907,7 @@ void testSimpleAromaticity() {
     MolOps::Kekulize(*m, true);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
-    MolOps::setSimpleAromaticity(*m);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
     delete m;

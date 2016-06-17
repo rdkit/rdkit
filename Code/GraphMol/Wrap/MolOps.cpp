@@ -390,14 +390,9 @@ void cleanupMol(ROMol &mol) {
   MolOps::cleanUp(rwmol);
 }
 
-void setAromaticityMol(ROMol &mol) {
+void setAromaticityMol(ROMol &mol, MolOps::AromaticityModel model) {
   RWMol &wmol = static_cast<RWMol &>(mol);
-  MolOps::setAromaticity(wmol);
-}
-
-void setSimpleAromaticityMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
-  MolOps::setSimpleAromaticity(wmol);
+  MolOps::setAromaticity(wmol, model);
 }
 
 void setConjugationMol(ROMol &mol) {
@@ -1130,6 +1125,13 @@ struct molops_wrapper {
 \n";
     python::def("Cleanup", cleanupMol, (python::arg("mol")), docString.c_str());
 
+    python::enum_<MolOps::AromaticityModel>("AromaticityModel")
+        .value("AROMATICITY_DEFAULT", MolOps::AROMATICITY_DEFAULT)
+        .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
+        .value("AROMATICITY_SIMPLE", MolOps::AROMATICITY_SIMPLE)
+        .value("AROMATICITY_CUSTOM", MolOps::AROMATICITY_CUSTOM)
+        .export_values();
+
     // ------------------------------------------------------------------------
     docString =
         "does aromaticity perception\n\
@@ -1137,31 +1139,17 @@ struct molops_wrapper {
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
+    - model: the model to use\n\
 \n\
   NOTES:\n\
 \n\
     - The molecule is modified in place.\n\
 \n";
-    python::def("SetAromaticity", setAromaticityMol, (python::arg("mol")),
+    python::def("SetAromaticity", setAromaticityMol,
+                (python::arg("mol"),
+                 python::arg("model") = MolOps::AROMATICITY_DEFAULT),
                 docString.c_str());
-    // ------------------------------------------------------------------------
-    docString =
-        "does aromaticity perception using a simplified model\n\
-\n\
-  Differences to the standard RDKit aromaticity model:\n\
-     - Only five- and six-membered simple rings are considered (no fused ring\n\
-  envelopes)\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-  NOTES:\n\
-\n\
-    - The molecule is modified in place.\n\
-\n";
-    python::def("SetSimpleAromaticity", setSimpleAromaticityMol,
-                (python::arg("mol")), docString.c_str());
+
     docString =
         "finds conjugated bonds\n\
 \n\
