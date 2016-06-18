@@ -32,11 +32,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
-<<<<<<< 60a5b5e0b3677cb8e706fb4c4815bea609a5e622
-=======
 #include <GraphMol/Descriptors/Property.h>
-
->>>>>>> Updates to new API, adds better property registry
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/atomic_data.h>
 
