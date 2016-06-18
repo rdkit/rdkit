@@ -33,7 +33,6 @@
 #ifndef RDKIT_REGISTER_DESCRIPTOR_H
 #define RDKIT_REGISTER_DESCRIPTOR_H
 
-#include <unordered_map>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
