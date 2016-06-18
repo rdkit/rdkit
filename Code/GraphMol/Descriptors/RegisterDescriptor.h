@@ -30,39 +30,41 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "KitchenSink.h"
+#ifndef RDKIT_REGISTER_DESCRIPTOR_H
+#define RDKIT_REGISTER_DESCRIPTOR_H
+
+#include <unordered_map>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/shared_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include "Property.h"
 
 namespace RDKit {
+class ROMol;
 namespace Descriptors {
 
+// these macros create a static class that can call the specified function.
+// these classes are automatically registered with the property registry
+#define REGISTER_FULL_DESCRIPTOR( NAME, VERSION, FUNC )         \
+  struct NAME##PropertyFxn : public PropertyFxn{          \
+    NAME##PropertyFxn(bool registerProp=true) : PropertyFxn(#NAME, VERSION) { \
+      if (registerProp) Properties::registerProperty(new NAME##PropertyFxn(false)); \
+    } \
+    double compute(const RDKit::ROMol &mol) const {return static_cast<double>(FUNC(mol));} \
+  }; \
+  static NAME##PropertyFxn NAME##PropertyFxn__;
 
-Properties::Properties(const std::vector<Property> &props) :
-    m_properties(props) {}
+  
 
-std::vector<std::string> Properties::getPropertyNames() const {
-  std::vector<std::string> res;
-  res.reserve(m_properties.size());
-  for (size_t i=0; i<m_properties.size(); ++i) {
-    res.push_back(m_properties[i].getName());
-  }
-  return res;
-}
-
-std::vector<double> Properties::getProperties(const RDKit::ROMol &mol) const {
-  std::vector<double> res;
-  res.reserve(m_properties.size());
-  for (size_t i=0; i<m_properties.size(); ++i) {
-    res.push_back(m_properties[i].computeProperty(mol));
-  }
-  return res;
-}
-
-KitchenSink::KitchenSink() :
-    Properties() {
-  m_properties = std::vector<Property>(
-      AllProperties,
-      AllProperties + sizeof(AllProperties)/sizeof(AllProperties[0]));
+#define REGISTER_DESCRIPTOR( NAME, FUNC )           \
+  struct NAME##PropertyFxn : public PropertyFxn{          \
+    NAME##PropertyFxn(bool registerProp=true) : PropertyFxn(#NAME, NAME##Version) { \
+      if (registerProp) Properties::registerProperty(new NAME##PropertyFxn(false)); \
+    } \
+    double compute(const RDKit::ROMol &mol) const {return static_cast<double>(FUNC(mol));} \
+  }; \
+  static NAME##PropertyFxn NAME##PropertyFxn__;
 }
 }
-};
+
+#endif

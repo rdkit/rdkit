@@ -17,7 +17,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "RDLog.h"
+#include "BoostStartInclude.h"
+#include <RDGeneral/RDLog.h>
+#include "BoostEndInclude.h"
 
 #ifdef RDDEBUG
 // Enable RDDEBUG for testing whether rdcast

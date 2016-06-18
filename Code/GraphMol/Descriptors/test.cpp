@@ -11,9 +11,12 @@
 
 #include <iostream>
 #include <fstream>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -29,6 +32,11 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+<<<<<<< 60a5b5e0b3677cb8e706fb4c4815bea609a5e622
+=======
+#include <GraphMol/Descriptors/Property.h>
+
+>>>>>>> Updates to new API, adds better property registry
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/atomic_data.h>
 
@@ -1831,26 +1839,69 @@ void testGitHubIssue694() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-void testKitchenSink() {
-  KitchenSink sink;
-  std::vector<std::string> names = sink.getPropertyNames();
-  for (size_t i=0;i<names.size();++i) {
-    std::cout << names[i];
-    if (i!=names.size()-1)
-      std::cout << ",";
-  }
-  std::cout << std::endl;
-  RWMol *mol;
-  mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+void testProperties() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Testing Properties and KitchenSink"
+      << std::endl;
 
-  std::vector<double> props = sink.getProperties(*mol);
-  for (size_t i=0;i<props.size();++i) {
-    std::cout << props[i];
-    if (i!=names.size()-1)
-      std::cout << ",";
+  {
+    std::vector<std::string> all_names = Properties::getAvailableProperties();
+    
+    Properties sink;
+    std::vector<std::string> names = sink.getPropertyNames();
+
+    TEST_ASSERT(names == all_names);
+
+    
+    RWMol *mol;
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    std::vector<double> props = sink.computeProperties(*mol);
+
+    std::vector<double> res;
+    BOOST_FOREACH(std::string prop, all_names) {
+      std::vector<std::string> props;
+      props.push_back(prop);
+      Properties property(props);
+      std::vector<double> computedProps = property.computeProperties(*mol);
+      TEST_ASSERT(computedProps.size() == 1);
+      res.push_back(computedProps[0]);
+    }
+    
+    TEST_ASSERT(props == res);
+    delete mol;
   }
-  std::cout << std::endl;
-  delete mol;
+  {
+    std::vector<std::string> names;
+    names.push_back("NumSpiroAtoms");
+    names.push_back("NumBridgeheadAtoms");
+    Properties sink(names);
+    std::vector<std::string> sink_names = sink.getPropertyNames();
+    TEST_ASSERT( names == sink_names );
+    std::vector<double> res;
+    res.push_back(1.);
+    res.push_back(2.);
+
+    RWMol *mol;
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    TEST_ASSERT(mol);
+    std::vector<double> props = sink.computeProperties(*mol);
+    delete mol;
+
+    TEST_ASSERT(props == res);
+  }
+
+  {
+    try {
+      std::vector<std::string> names;
+      names.push_back("FakeName");
+      Properties sink(names);
+      TEST_ASSERT(0); // should throw
+    } catch(KeyErrorException) {
+      BOOST_LOG(rdErrorLog) << "---Caught error---" << std::endl;
+    }
+  }
+
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1889,5 +1940,5 @@ int main() {
   testGitHubIssue463();
   testSpiroAndBridgeheads();
   testGitHubIssue694();
-  testKitchenSink();
+  testProperties();
 }

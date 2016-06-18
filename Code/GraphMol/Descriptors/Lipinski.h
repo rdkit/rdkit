@@ -16,6 +16,8 @@
 */
 #ifndef __RD_LIPINSKI_H__
 #define __RD_LIPINSKI_H__
+#include "RegisterDescriptor.h"
+
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
@@ -135,6 +137,17 @@ extern const std::string NumBridgeheadAtomsVersion;
 // share at least two bonds)
 unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
                                     std::vector<unsigned int> *atoms = NULL);
+
+extern const std::string NumAtomStereoCentersVersion;
+//! calculates the number of stereo atom stereo centers
+unsigned numAtomStereoCenters(const ROMol &mol);
+
+//! calculates the number of unspecified stereo atom stereo centers
+extern const std::string NumUnspecifiedAtomStereoCentersVersion;
+unsigned numUnspecifiedAtomStereoCenters(const ROMol &mol);
+
+//! Helper function to register the descriptors with the descriptor service
+void registerDescriptors();
 }  // end of namespace Descriptors
 }  // end of namespace RDKit
 

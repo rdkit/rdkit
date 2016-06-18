@@ -38,146 +38,134 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/MolSurf.h>
 
+#ifdef RDK_THREADSAFE_SSS
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/thread/once.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif
+
 namespace RDKit {
 namespace Descriptors {
 
-const char * Property::getNameForProp(PropType prop) {
-  switch (prop) {
-    case Property::MW: return "Molecular Weight";
-    case Property::TPSA: return "Polar Surface Area";
-    case Property::ALOGP: return "A logP";
-    case Property::NumRotors: return "Number of Rotatable bonds";
-    case Property::MissingStereo: return "Number of undefined stereo centers";
-    case Property::LipinskiHBA: return "Number of Lipinski Hydrogen Bond Acceptors";
-    case Property::LipinskiHBD: return "Number of Lipinski Hydrogen Bond Donors";
-    case Property::HBA: return "Number of Hydrogen Bond Acceptors";
-    case Property::HBD: return "Number of Hydrogen Bond Donors";
-    case Property::NumHeteroAtoms: return "Number of Hetero Atoms";
-    case Property::NumAmideBonds: return "Number of Amide Bonds";
-    case Property::FractionCSP3: return "Fraction of SP3 carbons";
-    case Property::NumRings: return "Number of Rings";
-    case Property::NumAromaticRings: return "Number of Aromatic Rings";
-    case Property::NumAliphaticRings: return "Number of Aliphatic Rings";
-    case Property::NumSaturatedRings: return "Number of Saturated Rings";
-    case Property::NumHeteroCycles: return "Number of Heterocycles";
-    case Property::NumSaturatedHeteroCycles: return "Number of Saturated Heterocycles";
-    case Property::NumAromaticHeteroCycles: return "Number of Aromatic HeteroCycles";
-    case Property::NumAliphaticCarboCycles: return "Number of Aliphatic CarboCycles";
-    case Property::NumAromaticCarboCycles: return "Number of Aromatic CarboCycles";
-    case Property::NumSaturatedCarboCycles: return "Number of Saturated CarboCycles";
-    case Property::NumAlpiphaticHeteroCycles: return "Number of Aliphatic Hetero Cycles";
-    case Property::NumSpiroAtoms: return "Number of Spiro Atoms";
-    case Property::NumBridgeheadAtoms: return "Number of Bridgehead Atoms";
-    case Property::AMW: return "Average Molecular WeightW";
-    case Property::LabuteASA: return "Labute Approximate Surface Area";
-      
-    default:
-        return "User defined property";
-  }
+namespace {
+const std::string CrippenClogPVersion = crippenVersion;
+double calcClogP(const ROMol &mol) {
+  double clogp,mr;
+  calcCrippenDescriptors(mol, clogp, mr);
+  return clogp;
 }
-
-std::string Property::getVersionForProp(PropType prop) {
-  switch (prop) {
-    case Property::MW: return  exactmwVersion;
-    case Property::TPSA: return tpsaVersion;
-    case Property::ALOGP: return crippenVersion;
-    case Property::NumRotors: return NumRotatableBondsVersion;
-    case Property::MissingStereo: return "1.0";
-    case Property::LipinskiHBA: return "1.0";
-    case Property::LipinskiHBD: return "1.0";
-    case Property::HBA: return NumHBAVersion;
-    case Property::HBD: return NumHBDVersion;
-    case Property::NumHeteroAtoms: return NumHeteroatomsVersion;
-    case Property::NumAmideBonds: return NumAmideBondsVersion;
-    case Property::FractionCSP3: return FractionCSP3Version;
-    case Property::NumRings: return NumRingsVersion;
-    case Property::NumAromaticRings: return NumAromaticRingsVersion;
-    case Property::NumAliphaticRings: return NumAliphaticRingsVersion;
-    case Property::NumSaturatedRings: return NumSaturatedRingsVersion;
-    case Property::NumHeteroCycles: return NumHeterocyclesVersion;
-    case Property::NumSaturatedHeteroCycles: return NumSaturatedHeterocyclesVersion;
-    case Property::NumAromaticHeteroCycles: return NumAromaticHeterocyclesVersion;
-    case Property::NumAromaticCarboCycles: return NumAromaticCarbocyclesVersion;
-    case Property::NumSaturatedCarboCycles: return NumSaturatedCarbocyclesVersion;
-    case Property::NumAlpiphaticHeteroCycles: return NumAliphaticCarbocyclesVersion;
-    case Property::NumSpiroAtoms: return NumSpiroAtomsVersion;
-    case Property::NumBridgeheadAtoms: return NumBridgeheadAtomsVersion;
-    case Property::AMW: return amwVersion;
-    case Property::LabuteASA: return labuteASAVersion;
-      
-    default:
-        return "User defined property";
-  }
+const std::string CrippenMRVersion = crippenVersion;
+double calcMR(const ROMol &mol) {
+  double clogp,mr;
+  calcCrippenDescriptors(mol, clogp, mr);
+  return mr;
 }
-
-bool Property::isAdditive() const {
-  switch(m_proptype) {
-    case Property::AMW: 
-    case Property::LabuteASA:
-      return false;
-    case Property::User:
-      PRECONDITION(m_propfxn.get(), "Null Property fxn");
-      return m_propfxn->isAdditive();
-    default:
-      return true;
-  }
 }
-
 
 namespace {
-double numUnspecifiedStereoAtoms(const ROMol &mol) {
-  double res=0.;
-  for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
-       ++atom) {
-    if ((*atom)->hasProp(common_properties::_ChiralityPossible) &&
-        (*atom)->getChiralTag() == Atom::CHI_UNSPECIFIED)
-      res++;
-  }
-  return res;
-}
+void _registerDescriptors() {
+  REGISTER_DESCRIPTOR(exactmw, calcExactMW);
+  REGISTER_DESCRIPTOR(lipinskiHBA, calcLipinskiHBA);
+  REGISTER_DESCRIPTOR(lipinskiHBD, calcLipinskiHBD);
+  REGISTER_DESCRIPTOR(NumRotatableBonds, calcNumRotatableBonds);
+  REGISTER_DESCRIPTOR(NumHBD, calcNumHBD);
+  REGISTER_DESCRIPTOR(NumHBA, calcNumHBA);
+  REGISTER_DESCRIPTOR(NumHeteroatoms, calcNumHeteroatoms);
+  REGISTER_DESCRIPTOR(NumAmideBonds, calcNumAmideBonds);
+  REGISTER_DESCRIPTOR(FractionCSP3, calcFractionCSP3);
+  REGISTER_DESCRIPTOR(NumRings, calcNumRings);
+  REGISTER_DESCRIPTOR(NumAromaticRings, calcNumAromaticRings);
+  REGISTER_DESCRIPTOR(NumAliphaticRings, calcNumAliphaticRings);
+  REGISTER_DESCRIPTOR(NumSaturatedRings, calcNumSaturatedRings);
+  REGISTER_DESCRIPTOR(NumHeterocycles, calcNumHeterocycles);
+  REGISTER_DESCRIPTOR(NumAromaticHeterocycles, calcNumAromaticHeterocycles);
+  REGISTER_DESCRIPTOR(NumSaturatedHeterocycles, calcNumSaturatedHeterocycles);
+  REGISTER_DESCRIPTOR(NumAliphaticHeterocycles, calcNumAliphaticHeterocycles);
+  REGISTER_DESCRIPTOR(NumSpiroAtoms, calcNumSpiroAtoms);
+  REGISTER_DESCRIPTOR(NumBridgeheadAtoms, calcNumBridgeheadAtoms);
+  REGISTER_DESCRIPTOR(NumAtomStereoCenters, numAtomStereoCenters);  
+  REGISTER_DESCRIPTOR(NumUnspecifiedAtomStereoCenters, numUnspecifiedAtomStereoCenters);
+  REGISTER_DESCRIPTOR(labuteASA, calcLabuteASA);
+  REGISTER_DESCRIPTOR(tpsa, calcTPSA);
+  REGISTER_DESCRIPTOR(CrippenClogP, calcClogP);
+  REGISTER_DESCRIPTOR(CrippenMR, calcMR);
+};
 }
 
-double Property::computeProperty(const ROMol &mol) const {
-  const bool ignoreCachedValues = true;
-  const bool includeHs = true; // used for default values...
-  double logp;
-  double mr;
-  
-  switch (m_proptype) {
-    case Property::MW: return calcExactMW(mol);
-    case Property::TPSA: return calcTPSA(mol, ignoreCachedValues);
-    case Property::ALOGP:
-      calcCrippenDescriptors(mol, logp, mr, includeHs, ignoreCachedValues);
-      return logp;
-    case Property::NumRotors: return calcNumRotatableBonds(mol);
-    case Property::MissingStereo: return numUnspecifiedStereoAtoms(mol);
-    case Property::LipinskiHBA: return calcLipinskiHBA(mol);
-    case Property::LipinskiHBD: return calcLipinskiHBD(mol);
-    case Property::HBA: return calcNumHBA(mol);
-    case Property::HBD: return calcNumHBD(mol);
-    case Property::NumHeteroAtoms: return calcNumHeteroatoms(mol); 
-    case Property::NumAmideBonds: return calcNumAmideBonds(mol);
-    case Property::FractionCSP3: return calcFractionCSP3(mol);
-    case Property::NumRings: return calcNumRings(mol);
-    case Property::NumAromaticRings: return calcNumAromaticRings(mol);
-    case Property::NumAliphaticRings: return calcNumAliphaticRings(mol);
-    case Property::NumSaturatedRings: return calcNumSaturatedRings(mol);
-    case Property::NumHeteroCycles: return calcNumHeterocycles(mol);
-    case Property::NumSaturatedHeteroCycles: return calcNumSaturatedHeterocycles(mol);
-    case Property::NumAromaticHeteroCycles: return calcNumAromaticHeterocycles(mol);
-    case Property::NumAromaticCarboCycles:return calcNumAromaticCarbocycles(mol);
-    case Property::NumAliphaticCarboCycles: return calcNumAliphaticCarbocycles(mol);
-    case Property::NumSaturatedCarboCycles: return calcNumSaturatedCarbocycles(mol);
-    case Property::NumAlpiphaticHeteroCycles: return calcNumAliphaticHeterocycles(mol);
-    case Property::NumSpiroAtoms: return calcNumSpiroAtoms(mol);
-    case Property::NumBridgeheadAtoms: return calcNumBridgeheadAtoms(mol);
-    case Property::AMW: return calcAMW(mol);
-    case Property::LabuteASA: return calcLabuteASA(mol);
-      
-    default:
-      return m_propfxn.get()->compute(mol);
+void registerDescriptors() {
+#ifdef RDK_THREADSAFE_SSS
+  static boost::once_flag once = BOOST_ONCE_INIT;
+  boost::call_once(&_registerDescriptors, once);
+#else
+  static bool initialized = false;
+  if(!initialized) {
+    _registerDescriptors();
+    initalized=true;
   }
-  
+#endif
+}
+
+std::vector<boost::shared_ptr<PropertyFxn> > Properties::registry;
+int Properties::registerProperty(PropertyFxn *prop) {
+  for(size_t i=0; i<Properties::registry.size(); ++i) {
+    if (registry[i]->getName() == prop->getName()) {
+      Properties::registry[i] = boost::shared_ptr<PropertyFxn>(prop);
+      return i;
+    }
+  }
+  // XXX Add mutex?
+  Properties::registry.push_back( boost::shared_ptr<PropertyFxn>(prop) );
+  return Properties::registry.size();
+}
+
+std::vector<std::string> Properties::getAvailableProperties() {
+  registerDescriptors();
+  std::vector<std::string> names;
+  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, Properties::registry) {
+    names.push_back(prop->getName());
+  }
+  return names;
+}
+
+boost::shared_ptr<PropertyFxn> Properties::getProperty(const std::string &name) {
+  registerDescriptors();
+  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, Properties::registry) {
+    if (prop.get() && prop->getName() == name) {
+      return prop;
+    }
+  }
+  throw KeyErrorException(name);
+}
+
+Properties::Properties() : m_properties() {
+  registerDescriptors();
+  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, Properties::registry) {
+    m_properties.push_back(prop);
+  }
+}
+
+Properties::Properties(const std::vector<std::string> &propNames) {
+  registerDescriptors();
+  BOOST_FOREACH(const std::string &name, propNames) {
+    m_properties.push_back( Properties::getProperty(name) );
+  }
+}
+
+std::vector<std::string> Properties::getPropertyNames() const {
+  std::vector<std::string> names;
+  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, m_properties) {
+    names.push_back(prop->getName());
+  }
+  return names;
+}
+
+std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol) const {
+  std::vector<double> res;
+  res.reserve(m_properties.size());
+  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, m_properties) {
+    res.push_back(prop->compute(mol));
+  }
+  return res;
 }
 
 }

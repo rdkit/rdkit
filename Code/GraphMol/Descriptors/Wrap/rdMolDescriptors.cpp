@@ -510,6 +510,7 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
   }
   return res;
 }
+
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1048,4 +1049,24 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcNumBridgeheadAtoms", numBridgeheadAtoms,
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
+
+  python::class_<RDKit::Descriptors::PropertyFxn,
+                 RDKit::Descriptors::PropertyFxn*,
+                 boost::shared_ptr<RDKit::Descriptors::PropertyFxn>,
+                 boost::noncopyable>("PropertyFxn", "", python::no_init)
+      .def("Compute", &RDKit::Descriptors::PropertyFxn::compute,
+           "Compute the property for the specified molecule")
+      .def("GetName", &RDKit::Descriptors::PropertyFxn::getName,
+           "Return the name of the property to calculate")
+      .def("GetVersion", &RDKit::Descriptors::PropertyFxn::getVersion,
+           "Return the version of the calculated property");
+
+  python::class_<RDKit::Descriptors::Properties,
+                 RDKit::Descriptors::Properties*>("Properties", python::init<>())
+      .def("GetPropertyNames", &RDKit::Descriptors::Properties::getPropertyNames)
+      .def("ComputeProperties", &RDKit::Descriptors::Properties::computeProperties)
+      .def("GetAvailableProperties", &RDKit::Descriptors::Properties::getAvailableProperties)
+      .def("GetProperty", &RDKit::Descriptors::Properties::getProperty)
+      .def("RegisterProperty", &RDKit::Descriptors::Properties::getAvailableProperties);
+    
 }
