@@ -33,8 +33,10 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/Property.h>
+
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/atomic_data.h>
+
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
