@@ -16,9 +16,9 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
-
+#include "BoostStartInclude.h"
 #include <RDGeneral/RDLog.h>
-
+#include "BoostEndInclude.h"
 #ifdef RDDEBUG
 // Enable RDDEBUG for testing whether rdcast
 //  conversions are within numerical limits

@@ -12,8 +12,10 @@
 #define _RDLOG_H_29JUNE2005_
 
 #if 1
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <iostream>
 namespace boost {
 namespace logging {

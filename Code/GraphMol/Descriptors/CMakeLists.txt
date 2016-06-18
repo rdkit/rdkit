@@ -1,6 +1,5 @@
 rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
-              KitchenSink.cpp
               MQN.cpp
               Property.cpp
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch 
@@ -10,7 +9,7 @@ rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
               MolSurf.h
               ConnectivityDescriptors.h MQN.h
-              KitchenSink.h
+              RegisterDescriptor.h
               Property.h
               DEST GraphMol/Descriptors)
 
