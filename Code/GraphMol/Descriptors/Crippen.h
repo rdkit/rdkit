@@ -82,6 +82,23 @@ class CrippenParams {
   ~CrippenParams();
 };
 
+const std::string CrippenClogPVersion = crippenVersion;
+//! calculate the default Wildman-Crippen LogP for a molecule
+/*!
+  See calcCrippenDescriptors
+    \param mol        the molecule of interest
+ */
+double calcClogP(const ROMol &mol);
+
+const std::string CrippenMRVersion = crippenVersion;
+//! calculate the default Wildman-Crippen MR Estimate for a molecule
+/*!
+  See calcCrippenDescriptors
+    \param mol        the molecule of interest
+ */
+double calcMR(const ROMol &mol);
+
+
 //! singleton class for retrieving Crippen parameters
 /*!
   Use the singleton like this:
