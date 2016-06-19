@@ -1899,7 +1899,34 @@ void testProperties() {
       BOOST_LOG(rdErrorLog) << "---Caught error---" << std::endl;
     }
   }
+}
 
+void testPropertyQueries() {
+  RWMol *mol;
+  mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+  {
+    PROP_RANGE_QUERY *query = makePropertyRangeQuery("exactmw", 50,300);
+    TEST_ASSERT(query->Match( *mol ));
+    delete query;
+  }
+  {
+    PROP_RANGE_QUERY *query = makePropertyRangeQuery("exactmw", 1000,10300);
+    TEST_ASSERT(!query->Match( *mol ));
+    delete query;
+  }
+
+  {
+    // these leak..
+    TEST_ASSERT(
+        makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", calcExactMW(*mol))
+        ->Match(*mol));
+    TEST_ASSERT(
+        makePropertyQuery<PROP_EQUALS_QUERY>("NumHBA", calcNumHBA(*mol))
+        ->Match(*mol));
+    TEST_ASSERT(
+        makePropertyQuery<PROP_EQUALS_QUERY>("lipinskiHBA", calcLipinskiHBA(*mol))
+        ->Match(*mol));
+  }
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1939,4 +1966,5 @@ int main() {
   testSpiroAndBridgeheads();
   testGitHubIssue694();
   testProperties();
+  testPropertyQueries();
 }

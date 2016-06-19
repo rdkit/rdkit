@@ -43,26 +43,37 @@ class ROMol;
 namespace Descriptors {
 
 // these macros create a static class that can call the specified function.
+//    using double class::operator(const ROMol&)
+//  this class also contains a function pointer with the signature
+//      double(*)(const ROMol&)  
 // these classes are automatically registered with the property registry
+  /*
 #define REGISTER_FULL_DESCRIPTOR( NAME, VERSION, FUNC )         \
-  struct NAME##PropertyFxn : public PropertyFxn{          \
-    NAME##PropertyFxn(bool registerProp=true) : PropertyFxn(#NAME, VERSION) { \
-      if (registerProp) Properties::registerProperty(new NAME##PropertyFxn(false)); \
+  double NAME##PropertyFunction(const ROMol&m){return static_cast<double>(FUNC(mol));}\
+  struct NAME##PropertyFunctor : public PropertyFunctor{          \
+    NAME##PropertyFunctor(bool registerProp=true) : PropertyFunctor(#NAME, VERSION) { \
+      if (registerProp) Properties::registerProperty(new NAME##PropertyFunctor(false)); \
+      d_dataFunc = &NAME##PropertyFunction;  \
     } \
-    double compute(const RDKit::ROMol &mol) const {return static_cast<double>(FUNC(mol));} \
+    double operator()(const RDKit::ROMol &mol) const { \
+       return NAME##PropertyFunction(mol); } \
   }; \
-  static NAME##PropertyFxn NAME##PropertyFxn__;
+  static NAME##PropertyFunctor NAME##PropertyFunctor__;
+  */
 
   
 
 #define REGISTER_DESCRIPTOR( NAME, FUNC )           \
-  struct NAME##PropertyFxn : public PropertyFxn{          \
-    NAME##PropertyFxn(bool registerProp=true) : PropertyFxn(#NAME, NAME##Version) { \
-      if (registerProp) Properties::registerProperty(new NAME##PropertyFxn(false)); \
+  struct NAME##PropertyFunctor : public PropertyFunctor{          \
+    static double _func(const ROMol&m){return static_cast<double>(FUNC(m));} \
+    NAME##PropertyFunctor(bool registerProp=true) : \
+    PropertyFunctor(#NAME, NAME##Version, _func) { \
+      if (registerProp) Properties::registerProperty(new NAME##PropertyFunctor(false)); \
     } \
-    double compute(const RDKit::ROMol &mol) const {return static_cast<double>(FUNC(mol));} \
+    double operator()(const RDKit::ROMol &mol) const { \
+       return _func(mol); } \
   }; \
-  static NAME##PropertyFxn NAME##PropertyFxn__;
+  static NAME##PropertyFunctor NAME##PropertyFunctor__;
 }
 }
 

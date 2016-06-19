@@ -48,21 +48,6 @@ namespace RDKit {
 namespace Descriptors {
 
 namespace {
-const std::string CrippenClogPVersion = crippenVersion;
-double calcClogP(const ROMol &mol) {
-  double clogp,mr;
-  calcCrippenDescriptors(mol, clogp, mr);
-  return clogp;
-}
-const std::string CrippenMRVersion = crippenVersion;
-double calcMR(const ROMol &mol) {
-  double clogp,mr;
-  calcCrippenDescriptors(mol, clogp, mr);
-  return mr;
-}
-}
-
-namespace {
 void _registerDescriptors() {
   REGISTER_DESCRIPTOR(exactmw, calcExactMW);
   REGISTER_DESCRIPTOR(lipinskiHBA, calcLipinskiHBA);
@@ -105,31 +90,31 @@ void registerDescriptors() {
 #endif
 }
 
-std::vector<boost::shared_ptr<PropertyFxn> > Properties::registry;
-int Properties::registerProperty(PropertyFxn *prop) {
+std::vector<boost::shared_ptr<PropertyFunctor> > Properties::registry;
+int Properties::registerProperty(PropertyFunctor *prop) {
   for(size_t i=0; i<Properties::registry.size(); ++i) {
     if (registry[i]->getName() == prop->getName()) {
-      Properties::registry[i] = boost::shared_ptr<PropertyFxn>(prop);
+      Properties::registry[i] = boost::shared_ptr<PropertyFunctor>(prop);
       return i;
     }
   }
   // XXX Add mutex?
-  Properties::registry.push_back( boost::shared_ptr<PropertyFxn>(prop) );
+  Properties::registry.push_back( boost::shared_ptr<PropertyFunctor>(prop) );
   return Properties::registry.size();
 }
 
 std::vector<std::string> Properties::getAvailableProperties() {
   registerDescriptors();
   std::vector<std::string> names;
-  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, Properties::registry) {
+  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, Properties::registry) {
     names.push_back(prop->getName());
   }
   return names;
 }
 
-boost::shared_ptr<PropertyFxn> Properties::getProperty(const std::string &name) {
+boost::shared_ptr<PropertyFunctor> Properties::getProperty(const std::string &name) {
   registerDescriptors();
-  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, Properties::registry) {
+  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, Properties::registry) {
     if (prop.get() && prop->getName() == name) {
       return prop;
     }
@@ -139,7 +124,7 @@ boost::shared_ptr<PropertyFxn> Properties::getProperty(const std::string &name) 
 
 Properties::Properties() : m_properties() {
   registerDescriptors();
-  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, Properties::registry) {
+  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, Properties::registry) {
     m_properties.push_back(prop);
   }
 }
@@ -153,7 +138,7 @@ Properties::Properties(const std::vector<std::string> &propNames) {
 
 std::vector<std::string> Properties::getPropertyNames() const {
   std::vector<std::string> names;
-  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, m_properties) {
+  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
     names.push_back(prop->getName());
   }
   return names;
@@ -162,10 +147,22 @@ std::vector<std::string> Properties::getPropertyNames() const {
 std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol) const {
   std::vector<double> res;
   res.reserve(m_properties.size());
-  BOOST_FOREACH(boost::shared_ptr<PropertyFxn> prop, m_properties) {
-    res.push_back(prop->compute(mol));
+  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+    res.push_back((*prop)(mol));
   }
   return res;
+}
+
+void t() {
+  makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", 2.);
+}
+
+PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
+                                        double min,
+                                        double max) {
+  PROP_RANGE_QUERY *filter = new PROP_RANGE_QUERY(min, max);
+  filter->setDataFunc( Properties::getProperty(name)->d_dataFunc );
+  return filter;
 }
 
 }

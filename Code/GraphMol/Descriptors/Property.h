@@ -37,22 +37,26 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <Query/Query.h>
+#include <RDGeneral/Exceptions.h>
 
 namespace RDKit {
 namespace Descriptors {
-  struct PropertyFxn {
+  struct PropertyFunctor {
     // Registry of property functions
     //  See REGISTER_DESCRIPTOR
     std::string propName;
     std::string propVersion;
+    double (*d_dataFunc)(const ROMol&);
     
-   PropertyFxn(const std::string &name, const std::string &version) :
-    propName(name), propVersion(version) {
+    PropertyFunctor(const std::string &name, const std::string &version,
+                    double (*func)(const ROMol&)=NULL) :
+       propName(name), propVersion(version), d_dataFunc(func) {
     }
-    virtual ~PropertyFxn() {};
+    virtual ~PropertyFunctor() {};
     
     //! Compute the value of the property
-    virtual double compute(const RDKit::ROMol &) const = 0;
+    virtual double operator()(const RDKit::ROMol &) const = 0;
     
     //! Return the name of the property
     const std::string getName() const { return propName; }
@@ -65,7 +69,7 @@ namespace Descriptors {
 //! Holds a collection of properties for computation purposes
 class Properties {
 protected:
-  std::vector<boost::shared_ptr<PropertyFxn> > m_properties;
+  std::vector<boost::shared_ptr<PropertyFunctor> > m_properties;
   
 public:
   Properties();
@@ -75,44 +79,46 @@ public:
   std::vector<double>      computeProperties(const RDKit::ROMol &mol) const;
 
   //! Register a property function - takes ownership
-  static int registerProperty(PropertyFxn *ptr);
-  static boost::shared_ptr<PropertyFxn> getProperty(const std::string &name);
+  static int registerProperty(PropertyFunctor *ptr);
+  static boost::shared_ptr<PropertyFunctor> getProperty(const std::string &name);
   static std::vector<std::string> getAvailableProperties();
-  static std::vector<boost::shared_ptr<PropertyFxn> > registry;
+  static std::vector<boost::shared_ptr<PropertyFunctor> > registry;
     
   
 };
 
-//! Filters properties between a min and max
-class PropertyFilter {
 
-  boost::shared_ptr<PropertyFxn> m_property;
-  double      m_min;
-  double      m_max;
-  
-public:
-  
-  PropertyFilter(const std::string &propName, double minValue, double maxValue) :  
-   m_property(Properties::getProperty(propName)), m_min(minValue), m_max(maxValue) {
-  }
-  
-  PropertyFilter(boost::shared_ptr<PropertyFxn> fxn,
-               double minValue, double maxValue) :
-   m_property(fxn), m_min(minValue), m_max(maxValue) {}
-  
-  //! returns the minimum acceptable value for the property
-  double getMin() const { return m_min; }
-  //! returns the maximum acceptable value for the property
-  double getMax() const { return m_max; }
+typedef Queries::Query<bool, const ROMol &, true> PROP_BOOL_QUERY;
+typedef Queries::AndQuery<int, const ROMol &, true> PROP_AND_QUERY;
+typedef Queries::OrQuery<int, const ROMol &, true> PROP_OR_QUERY;
+typedef Queries::XOrQuery<int, const ROMol &, true> PROP_XOR_QUERY;
 
-  //! returns true if the molecule passes the property filter
-  bool accepts(const ROMol &mol) {
-    double res = m_property->compute(mol);
-    return (res >= m_min && res <= m_max);
-  }
-};
+typedef Queries::EqualityQuery<double, const ROMol &, true> PROP_EQUALS_QUERY;
+
+typedef Queries::GreaterQuery<double, const ROMol &, true> PROP_GREATER_QUERY;
+
+typedef Queries::GreaterEqualQuery<double, const ROMol &, true>
+    PROP_GREATEREQUAL_QUERY;
 
 
+typedef Queries::LessQuery<double, const ROMol &, true> PROP_LESS_QUERY;
+
+typedef Queries::LessEqualQuery<double, const ROMol &, true> PROP_LESSEQUAL_QUERY;
+
+typedef Queries::RangeQuery<double, const ROMol &, true> PROP_RANGE_QUERY;
+
+
+template<class T>
+T* makePropertyQuery(const std::string &name, double what) {
+  T *t = new T(what);
+  t->setDataFunc( Properties::getProperty(name)->d_dataFunc );
+  return t;
+}
+
+
+PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
+                                         double min,
+                                         double max);
 
 }
 }

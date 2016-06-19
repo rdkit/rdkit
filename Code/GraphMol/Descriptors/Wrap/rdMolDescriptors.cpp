@@ -1050,15 +1050,15 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
 
-  python::class_<RDKit::Descriptors::PropertyFxn,
-                 RDKit::Descriptors::PropertyFxn*,
-                 boost::shared_ptr<RDKit::Descriptors::PropertyFxn>,
-                 boost::noncopyable>("PropertyFxn", "", python::no_init)
-      .def("Compute", &RDKit::Descriptors::PropertyFxn::compute,
+  python::class_<RDKit::Descriptors::PropertyFunctor,
+                 RDKit::Descriptors::PropertyFunctor*,
+                 boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
+                 boost::noncopyable>("PropertyFunctor", "", python::no_init)
+      .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
            "Compute the property for the specified molecule")
-      .def("GetName", &RDKit::Descriptors::PropertyFxn::getName,
+      .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
            "Return the name of the property to calculate")
-      .def("GetVersion", &RDKit::Descriptors::PropertyFxn::getVersion,
+      .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
            "Return the version of the calculated property");
 
   python::class_<RDKit::Descriptors::Properties,
