@@ -1,7 +1,7 @@
 # $Id$
 # 
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Chem import rdMolDescriptors as rdMD, Descriptors
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 from rdkit import RDConfig
@@ -375,6 +375,54 @@ class TestCase(unittest.TestCase) :
       self.assertEquals(v1, v4)
       self.assertEquals(v2, v5)
       self.assertEquals(v3, v6)
-        
+
+  def testProperties(self):
+      props = rdMD.Properties()
+      names = list(props.GetAvailableProperties())
+      self.assertEquals(names, list(props.GetPropertyNames()))
+      m = Chem.MolFromSmiles("C1CC1CC")
+      results = props.ComputeProperties(m)
+
+      for i,name in enumerate(names):
+        props = rdMD.Properties([name])
+        res = props.ComputeProperties(m)
+        self.assertEquals(len(res), 1)
+        self.assertEquals(res[0], results[i])
+        self.assertEquals(props.GetPropertyNames()[0], names[i])
+        self.assertEquals(len(props.GetPropertyNames()), 1)
+
+      try:
+        props = rdMD.Properties([1,2,3])
+        self.assertEquals("should not get here", "but did")
+      except TypeError:
+        pass
+
+      try:
+        props = rdMD.Properties(["property that doesn't exist"])
+        self.assertEquals("should not get here", "but did")
+      except RuntimeError:
+        pass
+
+  def testPythonDescriptorFunctor(self):
+    class NumAtoms(Descriptors.PropertyFunctor):
+      def __init__(self):
+        Descriptors.PropertyFunctor.__init__(self, "NumAtoms", "1.0.0")
+      def __call__(self, mol):
+        return mol.GetNumAtoms()
+
+    numAtoms = NumAtoms()
+    rdMD.Properties.RegisterProperty(numAtoms)
+    props = rdMD.Properties(["NumAtoms"])
+    self.assertEquals(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+                            
+    self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
+    # check memory
+    del numAtoms
+    self.assertEquals(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+    self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
+    
+      
+
+      
 if __name__ == '__main__':
   unittest.main()
