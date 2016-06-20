@@ -472,8 +472,16 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
   return atoms->size();
 }
 
+namespace {
+bool hasStereoAssigned(const ROMol &mol) {
+  return mol.hasProp(common_properties::_StereochemDone);
+}
+}
 const std::string NumAtomStereoCentersVersion = "1.0.0";
 unsigned int numAtomStereoCenters(const ROMol &mol) {
+  if(!hasStereoAssigned(mol))
+    throw ValueErrorException("numStereoCenters called without stereo being assigned");
+  
   unsigned int res=0;
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
        ++atom) {
@@ -486,6 +494,9 @@ unsigned int numAtomStereoCenters(const ROMol &mol) {
 
 const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.0";
 unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
+  if(!hasStereoAssigned(mol))
+    throw ValueErrorException("numUnspecifiedStereoCenters called without stereo being assigned");
+
   unsigned int res=0;
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
        ++atom) {

@@ -153,10 +153,6 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol) const
   return res;
 }
 
-void t() {
-  makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", 2.);
-}
-
 PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
                                         double min,
                                         double max) {
