@@ -1,5 +1,6 @@
 # $Id$
-# 
+#
+from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD, Descriptors
 from rdkit.Chem import AllChem
@@ -420,7 +421,16 @@ class TestCase(unittest.TestCase) :
     del numAtoms
     self.assertEquals(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
     self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
-    
+
+    m = Chem.MolFromSmiles("c1ccccc1")
+    properties = rdMD.Properties()
+    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
+      print(name, value)
+      
+    properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
+    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
+      print(name, value)
+
   def testPropertyRanges(self):
     query = rdMD.MakePropertyRangeQuery("exactmw", 0, 1000)
     self.assertTrue(query.Match(Chem.MolFromSmiles("C")))

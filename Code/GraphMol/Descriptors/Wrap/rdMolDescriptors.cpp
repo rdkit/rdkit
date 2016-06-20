@@ -1135,10 +1135,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
 
+  docString = "Property computation class stored in the property registry.\n"
+      "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
+      "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
   python::class_<RDKit::Descriptors::PropertyFunctor,
                  RDKit::Descriptors::PropertyFunctor*,
                  boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
-                 boost::noncopyable>("PropertyFunctor", "", python::no_init)
+                 boost::noncopyable>("PropertyFunctor", docString.c_str(), python::no_init)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
            "Compute the property for the specified molecule")
       .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
@@ -1147,9 +1150,20 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
            "Return the version of the calculated property");
 
   iterable_converter().from_python<std::vector<std::string> >();
-  
+
+  docString = "Property computation and registry system.  To compute all registered properties:\n"
+      "mol = Chem.MolFromSmiles('c1ccccc1')\n"
+      "properties = rdMolDescriptors.Properties()\n"
+      "for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):\n"
+      "  print(name, value)\n\n"
+      "To compute a subset\n"
+      "properties = rdMolDescriptors.Properties(['exactmw', 'lipinskiHBA'])\n"
+      "for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):\n"
+      "  print(name, value)\n\n"
+      "";
+
   python::class_<RDKit::Descriptors::Properties,
-                 RDKit::Descriptors::Properties*>("Properties", python::init<>())
+                 RDKit::Descriptors::Properties*>("Properties", docString.c_str(), python::init<>() )
       .def(python::init<const std::vector<std::string>&>())
       .def("GetPropertyNames", &RDKit::Descriptors::Properties::getPropertyNames,
            "Return the property names computed by this instance")
@@ -1172,15 +1186,19 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("__call__", &PythonPropertyFunctor::operator(),
            "Compute the property for the specified molecule");
 
+  docString = "Property Range Query for a molecule.  Match(mol) -> true if in range";
   python::class_<Queries::RangeQuery<double, RDKit::ROMol const&, true>,
                  Queries::RangeQuery<double, RDKit::ROMol const&, true>*,
                  boost::noncopyable>(
                      "PropertyRangeQuery",
-                     "Property Range Query for a molecule.  Match(mol) -> true if in range",
+                     docString.c_str(),
                      python::no_init)
       .def("Match", &Queries::RangeQuery<double, RDKit::ROMol const&, true>::Match);
   
-  docString = "Generates a Range property for the specified property, between min and max";
+  docString = "Generates a Range property for the specified property, between min and max\n"
+      "query = MakePropertyRangeQuery('exactmw', 0, 500)\n"
+      "query.Match( mol )";
+  
   python::def("MakePropertyRangeQuery",
               RDKit::Descriptors::makePropertyRangeQuery,
               (python::arg("name"), python::arg("min"), python::arg("max")), docString.c_str(),
