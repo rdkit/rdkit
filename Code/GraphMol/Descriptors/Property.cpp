@@ -144,13 +144,22 @@ std::vector<std::string> Properties::getPropertyNames() const {
   return names;
 }
 
-std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol) const {
+std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol, bool annotate) const {
   std::vector<double> res;
   res.reserve(m_properties.size());
   BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
     res.push_back((*prop)(mol));
+    if (annotate) {
+      mol.setProp<double>(prop->getName(), (*prop)(mol));
+    }
   }
   return res;
+}
+
+void Properties::annotateProperties(RDKit::ROMol &mol) const {
+  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+    mol.setProp<double>(prop->getName(), (*prop)(mol));
+  }
 }
 
 PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,

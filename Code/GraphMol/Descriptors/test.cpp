@@ -71,6 +71,9 @@ void test2() {
   calcCrippenDescriptors(*mol, logp, mr);
   TEST_ASSERT(feq(logp, 0.6361));
   TEST_ASSERT(feq(mr, 6.7310));
+  // check singleton functions
+  TEST_ASSERT(calcClogP(*mol) == logp);
+  TEST_ASSERT(calcMR(*mol) == mr);
   // check that caching works:
   calcCrippenDescriptors(*mol, logp, mr);
   TEST_ASSERT(feq(logp, 0.6361));
@@ -1883,10 +1886,21 @@ void testProperties() {
     RWMol *mol;
     mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
     TEST_ASSERT(mol);
-    std::vector<double> props = sink.computeProperties(*mol);
-    delete mol;
+    // Test annotation as well
+    std::vector<double> props = sink.computeProperties(*mol, true);
 
     TEST_ASSERT(props == res);
+    TEST_ASSERT(mol->getProp<double>("NumSpiroAtoms") == 1.);
+    TEST_ASSERT(mol->getProp<double>("NumBridgeheadAtoms") == 2.);
+    delete mol;
+
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    TEST_ASSERT(mol);
+    // Test annotation as well
+    sink.annotateProperties(*mol);
+    TEST_ASSERT(mol->getProp<double>("NumSpiroAtoms") == 1.);
+    TEST_ASSERT(mol->getProp<double>("NumBridgeheadAtoms") == 2.);
+    
   }
 
   {
@@ -1896,7 +1910,7 @@ void testProperties() {
       Properties sink(names);
       TEST_ASSERT(0); // should throw
     } catch(KeyErrorException) {
-      BOOST_LOG(rdErrorLog) << "---Caught error---" << std::endl;
+      BOOST_LOG(rdErrorLog) << "---Caught keyerror (bad property name)---" << std::endl;
     }
   }
 }
@@ -1927,6 +1941,31 @@ void testPropertyQueries() {
         makePropertyQuery<PROP_EQUALS_QUERY>("lipinskiHBA", calcLipinskiHBA(*mol))
         ->Match(*mol));
   }
+}
+
+void testStereoCounting() {
+  const bool debugParse=false;
+  const bool sanitize=false;
+  ROMol *m = SmilesToMol("NC(C)(F)C(=O)O", debugParse, sanitize);
+  TEST_ASSERT(!m->hasProp(common_properties::_StereochemDone));
+  
+  std::vector<std::string> names;
+  names.push_back("NumAtomStereoCenters");
+  names.push_back("NumUnspecifiedAtomStereoCenters");
+  Properties prop(names);
+
+  try {
+    prop.computeProperties(*m);
+    TEST_ASSERT(0); // didn't catch exception
+  } catch (ValueErrorException) {
+    BOOST_LOG(rdErrorLog) << "---Caught stereo value error---" << std::endl;
+  }
+
+  delete m;
+  m = SmilesToMol("NC(C)(F)C(=O)O", sanitize);
+  std::vector<double> res = prop.computeProperties(*m);
+  TEST_ASSERT(res[0] == 1);
+  TEST_ASSERT(res[1] == 1);
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1967,4 +2006,5 @@ int main() {
   testGitHubIssue694();
   testProperties();
   testPropertyQueries();
+  testStereoCounting();
 }

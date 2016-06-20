@@ -1168,8 +1168,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("GetPropertyNames", &RDKit::Descriptors::Properties::getPropertyNames,
            "Return the property names computed by this instance")
       .def("ComputeProperties", &RDKit::Descriptors::Properties::computeProperties,
+           (python::arg("mol"), python::arg("annotateMol")=false),
+           "Return a list of computed properties, if annotateMol==True, annotate the molecule with "
+           "the computed properties.")
+      .def("annotateProperties", &RDKit::Descriptors::Properties::annotateProperties,
            python::arg("mol"),
-           "Return a list of computed properties")
+           "Annotate the molecule with the computed properties.  These properties will be available "
+           "as SDData or from mol.GetProp(prop)")
       .def("GetAvailableProperties", &RDKit::Descriptors::Properties::getAvailableProperties,
            "Return all available property names that can be computed").staticmethod("GetAvailableProperties")
       .def("GetProperty", &RDKit::Descriptors::Properties::getProperty,

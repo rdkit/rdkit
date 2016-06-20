@@ -76,8 +76,9 @@ public:
   Properties(const std::vector<std::string> &propNames);
   
   std::vector<std::string> getPropertyNames() const;
-  std::vector<double>      computeProperties(const RDKit::ROMol &mol) const;
-
+  std::vector<double>      computeProperties(const RDKit::ROMol &mol, bool annotate=false) const;
+  void                     annotateProperties(RDKit::ROMol& mol) const;
+  
   //! Register a property function - takes ownership
   static int registerProperty(PropertyFunctor *ptr);
   static boost::shared_ptr<PropertyFunctor> getProperty(const std::string &name);
