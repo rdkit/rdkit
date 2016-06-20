@@ -1172,4 +1172,19 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("__call__", &PythonPropertyFunctor::operator(),
            "Compute the property for the specified molecule");
 
+  python::class_<Queries::RangeQuery<double, RDKit::ROMol const&, true>,
+                 Queries::RangeQuery<double, RDKit::ROMol const&, true>*,
+                 boost::noncopyable>(
+                     "PropertyRangeQuery",
+                     "Property Range Query for a molecule.  Match(mol) -> true if in range",
+                     python::no_init)
+      .def("Match", &Queries::RangeQuery<double, RDKit::ROMol const&, true>::Match);
+  
+  docString = "Generates a Range property for the specified property, between min and max";
+  python::def("MakePropertyRangeQuery",
+              RDKit::Descriptors::makePropertyRangeQuery,
+              (python::arg("name"), python::arg("min"), python::arg("max")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  
+
 }

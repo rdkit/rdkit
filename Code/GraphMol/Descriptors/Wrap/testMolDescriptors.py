@@ -421,8 +421,13 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
     self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
     
-      
+  def testPropertyRanges(self):
+    query = rdMD.MakePropertyRangeQuery("exactmw", 0, 1000)
+    self.assertTrue(query.Match(Chem.MolFromSmiles("C")))
 
+    query = rdMD.MakePropertyRangeQuery("exactmw", 1000, 10000)
+    self.assertFalse(query.Match(Chem.MolFromSmiles("C")))
+                    
       
 if __name__ == '__main__':
   unittest.main()
