@@ -58,70 +58,70 @@ SELECT id, atompair_fp(m) AS f INTO pgpairfp FROM pgmol;
 set rdkit.tanimoto_threshold=0.5;
 set rdkit.dice_threshold=0.5;
 
-SELECT 
-	id, 
-	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+SELECT
+	id,
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f
 LIMIT 10;
 
-SELECT 
-	id, 
-	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+SELECT
+	id,
+	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f
 LIMIT 10;
 
-SELECT 
-	id, 
-	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+SELECT
+	id,
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f
 LIMIT 10;
 
-SELECT 
-	id, 
+SELECT
+	id,
 	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
 	size(f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f
 LIMIT 10;
 
 set rdkit.tanimoto_threshold=0.4;
-SELECT 
-	id, 
-	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f) 
+SELECT
+	id,
+	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f
 LIMIT 10;
 
-SELECT 
-	id, 
-	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f) 
+SELECT
+	id,
+	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f
 LIMIT 10;
 
-SELECT 
-	id, 
-	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f) 
+SELECT
+	id,
+	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f
 LIMIT 10;
 
-SELECT 
-	id, 
+SELECT
+	id,
 	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f
 LIMIT 10;
 
 select dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)N)'::mol, 1)) sml;
@@ -153,10 +153,10 @@ select is_valid_ctab('chiral1.mol
    -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
    -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  1  3  1  0      
-  1  4  1  1      
-  1  5  1  0      
+  1  2  1  0
+  1  3  1  0
+  1  4  1  1
+  1  5  1  0
 M  END');
 select is_valid_ctab('invalid');
 select mol_from_ctab('chiral1.mol
@@ -168,10 +168,10 @@ select mol_from_ctab('chiral1.mol
    -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
    -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  1  3  1  0      
-  1  4  1  1      
-  1  5  1  0      
+  1  2  1  0
+  1  3  1  0
+  1  4  1  1
+  1  5  1  0
 M  END');
 
 -- mol_to_ctab() - suppress auto-generation of depiction.
@@ -190,10 +190,10 @@ select mol_to_ctab(mol_from_ctab('chiral1.mol
    -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
    -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  1  3  1  0      
-  1  4  1  1      
-  1  5  1  0      
+  1  2  1  0
+  1  3  1  0
+  1  4  1  1
+  1  5  1  0
 M  END', true));
 
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
@@ -232,7 +232,7 @@ select 'c1cccn1C'::mol@>mol_from_smiles('c1cccn1[H]') as match;
 select 'c1ccc[nH]1'::mol@>qmol_from_smiles('c1cccn1[H]') as match;
 select 'c1cccn1C'::mol@>qmol_from_smiles('c1cccn1[H]') as match;
 select 'c1ccc[nH]1'::mol@>mol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -249,7 +249,7 @@ select 'c1ccc[nH]1'::mol@>mol_from_ctab('query
   1  6  1  0  0  0  0
 M  END') as match;
 select 'c1cccn1C'::mol@>mol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -266,7 +266,7 @@ select 'c1cccn1C'::mol@>mol_from_ctab('query
   1  6  1  0  0  0  0
 M  END') as match;
 select 'c1ccc[nH]1'::mol@>qmol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -283,7 +283,7 @@ select 'c1ccc[nH]1'::mol@>qmol_from_ctab('query
   1  6  1  0  0  0  0
 M  END') as match;
 select 'c1cccn1C'::mol@>qmol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -300,3 +300,7 @@ select 'c1cccn1C'::mol@>qmol_from_ctab('query
   1  6  1  0  0  0  0
 M  END') as match;
 
+-- mol_adjust_query_properties
+select mol_to_smarts('CC*'::mol) smarts;
+select mol_to_smarts(mol_adjust_query_properties('CC*'::mol)) smarts;
+select mol_to_smarts(mol_adjust_query_properties('CC*'::mol,'{"adjustDegree":true}')) smarts;

@@ -191,6 +191,8 @@ const char *MolInchi(CROMol i, const char *opts);
 const char *MolInchiKey(CROMol i, const char *opts);
 CROMol MolMurckoScaffold(CROMol i);
 
+CROMol MolAdjustQueryProperties(CROMol m, const char *params);
+
 /* ExplicitBitVect */
 typedef void *MolBitmapFingerPrint;
 void freeMolBitmapFingerPrint(MolBitmapFingerPrint data);

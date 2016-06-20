@@ -50,7 +50,12 @@
 #include <GraphMol/FMCS/FMCS.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/integer_traits.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #ifdef BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
 #endif
@@ -586,6 +591,45 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
       mol = 0;
     }
   }
+  return (CROMol)mol;
+}
+
+namespace {
+void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
+                                const char *json) {
+  PRECONDITION(json && strlen(json), "empty json");
+  std::istringstream ss;
+  ss.str(json);
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
+  p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
+  p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
+  boost::property_tree::write_json("/tmp/foo.json", pt);
+}
+}
+
+extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
+  const ROMol *im = (ROMol *)i;
+
+  MolOps::AdjustQueryParameters p;
+
+  if (params && strlen(params)) {
+    // try {
+    parseAdjustQueryParameters(p, params);
+    // } catch (...) {
+    //   ereport(
+    //       WARNING,
+    //       (errcode(ERRCODE_WARNING),
+    //        errmsg(
+    //            "adjustQueryProperties: Invalid argument \'params\'
+    //            ignored")));
+    // }
+  }
+  std::cerr << "   PT: " << p.adjustDegree << " " << p.adjustRingCount
+            << std::endl;
+  ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
   return (CROMol)mol;
 }
 
