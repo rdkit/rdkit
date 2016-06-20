@@ -329,7 +329,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     if (!obnd) continue;
     obnd->getStereoAtoms().clear();
   }
-  boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
+  boost::tie(a1, a2) = boost::adjacent_vertices(aid2, d_graph);
   while (a1 != a2) {
     unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
