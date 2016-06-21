@@ -119,7 +119,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << " " << c0.x << "," << c0.y;
   d_os << "' style='";
   if (fillPolys())
-    d_os << "fill:" << col << ";fill-rule:evenodd";
+    d_os << "fill:" << col << ";fill-rule:evenodd;";
   else
     d_os << "fill:none;";
 
@@ -150,7 +150,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
 
   d_os << " style='";
   if (fillPolys())
-    d_os << "fill:" << col << ";fill-rule:evenodd";
+    d_os << "fill:" << col << ";fill-rule:evenodd;";
   else
     d_os << "fill:none;";
 
@@ -203,7 +203,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
         MolDraw2D_detail::char_widths[(int)'M'];
     if (TextDrawSubscript == draw_mode) {
       char_width *= 0.5;
-      had_a_sub =true;
+      had_a_sub = true;
     } else if (TextDrawSuperscript == draw_mode) {
       char_width *= 0.5;
       had_a_super = true;
