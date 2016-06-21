@@ -301,6 +301,11 @@ select 'c1cccn1C'::mol@>qmol_from_ctab('query
 M  END') as match;
 
 -- mol_adjust_query_properties
-select mol_to_smarts('CC*'::mol) smarts;
-select mol_to_smarts(mol_adjust_query_properties('CC*'::mol)) smarts;
-select mol_to_smarts(mol_adjust_query_properties('CC*'::mol,'{"adjustDegree":true}')) smarts;
+select 'C1CC1OC'::mol @> 'C1CC1O*'::mol;
+select 'C1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol);
+select 'C1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol,'{"makeDummiesQueries":false}');
+select 'CC1CC1OC'::mol @> 'C1CC1O*'::mol;
+select 'CC1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol);
+select 'CC1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol,'{"adjustDegree":false}');
+select 'C1CC1C(C)OC'::mol @> mol_adjust_query_properties('C1CC1CO*'::mol);
+select 'C1CC1C(C)OC'::mol @> mol_adjust_query_properties('C1CC1CO*'::mol,'{"adjustDegreeFlags":"IGNOREDUMMIES"}');
