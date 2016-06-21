@@ -208,7 +208,7 @@ if(APPLE)
   endif()
 endif(APPLE)
 
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 include_directories(${RDKit_CodeDir})
