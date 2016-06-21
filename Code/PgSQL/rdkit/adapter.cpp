@@ -54,6 +54,7 @@
 #include <boost/integer_traits.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #ifdef BUILD_INCHI_SUPPORT
@@ -595,6 +596,25 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
 }
 
 namespace {
+
+MolOps::AdjustQueryWhichFlags parseWhichString(const std::string &v) {
+  if (v == "IGNORENONE") {
+    return MolOps::ADJUST_IGNORENONE;
+  } else if (v == "IGNORERINGATOMS") {
+    return MolOps::ADJUST_IGNORERINGATOMS;
+  } else if (v == "IGNORECHAINATOMS") {
+    return MolOps::ADJUST_IGNORECHAINATOMS;
+  } else if (v == "IGNOREDUMMIES") {
+    return MolOps::ADJUST_IGNOREDUMMIES;
+  } else if (v == "IGNORENONDUMMIES") {
+    return MolOps::ADJUST_IGNORENONDUMMIES;
+  } else if (v == "IGNOREALL") {
+    return MolOps::ADJUST_IGNOREALL;
+  } else {
+    throw ValueErrorException("Bad which string provided");
+  }
+}
+
 void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
                                 const char *json) {
   PRECONDITION(json && strlen(json), "empty json");
@@ -606,7 +626,11 @@ void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
   p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
   p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
   p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
-  boost::property_tree::write_json("/tmp/foo.json", pt);
+  std::string which;
+  which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
+  if (which != "") p.adjustDegreeFlags = parseWhichString(which);
+  which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
+  if (which != "") p.adjustRingCountFlags = parseWhichString(which);
 }
 }
 
@@ -627,8 +651,6 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
     //            ignored")));
     // }
   }
-  std::cerr << "   PT: " << p.adjustDegree << " " << p.adjustRingCount
-            << std::endl;
   ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
   return (CROMol)mol;
 }
