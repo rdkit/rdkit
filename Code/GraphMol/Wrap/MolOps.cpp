@@ -1880,10 +1880,12 @@ ARGUMENTS:\n\
                 docString.c_str());
 
     python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
-        .value("ADJUST_EMPTY", MolOps::ADJUST_EMPTY)
-        .value("ADJUST_RINGSONLY", MolOps::ADJUST_RINGSONLY)
+        .value("ADJUST_IGNORENONE", MolOps::ADJUST_IGNORENONE)
+        .value("ADJUST_IGNORECHAINATOMS", MolOps::ADJUST_IGNORECHAINATOMS)
+        .value("ADJUST_IGNORERINGATOMS", MolOps::ADJUST_IGNORERINGATOMS)
         .value("ADJUST_IGNOREDUMMIES", MolOps::ADJUST_IGNOREDUMMIES)
-        .value("ADJUST_SETALL", MolOps::ADJUST_SETALL)
+        .value("ADJUST_IGNORENONDUMMIES", MolOps::ADJUST_IGNORENONDUMMIES)
+        .value("ADJUST_IGNOREALL", MolOps::ADJUST_IGNOREALL)
         .export_values();
 
     docString =
@@ -1904,7 +1906,7 @@ Attributes:\n\
 A note on the flags controlling which atoms are modified: \n\
    These generally limit the set of atoms to be modified.\n\
    For example if ADJUST_RINGSONLY is set, then only atoms in rings will be modified.\n\
-       ADJUST_EMPTY causes all atoms to be modified\n\
+       ADJUST_IGNORENONE causes all atoms to be modified\n\
        ADJUST_SETALL sets all of the ADJUST flags\n\
 ";
     python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",
