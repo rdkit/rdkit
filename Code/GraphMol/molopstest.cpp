@@ -2689,10 +2689,15 @@ void testSFIssue1894348() {
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size() == 2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0] == 0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1] == 4);
+  // we remove an H attached to a stereo bond
   m2 = static_cast<RWMol *>(MolOps::removeHs(static_cast<const ROMol &>(*m)));
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size() == 2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0] == 0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1] == 4);
+  // at first the stereoatoms are gone:
+  TEST_ASSERT(m2->getBondWithIdx(2)->getStereoAtoms().size() == 0);
+  // but they can be re-perceived:
+  MolOps::assignStereochemistry(*m2, true, true);
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms().size() == 2);
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
