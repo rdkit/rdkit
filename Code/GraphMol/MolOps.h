@@ -242,25 +242,27 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly = false);
 void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly = false);
 
 typedef enum {
-  ADJUST_EMPTY = 0x0,
-  ADJUST_RINGSONLY = 0x1,
+  ADJUST_IGNORENONE = 0x0,
+  ADJUST_IGNORECHAINATOMS = 0x1,
+  ADJUST_IGNORERINGATOMS = 0x4,
   ADJUST_IGNOREDUMMIES = 0x2,
-  ADJUST_SETALL = 0xFFFFFFF
+  ADJUST_IGNORENONDUMMIES = 0x8,
+  ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 struct AdjustQueryParameters {
   bool adjustDegree; /**< add degree queries */
-  AdjustQueryWhichFlags adjustDegreeFlags;
+  boost::uint32_t adjustDegreeFlags;
   bool adjustRingCount; /**< add ring-count queries */
-  AdjustQueryWhichFlags adjustRingCountFlags;
+  boost::uint32_t adjustRingCountFlags;
 
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
 
   AdjustQueryParameters()
       : adjustDegree(true),
-        adjustDegreeFlags(ADJUST_SETALL),
+        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
         adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_SETALL),
+        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
         makeDummiesQueries(true) {}
 };
 //! returns a copy of a molecule with query properties adjusted

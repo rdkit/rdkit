@@ -5387,7 +5387,7 @@ void testAdjustQueryProperties() {
       delete aqm;
       aqp.adjustDegree = true;
       aqp.adjustRingCount = false;
-      aqp.adjustDegreeFlags = MolOps::ADJUST_EMPTY;
+      aqp.adjustDegreeFlags = MolOps::ADJUST_IGNORENONE;
       aqm = MolOps::adjustQueryProperties(*qm, &aqp);
       TEST_ASSERT(aqm);
       TEST_ASSERT(aqm->getNumAtoms() == 6);
@@ -5416,7 +5416,7 @@ void testAdjustQueryProperties() {
       TEST_ASSERT(SubstructMatch(*m, *aqm, match));
 
       delete aqm;
-      aqp.adjustRingCountFlags = MolOps::ADJUST_EMPTY;  // neither "not dummy"
+      aqp.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;  // neither "not dummy"
                                                         // nor "in ring"
                                                         // restrictions
       aqm = MolOps::adjustQueryProperties(*qm, &aqp);

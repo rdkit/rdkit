@@ -50,7 +50,13 @@
 #include <GraphMol/FMCS/FMCS.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/integer_traits.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #ifdef BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
 #endif
@@ -586,6 +592,66 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
       mol = 0;
     }
   }
+  return (CROMol)mol;
+}
+
+namespace {
+
+MolOps::AdjustQueryWhichFlags parseWhichString(const std::string &v) {
+  if (v == "IGNORENONE") {
+    return MolOps::ADJUST_IGNORENONE;
+  } else if (v == "IGNORERINGATOMS") {
+    return MolOps::ADJUST_IGNORERINGATOMS;
+  } else if (v == "IGNORECHAINATOMS") {
+    return MolOps::ADJUST_IGNORECHAINATOMS;
+  } else if (v == "IGNOREDUMMIES") {
+    return MolOps::ADJUST_IGNOREDUMMIES;
+  } else if (v == "IGNORENONDUMMIES") {
+    return MolOps::ADJUST_IGNORENONDUMMIES;
+  } else if (v == "IGNOREALL") {
+    return MolOps::ADJUST_IGNOREALL;
+  } else {
+    throw ValueErrorException("Bad which string provided");
+  }
+}
+
+void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
+                                const char *json) {
+  PRECONDITION(json && strlen(json), "empty json");
+  std::istringstream ss;
+  ss.str(json);
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
+  p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
+  p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
+  std::string which;
+  which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
+  if (which != "") p.adjustDegreeFlags = parseWhichString(which);
+  which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
+  if (which != "") p.adjustRingCountFlags = parseWhichString(which);
+}
+}
+
+extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
+  const ROMol *im = (ROMol *)i;
+
+  MolOps::AdjustQueryParameters p;
+
+  if (params && strlen(params)) {
+    // try {
+    parseAdjustQueryParameters(p, params);
+    // } catch (...) {
+    //   ereport(
+    //       WARNING,
+    //       (errcode(ERRCODE_WARNING),
+    //        errmsg(
+    //            "adjustQueryProperties: Invalid argument \'params\'
+    //            ignored")));
+    // }
+  }
+  ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
   return (CROMol)mol;
 }
 
