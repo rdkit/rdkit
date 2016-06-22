@@ -575,7 +575,7 @@ DrawColour MolDraw2D::getColour(
 DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
   // RGB values taken from Qt's QColor. The seem to work pretty well on my
   // machine. Using them as fractions of 255, as that's the way Cairo does it.
-  DrawColour res(0., 1., 1.);  // default to cyan
+  DrawColour res(0., 0., 0.);  // default to black
 
   switch (atomic_num) {
     case 0:
