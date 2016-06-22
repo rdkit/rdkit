@@ -11,8 +11,9 @@
 #ifndef RDTHREADS_H_2015
 #define RDTHREADS_H_2015
 
+#include <RDGeneral/Invariant.h>
+
 #ifdef RDK_THREADSAFE_SSS
-#include "RDGeneral/Invariant.h"
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread.hpp>
 #include <RDGeneral/BoostEndInclude.h>

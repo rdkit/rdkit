@@ -24,7 +24,9 @@
 #ifdef RDDEBUG
 // Enable RDDEBUG for testing whether rdcast
 //  conversions are within numerical limits
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/numeric/conversion/cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #endif
 //
 // What if no invariant method is defined?
