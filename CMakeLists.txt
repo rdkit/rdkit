@@ -46,10 +46,16 @@ if(NOT MSVC)
   endif()
 endif()
 
-
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
   set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
+endif()
+
+if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
+  if(NOT RDK_INSTALL_STATIC_LIBS)
+    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_PGSQL_STATIC is set.")
+    set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
+  endif(NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
 include(TestBigEndian)
