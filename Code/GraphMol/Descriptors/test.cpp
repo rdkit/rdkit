@@ -11,9 +11,12 @@
 
 #include <iostream>
 #include <fstream>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -29,8 +32,11 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/Descriptors/Property.h>
+
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/atomic_data.h>
+
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -65,6 +71,9 @@ void test2() {
   calcCrippenDescriptors(*mol, logp, mr);
   TEST_ASSERT(feq(logp, 0.6361));
   TEST_ASSERT(feq(mr, 6.7310));
+  // check singleton functions
+  TEST_ASSERT(calcClogP(*mol) == logp);
+  TEST_ASSERT(calcMR(*mol) == mr);
   // check that caching works:
   calcCrippenDescriptors(*mol, logp, mr);
   TEST_ASSERT(feq(logp, 0.6361));
@@ -1831,6 +1840,134 @@ void testGitHubIssue694() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testProperties() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Testing Properties and KitchenSink"
+      << std::endl;
+
+  {
+    std::vector<std::string> all_names = Properties::getAvailableProperties();
+    
+    Properties sink;
+    std::vector<std::string> names = sink.getPropertyNames();
+
+    TEST_ASSERT(names == all_names);
+
+    
+    RWMol *mol;
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    std::vector<double> props = sink.computeProperties(*mol);
+
+    std::vector<double> res;
+    BOOST_FOREACH(std::string prop, all_names) {
+      std::vector<std::string> props;
+      props.push_back(prop);
+      Properties property(props);
+      std::vector<double> computedProps = property.computeProperties(*mol);
+      TEST_ASSERT(computedProps.size() == 1);
+      res.push_back(computedProps[0]);
+    }
+    
+    TEST_ASSERT(props == res);
+    delete mol;
+  }
+  {
+    std::vector<std::string> names;
+    names.push_back("NumSpiroAtoms");
+    names.push_back("NumBridgeheadAtoms");
+    Properties sink(names);
+    std::vector<std::string> sink_names = sink.getPropertyNames();
+    TEST_ASSERT( names == sink_names );
+    std::vector<double> res;
+    res.push_back(1.);
+    res.push_back(2.);
+
+    RWMol *mol;
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    TEST_ASSERT(mol);
+    // Test annotation as well
+    std::vector<double> props = sink.computeProperties(*mol, true);
+
+    TEST_ASSERT(props == res);
+    TEST_ASSERT(mol->getProp<double>("NumSpiroAtoms") == 1.);
+    TEST_ASSERT(mol->getProp<double>("NumBridgeheadAtoms") == 2.);
+    delete mol;
+
+    mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+    TEST_ASSERT(mol);
+    // Test annotation as well
+    sink.annotateProperties(*mol);
+    TEST_ASSERT(mol->getProp<double>("NumSpiroAtoms") == 1.);
+    TEST_ASSERT(mol->getProp<double>("NumBridgeheadAtoms") == 2.);
+    
+  }
+
+  {
+    try {
+      std::vector<std::string> names;
+      names.push_back("FakeName");
+      Properties sink(names);
+      TEST_ASSERT(0); // should throw
+    } catch(KeyErrorException) {
+      BOOST_LOG(rdErrorLog) << "---Caught keyerror (bad property name)---" << std::endl;
+    }
+  }
+}
+
+void testPropertyQueries() {
+  RWMol *mol;
+  mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
+  {
+    PROP_RANGE_QUERY *query = makePropertyRangeQuery("exactmw", 50,300);
+    TEST_ASSERT(query->Match( *mol ));
+    delete query;
+  }
+  {
+    PROP_RANGE_QUERY *query = makePropertyRangeQuery("exactmw", 1000,10300);
+    TEST_ASSERT(!query->Match( *mol ));
+    delete query;
+  }
+
+  {
+    // these leak..
+    TEST_ASSERT(
+        makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", calcExactMW(*mol))
+        ->Match(*mol));
+    TEST_ASSERT(
+        makePropertyQuery<PROP_EQUALS_QUERY>("NumHBA", calcNumHBA(*mol))
+        ->Match(*mol));
+    TEST_ASSERT(
+        makePropertyQuery<PROP_EQUALS_QUERY>("lipinskiHBA", calcLipinskiHBA(*mol))
+        ->Match(*mol));
+  }
+}
+
+void testStereoCounting() {
+  const bool debugParse=false;
+  const bool sanitize=false;
+  ROMol *m = SmilesToMol("NC(C)(F)C(=O)O", debugParse, sanitize);
+  TEST_ASSERT(!m->hasProp(common_properties::_StereochemDone));
+  
+  std::vector<std::string> names;
+  names.push_back("NumAtomStereoCenters");
+  names.push_back("NumUnspecifiedAtomStereoCenters");
+  Properties prop(names);
+
+  try {
+    prop.computeProperties(*m);
+    TEST_ASSERT(0); // didn't catch exception
+  } catch (ValueErrorException) {
+    BOOST_LOG(rdErrorLog) << "---Caught stereo value error---" << std::endl;
+  }
+
+  delete m;
+  m = SmilesToMol("NC(C)(F)C(=O)O", sanitize);
+  std::vector<double> res = prop.computeProperties(*m);
+  TEST_ASSERT(res[0] == 1);
+  TEST_ASSERT(res[1] == 1);
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1867,4 +2004,7 @@ int main() {
   testGitHubIssue463();
   testSpiroAndBridgeheads();
   testGitHubIssue694();
+  testProperties();
+  testPropertyQueries();
+  testStereoCounting();
 }
