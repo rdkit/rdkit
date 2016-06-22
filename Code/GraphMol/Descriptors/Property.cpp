@@ -85,7 +85,7 @@ void registerDescriptors() {
   static bool initialized = false;
   if(!initialized) {
     _registerDescriptors();
-    initalized=true;
+    initialized=true;
   }
 #endif
 }
