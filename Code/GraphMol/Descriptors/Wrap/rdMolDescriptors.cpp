@@ -1171,7 +1171,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
            (python::arg("mol"), python::arg("annotateMol")=false),
            "Return a list of computed properties, if annotateMol==True, annotate the molecule with "
            "the computed properties.")
-      .def("annotateProperties", &RDKit::Descriptors::Properties::annotateProperties,
+      .def("AnnotateProperties",
+           &RDKit::Descriptors::Properties::annotateProperties,
            python::arg("mol"),
            "Annotate the molecule with the computed properties.  These properties will be available "
            "as SDData or from mol.GetProp(prop)")
