@@ -111,7 +111,7 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
 }
 
 // the minimization using experimental torsion angle preferences
-void _minimizeWithExpTorsions(
+bool _minimizeWithExpTorsions(
     RDGeom::PointPtrVect &positions, DistGeom::BoundsMatPtr mmat,
     double optimizerForceTol, double basinThresh,
     const std::vector<std::pair<int, int> > &bonds,
@@ -122,6 +122,8 @@ void _minimizeWithExpTorsions(
     const std::vector<std::vector<int> > &improperAtoms,
     const std::vector<int> &atomNums, bool useBasicKnowledge) {
   RDUNUSED_PARAM(basinThresh);
+
+  bool planar = true;
 
   // convert to 3D positions and create coordMap
   RDGeom::Point3DPtrVect positions3D;
@@ -153,8 +155,23 @@ void _minimizeWithExpTorsions(
     //}
   }
   // std::cout << field->calcEnergy() << std::endl;
-
   delete field;
+
+  // check for planarity if ETKDG or KDG
+  if (useBasicKnowledge) {
+    // create a force field with only the impropers
+    ForceFields::ForceField *field2;
+    field2 = DistGeom::construct3DImproperForceField(*mmat, positions3D,
+        improperAtoms, atomNums);
+    field2->initialize();
+    // check if the energy is low enough
+    double planarityTolerance = 0.05;
+    if (field2->calcEnergy() > improperAtoms.size()*planarityTolerance) {
+      std::cerr << "planarity check failed: " << field2->calcEnergy() << std::endl;
+      planar = false;
+    }
+    delete field2;
+  }
 
   // overwrite positions and delete the 3D ones
   for (unsigned int i = 0; i < positions3D.size(); ++i) {
@@ -163,6 +180,8 @@ void _minimizeWithExpTorsions(
     (*positions[i])[2] = (*positions3D[i])[2];
     delete positions3D[i];
   }
+
+  return planar;
 }
 
 bool _embedPoints(
@@ -283,7 +302,7 @@ bool _embedPoints(
 
       // (ET)(K)DG
       if (gotCoords && (useExpTorsionAnglePrefs || useBasicKnowledge)) {
-        _minimizeWithExpTorsions(*positions, mmat, optimizerForceTol,
+        gotCoords = _minimizeWithExpTorsions(*positions, mmat, optimizerForceTol,
                                  basinThresh, bonds, angles, expTorsionAtoms,
                                  expTorsionAngles, improperAtoms, atomNums,
                                  useBasicKnowledge);
@@ -525,6 +544,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
     }
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
+    std::cerr << "conf " << ci << std::endl;
     if (rdcast<int>(ci % numThreads) != threadId) continue;
     if (!(*eargs->confsOk)[ci]) {
       // if one of the fragments here has already failed, there's no
