@@ -5,6 +5,7 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
+from __future__ import print_function
 
 from rdkit import Geometry
 from rdkit.Chem.Subshape import SubshapeObjects

@@ -3,6 +3,7 @@
 # Copyright (C) 2007-2008 by Greg Landrum 
 #  All rights reserved
 #
+from __future__ import print_function
 
 from rdkit import RDLogger
 logger = RDLogger.logger()

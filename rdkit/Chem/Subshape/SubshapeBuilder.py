@@ -3,6 +3,7 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
+from __future__ import print_function
 from rdkit import Chem,Geometry
 from rdkit.Chem import AllChem
 from rdkit.Chem.Subshape import SubshapeObjects
