@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.PyMol import MolViewer

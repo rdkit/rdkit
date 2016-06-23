@@ -95,7 +95,7 @@ if __name__=='__main__':
     AllChem.EmbedMolecule(cmpd)
     AllChem.UFFOptimizeMolecule(cmpd)
     AllChem.CanonicalizeMol(cmpd)
-    print >>file('testmol.mol','w+'),Chem.MolToMolBlock(cmpd)
+    print(Chem.MolToMolBlock(cmpd), file=file('testmol.mol','w+'))
   else:
     cmpd = Chem.MolFromMolFile('testmol.mol')
   builder=SubshapeBuilder()
