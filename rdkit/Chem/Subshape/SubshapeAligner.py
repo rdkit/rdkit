@@ -4,6 +4,7 @@
 #  All rights reserved
 #
 from __future__ import print_function
+
 from rdkit import RDLogger
 logger = RDLogger.logger()
 from rdkit import Chem,Geometry
@@ -125,17 +126,17 @@ class SubshapeAligner(object):
         queryLs[(i,j)]=l2
     compatEdges={}
     tol2 = self.edgeTol*self.edgeTol
-    for tk,tv in tgtLs.iteritems():
-      for qk,qv in queryLs.iteritems():
+    for tk,tv in tgtLs.items():
+      for qk,qv in queryLs.items():
         if abs(tv-qv)<tol2:
           compatEdges[(tk,qk)]=1
     seqNo=0
     for tgtTri in _getAllTriangles(tgtPts,orderedTraversal=True):
       tgtLocs=[tgtPts[x].location for x in tgtTri]
       for queryTri in _getAllTriangles(queryPts,orderedTraversal=False):
-        if compatEdges.has_key(((tgtTri[0],tgtTri[1]),(queryTri[0],queryTri[1]))) and \
-           compatEdges.has_key(((tgtTri[0],tgtTri[2]),(queryTri[0],queryTri[2]))) and \
-           compatEdges.has_key(((tgtTri[1],tgtTri[2]),(queryTri[1],queryTri[2]))):
+        if ((tgtTri[0],tgtTri[1]),(queryTri[0],queryTri[1])) in compatEdges and \
+           ((tgtTri[0],tgtTri[2]),(queryTri[0],queryTri[2])) in compatEdges and \
+           ((tgtTri[1],tgtTri[2]),(queryTri[1],queryTri[2])) in compatEdges:
           queryLocs=[queryPts[x].location for x in queryTri]
           ssd,tf = Alignment.GetAlignmentTransform(tgtLocs,queryLocs)
           if ssd<=ssdTol:
