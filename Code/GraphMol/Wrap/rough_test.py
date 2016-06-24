@@ -3624,6 +3624,15 @@ CAS<~>
     self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
     self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
 
+  def testGithub955(self):
+    m = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetProp("foo","1")
+    self.assertEqual(list(m.GetAtomWithIdx(0).GetPropNames()),["foo"])
+    m.GetBondWithIdx(0).SetProp("foo","1")
+    self.assertEqual(list(m.GetBondWithIdx(0).GetPropNames()),["foo"])
+
+
+
 
 if __name__ == '__main__':
   unittest.main()

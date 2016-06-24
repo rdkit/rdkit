@@ -1045,6 +1045,26 @@ void testGithub932() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub953() {
+  std::cout
+      << " ----------------- Test Github #953: default color should not be cyan"
+      << std::endl;
+  {
+    std::string smiles = "[Nb]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    TEST_ASSERT(text.find("#00FFFF") == std::string::npos);
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1065,4 +1085,5 @@ int main() {
 #endif
   testGithub910();
   testGithub932();
+  testGithub953();
 }

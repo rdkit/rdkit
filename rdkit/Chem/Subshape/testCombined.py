@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.PyMol import MolViewer
@@ -16,18 +17,18 @@ b.winRad=2.0
 if 1:
   print('m1:')
   s1 = b.GenerateSubshapeShape(m1)
-  cPickle.dump(s1,file('test_data/square1.shp.pkl','wb+'))
+  cPickle.dump(s1,open('test_data/square1.shp.pkl','wb+'))
   print('m2:')
   s2 = b.GenerateSubshapeShape(m2)
-  cPickle.dump(s2,file('test_data/square2.shp.pkl','wb+'))
+  cPickle.dump(s2,open('test_data/square2.shp.pkl','wb+'))
   ns1 = b.CombineSubshapes(s1,s2)
   b.GenerateSubshapeSkeleton(ns1)
-  cPickle.dump(ns1,file('test_data/combined.shp.pkl','wb+'))
+  cPickle.dump(ns1,open('test_data/combined.shp.pkl','wb+'))
 else:
-  s1 = cPickle.load(file('test_data/square1.shp.pkl','rb'))
-  s2 = cPickle.load(file('test_data/square2.shp.pkl','rb'))
+  s1 = cPickle.load(open('test_data/square1.shp.pkl','rb'))
+  s2 = cPickle.load(open('test_data/square2.shp.pkl','rb'))
   #ns1 = cPickle.load(file('test_data/combined.shp.pkl','rb'))
-  ns1=cPickle.load(file('test_data/combined.shp.pkl','rb'))
+  ns1=cPickle.load(open('test_data/combined.shp.pkl','rb'))
 
 v = MolViewer()
 SubshapeObjects.DisplaySubshape(v,s1,'shape1')
@@ -50,4 +51,3 @@ fName = tempfile.mktemp('.grd')
 Geometry.WriteGridToFile(ns1.medGrid.grid,fName)
 v.server.loadSurface(fName,'med','',2.5)
 os.unlink(fName)
-

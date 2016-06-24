@@ -58,7 +58,9 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wconversion"
+#if (__GNUC__ > 4 || __GNUC_MINOR__ > 7)
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
 #elif defined(__HP_cc) || defined(__HP_aCC)
 /* Hewlett-Packard C/aC++. ---------------------------------- */
 
