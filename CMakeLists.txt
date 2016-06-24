@@ -334,6 +334,13 @@ if(RDK_USE_STRICT_ROTOR_DEFINITION)
     ADD_DEFINITIONS("-DRDK_USE_STRICT_ROTOR_DEFINITION")
 endif()
 
+if (MSVC)
+  # disable warnings:
+  #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
+  add_definitions( "/wd4267" )
+endif(MSVC)
+
+
 add_subdirectory(External)
 add_subdirectory(Code)
 
