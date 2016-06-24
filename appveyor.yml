@@ -36,6 +36,8 @@ build:
   project: c:\projects\RDKit\build\INSTALL.vcxproj      # path to Visual Studio solution or project
   parallel: true
 
+verbosity: quiet
+
 # scripts to run before build
 before_build:
   - echo Running cmake...
