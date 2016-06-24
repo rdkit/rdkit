@@ -13,6 +13,7 @@ branches:
   # whitelist
   only:
     - master
+    - appveyor_tuning
 
 # Operating system (build VM template)
 #os: Windows Server 2012 R2
@@ -45,7 +46,7 @@ before_build:
 
 #test_script:
 #  - cd c:\projects\RDKit\build
-#  - ctest 
+#  - ctest
 
 # scripts to run after build
 #after_build:
