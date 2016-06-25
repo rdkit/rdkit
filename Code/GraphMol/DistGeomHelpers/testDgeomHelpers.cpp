@@ -1407,26 +1407,13 @@ void testMultiThreadMultiConf() {
     ForceFields::ForceField *ff = UFF::constructForceField(*m, 100, *ci);
     ff->initialize();
     double e1 = ff->calcEnergy();
-    const RDGeom::PointPtrVect &pVect = ff->positions();
     TEST_ASSERT(e1 > 100.0);
     TEST_ASSERT(e1 < 300.0);
-    ForceFields::ForceField *ff2 = UFF::constructForceField(m2, 100, *ci);
-    ff2->initialize();
-    double e2 = ff2->calcEnergy();
-    const RDGeom::PointPtrVect &p2Vect = ff2->positions();
-    TEST_ASSERT(fabs(e1 - e2) < 5.0);
-    TEST_ASSERT(pVect.size() == p2Vect.size());
-    double msd = 0.0;
-    for (unsigned int i = 0; i < pVect.size(); ++i) {
-      const RDGeom::Point3D *p = dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
-      const RDGeom::Point3D *p2 = dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
-      TEST_ASSERT(p && p2);
-      msd += (*p - *p2).lengthSq();
-    }
-    msd /= static_cast<double>(pVect.size());
-    TEST_ASSERT(msd < 1.0e-5);
     delete ff;
-    delete ff2;
+    ff = UFF::constructForceField(m2, 100, *ci);
+    ff->initialize();
+    double e2 = ff->calcEnergy();
+    TEST_ASSERT(feq(e1, e2));
   }
 }
 #endif

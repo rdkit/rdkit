@@ -375,24 +375,16 @@ class TestCase(unittest.TestCase) :
             ee = ff.CalcEnergy()
             energies.append(ee)
 
-        mol2 = Chem.AddHs(Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC"))
-        cids2 = rdDistGeom.EmbedMultipleConfs(mol2,200,maxAttempts=30,randomSeed=100,numThreads=4)
-        self.assertTrue(lstEq(cids, cids2))
+        mol = Chem.AddHs(Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC"))
+        cids = rdDistGeom.EmbedMultipleConfs(mol,200,maxAttempts=30,randomSeed=100,numThreads=4)
         nenergies = []
-        for cid in cids2:
-            ff = ChemicalForceFields.UFFGetMoleculeForceField(mol2, 10.0, cid)
+        for cid in cids:
+            ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
             ee = ff.CalcEnergy()
             nenergies.append(ee)
 
-        self.assertTrue(lstEq(energies, nenergies, tol=5.0))
+        self.assertTrue(lstEq(energies, nenergies,tol=1e-6))
             
-        for cid in cids:
-            msd = 0.0
-            for i in range(mol.GetNumAtoms()):
-                msd += (mol.GetConformer().GetAtomPosition(i) \
-                    - mol2.GetConformer().GetAtomPosition(i)).LengthSq()
-            msd /= len(cids)
-            self.assertTrue(msd < 1.0e-5)
 
             
 if __name__ == '__main__':
