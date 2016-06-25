@@ -384,7 +384,7 @@ class TestCase(unittest.TestCase) :
             ee = ff.CalcEnergy()
             nenergies.append(ee)
 
-        self.assertTrue(lstEq(energies, nenergies, tol=5.0))
+        self.assertTrue(lstEq(energies, nenergies, tol=1.0))
             
         for cid in cids:
             msd = 0.0

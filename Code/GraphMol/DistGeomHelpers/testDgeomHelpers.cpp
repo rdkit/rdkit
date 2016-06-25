@@ -1414,7 +1414,7 @@ void testMultiThreadMultiConf() {
     ff2->initialize();
     double e2 = ff2->calcEnergy();
     const RDGeom::PointPtrVect &p2Vect = ff2->positions();
-    TEST_ASSERT(fabs(e1 - e2) < 5.0);
+    TEST_ASSERT(fabs(e1 - e2) < 1.0);
     TEST_ASSERT(pVect.size() == p2Vect.size());
     double msd = 0.0;
     for (unsigned int i = 0; i < pVect.size(); ++i) {
