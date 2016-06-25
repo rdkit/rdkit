@@ -13,7 +13,7 @@
 #include <stddef.h>
 #include <time.h>
 #include <iostream>
-#ifdef WIN32
+#ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #include <Windows.h>  // for Winmm.lib timeGetTime()
 #ifdef _DEBUG         // check memory leaks
@@ -27,7 +27,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#ifndef _WIN32
 #include <sys/resource.h>
+#endif
 #endif
 
 // SELECT ALGORITHM OPTIONS by comment some lines to exclude additional or
@@ -51,7 +53,7 @@
 
 #define VERBOSE_STATISTICS_ON
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 
 struct timezone {

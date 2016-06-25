@@ -20,7 +20,9 @@
 #include <Query/Query.h>
 
 #ifdef RDK_THREADSAFE_SSS
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/thread/mutex.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #endif
 
 namespace RDKit {

@@ -32,7 +32,7 @@
 
 // LocaleSwitcher Dependencies
 #include <clocale>
-#ifndef _MSC_VER
+#ifndef _WIN32
 #include <xlocale.h>
 #include <string>
 #else
@@ -86,7 +86,7 @@ static int recurseLocale(int state) {
 // instead of whatever we started in.
 class LocaleSwitcherImpl {
  public:
-#ifdef _MSC_VER
+#ifdef _WIN32
 
   LocaleSwitcherImpl() {
     if (!recurseLocale(CurrentState)) {
@@ -113,7 +113,7 @@ class LocaleSwitcherImpl {
 
  public:
   bool switched;
-#else // _MSC_VER
+#else // _WIN32
   locale_t loc;     // current "C" locale
   locale_t old_loc; // locale we came frome
 
@@ -140,7 +140,7 @@ class LocaleSwitcherImpl {
  public:
   std::string old_locale;
 
-#endif // _MSC_VER
+#endif // _WIN32
 };
 }
 

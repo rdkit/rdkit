@@ -64,6 +64,11 @@ SMILES                    200  non-null values
 Molecule                  200  non-null values
 dtypes: object(20)>
 
+Conversion to html is quite easy:
+>>> htm = frame.to_html()
+>>> str(htm[:36])
+'<table border="1" class="dataframe">'
+
 In order to support rendering the molecules as images in the HTML export of the dataframe, the __str__ method is monkey-patched to return a base64 encoded PNG:
 >>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
 >>> print(molX) # doctest: +SKIP
@@ -75,6 +80,7 @@ This can be reverted using the ChangeMoleculeRendering method
 >>> ChangeMoleculeRendering(renderer='PNG')
 >>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
+
 '''
 from __future__ import print_function
 
@@ -93,7 +99,7 @@ try:
     # support for older versions of pandas
     v = pd.version.version.split('.')
 
-    
+
   if v[0]=='0' and int(v[1])<10:
     print("Pandas version %s not compatible with tests"%v, file=sys.stderr)
     pd = None
@@ -112,12 +118,19 @@ except ImportError:
   import traceback
   traceback.print_exc()
   pd = None
-  
+
 except Exception as e:
   import sys
   import traceback
   traceback.print_exc()
   pd = None
+
+if pd:
+    try:
+        from pandas.formats import format as fmt
+    except ImportError:
+        from pandas.core import format as fmt # older versions
+
 
 highlightSubstructures=True
 molRepresentation = 'png' # supports also SVG
@@ -128,7 +141,7 @@ def patchPandasHTMLrepr(self,**kwargs):
   '''
   Patched default escaping of HTML control characters to allow molecule image rendering dataframes
   '''
-  formatter = pd.core.format.DataFrameFormatter(self,buf=None,columns=None,col_space=None,colSpace=None,header=True,index=True,
+  formatter = fmt.DataFrameFormatter(self,buf=None,columns=None,col_space=None,colSpace=None,header=True,index=True,
                                                na_rep='NaN',formatters=None,float_format=None,sparsify=None,index_names=True,
                                                justify = None, force_unicode=None,bold_rows=True,classes=None,escape=False)
   formatter.to_html()
@@ -169,7 +182,7 @@ def _get_svg_image(mol, size=(200,200), highlightAtoms=[]):
   drawer.DrawMolecule(mol,highlightAtoms=highlightAtoms)
   drawer.FinishDrawing()
   svg = drawer.GetDrawingText().replace('svg:','')
-  return SVG(svg).data # IPython's SVG clears the svg text 
+  return SVG(svg).data # IPython's SVG clears the svg text
 
 from rdkit import DataStructs
 
@@ -313,7 +326,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   "idName" can be used to select a column to serve as molecule title. It can be set to "RowID" to use the dataframe row key as title.
   '''
 
-  close = None  
+  close = None
   if isinstance(out, string_types):
     if out.lower()[-3:] == ".gz":
       import gzip
@@ -497,7 +510,7 @@ if __name__ == "__main__":
     except AttributeError:
       # support for older versions of pandas
       v = pd.version.version.split('.')
-    
+
     if v[0]=='0' and int(v[1])<10:
       print("pandas installation >=0.10 not found, skipping tests",
             file=sys.stderr)

@@ -67,13 +67,15 @@
 #include <stack>
 #include <set>
 #include "inchi.h"
-#include <boost/foreach.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <algorithm>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #if RDK_TEST_MULTITHREADED
 #include <boost/thread.hpp>
 #endif
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace {

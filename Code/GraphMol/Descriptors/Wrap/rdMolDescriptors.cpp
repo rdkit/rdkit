@@ -510,6 +510,92 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
   }
   return res;
 }
+
+/// Awesome StackOverflow response:
+/// http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python
+/// I know a lot more about how boost works.
+/// @brief Type that allows for registration of conversions from
+///        python iterable types.
+struct iterable_converter
+{
+  /// @note Registers converter from a python interable type to the
+  ///       provided type.
+  template <typename Container>
+  iterable_converter&
+  from_python()
+  {
+    boost::python::converter::registry::push_back(
+      &iterable_converter::convertible,
+      &iterable_converter::construct<Container>,
+      boost::python::type_id<Container>());
+
+    // Support chaining.
+    return *this;
+  }
+
+  /// @brief Check if PyObject is iterable.
+  static void* convertible(PyObject* object)
+  {
+    return PyObject_GetIter(object) ? object : NULL;
+  }
+
+  /// @brief Convert iterable PyObject to C++ container type.
+  ///
+  /// Container Concept requirements:
+  ///
+  ///   * Container::value_type is CopyConstructable.
+  ///   * Container can be constructed and populated with two iterators.
+  ///     I.e. Container(begin, end)
+  template <typename Container>
+  static void construct(
+    PyObject* object,
+    boost::python::converter::rvalue_from_python_stage1_data* data)
+  {
+    namespace python = boost::python;
+    // Object is a borrowed reference, so create a handle indicting it is
+    // borrowed for proper reference counting.
+    python::handle<> handle(python::borrowed(object));
+
+    // Obtain a handle to the memory block that the converter has allocated
+    // for the C++ type.
+    typedef python::converter::rvalue_from_python_storage<Container>
+                                                                storage_type;
+    void* storage = reinterpret_cast<storage_type*>(data)->storage.bytes;
+
+    typedef python::stl_input_iterator<typename Container::value_type>
+                                                                    iterator;
+
+    // Allocate the C++ type into the converter's memory block, and assign
+    // its handle to the converter's convertible variable.  The C++
+    // container is populated by passing the begin and end iterators of
+    // the python object to the container's constructor.
+    new (storage) Container(
+      iterator(python::object(handle)), // begin
+      iterator());                      // end
+    data->convertible = storage;
+  }
+};
+
+struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
+  PyObject *self;
+
+  // n.b. until we switch the query d_dataFunc over to boost::function
+  //  we can't use python props in functions.
+  PythonPropertyFunctor(PyObject *self, const std::string &name, const std::string &version) :
+      PropertyFunctor(name, version), self(self) {
+    python::incref(self);
+
+  }
+
+  ~PythonPropertyFunctor() {
+    python::decref(self);
+  }
+
+  double operator()(const RDKit::ROMol &mol) const {
+    return python::call_method<double>(self, "__call__", boost::ref(mol));
+  }
+};
+
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1048,4 +1134,81 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcNumBridgeheadAtoms", numBridgeheadAtoms,
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
+
+  docString = "Property computation class stored in the property registry.\n"
+      "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
+      "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
+  python::class_<RDKit::Descriptors::PropertyFunctor,
+                 RDKit::Descriptors::PropertyFunctor*,
+                 boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
+                 boost::noncopyable>("PropertyFunctor", docString.c_str(), python::no_init)
+      .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
+           "Compute the property for the specified molecule")
+      .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
+           "Return the name of the property to calculate")
+      .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
+           "Return the version of the calculated property");
+
+  iterable_converter().from_python<std::vector<std::string> >();
+
+  docString = "Property computation and registry system.  To compute all registered properties:\n"
+      "mol = Chem.MolFromSmiles('c1ccccc1')\n"
+      "properties = rdMolDescriptors.Properties()\n"
+      "for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):\n"
+      "  print(name, value)\n\n"
+      "To compute a subset\n"
+      "properties = rdMolDescriptors.Properties(['exactmw', 'lipinskiHBA'])\n"
+      "for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):\n"
+      "  print(name, value)\n\n"
+      "";
+
+  python::class_<RDKit::Descriptors::Properties,
+                 RDKit::Descriptors::Properties*>("Properties", docString.c_str(), python::init<>() )
+      .def(python::init<const std::vector<std::string>&>())
+      .def("GetPropertyNames", &RDKit::Descriptors::Properties::getPropertyNames,
+           "Return the property names computed by this instance")
+      .def("ComputeProperties", &RDKit::Descriptors::Properties::computeProperties,
+           (python::arg("mol"), python::arg("annotateMol")=false),
+           "Return a list of computed properties, if annotateMol==True, annotate the molecule with "
+           "the computed properties.")
+      .def("AnnotateProperties",
+           &RDKit::Descriptors::Properties::annotateProperties,
+           python::arg("mol"),
+           "Annotate the molecule with the computed properties.  These properties will be available "
+           "as SDData or from mol.GetProp(prop)")
+      .def("GetAvailableProperties", &RDKit::Descriptors::Properties::getAvailableProperties,
+           "Return all available property names that can be computed").staticmethod("GetAvailableProperties")
+      .def("GetProperty", &RDKit::Descriptors::Properties::getProperty,
+           python::arg("propName"),
+           "Return the named property if it exists").staticmethod("GetProperty")
+      .def("RegisterProperty", &RDKit::Descriptors::Properties::registerProperty,
+           python::arg("propertyFunctor"),
+           "Register a new property object (not thread safe)").staticmethod("RegisterProperty");
+
+  python::class_<PythonPropertyFunctor, boost::noncopyable,
+                 python::bases<RDKit::Descriptors::PropertyFunctor> >(
+                     "PythonPropertyFunctor","",python::init<
+                     PyObject*, const std::string &, const std::string &>())
+      .def("__call__", &PythonPropertyFunctor::operator(),
+           "Compute the property for the specified molecule");
+
+  docString = "Property Range Query for a molecule.  Match(mol) -> true if in range";
+  python::class_<Queries::RangeQuery<double, RDKit::ROMol const&, true>,
+                 Queries::RangeQuery<double, RDKit::ROMol const&, true>*,
+                 boost::noncopyable>(
+                     "PropertyRangeQuery",
+                     docString.c_str(),
+                     python::no_init)
+      .def("Match", &Queries::RangeQuery<double, RDKit::ROMol const&, true>::Match);
+  
+  docString = "Generates a Range property for the specified property, between min and max\n"
+      "query = MakePropertyRangeQuery('exactmw', 0, 500)\n"
+      "query.Match( mol )";
+  
+  python::def("MakePropertyRangeQuery",
+              RDKit::Descriptors::makePropertyRangeQuery,
+              (python::arg("name"), python::arg("min"), python::arg("max")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  
+
 }

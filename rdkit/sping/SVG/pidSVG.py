@@ -156,7 +156,7 @@ class SVGCanvas( Canvas ):
     fontStr = ''
     if font.face is None:
       font.__dict__['face'] = 'sansserif'  # quick hack -cwl
-    if isinstance(font.face,siz.string_types):
+    if isinstance(font.face,six.string_types):
       if len(string.split(font.face)) > 1:
         familyStr = '\'%s\''%font.face
       else:
