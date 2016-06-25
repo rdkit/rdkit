@@ -116,7 +116,7 @@ struct MCSParameters {
         AtomTyper(MCSAtomCompareElements),
         BondTyper(MCSBondCompareOrder),
         CompareFunctionsUserData(0),
-        ProgressCallback(MCSProgressCallbackTimeout),
+        ProgressCallback(0),
         ProgressCallbackUserData(0),
         FinalMatchChecker(0),
         InitialSeed("") {}
