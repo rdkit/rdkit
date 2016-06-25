@@ -37,7 +37,7 @@ class InversionContrib : public ForceFieldContrib {
   */
   InversionContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                    unsigned int idx3, unsigned int idx4, int at2AtomicNum,
-                   bool isCBoundToO);
+                   bool isCBoundToO, double oobForceScalingFactor = 1.0);
 
   double getEnergy(double *pos) const;
 

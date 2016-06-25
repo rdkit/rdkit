@@ -279,6 +279,7 @@ ForceFields::ForceField *construct3DForceField(
   }  // torsion constraints
 
   // improper torsions / out-of-plane bend / inversion
+  double oobForceScalingFactor = 10.0;
   for (unsigned int t = 0; t < improperAtoms.size(); ++t) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
@@ -306,7 +307,7 @@ ForceFields::ForceField *construct3DForceField(
           new ForceFields::UFF::InversionContrib(
               field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
               improperAtoms[t][n[2]], improperAtoms[t][n[3]],
-              improperAtoms[t][4], improperAtoms[t][5]);
+              improperAtoms[t][4], improperAtoms[t][5], oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -481,6 +482,7 @@ ForceFields::ForceField *construct3DImproperForceField(
   }
 
   // improper torsions / out-of-plane bend / inversion
+  double oobForceScalingFactor = 10.0;
   for (unsigned int t = 0; t < improperAtoms.size(); ++t) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
@@ -508,7 +510,7 @@ ForceFields::ForceField *construct3DImproperForceField(
           new ForceFields::UFF::InversionContrib(
               field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
               improperAtoms[t][n[2]], improperAtoms[t][n[3]],
-              improperAtoms[t][4], improperAtoms[t][5]);
+              improperAtoms[t][4], improperAtoms[t][5], oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
