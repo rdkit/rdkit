@@ -93,6 +93,10 @@ else()
   ADD_DEFINITIONS("-DRDK_64BIT_BUILD")
 endif()
 
+if(MINGW)
+  ADD_DEFINITIONS("-DBOOST_SYSTEM_NO_DEPRECATED")
+endif(MINGW)
+
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
 install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir})

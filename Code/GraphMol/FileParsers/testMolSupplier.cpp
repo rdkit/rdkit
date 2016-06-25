@@ -944,7 +944,7 @@ int testTDTSupplier1() {
     TEST_ASSERT(i == 10);
   }
   {
-    std::ifstream strm(fname.c_str());
+    std::ifstream strm(fname.c_str(), std::ios_base::binary);
     TDTMolSupplier suppl(&strm, false, "PN");
     unsigned int i = 0;
     while (!suppl.atEnd()) {
