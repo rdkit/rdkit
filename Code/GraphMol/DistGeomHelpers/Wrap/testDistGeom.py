@@ -8,7 +8,7 @@ from rdkit.six.moves import cPickle as pickle
 from rdkit.six import next
 from rdkit import Chem
 from rdkit.Chem import rdDistGeom,ChemicalForceFields,rdMolAlign
-from rdkit import RDConfig
+from rdkit import RDConfig, rdBase
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
 logger=logger()
@@ -367,6 +367,12 @@ class TestCase(unittest.TestCase) :
 
 
     def test8MultiThreadMultiConf(self):
+        if (rdBase.rdkitBuild.split('|')[2] != "MINGW"):
+          ENERGY_TOLERANCE = 1.0e-6
+          MSD_TOLERANCE = 1.0e-6
+        else:
+          ENERGY_TOLERANCE = 1.0
+          MSD_TOLERANCE = 1.0e-5
         mol = Chem.AddHs(Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC"))
         cids = rdDistGeom.EmbedMultipleConfs(mol,200,maxAttempts=30,randomSeed=100)
         energies = []
@@ -384,7 +390,7 @@ class TestCase(unittest.TestCase) :
             ee = ff.CalcEnergy()
             nenergies.append(ee)
 
-        self.assertTrue(lstEq(energies, nenergies, tol=1.0))
+        self.assertTrue(lstEq(energies, nenergies, tol=ENERGY_TOLERANCE))
             
         for cid in cids:
             msd = 0.0
@@ -392,7 +398,7 @@ class TestCase(unittest.TestCase) :
                 msd += (mol.GetConformer().GetAtomPosition(i) \
                     - mol2.GetConformer().GetAtomPosition(i)).LengthSq()
             msd /= mol.GetNumAtoms()
-            self.assertTrue(msd < 1.0e-5)
+            self.assertTrue(msd < MSD_TOLERANCE)
 
             
 if __name__ == '__main__':

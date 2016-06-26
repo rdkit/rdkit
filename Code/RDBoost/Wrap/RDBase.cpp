@@ -131,6 +131,7 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   python::scope().attr("rdkitVersion") = RDKit::rdkitVersion;
   python::scope().attr("boostVersion") = RDKit::boostVersion;
+  python::scope().attr("rdkitBuild") = RDKit::rdkitBuild;
 
   python::def("EnableLog", EnableLog);
   python::def("DisableLog", DisableLog);

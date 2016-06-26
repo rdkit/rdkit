@@ -8,8 +8,10 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/RDLog.h>
+#include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
+#include <vector>
 #include <iostream>
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -1395,6 +1397,11 @@ void testGithub256() {
 
 #ifdef RDK_TEST_MULTITHREADED
 void testMultiThreadMultiConf() {
+  boost::char_separator<char> sep("|");
+  tokenizer tokens(std::string(RDKit::rdkitBuild), sep);
+  std::vector<std::string> tokenVect(tokens.begin(), tokens.end());
+  const double ENERGY_TOLERANCE = ((tokenVect[2] != "MINGW") ? 1.0e-6 : 1.0);
+  const double MSD_TOLERANCE = ((tokenVect[2] != "MINGW") ? 1.0e-6 : 1.0e-5);
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids;
@@ -1414,7 +1421,7 @@ void testMultiThreadMultiConf() {
     ff2->initialize();
     double e2 = ff2->calcEnergy();
     const RDGeom::PointPtrVect &p2Vect = ff2->positions();
-    TEST_ASSERT(fabs(e1 - e2) < 1.0);
+    TEST_ASSERT(RDKit::feq(e1, e2, ENERGY_TOLERANCE));
     TEST_ASSERT(pVect.size() == p2Vect.size());
     double msd = 0.0;
     for (unsigned int i = 0; i < pVect.size(); ++i) {
@@ -1424,7 +1431,7 @@ void testMultiThreadMultiConf() {
       msd += (*p - *p2).lengthSq();
     }
     msd /= static_cast<double>(pVect.size());
-    TEST_ASSERT(msd < 1.0e-5);
+    TEST_ASSERT(msd < MSD_TOLERANCE);
     delete ff;
     delete ff2;
   }
