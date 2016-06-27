@@ -6,6 +6,7 @@
 #  All rights reserved
 #
 from __future__ import print_function
+
 from rdkit import Geometry
 from rdkit.Chem.Subshape import SubshapeObjects
 import math
@@ -322,9 +323,9 @@ def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
   covMat[2][1] = covMat[1][2]
 
   eVals,eVects = numpy.linalg.eigh(covMat)
-  sv = zip(eVals,numpy.transpose(eVects))
+  sv = list(zip(eVals,numpy.transpose(eVects)))
   sv.sort(reverse=True)
-  eVals,eVects=zip(*sv)
+  eVals,eVects=list(zip(*sv))
   pt.shapeMoments=tuple(eVals)
   pt.shapeDirs = tuple([Geometry.Point3D(p[0],p[1],p[2]) for p in eVects])
 

@@ -450,7 +450,7 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
       if (getTwoBitCell(neighborMatrix, i * nAtoms + j) >= RELATION_1_4) {
         double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
         if (dist <
-            vdwThresh * Utils::calcNonbondedMinimum(params[i], params[j])) {
+            vdwThresh * UFF::Utils::calcNonbondedMinimum(params[i], params[j])) {
           vdWContrib *contrib;
           contrib = new vdWContrib(field, i, j, params[i], params[j]);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));

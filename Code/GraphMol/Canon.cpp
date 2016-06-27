@@ -923,7 +923,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::findSSSR(mol);
   }
-  mol.getAtomWithIdx(atomIdx)->setProp("_TraversalStartPoint", true);
+  mol.getAtomWithIdx(atomIdx)->setProp(
+      common_properties::_TraversalStartPoint, true);
 
   VECT_INT_VECT atomRingClosures(nAtoms);
   std::vector<INT_LIST> atomTraversalBondOrder(nAtoms);

@@ -73,6 +73,7 @@ typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
 
 namespace RDKit {
 namespace Descriptors {
+
 unsigned int calcLipinskiHBA(const ROMol &mol) {
   unsigned int res = 0;
   for (ROMol::ConstAtomIterator iter = mol.beginAtoms(); iter != mol.endAtoms();
@@ -81,6 +82,7 @@ unsigned int calcLipinskiHBA(const ROMol &mol) {
   }
   return res;
 }
+
 unsigned int calcLipinskiHBD(const ROMol &mol) {
   unsigned int res = 0;
   for (ROMol::ConstAtomIterator iter = mol.beginAtoms(); iter != mol.endAtoms();
@@ -91,6 +93,7 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
   }
   return res;
 }
+
 
 namespace {
 #ifdef RDK_USE_STRICT_ROTOR_DEFINITION
@@ -467,6 +470,42 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
     }
   }
   return atoms->size();
+}
+
+namespace {
+bool hasStereoAssigned(const ROMol &mol) {
+  return mol.hasProp(common_properties::_StereochemDone);
+}
+}
+const std::string NumAtomStereoCentersVersion = "1.0.0";
+unsigned int numAtomStereoCenters(const ROMol &mol) {
+  if(!hasStereoAssigned(mol))
+    throw ValueErrorException("numStereoCenters called without stereo being assigned");
+  
+  unsigned int res=0;
+  for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
+       ++atom) {
+    if ((*atom)->hasProp(common_properties::_ChiralityPossible)) {
+      res++;
+    }
+  }
+  return res;
+}
+
+const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.0";
+unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
+  if(!hasStereoAssigned(mol))
+    throw ValueErrorException("numUnspecifiedStereoCenters called without stereo being assigned");
+
+  unsigned int res=0;
+  for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
+       ++atom) {
+    if ((*atom)->hasProp(common_properties::_ChiralityPossible) &&
+        (*atom)->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+      res++;
+    }
+  }
+  return res;
 }
 
 }  // end of namespace Descriptors

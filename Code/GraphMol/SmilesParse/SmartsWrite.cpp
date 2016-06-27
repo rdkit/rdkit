@@ -326,10 +326,11 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   if (descrip == "AtomAnd") {
     bool specialCase = false;
     // case 1
-    if (((dsc1 == "AtomAtomicNum") &&
-         ((dsc2 == "AtomIsAliphatic") || (dsc2 == "AtomIsAromatic"))) ||
-        ((dsc2 == "AtomAtomicNum") &&
-         ((dsc1 == "AtomIsAliphatic") || (dsc1 == "AtomIsAromatic")))) {
+    if ((!child1->getNegation() && !child2->getNegation()) &&
+        (((dsc1 == "AtomAtomicNum") &&
+          ((dsc2 == "AtomIsAliphatic") || (dsc2 == "AtomIsAromatic"))) ||
+         ((dsc2 == "AtomAtomicNum") &&
+          ((dsc1 == "AtomIsAliphatic") || (dsc1 == "AtomIsAromatic"))))) {
       // we trap this one because it's nicer to see
       //   "CC" in the output than "[#6&A][#6&A]"
       res = smartsOrganicAtom(child1, child2);

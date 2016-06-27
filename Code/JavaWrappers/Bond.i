@@ -49,9 +49,6 @@
 
 %include <GraphMol/Bond.h>
 
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::Bond::setProp<std::string>;
-
 %extend RDKit::Bond {
   std::string getProp(const std::string key){
     std::string res;

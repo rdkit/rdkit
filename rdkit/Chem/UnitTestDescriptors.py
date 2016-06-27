@@ -83,7 +83,7 @@ class TestCase(unittest.TestCase):
         indices=[(j,x,y) for j,x,y in zip(range(len(mqns)),mqns,refData[i][1]) if x!=y]
         print(i, Chem.MolToSmiles(m),indices)
       self.assertEqual(mqns,refData[i][1])
-      
+
   def testMQN(self):
     m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
     if Lipinski.NumRotatableBonds(m) == 2:
@@ -98,17 +98,16 @@ class TestCase(unittest.TestCase):
                       8314, 24146, 16076,  5560,  4262,   646,   746, 13725,  5430,
                       2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
                       31,     9,     1,     2,  3060,  1750])
-      
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
     vs = np.zeros((42,),np.int32)
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
     self.assertFalse(False in (vs==tgt))
-    
-          
-      
-# - - - - - 
+
+
+
+# - - - - -
 if __name__ == '__main__':
   import sys,getopt,re
   doLong=0
@@ -123,5 +122,5 @@ if __name__ == '__main__':
       if re.match('_test',methName):
         newName = re.sub('_test','test',methName)
         exec('TestCase.%s = TestCase.%s'%(newName,methName))
-        
+
   unittest.main()

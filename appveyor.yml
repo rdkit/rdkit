@@ -13,6 +13,7 @@ branches:
   # whitelist
   only:
     - master
+    - appveyor_tuning
 
 # Operating system (build VM template)
 #os: Windows Server 2012 R2
@@ -34,6 +35,7 @@ install:
 build:
   project: c:\projects\RDKit\build\INSTALL.vcxproj      # path to Visual Studio solution or project
   parallel: true
+  verbosity: quiet
 
 # scripts to run before build
 before_build:
@@ -45,7 +47,7 @@ before_build:
 
 #test_script:
 #  - cd c:\projects\RDKit\build
-#  - ctest 
+#  - ctest
 
 # scripts to run after build
 #after_build:

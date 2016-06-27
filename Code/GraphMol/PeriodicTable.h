@@ -310,6 +310,7 @@ class PeriodicTable {
  private:
   PeriodicTable();
   PeriodicTable &operator=(const PeriodicTable &);
+  static void initInstance();
 
   static class PeriodicTable *ds_instance;
 

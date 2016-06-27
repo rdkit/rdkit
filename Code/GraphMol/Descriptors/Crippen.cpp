@@ -116,6 +116,19 @@ void calcCrippenDescriptors(const ROMol &mol, double &logp, double &mr,
   mol.setProp(common_properties::_crippenMR, mr, true);
 };
 
+
+double calcClogP(const ROMol &mol) {
+  double clogp,mr;
+  calcCrippenDescriptors(mol, clogp, mr);
+  return clogp;
+}
+
+double calcMR(const ROMol &mol) {
+  double clogp,mr;
+  calcCrippenDescriptors(mol, clogp, mr);
+  return mr;
+}
+
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, CrippenParamCollection>,
     boost::flyweights::no_tracking> param_flyweight;

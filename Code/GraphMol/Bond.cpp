@@ -15,18 +15,16 @@
 
 namespace RDKit {
 
-Bond::Bond() {
+Bond::Bond() : RDProps() {
   initBond();
-  dp_props = new Dict();
 };
 
-Bond::Bond(BondType bT) {
+Bond::Bond(BondType bT) : RDProps() {
   initBond();
   d_bondType = bT;
-  dp_props = new Dict();
 };
 
-Bond::Bond(const Bond &other) {
+Bond::Bond(const Bond &other) : RDProps(other) {
   // NOTE: we do *not* copy ownership!
   dp_mol = 0;
   d_bondType = other.d_bondType;
@@ -42,15 +40,9 @@ Bond::Bond(const Bond &other) {
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
-  if (other.dp_props) {
-    dp_props = new Dict(*other.dp_props);
-  } else {
-    dp_props = new Dict();
-  }
 }
 
 Bond::~Bond() {
-  delete dp_props;
   delete dp_stereoAtoms;
 }
 
@@ -68,11 +60,7 @@ Bond &Bond::operator=(const Bond &other) {
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
-  if (other.dp_props) {
-    dp_props = new Dict(*other.dp_props);
-  } else {
-    dp_props = new Dict();
-  }
+  dp_props = other.dp_props;
 
   return *this;
 }

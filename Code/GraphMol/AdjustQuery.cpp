@@ -47,8 +47,11 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     unsigned int nRings = ringInfo->numAtomRings(i);
     int atomicNum = at->getAtomicNum();
     if (params.adjustDegree &&
-        !((params.adjustDegreeFlags & ADJUST_RINGSONLY) && !nRings) &&
-        !((params.adjustDegreeFlags & ADJUST_IGNOREDUMMIES) && !atomicNum)) {
+
+        !((params.adjustDegreeFlags & ADJUST_IGNORECHAINATOMS) && !nRings) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNORENONDUMMIES) && atomicNum)) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);
@@ -62,8 +65,11 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       qa->expandQuery(makeAtomExplicitDegreeQuery(qa->getDegree()));
     }  // end of adjust degree
     if (params.adjustRingCount &&
-        !((params.adjustRingCountFlags & ADJUST_RINGSONLY) && !nRings) &&
-        !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum)) {
+        !((params.adjustRingCountFlags & ADJUST_IGNORECHAINATOMS) && !nRings) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNORENONDUMMIES) &&
+          atomicNum)) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);

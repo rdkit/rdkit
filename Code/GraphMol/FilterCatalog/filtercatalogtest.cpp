@@ -72,8 +72,8 @@ bool check(MatchVectType v, MatchVectType match) {
 }
 
 void testFilterCatalog() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "2313979: aromaticity assignment hangs " << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing the filter catalog " << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";

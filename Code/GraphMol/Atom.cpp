@@ -29,22 +29,22 @@ bool isEarlyAtom(int atomicNum) {
   return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
 }
 }
-Atom::Atom() {
+Atom::Atom() : RDProps() {
   d_atomicNum = 0;
   initAtom();
 }
 
-Atom::Atom(unsigned int num) {
+Atom::Atom(unsigned int num) : RDProps() {
   d_atomicNum = num;
   initAtom();
 };
 
-Atom::Atom(const std::string &what) {
+Atom::Atom(const std::string &what) : RDProps() {
   d_atomicNum = PeriodicTable::getTable()->getAtomicNumber(what);
   initAtom();
 };
 
-Atom::Atom(const Atom &other) {
+Atom::Atom(const Atom &other) : RDProps(other) {
   // NOTE: we do *not* copy ownership!
   d_atomicNum = other.d_atomicNum;
   dp_mol = 0;
@@ -60,13 +60,6 @@ Atom::Atom(const Atom &other) {
   d_hybrid = other.d_hybrid;
   d_implicitValence = other.d_implicitValence;
   d_explicitValence = other.d_explicitValence;
-  if (other.dp_props) {
-    dp_props = new Dict(*other.dp_props);
-  } else {
-    dp_props = new Dict();
-    STR_VECT computed;
-    dp_props->setVal(detail::computedPropName, computed);
-  }
   if (other.dp_monomerInfo) {
     dp_monomerInfo = other.dp_monomerInfo->copy();
   } else {
@@ -84,7 +77,6 @@ void Atom::initAtom() {
   d_chiralTag = CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
   dp_mol = 0;
-  dp_props = new Dict();
   dp_monomerInfo = 0;
 
   d_implicitValence = -1;
@@ -92,10 +84,6 @@ void Atom::initAtom() {
 }
 
 Atom::~Atom() {
-  if (dp_props) {
-    delete dp_props;
-    dp_props = 0;
-  }
   if (dp_monomerInfo) {
     delete dp_monomerInfo;
   }

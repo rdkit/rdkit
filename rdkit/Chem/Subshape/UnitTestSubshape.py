@@ -36,12 +36,12 @@ class TestCase(unittest.TestCase):
       shape = builder(m,terminalPtsOnly=True)
       shapes.append(shape)
     
-    self.failUnless(len(ms)==4)
-    self.failUnless(len(shapes)==4)
-    self.failUnless([len(x.skelPts) for x in shapes] == [5,5,5,5])
+    self.assertTrue(len(ms)==4)
+    self.assertTrue(len(shapes)==4)
+    self.assertTrue([len(x.skelPts) for x in shapes] == [5,5,5,5])
 
     refShape = builder.GenerateSubshapeShape(ms[0])
-    self.failUnless(len(refShape.skelPts)==15)
+    self.assertTrue(len(refShape.skelPts)==15)
 
     aligner = SubshapeAligner.SubshapeAligner()
     aligner.shapeDistTol=.30
@@ -54,7 +54,7 @@ class TestCase(unittest.TestCase):
       m1 = ms[i]
       alignments = aligner.GetSubshapeAlignments(ms[0],refShape,m1,s1,builder)
       algStore.append(alignments)
-    self.failUnlessEqual([len(x) for x in algStore],[0,2,39,0])
+    self.assertEqual([len(x) for x in algStore],[0,2,39,0])
 
     algStore = []
     for i,s1 in enumerate(shapes):
@@ -64,7 +64,7 @@ class TestCase(unittest.TestCase):
       m1 = ms[i]
       alignments = list(aligner(ms[0],refShape,m1,s1,builder))
       algStore.append(alignments)
-    self.failUnless([len(x) for x in algStore] == [0,2,39,0])
+    self.assertTrue([len(x) for x in algStore] == [0,2,39,0])
 
 
     
@@ -73,7 +73,7 @@ class TestCase(unittest.TestCase):
       alignments=algStore[i]
       pruned.append(SubshapeAligner.ClusterAlignments(mi,alignments,builder,
                                                       neighborTol=0.15))
-    self.failUnless([len(x) for x in pruned] == [0,2,29,0])
+    self.assertTrue([len(x) for x in pruned] == [0,2,29,0])
 
 
     

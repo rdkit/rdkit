@@ -86,6 +86,7 @@ void test1FPBReaderBasics() {
     std::string filename = pathName + "zim.head100.fpb";
     FPBReader fps(filename);
     _basicsTest(fps);
+    fps.cleanup();  // make sure this doesn't cause problems
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -100,6 +101,7 @@ void test9LazyFPBReaderBasics() {
     std::string filename = pathName + "zim.head100.fpb";
     FPBReader fps(filename, true);
     _basicsTest(fps);
+    fps.cleanup();  // make sure this doesn't cause problems
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

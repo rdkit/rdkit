@@ -499,7 +499,7 @@ This works because we know that the atom indices in the copies and the original 
     def getMCSSmiles(mol,labelledMol,mcs):
         mcsp = Chem.MolFromSmarts(mcs.smartsString)
         match = labelledMol.GetSubstructMatch(mcsp)
-        return Chem.MolFragmentToSmiles(ms[0],atomsToUse=match,
+        return Chem.MolFragmentToSmiles(mol,atomsToUse=match,
                                         isomericSmiles=True,
                                         canonical=False)
     

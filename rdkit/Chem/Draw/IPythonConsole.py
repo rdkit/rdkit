@@ -1,3 +1,4 @@
+import sys
 import IPython
 
 if IPython.release.version < '0.11':

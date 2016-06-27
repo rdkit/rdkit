@@ -31,12 +31,12 @@ namespace RDKit {
 void tossit() { throw IndexErrorException(1); }
 }
 
-void rdExceptionTranslator(RDKit::ConformerException const& x) {
+void rdExceptionTranslator(RDKit::ConformerException const &x) {
   RDUNUSED_PARAM(x);
   PyErr_SetString(PyExc_ValueError, "Bad Conformer Id");
 }
 
-void rdSanitExceptionTranslator(RDKit::MolSanitizeException const& x) {
+void rdSanitExceptionTranslator(RDKit::MolSanitizeException const &x) {
   std::ostringstream ss;
   ss << "Sanitization error: " << x.message();
   PyErr_SetString(PyExc_ValueError, ss.str().c_str());
@@ -52,20 +52,22 @@ void wrap_EditableMol();
 void wrap_monomerinfo();
 void wrap_resmolsupplier();
 
-struct PySysErrWrite : std::ostream, std::streambuf
-{
+struct PySysErrWrite : std::ostream, std::streambuf {
   std::string prefix;
-  
-  PySysErrWrite(const std::string &prefix) :
-      std::ostream(this), prefix(prefix) {}
 
-  int overflow(int c) { write(c); return 0;}
-  
+  PySysErrWrite(const std::string &prefix)
+      : std::ostream(this), prefix(prefix) {}
+
+  int overflow(int c) {
+    write(c);
+    return 0;
+  }
+
 #ifdef RDK_THREADSAFE_SSS
-  void write(char c) { // enable thread safe logging
-    static boost::thread_specific_ptr< std::string > buffer;
-    if( !buffer.get() ) {
-      buffer.reset( new std::string );
+  void write(char c) {  // enable thread safe logging
+    static boost::thread_specific_ptr<std::string> buffer;
+    if (!buffer.get()) {
+      buffer.reset(new std::string);
     }
     (*buffer.get()) += c;
     if (c == '\n') {
@@ -77,9 +79,9 @@ struct PySysErrWrite : std::ostream, std::streambuf
       buffer->clear();
     }
   }
-  
+
 #else
-  std::string buffer; // unlimited! flushes in endl
+  std::string buffer;  // unlimited! flushes in endl
   void write(char c) {
     buffer += c;
     if (c == '\n') {
@@ -88,8 +90,6 @@ struct PySysErrWrite : std::ostream, std::streambuf
     }
   }
 #endif
-
-  
 };
 
 void RDLogError(const std::string &msg) {
@@ -103,24 +103,25 @@ void RDLogWarning(const std::string &msg) {
 }
 
 void WrapLogs() {
-  static PySysErrWrite debug  ("RDKit DEBUG: ");
-  static PySysErrWrite error  ("RDKit ERROR: ");
-  static PySysErrWrite info   ("RDKit INFO: ");
+  static PySysErrWrite debug("RDKit DEBUG: ");
+  static PySysErrWrite error("RDKit ERROR: ");
+  static PySysErrWrite info("RDKit INFO: ");
   static PySysErrWrite warning("RDKit WARNING: ");
-  if( rdDebugLog == NULL || rdInfoLog == NULL || rdErrorLog == NULL || rdWarningLog == NULL ){
+  if (rdDebugLog == NULL || rdInfoLog == NULL || rdErrorLog == NULL ||
+      rdWarningLog == NULL) {
     RDLog::InitLogs();
   }
-  if( rdDebugLog != NULL ) rdDebugLog->AddTee(debug);
-  if( rdInfoLog != NULL ) rdInfoLog->AddTee(info);
-  if( rdErrorLog != NULL ) rdErrorLog->AddTee(error);
-  if( rdWarningLog != NULL ) rdWarningLog->AddTee(warning);
+  if (rdDebugLog != NULL) rdDebugLog->SetTee(debug);
+  if (rdInfoLog != NULL) rdInfoLog->SetTee(info);
+  if (rdErrorLog != NULL) rdErrorLog->SetTee(error);
+  if (rdWarningLog != NULL) rdWarningLog->SetTee(warning);
 }
 
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
-  RegisterListConverter<RDKit::Atom*>();
-  RegisterListConverter<RDKit::Bond*>();
+  RegisterListConverter<RDKit::Atom *>();
+  RegisterListConverter<RDKit::Bond *>();
   rdkit_import_array();
   python::register_exception_translator<RDKit::MolSanitizeException>(
       &rdSanitExceptionTranslator);

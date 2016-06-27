@@ -2,7 +2,7 @@
 (Changes relative to Release_2016.03.1)
 
 ## Acknowledgements:
-Brian Kelley, John May, Roger Sayle, Paolo Tosco
+Brian Kelley, John May, Roger Sayle, Paolo Tosco, Riccardo Vianello
 
 ## Bug Fixes:
   - Fixed a few typos in Code/PgSQL/rdkit/CMakeLists.txt
@@ -25,6 +25,8 @@ Brian Kelley, John May, Roger Sayle, Paolo Tosco
  (github issue #906 from greglandrum)
   - ugly coordinates generated for peptide chains
  (github issue #910 from greglandrum)
+  - Cartridge: makefile not using -O2 for C code
+ (github issue #920 from rvianello)
 
 
 # Release_2016.03.1
