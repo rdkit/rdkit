@@ -36,6 +36,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/PreprocessRxn.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
@@ -374,6 +375,28 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
                             python::tuple(reactantLabels));
 
 }
+#ifdef RDK_32BIT_BUILD
+typedef int sanitize_ops;
+#else
+typedef unsigned int sanitize_ops;
+#endif
+
+RxnOps::SanitizeRxnFlags sanitizeReaction(ChemicalReaction &rxn,
+                                          sanitize_ops sanitizeOps,
+                                          bool catchErrors) {
+  unsigned int operationsThatFailed = 0;
+  try {
+    RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps);
+  } catch(...) {
+    if (!catchErrors)
+      throw;
+  }
+  return static_cast<RxnOps::SanitizeRxnFlags>(operationsThatFailed);
+}
+}
+
+
+void wrap_enumeration();
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
   python::scope().attr("__doc__") =
@@ -774,10 +797,29 @@ Sample Usage:\n\
   True\n\
 ";
 
-  python::def("PreprocessReaction", PreprocessReaction,
+  python::def("PreprocessReaction", RDKit::PreprocessReaction,
               (python::arg("reaction"),
                python::arg("queries")=python::dict(),
-               python::arg("propName")=common_properties::molFileValue),
+               python::arg("propName")=RDKit::common_properties::molFileValue),
               docString.c_str());
+
+  python::enum_<RDKit::RxnOps::SanitizeRxnFlags>("SanitizeFlags")
+        .value("SANITIZE_NONE", RDKit::RxnOps::SANITIZE_NONE)
+        .value("SANITIZE_ATOM_MAPS", RDKit::RxnOps::SANITIZE_ATOM_MAPS)
+        .value("SANITIZE_RGROUP_NAMES", RDKit::RxnOps::SANITIZE_RGROUP_NAMES)
+        .value("SANITIZE_REAGENT_AROMATICITY", RDKit::RxnOps::SANITIZE_REAGENT_AROMATICITY)
+        .value("SANITIZE_MERGEHS", RDKit::RxnOps::SANITIZE_MERGEHS)
+        .value("SANITIZE_ALL", RDKit::RxnOps::SANITIZE_ALL)
+        .export_values();
+    ;
+
+    std::string docstring = "feed me";
+    python::def(
+        "SanitizeRxn", RDKit::sanitizeReaction,
+        (python::arg("rxn"), python::arg("sanitizeOps") = RDKit::RxnOps::SANITIZE_ALL,
+         python::arg("catchErrors") = false),
+        docString.c_str());
+    
+  wrap_enumeration();
 }
-}
+
