@@ -18,6 +18,27 @@
 #include <algorithm>
 
 namespace RDKit {
+namespace {
+bool isMapped(const Atom* atom) {
+  return atom->hasProp(common_properties::molAtomMapNumber);
+}
+
+bool isRGroup(const Atom* atom) {
+  return atom->hasProp(common_properties::_MolFileRLabel) || atom->getAtomicNum() == 0;
+}
+
+bool attachedToRGroup(const ROMol &mol, Atom*atom) {
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
+  while (nbrIdx != endNbrs) {
+    if (isRGroup(mol.getAtomWithIdx(*nbrIdx)))
+      return true;
+    ++nbrIdx;
+  }
+}
+
+}
+
 namespace MolOps {
 ROMol *adjustQueryProperties(const ROMol &mol,
                              const AdjustQueryParameters *params) {
@@ -36,22 +57,31 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     params = *inParams;
   }
   const RingInfo *ringInfo = mol.getRingInfo();
-  if (!ringInfo->isInitialized()) {
-    MolOps::symmetrizeSSSR(mol);
-  }
 
+  if(params.aromatizeIfPossible) {
+    unsigned int failed;
+    sanitizeMol(mol, failed, SANITIZE_SYMMRINGS | SANITIZE_SETAROMATICITY);
+  } else {
+    if (!ringInfo->isInitialized()) {
+      MolOps::symmetrizeSSSR(mol);
+    }
+  }
+  
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     Atom *at = mol.getAtomWithIdx(i);
     // pull properties we need from the atom here, once we
     // create a query atom they may no longer be valid.
     unsigned int nRings = ringInfo->numAtomRings(i);
     int atomicNum = at->getAtomicNum();
+    bool attachedR = attachedToRGroup(mol,at);
     if (params.adjustDegree &&
-
         !((params.adjustDegreeFlags & ADJUST_IGNORECHAINATOMS) && !nRings) &&
         !((params.adjustDegreeFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
         !((params.adjustDegreeFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
-        !((params.adjustDegreeFlags & ADJUST_IGNORENONDUMMIES) && atomicNum)) {
+        !((params.adjustDegreeFlags & ADJUST_IGNORENONDUMMIES) && atomicNum) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) && isMapped(at)) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNOREATTACHEDRGROUPS) && attachedR)
+        ) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);
@@ -69,6 +99,8 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         !((params.adjustRingCountFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
         !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
         !((params.adjustRingCountFlags & ADJUST_IGNORENONDUMMIES) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNOREMAPPED) && isMapped(at)) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNOREATTACHEDRGROUPS) && attachedR) &&
           atomicNum)) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
