@@ -7,4 +7,5 @@
 namespace RDKit {
   extern const char * rdkitVersion;
   extern const char * boostVersion;
+  extern const char * rdkitBuild;
 }  
