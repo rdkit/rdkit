@@ -35,6 +35,7 @@ bool attachedToRGroup(const ROMol &mol, Atom*atom) {
       return true;
     ++nbrIdx;
   }
+  return false;
 }
 
 }
