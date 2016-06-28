@@ -165,7 +165,7 @@ bool _minimizeWithExpTorsions(
         improperAtoms, atomNums);
     field2->initialize();
     // check if the energy is low enough
-    double planarityTolerance = 0.3;
+    double planarityTolerance = 0.5;
     if (field2->calcEnergy() > improperAtoms.size()*planarityTolerance) {
       //std::cerr << "planarity check failed: " << field2->calcEnergy()  << std::endl;
       planar = false;
