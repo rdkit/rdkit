@@ -248,7 +248,6 @@ typedef enum {
   ADJUST_IGNOREDUMMIES = 0x2,
   ADJUST_IGNORENONDUMMIES = 0x8,
   ADJUST_IGNOREMAPPED = 0x10,
-  ADJUST_IGNOREATTACHEDRGROUPS = 0x20, // Ignore if atom is attached to rgroup
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 struct AdjustQueryParameters {

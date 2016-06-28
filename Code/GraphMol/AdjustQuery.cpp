@@ -22,22 +22,6 @@ namespace {
 bool isMapped(const Atom* atom) {
   return atom->hasProp(common_properties::molAtomMapNumber);
 }
-
-bool isRGroup(const Atom* atom) {
-  return atom->hasProp(common_properties::_MolFileRLabel) || atom->getAtomicNum() == 0;
-}
-
-bool attachedToRGroup(const ROMol &mol, Atom*atom) {
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-  while (nbrIdx != endNbrs) {
-    if (isRGroup(mol.getAtomWithIdx(*nbrIdx)))
-      return true;
-    ++nbrIdx;
-  }
-  return false;
-}
-
 }
 
 namespace MolOps {
@@ -74,14 +58,12 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     // create a query atom they may no longer be valid.
     unsigned int nRings = ringInfo->numAtomRings(i);
     int atomicNum = at->getAtomicNum();
-    bool attachedR = attachedToRGroup(mol,at);
     if (params.adjustDegree &&
         !((params.adjustDegreeFlags & ADJUST_IGNORECHAINATOMS) && !nRings) &&
         !((params.adjustDegreeFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
         !((params.adjustDegreeFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
         !((params.adjustDegreeFlags & ADJUST_IGNORENONDUMMIES) && atomicNum) &&
-        !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) && isMapped(at)) &&
-        !((params.adjustDegreeFlags & ADJUST_IGNOREATTACHEDRGROUPS) && attachedR)
+        !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) && isMapped(at))
         ) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
@@ -101,7 +83,6 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
         !((params.adjustRingCountFlags & ADJUST_IGNORENONDUMMIES) &&
         !((params.adjustRingCountFlags & ADJUST_IGNOREMAPPED) && isMapped(at)) &&
-        !((params.adjustRingCountFlags & ADJUST_IGNOREATTACHEDRGROUPS) && attachedR) &&
           atomicNum)) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
