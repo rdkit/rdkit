@@ -167,14 +167,8 @@ bool _minimizeWithExpTorsions(
     // check if the energy is low enough
     double planarityTolerance = 0.3;
     if (field2->calcEnergy() > improperAtoms.size()*planarityTolerance) {
-      std::cerr << "planarity check failed: " << field2->calcEnergy()  << std::endl;
-      // if needed we could do a minimization with only the impropers
-      //std::cerr << "Minimizing only the impropers" << std::endl;
-      //field->minimize(100, optimizerForceTol);
-      //if (field2->calcEnergy() > improperAtoms.size()*planarityTolerance) {
-      //  std::cerr << "planarity check failed again: " << field2->calcEnergy() << ". Discard." << std::endl;
-        planar = false;
-      //}
+      //std::cerr << "planarity check failed: " << field2->calcEnergy()  << std::endl;
+      planar = false;
     }
     delete field2;
   }
@@ -550,7 +544,6 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
     }
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
-    std::cerr << "conf " << ci << std::endl;
     if (rdcast<int>(ci % numThreads) != threadId) continue;
     if (!(*eargs->confsOk)[ci]) {
       // if one of the fragments here has already failed, there's no
