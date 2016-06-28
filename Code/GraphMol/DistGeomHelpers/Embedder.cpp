@@ -167,7 +167,7 @@ bool _minimizeWithExpTorsions(
     // check if the energy is low enough
     double planarityTolerance = 0.5;
     if (field2->calcEnergy() > improperAtoms.size()*planarityTolerance) {
-      //std::cerr << "planarity check failed: " << field2->calcEnergy()  << std::endl;
+      BOOST_LOG(rdWarningLog) << "Planarity check failed with energy = " << field2->calcEnergy() << ". Discard conformer." << std::endl;
       planar = false;
     }
     delete field2;
