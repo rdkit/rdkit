@@ -162,12 +162,11 @@ bool _minimizeWithExpTorsions(
     // create a force field with only the impropers
     ForceFields::ForceField *field2;
     field2 = DistGeom::construct3DImproperForceField(*mmat, positions3D,
-        improperAtoms, atomNums);
+                                                     improperAtoms, atomNums);
     field2->initialize();
     // check if the energy is low enough
     double planarityTolerance = 0.5;
-    if (field2->calcEnergy() > improperAtoms.size()*planarityTolerance) {
-      BOOST_LOG(rdWarningLog) << "Planarity check failed with energy = " << field2->calcEnergy() << ". Discard conformer." << std::endl;
+    if (field2->calcEnergy() > improperAtoms.size() * planarityTolerance) {
       planar = false;
     }
     delete field2;
@@ -302,10 +301,10 @@ bool _embedPoints(
 
       // (ET)(K)DG
       if (gotCoords && (useExpTorsionAnglePrefs || useBasicKnowledge)) {
-        gotCoords = _minimizeWithExpTorsions(*positions, mmat, optimizerForceTol,
-                                 basinThresh, bonds, angles, expTorsionAtoms,
-                                 expTorsionAngles, improperAtoms, atomNums,
-                                 useBasicKnowledge);
+        gotCoords = _minimizeWithExpTorsions(
+            *positions, mmat, optimizerForceTol, basinThresh, bonds, angles,
+            expTorsionAtoms, expTorsionAngles, improperAtoms, atomNums,
+            useBasicKnowledge);
       }
 
       // test if chirality is correct
