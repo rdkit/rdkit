@@ -111,7 +111,7 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
 }
 
 // the minimization using experimental torsion angle preferences
-void _minimizeWithExpTorsions(
+bool _minimizeWithExpTorsions(
     RDGeom::PointPtrVect &positions, DistGeom::BoundsMatPtr mmat,
     double optimizerForceTol, double basinThresh,
     const std::vector<std::pair<int, int> > &bonds,
@@ -122,6 +122,8 @@ void _minimizeWithExpTorsions(
     const std::vector<std::vector<int> > &improperAtoms,
     const std::vector<int> &atomNums, bool useBasicKnowledge) {
   RDUNUSED_PARAM(basinThresh);
+
+  bool planar = true;
 
   // convert to 3D positions and create coordMap
   RDGeom::Point3DPtrVect positions3D;
@@ -153,8 +155,22 @@ void _minimizeWithExpTorsions(
     //}
   }
   // std::cout << field->calcEnergy() << std::endl;
-
   delete field;
+
+  // check for planarity if ETKDG or KDG
+  if (useBasicKnowledge) {
+    // create a force field with only the impropers
+    ForceFields::ForceField *field2;
+    field2 = DistGeom::construct3DImproperForceField(*mmat, positions3D,
+                                                     improperAtoms, atomNums);
+    field2->initialize();
+    // check if the energy is low enough
+    double planarityTolerance = 0.5;
+    if (field2->calcEnergy() > improperAtoms.size() * planarityTolerance) {
+      planar = false;
+    }
+    delete field2;
+  }
 
   // overwrite positions and delete the 3D ones
   for (unsigned int i = 0; i < positions3D.size(); ++i) {
@@ -163,6 +179,8 @@ void _minimizeWithExpTorsions(
     (*positions[i])[2] = (*positions3D[i])[2];
     delete positions3D[i];
   }
+
+  return planar;
 }
 
 bool _embedPoints(
@@ -283,10 +301,10 @@ bool _embedPoints(
 
       // (ET)(K)DG
       if (gotCoords && (useExpTorsionAnglePrefs || useBasicKnowledge)) {
-        _minimizeWithExpTorsions(*positions, mmat, optimizerForceTol,
-                                 basinThresh, bonds, angles, expTorsionAtoms,
-                                 expTorsionAngles, improperAtoms, atomNums,
-                                 useBasicKnowledge);
+        gotCoords = _minimizeWithExpTorsions(
+            *positions, mmat, optimizerForceTol, basinThresh, bonds, angles,
+            expTorsionAtoms, expTorsionAngles, improperAtoms, atomNums,
+            useBasicKnowledge);
       }
 
       // test if chirality is correct

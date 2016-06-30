@@ -569,19 +569,21 @@ const std::string torsionPreferences =
     "1 0.0 1 0.0\n"
     "[cH0:1]([OH1])[c:2]([cH1])!@;-[C:3](=O)[NH1:4] 1 0.0 -1 15.0 1 0.0 1 0.0 "
     "1 0.0 1 0.0\n"
-    "[cH0:1][c:2]([cH1])!@;-[CX3:3]([NX3H1])=[O:4] 1 -0.2 1 -0.9 -1 -0.4 -1 "
-    "-0.1 1 0.5 1 -0.8\n"
+    //"[cH0:1][c:2]([cH1])!@;-[CX3:3]([NX3H1])=[O:4] 1 -0.2 1 -0.9 -1 -0.4 -1 " // 27.6.16 change in functional form
+    //"-0.1 1 0.5 1 -0.8\n"
+    "[cH0:1][c:2]([cH1])!@;-[CX3:3]([NX3H1])=[O:4] 1 0.0 1 0.0 1 0.0 1 0.0 1 "
+    "0.1 1 0.0\n"
     "[cH0:1][c:2]([cH1])!@;-[CX3:3]([NX3H0])=[O:4] 1 0.0 1 5.0 1 0.0 1 0.0 1 "
     "0.0 1 0.0\n"
-    "[cH1:1][c:2]([cH1])!@;-[C:3]([NH1,NH2])=[O:4] 1 0.0 -1 1.6 1 0.0 1 0.0 1 "
+    "[cH1:1][c:2]([cH1])!@;-[C:3]([NH1,NH2])=[O:4] 1 0.0 -1 0.5 1 0.0 1 0.0 1 " // 27.6. reduced from 1.6
     "0.0 1 0.0\n"
     //"[a:1][c:2]!@;-[C:3]([NH0])=[O:4]\n"
     "[a:1][c:2]!@;-[C:3]([NH1,NH2])=[O:4] 1 0.0 -1 2.4 1 0.0 1 0.0 1 0.0 1 "
     "0.0\n"
     "[cH0:1](F)[c:2]([cH1])!@;-[CX3:3]=[O:4] 1 0.0 -1 1.8 1 0.0 1 0.0 1 0.0 1 "
     "0.0\n"
-    "[cH0:1](Cl)[c:2]([cH1])!@;-[CX3:3]=[O:4] 1 0.0 1 0.0 1 0.0 1 0.0 1 0.0 -1 "
-    "10.0\n"
+    "[cH0:1](Cl)[c:2]([cH1])!@;-[CX3:3]=[O:4] 1 0.0 1 0.0 1 0.0 1 0.0 1 0.0 -1 " // 26.6.16 reduced from 10.0
+    "2.0\n"
     "[nX3H1:1][a:2]!@;-[CX3:3]=[O:4] 1 0.0 -1 10.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
     "[nX2H0:1][c:2](c)!@;-[CX3:3]([!O])=[O:4] 1 66.5 1 0.0 1 0.0 1 0.0 1 0.0 1 "
     "0.0\n"
@@ -589,7 +591,7 @@ const std::string torsionPreferences =
     "1 0.0\n"
     "[*^2]!@;-[cH0:1][c:2]([cH1])!@;-[CX3:3]=[O:4] 1 0.0 -1 8.0 1 0.0 1 0.0 1 "
     "0.0 1 0.0\n"
-    "[cH0:1][c:2]([cH1])!@;-[CX3:3]=[O:4] 1 0.0 -1 10.0 1 0.0 1 0.0 1 0.0 1 "
+    "[cH0:1][c:2]([cH1])!@;-[CX3:3]=[O:4] 1 0.0 -1 2.0 1 0.0 1 0.0 1 0.0 1 " // 25.6.16 reduced from 10.0
     "0.0\n"
     "[cH0:1][c:2]([cH0])!@;-[CX3:3]=[O:4] 1 0.0 1 0.0 1 0.0 -1 3.0 1 0.0 1 "
     "0.0\n"
@@ -620,7 +622,7 @@ const std::string torsionPreferences =
     //  these patterns were added as part of the ET-DG work
     // non-aromatic double bonds
     //"[*:1][CX3:2]=[CX3:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n"
-    "[*:1][X3,X2:2]=[X3,X2:3][*:4] 1 0.0 -1 7.0 1 0.0 1 0.0 1 0.0 1 0.0\n";
+    "[*:1][X3,X2:2]=[X3,X2:3][*:4] 1 0.0 -1 100.0 1 0.0 1 0.0 1 0.0 1 0.0\n";
 
 //! A structure used to the experimental torsion patterns
 struct ExpTorsionAngle {
@@ -861,12 +863,11 @@ void getExperimentalTorsions(
           std::vector<int> signs(6, 1);
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
-          fconsts[1] = 7.0;  // MMFF force constants for aromatic rings
+          fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
           expTorsionAngles.push_back(std::make_pair(signs, fconsts));
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 << "
-          " << aid4
-                << ", (0, 7.0, 0, 0, 0, 0)" << std::endl;
+          " << aid4 << std::endl;
           }*/
         }
 
