@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "StructChecker.h"
+#include "Pattern.h"
 
 namespace RDKit {
  namespace StructureCheck {
@@ -15,10 +16,13 @@ namespace RDKit {
     unsigned StructChecker::checkMolStructure(RWMol &mol)const {
         unsigned flags = StructureFlags::NO_CHANGE; // == 0. return value
 
-        if ( 0 != Options.MaxMolSize && mol.getNumAtoms() > 0
-            &&(mol.getNumAtoms() > Options.MaxMolSize || mol.getNumBonds() > Options.MaxMolSize))
-            return StructureFlags::BAD_MOLECULE;
-/* uses SDL text
+        if (0 != Options.MaxMolSize
+            && (mol.getNumAtoms() > Options.MaxMolSize || mol.getNumBonds() > Options.MaxMolSize)) {
+            return StructureFlags::SIZE_CHECK_FAILED;
+        }
+        mol.getRingInfo()->initialize();
+
+/* it uses SDL text
         if (Options.ConvertAtomTexts)
         {
             if(!convertAtomAliases(mol))
@@ -30,6 +34,23 @@ namespace RDKit {
         if (Options.ConvertSText)
             ;//new_data_list = ConvertSTEXTToData(mol, new_data_list);
 */
+        if (!Options.AugmentedAtomPairs.empty()) {
+            if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs))
+                flags |= TRANSFORMED;
+        }
+
+/* TODO:
+        stereo_result = DubiousStereochemistry(mp);
+        if (FixDubious3DMolecule(mp) & CONVERTED_TO_2D)
+        {
+            stereo_result = TRUE;
+            flags |= DUBIOUS_STEREO_REMOVED;
+        }
+*/
+        if (0 != (flags & TRANSFORMED)) {   // sanitaze molecule
+//???? .............. ????
+            mol.getRingInfo()->initialize();
+        }
         return flags;
     }
 

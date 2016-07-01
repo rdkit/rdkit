@@ -48,9 +48,10 @@ namespace RDKit {
         SINGLET = 1,
         DOUBLET = 2,
         TRIPLET = 3,
+        ANY_RADICAL = 0xFF, // ???
     };
-    enum BondType {
-        BT_NONE    = 0,
+    enum BondType { // those values are defined and used in file format. Do not change it.
+        BT_NONE = 0, // means REMOVE Bond
         SINGLE  = 1,
         DOUBLE  = 2,
         TRIPLE  = 3,
@@ -63,27 +64,27 @@ namespace RDKit {
     };
 
     struct Ligand {
-        std::string AtomSymbol;
+        std::string AtomSymbol; // comma separated list of elements or #
         int         Charge;
-        int         Radical;
-        int         SubstitutionCount; // substitution count 0 = don't care
+        RadicalType Radical;
+        unsigned    SubstitutionCount; // substitution count 0 = don't care
         BondType    BondType; // was: short 
-        Ligand() : Charge(0), Radical(0), SubstitutionCount(0), BondType(BondType::BT_NONE) {}
+        Ligand() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), SubstitutionCount(0), BondType(ANY_BOND) {}
     };
 
     struct AugmentedAtom {
-        enum Topography {
+        enum Topology {
             TP_NONE = 0,
             RING = 1,
             CHAIN= 2
         };
-        std::string AtomSymbol;
+        std::string AtomSymbol; // comma separated list of elements or #
         std::string ShortName;
         int         Charge;
-        int         Radical;
-        Topography  Topography; // 1=ring 2=chain 0 don't care
+        unsigned    Radical;
+        Topology    Topology; // this atom in: 1=ring 2=chain 0 don't care
         std::vector<Ligand> Ligands;
-        AugmentedAtom() : Charge(0), Radical(0), Topography(Topography::TP_NONE) {}
+        AugmentedAtom() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(Topology::TP_NONE) {}
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -97,7 +98,7 @@ namespace RDKit {
         int     DesiredCharge;
         bool    CheckCollisions;
         int     CollisionLimitPercent;
-        int     MaxMolSize;
+        unsigned MaxMolSize;
         bool    ConvertSText;
         bool    SqueezeIdentifiers;
         bool    StripZeros;
@@ -120,7 +121,7 @@ namespace RDKit {
             , DesiredCharge(0)
             , CheckCollisions(false)
             , CollisionLimitPercent(0)
-            , MaxMolSize(255)           //// Really NEED it ???
+            , MaxMolSize(255)
             , ConvertSText(false)
             , SqueezeIdentifiers(false)
             , StripZeros(false)

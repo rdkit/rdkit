@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <ctype.h>
+#include <memory.h>
 #include <errno.h>
 #include <iostream>
 #include <sstream>
@@ -114,11 +115,11 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
     aa.ShortName = str;
 
     if (str[0] == '@') {
-        aa.Topography = AugmentedAtom::Topography::RING;
+        aa.Topology = AugmentedAtom::Topology::RING;
         str++;
     }
     else if (str[0] == '!'  &&  str[1] == '@') {
-        aa.Topography = AugmentedAtom::Topography::CHAIN;
+        aa.Topology = AugmentedAtom::Topology::CHAIN;
         str++;
         str++;
     }
