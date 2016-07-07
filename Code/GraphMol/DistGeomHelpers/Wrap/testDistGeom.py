@@ -302,7 +302,7 @@ class TestCase(unittest.TestCase) :
         for i in range(5):
             smi = "C1=CC=C(C=C1)[C@H](OC1=C[NH]N=C1)C(=O)[NH]C[C@H](Cl)C1=CC=NC=C1"
             mol = Chem.MolFromSmiles(smi)
-            ci = rdDistGeom.EmbedMolecule(mol, 50, randomSeed=(i+1)*15)
+            ci = rdDistGeom.EmbedMolecule(mol, randomSeed=(i+1)*15)
             self.assertTrue(ci>=0)
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, ci)
             ff.Minimize()

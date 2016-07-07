@@ -885,12 +885,13 @@ void testRandomCoords() {
   for (tokenizer::iterator token = tokens.begin(); token != tokens.end();
        ++token) {
     std::string smi = *token;
+    std::cerr << smi << std::endl;
     ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m = m2;
-    int cid =
-        DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2, true, 1, 0, 1e-2);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10 * m->getNumAtoms(), 1, true,
+                                          true, 2, true, 1, 0, 1e-2);
     CHECK_INVARIANT(cid >= 0, "");
 // writer.write(*m);
 // writer.flush();
