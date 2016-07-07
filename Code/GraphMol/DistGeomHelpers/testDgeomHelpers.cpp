@@ -903,7 +903,7 @@ void testRandomCoords() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 0
+#if 1
       BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
       BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
       BOOST_LOG(rdInfoLog) << "---" << std::endl;
@@ -1425,8 +1425,10 @@ void testMultiThreadMultiConf() {
     TEST_ASSERT(pVect.size() == p2Vect.size());
     double msd = 0.0;
     for (unsigned int i = 0; i < pVect.size(); ++i) {
-      const RDGeom::Point3D *p = dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
-      const RDGeom::Point3D *p2 = dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
+      const RDGeom::Point3D *p =
+          dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
+      const RDGeom::Point3D *p2 =
+          dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
       TEST_ASSERT(p && p2);
       msd += (*p - *p2).lengthSq();
     }

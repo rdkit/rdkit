@@ -35,6 +35,8 @@
 #include <RDGeneral/RDThreads.h>
 
 #define ERROR_TOL 0.00001
+#define MAX_MINIMIZED_E_PER_ATOM 0.05
+#define MAX_MINIMIZED_E_CONTRIB 0.15
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -245,7 +247,7 @@ bool _embedPoints(
           *mmat, *positions, *chiralCenters, 1.0, 0.1, 0, basinThresh);
       unsigned int nPasses = 0;
       field->initialize();
-      // std::cerr<<"FIELD E: "<<field->calcEnergy()<<std::endl;
+      // std::cerr << "FIELD E: " << field->calcEnergy() << std::endl;
       if (field->calcEnergy() > ERROR_TOL) {
         int needMore = 1;
         while (needMore) {
@@ -253,10 +255,29 @@ bool _embedPoints(
           ++nPasses;
         }
       }
+      // FIX: should we only be doing this when we're using the basicKnowledge
+      // terms? I tend to think not, since we want non-crap geometries even when
+      // we aren't doing that extra work
+      if (1) {
+        std::vector<double> e_contribs;
+        double local_e = field->calcEnergy(&e_contribs);
+        // std::cerr << "        check: " << local_e / nat << " "
+        //           << *(std::max_element(e_contribs.begin(),
+        //           e_contribs.end()))
+        //           << std::endl;
+        if (local_e / nat >= MAX_MINIMIZED_E_PER_ATOM ||
+            (e_contribs.size() &&
+             *(std::max_element(e_contribs.begin(), e_contribs.end())) >
+                 MAX_MINIMIZED_E_CONTRIB)) {
+          std::cerr << " Energy fail: " << local_e / nat << " "
+                    << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+                    << std::endl;
+          gotCoords = false;
+          continue;
+        }
+      }
       delete field;
       field = NULL;
-      // std::cerr<<"   "<<field->calcEnergy()<<" after npasses:
-      // "<<nPasses<<std::endl;
 
       // Check if any of our chiral centers are badly out of whack. If so, try
       // again

@@ -69,7 +69,7 @@ class ForceField {
   void initialize();
 
   //! calculates and returns the energy (in kcal/mol) based on existing
-  //positions in the forcefield
+  // positions in the forcefield
   /*!
 
   \return the current energy
@@ -79,7 +79,7 @@ class ForceField {
   double *
       the positions need to be converted to double * here
   */
-  double calcEnergy() const;
+  double calcEnergy(std::vector<double> *contribs = NULL) const;
 
   // these next two aren't const because they may update our
   // distance matrix
