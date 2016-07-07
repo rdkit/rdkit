@@ -287,8 +287,8 @@ bool _embedPoints(
           // by the other
           // four points. That is also a fail.
           if (!_centerInVolume(tetSet, *positions, 0.3)) {
-            std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-                      << std::endl;
+            // std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+            //           << std::endl;
             gotCoords = false;
             continue;
           }
@@ -442,8 +442,10 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           chiralCenters.push_back(cptr);
         } else {
           if (mol.getRingInfo()->isInitialized() &&
-              mol.getRingInfo()->isAtomInRingOfSize((*ati)->getIdx(), 3)) {
-            // these are really, really hard, so just punt
+              (!mol.getRingInfo()->numAtomRings((*ati)->getIdx()) ||
+               mol.getRingInfo()->isAtomInRingOfSize((*ati)->getIdx(), 3))) {
+            // we only want to these tests for ring atoms
+            // there's no sense doing 3-rings because those are a nightmare
           } else {
             DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(
                 (*ati)->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], 0.0, 0.0);
