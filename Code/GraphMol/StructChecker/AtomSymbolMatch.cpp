@@ -362,16 +362,16 @@ bool AtomSymbolMatch(const std::string symbol, const std::string pattern) {
  * There are also a number of standard atom type lists like "alk" for alkali metals or
  * "Q" for non-C/non-H defined above as arrays of strings.
  */
-#ifdef WIN32
     char *context;
-    #define strtok_r(s,p) strtok_s(s,p, &context)   // thread safe strtok()
+#ifdef WIN32
+    #define strtok_r strtok_s   // thread safe strtok()
 #endif
     const char *atsym = symbol.c_str();
     char pat_buf[512];
     char *tokp;
 
    strcpy(pat_buf, pattern.c_str());
-   for (tokp = strtok_r(pat_buf,","); tokp; tokp = strtok_r((char *)NULL,",")) {
+   for (tokp = strtok_r(pat_buf,",",&context); tokp; tokp = strtok_r((char *)NULL,",",&context)) {
       if (islower(*tokp)) {
          if (0 == strcmp("alk",tokp))
          {

@@ -26,15 +26,16 @@ void testFlags() //PASSED
     BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
     BOOST_LOG(rdInfoLog) << "testFlags\n";
 
-    unsigned int flags = StructChecker::StructureFlags::STEREO_ERROR;
-    std::string  str = StructChecker::StructureFlagsToString(flags);
-    unsigned int f2 = StructChecker::StringToStructureFlags(str);
+    unsigned int flags = RDKit::StructureCheck::StructChecker::STEREO_ERROR;
+    std::string  str = RDKit::StructureCheck::StructChecker::StructureFlagsToString(flags);
+    unsigned int f2 = RDKit::StructureCheck::StructChecker::StringToStructureFlags(str);
     BOOST_LOG(rdInfoLog) << str << "\n";
     TEST_ASSERT(flags == f2);
 
-    flags = StructChecker::StructureFlags::STEREO_ERROR | StructChecker::StructureFlags::TRANSFORMED;
-    str = StructChecker::StructureFlagsToString(flags);
-    f2 = StructChecker::StringToStructureFlags(str);
+    flags = RDKit::StructureCheck::StructChecker::STEREO_ERROR
+          | RDKit::StructureCheck::StructChecker::TRANSFORMED;
+    str = RDKit::StructureCheck::StructChecker::StructureFlagsToString(flags);
+    f2 = RDKit::StructureCheck::StructChecker::StringToStructureFlags(str);
     BOOST_LOG(rdInfoLog) << str << "\n";
     TEST_ASSERT(flags == f2);
 
@@ -45,7 +46,8 @@ void testFlags() //PASSED
     TEST_ASSERT((flags & (~0x0080)) == f2);
 
     str = " STEREO_ERROR ,\t TRANSFORMED [xXx}"; // 'stability test with minor syntax errors'
-    flags = StructChecker::StructureFlags::STEREO_ERROR | StructChecker::StructureFlags::TRANSFORMED;
+    flags = RDKit::StructureCheck::StructChecker::STEREO_ERROR
+          | RDKit::StructureCheck::StructChecker::TRANSFORMED;
     f2 = StructChecker::StringToStructureFlags(str);
     BOOST_LOG(rdInfoLog) << str <<" = "<< StructChecker::StructureFlagsToString(f2) <<"\n";
     TEST_ASSERT(flags == f2);

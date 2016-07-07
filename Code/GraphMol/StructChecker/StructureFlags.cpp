@@ -14,7 +14,7 @@ namespace RDKit {
  namespace StructureCheck {
 
     static
-    const char* flags[]{
+    const char* flags[] = {
         "BAD_MOLECULE",
         "ALIAS_CONVERSION_FAILED",
         "STEREO_ERROR",

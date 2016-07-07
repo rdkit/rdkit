@@ -14,11 +14,11 @@ namespace RDKit {
  namespace StructureCheck {
 
     unsigned StructChecker::checkMolStructure(RWMol &mol)const {
-        unsigned flags = StructureFlags::NO_CHANGE; // == 0. return value
+        unsigned flags = NO_CHANGE; // == 0. return value
 
         if (0 != Options.MaxMolSize
             && (mol.getNumAtoms() > Options.MaxMolSize || mol.getNumBonds() > Options.MaxMolSize)) {
-            return StructureFlags::SIZE_CHECK_FAILED;
+            return SIZE_CHECK_FAILED;
         }
         mol.getRingInfo()->initialize();
 

@@ -50,7 +50,7 @@ namespace RDKit {
         TRIPLET = 3,
         ANY_RADICAL = 0xFF, // ???
     };
-    enum BondType { // those values are defined and used in file format. Do not change it.
+    enum AABondType { // those values are defined and used in file format. Do not change it.
         BT_NONE = 0, // means REMOVE Bond
         SINGLE  = 1,
         DOUBLE  = 2,
@@ -63,28 +63,29 @@ namespace RDKit {
         ALL_BOND_TYPES = 0xF,
     };
 
+    enum AATopology {
+        TP_NONE = 0,
+        RING = 1,
+        CHAIN= 2
+    };
+
     struct Ligand {
         std::string AtomSymbol; // comma separated list of elements or #
         int         Charge;
         RadicalType Radical;
         unsigned    SubstitutionCount; // substitution count 0 = don't care
-        BondType    BondType; // was: short 
+        AABondType  BondType; // was: short 
         Ligand() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), SubstitutionCount(0), BondType(ANY_BOND) {}
     };
 
     struct AugmentedAtom {
-        enum Topology {
-            TP_NONE = 0,
-            RING = 1,
-            CHAIN= 2
-        };
         std::string AtomSymbol; // comma separated list of elements or #
         std::string ShortName;
         int         Charge;
-        unsigned    Radical;
-        Topology    Topology; // this atom in: 1=ring 2=chain 0 don't care
+        RadicalType Radical;
+        AATopology    Topology; // this atom in: 1=ring 2=chain 0 don't care
         std::vector<Ligand> Ligands;
-        AugmentedAtom() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(Topology::TP_NONE) {}
+        AugmentedAtom() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(TP_NONE) {}
     };
 
     ////////////////////////////////////////////////////////////////////////////

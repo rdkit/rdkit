@@ -115,11 +115,11 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
     aa.ShortName = str;
 
     if (str[0] == '@') {
-        aa.Topology = AugmentedAtom::Topology::RING;
+        aa.Topology = RING;
         str++;
     }
     else if (str[0] == '!'  &&  str[1] == '@') {
-        aa.Topology = AugmentedAtom::Topology::CHAIN;
+        aa.Topology = CHAIN;
         str++;
         str++;
     }
@@ -160,22 +160,22 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
     if (str == strpbrk(str, "|.:") && !isdigit(str[1])) { // don't confuse with degree specification
         switch (*str) {
             case '|':
-                        aa.Radical = RadicalType::SINGLET;
+                        aa.Radical = SINGLET;   //RadicalType::SINGLET;
                         str++;
                 break;
             case '.':
-                        aa.Radical = RadicalType::DOUBLET;
+                        aa.Radical = DOUBLET;
                         str++;
                 break;
             case ':':
-                        aa.Radical = RadicalType::TRIPLET;
+                        aa.Radical = TRIPLET;
                         str++;
                 break;
             default:
                 return false; //never
         };
     }
-    else aa.Radical = RadicalType::RT_NONE;
+    else aa.Radical = RT_NONE;
 
     // read ligand descriptions
     while (*str == '(') {
@@ -187,7 +187,7 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
             if (0 == memcmp(str, bond_to_string[i], isalpha(str[1]) ? 1:2))
             {
                 found = true;
-                aa.Ligands.back().BondType = (BondType)(i);
+                aa.Ligands.back().BondType = (AABondType)(i);
                 str += strlen(bond_to_string[i]);
                 break;
             }
@@ -231,22 +231,22 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
         if (str == strpbrk(str, "|.:") && !isdigit(str[1])) { // don't confuse with degree specification
             switch (*str) {
             case '|':
-                aa.Ligands.back().Radical = RadicalType::SINGLET;
+                aa.Ligands.back().Radical = SINGLET;
                 str++;
                 break;
             case '.':
-                aa.Ligands.back().Radical = RadicalType::DOUBLET;
+                aa.Ligands.back().Radical = DOUBLET;
                 str++;
                 break;
             case ':':
-                aa.Ligands.back().Radical = RadicalType::TRIPLET;
+                aa.Ligands.back().Radical = TRIPLET;
                 str++;
                 break;
             default:
                 return false; //never
             };
         }
-        else aa.Ligands.back().Radical = RadicalType::RT_NONE;
+        else aa.Ligands.back().Radical = RT_NONE;
 
         // substitution count descriptor
         if (str[0] == ':' && isdigit(str[1])) {
@@ -365,10 +365,10 @@ bool ReadAAPairs(const std::string &path, std::vector<std::pair<AugmentedAtom, A
     }
     unsigned n = 0;
 
-    fscanf(fp, "%d", &n);
+    unsigned k = fscanf(fp, "%d", &n);
 
     char buffer[80];
-    fgets(buffer, sizeof(buffer), fp);
+    if (fgets(buffer, sizeof(buffer), fp)) {
 /*
             int  vers_len;
             char *cp;
@@ -382,6 +382,7 @@ bool ReadAAPairs(const std::string &path, std::vector<std::pair<AugmentedAtom, A
             if (log_file)
                 fprintf(log_file, "augmented atom transformation version = %s\n", aa_trans_version);
 */
+        }
     trans_pairs.clear();
     trans_pairs.resize(n);
 
@@ -548,7 +549,7 @@ bool StructCheckerOptions::loadTautomerData(const std::string &path) {
             }
         }
         else if (ext == "rdf" || ext == "RDF") { // load RD-File, see CTfile format specification
-            std::ifstream in(path);
+            std::ifstream in(path.c_str());
             if(!in) {
                 BOOST_LOG(rdErrorLog) << "could not open file '" << path << "'\n" << strerror(errno) << "\n";
                 return false;

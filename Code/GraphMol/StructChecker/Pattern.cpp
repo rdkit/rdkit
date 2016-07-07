@@ -14,7 +14,7 @@ namespace RDKit {
  namespace StructureCheck {
 
 static inline
-RDKit::Bond::BondType convertBondType(BondType bt) {
+RDKit::Bond::BondType convertBondType(AABondType bt) {
     static const RDKit::Bond::BondType rdbt[] = {
         RDKit::Bond::UNSPECIFIED,  //BT_NONE = 0,
         RDKit::Bond::SINGLE,
@@ -29,8 +29,8 @@ RDKit::Bond::BondType convertBondType(BondType bt) {
 }
 
 static inline
-BondType convertBondType(RDKit::Bond::BondType rdbt) {
-    static const BondType bt[] = {
+AABondType convertBondType(RDKit::Bond::BondType rdbt) {
+    static const AABondType bt[] = {
         BT_NONE,
         SINGLE,
         DOUBLE,
@@ -92,9 +92,9 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
             if (neighbors[j].size() == aa1.Ligands.size()
                 && (ANY_CHARGE == aa1.Charge  || atom->getFormalCharge() == aa1.Charge)
                 && (ANY_RADICAL== aa1.Radical || atom->getNumRadicalElectrons() == aa1.Radical)
-                && ( AugmentedAtom::TP_NONE == aa1.Topology
-                  ||(AugmentedAtom::RING  == aa1.Topology && atomInRing[j])
-                  ||(AugmentedAtom::CHAIN == aa1.Topology && ! atomInRing[j]))
+                && ( TP_NONE == aa1.Topology
+                  ||(RING  == aa1.Topology && atomInRing[j])
+                  ||(CHAIN == aa1.Topology && ! atomInRing[j]))
                 && AtomSymbolMatch(atom->getSymbol(), aa1.AtomSymbol)) {
                  //RecMatch():
                 unsigned matched = 0;
