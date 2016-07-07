@@ -53,36 +53,35 @@ bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
   if (fabs(d1) < tol || fabs(d2) < tol) return false;
   return !((d1 < 0.) ^ (d2 < 0.));
 }
+bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
+                     unsigned int idx3, unsigned int idx4,
+                     const RDGeom::PointPtrVect &positions) {
+  RDGeom::Point3D p0((*positions[idx0])[0], (*positions[idx0])[1],
+                     (*positions[idx0])[2]);
+  RDGeom::Point3D p1((*positions[idx1])[0], (*positions[idx1])[1],
+                     (*positions[idx1])[2]);
+  RDGeom::Point3D p2((*positions[idx2])[0], (*positions[idx2])[1],
+                     (*positions[idx2])[2]);
+  RDGeom::Point3D p3((*positions[idx3])[0], (*positions[idx3])[1],
+                     (*positions[idx3])[2]);
+  RDGeom::Point3D p4((*positions[idx4])[0], (*positions[idx4])[1],
+                     (*positions[idx4])[2]);
+  // RDGeom::Point3D centroid = (p1+p2+p3+p4)/4.;
+
+  bool res = _sameSide(p1, p2, p3, p4, p0) && _sameSide(p2, p3, p4, p1, p0) &&
+             _sameSide(p3, p4, p1, p2, p0) && _sameSide(p4, p1, p2, p3, p0);
+  return res;
+}
+
 bool _centerInVolume(const DistGeom::ChiralSetPtr &chiralSet,
                      const RDGeom::PointPtrVect &positions) {
   if (chiralSet->d_idx0 ==
       chiralSet->d_idx4) {  // this happens for three-coordinate centers
     return true;
   }
-
-  RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],
-                     (*positions[chiralSet->d_idx0])[1],
-                     (*positions[chiralSet->d_idx0])[2]);
-  RDGeom::Point3D p1((*positions[chiralSet->d_idx1])[0],
-                     (*positions[chiralSet->d_idx1])[1],
-                     (*positions[chiralSet->d_idx1])[2]);
-  RDGeom::Point3D p2((*positions[chiralSet->d_idx2])[0],
-                     (*positions[chiralSet->d_idx2])[1],
-                     (*positions[chiralSet->d_idx2])[2]);
-  RDGeom::Point3D p3((*positions[chiralSet->d_idx3])[0],
-                     (*positions[chiralSet->d_idx3])[1],
-                     (*positions[chiralSet->d_idx3])[2]);
-  RDGeom::Point3D p4((*positions[chiralSet->d_idx4])[0],
-                     (*positions[chiralSet->d_idx4])[1],
-                     (*positions[chiralSet->d_idx4])[2]);
-  // RDGeom::Point3D centroid = (p1+p2+p3+p4)/4.;
-
-  bool res = _sameSide(p1, p2, p3, p4, p0) && _sameSide(p2, p3, p4, p1, p0) &&
-             _sameSide(p3, p4, p1, p2, p0) && _sameSide(p4, p1, p2, p3, p0);
-  // std::cerr<<"civ:"<<chiralSet->d_idx0<<" "<<chiralSet->d_idx1<<"
-  // "<<chiralSet->d_idx2<<" "<<chiralSet->d_idx3<<"
-  // "<<chiralSet->d_idx4<<"->"<<res<<"|"<<std::endl;
-  return res;
+  return _centerInVolume(chiralSet->d_idx0, chiralSet->d_idx1,
+                         chiralSet->d_idx2, chiralSet->d_idx3,
+                         chiralSet->d_idx4, positions);
 }
 bool _boundsFulfilled(const std::vector<int> &atoms,
                       const DistGeom::BoundsMatrix &mmat,
