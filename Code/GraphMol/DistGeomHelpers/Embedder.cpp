@@ -403,7 +403,8 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
       Atom::ChiralType chiralType = (*ati)->getChiralTag();
       if ((chiralType == Atom::CHI_TETRAHEDRAL_CW ||
            chiralType == Atom::CHI_TETRAHEDRAL_CCW) ||
-          ((*ati)->getAtomicNum() == 6 && (*ati)->getDegree() == 4)) {
+          (((*ati)->getAtomicNum() == 6 || (*ati)->getAtomicNum() == 7) &&
+           (*ati)->getDegree() == 4)) {
         // make a chiral set from the neighbors
         nbrs.clear();
         nbrs.reserve(4);
