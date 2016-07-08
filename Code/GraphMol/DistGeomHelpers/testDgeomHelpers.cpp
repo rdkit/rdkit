@@ -904,7 +904,7 @@ void testRandomCoords() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 1
+#if 0
       BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
       BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
       BOOST_LOG(rdInfoLog) << "---" << std::endl;
@@ -1714,6 +1714,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3238580 \n\n";
   testIssue3238580();
 
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
+  testGithub55();
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
   testIssue3483968();
