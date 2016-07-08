@@ -54,6 +54,15 @@ typedef char *BITVECP;
 
 #define GETENTRY(vec,pos) ((bytea *) DatumGetPointer((vec)->vector[(pos)].key))
 
+// from here:
+// http://stackoverflow.com/questions/3849337/msvc-equivalent-to-builtin-popcount
+#ifdef _MSC_VER
+#include <intrin.h>
+#define BUILTIN_POPCOUNT_INSTR __popcnt
+#else
+#define BUILTIN_POPCOUNT_INSTR __builtin_popcount
+#endif
+
 /* Number of one-bits in an unsigned byte */
 static const uint8 number_of_ones[256] = {
   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
@@ -313,7 +322,7 @@ hemdistsign(bytea *a, bytea *b)
 #else
   unsigned eidx=SIGLEN(a)/sizeof(unsigned int);
   for(i=0;i<eidx;++i){
-    dist += __builtin_popcount(((unsigned int *)as)[i] ^ ((unsigned int *)bs)[i]);
+    dist += BUILTIN_POPCOUNT_INSTR(((unsigned int *)as)[i] ^ ((unsigned int *)bs)[i]);
   }
   for(i=eidx*sizeof(unsigned);i<SIGLEN(a);++i){
     int diff = as[i] ^ bs[i];
@@ -341,8 +350,8 @@ soergeldistsign(bytea *a, bytea *b) {
   unsigned *bs = (unsigned *)VARDATA(b);
   unsigned eidx=SIGLEN(a)/sizeof(unsigned);
   for(i=0;i<eidx;++i){
-    union_popcount += __builtin_popcount(as[i] | bs[i]);
-    intersect_popcount += __builtin_popcount(as[i] & bs[i]);
+    union_popcount += BUILTIN_POPCOUNT_INSTR(as[i] | bs[i]);
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(as[i] & bs[i]);
   }
   for(i=eidx*sizeof(unsigned);i<SIGLEN(a);++i){
     union_popcount += number_of_ones[as[i] | bs[i]];
@@ -838,7 +847,7 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
 #else
     unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
     for(i=0;i<eidx;++i){
-      cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+      cnt += BUILTIN_POPCOUNT_INSTR(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
     }
     for(i=eidx*sizeof(unsigned);i<SIGLEN(key);++i){
       cnt += number_of_ones[ pk[i] & pq[i] ];
@@ -904,7 +913,7 @@ gbfp_distance(PG_FUNCTION_ARGS)
 #else
         unsigned eidx=SIGLEN(key)/sizeof(unsigned int);
         for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
-          cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+          cnt += BUILTIN_POPCOUNT_INSTR(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
         }
         for(i=eidx*sizeof(unsigned);i<SIGLEN(key);++i){
           cnt += number_of_ones[ pk[i] & pq[i] ];
