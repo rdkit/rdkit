@@ -334,10 +334,11 @@ bool _embedPoints(
           // four points. That is also a fail.
           if (!_volumeTest(tetSet, *positions) ||
               !_centerInVolume(tetSet, *positions, 0.3)) {
-            std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-                      << " vol: " << _volumeTest(tetSet, *positions)
-                      << " center: " << _centerInVolume(tetSet, *positions, 0.3)
-                      << std::endl;
+            // std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+            //           << " vol: " << _volumeTest(tetSet, *positions)
+            //           << " center: " << _centerInVolume(tetSet, *positions,
+            //           0.3)
+            //           << std::endl;
             gotCoords = false;
             continue;
           }
