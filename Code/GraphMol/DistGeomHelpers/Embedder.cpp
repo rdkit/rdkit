@@ -38,11 +38,57 @@
 #define ERROR_TOL 0.00001
 #define MAX_MINIMIZED_E_PER_ATOM 0.05
 #define MAX_MINIMIZED_E_CONTRIB 0.10
+#define MIN_TETRAHEDRAL_CHIRAL_VOL 0.50
 
 namespace RDKit {
 namespace DGeomHelpers {
 typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
+
+bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
+                 const RDGeom::PointPtrVect &positions) {
+  RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],
+                     (*positions[chiralSet->d_idx0])[1],
+                     (*positions[chiralSet->d_idx0])[2]);
+  RDGeom::Point3D p1((*positions[chiralSet->d_idx1])[0],
+                     (*positions[chiralSet->d_idx1])[1],
+                     (*positions[chiralSet->d_idx1])[2]);
+  RDGeom::Point3D p2((*positions[chiralSet->d_idx2])[0],
+                     (*positions[chiralSet->d_idx2])[1],
+                     (*positions[chiralSet->d_idx2])[2]);
+  RDGeom::Point3D p3((*positions[chiralSet->d_idx3])[0],
+                     (*positions[chiralSet->d_idx3])[1],
+                     (*positions[chiralSet->d_idx3])[2]);
+  RDGeom::Point3D p4((*positions[chiralSet->d_idx4])[0],
+                     (*positions[chiralSet->d_idx4])[1],
+                     (*positions[chiralSet->d_idx4])[2]);
+
+  // even if we are minimizing in higher dimension the chiral volume is
+  // calculated using only the first 3 dimensions
+  RDGeom::Point3D v1 = p0 - p1;
+  v1.normalize();
+  RDGeom::Point3D v2 = p0 - p2;
+  v2.normalize();
+  RDGeom::Point3D v3 = p0 - p3;
+  v3.normalize();
+  RDGeom::Point3D v4 = p0 - p4;
+  v4.normalize();
+
+  RDGeom::Point3D crossp = v1.crossProduct(v2);
+  double vol = crossp.dotProduct(v3);
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  crossp = v1.crossProduct(v2);
+  vol = crossp.dotProduct(v4);
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  crossp = v1.crossProduct(v3);
+  vol = crossp.dotProduct(v4);
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  crossp = v2.crossProduct(v3);
+  vol = crossp.dotProduct(v4);
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+
+  return true;
+}
 
 bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
                const RDGeom::Point3D &v3, const RDGeom::Point3D &v4,
@@ -286,9 +332,12 @@ bool _embedPoints(
           // it could happen that the centroid is outside the volume defined
           // by the other
           // four points. That is also a fail.
-          if (!_centerInVolume(tetSet, *positions, 0.3)) {
-            // std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-            //           << std::endl;
+          if (!_volumeTest(tetSet, *positions) ||
+              !_centerInVolume(tetSet, *positions, 0.3)) {
+            std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+                      << " vol: " << _volumeTest(tetSet, *positions)
+                      << " center: " << _centerInVolume(tetSet, *positions, 0.3)
+                      << std::endl;
             gotCoords = false;
             continue;
           }
@@ -393,7 +442,8 @@ bool _embedPoints(
 }
 
 void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
-                     DistGeom::VECT_CHIRALSET &tetrahedralCenters) {
+                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
+                     const std::map<int, RDGeom::Point3D> *coordMap) {
   ROMol::ConstAtomIterator ati;
   INT_VECT nbrs;
   ROMol::OEDGE_ITER beg, end;
@@ -442,10 +492,13 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else {
-          if (mol.getRingInfo()->isInitialized() &&
-              (!mol.getRingInfo()->numAtomRings((*ati)->getIdx()) ||
-               mol.getRingInfo()->isAtomInRingOfSize((*ati)->getIdx(), 3))) {
-            // we only want to these tests for ring atoms
+          if ((coordMap &&
+               coordMap->find((*ati)->getIdx()) != coordMap->end()) ||
+              (mol.getRingInfo()->isInitialized() &&
+               (!mol.getRingInfo()->numAtomRings((*ati)->getIdx()) ||
+                mol.getRingInfo()->isAtomInRingOfSize((*ati)->getIdx(), 3)))) {
+            // we only want to these tests for ring atoms that are not part of
+            // the coordMap
             // there's no sense doing 3-rings because those are a nightmare
           } else {
             DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(
@@ -743,7 +796,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
 
     MolOps::assignStereochemistry(*piece);
-    _findChiralSets(*piece, chiralCenters, tetrahedralCarbons);
+    _findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
 
     // if we have any chiral centers or are using random coordinates, we will
     // first embed the molecule in four dimensions, otherwise we will use 3D
