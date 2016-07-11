@@ -885,13 +885,13 @@ void testRandomCoords() {
   for (tokenizer::iterator token = tokens.begin(); token != tokens.end();
        ++token) {
     std::string smi = *token;
-    std::cerr << smi << std::endl;
+    std::cerr << "SMI: " << smi << std::endl;
     ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m = m2;
-    int cid = DGeomHelpers::EmbedMolecule(*m, 10 * m->getNumAtoms(), 1, true,
-                                          true, 2, true, 1, 0, 1e-2);
+    int cid =
+        DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2, true, 1, 0, 1e-2);
     CHECK_INVARIANT(cid >= 0, "");
 // writer.write(*m);
 // writer.flush();
@@ -904,7 +904,7 @@ void testRandomCoords() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 0
+#if 1
       BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
       BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
       BOOST_LOG(rdInfoLog) << "---" << std::endl;
@@ -1602,6 +1602,50 @@ void testGithub697() {
   }
 }
 
+void testGithub971() {
+  {
+    // sample molecule found by Sereina
+    std::string smi = "C/C(=C\\c1ccccc1)CN1C2CC[NH2+]CC1CC2";
+
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::addHs(*m);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 0, 0xf00d);
+    TEST_ASSERT(cid >= 0);
+    MolOps::removeHs(*m);
+    std::string expectedMb =
+        "\n     RDKit          3D\n\n 19 21  0  0  0  0  0  0  0  0999 V2000\n "
+        "   1.1258   -1.3888    0.9306 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n    1.0779   -0.1065    0.1565 C   0  0  0  0  0  0  0  0  0  0  0 "
+        " 0\n    2.2519    0.2795   -0.3483 C   0  0  0  0  0  0  0  0  0  0  "
+        "0  0\n    3.5245   -0.0901    0.2817 C   0  0  0  0  0  0  0  0  0  0 "
+        " 0  0\n    4.2551    0.9456    0.8411 C   0  0  0  0  0  0  0  0  0  "
+        "0  0  0\n    5.6137    0.8099    1.0965 C   0  0  0  0  0  0  0  0  0 "
+        " 0  0  0\n    6.2293   -0.3871    0.7552 C   0  0  0  0  0  0  0  0  "
+        "0  0  0  0\n    5.4107   -1.4793    0.4938 C   0  0  0  0  0  0  0  0 "
+        " 0  0  0  0\n    4.2354   -1.1874   -0.1873 C   0  0  0  0  0  0  0  "
+        "0  0  0  0  0\n   -0.0943    0.0572   -0.7601 C   0  0  0  0  0  0  0 "
+        " 0  0  0  0  0\n   -1.3242    0.2903   -0.0524 N   0  0  0  0  0  0  "
+        "0  0  0  0  0  0\n   -2.1468    1.1490   -0.9044 C   0  0  0  0  0  0 "
+        " 0  0  0  0  0  0\n   -3.1678    1.9193   -0.1239 C   0  0  0  0  0  "
+        "0  0  0  0  0  0  0\n   -2.9879    1.6714    1.3508 C   0  0  0  0  0 "
+        " 0  0  0  0  0  0  0\n   -3.3579    0.3480    1.7662 N   0  0  0  0  "
+        "0  0  0  0  0  0  0  0\n   -3.4586   -0.6011    0.7007 C   0  0  0  0 "
+        " 0  0  0  0  0  0  0  0\n   -2.1733   -0.8977   -0.0058 C   0  0  0  "
+        "0  0  0  0  0  0  0  0  0\n   -2.5650   -1.1467   -1.4589 C   0  0  0 "
+        " 0  0  0  0  0  0  0  0  0\n   -2.7401    0.2591   -1.9624 C   0  0  "
+        "0  0  0  0  0  0  0  0  0  0\n  1  2  1  0\n  2  3  2  0\n  3  4  1  "
+        "0\n  4  5  2  0\n  5  6  1  0\n  6  7  2  0\n  7  8  1  0\n  8  9  2  "
+        "0\n  2 10  1  0\n 10 11  1  0\n 11 12  1  0\n 12 13  1  0\n 13 14  1  "
+        "0\n 14 15  1  0\n 15 16  1  0\n 16 17  1  0\n 17 18  1  0\n 18 19  1  "
+        "0\n  9  4  1  0\n 17 11  1  0\n 19 12  1  0\nM  CHG  1  15   1\nM  "
+        "END\n";
+    std::string mb = MolToMolBlock(*m);
+    TEST_ASSERT(mb == expectedMb);
+    delete m;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1715,9 +1759,6 @@ int main() {
   testIssue3238580();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
-  testGithub55();
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
   testIssue3483968();
 
@@ -1761,6 +1802,11 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "\t More ChEMBL molecules failing bounds smoothing.\n";
   testGithub697();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
+                          "constrained ring systems.\n";
+  testGithub971();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

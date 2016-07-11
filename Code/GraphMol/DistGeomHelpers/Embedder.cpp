@@ -37,7 +37,7 @@
 
 #define ERROR_TOL 0.00001
 #define MAX_MINIMIZED_E_PER_ATOM 0.05
-#define MAX_MINIMIZED_E_CONTRIB 0.10
+#define MAX_MINIMIZED_E_CONTRIB 0.20
 #define MIN_TETRAHEDRAL_CHIRAL_VOL 0.50
 #define TETRAHEDRAL_CENTERINVOLUME_TOL 0.30
 
@@ -292,6 +292,8 @@ bool _embedPoints(
       }
       gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
     }
+    // std::cerr << " ITER: " << iter << " gotCoords: " << gotCoords <<
+    // std::endl;
     if (gotCoords) {
       boost::scoped_ptr<ForceFields::ForceField> field(
           DistGeom::constructForceField(*mmat, *positions, *chiralCenters, 1.0,
@@ -325,10 +327,9 @@ bool _embedPoints(
             (e_contribs.size() &&
              *(std::max_element(e_contribs.begin(), e_contribs.end())) >
                  MAX_MINIMIZED_E_CONTRIB)) {
-          // std::cerr << " Energy fail: " << local_e / nat << " "
-          //           << *(std::max_element(e_contribs.begin(),
-          //           e_contribs.end()))
-          //           << std::endl;
+          std::cerr << " Energy fail: " << local_e / nat << " "
+                    << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+                    << std::endl;
           gotCoords = false;
           continue;
         }
@@ -365,8 +366,9 @@ bool _embedPoints(
           double ub = chiralSet->getUpperVolumeBound();
           if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
               (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
-            // std::cerr<<" fail! ("<<chiralSet->d_idx0<<") iter: "<<iter<<"
-            // "<<vol<<" "<<lb<<"-"<<ub<<std::endl;
+            // std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: " <<
+            // iter
+            //           << " " << vol << " " << lb << "-" << ub << std::endl;
             gotCoords = false;
             break;
           }
@@ -401,7 +403,6 @@ bool _embedPoints(
             expTorsionAtoms, expTorsionAngles, improperAtoms, atomNums,
             useBasicKnowledge);
       }
-
       // test if chirality is correct
       if (enforceChirality && gotCoords && (chiralCenters->size() > 0)) {
         // "distance matrix" chirality test
@@ -429,8 +430,8 @@ bool _embedPoints(
             // by the other
             // four points. That is also a fail.
             if (!_centerInVolume(chiralSet, *positions)) {
-              // std::cerr<<" fail2! ("<<chiralSet->d_idx0<<") iter:
-              // "<<iter<<std::endl;
+              // std::cerr << " fail3! (" << chiralSet->d_idx0
+              //           << ") iter: " << iter << std::endl;
               gotCoords = false;
               break;
             }
@@ -501,7 +502,7 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           if ((coordMap &&
                coordMap->find((*ati)->getIdx()) != coordMap->end()) ||
               (mol.getRingInfo()->isInitialized() &&
-               (!mol.getRingInfo()->numAtomRings((*ati)->getIdx()) ||
+               (mol.getRingInfo()->numAtomRings((*ati)->getIdx()) < 2 ||
                 mol.getRingInfo()->isAtomInRingOfSize((*ati)->getIdx(), 3)))) {
             // we only want to these tests for ring atoms that are not part of
             // the coordMap
