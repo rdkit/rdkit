@@ -292,8 +292,9 @@ bool _embedPoints(
       gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
     }
     if (gotCoords) {
-      ForceFields::ForceField *field = DistGeom::constructForceField(
-          *mmat, *positions, *chiralCenters, 1.0, 0.1, 0, basinThresh);
+      boost::scoped_ptr<ForceFields::ForceField> field(
+          DistGeom::constructForceField(*mmat, *positions, *chiralCenters, 1.0,
+                                        0.1, 0, basinThresh));
       unsigned int nPasses = 0;
       field->initialize();
       // std::cerr << "FIELD E: " << field->calcEnergy() << std::endl;
@@ -345,9 +346,6 @@ bool _embedPoints(
         }
       }
 
-      delete field;
-      field = NULL;
-
       // Check if any of our chiral centers are badly out of whack. If so, try
       // again
       if (enforceChirality && chiralCenters->size() > 0) {
@@ -372,8 +370,9 @@ bool _embedPoints(
       // time removing the chiral constraints and
       // increasing the weight on the fourth dimension
       if (gotCoords && (chiralCenters->size() > 0 || useRandomCoords)) {
-        ForceFields::ForceField *field2 = DistGeom::constructForceField(
-            *mmat, *positions, *chiralCenters, 0.2, 1.0, 0, basinThresh);
+        boost::scoped_ptr<ForceFields::ForceField> field2(
+            DistGeom::constructForceField(*mmat, *positions, *chiralCenters,
+                                          0.2, 1.0, 0, basinThresh));
         field2->initialize();
         // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
         if (field2->calcEnergy() > ERROR_TOL) {
@@ -386,7 +385,6 @@ bool _embedPoints(
           // std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2:
           // "<<nPasses2<<std::endl;
         }
-        delete field2;
       }
 
       // (ET)(K)DG
