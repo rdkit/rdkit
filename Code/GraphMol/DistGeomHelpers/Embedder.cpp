@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
+//#define DEBUG_EMBEDDING 1
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -292,6 +292,11 @@ bool _embedPoints(
       }
       gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
     }
+#ifdef DEBUG_EMBEDDING
+    if (!gotCoords) {
+      std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
+    }
+#endif
     // std::cerr << " ITER: " << iter << " gotCoords: " << gotCoords <<
     // std::endl;
     if (gotCoords) {
@@ -327,9 +332,11 @@ bool _embedPoints(
             (e_contribs.size() &&
              *(std::max_element(e_contribs.begin(), e_contribs.end())) >
                  MAX_MINIMIZED_E_CONTRIB)) {
+#ifdef DEBUG_EMBEDDING
           std::cerr << " Energy fail: " << local_e / nat << " "
                     << *(std::max_element(e_contribs.begin(), e_contribs.end()))
                     << std::endl;
+#endif
           gotCoords = false;
           continue;
         }
@@ -343,11 +350,14 @@ bool _embedPoints(
           if (!_volumeTest(tetSet, *positions) ||
               !_centerInVolume(tetSet, *positions,
                                TETRAHEDRAL_CENTERINVOLUME_TOL)) {
-            // std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-            //           << " vol: " << _volumeTest(tetSet, *positions)
-            //           << " center: " << _centerInVolume(tetSet, *positions,
-            //           0.3)
-            //           << std::endl;
+#ifdef DEBUG_EMBEDDING
+            std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+                      << " vol: " << _volumeTest(tetSet, *positions)
+                      << " center: "
+                      << _centerInVolume(tetSet, *positions,
+                                         TETRAHEDRAL_CENTERINVOLUME_TOL)
+                      << std::endl;
+#endif
             gotCoords = false;
             continue;
           }
@@ -366,9 +376,10 @@ bool _embedPoints(
           double ub = chiralSet->getUpperVolumeBound();
           if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
               (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
-            // std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: " <<
-            // iter
-            //           << " " << vol << " " << lb << "-" << ub << std::endl;
+#ifdef DEBUG_EMBEDDING
+            std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: " << iter
+                      << " " << vol << " " << lb << "-" << ub << std::endl;
+#endif
             gotCoords = false;
             break;
           }
@@ -430,8 +441,10 @@ bool _embedPoints(
             // by the other
             // four points. That is also a fail.
             if (!_centerInVolume(chiralSet, *positions)) {
-              // std::cerr << " fail3! (" << chiralSet->d_idx0
-              //           << ") iter: " << iter << std::endl;
+#ifdef DEBUG_EMBEDDING
+              std::cerr << " fail3! (" << chiralSet->d_idx0
+                        << ") iter: " << iter << std::endl;
+#endif
               gotCoords = false;
               break;
             }
