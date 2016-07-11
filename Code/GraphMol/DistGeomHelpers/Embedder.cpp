@@ -39,6 +39,7 @@
 #define MAX_MINIMIZED_E_PER_ATOM 0.05
 #define MAX_MINIMIZED_E_CONTRIB 0.10
 #define MIN_TETRAHEDRAL_CHIRAL_VOL 0.50
+#define TETRAHEDRAL_CENTERINVOLUME_TOL 0.30
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -317,6 +318,9 @@ bool _embedPoints(
         //             e_contribs.end()))
         //             << std::endl;
         // }
+
+        // check that neither the energy nor any of the contributions to it are
+        // too high (this is part of github #971)
         if (local_e / nat >= MAX_MINIMIZED_E_PER_ATOM ||
             (e_contribs.size() &&
              *(std::max_element(e_contribs.begin(), e_contribs.end())) >
@@ -328,13 +332,16 @@ bool _embedPoints(
           gotCoords = false;
           continue;
         }
-        // "center in volume" chirality test
+        // for each of the atoms in the "tetrahedralCarbons" list, make sure
+        // that there is a minimum volume around them and that they are inside
+        // that volume. (this is part of github #971)
         BOOST_FOREACH (DistGeom::ChiralSetPtr tetSet, *tetrahedralCarbons) {
           // it could happen that the centroid is outside the volume defined
           // by the other
           // four points. That is also a fail.
           if (!_volumeTest(tetSet, *positions) ||
-              !_centerInVolume(tetSet, *positions, 0.3)) {
+              !_centerInVolume(tetSet, *positions,
+                               TETRAHEDRAL_CENTERINVOLUME_TOL)) {
             // std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
             //           << " vol: " << _volumeTest(tetSet, *positions)
             //           << " center: " << _centerInVolume(tetSet, *positions,
